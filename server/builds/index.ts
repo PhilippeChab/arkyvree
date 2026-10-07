@@ -1,2 +1,2 @@
 export { buildCharacter } from "./buildCharacter.ts";
-export { readCharacterRows } from "./characterRows.ts";
+export { readBondedInputs, readCharacterInput, readCharacterRows, readMasterInput } from "./characterRows.ts";

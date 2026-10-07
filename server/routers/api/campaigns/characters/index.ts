@@ -1,7 +1,6 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { buildBondedMap, buildFullCharacterResponse, redactPrivateNotes } from "@/engine/rulesets/dnd3.5/index.ts";
 import { denyDemoUser, exportRateLimit, type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { idParam, limit, page } from "@/server/routers/api/validation.ts";
 import { CampaignCharactersService } from "@/server/services/campaigns/characters/index.ts";
@@ -38,79 +37,7 @@ export default new Hono<SessionContext>()
   )
   .get("/:id/characters/:characterId", validate("param", characterParams), async (c) => {
     const { id, characterId } = c.req.valid("param");
-    const data = await CampaignCharactersService.getCharacter(c.var.requestSession, id, characterId);
-    const response = buildFullCharacterResponse(data.character!, data.detailedCharacter!);
-    const redactForViewer = <T extends { identity: { background: { privateNotes?: string } } }>(entry: T): T =>
-      data.canViewPrivateNotes ? entry : redactPrivateNotes(entry, "");
-    const safeResponse = {
-      ...redactForViewer(response),
-      shareToken: data.canEdit ? response.shareToken : null,
-    };
-    const { physiology } = response.identity;
-    // Explicit allowlist: a new full-response field, or identity field, must be considered here. A Partial character
-    // shows its name and physical traits (race, age, gender, height, weight), and nothing else.
-    const visibleResponse = data.isPartial
-      ? ({
-          id: safeResponse.id,
-          userId: safeResponse.userId,
-          kind: safeResponse.kind,
-          parentCharacterId: safeResponse.parentCharacterId,
-          name: safeResponse.name,
-          raceId: safeResponse.raceId,
-          rulesetId: safeResponse.rulesetId,
-          rulesetName: safeResponse.rulesetName,
-          baseRules: safeResponse.baseRules,
-          isCustomRuleset: safeResponse.isCustomRuleset,
-          deletedAt: safeResponse.deletedAt,
-          updatedAt: safeResponse.updatedAt,
-          shareToken: null,
-          identity: {
-            background: null,
-            beliefs: null,
-            meta: null,
-            physiology: {
-              age: physiology.age,
-              description: null,
-              gender: physiology.gender,
-              height: physiology.height,
-              languages: null,
-              name: physiology.name,
-              race: physiology.race,
-              weight: physiology.weight,
-            } satisfies Record<keyof typeof physiology, unknown>,
-          } satisfies Record<keyof typeof response.identity, unknown>,
-          skillBudget: { available: 0, spent: 0, total: 0 },
-          abilities: {},
-          combat: {},
-          savingThrows: {},
-          classes: {},
-          skills: {},
-          inventory: {},
-          equipment: [],
-          powers: [],
-          virtualFeats: [],
-          virtualPowers: [],
-          aptitudes: {},
-          spellTags: {},
-          spellTagLists: {},
-          requirements: {},
-          modifiers: {},
-          validation: { valid: true, issues: [] },
-        } satisfies Record<keyof typeof response, unknown>)
-      : safeResponse;
-
-    return c.json(
-      {
-        visibility: data.visibility,
-        isOwner: data.isOwner,
-        canEdit: data.canEdit,
-        canDownloadPdf: data.canDownloadPdf,
-        isPartial: data.isPartial,
-        ...visibleResponse,
-        bonded: data.isPartial ? {} : buildBondedMap(data.bondedByKind ?? {}, redactForViewer),
-      },
-      200,
-    );
+    return c.json(await CampaignCharactersService.getCharacter(c.var.requestSession, id, characterId), 200);
   })
   .post(
     "/:id/characters",

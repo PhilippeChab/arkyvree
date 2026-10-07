@@ -25,6 +25,12 @@ import type {
   Ruleset,
 } from "@/shared/relations.ts";
 
+/** A character's row and the rows it's built from, as the server reads them in its ruleset's scope. */
+export interface CharacterInput {
+  record: CharacterRecord;
+  rows: CharacterRows;
+}
+
 /**
  * A character's own rows, which the server reads (`server/builds/`) and its module builds the character from: its seat
  * in a campaign, its ability scores, languages, inventory and levels, every saved level's picks (the links, whose
@@ -75,6 +81,8 @@ export interface RulesetModule<
 > {
   /** What a master's bonded creatures become as the master's levels change, and the kinds they are */
   bonded: object;
+  /** A character's description: the sheet the API answers, its own and its bonded creatures' */
+  characters: object;
   createDetailedCharacter(record: CharacterRecord, kind?: Kind): Character;
   createPropertyTypes(): PropertyTypesProvider;
   createTargetPaths(): TargetPathsInterface;

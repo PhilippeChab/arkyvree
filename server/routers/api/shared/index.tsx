@@ -2,7 +2,6 @@ import { pdf } from "@react-pdf/renderer";
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { buildBondedMap, buildFullCharacterResponse, redactPrivateNotes } from "@/engine/rulesets/dnd3.5/index.ts";
 import { validate } from "@/server/middlewares/index.ts";
 import { CharacterSharingService } from "@/server/services/characters/sharing/index.ts";
 
@@ -12,18 +11,7 @@ export default new Hono()
   // Get shared character data (public, no auth)
   .get("/characters/:shareToken", validate("param", shareTokenParam), async (c) => {
     const { shareToken } = c.req.valid("param");
-
-    const { character, detailedCharacter, bondedByKind, portraitUrl } =
-      await CharacterSharingService.getSharedCharacter(shareToken);
-    const response = buildFullCharacterResponse(character, detailedCharacter);
-    return c.json(
-      {
-        ...redactPrivateNotes(response, undefined),
-        bonded: buildBondedMap(bondedByKind, (entry) => redactPrivateNotes(entry, undefined)),
-        portraitUrl,
-      },
-      200,
-    );
+    return c.json(await CharacterSharingService.getSharedCharacter(shareToken), 200);
   })
   // Generate PDF for shared character (public, no auth)
   .get("/characters/:shareToken/pdf", validate("param", shareTokenParam), async (c) => {

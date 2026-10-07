@@ -1,0 +1,116 @@
+import type { CharacterInput } from "@/engine/core/module/index.ts";
+import type { RulesetView } from "@/engine/core/types.ts";
+import { buildCharacter } from "@/engine/rulesets/dnd3.5/character/buildCharacter.ts";
+import type DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
+import { BONDED_KIND_SLUGS } from "@/shared/dnd3.5/bondedKinds.ts";
+
+import { buildBondedResponse, buildFullCharacterResponse } from "./buildCharacterResponse.ts";
+import { redactPrivateNotes } from "./redactPrivateNotes.ts";
+
+/** A bonded creature's sheet, as the API answers it. */
+type BondedDescription = ReturnType<typeof buildBondedResponse>;
+
+/** What a viewer reads of a character's private notes: all of it, a blank, or no field at all. */
+export type PrivateNotes = "blank" | "omit" | "show";
+
+/** The master's bonded creatures (`bonded`), each built with its master's sheet, by their kind, in the kinds' order. */
+function describeBonded(view: RulesetView, master: DetailedCharacter, bonded: CharacterInput[], notes: PrivateNotes) {
+  const byKind = new Map(bonded.map((input) => [input.record.kind, input]));
+  const described: Record<string, BondedDescription> = {};
+  for (const kind of BONDED_KIND_SLUGS) {
+    const input = byKind.get(kind);
+    if (input)
+      described[kind] = redactNotes(buildBondedResponse(input.record, buildCharacter(view, input, { master })), notes);
+  }
+  return described;
+}
+
+/** The bonded creatures of a sheet that shows none: a creature's own, or a partly seen character's. */
+function noBonded(): Record<string, BondedDescription> {
+  return {};
+}
+
+/** An entry's private notes, as the viewer reads them. */
+function redactNotes<T extends { identity: { background: { privateNotes?: string } } }>(entry: T, notes: PrivateNotes) {
+  if (notes === "show") return entry;
+  return redactPrivateNotes(entry, notes === "blank" ? "" : undefined);
+}
+
+/** A bonded creature's sheet, from its master's (`master`), as the API answers it: it has no creatures of its own. */
+export function describeBondedCreature(view: RulesetView, creature: CharacterInput, master: CharacterInput) {
+  const built = buildCharacter(view, creature, { master: buildCharacter(view, master) });
+  return { ...buildBondedResponse(creature.record, built), bonded: noBonded() };
+}
+
+/**
+ * A player character's sheet, as the API answers it, with its bonded creatures' (`bonded`), each built with it: their
+ * private notes as the viewer reads them (`notes`).
+ */
+export function describeCharacter(
+  view: RulesetView,
+  character: CharacterInput,
+  bonded: CharacterInput[],
+  notes: PrivateNotes = "show",
+) {
+  const built = buildCharacter(view, character);
+  const response = buildFullCharacterResponse(character.record, built);
+  return { ...redactNotes(response, notes), bonded: describeBonded(view, built, bonded, notes) };
+}
+
+/**
+ * What a campaign member who only sees a character partly reads of it: who it is, its name and physical traits (race,
+ * age, gender, height, weight), and nothing else. An allowlist: a new field of the full sheet, or of its identity, must
+ * be considered here.
+ */
+export function describePartialCharacter(view: RulesetView, character: CharacterInput) {
+  const response = buildFullCharacterResponse(character.record, buildCharacter(view, character));
+  const { physiology } = response.identity;
+  return {
+    id: response.id,
+    userId: response.userId,
+    kind: response.kind,
+    parentCharacterId: response.parentCharacterId,
+    name: response.name,
+    raceId: response.raceId,
+    rulesetId: response.rulesetId,
+    rulesetName: response.rulesetName,
+    baseRules: response.baseRules,
+    isCustomRuleset: response.isCustomRuleset,
+    deletedAt: response.deletedAt,
+    updatedAt: response.updatedAt,
+    shareToken: null,
+    identity: {
+      background: null,
+      beliefs: null,
+      meta: null,
+      physiology: {
+        age: physiology.age,
+        description: null,
+        gender: physiology.gender,
+        height: physiology.height,
+        languages: null,
+        name: physiology.name,
+        race: physiology.race,
+        weight: physiology.weight,
+      } satisfies Record<keyof typeof physiology, unknown>,
+    } satisfies Record<keyof typeof response.identity, unknown>,
+    skillBudget: { available: 0, spent: 0, total: 0 },
+    abilities: {},
+    combat: {},
+    savingThrows: {},
+    classes: {},
+    skills: {},
+    inventory: {},
+    equipment: [],
+    powers: [],
+    virtualFeats: [],
+    virtualPowers: [],
+    aptitudes: {},
+    spellTags: {},
+    spellTagLists: {},
+    requirements: {},
+    modifiers: {},
+    validation: { valid: true, issues: [] },
+    bonded: noBonded(),
+  } satisfies Record<keyof typeof response | "bonded", unknown>;
+}

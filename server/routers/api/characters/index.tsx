@@ -1,17 +1,6 @@
-/**
- * Level-up flows are currently 3.5-shaped (aptitude pools in query params, spell levels, wizard schools). When a second
- * ruleset ships, dispatch by ruleset at this layer and pick the matching implementation.
- */
-
 import { Hono } from "hono";
 import { z } from "zod";
 
-import {
-  buildBondedMap,
-  buildBondedResponse,
-  buildFullCharacterResponse,
-  type Dnd35DetailedCharacterBonded,
-} from "@/engine/rulesets/dnd3.5/index.ts";
 import { denyDemoUser, exportRateLimit, sessionMiddleware, validate } from "@/server/middlewares/index.ts";
 import { characterIdParam, idParam, limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
@@ -109,22 +98,7 @@ export default new Hono()
   )
   .get("/:id", validate("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
-
-    // Use the service to get character data with session for activity logging
-    const { character, detailedCharacter, bondedByKind } = await CharactersService.getCharacter(
-      c.var.requestSession,
-      id,
-    );
-
-    if (character.kind !== "pc") {
-      // The module builds a bonded creature for its kind; a kind it doesn't know gets a plain character, which this
-      // reads the same way (an `instanceof` would send that one down the full sheet instead)
-      const response = buildBondedResponse(character, detailedCharacter as Dnd35DetailedCharacterBonded);
-      return c.json({ ...response, bonded: {} as Record<string, ReturnType<typeof buildBondedResponse>> }, 200);
-    }
-
-    const response = buildFullCharacterResponse(character, detailedCharacter);
-    return c.json({ ...response, bonded: buildBondedMap(bondedByKind) }, 200);
+    return c.json(await CharactersService.getCharacter(c.var.requestSession, id), 200);
   })
   .post(
     "/",

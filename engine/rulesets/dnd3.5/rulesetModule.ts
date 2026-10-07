@@ -1,12 +1,8 @@
 import type { Character as CharacterRecord } from "@/shared/relations.ts";
 
 import { Dnd35AptitudesRules } from "./aptitudes/Dnd35AptitudesRules.ts";
-import Dnd35DetailedCharacterAnimalCompanion from "./bonded/DetailedCharacterAnimalCompanion.ts";
-import type Dnd35DetailedCharacterBonded from "./bonded/DetailedCharacterBonded.ts";
-import Dnd35DetailedCharacterFamiliar from "./bonded/DetailedCharacterFamiliar.ts";
-import Dnd35DetailedCharacterMount from "./bonded/DetailedCharacterMount.ts";
 import { Dnd35Bonded } from "./bonded/Dnd35Bonded.ts";
-import Dnd35DetailedCharacter from "./character/DetailedCharacter.ts";
+import { createCharacter } from "./character/buildCharacter.ts";
 import { Dnd35ClassesEffects } from "./classes/Dnd35ClassesEffects.ts";
 import { Dnd35ClassesRules } from "./classes/Dnd35ClassesRules.ts";
 import { Dnd35ClassLevelsEffects } from "./classes/Dnd35ClassLevelsEffects.ts";
@@ -24,24 +20,12 @@ import { Dnd35PowersEffects } from "./powers/Dnd35PowersEffects.ts";
 import { Dnd35PowersRules } from "./powers/Dnd35PowersRules.ts";
 import { Dnd35RacesEffects } from "./races/Dnd35RacesEffects.ts";
 import { Dnd35RacesRules } from "./races/Dnd35RacesRules.ts";
+import { Dnd35Characters } from "./response/Dnd35Characters.ts";
 import { Dnd35RulesetsEffects } from "./ruleset/Dnd35RulesetsEffects.ts";
 import { Dnd35RulesetsRules } from "./ruleset/Dnd35RulesetsRules.ts";
 import { Dnd35SkillsEffects } from "./skills/Dnd35SkillsEffects.ts";
 import { Dnd35SkillsRules } from "./skills/Dnd35SkillsRules.ts";
 import type { CharacterKind, Dnd35RulesetModule } from "./types.ts";
-
-function createBonded(record: CharacterRecord, kind: CharacterKind): Dnd35DetailedCharacterBonded | null {
-  switch (kind) {
-    case "familiar":
-      return new Dnd35DetailedCharacterFamiliar(record);
-    case "animalcompanion":
-      return new Dnd35DetailedCharacterAnimalCompanion(record);
-    case "mount":
-      return new Dnd35DetailedCharacterMount(record);
-    default:
-      return null;
-  }
-}
 
 /**
  * The 3.5 rules as a ruleset module: what they answer the services and do in their transactions, characters, sheets
@@ -63,6 +47,7 @@ export function createRulesetModule(): Dnd35RulesetModule {
       skills: new Dnd35SkillsRules(),
     },
     bonded: new Dnd35Bonded(),
+    characters: new Dnd35Characters(),
     effects: {
       classes: new Dnd35ClassesEffects(),
       classLevels: new Dnd35ClassLevelsEffects(),
@@ -77,9 +62,7 @@ export function createRulesetModule(): Dnd35RulesetModule {
     levelUp: new Dnd35LevelUp(),
 
     createDetailedCharacter(record: CharacterRecord, kind: CharacterKind = "pc") {
-      const bonded = createBonded(record, kind);
-      if (bonded) return bonded;
-      return new Dnd35DetailedCharacter(record);
+      return createCharacter(record, kind);
     },
 
     createTargetPaths() {

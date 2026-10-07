@@ -1,5 +1,5 @@
 import { baseRules } from "@/drizzle/schema.ts";
-import { getRulesetModule } from "@/engine/rulesets/modules.ts";
+import { getRulesetModule } from "@/engine/api/modules.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";

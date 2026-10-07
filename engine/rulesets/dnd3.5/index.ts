@@ -42,7 +42,6 @@ export {
   checkSelections,
 } from "./levelUp/validation.ts";
 export {
-  buildBondedMap,
   buildBondedResponse,
   buildFullCharacterResponse,
   buildVirtualEntities,

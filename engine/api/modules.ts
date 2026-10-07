@@ -1,7 +1,6 @@
 import type { RulesetModule } from "@/engine/core/module/index.ts";
+import { createRulesetModule as createDnd35Module } from "@/engine/rulesets/dnd3.5/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
-
-import { createRulesetModule as createDnd35Module } from "./dnd3.5/index.ts";
 
 /**
  * Each base rules' module, built once: a module keeps no state (its rules and effects are fieldless, its factories make

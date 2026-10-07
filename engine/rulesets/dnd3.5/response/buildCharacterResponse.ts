@@ -1,7 +1,6 @@
 import type { InferSelectModel } from "drizzle-orm";
 
 import type { charactersInCharacter } from "@/drizzle/schema.ts";
-import type Dnd35DetailedCharacterBonded from "@/engine/rulesets/dnd3.5/bonded/DetailedCharacterBonded.ts";
 import type Dnd35DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import { formatPropertyValues, groupPropertyValues } from "@/shared/customization/properties.ts";
 import { getStaticPropertyValues } from "@/shared/dnd3.5/properties/index.ts";
@@ -70,22 +69,9 @@ function identityWithPrivateNotes(detailedCharacter: Dnd35DetailedCharacter) {
   return { ...data, background: { ...data.background, privateNotes: identity.getPrivateNotes() } };
 }
 
-export function buildBondedMap(
-  bondedByKind: Partial<Record<string, { detailed: unknown; record: InferSelectModel<typeof charactersInCharacter> }>>,
-  transform?: (entry: ReturnType<typeof buildBondedResponse>) => ReturnType<typeof buildBondedResponse>,
-): Record<string, ReturnType<typeof buildBondedResponse>> {
-  const out: Record<string, ReturnType<typeof buildBondedResponse>> = {};
-  for (const [kind, entry] of Object.entries(bondedByKind)) {
-    if (!entry) continue;
-    const built = buildBondedResponse(entry.record, entry.detailed as Parameters<typeof buildBondedResponse>[1]);
-    out[kind] = transform ? transform(built) : built;
-  }
-  return out;
-}
-
 export function buildBondedResponse(
   record: InferSelectModel<typeof charactersInCharacter>,
-  bonded: Dnd35DetailedCharacterBonded,
+  bonded: Dnd35DetailedCharacter,
 ) {
   return {
     ...buildFullCharacterResponse(record, bonded),
