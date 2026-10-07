@@ -58,7 +58,7 @@ Each reference JSON stores:
 - **`raw`** — Scraped data, never manually edited. Replaced on re-scrape.
 - **`overrides`** — Corrections made by hand. Kept on re-scrape.
 
-Loading a reference (`ReferenceLoader`, `tools/ReferenceLoader.ts`) derives the rest (`resolveReference`, `tools/references.ts`): **`detected`** (BAB, saves, requirements, modifiers… parsed from `raw`) and **`mapping`** (the entities to generate). Items and magic items have only `detected`; spells and wizard schools, neither. The overrides win over both. A correction takes effect at the next `parser:generate`, without re-scraping. See `reference/README.md`.
+Loading a reference (`ReferenceLoader`, `tools/references/ReferenceLoader.ts`) derives the rest (`resolveReference`, `tools/references/resolve.ts`, with the detectors in `tools/detect/`): **`detected`** (BAB, saves, requirements, modifiers… parsed from `raw`) and **`mapping`** (the entities to generate). Items and magic items have only `detected`; spells and wizard schools, neither. The overrides win over both. A correction takes effect at the next `parser:generate`, without re-scraping. See `reference/README.md`.
 
 `generated/` holds only what the generator writes: hand-written content goes in `database/packages/dnd35/data/`, and what content is written with (its types and builders) in `database/packages/dnd35/content/`.
 
@@ -167,7 +167,7 @@ Scrapes magic item pages into `MagicItemReference` JSON. Covers specific armor, 
 
 ### Bonus detection
 
-Feats (with class features), races and magic items read their bonuses with the same two pieces in `tools/scraper/`:
+Feats (with class features), races and magic items read their bonuses with the same two pieces in `tools/detect/`:
 
 - **`readSkillBonuses`** (`skillBonuses.ts`): "+N [type] bonus on/to [all] [the wearer's/your…] X, Y and Z check(s)", capitalized skill names joined by commas and "and" (never split inside parentheses). A size bonus is left out: the character sheet applies size itself. A name that isn't a skill is reported, for review.
 - **`isConditional`** (`conditional.ts`): a bonus isn't a permanent modifier when its part of the sentence (the sentence's opening, its own text up to the next bonus, and what joins it to the previous one) names a condition (against, while, when, if, only, as long as…), an effect used (expend, per day, as a swift action, for 1 hour…), or someone else it goes to (allies, a companion, a mount…); or when what follows it narrows it ("made to…", "to find…", "related to…"). What's worn, held or carried isn't a condition.

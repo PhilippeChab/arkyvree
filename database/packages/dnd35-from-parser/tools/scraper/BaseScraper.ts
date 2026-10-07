@@ -1,21 +1,21 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
-import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
+import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import {
   readStoredOverrides,
   type ReferenceType,
   resolveReference,
   type StoredReference,
-} from "@/database/packages/dnd35-from-parser/tools/references.ts";
+} from "@/database/packages/dnd35-from-parser/tools/references/resolve.ts";
+import { BASE_URL, getBookSlug } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
+import type { HttpClient } from "@/database/packages/dnd35-from-parser/tools/scraper/HttpClient.ts";
+import { parseListingHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import {
   sanitizeJsonValues,
   sortKeysDeep,
   stringifyStably,
-} from "@/database/packages/dnd35-from-parser/tools/sanitize.ts";
-import { BASE_URL, getBookSlug } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
-import type { HttpClient } from "@/database/packages/dnd35-from-parser/tools/scraper/HttpClient.ts";
-import { parseListingHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
+} from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
 /**

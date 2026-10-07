@@ -8,9 +8,9 @@ import {
 import { generateClassFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/generator/code/classFeatsFile.ts";
 import { ClassFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/ClassFile.ts";
 import { quote, toConstName } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
-import { toCamelCase } from "@/database/packages/dnd35-from-parser/tools/names.ts";
-import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/ReferenceLoader.ts";
+import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
+import { toCamelCase } from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import type { Constructor } from "@/server/mixins.ts";
 

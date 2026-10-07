@@ -4,7 +4,7 @@ import { dirname, join, relative } from "node:path";
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
 import { formatImport, type ImportTable } from "@/database/packages/dnd35-from-parser/tools/generator/code/imports.ts";
 import { quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/ReferenceLoader.ts";
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
 
 /** The files a book's items/ can hold, each with the list it exports, in the order the items' index lists them. */
 const ITEM_FILES = [

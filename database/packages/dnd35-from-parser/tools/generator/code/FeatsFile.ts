@@ -13,7 +13,7 @@ import {
 import {
   expandTemplateDescription,
   normalizeDescription,
-} from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
+} from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
 import { feat } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type {

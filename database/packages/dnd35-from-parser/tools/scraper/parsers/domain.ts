@@ -6,7 +6,7 @@
 
 import * as cheerio from "cheerio";
 
-import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
+import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 
 /** A domain version of the domain index: its page's slug ("celerity-cd") and its label ("Celerity (CD)"). */
 export type DomainIndexEntry = { slug: string; label: string };

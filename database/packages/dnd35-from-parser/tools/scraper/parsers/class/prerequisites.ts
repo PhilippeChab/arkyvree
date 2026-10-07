@@ -2,9 +2,9 @@
 
 import type * as cheerio from "cheerio";
 
-import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import { findSectionHeader } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/sections.ts";
 import { findSectionElements } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
+import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 
 type Parsed = ClassReference["raw"]["prerequisites"]["parsed"];

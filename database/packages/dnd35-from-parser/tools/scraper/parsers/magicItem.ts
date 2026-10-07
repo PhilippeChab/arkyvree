@@ -1,8 +1,8 @@
 import * as cheerio from "cheerio";
 import type { AnyNode } from "domhandler";
 
-import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import { findSectionElements, getTagName } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
+import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import type {
   MagicItemCategory,
   MagicItemReference,

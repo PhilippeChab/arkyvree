@@ -1,15 +1,15 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 
-import { buildItemSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/items.ts";
-import { buildMagicItemSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/magicItems.ts";
 import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
 import {
   stringifyModifier,
   stringifyProperty,
 } from "@/database/packages/dnd35-from-parser/tools/generator/code/customization.ts";
 import { listField, quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/ReferenceLoader.ts";
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
+import { buildItemSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/items.ts";
+import { buildMagicItemSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/magicItems.ts";
 import type { MagicItemReference } from "@/database/packages/dnd35-from-parser/tools/types/magicItems.ts";
 import type { Constructor } from "@/server/mixins.ts";
 import { ARMOR_PROFICIENCY } from "@/shared/dnd3.5/properties/index.ts";

@@ -1,12 +1,12 @@
 import { join } from "node:path";
 
-import { buildRaceSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/races.ts";
 import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
 import {
   stringifyModifier,
   stringifyProperty,
 } from "@/database/packages/dnd35-from-parser/tools/generator/code/customization.ts";
 import { listField, quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
+import { buildRaceSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/races.ts";
 import type { RaceReference } from "@/database/packages/dnd35-from-parser/tools/types/races.ts";
 import type { Constructor } from "@/server/mixins.ts";
 

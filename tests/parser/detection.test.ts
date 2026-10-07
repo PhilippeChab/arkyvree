@@ -7,10 +7,10 @@ import { ALL_FEATS as SCOUNDREL_FEATS } from "@/database/packages/dnd35-from-par
 import { ALL_FEATS as WARRIOR_FEATS } from "@/database/packages/dnd35-from-parser/generated/complete-warrior/feats/index.ts";
 import { RODS, WONDROUS_ITEMS } from "@/database/packages/dnd35-from-parser/generated/srd/items/index.ts";
 import { ALL_RACES } from "@/database/packages/dnd35-from-parser/generated/srd/races/data.ts";
-import { readArmorStats } from "@/database/packages/dnd35-from-parser/tools/scraper/armorStats.ts";
-import { isConditional } from "@/database/packages/dnd35-from-parser/tools/scraper/conditional.ts";
-import { readSkillBonuses } from "@/database/packages/dnd35-from-parser/tools/scraper/skillBonuses.ts";
-import { readWeaponEnhancement } from "@/database/packages/dnd35-from-parser/tools/scraper/weaponStats.ts";
+import { readArmorStats } from "@/database/packages/dnd35-from-parser/tools/detect/armorStats.ts";
+import { isConditional } from "@/database/packages/dnd35-from-parser/tools/detect/conditional.ts";
+import { readSkillBonuses } from "@/database/packages/dnd35-from-parser/tools/detect/skillBonuses.ts";
+import { readWeaponEnhancement } from "@/database/packages/dnd35-from-parser/tools/detect/weaponStats.ts";
 
 /** The skill bonuses a text gives, each as "slug +value", or "?name" for a name that isn't a skill. */
 function bonuses(text: string) {

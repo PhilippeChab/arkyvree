@@ -1,7 +1,7 @@
-import { toCamelCase } from "@/database/packages/dnd35-from-parser/tools/names.ts";
 import { type BaseScraper } from "@/database/packages/dnd35-from-parser/tools/scraper/BaseScraper.ts";
 import { BASE_URL } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
 import { parseClassHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/classPage.ts";
+import { toCamelCase } from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
 /** Scraping a book's classes (dndtools.net): a reference per class. */

@@ -2,22 +2,22 @@ import { describe, expect, test } from "bun:test";
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 
-import {
-  buildMagicItemSeeds,
-  getSeededMagicItems,
-} from "@/database/packages/dnd35-from-parser/tools/buildSeeds/magicItems.ts";
-import { buildRaceSeeds, getSeededRaces } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/races.ts";
-import { checkOneOf } from "@/database/packages/dnd35-from-parser/tools/checks.ts";
-import { listReferenceBooks, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/ReferenceLoader.ts";
+import { buildFeatDetected } from "@/database/packages/dnd35-from-parser/tools/detect/feats.ts";
+import { buildRaceDetected } from "@/database/packages/dnd35-from-parser/tools/detect/races.ts";
+import { listReferenceBooks, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
 import {
   readStoredReference,
   type ReferenceType,
   resolveReference,
   type StoredReference,
-} from "@/database/packages/dnd35-from-parser/tools/references.ts";
-import { buildFeatDetected } from "@/database/packages/dnd35-from-parser/tools/scraper/detectFeat.ts";
-import { buildRaceDetected } from "@/database/packages/dnd35-from-parser/tools/scraper/detectRace.ts";
+} from "@/database/packages/dnd35-from-parser/tools/references/resolve.ts";
+import { checkOneOf } from "@/database/packages/dnd35-from-parser/tools/seeds/checks.ts";
+import {
+  buildMagicItemSeeds,
+  getSeededMagicItems,
+} from "@/database/packages/dnd35-from-parser/tools/seeds/magicItems.ts";
+import { buildRaceSeeds, getSeededRaces } from "@/database/packages/dnd35-from-parser/tools/seeds/races.ts";
 import { eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import { LOCATION_OPTIONS, SIZE_OPTIONS } from "@/shared/enums.ts";
 

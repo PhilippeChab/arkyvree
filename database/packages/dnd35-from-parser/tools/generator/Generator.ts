@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { basename, dirname, join, relative } from "node:path";
 
-import type { parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/cli.ts";
+import type { parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/cli/args.ts";
 import { BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
 import { GeneratesBooks } from "@/database/packages/dnd35-from-parser/tools/generator/concerns/GeneratesBooks.ts";
 import { GeneratesClasses } from "@/database/packages/dnd35-from-parser/tools/generator/concerns/GeneratesClasses.ts";
@@ -16,8 +16,8 @@ import {
   listReferenceBooks,
   listReferenceFiles,
   REFERENCE_DIR,
-} from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/ReferenceLoader.ts";
+} from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
 import type { SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
