@@ -96,7 +96,7 @@ export default class InventoryComponent {
           properties: propertiesMap,
         };
 
-        this.combat.addWeapon(
+        const weapon = this.combat.addWeapon(
           setIndex,
           entry.location as "Main Hand" | "Off Hand" | "Two Handed",
           entry.item,
@@ -104,7 +104,8 @@ export default class InventoryComponent {
           { itemId: entry.item.id, entryId: entry.id },
         );
 
-        this.weapons.registerWeapon(setIndex, entry.location as string, entry.item, entry.item.properties);
+        // A weapon without a proficiency fills no slot: what the slot holds (an empty hand's unarmed strike) isn't it
+        if (weapon) this.weapons.registerWeapon(setIndex, entry.location as string, entry.item.properties);
       } else if (isArmor) {
         this.armors.registerArmor(entry.item, entry.item.properties);
       } else if (isShield) {
@@ -119,6 +120,6 @@ export default class InventoryComponent {
 
     const set0Mainhand = this.combat.getCombat().weaponsets["0"]?.mainhand;
     if (set0Mainhand?.name === UNARMED_STRIKE && set0Mainhand.itemId === null)
-      this.weapons.registerWeapon(0, "Main Hand", { name: UNARMED_STRIKE });
+      this.weapons.registerUnarmedStrike(0, "Main Hand");
   }
 }

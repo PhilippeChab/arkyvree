@@ -69,8 +69,6 @@ export default class ShieldsComponent {
         groupingValues.push(stripSeparators(prop.value));
     }
 
-    groupingValues.push(stripSeparators(item.name));
-
     for (const grouping of groupingValues) {
       if (!grouping) continue;
       this.shields[grouping] = shieldSlot;
