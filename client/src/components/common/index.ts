@@ -26,6 +26,7 @@ export {
 export { GoldDivider } from "./GoldDivider.tsx";
 export { HelpLabel } from "./HelpLabel.tsx";
 export { InfoPill } from "./InfoPill.tsx";
+export { InlineConfirm } from "./InlineConfirm.tsx";
 export { LinkButton } from "./LinkButton.tsx";
 export { ListCard, ListCardGrid } from "./ListCard.tsx";
 export { ListToolbar } from "./ListToolbar.tsx";
@@ -46,3 +47,4 @@ export { ConfirmDialog, CreateDialog, DeleteDialog, EditDialog } from "./Standar
 export { StyledCard } from "./StyledCard.tsx";
 export { ToggleLabel } from "./ToggleLabel.tsx";
 export { ValidationIssueList } from "./ValidationIssueList.tsx";
+export { ValidationIssuesAlert } from "./ValidationIssuesAlert.tsx";

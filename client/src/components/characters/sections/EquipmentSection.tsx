@@ -15,7 +15,7 @@ import {
   EditDialog,
   LoadError,
   ScrollSafeListbox,
-  ValidationIssueList,
+  ValidationIssuesAlert,
 } from "@/client/src/components/common/index.ts";
 import { DeleteIcon, EditIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
@@ -242,35 +242,16 @@ export function EquipmentSection({
     setDeleteDialogOpen(true);
   };
 
+  // A dialog's warnings: in its spaced fields, so mounted only while they show
   const requirementAlert = (visible: boolean, onForce?: () => void) =>
     visible && (
-      <AnimatedAlert
-        in
-        severity="warning"
+      <ValidationIssuesAlert
+        issues={validationErrors}
+        title="Equipment warnings"
         onClose={() => setValidationErrors([])}
-        action={
-          onForce && (
-            <Button
-              size="small"
-              variant="outlined"
-              color="warning"
-              onClick={onForce}
-              disabled={addMutation.isPending || updateMutation.isPending}
-              sx={{ whiteSpace: "nowrap" }}
-            >
-              Proceed Anyway
-            </Button>
-          )
-        }
-        sx={{ mb: 0, "& .MuiAlert-action": { alignItems: "flex-start", pt: 0.5 } }}
-      >
-        <Stack spacing={0.5}>
-          <Typography variant="subtitle2" component="h3">
-            Equipment warnings
-          </Typography>
-          <ValidationIssueList issues={validationErrors} />
-        </Stack>
-      </AnimatedAlert>
+        onProceed={onForce}
+        pending={addMutation.isPending || updateMutation.isPending}
+      />
     );
 
   const hasItems = inventoryItems.length > 0;

@@ -203,4 +203,23 @@ describe("component rules", () => {
       "expand-arrows client/src/more.tsx",
     ]);
   });
+
+  test("a dialog asks before a loss with an InlineConfirm, never by hand", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/bar.tsx": "export const b = <AnimatedAlert in={open} action={<Button>Discard</Button>} />;\n",
+          "client/src/plain.tsx": 'export const p = <AnimatedAlert in={open} severity="info">Saved</AnimatedAlert>;\n',
+          "client/src/asked.tsx": "export const a = <Stack><Typography>Are you sure?</Typography></Stack>;\n",
+          "client/src/message.tsx":
+            "export const m = <ConfirmDialog message={<>Are you sure you want to remove <b>it</b>?</>} />;\n",
+          "client/src/inline.tsx":
+            'export const i = <InlineConfirm open cancelLabel="Keep" confirmLabel="Revoke">Revoke this link?</InlineConfirm>;\n',
+          "client/src/components/common/InlineConfirm.tsx":
+            "export const c = <AnimatedAlert in={open} action={<Button>Go</Button>} />;\n",
+        },
+        ["inline-confirms"],
+      ),
+    ).toEqual(["inline-confirms client/src/asked.tsx", "inline-confirms client/src/bar.tsx"]);
+  });
 });
