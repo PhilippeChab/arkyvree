@@ -9,11 +9,11 @@ import { quote } from "@/database/packages/dnd35-from-parser/tools/generator/cod
 import { generateSpellFiles } from "@/database/packages/dnd35-from-parser/tools/generator/code/spellFiles.ts";
 import { CORE_BOOK, listReferenceBooks } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
+import { getClassSpells } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/spellSlots.ts";
 import {
-  getClassSpells,
   getInheritedLevel,
   getInheritedLists,
-} from "@/database/packages/dnd35-from-parser/tools/seeds/classes.ts";
+} from "@/database/packages/dnd35-from-parser/tools/seeds/inheritedLists.ts";
 import { buildSpellSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/spells.ts";
 import type { SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
 import type { Constructor } from "@/server/mixins.ts";

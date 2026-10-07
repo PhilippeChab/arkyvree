@@ -3,10 +3,8 @@
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
 import { stringifyProperty } from "@/database/packages/dnd35-from-parser/tools/generator/code/customization.ts";
 import { quote, toConstName } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
-import {
-  buildClassDomainPickFeats,
-  buildClassFeatSeeds,
-} from "@/database/packages/dnd35-from-parser/tools/seeds/classes.ts";
+import { buildClassDomainPickFeats } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/domainPicks.ts";
+import { buildClassFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/featSeeds.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
