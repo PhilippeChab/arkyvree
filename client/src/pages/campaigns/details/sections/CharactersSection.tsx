@@ -109,7 +109,7 @@ function CharacterCard({
   const { mutate: updateVisibility } = useMutation({
     mutationFn: async (visibility: Visibility) => {
       return parseResponse(
-        rpc.api.campaigns[":id"].characters[":characterId"]["$put"]({
+        rpc.api.campaigns[":id"].characters[":characterId"].$put({
           param: { id: campaignId, characterId: character.id },
           json: { visibility },
         }),

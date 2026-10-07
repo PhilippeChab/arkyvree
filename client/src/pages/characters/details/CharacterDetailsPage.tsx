@@ -66,9 +66,8 @@ export default function CharacterDetailsPage() {
   const [isModifiersOpen, setModifiersOpen] = useState(false);
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
-  const pdfExport = usePdfExport(() =>
-    rpc.api.characters[":characterId"]["pdf"]["$post"]({ param: { characterId: id } }),
-  );
+  const exportFn = () => parseResponse(rpc.api.characters[":characterId"].pdf.$post({ param: { characterId: id } }));
+  const pdfExport = usePdfExport(exportFn);
   const { isDemo } = useDemoTimeRemaining();
   const currentUserId = useAuthStore((s) => s.user?.id);
 

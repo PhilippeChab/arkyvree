@@ -4,18 +4,16 @@ import { useNavigate } from "react-router-dom";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { saveBlob } from "@/client/src/lib/download.ts";
+import { ANSWER_INVITE_KEY } from "@/client/src/lib/invites.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { ApiError } from "@/client/src/services/ApiError.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
+import { useAnswerInvite } from "./useAnswerInvite.ts";
 import { isNavigableTarget, useOpenActivityTarget } from "./useOpenActivityTarget.ts";
 
-interface InviteAnswer {
-  notification: NotificationLike;
-  type: InviteType;
-}
-type InviteType = keyof typeof INVITES;
+type InviteType = keyof typeof NOTIFICATION_INVITES;
 
 type NotificationData = Record<string, string | undefined>;
 
@@ -25,47 +23,26 @@ type NotificationItem = InferResponseType<typeof rpc.api.notifications.$get, 200
 type NotificationLike = Pick<NotificationItem, "id" | "type" | "targetTable" | "targetId" | "data" | "readAt">;
 
 /**
- * Shared by accept and reject, so every notification surface can tell which invites are being answered, whichever
- * surface the click came from.
+ * Notification types that are invitations, answered in place with Accept / Reject (`useAnswerInvite`): `targetId` is
+ * the invite, of `kind`; `path` is where accepting takes the user.
  */
-const ANSWER_INVITE_KEY = ["notifications", "answerInvite"] as const;
-
-/**
- * Notification types that are invitations, answered in place with Accept /
- * Reject. `targetId` is the invite; `path` is where accepting takes the user.
- */
-const INVITES = {
+const NOTIFICATION_INVITES = {
   createCampaignInvite: {
-    label: "Campaign invite",
-    acceptFn: (id: string) =>
-      parseResponse(rpc.api.campaigns.invites[":inviteId"].accept.$post({ param: { inviteId: id } })),
-    rejectFn: (id: string) =>
-      parseResponse(rpc.api.campaigns.invites[":inviteId"].reject.$post({ param: { inviteId: id } })),
-    listKey: QUERY_KEYS.campaigns.lists,
+    kind: "campaign",
     path: (d: NotificationData) => (d.campaignId ? `/campaigns/${d.campaignId}` : "/campaigns"),
   },
   inviteContributor: {
-    label: "Contributor invite",
-    acceptFn: (id: string) =>
-      parseResponse(rpc.api.rulesets.contributors.invites[":id"].accept.$post({ param: { id } })),
-    rejectFn: (id: string) =>
-      parseResponse(rpc.api.rulesets.contributors.invites[":id"].reject.$post({ param: { id } })),
-    listKey: QUERY_KEYS.rulesets.lists,
+    kind: "rulesetContributor",
     path: (d: NotificationData) => (d.rulesetId ? `/rulesets/${d.rulesetId}` : "/rulesets"),
   },
   inviteCharacterContributor: {
-    label: "Contributor invite",
-    acceptFn: (id: string) =>
-      parseResponse(rpc.api.characters.contributors.invites[":id"].accept.$post({ param: { id } })),
-    rejectFn: (id: string) =>
-      parseResponse(rpc.api.characters.contributors.invites[":id"].reject.$post({ param: { id } })),
-    listKey: QUERY_KEYS.characters.lists,
+    kind: "characterContributor",
     path: (d: NotificationData) => (d.characterId ? `/characters/${d.characterId}` : "/characters"),
   },
 } as const;
 
 function isInviteType(type: string): type is InviteType {
-  return type in INVITES;
+  return type in NOTIFICATION_INVITES;
 }
 
 /** A notification's payload: its string fields (ids, names); anything else is left out. */
@@ -77,21 +54,20 @@ function notificationData(n: NotificationLike): NotificationData {
     : {};
 }
 
-/**
- * What a user can do with a notification, shared by the bell, the dashboard card and the notifications page: answer an
- * invite, download a ready PDF, or open the entity the notification is about.
- *
- * A pending answer's invite and answer, read off its mutation: its key's last part, its variables' notification.
- */
+/** A pending answer's notification and answer, read off its mutation: its key's last part, its variables' notification. */
 function pendingAnswerOf(
   mutationKey: readonly unknown[] | undefined,
   variables: unknown,
 ): { answer: "accept" | "reject"; id: string } | undefined {
   const answer = mutationKey?.at(-1);
-  const id = isRecord(variables) && isRecord(variables.notification) ? variables.notification.id : undefined;
+  const id = isRecord(variables) ? variables.notificationId : undefined;
   return typeof id === "string" && (answer === "accept" || answer === "reject") ? { id, answer } : undefined;
 }
 
+/**
+ * What a user can do with a notification, shared by the bell, the dashboard card and the notifications page: answer an
+ * invite, download a ready PDF, or open the entity the notification is about.
+ */
 export function useNotificationActions() {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
@@ -114,41 +90,9 @@ export function useNotificationActions() {
     onError: (error) => snackbar.error(error, "Failed to mark all notifications as read"),
   });
 
-  const handleInviteError = (error: unknown, notification: NotificationLike) => {
-    if (error instanceof ApiError && error.status === 409) {
-      snackbar.warning("This invitation is no longer pending");
-      // Answered or revoked elsewhere: stop offering it.
-      markRead.mutate(notification.id);
-    } else {
-      // Still pending: keep Accept / Reject so the user can retry.
-      snackbar.error(error, "Failed to process invitation");
-    }
-  };
-
-  const acceptMutation = useMutation({
-    mutationKey: [...ANSWER_INVITE_KEY, "accept"],
-    mutationFn: async ({ notification, type }: InviteAnswer) => {
-      await INVITES[type].acceptFn(notification.targetId);
-    },
-    // Answering marks the invite's notification read server-side.
-    onSuccess: (_, { type }) => {
-      snackbar.success(`${INVITES[type].label} accepted`);
-      queryClient.invalidateQueries({ queryKey: INVITES[type].listKey });
-      void invalidateNotifications();
-    },
-    onError: (error, { notification }) => handleInviteError(error, notification),
-  });
-
-  const rejectMutation = useMutation({
-    mutationKey: [...ANSWER_INVITE_KEY, "reject"],
-    mutationFn: async ({ notification, type }: InviteAnswer) => {
-      await INVITES[type].rejectFn(notification.targetId);
-    },
-    onSuccess: (_, { type }) => {
-      snackbar.success(`${INVITES[type].label} rejected`);
-      void invalidateNotifications();
-    },
-    onError: (error, { notification }) => handleInviteError(error, notification),
+  // An invite answered or revoked elsewhere: its notification stops offering it
+  const answers = useAnswerInvite(({ notificationId }) => {
+    if (notificationId) markRead.mutate(notificationId);
   });
 
   const pendingAnswers = useMutationState({
@@ -170,14 +114,16 @@ export function useNotificationActions() {
   const isOpenable = (n: NotificationLike) =>
     !isActionable(n) && (isDownloadable(n) || isNavigableTarget(n.targetTable) || !n.readAt);
 
+  // The export is gone: past its lifetime (a 404), or one its notification doesn't name
+  const exportExpired = () => snackbar.warning("This export expired: generate a new one");
+
   const download = useMutation({
     // A file: its body is a blob, never JSON
     mutationFn: async ({ exportId }: { exportId: string; fileName: string }) =>
       (await rpc.api.exports[":id"].download.$get({ param: { id: exportId } })).blob(),
     onSuccess: (blob, { fileName }) => saveBlob(blob, fileName),
     onError: (error) => {
-      if (error instanceof ApiError && error.status === 404)
-        snackbar.warning("This export expired: generate a new one");
+      if (error instanceof ApiError && error.status === 404) exportExpired();
       else snackbar.error(error, "Failed to download export");
     },
   });
@@ -186,7 +132,7 @@ export function useNotificationActions() {
     markRead.mutate(n.id);
     const { exportId, fileName } = notificationData(n);
     if (!exportId) {
-      snackbar.error("Download link is no longer available");
+      exportExpired();
       return;
     }
     download.mutate({ exportId, fileName: fileName || "export.pdf" });
@@ -204,18 +150,16 @@ export function useNotificationActions() {
 
   const accept = (n: NotificationLike, onAccepted: (path: string) => void = navigate) => {
     if (!isInviteType(n.type)) return;
-    const type = n.type;
-    acceptMutation.mutate(
-      { notification: n, type },
-      {
-        onSuccess: () => onAccepted(INVITES[type].path(notificationData(n))),
-      },
+    const { kind, path } = NOTIFICATION_INVITES[n.type];
+    answers.accept.mutate(
+      { kind, inviteId: n.targetId, notificationId: n.id },
+      { onSuccess: () => onAccepted(path(notificationData(n))) },
     );
   };
 
   const reject = (n: NotificationLike) => {
     if (!isInviteType(n.type)) return;
-    rejectMutation.mutate({ notification: n, type: n.type });
+    answers.reject.mutate({ kind: NOTIFICATION_INVITES[n.type].kind, inviteId: n.targetId, notificationId: n.id });
   };
 
   return {

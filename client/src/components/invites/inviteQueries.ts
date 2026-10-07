@@ -1,12 +1,14 @@
-import { type QueryKey, queryOptions } from "@tanstack/react-query";
+import { queryOptions } from "@tanstack/react-query";
 
 import { NO_TIME } from "@/client/src/lib/durations.ts";
+import type { InviteKind } from "@/client/src/lib/invites.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { ApiError } from "@/client/src/services/ApiError.ts";
 
 /** An invite a landing page answers: what `inviteFn` reads of it, or null once it's gone (a 404). */
-export function inviteQuery<T>(queryKey: QueryKey, inviteFn: () => Promise<T>) {
+export function inviteQuery<T>(kind: InviteKind, inviteId: string, inviteFn: () => Promise<T>) {
   return queryOptions({
-    queryKey,
+    queryKey: QUERY_KEYS.invites.detail(kind, inviteId),
     queryFn: async () => {
       try {
         return await inviteFn();

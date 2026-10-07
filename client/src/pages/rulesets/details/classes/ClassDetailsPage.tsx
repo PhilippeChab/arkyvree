@@ -181,7 +181,7 @@ export default function ClassDetailsPage() {
 
   // Create, update or clear (empty value) the class's single property of a type, as the Properties tab would: tagged
   // with the class it was sent for, so a copy it makes of an inherited class is followed.
-  const setClassProperty = (type: string, propertyId: string | null | undefined, value: string) => {
+  const setPropertyFn = (type: string, propertyId: string | null | undefined, value: string) => {
     const param = { id: rulesetId, entityType: getUrlSegment("klasses"), entityId: classData?.id ?? classId };
     const endpoint = rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties;
     if (!propertyId) return tag(parseResponse(endpoint.$post({ param, json: { type, value } })));
@@ -202,14 +202,13 @@ export default function ClassDetailsPage() {
 
   const bonusSpellMutation = useMutation({
     mutationFn: (abilityId: string) =>
-      setClassProperty(KLASS_BONUS_SPELL_ABILITY_ID, classData?.bonusSpellPropertyId, abilityId),
+      setPropertyFn(KLASS_BONUS_SPELL_ABILITY_ID, classData?.bonusSpellPropertyId, abilityId),
     onSuccess: handleClassPropertySaved("Bonus spell ability updated"),
     onError: (err) => snackbar.error(err, "Failed to update bonus spell ability"),
   });
 
   const casterTypeMutation = useMutation({
-    mutationFn: (casterType: string) =>
-      setClassProperty(KLASS_CASTER_TYPE, classData?.casterTypePropertyId, casterType),
+    mutationFn: (casterType: string) => setPropertyFn(KLASS_CASTER_TYPE, classData?.casterTypePropertyId, casterType),
     onSuccess: handleClassPropertySaved("Caster type updated"),
     onError: (err) => snackbar.error(err, "Failed to update caster type"),
   });

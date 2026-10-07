@@ -2,9 +2,9 @@ import { type QueryClient, useIsMutating, useMutation } from "@tanstack/react-qu
 import { parseResponse } from "hono/client";
 
 import { NO_TIME } from "@/client/src/lib/durations.ts";
+import { emailNotVerified } from "@/client/src/lib/errorMessage.ts";
 import { currentUserQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
-import { ApiError } from "@/client/src/services/ApiError.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { type AuthUser, toAuthUser } from "@/client/src/stores/authUser.ts";
@@ -54,11 +54,10 @@ export function useAuthRequests() {
     onSuccess: signedIn,
     // An unverified email waits for its code
     onError: (error, { emailAddress }) => {
-      const isUnverified = error instanceof ApiError && error.errorName === "EmailNotVerifiedError";
       useAuthStore.setState({
         user: null,
         isAuthenticated: false,
-        pendingVerificationEmail: isUnverified ? emailAddress : null,
+        pendingVerificationEmail: emailNotVerified(error) ? emailAddress : null,
       });
     },
   });

@@ -1,14 +1,13 @@
 import { Avatar, Box, Button, Card, CardContent, Chip, Container, Stack, Typography } from "@mui/material";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import type { ElementType, ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { LoadError, PageLoader, PageTransition } from "@/client/src/components/common/index.ts";
 import { CheckIcon } from "@/client/src/components/icons/index.ts";
-import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { usePageTitle } from "@/client/src/hooks/index.ts";
+import { useAnswerInvite, usePageTitle } from "@/client/src/hooks/index.ts";
 import { formatDate } from "@/client/src/lib/formatDate.ts";
-import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
+import type { InviteKind } from "@/client/src/lib/invites.ts";
 
 import { InviteActionButtons } from "./InviteActionButtons.tsx";
 import { inviteQuery } from "./inviteQueries.ts";
@@ -27,22 +26,20 @@ interface InviteDetails {
 interface InviteLandingPageProps {
   /** Status an accepted invite ends in ("Accepted" for campaigns, "Active" for contributors). */
   acceptedStatus: string;
-  acceptFn: () => Promise<unknown>;
   description: string;
   /** "Campaign", "Ruleset", "Character". */
   entityLabel: string;
   entityPath: (entityId: string) => string;
   icon: ElementType;
-  /** Lists that gain the entity once the invite is accepted. */
-  invalidateOnAccept: readonly unknown[];
   inviteFn: () => Promise<InviteDetails>;
+  inviteId: string;
   /** Completes "invitation to …": "join", "contribute to". */
   joinVerb: string;
+  /** What the invite is to, answered as every invite of its kind is (`useAnswerInvite`). */
+  kind: InviteKind;
   /** Where accepting lands when the invite doesn't name its entity. */
   listPath: string;
   pageTitle: string;
-  queryKey: readonly unknown[];
-  rejectFn: () => Promise<unknown>;
 }
 
 interface InviteStateCardProps {
@@ -87,46 +84,29 @@ export function InviteLandingPage({
   entityPath,
   listPath,
   icon: Icon,
-  queryKey,
+  kind,
+  inviteId,
   inviteFn,
-  acceptFn,
-  rejectFn,
   acceptedStatus,
   joinVerb,
   description,
-  invalidateOnAccept,
 }: InviteLandingPageProps) {
   usePageTitle(pageTitle);
   const navigate = useNavigate();
-  const snackbar = useSnackbar();
-  const queryClient = useQueryClient();
-
-  const acceptMutation = useMutation({
-    mutationFn: acceptFn,
-    onSuccess: () => {
-      snackbar.success("Invitation accepted");
-      queryClient.invalidateQueries({ queryKey: invalidateOnAccept });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notifications.all });
-    },
-    onError: (error) => snackbar.error(error, "Failed to accept invitation"),
-  });
-
-  const rejectMutation = useMutation({
-    mutationFn: rejectFn,
-    onSuccess: () => {
-      snackbar.success("Invitation rejected");
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notifications.all });
-      navigate("/dashboard");
-    },
-    onError: (error) => snackbar.error(error, "Failed to reject invitation"),
-  });
+  // An invite answered or revoked elsewhere refreshes, and the page shows why it can't be answered anymore
+  const { accept: acceptMutation, reject: rejectMutation } = useAnswerInvite();
+  const answer = { kind, inviteId };
 
   // Once answered, the page is on its way out: don't refetch the invite and
   // flash its new status before the navigation lands.
   const isAnswering =
     acceptMutation.isPending || rejectMutation.isPending || acceptMutation.isSuccess || rejectMutation.isSuccess;
 
-  const { data: invite, isLoading, error } = useQuery({ ...inviteQuery(queryKey, inviteFn), enabled: !isAnswering });
+  const {
+    data: invite,
+    isLoading,
+    error,
+  } = useQuery({ ...inviteQuery(kind, inviteId, inviteFn), enabled: !isAnswering });
 
   const goToDashboard = (
     <Button variant="contained" component={Link} to="/dashboard">
@@ -238,11 +218,11 @@ export function InviteLandingPage({
                 <InviteActionButtons
                   prominent
                   onAccept={() =>
-                    acceptMutation.mutate(undefined, {
+                    acceptMutation.mutate(answer, {
                       onSuccess: () => navigate(entityId ? entityPath(entityId) : listPath),
                     })
                   }
-                  onReject={() => rejectMutation.mutate()}
+                  onReject={() => rejectMutation.mutate(answer, { onSuccess: () => navigate("/dashboard") })}
                   pending={acceptMutation.isPending ? "accept" : rejectMutation.isPending ? "reject" : null}
                 />
               </Stack>

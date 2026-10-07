@@ -153,10 +153,21 @@ describe("frontend rules", () => {
           "client/src/handed.tsx":
             "export const h = <Picker pageFn={(s) => rpc.api.feats.$get({ query: { s } })} />;\n",
           "client/src/linked.tsx": "export const u = rpc.api.feats.$url();\n",
+          "client/src/bracket.tsx": 'export async function b() {\n  await rpc.api.feats["$get"]();\n}\n',
+          "client/src/held.tsx": "const api = rpc.api.feats;\nexport async function e() {\n  await api.$get();\n}\n",
+          "client/src/named.tsx":
+            "export function N() {\n  const exportFn = () => rpc.api.feats.$post({});\n  return exportFn;\n}\n",
+          "client/src/declared.ts": "export async function deleteFn() {\n  await rpc.api.feats.$delete();\n}\n",
+          "client/src/pages/a/featQueries.ts":
+            "async function fetchFeat() {\n  return parseResponse(await rpc.api.feats.$get());\n}\nexport const f = fetchFeat;\n",
         },
         ["api-calls-in-queries"],
       ),
-    ).toEqual(["api-calls-in-queries client/src/direct.tsx"]);
+    ).toEqual([
+      "api-calls-in-queries client/src/bracket.tsx",
+      "api-calls-in-queries client/src/direct.tsx",
+      "api-calls-in-queries client/src/held.tsx",
+    ]);
   });
 
   test("a failure to load is a LoadError, whose words are loadFailureMessage's", async () => {
@@ -369,19 +380,45 @@ describe("frontend rules", () => {
           "client/src/parsed.ts":
             "export const p = { mutationFn: () => parseResponse(rpc.api.feats.$post({ json })) };\n",
           "client/src/raw.ts": "export const r = { mutationFn: () => rpc.api.feats.$post({ json }) };\n",
+          "client/src/bracketRaw.ts": 'export const b = { mutationFn: () => rpc.api.feats["$post"]({ json }) };\n',
+          "client/src/heldRaw.ts":
+            "const api = rpc.api.feats;\nexport const h = { mutationFn: () => api.$post({ json }) };\n",
+          "client/src/pages/a/rawQueries.ts":
+            "async function fetchRaw() {\n  return rpc.api.feats.$get();\n}\nexport const x = fetchRaw;\n",
+          "client/src/blob.ts":
+            "export const d = { mutationFn: async () => (await rpc.api.exports.download.$get()).blob() };\n",
         },
         ["parsed-responses"],
       ),
-    ).toEqual(["parsed-responses client/src/raw.ts"]);
+    ).toEqual([
+      "parsed-responses client/src/bracketRaw.ts",
+      "parsed-responses client/src/heldRaw.ts",
+      "parsed-responses client/src/pages/a/rawQueries.ts",
+      "parsed-responses client/src/raw.ts",
+    ]);
   });
 
-  test("an error's toast names what failed, and an error shows through errorMessage", async () => {
+  test("a member named by an identifier is read with a dot", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/bracket.ts": 'export const b = rpc.api.characters["share"].$post;\n',
+          "client/src/optional.ts": 'export const o = attrs?.["intelligence"];\n',
+          "client/src/param.ts": 'export const p = rpc.api.characters[":id"];\n',
+          "client/src/dashed.ts": 'export const d = rpc.api.rulesets["class-levels"];\n',
+          "client/src/typed.ts": 'export type T = Api["$get"];\n',
+          "server/x.ts": 'export const s = o["a"];\n',
+        },
+        ["dot-notation"],
+      ),
+    ).toEqual(["dot-notation client/src/bracket.ts", "dot-notation client/src/optional.ts"]);
+  });
+
+  test("an error shows through errorMessage", async () => {
     expect(
       await lintRepo(
         {
           "client/src/named.ts": 'export const n = () => snackbar.error(error, "Failed to save feat");\n',
-          "client/src/worded.ts": 'export const w = () => snackbar.error("Nothing to save");\n',
-          "client/src/bare.ts": "export const b = () => snackbar.error(error);\n",
           "client/src/raw.ts": "export const r = { onError: (error: Error) => setError(error.message) };\n",
           "client/src/caught.ts":
             "export function c() {\n  try {\n    f();\n  } catch (e) {\n    show(e.message);\n  }\n}\n",
@@ -389,7 +426,7 @@ describe("frontend rules", () => {
         },
         ["error-reads"],
       ),
-    ).toEqual(["error-reads client/src/bare.ts", "error-reads client/src/caught.ts", "error-reads client/src/raw.ts"]);
+    ).toEqual(["error-reads client/src/caught.ts", "error-reads client/src/raw.ts"]);
   });
 
   test("what the browser keeps is a store's", async () => {

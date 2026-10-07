@@ -30,8 +30,8 @@ export default function SaveDetailsPage() {
           description: save.description ?? "",
           abilityId: save.abilityId,
         }),
-        update: (data, updatedAt) => parseResponse(endpoint.$put({ param, json: { ...data, updatedAt } })),
-        remove: () => endpoint.$delete({ param }),
+        updateFn: (data, updatedAt) => parseResponse(endpoint.$put({ param, json: { ...data, updatedAt } })),
+        removeFn: () => parseResponse(endpoint.$delete({ param })),
         renderFields: (form) => <SaveFormFields form={form} abilities={abilities} abilitiesError={abilitiesError} />,
       }}
       renderChips={(save) => {

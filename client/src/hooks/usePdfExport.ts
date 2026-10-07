@@ -3,12 +3,12 @@ import { useMutation } from "@tanstack/react-query";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { ApiError } from "@/client/src/services/ApiError.ts";
 
-/** Queues a PDF export; the user is notified when it's ready. */
-export function usePdfExport(requestPdf: () => Promise<unknown>) {
+/** Queues a PDF export through `exportFn`, its request; the user is notified when it's ready. */
+export function usePdfExport(exportFn: () => Promise<unknown>) {
   const snackbar = useSnackbar();
 
   return useMutation({
-    mutationFn: requestPdf,
+    mutationFn: exportFn,
     onSuccess: () => {
       snackbar.info("Generating your PDF: you'll be notified when it's ready");
     },

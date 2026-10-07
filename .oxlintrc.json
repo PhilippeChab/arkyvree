@@ -106,6 +106,7 @@
     "arkyvree/constant-names": "error",
     "arkyvree/queries": "error",
     "arkyvree/parsed-responses": "error",
+    "arkyvree/dot-notation": "error",
     "arkyvree/error-reads": "error",
     "arkyvree/browser-storage": "error",
     "arkyvree/date-formats": "error",

@@ -3,7 +3,6 @@ import { useParams } from "react-router-dom";
 
 import { ContributorIcon } from "@/client/src/components/icons/index.ts";
 import { InviteLandingPage } from "@/client/src/components/invites/index.ts";
-import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 export default function RulesetContributorInvitePage() {
@@ -17,7 +16,8 @@ export default function RulesetContributorInvitePage() {
       entityPath={(id) => `/rulesets/${id}`}
       listPath="/rulesets"
       icon={ContributorIcon}
-      queryKey={QUERY_KEYS.invites.detail("rulesetContributor", contributorId)}
+      kind="rulesetContributor"
+      inviteId={contributorId}
       inviteFn={async () => {
         const invite = await parseResponse(rpc.api.rulesets.contributors.invites[":id"].$get(param));
         return {
@@ -28,12 +28,9 @@ export default function RulesetContributorInvitePage() {
           role: invite.role,
         };
       }}
-      acceptFn={() => parseResponse(rpc.api.rulesets.contributors.invites[":id"].accept.$post(param))}
-      rejectFn={() => parseResponse(rpc.api.rulesets.contributors.invites[":id"].reject.$post(param))}
       acceptedStatus="Active"
       joinVerb="contribute to"
       description="You've been invited to contribute to this ruleset. Would you like to accept or reject this invitation?"
-      invalidateOnAccept={QUERY_KEYS.rulesets.lists}
     />
   );
 }

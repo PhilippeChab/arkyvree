@@ -101,7 +101,7 @@ export function CharacterIdentitySection({
   const saveIdentity = useMutation({
     mutationFn: (formData: CharacterIdentityFormData) =>
       parseResponse(
-        rpc.api.characters[":id"]["$put"]({
+        rpc.api.characters[":id"].$put({
           param: { id: characterId },
           json: {
             // An emptied age, height or weight is cleared

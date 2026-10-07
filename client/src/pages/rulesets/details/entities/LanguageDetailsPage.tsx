@@ -31,8 +31,8 @@ export default function LanguageDetailsPage() {
           description: language.description ?? "",
           type: language.type,
         }),
-        update: (data, updatedAt) => parseResponse(endpoint.$put({ param, json: { ...data, updatedAt } })),
-        remove: () => endpoint.$delete({ param }),
+        updateFn: (data, updatedAt) => parseResponse(endpoint.$put({ param, json: { ...data, updatedAt } })),
+        removeFn: () => parseResponse(endpoint.$delete({ param })),
         renderFields: (form) => <LanguageFormFields form={form} />,
       }}
       renderChips={(language) =>

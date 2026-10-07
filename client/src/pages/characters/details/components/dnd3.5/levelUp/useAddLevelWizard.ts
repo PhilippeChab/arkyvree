@@ -238,7 +238,7 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
   // adjust both the per-level array and the wizard-wide skillPointsToSpend total.
   const intModAdjustment = useMemo(() => {
     const attrs = previewQuery.data?.attributes.attributes;
-    const intAttr = attrs?.["intelligence"];
+    const intAttr = attrs?.intelligence;
     if (!intAttr) return null;
     const intIncreases = Object.values(abilityIncreases).filter((id) => id === intAttr.abilityId).length;
     if (intIncreases === 0) return null;

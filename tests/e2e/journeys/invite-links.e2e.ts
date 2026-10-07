@@ -47,7 +47,7 @@ test.describe("A campaign invite link", () => {
 
     await page.getByRole("button", { name: "Accept" }).click();
     await expect(page).toHaveURL(campaign.page, { timeout: 10_000 });
-    await expect(page.getByText("Invitation accepted", { exact: true })).toBeVisible();
+    await expect(page.getByText("Campaign invite accepted", { exact: true })).toBeVisible();
 
     await page.goto(campaign.link);
     await expect(page.getByText("Already Accepted", { exact: true })).toBeVisible();
@@ -64,7 +64,7 @@ test.describe("A campaign invite link", () => {
     await page.goto(campaign.link);
     await page.getByRole("button", { name: "Reject" }).click();
     await expect(page).toHaveURL("/dashboard", { timeout: 10_000 });
-    await expect(page.getByText("Invitation rejected", { exact: true })).toBeVisible();
+    await expect(page.getByText("Campaign invite rejected", { exact: true })).toBeVisible();
 
     await page.goto(campaign.link);
     await expect(page.getByText("Invitation Rejected", { exact: true })).toBeVisible();

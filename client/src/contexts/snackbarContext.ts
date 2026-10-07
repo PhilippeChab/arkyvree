@@ -4,10 +4,10 @@ import { createContext } from "react";
 
 export interface SnackbarContextType {
   /**
-   * Show an error toast. Accepts a plain string, an Error (uses `.message`),
-   * or anything else (falls back to `fallback`).
+   * Show an error toast: the caught error's message, or `fallback`, which names what failed ("Failed to archive
+   * campaign"), when it carries none.
    */
-  error: (err: unknown, fallback?: string) => void;
+  error: (err: unknown, fallback: string) => void;
   info: (message: string, options?: ToastOptions) => void;
   success: (message: string, options?: ToastOptions) => void;
   warning: (message: string) => void;

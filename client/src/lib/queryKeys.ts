@@ -1,3 +1,5 @@
+import type { InviteKind } from "./invites.ts";
+
 export const QUERY_KEYS = {
   auth: {
     me: ["auth", "me"] as const,
@@ -111,8 +113,8 @@ export const QUERY_KEYS = {
     character: (shareToken: string) => ["shared", "character", shareToken] as const,
   },
   invites: {
-    detail: (kind: "campaign" | "rulesetContributor" | "characterContributor", id: string) =>
-      ["invites", kind, id] as const,
+    all: ["invites"] as const,
+    detail: (kind: InviteKind, id: string) => ["invites", kind, id] as const,
   },
   dashboard: {
     stats: ["dashboard", "stats"] as const,

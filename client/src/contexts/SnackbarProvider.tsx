@@ -32,11 +32,7 @@ export function SnackbarProvider({ children }: SnackbarProviderProps) {
     [enqueue],
   );
   const error = useCallback(
-    (err: unknown, fallback?: string) => {
-      const message = errorMessage(err, fallback ?? "");
-      if (!message) return;
-      enqueue(message, "error");
-    },
+    (err: unknown, fallback: string) => enqueue(errorMessage(err, fallback), "error"),
     [enqueue],
   );
   const info = useCallback((message: string, options?: ToastOptions) => enqueue(message, "info", options), [enqueue]);
