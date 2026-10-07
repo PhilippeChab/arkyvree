@@ -124,20 +124,26 @@ export interface ModuleRules {
 }
 
 /**
- * A base rules' module, typed by what it builds: its characters, its level-up projector and the kinds of character it
- * knows (`RulesetFactory` hands out each module's own type).
+ * A base rules' module, typed by what it builds and answers: its characters, its level-up projector, the kinds of
+ * character it knows, its level-up and its bonded creatures (`getRulesetModule` hands out each module's own type).
  */
 export interface RulesetModule<
   Character extends DetailedCharacterInterface = DetailedCharacterInterface,
   Projector extends LevelUpProjector = LevelUpProjector,
   Kind extends string = string,
+  LevelUp = unknown,
+  Bonded = unknown,
 > {
+  /** What a master's bonded creatures become as the master's levels change, and the kinds they are */
+  bonded: Bonded;
   createDetailedCharacter(record: CharacterRecord, kind?: Kind): Character;
   createLevelUpProjector(character: Character): Projector;
   createPropertyTypes(): PropertyTypesProvider;
   createTargetPaths(): TargetPathsInterface;
   /** What the ruleset does in a service's transaction */
   effects: ModuleEffects;
+  /** What the ruleset answers a character's level-up, from the rows and characters the server reads and builds */
+  levelUp: LevelUp;
   /** What the ruleset answers the services, without the database */
   rules: ModuleRules;
 }

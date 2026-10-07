@@ -10,17 +10,6 @@ import { getTableName } from "drizzle-orm";
 
 import { levelsInCharacter } from "@/drizzle/schema.ts";
 import { type RulesetData } from "@/engine/core/view/index.ts";
-import {
-  checkAbilityIncrease,
-  checkEditedLevelIssues,
-  checkIssues,
-  checkSelections,
-  distributePlannedPicks,
-  getPlannedKlassLevels,
-  getSavedKlassLevel,
-  projectEditedLevel,
-  projectLevelContribution,
-} from "@/engine/rulesets/dnd3.5/index.ts";
 import { buildCharacter } from "@/server/builds/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { type Db, withTransaction } from "@/server/database/index.ts";
@@ -33,7 +22,7 @@ import {
   CharacterLevelSkills,
   Characters,
 } from "@/server/repositories/index.ts";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
+import { RulesetFactory, type RulesetModuleOf } from "@/server/rulesets/RulesetFactory.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -77,11 +66,12 @@ async function insertLevelChildren(
  */
 async function insertPlannedLevels(
   tx: Db,
+  rulesetModule: RulesetModuleOf,
   rulesetData: RulesetData,
   characterId: string,
   levels: { abilityId: string | null; hp: number }[],
-  klassLevelEntries: ReturnType<typeof getPlannedKlassLevels>,
-  distributedLevels: ReturnType<typeof distributePlannedPicks>,
+  klassLevelEntries: ReturnType<RulesetModuleOf["levelUp"]["getPlannedKlassLevels"]>,
+  distributedLevels: ReturnType<RulesetModuleOf["levelUp"]["distributePlannedPicks"]>,
   baseExistingLevels: Awaited<ReturnType<typeof CharacterLevels.findMany>>,
 ) {
   const createdLevels: Awaited<ReturnType<typeof CharacterLevels.create>>[number][] = [];
@@ -100,14 +90,14 @@ async function insertPlannedLevels(
 
     // Validate ability increase timing using base count + plan offset
     const totalLevelCount = baseExistingLevels.length + i;
-    checkAbilityIncrease(totalLevelCount, abilityId, `Level ${i + 1}: `);
+    rulesetModule.levelUp.checkAbilityIncrease(totalLevelCount, abilityId, `Level ${i + 1}: `);
 
     // baseExistingLevels (from before the loop) + levels we've inserted so
     // far in this iteration covers what a fresh findMany would return,
     // without the per-iteration round-trip.
     const existingLevels = [...baseExistingLevels, ...createdLevels];
 
-    await validateAndFetchLevelSelections(tx, {
+    await validateAndFetchLevelSelections(tx, rulesetModule, {
       klass,
       klassLevel,
       otherLevels: existingLevels,
@@ -171,7 +161,7 @@ export async function finalizeLevelUp(
       // Phase 1: Compute per-level distribution from pool selections
       // Resolve all klasses/klassLevels upfront — all reads from the composed
       // cache (no DB round trips inside the loop).
-      const klassLevelEntries = getPlannedKlassLevels(rulesetData, levels, rulesetIds);
+      const klassLevelEntries = rulesetModule.levelUp.getPlannedKlassLevels(rulesetData, levels, rulesetIds);
 
       // Early ruleset-lineage check for submitted entity IDs. Per-level
       // validateAndFetchLevelSelections re-checks these, but it runs *after*
@@ -179,7 +169,7 @@ export async function finalizeLevelUp(
       // entities resolve in the ruleset's composed cache. Throwing up-front
       // keeps the user-facing error targeted (BadRequestError) instead of a
       // downstream TypeError from the aptitude builder.
-      checkSelections(rulesetData, skills, feats, powers);
+      rulesetModule.levelUp.checkSelections(rulesetData, skills, feats, powers);
 
       const baseExistingLevels = await CharacterLevels.findMany(tx, {
         characterId,
@@ -193,11 +183,18 @@ export async function finalizeLevelUp(
         klassLevelEntries,
         baseExistingLevels.length,
       );
-      const distributedLevels = distributePlannedPicks(planned, skills, feats, powers, rulesetData);
+      const distributedLevels = rulesetModule.levelUp.distributePlannedPicks(
+        planned,
+        skills,
+        feats,
+        powers,
+        rulesetData,
+      );
 
       // Phase 2: Per-level validation and insertion
       const createdLevels = await insertPlannedLevels(
         tx,
+        rulesetModule,
         rulesetData,
         characterId,
         levels,
@@ -208,9 +205,9 @@ export async function finalizeLevelUp(
 
       const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, { database: tx, scope });
 
-      if (!force) checkIssues(detailedCharacter.validate().issues);
+      if (!force) rulesetModule.levelUp.checkIssues(detailedCharacter.validate().issues);
 
-      await reconcileAllBondedKinds(tx, characterRecord, detailedCharacter, rulesetData);
+      await reconcileAllBondedKinds(tx, rulesetModule, characterRecord, detailedCharacter, rulesetData);
 
       await Activities.create(tx, {
         userId: session.userId,
@@ -241,7 +238,7 @@ export async function removeLevel(session: Session, characterId: string) {
     await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
       const rulesetModule = RulesetFactory.fromBaseRules(scope.ruleset.baseRules);
       const reconcileCharacter = await buildCharacter(rulesetModule, characterRecord, { database: tx, scope });
-      await reconcileAllBondedKinds(tx, characterRecord, reconcileCharacter, scope.rulesetData);
+      await reconcileAllBondedKinds(tx, rulesetModule, characterRecord, reconcileCharacter, scope.rulesetData);
     });
 
     await Activities.create(tx, {
@@ -278,14 +275,13 @@ export async function updateLevel(
       if (!characterLevel || characterLevel.characterId !== characterId)
         throw new NotFoundError("Character level not found");
 
-      const { klassLevel, klass } = getSavedKlassLevel(rulesetData, characterLevel);
-
       const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
+      const { klassLevel, klass } = rulesetModule.levelUp.getSavedKlassLevel(rulesetData, characterLevel);
       // The levels in the order the character took them: the edited level's index is its total level less one
       const existingLevels = await CharacterLevels.findMany(tx, { characterId });
       const levelIndex = existingLevels.findIndex((l) => l.id === characterLevelId);
-      checkAbilityIncrease(levelIndex, abilityId);
-      const validationResult = await validateAndFetchLevelSelections(tx, {
+      rulesetModule.levelUp.checkAbilityIncrease(levelIndex, abilityId);
+      const validationResult = await validateAndFetchLevelSelections(tx, rulesetModule, {
         klass,
         klassLevel,
         otherLevels: existingLevels.filter((l) => l.id !== characterLevelId),
@@ -300,7 +296,7 @@ export async function updateLevel(
       const builds = { database: tx, scope };
       const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, {
         ...builds,
-        projected: projectEditedLevel(
+        projected: rulesetModule.levelUp.projectEditedLevel(
           characterId,
           characterLevel,
           klassLevel.id,
@@ -313,7 +309,7 @@ export async function updateLevel(
       const { valid, issues } = detailedCharacter.validate();
       if (!valid && !force) {
         // The issues of the pools the level adds to: built without the level and every later one, then with it alone
-        const { before, withLevel } = projectLevelContribution(
+        const { before, withLevel } = rulesetModule.levelUp.projectLevelContribution(
           characterId,
           existingLevels,
           characterLevelId,
@@ -321,7 +317,7 @@ export async function updateLevel(
           skills,
           validationResult,
         );
-        checkEditedLevelIssues(
+        rulesetModule.levelUp.checkEditedLevelIssues(
           issues,
           await buildCharacter(rulesetModule, characterRecord, { ...builds, projected: before }),
           await buildCharacter(rulesetModule, characterRecord, { ...builds, projected: withLevel }),
@@ -339,7 +335,7 @@ export async function updateLevel(
       );
 
       await insertLevelChildren(tx, characterLevelId, skills, feats, powers);
-      await reconcileAllBondedKinds(tx, characterRecord, detailedCharacter, rulesetData);
+      await reconcileAllBondedKinds(tx, rulesetModule, characterRecord, detailedCharacter, rulesetData);
 
       await Activities.create(tx, {
         userId: session.userId,

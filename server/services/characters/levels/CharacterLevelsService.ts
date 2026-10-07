@@ -4,12 +4,12 @@
  * character's ruleset before dispatching.
  */
 
-import { getAvailableKlasses } from "./dnd3.5/classPicks.ts";
-import { getAvailableFeats, getAvailableFeatsGrouped } from "./dnd3.5/featPicks.ts";
-import { finalizeLevelUp, removeLevel, updateLevel } from "./dnd3.5/finalize.ts";
-import { getLevel } from "./dnd3.5/levelSelections.ts";
-import { getAvailablePowers } from "./dnd3.5/powerPicks.ts";
-import { getLevelUpPreview } from "./dnd3.5/preview.ts";
+import { getAvailableKlasses } from "./classPicks.ts";
+import { getAvailableFeats, getAvailableFeatsGrouped } from "./featPicks.ts";
+import { finalizeLevelUp, removeLevel, updateLevel } from "./finalize.ts";
+import { getLevel } from "./levelSelections.ts";
+import { getAvailablePowers } from "./powerPicks.ts";
+import { getLevelUpPreview } from "./preview.ts";
 import {
   getAttributeSlots,
   getEditFeatSlots,
@@ -17,7 +17,7 @@ import {
   getFeatSlots,
   getPowerSlots,
   getSkillSlots,
-} from "./dnd3.5/slotQueries.ts";
+} from "./slotQueries.ts";
 
 class CharacterLevelsService {
   readonly finalizeLevelUp = finalizeLevelUp;

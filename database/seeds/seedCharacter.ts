@@ -77,7 +77,7 @@ async function reconcileBondedForCharacter(tx: Db, characterId: string): Promise
   await withRulesetScope(tx, master.rulesetId, async ({ ruleset, rulesetData }) => {
     const module = RulesetFactory.fromBaseRules(ruleset.baseRules);
     const detailed = await buildCharacter(module, master, { database: tx, scope: { ruleset, rulesetData } });
-    await reconcileAllBondedKinds(tx, master, detailed, rulesetData);
+    await reconcileAllBondedKinds(tx, module, master, detailed, rulesetData);
   });
 }
 

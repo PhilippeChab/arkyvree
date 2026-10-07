@@ -4,7 +4,6 @@
  * - getLevelUpPreview — computes merged pools, per-level skill points, and slot distributions for the level-up wizard
  */
 
-import { buildLevelUpPreview, getPlannedKlassLevels } from "@/engine/rulesets/dnd3.5/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels } from "@/server/repositories/index.ts";
@@ -24,19 +23,20 @@ export async function getLevelUpPreview(
 
   return await withRulesetScope(db, characterRecord.rulesetId, async (scope) => {
     const { ruleset, rulesetData } = scope;
-    const klassLevelEntries = getPlannedKlassLevels(
+    const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
+    const klassLevelEntries = rulesetModule.levelUp.getPlannedKlassLevels(
       rulesetData,
       levels.map((level, i) => ({ ...level, abilityId: abilityIds[i] ?? null })),
     );
     const existingLevels = await CharacterLevels.findMany(db, { characterId });
     const planned = await buildPlannedLevels(
       db,
-      RulesetFactory.fromBaseRules(ruleset.baseRules),
+      rulesetModule,
       characterRecord,
       scope,
       klassLevelEntries,
       existingLevels.length,
     );
-    return buildLevelUpPreview(planned, rulesetData);
+    return rulesetModule.levelUp.buildLevelUpPreview(planned, rulesetData);
   });
 }

@@ -418,6 +418,7 @@ The rulesets that run on it:
 
 ```
 engine/rulesets/
+├── modules.ts                             (getRulesetModule: each base rules' module, built once)
 └── dnd3.5/                                ← 3.5-specific implementation
     ├── index.ts                           (the module's entry: createRulesetModule, the response builders)
     ├── rulesetModule.ts                   (createRulesetModule: the 3.5 module, a Dnd35RulesetModule)
@@ -457,37 +458,36 @@ engine/rulesets/
     ├── levelUp/                           (the level-up's rules: planned class levels, slots and their distribution,
     │                                      projections, a level's selections checked; plan: the preview, and a save's
     │                                      picks spread over its levels; edit: an edited level's projection, and the
-    │                                      issues it answers for)
+    │                                      issues it answers for; steps, picks: the wizard's; Dnd35LevelUp: the
+    │                                      module's levelUp, which the server's level flows ask)
     ├── levels/                            (Dnd35LevelsRules)
     └── bonded/                            (the bonded creatures' characters, BondsComponent, BondedPaths; bondedPlans:
-                                           what a master's creatures become as the master's levels change)
+                                           what a master's creatures become as the master's levels change;
+                                           Dnd35Bonded: the module's bonded, their kinds and plans)
 ```
 
-In the server: the registry that hands the modules out (`server/rulesets/RulesetFactory.ts`), the builds (`server/builds/`), and what writes the effects' writes (`server/services/rulesets/effectWrites.ts`).
+In the server: what reads a ruleset's base rules and hands out its module (`server/rulesets/RulesetFactory.ts`, from the engine's registry, `engine/rulesets/modules.ts`: `getRulesetModule`), the builds (`server/builds/`), and what writes the effects' writes (`server/services/rulesets/effectWrites.ts`). The server names no ruleset: it reads, builds, asks the character's module and writes.
 
 ```
 server/
 ├── services/
 │   ├── characters/
-│   │   ├── inventory/CharacterInventoryService.ts   ← universal
-│   │   ├── modifiers/CharacterModifiersService.ts   ← universal
-│   │   └── levels/
-│   │       ├── CharacterLevelsService.ts  ← thin dispatcher; forwards to the ruleset impl
-│   │       └── dnd3.5/                    ← 3.5-only level-up flows
-│   │           ├── classPicks.ts, featPicks.ts, powerPicks.ts, levelSelections.ts
-│   │           ├── bondedReconcile.ts     (the bonded creatures the module plans, written)
-│   │           ├── slotQueries.ts
-│   │           ├── preview.ts
-│   │           ├── finalize.ts
-│   │           ├── plannedLevels.ts       (a level-up's planned levels built, which the module plans from)
-│   │           └── validation.ts
+│   │   ├── inventory/CharacterInventoryService.ts
+│   │   ├── modifiers/CharacterModifiersService.ts
+│   │   └── levels/                        ← the level flows: they read, build, ask the module's levelUp and write
+│   │       ├── CharacterLevelsService.ts
+│   │       ├── classPicks.ts, featPicks.ts, powerPicks.ts, levelSelections.ts
+│   │       ├── bondedReconcile.ts         (the bonded creatures the module's bonded part plans, written)
+│   │       ├── slotQueries.ts
+│   │       ├── preview.ts
+│   │       ├── finalize.ts
+│   │       ├── plannedLevels.ts           (a level-up's planned levels built, which the module plans from)
+│   │       └── validation.ts
 │   └── rulesets/                          ← entity CRUD for feats/powers/aptitudes/…
 └── routers/
     └── api/
         └── characters/
-            └── levels/
-                └── dnd3.5/                ← 3.5-shaped HTTP routes
-                    └── index.ts
+            └── levels/index.ts            ← the level routes
 ```
 
 ### What goes in `engine/` vs `dnd3.5/`
@@ -540,12 +540,14 @@ export interface Dnd35LevelUpProjector extends LevelUpProjector {
 }
 ```
 
-A module is typed by what it builds: `RulesetModule<Character, Projector, Kind>`. The 3.5 module is `Dnd35RulesetModule` (`RulesetModule<DetailedCharacter, Dnd35LevelUpProjector, CharacterKind>`), and `RulesetFactory` hands out each module's own type, so the services inside `dnd3.5/` get the 3.5 character and projector without a cast:
+A module is typed by what it builds and answers: `RulesetModule<Character, Projector, Kind, LevelUp, Bonded>`. The 3.5 module is `Dnd35RulesetModule` (`RulesetModule<DetailedCharacter, Dnd35LevelUpProjector, CharacterKind, Dnd35LevelUp, Dnd35Bonded>`), and `RulesetFactory` hands out each module's own type (`RulesetModuleOf`), so the level flows call the module's level-up with its own types, naming no ruleset:
 
 ```ts
-// inside server/services/characters/levels/dnd3.5/…
-const projectedData: Dnd35ProjectedCharacterData = { /* skills, powers */ };
-const levelUpProjector = rulesetModule.createLevelUpProjector(detailedCharacter); // a Dnd35LevelUpProjector
+// server/services/characters/levels/preview.ts
+const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
+const klassLevelEntries = rulesetModule.levelUp.getPlannedKlassLevels(rulesetData, levels);
+const planned = await buildPlannedLevels(db, rulesetModule, characterRecord, scope, klassLevelEntries, count);
+return rulesetModule.levelUp.buildLevelUpPreview(planned, rulesetData);
 ```
 
 The engine's own types name no ruleset (`arkyvree/layers`): its `DetailedCharacterInterface` holds `Components`, which the 3.5 character narrows to its own.
@@ -592,41 +594,15 @@ A bound the client and the API check too is a constant of the ruleset's shared v
 
 Rules are for **small predicates and constants**. More complex operations (bound to the detailed character, returning rich data, potentially mutating internal state) belong on the ruleset's level-up projector (`Dnd35LevelUpProjector`) or on its character (a concern of `DetailedCharacter`) instead.
 
-### The service split pattern
+### The level flows ask the module
 
-Services that orchestrate 3.5-shaped flows (level-up, spell selection, wizard school exclusion, skill-point budgeting) live under `server/services/characters/levels/dnd3.5/`. The parent service class (`CharacterLevelsService`) imports the 3.5 impls and exposes them by name. When a second ruleset is added, dispatch moves up to `CharacterLevelsService`:
+The level flows (`server/services/characters/levels/`: the preview, a save, an edit, a removal, the wizard's steps and pickers, a level's selections, the bonded creatures' reconcile) are the server's: they read the character's rows and levels in their transaction, build the characters a step needs (`buildCharacter`), and write what's saved. What a level-up is, its rules, is the module's: its `levelUp` (the 3.5 module's `Dnd35LevelUp`: the planned levels' class levels and projections, the preview and a save's distribution, the checks a save makes, the steps' slots, the pickers' filters and options, a level's selections) and its `bonded` (`Dnd35Bonded`: the kinds of bonded creature, and their plans). A second ruleset gives its module a level-up of its own; no line of the server changes.
 
-```ts
-// Today
-import { getAvailableKlasses } from "./dnd3.5/classPicks.ts";
-// …
-class CharacterLevelsService {
-  readonly getAvailableKlasses = getAvailableKlasses;
-  …
-}
-
-// With multiple rulesets (sketch)
-import * as dnd35 from "./dnd3.5/classPicks.ts";
-import * as pf2e from "./pf2e/classPicks.ts";
-
-class CharacterLevelsService {
-  async getAvailableKlasses(session, characterId, where, pagination) {
-    const ruleset = await getCharacterRuleset(characterId);
-    if (ruleset.name === "Dungeons & Dragons: 3.5") return dnd35.getAvailableKlasses(session, characterId, where, pagination);
-    if (ruleset.name === "Pathfinder 2e")           return pf2e.getAvailableKlasses(session, characterId, where, pagination);
-    throw new BadRequestError(`Unsupported ruleset: ${ruleset.name}`);
-  }
-  …
-}
-```
-
-Entity CRUD services (`FeatsService`, `PowersService`, `AptitudesService`, `RulesetsService`) are ruleset-agnostic — they operate on rows of the generic schema. These stay in `server/services/rulesets/` and don't get split.
+Entity CRUD services (`FeatsService`, `PowersService`, `AptitudesService`, `RulesetsService`) operate on rows of the generic schema, and ask the module's `rules` and `effects` what's ruleset-specific about them.
 
 ### Routes
 
-Routes that accept 3.5-shaped request bodies (`powerLevel`, `excludeSchools`, wizard-specific aptitude IDs) live under `server/routers/api/characters/levels/dnd3.5/`. The parent `characters/index.tsx` imports the 3.5 variant for now and adds a dispatch layer when a second ruleset lands.
-
-Routes that operate on generic entities (ruleset CRUD, character profile, inventory) are unchanged — they stay at the generic path.
+The level routes (`server/routers/api/characters/levels/index.ts`) take the generic schema's level-up: class levels, skill ranks, and feats and powers by their pool; the module reads what its own pickers take (a spell level, a specialist's excluded schools).
 
 ### What's intentionally generic schema, not ruleset-specific
 
@@ -669,7 +645,7 @@ An audit on 2026-04-16 identified real leaks and some false alarms. It predates 
 **Fixed:**
 - `MAX_SPELL_LEVEL = 9` was hardcoded in the aptitudes component (`dnd3.5/aptitudes/AptitudesComponent.ts`) — now one constant in `shared/dnd3.5/spells.ts`, which the spellcasting, the routes and the client read too.
 - `buildCharacterResponse.ts` lived in `routers/api/` with a cast to `Dnd35DetailedCharacter` — moved to `engine/rulesets/dnd3.5/response/buildCharacterResponse.ts`.
-- `server/routers/api/characters/levels/` had 3.5-shaped query params (`powerLevel`, `excludeSchools`) — moved under `dnd3.5/`.
+- `server/routers/api/characters/levels/` had 3.5-shaped query params (`powerLevel`, `excludeSchools`): moved under `dnd3.5/`, then back once the level flows asked the module (`levelUp`), which reads them.
 
 **Not leaks (confirmed generic):**
 - `SkillWithRank.rank: number`, `CustomizedPower.powerLevel: number | null`, `CustomizedPower.saveName: string | null` — neutral primitive fields with 3.5-flavored seeded content but no schema constraint forcing 3.5 semantics.

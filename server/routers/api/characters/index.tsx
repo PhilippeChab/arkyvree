@@ -18,7 +18,7 @@ import { CharactersService } from "@/server/services/characters/index.ts";
 
 import contributors from "./contributors/index.ts";
 import inventory from "./inventory/index.ts";
-import levels from "./levels/dnd3.5/index.ts";
+import levels from "./levels/index.ts";
 import modifiers from "./modifiers/index.ts";
 import sharing from "./sharing/index.ts";
 

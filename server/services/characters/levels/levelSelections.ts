@@ -2,7 +2,6 @@
  * An existing character level's saved selections.
  */
 
-import { buildLevelSelections, getSavedKlassLevel } from "@/engine/rulesets/dnd3.5/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
@@ -12,6 +11,7 @@ import {
   CharacterLevels,
   CharacterLevelSkills,
 } from "@/server/repositories/index.ts";
+import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -22,7 +22,8 @@ export async function getLevel(session: Session, characterId: string, characterL
   if (!characterLevel || characterLevel.characterId !== characterId)
     throw new NotFoundError("Character level not found");
 
-  return await withRulesetScope(db, characterRecord.rulesetId, async ({ rulesetData }) => {
+  return await withRulesetScope(db, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
+    const { levelUp } = RulesetFactory.fromBaseRules(ruleset.baseRules);
     // Inside withRulesetScope every Character* repo read below returns rows
     // with *Id fields already remapped to post-COW, and rulesetData's id
     // Maps auto-resolve stored pre-COW keys. No manual canonicalize calls.
@@ -36,7 +37,7 @@ export async function getLevel(session: Session, characterId: string, characterL
     ]);
     if (!refreshedCharacterLevel) throw new NotFoundError("Character level not found");
 
-    const { klassLevel, klass } = getSavedKlassLevel(rulesetData, refreshedCharacterLevel);
+    const { klassLevel, klass } = levelUp.getSavedKlassLevel(rulesetData, refreshedCharacterLevel);
     return {
       characterLevelId: refreshedCharacterLevel.id,
       klassId: klass.id,
@@ -45,7 +46,7 @@ export async function getLevel(session: Session, characterId: string, characterL
       hd: klass.hd,
       hp: refreshedCharacterLevel.hp,
       abilityId: refreshedCharacterLevel.abilityId,
-      ...buildLevelSelections(levelSkills, levelFeats, levelPowers, rulesetData),
+      ...levelUp.buildLevelSelections(levelSkills, levelFeats, levelPowers, rulesetData),
     };
   });
 }

@@ -1,12 +1,7 @@
-import {
-  type Dnd35RulesetModule,
-  type getPlannedKlassLevels,
-  type PlannedLevels,
-  projectPlannedLevels,
-} from "@/engine/rulesets/dnd3.5/index.ts";
 import { buildCharacter, readCharacterRows } from "@/server/builds/index.ts";
 import type { RulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
+import type { RulesetModuleOf } from "@/server/rulesets/RulesetFactory.ts";
 import type { Character } from "@/shared/relations.ts";
 
 /**
@@ -14,13 +9,13 @@ import type { Character } from "@/shared/relations.ts";
  */
 export async function buildPlannedLevels(
   database: Db,
-  rulesetModule: Dnd35RulesetModule,
+  rulesetModule: RulesetModuleOf,
   characterRecord: Character,
   scope: RulesetScope,
-  klassLevelEntries: ReturnType<typeof getPlannedKlassLevels>,
+  klassLevelEntries: ReturnType<RulesetModuleOf["levelUp"]["getPlannedKlassLevels"]>,
   existingLevelCount: number,
-): Promise<PlannedLevels> {
-  const { projectedData, allAutoGrantedFeatRecords } = projectPlannedLevels(
+): Promise<Parameters<RulesetModuleOf["levelUp"]["buildLevelUpPreview"]>[0]> {
+  const { projectedData, allAutoGrantedFeatRecords } = rulesetModule.levelUp.projectPlannedLevels(
     characterRecord.id,
     klassLevelEntries,
     scope.rulesetData,

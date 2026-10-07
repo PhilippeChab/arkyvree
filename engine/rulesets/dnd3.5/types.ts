@@ -15,7 +15,9 @@ import type { RulesetData } from "@/engine/core/view/index.ts";
 import type { BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
 import type { Power, Skill } from "@/shared/relations.ts";
 
+import type { Dnd35Bonded } from "./bonded/Dnd35Bonded.ts";
 import type DetailedCharacter from "./character/DetailedCharacter.ts";
+import type { Dnd35LevelUp } from "./levelUp/Dnd35LevelUp.ts";
 
 /** A projected power row with 3.5 spell-level and save-name fields. */
 type Dnd35ProjectedPower = Power & {
@@ -67,8 +69,14 @@ export interface Dnd35ProjectedCharacterData extends ProjectedCharacterData {
   skills?: Dnd35ProjectedSkill[];
 }
 
-/** The 3.5 rules' module: its characters, level-up projector and kinds of character, by their own types. */
-export type Dnd35RulesetModule = RulesetModule<DetailedCharacter, Dnd35LevelUpProjector, CharacterKind>;
+/** The 3.5 rules' module: its characters, level-up projector, kinds of character, level-up and bonded creatures. */
+export type Dnd35RulesetModule = RulesetModule<
+  DetailedCharacter,
+  Dnd35LevelUpProjector,
+  CharacterKind,
+  Dnd35LevelUp,
+  Dnd35Bonded
+>;
 
 /** A property row a 3.5 effect writes for an entity: a skill's flags, a class level's base attack and skill points. */
 export type PropertyRecord = {

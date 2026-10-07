@@ -1,26 +1,16 @@
 import { baseRules } from "@/drizzle/schema.ts";
-import type { RulesetModule } from "@/engine/core/module/index.ts";
-import { createRulesetModule as createDnd35Module } from "@/engine/rulesets/dnd3.5/index.ts";
+import { getRulesetModule } from "@/engine/rulesets/modules.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
-/**
- * Each base rules' module, built once: a module keeps no state (its rules and effects are fieldless, its factories make
- * a new character or path set on each call). One the database's enum gains has to be written here, or the server
- * doesn't compile. Each keeps the type its factory gives it, a `RulesetModule` of its own character, projector and kinds
- * (`Dnd35RulesetModule`), so the code that reads its rules' parts needs no cast. The table checks every member of the
- * contract but the ones typed by the module's character, which its factory's return type checks: the projector takes the
- * module's own character, so a module can't widen to a `RulesetModule` of any character.
- */
-const MODULES = {
-  "Dungeons & Dragons: 3.5": createDnd35Module(),
-} satisfies Record<BaseRules, Omit<RulesetModule, "createDetailedCharacter" | "createLevelUpProjector">>;
+/** A ruleset's module, as the factory hands it out. */
+export type RulesetModuleOf = ReturnType<typeof RulesetFactory.fromBaseRules>;
 
 export class RulesetFactory {
   static fromBaseRules(baseRules: BaseRules) {
-    return MODULES[baseRules];
+    return getRulesetModule(baseRules);
   }
 
   static getSupportedRulesets(): string[] {

@@ -7,27 +7,20 @@
  * - getAttributeSlots — ability score increase availability
  */
 
-import {
-  buildFeatSlots,
-  buildPowerSlots,
-  buildSkillSlots,
-  getKlassLevel,
-  projectAttributeStep,
-  projectFeatStep,
-  projectStepLevel,
-  type StepProjection,
-} from "@/engine/rulesets/dnd3.5/index.ts";
 import { buildCharacter } from "@/server/builds/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { CharacterLevels } from "@/server/repositories/index.ts";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
+import { RulesetFactory, type RulesetModuleOf } from "@/server/rulesets/RulesetFactory.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /** A step as its route asks for it: the edited level by id, which the step's projection takes with its place. */
 type Step = Omit<StepProjection, "editedLevel"> & { editedLevelId?: string };
+
+/** A step's projection, as the module takes it. */
+type StepProjection = Parameters<RulesetModuleOf["levelUp"]["projectStepLevel"]>[2];
 
 /** The feat pools of a projected level, and the feats its class level grants. */
 async function featSlots(session: Session, characterId: string, klassId: string, level: number, step: Step) {
@@ -35,11 +28,17 @@ async function featSlots(session: Session, characterId: string, klassId: string,
 
   return await withRulesetScope(db, characterRecord.rulesetId, async (scope) => {
     const { ruleset, rulesetData } = scope;
-    const klassLevel = getKlassLevel(rulesetData, klassId, level);
-    const projected = projectFeatStep(characterId, klassLevel.id, await readStep(characterId, step), rulesetData);
     const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
+    const { levelUp } = rulesetModule;
+    const klassLevel = levelUp.getKlassLevel(rulesetData, klassId, level);
+    const projected = levelUp.projectFeatStep(
+      characterId,
+      klassLevel.id,
+      await readStep(characterId, step),
+      rulesetData,
+    );
     const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, { projected, scope });
-    return buildFeatSlots(detailedCharacter, klassLevel.id, rulesetData);
+    return levelUp.buildFeatSlots(detailedCharacter, klassLevel.id, rulesetData);
   });
 }
 
@@ -49,11 +48,12 @@ async function powerSlots(session: Session, characterId: string, klassId: string
 
   return await withRulesetScope(db, characterRecord.rulesetId, async (scope) => {
     const { ruleset, rulesetData } = scope;
-    const klassLevel = getKlassLevel(rulesetData, klassId, level);
-    const projected = projectStepLevel(characterId, klassLevel.id, await readStep(characterId, step));
     const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
+    const { levelUp } = rulesetModule;
+    const klassLevel = levelUp.getKlassLevel(rulesetData, klassId, level);
+    const projected = levelUp.projectStepLevel(characterId, klassLevel.id, await readStep(characterId, step));
     const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, { projected, scope });
-    return buildPowerSlots(detailedCharacter, klassLevel.id, rulesetData);
+    return levelUp.buildPowerSlots(detailedCharacter, klassLevel.id, rulesetData);
   });
 }
 
@@ -76,7 +76,7 @@ export async function getAttributeSlots(
 
   const rulesetModule = await RulesetFactory.fromRulesetId(characterRecord.rulesetId);
   const characterLevels = await CharacterLevels.findMany(db, { characterId });
-  const step = projectAttributeStep(characterLevels, excludeCharacterLevelId, pendingLevelCount);
+  const step = rulesetModule.levelUp.projectAttributeStep(characterLevels, excludeCharacterLevelId, pendingLevelCount);
   if (!step) return { isAvailable: false, attributes: {} };
 
   const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, { projected: step.projected });
@@ -137,22 +137,23 @@ export async function getSkillSlots(
 
   return await withRulesetScope(db, characterRecord.rulesetId, async (scope) => {
     const { ruleset, rulesetData } = scope;
-    const klassLevel = getKlassLevel(rulesetData, klassId, level);
+    const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
+    const { levelUp } = rulesetModule;
+    const klassLevel = levelUp.getKlassLevel(rulesetData, klassId, level);
     const step = await readStep(characterId, {
       editedLevelId: excludeCharacterLevelId,
       abilityId,
       pendingLevelKlassLevelIds,
       pendingLevelAbilityIds,
     });
-    const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
     const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, {
-      projected: projectStepLevel(characterId, klassLevel.id, step),
+      projected: levelUp.projectStepLevel(characterId, klassLevel.id, step),
       scope,
     });
 
     // An edit replaces the edited level, so the count stays the total
     const characterLevels = await CharacterLevels.findMany(db, { characterId });
     const totalCharacterLevel = characterLevels.length + (excludeCharacterLevelId ? 0 : 1);
-    return buildSkillSlots(detailedCharacter, klassId, totalCharacterLevel, rulesetData);
+    return levelUp.buildSkillSlots(detailedCharacter, klassId, totalCharacterLevel, rulesetData);
   });
 }

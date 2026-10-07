@@ -1,6 +1,6 @@
-import { checkLevelSelections, checkNotTaken } from "@/engine/rulesets/dnd3.5/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { CharacterLevelFeats } from "@/server/repositories/index.ts";
+import type { RulesetModuleOf } from "@/server/rulesets/RulesetFactory.ts";
 
 /**
  * A level's selections checked for a save (`checkLevelSelections`), then its non-stackable feats against those the
@@ -9,14 +9,17 @@ import { CharacterLevelFeats } from "@/server/repositories/index.ts";
  */
 export async function validateAndFetchLevelSelections(
   tx: Db,
-  params: Parameters<typeof checkLevelSelections>[0] & { otherLevels: { id: string; klassLevelId: string }[] },
+  { levelUp }: RulesetModuleOf,
+  params: Parameters<RulesetModuleOf["levelUp"]["checkLevelSelections"]>[0] & {
+    otherLevels: { id: string; klassLevelId: string }[];
+  },
 ) {
-  const selections = checkLevelSelections(params);
+  const selections = levelUp.checkLevelSelections(params);
   if (selections.fetchedFeats.some((feat) => !feat.stackable)) {
     const picks = await CharacterLevelFeats.findMany(tx, {
       characterLevelIds: params.otherLevels.map((level) => level.id),
     });
-    checkNotTaken(
+    levelUp.checkNotTaken(
       selections.fetchedFeats,
       picks.map((pick) => pick.featId),
       params.otherLevels,

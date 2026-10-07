@@ -2,20 +2,16 @@
  * Powers and spells a level-up can pick for an aptitude pool.
  */
 
-import {
-  annotateRequirements,
-  type FeatPick,
-  getKlassLevel,
-  getPowerPickFilters,
-  projectPowerPick,
-} from "@/engine/rulesets/dnd3.5/index.ts";
 import { buildCharacter } from "@/server/builds/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels, Powers } from "@/server/repositories/index.ts";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
+import { RulesetFactory, type RulesetModuleOf } from "@/server/rulesets/RulesetFactory.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
+
+/** A feat picked so far: the feat, and the pool it's picked in. */
+type FeatPick = Parameters<RulesetModuleOf["levelUp"]["projectPowerPick"]>[2][number];
 
 export async function getAvailablePowers(
   session: Session,
@@ -38,27 +34,28 @@ export async function getAvailablePowers(
 
   return await withRulesetScope(db, characterRecord.rulesetId, async (scope) => {
     const { ruleset, rulesetData } = scope;
-    const klassLevel = getKlassLevel(rulesetData, klassId, level);
+    const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
+    const { levelUp } = rulesetModule;
+    const klassLevel = levelUp.getKlassLevel(rulesetData, klassId, level);
     const levels = await CharacterLevels.findMany(db, { characterId });
-    const projected = projectPowerPick(
+    const projected = levelUp.projectPowerPick(
       characterId,
       klassLevel.id,
       [...(where.pendingLevelFeatPicks ?? []), ...(where.selectedFeatPicks ?? [])],
       { excludeCharacterLevelId, levels, pendingLevelKlassLevelIds },
       rulesetData,
     );
-    const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
     const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, { projected, scope });
 
     const result = await Powers.findOptionPage(
       db,
       {
-        ...getPowerPickFilters(detailedCharacter, aptitudeId, klassLevel.id, where, rulesetData),
+        ...levelUp.getPowerPickFilters(detailedCharacter, aptitudeId, klassLevel.id, where, rulesetData),
         search: where.search,
       },
       pagination,
     );
-    const items = annotateRequirements(detailedCharacter, result.items, rulesetData);
+    const items = levelUp.annotateRequirements(detailedCharacter, result.items, rulesetData);
     return { items, page: result.page, nextPage: result.nextPage };
   });
 }

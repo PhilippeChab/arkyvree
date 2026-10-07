@@ -5,6 +5,7 @@ import Dnd35DetailedCharacterAnimalCompanion from "./bonded/DetailedCharacterAni
 import type Dnd35DetailedCharacterBonded from "./bonded/DetailedCharacterBonded.ts";
 import Dnd35DetailedCharacterFamiliar from "./bonded/DetailedCharacterFamiliar.ts";
 import Dnd35DetailedCharacterMount from "./bonded/DetailedCharacterMount.ts";
+import { Dnd35Bonded } from "./bonded/Dnd35Bonded.ts";
 import Dnd35DetailedCharacter from "./character/DetailedCharacter.ts";
 import Dnd35LevelUpProjector from "./character/Dnd35LevelUpProjector.ts";
 import { Dnd35ClassesEffects } from "./classes/Dnd35ClassesEffects.ts";
@@ -19,6 +20,7 @@ import { Dnd35InventoryRules } from "./items/Dnd35InventoryRules.ts";
 import { Dnd35ItemsEffects } from "./items/Dnd35ItemsEffects.ts";
 import { Dnd35ItemsRules } from "./items/Dnd35ItemsRules.ts";
 import { Dnd35LevelsRules } from "./levels/Dnd35LevelsRules.ts";
+import { Dnd35LevelUp } from "./levelUp/Dnd35LevelUp.ts";
 import { Dnd35PowersEffects } from "./powers/Dnd35PowersEffects.ts";
 import { Dnd35PowersRules } from "./powers/Dnd35PowersRules.ts";
 import { Dnd35RacesEffects } from "./races/Dnd35RacesEffects.ts";
@@ -61,6 +63,7 @@ export function createRulesetModule(): Dnd35RulesetModule {
       rulesets: new Dnd35RulesetsRules(),
       skills: new Dnd35SkillsRules(),
     },
+    bonded: new Dnd35Bonded(),
     effects: {
       classes: new Dnd35ClassesEffects(),
       classLevels: new Dnd35ClassLevelsEffects(),
@@ -71,6 +74,8 @@ export function createRulesetModule(): Dnd35RulesetModule {
       rulesets: new Dnd35RulesetsEffects(),
       skills: new Dnd35SkillsEffects(),
     },
+
+    levelUp: new Dnd35LevelUp(),
 
     createDetailedCharacter(record: CharacterRecord, kind: CharacterKind = "pc") {
       const bonded = createBonded(record, kind);
