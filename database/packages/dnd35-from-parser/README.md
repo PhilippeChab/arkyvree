@@ -161,7 +161,7 @@ Scrapes magic item pages into `MagicItemReference` JSON. Covers specific armor, 
 **Auto-detected:**
 - Item name, description, cost, weight, category
 - Base item template detection (e.g. "+1 Longsword" → sourceItem "Longsword"). An item made from a base one weighs what its base does, unless its text gives its weight
-- A specific armor's or shield's stats (`readArmorStats`, `armorStats.ts`): the spell failure, maximum Dexterity bonus and check penalty its text gives, its category ("considered light armor"), its weight, and its enhancement bonus to AC ("this +3 banded mail"). Magic, adamantine or masterwork armor is masterwork, unless its text gives its check penalty
+- A specific armor's or shield's stats (`MagicItemText.armorStats`, `tools/detect/readers/items/MagicItemText.ts`): the spell failure, maximum Dexterity bonus and check penalty its text gives, its category ("considered light armor"), its weight, and its enhancement bonus to AC ("this +3 banded mail"). Magic, adamantine or masterwork armor is masterwork, unless its text gives its check penalty
 - Slot assignment (head, neck, hands, etc.)
 - Modifier detection from item descriptions (save bonuses, skill bonuses, ability bonuses)
 
@@ -169,10 +169,10 @@ Scrapes magic item pages into `MagicItemReference` JSON. Covers specific armor, 
 
 ### Bonus detection
 
-Feats (with class features), races and magic items read their bonuses as a `BonusText` (`tools/detect/readers/modifiers/`), the text and the two pieces it reads it with:
+Feats (with class features), races and magic items read their bonuses as a `BonusText` (`tools/detect/readers/modifiers/BonusText.ts`), the text and the two readings it reads it with:
 
-- **`readSkillBonuses`** (`skillBonuses.ts`): "+N [type] bonus on/to [all] [the wearer's/your…] X, Y and Z check(s)", capitalized skill names joined by commas and "and" (never split inside parentheses). A size bonus is left out: the character sheet applies size itself. A name that isn't a skill is reported, for review.
-- **`isConditional`** (`conditional.ts`): a bonus isn't a permanent modifier when its part of the sentence (the sentence's opening, its own text up to the next bonus, and what joins it to the previous one) names a condition (against, while, when, if, only, as long as…), an effect used (expend, per day, as a swift action, for 1 hour…), or someone else it goes to (allies, a companion, a mount…); or when what follows it narrows it ("made to…", "to find…", "related to…"). What's worn, held or carried isn't a condition.
+- **Its skill bonuses** (`skillBonuses()`): "+N [type] bonus on/to [all] [the wearer's/your…] X, Y and Z check(s)", capitalized skill names joined by commas and "and" (never split inside parentheses). A size bonus is left out: the character sheet applies size itself. A name that isn't a skill is reported, for review.
+- **Whether a bonus applies only sometimes** (`isConditional(match)`, which `every()`, `first()` and `skillBonuses()` leave out): a bonus isn't a permanent modifier when its part of the sentence (the sentence's opening, its own text up to the next bonus, and what joins it to the previous one) names a condition (against, while, when, if, only, as long as…), an effect used (expend, per day, as a swift action, for 1 hour…), or someone else it goes to (allies, a companion, a mount…); or when what follows it narrows it ("made to…", "to find…", "related to…"). What's worn, held or carried isn't a condition.
 
 ## What needs manual annotation in `overrides`
 

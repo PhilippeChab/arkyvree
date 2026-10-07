@@ -19,7 +19,10 @@ describe("A class's skill prerequisite", () => {
     expect(skillRequirements("Tumble (any)", 4)).toEqual([gte("skills.tumble.rank", 4)]);
   });
 
-  test("of a skill that isn't a family's is its own ranks", () => {
+  test("of a skill that isn't a family's is its own ranks, and of a family that covers no skill an invalid path", () => {
     expect(skillRequirements("Knowledge (arcana)", 8)).toEqual([gte("skills.knowledgearcana.rank", 8)]);
+    const basketweaving = new ClassPrerequisites({ skills: [{ name: "Basketweaving (any)", ranks: 8 }] });
+    expect(basketweaving.requirements).toEqual([]);
+    expect(basketweaving.errors).toEqual(['Invalid requirement path: "skills.basketweaving.rank"']);
   });
 });
