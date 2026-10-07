@@ -4,6 +4,7 @@ import { dirname, join, relative } from "node:path";
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
 import { formatImport, type ImportTable } from "@/database/packages/dnd35-from-parser/tools/generator/code/imports.ts";
 import { quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
+import { CORE_BOOK } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
 
 /** The files a book's items/ can hold, each with the list it exports, in the order the items' index lists them. */
@@ -79,7 +80,7 @@ export class BaseGenerator {
    * The core rules are what extensions copy from.
    */
   protected copiesFromCore(book: string): boolean {
-    return book !== "srd" && ReferenceLoader.loadClasses(book).length > 0;
+    return book !== CORE_BOOK && ReferenceLoader.loadClasses(book).length > 0;
   }
 
   /** An index file's head: its header, the seed type's import, and the import of each file's list. */

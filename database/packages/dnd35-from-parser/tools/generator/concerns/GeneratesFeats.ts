@@ -13,7 +13,7 @@ import {
 } from "@/database/packages/dnd35-from-parser/tools/generator/code/featFiles.ts";
 import { compareNames, formatImport } from "@/database/packages/dnd35-from-parser/tools/generator/code/imports.ts";
 import { quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
-import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
+import { CORE_BOOK, getReferencePath } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
 import { collectAptitudes } from "@/database/packages/dnd35-from-parser/tools/seeds/aptitudes.ts";
 import { buildWizardSchoolSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/wizardSchools.ts";
@@ -25,14 +25,12 @@ export function GeneratesFeats<B extends Constructor<BaseGenerator>>(Base: B) {
   abstract class GeneratingFeats extends Base {
     /** Regenerate aptitudes.ts for a book from reference JSONs: its feats', and the core rules' system feats. */
     writeAptitudes(book: string) {
-      const featRefPath = join(REFERENCE_DIR, book, "feats.json");
+      const featRef = ReferenceLoader.find(book, "feat");
       const feats = [
-        ...(existsSync(featRefPath) ? getFeatAptitudeSources(ReferenceLoader.load(featRefPath, "feat")) : []),
-        ...(book === "srd"
+        ...(featRef ? getFeatAptitudeSources(featRef) : []),
+        ...(book === CORE_BOOK
           ? buildCoreSystemFeats(
-              buildWizardSchoolSeeds(
-                ReferenceLoader.load(join(REFERENCE_DIR, "srd", "wizardSchools.json"), "wizardSchool"),
-              ),
+              buildWizardSchoolSeeds(ReferenceLoader.load(getReferencePath(CORE_BOOK, "wizardSchool"), "wizardSchool")),
             )
           : []),
       ];
@@ -53,7 +51,7 @@ export function GeneratesFeats<B extends Constructor<BaseGenerator>>(Base: B) {
 
     /** The core rules' favored enemy feats file: the core rules' alone. */
     writeFavoredEnemyFeats(book: string) {
-      if (book !== "srd") return;
+      if (book !== CORE_BOOK) return;
 
       this.write(join(this.dir, book, "feats", "favoredEnemy.ts"), generateFavoredEnemyFeats());
     }

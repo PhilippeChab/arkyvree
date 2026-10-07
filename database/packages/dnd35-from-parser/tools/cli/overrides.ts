@@ -12,7 +12,10 @@
 import { basename } from "node:path";
 
 import { parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/cli/args.ts";
-import { listReferenceFiles } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
+import {
+  filterReferenceFiles,
+  listReferenceFiles,
+} from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import {
   readStoredReference,
   type StoredReference,
@@ -71,10 +74,7 @@ function collectEntryOverrides(
 function main() {
   const { bookFilter, typeFilter, nameFilter, keyFilter } = parseCliArgs();
 
-  let refs = listReferenceFiles();
-  if (bookFilter) refs = refs.filter((r) => r.book === bookFilter);
-  if (typeFilter) refs = refs.filter((r) => r.type === typeFilter);
-  if (nameFilter) refs = refs.filter((r) => basename(r.path, ".json").toLowerCase() === nameFilter);
+  const refs = filterReferenceFiles(listReferenceFiles(), { bookFilter, typeFilter, nameFilter });
 
   const allEntries: OverrideEntry[] = [];
 

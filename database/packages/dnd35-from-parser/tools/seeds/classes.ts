@@ -8,6 +8,7 @@ import {
   buildUncannyDodgeModifiers,
   extractGrantedFeatNames,
 } from "@/database/packages/dnd35-from-parser/tools/detect/grants.ts";
+import { CORE_BOOK } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
 import { buildBookDomainSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/domains.ts";
 import ExistingFeats from "@/database/packages/dnd35-from-parser/tools/seeds/ExistingFeats.ts";
@@ -214,7 +215,10 @@ export function buildClassDomainPickFeats(ref: ClassReference): FeatSeed[] {
   const pool = getClassSpells(ref)?.domainPool;
   if (!pool) return [];
   const book = ref._meta.book;
-  const domains = [...buildBookDomainSeeds("srd").seeds, ...(book === "srd" ? [] : buildBookDomainSeeds(book).seeds)];
+  const domains = [
+    ...buildBookDomainSeeds(CORE_BOOK).seeds,
+    ...(book === CORE_BOOK ? [] : buildBookDomainSeeds(book).seeds),
+  ];
   return domains
     .map(({ name }) => ({
       name: `${name} Domain (${ref.raw.name})`,

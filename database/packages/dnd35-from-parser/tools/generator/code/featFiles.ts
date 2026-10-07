@@ -3,6 +3,7 @@
 import { FeatsFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/FeatsFile.ts";
 import { buildReferenceFeats } from "@/database/packages/dnd35-from-parser/tools/generator/code/referenceFeats.ts";
 import TemplateFamilies from "@/database/packages/dnd35-from-parser/tools/generator/code/TemplateFamilies.ts";
+import { CORE_BOOK } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
 import type { RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
@@ -35,7 +36,7 @@ export function generateFeatSeeds(ref: FeatReference): string {
   for (const family of templates) file.emitTemplate(family, families);
 
   // System feats are only generated for the SRD — other books reuse them
-  if (ref._meta.book === "srd") {
+  if (ref._meta.book === CORE_BOOK) {
     file.emitSystemFeats("feats.ts");
   }
   return file.code([FEAT_SEED_IMPORT]);

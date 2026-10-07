@@ -2,11 +2,8 @@
  * The feats a book already has, by name: a class feature that duplicates one grants it rather than a feat of its own.
  */
 
-import { existsSync } from "node:fs";
-import { join } from "node:path";
-
 import { findFamilyFeat } from "@/database/packages/dnd35-from-parser/tools/detect/featOptions.ts";
-import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
+import { CORE_BOOK } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -27,11 +24,10 @@ class ExistingFeats {
     // Skip template feats (family parents like "Weapon Specialization") — they
     // expand into per-variant feats during generation and the bare name is never
     // seeded, so matching against it would create phantom freeFeat lookups.
-    const books = book ? [book, "srd"] : ["srd"];
+    const books = book ? [book, CORE_BOOK] : [CORE_BOOK];
     for (const b of books) {
-      const featsPath = join(REFERENCE_DIR, b, "feats.json");
-      if (!existsSync(featsPath)) continue;
-      const ref = ReferenceLoader.load(featsPath, "feat");
+      const ref = ReferenceLoader.find(b, "feat");
+      if (!ref) continue;
       for (const feat of ref.raw) {
         const mapped = ref.mapping[feat.name];
         if (mapped?.template) continue;

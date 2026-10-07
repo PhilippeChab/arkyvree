@@ -1,6 +1,6 @@
 /** A spell reference's seeds: its PowerSeed[], each with its level. */
 
-import { listReferenceBooks } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
+import { CORE_BOOK, listReferenceBooks } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import { getInheritedLevel, getInheritedLists } from "@/database/packages/dnd35-from-parser/tools/seeds/classes.ts";
 import ClassSpellMaps from "@/database/packages/dnd35-from-parser/tools/seeds/ClassSpellMaps.ts";
 import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
@@ -275,7 +275,7 @@ export function buildSpellSeeds(ref: SpellReference, book?: string): { spells: S
   // the book seeds its own copy of each that takes one, which a ruleset merges with that book's when it takes both, as
   // it does a class list the spell's level line names. The core rules' spells reach them through each book's copies.
   const othersInherited =
-    book && book !== "srd"
+    book && book !== CORE_BOOK
       ? listReferenceBooks().flatMap((other) => (other === book ? [] : getInheritedLists(other)))
       : [];
 

@@ -12,7 +12,10 @@ import { basename, join } from "node:path";
 import { $ } from "bun";
 
 import { parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/cli/args.ts";
-import { listReferenceFiles } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
+import {
+  filterReferenceFiles,
+  listReferenceFiles,
+} from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import { BASE_URL, getBookSlug } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
 
 const BASE_DIR = join(import.meta.dirname!, "../../");
@@ -79,15 +82,13 @@ function buildScrapeArgs(ref: { path: string; type: string; url?: string; book: 
 async function main() {
   const { bookFilter, typeFilter, nameFilter } = parseCliArgs();
 
-  let refs = listReferenceFiles();
-  if (refs.length === 0) {
+  const allRefs = listReferenceFiles();
+  if (allRefs.length === 0) {
     console.log("No reference files found.");
     return;
   }
 
-  if (bookFilter) refs = refs.filter((r) => r.book === bookFilter);
-  if (typeFilter) refs = refs.filter((r) => r.type === typeFilter);
-  if (nameFilter) refs = refs.filter((r) => basename(r.path, ".json").toLowerCase() === nameFilter);
+  const refs = filterReferenceFiles(allRefs, { bookFilter, typeFilter, nameFilter });
 
   console.log(
     `Found ${refs.length} reference files.${bookFilter || typeFilter || nameFilter ? ` (filtered: book=${bookFilter ?? "*"}, type=${typeFilter ?? "*"}, name=${nameFilter ?? "*"})` : ""}\n`,

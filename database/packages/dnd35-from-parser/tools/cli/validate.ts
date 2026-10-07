@@ -17,7 +17,10 @@
  */
 
 import { parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/cli/args.ts";
-import { listReferenceFiles } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
+import {
+  filterReferenceFiles,
+  listReferenceFiles,
+} from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import {
   findReferenceIssues,
   type Issue,
@@ -26,9 +29,7 @@ import {
 function main() {
   const { bookFilter, typeFilter } = parseCliArgs();
 
-  let refs = listReferenceFiles();
-  if (bookFilter) refs = refs.filter((r) => r.book === bookFilter);
-  if (typeFilter) refs = refs.filter((r) => r.type === typeFilter);
+  const refs = filterReferenceFiles(listReferenceFiles(), { bookFilter, typeFilter });
 
   const issues = findReferenceIssues(refs);
   if (issues.length === 0) {

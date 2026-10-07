@@ -1,9 +1,6 @@
 /** Collects the aptitudes a book's seeds use. */
 
-import { existsSync } from "node:fs";
-import { join } from "node:path";
-
-import { listReferenceBooks, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
+import { CORE_BOOK, listReferenceBooks } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
 import {
   buildClassDomainPickFeats,
@@ -60,9 +57,8 @@ export function collectAptitudes(feats: Pick<FeatSeed, "name" | "aptitudes" | "m
   for (const feat of domains.poolFeats) for (const apt of feat.aptitudes) names.add(apt);
 
   // Wizard school aptitudes
-  const wsRefPath = join(REFERENCE_DIR, book, "wizardSchools.json");
-  if (existsSync(wsRefPath)) {
-    const wsRef = ReferenceLoader.load(wsRefPath, "wizardSchool");
+  const wsRef = ReferenceLoader.find(book, "wizardSchool");
+  if (wsRef) {
     for (const school of buildWizardSchoolSeeds(wsRef)) {
       names.add(`${school.name} Specialist Spells`);
     }
@@ -71,10 +67,9 @@ export function collectAptitudes(feats: Pick<FeatSeed, "name" | "aptitudes" | "m
   // For extension books: collect aptitudes referenced by this book's spells
   // so we can keep sibling spell list aptitudes (each extension creates its own copy).
   const spellAptitudes = new Set<string>();
-  if (book !== "srd") {
-    const spellRefPath = join(REFERENCE_DIR, book, "spells.json");
-    if (existsSync(spellRefPath)) {
-      const spellRef = ReferenceLoader.load(spellRefPath, "spell");
+  if (book !== CORE_BOOK) {
+    const spellRef = ReferenceLoader.find(book, "spell");
+    if (spellRef) {
       const { spells } = buildSpellSeeds(spellRef, book);
       for (const spell of spells) {
         for (const apt of spell.aptitudes) spellAptitudes.add(apt);
@@ -86,7 +81,7 @@ export function collectAptitudes(feats: Pick<FeatSeed, "name" | "aptitudes" | "m
   // For sibling extension spell lists, keep them if this book's spells reference them.
   for (const other of listReferenceBooks()) {
     if (other === book) continue;
-    const isSibling = other !== "srd" && book !== "srd";
+    const isSibling = other !== CORE_BOOK && book !== CORE_BOOK;
     for (const { ref } of ReferenceLoader.loadClasses(other)) {
       if (ref.mapping.classFeatureAptitude) names.delete(ref.mapping.classFeatureAptitude);
       for (const spellApt of getClassSpellLists(ref)) {

@@ -3,7 +3,7 @@
 import { existsSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 
-import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
+import { getReferencePath, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import {
   readStoredReference,
   type ReferenceByType,
@@ -35,6 +35,12 @@ class ReferenceLoader {
     magicItem: new Map(),
     wizardSchool: new Map(),
   };
+
+  /** `book`'s reference of `type`, loaded (`load`): none when the book has none. */
+  find<T extends Exclude<ReferenceType, "class">>(book: string, type: T): ReferenceByType[T] | undefined {
+    const path = getReferencePath(book, type);
+    return existsSync(path) ? this.load(path, type) : undefined;
+  }
 
   /**
    * Loads a reference of `type`, with what the generator reads derived from it. A process loads each file once (the

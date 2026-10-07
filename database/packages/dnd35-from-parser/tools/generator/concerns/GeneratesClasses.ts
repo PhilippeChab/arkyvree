@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { readdirSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 
 import {
@@ -8,7 +8,6 @@ import {
 import { generateClassFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/generator/code/classFeatsFile.ts";
 import { ClassFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/ClassFile.ts";
 import { quote, toConstName } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
-import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
 import { toCamelCase } from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
@@ -130,11 +129,7 @@ export function GeneratesClasses<B extends Constructor<BaseGenerator>>(Base: B) 
 
       // Load the book's own raw feat names — these already get aptitudes via the feat generator
       const bookFeats = new Set<string>();
-      const bookFeatsPath = join(REFERENCE_DIR, book, "feats.json");
-      if (existsSync(bookFeatsPath)) {
-        const ref = ReferenceLoader.load(bookFeatsPath, "feat");
-        for (const feat of ref.raw) bookFeats.add(feat.name);
-      }
+      for (const feat of ReferenceLoader.find(book, "feat")?.raw ?? []) bookFeats.add(feat.name);
 
       // Also collect class feature seed names — these are generated as feats by the class feat generator
       const classFeatureNames = new Set<string>();

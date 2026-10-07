@@ -6,7 +6,7 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 
-import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
+import { CORE_BOOK, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
 import { type DomainReference } from "@/database/packages/dnd35-from-parser/tools/types/domains.ts";
 import type { ModifierSeed } from "@/database/packages/dnd35/content/customization/types.ts";
@@ -109,9 +109,8 @@ function resolveFeatPoolItems(items: "martial" | "simple" | "exotic" | "all" | s
 
 /** A book's domains as it prints them (`reference/<book>/domains.json`; none for a book without), and their feat pools' feats. */
 export function buildBookDomainSeeds(book: string): { seeds: DomainDefinition[]; poolFeats: FeatSeed[] } {
-  const path = join(REFERENCE_DIR, book, "domains.json");
-  if (!existsSync(path)) return { seeds: [], poolFeats: [] };
-  const ref = ReferenceLoader.load(path, "domain");
+  const ref = ReferenceLoader.find(book, "domain");
+  if (!ref) return { seeds: [], poolFeats: [] };
   return { seeds: domainSeeds(ref), poolFeats: buildDomainFeatPoolSeeds(ref) };
 }
 
@@ -149,11 +148,11 @@ export function findDomainSpellIssues(ref: DomainReference): { domain: string; t
 
 /** The spells a book's domains can name, by their lowercase name: the core rules' and the book's. */
 export function getDomainSpellNames(book: string): Map<string, string> {
-  const spellNames = (b: string) => {
-    const path = join(REFERENCE_DIR, b, "spells.json");
-    return existsSync(path) ? ReferenceLoader.load(path, "spell").raw.map((spell) => spell.name) : [];
-  };
+  const spellNames = (b: string) => ReferenceLoader.find(b, "spell")?.raw.map((spell) => spell.name) ?? [];
   return new Map(
-    [...spellNames("srd"), ...(book === "srd" ? [] : spellNames(book))].map((name) => [name.toLowerCase(), name]),
+    [...spellNames(CORE_BOOK), ...(book === CORE_BOOK ? [] : spellNames(book))].map((name) => [
+      name.toLowerCase(),
+      name,
+    ]),
   );
 }

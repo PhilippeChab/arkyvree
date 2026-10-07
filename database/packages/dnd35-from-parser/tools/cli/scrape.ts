@@ -1,3 +1,4 @@
+import { CORE_BOOK } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import { HttpClient } from "@/database/packages/dnd35-from-parser/tools/scraper/HttpClient.ts";
 import { Scraper } from "@/database/packages/dnd35-from-parser/tools/scraper/Scraper.ts";
 
@@ -53,7 +54,7 @@ async function main() {
   const urlIdx = args.indexOf("--url");
   const url = urlIdx >= 0 ? args[urlIdx + 1] : undefined;
   const bookIdx = args.indexOf("--book");
-  const book = bookIdx >= 0 ? args[bookIdx + 1] : "srd";
+  const book = bookIdx >= 0 ? args[bookIdx + 1] : CORE_BOOK;
   const scraper = new Scraper(book, new HttpClient({ noCache, ...(delay !== undefined ? { delay } : {}) }));
 
   if (type === "class") {

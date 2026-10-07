@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, unlinkSync } from "node:fs";
+import { readdirSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 
 import {
@@ -7,7 +7,7 @@ import {
 } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
 import { quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import { generateSpellFiles } from "@/database/packages/dnd35-from-parser/tools/generator/code/spellFiles.ts";
-import { listReferenceBooks, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
+import { CORE_BOOK, listReferenceBooks } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
 import {
   getClassSpells,
@@ -49,11 +49,7 @@ export function GeneratesSpells<B extends Constructor<BaseGenerator>>(Base: B) {
     /** The names of a book's own spells, which it seeds itself: none needs copying. */
     private bookSpellNames(book: string): Set<string> {
       const names = new Set<string>();
-      const path = join(REFERENCE_DIR, book, "spells.json");
-      if (existsSync(path)) {
-        const ref = ReferenceLoader.load(path, "spell");
-        for (const spell of ref.raw) names.add(spell.name);
-      }
+      for (const spell of ReferenceLoader.find(book, "spell")?.raw ?? []) names.add(spell.name);
       return names;
     }
 
@@ -96,20 +92,15 @@ export function GeneratesSpells<B extends Constructor<BaseGenerator>>(Base: B) {
       // The spells an inherited list can take: the base book's and this book's
       const inheritable = new Set<string>();
 
-      // Find the base book (the one defining core classes like Wizard).
-      // COW only makes sense for spells from the base book, not siblings.
-      const baseBook = listReferenceBooks().find((b) =>
-        ReferenceLoader.loadClasses(b).some(({ ref }) => ref.raw?.name === "Wizard"),
-      );
-      const isBaseBook = book === baseBook;
+      // COW only makes sense for the core rules' spells, not a sibling's
+      const isBaseBook = book === CORE_BOOK;
       for (const otherBook of listReferenceBooks()) {
-        const spellPath = join(REFERENCE_DIR, otherBook, "spells.json");
-        if (!existsSync(spellPath)) continue;
+        const ref = ReferenceLoader.find(otherBook, "spell");
+        if (!ref) continue;
 
-        const ref = ReferenceLoader.load(spellPath, "spell");
         for (const spell of ref.raw) {
           const isSameBook = bookSpellNames.has(spell.name);
-          const isFromBase = otherBook === baseBook;
+          const isFromBase = otherBook === CORE_BOOK;
           const matchedApts: { aptitude: string; level: number }[] = [];
           const overrideLe = ref.overrides?.[spell.name]?.levelEntries ?? [];
           const levelEntries = [...spell.levelEntries, ...overrideLe];
