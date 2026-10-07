@@ -8,8 +8,8 @@ type IdentityData = {
     description: string;
     age?: number;
     gender: string;
-    height?: string;
-    weight?: string;
+    height: string;
+    weight: string;
     race: Race;
     languages: Language[];
   };
@@ -58,8 +58,8 @@ export default class IdentityComponent {
       description: character.description || "",
       age: character.age ?? undefined,
       gender: character.gender,
-      height: character.height ?? undefined,
-      weight: character.weight ?? undefined,
+      height: character.height ?? "",
+      weight: character.weight ?? "",
       race,
       languages,
     };
