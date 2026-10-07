@@ -1,6 +1,6 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Components, TargetPathsInterface, TraversePathResult } from "@/server/rulesets/engine/types.ts";
-import type { TargetPath } from "@/shared/customization/target.ts";
+import type { TargetPath, TargetPathKind } from "@/shared/customization/target.ts";
 
 import type { PathCategory } from "./PathCategory.ts";
 import PathTraverser from "./PathTraverser.ts";
@@ -86,11 +86,22 @@ export default abstract class CategoryPaths<C = Components> implements TargetPat
     }
   }
 
-  /** Every path each category lists, in the categories' order, and each segment's label. */
+  /**
+   * Every path each category lists, in the categories' order, and each segment's label. A template's paths are the
+   * requirement's that read one value from the sheet: no wildcard, no path that reaches several values or a list
+   * (`readsMany`), and none that reads its source (an item's own weapon), which a template has none of.
+   */
   async getTargetPathsAndLabels(
     rulesetData: RulesetData,
-    kind: "modifier" | "requirement",
+    kind: TargetPathKind,
   ): Promise<{ paths: TargetPath[]; segmentLabels: Record<string, string> }> {
+    if (kind === "template") {
+      const { paths, segmentLabels } = await this.getTargetPathsAndLabels(rulesetData, "requirement");
+      return {
+        paths: paths.filter(({ path, readsMany }) => !readsMany && !path.includes("*") && !this.readsSource(path)),
+        segmentLabels,
+      };
+    }
     const segmentLabels: Record<string, string> = {
       "*": "All",
       ...this.labelOf,

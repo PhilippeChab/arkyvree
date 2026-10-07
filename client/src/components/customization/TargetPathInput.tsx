@@ -1,5 +1,7 @@
 import { Box, FormControl, FormHelperText, InputLabel } from "@mui/material";
 
+import type { TargetPathKind } from "@/shared/customization/target.ts";
+
 import type { PathInfo } from "./pathValues.ts";
 import { TargetPathBrowser } from "./TargetPathBrowser.tsx";
 import { useTargetPath } from "./useTargetPath.ts";
@@ -9,7 +11,7 @@ interface TargetPathInputProps {
   /** The new path, and what it takes when it's a complete one picked from the list. */
   onChange: (value: string, picked?: PathInfo) => void;
   rulesetId: string;
-  kind: "modifier" | "requirement";
+  kind: TargetPathKind;
   entityType?: string;
   label?: string;
   required?: boolean;

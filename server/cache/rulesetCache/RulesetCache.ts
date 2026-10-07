@@ -1,7 +1,7 @@
 import DependentCache from "@/server/cache/DependentCache.ts";
 import { type CowData, db, withCowContext } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
-import type { TargetPath } from "@/shared/customization/target.ts";
+import type { TargetPath, TargetPathKind } from "@/shared/customization/target.ts";
 
 import CowDataBuilder, { buildSourceChain, type RulesetSources } from "./CowDataBuilder.ts";
 import { fetchRulesetRawData, type RulesetRawData } from "./rawData.ts";
@@ -83,10 +83,10 @@ class RulesetCache {
     );
   }
 
-  /** A ruleset's target paths for a modifier or a requirement, and their segments' labels. */
+  /** A ruleset's target paths for a modifier, a requirement or a template, and their segments' labels. */
   async getTargetPaths(
     rulesetId: string,
-    kind: "modifier" | "requirement",
+    kind: TargetPathKind,
     fetcher: () => Promise<TargetPathsAndLabels>,
     sourceChain: readonly string[] = [],
   ): Promise<TargetPathsAndLabels> {

@@ -3,7 +3,7 @@ import type { FC } from "react";
 import type { RulesetData, RulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import type { CowData, Db } from "@/server/database/index.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
-import type { TargetPath } from "@/shared/customization/target.ts";
+import type { TargetPath, TargetPathKind } from "@/shared/customization/target.ts";
 import type {
   Aptitude,
   Campaign,
@@ -272,7 +272,7 @@ export type SkillWithRank = Skill & {
 export interface TargetPathsInterface extends TargetPathsTraverser {
   getTargetPathsAndLabels(
     rulesetData: RulesetData,
-    kind: "modifier" | "requirement",
+    kind: TargetPathKind,
   ): Promise<{ paths: TargetPath[]; segmentLabels: Record<string, string> }>;
   getCategories(): string[];
   getCategoryDescriptions(): Record<string, string>;

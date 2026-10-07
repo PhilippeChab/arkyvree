@@ -5,12 +5,12 @@ import {
   getTargetPathsWithLabels,
   TargetPathsService,
 } from "@/server/services/rulesets/customization/targetPaths/index.ts";
+import type { TargetPathKind } from "@/shared/customization/target.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
 type EntityType = Parameters<typeof getTargetPathsWithLabels>[2];
-type Kind = "modifier" | "requirement";
 
 function isAptitudeGrant(p: { category: string; path: string }) {
   return p.category === "aptitudes" && /\.(uses|allowed)$/.test(p.path);
@@ -22,7 +22,7 @@ function pathsOf(result: Awaited<ReturnType<typeof complete>>) {
 
 async function complete(
   partialPath: string,
-  kind: Kind,
+  kind: TargetPathKind,
   {
     search,
     limit = 50,
@@ -45,12 +45,12 @@ async function complete(
 }
 
 /** The seeded D&D 3.5 ruleset's target paths and segment labels. */
-async function seedPaths(kind: Kind, entityType?: EntityType) {
+async function seedPaths(kind: TargetPathKind, entityType?: EntityType) {
   const { rulesetId } = await getSeedCtx();
   return await getTargetPathsWithLabels(rulesetId, kind, entityType);
 }
 
-async function validate(path: string, kind: Kind = "modifier", entityType?: EntityType) {
+async function validate(path: string, kind: TargetPathKind = "modifier", entityType?: EntityType) {
   return TargetPathsService.validatePath((await getSeedCtx()).rulesetId, path, kind, entityType);
 }
 
@@ -117,6 +117,36 @@ describe("TargetPathsService", () => {
     expect(featWildcards.filter((p) => !p.description.startsWith("Any "))).toEqual([]);
   });
 
+  test("lists for a template what it reads, one value each: totals and modifiers too, no wildcard, family or list", async () => {
+    const requirement = (await seedPaths("requirement")).paths;
+    const template = (await seedPaths("template")).paths.map((p) => p.path);
+    const readable = new Set(template);
+    for (const path of [
+      "abilities.charisma.modifier",
+      "combat.ac.total",
+      "saves.fortitude.total",
+      "feats.toughness.count",
+      "spellcasting.arcane",
+    ])
+      expect([path, readable.has(path)]).toEqual([path, true]);
+    // Each is a requirement's path, reaching one value from the sheet: an item's own weapon has no source in a template
+    const requirementPaths = new Set(requirement.map((p) => p.path));
+    expect(template.filter((path) => !requirementPaths.has(path))).toEqual([]);
+    expect(
+      template.filter(
+        (path) =>
+          path.includes("*") ||
+          path.startsWith("weapon.") ||
+          path === "skills.knowledge.rank" ||
+          /^powers\.[a-z0-9]+\.properties\./.test(path),
+      ),
+    ).toEqual([]);
+    expect(requirement.filter((p) => p.readsMany && readable.has(p.path))).toEqual([]);
+    expect((await complete("abilities.charisma.", "template")).items.map((item) => item.path)).toContain(
+      "abilities.charisma.modifier",
+    );
+  });
+
   test("leaves totals to requirements", async () => {
     expect((await seedPaths("modifier")).paths.filter((p) => p.path.endsWith(".total"))).toEqual([]);
     const totals = (await seedPaths("requirement")).paths.filter((p) => p.path.endsWith(".total")).map((p) => p.path);
@@ -152,7 +182,7 @@ describe("TargetPathsService", () => {
       "skills.climb.weight",
       "saves.fortitude.ability",
     ];
-    const pathsOf = async (kind: Kind) => new Set((await seedPaths(kind)).paths.map((p) => p.path));
+    const pathsOf = async (kind: TargetPathKind) => new Set((await seedPaths(kind)).paths.map((p) => p.path));
     const [modifiable, requirable] = [await pathsOf("modifier"), await pathsOf("requirement")];
     expect(computed.filter((path) => modifiable.has(path))).toEqual([]);
     expect(computed.filter((path) => !requirable.has(path))).toEqual([]);
@@ -191,7 +221,8 @@ describe("TargetPathsService", () => {
   });
 
   test("lets a modifier on a pool's slots only grant more, or make a spell level's all known, with a literal", async () => {
-    const pathOf = async (kind: Kind, path: string) => (await seedPaths(kind)).paths.find((p) => p.path === path);
+    const pathOf = async (kind: TargetPathKind, path: string) =>
+      (await seedPaths(kind)).paths.find((p) => p.path === path);
     const allKnown = [{ value: "-1", label: "All known" }];
     expect(await pathOf("modifier", "aptitudes.general.allowed")).toMatchObject({
       operators: ["add"],
@@ -214,7 +245,8 @@ describe("TargetPathsService", () => {
   });
 
   test("lets a feat or a class level join a spell list to its class's, and gives a feat's list no known path", async () => {
-    const pathOf = async (kind: Kind, path: string) => (await seedPaths(kind)).paths.find((p) => p.path === path);
+    const pathOf = async (kind: TargetPathKind, path: string) =>
+      (await seedPaths(kind)).paths.find((p) => p.path === path);
     expect(await pathOf("modifier", "aptitudes.firedomainspells.joinsclasslist")).toMatchObject({
       valueType: "boolean",
       operators: ["set"],
@@ -232,7 +264,7 @@ describe("TargetPathsService", () => {
   });
 
   test("lists what the engine reads without an entity of its own: the unarmed strike, the skill points, a skill family", async () => {
-    const offered = async (kind: Kind) => new Map((await seedPaths(kind)).paths.map((p) => [p.path, p]));
+    const offered = async (kind: TargetPathKind) => new Map((await seedPaths(kind)).paths.map((p) => [p.path, p]));
     const [modifiers, requirements] = [await offered("modifier"), await offered("requirement")];
     for (const path of [
       "items.weapons.unarmedstrike.damage.base",
@@ -300,7 +332,7 @@ describe("TargetPathsService", () => {
     });
 
     test("describe a wildcard as all of a kind when modifying, and any when requiring", async () => {
-      const wildcard = async (kind: Kind) =>
+      const wildcard = async (kind: TargetPathKind) =>
         (await complete("abilities.", kind)).items.find((item) => item.label === "*")?.detail;
       expect([await wildcard("modifier"), await wildcard("requirement")]).toEqual(["All abilities", "Any ability"]);
     });

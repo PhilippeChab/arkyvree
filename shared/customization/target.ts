@@ -65,7 +65,12 @@ export interface TargetPath {
   sortOrder?: number;
   /** When set, this path is only available for modifiers on these entity types */
   allowedEntityTypes?: string[];
+  /** It reaches several values (a skill family's skills) or a list (a spell's property values): no template reads it */
+  readsMany?: boolean;
 }
+
+/** What a listing offers: a modifier's targets, a requirement's, or the paths a template reads, one value each. */
+export type TargetPathKind = "modifier" | "requirement" | "template";
 
 /** The label of each segment of `paths`: its override, else the segment formatted. */
 export function deriveSegmentLabels(
