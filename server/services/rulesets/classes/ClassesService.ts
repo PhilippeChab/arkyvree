@@ -92,12 +92,18 @@ class ClassesService {
       const { sourceChain } = rulesetData.cow;
       const klass = findScopedEntity(rulesetData.klassesById, klassId, rulesetId, sourceChain, "Class");
 
-      const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
+      const { rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
       const properties = rulesetData.propertiesByEntity.get(klass.id) ?? [];
-      const { bonusSpellAbilityId, bonusSpellPropertyId, casterTypeValue, casterTypePropertyId } =
-        rulesetModule.rules.classes.readProperties(properties);
+      const { bonusSpellAbilityId, casterType } = rules.classes.readProperties(properties);
+      const propertyIds = rules.classes.getPropertyIds(properties);
 
-      return { ...klass, bonusSpellAbilityId, bonusSpellPropertyId, casterTypeValue, casterTypePropertyId };
+      return {
+        ...klass,
+        bonusSpellAbilityId,
+        bonusSpellPropertyId: propertyIds.bonusSpellAbilityId,
+        casterTypeValue: casterType,
+        casterTypePropertyId: propertyIds.casterType,
+      };
     });
   }
 

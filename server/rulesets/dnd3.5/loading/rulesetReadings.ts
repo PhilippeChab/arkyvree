@@ -1,13 +1,10 @@
 /** What the loader reads of the ruleset's view: its rows, its fields and the 3.5 meaning of its properties. */
 
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import { readClassFields } from "@/server/rulesets/dnd3.5/classes/classFields.ts";
 import { readSkillFlags } from "@/server/rulesets/dnd3.5/skills/skillFlags.ts";
 import { collectClassListIds, collectFeatListIds } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
-import {
-  KLASS_BONUS_SPELL_ABILITY_ID,
-  KLASS_CASTER_TYPE,
-  RULESET_SKILL_POINT_ABILITY_ID,
-} from "@/shared/dnd3.5/properties/index.ts";
+import { RULESET_SKILL_POINT_ABILITY_ID } from "@/shared/dnd3.5/properties/index.ts";
 
 import type { SharedCharacterData } from "./DetailedCharacterDataLoader.ts";
 
@@ -38,7 +35,7 @@ export function readCachedRows(shared: SharedCharacterData, klassLevelIds: strin
   };
 }
 
-/** Klass properties (bonus spell ability + caster type). */
+/** Each class's fields: its bonus spell ability, by the ability's name, and its caster type. */
 export function readKlassProperties(
   klassEntityIds: string[],
   rulesetData: RulesetData,
@@ -47,16 +44,10 @@ export function readKlassProperties(
   const klassBonusSpellAbilityMap = new Map<string, string>();
   const klassCasterTypeMap = new Map<string, "Arcane" | "Divine">();
   for (const klassId of klassEntityIds) {
-    const props = rulesetData.propertiesByEntity.get(klassId);
-    if (!props) continue;
-    for (const prop of props) {
-      if (prop.type === KLASS_BONUS_SPELL_ABILITY_ID) {
-        const abilityName = abilityLookup.get(prop.value);
-        if (abilityName) klassBonusSpellAbilityMap.set(klassId, abilityName);
-      } else if (prop.type === KLASS_CASTER_TYPE) {
-        klassCasterTypeMap.set(klassId, prop.value as "Arcane" | "Divine");
-      }
-    }
+    const { bonusSpellAbilityId, casterType } = readClassFields(rulesetData.propertiesByEntity.get(klassId) ?? []);
+    const abilityName = bonusSpellAbilityId ? abilityLookup.get(bonusSpellAbilityId) : undefined;
+    if (abilityName) klassBonusSpellAbilityMap.set(klassId, abilityName);
+    if (casterType) klassCasterTypeMap.set(klassId, casterType);
   }
   return { klassBonusSpellAbilityMap, klassCasterTypeMap };
 }

@@ -12,14 +12,13 @@ export interface AptitudesRules {
 
 /** The rules a class follows. */
 export interface ClassesRules {
-  /** Extract spellcasting-related property values from raw class properties. */
-  readProperties(properties: { id: string; type: string; value: string }[]): {
-    bonusSpellAbilityId: string | null;
-    bonusSpellPropertyId: string | null;
-    casterTypePropertyId: string | null;
-    casterTypeValue: string | null;
-  };
+  /** The ids of the rows that hold a class's fields: what the class page edits them through. */
+  getPropertyIds(properties: { id: string; type: string }[]): Record<keyof ClassFields, string | null>;
+  readProperties(properties: { type: string; value: string }[]): ClassFields;
 }
+
+/** A class's fields its properties hold: the ability its bonus spells and spell DCs use, and the spells it casts. */
+export type ClassFields = { bonusSpellAbilityId: string | null; casterType: "Arcane" | "Divine" | null };
 
 /** A class level's fields its properties hold: its base attack bonus and its skill points. */
 export type ClassLevelFields = { bab: number; skills: number };
