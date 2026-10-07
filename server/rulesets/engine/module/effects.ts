@@ -35,7 +35,8 @@ export interface FeatsEffects {
 export interface ItemsEffects {
   /**
    * Stores exactly the item's fields given, as its own properties, in place of those it stored before: for an item made
-   * from a template, the fields it overrides, which its template's fill in when read (`RulesetData.itemProperties`).
+   * from a template, the fields it overrides, which its template's fill in when read (`RulesetData.itemProperties`). A
+   * list can't be overridden to none: an item without damage types or magic auras of its own reads its template's.
    */
   syncProperties(tx: Db, itemId: string, fields: ItemFields): Promise<void>;
 }
