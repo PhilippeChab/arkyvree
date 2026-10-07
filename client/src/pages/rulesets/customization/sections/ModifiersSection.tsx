@@ -11,13 +11,13 @@ import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { formatDate } from "@/client/src/lib/formatDate.ts";
 import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
-import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import {
   customizationSection,
   modifiersQuery,
 } from "@/client/src/pages/rulesets/customization/customizationQueries.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
+import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import type { CustomizableEntityType } from "@/shared/customization/entities.ts";
@@ -69,6 +69,7 @@ export function ModifiersSection({
   const {
     data: modifiers,
     isLoading,
+    error,
     createDialogOpen,
     editDialogOpen,
     deleteDialogOpen,
@@ -172,10 +173,10 @@ export function ModifiersSection({
     },
     onSuccess: (data) => {
       snackbar.success("Modifier created");
-      queryClient.invalidateQueries({ queryKey: modifiersQuery(ruleset.id, entityType, entityId).queryKey });
-      for (const queryKey of queryKeysToInvalidate ?? []) queryClient.invalidateQueries({ queryKey });
-
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.changes(ruleset.id) });
+      invalidateRulesetEdit(queryClient, ruleset.id, [
+        modifiersQuery(ruleset.id, entityType, entityId).queryKey,
+        ...(queryKeysToInvalidate ?? []),
+      ]);
       setCreateDialogOpen(false);
       setDuplicateSourceId(null);
       handleResolvedEntityId(data);
@@ -233,6 +234,7 @@ export function ModifiersSection({
 
         <RulesetSectionTable
           what="Modifiers"
+          error={error}
           data={modifiers}
           isLoading={isLoading}
           columns={MODIFIERS_COLUMNS}

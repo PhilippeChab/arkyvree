@@ -104,7 +104,7 @@ export default function NotificationsPage() {
 
             {isLoading ? (
               <PageLoader />
-            ) : error ? (
+            ) : error && notifications.length === 0 ? (
               <LoadError what="Notifications" error={error} />
             ) : notifications.length > 0 ? (
               // With nothing more to load, the page ends three units below the table, as the table's margin left it

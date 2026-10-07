@@ -36,7 +36,7 @@ import {
   usePdfExport,
 } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
-import { characterDetailQuery } from "@/client/src/lib/queries.ts";
+import { characterDetailQuery, invalidateCharacter, invalidateCharacterListings } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
@@ -84,16 +84,11 @@ export default function CharacterDetailsPage() {
     if (location.state?.openLevelUp) navigate(location.pathname, { replace: true, state: {} });
   };
 
-  const invalidateCharacter = () =>
-    Promise.all([
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.detail(id) }),
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.lists }),
-    ]);
-
   const removeLevelMutation = useMutation({
     mutationFn: () => parseResponse(rpc.api.characters.levels[":characterId"].$delete({ param: { characterId: id } })),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.detail(id) });
+      void invalidateCharacterListings(queryClient);
+      await invalidateCharacter(queryClient, id);
       setConfirmOpen(false);
     },
     onError: (err) => snackbar.error(err, "Failed to remove level"),
@@ -102,7 +97,8 @@ export default function CharacterDetailsPage() {
   const archiveMutation = useMutation({
     mutationFn: () => parseResponse(rpc.api.characters[":id"].$delete({ param: { id } })),
     onSuccess: () => {
-      void invalidateCharacter();
+      void invalidateCharacter(queryClient, id);
+      void invalidateCharacterListings(queryClient);
       navigate("/characters");
     },
     onError: (err) => {
@@ -115,7 +111,7 @@ export default function CharacterDetailsPage() {
     mutationFn: () => parseResponse(rpc.api.characters[":id"].unarchive.$post({ param: { id } })),
     onSuccess: () => {
       snackbar.success("Character unarchived");
-      return invalidateCharacter();
+      return Promise.all([invalidateCharacter(queryClient, id), invalidateCharacterListings(queryClient)]);
     },
     onError: (err) => snackbar.error(err, "Failed to unarchive character"),
   });
@@ -124,8 +120,10 @@ export default function CharacterDetailsPage() {
     mutationFn: () => parseResponse(rpc.api.characters[":id"].permanent.$delete({ param: { id } })),
     onSuccess: () => {
       snackbar.success("Character permanently deleted");
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.lists });
+      void invalidateCharacterListings(queryClient);
       navigate("/characters");
+      // Gone: don't let Back render it from the cache
+      queryClient.removeQueries({ queryKey: QUERY_KEYS.characters.detail(id) });
     },
     onError: (err) => {
       snackbar.error(err, "Failed to delete character");

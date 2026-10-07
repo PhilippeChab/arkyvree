@@ -45,6 +45,17 @@ export function campaignPlayersQuery(campaignId: string, search: string) {
   });
 }
 
+/**
+ * After a player is added, edited or removed: the campaign itself (its header counts its players), its Players tab and
+ * the campaign lists, whose cards count them too. A removal unlinks the player's characters: its Characters tab with it.
+ */
+export function invalidateCampaignPlayers(queryClient: QueryClient, campaignId: string, removed = false) {
+  void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.detail(campaignId), exact: true });
+  void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.section(campaignId, "players") });
+  if (removed) void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.section(campaignId, "characters") });
+  void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.lists });
+}
+
 /** Warm the first page of both tabs: the campaign page mounts them together. */
 export function prefetchCampaignSections(queryClient: QueryClient, campaignId: string) {
   return Promise.all([

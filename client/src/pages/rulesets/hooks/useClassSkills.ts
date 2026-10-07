@@ -8,6 +8,7 @@ import {
   classSkillsQuery,
   skillOptionsQuery,
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
+import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 export function useClassSkills(rulesetId: string, classId: string) {
@@ -75,13 +76,11 @@ export function useClassSkills(rulesetId: string, classId: string) {
     onError: (err, _skillId, context) => {
       snackbar.error(err, "Failed to add skill to class");
       // If the mutation fails, use the context returned from onMutate to roll back
-      queryClient.setQueryData(classSkillsKey, context?.previousClassSkills);
+      if (context?.previousClassSkills) queryClient.setQueryData(classSkillsKey, context.previousClassSkills);
     },
     onSettled: () => {
       // Always refetch after error or success to ensure we have the latest data
-      queryClient.invalidateQueries({
-        queryKey: classSkillsKey,
-      });
+      invalidateRulesetEdit(queryClient, rulesetId, [classSkillsKey]);
     },
   });
 
@@ -117,13 +116,11 @@ export function useClassSkills(rulesetId: string, classId: string) {
     onError: (err, _skillId, context) => {
       snackbar.error(err, "Failed to remove skill from class");
       // If the mutation fails, use the context returned from onMutate to roll back
-      queryClient.setQueryData(classSkillsKey, context?.previousClassSkills);
+      if (context?.previousClassSkills) queryClient.setQueryData(classSkillsKey, context.previousClassSkills);
     },
     onSettled: () => {
       // Always refetch after error or success to ensure we have the latest data
-      queryClient.invalidateQueries({
-        queryKey: classSkillsKey,
-      });
+      invalidateRulesetEdit(queryClient, rulesetId, [classSkillsKey]);
       setDeleteDialogOpen(false);
       setSkillToRemove(null);
     },

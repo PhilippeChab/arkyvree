@@ -20,6 +20,11 @@ export const QUERY_KEYS = {
      * section key so invalidating the section refreshes the pickers too.
      */
     abilities: (id: string) => ["rulesets", "detail", id, "abilities", "options"] as const,
+    /**
+     * The templates of an item type (the weapons, armors or shields an item can be based on). Nested under the Items
+     * section key so an item's write refreshes them too.
+     */
+    itemTemplates: (id: string, type: string) => ["rulesets", "detail", id, "items", "templates", type] as const,
     classDetail: (id: string, classId: string) => ["rulesets", "detail", id, "class", classId] as const,
     classLevels: (id: string, classId: string) => ["rulesets", "detail", id, "class", classId, "levels"] as const,
     classSkills: (id: string, classId: string) => ["rulesets", "detail", id, "class", classId, "skills"] as const,
@@ -52,6 +57,8 @@ export const QUERY_KEYS = {
   campaigns: {
     lists: ["campaigns", "list"] as const,
     list: (filters?: Record<string, unknown>) => ["campaigns", "list", filters] as const,
+    /** Every campaign's own data and tabs: what a character's change can show in, whichever campaigns list it. */
+    details: ["campaigns", "detail"] as const,
     detail: (id: string) => ["campaigns", "detail", id] as const,
     section: (id: string, section: string) => ["campaigns", "detail", id, section] as const,
     characterDetail: (campaignId: string, characterId: string) =>

@@ -29,7 +29,6 @@ import {
   StarIcon,
 } from "@/client/src/components/icons/index.ts";
 import { useListParams, usePageTitle, useStaggerAnimation } from "@/client/src/hooks/index.ts";
-import { TEN_MINUTES } from "@/client/src/lib/durations.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { rulesetDetailQuery, type RulesetListFilters, rulesetListQuery } from "@/client/src/lib/queries.ts";
@@ -80,7 +79,6 @@ function RulesetList({ filters }: RulesetListProps) {
 
   const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     ...listQuery,
-    staleTime: TEN_MINUTES,
     placeholderData: keepPreviousData,
   });
 
@@ -88,7 +86,7 @@ function RulesetList({ filters }: RulesetListProps) {
 
   if (isLoading) return <PageLoader />;
 
-  if (error) return <LoadError what="Rulesets" error={error} />;
+  if (error && rulesets.length === 0) return <LoadError what="Rulesets" error={error} />;
 
   if (rulesets.length === 0) {
     return filters.search ? (

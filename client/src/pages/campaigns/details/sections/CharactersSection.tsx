@@ -114,9 +114,8 @@ function CharacterCard({
     },
     onSuccess: () => {
       snackbar.success("Visibility updated");
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.campaigns.section(campaignId, "characters"),
-      });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.section(campaignId, "characters") });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.characterDetail(campaignId, character.id) });
     },
     onError: (error) => {
       snackbar.error(error, "Failed to update visibility");
@@ -334,6 +333,7 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
   } = useInfiniteQuery({ ...listQuery, placeholderData: keepPreviousData });
 
   const characters = useMemo(() => pageItems(data), [data]);
+  const charactersLoadFailed = !!charactersError && !data;
 
   const characterIds = useMemo(() => characters.map((c) => c.id), [characters]);
   const { data: portraitsByCharacterId } = useAttachments({
@@ -354,8 +354,8 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
         {/* Loading State */}
         {charactersLoading && <DiceSpinner sx={{ py: 4 }} />}
 
-        {/* Error State */}
-        {charactersError && (
+        {/* Error State: only while nothing has loaded, a failed refetch keeping the grid */}
+        {charactersLoadFailed && (
           // The room below the error, at the end of the tab
           <Box sx={{ pb: 3 }}>
             <LoadError what="Characters" error={charactersError} />
@@ -364,7 +364,7 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
 
         {/* Characters Grid */}
         {!charactersLoading &&
-          !charactersError &&
+          !charactersLoadFailed &&
           (characters.length > 0 ? (
             // With nothing more to load, the tab ends three units below the grid, as the grid's margin left it
             <Stack spacing={3} sx={{ pb: hasNextPage ? 0 : 3 }}>

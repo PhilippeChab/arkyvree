@@ -40,7 +40,7 @@ import { ContentCopyIcon, DeleteIcon, EditIcon } from "@/client/src/components/i
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
 import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
-import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
+import { invalidateCharacter } from "@/client/src/lib/queries.ts";
 import { characterModifiersQuery } from "@/client/src/pages/characters/characterQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { extractTemplatePath } from "@/shared/customization/templateExpression.ts";
@@ -75,9 +75,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
     error,
   } = useQuery({ ...characterModifiersQuery(characterId), enabled: open });
 
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.detail(characterId) });
-  };
+  const invalidate = () => invalidateCharacter(queryClient, characterId);
 
   const createMutation = useMutation({
     mutationFn: async (data: ModifierFormData) => {

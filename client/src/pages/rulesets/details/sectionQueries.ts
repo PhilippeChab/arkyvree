@@ -7,6 +7,7 @@ import {
   type DefaultError,
   infiniteQueryOptions,
   type QueryClient,
+  type QueryKey,
   queryOptions,
   skipToken,
 } from "@tanstack/react-query";
@@ -177,6 +178,15 @@ export function heldSectionQuery<TData>(rulesetId: string, sectionName: string) 
     queryKey: QUERY_KEYS.rulesets.section(rulesetId, sectionName),
     queryFn: skipToken,
   });
+}
+
+/**
+ * After a write to a ruleset's content: the lists it shows in (a section's, a customization tab's, a class's), and the
+ * ruleset's Local Changes, which any write can change.
+ */
+export function invalidateRulesetEdit(queryClient: QueryClient, rulesetId: string, keys: readonly QueryKey[]) {
+  for (const queryKey of keys) void queryClient.invalidateQueries({ queryKey });
+  void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.changes(rulesetId) });
 }
 
 export function itemsQuery(rulesetId: string, filters: ListFilters) {

@@ -72,7 +72,7 @@ export default function ActivitiesPage() {
 
             {isLoading ? (
               <PageLoader />
-            ) : error ? (
+            ) : error && activities.length === 0 ? (
               <LoadError what="Activity logs" error={error} />
             ) : activities.length > 0 ? (
               // With nothing more to load, the page ends three units below the table, as the table's margin left it

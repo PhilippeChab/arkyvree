@@ -97,7 +97,7 @@ export default function CampaignsPage() {
 
           {isLoading ? (
             <PageLoader />
-          ) : error ? (
+          ) : error && campaigns.length === 0 ? (
             <LoadError what="Campaigns" error={error} />
           ) : campaigns.length > 0 ? (
             <Stack spacing={3} sx={{ pb: hasNextPage ? 0 : 3 }}>

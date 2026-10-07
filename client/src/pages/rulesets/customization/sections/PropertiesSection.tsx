@@ -69,6 +69,7 @@ export function PropertiesSection({
   const {
     data: properties,
     isLoading,
+    error,
     editDialogOpen,
     deleteDialogOpen,
     setEditDialogOpen,
@@ -166,6 +167,7 @@ export function PropertiesSection({
 
         <RulesetSectionTable
           what="Properties"
+          error={error}
           data={properties}
           isLoading={isLoading}
           columns={PROPERTIES_COLUMNS}

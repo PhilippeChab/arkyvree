@@ -7,6 +7,7 @@ import { useController } from "react-hook-form";
 import { CLICKABLE_SX, clickableProps, DetailPageHeader } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
+import { invalidateCharacter, invalidateCharacterListings } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
@@ -43,8 +44,9 @@ function CharacterNameEditor({ characterId, updatedAt, parentCharacterId, name, 
     mutationFn: (next: string) =>
       parseResponse(rpc.api.characters[":id"]["$put"]({ param: { id: characterId }, json: { name: next, updatedAt } })),
     onSuccess: async () => {
-      // The character's detail refetches, so the new name shows everywhere
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.detail(characterId) });
+      // The character refetches, and its cards, so the new name shows everywhere
+      void invalidateCharacterListings(queryClient);
+      await invalidateCharacter(queryClient, characterId);
       if (parentCharacterId)
         await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.detail(parentCharacterId) });
     },

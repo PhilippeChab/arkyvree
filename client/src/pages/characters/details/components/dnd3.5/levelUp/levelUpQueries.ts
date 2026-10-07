@@ -7,6 +7,7 @@
 import { infiniteQueryOptions, queryOptions, skipToken } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 
+import { FOREVER } from "@/client/src/lib/durations.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
@@ -227,7 +228,7 @@ export function levelPreviewQuery(characterId: string, levels: { klassId: string
     queryKey: QUERY_KEYS.characters.levelUp.preview(characterId, body),
     queryFn: () =>
       parseResponse(rpc.api.characters.levels[":characterId"].preview.$post({ param: { characterId }, json: body })),
-    staleTime: Infinity,
+    staleTime: FOREVER,
   });
 }
 
