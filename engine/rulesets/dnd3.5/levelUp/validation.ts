@@ -10,6 +10,7 @@
 
 import type { DetailedCharacterInterface } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
+import type { ValidationIssue } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 
 import { loadFeatCustomizations } from "./projection.ts";
@@ -114,6 +115,13 @@ export function checkAbilityIncrease(isAbilityIncreaseLevel: boolean, abilityId:
 
   if (!abilityId && isAbilityIncreaseLevel)
     throw new RulesError("invalid", `${label}Ability increase is required at this level`);
+}
+
+/**
+ * Refuses a level whose character fails its rules: what it fails, as the refusal's issues, its messages as its own.
+ */
+export function checkIssues(issues: ValidationIssue[]) {
+  if (issues.length > 0) throw new RulesError("invalid", issues.map((issue) => issue.message).join("; "), issues);
 }
 
 /**
