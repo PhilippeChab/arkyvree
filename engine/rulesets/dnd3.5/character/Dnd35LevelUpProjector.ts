@@ -24,6 +24,40 @@ export default class Dnd35LevelUpProjector implements Dnd35LevelUpProjectorInter
     );
   }
 
+  /** Each planned level's skill points, in the batch's order: the first counts four times over on a new character. */
+  computeSkillPointsPerLevel(klassLevelIds: string[], existingLevelCount: number, rulesetData: RulesetData): number[] {
+    const { bonusPerLevel } = this.getSkillPointBases();
+    return this.computeSkillPointBasesPerLevel(klassLevelIds, rulesetData).map((points, i) =>
+      computeLevelSkillPoints(points, bonusPerLevel, existingLevelCount === 0 && i === 0),
+    );
+  }
+
+  evaluateClassAvailability(
+    candidates: { klassLevel: KlassLevel; klassName: string; requirementGroups: Requirement[][] }[],
+    projectedCharacterLevel: ProjectedCharacterLevel,
+  ): Map<string, boolean> {
+    const results = new Map<string, boolean>();
+    if (candidates.length === 0) return results;
+
+    const identity = this.character.components.identity.getIdentity();
+    identity.meta.level++;
+
+    for (const candidate of candidates) {
+      results.set(
+        candidate.klassLevel.id,
+        this.character.evaluateWithProjectedLevel(
+          candidate.klassName,
+          candidate.klassLevel,
+          projectedCharacterLevel,
+          candidate.requirementGroups,
+        ),
+      );
+    }
+
+    identity.meta.level--;
+    return results;
+  }
+
   getCharacterEnrichedSkills<T extends { id: string; name: string }>(
     allSkills: T[],
     classSkillIds: Set<string>,
@@ -60,43 +94,5 @@ export default class Dnd35LevelUpProjector implements Dnd35LevelUpProjectorInter
 
   getSkillPointBases() {
     return this.character.components.skills.getSkillPointBases();
-  }
-
-  /** Each planned level's skill points, in the batch's order: the first counts four times over on a new character. */
-  async computeSkillPointsPerLevel(
-    klassLevelIds: string[],
-    existingLevelCount: number,
-    rulesetData: RulesetData,
-  ): Promise<number[]> {
-    const { bonusPerLevel } = this.getSkillPointBases();
-    return this.computeSkillPointBasesPerLevel(klassLevelIds, rulesetData).map((points, i) =>
-      computeLevelSkillPoints(points, bonusPerLevel, existingLevelCount === 0 && i === 0),
-    );
-  }
-
-  async evaluateClassAvailability(
-    candidates: { klassLevel: KlassLevel; klassName: string; requirementGroups: Requirement[][] }[],
-    projectedCharacterLevel: ProjectedCharacterLevel,
-  ): Promise<Map<string, boolean>> {
-    const results = new Map<string, boolean>();
-    if (candidates.length === 0) return results;
-
-    const identity = this.character.components.identity.getIdentity();
-    identity.meta.level++;
-
-    for (const candidate of candidates) {
-      results.set(
-        candidate.klassLevel.id,
-        this.character.evaluateWithProjectedLevel(
-          candidate.klassName,
-          candidate.klassLevel,
-          projectedCharacterLevel,
-          candidate.requirementGroups,
-        ),
-      );
-    }
-
-    identity.meta.level--;
-    return results;
   }
 }

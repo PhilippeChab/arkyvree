@@ -78,12 +78,7 @@ export interface DetailedCharacterInterface {
    * Builds the character from its rows (`rows`), in its ruleset's `view`, with a level-up's `projectedData`: a bonded
    * creature's `master` built first. A build reads nothing: the server reads what it's given (`buildCharacter`).
    */
-  build(
-    rows: CharacterRows,
-    view: RulesetView,
-    projectedData?: unknown,
-    master?: DetailedCharacterInterface,
-  ): Promise<void>;
+  build(rows: CharacterRows, view: RulesetView, projectedData?: unknown, master?: DetailedCharacterInterface): void;
   readonly components: Components;
   formatRequirements(requirements: Requirement[]): string;
   getCampaign(): Campaign | undefined;

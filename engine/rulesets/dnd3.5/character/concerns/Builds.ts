@@ -207,38 +207,7 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
       this.components.skills.updateSkillPointTotals();
     }
 
-    protected postRequirementProcessing(): void {
-      // A weapon's proficiency is its base item's requirements (the loader's `toCustomizedInventory`), apart from its
-      // others, read of the entry holding it: a bastard sword's in the hands it's in, each of an item's entries alone
-      const unproficient = this.inventory
-        .filter((inv) => inv.equipped && !this.areRequirementsMet([inv.item.proficiency], { sourceId: inv.id }))
-        .map((inv) => ({ id: inv.id, itemId: inv.item.id }));
-      this.components.combat.applyProficiencyPenalties(unproficient);
-    }
-
-    protected preApplyPossessionModifiers() {
-      for (const mod of this.modifiers) {
-        if (mod.operator !== "set" || mod.valueType !== "boolean" || mod.value !== "true") continue;
-
-        const featSlug = FeatsPaths.parsePossessed(mod.target);
-        if (featSlug !== undefined) {
-          const feat = this.components.feats.getFeat(featSlug);
-          if (feat && !feat.possessed) {
-            feat.possessed = true;
-            feat.count += 1;
-          }
-          continue;
-        }
-
-        const known = PowersPaths.parseKnown(mod.target);
-        if (known) {
-          const spell = this.components.powers.getSpellEntry(known.spell, known.list);
-          if (spell && !spell.known) spell.known = true;
-        }
-      }
-    }
-
-    protected async postModifierProcessing(rulesetData: RulesetData): Promise<void> {
+    protected postModifierProcessing(rulesetData: RulesetData): void {
       this.components.spellcasting.fetchBonusCasterLevelData(
         rulesetData,
         this.klassLevels,
@@ -272,7 +241,38 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
       this.components.spellcasting.buildSpellTags(this.feats, this.featListIds);
     }
 
-    protected async preRequirementProcessing(rulesetData: RulesetData): Promise<void> {
+    protected postRequirementProcessing(): void {
+      // A weapon's proficiency is its base item's requirements (the loader's `toCustomizedInventory`), apart from its
+      // others, read of the entry holding it: a bastard sword's in the hands it's in, each of an item's entries alone
+      const unproficient = this.inventory
+        .filter((inv) => inv.equipped && !this.areRequirementsMet([inv.item.proficiency], { sourceId: inv.id }))
+        .map((inv) => ({ id: inv.id, itemId: inv.item.id }));
+      this.components.combat.applyProficiencyPenalties(unproficient);
+    }
+
+    protected preApplyPossessionModifiers() {
+      for (const mod of this.modifiers) {
+        if (mod.operator !== "set" || mod.valueType !== "boolean" || mod.value !== "true") continue;
+
+        const featSlug = FeatsPaths.parsePossessed(mod.target);
+        if (featSlug !== undefined) {
+          const feat = this.components.feats.getFeat(featSlug);
+          if (feat && !feat.possessed) {
+            feat.possessed = true;
+            feat.count += 1;
+          }
+          continue;
+        }
+
+        const known = PowersPaths.parseKnown(mod.target);
+        if (known) {
+          const spell = this.components.powers.getSpellEntry(known.spell, known.list);
+          if (spell && !spell.known) spell.known = true;
+        }
+      }
+    }
+
+    protected preRequirementProcessing(rulesetData: RulesetData): void {
       this.components.spellcasting.loadClassLists(rulesetData);
       this.components.spellcasting.initCasterLevels(this.modifiers, this.klassCasterTypeMap);
       // Possession modifiers have given their feats: a finessed weapon's attack is what requirements read
@@ -286,7 +286,7 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
      * Builds the character from its rows (`rows`) in its ruleset's `view`, with a level-up's `projectedData`: it reads
      * nothing. A bonded creature's `master` comes built (`DetailedCharacterBonded`); a character of its own needs none.
      */
-    async build(
+    build(
       rows: CharacterRows,
       view: RulesetView,
       projectedData?: Dnd35ProjectedCharacterData,
@@ -306,7 +306,7 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
       this.builtComponents = this.components;
 
       // 5. Pre-requirement processing (the spellcasting component, a bonded creature's master and stat block)
-      await this.preRequirementProcessing(rulesetData);
+      this.preRequirementProcessing(rulesetData);
 
       // 6. Post-requirement processing (proficiency penalties, which check requirements of their own)
       this.postRequirementProcessing();
@@ -317,7 +317,7 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
       this.applyModifiersInRounds(otherModifiers);
 
       // 8. Post-modifier processing: the spellcasting (bonus caster levels, bonus spells, known spells)
-      await this.postModifierProcessing(rulesetData);
+      this.postModifierProcessing(rulesetData);
 
       // 9. Power modifiers, gated by the final requirement evaluation
       this.modifierEvaluator.evaluateModifiers(this.builtComponents, powerModifiers, this.requirementEvaluator);

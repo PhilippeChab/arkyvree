@@ -23,6 +23,7 @@
  *   on a key no two rows share: OFFSET paging repeats or skips rows that tie.
  * - `shared-runtime`: `shared/` runs in the client too, and `engine/` computes over the data it's given, so neither uses
  *   Bun's APIs (`bun`, the `Bun` global) nor Node's (`node:fs`, `fs`).
+ * - `engine-sync`: `engine/` reads nothing, so nothing it does waits: no `async` function, no `await`, no `Promise`.
  * - `session-param`: a `Session` parameter is named `session` (`_session` when it's unused).
  * - `writes-in-transactions`: a repository write or lock (`methodVerbs.json`'s verbs) outside the repositories takes a
  *   transaction's handle, `tx` (`withTransaction(async (tx) => …)`), never the shared `db`: a write is atomic with the
@@ -404,6 +405,26 @@ function createEmptyListReads(context) {
       }
       // `if (ids.length > 0) { …a read of ids… }`
       if (readsOnly([node.consequent], list)) report(node);
+    },
+  };
+}
+
+function createEngineSync(context) {
+  if (!repoPath(context.filename).startsWith("engine/")) return {};
+  const message =
+    "`engine/` reads nothing, so nothing it does waits: it computes without `async`, `await` or a `Promise`.";
+  function checkAsync(node) {
+    if (node.async) context.report({ node, message });
+  }
+  return {
+    ArrowFunctionExpression: checkAsync,
+    AwaitExpression(node) {
+      context.report({ node, message });
+    },
+    FunctionDeclaration: checkAsync,
+    FunctionExpression: checkAsync,
+    TSTypeReference(node) {
+      if (node.typeName.type === "Identifier" && node.typeName.name === "Promise") context.report({ node, message });
     },
   };
 }
@@ -1134,6 +1155,7 @@ export default {
   "no-null-reads": { meta: { type: "suggestion" }, create: createNoNullReads },
   "order-through-repository": { meta: { type: "suggestion" }, create: createOrderThroughRepository },
   "shared-runtime": { meta: { type: "problem" }, create: createSharedRuntime },
+  "engine-sync": { meta: { type: "problem" }, create: createEngineSync },
   "session-param": { meta: { type: "suggestion" }, create: createSessionParam },
   "test-placement": { meta: { type: "suggestion" }, create: createTestPlacement },
   "policy-shape": { meta: { type: "problem" }, create: createPolicyShape },
