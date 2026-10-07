@@ -18,7 +18,7 @@ function familyGroup(): FeatGroup {
 
 export default class FeatGroupingsComponent {
   constructor(
-    private readonly detailedCharacterFeats: FeatsComponent,
+    private readonly feats: FeatsComponent,
     private readonly groupingProperties: readonly string[],
   ) {}
 
@@ -44,7 +44,7 @@ export default class FeatGroupingsComponent {
       if (variant === FAMILY_COUNT) continue;
 
       // Get the shared feat state ref from FeatsComponent
-      const featState = this.detailedCharacterFeats.getFeat(feat.name);
+      const featState = this.feats.getFeat(feat.name);
       if (!featState) continue;
 
       if (!this.featGroupings[normalizedFamily]) {

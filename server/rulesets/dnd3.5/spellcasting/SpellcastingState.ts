@@ -16,9 +16,9 @@ export default abstract class SpellcastingState {
     protected readonly classes: ClassesComponent,
     protected readonly abilities: AbilitiesComponent,
     protected readonly aptitudes: AptitudesComponent,
-    protected readonly characterPowers: PowersComponent,
+    protected readonly powers: PowersComponent,
     protected readonly powerGroupings: PowerGroupingsComponent,
-    protected readonly characterModifiers: ModifierEvaluator,
+    protected readonly modifierEvaluator: ModifierEvaluator,
   ) {}
 
   /**
@@ -98,7 +98,7 @@ export default abstract class SpellcastingState {
     };
 
     const joining = new Map<string, Set<string>>();
-    for (const modifier of this.characterModifiers.getModifiers().appliedModifiers) {
+    for (const modifier of this.modifierEvaluator.getModifiers().appliedModifiers) {
       const list = JOIN_TARGET.exec(modifier.target)?.[1];
       if (list === undefined || aptitudes[list]?.joinsclasslist !== true || modifier.value === "false") continue;
       const className = classOf(modifier);

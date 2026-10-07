@@ -15,7 +15,7 @@ const NAVIGATABLE_PATHS = [
 
 /** The saving throws' target paths: each save's components. */
 export default class SavesPaths implements PathCategory<Dnd35Components> {
-  static generateTargetPaths(saves: RulesetSave[], kind: "modifier" | "requirement"): TargetPath[] {
+  static generateSavePaths(saves: RulesetSave[], kind: "modifier" | "requirement"): TargetPath[] {
     const paths: TargetPath[] = [];
 
     for (const save of saves) {
@@ -56,7 +56,7 @@ export default class SavesPaths implements PathCategory<Dnd35Components> {
   readonly groupDescriptionTemplates = { saves: "{name} saving throw components" };
 
   generate(rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
-    return SavesPaths.generateTargetPaths(rulesetData.saves, kind);
+    return SavesPaths.generateSavePaths(rulesetData.saves, kind);
   }
 
   getSegmentLabels(): Record<string, string> {

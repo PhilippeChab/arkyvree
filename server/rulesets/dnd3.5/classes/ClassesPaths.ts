@@ -18,7 +18,7 @@ export default class ClassesPaths implements PathCategory<Dnd35Components> {
     return `classes.${stripSeparators(className)}.level`;
   }
 
-  static generateTargetPaths(klasses: Klass[], kind: "modifier" | "requirement"): TargetPath[] {
+  static generateClassPaths(klasses: Klass[], kind: "modifier" | "requirement"): TargetPath[] {
     const paths: TargetPath[] = [];
 
     for (const klass of klasses) {
@@ -57,7 +57,7 @@ export default class ClassesPaths implements PathCategory<Dnd35Components> {
   readonly groupDescriptionTemplates = { classes: "{name} class level and caster level" };
 
   generate(rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
-    return ClassesPaths.generateTargetPaths(rulesetData.klasses, kind);
+    return ClassesPaths.generateClassPaths(rulesetData.klasses, kind);
   }
 
   getSegmentLabels(): Record<string, string> {

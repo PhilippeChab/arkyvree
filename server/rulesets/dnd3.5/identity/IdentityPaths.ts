@@ -37,7 +37,7 @@ const SEGMENT_LABELS: Record<string, string> = {
 
 /** The identity's target paths: physiology, beliefs, background, level and XP. */
 export default class IdentityPaths implements PathCategory<Dnd35Components> {
-  static generateTargetPaths(kind: "modifier" | "requirement"): TargetPath[] {
+  static generateIdentityPaths(kind: "modifier" | "requirement"): TargetPath[] {
     const paths: TargetPath[] = [];
 
     for (const subPath of NAVIGATABLE_IDENTITY_PATHS) {
@@ -107,7 +107,7 @@ export default class IdentityPaths implements PathCategory<Dnd35Components> {
   };
 
   generate(_rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
-    return IdentityPaths.generateTargetPaths(kind);
+    return IdentityPaths.generateIdentityPaths(kind);
   }
 
   getSegmentLabels(): Record<string, string> {

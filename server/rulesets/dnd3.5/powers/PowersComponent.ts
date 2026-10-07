@@ -4,19 +4,6 @@ import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import { type Aptitude, type Power, type PowerWithAptitudes, type Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-/**
- * Spell known entries ({ [aptSlug]: { known } }) are bolted onto PowerEntry objects and onto standalone entries for
- * spells the character doesn't have. The traversal system navigates these via dot paths (e.g.
- * powers.magicmissile.wizard.known). getSpellEntry() encapsulates all known reads.
- *
- * Groupings (school/descriptor) live under the reserved `groups` key (powers.groups.<name>.<spellSlug>.dc.misc) to
- * avoid collisions with spells whose name matches a school name (e.g. the Cleric spell "Divination" vs the Divination
- * school).
- */
-type DetailedCharacterComprehensivePowers = {
-  [key: string]: PowerEntry | PowerGroupEntry | Record<string, { known: boolean }> | PowerGroupsNamespace;
-};
-
 type PowerEntry = {
   power: Power;
   /**
@@ -27,16 +14,29 @@ type PowerEntry = {
   /** Its DC as each of the character's classes casts it, by the class's aptitude slug. */
   dc?: PowerDcsByClass;
 };
+
 /** A grouping's spells, each with its DC as each class casts it */
 type PowerGroupEntry = Record<string, Record<string, { dc: PowerDc }>>;
-
 type PowerGroupsNamespace = Record<string, PowerGroupEntry>;
+
+/**
+ * Spell known entries ({ [aptSlug]: { known } }) are bolted onto PowerEntry objects and onto standalone entries for
+ * spells the character doesn't have. The traversal system navigates these via dot paths (e.g.
+ * powers.magicmissile.wizard.known). getSpellEntry() encapsulates all known reads.
+ *
+ * Groupings (school/descriptor) live under the reserved `groups` key (powers.groups.<name>.<spellSlug>.dc.misc) to
+ * avoid collisions with spells whose name matches a school name (e.g. the Cleric spell "Divination" vs the Divination
+ * school).
+ */
+type PowersData = {
+  [key: string]: PowerEntry | PowerGroupEntry | Record<string, { known: boolean }> | PowerGroupsNamespace;
+};
 
 export default class PowersComponent {
   /** `propertyValues`: a property type's options in their order (the ruleset's), which a spell lists its values in. */
   constructor(private readonly propertyValues: (type: string) => readonly string[] | null) {}
 
-  private readonly detailedCharacterPowers: DetailedCharacterComprehensivePowers = {};
+  private readonly powers: PowersData = {};
 
   addPowerEntries(powers: (Power & { properties: Property[] })[]) {
     for (const power of powers) {
@@ -44,14 +44,14 @@ export default class PowersComponent {
 
       // A spell already listed keeps what's on its entry: its known flags and its DCs by class
       const slug = stripSeparators(power.name);
-      this.detailedCharacterPowers[slug] = { ...this.detailedCharacterPowers[slug], power, properties: propertiesMap };
+      this.powers[slug] = { ...this.powers[slug], power, properties: propertiesMap };
     }
   }
 
   /** The spells as a sheet lists them: each property type's values joined, those modifiers add included. */
   getFlatPowers(): Record<string, Omit<PowerEntry, "properties"> & { properties: Record<string, string> }> {
     const result: Record<string, Omit<PowerEntry, "properties"> & { properties: Record<string, string> }> = {};
-    for (const [key, value] of Object.entries(this.detailedCharacterPowers)) {
+    for (const [key, value] of Object.entries(this.powers)) {
       if ("power" in value) {
         const entry = value as PowerEntry;
         result[key] = { ...entry, properties: formatPropertyValues(entry.properties, this.propertyValues) };
@@ -61,15 +61,15 @@ export default class PowersComponent {
   }
 
   getPower(name: string) {
-    return this.detailedCharacterPowers[stripSeparators(name)] as PowerEntry | undefined;
+    return this.powers[stripSeparators(name)] as PowerEntry | undefined;
   }
 
   getPowers() {
-    return this.detailedCharacterPowers;
+    return this.powers;
   }
 
   getSpellEntry(spellSlug: string, aptitudeSlug: string): { known: boolean } | undefined {
-    const entry = this.detailedCharacterPowers[spellSlug] as Record<string, { known: boolean }> | undefined;
+    const entry = this.powers[spellSlug] as Record<string, { known: boolean }> | undefined;
     return entry?.[aptitudeSlug];
   }
 
@@ -96,10 +96,10 @@ export default class PowersComponent {
         const aptSlug = aptitudeIdToSlug.get(pa.aptitudeId);
         if (!aptSlug) continue;
 
-        if (!this.detailedCharacterPowers[spellSlug]) {
-          this.detailedCharacterPowers[spellSlug] = {} as Record<string, { known: boolean }>;
+        if (!this.powers[spellSlug]) {
+          this.powers[spellSlug] = {} as Record<string, { known: boolean }>;
         }
-        (this.detailedCharacterPowers[spellSlug] as Record<string, { known: boolean }>)[aptSlug] = { known: false };
+        (this.powers[spellSlug] as Record<string, { known: boolean }>)[aptSlug] = { known: false };
       }
     }
 
@@ -108,9 +108,7 @@ export default class PowersComponent {
       const aptSlug = aptitudeIdToSlug.get(power.aptitudeId);
       if (!aptSlug) continue;
 
-      const spellEntry = this.detailedCharacterPowers[stripSeparators(power.name)] as
-        | Record<string, { known: boolean }>
-        | undefined;
+      const spellEntry = this.powers[stripSeparators(power.name)] as Record<string, { known: boolean }> | undefined;
       if (spellEntry?.[aptSlug]) {
         spellEntry[aptSlug].known = true;
       }
@@ -131,6 +129,6 @@ export default class PowersComponent {
       }
       namespace[key] = wrapped;
     }
-    this.detailedCharacterPowers.groups = namespace;
+    this.powers.groups = namespace;
   }
 }

@@ -28,7 +28,7 @@ type ArmorSlot = {
 const ARMOR_GROUPING_PROPERTIES = [ARMOR_TYPE] as const;
 
 export default class ArmorsComponent {
-  constructor(private readonly characterCombat: CombatComponent) {}
+  constructor(private readonly combat: CombatComponent) {}
 
   private readonly armors: ArmorsData = {};
 
@@ -80,7 +80,7 @@ export default class ArmorsComponent {
       this.armors[grouping] = armorSlot;
     }
 
-    this.characterCombat.addArmor(properties);
+    this.combat.addArmor(properties);
   }
 }
 

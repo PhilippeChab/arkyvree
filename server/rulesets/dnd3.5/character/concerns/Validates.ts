@@ -4,10 +4,10 @@ import type CharacterState from "@/server/rulesets/dnd3.5/character/CharacterSta
 import type { ValidationIssue, ValidationResult } from "@/server/rulesets/dnd3.5/character/CharacterState.ts";
 import RequirementEvaluator from "@/server/rulesets/engine/requirements/RequirementEvaluator.ts";
 import type {
-  FeatWithPMR,
+  CustomizedFeat,
+  CustomizedKlassLevel,
+  CustomizedPower,
   InventoryEntry,
-  KlassLevelWithPMR,
-  PowerWithPMR,
   RequirementIssue,
 } from "@/server/rulesets/engine/types.ts";
 import RequirementTree, { type RequirementNode } from "@/shared/customization/RequirementTree.ts";
@@ -131,11 +131,11 @@ export function Validates<B extends Constructor<CharacterState>>(Base: B) {
 
     private getDiagnosticsIndex() {
       if (this.diagnosticsIndex) return this.diagnosticsIndex;
-      const featsById = new Map<string, FeatWithPMR>();
+      const featsById = new Map<string, CustomizedFeat>();
       for (const f of this.feats) featsById.set(f.id, f);
-      const powersById = new Map<string, PowerWithPMR>();
+      const powersById = new Map<string, CustomizedPower>();
       for (const p of this.powers) powersById.set(p.id, p);
-      const klassLevelsById = new Map<string, KlassLevelWithPMR>();
+      const klassLevelsById = new Map<string, CustomizedKlassLevel>();
       for (const kl of this.klassLevels) klassLevelsById.set(kl.id, kl);
       const rulesetKlassesById = new Map<string, Klass>();
       for (const k of this.rulesetKlasses) rulesetKlassesById.set(k.id, k);

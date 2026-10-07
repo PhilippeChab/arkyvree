@@ -2,7 +2,7 @@ import type AbilitiesComponent from "@/server/rulesets/dnd3.5/abilities/Abilitie
 import type ClassesComponent from "@/server/rulesets/dnd3.5/classes/ClassesComponent.ts";
 import { type Character, type Language, type Race } from "@/shared/relations.ts";
 
-type DetailedCharacterComprehensiveIdentity = {
+type IdentityData = {
   physiology: {
     name: string;
     description: string;
@@ -29,22 +29,21 @@ type DetailedCharacterComprehensiveIdentity = {
 
 export default class IdentityComponent {
   constructor(
-    protected readonly characterAbilities: AbilitiesComponent,
-    protected readonly characterClasses: ClassesComponent,
+    protected readonly abilities: AbilitiesComponent,
+    protected readonly classes: ClassesComponent,
   ) {}
 
-  protected readonly detailedCharacterIdentity: DetailedCharacterComprehensiveIdentity =
-    {} as DetailedCharacterComprehensiveIdentity;
+  protected readonly identity: IdentityData = {} as IdentityData;
 
   getIdentity() {
-    return this.detailedCharacterIdentity;
+    return this.identity;
   }
 
   initialize(character: Character, race: Race, languages: Language[]) {
-    const classes = this.characterClasses.getClasses();
+    const classes = this.classes.getClasses();
     const level = Object.values(classes).reduce((acc, klass) => acc + klass.level, 0);
 
-    this.detailedCharacterIdentity.physiology = {
+    this.identity.physiology = {
       name: character.name,
       description: character.description || "",
       age: character.age ?? undefined,
@@ -54,16 +53,16 @@ export default class IdentityComponent {
       race,
       languages,
     };
-    this.detailedCharacterIdentity.beliefs = {
+    this.identity.beliefs = {
       deity: character.deity || "",
       alignment: character.alignment,
     };
-    this.detailedCharacterIdentity.background = {
+    this.identity.background = {
       notes: character.notes || "",
       privateNotes: character.privateNotes || "",
     };
 
-    this.detailedCharacterIdentity.meta = {
+    this.identity.meta = {
       level,
       xp: character.xp,
     };

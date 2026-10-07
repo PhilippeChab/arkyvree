@@ -53,6 +53,55 @@ export type Component = object;
 
 export type Components = Record<string, Component>;
 
+/**
+ * Feats live in one merged list whether they were picked, granted by a klass
+ * level, or virtually possessed via a `set feats.<slug>.possessed = true`
+ * modifier. Virtual entries carry `virtual: true` and use empty-string keys
+ * for klass/character/aptitude IDs so existing per-level lookups (which key
+ * by characterLevelId) skip them naturally without a flag check.
+ */
+export type CustomizedFeat = Feat & {
+  klassLevelId: string;
+  characterLevelId: string;
+  aptitudeId: string;
+  klassLevelFeatId?: string;
+  virtual?: boolean;
+  modifiers: Modifier[];
+  properties: Property[];
+  requirements: Requirement[];
+};
+
+export type CustomizedKlassLevel = KlassLevel & {
+  properties: Property[];
+  modifiers: Modifier[];
+  requirements: Requirement[];
+};
+
+/**
+ * Same shape rule as CustomizedFeat. `virtual: true` powers are spells granted
+ * by `set powers.<slug>.<apt>.known = true` modifiers; their klass/character
+ * level IDs are empty strings so per-level scans skip them. Pool accounting
+ * relies on `virtual` (or `free`, for klass-granted powers).
+ */
+export type CustomizedPower = Power & {
+  klassLevelId: string;
+  characterLevelId: string;
+  aptitudeId: string;
+  free?: boolean;
+  virtual?: boolean;
+  saveName: string | null;
+  powerLevel: number | null;
+  properties: Property[];
+  modifiers: Modifier[];
+  requirements: Requirement[];
+};
+
+export type CustomizedRace = Race & {
+  properties: Property[];
+  modifiers: Modifier[];
+  requirements: Requirement[];
+};
+
 export interface DetailedCharacterInterface {
   preload(): Promise<PreloadedCharacterData>;
   build(
@@ -81,24 +130,6 @@ export type DetailedCharacterWithSheet = {
   }>;
 };
 
-/**
- * Feats live in one merged list whether they were picked, granted by a klass
- * level, or virtually possessed via a `set feats.<slug>.possessed = true`
- * modifier. Virtual entries carry `virtual: true` and use empty-string keys
- * for klass/character/aptitude IDs so existing per-level lookups (which key
- * by characterLevelId) skip them naturally without a flag check.
- */
-export type FeatWithPMR = Feat & {
-  klassLevelId: string;
-  characterLevelId: string;
-  aptitudeId: string;
-  klassLevelFeatId?: string;
-  virtual?: boolean;
-  modifiers: Modifier[];
-  properties: Property[];
-  requirements: Requirement[];
-};
-
 export type InventoryEntry = CharacterInventory & {
   item: Item & {
     properties: Property[];
@@ -108,12 +139,6 @@ export type InventoryEntry = CharacterInventory & {
     /** Its other requirements, which its modifiers need */
     requirements: Requirement[];
   };
-};
-
-export type KlassLevelWithPMR = KlassLevel & {
-  properties: Property[];
-  modifiers: Modifier[];
-  requirements: Requirement[];
 };
 
 /**
@@ -151,42 +176,23 @@ export interface LoadedCharacterData {
   /** The spell lists a feat brings (a domain's, a specialist's school): their spells come with it, never learned. */
   featListIds: Set<string>;
   characterAbilityScores: { abilityId: string; name: string; score: number }[];
-  race: RaceWithPMR;
+  race: CustomizedRace;
   languages: Language[];
   inventory: InventoryEntry[];
   characterLevels: CharacterLevel[];
-  klassLevels: KlassLevelWithPMR[];
+  klassLevels: CustomizedKlassLevel[];
   klassSkills: KlassSkill[];
   klassLevelSaves: KlassLevelSave[];
   klasses: Klass[];
-  feats: FeatWithPMR[];
+  feats: CustomizedFeat[];
   skills: SkillWithRank[];
-  powers: PowerWithPMR[];
+  powers: CustomizedPower[];
   klassLevelFeatCountsByAptitudeId: Record<string, number>;
   klassLevelPowerCountsByAptitudeId: Record<string, number>;
   modifiers: Modifier[];
   requirementGroups: Requirement[][];
   validRulesetIds: Set<string>;
 }
-
-/**
- * Same shape rule as FeatWithPMR. `virtual: true` powers are spells granted
- * by `set powers.<slug>.<apt>.known = true` modifiers; their klass/character
- * level IDs are empty strings so per-level scans skip them. Pool accounting
- * relies on `virtual` (or `free`, for klass-granted powers).
- */
-export type PowerWithPMR = Power & {
-  klassLevelId: string;
-  characterLevelId: string;
-  aptitudeId: string;
-  free?: boolean;
-  virtual?: boolean;
-  saveName: string | null;
-  powerLevel: number | null;
-  properties: Property[];
-  modifiers: Modifier[];
-  requirements: Requirement[];
-};
 
 /**
  * Shared character data, the loader's `loadSharedData`.
@@ -222,12 +228,6 @@ export interface PropertyTypesProvider {
   getStaticPropertyTypes(entityType?: PropertyEntityType): Record<string, string>;
   getStaticPropertyValues(type: string): string[] | null;
 }
-
-export type RaceWithPMR = Race & {
-  properties: Property[];
-  modifiers: Modifier[];
-  requirements: Requirement[];
-};
 
 export type RequirementIssue = {
   category: "requirements";

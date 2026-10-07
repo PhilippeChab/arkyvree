@@ -9,7 +9,7 @@ import { computeLevelSkillPoints } from "@/shared/dnd3.5/skills.ts";
 import { type RulesetAbility, type Skill } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-type DetailedCharacterComprehensiveSkills = {
+type SkillsData = {
   [key: string]: {
     name: string;
     description?: string | null;
@@ -37,8 +37,8 @@ export function isSkillSubtypeOf(name: string, names: Set<string>): boolean {
 
 export default class SkillsComponent {
   constructor(
-    private readonly characterAbilities: AbilitiesComponent,
-    private readonly characterClasses: ClassesComponent,
+    private readonly abilities: AbilitiesComponent,
+    private readonly classes: ClassesComponent,
   ) {}
 
   private readonly skillBudget = { total: 0, available: 0, spent: 0, perlevel: 0 };
@@ -50,8 +50,7 @@ export default class SkillsComponent {
   /** Each skill's key ability, by the skill's slug. */
   private readonly abilityNameBySkill = new Map<string, string>();
 
-  private readonly detailedCharacterSkills: DetailedCharacterComprehensiveSkills =
-    {} as DetailedCharacterComprehensiveSkills;
+  private readonly skills: SkillsData = {} as SkillsData;
 
   private characterArmors: { getArmors(): ArmorsData } | null = null;
 
@@ -97,12 +96,12 @@ export default class SkillsComponent {
     const abilityName = this.skillPointAbilityId
       ? (this.skillPointRulesetAbilities.find((a) => a.id === this.skillPointAbilityId)?.name ?? null)
       : null;
-    return abilityName ? this.characterAbilities.getAbilityModifierExcludingMisc(abilityName) : 0;
+    return abilityName ? this.abilities.getAbilityModifierExcludingMisc(abilityName) : 0;
   }
 
   /** Ranks a bonded creature's hit dice past its stat block's give a skill. */
   addRanks(skillName: string, ranks: number): void {
-    const skill = this.detailedCharacterSkills[stripSeparators(skillName)];
+    const skill = this.skills[stripSeparators(skillName)];
     if (!skill || ranks === 0) return;
     skill.rank += ranks;
     skill.trained = true;
@@ -111,7 +110,7 @@ export default class SkillsComponent {
   /** Raises each skill's ranks to these, by skill slug, where they're better: a familiar's to its master's. */
   applyBetterRanks(ranks: Record<string, number>): void {
     for (const [slug, rank] of Object.entries(ranks)) {
-      const skill = this.detailedCharacterSkills[slug];
+      const skill = this.skills[slug];
       if (!skill || rank <= skill.rank) continue;
       skill.rank = rank;
       skill.trained = true;
@@ -124,7 +123,7 @@ export default class SkillsComponent {
     classSkillIds: Set<string>,
   ): (T & { isClassSkill: boolean; isCurrentClassSkill: boolean; currentRank: number })[] {
     return allSkills.map((skill) => {
-      const skillData = this.detailedCharacterSkills[stripSeparators(skill.name)];
+      const skillData = this.skills[stripSeparators(skill.name)];
       return {
         ...skill,
         isClassSkill: skillData?.innate ?? classSkillIds.has(skill.id),
@@ -158,7 +157,7 @@ export default class SkillsComponent {
    * skill point ability.
    */
   getSkillPointBases(): { pointsPerLevel: number[]; bonusPerLevel: number } {
-    const levels = Object.values(this.characterClasses.getClasses())
+    const levels = Object.values(this.classes.getClasses())
       .flatMap((klass) => klass.levels)
       .sort((a, b) => (a.characterLevel.createdAt < b.characterLevel.createdAt ? -1 : 1));
     return {
@@ -170,7 +169,7 @@ export default class SkillsComponent {
   }
 
   getSkills() {
-    return this.detailedCharacterSkills;
+    return this.skills;
   }
 
   getValidationIssues(characterLevel: number): ValidationIssue[] {
@@ -178,7 +177,7 @@ export default class SkillsComponent {
     const classSkillMaxRank = characterLevel + 3;
     const crossClassMaxRank = (characterLevel + 3) / 2;
 
-    for (const [, skill] of Object.entries(this.detailedCharacterSkills)) {
+    for (const [, skill] of Object.entries(this.skills)) {
       if (skill.rank <= 0) continue;
       const maxRank = skill.innate ? classSkillMaxRank : crossClassMaxRank;
       if (skill.rank > maxRank) {
@@ -199,7 +198,7 @@ export default class SkillsComponent {
     skillProperties?: Map<string, SkillFlags>,
   ) {
     this.raceSize = raceSize;
-    const classes = this.characterClasses.getClasses();
+    const classes = this.classes.getClasses();
 
     // Build ability ID -> name lookup
     const abilityNameById = new Map<string, string>();
@@ -261,12 +260,12 @@ export default class SkillsComponent {
       const invested = this.rankBySkillId.get(skill.id) ?? 0;
       const abilityName = abilityNameById.get(skill.primaryAbilityId) ?? "";
       this.abilityNameBySkill.set(stripSeparators(skill.name), abilityName);
-      const abilities = this.characterAbilities;
+      const abilities = this.abilities;
       const armorCheckPenalty = () => this.armorCheckPenalty();
 
       // The ability's modifier, the armor check penalty and the total are computed when read: they follow the
       // abilities, the armor and the load, and the parts
-      this.detailedCharacterSkills[stripSeparators(skill.name)] = {
+      this.skills[stripSeparators(skill.name)] = {
         name: skill.name,
         description: skill.description ?? undefined,
         trained: usableWithoutTraining ? true : invested !== 0,
@@ -313,10 +312,10 @@ export default class SkillsComponent {
    */
   setStatBlockTotal(skillName: string, total: number, ranks = 0): void {
     const slug = stripSeparators(skillName);
-    const skill = this.detailedCharacterSkills[slug];
+    const skill = this.skills[slug];
     if (!skill) return;
     const abilityName = this.abilityNameBySkill.get(slug);
-    const ability = abilityName ? this.characterAbilities.getAbilityModifierExcludingMisc(abilityName) : 0;
+    const ability = abilityName ? this.abilities.getAbilityModifierExcludingMisc(abilityName) : 0;
     skill.rank = ranks;
     skill.misc = total - ability - skill.size - ranks;
     skill.trained = total > 0;
@@ -327,7 +326,7 @@ export default class SkillsComponent {
   }
 
   updateSkillPointTotals() {
-    const classes = this.characterClasses.getClasses();
+    const classes = this.classes.getClasses();
 
     // Compute spent from actual skill ranks
     const spent = Object.values(classes).reduce(

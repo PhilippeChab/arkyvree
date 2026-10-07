@@ -6,7 +6,7 @@ import ClassesPaths from "@/server/rulesets/dnd3.5/classes/ClassesPaths.ts";
 import type SpellcastingState from "@/server/rulesets/dnd3.5/spellcasting/SpellcastingState.ts";
 import { SLOT_TARGET } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
 import { parseLiteralValue } from "@/server/rulesets/engine/paths/literalValue.ts";
-import type { Components, FeatWithPMR, KlassLevelWithPMR } from "@/server/rulesets/engine/types.ts";
+import type { Components, CustomizedFeat, CustomizedKlassLevel } from "@/server/rulesets/engine/types.ts";
 import type { CharacterLevel, Klass, KlassLevel, Modifier } from "@/shared/relations.ts";
 
 /** A character level's key in the index of the class levels the character took. */
@@ -20,8 +20,8 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
     /** Attributes each bonus klass level to the class level that granted it ("Mystic Theurge Level 3"). */
     private attributeBonusLevels(
       bonusKlassLevels: KlassLevel[],
-      klassLevels: KlassLevelWithPMR[],
-      feats: FeatWithPMR[],
+      klassLevels: CustomizedKlassLevel[],
+      feats: CustomizedFeat[],
       characterLevels: CharacterLevel[],
       rulesetKlasses: Klass[],
     ) {
@@ -71,7 +71,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
      * Each list a feat brings that it gives slots in (`featListIds`: a cleric's domain, a specialist wizard's school):
      * the class whose level gave the feat, and the feat's modifiers on the list's slots. A list stays with the first feat.
      */
-    private featListSlots(feats: FeatWithPMR[], featListIds: Set<string>) {
+    private featListSlots(feats: CustomizedFeat[], featListIds: Set<string>) {
       const aptitudes = this.aptitudes.getAptitudes();
       const classNameByKlassLevelId = this.classNameByKlassLevelId();
       const slotsByList = new Map<string, { className: string; featId: string; modifiers: Modifier[] }>();
@@ -97,8 +97,8 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
      */
     private grantingLevels(
       target: string,
-      klassLevels: KlassLevelWithPMR[],
-      feats: FeatWithPMR[],
+      klassLevels: CustomizedKlassLevel[],
+      feats: CustomizedFeat[],
       takenAt: Set<string>,
       rulesetKlassById: Map<string, Klass>,
     ) {
@@ -146,7 +146,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
      * feat's modifiers open their levels by the class's own level alone.
      */
     protected syncFeatListSlots(
-      feats: FeatWithPMR[],
+      feats: CustomizedFeat[],
       featListIds: Set<string>,
       isGateMet: (modifier: Modifier, metTargets?: string[]) => boolean,
     ) {
@@ -194,7 +194,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
      */
     applyBonusCasterLevelModifiers(
       components: Components,
-      feats: FeatWithPMR[],
+      feats: CustomizedFeat[],
       featListIds: Set<string>,
       isGateMet: (modifier: Modifier, metTargets?: string[]) => boolean,
     ) {
@@ -203,7 +203,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
       );
 
       for (const modifier of aptitudeModifiers) {
-        this.characterModifiers.evaluateModifier(modifier, components);
+        this.modifierEvaluator.evaluateModifier(modifier, components);
       }
 
       this.syncFeatListSlots(feats, featListIds, isGateMet);
@@ -211,8 +211,8 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
 
     fetchBonusCasterLevelData(
       rulesetData: RulesetData,
-      klassLevels: KlassLevelWithPMR[],
-      feats: FeatWithPMR[],
+      klassLevels: CustomizedKlassLevel[],
+      feats: CustomizedFeat[],
       characterLevels: CharacterLevel[],
       rulesetKlasses: Klass[],
     ) {

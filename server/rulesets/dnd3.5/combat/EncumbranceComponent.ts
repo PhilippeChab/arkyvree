@@ -7,7 +7,7 @@ import {
   QUADRUPED_SIZE_CARRY_MULTIPLIERS,
   SIZE_CARRY_MULTIPLIERS,
 } from "@/server/rulesets/dnd3.5/constants.ts";
-import type { RaceWithPMR } from "@/server/rulesets/engine/types.ts";
+import type { CustomizedRace } from "@/server/rulesets/engine/types.ts";
 import { RACE_QUADRUPED } from "@/shared/dnd3.5/properties/index.ts";
 import type { CharacterInventory, Item, Modifier, Property, Requirement } from "@/shared/relations.ts";
 
@@ -30,7 +30,7 @@ export type EncumbranceData = {
 };
 
 export default class EncumbranceComponent {
-  constructor(private readonly characterAbilities: AbilitiesComponent) {}
+  constructor(private readonly abilities: AbilitiesComponent) {}
 
   private raceSize = "Medium";
 
@@ -80,7 +80,7 @@ export default class EncumbranceComponent {
 
   /** The heaviest load the character carries: its strength's, for its size and legs. */
   private getHeavyLoad(): number {
-    const strTotal = this.characterAbilities.getAbility("Strength")?.total ?? 0;
+    const strTotal = this.abilities.getAbility("Strength")?.total ?? 0;
     const sizeMultiplier =
       (this.quadruped ? QUADRUPED_SIZE_CARRY_MULTIPLIERS : SIZE_CARRY_MULTIPLIERS)[this.raceSize] ?? 1;
     return Math.floor(this.getCarryingCapacity(strTotal) * sizeMultiplier);
@@ -107,7 +107,7 @@ export default class EncumbranceComponent {
     return this.encumbrance;
   }
 
-  initialize(inventory: RawInventoryEntry[], race: RaceWithPMR): void {
+  initialize(inventory: RawInventoryEntry[], race: CustomizedRace): void {
     this.raceSize = race.size;
     this.quadruped = race.properties.some((p) => p.type === RACE_QUADRUPED && p.value === "true");
 

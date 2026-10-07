@@ -11,9 +11,9 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
   abstract class WithArmorClass extends Base {
     /** Dexterity's bonus to AC, capped by the lowest maximum of the armor, the shield and the load. */
     private dexterityAc(): number {
-      const armorCaps = [...new Set(Object.values(this.detailedCharacterCombat.armors))].map((armor) => armor.maxdex);
-      const cap = Math.min(...armorCaps, this.shieldMaxDex, this.detailedCharacterCombat.encumbrance.maxdex);
-      const dexterity = this.characterAbilities.getAbilityModifier("Dexterity");
+      const armorCaps = [...new Set(Object.values(this.combat.armors))].map((armor) => armor.maxdex);
+      const cap = Math.min(...armorCaps, this.shieldMaxDex, this.combat.encumbrance.maxdex);
+      const dexterity = this.abilities.getAbilityModifier("Dexterity");
       return cap === Infinity ? dexterity : Math.min(dexterity, cap);
     }
 
@@ -32,7 +32,7 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
       const equippedAc = (slots: ArmorsData | ShieldsData) => this.equippedAc(slots);
       const dexterityAc = () => this.dexterityAc();
       const size = () => SIZE_AC_ATTACK_MOD[this.raceSize] ?? 0;
-      const combat = this.detailedCharacterCombat;
+      const combat = this.combat;
       let armorBonus = 0;
       let shieldBonus = 0;
       combat.ac = {
@@ -88,7 +88,7 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
     addArmor(properties: { type: string; value: string }[]) {
       const category = properties.find((property) => property.type === ARMOR_PROFICIENCY)?.value.toLowerCase();
       const worn = ARMOR_CATEGORIES.find((armor) => armor === category);
-      const { armor } = this.detailedCharacterCombat;
+      const { armor } = this.combat;
       if (worn && ARMOR_CATEGORIES.indexOf(worn) > ARMOR_CATEGORIES.indexOf(armor.category)) armor.category = worn;
     }
 
@@ -96,7 +96,7 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
     addShield(properties: { type: string; value: string }[]) {
       const category = properties.find((property) => property.type === SHIELD_PROFICIENCY)?.value;
       if (!category) return;
-      this.detailedCharacterCombat.shield.held = true;
+      this.combat.shield.held = true;
       if (category === "Tower") this.towerShield = true;
       const dexterityLimitation = properties.find((property) => property.type === ARMOR_MAX_DEX)?.value ?? null;
       if (dexterityLimitation) {
@@ -105,11 +105,11 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
     }
 
     setArmorsData(armors: ArmorsData): void {
-      this.detailedCharacterCombat.armors = armors;
+      this.combat.armors = armors;
     }
 
     setShieldsData(shields: ShieldsData): void {
-      this.detailedCharacterCombat.shields = shields;
+      this.combat.shields = shields;
     }
   }
   return WithArmorClass;

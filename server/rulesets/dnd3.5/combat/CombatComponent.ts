@@ -2,7 +2,7 @@ import { include } from "@/server/mixins.ts";
 import type EncumbranceComponent from "@/server/rulesets/dnd3.5/combat/EncumbranceComponent.ts";
 import { UNARMED_STRIKE } from "@/server/rulesets/dnd3.5/constants.ts";
 import type SkillsComponent from "@/server/rulesets/dnd3.5/skills/SkillsComponent.ts";
-import type { RaceWithPMR } from "@/server/rulesets/engine/types.ts";
+import type { CustomizedRace } from "@/server/rulesets/engine/types.ts";
 import {
   DAMAGE_TYPE,
   WEAPON_BASE_DAMAGE,
@@ -15,19 +15,19 @@ import { type CharacterLevel } from "@/shared/relations.ts";
 
 import { ArmorClass } from "./ArmorClass.ts";
 import { Attacks } from "./Attacks.ts";
-import CombatState, { type DetailedCharacterComprehensiveCombat } from "./CombatState.ts";
+import CombatState, { type CombatData } from "./CombatState.ts";
 import { HitPoints } from "./HitPoints.ts";
 import { InitiativeAndSpeed } from "./InitiativeAndSpeed.ts";
 
 class CombatComponent extends include(CombatState, ArmorClass, Attacks, HitPoints, InitiativeAndSpeed) {
-  getCombat(): DetailedCharacterComprehensiveCombat {
-    return this.detailedCharacterCombat;
+  getCombat(): CombatData {
+    return this.combat;
   }
 
-  initialize(race: RaceWithPMR, klassLevelProperties: Map<string, { bab: number; skills: number }>) {
+  initialize(race: CustomizedRace, klassLevelProperties: Map<string, { bab: number; skills: number }>) {
     this.raceSize = race.size;
 
-    const classes = this.characterClasses.getClasses();
+    const classes = this.classes.getClasses();
     const levels = Object.values(classes).reduce((acc, klass) => {
       for (const level of klass.levels) {
         acc.push(level.characterLevel);
@@ -55,7 +55,7 @@ class CombatComponent extends include(CombatState, ArmorClass, Attacks, HitPoint
   /** The encumbrance the sheet shows: the encumbrance's own object, so what changes it (a modifier) is what's read. */
   setEncumbranceSource(encumbrance: EncumbranceComponent) {
     this.characterEncumbrance = encumbrance;
-    this.detailedCharacterCombat.encumbrance = encumbrance.getEncumbrance();
+    this.combat.encumbrance = encumbrance.getEncumbrance();
   }
 
   setSkills(skills: SkillsComponent) {

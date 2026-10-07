@@ -612,7 +612,7 @@ An audit on 2026-04-16 identified real leaks and some false alarms:
 - `server/routers/api/characters/levels/` had 3.5-shaped query params (`powerLevel`, `excludeSchools`) — moved under `dnd3.5/`.
 
 **Not leaks (confirmed generic):**
-- `SkillWithRank.rank: number`, `PowerWithPMR.powerLevel: number | null`, `PowerWithPMR.saveName: string | null` — neutral primitive fields with 3.5-flavored seeded content but no schema constraint forcing 3.5 semantics.
+- `SkillWithRank.rank: number`, `CustomizedPower.powerLevel: number | null`, `CustomizedPower.saveName: string | null` — neutral primitive fields with 3.5-flavored seeded content but no schema constraint forcing 3.5 semantics.
 - Aptitudes, saves, requirements/modifiers/properties tables — generic primitives; see "What's intentionally generic" above.
 - `SavingThrowsComponent` (`dnd3.5/saves/`) — iterates generic save data, no 3.5 hardcoding.
 - Alignment path in `IdentityComponent` — "alignment" is a fantasy-RPG convention, string field value is content-level.

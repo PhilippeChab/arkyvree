@@ -3,7 +3,7 @@ import type ClassesComponent from "@/server/rulesets/dnd3.5/classes/ClassesCompo
 import type { KlassLevelSave, RulesetAbility, RulesetSave } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-type DetailedCharacterComprehensiveSavingThrows = {
+type SavingThrowsData = {
   [key: string]: {
     name: string;
     base: number;
@@ -15,25 +15,24 @@ type DetailedCharacterComprehensiveSavingThrows = {
 
 export default class SavingThrowsComponent {
   constructor(
-    private readonly characterAbilities: AbilitiesComponent,
-    private readonly characterClasses: ClassesComponent,
+    private readonly abilities: AbilitiesComponent,
+    private readonly classes: ClassesComponent,
   ) {}
 
-  private readonly detailedCharacterSavingThrows: DetailedCharacterComprehensiveSavingThrows =
-    {} as DetailedCharacterComprehensiveSavingThrows;
+  private readonly savingThrows: SavingThrowsData = {} as SavingThrowsData;
 
-  getSavingThrow(savingThrowName: string): DetailedCharacterComprehensiveSavingThrows[string] {
-    return this.detailedCharacterSavingThrows[stripSeparators(savingThrowName)];
+  getSavingThrow(savingThrowName: string): SavingThrowsData[string] {
+    return this.savingThrows[stripSeparators(savingThrowName)];
   }
 
-  getSavingThrows(): DetailedCharacterComprehensiveSavingThrows {
-    return this.detailedCharacterSavingThrows;
+  getSavingThrows(): SavingThrowsData {
+    return this.savingThrows;
   }
 
   initialize(saves: RulesetSave[], rulesetAbilities: RulesetAbility[], klassLevelSaves: KlassLevelSave[]) {
     const abilityNames = new Map(rulesetAbilities.map((a) => [a.id, a.name]));
     const saveBaseValues = new Map<string, number>();
-    const classes = this.characterClasses.getClasses();
+    const classes = this.classes.getClasses();
     for (const klass of Object.values(classes)) {
       const lastLevel = klass.levels.at(-1);
       if (lastLevel) {
@@ -48,10 +47,10 @@ export default class SavingThrowsComponent {
       const normalizedName = stripSeparators(save.name);
       const abilityName = abilityNames.get(save.abilityId) ?? "Unknown";
       const base = saveBaseValues.get(save.id) ?? 0;
-      const abilities = this.characterAbilities;
+      const abilities = this.abilities;
 
       // The ability's modifier and the total are computed when read, so they follow the abilities and the parts
-      this.detailedCharacterSavingThrows[normalizedName] = {
+      this.savingThrows[normalizedName] = {
         name: save.name,
         base,
         get ability() {
