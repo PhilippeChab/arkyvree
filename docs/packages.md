@@ -30,9 +30,9 @@ database/packages/
     ├── index.ts          # The core rules package
     ├── names.ts          # Ruleset display names
     ├── extensions/       # One file per extension package
-    ├── content/          # What the data is written with: a folder per kind of content, its types and builders
+    ├── content/          # What the data is written with: a folder per kind of content, its types, its builders and the tables they read
     │   ├── customization/    # Requirement, modifier and property types; eq(), gte(), or(), feat(), bonus()…
-    │   ├── items/            # ItemDef; weapon, armor and shield properties and proficiencies (simple(), martial()…)
+    │   ├── items/            # ItemDef; the weapon, armor and shield tables, their properties and proficiencies (simple(), martial()…)
     │   ├── classes/          # ClassSeed; the class level each of a class's spell levels opens at
     │   ├── feats/, spells/, races/, domains/   # FeatSeed; PowerSeed, SpellSeed; RaceDefinition; DomainDefinition
     │   ├── wizardSchools/    # WizardSchoolDefinition; the wizard's school feats
@@ -41,7 +41,7 @@ database/packages/
     │   └── rulesets/         # CoreContent, BookContent: what a ruleset is seeded with
     ├── data/             # The hand-written data
     │   ├── core.ts           # The core ruleset, its abilities, saves, skills, languages, and CORE: all it's seeded with
-    │   ├── skills.ts, weapons.ts, creatureTypes.ts, templateItems.ts
+    │   ├── skills.ts, creatureTypes.ts, templateItems.ts
     │   ├── bonds/            # Familiars, animal companions, special mounts
     │   └── feats/            # Favored enemy, deity's weapon, the weapon feats
     └── seed/             # What writes it to the database
@@ -73,7 +73,7 @@ database/packages/dnd35-from-parser/
         └── code/             # A file's code: CodeFile (its lines, the names they use), FeatsFile
 ```
 
-`content/` and `data/` never touch the database: the generated data, the parser and the seeds import them. `generated/` holds only what the generator writes; hand-written content goes in `data/`, what content is written with in `content/`.
+`content/` and `data/` never touch the database: the generated data, the parser and the seeds import them. `generated/` holds only what the generator writes; hand-written content goes in `data/`, what content is written with in `content/`, which imports none of them (`arkyvree/layers`): a table a builder reads (the weapons, the armor) is content.
 
 ## How seeds work
 

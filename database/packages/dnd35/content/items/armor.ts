@@ -1,3 +1,5 @@
+/** The armor and shield tables: each base armor and shield type's definition, which its properties are read from. */
+
 type ArmorCategory = "Light" | "Medium" | "Heavy";
 interface ArmorDefinition {
   armorType: ArmorCategory;
@@ -44,10 +46,12 @@ const SHIELD_TYPE_DEFINITIONS: Record<string, ShieldDefinition> = {
   "Tower Shield": { shieldType: "Tower", acBonus: 4, checkPenalty: -10, spellFailure: 50 },
 };
 
-export function getArmorDefinition(armorTypeName: string): ArmorDefinition | null {
-  return ARMOR_TYPE_DEFINITIONS[armorTypeName] ?? null;
+/** The armor type `armorTypeName`'s definition: none for a name the table doesn't have. */
+export function getArmorDefinition(armorTypeName: string): ArmorDefinition | undefined {
+  return ARMOR_TYPE_DEFINITIONS[armorTypeName];
 }
 
-export function getShieldDefinition(shieldTypeName: string): ShieldDefinition | null {
-  return SHIELD_TYPE_DEFINITIONS[shieldTypeName] ?? null;
+/** The shield type `shieldTypeName`'s definition: none for a name the table doesn't have. */
+export function getShieldDefinition(shieldTypeName: string): ShieldDefinition | undefined {
+  return SHIELD_TYPE_DEFINITIONS[shieldTypeName];
 }

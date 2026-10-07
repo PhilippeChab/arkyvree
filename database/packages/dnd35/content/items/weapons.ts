@@ -1,3 +1,8 @@
+/**
+ * The weapons: the weapon table (each base weapon type's definition, which its properties and proficiency are read
+ * from), and the weapons by proficiency, which the weapon feats and the proficiency requirements name.
+ */
+
 type DamageType = "Bludgeoning" | "Piercing" | "Slashing";
 
 interface WeaponDefinition {
@@ -14,8 +19,13 @@ interface WeaponDefinition {
   mighty?: number;
   /** Its penalty on attack rolls in one hand (WEAPON_ONE_HANDED_PENALTY): a crossbow's, which takes two hands to load. */
   oneHandedPenalty?: number;
-  /** Too large for one hand without training (WEAPON_ONE_HAND_TRAINING): a bastard sword, a dwarven waraxe. */
+  /**
+   * Too large for one hand without training (WEAPON_ONE_HAND_TRAINING): a bastard sword, a dwarven waraxe. A character
+   * can use it two-handed as a martial weapon.
+   */
   oneHandTraining?: true;
+  /** The race that treats it as a martial weapon (its weapon familiarity): a dwarf's waraxe and urgrosh, a gnome's hooked hammer. */
+  familiarity?: string;
   /** A double weapon's other end's damage dice (WEAPON_DOUBLE_DAMAGE): in two hands, it fights as two weapons. */
   doubleDamage?: string;
   damageTypes: DamageType[];
@@ -90,14 +100,14 @@ const WEAPON_TYPE_DEFINITIONS: Record<string, WeaponDefinition> = {
   "Sai": { proficiency: "Exotic", family: "Monk", baseDamage: "1d4", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Bludgeoning"], size: "Small", range: 10, finessable: true },
   "Siangham": { proficiency: "Exotic", family: "Monk", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Piercing"], size: "Small", finessable: true },
   "Bastard Sword": { proficiency: "Exotic", family: "Sword", baseDamage: "1d10", criticalRange: 2, criticalMultiplier: 2, oneHandTraining: true, damageTypes: ["Slashing"], size: "Medium" },
-  "Dwarven Waraxe": { proficiency: "Exotic", family: "Axe", baseDamage: "1d10", criticalRange: 1, criticalMultiplier: 3, oneHandTraining: true, damageTypes: ["Slashing"], size: "Medium" },
+  "Dwarven Waraxe": { proficiency: "Exotic", family: "Axe", baseDamage: "1d10", criticalRange: 1, criticalMultiplier: 3, oneHandTraining: true, damageTypes: ["Slashing"], size: "Medium" , familiarity: "Dwarf" },
   "Whip": { proficiency: "Exotic", family: "Flail", baseDamage: "1d3", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Slashing"], size: "Medium", reach: 15, finessable: true },
   "Spiked Chain": { proficiency: "Exotic", family: "Flail", baseDamage: "2d4", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Piercing"], size: "Large", reach: 10, finessable: true },
   "Dire Flail": { proficiency: "Exotic", family: "Flail", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 2, doubleDamage: "1d8", damageTypes: ["Bludgeoning"], size: "Large" },
-  "Gnome Hooked Hammer": { proficiency: "Exotic", family: "Hammer", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, doubleDamage: "1d6", damageTypes: ["Bludgeoning", "Piercing"], size: "Large" },
+  "Gnome Hooked Hammer": { proficiency: "Exotic", family: "Hammer", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, doubleDamage: "1d6", damageTypes: ["Bludgeoning", "Piercing"], size: "Large" , familiarity: "Gnome" },
   "Orc Double Axe": { proficiency: "Exotic", family: "Axe", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, doubleDamage: "1d8", damageTypes: ["Slashing"], size: "Large" },
   "Two-Bladed Sword": { proficiency: "Exotic", family: "Sword", baseDamage: "1d8", criticalRange: 2, criticalMultiplier: 2, doubleDamage: "1d8", damageTypes: ["Slashing"], size: "Large" },
-  "Dwarven Urgrosh": { proficiency: "Exotic", family: "Axe", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, doubleDamage: "1d6", damageTypes: ["Slashing", "Piercing"], size: "Large" },
+  "Dwarven Urgrosh": { proficiency: "Exotic", family: "Axe", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, doubleDamage: "1d6", damageTypes: ["Slashing", "Piercing"], size: "Large" , familiarity: "Dwarf" },
   "Hand Crossbow": { proficiency: "Exotic", family: "Crossbow", baseDamage: "1d4", criticalRange: 2, criticalMultiplier: 2, ranged: true, strengthDamage: "None", damageTypes: ["Piercing"], size: "Tiny", range: 30 },
   "Repeating Heavy Crossbow": { proficiency: "Exotic", family: "Crossbow", baseDamage: "1d10", criticalRange: 2, criticalMultiplier: 2, ranged: true, strengthDamage: "None", oneHandedPenalty: -4, damageTypes: ["Piercing"], size: "Medium", range: 120 },
   "Repeating Light Crossbow": { proficiency: "Exotic", family: "Crossbow", baseDamage: "1d8", criticalRange: 2, criticalMultiplier: 2, ranged: true, strengthDamage: "None", oneHandedPenalty: -2, damageTypes: ["Piercing"], size: "Small", range: 80 },
@@ -106,6 +116,88 @@ const WEAPON_TYPE_DEFINITIONS: Record<string, WeaponDefinition> = {
   "Shuriken": { proficiency: "Exotic", family: "Monk", baseDamage: "1d2", criticalRange: 1, criticalMultiplier: 2, ranged: true, damageTypes: ["Piercing"], size: "Tiny", range: 10 },
 };
 
-export function getWeaponDefinition(weaponTypeName: string): WeaponDefinition | null {
-  return WEAPON_TYPE_DEFINITIONS[weaponTypeName] ?? null;
+export const EXOTIC_WEAPONS = [
+  "Kama",
+  "Nunchaku",
+  "Sai",
+  "Siangham",
+  "Bastard Sword",
+  "Dwarven Waraxe",
+  "Whip",
+  "Orc Double Axe",
+  "Spiked Chain",
+  "Dire Flail",
+  "Two-Bladed Sword",
+  "Dwarven Urgrosh",
+  "Gnome Hooked Hammer",
+  "Shuriken",
+  "Hand Crossbow",
+  "Repeating Heavy Crossbow",
+  "Repeating Light Crossbow",
+  "Net",
+  "Bolas",
+];
+
+export const MARTIAL_WEAPONS = [
+  "Throwing Axe",
+  "Light Hammer",
+  "Handaxe",
+  "Kukri",
+  "Light Pick",
+  "Sap",
+  "Short Sword",
+  "Battleaxe",
+  "Flail",
+  "Longsword",
+  "Heavy Pick",
+  "Rapier",
+  "Scimitar",
+  "Trident",
+  "Warhammer",
+  "Falchion",
+  "Glaive",
+  "Greataxe",
+  "Greatclub",
+  "Heavy Flail",
+  "Greatsword",
+  "Guisarme",
+  "Halberd",
+  "Lance",
+  "Ranseur",
+  "Scythe",
+  "Shortbow",
+  "Composite Shortbow",
+  "Longbow",
+  "Composite Longbow",
+];
+
+export const SIMPLE_WEAPONS = [
+  "Gauntlet",
+  "Unarmed Strike",
+  "Dagger",
+  "Punching Dagger",
+  "Spiked Gauntlet",
+  "Light Mace",
+  "Sickle",
+  "Club",
+  "Heavy Mace",
+  "Morningstar",
+  "Shortspear",
+  "Longspear",
+  "Quarterstaff",
+  "Spear",
+  "Heavy Crossbow",
+  "Light Crossbow",
+  "Dart",
+  "Javelin",
+  "Sling",
+];
+
+export const ALL_WEAPONS = [...SIMPLE_WEAPONS, ...MARTIAL_WEAPONS, ...EXOTIC_WEAPONS];
+
+export const CROSSBOW_WEAPONS = ALL_WEAPONS.filter((w) => w.toLowerCase().includes("crossbow"));
+
+/** The weapon type `weaponTypeName`'s definition: none for a name the table doesn't have. */
+export function getWeaponDefinition(weaponTypeName: string): WeaponDefinition | undefined {
+  return WEAPON_TYPE_DEFINITIONS[weaponTypeName];
 }

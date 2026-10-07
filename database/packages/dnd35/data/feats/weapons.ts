@@ -2,7 +2,7 @@
 
 import { gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
-import { MARTIAL_WEAPONS, SIMPLE_WEAPONS } from "@/database/packages/dnd35/data/weapons.ts";
+import { MARTIAL_WEAPONS, SIMPLE_WEAPONS } from "@/database/packages/dnd35/content/items/weapons.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 
 /**

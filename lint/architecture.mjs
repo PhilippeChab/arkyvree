@@ -4,7 +4,8 @@
  * - `layers`: a layer imports only what's below it (database < repositories < cache < copy-on-write's writes <
  *   the engine < services < jobs < routers; the middlewares sit on the repositories, beside the services). The cache
  *   holds copy-on-write's read side (the view a ruleset's reads see), `cow/` its write side. The server reads the
- *   content packages, never the seeders.
+ *   content packages, never the seeders. A content package's `content/` (the types and builders its data is written
+ *   with, and the tables they read) imports nothing of its data, its seeder, its extensions, the parser or the server.
  *   `shared/` imports nothing app-specific (the schema's types only), and the client takes only types from the server.
  * - `queries-in-repositories`: a query is built in `server/repositories/` or `server/database/` (what talks to Postgres
  *   itself: the job queue, a channel's notifications, its health), nowhere else in the server. A transaction's handle
@@ -71,6 +72,17 @@ const LAYERS = [
   { layer: "server/middlewares/", deny: ["server/services/", "server/jobs/", "server/routers/"] },
   // The server reads the content packages' data (a new ruleset's template items), never the seeders or scripts.
   { layer: "server/", deny: ["database/"], allow: ["database/packages/"] },
+  // What a content package's data is written with: below its data, its seeder and what generates it
+  {
+    layer: "database/packages/dnd35/content/",
+    deny: [
+      "database/packages/dnd35/data/",
+      "database/packages/dnd35/seed/",
+      "database/packages/dnd35/extensions/",
+      "database/packages/dnd35-from-parser/",
+      "server/",
+    ],
+  },
   { layer: "shared/", deny: ["server/", "client/", "database/", "drizzle/"], types: ["drizzle/"] },
   { layer: "client/", deny: ["server/", "database/", "drizzle/"], types: ["server/", "drizzle/"] },
 ];

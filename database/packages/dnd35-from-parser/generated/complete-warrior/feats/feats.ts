@@ -1,6 +1,6 @@
 import { eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
-import { ALL_WEAPONS } from "@/database/packages/dnd35/data/weapons.ts";
+import { ALL_WEAPONS } from "@/database/packages/dnd35/content/items/weapons.ts";
 
 export const DIVINE_FEATS: FeatSeed[] = [
   {

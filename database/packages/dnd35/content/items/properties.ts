@@ -1,8 +1,8 @@
 /** Builders the generated items are written with: their weapon, armor or shield properties. */
 
 import type { Property } from "@/database/packages/dnd35/content/customization/types.ts";
-import { getArmorDefinition, getShieldDefinition } from "@/database/packages/dnd35/data/armorDefinitions.ts";
-import { getWeaponDefinition } from "@/database/packages/dnd35/data/weaponDefinitions.ts";
+import { getArmorDefinition, getShieldDefinition } from "@/database/packages/dnd35/content/items/armor.ts";
+import { getWeaponDefinition } from "@/database/packages/dnd35/content/items/weapons.ts";
 import {
   ARMOR_AC_BONUS,
   ARMOR_CHECK_PENALTY,

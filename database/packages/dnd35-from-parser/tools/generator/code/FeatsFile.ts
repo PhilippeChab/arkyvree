@@ -41,7 +41,7 @@ export type TemplateFamily = {
 const IMPORTS: ImportTable = [
   ...REQUIREMENT_IMPORTS,
   [
-    "@/database/packages/dnd35/data/weapons.ts",
+    "@/database/packages/dnd35/content/items/weapons.ts",
     ["ALL_WEAPONS", "SIMPLE_WEAPONS", "MARTIAL_WEAPONS", "EXOTIC_WEAPONS", "CROSSBOW_WEAPONS"],
   ],
   ["@/database/packages/dnd35/content/items/proficiencies.ts", ["proficiencyRequirements"]],
