@@ -105,24 +105,35 @@ server/
   services/             # One folder per service, laid out like routers/api
     campaigns/          # Campaign, player, invite services
     characters/         # Character, inventory, levels, modifiers services
-      levels/           # Level-up wizard (slot queries, pick queries, finalize, batch)
+      levels/           # Level-up wizard (slot queries, pick queries, finalize): reads, asks the engine, writes
     rulesets/           # Ruleset entity services (feats, powers, classes, etc.)
       customization/    # Modifiers, requirements, properties, target paths
     policies/           # Authorization policies
   repositories/         # Database access layer (Drizzle ORM), in folders by domain
-  rulesets/             # Ruleset engine; RulesetFactory picks a ruleset's module
-    engine/             # Machinery: modifiers, requirements, path traversal, the module's contract
-    dnd3.5/             # D&D 3.5e: the character, its components by domain, rules and effects, sheet
+  cow/                  # Copy-on-write's writes: the copy of an inherited entity, the rows a change writes
   middlewares/          # Session, rate limiting, request logging
   errors/               # Error classes
-  cache/                # In-memory cache (ruleset COW data)
+  cache/                # In-memory cache (a ruleset's rows, its COW data, its target paths)
   database/             # Database connection and request-scoped query cache
   jobs/                 # Background jobs run by the worker (PDF export, emails, cleanup)
   emails/               # Email templates and sending
   storage/              # S3 attachment storage
 
+engine/                 # The ruleset engine: computes a ruleset's rules over the rows it's given, reads and writes nothing
+  index.ts              # Its one entry: the operations the server, the seeders and the codegen call
+  api/                  # The operations, each dispatched to the ruleset's module by its base rules
+  core/                 # Machinery: modifiers, requirements, the path language, the ruleset view, COW data, the module's contract
+  rulesets/dnd3.5/      # D&D 3.5e: the character, its components by domain, its entities, level-ups and printed sheet
+
+content/
+  dnd3.5/               # The 3.5 content: its builders, its hand-written data, the generated books
+
+codegen/
+  dnd3.5/               # The SRD scraper and generator: reference files, and the tools that write content/dnd3.5/generated
+
 database/
-  packages/             # Content packages (dnd35, extensions)
+  packages/             # Content packages (dnd35, extensions), their runner and seeders
+  seeds/                # Development seed data (users, characters)
 
 drizzle/
   schema.ts             # Database schema (and relations.ts), pulled from the database
@@ -133,7 +144,7 @@ shared/                 # Types and utilities shared between client and server
 tests/
   routers/              # API route tests
   services/             # Service-level tests
-  rulesets/             # Character computation, target paths, requirements
+  engine/               # The engine: character computation, target paths, requirements, level-ups, sheets
   seeds/                # Seed data integrity tests
   cache/                # Cache tests
   client/               # Client logic that needs no browser
@@ -150,7 +161,7 @@ tests/
 
 **Ruleset system:** Rulesets support COW forking (edit inherited content without modifying the parent), extensions, publishing, and multi-contributor collaboration. See [docs/rulesets.md](./docs/rulesets.md).
 
-**Character engine:** `DetailedCharacter` builds a complete character state from raw DB records, evaluating modifiers, requirements, and properties. Supports "projected" builds for simulating level-ups before committing.
+**Ruleset engine:** `engine/` computes every ruleset rule over the data the server reads, through one entry (`engine/index.ts`): its operations take a ruleset's view, a character's rows or a request's body, and answer descriptions, plans of the writes the server makes, or refusals. A ruleset's module (`engine/rulesets/dnd3.5/`) builds a complete character state from its rows, evaluating modifiers, requirements, and properties, and projects level-ups before they're saved.
 
 ## Community
 

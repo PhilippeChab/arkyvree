@@ -1,6 +1,7 @@
 /**
  * The D&D 3.5 property types: each entity type's, in the order a stat block shows them, with what each means, and the
- * values each takes. The ruleset cache orders every entity's properties by them (`sortProperties`).
+ * values each takes. The 3.5 module's view orders every entity's properties by them (`sortProperties`, its
+ * `orderProperties`).
  */
 
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";

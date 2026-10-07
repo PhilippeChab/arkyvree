@@ -121,8 +121,8 @@ function createEngineFrontDoor(context) {
 function createFolderIndex(context) {
   const root = rootOf(context.filename);
   const file = repoPath(context.filename);
-  // The server and the client hold to it. A test may reach a folder's own modules, and the seeders and the parser's
-  // tools reach the engine's pure modules without loading the database an index would.
+  // The server, the engine and the client hold to it. A test, a seeder, the codegen and a script may reach a folder's
+  // own modules: the engine's, though, only through its entry (`engine-front-door`).
   if (!/^(server|engine|client)\//.test(file)) return {};
   return onImports((node, spec) => {
     const target = targetOf(file, spec);
