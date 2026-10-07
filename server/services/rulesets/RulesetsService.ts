@@ -8,13 +8,11 @@ import { include } from "@/server/mixins.ts";
 import {
   Activities,
   Contributors,
-  Items,
   Properties,
   RulesetExtensions,
   Rulesets,
   StarredRulesets,
 } from "@/server/repositories/index.ts";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { RulesetKind } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -76,12 +74,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
         );
       }
 
-      // 4. Seed template items if source ruleset didn't have any (pre-migration rulesets)
-      const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
-      const sourceTemplates = await Items.findMany(tx, { rulesetId: id, isTemplate: true });
-      if (sourceTemplates.length === 0) await rulesetModule.seedTemplateItems(tx, newRuleset.id);
-
-      // 5. Log the fork activity
+      // 4. Log the fork activity
       await Activities.create(tx, {
         userId: session.userId,
         targetId: newRuleset.id,

@@ -260,16 +260,10 @@ describe("RulesetsService", () => {
       expect((await fork(session, parent, { description: "Mine" })).description).toBe("Mine");
     });
 
-    test("gives the fork the engine's template items when the parent has none", async () => {
+    test("gives the fork no template items of its own: it reads its base's through its chain", async () => {
       const { session } = await createTestUser();
-      const withTemplates = await createParent();
-      const withoutTemplates = await createTestRuleset(null, { private: false, status: "Published" });
-      expect(
-        await Items.findMany(db, { rulesetId: (await fork(session, withTemplates)).id, isTemplate: true }),
-      ).toEqual([]);
-      expect(
-        (await Items.findMany(db, { rulesetId: (await fork(session, withoutTemplates)).id, isTemplate: true })).length,
-      ).toBeGreaterThan(0);
+      const parent = await createParent();
+      expect(await Items.findMany(db, { rulesetId: (await fork(session, parent)).id, isTemplate: true })).toEqual([]);
     });
 
     test("refuses a fork of a fork, of a draft, of a missing ruleset, or under a taken name", async () => {

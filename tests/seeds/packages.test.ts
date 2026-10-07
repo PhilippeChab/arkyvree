@@ -114,6 +114,21 @@ test("Every content package seeds into a database without them, its extensions e
       .sort(),
   );
 
+  // Every base a package seeds holds the template items (its magic armor adds one), which its forks read through their
+  // chain: a fork makes none
+  const bases = rulesets.filter((ruleset) => ruleset.rulesetId === null);
+  expect(bases.map((base) => base.name)).toEqual([DND35_RULESET_NAME]);
+  for (const base of bases) {
+    const templates = await db
+      .select({ name: itemsInRules.name })
+      .from(itemsInRules)
+      .where(and(eq(itemsInRules.rulesetId, base.id), eq(itemsInRules.isTemplate, true)));
+    expect({ base: base.name, templates: sortedNames(templates) }).toEqual({
+      base: base.name,
+      templates: expect.arrayContaining(sortedNames(TEMPLATE_ITEMS)),
+    });
+  }
+
   // What the extensions copy is the new core's
   const snapshots = await db
     .select()
