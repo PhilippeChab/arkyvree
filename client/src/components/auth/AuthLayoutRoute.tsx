@@ -4,7 +4,7 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 
 import { DiceSpinner, LinkButton, PageLoader, PageTransition, Panel } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useAuthRequests, useIsMobile, useSearchParam } from "@/client/src/hooks/index.ts";
+import { useAuthRequests, useIsDemo, useIsMobile, useSearchParam } from "@/client/src/hooks/index.ts";
 import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 import { safeRedirectPath } from "@/client/src/lib/safeRedirect.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
@@ -257,7 +257,7 @@ function MobileBranding() {
 export function AuthLayoutRoute() {
   const isMobile = useIsMobile();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const isDemo = useAuthStore((s) => !!s.user?.expiresAt);
+  const isDemo = useIsDemo();
 
   // Only kill the demo if we were already one at mount — a freshly-created
   // demo on /sign-up must survive the route change.

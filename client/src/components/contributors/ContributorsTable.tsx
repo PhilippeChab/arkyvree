@@ -10,11 +10,12 @@ import {
   TableFrame,
 } from "@/client/src/components/common/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
+import type { ContributorRole } from "@/shared/enums.ts";
 
 interface ContributorRow {
   email: string;
   id: string;
-  role?: string;
+  role: ContributorRole;
   status: string;
   user?: { username?: string | null } | null;
 }
@@ -24,8 +25,6 @@ interface ContributorsTableProps<T extends ContributorRow> {
   owner: { emailAddress: string; username?: string | null } | null;
   /** A row's `RowAction`s; when omitted there is no Actions column. */
   renderActions?: (contributor: T) => ReactNode;
-  /** Show the Role column (rulesets have roles, characters don't). */
-  showRoles?: boolean;
 }
 
 function contributorStatusColor(status: string): "warning" | "success" | "error" | "default" {
@@ -41,7 +40,7 @@ function contributorStatusColor(status: string): "warning" | "success" | "error"
   }
 }
 
-function roleColor(role: string): "error" | "primary" | "default" {
+function roleColor(role: ContributorRole): "error" | "primary" | "default" {
   switch (role) {
     case "Admin":
       return "error";
@@ -52,11 +51,10 @@ function roleColor(role: string): "error" | "primary" | "default" {
   }
 }
 
-/** Owner row followed by the invited contributors, with their status. */
+/** Owner row followed by the invited contributors, with their role and their status. */
 export function ContributorsTable<T extends ContributorRow>({
   owner,
   contributors,
-  showRoles = false,
   renderActions,
 }: ContributorsTableProps<T>) {
   const isMobile = useIsMobile();
@@ -81,7 +79,7 @@ export function ContributorsTable<T extends ContributorRow>({
           <TableRow>
             <TableCell>User</TableCell>
             {!isMobile && <TableCell>Email</TableCell>}
-            {showRoles && <TableCell>Role</TableCell>}
+            <TableCell>Role</TableCell>
             <TableCell>Status</TableCell>
             {renderActions && <TableCell align="right">Actions</TableCell>}
           </TableRow>
@@ -91,13 +89,11 @@ export function ContributorsTable<T extends ContributorRow>({
             <TableRow>
               {userCell(owner.username, owner.emailAddress)}
               {!isMobile && <TableCell>{owner.emailAddress}</TableCell>}
-              {showRoles && (
-                <TableCell>
-                  <RoleChip label="Owner" color="primary" />
-                </TableCell>
-              )}
               <TableCell>
-                {showRoles ? <StatusChip label="Active" color="success" /> : <RoleChip label="Owner" color="primary" />}
+                <RoleChip label="Owner" color="primary" />
+              </TableCell>
+              <TableCell>
+                <StatusChip label="Active" color="success" />
               </TableCell>
               {renderActions && <TableCell align="right" />}
             </TableRow>
@@ -106,11 +102,9 @@ export function ContributorsTable<T extends ContributorRow>({
             <TableRow key={contributor.id} sx={ROW_ACTIONS_HOVER_SX}>
               {userCell(contributor.user?.username, contributor.email)}
               {!isMobile && <TableCell>{contributor.email}</TableCell>}
-              {showRoles && (
-                <TableCell>
-                  {contributor.role && <RoleChip label={contributor.role} color={roleColor(contributor.role)} />}
-                </TableCell>
-              )}
+              <TableCell>
+                <RoleChip label={contributor.role} color={roleColor(contributor.role)} />
+              </TableCell>
               <TableCell>
                 <StatusChip label={contributor.status} color={contributorStatusColor(contributor.status)} />
               </TableCell>

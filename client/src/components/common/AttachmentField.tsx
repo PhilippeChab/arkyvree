@@ -8,7 +8,7 @@ import {
   PhotoCameraOutlinedIcon,
 } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useAttachment, useDemoTimeRemaining, useDetachAttachment, useDirectUpload } from "@/client/src/hooks/index.ts";
+import { useAttachment, useDetachAttachment, useDirectUpload, useIsDemo } from "@/client/src/hooks/index.ts";
 import { DURATION, transitionOf } from "@/client/src/theme/animations.ts";
 import { ALLOWED_IMAGE_TYPES } from "@/shared/attachments.ts";
 
@@ -54,7 +54,7 @@ export function AttachmentField({
   const snackbar = useSnackbar();
 
   const sharedMode = urlOverride !== undefined;
-  const { isDemo } = useDemoTimeRemaining();
+  const isDemo = useIsDemo();
   const slot = { recordType, recordId, name };
   const attachmentQuery = useAttachment({ ...slot, enabled: !sharedMode });
   const upload = useDirectUpload(slot);

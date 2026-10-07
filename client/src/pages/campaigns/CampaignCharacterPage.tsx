@@ -21,6 +21,8 @@ import { useCampaignPermissions } from "./hooks/index.ts";
 export default function CampaignCharacterPage() {
   const { id: campaignId = "", characterId = "" } = useParams<{ characterId: string; id: string }>();
   const menu = useAnchorMenu();
+  // The tab the sheet was opened from: its header's Back and its error page's go there alike
+  const backTo = `/campaigns/${campaignId}/characters`;
 
   const { data, isLoading, error } = useQuery(campaignCharacterQuery(campaignId, characterId));
   // The viewer's role: the private notes show to the character's editors and the Game Master
@@ -47,11 +49,7 @@ export default function CampaignCharacterPage() {
   if (!data || !campaign || accessLost(loadError)) {
     return (
       <Container maxWidth="xl">
-        <PageError
-          message={loadFailureMessage("Character", loadError)}
-          backLabel="Back to Campaign"
-          backTo={`/campaigns/${campaignId}/characters`}
-        />
+        <PageError message={loadFailureMessage("Character", loadError)} backLabel="Back to Campaign" backTo={backTo} />
       </Container>
     );
   }
@@ -63,7 +61,7 @@ export default function CampaignCharacterPage() {
           <CharacterHeader
             name={data.identity?.physiology?.name ?? ""}
             rulesetName={data.rulesetName}
-            backTo={`/campaigns/${campaignId}`}
+            backTo={backTo}
             onMenuOpen={data.canDownloadPdf && !data.deletedAt ? menu.openMenu : undefined}
           />
           <Menu anchorEl={menu.anchorEl} open={menu.open} onClose={menu.closeMenu}>

@@ -65,7 +65,7 @@ export function ItemEditor({
           ? {
               fields: <ItemFormFields form={form} rulesetId={rulesetId} />,
               onSubmit: sync.handleSubmit((data) => saveMutation.mutate(data)),
-              canSave: form.formState.isDirty && !locked,
+              canSave: sync.isDirty && !locked,
               isSaving: saveMutation.isPending,
             }
           : undefined

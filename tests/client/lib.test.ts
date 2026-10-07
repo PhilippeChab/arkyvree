@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
+import { partialMatchKey } from "@tanstack/react-query";
+
 import { sortAbilities } from "@/client/src/lib/abilityOrder.ts";
 import {
   formatActivityDetails,
@@ -13,6 +15,7 @@ import { formatCost, formatCount, formatDecimal, formatSigned, formatWeight } fr
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import {
   confirmPasswordRules,
@@ -173,6 +176,12 @@ describe("An activity", () => {
       "Create Spell: Fireball",
     );
     expect(formatActivityType("createPower")).toBe("Create Power");
+    // The app's words, never the engine's names
+    expect([
+      formatActivityType("createKlass", { entityName: "Fighter" }),
+      formatActivityType("updateKlassLevel"),
+      formatActivityType("addKlassSkill"),
+    ]).toEqual(["Create Class: Fighter", "Update Class Level", "Add Class Skill"]);
   });
 
   test("notifies with its actor, else someone, and a known type's sentence", () => {
@@ -182,26 +191,36 @@ describe("An activity", () => {
     expect(formatNotificationMessage("createFeat", { entityName: "Dodge" })).toBe("Someone created feat Dodge");
     expect(formatNotificationMessage("createFeat", {})).toBe("Someone created feat");
     expect(formatNotificationMessage("somethingNew", { actorName: "Ann" })).toBe("Ann: something new");
+    // An entity is named in its ruleset's word: a 3.5 power is a spell, another ruleset's a power
+    expect([
+      formatNotificationMessage("deletePower", { baseRules: "Dungeons & Dragons: 3.5", entityName: "Fireball" }),
+      formatNotificationMessage("updatePower", { entityName: "Blast" }),
+      formatNotificationMessage("createKlass", { actorName: "Ann", entityName: "Fighter" }),
+    ]).toEqual(["Someone deleted spell Fireball", "Someone updated power Blast", "Ann created class Fighter"]);
   });
 
   test("details the fields it changed, its level, modifier and property", () => {
     expect(
-      formatActivityDetails({
+      formatActivityDetails("updateItem", {
         changedFields: [
           { field: "name", from: "A", to: "B" },
           { field: "hd", to: "8" },
           { field: "slot", from: "Neck" },
-          { field: "size" },
+          { field: "baseSpeed" },
           { bad: true },
         ],
         level: 3,
-        target: "combat.ac.misc",
-        operator: "add",
-        value: "1",
-        propertyType: "costGp",
       }),
-    ).toBe("Name: A → B\nHit die set to 8\nSlot cleared\nSize updated\nLevel 3\nadd 1 on combat.ac.misc\nCost (gp): 1");
-    expect([formatActivityDetails({}), formatActivityDetails("not a payload")]).toEqual([null, null]);
+    ).toBe("Name: A → B\nHit Die set to 8\nSlot cleared\nBase Speed updated\nLevel 3");
+    expect([
+      formatActivityDetails("createModifier", { target: "combat.ac.misc", operator: "add", value: "1" }),
+      formatActivityDetails("updateRequirement", { target: "identity.name", operator: "not_empty" }),
+      formatActivityDetails("createProperty", { propertyType: "SPELL_SCHOOL", value: "Evocation" }),
+    ]).toEqual(["+ 1 on combat.ac.misc", "is not empty on identity.name", "Spell School: Evocation"]);
+    expect([formatActivityDetails("updateItem", {}), formatActivityDetails("updateItem", "not a payload")]).toEqual([
+      null,
+      null,
+    ]);
   });
 
   test("happened a while ago, in the unit that reads best", () => {
@@ -237,6 +256,17 @@ describe("Dice", () => {
       .sort((a, b) => a - b);
     for (const [i, score] of scores.slice(1).entries())
       expect(POINT_BUY_COSTS[score]).toBeGreaterThan(POINT_BUY_COSTS[scores[i]]);
+  });
+});
+
+describe("Query keys", () => {
+  // An item's write refreshes its ruleset's Items section, and with it what a character's add dialog read of the items
+  test("of a ruleset's items, as a character's add dialog reads them, nest under its Items section", () => {
+    const section = QUERY_KEYS.rulesets.section("r", "items");
+    expect([
+      partialMatchKey(QUERY_KEYS.rulesets.item("r", "i"), section),
+      partialMatchKey(QUERY_KEYS.rulesets.sectionSearch("r", "items", "sword"), section),
+    ]).toEqual([true, true]);
   });
 });
 

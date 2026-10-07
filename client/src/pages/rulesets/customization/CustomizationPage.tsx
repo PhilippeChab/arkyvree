@@ -5,7 +5,6 @@ import { type ReactNode, useState } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import {
-  DeleteDialog,
   DiceSpinner,
   HelpLabel,
   type SectionTab,
@@ -22,15 +21,17 @@ import { ModifiersIcon, PropertiesIcon, RequirementsIcon } from "@/client/src/co
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { usePageTitle, useRulesetFeats, useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
-import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
 import { type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
-import { isStillOpen } from "@/client/src/lib/stillOpen.ts";
-import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
+import {
+  EntityDeleteDialog,
+  EntityDetailLayout,
+  EntityPageError,
+} from "@/client/src/pages/rulesets/components/index.ts";
 import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { entityPageState } from "@/client/src/pages/rulesets/entityPageState.ts";
-import { useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useCopyOnWrite, useRestorableDelete, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import {
   buildCustomizationPath,
@@ -38,6 +39,7 @@ import {
   type CustomizationPageType,
   parseCustomizationSegment,
 } from "@/shared/customization/entities.ts";
+import { formatOperator } from "@/shared/customization/operators.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 
 import {
@@ -115,30 +117,14 @@ function CustomizationView({
   const klassLevelsKey =
     data.type === "klass_levels" ? QUERY_KEYS.rulesets.classLevels(rulesetId, data.entity.klassId) : undefined;
 
-  // Editing or customizing an inherited entity copies it into this ruleset
-  // under a new id: move to the copy, unless the page has left the source
-  // since. `copiedFrom` keeps the source on screen while the copy loads and
-  // lets the editor carry its unsaved edits over.
-  const followCopy = (copyId: string, sourceId: string) => {
-    const sourcePath = `/rulesets/${rulesetId}/${buildCustomizationPath(type, sourceId)}`;
-    if (!isStillOpen(sourcePath)) return;
-    // Onto the tab shown now, which may have changed while the request ran.
-    navigate(
-      `/rulesets/${rulesetId}/${buildCustomizationPath(type, copyId)}${window.location.pathname.slice(sourcePath.length)}`,
-      {
-        replace: true,
-        state: { ...state, copiedFrom: sourceId },
-      },
-    );
-  };
-
-  // Once the copy's own data is in, forget where it came from, so going back and forth in history never carries edits
-  // between the two. A navigation still loading has moved the address bar on: leave it be.
-  const { copiedFrom, ...stateAfterCopy } = state;
-  const forgetsCopy = !!copiedFrom && !locked && window.location.pathname === location.pathname;
+  // A copy-on-write moves the page to the copy; `copiedFrom` keeps the source on screen while the copy loads
+  const copy = useCopyOnWrite(rulesetId, entityId, (id) => buildCustomizationPath(type, id));
+  const forgetSource = copy.forgetSource(!locked);
+  // What this page deletes, the entity or what it holds, comes back with the entity when it's inherited
+  const { restorable, error: changesError } = useRestorableDelete(ruleset, deletedHolder(data));
 
   const handleSaved = (sourceId: string, saved: { id: string }, listKey: QueryKey, message: string) => {
-    if (saved.id !== sourceId) followCopy(saved.id, sourceId);
+    copy.followCopy(saved.id, sourceId);
     invalidateRulesetEdit(queryClient, rulesetId, [listKey]);
     snackbar.success(message);
     // Save responses lack relations (aptitudes, level feats): refetch the entity.
@@ -167,7 +153,8 @@ function CustomizationView({
     ruleset,
     entityId,
     data: undefined,
-    onEntityIdChange: followCopy,
+    onEntityIdChange: copy.followCopy,
+    restorable,
   };
 
   return (
@@ -178,16 +165,15 @@ function CustomizationView({
       backDisabled={locked}
       canDelete={canEdit && isEditable(data) && !locked}
       onDelete={() => setDeleteDialogOpen(true)}
+      restorable={restorable}
     >
-      {forgetsCopy && (
-        <Navigate to={`${location.pathname}${location.search}${location.hash}`} replace state={stateAfterCopy} />
-      )}
+      {forgetSource && <Navigate to={forgetSource.to} replace state={forgetSource.state} />}
       {isEditable(data) &&
         renderEditor(data, {
           rulesetId,
           entityId,
-          recordKey: `${rulesetId}/${entityId}`,
-          adoptKey: state.copiedFrom && `${rulesetId}/${state.copiedFrom}`,
+          recordKey: copy.key,
+          adoptKey: copy.adoptKey,
           canEdit,
           locked,
           onSaved: handleSaved,
@@ -226,16 +212,23 @@ function CustomizationView({
         </SectionTabPanel>
       </Stack>
 
-      <DeleteDialog
+      <EntityDeleteDialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
-        title={`Delete ${label}`}
-        message={`Are you sure you want to delete this ${label.toLowerCase()}? This action cannot be undone.`}
+        what={label}
+        restorable={restorable}
+        changesError={changesError}
         onConfirm={() => deleteMutation.mutate()}
         isLoading={deleteMutation.isPending}
       />
     </EntityDetailLayout>
   );
+}
+
+/** The ruleset entity whose delete the page's comes back with: its own, a class level's class; a modifier's isn't told. */
+function deletedHolder(data: CustomizationEntity) {
+  if (data.type === "modifiers") return undefined;
+  return { id: data.type === "klass_levels" ? data.entity.klassId : data.entity.id, rulesetId: data.entity.rulesetId };
 }
 
 /** What surrounds the editor: the header and where Back goes. */
@@ -253,12 +246,12 @@ function describe(
       const modifier = data.entity;
       return {
         title: modifier.sourceName,
-        pageTitle: `${modifier.target} ${modifier.operator} ${modifier.value}`,
+        pageTitle: `${modifier.target} ${formatOperator("modifier", modifier.operator)} ${modifier.value}`,
         subtitle: (
           <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "center" }}>
             <TargetPathBreadcrumbs target={modifier.target} targetLabels={modifier.targetLabels} />
             <Typography component="p" sx={{ typography: { xs: "body1", sm: "h6" }, color: "text.secondary" }}>
-              {MODIFIER_OPERATOR_LABELS[modifier.operator]} {modifier.value}
+              {formatOperator("modifier", modifier.operator)} {modifier.value}
             </Typography>
           </Stack>
         ),

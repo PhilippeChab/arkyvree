@@ -56,6 +56,8 @@ interface ProfileFormData {
   username: string;
 }
 
+const EMPTY_PASSWORD_FORM: PasswordFormData = { currentPassword: "", newPassword: "", newPasswordConfirmation: "" };
+
 function ProfileCard({ title, children, danger = false }: ProfileCardProps) {
   return (
     <Panel spacing={danger ? 1 : 3} sx={[danger && { border: 1, borderColor: "error.main" }]}>
@@ -111,12 +113,9 @@ export default function ProfilePage() {
   const profileSync = useFormSync(profileForm, userData && toProfileForm(userData));
 
   // Set-password (no password yet, e.g. Google-only accounts) uses the same
-  // form minus the current password.
-  const passwordForm = useFormWith<PasswordFormData>({
-    currentPassword: "",
-    newPassword: "",
-    newPasswordConfirmation: "",
-  });
+  // form minus the current password. It edits nothing the server holds: its sync starts it empty.
+  const passwordForm = useFormWith<PasswordFormData>(EMPTY_PASSWORD_FORM);
+  const passwordSync = useFormSync(passwordForm, EMPTY_PASSWORD_FORM);
 
   const profileMutation = useMutation({
     mutationFn: (data: ProfileFormData) =>
@@ -159,7 +158,7 @@ export default function ProfilePage() {
             }),
           ),
     onSuccess: () => {
-      passwordForm.reset();
+      passwordSync.saved(EMPTY_PASSWORD_FORM);
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.auth.me });
       snackbar.success(hasPassword ? "Password updated" : "Password set");
     },
@@ -263,7 +262,7 @@ export default function ProfilePage() {
                       label="Email Address"
                     />
 
-                    <SaveButton canSave={profileForm.formState.isDirty} pending={profileMutation.isPending} />
+                    <SaveButton canSave={profileSync.isDirty} pending={profileMutation.isPending} />
                   </Stack>
                 </Box>
               </Stack>
@@ -312,7 +311,7 @@ export default function ProfilePage() {
             <ProfileCard title={hasPassword ? "Change Password" : "Set Password"}>
               <Stack
                 component="form"
-                onSubmit={passwordForm.handleSubmit((data) => passwordMutation.mutate(data))}
+                onSubmit={passwordSync.handleSubmit((data) => passwordMutation.mutate(data))}
                 noValidate
                 spacing={3}
                 sx={{ pt: 2, alignItems: "flex-start" }}
@@ -344,7 +343,7 @@ export default function ProfilePage() {
                 />
 
                 <SaveButton
-                  canSave={passwordForm.formState.isDirty}
+                  canSave={passwordSync.isDirty}
                   label={hasPassword ? "Update Password" : "Set Password"}
                   pending={passwordMutation.isPending}
                 />

@@ -55,3 +55,18 @@ export function describeWeaponSlot(
 ): string {
   return weapon.natural ? capitalize(weapon.natural) : SLOT_LABELS[slot];
 }
+
+/** An attack row's to-hit, its iterative attacks signed and joined ("+9/+4"); "—" for none. */
+export function formatAttackBonus(attack: number[]): string {
+  if (attack.length === 0) return "—";
+  return attack.map((bonus) => (bonus >= 0 ? `+${bonus}` : `${bonus}`)).join("/");
+}
+
+/**
+ * A weapon's critical as the SRD writes it: its multiplier alone for a threat on a 20 ("×3"), else its threat range
+ * before it ("19–20/×2"). `range` is how many rolls threaten, the 20 and those under it.
+ */
+export function formatCritical(critical: { multiplier: number; range: number }): string {
+  const multiplier = `×${critical.multiplier}`;
+  return critical.range > 1 ? `${21 - critical.range}–20/${multiplier}` : multiplier;
+}

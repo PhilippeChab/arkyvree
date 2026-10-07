@@ -16,16 +16,12 @@ export function isChunkLoadError(error: unknown): boolean {
 /**
  * Reload once to fetch the current deploy's chunks. Returns false without
  * reloading when a reload already happened moments ago (or storage is
- * unavailable), so a chunk that is really missing can't loop the page.
+ * blocked, which can't tell), so a chunk that is really missing can't loop the page.
  */
 export function reloadForStaleChunks(): boolean {
-  try {
-    const lastReload = readChunkReloadTime();
-    if (lastReload && Date.now() - lastReload < RELOAD_WINDOW_MS) return false;
-    saveChunkReloadTime(Date.now());
-  } catch {
-    return false;
-  }
+  const lastReload = readChunkReloadTime();
+  if (lastReload && Date.now() - lastReload < RELOAD_WINDOW_MS) return false;
+  if (!saveChunkReloadTime(Date.now())) return false;
   window.location.reload();
   return true;
 }

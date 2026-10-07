@@ -1,4 +1,6 @@
 interface Words {
+  /** How the engine's names spell it (`createKlass`), where that isn't `one` */
+  code?: string;
   many: string;
   one: string;
 }
@@ -9,8 +11,8 @@ const ENTITY_WORDS: Record<string, Words> = {
   aptitudes: { one: "Aptitude", many: "Aptitudes" },
   feats: { one: "Feat", many: "Feats" },
   items: { one: "Item", many: "Items" },
-  klass_levels: { one: "Class Level", many: "Class Levels" },
-  klasses: { one: "Class", many: "Classes" },
+  klass_levels: { one: "Class Level", many: "Class Levels", code: "Klass Level" },
+  klasses: { one: "Class", many: "Classes", code: "Klass" },
   languages: { one: "Language", many: "Languages" },
   mechanics: { one: "Mechanic", many: "Mechanics" },
   modifiers: { one: "Modifier", many: "Modifiers" },
@@ -34,12 +36,16 @@ export function entityTypeLabel(entityType: string, baseRules: string | undefine
   return many ? words.many : words.one;
 }
 
-/** The ruleset's words that replace the engine's in an activity's type ("Create Power" → "Create Spell"). */
-export function getActivityLabelOverrides(baseRules: string): Record<string, string> {
+/**
+ * The ruleset's words that replace the engine's names in an activity's type: the app's own ("Create Klass" → "Create
+ * Class"), and its base rules' ("Create Power" → "Create Spell").
+ */
+export function getActivityLabelOverrides(baseRules: string | undefined): Record<string, string> {
   return Object.fromEntries(
-    Object.entries(RULESET_WORDS[baseRules] ?? {}).map(([entityType, words]) => [
-      ENTITY_WORDS[entityType].one,
-      words.one,
-    ]),
+    Object.entries(ENTITY_WORDS).flatMap(([entityType, words]) => {
+      const code = words.code ?? words.one;
+      const word = entityTypeLabel(entityType, baseRules);
+      return code === word ? [] : [[code, word]];
+    }),
   );
 }

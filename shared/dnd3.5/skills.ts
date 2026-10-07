@@ -46,6 +46,11 @@ export function computeMaxPointsForSkill(
   return Math.floor(points);
 }
 
+/** The most ranks a skill may have at `characterLevel`: the level + 3 as a class skill, half that cross-class. */
+export function computeMaxSkillRank(characterLevel: number, isClassSkill: boolean): number {
+  return isClassSkill ? characterLevel + 3 : (characterLevel + 3) / 2;
+}
+
 /** `points` spent on `skillId`, class-skill levels first: the ranks they buy and the points each level spends. */
 export function distributeSkillPoints(
   skillId: string,

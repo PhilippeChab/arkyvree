@@ -19,11 +19,10 @@ import {
   UPDATED_SORTS,
 } from "@/client/src/components/common/index.ts";
 import { ArchiveIcon, CampaignIcon, PlayersIcon, RulesetIcon } from "@/client/src/components/icons/index.ts";
-import { useListPageQuery, useListParams, usePageTitle } from "@/client/src/hooks/index.ts";
+import { useIsDemo, useListPageQuery, useListParams, usePageTitle } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { campaignDetailQuery, type CampaignListFilters, campaignListQuery } from "@/client/src/lib/queries.ts";
-import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
 import { CreateCampaignDialog } from "./components/index.ts";
 import { prefetchCampaignSections } from "./details/sectionQueries.ts";
@@ -46,7 +45,7 @@ export default function CampaignsPage() {
     ["name", "createdAt", "updatedAt"],
     { orderBy: "createdAt", orderDir: "desc" },
   );
-  const isDemo = useAuthStore((s) => !!s.user?.expiresAt);
+  const isDemo = useIsDemo();
 
   const view = oneOf(searchParams.get("view"), ["active", "archived"], "active");
 

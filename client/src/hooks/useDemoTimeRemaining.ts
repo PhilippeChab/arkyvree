@@ -7,7 +7,6 @@ type DemoUrgency = "normal" | "warning" | "critical" | "expired";
 export interface DemoTimeRemaining {
   expiresAt: string | null;
   hours: number;
-  isDemo: boolean;
   minutes: number;
   msRemaining: number;
   seconds: number;
@@ -17,7 +16,6 @@ export interface DemoTimeRemaining {
 const CRITICAL_THRESHOLD_MS = 5 * 60 * 1000;
 /** What the hook returns for a user who isn't a demo's. */
 const NOT_A_DEMO: DemoTimeRemaining = {
-  isDemo: false,
   expiresAt: null,
   msRemaining: 0,
   hours: 0,
@@ -39,9 +37,13 @@ function compute(expiresAt: string | null | undefined): DemoTimeRemaining {
   if (msRemaining <= 0) urgency = "expired";
   else if (msRemaining <= CRITICAL_THRESHOLD_MS) urgency = "critical";
   else if (msRemaining <= WARNING_THRESHOLD_MS) urgency = "warning";
-  return { isDemo: true, expiresAt, msRemaining, hours, minutes, seconds, urgency };
+  return { expiresAt, msRemaining, hours, minutes, seconds, urgency };
 }
 
+/**
+ * The time a demo session has left, ticking every 30s and every second in its last 5 minutes: the demo banner's alone,
+ * which re-renders as it ticks. Whether the user is a demo's is `useIsDemo`'s.
+ */
 export function useDemoTimeRemaining(): DemoTimeRemaining {
   const expiresAt = useAuthStore((s) => s.user?.expiresAt ?? null);
   const [state, setState] = useState(() => compute(expiresAt));

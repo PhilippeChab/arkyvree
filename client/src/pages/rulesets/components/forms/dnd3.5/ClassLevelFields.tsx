@@ -149,7 +149,6 @@ export function ClassLevelFields({
               color="default"
               {...getItemProps({ index })}
               key={featKey(option)}
-
               label={option.label}
               onDelete={() => setFeats(selectedFeats.filter((_, i) => i !== index))}
             />

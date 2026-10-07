@@ -135,7 +135,6 @@ export function TargetPathBrowser({
             {index > 0 && <ChevronRightIcon sx={{ fontSize: 16, color: "text.secondary" }} />}
             <ValueChip
               label={segmentLabels[segment] || formatSegment(segment)}
-
               color={isComplete ? "success" : "info"}
               onClick={disabled ? undefined : () => handleBreadcrumbClick(index)}
             />

@@ -6,7 +6,8 @@
  * - `toast-wording`: a toast is a phrase ("Ruleset archived"), no final period or "!", no "successfully", no
  *   "Please"; an error's fallback names what failed ("Failed to remove item").
  * - `confirm-wording`: a confirmation asks "Are you sure you want to …?", then says what follows; a deletion ends
- *   "This action cannot be undone."
+ *   "This action cannot be undone.", or "You can restore it from Local Changes." for what a fork inherits, each branch
+ *   of a message that says either.
  * - `typography-marks`: an ellipsis is "…" and a dash between words "—", never "..." or " - ", a template's
  *   interpolations reading as words (`${pool} - ${level}`); a text cut short is `truncate(text, length)`.
  *
@@ -15,6 +16,9 @@
 
 import { calleeName, elementName, inClient } from "./jsx.mjs";
 import { repoPath } from "./paths.mjs";
+
+/** How a deletion's confirmation ends: for good, or restorable, what a fork inherits (`isRestorableDelete`) */
+const DELETE_ENDINGS = ["This action cannot be undone.", "You can restore it from Local Changes."];
 
 /** What lays a label out without being one: its row, its box, its spinner while pending */
 const LABEL_LAYOUT = new Set(["Box", "DiceSpinner", "Stack", "Typography", "span"]);
@@ -70,16 +74,19 @@ function createConfirmWording(context) {
       if (node.name.name !== "message") return;
       const element = elementName(node.parent.parent);
       if (element !== "ConfirmDialog" && element !== "DeleteDialog") return;
-      const text = writtenText(attributeExpression(node));
-      if (text === null) return;
-      const asks = /^Are you sure you want to [^?]+\?/.test(text);
-      const final = element !== "DeleteDialog" || text.endsWith("This action cannot be undone.");
-      if (asks && final) return;
+      const value = attributeExpression(node);
+      // A message on a condition is each of its branches
+      const branches = value?.type === "ConditionalExpression" ? [value.consequent, value.alternate] : [value];
+      const texts = branches.map(writtenText).filter((text) => text !== null);
+      const said = (text) =>
+        /^Are you sure you want to [^?]+\?/.test(text) &&
+        (element !== "DeleteDialog" || DELETE_ENDINGS.some((ending) => text.endsWith(ending)));
+      if (texts.every(said)) return;
       context.report({
         node,
         message:
           'A confirmation asks "Are you sure you want to …?", then says what follows; a deletion ends "This action ' +
-          'cannot be undone."',
+          'cannot be undone.", or "You can restore it from Local Changes." for what a fork inherits.',
       });
     },
   };

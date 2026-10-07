@@ -151,7 +151,6 @@ function CharacterCard({
                 <VisibilityIcon sx={{ fontSize: 14 }} />
               </Stack>
             }
-
             onClick={canEditVisibility ? menu.openMenu : undefined}
           />
           {canEditVisibility && (

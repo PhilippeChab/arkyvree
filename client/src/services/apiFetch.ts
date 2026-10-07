@@ -10,17 +10,12 @@ export async function apiFetch(input: URL | RequestInfo, init?: RequestInit) {
   });
 
   if (!response.ok) {
-    // Errors from the API are JSON, but a proxy in front of it (502, 413, …)
-    // can answer with HTML. Fall back to a generic message instead of
-    // surfacing a JSON parse error.
+    // Errors from the API are JSON, but a proxy in front of it (502, 413, …) can answer with HTML. Its error then says
+    // nothing of its own, so `errorMessage`'s fallback says what failed ("Failed to save item"), never a JSON parse
+    // error or a message that names nothing.
     const errorData: Partial<ErrorJson> = await response.json().catch(() => ({}));
 
-    throw new ApiError(
-      errorData.message || "An unexpected error occurred",
-      response.status,
-      errorData.error || "UnknownError",
-      errorData.issues,
-    );
+    throw new ApiError(errorData.message ?? "", response.status, errorData.error || "UnknownError", errorData.issues);
   }
 
   return response;

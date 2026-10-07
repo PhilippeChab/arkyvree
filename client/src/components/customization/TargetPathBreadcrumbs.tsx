@@ -18,11 +18,7 @@ export function TargetPathBreadcrumbs({ target, targetLabels }: TargetPathBreadc
       {segments.map((segment, index) => (
         <Stack key={index} direction="row" spacing={0.25} sx={{ alignItems: "center" }}>
           {index > 0 && <ChevronRightIcon sx={{ fontSize: 16, color: "text.secondary" }} />}
-          <ValueChip
-            label={targetLabels?.[segment] ?? formatSegment(segment)}
-
-            color="primary"
-          />
+          <ValueChip label={targetLabels?.[segment] ?? formatSegment(segment)} color="primary" />
         </Stack>
       ))}
     </Stack>

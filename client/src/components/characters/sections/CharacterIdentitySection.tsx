@@ -14,13 +14,7 @@ import {
   ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import {
-  type RulesetLanguage,
-  useDirtyForm,
-  useFormSync,
-  useFormWith,
-  useRulesetLanguages,
-} from "@/client/src/hooks/index.ts";
+import { type RulesetLanguage, useFormSync, useFormWith, useRulesetLanguages } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { invalidateCharacter, invalidateCharacterListings } from "@/client/src/lib/queries.ts";
@@ -145,9 +139,6 @@ export function CharacterIdentitySection({
     },
     onError: (error) => snackbar.error(error, "Failed to save character details"),
   });
-
-  const { isDirty } = form.formState;
-  useDirtyForm(isDirty);
 
   // Staged via the form like every other field — selections only persist
   // when the user clicks Save, matching the rest of the identity section.
@@ -393,7 +384,7 @@ export function CharacterIdentitySection({
           </Stack>
         </Stack>
         {/* The panel's Save, at its end as an inline editor's */}
-        {!readOnly && <SaveButton canSave={isDirty} pending={saveIdentity.isPending} />}
+        {!readOnly && <SaveButton canSave={sync.isDirty} pending={saveIdentity.isPending} />}
       </Stack>
     </Panel>
   );

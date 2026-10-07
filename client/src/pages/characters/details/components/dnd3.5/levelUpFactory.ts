@@ -24,6 +24,7 @@ import type {
   PreviewLevelDetail,
   SelectedFeat,
   SelectedKlass,
+  SkillLevels,
   SkillsData,
 } from "./levelUp/index.ts";
 import { LevelUpAttributeStep } from "./LevelUpAttributeStep.tsx";
@@ -161,10 +162,9 @@ interface SkillPickerState {
   /** The picks' form: the skill points field, which the step changes from `skillPointAllocations`. */
   control: Control<LevelUpFormData>;
   isLoadingSkills: boolean;
-  /** Several levels at once (Add Level): each level's class skills and points. */
-  perLevelClassSkillIds?: string[][];
-  perLevelSkillPoints?: number[];
   skillData: SkillsData | null | undefined;
+  /** The levels the points go to: the planned ones (Add Level), or the edited one. */
+  skillLevels: SkillLevels | undefined;
   /** The points as they fit the slots */
   skillPointAllocations: Record<string, number>;
   skillsError: Error | null;
@@ -204,6 +204,8 @@ export interface LevelReviewState {
   selectedFeats: LevelUpFormData["selectedFeats"];
   selectedPowers: LevelUpFormData["selectedPowers"];
   skillData: SkillsData | null | undefined;
+  /** The levels the points go to, which the skills step spends them over too. */
+  skillLevels: SkillLevels | undefined;
   skillPointAllocations: Record<string, number>;
 }
 

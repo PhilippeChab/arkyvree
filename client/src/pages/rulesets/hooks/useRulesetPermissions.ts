@@ -1,3 +1,4 @@
+import { useIsDemo } from "@/client/src/hooks/index.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
@@ -23,7 +24,7 @@ export function useRulesetPermissions(ruleset: RulesetData | undefined): Ruleset
   // Demo users own everything they fork, but cross-user / publish actions are
   // server-blocked. Suppress the affordances here so the menu items don't
   // appear at all rather than 403'ing.
-  const isDemo = useAuthStore((state) => !!state.user?.expiresAt);
+  const isDemo = useIsDemo();
 
   if (!ruleset || !currentUserId) {
     return {

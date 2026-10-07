@@ -1,6 +1,6 @@
 import { describe, expect, setDefaultTimeout, test } from "bun:test";
 
-import { lines, lintRepo } from "./lintRepo.ts";
+import { fixRepo, lines, lintRepo } from "./lintRepo.ts";
 
 // Each test runs oxlint, which a busy suite can slow past the default 5s.
 setDefaultTimeout(30_000);
@@ -212,6 +212,32 @@ describe("frontend rules", () => {
     ).toEqual(["controlled-inputs client/src/destructured.tsx", "controlled-inputs client/src/read.tsx"]);
   });
 
+  test("a form's unsaved edits are read from its sync or its dialog, which guard the page's reload", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/synced.tsx": "export const s = <SaveButton canSave={sync.isDirty} pending={busy} />;\n",
+          "client/src/read.tsx": "export const r = <SaveButton canSave={form.formState.isDirty} pending={busy} />;\n",
+          "client/src/destructured.tsx":
+            "export function D() {\n  const { isDirty } = form.formState;\n  return <SaveButton canSave={isDirty} pending={busy} />;\n}\n",
+          "client/src/nested.tsx":
+            "export function N() {\n  const { formState: { isDirty } } = form;\n  return <SaveButton canSave={isDirty} pending={busy} />;\n}\n",
+          "client/src/registered.tsx": "export function G() {\n  useDirtyForm(changed);\n  return null;\n}\n",
+          "client/src/hooks/useFormSync.ts":
+            "export function useFormSync() {\n  useDirtyForm(form.formState.isDirty);\n}\n",
+          "client/src/components/common/FormDialog.tsx":
+            "export function FormDialog() {\n  useDirtyForm(open && dirty);\n}\n",
+        },
+        ["dirty-forms"],
+      ),
+    ).toEqual([
+      "dirty-forms client/src/destructured.tsx",
+      "dirty-forms client/src/nested.tsx",
+      "dirty-forms client/src/read.tsx",
+      "dirty-forms client/src/registered.tsx",
+    ]);
+  });
+
   test("a form is made with useFormWith, whose values are whole, never react-hook-form's useForm", async () => {
     expect(
       await lintRepo(
@@ -406,6 +432,30 @@ describe("frontend rules", () => {
     ).toEqual(["jsx-conditionals client/src/flipped.tsx", "jsx-conditionals client/src/lone.tsx"]);
   });
 
+  test("a JSX element's attributes stand on consecutive lines, which --fix closes up", async () => {
+    const gapped = lines("export const g = (", "  <Chip", '    label="A"', "", '    color="primary"', "  />", ");");
+    const closed = lines("export const c = (", "  <Chip", '    label="A"', '    color="primary"', "  />", ");");
+    const lastGap = lines(
+      "export const l = (",
+      "  <Chip",
+      '    label="A"',
+      "",
+      "  >",
+      "    {child}",
+      "  </Chip>",
+      ");",
+    );
+    expect(
+      await lintRepo(
+        { "client/src/gapped.tsx": gapped, "client/src/closed.tsx": closed, "server/sheets/last.tsx": lastGap },
+        ["jsx-attribute-lines"],
+      ),
+    ).toEqual(["jsx-attribute-lines client/src/gapped.tsx", "jsx-attribute-lines server/sheets/last.tsx"]);
+    expect((await fixRepo({ "client/src/gapped.tsx": gapped }, ["jsx-attribute-lines"]))["client/src/gapped.tsx"]).toBe(
+      closed.replace("const c", "const g"),
+    );
+  });
+
   test("a component file is named for what it exports, and a page is XPage.tsx", async () => {
     expect(
       await lintRepo(
@@ -570,18 +620,47 @@ describe("frontend rules", () => {
     ).toEqual(["error-reads client/src/caught.ts", "error-reads client/src/raw.ts"]);
   });
 
-  test("what the browser keeps is a store's", async () => {
+  test("what the browser keeps is a store's, read and written through its guards", async () => {
     expect(
       await lintRepo(
         {
-          "client/src/stores/prefs.ts": 'export const p = () => localStorage.getItem("x");\n',
+          "client/src/stores/browserStorage.ts": 'export const p = () => localStorage.getItem("x");\n',
+          "client/src/stores/prefs.ts": 'export const r = () => readStored("local", "x");\n',
+          "client/src/stores/raw.ts": 'export const w = () => localStorage.setItem("x", "1");\n',
           "client/src/page.ts": 'export const g = () => localStorage.getItem("x");\n',
           "client/src/session.ts": 'export const s = () => window.sessionStorage.setItem("x", "1");\n',
           "client/src/own.ts": "export const o = (x: { localStorage: string }) => x.localStorage;\n",
         },
         ["browser-storage"],
       ),
-    ).toEqual(["browser-storage client/src/page.ts", "browser-storage client/src/session.ts"]);
+    ).toEqual([
+      "browser-storage client/src/page.ts",
+      "browser-storage client/src/session.ts",
+      "browser-storage client/src/stores/raw.ts",
+    ]);
+  });
+
+  test("whether the user is a demo's is useIsDemo, and its countdown the demo banner's", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/gate.tsx": "export function G() {\n  return useIsDemo() && <Banner />;\n}\n",
+          "client/src/read.tsx": "export function R() {\n  return useAuthStore((s) => !!s.user?.expiresAt);\n}\n",
+          "client/src/user.ts": "export const u = (user: AuthUser) => !!user.expiresAt;\n",
+          "client/src/share.ts": "export const s = (link: ShareLink) => link.expiresAt;\n",
+          "client/src/countdown.tsx": "export function C() {\n  return useDemoTimeRemaining().minutes;\n}\n",
+          "client/src/components/layout/DemoBanner.tsx":
+            "export function D() {\n  return useDemoTimeRemaining().minutes;\n}\n",
+          "client/src/hooks/useIsDemo.ts": "export const i = () => useAuthStore((s) => !!s.user?.expiresAt);\n",
+          "client/src/stores/authUser.ts": "export const a = (user: AuthUser) => user.expiresAt;\n",
+        },
+        ["demo-reads"],
+      ),
+    ).toEqual([
+      "demo-reads client/src/countdown.tsx",
+      "demo-reads client/src/read.tsx",
+      "demo-reads client/src/user.ts",
+    ]);
   });
 
   test("a date is shown through lib/formatDate.ts", async () => {

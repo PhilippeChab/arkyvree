@@ -21,7 +21,7 @@ export function NotificationMessage({ notification, unread = false }: Notificati
       {unread && <CircleIcon titleAccess="Unread" sx={{ fontSize: 8, color: "primary.main", flexShrink: 0 }} />}
       <Stack spacing={0.5} sx={{ minWidth: 0 }}>
         <Typography variant="body2">{formatNotificationMessage(notification.type, notification.data)}</Typography>
-        <ActivityDetails data={notification.data} />
+        <ActivityDetails type={notification.type} data={notification.data} />
       </Stack>
     </Stack>
   );

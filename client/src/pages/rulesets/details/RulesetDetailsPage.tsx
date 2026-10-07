@@ -164,13 +164,6 @@ export default function RulesetDetailsPage() {
 
   const { isOwner, isContributor, canEditRuleset, canPublish } = useRulesetPermissions(ruleset);
   const isFork = !!ruleset?.rulesetId && !isExtension;
-  const showContributorsMenu = (isOwner || isContributor) && ruleset?.status !== "Archived";
-  const hasMenuItems =
-    isOwner ||
-    canEditRuleset ||
-    (!!ruleset && ruleset.status === "Published" && !isExtension) ||
-    isFork ||
-    showContributorsMenu;
 
   const baseRules = ruleset?.baseRules;
   const [contributorsDialogOpen, setContributorsDialogOpen] = useState(false);
@@ -240,6 +233,85 @@ export default function RulesetDetailsPage() {
     );
   }
 
+  const isActive = ruleset.status !== "Archived";
+  // What the session may do here: the header's menu, whose button shows only when it holds something
+  const menuItems = [
+    ruleset.status === "Published" && !isExtension && !isFork && (
+      <ActionMenuItem key="fork" icon={ForkIcon} label="Fork" onClick={menu.closeMenuAnd(() => handleFork(ruleset))} />
+    ),
+    !!ruleset.rulesetId && (
+      <ActionMenuItem
+        key="local-changes"
+        icon={CompareArrowsIcon}
+        label="Local Changes"
+        onClick={menu.closeMenuAnd(() => setOverridesDialogOpen(true))}
+      />
+    ),
+    isOwner && !!ruleset.rulesetId && isActive && !ruleset.isUsedAsExtension && !isExtension && (
+      <ActionMenuItem
+        key="subscribe"
+        icon={ExtensionIcon}
+        label="Subscribe"
+        onClick={menu.closeMenuAnd(() => handleSubscribe(ruleset))}
+      />
+    ),
+    (isOwner || isContributor) && isActive && (
+      <ActionMenuItem
+        key="contributors"
+        icon={ContributorsIcon}
+        label="Contributors"
+        onClick={menu.closeMenuAnd(() => setContributorsDialogOpen(true))}
+      />
+    ),
+    ...(isOwner && !!ruleset.rulesetId && isActive
+      ? [
+          <Divider key="help-divider" />,
+          <ActionMenuItem
+            key="help"
+            icon={HelpIcon}
+            label="Learn More in Help Center"
+            href={EXTERNAL_LINKS.help}
+            onClick={menu.closeMenu}
+          />,
+        ]
+      : []),
+    ...(canEditRuleset && isActive
+      ? [
+          <ActionMenuItem
+            key="edit"
+            icon={EditIcon}
+            label="Edit"
+            onClick={menu.closeMenuAnd(() => handleEdit(ruleset))}
+          />,
+          canPublish && ruleset.status === "Draft" && (
+            <ActionMenuItem
+              key="publish"
+              icon={PublishIcon}
+              label="Publish"
+              intent="positive"
+              onClick={menu.closeMenuAnd(() => handlePublish(ruleset))}
+            />
+          ),
+          <ActionMenuItem
+            key="archive"
+            icon={ArchiveIcon}
+            label="Archive"
+            intent="caution"
+            onClick={menu.closeMenuAnd(() => handleArchive(ruleset))}
+          />,
+        ]
+      : []),
+    isOwner && !isActive && (
+      <ActionMenuItem
+        key="unarchive"
+        icon={UnarchiveIcon}
+        label="Unarchive"
+        intent="positive"
+        onClick={menu.closeMenuAnd(() => unarchiveMutation.mutate(ruleset.id))}
+      />
+    ),
+  ].filter((item) => item !== false);
+
   return (
     <PageTransition>
       <Container maxWidth="xl">
@@ -265,7 +337,7 @@ export default function RulesetDetailsPage() {
               )
             }
             backTo={"/rulesets"}
-            onMenuOpen={hasMenuItems ? menu.openMenu : undefined}
+            onMenuOpen={menuItems.length > 0 ? menu.openMenu : undefined}
             chips={
               <>
                 {getStatusChip(ruleset.status)}
@@ -368,79 +440,7 @@ export default function RulesetDetailsPage() {
         </Stack>
 
         <Menu anchorEl={menu.anchorEl} open={menu.open} onClose={menu.closeMenu}>
-          {ruleset.status === "Published" && !isExtension && !isFork && (
-            <ActionMenuItem icon={ForkIcon} label="Fork" onClick={menu.closeMenuAnd(() => handleFork(ruleset))} />
-          )}
-          {!!ruleset.rulesetId && (
-            <ActionMenuItem
-              icon={CompareArrowsIcon}
-              label="Local Changes"
-              onClick={menu.closeMenuAnd(() => setOverridesDialogOpen(true))}
-            />
-          )}
-          {isOwner &&
-            ruleset.rulesetId &&
-            ruleset.status !== "Archived" &&
-            !ruleset.isUsedAsExtension &&
-            !isExtension && (
-              <ActionMenuItem
-                icon={ExtensionIcon}
-                label="Subscribe"
-                onClick={menu.closeMenuAnd(() => handleSubscribe(ruleset))}
-              />
-            )}
-          {showContributorsMenu && (
-            <ActionMenuItem
-              icon={ContributorsIcon}
-              label="Contributors"
-              onClick={menu.closeMenuAnd(() => setContributorsDialogOpen(true))}
-            />
-          )}
-          {isOwner &&
-            ruleset.rulesetId &&
-            ruleset.status !== "Archived" && [
-              <Divider key="sync-divider" />,
-              <ActionMenuItem
-                key="faq-link"
-                icon={HelpIcon}
-                label="Learn More in Help Center"
-                href={EXTERNAL_LINKS.help}
-                onClick={menu.closeMenu}
-              />,
-            ]}
-          {canEditRuleset &&
-            ruleset.status !== "Archived" && [
-              <ActionMenuItem
-                key="edit"
-                icon={EditIcon}
-                label="Edit"
-                onClick={menu.closeMenuAnd(() => handleEdit(ruleset))}
-              />,
-              canPublish && ruleset.status === "Draft" && (
-                <ActionMenuItem
-                  key="publish"
-                  icon={PublishIcon}
-                  label="Publish"
-                  intent="positive"
-                  onClick={menu.closeMenuAnd(() => handlePublish(ruleset))}
-                />
-              ),
-              <ActionMenuItem
-                key="archive"
-                icon={ArchiveIcon}
-                label="Archive"
-                intent="caution"
-                onClick={menu.closeMenuAnd(() => handleArchive(ruleset))}
-              />,
-            ]}
-          {isOwner && ruleset.status === "Archived" && (
-            <ActionMenuItem
-              icon={UnarchiveIcon}
-              label="Unarchive"
-              intent="positive"
-              onClick={menu.closeMenuAnd(() => unarchiveMutation.mutate(ruleset.id))}
-            />
-          )}
+          {menuItems}
         </Menu>
 
         <EditRulesetDialog

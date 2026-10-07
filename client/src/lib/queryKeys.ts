@@ -27,6 +27,8 @@ export const QUERY_KEYS = {
      * section key so an item's write refreshes them too.
      */
     itemTemplates: (id: string, type: string) => ["rulesets", "detail", id, "items", "templates", type] as const,
+    /** One item's details, as a character's add dialog reads them; nested like `itemTemplates`. */
+    item: (id: string, itemId: string) => ["rulesets", "detail", id, "items", "item", itemId] as const,
     classDetail: (id: string, classId: string) => ["rulesets", "detail", id, "class", classId] as const,
     classLevels: (id: string, classId: string) => ["rulesets", "detail", id, "class", classId, "levels"] as const,
     classSkills: (id: string, classId: string) => ["rulesets", "detail", id, "class", classId, "skills"] as const,
@@ -79,8 +81,6 @@ export const QUERY_KEYS = {
         : (["characters", "unlinked", campaignId] as const),
     availableRaces: (rulesetId: string, filters?: Record<string, unknown>) =>
       ["characters", "availableRaces", rulesetId, filters] as const,
-    rulesetItem: (rulesetId: string, itemId: string) => ["characters", "rulesetItem", rulesetId, itemId] as const,
-    itemSearch: (rulesetId: string, search: string) => ["characters", "itemSearch", rulesetId, search] as const,
     /** A level-up read's cache: its key holds the query (or the body) it sends, so no parameter is left out of it. */
     levelUp: {
       all: (characterId: string) => ["characters", "levelUp", characterId] as const,

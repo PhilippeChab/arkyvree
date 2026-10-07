@@ -40,12 +40,9 @@ export function AbilityScoresSection({ abilities, characterId, readOnly }: Dnd35
         const updated = { ...old.abilities };
         for (const [name, data] of Object.entries(updated)) {
           if (data.abilityId === abilityId) {
-            const base = score;
-            const level = data.level || 0;
-            const misc = data.misc || 0;
-            const total = base + level + misc;
-            const modifier = computeAbilityModifier(total);
-            updated[name] = { ...data, base, total, modifier };
+            // Until the server answers: the total moves by the base's change, whatever else adds to it
+            const total = data.total + score - data.base;
+            updated[name] = { ...data, base: score, total, modifier: computeAbilityModifier(total) };
             break;
           }
         }
@@ -68,7 +65,7 @@ export function AbilityScoresSection({ abilities, characterId, readOnly }: Dnd35
 
   const handleBaseChange = (abilityId: string, score: number) => {
     const current = Object.values(abilities).find((a) => a.abilityId === abilityId);
-    const currentBase = current?.base || 10;
+    const currentBase = current?.base ?? 10;
 
     if (score > currentBase || !shouldWarn("abilityDecrease")) updateMutation.mutate({ abilityId, score });
     else decreaseDialog.openWith({ abilityId, score });
@@ -78,22 +75,18 @@ export function AbilityScoresSection({ abilities, characterId, readOnly }: Dnd35
     <SheetSection title="Ability Scores">
       {sortedEntries.length > 0 ? (
         <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap", justifyContent: "center" }}>
-          {sortedEntries.map(([ability, abilityData]) => {
-            const total = abilityData.total || abilityData.base || 10;
-            const modifier = computeAbilityModifier(total);
-            return (
-              <Box key={ability} sx={{ minWidth: { xs: 120, sm: 140 } }}>
-                <AbilityScoreBox
-                  ability={ability}
-                  score={total}
-                  modifier={modifier}
-                  abilityData={abilityData}
-                  onBaseChange={handleBaseChange}
-                  readOnly={readOnly}
-                />
-              </Box>
-            );
-          })}
+          {sortedEntries.map(([ability, abilityData]) => (
+            <Box key={ability} sx={{ minWidth: { xs: 120, sm: 140 } }}>
+              <AbilityScoreBox
+                ability={ability}
+                score={abilityData.total}
+                modifier={abilityData.modifier}
+                abilityData={abilityData}
+                onBaseChange={handleBaseChange}
+                readOnly={readOnly}
+              />
+            </Box>
+          ))}
         </Stack>
       ) : (
         <BlankNote>No ability scores available</BlankNote>

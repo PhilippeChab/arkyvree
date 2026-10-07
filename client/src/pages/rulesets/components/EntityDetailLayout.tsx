@@ -15,6 +15,8 @@ interface EntityDetailLayoutProps {
   entityName?: string;
   isLoading?: boolean;
   onDelete?: () => void;
+  /** Its delete can be undone from Local Changes (`useRestorableDelete`): its menu says "Delete", not "Delete Permanently". */
+  restorable?: boolean;
   rulesetName?: string;
   /** Replaces "<ruleset> Ruleset" under the title. */
   subtitle?: ReactNode;
@@ -31,6 +33,7 @@ export function EntityDetailLayout({
   backDisabled,
   canDelete,
   onDelete,
+  restorable = false,
   isLoading,
   children,
 }: EntityDetailLayoutProps) {
@@ -73,7 +76,7 @@ export function EntityDetailLayout({
             <Menu anchorEl={menu.anchorEl} open={!!menu.anchorEl?.isConnected} onClose={menu.closeMenu}>
               <ActionMenuItem
                 icon={DeleteIcon}
-                label="Delete Permanently"
+                label={restorable ? "Delete" : "Delete Permanently"}
                 intent="destructive"
                 onClick={menu.closeMenuAnd(onDelete)}
               />

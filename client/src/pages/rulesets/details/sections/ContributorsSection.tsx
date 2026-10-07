@@ -180,7 +180,6 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
           <ContributorsTable
             owner={owner}
             contributors={contributors}
-            showRoles
             renderActions={
               canManageContributors
                 ? (contributor) => {

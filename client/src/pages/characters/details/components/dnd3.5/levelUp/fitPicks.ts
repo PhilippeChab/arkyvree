@@ -5,9 +5,8 @@
  * grows back (the class planned again) shows them again.
  */
 
-import { computeMaxPointsForSkill } from "@/shared/dnd3.5/skills.ts";
-
 import type { AptitudePool, LevelUpFormData, PowerAptitudePool } from "./levelUpTypes.ts";
+import { maxSkillPoints, type SkillLevels } from "./skillLevels.ts";
 
 type Feats = LevelUpFormData["selectedFeats"];
 
@@ -107,10 +106,9 @@ export function fitPowers(powers: Powers, aptitudePools: Record<string, PowerApt
 export function fitSkillPoints(
   allocations: Record<string, number>,
   limits: SkillLimits | null | undefined,
-  perLevelClassSkillIds: string[][] | undefined,
-  perLevelSkillPoints: number[] | undefined,
+  levels: SkillLevels | undefined,
 ) {
-  if (!limits || !perLevelClassSkillIds || !perLevelSkillPoints) return allocations;
+  if (!limits || !levels) return allocations;
   let changed = false;
   let total = 0;
   const fitted: Record<string, number> = {};
@@ -120,14 +118,11 @@ export function fitSkillPoints(
       changed = true;
       continue;
     }
-    const maxRank = skill.isClassSkill ? limits.totalCharacterLevel + 3 : (limits.totalCharacterLevel + 3) / 2;
-    const maxFromLevel = computeMaxPointsForSkill(
-      skillId,
-      maxRank - skill.currentRank,
-      perLevelClassSkillIds,
-      perLevelSkillPoints,
+    const clamped = Math.min(
+      points,
+      maxSkillPoints(skill, limits.totalCharacterLevel, levels),
+      limits.skillPointsToSpend - total,
     );
-    const clamped = Math.min(points, maxFromLevel, limits.skillPointsToSpend - total);
     if (clamped !== points) changed = true;
     if (clamped > 0) {
       fitted[skillId] = clamped;

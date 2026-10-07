@@ -7,7 +7,6 @@ import { useNavigate } from "react-router-dom";
 import {
   AddButton,
   CreateDialog,
-  DeleteDialog,
   EditDialog,
   ListToolbar,
   SectionContent,
@@ -22,9 +21,8 @@ import {
 import { ModifiersIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { formatDate } from "@/client/src/lib/formatDate.ts";
-import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
-import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
+import { EntityDeleteDialog, RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import {
   customizationSection,
   modifiersQuery,
@@ -34,6 +32,7 @@ import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/secti
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import type { CustomizableEntityType } from "@/shared/customization/entities.ts";
+import { formatOperator } from "@/shared/customization/operators.ts";
 import { extractTemplatePath } from "@/shared/customization/templateExpression.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
@@ -51,6 +50,8 @@ interface ModifiersSectionProps {
   entityType: CustomizableEntityType;
   onEntityIdChange?: (copyId: string, sourceId: string) => void;
   queryKeysToInvalidate?: readonly (readonly unknown[])[];
+  /** A delete can be undone from Local Changes, its entity's being inherited (`useRestorableDelete`) */
+  restorable: boolean;
   ruleset: RulesetDetail;
 }
 
@@ -68,6 +69,7 @@ export function ModifiersSection({
   data: externalData,
   queryKeysToInvalidate,
   onEntityIdChange,
+  restorable,
 }: ModifiersSectionProps) {
   const navigate = useNavigate();
 
@@ -205,13 +207,7 @@ export function ModifiersSection({
         return <Typography variant="body2">{modifier.valueLabel || modifier.value}</Typography>;
       }
       case "operator":
-        return (
-          <ValueChip
-            label={MODIFIER_OPERATOR_LABELS[modifier.operator] || modifier.operator}
-
-            color="secondary"
-          />
-        );
+        return <ValueChip label={formatOperator("modifier", modifier.operator)} color="secondary" />;
       case "createdAt":
         return (
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
@@ -238,6 +234,7 @@ export function ModifiersSection({
           canDelete={canDelete}
           onEdit={handleEditModifier}
           onDelete={handleDelete}
+          restorable={restorable}
           onDuplicate={handleDuplicateModifier}
           onRowClick={handleRowClick}
           onRowMouseEnter={handleRowMouseEnter}
@@ -266,11 +263,7 @@ export function ModifiersSection({
         <ModifierForm form={editForm} rulesetId={ruleset.id} entityType={entityType} mode="edit" />
       </EditDialog>
 
-      <DeleteDialog
-        {...deleteDialogProps}
-        title="Delete Modifier"
-        message="Are you sure you want to delete this modifier? This action cannot be undone."
-      />
+      <EntityDeleteDialog {...deleteDialogProps} what="Modifier" restorable={restorable} />
     </SectionContent>
   );
 }

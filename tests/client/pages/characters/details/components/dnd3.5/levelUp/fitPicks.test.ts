@@ -110,14 +110,15 @@ describe("fitting a level's skill points", () => {
     totalCharacterLevel: 1,
     skillPointsToSpend: 6,
   };
+  const oneLevel = { classSkillIds: [["climb", "swim"]], points: [6] };
 
   test("caps a skill at its rank and the points left, in the order given", () => {
-    expect(fitSkillPoints({ climb: 5, swim: 3 }, limits, [["climb", "swim"]], [6])).toEqual({ climb: 4, swim: 2 });
+    expect(fitSkillPoints({ climb: 5, swim: 3 }, limits, oneLevel)).toEqual({ climb: 4, swim: 2 });
   });
 
   test("keeps points that fit, and every point while the slots load", () => {
     const allocations = { climb: 2 };
-    expect(fitSkillPoints(allocations, limits, [["climb", "swim"]], [6])).toBe(allocations);
-    expect(fitSkillPoints(allocations, null, undefined, undefined)).toBe(allocations);
+    expect(fitSkillPoints(allocations, limits, oneLevel)).toBe(allocations);
+    expect(fitSkillPoints(allocations, null, undefined)).toBe(allocations);
   });
 });

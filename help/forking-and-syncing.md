@@ -12,7 +12,7 @@ In a fork you can:
 
 - Add new entities — homebrew feats, custom races, new magic items.
 - Edit anything inherited from the parent.
-- Delete entities — for inherited content this hides it from your fork; for your own additions it's a permanent removal. Either way, deletion is blocked if a character has the entity picked.
+- Delete entities — an inherited one (edited or not) is removed from your fork until you restore it from **Local Changes** (its menu says **Delete**); your own additions are removed for good (**Delete Permanently**). Either way, deletion is blocked if a character has the entity picked.
 - Subscribe your fork to [extensions](#what-are-extensions) independently of the parent.
 - Build characters on it.
 
@@ -28,7 +28,7 @@ Once you edit an entity in your fork, that entity becomes yours. Parent changes 
 
 This per-entity behavior protects your customizations. If you've rebalanced Power Attack to fit your campaign, the parent's next update won't silently overwrite your changes.
 
-To re-pull the parent's update onto an entity you've already edited, delete your local copy (the inherited version returns, but your changes are lost) or manually re-apply the parent's change.
+To re-pull the parent's update onto an entity you've already edited, revert it from **Local Changes** (the ruleset's ⋮ menu): the inherited version returns, but your changes are lost. Or re-apply the parent's change by hand.
 
 ## What are Extensions?
 

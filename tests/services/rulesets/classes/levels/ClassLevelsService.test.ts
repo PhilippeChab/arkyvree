@@ -349,16 +349,18 @@ describe("ClassLevelsService", () => {
 
   describe("in a fork", () => {
     test("reads the inherited class's levels", async () => {
-      const { fork, klass, inheritedLevel } = await setupFork();
+      const { parent, fork, klass, inheritedLevel } = await setupFork();
       expect(await ClassLevelsService.getClassLevels(fork.id, klass.id)).toMatchObject([
         { id: inheritedLevel.id, level: 1, bab: 1 },
       ]);
       expect(await ClassLevelsService.getClassLevel(fork.id, klass.id, inheritedLevel.id)).toMatchObject({
         id: inheritedLevel.id,
       });
+      // Held by the parent, as its class is: a delete of it in the fork can be undone
       expect(await ClassLevelsService.getClassLevelWithClassName(fork.id, inheritedLevel.id)).toMatchObject({
         id: inheritedLevel.id,
         name: klass.name,
+        rulesetId: parent.id,
       });
     });
 

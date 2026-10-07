@@ -41,13 +41,7 @@ import {
   SupportIcon,
 } from "@/client/src/components/icons/index.ts";
 import { Onboarding } from "@/client/src/components/onboarding/index.ts";
-import {
-  useAnchorMenu,
-  useAttachment,
-  useAuthRequests,
-  useDemoTimeRemaining,
-  useIsMobile,
-} from "@/client/src/hooks/index.ts";
+import { useAnchorMenu, useAttachment, useAuthRequests, useIsDemo, useIsMobile } from "@/client/src/hooks/index.ts";
 import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 import {
   campaignListQuery,
@@ -160,7 +154,7 @@ export function Layout() {
     recordId: user?.id,
     name: "avatar",
   });
-  const { isDemo } = useDemoTimeRemaining();
+  const isDemo = useIsDemo();
   // Suppress the onboarding popovers for demo users — they already see a
   // dedicated demo banner and the popover would just stack on top.
   const [onboardingOpen, setOnboardingOpen] = useState(() => !isDemo && !user?.onboardingCompletedAt);

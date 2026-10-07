@@ -28,13 +28,7 @@ import {
   UnarchiveIcon,
 } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import {
-  useAnchorMenu,
-  useDemoTimeRemaining,
-  useDialogState,
-  usePageTitle,
-  usePdfExport,
-} from "@/client/src/hooks/index.ts";
+import { useAnchorMenu, useDialogState, useIsDemo, usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { characterDetailQuery, invalidateCharacter, invalidateCharacterListings } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -68,7 +62,7 @@ export default function CharacterDetailsPage() {
   const snackbar = useSnackbar();
   const exportFn = () => parseResponse(rpc.api.characters[":characterId"].pdf.$post({ param: { characterId: id } }));
   const pdfExport = usePdfExport(exportFn);
-  const { isDemo } = useDemoTimeRemaining();
+  const isDemo = useIsDemo();
   const currentUserId = useAuthStore((s) => s.user?.id);
 
   // The route always gives an id

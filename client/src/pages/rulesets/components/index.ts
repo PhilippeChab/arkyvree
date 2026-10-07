@@ -1,5 +1,6 @@
 export { AptitudeChipsCell } from "./AptitudeChipsCell.tsx";
 export { DescriptionCell } from "./DescriptionCell.tsx";
+export { EntityDeleteDialog } from "./EntityDeleteDialog.tsx";
 export { EntityDetailLayout, EntityPageError } from "./EntityDetailLayout.tsx";
 export { EntityDetailsCard } from "./EntityDetailsCard.tsx";
 export { RulesetSectionTable } from "./RulesetSectionTable.tsx";

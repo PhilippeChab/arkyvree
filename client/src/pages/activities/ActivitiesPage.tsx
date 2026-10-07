@@ -91,7 +91,7 @@ export default function ActivitiesPage() {
                           <TableCell>
                             <Stack spacing={0.5} sx={{ alignItems: "flex-start" }}>
                               <ValueChip color="default" label={formatActivityType(activity.type, activity.data)} />
-                              <ActivityDetails data={activity.data} />
+                              <ActivityDetails type={activity.type} data={activity.data} />
                             </Stack>
                           </TableCell>
                           <TableCell>

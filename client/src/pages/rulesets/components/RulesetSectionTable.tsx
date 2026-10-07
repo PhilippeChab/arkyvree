@@ -45,6 +45,8 @@ interface RulesetSectionTableProps<T extends { id: string }> {
   onRowClick?: (item: T) => void;
   onRowMouseEnter?: (item: T) => void;
   renderCell: (item: T, columnKey: string) => ReactNode;
+  /** A row's delete can be undone from Local Changes (`useRestorableDelete`): "Delete", not "Delete Permanently". */
+  restorable?: boolean;
   /** The section's search, so an empty result reads as no matches rather than an empty section. */
   search?: string;
   /** What it lists, as a failure names it ("Races"). */
@@ -69,6 +71,7 @@ export function RulesetSectionTable<T extends { id: string }>({
   onRowClick,
   onRowMouseEnter,
   renderCell,
+  restorable = false,
   emptyIcon,
   emptyTitle = "No data available",
   emptyDescription = "No data available for this ruleset.",
@@ -144,7 +147,7 @@ export function RulesetSectionTable<T extends { id: string }>({
                     {canDelete && onDelete && (
                       <RowAction
                         icon={DeleteIcon}
-                        label="Delete"
+                        label={restorable ? "Delete" : "Delete Permanently"}
                         intent="destructive"
                         onClick={() => onDelete(item.id)}
                       />

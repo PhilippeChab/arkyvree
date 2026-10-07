@@ -22,5 +22,6 @@ export type {
   SelectedKlass,
   SkillsData,
 } from "./levelUpTypes.ts";
+export { maxSkillPoints, type SkillLevels, skillRanks } from "./skillLevels.ts";
 export { ADD_STEP_CONTENT, ADD_STEP_LABELS, useAddLevelWizard } from "./useAddLevelWizard.ts";
 export { EDIT_STEP_CONTENT, EDIT_STEP_LABELS, type LevelWizard, useLevelWizard } from "./useLevelWizard.ts";

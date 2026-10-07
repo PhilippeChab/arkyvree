@@ -18,6 +18,9 @@
  *   `defaultValues`), never react-hook-form's `useForm`, which takes some. A field written in the user's event (what
  *   follows from a pick) is marked dirty as its input would: `setValue(name, value, { shouldDirty: true })`. A field's
  *   error shows where its binding puts it (`fieldState.error`), never read from `formState.errors`.
+ * - `dirty-forms`: a form's unsaved edits guard the page's reload: an inline form reads them from its `useFormSync`
+ *   (`sync.isDirty`), which registers them, and a dialog's `FormDialog` does; nothing else reads `formState.isDirty` or
+ *   calls `useDirtyForm`.
  * - `effect-writes`: an effect synchronizes with what's outside React, and never does what an event or a render does: it
  *   never writes a form's field (`setValue`, `resetField`, `reset`, but `useFormSync`'s, which follows the server),
  *   navigates (a redirect is a rendered `<Navigate>`) nor calls back its owner (an `on…` prop, or a callback a ref
@@ -36,6 +39,8 @@
  *   in place (an object type, an intersection, `Omit<…>`, `Pick<…>`, `ComponentProps<…>`).
  * - `jsx-conditionals`: what shows on a condition only is `cond && <X />`, never `cond ? <X /> : null`; a chain of
  *   alternatives (`a ? <A /> : b ? <B /> : null`) ends in null.
+ * - `jsx-attribute-lines`: a JSX element's attributes stand on consecutive lines, no blank line among them, which the
+ *   formatter keeps (`--fix` removes it).
  * - `component-files`: a PascalCase `.tsx` file exports a component of its name (`Card.tsx`, `Card`), or, named in
  *   the plural, the family its name says (`FormFields.tsx`: `NameField`, `EmailField`); a camelCase file exports no
  *   component. A page is `XPage.tsx`, under `pages/`, whose default export is `function XPage`; a default export is
@@ -54,8 +59,12 @@
  *   for a name that isn't one (`[":id"]`, `["class-levels"]`).
  * - `error-reads`: an error shows through `errorMessage`, never its raw `message` (its toast names what failed:
  *   `snackbar.error(error, "Failed to …")`, whose fallback TypeScript requires).
- * - `browser-storage`: what the browser keeps is a store's (`client/src/stores/`, zustand's `persist`).
+ * - `browser-storage`: what the browser keeps is a store's (`client/src/stores/`, zustand's `persist`), read and written
+ *   through `stores/browserStorage.ts`, whose guards a blocked storage (a private window, blocked site data) never makes
+ *   throw.
  * - `date-formats`: a date is shown through `lib/formatDate.ts`, in the viewer's language.
+ * - `demo-reads`: whether the user is a demo's is `useIsDemo()`, read from the store, never the user's `expiresAt` again;
+ *   a demo's countdown, `useDemoTimeRemaining`, which re-renders as it ticks, is the demo banner's alone.
  * - `navigation`: a control that only navigates is a link (`component={Link} to`), an external link an anchor, never
  *   `window.open`; the URL's search params are read through the shared hooks; React Router's `Link` is `Link`, MUI's
  *   `MuiLink`.
@@ -87,8 +96,18 @@ const COMPONENT_WRAPPERS = new Set(["forwardRef", "memo"]);
 /** A date's own formatters, which a date never goes through outside `lib/formatDate.ts` */
 const DATE_FORMATTERS = new Set(["toLocaleDateString", "toLocaleTimeString"]);
 
+/** The modules that read when a demo's session ends: its hooks, and the query client's 401, outside React */
+const DEMO_READERS = new Set([
+  "client/src/hooks/useDemoTimeRemaining.ts",
+  "client/src/hooks/useIsDemo.ts",
+  "client/src/lib/queryClient.ts",
+]);
+
 /** The padding a dialog's content keeps: the theme's, under its title and above its footer */
 const DIALOG_PADDINGS = new Set(["p", "padding", "pb", "paddingBottom", "pt", "paddingTop", "py"]);
+
+/** The modules that read a form's unsaved edits, and register them: a dialog's `FormDialog`, an inline form's sync */
+const DIRTY_FORM_OWNERS = new Set(["client/src/components/common/FormDialog.tsx", "client/src/hooks/useFormSync.ts"]);
 
 /** The hooks whose callback is an effect. */
 const EFFECTS = new Set(["useEffect", "useLayoutEffect"]);
@@ -246,7 +265,7 @@ function createApiCallsInQueries(context) {
 }
 
 function createBrowserStorage(context) {
-  if (!inClient(context) || repoPath(context.filename).startsWith("client/src/stores/")) return {};
+  if (!inClient(context) || repoPath(context.filename) === "client/src/stores/browserStorage.ts") return {};
   return {
     Identifier(node) {
       if (node.name !== "localStorage" && node.name !== "sessionStorage") return;
@@ -262,7 +281,8 @@ function createBrowserStorage(context) {
       context.report({
         node,
         message:
-          "What the browser keeps is a store's (`client/src/stores/`, persisted through zustand's `persist`): never " +
+          "What the browser keeps is a store's (`client/src/stores/`, persisted through zustand's `persist`), read and " +
+          "written through `browserStorage.ts`, whose guards a blocked storage never makes throw: never " +
           "`localStorage` or `sessionStorage` elsewhere.",
       });
     },
@@ -567,6 +587,32 @@ function createDateFormats(context) {
   };
 }
 
+function createDemoReads(context) {
+  const file = repoPath(context.filename);
+  if (!inClient(context) || file.startsWith("client/src/stores/")) return {};
+  return {
+    CallExpression(node) {
+      if (calleeName(node) !== "useDemoTimeRemaining" || file === "client/src/components/layout/DemoBanner.tsx") return;
+      context.report({
+        node,
+        message:
+          "A demo's countdown, `useDemoTimeRemaining`, is the demo banner's alone: it re-renders as it ticks. Whether " +
+          "the user is a demo's is `useIsDemo()`.",
+      });
+    },
+    // `user.expiresAt`, `state.user?.expiresAt`
+    MemberExpression(node) {
+      if (DEMO_READERS.has(file) || node.property.name !== "expiresAt") return;
+      const owner = node.object.type === "Identifier" ? node.object.name : node.object.property?.name;
+      if (owner !== "user") return;
+      context.report({
+        node,
+        message: "Whether the user is a demo's is `useIsDemo()`, read from the store, never the user's `expiresAt`.",
+      });
+    },
+  };
+}
+
 function createDialogConventions(context) {
   if (!inClient(context)) return {};
   // The icons the file imports, which a dialog's title never shows
@@ -603,6 +649,38 @@ function createDialogConventions(context) {
           return;
         }
       }
+    },
+  };
+}
+
+function createDirtyForms(context) {
+  if (!inClient(context) || DIRTY_FORM_OWNERS.has(repoPath(context.filename))) return {};
+  const report = (node) =>
+    context.report({
+      node,
+      message:
+        "A form's unsaved edits guard the page's reload: an inline form reads them from its `useFormSync` " +
+        "(`sync.isDirty`), which registers them, and a dialog's `FormDialog` does, never `formState.isDirty` or " +
+        "`useDirtyForm` of its own.",
+    });
+  return {
+    CallExpression(node) {
+      if (calleeName(node) === "useDirtyForm") report(node);
+    },
+    // `form.formState.isDirty`
+    MemberExpression(node) {
+      if (node.property.name === "isDirty" && node.object.property?.name === "formState") report(node);
+    },
+    // `const { isDirty } = form.formState`, `const { formState: { isDirty } } = form`
+    Property(node) {
+      const pattern = node.parent;
+      if (pattern.type !== "ObjectPattern" || node.key.name !== "isDirty") return;
+      const holder = pattern.parent;
+      if (
+        (holder.type === "Property" && holder.key.name === "formState") ||
+        (holder.type === "VariableDeclarator" && holder.init?.property?.name === "formState")
+      )
+        report(node);
     },
   };
 }
@@ -802,6 +880,28 @@ function createIcons(context) {
         message:
           "An icon comes from `components/icons`, where every icon the app shows is named: never from `@mui/icons-material`.",
       });
+    },
+  };
+}
+
+function createJsxAttributeLines(context) {
+  const text = context.sourceCode.text;
+  const rangeOf = (node) => node.range ?? [node.start, node.end];
+  return {
+    JSXOpeningElement(node) {
+      const [, end] = rangeOf(node);
+      const parts = [node.typeArguments ?? node.name, ...node.attributes].map(rangeOf);
+      // The gaps after the element's name and each of its attributes, the last one's up to the tag's `>` or `/>`
+      for (const [i, [, from]] of parts.entries()) {
+        const to = i + 1 < parts.length ? parts[i + 1][0] : end - (node.selfClosing ? 2 : 1);
+        const gap = text.slice(from, to);
+        if (!/\n[ \t]*\n/.test(gap)) continue;
+        context.report({
+          node,
+          message: "A JSX element's attributes stand on consecutive lines: no blank line among them.",
+          fix: (fixer) => fixer.replaceTextRange([from, to], gap.replace(/\n(?:[ \t]*\n)+/g, "\n")),
+        });
+      }
     },
   };
 }
@@ -1314,6 +1414,7 @@ export default {
   "query-keys": { meta: { type: "suggestion" }, create: createQueryKeyRule },
   "client-apis": { meta: { type: "suggestion" }, create: createClientApis },
   "controlled-inputs": { meta: { type: "problem" }, create: createControlledInputs },
+  "dirty-forms": { meta: { type: "problem" }, create: createDirtyForms },
   "effect-writes": { meta: { type: "problem" }, create: createEffectWrites },
   "api-calls-in-queries": { meta: { type: "problem" }, create: createApiCallsInQueries },
   "load-errors": { meta: { type: "suggestion" }, create: createLoadErrors },
@@ -1321,6 +1422,7 @@ export default {
   "react-imports": { meta: { type: "suggestion" }, create: createReactImports },
   icons: { meta: { type: "suggestion" }, create: createIcons },
   "jsx-conditionals": { meta: { type: "suggestion" }, create: createJsxConditionals },
+  "jsx-attribute-lines": { meta: { type: "layout", fixable: "whitespace" }, create: createJsxAttributeLines },
   "component-files": { meta: { type: "suggestion" }, create: createComponentFiles },
   "hook-files": { meta: { type: "suggestion" }, create: createHookFiles },
   "handler-names": { meta: { type: "suggestion" }, create: createHandlerNames },
@@ -1331,6 +1433,7 @@ export default {
   "error-reads": { meta: { type: "suggestion" }, create: createErrorReads },
   "browser-storage": { meta: { type: "suggestion" }, create: createBrowserStorage },
   "date-formats": { meta: { type: "suggestion" }, create: createDateFormats },
+  "demo-reads": { meta: { type: "suggestion" }, create: createDemoReads },
   navigation: { meta: { type: "suggestion" }, create: createNavigation },
   "clickable-elements": { meta: { type: "suggestion" }, create: createClickableElements },
   tooltips: { meta: { type: "suggestion" }, create: createTooltips },

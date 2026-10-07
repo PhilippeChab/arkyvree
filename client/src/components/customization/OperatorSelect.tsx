@@ -1,7 +1,7 @@
 import { MenuItem, TextField } from "@mui/material";
 import { type Ref } from "react";
 
-import { MODIFIER_OPERATOR_LABELS, REQUIREMENT_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
+import { formatOperator, type OperatorKind } from "@/shared/customization/operators.ts";
 
 interface OperatorSelectProps {
   error?: boolean;
@@ -9,14 +9,12 @@ interface OperatorSelectProps {
   helperText?: string;
   /** Its form field's `ref`, so a failed submit focuses it. */
   inputRef?: Ref<HTMLInputElement>;
-  kind: "modifier" | "requirement";
+  kind: OperatorKind;
   onChange: (value: string) => void;
   /** The operators the target path allows. */
   operators: string[];
   value: string;
 }
-
-const OPERATOR_LABELS = { modifier: MODIFIER_OPERATOR_LABELS, requirement: REQUIREMENT_OPERATOR_LABELS };
 
 /** A modifier's or requirement's operator, among those its target path allows. */
 export function OperatorSelect({
@@ -42,7 +40,7 @@ export function OperatorSelect({
     >
       {operators.map((operator) => (
         <MenuItem key={operator} value={operator}>
-          {OPERATOR_LABELS[kind][operator] || operator}
+          {formatOperator(kind, operator)}
         </MenuItem>
       ))}
     </TextField>

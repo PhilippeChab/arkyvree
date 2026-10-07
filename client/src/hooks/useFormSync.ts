@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 import type { FieldValues, SubmitHandler, UseFormReturn } from "react-hook-form";
 
+import { useDirtyForm } from "./useDirtyForm.ts";
+
 interface FormSyncOptions {
   /**
    * The record this one was copied from, when a copy-on-write moved the page
@@ -29,8 +31,11 @@ export type FormSync<T extends FieldValues> = ReturnType<typeof useFormSync<T>>;
  * Keep an edit form showing the latest server values without wiping unsaved
  * edits. While the form is clean it follows the server; a change that arrives
  * while it is dirty waits until the edits are saved or undone. Pass
- * `undefined` while loading.
+ * `undefined` while loading, and the form's empty values when it edits nothing
+ * the server holds (a new password).
  *
+ * - `isDirty` says the form holds unsaved edits, which its Save waits for;
+ *   while it does, a reload of the page asks first (`useDirtyForm`).
  * - `handleSubmit(onValid)` replaces `form.handleSubmit`: it remembers which
  *   record the save is for.
  * - `updatedAt()` is the token of the server values the form is based on.
@@ -48,6 +53,7 @@ export function useFormSync<T extends FieldValues>(
   { key, adoptKey, updatedAt }: FormSyncOptions = {},
 ) {
   const { isDirty } = form.formState;
+  useDirtyForm(isDirty);
   // Compare by content: a refetch returns new objects even when nothing changed.
   const snapshot = values === undefined ? undefined : JSON.stringify(values);
   const synced = useRef<ServerVersion>(undefined);
@@ -103,6 +109,7 @@ export function useFormSync<T extends FieldValues>(
 
   return {
     handleSubmit,
+    isDirty,
     updatedAt: () => synced.current?.updatedAt,
     saved,
   };

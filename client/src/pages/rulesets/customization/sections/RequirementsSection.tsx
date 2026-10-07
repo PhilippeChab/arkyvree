@@ -8,7 +8,6 @@ import {
   AddButton,
   BlankState,
   CreateDialog,
-  DeleteDialog,
   DiceSpinner,
   EditDialog,
   EmptyValue,
@@ -30,8 +29,8 @@ import {
 } from "@/client/src/components/customization/index.ts";
 import { AddIcon, DeleteIcon, EditIcon, RequirementsIcon } from "@/client/src/components/icons/index.ts";
 import { formatDate } from "@/client/src/lib/formatDate.ts";
-import { REQUIREMENT_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
+import { EntityDeleteDialog } from "@/client/src/pages/rulesets/components/index.ts";
 import {
   customizationSection,
   requirementsQuery,
@@ -39,6 +38,7 @@ import {
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import type { CustomizationOwnerType } from "@/shared/customization/entities.ts";
+import { formatOperator } from "@/shared/customization/operators.ts";
 import RequirementTree, { type RequirementNode } from "@/shared/customization/RequirementTree.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
@@ -56,6 +56,8 @@ interface RequirementsSectionProps {
   entityType: CustomizationOwnerType;
   onEntityIdChange?: (copyId: string, sourceId: string) => void;
   queryKeysToInvalidate?: readonly (readonly unknown[])[];
+  /** A delete can be undone from Local Changes, its entity's being inherited (`useRestorableDelete`) */
+  restorable: boolean;
   ruleset: RulesetDetail;
 }
 
@@ -84,6 +86,7 @@ export function RequirementsSection({
   data: externalData,
   queryKeysToInvalidate,
   onEntityIdChange,
+  restorable,
 }: RequirementsSectionProps) {
   const { tag, followCopies } = useCopyFollow(entityId, onEntityIdChange);
   const entityParam = { id: ruleset.id, entityType: getUrlSegment(entityType), entityId };
@@ -275,11 +278,7 @@ export function RequirementsSection({
           >
             <CardContent sx={{ py: 1.5, px: 2, "&:last-child": { pb: 1.5 } }}>
               <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
-                <ValueChip
-                  label={requirement.level}
-
-                  color="default"
-                />
+                <ValueChip label={requirement.level} color="default" />
 
                 {requirementIsChaining ? (
                   <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
@@ -296,11 +295,7 @@ export function RequirementsSection({
                       <EmptyValue />
                     )}
                     {requirement.operator && (
-                      <ValueChip
-                        label={REQUIREMENT_OPERATOR_LABELS[requirement.operator] || requirement.operator}
-
-                        color="secondary"
-                      />
+                      <ValueChip label={formatOperator("requirement", requirement.operator)} color="secondary" />
                     )}
                     <Typography variant="body2">
                       {requirement.valueLabel || requirement.value || <EmptyValue />}
@@ -435,11 +430,7 @@ export function RequirementsSection({
           mode="edit"
         />
       </EditDialog>
-      <DeleteDialog
-        {...deleteDialogProps}
-        title="Delete Requirement"
-        message="Are you sure you want to delete this requirement? This action cannot be undone."
-      />
+      <EntityDeleteDialog {...deleteDialogProps} what="Requirement" restorable={restorable} />
     </SectionContent>
   );
 }
