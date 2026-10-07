@@ -1,9 +1,9 @@
+import { readCost, readWeight } from "@/database/packages/dnd35-from-parser/tools/text/amounts.ts";
 import type { ItemReference } from "@/database/packages/dnd35-from-parser/tools/types/items.ts";
 import { getArmorDefinition, getShieldDefinition } from "@/database/packages/dnd35/content/items/armor.ts";
 import { getWeaponDefinition } from "@/database/packages/dnd35/content/items/weapons.ts";
 
 import { BaseDetector } from "./BaseDetector.ts";
-import { readCost, readWeight } from "./readers/items/amounts.ts";
 
 /** SRD armor table uses short names; generators use full names */
 const DEFAULT_ARMOR_NAME_MAP: Record<string, string> = {

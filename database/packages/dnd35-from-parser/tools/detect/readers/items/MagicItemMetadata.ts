@@ -1,14 +1,13 @@
 /** What a magic item's metadata line says of it: its aura, caster level, price and weight; and its type and slot. */
 
+import { readCost, readWeight } from "@/database/packages/dnd35-from-parser/tools/text/amounts.ts";
 import type {
   MagicItemCategory,
   MagicItemReference,
 } from "@/database/packages/dnd35-from-parser/tools/types/magicItems.ts";
 
-import { readCost, readWeight } from "./amounts.ts";
-
 /** What a magic item's metadata says of it, and what its category and name make it. */
-type MagicItemMetadata = Pick<
+type Metadata = Pick<
   MagicItemReference["detected"][string],
   "aura" | "casterLevel" | "costGp" | "itemType" | "slot" | "weight"
 >;
@@ -108,16 +107,21 @@ function variantPrice(entry: MagicItemReference["raw"][number]): string {
   return price ?? parseMetadataPrice(entry.metadataText);
 }
 
-/** A magic item's aura, caster level, price and weight, as its metadata gives them, and its type and slot. */
-export function readMagicItemMetadata(entry: MagicItemReference["raw"][number]): MagicItemMetadata {
-  const aura = parseAura(entry.metadataText);
-  const casterLevel = parseCasterLevel(entry.metadataText);
-  return {
-    ...(aura ? { aura } : {}),
-    ...(casterLevel ? { casterLevel } : {}),
-    costGp: variantPrice(entry),
-    weight: parseMetadataWeight(entry.metadataText),
-    itemType: CATEGORY_TYPE_MAP[entry.category],
-    slot: inferSlot(entry.name, entry.category),
-  };
+/** A magic item's metadata line (its aura, caster level, price and weight), read with its name and category. */
+export class MagicItemMetadata {
+  constructor(private readonly entry: MagicItemReference["raw"][number]) {}
+
+  /** A magic item's aura, caster level, price and weight, as its metadata gives them, and its type and slot. */
+  read(): Metadata {
+    const aura = parseAura(this.entry.metadataText);
+    const casterLevel = parseCasterLevel(this.entry.metadataText);
+    return {
+      ...(aura ? { aura } : {}),
+      ...(casterLevel ? { casterLevel } : {}),
+      costGp: variantPrice(this.entry),
+      weight: parseMetadataWeight(this.entry.metadataText),
+      itemType: CATEGORY_TYPE_MAP[this.entry.category],
+      slot: inferSlot(this.entry.name, this.entry.category),
+    };
+  }
 }

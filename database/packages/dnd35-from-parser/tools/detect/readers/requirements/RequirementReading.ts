@@ -1,22 +1,20 @@
-import TargetPaths from "@/database/packages/dnd35-from-parser/tools/detect/readers/TargetPaths.ts";
-import type { RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
+import { include } from "@/server/mixins.ts";
+
+import { BaseRequirementReading } from "./BaseRequirementReading.ts";
+import { ReadsAlignment } from "./concerns/ReadsAlignment.ts";
+import { ReadsAnyFeats } from "./concerns/ReadsAnyFeats.ts";
+import { ReadsFeatOptions } from "./concerns/ReadsFeatOptions.ts";
+import { ReadsSkills } from "./concerns/ReadsSkills.ts";
 
 /**
- * A prerequisite, read: the requirements it gives, the prerequisites it names that no requirement can say
- * (`unresolved`), and the paths no character has (`errors`), whose requirements are left out.
+ * A prerequisite, read (a feat's, `FeatPrerequisites`; a class's, `ClassPrerequisites`): the requirements it gives,
+ * what no requirement can say, the invalid paths (`BaseRequirementReading`), and the readings both kinds share, a
+ * concern each (`concerns/`): an alignment, any feat of a family, a feat's options, any skill of a family.
  */
-export class RequirementReading {
-  readonly errors: string[] = [];
-  readonly requirements: RequirementEntry[] = [];
-  readonly unresolved: string[] = [];
-
-  /** Leaves out the requirements read whose paths aren't all valid, each invalid path in `errors`. */
-  protected keepValidRequirements() {
-    const read = this.requirements.splice(0);
-    for (const requirement of read) {
-      const invalid = TargetPaths.invalidRequirementPaths(requirement);
-      if (invalid.length > 0) for (const path of invalid) this.errors.push(`Invalid requirement path: "${path}"`);
-      else this.requirements.push(requirement);
-    }
-  }
-}
+export class RequirementReading extends include(
+  BaseRequirementReading,
+  ReadsAlignment,
+  ReadsAnyFeats,
+  ReadsFeatOptions,
+  ReadsSkills,
+) {}

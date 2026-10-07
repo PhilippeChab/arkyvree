@@ -1,5 +1,6 @@
 import { BOOK_ABBREV_PATTERN } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
+import { findOptionName } from "@/database/packages/dnd35-from-parser/tools/vocabulary/featOptions.ts";
 import {
   RACE_NAME_PATH,
   RACE_NAMES,
@@ -10,30 +11,13 @@ import { domainFeat } from "@/database/packages/dnd35/content/aptitudes/names.ts
 import { eq, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
 import { proficiencyRequirements } from "@/database/packages/dnd35/content/items/proficiencies.ts";
+import { ALL_WEAPONS } from "@/database/packages/dnd35/content/items/weapons.ts";
 import { capitalize, stripSeparators } from "@/shared/text.ts";
 
-import { readAlignmentRequirement } from "./alignment.ts";
-import { readAnyFeatRequirement, readFamilyFeatRequirements } from "./anyFeats.ts";
-import { findWeapon, readFamilyOptions, stripFeatChoice } from "./featOptions.ts";
 import { RequirementReading } from "./RequirementReading.ts";
-import { readAnySkillRequirement } from "./skills.ts";
 
 /** Skills that exist in D&D 3.5 but aren't tracked in this system. */
 const NON_TRACKABLE_SKILLS = new Set(["speak language"]);
-
-/** A compound feat requirement: "Weapon Focus (longbow or shortbow)". */
-function compoundFeatRequirement(text: string): RequirementEntry | undefined {
-  // Pattern: "FeatName (optionA or optionB)", "FeatName (optionA, optionB, or optionC)"
-  const match = text.match(/^(.+?)\s*\(([^)]+\s+or\s+[^)]+)\)$/i);
-  if (!match) return undefined;
-
-  const baseFeat = match[1].trim();
-  const options = readFamilyOptions(baseFeat, match[2]);
-
-  if (options.length < 2) return undefined;
-
-  return or(...options.map((opt) => eq(feat(`${baseFeat}: ${capitalize(opt)}`))));
-}
 
 /**
  * A class's feat prerequisites as the scraper split them, mended: a list split inside its parentheses ("Weapon Focus
@@ -57,35 +41,6 @@ function featPrerequisites(scraped: string[]): string[] {
  *  Mechanical ones are tracked as unresolved so they show up as TODOs. */
 function isMechanicalPrereq(text: string): boolean {
   return /animal companion|spell-like|psionic/i.test(text);
-}
-
-/** Expand "Knowledge (any)" to OR of all matching knowledge skills, or handle multi-option parentheticals */
-function listedSkillRequirement(name: string, ranks: number): RequirementEntry | null {
-  // "Knowledge (any)" → OR of all Knowledge skills
-  const anySkill = readAnySkillRequirement(name, ranks);
-  if (anySkill) return anySkill;
-
-  // "Knowledge (arcana, local or psionics)" or "Craft (leather, metal, or woodworking)" → OR of individual skills
-  const multiMatch = name.match(/^(.+?)\s*\(([^)]*(?:,|or)[^)]*)\)$/i);
-  if (multiMatch) {
-    const baseName = multiMatch[1].trim();
-    const options = multiMatch[2]
-      .split(/,\s*(?:or\s+)?|\s+or\s+/)
-      .map((o) => o.trim())
-      .filter(Boolean);
-    if (options.length >= 2) {
-      const slugs = options.map((opt) => {
-        // Normalize abbreviated Craft subtypes: "leather" → "leatherworking", "metal" → "metalworking"
-        const normalized = /^craft$/i.test(baseName) ? normalizeCraftSubtype(opt) : opt;
-        const fullName = `${baseName} (${capitalize(normalized)})`;
-        // Try exact SKILL_SLUGS lookup first, fall back to constructing the slug directly
-        return SKILL_SLUGS[fullName.toLowerCase()] ?? stripSeparators(fullName);
-      });
-      return or(...slugs.map((s) => gte(`skills.${s}.rank`, ranks)));
-    }
-  }
-
-  return null;
 }
 
 /** Normalize abbreviated Craft subtypes from prerequisite text to proper D&D skill names */
@@ -132,64 +87,6 @@ function raceRequirement(text: string): RequirementEntry | undefined {
   if (resolved.length === 1) return eqStr(RACE_NAME_PATH, resolved[0]);
 
   return or(...resolved.map((r) => eqStr(RACE_NAME_PATH, r)));
-}
-
-/**
- * The skills a class's prerequisites list, as requirements: an "X or Y" one either, and an "or Y" entry folded into
- * the skill before it. A skill the system doesn't track is left out.
- */
-function skillRequirements(skills: { name: string; ranks: number }[]): RequirementEntry[] {
-  const reqs: RequirementEntry[] = [];
-  let lastSkillReqIdx = -1;
-  for (let i = 0; i < skills.length; i++) {
-    const s = skills[i];
-
-    // Skip skills not tracked in this system (e.g. "Speak Language")
-    const baseName = s.name
-      .replace(/\s*\([^)]*\)\s*$/, "")
-      .toLowerCase()
-      .trim();
-    if (NON_TRACKABLE_SKILLS.has(baseName)) continue;
-
-    // Try to expand special skill patterns first (e.g. "Knowledge (any)", "Knowledge (arcana, local or psionics)")
-    const expanded = listedSkillRequirement(s.name, s.ranks);
-    if (expanded) {
-      reqs.push(expanded);
-      lastSkillReqIdx = reqs.length - 1;
-      continue;
-    }
-
-    // "Diplomacy or Intimidate 1 rank" → single entry with "or" inside
-    if (/\bor\b/i.test(s.name) && !/^or\s+/i.test(s.name)) {
-      const parts = s.name
-        .split(/\s+or\s+/i)
-        .map((p) => p.trim())
-        .filter(Boolean);
-      if (parts.length >= 2) {
-        reqs.push(or(...parts.map((p) => gte(`skills.${toSkillSlug(p)}.rank`, s.ranks))));
-        lastSkillReqIdx = reqs.length - 1;
-        continue;
-      }
-    }
-    // "or Intimidate" as a separate entry → merge with previous skill req as OR
-    if (/^or\s+/i.test(s.name)) {
-      const name = s.name.replace(/^or\s+/i, "");
-      const newTarget = `skills.${toSkillSlug(name)}.rank`;
-      if (lastSkillReqIdx >= 0) {
-        const prev = reqs[lastSkillReqIdx];
-        // Skip if it resolves to the same path (e.g. Perform subtypes)
-        if (!("chainingOperator" in prev) && prev.target === newTarget) continue;
-        reqs[lastSkillReqIdx] = or(prev, gte(newTarget, s.ranks));
-      } else {
-        reqs.push(gte(newTarget, s.ranks));
-        lastSkillReqIdx = reqs.length - 1;
-      }
-      continue;
-    }
-    reqs.push(gte(`skills.${toSkillSlug(s.name)}.rank`, s.ranks));
-    lastSkillReqIdx = reqs.length - 1;
-  }
-  return reqs;
 }
 
 /** A special ability requirement: turning or rebuking undead, a domain's access, wild shape. */
@@ -290,7 +187,7 @@ export class ClassPrerequisites extends RequirementReading {
     const reqs = this.requirements;
     if (parsed.bab) reqs.push(gte("combat.bab", parsed.bab));
 
-    if (parsed.skills) reqs.push(...skillRequirements(parsed.skills));
+    if (parsed.skills) reqs.push(...this.skillRequirements(parsed.skills));
 
     if (parsed.feats) reqs.push(...this.featRequirements(parsed.feats));
 
@@ -303,7 +200,7 @@ export class ClassPrerequisites extends RequirementReading {
     }
 
     if (parsed.alignment) {
-      const alignReqs = readAlignmentRequirement(parsed.alignment);
+      const alignReqs = this.alignmentRequirement(parsed.alignment);
       if (alignReqs) reqs.push(alignReqs);
     }
 
@@ -328,6 +225,20 @@ export class ClassPrerequisites extends RequirementReading {
     this.keepValidRequirements();
   }
 
+  /** A compound feat requirement: "Weapon Focus (longbow or shortbow)". */
+  private compoundFeatRequirement(text: string): RequirementEntry | undefined {
+    // Pattern: "FeatName (optionA or optionB)", "FeatName (optionA, optionB, or optionC)"
+    const match = text.match(/^(.+?)\s*\(([^)]+\s+or\s+[^)]+)\)$/i);
+    if (!match) return undefined;
+
+    const baseFeat = match[1].trim();
+    const options = this.familyOptions(baseFeat, match[2]);
+
+    if (options.length < 2) return undefined;
+
+    return or(...options.map((opt) => eq(feat(`${baseFeat}: ${capitalize(opt)}`))));
+  }
+
   /** The feats a class's prerequisites list, as requirements: one it can't read is unresolved. */
   private featRequirements(scraped: string[]): RequirementEntry[] {
     const reqs: RequirementEntry[] = [];
@@ -345,18 +256,18 @@ export class ClassPrerequisites extends RequirementReading {
       // "Improved Unarmed Strike (or monk's unarmed strike ability)": the feat, which the alternative grants
       f = f.replace(/\s*\(or\b[^)]*\)$/i, "");
       // "Exotic Weapon Proficiency (kukri)": proficiency with the weapon, which may be martial
-      const proficiencyWeapon = findWeapon(/^Exotic Weapon Proficiency \((.+)\)$/i.exec(f)?.[1] ?? "");
+      const proficiencyWeapon = findOptionName(/^Exotic Weapon Proficiency \((.+)\)$/i.exec(f)?.[1] ?? "", ALL_WEAPONS);
       if (proficiencyWeapon) {
         reqs.push(...proficiencyRequirements(proficiencyWeapon));
         continue;
       }
-      const withoutChoice = stripFeatChoice(f);
+      const withoutChoice = this.featWithoutChoice(f);
       if (withoutChoice) {
         reqs.push(eq(feat(withoutChoice)));
         continue;
       }
 
-      const familyReqs = readFamilyFeatRequirements(f);
+      const familyReqs = this.familyFeatRequirements(f);
       if (familyReqs.length > 0) {
         reqs.push(...familyReqs);
         continue;
@@ -365,13 +276,13 @@ export class ClassPrerequisites extends RequirementReading {
       //   "Weapon Focus (with deity's favored weapon)")
       // → prefix wildcard on the feat family slug
       if (/\(any\b|\bany\b|\btwo\s+(schools?|weapons?|domains?|powers?|skills?|feats?)\b|\bdeity'?s?\b/i.test(f)) {
-        const anyReq = readAnyFeatRequirement(f);
+        const anyReq = this.anyFeatRequirement(f);
         if (anyReq) reqs.push(anyReq);
         else this.unresolved.push(f);
 
         continue;
       }
-      const compoundReq = compoundFeatRequirement(f);
+      const compoundReq = this.compoundFeatRequirement(f);
       if (compoundReq) {
         reqs.push(compoundReq);
       } else {
@@ -379,6 +290,93 @@ export class ClassPrerequisites extends RequirementReading {
         // and book abbreviation suffixes (e.g. "Brutal Throw (CAd)" → "Brutal Throw")
         reqs.push(eq(feat(f.replace(/\s*\+\d+(?:d\d+)?$/, "").replace(BOOK_ABBREV_PATTERN, ""))));
       }
+    }
+    return reqs;
+  }
+
+  /** Expand "Knowledge (any)" to OR of all matching knowledge skills, or handle multi-option parentheticals */
+  private listedSkillRequirement(name: string, ranks: number): RequirementEntry | null {
+    // "Knowledge (any)" → OR of all Knowledge skills
+    const anySkill = this.anySkillRequirement(name, ranks);
+    if (anySkill) return anySkill;
+
+    // "Knowledge (arcana, local or psionics)" or "Craft (leather, metal, or woodworking)" → OR of individual skills
+    const multiMatch = name.match(/^(.+?)\s*\(([^)]*(?:,|or)[^)]*)\)$/i);
+    if (multiMatch) {
+      const baseName = multiMatch[1].trim();
+      const options = multiMatch[2]
+        .split(/,\s*(?:or\s+)?|\s+or\s+/)
+        .map((o) => o.trim())
+        .filter(Boolean);
+      if (options.length >= 2) {
+        const slugs = options.map((opt) => {
+          // Normalize abbreviated Craft subtypes: "leather" → "leatherworking", "metal" → "metalworking"
+          const normalized = /^craft$/i.test(baseName) ? normalizeCraftSubtype(opt) : opt;
+          const fullName = `${baseName} (${capitalize(normalized)})`;
+          // Try exact SKILL_SLUGS lookup first, fall back to constructing the slug directly
+          return SKILL_SLUGS[fullName.toLowerCase()] ?? stripSeparators(fullName);
+        });
+        return or(...slugs.map((s) => gte(`skills.${s}.rank`, ranks)));
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * The skills a class's prerequisites list, as requirements: an "X or Y" one either, and an "or Y" entry folded into
+   * the skill before it. A skill the system doesn't track is left out.
+   */
+  private skillRequirements(skills: { name: string; ranks: number }[]): RequirementEntry[] {
+    const reqs: RequirementEntry[] = [];
+    let lastSkillReqIdx = -1;
+    for (let i = 0; i < skills.length; i++) {
+      const s = skills[i];
+
+      // Skip skills not tracked in this system (e.g. "Speak Language")
+      const baseName = s.name
+        .replace(/\s*\([^)]*\)\s*$/, "")
+        .toLowerCase()
+        .trim();
+      if (NON_TRACKABLE_SKILLS.has(baseName)) continue;
+
+      // Try to expand special skill patterns first (e.g. "Knowledge (any)", "Knowledge (arcana, local or psionics)")
+      const expanded = this.listedSkillRequirement(s.name, s.ranks);
+      if (expanded) {
+        reqs.push(expanded);
+        lastSkillReqIdx = reqs.length - 1;
+        continue;
+      }
+
+      // "Diplomacy or Intimidate 1 rank" → single entry with "or" inside
+      if (/\bor\b/i.test(s.name) && !/^or\s+/i.test(s.name)) {
+        const parts = s.name
+          .split(/\s+or\s+/i)
+          .map((p) => p.trim())
+          .filter(Boolean);
+        if (parts.length >= 2) {
+          reqs.push(or(...parts.map((p) => gte(`skills.${toSkillSlug(p)}.rank`, s.ranks))));
+          lastSkillReqIdx = reqs.length - 1;
+          continue;
+        }
+      }
+      // "or Intimidate" as a separate entry → merge with previous skill req as OR
+      if (/^or\s+/i.test(s.name)) {
+        const name = s.name.replace(/^or\s+/i, "");
+        const newTarget = `skills.${toSkillSlug(name)}.rank`;
+        if (lastSkillReqIdx >= 0) {
+          const prev = reqs[lastSkillReqIdx];
+          // Skip if it resolves to the same path (e.g. Perform subtypes)
+          if (!("chainingOperator" in prev) && prev.target === newTarget) continue;
+          reqs[lastSkillReqIdx] = or(prev, gte(newTarget, s.ranks));
+        } else {
+          reqs.push(gte(newTarget, s.ranks));
+          lastSkillReqIdx = reqs.length - 1;
+        }
+        continue;
+      }
+      reqs.push(gte(`skills.${toSkillSlug(s.name)}.rank`, s.ranks));
+      lastSkillReqIdx = reqs.length - 1;
     }
     return reqs;
   }

@@ -108,7 +108,10 @@ export class FeatDetector extends BaseDetector<FeatReference> {
     return map;
   }
 
-  /** Each feat's class levels that grant it as a bonus feat (for alternate prerequisites), from the book's classes' lists. */
+  /**
+   * Each feat's class levels that grant it as a bonus feat (for alternate prerequisites), from the book's classes'
+   * lists.
+   */
   private bonusFeatClassLevels(): Map<string, { classSlug: string; minLevel: number }[]> {
     const map = new Map<string, { classSlug: string; minLevel: number }[]>();
 

@@ -1,5 +1,7 @@
+import type { BaseRequirementReading } from "@/database/packages/dnd35-from-parser/tools/detect/readers/requirements/BaseRequirementReading.ts";
 import { eqStr, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
+import type { Constructor } from "@/server/mixins.ts";
 
 /** The nine alignments, lowercased: what a prerequisite names one by ("neutral" is true neutral). */
 const ALIGNMENT_NAMES = [
@@ -53,19 +55,25 @@ function titleCase(name: string): string {
     .join(" ");
 }
 
-/** A prerequisite's alignment ("Any nonevil", "Lawful neutral"), as a check of the character's. */
-export function readAlignmentRequirement(text: string): RequirementEntry | undefined {
-  const lower = text.toLowerCase().trim().replace(/\.$/, "");
+/** Reading a prerequisite's alignment: "Any nonevil", "Lawful neutral", a list of them. */
+export function ReadsAlignment<B extends Constructor<BaseRequirementReading>>(Base: B) {
+  abstract class ReadingAlignment extends Base {
+    /** A prerequisite's alignment ("Any nonevil", "Lawful neutral"), as a check of the character's. */
+    protected alignmentRequirement(text: string): RequirementEntry | undefined {
+      const lower = text.toLowerCase().trim().replace(/\.$/, "");
 
-  const any = ANY_ALIGNMENTS.find(({ prefixes }) => prefixes.some((prefix) => lower.startsWith(prefix)));
-  if (any) return or(...any.alignments.map((alignment) => eqStr(ALIGNMENT_PATH, alignment)));
+      const any = ANY_ALIGNMENTS.find(({ prefixes }) => prefixes.some((prefix) => lower.startsWith(prefix)));
+      if (any) return or(...any.alignments.map((alignment) => eqStr(ALIGNMENT_PATH, alignment)));
 
-  if (lower.includes(",")) {
-    const listed = listedAlignments(lower);
-    if (listed) return listed;
+      if (lower.includes(",")) {
+        const listed = listedAlignments(lower);
+        if (listed) return listed;
+      }
+
+      // Specific alignment
+      const name = ALIGNMENT_NAMES.find((name) => lower === name || (name === "true neutral" && lower === "neutral"));
+      return name ? eqStr(ALIGNMENT_PATH, titleCase(name)) : undefined;
+    }
   }
-
-  // Specific alignment
-  const name = ALIGNMENT_NAMES.find((name) => lower === name || (name === "true neutral" && lower === "neutral"));
-  return name ? eqStr(ALIGNMENT_PATH, titleCase(name)) : undefined;
+  return ReadingAlignment;
 }

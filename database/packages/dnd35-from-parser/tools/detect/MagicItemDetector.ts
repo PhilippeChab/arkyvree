@@ -9,10 +9,8 @@ import type { Modifier, Property } from "@/database/packages/dnd35/content/custo
 import { MAGIC_AURA, MAGIC_CASTER_LEVEL } from "@/shared/dnd3.5/properties/index.ts";
 
 import { BaseDetector, type Resolved } from "./BaseDetector.ts";
-import { readArmorStats } from "./readers/items/armorStats.ts";
-import { readBaseItem } from "./readers/items/baseItems.ts";
-import { readMagicItemMetadata } from "./readers/items/magicItemMetadata.ts";
-import { readWeaponEnhancement } from "./readers/items/weaponStats.ts";
+import { MagicItemMetadata } from "./readers/items/MagicItemMetadata.ts";
+import { MagicItemText } from "./readers/items/MagicItemText.ts";
 import { MagicItemModifiers } from "./readers/modifiers/MagicItemModifiers.ts";
 
 /** The specific armor and shields, whose text gives what they change of their base's. */
@@ -20,7 +18,7 @@ const ARMOR_CATEGORIES = new Set<MagicItemCategory>(["specificArmor", "specificS
 
 /** A weapon's enhancement bonus, as modifiers of the weapon holding it: its attack's and its damage's. */
 function weaponEnhancementModifiers(description: string): Modifier[] {
-  const enhancement = readWeaponEnhancement(description);
+  const enhancement = new MagicItemText(description).weaponEnhancement();
   if (!enhancement) return [];
   const bonusOf = (target: string, value: number): Modifier[] => (value ? [bonus(target, value)] : []);
   return [...bonusOf("weapon.tohit.magic", enhancement.attack), ...bonusOf("weapon.damage.magic", enhancement.damage)];
@@ -29,8 +27,8 @@ function weaponEnhancementModifiers(description: string): Modifier[] {
 /**
  * A magic item reference's detector: each item's metadata, its base item and its modifiers (`detected`), and each item
  * as the seeds make it, its overrides applied (`mapping`): a specific armor or shield takes the stats its text gives
- * (`readArmorStats`) and its enhancement bonus to AC, a specific weapon made from a base one its enhancement bonus to
- * attack and damage (`readWeaponEnhancement`).
+ * (`MagicItemText.armorStats`) and its enhancement bonus to AC, a specific weapon made from a base one its enhancement
+ * bonus to attack and damage (`MagicItemText.weaponEnhancement`).
  */
 export class MagicItemDetector extends BaseDetector<MagicItemReference> {
   constructor(stored: Pick<MagicItemReference, "_meta" | "overrides" | "raw">) {
@@ -38,7 +36,9 @@ export class MagicItemDetector extends BaseDetector<MagicItemReference> {
     this.overrides = sanitizeJsonValues(stored.overrides);
   }
 
-  /** Its overrides, sanitized: its mapping is made of them, its descriptions normalized after, as the seeds write them. */
+  /**
+   * Its overrides, sanitized: its mapping is made of them, its descriptions normalized after, as the seeds write them.
+   */
   private readonly overrides: MagicItemReference["overrides"];
 
   /** Each item's detected section: its metadata, its base item, its modifiers. */
@@ -48,11 +48,11 @@ export class MagicItemDetector extends BaseDetector<MagicItemReference> {
     for (const entry of this.stored.raw) {
       const description = entry.description ?? "";
       const { modifiers, unresolved } = new MagicItemModifiers(entry.name, description);
-      const baseItem = readBaseItem(entry.name, description, entry.category);
+      const baseItem = new MagicItemText(description).baseItem(entry.name, entry.category);
 
       detected[entry.name] = {
         category: entry.category,
-        ...readMagicItemMetadata(entry),
+        ...new MagicItemMetadata(entry).read(),
         ...(baseItem ? { baseItem } : {}),
         ...(modifiers.length > 0 ? { modifiers } : {}),
         ...(unresolved.length > 0 ? { unresolvedModifiers: unresolved } : {}),
@@ -72,7 +72,7 @@ export class MagicItemDetector extends BaseDetector<MagicItemReference> {
       const rawEntry = raw.find((r) => r.name === name);
       const baseItem = (ovr?.baseItem !== undefined ? ovr.baseItem : det.baseItem) ?? undefined;
       const description = normalizeDescription(ovr?.description ?? rawEntry?.description ?? "");
-      const stats = ARMOR_CATEGORIES.has(det.category) ? readArmorStats(description) : undefined;
+      const stats = ARMOR_CATEGORIES.has(det.category) ? new MagicItemText(description).armorStats() : undefined;
       // The weight its override or its text gives, else the detected one when it isn't none: else its base item's
       const weight = ovr?.weight ?? stats?.weight ?? (det.weight !== "0" ? det.weight : undefined);
 

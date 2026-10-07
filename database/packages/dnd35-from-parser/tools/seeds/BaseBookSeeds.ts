@@ -1,4 +1,3 @@
-import { findFamilyFeat } from "@/database/packages/dnd35-from-parser/tools/detect/readers/requirements/featOptions.ts";
 import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
 import type {
   ClassReferenceFile,
@@ -9,6 +8,7 @@ import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/
 import type { ItemReference } from "@/database/packages/dnd35-from-parser/tools/types/items.ts";
 import type { ReferenceByType, ReferenceType } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
 import { CORE_BOOK } from "@/database/packages/dnd35-from-parser/tools/vocabulary/books.ts";
+import { findFamilyFeat } from "@/database/packages/dnd35-from-parser/tools/vocabulary/featOptions.ts";
 import { classSpells } from "@/database/packages/dnd35/content/aptitudes/names.ts";
 import type { DomainSeed } from "@/database/packages/dnd35/content/domains/types.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
