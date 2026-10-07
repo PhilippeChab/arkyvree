@@ -68,7 +68,7 @@ test.describe("Rulesets", () => {
 
     await expect(page).toHaveURL(/\/rulesets$/, { timeout: 15_000 });
     // The list has rendered before we check what it lacks.
-    await expect(page.getByRole("textbox", { name: "Search rulesets..." })).toBeVisible();
+    await expect(page.getByRole("textbox", { name: "Search rulesets…" })).toBeVisible();
     await expect(page.getByRole("heading", { name })).toHaveCount(0);
     await filterList(page, /^Archived$/);
     await expect(page).toHaveURL(/scope=archived/);
@@ -104,7 +104,7 @@ test.describe("Rulesets", () => {
     const rows = page.locator("table tbody tr");
     // A first page holds 10 feats.
     await expect.poll(() => rows.count(), { timeout: 10_000 }).toBeGreaterThanOrEqual(10);
-    const search = page.getByPlaceholder("Search feats...");
+    const search = page.getByPlaceholder("Search feats…");
     await search.fill("Toughness");
     await expect.poll(() => rows.count(), { timeout: 10_000 }).toBeLessThanOrEqual(5);
     await expect(rows.filter({ hasText: "Toughness" }).first()).toBeVisible();
@@ -127,7 +127,7 @@ test.describe("Rulesets", () => {
     const cloudChariot = page.getByRole("cell", { name: "Cloud Chariot", exact: true });
     const searchSpells = async () => {
       await page.getByRole("tab", { name: "Spells" }).click();
-      await page.getByPlaceholder("Search spells...").fill("Cloud Chariot");
+      await page.getByPlaceholder("Search spells…").fill("Cloud Chariot");
     };
     await searchSpells();
     await expect(cloudChariot).toBeVisible({ timeout: 10_000 });

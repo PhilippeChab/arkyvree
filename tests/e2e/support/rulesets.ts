@@ -16,7 +16,7 @@ export async function coreRulesetId(page: Page) {
 
 /** Fills a modifier dialog: `value` added to Strength. */
 export async function fillStrengthModifier(dialog: Locator, value: number) {
-  await dialog.locator('input[placeholder="Search..."]').fill("strength");
+  await dialog.locator('input[placeholder="Search…"]').fill("strength");
   const strength = dialog.getByText("Abilities › Strength › Misc").first();
   await expect(strength).toBeVisible({ timeout: 10_000 });
   await strength.click();
@@ -43,7 +43,7 @@ export async function forkCoreRuleset(page: Page, name: string) {
 /** Opens, from the fork on the page, the customization page of its feat named `name`. */
 export async function openFeat(page: Page, name: string) {
   await page.getByRole("tab", { name: "Feats" }).click();
-  await page.getByPlaceholder("Search feats...").fill(name);
+  await page.getByPlaceholder("Search feats…").fill(name);
   await page.getByRole("cell", { name, exact: true }).first().click();
   await expect(page).toHaveURL(/\/rulesets\/[a-f0-9-]+\/feats\/[a-f0-9-]+\/customization/);
 }

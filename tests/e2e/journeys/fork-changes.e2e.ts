@@ -100,7 +100,7 @@ test.describe("Changes to a fork", () => {
     await expect(dialog).toBeHidden({ timeout: 15_000 });
 
     await page.goto(`/rulesets/${forkId}/feats`);
-    await page.getByPlaceholder("Search feats...").fill(featName);
+    await page.getByPlaceholder("Search feats…").fill(featName);
     const row = page.locator("table tbody").getByText(featName, { exact: true }).first();
     await expect(row).toBeVisible({ timeout: 10_000 });
     await page.getByRole("button", { name: "Local Changes" }).click();

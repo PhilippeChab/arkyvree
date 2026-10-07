@@ -94,7 +94,7 @@ test.describe("Customization of a fork", () => {
     await page.getByRole("tab", { name: "Requirements" }).click();
     await page.getByRole("button", { name: "Add Requirement" }).click();
     const requirementDialog = page.getByRole("dialog", { name: "Create Requirement" });
-    await requirementDialog.locator('input[placeholder="Search..."]').fill("strength");
+    await requirementDialog.locator('input[placeholder="Search…"]').fill("strength");
     const strength = requirementDialog.getByText("Abilities › Strength › Base").first();
     await expect(strength).toBeVisible({ timeout: 10_000 });
     await strength.click();
