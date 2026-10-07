@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { ClassPage } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/class/ClassPage.ts";
-import { fixture, scraped, stored } from "@/tests/support/scrapedPages.ts";
+import { fixture, scraped, stored, urlOf } from "@/tests/support/scrapedPages.ts";
 
 describe("A class's page", () => {
   test.each([
@@ -16,9 +16,10 @@ describe("A class's page", () => {
     ["shadowmind", "complete-adventurer"],
     ["vigilante", "complete-adventurer"],
   ])("reads the class %s as its reference stores it", (page, book) => {
-    expect(scraped(new ClassPage(fixture(`class-${page}`)).read())).toEqual(
-      stored(`${book}/classes/${page}.json`, "class").raw,
-    );
+    const klass = stored(`${book}/classes/${page}.json`, "class");
+    // The saved page is the one the reference was scraped from
+    expect(urlOf(`class-${page}`)).toBe(klass._meta.sourceUrl);
+    expect(scraped(new ClassPage(fixture(`class-${page}`)).read())).toEqual(klass.raw);
   });
 
   test("reads a page carrying only the site's heading as a class named after that heading", () => {
