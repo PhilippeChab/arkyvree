@@ -100,7 +100,7 @@ const dnd35Dmg: ContentPackage = {
   seeds: [
     async (db) => {
       const seeder = await RulesetSeeder.createExtension(db, { name: DND35_DMG_NAME, description: "…" });
-      await seeder.seedBook(BOOK, CORE.clericSpellLevels);
+      await seeder.seedBook(BOOK, CORE.classes);
     },
   ],
 };
@@ -130,7 +130,7 @@ const dnd35Dmg: ContentPackage = {
   seeds: [
     async (db) => {
       const seeder = await RulesetSeeder.createExtension(db, { name: DND35_DMG_NAME, description: "…" });
-      await seeder.seedBook(BOOK, CORE.clericSpellLevels);
+      await seeder.seedBook(BOOK, CORE.classes);
     },
   ],
   updates: {

@@ -2,12 +2,14 @@ import { describe, expect, test } from "bun:test";
 
 import { eq, inArray } from "drizzle-orm";
 
+import { ALL_CLASSES as SRD_CLASSES } from "@/database/packages/dnd35-from-parser/generated/srd/classes/index.ts";
 import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
 import * as r from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { ItemSeed } from "@/database/packages/dnd35/content/items/types.ts";
 import type { RaceSeed } from "@/database/packages/dnd35/content/races/types.ts";
 import type { SpellSeed } from "@/database/packages/dnd35/content/spells/types.ts";
 import type { SeedContext } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
+import { findSpellcastingClass } from "@/database/packages/dnd35/seed/spellTable.ts";
 import {
   entitySnapshotsInRules,
   featsAptitudesInRules,
@@ -33,8 +35,14 @@ import {
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { describeCustomizations, freshExtensionSeeder, freshSeeder, namesOf } from "@/tests/seeds/freshSeed.ts";
 
-/** The class level each spell level opens at, the first at the first: 1, 3, 5… */
-const SPELL_LEVELS = Object.fromEntries(Array.from({ length: 10 }, (_, level) => [level, Math.max(1, 2 * level - 1)]));
+/**
+ * The class level each spell level opens at, the first at the first: 1, 3, 5…
+ *
+ * Full casters, whose spell level N opens at class level 2N - 1: a domain's slots open with the cleric's, a school's
+ * with the wizard's.
+ */
+const CLERIC = findSpellcastingClass(SRD_CLASSES, "Cleric");
+const WIZARD = findSpellcastingClass(SRD_CLASSES, "Wizard");
 
 function feats(...names: string[]) {
   return names.map((name) => ({ name, description: "", aptitudes: [] }));
@@ -566,7 +574,7 @@ describe("Seeding", () => {
           ],
         },
       ],
-      SPELL_LEVELS,
+      CLERIC,
     );
 
     const featId = ctx.featMap["Test Luck Domain"];
@@ -608,7 +616,7 @@ describe("Seeding", () => {
         { name: "Evocation", description: "", prohibitedSchoolCount: 1 },
         { name: "Illusion", description: "", prohibitedSchoolCount: 1 },
       ],
-      SPELL_LEVELS,
+      WIZARD,
     );
 
     expect((await describeCustomizations(ctx.featMap["Evocation Specialist"])).modifiers).toEqual(

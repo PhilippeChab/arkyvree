@@ -3,6 +3,7 @@ import { bonus } from "@/database/packages/dnd35/content/customization/modifiers
 import { gt } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
 import type { BaseSeeder } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
+import { getSpellLevelOpenings } from "@/database/packages/dnd35/seed/spellTable.ts";
 import {
   klassesInRules,
   klassLevelFeatsInRules,
@@ -66,7 +67,7 @@ function listSlots(
       modifier(g.level, slot(g.spellLevel, "allowed"), String(g.delta), "add"),
     ),
     ...(spells.knowAll
-      ? tableOpenings(spells.perDay).map((o) => modifier(o.level, slot(o.spellLevel, "allowed"), "-1", "set"))
+      ? getSpellLevelOpenings(spells.perDay).map((o) => modifier(o.level, slot(o.spellLevel, "allowed"), "-1", "set"))
       : []),
   ];
 }
@@ -89,17 +90,6 @@ function tableGains(table: number[][]) {
       return delta > 0 ? [{ level: i + 1, spellLevel, delta }] : [];
     }),
   );
-}
-
-/** The spell levels a table opens at each class level. */
-function tableOpenings(table: number[][]) {
-  return table.flatMap((row, i) => {
-    const opened = table[i - 1]?.length ?? 0;
-    return Array.from({ length: Math.max(row.length - opened, 0) }, (_, j) => ({
-      level: i + 1,
-      spellLevel: opened + j,
-    }));
-  });
 }
 
 /** Seeding classes. */

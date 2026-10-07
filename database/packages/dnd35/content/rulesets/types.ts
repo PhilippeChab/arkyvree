@@ -45,10 +45,6 @@ export type CoreContent = {
   wizardSchools: WizardSchoolSeed[];
   domains: DomainSeed[];
   bonds: BondContent[];
-  /** The class level each of the cleric's spell levels opens at, which a domain's slots open at too. */
-  clericSpellLevels: Record<number, number>;
-  /** The class level each of the wizard's spell levels opens at, which a school's slots open at too. */
-  wizardSpellLevels: Record<number, number>;
 };
 
 /** A core feat an extension changes: more aptitudes it's taken in, and the class levels that also qualify for it. */
