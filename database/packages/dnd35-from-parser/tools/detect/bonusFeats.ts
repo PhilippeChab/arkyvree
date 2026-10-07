@@ -4,6 +4,7 @@
  */
 
 import type { ClassReferenceFile } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 /** Build map of feat name → additional aptitudes from the bonusFeatLists of a book's `classes`. */
 export function getBonusFeatAptitudes(classes: ClassReferenceFile[]): Map<string, string[]> {
@@ -49,10 +50,11 @@ export function getBonusFeatClassLevels(
 ): Map<string, { classSlug: string; minLevel: number }[]> {
   const map = new Map<string, { classSlug: string; minLevel: number }[]>();
 
-  for (const { file, ref } of classes) {
+  for (const { ref } of classes) {
     const lists = ref.detected?.bonusFeatLists;
     if (!lists) continue;
-    const classSlug = file.replace(".json", "");
+    // The class's path segment (`classes.wujen.level`), as every class path names it: its name's, not its file's
+    const classSlug = stripSeparators(ref.raw.name);
     for (const list of lists) {
       if (!list.levels?.length) continue;
       const minLevel = Math.min(...list.levels);
