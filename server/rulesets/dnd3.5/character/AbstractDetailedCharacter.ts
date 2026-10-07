@@ -1,16 +1,8 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db, type Db } from "@/server/database/index.ts";
-import type AbilitiesComponent from "@/server/rulesets/dnd3.5/abilities/AbilitiesComponent.ts";
 import { ALLOWED_ALL } from "@/server/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
-import type AptitudesComponent from "@/server/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
-import type ClassesComponent from "@/server/rulesets/dnd3.5/classes/ClassesComponent.ts";
-import type FeatGroupingsComponent from "@/server/rulesets/dnd3.5/feats/FeatGroupingsComponent.ts";
-import type FeatsComponent from "@/server/rulesets/dnd3.5/feats/FeatsComponent.ts";
-import type IdentityComponent from "@/server/rulesets/dnd3.5/identity/IdentityComponent.ts";
-import type PowerGroupingsComponent from "@/server/rulesets/dnd3.5/powers/PowerGroupingsComponent.ts";
-import type PowersComponent from "@/server/rulesets/dnd3.5/powers/PowersComponent.ts";
-import type SavingThrowsComponent from "@/server/rulesets/dnd3.5/saves/SavingThrowsComponent.ts";
+import type { Dnd35Components } from "@/server/rulesets/dnd3.5/character/components.ts";
 import ModifierEvaluator from "@/server/rulesets/engine/modifiers/ModifierEvaluator.ts";
 import { isTemplateValue } from "@/server/rulesets/engine/paths/templateExpression.ts";
 import RequirementEvaluator from "@/server/rulesets/engine/requirements/RequirementEvaluator.ts";
@@ -100,6 +92,13 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     not_empty: "is not empty",
   };
 
+  /** The character's parts, each wired to the ones it reads (`buildComponents`). */
+  abstract readonly components: Dnd35Components;
+
+  abstract readonly modifierEvaluator: ModifierEvaluator;
+
+  abstract readonly requirementEvaluator: RequirementEvaluator;
+
   // Context data
   protected ruleset: Ruleset | undefined = undefined;
 
@@ -174,29 +173,6 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
   private modifiersPastTheirGates: Modifier[] = [];
 
   protected validRulesetIds = new Set<string>();
-
-  // Universal sub-systems (initialized by subclass constructor)
-  protected detailedCharacterAbilities!: AbilitiesComponent;
-
-  protected detailedCharacterClasses!: ClassesComponent;
-
-  protected detailedCharacterFeats!: FeatsComponent;
-
-  protected detailedCharacterFeatGroupings!: FeatGroupingsComponent;
-
-  protected detailedCharacterPowers!: PowersComponent;
-
-  protected detailedCharacterPowerGroupings!: PowerGroupingsComponent;
-
-  protected detailedCharacterAptitudes!: AptitudesComponent;
-
-  protected detailedCharacterSavingThrows!: SavingThrowsComponent;
-
-  protected detailedCharacterModifiers!: ModifierEvaluator;
-
-  protected detailedCharacterIdentity!: IdentityComponent;
-
-  protected detailedCharacterRequirements!: RequirementEvaluator;
 
   protected targetPaths!: TargetPathsTraverser;
 
@@ -283,7 +259,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     const literal = modifiers.filter((m) => !isTemplateValue(m.value));
 
     for (const modifier of literal.filter((m) => !keysOf(m).some((key) => gateKeys.has(key)))) {
-      this.detailedCharacterModifiers.evaluateModifier(modifier, holders);
+      this.modifierEvaluator.evaluateModifier(modifier, holders);
     }
     let waiting = literal.filter((m) => keysOf(m).some((key) => gateKeys.has(key)));
     const appliedGated: Modifier[] = [];
@@ -298,30 +274,27 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
       const blocked = ModifierEvaluator.blockedKeys(round);
       const ready = waiting.filter((m) => !keysOf(m).some((key) => blocked.has(key)));
       if (ready.length === 0) break;
-      for (const modifier of ready) this.detailedCharacterModifiers.evaluateModifier(modifier, holders);
+      for (const modifier of ready) this.modifierEvaluator.evaluateModifier(modifier, holders);
       appliedGated.push(...ready);
       waiting = waiting.filter((m) => !ready.includes(m));
     }
 
-    this.detailedCharacterRequirements.evaluateRequirements(holders, groups, this.itemOf);
+    this.requirementEvaluator.evaluateRequirements(holders, groups, this.itemOf);
     // A modifier can break a requirement already met, another's or its own: the modifiers it gated stay applied (undoing
     // them could loop, two modifiers breaking each other's), and validation reports them. A ready one a round skipped,
     // or that reached nothing, didn't apply
-    const blockedAtTheEnd = ModifierEvaluator.blockedKeys(this.detailedCharacterRequirements);
-    const appliedIds = new Set(this.detailedCharacterModifiers.getModifiers().appliedModifiers.map((m) => m.id));
+    const blockedAtTheEnd = ModifierEvaluator.blockedKeys(this.requirementEvaluator);
+    const appliedIds = new Set(this.modifierEvaluator.getModifiers().appliedModifiers.map((m) => m.id));
     this.modifiersPastTheirGates = appliedGated.filter(
       (m) => appliedIds.has(m.id) && keysOf(m).some((key) => blockedAtTheEnd.has(key)),
     );
     // The modifiers still waiting are recorded as gated out; the templates apply, or are, by the final evaluation
-    this.detailedCharacterModifiers.evaluateModifiers(
+    this.modifierEvaluator.evaluateModifiers(
       holders,
       [...waiting, ...modifiers.filter((m) => isTemplateValue(m.value))],
-      this.detailedCharacterRequirements,
+      this.requirementEvaluator,
     );
   }
-
-  /** Build the holders map — universal holders + ruleset-specific ones. */
-  protected abstract buildHolders(): Holders;
 
   /** Create the data loader for this ruleset. */
   protected abstract createDataLoader(): DataLoader;
@@ -361,7 +334,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
 
       // feats.<slug>.possessed
       if (parts.length === 3 && parts[0] === "feats" && parts[2] === "possessed") {
-        const feat = this.detailedCharacterFeats.getFeat(parts[1]);
+        const feat = this.components.feats.getFeat(parts[1]);
         if (feat && !feat.possessed) {
           feat.possessed = true;
           feat.count += 1;
@@ -371,7 +344,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
 
       // powers.<spellSlug>.<aptSlug>.known
       if (parts.length === 4 && parts[0] === "powers" && parts[3] === "known") {
-        const spell = this.detailedCharacterPowers.getSpellEntry(parts[1], parts[2]);
+        const spell = this.components.powers.getSpellEntry(parts[1], parts[2]);
         if (spell && !spell.known) {
           spell.known = true;
         }
@@ -448,46 +421,6 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     return this.campaign;
   }
 
-  getDetailedCharacterAbilities() {
-    return this.detailedCharacterAbilities;
-  }
-
-  getDetailedCharacterAptitudes() {
-    return this.detailedCharacterAptitudes;
-  }
-
-  getDetailedCharacterClasses() {
-    return this.detailedCharacterClasses;
-  }
-
-  getDetailedCharacterFeats() {
-    return this.detailedCharacterFeats;
-  }
-
-  getDetailedCharacterIdentity() {
-    return this.detailedCharacterIdentity;
-  }
-
-  getDetailedCharacterModifiers() {
-    return this.detailedCharacterModifiers;
-  }
-
-  getDetailedCharacterPowerGroupings() {
-    return this.detailedCharacterPowerGroupings;
-  }
-
-  getDetailedCharacterPowers() {
-    return this.detailedCharacterPowers;
-  }
-
-  getDetailedCharacterRequirements() {
-    return this.detailedCharacterRequirements;
-  }
-
-  getDetailedCharacterSavingThrows() {
-    return this.detailedCharacterSavingThrows;
-  }
-
   getPlayer() {
     return this.player;
   }
@@ -549,11 +482,11 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
             : `${name}: overspent by ${Math.abs(available)} (${spent}/${allowed})`,
       });
     };
-    const aptitudes = this.detailedCharacterAptitudes.getAptitudes();
+    const aptitudes = this.components.aptitudes.getAptitudes();
     for (const [key, aptitude] of Object.entries(aptitudes)) {
-      if (this.detailedCharacterAptitudes.isLeveledAptitude(key)) {
+      if (this.components.aptitudes.isLeveledAptitude(key)) {
         const aptitudeObj = aptitude as Record<string, unknown>;
-        for (let level = 0; level <= this.detailedCharacterAptitudes.maxSpellLevel; level++) {
+        for (let level = 0; level <= this.components.aptitudes.maxSpellLevel; level++) {
           const levelData = aptitudeObj[String(level)] as AptitudeSlots | undefined;
           if (levelData) slotIssue(`${aptitude.name} (level ${level})`, levelData);
         }
@@ -563,7 +496,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     }
 
     // Check unmet requirements (skip modifier/item requirements)
-    const { unmetRequirementGroups, invalidRequirements } = this.detailedCharacterRequirements.getRequirements();
+    const { unmetRequirementGroups, invalidRequirements } = this.requirementEvaluator.getRequirements();
     for (const group of unmetRequirementGroups) {
       if (group.every((r) => r.entityType === "modifiers")) continue;
       if (group.every((r) => r.entityType === "items")) continue;
@@ -572,7 +505,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
     for (const invalid of invalidRequirements) issues.push(this.invalidRequirementIssue(invalid));
 
     // Check modifier issues
-    const { skippedModifiers, unappliedModifiers } = this.detailedCharacterModifiers.getModifiers();
+    const { skippedModifiers, unappliedModifiers } = this.modifierEvaluator.getModifiers();
     for (const modifier of unappliedModifiers) {
       const isConditional = unmetRequirementGroups.some((group) =>
         group.every((r) => r.entityType === "modifiers" && r.entityId === modifier.id),
@@ -651,7 +584,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
       this.preApplyPossessionModifiers();
 
       // 4. Build holders (subclass — includes ruleset-specific holders)
-      this.holders = this.buildHolders();
+      this.holders = this.components;
 
       // 5. Pre-requirement processing (subclass — e.g. the spellcasting holder, a bonded creature's stat block)
       await this.preRequirementProcessing(rulesetData);
@@ -668,11 +601,7 @@ export default abstract class AbstractDetailedCharacter implements DetailedChara
       await this.postModifierProcessing(rulesetData);
 
       // 9. Evaluate power modifiers (universal)
-      this.detailedCharacterModifiers.evaluateModifiers(
-        this.holders,
-        powerModifiers,
-        this.detailedCharacterRequirements,
-      );
+      this.modifierEvaluator.evaluateModifiers(this.holders, powerModifiers, this.requirementEvaluator);
     });
   }
 

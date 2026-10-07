@@ -77,7 +77,7 @@ async function featSlots(
     const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
     await detailedCharacter.build(undefined, projectedData);
 
-    const aptitudePools = detailedCharacter.getDetailedCharacterAptitudes().extractFeatPools();
+    const aptitudePools = detailedCharacter.components.aptitudes.extractFeatPools();
     let featsToSelect = 0;
     for (const pool of Object.values(aptitudePools)) {
       pool.shared = rulesetData.aptitudeIdsByHavingPowers.has(pool.id);
@@ -110,7 +110,7 @@ async function powerSlots(
     const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
     await detailedCharacter.build(undefined, projectedData);
 
-    const aptitudePools = spellPools(detailedCharacter.getDetailedCharacterAptitudes(), rulesetData);
+    const aptitudePools = spellPools(detailedCharacter.components.aptitudes, rulesetData);
     const powersToSelect = Object.values(aptitudePools).reduce((total, pool) => total + pool.available, 0);
     const autoGrantedPowers = (rulesetData.klassLevelPowersWithPowersByKlassLevel.get(klassLevel.id) ?? []).map(
       (rec) => ({ ...rec.powersInRule, free: rec.free }),
@@ -170,7 +170,7 @@ export async function getAttributeSlots(
 
   const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
   await detailedCharacter.build(undefined, projectedData);
-  const abilities = detailedCharacter.getDetailedCharacterAbilities();
+  const abilities = detailedCharacter.components.abilities;
 
   return {
     isAvailable: true,

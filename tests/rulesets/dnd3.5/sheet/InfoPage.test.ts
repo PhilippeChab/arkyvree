@@ -19,7 +19,7 @@ describe("InfoPage", () => {
   test("shows a height and a weight as the player wrote them, free text without a unit added", async () => {
     const detailed = new DetailedCharacter(await findSeededCharacter("Bjorn Ironhand"));
     await detailed.build();
-    const { physiology } = detailed.getDetailedCharacterIdentity().getIdentity();
+    const { physiology } = detailed.components.identity.getIdentity();
     physiology.height = `5'11"`;
     physiology.weight = "82 kg";
 

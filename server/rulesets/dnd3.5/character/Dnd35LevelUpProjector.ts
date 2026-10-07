@@ -28,7 +28,7 @@ export default class Dnd35LevelUpProjector implements Dnd35LevelUpProjectorInter
       }
     }
 
-    const skills = this.character.getDetailedCharacterSkills();
+    const skills = this.character.components.skills;
     return klassLevelIds.map((klassLevelId) =>
       skills.getLevelPointsPerLevel(skillPointsByKlassLevelId.get(klassLevelId) ?? 0),
     );
@@ -38,19 +38,19 @@ export default class Dnd35LevelUpProjector implements Dnd35LevelUpProjectorInter
     allSkills: T[],
     classSkillIds: Set<string>,
   ): (T & { isClassSkill: boolean; isCurrentClassSkill: boolean; currentRank: number })[] {
-    return this.character.getDetailedCharacterSkills().getEnrichedSkills(allSkills, classSkillIds);
+    return this.character.components.skills.getEnrichedSkills(allSkills, classSkillIds);
   }
 
   getCharacterSkills(): Record<string, unknown> {
-    return this.character.getDetailedCharacterSkills().getSkills();
+    return this.character.components.skills.getSkills();
   }
 
   getSkillBudget() {
-    return this.character.getDetailedCharacterSkills().getSkillBudget();
+    return this.character.components.skills.getSkillBudget();
   }
 
   getSkillPointBases() {
-    return this.character.getDetailedCharacterSkills().getSkillPointBases();
+    return this.character.components.skills.getSkillPointBases();
   }
 
   /** Each planned level's skill points, in the batch's order: the first counts four times over on a new character. */
@@ -72,7 +72,7 @@ export default class Dnd35LevelUpProjector implements Dnd35LevelUpProjectorInter
     const results = new Map<string, boolean>();
     if (candidates.length === 0) return results;
 
-    const identity = this.character.getDetailedCharacterIdentity().getIdentity();
+    const identity = this.character.components.identity.getIdentity();
     identity.meta.level++;
 
     for (const candidate of candidates) {

@@ -10,7 +10,7 @@ import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 /** The modifiers, applied, unapplied and inactive, each with the name of its source. */
 function enrichedModifiersOf(dc: Dnd35DetailedCharacter) {
-  const modifiersData = dc.getDetailedCharacterModifiers().getModifiers();
+  const modifiersData = dc.modifierEvaluator.getModifiers();
   const withSource = (mods: Modifier[]) =>
     mods.map((mod) => ({
       ...mod,
@@ -26,7 +26,7 @@ function enrichedModifiersOf(dc: Dnd35DetailedCharacter) {
 
 /** The requirements, each group and each invalid one with the name of the entity it belongs to. */
 function enrichedRequirementsOf(dc: Dnd35DetailedCharacter) {
-  const requirementsData = dc.getDetailedCharacterRequirements().getRequirements();
+  const requirementsData = dc.requirementEvaluator.getRequirements();
   const withSource = (group: Requirement[]) => ({
     sourceName: group[0] ? dc.resolveEntityName(group[0].entityId, group[0].entityType) : undefined,
     sourceType: group[0]?.entityType,
@@ -46,25 +46,22 @@ function enrichedRequirementsOf(dc: Dnd35DetailedCharacter) {
 
 /** The inventory as a flat list of entries, each with its item's fields. */
 function equipmentOf(dc: Dnd35DetailedCharacter) {
-  return dc
-    .getDetailedCharacterInventory()
-    .getFlatInventory()
-    .map((entry) => ({
-      id: entry.id,
-      itemId: entry.itemId,
-      name: entry.item.name,
-      type: entry.item.type,
-      description: entry.item.description,
-      weight: entry.item.weight,
-      costGp: entry.item.costGp,
-      quantity: entry.quantity,
-      equipped: entry.equipped,
-      location: entry.location,
-      weaponSet: entry.weaponSet,
-      totalCharges: entry.totalCharges,
-      remainingCharges: entry.remainingCharges,
-      updatedAt: entry.updatedAt,
-    }));
+  return dc.components.inventory.getFlatInventory().map((entry) => ({
+    id: entry.id,
+    itemId: entry.itemId,
+    name: entry.item.name,
+    type: entry.item.type,
+    description: entry.item.description,
+    weight: entry.item.weight,
+    costGp: entry.item.costGp,
+    quantity: entry.quantity,
+    equipped: entry.equipped,
+    location: entry.location,
+    weaponSet: entry.weaponSet,
+    totalCharges: entry.totalCharges,
+    remainingCharges: entry.remainingCharges,
+    updatedAt: entry.updatedAt,
+  }));
 }
 
 export function buildBondedMap(
@@ -86,7 +83,7 @@ export function buildBondedResponse(
 ) {
   return {
     ...buildFullCharacterResponse(record, bonded),
-    feats: bonded.getDetailedCharacterFeats().getFeats(),
+    feats: bonded.components.feats.getFeats(),
   };
 }
 
@@ -115,18 +112,18 @@ export function buildFullCharacterResponse(
     deletedAt: character.deletedAt,
     updatedAt: character.updatedAt,
     shareToken: character.shareToken ?? null,
-    identity: detailedCharacter.getDetailedCharacterIdentity().getIdentity(),
-    skillBudget: dc.getDetailedCharacterSkills().getSkillBudget(),
-    abilities: detailedCharacter.getDetailedCharacterAbilities().getAbilitiesWithIds(),
-    combat: dc.getDetailedCharacterCombat().getCombat(),
-    savingThrows: dc.getDetailedCharacterSavingThrows().getSavingThrows(),
-    classes: dc.getDetailedCharacterClasses().getCharacterClasses(),
-    inventory: dc.getDetailedCharacterInventory().getInventory(),
+    identity: detailedCharacter.components.identity.getIdentity(),
+    skillBudget: dc.components.skills.getSkillBudget(),
+    abilities: detailedCharacter.components.abilities.getAbilitiesWithIds(),
+    combat: dc.components.combat.getCombat(),
+    savingThrows: dc.components.savingThrows.getSavingThrows(),
+    classes: dc.components.classes.getCharacterClasses(),
+    inventory: dc.components.inventory.getInventory(),
     equipment: equipmentOf(dc),
-    skills: dc.getDetailedCharacterSkills().getSkills(),
-    powers: dc.getDetailedCharacterPowers().getFlatPowers(),
+    skills: dc.components.skills.getSkills(),
+    powers: dc.components.powers.getFlatPowers(),
     ...buildVirtualEntities(dc),
-    aptitudes: detailedCharacter.getDetailedCharacterAptitudes().getAptitudes(),
+    aptitudes: detailedCharacter.components.aptitudes.getAptitudes(),
     spellTags: dc.getSpellTags(),
     spellTagLists: dc.getSpellTagLists(),
     requirements,

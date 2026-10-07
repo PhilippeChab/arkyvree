@@ -46,9 +46,9 @@ function familiarOf(masterId: string) {
 
 /** A bonded creature's numbers, as its sheet shows them. */
 function statBlock(detailed: DetailedCharacterMount | DetailedCharacterAnimalCompanion) {
-  const { hp, bab, ac, weaponsets } = detailed.getDetailedCharacterCombat().getCombat();
-  const saves = detailed.getDetailedCharacterSavingThrows().getSavingThrows();
-  const abilities = detailed.getDetailedCharacterAbilities().getAbilities();
+  const { hp, bab, ac, weaponsets } = detailed.components.combat.getCombat();
+  const saves = detailed.components.savingThrows.getSavingThrows();
+  const abilities = detailed.components.abilities.getAbilities();
   const bite = weaponsets["0"]?.mainhand;
   return {
     hp: hp.base,
@@ -103,7 +103,7 @@ describe("Bonded creatures", () => {
   ] as const)("%s has no general feat to pick, and no unspent slot", async (_, create, Kind) => {
     const { bonded } = await create();
     const detailed = await build(new Kind(bonded));
-    expect(detailed.getDetailedCharacterAptitudes().getAptitudes()["general"]).toMatchObject({
+    expect(detailed.components.aptitudes.getAptitudes()["general"]).toMatchObject({
       allowed: 0,
       available: 0,
     });
@@ -125,8 +125,8 @@ describe("Bonded creatures", () => {
     const master = await build(new DetailedCharacter((await Characters.findOne(db, { id: masterId }))!));
     const familiar = await build(new DetailedCharacterFamiliar(bonded));
     const numbers = (detailed: DetailedCharacter) => {
-      const { hp, bab } = detailed.getDetailedCharacterCombat().getCombat();
-      const saves = detailed.getDetailedCharacterSavingThrows().getSavingThrows();
+      const { hp, bab } = detailed.components.combat.getCombat();
+      const saves = detailed.components.savingThrows.getSavingThrows();
       return { hp: hp.total, bab, saves: [saves.fortitude.base, saves.reflex.base, saves.will.base] };
     };
     const ofMaster = numbers(master);
@@ -169,18 +169,14 @@ describe("Bonded creatures", () => {
     // A second character level: no General feat.
     await levelUp(owner, ctx, masterId, "Sorcerer", 1, { ...SORCERER_1, feats: { "Familiar Bond": ["Owl Familiar"] } });
     const master = await Characters.findOne(db, { id: masterId });
-    const bond = (await build(new DetailedCharacter(master!))).getDetailedCharacterAptitudes().getAptitudes()[
-      "familiarbond"
-    ];
+    const bond = (await build(new DetailedCharacter(master!))).components.aptitudes.getAptitudes()["familiarbond"];
     expect(bond).toMatchObject({ allowed: 2, spent: 2 });
     expect((await familiarOf(masterId))?.raceId).toBe(ctx.raceMap.familiar["Owl"]);
 
     const { skills, feats, powers } = picks(ctx, WIZARD_1);
     await CharacterLevelsService.updateLevel(owner, masterId, wizardLevel.id, WIZARD_1.hp, null, skills, feats, powers);
     expect((await familiarOf(masterId))?.raceId).toBe(ctx.raceMap.familiar["Owl"]);
-    expect((await build(new DetailedCharacter(master!))).getDetailedCharacterBonds().getBondedRace("familiar")).toBe(
-      "Owl",
-    );
+    expect((await build(new DetailedCharacter(master!))).components.bonded.getBondedRace("familiar")).toBe("Owl");
   });
 
   test("a familiar picked straight in the database, without a level-up, is the master's", async () => {
@@ -189,7 +185,7 @@ describe("Bonded creatures", () => {
     const levelIds = await addClassLevels(db, ctx, masterId, "Wizard", [1], [4]);
     await addFeats(db, ctx, levelIds, [{ levelIndex: 0, featName: "Raven Familiar", aptitude: "Familiar Bond" }]);
     const master = await build(new DetailedCharacter((await Characters.findOne(db, { id: masterId }))!));
-    expect(master.getDetailedCharacterBonds().getBondedRace("familiar")).toBe("Raven");
+    expect(master.components.bonded.getBondedRace("familiar")).toBe("Raven");
   });
 
   test("a familiar is archived and restored with its master, and isn't listed or found on its own", async () => {
@@ -350,16 +346,16 @@ describe("A familiar's benefit", () => {
     // A cat's master: +3 Move Silently; a weasel's: +2 Reflex
     const cat = await createWizardWithFamiliar("Cat Familiar");
     const catMaster = await masterOf(cat.masterId);
-    expect(catMaster.getDetailedCharacterSkills().getSkills()["movesilently"].misc).toBe(3);
+    expect(catMaster.components.skills.getSkills()["movesilently"].misc).toBe(3);
     const weasel = await createWizardWithFamiliar("Weasel Familiar");
     const weaselMaster = await masterOf(weasel.masterId);
-    expect(weaselMaster.getDetailedCharacterSavingThrows().getSavingThrows()["reflex"].misc).toBe(2);
+    expect(weaselMaster.components.savingThrows.getSavingThrows()["reflex"].misc).toBe(2);
 
     // The familiar keeps its SRD stat block: neither its master's bonus nor the Alertness its master gains
     const familiar = await build(new DetailedCharacterFamiliar(cat.bonded));
-    const feats = familiar.getDetailedCharacterFeats().getFeats() as Record<string, { possessed?: boolean }>;
+    const feats = familiar.components.feats.getFeats() as Record<string, { possessed?: boolean }>;
     expect([feats["alertness"]?.possessed, feats["alertnessfamiliar"]?.possessed]).toEqual([false, true]);
-    expect(familiar.getDetailedCharacterSkills().getSkills()["movesilently"].total).toBe(8);
+    expect(familiar.components.skills.getSkills()["movesilently"].total).toBe(8);
   });
 });
 
@@ -380,16 +376,16 @@ describe("Stat blocks", () => {
     }
     invalidateSeededRuleset(ctx.rulesetId);
     const cat = await build(new DetailedCharacterFamiliar(bonded));
-    expect(cat.getDetailedCharacterCombat().getCombat().hp.misc).toBe(3);
-    expect(cat.getDetailedCharacterAbilities().getAbilities()["intelligence"].misc).toBe(2);
+    expect(cat.components.combat.getCombat().hp.misc).toBe(3);
+    expect(cat.components.abilities.getAbilities()["intelligence"].misc).toBe(2);
   });
 
   test("a four-legged creature carries more for its size than a biped, as its race says", async () => {
     const heavyLoad = (detailed: DetailedCharacter) => {
-      const strength = detailed.getDetailedCharacterAbilities().getAbilities()["strength"].total;
+      const strength = detailed.components.abilities.getAbilities()["strength"].total;
       return {
         capacity: CARRYING_CAPACITY[strength],
-        heavy: detailed.getDetailedCharacterEncumbrance().getEncumbrance().heavyload,
+        heavy: detailed.components.encumbrance.getEncumbrance().heavyload,
       };
     };
     // Large and Medium quadrupeds: x3 and x1 1/2 (a biped's x2 and x1).
@@ -425,7 +421,7 @@ describe("Stat blocks", () => {
     "Wolf",
   ])("a druid 1's %s companion has its stat block's skills, racial bonuses included", async (race) => {
     const { bonded } = await createDruidWithCompanion(1, `${race} Animal Companion`);
-    const skills = (await build(new DetailedCharacterAnimalCompanion(bonded))).getDetailedCharacterSkills().getSkills();
+    const skills = (await build(new DetailedCharacterAnimalCompanion(bonded))).components.skills.getSkills();
     const totals = getBondedRaceStats(race)!.baseSkillTotals!;
     expect(
       Object.fromEntries(Object.keys(totals).map((skill) => [skill, skills[stripSeparators(skill)]?.total])),
@@ -439,9 +435,7 @@ describe("Stat blocks", () => {
       await build(
         new DetailedCharacterAnimalCompanion((await createDruidWithCompanion(7, "Owl Animal Companion")).bonded),
       )
-    )
-      .getDetailedCharacterSkills()
-      .getSkills();
+    ).components.skills.getSkills();
     expect([owl.movesilently, owl.listen, owl.spot].map(({ rank, total }) => ({ rank, total }))).toEqual([
       { rank: 2, total: 17 + 2 + 1 },
       { rank: 2 + 1, total: 14 + 1 },
@@ -454,15 +448,13 @@ describe("Stat blocks", () => {
           (await createDruidWithCompanion(7, "Horse, Light Animal Companion")).bonded,
         ),
       )
-    )
-      .getDetailedCharacterSkills()
-      .getSkills();
+    ).components.skills.getSkills();
     expect(horse.listen).toMatchObject({ rank: 2, total: 4 + 2 + 2 });
   });
 
   test("a cat familiar has the SRD cat's skills, and a tiny creature's size bonuses", async () => {
     const cat = await build(new DetailedCharacterFamiliar((await createWizardWithFamiliar("Cat Familiar")).bonded));
-    const skills = cat.getDetailedCharacterSkills().getSkills();
+    const skills = cat.components.skills.getSkills();
     expect(
       Object.fromEntries(
         ["balance", "climb", "hide", "jump", "listen", "movesilently", "spot"].map((skill) => [
@@ -473,7 +465,7 @@ describe("Stat blocks", () => {
     ).toEqual({ balance: 10, climb: 6, hide: 16, jump: 10, listen: 3, movesilently: 8, spot: 3 });
     expect(skills["hide"]?.size).toBe(8);
 
-    const { ac, weaponsets } = cat.getDetailedCharacterCombat().getCombat();
+    const { ac, weaponsets } = cat.components.combat.getCombat();
     expect(ac.size).toBe(2);
     expect(ac.total).toBe(
       ac.base + ac.armor + ac.shield + ac.dexterity + ac.natural + ac.deflection + ac.size + ac.misc,
@@ -509,9 +501,9 @@ describe("Stat blocks", () => {
 
   test("a familiar uses its master's skill ranks where they're better, with its own ability modifiers", async () => {
     // A wizard with 4 ranks in Concentration and Spellcraft, and a cat familiar: Constitution 10, Intelligence 6
-    const skills = (await build(new DetailedCharacterFamiliar((await createWizardWithFamiliar("Cat Familiar")).bonded)))
-      .getDetailedCharacterSkills()
-      .getSkills();
+    const skills = (
+      await build(new DetailedCharacterFamiliar((await createWizardWithFamiliar("Cat Familiar")).bonded))
+    ).components.skills.getSkills();
     expect(skills["concentration"]).toMatchObject({ rank: 4, total: 4 });
     expect(skills["spellcraft"]).toMatchObject({ rank: 4, total: 4 - 2, trained: true });
     // Its own 2 ranks in Listen beat its master's none: its stat block's total
@@ -520,9 +512,9 @@ describe("Stat blocks", () => {
 
   test("a natural attack is primary or secondary, as its stat block has it, and attacks once", async () => {
     // A cat familiar: two claws, then a bite at -5, which adds half its Strength bonus (a penalty in full)
-    const cat = (await build(new DetailedCharacterFamiliar((await createWizardWithFamiliar("Cat Familiar")).bonded)))
-      .getDetailedCharacterCombat()
-      .getCombat();
+    const cat = (
+      await build(new DetailedCharacterFamiliar((await createWizardWithFamiliar("Cat Familiar")).bonded))
+    ).components.combat.getCombat();
     const { mainhand: claws, offhand: bite } = cat.weaponsets["0"];
     expect(claws).toMatchObject({ name: "Claw (x2)", natural: "primary" });
     expect(bite).toMatchObject({
@@ -533,9 +525,9 @@ describe("Stat blocks", () => {
     // Its −5: `combat.naturalattacks.secondarypenalty`
     expect(bite!.tohit.total).toEqual([claws!.tohit.total[0] - 5]);
     // A paladin 5's heavy warhorse: its hooves primary, its bite secondary
-    const horse = (await build(new DetailedCharacterMount((await createPaladinWithMount(5)).bonded)))
-      .getDetailedCharacterCombat()
-      .getCombat().weaponsets["0"];
+    const horse = (
+      await build(new DetailedCharacterMount((await createPaladinWithMount(5)).bonded))
+    ).components.combat.getCombat().weaponsets["0"];
     expect([horse.mainhand?.natural, horse.offhand?.natural]).toEqual(["primary", "secondary"]);
   });
 
@@ -545,9 +537,7 @@ describe("Stat blocks", () => {
         await build(
           new DetailedCharacterAnimalCompanion((await createDruidWithCompanion(druidLevel, companion)).bonded),
         )
-      )
-        .getDetailedCharacterCombat()
-        .getCombat();
+      ).components.combat.getCombat();
     // A druid 12's badger: two claws and a bite, its bite at -2. Its base attack bonus past +5 gives no other attack
     const badger = await combat("Badger Animal Companion", 12);
     expect(badger.naturalattacks).toMatchObject({ count: 3, secondarypenalty: -2, extraattacks: 0 });

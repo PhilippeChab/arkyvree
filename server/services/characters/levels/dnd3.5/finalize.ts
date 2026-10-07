@@ -258,7 +258,7 @@ async function levelDistributionData(
   const fullCharacter = rulesetModule.createDetailedCharacter(characterRecord);
   await fullCharacter.build(tx, projectedData);
   const levelUpProjector = rulesetModule.createLevelUpProjector(fullCharacter) as Dnd35LevelUpProjector;
-  const { featPoolIds, powerPoolIds } = poolIds(fullCharacter.getDetailedCharacterAptitudes(), rulesetData);
+  const { featPoolIds, powerPoolIds } = poolIds(fullCharacter.components.aptitudes, rulesetData);
 
   // Compute per-level feat/power slots from modifier data directly
   const baselineApts = await buildBaselineAptitudes(tx, rulesetModule, characterRecord, fullCharacter);
@@ -314,7 +314,7 @@ async function ownedPoolNames(
   };
   const baselineCharacter = rulesetModule.createDetailedCharacter(characterRecord);
   await baselineCharacter.build(tx, baselineData);
-  const baselineApts = baselineCharacter.getDetailedCharacterAptitudes().getAptitudes();
+  const baselineApts = baselineCharacter.components.aptitudes.getAptitudes();
   const baselineAllowed = new Map<string, number>();
   for (const apt of Object.values(baselineApts)) {
     baselineAllowed.set(apt.name, apt.allowed);
@@ -338,7 +338,7 @@ async function ownedPoolNames(
   };
   const withLevelCharacter = rulesetModule.createDetailedCharacter(characterRecord);
   await withLevelCharacter.build(tx, withLevelData);
-  const withLevelApts = withLevelCharacter.getDetailedCharacterAptitudes().getAptitudes();
+  const withLevelApts = withLevelCharacter.components.aptitudes.getAptitudes();
   const owned = new Set<string>();
   for (const apt of Object.values(withLevelApts)) {
     if (apt.allowed > (baselineAllowed.get(apt.name) ?? 0)) {

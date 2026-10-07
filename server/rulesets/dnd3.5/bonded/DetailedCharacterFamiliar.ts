@@ -23,17 +23,17 @@ export default class DetailedCharacterFamiliar extends DetailedCharacterBonded {
   /** The stat block's skills, then its master's ranks where they're better. */
   protected override applyRaceDefaults(raceStats: BondedRaceStatBlock, rulesetData: RulesetData): void {
     super.applyRaceDefaults(raceStats, rulesetData);
-    this.detailedCharacterSkills.applyBetterRanks(this.masterSkillRanks);
+    this.components.skills.applyBetterRanks(this.masterSkillRanks);
   }
 
   protected async applyMasterDerivation(parentCharacterId: string, rulesetData: RulesetData): Promise<void> {
     const master = await this.loadMaster(parentCharacterId, rulesetData);
-    const masterLevel = master.getDetailedCharacterIdentity().getIdentity().meta.level;
+    const masterLevel = master.components.identity.getIdentity().meta.level;
     const naBonus = Math.min(10, Math.max(1, Math.ceil(masterLevel / 2)));
     const familiarInt = Math.min(15, 5 + Math.ceil(masterLevel / 2));
 
-    const masterCombat = master.getDetailedCharacterCombat().getCombat();
-    const familiarCombat = this.detailedCharacterCombat.getCombat();
+    const masterCombat = master.components.combat.getCombat();
+    const familiarCombat = this.components.combat.getCombat();
 
     familiarCombat.hp.base = Math.floor(masterCombat.hp.total / 2);
     familiarCombat.bab = masterCombat.bab;
@@ -41,14 +41,14 @@ export default class DetailedCharacterFamiliar extends DetailedCharacterBonded {
     const raceStats = getBondedRaceStats(this.race?.name);
     familiarCombat.ac.natural = (raceStats?.baseNaturalArmor ?? 0) + naBonus;
 
-    const intelligence = this.detailedCharacterAbilities.getAbility("Intelligence");
+    const intelligence = this.components.abilities.getAbility("Intelligence");
     if (intelligence) {
       intelligence.base = familiarInt;
       intelligence.level = 0;
     }
 
-    const masterSaves = master.getDetailedCharacterSavingThrows().getSavingThrows();
-    const familiarSaves = this.detailedCharacterSavingThrows.getSavingThrows();
+    const masterSaves = master.components.savingThrows.getSavingThrows();
+    const familiarSaves = this.components.savingThrows.getSavingThrows();
     for (const saveName of Object.keys(familiarSaves)) {
       if (masterSaves[saveName]) {
         familiarSaves[saveName].base = masterSaves[saveName].base;
@@ -56,7 +56,7 @@ export default class DetailedCharacterFamiliar extends DetailedCharacterBonded {
     }
 
     this.masterSkillRanks = Object.fromEntries(
-      Object.entries(master.getDetailedCharacterSkills().getSkills()).map(([slug, skill]) => [slug, skill.rank]),
+      Object.entries(master.components.skills.getSkills()).map(([slug, skill]) => [slug, skill.rank]),
     );
 
     // Familiar HP = ½ master HP only — no per-HD Con component.

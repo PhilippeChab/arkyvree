@@ -2,12 +2,7 @@ import type { FC } from "react";
 
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { CowData, Db } from "@/server/database/index.ts";
-import type {
-  AbilitiesComponent,
-  AptitudesComponent,
-  IdentityComponent,
-  ValidationResult,
-} from "@/server/rulesets/dnd3.5/index.ts";
+import type { Dnd35Components, ValidationResult } from "@/server/rulesets/dnd3.5/index.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 import type {
@@ -64,9 +59,7 @@ export interface DetailedCharacterInterface {
   getRuleset(): Ruleset | undefined;
   getPlayer(): Player | undefined;
   getCampaign(): Campaign | undefined;
-  getDetailedCharacterAbilities(): AbilitiesComponent;
-  getDetailedCharacterAptitudes(): AptitudesComponent;
-  getDetailedCharacterIdentity(): IdentityComponent;
+  readonly components: Dnd35Components;
   getVirtuallyPossessedFeatIds(): string[];
   getVirtuallyPossessedPowerIds(): string[];
 }

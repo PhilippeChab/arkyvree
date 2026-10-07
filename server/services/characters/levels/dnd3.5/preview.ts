@@ -127,12 +127,12 @@ export async function getLevelUpPreview(
     await detailedCharacter.build(undefined, projectedData);
     const levelUpProjector = rulesetModule.createLevelUpProjector(detailedCharacter) as Dnd35LevelUpProjector;
     const { featPools, powerPools, featsToSelect, powersToSelect } = splitPools(
-      detailedCharacter.getDetailedCharacterAptitudes(),
+      detailedCharacter.components.aptitudes,
       rulesetData,
     );
 
     const existingLevels = await CharacterLevels.findMany(db, { characterId });
-    const abilities = detailedCharacter.getDetailedCharacterAbilities();
+    const abilities = detailedCharacter.components.abilities;
     const autoGrantedFeats = allAutoGrantedFeatRecords.flat().map((rec) => rec.featsInRule);
     const klassLevelIds = klassLevelEntries.map(({ klassLevel }) => klassLevel.id);
     const { skills, perLevelSkillPoints, perLevelSkillPointBases, perLevelClassSkillIds } = await planSkills(

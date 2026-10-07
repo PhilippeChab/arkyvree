@@ -15,12 +15,12 @@ export default abstract class DetailedCharacterAdvancingBonded extends DetailedC
   protected applyHitDice(totalHD: number, naturalArmor: number): void {
     this.cachedTotalHD = totalHD;
 
-    const combat = this.detailedCharacterCombat.getCombat();
+    const combat = this.components.combat.getCombat();
     combat.ac.natural = naturalArmor;
     combat.bab = Math.floor((totalHD * 3) / 4);
     combat.hp.base = Math.ceil(totalHD * HD_PER_LEVEL_AVG);
 
-    const saves = this.detailedCharacterSavingThrows.getSavingThrows();
+    const saves = this.components.savingThrows.getSavingThrows();
     if (saves["fortitude"]) saves["fortitude"].base = 2 + Math.floor(totalHD / 2);
     if (saves["reflex"]) saves["reflex"].base = 2 + Math.floor(totalHD / 2);
     if (saves["will"]) saves["will"].base = Math.floor(totalHD / 3);
@@ -39,7 +39,7 @@ export default abstract class DetailedCharacterAdvancingBonded extends DetailedC
       rulesetData,
     );
     for (const [skillName, ranks] of Object.entries(scaleSkillRanks(raceStats, totalHD))) {
-      this.detailedCharacterSkills.addRanks(skillName, ranks);
+      this.components.skills.addRanks(skillName, ranks);
     }
   }
 }

@@ -1,39 +1,21 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
-import AbilitiesComponent from "@/server/rulesets/dnd3.5/abilities/AbilitiesComponent.ts";
-import AptitudesComponent from "@/server/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
-import BondsComponent from "@/server/rulesets/dnd3.5/bonded/BondsComponent.ts";
 import AbstractDetailedCharacter, {
   type DataLoader,
   type ValidationIssue,
 } from "@/server/rulesets/dnd3.5/character/AbstractDetailedCharacter.ts";
-import ClassesComponent from "@/server/rulesets/dnd3.5/classes/ClassesComponent.ts";
-import ArmorsComponent from "@/server/rulesets/dnd3.5/combat/ArmorsComponent.ts";
-import CombatComponent from "@/server/rulesets/dnd3.5/combat/CombatComponent.ts";
-import EncumbranceComponent from "@/server/rulesets/dnd3.5/combat/EncumbranceComponent.ts";
-import ShieldsComponent from "@/server/rulesets/dnd3.5/combat/ShieldsComponent.ts";
-import WeaponsComponent from "@/server/rulesets/dnd3.5/combat/WeaponsComponent.ts";
+import { buildComponents, type Dnd35Components } from "@/server/rulesets/dnd3.5/character/components.ts";
 import TargetPaths from "@/server/rulesets/dnd3.5/Dnd35TargetPaths.ts";
-import FeatGroupingsComponent from "@/server/rulesets/dnd3.5/feats/FeatGroupingsComponent.ts";
-import FeatsComponent from "@/server/rulesets/dnd3.5/feats/FeatsComponent.ts";
-import IdentityComponent from "@/server/rulesets/dnd3.5/identity/IdentityComponent.ts";
-import InventoryComponent from "@/server/rulesets/dnd3.5/items/InventoryComponent.ts";
 import { Dnd35LevelsHooks } from "@/server/rulesets/dnd3.5/levels/Dnd35LevelsHooks.ts";
 import DetailedCharacterDataLoader, {
   type Dnd35LoadedCharacterData,
 } from "@/server/rulesets/dnd3.5/loading/DetailedCharacterDataLoader.ts";
-import PowerGroupingsComponent from "@/server/rulesets/dnd3.5/powers/PowerGroupingsComponent.ts";
-import PowersComponent from "@/server/rulesets/dnd3.5/powers/PowersComponent.ts";
-import SavingThrowsComponent from "@/server/rulesets/dnd3.5/saves/SavingThrowsComponent.ts";
-import SkillsComponent from "@/server/rulesets/dnd3.5/skills/SkillsComponent.ts";
-import SpellcastingComponent from "@/server/rulesets/dnd3.5/spellcasting/SpellcastingComponent.ts";
 import type { Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
 import type { SkillFlags } from "@/server/rulesets/engine/hooks/index.ts";
 import ModifierEvaluator from "@/server/rulesets/engine/modifiers/ModifierEvaluator.ts";
 import RequirementEvaluator from "@/server/rulesets/engine/requirements/RequirementEvaluator.ts";
 import type {
   FeatWithPMR,
-  Holders,
   InventoryEntry,
   KlassLevelWithPMR,
   PowerWithPMR,
@@ -42,13 +24,11 @@ import type {
 } from "@/server/rulesets/engine/types.ts";
 import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
 import {
-  FEAT_FAMILY,
   FEAT_OVERSIZED_TWO_WEAPON_FIGHTING,
   FEAT_WEAPON_FINESSE,
   SPELL_DESCRIPTOR,
   SPELL_SCHOOL,
 } from "@/shared/dnd3.5/properties/index.ts";
-import { getStaticPropertyValues } from "@/shared/dnd3.5/properties/index.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import type {
   Character,
@@ -64,91 +44,17 @@ import type {
 export default class DetailedCharacter extends AbstractDetailedCharacter {
   constructor(character: Character) {
     super(character);
-
-    // Universal sub-systems
-    this.detailedCharacterClasses = new ClassesComponent();
-    this.detailedCharacterAbilities = new AbilitiesComponent();
-    this.detailedCharacterFeats = new FeatsComponent();
-    this.detailedCharacterFeatGroupings = new FeatGroupingsComponent(this.detailedCharacterFeats, [FEAT_FAMILY]);
-    this.detailedCharacterPowers = new PowersComponent(getStaticPropertyValues);
-    this.detailedCharacterPowerGroupings = new PowerGroupingsComponent(
-      this.detailedCharacterPowers,
-      this.detailedCharacterAbilities,
-      [SPELL_SCHOOL, SPELL_DESCRIPTOR],
-    );
-    this.detailedCharacterSavingThrows = new SavingThrowsComponent(
-      this.detailedCharacterAbilities,
-      this.detailedCharacterClasses,
-    );
     this.targetPaths = new TargetPaths();
-    this.detailedCharacterModifiers = new ModifierEvaluator(this.targetPaths, this.sourcesOf);
-    this.detailedCharacterRequirements = new RequirementEvaluator(this.targetPaths);
-
-    // Identity (universal)
-    this.detailedCharacterIdentity = new IdentityComponent(
-      this.detailedCharacterAbilities,
-      this.detailedCharacterClasses,
-    );
-
-    // Dnd3.5-specific sub-systems. Aptitude pools enumerate per-level slots up
-    // to the ruleset's maxSpellLevel (3.5 caps at 9; other systems differ).
-    this.detailedCharacterAptitudes = new AptitudesComponent(
-      this.detailedCharacterIdentity,
-      this.detailedCharacterClasses,
-      Dnd35LevelsHooks.MAX_SPELL_LEVEL,
-      (totalLevel) => this.countGeneralFeats(totalLevel),
-    );
-    this.detailedCharacterSkills = new SkillsComponent(this.detailedCharacterAbilities, this.detailedCharacterClasses);
-    this.detailedCharacterCombat = new CombatComponent(this.detailedCharacterAbilities, this.detailedCharacterClasses);
-    this.detailedCharacterWeapons = new WeaponsComponent(this.detailedCharacterCombat);
-    this.detailedCharacterArmors = new ArmorsComponent(this.detailedCharacterCombat);
-    this.detailedCharacterShields = new ShieldsComponent(this.detailedCharacterCombat);
-    this.detailedCharacterEncumbrance = new EncumbranceComponent(this.detailedCharacterAbilities);
-
-    // Wire cross-dependencies
-    this.detailedCharacterCombat.setArmorsData(this.detailedCharacterArmors.getArmors());
-    this.detailedCharacterCombat.setShieldsData(this.detailedCharacterShields.getShields());
-    this.detailedCharacterSkills.setArmorSources(this.detailedCharacterArmors, this.detailedCharacterShields);
-    this.detailedCharacterSkills.setEncumbranceSource(this.detailedCharacterEncumbrance);
-    this.detailedCharacterCombat.setSkills(this.detailedCharacterSkills);
-    this.detailedCharacterCombat.setEncumbranceSource(this.detailedCharacterEncumbrance);
-    this.detailedCharacterInventory = new InventoryComponent(
-      this.detailedCharacterCombat,
-      this.detailedCharacterWeapons,
-      this.detailedCharacterArmors,
-      this.detailedCharacterShields,
-    );
-
-    this.detailedCharacterSpellcasting = new SpellcastingComponent(
-      this.detailedCharacterClasses,
-      this.detailedCharacterAbilities,
-      this.detailedCharacterAptitudes,
-      this.detailedCharacterPowers,
-      this.detailedCharacterPowerGroupings,
-      this.detailedCharacterModifiers,
-    );
-
-    this.detailedCharacterBonds = new BondsComponent();
+    this.modifierEvaluator = new ModifierEvaluator(this.targetPaths, this.sourcesOf);
+    this.requirementEvaluator = new RequirementEvaluator(this.targetPaths);
+    this.components = buildComponents(this.modifierEvaluator, (totalLevel) => this.countGeneralFeats(totalLevel));
   }
 
-  // Dnd3.5-specific sub-systems
-  protected readonly detailedCharacterSkills: SkillsComponent;
+  readonly components: Dnd35Components;
 
-  protected readonly detailedCharacterCombat: CombatComponent;
+  readonly modifierEvaluator: ModifierEvaluator;
 
-  protected readonly detailedCharacterWeapons: WeaponsComponent;
-
-  protected readonly detailedCharacterArmors: ArmorsComponent;
-
-  protected readonly detailedCharacterShields: ShieldsComponent;
-
-  protected readonly detailedCharacterEncumbrance: EncumbranceComponent;
-
-  protected readonly detailedCharacterInventory: InventoryComponent;
-
-  protected readonly detailedCharacterSpellcasting: SpellcastingComponent;
-
-  protected readonly detailedCharacterBonds: BondsComponent;
+  readonly requirementEvaluator: RequirementEvaluator;
 
   // Dnd3.5-specific data
   protected skillPointAbilityId: string | null = null;
@@ -184,26 +90,6 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     this.klassLevelProperties = data.klassLevelProperties;
     this.klassBonusSpellAbilityMap = data.klassBonusSpellAbilityMap;
     this.klassCasterTypeMap = data.klassCasterTypeMap;
-  }
-
-  protected buildHolders(): Holders {
-    return {
-      abilities: this.detailedCharacterAbilities,
-      skills: this.detailedCharacterSkills,
-      savingThrows: this.detailedCharacterSavingThrows,
-      combat: this.detailedCharacterCombat,
-      weapons: this.detailedCharacterWeapons,
-      armors: this.detailedCharacterArmors,
-      shields: this.detailedCharacterShields,
-      classes: this.detailedCharacterClasses,
-      feats: this.detailedCharacterFeats,
-      inventory: this.detailedCharacterInventory,
-      powers: this.detailedCharacterPowers,
-      identity: this.detailedCharacterIdentity,
-      aptitudes: this.detailedCharacterAptitudes,
-      bonded: this.detailedCharacterBonds,
-      spellcasting: this.detailedCharacterSpellcasting,
-    };
   }
 
   /** The general feats the character has at its total level (`Dnd35LevelsHooks.countGeneralFeats`). */
@@ -265,7 +151,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
 
   protected getSkillValidationIssues(): { budget: ValidationIssue[]; ranks: ValidationIssue[] } {
     const budget: ValidationIssue[] = [];
-    const { available, spent, total } = this.detailedCharacterSkills.getSkillBudget();
+    const { available, spent, total } = this.components.skills.getSkillBudget();
     if (available > 0) {
       budget.push({ category: "skills", message: `${available} unspent skill point(s) (${spent}/${total})` });
     } else if (available < 0) {
@@ -274,8 +160,8 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
         message: `Overspent by ${Math.abs(available)} skill point(s) (${spent}/${total})`,
       });
     }
-    const characterLevel = this.detailedCharacterIdentity.getIdentity().meta.level;
-    const ranks = this.detailedCharacterSkills.getValidationIssues(characterLevel);
+    const characterLevel = this.components.identity.getIdentity().meta.level;
+    const ranks = this.components.skills.getValidationIssues(characterLevel);
     return { budget, ranks };
   }
 
@@ -289,12 +175,12 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
         (rulesetData.propertiesByEntity.get(feat.id) ?? []).some(
           (property) => property.type === propertyType && property.value === "true",
         ) &&
-        (this.detailedCharacterFeats.getFeat(feat.name)?.possessed ?? false),
+        (this.components.feats.getFeat(feat.name)?.possessed ?? false),
     );
   }
 
   protected normalizeData(): void {
-    this.detailedCharacterClasses.initialize(
+    this.components.classes.initialize(
       this.klasses,
       this.klassSkills,
       this.klassLevels,
@@ -304,39 +190,34 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
       this.powers,
       this.rulesetKlasses,
     );
-    this.detailedCharacterAbilities.initialize(this.characterAbilityScores, this.characterLevels);
-    this.detailedCharacterIdentity.initialize(this.character, this.race, this.languages);
-    this.detailedCharacterSkills.setSkillPointDependencies(
+    this.components.abilities.initialize(this.characterAbilityScores, this.characterLevels);
+    this.components.identity.initialize(this.character, this.race, this.languages);
+    this.components.skills.setSkillPointDependencies(
       this.rulesetAbilities,
       this.skillPointAbilityId,
       this.klassLevelProperties,
     );
-    this.detailedCharacterAptitudes.initialize(
+    this.components.aptitudes.initialize(
       this.rulesetAptitudes,
       this.klassLevelFeatCountsByAptitudeId,
       this.klassLevelPowerCountsByAptitudeId,
       this.leveledAptitudeIds,
     );
-    this.detailedCharacterFeats.initialize(this.rulesetFeats, this.feats);
+    this.components.feats.initialize(this.rulesetFeats, this.feats);
     // Every feat of a family, had or not, so a check of any of them reads the whole family
     const rulesetFeatsById = new Map(this.rulesetFeats.map((feat) => [feat.id, feat]));
     for (const prop of this.rulesetFeatProperties) {
       const feat = rulesetFeatsById.get(prop.entityId);
-      if (feat) this.detailedCharacterFeatGroupings.registerFeat(feat, [prop]);
+      if (feat) this.components.featGroupings.registerFeat(feat, [prop]);
     }
-    this.detailedCharacterFeatGroupings.seedEmptyFamilies(FEAT_FAMILIES);
-    this.detailedCharacterFeats.injectGroupings(this.detailedCharacterFeatGroupings.getFeatGroupings());
-    this.detailedCharacterSkills.initialize(
-      this.rulesetSkills,
-      this.rulesetAbilities,
-      this.race.size,
-      this.skillProperties,
-    );
-    this.detailedCharacterSavingThrows.initialize(this.rulesetSaves, this.rulesetAbilities, this.klassLevelSaves);
-    this.detailedCharacterCombat.initialize(this.race, this.klassLevelProperties);
-    this.detailedCharacterInventory.initialize(this.inventory);
-    this.detailedCharacterEncumbrance.initialize(this.inventory, this.race);
-    this.detailedCharacterPowers.initialize(this.powers, this.rulesetPowers, this.rulesetAptitudes, this.featListIds);
+    this.components.featGroupings.seedEmptyFamilies(FEAT_FAMILIES);
+    this.components.feats.injectGroupings(this.components.featGroupings.getFeatGroupings());
+    this.components.skills.initialize(this.rulesetSkills, this.rulesetAbilities, this.race.size, this.skillProperties);
+    this.components.savingThrows.initialize(this.rulesetSaves, this.rulesetAbilities, this.klassLevelSaves);
+    this.components.combat.initialize(this.race, this.klassLevelProperties);
+    this.components.inventory.initialize(this.inventory);
+    this.components.encumbrance.initialize(this.inventory, this.race);
+    this.components.powers.initialize(this.powers, this.rulesetPowers, this.rulesetAptitudes, this.featListIds);
 
     // Seed empty buckets for every school/descriptor in the ruleset so a
     // Spell Focus targeting a school the character has no spells in resolves
@@ -347,7 +228,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
         groupingValues.add(prop.value);
       }
     }
-    this.detailedCharacterPowerGroupings.seedEmptyGroupings([...groupingValues]);
+    this.components.powerGroupings.seedEmptyGroupings([...groupingValues]);
 
     // Build aptitudeId → DC ability lookup from real spells once so virtual
     // spells (granted via `set powers.X.Y.known`) — which carry no klass
@@ -374,11 +255,11 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
         }
       }
       const aptitudeSlug = aptitudeSlugById.get(power.aptitudeId) ?? power.aptitudeId;
-      this.detailedCharacterPowerGroupings.registerPower({ ...power, abilityDcName, aptitudeSlug }, power.properties);
+      this.components.powerGroupings.registerPower({ ...power, abilityDcName, aptitudeSlug }, power.properties);
     }
-    this.detailedCharacterPowers.injectGroupings(this.detailedCharacterPowerGroupings.getPowerGroupings());
+    this.components.powers.injectGroupings(this.components.powerGroupings.getPowerGroupings());
 
-    this.detailedCharacterSkills.updateSkillPointTotals();
+    this.components.skills.updateSkillPointTotals();
   }
 
   protected postRequirementProcessing(): void {
@@ -387,18 +268,18 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     const unproficient = this.inventory
       .filter((inv) => inv.equipped && !this.areRequirementsMet([inv.item.proficiency], { sourceId: inv.id }))
       .map((inv) => ({ id: inv.id, itemId: inv.item.id }));
-    this.detailedCharacterCombat.applyProficiencyPenalties(unproficient);
+    this.components.combat.applyProficiencyPenalties(unproficient);
   }
 
   protected async postModifierProcessing(rulesetData: RulesetData): Promise<void> {
-    this.detailedCharacterSpellcasting.fetchBonusCasterLevelData(
+    this.components.spellcasting.fetchBonusCasterLevelData(
       rulesetData,
       this.klassLevels,
       this.feats,
       this.characterLevels,
       this.rulesetKlasses,
     );
-    this.detailedCharacterSpellcasting.applyBonusCasterLevelModifiers(
+    this.components.spellcasting.applyBonusCasterLevelModifiers(
       this.holders!,
       this.feats,
       this.featListIds,
@@ -412,24 +293,24 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
           ),
         ]),
     );
-    this.detailedCharacterSpellcasting.applyBonusSpellsFromAbilities(this.klassBonusSpellAbilityMap);
-    this.detailedCharacterSpellcasting.computeSpellcasting(this.klassCasterTypeMap);
-    this.detailedCharacterSpellcasting.fetchAptitudePowerData(rulesetData, this.powers);
-    this.detailedCharacterSpellcasting.enrichAllKnownPowers(
+    this.components.spellcasting.applyBonusSpellsFromAbilities(this.klassBonusSpellAbilityMap);
+    this.components.spellcasting.computeSpellcasting(this.klassCasterTypeMap);
+    this.components.spellcasting.fetchAptitudePowerData(rulesetData, this.powers);
+    this.components.spellcasting.enrichAllKnownPowers(
       this.powers,
       this.klassLevels,
       this.rulesetAptitudes,
       this.klassBonusSpellAbilityMap,
     );
-    this.detailedCharacterSpellcasting.buildSpellTags(this.feats, this.featListIds);
+    this.components.spellcasting.buildSpellTags(this.feats, this.featListIds);
   }
 
   protected async preRequirementProcessing(rulesetData: RulesetData): Promise<void> {
-    this.detailedCharacterSpellcasting.loadClassLists(rulesetData);
-    this.detailedCharacterSpellcasting.initCasterLevels(this.modifiers, this.klassCasterTypeMap);
+    this.components.spellcasting.loadClassLists(rulesetData);
+    this.components.spellcasting.initCasterLevels(this.modifiers, this.klassCasterTypeMap);
     // Possession modifiers have given their feats: a finessed weapon's attack is what requirements read
-    this.detailedCharacterCombat.applyWeaponFinesse(this.hasFeatWith(rulesetData, FEAT_WEAPON_FINESSE));
-    this.detailedCharacterCombat.applyOversizedTwoWeaponFighting(
+    this.components.combat.applyWeaponFinesse(this.hasFeatWith(rulesetData, FEAT_WEAPON_FINESSE));
+    this.components.combat.applyOversizedTwoWeaponFighting(
       this.hasFeatWith(rulesetData, FEAT_OVERSIZED_TWO_WEAPON_FIGHTING),
     );
   }
@@ -440,58 +321,22 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     characterLevel: CharacterLevel,
     requirementGroups: Requirement[][],
   ): boolean {
-    this.detailedCharacterClasses.addProjectedLevel(klassName, klassLevel, characterLevel);
+    this.components.classes.addProjectedLevel(klassName, klassLevel, characterLevel);
     const result = this.areRequirementsMet(requirementGroups);
-    this.detailedCharacterClasses.removeProjectedLevel(klassName);
+    this.components.classes.removeProjectedLevel(klassName);
     return result;
   }
 
-  getDetailedCharacterArmors() {
-    return this.detailedCharacterArmors;
-  }
-
-  getDetailedCharacterBonds() {
-    return this.detailedCharacterBonds;
-  }
-
-  getDetailedCharacterCombat() {
-    return this.detailedCharacterCombat;
-  }
-
-  getDetailedCharacterEncumbrance() {
-    return this.detailedCharacterEncumbrance;
-  }
-
-  getDetailedCharacterInventory() {
-    return this.detailedCharacterInventory;
-  }
-
-  getDetailedCharacterSavingThrows() {
-    return this.detailedCharacterSavingThrows;
-  }
-
-  getDetailedCharacterShields() {
-    return this.detailedCharacterShields;
-  }
-
-  getDetailedCharacterSkills() {
-    return this.detailedCharacterSkills;
-  }
-
-  getDetailedCharacterWeapons() {
-    return this.detailedCharacterWeapons;
-  }
-
   getSpellcasting(): { arcane: number; divine: number } {
-    return this.detailedCharacterSpellcasting.getSpellcasting();
+    return this.components.spellcasting.getSpellcasting();
   }
 
   getSpellTagLists() {
-    return this.detailedCharacterSpellcasting.getSpellTagLists();
+    return this.components.spellcasting.getSpellTagLists();
   }
 
   getSpellTags() {
-    return this.detailedCharacterSpellcasting.getSpellTags();
+    return this.components.spellcasting.getSpellTags();
   }
 
   getVirtuallyPossessedPowerIds() {
@@ -527,7 +372,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
       if (level == null) continue;
       const aptitude = this.rulesetAptitudes.find((apt) => apt.id === virtual.aptitudeId);
       const aptitudeSlug = aptitude ? toSpellPossessionSlug(aptitude.name) : virtual.aptitudeId;
-      const dc = this.detailedCharacterPowers.getPower(virtual.name)?.dc?.[aptitudeSlug]?.total ?? null;
+      const dc = this.components.powers.getPower(virtual.name)?.dc?.[aptitudeSlug]?.total ?? null;
       const saveName = fullPower.saveId ? (saveIdToName.get(fullPower.saveId) ?? null) : null;
       results.push({
         power: fullPower,
@@ -558,7 +403,7 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
       case "modifiers": {
         const mod =
           this.modifiers.find((m) => m.id === entityId) ??
-          this.detailedCharacterSpellcasting.getBonusKlassLevelModifiers().find((m) => m.id === entityId);
+          this.components.spellcasting.getBonusKlassLevelModifiers().find((m) => m.id === entityId);
         if (mod) {
           return this.resolveEntityName(mod.sourceId, mod.sourceType);
         }
@@ -573,9 +418,9 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
           const klass = idx.rulesetKlassesById.get(kl.klassId);
           return klass ? `${klass.name} Level ${kl.level}` : `Level ${kl.level}`;
         }
-        const attribution = this.detailedCharacterSpellcasting.getBonusKlassLevelAttribution().get(entityId);
+        const attribution = this.components.spellcasting.getBonusKlassLevelAttribution().get(entityId);
         if (attribution) return attribution;
-        const bonusKl = this.detailedCharacterSpellcasting.getBonusKlassLevels().find((k) => k.id === entityId);
+        const bonusKl = this.components.spellcasting.getBonusKlassLevels().find((k) => k.id === entityId);
         if (bonusKl) {
           const klass = idx.rulesetKlassesById.get(bonusKl.klassId);
           return klass ? `${klass.name} Level ${bonusKl.level} (bonus)` : `Level ${bonusKl.level} (bonus)`;

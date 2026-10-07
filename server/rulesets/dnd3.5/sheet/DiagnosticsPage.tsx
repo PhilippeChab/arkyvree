@@ -38,8 +38,8 @@ function DiagnosticCounts({ counts }: { counts: { label: string; color: string }
 }
 
 function DiagnosticsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacter }) {
-  const identity = detailedCharacter.getDetailedCharacterIdentity();
-  const requirements = detailedCharacter.getDetailedCharacterRequirements();
+  const identity = detailedCharacter.components.identity;
+  const requirements = detailedCharacter.requirementEvaluator;
   const identityData = identity.getIdentity();
   return (
     <Page size="A4" style={styles.page}>
@@ -112,7 +112,7 @@ function DiagnosticsPage({ detailedCharacter }: { detailedCharacter: DetailedCha
         <Text style={styles.sectionTitle}>Modifier System Status</Text>
         {(() => {
           const { modifiers, appliedModifiers, unappliedModifiers, inactiveModifiers, skippedModifiers } =
-            detailedCharacter.getDetailedCharacterModifiers().getModifiers();
+            detailedCharacter.modifierEvaluator.getModifiers();
           const modifierRow = (modifier: Modifier) => [
             modifier.sourceType,
             modifier.target,

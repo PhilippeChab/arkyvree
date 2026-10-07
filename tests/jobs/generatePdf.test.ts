@@ -76,10 +76,8 @@ describe("generatePdf", () => {
     const module = await RulesetFactory.fromRulesetId(character.rulesetId);
     const { detailedCharacter } = await module.createDetailedCharacterWithSheet(character, "pc");
     if (!(detailedCharacter instanceof Dnd35DetailedCharacter)) throw new Error("Not a D&D 3.5 character");
-    const { inactiveModifiers, skippedModifiers } = detailedCharacter.getDetailedCharacterModifiers().getModifiers();
-    const { invalidRequirements, unmetRequirementGroups } = detailedCharacter
-      .getDetailedCharacterRequirements()
-      .getRequirements();
+    const { inactiveModifiers, skippedModifiers } = detailedCharacter.modifierEvaluator.getModifiers();
+    const { invalidRequirements, unmetRequirementGroups } = detailedCharacter.requirementEvaluator.getRequirements();
     expect(inactiveModifiers.map((m) => m.target)).toEqual(["weapon.tohit.misc"]);
     expect(skippedModifiers.map(({ modifier: m, warning }) => [m.target, warning])).toEqual([
       ["abilities.luck.misc", "Element not found: luck"],
