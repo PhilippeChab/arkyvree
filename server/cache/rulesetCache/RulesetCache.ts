@@ -3,13 +3,11 @@ import { RulesetComposition, type RulesetData, type RulesetRawData } from "@/eng
 import DependentCache from "@/server/cache/DependentCache.ts";
 import { db, withCowContext } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
-import type { TargetPath, TargetPathKind } from "@/shared/customization/target.ts";
+import type { TargetPathCatalog, TargetPathKind } from "@/shared/customization/target.ts";
 import { sortProperties } from "@/shared/dnd3.5/properties/index.ts";
 
 import { readCowData } from "./cowData.ts";
 import { fetchRulesetRawData } from "./rawData.ts";
-
-type TargetPathsAndLabels = { paths: TargetPath[]; segmentLabels: Record<string, string> };
 
 /** A ruleset's own rows' key: a campaign's are its own. */
 function getRawDataKey(rulesetId: string, campaignId?: string): string {
@@ -28,7 +26,7 @@ class RulesetCache {
 
   private readonly rawData = new DependentCache<RulesetRawData>();
 
-  private readonly targetPaths = new DependentCache<TargetPathsAndLabels>();
+  private readonly targetPaths = new DependentCache<TargetPathCatalog>();
 
   /** Drops what a change to a ruleset can touch: its copy-on-write data, its rows and its target paths. */
   invalidate(rulesetId: string): void {
@@ -88,9 +86,9 @@ class RulesetCache {
   async getTargetPaths(
     rulesetId: string,
     kind: TargetPathKind,
-    fetcher: () => Promise<TargetPathsAndLabels>,
+    fetcher: () => Promise<TargetPathCatalog>,
     sourceChain: readonly string[] = [],
-  ): Promise<TargetPathsAndLabels> {
+  ): Promise<TargetPathCatalog> {
     // Old subscription metadata must not populate the key for the new chain.
     const key = JSON.stringify([rulesetId, kind, ...sourceChain]);
     return this.targetPaths.getOrFetch(key, [rulesetId, ...sourceChain], async () => ({ data: await fetcher() }));

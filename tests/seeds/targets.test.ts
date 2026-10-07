@@ -1,10 +1,8 @@
 import { expect, test } from "bun:test";
 
 import * as RULESET_NAMES from "@/database/packages/dnd35/names.ts";
-import {
-  findTemplateValueError,
-  getTargetPathsWithLabels,
-} from "@/server/services/rulesets/customization/targetPaths/index.ts";
+import { findTemplateValueError } from "@/engine/core/paths/pathChecks.ts";
+import { getTargetPathsWithLabels } from "@/server/services/rulesets/customization/targetPaths/index.ts";
 import { isTemplateValue } from "@/shared/customization/templateExpression.ts";
 
 import { seededRows } from "./seededRows.ts";
@@ -36,10 +34,11 @@ test("Every seeded template reads what a template of its ruleset can, as its val
   let templates = 0;
   for (const name of Object.values(RULESET_NAMES)) {
     const rows = await seededRows(name);
+    const templatePaths = await getTargetPathsWithLabels(rows.rulesetId, "template");
     for (const { target, value, valueType } of [...rows.modifiers, ...rows.requirements]) {
       if (!value || !valueType || !isTemplateValue(value)) continue;
       templates++;
-      const error = await findTemplateValueError(rows.rulesetId, value, valueType);
+      const error = findTemplateValueError(templatePaths, value, valueType);
       if (error) errors.push(`${name}: ${target} = ${value}: ${error}`);
     }
   }

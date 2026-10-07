@@ -1,8 +1,7 @@
-import { type RulesetData } from "@/engine/core/view/index.ts";
+import { getPropertyTypes, getPropertyValues, type RulesetView } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { type Paginated, paginateItems } from "@/server/repositories/index.ts";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
 import type {
   PropertyType,
@@ -15,7 +14,7 @@ class PropertyTypesService {
    * The ruleset's custom property types (of one entity type, and containing `query`, when given): each with how many
    * properties use it, the most used first.
    */
-  private countPropertyTypes(rulesetData: RulesetData, entityType?: PropertyEntityType, query = "") {
+  private countPropertyTypes(rulesetData: RulesetView["rulesetData"], entityType?: PropertyEntityType, query = "") {
     const counts = new Map<string, { count: number; entityType: string; type: string }>();
     const groups = entityType
       ? [rulesetData.propertiesByEntityType.get(entityType) ?? []]
@@ -41,11 +40,10 @@ class PropertyTypesService {
     pagination: { limit: number; page: number },
     entityType?: PropertyEntityType,
   ): Promise<Paginated<PropertyTypeCompletion>> {
-    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
+    return await withRulesetScope(db, rulesetId, async (scope) => {
+      const { rulesetData } = scope;
       const lowercaseQuery = query.toLowerCase();
-      const provider = RulesetFactory.fromBaseRules(ruleset.baseRules).createPropertyTypes();
-
-      const staticTypes = Object.entries(provider.getStaticPropertyTypes(entityType));
+      const staticTypes = Object.entries(getPropertyTypes(scope, entityType));
       const engineCompletions: PropertyTypeCompletion[] = staticTypes
         .filter(
           ([value, description]) =>
@@ -127,14 +125,13 @@ class PropertyTypesService {
    * Get static property types via ruleset-specific provider
    */
   async getStaticPropertyTypes(rulesetId: string, entityType?: PropertyEntityType): Promise<PropertyType[]> {
-    const provider = await RulesetFactory.fromRulesetId(rulesetId).then((m) => m.createPropertyTypes());
-    const types = provider.getStaticPropertyTypes(entityType);
-
-    return Object.entries(types).map(([value, description]) => ({
-      value,
-      isStatic: true,
-      description,
-    }));
+    return await withRulesetScope(db, rulesetId, async (scope) =>
+      Object.entries(getPropertyTypes(scope, entityType)).map(([value, description]) => ({
+        value,
+        isStatic: true,
+        description,
+      })),
+    );
   }
 
   /**
@@ -148,11 +145,10 @@ class PropertyTypesService {
     query: string,
     pagination: { limit: number; page: number },
   ): Promise<Paginated<PropertyValueCompletion>> {
-    return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
+    return await withRulesetScope(db, rulesetId, async (scope) => {
+      const { rulesetData } = scope;
       const lowercaseQuery = query.toLowerCase();
-      const provider = RulesetFactory.fromBaseRules(ruleset.baseRules).createPropertyTypes();
-
-      const staticValues = provider.getStaticPropertyValues(type) ?? [];
+      const staticValues = getPropertyValues(scope, type);
       const engineCompletions: PropertyValueCompletion[] = staticValues
         .filter((v) => v.toLowerCase().includes(lowercaseQuery))
         .map((v): PropertyValueCompletion => ({ label: v, value: v, kind: "engine" }));

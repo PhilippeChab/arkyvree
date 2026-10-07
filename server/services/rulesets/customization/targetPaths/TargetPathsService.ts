@@ -1,15 +1,9 @@
+import { getTargetPathCompletions } from "@/engine/index.ts";
+import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { db } from "@/server/database/index.ts";
 import { paginateItems } from "@/server/repositories/index.ts";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import type { PaginatedCompletions, PathCompletion, TargetPathKind } from "@/shared/customization/target.ts";
+import type { PaginatedCompletions, TargetPathKind } from "@/shared/customization/target.ts";
 
-import {
-  buildSegmentDescriber,
-  compareCompletions,
-  getCategoryCompletions,
-  getFlatCompletions,
-  getSegmentCompletions,
-  resolveCompletedPrefix,
-} from "./completions.ts";
 import { getTargetPathsWithLabels, validatePath } from "./targetPaths.ts";
 
 class TargetPathsService {
@@ -30,29 +24,11 @@ class TargetPathsService {
     page: number = 1,
     flat: boolean = false,
   ): Promise<PaginatedCompletions> {
-    const { paths: allPaths, segmentLabels } = await getTargetPathsWithLabels(rulesetId, kind, entityType);
-    if (flat)
-      return { ...paginateItems(getFlatCompletions(allPaths, segmentLabels, search), { limit, page }), segmentLabels };
-
-    const generator = await RulesetFactory.fromRulesetId(rulesetId).then((m) => m.createTargetPaths());
-    const segments = resolveCompletedPrefix(allPaths, partialPath, position).split(".");
-    let completions: PathCompletion[] = [];
-    if (segments.length === 1) {
-      completions = getCategoryCompletions(generator, allPaths, segments[0]);
-    } else if (segments[0] !== "") {
-      // A prefix starting with a dot (".", ".a") names no path, and completes nothing.
-      completions = getSegmentCompletions(allPaths, segments, buildSegmentDescriber(generator, segmentLabels, kind));
-    }
-    completions.sort(compareCompletions);
-
-    const filtered = search
-      ? completions.filter((c) => {
-          const q = search.toLowerCase();
-          return c.label.toLowerCase().includes(q) || c.detail.toLowerCase().includes(q);
-        })
-      : completions;
-
-    return { ...paginateItems(filtered, { limit, page }), segmentLabels };
+    const catalog = await getTargetPathsWithLabels(rulesetId, kind, entityType);
+    const completions = await withRulesetScope(db, rulesetId, async (scope) =>
+      getTargetPathCompletions(scope, catalog, kind, { flat, partialPath, position, search }),
+    );
+    return { ...paginateItems(completions, { limit, page }), segmentLabels: catalog.segmentLabels };
   }
 }
 

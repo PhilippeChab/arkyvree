@@ -1,67 +1,20 @@
 import { buildSourceChain } from "@/engine/core/cow/index.ts";
-import { parseLiteralValue } from "@/engine/core/paths/literalValue.ts";
+import { checkTargetValue, listTargetPaths, validateTargetPath } from "@/engine/index.ts";
 import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
-import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
+import { NotFoundError } from "@/server/errors/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import type {
-  PathCompletion,
-  PathError,
-  PathValidationResult,
-  TargetPath,
-  TargetPathKind,
-} from "@/shared/customization/target.ts";
-import {
-  extractTemplateExpression,
-  findTemplateError,
-  isTemplateValue,
-} from "@/shared/customization/templateExpression.ts";
-
-/** Why a modifier's or requirement's operator and value don't suit the path, or null when they do. */
-function valueMismatch(pathDef: TargetPath, operator: string | undefined, value: string | undefined): string | null {
-  const { path, valueType } = pathDef;
-  if (operator !== undefined && !pathDef.operators.includes(operator))
-    return `The operator ${operator} isn't offered on ${path}: ${pathDef.operators.join(", ")}`;
-
-  if (value === undefined) return null;
-  if (isTemplateValue(value)) return pathDef.literalOnly ? `${path} takes a number, not a template` : null;
-  const literal = parseLiteralValue(value, valueType);
-  if (literal === undefined) return `Invalid ${valueType} value for ${path}: ${JSON.stringify(value)}`;
-  if (operator === "set" && pathDef.setValues) {
-    if (pathDef.setValues.some((choice) => choice.value === value)) return null;
-    return `A set on ${path} takes ${pathDef.setValues.map((choice) => `${choice.value} (${choice.label})`).join(", ")}`;
-  }
-  if (pathDef.minValue !== undefined && typeof literal === "number" && literal < pathDef.minValue)
-    return `${path} takes ${pathDef.minValue} or more`;
-
-  return null;
-}
+import type { TargetPathCatalog, TargetPathKind } from "@/shared/customization/target.ts";
 
 /**
- * What's wrong with a template value for a value of `valueType`, or null: checked as the sheet will evaluate it, against
- * the paths a template of the ruleset reads (the "template" listing).
- */
-export async function findTemplateValueError(
-  rulesetId: string,
-  value: string,
-  valueType: string,
-): Promise<string | null> {
-  const expression = extractTemplateExpression(value);
-  if (expression === null) return `Invalid template ${JSON.stringify(value)}`;
-  const { paths } = await getTargetPathsWithLabels(rulesetId, "template");
-  return findTemplateError(expression, new Map(paths.map((path) => [path.path, path.valueType])), valueType);
-}
-
-/**
- * Get all target paths with segment labels in a single fetch.
- * Entity data is fetched once and used to build both.
+ * The ruleset's target paths of a kind, with their segments' labels, as the engine lists them: cached for the ruleset
+ * and those it depends on. Of an entity type (`entityType`), the paths it takes.
  */
 export async function getTargetPathsWithLabels(
   rulesetId: string,
   kind: TargetPathKind,
   entityType?: string,
-): Promise<{ paths: TargetPath[]; segmentLabels: Record<string, string> }> {
+): Promise<TargetPathCatalog> {
   const ruleset = await Rulesets.findOne(db, { id: rulesetId });
   if (!ruleset) throw new NotFoundError("Ruleset not found");
   // Compose inside the registered cache fill: composing beforehand can carry
@@ -69,11 +22,7 @@ export async function getTargetPathsWithLabels(
   const result = await RulesetCache.getTargetPaths(
     rulesetId,
     kind,
-    () =>
-      withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
-        const generator = RulesetFactory.fromBaseRules(ruleset.baseRules).createTargetPaths();
-        return generator.getTargetPathsAndLabels(rulesetData, kind);
-      }),
+    () => withRulesetScope(db, rulesetId, async (scope) => listTargetPaths(scope, kind)),
     buildSourceChain(ruleset),
   );
   if (!entityType) return result;
@@ -84,10 +33,8 @@ export async function getTargetPathsWithLabels(
 }
 
 /**
- * The value type of the path a modifier or requirement targets, its operator and value checked against it: an operator
- * the path offers, and a template the sheet resolves or a literal of that type (a number, `true` or `false`), as the
- * path allows. A modifier's `sourceType` must be one the path takes modifiers from (a level's advancement, a pool's
- * slots). A BadRequestError says what's wrong.
+ * The value type of the path a modifier or requirement targets, its operator and value checked against it by the
+ * engine: refused as invalid with what's wrong.
  */
 export async function resolvePathValueType(
   rulesetId: string,
@@ -97,23 +44,11 @@ export async function resolvePathValueType(
   value: string | undefined,
   sourceType?: string,
 ): Promise<string> {
-  const { paths } = await getTargetPathsWithLabels(rulesetId, kind);
-  const pathDef = paths.find((p) => p.path === target);
-  if (!pathDef) {
-    const { errors } = await validatePath(rulesetId, target, kind);
-    throw new BadRequestError(`Invalid ${kind} path: ${errors[0]?.message ?? target}`);
-  }
-  const allowed = kind === "modifier" ? pathDef.allowedEntityTypes : undefined;
-  if (allowed && sourceType && !allowed.includes(sourceType))
-    throw new BadRequestError(`${target} takes modifiers from ${allowed.join(", ")} only`);
-
-  const mismatch = valueMismatch(pathDef, operator, value);
-  if (mismatch) throw new BadRequestError(mismatch);
-  if (value !== undefined && isTemplateValue(value)) {
-    const templateError = await findTemplateValueError(rulesetId, value, pathDef.valueType);
-    if (templateError) throw new BadRequestError(templateError);
-  }
-  return pathDef.valueType;
+  const paths = await getTargetPathsWithLabels(rulesetId, kind);
+  const templatePaths = await getTargetPathsWithLabels(rulesetId, "template");
+  return await withRulesetScope(db, rulesetId, async (scope) =>
+    checkTargetValue(scope, { paths, templatePaths }, { kind, operator, sourceType, target, value }),
+  );
 }
 
 /**
@@ -125,57 +60,7 @@ export async function validatePath(
   path: string,
   kind: TargetPathKind = "modifier",
   entityType?: string,
-): Promise<PathValidationResult> {
-  const { paths: allPaths } = await getTargetPathsWithLabels(rulesetId, kind, entityType);
-  const pathMap = new Map(allPaths.map((p) => [p.path, p]));
-  const generator = await RulesetFactory.fromRulesetId(rulesetId).then((m) => m.createTargetPaths());
-  const validCategories = generator.getCategories();
-
-  const errors: PathError[] = [];
-  const suggestions: string[] = [];
-  const completions: PathCompletion[] = [];
-
-  const segments = path.split(".");
-
-  const category = segments[0];
-
-  if (!validCategories.includes(category)) {
-    errors.push({
-      message: `Unknown category '${category}'. Valid categories: ${validCategories.join(", ")}`,
-      position: { start: 0, end: category.length },
-      severity: "error",
-      code: "INVALID_CATEGORY",
-    });
-
-    const similarCategories = validCategories.filter(
-      (cat) => cat.toLowerCase().includes(category.toLowerCase()) || category.toLowerCase().includes(cat.toLowerCase()),
-    );
-    suggestions.push(...similarCategories);
-  }
-
-  const exactMatch = pathMap.get(path);
-  if (exactMatch) return { isValid: true, errors: [], suggestions: [], completions: [], target: exactMatch };
-
-  const partialMatches = allPaths.filter((p) => p.path.startsWith(path));
-  if (partialMatches.length > 0) {
-    errors.push({
-      message: `Incomplete path. Did you mean: ${partialMatches
-        .slice(0, 3)
-        .map((p) => p.path)
-        .join(", ")}?`,
-      position: { start: 0, end: path.length },
-      severity: "warning",
-      code: "INCOMPLETE_PATH",
-    });
-    suggestions.push(...partialMatches.slice(0, 5).map((p) => p.path));
-  } else {
-    errors.push({
-      message: `Invalid path '${path}'. No matching paths found.`,
-      position: { start: 0, end: path.length },
-      severity: "error",
-      code: "INVALID_PATH",
-    });
-  }
-
-  return { isValid: false, errors, suggestions, completions };
+) {
+  const catalog = await getTargetPathsWithLabels(rulesetId, kind, entityType);
+  return await withRulesetScope(db, rulesetId, async (scope) => validateTargetPath(scope, catalog, path));
 }

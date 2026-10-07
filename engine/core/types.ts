@@ -1,5 +1,5 @@
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
-import type { TargetPath, TargetPathKind } from "@/shared/customization/target.ts";
+import type { TargetPathCatalog, TargetPathKind } from "@/shared/customization/target.ts";
 import type { Ruleset } from "@/shared/relations.ts";
 
 import type { RulesetData } from "./view/index.ts";
@@ -36,10 +36,7 @@ export interface TargetPathsInterface extends TargetPathsTraverser {
   getCategoryDescriptions(): Record<string, string>;
   getGroupDescriptionTemplates(): Record<string, string>;
   getPathDescriptions(): Record<string, string>;
-  getTargetPathsAndLabels(
-    rulesetData: RulesetData,
-    kind: TargetPathKind,
-  ): { paths: TargetPath[]; segmentLabels: Record<string, string> };
+  getTargetPathsAndLabels(rulesetData: RulesetData, kind: TargetPathKind): TargetPathCatalog;
 }
 export interface TargetPathsTraverser {
   /** Whether a target reads its source itself (a weapon's own paths: the place its item is held), not the sheet. */

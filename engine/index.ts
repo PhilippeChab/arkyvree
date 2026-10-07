@@ -35,6 +35,8 @@ export {
   planLevelEdit,
   planLevelUp,
 } from "./api/levelUp.ts";
+export { checkTargetValue, getTargetPathCompletions, listTargetPaths, validateTargetPath } from "./api/paths.ts";
+export { getPropertyTypes, getPropertyValues } from "./api/properties.ts";
 export type {
   CharacterInput,
   CharacterRows,

@@ -69,6 +69,12 @@ export interface TargetPath {
   valueType: PathValueType;
 }
 
+/** A ruleset's target paths of a kind, with the label of each of their segments. */
+export interface TargetPathCatalog {
+  paths: TargetPath[];
+  segmentLabels: Record<string, string>;
+}
+
 /** What a listing offers: a modifier's targets, a requirement's, or the paths a template reads, one value each. */
 export type TargetPathKind = "modifier" | "requirement" | "template";
 

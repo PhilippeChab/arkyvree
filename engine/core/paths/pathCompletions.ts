@@ -1,43 +1,16 @@
+/** The completions of a partial target path, as a language server offers them. */
+
 import type { TargetPathsInterface } from "@/engine/core/types.ts";
-import type { PathCompletion, TargetPath, TargetPathKind } from "@/shared/customization/target.ts";
+import type { PathCompletion, TargetPath, TargetPathCatalog, TargetPathKind } from "@/shared/customization/target.ts";
 import { capitalize } from "@/shared/text.ts";
 
 type SegmentInfo = { examplePath: TargetPath | null; groupDesc: string | undefined; isGroup: boolean };
 
 /**
- * The segments that come after `baseDot` and start with `segmentPrefix`, each with its first path, whether it's a group
- * (it has a wildcard under it) and its group's description.
- */
-function nextSegments(allPaths: TargetPath[], baseDot: string, segmentPrefix: string) {
-  const segmentInfo = new Map<string, SegmentInfo>();
-  for (const p of allPaths) {
-    if (!p.path.startsWith(baseDot)) continue;
-    const pathAfterBase = p.path.substring(baseDot.length);
-    const nextSegment = pathAfterBase.split(".")[0];
-    if (!nextSegment || !nextSegment.toLowerCase().startsWith(segmentPrefix)) continue;
-
-    let info = segmentInfo.get(nextSegment);
-    if (!info) {
-      info = { examplePath: null, isGroup: false, groupDesc: undefined };
-      segmentInfo.set(nextSegment, info);
-    }
-
-    const fullPrefix = baseDot + nextSegment;
-    if (!info.examplePath && (p.path.startsWith(fullPrefix + ".") || p.path === fullPrefix)) info.examplePath = p;
-
-    if (!info.isGroup && p.path.startsWith(fullPrefix + ".*")) info.isGroup = true;
-
-    if (!info.groupDesc && p.groupDescription && p.path.startsWith(fullPrefix + "."))
-      info.groupDesc = p.groupDescription;
-  }
-  return segmentInfo;
-}
-
-/**
  * How a segment is described: by its path's own description, as "All …" / "Any …" for a wildcard, by an item path's
  * structural description, by its group's template, or else by `fallback`.
  */
-export function buildSegmentDescriber(
+function buildSegmentDescriber(
   generator: TargetPathsInterface,
   segmentLabels: Record<string, string>,
   kind: TargetPathKind,
@@ -77,7 +50,7 @@ export function buildSegmentDescriber(
 }
 
 /** Groups first, then by sort order, then by label. */
-export function compareCompletions(a: PathCompletion, b: PathCompletion) {
+function compareCompletions(a: PathCompletion, b: PathCompletion) {
   if (a.kind === "group" && b.kind !== "group") return -1;
   if (a.kind !== "group" && b.kind === "group") return 1;
   const orderA = a.sortOrder ?? Infinity;
@@ -87,7 +60,7 @@ export function compareCompletions(a: PathCompletion, b: PathCompletion) {
 }
 
 /** The categories that have paths and start with what's typed of the first segment. */
-export function getCategoryCompletions(
+function getCategoryCompletions(
   generator: TargetPathsInterface,
   allPaths: TargetPath[],
   lastSegment: string,
@@ -110,7 +83,7 @@ export function getCategoryCompletions(
  * Every leaf path that matches `search`, by its path or a segment's label, ignoring the drill prefix: the path browser's
  * search-first mode, so users can type "wizard known" and find paths across the whole tree without drilling.
  */
-export function getFlatCompletions(
+function getFlatCompletions(
   allPaths: TargetPath[],
   segmentLabels: Record<string, string>,
   search: string | undefined,
@@ -147,7 +120,7 @@ export function getFlatCompletions(
  * The completions of the prefix's last segment, among the segments under the ones before it. A trailing dot leaves an
  * empty last segment: every next segment under the prefix completes it.
  */
-export function getSegmentCompletions(
+function getSegmentCompletions(
   allPaths: TargetPath[],
   segments: string[],
   describe: ReturnType<typeof buildSegmentDescriber>,
@@ -180,10 +153,39 @@ export function getSegmentCompletions(
 }
 
 /**
+ * The segments that come after `baseDot` and start with `segmentPrefix`, each with its first path, whether it's a group
+ * (it has a wildcard under it) and its group's description.
+ */
+function nextSegments(allPaths: TargetPath[], baseDot: string, segmentPrefix: string) {
+  const segmentInfo = new Map<string, SegmentInfo>();
+  for (const p of allPaths) {
+    if (!p.path.startsWith(baseDot)) continue;
+    const pathAfterBase = p.path.substring(baseDot.length);
+    const nextSegment = pathAfterBase.split(".")[0];
+    if (!nextSegment || !nextSegment.toLowerCase().startsWith(segmentPrefix)) continue;
+
+    let info = segmentInfo.get(nextSegment);
+    if (!info) {
+      info = { examplePath: null, isGroup: false, groupDesc: undefined };
+      segmentInfo.set(nextSegment, info);
+    }
+
+    const fullPrefix = baseDot + nextSegment;
+    if (!info.examplePath && (p.path.startsWith(fullPrefix + ".") || p.path === fullPrefix)) info.examplePath = p;
+
+    if (!info.isGroup && p.path.startsWith(fullPrefix + ".*")) info.isGroup = true;
+
+    if (!info.groupDesc && p.groupDescription && p.path.startsWith(fullPrefix + "."))
+      info.groupDesc = p.groupDescription;
+  }
+  return segmentInfo;
+}
+
+/**
  * The prefix to complete. A leaf path + "." resolves to its parent level, so the client gets its siblings with the leaf
  * visible (avoids empty results and extra round-trips).
  */
-export function resolveCompletedPrefix(allPaths: TargetPath[], partialPath: string, position: number) {
+function resolveCompletedPrefix(allPaths: TargetPath[], partialPath: string, position: number) {
   const pathPrefix = partialPath.substring(0, position);
   if (pathPrefix.endsWith(".")) {
     const candidatePath = pathPrefix.slice(0, -1);
@@ -193,4 +195,33 @@ export function resolveCompletedPrefix(allPaths: TargetPath[], partialPath: stri
     }
   }
   return pathPrefix;
+}
+
+/**
+ * The completions of a partial path (`partialPath` up to `position`) among a catalog's paths of `kind`: the categories,
+ * or the segments under its completed prefix, groups first; or, `flat`, every leaf path that matches `search` (the path
+ * browser's search-first mode). Unpaged: the caller pages them.
+ */
+export function getPathCompletions(
+  generator: TargetPathsInterface,
+  { paths: allPaths, segmentLabels }: TargetPathCatalog,
+  kind: TargetPathKind,
+  query: { flat?: boolean; partialPath: string; position: number; search?: string },
+): PathCompletion[] {
+  const { flat, partialPath, position, search } = query;
+  if (flat) return getFlatCompletions(allPaths, segmentLabels, search);
+
+  const segments = resolveCompletedPrefix(allPaths, partialPath, position).split(".");
+  let completions: PathCompletion[] = [];
+  if (segments.length === 1) {
+    completions = getCategoryCompletions(generator, allPaths, segments[0]);
+  } else if (segments[0] !== "") {
+    // A prefix starting with a dot (".", ".a") names no path, and completes nothing.
+    completions = getSegmentCompletions(allPaths, segments, buildSegmentDescriber(generator, segmentLabels, kind));
+  }
+  completions.sort(compareCompletions);
+
+  if (!search) return completions;
+  const q = search.toLowerCase();
+  return completions.filter((c) => c.label.toLowerCase().includes(q) || c.detail.toLowerCase().includes(q));
 }
