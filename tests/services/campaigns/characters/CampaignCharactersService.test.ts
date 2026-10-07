@@ -10,6 +10,7 @@ import { CampaignCharactersService } from "@/server/services/campaigns/character
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { addCharacterContributor } from "@/tests/support/contributors.ts";
+import { measure } from "@/tests/support/database.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
@@ -182,12 +183,14 @@ describe("CampaignCharactersService", () => {
         visibility: "Public",
         description: publicOne.character.description,
       });
-      // Others' Partial ones: name only.
+      // Others' Partial ones: name and race only.
       expect(seen.get(partialOne.character.id)).toMatchObject({
         visibility: "Partial",
         name: partialOne.character.name,
+        race: "Human",
         description: null,
         levels: [],
+        totalLevel: null,
       });
       expect(seen.has(privateOne.character.id)).toBe(false);
 
@@ -197,6 +200,32 @@ describe("CampaignCharactersService", () => {
       ).toMatchObject({ visibility: "Partial", description: partialOne.character.description });
 
       expect((await list(gm.id, campaign.id)).items).toHaveLength(4);
+    });
+
+    test("shows a Partial character whole to its contributors, as its sheet does, in one query for the page", async () => {
+      const { user: gm } = await createTestUser("gm");
+      const { campaign } = await createTestCampaign(gm.id);
+      const viewer = await joinWithCharacter(campaign.id, "Private");
+      const edited = await joinWithCharacter(campaign.id, "Partial");
+      const hidden = await joinWithCharacter(campaign.id, "Partial");
+      await joinWithCharacter(campaign.id, "Partial");
+      for (const { character } of [edited, hidden])
+        await Characters.update(db, { description: "A scar runs down her left cheek" }, { id: character.id });
+      await addCharacterContributor(edited.character.id, viewer.user, edited.user.id);
+
+      const seen = new Map((await list(viewer.user.id, campaign.id)).items.map((c) => [c.id, c]));
+      expect(seen.get(edited.character.id)).toMatchObject({
+        description: "A scar runs down her left cheek",
+        totalLevel: 0,
+        isPartial: false,
+      });
+      expect(seen.get(hidden.character.id)).toMatchObject({ description: null, totalLevel: null, isPartial: true });
+
+      // The contributions are read once for the page, whatever its size.
+      const { timing: two } = await measure(() => list(viewer.user.id, campaign.id, { limit: 2, page: 1 }));
+      const { timing: four } = await measure(() => list(viewer.user.id, campaign.id, { limit: 10, page: 1 }));
+      expect(two.queryCount).toBeGreaterThan(0);
+      expect(four.queryCount).toBe(two.queryCount);
     });
 
     test("pages the characters", async () => {

@@ -9,7 +9,7 @@ Character creation is a guided flow. Pick a ruleset, fill in the basics, and the
 Steps:
 
 1. **Pick a ruleset.** **Core SRD 3.5** is available to everyone; any forks you own or have access to via campaigns are also listed.
-2. **Identity.** Name, gender, age, height, weight, alignment, deity, description, notes.
+2. **Identity.** Name, gender, age, height, weight, alignment, deity, description, notes, [private notes](#what-is-character-visibility).
 3. **Race.** Picking a race seeds size, base speed, and racial modifiers automatically.
 4. **Ability scores.** Roll them (4d6 drop lowest or 3d6 straight), use the standard array, or point-buy. What you enter is the *base* score — racial modifiers stack on top.
 5. **First level.** The [level-up wizard](#what-is-the-level-up-wizard) takes over: pick a class, roll HP, allocate skill points within the rank cap, pick feats from the available pools, pick spells if your class has them, review and confirm.
@@ -48,14 +48,17 @@ When you link a character to a campaign, you choose how much other players can s
 | Visibility | What other players see |
 |---|---|
 | **Private** | Nothing — the character doesn't appear in their roster. |
-| **Partial** | Physical traits only — race, class, level, name, public notes. Stats, feats, spells, equipment hidden. |
+| **Partial** | Physical traits only — name, race, age, gender, height and weight. Everything else is hidden: classes and level, alignment, deity, languages, description, notes, stats, feats, spells, equipment. |
 | **Public** | The full sheet. |
 
-The GM always sees the full sheet of every linked character, including private notes. Visibility controls player-to-player privacy only.
+The GM always sees the full sheet of every linked character, including its private notes. Visibility controls player-to-player privacy only.
 
-Each character has two notes fields: **public notes** (visible to everyone whose visibility level reveals the sheet) and **private notes** (visible only to the player and the GM).
+Each character has two notes fields, under its description:
 
-Independent of campaign visibility, every character has a per-character public share link from **More → Share** that displays the full sheet in a browser, no account required. Revoke any time from the same menu.
+- **Notes** — seen by anyone who sees the full sheet: the GM, the other players when the character is Public, and anyone with its share link.
+- **Private Notes** — seen only by the character's owner, its contributors (invited from **More → Contributors**), and the GM of its campaign. The owner and contributors write them on the character's page; the GM reads them on the campaign's character page, and edits them only as a contributor. Other players never see them, whatever the visibility, and a share link leaves them out.
+
+Independent of campaign visibility, every character has a per-character public share link from **More → Share** that displays the full sheet in a browser, without its private notes, no account required. Revoke any time from the same menu.
 
 ## What is the Level-Up Wizard?
 

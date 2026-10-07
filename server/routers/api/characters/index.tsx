@@ -160,6 +160,8 @@ export default new Hono()
         deity: z.string().optional(),
         description: z.string().optional(),
         notes: z.string().optional(),
+        // Read by the character's editors and its campaign's Game Master only
+        privateNotes: z.string().optional(),
       }),
     ),
     async (c) => {
@@ -211,6 +213,8 @@ export default new Hono()
           .optional(),
         description: z.string().optional(),
         notes: z.string().optional(),
+        // Read by the character's editors and its campaign's Game Master only
+        privateNotes: z.string().optional(),
         languageIds: z.array(z.string().uuid()).optional(),
         updatedAt: z.string().optional(),
       }),

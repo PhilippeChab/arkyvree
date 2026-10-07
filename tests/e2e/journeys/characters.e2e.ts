@@ -136,7 +136,7 @@ test.describe("Characters", () => {
     await expect(page.getByRole("menu").getByRole("menuitem", { name: /^Archive$/ })).toBeVisible();
   });
 
-  test("identity edits, a language added and removed, outlast a reload", async ({ page, ownerUser }) => {
+  test("identity edits, private notes, a language added and removed, outlast a reload", async ({ page, ownerUser }) => {
     await signIn(page, ownerUser.email, ownerUser.password);
     const name = `IdentityHero ${Date.now()}`;
     await createCharacter(page, name);
@@ -154,6 +154,8 @@ test.describe("Characters", () => {
     await selectOption(page, "Alignment", "Chaotic Good");
     await page.locator('input[name="deity"]').fill("Olidammara");
     await page.locator('input[name="age"]').fill("27");
+    const privateNotes = page.getByRole("textbox", { name: "Private Notes" });
+    await privateNotes.fill("Owes the thieves' guild");
     // Aquan: an exotic language no race knows from the start.
     await page.getByRole("combobox", { name: "Languages" }).click();
     await page.getByRole("option", { name: "Aquan" }).click();
@@ -164,6 +166,7 @@ test.describe("Characters", () => {
     );
     await expect(page.locator('input[name="deity"]')).toHaveValue("Olidammara");
     await expect(page.locator('input[name="age"]')).toHaveValue("27");
+    await expect(privateNotes).toHaveValue("Owes the thieves' guild");
     const aquan = page.locator(".MuiChip-root").filter({ hasText: "Aquan" });
 
     await aquan.first().locator(".MuiChip-deleteIcon").click();

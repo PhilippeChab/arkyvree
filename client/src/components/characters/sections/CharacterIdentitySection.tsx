@@ -41,6 +41,7 @@ interface CharacterIdentityFormData {
   height: string;
   languageIds: string[];
   notes: string;
+  privateNotes: string;
   race: string;
   weight: string;
 }
@@ -55,6 +56,8 @@ interface CharacterIdentitySectionProps {
   portraitUrl?: string | null;
   readOnly?: boolean;
   rulesetId?: string;
+  /** The viewer receives the private notes: the character's editors, and its campaign's Game Master. */
+  showPrivateNotes?: boolean;
 }
 
 /** A language as the picker shows it: the character's, or one the ruleset offers. */
@@ -62,6 +65,9 @@ type LanguageOption = Pick<RulesetLanguage, "id" | "name">;
 
 /** No saved languages: one list, so the selection's memo keeps its value. */
 const NO_LANGUAGES: LanguageOption[] = [];
+
+/** What a Partial character hides from the campaign's other players, said on its sheet and on its card. */
+export const PARTIAL_IDENTITY_NOTE = "The rest of this character's identity is private";
 
 function toIdentityForm({ identity }: CharacterIdentitySectionProps["character"]): CharacterIdentityFormData {
   return {
@@ -75,6 +81,7 @@ function toIdentityForm({ identity }: CharacterIdentitySectionProps["character"]
     deity: identity?.beliefs?.deity || "",
     description: identity?.physiology?.description || "",
     notes: identity?.background?.notes || "",
+    privateNotes: identity?.background?.privateNotes || "",
     languageIds: (identity?.physiology?.languages ?? []).map((l) => l.id),
   };
 }
@@ -87,6 +94,7 @@ export function CharacterIdentitySection({
   portraitReadOnly = readOnly,
   partial = false,
   portraitUrl,
+  showPrivateNotes = false,
 }: CharacterIdentitySectionProps) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
@@ -101,6 +109,7 @@ export function CharacterIdentitySection({
     deity: "",
     description: "",
     notes: "",
+    privateNotes: "",
     languageIds: [],
   });
 
@@ -122,6 +131,8 @@ export function CharacterIdentitySection({
             alignment: formData.alignment || undefined,
             description: formData.description,
             notes: formData.notes,
+            // Only who reads them saves them: a form without the field leaves them as they are
+            privateNotes: showPrivateNotes ? formData.privateNotes : undefined,
             languageIds: formData.languageIds,
             updatedAt: sync.updatedAt(),
           },
@@ -329,9 +340,9 @@ export function CharacterIdentitySection({
               </Box>
             )}
 
-            {/* Line 3: Description and Notes */}
+            {/* Line 3: Description, Notes and Private Notes */}
             {partial ? (
-              <BlankNote>The rest of this character's identity is private</BlankNote>
+              <BlankNote>{PARTIAL_IDENTITY_NOTE}</BlankNote>
             ) : (
               <>
                 <Box sx={{ display: "grid", gridTemplateColumns: "1fr", gap: 3 }}>
@@ -362,6 +373,20 @@ export function CharacterIdentitySection({
                     disabled={readOnly}
                     sx={{ ...disabledFieldStyle, "& textarea": { resize: "vertical" } }}
                   />
+                  {showPrivateNotes && (
+                    <FormTextField
+                      control={form.control}
+                      name="privateNotes"
+                      label="Private Notes"
+                      size="small"
+                      variant="outlined"
+                      multiline
+                      minRows={4}
+                      placeholder="Secrets and plans only the character's editors and the Game Master see…"
+                      disabled={readOnly}
+                      sx={{ ...disabledFieldStyle, "& textarea": { resize: "vertical" } }}
+                    />
+                  )}
                 </Box>
               </>
             )}

@@ -91,7 +91,7 @@ The character-creation wizard combines `published + campaignAccessible` (and his
 
 If none match → `ForbiddenError "You do not have access to this ruleset"`.
 
-Campaign character responses redact private notes for viewers without character edit rights or GM status. Share tokens are returned only to character editors. Partial responses explicitly allow identity and metadata, and clear equipment, skill budget, virtual abilities, spell tags, validation details, and bonded sheets as well as the normal build fields.
+Campaign character responses redact private notes (to `""`, a bonded creature's too) for viewers without character edit rights or GM status; the client shows the field to `canEdit` or the Game Master (`useCampaignPermissions`' `isDM`) only, read-only there. The character's own sheet (`GET /characters/:id`) goes to its editors alone, private notes included, and a share link's response leaves them out. Share tokens are returned only to character editors. A Partial response is an explicit allowlist: the character's ids and ruleset, its name and physical traits (`identity.physiology`'s race, age, gender, height and weight). Its description and languages, its beliefs (alignment, deity), its background (notes, private notes) and its meta (level, XP) are `null`, and its build fields, equipment, skill budget, virtual abilities, spell tags, validation details and bonded sheets are cleared.
 
 ## Campaigns — `CampaignsPolicy`
 
@@ -107,7 +107,7 @@ Campaign character responses redact private notes for viewers without character 
 
 **Campaign character visibility** is *not* a CAS-protected surface — only the linking player can change visibility on their own character (`updateCharacterVisibility` throws `ForbiddenError "You do not own this character in this campaign"` for everyone else, including the GM: an identity match on the link's player). This is single-user contention by design.
 
-**Partial visibility filtering**: `CampaignCharactersService.getCharacters` strips `description` and `levels` for characters with `visibility: "Partial"` when the viewer is neither the owner nor a GM.
+**Partial visibility filtering**: who sees a Partial character trimmed is decided one way, for the roster and the character page alike (`CampaignCharactersService`'s `isPartial`): anyone but the link's player, the Game Master and the character's editors (its owner, or an active contributor; the roster reads the session's contributions to its page's characters in one query). `getCharacters` sends such a character with its name and race only (`description` and `totalLevel` `null`, `levels` empty) and `isPartial: true`, which its card reads to say its identity is private (`PARTIAL_IDENTITY_NOTE`, the sheet's words) rather than that it has no description.
 
 **`canEdit` on the campaign-character detail response**: `CampaignCharactersService.getCharacter` returns `isOwner` (link-slot ownership in the campaign), `canEdit` (character owner OR active character contributor), and `canDownloadPdf` (`canEdit` OR Game Master). The campaign character view shows "Edit Character" to `canEdit` only, and "Download PDF" to `canDownloadPdf` — `isOwner` is kept on the response for any future UI that needs the strict campaign-link semantics.
 
