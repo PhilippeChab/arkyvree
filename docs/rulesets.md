@@ -413,13 +413,13 @@ server/
 │       ├── index.ts                       (the module's entry: createRulesetModule, the response builders)
 │       ├── rulesetModule.ts               (RulesetModule impl)
 │       ├── types.ts                       (Dnd35ProjectedCharacterData, Dnd35LevelUpProjector)
-│       ├── TargetPaths.ts
-│       ├── character/                     (AbstractDetailedCharacter, DetailedCharacter, LevelUpProjector)
+│       ├── Dnd35TargetPaths.ts
+│       ├── character/                     (AbstractDetailedCharacter, DetailedCharacter, Dnd35LevelUpProjector)
 │       ├── loading/                       (DetailedCharacterDataLoader)
 │       ├── response/                      (buildCharacterResponse: the 3.5 API response shape)
 │       ├── abilities/ aptitudes/ classes/ feats/ identity/ powers/ saves/
 │       │                                  (each domain's component, and its hooks: AbilitiesComponent, …)
-│       ├── skills/                        (SkillsComponent: the 3.5 rank system, SkillsHooks)
+│       ├── skills/                        (SkillsComponent: the 3.5 rank system, Dnd35SkillsHooks)
 │       ├── combat/                        (CombatComponent, which includes ArmorClass, HitPoints, Attacks, InitiativeAndSpeed;
 │       │                                  ArmorsComponent, ShieldsComponent, WeaponsComponent, EncumbranceComponent)
 │       ├── spellcasting/                  (SpellcastingComponent, which includes BonusCasterLevels, KnownPowers)
@@ -520,7 +520,7 @@ export interface LevelsHooks {
   readonly maxSpellLevel: number;
 }
 
-// server/rulesets/dnd3.5/levels/LevelsHooks.ts  (3.5 impl)
+// server/rulesets/dnd3.5/levels/Dnd35LevelsHooks.ts  (3.5 impl)
 export class Dnd35LevelsHooks implements LevelsHooks {
   readonly maxSpellLevel = 9;
   isAbilityIncreaseLevel(totalLevel: number): boolean {

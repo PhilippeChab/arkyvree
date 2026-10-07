@@ -2,7 +2,7 @@
 
 import { FeatsFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/FeatsFile.ts";
 import { buildReferenceFeats } from "@/database/packages/dnd35-from-parser/tools/generator/code/referenceFeats.ts";
-import TemplateFamilies from "@/database/packages/dnd35-from-parser/tools/generator/code/templateFamilies.ts";
+import TemplateFamilies from "@/database/packages/dnd35-from-parser/tools/generator/code/TemplateFamilies.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
 import type { RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";

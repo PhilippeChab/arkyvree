@@ -3,7 +3,7 @@
  * them.
  */
 
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/referenceLoader.ts";
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/ReferenceLoader.ts";
 
 /** Build map of feat name → additional aptitudes from all class bonusFeatLists in a given book. */
 export function loadBonusFeatAptitudes(book: string): Map<string, string[]> {

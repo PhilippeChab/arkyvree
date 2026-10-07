@@ -9,7 +9,7 @@ import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { formatDate } from "@/client/src/lib/activityFormatters.ts";
 import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { ApiError } from "@/client/src/services/apiError.ts";
+import { ApiError } from "@/client/src/services/ApiError.ts";
 
 import { InviteActionButtons } from "./InviteActionButtons.tsx";
 

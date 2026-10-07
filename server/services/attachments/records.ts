@@ -1,6 +1,6 @@
 import { type Db, db } from "@/server/database/index.ts";
 import { Attachments } from "@/server/repositories/index.ts";
-import ObjectStorage from "@/server/storage/s3.ts";
+import ObjectStorage from "@/server/storage/ObjectStorage.ts";
 
 /** An attachment's public URL, or null when storage isn't configured. */
 export function getPublicUrl(blob: { key: string }): string | null {

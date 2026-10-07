@@ -461,7 +461,7 @@ describe("conventions", () => {
       "session-param server/services/union.ts",
     ]);
   });
-  test("a test named after a module sits at that module's mirror; a scenario test sits anywhere in its area", async () => {
+  test("a test named after a module sits at that module's mirror, case and all; a scenario test sits anywhere in its area", async () => {
     expect(
       await lintRepo(
         {
@@ -470,12 +470,45 @@ describe("conventions", () => {
           "tests/services/FooService.test.ts": "export const t = 1;\n",
           "tests/services/Scenario.test.ts": "export const t = 1;\n",
           "tests/services/x/BarService.test.ts": "export const t = 1;\n",
+          "server/services/x/RequirementTree.ts": "export default 1;\n",
+          "tests/services/x/requirementTree.test.ts": "export const t = 1;\n",
         },
         ["test-placement"],
       ),
     ).toEqual([
       "test-placement tests/services/FooService.test.ts",
       "test-placement tests/services/x/BarService.test.ts",
+      "test-placement tests/services/x/requirementTree.test.ts",
+    ]);
+  });
+  test("a module that exports its class, or the class's shared instance, is named after it", async () => {
+    expect(
+      await lintRepo(
+        {
+          "server/FeatsService.ts": "class FeatsService {}\nexport default new FeatsService();\n",
+          "server/Telemetry.ts": "export class Telemetry {}\n",
+          "server/RequirementTree.ts": "export default class RequirementTree {}\n",
+          "client/src/Button.tsx": "export class Button {}\n",
+          "server/otel.ts": "class Telemetry {}\nexport default new Telemetry();\n",
+          "server/apiError.ts": "export class ApiError extends Error {}\n",
+          "server/rulesets/hooks/LevelsHooks.ts": "export class Dnd35LevelsHooks {}\n",
+          "server/errors/index.ts":
+            "export class NotFoundError extends Error {}\nexport class ConflictError extends Error {}\n",
+          "server/routers/health.ts": "import { Hono } from 'hono';\nexport default new Hono();\n",
+          "server/helpers/kept.ts": "class Kept {}\nexport function run() {\n  return new Kept();\n}\n",
+          "server/listed.ts": "class Listed {}\nexport { Listed };\n",
+          "server/named.ts": "class Counter {}\nexport const counter = new Counter();\n",
+          "server/byName.ts": "class ByName {}\nexport default ByName;\n",
+        },
+        ["class-file-names"],
+      ),
+    ).toEqual([
+      "class-file-names server/apiError.ts",
+      "class-file-names server/byName.ts",
+      "class-file-names server/listed.ts",
+      "class-file-names server/named.ts",
+      "class-file-names server/otel.ts",
+      "class-file-names server/rulesets/hooks/LevelsHooks.ts",
     ]);
   });
   test("a concern sits in its file, its class is named for what it adds, and it holds no state", async () => {

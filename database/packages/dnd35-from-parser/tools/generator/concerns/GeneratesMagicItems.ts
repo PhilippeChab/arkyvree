@@ -9,7 +9,7 @@ import {
   stringifyProperty,
 } from "@/database/packages/dnd35-from-parser/tools/generator/code/customization.ts";
 import { listField, quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/referenceLoader.ts";
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/ReferenceLoader.ts";
 import type { MagicItemReference } from "@/database/packages/dnd35-from-parser/tools/types/magicItems.ts";
 import type { Constructor } from "@/server/mixins.ts";
 import { ARMOR_PROFICIENCY } from "@/shared/dnd3.5/properties/index.ts";

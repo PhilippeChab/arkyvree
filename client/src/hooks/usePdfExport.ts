@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { ApiError } from "@/client/src/services/apiError.ts";
+import { ApiError } from "@/client/src/services/ApiError.ts";
 
 /** Queues a PDF export; the user is notified when it's ready. */
 export function usePdfExport(requestPdf: () => Promise<unknown>) {

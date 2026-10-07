@@ -4,7 +4,7 @@
  */
 
 import { buildBookDomainSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/domains.ts";
-import ExistingFeats from "@/database/packages/dnd35-from-parser/tools/buildSeeds/existingFeats.ts";
+import ExistingFeats from "@/database/packages/dnd35-from-parser/tools/buildSeeds/ExistingFeats.ts";
 import {
   buildCompanionGrantModifiers,
   buildUncannyDodgeModifiers,
@@ -15,7 +15,7 @@ import {
   isPluralVariantOf,
   stripClassSuffix,
 } from "@/database/packages/dnd35-from-parser/tools/names.ts";
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/referenceLoader.ts";
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/ReferenceLoader.ts";
 import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/scrapedText.ts";
 import {
   type AptitudePick,

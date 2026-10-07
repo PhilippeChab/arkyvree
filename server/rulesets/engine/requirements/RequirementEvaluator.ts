@@ -5,7 +5,7 @@ import {
   isTemplateValue,
 } from "@/server/rulesets/engine/paths/templateExpression.ts";
 import type { Holders, TargetPathsTraverser, TraversePathResult } from "@/server/rulesets/engine/types.ts";
-import RequirementTree, { getParentLevel, type RequirementNode } from "@/shared/customization/requirementTree.ts";
+import RequirementTree, { getParentLevel, type RequirementNode } from "@/shared/customization/RequirementTree.ts";
 import type { Requirement } from "@/shared/relations.ts";
 
 type DetailedCharacterComprehensiveRequirements = {

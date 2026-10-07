@@ -9,7 +9,7 @@ import {
 import { buildRaceSeeds, getSeededRaces } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/races.ts";
 import { checkOneOf } from "@/database/packages/dnd35-from-parser/tools/checks.ts";
 import { listReferenceBooks, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/referenceLoader.ts";
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/ReferenceLoader.ts";
 import {
   readStoredReference,
   type ReferenceType,

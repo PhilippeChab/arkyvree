@@ -12,7 +12,7 @@ import { buildBookDomainSeeds } from "@/database/packages/dnd35-from-parser/tool
 import { buildSpellSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/spells.ts";
 import { buildWizardSchoolSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/wizardSchools.ts";
 import { listReferenceBooks, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/referenceLoader.ts";
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/ReferenceLoader.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
 

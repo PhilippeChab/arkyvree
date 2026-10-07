@@ -50,6 +50,9 @@
  * - `policy-shape`: a service builds a policy with `XPolicy.for(db, session, entity)`, which loads the session's standing
  *   on the entity (its role on it), never with `new`; a policy's only static is `for`, and its only async method: a
  *   check reads that standing and what the service passes it (`canDeleteEntity({ inUse })`), and throws or answers.
+ * - `class-file-names`: a module that declares a class and exports it, or its shared instance (`export default new
+ *   X()`), is named after the class: `X.ts` (`FeatsService.ts`, `ReferenceLoader.ts`). A module of several classes is
+ *   named for what groups them (`server/errors/`), and a router's `new Hono()` is another module's class.
  * - `concern-shape`: a concern (`function X<B extends Constructor>(Base: B)`) sits in `X.ts`, its class is named for
  *   what it adds (a verb's `-ing`, `Archives` → `Archiving`, or `With` a noun, `ArmorClass` → `WithArmorClass`), and
  *   it adds methods, never state.
@@ -223,6 +226,49 @@ function checkValidation(context, node, named) {
     uses[root === schema ? "bare" : "derived"].push(root);
     uses.targets.add(target.value);
   }
+}
+
+function createClassFileNames(context) {
+  const file = repoPath(context.filename);
+  if (!/\.tsx?$/.test(file)) return {};
+  const base = path.posix.basename(file).replace(/\.tsx?$/, "");
+  return {
+    Program(program) {
+      const classes = new Set();
+      const exported = new Map();
+      for (const statement of program.body) {
+        const declaration =
+          statement.type === "ExportNamedDeclaration" || statement.type === "ExportDefaultDeclaration"
+            ? statement.declaration
+            : statement;
+        if (declaration?.type !== "ClassDeclaration" || !declaration.id) continue;
+        classes.add(declaration.id.name);
+        if (declaration !== statement) exported.set(declaration.id.name, declaration.id);
+      }
+      // The class exported by name (`export { X }`, `export default X`), or its instance (`export default new X()`,
+      // `export const x = new X()`)
+      const exportOf = (node) => {
+        if (node?.type === "Identifier" && classes.has(node.name)) exported.set(node.name, node);
+        if (node?.type === "NewExpression" && node.callee.type === "Identifier" && classes.has(node.callee.name)) {
+          exported.set(node.callee.name, node.callee);
+        }
+      };
+      for (const statement of program.body) {
+        if (statement.type === "ExportDefaultDeclaration") exportOf(statement.declaration);
+        if (statement.type !== "ExportNamedDeclaration" || statement.source) continue;
+        for (const specifier of statement.specifiers ?? []) exportOf(specifier.local);
+        for (const declarator of statement.declaration?.declarations ?? []) exportOf(declarator.init);
+      }
+      // One class, or its shared instance: the module is named after it
+      if (exported.size !== 1) return;
+      const [[name, node]] = exported;
+      if (name === base) return;
+      context.report({
+        node,
+        message: `A module that exports its class, or the class's shared instance, is named after it: \`${name}${path.posix.extname(file)}\`.`,
+      });
+    },
+  };
 }
 
 function createConcernShape(context) {
@@ -712,10 +758,20 @@ function createTestPlacement(context) {
   const [tests, tree] = mirror;
   const name = path.posix.basename(file, extension);
   const mirrored = `${tree}${path.posix.dirname(file.slice(tests.length))}/`.replace(/\/\.\/$/, "/");
-  const modules = modulesIn(rootOf(context.filename), tree).get(name);
+  const byName = modulesIn(rootOf(context.filename), tree);
+  const modules = byName.get(name);
+  // A module of the test's name in another case: a rename left the test behind
+  const recased = modules
+    ? undefined
+    : [...byName.keys()].find((module) => module.toLowerCase() === name.toLowerCase());
   return {
     Program(node) {
-      if (modules) {
+      if (recased) {
+        context.report({
+          node,
+          message: `A test named after \`${recased}\` takes its name, case and all: \`${recased}.test.ts\`.`,
+        });
+      } else if (modules) {
         if (modules.some((m) => path.posix.dirname(m) + "/" === mirrored)) return;
         const at = modules.map((m) =>
           `${tests}${path.posix.dirname(m.slice(tree.length))}/${name}.test.ts`.replace("/./", "/"),
@@ -1053,6 +1109,7 @@ export default {
   "session-param": { meta: { type: "suggestion" }, create: createSessionParam },
   "test-placement": { meta: { type: "suggestion" }, create: createTestPlacement },
   "policy-shape": { meta: { type: "problem" }, create: createPolicyShape },
+  "class-file-names": { meta: { type: "suggestion" }, create: createClassFileNames },
   "concern-shape": { meta: { type: "suggestion" }, create: createConcernShape },
   "include-order": { meta: { type: "suggestion", fixable: "code" }, create: createIncludeOrder },
   "function-declarations": { meta: { type: "suggestion", fixable: "code" }, create: createFunctionDeclarations },

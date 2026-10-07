@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { sweepPendingBlobs } from "@/server/jobs/sweepPendingBlobs.ts";
 import { Attachments, Blobs } from "@/server/repositories/index.ts";
-import ObjectStorage from "@/server/storage/s3.ts";
+import ObjectStorage from "@/server/storage/ObjectStorage.ts";
 import { fakeStorage } from "@/tests/support/storage.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 

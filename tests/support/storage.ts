@@ -1,4 +1,4 @@
-import type { StorageBackend } from "@/server/storage/s3.ts";
+import type { StorageBackend } from "@/server/storage/ObjectStorage.ts";
 
 /**
  * An in-memory storage backend: every object exists and reports 1 KiB.

@@ -1,5 +1,5 @@
-import Telemetry from "@/server/otel.ts";
-import ErrorReporting from "@/server/sentry.ts";
+import ErrorReporting from "@/server/ErrorReporting.ts";
+import Telemetry from "@/server/Telemetry.ts";
 
 ErrorReporting.init("web");
 Telemetry.init("web");

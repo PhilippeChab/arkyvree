@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { ApiError, type ApiValidationIssue } from "@/client/src/services/apiError.ts";
+import { ApiError, type ApiValidationIssue } from "@/client/src/services/ApiError.ts";
 
 /**
  * A save the server can refuse with rules warnings: those show in the form

@@ -23,7 +23,7 @@ import {
 } from "@/database/packages/dnd35-from-parser/tools/generator/code/imports.ts";
 import { escapeTemplate, quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/referenceLoader.ts";
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/ReferenceLoader.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { and, eq, eqNum, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type {

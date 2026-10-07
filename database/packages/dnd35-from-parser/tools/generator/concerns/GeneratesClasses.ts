@@ -10,7 +10,7 @@ import { ClassFile } from "@/database/packages/dnd35-from-parser/tools/generator
 import { quote, toConstName } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import { toCamelCase } from "@/database/packages/dnd35-from-parser/tools/names.ts";
 import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/referenceLoader.ts";
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/ReferenceLoader.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import type { Constructor } from "@/server/mixins.ts";
 

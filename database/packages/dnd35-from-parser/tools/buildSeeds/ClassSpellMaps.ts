@@ -3,7 +3,7 @@
 import { existsSync } from "node:fs";
 
 import { listReferenceBooks, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/referenceFiles.ts";
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/referenceLoader.ts";
+import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/ReferenceLoader.ts";
 
 /** The spell lists by class name, built from every book's class references the first time they're asked for. */
 class ClassSpellMaps {

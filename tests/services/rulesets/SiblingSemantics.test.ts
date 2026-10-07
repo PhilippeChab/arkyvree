@@ -21,7 +21,7 @@ import {
   Rulesets,
 } from "@/server/repositories/index.ts";
 import AbilitiesComponent from "@/server/rulesets/dnd3.5/abilities/AbilitiesComponent.ts";
-import Dnd35TargetPaths from "@/server/rulesets/dnd3.5/TargetPaths.ts";
+import Dnd35TargetPaths from "@/server/rulesets/dnd3.5/Dnd35TargetPaths.ts";
 import RequirementEvaluator from "@/server/rulesets/engine/requirements/RequirementEvaluator.ts";
 import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";

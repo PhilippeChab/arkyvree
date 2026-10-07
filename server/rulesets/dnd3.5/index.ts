@@ -7,7 +7,7 @@ export type { default as Dnd35DetailedCharacter } from "./character/DetailedChar
 export type { default as IdentityComponent } from "./identity/IdentityComponent.ts";
 export { isSkillSubtypeOf } from "./skills/SkillsComponent.ts";
 export { getBondedRaceStats } from "./bonded/bondedRaceData.ts";
-export { Dnd35LevelsHooks } from "./levels/LevelsHooks.ts";
+export { Dnd35LevelsHooks } from "./levels/Dnd35LevelsHooks.ts";
 export { buildBondedMap, buildBondedResponse, buildFullCharacterResponse } from "./response/buildCharacterResponse.ts";
 export { redactPrivateNotes } from "./response/redactPrivateNotes.ts";
 export type { Dnd35LevelUpProjector, Dnd35ProjectedCharacterData } from "./types.ts";

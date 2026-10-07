@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import RequirementTree, { compareLevels, getParentLevel } from "@/shared/customization/requirementTree.ts";
+import RequirementTree, { compareLevels, getParentLevel } from "@/shared/customization/RequirementTree.ts";
 
 /** A row at `level`: a group when it has an operator, a condition otherwise. */
 function row(level: string, chainingOperator: string | null = null) {

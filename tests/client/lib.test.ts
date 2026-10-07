@@ -23,7 +23,7 @@ import {
   wholeNumberRules,
 } from "@/client/src/lib/validation.ts";
 import { valuesEqual } from "@/client/src/lib/valuesEqual.ts";
-import { ApiError } from "@/client/src/services/apiError.ts";
+import { ApiError } from "@/client/src/services/ApiError.ts";
 import { PASSWORD_MIN_LENGTH } from "@/shared/auth.ts";
 
 describe("Numbers shown to the user", () => {

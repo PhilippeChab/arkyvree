@@ -29,7 +29,7 @@ import type {
   SkillWithRank,
   TargetPathsTraverser,
 } from "@/server/rulesets/engine/types.ts";
-import RequirementTree, { type RequirementNode } from "@/shared/customization/requirementTree.ts";
+import RequirementTree, { type RequirementNode } from "@/shared/customization/RequirementTree.ts";
 import type {
   Aptitude,
   Campaign,

@@ -1,6 +1,6 @@
 import { Pool, type PoolConfig } from "pg";
 
-import QueryInstrumentation from "@/server/timing.ts";
+import QueryInstrumentation from "@/server/QueryInstrumentation.ts";
 
 /**
  * A connection pool whose queries are timed (`QueryInstrumentation.instrument` patches pg's pool and client, once)
