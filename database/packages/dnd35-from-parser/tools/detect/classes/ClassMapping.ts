@@ -1,35 +1,27 @@
-/** A class reference's mapping: its initial section, and where its features' occurrences go. */
-
 import { BenefitModifiers } from "@/database/packages/dnd35-from-parser/tools/detect/readers/modifiers/BenefitModifiers.ts";
 import { readProficiencyModifiers } from "@/database/packages/dnd35-from-parser/tools/detect/readers/modifiers/proficiencies.ts";
-import { findWithPluralVariants, isPluralVariantOf } from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
+import { isPluralVariantOf } from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { type NamedText } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
 import { bonus } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-import { CHOICE_PATTERN } from "./aptitudePicks.ts";
-import {
-  buildFeatureMap,
-  getFeatureBaseName,
-  normalizeFeatureName,
-  ORDINAL_PREFIX,
-  parsePoolSubOptions,
-  stripOrdinalPrefix,
-} from "./features.ts";
+import type { BaseClassDetector, ClassFeature } from "./BaseClassDetector.ts";
+import { getFeatureBaseName, isVariantOf, normalizeFeatureName } from "./featureNames.ts";
+import { CHOICE_PATTERN, readPoolSubOptions } from "./featureText.ts";
 
 /** A pool's aptitude, the level it opens at, and whether its picks stack. */
 type PoolAptitude = { aptitude: string; level: number; stackable?: true };
 
 /**
- * A class reference's initial mapping, built step by step from what's scraped and detected: its pools (features whose
- * description offers a choice) and their sub-options (inline, separate features, or a table's), its features, the
- * aptitude picks they own, and its spells.
+ * A class reference's mapping, built step by step from what its detector read: its pools (features whose description
+ * offers a choice) and their sub-options (inline, separate features, or a table's), its features, the aptitude picks
+ * they own, and its spells; its overrides applied, and each occurrence its table names mapped to its feature.
  */
-class InitialMapping {
+export class ClassMapping {
   constructor(
-    private readonly raw: ClassReference["raw"],
+    private readonly detector: BaseClassDetector,
     private readonly detected: ClassReference["detected"],
   ) {}
 
@@ -56,9 +48,9 @@ class InitialMapping {
    * Abilities"). The feat owns the modifier; aptitudePicks that duplicate these are stripped when the class's seed is built.
    */
   private addAptitudePickModifiers() {
-    const { raw, detected } = this;
+    const { detected } = this;
     if (!detected.aptitudePicks) return;
-    const classSlug = stripSeparators(raw.name);
+    const { classSlug } = this.detector;
     for (const pick of detected.aptitudePicks) {
       const slugMatch = pick.target.match(/^aptitudes\.(.+)\.allowed$/);
       if (!slugMatch) continue;
@@ -99,7 +91,7 @@ class InitialMapping {
    * A feature, at the level its occurrences in the progression first give it (its variants' too: "Bear Form
    * (Black)", "1st Favored Enemy"), stackable when it occurs more than once, with the modifiers its text gives.
    */
-  private addFeature(cf: ClassReference["raw"]["classFeatures"][number], baseName: string) {
+  private addFeature(cf: ClassFeature, baseName: string) {
     const { raw, detected } = this;
     // Find occurrences for this feature
     const baseNameLower = baseName.toLowerCase();
@@ -122,15 +114,9 @@ class InitialMapping {
     // Collect variant occurrences: same feature appearing at multiple levels under different names
     // Match only true variants (suffix/prefix patterns), not unrelated features containing the name
     // e.g. "Bear Form (Black)" is a variant of "Bear Form", but "Improved Evasion" is NOT a variant of "Evasion"
-    const variantOccs = detected.featureOccurrences.filter((fo) => {
-      if (fo === occ) return false;
-      const foLower = fo.name.toLowerCase();
-      // Occurrence starts with base name (handles suffixes like "(Black)", "1/Week", "(2nd)")
-      if (foLower.startsWith(baseNameLower + " ") || foLower.startsWith(baseNameLower + "(")) return true;
-      // Occurrence has ordinal prefix before base name (handles "1st Favored Enemy", "2nd Favored Enemy")
-      if (ORDINAL_PREFIX.test(foLower) && stripOrdinalPrefix(foLower) === baseNameLower) return true;
-      return false;
-    });
+    const variantOccs = detected.featureOccurrences.filter(
+      (fo) => fo !== occ && isVariantOf(fo.name.toLowerCase(), baseNameLower),
+    );
     // Stackable if single occurrence spans multiple levels OR total occurrences > 1
     const totalOccurrences = (occ ? 1 : 0) + variantOccs.length;
     const stackable = (occ && occ.levels.length > 1) || totalOccurrences > 1 ? true : undefined;
@@ -166,7 +152,7 @@ class InitialMapping {
    * handles it at runtime), and its sub-options, each a selectable feature of its aptitude: its description's, or
    * else the separate features (or table rows) that follow it.
    */
-  private addPoolFeature(cf: ClassReference["raw"]["classFeatures"][number], baseName: string) {
+  private addPoolFeature(cf: ClassFeature, baseName: string) {
     const { raw, detected } = this;
     const normalizedDesc = normalizeWs(cf.description);
     const baseSlug = stripSeparators(baseName);
@@ -180,7 +166,7 @@ class InitialMapping {
       level: poolLevel,
       ...(poolStackable ? { stackable: true } : {}),
     };
-    const parsed = parsePoolSubOptions(normalizedDesc);
+    const parsed = readPoolSubOptions(normalizedDesc);
     if (parsed) {
       for (const opt of parsed.options) {
         const pool = this.poolAptitudes.get(opt.name);
@@ -209,6 +195,20 @@ class InitialMapping {
         selectable: true,
         level: poolInfo.level,
       };
+    }
+  }
+
+  /** Its overrides: no spells of its own (`noSpells`), and each feature's fields (a `null` one removes the detected). */
+  private applyOverrides(mapping: ClassReference["mapping"]) {
+    const { overrides } = this.detector.stored;
+    if (overrides?.noSpells) {
+      delete mapping.spells;
+      delete mapping.bonusSpellAbility;
+    }
+    for (const [name, fields] of Object.entries(overrides?.features ?? {})) {
+      const feature: Record<string, unknown> = Object.assign(mapping.features[name] ?? {}, fields);
+      for (const [key, value] of Object.entries(feature)) if (value === null) delete feature[key];
+      mapping.features[name] = feature;
     }
   }
 
@@ -252,7 +252,7 @@ class InitialMapping {
 
       // This is a pool parent — check if it has inline sub-options
       const normalizedDesc = normalizeWs(cf.description);
-      const parsed = parsePoolSubOptions(normalizedDesc);
+      const parsed = readPoolSubOptions(normalizedDesc);
       if (parsed && parsed.options.length >= 2) continue; // Handled by inline parsing
 
       // No inline sub-options — collect orphan features that follow
@@ -282,9 +282,7 @@ class InitialMapping {
   private detectPools() {
     const { raw, detected } = this;
     if (!detected.aptitudePicks) return;
-    const classSlug = stripSeparators(raw.name);
-    // Build a map of class feature descriptions by lowercase name
-    const descMap = buildFeatureMap(raw.classFeatures, (cf) => cf);
+    const { classSlug } = this.detector;
 
     for (const pick of detected.aptitudePicks) {
       // Extract feature slug from target: "aptitudes.roguespecialability.allowed" → "roguespecialability"
@@ -300,7 +298,7 @@ class InitialMapping {
       if (!occ) continue;
 
       // Find the raw class feature description
-      const cf = findWithPluralVariants(descMap, occ.name);
+      const cf = this.detector.findFeature(occ.name);
       if (!cf) continue;
 
       const normalizedDesc = normalizeWs(cf.description);
@@ -311,7 +309,7 @@ class InitialMapping {
       const aptName = `${raw.name} ${occ.name}`;
       const minLevel = Math.min(...occ.levels);
 
-      const parsed = parsePoolSubOptions(normalizedDesc);
+      const parsed = readPoolSubOptions(normalizedDesc);
       const hasInlineSubs = parsed && parsed.options.length >= 2;
 
       if (hasInlineSubs) {
@@ -381,6 +379,57 @@ class InitialMapping {
     }
   }
 
+  /**
+   * Each occurrence the table names, by the feature it is: the one it names, one of its aliases, a variant of it, its
+   * plural or singular, or a feature whose name starts with it ("Rage +" for "Rage +1/Day").
+   */
+  private occurrenceMap(features: ClassReference["mapping"]["features"]): Record<string, string> {
+    const occurrenceMap: Record<string, string> = {};
+
+    for (const [key, feat] of Object.entries(features)) {
+      const keyLower = key.toLowerCase();
+      const aliasLower = new Set(feat.aliases?.map((a) => a.toLowerCase()) ?? []);
+
+      for (const fo of this.detected.featureOccurrences) {
+        if (fo.name in occurrenceMap) continue;
+        const foLower = fo.name.toLowerCase();
+        // Direct match
+        if (foLower === keyLower) {
+          occurrenceMap[fo.name] = key;
+          continue;
+        }
+        // Alias match
+        if (aliasLower.has(foLower)) {
+          occurrenceMap[fo.name] = key;
+          continue;
+        }
+        // Variant: a suffix ("(Magic)", "Any Distance") or an ordinal ("1st Favored Enemy" → "Favored Enemy")
+        if (isVariantOf(foLower, keyLower)) {
+          occurrenceMap[fo.name] = key;
+          continue;
+        }
+        // Plural match ("Bonus Feat" ↔ "Bonus Feats")
+        if (isPluralVariantOf(keyLower, foLower)) {
+          occurrenceMap[fo.name] = key;
+          continue;
+        }
+        // Key starts with occurrence name (occurrence is a truncated version of key)
+        // Handles "Rage +" matching "Rage +1/Day"
+        if (keyLower.startsWith(foLower)) {
+          occurrenceMap[fo.name] = key;
+          continue;
+        }
+      }
+    }
+
+    return occurrenceMap;
+  }
+
+  /** What the class's page gives. */
+  private get raw(): ClassReference["raw"] {
+    return this.detector.raw;
+  }
+
   /** The class's mapping: its pools and features, their aptitude picks, its spells and its bonus spells' ability. */
   build(): ClassReference["mapping"] {
     const { raw, detected } = this;
@@ -421,7 +470,7 @@ class InitialMapping {
     // Auto-populate spells from detected data
     if (detected.spellsPerDay) {
       // The aptitude "<Class> Spells" as a path names it
-      const slug = stripSeparators(raw.name) + "spells";
+      const slug = `${this.detector.classSlug}spells`;
       mapping.spells = {
         slug,
         ...(!raw.hasCantrips ? { noCantrips: true } : {}),
@@ -433,66 +482,8 @@ class InitialMapping {
     const bonusSpellAbility = this.bonusSpellAbility();
     if (bonusSpellAbility) mapping.bonusSpellAbility = bonusSpellAbility;
 
+    this.applyOverrides(mapping);
+    mapping.occurrenceMap = this.occurrenceMap(mapping.features);
     return mapping;
   }
-}
-
-/** A class reference's initial mapping section. */
-export function buildInitialMapping(
-  raw: ClassReference["raw"],
-  detected: ClassReference["detected"],
-): ClassReference["mapping"] {
-  return new InitialMapping(raw, detected).build();
-}
-
-/** Build a map from every feature occurrence name to its mapping key.
- *  Handles direct matches, variant suffixes/prefixes, and aliases. */
-export function buildOccurrenceMap(
-  features: ClassReference["mapping"]["features"],
-  featureOccurrences: ClassReference["detected"]["featureOccurrences"],
-): Record<string, string> {
-  const occurrenceMap: Record<string, string> = {};
-
-  for (const [key, feat] of Object.entries(features)) {
-    const keyLower = key.toLowerCase();
-    const aliasLower = new Set(feat.aliases?.map((a) => a.toLowerCase()) ?? []);
-
-    for (const fo of featureOccurrences) {
-      if (fo.name in occurrenceMap) continue;
-      const foLower = fo.name.toLowerCase();
-      // Direct match
-      if (foLower === keyLower) {
-        occurrenceMap[fo.name] = key;
-        continue;
-      }
-      // Alias match
-      if (aliasLower.has(foLower)) {
-        occurrenceMap[fo.name] = key;
-        continue;
-      }
-      // Variant: occurrence starts with key name (suffix like "(Magic)", "Any Distance")
-      if (foLower.startsWith(keyLower + " ") || foLower.startsWith(keyLower + "(")) {
-        occurrenceMap[fo.name] = key;
-        continue;
-      }
-      // Variant: ordinal prefix ("1st Favored Enemy" → "Favored Enemy")
-      if (ORDINAL_PREFIX.test(foLower) && stripOrdinalPrefix(foLower) === keyLower) {
-        occurrenceMap[fo.name] = key;
-        continue;
-      }
-      // Plural match ("Bonus Feat" ↔ "Bonus Feats")
-      if (isPluralVariantOf(keyLower, foLower)) {
-        occurrenceMap[fo.name] = key;
-        continue;
-      }
-      // Key starts with occurrence name (occurrence is a truncated version of key)
-      // Handles "Rage +" matching "Rage +1/Day"
-      if (keyLower.startsWith(foLower)) {
-        occurrenceMap[fo.name] = key;
-        continue;
-      }
-    }
-  }
-
-  return occurrenceMap;
 }
