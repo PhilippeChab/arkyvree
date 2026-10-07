@@ -27,7 +27,7 @@ export type BookContent = {
 
 /**
  * The core rules' content: the SRD's, as the generator wrote it, and the hand-written core rules, template items and
- * bonded creatures, with the class level the cleric's and the wizard's spell levels open at.
+ * bonded creatures.
  */
 export type CoreContent = {
   aptitudes: string[];
