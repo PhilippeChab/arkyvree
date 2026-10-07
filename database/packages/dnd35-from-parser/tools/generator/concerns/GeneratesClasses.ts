@@ -9,8 +9,10 @@ import { generateClassFeatSeeds } from "@/database/packages/dnd35-from-parser/to
 import { ClassFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/ClassFile.ts";
 import { quote, toConstName } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
+import { buildClassSeed } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/classSeed.ts";
 import { toCamelCase } from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
+import { getClassReviewNotes } from "@/database/packages/dnd35-from-parser/tools/validate/classReview.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
 /** Generating a book's classes: each class's file and its feats', their indexes, and the core feats they copy. */
@@ -27,7 +29,7 @@ export function GeneratesClasses<B extends Constructor<BaseGenerator>>(Base: B) 
         rmSync(classPath, { force: true });
         rmSync(featPath, { force: true });
       } else {
-        this.write(classPath, new ClassFile(ref).classCode());
+        this.write(classPath, new ClassFile(buildClassSeed(ref), getClassReviewNotes(ref)).classCode());
         this.write(featPath, generateClassFeatSeeds(ref));
       }
     }

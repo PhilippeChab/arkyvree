@@ -87,6 +87,26 @@ function mergeAptitudePicks(detected?: AptitudePick[], overrides?: AptitudePick[
   return [...detected.filter((p) => !overrideTargets.has(p.target)), ...overrides];
 }
 
+/** A class's aptitude picks (`picks`), but those its features' modifiers already give (`remap`ped or split `perLevel`). */
+export function buildClassAptitudePicks(
+  ref: ClassReference,
+  { aptitudePicks, remap, perLevel }: ReturnType<typeof getClassAptitudePicks>,
+): AptitudePick[] {
+  if (!aptitudePicks || aptitudePicks.length === 0) return [];
+  const featModTargets = new Set<string>();
+  for (const feat of Object.values(ref.mapping.features)) {
+    for (const m of feat.modifiers ?? []) {
+      if (m.operator !== "add" || !m.target.startsWith("aptitudes.") || !m.target.endsWith(".allowed")) continue;
+      const remapped = remap.get(m.target);
+      const expansions = perLevel.get(m.target);
+      if (remapped) featModTargets.add(remapped);
+      else if (expansions) for (const exp of expansions) featModTargets.add(exp.newTarget);
+      else featModTargets.add(m.target);
+    }
+  }
+  return aptitudePicks.filter((p) => !featModTargets.has(p.target));
+}
+
 /**
  * A class's aptitude picks: detected, with the overrides', then split per level where a bonus feat list has one per
  * level (`aptitudePicks`); the first level each aptitude gets a pick (`aptitudeMinLevel`, by slug); and how the split
