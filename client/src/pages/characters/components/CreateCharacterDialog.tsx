@@ -367,6 +367,7 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
     deity: "",
     description: "",
     notes: "",
+    privateNotes: "",
   });
   const { control, watch, setValue } = form;
 
@@ -502,6 +503,7 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
             deity: data.deity || undefined,
             description: data.description || undefined,
             notes: data.notes || undefined,
+            privateNotes: data.privateNotes || undefined,
           },
         }),
       ),
@@ -720,6 +722,16 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
             multiline
             minRows={3}
             placeholder="Campaign notes, character development, reminders…"
+            fullWidth
+            sx={{ "& textarea": { resize: "vertical" } }}
+          />
+          <FormTextField
+            control={control}
+            name="privateNotes"
+            label="Private Notes"
+            multiline
+            minRows={3}
+            placeholder="Secrets and plans only the character's editors and the Game Master see…"
             fullWidth
             sx={{ "& textarea": { resize: "vertical" } }}
           />

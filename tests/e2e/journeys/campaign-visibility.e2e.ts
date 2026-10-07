@@ -9,6 +9,9 @@ import { signedInPage, signIn } from "@/tests/e2e/support/signIn.ts";
 
 type Campaign = { characters: Record<(typeof VISIBILITIES)[number], { id: string; name: string }>; id: string };
 
+/** What a Partial character's card and sheet say of what they hide from the other players. */
+const PARTIAL_IDENTITY_NOTE = "The rest of this character's identity is private";
+
 /** What the player keeps in each character's private notes: the Game Master reads them, and no other player. */
 const PRIVATE_NOTES = "Plans to betray the party";
 
@@ -83,6 +86,7 @@ test.describe("A campaign character", () => {
     await page.goto(`/campaigns/${campaign.id}/characters`);
     for (const { name } of Object.values(campaign.characters))
       await expect(page.getByText(name, { exact: true }).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(PARTIAL_IDENTITY_NOTE)).toHaveCount(0);
 
     for (const { id, name } of Object.values(campaign.characters)) {
       await page.goto(`/campaigns/${campaign.id}/characters/${id}`);
@@ -112,6 +116,8 @@ test.describe("A campaign character", () => {
       await other.goto(`/campaigns/${id}/characters`);
       await expect(other.getByText(characters.Public.name, { exact: true }).first()).toBeVisible({ timeout: 15_000 });
       await expect(other.getByText(characters.Partial.name, { exact: true }).first()).toBeVisible();
+      // Its card says its description is hidden, not missing
+      await expect(other.getByText(PARTIAL_IDENTITY_NOTE)).toHaveCount(1);
       await expect(other.getByText(characters.Private.name, { exact: true })).toHaveCount(0);
 
       await other.goto(`/campaigns/${id}/characters/${characters.Public.id}`);
@@ -122,6 +128,7 @@ test.describe("A campaign character", () => {
       await other.goto(`/campaigns/${id}/characters/${characters.Partial.id}`);
       await expect(other.getByText(characters.Partial.name, { exact: true }).first()).toBeVisible({ timeout: 15_000 });
       await expect(buildShown(other)).toHaveCount(0);
+      await expect(other.getByText(PARTIAL_IDENTITY_NOTE)).toBeVisible();
       await expect(privateNotesShown(other)).toHaveCount(0);
 
       await other.goto(`/campaigns/${id}/characters/${characters.Private.id}`);

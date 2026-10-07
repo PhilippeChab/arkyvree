@@ -66,6 +66,9 @@ type LanguageOption = Pick<RulesetLanguage, "id" | "name">;
 /** No saved languages: one list, so the selection's memo keeps its value. */
 const NO_LANGUAGES: LanguageOption[] = [];
 
+/** What a Partial character hides from the campaign's other players, said on its sheet and on its card. */
+export const PARTIAL_IDENTITY_NOTE = "The rest of this character's identity is private";
+
 function toIdentityForm({ identity }: CharacterIdentitySectionProps["character"]): CharacterIdentityFormData {
   return {
     race: identity?.physiology?.race?.name || "",
@@ -339,7 +342,7 @@ export function CharacterIdentitySection({
 
             {/* Line 3: Description, Notes and Private Notes */}
             {partial ? (
-              <BlankNote>The rest of this character's identity is private</BlankNote>
+              <BlankNote>{PARTIAL_IDENTITY_NOTE}</BlankNote>
             ) : (
               <>
                 <Box sx={{ display: "grid", gridTemplateColumns: "1fr", gap: 3 }}>

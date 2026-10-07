@@ -14,7 +14,7 @@ import { type InferRequestType, type InferResponseType, parseResponse } from "ho
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { CharacterBuildChips } from "@/client/src/components/characters/index.ts";
+import { CharacterBuildChips, PARTIAL_IDENTITY_NOTE } from "@/client/src/components/characters/index.ts";
 import {
   AddButton,
   BlankState,
@@ -139,7 +139,8 @@ function CharacterCard({
       onFocus={prefetchSheet}
       avatarSrc={portraitUrl ?? undefined}
       title={character.name}
-      description={character.description}
+      // A Partial character's description is hidden, not missing
+      description={character.isPartial ? PARTIAL_IDENTITY_NOTE : character.description}
       action={
         <>
           <ValueChip

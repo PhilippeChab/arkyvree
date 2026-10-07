@@ -76,6 +76,7 @@ class CharactersService extends include(Object, Archives) {
       height?: string;
       name: string;
       notes?: string;
+      privateNotes?: string;
       raceId: string;
       rulesetId: string;
       weight?: string;
@@ -110,6 +111,7 @@ class CharactersService extends include(Object, Archives) {
             deity: characterData.deity,
             description: characterData.description,
             notes: characterData.notes,
+            privateNotes: characterData.privateNotes,
           });
 
           // Create character ability scores from ruleset abilities

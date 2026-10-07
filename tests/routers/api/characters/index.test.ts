@@ -153,6 +153,15 @@ describe("characters", () => {
   });
 
   describe("private notes", () => {
+    test("creates a character with its private notes, beside its notes", async () => {
+      const { id, privateNotes } = await postCharacter({ notes: "Public notes", privateNotes: PRIVATE_NOTES });
+      expect(privateNotes).toBe(PRIVATE_NOTES);
+      expect((await expectOk(character.$get({ param: { id } }))).identity.background).toEqual({
+        notes: "Public notes",
+        privateNotes: PRIVATE_NOTES,
+      });
+    });
+
     test("saves a character's private notes, which its editors read and no one else", async () => {
       const { id } = await postCharacter({ notes: "Public notes" });
       const saved = await expectOk(character.$put({ param: { id }, json: { privateNotes: PRIVATE_NOTES } }));

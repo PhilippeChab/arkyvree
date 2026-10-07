@@ -71,6 +71,11 @@ async function queuedPdfPayload(characterId: string) {
   return jobs[0].payload;
 }
 
+/** The campaign's roster as `client` sees it. */
+async function rosterOf(client: Client, campaignId: string) {
+  return (await expectOk(client.api.campaigns[":id"].characters.$get({ param: { id: campaignId }, query: {} }))).items;
+}
+
 /** A campaign of the seeded user's and a character of theirs, not linked yet. */
 async function setup() {
   return { campaignId: (await postCampaign()).id, characterId: (await postCharacter()).id };
@@ -179,7 +184,7 @@ describe("campaigns characters", () => {
     const characterId = await postFilledCharacter();
     const shareToken = crypto.randomUUID();
     await Characters.update(db, { shareToken }, { id: characterId });
-    const { campaignId, gm, player } = await linkWithMembers(characterId, "Partial");
+    const { campaignId, gm, contributor, player } = await linkWithMembers(characterId, "Partial");
 
     const sheet = await sheetOf(player.api, campaignId, characterId);
     expect(sheet.identity).toEqual({
@@ -213,10 +218,7 @@ describe("campaigns characters", () => {
     for (const hidden of [...Object.values(SECRETS), "Chaotic Good", "Draconic", "Fighter", shareToken])
       expect(text).not.toContain(hidden);
 
-    const roster = await expectOk(
-      player.api.api.campaigns[":id"].characters.$get({ param: { id: campaignId }, query: {} }),
-    );
-    expect(roster.items).toEqual([
+    expect(await rosterOf(player.api, campaignId)).toEqual([
       {
         id: characterId,
         name: sheet.identity.physiology.name,
@@ -226,20 +228,27 @@ describe("campaigns characters", () => {
         totalLevel: null,
         visibility: "Partial",
         isOwn: false,
+        isPartial: true,
       },
     ]);
 
-    // The Game Master sees it whole.
-    expect((await sheetOf(gm.api, campaignId, characterId)).identity).toMatchObject({
-      background: { notes: SECRETS.notes, privateNotes: SECRETS.privateNotes },
-      beliefs: { alignment: "Chaotic Good", deity: SECRETS.deity },
-      meta: { level: 1 },
-      physiology: { description: SECRETS.description, languages: [expect.objectContaining({ name: "Draconic" })] },
-    });
-    const gmRoster = await expectOk(
-      gm.api.api.campaigns[":id"].characters.$get({ param: { id: campaignId }, query: {} }),
-    );
-    expect(gmRoster.items[0]).toMatchObject({ description: SECRETS.description, totalLevel: 1 });
+    // The Game Master and the character's contributor see it whole, on its sheet and on its card alike.
+    for (const viewer of [gm, contributor]) {
+      const whole = await sheetOf(viewer.api, campaignId, characterId);
+      expect(whole.isPartial).toBe(false);
+      expect(whole.identity).toMatchObject({
+        background: { notes: SECRETS.notes, privateNotes: SECRETS.privateNotes },
+        beliefs: { alignment: "Chaotic Good", deity: SECRETS.deity },
+        meta: { level: 1 },
+        physiology: { description: SECRETS.description, languages: [expect.objectContaining({ name: "Draconic" })] },
+      });
+      expect((await rosterOf(viewer.api, campaignId))[0]).toMatchObject({
+        description: SECRETS.description,
+        levels: [expect.objectContaining({ klass: "Fighter", level: 1 })],
+        totalLevel: 1,
+        isPartial: false,
+      });
+    }
   });
 
   test("shows a character's private notes to its editors and the Game Master, and blank to the other players", async () => {

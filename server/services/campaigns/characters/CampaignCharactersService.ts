@@ -28,6 +28,15 @@ import type { Session } from "@/shared/relations.ts";
 type VisibilityType = "Private" | "Public" | "Partial";
 
 class CampaignCharactersService {
+  /**
+   * Whether a character linked with `visibility` shows the viewer its name and physical traits only: Partial hides the
+   * rest from incidental viewers. The link's player, the Game Master and anyone with edit rights (the character's owner
+   * or an active contributor) see it whole: they're not incidental viewers.
+   */
+  private isPartial(visibility: string, viewer: { canEdit: boolean; isGM: boolean; isOwner: boolean }) {
+    return visibility === "Partial" && !viewer.isOwner && !viewer.isGM && !viewer.canEdit;
+  }
+
   /** The session's player row in the campaign: a 404 when there's no such campaign, a 403 when they aren't in it. */
   private async getMember(session: Session, campaignId: string) {
     const campaign = await Campaigns.findOne(db, { id: campaignId }, Visibility.All);
@@ -67,11 +76,7 @@ class CampaignCharactersService {
       : await CharacterContributors.findRole(db, { userId: session.userId, characterId });
     const canEdit = isCharacterOwner || contributorRole !== undefined;
 
-    // Partial visibility hides build details from incidental viewers. The
-    // link-slot owner, GM, and anyone with edit rights (character owner or
-    // active character contributor) always see the full sheet — they're not
-    // incidental viewers.
-    const isPartial = link.visibility === "Partial" && !isOwner && !isGM && !canEdit;
+    const isPartial = this.isPartial(link.visibility, { canEdit, isGM, isOwner });
 
     const rulesetModule = await RulesetFactory.fromRulesetId(character.rulesetId);
     const detailedCharacter = await buildCharacter(rulesetModule, character);
@@ -128,8 +133,14 @@ class CampaignCharactersService {
 
     if (characters.length === 0) return { items: [], page: paginationMeta.page, nextPage: paginationMeta.nextPage };
 
-    // Batch fetch levels for all characters
+    // Batch fetch levels for all characters, and the ones the session contributes to: it edits them
     const levels = await CharacterLevels.findMany(db, { characterIds });
+    const contributions = await CharacterContributors.findMany(db, {
+      characterIds,
+      status: "Active",
+      userId: session.userId,
+    });
+    const contributedIds = new Set(contributions.map((contribution) => contribution.characterId));
 
     // Resolve race / klass names via each character's composed ruleset cache
     // so COW'd or renamed entities render their post-COW names.
@@ -149,7 +160,8 @@ class CampaignCharactersService {
         const enrichedCharacters = orderedCharacters.map((char) => {
           const meta = characterMeta.get(char.id);
           const isOwn = meta?.playerId === member.id;
-          const isPartial = !isGM && !isOwn && meta?.visibility === "Partial";
+          const canEdit = char.userId === session.userId || contributedIds.has(char.id);
+          const isPartial = this.isPartial(meta?.visibility ?? "Private", { canEdit, isGM, isOwner: isOwn });
 
           const classLevels = classLevelsByCharacter.get(char.id) ?? [];
           const rulesetData = rulesetDataByRulesetId.get(char.rulesetId);
@@ -164,6 +176,7 @@ class CampaignCharactersService {
             totalLevel: isPartial ? null : classLevels.reduce((sum, lvl) => sum + lvl.level, 0),
             visibility: meta?.visibility ?? "Private",
             isOwn,
+            isPartial,
           };
         });
 

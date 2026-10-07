@@ -1,4 +1,4 @@
-import { and, eq, type InferInsertModel, isNull, not, or } from "drizzle-orm";
+import { and, eq, inArray, type InferInsertModel, isNull, not, or } from "drizzle-orm";
 
 import { contributorsInCharacter, usersInAccount } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
@@ -53,6 +53,19 @@ class CharacterContributorsRepository extends include(
         userId: values.userId,
       })
       .returning();
+  }
+
+  /** The user's contributions with `status` to any of the characters: one query for a list of characters. */
+  async findMany(db: Db, where: { characterIds: string[]; status: ContributorStatus; userId: string }) {
+    if (where.characterIds.length === 0) return [];
+    return await db.query.contributorsInCharacter.findMany({
+      where: this.where([
+        inArray(this.table.characterId, where.characterIds),
+        eq(this.table.userId, where.userId),
+        eq(this.table.status, where.status),
+        isNull(this.table.deletedAt),
+      ]),
+    });
   }
 
   async findManyWithCharacter(

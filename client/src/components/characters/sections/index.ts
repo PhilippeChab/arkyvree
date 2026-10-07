@@ -1,5 +1,5 @@
 export type { CharacterData } from "./characterData.ts";
-export { CharacterIdentitySection } from "./CharacterIdentitySection.tsx";
+export { CharacterIdentitySection, PARTIAL_IDENTITY_NOTE } from "./CharacterIdentitySection.tsx";
 export { ClassesSection } from "./ClassesSection.tsx";
 export { DiagnosticsSection } from "./DiagnosticsSection.tsx";
 export { EquipmentSection } from "./EquipmentSection.tsx";

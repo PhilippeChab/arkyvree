@@ -3,3 +3,4 @@ export { CharacterDetailSkeleton } from "./CharacterDetailSkeleton.tsx";
 export { CharacterHeader } from "./CharacterHeader.tsx";
 export { CharacterSheetBody } from "./CharacterSheetBody.tsx";
 export { RollAllButton } from "./RollAllButton.tsx";
+export { PARTIAL_IDENTITY_NOTE } from "./sections/index.ts";
