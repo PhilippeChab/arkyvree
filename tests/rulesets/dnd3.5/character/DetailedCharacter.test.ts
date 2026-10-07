@@ -46,6 +46,7 @@ import {
   buildFullCharacterResponse,
   buildVirtualEntities,
 } from "@/server/rulesets/dnd3.5/response/buildCharacterResponse.ts";
+import RequirementEvaluator from "@/server/rulesets/engine/requirements/RequirementEvaluator.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import {
   ARMOR_AC_BONUS,
@@ -2162,6 +2163,26 @@ describe("DetailedCharacter", () => {
   });
 
   describe("spells", () => {
+    test("reach no DC of a spell the character doesn't cast: a modifier there applies to nothing, a requirement is unmet", async () => {
+      // A fighter: no class list's spell (Fireball), and no domain's alone (Chaos Hammer)
+      const bjorn = await buildSeeded("Bjorn Ironhand");
+      const targetPaths = new Dnd35TargetPaths();
+      for (const target of [
+        "powers.fireball.dc.*.misc",
+        "powers.fireball.dc.*.total",
+        "powers.chaoshammer.dc.*.misc",
+        "powers.chaoshammer.dc.*.total",
+      ])
+        expect([target, targetPaths.traversePathInit(target, bjorn.components)]).toEqual([target, []]);
+
+      const atLeast15 = { operator: "greater_than_or_equal", value: "15", valueType: "number" } as const;
+      const requirement = requiring("powers.fireball.dc.*.total", atLeast15);
+      const evaluator = new RequirementEvaluator(targetPaths);
+      evaluator.evaluateRequirements(bjorn.components, requirement);
+      expect(evaluator.getRequirements().invalidRequirements).toEqual([]);
+      expect(bjorn.areRequirementsMet(requirement)).toBe(false);
+    });
+
     test("give a class drawing on another class's list its slots: a spellthief's, of the sorcerer's", async () => {
       const fork = await forkWith(DND35_COMPLETE_ADVENTURER_NAME);
       const scores = { Strength: 10, Dexterity: 10, Constitution: 10, Intelligence: 10, Wisdom: 10, Charisma: 10 };

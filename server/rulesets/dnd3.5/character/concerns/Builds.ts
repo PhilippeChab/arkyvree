@@ -211,6 +211,7 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
         const aptitudeSlug = aptitudeSlugById.get(power.aptitudeId) ?? power.aptitudeId;
         this.components.powerGroupings.registerPower({ ...power, abilityDcName, aptitudeSlug }, power.properties);
       }
+      this.components.powers.seedEmptyDcs(this.rulesetPowers);
       this.components.powers.injectGroupings(this.components.powerGroupings.getPowerGroupings());
 
       this.components.skills.updateSkillPointTotals();
