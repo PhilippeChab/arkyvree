@@ -56,7 +56,7 @@ export type ClassReference = {
     casterType?: "Arcane" | "Divine";
     /** Invalid paths that failed validation — bugs to fix */
     errors?: string[];
-    /** Map from feat slug (e.g. "pointblankshot") to original name (e.g. "Point Blank Shot") */
+    /** Each feature the table's Special column names, normalized, and the levels it's at */
     featureOccurrences: { levels: number[]; name: string }[];
     /** Whether class has own spell list (not advancement of existing) */
     hasOwnSpells?: boolean;
