@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 
-import PageTemplates, { APP_URL } from "@/server/routers/PageTemplates.ts";
+import PageTemplates, { APP_URL } from "./PageTemplates.ts";
 
 interface RouteMeta {
   title: string;
@@ -189,9 +189,8 @@ export default new Hono()
   .get("*", async (c) => {
     // Never serve index.html for requests that look like static files or probe
     // for hidden paths (.git, .env, .aws, etc.)
-    if (/\.\w+$/.test(c.req.path) || c.req.path.includes("/.")) {
-      return c.text("Not found", 404);
-    }
+    if (/\.\w+$/.test(c.req.path) || c.req.path.includes("/.")) return c.text("Not found", 404);
+
     try {
       const template = await PageTemplates.getTemplate();
       const html = injectMeta(template, c.req.path);

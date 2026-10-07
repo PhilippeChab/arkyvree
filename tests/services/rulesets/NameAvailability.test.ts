@@ -3,8 +3,7 @@ import { afterEach, expect, test } from "bun:test";
 import { and, eq } from "drizzle-orm";
 
 import { aptitudesInRules, featsInRules } from "@/drizzle/schema.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { EntitySnapshots, Rulesets } from "@/server/repositories/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";

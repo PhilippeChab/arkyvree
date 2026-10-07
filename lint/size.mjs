@@ -46,9 +46,9 @@ function createFunctionLength(context) {
     stack.at(-1)?.nested.push([first + 1, last - 1]);
     if (isConcern(fn)) return;
     let own = 0;
-    for (let line = first; line <= last; line++) {
+    for (let line = first; line <= last; line++)
       if (counts(line) && !nested.some(([a, b]) => line >= a && line <= b)) own++;
-    }
+
     if (own > MAX_OWN_LINES) {
       context.report({
         node: fn.id ?? fn,

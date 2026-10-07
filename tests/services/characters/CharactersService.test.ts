@@ -217,9 +217,8 @@ describe("CharactersService", () => {
         () => CharactersService.unarchiveCharacter(other, character.id),
         () => CharactersService.unarchiveCharacter(owner, NIL_UUID),
         () => CharactersService.hardDeleteCharacter(other, character.id),
-      ]) {
+      ])
         await expect(call()).rejects.toThrow(NotFoundError);
-      }
     });
   });
 
@@ -381,7 +380,7 @@ describe("CharactersService", () => {
           const character = await createCharacterAs(session);
           const { campaign, player } = await createTestCampaign(session.userId);
           await PlayerCharacters.create(db, { playerId: player.id, characterId: character.id });
-          if (situation === "removed from the campaign")
+          if (situation === "removed from the campaign") {
             await db
               .update(playerCharactersInCampaign)
               .set({ deletedAt: new Date().toISOString() })
@@ -391,7 +390,9 @@ describe("CharactersService", () => {
                   eq(playerCharactersInCampaign.characterId, character.id),
                 ),
               );
-          else await Campaigns.archive(db, { id: campaign.id });
+          } else {
+            await Campaigns.archive(db, { id: campaign.id });
+          }
 
           await CharactersService.archiveCharacter(session, character.id);
           await CharactersService.hardDeleteCharacter(session, character.id);

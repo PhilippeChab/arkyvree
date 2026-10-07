@@ -30,9 +30,7 @@ export class RulesetFactory {
   static async fromRulesetId(rulesetId: string) {
     const ruleset = await Rulesets.findOne(db, { id: rulesetId });
 
-    if (!ruleset) {
-      throw new NotFoundError("Ruleset not found");
-    }
+    if (!ruleset) throw new NotFoundError("Ruleset not found");
 
     return this.fromBaseRules(ruleset.baseRules);
   }

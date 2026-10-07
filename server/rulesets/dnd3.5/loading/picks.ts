@@ -3,10 +3,11 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { Feats, Powers, Skills } from "@/server/repositories/index.ts";
-import type { Resolve } from "@/server/rulesets/dnd3.5/loading/DetailedCharacterDataLoader.ts";
-import { refreshEntityData } from "@/server/rulesets/dnd3.5/loading/refreshEntityData.ts";
 import type { Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
 import type { CharacterLevel } from "@/shared/relations.ts";
+
+import type { Resolve } from "./DetailedCharacterDataLoader.ts";
+import { refreshEntityData } from "./refreshEntityData.ts";
 
 /** The feats: picked and given (deduped), then projected, in character-level order; and the given per aptitude. */
 export function buildFeats(
@@ -44,9 +45,8 @@ export function buildFeats(
   const characterLevelIdSet = new Set(allCharacterLevels.map((l) => l.id));
   const klassLevelFeatCountsByAptitudeId = dedupedGivenFeats.reduce(
     (acc, feat) => {
-      if (characterLevelIdSet.has(feat.characterLevelId)) {
-        acc[feat.aptitudeId] = (acc[feat.aptitudeId] || 0) + 1;
-      }
+      if (characterLevelIdSet.has(feat.characterLevelId)) acc[feat.aptitudeId] = (acc[feat.aptitudeId] || 0) + 1;
+
       return acc;
     },
     {} as Record<string, number>,
@@ -109,9 +109,9 @@ export function buildPowers(
   const characterLevelIdSet = new Set(allCharacterLevels.map((l) => l.id));
   const klassLevelPowerCountsByAptitudeId = givenPowers.reduce(
     (acc, power) => {
-      if (!power.free && characterLevelIdSet.has(power.characterLevelId)) {
+      if (!power.free && characterLevelIdSet.has(power.characterLevelId))
         acc[power.aptitudeId] = (acc[power.aptitudeId] || 0) + 1;
-      }
+
       return acc;
     },
     {} as Record<string, number>,

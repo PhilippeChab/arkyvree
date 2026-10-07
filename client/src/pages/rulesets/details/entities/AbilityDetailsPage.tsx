@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { abilityQuery } from "./entityDetailQueries.ts";
 import { RulesetEntityDetail } from "./RulesetEntityDetail.tsx";
 
-export default function AbilityDetailPage() {
+export default function AbilityDetailsPage() {
   const { id: rulesetId = "", abilityId = "" } = useParams<{ id: string; abilityId: string }>();
 
   return (

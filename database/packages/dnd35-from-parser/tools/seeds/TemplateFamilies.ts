@@ -2,8 +2,9 @@
 
 import { CORE_BOOK } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
-import { CLASS_FEAT_FAMILY_NAMES } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/featFamilies.ts";
-import { buildReferenceFeats } from "@/database/packages/dnd35-from-parser/tools/seeds/feats.ts";
+
+import { CLASS_FEAT_FAMILY_NAMES } from "./classes/featFamilies.ts";
+import { buildReferenceFeats } from "./feats.ts";
 
 /** Each book's template families, read once: every class of the book asks for them. */
 class TemplateFamilies {

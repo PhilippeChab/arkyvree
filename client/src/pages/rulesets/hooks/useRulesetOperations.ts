@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { InferRequestType } from "hono/client";
-import { parseResponse } from "hono/client";
+import { type InferRequestType, parseResponse } from "hono/client";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -8,7 +7,7 @@ import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import type { RulesetListItem } from "@/client/src/lib/queries.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import type { EditRulesetFormData, ForkRulesetFormData } from "@/client/src/pages/rulesets/details/components/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
@@ -43,8 +42,8 @@ export function useRulesetOperations() {
   /** Refetches a ruleset and the lists that show it. */
   const refreshRuleset = (id: string) =>
     Promise.all([
-      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.detail(id) }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.lists }),
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.detail(id) }),
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.lists }),
     ]);
 
   const editForm = useFormWith<EditRulesetFormData>({ name: "", description: "", private: false });
@@ -82,7 +81,7 @@ export function useRulesetOperations() {
     onSuccess: (data) => {
       snackbar.success("Ruleset forked successfully");
       queryClient.invalidateQueries({
-        queryKey: queryKeys.rulesets.lists,
+        queryKey: QUERY_KEYS.rulesets.lists,
       });
       setForkDialogOpen(false);
       forkForm.reset();
@@ -251,27 +250,19 @@ export function useRulesetOperations() {
   };
 
   const confirmEdit = (data: EditRulesetFormData) => {
-    if (selectedRuleset) {
-      updateMutation.mutate({ id: selectedRuleset.id, data });
-    }
+    if (selectedRuleset) updateMutation.mutate({ id: selectedRuleset.id, data });
   };
 
   const confirmFork = (data: ForkRulesetFormData) => {
-    if (selectedRuleset) {
-      forkMutation.mutate({ id: selectedRuleset.id, data });
-    }
+    if (selectedRuleset) forkMutation.mutate({ id: selectedRuleset.id, data });
   };
 
   const confirmArchive = () => {
-    if (selectedRuleset) {
-      archiveMutation.mutate(selectedRuleset.id);
-    }
+    if (selectedRuleset) archiveMutation.mutate(selectedRuleset.id);
   };
 
   const confirmPublish = (kind?: PublishKind) => {
-    if (selectedRuleset) {
-      publishMutation.mutate({ id: selectedRuleset.id, kind });
-    }
+    if (selectedRuleset) publishMutation.mutate({ id: selectedRuleset.id, kind });
   };
 
   return {

@@ -1,4 +1,3 @@
-import { Circle as CircleIcon, Notifications as NotificationsIcon } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -14,7 +13,6 @@ import {
   Typography,
 } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
-import { parseResponse } from "hono/client";
 
 import {
   BlankState,
@@ -30,23 +28,18 @@ import {
   PageTransition,
   SearchBar,
 } from "@/client/src/components/common/index.ts";
+import { CircleIcon, NotificationsIcon } from "@/client/src/components/icons/index.ts";
 import { InviteActionButtons } from "@/client/src/components/invites/index.ts";
 import { useListParams, useNotificationActions, usePageTitle } from "@/client/src/hooks/index.ts";
-import {
-  formatActivityDetails,
-  formatNotificationMessage,
-  formatRelativeTime,
-} from "@/client/src/lib/activityFormatters.ts";
+import { formatActivityDetails, formatNotificationMessage } from "@/client/src/lib/activityFormatters.ts";
+import { formatRelativeTime } from "@/client/src/lib/formatDate.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { notificationListQuery } from "@/client/src/lib/queries.ts";
 
 const FILTER_OPTIONS: FilterOption<"unread">[] = [
   { value: undefined, label: "All" },
   { value: "unread", label: "Unread" },
 ];
-
-const PAGE_SIZE = 10;
 
 export default function NotificationsPage() {
   usePageTitle("Notifications");
@@ -59,21 +52,7 @@ export default function NotificationsPage() {
   const unreadOnly = searchParams.get("filter") === "unread";
 
   const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    queryKey: queryKeys.notifications.list({ search, orderDir, unreadOnly }),
-    queryFn: ({ pageParam }) =>
-      parseResponse(
-        rpc.api.notifications.$get({
-          query: {
-            page: pageParam.toString(),
-            limit: PAGE_SIZE.toString(),
-            search: search || undefined,
-            orderDir,
-            unreadOnly: unreadOnly ? "true" : undefined,
-          },
-        }),
-      ),
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    ...notificationListQuery({ search, orderDir, unreadOnly }),
     placeholderData: keepPreviousData,
   });
 

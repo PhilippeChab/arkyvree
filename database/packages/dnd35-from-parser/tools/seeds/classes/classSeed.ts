@@ -1,12 +1,5 @@
 /** A class reference's seed: what its file holds, each field its overrides' or else what's detected. */
 
-import {
-  buildClassAptitudePicks,
-  getClassAptitudePicks,
-} from "@/database/packages/dnd35-from-parser/tools/seeds/classes/aptitudePicks.ts";
-import { buildClassFeatures } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/features.ts";
-import { buildClassModifiers } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/modifiers.ts";
-import { getClassSpells } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/spellSlots.ts";
 import { resolveFamilyChecks } from "@/database/packages/dnd35-from-parser/tools/seeds/feats.ts";
 import TemplateFamilies from "@/database/packages/dnd35-from-parser/tools/seeds/TemplateFamilies.ts";
 import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
@@ -14,17 +7,22 @@ import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools
 import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
+import { buildClassAptitudePicks, getClassAptitudePicks } from "./aptitudePicks.ts";
+import { buildClassFeatures } from "./features.ts";
+import { buildClassModifiers } from "./modifiers.ts";
+import { getClassSpells } from "./spellSlots.ts";
+
 /** A class's spellcasting: its bonus spells' ability and its caster type, which one without the other refuses. */
 function buildClassCasting(ref: ClassReference): Pick<ClassSeed, "bonusSpellAbility" | "casterType"> {
   const overrides = ref.overrides ?? {};
   const bonusSpellAbility = overrides.bonusSpellAbility ?? ref.mapping.bonusSpellAbility;
   const casterType = overrides.casterType ?? ref.detected.casterType;
-  if (bonusSpellAbility && !casterType) {
+  if (bonusSpellAbility && !casterType)
     throw new Error(`${ref.raw.name}: has bonusSpellAbility ("${bonusSpellAbility}") but no casterType`);
-  }
-  if (casterType && !bonusSpellAbility) {
+
+  if (casterType && !bonusSpellAbility)
     throw new Error(`${ref.raw.name}: has casterType ("${casterType}") but no bonusSpellAbility`);
-  }
+
   return { ...(bonusSpellAbility ? { bonusSpellAbility } : {}), ...(casterType ? { casterType } : {}) };
 }
 

@@ -1,8 +1,6 @@
-import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon } from "@mui/icons-material";
 import { Autocomplete, Box, Button, IconButton, Stack, TextField, Typography } from "@mui/material";
-import { skipToken, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { InferResponseType } from "hono/client";
-import { parseResponse } from "hono/client";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { type InferResponseType, parseResponse } from "hono/client";
 import { useMemo, useState } from "react";
 import { Controller } from "react-hook-form";
 import { Link } from "react-router-dom";
@@ -17,11 +15,13 @@ import {
   ScrollSafeListbox,
   ValidationIssueList,
 } from "@/client/src/components/common/index.ts";
+import { AddIcon, DeleteIcon, EditIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDebouncedValue, useFormWith, useListboxQuery, useValidationIssues } from "@/client/src/hooks/index.ts";
 import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
+import { requiredRules } from "@/client/src/lib/validation.ts";
 import { type RPC, rpc } from "@/client/src/services/rpc.ts";
 
 import {
@@ -35,6 +35,7 @@ import {
   placementPayload,
   placementProfile,
 } from "./equipment.ts";
+import { characterInventoryQuery, rulesetItemQuery, rulesetItemSearchQuery } from "./equipmentQueries.ts";
 import { EquipmentTable } from "./EquipmentTable.tsx";
 import { InventoryPlacementFields } from "./InventoryPlacementFields.tsx";
 import { SheetSection } from "./SheetSection.tsx";
@@ -71,16 +72,7 @@ export function EquipmentSection({
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
 
-  const { data: inventoryItems = [] } = useQuery({
-    queryKey: queryKeys.characters.inventory(characterId),
-    queryFn: async () => {
-      return parseResponse(
-        rpc.api.characters.inventory[":characterId"].$get({
-          param: { characterId },
-        }),
-      );
-    },
-  });
+  const { data: inventoryItems = [] } = useQuery(characterInventoryQuery(characterId));
 
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -101,20 +93,12 @@ export function EquipmentSection({
   const editWeaponSet = editForm.watch("weaponSet");
 
   // The picked item's details (add dialog): its placement profile
-  const itemQuery = (itemId: string) => ({
-    queryKey: queryKeys.characters.rulesetItem(rulesetId, itemId),
-    queryFn: () => parseResponse(rpc.api.rulesets[":id"].items[":itemId"].$get({ param: { id: rulesetId, itemId } })),
-  });
-  const { data: itemDetail } = useQuery(
-    selectedItem
-      ? itemQuery(selectedItem.id)
-      : { queryKey: queryKeys.characters.rulesetItem(rulesetId, ""), queryFn: skipToken },
-  );
+  const { data: itemDetail } = useQuery(rulesetItemQuery(rulesetId, selectedItem?.id));
   const addProfile = useMemo(() => (itemDetail ? placementOf(itemDetail).profile : null), [itemDetail]);
 
   // An item picked in the add dialog fills its slot and charges once its details arrive, unless another was picked since
   const fillPlacement = (itemId: string) => {
-    queryClient.fetchQuery(itemQuery(itemId)).then(
+    queryClient.fetchQuery(rulesetItemQuery(rulesetId, itemId)).then(
       (detail) => {
         if (addForm.getValues("selectedItem")?.id !== itemId) return;
         const { columns, profile } = placementOf(detail);
@@ -157,37 +141,22 @@ export function EquipmentSection({
     items: searchItems,
     isLoading: isLoadingSearch,
     onScroll: handleItemsScroll,
-  } = useListboxQuery({
-    queryKey: queryKeys.characters.itemSearch(rulesetId, debouncedItemSearch),
-    queryFn: async ({ pageParam }) => {
-      return parseResponse(
-        rpc.api.rulesets[":id"].items.$get({
-          param: { id: rulesetId },
-          query: {
-            page: pageParam.toString(),
-            limit: "10",
-            search: debouncedItemSearch || undefined,
-          },
-        }),
-      );
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
-    enabled: addDialogOpen,
-  });
+  } = useListboxQuery({ ...rulesetItemSearchQuery(rulesetId, debouncedItemSearch), enabled: addDialogOpen });
 
   const addMutation = useMutation({
     mutationFn: async ({ data, force = false }: { data: InventoryFormData; force?: boolean }) => {
       if (!data.selectedItem) throw new Error("No item selected");
-      return rpc.api.characters.inventory[":characterId"].$post({
-        param: { characterId },
-        json: { itemId: data.selectedItem.id, ...placementPayload(data, !!addProfile?.charges.has), force },
-      });
+      return parseResponse(
+        rpc.api.characters.inventory[":characterId"].$post({
+          param: { characterId },
+          json: { itemId: data.selectedItem.id, ...placementPayload(data, !!addProfile?.charges.has), force },
+        }),
+      );
     },
     onSuccess: () => {
       snackbar.success("Item added to inventory");
       queryClient.invalidateQueries({
-        queryKey: queryKeys.characters.detail(characterId),
+        queryKey: QUERY_KEYS.characters.detail(characterId),
       });
       setAddDialogOpen(false);
       setValidationErrors([]);
@@ -205,15 +174,17 @@ export function EquipmentSection({
       data: InventoryFormData;
       force?: boolean;
     }) => {
-      return rpc.api.characters.inventory[":characterId"][":entryId"].$put({
-        param: { characterId, entryId },
-        json: { ...placementPayload(data, editProfile.charges.has), force, updatedAt: editingEntry?.updatedAt },
-      });
+      return parseResponse(
+        rpc.api.characters.inventory[":characterId"][":entryId"].$put({
+          param: { characterId, entryId },
+          json: { ...placementPayload(data, editProfile.charges.has), force, updatedAt: editingEntry?.updatedAt },
+        }),
+      );
     },
     onSuccess: () => {
       snackbar.success("Item updated");
       queryClient.invalidateQueries({
-        queryKey: queryKeys.characters.detail(characterId),
+        queryKey: QUERY_KEYS.characters.detail(characterId),
       });
       setEditDialogOpen(false);
       setValidationErrors([]);
@@ -223,20 +194,22 @@ export function EquipmentSection({
 
   const removeMutation = useMutation({
     mutationFn: async (entryId: string) => {
-      return rpc.api.characters.inventory[":characterId"][":entryId"].$delete({
-        param: { characterId, entryId },
-      });
+      return parseResponse(
+        rpc.api.characters.inventory[":characterId"][":entryId"].$delete({
+          param: { characterId, entryId },
+        }),
+      );
     },
     onSuccess: () => {
       snackbar.success("Item removed from inventory");
       queryClient.invalidateQueries({
-        queryKey: queryKeys.characters.detail(characterId),
+        queryKey: QUERY_KEYS.characters.detail(characterId),
       });
       setDeleteDialogOpen(false);
       setDeletingEntryId(null);
     },
     onError: (error) => {
-      snackbar.error(error);
+      snackbar.error(error, "Failed to remove item");
     },
   });
 
@@ -265,7 +238,7 @@ export function EquipmentSection({
   };
 
   const requirementAlert = (visible: boolean, onForce?: () => void) =>
-    visible ? (
+    visible && (
       <AnimatedAlert
         in
         severity="warning"
@@ -291,7 +264,7 @@ export function EquipmentSection({
         </Typography>
         <ValidationIssueList issues={validationErrors} />
       </AnimatedAlert>
-    ) : null;
+    );
 
   const hasItems = inventoryItems.length > 0;
 
@@ -394,7 +367,7 @@ export function EquipmentSection({
         <Controller
           name="selectedItem"
           control={addForm.control}
-          rules={{ required: "Item is required" }}
+          rules={requiredRules("Item is required")}
           render={({ field, fieldState }) => (
             <Autocomplete
               options={searchItems}
@@ -430,7 +403,7 @@ export function EquipmentSection({
                       ...params.slotProps.input,
                       endAdornment: (
                         <>
-                          {isLoadingSearch ? <DiceSpinner size="small" /> : null}
+                          {isLoadingSearch && <DiceSpinner size="small" />}
                           {params.slotProps.input.endAdornment}
                         </>
                       ),

@@ -1,4 +1,3 @@
-import { ExpandLess as ExpandLessIcon, ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
 import {
   Box,
   Chip,
@@ -13,25 +12,42 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import { Fragment, useMemo, useState } from "react";
+import { type MouseEvent, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
+import { CLICKABLE_SX, clickableProps } from "@/client/src/components/common/index.ts";
+import { ExpandLessIcon, ExpandMoreIcon } from "@/client/src/components/icons/index.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { type AptitudeSpells, buildSpellGroups, type SpellGroup, type SpellRow } from "@/shared/dnd3.5/spellGroups.ts";
 
 import type { Dnd35PowersSectionProps } from "./types.ts";
 
-function CollapsibleClass({ apt, rulesetId }: { apt: AptitudeSpells; rulesetId?: string }) {
+interface CollapsibleClassProps {
+  apt: AptitudeSpells;
+  rulesetId?: string;
+}
+
+interface CollapsibleLevelProps {
+  group: SpellGroup;
+  rulesetId?: string;
+}
+
+interface SpellRowItemProps {
+  spell: SpellRow;
+  rulesetId?: string;
+}
+
+function CollapsibleClass({ apt, rulesetId }: CollapsibleClassProps) {
   const [open, setOpen] = useState(false);
   const totalSpells = apt.levels.reduce((sum, g) => sum + g.spells.length, 0);
 
   return (
     <Box sx={{ mb: 3, "&:last-child": { mb: 0 } }}>
       <Box
-        onClick={() => setOpen((prev) => !prev)}
-        sx={{ display: "flex", alignItems: "center", cursor: "pointer", gap: 0.5, mb: 1 }}
+        {...clickableProps(() => setOpen((prev) => !prev))}
+        sx={{ ...CLICKABLE_SX, display: "flex", alignItems: "center", gap: 0.5, mb: 1 }}
       >
         <IconButton size="small" aria-label={`${open ? "Hide" : "Show"} ${apt.aptitudeName}`} sx={{ p: 0 }}>
           {open ? <ExpandLessIcon /> : <ExpandMoreIcon />}
@@ -51,15 +67,15 @@ function CollapsibleClass({ apt, rulesetId }: { apt: AptitudeSpells; rulesetId?:
   );
 }
 
-function CollapsibleLevel({ group, rulesetId }: { group: SpellGroup; rulesetId?: string }) {
+function CollapsibleLevel({ group, rulesetId }: CollapsibleLevelProps) {
   const [open, setOpen] = useState(false);
   const label = group.level === 0 ? "Cantrips" : `Level ${group.level}`;
 
   return (
     <Box sx={{ mb: 1, "&:last-child": { mb: 0 } }}>
       <Box
-        onClick={() => setOpen((prev) => !prev)}
-        sx={{ display: "flex", alignItems: "center", cursor: "pointer", gap: 0.5, mb: 0.5 }}
+        {...clickableProps(() => setOpen((prev) => !prev))}
+        sx={{ ...CLICKABLE_SX, display: "flex", alignItems: "center", gap: 0.5, mb: 0.5 }}
       >
         <IconButton size="small" aria-label={`${open ? "Hide" : "Show"} ${label} spells`} sx={{ p: 0 }}>
           {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
@@ -104,18 +120,18 @@ function CollapsibleLevel({ group, rulesetId }: { group: SpellGroup; rulesetId?:
   );
 }
 
-function SpellRowItem({ spell, rulesetId }: { spell: SpellRow; rulesetId?: string }) {
+function SpellRowItem({ spell, rulesetId }: SpellRowItemProps) {
   const [open, setOpen] = useState(false);
 
   const detailProps = Object.entries(spell.properties).filter(([key]) => key !== SPELL_SCHOOL);
   const spellLink = rulesetId && spell.id ? `/rulesets/${rulesetId}/powers/${spell.id}/customization` : undefined;
 
   return (
-    <Fragment>
+    <>
       <TableRow
         hover
-        onClick={() => setOpen((prev) => !prev)}
-        sx={{ cursor: "pointer", "& > td": { borderBottom: open ? "none" : undefined } }}
+        {...clickableProps(() => setOpen((prev) => !prev))}
+        sx={{ ...CLICKABLE_SX, "& > td": { borderBottom: open ? "none" : undefined } }}
       >
         <TableCell>
           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
@@ -128,7 +144,7 @@ function SpellRowItem({ spell, rulesetId }: { spell: SpellRow; rulesetId?: strin
                 to={spellLink}
                 target="_blank"
                 underline="hover"
-                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                onClick={(e: MouseEvent) => e.stopPropagation()}
               >
                 {spell.name}
               </MuiLink>
@@ -180,7 +196,7 @@ function SpellRowItem({ spell, rulesetId }: { spell: SpellRow; rulesetId?: strin
           </Collapse>
         </TableCell>
       </TableRow>
-    </Fragment>
+    </>
   );
 }
 

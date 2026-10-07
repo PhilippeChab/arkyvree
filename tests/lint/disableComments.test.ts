@@ -23,9 +23,8 @@ describe("disable comments", () => {
     const found: string[] = [];
     for (const [file, plugins] of await sourceFiles()) {
       const { comments } = parse(readFileSync(file, "utf8"), { sourceType: "module", plugins });
-      for (const comment of comments ?? []) {
+      for (const comment of comments ?? [])
         if (DIRECTIVE.test(comment.value)) found.push(`${file}:${comment.loc?.start.line}`);
-      }
     }
     expect(found).toEqual([]);
   });

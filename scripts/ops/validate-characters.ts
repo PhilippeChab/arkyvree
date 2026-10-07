@@ -11,12 +11,13 @@
 import { isNull } from "drizzle-orm";
 
 import { charactersInCharacter } from "@/drizzle/schema.ts";
-import { checkAbilityIncreases } from "@/scripts/ops/validateCharacters/abilityIncreases.ts";
-import { checkBuilds } from "@/scripts/ops/validateCharacters/builds.ts";
-import { printCharacterData } from "@/scripts/ops/validateCharacters/characterData.ts";
-import { checkJunctions } from "@/scripts/ops/validateCharacters/junctions.ts";
-import { checkReferences } from "@/scripts/ops/validateCharacters/references.ts";
 import { db } from "@/server/database/index.ts";
+
+import { checkAbilityIncreases } from "./validateCharacters/abilityIncreases.ts";
+import { checkBuilds } from "./validateCharacters/builds.ts";
+import { printCharacterData } from "./validateCharacters/characterData.ts";
+import { checkJunctions } from "./validateCharacters/junctions.ts";
+import { checkReferences } from "./validateCharacters/references.ts";
 
 async function main() {
   const characters = await db.select().from(charactersInCharacter).where(isNull(charactersInCharacter.deletedAt));

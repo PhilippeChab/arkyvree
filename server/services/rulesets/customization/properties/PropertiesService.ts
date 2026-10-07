@@ -1,8 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { propertiesInCustomization } from "@/drizzle/schema.ts";
-import { RulesetCache, type RulesetData } from "@/server/cache/rulesetCache/index.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache, type RulesetData, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
@@ -200,9 +199,8 @@ class PropertiesService {
         const expectedUpdatedAt = resolvedPropertyId === propertyId ? body.updatedAt : undefined;
         const { updatedAt: _u, ...propertyData } = body;
         const rows = await Properties.update(tx, propertyData, { id: resolvedPropertyId, expectedUpdatedAt });
-        if (expectedUpdatedAt && rows.length === 0) {
-          throw new ConflictError(STALE_ENTITY_MESSAGE);
-        }
+        if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
+
         const updatedProperty = rows[0];
 
         const entityName = await getCustomizableEntityName(effectiveEntityId, entityType, rulesetData);

@@ -82,9 +82,9 @@ describe("RulesetsPolicy", () => {
 
   test("canPublish: the owner, on a draft", () => {
     expectOnly(["Owner"], (p) => p.canPublish(), ForbiddenError);
-    for (const status of ["Published", "Archived"] as const) {
+    for (const status of ["Published", "Archived"] as const)
       expect(() => policyOf("Owner", { status }).canPublish()).toThrow("Can only publish draft rulesets");
-    }
+
     expect(() => policyOf("Owner", { userId: null }).canPublish()).toThrow("Cannot publish a base ruleset");
   });
 
@@ -137,15 +137,13 @@ describe("RulesetsPolicy", () => {
   describe("canCreateCharacter", () => {
     test("allows public published rulesets, and the owner's and contributors' own", () => {
       expect(policyOf("Stranger", { private: false, status: "Published" }).canCreateCharacter()).toBe(true);
-      for (const actor of ["Owner", "Admin", "Editor", "Viewer"] as const) {
+      for (const actor of ["Owner", "Admin", "Editor", "Viewer"] as const)
         expect(policyOf(actor).canCreateCharacter()).toBe(true);
-      }
     });
 
     test("refuses extensions and archived rulesets", () => {
-      for (const overrides of [{ kind: "extension" as const }, { status: "Archived" as const }]) {
+      for (const overrides of [{ kind: "extension" as const }, { status: "Archived" as const }])
         expect(() => policyOf("Owner", overrides).canCreateCharacter()).toThrow("Choose an active playable ruleset");
-      }
     });
 
     test("allows members of a campaign using a private ruleset, and nobody else", async () => {

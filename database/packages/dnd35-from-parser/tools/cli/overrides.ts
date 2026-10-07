@@ -11,7 +11,6 @@
 
 import { basename } from "node:path";
 
-import { parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/cli/args.ts";
 import {
   filterReferenceFiles,
   listReferenceFiles,
@@ -20,6 +19,8 @@ import {
   readStoredReference,
   type StoredReference,
 } from "@/database/packages/dnd35-from-parser/tools/references/resolve.ts";
+
+import { parseCliArgs } from "./args.ts";
 
 type OverrideEntry = {
   book: string;
@@ -137,9 +138,7 @@ function main() {
       const typeTag = entry.refType === "feat" ? "" : ` [${entry.refType}:${entry.refName}]`;
       const keysStr = keyFilter ? "" : ` (${entry.keys.join(", ")})`;
       console.log(`  ${entry.entryName}${typeTag}${keysStr}`);
-      if (entry.prereqText) {
-        console.log(`    prereqText: ${entry.prereqText}`);
-      }
+      if (entry.prereqText) console.log(`    prereqText: ${entry.prereqText}`);
     }
     console.log();
   }

@@ -1,5 +1,4 @@
-import { count, eq, gte, isNull, lt, notInArray } from "drizzle-orm";
-import type { InferInsertModel } from "drizzle-orm";
+import { count, eq, gte, type InferInsertModel, isNull, lt, notInArray } from "drizzle-orm";
 
 import { notificationsInAccount } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";

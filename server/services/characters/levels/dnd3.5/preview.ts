@@ -4,8 +4,7 @@
  * - getLevelUpPreview — computes merged pools, per-level skill points, and slot distributions for the level-up wizard
  */
 
-import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { type RulesetData, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels } from "@/server/repositories/index.ts";
 import type { AptitudesComponent, Dnd35LevelUpProjector, Dnd35RulesetModule } from "@/server/rulesets/dnd3.5/index.ts";
@@ -22,11 +21,9 @@ type PowerPools = ReturnType<AptitudesComponent["extractPowerPools"]>;
 /** The planned levels (by index) that take an ability increase, after the character's `existingCount` levels. */
 function abilityIncreaseLevels(rulesetModule: Dnd35RulesetModule, existingCount: number, plannedCount: number) {
   const levels: number[] = [];
-  for (let i = 0; i < plannedCount; i++) {
-    if (rulesetModule.rules.levels.isAbilityIncreaseLevel(existingCount + i)) {
-      levels.push(i);
-    }
-  }
+  for (let i = 0; i < plannedCount; i++)
+    if (rulesetModule.rules.levels.isAbilityIncreaseLevel(existingCount + i)) levels.push(i);
+
   return levels;
 }
 

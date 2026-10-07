@@ -1,6 +1,15 @@
-import type { PathValueType } from "@/shared/customization/target.ts";
+import type { PathValueType, TargetPath } from "@/shared/customization/target.ts";
 
-type PathChoice = { value: string; label: string };
+interface PathChoice {
+  value: string;
+  label: string;
+}
+
+/** What a complete target path takes: its value type, operators and values. */
+export type PathInfo = Pick<
+  TargetPath,
+  "path" | "valueType" | "operators" | "possibleValues" | "setValues" | "literalOnly"
+>;
 
 const BOOLEAN_CHOICES: PathChoice[] = [
   { value: "true", label: "True" },
@@ -35,4 +44,9 @@ export function pathChoices(
   possibleValues: PathChoice[] | undefined,
 ): PathChoice[] | null {
   return possibleValues ?? (valueType === "boolean" ? BOOLEAN_CHOICES : null);
+}
+
+/** What a target path takes, read from its definition or from the completion it was picked from. */
+export function toPathInfo({ path, valueType, operators, possibleValues, setValues, literalOnly }: PathInfo): PathInfo {
+  return { path, valueType, operators, possibleValues, setValues, literalOnly };
 }

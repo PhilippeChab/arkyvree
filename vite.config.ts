@@ -22,15 +22,11 @@ const baseConfig: UserConfig = {
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes("node_modules/react-dom/") || id.includes("node_modules/react/")) {
-            return "vendor-react";
-          }
-          if (id.includes("node_modules/@mui/")) {
-            return "vendor-mui";
-          }
-          if (id.includes("node_modules/@tanstack/")) {
-            return "vendor-query";
-          }
+          if (id.includes("node_modules/react-dom/") || id.includes("node_modules/react/")) return "vendor-react";
+
+          if (id.includes("node_modules/@mui/")) return "vendor-mui";
+
+          if (id.includes("node_modules/@tanstack/")) return "vendor-query";
         },
       },
     },

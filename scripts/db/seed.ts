@@ -10,9 +10,8 @@ export default async function seedDatabase(db: Db, includeTestSeeds: boolean) {
 
   if (includeTestSeeds) {
     console.log("Seeding test data...");
-    for (const seed of testSeeds) {
-      await seed(db);
-    }
+    for (const seed of testSeeds) await seed(db);
+
     console.log("  ✓ Test data seeded");
   }
 

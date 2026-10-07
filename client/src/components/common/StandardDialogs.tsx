@@ -10,9 +10,11 @@ import {
 import { type ReactNode } from "react";
 import { type FieldValues, type UseFormReturn } from "react-hook-form";
 
-import { DiceSpinner } from "@/client/src/components/common/DiceSpinner.tsx";
-import { FormDialog } from "@/client/src/components/common/FormDialog.tsx";
-import { Modal } from "@/client/src/components/common/Modal.tsx";
+import { DiceSpinner } from "./DiceSpinner.tsx";
+import { FormDialog } from "./FormDialog.tsx";
+import { Modal } from "./Modal.tsx";
+
+type DeleteDialogProps = Omit<ConfirmDialogProps, "confirmColor">;
 
 interface FormActionDialogProps<T extends FieldValues = FieldValues> {
   open: boolean;
@@ -141,14 +143,14 @@ export function ConfirmDialog({
   );
 }
 
-export function CreateDialog<T extends FieldValues = FieldValues>(props: StandardFormDialogProps<T>) {
+export function CreateDialog<T extends FieldValues = FieldValues>({ ...props }: StandardFormDialogProps<T>) {
   return <FormActionDialog submitLabel="Create" {...props} />;
 }
 
-export function DeleteDialog(props: Omit<ConfirmDialogProps, "confirmColor">) {
+export function DeleteDialog({ ...props }: DeleteDialogProps) {
   return <ConfirmDialog confirmLabel="Delete" {...props} confirmColor="error" />;
 }
 
-export function EditDialog<T extends FieldValues = FieldValues>(props: StandardFormDialogProps<T>) {
+export function EditDialog<T extends FieldValues = FieldValues>({ ...props }: StandardFormDialogProps<T>) {
   return <FormActionDialog submitLabel="Update" {...props} />;
 }

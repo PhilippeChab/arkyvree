@@ -211,9 +211,7 @@ describe("aptitude ownership (seed-level invariants)", () => {
     for (const name of SIBLING_SHARED_NAMES) {
       const matches = rows.filter((r) => r.aptName === name);
       expect(matches.length).toBeGreaterThan(1);
-      for (const m of matches) {
-        expect(m.rulesetName).not.toBe(DND35_RULESET_NAME);
-      }
+      for (const m of matches) expect(m.rulesetName).not.toBe(DND35_RULESET_NAME);
     }
   });
 

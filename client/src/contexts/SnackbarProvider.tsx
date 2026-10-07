@@ -1,5 +1,5 @@
 import { Alert, type AlertColor, Button, Snackbar } from "@mui/material";
-import React, { type ReactNode, useCallback, useState } from "react";
+import { type ReactNode, type SyntheticEvent, useCallback, useState } from "react";
 
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 
@@ -42,7 +42,7 @@ export function SnackbarProvider({ children }: SnackbarProviderProps) {
   const info = useCallback((message: string, options?: ToastOptions) => enqueue(message, "info", options), [enqueue]);
   const warning = useCallback((message: string) => enqueue(message, "warning"), [enqueue]);
 
-  const handleClose = (_event?: React.SyntheticEvent | Event, reason?: string) => {
+  const handleClose = (_event?: SyntheticEvent | Event, reason?: string) => {
     if (reason === "clickaway") return;
     setClosing(true);
   };

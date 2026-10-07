@@ -1,48 +1,20 @@
-import { type QueryClient, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { MAX_UPLOAD_BYTES } from "@/shared/attachments.ts";
 
-interface SlotParams {
-  recordType: string;
-  recordId: string | undefined;
-  name: string;
-}
+import { type AttachmentSlot, refreshAttachmentSlot } from "./refreshAttachmentSlot.ts";
 
-/** Refetches the slot's attachment once it changed. */
-function refreshSlot(queryClient: QueryClient, slot: SlotParams) {
-  if (slot.recordId) {
-    void queryClient.invalidateQueries({
-      queryKey: queryKeys.attachments.slot(slot.recordType, slot.recordId, slot.name),
-    });
-  }
-}
-
-export function useDetachAttachment(slot: SlotParams) {
-  const queryClient = useQueryClient();
-  const snackbar = useSnackbar();
-
-  return useMutation({
-    mutationFn: (attachmentId: string) =>
-      parseResponse(rpc.api.attachments[":id"].$delete({ param: { id: attachmentId } })),
-    onSuccess: () => refreshSlot(queryClient, slot),
-    onError: (error) => snackbar.error(error),
-  });
-}
-
-export function useDirectUpload(slot: SlotParams) {
+export function useDirectUpload(slot: AttachmentSlot) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
 
   return useMutation({
     mutationFn: async (file: File) => {
       if (!slot.recordId) throw new Error("Missing recordId");
-      if (file.size > MAX_UPLOAD_BYTES) {
-        throw new Error(`File exceeds ${MAX_UPLOAD_BYTES / 1024 / 1024}MB limit`);
-      }
+      if (file.size > MAX_UPLOAD_BYTES) throw new Error(`File exceeds ${MAX_UPLOAD_BYTES / 1024 / 1024}MB limit`);
 
       const { signedId, presignedUrl, headers } = await parseResponse(
         rpc.api.attachments["direct-uploads"].$post({
@@ -63,15 +35,13 @@ export function useDirectUpload(slot: SlotParams) {
         body: file,
         headers,
       });
-      if (!putRes.ok) {
-        throw new Error(`Upload failed: ${putRes.status} ${putRes.statusText}`);
-      }
+      if (!putRes.ok) throw new Error(`Upload failed: ${putRes.status} ${putRes.statusText}`);
 
       return parseResponse(rpc.api.attachments[":signedId"].attach.$post({ param: { signedId } }));
     },
-    onSuccess: () => refreshSlot(queryClient, slot),
+    onSuccess: () => refreshAttachmentSlot(queryClient, slot),
     onError: (error) => {
-      snackbar.error(error);
+      snackbar.error(error, "Failed to upload file");
     },
   });
 }

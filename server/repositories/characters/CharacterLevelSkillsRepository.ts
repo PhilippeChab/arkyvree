@@ -2,7 +2,8 @@ import { and, eq, getTableColumns, inArray, isNull } from "drizzle-orm";
 
 import { levelSkillsInCharacter, skillsInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
-import LevelPicksRepository from "@/server/repositories/characters/LevelPicksRepository.ts";
+
+import LevelPicksRepository from "./LevelPicksRepository.ts";
 
 class CharacterLevelSkillsRepository extends LevelPicksRepository<typeof levelSkillsInCharacter> {
   constructor() {

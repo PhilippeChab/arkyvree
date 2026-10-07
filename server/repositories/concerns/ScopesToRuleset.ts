@@ -29,9 +29,7 @@ export function ScopesToRuleset<B extends Constructor<BaseRepository<Table>>>(Ba
       const { ancestorRulesetIds, childOnly } = where;
       const childOwned = and(eq(this.column("rulesetId"), where.rulesetId), isNull(this.column("campaignId")));
 
-      if (childOnly) {
-        return childOwned!;
-      }
+      if (childOnly) return childOwned!;
 
       const inheritedClauses = (ancestorRulesetIds ?? []).map((ancestorId, i) => {
         const overriddenBy = [where.rulesetId, ...(ancestorRulesetIds ?? []).slice(0, i)];

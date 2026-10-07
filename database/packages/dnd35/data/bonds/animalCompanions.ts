@@ -5,8 +5,9 @@ import { bonus, grantFeat, setNum, setStr } from "@/database/packages/dnd35/cont
 import { gte, lt } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import type { RaceSeed } from "@/database/packages/dnd35/content/races/types.ts";
-import { QUADRUPED } from "@/database/packages/dnd35/data/bonds/raceProperties.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
+
+import { QUADRUPED } from "./raceProperties.ts";
 
 const ANIMAL_COMPANION_APTITUDE = "Animal Companion Bond";
 const ANIMAL_COMPANION_CLASS_FEATURE_APTITUDE = "Animal Companion Class Feature";

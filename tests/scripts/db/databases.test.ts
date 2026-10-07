@@ -16,9 +16,9 @@ describe("A database URL", () => {
 
 describe("A script that drops databases or tables", () => {
   test("runs only on a local server", () => {
-    for (const host of ["localhost:5433", "127.0.0.1", "[::1]:5432"]) {
+    for (const host of ["localhost:5433", "127.0.0.1", "[::1]:5432"])
       expect(() => assertLocalDatabase(`postgresql://u:p@${host}/db`, "reset")).not.toThrow();
-    }
+
     expect(() => assertLocalDatabase("postgresql://u:p@ep-x.neon.tech/arkyvreedb", "reset")).toThrow(
       "ep-x.neon.tech isn't a local database server: only a local database is reset",
     );

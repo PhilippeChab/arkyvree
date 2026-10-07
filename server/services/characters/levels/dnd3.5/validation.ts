@@ -22,9 +22,8 @@ function checkRepeatedPicks(featIds: string[], fetchedFeats: FeatRecord[]) {
   const submittedFeatCounts = new Map<string, number>();
   for (const id of featIds) submittedFeatCounts.set(id, (submittedFeatCounts.get(id) ?? 0) + 1);
   for (const feat of fetchedFeats) {
-    if (!feat.stackable && (submittedFeatCounts.get(feat.id) ?? 0) > 1) {
+    if (!feat.stackable && (submittedFeatCounts.get(feat.id) ?? 0) > 1)
       throw new BadRequestError(`Non-stackable feat "${feat.name}" cannot be picked more than once`);
-    }
   }
 }
 
@@ -63,9 +62,8 @@ function linkedPowerLevels(
   for (const [aptitudeId, ids] of Object.entries(feats)) {
     for (const featId of ids) {
       const links = rulesetData.featsById.get(featId)?.featsAptitudesInRules ?? [];
-      if (!links.some((fa) => fa.aptitudeId === aptitudeId)) {
+      if (!links.some((fa) => fa.aptitudeId === aptitudeId))
         throw new BadRequestError("Feat is not linked to the specified aptitude");
-      }
     }
   }
 
@@ -74,12 +72,9 @@ function linkedPowerLevels(
     for (const powerId of ids) {
       const power = rulesetData.powersById.get(powerId);
       const link = power?.powersAptitudesInRules.find((pa) => pa.aptitudeId === aptitudeId);
-      if (!link) {
-        throw new BadRequestError("Power is not linked to the specified aptitude");
-      }
-      if (link.level != null) {
-        powerLevelMap.set(`${powerId}:${aptitudeId}`, link.level);
-      }
+      if (!link) throw new BadRequestError("Power is not linked to the specified aptitude");
+
+      if (link.level != null) powerLevelMap.set(`${powerId}:${aptitudeId}`, link.level);
     }
   }
   return powerLevelMap;
@@ -88,11 +83,8 @@ function linkedPowerLevels(
 /** The pool each picked id is picked under. */
 function poolsOf(selections: Record<string, string[]>) {
   const pools = new Map<string, string>();
-  for (const [aptitudeId, ids] of Object.entries(selections)) {
-    for (const id of ids) {
-      pools.set(id, aptitudeId);
-    }
-  }
+  for (const [aptitudeId, ids] of Object.entries(selections)) for (const id of ids) pools.set(id, aptitudeId);
+
   return pools;
 }
 
@@ -118,14 +110,11 @@ async function checkNotTaken(
   const existingFeatIds = new Set([...pickedFeats, ...givenFeats].map((f) => f.id));
 
   // Auto-granted feats come from the composed cache (already post-COW).
-  for (const rec of autoGrantedRecords) {
-    existingFeatIds.add(rec.featsInRule.id);
-  }
+  for (const rec of autoGrantedRecords) existingFeatIds.add(rec.featsInRule.id);
 
   for (const feat of nonStackableSubmitted) {
-    if (existingFeatIds.has(feat.id)) {
+    if (existingFeatIds.has(feat.id))
       throw new BadRequestError(`Non-stackable feat "${feat.name}" is already on this character`);
-    }
   }
 }
 
@@ -151,12 +140,11 @@ export function annotateRequirements<T extends { id: string }>(
  * the message ("Level 2: ").
  */
 export function checkAbilityIncrease(isAbilityIncreaseLevel: boolean, abilityId: string | null, label = "") {
-  if (abilityId && !isAbilityIncreaseLevel) {
+  if (abilityId && !isAbilityIncreaseLevel)
     throw new BadRequestError(`${label}Ability increase is not available at this level`);
-  }
-  if (!abilityId && isAbilityIncreaseLevel) {
+
+  if (!abilityId && isAbilityIncreaseLevel)
     throw new BadRequestError(`${label}Ability increase is required at this level`);
-  }
 }
 
 /** Throws when a submitted selection isn't the character's ruleset's, or isn't linked to the pool it's picked under. */
@@ -190,15 +178,12 @@ export async function validateAndFetchLevelSelections(
 ) {
   const { klass, klassLevel, otherLevels, hp, abilityId, skills, feats, powers, rulesetData } = params;
 
-  if (hp < 1 || hp > klass.hd) {
-    throw new BadRequestError(`HP must be between 1 and ${klass.hd}`);
-  }
+  if (hp < 1 || hp > klass.hd) throw new BadRequestError(`HP must be between 1 and ${klass.hd}`);
 
   // A cache hit means the entity is in the composed view of the character's ruleset
   // (the cache's arrays are already COW-resolved and sibling-filtered).
-  if (abilityId && !rulesetData.abilitiesById.has(abilityId)) {
+  if (abilityId && !rulesetData.abilitiesById.has(abilityId))
     throw new BadRequestError("Ability does not belong to the character's ruleset");
-  }
 
   // Submitted ids can repeat, e.g. a non-stackable feat picked under two aptitude pools: caught by checkRepeatedPicks.
   const featIds = Object.values(feats).flat();

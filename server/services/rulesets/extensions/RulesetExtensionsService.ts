@@ -1,8 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { rulesetsInRules } from "@/drizzle/schema.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { NAME_FALLBACK_ENTITY_TYPES } from "@/server/cache/rulesetCache/index.ts";
+import { NAME_FALLBACK_ENTITY_TYPES, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { ENTITY_REPOS } from "@/server/cow/index.ts";
 import { type Db, db, withCowContext, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
@@ -171,9 +170,7 @@ class RulesetExtensionsService {
 
   async getExtensions(_session: Session, id: string) {
     const ruleset = await Rulesets.findOne(db, { id });
-    if (!ruleset) {
-      throw new NotFoundError("Ruleset not found");
-    }
+    if (!ruleset) throw new NotFoundError("Ruleset not found");
 
     const subscribed = await RulesetExtensions.findMany(db, { rulesetId: id });
 
@@ -190,9 +187,8 @@ class RulesetExtensionsService {
     const result = await withTransaction(async (tx) => {
       // 1. Validate ruleset
       const childRuleset = await Rulesets.findOne(tx, { id });
-      if (!childRuleset) {
-        throw new NotFoundError("Ruleset not found");
-      }
+      if (!childRuleset) throw new NotFoundError("Ruleset not found");
+
       (await RulesetsPolicy.for(tx, session, childRuleset)).canSubscribeExtension();
 
       // The host can't subscribe to anything if it's already being used as an
@@ -210,31 +206,28 @@ class RulesetExtensionsService {
       // 2. Validate each extension
       const newExtensionIds: string[] = [];
       for (const extensionId of extensionIds) {
-        if (extensionId === id) {
-          throw new UnprocessableEntityError("Cannot subscribe to itself");
-        }
+        if (extensionId === id) throw new UnprocessableEntityError("Cannot subscribe to itself");
+
         const extension = await Rulesets.findOne(tx, { id: extensionId });
-        if (!extension) {
-          throw new NotFoundError("Extension not found");
-        }
-        if (extension.kind !== "extension") {
+        if (!extension) throw new NotFoundError("Extension not found");
+
+        if (extension.kind !== "extension")
           throw new UnprocessableEntityError("Ruleset is not published as an extension");
-        }
-        if (extension.status !== "Published") {
-          throw new UnprocessableEntityError("Extension must be published");
-        }
-        if (extension.userId !== null && extension.private) {
+
+        if (extension.status !== "Published") throw new UnprocessableEntityError("Extension must be published");
+
+        if (extension.userId !== null && extension.private)
           throw new UnprocessableEntityError("Extension must be public");
-        }
+
         // Both child and extension are forks of a base ruleset (fork-of-fork
         // is blocked, extensions are forks of bases) so "share a common ancestor"
         // collapses to "fork the same base."
-        if (childRuleset.rulesetId !== extension.rulesetId) {
+        if (childRuleset.rulesetId !== extension.rulesetId)
           throw new UnprocessableEntityError("Extension must share a common ancestor ruleset");
-        }
-        if (childRuleset.extensionRulesetIds.includes(extensionId)) {
+
+        if (childRuleset.extensionRulesetIds.includes(extensionId))
           throw new ConflictError("Already subscribed to this extension");
-        }
+
         newExtensionIds.push(extensionId);
       }
 
@@ -248,9 +241,7 @@ class RulesetExtensionsService {
       );
 
       // 4. Upsert metadata rows
-      for (const extensionId of newExtensionIds) {
-        await RulesetExtensions.upsert(tx, { rulesetId: id, extensionId });
-      }
+      for (const extensionId of newExtensionIds) await RulesetExtensions.upsert(tx, { rulesetId: id, extensionId });
 
       // 5. Log activity
       await Activities.create(tx, {
@@ -272,15 +263,13 @@ class RulesetExtensionsService {
     const result = await withTransaction(async (tx) => {
       // 1. Validate
       const ruleset = await Rulesets.findOne(tx, { id });
-      if (!ruleset) {
-        throw new NotFoundError("Ruleset not found");
-      }
+      if (!ruleset) throw new NotFoundError("Ruleset not found");
+
       const policy = await RulesetsPolicy.for(tx, session, ruleset);
       policy.canUnsubscribeExtension();
 
-      if (!ruleset.extensionRulesetIds.includes(extensionId)) {
+      if (!ruleset.extensionRulesetIds.includes(extensionId))
         throw new NotFoundError("Not subscribed to this extension");
-      }
 
       const inUse = await this.isExtensionInUseByHost(tx, id, extensionId);
       policy.canUnsubscribeExtension({ inUse });
@@ -293,9 +282,7 @@ class RulesetExtensionsService {
         const repo = ENTITY_REPOS[entityType];
         if (!repo) continue;
         const sourceEntity = await repo.findOne(tx, { id: snap.sourceEntityId });
-        if (sourceEntity?.rulesetId === extensionId) {
-          extensionSnapshots.push(snap);
-        }
+        if (sourceEntity?.rulesetId === extensionId) extensionSnapshots.push(snap);
       }
 
       // What the fork keeps that names the book's lists moves to its lists of the same name, or the unsubscribe

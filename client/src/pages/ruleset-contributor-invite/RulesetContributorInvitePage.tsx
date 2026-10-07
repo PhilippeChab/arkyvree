@@ -1,9 +1,9 @@
-import { Group as ContributorIcon } from "@mui/icons-material";
 import { parseResponse } from "hono/client";
 import { useParams } from "react-router-dom";
 
+import { ContributorIcon } from "@/client/src/components/icons/index.ts";
 import { InviteLandingPage } from "@/client/src/components/invites/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 export default function RulesetContributorInvitePage() {
@@ -17,7 +17,7 @@ export default function RulesetContributorInvitePage() {
       entityPath={(id) => `/rulesets/${id}`}
       listPath="/rulesets"
       icon={ContributorIcon}
-      queryKey={queryKeys.invites.detail("rulesetContributor", contributorId)}
+      queryKey={QUERY_KEYS.invites.detail("rulesetContributor", contributorId)}
       inviteFn={async () => {
         const invite = await parseResponse(rpc.api.rulesets.contributors.invites[":id"].$get(param));
         return {
@@ -28,12 +28,12 @@ export default function RulesetContributorInvitePage() {
           role: invite.role,
         };
       }}
-      acceptFn={() => rpc.api.rulesets.contributors.invites[":id"].accept.$post(param)}
-      rejectFn={() => rpc.api.rulesets.contributors.invites[":id"].reject.$post(param)}
+      acceptFn={() => parseResponse(rpc.api.rulesets.contributors.invites[":id"].accept.$post(param))}
+      rejectFn={() => parseResponse(rpc.api.rulesets.contributors.invites[":id"].reject.$post(param))}
       acceptedStatus="Active"
       joinVerb="contribute to"
       description="You've been invited to contribute to this ruleset. Would you like to accept or reject this invitation?"
-      invalidateOnAccept={queryKeys.rulesets.lists}
+      invalidateOnAccept={QUERY_KEYS.rulesets.lists}
     />
   );
 }

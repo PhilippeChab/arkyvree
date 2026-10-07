@@ -1,4 +1,4 @@
-import { Box, Button, DialogActions, DialogContent, DialogTitle, Link, Typography } from "@mui/material";
+import { Box, Button, DialogActions, DialogContent, DialogTitle, Link as MuiLink, Typography } from "@mui/material";
 import { useState } from "react";
 
 import { DiceSpinner, LoadError, Modal } from "@/client/src/components/common/index.ts";
@@ -14,7 +14,7 @@ export function RulesetLicenseNotice({ name }: RulesetLicenseNoticeProps) {
 
   return (
     <>
-      <Link
+      <MuiLink
         component="button"
         type="button"
         variant="body2"
@@ -23,7 +23,7 @@ export function RulesetLicenseNotice({ name }: RulesetLicenseNoticeProps) {
         sx={{ mt: 1 }}
       >
         License & attribution
-      </Link>
+      </MuiLink>
       <Modal open={open} onClose={() => setOpen(false)} maxWidth="md" aria-labelledby="ruleset-license-title">
         <DialogTitle id="ruleset-license-title">License & attribution</DialogTitle>
         <DialogContent dividers>

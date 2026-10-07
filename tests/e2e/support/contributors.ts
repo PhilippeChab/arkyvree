@@ -1,6 +1,6 @@
 import { expect, type Page } from "@playwright/test";
 
-import { apiResponse, openActionsMenu } from "@/tests/e2e/support/page.ts";
+import { apiResponse, openActionsMenu } from "./page.ts";
 
 /** Accepts or rejects, from the notifications page, the invite about `name`. */
 export async function answerInvite(page: Page, name: string, answer: "Accept" | "Reject") {

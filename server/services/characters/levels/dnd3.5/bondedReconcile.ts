@@ -85,14 +85,10 @@ async function reconcileBonded(
   }
 
   const targetRace = rulesetData.races.find((r) => r.name === targetRaceName && r.kind === kind);
-  if (!targetRace) {
-    throw new BadRequestError(`Bonded ${kind} race "${targetRaceName}" not found in ruleset`);
-  }
+  if (!targetRace) throw new BadRequestError(`Bonded ${kind} race "${targetRaceName}" not found in ruleset`);
 
   const bondedKlass = rulesetData.klasses.find((k) => k.name === className && k.kind === kind);
-  if (!bondedKlass) {
-    throw new BadRequestError(`${className} class not found in ruleset — content seed missing`);
-  }
+  if (!bondedKlass) throw new BadRequestError(`${className} class not found in ruleset — content seed missing`);
 
   const targetHD = computeBondedTargetHD(kind, detailedMaster);
 
@@ -126,9 +122,8 @@ async function syncBondedLevels(
     const klassLevelByLevel = new Map(klassLevels.map((kl) => [kl.level, kl]));
     for (let lv = currentHD + 1; lv <= targetHD; lv++) {
       const kl = klassLevelByLevel.get(lv);
-      if (!kl) {
-        throw new BadRequestError(`Bonded class is missing level ${lv} — content seed incomplete`);
-      }
+      if (!kl) throw new BadRequestError(`Bonded class is missing level ${lv} — content seed incomplete`);
+
       await CharacterLevels.create(tx, {
         characterId: bondedId,
         klassLevelId: kl.id,
@@ -140,9 +135,7 @@ async function syncBondedLevels(
   }
 
   const sorted = [...existingLevels].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  for (let i = 0; i < currentHD - targetHD; i++) {
-    await CharacterLevels.delete(tx, { id: sorted[i].id });
-  }
+  for (let i = 0; i < currentHD - targetHD; i++) await CharacterLevels.delete(tx, { id: sorted[i].id });
 }
 
 export async function reconcileAllBondedKinds(
@@ -151,7 +144,5 @@ export async function reconcileAllBondedKinds(
   detailedMaster: Dnd35DetailedCharacter,
   rulesetData: RulesetData,
 ): Promise<void> {
-  for (const kind of BONDED_KIND_SLUGS) {
-    await reconcileBonded(tx, masterRecord, kind, detailedMaster, rulesetData);
-  }
+  for (const kind of BONDED_KIND_SLUGS) await reconcileBonded(tx, masterRecord, kind, detailedMaster, rulesetData);
 }

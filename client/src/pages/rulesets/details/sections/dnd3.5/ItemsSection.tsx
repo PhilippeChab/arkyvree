@@ -1,16 +1,16 @@
-import { Construction as ItemsIcon } from "@mui/icons-material";
 import { Chip, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useCallback, useState } from "react";
 
 import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
+import { ItemsIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith, useSearchText } from "@/client/src/hooks/index.ts";
 import { formatCost, formatCount, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import type { RulesetItem } from "@/client/src/lib/queries.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
   EMPTY_ITEM,
   ItemFormFields,
@@ -114,8 +114,8 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     },
     onSuccess: (created) => {
       snackbar.success("Item created successfully");
-      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(ruleset.id, "items") });
-      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.changes(ruleset.id) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.section(ruleset.id, "items") });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.changes(ruleset.id) });
       setCreateDialogOpen(false);
       setDuplicateSourceId(null);
       createForm.reset();
@@ -139,7 +139,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       const count = data.length;
       snackbar.success(`Created ${formatCount(count, "variant")}`);
       setBulkItem(null);
-      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(ruleset.id, "items") });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.section(ruleset.id, "items") });
     },
     onError: (err: Error) => {
       snackbar.error(err, "Failed to create variants");
@@ -159,12 +159,13 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
         return item.name;
       case "template":
         if (item.isTemplate) return <Chip label="Template" size="small" color="info" />;
-        if (item.templateName)
+        if (item.templateName) {
           return (
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
               {item.templateName}
             </Typography>
           );
+        }
         return null;
       case "type":
         return (
@@ -228,11 +229,8 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
         title="Create New Item"
         form={createForm}
         onSubmit={(data) => {
-          if (duplicateSourceId) {
-            duplicateMutation.mutate({ sourceId: duplicateSourceId, data });
-          } else {
-            createMutation.mutate(data);
-          }
+          if (duplicateSourceId) duplicateMutation.mutate({ sourceId: duplicateSourceId, data });
+          else createMutation.mutate(data);
         }}
         isLoading={createMutation.isPending || duplicateMutation.isPending}
       >

@@ -3,15 +3,16 @@
 import { existsSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 
-import { getReferencePath, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
+import type { ClassReferenceFile } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
+
+import { getReferencePath, REFERENCE_DIR } from "./files.ts";
 import {
   readStoredReference,
   type ReferenceByType,
   type ReferenceType,
   resolveReference,
   type StoredReference,
-} from "@/database/packages/dnd35-from-parser/tools/references/resolve.ts";
-import type { ClassReferenceFile } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
+} from "./resolve.ts";
 
 /** Freezes a value and everything in it. */
 function deepFreeze<T>(value: T): T {

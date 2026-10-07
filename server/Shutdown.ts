@@ -1,4 +1,4 @@
-import Telemetry from "@/server/Telemetry.ts";
+import Telemetry from "./Telemetry.ts";
 
 /** The process's shutdown: started once, on SIGTERM or SIGINT, and asked about by the health checks. */
 class Shutdown {

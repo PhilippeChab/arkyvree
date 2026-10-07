@@ -29,9 +29,7 @@ export function EntityRights<B extends Constructor<RulesetRoles>>(Base: B) {
     canDeleteEntity({ inUse = false }: { inUse?: boolean } = {}) {
       this.canUpdateEntity();
 
-      if (inUse) {
-        throw new ConflictError("Cannot delete entities from a ruleset in use by characters");
-      }
+      if (inUse) throw new ConflictError("Cannot delete entities from a ruleset in use by characters");
 
       return true;
     }
@@ -41,17 +39,12 @@ export function EntityRights<B extends Constructor<RulesetRoles>>(Base: B) {
      * Owner, Admin, and Editor contributors are allowed.
      */
     canUpdateEntity() {
-      if (!this.entity.userId) {
-        throw new ForbiddenError("Cannot edit a base ruleset");
-      }
+      if (!this.entity.userId) throw new ForbiddenError("Cannot edit a base ruleset");
 
-      if (!this.isOwner && !this.isAdminContributor && !this.isEditorContributor) {
+      if (!this.isOwner && !this.isAdminContributor && !this.isEditorContributor)
         throw new ForbiddenError("Cannot edit another user's ruleset");
-      }
 
-      if (this.entity.status === "Archived") {
-        throw new UnprocessableEntityError("Archived rulesets are read-only");
-      }
+      if (this.entity.status === "Archived") throw new UnprocessableEntityError("Archived rulesets are read-only");
 
       return true;
     }

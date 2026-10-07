@@ -43,9 +43,9 @@ function mapRows(rows: unknown[], cow: CowData): unknown[] {
     if (typeof row === "string") return cow.resolve(row);
     if (!row || typeof row !== "object" || Array.isArray(row)) return row;
     const mapped = { ...row } as Record<string, unknown>;
-    for (const [key, value] of Object.entries(mapped)) {
+    for (const [key, value] of Object.entries(mapped))
       if (key !== "id" && typeof value === "string") mapped[key] = cow.resolve(value);
-    }
+
     return mapped;
   });
 }

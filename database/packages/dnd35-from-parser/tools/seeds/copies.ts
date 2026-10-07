@@ -5,13 +5,11 @@
 
 import { CORE_BOOK, listReferenceBooks } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
-import { getClassSpells } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/spellSlots.ts";
-import {
-  getInheritedLevel,
-  getInheritedLists,
-} from "@/database/packages/dnd35-from-parser/tools/seeds/inheritedLists.ts";
 import { classSpells } from "@/database/packages/dnd35/content/aptitudes/names.ts";
 import type { CowFeatEntry, CowSpellEntry } from "@/database/packages/dnd35/content/rulesets/types.ts";
+
+import { getClassSpells } from "./classes/spellSlots.ts";
+import { getInheritedLevel, getInheritedLists } from "./inheritedLists.ts";
 
 /** The spells a book's inherited lists add (`additions`), each at its level there, into `entries`. */
 function addListAdditions(
@@ -51,9 +49,8 @@ export function buildCowFeats(book: string): CowFeatEntry[] {
   // The book's own feats and its classes' features, which the feats and class feats files give their lists
   const ownFeats = new Set<string>();
   for (const feat of ReferenceLoader.find(book, "feat")?.raw ?? []) ownFeats.add(feat.name);
-  for (const { ref } of classes) {
+  for (const { ref } of classes)
     for (const feat of Object.values(ref.mapping.features)) if (feat.seedName) ownFeats.add(feat.seedName);
-  }
 
   // A feat in several lists joins each, once
   const copies = new Map<string, CowFeatEntry>();
@@ -79,9 +76,9 @@ export function buildCowSpells(book: string): CowSpellEntry[] {
 
   // Build map: className → aptitude name for classes that have spell lists
   const classToApt = new Map<string, string>();
-  for (const { ref } of classes) {
+  for (const { ref } of classes)
     if (getClassSpells(ref) && ref.raw?.name) classToApt.set(ref.raw.name, classSpells(ref.raw.name));
-  }
+
   // The lists classes draw on (`inheritsFrom`), each its class's aptitude
   const bookInheritedLists = getInheritedLists(book);
 
@@ -107,9 +104,7 @@ export function buildCowSpells(book: string): CowSpellEntry[] {
         // Direct class matches: only from the core rules (not siblings); the book seeds its own spells itself
         if (!isSameBook && isFromBase) {
           const aptName = classToApt.get(le.className);
-          if (aptName) {
-            matchedApts.push({ aptitude: aptName, level: le.level });
-          }
+          if (aptName) matchedApts.push({ aptitude: aptName, level: le.level });
         }
       }
       // Inherited spell lists: from the base book + current book only
@@ -126,11 +121,8 @@ export function buildCowSpells(book: string): CowSpellEntry[] {
       const existing = entries.get(spell.name);
       if (existing) {
         // Merge aptitudes (deduplicate by aptitude name)
-        for (const apt of matchedApts) {
-          if (!existing.aptitudes.some((a) => a.aptitude === apt.aptitude)) {
-            existing.aptitudes.push(apt);
-          }
-        }
+        for (const apt of matchedApts)
+          if (!existing.aptitudes.some((a) => a.aptitude === apt.aptitude)) existing.aptitudes.push(apt);
       } else {
         entries.set(spell.name, { spell: spell.name, aptitudes: matchedApts });
       }

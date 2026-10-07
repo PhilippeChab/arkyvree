@@ -1,6 +1,11 @@
 import { Box, Typography } from "@mui/material";
 
-export function StatField({ label, value }: { label: string; value: string | number }) {
+interface StatFieldProps {
+  label: string;
+  value: string | number;
+}
+
+export function StatField({ label, value }: StatFieldProps) {
   return (
     <Box sx={{ display: "flex", alignItems: "baseline", gap: 1 }}>
       <Typography variant="body2" sx={{ fontWeight: 500, color: "text.secondary", whiteSpace: "nowrap" }}>

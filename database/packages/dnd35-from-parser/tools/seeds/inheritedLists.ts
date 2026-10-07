@@ -1,10 +1,11 @@
 /** The spell lists classes draw on others' lists for (`inheritsFrom`), and a spell's level on one. */
 
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
-import { getClassSpells } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/spellSlots.ts";
 import { type InheritedSpellList } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { type SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
 import { classSpells } from "@/database/packages/dnd35/content/aptitudes/names.ts";
+
+import { getClassSpells } from "./classes/spellSlots.ts";
 
 /**
  * A spell's level on a list a class draws on (`inheritsFrom`): on the first of its classes' lists that has it, when

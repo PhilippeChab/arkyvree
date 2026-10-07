@@ -42,9 +42,9 @@ describe("the aptitudes' target grammar", () => {
       "aptitudes.wizard.1e1.allowed",
       "aptitudes.wizard. 3.allowed",
       "aptitudes.é.allowed",
-    ]) {
+    ])
       expect([target, parseAptitudePool(target) ?? parseAptitudeSpellLevel(target)]).toEqual([target, undefined]);
-    }
+
     expect(parseAptitudeAllowed("aptitudes.x.foo.notallowed")).toBeUndefined();
     expect(parseAptitudeList("aptitudesx.general.allowed")).toBeUndefined();
   });

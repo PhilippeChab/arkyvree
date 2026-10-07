@@ -117,7 +117,11 @@ describe("authentication", () => {
       await signUp(email);
       const response = await auth["sign-in"].$post({ json: { emailAddress: email, password } });
       await expectStatus(response, 401);
-      expect(await response.json()).toMatchObject({ message: expect.stringContaining("Email not verified") });
+      // The client tells this refusal apart by its name, and sends the user to verify the email
+      expect(await response.json()).toMatchObject({
+        error: "EmailNotVerifiedError",
+        message: expect.stringContaining("Email not verified"),
+      });
     });
 
     test("refuses an expired session", async () => {

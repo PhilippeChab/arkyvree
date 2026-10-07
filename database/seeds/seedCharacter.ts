@@ -5,8 +5,6 @@
 
 import { and, eq } from "drizzle-orm";
 
-import { type SeedContext } from "@/database/seeds/seedContext.ts";
-import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import {
   characterAbilitiesInCharacter,
   charactersInCharacter,
@@ -26,6 +24,9 @@ import type Dnd35DetailedCharacter from "@/server/rulesets/dnd3.5/character/Deta
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { reconcileAllBondedKinds } from "@/server/services/characters/levels/index.ts";
 import { type Alignment, type Gender, type ItemLocation } from "@/shared/enums.ts";
+
+import { type SeedContext } from "./seedContext.ts";
+import { SEED_USER_ID } from "./users.ts";
 
 type CharacterData = Parameters<typeof createCharacter>[2];
 

@@ -6,7 +6,8 @@ import { findDomainSpellIssues } from "@/database/packages/dnd35-from-parser/too
 import { getSeededMagicItems } from "@/database/packages/dnd35-from-parser/tools/seeds/magicItems.ts";
 import { getSeededRaces, getSkippedRaces } from "@/database/packages/dnd35-from-parser/tools/seeds/races.ts";
 import { sanitizeJsonValues } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
-import { checkClassOverrides } from "@/database/packages/dnd35-from-parser/tools/validate/checkOverrides.ts";
+
+import { checkClassOverrides } from "./checkOverrides.ts";
 
 type DetectedEntry = {
   errors?: string[];

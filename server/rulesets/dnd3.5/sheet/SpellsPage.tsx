@@ -75,11 +75,8 @@ function SpellsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacte
           for (const apt of sorted) {
             for (const group of apt.levels) {
               for (const spell of group.spells) {
-                for (const key of Object.keys(spell.properties)) {
-                  if (key !== SPELL_SCHOOL && SPELL_PROPERTY_ABBR[key]) {
-                    presentKeys.add(key);
-                  }
-                }
+                for (const key of Object.keys(spell.properties))
+                  if (key !== SPELL_SCHOOL && SPELL_PROPERTY_ABBR[key]) presentKeys.add(key);
               }
             }
           }

@@ -20,15 +20,11 @@ import { RESTORABLE_ENTITY_TYPES, type RestorableEntityType } from "./restorable
 class RulesetChangesService {
   async getChanges(session: Session, rulesetId: string) {
     const ruleset = await Rulesets.findOne(db, { id: rulesetId });
-    if (!ruleset) {
-      throw new NotFoundError("Ruleset not found");
-    }
+    if (!ruleset) throw new NotFoundError("Ruleset not found");
 
     (await RulesetsPolicy.for(db, session, ruleset)).canViewChanges();
 
-    if (!ruleset.rulesetId) {
-      throw new BadRequestError("Only forked rulesets have local changes");
-    }
+    if (!ruleset.rulesetId) throw new BadRequestError("Only forked rulesets have local changes");
 
     const snapshots = await EntitySnapshots.findMany(db, { rulesetId });
 
@@ -106,9 +102,7 @@ class RulesetChangesService {
   async revertOverride(session: Session, rulesetId: string, entityType: RulesetEntityType, entityId: string) {
     const result = await withTransaction(async (tx) => {
       const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
-      if (!ruleset) {
-        throw new NotFoundError("Ruleset not found");
-      }
+      if (!ruleset) throw new NotFoundError("Ruleset not found");
 
       (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
@@ -117,16 +111,13 @@ class RulesetChangesService {
         rulesetId,
       });
 
-      if (!snapshot) {
-        throw new NotFoundError("Entity is not an override in this ruleset");
-      }
+      if (!snapshot) throw new NotFoundError("Entity is not an override in this ruleset");
 
       // Reverting hard-deletes the COW row, and FK CASCADE then wipes any
       // character picks pointing at it. Mirror the inUse guard each delete
       // service runs (current ruleset + descendants).
-      if (await hasCharacterPicks(tx, entityType, snapshot.forkedEntityId, rulesetId)) {
+      if (await hasCharacterPicks(tx, entityType, snapshot.forkedEntityId, rulesetId))
         throw new ConflictError("Cannot revert override while characters in this ruleset depend on it");
-      }
 
       // For items, repoint copies from the COW back to the original parent template
       // before the cascade hard-deletes (RESTRICT FK). Klass_levels and dependent

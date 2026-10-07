@@ -1,11 +1,6 @@
 /** A spell reference's seeds: its PowerSeed[], each with its level. */
 
 import { CORE_BOOK, listReferenceBooks } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
-import ClassSpellMaps from "@/database/packages/dnd35-from-parser/tools/seeds/ClassSpellMaps.ts";
-import {
-  getInheritedLevel,
-  getInheritedLists,
-} from "@/database/packages/dnd35-from-parser/tools/seeds/inheritedLists.ts";
 import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
 import { normalizeDescription, normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import { type SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
@@ -24,6 +19,9 @@ import {
 } from "@/shared/dnd3.5/properties/index.ts";
 import { SPELL_SUBSCHOOLS } from "@/shared/dnd3.5/spells.ts";
 import { capitalize } from "@/shared/text.ts";
+
+import ClassSpellMaps from "./ClassSpellMaps.ts";
+import { getInheritedLevel, getInheritedLists } from "./inheritedLists.ts";
 
 /** A spell of a reference, as scraped. */
 type RawSpell = SpellReference["raw"][number];
@@ -117,9 +115,8 @@ function resolveBaseSpell(rawByName: Map<string, RawSpell>, refText: string): Ra
     if (rawByName.has(reordered)) return rawByName.get(reordered);
   }
   // Partial match: "interposing hand" should match "Bigby's Interposing Hand"
-  for (const [name, entry] of rawByName) {
-    if (name.endsWith(lower) || name.endsWith(` ${lower}`)) return entry;
-  }
+  for (const [name, entry] of rawByName) if (name.endsWith(lower) || name.endsWith(` ${lower}`)) return entry;
+
   return undefined;
 }
 
@@ -171,11 +168,8 @@ function spellLevels(entry: RawSpell, othersInherited: ReturnType<typeof getInhe
   }
 
   // Fallback: if no mapped entries found, use the lowest level from any entry
-  if (minLevel === 99) {
-    for (const le of entry.levelEntries) {
-      minLevel = Math.min(minLevel, le.level);
-    }
-  }
+  if (minLevel === 99) for (const le of entry.levelEntries) minLevel = Math.min(minLevel, le.level);
+
   if (minLevel === 99) minLevel = 0;
   return { aptitudes, aptitudeLevels, minLevel };
 }
@@ -185,9 +179,8 @@ function spellProperties(entry: RawSpell): { type: string; value: string }[] {
   const properties: { type: string; value: string }[] = [];
   properties.push({ type: SPELL_SCHOOL, value: entry.school });
   if (entry.subschool) properties.push({ type: SPELL_SUBSCHOOL, value: normalizeSubschool(entry.subschool) });
-  for (const desc of entry.descriptors) {
-    properties.push({ type: SPELL_DESCRIPTOR, value: normalizeDescriptor(desc) });
-  }
+  for (const desc of entry.descriptors) properties.push({ type: SPELL_DESCRIPTOR, value: normalizeDescriptor(desc) });
+
   properties.push({
     type: SPELL_CASTING_TIME,
     value: normalizeSpellText(entry.castingTime || "1 standard action"),
@@ -204,9 +197,9 @@ function spellProperties(entry: RawSpell): { type: string; value: string }[] {
     type: SPELL_RESISTANCE,
     value: normalizeSpellResistance(normalizeSpellText(entry.spellResistance || "No")),
   });
-  for (const compName of expandComponents(entry.components)) {
+  for (const compName of expandComponents(entry.components))
     properties.push({ type: SPELL_COMPONENT, value: compName });
-  }
+
   return properties;
 }
 
@@ -266,9 +259,7 @@ export function buildSpellSeeds(ref: SpellReference, book?: string): { spells: S
 
   // Build name lookup (case-insensitive) for base spell resolution
   const rawByName = new Map<string, RawSpell>();
-  for (const entry of ref.raw) {
-    rawByName.set(entry.name.toLowerCase(), entry);
-  }
+  for (const entry of ref.raw) rawByName.set(entry.name.toLowerCase(), entry);
 
   const spells: SpellSeed[] = [];
 

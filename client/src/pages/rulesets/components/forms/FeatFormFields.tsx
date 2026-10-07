@@ -3,10 +3,10 @@ import { Controller, type UseFormReturn } from "react-hook-form";
 
 import { DescriptionField, NameField } from "@/client/src/components/common/index.ts";
 import { type Aptitude, AptitudesAutocomplete } from "@/client/src/components/customization/index.ts";
-import { nameRules } from "@/client/src/lib/validation.ts";
+import { NAME_RULES } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
-import { byName, useAptitudeLookup } from "./aptitudeLookup.ts";
+import { byName, useAptitudeLookup } from "./useAptitudeLookup.ts";
 
 interface FeatFormFieldsProps {
   form: UseFormReturn<FeatFormData>;
@@ -27,7 +27,7 @@ export function FeatFormFields({ form, rulesetId, knownAptitudes = [], generated
       <NameField
         control={form.control}
         name="name"
-        rules={nameRules}
+        rules={NAME_RULES}
         disabled={generated}
         helperText={generated ? "A generated feat keeps its name" : undefined}
       />

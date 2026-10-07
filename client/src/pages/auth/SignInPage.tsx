@@ -1,24 +1,25 @@
 import { Box, Link as MuiLink, Typography } from "@mui/material";
 import type { InferRequestType } from "hono/client";
 import { useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { AuthPage, AuthSubmitButton, GoogleSignInSection } from "@/client/src/components/auth/index.ts";
 import { EmailField, PasswordField } from "@/client/src/components/common/index.ts";
-import { useAuthRequests, useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
+import { useAuthRequests, useFormWith, usePageTitle, useSearchParam } from "@/client/src/hooks/index.ts";
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 import { safeRedirectPath } from "@/client/src/lib/safeRedirect.ts";
-import { emailRules } from "@/client/src/lib/validation.ts";
+import { EMAIL_RULES, requiredRules } from "@/client/src/lib/validation.ts";
+import { ApiError } from "@/client/src/services/ApiError.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
 type SignInFormData = InferRequestType<(typeof rpc.auth)["sign-in"]["$post"]>["json"];
 
-export default function SignIn() {
+export default function SignInPage() {
   usePageTitle("Sign In");
   const [error, setError] = useState<string | null>(null);
-  const [searchParams] = useSearchParams();
+  const { value: redirectParam } = useSearchParam("redirect");
   const navigate = useNavigate();
-  const redirect = safeRedirectPath(searchParams.get("redirect"));
+  const redirect = safeRedirectPath(redirectParam || null);
   const auth = useAuthRequests();
 
   const { control, handleSubmit } = useFormWith<SignInFormData>({
@@ -26,29 +27,26 @@ export default function SignIn() {
     password: "",
   });
 
-  const onSubmit = (data: SignInFormData) => {
+  const handleSignIn = (data: SignInFormData) => {
     setError(null);
     auth.signIn.mutate(data, {
       onError: (error) => {
-        const message = errorMessage(error, "Failed to sign in");
-        if (message === "Email not verified") {
+        if (error instanceof ApiError && error.errorName === "EmailNotVerifiedError")
           navigate("/verify-email", { state: { from: "sign-in", redirect } });
-        } else {
-          setError(message);
-        }
+        else setError(errorMessage(error, "Failed to sign in"));
       },
     });
   };
 
   return (
     <AuthPage error={error} title="Sign In">
-      <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <EmailField control={control} name="emailAddress" rules={emailRules} />
+      <form onSubmit={handleSubmit(handleSignIn)} noValidate>
+        <EmailField control={control} name="emailAddress" rules={EMAIL_RULES} />
 
         <PasswordField
           control={control}
           name="password"
-          rules={{ required: "Password is required" }}
+          rules={requiredRules("Password is required")}
           label="Password"
           autoComplete="current-password"
         />

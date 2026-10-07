@@ -1,6 +1,6 @@
-import { AutoStories as SpellsIcon } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 
+import { SpellsIcon } from "@/client/src/components/icons/index.ts";
 import { classSpellsQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 
 import { ClassLevelCountsTable } from "./ClassLevelCountsTable.tsx";

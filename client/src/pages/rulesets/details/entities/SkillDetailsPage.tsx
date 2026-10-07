@@ -13,7 +13,7 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import { skillQuery } from "./entityDetailQueries.ts";
 import { RulesetEntityDetail } from "./RulesetEntityDetail.tsx";
 
-export default function SkillDetailPage() {
+export default function SkillDetailsPage() {
   const { id: rulesetId = "", skillId = "" } = useParams<{ id: string; skillId: string }>();
   const param = { id: rulesetId, skillId };
   const endpoint = rpc.api.rulesets[":id"].skills[":skillId"];

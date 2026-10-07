@@ -1,4 +1,3 @@
-import { ChevronRight as ChevronRightIcon, ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
 import {
   Accordion,
   AccordionDetails,
@@ -18,8 +17,16 @@ import {
 } from "@mui/material";
 import { Fragment, type ReactNode, useMemo } from "react";
 
+import { CLICKABLE_SX, clickableProps } from "@/client/src/components/common/index.ts";
+import { ChevronRightIcon, ExpandMoreIcon } from "@/client/src/components/icons/index.ts";
 import { useToggleSet } from "@/client/src/hooks/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
+
+interface DiagnosticsGroupProps {
+  label: string;
+  count: number;
+  children: ReactNode;
+}
 
 interface DiagnosticsSectionProps {
   validation: CharacterDetail["validation"];
@@ -27,12 +34,41 @@ interface DiagnosticsSectionProps {
   modifiers: CharacterDetail["modifiers"];
 }
 
+interface GroupedRuleTableProps {
+  label: string;
+  count: number;
+  lastColumn: string;
+  groups: RuleGroup[];
+}
+
+interface HeaderRowProps {
+  labels: string[];
+}
+
+interface InvalidRequirementTableProps {
+  items: DiagnosticsSectionProps["requirements"]["invalidRequirements"];
+}
+
 /** A modifier in the applied, unapplied or inactive list, with its source's name. */
 type Modifier = DiagnosticsSectionProps["modifiers"]["appliedModifiers"][number];
+
+interface ModifierTableProps {
+  modifiers: Modifier[];
+  label: string;
+}
+
 type RequirementGroup = DiagnosticsSectionProps["requirements"]["unmetRequirementGroups"][number];
+
+interface RequirementTableProps {
+  groups: RequirementGroup[];
+  label: string;
+}
 
 /** A requirement's or modifier's target, operator, value and last column (chaining or value type). */
 type RuleCells = [target: ReactNode, operator: ReactNode, value: ReactNode, last: ReactNode];
+interface RuleCellsRowProps {
+  cells: RuleCells;
+}
 
 interface RuleGroup {
   key: string;
@@ -40,17 +76,21 @@ interface RuleGroup {
   rules: RuleCells[];
 }
 
-const accordionSx = { boxShadow: "none", "&:before": { display: "none" } } as const;
-const tableCellSx = { py: 0.5, px: 1, fontSize: "0.8rem" } as const;
-const headerCellSx = { ...tableCellSx, fontWeight: 600 } as const;
-const summarySx = { px: 0, minHeight: 0, "& .MuiAccordionSummary-content": { my: 0 } } as const;
+interface SkippedModifierTableProps {
+  items: DiagnosticsSectionProps["modifiers"]["skippedModifiers"];
+}
+
+const ACCORDION_SX = { boxShadow: "none", "&:before": { display: "none" } } as const;
+const TABLE_CELL_SX = { py: 0.5, px: 1, fontSize: "0.8rem" } as const;
+const HEADER_CELL_SX = { ...TABLE_CELL_SX, fontWeight: 600 } as const;
+const SUMMARY_SX = { px: 0, minHeight: 0, "& .MuiAccordionSummary-content": { my: 0 } } as const;
 
 /** A collapsed table of one kind of diagnostic ("Unmet (3)"), hidden when there are none. */
-function DiagnosticsGroup({ label, count, children }: { label: string; count: number; children: ReactNode }) {
+function DiagnosticsGroup({ label, count, children }: DiagnosticsGroupProps) {
   if (count === 0) return null;
   return (
-    <Accordion disableGutters sx={accordionSx}>
-      <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={summarySx}>
+    <Accordion disableGutters sx={ACCORDION_SX}>
+      <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={SUMMARY_SX}>
         <Typography variant="subtitle2">
           {label} ({count})
         </Typography>
@@ -65,28 +105,18 @@ function DiagnosticsGroup({ label, count, children }: { label: string; count: nu
 }
 
 /** Rules by source: a source with one rule is a row, one with several expands to list them. */
-function GroupedRuleTable({
-  label,
-  count,
-  lastColumn,
-  groups,
-}: {
-  label: string;
-  count: number;
-  lastColumn: string;
-  groups: RuleGroup[];
-}) {
-  const [expanded, toggle] = useToggleSet();
+function GroupedRuleTable({ label, count, lastColumn, groups }: GroupedRuleTableProps) {
+  const { keys: expanded, toggle } = useToggleSet();
 
   return (
     <DiagnosticsGroup label={label} count={count}>
       <TableHead>
         <TableRow>
-          <TableCell sx={headerCellSx} width={28} />
-          <TableCell sx={headerCellSx}>Source</TableCell>
-          <TableCell sx={headerCellSx}>Target</TableCell>
+          <TableCell sx={HEADER_CELL_SX} width={28} />
+          <TableCell sx={HEADER_CELL_SX}>Source</TableCell>
+          <TableCell sx={HEADER_CELL_SX}>Target</TableCell>
           {["Operator", "Value", lastColumn].map((column) => (
-            <TableCell key={column} sx={headerCellSx} align="center">
+            <TableCell key={column} sx={HEADER_CELL_SX} align="center">
               {column}
             </TableCell>
           ))}
@@ -97,8 +127,8 @@ function GroupedRuleTable({
           if (rules.length === 1) {
             return (
               <TableRow key={key}>
-                <TableCell sx={tableCellSx} />
-                <TableCell sx={tableCellSx}>{source}</TableCell>
+                <TableCell sx={TABLE_CELL_SX} />
+                <TableCell sx={TABLE_CELL_SX}>{source}</TableCell>
                 <RuleCellsRow cells={rules[0]} />
               </TableRow>
             );
@@ -106,14 +136,14 @@ function GroupedRuleTable({
           const isOpen = expanded.has(key);
           return (
             <Fragment key={key}>
-              <TableRow hover onClick={() => toggle(key)} sx={{ cursor: "pointer" }}>
-                <TableCell sx={{ ...tableCellSx, pr: 0 }}>
+              <TableRow hover {...clickableProps(() => toggle(key))} sx={CLICKABLE_SX}>
+                <TableCell sx={{ ...TABLE_CELL_SX, pr: 0 }}>
                   <IconButton size="small" aria-label={`${isOpen ? "Hide" : "Show"} ${source}'s rules`} sx={{ p: 0 }}>
                     {isOpen ? <ExpandMoreIcon fontSize="small" /> : <ChevronRightIcon fontSize="small" />}
                   </IconButton>
                 </TableCell>
-                <TableCell sx={{ ...tableCellSx, fontWeight: 600 }}>{source}</TableCell>
-                <TableCell sx={tableCellSx} colSpan={4}>
+                <TableCell sx={{ ...TABLE_CELL_SX, fontWeight: 600 }}>{source}</TableCell>
+                <TableCell sx={TABLE_CELL_SX} colSpan={4}>
                   <Chip label={rules.length} size="small" variant="outlined" sx={{ height: 20, fontSize: "0.75rem" }} />
                 </TableCell>
               </TableRow>
@@ -124,7 +154,7 @@ function GroupedRuleTable({
                       <TableBody>
                         {rules.map((cells, i) => (
                           <TableRow key={i} sx={{ bgcolor: "action.hover" }}>
-                            <TableCell sx={tableCellSx} />
+                            <TableCell sx={TABLE_CELL_SX} />
                             <RuleCellsRow cells={cells} />
                           </TableRow>
                         ))}
@@ -141,12 +171,12 @@ function GroupedRuleTable({
   );
 }
 
-function HeaderRow({ labels }: { labels: string[] }) {
+function HeaderRow({ labels }: HeaderRowProps) {
   return (
     <TableHead>
       <TableRow>
         {labels.map((label) => (
-          <TableCell key={label} sx={headerCellSx}>
+          <TableCell key={label} sx={HEADER_CELL_SX}>
             {label}
           </TableCell>
         ))}
@@ -155,17 +185,17 @@ function HeaderRow({ labels }: { labels: string[] }) {
   );
 }
 
-function InvalidRequirementTable({ items }: { items: DiagnosticsSectionProps["requirements"]["invalidRequirements"] }) {
+function InvalidRequirementTable({ items }: InvalidRequirementTableProps) {
   return (
     <DiagnosticsGroup label="Invalid" count={items.length}>
       <HeaderRow labels={["Source", "Level", "Target", "Warning"]} />
       <TableBody>
         {items.map((item, i) => (
           <TableRow key={i}>
-            <TableCell sx={tableCellSx}>{item.sourceName ?? item.requirement.entityType}</TableCell>
-            <TableCell sx={tableCellSx}>{item.requirement.level}</TableCell>
-            <TableCell sx={tableCellSx}>{item.requirement.target || "—"}</TableCell>
-            <TableCell sx={tableCellSx}>{item.warning}</TableCell>
+            <TableCell sx={TABLE_CELL_SX}>{item.sourceName ?? item.requirement.entityType}</TableCell>
+            <TableCell sx={TABLE_CELL_SX}>{item.requirement.level}</TableCell>
+            <TableCell sx={TABLE_CELL_SX}>{item.requirement.target || "—"}</TableCell>
+            <TableCell sx={TABLE_CELL_SX}>{item.warning}</TableCell>
           </TableRow>
         ))}
       </TableBody>
@@ -173,7 +203,7 @@ function InvalidRequirementTable({ items }: { items: DiagnosticsSectionProps["re
   );
 }
 
-function ModifierTable({ modifiers, label }: { modifiers: Modifier[]; label: string }) {
+function ModifierTable({ modifiers, label }: ModifierTableProps) {
   const groups = useMemo(() => {
     const bySource = new Map<string, RuleCells[]>();
     for (const mod of modifiers) {
@@ -189,7 +219,7 @@ function ModifierTable({ modifiers, label }: { modifiers: Modifier[]; label: str
   return <GroupedRuleTable label={label} count={modifiers.length} lastColumn="Type" groups={groups} />;
 }
 
-function RequirementTable({ groups, label }: { groups: RequirementGroup[]; label: string }) {
+function RequirementTable({ groups, label }: RequirementTableProps) {
   return (
     <GroupedRuleTable
       label={label}
@@ -209,13 +239,13 @@ function RequirementTable({ groups, label }: { groups: RequirementGroup[]; label
   );
 }
 
-function RuleCellsRow({ cells }: { cells: RuleCells }) {
+function RuleCellsRow({ cells }: RuleCellsRowProps) {
   const [target, ...rest] = cells;
   return (
     <>
-      <TableCell sx={tableCellSx}>{target}</TableCell>
+      <TableCell sx={TABLE_CELL_SX}>{target}</TableCell>
       {rest.map((cell, i) => (
-        <TableCell key={i} sx={tableCellSx} align="center">
+        <TableCell key={i} sx={TABLE_CELL_SX} align="center">
           {cell}
         </TableCell>
       ))}
@@ -223,16 +253,16 @@ function RuleCellsRow({ cells }: { cells: RuleCells }) {
   );
 }
 
-function SkippedModifierTable({ items }: { items: DiagnosticsSectionProps["modifiers"]["skippedModifiers"] }) {
+function SkippedModifierTable({ items }: SkippedModifierTableProps) {
   return (
     <DiagnosticsGroup label="Skipped" count={items.length}>
       <HeaderRow labels={["Source Type", "Target", "Warning"]} />
       <TableBody>
         {items.map((item, i) => (
           <TableRow key={i}>
-            <TableCell sx={tableCellSx}>{item.modifier.sourceType}</TableCell>
-            <TableCell sx={tableCellSx}>{item.modifier.target}</TableCell>
-            <TableCell sx={tableCellSx}>{item.warning}</TableCell>
+            <TableCell sx={TABLE_CELL_SX}>{item.modifier.sourceType}</TableCell>
+            <TableCell sx={TABLE_CELL_SX}>{item.modifier.target}</TableCell>
+            <TableCell sx={TABLE_CELL_SX}>{item.warning}</TableCell>
           </TableRow>
         ))}
       </TableBody>
@@ -243,8 +273,8 @@ function SkippedModifierTable({ items }: { items: DiagnosticsSectionProps["modif
 export function DiagnosticsSection({ validation, requirements, modifiers }: DiagnosticsSectionProps) {
   return (
     <Paper sx={{ p: { xs: 2, sm: 3 } }}>
-      <Accordion defaultExpanded={false} disableGutters sx={accordionSx}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={summarySx}>
+      <Accordion defaultExpanded={false} disableGutters sx={ACCORDION_SX}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={SUMMARY_SX}>
           <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
             <Typography variant="h6">Diagnostics</Typography>
             <Chip

@@ -15,7 +15,7 @@ import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormSync, useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { isStillOpen } from "@/client/src/lib/stillOpen.ts";
 import {
   EntityDetailLayout,
@@ -23,6 +23,15 @@ import {
   EntityPageError,
 } from "@/client/src/pages/rulesets/components/index.ts";
 import { entityPageState, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+
+type EditableDetailsProps<TEntity extends EntityBase, TForm extends FieldValues, TKey extends QueryKey> = Pick<
+  RulesetEntityDetailProps<TEntity, TForm, TKey>,
+  "rulesetId" | "entityId" | "section" | "label" | "query"
+> & {
+  editing: EntityEditing<TEntity, TForm>;
+  entity: TEntity;
+  chips: ReactNode;
+};
 
 interface EntityBase {
   id: string;
@@ -66,11 +75,7 @@ function EditableDetails<TEntity extends EntityBase, TForm extends FieldValues, 
   editing,
   entity,
   chips,
-}: Pick<RulesetEntityDetailProps<TEntity, TForm, TKey>, "rulesetId" | "entityId" | "section" | "label" | "query"> & {
-  editing: EntityEditing<TEntity, TForm>;
-  entity: TEntity;
-  chips: ReactNode;
-}) {
+}: EditableDetailsProps<TEntity, TForm, TKey>) {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
@@ -96,9 +101,9 @@ function EditableDetails<TEntity extends EntityBase, TForm extends FieldValues, 
       void queryClient.invalidateQueries({ queryKey: savedKey, exact: true });
       // Editing an inherited entity copies it into this ruleset under a new id:
       // follow it, unless the page has left that entity since.
-      if (isStillOpen(`/rulesets/${rulesetId}/${section}/${sourceId}`) && saved.id !== sourceId) {
+      if (isStillOpen(`/rulesets/${rulesetId}/${section}/${sourceId}`) && saved.id !== sourceId)
         navigate(`/rulesets/${rulesetId}/${section}/${saved.id}`, { replace: true, state: location.state });
-      }
+
       void invalidateSection(queryClient, rulesetId, section);
       snackbar.success(`${label} updated`);
     },
@@ -122,7 +127,7 @@ function EditableDetails<TEntity extends EntityBase, TForm extends FieldValues, 
 
 /** Refetches the section that lists the entity. */
 function invalidateSection(queryClient: QueryClient, rulesetId: string, section: string) {
-  return queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(rulesetId, section) });
+  return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.section(rulesetId, section) });
 }
 
 /**

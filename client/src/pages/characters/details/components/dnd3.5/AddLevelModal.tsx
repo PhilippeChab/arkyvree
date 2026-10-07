@@ -1,13 +1,16 @@
 import { keepPreviousData } from "@tanstack/react-query";
-import { parseResponse } from "hono/client";
 import { useEffect, useMemo, useState } from "react";
 
 import { DiceSpinner } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
 
-import { addStepContent, addStepLabels, type BaseRules, useAddLevelWizard } from "./levelUp/index.ts";
+import {
+  ADD_STEP_CONTENT,
+  ADD_STEP_LABELS,
+  availableClassesQuery,
+  type BaseRules,
+  useAddLevelWizard,
+} from "./levelUp/index.ts";
 import { LevelWizardDialog } from "./LevelWizardDialog.tsx";
 
 interface AddLevelModalProps {
@@ -47,7 +50,7 @@ export function AddLevelModal({ open, onClose, characterId, baseRules }: AddLeve
     isLoading: isLoadingKlasses,
     onScroll: handleKlassListScroll,
   } = useListboxQuery({
-    queryKey: queryKeys.characters.levelUp.availableClasses(
+    ...availableClassesQuery(
       characterId,
       debouncedKlassSearch,
       wizard.allKlassLevelIds,
@@ -55,24 +58,6 @@ export function AddLevelModal({ open, onClose, characterId, baseRules }: AddLeve
       wizard.allSelectedFeatPickString,
       pendingSkillAllocations,
     ),
-    queryFn: async ({ pageParam }) => {
-      return parseResponse(
-        rpc.api.characters.levels[":characterId"]["available-classes"]["$get"]({
-          param: { characterId },
-          query: {
-            limit: "10",
-            page: pageParam.toString(),
-            search: debouncedKlassSearch || undefined,
-            pendingLevelClassLevelIds: wizard.allKlassLevelIds || undefined,
-            pendingLevelAbilityIds: allAbilityIds || undefined,
-            pendingFeatPicks: wizard.allSelectedFeatPickString || undefined,
-            pendingSkillAllocations: pendingSkillAllocations || undefined,
-          },
-        }),
-      );
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
     enabled: open && wizard.activeStep === 0,
     // Adding a class to the plan re-keys the query, which would drop the
     // data while it refetches. Keep the previous result visible so the
@@ -87,9 +72,8 @@ export function AddLevelModal({ open, onClose, characterId, baseRules }: AddLeve
   // refetch during any query-key churn that slipped past keepPreviousData).
   const [quickAddSnapshot, setQuickAddSnapshot] = useState<typeof availableKlasses>([]);
   const hasUnfilteredKlasses = !debouncedKlassSearch && availableKlasses.length > 0;
-  if (hasUnfilteredKlasses && availableKlasses !== quickAddSnapshot) {
-    setQuickAddSnapshot(availableKlasses);
-  }
+  if (hasUnfilteredKlasses && availableKlasses !== quickAddSnapshot) setQuickAddSnapshot(availableKlasses);
+
   const quickAddKlasses = hasUnfilteredKlasses ? availableKlasses : quickAddSnapshot;
 
   // Deferred step (minimum 300ms spinner before heavy render)
@@ -108,7 +92,7 @@ export function AddLevelModal({ open, onClose, characterId, baseRules }: AddLeve
 
   const renderStepContent = (step: number) => {
     if (stepTransitioning) return <DiceSpinner />;
-    const contentType = addStepContent[step];
+    const contentType = ADD_STEP_CONTENT[step];
 
     switch (contentType) {
       case "class-plan":
@@ -153,7 +137,7 @@ export function AddLevelModal({ open, onClose, characterId, baseRules }: AddLeve
       open={open}
       title="Add Level"
       wizard={wizard}
-      stepLabels={addStepLabels}
+      stepLabels={ADD_STEP_LABELS}
       finishLabel="Finish All"
       isSaving={wizard.finalizeMutation.isPending}
     >

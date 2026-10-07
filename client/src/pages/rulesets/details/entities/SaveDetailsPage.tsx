@@ -9,7 +9,7 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import { saveQuery } from "./entityDetailQueries.ts";
 import { RulesetEntityDetail } from "./RulesetEntityDetail.tsx";
 
-export default function SaveDetailPage() {
+export default function SaveDetailsPage() {
   const { id: rulesetId = "", saveId = "" } = useParams<{ id: string; saveId: string }>();
   const param = { id: rulesetId, saveId };
   const endpoint = rpc.api.rulesets[":id"].saves[":saveId"];

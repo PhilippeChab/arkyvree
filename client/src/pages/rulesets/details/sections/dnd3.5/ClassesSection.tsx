@@ -1,11 +1,10 @@
-import { AccessibilityNew as ClassesIcon } from "@mui/icons-material";
 import { Chip, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import type { InferResponseType } from "hono/client";
-import { parseResponse } from "hono/client";
+import { type InferResponseType, parseResponse } from "hono/client";
 import { useCallback } from "react";
 
 import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
+import { ClassesIcon } from "@/client/src/components/icons/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import {
   type ClassFormData,
@@ -17,9 +16,9 @@ import {
   classDetailQuery,
   prefetchClassSection,
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
-import { useEntityFilters } from "@/client/src/pages/rulesets/details/entityFilters.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { classesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
+import { useEntityFilters } from "@/client/src/pages/rulesets/details/useEntityFilters.ts";
 import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 

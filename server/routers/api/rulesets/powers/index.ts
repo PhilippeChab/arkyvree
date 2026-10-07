@@ -1,8 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { validate } from "@/server/middlewares/index.ts";
-import type { SessionContext } from "@/server/middlewares/index.ts";
+import { type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";

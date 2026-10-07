@@ -1,4 +1,3 @@
-import { Archive as ArchiveIcon, Group as GroupIcon, Shield as ShieldIcon } from "@mui/icons-material";
 import { Button, Chip, Container } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -22,11 +21,13 @@ import {
   type SortOption,
   UPDATED_SORTS,
 } from "@/client/src/components/common/index.ts";
+import { ArchiveIcon, GroupIcon, ShieldIcon } from "@/client/src/components/icons/index.ts";
 import { useAttachments, useListParams, usePageTitle, useStaggerAnimation } from "@/client/src/hooks/index.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { characterDetailQuery, type CharacterListFilters, characterListQuery } from "@/client/src/lib/queries.ts";
-import { CreateCharacterDialog } from "@/client/src/pages/characters/components/index.ts";
+
+import { CreateCharacterDialog } from "./components/index.ts";
 
 type CharacterView = CharacterListFilters["view"];
 type SortField = CharacterListFilters["orderBy"];

@@ -112,18 +112,14 @@ function createFunctionNames(context) {
   const listed = [];
   return {
     Program(program) {
-      for (const statement of program.body) {
+      for (const statement of program.body)
         for (const id of exportedFunctions({ declaration: statement })) locals.add(id.name);
-      }
     },
     ExportNamedDeclaration(node) {
       for (const id of exportedFunctions(node)) report(id);
       if (node.source) return;
-      for (const specifier of node.specifiers ?? []) {
-        if (specifier.local?.type === "Identifier" && specifier.exported?.type === "Identifier") {
-          listed.push(specifier);
-        }
-      }
+      for (const specifier of node.specifiers ?? [])
+        if (specifier.local?.type === "Identifier" && specifier.exported?.type === "Identifier") listed.push(specifier);
     },
     ExportDefaultDeclaration(node) {
       for (const id of exportedFunctions(node)) report(id);

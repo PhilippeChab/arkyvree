@@ -1,7 +1,12 @@
 import { Link as MuiLink, Typography } from "@mui/material";
 
+interface ResendCodeLinkProps {
+  onResend: () => void;
+  disabled: boolean;
+}
+
 /** "Didn't receive the code? Resend" under a verification code form. */
-export function ResendCodeLink({ onResend, disabled }: { onResend: () => void; disabled: boolean }) {
+export function ResendCodeLink({ onResend, disabled }: ResendCodeLinkProps) {
   return (
     <Typography variant="body2">
       Didn't receive the code?{" "}

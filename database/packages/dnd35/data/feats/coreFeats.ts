@@ -5,9 +5,10 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import type { WizardSchoolSeed } from "@/database/packages/dnd35/content/wizardSchools/types.ts";
-import { FAVORED_ENEMY_FEATS } from "@/database/packages/dnd35/data/feats/favoredEnemy.ts";
-import { SPELL_WEAPON_FOCUS_FEATS, WEAPON_PROFICIENCY_FEATS } from "@/database/packages/dnd35/data/feats/weapons.ts";
-import { buildWizardSchoolFeats } from "@/database/packages/dnd35/data/feats/wizardSchools.ts";
+
+import { FAVORED_ENEMY_FEATS } from "./favoredEnemy.ts";
+import { SPELL_WEAPON_FOCUS_FEATS, WEAPON_PROFICIENCY_FEATS } from "./weapons.ts";
+import { buildWizardSchoolFeats } from "./wizardSchools.ts";
 
 /** The core rules' hand-written feats, those of its wizard schools (`wizardSchools`) among them. */
 export function buildCoreFeats(wizardSchools: WizardSchoolSeed[]): FeatSeed[] {

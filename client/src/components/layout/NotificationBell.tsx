@@ -1,22 +1,22 @@
-import { Notifications as NotificationsIcon } from "@mui/icons-material";
-import { Badge, Box, Button, Divider, IconButton, Menu, MenuItem, Tooltip, Typography } from "@mui/material";
-import { keyframes } from "@mui/material/styles";
+import { Badge, Box, Button, Divider, IconButton, keyframes, Menu, MenuItem, Tooltip, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
-import { parseResponse } from "hono/client";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { NotificationsIcon } from "@/client/src/components/icons/index.ts";
 import { InviteActionButtons } from "@/client/src/components/invites/index.ts";
 import { useNotificationActions } from "@/client/src/hooks/index.ts";
-import {
-  formatActivityDetails,
-  formatNotificationMessage,
-  formatRelativeTime,
-} from "@/client/src/lib/activityFormatters.ts";
+import { formatActivityDetails, formatNotificationMessage } from "@/client/src/lib/activityFormatters.ts";
+import { ONE_MINUTE } from "@/client/src/lib/durations.ts";
+import { formatRelativeTime } from "@/client/src/lib/formatDate.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { unreadNotificationsQuery } from "@/client/src/lib/queries.ts";
+import type { rpc } from "@/client/src/services/rpc.ts";
+
+interface NotificationSummaryProps {
+  notification: UnreadNotification;
+}
 
 type UnreadNotification = InferResponseType<typeof rpc.api.notifications.unread.$get, 200>["items"][number];
 
@@ -29,7 +29,7 @@ const bellShake = keyframes`
   75% { transform: rotate(4deg); }
 `;
 
-function NotificationSummary({ notification }: { notification: UnreadNotification }) {
+function NotificationSummary({ notification }: NotificationSummaryProps) {
   return (
     <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 1, width: "100%" }}>
       <Typography variant="body2">{formatNotificationMessage(notification.type, notification.data)}</Typography>
@@ -45,11 +45,7 @@ export function NotificationBell() {
   const navigate = useNavigate();
   const actions = useNotificationActions();
 
-  const { data: unreadData } = useQuery({
-    queryKey: queryKeys.notifications.unreadCount,
-    queryFn: () => parseResponse(rpc.api.notifications.unread.$get()),
-    refetchInterval: 60 * 1000,
-  });
+  const { data: unreadData } = useQuery({ ...unreadNotificationsQuery(), refetchInterval: ONE_MINUTE });
 
   const unreadCount = unreadData?.count ?? 0;
   const notifications = unreadData?.items ?? [];

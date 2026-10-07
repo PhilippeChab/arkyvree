@@ -1,6 +1,6 @@
-import { Box, Link, Typography } from "@mui/material";
+import { Box, Link as MuiLink, Typography } from "@mui/material";
 
-import { externalLinks } from "@/client/src/lib/externalLinks.ts";
+import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 
 export function Footer() {
   return (
@@ -20,8 +20,8 @@ export function Footer() {
       }}
     >
       <Typography variant="caption">© {new Date().getFullYear()} Arkyvree</Typography>
-      <Link
-        href={externalLinks.source}
+      <MuiLink
+        href={EXTERNAL_LINKS.source}
         target="_blank"
         rel="noopener noreferrer"
         variant="caption"
@@ -30,7 +30,7 @@ export function Footer() {
         sx={{ display: "inline-flex", alignItems: "center", minHeight: 44, px: 1 }}
       >
         Source
-      </Link>
+      </MuiLink>
     </Box>
   );
 }

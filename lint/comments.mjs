@@ -289,7 +289,9 @@ function wrap(lines, width) {
       if (line && line.length + 1 + word.length > width) {
         wrapped.push(line);
         line = word;
-      } else line = line ? `${line} ${word}` : word;
+      } else {
+        line = line ? `${line} ${word}` : word;
+      }
     }
     if (line) wrapped.push(line);
     words = [];

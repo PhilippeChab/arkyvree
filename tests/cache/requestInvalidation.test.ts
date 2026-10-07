@@ -1,7 +1,6 @@
 import { afterEach, expect, test } from "bun:test";
 
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { runWithRequestCache } from "@/server/database/requestCache.ts";
 import { Feats, Rulesets } from "@/server/repositories/index.ts";
@@ -104,7 +103,9 @@ for (const scenario of ["entity", "cow", "paths"] as const) {
           if (scenario === "cow") {
             expect(copyId).not.toBe(seed.featMap.Toughness);
             expect(rulesetData.canonicalize(seed.featMap.Toughness)).toBe(copyId!);
-          } else expect(rulesetData.featsById.get(local.id)?.description).toBe("after");
+          } else {
+            expect(rulesetData.featsById.get(local.id)?.description).toBe("after");
+          }
         });
       }
     });

@@ -8,7 +8,6 @@ import type {
   Property,
   RequirementEntry,
 } from "@/database/packages/dnd35/content/customization/types.ts";
-import { getClassSpellLevels, type SpellcastingClass } from "@/database/packages/dnd35/seed/spellTable.ts";
 import {
   modifiersInCustomization,
   type propertiesInCustomization,
@@ -16,6 +15,8 @@ import {
 } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
+
+import { getClassSpellLevels, type SpellcastingClass } from "./spellTable.ts";
 
 type Ids = Record<string, string>;
 

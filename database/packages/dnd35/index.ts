@@ -1,6 +1,7 @@
-import { CORE, CORE_RULESET } from "@/database/packages/dnd35/data/core.ts";
-import { RulesetSeeder } from "@/database/packages/dnd35/seed/RulesetSeeder.ts";
 import type { ContentPackage } from "@/database/packages/types.ts";
+
+import { CORE, CORE_RULESET } from "./data/core.ts";
+import { RulesetSeeder } from "./seed/RulesetSeeder.ts";
 
 const dnd35: ContentPackage = {
   name: "dnd35",

@@ -48,11 +48,9 @@ export function parseFamilyOptions(family: string, optionsText: string): string[
   const options: string[] = [];
   for (const option of optionsText.split(/,\s*(?:or\s+)?|\s+or\s+/).map((o) => o.trim())) {
     if (!option) continue;
-    if (/^composite versions? of (?:either|both|each)$/i.test(option)) {
+    if (/^composite versions? of (?:either|both|each)$/i.test(option))
       options.push(...options.map((name) => `Composite ${name}`).filter((name) => names.includes(name)));
-    } else {
-      options.push(nameOf(option, names) ?? option);
-    }
+    else options.push(nameOf(option, names) ?? option);
   }
   return options;
 }

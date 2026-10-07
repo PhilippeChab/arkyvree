@@ -15,9 +15,7 @@ export function Crossfade({ showFirst, first, second, duration = 200 }: Crossfad
 
   useEffect(() => {
     const active = showFirst ? firstRef.current : secondRef.current;
-    if (active) {
-      setHeight(active.scrollHeight);
-    }
+    if (active) setHeight(active.scrollHeight);
   }, [showFirst]);
 
   // Also observe resize of the active child (e.g., path browser list loading)

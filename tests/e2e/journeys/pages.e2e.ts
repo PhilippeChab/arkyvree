@@ -4,8 +4,7 @@
  * opens, and a page that breaks as it renders.
  */
 
-import type { Page } from "@playwright/test";
-import { expect } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 import { parseResponse } from "hono/client";
 
 import { test } from "@/tests/e2e/fixtures.ts";
@@ -99,9 +98,8 @@ test.describe("Every page", () => {
       "saves",
       "abilities",
       "mechanics",
-    ]) {
+    ])
       await visit(page, errors, `/rulesets/${rulesetId}/${section}`, "Pages Fork");
-    }
   });
 
   test("of a ruleset's entity loads, for each kind with a page of its own", async ({ page }) => {
@@ -124,9 +122,8 @@ test.describe("Every page", () => {
     );
     const wizard = items.find((klass) => klass.name === "Wizard")!;
     const errors = watchErrors(page);
-    for (const section of ["levels", "skills", "feat-pools", "spells-known", "spells", "spell-list"]) {
+    for (const section of ["levels", "skills", "feat-pools", "spells-known", "spells", "spell-list"])
       await visit(page, errors, `/rulesets/${rulesetId}/classes/${wizard.id}/${section}`, "Wizard");
-    }
   });
 
   for (const list of ["races", "feats", "items", "powers"] as const) {
@@ -134,9 +131,8 @@ test.describe("Every page", () => {
       const rulesetId = await forkCoreRuleset(page, uniqueName("Customization Pages Fork"));
       const entity = await firstOf(page, rulesetId, list);
       const errors = watchErrors(page);
-      for (const section of ["", "/properties", "/modifiers", "/requirements"]) {
+      for (const section of ["", "/properties", "/modifiers", "/requirements"])
         await visit(page, errors, `/rulesets/${rulesetId}/${list}/${entity.id}/customization${section}`, entity.name);
-      }
     });
   }
 

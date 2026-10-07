@@ -2,15 +2,16 @@
 
 import { CORE_BOOK, listReferenceBooks } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
-import { buildClassDomainPickFeats } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/domainPicks.ts";
-import { buildClassFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/featSeeds.ts";
-import { getClassSpellLists } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/spellSlots.ts";
-import { buildBookDomainSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/domains.ts";
-import { buildSpellSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/spells.ts";
-import { buildWizardSchoolSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/wizardSchools.ts";
 import { CLERIC_DOMAIN, specialistSpells } from "@/database/packages/dnd35/content/aptitudes/names.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
+
+import { buildClassDomainPickFeats } from "./classes/domainPicks.ts";
+import { buildClassFeatSeeds } from "./classes/featSeeds.ts";
+import { getClassSpellLists } from "./classes/spellSlots.ts";
+import { buildBookDomainSeeds } from "./domains.ts";
+import { buildSpellSeeds } from "./spells.ts";
+import { buildWizardSchoolSeeds } from "./wizardSchools.ts";
 
 /** A book's aptitudes: its feats' (`feats`, and its classes'), its classes' and spell lists', its domains' feat pools. */
 export function collectAptitudes(feats: Pick<FeatSeed, "name" | "aptitudes" | "modifiers">[], book: string): string[] {
@@ -24,15 +25,11 @@ export function collectAptitudes(feats: Pick<FeatSeed, "name" | "aptitudes" | "m
     for (const list of getClassSpellLists(ref)) names.add(list);
 
     // From detected bonusFeatLists
-    if (ref.detected?.bonusFeatLists) {
-      for (const list of ref.detected.bonusFeatLists) names.add(list.aptitude);
-    }
+    if (ref.detected?.bonusFeatLists) for (const list of ref.detected.bonusFeatLists) names.add(list.aptitude);
   }
 
   // From feat aptitudes
-  for (const feat of allFeats) {
-    for (const apt of feat.aptitudes) names.add(apt);
-  }
+  for (const feat of allFeats) for (const apt of feat.aptitudes) names.add(apt);
 
   // From feat modifier targets referencing aptitudes
   for (const feat of allFeats) {
@@ -57,11 +54,7 @@ export function collectAptitudes(feats: Pick<FeatSeed, "name" | "aptitudes" | "m
 
   // Wizard school aptitudes
   const wsRef = ReferenceLoader.find(book, "wizardSchool");
-  if (wsRef) {
-    for (const school of buildWizardSchoolSeeds(wsRef)) {
-      names.add(specialistSpells(school.name));
-    }
-  }
+  if (wsRef) for (const school of buildWizardSchoolSeeds(wsRef)) names.add(specialistSpells(school.name));
 
   // For extension books: collect aptitudes referenced by this book's spells
   // so we can keep sibling spell list aptitudes (each extension creates its own copy).
@@ -70,9 +63,7 @@ export function collectAptitudes(feats: Pick<FeatSeed, "name" | "aptitudes" | "m
     const spellRef = ReferenceLoader.find(book, "spell");
     if (spellRef) {
       const { spells } = buildSpellSeeds(spellRef, book);
-      for (const spell of spells) {
-        for (const apt of spell.aptitudes) spellAptitudes.add(apt);
-      }
+      for (const spell of spells) for (const apt of spell.aptitudes) spellAptitudes.add(apt);
     }
   }
 
@@ -84,11 +75,8 @@ export function collectAptitudes(feats: Pick<FeatSeed, "name" | "aptitudes" | "m
     for (const { ref } of ReferenceLoader.loadClasses(other)) {
       if (ref.mapping.classFeatureAptitude) names.delete(ref.mapping.classFeatureAptitude);
       for (const spellApt of getClassSpellLists(ref)) {
-        if (isSibling && spellAptitudes.has(spellApt)) {
-          names.add(spellApt);
-        } else {
-          names.delete(spellApt);
-        }
+        if (isSibling && spellAptitudes.has(spellApt)) names.add(spellApt);
+        else names.delete(spellApt);
       }
     }
   }

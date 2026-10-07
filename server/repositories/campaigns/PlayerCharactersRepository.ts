@@ -1,5 +1,4 @@
-import { and, eq, inArray, isNull, not, or } from "drizzle-orm";
-import type { InferInsertModel } from "drizzle-orm";
+import { and, eq, inArray, type InferInsertModel, isNull, not, or } from "drizzle-orm";
 
 import {
   campaignsInCampaign,

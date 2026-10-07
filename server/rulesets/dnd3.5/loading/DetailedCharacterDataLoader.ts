@@ -11,23 +11,6 @@ import {
   Players,
   Requirements,
 } from "@/server/repositories/index.ts";
-import {
-  collectModifiers,
-  toCustomizedFeats,
-  toCustomizedInventory,
-  toCustomizedKlassLevels,
-  toCustomizedPowers,
-  toCustomizedRace,
-} from "@/server/rulesets/dnd3.5/loading/customizations.ts";
-import { buildPicks, fetchPicks, resolveLevels } from "@/server/rulesets/dnd3.5/loading/picks.ts";
-import { resolveVirtualPossessions } from "@/server/rulesets/dnd3.5/loading/possessions.ts";
-import {
-  buildAbilityScore,
-  readCachedRows,
-  readKlassProperties,
-  readRulesetFields,
-  readRulesetProperties,
-} from "@/server/rulesets/dnd3.5/loading/rulesetReadings.ts";
 import type { Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
 import type { SkillFlags } from "@/server/rulesets/engine/module/index.ts";
 import type {
@@ -36,6 +19,24 @@ import type {
   PreloadedRulesetData,
 } from "@/server/rulesets/engine/types.ts";
 import type { Campaign, Character, CharacterLevel, Modifier, Player, Race, Ruleset } from "@/shared/relations.ts";
+
+import {
+  collectModifiers,
+  toCustomizedFeats,
+  toCustomizedInventory,
+  toCustomizedKlassLevels,
+  toCustomizedPowers,
+  toCustomizedRace,
+} from "./customizations.ts";
+import { buildPicks, fetchPicks, resolveLevels } from "./picks.ts";
+import { resolveVirtualPossessions } from "./possessions.ts";
+import {
+  buildAbilityScore,
+  readCachedRows,
+  readKlassProperties,
+  readRulesetFields,
+  readRulesetProperties,
+} from "./rulesetReadings.ts";
 
 /** D&D 3.5-specific extension of LoadedCharacterData with spellcasting and skill properties. */
 export interface Dnd35LoadedCharacterData extends LoadedCharacterData {
@@ -99,9 +100,9 @@ export default class DetailedCharacterDataLoader {
     projectedData?: Dnd35ProjectedCharacterData,
     preloaded?: PreloadedCharacterData | PreloadedRulesetData,
   ): Promise<Dnd35LoadedCharacterData> {
-    if (!preloaded) {
+    if (!preloaded)
       throw new Error("DetailedCharacterDataLoader.load() requires preloaded ruleset data — call via withRulesetScope");
-    }
+
     const shared: SharedCharacterData =
       "_shared" in preloaded
         ? (preloaded._shared as SharedCharacterData)
@@ -191,9 +192,7 @@ export default class DetailedCharacterDataLoader {
     // Character's race — read from the composed ruleset cache.
     // racesById auto-resolves stored pre-COW ids (RulesetComposition).
     const race = rulesetData.racesById.get(this.character.raceId);
-    if (!race) {
-      throw new Error("Race not found");
-    }
+    if (!race) throw new Error("Race not found");
 
     // Campaign context + character core data, all in parallel. Ruleset /
     // cowData / rulesetData arrive pre-loaded from `withRulesetScope`.

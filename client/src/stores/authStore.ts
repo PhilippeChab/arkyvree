@@ -18,7 +18,7 @@ interface AuthState {
   updateUser: (patch: Partial<AuthUser>) => void;
 }
 
-const signedOut = {
+const SIGNED_OUT = {
   user: null,
   isAuthenticated: false,
   pendingVerificationEmail: null,
@@ -29,10 +29,10 @@ const signedOut = {
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
-      ...signedOut,
+      ...SIGNED_OUT,
 
       clearSession: ({ byUser = false } = {}) => {
-        set({ ...signedOut, signedOutByUser: byUser });
+        set({ ...SIGNED_OUT, signedOutByUser: byUser });
       },
 
       updateUser: (patch) => {

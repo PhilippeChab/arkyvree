@@ -1,9 +1,9 @@
 import { expect, type Page } from "@playwright/test";
 import { parseResponse } from "hono/client";
 
-import { apiOf } from "@/tests/e2e/support/api.ts";
-import { apiResponse } from "@/tests/e2e/support/page.ts";
-import { coreRulesetId } from "@/tests/e2e/support/rulesets.ts";
+import { apiOf } from "./api.ts";
+import { apiResponse } from "./page.ts";
+import { coreRulesetId } from "./rulesets.ts";
 
 /** Creates a campaign on the core rules through the API, and opens its page. Returns its id. */
 export async function createCampaign(page: Page, name: string) {

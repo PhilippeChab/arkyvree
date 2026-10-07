@@ -1,4 +1,4 @@
-import { SKILL_MAP } from "@/database/packages/dnd35-from-parser/tools/detect/targets.ts";
+import { SKILL_MAP } from "./targets.ts";
 
 /** A skill bonus a text gives: its skill's slug, or none when the name isn't a skill (`name`), and where it was read. */
 export type SkillBonus = { value: string; name: string; slug: string | undefined; index: number };
@@ -24,9 +24,11 @@ function splitSkillList(list: string): string[] {
   let depth = 0;
   let start = 0;
   for (let i = 0; i < list.length; i++) {
-    if (list[i] === "(") depth++;
-    else if (list[i] === ")") depth = Math.max(0, depth - 1);
-    else if (depth === 0) {
+    if (list[i] === "(") {
+      depth++;
+    } else if (list[i] === ")") {
+      depth = Math.max(0, depth - 1);
+    } else if (depth === 0) {
       const separator = list.slice(i).match(/^(?:\s*,\s*(?:and\s+)?|\s+and\s+)/i);
       if (!separator) continue;
       names.push(list.slice(start, i));

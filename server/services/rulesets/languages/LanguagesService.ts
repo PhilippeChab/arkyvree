@@ -1,8 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { languagesInRules } from "@/drizzle/schema.ts";
-import { findScopedEntity, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { findScopedEntity, RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
@@ -34,9 +33,7 @@ class LanguagesService {
         });
         const language = rows[0];
 
-        if (tombstoneAncestorId) {
-          await edit.repointTombstone(tx, "languages", tombstoneAncestorId, language.id);
-        }
+        if (tombstoneAncestorId) await edit.repointTombstone(tx, "languages", tombstoneAncestorId, language.id);
 
         await createActivityWithNotifications(tx, {
           userId: session.userId,
@@ -134,9 +131,8 @@ class LanguagesService {
 
         const { updatedAt: _u, ...languageData } = body;
         const rows = await Languages.update(tx, languageData, { id: targetId, expectedUpdatedAt });
-        if (expectedUpdatedAt && rows.length === 0) {
-          throw new ConflictError(STALE_ENTITY_MESSAGE);
-        }
+        if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
+
         const updatedLanguage = rows[0];
 
         await createActivityWithNotifications(tx, {

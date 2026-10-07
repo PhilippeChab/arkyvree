@@ -1,14 +1,23 @@
-import { skipToken, useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useListboxQuery } from "@/client/src/hooks/index.ts";
 import { rollDie } from "@/client/src/lib/dice.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { getLevelUpSections } from "@/client/src/pages/characters/details/components/dnd3.5/levelUpFactory.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import { featPickString, fitFeats, openPoolOf } from "./fitPicks.ts";
+import {
+  attributeSlotsQuery,
+  availableFeatsGroupedQuery,
+  availablePowersQuery,
+  featSlotsQuery,
+  type PickerLevel,
+  powerSlotsQuery,
+  skillSlotsQuery,
+  type StepLevel,
+} from "./levelUpQueries.ts";
 import type { BaseRules, LevelUpFormData } from "./levelUpTypes.ts";
 import { pickIds, useLevelWizardBase } from "./useLevelWizardBase.ts";
 
@@ -22,9 +31,9 @@ interface UseLevelWizardParams {
 
 export type LevelWizard = ReturnType<typeof useLevelWizard>;
 
-export const editStepContent = ["hp", "attributes", "skills", "feats", "powers", "review"] as const;
+export const EDIT_STEP_CONTENT = ["hp", "attributes", "skills", "feats", "powers", "review"] as const;
 
-export const editStepLabels = [
+export const EDIT_STEP_LABELS = [
   "Select HP",
   "Attribute Increase",
   "Select Skills",
@@ -55,10 +64,10 @@ export function useLevelWizard({ open, onClose, characterId, baseRules, editingL
   } = base;
   const levelUpSections = getLevelUpSections(baseRules);
 
-  const attributeStep = editStepContent.indexOf("attributes");
-  const skillsStep = editStepContent.indexOf("skills");
-  const featsStep = editStepContent.indexOf("feats");
-  const powersStep = editStepContent.indexOf("powers");
+  const attributeStep = EDIT_STEP_CONTENT.indexOf("attributes");
+  const skillsStep = EDIT_STEP_CONTENT.indexOf("skills");
+  const featsStep = EDIT_STEP_CONTENT.indexOf("feats");
+  const powersStep = EDIT_STEP_CONTENT.indexOf("powers");
 
   // HP roll animation
   const [hpRolling, setHpRolling] = useState(false);
@@ -84,12 +93,10 @@ export function useLevelWizard({ open, onClose, characterId, baseRules, editingL
   const selectedHP = watch("selectedHP");
   const selectedAttribute = watch("selectedAttribute");
 
-  const levels = rpc.api.characters.levels[":characterId"];
-  const param = { characterId };
   // The edited level's class and level, which the slot and picker endpoints take.
-  const levelQuery = selectedClass && {
-    classId: selectedClass.id,
-    level: selectedClass.nextLevel.toString(),
+  const step: StepLevel = {
+    classId: selectedClass?.id,
+    level: selectedClass?.nextLevel,
     characterLevelId: editingLevelId,
   };
 
@@ -97,41 +104,22 @@ export function useLevelWizard({ open, onClose, characterId, baseRules, editingL
     data: attributeData,
     isLoading: isLoadingAttributes,
     error: attributesError,
-  } = useQuery({
-    queryKey: queryKeys.characters.levelUp.attributes(characterId, editingLevelId),
-    queryFn:
-      open && activeStep === attributeStep
-        ? () => parseResponse(levels["attribute-slots"].$get({ param, query: { characterLevelId: editingLevelId } }))
-        : skipToken,
-  });
+  } = useQuery({ ...attributeSlotsQuery(characterId, editingLevelId), enabled: open && activeStep === attributeStep });
 
   const {
     data: skillData,
     isLoading: isLoadingSkills,
     error: skillsError,
   } = useQuery({
-    queryKey: queryKeys.characters.levelUp.skills(characterId, selectedClass?.id, editingLevelId, selectedAttribute),
-    queryFn:
-      open && activeStep === skillsStep && levelQuery
-        ? () =>
-            parseResponse(
-              levels["skill-slots"].$get({
-                param,
-                query: { ...levelQuery, abilityId: selectedAttribute || undefined },
-              }),
-            )
-        : skipToken,
+    ...skillSlotsQuery(characterId, step, selectedAttribute),
+    enabled: open && activeStep === skillsStep,
   });
 
   const {
     data: featData,
     isLoading: isLoadingFeats,
     error: featsError,
-  } = useQuery({
-    queryKey: queryKeys.characters.levelUp.feats(characterId, selectedClass?.id, editingLevelId),
-    queryFn:
-      open && levelQuery ? () => parseResponse(levels["feat-slots"].$get({ param, query: levelQuery })) : skipToken,
-  });
+  } = useQuery({ ...featSlotsQuery(characterId, step), enabled: open });
 
   // The feats, fitted to the level's slots
   const { feats: selectedFeats, pools: adjustedFeatPools } = useMemo(
@@ -140,6 +128,7 @@ export function useLevelWizard({ open, onClose, characterId, baseRules, editingL
   );
   const selectedAptitude = openPoolOf(base.selectedAptitude, adjustedFeatPools);
   const allSelectedFeatPickString = useMemo(() => featPickString(selectedFeats), [selectedFeats]);
+  const picker: PickerLevel = { ...step, selectedFeatPicks: allSelectedFeatPickString };
 
   // Grouped available feats
   const {
@@ -148,33 +137,8 @@ export function useLevelWizard({ open, onClose, characterId, baseRules, editingL
     onScroll: handleFeatsScroll,
     isFetchingNextPage: isFetchingNextFeatsPage,
   } = useListboxQuery({
-    queryKey: queryKeys.characters.levelUp.availableFeatsGrouped(
-      characterId,
-      selectedAptitude,
-      selectedClass?.id,
-      debouncedFeatSearch,
-      editingLevelId,
-      allSelectedFeatPickString,
-    ),
-    queryFn:
-      open && activeStep === featsStep && selectedAptitude && levelQuery
-        ? ({ pageParam }) =>
-            parseResponse(
-              levels["available-feats"].grouped.$get({
-                param,
-                query: {
-                  ...levelQuery,
-                  aptitudeId: selectedAptitude,
-                  limit: "20",
-                  page: pageParam.toString(),
-                  search: debouncedFeatSearch || undefined,
-                  selectedFeatPicks: allSelectedFeatPickString || undefined,
-                },
-              }),
-            )
-        : skipToken,
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    ...availableFeatsGroupedQuery(characterId, selectedAptitude, debouncedFeatSearch, picker),
+    enabled: open && activeStep === featsStep,
   });
 
   // Powers queries
@@ -182,11 +146,7 @@ export function useLevelWizard({ open, onClose, characterId, baseRules, editingL
     data: powerData,
     isLoading: isLoadingPowers,
     error: powersError,
-  } = useQuery({
-    queryKey: queryKeys.characters.levelUp.powers(characterId, selectedClass?.id, editingLevelId),
-    queryFn:
-      open && levelQuery ? () => parseResponse(levels["power-slots"].$get({ param, query: levelQuery })) : skipToken,
-  });
+  } = useQuery({ ...powerSlotsQuery(characterId, step), enabled: open });
 
   const {
     items: availablePowers,
@@ -194,35 +154,8 @@ export function useLevelWizard({ open, onClose, characterId, baseRules, editingL
     onScroll: handlePowersScroll,
     isFetchingNextPage: isFetchingNextPowersPage,
   } = useListboxQuery({
-    queryKey: queryKeys.characters.levelUp.availablePowers(
-      characterId,
-      selectedPowerAptitude,
-      selectedPowerLevel,
-      selectedClass?.id,
-      debouncedPowerSearch,
-      editingLevelId,
-      allSelectedFeatPickString,
-    ),
-    queryFn:
-      open && activeStep === powersStep && selectedPowerAptitude && levelQuery
-        ? ({ pageParam }) =>
-            parseResponse(
-              levels["available-powers"].$get({
-                param,
-                query: {
-                  ...levelQuery,
-                  aptitudeId: selectedPowerAptitude,
-                  powerLevel: selectedPowerLevel?.toString(),
-                  limit: "20",
-                  page: pageParam.toString(),
-                  search: debouncedPowerSearch || undefined,
-                  selectedFeatPicks: allSelectedFeatPickString || undefined,
-                },
-              }),
-            )
-        : skipToken,
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    ...availablePowersQuery(characterId, selectedPowerAptitude, selectedPowerLevel, debouncedPowerSearch, picker),
+    enabled: open && activeStep === powersStep,
   });
 
   const finalizeMutation = useMutation({
@@ -252,14 +185,11 @@ export function useLevelWizard({ open, onClose, characterId, baseRules, editingL
     onError: handleSaveError,
   });
 
-  const isLastStep = activeStep === editStepContent.length - 1;
+  const isLastStep = activeStep === EDIT_STEP_CONTENT.length - 1;
 
   const handleNext = useCallback(() => {
-    if (isLastStep) {
-      handleSubmit((data) => finalizeMutation.mutate({ data }))();
-    } else {
-      setActiveStep((prev) => prev + 1);
-    }
+    if (isLastStep) handleSubmit((data) => finalizeMutation.mutate({ data }))();
+    else setActiveStep((prev) => prev + 1);
   }, [isLastStep, handleSubmit, finalizeMutation, setActiveStep]);
 
   const handleForceSubmit = useCallback(() => {
@@ -302,7 +232,7 @@ export function useLevelWizard({ open, onClose, characterId, baseRules, editingL
   );
 
   // The dialog also disables Next while the save runs.
-  const isNextDisabled = editStepContent[activeStep] === "hp" && !selectedHP;
+  const isNextDisabled = EDIT_STEP_CONTENT[activeStep] === "hp" && !selectedHP;
 
   return {
     ...base,

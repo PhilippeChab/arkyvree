@@ -8,7 +8,8 @@ import { VerificationCodeInput } from "@/client/src/components/auth/index.ts";
 import { AnimatedAlert, DiceSpinner, FormDialog } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { errorMessage } from "@/client/src/lib/errorMessage.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { EMPTY_VERIFICATION_CODE } from "@/client/src/lib/verificationCode.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
@@ -43,24 +44,24 @@ export function EmailChangeVerificationDialog({ open, onClose, pendingEmail }: E
   const verifyMutation = useMutation({
     mutationFn: (code: string) => parseResponse(rpc.auth["verify-email-change"].$post({ json: { code } })),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.auth.me });
       updateUser({ emailAddress: data.emailAddress, pendingEmailAddress: data.pendingEmailAddress });
       snackbar.success("Email address updated successfully");
       handleClose();
     },
-    onError: (error) => setError(error.message),
+    onError: (error) => setError(errorMessage(error, "Failed to verify the code")),
   });
 
   const resendMutation = useMutation({
-    mutationFn: () => rpc.auth["resend-email-change"].$post(),
+    mutationFn: () => parseResponse(rpc.auth["resend-email-change"].$post()),
     onSuccess: () => {
       setResendSuccess(true);
       setError(null);
     },
-    onError: (error) => setError(error.message),
+    onError: (error) => setError(errorMessage(error, "Failed to resend the code")),
   });
 
-  const onSubmit = (data: EmailVerificationFormData) => {
+  const handleVerify = (data: EmailVerificationFormData) => {
     setError(null);
     setResendSuccess(false);
     verifyMutation.mutate(data.digits.join(""));
@@ -71,7 +72,7 @@ export function EmailChangeVerificationDialog({ open, onClose, pendingEmail }: E
   return (
     <FormDialog open={open} onClose={handleClose} form={form} isLoading={verifyMutation.isPending} maxWidth="xs">
       <DialogTitle>Verify New Email</DialogTitle>
-      <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
+      <form onSubmit={form.handleSubmit(handleVerify)} noValidate>
         <DialogContent>
           <Typography variant="body2" sx={{ mb: 2 }}>
             We sent an 8-digit code to <strong>{pendingEmail}</strong>

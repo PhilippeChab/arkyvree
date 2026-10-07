@@ -6,10 +6,11 @@ import { parseAptitudeJoin } from "@/server/rulesets/dnd3.5/aptitudes/aptitudeTa
 import type ClassesComponent from "@/server/rulesets/dnd3.5/classes/ClassesComponent.ts";
 import type PowerGroupingsComponent from "@/server/rulesets/dnd3.5/powers/PowerGroupingsComponent.ts";
 import type PowersComponent from "@/server/rulesets/dnd3.5/powers/PowersComponent.ts";
-import { collectClassLists } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
 import type ModifierEvaluator from "@/server/rulesets/engine/modifiers/ModifierEvaluator.ts";
 import type { SpellTagLists } from "@/shared/dnd3.5/spellGroups.ts";
 import type { KlassLevel, Modifier, Power, Property } from "@/shared/relations.ts";
+
+import { collectClassLists } from "./spellLists.ts";
 
 /** What a character's spellcasting holds: its bonus caster levels, its aptitudes' powers, its spell tags. */
 export default abstract class SpellcastingState {
@@ -74,9 +75,9 @@ export default abstract class SpellcastingState {
   /** The class of each of the character's class levels. */
   protected classNameByKlassLevelId() {
     const classNames = new Map<string, string>();
-    for (const [className, klassData] of Object.entries(this.classes.getCharacterClasses())) {
+    for (const [className, klassData] of Object.entries(this.classes.getCharacterClasses()))
       for (const level of klassData.levels) classNames.set(level.klassLevel.id, className);
-    }
+
     return classNames;
   }
 
@@ -89,9 +90,9 @@ export default abstract class SpellcastingState {
     const classes = Object.entries(this.classes.getClasses());
     const classNameByKlassLevelId = this.classNameByKlassLevelId();
     const classOf = (modifier: Modifier) => {
-      if (modifier.sourceType === "klass_levels") {
+      if (modifier.sourceType === "klass_levels")
         return classNameByKlassLevelId.get(modifier.sourceId) ?? this.bonusKlassLevelClassMap.get(modifier.sourceId);
-      }
+
       if (modifier.sourceType !== "feats") return undefined;
       return classes.find(([, klassData]) =>
         klassData.levels.some((level) => level.feats.some((feat) => feat.id === modifier.sourceId)),

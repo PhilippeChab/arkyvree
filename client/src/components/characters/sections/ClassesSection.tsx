@@ -1,10 +1,4 @@
 import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  ExpandMore as ExpandMoreIcon,
-  Remove as RemoveIcon,
-} from "@mui/icons-material";
-import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
@@ -16,10 +10,11 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import type React from "react";
+import { type MouseEvent } from "react";
 import { Link } from "react-router-dom";
 
 import { BlankState } from "@/client/src/components/common/index.ts";
+import { AddIcon, EditIcon, ExpandMoreIcon, RemoveIcon } from "@/client/src/components/icons/index.ts";
 import type { EditingLevel } from "@/client/src/types/character.ts";
 
 import type { CharacterData } from "./characterData.ts";
@@ -51,12 +46,12 @@ export function ClassesSection({
         !readOnly && (
           <Stack direction="row" spacing={0.5}>
             <Tooltip title="Add Level">
-              <IconButton size="small" onClick={onAddLevel}>
+              <IconButton aria-label="Add Level" size="small" onClick={onAddLevel}>
                 <AddIcon fontSize="small" />
               </IconButton>
             </Tooltip>
             <Tooltip title="Remove Level">
-              <IconButton size="small" onClick={onRemoveLevel}>
+              <IconButton aria-label="Remove Level" size="small" onClick={onRemoveLevel}>
                 <RemoveIcon fontSize="small" />
               </IconButton>
             </Tooltip>
@@ -120,7 +115,7 @@ export function ClassesSection({
                           to={classLink}
                           target="_blank"
                           underline="hover"
-                          onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                          onClick={(e: MouseEvent) => e.stopPropagation()}
                         >
                           {className}
                         </MuiLink>{" "}

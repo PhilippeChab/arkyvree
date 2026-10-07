@@ -1,7 +1,5 @@
-import { ListAlt as PropertiesIcon } from "@mui/icons-material";
 import { Chip, Typography } from "@mui/material";
-import type { InferRequestType, InferResponseType } from "hono/client";
-import { parseResponse } from "hono/client";
+import { type InferRequestType, type InferResponseType, parseResponse } from "hono/client";
 import { Controller } from "react-hook-form";
 
 import {
@@ -12,7 +10,9 @@ import {
   SectionContent,
 } from "@/client/src/components/common/index.ts";
 import { PropertyTypeInput, PropertyValueInput } from "@/client/src/components/customization/index.ts";
+import { ListAltIcon } from "@/client/src/components/icons/index.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
+import { requiredRules } from "@/client/src/lib/validation.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
@@ -168,7 +168,7 @@ export function PropertiesSection({
         onEdit={handleEditProperty}
         onDelete={handleDelete}
         renderCell={renderCell}
-        emptyIcon={PropertiesIcon}
+        emptyIcon={ListAltIcon}
         emptyTitle="No properties"
         emptyDescription="No properties defined for this entity."
       />
@@ -192,7 +192,7 @@ export function PropertiesSection({
         <Controller
           control={createForm.control}
           name="value"
-          rules={{ required: "Value is required" }}
+          rules={requiredRules("Value is required")}
           render={({ field, fieldState }) => (
             <PropertyValueInput
               value={field.value || ""}
@@ -242,7 +242,7 @@ export function PropertiesSection({
         <Controller
           control={editForm.control}
           name="value"
-          rules={{ required: "Value is required" }}
+          rules={requiredRules("Value is required")}
           render={({ field, fieldState }) => (
             <PropertyValueInput
               value={field.value || ""}

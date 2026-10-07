@@ -1,8 +1,7 @@
 import { afterEach, expect, test } from "bun:test";
 
 import MemoryCache from "@/server/cache/MemoryCache.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Rulesets } from "@/server/repositories/index.ts";
 import { copyEntity, createSeededTestRuleset } from "@/tests/support/rulesets.ts";

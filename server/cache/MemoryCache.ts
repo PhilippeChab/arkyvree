@@ -53,9 +53,7 @@ export default class MemoryCache<T> {
       }
     }
 
-    if (oldestKey) {
-      this.store.delete(oldestKey);
-    }
+    if (oldestKey) this.store.delete(oldestKey);
   }
 
   private invalidate(key: string): void {
@@ -66,11 +64,7 @@ export default class MemoryCache<T> {
   /** Remove all expired entries. Called automatically by the sweep timer. */
   private sweep(): void {
     const now = Date.now();
-    for (const [key, entry] of this.store) {
-      if (now > entry.expiresAt && !this.pinned.has(key)) {
-        this.store.delete(key);
-      }
-    }
+    for (const [key, entry] of this.store) if (now > entry.expiresAt && !this.pinned.has(key)) this.store.delete(key);
   }
 
   get(key: string): T | undefined {
@@ -101,9 +95,7 @@ export default class MemoryCache<T> {
   }
 
   invalidateWhere(matches: (value: T) => boolean): void {
-    for (const [key, entry] of this.store) {
-      if (matches(entry.value)) this.invalidate(key);
-    }
+    for (const [key, entry] of this.store) if (matches(entry.value)) this.invalidate(key);
   }
 
   isPinned(key: string): boolean {

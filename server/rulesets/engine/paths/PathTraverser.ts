@@ -92,9 +92,8 @@ export default class PathTraverser {
     if (maxDepth > 10) return PathTraverser.failed(component, lastKey, `Max depth reached`);
     maxDepth++;
     const [next, ...rest] = elements;
-    if (next === "*" || next.endsWith("*")) {
+    if (next === "*" || next.endsWith("*"))
       return this.traverseWildcard(component, next, rest, currentValue, lastKey, maxDepth, pathParts);
-    }
 
     const formattedKey = stripSeparators(next);
     // Only a skill's name also reaches its subtypes, the skills its name starts ("craft" → "craftarmorsmithing").
@@ -122,9 +121,8 @@ export default class PathTraverser {
     }
 
     const path = [...pathParts, formattedKey];
-    if (rest.length !== 0) {
-      return this.traverse(component, rest, currentValue[key], key, maxDepth, path);
-    }
+    if (rest.length !== 0) return this.traverse(component, rest, currentValue[key], key, maxDepth, path);
+
     return [
       {
         component,

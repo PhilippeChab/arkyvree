@@ -45,9 +45,7 @@ export async function deleteEntityWithCascade(tx: Db, entityType: RulesetEntityT
         await KlassLevelPowers.delete(tx, { klassLevelId: levelId });
         await KlassLevelSaves.delete(tx, { klassLevelId: levelId });
       }
-      for (const level of levels) {
-        await KlassLevels.delete(tx, { id: level.id });
-      }
+      for (const level of levels) await KlassLevels.delete(tx, { id: level.id });
     }
     await KlassSkills.delete(tx, { klassId: entityId });
   }

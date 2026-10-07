@@ -1,4 +1,3 @@
-import { ExpandLess as ExpandLessIcon, ExpandMore as ExpandMoreIcon, Spoke as FeatsIcon } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -14,9 +13,8 @@ import {
   ToggleButton,
   Typography,
 } from "@mui/material";
-import { keepPreviousData, skipToken, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import type { InferResponseType } from "hono/client";
-import { parseResponse } from "hono/client";
+import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { type InferResponseType, parseResponse } from "hono/client";
 import { useCallback, useState } from "react";
 
 import {
@@ -31,11 +29,11 @@ import {
   SectionContent,
 } from "@/client/src/components/common/index.ts";
 import { type Aptitude, AptitudeAutocomplete } from "@/client/src/components/customization/index.ts";
+import { ExpandLessIcon, ExpandMoreIcon, FeatsIcon } from "@/client/src/components/icons/index.ts";
 import { useSearchParam, useSearchText, useToggleSet } from "@/client/src/hooks/index.ts";
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
-import { pageItems } from "@/client/src/lib/pageItems.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import { EMPTY_FEAT, type FeatFormData, FeatFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import {
   AptitudeChipsCell,
@@ -48,15 +46,30 @@ import {
 } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
-import { featsGroupedQuery, featsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
+import { featFamilyQuery, featsGroupedQuery, featsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 type Feat = FeatsPaginated["items"][number];
-type FeatsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["feats"]["$get"], 200>;
 
+type FeatsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["feats"]["$get"], 200>;
 type GroupedFeatRow = GroupedPaginated["items"][number];
+
 type GroupedPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["feats"]["grouped"]["$get"], 200>;
+interface GroupedRowProps {
+  row: GroupedFeatRow;
+  rulesetId: string;
+  childOnly: boolean;
+  /** Set on a row that groups several variants. */
+  family: string | null;
+  isExpanded: boolean;
+  rowIndex: number;
+  onToggleFamily: (family: string) => void;
+  onVariantClick: (feat: Feat) => void;
+  onVariantMouseEnter: (feat: Feat) => void;
+  onRowClick: (feat: Pick<Feat, "id">) => void;
+  onRowMouseEnter: (feat: Pick<Feat, "id">) => void;
+}
 
 const FEATS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
@@ -82,41 +95,8 @@ function GroupedRow({
   onVariantMouseEnter,
   onRowClick,
   onRowMouseEnter,
-}: {
-  row: GroupedFeatRow;
-  rulesetId: string;
-  childOnly: boolean;
-  /** Set on a row that groups several variants. */
-  family: string | null;
-  isExpanded: boolean;
-  rowIndex: number;
-  onToggleFamily: (family: string) => void;
-  onVariantClick: (feat: Feat) => void;
-  onVariantMouseEnter: (feat: Feat) => void;
-  onRowClick: (feat: Pick<Feat, "id">) => void;
-  onRowMouseEnter: (feat: Pick<Feat, "id">) => void;
-}) {
-  const variantQuery = useInfiniteQuery({
-    queryKey: queryKeys.rulesets.familyVariants(rulesetId, family ?? "", childOnly),
-    queryFn: family
-      ? async ({ pageParam }) => {
-          return parseResponse(
-            rpc.api.rulesets[":id"].feats.$get({
-              param: { id: rulesetId },
-              query: {
-                limit: "50",
-                page: pageParam.toString(),
-                family,
-                childOnly: childOnly ? "true" : undefined,
-              },
-            }),
-          );
-        }
-      : skipToken,
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
-    enabled: isExpanded,
-  });
+}: GroupedRowProps) {
+  const variantQuery = useInfiniteQuery({ ...featFamilyQuery(rulesetId, family, childOnly), enabled: isExpanded });
 
   const variants = pageItems(variantQuery.data);
 
@@ -150,8 +130,7 @@ function GroupedRow({
         )}
         {isExpanded &&
           variants.map((feat, i) => {
-            const pages = variantQuery.data?.pages ?? [];
-            const previousItemCount = pages.slice(0, -1).reduce((sum, p) => sum + p.items.length, 0);
+            const previousItemCount = itemsBeforeLastPage(variantQuery.data);
             const isNew = i >= previousItemCount;
             return (
               <TableRow
@@ -220,9 +199,9 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
 
   const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("search");
   const [selectedAptitude, setSelectedAptitude] = useState<Aptitude | null>(null);
-  const [groupedParam, setGroupedParam] = useSearchParam("grouped", "true");
+  const { value: groupedParam, setValue: setGroupedParam } = useSearchParam("grouped", "true");
   const grouped = groupedParam === "true";
-  const [expandedFamilies, toggleFamily, collapseFamilies] = useToggleSet();
+  const { keys: expandedFamilies, toggle: toggleFamily, clear: collapseFamilies } = useToggleSet();
 
   const { setCreateDialogOpen, createForm, createDialogProps } = useRulesetSection<Feat, FeatFormData>({
     createDefaults: EMPTY_FEAT,
@@ -230,9 +209,8 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     sectionName: "feats",
     label: "Feat",
     createFn: async (data) => {
-      if (!data.aptitudeIds?.length) {
-        throw new Error("At least one aptitude must be selected");
-      }
+      if (!data.aptitudeIds?.length) throw new Error("At least one aptitude must be selected");
+
       return parseResponse(rpc.api.rulesets[":id"].feats.$post({ param: { id: ruleset.id }, json: data }));
     },
     onCreateSuccess: (created) => openEntity(`feats/${created.id}/customization`),

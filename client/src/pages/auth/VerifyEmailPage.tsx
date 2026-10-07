@@ -18,7 +18,7 @@ interface VerifyEmailFormData {
   digits: string[];
 }
 
-export default function VerifyEmail() {
+export default function VerifyEmailPage() {
   usePageTitle("Verify Email");
   const pendingVerificationEmail = useAuthStore((s) => s.pendingVerificationEmail);
   const location = useLocation();
@@ -32,11 +32,9 @@ export default function VerifyEmail() {
     auth.resendVerification.mutate(pendingVerificationEmail ?? "", callbacks),
   );
 
-  if (!pendingVerificationEmail) {
-    return <Navigate to={fromSignIn ? "/sign-in" : "/sign-up"} replace />;
-  }
+  if (!pendingVerificationEmail) return <Navigate to={fromSignIn ? "/sign-in" : "/sign-up"} replace />;
 
-  const onSubmit = (data: VerifyEmailFormData) => {
+  const handleVerify = (data: VerifyEmailFormData) => {
     setError(null);
     auth.verifyEmail.mutate(
       { emailAddress: pendingVerificationEmail, code: data.digits.join("") },
@@ -57,7 +55,7 @@ export default function VerifyEmail() {
         </>
       }
     >
-      <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
+      <form onSubmit={form.handleSubmit(handleVerify)} noValidate>
         <Controller
           control={form.control}
           name="digits"

@@ -5,10 +5,10 @@ import {
   formatActivityDetails,
   formatActivityType,
   formatNotificationMessage,
-  formatRelativeTime,
 } from "@/client/src/lib/activityFormatters.ts";
 import { getRollFunction, isDiceMethod, POINT_BUY_COSTS, rollDie } from "@/client/src/lib/dice.ts";
 import { accessLost, errorMessage, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
+import { formatRelativeTime } from "@/client/src/lib/formatDate.ts";
 import { formatCost, formatCount, formatDecimal, formatSigned, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
@@ -17,9 +17,9 @@ import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { extractTemplateExpression, extractTemplatePath, isTemplateValue } from "@/client/src/lib/templateValues.ts";
 import {
   confirmPasswordRules,
-  emailRules,
-  newPasswordRules,
-  usernameRules,
+  EMAIL_RULES,
+  NEW_PASSWORD_RULES,
+  USERNAME_RULES,
   wholeNumberRules,
 } from "@/client/src/lib/validation.ts";
 import { valuesEqual } from "@/client/src/lib/valuesEqual.ts";
@@ -100,7 +100,7 @@ describe("A URL parameter of a fixed set", () => {
 
 describe("Form rules", () => {
   test("check an email address's shape", () => {
-    expect(["a@b.co", "a@b", "a b@c.de", "@b.co"].map((email) => emailRules.pattern.value.test(email))).toEqual([
+    expect(["a@b.co", "a@b", "a b@c.de", "@b.co"].map((email) => EMAIL_RULES.pattern.value.test(email))).toEqual([
       true,
       false,
       false,
@@ -116,11 +116,11 @@ describe("Form rules", () => {
 
   test("measure a password and a username as the server stores them, trimmed", () => {
     const password = "x".repeat(PASSWORD_MIN_LENGTH);
-    expect([newPasswordRules.validate(password), newPasswordRules.validate(` ${password.slice(1)} `)]).toEqual([
+    expect([NEW_PASSWORD_RULES.validate(password), NEW_PASSWORD_RULES.validate(` ${password.slice(1)} `)]).toEqual([
       true,
       `Password must be at least ${PASSWORD_MIN_LENGTH} characters`,
     ]);
-    expect(["", "elara", "  ab  ", "   ", "x".repeat(51)].map((name) => usernameRules.validate(name))).toEqual([
+    expect(["", "elara", "  ab  ", "   ", "x".repeat(51)].map((name) => USERNAME_RULES.validate(name))).toEqual([
       true,
       true,
       "Username must be at least 3 characters",

@@ -11,9 +11,8 @@ const LOCAL_HOSTS = ["localhost", "127.0.0.1", "[::1]"];
 /** Refuses `url` unless its database is on a local server: a script that drops databases or tables runs only there. */
 export function assertLocalDatabase(url: string, action: string) {
   const { hostname } = new URL(url);
-  if (!LOCAL_HOSTS.includes(hostname)) {
+  if (!LOCAL_HOSTS.includes(hostname))
     throw new Error(`${hostname} isn't a local database server: only a local database is ${action}`);
-  }
 }
 
 /** A database URL's server (without a database) and database name. */
@@ -49,10 +48,11 @@ export async function cloneDatabase(templateUrl: string, targets: string[]) {
       !/^[a-z0-9_]+$/.test(target.slice(template.length + 1)) ||
       target.length > 63,
   );
-  if (unrelated.length)
+  if (unrelated.length) {
     throw new Error(
       `The copies of ${template} are named ${template}_ and letters, digits or _, in 63 characters, not ${unrelated.join(", ")}`,
     );
+  }
 
   const client = new pg.Client({ connectionString: `${server}/postgres` });
   await client.connect();

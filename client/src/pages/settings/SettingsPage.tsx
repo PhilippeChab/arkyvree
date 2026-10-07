@@ -1,15 +1,16 @@
-import { DarkMode, LightMode, SettingsBrightness } from "@mui/icons-material";
 import { Card, CardContent, Container, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
+import { type ReactNode } from "react";
 
 import { PageHeader, PageTransition } from "@/client/src/components/common/index.ts";
+import { DarkModeIcon, LightModeIcon, SettingsBrightnessIcon } from "@/client/src/components/icons/index.ts";
 import { type ThemeMode } from "@/client/src/contexts/themeContext.ts";
 import { useTheme } from "@/client/src/contexts/useTheme.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
 
-const themeModeOptions: { value: ThemeMode; label: string; icon: React.ReactNode }[] = [
-  { value: "light", label: "Light", icon: <LightMode /> },
-  { value: "dark", label: "Dark", icon: <DarkMode /> },
-  { value: "system", label: "System", icon: <SettingsBrightness /> },
+const THEME_MODE_OPTIONS: { value: ThemeMode; label: string; icon: ReactNode }[] = [
+  { value: "light", label: "Light", icon: <LightModeIcon /> },
+  { value: "dark", label: "Dark", icon: <DarkModeIcon /> },
+  { value: "system", label: "System", icon: <SettingsBrightnessIcon /> },
 ];
 
 export default function SettingsPage() {
@@ -46,7 +47,7 @@ export default function SettingsPage() {
                 },
               }}
             >
-              {themeModeOptions.map((option) => (
+              {THEME_MODE_OPTIONS.map((option) => (
                 <ToggleButton key={option.value} value={option.value}>
                   {option.icon}
                   {option.label}

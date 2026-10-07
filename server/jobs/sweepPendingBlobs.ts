@@ -87,9 +87,8 @@ export async function sweepPendingBlobs(
     if (candidates.length < batch) break;
   }
 
-  if (swept > 0 || failed > 0) {
-    logger.info(`Swept ${swept} blobs, ${failed} failed`);
-  }
+  if (swept > 0 || failed > 0) logger.info(`Swept ${swept} blobs, ${failed} failed`);
+
   return { swept, failed };
 }
 

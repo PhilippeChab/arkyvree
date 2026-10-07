@@ -1,13 +1,6 @@
-import {
-  Archive as ArchiveIcon,
-  Person as CharactersIcon,
-  DeleteForever as DeleteForeverIcon,
-  Edit as EditIcon,
-  Group as PlayersIcon,
-  Unarchive as UnarchiveIcon,
-} from "@mui/icons-material";
 import { Alert, Box, Chip, Container, Menu, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { parseResponse } from "hono/client";
 import { useState } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 
@@ -22,12 +15,20 @@ import {
   type SectionTab,
   SectionTabs,
 } from "@/client/src/components/common/index.ts";
+import {
+  ArchiveIcon,
+  CharactersIcon,
+  DeleteForeverIcon,
+  EditIcon,
+  PlayersIcon,
+  UnarchiveIcon,
+} from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { accessLost, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { campaignDetailQuery } from "@/client/src/lib/queries.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { EditCampaignDialog, type EditCampaignFormData } from "@/client/src/pages/campaigns/components/index.ts";
 import { useCampaignPermissions } from "@/client/src/pages/campaigns/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
@@ -72,12 +73,13 @@ export default function CampaignDetailsPage() {
   const editForm = useFormWith<EditCampaignFormData>({ name: "", description: "" });
 
   const invalidateCampaign = () => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.detail(id) });
-    queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.lists });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.detail(id) });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.lists });
   };
 
   const updateMutation = useMutation({
-    mutationFn: (data: EditCampaignFormData) => rpc.api.campaigns[":id"].$put({ param: { id }, json: data }),
+    mutationFn: (data: EditCampaignFormData) =>
+      parseResponse(rpc.api.campaigns[":id"].$put({ param: { id }, json: data })),
     onSuccess: () => {
       snackbar.success("Campaign updated successfully");
       invalidateCampaign();
@@ -88,7 +90,7 @@ export default function CampaignDetailsPage() {
   });
 
   const archiveMutation = useMutation({
-    mutationFn: () => rpc.api.campaigns[":id"].$delete({ param: { id } }),
+    mutationFn: () => parseResponse(rpc.api.campaigns[":id"].$delete({ param: { id } })),
     onSuccess: () => {
       snackbar.success("Campaign archived successfully");
       invalidateCampaign();
@@ -98,7 +100,7 @@ export default function CampaignDetailsPage() {
   });
 
   const unarchiveMutation = useMutation({
-    mutationFn: () => rpc.api.campaigns[":id"].unarchive.$post({ param: { id } }),
+    mutationFn: () => parseResponse(rpc.api.campaigns[":id"].unarchive.$post({ param: { id } })),
     onSuccess: () => {
       snackbar.success("Campaign unarchived successfully");
       invalidateCampaign();
@@ -107,19 +109,17 @@ export default function CampaignDetailsPage() {
   });
 
   const hardDeleteMutation = useMutation({
-    mutationFn: () => rpc.api.campaigns[":id"].permanent.$delete({ param: { id } }),
+    mutationFn: () => parseResponse(rpc.api.campaigns[":id"].permanent.$delete({ param: { id } })),
     onSuccess: () => {
       snackbar.success("Campaign permanently deleted");
-      queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.lists });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.lists });
       navigate("/campaigns");
     },
     onError: (error) => snackbar.error(error, "Failed to delete campaign"),
   });
 
   // Normalize the URL to a known tab.
-  if (id && !isTabSection(section)) {
-    return <Navigate to={`/campaigns/${id}/characters`} replace />;
-  }
+  if (id && !isTabSection(section)) return <Navigate to={`/campaigns/${id}/characters`} replace />;
 
   if (isLoading) {
     return (

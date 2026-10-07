@@ -76,9 +76,8 @@ function changedBinding(node) {
   if (node.type === "CallExpression" && node.callee.type === "MemberExpression" && !node.callee.computed) {
     if (MUTATORS.has(node.callee.property.name)) return rootIdentifier(node.callee.object);
     const { object, property } = node.callee;
-    if (object.type === "Identifier" && object.name === "Object" && property.name === "assign") {
+    if (object.type === "Identifier" && object.name === "Object" && property.name === "assign")
       return rootIdentifier(node.arguments[0]);
-    }
   }
   return undefined;
 }
@@ -124,9 +123,8 @@ function exportedNames(program) {
       for (const specifier of statement.specifiers)
         if (specifier.local.type === "Identifier") names.add(specifier.local.name);
     }
-    if (statement.type === "ExportDefaultDeclaration" && statement.declaration?.type === "Identifier") {
+    if (statement.type === "ExportDefaultDeclaration" && statement.declaration?.type === "Identifier")
       names.add(statement.declaration.name);
-    }
   }
   return names;
 }
@@ -159,9 +157,9 @@ function isValueClass(callee) {
 /** The identifier at the root of `x.a.b` / `x[k]` / `(x as T).a` / `x!.a`, or the identifier itself. */
 function rootIdentifier(node) {
   let current = node;
-  while (current && (current.type === "MemberExpression" || WRAPPERS.has(current.type))) {
+  while (current && (current.type === "MemberExpression" || WRAPPERS.has(current.type)))
     current = current.type === "MemberExpression" ? current.object : current.expression;
-  }
+
   return current?.type === "Identifier" ? current : undefined;
 }
 
@@ -172,29 +170,27 @@ function scopeNames(node) {
   if (isFunction) for (const param of node.params ?? []) for (const name of boundNames(param)) names.add(name);
   const body = isFunction ? node.body?.body : node.type === "BlockStatement" ? node.body : undefined;
   for (const statement of Array.isArray(body) ? body : []) {
-    if (statement.type === "VariableDeclaration") {
+    if (statement.type === "VariableDeclaration")
       for (const declarator of statement.declarations) for (const name of boundNames(declarator.id)) names.add(name);
-    } else if ((statement.type === "FunctionDeclaration" || statement.type === "ClassDeclaration") && statement.id) {
+    else if ((statement.type === "FunctionDeclaration" || statement.type === "ClassDeclaration") && statement.id)
       names.add(statement.id.name);
-    }
   }
   if (node.type === "CatchClause") for (const name of boundNames(node.param)) names.add(name);
   // A case's declarations are the switch's, braces or not
   if (node.type === "SwitchStatement") {
     for (const statement of node.cases.flatMap((c) => c.consequent)) {
-      if (statement.type === "VariableDeclaration") {
+      if (statement.type === "VariableDeclaration")
         for (const declarator of statement.declarations) for (const name of boundNames(declarator.id)) names.add(name);
-      } else if ((statement.type === "FunctionDeclaration" || statement.type === "ClassDeclaration") && statement.id) {
+      else if ((statement.type === "FunctionDeclaration" || statement.type === "ClassDeclaration") && statement.id)
         names.add(statement.id.name);
-      }
     }
   }
-  if (/^For(In|Of)?Statement$/.test(node.type) && node.left?.type === "VariableDeclaration") {
+  if (/^For(In|Of)?Statement$/.test(node.type) && node.left?.type === "VariableDeclaration")
     for (const declarator of node.left.declarations) for (const name of boundNames(declarator.id)) names.add(name);
-  }
-  if (node.type === "ForStatement" && node.init?.type === "VariableDeclaration") {
+
+  if (node.type === "ForStatement" && node.init?.type === "VariableDeclaration")
     for (const declarator of node.init.declarations) for (const name of boundNames(declarator.id)) names.add(name);
-  }
+
   return names;
 }
 

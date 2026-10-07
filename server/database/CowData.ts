@@ -20,9 +20,8 @@ export default class CowData {
     this.sourceChain = sourceChain;
     this.overrides = overrides;
     this.aliases = aliases;
-    for (const [winnerId, loserIds] of siblings) {
-      for (const loserId of loserIds) this.winners.set(loserId, winnerId);
-    }
+    for (const [winnerId, loserIds] of siblings) for (const loserId of loserIds) this.winners.set(loserId, winnerId);
+
     const losersOf = new Map<string, string[]>();
     for (const [winnerId, loserIds] of siblings) {
       const own = [...new Set(loserIds)].filter((loserId) => this.winners.get(loserId) === winnerId);
@@ -59,9 +58,8 @@ export default class CowData {
   getEquivalentIds(id: string): string[] {
     const target = this.resolve(id);
     const ids = new Set([target]);
-    for (const [staleId, resolvedId] of this.aliases) {
-      if (resolvedId === target) ids.add(staleId);
-    }
+    for (const [staleId, resolvedId] of this.aliases) if (resolvedId === target) ids.add(staleId);
+
     return [...ids];
   }
 
@@ -114,9 +112,8 @@ export default class CowData {
     return rows.map((row) => {
       const resolved = { ...row };
       for (const [key, value] of Object.entries(resolved)) {
-        if (typeof value === "string" && this.aliases.has(value)) {
+        if (typeof value === "string" && this.aliases.has(value))
           (resolved as Record<string, unknown>)[key] = this.aliases.get(value);
-        }
       }
       return resolved;
     });

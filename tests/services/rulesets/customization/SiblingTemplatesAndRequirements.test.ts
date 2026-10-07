@@ -1,7 +1,6 @@
 import { afterEach, expect, test } from "bun:test";
 
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Feats, Items, Properties, Requirements, Rulesets } from "@/server/repositories/index.ts";
@@ -210,13 +209,15 @@ test("three-extension requirement merge preserves chains and rejects a duplicate
         value: "13",
         valueType: "number",
       };
-      if (index < 2) await Requirements.create(db, { ...owner, ...leaf, level: "1" });
-      else
+      if (index < 2) {
+        await Requirements.create(db, { ...owner, ...leaf, level: "1" });
+      } else {
         await Requirements.createMany(db, [
           { ...owner, level: "1", chainingOperator: "or" },
           { ...owner, ...leaf, level: "1.1" },
           { ...owner, ...leaf, target: "abilities.dexterity.total", level: "1.2" },
         ]);
+      }
     },
     3,
   );

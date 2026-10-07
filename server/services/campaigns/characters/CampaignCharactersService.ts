@@ -30,9 +30,8 @@ class CampaignCharactersService {
   /** The session's player row in the campaign: a 404 when there's no such campaign, a 403 when they aren't in it. */
   private async getMember(session: Session, campaignId: string) {
     const campaign = await Campaigns.findOne(db, { id: campaignId }, Visibility.All);
-    if (!campaign) {
-      throw new NotFoundError("Campaign not found");
-    }
+    if (!campaign) throw new NotFoundError("Campaign not found");
+
     return (await CampaignsPolicy.for(db, session, campaign)).canRead();
   }
 
@@ -54,9 +53,8 @@ class CampaignCharactersService {
     const isGM = member.role === "Game Master";
 
     // Private characters are only visible to the owner and GMs
-    if (!isOwner && !isGM && link.visibility === "Private") {
+    if (!isOwner && !isGM && link.visibility === "Private")
       throw new NotFoundError("Character not found in this campaign");
-    }
 
     // Full character build for all visible cases (Public, Partial, owner, GM)
     const character = await Characters.findOne(db, { id: characterId });
@@ -107,9 +105,7 @@ class CampaignCharactersService {
     const campaignPlayers = await Players.findMany(db, { campaignId }, Visibility.All);
     const playerIds = campaignPlayers.map((p) => p.id);
 
-    if (playerIds.length === 0) {
-      return { items: [], page: 1, nextPage: undefined };
-    }
+    if (playerIds.length === 0) return { items: [], page: 1, nextPage: undefined };
 
     // Get linked characters with pagination; GMs see all characters regardless of visibility
     const paginatedResult = await PlayerCharacters.findPage(
@@ -120,9 +116,7 @@ class CampaignCharactersService {
     const linkedCharacters = paginatedResult.items;
     const paginationMeta = { page: paginatedResult.page, nextPage: paginatedResult.nextPage };
 
-    if (linkedCharacters.length === 0) {
-      return { items: [], page: paginationMeta.page, nextPage: undefined };
-    }
+    if (linkedCharacters.length === 0) return { items: [], page: paginationMeta.page, nextPage: undefined };
 
     const characterMeta = new Map(
       linkedCharacters.map((pc) => [pc.characterId, { playerId: pc.playerId, visibility: pc.visibility }]),
@@ -132,9 +126,7 @@ class CampaignCharactersService {
     // Get character details using direct query with character IDs
     const characters = await Characters.findMany(db, { ids: characterIds });
 
-    if (characters.length === 0) {
-      return { items: [], page: paginationMeta.page, nextPage: paginationMeta.nextPage };
-    }
+    if (characters.length === 0) return { items: [], page: paginationMeta.page, nextPage: paginationMeta.nextPage };
 
     // Batch fetch levels for all characters
     const levels = await CharacterLevels.findMany(db, { characterIds });
@@ -188,30 +180,24 @@ class CampaignCharactersService {
   async linkCharacter(session: Session, campaignId: string, characterId: string, visibility: VisibilityType) {
     return await withTransaction(async (tx) => {
       const campaign = await Campaigns.findOne(tx, { id: campaignId }, Visibility.All);
-      if (!campaign) {
-        throw new NotFoundError("Campaign not found");
-      }
+      if (!campaign) throw new NotFoundError("Campaign not found");
+
       (await CampaignsPolicy.for(tx, session, campaign)).canModify();
 
       const player = await Players.findOne(tx, {
         campaignId,
         userId: session.userId,
       });
-      if (!player) {
-        throw new NotFoundError("Player not found in this campaign");
-      }
+      if (!player) throw new NotFoundError("Player not found in this campaign");
 
       const character = await Characters.findOne(tx, { id: characterId, userId: session.userId });
-      if (!character) {
-        throw new NotFoundError("Character not found");
-      }
-      if (character.kind !== "pc") {
-        throw new BadRequestError("Only player characters can be linked to a campaign");
-      }
+      if (!character) throw new NotFoundError("Character not found");
+
+      if (character.kind !== "pc") throw new BadRequestError("Only player characters can be linked to a campaign");
+
       // The campaign's exact ruleset: not a fork of it, nor its parent.
-      if (character.rulesetId !== campaign.rulesetId) {
+      if (character.rulesetId !== campaign.rulesetId)
         throw new BadRequestError("Only characters built on the campaign's ruleset can be linked");
-      }
 
       const existingLink = await PlayerCharacters.findOne(tx, { characterId });
 
@@ -249,18 +235,16 @@ class CampaignCharactersService {
   ) {
     return await withTransaction(async (tx) => {
       const campaign = await Campaigns.findOne(tx, { id: campaignId }, Visibility.All);
-      if (!campaign) {
-        throw new NotFoundError("Campaign not found");
-      }
+      if (!campaign) throw new NotFoundError("Campaign not found");
+
       const policy = await CampaignsPolicy.for(tx, session, campaign);
       policy.canModify();
 
       const player = policy.canRead();
 
       const link = await PlayerCharacters.findOne(tx, { characterId });
-      if (!link || link.playerId !== player.id) {
+      if (!link || link.playerId !== player.id)
         throw new ForbiddenError("You do not own this character in this campaign");
-      }
 
       const [updated] = await PlayerCharacters.update(tx, { visibility }, { playerId: player.id, characterId });
 

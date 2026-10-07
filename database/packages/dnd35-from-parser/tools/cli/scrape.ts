@@ -58,31 +58,19 @@ async function main() {
   const scraper = new Scraper(book, new HttpClient({ noCache, ...(delay !== undefined ? { delay } : {}) }));
 
   if (type === "class") {
-    if (url) {
-      await scraper.scrapeClass(url);
-    } else {
-      await scraper.scrapeClasses();
-    }
+    if (url) await scraper.scrapeClass(url);
+    else await scraper.scrapeClasses();
   } else if (type === "feat") {
-    if (url) {
-      await scraper.scrapeFeat(url);
-    } else {
-      await scraper.scrapeFeats();
-    }
+    if (url) await scraper.scrapeFeat(url);
+    else await scraper.scrapeFeats();
   } else if (type === "spell") {
-    if (url) {
-      await scraper.scrapeSpell(url);
-    } else {
-      await scraper.scrapeSpells();
-    }
+    if (url) await scraper.scrapeSpell(url);
+    else await scraper.scrapeSpells();
   } else if (type === "domain") {
     await scraper.scrapeDomains();
   } else if (type === "race") {
-    if (url) {
-      await scraper.scrapeRace(url);
-    } else {
-      await scraper.scrapeRaces();
-    }
+    if (url) await scraper.scrapeRace(url);
+    else await scraper.scrapeRaces();
   } else if (type === "item") {
     await scraper.scrapeItems();
   } else if (type === "magicItem") {

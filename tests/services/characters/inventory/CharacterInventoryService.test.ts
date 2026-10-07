@@ -211,9 +211,9 @@ describe("InventoryService", () => {
         [10, 20],
         [10, null],
         [null, 5],
-      ] as [number | null, number | null][]) {
+      ] as [number | null, number | null][])
         await expect(add(session, character.id, item.id, { charges })).rejects.toThrow(BadRequestError);
-      }
+
       await add(session, character.id, item.id, { charges: [10, 10] });
       await expect(update(session, character.id, item.id, { charges: [10, 20] })).rejects.toThrow(BadRequestError);
     });

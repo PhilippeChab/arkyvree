@@ -1,18 +1,18 @@
-import { HelpOutlined } from "@mui/icons-material";
 import { Box, FormControlLabel, Switch, Tooltip } from "@mui/material";
 import { useRef, useState } from "react";
 import type { FieldError } from "react-hook-form";
 
 import { Crossfade } from "@/client/src/components/common/index.ts";
+import { HelpOutlinedIcon } from "@/client/src/components/icons/index.ts";
 import { extractTemplateExpression, isTemplateValue } from "@/client/src/lib/templateValues.ts";
 
 import { OperatorSelect } from "./OperatorSelect.tsx";
 import { PathValueInput } from "./PathValueInput.tsx";
-import { defaultValueForPath, fitsPath } from "./pathValues.ts";
+import { defaultValueForPath, fitsPath, type PathInfo } from "./pathValues.ts";
 import { TargetPathInput } from "./TargetPathInput.tsx";
 import { TemplateExpressionInput, type TemplateExpressionInputRef } from "./TemplateExpressionInput.tsx";
 import { TemplateExpressionToolbar } from "./TemplateExpressionToolbar.tsx";
-import { type PathInfo, useTargetPath } from "./useTargetPath.ts";
+import { useTargetPath } from "./useTargetPath.ts";
 
 /** A form's field, as `useController` binds it: its value, its change and its error. */
 interface BoundField {
@@ -48,7 +48,7 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, fields }: C
     operator: fields.operator.fieldState.error,
     value: fields.value.fieldState.error,
   };
-  const onChange = (field: ConditionField, next: string) => fields[field].field.onChange(next);
+  const handleChange = (field: ConditionField, next: string) => fields[field].field.onChange(next);
   const { value } = values;
 
   const { target: pathInfo } = useTargetPath(rulesetId, kind, entityType, values.target);
@@ -64,7 +64,7 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, fields }: C
   // opens on a reset form, then writing the value it makes. The value never comes back into it, so a dialog reopened
   // during its exit transition (still mounted) keeps the editor it closed with.
   const writeFormValue = (next: string) => {
-    if (next !== value) onChange("value", next);
+    if (next !== value) handleChange("value", next);
   };
 
   const handleLiteralChange = (v: string) => {
@@ -92,17 +92,14 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, fields }: C
         if (!templateMode) writeFormValue(seeded);
       }
     }
-    if (operator !== values.operator) onChange("operator", operator);
+    if (operator !== values.operator) handleChange("operator", operator);
   };
 
   // The other mode's input keeps its text, so switching back restores it.
   const handleToggleTemplate = (checked: boolean) => {
     setTemplateMode(checked);
-    if (checked) {
-      writeFormValue(templateExpression.trim() ? `{{ ${templateExpression} }}` : "");
-    } else {
-      writeFormValue(literalValue);
-    }
+    if (checked) writeFormValue(templateExpression.trim() ? `{{ ${templateExpression} }}` : "");
+    else writeFormValue(literalValue);
   };
 
   return (
@@ -113,7 +110,7 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, fields }: C
         entityType={entityType}
         value={values.target}
         onChange={(nextTarget, picked) => {
-          onChange("target", nextTarget);
+          handleChange("target", nextTarget);
           if (picked) fitToPath(picked);
         }}
         error={!!errors.target}
@@ -124,12 +121,11 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, fields }: C
         kind={kind}
         value={values.operator}
         onChange={(nextOperator) => {
-          onChange("operator", nextOperator);
+          handleChange("operator", nextOperator);
           // A set the path restricts starts on its first value
           const setChoices = nextOperator === "set" ? pathInfo?.setValues : undefined;
-          if (setChoices?.length && !setChoices.some((choice) => choice.value === literalValue)) {
+          if (setChoices?.length && !setChoices.some((choice) => choice.value === literalValue))
             handleLiteralChange(setChoices[0].value);
-          }
         }}
         error={!!errors.operator}
         operators={pathInfo?.operators || []}
@@ -161,7 +157,7 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, fields }: C
                 title="Compute the value from another path or an expression. Wrap paths in [brackets] and use floor/ceil/min/max plus +-*/ for arithmetic. Examples: [abilities.charisma.modifier], floor([classes.ranger.level] / 2), max(0, [classes.beastmaster.level] + 3)."
                 arrow
               >
-                <HelpOutlined sx={{ fontSize: 16, color: "text.secondary", cursor: "help" }} />
+                <HelpOutlinedIcon sx={{ fontSize: 16, color: "text.secondary", cursor: "help" }} />
               </Tooltip>
             </Box>
           }

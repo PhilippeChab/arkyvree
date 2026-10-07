@@ -1,20 +1,8 @@
-import {
-  Add as AddIcon,
-  Archive as ArchiveIcon,
-  ArrowBack as ArrowBackIcon,
-  DeleteForever as DeleteForeverIcon,
-  Download as DownloadIcon,
-  Group as GroupIcon,
-  MoreVert as MoreVertIcon,
-  Remove as RemoveIcon,
-  Share as ShareIcon,
-  Tune as TuneIcon,
-  Unarchive as UnarchiveIcon,
-} from "@mui/icons-material";
 import { Alert, Container, Fade, IconButton, Menu, Paper, Stack, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { parseResponse } from "hono/client";
+import { type MouseEvent, useState } from "react";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { CharacterDetailSkeleton, CharacterSheetBody } from "@/client/src/components/characters/index.ts";
 import {
@@ -24,12 +12,25 @@ import {
   PageError,
   PageTransition,
 } from "@/client/src/components/common/index.ts";
+import {
+  AddIcon,
+  ArchiveIcon,
+  ArrowBackIcon,
+  DeleteForeverIcon,
+  DownloadIcon,
+  GroupIcon,
+  MoreVertIcon,
+  RemoveIcon,
+  ShareIcon,
+  TuneIcon,
+  UnarchiveIcon,
+} from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDemoTimeRemaining, usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
 import { DURATION } from "@/client/src/lib/animations.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { characterDetailQuery } from "@/client/src/lib/queries.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import type { EditingLevel } from "@/client/src/types/character.ts";
@@ -64,14 +65,8 @@ export default function CharacterDetailsPage() {
   const { isDemo } = useDemoTimeRemaining();
   const currentUserId = useAuthStore((s) => s.user?.id);
 
-  const {
-    data: character,
-    isLoading,
-    error,
-  } = useQuery({
-    ...characterDetailQuery(id),
-    enabled: !!id,
-  });
+  // The route always gives an id
+  const { data: character, isLoading, error } = useQuery(characterDetailQuery(id));
 
   usePageTitle(character?.identity?.physiology?.name);
 
@@ -82,7 +77,7 @@ export default function CharacterDetailsPage() {
     if (location.state?.openLevelUp) navigate(location.pathname, { replace: true, state: {} });
   };
 
-  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+  const handleClick = (event: MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
 
@@ -96,21 +91,21 @@ export default function CharacterDetailsPage() {
 
   const invalidateCharacter = () =>
     Promise.all([
-      queryClient.invalidateQueries({ queryKey: queryKeys.characters.detail(id) }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.characters.lists }),
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.detail(id) }),
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.lists }),
     ]);
 
   const removeLevelMutation = useMutation({
-    mutationFn: () => rpc.api.characters.levels[":characterId"].$delete({ param: { characterId: id } }),
+    mutationFn: () => parseResponse(rpc.api.characters.levels[":characterId"].$delete({ param: { characterId: id } })),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.characters.detail(id) });
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.detail(id) });
       setConfirmOpen(false);
     },
     onError: (err) => snackbar.error(err, "Failed to remove level"),
   });
 
   const archiveMutation = useMutation({
-    mutationFn: () => rpc.api.characters[":id"].$delete({ param: { id } }),
+    mutationFn: () => parseResponse(rpc.api.characters[":id"].$delete({ param: { id } })),
     onSuccess: () => {
       void invalidateCharacter();
       navigate("/characters");
@@ -122,7 +117,7 @@ export default function CharacterDetailsPage() {
   });
 
   const unarchiveMutation = useMutation({
-    mutationFn: () => rpc.api.characters[":id"].unarchive.$post({ param: { id } }),
+    mutationFn: () => parseResponse(rpc.api.characters[":id"].unarchive.$post({ param: { id } })),
     onSuccess: () => {
       snackbar.success("Character unarchived successfully");
       return invalidateCharacter();
@@ -131,10 +126,10 @@ export default function CharacterDetailsPage() {
   });
 
   const hardDeleteMutation = useMutation({
-    mutationFn: () => rpc.api.characters[":id"].permanent.$delete({ param: { id } }),
+    mutationFn: () => parseResponse(rpc.api.characters[":id"].permanent.$delete({ param: { id } })),
     onSuccess: () => {
       snackbar.success("Character permanently deleted");
-      queryClient.invalidateQueries({ queryKey: queryKeys.characters.lists });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.lists });
       navigate("/characters");
     },
     onError: (err) => {
@@ -183,9 +178,8 @@ export default function CharacterDetailsPage() {
             <Stack direction="row" spacing={2} sx={{ alignItems: "center", minWidth: 0 }}>
               <IconButton
                 aria-label="Back"
-                onClick={() =>
-                  navigate(isBonded && parentCharacterId ? `/characters/${parentCharacterId}` : "/characters")
-                }
+                component={Link}
+                to={isBonded && parentCharacterId ? `/characters/${parentCharacterId}` : "/characters"}
               >
                 <ArrowBackIcon />
               </IconButton>

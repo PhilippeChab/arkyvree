@@ -1,10 +1,4 @@
 import {
-  ContentCopy as ContentCopyIcon,
-  Delete as DeleteIcon,
-  Edit as EditIcon,
-  LibraryAdd as LibraryAddIcon,
-} from "@mui/icons-material";
-import {
   Box,
   IconButton,
   Paper,
@@ -27,6 +21,7 @@ import {
   ROW_ACTIONS_HOVER_SX,
   ROW_ACTIONS_SX,
 } from "@/client/src/components/common/index.ts";
+import { ContentCopyIcon, DeleteIcon, EditIcon, LibraryAddIcon } from "@/client/src/components/icons/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
 
@@ -199,6 +194,7 @@ export function RulesetSectionTable<T extends { id: string }>({
                         {canEdit && onEdit && (
                           <Tooltip title="Edit">
                             <IconButton
+                              aria-label="Edit"
                               size="small"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -213,6 +209,7 @@ export function RulesetSectionTable<T extends { id: string }>({
                         {canEdit && onDuplicate && (
                           <Tooltip title="Duplicate">
                             <IconButton
+                              aria-label="Duplicate"
                               size="small"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -226,6 +223,7 @@ export function RulesetSectionTable<T extends { id: string }>({
                         {canEdit && onCreateVariants && (
                           <Tooltip title="Create variants">
                             <IconButton
+                              aria-label="Create variants"
                               size="small"
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -239,6 +237,7 @@ export function RulesetSectionTable<T extends { id: string }>({
                         {canDelete && onDelete && (
                           <Tooltip title="Delete">
                             <IconButton
+                              aria-label="Delete"
                               size="small"
                               onClick={(e) => {
                                 e.stopPropagation();

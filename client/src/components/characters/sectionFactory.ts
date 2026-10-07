@@ -34,7 +34,7 @@ interface SectionMap {
 
 type SkillsSectionProps = Dnd35SkillsSectionProps;
 
-const rulesetSections: Record<BaseRules, SectionMap> = {
+const RULESET_SECTIONS: Record<BaseRules, SectionMap> = {
   "Dungeons & Dragons: 3.5": {
     AbilityScoresSection,
     CombatAndSavesSection,
@@ -45,5 +45,5 @@ const rulesetSections: Record<BaseRules, SectionMap> = {
 };
 
 export function getSections(baseRules: BaseRules): SectionMap {
-  return rulesetSections[baseRules];
+  return RULESET_SECTIONS[baseRules];
 }

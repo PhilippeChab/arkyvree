@@ -18,9 +18,9 @@ export default async function resetDatabase(includeTestSeeds: boolean) {
   assertLocalDatabase(connectionString, "reset");
   // A tunnel to a remote server is local too: the database's name has to say it's a development or test one
   const { name } = databaseOf(connectionString);
-  if (!/(^|_)(dev|test)(_|$)/.test(name)) {
+  if (!/(^|_)(dev|test)(_|$)/.test(name))
     throw new Error(`${name} isn't a development or test database (dev or test a word of its name): only one is reset`);
-  }
+
   console.log(`Resetting database: ${name} on ${new URL(connectionString).host}`);
 
   await db.execute(`

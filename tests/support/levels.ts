@@ -12,8 +12,9 @@ import {
 } from "@/server/repositories/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import type { Session } from "@/shared/relations.ts";
-import { createTestCharacter } from "@/tests/support/characters.ts";
-import { uniqueId } from "@/tests/support/seed.ts";
+
+import { createTestCharacter } from "./characters.ts";
+import { uniqueId } from "./seed.ts";
 
 type LevelPicks = {
   feats?: { featId: string; aptitudeId: string }[];

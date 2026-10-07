@@ -1,8 +1,8 @@
-import { Casino as CasinoIcon } from "@mui/icons-material";
 import { Box, Chip, IconButton, Stack, TextField, Typography } from "@mui/material";
 import { useController } from "react-hook-form";
 
 import { DiceSpinner } from "@/client/src/components/common/index.ts";
+import { CasinoIcon } from "@/client/src/components/icons/index.ts";
 import { settledPulse } from "@/client/src/lib/animations.ts";
 
 import type { LevelUpHpStepProps } from "./levelUpFactory.ts";

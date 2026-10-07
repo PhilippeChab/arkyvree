@@ -4,7 +4,8 @@ import * as RULESET_NAMES from "@/database/packages/dnd35/names.ts";
 import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
-import { seededRows } from "@/tests/seeds/seededRows.ts";
+
+import { seededRows } from "./seededRows.ts";
 
 /** The families the rulesets' feats are in (their FEAT_FAMILY). */
 function familiesOf(rulesets: Awaited<ReturnType<typeof seededRulesets>>) {

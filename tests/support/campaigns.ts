@@ -4,8 +4,9 @@ import { db } from "@/server/database/index.ts";
 import { Campaigns, Players } from "@/server/repositories/index.ts";
 import { CampaignPlayersService } from "@/server/services/campaigns/players/index.ts";
 import type { Player, Session } from "@/shared/relations.ts";
-import { api, expectOk } from "@/tests/support/api.ts";
-import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
+
+import { api, expectOk } from "./api.ts";
+import { getSeedCtx, uniqueId } from "./seed.ts";
 
 /** A campaign on the seeded ruleset (or `rulesetId`) with `userId` as its Game Master. */
 export async function createTestCampaign(userId: string, rulesetId?: string) {

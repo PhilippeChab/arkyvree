@@ -1,13 +1,3 @@
-import {
-  EmojiEvents as FeatPoolsIcon,
-  TrendingUp as LevelsIcon,
-  Settings as ModifiersIcon,
-  Label as PropertiesIcon,
-  Rule as RequirementsIcon,
-  Psychology as SkillsIcon,
-  Bolt as SpellListIcon,
-  AutoStories as SpellsIcon,
-} from "@mui/icons-material";
 import { Box, Chip, MenuItem, TextField } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
@@ -15,12 +5,22 @@ import { useState } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { DeleteDialog, type SectionTab, SectionTabs } from "@/client/src/components/common/index.ts";
+import {
+  FeatPoolsIcon,
+  ModifiersIcon,
+  PropertiesIcon,
+  RequirementsIcon,
+  SkillsIcon,
+  SpellListIcon,
+  SpellsIcon,
+  TrendingUpIcon,
+} from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormSync, useFormWith, usePageTitle, useRulesetAbilities } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { isStillOpen } from "@/client/src/lib/stillOpen.ts";
 import {
   type ClassFormData,
@@ -32,18 +32,13 @@ import {
   EntityDetailsCard,
   EntityPageError,
 } from "@/client/src/pages/rulesets/components/index.ts";
-import {
-  type ClassDetail,
-  classDetailQuery,
-  type ClassSection,
-  prefetchClassSection,
-} from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import { entityPageState, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { HIT_DIE_VALUES } from "@/shared/dnd3.5/classes.ts";
 import { KLASS_BONUS_SPELL_ABILITY_ID, KLASS_CASTER_TYPE } from "@/shared/dnd3.5/properties/index.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
+import { type ClassDetail, classDetailQuery, type ClassSection, prefetchClassSection } from "./classSectionQueries.ts";
 import {
   ClassFeatPoolsSection,
   ClassLevelsSection,
@@ -69,7 +64,7 @@ const SECTION_COMPONENTS = {
 } as const;
 
 const TABS: SectionTab<ClassSection>[] = [
-  { key: "levels", label: "Levels", icon: LevelsIcon },
+  { key: "levels", label: "Levels", icon: TrendingUpIcon },
   { key: "skills", label: "Skills", icon: SkillsIcon },
   { key: "feat-pools", label: "Feat Pools", icon: FeatPoolsIcon },
   { key: "spells-known", label: "Spells Known", icon: SpellsIcon },
@@ -154,19 +149,20 @@ export default function ClassDetailsPage() {
       if (classData && stillOpen) queryClient.setQueryData(savedKey, { ...classData, ...data });
       queryClient.invalidateQueries({ queryKey: savedKey, exact: true });
       // Editing an inherited class copies it into this ruleset under a new id.
-      if (stillOpen && data.id !== sourceId) {
+      if (stillOpen && data.id !== sourceId)
         navigate(`/rulesets/${rulesetId}/classes/${data.id}/${currentTab}`, { replace: true, state: location.state });
-      }
-      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(rulesetId, "classes") });
+
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.section(rulesetId, "classes") });
       snackbar.success("Class updated");
     },
     onError: (err) => snackbar.error(err, "Failed to update class"),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: () => rpc.api.rulesets[":id"].classes[":classId"].$delete({ param: { id: rulesetId, classId } }),
+    mutationFn: () =>
+      parseResponse(rpc.api.rulesets[":id"].classes[":classId"].$delete({ param: { id: rulesetId, classId } })),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(rulesetId, "classes") });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.section(rulesetId, "classes") });
       snackbar.success("Class deleted");
       navigate(backUrl);
     },
@@ -177,16 +173,12 @@ export default function ClassDetailsPage() {
   const setClassProperty = async (type: string, propertyId: string | null | undefined, value: string) => {
     const param = { id: rulesetId, entityType: getUrlSegment("klasses"), entityId: classData?.id ?? classId };
     const endpoint = rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].properties;
-    if (!propertyId) {
-      await endpoint.$post({ param, json: { type, value } });
-    } else if (!value) {
-      await endpoint[":propertyId"].$delete({ param: { ...param, propertyId } });
-    } else {
-      await endpoint[":propertyId"].$put({ param: { ...param, propertyId }, json: { type, value } });
-    }
+    if (!propertyId) await endpoint.$post({ param, json: { type, value } });
+    else if (!value) await endpoint[":propertyId"].$delete({ param: { ...param, propertyId } });
+    else await endpoint[":propertyId"].$put({ param: { ...param, propertyId }, json: { type, value } });
   };
 
-  const onClassPropertySaved = (message: string) => () => {
+  const handleClassPropertySaved = (message: string) => () => {
     queryClient.invalidateQueries({ queryKey: classDetailQuery(rulesetId, classId).queryKey });
     snackbar.success(message);
   };
@@ -194,21 +186,20 @@ export default function ClassDetailsPage() {
   const bonusSpellMutation = useMutation({
     mutationFn: (abilityId: string) =>
       setClassProperty(KLASS_BONUS_SPELL_ABILITY_ID, classData?.bonusSpellPropertyId, abilityId),
-    onSuccess: onClassPropertySaved("Bonus spell ability updated"),
+    onSuccess: handleClassPropertySaved("Bonus spell ability updated"),
     onError: (err) => snackbar.error(err, "Failed to update bonus spell ability"),
   });
 
   const casterTypeMutation = useMutation({
     mutationFn: (casterType: string) =>
       setClassProperty(KLASS_CASTER_TYPE, classData?.casterTypePropertyId, casterType),
-    onSuccess: onClassPropertySaved("Caster type updated"),
+    onSuccess: handleClassPropertySaved("Caster type updated"),
     onError: (err) => snackbar.error(err, "Failed to update caster type"),
   });
 
   // Normalize the URL to a known tab.
-  if (rulesetId && classId && !isClassSection(section)) {
+  if (rulesetId && classId && !isClassSection(section))
     return <Navigate to={`/rulesets/${rulesetId}/classes/${classId}/levels`} replace />;
-  }
 
   const isLoading = isRulesetLoading || isClassLoading;
 

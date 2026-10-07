@@ -1,11 +1,7 @@
-import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
-import {
-  formatStringArray,
-  listField,
-  quote,
-  toConstName,
-} from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
+
+import { CodeFile } from "./CodeFile.ts";
+import { formatStringArray, listField, quote, toConstName } from "./literals.ts";
 
 /**
  * A class's file (classes/<slug>.ts): its seed (`buildClassSeed`) written field by field, and the requirement builders
@@ -21,9 +17,9 @@ export class ClassFile extends CodeFile {
     const { aptitudePicks } = this.seed;
     if (!aptitudePicks) return;
     this.lines.push(`  aptitudePicks: [`);
-    for (const pick of aptitudePicks) {
+    for (const pick of aptitudePicks)
       this.lines.push(`    { levels: [${pick.levels.join(", ")}], target: ${quote(pick.target)} },`);
-    }
+
     this.lines.push(`  ],`);
   }
 
@@ -55,9 +51,9 @@ export class ClassFile extends CodeFile {
     const { modifiers } = this.seed;
     if (!modifiers) return;
     this.lines.push(`  modifiers: [`);
-    for (const m of modifiers) {
+    for (const m of modifiers)
       this.lines.push(`    { ${[`level: ${m.level}`, ...this.modifierFields(m)].join(", ")} },`);
-    }
+
     this.lines.push(`  ],`);
   }
 

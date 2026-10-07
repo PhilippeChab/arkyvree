@@ -7,15 +7,16 @@
  *   Copies $TEMPLATE_DATABASE_URL's database (by default $DATABASE_URL's) into <its name>_<suffix>.
  */
 
-import { cloneDatabase, databaseOf } from "@/scripts/db/databases.ts";
+import { cloneDatabase, databaseOf } from "./databases.ts";
 
 async function main() {
   const template = process.env.TEMPLATE_DATABASE_URL ?? process.env.DATABASE_URL;
   const suffix = process.argv[2];
-  if (!template || !suffix)
+  if (!template || !suffix) {
     throw new Error(
       "Usage: bun scripts/db/clone-database.ts <suffix>, with DATABASE_URL (or TEMPLATE_DATABASE_URL) the database to copy",
     );
+  }
   const target = `${databaseOf(template).name}_${suffix}`;
   await cloneDatabase(template, [target]);
   console.log(`Copied ${databaseOf(template).name} into ${target}`);

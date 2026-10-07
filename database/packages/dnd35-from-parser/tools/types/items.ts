@@ -1,4 +1,4 @@
-import type { Overrides, ScrapedMeta } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
+import type { Overrides, ScrapedMeta } from "./reference.ts";
 
 export type ArmorRow = {
   name: string;

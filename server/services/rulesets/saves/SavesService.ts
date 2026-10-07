@@ -1,8 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { savesInRules } from "@/drizzle/schema.ts";
-import { findScopedEntity, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { findScopedEntity, RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
@@ -31,9 +30,7 @@ class SavesService {
         const rows = await Saves.create(tx, { ...body, rulesetId });
         const save = rows[0];
 
-        if (tombstoneAncestorId) {
-          await edit.repointTombstone(tx, "saves", tombstoneAncestorId, save.id);
-        }
+        if (tombstoneAncestorId) await edit.repointTombstone(tx, "saves", tombstoneAncestorId, save.id);
 
         await createActivityWithNotifications(tx, {
           userId: session.userId,
@@ -134,9 +131,8 @@ class SavesService {
 
         const { updatedAt: _u, ...saveData } = body;
         const rows = await Saves.update(tx, saveData, { id: targetId, expectedUpdatedAt });
-        if (expectedUpdatedAt && rows.length === 0) {
-          throw new ConflictError(STALE_ENTITY_MESSAGE);
-        }
+        if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
+
         const updatedSave = rows[0];
 
         await createActivityWithNotifications(tx, {

@@ -15,5 +15,5 @@ export function useToggleSet<T = string>() {
 
   const clear = useCallback(() => setSet(new Set()), []);
 
-  return [set, toggle, clear] as const;
+  return { keys: set, toggle, clear };
 }

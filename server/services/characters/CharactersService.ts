@@ -21,13 +21,13 @@ import type { CharacterKind } from "@/server/rulesets/dnd3.5/index.ts";
 import RequirementEvaluator from "@/server/rulesets/engine/requirements/RequirementEvaluator.ts";
 import type { Components } from "@/server/rulesets/engine/types.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import { getClassLevelsByCharacter } from "@/server/services/characters/classLevels.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
 import type { Alignment, Gender } from "@/shared/enums.ts";
 import type { Requirement, Session } from "@/shared/relations.ts";
 
 import { type BondedEntry, loadBondedByKind } from "./bonded.ts";
+import { getClassLevelsByCharacter } from "./classLevels.ts";
 import { Archives } from "./concerns/Archives.ts";
 import { findEditableCharacterOrBonded, getEditableCharacter } from "./editableCharacter.ts";
 import { enqueueCharacterPdf, findExportableCharacter } from "./pdf.ts";
@@ -49,21 +49,18 @@ class CharactersService extends include(Object, Archives) {
     // Languages.findMany returns the post-COW rows regardless of which
     // form the client sent.
     const languages = await Languages.findMany(tx, { ids: languageIds });
-    if (languages.length !== languageIds.length) {
-      throw new BadRequestError("Some languages were not found");
-    }
+    if (languages.length !== languageIds.length) throw new BadRequestError("Some languages were not found");
+
     const validRulesetIds = new Set([characterRecord.rulesetId, ...rulesetData.cow.sourceChain]);
-    if (languages.some((l) => !validRulesetIds.has(l.rulesetId))) {
+    if (languages.some((l) => !validRulesetIds.has(l.rulesetId)))
       throw new BadRequestError("Some languages do not belong to the character's ruleset");
-    }
 
     const existing = await CharacterLanguages.findMany(tx, { characterId: characterRecord.id });
-    for (const lang of existing) {
+    for (const lang of existing)
       await CharacterLanguages.delete(tx, { characterId: characterRecord.id, languageId: lang.languageId });
-    }
-    for (const languageId of languageIds) {
+
+    for (const languageId of languageIds)
       await CharacterLanguages.create(tx, { characterId: characterRecord.id, languageId });
-    }
   }
 
   async createCharacter(
@@ -95,9 +92,7 @@ class CharactersService extends include(Object, Archives) {
           rulesetData.cow.sourceChain,
           "Race",
         );
-        if (race.kind !== "pc") {
-          throw new BadRequestError("Race is not valid for a player character");
-        }
+        if (race.kind !== "pc") throw new BadRequestError("Race is not valid for a player character");
 
         const [newCharacter] = await Characters.create(tx, {
           userId: session.userId,
@@ -142,9 +137,7 @@ class CharactersService extends include(Object, Archives) {
 
   async enqueuePdf(session: Session, characterId: string) {
     const characterRecord = await findExportableCharacter(session.userId, characterId);
-    if (!characterRecord) {
-      throw new NotFoundError("Character not found");
-    }
+    if (!characterRecord) throw new NotFoundError("Character not found");
 
     await enqueueCharacterPdf(session, characterRecord);
   }
@@ -230,14 +223,11 @@ class CharactersService extends include(Object, Archives) {
 
   async getCharacter(session: Session, characterId: string) {
     const record = await Characters.findOne(db, { id: characterId }, Visibility.All);
-    if (!record) {
-      throw new NotFoundError("Character not found");
-    }
+    if (!record) throw new NotFoundError("Character not found");
 
     if (record.kind !== "pc") {
-      if (!record.parentCharacterId) {
-        throw new NotFoundError("Character not found");
-      }
+      if (!record.parentCharacterId) throw new NotFoundError("Character not found");
+
       await getEditableCharacter(db, session, record.parentCharacterId, Visibility.All);
 
       const rulesetModule = await RulesetFactory.fromRulesetId(record.rulesetId);
@@ -332,9 +322,7 @@ class CharactersService extends include(Object, Archives) {
     pagination: { limit: number; page: number },
   ) {
     const campaign = await Campaigns.findOne(db, { id: campaignId });
-    if (!campaign) {
-      throw new NotFoundError("Campaign not found");
-    }
+    if (!campaign) throw new NotFoundError("Campaign not found");
 
     return await Characters.findUnlinkedPage(
       db,
@@ -352,9 +340,7 @@ class CharactersService extends include(Object, Archives) {
         // stored pre-COW rows still match when the client sends post-COW ids.
         for (const [abilityId, score] of Object.entries(abilities)) {
           const rows = await CharacterAbilities.update(tx, { score }, { characterId, abilityId });
-          if (rows.length === 0) {
-            throw new NotFoundError("Ability not found");
-          }
+          if (rows.length === 0) throw new NotFoundError("Ability not found");
         }
 
         await Activities.create(tx, {
@@ -387,16 +373,13 @@ class CharactersService extends include(Object, Archives) {
   ) {
     return await withTransaction(async (tx) => {
       const characterRecord = await findEditableCharacterOrBonded(tx, characterId, session.userId);
-      if (!characterRecord) {
-        throw new NotFoundError("Character not found");
-      }
+      if (!characterRecord) throw new NotFoundError("Character not found");
 
       const { languageIds, updatedAt: expectedUpdatedAt, ...characterFields } = updateData;
 
       const updatedRows = await Characters.update(tx, characterFields, { id: characterId, expectedUpdatedAt });
-      if (expectedUpdatedAt && updatedRows.length === 0) {
-        throw new ConflictError(STALE_ENTITY_MESSAGE);
-      }
+      if (expectedUpdatedAt && updatedRows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
+
       const [updatedCharacter] = updatedRows;
 
       // Apply languages atomically when present. `undefined` = leave alone;

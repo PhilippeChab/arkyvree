@@ -261,8 +261,7 @@ describe("The seeded bonuses the rules read", () => {
       [RODS, "Rod of Flailing"],
       // Goes to the object it coats: its override says so
       [WONDROUS_ITEMS, "Unguent of Timelessness"],
-    ] as const) {
+    ] as const)
       expect({ name, modifiers: seededModifiers(seeds, name) }).toEqual({ name, modifiers: [] });
-    }
   });
 });

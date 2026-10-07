@@ -29,9 +29,9 @@ interface EquipmentTableProps<T extends EquipmentTableRow> {
 
 type EquipmentTableRow = Omit<EquipmentRow, "type" | "updatedAt">;
 
-const headerSx = { fontWeight: 600 };
+const HEADER_SX = { fontWeight: 600 };
 /** Slots and figures stay on one line; the table scrolls on narrow screens. */
-const noWrap = { whiteSpace: "nowrap" };
+const NO_WRAP_SX = { whiteSpace: "nowrap" };
 
 /** A character's inventory: slot, quantity, weight, value, and the carried load under it. */
 export function EquipmentTable<T extends EquipmentTableRow>({
@@ -46,22 +46,22 @@ export function EquipmentTable<T extends EquipmentTableRow>({
         <Table size="small" sx={{ minWidth: 640 }}>
           <TableHead>
             <TableRow>
-              <TableCell sx={headerSx}>Item</TableCell>
-              <TableCell align="center" sx={headerSx}>
+              <TableCell sx={HEADER_SX}>Item</TableCell>
+              <TableCell align="center" sx={HEADER_SX}>
                 Slot
               </TableCell>
-              <TableCell align="center" sx={headerSx}>
+              <TableCell align="center" sx={HEADER_SX}>
                 Quantity
               </TableCell>
-              <TableCell align="center" sx={headerSx}>
+              <TableCell align="center" sx={HEADER_SX}>
                 Weight
               </TableCell>
-              <TableCell align="center" sx={headerSx}>
+              <TableCell align="center" sx={HEADER_SX}>
                 Value
               </TableCell>
-              <TableCell sx={headerSx}>Description</TableCell>
+              <TableCell sx={HEADER_SX}>Description</TableCell>
               {renderActions && (
-                <TableCell align="center" sx={headerSx}>
+                <TableCell align="center" sx={HEADER_SX}>
                   Actions
                 </TableCell>
               )}
@@ -89,14 +89,14 @@ export function EquipmentTable<T extends EquipmentTableRow>({
                     </Typography>
                   )}
                 </TableCell>
-                <TableCell align="center" sx={noWrap}>
+                <TableCell align="center" sx={NO_WRAP_SX}>
                   <Typography variant="body2">{formatSlotDisplay(entry)}</Typography>
                 </TableCell>
                 <TableCell align="center">{entry.quantity || 1}</TableCell>
-                <TableCell align="center" sx={noWrap}>
+                <TableCell align="center" sx={NO_WRAP_SX}>
                   {formatWeight(entry.weight) ?? "—"}
                 </TableCell>
-                <TableCell align="center" sx={noWrap}>
+                <TableCell align="center" sx={NO_WRAP_SX}>
                   {formatCost(entry.costGp) ?? "—"}
                 </TableCell>
                 <TableCell sx={{ fontSize: "0.875rem", minWidth: 220 }}>{entry.description || "—"}</TableCell>

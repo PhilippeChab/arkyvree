@@ -1,15 +1,5 @@
 /** A class reference's mapping: its initial section, and where its features' occurrences go. */
 
-import { CHOICE_PATTERN } from "@/database/packages/dnd35-from-parser/tools/detect/classes/aptitudePicks.ts";
-import {
-  buildFeatureMap,
-  getFeatureBaseName,
-  normalizeFeatureName,
-  ORDINAL_PREFIX,
-  parsePoolSubOptions,
-  stripOrdinalPrefix,
-} from "@/database/packages/dnd35-from-parser/tools/detect/classes/features.ts";
-import { detectWAPModifiers } from "@/database/packages/dnd35-from-parser/tools/detect/classes/proficiencies.ts";
 import { detectModifiers } from "@/database/packages/dnd35-from-parser/tools/detect/feats.ts";
 import { findWithPluralVariants, isPluralVariantOf } from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
@@ -17,6 +7,17 @@ import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools
 import { type NamedText } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
 import { bonus } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import { stripSeparators } from "@/shared/text.ts";
+
+import { CHOICE_PATTERN } from "./aptitudePicks.ts";
+import {
+  buildFeatureMap,
+  getFeatureBaseName,
+  normalizeFeatureName,
+  ORDINAL_PREFIX,
+  parsePoolSubOptions,
+  stripOrdinalPrefix,
+} from "./features.ts";
+import { detectWAPModifiers } from "./proficiencies.ts";
 
 /** A pool's aptitude, the level it opens at, and whether its picks stack. */
 type PoolAptitude = { aptitude: string; level: number; stackable?: true };
@@ -236,9 +237,8 @@ class InitialMapping {
     // (used to detect "orphan" classFeature entries that are pool sub-options)
     const progressionFeatureNames = new Set<string>();
     for (const row of raw.progression) {
-      for (const special of row.special) {
+      for (const special of row.special)
         if (special) progressionFeatureNames.add(normalizeFeatureName(special).toLowerCase());
-      }
     }
 
     for (let i = 0; i < raw.classFeatures.length; i++) {

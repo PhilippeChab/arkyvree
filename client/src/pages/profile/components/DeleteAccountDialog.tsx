@@ -6,6 +6,7 @@ import { useState } from "react";
 import { AnimatedAlert, DiceSpinner, FormDialog, FormTextField } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
+import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
@@ -48,10 +49,10 @@ export function DeleteAccountDialog({ open, onClose, hasPassword }: DeleteAccoun
       useAuthStore.getState().clearSession({ byUser: true });
       snackbar.success("Account deleted successfully");
     },
-    onError: (error) => setError(error.message),
+    onError: (error) => setError(errorMessage(error, "Failed to delete account")),
   });
 
-  const onSubmit = (data: DeleteAccountFormData) => {
+  const handleDelete = (data: DeleteAccountFormData) => {
     if (hasPassword && !data.password) return;
     if (!hasPassword && data.confirmText !== "DELETE") return;
 
@@ -66,7 +67,7 @@ export function DeleteAccountDialog({ open, onClose, hasPassword }: DeleteAccoun
   return (
     <FormDialog open={open} onClose={handleClose} form={form} isLoading={deleteMutation.isPending} maxWidth="xs">
       <DialogTitle>Delete Account</DialogTitle>
-      <form onSubmit={handleSubmit(onSubmit)} noValidate>
+      <form onSubmit={handleSubmit(handleDelete)} noValidate>
         <DialogContent>
           <Typography variant="body2" sx={{ mb: 2 }}>
             This action is <strong>permanent</strong> and cannot be undone. All your characters, campaign memberships,

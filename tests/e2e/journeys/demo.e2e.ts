@@ -1,5 +1,4 @@
-import type { Page } from "@playwright/test";
-import { expect } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 
 import { test } from "@/tests/e2e/fixtures.ts";
 import { visitCoreRulesetList } from "@/tests/e2e/support/rulesets.ts";
@@ -65,7 +64,7 @@ test.describe("Demo", () => {
     await expect(page.getByRole("heading", { name: /Your demo has ended/ })).toBeVisible();
 
     await page.unroute("**/api/**");
-    await page.getByRole("button", { name: /^Sign up$/ }).click();
+    await page.getByRole("link", { name: /^Sign up$/ }).click();
     await page.waitForURL("/sign-up", { timeout: 10_000 });
   });
 });

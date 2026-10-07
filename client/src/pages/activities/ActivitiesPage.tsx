@@ -1,4 +1,3 @@
-import { History as HistoryIcon } from "@mui/icons-material";
 import {
   Chip,
   Container,
@@ -13,7 +12,6 @@ import {
   Typography,
 } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
-import { parseResponse } from "hono/client";
 
 import {
   BlankState,
@@ -29,11 +27,12 @@ import {
   SearchBar,
   type SortOption,
 } from "@/client/src/components/common/index.ts";
+import { HistoryIcon } from "@/client/src/components/icons/index.ts";
 import { isNavigableTarget, useListParams, useOpenActivityTarget, usePageTitle } from "@/client/src/hooks/index.ts";
-import { formatActivityDate, formatActivityDetails, formatActivityType } from "@/client/src/lib/activityFormatters.ts";
+import { formatActivityDetails, formatActivityType } from "@/client/src/lib/activityFormatters.ts";
+import { formatDateTime } from "@/client/src/lib/formatDate.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { activityListQuery } from "@/client/src/lib/queries.ts";
 
 type SortField = "createdAt" | "type";
 
@@ -42,8 +41,6 @@ const ACTIVITY_SORT_OPTIONS: SortOption<SortField>[] = [
   { field: "type", direction: "asc", label: "Type (A-Z)" },
   { field: "type", direction: "desc", label: "Type (Z-A)" },
 ];
-
-const PAGE_SIZE = 10;
 
 export default function ActivitiesPage() {
   usePageTitle("Activities");
@@ -54,21 +51,7 @@ export default function ActivitiesPage() {
   });
 
   const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    queryKey: queryKeys.activities.list({ search, orderBy, orderDir }),
-    queryFn: ({ pageParam }) =>
-      parseResponse(
-        rpc.api.activities.$get({
-          query: {
-            page: pageParam.toString(),
-            limit: PAGE_SIZE.toString(),
-            search: search || undefined,
-            orderBy,
-            orderDir,
-          },
-        }),
-      ),
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    ...activityListQuery({ search, orderBy, orderDir }),
     placeholderData: keepPreviousData,
   });
 
@@ -132,7 +115,7 @@ export default function ActivitiesPage() {
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                            {formatActivityDate(activity.createdAt)}
+                            {formatDateTime(activity.createdAt)}
                           </Typography>
                         </TableCell>
                       </TableRow>

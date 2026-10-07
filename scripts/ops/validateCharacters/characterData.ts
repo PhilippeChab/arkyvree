@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 
-import { ACTIVE_CHARACTERS, ACTIVE_LEVELS, type Character, query } from "@/scripts/ops/validateCharacters/queries.ts";
+import { ACTIVE_CHARACTERS, ACTIVE_LEVELS, type Character, query } from "./queries.ts";
 
 /** Prints how many rows the active characters hold, by kind. */
 export async function printCharacterData(characters: Character[]) {

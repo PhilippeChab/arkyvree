@@ -1,8 +1,11 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Dnd35Components } from "@/server/rulesets/dnd3.5/character/components.ts";
 import type { PathCategory } from "@/server/rulesets/engine/paths/PathCategory.ts";
-import { getNumericOperators } from "@/shared/customization/operators.ts";
-import { MODIFIER_OPERATORS, NUMERIC_REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
+import {
+  getNumericOperators,
+  MODIFIER_OPERATORS,
+  NUMERIC_REQUIREMENT_OPERATORS,
+} from "@/shared/customization/operators.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 
 const NAVIGATABLE_BACKGROUND_PATHS = [{ path: "notes", description: "Public notes", type: "string" as const }];

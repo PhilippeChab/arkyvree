@@ -9,7 +9,8 @@ import {
 } from "@/database/packages/dnd35/names.ts";
 import { db } from "@/server/database/index.ts";
 import { EntitySnapshots, Rulesets } from "@/server/repositories/index.ts";
-import { seededRows } from "@/tests/seeds/seededRows.ts";
+
+import { seededRows } from "./seededRows.ts";
 
 describe("The seeded extensions", () => {
   test.each([
@@ -72,10 +73,11 @@ describe("The seeded extensions", () => {
         const lost = source.powersAptitudesInRules.filter(
           (link) => link.aptitudesInRule.name.endsWith("Spells") && !copyLists.has(link.aptitudeId),
         );
-        if (lost.length > 0)
+        if (lost.length > 0) {
           failures.push(
             `${extension.name}: ${copy.name} lost ${lost.map((link) => link.aptitudesInRule.name).join(", ")}`,
           );
+        }
       }
     }
     expect(copies).toBeGreaterThan(0);

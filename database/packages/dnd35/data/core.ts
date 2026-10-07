@@ -21,12 +21,13 @@ import type { LanguageSeed } from "@/database/packages/dnd35/content/languages/t
 import type { CoreContent } from "@/database/packages/dnd35/content/rulesets/types.ts";
 import type { SaveSeed } from "@/database/packages/dnd35/content/saves/types.ts";
 import type { SkillSeed } from "@/database/packages/dnd35/content/skills/types.ts";
-import { ANIMAL_COMPANIONS } from "@/database/packages/dnd35/data/bonds/animalCompanions.ts";
-import { FAMILIARS } from "@/database/packages/dnd35/data/bonds/familiars.ts";
-import { SPECIAL_MOUNTS } from "@/database/packages/dnd35/data/bonds/mounts.ts";
-import { buildCoreFeats } from "@/database/packages/dnd35/data/feats/coreFeats.ts";
-import { TEMPLATE_ITEMS } from "@/database/packages/dnd35/data/templateItems.ts";
 import { DND35_RULESET_NAME } from "@/database/packages/dnd35/names.ts";
+
+import { ANIMAL_COMPANIONS } from "./bonds/animalCompanions.ts";
+import { FAMILIARS } from "./bonds/familiars.ts";
+import { SPECIAL_MOUNTS } from "./bonds/mounts.ts";
+import { buildCoreFeats } from "./feats/coreFeats.ts";
+import { TEMPLATE_ITEMS } from "./templateItems.ts";
 
 export const ABILITIES: AbilitySeed[] = [
   { name: "Strength", description: "Measures physical power and carrying capacity" },

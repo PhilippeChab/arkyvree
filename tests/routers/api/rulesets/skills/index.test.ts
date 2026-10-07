@@ -54,9 +54,8 @@ describe("rulesets skills", () => {
     for (const json of [
       { ...valid, name: "" },
       { ...valid, primaryAbilityId: "Wisdom" },
-    ]) {
+    ])
       await expectStatus(skills.$post({ param: { id }, json }), 400);
-    }
   });
 
   test("returns 404 for a missing ruleset or skill", async () => {

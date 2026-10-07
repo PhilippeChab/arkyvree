@@ -1,18 +1,10 @@
 import {
-  HelpOutlined as FaqIcon,
-  Map as MapIcon,
-  Person as PersonIcon,
-  MenuBook as RulesetIcon,
-} from "@mui/icons-material";
-import type { SvgIconComponent } from "@mui/icons-material";
-import { HelpOutlined as HelpIcon } from "@mui/icons-material";
-import {
   Backdrop,
   Box,
   Button,
   DialogContent,
-  Link,
   MobileStepper,
+  Link as MuiLink,
   Paper,
   Popper,
   Tooltip,
@@ -23,9 +15,23 @@ import type { Instance } from "@popperjs/core";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { Modal } from "@/client/src/components/common/index.ts";
-import { DURATION, EASING, fadeInUp, prefersReducedMotion } from "@/client/src/lib/animations.ts";
+import {
+  FaqIcon,
+  HelpIcon,
+  MapIcon,
+  PersonIcon,
+  RulesetIcon,
+  type SvgIconComponent,
+} from "@/client/src/components/icons/index.ts";
+import { DURATION, EASING, fadeInUp, PREFERS_REDUCED_MOTION } from "@/client/src/lib/animations.ts";
 import { brandGold, brandGoldTint } from "@/client/src/lib/brandGold.ts";
-import { externalLinks } from "@/client/src/lib/externalLinks.ts";
+import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
+
+interface OnboardingPopperProps {
+  anchorEl: HTMLElement;
+  onClose: () => void;
+  children: ReactNode;
+}
 
 interface OnboardingProps {
   open: boolean;
@@ -47,7 +53,7 @@ interface OnboardingStep {
 
 const SIDEBAR_TRANSITION_MS = 380;
 
-const steps: OnboardingStep[] = [
+const STEPS: OnboardingStep[] = [
   {
     icon: null,
     logo: true,
@@ -88,15 +94,7 @@ const steps: OnboardingStep[] = [
  * The steps beside the sidebar, shown once its expansion, which entering popper mode starts, has finished: it mounts as
  * the mode starts, so each entry waits for its transition. Between steps it moves to the new anchor.
  */
-function OnboardingPopper({
-  anchorEl,
-  onClose,
-  children,
-}: {
-  anchorEl: HTMLElement;
-  onClose: () => void;
-  children: ReactNode;
-}) {
+function OnboardingPopper({ anchorEl, onClose, children }: OnboardingPopperProps) {
   const popperRef = useRef<Instance>(null);
   const [entered, setEntered] = useState(false);
 
@@ -151,25 +149,17 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
   const gold = brandGold(darkMode);
   const goldFaint = brandGoldTint(darkMode, darkMode ? 0.12 : 0.1);
 
-  const step = steps[activeStep];
-  const isLastStep = activeStep === steps.length - 1;
+  const step = STEPS[activeStep];
+  const isLastStep = activeStep === STEPS.length - 1;
   const effectiveMode = isMobile || !anchorEl ? "dialog" : "popper";
 
   const handleNext = () => {
-    if (isLastStep) {
-      onClose();
-    } else {
-      onStepChange(activeStep + 1);
-    }
+    if (isLastStep) onClose();
+    else onStepChange(activeStep + 1);
   };
 
   const handleBack = () => {
     onStepChange(activeStep - 1);
-  };
-
-  const handleViewFaq = () => {
-    onClose();
-    window.open(externalLinks.help, "_blank", "noopener,noreferrer");
   };
 
   if (!open) return null;
@@ -203,7 +193,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
           flexDirection: "column",
           alignItems: "center",
           animation: `${fadeInUp} ${DURATION.normal}ms ${EASING.decelerate} both`,
-          [prefersReducedMotion]: { animation: "none" },
+          [PREFERS_REDUCED_MOTION]: { animation: "none" },
         }}
       >
         {/* Icon circle */}
@@ -285,13 +275,15 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
                 <span key={i}>
                   {part}
                   {i === 0 && (
-                    <Link
-                      component="button"
-                      onClick={handleViewFaq}
+                    <MuiLink
+                      href={EXTERNAL_LINKS.help}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={onClose}
                       sx={{ fontSize: "inherit", verticalAlign: "baseline" }}
                     >
                       FAQ
-                    </Link>
+                    </MuiLink>
                   )}
                 </span>
               ))
@@ -325,7 +317,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
   const stepperDots = (
     <MobileStepper
       variant="dots"
-      steps={steps.length}
+      steps={STEPS.length}
       position="static"
       activeStep={activeStep}
       sx={{

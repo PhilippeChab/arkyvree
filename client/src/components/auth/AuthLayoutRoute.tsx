@@ -1,12 +1,12 @@
 import { Alert, Box, Card, CardContent, Link as MuiLink, Typography, useTheme } from "@mui/material";
 import { type ReactNode, Suspense, useEffect, useRef, useState } from "react";
-import { Navigate, Outlet, useLocation, useSearchParams } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 
 import { DiceSpinner, PageTransition } from "@/client/src/components/common/index.ts";
-import { useAuthRequests, useIsMobile, useStartDemo } from "@/client/src/hooks/index.ts";
-import { DURATION, EASING, fadeInUp, prefersReducedMotion } from "@/client/src/lib/animations.ts";
+import { useAuthRequests, useIsMobile, useSearchParam, useStartDemo } from "@/client/src/hooks/index.ts";
+import { DURATION, EASING, fadeInUp, PREFERS_REDUCED_MOTION } from "@/client/src/lib/animations.ts";
 import { brandGold, brandGoldTint } from "@/client/src/lib/brandGold.ts";
-import { externalLinks } from "@/client/src/lib/externalLinks.ts";
+import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 import { safeRedirectPath } from "@/client/src/lib/safeRedirect.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
@@ -57,7 +57,7 @@ function AuthFooterLinks() {
         </>
       )}
       <MuiLink
-        href={externalLinks.source}
+        href={EXTERNAL_LINKS.source}
         target="_blank"
         rel="noopener noreferrer"
         variant="body2"
@@ -79,7 +79,7 @@ function DesktopBranding() {
   const goldFaint = brandGoldTint(darkMode, darkMode ? 0.12 : 0.1);
 
   const animBase = {
-    [prefersReducedMotion]: { animation: "none" },
+    [PREFERS_REDUCED_MOTION]: { animation: "none" },
   } as const;
 
   const stagger = (i: number) => ({
@@ -266,9 +266,9 @@ export function AuthLayoutRoute() {
   const { signOut } = useAuthRequests();
   const signOutDemo = signOut.mutate;
   const location = useLocation();
-  const [searchParams] = useSearchParams();
+  const { value: redirectParam } = useSearchParam("redirect");
   // Where a user signing in was going: the page that sent them to sign in, which verifying an email carries along
-  const destination = safeRedirectPath(searchParams.get("redirect") ?? location.state?.redirect) ?? "/dashboard";
+  const destination = safeRedirectPath(redirectParam || location.state?.redirect) ?? "/dashboard";
 
   // Demo sessions live only inside the app — drop the demo on entry to any auth route.
   // A sign-out that fails (server already 401'd, network blip) still ends signed out locally: the server-side demo may
@@ -279,13 +279,9 @@ export function AuthLayoutRoute() {
     signOutDemo(undefined, { onSettled: () => setIsClearingDemo(false) });
   }, [isClearingDemo, signOutDemo]);
 
-  if (isClearingDemo) {
-    return <DiceSpinner sx={{ minHeight: "100vh" }} />;
-  }
+  if (isClearingDemo) return <DiceSpinner sx={{ minHeight: "100vh" }} />;
 
-  if (isAuthenticated) {
-    return <Navigate to={destination} replace />;
-  }
+  if (isAuthenticated) return <Navigate to={destination} replace />;
 
   if (isMobile) {
     return (
@@ -335,7 +331,7 @@ export function AuthPage({ children, title, subtitle, error, notice }: AuthPageP
           <Box
             sx={{
               animation: `${fadeInUp} ${DURATION.slow}ms ${EASING.decelerate} both`,
-              [prefersReducedMotion]: { animation: "none" },
+              [PREFERS_REDUCED_MOTION]: { animation: "none" },
             }}
           >
             <Typography sx={{ typography: { xs: "h5", sm: "h4" } }} component="h1" gutterBottom align="center">

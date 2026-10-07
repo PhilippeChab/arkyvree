@@ -29,13 +29,11 @@ class CampaignInvitesService {
   /** The campaign of an invite's player slot, archived or not. */
   private async getInviteCampaign(tx: Db, invite: Invite) {
     const player = await Players.findOne(tx, { id: invite.playerId });
-    if (!player) {
-      throw new NotFoundError("Player not found");
-    }
+    if (!player) throw new NotFoundError("Player not found");
+
     const campaign = await Campaigns.findOne(tx, { id: player.campaignId }, Visibility.All);
-    if (!campaign) {
-      throw new NotFoundError("Campaign not found");
-    }
+    if (!campaign) throw new NotFoundError("Campaign not found");
+
     return campaign;
   }
 
@@ -44,12 +42,10 @@ class CampaignInvitesService {
    */
   private async getPendingInviteFor(tx: Db, session: Session, inviteId: string) {
     const invite = await Invites.findOne(tx, { id: inviteId });
-    if (!invite || invite.userId !== session.userId) {
-      throw new NotFoundError("Invite not found");
-    }
-    if (invite.status !== "Pending") {
-      throw new ConflictError("Invite is no longer pending");
-    }
+    if (!invite || invite.userId !== session.userId) throw new NotFoundError("Invite not found");
+
+    if (invite.status !== "Pending") throw new ConflictError("Invite is no longer pending");
+
     return invite;
   }
 
@@ -57,9 +53,7 @@ class CampaignInvitesService {
     return await withTransaction(async (tx) => {
       const invite = await this.getPendingInviteFor(tx, session, inviteId);
       const campaign = await this.getInviteCampaign(tx, invite);
-      if (campaign.deletedAt) {
-        throw new ForbiddenError("Cannot accept an invite for an archived campaign");
-      }
+      if (campaign.deletedAt) throw new ForbiddenError("Cannot accept an invite for an archived campaign");
 
       await Players.update(tx, { userId: session.userId }, { id: invite.playerId });
       return await this.answerInvite(tx, session, invite, "Accepted");
@@ -74,9 +68,8 @@ class CampaignInvitesService {
       id: inviteId,
       userId: session.userId,
     });
-    if (!invite) {
-      throw new NotFoundError("Invite not found");
-    }
+    if (!invite) throw new NotFoundError("Invite not found");
+
     return invite;
   }
 
@@ -87,9 +80,7 @@ class CampaignInvitesService {
     pagination: { limit: number; page: number },
   ) {
     const campaign = await Campaigns.findOne(db, { id: campaignId }, Visibility.All);
-    if (!campaign) {
-      throw new NotFoundError("Campaign not found");
-    }
+    if (!campaign) throw new NotFoundError("Campaign not found");
 
     (await CampaignsPolicy.for(db, session, campaign)).canRead();
 
@@ -110,17 +101,13 @@ class CampaignInvitesService {
   async revokeInvite(session: Session, inviteId: string) {
     return await withTransaction(async (tx) => {
       const invite = await Invites.findOne(tx, { id: inviteId });
-      if (!invite) {
-        throw new NotFoundError("Invite not found");
-      }
+      if (!invite) throw new NotFoundError("Invite not found");
 
       const campaign = await this.getInviteCampaign(tx, invite);
 
       (await CampaignsPolicy.for(tx, session, campaign)).canUpdate();
 
-      if (invite.status !== "Pending") {
-        throw new ConflictError("Only pending invites can be revoked");
-      }
+      if (invite.status !== "Pending") throw new ConflictError("Only pending invites can be revoked");
 
       const rows = await Invites.update(tx, { status: "Revoked" }, { id: inviteId });
       const updatedInvite = rows[0];

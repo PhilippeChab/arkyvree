@@ -1,5 +1,4 @@
-import { Box, Typography } from "@mui/material";
-import type { SxProps, Theme } from "@mui/material";
+import { Box, type SxProps, type Theme, Typography } from "@mui/material";
 
 interface GoldDividerProps {
   label?: string;

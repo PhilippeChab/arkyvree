@@ -90,9 +90,9 @@ function boundNames(pattern, into = []) {
 /** The function a call starts from: `describe` in `describe.each(cases)(…)`. */
 function calleeOf(expression) {
   let node = expression;
-  while (node?.type === "CallExpression" || node?.type === "MemberExpression") {
+  while (node?.type === "CallExpression" || node?.type === "MemberExpression")
     node = node.type === "CallExpression" ? node.callee : node.object;
-  }
+
   return node?.type === "Identifier" ? node.name : undefined;
 }
 
@@ -150,9 +150,9 @@ function createFileLayout(context) {
       const statements = node.body;
       const items = rankStatements(statements);
       const strays = findStrays(items);
-      for (const [item, message] of strays) {
+      for (const [item, message] of strays)
         context.report({ node: declarationOf(item.statement) ?? item.statement, message });
-      }
+
       // Steps run in order: what follows one moves by hand, never by the fix
       const afterStep = strays.some(([, message]) => message === STEP);
       const firstBody = items.findIndex((item) => item.kind !== "import");
@@ -203,9 +203,9 @@ function describeHelperNames(program) {
       (node.type === "FunctionDeclaration" || node.type === "VariableDeclaration") &&
       holdsFunction(node) &&
       isInDescribe(node)
-    ) {
+    )
       names.push(...declaredNames(node));
-    }
+
     for (const [key, child] of Object.entries(node))
       if (key !== "parent" && child && typeof child === "object") visit(child);
   };
@@ -216,9 +216,8 @@ function describeHelperNames(program) {
 /** The names the functions and blocks around a nested statement declare: what a helper lifted out would lose. */
 function enclosingNames(ancestors, statement) {
   const names = new Set();
-  for (const node of ancestors) {
-    for (const param of node.params ?? []) for (const n of boundNames(param)) names.add(n);
-  }
+  for (const node of ancestors) for (const param of node.params ?? []) for (const n of boundNames(param)) names.add(n);
+
   for (const block of ancestors.filter((a) => a.type === "BlockStatement")) {
     for (const s of block.body ?? []) {
       if (s === statement) continue;

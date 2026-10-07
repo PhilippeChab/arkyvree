@@ -2,13 +2,13 @@ import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Constructor } from "@/server/mixins.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
 import { parseAptitudeJoin, parseAptitudeList } from "@/server/rulesets/dnd3.5/aptitudes/aptitudeTargets.ts";
-import type SpellcastingState from "@/server/rulesets/dnd3.5/spellcasting/SpellcastingState.ts";
-import { listOpenedBy } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
 import type { CustomizedFeat, CustomizedKlassLevel, CustomizedPower } from "@/server/rulesets/engine/types.ts";
-import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
-import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
+import { MAX_SPELL_LEVEL, toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import type { Aptitude, Power, Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
+
+import type SpellcastingState from "./SpellcastingState.ts";
+import { listOpenedBy } from "./spellLists.ts";
 
 /** The powers a character's aptitudes give it, each with what it knows of them, and the spell tags they carry. */
 export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
@@ -62,13 +62,9 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
           const levels = new Set<number>();
           for (let level = 0; level <= MAX_SPELL_LEVEL; level++) {
             const levelData = aptitudeObj[String(level)] as { allowed: number } | undefined;
-            if (levelData && levelData.allowed === ALLOWED_ALL) {
-              levels.add(level);
-            }
+            if (levelData && levelData.allowed === ALLOWED_ALL) levels.add(level);
           }
-          if (levels.size > 0) {
-            perAptitudeLevels.set(aptitude.id, levels);
-          }
+          if (levels.size > 0) perAptitudeLevels.set(aptitude.id, levels);
         } else if (aptitude.allowed === ALLOWED_ALL) {
           unleveledAptitudeIds.add(aptitude.id);
         }
@@ -79,9 +75,8 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
         if (!aptitude || !this.aptitudes.isLeveledAptitude(list)) continue;
         const levels = perAptitudeLevels.get(aptitude.id) ?? new Set<number>();
         for (const className of classNames) {
-          for (let level = 0; level <= MAX_SPELL_LEVEL; level++) {
+          for (let level = 0; level <= MAX_SPELL_LEVEL; level++)
             if (this.classListKnowing(className, level)) levels.add(level);
-          }
         }
         if (levels.size > 0) perAptitudeLevels.set(aptitude.id, levels);
       }
@@ -140,9 +135,8 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
           !joined &&
           joiningClassNames.length > 0 &&
           (ownLevel as AptitudeLevelData | undefined)?.allowed === ALLOWED_ALL
-        ) {
+        )
           give(power, joiningClassNames[0], power.aptitudeId);
-        }
       }
       return newPowers;
     }
@@ -165,9 +159,8 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
 
         let abilityDcName: string | null = null;
         const klassLevel = klassLevels.find((kl) => kl.id === power.klassLevelId);
-        if (klassLevel) {
-          abilityDcName = klassBonusSpellAbilityMap.get(klassLevel.klassId) ?? null;
-        }
+        if (klassLevel) abilityDcName = klassBonusSpellAbilityMap.get(klassLevel.klassId) ?? null;
+
         const aptitudeSlug = apt ? toSpellPossessionSlug(apt.name) : power.aptitudeId;
         this.powerGroupings.registerPower({ ...power, abilityDcName, aptitudeSlug }, power.properties);
       }
@@ -220,9 +213,8 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
     ) {
       if (this.allAptitudePowers.length === 0) return;
       const newPowers = this.newKnownPowers(powers, this.aptitudeClassNames());
-      if (newPowers.length > 0) {
+      if (newPowers.length > 0)
         this.registerKnownPowers(newPowers, klassLevels, rulesetAptitudes, klassBonusSpellAbilityMap);
-      }
     }
 
     fetchAptitudePowerData(rulesetData: RulesetData, powers: CustomizedPower[]) {
@@ -272,9 +264,8 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
       for (const id of allPowerIdSet) {
         const p = rulesetData.powersById.get(id);
         if (!p) continue;
-        for (const link of p.powersAptitudesInRules) {
+        for (const link of p.powersAptitudesInRules)
           powerAptitudeLinks.push({ powerId: p.id, aptitudeId: link.aptitudeId });
-        }
       }
 
       this.aptitudePowerProperties = properties;

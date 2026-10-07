@@ -160,9 +160,9 @@ async function forkBase(session: Session, values: { private?: boolean } = {}) {
 /** A new user's fork of the base taking these books, in this order, and a character of theirs on it. */
 async function forkTaking(...books: string[]) {
   const { user, session, draft } = await setupFork();
-  for (const book of books) {
+  for (const book of books)
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [(await findSeededRuleset(book)).id]);
-  }
+
   const { abilityMap } = await getSeedCtx();
   const character = await createTestCharacter(user.id, { rulesetId: draft.id });
   await db

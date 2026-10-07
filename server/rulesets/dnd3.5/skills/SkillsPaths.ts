@@ -4,10 +4,12 @@ import type { GetterOf, PathCategory } from "@/server/rulesets/engine/paths/Path
 import PathTraverser from "@/server/rulesets/engine/paths/PathTraverser.ts";
 import { readComponent } from "@/server/rulesets/engine/paths/readComponent.ts";
 import type { Components, TraversePathResult } from "@/server/rulesets/engine/types.ts";
-import { getNumericOperators } from "@/shared/customization/operators.ts";
-import { MODIFIER_OPERATORS, NUMERIC_REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
-import type { TargetPath } from "@/shared/customization/target.ts";
-import { deriveSegmentLabels } from "@/shared/customization/target.ts";
+import {
+  getNumericOperators,
+  MODIFIER_OPERATORS,
+  NUMERIC_REQUIREMENT_OPERATORS,
+} from "@/shared/customization/operators.ts";
+import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import type { Skill } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 

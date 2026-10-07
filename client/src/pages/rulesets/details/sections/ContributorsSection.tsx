@@ -1,14 +1,6 @@
-import {
-  Add as AddIcon,
-  People as ContributorsIcon,
-  Delete as DeleteIcon,
-  Edit as EditIcon,
-  ExitToApp as LeaveIcon,
-} from "@mui/icons-material";
 import { Box, Button, IconButton, Tooltip } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { InferRequestType, InferResponseType } from "hono/client";
-import { parseResponse } from "hono/client";
+import { type InferRequestType, type InferResponseType, parseResponse } from "hono/client";
 import { useState } from "react";
 
 import {
@@ -25,11 +17,13 @@ import {
   ContributorsTable,
   InviteContributorDialog,
 } from "@/client/src/components/contributors/index.ts";
+import { AddIcon, ContributorsIcon, DeleteIcon, EditIcon, LeaveIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
-import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { firstPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
+import { rulesetContributorsQuery } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import { useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
@@ -65,28 +59,20 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
   const [removeTarget, setRemoveTarget] = useState<Contributor | null>(null);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
 
-  const contributorsKey = queryKeys.rulesets.section(ruleset.id, "contributors");
+  const contributorsQuery = rulesetContributorsQuery(ruleset.id);
+  const contributorsKey = contributorsQuery.queryKey;
 
   const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    queryKey: contributorsKey,
-    queryFn: ({ pageParam }) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].contributors.$get({
-          param: { id: ruleset.id },
-          query: { page: pageParam.toString(), limit: "10" },
-        }),
-      ),
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    ...contributorsQuery,
     placeholderData: keepPreviousData,
   });
 
   const contributors = pageItems(data);
-  const owner = data?.pages[0]?.owner ?? null;
+  const owner = firstPage(data)?.owner ?? null;
 
   const inviteMutation = useMutation({
     mutationFn: (invite: ContributorInvite) =>
-      rpc.api.rulesets[":id"].contributors.$post({ param: { id: ruleset.id }, json: invite }),
+      parseResponse(rpc.api.rulesets[":id"].contributors.$post({ param: { id: ruleset.id }, json: invite })),
     onSuccess: () => {
       snackbar.success("Contributor invited");
       queryClient.invalidateQueries({ queryKey: contributorsKey });
@@ -97,10 +83,12 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
 
   const updateRoleMutation = useMutation({
     mutationFn: ({ contributorId, role }: { contributorId: string; role: ContributorRole }) =>
-      rpc.api.rulesets[":id"].contributors[":contributorId"].$put({
-        param: { id: ruleset.id, contributorId },
-        json: { role },
-      }),
+      parseResponse(
+        rpc.api.rulesets[":id"].contributors[":contributorId"].$put({
+          param: { id: ruleset.id, contributorId },
+          json: { role },
+        }),
+      ),
     onSuccess: () => {
       snackbar.success("Role updated");
       queryClient.invalidateQueries({ queryKey: contributorsKey });
@@ -111,9 +99,11 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
 
   const revokeMutation = useMutation({
     mutationFn: (contributorId: string) =>
-      rpc.api.rulesets[":id"].contributors[":contributorId"].$delete({
-        param: { id: ruleset.id, contributorId },
-      }),
+      parseResponse(
+        rpc.api.rulesets[":id"].contributors[":contributorId"].$delete({
+          param: { id: ruleset.id, contributorId },
+        }),
+      ),
     onSuccess: () => {
       snackbar.success("Contributor removed");
       queryClient.invalidateQueries({ queryKey: contributorsKey });
@@ -123,23 +113,19 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
   });
 
   const leaveMutation = useMutation({
-    mutationFn: () => rpc.api.rulesets[":id"].contributors.leave.$post({ param: { id: ruleset.id } }),
+    mutationFn: () => parseResponse(rpc.api.rulesets[":id"].contributors.leave.$post({ param: { id: ruleset.id } })),
     onSuccess: () => {
       snackbar.success("You have left this ruleset");
-      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.lists });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.lists });
       setLeaveDialogOpen(false);
       onLeave?.();
     },
     onError: (error) => snackbar.error(error, "Failed to leave ruleset"),
   });
 
-  if (isLoading) {
-    return <DiceSpinner sx={{ py: 4 }} />;
-  }
+  if (isLoading) return <DiceSpinner sx={{ py: 4 }} />;
 
-  if (error) {
-    return <LoadError what="Contributors" error={error} />;
-  }
+  if (error) return <LoadError what="Contributors" error={error} />;
 
   const canLeave = !isOwner && !!ruleset.contributorRole;
 
@@ -196,6 +182,7 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
                         {canEditRoles && outranks && contributor.status === "Active" && (
                           <Tooltip title="Edit role">
                             <IconButton
+                              aria-label="Edit role"
                               size="small"
                               onClick={() => {
                                 roleForm.reset({ role: contributor.role });
@@ -208,7 +195,12 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
                         )}
                         {outranks && (
                           <Tooltip title="Remove">
-                            <IconButton size="small" color="error" onClick={() => setRemoveTarget(contributor)}>
+                            <IconButton
+                              aria-label="Remove"
+                              size="small"
+                              color="error"
+                              onClick={() => setRemoveTarget(contributor)}
+                            >
                               <DeleteIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>

@@ -1,5 +1,11 @@
 import { Autocomplete, Chip, ListItem, ListItemText, TextField } from "@mui/material";
-import { keepPreviousData, type QueryKey } from "@tanstack/react-query";
+import {
+  type DefaultError,
+  type InfiniteData,
+  keepPreviousData,
+  type QueryKey,
+  type UseInfiniteQueryOptions,
+} from "@tanstack/react-query";
 import { useMemo } from "react";
 
 import { DiceSpinner, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
@@ -14,12 +20,15 @@ interface Completion {
   detail?: string | null;
 }
 
-interface CompletionAutocompleteProps<T extends Completion> {
+interface CompletionAutocompleteProps<
+  TPage extends CompletionPage,
+  TKey extends QueryKey,
+  TData extends InfiniteData<TPage, unknown>,
+> {
   value: string;
   onChange: (value: string) => void;
-  /** The completions for what's typed, a page at a time. */
-  queryKey: (search: string) => QueryKey;
-  pageFn: (search: string, page: number) => Promise<{ items: T[]; nextPage?: number | null }>;
+  /** The completions for what's typed, a page at a time: a factory of `customizationQueries.ts`. */
+  query: (search: string) => UseInfiniteQueryOptions<TPage, DefaultError, TData, TKey, number>;
   enabled: boolean;
   label: string;
   placeholder: string;
@@ -34,12 +43,21 @@ interface CompletionAutocompleteProps<T extends Completion> {
   rows?: number;
 }
 
+/** A page of the customization completion endpoints. */
+interface CompletionPage {
+  items: Completion[];
+  nextPage?: number | null;
+}
+
 /** A free-text field that suggests the values the ruleset already uses. */
-export function CompletionAutocomplete<T extends Completion>({
+export function CompletionAutocomplete<
+  TPage extends CompletionPage,
+  TKey extends QueryKey,
+  TData extends InfiniteData<TPage, unknown>,
+>({
   value,
   onChange,
-  queryKey,
-  pageFn,
+  query,
   enabled,
   label,
   placeholder,
@@ -52,17 +70,13 @@ export function CompletionAutocomplete<T extends Completion>({
   fullWidth = true,
   multiline = false,
   rows,
-}: CompletionAutocompleteProps<T>) {
+}: CompletionAutocompleteProps<TPage, TKey, TData>) {
   // Controlled: what's typed is the value, which every keystroke and pick reports
   const debouncedInputValue = useDebouncedValue(value);
 
   const { items, isLoading, onScroll } = useListboxQuery({
-    queryKey: queryKey(debouncedInputValue),
-    queryFn: ({ pageParam }) => pageFn(debouncedInputValue, pageParam),
+    ...query(debouncedInputValue),
     enabled: enabled && !disabled,
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
-    staleTime: 5000,
     placeholderData: keepPreviousData,
   });
 

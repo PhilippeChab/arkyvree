@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 
-import { query } from "@/scripts/ops/validateCharacters/queries.ts";
+import { query } from "./queries.ts";
 
 /** Phase 2: every feat and power a level picked is one its aptitude offers. Returns the issues found. */
 export async function checkJunctions() {
@@ -30,9 +30,8 @@ export async function checkJunctions() {
   if (badFeatCombos.length > 0) {
     issues += badFeatCombos.length;
     console.error(`✗ feat+aptitude: ${badFeatCombos.length} invalid combo(s)`);
-    for (const row of badFeatCombos) {
+    for (const row of badFeatCombos)
       console.error(`    ${row.charName}: feat "${row.featName}" (${row.featRuleset}) + aptitude "${row.aptName}"`);
-    }
   } else {
     console.log("✓ feat+aptitude combos");
   }
@@ -61,9 +60,8 @@ export async function checkJunctions() {
   if (badPowerCombos.length > 0) {
     issues += badPowerCombos.length;
     console.error(`✗ power+aptitude: ${badPowerCombos.length} invalid combo(s)`);
-    for (const row of badPowerCombos) {
+    for (const row of badPowerCombos)
       console.error(`    ${row.charName}: power "${row.powerName}" (${row.powerRuleset}) + aptitude "${row.aptName}"`);
-    }
   } else {
     console.log("✓ power+aptitude combos");
   }

@@ -15,9 +15,7 @@ export function Archives<B extends Constructor>(Base: B) {
     async archiveRuleset(session: Session, id: string) {
       return await withTransaction(async (tx) => {
         const ruleset = await Rulesets.findOne(tx, { id });
-        if (!ruleset) {
-          throw new NotFoundError("Ruleset not found");
-        }
+        if (!ruleset) throw new NotFoundError("Ruleset not found");
 
         (await RulesetsPolicy.for(tx, session, ruleset)).canUpdate();
 
@@ -42,18 +40,14 @@ export function Archives<B extends Constructor>(Base: B) {
     async unarchiveRuleset(session: Session, id: string) {
       const result = await withTransaction(async (tx) => {
         const ruleset = await Rulesets.findOne(tx, { id });
-        if (!ruleset) {
-          throw new NotFoundError("Ruleset not found");
-        }
+        if (!ruleset) throw new NotFoundError("Ruleset not found");
 
         (await RulesetsPolicy.for(tx, session, ruleset)).canUnarchive();
 
         const rows = await Rulesets.unarchive(tx, { id });
         const unarchivedRuleset = rows[0];
 
-        if (!unarchivedRuleset) {
-          throw new InternalError("Failed to unarchive ruleset");
-        }
+        if (!unarchivedRuleset) throw new InternalError("Failed to unarchive ruleset");
 
         await Activities.create(tx, {
           userId: session.userId,

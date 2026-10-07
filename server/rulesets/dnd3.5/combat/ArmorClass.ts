@@ -1,10 +1,11 @@
 import type { Constructor } from "@/server/mixins.ts";
-import type { ArmorsData } from "@/server/rulesets/dnd3.5/combat/ArmorsComponent.ts";
-import { ARMOR_CATEGORIES } from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
-import type CombatState from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
-import type { ShieldsData } from "@/server/rulesets/dnd3.5/combat/ShieldsComponent.ts";
 import { CONSTANTS, SIZE_AC_ATTACK_MOD } from "@/server/rulesets/dnd3.5/constants.ts";
 import { ARMOR_MAX_DEX, ARMOR_PROFICIENCY, SHIELD_PROFICIENCY } from "@/shared/dnd3.5/properties/index.ts";
+
+import type { ArmorsData } from "./ArmorsComponent.ts";
+import { ARMOR_CATEGORIES } from "./CombatState.ts";
+import type CombatState from "./CombatState.ts";
+import type { ShieldsData } from "./ShieldsComponent.ts";
 
 /** A character's armor class: its armor and shields, and the Dexterity bonus they leave it. */
 export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
@@ -99,9 +100,7 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
       this.combat.shield.held = true;
       if (category === "Tower") this.towerShield = true;
       const dexterityLimitation = properties.find((property) => property.type === ARMOR_MAX_DEX)?.value ?? null;
-      if (dexterityLimitation) {
-        this.shieldMaxDex = Math.min(this.shieldMaxDex, Number(dexterityLimitation));
-      }
+      if (dexterityLimitation) this.shieldMaxDex = Math.min(this.shieldMaxDex, Number(dexterityLimitation));
     }
 
     setArmorsData(armors: ArmorsData): void {

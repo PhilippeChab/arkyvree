@@ -2,12 +2,10 @@
  * Feats a level-up can pick: those available for an aptitude pool, flat or grouped by feat family.
  */
 
-import type { RulesetData, RulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { type RulesetData, type RulesetScope, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels, Feats } from "@/server/repositories/index.ts";
-import { type Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/index.ts";
-import { parseAptitudePool } from "@/server/rulesets/dnd3.5/index.ts";
+import { type Dnd35ProjectedCharacterData, parseAptitudePool } from "@/server/rulesets/dnd3.5/index.ts";
 import { parseLiteralValue } from "@/server/rulesets/engine/paths/literalValue.ts";
 import type { DetailedCharacterInterface } from "@/server/rulesets/engine/types.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
@@ -43,21 +41,13 @@ async function getExcludeNonStackableFeatIds(
   const givenFeats = await Feats.findGrants(database, { levels: characterLevels });
   const excludeFeatIds = [...pickedFeats, ...givenFeats].filter((feat) => !feat.stackable).map((feat) => feat.id);
 
-  for (const rec of autoGrantedRecords) {
-    if (!rec.featsInRule.stackable) {
-      excludeFeatIds.push(rec.featsInRule.id);
-    }
-  }
+  for (const rec of autoGrantedRecords) if (!rec.featsInRule.stackable) excludeFeatIds.push(rec.featsInRule.id);
 
   excludeFeatIds.push(...selectedNonStackableFeatIds);
 
   const virtualFeatIds = detailedCharacter.getVirtuallyPossessedFeatIds();
   const virtualFeats = await Feats.findMany(database, { ids: virtualFeatIds });
-  for (const feat of virtualFeats) {
-    if (!feat.stackable) {
-      excludeFeatIds.push(feat.id);
-    }
-  }
+  for (const feat of virtualFeats) if (!feat.stackable) excludeFeatIds.push(feat.id);
 
   return excludeFeatIds;
 }

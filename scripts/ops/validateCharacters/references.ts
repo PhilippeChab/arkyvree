@@ -1,6 +1,6 @@
 import { sql, type SQL } from "drizzle-orm";
 
-import { query } from "@/scripts/ops/validateCharacters/queries.ts";
+import { query } from "./queries.ts";
 
 const refChecks: { label: string; sql: SQL }[] = [
   {

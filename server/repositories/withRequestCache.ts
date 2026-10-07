@@ -48,9 +48,9 @@ function verbOf(method: string) {
 function writeThrough(mapsIds: boolean, call: Call, args: unknown[]) {
   clearRequestCache();
   const result = call(mapsIds ? mapArgIds(args) : args);
-  if (result && typeof (result as Promise<unknown>).then === "function") {
+  if (result && typeof (result as Promise<unknown>).then === "function")
     return (result as Promise<unknown>).finally(() => clearRequestCache());
-  }
+
   return result;
 }
 

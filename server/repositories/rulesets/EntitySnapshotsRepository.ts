@@ -1,5 +1,4 @@
-import { and, eq, inArray, sql } from "drizzle-orm";
-import type { InferInsertModel } from "drizzle-orm";
+import { and, eq, inArray, type InferInsertModel, sql } from "drizzle-orm";
 
 import { entitySnapshotsInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";

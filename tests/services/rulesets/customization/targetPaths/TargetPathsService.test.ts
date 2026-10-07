@@ -1,8 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
 import { NotFoundError } from "@/server/errors/index.ts";
-import { getTargetPathsWithLabels } from "@/server/services/rulesets/customization/targetPaths/index.ts";
-import { TargetPathsService } from "@/server/services/rulesets/customization/targetPaths/index.ts";
+import {
+  getTargetPathsWithLabels,
+  TargetPathsService,
+} from "@/server/services/rulesets/customization/targetPaths/index.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
@@ -118,9 +120,8 @@ describe("TargetPathsService", () => {
   test("leaves totals to requirements", async () => {
     expect((await seedPaths("modifier")).paths.filter((p) => p.path.endsWith(".total"))).toEqual([]);
     const totals = (await seedPaths("requirement")).paths.filter((p) => p.path.endsWith(".total")).map((p) => p.path);
-    for (const prefix of ["combat.ac", "combat.hp", "skills.", "saves.", "abilities."]) {
+    for (const prefix of ["combat.ac", "combat.hp", "skills.", "saves.", "abilities."])
       expect(totals.some((path) => path.startsWith(prefix))).toBe(true);
-    }
   });
 
   test("leaves the parts the sheet computes to requirements: a modifier can't change them", async () => {
@@ -249,9 +250,9 @@ describe("TargetPathsService", () => {
   });
 
   test("offers aptitude uses and picks only to the entities that grant them", async () => {
-    for (const entityType of ["klass_levels", "feats", "races", undefined] as const) {
+    for (const entityType of ["klass_levels", "feats", "races", undefined] as const)
       expect((await seedPaths("modifier", entityType)).paths.some(isAptitudeGrant)).toBe(true);
-    }
+
     for (const entityType of ["items", "powers"] as const) {
       const { paths } = await seedPaths("modifier", entityType);
       expect(paths.filter(isAptitudeGrant)).toEqual([]);

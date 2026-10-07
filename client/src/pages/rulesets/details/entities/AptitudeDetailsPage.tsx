@@ -11,7 +11,7 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import { aptitudeQuery } from "./entityDetailQueries.ts";
 import { RulesetEntityDetail } from "./RulesetEntityDetail.tsx";
 
-export default function AptitudeDetailPage() {
+export default function AptitudeDetailsPage() {
   const { id: rulesetId = "", aptitudeId = "" } = useParams<{ id: string; aptitudeId: string }>();
   const param = { id: rulesetId, aptitudeId };
   const endpoint = rpc.api.rulesets[":id"].aptitudes[":aptitudeId"];

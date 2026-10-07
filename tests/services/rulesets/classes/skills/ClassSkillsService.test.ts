@@ -37,9 +37,8 @@ describe("ClassSkillsService", () => {
       [fighter, climb],
       [fighter, swim],
       [rogue, climb],
-    ] as const) {
+    ] as const)
       await ClassSkillsService.addClassSkill(session, ruleset.id, klass.id, skill.id);
-    }
 
     await ClassSkillsService.removeClassSkill(session, ruleset.id, fighter.id, climb.id);
     expect(await skillIdsOf(ruleset.id, fighter.id)).toEqual([swim.id]);

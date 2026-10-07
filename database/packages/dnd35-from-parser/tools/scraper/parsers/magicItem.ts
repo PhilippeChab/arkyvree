@@ -1,12 +1,13 @@
 import * as cheerio from "cheerio";
 import type { AnyNode } from "domhandler";
 
-import { findSectionElements, getTagName } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import type {
   MagicItemCategory,
   MagicItemReference,
 } from "@/database/packages/dnd35-from-parser/tools/types/magicItems.ts";
+
+import { findSectionElements, getTagName } from "./page.ts";
 
 type CheerioEl = cheerio.Cheerio<AnyNode>;
 
@@ -107,9 +108,8 @@ function parseVariantPrices(metadataText: string): { price: string; variant: str
     // Strip category prefix from variant tag (e.g., "ring +1" → "+1")
     variant = variant.replace(/^(?:ring|armor|shield|weapon)\s+/i, "");
     // Title-case text variants (e.g., "lesser" → "Lesser", "greater slaying arrow" → "Greater Slaying Arrow")
-    if (variant && !variant.startsWith("+")) {
-      variant = variant.replace(/\b\w/g, (c) => c.toUpperCase());
-    }
+    if (variant && !variant.startsWith("+")) variant = variant.replace(/\b\w/g, (c) => c.toUpperCase());
+
     variants.push({ price: match[1].replace(/,/g, ""), variant });
   }
 
@@ -133,17 +133,12 @@ function readItemBlock($: cheerio.CheerioAPI, heading: CheerioEl) {
       sibling.find("li").each((_, li) => {
         const text = normalizeWs($(li).text());
         const chargeMatch = text.match(/^(.+?)\s*\((\d+)\s*charges?\)/i);
-        if (chargeMatch) {
-          charges.push({ spell: chargeMatch[1].trim(), charges: parseInt(chargeMatch[2], 10) });
-        }
+        if (chargeMatch) charges.push({ spell: chargeMatch[1].trim(), charges: parseInt(chargeMatch[2], 10) });
       });
     } else if (tag === "p") {
       const text = normalizeWs(sibling.text());
-      if (isMetadataParagraph(text)) {
-        metadataText = text;
-      } else if (!metadataText && text) {
-        descParts.push(text);
-      }
+      if (isMetadataParagraph(text)) metadataText = text;
+      else if (!metadataText && text) descParts.push(text);
     }
   }
 
@@ -186,9 +181,8 @@ export function parseWondrousItemsHtml(html: string): RawMagicItem[] {
   const $ = cheerio.load(html);
   // Try "Wondrous Item Descriptions" first, then fall back to "Item Descriptions"
   let items = parseItemEntries($, "Wondrous Item Descriptions", "wondrousItem");
-  if (items.length === 0) {
-    items = parseItemEntries($, "Item Descriptions", "wondrousItem");
-  }
+  if (items.length === 0) items = parseItemEntries($, "Item Descriptions", "wondrousItem");
+
   if (items.length === 0) {
     // Fallback: parse all h5 entries on the page after any table
     items = parseAllH5Entries($, "wondrousItem");

@@ -2,8 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { sizeType } from "@/drizzle/schema.ts";
-import { validate } from "@/server/middlewares/index.ts";
-import type { SessionContext } from "@/server/middlewares/index.ts";
+import { type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { RacesService } from "@/server/services/rulesets/races/index.ts";
 

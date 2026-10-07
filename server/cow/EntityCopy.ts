@@ -102,13 +102,11 @@ export default class EntityCopy {
     }
 
     // 1. Fetch the parent entity
-    if (!(await repo.lock(tx, { id: this.entityId }, "share"))) {
+    if (!(await repo.lock(tx, { id: this.entityId }, "share")))
       throw new NotFoundError("Customization source no longer exists; refresh the entity");
-    }
+
     const parentEntity = await repo.findOne(tx, { id: this.entityId });
-    if (!parentEntity) {
-      throw new Error(`Parent entity not found: ${this.entityType}/${this.entityId}`);
-    }
+    if (!parentEntity) throw new Error(`Parent entity not found: ${this.entityType}/${this.entityId}`);
 
     // 2. Copy entity to child ruleset
     const { id: _id, createdAt: _ca, updatedAt: _ua, deletedAt: _da, rulesetId: _rid, ...entityData } = parentEntity;
@@ -132,9 +130,7 @@ export default class EntityCopy {
 
     // 4b. Merge sibling data when multiple extensions COW the same base entity
     const siblingIds = cow.getSiblings(this.entityId);
-    if (siblingIds.length > 0) {
-      await this.mergeSiblings(tx, newEntity.id, cust, siblingIds, cow);
-    }
+    if (siblingIds.length > 0) await this.mergeSiblings(tx, newEntity.id, cust, siblingIds, cow);
 
     // 5. Record the copy: the ruleset's view shows it in place of the parent
     await EntitySnapshots.create(tx, {
@@ -159,9 +155,7 @@ export default class EntityCopy {
 
     // Build level ID map (old -> new)
     const levelIdMapLocal: Record<string, string> = {};
-    for (let i = 0; i < levels.length; i++) {
-      levelIdMapLocal[levels[i].id] = newLevels[i].id;
-    }
+    for (let i = 0; i < levels.length; i++) levelIdMapLocal[levels[i].id] = newLevels[i].id;
 
     const oldLevelIds = levels.map((l) => l.id);
     const levelSaves = await KlassLevelSaves.findMany(tx, { klassLevelIds: oldLevelIds });
@@ -173,9 +167,7 @@ export default class EntityCopy {
     for (const oldLevelId of oldLevelIds) {
       const newLevelId = levelIdMapLocal[oldLevelId];
       const cust = levelCusts.get(oldLevelId);
-      if (cust && newLevelId) {
-        await copyEntityCustomizations(tx, newLevelId, "klass_levels", cust, this.copiedIds);
-      }
+      if (cust && newLevelId) await copyEntityCustomizations(tx, newLevelId, "klass_levels", cust, this.copiedIds);
     }
 
     await KlassLevelSaves.createMany(

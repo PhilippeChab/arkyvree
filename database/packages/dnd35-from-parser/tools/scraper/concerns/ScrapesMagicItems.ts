@@ -81,13 +81,10 @@ export function ScrapesMagicItems<B extends Constructor<BaseScraper>>(Base: B) {
       const outPath = this.referencePath(REFERENCE_FILE_NAMES.magicItem);
 
       const categoryCounts: Record<string, number> = {};
-      for (const entry of raw) {
-        categoryCounts[entry.category] = (categoryCounts[entry.category] ?? 0) + 1;
-      }
+      for (const entry of raw) categoryCounts[entry.category] = (categoryCounts[entry.category] ?? 0) + 1;
+
       console.log(`\nDetection results:`);
-      for (const [cat, count] of Object.entries(categoryCounts).sort()) {
-        console.log(`  ${cat}: ${count}`);
-      }
+      for (const [cat, count] of Object.entries(categoryCounts).sort()) console.log(`  ${cat}: ${count}`);
 
       this.saveReference(
         outPath,

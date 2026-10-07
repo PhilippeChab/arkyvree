@@ -1,6 +1,6 @@
-import { EmojiEvents as FeatPoolsIcon } from "@mui/icons-material";
 import { useQuery } from "@tanstack/react-query";
 
+import { FeatPoolsIcon } from "@/client/src/components/icons/index.ts";
 import { classFeatPoolsQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 
 import { ClassLevelCountsTable } from "./ClassLevelCountsTable.tsx";

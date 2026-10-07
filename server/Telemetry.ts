@@ -8,7 +8,7 @@ import { BatchLogRecordProcessor, LoggerProvider } from "@opentelemetry/sdk-logs
 import { MeterProvider, PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
 import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from "@opentelemetry/semantic-conventions";
 
-import { getEnvironmentName, readEnv } from "@/server/environment.ts";
+import { getEnvironmentName, readEnv } from "./environment.ts";
 
 /** OpenTelemetry's metrics and logs, pushed to Better Stack: its providers, kept to drain them on shutdown. */
 class Telemetry {

@@ -1,12 +1,11 @@
-import { Bolt as PowersIcon } from "@mui/icons-material";
 import { Box } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import type { InferResponseType } from "hono/client";
-import { parseResponse } from "hono/client";
+import { type InferResponseType, parseResponse } from "hono/client";
 import { useCallback, useState } from "react";
 
 import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
 import { type Aptitude, AptitudeAutocomplete } from "@/client/src/components/customization/index.ts";
+import { PowersIcon } from "@/client/src/components/icons/index.ts";
 import { useRulesetSaves, useSearchParam, useSearchText } from "@/client/src/hooks/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import {
@@ -42,7 +41,7 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
 
   const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("search");
   const [selectedAptitude, setSelectedAptitude] = useState<Aptitude | null>(null);
-  const [levelParam, setLevelParam] = useSearchParam("level");
+  const { value: levelParam, setValue: setLevelParam } = useSearchParam("level");
   const parsed = Number(levelParam);
   const selectedLevel: number | "" = levelParam === "" || Number.isNaN(parsed) ? "" : parsed;
 
@@ -55,9 +54,8 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
     sectionName: "powers",
     label: "Spell",
     createFn: async (data) => {
-      if (!data.aptitudes?.length) {
-        throw new Error("At least one aptitude must be selected");
-      }
+      if (!data.aptitudes?.length) throw new Error("At least one aptitude must be selected");
+
       return parseResponse(rpc.api.rulesets[":id"].powers.$post({ param: { id: ruleset.id }, json: data }));
     },
     onCreateSuccess: (created) => openEntity(`powers/${created.id}/customization`),

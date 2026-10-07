@@ -2,7 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 
 import { useDebouncedValue, useFormWith, useToggleSet, useValidationIssues } from "@/client/src/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 
 import type { LevelUpFormData } from "./levelUpTypes.ts";
 
@@ -45,7 +45,7 @@ export function useLevelWizardBase(characterId: string) {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [featSearch, setFeatSearch] = useState("");
   const debouncedFeatSearch = useDebouncedValue(featSearch);
-  const [expandedFeatFamilies, toggleFeatFamily, collapseFeatFamilies] = useToggleSet();
+  const { keys: expandedFeatFamilies, toggle: toggleFeatFamily, clear: collapseFeatFamilies } = useToggleSet();
   const [powerSearch, setPowerSearch] = useState("");
   const debouncedPowerSearch = useDebouncedValue(powerSearch);
   const { validationErrors, setValidationErrors, handleSaveError } = useValidationIssues("Failed to finalize level up");
@@ -70,8 +70,8 @@ export function useLevelWizardBase(characterId: string) {
 
   /** Drops the wizard's cached slots and refetches the sheet once the save lands. */
   const refreshAfterSave = useCallback(async () => {
-    queryClient.removeQueries({ queryKey: queryKeys.characters.levelUp.all(characterId) });
-    await queryClient.invalidateQueries({ queryKey: queryKeys.characters.detail(characterId) });
+    queryClient.removeQueries({ queryKey: QUERY_KEYS.characters.levelUp.all(characterId) });
+    await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.detail(characterId) });
   }, [queryClient, characterId]);
 
   return {

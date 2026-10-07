@@ -1,8 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { klassSkillsInRules } from "@/drizzle/schema.ts";
-import { findScopedEntity, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { findScopedEntity, RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
@@ -24,9 +23,7 @@ class ClassSkillsService {
         const skill = findScopedEntity(rulesetData.skillsById, skillId, rulesetId, sourceChain, "Skill");
 
         const existing = rulesetData.klassSkillsByKlassId.get(klass.id)?.some((ks) => ks.skillId === skill.id);
-        if (existing) {
-          throw new ConflictError("Skill is already assigned to this class");
-        }
+        if (existing) throw new ConflictError("Skill is already assigned to this class");
 
         // Copy an inherited class: the new klass_skills row would otherwise point at the parent ruleset's class.
         const edit = new RulesetEdit(ruleset, rulesetData.cow);
@@ -72,9 +69,7 @@ class ClassSkillsService {
         const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
 
         const klassSkill = rulesetData.klassSkillsByKlassId.get(klass.id)?.find((ks) => ks.skillId === skillId);
-        if (!klassSkill) {
-          throw new NotFoundError("Skill is not assigned to this class");
-        }
+        if (!klassSkill) throw new NotFoundError("Skill is not assigned to this class");
 
         const skill = rulesetData.skillsById.get(skillId);
 

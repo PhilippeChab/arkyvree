@@ -1544,9 +1544,9 @@ describe("DetailedCharacter", () => {
           { rulesetId: fork.id },
         );
         await addClassLevels(db, ctx, characterId, "Fighter", [1], [10]);
-        for (let level = 1; level <= duelistLevels; level++) {
+        for (let level = 1; level <= duelistLevels; level++)
           await addCharacterLevel(characterId, (await findKlassLevel(duelist.id, level))!.id);
-        }
+
         return (await build((await Characters.findOne(db, { id: characterId }))!)).components.combat.getCombat().ac
           .dodge;
       };
@@ -1768,9 +1768,9 @@ describe("DetailedCharacter", () => {
           name: className,
           rulesetId: (await findSeededRuleset(book)).id,
         }))!;
-        for (let level = 1; level <= levels; level++) {
+        for (let level = 1; level <= levels; level++)
           await addCharacterLevel(characterId, (await findKlassLevel(klass.id, level))!.id);
-        }
+
         const { speed, ac } = (
           await build((await Characters.findOne(db, { id: characterId }))!)
         ).components.combat.getCombat();
@@ -2168,9 +2168,9 @@ describe("DetailedCharacter", () => {
       const characterId = await seedHuman("Spellthief", scores, { rulesetId: fork.id });
       const adventurerId = (await findSeededRuleset(DND35_COMPLETE_ADVENTURER_NAME)).id;
       const spellthief = (await Klasses.findOne(db, { name: "Spellthief", rulesetId: adventurerId }))!;
-      for (let level = 1; level <= 6; level++) {
+      for (let level = 1; level <= 6; level++)
         await addCharacterLevel(characterId, (await findKlassLevel(spellthief.id, level))!.id);
-      }
+
       // Spellthief 6: one 1st-level spell a day, three known
       const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
       expect(spellUses(detailed, "spellthiefspells", [1])).toEqual([1]);
@@ -2800,9 +2800,8 @@ describe("DetailedCharacter", () => {
           featId: ctx.featMap["Advance Wizard Spellcasting"],
           aptitudeId: ctx.aptMap["Bonus Arcane Caster Level"],
         };
-        for (let level = 1; level <= 3; level++) {
+        for (let level = 1; level <= 3; level++)
           await addCharacterLevel(characterId, (await findKlassLevel(loremaster.id, level))!.id, { feats: [advance] });
-        }
 
         const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
         expect(spellLevel(detailed, "wizardspells", 4).uses).toBeGreaterThan(0);

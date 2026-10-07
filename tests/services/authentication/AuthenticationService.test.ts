@@ -4,7 +4,13 @@ import { eq } from "drizzle-orm";
 
 import { emailVerificationsInAccount, passwordResetsInAccount } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
-import { BadRequestError, ConflictError, InternalError, UnauthorizedError } from "@/server/errors/index.ts";
+import {
+  BadRequestError,
+  ConflictError,
+  EmailNotVerifiedError,
+  InternalError,
+  UnauthorizedError,
+} from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import {
   Characters,
@@ -18,8 +24,7 @@ import {
   Users,
 } from "@/server/repositories/index.ts";
 import { AccountService } from "@/server/services/authentication/account/index.ts";
-import { signInAsGoogleAccount } from "@/server/services/authentication/index.ts";
-import { AuthenticationService } from "@/server/services/authentication/index.ts";
+import { AuthenticationService, signInAsGoogleAccount } from "@/server/services/authentication/index.ts";
 import { LinkedAccountsService, linkGoogleAccountTo } from "@/server/services/authentication/linkedAccounts/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createTestCampaign, inviteToSlot } from "@/tests/support/campaigns.ts";
@@ -190,7 +195,7 @@ describe("AuthenticationService", () => {
       const unverified = credentials();
       await AuthenticationService.signUp(unverified.emailAddress, unverified.password);
       await expect(AuthenticationService.signIn(unverified.emailAddress, unverified.password)).rejects.toEqual(
-        new UnauthorizedError("Email not verified"),
+        new EmailNotVerifiedError(),
       );
     });
 

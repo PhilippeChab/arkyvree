@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/bun";
 
-import { getEnvironmentName, readEnv } from "@/server/environment.ts";
-import { timingStorage } from "@/server/timing.ts";
+import { getEnvironmentName, readEnv } from "./environment.ts";
+import { timingStorage } from "./timing.ts";
 
 /** Error reporting to Sentry (Better Stack's Sentry-compatible ingest), set up once per process. */
 class ErrorReporting {

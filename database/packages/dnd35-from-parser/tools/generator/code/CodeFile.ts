@@ -1,12 +1,5 @@
 import { isDeepStrictEqual } from "node:util";
 
-import {
-  formatImport,
-  formatImports,
-  type ImportTable,
-  REQUIREMENT_IMPORTS,
-} from "@/database/packages/dnd35-from-parser/tools/generator/code/imports.ts";
-import { indent, listField, quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import { eq, eqNum, eqStr, gte } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type {
   Modifier,
@@ -40,6 +33,9 @@ import type { RaceSeed } from "@/database/packages/dnd35/content/races/types.ts"
 import type { CowFeatEntry, CowSpellEntry } from "@/database/packages/dnd35/content/rulesets/types.ts";
 import type { SpellSeed } from "@/database/packages/dnd35/content/spells/types.ts";
 import type { WizardSchoolSeed } from "@/database/packages/dnd35/content/wizardSchools/types.ts";
+
+import { formatImport, formatImports, type ImportTable, REQUIREMENT_IMPORTS } from "./imports.ts";
+import { indent, listField, quote } from "./literals.ts";
 
 /**
  * A builder an item's field is written with: what it gives an item of a name (`of`, none when it gives it nothing),
@@ -350,9 +346,8 @@ export class CodeFile {
       const fn = req.chainingOperator;
       this.uses.add(fn);
       const children = req.children.map((c) => this.requirement(c, indentLevel + 1));
-      if (children.length <= 3 && children.every((c) => c.length < 60)) {
-        return `${fn}(${children.join(", ")})`;
-      }
+      if (children.length <= 3 && children.every((c) => c.length < 60)) return `${fn}(${children.join(", ")})`;
+
       return `${fn}(\n${children.map((c) => indent(c + ",", indentLevel + 1)).join("\n")}\n${indent(")", indentLevel)}`;
     }
 

@@ -55,16 +55,13 @@ class CharacterInventoryService {
         // the current character's ruleset chain, so both cases would return
         // undefined and collapse into one error message.
         const itemRecord = await Items.findOne(tx, { id: itemId });
-        if (!itemRecord) {
-          throw new NotFoundError("Item not found");
-        }
+        if (!itemRecord) throw new NotFoundError("Item not found");
 
         // Validate item belongs to character's ruleset or any ancestor in its
         // source chain.
         const validRulesetIds = new Set([characterRecord.rulesetId, ...rulesetData.cow.sourceChain]);
-        if (!validRulesetIds.has(itemRecord.rulesetId)) {
+        if (!validRulesetIds.has(itemRecord.rulesetId))
           throw new BadRequestError("Item does not belong to the character's ruleset");
-        }
 
         validateCharges(totalCharges, remainingCharges);
 
@@ -136,9 +133,7 @@ class CharacterInventoryService {
 
       return await withRulesetScope(tx, characterRecord.rulesetId, async () => {
         const existing = await CharacterInventory.findOne(tx, { characterId, id: entryId });
-        if (!existing) {
-          throw new NotFoundError("Item not in inventory");
-        }
+        if (!existing) throw new NotFoundError("Item not in inventory");
 
         await CharacterInventory.delete(tx, { characterId, id: entryId });
 
@@ -173,17 +168,14 @@ class CharacterInventoryService {
       return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
         const { rulesetData } = scope;
         const existing = await CharacterInventory.findOne(tx, { characterId, id: entryId });
-        if (!existing) {
-          throw new NotFoundError("Item not in inventory");
-        }
+        if (!existing) throw new NotFoundError("Item not in inventory");
 
         validateCharges(totalCharges, remainingCharges);
 
         if (equipped && location) {
           const itemRecord = rulesetData.itemsById.get(existing.itemId);
-          if (!itemRecord) {
-            throw new NotFoundError("Item not found");
-          }
+          if (!itemRecord) throw new NotFoundError("Item not found");
+
           const entry = { id: entryId, item: itemRecord };
           await validateEquipping(tx, characterRecord, entry, location, weaponSet, force, scope);
         }
@@ -193,9 +185,7 @@ class CharacterInventoryService {
           { quantity, ...this.entryFields(equipped, location, weaponSet, totalCharges, remainingCharges) },
           { characterId, id: entryId, expectedUpdatedAt },
         );
-        if (expectedUpdatedAt && rows.length === 0) {
-          throw new ConflictError(STALE_ENTITY_MESSAGE);
-        }
+        if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
         await Activities.create(tx, {
           userId: session.userId,

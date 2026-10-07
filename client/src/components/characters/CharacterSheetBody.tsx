@@ -19,7 +19,7 @@ import {
   WeaponsSection,
 } from "./sections/index.ts";
 
-type CharacterSheetBodyProps = {
+interface CharacterSheetBodyProps {
   character: CharacterData;
   characterId: string;
   readOnly?: boolean;
@@ -37,7 +37,7 @@ type CharacterSheetBodyProps = {
   diagnostics?: Pick<CharacterDetail, "validation" | "requirements" | "modifiers">;
   /** Pre-resolved portrait URL for unauthenticated views. */
   portraitUrl?: string | null;
-};
+}
 
 export function CharacterSheetBody({
   character,
@@ -112,9 +112,8 @@ export function CharacterSheetBody({
               return (feat) => {
                 for (const { suffix, bonded } of matches) {
                   const raceName = bonded.identity?.physiology?.race?.name;
-                  if (raceName && feat.name === `${raceName} ${suffix}`) {
+                  if (raceName && feat.name === `${raceName} ${suffix}`)
                     return <sections.BondedSection bonded={bonded} linkable={!!onViewBondedSheet} />;
-                  }
                 }
                 return null;
               };

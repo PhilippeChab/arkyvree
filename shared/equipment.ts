@@ -1,7 +1,7 @@
 /** Where equipped items go: the rules the server enforces and the inventory dialogs warn about. */
 
-import type { ItemLocation } from "@/shared/enums.ts";
-import { isOneOf } from "@/shared/isOneOf.ts";
+import type { ItemLocation } from "./enums.ts";
+import { isOneOf } from "./isOneOf.ts";
 
 /** An equipped inventory entry, as the slot rules read it. */
 interface EquippedEntry {
@@ -56,9 +56,8 @@ export function findSlotConflict<T extends EquippedEntry>(
     if (entry) return { reason: "occupied", entry };
   }
 
-  if (location === "Finger" && equipped.filter((e) => e.location === "Finger").length >= MAX_FINGER_ITEMS) {
+  if (location === "Finger" && equipped.filter((e) => e.location === "Finger").length >= MAX_FINGER_ITEMS)
     return { reason: "fingers" };
-  }
 
   if (isHandLocation(location)) {
     const sameSet = equipped.filter((e) => isHandLocation(e.location) && e.weaponSet === weaponSet);

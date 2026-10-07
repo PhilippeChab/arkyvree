@@ -97,9 +97,8 @@ export default class EncumbranceComponent {
   }
 
   getEncumberedSpeed(baseSpeed: number): number {
-    if (ENCUMBERED_SPEED[baseSpeed] !== undefined) {
-      return ENCUMBERED_SPEED[baseSpeed];
-    }
+    if (ENCUMBERED_SPEED[baseSpeed] !== undefined) return ENCUMBERED_SPEED[baseSpeed];
+
     return Math.floor((baseSpeed * 2) / 3);
   }
 

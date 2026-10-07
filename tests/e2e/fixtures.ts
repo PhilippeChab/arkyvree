@@ -2,10 +2,11 @@ import { randomUUID } from "node:crypto";
 
 import { test as base, type Page } from "@playwright/test";
 
-import { recordCoverage } from "@/tests/e2e/coverage.ts";
-import { queryDatabase } from "@/tests/e2e/support/database.ts";
-import { createUser, type E2EUser } from "@/tests/e2e/support/users.ts";
 import { TEST_USERS } from "@/tests/fixtures/auth.fixture.ts";
+
+import { recordCoverage } from "./coverage.ts";
+import { queryDatabase } from "./support/database.ts";
+import { createUser, type E2EUser } from "./support/users.ts";
 
 /**
  * Users the tests sign in as, created as they're used, so parallel tests can't collide on a user's state and a run

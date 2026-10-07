@@ -1,15 +1,12 @@
 /** Detects a class's aptitude picks: the features where its player picks from a pool. */
 
-import {
-  buildFeatureMap,
-  isScalingFeature,
-  mergeOrdinalVariants,
-} from "@/database/packages/dnd35-from-parser/tools/detect/classes/features.ts";
 import { findWithPluralVariants } from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import { type AptitudePick, type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { CREATURE_TYPES } from "@/database/packages/dnd35/data/creatureTypes.ts";
 import { stripSeparators } from "@/shared/text.ts";
+
+import { buildFeatureMap, isScalingFeature, mergeOrdinalVariants } from "./features.ts";
 
 type CreatureType = (typeof CREATURE_TYPES)[number];
 
@@ -63,12 +60,11 @@ function findCreatureType(text: string): CreatureType | null {
     const m = t.match(/^(.+?)\s*\(([^)]+)\)$/);
     if (m) tries.push({ keyword: m[2], variant: t });
   }
-  for (const t of CREATURE_TYPES) {
-    if (!/\(/.test(t)) tries.push({ keyword: t, variant: t });
-  }
-  for (const { keyword, variant } of tries) {
+  for (const t of CREATURE_TYPES) if (!/\(/.test(t)) tries.push({ keyword: t, variant: t });
+
+  for (const { keyword, variant } of tries)
     if (new RegExp(`\\b${RegExp.escape(keyword)}s?\\b`, "i").test(text)) return variant;
-  }
+
   return null;
 }
 
@@ -188,8 +184,7 @@ export function parseTreatedAsHavingFeats(description: string): string[] | undef
   const pattern = /treated as having the (.+?) feat/gi;
   const feats: string[] = [];
   let m;
-  while ((m = pattern.exec(description)) !== null) {
-    feats.push(m[1]);
-  }
+  while ((m = pattern.exec(description)) !== null) feats.push(m[1]);
+
   return feats.length >= 2 ? feats : undefined;
 }

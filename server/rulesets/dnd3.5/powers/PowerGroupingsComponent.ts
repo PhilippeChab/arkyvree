@@ -1,7 +1,8 @@
 import type AbilitiesComponent from "@/server/rulesets/dnd3.5/abilities/AbilitiesComponent.ts";
-import type PowersComponent from "@/server/rulesets/dnd3.5/powers/PowersComponent.ts";
 import type { Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
+
+import type PowersComponent from "./PowersComponent.ts";
 
 type PowerGroup = Record<string, PowerDcsByClass>;
 type PowerGroupingsData = Record<string, PowerGroup>;
@@ -84,9 +85,7 @@ export default class PowerGroupingsComponent {
     for (const raw of values) {
       const key = stripSeparators(raw);
       if (!key) continue;
-      if (!this.powerGroupings[key]) {
-        this.powerGroupings[key] = {};
-      }
+      if (!this.powerGroupings[key]) this.powerGroupings[key] = {};
     }
   }
 }

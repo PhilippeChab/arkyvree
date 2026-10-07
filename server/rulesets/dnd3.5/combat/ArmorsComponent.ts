@@ -1,4 +1,3 @@
-import type CombatComponent from "@/server/rulesets/dnd3.5/combat/CombatComponent.ts";
 import {
   ARMOR_AC_BONUS,
   ARMOR_CHECK_PENALTY,
@@ -10,6 +9,8 @@ import {
 } from "@/shared/dnd3.5/properties/index.ts";
 import type { Item, Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
+
+import type CombatComponent from "./CombatComponent.ts";
 
 /** Grouping key (normalized) → shared ArmorSlot reference */
 type ArmorsData = Record<string, ArmorSlot>;
@@ -68,9 +69,8 @@ export default class ArmorsComponent {
     const groupingValues: string[] = [];
 
     for (const prop of properties) {
-      if ((ARMOR_GROUPING_PROPERTIES as readonly string[]).includes(prop.type)) {
+      if ((ARMOR_GROUPING_PROPERTIES as readonly string[]).includes(prop.type))
         groupingValues.push(stripSeparators(prop.value));
-      }
     }
 
     groupingValues.push(stripSeparators(item.name));

@@ -37,9 +37,7 @@ export default class SavingThrowsComponent {
       const lastLevel = klass.levels.at(-1);
       if (lastLevel) {
         const levelSaves = klassLevelSaves.filter((ls) => ls.klassLevelId === lastLevel.klassLevel.id);
-        for (const ls of levelSaves) {
-          saveBaseValues.set(ls.saveId, (saveBaseValues.get(ls.saveId) ?? 0) + ls.base);
-        }
+        for (const ls of levelSaves) saveBaseValues.set(ls.saveId, (saveBaseValues.get(ls.saveId) ?? 0) + ls.base);
       }
     }
 

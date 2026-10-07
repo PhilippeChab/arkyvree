@@ -11,12 +11,13 @@ import { basename, join } from "node:path";
 
 import { $ } from "bun";
 
-import { parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/cli/args.ts";
 import {
   filterReferenceFiles,
   listReferenceFiles,
 } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import { BASE_URL, getBookSlug } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
+
+import { parseCliArgs } from "./args.ts";
 
 const GENERATOR = join(import.meta.dirname!, "generate.ts");
 const SCRAPER = join(import.meta.dirname!, "scrape.ts");

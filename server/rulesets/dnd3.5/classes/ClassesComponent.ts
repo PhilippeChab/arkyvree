@@ -141,14 +141,10 @@ export default class ClassesComponent {
 
     for (const characterLevel of characterLevels) {
       const klassLevel = klassLevelsById.get(characterLevel.klassLevelId);
-      if (!klassLevel) {
-        throw new Error("Klass level not found");
-      }
+      if (!klassLevel) throw new Error("Klass level not found");
 
       const klass = klassesById.get(klassLevel.klassId);
-      if (!klass) {
-        throw new Error("Klass not found");
-      }
+      if (!klass) throw new Error("Klass not found");
 
       const klassName = stripSeparators(klass.name);
       if (!this.classes[klassName]) {

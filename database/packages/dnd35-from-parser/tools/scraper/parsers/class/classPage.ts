@@ -19,22 +19,13 @@
 
 import * as cheerio from "cheerio";
 
-import { parseClassFeatures } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/features.ts";
-import { parsePrerequisites } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/prerequisites.ts";
-import {
-  detectBonusSpellAbility,
-  parseProgression,
-  parseSpellsKnownTable,
-} from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/progression.ts";
-import { parseClassSkills } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/skills.ts";
-import {
-  parseAlignment,
-  parseClassName,
-  parseDescription,
-  parseHitDie,
-  parseSkillPoints,
-} from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/summary.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
+
+import { parseClassFeatures } from "./features.ts";
+import { parsePrerequisites } from "./prerequisites.ts";
+import { detectBonusSpellAbility, parseProgression, parseSpellsKnownTable } from "./progression.ts";
+import { parseClassSkills } from "./skills.ts";
+import { parseAlignment, parseClassName, parseDescription, parseHitDie, parseSkillPoints } from "./summary.ts";
 
 export function parseClassHtml(
   html: string,
@@ -55,9 +46,7 @@ export function parseClassHtml(
   const spellsKnown = parseSpellsKnownTable($);
   const bonusSpellAbility = detectBonusSpellAbility($);
 
-  if (alignment && !prerequisites.parsed.alignment) {
-    prerequisites.parsed.alignment = alignment;
-  }
+  if (alignment && !prerequisites.parsed.alignment) prerequisites.parsed.alignment = alignment;
 
   return {
     _meta: {

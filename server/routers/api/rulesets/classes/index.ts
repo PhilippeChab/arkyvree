@@ -1,14 +1,13 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { validate } from "@/server/middlewares/index.ts";
-import type { SessionContext } from "@/server/middlewares/index.ts";
-import { classParams } from "@/server/routers/api/rulesets/classes/validation.ts";
+import { type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 
 import classLevels from "./levels/index.ts";
 import classSkills from "./skills/index.ts";
+import { classParams } from "./validation.ts";
 
 const hitDie = z.union([z.literal(4), z.literal(6), z.literal(8), z.literal(10), z.literal(12)], {
   error: () => "Hit die must be one of: 4, 6, 8, 10, 12",

@@ -3,8 +3,12 @@ import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { Powers, Properties } from "@/server/repositories/index.ts";
 import PowersComponent from "@/server/rulesets/dnd3.5/powers/PowersComponent.ts";
-import { getStaticPropertyValues } from "@/shared/dnd3.5/properties/index.ts";
-import { SPELL_COMPONENT, SPELL_DESCRIPTOR, SPELL_TARGET } from "@/shared/dnd3.5/properties/index.ts";
+import {
+  getStaticPropertyValues,
+  SPELL_COMPONENT,
+  SPELL_DESCRIPTOR,
+  SPELL_TARGET,
+} from "@/shared/dnd3.5/properties/index.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 
 describe("PowersComponent.addPowerEntries", () => {

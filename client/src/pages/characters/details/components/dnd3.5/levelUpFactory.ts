@@ -3,8 +3,7 @@
  * over.
  */
 
-import type React from "react";
-import type { ComponentType } from "react";
+import { type ComponentType, type UIEvent } from "react";
 import type { Control } from "react-hook-form";
 
 import { AddAttributeStep } from "./AddAttributeStep.tsx";
@@ -85,7 +84,7 @@ interface FeatPickerState {
   allSelectedFeatPickString?: string;
   featSearch: string;
   setFeatSearch: (search: string) => void;
-  handleFeatsScroll: (event: React.UIEvent<HTMLElement>) => void;
+  handleFeatsScroll: (event: UIEvent<HTMLElement>) => void;
   /** The picks' form: the feats field, which the step changes from `selectedFeats`. */
   control: Control<LevelUpFormData>;
 }
@@ -133,7 +132,7 @@ interface PowerPickerState {
   /** The picks' form: the spells field, which the step changes from `selectedPowers`. */
   control: Control<LevelUpFormData>;
   setPowerSearch: (search: string) => void;
-  handlePowersScroll: (event: React.UIEvent<HTMLElement>) => void;
+  handlePowersScroll: (event: UIEvent<HTMLElement>) => void;
 }
 
 interface SectionMap {
@@ -175,7 +174,7 @@ export interface AddClassPlanStepProps {
    *  drop the character's existing classes from the "+ X" row. */
   quickAddKlasses: AvailableKlass[];
   isLoadingKlasses: boolean;
-  handleKlassListScroll: (event: React.UIEvent<HTMLElement>) => void;
+  handleKlassListScroll: (event: UIEvent<HTMLElement>) => void;
   setKlassSearch: (search: string) => void;
 }
 
@@ -229,7 +228,7 @@ export interface LevelUpSkillsStepProps {
   wizard: SkillPickerState;
 }
 
-const rulesetSections: Record<BaseRules, SectionMap> = {
+const RULESET_SECTIONS: Record<BaseRules, SectionMap> = {
   "Dungeons & Dragons: 3.5": {
     LevelUpHpStep,
     LevelUpAttributeStep,
@@ -245,5 +244,5 @@ const rulesetSections: Record<BaseRules, SectionMap> = {
 };
 
 export function getLevelUpSections(baseRules: BaseRules): SectionMap {
-  return rulesetSections[baseRules];
+  return RULESET_SECTIONS[baseRules];
 }

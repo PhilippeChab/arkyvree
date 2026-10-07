@@ -2,8 +2,8 @@ import { useSearchParams } from "react-router-dom";
 
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 
-import { useUpdateSearchParams } from "./useSearchParam.ts";
 import { useSearchText } from "./useSearchText.ts";
+import { useUpdateSearchParams } from "./useUpdateSearchParams.ts";
 
 type Direction = "asc" | "desc";
 

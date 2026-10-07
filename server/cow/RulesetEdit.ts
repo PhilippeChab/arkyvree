@@ -100,9 +100,9 @@ export default class RulesetEdit {
 
     if (klass.rulesetId === this.ruleset.id) {
       await lockEntityForMutation(tx, "klasses", klass.id);
-      if (!(await KlassLevels.findOne(tx, { id: level.id }))) {
+      if (!(await KlassLevels.findOne(tx, { id: level.id })))
         throw new NotFoundError("Customization source no longer exists; refresh the entity");
-      }
+
       return { id: level.id };
     }
     if (!this.cow.sourceChain.includes(klass.rulesetId))
@@ -156,9 +156,9 @@ export default class RulesetEdit {
     if (
       resolvedCustomizationId === customizationId &&
       !(await withCowContext(undefined, () => CUSTOMIZATION_REPOS[kind].exists(tx, { id: customizationId })))
-    ) {
+    )
       throw new NotFoundError("Customization source no longer exists; refresh the entity");
-    }
+
     return resolvedCustomizationId;
   }
 
@@ -170,17 +170,16 @@ export default class RulesetEdit {
    * even after a rename, so inherited references keep resolving to it.
    */
   async assertAncestorNamesHidden(tx: Db, entityType: RulesetEntityType, ancestorIds: string[]): Promise<Set<string>> {
-    if (ancestorIds.some((id) => !this.cow.isHidden(id))) {
+    if (ancestorIds.some((id) => !this.cow.isHidden(id)))
       throw new ConflictError("Name already exists in the source chain (an ancestor or subscribed extension)");
-    }
+
     const repo = ENTITY_REPOS[entityType];
     const snapshots = await EntitySnapshots.findMany(tx, { sourceEntityIds: ancestorIds, rulesetId: this.ruleset.id });
     const tombstoned = new Set<string>();
     for (const snapshot of snapshots) {
       // Stored id of the local copy — check it as written, without COW remapping.
-      if (!(await withCowContext(undefined, () => repo.exists(tx, { id: snapshot.forkedEntityId })))) {
+      if (!(await withCowContext(undefined, () => repo.exists(tx, { id: snapshot.forkedEntityId }))))
         tombstoned.add(snapshot.sourceEntityId);
-      }
     }
     return tombstoned;
   }

@@ -5,12 +5,12 @@ import { isDevelopment } from "@/server/environment.ts";
 type Code = 400 | 401 | 403 | 404 | 409 | 422 | 429 | 500;
 
 /** Body of every API error response. */
-export type ErrorJson = {
+export interface ErrorJson {
   error: string;
   cause: string;
   message: string;
   issues?: { category: string; message: string; entityName?: string; entityType?: string; requirementTree?: string }[];
-};
+}
 
 export const STALE_ENTITY_MESSAGE = "This was modified by someone else. Please refresh and try again.";
 
@@ -40,6 +40,14 @@ export class UnauthorizedError extends BaseError {
     this.name = "UnauthorizedError";
     this.cause = this.cause ?? "unauthorized";
     this.code = 401;
+  }
+}
+
+/** A sign-in whose email isn't verified yet: the client sends its user to verify it, by this name. */
+export class EmailNotVerifiedError extends UnauthorizedError {
+  constructor(message = "Email not verified", options?: ErrorOptions) {
+    super(message, options);
+    this.name = "EmailNotVerifiedError";
   }
 }
 
@@ -112,9 +120,7 @@ export function toJson(error: Error): [ErrorJson, Code] {
       ? { error: baseError.name, cause: (baseError.cause || "") as string, message: baseError.message }
       : { error: "InternalError", cause: "internal", message: "Internal Server Error" };
 
-  if ("issues" in baseError && Array.isArray(baseError.issues)) {
-    errorJson.issues = baseError.issues;
-  }
+  if ("issues" in baseError && Array.isArray(baseError.issues)) errorJson.issues = baseError.issues;
 
   return [errorJson, baseError.code];
 }

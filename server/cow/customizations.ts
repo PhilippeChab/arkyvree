@@ -22,9 +22,9 @@ function buildCustomizationsMap(
   for (const m of modifiers) modifierToEntity.set(m.id, m.sourceId);
 
   const map = new Map<string, EntityCustomizations>();
-  for (const id of entityIds) {
+  for (const id of entityIds)
     map.set(id, { modifiers: [], properties: [], requirements: [], modifierRequirements: [] });
-  }
+
   for (const m of modifiers) map.get(m.sourceId)?.modifiers.push(m);
   for (const p of properties) map.get(p.entityId)?.properties.push(p);
   for (const r of requirements) map.get(r.entityId)?.requirements.push(r);

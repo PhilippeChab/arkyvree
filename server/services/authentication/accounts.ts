@@ -91,9 +91,7 @@ export async function signInAsGoogleAccount(payload: { sub: string; email: strin
     // through to Case 3 and hitting the users_email constraint.
     const existingUser = await Users.findOne(tx, { emailAddress: email }, Visibility.All);
 
-    if (existingUser?.deletedAt) {
-      throw new ConflictError("Email already in use");
-    }
+    if (existingUser?.deletedAt) throw new ConflictError("Email already in use");
 
     if (existingUser) {
       await OauthAccounts.create(tx, {

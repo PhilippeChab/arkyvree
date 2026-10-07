@@ -134,11 +134,9 @@ function featRequirements(
     // → prefix wildcard on the feat family slug
     if (/\(any\b|\bany\b|\btwo\s+(schools?|weapons?|domains?|powers?|skills?|feats?)\b|\bdeity'?s?\b/i.test(f)) {
       const anyReq = expandAnyFeatRequirement(f);
-      if (anyReq) {
-        reqs.push(anyReq);
-      } else {
-        unresolvedPrereqs.push(f);
-      }
+      if (anyReq) reqs.push(anyReq);
+      else unresolvedPrereqs.push(f);
+
       continue;
     }
     const compoundReq = parseCompoundFeatRequirement(f, featNameMap);
@@ -233,9 +231,7 @@ function parseRaceRequirement(text: string): RequirementEntry | undefined {
   const resolved = races.map((r) => RACE_NAMES[r]).filter(Boolean);
   if (resolved.length === 0) return undefined;
 
-  if (resolved.length === 1) {
-    return eqStr("identity.physiology.race.name", resolved[0]);
-  }
+  if (resolved.length === 1) return eqStr("identity.physiology.race.name", resolved[0]);
 
   return or(...resolved.map((r) => eqStr("identity.physiology.race.name", r)));
 }
@@ -283,34 +279,22 @@ function parseSpecialAbilityRequirement(
   }
 
   // "Rage or frenzy ability"
-  if (/\brage\b.*\bfrenzy\b|\bfrenzy\b.*\brage\b|\brage ability\b/i.test(lower)) {
-    return eq("feats.rage.possessed");
-  }
+  if (/\brage\b.*\bfrenzy\b|\bfrenzy\b.*\brage\b|\brage ability\b/i.test(lower)) return eq("feats.rage.possessed");
 
   // "Flurry of blows ability"
-  if (/\bflurry of blows\b/i.test(lower)) {
-    return eq("feats.flurryofblows.possessed");
-  }
+  if (/\bflurry of blows\b/i.test(lower)) return eq("feats.flurryofblows.possessed");
 
   // "Evasion ability"
-  if (/\bevasion ability\b/i.test(lower)) {
-    return eq("feats.evasion.possessed");
-  }
+  if (/\bevasion ability\b/i.test(lower)) return eq("feats.evasion.possessed");
 
   // "Trapfinding"
-  if (/\btrapfinding\b/i.test(lower)) {
-    return eq("feats.trapfinding.possessed");
-  }
+  if (/\btrapfinding\b/i.test(lower)) return eq("feats.trapfinding.possessed");
 
   // "Lay on hands class feature"
-  if (/\blay on hands\b/i.test(lower)) {
-    return eq("feats.layonhands.possessed");
-  }
+  if (/\blay on hands\b/i.test(lower)) return eq("feats.layonhands.possessed");
 
   // "Inspire courage bardic music ability"
-  if (/\binspire courage\b/i.test(lower)) {
-    return eq("feats.inspirecourage.possessed");
-  }
+  if (/\binspire courage\b/i.test(lower)) return eq("feats.inspirecourage.possessed");
 
   // "Large size or larger"
   if (/\blarge size or larger\b/i.test(lower)) {
@@ -324,9 +308,8 @@ function parseSpecialAbilityRequirement(
   }
 
   // Skip negated casting prereqs ("no ability to cast", "must have no ability to cast")
-  if (/\bno\s+ability to cast\b/i.test(lower) || /\bmust not have\b.*\bability to cast\b/i.test(lower)) {
+  if (/\bno\s+ability to cast\b/i.test(lower) || /\bmust not have\b.*\bability to cast\b/i.test(lower))
     return undefined;
-  }
 
   // "Ability to cast N-level [arcane/divine] spells"
   const castAbilityMatch = text.match(
@@ -341,9 +324,8 @@ function parseSpecialAbilityRequirement(
   }
 
   // "Ability to cast summon monster III" / "Ability to cast detect thoughts"
-  if (/[Aa](?:bility|ble) to (?:cast|use)\b/i.test(lower)) {
+  if (/[Aa](?:bility|ble) to (?:cast|use)\b/i.test(lower))
     return or(gte("spellcasting.arcane", 1), gte("spellcasting.divine", 1));
-  }
 
   // "Any luck feat" / "Any divine feat"
   const anyFeatMatch = text.match(/\bany (\w+) feat\b/i);
@@ -444,9 +426,7 @@ function specialRequirements(
 
     // Track mechanical prerequisites that we couldn't parse (sneak attack, rage, etc.)
     // Discard narrative/RP-only ones (deity worship, organization membership, rituals)
-    if (isMechanicalPrereq(s)) {
-      unresolvedPrereqs.push(s);
-    }
+    if (isMechanicalPrereq(s)) unresolvedPrereqs.push(s);
   }
   return reqs;
 }
@@ -456,11 +436,8 @@ function validRequirements(reqs: RequirementEntry[], errors: string[]): Requirem
   const validatedReqs: RequirementEntry[] = [];
   for (const req of reqs) {
     const invalid = findInvalidRequirementPaths(req);
-    if (invalid.length > 0) {
-      for (const p of invalid) errors.push(`Invalid requirement path: "${p}"`);
-    } else {
-      validatedReqs.push(req);
-    }
+    if (invalid.length > 0) for (const p of invalid) errors.push(`Invalid requirement path: "${p}"`);
+    else validatedReqs.push(req);
   }
   return validatedReqs;
 }
@@ -476,9 +453,7 @@ export function parseRequirements(parsed: ClassReference["raw"]["prerequisites"]
   const errors: string[] = [];
   const unresolvedPrereqs: string[] = [];
 
-  if (parsed.bab) {
-    reqs.push(gte("combat.bab", parsed.bab));
-  }
+  if (parsed.bab) reqs.push(gte("combat.bab", parsed.bab));
 
   if (parsed.skills) reqs.push(...skillRequirements(parsed.skills));
 
@@ -486,11 +461,8 @@ export function parseRequirements(parsed: ClassReference["raw"]["prerequisites"]
 
   if (parsed.casterLevel) {
     for (const cl of parsed.casterLevel) {
-      if (cl.type === "any") {
-        reqs.push(or(gte("spellcasting.arcane", cl.level), gte("spellcasting.divine", cl.level)));
-      } else {
-        reqs.push(gte(`spellcasting.${cl.type}`, cl.level));
-      }
+      if (cl.type === "any") reqs.push(or(gte("spellcasting.arcane", cl.level), gte("spellcasting.divine", cl.level)));
+      else reqs.push(gte(`spellcasting.${cl.type}`, cl.level));
     }
   }
 

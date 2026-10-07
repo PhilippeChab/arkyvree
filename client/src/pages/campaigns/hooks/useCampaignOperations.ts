@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import type { CreateCampaignFormData } from "@/client/src/pages/campaigns/components/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
@@ -27,14 +27,14 @@ export function useCampaignOperations() {
     onSuccess: (data) => {
       snackbar.success("Campaign created successfully");
       queryClient.invalidateQueries({
-        queryKey: queryKeys.campaigns.lists,
+        queryKey: QUERY_KEYS.campaigns.lists,
       });
       setCreateDialogOpen(false);
       createForm.reset();
       navigate(`/campaigns/${data.campaign.id}`);
     },
     onError: (error) => {
-      snackbar.error(error);
+      snackbar.error(error, "Failed to create campaign");
     },
   });
 

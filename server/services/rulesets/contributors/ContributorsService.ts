@@ -31,13 +31,11 @@ class ContributorsService {
   /** A contributor the session's user may manage, with its ruleset and the policy that allowed it. */
   private async getManagedContributor(tx: Db, session: Session, contributorId: string) {
     const contributor = await Contributors.findOne(tx, { id: contributorId });
-    if (!contributor) {
-      throw new NotFoundError("Contributor not found");
-    }
+    if (!contributor) throw new NotFoundError("Contributor not found");
+
     const ruleset = await Rulesets.findOne(tx, { id: contributor.rulesetId }, Visibility.All);
-    if (!ruleset) {
-      throw new NotFoundError("Ruleset not found");
-    }
+    if (!ruleset) throw new NotFoundError("Ruleset not found");
+
     const policy = await RulesetsPolicy.for(tx, session, ruleset);
     policy.canManageContributors();
     return { contributor, ruleset, policy };
@@ -48,12 +46,10 @@ class ContributorsService {
    */
   private async getPendingInviteFor(tx: Db, session: Session, contributorId: string) {
     const contributor = await Contributors.findOne(tx, { id: contributorId });
-    if (!contributor || contributor.userId !== session.userId) {
-      throw new NotFoundError("Contributor invite not found");
-    }
-    if (contributor.status !== "Pending") {
-      throw new ConflictError("Invite is no longer pending");
-    }
+    if (!contributor || contributor.userId !== session.userId) throw new NotFoundError("Contributor invite not found");
+
+    if (contributor.status !== "Pending") throw new ConflictError("Invite is no longer pending");
+
     return contributor;
   }
 
@@ -62,12 +58,9 @@ class ContributorsService {
       const contributor = await this.getPendingInviteFor(tx, session, contributorId);
 
       const ruleset = await Rulesets.findOne(tx, { id: contributor.rulesetId }, Visibility.All);
-      if (!ruleset) {
-        throw new NotFoundError("Ruleset not found");
-      }
-      if (ruleset.status === "Archived") {
-        throw new ConflictError("This ruleset has been archived");
-      }
+      if (!ruleset) throw new NotFoundError("Ruleset not found");
+
+      if (ruleset.status === "Archived") throw new ConflictError("This ruleset has been archived");
 
       return await this.answerInvite(tx, session, contributor.id, "Active");
     });
@@ -84,9 +77,7 @@ class ContributorsService {
     pagination: { limit: number; page: number },
   ) {
     const ruleset = await Rulesets.findOne(db, { id: rulesetId }, Visibility.All);
-    if (!ruleset) {
-      throw new NotFoundError("Ruleset not found");
-    }
+    if (!ruleset) throw new NotFoundError("Ruleset not found");
 
     (await RulesetsPolicy.for(db, session, ruleset)).canReadContributors();
 
@@ -106,9 +97,8 @@ class ContributorsService {
       id: contributorId,
       userId: session.userId,
     });
-    if (!invite) {
-      throw new NotFoundError("Contributor invite not found");
-    }
+    if (!invite) throw new NotFoundError("Contributor invite not found");
+
     return invite;
   }
 
@@ -119,27 +109,20 @@ class ContributorsService {
   async inviteContributor(session: Session, rulesetId: string, email: string, role: ContributorRole) {
     const { contributor, emailData } = await withTransaction(async (tx) => {
       const ruleset = await Rulesets.findOne(tx, { id: rulesetId }, Visibility.All);
-      if (!ruleset) {
-        throw new NotFoundError("Ruleset not found");
-      }
+      if (!ruleset) throw new NotFoundError("Ruleset not found");
 
       const policy = await RulesetsPolicy.for(tx, session, ruleset);
       policy.canManageContributors();
 
-      if (ruleset.status === "Archived") {
-        throw new ConflictError("Cannot invite a contributor to an archived ruleset");
-      }
+      if (ruleset.status === "Archived") throw new ConflictError("Cannot invite a contributor to an archived ruleset");
 
-      if (role === "Admin") {
-        policy.canManageAdminContributors();
-      }
+      if (role === "Admin") policy.canManageAdminContributors();
 
       const user = await Users.findOne(tx, { emailAddress: email });
 
       // Cannot invite the owner
-      if (user && user.id === ruleset.userId) {
+      if (user && user.id === ruleset.userId)
         throw new ConflictError("Cannot invite the ruleset owner as a contributor");
-      }
 
       // Check for existing active/pending contributor
       if (user) {
@@ -148,26 +131,21 @@ class ContributorsService {
           userId: user.id,
           status: "Active",
         });
-        if (existing) {
-          throw new ConflictError("User is already a contributor");
-        }
+        if (existing) throw new ConflictError("User is already a contributor");
+
         const pending = await Contributors.findOne(tx, {
           rulesetId,
           userId: user.id,
           status: "Pending",
         });
-        if (pending) {
-          throw new ConflictError("User already has a pending invite");
-        }
+        if (pending) throw new ConflictError("User already has a pending invite");
       } else {
         const pending = await Contributors.findOne(tx, {
           rulesetId,
           email,
           status: "Pending",
         });
-        if (pending) {
-          throw new ConflictError("This email already has a pending invite");
-        }
+        if (pending) throw new ConflictError("This email already has a pending invite");
       }
 
       const rows = await Contributors.create(tx, {
@@ -221,26 +199,20 @@ class ContributorsService {
   async leaveRuleset(session: Session, rulesetId: string) {
     return await withTransaction(async (tx) => {
       const ruleset = await Rulesets.findOne(tx, { id: rulesetId }, Visibility.All);
-      if (!ruleset) {
-        throw new NotFoundError("Ruleset not found");
-      }
+      if (!ruleset) throw new NotFoundError("Ruleset not found");
 
       const role = await Contributors.findRole(tx, {
         userId: session.userId,
         rulesetId,
       });
-      if (!role) {
-        throw new NotFoundError("You are not a contributor of this ruleset");
-      }
+      if (!role) throw new NotFoundError("You are not a contributor of this ruleset");
 
       const contributor = await Contributors.findOne(tx, {
         rulesetId,
         userId: session.userId,
         status: "Active",
       });
-      if (!contributor) {
-        throw new NotFoundError("Contributor record not found");
-      }
+      if (!contributor) throw new NotFoundError("Contributor record not found");
 
       const rows = await Contributors.update(tx, { status: "Revoked" }, { id: contributor.id });
       const updated = rows[0];
@@ -269,13 +241,10 @@ class ContributorsService {
     return await withTransaction(async (tx) => {
       const { contributor, policy } = await this.getManagedContributor(tx, session, contributorId);
 
-      if (contributor.role === "Admin") {
-        policy.canManageAdminContributors();
-      }
+      if (contributor.role === "Admin") policy.canManageAdminContributors();
 
-      if (contributor.status !== "Active" && contributor.status !== "Pending") {
+      if (contributor.status !== "Active" && contributor.status !== "Pending")
         throw new ConflictError("Contributor is not active or pending");
-      }
 
       const prevStatus = contributor.status;
       const rows = await Contributors.update(tx, { status: "Revoked" }, { id: contributorId });
@@ -297,17 +266,11 @@ class ContributorsService {
     return await withTransaction(async (tx) => {
       const { contributor, ruleset, policy } = await this.getManagedContributor(tx, session, contributorId);
 
-      if (ruleset.status === "Archived") {
-        throw new ConflictError("Cannot modify roles on an archived ruleset");
-      }
+      if (ruleset.status === "Archived") throw new ConflictError("Cannot modify roles on an archived ruleset");
 
-      if (role === "Admin" || contributor.role === "Admin") {
-        policy.canManageAdminContributors();
-      }
+      if (role === "Admin" || contributor.role === "Admin") policy.canManageAdminContributors();
 
-      if (contributor.status !== "Active") {
-        throw new ConflictError("Can only update role of active contributors");
-      }
+      if (contributor.status !== "Active") throw new ConflictError("Can only update role of active contributors");
 
       const rows = await Contributors.update(tx, { role }, { id: contributorId });
       const updated = rows[0];

@@ -32,22 +32,21 @@ function createTestConventions(context) {
           ? node.object.object
           : node.object;
       if (object.type !== "Identifier") return;
-      if (TEST_FUNCTIONS.has(object.name) && SKIPPING.has(name)) {
+      if (TEST_FUNCTIONS.has(object.name) && SKIPPING.has(name))
         context.report({ node, message: `Every test runs: no \`.${name}\`.` });
-      }
+
       // import * as bt from "bun:test"; bt.mock(…)
-      if (bunTestNamespaces.has(object.name) && MOCKS.has(name)) {
+      if (bunTestNamespaces.has(object.name) && MOCKS.has(name))
         context.report({ node, message: "No mocks: a test runs the real code on the seeded test database." });
-      }
     },
     ImportDeclaration(node) {
       const source = node.source.value;
       for (const s of node.specifiers ?? []) {
         if (source === "bun:test" && s.type === "ImportNamespaceSpecifier") bunTestNamespaces.add(s.local.name);
         if (s.type !== "ImportSpecifier") continue;
-        if (source === "bun:test" && MOCKS.has(s.imported.name)) {
+        if (source === "bun:test" && MOCKS.has(s.imported.name))
           context.report({ node: s, message: "No mocks: a test runs the real code on the seeded test database." });
-        }
+
         if (
           isE2e &&
           file.endsWith(".e2e.ts") &&

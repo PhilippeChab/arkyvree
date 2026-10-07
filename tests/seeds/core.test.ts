@@ -4,7 +4,8 @@ import { ALL_DOMAINS } from "@/database/packages/dnd35-from-parser/generated/srd
 import { CREATURE_TYPES } from "@/database/packages/dnd35/data/creatureTypes.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
-import { describeRequirement, seededRows } from "@/tests/seeds/seededRows.ts";
+
+import { describeRequirement, seededRows } from "./seededRows.ts";
 
 const bab1 = "2 combat.bab greater_than_or_equal 1";
 

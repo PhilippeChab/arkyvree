@@ -11,8 +11,18 @@ interface LevelReviewProps {
   children: ReactNode;
 }
 
+interface ReviewGroupProps {
+  title: string;
+  children: ReactNode;
+}
+
+interface ReviewItemProps {
+  name: string;
+  note?: string;
+}
+
 /** A named pick of the review ("Power Attack"). */
-function ReviewItem({ name, note }: { name: string; note?: string }) {
+function ReviewItem({ name, note }: ReviewItemProps) {
   return (
     <Typography variant="body1">
       <strong>{name}</strong>
@@ -91,7 +101,7 @@ export function LevelReview({ wizard, children }: LevelReviewProps) {
 }
 
 /** A titled group of a level review ("Class Advancement", "New Feats"). */
-export function ReviewGroup({ title, children }: { title: string; children: ReactNode }) {
+export function ReviewGroup({ title, children }: ReviewGroupProps) {
   return (
     <Box sx={{ mb: 3 }}>
       <Typography variant="h6" gutterBottom>

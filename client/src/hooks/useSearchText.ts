@@ -13,7 +13,7 @@ import { useSearchParam } from "./useSearchParam.ts";
  * (Back, a link), even one the router commits together with a replace of its own.
  */
 export function useSearchText(key = "search") {
-  const [urlText, setUrlText] = useSearchParam(key);
+  const { value: urlText, setValue: setUrlText } = useSearchParam(key);
   const { key: locationKey } = useLocation();
   const navigationType = useNavigationType();
   const [text, setText] = useState(urlText);

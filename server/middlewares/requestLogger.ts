@@ -56,9 +56,8 @@ export function requestLogger(): MiddlewareHandler {
       log(LogPrefix.Outgoing, method, path, `${status} ${Math.round(totalMs)}ms ${timing}`);
 
       if (store?.slowQueries.length) {
-        for (const q of store.slowQueries) {
+        for (const q of store.slowQueries)
           console.log(`[api] \x1b[33m    ⚠ ${Math.round(q.durationMs)}ms  ${q.sql}\x1b[0m`);
-        }
       }
     });
   };

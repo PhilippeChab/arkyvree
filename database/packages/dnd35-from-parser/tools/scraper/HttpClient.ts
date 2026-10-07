@@ -45,9 +45,8 @@ export class HttpClient {
     const turn = this.lastTurn.then(async () => {
       const delay = this.options.delay ?? 200;
       const elapsed = Date.now() - this.lastRequestTime;
-      if (elapsed < delay) {
-        await new Promise((resolve) => setTimeout(resolve, delay - elapsed));
-      }
+      if (elapsed < delay) await new Promise((resolve) => setTimeout(resolve, delay - elapsed));
+
       this.lastRequestTime = Date.now();
     });
     this.lastTurn = turn;
@@ -139,9 +138,7 @@ export class HttpClient {
           continue;
         }
 
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText} — ${url}`);
-        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText} — ${url}`);
 
         const html = sanitizeHtml(await response.text());
         this.writeCache(url, html);

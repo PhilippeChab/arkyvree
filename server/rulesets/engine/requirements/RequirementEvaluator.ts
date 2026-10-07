@@ -176,11 +176,8 @@ export default class RequirementEvaluator {
     // The top-level rows are AND'd: the group is met when each of them is
     const isGroupFulfilled = tree.roots.every((node) => this.evaluateNode(node, fulfilled));
 
-    if (isGroupFulfilled) {
-      this.results.fulfilledRequirementGroups.push(requirements);
-    } else {
-      this.results.unmetRequirementGroups.push(requirements);
-    }
+    if (isGroupFulfilled) this.results.fulfilledRequirementGroups.push(requirements);
+    else this.results.unmetRequirementGroups.push(requirements);
   }
 
   /**
@@ -228,9 +225,7 @@ export default class RequirementEvaluator {
     requirements: Requirement[][],
     itemOf: (group: Requirement[]) => string | undefined = () => undefined,
   ) {
-    for (const group of requirements) {
-      this.evaluateRequirementsGroup(group, components, itemOf(group));
-    }
+    for (const group of requirements) this.evaluateRequirementsGroup(group, components, itemOf(group));
   }
 
   getRequirements() {

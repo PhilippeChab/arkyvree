@@ -1,8 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { itemsInRules } from "@/drizzle/schema.ts";
-import { findScopedEntity, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { findScopedEntity, RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import {
   copyEntityCustomizations,
   fetchEntityCustomizations,
@@ -71,9 +70,7 @@ class ItemsService extends include(Object, Variants) {
         });
         const item = rows[0];
 
-        if (tombstoneAncestorId) {
-          await edit.repointTombstone(tx, "items", tombstoneAncestorId, item.id);
-        }
+        if (tombstoneAncestorId) await edit.repointTombstone(tx, "items", tombstoneAncestorId, item.id);
 
         if (source && !source.isTemplate) {
           const cust = (await fetchEntityCustomizations(tx, [source.id], "items", "items")).get(source.id);
@@ -112,9 +109,8 @@ class ItemsService extends include(Object, Variants) {
         // If template, check for copies using the resolved ID
         if (item.isTemplate) {
           const copies = await Items.findMany(tx, { sourceItemId: item.id });
-          if (copies.length > 0) {
+          if (copies.length > 0)
             throw new ConflictError("Cannot delete a template item that has copies referencing it");
-          }
         }
 
         const edit = new RulesetEdit(ruleset, rulesetData.cow);
@@ -222,9 +218,8 @@ class ItemsService extends include(Object, Variants) {
           },
           { id: targetId, expectedUpdatedAt },
         );
-        if (expectedUpdatedAt && rows.length === 0) {
-          throw new ConflictError(STALE_ENTITY_MESSAGE);
-        }
+        if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
+
         const updatedItem = rows[0];
 
         await createActivityWithNotifications(tx, {

@@ -9,7 +9,7 @@ import {
   SwitchField,
 } from "@/client/src/components/common/index.ts";
 import type { RulesetAbility } from "@/client/src/hooks/index.ts";
-import { nameRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
+import { NAME_RULES, requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
 type Ability = RulesetAbility;
@@ -26,13 +26,13 @@ export function SkillFormFields({ form, abilities }: SkillFormFieldsProps) {
 
   return (
     <>
-      <NameField control={form.control} name="name" rules={nameRules} />
+      <NameField control={form.control} name="name" rules={NAME_RULES} />
       <DescriptionField control={form.control} name="description" />
       <SelectField
         control={form.control}
         name="primaryAbilityId"
         label="Primary Ability"
-        rules={{ required: "Primary ability is required" }}
+        rules={requiredRules("Primary ability is required")}
         options={abilities.map((ability) => ({ value: ability.id, label: ability.name }))}
       />
       <SwitchField
@@ -51,7 +51,6 @@ export function SkillFormFields({ form, abilities }: SkillFormFieldsProps) {
           rules={wholeNumberRules(1, "Multiplier is required")}
           number
           label="Armor Check Penalty Multiplier"
-          type="number"
           fullWidth
         />
       )}

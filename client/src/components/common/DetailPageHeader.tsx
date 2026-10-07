@@ -1,6 +1,7 @@
-import { ArrowBack, MoreVert as MoreVertIcon } from "@mui/icons-material";
 import { Box, IconButton, Tab, Tabs, Typography, useTheme } from "@mui/material";
 import { type ElementType, type MouseEvent, type ReactNode, useEffect, useRef } from "react";
+
+import { ArrowBackIcon, MoreVertIcon } from "@/client/src/components/icons/index.ts";
 
 interface DetailPageHeaderProps {
   title: string;
@@ -12,6 +13,10 @@ interface DetailPageHeaderProps {
   chips?: ReactNode;
   description: ReactNode;
   children?: ReactNode;
+}
+
+interface SectionContentProps {
+  children: ReactNode;
 }
 
 interface SectionTabsProps<K extends string> {
@@ -54,7 +59,7 @@ export function DetailPageHeader({
       }}
     >
       <IconButton onClick={onBack} size="large" aria-label="Back" sx={{ ...cornerButtonSx, left: 0 }}>
-        <ArrowBack />
+        <ArrowBackIcon />
       </IconButton>
       {onMenuOpen && (
         <IconButton onClick={onMenuOpen} size="large" aria-label="More actions" sx={{ ...cornerButtonSx, right: 0 }}>
@@ -81,7 +86,7 @@ export function DetailPageHeader({
 }
 
 /** A detail page tab's content: the page's centered column, up to 1200px. */
-export function SectionContent({ children }: { children: ReactNode }) {
+export function SectionContent({ children }: SectionContentProps) {
   return <Box sx={{ width: "100%", maxWidth: 1200, margin: "0 auto" }}>{children}</Box>;
 }
 

@@ -1,5 +1,6 @@
-import { Casino as CasinoIcon } from "@mui/icons-material";
 import { Box, Button, Chip, IconButton, Stack, TextField, Typography } from "@mui/material";
+
+import { CasinoIcon } from "@/client/src/components/icons/index.ts";
 
 import type { AddHpStepProps } from "./levelUpFactory.ts";
 

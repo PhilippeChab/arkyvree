@@ -81,9 +81,8 @@ async function getRulesetStakeholders(db: Db, rulesetId: string): Promise<string
 
   const userIds = new Set<string>();
   if (ruleset?.userId) userIds.add(ruleset.userId);
-  for (const c of contributors) {
-    if (c.userId) userIds.add(c.userId);
-  }
+  for (const c of contributors) if (c.userId) userIds.add(c.userId);
+
   return Array.from(userIds);
 }
 

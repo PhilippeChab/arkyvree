@@ -2,7 +2,7 @@ import { Chip } from "@mui/material";
 import { parseResponse } from "hono/client";
 
 import { useFormSync, useFormWith, useRulesetSaves } from "@/client/src/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
   EMPTY_SPELL,
   spellAptitude,
@@ -51,7 +51,7 @@ export function SpellEditor({
     sync,
     entityId,
     onSaved,
-    listKey: queryKeys.rulesets.section(rulesetId, "powers"),
+    listKey: QUERY_KEYS.rulesets.section(rulesetId, "powers"),
     label: "Spell",
     saveFn: (data: SpellFormData) =>
       parseResponse(

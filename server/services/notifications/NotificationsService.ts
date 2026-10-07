@@ -45,9 +45,8 @@ class NotificationsService {
         id: notificationId,
         recipientId: session.userId,
       });
-      if (result.length === 0) {
-        throw new NotFoundError("Notification not found");
-      }
+      if (result.length === 0) throw new NotFoundError("Notification not found");
+
       return result[0];
     });
   }

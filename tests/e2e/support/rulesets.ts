@@ -1,8 +1,8 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 import { parseResponse } from "hono/client";
 
-import { apiOf } from "@/tests/e2e/support/api.ts";
-import { apiResponse } from "@/tests/e2e/support/page.ts";
+import { apiOf } from "./api.ts";
+import { apiResponse } from "./page.ts";
 
 /** The core rules' id. */
 export async function coreRulesetId(page: Page) {

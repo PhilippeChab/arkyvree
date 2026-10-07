@@ -9,7 +9,7 @@ import { GroupedSkillRows, SkillRow } from "./GroupedSkillRows.tsx";
 import type { Dnd35SkillsSectionProps } from "./types.ts";
 
 /** The narrow number columns' headers. */
-const columnHeaderSx = { fontWeight: 600, fontSize: { xs: "0.7rem", sm: "0.8125rem" } };
+const COLUMN_HEADER_SX = { fontWeight: 600, fontSize: { xs: "0.7rem", sm: "0.8125rem" } };
 
 export function SkillsSection({ skills }: Dnd35SkillsSectionProps) {
   const sortedSkills = useMemo(() => Object.values(skills).sort((a, b) => a.name.localeCompare(b.name)), [skills]);
@@ -36,19 +36,19 @@ export function SkillsSection({ skills }: Dnd35SkillsSectionProps) {
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 600 }}>Skill</TableCell>
-                  <TableCell align="center" sx={columnHeaderSx}>
+                  <TableCell align="center" sx={COLUMN_HEADER_SX}>
                     Rank
                   </TableCell>
-                  <TableCell align="center" sx={columnHeaderSx}>
+                  <TableCell align="center" sx={COLUMN_HEADER_SX}>
                     Abil
                   </TableCell>
-                  <TableCell align="center" sx={columnHeaderSx}>
+                  <TableCell align="center" sx={COLUMN_HEADER_SX}>
                     Misc
                   </TableCell>
-                  <TableCell align="center" sx={columnHeaderSx}>
+                  <TableCell align="center" sx={COLUMN_HEADER_SX}>
                     Wt
                   </TableCell>
-                  <TableCell align="center" sx={columnHeaderSx}>
+                  <TableCell align="center" sx={COLUMN_HEADER_SX}>
                     Total
                   </TableCell>
                 </TableRow>

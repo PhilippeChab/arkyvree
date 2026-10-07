@@ -4,8 +4,6 @@ import type { Db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { Feats, FeatsAptitudes, Modifiers, Properties } from "@/server/repositories/index.ts";
 import { Dnd35LevelsRules } from "@/server/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
-import { normalizeSkillFlags } from "@/server/rulesets/dnd3.5/skills/skillFlags.ts";
-import SkillsPaths from "@/server/rulesets/dnd3.5/skills/SkillsPaths.ts";
 import type { PropertyRecord } from "@/server/rulesets/dnd3.5/types.ts";
 import type { SkillFlags, SkillsEffects } from "@/server/rulesets/engine/module/index.ts";
 import {
@@ -13,6 +11,9 @@ import {
   SKILL_IMPACTED_BY_WEIGHT,
   SKILL_USABLE_WITHOUT_TRAINING,
 } from "@/shared/dnd3.5/properties/index.ts";
+
+import { normalizeSkillFlags } from "./skillFlags.ts";
+import SkillsPaths from "./SkillsPaths.ts";
 
 export class Dnd35SkillsEffects implements SkillsEffects {
   private buildProperties(skillId: string, flags: SkillFlags): PropertyRecord[] {
@@ -37,9 +38,8 @@ export class Dnd35SkillsEffects implements SkillsEffects {
     const { ruleset, rulesetData } = scope;
     const feat = rulesetData.feats.find((f) => f.name === `Skill Focus: ${skillName}`);
     if (!feat) return;
-    if (await hasCharacterPicks(tx, "feats", feat.id, ruleset.id)) {
+    if (await hasCharacterPicks(tx, "feats", feat.id, ruleset.id))
       throw new ConflictError("Cannot remove a Skill Focus feat in use by a character in this ruleset");
-    }
 
     // Deleting the local COW copy leaves a tombstone snapshot: the obsolete
     // inherited feat disappears from this fork while its ancestor stays intact.
@@ -86,9 +86,8 @@ export class Dnd35SkillsEffects implements SkillsEffects {
     });
 
     const records = this.buildProperties(skillId, flags);
-    if (records.length > 0) {
-      await Properties.createMany(tx, records);
-    }
+    if (records.length > 0) await Properties.createMany(tx, records);
+
     return normalizeSkillFlags(flags);
   }
 }

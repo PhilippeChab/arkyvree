@@ -2,9 +2,10 @@
 
 import type * as cheerio from "cheerio";
 
-import { capitalizeTitle } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/capitalizeTitle.ts";
-import { findSectionHeader } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/sections.ts";
 import { findSectionElements, getTagName } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
+
+import { capitalizeTitle } from "./capitalizeTitle.ts";
+import { findSectionHeader } from "./sections.ts";
 
 /** Known Knowledge subspecialties for expansion */
 const KNOWLEDGE_SUBSPECIALTIES: Record<string, string> = {

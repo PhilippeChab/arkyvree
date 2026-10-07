@@ -14,9 +14,9 @@ export async function linkGoogleAccountTo(session: Session, googleAccountId: str
       providerAccountId: googleAccountId,
     });
     if (existing) {
-      if (existing.userId === session.userId) {
+      if (existing.userId === session.userId)
         throw new BadRequestError("This Google account is already linked to your account");
-      }
+
       throw new BadRequestError("This Google account is already linked to another user");
     }
 

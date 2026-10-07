@@ -14,9 +14,7 @@ class CharacterSharingService {
   async generateSharedPdf(shareToken: string) {
     const characterRecord = await Characters.findOne(db, { shareToken });
 
-    if (!characterRecord) {
-      throw new NotFoundError("Character not found");
-    }
+    if (!characterRecord) throw new NotFoundError("Character not found");
 
     const rulesetModule = await RulesetFactory.fromRulesetId(characterRecord.rulesetId);
     const { detailedCharacter, CharacterSheetComponent } =
@@ -39,9 +37,7 @@ class CharacterSharingService {
         userId: session.userId,
       });
 
-      if (!characterRecord || characterRecord.kind !== "pc") {
-        throw new NotFoundError("Character not found");
-      }
+      if (!characterRecord || characterRecord.kind !== "pc") throw new NotFoundError("Character not found");
 
       const shareToken = crypto.randomUUID();
       const [updated] = await Characters.update(tx, { shareToken }, { id: characterId });
@@ -60,9 +56,7 @@ class CharacterSharingService {
   async getSharedCharacter(shareToken: string) {
     const characterRecord = await Characters.findOne(db, { shareToken });
 
-    if (!characterRecord) {
-      throw new NotFoundError("Character not found");
-    }
+    if (!characterRecord) throw new NotFoundError("Character not found");
 
     const rulesetModule = await RulesetFactory.fromRulesetId(characterRecord.rulesetId);
     const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
@@ -86,9 +80,7 @@ class CharacterSharingService {
         userId: session.userId,
       });
 
-      if (!characterRecord || characterRecord.kind !== "pc") {
-        throw new NotFoundError("Character not found");
-      }
+      if (!characterRecord || characterRecord.kind !== "pc") throw new NotFoundError("Character not found");
 
       const [updated] = await Characters.update(tx, { shareToken: null }, { id: characterId });
 

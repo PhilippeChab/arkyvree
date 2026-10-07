@@ -1,9 +1,10 @@
-import type { Overrides, ScrapedMeta } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
 import type {
   ModifierSeed,
   Property,
   RequirementEntry,
 } from "@/database/packages/dnd35/content/customization/types.ts";
+
+import type { Overrides, ScrapedMeta } from "./reference.ts";
 
 /** A feat's fields a mapping derives and an override sets. */
 type FeatFields = {

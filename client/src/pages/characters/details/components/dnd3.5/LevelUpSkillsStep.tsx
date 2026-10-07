@@ -1,4 +1,3 @@
-import { Casino as CasinoIcon } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -18,6 +17,7 @@ import { useController } from "react-hook-form";
 
 import { GroupedSkillRows, SkillRow } from "@/client/src/components/characters/sections/dnd3.5/index.ts";
 import { DiceSpinner, LoadError } from "@/client/src/components/common/index.ts";
+import { CasinoIcon } from "@/client/src/components/icons/index.ts";
 import { useLatest } from "@/client/src/hooks/index.ts";
 import { computeMaxPointsForSkill, distributeSkillPoints } from "@/shared/dnd3.5/skills.ts";
 
@@ -36,7 +36,7 @@ interface SkillAllocationRowProps {
 }
 
 /** The narrow number columns' headers. */
-const columnHeaderSx = { whiteSpace: "nowrap", fontSize: { xs: "0.7rem", sm: "0.8125rem" } };
+const COLUMN_HEADER_SX = { whiteSpace: "nowrap", fontSize: { xs: "0.7rem", sm: "0.8125rem" } };
 
 const SkillAllocationRow = memo(function SkillAllocationRow({
   skill,
@@ -198,7 +198,7 @@ export function LevelUpSkillsStep({ wizard }: LevelUpSkillsStepProps) {
 
   const skillPointsToSpend = skillData?.skillPointsToSpend ?? 0;
 
-  const onAllocate = useCallback(
+  const handleAllocate = useCallback(
     (skillId: string, rawPoints: number) => {
       if (!skillPointsToSpend) return;
       const allocs = latestAllocations.current;
@@ -261,11 +261,11 @@ export function LevelUpSkillsStep({ wizard }: LevelUpSkillsStepProps) {
           <TableHead>
             <TableRow>
               <TableCell>Skill</TableCell>
-              <TableCell sx={columnHeaderSx}>Add</TableCell>
-              <TableCell sx={columnHeaderSx}>Used</TableCell>
-              <TableCell sx={columnHeaderSx}>Rank</TableCell>
-              <TableCell sx={columnHeaderSx}>Total</TableCell>
-              <TableCell sx={columnHeaderSx}>Class</TableCell>
+              <TableCell sx={COLUMN_HEADER_SX}>Add</TableCell>
+              <TableCell sx={COLUMN_HEADER_SX}>Used</TableCell>
+              <TableCell sx={COLUMN_HEADER_SX}>Rank</TableCell>
+              <TableCell sx={COLUMN_HEADER_SX}>Total</TableCell>
+              <TableCell sx={COLUMN_HEADER_SX}>Class</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -278,7 +278,7 @@ export function LevelUpSkillsStep({ wizard }: LevelUpSkillsStepProps) {
                   skill={skill}
                   totalCharacterLevel={skillData.totalCharacterLevel}
                   pointsAllocated={skillPointAllocations[skill.id] || 0}
-                  onAllocate={onAllocate}
+                  onAllocate={handleAllocate}
                   indented={indented}
                   hidden={hidden}
                   perLevelClassSkillIds={perLevelClassSkillIds}

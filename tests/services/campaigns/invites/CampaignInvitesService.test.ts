@@ -73,9 +73,8 @@ describe("CampaignInvitesService", () => {
     test("refuses a second invite for the same user, to the same slot or another one", async () => {
       const { gmSession, invitee, campaign, slot } = await setup();
       const otherSlot = await createEmptySlot(campaign.id);
-      for (const target of [slot, otherSlot]) {
+      for (const target of [slot, otherSlot])
         await expect(inviteToSlot(gmSession, target, invitee.user.emailAddress)).rejects.toThrow(ConflictError);
-      }
     });
 
     test("refuses to invite someone who already plays in the campaign", async () => {

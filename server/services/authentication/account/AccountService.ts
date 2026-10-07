@@ -56,13 +56,10 @@ class AccountService {
     if (!user) throw new InternalError("User not found");
 
     if (user.passwordDigest) {
-      if (!password) {
-        throw new BadRequestError("Password is required");
-      }
+      if (!password) throw new BadRequestError("Password is required");
+
       const { verified } = await verifyPassword(password, user.passwordDigest);
-      if (!verified) {
-        throw new UnauthorizedError("Incorrect password");
-      }
+      if (!verified) throw new UnauthorizedError("Incorrect password");
     }
 
     return await withTransaction(async (tx) => {
@@ -101,16 +98,12 @@ class AccountService {
       const user = await Users.findOne(tx, { id: session.userId });
       if (!user) throw new InternalError("User not found");
 
-      if (!user.pendingEmailAddress) {
-        throw new BadRequestError("No pending email change");
-      }
+      if (!user.pendingEmailAddress) throw new BadRequestError("No pending email change");
 
       const existing = await EmailVerifications.findOne(tx, { userId: user.id });
       if (existing) {
         const elapsed = Date.now() - new Date(existing.createdAt).getTime();
-        if (elapsed < 5 * 60 * 1000) {
-          throw new BadRequestError("Please wait before requesting a new code");
-        }
+        if (elapsed < 5 * 60 * 1000) throw new BadRequestError("Please wait before requesting a new code");
       }
 
       await EmailVerifications.archive(tx, { userId: user.id });
@@ -137,9 +130,7 @@ class AccountService {
       const user = await Users.findOne(tx, { id: session.userId });
       if (!user) throw new InternalError("User not found");
 
-      if (user.passwordDigest) {
-        throw new BadRequestError("Password already set. Use change password instead.");
-      }
+      if (user.passwordDigest) throw new BadRequestError("Password already set. Use change password instead.");
 
       const newHash = await hashPassword(newPassword);
       await Users.update(tx, { passwordDigest: newHash }, { id: session.userId });
@@ -160,20 +151,14 @@ class AccountService {
       const user = await Users.findOne(tx, { id: session.userId });
       if (!user) throw new InternalError("User not found");
 
-      if (!user.passwordDigest) {
-        throw new BadRequestError("Set a password first");
-      }
+      if (!user.passwordDigest) throw new BadRequestError("Set a password first");
 
       const { verified } = await verifyPassword(currentPassword, user.passwordDigest);
-      if (!verified) {
-        throw new UnauthorizedError("Current password is incorrect");
-      }
+      if (!verified) throw new UnauthorizedError("Current password is incorrect");
 
       // Ensure new password is different
       const { verified: sameAsOld } = await verifyPassword(newPassword, user.passwordDigest);
-      if (sameAsOld) {
-        throw new BadRequestError("New password must be different from current password");
-      }
+      if (sameAsOld) throw new BadRequestError("New password must be different from current password");
 
       const newHash = await hashPassword(newPassword);
       const rows = await Users.update(tx, { passwordDigest: newHash }, { id: session.userId });
@@ -202,9 +187,7 @@ class AccountService {
       // Check if email is being changed and is already taken
       if (newEmailAddress) {
         const existingUser = await Users.findOne(tx, { emailAddress: newEmailAddress });
-        if (existingUser) {
-          throw new BadRequestError("Email address already in use");
-        }
+        if (existingUser) throw new BadRequestError("Email address already in use");
       }
 
       // Check if username is being changed and is already taken
@@ -212,15 +195,12 @@ class AccountService {
         const existingUser = await Users.findOne(tx, {
           username,
         });
-        if (existingUser) {
-          throw new BadRequestError("Username already in use");
-        }
+        if (existingUser) throw new BadRequestError("Username already in use");
       }
 
       const updateData: Partial<InferInsertModel<typeof usersInAccount>> = {};
-      if (newEmailAddress) {
-        updateData.pendingEmailAddress = newEmailAddress;
-      }
+      if (newEmailAddress) updateData.pendingEmailAddress = newEmailAddress;
+
       if (username !== undefined) updateData.username = username;
 
       const rows = await Users.update(tx, updateData, { id: session.userId });
@@ -265,26 +245,18 @@ class AccountService {
       const user = await Users.findOne(tx, { id: session.userId });
       if (!user) throw new InternalError("User not found");
 
-      if (!user.pendingEmailAddress) {
-        throw new BadRequestError("No pending email change");
-      }
+      if (!user.pendingEmailAddress) throw new BadRequestError("No pending email change");
 
       const verification = await EmailVerifications.findOne(tx, { userId: user.id });
       if (!verification) throw new UnauthorizedError("Invalid code");
 
-      if (!compareInConstantTime(verification.code, code)) {
-        throw new UnauthorizedError("Invalid code");
-      }
+      if (!compareInConstantTime(verification.code, code)) throw new UnauthorizedError("Invalid code");
 
-      if (new Date(verification.expiresAt) < new Date()) {
-        throw new UnauthorizedError("Verification code expired");
-      }
+      if (new Date(verification.expiresAt) < new Date()) throw new UnauthorizedError("Verification code expired");
 
       // Re-check uniqueness — someone else may have claimed this email
       const existingUser = await Users.findOne(tx, { emailAddress: user.pendingEmailAddress });
-      if (existingUser) {
-        throw new BadRequestError("Email address already in use");
-      }
+      if (existingUser) throw new BadRequestError("Email address already in use");
 
       const rows = await Users.update(
         tx,

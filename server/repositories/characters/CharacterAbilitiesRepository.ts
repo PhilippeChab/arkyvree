@@ -1,5 +1,4 @@
-import { and, eq, isNull } from "drizzle-orm";
-import type { InferInsertModel } from "drizzle-orm";
+import { and, eq, type InferInsertModel, isNull } from "drizzle-orm";
 
 import { characterAbilitiesInCharacter } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";

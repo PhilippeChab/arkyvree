@@ -1,8 +1,12 @@
 import { getTableName } from "drizzle-orm";
 
 import { powersInRules } from "@/drizzle/schema.ts";
-import { findScopedEntity, RulesetCache, type RulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import {
+  findScopedEntity,
+  RulesetCache,
+  type RulesetScope,
+  withRulesetScope,
+} from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { type Db, db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
@@ -51,9 +55,7 @@ class PowersService {
   /** Throws when one of the aptitudes is already used for feats: a spell can't be linked to it. */
   private async checkSpellAptitudes(tx: Db, aptitudeIds: string[]) {
     const featAptitudes = await FeatsAptitudes.findAptitudeIds(tx, { aptitudeIds });
-    if (featAptitudes.length > 0) {
-      throw new ConflictError("Cannot link spell to aptitude(s) already used for feats");
-    }
+    if (featAptitudes.length > 0) throw new ConflictError("Cannot link spell to aptitude(s) already used for feats");
   }
 
   /**
@@ -85,9 +87,8 @@ class PowersService {
     if (newGroupingValue) {
       await effects.powers.generateProperties(tx, powerId, body);
 
-      if (newGroupingValue !== oldGroupingValue) {
+      if (newGroupingValue !== oldGroupingValue)
         await effects.powers.generateGroupingFeats(tx, scope, newGroupingValue);
-      }
     }
   }
 
@@ -120,9 +121,8 @@ class PowersService {
         const edit = new RulesetEdit(ruleset, rulesetData.cow);
         const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "powers", body.name);
 
-        if (!body.aptitudes || body.aptitudes.length === 0) {
+        if (!body.aptitudes || body.aptitudes.length === 0)
           throw new BadRequestError("At least one aptitude must be selected for the power");
-        }
 
         await this.checkSpellAptitudes(
           tx,
@@ -140,9 +140,7 @@ class PowersService {
         });
         const power = rows[0];
 
-        if (tombstoneAncestorId) {
-          await edit.repointTombstone(tx, "powers", tombstoneAncestorId, power.id);
-        }
+        if (tombstoneAncestorId) await edit.repointTombstone(tx, "powers", tombstoneAncestorId, power.id);
 
         for (const aptitude of body.aptitudes) {
           await PowersAptitudes.create(tx, {
@@ -279,17 +277,14 @@ class PowersService {
           },
           { id: targetId, expectedUpdatedAt },
         );
-        if (expectedUpdatedAt && rows.length === 0) {
-          throw new ConflictError(STALE_ENTITY_MESSAGE);
-        }
+        if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
+
         const updatedPower = rows[0];
 
-        if (body.aptitudes !== undefined) {
-          await this.replaceAptitudes(tx, targetId, body.aptitudes);
-        }
-        if (SPELL_FIELDS.some((field) => body[field] !== undefined)) {
+        if (body.aptitudes !== undefined) await this.replaceAptitudes(tx, targetId, body.aptitudes);
+
+        if (SPELL_FIELDS.some((field) => body[field] !== undefined))
           await this.regenerateSpellProperties(tx, rulesetModule, { ruleset, rulesetData }, targetId, body);
-        }
 
         await createActivityWithNotifications(tx, {
           userId: session.userId,

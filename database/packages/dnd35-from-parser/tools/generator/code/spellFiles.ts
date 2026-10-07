@@ -1,7 +1,8 @@
 /** Generates a spell reference's PowerSeed[] files: one per spell level (cantrips.ts, level1.ts, …, level9.ts). */
 
-import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
 import type { SpellSeed } from "@/database/packages/dnd35/content/spells/types.ts";
+
+import { CodeFile } from "./CodeFile.ts";
 
 /** A spell reference's files, by file name: a list of its spells per spell level, sorted by level. */
 export function generateSpellFiles(spells: SpellSeed[]): Map<string, string> {

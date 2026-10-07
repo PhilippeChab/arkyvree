@@ -40,9 +40,8 @@ describe("COW inventory item details", () => {
     test(`${view} displays updated fork details for an item added before the override`, async () => {
       const { session, ruleset, item, character } = await setup();
       const readInventory = async () => {
-        if (view === "editable inventory") {
-          return CharacterInventoryService.getInventory(session, character.id);
-        }
+        if (view === "editable inventory") return CharacterInventoryService.getInventory(session, character.id);
+
         const detailedCharacter = new DetailedCharacter(character);
         await detailedCharacter.build();
         return detailedCharacter.components.inventory.getFlatInventory();

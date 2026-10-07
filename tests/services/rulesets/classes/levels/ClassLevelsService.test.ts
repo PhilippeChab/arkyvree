@@ -327,9 +327,9 @@ describe("ClassLevelsService", () => {
       await ClassLevelsService.deleteClassLevel(session, ruleset.id, klass.id, level.id);
 
       expect(await KlassLevels.findOne(db, { id: level.id })).toBeUndefined();
-      for (const table of [klassLevelFeatsInRules, klassLevelPowersInRules, klassLevelSavesInRules]) {
+      for (const table of [klassLevelFeatsInRules, klassLevelPowersInRules, klassLevelSavesInRules])
         expect(await db.select().from(table).where(eq(table.klassLevelId, level.id))).toEqual([]);
-      }
+
       expect(await Modifiers.findMany(db, { sourceIds: [level.id], sourceType: "klass_levels" })).toEqual([]);
       expect(await Requirements.findMany(db, { entityIds: [level.id], entityType: "klass_levels" })).toEqual([]);
       expect(await Properties.findMany(db, { entityIds: [level.id], entityType: "klass_levels" })).toEqual([]);

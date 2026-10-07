@@ -13,8 +13,7 @@ describe("URL segments", () => {
   });
 
   test("read each segment back as its entity type", () => {
-    for (const entityType of ["klass_levels", "klasses", "feats", "modifiers"]) {
+    for (const entityType of ["klass_levels", "klasses", "feats", "modifiers"])
       expect(getEntityTypeOfSegment(getUrlSegment(entityType))).toBe(entityType);
-    }
   });
 });

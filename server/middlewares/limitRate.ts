@@ -16,15 +16,11 @@ function getClientIp(c: { req: { header: (name: string) => string | undefined } 
 
 /** The requester's email address, for the routes that send one an email; other requests aren't counted together. */
 async function emailKey(c: Parameters<KeyGenerator>[0]): Promise<string> {
-  if (c.req.method !== "POST" && c.req.method !== "PUT") {
-    return `skip:${crypto.randomUUID()}`;
-  }
+  if (c.req.method !== "POST" && c.req.method !== "PUT") return `skip:${crypto.randomUUID()}`;
 
   try {
     const body = await c.req.json();
-    if (body && typeof body.emailAddress === "string") {
-      return `email:${sanitizeEmail(body.emailAddress)}`;
-    }
+    if (body && typeof body.emailAddress === "string") return `email:${sanitizeEmail(body.emailAddress)}`;
   } catch {
     // no JSON body
   }

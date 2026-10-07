@@ -1,13 +1,13 @@
 import { websocket } from "hono/bun";
 
-import "@/server/instrument-web.ts";
-import "@/server/log.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { waitForDatabase } from "@/server/database/index.ts";
-import { isProduction, readEnv, REQUIRED_IN_PRODUCTION } from "@/server/environment.ts";
-import { application } from "@/server/routers/application.ts";
-import Shutdown from "@/server/Shutdown.ts";
-import { BroadcastListener } from "@/server/websockets/index.ts";
+import "./instrument-web.ts";
+import "./log.ts";
+import { RulesetCache } from "./cache/rulesetCache/index.ts";
+import { waitForDatabase } from "./database/index.ts";
+import { isProduction, readEnv, REQUIRED_IN_PRODUCTION } from "./environment.ts";
+import { application } from "./routers/application.ts";
+import Shutdown from "./Shutdown.ts";
+import { BroadcastListener } from "./websockets/index.ts";
 
 /** Stops a production start that lacks a variable production needs. */
 function checkProductionEnvironment() {

@@ -1,25 +1,25 @@
 import { Box, Link as MuiLink, Typography } from "@mui/material";
 import type { InferRequestType } from "hono/client";
 import { useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { AuthPage, AuthSubmitButton, GoogleSignInSection } from "@/client/src/components/auth/index.ts";
 import { EmailField, PasswordField } from "@/client/src/components/common/index.ts";
-import { useAuthRequests, useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
+import { useAuthRequests, useFormWith, usePageTitle, useSearchParam } from "@/client/src/hooks/index.ts";
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 import { safeRedirectPath } from "@/client/src/lib/safeRedirect.ts";
-import { confirmPasswordRules, emailRules, newPasswordRules } from "@/client/src/lib/validation.ts";
+import { confirmPasswordRules, EMAIL_RULES, NEW_PASSWORD_RULES } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
 type SignUpFormData = InferRequestType<(typeof rpc.auth)["sign-up"]["$post"]>["json"];
 
-export default function SignUp() {
+export default function SignUpPage() {
   usePageTitle("Sign Up");
   const auth = useAuthRequests();
   const [error, setError] = useState<string | null>(null);
-  const [searchParams] = useSearchParams();
+  const { value: redirectParam } = useSearchParam("redirect");
   const navigate = useNavigate();
-  const redirect = safeRedirectPath(searchParams.get("redirect"));
+  const redirect = safeRedirectPath(redirectParam || null);
 
   const { control, handleSubmit } = useFormWith<SignUpFormData>({
     emailAddress: "",
@@ -27,7 +27,7 @@ export default function SignUp() {
     passwordConfirmation: "",
   });
 
-  const onSubmit = (data: SignUpFormData) => {
+  const handleSignUp = (data: SignUpFormData) => {
     setError(null);
     auth.signUp.mutate(data, {
       onSuccess: () => navigate("/verify-email", { state: { redirect } }),
@@ -37,13 +37,13 @@ export default function SignUp() {
 
   return (
     <AuthPage error={error} title="Sign Up">
-      <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <EmailField control={control} name="emailAddress" rules={emailRules} />
+      <form onSubmit={handleSubmit(handleSignUp)} noValidate>
+        <EmailField control={control} name="emailAddress" rules={EMAIL_RULES} />
 
         <PasswordField
           control={control}
           name="password"
-          rules={newPasswordRules}
+          rules={NEW_PASSWORD_RULES}
           label="Password"
           autoComplete="new-password"
         />

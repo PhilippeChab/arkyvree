@@ -2,7 +2,7 @@ import { Chip } from "@mui/material";
 import { parseResponse } from "hono/client";
 
 import { useFormSync, useFormWith } from "@/client/src/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { EMPTY_RACE, type RaceFormData, RaceFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
 import type { Race } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
@@ -36,7 +36,7 @@ export function RaceEditor({
     sync,
     entityId,
     onSaved,
-    listKey: queryKeys.rulesets.section(rulesetId, "races"),
+    listKey: QUERY_KEYS.rulesets.section(rulesetId, "races"),
     label: "Race",
     saveFn: (data: RaceFormData) =>
       parseResponse(

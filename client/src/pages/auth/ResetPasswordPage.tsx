@@ -12,7 +12,7 @@ import {
 import { PasswordField } from "@/client/src/components/common/index.ts";
 import { useAuthRequests, useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
-import { confirmPasswordRules, newPasswordRules } from "@/client/src/lib/validation.ts";
+import { confirmPasswordRules, NEW_PASSWORD_RULES } from "@/client/src/lib/validation.ts";
 import { EMPTY_VERIFICATION_CODE } from "@/client/src/lib/verificationCode.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
@@ -22,7 +22,7 @@ interface ResetPasswordFormData {
   newPasswordConfirmation: string;
 }
 
-export default function ResetPassword() {
+export default function ResetPasswordPage() {
   usePageTitle("Reset Password");
   const pendingPasswordResetEmail = useAuthStore((s) => s.pendingPasswordResetEmail);
   const navigate = useNavigate();
@@ -39,11 +39,9 @@ export default function ResetPassword() {
     auth.forgotPassword.mutate(pendingPasswordResetEmail ?? "", callbacks),
   );
 
-  if (!pendingPasswordResetEmail) {
-    return <Navigate to="/forgot-password" replace />;
-  }
+  if (!pendingPasswordResetEmail) return <Navigate to="/forgot-password" replace />;
 
-  const onSubmit = (data: ResetPasswordFormData) => {
+  const handleReset = (data: ResetPasswordFormData) => {
     setError(null);
     auth.resetPassword.mutate(
       {
@@ -72,7 +70,7 @@ export default function ResetPassword() {
         </>
       }
     >
-      <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
+      <form onSubmit={form.handleSubmit(handleReset)} noValidate>
         <Controller
           control={form.control}
           name="digits"
@@ -82,7 +80,7 @@ export default function ResetPassword() {
         <PasswordField
           control={form.control}
           name="newPassword"
-          rules={newPasswordRules}
+          rules={NEW_PASSWORD_RULES}
           label="New Password"
           autoComplete="new-password"
         />

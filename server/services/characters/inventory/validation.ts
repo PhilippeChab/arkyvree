@@ -41,15 +41,14 @@ async function validateEquipmentSlot(
   const conflict = findSlotConflict(location, weaponSet, equippedItems);
   if (conflict) throw new BadRequestError(SLOT_CONFLICT_MESSAGES[conflict.reason](location));
 
-  if (item.type === "Weapon" && !isHandLocation(location)) {
+  if (item.type === "Weapon" && !isHandLocation(location))
     throw new BadRequestError("Weapons can only be equipped in hand slots");
-  }
-  if (item.type === "Armor" && location !== "Torso") {
+
+  if (item.type === "Armor" && location !== "Torso")
     throw new BadRequestError("Body armor can only be equipped in the Torso slot");
-  }
-  if (item.type === "Shield" && location !== "Off Hand") {
+
+  if (item.type === "Shield" && location !== "Off Hand")
     throw new BadRequestError("Shields can only be equipped in the Off Hand slot");
-  }
 
   // A two-handed weapon needs both hands
   if (isHandLocation(location)) {
@@ -80,9 +79,8 @@ async function validateItemRequirements(
 
   // Two entities' requirements, each its own group: their levels each start at "1"
   const issues = detailedCharacter.getUnmetRequirementIssues([templateRequirements, ownRequirements]);
-  if (issues.length > 0) {
+  if (issues.length > 0)
     throw new BadRequestError("Character does not meet the requirements to equip this item", { issues });
-  }
 }
 
 /**
@@ -122,12 +120,11 @@ async function validateWeaponInOneHand(
 
 /** An entry's charges: both set or both null, and no more remaining than total. */
 export function validateCharges(totalCharges: number | null, remainingCharges: number | null) {
-  if ((totalCharges === null) !== (remainingCharges === null)) {
+  if ((totalCharges === null) !== (remainingCharges === null))
     throw new BadRequestError("Total charges and remaining charges must both be set or both be null");
-  }
-  if (totalCharges !== null && remainingCharges !== null && remainingCharges > totalCharges) {
+
+  if (totalCharges !== null && remainingCharges !== null && remainingCharges > totalCharges)
     throw new BadRequestError("Remaining charges cannot exceed total charges");
-  }
 }
 
 /**
@@ -144,9 +141,9 @@ export async function validateEquipping(
   scope: RulesetScope,
 ) {
   const { ruleset, rulesetData } = scope;
-  if (isHandLocation(location) && weaponSet === null) {
+  if (isHandLocation(location) && weaponSet === null)
     throw new BadRequestError("A weapon set is required when equipping to a hand slot");
-  }
+
   const { item } = entry;
   await validateEquipmentSlot(tx, characterRecord.id, entry, location, weaponSet, ruleset, rulesetData);
   if (force) return;

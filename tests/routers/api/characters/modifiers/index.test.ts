@@ -63,9 +63,9 @@ describe("character modifiers", () => {
   test("refuses a value that isn't of its target's type, and takes a template", async () => {
     const characterId = (await postCharacter()).id;
     const created = await expectOk(modifiers.$post({ param: { characterId }, json: strengthBonus }));
-    for (const value of ["abc", "true"]) {
+    for (const value of ["abc", "true"])
       await expectStatus(modifiers.$post({ param: { characterId }, json: { ...strengthBonus, value } }), 400);
-    }
+
     const param = { characterId, modifierId: created.id };
     await expectStatus(modifier.$put({ param, json: { ...strengthBonus, value: "two" } }), 400);
     const halfLevel = "{{ floor([identity.meta.level] / 2) }}";

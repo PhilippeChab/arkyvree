@@ -1,7 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import {
@@ -134,11 +133,9 @@ for (const entityType of ["feats", "powers"] as const) {
         operator: "greater_than_or_equal",
       });
       const [aptitude] = await Aptitudes.create(db, { name: "Sibling aptitude fixture", rulesetId: loserRulesetId });
-      if (entityType === "feats") {
-        await FeatsAptitudes.create(db, { featId: loser.id, aptitudeId: aptitude.id });
-      } else {
-        await PowersAptitudes.create(db, { powerId: loser.id, aptitudeId: aptitude.id });
-      }
+      if (entityType === "feats") await FeatsAptitudes.create(db, { featId: loser.id, aptitudeId: aptitude.id });
+      else await PowersAptitudes.create(db, { powerId: loser.id, aptitudeId: aptitude.id });
+
       RulesetCache.invalidateAll();
       const local = await PropertiesService.createProperty(session, host.id, entityType, winnerId, {
         type: "LOCAL",
@@ -167,18 +164,14 @@ for (const entityType of ["feats", "powers"] as const) {
         if (cold) RulesetCache.invalidateAll();
         const requirements = await RequirementsService.getRequirements(host.id, entityType, local.resolvedEntityId);
         expect(requirements.some((r) => r.target === requirement.target)).toBe(false);
-        if (entityType === "feats") {
+        if (entityType === "feats")
           expect((await FeatsService.getFeat(host.id, local.resolvedEntityId)).featsAptitudesInRules).toEqual([]);
-        } else {
-          expect((await PowersService.getPower(host.id, local.resolvedEntityId)).powersAptitudesInRules).toEqual([]);
-        }
+        else expect((await PowersService.getPower(host.id, local.resolvedEntityId)).powersAptitudesInRules).toEqual([]);
       }
       expect(await Requirements.findOne(db, { id: requirement.id })).toEqual(requirement);
-      if (entityType === "feats") {
-        await FeatsService.deleteFeat(session, host.id, local.resolvedEntityId);
-      } else {
-        await PowersService.deletePower(session, host.id, local.resolvedEntityId);
-      }
+      if (entityType === "feats") await FeatsService.deleteFeat(session, host.id, local.resolvedEntityId);
+      else await PowersService.deletePower(session, host.id, local.resolvedEntityId);
+
       RulesetCache.invalidateAll();
       await withRulesetScope(db, host.id, async ({ rulesetData }) => {
         const entities = entityType === "feats" ? rulesetData.featsById : rulesetData.powersById;

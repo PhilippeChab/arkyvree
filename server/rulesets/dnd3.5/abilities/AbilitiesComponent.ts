@@ -41,9 +41,7 @@ export default class AbilitiesComponent {
 
     for (const [abilityId, normalizedName] of this.abilityIdToName.entries()) {
       const ability = this.abilities[normalizedName];
-      if (ability) {
-        result[normalizedName] = { abilityId, ...ability };
-      }
+      if (ability) result[normalizedName] = { abilityId, ...ability };
     }
 
     return result;
@@ -90,9 +88,7 @@ export default class AbilitiesComponent {
     for (const level of levels) {
       if (level.abilityId) {
         const normalizedName = this.abilityIdToName.get(level.abilityId);
-        if (normalizedName && this.abilities[normalizedName]) {
-          this.abilities[normalizedName].level += 1;
-        }
+        if (normalizedName && this.abilities[normalizedName]) this.abilities[normalizedName].level += 1;
       }
     }
   }

@@ -16,7 +16,6 @@
  *   bun run parser:validate complete-warrior              # only a specific book
  */
 
-import { parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/cli/args.ts";
 import {
   filterReferenceFiles,
   listReferenceFiles,
@@ -25,6 +24,8 @@ import {
   findReferenceIssues,
   type Issue,
 } from "@/database/packages/dnd35-from-parser/tools/validate/referenceIssues.ts";
+
+import { parseCliArgs } from "./args.ts";
 
 function main() {
   const { bookFilter, typeFilter } = parseCliArgs();

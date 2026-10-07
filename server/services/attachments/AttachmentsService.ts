@@ -71,19 +71,15 @@ const TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 class AttachmentsService {
   private assertValidName(recordType: string, name: string): void {
     const { names } = this.getAttachableConfig(recordType);
-    if (!names.includes(name)) {
-      throw new BadRequestError(`Slot "${name}" is not allowed for ${recordType}`);
-    }
+    if (!names.includes(name)) throw new BadRequestError(`Slot "${name}" is not allowed for ${recordType}`);
   }
 
   private assertWithinPolicy(recordType: string, byteSize: number, contentType: string): void {
     const { policy } = this.getAttachableConfig(recordType);
-    if (byteSize > policy.maxBytes) {
-      throw new BadRequestError(`File exceeds maximum size of ${policy.maxBytes} bytes`);
-    }
-    if (!policy.contentTypes.includes(contentType)) {
+    if (byteSize > policy.maxBytes) throw new BadRequestError(`File exceeds maximum size of ${policy.maxBytes} bytes`);
+
+    if (!policy.contentTypes.includes(contentType))
       throw new BadRequestError(`Content type "${contentType}" is not allowed for ${recordType}`);
-    }
   }
 
   private buildKey(blobId: string, filename: string): string {
@@ -125,33 +121,29 @@ class AttachmentsService {
     const expected = createHmac("sha256", this.getSigningSecret()).update(data).digest("base64url");
     const sigBuf = Buffer.from(sig);
     const expectedBuf = Buffer.from(expected);
-    if (sigBuf.length !== expectedBuf.length || !timingSafeEqual(sigBuf, expectedBuf)) {
+    if (sigBuf.length !== expectedBuf.length || !timingSafeEqual(sigBuf, expectedBuf))
       throw new BadRequestError("Invalid signed id");
-    }
+
     let payload: SignedTokenPayload;
     try {
       payload = JSON.parse(Buffer.from(data, "base64url").toString());
     } catch {
       throw new BadRequestError("Invalid signed id");
     }
-    if (typeof payload.iat !== "number" || Date.now() - payload.iat > TOKEN_TTL_MS) {
+    if (typeof payload.iat !== "number" || Date.now() - payload.iat > TOKEN_TTL_MS)
       throw new BadRequestError("Signed id has expired");
-    }
+
     return payload;
   }
 
   private async assertCanAttach(session: Session, recordType: string, recordId: string): Promise<void> {
     const config = this.getAttachableConfig(recordType);
-    if (!(await config.isOwner(session, recordId))) {
-      throw new ForbiddenError("Not authorized to attach to this record");
-    }
+    if (!(await config.isOwner(session, recordId))) throw new ForbiddenError("Not authorized to attach to this record");
   }
 
   private async assertCanRead(session: Session, recordType: string, recordId: string): Promise<void> {
     const config = this.getAttachableConfig(recordType);
-    if (!(await config.isReader(session, recordId))) {
-      throw new ForbiddenError("Not authorized to view this attachment");
-    }
+    if (!(await config.isReader(session, recordId))) throw new ForbiddenError("Not authorized to view this attachment");
   }
 
   private async findOrphanedBlob(tx: Db, blobId: string): Promise<{ id: string; key: string } | null> {
@@ -190,9 +182,8 @@ class AttachmentsService {
 
     const stats = await ObjectStorage.get().objectStats(preBlob.key);
     if (!stats) throw new BadRequestError("Upload not found at expected key");
-    if (stats.size !== preBlob.byteSize) {
+    if (stats.size !== preBlob.byteSize)
       throw new BadRequestError(`Upload size ${stats.size} does not match declared byteSize ${preBlob.byteSize}`);
-    }
 
     const result = await withTransaction(async (tx: Db) => {
       // Lock the blob row so a concurrent sweep can't delete it between
@@ -208,9 +199,7 @@ class AttachmentsService {
         recordId: payload.recordId,
         name: payload.name,
       });
-      if (existing) {
-        await Attachments.delete(tx, { id: existing.id });
-      }
+      if (existing) await Attachments.delete(tx, { id: existing.id });
 
       let attachment;
       try {
@@ -222,9 +211,8 @@ class AttachmentsService {
         });
         attachment = rows[0];
       } catch (err) {
-        if (this.isUniqueViolation(err)) {
-          throw new ConflictError("Slot is already attached by a concurrent request");
-        }
+        if (this.isUniqueViolation(err)) throw new ConflictError("Slot is already attached by a concurrent request");
+
         throw err;
       }
       if (!attachment) throw new InternalError("Failed to create attachment");

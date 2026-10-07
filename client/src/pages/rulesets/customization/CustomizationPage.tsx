@@ -1,4 +1,3 @@
-import { Settings as ModifiersIcon, Label as PropertiesIcon, Rule as RequirementsIcon } from "@mui/icons-material";
 import { Box, Typography } from "@mui/material";
 import { type QueryKey, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
@@ -12,32 +11,16 @@ import {
   SectionTabs,
 } from "@/client/src/components/common/index.ts";
 import { TargetPathBreadcrumbs } from "@/client/src/components/customization/index.ts";
+import { ModifiersIcon, PropertiesIcon, RequirementsIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { usePageTitle, useRulesetFeats, useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
 import { type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { isStillOpen } from "@/client/src/lib/stillOpen.ts";
 import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
-import {
-  ClassLevelEditor,
-  type EditorProps,
-  FeatEditor,
-  ItemEditor,
-  RaceEditor,
-  SpellEditor,
-} from "@/client/src/pages/rulesets/customization/editors/index.ts";
-import {
-  type CustomizationEntity,
-  customizationEntityQuery,
-} from "@/client/src/pages/rulesets/customization/entityQueries.ts";
-import {
-  ModifiersSection,
-  PropertiesSection,
-  RequirementsSection,
-} from "@/client/src/pages/rulesets/customization/sections/index.ts";
 import { entityPageState, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import {
@@ -47,6 +30,17 @@ import {
   parseCustomizationSegment,
 } from "@/shared/customization/entities.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
+
+import {
+  ClassLevelEditor,
+  type EditorProps,
+  FeatEditor,
+  ItemEditor,
+  RaceEditor,
+  SpellEditor,
+} from "./editors/index.ts";
+import { type CustomizationEntity, customizationEntityQuery } from "./entityQueries.ts";
+import { ModifiersSection, PropertiesSection, RequirementsSection } from "./sections/index.ts";
 
 interface CustomizationViewProps {
   rulesetId: string;
@@ -123,9 +117,9 @@ function CustomizationView({
   const listPath = state.from ?? `/rulesets/${rulesetId}/${type}`;
   usePageTitle(pageTitle);
 
-  const entityKey = queryKeys.rulesets.entity(rulesetId, type, entityId);
+  const entityKey = QUERY_KEYS.rulesets.entity(rulesetId, type, entityId);
   const klassLevelsKey =
-    data.type === "klass_levels" ? queryKeys.rulesets.classLevels(rulesetId, data.entity.klassId) : undefined;
+    data.type === "klass_levels" ? QUERY_KEYS.rulesets.classLevels(rulesetId, data.entity.klassId) : undefined;
 
   // Editing or customizing an inherited entity copies it into this ruleset
   // under a new id: move to the copy, unless the page has left the source
@@ -154,7 +148,7 @@ function CustomizationView({
     void queryClient.invalidateQueries({ queryKey: listKey });
     snackbar.success(message);
     // Save responses lack relations (aptitudes, level feats): refetch the entity.
-    return queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.entity(rulesetId, type, saved.id) });
+    return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.entity(rulesetId, type, saved.id) });
   };
 
   const deleteMutation = useMutation({
@@ -163,7 +157,7 @@ function CustomizationView({
       return deleteEntity(data, rulesetId, entityId);
     },
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(rulesetId, type) });
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.section(rulesetId, type) });
       if (klassLevelsKey) void queryClient.invalidateQueries({ queryKey: klassLevelsKey });
       snackbar.success(`${label} deleted`);
       navigate(backPath ?? listPath);
@@ -363,6 +357,23 @@ export default function CustomizationPage() {
 
   const { copiedFrom } = entityPageState(location.state);
 
+  // Right after a copy-on-write, keep showing the entity the copy was made
+  // from until the copy loads, so the page and any unsaved edits stay; the
+  // page is locked meanwhile. A refetch of the source may already return the
+  // copy, as the server resolves an inherited entity to its copy. The
+  // ruleset must match too: an inherited entity keeps its id in every fork.
+  function keepCopySource(
+    previous: CustomizationEntity | undefined,
+    previousQuery: { queryKey: QueryKey } | undefined,
+  ) {
+    return copiedFrom &&
+      previous &&
+      previousQuery?.queryKey[2] === rulesetId &&
+      (previous.entity.id === copiedFrom || previous.entity.id === entityId)
+      ? previous
+      : undefined;
+  }
+
   const { data: ruleset, isLoading: isRulesetLoading, error: rulesetError } = useQuery(rulesetDetailQuery(rulesetId));
   const {
     data,
@@ -370,20 +381,8 @@ export default function CustomizationPage() {
     isPlaceholderData,
     error: entityError,
   } = useQuery({
-    ...customizationEntityQuery(rulesetId, validType ?? "feats", entityId),
-    enabled: !!validType && !!entityId,
-    // Right after a copy-on-write, keep showing the entity the copy was made
-    // from until the copy loads, so the page and any unsaved edits stay; the
-    // page is locked meanwhile. A refetch of the source may already return the
-    // copy, as the server resolves an inherited entity to its copy. The
-    // ruleset must match too: an inherited entity keeps its id in every fork.
-    placeholderData: (previous, previousQuery) =>
-      copiedFrom &&
-      previous &&
-      previousQuery?.queryKey[2] === rulesetId &&
-      (previous.entity.id === copiedFrom || previous.entity.id === entityId)
-        ? previous
-        : undefined,
+    ...customizationEntityQuery(rulesetId, validType, entityId),
+    placeholderData: keepCopySource,
   });
   // Load the editors' pickers alongside the entity.
   const { canEditEntities } = useRulesetPermissions(ruleset);

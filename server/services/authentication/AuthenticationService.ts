@@ -3,7 +3,13 @@ import { getTableName } from "drizzle-orm";
 import { sessionsInAccount, usersInAccount } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { emailService, EmailTemplate } from "@/server/emails/index.ts";
-import { BadRequestError, ConflictError, InternalError, UnauthorizedError } from "@/server/errors/index.ts";
+import {
+  BadRequestError,
+  ConflictError,
+  EmailNotVerifiedError,
+  InternalError,
+  UnauthorizedError,
+} from "@/server/errors/index.ts";
 import { hashPassword, verifyPassword } from "@/server/password.ts";
 import {
   Activities,
@@ -105,13 +111,9 @@ class AuthenticationService {
       const reset = await PasswordResets.findOne(tx, { userId: user.id });
       if (!reset) throw new UnauthorizedError("Invalid email or code");
 
-      if (!compareInConstantTime(reset.code, code)) {
-        throw new UnauthorizedError("Invalid email or code");
-      }
+      if (!compareInConstantTime(reset.code, code)) throw new UnauthorizedError("Invalid email or code");
 
-      if (new Date(reset.expiresAt) < new Date()) {
-        throw new UnauthorizedError("Reset code expired");
-      }
+      if (new Date(reset.expiresAt) < new Date()) throw new UnauthorizedError("Reset code expired");
 
       const newHash = await hashPassword(newPassword);
       await Users.update(tx, { passwordDigest: newHash }, { id: user.id });
@@ -144,9 +146,7 @@ class AuthenticationService {
     const { verified, needsRehash } = await verifyPassword(password, user.passwordDigest);
     if (!verified) throw new UnauthorizedError("Invalid email or password");
 
-    if (!user.emailVerifiedAt) {
-      throw new UnauthorizedError("Email not verified");
-    }
+    if (!user.emailVerifiedAt) throw new EmailNotVerifiedError();
 
     return await withTransaction(async (tx) => {
       if (needsRehash) {
@@ -224,12 +224,10 @@ class AuthenticationService {
       const session = await Sessions.findOne(db, { id: existingSessionId });
       if (session && new Date(session.expiresAt) >= new Date()) {
         const user = await Users.findOne(db, { id: session.userId });
-        if (user && !user.expiresAt) {
-          throw new BadRequestError("Already signed in");
-        }
-        if (user?.expiresAt && new Date(user.expiresAt) >= new Date()) {
+        if (user && !user.expiresAt) throw new BadRequestError("Already signed in");
+
+        if (user?.expiresAt && new Date(user.expiresAt) >= new Date())
           return { session, user: toSafeUser(user), reused: true as const };
-        }
       }
     }
 
@@ -255,20 +253,14 @@ class AuthenticationService {
       const user = await Users.findOne(tx, { emailAddress });
       if (!user) throw new UnauthorizedError("Invalid email or code");
 
-      if (user.emailVerifiedAt) {
-        throw new BadRequestError("Email already verified");
-      }
+      if (user.emailVerifiedAt) throw new BadRequestError("Email already verified");
 
       const verification = await EmailVerifications.findOne(tx, { userId: user.id });
       if (!verification) throw new UnauthorizedError("Invalid email or code");
 
-      if (!compareInConstantTime(verification.code, code)) {
-        throw new UnauthorizedError("Invalid email or code");
-      }
+      if (!compareInConstantTime(verification.code, code)) throw new UnauthorizedError("Invalid email or code");
 
-      if (new Date(verification.expiresAt) < new Date()) {
-        throw new UnauthorizedError("Verification code expired");
-      }
+      if (new Date(verification.expiresAt) < new Date()) throw new UnauthorizedError("Verification code expired");
 
       await Users.update(tx, { emailVerifiedAt: new Date().toISOString() }, { id: user.id });
       await EmailVerifications.archive(tx, { id: verification.id });

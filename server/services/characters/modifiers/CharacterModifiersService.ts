@@ -57,9 +57,8 @@ class CharacterModifiersService {
       const character = await getEditableCharacter(tx, session, characterId);
 
       const existing = await Modifiers.findOne(tx, { id: modifierId });
-      if (!existing || existing.sourceId !== characterId || existing.sourceType !== "characters") {
+      if (!existing || existing.sourceId !== characterId || existing.sourceType !== "characters")
         throw new NotFoundError("Modifier not found");
-      }
 
       const rows = await Modifiers.delete(tx, { ids: [modifierId] });
       const modifier = rows[0];
@@ -105,9 +104,8 @@ class CharacterModifiersService {
       const character = await getEditableCharacter(tx, session, characterId);
 
       const existing = await Modifiers.findOne(tx, { id: modifierId });
-      if (!existing || existing.sourceId !== characterId || existing.sourceType !== "characters") {
+      if (!existing || existing.sourceId !== characterId || existing.sourceType !== "characters")
         throw new NotFoundError("Modifier not found");
-      }
 
       const valueType = await resolvePathValueType(
         character.rulesetId,
@@ -128,9 +126,8 @@ class CharacterModifiersService {
         },
         { id: modifierId, expectedUpdatedAt: body.updatedAt },
       );
-      if (body.updatedAt && rows.length === 0) {
-        throw new ConflictError(STALE_ENTITY_MESSAGE);
-      }
+      if (body.updatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
+
       const modifier = rows[0];
 
       await Activities.create(tx, {

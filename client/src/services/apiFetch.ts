@@ -1,5 +1,6 @@
-import { ApiError } from "@/client/src/services/ApiError.ts";
 import type { ErrorJson } from "@/server/errors/index.ts";
+
+import { ApiError } from "./ApiError.ts";
 
 /** The API's fetch: the session's cookie goes along, and any answer but a 2xx throws its error as an `ApiError`. */
 export async function apiFetch(input: URL | RequestInfo, init?: RequestInit) {

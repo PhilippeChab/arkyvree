@@ -5,7 +5,8 @@ import { bonus, grantFeat, setStr } from "@/database/packages/dnd35/content/cust
 import type { Modifier } from "@/database/packages/dnd35/content/customization/types.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 import type { RaceSeed } from "@/database/packages/dnd35/content/races/types.ts";
-import { QUADRUPED } from "@/database/packages/dnd35/data/bonds/raceProperties.ts";
+
+import { QUADRUPED } from "./raceProperties.ts";
 
 const FAMILIAR_APTITUDE = "Familiar Bond";
 const FAMILIAR_CLASS_FEATURE_APTITUDE = "Familiar Class Feature";

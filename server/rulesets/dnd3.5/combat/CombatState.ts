@@ -1,11 +1,12 @@
 import type AbilitiesComponent from "@/server/rulesets/dnd3.5/abilities/AbilitiesComponent.ts";
 import type ClassesComponent from "@/server/rulesets/dnd3.5/classes/ClassesComponent.ts";
-import type { ArmorsData } from "@/server/rulesets/dnd3.5/combat/ArmorsComponent.ts";
-import type EncumbranceComponent from "@/server/rulesets/dnd3.5/combat/EncumbranceComponent.ts";
-import type { EncumbranceData } from "@/server/rulesets/dnd3.5/combat/EncumbranceComponent.ts";
-import type { ShieldsData } from "@/server/rulesets/dnd3.5/combat/ShieldsComponent.ts";
 import { CONSTANTS } from "@/server/rulesets/dnd3.5/constants.ts";
 import type SkillsComponent from "@/server/rulesets/dnd3.5/skills/SkillsComponent.ts";
+
+import type { ArmorsData } from "./ArmorsComponent.ts";
+import type EncumbranceComponent from "./EncumbranceComponent.ts";
+import type { EncumbranceData } from "./EncumbranceComponent.ts";
+import type { ShieldsData } from "./ShieldsComponent.ts";
 
 export type ArmorCategory = (typeof ARMOR_CATEGORIES)[number];
 

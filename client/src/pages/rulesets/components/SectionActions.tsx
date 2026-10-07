@@ -1,7 +1,7 @@
-import { Add as AddIcon } from "@mui/icons-material";
 import { Button, ToggleButton } from "@mui/material";
 import type { ReactNode } from "react";
 
+import { AddIcon } from "@/client/src/components/icons/index.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 

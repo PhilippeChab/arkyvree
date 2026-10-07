@@ -1,29 +1,4 @@
 import {
-  FitnessCenter as AbilitiesIcon,
-  Stars as AptitudesIcon,
-  Archive as ArchiveIcon,
-  AccessibilityNew as ClassesIcon,
-  CompareArrows as CompareArrowsIcon,
-  Group as ContributorsIcon,
-  Edit as EditIcon,
-  Extension as ExtensionIcon,
-  Spoke as FeatsIcon,
-  ContentCopy as ForkIcon,
-  Construction as ItemsIcon,
-  Translate as LanguagesIcon,
-  Gavel as MechanicsIcon,
-  Bolt as PowersIcon,
-  Lock as PrivateIcon,
-  Public as PublicIcon,
-  Publish as PublishIcon,
-  People as RacesIcon,
-  Shield as SavesIcon,
-  Psychology as SkillsIcon,
-  StarBorder as StarBorderIcon,
-  Star as StarIcon,
-  Unarchive as UnarchiveIcon,
-} from "@mui/icons-material";
-import {
   Alert,
   Box,
   Button,
@@ -41,9 +16,8 @@ import {
   Typography,
 } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { parseResponse } from "hono/client";
-import { useCallback, useMemo, useState } from "react";
-import { Navigate, Link as RouterLink, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { type MouseEvent, type ReactNode, useMemo, useState } from "react";
+import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 
 import {
   ActionMenuItem,
@@ -56,15 +30,41 @@ import {
   type SectionTab,
   SectionTabs,
 } from "@/client/src/components/common/index.ts";
-import { usePageTitle } from "@/client/src/hooks/index.ts";
+import {
+  AbilitiesIcon,
+  AptitudesIcon,
+  ArchiveIcon,
+  ClassesIcon,
+  CompareArrowsIcon,
+  EditIcon,
+  ExtensionIcon,
+  FeatsIcon,
+  ForkIcon,
+  GroupIcon,
+  ItemsIcon,
+  LanguagesIcon,
+  MechanicsIcon,
+  PowersIcon,
+  PrivateIcon,
+  PublicIcon,
+  PublishIcon,
+  RacesIcon,
+  SavesIcon,
+  SkillsIcon,
+  StarBorderIcon,
+  StarIcon,
+  UnarchiveIcon,
+} from "@/client/src/components/icons/index.ts";
+import { usePageTitle, useSearchParam } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
-import { externalLinks } from "@/client/src/lib/externalLinks.ts";
+import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
-import type { RulesetDetail } from "@/client/src/lib/queries.ts";
-import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { RULESET_STATUS } from "@/client/src/pages/rulesets/components/index.ts";
+import { useRulesetOperations, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
+
 import {
   ArchiveRulesetDialog,
   EditRulesetDialog,
@@ -74,11 +74,8 @@ import {
   RulesetLicenseNotice,
   SubscribeExtensionDialog,
   UnsubscribeExtensionDialog,
-} from "@/client/src/pages/rulesets/details/components/index.ts";
-import { useRulesetOperations, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
-import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
-
+} from "./components/index.ts";
+import { rulesetExtensionsQuery } from "./rulesetQueries.ts";
 import { getSections, type RulesetSectionProps } from "./sectionFactory.ts";
 import { prefetchSection, type RulesetSection } from "./sectionQueries.ts";
 import {
@@ -122,11 +119,7 @@ export default function RulesetDetailsPage() {
 
   usePageTitle(ruleset?.name);
 
-  const { data: subscribedExtensions } = useQuery({
-    queryKey: queryKeys.rulesets.extensions(id),
-    queryFn: () => parseResponse(rpc.api.rulesets[":id"].extensions.$get({ param: { id } })),
-    enabled: !!ruleset?.rulesetId,
-  });
+  const { data: subscribedExtensions } = useQuery(rulesetExtensionsQuery(id, ruleset?.rulesetId));
 
   const queryClient = useQueryClient();
   // Warm the parent ruleset while the pointer is on the "Forked from" chip.
@@ -174,34 +167,17 @@ export default function RulesetDetailsPage() {
 
   const isExtension = !!ruleset && ruleset.kind === "extension";
   const [overridesDialogOpen, setOverridesDialogOpen] = useState(false);
-  const [searchParams, setSearchParams] = useSearchParams();
-  const childOnly = searchParams.has("childOnly") ? searchParams.get("childOnly") === "true" : isExtension;
-  const setChildOnly = useCallback(
-    (value: boolean) => {
-      setSearchParams(
-        (prev) => {
-          const next = new URLSearchParams(prev);
-          if (value) {
-            next.set("childOnly", "true");
-          } else {
-            next.set("childOnly", "false");
-          }
-          return next;
-        },
-        { replace: true },
-      );
-    },
-    [setSearchParams],
-  );
+  const { value: childOnlyParam, setValue: setChildOnlyParam } = useSearchParam("childOnly");
+  const childOnly = childOnlyParam ? childOnlyParam === "true" : isExtension;
+  const setChildOnly = (value: boolean) => setChildOnlyParam(value ? "true" : "false");
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const closeMenuAnd = (then: () => void) => () => {
     setAnchorEl(null);
     then();
   };
   const [extensionsAnchor, setExtensionsAnchor] = useState<null | HTMLElement>(null);
-  if (!subscribedExtensions?.length && extensionsAnchor !== null) {
-    setExtensionsAnchor(null);
-  }
+  if (!subscribedExtensions?.length && extensionsAnchor !== null) setExtensionsAnchor(null);
+
   const { isOwner, isContributor, canEditRuleset, canPublish } = useRulesetPermissions(ruleset);
   const isFork = !!ruleset?.rulesetId && !isExtension;
   const showContributorsMenu = (isOwner || isContributor) && ruleset?.status !== "Archived";
@@ -214,7 +190,7 @@ export default function RulesetDetailsPage() {
 
   const baseRules = ruleset?.baseRules;
   const [contributorsDialogOpen, setContributorsDialogOpen] = useState(false);
-  type TabConfig = SectionTab<RulesetSection> & { component: (props: RulesetSectionProps) => React.ReactNode };
+  type TabConfig = SectionTab<RulesetSection> & { component: (props: RulesetSectionProps) => ReactNode };
   const tabConfig = useMemo((): TabConfig[] => {
     const rules = baseRules ?? DEFAULT_BASE_RULES;
     const sections = getSections(rules);
@@ -261,9 +237,7 @@ export default function RulesetDetailsPage() {
   const currentTab = tabConfig.find((tab) => tab.key === section) ?? tabConfig[0];
 
   // Normalize the URL to a known tab.
-  if (id && !tabConfig.some((tab) => tab.key === section)) {
-    return <Navigate to={`/rulesets/${id}/races`} replace />;
-  }
+  if (id && !tabConfig.some((tab) => tab.key === section)) return <Navigate to={`/rulesets/${id}/races`} replace />;
 
   if (isLoading) {
     return (
@@ -338,7 +312,7 @@ export default function RulesetDetailsPage() {
                   size="medium"
                   color="info"
                   variant="outlined"
-                  component={RouterLink}
+                  component={Link}
                   to={`/rulesets/${ruleset.rulesetId}`}
                   clickable
                   sx={{ fontWeight: 500 }}
@@ -374,13 +348,13 @@ export default function RulesetDetailsPage() {
                           size="medium"
                           color={ext.updateAvailable ? "warning" : "default"}
                           variant="outlined"
-                          component={RouterLink}
+                          component={Link}
                           to={`/rulesets/${ext.extensionId}`}
                           clickable
                           sx={{ fontWeight: 500, justifyContent: "flex-start" }}
                           onDelete={
                             isOwner
-                              ? (e: React.MouseEvent) => {
+                              ? (e: MouseEvent) => {
                                   e.preventDefault();
                                   e.stopPropagation();
                                   handleUnsubscribe(ruleset.id, ext.extensionId, ext.extensionName);
@@ -467,7 +441,7 @@ export default function RulesetDetailsPage() {
             )}
           {showContributorsMenu && (
             <ActionMenuItem
-              icon={ContributorsIcon}
+              icon={GroupIcon}
               label="Contributors"
               description="Admin, Editor, Viewer"
               onClick={closeMenuAnd(() => setContributorsDialogOpen(true))}
@@ -480,7 +454,7 @@ export default function RulesetDetailsPage() {
               <MenuItem
                 key="faq-link"
                 component="a"
-                href={externalLinks.help}
+                href={EXTERNAL_LINKS.help}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setAnchorEl(null)}
@@ -531,9 +505,7 @@ export default function RulesetDetailsPage() {
           onClose={() => setEditDialogOpen(false)}
           form={editForm}
           onSubmit={(data) => {
-            if (selectedRuleset) {
-              updateMutation.mutate({ id: selectedRuleset.id, data });
-            }
+            if (selectedRuleset) updateMutation.mutate({ id: selectedRuleset.id, data });
           }}
           isLoading={updateMutation.isPending}
           isPublic={selectedRuleset ? !selectedRuleset.private : false}
@@ -561,9 +533,7 @@ export default function RulesetDetailsPage() {
           open={publishDialogOpen}
           onClose={() => setPublishDialogOpen(false)}
           onConfirm={(kind) => {
-            if (selectedRuleset) {
-              publishMutation.mutate({ id: selectedRuleset.id, kind });
-            }
+            if (selectedRuleset) publishMutation.mutate({ id: selectedRuleset.id, kind });
           }}
           isLoading={publishMutation.isPending}
           canBeExtension={
@@ -615,7 +585,7 @@ export default function RulesetDetailsPage() {
 
         <Modal open={contributorsDialogOpen} onClose={() => setContributorsDialogOpen(false)} maxWidth="md">
           <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <ContributorsIcon /> Contributors
+            <GroupIcon /> Contributors
           </DialogTitle>
           <DialogContent>
             <ContributorsSection ruleset={ruleset} onLeave={() => navigate("/rulesets")} />

@@ -4,12 +4,24 @@ import { parseResponse } from "hono/client";
 import { useMemo, useState } from "react";
 import { useController } from "react-hook-form";
 
-import { AttachmentField, DiceSpinner, FormTextField, SelectField } from "@/client/src/components/common/index.ts";
+import {
+  AttachmentField,
+  CLICKABLE_SX,
+  clickableProps,
+  DiceSpinner,
+  FormTextField,
+  SelectField,
+} from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { type RulesetLanguage, useFormWith, useRulesetLanguages } from "@/client/src/hooks/index.ts";
-import { useDirtyForm, useFormSync } from "@/client/src/hooks/index.ts";
+import {
+  type RulesetLanguage,
+  useDirtyForm,
+  useFormSync,
+  useFormWith,
+  useRulesetLanguages,
+} from "@/client/src/hooks/index.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { type Alignment, ALIGNMENT_OPTIONS, type Gender, GENDER_OPTIONS } from "@/shared/enums.ts";
 
@@ -115,8 +127,8 @@ export function CharacterIdentitySection({
       ),
     onSuccess: async (saved, formData) => {
       sync.saved(formData, saved.updatedAt);
-      await queryClient.invalidateQueries({ queryKey: queryKeys.characters.detail(characterId) });
-      await queryClient.invalidateQueries({ queryKey: queryKeys.characters.levelUp.all(characterId) });
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.detail(characterId) });
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.levelUp.all(characterId) });
     },
     onError: (err) => snackbar.error(err, "Failed to save character details"),
   });
@@ -138,10 +150,9 @@ export function CharacterIdentitySection({
         }),
       ),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: queryKeys.characters.detail(characterId) });
-      if (character.parentCharacterId) {
-        await queryClient.invalidateQueries({ queryKey: queryKeys.characters.detail(character.parentCharacterId) });
-      }
+      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.detail(characterId) });
+      if (character.parentCharacterId)
+        await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.detail(character.parentCharacterId) });
     },
     onError: (err) => snackbar.error(err, "Failed to rename character"),
     onSettled: () => setNameEditing(false),
@@ -224,15 +235,13 @@ export function CharacterIdentitySection({
           ) : (
             <Typography
               component="h5"
-              onClick={
-                canEditName
-                  ? () => {
-                      nameForm.reset({ name: characterName });
-                      setNameEditing(true);
-                    }
-                  : undefined
-              }
+              {...(canEditName &&
+                clickableProps(() => {
+                  nameForm.reset({ name: characterName });
+                  setNameEditing(true);
+                }))}
               sx={{
+                ...(canEditName && CLICKABLE_SX),
                 fontWeight: 600,
                 color: "primary.main",
                 typography: { xs: "h6", sm: "h5" },
@@ -309,7 +318,6 @@ export function CharacterIdentitySection({
                     name="experience"
                     number
                     label="Experience"
-                    type="number"
                     size="small"
                     variant="outlined"
                     slotProps={{ htmlInput: { min: 0 } }}

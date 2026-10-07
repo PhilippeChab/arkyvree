@@ -1,8 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { validate } from "@/server/middlewares/index.ts";
-import type { SessionContext } from "@/server/middlewares/index.ts";
+import { type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { modifierOperator } from "@/server/routers/api/rulesets/customization/validation.ts";
 import { characterIdParam } from "@/server/routers/api/validation.ts";
 import { CharacterModifiersService } from "@/server/services/characters/modifiers/index.ts";

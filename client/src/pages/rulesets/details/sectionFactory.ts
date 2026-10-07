@@ -22,7 +22,7 @@ export interface RulesetSectionProps {
   onChildOnlyChange: (childOnly: boolean) => void;
 }
 
-const rulesetSections: Record<BaseRules, SectionMap> = {
+const RULESET_SECTIONS: Record<BaseRules, SectionMap> = {
   "Dungeons & Dragons: 3.5": {
     ClassesSection,
     ItemsSection,
@@ -32,5 +32,5 @@ const rulesetSections: Record<BaseRules, SectionMap> = {
 };
 
 export function getSections(baseRules: BaseRules): SectionMap {
-  return rulesetSections[baseRules];
+  return RULESET_SECTIONS[baseRules];
 }

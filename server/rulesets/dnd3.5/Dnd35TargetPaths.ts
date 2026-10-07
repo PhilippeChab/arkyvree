@@ -1,7 +1,6 @@
 /** The paths an entity's modifiers and requirements name, in the 3.5 rules: each category's, and the ruleset's labels. */
 
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
-import type { Dnd35Components } from "@/server/rulesets/dnd3.5/character/components.ts";
 import CategoryPaths from "@/server/rulesets/engine/paths/CategoryPaths.ts";
 import type { PathCategory } from "@/server/rulesets/engine/paths/PathCategory.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
@@ -13,6 +12,7 @@ import { stripSeparators } from "@/shared/text.ts";
 import AbilitiesPaths from "./abilities/AbilitiesPaths.ts";
 import AptitudesPaths from "./aptitudes/AptitudesPaths.ts";
 import BondedPaths from "./bonded/BondedPaths.ts";
+import type { Dnd35Components } from "./character/components.ts";
 import ClassesPaths from "./classes/ClassesPaths.ts";
 import CombatPaths from "./combat/CombatPaths.ts";
 import ItemsPaths from "./combat/ItemsPaths.ts";
@@ -50,9 +50,9 @@ export default class Dnd35TargetPaths extends CategoryPaths<Dnd35Components> {
   /** The ruleset's names: its entities', skill families', spell lists', and its properties' values. */
   protected labelNames(rulesetData: RulesetData, segmentLabels: Record<string, string>): Record<string, string> {
     const { abilities, saves, skills, feats, items, aptitudes, klasses, powers, propertiesByEntityType } = rulesetData;
-    for (const entity of [...abilities, ...saves, ...skills, ...feats, ...items, ...aptitudes, ...klasses, ...powers]) {
+    for (const entity of [...abilities, ...saves, ...skills, ...feats, ...items, ...aptitudes, ...klasses, ...powers])
       segmentLabels[stripSeparators(entity.name)] = entity.name;
-    }
+
     Object.assign(segmentLabels, SkillsPaths.getFamilyLabels(skills), {
       [stripSeparators(UNARMED_STRIKE)]: UNARMED_STRIKE,
     });
@@ -90,9 +90,8 @@ export default class Dnd35TargetPaths extends CategoryPaths<Dnd35Components> {
     for (const prop of propertiesByEntityType.get("powers") ?? []) {
       if (!(prop.type in segmentLabels)) segmentLabels[prop.type] = formatPropertyType(prop.type);
       const normalizedValue = stripSeparators(prop.value);
-      if (normalizedValue && !/^\d+$/.test(normalizedValue) && !(normalizedValue in segmentLabels)) {
+      if (normalizedValue && !/^\d+$/.test(normalizedValue) && !(normalizedValue in segmentLabels))
         segmentLabels[normalizedValue] = prop.value;
-      }
     }
     return segmentLabels;
   }

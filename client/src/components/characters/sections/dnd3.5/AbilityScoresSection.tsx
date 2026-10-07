@@ -56,9 +56,8 @@ export function AbilityScoresSection({ abilities, characterId, readOnly }: Dnd35
       return { previous };
     },
     onError: (error, _variables, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(queryKey, context.previous);
-      }
+      if (context?.previous) queryClient.setQueryData(queryKey, context.previous);
+
       snackbar.error(error, "Failed to update ability score");
     },
     onSettled: () => {
@@ -74,11 +73,8 @@ export function AbilityScoresSection({ abilities, characterId, readOnly }: Dnd35
     const current = Object.values(abilities).find((a) => a.abilityId === abilityId);
     const currentBase = current?.base || 10;
 
-    if (score > currentBase || !shouldWarn("abilityDecrease")) {
-      updateMutation.mutate({ abilityId, score });
-    } else {
-      setPendingChange({ abilityId, score });
-    }
+    if (score > currentBase || !shouldWarn("abilityDecrease")) updateMutation.mutate({ abilityId, score });
+    else setPendingChange({ abilityId, score });
   };
 
   return (

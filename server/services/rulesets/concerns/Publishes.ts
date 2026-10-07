@@ -1,8 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { rulesetsInRules } from "@/drizzle/schema.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { buildSourceChain } from "@/server/cache/rulesetCache/index.ts";
+import { buildSourceChain, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withTransaction } from "@/server/database/index.ts";
 import { NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import type { Constructor } from "@/server/mixins.ts";
@@ -15,28 +14,22 @@ import type { Ruleset, Session } from "@/shared/relations.ts";
 export function Publishes<B extends Constructor>(Base: B) {
   abstract class Publishing extends Base {
     protected assertCanBeExtension(ruleset: Pick<Ruleset, "rulesetId" | "extensionRulesetIds">) {
-      if (!ruleset.rulesetId) {
-        throw new UnprocessableEntityError("Only forks can be published as extensions");
-      }
-      if (ruleset.extensionRulesetIds.length > 0) {
+      if (!ruleset.rulesetId) throw new UnprocessableEntityError("Only forks can be published as extensions");
+
+      if (ruleset.extensionRulesetIds.length > 0)
         throw new UnprocessableEntityError("A ruleset that subscribes to extensions cannot itself be an extension");
-      }
     }
 
     async publishRuleset(session: Session, id: string, body: { kind?: RulesetKind } = {}) {
       const result = await withTransaction(async (tx) => {
         // First verify the ruleset exists
         const ruleset = await Rulesets.findOne(tx, { id });
-        if (!ruleset) {
-          throw new NotFoundError("Ruleset not found");
-        }
+        if (!ruleset) throw new NotFoundError("Ruleset not found");
 
         (await RulesetsPolicy.for(tx, session, ruleset)).canPublish();
 
         const targetKind = body.kind ?? ruleset.kind;
-        if (targetKind === "extension") {
-          this.assertCanBeExtension(ruleset);
-        }
+        if (targetKind === "extension") this.assertCanBeExtension(ruleset);
 
         // Extensions don't need playable content (races/klasses/skills/feats);
         // they're add-ons layered onto rulesets that already have the basics.
@@ -69,14 +62,11 @@ export function Publishes<B extends Constructor>(Base: B) {
           if (skills.items.length === 0) missing.push("skill");
           if (feats.items.length === 0) missing.push("feat");
 
-          if (missing.length > 0) {
+          if (missing.length > 0)
             throw new UnprocessableEntityError(`Ruleset requires at least one of each: ${missing.join(", ")}`);
-          }
         }
 
-        if (body.kind && body.kind !== ruleset.kind) {
-          await Rulesets.update(tx, { kind: body.kind }, { id });
-        }
+        if (body.kind && body.kind !== ruleset.kind) await Rulesets.update(tx, { kind: body.kind }, { id });
 
         const rows = await Rulesets.publish(tx, { id });
         const publishedRuleset = rows[0];

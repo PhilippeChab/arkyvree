@@ -28,16 +28,13 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
     const result = await withTransaction(async (tx) => {
       // 1. Verify source ruleset exists and is published
       const ruleset = await Rulesets.findOne(tx, { id });
-      if (!ruleset) {
-        throw new NotFoundError("Ruleset not found");
-      }
+      if (!ruleset) throw new NotFoundError("Ruleset not found");
+
       (await RulesetsPolicy.for(tx, session, ruleset)).canFork();
 
       // 2. Verify name uniqueness
       const existing = await Rulesets.findOne(tx, { name: body.name });
-      if (existing) {
-        throw new ConflictError("A ruleset with this name already exists");
-      }
+      if (existing) throw new ConflictError("A ruleset with this name already exists");
 
       // canFork blocks forks-of-forks, so the parent is always a base —
       // ancestorRulesetIds is always [baseId].
@@ -59,9 +56,8 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
 
       // Copy extension metadata rows
       if (ruleset.extensionRulesetIds.length > 0) {
-        for (const extId of ruleset.extensionRulesetIds) {
+        for (const extId of ruleset.extensionRulesetIds)
           await RulesetExtensions.upsert(tx, { rulesetId: newRuleset.id, extensionId: extId });
-        }
       }
 
       // 3. Copy ruleset-level properties as-is (parent entity IDs — `CowData.resolveRows` resolves them at read time)
@@ -83,9 +79,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
       // 4. Seed template items if source ruleset didn't have any (pre-migration rulesets)
       const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
       const sourceTemplates = await Items.findMany(tx, { rulesetId: id, isTemplate: true });
-      if (sourceTemplates.length === 0) {
-        await rulesetModule.seedTemplateItems(tx, newRuleset.id);
-      }
+      if (sourceTemplates.length === 0) await rulesetModule.seedTemplateItems(tx, newRuleset.id);
 
       // 5. Log the fork activity
       await Activities.create(tx, {
@@ -105,9 +99,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
 
   async getRuleset(session: Session, id: string) {
     const ruleset = await Rulesets.findOne(db, { id });
-    if (!ruleset) {
-      throw new NotFoundError("Ruleset not found");
-    }
+    if (!ruleset) throw new NotFoundError("Ruleset not found");
 
     const [star, starCount, contributorRole, isUsedAsExtension] = await Promise.all([
       StarredRulesets.findOne(db, { userId: session.userId, rulesetId: id }),
@@ -194,25 +186,18 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
     const result = await withTransaction(async (tx) => {
       // First verify the ruleset exists
       const ruleset = await Rulesets.findOne(tx, { id });
-      if (!ruleset) {
-        throw new NotFoundError("Ruleset not found");
-      }
+      if (!ruleset) throw new NotFoundError("Ruleset not found");
 
       (await RulesetsPolicy.for(tx, session, ruleset)).canUpdate();
 
-      if (!ruleset.private && body.private) {
-        throw new ForbiddenError("Cannot make a public ruleset private");
-      }
+      if (!ruleset.private && body.private) throw new ForbiddenError("Cannot make a public ruleset private");
 
-      if (body.kind === "extension" && ruleset.kind !== "extension") {
-        this.assertCanBeExtension(ruleset);
-      }
+      if (body.kind === "extension" && ruleset.kind !== "extension") this.assertCanBeExtension(ruleset);
 
       const { updatedAt, ...rulesetData } = body;
       const rows = await Rulesets.update(tx, rulesetData, { id, expectedUpdatedAt: updatedAt });
-      if (updatedAt && rows.length === 0) {
-        throw new ConflictError(STALE_ENTITY_MESSAGE);
-      }
+      if (updatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
+
       const updatedRuleset = rows[0];
 
       await Activities.create(tx, {

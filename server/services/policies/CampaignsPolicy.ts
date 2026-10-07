@@ -26,20 +26,18 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
   private readonly player: Player | null;
 
   canDelete() {
-    if (this.player?.role !== "Game Master") {
-      throw new ForbiddenError("Only the Game Master can manage this campaign");
-    }
+    if (this.player?.role !== "Game Master") throw new ForbiddenError("Only the Game Master can manage this campaign");
 
     return true;
   }
 
   canHardDelete() {
-    if (this.player?.role !== "Game Master") {
+    if (this.player?.role !== "Game Master")
       throw new ForbiddenError("Only the Game Master can permanently delete this campaign");
-    }
-    if (!this.entity.deletedAt) {
+
+    if (!this.entity.deletedAt)
       throw new UnprocessableEntityError("Only archived campaigns can be permanently deleted");
-    }
+
     return true;
   }
 
@@ -56,9 +54,7 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
   }
 
   canUpdate() {
-    if (!this.isGameMaster()) {
-      throw new ForbiddenError("Only the Game Master can edit this campaign");
-    }
+    if (!this.isGameMaster()) throw new ForbiddenError("Only the Game Master can edit this campaign");
 
     return true;
   }

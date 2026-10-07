@@ -1,4 +1,3 @@
-import { Add as AddIcon, Close as CloseIcon } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -13,7 +12,9 @@ import {
 import { useFieldArray, type UseFormReturn } from "react-hook-form";
 
 import { DiceSpinner, FormDialog, FormTextField } from "@/client/src/components/common/index.ts";
+import { AddIcon, CloseIcon } from "@/client/src/components/icons/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
+import { NAME_RULES } from "@/client/src/lib/validation.ts";
 
 import { type BulkVariantsFormValues, type VariantRow, variantRow } from "./bulkVariants.ts";
 
@@ -77,9 +78,7 @@ export function BulkVariantsDialog({
                     <FormTextField
                       control={form.control}
                       name={`variants.${index}.name`}
-                      rules={{
-                        required: "Name is required",
-                      }}
+                      rules={NAME_RULES}
                       label="Name"
                       size="small"
                       fullWidth

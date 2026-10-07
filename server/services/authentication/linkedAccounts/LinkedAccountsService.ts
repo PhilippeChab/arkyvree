@@ -25,9 +25,8 @@ class LinkedAccountsService {
       const user = await Users.findOne(tx, { id: session.userId });
       if (!user) throw new InternalError("User not found");
 
-      if (!user.passwordDigest) {
+      if (!user.passwordDigest)
         throw new BadRequestError("Cannot unlink OAuth provider without a password set. Set a password first.");
-      }
 
       const oauthAccount = await OauthAccounts.findOne(tx, {
         userId: session.userId,

@@ -98,9 +98,8 @@ describe("rulesets class levels", () => {
       { bab: 1, skills: 4 },
       { level: "1", bab: 1, skills: 4 },
       { level: 21, bab: 1, skills: 4 },
-    ]) {
+    ])
       await expectStatus(levels.$post({ param: { id, classId }, json: json as never }), 400);
-    }
   });
 
   test("returns 404 for a missing ruleset, class or level", async () => {

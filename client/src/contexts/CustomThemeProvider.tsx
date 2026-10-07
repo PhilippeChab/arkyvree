@@ -1,8 +1,8 @@
-import { Grow } from "@mui/material";
-import { createTheme, responsiveFontSizes, type Theme, ThemeProvider } from "@mui/material/styles";
-import React, { useEffect, useMemo, useState } from "react";
+import { createTheme, Grow, responsiveFontSizes, type Theme, ThemeProvider } from "@mui/material";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 
-import { prefersReducedMotion } from "@/client/src/lib/animations.ts";
+import { PREFERS_REDUCED_MOTION } from "@/client/src/lib/animations.ts";
+import { readThemeMode, saveThemeMode } from "@/client/src/stores/themeModeStorage.ts";
 
 import { ThemeContext, type ThemeMode } from "./themeContext.ts";
 
@@ -18,7 +18,7 @@ type ContainedColor =
   | undefined;
 
 interface CustomThemeProviderProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 function containedBorderColor(color: ContainedColor, darkMode: boolean) {
@@ -212,7 +212,7 @@ function createAppTheme(darkMode: boolean): Theme {
                 "&:active": {
                   transform: "scale(0.97)",
                 },
-                [prefersReducedMotion]: {
+                [PREFERS_REDUCED_MOTION]: {
                   "&:active": { transform: "none" },
                 },
               };
@@ -234,9 +234,8 @@ function createAppTheme(darkMode: boolean): Theme {
             },
             outlined: ({ ownerState, theme }) => {
               const color = ownerState.color;
-              if (color && color !== "primary" && color !== "inherit") {
-                return {};
-              }
+              if (color && color !== "primary" && color !== "inherit") return {};
+
               if (color === "inherit") {
                 return {
                   borderColor: theme.palette.text.secondary,
@@ -395,23 +394,7 @@ function createAppTheme(darkMode: boolean): Theme {
 }
 
 export function CustomThemeProvider({ children }: CustomThemeProviderProps) {
-  const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
-    try {
-      const saved = localStorage.getItem("themeMode");
-      if (saved === "light" || saved === "dark" || saved === "system") {
-        return saved;
-      }
-      // Migrate legacy darkMode preference
-      const legacyDarkMode = localStorage.getItem("darkMode");
-      if (legacyDarkMode !== null) {
-        localStorage.removeItem("darkMode");
-        return JSON.parse(legacyDarkMode) === true ? "dark" : "light";
-      }
-    } catch {
-      // Ignore corrupted localStorage
-    }
-    return "system";
-  });
+  const [themeMode, setThemeMode] = useState<ThemeMode>(readThemeMode);
 
   const [systemPrefersDark, setSystemPrefersDark] = useState(
     () => window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false,
@@ -424,9 +407,7 @@ export function CustomThemeProvider({ children }: CustomThemeProviderProps) {
     return () => mediaQuery.removeEventListener("change", handler);
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem("themeMode", themeMode);
-  }, [themeMode]);
+  useEffect(() => saveThemeMode(themeMode), [themeMode]);
 
   const darkMode = themeMode === "dark" || (themeMode === "system" && systemPrefersDark);
   const appTheme = useMemo(() => createAppTheme(darkMode), [darkMode]);

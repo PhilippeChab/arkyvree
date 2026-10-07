@@ -1,0 +1,41 @@
+/** The equipment section's queries: a character's inventory, and the ruleset's items its add dialog searches and picks. */
+
+import { infiniteQueryOptions, queryOptions, skipToken } from "@tanstack/react-query";
+import { parseResponse } from "hono/client";
+
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
+
+/** The items a character carries, with where each is placed. */
+export function characterInventoryQuery(characterId: string) {
+  return queryOptions({
+    queryKey: QUERY_KEYS.characters.inventory(characterId),
+    queryFn: () => parseResponse(rpc.api.characters.inventory[":characterId"].$get({ param: { characterId } })),
+  });
+}
+
+/** A ruleset item's details, which its placement profile reads; skipped until an item is picked. */
+export function rulesetItemQuery(rulesetId: string, itemId: string | undefined) {
+  return queryOptions({
+    queryKey: QUERY_KEYS.characters.rulesetItem(rulesetId, itemId ?? ""),
+    queryFn: itemId
+      ? () => parseResponse(rpc.api.rulesets[":id"].items[":itemId"].$get({ param: { id: rulesetId, itemId } }))
+      : skipToken,
+  });
+}
+
+/** The ruleset's items the add dialog offers, filtered by what's typed. */
+export function rulesetItemSearchQuery(rulesetId: string, search: string) {
+  return infiniteQueryOptions({
+    queryKey: QUERY_KEYS.characters.itemSearch(rulesetId, search),
+    queryFn: ({ pageParam }) =>
+      parseResponse(
+        rpc.api.rulesets[":id"].items.$get({
+          param: { id: rulesetId },
+          query: { page: pageParam.toString(), limit: "10", search: search || undefined },
+        }),
+      ),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => lastPage.nextPage,
+  });
+}

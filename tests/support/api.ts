@@ -6,8 +6,9 @@ import { db } from "@/server/database/index.ts";
 import { SESSION_COOKIE_NAME } from "@/server/middlewares/session.ts";
 import { Sessions } from "@/server/repositories/index.ts";
 import { application, type Application } from "@/server/routers/application.ts";
-import { apiAs } from "@/tests/support/clients.ts";
-import { createTestUser } from "@/tests/support/users.ts";
+
+import { apiAs } from "./clients.ts";
+import { createTestUser } from "./users.ts";
 
 /** The seeded session of the seeded user (`SEED_USER_ID`, LocalUser). */
 export const SEED_SESSION_ID = "00000000-0000-4000-8000-000000000123";
@@ -53,9 +54,9 @@ export async function expectStatus<T extends { status: number; clone(): { text()
   status: number,
 ) {
   const awaited = await response;
-  if (awaited.status !== status) {
+  if (awaited.status !== status)
     throw new Error(`Expected status ${status}, got ${awaited.status}: ${await awaited.clone().text()}`);
-  }
+
   return awaited;
 }
 

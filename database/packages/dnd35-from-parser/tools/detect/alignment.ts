@@ -40,9 +40,7 @@ function listedAlignments(lower: string): RequirementEntry | undefined {
   const matched: RequirementEntry[] = [];
   for (const part of parts) {
     const normalized = part === "neutral" ? "true neutral" : part;
-    if (ALIGNMENT_NAMES.includes(normalized)) {
-      matched.push(eqStr(ALIGNMENT_PATH, titleCase(normalized)));
-    }
+    if (ALIGNMENT_NAMES.includes(normalized)) matched.push(eqStr(ALIGNMENT_PATH, titleCase(normalized)));
   }
   return matched.length > 0 ? or(...matched) : undefined;
 }

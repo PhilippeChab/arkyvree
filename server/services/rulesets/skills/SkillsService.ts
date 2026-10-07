@@ -1,8 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { skillsInRules } from "@/drizzle/schema.ts";
-import { findScopedEntity, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { findScopedEntity, RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
@@ -30,9 +29,7 @@ class SkillsService {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
         (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-        if (stripSeparators(body.name) === "budget") {
-          throw new BadRequestError('"Budget" is a reserved skill name');
-        }
+        if (stripSeparators(body.name) === "budget") throw new BadRequestError('"Budget" is a reserved skill name');
 
         const edit = new RulesetEdit(ruleset, rulesetData.cow);
         const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "skills", body.name);
@@ -44,9 +41,7 @@ class SkillsService {
         const rows = await Skills.create(tx, { ...skillData, rulesetId });
         const skill = rows[0];
 
-        if (tombstoneAncestorId) {
-          await edit.repointTombstone(tx, "skills", tombstoneAncestorId, skill.id);
-        }
+        if (tombstoneAncestorId) await edit.repointTombstone(tx, "skills", tombstoneAncestorId, skill.id);
 
         const storedFlags = await effects.skills.syncProperties(tx, skill.id, flags);
         await effects.skills.generateSkillFeat(tx, { ruleset, rulesetData }, body.name);
@@ -166,9 +161,7 @@ class SkillsService {
 
         const skill = findScopedEntity(rulesetData.skillsById, skillId, rulesetId, sourceChain, "Skill");
 
-        if (stripSeparators(body.name) === "budget") {
-          throw new BadRequestError('"Budget" is a reserved skill name');
-        }
+        if (stripSeparators(body.name) === "budget") throw new BadRequestError('"Budget" is a reserved skill name');
 
         const edit = new RulesetEdit(ruleset, rulesetData.cow);
         const { id: targetId, copied } = await edit.cowToEdit(tx, "skills", skill);
@@ -178,9 +171,8 @@ class SkillsService {
         const { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining, updatedAt: _u, ...skillData } = body;
         const flags = { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining };
         const rows = await Skills.update(tx, skillData, { id: targetId, expectedUpdatedAt });
-        if (expectedUpdatedAt && rows.length === 0) {
-          throw new ConflictError(STALE_ENTITY_MESSAGE);
-        }
+        if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
+
         const updatedSkill = rows[0];
 
         const storedFlags = await effects.skills.syncProperties(tx, targetId, flags);

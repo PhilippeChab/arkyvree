@@ -8,15 +8,16 @@ import {
   type ReferenceType,
   type StoredReference,
 } from "@/database/packages/dnd35-from-parser/tools/references/resolve.ts";
-import { BASE_URL, getBookSlug } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
-import type { HttpClient } from "@/database/packages/dnd35-from-parser/tools/scraper/HttpClient.ts";
-import { parseListingHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
 import {
   sanitizeJsonValues,
   sortKeysDeep,
   stringifyStably,
 } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
 import { isRecord } from "@/shared/isRecord.ts";
+
+import { BASE_URL, getBookSlug } from "./books.ts";
+import type { HttpClient } from "./HttpClient.ts";
+import { parseListingHtml } from "./parsers/page.ts";
 
 /**
  * A scraper's core, which its concerns (`concerns/`) build on: the book it scrapes, the client it fetches pages with,
@@ -84,9 +85,7 @@ export class BaseScraper {
         if (isRecord(copy) && isRecord(copy._meta)) delete copy._meta.scrapedAt;
         return JSON.stringify(copy);
       };
-      if (stripTimestamp(sortKeysDeep(data)) === stripTimestamp(oldData)) {
-        return;
-      }
+      if (stripTimestamp(sortKeysDeep(data)) === stripTimestamp(oldData)) return;
     }
     mkdirSync(dirname(outPath), { recursive: true });
     writeFileSync(outPath, newJson);

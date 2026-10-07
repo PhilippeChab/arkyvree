@@ -41,9 +41,6 @@ export async function selectOption(page: Page, label: string, optionText?: strin
     : page;
   await scope.locator(`text="${label}"`).first().locator("..").locator('[role="combobox"]').click();
   await page.locator('[role="listbox"]').waitFor({ state: "visible" });
-  if (optionText) {
-    await page.locator(`[role="option"]:has-text("${optionText}")`).click();
-  } else {
-    await page.locator('[role="option"]').first().click();
-  }
+  if (optionText) await page.locator(`[role="option"]:has-text("${optionText}")`).click();
+  else await page.locator('[role="option"]').first().click();
 }

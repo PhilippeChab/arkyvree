@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 
-import signedIn from "@/server/routers/authentication/signedIn/index.ts";
-import signedOut from "@/server/routers/authentication/signedOut/index.ts";
+import signedIn from "./signedIn/index.ts";
+import signedOut from "./signedOut/index.ts";
 
 /**
  * The `/auth` routes. The signed-out ones are mounted first: the signed-in router's middleware (its session) applies to

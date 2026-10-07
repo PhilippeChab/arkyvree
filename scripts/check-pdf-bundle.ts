@@ -10,9 +10,9 @@ const fixture = fileURLToPath(new URL("../tests/fixtures/pdf/compiled-document.t
 
 try {
   // Match the production image's isolated, frozen runtime dependency install.
-  for (const file of ["package.json", "bun.lock"]) {
+  for (const file of ["package.json", "bun.lock"])
     await copyFile(new URL(`../runtime/${file}`, import.meta.url), join(directory, file));
-  }
+
   const install = Bun.spawn([process.execPath, "install", "--frozen-lockfile", "--production", "--ignore-scripts"], {
     cwd: directory,
     stdout: "pipe",
@@ -58,9 +58,9 @@ try {
   const pdf = Buffer.from(output).toString("latin1");
   assert(pdf.startsWith("%PDF-"), "Expected a PDF document");
   assert(pdf.trimEnd().endsWith("%%EOF"), "Expected a complete PDF document");
-  for (const font of ["Helvetica", "Helvetica-Bold", "Helvetica-Oblique", "Helvetica-BoldOblique"]) {
+  for (const font of ["Helvetica", "Helvetica-Bold", "Helvetica-Oblique", "Helvetica-BoldOblique"])
     assert(pdf.includes(`/BaseFont /${font}\n`), `Missing font ${font}`);
-  }
+
   process.stdout.write(`Compiled PDF generation passed (${output.byteLength} bytes; all four Helvetica styles).\n`);
 } finally {
   await rm(directory, { recursive: true, force: true });

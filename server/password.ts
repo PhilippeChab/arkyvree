@@ -1,6 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 
-import { isTest } from "@/server/environment.ts";
+import { isTest } from "./environment.ts";
 
 /** Whether two digests are the same, compared in constant time. */
 function sameDigest(a: string, b: string): boolean {

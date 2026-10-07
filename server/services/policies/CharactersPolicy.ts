@@ -28,12 +28,11 @@ export default class CharactersPolicy extends BasePolicy<Character> {
 
   /** `inActiveCampaign`: the character is linked to a campaign that isn't archived. */
   canHardDelete({ inActiveCampaign }: { inActiveCampaign: boolean }) {
-    if (!this.isOwner) {
-      throw new ForbiddenError("Only the owner can permanently delete this character");
-    }
-    if (!this.entity.deletedAt) {
+    if (!this.isOwner) throw new ForbiddenError("Only the owner can permanently delete this character");
+
+    if (!this.entity.deletedAt)
       throw new UnprocessableEntityError("Only archived characters can be permanently deleted");
-    }
+
     if (inActiveCampaign) {
       throw new ConflictError(
         "This character is linked to an active campaign and cannot be permanently deleted. Remove it from the campaign first.",
@@ -43,16 +42,15 @@ export default class CharactersPolicy extends BasePolicy<Character> {
   }
 
   canManageContributors() {
-    if (!this.isOwner) {
-      throw new ForbiddenError("Only the owner can manage contributors");
-    }
+    if (!this.isOwner) throw new ForbiddenError("Only the owner can manage contributors");
+
     return true;
   }
 
   canReadContributors() {
-    if (!this.isOwner && !this.isActiveContributor) {
+    if (!this.isOwner && !this.isActiveContributor)
       throw new ForbiddenError("You are not a contributor of this character");
-    }
+
     return true;
   }
 }

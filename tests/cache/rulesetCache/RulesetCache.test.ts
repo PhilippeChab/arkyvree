@@ -337,12 +337,9 @@ describe("rulesetCache", () => {
       const visibleKlassIds = new Set(seedData.klasses.map((k) => k.id));
       const visibleKlassLevelIds = new Set(seedData.klassLevels.map((kl) => kl.id));
 
-      for (const ks of seedData.klassSkills) {
-        expect(visibleKlassIds.has(ks.klassId)).toBe(true);
-      }
-      for (const kls of seedData.klassLevelSaves) {
-        expect(visibleKlassLevelIds.has(kls.klassLevelId)).toBe(true);
-      }
+      for (const ks of seedData.klassSkills) expect(visibleKlassIds.has(ks.klassId)).toBe(true);
+
+      for (const kls of seedData.klassLevelSaves) expect(visibleKlassLevelIds.has(kls.klassLevelId)).toBe(true);
     });
 
     test("base tier-1 is reused across multiple forks — same reference", async () => {

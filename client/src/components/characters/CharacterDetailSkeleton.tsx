@@ -1,9 +1,15 @@
 import { Box, Container, Paper, Skeleton, Stack, Typography } from "@mui/material";
+import { type ReactNode } from "react";
 
 import { DiceSpinner } from "@/client/src/components/common/index.ts";
-import { EASING, fadeInUpSx, prefersReducedMotion, pulse } from "@/client/src/lib/animations.ts";
+import { EASING, fadeInUpSx, PREFERS_REDUCED_MOTION, pulse } from "@/client/src/lib/animations.ts";
 
-function Section({ index, children }: { index: number; children: React.ReactNode }) {
+interface SectionProps {
+  index: number;
+  children: ReactNode;
+}
+
+function Section({ index, children }: SectionProps) {
   return <Paper sx={{ p: { xs: 2, sm: 3 }, ...fadeInUpSx(index) }}>{children}</Paper>;
 }
 
@@ -18,7 +24,7 @@ export function CharacterDetailSkeleton() {
           sx={{
             color: "text.secondary",
             animation: `${pulse} 2s ${EASING.standard} infinite`,
-            [prefersReducedMotion]: { animation: "none", opacity: 0.6 },
+            [PREFERS_REDUCED_MOTION]: { animation: "none", opacity: 0.6 },
           }}
         >
           Loading character sheet...

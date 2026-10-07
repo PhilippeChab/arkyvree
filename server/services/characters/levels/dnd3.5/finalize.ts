@@ -9,8 +9,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { levelsInCharacter } from "@/drizzle/schema.ts";
-import type { RulesetData, RulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { type RulesetData, type RulesetScope, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { type Db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
 import {
@@ -62,20 +61,16 @@ function poolIds(aptitudesInstance: AptitudesComponent, rulesetData: RulesetData
   const nonLeveledAptitudeIds: string[] = [];
 
   for (const [key, aptitude] of Object.entries(aptitudesInstance.getAptitudes())) {
-    if (aptitudesInstance.isLeveledAptitude(key)) {
-      powerPoolIds.push(aptitude.id);
-    } else {
-      nonLeveledAptitudeIds.push(aptitude.id);
-    }
+    if (aptitudesInstance.isLeveledAptitude(key)) powerPoolIds.push(aptitude.id);
+    else nonLeveledAptitudeIds.push(aptitude.id);
   }
 
   const sharedAptitudeIds = new Set(
     nonLeveledAptitudeIds.filter((id) => rulesetData.aptitudeIdsByHavingPowers.has(id)),
   );
   for (const aptId of nonLeveledAptitudeIds) {
-    if (sharedAptitudeIds.has(aptId)) {
-      powerPoolIds.push(aptId);
-    }
+    if (sharedAptitudeIds.has(aptId)) powerPoolIds.push(aptId);
+
     featPoolIds.push(aptId);
   }
   return { featPoolIds, powerPoolIds };
@@ -188,9 +183,7 @@ async function insertPlannedLevels(
       characterId,
       klassLevelId: klassLevel.id,
     });
-    if (existingLevel) {
-      throw new BadRequestError(`Level ${i + 1}: This level has already been finalized`);
-    }
+    if (existingLevel) throw new BadRequestError(`Level ${i + 1}: This level has already been finalized`);
 
     // Validate ability increase timing using base count + plan offset
     const totalLevelCount = baseExistingLevels.length + i;
@@ -316,9 +309,7 @@ async function ownedPoolNames(
   await baselineCharacter.build(tx, baselineData, scope);
   const baselineApts = baselineCharacter.components.aptitudes.getAptitudes();
   const baselineAllowed = new Map<string, number>();
-  for (const apt of Object.values(baselineApts)) {
-    baselineAllowed.set(apt.name, apt.allowed);
-  }
+  for (const apt of Object.values(baselineApts)) baselineAllowed.set(apt.name, apt.allowed);
 
   // Mirror the primary projection's shape exactly: auto-grants via
   // `givenFeats` and the user's submitted feats/skills/powers via
@@ -340,11 +331,9 @@ async function ownedPoolNames(
   await withLevelCharacter.build(tx, withLevelData, scope);
   const withLevelApts = withLevelCharacter.components.aptitudes.getAptitudes();
   const owned = new Set<string>();
-  for (const apt of Object.values(withLevelApts)) {
-    if (apt.allowed > (baselineAllowed.get(apt.name) ?? 0)) {
-      owned.add(apt.name);
-    }
-  }
+  for (const apt of Object.values(withLevelApts))
+    if (apt.allowed > (baselineAllowed.get(apt.name) ?? 0)) owned.add(apt.name);
+
   return owned;
 }
 
@@ -424,9 +413,7 @@ export async function finalizeLevelUp(
 
       if (!force) {
         const { valid, issues } = detailedCharacter.validate();
-        if (!valid) {
-          throw new BadRequestError(issues.map((iss) => iss.message).join("; "), { issues });
-        }
+        if (!valid) throw new BadRequestError(issues.map((iss) => iss.message).join("; "), { issues });
       }
 
       await reconcileAllBondedKinds(tx, characterRecord, detailedCharacter, rulesetData);
@@ -452,9 +439,7 @@ export async function removeLevel(session: Session, characterId: string) {
     const lastLevel = await CharacterLevels.findLatest(tx, {
       characterId,
     });
-    if (!lastLevel) {
-      throw new NotFoundError("No level to remove.");
-    }
+    if (!lastLevel) throw new NotFoundError("No level to remove.");
 
     await deleteLevelChildren(tx, lastLevel.id);
     await CharacterLevels.delete(tx, { id: lastLevel.id });
@@ -497,9 +482,9 @@ export async function updateLevel(
       const characterLevel = await CharacterLevels.findOne(tx, {
         id: characterLevelId,
       });
-      if (!characterLevel || characterLevel.characterId !== characterId) {
+      if (!characterLevel || characterLevel.characterId !== characterId)
         throw new NotFoundError("Character level not found");
-      }
+
       const { klassLevel, klass } = getSavedKlassLevel(rulesetData, characterLevel);
 
       const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
@@ -545,9 +530,8 @@ export async function updateLevel(
         const relevantIssues = issues.filter(
           (issue) => issue.category !== "aptitudes" || [...owned].some((name) => issue.message.startsWith(name)),
         );
-        if (relevantIssues.length > 0) {
+        if (relevantIssues.length > 0)
           throw new BadRequestError(relevantIssues.map((i) => i.message).join("; "), { issues: relevantIssues });
-        }
       }
 
       await deleteLevelChildren(tx, characterLevelId);

@@ -192,13 +192,8 @@ describe("characters", () => {
       height: "5'10\"",
       weight: "170 lbs",
     };
-    for (const json of [
-      { xp: 0 },
-      { ...valid, alignment: "Invalid Alignment" },
-      { ...valid, gender: "InvalidGender" },
-    ]) {
+    for (const json of [{ xp: 0 }, { ...valid, alignment: "Invalid Alignment" }, { ...valid, gender: "InvalidGender" }])
       await expectStatus(characters.$post({ json: json as never }), 400);
-    }
   });
 
   test("returns 404 for a missing character", async () => {

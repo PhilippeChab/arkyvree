@@ -25,9 +25,8 @@ export type SeedContext = RulesetSeedContext & {
  */
 function buildKindMap(rows: { name: string; id: string; kind: string }[]): Record<string, Record<string, string>> {
   const out: Record<string, Record<string, string>> = {};
-  for (const row of rows) {
-    (out[row.kind] ??= {})[row.name] = row.id;
-  }
+  for (const row of rows) (out[row.kind] ??= {})[row.name] = row.id;
+
   return out;
 }
 

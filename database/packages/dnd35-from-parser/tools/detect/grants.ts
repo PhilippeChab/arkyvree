@@ -34,15 +34,12 @@ function detectBondedLevelFormula(description: string, classSlug: string): strin
   const base = `[classes.${classSlug}.level]`;
 
   // "half ... level" (Ranger)
-  if (/\bhalf\b[\w\s'.]*?\blevel\b/i.test(description)) {
-    return `floor(${base} / 2)`;
-  }
+  if (/\bhalf\b[\w\s'.]*?\blevel\b/i.test(description)) return `floor(${base} / 2)`;
 
   // "level + N" / "level plus N" (Beastmaster)
   const plusMatch = description.match(/\blevel\s*(?:\+|plus)\s*(\d+)/i);
-  if (plusMatch) {
-    return `max(0, ${base} + ${plusMatch[1]})`;
-  }
+  if (plusMatch) return `max(0, ${base} + ${plusMatch[1]})`;
+
   const higherMatch = description.match(/(\d+|\w+)\s+levels?\s+higher/i);
   if (higherMatch) {
     const n = parseInt(higherMatch[1], 10) || NUMBER_WORDS[higherMatch[1].toLowerCase()];
@@ -56,9 +53,7 @@ function detectBondedLevelFormula(description: string, classSlug: string): strin
     if (n) return `max(0, ${base} - ${n})`;
   }
   const minusMatch = description.match(/\blevel\s*(?:-|minus)\s*(\d+)/i);
-  if (minusMatch) {
-    return `max(0, ${base} - ${minusMatch[1]})`;
-  }
+  if (minusMatch) return `max(0, ${base} - ${minusMatch[1]})`;
 
   return base;
 }

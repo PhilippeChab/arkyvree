@@ -1,9 +1,9 @@
 import { expect, type Page } from "@playwright/test";
 import { parseResponse } from "hono/client";
 
-import { apiOf } from "@/tests/e2e/support/api.ts";
-import { filterList, selectOption } from "@/tests/e2e/support/page.ts";
-import { coreRulesetId } from "@/tests/e2e/support/rulesets.ts";
+import { apiOf } from "./api.ts";
+import { filterList, selectOption } from "./page.ts";
+import { coreRulesetId } from "./rulesets.ts";
 
 /** Creates a human D&D 3.5 character with 10 in each ability through the API, and opens its sheet. Returns its id. */
 export async function createCharacter(page: Page, name: string) {

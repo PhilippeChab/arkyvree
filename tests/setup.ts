@@ -11,8 +11,9 @@ import type { PoolClient } from "pg";
 
 import { createTestDbFromClient, createTestPool, setTestDb } from "@/server/database/test.ts";
 import ObjectStorage from "@/server/storage/ObjectStorage.ts";
-import { forgetSeededRulesetWrites } from "@/tests/support/rulesets.ts";
-import { fakeStorage } from "@/tests/support/storage.ts";
+
+import { forgetSeededRulesetWrites } from "./support/rulesets.ts";
+import { fakeStorage } from "./support/storage.ts";
 
 let endTest: (() => void) | null = null;
 let testClient: PoolClient | null = null;

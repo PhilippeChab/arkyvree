@@ -49,11 +49,8 @@ export default class DetailedCharacterFamiliar extends DetailedCharacterBonded {
 
     const masterSaves = master.components.savingThrows.getSavingThrows();
     const familiarSaves = this.components.savingThrows.getSavingThrows();
-    for (const saveName of Object.keys(familiarSaves)) {
-      if (masterSaves[saveName]) {
-        familiarSaves[saveName].base = masterSaves[saveName].base;
-      }
-    }
+    for (const saveName of Object.keys(familiarSaves))
+      if (masterSaves[saveName]) familiarSaves[saveName].base = masterSaves[saveName].base;
 
     this.masterSkillRanks = Object.fromEntries(
       Object.entries(master.components.skills.getSkills()).map(([slug, skill]) => [slug, skill.rank]),

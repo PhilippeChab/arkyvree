@@ -1,5 +1,6 @@
 import { PASSWORD_DIGEST } from "@/database/seeds/users.ts";
-import { queryDatabase } from "@/tests/e2e/support/database.ts";
+
+import { queryDatabase } from "./database.ts";
 
 export type E2EUser = { email: string; password: string; username: string };
 

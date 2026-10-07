@@ -2,9 +2,10 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
-import propertyTypesRouter from "@/server/routers/api/rulesets/customization/properties/types/index.ts";
 import { entityParams } from "@/server/routers/api/rulesets/customization/validation.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
+
+import propertyTypesRouter from "./types/index.ts";
 
 const propertyParams = entityParams.extend({ propertyId: z.string().uuid() });
 

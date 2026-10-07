@@ -1,11 +1,10 @@
-import { Translate as LanguagesIcon } from "@mui/icons-material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useCallback } from "react";
 
 import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
-import type { RulesetLanguage } from "@/client/src/hooks/index.ts";
-import { useSearchText } from "@/client/src/hooks/index.ts";
+import { LanguagesIcon } from "@/client/src/components/icons/index.ts";
+import { type RulesetLanguage, useSearchText } from "@/client/src/hooks/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import {
   EMPTY_LANGUAGE,

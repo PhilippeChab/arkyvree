@@ -1,10 +1,10 @@
-import { skipToken, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { type DefaultError, useMutation, useQuery, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";
 import { useState } from "react";
 import { type DefaultValues, type FieldValues } from "react-hook-form";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 
 interface RulesetSectionConfig<
   TData,
@@ -16,7 +16,8 @@ interface RulesetSectionConfig<
   rulesetId: string;
   sectionName: string;
   label: string;
-  queryFn?: () => Promise<TData[]>;
+  /** The section's own rows, a factory's options (`modifiersQuery(…)`), read unless `data` hands them over */
+  query?: UseQueryOptions<TData[], DefaultError, TData[], SectionKey>;
   data?: TData[];
   queryKeysToInvalidate?: readonly (readonly unknown[])[];
   /** Resolves to the created entity; its id is handed to `onCreateSuccess`. */
@@ -31,6 +32,9 @@ interface RulesetSectionConfig<
   createDefaults: TFormData & DefaultValues<TFormData>;
 }
 
+/** Where a section's rows are cached, which its saves refresh */
+type SectionKey = ReturnType<typeof QUERY_KEYS.rulesets.section>;
+
 export function useRulesetSection<
   TData extends { id: string },
   TFormData extends FieldValues,
@@ -41,7 +45,7 @@ export function useRulesetSection<
   rulesetId,
   sectionName,
   label,
-  queryFn,
+  query,
   data: externalData,
   queryKeysToInvalidate,
   createFn,
@@ -66,15 +70,14 @@ export function useRulesetSection<
   const createForm = useFormWith<TFormData>(createDefaults);
   const editForm = useFormWith<TFormData>(createDefaults);
 
-  // Data query (only when queryFn is provided and no external data)
+  // A section handed its rows, or with none of its own to read, keeps its query idle
   const {
     data: queryData,
     isLoading,
     error,
-  } = useQuery({
-    queryKey: queryKeys.rulesets.section(rulesetId, sectionName),
-    queryFn: !externalData && queryFn && rulesetId ? queryFn : skipToken,
-  });
+  } = useQuery<TData[], DefaultError, TData[], SectionKey>(
+    query && !externalData ? query : { queryKey: QUERY_KEYS.rulesets.section(rulesetId, sectionName), enabled: false },
+  );
 
   const data = externalData ?? queryData;
 
@@ -86,11 +89,10 @@ export function useRulesetSection<
   };
 
   const invalidateOnMutation = () => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.section(rulesetId, sectionName) });
-    for (const queryKey of queryKeysToInvalidate ?? []) {
-      queryClient.invalidateQueries({ queryKey });
-    }
-    queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.changes(rulesetId) });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.section(rulesetId, sectionName) });
+    for (const queryKey of queryKeysToInvalidate ?? []) queryClient.invalidateQueries({ queryKey });
+
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.changes(rulesetId) });
   };
 
   const createMutation = useMutation({
@@ -141,9 +143,8 @@ export function useRulesetSection<
 
   const handleEdit = (item: TData, resetData?: TFormData) => {
     setSelectedItem(item);
-    if (resetData) {
-      editForm.reset(resetData);
-    }
+    if (resetData) editForm.reset(resetData);
+
     setEditDialogOpen(true);
   };
 
@@ -153,9 +154,7 @@ export function useRulesetSection<
   };
 
   const confirmDelete = () => {
-    if (itemToDelete) {
-      deleteMutation.mutate(itemToDelete);
-    }
+    if (itemToDelete) deleteMutation.mutate(itemToDelete);
   };
 
   return {

@@ -2,18 +2,23 @@ import { useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useCallback, useRef, useState } from "react";
 
 import { ConfirmDialog } from "@/client/src/components/common/index.ts";
-import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useWebSocket } from "@/client/src/contexts/useWebSocket.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { useDirtyFormsStore } from "@/client/src/stores/dirtyFormsStore.ts";
 
+import { useSnackbar } from "./useSnackbar.ts";
+import { useWebSocket } from "./useWebSocket.ts";
+
+interface WebSocketProviderProps {
+  children: ReactNode;
+}
+
 const EVENT_INVALIDATION_MAP: Record<string, readonly (readonly string[])[]> = {
-  "activities:updated": [queryKeys.activities.all, queryKeys.dashboard.stats],
-  "notifications:updated": [queryKeys.notifications.all, queryKeys.activities.all, queryKeys.dashboard.stats],
+  "activities:updated": [QUERY_KEYS.activities.all, QUERY_KEYS.dashboard.stats],
+  "notifications:updated": [QUERY_KEYS.notifications.all, QUERY_KEYS.activities.all, QUERY_KEYS.dashboard.stats],
 };
 
-export function WebSocketProvider({ children }: { children: ReactNode }) {
+export function WebSocketProvider({ children }: WebSocketProviderProps) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const userId = useAuthStore((s) => s.user?.id ?? null);
   const queryClient = useQueryClient();
@@ -22,7 +27,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   // A refresh would discard unsaved form work: confirm it first.
   const [confirmRefresh, setConfirmRefresh] = useState(false);
 
-  const onMessage = useCallback(
+  const handleMessage = useCallback(
     (data: { type: string; [key: string]: unknown }) => {
       if (data.type === "app:version") {
         if (typeof data.version !== "string") return;
@@ -45,14 +50,12 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
 
       const keys = EVENT_INVALIDATION_MAP[data.type];
       if (!keys) return;
-      for (const key of keys) {
-        queryClient.invalidateQueries({ queryKey: key });
-      }
+      for (const key of keys) queryClient.invalidateQueries({ queryKey: key });
     },
     [queryClient, snackbar],
   );
 
-  useWebSocket({ enabled: isAuthenticated, identity: userId, onMessage });
+  useWebSocket({ enabled: isAuthenticated, identity: userId, onMessage: handleMessage });
 
   return (
     <>

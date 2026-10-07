@@ -61,11 +61,8 @@ export function validateModifiers<M extends ModifierEffect>(
   const validated: M[] = [];
   const errors: string[] = [];
   for (const m of modifiers) {
-    if (isValid(m.target)) {
-      validated.push(m);
-    } else {
-      errors.push(`Invalid modifier path "${m.target}": ${m.operator} ${m.value}`);
-    }
+    if (isValid(m.target)) validated.push(m);
+    else errors.push(`Invalid modifier path "${m.target}": ${m.operator} ${m.value}`);
   }
   return { validated, errors };
 }

@@ -1,9 +1,4 @@
 import { include } from "@/server/mixins.ts";
-import CharacterState, { type DataLoader } from "@/server/rulesets/dnd3.5/character/CharacterState.ts";
-import { buildComponents, type Dnd35Components } from "@/server/rulesets/dnd3.5/character/components.ts";
-import { Builds } from "@/server/rulesets/dnd3.5/character/concerns/Builds.ts";
-import { PossessesVirtually } from "@/server/rulesets/dnd3.5/character/concerns/PossessesVirtually.ts";
-import { Validates } from "@/server/rulesets/dnd3.5/character/concerns/Validates.ts";
 import TargetPaths from "@/server/rulesets/dnd3.5/Dnd35TargetPaths.ts";
 import { Dnd35LevelsRules } from "@/server/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
 import DetailedCharacterDataLoader from "@/server/rulesets/dnd3.5/loading/DetailedCharacterDataLoader.ts";
@@ -11,6 +6,12 @@ import ModifierEvaluator from "@/server/rulesets/engine/modifiers/ModifierEvalua
 import RequirementEvaluator from "@/server/rulesets/engine/requirements/RequirementEvaluator.ts";
 import type { DetailedCharacterInterface } from "@/server/rulesets/engine/types.ts";
 import type { Character, CharacterLevel, KlassLevel, Requirement } from "@/shared/relations.ts";
+
+import CharacterState, { type DataLoader } from "./CharacterState.ts";
+import { buildComponents, type Dnd35Components } from "./components.ts";
+import { Builds } from "./concerns/Builds.ts";
+import { PossessesVirtually } from "./concerns/PossessesVirtually.ts";
+import { Validates } from "./concerns/Validates.ts";
 
 /** A 3.5 character: its components wired, built and validated by its concerns. */
 export default class DetailedCharacter

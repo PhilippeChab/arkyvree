@@ -31,9 +31,8 @@ class TargetPathsService {
     flat: boolean = false,
   ): Promise<PaginatedCompletions> {
     const { paths: allPaths, segmentLabels } = await getTargetPathsWithLabels(rulesetId, kind, entityType);
-    if (flat) {
+    if (flat)
       return { ...paginateItems(getFlatCompletions(allPaths, segmentLabels, search), { limit, page }), segmentLabels };
-    }
 
     const generator = await RulesetFactory.fromRulesetId(rulesetId).then((m) => m.createTargetPaths());
     const segments = resolveCompletedPrefix(allPaths, partialPath, position).split(".");

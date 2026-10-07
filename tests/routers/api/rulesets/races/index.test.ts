@@ -40,9 +40,8 @@ describe("rulesets races", () => {
       { ...valid, name: "" },
       { ...valid, size: "Colossal-ish" },
       { ...valid, baseSpeed: "fast" },
-    ]) {
+    ])
       await expectStatus(races.$post({ param: { id }, json: json as never }), 400);
-    }
   });
 
   test("returns 404 for a missing ruleset or race", async () => {

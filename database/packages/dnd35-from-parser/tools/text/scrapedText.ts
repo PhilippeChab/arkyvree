@@ -1,6 +1,6 @@
 /** The scraped text, cleaned as the seeds store it. */
 
-import { sanitizeText } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
+import { sanitizeText } from "./sanitize.ts";
 
 const WEAPON_DESC_PATTERNS = [/the selected weapon/gi, /selected weapon/gi, /the weapon you selected/gi];
 
@@ -26,15 +26,13 @@ export const NUMBER_WORDS: Record<string, number> = {
 export const PART_SEPARATOR = "\u2063";
 
 export function expandTemplateDescription(description: string, type: string, item: string): string {
-  if (type === "weapon" || type === "crossbow") {
+  if (type === "weapon" || type === "crossbow")
     return WEAPON_DESC_PATTERNS.reduce((text, pattern) => text.replace(pattern, item), description);
-  }
-  if (type === "skill") {
-    return description.replace(/that skill|\{skill\}/gi, item);
-  }
-  if (type === "school") {
-    return description.replace(/\{school\}/g, item);
-  }
+
+  if (type === "skill") return description.replace(/that skill|\{skill\}/gi, item);
+
+  if (type === "school") return description.replace(/\{school\}/g, item);
+
   return description;
 }
 

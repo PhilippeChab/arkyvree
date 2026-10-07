@@ -1,7 +1,6 @@
 /** The repositories' shared instances, each wrapped in the request cache (`withRequestCache`). */
 
 import { emailVerificationsInAccount, passwordResetsInAccount } from "@/drizzle/schema.ts";
-import RulesetEntitiesRepository from "@/server/repositories/rulesets/RulesetEntitiesRepository.ts";
 
 import AccountCodesRepository from "./accounts/AccountCodesRepository.ts";
 import OauthAccountsRepository from "./accounts/OauthAccountsRepository.ts";
@@ -46,6 +45,7 @@ import PowersRepository from "./rulesets/PowersRepository.ts";
 import PropertiesRepository from "./rulesets/PropertiesRepository.ts";
 import RacesRepository from "./rulesets/RacesRepository.ts";
 import RequirementsRepository from "./rulesets/RequirementsRepository.ts";
+import RulesetEntitiesRepository from "./rulesets/RulesetEntitiesRepository.ts";
 import RulesetExtensionsRepository from "./rulesets/RulesetExtensionsRepository.ts";
 import RulesetsRepository from "./rulesets/RulesetsRepository.ts";
 import SavesRepository from "./rulesets/SavesRepository.ts";

@@ -348,9 +348,9 @@ describe("LevelsService", () => {
       for (const [entityId, entityType, target, operator, value, valueType] of [
         [klass.id, "klasses", "feats.powerattack.possessed", "equal", "true", "boolean"],
         [level.id, "klass_levels", "combat.bab", "greater_than_or_equal", "1", "number"],
-      ]) {
+      ])
         await Requirements.create(db, { entityId, entityType, level: "1", target, operator, value, valueType });
-      }
+
       const fighterWith = async (featName: string) => {
         const characterId = await createSeedCharacter(ctx, "fighter", { xp: 1000, rulesetId: fork.id });
         const levelIds = await addClassLevels(db, ctx, characterId, "Fighter", [1], [10]);

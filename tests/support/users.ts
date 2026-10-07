@@ -2,7 +2,8 @@ import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { EmailVerifications, Users } from "@/server/repositories/index.ts";
 import type { Session } from "@/shared/relations.ts";
-import { uniqueId } from "@/tests/support/seed.ts";
+
+import { uniqueId } from "./seed.ts";
 
 /**
  * A session for `userId` that services accept. It isn't stored, so it can't

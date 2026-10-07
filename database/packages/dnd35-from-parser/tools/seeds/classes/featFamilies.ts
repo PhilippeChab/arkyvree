@@ -14,8 +14,7 @@ const CLASS_FEAT_FAMILIES: { pattern: RegExp; family: string }[] = [
 export const CLASS_FEAT_FAMILY_NAMES = [...CLASS_FEAT_FAMILIES.map(({ family }) => family), FAVORED_ENEMY_FAMILY];
 
 export function detectClassFeatFamily(name: string): string | undefined {
-  for (const { pattern, family } of CLASS_FEAT_FAMILIES) {
-    if (pattern.test(name)) return family;
-  }
+  for (const { pattern, family } of CLASS_FEAT_FAMILIES) if (pattern.test(name)) return family;
+
   return undefined;
 }

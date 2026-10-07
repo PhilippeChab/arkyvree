@@ -68,9 +68,9 @@ export function ScrapesDomains<B extends Constructor<BaseScraper>>(Base: B) {
       for (const version of versions) {
         const name = parseDomainName(version.label);
         const candidates = new Map<string, DomainPageSpell>();
-        for (const page of pages.filter((p) => parseDomainName(p.label) === name)) {
+        for (const page of pages.filter((p) => parseDomainName(p.label) === name))
           for (const spell of page.spells) if (spell.edition.includes("3.5")) candidates.set(spell.path, spell);
-        }
+
         const spells = [];
         for (const spell of candidates.values()) {
           const levels = parseSpellDomainLevelsHtml(
