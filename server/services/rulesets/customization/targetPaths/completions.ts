@@ -1,5 +1,5 @@
 import type { TargetPathsInterface } from "@/server/rulesets/engine/types.ts";
-import type { PathCompletion, TargetPath } from "@/shared/customization/target.ts";
+import type { PathCompletion, TargetPath, TargetPathKind } from "@/shared/customization/target.ts";
 import { capitalize } from "@/shared/text.ts";
 
 type SegmentInfo = { examplePath: TargetPath | null; isGroup: boolean; groupDesc: string | undefined };
@@ -40,7 +40,7 @@ function nextSegments(allPaths: TargetPath[], baseDot: string, segmentPrefix: st
 export function buildSegmentDescriber(
   generator: TargetPathsInterface,
   segmentLabels: Record<string, string>,
-  kind: "modifier" | "requirement",
+  kind: TargetPathKind,
 ) {
   const pathDescriptions = generator.getPathDescriptions();
   const groupTemplates = generator.getGroupDescriptionTemplates();

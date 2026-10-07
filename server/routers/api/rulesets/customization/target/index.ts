@@ -18,7 +18,7 @@ export default new Hono()
       z.object({
         partialPath: z.string(),
         position: z.number(),
-        kind: z.enum(["modifier", "requirement"]),
+        kind: z.enum(["modifier", "requirement", "template"]),
         entityType: z.string().optional(),
         search: z.string().optional(),
         flat: z.boolean().optional(),
@@ -56,7 +56,7 @@ export default new Hono()
       "json",
       z.object({
         path: z.string(),
-        kind: z.enum(["modifier", "requirement"]),
+        kind: z.enum(["modifier", "requirement", "template"]),
         entityType: z.string().optional(),
       }),
     ),

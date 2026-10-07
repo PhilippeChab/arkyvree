@@ -7,11 +7,10 @@ import { FIVE_SECONDS } from "@/client/src/lib/durations.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
+import type { TargetPathKind } from "@/shared/customization/target.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import { type PathInfo, toPathInfo } from "./pathValues.ts";
-
-type ConditionKind = "modifier" | "requirement";
 
 /** A picker's aptitudes, searched on the server: a ruleset's, or those of its feats or its spells. */
 export function aptitudeOptionsQuery(rulesetId: string, search: string, scope?: "feats" | "spells") {
@@ -78,7 +77,7 @@ export function propertyValueCompletionsQuery(rulesetId: string, propertyType: s
 export function seedTargetPath(
   queryClient: QueryClient,
   rulesetId: string,
-  kind: ConditionKind,
+  kind: TargetPathKind,
   picked: PathInfo,
   entityType?: string,
 ) {
@@ -91,7 +90,7 @@ export function seedTargetPath(
  */
 export function targetCompletionsQuery(
   rulesetId: string,
-  kind: ConditionKind,
+  kind: TargetPathKind,
   entityType: string | undefined,
   prefix: string,
   search: string,
@@ -132,7 +131,7 @@ export function targetCompletionsQuery(
 }
 
 /** What a target path takes, once it's a complete path its entity type takes: null while it's incomplete or unknown. */
-export function targetPathQuery(rulesetId: string, kind: ConditionKind, path: string, entityType?: string) {
+export function targetPathQuery(rulesetId: string, kind: TargetPathKind, path: string, entityType?: string) {
   return queryOptions({
     queryKey: QUERY_KEYS.rulesets.targetPath(rulesetId, kind, path, entityType),
     queryFn: path

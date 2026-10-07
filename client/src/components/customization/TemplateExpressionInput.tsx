@@ -11,8 +11,6 @@ interface TemplateExpressionInputProps {
   /** Called with the new inner expression whenever the user edits. */
   onChange: (expression: string) => void;
   rulesetId: string;
-  /** "modifier" gates writable target paths; "requirement" gates comparable ones. */
-  kind: "modifier" | "requirement";
   disabled?: boolean;
   error?: boolean;
   helperText?: string;
@@ -43,7 +41,6 @@ export function TemplateExpressionInput({
   value,
   onChange,
   rulesetId,
-  kind,
   disabled,
   error,
   helperText,
@@ -163,7 +160,7 @@ export function TemplateExpressionInput({
       >
         <TargetPathInput
           rulesetId={rulesetId}
-          kind={kind}
+          kind="template"
           value={pickerPath}
           onChange={(path, picked) => {
             if (picked) insertBracketed(path);

@@ -18,14 +18,14 @@ import { ChevronRightIcon, ClearIcon, FilterListIcon, PublicIcon } from "@/clien
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 import { firstPage, pageItems } from "@/client/src/lib/pageItems.ts";
-import { formatSegment, type PathCompletion } from "@/shared/customization/target.ts";
+import { formatSegment, type PathCompletion, type TargetPathKind } from "@/shared/customization/target.ts";
 
 import { targetCompletionsQuery } from "./customizationQueries.ts";
 import { type PathInfo, toPathInfo } from "./pathValues.ts";
 
 interface TargetPathBrowserProps {
   rulesetId: string;
-  kind: "modifier" | "requirement";
+  kind: TargetPathKind;
   entityType?: string;
   segments: string[];
   isComplete: boolean;

@@ -327,6 +327,8 @@ Feats auto-generated per unique school in `powers/spellGenerator.generateSpellFo
 
 Use `{{ target.path }}` syntax to reference another stat as the modifier value. Template modifiers are evaluated **after** all literal modifiers, so they read final resolved values (see [How a sheet is built](#how-a-sheet-is-built)).
 
+The template field's path picker lists what a template reads (the `template` kind of the target path listing): one value each from the sheet, the read-only totals and modifiers included (`abilities.charisma.modifier`, `combat.ac.total`). It leaves out what a template can't read: wildcards, a skill family's paths and a spell's property lists (`readsMany`: several values, or a list), and an item's own weapon paths (`weapon.*`), which read the item a template doesn't have.
+
 ```ts
 // Divine Grace: add CHA modifier to all saves
 modifiers: [

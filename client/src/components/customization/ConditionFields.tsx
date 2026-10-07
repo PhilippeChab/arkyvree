@@ -198,7 +198,6 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, fields }: C
             value={templateExpression}
             onChange={handleExpressionChange}
             rulesetId={rulesetId}
-            kind={kind}
             disabled={!templateMode}
             error={!!errors.value}
             helperText={errors.value?.message}

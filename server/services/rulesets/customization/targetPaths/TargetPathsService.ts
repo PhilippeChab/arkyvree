@@ -1,6 +1,6 @@
 import { paginateItems } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import type { PaginatedCompletions, PathCompletion } from "@/shared/customization/target.ts";
+import type { PaginatedCompletions, PathCompletion, TargetPathKind } from "@/shared/customization/target.ts";
 
 import {
   buildSegmentDescriber,
@@ -23,7 +23,7 @@ class TargetPathsService {
     rulesetId: string,
     partialPath: string,
     position: number,
-    kind: "modifier" | "requirement",
+    kind: TargetPathKind,
     entityType?: string,
     search?: string,
     limit: number = 20,

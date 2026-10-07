@@ -52,6 +52,7 @@ export default class PowersPaths implements PathCategory<Dnd35Components> {
           valueType: "string",
           // A list of values: one of them is required or added, never the whole list as text
           operators: kind === "modifier" ? ["add", "subtract"] : ["contains", "not_contains"],
+          readsMany: true,
         });
       }
     }

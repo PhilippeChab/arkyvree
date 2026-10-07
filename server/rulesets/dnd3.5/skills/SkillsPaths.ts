@@ -58,14 +58,15 @@ export default class SkillsPaths implements PathCategory<Dnd35Components> {
   static generateSkillPaths(skills: Skill[], kind: "modifier" | "requirement"): TargetPath[] {
     const paths: TargetPath[] = [];
     const entries = [
-      ...skills.map((skill) => ({ slug: stripSeparators(skill.name), prefix: "" })),
+      ...skills.map((skill) => ({ slug: stripSeparators(skill.name), prefix: "", readsMany: false })),
       ...Object.entries(SkillsPaths.getFamilyLabels(skills)).map(([slug, family]) => ({
         slug,
         prefix: kind === "requirement" ? `Any ${family} skill — ` : `All ${family} skills — `,
+        readsMany: true,
       })),
     ];
 
-    for (const { slug, prefix } of entries) {
+    for (const { slug, prefix, readsMany } of entries) {
       for (const subPath of NAVIGATABLE_PATHS) {
         if ("requirementOnly" in subPath && subPath.requirementOnly && kind === "modifier") continue;
         paths.push({
@@ -73,6 +74,7 @@ export default class SkillsPaths implements PathCategory<Dnd35Components> {
           category: "skills",
           description: `${prefix}${subPath.description}`,
           valueType: subPath.type,
+          ...(readsMany && { readsMany }),
           operators:
             kind === "modifier"
               ? subPath.type === "boolean"
