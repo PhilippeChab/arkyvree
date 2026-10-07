@@ -1,7 +1,6 @@
 import { and, eq, getTableColumns, inArray, isNull } from "drizzle-orm";
 
 import {
-  klassLevelPowersInRules,
   klassLevelsInRules,
   levelPowersInCharacter,
   levelsInCharacter,
@@ -10,49 +9,16 @@ import {
 } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 import { include } from "@/server/mixins.ts";
-import { GrantsPerLevel } from "@/server/repositories/concerns/GrantsPerLevel.ts";
 import { ResolvesCopies } from "@/server/repositories/concerns/ResolvesCopies.ts";
 import { type RulesetEntityFilters } from "@/server/repositories/concerns/ScopesToRuleset.ts";
 import RulesetEntityRepository from "@/server/repositories/RulesetEntityRepository.ts";
 
-class PowersRepository extends include(RulesetEntityRepository<typeof powersInRules>, GrantsPerLevel, ResolvesCopies) {
+class PowersRepository extends include(RulesetEntityRepository<typeof powersInRules>, ResolvesCopies) {
   constructor() {
     super(powersInRules);
   }
 
   protected readonly entityType = "powers";
-
-  /**
-   * The powers the character levels' class levels grant, each with its level (see `grantedAt`), by name, ties broken to
-   * a fixed order.
-   */
-  async findGrants(db: Db, where: { levels: { id: string; klassLevelId: string }[] }) {
-    if (where.levels.length === 0) return [];
-    const granted = await db
-      .select({
-        ...getTableColumns(powersInRules),
-        klassLevelId: klassLevelPowersInRules.klassLevelId,
-        aptitudeId: klassLevelPowersInRules.aptitudeId,
-        free: klassLevelPowersInRules.free,
-        saveName: savesInRules.name,
-      })
-      .from(powersInRules)
-      .innerJoin(klassLevelPowersInRules, eq(powersInRules.id, klassLevelPowersInRules.powerId))
-      .leftJoin(savesInRules, eq(powersInRules.saveId, savesInRules.id))
-      .where(
-        and(
-          inArray(klassLevelPowersInRules.klassLevelId, [...new Set(where.levels.map((level) => level.klassLevelId))]),
-          isNull(powersInRules.deletedAt),
-        ),
-      )
-      .orderBy(
-        this.orderBy(powersInRules.name),
-        this.orderBy(powersInRules.id),
-        this.orderBy(klassLevelPowersInRules.aptitudeId),
-        this.orderBy(klassLevelPowersInRules.klassLevelId),
-      );
-    return this.grantedAt(where.levels, granted);
-  }
 
   async findMany(db: Db, where: { ids: string[] }) {
     if (where.ids.length === 0) return [];

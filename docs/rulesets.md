@@ -527,7 +527,7 @@ export interface Dnd35ProjectedCharacterData extends ProjectedCharacterData {
 
 export interface Dnd35LevelUpProjector extends LevelUpProjector {
   computeSkillPointsPerLevel(…): Promise<…>;
-  getExcludedPowerIds(…): Promise<…>;          // wizard schools
+  getExcludedPowerIds(…): string[];            // wizard schools
   getSkillBudget(): { total; available; spent; perlevel };
   getCharacterEnrichedSkills(…): (…& { isClassSkill; currentRank })[];
 }

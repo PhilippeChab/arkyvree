@@ -52,7 +52,6 @@ export async function getAvailablePowers(
     const excludeIds = excludeCharacterLevelId
       ? getLevelIdsFromOnward(allCharacterLevels, excludeCharacterLevelId)
       : [];
-    const excludeIdSet = new Set(excludeIds);
 
     const pendingLevels = pendingLevelKlassLevelIds?.length
       ? buildPendingCharacterLevels(characterId, pendingLevelKlassLevelIds)
@@ -64,7 +63,7 @@ export async function getAvailablePowers(
     ];
 
     const projectedCharacterLevel = buildProjectedCharacterLevel(characterId, klassLevel.id);
-    const { projectedFeats: selectedProjectedFeats } = buildProjectedFeatsFromPicks(
+    const selectedProjectedFeats = buildProjectedFeatsFromPicks(
       allSelectedFeatPicks,
       klassLevel.id,
       projectedCharacterLevel.id,
@@ -88,16 +87,9 @@ export async function getAvailablePowers(
     const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
     await detailedCharacter.build(undefined, projectedData, scope);
 
-    // Get character's existing powers to exclude already-taken ones
-    // When editing, exclude the edited level and all subsequent levels from the "already taken" set
-    const characterLevels =
-      excludeIdSet.size > 0 ? allCharacterLevels.filter((l) => !excludeIdSet.has(l.id)) : allCharacterLevels;
-    const characterLevelIds = characterLevels.map((lvl) => lvl.id);
-    const pickedPowers = await Powers.findPicks(db, { characterLevelIds });
-    const givenPowers = await Powers.findGrants(db, { levels: characterLevels });
-    const excludePowerIds = [...pickedPowers, ...givenPowers]
-      .filter((power) => power.aptitudeId === aptitudeId)
-      .map((power) => power.id);
+    // The powers the character knows in this pool aren't offered again: when editing, the projection left out the
+    // edited level and the levels after it
+    const excludePowerIds = detailedCharacter.getKnownPowerIds(aptitudeId);
 
     // Also exclude auto-granted powers from the current klass level
     for (const rec of autoGrantedPowerRecords) excludePowerIds.push(rec.powersInRule.id);
@@ -108,14 +100,7 @@ export async function getAvailablePowers(
 
     // Exclude powers from wizard-prohibited schools (delegated to ruleset-specific projector)
     const levelUpProjector = rulesetModule.createLevelUpProjector(detailedCharacter);
-    const wizardExcluded = await levelUpProjector.getExcludedPowerIds(
-      db,
-      aptitudeId,
-      characterLevels,
-      selectedProjectedFeats.flatMap((f) => f.properties),
-      where.excludeSchools ?? [],
-      rulesetData,
-    );
+    const wizardExcluded = levelUpProjector.getExcludedPowerIds(aptitudeId, where.excludeSchools ?? [], rulesetData);
     excludePowerIds.push(...wizardExcluded);
 
     const result = await Powers.findOptionPage(

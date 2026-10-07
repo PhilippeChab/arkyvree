@@ -97,20 +97,23 @@ async function checkNotTaken(
   fetchedFeats: FeatRecord[],
   otherLevels: { id: string; klassLevelId: string }[],
   autoGrantedRecords: { featsInRule: { id: string } }[],
+  rulesetData: RulesetData,
 ) {
   const nonStackableSubmitted = fetchedFeats.filter((f) => !f.stackable);
   if (nonStackableSubmitted.length === 0) return;
 
   const otherLevelIds = otherLevels.map((lvl) => lvl.id);
-  // Inside the caller's withRulesetScope, otherLevels[i].klassLevelId and the
-  // returned feat.id are auto-remapped to post-COW by the repo Proxy: the
-  // grants are the copied class level's, and the Set compares post-COW ids.
+  // The Set holds the ids the view has, which the submitted feats' are. Inside the caller's withRulesetScope the repo
+  // Proxy maps otherLevels[i].klassLevelId to a copied class level's, whose grants the view keys; a picked feat's row
+  // keeps its stored id, which the view resolves to the fork's copy.
   const pickedFeats = await Feats.findPicks(tx, { characterLevelIds: otherLevelIds });
-  const givenFeats = await Feats.findGrants(tx, { levels: otherLevels });
-  const existingFeatIds = new Set([...pickedFeats, ...givenFeats].map((f) => f.id));
+  const existingFeatIds = new Set(pickedFeats.map((f) => rulesetData.cow.resolve(f.id)));
 
-  // Auto-granted feats come from the composed cache (already post-COW).
-  for (const rec of autoGrantedRecords) existingFeatIds.add(rec.featsInRule.id);
+  // The feats the other levels' class levels and this one grant, as the view composes them
+  const grants = otherLevels.flatMap(
+    (level) => rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(level.klassLevelId) ?? [],
+  );
+  for (const rec of [...grants, ...autoGrantedRecords]) existingFeatIds.add(rec.featsInRule.id);
 
   for (const feat of nonStackableSubmitted) {
     if (existingFeatIds.has(feat.id))
@@ -193,7 +196,7 @@ export async function validateAndFetchLevelSelections(
 
   // Fetch auto-granted feats for the current klass level (reused by caller for projected data)
   const autoGrantedRecords = rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(klassLevel.id) ?? [];
-  await checkNotTaken(tx, fetchedFeats, otherLevels, autoGrantedRecords);
+  await checkNotTaken(tx, fetchedFeats, otherLevels, autoGrantedRecords, rulesetData);
 
   // Include auto-granted feat IDs so their modifiers are loaded in the same batch
   const autoGrantedFeatIds = autoGrantedRecords.map((rec) => rec.featsInRule.id);

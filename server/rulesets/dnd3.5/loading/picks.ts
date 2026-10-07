@@ -4,31 +4,74 @@ import type { RulesetData } from "@/engine/core/view/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { Feats, Powers, Skills } from "@/server/repositories/index.ts";
 import type { Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
-import type { CharacterLevel } from "@/shared/relations.ts";
+import type {
+  CharacterLevel,
+  FeatWithAptitudes,
+  KlassLevelFeat,
+  KlassLevelPower,
+  PowerWithAptitudes,
+} from "@/shared/relations.ts";
 
 import type { Resolve } from "./DetailedCharacterDataLoader.ts";
 import { refreshEntityData } from "./refreshEntityData.ts";
 
+/** The character's levels: those it keeps of its saved ones, and every one once the projected join them. */
+type Levels = ReturnType<typeof resolveLevels>;
+
+/**
+ * What each saved level's class level grants (`grants`, by class level), attached to the level it's granted at. The
+ * class level is the one the view stands for the level's stored one, which `resolveLevels` resolved: on a fork that
+ * copied the class after the level was saved, the stored id still names the source's class level, and its copy's
+ * grants are the ones the view keys. The view's grants leave out an archived feat or power.
+ */
+function grantedAt<G, R>(levels: CharacterLevel[], grants: Map<string, G[]>, toRow: (grant: G) => R) {
+  return levels.flatMap((level) =>
+    (grants.get(level.klassLevelId) ?? []).map((grant) => ({ ...toRow(grant), characterLevelId: level.id })),
+  );
+}
+
+/** A class level's granted feat as the build reads it: the feat, then the grant's class level, pool and flag. */
+function toGrantedFeat({ featsInRule, ...grant }: KlassLevelFeat & { featsInRule: FeatWithAptitudes }) {
+  const { featsAptitudesInRules: _links, ...feat } = featsInRule;
+  return {
+    ...feat,
+    klassLevelId: grant.klassLevelId,
+    aptitudeId: grant.aptitudeId,
+    free: grant.free,
+    klassLevelFeatId: grant.id,
+  };
+}
+
+/** A class level's granted power as the build reads it: the power, then the grant's class level, pool and flag. */
+function toGrantedPower(
+  { powersInRule, ...grant }: KlassLevelPower & { powersInRule: PowerWithAptitudes },
+  rulesetData: RulesetData,
+) {
+  const { powersAptitudesInRules: _links, ...power } = powersInRule;
+  return {
+    ...power,
+    klassLevelId: grant.klassLevelId,
+    aptitudeId: grant.aptitudeId,
+    free: grant.free,
+    saveName: power.saveId ? (rulesetData.savesById.get(power.saveId)?.name ?? null) : null,
+  };
+}
+
 /** The feats: picked and given (deduped), then projected, in character-level order; and the given per aptitude. */
 export function buildFeats(
   picks: Awaited<ReturnType<typeof fetchPicks>>,
-  rulesetFeats: RulesetData["feats"],
+  rulesetData: RulesetData,
   projectedData: Dnd35ProjectedCharacterData | undefined,
-  allCharacterLevels: CharacterLevel[],
+  { allCharacterLevels, characterLevels }: Levels,
   resolve: Resolve,
 ) {
-  const pickedFeats = refreshEntityData(resolve(picks.pickedFeats), rulesetFeats, [
+  const pickedFeats = refreshEntityData(resolve(picks.pickedFeats), rulesetData.feats, [
     "name",
     "description",
     "stackable",
     "selectable",
   ]);
-  const givenFeats = refreshEntityData(resolve(picks.givenFeats), rulesetFeats, [
-    "name",
-    "description",
-    "stackable",
-    "selectable",
-  ]);
+  const givenFeats = grantedAt(characterLevels, rulesetData.klassLevelFeatsWithFeatsByKlassLevel, toGrantedFeat);
   const allGivenFeats = projectedData?.givenFeats ? [...givenFeats, ...projectedData.givenFeats] : givenFeats;
 
   const pickedFeatIds = new Set(pickedFeats.filter((f) => !f.stackable).map((f) => f.id));
@@ -63,19 +106,22 @@ export function buildFeats(
   return { allFeats, klassLevelFeatCountsByAptitudeId };
 }
 
-/** The character's skills, feats and powers: saved picks and grants, COW-resolved, then the projected ones. */
+/**
+ * The character's skills, feats and powers: its saved picks, COW-resolved, and what its saved levels' class levels
+ * grant, as the view composes them; then the projected ones.
+ */
 export function buildPicks(
   picks: Awaited<ReturnType<typeof fetchPicks>>,
   rulesetData: RulesetData,
   projectedData: Dnd35ProjectedCharacterData | undefined,
-  allCharacterLevels: CharacterLevel[],
+  levels: Levels,
   resolve: Resolve,
 ) {
   const realSkills = resolve(picks.skills);
   return {
     skills: projectedData?.skills ? [...realSkills, ...projectedData.skills] : realSkills,
-    ...buildFeats(picks, rulesetData.feats, projectedData, allCharacterLevels, resolve),
-    ...buildPowers(picks, rulesetData, projectedData, allCharacterLevels, resolve),
+    ...buildFeats(picks, rulesetData, projectedData, levels, resolve),
+    ...buildPowers(picks, rulesetData, projectedData, levels, resolve),
   };
 }
 
@@ -88,7 +134,7 @@ export function buildPowers(
   picks: Awaited<ReturnType<typeof fetchPicks>>,
   rulesetData: RulesetData,
   projectedData: Dnd35ProjectedCharacterData | undefined,
-  allCharacterLevels: CharacterLevel[],
+  { allCharacterLevels, characterLevels }: Levels,
   resolve: Resolve,
 ) {
   const withLevel = <T extends { aptitudeId: string; id: string }>(power: T) => ({
@@ -100,9 +146,9 @@ export function buildPowers(
   const pickedPowers = refreshEntityData(resolve(picks.pickedPowers), rulesetData.powers, ["name", "description"]).map(
     withLevel,
   );
-  const givenPowers = refreshEntityData(resolve(picks.givenPowers), rulesetData.powers, ["name", "description"]).map(
-    withLevel,
-  );
+  const givenPowers = grantedAt(characterLevels, rulesetData.klassLevelPowersWithPowersByKlassLevel, (grant) =>
+    toGrantedPower(grant, rulesetData),
+  ).map(withLevel);
 
   const characterLevelIdSet = new Set(allCharacterLevels.map((l) => l.id));
   const klassLevelPowerCountsByAptitudeId = givenPowers.reduce(
@@ -150,19 +196,16 @@ export function resolveLevels(
   };
 }
 
-/** Round 4: character-scoped queries (5); ruleset-scoped lookups resolve from cache. */
-export async function fetchPicks(database: Db, realCharacterLevelIds: string[], characterLevels: CharacterLevel[]) {
+/** Round 4: the saved levels' picks (3 queries); what their class levels grant is the view's. */
+export async function fetchPicks(database: Db, realCharacterLevelIds: string[]) {
   const skills = await Skills.findPicks(database, {
     characterLevelIds: realCharacterLevelIds,
   });
   const pickedFeats = await Feats.findPicks(database, {
     characterLevelIds: realCharacterLevelIds,
   });
-  // A saved level's class level, copied (copy-on-write) or not; a projected level's grants come with it
-  const givenFeats = await Feats.findGrants(database, { levels: characterLevels });
   const pickedPowers = await Powers.findPicks(database, {
     characterLevelIds: realCharacterLevelIds,
   });
-  const givenPowers = await Powers.findGrants(database, { levels: characterLevels });
-  return { skills, pickedFeats, givenFeats, pickedPowers, givenPowers };
+  return { skills, pickedFeats, pickedPowers };
 }

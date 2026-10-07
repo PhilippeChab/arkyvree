@@ -36,33 +36,6 @@ function asFamilyRow<T extends object>(row: T) {
   };
 }
 
-/** Computes non-stackable feat IDs to exclude from browsing (existing, auto-granted, selected, virtual). */
-async function getExcludeNonStackableFeatIds(
-  database: typeof db,
-  allCharacterLevels: { id: string; klassLevelId: string }[],
-  excludeIdSet: Set<string>,
-  autoGrantedRecords: Array<{ featsInRule: { id: string; stackable: boolean } }>,
-  selectedNonStackableFeatIds: string[],
-  detailedCharacter: DetailedCharacterInterface,
-) {
-  const characterLevels =
-    excludeIdSet.size > 0 ? allCharacterLevels.filter((l) => !excludeIdSet.has(l.id)) : allCharacterLevels;
-  const characterLevelIds = characterLevels.map((lvl) => lvl.id);
-  const pickedFeats = await Feats.findPicks(database, { characterLevelIds });
-  const givenFeats = await Feats.findGrants(database, { levels: characterLevels });
-  const excludeFeatIds = [...pickedFeats, ...givenFeats].filter((feat) => !feat.stackable).map((feat) => feat.id);
-
-  for (const rec of autoGrantedRecords) if (!rec.featsInRule.stackable) excludeFeatIds.push(rec.featsInRule.id);
-
-  excludeFeatIds.push(...selectedNonStackableFeatIds);
-
-  const virtualFeatIds = detailedCharacter.getVirtuallyPossessedFeatIds();
-  const virtualFeats = await Feats.findMany(database, { ids: virtualFeatIds });
-  for (const feat of virtualFeats) if (!feat.stackable) excludeFeatIds.push(feat.id);
-
-  return excludeFeatIds;
-}
-
 /**
  * The character a feat pick is made for, and the feats it can't pick again. The projection has the levels planned
  * before this one, then this class level, the feats picked so far and every feat those class levels grant: granted
@@ -96,12 +69,7 @@ async function projectFeatPick(
     : [];
 
   const projectedCharacterLevel = buildProjectedCharacterLevel(characterId, klassLevelId);
-  const { projectedFeats, nonStackableFeatIds } = buildProjectedFeatsFromPicks(
-    featPicks,
-    klassLevelId,
-    projectedCharacterLevel.id,
-    rulesetData,
-  );
+  const projectedFeats = buildProjectedFeatsFromPicks(featPicks, klassLevelId, projectedCharacterLevel.id, rulesetData);
   const projectedData: Dnd35ProjectedCharacterData = {
     ...(excludeIds.length > 0 && { excludeCharacterLevelIds: excludeIds }),
     characterLevels: [...pendingLevels, projectedCharacterLevel],
@@ -112,16 +80,7 @@ async function projectFeatPick(
   const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
   const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
   await detailedCharacter.build(undefined, projectedData, scope);
-
-  const excludeFeatIds = await getExcludeNonStackableFeatIds(
-    db,
-    allCharacterLevels,
-    new Set(excludeIds),
-    grantedRecords,
-    nonStackableFeatIds,
-    detailedCharacter,
-  );
-  return { detailedCharacter, excludeFeatIds };
+  return { detailedCharacter, excludeFeatIds: detailedCharacter.getHeldNonStackableFeatIds() };
 }
 
 /**

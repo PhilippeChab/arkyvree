@@ -87,11 +87,8 @@ export function buildProjectedFeatsFromPicks(
   klassLevelId: string,
   projectedCharacterLevelId: string,
   rulesetData: RulesetData,
-): {
-  nonStackableFeatIds: string[];
-  projectedFeats: NonNullable<ProjectedCharacterData["feats"]>;
-} {
-  if (selectedFeatPicks.length === 0) return { projectedFeats: [], nonStackableFeatIds: [] };
+): NonNullable<ProjectedCharacterData["feats"]> {
+  if (selectedFeatPicks.length === 0) return [];
 
   // Dedup by (featId, aptitudeId) — the wizard sometimes sends the same pick
   // under both `selectedFeatPicks` and `pendingLevelFeatPicks` (Add Level batch
@@ -102,7 +99,7 @@ export function buildProjectedFeatsFromPicks(
   const uniqueFeatIds = [...new Set(uniquePicks.map((p) => p.featId))];
   const customizations = loadFeatCustomizations(rulesetData, uniqueFeatIds);
 
-  const projectedFeats = uniquePicks
+  return uniquePicks
     .map((pick) => {
       const feat = rulesetData.featsById.get(pick.featId);
       if (!feat) return null;
@@ -117,13 +114,6 @@ export function buildProjectedFeatsFromPicks(
       };
     })
     .filter((f): f is NonNullable<typeof f> => f !== null);
-
-  const nonStackableFeatIds = uniqueFeatIds
-    .map((id) => rulesetData.featsById.get(id))
-    .filter((f): f is NonNullable<typeof f> => f !== undefined && !f.stackable)
-    .map((f) => f.id);
-
-  return { projectedFeats, nonStackableFeatIds };
 }
 
 /** Maps auto-granted feat records to projected givenFeats format for character building. */

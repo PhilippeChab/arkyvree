@@ -6,10 +6,6 @@ import type { PowerWithAptitudes, Property } from "@/shared/relations.ts";
 /** The feats and spells a 3.5 character has without a pick: those its modifiers grant (`set …possessed`, `set …known`). */
 export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: B) {
   abstract class PossessingVirtually extends Base {
-    getVirtuallyPossessedFeatIds() {
-      return this.feats.filter((f) => f.virtual).map((f) => f.id);
-    }
-
     getVirtuallyPossessedFeats() {
       return this.feats.filter((f) => f.virtual);
     }
