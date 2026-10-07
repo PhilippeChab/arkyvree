@@ -43,12 +43,12 @@ export class BaseClassDetector {
     this.features = featuresByName(this.raw.classFeatures);
   }
 
+  /** The class's features by name (`featuresByName`). */
+  private readonly features: Map<string, ClassFeature>;
   /** The class's slug, as its paths name it (`classes.wujen.level`). */
   readonly classSlug: string;
   /** The features the class's table names, each with the levels it's at. */
   readonly featureOccurrences: ClassReference["detected"]["featureOccurrences"];
-  /** The class's features by name (`featuresByName`). */
-  private readonly features: Map<string, ClassFeature>;
   /** What the class's page gives, its alignment filled in from its overrides. */
   readonly raw: ClassReference["raw"];
   /** The reference as stored: what the scraper read, and the corrections made by hand. */

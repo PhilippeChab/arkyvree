@@ -221,7 +221,7 @@ describe("member order", () => {
     fs.rmSync(dir, { recursive: true });
   });
 
-  test("puts a class's members in groups with oxlint --fix: constructor, statics, readonly fields, other fields, methods", async () => {
+  test("puts a class's members in groups with oxlint --fix: constructor, statics, readonly fields, other fields, methods, private members first in each", async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "member-order-"));
     const config = path.join(dir, ".oxlintrc.json");
     fs.writeFileSync(
@@ -235,14 +235,18 @@ describe("member order", () => {
         "class Store {",
         "  async load() {}",
         "  count = 0;",
+        "  protected total = 0;",
         "  label?: string;",
+        "  #hidden = 0;",
         "  readonly b = 2;",
         "  /** The first. */",
         "  readonly a = 1;",
+        "  private readonly z = 3;",
         "  static zeta() {}",
         "  static async beta() {}",
         "  private static alpha() {}",
         "  static VERSION = 1;",
+        "  private static SECRET = 0;",
         "  constructor() {}",
         "}",
         "",
@@ -253,14 +257,19 @@ describe("member order", () => {
       [
         "class Store {",
         "  constructor() {}",
+        // Each group of fields puts its private and protected ones first, as methods do
+        "  private static SECRET = 0;",
         "  static VERSION = 1;",
         // Static methods as methods are: private before public, sync before async, then by name
         "  private static alpha() {}",
         "  static zeta() {}",
         "  static async beta() {}",
+        "  private readonly z = 3;",
         "  /** The first. */",
         "  readonly a = 1;",
         "  readonly b = 2;",
+        "  #hidden = 0;",
+        "  protected total = 0;",
         "  count = 0;",
         "  label?: string;",
         "  async load() {}",

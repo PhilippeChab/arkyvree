@@ -3,7 +3,8 @@
  * routes sort by HTTP method and path. `oxlint --fix` puts a file in order.
  *
  * - A class's members, in groups: its constructor, its static fields, its static methods, its readonly fields, its other
- *   fields, then its methods, its private and protected ones before its public ones. Each group goes by name, its
+ *   fields, then its methods, its private and protected ones before its public ones (in every group of fields and of
+ *   methods: a class's private members stay together). Each group goes by name, its
  *   methods sync before async; a field goes right below a field its initializer reads, which runs as the class is
  *   built (`this.lines`), and `--fix` never moves a field whose initializer runs code against the other fields (what
  *   it calls may read any of them): it suggests it.
@@ -176,7 +177,8 @@ function checkClass(context, body) {
       text: (order) => order.map((member, i) => gaps[i] + text.slice(member.start, member.end)).join(""),
     },
     "Members go in groups: the constructor, the static fields, the static methods, the readonly fields, the other " +
-      "fields, then the private and protected methods, then the public ones. Each group by name, a field below one " +
+      "fields, then the private and protected methods, then the public ones; in each group of fields too, its " +
+      "private and protected ones before its public ones. Each group by name, a field below one " +
       "its initializer reads, methods sync before async." +
       (safe
         ? ""
@@ -477,17 +479,18 @@ function memberName(member) {
 
 /**
  * A class member's place: its group (the constructor, static fields, static methods, readonly fields, other fields,
- * private and protected methods, public methods), then within it, a method's async-ness and its name, a field's name.
+ * private and protected methods, public methods), its private and protected members before its public ones in every
+ * group of fields, then within it, a method's async-ness and its name, a field's name.
  */
 function memberRank(member, asyncNames) {
   const name = memberName(member);
   if (member.kind === "constructor") return [-7];
   if (member.type === "TSIndexSignature") return [-8];
-  if (member.type === "StaticBlock") return [-6, ""];
+  if (member.type === "StaticBlock") return [-6, -1, ""];
   const isPublic =
     (!member.accessibility || member.accessibility === "public") && member.key?.type !== "PrivateIdentifier";
   const async = asyncNames.has(name) ? 1 : 0;
-  if (isField(member)) return [member.static ? -6 : member.readonly ? -4 : -3, name];
+  if (isField(member)) return [member.static ? -6 : member.readonly ? -4 : -3, isPublic ? 1 : 0, name];
   if (member.static) return [-5, isPublic ? 1 : 0, async, name];
   return [isPublic ? 0 : -1, async, name];
 }

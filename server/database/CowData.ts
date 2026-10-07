@@ -38,10 +38,12 @@ export default class CowData {
 
   private readonly overrides: ReadonlyMap<string, string>;
 
+  private readonly siblings: ReadonlyMap<string, readonly string[]>;
+
+  private readonly winners = new Map<string, string>();
+
   /** Every sibling loser. */
   readonly siblingIds: ReadonlySet<string>;
-
-  private readonly siblings: ReadonlyMap<string, readonly string[]>;
 
   /** The ruleset's extensions, then its ancestors: where its inherited entities come from. */
   readonly sourceChain: string[];
@@ -51,8 +53,6 @@ export default class CowData {
    * character's ruleset and another's) never share a cached result.
    */
   readonly stateId: string;
-
-  private readonly winners = new Map<string, string>();
 
   /** Every id that resolves to the entity `id` resolves to, that entity's own first: a stored row may hold any. */
   getEquivalentIds(id: string): string[] {
