@@ -17,6 +17,14 @@ export default class WeaponsComponent {
 
   private readonly weapons: WeaponsData = {};
 
+  /**
+   * Drops every group: a creature whose stat block replaces its weapon sets with its natural attacks holds none of the
+   * weapons they had. Natural attacks aren't items, so no `items.weapons` path reaches them.
+   */
+  clearGroups(): void {
+    for (const group of Object.keys(this.weapons)) delete this.weapons[group];
+  }
+
   getWeapons(): WeaponsData {
     return this.weapons;
   }

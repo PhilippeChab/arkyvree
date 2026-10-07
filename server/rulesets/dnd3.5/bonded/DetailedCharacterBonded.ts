@@ -75,7 +75,10 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
 
     const raceStats = getBondedRaceStats(this.race?.name);
     if (raceStats) {
-      if (raceStats.naturalAttacks.length > 0) this.components.combat.setNaturalAttacks(raceStats.naturalAttacks);
+      if (raceStats.naturalAttacks.length > 0) {
+        this.components.combat.setNaturalAttacks(raceStats.naturalAttacks);
+        this.components.weapons.clearGroups();
+      }
 
       this.applyRaceDefaults(raceStats, rulesetData);
     }

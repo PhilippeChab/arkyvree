@@ -89,7 +89,7 @@ A part the sheet computes when read (the totals, an ability's modifier, a skill'
 
 ## items.weapons
 
-Grouped by weapon type (`WEAPON_TYPE`) and proficiency (`WEAPON_PROFICIENCY`: simple, martial, exotic), as the picker lists them; an item is never reached by its name. `items.weapons.unarmedstrike` is always there: every character strikes unarmed, and a gauntlet's strike is unarmed too.
+Grouped by weapon type (`WEAPON_TYPE`) and proficiency (`WEAPON_PROFICIENCY`: simple, martial, exotic), as the picker lists them; an item is never reached by its name. `items.weapons.unarmedstrike` is always there: every character strikes unarmed, and a gauntlet's strike is unarmed too. A familiar's, animal companion's or mount's natural attacks replace its weapons: they aren't items, so no `items.weapons` path reaches them, and its unarmed strike group is empty.
 
 | Path | Type | Description |
 |------|------|-------------|
