@@ -11,6 +11,22 @@ function lint(files: Record<string, string>, from = ".") {
 setDefaultTimeout(30_000);
 
 describe("architecture rules", () => {
+  test("code outside engine/ enters it through engine/index.ts; the engine and a test reach any of its modules", async () => {
+    expect(
+      await lintRepo(
+        {
+          "server/a.ts": 'import { x } from "@/engine/index.ts";\nexport const a = x;\n',
+          "server/b.ts": 'import { x } from "@/engine/core/view/index.ts";\nexport const b = x;\n',
+          "database/c.ts": 'import X from "@/engine/rulesets/dnd3.5/skills/SkillsPaths.ts";\nexport const c = X;\n',
+          "codegen/d.ts": 'import type { T } from "@/engine/rulesets/dnd3.5/index.ts";\nexport type D = T;\n',
+          "engine/core/e.ts": 'import { x } from "@/engine/core/view/index.ts";\nexport const e = x;\n',
+          "tests/f.test.ts": 'import { x } from "@/engine/core/view/index.ts";\nexport const f = x;\n',
+        },
+        ["engine-front-door"],
+      ),
+    ).toEqual(["engine-front-door codegen/d.ts", "engine-front-door database/c.ts", "engine-front-door server/b.ts"]);
+  });
+
   test("an index that re-exports only re-exports; any other module exports what it declares", async () => {
     expect(
       await lintRepo(

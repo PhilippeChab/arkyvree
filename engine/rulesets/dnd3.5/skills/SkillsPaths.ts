@@ -39,7 +39,7 @@ export default class SkillsPaths implements PathCategory<Dnd35Components> {
    * Each skill's paths, and a family's that no skill of its own names: `skills.knowledge.rank` reaches every Knowledge
    * skill, as the engine reads it (any of them for a requirement, all for a modifier).
    */
-  static generateSkillPaths(skills: Skill[], kind: "modifier" | "requirement"): TargetPath[] {
+  static generateSkillPaths(skills: Pick<Skill, "name">[], kind: "modifier" | "requirement"): TargetPath[] {
     const paths: TargetPath[] = [];
     const entries = [
       ...skills.map((skill) => ({ slug: stripSeparators(skill.name), prefix: "", readsMany: false })),

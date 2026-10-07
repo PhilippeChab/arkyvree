@@ -45,7 +45,7 @@ const WEAPON_PATHS = [
 ];
 
 /** The first segments of a weapon's paths, which `weapon.*` reads on an item's own weapon. */
-export const WEAPON_PATH_ROOTS = [...new Set(WEAPON_PATHS.map(({ path }) => path.split(".")[0]))];
+const WEAPON_PATH_ROOTS = [...new Set(WEAPON_PATHS.map(({ path }) => path.split(".")[0]))];
 
 /** A weapon's paths under `prefix`: a weapon group's, or an item's own weapon's. */
 export function buildWeaponPaths(prefix: string, category: string, kind: "modifier" | "requirement"): TargetPath[] {

@@ -4,9 +4,6 @@ import { KLASS_BONUS_SPELL_ABILITY_ID, KLASS_CASTER_TYPE } from "@/shared/dnd3.5
 /** A class's fields its properties hold: the ability its bonus spells and spell DCs use, and the spells it casts. */
 export type ClassFields = { bonusSpellAbilityId: string | null; casterType: "Arcane" | "Divine" | null };
 
-/** The property types a class's fields are stored as. */
-export const CLASS_FIELD_PROPERTY_TYPES = [KLASS_BONUS_SPELL_ABILITY_ID, KLASS_CASTER_TYPE];
-
 /**
  * A class's fields, read off the rows of its properties: each from the first row of its type (the seeds write
  * one), and a caster type only as one of the two the engine casts by.

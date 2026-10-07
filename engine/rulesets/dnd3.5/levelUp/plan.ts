@@ -22,7 +22,7 @@ import { projectPlannedLevels } from "./projection.ts";
  * projection), the character as saved, without them (`saved`), what their class levels grant, and how many levels it
  * has before them.
  */
-export interface PlannedLevels {
+interface PlannedLevels {
   autoGrantedRecords: ReturnType<typeof projectPlannedLevels>["allAutoGrantedFeatRecords"];
   character: Dnd35DetailedCharacter;
   existingLevelCount: number;

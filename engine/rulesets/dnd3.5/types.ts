@@ -37,6 +37,7 @@ import type {
 
 import type DetailedCharacter from "./character/DetailedCharacter.ts";
 import type { Dnd35Characters } from "./character/Dnd35Characters.ts";
+import type { Dnd35Content } from "./content/Dnd35Content.ts";
 import type { Dnd35Entities } from "./Dnd35Entities.ts";
 import type { Dnd35LevelUp } from "./levelUp/Dnd35LevelUp.ts";
 
@@ -157,6 +158,7 @@ export interface Dnd35ProjectedCharacterData extends ProjectedCharacterData {
 /** The 3.5 rules' module: its characters and kinds of character, and its parts, by their own types. */
 export interface Dnd35RulesetModule extends RulesetModule<DetailedCharacter, CharacterKind> {
   characters: Dnd35Characters;
+  content: Dnd35Content;
   entities: Dnd35Entities;
   levelUp: Dnd35LevelUp;
 }

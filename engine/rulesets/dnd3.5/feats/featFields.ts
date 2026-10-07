@@ -17,14 +17,6 @@ export type FeatFields = {
   weaponFinesse: boolean;
 };
 
-/** The property types a feat's fields are stored as. */
-export const FEAT_FIELD_PROPERTY_TYPES = [
-  FEAT_FAMILY,
-  FEAT_OVERSIZED_TWO_WEAPON_FIGHTING,
-  FEAT_WEAPON_FINESSE,
-  WIZARD_PROHIBITED_SCHOOL,
-];
-
 /** The fields of a feat with none of its properties: in no family, changing no rule. */
 export const NO_FEAT_FIELDS: FeatFields = {
   families: [],

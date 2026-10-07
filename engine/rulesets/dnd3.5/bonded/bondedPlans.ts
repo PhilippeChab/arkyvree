@@ -6,31 +6,31 @@ import { BONDED_KIND_BY_SLUG, BONDED_KIND_SLUGS, type BondedKind } from "@/share
 
 import { getBondedRaceStats } from "./bondedRaceData.ts";
 
+/**
+ * What a master's bonded creature of a kind becomes once the master's levels change. Without a race for the kind, the
+ * creature the master had goes (`removedId`). With one, the master keeps the creature of that race it has (`keptId`),
+ * or one is made (`created`) in place of the one of another race it had; the creature kept or made has `levels`.
+ */
+type BondedCreaturePlan = { removedId?: string } & (
+  | { created: NewBondedCreature; levels: BondedLevels }
+  | { keptId: string; levels: BondedLevels }
+  | { levels?: undefined }
+);
+
 /** The levels a bonded creature has: its class's first `hitDice`. */
 interface BondedLevels {
   hitDice: number;
   klassId: string;
 }
 
-/**
- * What a master's bonded creature of a kind becomes once the master's levels change. Without a race for the kind, the
- * creature the master had goes (`removedId`). With one, the master keeps the creature of that race it has (`keptId`),
- * or one is made (`created`) in place of the one of another race it had; the creature kept or made has `levels`.
- */
-export type BondedCreaturePlan = { removedId?: string } & (
-  | { created: NewBondedCreature; levels: BondedLevels }
-  | { keptId: string; levels: BondedLevels }
-  | { levels?: undefined }
-);
-
 /** The levels a bonded creature takes, and the ids of those it loses. */
-export interface BondedLevelsPlan {
+interface BondedLevelsPlan {
   added: { abilityId: null; hp: number; klassLevelId: string }[];
   removedIds: string[];
 }
 
 /** A bonded creature a plan makes: of a race, named for it, with the ability scores of the race's stat block. */
-export interface NewBondedCreature {
+interface NewBondedCreature {
   abilities: { abilityId: string; score: number }[];
   name: string;
   raceId: string;

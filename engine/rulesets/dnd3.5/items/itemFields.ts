@@ -33,6 +33,9 @@ import {
   WEAPON_TYPE,
 } from "@/shared/dnd3.5/properties/index.ts";
 
+/** An armor's or a shield's own fields: its AC bonus, the proficiency it takes and its type. */
+type ProtectionFields = { acBonus: number | null; proficiency: string | null; type: string | null };
+
 /** A row's type and value, as `toItemProperties` writes them. */
 type Row = [type: string, value: string];
 
@@ -57,8 +60,7 @@ export type ItemFields = {
   spellFailure: number | null;
   weapon: WeaponFields;
 };
-/** An armor's or a shield's own fields: its AC bonus, the proficiency it takes and its type. */
-export type ProtectionFields = { acBonus: number | null; proficiency: string | null; type: string | null };
+
 /** A weapon's fields: what its attacks, its groupings and the hands it's held in read. */
 export type WeaponFields = {
   baseDamage: string | null;

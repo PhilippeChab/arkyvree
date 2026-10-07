@@ -11,6 +11,7 @@ export {
   describePartialCharacter,
   openRacePicker,
 } from "./api/characters.ts";
+export { listBookTargetPaths, toEntityProperties } from "./api/content.ts";
 export {
   checkAptitudeEdit,
   describeClass,
@@ -49,7 +50,6 @@ export {
   buildSourceChain,
   checkExtensionNames,
   type CowData,
-  type CowRows,
   getCowReads,
   getPairedKlassIds,
   type RulesetSources,
@@ -60,8 +60,6 @@ export type {
   EntityWrites,
   GeneratedFeatRemoval,
   GeneratedFeatsWrite,
-  PropertiesWrite,
-  RequirementWrite,
 } from "./core/module/index.ts";
 export { default as RulesError } from "./core/RulesError.ts";
 export type { RulesetView } from "./core/types.ts";

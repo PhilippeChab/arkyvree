@@ -85,6 +85,8 @@ export interface RulesetModule<
 > {
   /** What the ruleset answers of its characters, from the rows the server reads: their sheets, an item equipped */
   characters: object;
+  /** What the ruleset answers its content's seeders and codegen: the paths a book can target, its fields' properties */
+  content: object;
   createDetailedCharacter(record: CharacterRecord, kind?: Kind): Character;
   createPropertyTypes(): PropertyTypesProvider;
   createTargetPaths(): TargetPathsInterface;

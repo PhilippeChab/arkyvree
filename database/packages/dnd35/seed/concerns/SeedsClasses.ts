@@ -1,3 +1,4 @@
+import { DND35_BASE_RULES } from "@/content/dnd3.5/baseRules.ts";
 import type { BabType, ClassSeed, SaveType } from "@/content/dnd3.5/builders/classes/types.ts";
 import { bonus } from "@/content/dnd3.5/builders/customization/modifiers.ts";
 import { gt } from "@/content/dnd3.5/builders/customization/requirements.ts";
@@ -13,8 +14,7 @@ import {
   propertiesInCustomization,
   requirementsInCustomization,
 } from "@/drizzle/schema.ts";
-import { toClassProperties } from "@/engine/rulesets/dnd3.5/classes/classFields.ts";
-import { toClassLevelProperties } from "@/engine/rulesets/dnd3.5/classes/classLevelFields.ts";
+import { toEntityProperties } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -160,13 +160,13 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
         ...this.propertyRows(
           klassId,
           "klasses",
-          toClassProperties({ bonusSpellAbilityId, casterType: def.casterType ?? null }),
+          toEntityProperties(DND35_BASE_RULES, "klasses", { bonusSpellAbilityId, casterType: def.casterType ?? null }),
         ),
         ...levels.flatMap(({ id, level }) =>
           this.propertyRows(
             id,
             "klass_levels",
-            toClassLevelProperties({ bab: BAB[def.bab](level), skills: def.skillPoints }),
+            toEntityProperties(DND35_BASE_RULES, "klassLevels", { bab: BAB[def.bab](level), skills: def.skillPoints }),
           ),
         ),
       ]);

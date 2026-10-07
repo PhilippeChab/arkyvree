@@ -2,14 +2,10 @@
 
 import { ABILITY_NAMES } from "@/codegen/dnd3.5/tools/vocabulary/abilities.ts";
 import { SAVE_NAMES } from "@/codegen/dnd3.5/tools/vocabulary/saves.ts";
+import { DND35_BASE_RULES } from "@/content/dnd3.5/baseRules.ts";
 import type { RequirementEntry } from "@/content/dnd3.5/builders/customization/types.ts";
 import { SKILL_NAMES } from "@/content/dnd3.5/data/skills.ts";
-import AbilitiesPaths from "@/engine/rulesets/dnd3.5/abilities/AbilitiesPaths.ts";
-import CombatPaths from "@/engine/rulesets/dnd3.5/combat/CombatPaths.ts";
-import WeaponPaths from "@/engine/rulesets/dnd3.5/combat/WeaponPaths.ts";
-import IdentityPaths from "@/engine/rulesets/dnd3.5/identity/IdentityPaths.ts";
-import SavesPaths from "@/engine/rulesets/dnd3.5/saves/SavesPaths.ts";
-import SkillsPaths from "@/engine/rulesets/dnd3.5/skills/SkillsPaths.ts";
+import { listBookTargetPaths } from "@/engine/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /**
@@ -25,21 +21,8 @@ const SKILL_GROUP_SLUGS = new Set([
 
 /** The engine's target paths of `kind`, its categories' lists given the books' abilities, saves and skills. */
 function enginePaths(kind: "modifier" | "requirement"): Set<string> {
-  const abilities = ABILITY_NAMES.map((name) => ({ name })) as Parameters<
-    typeof AbilitiesPaths.generateAbilityPaths
-  >[0];
-  const saves = SAVE_NAMES.map((name) => ({ name })) as Parameters<typeof SavesPaths.generateSavePaths>[0];
-  const skills = SKILL_NAMES.map((name) => ({ name })) as Parameters<typeof SkillsPaths.generateSkillPaths>[0];
-  return new Set(
-    [
-      ...AbilitiesPaths.generateAbilityPaths(abilities, kind),
-      ...CombatPaths.generateCombatPaths(kind),
-      ...WeaponPaths.generateItemWeaponPaths(kind),
-      ...SavesPaths.generateSavePaths(saves, kind),
-      ...SkillsPaths.generateSkillPaths(skills, kind),
-      ...IdentityPaths.generateIdentityPaths(kind),
-    ].map((tp) => tp.path),
-  );
+  const names = { abilities: ABILITY_NAMES, saves: SAVE_NAMES, skills: SKILL_NAMES };
+  return new Set(listBookTargetPaths(DND35_BASE_RULES, names, kind).map((tp) => tp.path));
 }
 
 /** The target paths the engine knows, which a modifier's or a requirement's must be one of. */

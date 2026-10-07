@@ -11,6 +11,8 @@
  *   written with) import nothing of its data. The codegen (`codegen/`) isn't the server's, and stores nothing; the
  *   server reads none of `database/`, `content/` and `codegen/`. `shared/` imports nothing app-specific (the schema's
  *   types only), and the client takes only types from the server.
+ * - `engine-front-door`: code outside `engine/` enters it through `engine/index.ts`, its operations and their types, as
+ *   the client enters the server through its API; a test may reach any of its modules.
  * - `queries-in-repositories`: a query is built in `server/repositories/` or `server/database/` (what talks to Postgres
  *   itself: the job queue, a channel's notifications, its health), nowhere else in the server. A transaction's handle
  *   is named `tx`, the name it knows a query by.
@@ -101,6 +103,20 @@ const QUERY_METHODS = new Set(["select", "selectDistinct", "insert", "update", "
 const SET_OPERATORS = new Set(["union", "unionAll", "intersect", "intersectAll", "except", "exceptAll"]);
 
 const UNINDEXED_TREES = ["server/routers/"];
+
+function createEngineFrontDoor(context) {
+  const file = repoPath(context.filename);
+  // The engine's own modules import each other; a test may reach any of them
+  if (file.startsWith("engine/") || file.startsWith("tests/")) return {};
+  const message =
+    "Code outside engine/ enters it through engine/index.ts, its operations and their types, as the client enters " +
+    "the server through its API.";
+  return onImports((node, spec) => {
+    const target = targetOf(file, spec);
+    if (!target?.startsWith("engine/") || target === "engine/index.ts") return;
+    context.report({ node, message });
+  });
+}
 
 function createFolderIndex(context) {
   const root = rootOf(context.filename);
@@ -260,6 +276,7 @@ function reExportsFrom(statement) {
 }
 
 export default {
+  "engine-front-door": { meta: { type: "problem" }, create: createEngineFrontDoor },
   layers: { meta: { type: "problem" }, create: createLayers },
   "queries-in-repositories": { meta: { type: "problem" }, create: createQueriesInRepositories },
   "folder-index": { meta: { type: "problem" }, create: createFolderIndex },

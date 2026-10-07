@@ -3,6 +3,7 @@ import type { Character as CharacterRecord, Property } from "@/shared/relations.
 
 import { createCharacter } from "./character/buildCharacter.ts";
 import { Dnd35Characters } from "./character/Dnd35Characters.ts";
+import { Dnd35Content } from "./content/Dnd35Content.ts";
 import { Dnd35Entities } from "./Dnd35Entities.ts";
 import Dnd35PropertyTypes from "./Dnd35PropertyTypes.ts";
 import Dnd35TargetPaths from "./Dnd35TargetPaths.ts";
@@ -16,6 +17,7 @@ import type { CharacterKind, Dnd35RulesetModule } from "./types.ts";
 export function createRulesetModule(): Dnd35RulesetModule {
   return {
     characters: new Dnd35Characters(),
+    content: new Dnd35Content(),
     entities: new Dnd35Entities(),
     levelUp: new Dnd35LevelUp(),
 

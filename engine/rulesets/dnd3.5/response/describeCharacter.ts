@@ -11,7 +11,7 @@ import { redactPrivateNotes } from "./redactPrivateNotes.ts";
 type BondedDescription = ReturnType<typeof buildBondedResponse>;
 
 /** What a viewer reads of a character's private notes: all of it, a blank, or no field at all. */
-export type PrivateNotes = "blank" | "omit" | "show";
+type PrivateNotes = "blank" | "omit" | "show";
 
 /** The master's bonded creatures (`bonded`), each built with its master's sheet, by their kind, in the kinds' order. */
 function describeBonded(view: RulesetView, master: DetailedCharacter, bonded: CharacterInput[], notes: PrivateNotes) {
