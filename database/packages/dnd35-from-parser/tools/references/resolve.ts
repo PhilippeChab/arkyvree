@@ -8,11 +8,7 @@
 
 import { existsSync, readFileSync } from "node:fs";
 
-import { buildDetected } from "@/database/packages/dnd35-from-parser/tools/detect/classes/detected.ts";
-import {
-  buildInitialMapping,
-  buildOccurrenceMap,
-} from "@/database/packages/dnd35-from-parser/tools/detect/classes/mapping.ts";
+import { ClassDetector } from "@/database/packages/dnd35-from-parser/tools/detect/classes/ClassDetector.ts";
 import { buildDomainDetected, buildDomainMapping } from "@/database/packages/dnd35-from-parser/tools/detect/domains.ts";
 import { buildFeatDetected, buildFeatMapping } from "@/database/packages/dnd35-from-parser/tools/detect/feats.ts";
 import { buildItemDetected } from "@/database/packages/dnd35-from-parser/tools/detect/items.ts";
@@ -50,25 +46,7 @@ export type StoredReference<T extends ReferenceType = ReferenceType> = Pick<
 const RESOLVERS: {
   [T in ReferenceType]: (stored: StoredReference<T>, classesOf: ClassesOf) => ReferenceByType[T];
 } = {
-  // A class's mapping: its features as detected, with the overrides applied (a null field removes the detected one).
-  class: ({ _meta, raw, overrides }) => {
-    const scraped = structuredClone(raw);
-    if (overrides?.alignment && !scraped.prerequisites.parsed.alignment)
-      scraped.prerequisites.parsed.alignment = overrides.alignment;
-    const detected = buildDetected(scraped);
-    const mapping = buildInitialMapping(scraped, detected);
-    if (overrides?.noSpells) {
-      delete mapping.spells;
-      delete mapping.bonusSpellAbility;
-    }
-    for (const [name, fields] of Object.entries(overrides?.features ?? {})) {
-      const feature: Record<string, unknown> = Object.assign(mapping.features[name] ?? {}, fields);
-      for (const [key, value] of Object.entries(feature)) if (value === null) delete feature[key];
-      mapping.features[name] = feature;
-    }
-    mapping.occurrenceMap = buildOccurrenceMap(mapping.features, detected.featureOccurrences);
-    return { _meta, raw: scraped, ...sanitizeJsonValues({ overrides, detected, mapping }) };
-  },
+  class: (stored) => new ClassDetector(stored).resolve(),
   feat: ({ _meta, raw, overrides }, classesOf) => {
     const feats = sanitizeJsonValues(raw);
     const detected = buildFeatDetected(feats);
