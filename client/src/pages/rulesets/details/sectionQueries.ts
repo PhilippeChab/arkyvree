@@ -3,7 +3,13 @@
  * factories, so a hovered tab's first page is already cached under the exact key the section asks for.
  */
 
-import { infiniteQueryOptions, type QueryClient, queryOptions, skipToken } from "@tanstack/react-query";
+import {
+  type DefaultError,
+  infiniteQueryOptions,
+  type QueryClient,
+  queryOptions,
+  skipToken,
+} from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -159,6 +165,17 @@ export function featsQuery(rulesetId: string, filters: AptitudeFilters) {
       ),
     initialPageParam: 1,
     getNextPageParam: nextPage,
+  });
+}
+
+/**
+ * The rows of a section that doesn't read them itself (they're handed over, or it only creates): cached under the
+ * section's key, which its saves refresh, and never fetched.
+ */
+export function heldSectionQuery<TData>(rulesetId: string, sectionName: string) {
+  return queryOptions<TData[], DefaultError, TData[], ReturnType<typeof QUERY_KEYS.rulesets.section>>({
+    queryKey: QUERY_KEYS.rulesets.section(rulesetId, sectionName),
+    queryFn: skipToken,
   });
 }
 

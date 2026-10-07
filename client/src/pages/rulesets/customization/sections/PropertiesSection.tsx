@@ -14,6 +14,10 @@ import { ListAltIcon } from "@/client/src/components/icons/index.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import { requiredRules } from "@/client/src/lib/validation.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
+import {
+  customizationSection,
+  propertiesQuery,
+} from "@/client/src/pages/rulesets/customization/customizationQueries.ts";
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import type { CustomizableEntityType } from "@/shared/customization/entities.ts";
@@ -81,9 +85,10 @@ export function PropertiesSection({
   } = useRulesetSection({
     createDefaults: EMPTY_PROPERTY,
     rulesetId: ruleset.id,
-    sectionName: `customization-${entityType}-${entityId}-properties`,
+    sectionName: customizationSection(entityType, entityId, "properties"),
     label: "Property",
     data: externalData,
+    query: propertiesQuery(ruleset.id, entityType, entityId),
     queryKeysToInvalidate,
     createFn: async (data: PropertyFormData) => {
       return tag(

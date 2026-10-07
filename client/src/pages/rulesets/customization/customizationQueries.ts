@@ -1,6 +1,7 @@
 /**
- * The rows of a customization's tabs that their section reads itself: an entity's modifiers and requirements (its
- * properties come with the entity, `entityQueries.ts`). The class page's tabs read the same.
+ * The rows of a customization's tabs that their section reads itself: an entity's properties, modifiers and
+ * requirements. The class page's tabs read them so; the customization page hands its properties over with the entity
+ * (`entityQueries.ts`).
  */
 
 import { queryOptions } from "@tanstack/react-query";
@@ -17,7 +18,7 @@ const customizationApi = rpc.api.rulesets[":id"].customization[":entityType"][":
 export function customizationSection(
   entityType: CustomizationOwnerType,
   entityId: string,
-  tab: "modifiers" | "requirements",
+  tab: "modifiers" | "properties" | "requirements",
 ) {
   return `customization-${entityType}-${entityId}-${tab}`;
 }
@@ -28,6 +29,16 @@ export function modifiersQuery(rulesetId: string, entityType: CustomizableEntity
     queryFn: () =>
       parseResponse(
         customizationApi.modifiers.$get({ param: { id: rulesetId, entityType: getUrlSegment(entityType), entityId } }),
+      ),
+  });
+}
+
+export function propertiesQuery(rulesetId: string, entityType: CustomizableEntityType, entityId: string) {
+  return queryOptions({
+    queryKey: QUERY_KEYS.rulesets.section(rulesetId, customizationSection(entityType, entityId, "properties")),
+    queryFn: () =>
+      parseResponse(
+        customizationApi.properties.$get({ param: { id: rulesetId, entityType: getUrlSegment(entityType), entityId } }),
       ),
   });
 }

@@ -3,7 +3,7 @@ import { useController } from "react-hook-form";
 
 import { DiceSpinner } from "@/client/src/components/common/index.ts";
 import { CasinoIcon } from "@/client/src/components/icons/index.ts";
-import { ANIMATIONS, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
+import { PREFERS_REDUCED_MOTION, settleAnimation } from "@/client/src/theme/animations.ts";
 
 import type { LevelUpHpStepProps } from "./levelUpFactory.ts";
 
@@ -55,7 +55,7 @@ export function LevelUpHpStep({ wizard }: LevelUpHpStepProps) {
         inputRef={field.ref}
         disabled={hpRolling}
         fullWidth
-        sx={{ animation: hpSettled ? ANIMATIONS.settle : undefined, [PREFERS_REDUCED_MOTION]: { animation: "none" } }}
+        sx={{ animation: hpSettled ? settleAnimation : undefined, [PREFERS_REDUCED_MOTION]: { animation: "none" } }}
         slotProps={{
           htmlInput: {
             min: 1,
