@@ -1,5 +1,5 @@
 import type { BaseClassSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/BaseClassSeeds.ts";
-import { domainSpells } from "@/database/packages/dnd35/content/aptitudes/names.ts";
+import { classSpells, domainSpells } from "@/database/packages/dnd35/content/aptitudes/names.ts";
 import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
 import { bonus, setFlag } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
@@ -85,6 +85,13 @@ export function Spellcasting<B extends Constructor<BaseClassSeeds>>(Base: B) {
             }
           : {}),
       };
+    }
+
+    /** The spell lists a class's slots go to (`spells.lists`), or its own, "<Class> Spells": none for a class without slots. */
+    spellLists(): string[] {
+      const { spells } = this.ref.mapping;
+      if (!spells) return [];
+      return spells.lists?.map((list) => list.name) ?? [classSpells(this.ref.raw.name)];
     }
   }
   return WithSpellcasting;

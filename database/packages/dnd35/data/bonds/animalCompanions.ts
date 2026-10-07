@@ -62,7 +62,7 @@ const ANIMAL_COMPANION_CLASS_FEATURE_FEATS: FeatSeed[] = [
       "If the animal companion is subjected to an attack that normally allows a Reflex save for half damage, it takes no damage on a successful save.",
     selectable: false,
     aptitudes: [ANIMAL_COMPANION_CLASS_FEATURE_APTITUDE],
-    // Like every class's Evasion (`CLASS_FEAT_FAMILIES`, dnd35-from-parser/tools/seeds/classes/featFamilies.ts)
+    // Like every class's Evasion (`CLASS_FEAT_FAMILIES`, dnd35-from-parser/tools/vocabulary/classFeatFamilies.ts)
     properties: [{ type: FEAT_FAMILY, value: "Evasion" }],
   },
   {

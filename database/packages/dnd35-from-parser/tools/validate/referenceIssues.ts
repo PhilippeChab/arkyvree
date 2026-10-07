@@ -1,8 +1,6 @@
 import { ItemDetector } from "@/database/packages/dnd35-from-parser/tools/detect/ItemDetector.ts";
 import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
 import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
-import { getSeededMagicItems } from "@/database/packages/dnd35-from-parser/tools/seeds/magicItems.ts";
-import { getSeededRaces, getSkippedRaces } from "@/database/packages/dnd35-from-parser/tools/seeds/races.ts";
 import { sanitizeJsonValues } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
 import type { ReferenceFile } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
 
@@ -135,7 +133,7 @@ export function findReferenceIssues(refs: ReferenceFile[]): Issue[] {
           const data = References.load(ref.path, "domain");
           const review = reviewOf(data.overrides?.reviewed);
           entityIssues(data.detected, review);
-          for (const { domain, text } of Library.book(data._meta.book).domainSpellIssues(data))
+          for (const { domain, text } of Library.book(data._meta.book).domains(data).spellIssues())
             notSeedable(domain, text);
           return review;
         }
@@ -143,8 +141,9 @@ export function findReferenceIssues(refs: ReferenceFile[]): Issue[] {
           // A skipped race isn't seeded: its detections don't matter. A seeded one's size must be one the seed accepts.
           const data = References.load(ref.path, "race");
           const review = reviewOf(data.overrides?.reviewed);
-          entityIssues(data.detected, review, getSkippedRaces(data));
-          for (const { name, size } of getSeededRaces(data)) if (!size.ok) notSeedable(name, size.problem);
+          const races = Library.book(data._meta.book).races(data);
+          entityIssues(data.detected, review, races.skipped());
+          for (const { name, size } of races.seeded()) if (!size.ok) notSeedable(name, size.problem);
           return review;
         }
         case "item": {
@@ -167,7 +166,8 @@ export function findReferenceIssues(refs: ReferenceFile[]): Issue[] {
           const review = reviewOf(data.overrides?.reviewed);
           const skipped = Object.keys(data.detected).filter((name) => data.overrides?.[name]?.skip);
           entityIssues(data.detected, review, new Set(skipped));
-          for (const { name, slot } of getSeededMagicItems(data)) if (slot && !slot.ok) notSeedable(name, slot.problem);
+          for (const { name, slot } of Library.book(data._meta.book).magicItems(data).seeded())
+            if (slot && !slot.ok) notSeedable(name, slot.problem);
           return review;
         }
         case "spell":

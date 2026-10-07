@@ -25,12 +25,15 @@ function generated(ref: ClassReference): string | Error {
   try {
     const seeds = Library.book(ref._meta.book);
     const classFile = new CodeFile();
-    classFile.classSeed(seeds.classSeed(ref));
+    classFile.classSeed(seeds.classes(ref).seed());
     const featsFile = new CodeFile();
     featsFile.list(
       getClassFeatsFile(ref.raw.name).list,
       "FeatSeed",
-      seeds.classFeatSeeds(ref).flatMap((feat) => featsFile.feat(feat)),
+      seeds
+        .classes(ref)
+        .feats()
+        .flatMap((feat) => featsFile.feat(feat)),
     );
     return [...getClassReviewNotes(ref), classFile.code(), featsFile.code()].join("\n");
   } catch (error) {

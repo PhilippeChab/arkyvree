@@ -1,4 +1,3 @@
-import { resolveFamilyChecks } from "@/database/packages/dnd35-from-parser/tools/seeds/feats.ts";
 import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
@@ -36,7 +35,7 @@ export class ClassSeeds extends include(
    */
   seed(): ClassSeed {
     const { detected, mapping, raw } = this.ref;
-    const requirements = resolveFamilyChecks(mapping.requirements, this.book.requirableFamilies());
+    const requirements = this.book.familyChecks(mapping.requirements);
     const { classFeatures, autoFreeFeats } = this.classFeatures();
     const freeFeats = [...(mapping.freeFeats ?? []), ...autoFreeFeats];
     const casting = this.casting();

@@ -34,7 +34,7 @@ export function GeneratesSpells<B extends Constructor<BaseGenerator>>(Base: B) {
 
     /** A spell reference's files, one per spell level with spells. */
     writeSpells(ref: SpellReference, book: string) {
-      const spells = Library.book(book).spellSeeds(ref);
+      const { seeds: spells } = Library.book(book).spells(ref);
       this.log(`Built ${spells.length} spell seeds`);
 
       // A spell above 9th level would have no file: the app has no epic spells

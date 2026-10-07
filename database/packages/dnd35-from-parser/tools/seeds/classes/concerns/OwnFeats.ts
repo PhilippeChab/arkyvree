@@ -1,16 +1,13 @@
 import {
-  readCompanionGrantModifiers,
-  readUncannyDodgeModifiers,
-} from "@/database/packages/dnd35-from-parser/tools/detect/readers/modifiers/grants.ts";
-import type { PerLevelExpansion } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/aptitudePicks.ts";
-import type {
-  BaseClassSeeds,
-  MappedFeature,
+  type BaseClassSeeds,
+  type MappedFeature,
+  type PerLevelExpansion,
 } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/BaseClassSeeds.ts";
-import { detectClassFeatFamily } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/featFamilies.ts";
+import { GrantText } from "@/database/packages/dnd35-from-parser/tools/seeds/GrantText.ts";
 import { insertOrdinalInName } from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
 import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
+import { findClassFeatFamily } from "@/database/packages/dnd35-from-parser/tools/vocabulary/classFeatFamilies.ts";
 import { grantFeat } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import type { ModifierSeed, RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
@@ -104,8 +101,8 @@ export function OwnFeats<B extends Constructor<BaseClassSeeds>>(Base: B) {
 
         const modifiers: ModifierSeed[] = [
           ...(feature.modifiers ?? []).map((m) => ({ ...m, target: aptitudeTargetRemap.get(m.target) ?? m.target })),
-          ...readCompanionGrantModifiers(name, feature.description ?? ""),
-          ...readUncannyDodgeModifiers(name),
+          ...new GrantText(name, feature.description ?? "").companionModifiers(),
+          ...new GrantText(name).uncannyDodgeModifiers(),
           ...(lockedType ? [grantFeat(`Favored Enemy: ${lockedType}`)] : []),
         ];
         // A pick in a pool of the class's own (not its class features) opens at the pool's first pick.
@@ -118,7 +115,7 @@ export function OwnFeats<B extends Constructor<BaseClassSeeds>>(Base: B) {
           ...(poolLevel != null && poolLevel > 1 ? this.classLevelRequirement(poolLevel) : []),
         ];
         const isAutoGranted = feature.level != null && !feature.aptitude;
-        const family = lockedType ? FAVORED_ENEMY_FAMILY : detectClassFeatFamily(name);
+        const family = lockedType ? FAVORED_ENEMY_FAMILY : findClassFeatFamily(name);
         feats.push({
           name,
           description,
