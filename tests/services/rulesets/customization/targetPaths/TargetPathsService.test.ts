@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { NotFoundError } from "@/server/errors/index.ts";
 import {
   getTargetPathsWithLabels,
+  resolvePathValueType,
   TargetPathsService,
 } from "@/server/services/rulesets/customization/targetPaths/index.ts";
 import type { TargetPathKind } from "@/shared/customization/target.ts";
@@ -145,6 +146,20 @@ describe("TargetPathsService", () => {
     expect((await complete("abilities.charisma.", "template")).items.map((item) => item.path)).toContain(
       "abilities.charisma.modifier",
     );
+  });
+
+  test("refuses a template value the sheet couldn't evaluate, saying why, and takes one it can", async () => {
+    const { rulesetId } = await getSeedCtx();
+    const check = (value: string, target = "combat.ac.misc") =>
+      resolvePathValueType(rulesetId, target, "modifier", "add", value);
+    expect(await check("{{ floor([classes.ranger.level] / 2) }}")).toBe("number");
+    expect(await check("{{ [abilities.charisma.modifier] }}")).toBe("number");
+    await expect(check("{{ [classes.rangr.level] }}")).rejects.toThrow(
+      "classes.rangr.level isn't a path a template can read",
+    );
+    await expect(check("{{ round([classes.ranger.level]) }}")).rejects.toThrow('Unknown function "round"');
+    await expect(check("{{ [abilities.*.modifier] }}")).rejects.toThrow("isn't a path a template can read");
+    await expect(check("{{ [identity.physiology.name] + 1 }}")).rejects.toThrow("arithmetic takes numbers");
   });
 
   test("leaves totals to requirements", async () => {

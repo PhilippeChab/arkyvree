@@ -1,11 +1,8 @@
 import { hasValueType, parseLiteralValue } from "@/server/rulesets/engine/paths/literalValue.ts";
-import {
-  evaluateTemplateExpression,
-  extractTemplateExpression,
-  isTemplateValue,
-} from "@/server/rulesets/engine/paths/templateExpression.ts";
+import { evaluateTemplateExpression } from "@/server/rulesets/engine/paths/templateExpression.ts";
 import type { Components, TargetPathsTraverser, TraversePathResult } from "@/server/rulesets/engine/types.ts";
 import RequirementTree, { getParentLevel, type RequirementNode } from "@/shared/customization/RequirementTree.ts";
+import { extractTemplateExpression, isTemplateValue } from "@/shared/customization/templateExpression.ts";
 import type { Requirement } from "@/shared/relations.ts";
 
 type RequirementResults = {

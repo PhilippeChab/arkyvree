@@ -329,6 +329,8 @@ Use `{{ target.path }}` syntax to reference another stat as the modifier value. 
 
 The template field's path picker lists what a template reads (the `template` kind of the target path listing): one value each from the sheet, the read-only totals and modifiers included (`abilities.charisma.modifier`, `combat.ac.total`). It leaves out what a template can't read: wildcards, a skill family's paths and a spell's property lists (`readsMany`: several values, or a list), and an item's own weapon paths (`weapon.*`), which read the item a template doesn't have.
 
+A template is checked when it's saved, as the sheet will evaluate it (`findTemplateError`, `shared/customization/templateExpression.ts`): it parses, calls only `min`, `max`, `floor`, `ceil` and `abs`, reads only paths of that listing, and gives the value's type: a single path of the target's type, or a number computed from numbers. The seeds' templates, which no save checks, are held to the same check by a test (`tests/seeds/targets.test.ts`).
+
 ```ts
 // Divine Grace: add CHA modifier to all saves
 modifiers: [

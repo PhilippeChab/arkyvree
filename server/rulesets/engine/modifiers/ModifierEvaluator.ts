@@ -1,12 +1,7 @@
 import { isTraversable } from "@/server/rulesets/engine/paths/isTraversable.ts";
 import { hasValueType, parseLiteralValue } from "@/server/rulesets/engine/paths/literalValue.ts";
 import { readComponent } from "@/server/rulesets/engine/paths/readComponent.ts";
-import {
-  evaluateTemplateExpression,
-  extractReferencedPaths,
-  extractTemplateExpression,
-  isTemplateValue,
-} from "@/server/rulesets/engine/paths/templateExpression.ts";
+import { evaluateTemplateExpression } from "@/server/rulesets/engine/paths/templateExpression.ts";
 import type RequirementEvaluator from "@/server/rulesets/engine/requirements/RequirementEvaluator.ts";
 import type {
   Component,
@@ -14,6 +9,11 @@ import type {
   TargetPathsTraverser,
   TraversePathResult,
 } from "@/server/rulesets/engine/types.ts";
+import {
+  extractReferencedPaths,
+  extractTemplateExpression,
+  isTemplateValue,
+} from "@/shared/customization/templateExpression.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
 type ModifierResults = {
