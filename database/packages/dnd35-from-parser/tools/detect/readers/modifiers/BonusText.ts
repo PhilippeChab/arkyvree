@@ -13,8 +13,12 @@ export class BonusText {
     return [...this.text.matchAll(pattern)].filter((match) => !this.isConditional(match));
   }
 
-  /** The first bonus `pattern` matches, unless it applies only sometimes. */
+  /**
+   * The first bonus `pattern` matches, unless it applies only sometimes. `pattern` is a non-global one: a global one's
+   * `match` gives every match, with no index to check.
+   */
   first(pattern: RegExp): RegExpMatchArray | undefined {
+    if (pattern.global) throw new Error(`BonusText.first takes a non-global pattern: ${pattern}`);
     const match = this.text.match(pattern);
     return match && !this.isConditional(match) ? match : undefined;
   }
