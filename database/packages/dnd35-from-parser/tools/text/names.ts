@@ -1,4 +1,41 @@
-/** An entry's name as the books write it: normalized, matched whatever its number, and made an identifier. */
+/** An entry's name as the books write it: normalized, matched whatever its number, made an identifier or a title. */
+
+/** The small words a title keeps lowercase, the first aside. */
+const LOWERCASE_WORDS = new Set([
+  "a",
+  "an",
+  "and",
+  "as",
+  "at",
+  "but",
+  "by",
+  "for",
+  "if",
+  "in",
+  "of",
+  "on",
+  "or",
+  "the",
+  "to",
+  "vs",
+]);
+
+/** A name in title case, its small words (a, an, and…) aside, a parenthesized word capitalized too ("(Planar)"). */
+export function capitalizeTitle(s: string): string {
+  return s
+    .split(/\s+/)
+    .map((w, i) => {
+      const lower = w.toLowerCase();
+      // Always capitalize first word
+      if (i === 0) return lower.charAt(0).toUpperCase() + lower.slice(1);
+      // Capitalize words starting with ( — e.g. "(Planar)"
+      if (lower.startsWith("(")) return "(" + lower.charAt(1).toUpperCase() + lower.slice(2);
+      // Keep articles/prepositions lowercase
+      if (LOWERCASE_WORDS.has(lower)) return lower;
+      return lower.charAt(0).toUpperCase() + lower.slice(1);
+    })
+    .join(" ");
+}
 
 export function findWithPluralVariants<V>(map: Map<string, V>, name: string): V | undefined {
   for (const v of getPluralVariants(name)) {

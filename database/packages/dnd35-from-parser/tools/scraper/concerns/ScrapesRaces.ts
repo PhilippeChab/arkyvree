@@ -1,7 +1,6 @@
 import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
 import { type BaseScraper } from "@/database/packages/dnd35-from-parser/tools/scraper/BaseScraper.ts";
-import { buildRaceListingUrl } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
-import { parseRaceDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/race.ts";
+import { RacePage } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/RacePage.ts";
 import { type RaceReference } from "@/database/packages/dnd35-from-parser/tools/types/races.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
@@ -12,7 +11,7 @@ export function ScrapesRaces<B extends Constructor<BaseScraper>>(Base: B) {
     async scrapeRace(url: string) {
       console.log(`Fetching ${url}...`);
       const html = await this.http.fetchHtml(url);
-      const race = parseRaceDetailHtml(html);
+      const race = new RacePage(html).read();
       if (!race) {
         console.error(`Could not parse race from ${url}`);
         process.exit(1);
@@ -28,11 +27,7 @@ export function ScrapesRaces<B extends Constructor<BaseScraper>>(Base: B) {
 
     /** Every race of the book. */
     async scrapeRaces() {
-      const bookSlug = this.bookSlug();
-      const listingUrl = buildRaceListingUrl(this.book);
-      console.log(`Discovering races from ${listingUrl} (filtering for ${bookSlug})...`);
-
-      const raceUrls = await this.discover(listingUrl, "races", bookSlug);
+      const { entries: raceUrls, url: listingUrl } = await this.listing("races");
 
       console.log(`Found ${raceUrls.length} races`);
 
@@ -40,7 +35,7 @@ export function ScrapesRaces<B extends Constructor<BaseScraper>>(Base: B) {
       for (const entry of raceUrls) {
         console.log(`  Fetching: ${entry.name}...`);
         const html = await this.http.fetchHtml(entry.url);
-        const race = parseRaceDetailHtml(html);
+        const race = new RacePage(html).read();
         if (race) {
           raw.push(race);
           const adjStr =
@@ -54,18 +49,7 @@ export function ScrapesRaces<B extends Constructor<BaseScraper>>(Base: B) {
 
       console.log(`Parsed ${raw.length} races`);
 
-      const outPath = References.path(this.book, "race");
-
-      this.saveReference(
-        outPath,
-        {
-          type: "race",
-          sourceUrl: listingUrl,
-          book: this.book,
-          scrapedAt: new Date().toISOString(),
-        },
-        raw,
-      );
+      this.saveReference(References.path(this.book, "race"), this.meta("race", { sourceUrl: listingUrl }), raw);
     }
   }
   return ScrapingRaces;

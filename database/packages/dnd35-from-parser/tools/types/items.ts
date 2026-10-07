@@ -16,7 +16,13 @@ export type ArmorRow = {
   weight: string;
 };
 
-/** An item's fields an override sets. */
+/**
+ * An item's fields an override sets.
+ *
+ * A good of the SRD's goods tables, as scraped: its name, cost and weight, and the table it's in.
+ */
+export type GoodsRow = { cost: string; name: string; tableId: string; weight: string };
+
 export type ItemFields = { costGp?: string; description?: string; skip?: boolean; weight?: string };
 
 export type ItemReference = {
@@ -64,12 +70,7 @@ export type ItemReference = {
 
   raw: {
     armor: ArmorRow[];
-    goods: {
-      cost: string;
-      name: string;
-      tableId: string;
-      weight: string;
-    }[];
+    goods: GoodsRow[];
     weapons: WeaponRow[];
   };
 };

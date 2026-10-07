@@ -72,49 +72,6 @@ export class HttpClient {
     writeFileSync(this.cachePath(url), html);
   }
 
-  /**
-   * Fetch all pages from a paginated dndtools.net listing.
-   *
-   * Page 1 is fetched first to extract the total item count from the
-   * "(total N items)" text. Remaining pages are fetched sequentially
-   * (to respect rate limiting).
-   *
-   * Note: dndtools.net returns 500 for custom `page_size` params,
-   * so we use the default page size (20 items) and paginate with `?page=N`.
-   *
-   * Returns an array of HTML strings, one per page.
-   */
-  async fetchAllPages(baseUrl: string): Promise<string[]> {
-    const PAGE_SIZE = 20; // dndtools.net default, cannot be changed
-    const sep = baseUrl.includes("?") ? "&" : "?";
-    const page1Url = `${baseUrl}${sep}page=1`;
-
-    console.log(`Fetching page 1: ${page1Url}`);
-    const page1Html = await this.fetchHtml(page1Url);
-
-    // Extract total from "(total N items)"
-    const totalMatch = page1Html.match(/\(total\s+(\d+)\s+items?\)/i);
-    if (!totalMatch) {
-      // Single page — no pagination indicator
-      return [page1Html];
-    }
-
-    const total = parseInt(totalMatch[1], 10);
-    const totalPages = Math.ceil(total / PAGE_SIZE);
-    console.log(`  Total: ${total} items across ${totalPages} page(s)`);
-
-    if (totalPages <= 1) return [page1Html];
-
-    const pages = [page1Html];
-    for (let page = 2; page <= totalPages; page++) {
-      const pageUrl = `${baseUrl}${sep}page=${page}`;
-      console.log(`Fetching page ${page}/${totalPages}: ${pageUrl}`);
-      pages.push(await this.fetchHtml(pageUrl));
-    }
-
-    return pages;
-  }
-
   /** A page's HTML: from the disk cache, else fetched, rate limited, with up to MAX_RETRIES attempts. */
   async fetchHtml(url: string): Promise<string> {
     // Check cache first

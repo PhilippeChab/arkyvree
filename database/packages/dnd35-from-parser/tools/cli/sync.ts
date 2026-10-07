@@ -12,7 +12,7 @@ import { basename, join } from "node:path";
 import { $ } from "bun";
 
 import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
-import { BASE_URL, getBookSlug } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
+import type { ReferenceFile } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
 
 import { parseCliArgs } from "./args.ts";
 
@@ -20,59 +20,20 @@ const GENERATOR = join(import.meta.dirname!, "generate.ts");
 const SCRAPER = join(import.meta.dirname!, "scrape.ts");
 
 /**
- * Build CLI args for the scraper.
- *
- * Constructs dndtools.net URLs from book + type + name, regardless of
- * what the stored sourceUrl says (it may point to the old dead site).
+ * The scraper's arguments to re-scrape a reference: its type and book, and a class's page, the URL its reference
+ * stores. None for a reference the scraper doesn't scrape (the wizard schools).
  */
-function buildScrapeArgs(ref: { book: string; path: string; type: string; url?: string }): string[] | null {
-  const name = basename(ref.path, ".json");
-
+function buildScrapeArgs(ref: ReferenceFile): string[] | null {
   // wizardSchool has no parser — skip
   if (ref.type === "wizardSchool") return null;
 
-  let bookSlug: string;
-  try {
-    bookSlug = getBookSlug(ref.book);
-  } catch {
-    console.warn(`Unknown book "${ref.book}" — skipping`);
-    return null;
-  }
-
   const args = [ref.type, "--book", ref.book];
-
-  // Construct dndtools.net URL based on type
-  switch (ref.type) {
-    case "class": {
-      // Individual class URL: /classes/{book-slug}/{class-slug}/
-      // Convert camelCase filename to kebab-case for the URL
-      const classSlug = name.replace(/([a-z])([A-Z])/g, "$1-$2").toLowerCase();
-      const url = `${BASE_URL}/classes/${bookSlug}/${classSlug}/`;
-      args.push("--url", url);
-      break;
-    }
-    case "feat": {
-      // Feats listing: /feats/{book-slug}/ — auto-discovery works
-      // No --url needed, uses buildListingUrl internally
-      break;
-    }
-    case "spell": {
-      // Spells listing: /spells/{book-slug}/ — auto-discovery works
-      break;
-    }
-    case "domain":
-      // Domains: the book's versions on the dndtools copy's domain pages — no URL needed
-      break;
-    case "item":
-    case "magicItem":
-      // Items use hardcoded d20srd.org URLs in the scraper — no URL needed
-      break;
-    case "race":
-      break;
-    default:
-      return null;
+  // A class is scraped from its page, the one its reference was scraped from; the other kinds from their listings
+  // (feats, spells, races), the domains' pages or the SRD's equipment pages, which the scraper finds
+  if (ref.type === "class") {
+    if (!ref.url) return null;
+    args.push("--url", ref.url);
   }
-
   return args;
 }
 

@@ -1,7 +1,6 @@
 import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
 import { type BaseScraper } from "@/database/packages/dnd35-from-parser/tools/scraper/BaseScraper.ts";
-import { buildListingUrl } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
-import { parseFeatDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/feat.ts";
+import { FeatPage } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/FeatPage.ts";
 import { type FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
@@ -12,7 +11,7 @@ export function ScrapesFeats<B extends Constructor<BaseScraper>>(Base: B) {
     async scrapeFeat(url: string) {
       console.log(`Fetching ${url}...`);
       const html = await this.http.fetchHtml(url);
-      const feat = parseFeatDetailHtml(html);
+      const feat = new FeatPage(html).read();
       if (!feat) {
         console.error(`Could not parse feat from ${url}`);
         process.exit(1);
@@ -25,17 +24,14 @@ export function ScrapesFeats<B extends Constructor<BaseScraper>>(Base: B) {
 
     /** Every feat of the book. */
     async scrapeFeats() {
-      const listingUrl = buildListingUrl("feats", this.book);
-      console.log(`Discovering feats from ${listingUrl}...`);
-
-      const featUrls = await this.discover(listingUrl, "feats");
+      const { entries: featUrls, url: listingUrl } = await this.listing("feats");
 
       console.log(`Found ${featUrls.length} feats, fetching detail pages...`);
 
       const raw: FeatReference["raw"] = [];
       for (const entry of featUrls) {
         const html = await this.http.fetchHtml(entry.url);
-        const feat = parseFeatDetailHtml(html);
+        const feat = new FeatPage(html).read();
         if (feat) {
           raw.push(feat);
           console.log(`  ${feat.name} [${feat.featType}]`);
@@ -46,18 +42,7 @@ export function ScrapesFeats<B extends Constructor<BaseScraper>>(Base: B) {
 
       console.log(`Parsed ${raw.length} feats`);
 
-      const outPath = References.path(this.book, "feat");
-
-      this.saveReference(
-        outPath,
-        {
-          type: "feat",
-          sourceUrl: listingUrl,
-          book: this.book,
-          scrapedAt: new Date().toISOString(),
-        },
-        raw,
-      );
+      this.saveReference(References.path(this.book, "feat"), this.meta("feat", { sourceUrl: listingUrl }), raw);
     }
   }
   return ScrapingFeats;
