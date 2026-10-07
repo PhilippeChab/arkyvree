@@ -104,11 +104,6 @@ class CharacterInventoryService {
       return inventory.map((entry) => {
         // The join still contains the stored parent row after itemId resolves.
         const item = rulesetData.itemsById.get(entry.itemId) ?? entry.itemsInRule;
-        const ownProperties = rulesetData.propertiesByEntity.get(item.id) ?? [];
-        const ownPropertyTypes = new Set(ownProperties.map((p) => p.type));
-        const templateProperties = item.sourceItemId
-          ? (rulesetData.propertiesByEntity.get(item.sourceItemId) ?? []).filter((p) => !ownPropertyTypes.has(p.type))
-          : [];
         const ownRequirements = rulesetData.requirementsByEntity.get(item.id) ?? [];
         const templateRequirements = item.sourceItemId
           ? (rulesetData.requirementsByEntity.get(item.sourceItemId) ?? [])
@@ -118,7 +113,7 @@ class CharacterInventoryService {
           ...entry,
           item: {
             ...item,
-            properties: [...templateProperties, ...ownProperties],
+            properties: rulesetData.itemProperties(item),
             modifiers: rulesetData.modifiersBySource.get(item.id) ?? [],
             requirements: [...templateRequirements, ...ownRequirements],
           },

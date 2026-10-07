@@ -328,6 +328,19 @@ export default class RulesetData {
     return (this.built.featsById ??= this.resolvingIds(this.storedFeatsById));
   }
 
+  /**
+   * An item's properties: its template's of each type the item doesn't set, then its own. An item made from a
+   * template (`sourceItemId`) holds only what it overrides, a type at a time: its own damage types replace all the
+   * template's.
+   */
+  itemProperties(item: Pick<Item, "id" | "sourceItemId">): Property[] {
+    const own = this.propertiesByEntity.get(item.id) ?? [];
+    if (!item.sourceItemId) return [...own];
+    const ownTypes = new Set(own.map((property) => property.type));
+    const template = this.propertiesByEntity.get(item.sourceItemId) ?? [];
+    return [...template.filter((property) => !ownTypes.has(property.type)), ...own];
+  }
+
   get itemsById(): Map<string, Item> {
     return (this.built.itemsById ??= this.resolvingIds(buildById(this.items)));
   }

@@ -8,13 +8,10 @@ import { SIZE_ORDER } from "./slots.ts";
 export class Dnd35InventoryRules implements InventoryRules {
   /** A weapon whose WEAPON_ONE_HAND_TRAINING is true, its own or its template's: a bastard sword, a dwarven waraxe. */
   isUnwieldyInOneHand(rulesetData: RulesetData, itemId: string): boolean {
-    const item = rulesetData.itemsById.get(itemId);
-    const ownProps = rulesetData.propertiesByEntity.get(itemId) ?? [];
-    const templateProps = item?.sourceItemId ? (rulesetData.propertiesByEntity.get(item.sourceItemId) ?? []) : [];
-    const training =
-      ownProps.find((p) => p.type === WEAPON_ONE_HAND_TRAINING) ??
-      templateProps.find((p) => p.type === WEAPON_ONE_HAND_TRAINING);
-    return training?.value === "true";
+    const properties = rulesetData.itemProperties(
+      rulesetData.itemsById.get(itemId) ?? { id: itemId, sourceItemId: null },
+    );
+    return properties.find((p) => p.type === WEAPON_ONE_HAND_TRAINING)?.value === "true";
   }
 
   /**
@@ -24,12 +21,10 @@ export class Dnd35InventoryRules implements InventoryRules {
    * two-handed.
    */
   validateWeaponHands(rulesetData: RulesetData, itemId: string, location: string): void {
-    const item = rulesetData.itemsById.get(itemId);
-    const ownProps = rulesetData.propertiesByEntity.get(itemId) ?? [];
-    const templateProps = item?.sourceItemId ? (rulesetData.propertiesByEntity.get(item.sourceItemId) ?? []) : [];
-    const weaponSize = (
-      ownProps.find((p) => p.type === WEAPON_SIZE) ?? templateProps.find((p) => p.type === WEAPON_SIZE)
-    )?.value;
+    const properties = rulesetData.itemProperties(
+      rulesetData.itemsById.get(itemId) ?? { id: itemId, sourceItemId: null },
+    );
+    const weaponSize = properties.find((p) => p.type === WEAPON_SIZE)?.value;
     const sizeIndex = weaponSize === undefined ? undefined : SIZE_ORDER[weaponSize];
     if (sizeIndex !== undefined && sizeIndex > SIZE_ORDER.Medium && location !== "Two Handed")
       throw new BadRequestError("This weapon requires two hands");

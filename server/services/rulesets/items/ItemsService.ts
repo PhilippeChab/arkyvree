@@ -148,15 +148,12 @@ class ItemsService extends include(Object, Variants) {
       // requirements from the template. Own properties override template ones of
       // the same type; requirements are additive.
       const modifiers = rulesetData.modifiersBySource.get(item.id) ?? [];
-      const ownProperties = rulesetData.propertiesByEntity.get(item.id) ?? [];
       const ownRequirements = rulesetData.requirementsByEntity.get(item.id) ?? [];
-      const templateProperties = item.sourceItemId ? (rulesetData.propertiesByEntity.get(item.sourceItemId) ?? []) : [];
       const templateRequirements = item.sourceItemId
         ? (rulesetData.requirementsByEntity.get(item.sourceItemId) ?? [])
         : [];
 
-      const ownPropertyTypes = new Set(ownProperties.map((p) => p.type));
-      const properties = [...templateProperties.filter((p) => !ownPropertyTypes.has(p.type)), ...ownProperties];
+      const properties = rulesetData.itemProperties(item);
       const requirements = [...templateRequirements, ...ownRequirements];
 
       return { ...item, modifiers, properties, requirements };
