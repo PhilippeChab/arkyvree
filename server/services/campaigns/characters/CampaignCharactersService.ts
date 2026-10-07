@@ -90,7 +90,7 @@ class CampaignCharactersService {
       const described = describeCharacter(
         scope,
         input,
-        await readBondedInputs(db, character),
+        await readBondedInputs(db, character, Visibility.All),
         isGM || canEdit ? "show" : "blank",
       );
       return { ...viewer, ...described, shareToken: canEdit ? described.shareToken : null };

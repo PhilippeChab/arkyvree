@@ -183,7 +183,7 @@ export function checkLevelSelections(params: {
 export function checkNotTaken(
   feats: FeatRecord[],
   pickedFeatIds: string[],
-  otherLevels: { id: string; klassLevelId: string }[],
+  otherLevels: { klassLevelId: string }[],
   autoGrantedRecords: { featsInRule: { id: string } }[],
   rulesetData: RulesetData,
 ) {

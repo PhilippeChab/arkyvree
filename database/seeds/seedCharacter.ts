@@ -15,13 +15,13 @@ import {
   levelPowersInCharacter,
   levelSkillsInCharacter,
 } from "@/drizzle/schema.ts";
-import { buildCharacter } from "@/server/builds/index.ts";
+import { planBondedCreatures } from "@/engine/index.ts";
+import { readBondedInputs, readCharacterInput } from "@/server/builds/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { type Db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { CharacterLevels, Characters } from "@/server/repositories/index.ts";
-import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
-import { reconcileAllBondedKinds } from "@/server/services/characters/levels/index.ts";
+import { writeBondedCreatures } from "@/server/services/characters/levels/index.ts";
 import { type Alignment, type Gender, type ItemLocation } from "@/shared/enums.ts";
 
 import { type SeedContext } from "./seedContext.ts";
@@ -72,12 +72,13 @@ async function addInventory(
 async function reconcileBondedForCharacter(tx: Db, characterId: string): Promise<void> {
   const master = await Characters.findOne(tx, { id: characterId });
   if (!master) throw new NotFoundError(`Character ${characterId} not found`);
-  if (master.kind !== "pc") return;
+  // A bonded creature has none of its own
+  if (master.parentCharacterId) return;
 
-  await withRulesetScope(tx, master.rulesetId, async ({ ruleset, rulesetData }) => {
-    const module = RulesetFactory.fromBaseRules(ruleset.baseRules);
-    const detailed = await buildCharacter(module, master, { database: tx, scope: { ruleset, rulesetData } });
-    await reconcileAllBondedKinds(tx, module, master, detailed, rulesetData);
+  await withRulesetScope(tx, master.rulesetId, async (scope) => {
+    const character = await readCharacterInput(tx, master);
+    const bonded = await readBondedInputs(tx, master);
+    await writeBondedCreatures(tx, master, planBondedCreatures(scope, character, bonded));
   });
 }
 

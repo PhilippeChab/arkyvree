@@ -187,7 +187,7 @@ class CharactersService extends include(Object, Archives) {
       describeCharacter(
         scope,
         await readCharacterInput(db, characterRecord),
-        await readBondedInputs(db, characterRecord),
+        await readBondedInputs(db, characterRecord, Visibility.All),
       ),
     );
   }

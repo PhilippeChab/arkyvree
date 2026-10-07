@@ -7,7 +7,7 @@ import { readBondedInputs, readCharacterInput } from "@/server/builds/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import { Activities, Characters } from "@/server/repositories/index.ts";
+import { Activities, Characters, Visibility } from "@/server/repositories/index.ts";
 import { getSlotUrl } from "@/server/services/attachments/index.ts";
 import { buildCharacterSheet } from "@/server/sheets/index.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -63,7 +63,7 @@ class CharacterSharingService {
       ...describeCharacter(
         scope,
         await readCharacterInput(db, characterRecord),
-        await readBondedInputs(db, characterRecord),
+        await readBondedInputs(db, characterRecord, Visibility.All),
         "omit",
       ),
       portraitUrl,

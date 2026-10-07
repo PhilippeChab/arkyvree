@@ -1,12 +1,16 @@
+import type { CharacterInput } from "@/engine/core/module/index.ts";
 import { parseLiteralValue } from "@/engine/core/paths/literalValue.ts";
+import type { RulesetView } from "@/engine/core/types.ts";
 import { getListFeatIds, getListPowerIds, type RulesetData } from "@/engine/core/view/index.ts";
 import { parseAptitudePool } from "@/engine/rulesets/dnd3.5/aptitudes/aptitudeTargets.ts";
+import { buildCharacter } from "@/engine/rulesets/dnd3.5/character/buildCharacter.ts";
 import type Dnd35DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import Dnd35LevelUpProjector from "@/engine/rulesets/dnd3.5/character/Dnd35LevelUpProjector.ts";
 import type { Dnd35ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/types.ts";
-import type { Klass, KlassLevel, Requirement } from "@/shared/relations.ts";
+import type { CharacterLevel, Klass, KlassLevel, Requirement } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
+import { getKlassLevel, getSavedKlassLevel } from "./classes.ts";
 import { buildPowerLevelLookup } from "./distribution.ts";
 import {
   buildPendingCharacterLevels,
@@ -41,58 +45,22 @@ type PickLevel = {
   pendingLevelKlassLevelIds?: string[];
 };
 
-/** A row of a feat's variants, which the picker opens into them: each variant says whether it's eligible. */
-function asFamilyRow<T extends object>(row: T) {
-  return {
-    ...row,
-    eligible: true as boolean,
-    aptitudeModifiers: [] as AptitudeModifier[],
-    requirementTree: undefined as string | undefined,
-  };
-}
-
-/** The projection's levels: the pending ones and the picker's own, without the edited level and those after it. */
-function projectPickLevels(characterId: string, klassLevelId: string, pick: PickLevel, withAbilities: boolean) {
-  const { excludeCharacterLevelId, levels, pendingLevelAbilityIds, pendingLevelKlassLevelIds } = pick;
-  const excludeIds = excludeCharacterLevelId ? getLevelIdsFromOnward(levels, excludeCharacterLevelId) : [];
-  const pendingLevels = pendingLevelKlassLevelIds?.length
-    ? buildPendingCharacterLevels(
-        characterId,
-        pendingLevelKlassLevelIds,
-        withAbilities ? pendingLevelAbilityIds : undefined,
-      )
-    : [];
-  const level = buildProjectedCharacterLevel(characterId, klassLevelId);
-  return { excludeIds, level, pendingLevels };
-}
-
-/** Resolves aptitude-targeting modifiers (aptitudes.<slug>.allowed) for feats, grouped by feat ID. */
-function resolveAptitudeModifiers(featIds: string[], rulesetData: RulesetData) {
-  const result = new Map<string, AptitudeModifier[]>();
-  for (const featId of featIds) {
-    for (const mod of rulesetData.modifiersBySource.get(featId) ?? []) {
-      if (mod.sourceType !== "feats") continue;
-      const pool = parseAptitudePool(mod.target);
-      if (pool === undefined) continue;
-      const resolvedAptitudeId = rulesetData.aptitudeIdBySlug.get(pool);
-      const value = parseLiteralValue(mod.value, "number");
-      if (!resolvedAptitudeId || typeof value !== "number") continue;
-      let group = result.get(mod.sourceId);
-      if (!group) {
-        group = [];
-        result.set(mod.sourceId, group);
-      }
-      group.push({ aptitudeId: resolvedAptitudeId, value, operator: mod.operator });
-    }
-  }
-  return result;
-}
+/** What a picker's level is: class `klassId`'s `level`, after the levels planned before it, or an edit's. */
+type PickQuery = Omit<PickLevel, "levels"> & {
+  /** The pool picked in */
+  aptitudeId: string;
+  klassId: string;
+  level: number;
+  /** The feats the wizard's pending levels and this one picked so far */
+  pendingLevelFeatPicks?: FeatPick[];
+  selectedFeatPicks?: FeatPick[];
+};
 
 /**
  * The grouped feat options of a page: a feat without variants annotated as a flat option is, a family's row eligible,
  * its variants annotated when the picker opens it.
  */
-export function annotateFeatGroups<T extends { representativeId: string; variantCount: number }>(
+function annotateFeatGroups<T extends { representativeId: string; variantCount: number }>(
   character: Dnd35DetailedCharacter,
   rows: T[],
   rulesetData: RulesetData,
@@ -127,7 +95,7 @@ export function annotateFeatGroups<T extends { representativeId: string; variant
  * The feat options of a page, each with whether the character meets its requirements (and the tree it fails) and the
  * pools its modifiers add slots to.
  */
-export function annotateFeatOptions<T extends { id: string }>(
+function annotateFeatOptions<T extends { id: string }>(
   character: Dnd35DetailedCharacter,
   items: T[],
   rulesetData: RulesetData,
@@ -140,12 +108,22 @@ export function annotateFeatOptions<T extends { id: string }>(
   return annotated.map((item) => ({ ...item, aptitudeModifiers: aptitudeModByFeat.get(item.id) ?? [] }));
 }
 
+/** A row of a feat's variants, which the picker opens into them: each variant says whether it's eligible. */
+function asFamilyRow<T extends object>(row: T) {
+  return {
+    ...row,
+    eligible: true as boolean,
+    aptitudeModifiers: [] as AptitudeModifier[],
+    requirementTree: undefined as string | undefined,
+  };
+}
+
 /**
  * The classes of a page the character can take, each with its eligibility and, when it isn't, the requirements it
  * fails: from the character built with the pending picks (`projectPendingPicks`), which only a class with requirements
  * needs. Highest next level first, then by name.
  */
-export function buildClassOptions(
+function buildClassOptions(
   { candidates, requirementsByKlassLevel }: ClassPick,
   character: Dnd35DetailedCharacter | undefined,
   characterId: string,
@@ -194,7 +172,7 @@ export function buildClassOptions(
  * A saved level's selections, as the level's edit opens them: its skill ranks, its feats by pool (each with the pools
  * its modifiers add slots to) and its powers by pool (each with its spell level in the pool when it has one).
  */
-export function buildLevelSelections(
+function buildLevelSelections(
   levelSkills: { rank: number; skillId: string }[],
   levelFeats: { aptitudeId: string; featId: string }[],
   levelPowers: { aptitudeId: string; powerId: string }[],
@@ -244,7 +222,7 @@ export function buildLevelSelections(
  * The classes of a page the character can take another level of (`maxLevels`: its highest level in each), with that
  * level, and the requirements of those that have any.
  */
-export function getClassPick(klasses: Klass[], maxLevels: Map<string, number>, rulesetData: RulesetData): ClassPick {
+function getClassPick(klasses: Klass[], maxLevels: Map<string, number>, rulesetData: RulesetData): ClassPick {
   const candidates: ClassCandidate[] = [];
   for (const klass of klasses) {
     const nextKlassLevel = rulesetData.klassLevelByKlassAndLevel.get(
@@ -266,7 +244,7 @@ export function getClassPick(klasses: Klass[], maxLevels: Map<string, number>, r
  * What a feat picker offers and leaves out: the pool's feats as the ruleset composes the list, but those the character
  * can't take again (a feat that doesn't stack, held already).
  */
-export function getFeatPickFilters(character: Dnd35DetailedCharacter, aptitudeId: string, rulesetData: RulesetData) {
+function getFeatPickFilters(character: Dnd35DetailedCharacter, aptitudeId: string, rulesetData: RulesetData) {
   return { ids: getListFeatIds(rulesetData, aptitudeId), excludeFeatIds: character.getHeldNonStackableFeatIds() };
 }
 
@@ -275,7 +253,7 @@ export function getFeatPickFilters(character: Dnd35DetailedCharacter, aptitudeId
  * knows in the pool (the edited level and those after it aside), those its class level grants, those its modifiers give
  * it, and those of the schools a wizard's specialization prohibits (`excludeSchools`, the wizard step's).
  */
-export function getPowerPickFilters(
+function getPowerPickFilters(
   character: Dnd35DetailedCharacter,
   aptitudeId: string,
   klassLevelId: string,
@@ -297,7 +275,7 @@ export function getPowerPickFilters(
  * far and every feat those class levels grant. Granted feats count for requirements (a weapon proficiency for Weapon
  * Focus) and aren't offered. Editing a level leaves out it and the levels after it.
  */
-export function projectFeatPick(
+function projectFeatPick(
   characterId: string,
   klassLevelId: string,
   featPicks: FeatPick[],
@@ -326,7 +304,7 @@ export function projectFeatPick(
  * What the level-up wizard's pending picks add to the character, for the class picker: its pending levels with the
  * feats their class levels grant, its picked feats and its skill ranks. Undefined when there are none.
  */
-export function projectPendingPicks(
+function projectPendingPicks(
   characterId: string,
   rulesetData: RulesetData,
   pendingLevelKlassLevelIds?: string[],
@@ -378,12 +356,27 @@ export function projectPendingPicks(
     : undefined;
 }
 
+/** The projection's levels: the pending ones and the picker's own, without the edited level and those after it. */
+function projectPickLevels(characterId: string, klassLevelId: string, pick: PickLevel, withAbilities: boolean) {
+  const { excludeCharacterLevelId, levels, pendingLevelAbilityIds, pendingLevelKlassLevelIds } = pick;
+  const excludeIds = excludeCharacterLevelId ? getLevelIdsFromOnward(levels, excludeCharacterLevelId) : [];
+  const pendingLevels = pendingLevelKlassLevelIds?.length
+    ? buildPendingCharacterLevels(
+        characterId,
+        pendingLevelKlassLevelIds,
+        withAbilities ? pendingLevelAbilityIds : undefined,
+      )
+    : [];
+  const level = buildProjectedCharacterLevel(characterId, klassLevelId);
+  return { excludeIds, level, pendingLevels };
+}
+
 /**
  * The character a power pick is made for: the levels planned before this one, then this class level with the feats
  * picked so far and the powers it grants, which count for requirements and aren't offered. Editing a level leaves out
  * it and the levels after it.
  */
-export function projectPowerPick(
+function projectPowerPick(
   characterId: string,
   klassLevelId: string,
   featPicks: FeatPick[],
@@ -404,5 +397,140 @@ export function projectPowerPick(
       powerLevel: null,
       saveName: null,
     })),
+  };
+}
+
+/** Resolves aptitude-targeting modifiers (aptitudes.<slug>.allowed) for feats, grouped by feat ID. */
+function resolveAptitudeModifiers(featIds: string[], rulesetData: RulesetData) {
+  const result = new Map<string, AptitudeModifier[]>();
+  for (const featId of featIds) {
+    for (const mod of rulesetData.modifiersBySource.get(featId) ?? []) {
+      if (mod.sourceType !== "feats") continue;
+      const pool = parseAptitudePool(mod.target);
+      if (pool === undefined) continue;
+      const resolvedAptitudeId = rulesetData.aptitudeIdBySlug.get(pool);
+      const value = parseLiteralValue(mod.value, "number");
+      if (!resolvedAptitudeId || typeof value !== "number") continue;
+      let group = result.get(mod.sourceId);
+      if (!group) {
+        group = [];
+        result.set(mod.sourceId, group);
+      }
+      group.push({ aptitudeId: resolvedAptitudeId, value, operator: mod.operator });
+    }
+  }
+  return result;
+}
+
+/**
+ * A saved level's selections, as its edit opens them (`level`, with its picks): its class level, hit points and
+ * ability increase, its skill ranks, its feats by pool and its powers by pool.
+ */
+export function describeLevel(
+  view: RulesetView,
+  level: CharacterLevel,
+  picks: Parameters<typeof buildLevelSelections> extends [infer S, infer F, infer P, unknown]
+    ? { feats: F; powers: P; skills: S }
+    : never,
+) {
+  const { klassLevel, klass } = getSavedKlassLevel(view.rulesetData, level);
+  return {
+    characterLevelId: level.id,
+    klassId: klass.id,
+    klassName: klass.name,
+    level: klassLevel.level,
+    hd: klass.hd,
+    hp: level.hp,
+    abilityId: level.abilityId,
+    ...buildLevelSelections(picks.skills, picks.feats, picks.powers, view.rulesetData),
+  };
+}
+
+/**
+ * The class picker for a page of classes (`klasses`, with the character's highest level in each, `maxLevels`): each the
+ * character can take another level of. Only a class with requirements needs the character (`needsCharacter`), built
+ * with the wizard's pending picks when the server describes the options with its rows.
+ */
+export function openClassPicker(view: RulesetView, klasses: Klass[], maxLevels: Map<string, number>) {
+  const pick = getClassPick(klasses, maxLevels, view.rulesetData);
+  return {
+    needsCharacter: pick.requirementsByKlassLevel.size > 0,
+    describe(
+      characterId: string,
+      character: CharacterInput | undefined,
+      pending: {
+        featPicks?: FeatPick[];
+        levelAbilityIds?: (string | undefined)[];
+        levelKlassLevelIds?: string[];
+        skillAllocations?: { rank: number; skillId: string }[];
+      },
+    ) {
+      const built =
+        character &&
+        buildCharacter(view, character, {
+          projected: projectPendingPicks(
+            characterId,
+            view.rulesetData,
+            pending.levelKlassLevelIds,
+            pending.levelAbilityIds,
+            pending.featPicks,
+            pending.skillAllocations,
+          ),
+        });
+      return buildClassOptions(pick, built, characterId, view.rulesetData);
+    },
+  };
+}
+
+/**
+ * A feat picker for the character, from its rows: what it offers and leaves out (`filters`), which the server reads a
+ * page of options with, and the page annotated for the character built with the level's picks so far.
+ */
+export function openFeatPicker(view: RulesetView, character: CharacterInput, query: PickQuery) {
+  const { rulesetData } = view;
+  const klassLevel = getKlassLevel(rulesetData, query.klassId, query.level);
+  const projected = projectFeatPick(
+    character.record.id,
+    klassLevel.id,
+    [...(query.pendingLevelFeatPicks ?? []), ...(query.selectedFeatPicks ?? [])],
+    { ...query, levels: character.rows.levels },
+    rulesetData,
+  );
+  const built = buildCharacter(view, character, { projected });
+  return {
+    filters: getFeatPickFilters(built, query.aptitudeId, rulesetData),
+    annotate<T extends { id: string }>(items: T[]) {
+      return annotateFeatOptions(built, items, rulesetData);
+    },
+    annotateGroups<T extends { representativeId: string; variantCount: number }>(rows: T[]) {
+      return annotateFeatGroups(built, rows, rulesetData);
+    },
+  };
+}
+
+/**
+ * A power picker for the character, from its rows: what it offers and leaves out (`filters`: of a spell level, and
+ * but the schools a specialization prohibits), which the server reads a page of options with, and the page annotated.
+ */
+export function openPowerPicker(
+  view: RulesetView,
+  character: CharacterInput,
+  query: PickQuery & { excludeSchools?: string[]; powerLevel?: number },
+) {
+  const { rulesetData } = view;
+  const klassLevel = getKlassLevel(rulesetData, query.klassId, query.level);
+  const projected = projectPowerPick(
+    character.record.id,
+    klassLevel.id,
+    [...(query.pendingLevelFeatPicks ?? []), ...(query.selectedFeatPicks ?? [])],
+    { ...query, levels: character.rows.levels },
+    rulesetData,
+  );
+  const built = buildCharacter(view, character, { projected });
+  return {
+    filters: getPowerPickFilters(built, query.aptitudeId, klassLevel.id, query, rulesetData),
+    annotate<T extends { id: string }>(items: T[]) {
+      return annotateRequirements(built, items, rulesetData);
+    },
   };
 }

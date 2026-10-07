@@ -1,7 +1,8 @@
+import type { CharacterInput } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import type Dnd35DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
-import { BONDED_KIND_BY_SLUG, type BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
+import { BONDED_KIND_BY_SLUG, BONDED_KIND_SLUGS, type BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
 
 import { getBondedRaceStats } from "./bondedRaceData.ts";
 
@@ -93,4 +94,23 @@ export function planBondedLevels(
     added.push({ abilityId: null, hp: 1, klassLevelId: klassLevel.id });
   }
   return { added, removedIds: levels.slice(hitDice).map((level) => level.id) };
+}
+
+/**
+ * What a master's bonded creatures become as its levels make them, kind by kind, from the creatures it has (`bonded`,
+ * each with its rows): the creature it had removed (`removedId`), and the one it keeps (`keptId`) or makes (`created`)
+ * with the levels it takes or loses (`levels`: a new one has none yet).
+ */
+export function planMasterCreatures(
+  master: Dnd35DetailedCharacter,
+  bonded: CharacterInput[],
+  rulesetData: RulesetData,
+) {
+  return BONDED_KIND_SLUGS.map((kind) => {
+    const existing = bonded.find((input) => input.record.kind === kind);
+    const plan = planBondedCreature(master, kind, existing?.record, rulesetData);
+    if (!plan.levels) return { kind, levels: undefined, removedId: plan.removedId };
+    const levels = planBondedLevels("keptId" in plan ? (existing?.rows.levels ?? []) : [], plan.levels, rulesetData);
+    return { ...plan, kind, levels };
+  });
 }

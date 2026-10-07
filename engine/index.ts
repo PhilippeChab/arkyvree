@@ -5,5 +5,20 @@
  */
 
 export { describeBondedCreature, describeCharacter, describePartialCharacter } from "./api/characters.ts";
+export {
+  checkCharacter,
+  describeLevel,
+  getAttributeSlots,
+  getFeatSlots,
+  getLevelUpPreview,
+  getPowerSlots,
+  getSkillSlots,
+  openClassPicker,
+  openFeatPicker,
+  openPowerPicker,
+  planBondedCreatures,
+  planLevelEdit,
+  planLevelUp,
+} from "./api/levelUp.ts";
 export type { CharacterInput, CharacterRows } from "./core/module/index.ts";
 export type { RulesetView } from "./core/types.ts";

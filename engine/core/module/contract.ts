@@ -72,15 +72,13 @@ export interface DetailedCharacterInterface {
 /**
  * A base rules' module, typed by what it builds: its characters and the kinds of character it knows. Its parts are its
  * own, each typed by the module (`Dnd35RulesetModule`), which `getRulesetModule` hands out as it is: what it answers the
- * services (`rules`), what it writes in their transactions (`effects`), a character's level-up (`levelUp`) and its
- * bonded creatures (`bonded`).
+ * services (`rules`), what it writes in their transactions (`effects`), its characters' descriptions (`characters`)
+ * and their level-ups (`levelUp`).
  */
 export interface RulesetModule<
   Character extends DetailedCharacterInterface = DetailedCharacterInterface,
   Kind extends string = string,
 > {
-  /** What a master's bonded creatures become as the master's levels change, and the kinds they are */
-  bonded: object;
   /** A character's description: the sheet the API answers, its own and its bonded creatures' */
   characters: object;
   createDetailedCharacter(record: CharacterRecord, kind?: Kind): Character;
@@ -88,7 +86,7 @@ export interface RulesetModule<
   createTargetPaths(): TargetPathsInterface;
   /** What the ruleset does in a service's transaction */
   effects: object;
-  /** What the ruleset answers a character's level-up, from the rows and characters the server reads and builds */
+  /** What the ruleset answers a character's level-up, from the rows the server reads */
   levelUp: object;
   /** What the ruleset answers the services, without the database */
   rules: object;

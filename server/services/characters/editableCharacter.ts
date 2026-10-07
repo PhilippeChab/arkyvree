@@ -1,3 +1,6 @@
+import type { CharacterInput } from "@/engine/index.ts";
+import { readCharacterInput } from "@/server/builds/index.ts";
+import { type RulesetScope, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { type Db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Characters, Visibility } from "@/server/repositories/index.ts";
@@ -28,4 +31,22 @@ export async function getEditableCharacter(
   const character = await Characters.findOne(db, { id: characterId, editorId: session.userId }, visibility);
   if (!character) throw new NotFoundError("Character not found");
   return character;
+}
+
+/**
+ * Runs `run` in the ruleset scope of the character the session may edit, with the character's rows: what a level-up's
+ * reads ask the engine with.
+ */
+export async function withEditableCharacter<T>(
+  database: Db,
+  session: Session,
+  characterId: string,
+  run: (scope: RulesetScope, character: CharacterInput) => T,
+): Promise<Awaited<T>> {
+  const characterRecord = await getEditableCharacter(database, session, characterId);
+  return await withRulesetScope(
+    database,
+    characterRecord.rulesetId,
+    async (scope) => await run(scope, await readCharacterInput(database, characterRecord)),
+  );
 }

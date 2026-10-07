@@ -2,16 +2,14 @@
  * Powers and spells a level-up can pick for an aptitude pool.
  */
 
-import { buildCharacter } from "@/server/builds/index.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { openPowerPicker } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
-import { CharacterLevels, Powers } from "@/server/repositories/index.ts";
-import { RulesetFactory, type RulesetModuleOf } from "@/server/rulesets/RulesetFactory.ts";
-import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
+import { Powers } from "@/server/repositories/index.ts";
+import { withEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /** A feat picked so far: the feat, and the pool it's picked in. */
-type FeatPick = Parameters<RulesetModuleOf["levelUp"]["projectPowerPick"]>[2][number];
+type FeatPick = NonNullable<Parameters<typeof openPowerPicker>[2]["selectedFeatPicks"]>[number];
 
 export async function getAvailablePowers(
   session: Session,
@@ -30,32 +28,16 @@ export async function getAvailablePowers(
   excludeCharacterLevelId?: string,
   pendingLevelKlassLevelIds?: string[],
 ) {
-  const characterRecord = await getEditableCharacter(db, session, characterId);
-
-  return await withRulesetScope(db, characterRecord.rulesetId, async (scope) => {
-    const { ruleset, rulesetData } = scope;
-    const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
-    const { levelUp } = rulesetModule;
-    const klassLevel = levelUp.getKlassLevel(rulesetData, klassId, level);
-    const levels = await CharacterLevels.findMany(db, { characterId });
-    const projected = levelUp.projectPowerPick(
-      characterId,
-      klassLevel.id,
-      [...(where.pendingLevelFeatPicks ?? []), ...(where.selectedFeatPicks ?? [])],
-      { excludeCharacterLevelId, levels, pendingLevelKlassLevelIds },
-      rulesetData,
-    );
-    const detailedCharacter = await buildCharacter(rulesetModule, characterRecord, { projected, scope });
-
-    const result = await Powers.findOptionPage(
-      db,
-      {
-        ...levelUp.getPowerPickFilters(detailedCharacter, aptitudeId, klassLevel.id, where, rulesetData),
-        search: where.search,
-      },
-      pagination,
-    );
-    const items = levelUp.annotateRequirements(detailedCharacter, result.items, rulesetData);
-    return { items, page: result.page, nextPage: result.nextPage };
+  return await withEditableCharacter(db, session, characterId, async (scope, character) => {
+    const picker = openPowerPicker(scope, character, {
+      ...where,
+      aptitudeId,
+      excludeCharacterLevelId,
+      klassId,
+      level,
+      pendingLevelKlassLevelIds,
+    });
+    const result = await Powers.findOptionPage(db, { ...picker.filters, search: where.search }, pagination);
+    return { items: picker.annotate(result.items), page: result.page, nextPage: result.nextPage };
   });
 }

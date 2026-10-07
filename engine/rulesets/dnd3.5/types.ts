@@ -35,7 +35,6 @@ import type {
   Skill,
 } from "@/shared/relations.ts";
 
-import type { Dnd35Bonded } from "./bonded/Dnd35Bonded.ts";
 import type DetailedCharacter from "./character/DetailedCharacter.ts";
 import type { Dnd35LevelUp } from "./levelUp/Dnd35LevelUp.ts";
 import type { ModuleEffects, ModuleRules } from "./module/index.ts";
@@ -157,7 +156,6 @@ export interface Dnd35ProjectedCharacterData extends ProjectedCharacterData {
 
 /** The 3.5 rules' module: its characters and kinds of character, and its parts, by their own types. */
 export interface Dnd35RulesetModule extends RulesetModule<DetailedCharacter, CharacterKind> {
-  bonded: Dnd35Bonded;
   characters: Dnd35Characters;
   effects: ModuleEffects;
   levelUp: Dnd35LevelUp;

@@ -1,101 +1,37 @@
-import { getKlassLevel, getPlannedKlassLevels, getSavedKlassLevel } from "./classes.ts";
-import { checkEditedLevelIssues, projectEditedLevel, projectLevelContribution } from "./edit.ts";
-import {
-  annotateFeatGroups,
-  annotateFeatOptions,
-  buildClassOptions,
-  buildLevelSelections,
-  getClassPick,
-  getFeatPickFilters,
-  getPowerPickFilters,
-  projectFeatPick,
-  projectPendingPicks,
-  projectPowerPick,
-} from "./picks.ts";
-import { buildLevelUpPreview, distributePlannedPicks } from "./plan.ts";
-import { projectPlannedLevels } from "./projection.ts";
-import {
-  buildFeatSlots,
-  buildPowerSlots,
-  buildSkillSlots,
-  projectAttributeStep,
-  projectFeatStep,
-  projectStepLevel,
-} from "./steps.ts";
-import {
-  annotateRequirements,
-  checkAbilityIncrease,
-  checkIssues,
-  checkLevelSelections,
-  checkNotTaken,
-  checkSelections,
-} from "./validation.ts";
+import { describeLevel, openClassPicker, openFeatPicker, openPowerPicker } from "./picks.ts";
+import { getLevelUpPreview } from "./plan.ts";
+import { checkCharacter, planBondedCreatures, planLevelEdit, planLevelUp } from "./save.ts";
+import { getAttributeSlots, getFeatSlots, getPowerSlots, getSkillSlots } from "./steps.ts";
 
 /**
- * The 3.5 level-up, as the module answers the server's level flows: the planned levels' class levels and projections,
- * the preview and a save's distribution, the checks a save makes, the wizard's steps and pickers, and a saved level's
- * selections. Each answers from the rows and the characters the server reads and builds.
+ * The 3.5 level-up, as the module answers the server's level flows, each from the rows the server read: the preview,
+ * a save's levels and its check, a saved level's edit, the bonded creatures the levels make, the wizard's steps and
+ * pickers, and a saved level's selections.
  */
 export class Dnd35LevelUp {
-  readonly annotateFeatGroups = annotateFeatGroups;
+  readonly checkCharacter = checkCharacter;
 
-  readonly annotateFeatOptions = annotateFeatOptions;
+  readonly describeLevel = describeLevel;
 
-  readonly annotateRequirements = annotateRequirements;
+  readonly getAttributeSlots = getAttributeSlots;
 
-  readonly buildClassOptions = buildClassOptions;
+  readonly getFeatSlots = getFeatSlots;
 
-  readonly buildFeatSlots = buildFeatSlots;
+  readonly getLevelUpPreview = getLevelUpPreview;
 
-  readonly buildLevelSelections = buildLevelSelections;
+  readonly getPowerSlots = getPowerSlots;
 
-  readonly buildLevelUpPreview = buildLevelUpPreview;
+  readonly getSkillSlots = getSkillSlots;
 
-  readonly buildPowerSlots = buildPowerSlots;
+  readonly openClassPicker = openClassPicker;
 
-  readonly buildSkillSlots = buildSkillSlots;
+  readonly openFeatPicker = openFeatPicker;
 
-  readonly checkAbilityIncrease = checkAbilityIncrease;
+  readonly openPowerPicker = openPowerPicker;
 
-  readonly checkEditedLevelIssues = checkEditedLevelIssues;
+  readonly planBondedCreatures = planBondedCreatures;
 
-  readonly checkIssues = checkIssues;
+  readonly planLevelEdit = planLevelEdit;
 
-  readonly checkLevelSelections = checkLevelSelections;
-
-  readonly checkNotTaken = checkNotTaken;
-
-  readonly checkSelections = checkSelections;
-
-  readonly distributePlannedPicks = distributePlannedPicks;
-
-  readonly getClassPick = getClassPick;
-
-  readonly getFeatPickFilters = getFeatPickFilters;
-
-  readonly getKlassLevel = getKlassLevel;
-
-  readonly getPlannedKlassLevels = getPlannedKlassLevels;
-
-  readonly getPowerPickFilters = getPowerPickFilters;
-
-  readonly getSavedKlassLevel = getSavedKlassLevel;
-
-  readonly projectAttributeStep = projectAttributeStep;
-
-  readonly projectEditedLevel = projectEditedLevel;
-
-  readonly projectFeatPick = projectFeatPick;
-
-  readonly projectFeatStep = projectFeatStep;
-
-  readonly projectLevelContribution = projectLevelContribution;
-
-  readonly projectPendingPicks = projectPendingPicks;
-
-  readonly projectPlannedLevels = projectPlannedLevels;
-
-  readonly projectPowerPick = projectPowerPick;
-
-  readonly projectStepLevel = projectStepLevel;
+  readonly planLevelUp = planLevelUp;
 }

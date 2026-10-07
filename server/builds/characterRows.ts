@@ -18,10 +18,17 @@ import {
 } from "@/server/repositories/index.ts";
 import type { Character } from "@/shared/relations.ts";
 
-/** A master's bonded creatures, each with its rows, read in the master's ruleset's scope: archived ones with it. */
-export async function readBondedInputs(database: Db, master: Character): Promise<CharacterInput[]> {
+/**
+ * A master's bonded creatures, each with its rows, read in the master's ruleset's scope: those `visibility` shows (a
+ * sheet shows an archived master's, which are archived with it).
+ */
+export async function readBondedInputs(
+  database: Db,
+  master: Character,
+  visibility: Visibility = Visibility.UnarchivedOnly,
+): Promise<CharacterInput[]> {
   const inputs: CharacterInput[] = [];
-  for (const creature of await Characters.findMany(database, { parentCharacterId: master.id }, Visibility.All))
+  for (const creature of await Characters.findMany(database, { parentCharacterId: master.id }, visibility))
     inputs.push(await readCharacterInput(database, creature));
   return inputs;
 }

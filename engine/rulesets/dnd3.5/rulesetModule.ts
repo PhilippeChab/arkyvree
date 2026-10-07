@@ -1,7 +1,6 @@
 import type { Character as CharacterRecord } from "@/shared/relations.ts";
 
 import { Dnd35AptitudesRules } from "./aptitudes/Dnd35AptitudesRules.ts";
-import { Dnd35Bonded } from "./bonded/Dnd35Bonded.ts";
 import { createCharacter } from "./character/buildCharacter.ts";
 import { Dnd35ClassesEffects } from "./classes/Dnd35ClassesEffects.ts";
 import { Dnd35ClassesRules } from "./classes/Dnd35ClassesRules.ts";
@@ -46,7 +45,6 @@ export function createRulesetModule(): Dnd35RulesetModule {
       rulesets: new Dnd35RulesetsRules(),
       skills: new Dnd35SkillsRules(),
     },
-    bonded: new Dnd35Bonded(),
     characters: new Dnd35Characters(),
     effects: {
       classes: new Dnd35ClassesEffects(),
