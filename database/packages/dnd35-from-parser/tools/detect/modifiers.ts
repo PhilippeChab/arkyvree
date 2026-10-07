@@ -1,17 +1,9 @@
-/** The modifiers detected in an entry's text, checked against the target paths and overridden by hand. */
+/** The modifiers detected in an entry's text (a `ModifierReading`'s), and overridden by hand. */
 
 import type { DetectedModifiers } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
-import type { Modifier, ModifierEffect, ModifierSeed } from "@/database/packages/dnd35/content/customization/types.ts";
+import type { Modifier } from "@/database/packages/dnd35/content/customization/types.ts";
 
-/**
- * What detecting an entry's modifiers finds: its modifiers (a feat's `ModifierSeed`, a domain's or a race's
- * `Modifier`), the invalid paths and the text it couldn't parse.
- */
-export type ModifierDetection<M extends ModifierEffect = ModifierSeed> = {
-  errors: string[];
-  modifiers: M[];
-  unresolvedModifiers: string[];
-};
+import type { ModifierReading } from "./readers/modifiers/ModifierReading.ts";
 
 /** Each entry's description and modifiers, its override's or else what's detected, and what `extra` takes from its override. */
 export function buildModifierMapping<
@@ -40,11 +32,11 @@ export function buildModifierMapping<
 /** Each entry's detected modifiers, with the invalid paths and the text detection couldn't resolve, when any. */
 export function detectModifiersOf<E extends { name: string }>(
   raw: E[],
-  detect: (entry: E) => ModifierDetection<Modifier>,
+  read: (entry: E) => Pick<ModifierReading<Modifier>, "errors" | "modifiers" | "unresolved">,
 ) {
   const detected: Record<string, DetectedModifiers> = {};
   for (const entry of raw) {
-    const { modifiers, errors, unresolvedModifiers } = detect(entry);
+    const { modifiers, errors, unresolved: unresolvedModifiers } = read(entry);
     detected[entry.name] = {
       modifiers,
       ...(errors.length > 0 ? { errors } : {}),
@@ -52,17 +44,4 @@ export function detectModifiersOf<E extends { name: string }>(
     };
   }
   return detected;
-}
-
-export function validateModifiers<M extends ModifierEffect>(
-  modifiers: M[],
-  isValid: (target: string) => boolean,
-): { errors: string[]; validated: M[] } {
-  const validated: M[] = [];
-  const errors: string[] = [];
-  for (const m of modifiers) {
-    if (isValid(m.target)) validated.push(m);
-    else errors.push(`Invalid modifier path "${m.target}": ${m.operator} ${m.value}`);
-  }
-  return { validated, errors };
 }

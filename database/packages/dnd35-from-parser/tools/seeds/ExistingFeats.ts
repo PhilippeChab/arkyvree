@@ -2,7 +2,7 @@
  * The feats a book already has, by name: a class feature that duplicates one grants it rather than a feat of its own.
  */
 
-import { findFamilyFeat } from "@/database/packages/dnd35-from-parser/tools/detect/featOptions.ts";
+import { findFamilyFeat } from "@/database/packages/dnd35-from-parser/tools/detect/readers/requirements/featOptions.ts";
 import { CORE_BOOK } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
 import { stripSeparators } from "@/shared/text.ts";

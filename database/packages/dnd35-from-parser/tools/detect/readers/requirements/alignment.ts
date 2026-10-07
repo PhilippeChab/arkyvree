@@ -54,7 +54,7 @@ function titleCase(name: string): string {
 }
 
 /** A prerequisite's alignment ("Any nonevil", "Lawful neutral"), as a check of the character's. */
-export function parseAlignmentRequirement(text: string): RequirementEntry | undefined {
+export function readAlignmentRequirement(text: string): RequirementEntry | undefined {
   const lower = text.toLowerCase().trim().replace(/\.$/, "");
 
   const any = ANY_ALIGNMENTS.find(({ prefixes }) => prefixes.some((prefix) => lower.startsWith(prefix)));

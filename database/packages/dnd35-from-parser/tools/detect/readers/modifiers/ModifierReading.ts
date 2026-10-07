@@ -1,0 +1,22 @@
+import { isValidModifierPath } from "@/database/packages/dnd35-from-parser/tools/detect/paths.ts";
+import type { ModifierEffect, ModifierSeed } from "@/database/packages/dnd35/content/customization/types.ts";
+
+/**
+ * A text read for the modifiers it gives: the modifiers (a feat's `ModifierSeed`, a race's, a domain's or an item's
+ * `Modifier`), the bonuses it names that no modifier can hold (`unresolved`), and the paths no character has
+ * (`errors`), whose modifiers are left out.
+ */
+export class ModifierReading<M extends ModifierEffect = ModifierSeed> {
+  readonly errors: string[] = [];
+  readonly modifiers: M[] = [];
+  readonly unresolved: string[] = [];
+
+  /** Leaves out the modifiers read whose path isn't valid, each in `errors`. */
+  protected keepValidModifiers() {
+    const read = this.modifiers.splice(0);
+    for (const modifier of read) {
+      if (isValidModifierPath(modifier.target)) this.modifiers.push(modifier);
+      else this.errors.push(`Invalid modifier path "${modifier.target}": ${modifier.operator} ${modifier.value}`);
+    }
+  }
+}

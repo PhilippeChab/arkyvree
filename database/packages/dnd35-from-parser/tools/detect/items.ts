@@ -2,6 +2,8 @@ import type { ItemReference } from "@/database/packages/dnd35-from-parser/tools/
 import { getArmorDefinition, getShieldDefinition } from "@/database/packages/dnd35/content/items/armor.ts";
 import { getWeaponDefinition } from "@/database/packages/dnd35/content/items/weapons.ts";
 
+import { readCost, readWeight } from "./readers/items/amounts.ts";
+
 /** SRD armor table uses short names; generators use full names */
 const DEFAULT_ARMOR_NAME_MAP: Record<string, string> = {
   Padded: "Padded Armor",
@@ -110,8 +112,8 @@ export function buildItemDetected(
     weapons[w.name] = {
       generatorName: def ? resolved : null,
       proficiency: w.proficiency,
-      costGp: parseCost(w.cost),
-      weight: parseWeight(w.weight),
+      costGp: readCost(w.cost),
+      weight: readWeight(w.weight),
     };
   }
 
@@ -128,15 +130,15 @@ export function buildItemDetected(
       generatorName: def ? resolved : null,
       type: itemType,
       proficiencyCategory: a.category,
-      costGp: parseCost(a.cost),
-      weight: parseWeight(a.weight),
+      costGp: readCost(a.cost),
+      weight: readWeight(a.weight),
     };
   }
 
   for (const g of raw.goods) {
     goods[g.name] = {
-      costGp: parseCost(g.cost),
-      weight: parseWeight(g.weight),
+      costGp: readCost(g.cost),
+      weight: readWeight(g.weight),
       category: TABLE_CATEGORIES[g.tableId] ?? g.tableId,
     };
   }
@@ -160,45 +162,4 @@ export function findUnresolvedItems(
       .filter(([name, piece]) => !piece.generatorName && !skipped(name))
       .map(([name, piece]) => `${piece.type.toLowerCase()}: ${name}`),
   ];
-}
-
-export function parseCost(cost: string): string {
-  if (!cost || cost === "—" || cost === "-") return "0";
-
-  // Remove commas, footnote superscripts, parenthetical notes
-  const cleaned = cost
-    .replace(/,/g, "")
-    .replace(/\(\d+\)/g, "")
-    .trim();
-
-  // Match value + unit: "15 gp", "+50 gp", "5 sp", "1 cp"
-  const match = cleaned.match(/^\+?\s*([\d.]+)\s*(gp|sp|cp)/i);
-  if (!match) return "0";
-
-  const value = parseFloat(match[1]);
-  const unit = match[2].toLowerCase();
-
-  if (unit === "gp") return String(value);
-  if (unit === "sp") return String(+(value / 10).toFixed(2));
-  if (unit === "cp") return String(+(value / 100).toFixed(2));
-  return "0";
-}
-
-export function parseWeight(weight: string): string {
-  if (!weight || weight === "—" || weight === "-") return "0";
-
-  // Strip footnote superscripts (trailing digits not part of the weight value)
-  const cleaned = weight.replace(/lb\.?\s*\d*$/, "lb.").trim();
-
-  // Handle ½ character
-  if (cleaned.includes("½")) {
-    const match = cleaned.match(/([\d.]*)\s*½/);
-    const whole = match?.[1] ? parseFloat(match[1]) : 0;
-    return String(whole + 0.5);
-  }
-
-  const match = cleaned.match(/([\d.]+)\s*lb/i);
-  if (match) return String(parseFloat(match[1]));
-
-  return "0";
 }

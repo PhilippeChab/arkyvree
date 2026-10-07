@@ -1,9 +1,9 @@
 /** A class's own feats: its features, a pick at several levels split per level, and the feat advancing its spellcasting. */
 
 import {
-  buildCompanionGrantModifiers,
-  buildUncannyDodgeModifiers,
-} from "@/database/packages/dnd35-from-parser/tools/detect/grants.ts";
+  readCompanionGrantModifiers,
+  readUncannyDodgeModifiers,
+} from "@/database/packages/dnd35-from-parser/tools/detect/readers/modifiers/grants.ts";
 import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { bonus, grantFeat } from "@/database/packages/dnd35/content/customization/modifiers.ts";
@@ -119,8 +119,8 @@ export function buildClassFeatSeeds(ref: ClassReference): FeatSeed[] {
 
     const modifiers: ModifierSeed[] = [
       ...(feature.modifiers ?? []).map((m) => ({ ...m, target: aptitudeTargetRemap.get(m.target) ?? m.target })),
-      ...buildCompanionGrantModifiers(name, feature.description ?? ""),
-      ...buildUncannyDodgeModifiers(name),
+      ...readCompanionGrantModifiers(name, feature.description ?? ""),
+      ...readUncannyDodgeModifiers(name),
       ...(lockedType ? [grantFeat(`Favored Enemy: ${lockedType}`)] : []),
     ];
     // A pick in a pool of the class's own (not its class features) opens at the pool's first pick.

@@ -1,6 +1,6 @@
 /** What a feat reference makes: its feats by feat type and its template families, and a feat's checks of a family. */
 
-import { buildCompanionGrantModifiers } from "@/database/packages/dnd35-from-parser/tools/detect/grants.ts";
+import { readCompanionGrantModifiers } from "@/database/packages/dnd35-from-parser/tools/detect/readers/modifiers/grants.ts";
 import { normalizeName } from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
 import { normalizeDescription } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
@@ -89,7 +89,7 @@ export function buildReferenceFeats(ref: FeatReference) {
       requirements: mapped.requirements ?? [],
       modifiers: [
         ...(mapped.modifiers ?? []),
-        ...buildCompanionGrantModifiers(name, mapped.description ?? entry.benefit ?? ""),
+        ...readCompanionGrantModifiers(name, mapped.description ?? entry.benefit ?? ""),
       ],
       properties: mapped.properties ?? [],
     });

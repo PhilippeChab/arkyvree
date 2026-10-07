@@ -57,7 +57,6 @@ export type ClassReference = {
     /** Invalid paths that failed validation — bugs to fix */
     errors?: string[];
     /** Map from feat slug (e.g. "pointblankshot") to original name (e.g. "Point Blank Shot") */
-    featNameMap: Record<string, string>;
     featureOccurrences: { levels: number[]; name: string }[];
     /** Whether class has own spell list (not advancement of existing) */
     hasOwnSpells?: boolean;

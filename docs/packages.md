@@ -64,6 +64,8 @@ database/packages/dnd35-from-parser/
     │   ├── Scraper.ts        # A concern per kind of reference (concerns/): ScrapesClasses, ScrapesFeats…
     │   └── parsers/          # A page's HTML → what its reference stores
     ├── detect/           # A reference's raw → its detected and mapping, a module per kind (classes/, feats.ts…)
+    │   ├── vocabulary.ts     # The names the books give abilities, saves, skills and races, as slugs and paths
+    │   └── readers/          # What a phrase says, in any kind of reference: requirements/ (FeatPrerequisites, ClassPrerequisites), modifiers/ (BonusText, a reading per kind of text), items/ (cost, weight, stats, base item)
     ├── text/             # The scraped text: sanitized, normalized, entry names
     ├── seeds/            # A reference → the seeds it makes, whole (a class's: classes/classSeed.ts), and what a book copies (copies.ts)
     ├── validate/         # What parser:validate reports, and the overrides that change nothing

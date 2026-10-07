@@ -7,10 +7,10 @@ import { BOOK as SCOUNDREL } from "@/database/packages/dnd35-from-parser/generat
 import { BOOK as WARRIOR } from "@/database/packages/dnd35-from-parser/generated/complete-warrior/index.ts";
 import { RODS, WONDROUS_ITEMS } from "@/database/packages/dnd35-from-parser/generated/srd/items/index.ts";
 import { ALL_RACES } from "@/database/packages/dnd35-from-parser/generated/srd/races.ts";
-import { readArmorStats } from "@/database/packages/dnd35-from-parser/tools/detect/armorStats.ts";
-import { isConditional } from "@/database/packages/dnd35-from-parser/tools/detect/conditional.ts";
-import { readSkillBonuses } from "@/database/packages/dnd35-from-parser/tools/detect/skillBonuses.ts";
-import { readWeaponEnhancement } from "@/database/packages/dnd35-from-parser/tools/detect/weaponStats.ts";
+import { readArmorStats } from "@/database/packages/dnd35-from-parser/tools/detect/readers/items/armorStats.ts";
+import { readWeaponEnhancement } from "@/database/packages/dnd35-from-parser/tools/detect/readers/items/weaponStats.ts";
+import { isConditional } from "@/database/packages/dnd35-from-parser/tools/detect/readers/modifiers/conditional.ts";
+import { readSkillBonuses } from "@/database/packages/dnd35-from-parser/tools/detect/readers/modifiers/skillBonuses.ts";
 
 /** Each book's feats, its standalone ones and its classes'. */
 const ADVENTURER_FEATS = [...ADVENTURER.standaloneFeats, ...ADVENTURER.classFeats];

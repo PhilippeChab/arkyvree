@@ -64,7 +64,7 @@ Loading a reference (`ReferenceLoader`, `tools/references/ReferenceLoader.ts`) d
 
 The generator (`tools/generator/`) is a `Generator`, built as the seeder is: a step that writes one kind of file is a concern (`concerns/`: `GeneratesClasses`, `GeneratesFeats`…) on a `BaseGenerator` (the folder it writes to, what several kinds of files are written with), and the steps a reference takes, which rewrite the files the kinds share (the aptitudes, the indexes, what an extension copies from the core rules), are its own. A file's code is a `CodeFile` (`code/`): its lines, and the names they use, which its imports are written from.
 
-The scraper (`tools/scraper/`) is a `Scraper`, built the same way: a concern per kind of reference (`concerns/`: `ScrapesClasses`, `ScrapesFeats`…) on a `BaseScraper` (the book it scrapes, the `HttpClient` it fetches pages with, the listings it finds the book's entries in, and the reference files it saves what it read to, their overrides kept). What reads a page is a parser (`parsers/`), and what reads a reference's text a detector (`detect*.ts`): pure functions both, which the tests run on saved pages.
+The scraper (`tools/scraper/`) is a `Scraper`, built the same way: a concern per kind of reference (`concerns/`: `ScrapesClasses`, `ScrapesFeats`…) on a `BaseScraper` (the book it scrapes, the `HttpClient` it fetches pages with, the listings it finds the book's entries in, and the reference files it saves what it read to, their overrides kept). What reads a page is a parser (`parsers/`): pure functions, which the tests run on saved pages. What reads a reference's text is a detector (`tools/detect/`, a module per kind of reference), with the readers the kinds share (`detect/readers/`): a prerequisite's reading (`RequirementReading`: `FeatPrerequisites`, `ClassPrerequisites`), a text's modifiers (`ModifierReading`: `BenefitModifiers`, `RaceModifiers`, `DomainModifiers`, `MagicItemModifiers`), an item's cost, weight and stats; and the names the books give abilities, saves, skills and races (`detect/vocabulary.ts`).
 
 ## Supported entity types
 
@@ -167,7 +167,7 @@ Scrapes magic item pages into `MagicItemReference` JSON. Covers specific armor, 
 
 ### Bonus detection
 
-Feats (with class features), races and magic items read their bonuses with the same two pieces in `tools/detect/`:
+Feats (with class features), races and magic items read their bonuses as a `BonusText` (`tools/detect/readers/modifiers/`), the text and the two pieces it reads it with:
 
 - **`readSkillBonuses`** (`skillBonuses.ts`): "+N [type] bonus on/to [all] [the wearer's/your…] X, Y and Z check(s)", capitalized skill names joined by commas and "and" (never split inside parentheses). A size bonus is left out: the character sheet applies size itself. A name that isn't a skill is reported, for review.
 - **`isConditional`** (`conditional.ts`): a bonus isn't a permanent modifier when its part of the sentence (the sentence's opening, its own text up to the next bonus, and what joins it to the previous one) names a condition (against, while, when, if, only, as long as…), an effect used (expend, per day, as a swift action, for 1 hour…), or someone else it goes to (allies, a companion, a mount…); or when what follows it narrows it ("made to…", "to find…", "related to…"). What's worn, held or carried isn't a condition.

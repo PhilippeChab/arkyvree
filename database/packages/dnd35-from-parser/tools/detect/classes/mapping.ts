@@ -1,6 +1,7 @@
 /** A class reference's mapping: its initial section, and where its features' occurrences go. */
 
-import { detectModifiers } from "@/database/packages/dnd35-from-parser/tools/detect/feats.ts";
+import { BenefitModifiers } from "@/database/packages/dnd35-from-parser/tools/detect/readers/modifiers/BenefitModifiers.ts";
+import { readProficiencyModifiers } from "@/database/packages/dnd35-from-parser/tools/detect/readers/modifiers/proficiencies.ts";
 import { findWithPluralVariants, isPluralVariantOf } from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
@@ -17,7 +18,6 @@ import {
   parsePoolSubOptions,
   stripOrdinalPrefix,
 } from "./features.ts";
-import { detectWAPModifiers } from "./proficiencies.ts";
 
 /** A pool's aptitude, the level it opens at, and whether its picks stack. */
 type PoolAptitude = { aptitude: string; level: number; stackable?: true };
@@ -148,8 +148,8 @@ class InitialMapping {
     const level = allLevels.length > 0 ? Math.min(...allLevels) : spellFeatureLevel || 1; // Features not in progression table are available from level 1
 
     const normalizedDesc = normalizeWs(cf.description);
-    const { modifiers } = detectModifiers(normalizedDesc);
-    const wapMods = baseName === "Weapon and Armor Proficiency" ? detectWAPModifiers(normalizedDesc) : [];
+    const { modifiers } = new BenefitModifiers(normalizedDesc);
+    const wapMods = baseName === "Weapon and Armor Proficiency" ? readProficiencyModifiers(normalizedDesc) : [];
     const allModifiers = [...wapMods, ...modifiers];
 
     this.features[baseName] = {
