@@ -1,6 +1,5 @@
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
 import { CORE_SYSTEM_FEATS } from "@/database/packages/dnd35-from-parser/tools/generator/code/coreSystemFeats.ts";
-import { stringifyProperty } from "@/database/packages/dnd35-from-parser/tools/generator/code/customization.ts";
 import {
   type ImportTable,
   REQUIREMENT_IMPORTS,
@@ -9,6 +8,7 @@ import {
   escapeTemplate,
   listField,
   quote,
+  toConstName,
 } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import type { TemplateFamily, TemplateType } from "@/database/packages/dnd35-from-parser/tools/seeds/feats.ts";
 import {
@@ -36,7 +36,7 @@ const IMPORTS: ImportTable = [
   ["@/shared/text.ts", ["stripSeparators"]],
   ["@/database/packages/dnd35/content/wizardSchools/schoolFeats.ts", ["wizardSchoolFeats"]],
   ["@/database/packages/dnd35/data/feats/favoredEnemy.ts", ["favoredEnemyFeats"]],
-  ["@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts", ["WIZARD_SCHOOLS"]],
+  ["@/database/packages/dnd35-from-parser/generated/srd/wizardSchools.ts", ["WIZARD_SCHOOLS"]],
 ];
 
 /**
@@ -50,7 +50,7 @@ export class FeatsFile extends CodeFile {
 
   /** Ends a template: its feats' family. */
   private closeTemplate(familyName: string): void {
-    this.lines.push(`  properties: [${stringifyProperty({ type: FEAT_FAMILY, value: familyName })}],`);
+    this.lines.push(`  properties: [${this.property({ type: FEAT_FAMILY, value: familyName })}],`);
     this.lines.push(`}));`);
     this.lines.push("");
   }
@@ -99,7 +99,7 @@ export class FeatsFile extends CodeFile {
             throw new Error(`${m.target}: a template feat's modifier can't have requirements`);
           const target = retarget(escapeTemplate(m.target));
           if (target.includes("${stripSeparators(")) this.uses.add("stripSeparators");
-          return this.featModifier(m, 2, `\`${target}\``);
+          return this.modifier(m, 2, `\`${target}\``);
         }),
         "  ",
       ),
@@ -181,12 +181,13 @@ export class FeatsFile extends CodeFile {
 
   /** Starts a template: its feats over its options, named and described after each item (`variable`). */
   private openTemplate(
-    { constName, familyName, aptitudes, options }: TemplateFamily,
+    { familyName, aptitudes, options }: TemplateFamily,
     variable: string,
     description: string,
   ): void {
     this.uses.add(options);
-    this.lines.push(`export const ${constName}: FeatSeed[] = ${options}.map((${variable}) => ({`);
+    this.declare("FeatSeed");
+    this.lines.push(`export const ${toConstName(familyName)}_FEATS: FeatSeed[] = ${options}.map((${variable}) => ({`);
     this.lines.push(`  name: \`${escapeTemplate(familyName)}: \${${variable}}\`,`);
     this.lines.push(`  description: \`${description}\`,`);
     this.lines.push(`  generated: true,`);
@@ -209,6 +210,7 @@ export class FeatsFile extends CodeFile {
 
   /** The system feats of the core rules' feat file `fileName`. */
   emitSystemFeats(fileName: string): void {
+    this.declare("FeatSeed");
     for (const { name, code, uses } of CORE_SYSTEM_FEATS.filter((systemFeats) => systemFeats.file === fileName)) {
       this.lines.push(`/** A system feat list (\`buildCoreSystemFeats\`): no reference lists it. */`);
       this.lines.push(`export const ${name}: FeatSeed[] = ${code};`);

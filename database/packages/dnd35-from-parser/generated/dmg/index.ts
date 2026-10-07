@@ -6,7 +6,7 @@ import { ALL_APTITUDES } from "./aptitudes.ts";
 import { ALL_CLASSES } from "./classes/index.ts";
 import { COW_FEATS } from "./cowFeats.ts";
 import { COW_SPELLS } from "./cowSpells.ts";
-import { ALL_DOMAINS } from "./domains/data.ts";
+import { ALL_DOMAINS } from "./domains.ts";
 import { ALL_CLASS_FEATS } from "./feats/classes/index.ts";
 import { ALL_STANDALONE_FEATS } from "./feats/index.ts";
 import { ALL_SPELLS } from "./spells/index.ts";

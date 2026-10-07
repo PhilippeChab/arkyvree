@@ -6,7 +6,7 @@ import { ALL_FEATS as DIVINE_FEATS } from "@/database/packages/dnd35-from-parser
 import { ALL_FEATS as SCOUNDREL_FEATS } from "@/database/packages/dnd35-from-parser/generated/complete-scoundrel/feats/index.ts";
 import { ALL_FEATS as WARRIOR_FEATS } from "@/database/packages/dnd35-from-parser/generated/complete-warrior/feats/index.ts";
 import { RODS, WONDROUS_ITEMS } from "@/database/packages/dnd35-from-parser/generated/srd/items/index.ts";
-import { ALL_RACES } from "@/database/packages/dnd35-from-parser/generated/srd/races/data.ts";
+import { ALL_RACES } from "@/database/packages/dnd35-from-parser/generated/srd/races.ts";
 import { readArmorStats } from "@/database/packages/dnd35-from-parser/tools/detect/armorStats.ts";
 import { isConditional } from "@/database/packages/dnd35-from-parser/tools/detect/conditional.ts";
 import { readSkillBonuses } from "@/database/packages/dnd35-from-parser/tools/detect/skillBonuses.ts";

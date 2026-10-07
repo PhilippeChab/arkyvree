@@ -7,11 +7,10 @@ import {
   WEAPON_PROFICIENCY_FEATS,
   WIZARD_SCHOOL_FEATS,
 } from "@/database/packages/dnd35-from-parser/generated/srd/feats/feats.ts";
-import { WIZARD_SCHOOLS } from "@/database/packages/dnd35-from-parser/generated/srd/wizard-schools/data.ts";
+import { WIZARD_SCHOOLS } from "@/database/packages/dnd35-from-parser/generated/srd/wizardSchools.ts";
 import { ClassFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/ClassFile.ts";
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
 import { buildCoreSystemFeats } from "@/database/packages/dnd35-from-parser/tools/generator/code/coreSystemFeats.ts";
-import { stringifyModifier } from "@/database/packages/dnd35-from-parser/tools/generator/code/customization.ts";
 import { generateFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/generator/code/featFiles.ts";
 import {
   formatImports,
@@ -24,7 +23,6 @@ import { buildClassSeed } from "@/database/packages/dnd35-from-parser/tools/seed
 import { buildClassFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/featSeeds.ts";
 import { buildClassModifiers } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/modifiers.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
-import { getClassReviewNotes } from "@/database/packages/dnd35-from-parser/tools/validate/classReview.ts";
 import { and, eq, eqNum, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
 import type {
   Modifier,
@@ -43,7 +41,7 @@ function check(operator: string, valueType: string, value: string): RequirementC
 
 /** A class reference's generated ClassSeed file. */
 function classCode(ref: ClassReference) {
-  return new ClassFile(buildClassSeed(ref), getClassReviewNotes(ref)).classCode();
+  return new ClassFile(buildClassSeed(ref)).classCode();
 }
 
 function classRef(book: string, slug: string) {
@@ -104,7 +102,7 @@ describe("A generated requirement check", () => {
   test("of a feat's modifier is imported with it", () => {
     const file = new CodeFile();
     expect(
-      file.featModifier({
+      file.modifier({
         target: "combat.ac.misc",
         operator: "add",
         value: "1",
@@ -119,12 +117,12 @@ describe("A generated requirement check", () => {
 
   test("of another modifier (a domain's, a race's, an item's) can't be", () => {
     const modifier = { target: "combat.ac.misc", operator: "add", value: "1", valueType: "number" };
-    expect(stringifyModifier(modifier)).toBe(
+    expect(new CodeFile().plainModifier(modifier)).toBe(
       `{ target: "combat.ac.misc", operator: "add", value: "1", valueType: "number" }`,
     );
     // A hand-edited reference, which types don't check
     const edited: Modifier = JSON.parse(JSON.stringify({ ...modifier, requirements: [eq(feat("Dodge"))] }));
-    expect(() => stringifyModifier(edited)).toThrow("only a feat's modifier has requirements");
+    expect(() => new CodeFile().plainModifier(edited)).toThrow("only a feat's modifier has requirements");
   });
 
   test("names a builder its file can import", () => {
@@ -137,7 +135,7 @@ describe("A generated requirement check", () => {
         JSON.stringify({ target: "combat.bab", operator: "greater_than_or_equal", value, valueType: "number" }),
       );
     expect(code(hand(4))).toBe(`gte("combat.bab", 4)`);
-    expect(stringifyModifier(hand(2))).toBe(
+    expect(new CodeFile().plainModifier(hand(2))).toBe(
       `{ target: "combat.bab", operator: "greater_than_or_equal", value: "2", valueType: "number" }`,
     );
   });
@@ -169,7 +167,7 @@ describe("Generated strings", () => {
   test("are escaped for a string literal", () => {
     expect(quote(`a "b" \\ c\nd`)).toBe(`"a \\"b\\" \\\\ c\\nd"`);
     for (const text of ["line\r\nbreak", "tab\there", "nul\u0000"]) expect(JSON.parse(quote(text))).toBe(text);
-    expect(stringifyModifier({ target: `x."y"`, operator: "add", value: "1", valueType: "number" })).toBe(
+    expect(new CodeFile().plainModifier({ target: `x."y"`, operator: "add", value: "1", valueType: "number" })).toBe(
       `{ target: "x.\\"y\\"", operator: "add", value: "1", valueType: "number" }`,
     );
   });
@@ -214,7 +212,7 @@ describe("The generated feats", () => {
     greater.requirements = [...(greater.requirements ?? []), eq(feat("Combat Casting")), gte("spellcasting.arcane", 1)];
     greater.featNameMap = { ...greater.featNameMap, combatcasting: "Combat Casting" };
     const generated = generateFeatSeeds(ref);
-    const template = generated.slice(generated.indexOf("export const greaterSpellFocus"));
+    const template = generated.slice(generated.indexOf("export const GREATER_SPELL_FOCUS_FEATS"));
     expect(template).toContain("eq(feat(`Spell Focus: ${s}`)),");
     expect(template).toContain(`eq(feat("Combat Casting")),`);
     expect(template).toContain(`gte("spellcasting.arcane", 1),`);
@@ -236,7 +234,7 @@ describe("The generated feats", () => {
   test("let an extension's family require the core rules' for the same item", () => {
     const ref = ReferenceLoader.load(join(REFERENCE_DIR, "complete-warrior", "feats.json"), "feat");
     const generated = generateFeatSeeds(ref);
-    const template = generated.slice(generated.indexOf("export const powerCritical"));
+    const template = generated.slice(generated.indexOf("export const POWER_CRITICAL_FEATS"));
     expect(template.slice(0, template.indexOf("}));"))).toContain("eq(feat(`Weapon Focus: ${w}`)),");
   });
 

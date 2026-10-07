@@ -8,14 +8,11 @@ import {
 import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
 
 /**
- * A class's file (classes/<slug>.ts): its seed (`buildClassSeed`) written field by field, what's left to review in it
- * opening the file, and the requirement builders its checks are written with, which its imports are written from.
+ * A class's file (classes/<slug>.ts): its seed (`buildClassSeed`) written field by field, and the requirement builders
+ * its checks are written with, which its imports are written from.
  */
 export class ClassFile extends CodeFile {
-  constructor(
-    private readonly seed: ClassSeed,
-    private readonly reviewNotes: string[],
-  ) {
+  constructor(private readonly seed: ClassSeed) {
     super();
   }
 
@@ -59,11 +56,7 @@ export class ClassFile extends CodeFile {
     if (!modifiers) return;
     this.lines.push(`  modifiers: [`);
     for (const m of modifiers) {
-      const requirements = (m.requirements ?? []).map((r) => this.requirement(r, 3));
-      const gate = requirements.length > 0 ? `, requirements: [${requirements.join(", ")}]` : "";
-      this.lines.push(
-        `    { level: ${m.level}, target: ${quote(m.target)}, value: ${quote(m.value)}, valueType: ${quote(m.valueType)}, operator: ${quote(m.operator)}${gate} },`,
-      );
+      this.lines.push(`    { ${[`level: ${m.level}`, ...this.modifierFields(m)].join(", ")} },`);
     }
     this.lines.push(`  ],`);
   }
@@ -116,7 +109,7 @@ export class ClassFile extends CodeFile {
     );
   }
 
-  /** The class's file: its fields, then what's left to review opening it, and the imports of what its checks use. */
+  /** The class's file: its fields, and the imports of what its checks use. */
   classCode(): string {
     const { casterLevelAdvancement, classFeatureAptitude } = this.seed;
     this.writeSummary();
@@ -132,10 +125,7 @@ export class ClassFile extends CodeFile {
     this.writeAptitudePicks();
     this.lines.push(`};`);
     this.lines.push("");
-    const notes = this.reviewNotes;
-    return this.code([
-      ...(notes.length > 0 ? ["/**", " * To review:", ...notes.map((note) => ` * - ${note}`), " */", ""] : []),
-      `import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";`,
-    ]);
+    this.declare("ClassSeed");
+    return this.code();
   }
 }

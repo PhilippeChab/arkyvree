@@ -2,63 +2,63 @@
 
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
 
-import { ANIMAL_LORD_FEATS } from "./animalLord.ts";
-import { BEASTMASTER_FEATS } from "./beastmaster.ts";
-import { BLOODHOUND_FEATS } from "./bloodhound.ts";
-import { DAGGERSPELL_MAGE_FEATS } from "./daggerspellMage.ts";
-import { DAGGERSPELL_SHAPER_FEATS } from "./daggerspellShaper.ts";
-import { DREAD_PIRATE_FEATS } from "./dreadPirate.ts";
-import { DUNGEON_DELVER_FEATS } from "./dungeonDelver.ts";
-import { EXEMPLAR_FEATS } from "./exemplar.ts";
-import { FOCHLUCAN_LYRIST_FEATS } from "./fochlucanLyrist.ts";
-import { GHOST_FACED_KILLER_FEATS } from "./ghostFacedKiller.ts";
-import { HIGHLAND_STALKER_FEATS } from "./highlandStalker.ts";
-import { MAESTER_FEATS } from "./maester.ts";
-import { MASTER_OF_MANY_FORMS_FEATS } from "./masterOfManyForms.ts";
-import { NIGHTSONG_ENFORCER_FEATS } from "./nightsongEnforcer.ts";
-import { NIGHTSONG_INFILTRATOR_FEATS } from "./nightsongInfiltrator.ts";
-import { NINJA_FEATS } from "./ninja.ts";
-import { OLLAM_FEATS } from "./ollam.ts";
-import { SCOUT_FEATS } from "./scout.ts";
-import { SHADOWBANE_INQUISITOR_FEATS } from "./shadowbaneInquisitor.ts";
-import { SHADOWBANE_STALKER_FEATS } from "./shadowbaneStalker.ts";
-import { SPELLTHIEF_FEATS } from "./spellthief.ts";
-import { SPYMASTER_FEATS } from "./spymaster.ts";
-import { STREETFIGHTER_FEATS } from "./streetfighter.ts";
-import { TEMPEST_FEATS } from "./tempest.ts";
-import { THIEF_ACROBAT_FEATS } from "./thiefAcrobat.ts";
-import { VIGILANTE_FEATS } from "./vigilante.ts";
-import { VIRTUOSO_FEATS } from "./virtuoso.ts";
-import { WILD_PLAINS_OUTRIDER_FEATS } from "./wildPlainsOutrider.ts";
+import { ANIMAL_LORD_CLASS_FEATS } from "./animalLord.ts";
+import { BEASTMASTER_CLASS_FEATS } from "./beastmaster.ts";
+import { BLOODHOUND_CLASS_FEATS } from "./bloodhound.ts";
+import { DAGGERSPELL_MAGE_CLASS_FEATS } from "./daggerspellMage.ts";
+import { DAGGERSPELL_SHAPER_CLASS_FEATS } from "./daggerspellShaper.ts";
+import { DREAD_PIRATE_CLASS_FEATS } from "./dreadPirate.ts";
+import { DUNGEON_DELVER_CLASS_FEATS } from "./dungeonDelver.ts";
+import { EXEMPLAR_CLASS_FEATS } from "./exemplar.ts";
+import { FOCHLUCAN_LYRIST_CLASS_FEATS } from "./fochlucanLyrist.ts";
+import { GHOST_FACED_KILLER_CLASS_FEATS } from "./ghostFacedKiller.ts";
+import { HIGHLAND_STALKER_CLASS_FEATS } from "./highlandStalker.ts";
+import { MAESTER_CLASS_FEATS } from "./maester.ts";
+import { MASTER_OF_MANY_FORMS_CLASS_FEATS } from "./masterOfManyForms.ts";
+import { NIGHTSONG_ENFORCER_CLASS_FEATS } from "./nightsongEnforcer.ts";
+import { NIGHTSONG_INFILTRATOR_CLASS_FEATS } from "./nightsongInfiltrator.ts";
+import { NINJA_CLASS_FEATS } from "./ninja.ts";
+import { OLLAM_CLASS_FEATS } from "./ollam.ts";
+import { SCOUT_CLASS_FEATS } from "./scout.ts";
+import { SHADOWBANE_INQUISITOR_CLASS_FEATS } from "./shadowbaneInquisitor.ts";
+import { SHADOWBANE_STALKER_CLASS_FEATS } from "./shadowbaneStalker.ts";
+import { SPELLTHIEF_CLASS_FEATS } from "./spellthief.ts";
+import { SPYMASTER_CLASS_FEATS } from "./spymaster.ts";
+import { STREETFIGHTER_CLASS_FEATS } from "./streetfighter.ts";
+import { TEMPEST_CLASS_FEATS } from "./tempest.ts";
+import { THIEF_ACROBAT_CLASS_FEATS } from "./thiefAcrobat.ts";
+import { VIGILANTE_CLASS_FEATS } from "./vigilante.ts";
+import { VIRTUOSO_CLASS_FEATS } from "./virtuoso.ts";
+import { WILD_PLAINS_OUTRIDER_CLASS_FEATS } from "./wildPlainsOutrider.ts";
 
 const _allClassFeats: FeatSeed[] = [
-  ...ANIMAL_LORD_FEATS,
-  ...BEASTMASTER_FEATS,
-  ...BLOODHOUND_FEATS,
-  ...DAGGERSPELL_MAGE_FEATS,
-  ...DAGGERSPELL_SHAPER_FEATS,
-  ...DREAD_PIRATE_FEATS,
-  ...DUNGEON_DELVER_FEATS,
-  ...EXEMPLAR_FEATS,
-  ...FOCHLUCAN_LYRIST_FEATS,
-  ...GHOST_FACED_KILLER_FEATS,
-  ...HIGHLAND_STALKER_FEATS,
-  ...MAESTER_FEATS,
-  ...MASTER_OF_MANY_FORMS_FEATS,
-  ...NIGHTSONG_ENFORCER_FEATS,
-  ...NIGHTSONG_INFILTRATOR_FEATS,
-  ...NINJA_FEATS,
-  ...OLLAM_FEATS,
-  ...SCOUT_FEATS,
-  ...SHADOWBANE_INQUISITOR_FEATS,
-  ...SHADOWBANE_STALKER_FEATS,
-  ...SPELLTHIEF_FEATS,
-  ...SPYMASTER_FEATS,
-  ...STREETFIGHTER_FEATS,
-  ...TEMPEST_FEATS,
-  ...THIEF_ACROBAT_FEATS,
-  ...VIGILANTE_FEATS,
-  ...VIRTUOSO_FEATS,
-  ...WILD_PLAINS_OUTRIDER_FEATS,
+  ...ANIMAL_LORD_CLASS_FEATS,
+  ...BEASTMASTER_CLASS_FEATS,
+  ...BLOODHOUND_CLASS_FEATS,
+  ...DAGGERSPELL_MAGE_CLASS_FEATS,
+  ...DAGGERSPELL_SHAPER_CLASS_FEATS,
+  ...DREAD_PIRATE_CLASS_FEATS,
+  ...DUNGEON_DELVER_CLASS_FEATS,
+  ...EXEMPLAR_CLASS_FEATS,
+  ...FOCHLUCAN_LYRIST_CLASS_FEATS,
+  ...GHOST_FACED_KILLER_CLASS_FEATS,
+  ...HIGHLAND_STALKER_CLASS_FEATS,
+  ...MAESTER_CLASS_FEATS,
+  ...MASTER_OF_MANY_FORMS_CLASS_FEATS,
+  ...NIGHTSONG_ENFORCER_CLASS_FEATS,
+  ...NIGHTSONG_INFILTRATOR_CLASS_FEATS,
+  ...NINJA_CLASS_FEATS,
+  ...OLLAM_CLASS_FEATS,
+  ...SCOUT_CLASS_FEATS,
+  ...SHADOWBANE_INQUISITOR_CLASS_FEATS,
+  ...SHADOWBANE_STALKER_CLASS_FEATS,
+  ...SPELLTHIEF_CLASS_FEATS,
+  ...SPYMASTER_CLASS_FEATS,
+  ...STREETFIGHTER_CLASS_FEATS,
+  ...TEMPEST_CLASS_FEATS,
+  ...THIEF_ACROBAT_CLASS_FEATS,
+  ...VIGILANTE_CLASS_FEATS,
+  ...VIRTUOSO_CLASS_FEATS,
+  ...WILD_PLAINS_OUTRIDER_CLASS_FEATS,
 ];
 export const ALL_CLASS_FEATS: FeatSeed[] = [...Map.groupBy(_allClassFeats, (f) => f.name).values()].map(([f]) => f);

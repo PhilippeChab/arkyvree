@@ -1,11 +1,7 @@
 import { join } from "node:path";
 
 import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
-import {
-  stringifyModifier,
-  stringifyProperty,
-} from "@/database/packages/dnd35-from-parser/tools/generator/code/customization.ts";
-import { listField, quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
+import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
 import { buildRaceSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/races.ts";
 import type { RaceReference } from "@/database/packages/dnd35-from-parser/tools/types/races.ts";
 import type { Constructor } from "@/server/mixins.ts";
@@ -13,29 +9,18 @@ import type { Constructor } from "@/server/mixins.ts";
 /** Generating a book's races. */
 export function GeneratesRaces<B extends Constructor<BaseGenerator>>(Base: B) {
   abstract class GeneratingRaces extends Base {
-    /** A book's races file (races/data.ts). */
+    /** A book's races file (races.ts). */
     writeRaces(ref: RaceReference, book: string) {
       const seeds = buildRaceSeeds(ref);
       this.log(`Built ${seeds.length} race seeds`);
 
-      // Generate data.ts
-      const lines: string[] = [];
-      lines.push(`export const ALL_RACES: RaceSeed[] = [`);
-      for (const r of seeds) {
-        lines.push(`  {`);
-        lines.push(`    name: ${quote(r.name)},`);
-        lines.push(`    description: ${quote(r.description)},`);
-        lines.push(`    size: ${quote(r.size)},`);
-        lines.push(`    baseSpeed: ${r.baseSpeed},`);
-        lines.push(...listField("modifiers", (r.modifiers ?? []).map(stringifyModifier), "    "));
-        lines.push(...listField("properties", (r.properties ?? []).map(stringifyProperty), "    "));
-        lines.push(`  },`);
-      }
-      lines.push(`];`);
-      lines.push(``);
-
-      const head = [`import type { RaceSeed } from "@/database/packages/dnd35/content/races/types.ts";`, ``];
-      this.write(join(this.dir, book, "races", "data.ts"), [...head, ...lines].join("\n"));
+      const file = new CodeFile();
+      file.list(
+        "ALL_RACES",
+        "RaceSeed",
+        seeds.flatMap((race) => file.race(race)),
+      );
+      this.write(join(this.dir, book, "races.ts"), file.code());
 
       this.log(`\nDone!`);
     }

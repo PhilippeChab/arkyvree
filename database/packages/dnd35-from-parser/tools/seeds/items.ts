@@ -1,6 +1,23 @@
 /** An item reference's seeds: its ItemSeed[], by category. */
 
 import { type ItemReference } from "@/database/packages/dnd35-from-parser/tools/types/items.ts";
+import type { RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
+import { getArmorDefinition, getShieldDefinition } from "@/database/packages/dnd35/content/items/armor.ts";
+import {
+  exotic,
+  HEAVY_ARMOR_PROF,
+  LIGHT_ARMOR_PROF,
+  martial,
+  MEDIUM_ARMOR_PROF,
+  SHIELD_PROF,
+  simple,
+  TOWER_SHIELD_PROF,
+} from "@/database/packages/dnd35/content/items/proficiencies.ts";
+import {
+  armorProperties,
+  shieldProperties,
+  weaponProperties,
+} from "@/database/packages/dnd35/content/items/properties.ts";
 import type { ItemSeed } from "@/database/packages/dnd35/content/items/types.ts";
 
 export type ItemSeedSets = {
@@ -12,6 +29,10 @@ export type ItemSeedSets = {
   goods: ItemSeed[];
 };
 
+/**
+ * An item reference's seeds, by category: each item whole, its requirements (being proficient with it) and its
+ * properties (its weapon, armor or shield type's) built from its name.
+ */
 export function buildItemSeeds(ref: ItemReference): ItemSeedSets {
   const simpleWeapons: ItemSeed[] = [];
   const martialWeapons: ItemSeed[] = [];
@@ -49,7 +70,13 @@ export function buildItemSeeds(ref: ItemReference): ItemSeedSets {
       weight,
       costGp,
       type: "Weapon",
-      properties: [], // filled at runtime via weaponProperties()
+      requirements:
+        det.proficiency === "Simple"
+          ? simple(det.generatorName)
+          : det.proficiency === "Martial"
+            ? martial(det.generatorName)
+            : exotic(det.generatorName),
+      properties: weaponProperties(det.generatorName),
     };
 
     if (det.proficiency === "Simple") simpleWeapons.push(seed);
@@ -72,8 +99,18 @@ export function buildItemSeeds(ref: ItemReference): ItemSeedSets {
       weight,
       costGp,
       type: det.type,
-      ...(det.type === "Armor" ? { slot: "Torso" as const } : { slot: "Off Hand" as const }),
-      properties: [], // filled at runtime via armorProperties()/shieldProperties()
+      ...(det.type === "Armor"
+        ? {
+            slot: "Torso" as const,
+            requirements: getArmorProficiency(getArmorDefinition(det.generatorName)?.armorType),
+            properties: armorProperties(det.generatorName),
+          }
+        : {
+            slot: "Off Hand" as const,
+            requirements:
+              getShieldDefinition(det.generatorName)?.shieldType === "Tower" ? TOWER_SHIELD_PROF : SHIELD_PROF,
+            properties: shieldProperties(det.generatorName),
+          }),
     };
 
     if (det.type === "Shield") shields.push(seed);
@@ -97,4 +134,11 @@ export function buildItemSeeds(ref: ItemReference): ItemSeedSets {
   }
 
   return { simpleWeapons, martialWeapons, exoticWeapons, armor, shields, goods };
+}
+
+/** The proficiency an armor of `category` requires: light armor's for one without a category. */
+export function getArmorProficiency(category: string | undefined): RequirementEntry[] {
+  if (category === "Medium") return MEDIUM_ARMOR_PROF;
+  if (category === "Heavy") return HEAVY_ARMOR_PROF;
+  return LIGHT_ARMOR_PROF;
 }

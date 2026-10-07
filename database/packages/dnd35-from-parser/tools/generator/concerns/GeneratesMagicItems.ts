@@ -2,17 +2,11 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 
 import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
-import {
-  stringifyModifier,
-  stringifyProperty,
-} from "@/database/packages/dnd35-from-parser/tools/generator/code/customization.ts";
-import { listField, quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
 import { buildItemSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/items.ts";
 import { buildMagicItemSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/magicItems.ts";
 import type { MagicItemReference } from "@/database/packages/dnd35-from-parser/tools/types/magicItems.ts";
 import type { Constructor } from "@/server/mixins.ts";
-import { ARMOR_PROFICIENCY } from "@/shared/dnd3.5/properties/index.ts";
 
 type MagicItemSeeds = ReturnType<typeof buildMagicItemSeeds>[keyof ReturnType<typeof buildMagicItemSeeds>];
 
@@ -34,39 +28,23 @@ export function GeneratesMagicItems<B extends Constructor<BaseGenerator>>(Base: 
       return Object.fromEntries(bases.map((item) => [item.name, item.weight]));
     }
 
-    private writeMagicItemFile(path: string, constName: string, items: MagicItemSeeds) {
-      // A template's requirements are the proficiency with it, by its category
-      const proficiency = (item: (typeof items)[number]) =>
-        this.armorProficiencyOf(item.properties.find((property) => property.type === ARMOR_PROFICIENCY)?.value);
-      const uses = items.filter((item) => item.isTemplate).map(proficiency);
-      this.writeItemFile(path, constName, uses, items, (item) => [
-        `weight: ${quote(item.weight)}, costGp: ${quote(item.costGp)}, type: ${quote(item.type)},${item.slot ? ` slot: ${quote(item.slot)},` : ""}`,
-        ...(item.isTemplate ? [`isTemplate: true,`, `requirements: ${proficiency(item)},`] : []),
-        ...(item.sourceItem ? [`sourceItem: ${quote(item.sourceItem)},`] : []),
-        ...(item.properties.length > 0
-          ? [`properties: [`, ...item.properties.map((p) => `  ${stringifyProperty(p)},`), `],`]
-          : [`properties: [],`]),
-        ...listField("modifiers", (item.modifiers ?? []).map(stringifyModifier), ""),
-      ]);
-    }
-
     /** A book's magic items' files, a file per kind, and the items' index with them. */
     writeMagicItems(ref: MagicItemReference, book: string, referenceDir: string) {
       const seeds = buildMagicItemSeeds(ref, this.baseItemWeights(referenceDir));
       const outDir = join(this.dir, book, "items");
 
       const files: [string, string, MagicItemSeeds][] = [
-        ["magic-armor.ts", "MAGIC_ARMOR", seeds.magicArmor],
-        ["magic-shields.ts", "MAGIC_SHIELDS", seeds.magicShields],
-        ["magic-weapons.ts", "MAGIC_WEAPONS", seeds.magicWeapons],
-        ["wondrous-items.ts", "WONDROUS_ITEMS", seeds.wondrousItems],
+        ["magicArmor.ts", "MAGIC_ARMOR", seeds.magicArmor],
+        ["magicShields.ts", "MAGIC_SHIELDS", seeds.magicShields],
+        ["magicWeapons.ts", "MAGIC_WEAPONS", seeds.magicWeapons],
+        ["wondrousItems.ts", "WONDROUS_ITEMS", seeds.wondrousItems],
         ["rings.ts", "RINGS", seeds.rings],
         ["rods.ts", "RODS", seeds.rods],
         ["staffs.ts", "STAFFS", seeds.staffs],
       ];
 
       for (const [filename, constName, items] of files) {
-        this.writeMagicItemFile(join(outDir, filename), constName, items);
+        this.writeItemFile(join(outDir, filename), constName, items);
       }
 
       this.writeItemIndex(outDir);

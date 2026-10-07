@@ -1,11 +1,8 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 
-import {
-  type BaseGenerator,
-  GENERATED_HEADER,
-} from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
-import { formatImport } from "@/database/packages/dnd35-from-parser/tools/generator/code/imports.ts";
+import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
+import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
 /** Generating a book's index. */
@@ -21,31 +18,27 @@ export function GeneratesBooks<B extends Constructor<BaseGenerator>>(Base: B) {
         { key: "cowFeats", file: "cowFeats.ts", name: "COW_FEATS" },
         { key: "spells", file: "spells/index.ts", name: "ALL_SPELLS" },
         { key: "cowSpells", file: "cowSpells.ts", name: "COW_SPELLS" },
-        { key: "domains", file: "domains/data.ts", name: "ALL_DOMAINS" },
+        { key: "domains", file: "domains.ts", name: "ALL_DOMAINS" },
         { key: "classes", file: "classes/index.ts", name: "ALL_CLASSES" },
       ];
       const present = parts.filter((part) => existsSync(join(dir, part.file)));
       const files = [...new Set(present.map((part) => part.file))].sort();
 
-      const lines: string[] = [];
-      lines.push(...GENERATED_HEADER);
-      lines.push(`import type { BookContent } from "@/database/packages/dnd35/content/rulesets/types.ts";`);
-      for (const file of files) {
-        const names = present
-          .filter((part) => part.file === file)
-          .map((part) => part.name)
-          .sort();
-        lines.push(formatImport(names, `./${file}`));
+      const file = new CodeFile();
+      for (const name of files) {
+        file.gather(
+          `./${name}`,
+          present.filter((part) => part.file === name).map((part) => part.name),
+        );
       }
-      lines.push(``);
-      lines.push(`export const BOOK: BookContent = {`);
-      for (const part of parts) {
-        lines.push(`  ${part.key}: ${present.includes(part) ? part.name : "[]"},`);
-      }
-      lines.push(`};`);
-      lines.push(``);
-
-      this.write(join(dir, "index.ts"), lines.join("\n"));
+      file.declare("BookContent");
+      file.lines.push(
+        `export const BOOK: BookContent = {`,
+        ...parts.map((part) => `  ${part.key}: ${present.includes(part) ? part.name : "[]"},`),
+        `};`,
+        ``,
+      );
+      this.write(join(dir, "index.ts"), file.code());
     }
   }
   return GeneratingBooks;

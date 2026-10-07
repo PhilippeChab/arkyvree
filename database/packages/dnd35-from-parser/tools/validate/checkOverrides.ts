@@ -17,10 +17,14 @@ function alike(a: unknown, b: unknown) {
   return JSON.stringify(normal(a)) === JSON.stringify(normal(b));
 }
 
-/** What the generator writes for a class (its class file and its feats file), or why it refuses the class. */
+/** What the generator writes for a class (what's left to review in it, its class file and its feats file), or why it refuses the class. */
 function generated(ref: ClassReference): string | Error {
   try {
-    return new ClassFile(buildClassSeed(ref), getClassReviewNotes(ref)).classCode() + generateClassFeatSeeds(ref);
+    return [
+      ...getClassReviewNotes(ref),
+      new ClassFile(buildClassSeed(ref)).classCode(),
+      generateClassFeatSeeds(ref),
+    ].join("\n");
   } catch (error) {
     return error instanceof Error ? error : new Error(String(error));
   }

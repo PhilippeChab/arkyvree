@@ -3,7 +3,7 @@ import { expect, test } from "bun:test";
 import { and, eq, inArray, notInArray, sql } from "drizzle-orm";
 
 import { ALL_CLASSES } from "@/database/packages/dnd35-from-parser/generated/srd/classes/index.ts";
-import { ALL_DOMAINS } from "@/database/packages/dnd35-from-parser/generated/srd/domains/data.ts";
+import { ALL_DOMAINS } from "@/database/packages/dnd35-from-parser/generated/srd/domains.ts";
 import { ALL_FEATS } from "@/database/packages/dnd35-from-parser/generated/srd/feats/index.ts";
 import {
   GOODS,
@@ -15,7 +15,7 @@ import {
   STAFFS,
   WONDROUS_ITEMS,
 } from "@/database/packages/dnd35-from-parser/generated/srd/items/index.ts";
-import { ALL_RACES } from "@/database/packages/dnd35-from-parser/generated/srd/races/data.ts";
+import { ALL_RACES } from "@/database/packages/dnd35-from-parser/generated/srd/races.ts";
 import { ALL_SPELLS } from "@/database/packages/dnd35-from-parser/generated/srd/spells/index.ts";
 import { ANIMAL_COMPANIONS } from "@/database/packages/dnd35/data/bonds/animalCompanions.ts";
 import { FAMILIARS } from "@/database/packages/dnd35/data/bonds/familiars.ts";
