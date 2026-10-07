@@ -16,6 +16,18 @@ export type TemplateType = NonNullable<
   InferRequestType<(typeof rpc.api.rulesets)[":id"]["templates"]["$get"]>["query"]["type"]
 >;
 
+/** The types an item's form offers. */
+export const ITEM_TYPE_OPTIONS = [
+  "Weapon",
+  "Armor",
+  "Shield",
+  "Wondrous Item",
+  "Ring",
+  "Rod",
+  "Staff",
+  "Other",
+] as const;
+
 function parseNumericField(value: string | undefined): number | undefined {
   if (value === undefined || value.trim() === "") return undefined;
   const n = Number(value);

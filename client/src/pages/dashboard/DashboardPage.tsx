@@ -229,7 +229,7 @@ export default function DashboardPage() {
           </Paper>
 
           <Stack spacing={3}>
-            <GoldDivider />
+            <GoldDivider sx={{ opacity: 0.4 }} />
 
             <Stack direction="row" spacing={3} sx={{ flexWrap: "wrap" }}>
               <StatCard
@@ -263,7 +263,7 @@ export default function DashboardPage() {
           </Stack>
 
           <Stack spacing={3}>
-            <GoldDivider />
+            <GoldDivider sx={{ opacity: 0.4 }} />
 
             <RecentNotificationsCard />
           </Stack>

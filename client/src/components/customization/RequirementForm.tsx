@@ -6,14 +6,14 @@ import { SelectField } from "@/client/src/components/common/index.ts";
 import { requiredRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
-import { ConditionFields } from "./ConditionFields.tsx";
+import { ConditionFields, type ConditionMode } from "./ConditionFields.tsx";
 import { CONDITION_OPERATOR_RULES, CONDITION_TARGET_RULES, REQUIREMENT_VALUE_RULES } from "./conditionRules.ts";
 
 type RequirementConditionFieldsProps = Pick<RequirementFormProps, "form" | "rulesetId" | "mode">;
 
 interface RequirementFormProps {
   form: UseFormReturn<RequirementFormData>;
-  mode: "create" | "edit";
+  mode: ConditionMode;
   onTypeChange: (type: RequirementType) => void;
   rulesetId: string;
   type: RequirementType;

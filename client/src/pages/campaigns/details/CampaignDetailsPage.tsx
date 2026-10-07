@@ -39,19 +39,17 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import type { CampaignSection } from "./sectionQueries.ts";
 import { CharactersSection, PlayersSection } from "./sections/index.ts";
 
-type TabSection = CampaignSection;
-
 const SECTION_COMPONENTS = {
   characters: CharactersSection,
   players: PlayersSection,
 } as const;
 
-const TABS: SectionTab<TabSection>[] = [
+const TABS: SectionTab<CampaignSection>[] = [
   { key: "characters", label: "Characters", icon: CharacterIcon },
   { key: "players", label: "Players", icon: PlayersIcon },
 ];
 
-function isTabSection(section: string | undefined): section is TabSection {
+function isTabSection(section: string | undefined): section is CampaignSection {
   return TABS.some((tab) => tab.key === section);
 }
 
@@ -61,7 +59,7 @@ export default function CampaignDetailsPage() {
   const location = useLocation();
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
-  const currentTab: TabSection = isTabSection(section) ? section : "characters";
+  const currentTab: CampaignSection = isTabSection(section) ? section : "characters";
 
   const { data: campaign, isLoading, error } = useQuery(campaignDetailQuery(id));
   // Editing, archiving and deleting are the Game Master's.

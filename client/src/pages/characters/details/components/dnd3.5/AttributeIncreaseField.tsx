@@ -1,11 +1,11 @@
 import { FormControl, FormControlLabel, FormLabel, Radio, RadioGroup } from "@mui/material";
 
-import { sortAbilities } from "@/client/src/lib/abilityOrder.ts";
+import { computeAbilityModifier, sortAbilities } from "@/client/src/components/characters/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
-import { computeAbilityModifier } from "@/shared/dnd3.5/abilities.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 import { capitalize } from "@/shared/text.ts";
 
-import type { BaseRules, LeveledUpAttribute } from "./levelUp/index.ts";
+import type { LeveledUpAttribute } from "./levelUp/index.ts";
 
 interface AttributeIncreaseFieldProps {
   attributes: LeveledUpAttribute;

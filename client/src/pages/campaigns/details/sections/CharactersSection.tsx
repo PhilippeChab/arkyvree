@@ -47,8 +47,11 @@ import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import type { CampaignDetail } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
-import { campaignCharacterQuery, unlinkedCharactersQuery } from "@/client/src/pages/campaigns/campaignQueries.ts";
-import { campaignCharactersQuery } from "@/client/src/pages/campaigns/details/sectionQueries.ts";
+import { campaignCharacterQuery } from "@/client/src/pages/campaigns/campaignQueries.ts";
+import {
+  campaignCharactersQuery,
+  unlinkedCharactersQuery,
+} from "@/client/src/pages/campaigns/details/sectionQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 type CampaignCharacter = CampaignCharactersPaginated["items"][number];

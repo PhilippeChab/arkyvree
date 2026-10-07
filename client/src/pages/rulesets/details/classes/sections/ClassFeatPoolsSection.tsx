@@ -4,7 +4,7 @@ import { FeatPoolsIcon } from "@/client/src/components/icons/index.ts";
 import { classFeatPoolsQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 
 import { ClassLevelCountsTable } from "./ClassLevelCountsTable.tsx";
-import type { ClassSectionProps } from "./types.ts";
+import type { ClassSectionProps } from "./classSections.ts";
 
 export function ClassFeatPoolsSection({ rulesetId, classId }: ClassSectionProps) {
   const { data, isLoading, error } = useQuery(classFeatPoolsQuery(rulesetId, classId));

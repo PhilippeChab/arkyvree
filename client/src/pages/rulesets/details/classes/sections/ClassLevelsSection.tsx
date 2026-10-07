@@ -4,20 +4,15 @@ import { useCallback, useMemo } from "react";
 
 import { AddButton, EmptyValue, ListToolbar, LoadError, ValueChip } from "@/client/src/components/common/index.ts";
 import { LevelsIcon } from "@/client/src/components/icons/index.ts";
-import { useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { CreateLevelDialog } from "@/client/src/pages/rulesets/details/classes/components/index.ts";
-import {
-  type Level,
-  useClassLevels,
-  useOpenEntity,
-  useRulesetPermissions,
-} from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useOpenEntity, useRulesetPermissions, useRulesetSaves } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 
-import type { ClassSectionProps } from "./types.ts";
+import type { ClassSectionProps } from "./classSections.ts";
+import { type Level, useClassLevels } from "./useClassLevels.ts";
 
 export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: ClassSectionProps) {
   const openEntity = useOpenEntity(rulesetId);

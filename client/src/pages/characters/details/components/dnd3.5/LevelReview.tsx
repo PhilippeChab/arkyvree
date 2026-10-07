@@ -4,8 +4,14 @@ import type { ReactNode } from "react";
 import { SubsectionTitle } from "@/client/src/components/common/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 
-import { skillRanks } from "./levelUp/index.ts";
-import type { LevelReviewState } from "./levelUpFactory.ts";
+import {
+  type FeatsData,
+  type LevelUpFormData,
+  type PowersData,
+  type SkillLevels,
+  skillRanks,
+  type SkillsData,
+} from "./levelUp/index.ts";
 
 interface LevelReviewProps {
   /** The wizard's own groups (classes, HP, attributes), listed first. */
@@ -21,6 +27,18 @@ interface ReviewGroupProps {
 interface ReviewItemProps {
   name: string;
   note?: string;
+}
+
+/** The skills, feats and spells picked, as every level review lists them. */
+export interface LevelReviewState {
+  featData: FeatsData | null | undefined;
+  powerData: PowersData | null | undefined;
+  selectedFeats: LevelUpFormData["selectedFeats"];
+  selectedPowers: LevelUpFormData["selectedPowers"];
+  skillData: SkillsData | null | undefined;
+  /** The levels the points go to, which the skills step spends them over too. */
+  skillLevels: SkillLevels | undefined;
+  skillPointAllocations: Record<string, number>;
 }
 
 /** A named pick of the review ("Power Attack"). */

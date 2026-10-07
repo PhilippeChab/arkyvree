@@ -2,9 +2,10 @@ import { Autocomplete, Box, TextField } from "@mui/material";
 import { useMemo, useState } from "react";
 
 import { LoadError, ScrollSafeListbox, ValueChip } from "@/client/src/components/common/index.ts";
-import { type RulesetSave, useDebouncedValue, useRulesetFeats } from "@/client/src/hooks/index.ts";
+import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { readNumberInput } from "@/client/src/lib/validation.ts";
+import { type RulesetSave, useRulesetFeats } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { MAX_SAVE_BASE } from "@/shared/dnd3.5/classes.ts";
 
 import { featKey, type LevelFeat, levelFeatLabel, type LevelSave, saveBaseError } from "./classLevelForm.ts";

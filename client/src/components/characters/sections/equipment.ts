@@ -1,14 +1,15 @@
 import type { InferResponseType } from "hono/client";
 
-import type { CharacterDetail, RulesetItem } from "@/client/src/lib/queries.ts";
-import type { RPC } from "@/client/src/services/rpc.ts";
+import type { CharacterDetail } from "@/client/src/lib/queries.ts";
+import type { rpc } from "@/client/src/services/rpc.ts";
 import { ITEM_HAS_CHARGES } from "@/shared/dnd3.5/properties/index.ts";
 import { type ItemLocation, LOCATION_OPTIONS } from "@/shared/enums.ts";
 import { findSlotConflict, HAND_LOCATIONS, isHandLocation, type SlotConflictReason } from "@/shared/equipment.ts";
 
+import type { RulesetItem } from "./equipmentQueries.ts";
 import { shownWeaponSet } from "./weaponSets.ts";
 
-type InventoryEntry = InferResponseType<RPC["api"]["characters"]["inventory"][":characterId"]["$get"], 200>[number];
+type InventoryEntry = InferResponseType<(typeof rpc.api.characters.inventory)[":characterId"]["$get"], 200>[number];
 
 type ItemProperties = { type: string; value: string }[];
 

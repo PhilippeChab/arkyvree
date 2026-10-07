@@ -13,7 +13,6 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { AddIcon, EditIcon, RemoveIcon } from "@/client/src/components/icons/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
-import type { EditingLevel } from "@/client/src/types/character.ts";
 
 import type { CharacterData } from "./characterData.ts";
 import { SheetSection } from "./SheetSection.tsx";
@@ -30,9 +29,9 @@ interface ClassesSectionProps {
 interface ClassGroupProps {
   /** Its class's page, which its name links to */
   classLink?: string;
-  klass: NonNullable<SheetClass["klass"]>;
+  klass: SheetKlass;
   /** Its levels, which the sheet carries in full */
-  levels: NonNullable<SheetClass["levels"]>;
+  levels: SheetLevel[];
   /** Edits a level; a read-only viewer sees the levels without it. */
   onEditLevel?: (editingLevel: EditingLevel) => void;
 }
@@ -40,6 +39,19 @@ interface ClassGroupProps {
 type SheetClass = CharacterDetail["classes"][string];
 
 type SheetClasses = NonNullable<CharacterData["classes"]>;
+
+type SheetKlass = NonNullable<SheetClass["klass"]>;
+
+type SheetLevel = NonNullable<SheetClass["levels"]>[number];
+
+/** A level the sheet opens in Edit Level: its own row's id and level, and its class's. */
+export interface EditingLevel {
+  characterLevelId: SheetLevel["characterLevel"]["id"];
+  hd: SheetKlass["hd"];
+  klassId: SheetKlass["id"];
+  klassName: SheetKlass["name"];
+  level: SheetLevel["klassLevel"]["level"];
+}
 
 /** A class's levels under its heading, led by its arrow as every group the sheet opens and closes. */
 function ClassGroup({ klass, levels, classLink, onEditLevel }: ClassGroupProps) {

@@ -14,14 +14,18 @@ import { useMemo } from "react";
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
 import { BlankNote, EmptyValue } from "@/client/src/components/common/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
+import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 
 import { GroupedSkillRows, SkillRow } from "./GroupedSkillRows.tsx";
-import type { Dnd35SkillsSectionProps } from "./types.ts";
+
+export interface SkillsSectionProps {
+  skills: NonNullable<CharacterDetail["skills"]>;
+}
 
 /** The narrow number columns' headers. */
 const COLUMN_HEADER_SX = { fontSize: { xs: "0.7rem", sm: "0.8125rem" } };
 
-export function SkillsSection({ skills }: Dnd35SkillsSectionProps) {
+export function SkillsSection({ skills }: SkillsSectionProps) {
   const sortedSkills = useMemo(() => Object.values(skills).sort((a, b) => a.name.localeCompare(b.name)), [skills]);
 
   return (

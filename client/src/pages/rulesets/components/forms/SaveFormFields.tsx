@@ -6,10 +6,8 @@ import type { RulesetAbility } from "@/client/src/hooks/index.ts";
 import { NAME_RULES, requiredRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
-type Ability = RulesetAbility;
-
 interface SaveFormFieldsProps {
-  abilities: Ability[];
+  abilities: RulesetAbility[];
   /** Why the abilities didn't load. */
   abilitiesError: unknown;
   form: UseFormReturn<SaveFormData>;

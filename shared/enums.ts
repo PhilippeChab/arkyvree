@@ -37,6 +37,8 @@ export const ALIGNMENT_OPTIONS = [
   "Chaotic Evil",
 ] as const satisfies readonly Alignment[];
 
+export const BASE_RULES_OPTIONS = ["Dungeons & Dragons: 3.5"] as const satisfies readonly BaseRules[];
+
 /** The ruleset family a record without one belongs to. */
 export const DEFAULT_BASE_RULES: BaseRules = "Dungeons & Dragons: 3.5";
 

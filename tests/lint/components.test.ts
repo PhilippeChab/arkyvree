@@ -87,16 +87,16 @@ describe("component rules", () => {
           "client/src/tree.tsx": "export const t = <Tooltip title={feat.requirementTree}><span /></Tooltip>;\n",
           "client/src/cut.tsx": "export const c = <Tooltip title={text.slice(0, 200)}><span /></Tooltip>;\n",
           "client/src/plain.tsx": 'export const p = <Tooltip title="Edit"><span /></Tooltip>;\n',
-          "client/src/pages/characters/details/components/dnd3.5/LevelUpSkillsStep.tsx":
+          "client/src/pages/characters/details/components/dnd3.5/SkillsStep.tsx":
             "export const s = <Tooltip title={skill.description}><span /></Tooltip>;\n",
-          "client/src/pages/characters/details/components/dnd3.5/LevelWizardDialog.tsx":
+          "client/src/pages/characters/details/components/dnd3.5/OptionTooltip.tsx":
             'export const w = <Tooltip title="Edit"><span /></Tooltip>;\n',
         },
         ["option-tooltips"],
       ),
     ).toEqual([
       "option-tooltips client/src/cut.tsx",
-      "option-tooltips client/src/pages/characters/details/components/dnd3.5/LevelUpSkillsStep.tsx",
+      "option-tooltips client/src/pages/characters/details/components/dnd3.5/SkillsStep.tsx",
       "option-tooltips client/src/tree.tsx",
     ]);
   });
@@ -231,7 +231,7 @@ describe("component rules", () => {
             "export const m = <ConfirmDialog message={<>Are you sure you want to remove <b>it</b>?</>} />;\n",
           "client/src/inline.tsx":
             'export const i = <InlineConfirm open cancelLabel="Keep" confirmLabel="Revoke">Are you sure?</InlineConfirm>;\n',
-          "client/src/components/common/ValidationIssuesAlert.tsx":
+          "client/src/components/characters/validation/ValidationIssuesAlert.tsx":
             "export const v = <AnimatedAlert in={open} action={<Button>Proceed Anyway</Button>} />;\n",
         },
         ["confirm-dialogs"],
@@ -408,7 +408,7 @@ describe("component rules", () => {
           "client/src/invite.tsx": 'export const i = <Container maxWidth="sm" sx={{ py: { xs: 4, sm: 8 } }} />;\n',
           "client/src/panel.tsx": own,
           "client/src/tab.tsx": "export const p = <SectionTabPanel hidden={hidden} />;\n",
-          "client/src/components/common/DetailPageHeader.tsx": own,
+          "client/src/components/common/SectionTabs.tsx": own,
         },
         ["page-gaps"],
       ),
@@ -423,7 +423,7 @@ describe("component rules", () => {
           "client/src/pages/rulesets/components/EntityDetailLayout.tsx": title,
           "client/src/header.tsx": "export const h = <DetailPageHeader title={name} description={ruleset} />;\n",
           "client/src/components/common/DetailPageHeader.tsx": title,
-          "client/src/components/auth/AuthLayoutRoute.tsx": title,
+          "client/src/components/auth/AuthPage.tsx": title,
         },
         ["page-titles"],
       ),

@@ -7,7 +7,7 @@ import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { useDirtyFormsStore } from "@/client/src/stores/dirtyFormsStore.ts";
 
 import { useSnackbar } from "./useSnackbar.ts";
-import { useWebSocket } from "./useWebSocket.ts";
+import { useWebSocket, type WsMessage } from "./useWebSocket.ts";
 
 interface WebSocketProviderProps {
   children: ReactNode;
@@ -28,7 +28,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
   const [confirmRefresh, setConfirmRefresh] = useState(false);
 
   const handleMessage = useCallback(
-    (data: { [key: string]: unknown; type: string }) => {
+    (data: WsMessage) => {
       if (data.type === "app:version") {
         if (typeof data.version !== "string") return;
         const { version } = data;

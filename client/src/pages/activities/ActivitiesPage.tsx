@@ -24,7 +24,8 @@ import {
 } from "@/client/src/hooks/index.ts";
 import { formatActivityType } from "@/client/src/lib/activityFormatters.ts";
 import { formatDateTime } from "@/client/src/lib/formatDate.ts";
-import { activityListQuery } from "@/client/src/lib/queries.ts";
+
+import { activityListQuery } from "./activityQueries.ts";
 
 type SortField = "createdAt" | "type";
 

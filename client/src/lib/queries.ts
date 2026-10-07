@@ -1,7 +1,8 @@
 /**
- * Query definitions shared between the page that shows the data and the places that prefetch or reuse it (sidebar
- * hover, card hover, entity pages). Defining them once keeps the key and the request in step: a prefetch whose key or
- * page size drifts from the page's query is wasted, or worse, seeds the cache with pages of the wrong size.
+ * The queries several areas share, or a page and the places that prefetch it (sidebar hover, card hover), and the
+ * refreshes a write to a character asks for. Defining them once keeps the key and the request in step: a prefetch whose
+ * key or page size drifts from the page's query is wasted, or worse, seeds the cache with pages of the wrong size. A
+ * query one area reads alone is that area's (its `…Queries.ts`).
  */
 
 import { infiniteQueryOptions, type QueryClient, queryOptions, skipToken } from "@tanstack/react-query";
@@ -13,18 +14,18 @@ import { FOREVER } from "./durations.ts";
 import { nextPage } from "./pageItems.ts";
 import { QUERY_KEYS } from "./queryKeys.ts";
 
-type ActivityListParams = InferRequestType<typeof rpc.api.activities.$get>["query"];
 type CampaignListParams = InferRequestType<typeof rpc.api.campaigns.$get>["query"];
 type CharacterListParams = InferRequestType<typeof rpc.api.characters.$get>["query"];
-type Direction = "asc" | "desc";
 
 type RulesetListParams = InferRequestType<typeof rpc.api.rulesets.$get>["query"];
 
-export interface ActivityListFilters {
-  orderBy: NonNullable<ActivityListParams["orderBy"]>;
-  orderDir: Direction;
-  search: string;
+/** A record's attachment slot: its record (none until it has an id) and its name ("portrait", "avatar"). */
+export interface AttachmentSlot {
+  name: string;
+  recordId: string | undefined;
+  recordType: string;
 }
+
 export type CampaignDetail = InferResponseType<(typeof rpc.api.campaigns)[":id"]["$get"], 200>;
 export interface CampaignListFilters {
   orderBy: NonNullable<CampaignListParams["orderBy"]>;
@@ -39,14 +40,10 @@ export interface CharacterListFilters {
   search: string;
   view: "active" | "shared" | "archived";
 }
-export interface NotificationListFilters {
-  orderDir: Direction;
-  search: string;
-  unreadOnly: boolean;
-}
-export type RulesetDetail = InferResponseType<(typeof rpc.api.rulesets)[":id"]["$get"], 200>;
+/** A list's sort direction, as every list endpoint takes it. */
+export type Direction = NonNullable<RulesetListParams["orderDir"]>;
 
-export type RulesetItem = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"]["$get"], 200>["items"][number];
+export type RulesetDetail = InferResponseType<(typeof rpc.api.rulesets)[":id"]["$get"], 200>;
 
 export interface RulesetListFilters {
   orderBy: NonNullable<RulesetListParams["orderBy"]>;
@@ -57,28 +54,8 @@ export interface RulesetListFilters {
 
 export type RulesetListItem = InferResponseType<typeof rpc.api.rulesets.$get, 200>["items"][number];
 
-const LIST_PAGE_SIZE = 10;
-
-/** The activity log, a page at a time. */
-export function activityListQuery(filters: ActivityListFilters) {
-  return infiniteQueryOptions({
-    queryKey: QUERY_KEYS.activities.list({ ...filters }),
-    queryFn: ({ pageParam }) =>
-      parseResponse(
-        rpc.api.activities.$get({
-          query: {
-            page: pageParam.toString(),
-            limit: LIST_PAGE_SIZE.toString(),
-            search: filters.search || undefined,
-            orderBy: filters.orderBy,
-            orderDir: filters.orderDir,
-          },
-        }),
-      ),
-    initialPageParam: 1,
-    getNextPageParam: nextPage,
-  });
-}
+/** A list page's page: what a page asks for, and what its prefetch warms. */
+export const LIST_PAGE_SIZE = 10;
 
 /** Where an activity's or a notification's target is now: the server resolves its page as it's opened. */
 export function activityTargetQuery(targetTable: string, targetId: string) {
@@ -90,7 +67,7 @@ export function activityTargetQuery(targetTable: string, targetId: string) {
 }
 
 /** A record's attachment slot: its key and its request, which waits for the record's id. */
-export function attachmentSlotQuery(recordType: string, recordId: string | undefined, name: string) {
+export function attachmentSlotQuery({ recordType, recordId, name }: AttachmentSlot) {
   return queryOptions({
     queryKey: QUERY_KEYS.attachments.slot(recordType, recordId ?? "", name),
     queryFn: recordId
@@ -191,27 +168,6 @@ export function invalidateCharacterListings(queryClient: QueryClient) {
   ]);
 }
 
-/** The user's notifications, a page at a time. */
-export function notificationListQuery(filters: NotificationListFilters) {
-  return infiniteQueryOptions({
-    queryKey: QUERY_KEYS.notifications.list({ ...filters }),
-    queryFn: ({ pageParam }) =>
-      parseResponse(
-        rpc.api.notifications.$get({
-          query: {
-            page: pageParam.toString(),
-            limit: LIST_PAGE_SIZE.toString(),
-            search: filters.search || undefined,
-            orderDir: filters.orderDir,
-            unreadOnly: filters.unreadOnly ? "true" : undefined,
-          },
-        }),
-      ),
-    initialPageParam: 1,
-    getNextPageParam: nextPage,
-  });
-}
-
 /** The text of the Open Game License, a static file that never changes. */
 export function oglLicenseQuery() {
   return queryOptions({
@@ -222,14 +178,6 @@ export function oglLicenseQuery() {
       return response.text();
     },
     staleTime: FOREVER,
-  });
-}
-
-/** The user's five latest notifications, for the dashboard. */
-export function recentNotificationsQuery() {
-  return queryOptions({
-    queryKey: QUERY_KEYS.notifications.list({ limit: 5, page: 1 }),
-    queryFn: () => parseResponse(rpc.api.notifications.$get({ query: { limit: "5", page: "1" } })),
   });
 }
 
@@ -255,40 +203,6 @@ export function rulesetDetailQuery(id: string) {
   return queryOptions({
     queryKey: QUERY_KEYS.rulesets.detail(id),
     queryFn: () => parseResponse(rpc.api.rulesets[":id"].$get({ param: { id } })),
-  });
-}
-
-/** A feat picker's options: a ruleset's feats with their aptitudes, searched on the server, 50 a page. */
-export function rulesetFeatsQuery(rulesetId: string, search: string) {
-  return infiniteQueryOptions({
-    queryKey: QUERY_KEYS.rulesets.sectionSearch(rulesetId, "feats", search),
-    queryFn: async ({ pageParam }) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].feats.$get({
-          param: { id: rulesetId },
-          query: { page: pageParam.toString(), limit: "50", search: search || undefined },
-        }),
-      ),
-    initialPageParam: 1,
-    getNextPageParam: nextPage,
-  });
-}
-
-/** Every language of a ruleset, for pickers: the first 100, the most one request returns. */
-export function rulesetLanguagesQuery(rulesetId: string | undefined) {
-  return queryOptions({
-    queryKey: QUERY_KEYS.rulesets.languages(rulesetId ?? ""),
-    queryFn: rulesetId
-      ? async () => {
-          const page = await parseResponse(
-            rpc.api.rulesets[":id"].languages.$get({
-              param: { id: rulesetId },
-              query: { page: "1", limit: "100" },
-            }),
-          );
-          return page.items;
-        }
-      : skipToken,
   });
 }
 
@@ -330,31 +244,5 @@ export function rulesetPickerQuery(scope: RulesetListParams["scope"], search: st
       ),
     initialPageParam: 1,
     getNextPageParam: nextPage,
-  });
-}
-
-/** Every save of a ruleset, for pickers, columns and lookups: the first 100, the most one request returns. */
-export function rulesetSavesQuery(rulesetId: string | undefined) {
-  return queryOptions({
-    queryKey: QUERY_KEYS.rulesets.saves(rulesetId ?? ""),
-    queryFn: rulesetId
-      ? async () => {
-          const page = await parseResponse(
-            rpc.api.rulesets[":id"].saves.$get({
-              param: { id: rulesetId },
-              query: { page: "1", limit: "100" },
-            }),
-          );
-          return page.items;
-        }
-      : skipToken,
-  });
-}
-
-/** The unread notifications the bell counts and lists. */
-export function unreadNotificationsQuery() {
-  return queryOptions({
-    queryKey: QUERY_KEYS.notifications.unreadCount,
-    queryFn: () => parseResponse(rpc.api.notifications.unread.$get()),
   });
 }

@@ -1,5 +1,10 @@
 import { timingSafeEqual } from "node:crypto";
 
+import { VERIFICATION_CODE_LENGTH } from "@/shared/auth.ts";
+
+/** The smallest code of its length: its first digit is never 0. */
+const LOWEST_CODE = 10 ** (VERIFICATION_CODE_LENGTH - 1);
+
 export function compareInConstantTime(a: string, b: string): boolean {
   const bufA = Buffer.from(a);
   const bufB = Buffer.from(b);
@@ -10,5 +15,5 @@ export function compareInConstantTime(a: string, b: string): boolean {
 export function generateVerificationCode(): string {
   const buffer = new Uint32Array(1);
   crypto.getRandomValues(buffer);
-  return (10000000 + (buffer[0] % 90000000)).toString();
+  return (LOWEST_CODE + (buffer[0] % (9 * LOWEST_CODE))).toString();
 }

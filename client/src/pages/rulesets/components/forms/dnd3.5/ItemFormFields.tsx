@@ -9,10 +9,9 @@ import {
   SelectField,
 } from "@/client/src/components/common/index.ts";
 import { DECIMAL_RULES, NAME_RULES } from "@/client/src/lib/validation.ts";
-import { ITEM_TYPE_OPTIONS } from "@/shared/dnd3.5/items.ts";
 import { LOCATION_OPTIONS } from "@/shared/enums.ts";
 
-import { isTemplateType, type ItemFormInternal, type TemplateType } from "./itemForm.ts";
+import { isTemplateType, ITEM_TYPE_OPTIONS, type ItemFormInternal, type TemplateType } from "./itemForm.ts";
 import { itemTemplatesQuery } from "./itemFormQueries.ts";
 
 interface ItemFormFieldsProps {

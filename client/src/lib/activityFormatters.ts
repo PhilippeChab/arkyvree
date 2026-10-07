@@ -2,8 +2,10 @@ import type { ChangedField } from "@/shared/activity.ts";
 import { formatOperator } from "@/shared/customization/operators.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import { formatSegment } from "@/shared/customization/target.ts";
+import { BASE_RULES_OPTIONS } from "@/shared/enums.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
+import { oneOf } from "./oneOf.ts";
 import { entityTypeLabel, getActivityLabelOverrides } from "./rulesetLabels.ts";
 
 /** A ruleset entity's change, as its notification says it: its verb, by the type's (`createFeat`) */
@@ -84,7 +86,7 @@ const NOTIFICATION_MESSAGES: Record<string, (actor: string, d: Record<string, un
 
 /** The base rules an activity's ruleset follows, when it says */
 function baseRulesOf(d: Record<string, unknown>) {
-  return typeof d.baseRules === "string" ? d.baseRules : undefined;
+  return oneOf(d.baseRules, BASE_RULES_OPTIONS);
 }
 
 /** A ruleset entity's create, update or delete, named in its ruleset's word ("Ann created spell Fireball"). */

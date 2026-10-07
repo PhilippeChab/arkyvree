@@ -8,14 +8,13 @@ let initialized = false;
  */
 export function initSentry() {
   if (initialized) return;
-  const cfg = window.__APP_CONFIG__;
-  const dsn = cfg?.sentryDsn;
+  const { sentryDsn: dsn, sentryEnvironment, sentryRelease } = window.__APP_CONFIG__;
   if (!dsn) return;
 
   Sentry.init({
     dsn,
-    environment: cfg?.sentryEnvironment || undefined,
-    release: cfg?.sentryRelease || undefined,
+    environment: sentryEnvironment ?? undefined,
+    release: sentryRelease ?? undefined,
     sendDefaultPii: false,
   });
   initialized = true;

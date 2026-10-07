@@ -24,8 +24,7 @@ import {
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { classesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
-import { useEntityFilters } from "@/client/src/pages/rulesets/details/useEntityFilters.ts";
-import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useEntityFilters, useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 type Class = ClassesPaginated["items"][number];

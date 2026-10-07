@@ -4,7 +4,18 @@ import { RollAllButton } from "@/client/src/components/characters/index.ts";
 import { SubsectionTitle } from "@/client/src/components/common/index.ts";
 import { CasinoIcon } from "@/client/src/components/icons/index.ts";
 
-import type { AddHpStepProps } from "./levelUpFactory.ts";
+interface AddHpState {
+  handleHpChange: (index: number, value: number | null) => void;
+  handleHpMaxAll: () => void;
+  handleHpRoll: (index: number) => void;
+  handleHpRollAll: () => void;
+  hpLevels: Array<{ className: string; hd: number; nextLevel: number }>;
+  hpValues: (number | null)[];
+}
+
+export interface AddHpStepProps {
+  wizard: AddHpState;
+}
 
 export function AddHpStep({ wizard }: AddHpStepProps) {
   const {

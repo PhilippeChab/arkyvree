@@ -12,8 +12,6 @@ import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/se
 import { abilitiesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { useOpenEntity } from "@/client/src/pages/rulesets/hooks/index.ts";
 
-type Ability = RulesetAbility;
-
 const ABILITIES_COLUMNS = [
   { key: "name", label: "Name", width: "30%" },
   { key: "description", label: "Description", width: "70%" },
@@ -30,7 +28,7 @@ export function AbilitiesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
 
   const abilities = pageItems(data);
 
-  const renderCell = (ability: Ability, columnKey: string) => {
+  const renderCell = (ability: RulesetAbility, columnKey: string) => {
     switch (columnKey) {
       case "name":
         return ability.name;
@@ -41,12 +39,12 @@ export function AbilitiesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
     }
   };
 
-  const handleRowClick = (ability: Ability) => {
+  const handleRowClick = (ability: RulesetAbility) => {
     openEntity(`abilities/${ability.id}`);
   };
 
   const handleRowMouseEnter = useCallback(
-    (ability: Ability) => {
+    (ability: RulesetAbility) => {
       void queryClient.prefetchQuery(abilityQuery(ruleset.id, ability.id));
     },
     [queryClient, ruleset.id],

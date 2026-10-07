@@ -34,7 +34,7 @@ import { EntityDeleteDialog } from "@/client/src/pages/rulesets/components/index
 import {
   customizationSection,
   requirementsQuery,
-} from "@/client/src/pages/rulesets/customization/customizationQueries.ts";
+} from "@/client/src/pages/rulesets/customization/customizationSectionQueries.ts";
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import type { CustomizationOwnerType } from "@/shared/customization/entities.ts";

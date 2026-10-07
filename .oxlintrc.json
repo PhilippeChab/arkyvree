@@ -117,6 +117,7 @@
     "arkyvree/date-formats": "error",
     "arkyvree/demo-reads": "error",
     "arkyvree/navigation": "error",
+    "arkyvree/no-types-modules": "error",
     "arkyvree/clickable-elements": "error",
     "arkyvree/tooltips": "error",
     "arkyvree/form-fields": "error",

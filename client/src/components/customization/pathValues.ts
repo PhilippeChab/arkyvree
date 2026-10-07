@@ -1,9 +1,7 @@
 import type { PathValueType, TargetPath } from "@/shared/customization/target.ts";
 
-interface PathChoice {
-  label: string;
-  value: string;
-}
+/** A value a target path takes, among those it lists: its label and what it stores. */
+export type PathChoice = NonNullable<TargetPath["possibleValues"]>[number];
 
 /** What a complete target path takes: its value type, operators and values. */
 export type PathInfo = Pick<

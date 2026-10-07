@@ -4,13 +4,12 @@ import { parseResponse } from "hono/client";
 import { useState } from "react";
 import { Controller } from "react-hook-form";
 
-import { VerificationCodeInput } from "@/client/src/components/auth/index.ts";
+import { EMPTY_VERIFICATION_CODE, VerificationCodeInput } from "@/client/src/components/auth/index.ts";
 import { AnimatedAlert, DialogFooter, FormDialog, LinkButton } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
-import { EMPTY_VERIFICATION_CODE } from "@/client/src/lib/verificationCode.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 

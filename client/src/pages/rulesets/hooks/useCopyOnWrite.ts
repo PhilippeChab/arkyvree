@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 
-import { isStillOpen } from "@/client/src/lib/stillOpen.ts";
 import { entityPageState } from "@/client/src/pages/rulesets/entityPageState.ts";
+import { isStillOpen } from "@/client/src/pages/rulesets/stillOpen.ts";
 
 /**
  * A ruleset entity's page following a copy-on-write: editing or customizing an inherited entity copies it into the

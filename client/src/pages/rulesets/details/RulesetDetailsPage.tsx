@@ -73,7 +73,7 @@ import {
   ArchiveRulesetDialog,
   EditRulesetDialog,
   ForkRulesetDialog,
-  OverridesDialog,
+  LocalChangesDialog,
   PublishRulesetDialog,
   RulesetLicenseNotice,
   SubscribeExtensionDialog,
@@ -153,7 +153,7 @@ export default function RulesetDetailsPage() {
   } = useRulesetOperations();
 
   const isExtension = !!ruleset && ruleset.kind === "extension";
-  const [overridesDialogOpen, setOverridesDialogOpen] = useState(false);
+  const [localChangesOpen, setLocalChangesOpen] = useState(false);
   const { value: childOnlyParam, setValue: setChildOnlyParam } = useSearchParam("childOnly");
   const childOnlyChoice = oneOf(childOnlyParam, ["true", "false"]);
   const childOnly = childOnlyChoice ? childOnlyChoice === "true" : isExtension;
@@ -244,7 +244,7 @@ export default function RulesetDetailsPage() {
         key="local-changes"
         icon={CompareArrowsIcon}
         label="Local Changes"
-        onClick={menu.closeMenuAnd(() => setOverridesDialogOpen(true))}
+        onClick={menu.closeMenuAnd(() => setLocalChangesOpen(true))}
       />
     ),
     isOwner && !!ruleset.rulesetId && isActive && !ruleset.isUsedAsExtension && !isExtension && (
@@ -499,9 +499,9 @@ export default function RulesetDetailsPage() {
 
         {ruleset.rulesetId && (
           <>
-            <OverridesDialog
-              open={overridesDialogOpen}
-              onClose={() => setOverridesDialogOpen(false)}
+            <LocalChangesDialog
+              open={localChangesOpen}
+              onClose={() => setLocalChangesOpen(false)}
               rulesetId={ruleset.id}
               baseRules={ruleset.baseRules}
               canEdit={canEditRuleset}

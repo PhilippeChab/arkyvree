@@ -12,17 +12,15 @@ import {
   SectionContent,
 } from "@/client/src/components/common/index.ts";
 import { SavesIcon } from "@/client/src/components/icons/index.ts";
-import { type RulesetSave, useRulesetAbilities, useSearchText } from "@/client/src/hooks/index.ts";
+import { useRulesetAbilities, useSearchText } from "@/client/src/hooks/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { EMPTY_SAVE, type SaveFormData, SaveFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import { saveQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { savesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
-import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { type RulesetSave, useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-
-type Save = RulesetSave;
 
 const SAVES_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },
@@ -36,7 +34,7 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
 
   const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("search");
 
-  const { createForm, handleCreate, createDialogProps } = useRulesetSection<Save, SaveFormData>({
+  const { createForm, handleCreate, createDialogProps } = useRulesetSection<RulesetSave, SaveFormData>({
     createDefaults: EMPTY_SAVE,
     rulesetId: ruleset.id,
     sectionName: "saves",
@@ -61,18 +59,18 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   const saves = pageItems(data);
   const abilityLookup = new Map(abilities.map((a) => [a.id, a.name]));
 
-  const handleRowClick = (save: Save) => {
+  const handleRowClick = (save: RulesetSave) => {
     openEntity(`saves/${save.id}`);
   };
 
   const handleRowMouseEnter = useCallback(
-    (save: Save) => {
+    (save: RulesetSave) => {
       void queryClient.prefetchQuery(saveQuery(ruleset.id, save.id));
     },
     [queryClient, ruleset.id],
   );
 
-  const renderCell = (save: Save, columnKey: string) => {
+  const renderCell = (save: RulesetSave, columnKey: string) => {
     switch (columnKey) {
       case "name":
         return save.name;

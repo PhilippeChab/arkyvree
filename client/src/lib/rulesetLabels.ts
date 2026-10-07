@@ -1,3 +1,5 @@
+import type { BaseRules } from "@/shared/enums.ts";
+
 interface Words {
   /** How the engine's names spell it (`createKlass`), where that isn't `one` */
   code?: string;
@@ -23,15 +25,15 @@ const ENTITY_WORDS: Record<string, Words> = {
 };
 
 /** What a ruleset calls an entity type where its word isn't the engine's, by its base rules: 3.5's powers are spells. */
-const RULESET_WORDS: Record<string, Record<string, Words>> = {
+const RULESET_WORDS: Record<BaseRules, Partial<Record<string, Words>>> = {
   "Dungeons & Dragons: 3.5": {
     powers: { one: "Spell", many: "Spells" },
   },
 };
 
 /** The ruleset's word for an entity type ("Spell" for a 3.5 power, "Spells" with `many`), else the type itself. */
-export function entityTypeLabel(entityType: string, baseRules: string | undefined, many = false): string {
-  const words = RULESET_WORDS[baseRules ?? ""]?.[entityType] ?? ENTITY_WORDS[entityType];
+export function entityTypeLabel(entityType: string, baseRules: BaseRules | undefined, many = false): string {
+  const words = (baseRules && RULESET_WORDS[baseRules][entityType]) ?? ENTITY_WORDS[entityType];
   if (!words) return entityType;
   return many ? words.many : words.one;
 }
@@ -40,7 +42,7 @@ export function entityTypeLabel(entityType: string, baseRules: string | undefine
  * The ruleset's words that replace the engine's names in an activity's type: the app's own ("Create Klass" → "Create
  * Class"), and its base rules' ("Create Power" → "Create Spell").
  */
-export function getActivityLabelOverrides(baseRules: string | undefined): Record<string, string> {
+export function getActivityLabelOverrides(baseRules: BaseRules | undefined): Record<string, string> {
   return Object.fromEntries(
     Object.entries(ENTITY_WORDS).flatMap(([entityType, words]) => {
       const code = words.code ?? words.one;

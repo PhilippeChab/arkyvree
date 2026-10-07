@@ -75,6 +75,8 @@
  *   (`lib/validation.ts`), never written in place.
  * - `icons`: an icon comes from `components/icons`, where every icon the app shows is named, never from
  *   `@mui/icons-material`; there, a glyph goes by one name, one meaning per glyph.
+ * - `no-types-modules`: a type lives with the code it describes (the component that owns it, the hook or the query that
+ *   gives it), never in a `types/` folder nor a `types.ts` grab bag; a `.d.ts` declaring ambient globals stays.
  * - `react-imports`: React's types and functions are named imports (`import { type ReactNode, StrictMode } from
  *   "react"`), never read through a `React.` namespace or a default `React` import; a component takes its `ref` as a
  *   prop, never through `forwardRef`.
@@ -88,7 +90,7 @@ import { calleeName, elementName, hasAttribute, inClient, parentElement } from "
 import { repoPath } from "./paths.mjs";
 
 /** What a card renders: a container that opens on click and holds content of its own, so it can't be a link */
-const CARDS = new Set(["ListCard", "StatCard", "StyledCard"]);
+const CARDS = new Set(["ListCard", "StatCard"]);
 
 /** The wrappers a component's function is handed to */
 const COMPONENT_WRAPPERS = new Set(["forwardRef", "memo"]);
@@ -170,6 +172,9 @@ const TEXT_CONTROLS = new Set([
   "ToggleButton",
   "Typography",
 ]);
+
+/** A types grab bag: a `types/` folder, or a `types.ts` module. */
+const TYPES_GRAB_BAG = /(^|\/)types(\.tsx?$|\/)/;
 
 /** The props an input takes its value through. */
 const VALUE_PROPS = new Set(["value", "values", "checked", "digits", "selected"]);
@@ -1015,6 +1020,21 @@ function createNavigation(context) {
   };
 }
 
+function createNoTypesModules(context) {
+  const file = repoPath(context.filename);
+  if (!file.startsWith("client/src/") || file.endsWith(".d.ts") || !TYPES_GRAB_BAG.test(file)) return {};
+  return {
+    Program(node) {
+      context.report({
+        node,
+        message:
+          "A type lives with the code it describes (the component that owns it, the hook or the query that gives it), " +
+          "never in a `types/` folder nor a `types.ts` grab bag.",
+      });
+    },
+  };
+}
+
 function createParsedResponses(context) {
   if (!inClient(context)) return {};
   const queriesModule = isQueriesModule(context);
@@ -1435,6 +1455,7 @@ export default {
   "date-formats": { meta: { type: "suggestion" }, create: createDateFormats },
   "demo-reads": { meta: { type: "suggestion" }, create: createDemoReads },
   navigation: { meta: { type: "suggestion" }, create: createNavigation },
+  "no-types-modules": { meta: { type: "suggestion" }, create: createNoTypesModules },
   "clickable-elements": { meta: { type: "suggestion" }, create: createClickableElements },
   tooltips: { meta: { type: "suggestion" }, create: createTooltips },
   "form-fields": { meta: { type: "suggestion" }, create: createFormFields },

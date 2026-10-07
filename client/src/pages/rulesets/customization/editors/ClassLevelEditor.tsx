@@ -3,7 +3,7 @@ import { parseResponse } from "hono/client";
 import { useController } from "react-hook-form";
 
 import { BlankNote, ValueChip } from "@/client/src/components/common/index.ts";
-import { useFormSync, useFormWith, useRulesetSaves } from "@/client/src/hooks/index.ts";
+import { useFormSync, useFormWith } from "@/client/src/hooks/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
@@ -17,10 +17,10 @@ import {
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
 import type { ClassLevel } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
+import { useRulesetSaves } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-import type { EditorProps } from "./types.ts";
-import { useEditorSave } from "./useEditorSave.ts";
+import { type EditorProps, useEditorSave } from "./useEditorSave.ts";
 
 interface ClassLevelForm {
   feats: LevelFeat[];

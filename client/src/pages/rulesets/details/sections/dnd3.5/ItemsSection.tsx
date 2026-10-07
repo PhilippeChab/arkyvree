@@ -1,6 +1,6 @@
 import { Stack, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { parseResponse } from "hono/client";
+import { type InferResponseType, parseResponse } from "hono/client";
 import { useCallback, useState } from "react";
 
 import {
@@ -16,7 +16,6 @@ import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDialogState, useFormWith, useSearchText } from "@/client/src/hooks/index.ts";
 import { formatCost, formatCount, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
-import type { RulesetItem } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
   EMPTY_ITEM,
@@ -35,7 +34,8 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import { type BulkVariantsFormValues, type VariantRow, variantRow } from "./bulkVariants.ts";
 import { BulkVariantsDialog } from "./BulkVariantsDialog.tsx";
 
-type Item = RulesetItem;
+type Item = ItemsPaginated["items"][number];
+type ItemsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"]["$get"], 200>;
 
 const ITEMS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },

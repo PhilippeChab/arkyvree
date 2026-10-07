@@ -6,8 +6,8 @@
 import { type QueryClient, queryOptions, skipToken } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 
-import { type Aptitude } from "@/client/src/components/customization/index.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
+import type { Aptitude } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 const rulesetApi = rpc.api.rulesets[":id"];

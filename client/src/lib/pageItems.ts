@@ -1,3 +1,9 @@
+/** A page of a paginated list endpoint. */
+export interface ListPage {
+  items: unknown[];
+  nextPage?: number | null;
+}
+
 /** The first page an infinite query loaded, for what every page repeats (a list's labels, its total). */
 export function firstPage<P>(data: { pages: P[] } | undefined): P | undefined {
   return data?.pages[0];

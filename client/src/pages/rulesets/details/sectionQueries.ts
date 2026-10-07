@@ -1,6 +1,7 @@
 /**
  * List queries of the ruleset tabs. Each section renders with these, and the tab bar prefetches with the same
- * factories, so a hovered tab's first page is already cached under the exact key the section asks for.
+ * factories, so a hovered tab's first page is already cached under the exact key the section asks for. The pickers the
+ * ruleset's forms offer read its lists here too: its aptitudes, its feats and its saves.
  */
 
 import {
@@ -11,22 +12,28 @@ import {
   queryOptions,
   skipToken,
 } from "@tanstack/react-query";
-import { parseResponse } from "hono/client";
+import { type InferRequestType, type InferResponseType, parseResponse } from "hono/client";
 
 import { nextPage } from "@/client/src/lib/pageItems.ts";
+import type { Direction } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
+import {
+  DEFAULT_ENTITY_FILTERS,
+  type EntityKind,
+  type EntitySortField,
+} from "@/client/src/pages/rulesets/hooks/dnd3.5/useEntityFilters.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-
-import { DEFAULT_ENTITY_FILTERS, type EntityKind, type EntitySortField } from "./useEntityFilters.ts";
 
 interface AptitudeFilters extends ListFilters {
   aptitudeId?: string;
 }
 
+type AptitudesApi = (typeof rpc.api.rulesets)[":id"]["aptitudes"];
+
 interface EntityFilters extends ListFilters {
   kind: EntityKind;
   orderBy: EntitySortField;
-  orderDir: "asc" | "desc";
+  orderDir: Direction;
 }
 
 interface ListFilters {
@@ -37,6 +44,12 @@ interface ListFilters {
 interface PowerFilters extends AptitudeFilters {
   level?: number;
 }
+
+/** A ruleset's aptitude, as its list and its pickers give it. */
+export type Aptitude = InferResponseType<AptitudesApi["$get"], 200>["items"][number];
+
+/** The aptitudes a picker offers: those of the ruleset's feats, or of its spells (all of them without one). */
+export type AptitudeScope = NonNullable<InferRequestType<AptitudesApi["$get"]>["query"]["scope"]>;
 
 export type RulesetSection =
   | "races"
@@ -82,6 +95,27 @@ export function abilitiesQuery(rulesetId: string, filters: ListFilters) {
         rpc.api.rulesets[":id"].abilities.$get({
           param: { id: rulesetId },
           query: listQuery(pageParam, filters),
+        }),
+      ),
+    initialPageParam: 1,
+    getNextPageParam: nextPage,
+  });
+}
+
+/** A picker's aptitudes, searched on the server: a ruleset's, or those of its feats or its spells. */
+export function aptitudeOptionsQuery(rulesetId: string, search: string, scope?: AptitudeScope) {
+  return infiniteQueryOptions({
+    queryKey: QUERY_KEYS.rulesets.sectionSearch(rulesetId, "aptitudes", search, scope),
+    queryFn: async ({ pageParam }) =>
+      parseResponse(
+        rpc.api.rulesets[":id"].aptitudes.$get({
+          param: { id: rulesetId },
+          query: {
+            limit: "10",
+            page: pageParam.toString(),
+            search: search || undefined,
+            scope,
+          },
         }),
       ),
     initialPageParam: 1,
@@ -307,6 +341,40 @@ export function racesQuery(rulesetId: string, filters: EntityFilters) {
       ),
     initialPageParam: 1,
     getNextPageParam: nextPage,
+  });
+}
+
+/** A feat picker's options: a ruleset's feats with their aptitudes, searched on the server, 50 a page. */
+export function rulesetFeatsQuery(rulesetId: string, search: string) {
+  return infiniteQueryOptions({
+    queryKey: QUERY_KEYS.rulesets.sectionSearch(rulesetId, "feats", search),
+    queryFn: async ({ pageParam }) =>
+      parseResponse(
+        rpc.api.rulesets[":id"].feats.$get({
+          param: { id: rulesetId },
+          query: { page: pageParam.toString(), limit: "50", search: search || undefined },
+        }),
+      ),
+    initialPageParam: 1,
+    getNextPageParam: nextPage,
+  });
+}
+
+/** Every save of a ruleset, for pickers, columns and lookups: the first 100, the most one request returns. */
+export function rulesetSavesQuery(rulesetId: string | undefined) {
+  return queryOptions({
+    queryKey: QUERY_KEYS.rulesets.saves(rulesetId ?? ""),
+    queryFn: rulesetId
+      ? async () => {
+          const page = await parseResponse(
+            rpc.api.rulesets[":id"].saves.$get({
+              param: { id: rulesetId },
+              query: { page: "1", limit: "100" },
+            }),
+          );
+          return page.items;
+        }
+      : skipToken,
   });
 }
 

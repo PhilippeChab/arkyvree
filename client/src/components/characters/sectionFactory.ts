@@ -1,46 +1,47 @@
 import type { ComponentType } from "react";
 
-import type { CharacterDetail } from "@/client/src/lib/queries.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 
 import {
   AbilityScoresSection,
+  type AbilityScoresSectionProps,
+  bondedFeats,
   BondedSection,
+  type BondedSectionProps,
   CombatAndSavesSection,
-  type Dnd35AbilityScoresSectionProps,
-  type Dnd35BondedSectionProps,
-  type Dnd35CombatAndSavesSectionProps,
-  type Dnd35PowersSectionProps,
-  type Dnd35SkillsSectionProps,
+  type CombatAndSavesSectionProps,
   SkillsSection,
+  type SkillsSectionProps,
   SpellsSection,
+  type SpellsSectionProps,
+  WeaponsSection,
+  type WeaponsSectionProps,
 } from "./sections/dnd3.5/index.ts";
 
-type AbilityScoresSectionProps = Dnd35AbilityScoresSectionProps;
-
-type BaseRules = NonNullable<CharacterDetail["baseRules"]>;
 /**
- * The 3.5 prop shapes under the generic names the SectionMap uses. When a second ruleset ships, this file will grow
- * per-ruleset prop types and the SectionMap will become a discriminated union rather than a single shape.
+ * What a sheet shows by its base rules: its sections, which a power is to the schema and a spell to 3.5
+ * (`PowersSection: SpellsSection`), and its bonded creatures by the feat that bonds each. A second base rules makes
+ * this a union of each one's map.
  */
-type CombatAndSavesSectionProps = Dnd35CombatAndSavesSectionProps;
-type PowersSectionProps = Dnd35PowersSectionProps;
 interface SectionMap {
   AbilityScoresSection: ComponentType<AbilityScoresSectionProps>;
-  BondedSection: ComponentType<Dnd35BondedSectionProps>;
+  bondedFeats: typeof bondedFeats;
+  BondedSection: ComponentType<BondedSectionProps>;
   CombatAndSavesSection: ComponentType<CombatAndSavesSectionProps>;
-  PowersSection: ComponentType<PowersSectionProps>;
+  PowersSection: ComponentType<SpellsSectionProps>;
   SkillsSection: ComponentType<SkillsSectionProps>;
+  WeaponsSection: ComponentType<WeaponsSectionProps>;
 }
-
-type SkillsSectionProps = Dnd35SkillsSectionProps;
 
 const RULESET_SECTIONS: Record<BaseRules, SectionMap> = {
   "Dungeons & Dragons: 3.5": {
     AbilityScoresSection,
-    CombatAndSavesSection,
+    bondedFeats,
     BondedSection,
+    CombatAndSavesSection,
     PowersSection: SpellsSection,
     SkillsSection,
+    WeaponsSection,
   },
 };
 

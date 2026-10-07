@@ -5,13 +5,13 @@ import { Link, Navigate, useLocation } from "react-router-dom";
 import {
   AuthPage,
   AuthSubmitButton,
+  EMPTY_VERIFICATION_CODE,
   ResendCodeLink,
   useResendCode,
   VerificationCodeInput,
 } from "@/client/src/components/auth/index.ts";
 import { useAuthRequests, useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
-import { EMPTY_VERIFICATION_CODE } from "@/client/src/lib/verificationCode.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
 interface VerifyEmailFormData {

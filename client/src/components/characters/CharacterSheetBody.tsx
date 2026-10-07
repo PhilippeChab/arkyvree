@@ -1,9 +1,6 @@
 import { Stack } from "@mui/material";
 
-import { oneOf } from "@/client/src/lib/oneOf.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
-import type { EditingLevel } from "@/client/src/types/character.ts";
-import { BONDED_KIND_BY_SLUG, BONDED_KIND_SLUGS } from "@/shared/dnd3.5/bondedKinds.ts";
 import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
 
 import { getSections } from "./sectionFactory.ts";
@@ -13,13 +10,15 @@ import {
   CharacterIdentitySection,
   ClassesSection,
   DiagnosticsSection,
+  type EditingLevel,
   EquipmentSection,
   FeatsSection,
   ReadOnlyEquipmentSection,
-  WeaponsSection,
 } from "./sections/index.ts";
 
 interface CharacterSheetBodyProps {
+  /** The bonded creatures' names link to their sheets: the owner's view. */
+  bondedLinkable?: boolean;
   character: CharacterData;
   characterId: string;
   /** The owner's view only: the character's diagnostics, shown under the sheet. */
@@ -29,7 +28,6 @@ interface CharacterSheetBodyProps {
   onAddLevel?: () => void;
   onEditLevel?: (editingLevel: EditingLevel) => void;
   onRemoveLevel?: () => void;
-  onViewBondedSheet?: (bondedId: string) => void;
   partial?: boolean;
   /** The portrait can't be changed; defaults to the identity's read-only state. */
   portraitReadOnly?: boolean;
@@ -51,7 +49,7 @@ export function CharacterSheetBody({
   onEditLevel,
   onAddLevel,
   onRemoveLevel,
-  onViewBondedSheet,
+  bondedLinkable = false,
   equipmentMode,
   rulesetId,
   diagnostics,
@@ -63,6 +61,7 @@ export function CharacterSheetBody({
   const combat: SheetCombat = character.combat || {};
   const encumbrance = combat.encumbrance;
   const sections = getSections(character.baseRules ?? DEFAULT_BASE_RULES);
+  const bondedByFeat = "bonded" in character ? sections.bondedFeats(character.bonded) : undefined;
 
   return (
     <Stack spacing={3}>
@@ -92,7 +91,7 @@ export function CharacterSheetBody({
 
           <sections.CombatAndSavesSection combat={combat} saves={saves} />
 
-          <WeaponsSection combat={combat} />
+          <sections.WeaponsSection combat={combat} />
 
           <sections.SkillsSection skills={character.skills || {}} />
 
@@ -100,27 +99,10 @@ export function CharacterSheetBody({
             classes={character.classes || {}}
             virtualFeats={character.virtualFeats}
             rulesetId={rulesetId}
-            renderFeatExtra={(() => {
-              const bondedMap = "bonded" in character ? character.bonded : null;
-              if (!bondedMap) return undefined;
-              const matches: { bonded: NonNullable<(typeof bondedMap)[string]>; suffix: string }[] = [];
-              for (const [kind, bonded] of Object.entries(bondedMap)) {
-                if (!bonded) continue;
-                const bondedKind = oneOf(kind, BONDED_KIND_SLUGS);
-                if (!bondedKind) continue;
-                const suffix = BONDED_KIND_BY_SLUG[bondedKind].label;
-                matches.push({ suffix, bonded });
-              }
-              if (matches.length === 0) return undefined;
-              return (feat) => {
-                for (const { suffix, bonded } of matches) {
-                  const raceName = bonded.identity?.physiology?.race?.name;
-                  if (raceName && feat.name === `${raceName} ${suffix}`)
-                    return <sections.BondedSection bonded={bonded} linkable={!!onViewBondedSheet} />;
-                }
-                return null;
-              };
-            })()}
+            renderFeatExtra={(feat) => {
+              const bonded = bondedByFeat?.get(feat.name);
+              return bonded && <sections.BondedSection bonded={bonded} linkable={bondedLinkable} />;
+            }}
           />
 
           {/* The campaign endpoint returns powers as [] for partial visibility — guard against that since PowersSection expects a record */}

@@ -13,7 +13,7 @@ import {
 import type { Instance } from "@popperjs/core";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
-import { HelpLabel, Modal } from "@/client/src/components/common/index.ts";
+import { GoldDivider, HelpLabel, Modal } from "@/client/src/components/common/index.ts";
 import {
   CampaignIcon,
   CharacterIcon,
@@ -244,13 +244,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
             {step.title}
           </Typography>
 
-          <Box
-            sx={{
-              width: 60,
-              height: 2,
-              background: (theme) => `linear-gradient(90deg, transparent, ${theme.palette.gold.main}, transparent)`,
-            }}
-          />
+          <GoldDivider sx={{ width: 60, height: 2 }} />
 
           <Typography
             variant="body1"

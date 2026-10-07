@@ -6,14 +6,12 @@ import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDialogState, useFormWith } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
-import type { RulesetListItem } from "@/client/src/lib/queries.ts";
+import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import type { EditRulesetFormData, ForkRulesetFormData } from "@/client/src/pages/rulesets/details/components/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import { useToggleRulesetStar } from "./useToggleRulesetStar.ts";
-
-type Ruleset = RulesetListItem;
 
 /** An extension a ruleset unsubscribes from, and the ruleset. */
 interface UnsubscribeTarget {
@@ -32,12 +30,12 @@ export function useRulesetOperations() {
   const navigate = useNavigate();
 
   // Each dialog keeps the ruleset (or the extension) it acts on while it fades out
-  const editDialog = useDialogState<Ruleset>();
-  const forkDialog = useDialogState<Ruleset>();
-  const archiveDialog = useDialogState<Ruleset>();
-  const publishDialog = useDialogState<Ruleset>();
+  const editDialog = useDialogState<RulesetDetail>();
+  const forkDialog = useDialogState<RulesetDetail>();
+  const archiveDialog = useDialogState<RulesetDetail>();
+  const publishDialog = useDialogState<RulesetDetail>();
   const [publishKind, setPublishKind] = useState<PublishKind>("ruleset");
-  const subscribeDialog = useDialogState<Ruleset>();
+  const subscribeDialog = useDialogState<RulesetDetail>();
   const unsubscribeDialog = useDialogState<UnsubscribeTarget>();
 
   /**
@@ -184,7 +182,7 @@ export function useRulesetOperations() {
     },
   });
 
-  const handleEdit = (ruleset: Ruleset) => {
+  const handleEdit = (ruleset: RulesetDetail) => {
     editForm.reset({
       name: ruleset.name,
       description: ruleset.description,
@@ -194,7 +192,7 @@ export function useRulesetOperations() {
     editDialog.openWith(ruleset);
   };
 
-  const handleFork = (ruleset: Ruleset) => {
+  const handleFork = (ruleset: RulesetDetail) => {
     forkForm.reset({
       name: `${ruleset.name} (Fork)`,
       description: ruleset.description,
@@ -203,14 +201,14 @@ export function useRulesetOperations() {
     forkDialog.openWith(ruleset);
   };
 
-  const handleArchive = (ruleset: Ruleset) => archiveDialog.openWith(ruleset);
+  const handleArchive = (ruleset: RulesetDetail) => archiveDialog.openWith(ruleset);
 
-  const handlePublish = (ruleset: Ruleset) => {
+  const handlePublish = (ruleset: RulesetDetail) => {
     setPublishKind(ruleset.kind ?? "ruleset");
     publishDialog.openWith(ruleset);
   };
 
-  const handleSubscribe = (ruleset: Ruleset) => subscribeDialog.openWith(ruleset);
+  const handleSubscribe = (ruleset: RulesetDetail) => subscribeDialog.openWith(ruleset);
 
   const confirmSubscribe = (extensionIds: string[]) => {
     if (subscribeDialog.target) subscribeMutation.mutate({ id: subscribeDialog.target.id, extensionIds });

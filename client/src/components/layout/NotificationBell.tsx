@@ -23,9 +23,10 @@ import { useAnchorMenu, useNotificationActions } from "@/client/src/hooks/index.
 import { ONE_MINUTE } from "@/client/src/lib/durations.ts";
 import { formatRelativeTime } from "@/client/src/lib/formatDate.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
-import { unreadNotificationsQuery } from "@/client/src/lib/queries.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 import { ANIMATIONS, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
+
+import { unreadNotificationsQuery } from "./notificationBellQueries.ts";
 
 interface NotificationSummaryProps {
   notification: UnreadNotification;

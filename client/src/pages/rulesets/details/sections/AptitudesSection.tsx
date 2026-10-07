@@ -4,7 +4,6 @@ import { parseResponse } from "hono/client";
 import { useCallback } from "react";
 
 import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
-import type { Aptitude } from "@/client/src/components/customization/index.ts";
 import { AptitudesIcon } from "@/client/src/components/icons/index.ts";
 import { useSearchText } from "@/client/src/hooks/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
@@ -16,7 +15,7 @@ import {
 import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import { aptitudeQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
-import { aptitudesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
+import { type Aptitude, aptitudesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 

@@ -31,7 +31,6 @@ import {
   TableSkeleton,
   toggleProps,
 } from "@/client/src/components/common/index.ts";
-import { AptitudeAutocomplete } from "@/client/src/components/customization/index.ts";
 import { FeatsIcon } from "@/client/src/components/icons/index.ts";
 import { useSearchParam, useSearchText, useToggleSet } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
@@ -39,6 +38,7 @@ import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import { EMPTY_FEAT, type FeatFormData, FeatFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import {
+  AptitudeAutocomplete,
   AptitudeChipsCell,
   DescriptionCell,
   RulesetSectionTable,

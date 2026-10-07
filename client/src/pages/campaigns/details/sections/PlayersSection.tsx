@@ -40,23 +40,22 @@ import { pageItems } from "@/client/src/lib/pageItems.ts";
 import type { CampaignDetail } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
-  AddPlayerDialog,
-  type CampaignPlayer,
-  EditPlayerDialog,
-  getPlayerSlot,
-  playerDisplay,
-  type PlayerFormData,
-  type PlayerState,
-  RemovePlayerDialog,
-  toPlayerPayload,
-} from "@/client/src/pages/campaigns/components/index.ts";
-import {
   campaignPlayersQuery,
   invalidateCampaignPlayers,
 } from "@/client/src/pages/campaigns/details/sectionQueries.ts";
 import { useCampaignPermissions } from "@/client/src/pages/campaigns/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
+
+import { AddPlayerDialog, EditPlayerDialog, RemovePlayerDialog } from "./PlayerDialogs.tsx";
+import {
+  type CampaignPlayer,
+  getPlayerSlot,
+  playerDisplay,
+  type PlayerFormData,
+  type PlayerState,
+  toPlayerPayload,
+} from "./players.ts";
 
 interface PlayersSectionProps {
   campaign: CampaignDetail;

@@ -1,6 +1,5 @@
 import { Box, MenuItem, Stack, TextField } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import type { InferResponseType } from "hono/client";
 
 import { LoadMoreButton, SearchBar } from "@/client/src/components/common/index.ts";
 import { PowersIcon } from "@/client/src/components/icons/index.ts";
@@ -15,12 +14,10 @@ import {
   classSpellListsQuery,
   spellListSpellsQuery,
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
+import type { Spell } from "@/client/src/pages/rulesets/details/sections/dnd3.5/index.ts";
 import { useOpenEntity, useSpellLevelFilter } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { type rpc } from "@/client/src/services/rpc.ts";
 
-import type { ClassSectionProps } from "./types.ts";
-
-type Spell = InferResponseType<(typeof rpc.api.rulesets)[":id"]["powers"]["$get"], 200>["items"][number];
+import type { ClassSectionProps } from "./classSections.ts";
 
 const COLUMNS = [
   { key: "name", label: "Name", width: "30%" },

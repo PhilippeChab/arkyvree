@@ -26,7 +26,7 @@ import { EntityDeleteDialog, RulesetSectionTable } from "@/client/src/pages/rule
 import {
   customizationSection,
   modifiersQuery,
-} from "@/client/src/pages/rulesets/customization/customizationQueries.ts";
+} from "@/client/src/pages/rulesets/customization/customizationSectionQueries.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";

@@ -6,6 +6,7 @@ import { alignment, baseRules, gender, location, sizeType } from "@/drizzle/sche
 import { db } from "@/server/database/index.ts";
 import {
   ALIGNMENT_OPTIONS,
+  BASE_RULES_OPTIONS,
   DEFAULT_BASE_RULES,
   GENDER_OPTIONS,
   LOCATION_OPTIONS,
@@ -15,6 +16,7 @@ import {
 // The option lists are written out so the client doesn't load the schema: they must stay the database's enums, in order
 for (const [options, enumeration] of [
   [ALIGNMENT_OPTIONS, alignment],
+  [BASE_RULES_OPTIONS, baseRules],
   [GENDER_OPTIONS, gender],
   [LOCATION_OPTIONS, location],
   [SIZE_OPTIONS, sizeType],

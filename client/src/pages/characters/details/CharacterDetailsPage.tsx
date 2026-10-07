@@ -8,6 +8,7 @@ import {
   CharacterDetailSkeleton,
   CharacterHeader,
   CharacterSheetBody,
+  type EditingLevel,
 } from "@/client/src/components/characters/index.ts";
 import {
   ActionMenuItem,
@@ -34,7 +35,6 @@ import { characterDetailQuery, invalidateCharacter, invalidateCharacterListings 
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
-import type { EditingLevel } from "@/client/src/types/character.ts";
 import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
 
 import {
@@ -345,7 +345,7 @@ export default function CharacterDetailsPage() {
               onEditLevel={!isArchived ? editLevel.openWith : undefined}
               onAddLevel={() => addLevel.openWith(true)}
               onRemoveLevel={() => setConfirmOpen(true)}
-              onViewBondedSheet={(bondedId) => navigate(`/characters/${bondedId}`)}
+              bondedLinkable
               equipmentMode="editable"
               rulesetId={character.rulesetId}
               diagnostics={character}

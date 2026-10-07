@@ -1,11 +1,10 @@
 import { useSearchParams } from "react-router-dom";
 
 import { oneOf } from "@/client/src/lib/oneOf.ts";
+import type { Direction } from "@/client/src/lib/queries.ts";
 
 import { useSearchText } from "./useSearchText.ts";
 import { useUpdateSearchParams } from "./useUpdateSearchParams.ts";
-
-type Direction = "asc" | "desc";
 
 /**
  * A list's search and sort, kept in the URL (unknown values fall back to the default sort), with the search bar props

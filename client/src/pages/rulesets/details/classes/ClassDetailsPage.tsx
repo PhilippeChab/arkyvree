@@ -29,7 +29,6 @@ import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
-import { isStillOpen } from "@/client/src/lib/stillOpen.ts";
 import {
   type ClassFormData,
   ClassFormFields,
@@ -41,40 +40,19 @@ import {
   EntityDetailsCard,
   EntityPageError,
 } from "@/client/src/pages/rulesets/components/index.ts";
-import { propertiesQuery } from "@/client/src/pages/rulesets/customization/customizationQueries.ts";
+import { propertiesQuery } from "@/client/src/pages/rulesets/customization/customizationSectionQueries.ts";
 import { useCopyFollow } from "@/client/src/pages/rulesets/customization/sections/index.ts";
 import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { entityPageBack } from "@/client/src/pages/rulesets/entityPageState.ts";
 import { useCopyOnWrite, useRestorableDelete, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { isStillOpen } from "@/client/src/pages/rulesets/stillOpen.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { HIT_DIE_VALUES } from "@/shared/dnd3.5/classes.ts";
 import { KLASS_BONUS_SPELL_ABILITY_ID, KLASS_CASTER_TYPE } from "@/shared/dnd3.5/properties/index.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import { type ClassDetail, classDetailQuery, type ClassSection, prefetchClassSection } from "./classSectionQueries.ts";
-import {
-  ClassFeatPoolsSection,
-  ClassLevelsSection,
-  ClassModifiersSection,
-  ClassPropertiesSection,
-  ClassRequirementsSection,
-  ClassSkillsSection,
-  ClassSpellListSection,
-  ClassSpellsKnownSection,
-  ClassSpellsSection,
-} from "./sections/index.ts";
-
-const SECTION_COMPONENTS = {
-  levels: ClassLevelsSection,
-  skills: ClassSkillsSection,
-  "feat-pools": ClassFeatPoolsSection,
-  "spells-known": ClassSpellsKnownSection,
-  spells: ClassSpellsSection,
-  "spell-list": ClassSpellListSection,
-  properties: ClassPropertiesSection,
-  modifiers: ClassModifiersSection,
-  requirements: ClassRequirementsSection,
-} as const;
+import { CLASS_SECTIONS } from "./sections/index.ts";
 
 const TABS: SectionTab<ClassSection>[] = [
   { key: "levels", label: "Levels", icon: TrendingUpIcon },
@@ -241,7 +219,7 @@ export default function ClassDetailsPage() {
     );
   }
 
-  const Section = SECTION_COMPONENTS[currentTab];
+  const Section = CLASS_SECTIONS[currentTab];
   const bonusSpellAbility = abilities?.find((a) => a.id === classData?.bonusSpellAbilityId);
 
   return (

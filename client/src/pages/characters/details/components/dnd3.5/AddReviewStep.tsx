@@ -1,8 +1,19 @@
 import { Typography } from "@mui/material";
 
 import { attributeName } from "./attributeName.ts";
-import { LevelReview, ReviewGroup } from "./LevelReview.tsx";
-import type { AddReviewStepProps } from "./levelUpFactory.ts";
+import { LevelReview, type LevelReviewState, ReviewGroup } from "./LevelReview.tsx";
+import type { AttributesData, SelectedKlass } from "./levelUp/index.ts";
+
+interface AddReviewState extends LevelReviewState {
+  abilityIncreases: Record<number, string | null>;
+  attributeData: AttributesData | undefined;
+  classPlan: (SelectedKlass | null)[];
+  hpValues: (number | null)[];
+}
+
+export interface AddReviewStepProps {
+  wizard: AddReviewState;
+}
 
 export function AddReviewStep({ wizard }: AddReviewStepProps) {
   const { classPlan, hpValues, abilityIncreases, attributeData } = wizard;

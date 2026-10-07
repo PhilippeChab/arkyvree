@@ -20,7 +20,7 @@ import { EntityDeleteDialog, RulesetSectionTable } from "@/client/src/pages/rule
 import {
   customizationSection,
   propertiesQuery,
-} from "@/client/src/pages/rulesets/customization/customizationQueries.ts";
+} from "@/client/src/pages/rulesets/customization/customizationSectionQueries.ts";
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import type { CustomizableEntityType } from "@/shared/customization/entities.ts";

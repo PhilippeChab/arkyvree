@@ -4,7 +4,8 @@ import { Link } from "react-router-dom";
 import { DashboardIcon, PersonAddIcon } from "@/client/src/components/icons/index.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
-import { AppBrand, AppMain } from "./AppMain.tsx";
+import { AppBrand } from "./AppBrand.tsx";
+import { AppMain } from "./AppMain.tsx";
 
 export function PublicLayout() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);

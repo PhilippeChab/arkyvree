@@ -1,7 +1,7 @@
 import { IconButton, Stack, Tooltip } from "@mui/material";
 import type { ElementType, MouseEventHandler, ReactNode } from "react";
 
-import { ROW_ACTIONS_SX } from "./rowActions.ts";
+import { ROW_ACTIONS_SX } from "./rowActionStyles.ts";
 
 type Intent = "caution" | "default" | "destructive";
 
