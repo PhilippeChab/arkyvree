@@ -1,4 +1,4 @@
-import { findInvalidRequirementPaths } from "@/database/packages/dnd35-from-parser/tools/detect/paths.ts";
+import TargetPaths from "@/database/packages/dnd35-from-parser/tools/detect/readers/TargetPaths.ts";
 import type { RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
 
 /**
@@ -14,7 +14,7 @@ export class RequirementReading {
   protected keepValidRequirements() {
     const read = this.requirements.splice(0);
     for (const requirement of read) {
-      const invalid = findInvalidRequirementPaths(requirement);
+      const invalid = TargetPaths.invalidRequirementPaths(requirement);
       if (invalid.length > 0) for (const path of invalid) this.errors.push(`Invalid requirement path: "${path}"`);
       else this.requirements.push(requirement);
     }

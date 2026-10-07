@@ -1,8 +1,8 @@
-import { sanitizeJsonValues } from "@/database/packages/dnd35-from-parser/tools/text/sanitize.ts";
 import type { ItemReference } from "@/database/packages/dnd35-from-parser/tools/types/items.ts";
 import { getArmorDefinition, getShieldDefinition } from "@/database/packages/dnd35/content/items/armor.ts";
 import { getWeaponDefinition } from "@/database/packages/dnd35/content/items/weapons.ts";
 
+import { BaseDetector } from "./BaseDetector.ts";
 import { readCost, readWeight } from "./readers/items/amounts.ts";
 
 /** SRD armor table uses short names; generators use full names */
@@ -89,37 +89,30 @@ function isAmmunition(name: string): boolean {
 }
 
 /**
- * The weapons, armor and shields the generator has no definition of, and leaves out ("weapon: Name"): all of them, or
- * those `skipped` doesn't name.
- */
-export function findUnresolvedItems(
-  { weapons, armor }: Pick<ItemReference["detected"], "weapons" | "armor">,
-  skipped = (_name: string) => false,
-): string[] {
-  return [
-    ...Object.entries(weapons)
-      .filter(([name, weapon]) => !weapon.generatorName && !skipped(name))
-      .map(([name]) => `weapon: ${name}`),
-    ...Object.entries(armor)
-      .filter(([name, piece]) => !piece.generatorName && !skipped(name))
-      .map(([name, piece]) => `${piece.type.toLowerCase()}: ${name}`),
-  ];
-}
-
-/**
  * An item reference's detector: each weapon's, armor's, shield's and good's cost and weight, and the definition the
  * generator has of each weapon, armor and shield, by its name as the generator writes it (`detected`).
  */
-export class ItemDetector {
-  constructor(stored: Pick<ItemReference, "_meta" | "overrides" | "raw">) {
-    this.stored = stored;
+export class ItemDetector extends BaseDetector<ItemReference> {
+  /**
+   * The weapons, armor and shields the generator has no definition of, and leaves out ("weapon: Name"): all of them, or
+   * those `skipped` doesn't name.
+   */
+  static unresolvedItems(
+    { weapons, armor }: Pick<ItemReference["detected"], "weapons" | "armor">,
+    skipped = (_name: string) => false,
+  ): string[] {
+    return [
+      ...Object.entries(weapons)
+        .filter(([name, weapon]) => !weapon.generatorName && !skipped(name))
+        .map(([name]) => `weapon: ${name}`),
+      ...Object.entries(armor)
+        .filter(([name, piece]) => !piece.generatorName && !skipped(name))
+        .map(([name, piece]) => `${piece.type.toLowerCase()}: ${name}`),
+    ];
   }
 
-  /** The reference as stored. */
-  private readonly stored: Pick<ItemReference, "_meta" | "overrides" | "raw">;
-
   /** The items' detected section: the weapons, armor and goods, and the weapons and armor with no definition. */
-  detected(): ItemReference["detected"] {
+  protected detected(): ItemReference["detected"] {
     const { overrides, raw } = this.stored;
     const nameMap = overrides?.nameMap;
     const weapons: ItemReference["detected"]["weapons"] = {};
@@ -167,11 +160,11 @@ export class ItemDetector {
       };
     }
 
-    return { weapons, armor, goods, unresolved: findUnresolvedItems({ weapons, armor }) };
+    return { weapons, armor, goods, unresolved: ItemDetector.unresolvedItems({ weapons, armor }) };
   }
 
   /** Each item's cost and weight, its override's or else as detected, its override's description, and its skip. */
-  mapping(detected: ItemReference["detected"]): ItemReference["mapping"] {
+  protected mapping(detected: ItemReference["detected"]): ItemReference["mapping"] {
     const { overrides } = this.stored;
     const corrected = (items: Record<string, { costGp: string; weight: string }>) =>
       Object.fromEntries(
@@ -189,12 +182,5 @@ export class ItemDetector {
         }),
       );
     return { weapons: corrected(detected.weapons), armor: corrected(detected.armor), goods: corrected(detected.goods) };
-  }
-
-  /** The reference with what's derived from it: its detected section and its mapping. */
-  resolve(): ItemReference {
-    const { _meta, overrides, raw } = this.stored;
-    const detected = this.detected();
-    return { _meta, raw, ...sanitizeJsonValues({ overrides, detected, mapping: this.mapping(detected) }) };
   }
 }

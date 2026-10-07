@@ -17,6 +17,8 @@ import {
 import { SPELL_SUBSCHOOLS } from "@/shared/dnd3.5/spells.ts";
 import { capitalize } from "@/shared/text.ts";
 
+import { BaseDetector, type Resolved } from "./BaseDetector.ts";
+
 /** A spell of a reference, as scraped. */
 type RawSpell = SpellReference["raw"][number];
 
@@ -203,16 +205,9 @@ function withBaseSpellFields(rawEntry: RawSpell, rawByName: Map<string, RawSpell
  * normalized), the fields it lacks taken from the spell it "functions like"; and its description and level entries,
  * its overrides applied (`mapping`).
  */
-export class SpellDetector {
-  constructor(stored: Pick<SpellReference, "_meta" | "overrides" | "raw">) {
-    this.stored = stored;
-  }
-
-  /** The reference as stored. */
-  private readonly stored: Pick<SpellReference, "_meta" | "overrides" | "raw">;
-
+export class SpellDetector extends BaseDetector<SpellReference> {
   /** Each spell's properties and saving throw. */
-  detected(): SpellReference["detected"] {
+  protected detected(): SpellReference["detected"] {
     // Build name lookup (case-insensitive) for base spell resolution
     const rawByName = new Map<string, RawSpell>();
     for (const entry of this.stored.raw) rawByName.set(entry.name.toLowerCase(), entry);
@@ -229,7 +224,7 @@ export class SpellDetector {
   }
 
   /** Each spell's description and level entries, its overrides applied. */
-  mapping(): SpellReference["mapping"] {
+  protected mapping(): SpellReference["mapping"] {
     const { overrides, raw } = this.stored;
     return Object.fromEntries(
       raw.map((entry) => {
@@ -245,8 +240,8 @@ export class SpellDetector {
     );
   }
 
-  /** The reference with what's derived from it: its detected section and its mapping. */
-  resolve(): SpellReference {
+  /** The reference with what's derived from it: its detected section and its mapping, its overrides as stored. */
+  resolve(): Resolved<SpellReference> {
     return { ...this.stored, detected: this.detected(), mapping: this.mapping() };
   }
 }

@@ -1,3 +1,4 @@
+import { BaseDetector } from "@/database/packages/dnd35-from-parser/tools/detect/BaseDetector.ts";
 import { findWithPluralVariants } from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -34,9 +35,9 @@ function withAlignment({ overrides, raw }: Pick<ClassReference, "overrides" | "r
  * page gives (`raw`, its alignment filled in from its overrides), and what several of its readings look up: its
  * features by name, and the features its table names, each with the levels it's at.
  */
-export class BaseClassDetector {
+export abstract class BaseClassDetector extends BaseDetector<ClassReference> {
   constructor(stored: Pick<ClassReference, "_meta" | "overrides" | "raw">) {
-    this.stored = stored;
+    super(stored);
     this.raw = withAlignment(stored);
     this.classSlug = stripSeparators(this.raw.name);
     this.featureOccurrences = readFeatureOccurrences(this.raw.progression);
@@ -51,8 +52,6 @@ export class BaseClassDetector {
   private readonly features: Map<string, ClassFeature>;
   /** What the class's page gives, its alignment filled in from its overrides. */
   readonly raw: ClassReference["raw"];
-  /** The reference as stored: what the scraper read, and the corrections made by hand. */
-  readonly stored: Pick<ClassReference, "_meta" | "overrides" | "raw">;
 
   /** The class feature a name means: its own, or its plural or singular ("Bonus Feat" for "Bonus Feats"). */
   findFeature(name: string): ClassFeature | undefined {
