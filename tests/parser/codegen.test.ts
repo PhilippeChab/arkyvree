@@ -6,8 +6,7 @@ import { WIZARD_SCHOOLS } from "@/database/packages/dnd35-from-parser/generated/
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
 import { formatImports, IMPORT_TABLE } from "@/database/packages/dnd35-from-parser/tools/generator/code/imports.ts";
 import { escapeTemplate, quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
-import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
+import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
 import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
@@ -36,7 +35,7 @@ function classCode(ref: ClassReference) {
 }
 
 function classRef(book: string, slug: string) {
-  return ReferenceLoader.load(join(REFERENCE_DIR, book, "classes", `${slug}.json`), "class");
+  return References.load(join(References.dir, book, "classes", `${slug}.json`), "class");
 }
 
 function code(req: RequirementEntry) {
@@ -140,7 +139,7 @@ describe("A generated requirement check", () => {
   });
 
   test("of a feat's modifier is imported by its feats file", () => {
-    const ref = structuredClone(ReferenceLoader.load(join(REFERENCE_DIR, "complete-divine", "feats.json"), "feat"));
+    const ref = structuredClone(References.load(join(References.dir, "complete-divine", "feats.json"), "feat"));
     const entry = ref.raw.find(
       ({ name, featType }) => featType !== "epic" && !ref.mapping[name]?.skip && !ref.mapping[name]?.template,
     );
@@ -172,7 +171,7 @@ describe("Generated strings", () => {
   });
 
   test("keep a template description's text, the item named where it's mentioned", () => {
-    const ref = structuredClone(ReferenceLoader.load(join(REFERENCE_DIR, "srd", "feats.json"), "feat"));
+    const ref = structuredClone(References.load(join(References.dir, "srd", "feats.json"), "feat"));
     ref.mapping["Weapon Focus"].description = "With the selected weapon: `a` ${b} \\u0000.";
     expect(featsCode(ref)).toContain("description: `With ${w}: \\`a\\` \\${b} \\\\u0000.`,");
   });
@@ -192,7 +191,7 @@ describe("The generated feats", () => {
   });
 
   test("refuse a template family's modifier with requirements, whose targets can't follow the item", () => {
-    const ref = structuredClone(ReferenceLoader.load(join(REFERENCE_DIR, "srd", "feats.json"), "feat"));
+    const ref = structuredClone(References.load(join(References.dir, "srd", "feats.json"), "feat"));
     ref.mapping["Weapon Focus"].modifiers = [
       {
         target: "weapon.tohit.misc",
@@ -206,7 +205,7 @@ describe("The generated feats", () => {
   });
 
   test("require a family's feat for the same item, and any other feat or requirement as it is", () => {
-    const ref = structuredClone(ReferenceLoader.load(join(REFERENCE_DIR, "srd", "feats.json"), "feat"));
+    const ref = structuredClone(References.load(join(References.dir, "srd", "feats.json"), "feat"));
     const greater = ref.mapping["Greater Spell Focus"];
     greater.requirements = [...(greater.requirements ?? []), eq(feat("Combat Casting")), gte("spellcasting.arcane", 1)];
     greater.featNameMap = { ...greater.featNameMap, combatcasting: "Combat Casting" };
@@ -222,7 +221,7 @@ describe("The generated feats", () => {
       ["Greater Spell Focus", or(eq(feat("Spell Focus")), gte("spellcasting.arcane", 1))],
       ["Weapon Specialization", or(eq(feat("Weapon Focus")), gte("combat.bab", 6))],
     ] as const) {
-      const ref = structuredClone(ReferenceLoader.load(join(REFERENCE_DIR, "srd", "feats.json"), "feat"));
+      const ref = structuredClone(References.load(join(References.dir, "srd", "feats.json"), "feat"));
       ref.mapping[template].requirements = [group];
       expect(() => featsCode(ref)).toThrow(
         `${template}: a family it requires inside a group can't be written for each item`,
@@ -231,31 +230,31 @@ describe("The generated feats", () => {
   });
 
   test("let an extension's family require the core rules' for the same item", () => {
-    const ref = ReferenceLoader.load(join(REFERENCE_DIR, "complete-warrior", "feats.json"), "feat");
+    const ref = References.load(join(References.dir, "complete-warrior", "feats.json"), "feat");
     const generated = featsCode(ref);
     const template = generated.slice(generated.indexOf("export const POWER_CRITICAL_FEATS"));
     expect(template.slice(0, template.indexOf("}));"))).toContain("eq(feat(`Weapon Focus: ${w}`)),");
   });
 
   test("require any feat of a family a feat or a class names by the family's own name", () => {
-    const feats = featsCode(ReferenceLoader.load(join(REFERENCE_DIR, "complete-scoundrel", "feats.json"), "feat"));
+    const feats = featsCode(References.load(join(References.dir, "complete-scoundrel", "feats.json"), "feat"));
     const daringWarrior = feats.slice(feats.indexOf(`name: "Daring Warrior"`));
     expect(daringWarrior.slice(0, daringWarrior.indexOf("},"))).toContain(
       `eq("feats.weaponspecialization.*.possessed"),`,
     );
     const warChanter = classCode(
-      ReferenceLoader.load(join(REFERENCE_DIR, "complete-warrior", "classes", "warChanter.json"), "class"),
+      References.load(join(References.dir, "complete-warrior", "classes", "warChanter.json"), "class"),
     );
     expect(warChanter).toContain(`eq("feats.weaponfocus.*.possessed"),`);
     expect(warChanter).toContain(`eq("feats.combatexpertise.possessed"),`);
   });
 
   test("require any class's feat of a class feature a feat or a class names, or a number of them all together", () => {
-    const feats = featsCode(ReferenceLoader.load(join(REFERENCE_DIR, "complete-scoundrel", "feats.json"), "feat"));
+    const feats = featsCode(References.load(join(References.dir, "complete-scoundrel", "feats.json"), "feat"));
     const asceticStalker = feats.slice(feats.indexOf(`name: "Ascetic Stalker"`));
     expect(asceticStalker.slice(0, asceticStalker.indexOf("},"))).toContain(`eq("feats.kipower.*.possessed"),`);
     const arcaneTrickster = classCode(
-      ReferenceLoader.load(join(REFERENCE_DIR, "dmg", "classes", "arcaneTrickster.json"), "class"),
+      References.load(join(References.dir, "dmg", "classes", "arcaneTrickster.json"), "class"),
     );
     expect(arcaneTrickster).toContain(`gte("feats.sneakattack.count", 2),`);
   });
@@ -265,11 +264,11 @@ describe("The generated feats", () => {
       const from = feats.slice(feats.indexOf(`name: "${name}"`));
       return from.slice(0, from.indexOf("\n  },"));
     };
-    const scoundrel = featsCode(ReferenceLoader.load(join(REFERENCE_DIR, "complete-scoundrel", "feats.json"), "feat"));
+    const scoundrel = featsCode(References.load(join(References.dir, "complete-scoundrel", "feats.json"), "feat"));
     expect(entry(scoundrel, "Tempting Fate")).toContain(`eq("feats.luck.*.possessed"),`);
     expect(entry(scoundrel, "Better Lucky than Good")).toContain(`gte("feats.luck.count", 2),`);
     expect(entry(scoundrel, "Better Lucky than Good")).toContain(`{ type: "FEAT_FAMILY", value: "Luck" },`);
-    const arcane = featsCode(ReferenceLoader.load(join(REFERENCE_DIR, "complete-arcane", "feats.json"), "feat"));
+    const arcane = featsCode(References.load(join(References.dir, "complete-arcane", "feats.json"), "feat"));
     expect(entry(arcane, "Draconic Legacy")).toContain(`gte("feats.draconic.count", 4),`);
     expect(entry(arcane, "Draconic Breath")).toContain(`{ type: "FEAT_FAMILY", value: "Draconic" },`);
   });

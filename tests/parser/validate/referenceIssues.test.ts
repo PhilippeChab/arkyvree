@@ -3,8 +3,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
-import { listReferenceFiles, REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
-import { readStoredReference } from "@/database/packages/dnd35-from-parser/tools/references/resolve.ts";
+import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
 import { findReferenceIssues } from "@/database/packages/dnd35-from-parser/tools/validate/referenceIssues.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
@@ -15,7 +14,7 @@ const folders: string[] = [];
  * file would, in a folder of its own.
  */
 function issuesOf(file: string, edit: (overrides: Record<string, unknown>) => void) {
-  const reference: unknown = JSON.parse(readFileSync(join(REFERENCE_DIR, file), "utf8"));
+  const reference: unknown = JSON.parse(readFileSync(join(References.dir, file), "utf8"));
   if (!isRecord(reference)) throw new Error(`${file} isn't a reference`);
   const overrides = isRecord(reference.overrides) ? reference.overrides : {};
   edit(overrides);
@@ -24,7 +23,7 @@ function issuesOf(file: string, edit: (overrides: Record<string, unknown>) => vo
   folders.push(folder);
   mkdirSync(dirname(join(folder, file)), { recursive: true });
   writeFileSync(join(folder, file), JSON.stringify(reference));
-  return findReferenceIssues(listReferenceFiles(folder)).map(({ kind, entityName, text }) => ({
+  return findReferenceIssues([References.file(join(folder, file))]).map(({ kind, entityName, text }) => ({
     kind,
     entityName,
     text,
@@ -61,7 +60,7 @@ describe("parser:validate", () => {
   });
 
   test("reports a magic item slot the seed refuses", () => {
-    const stored = readStoredReference(join(REFERENCE_DIR, "srd/magicItems.json"), "magicItem");
+    const stored = References.stored(join(References.dir, "srd/magicItems.json"), "magicItem");
     const [item] = stored.raw.map(({ name }) => name).filter((name) => !stored.overrides?.[name]);
     const issues = issuesOf("srd/magicItems.json", (overrides) => {
       overrides[item] = { slot: "Tail" };
@@ -103,7 +102,7 @@ describe("parser:validate", () => {
   });
 
   test("finds no issue in the committed references", () => {
-    expect(findReferenceIssues(listReferenceFiles())).toEqual([]);
+    expect(findReferenceIssues(References.files())).toEqual([]);
   });
 
   test("reports what a reference's review list covers, once cleared: a class's aptitude picks and prerequisites, feats' modifiers", () => {
@@ -181,9 +180,9 @@ describe("parser:validate", () => {
       join(folder, "potions.json"),
       JSON.stringify({ _meta: { type: "potion", sourceUrl: "", book: "srd", scrapedAt: "" }, raw: [] }),
     );
-    expect(findReferenceIssues(listReferenceFiles(folder)).map(({ kind, text }) => ({ kind, text }))).toEqual([
-      { kind: "unknown type", text: "potion" },
-    ]);
+    expect(
+      findReferenceIssues([References.file(join(folder, "potions.json"))]).map(({ kind, text }) => ({ kind, text })),
+    ).toEqual([{ kind: "unknown type", text: "potion" }]);
   });
 
   test("reads a review entry as the scraper stores text: a curly quote or a double space is the plain one", () => {

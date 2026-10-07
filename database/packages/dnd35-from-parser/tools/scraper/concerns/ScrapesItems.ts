@@ -1,4 +1,4 @@
-import { REFERENCE_FILE_NAMES } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
+import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
 import { type BaseScraper } from "@/database/packages/dnd35-from-parser/tools/scraper/BaseScraper.ts";
 import {
   parseArmorHtml,
@@ -46,7 +46,7 @@ export function ScrapesItems<B extends Constructor<BaseScraper>>(Base: B) {
         goods: rawGoods,
       };
 
-      const outPath = this.referencePath(REFERENCE_FILE_NAMES.item);
+      const outPath = References.path(this.book, "item");
 
       const { detected } = this.saveResolvedReference(
         outPath,

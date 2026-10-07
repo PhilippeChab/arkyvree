@@ -1,6 +1,6 @@
 # Reference JSON Schema
 
-A reference file stores what the scraper read (`raw`) and the corrections made by hand (`overrides`), nothing else. Loading it (`ReferenceLoader`, by `tools/references/resolve.ts` and the detectors in `tools/detect/`) derives what the generator reads: `detected`, parsed from `raw` (wizard schools have none), and `mapping`, each entity as the seeds make it, its overrides applied (they win over both). The seeds read the mapping, never the overrides. So a correction takes effect at the next `parser:generate`, and re-scraping (which replaces `raw`) keeps it.
+A reference file stores what the scraper read (`raw`) and the corrections made by hand (`overrides`), nothing else. Loading it (`References`, `tools/references/References.ts`, with the detectors in `tools/detect/`) derives what the generator reads: `detected`, parsed from `raw` (wizard schools have none), and `mapping`, each entity as the seeds make it, its overrides applied (they win over both). The seeds read the mapping, never the overrides. So a correction takes effect at the next `parser:generate`, and re-scraping (which replaces `raw`) keeps it.
 
 A class reference, as stored (see `tools/types/classes.ts` for the definitive types):
 

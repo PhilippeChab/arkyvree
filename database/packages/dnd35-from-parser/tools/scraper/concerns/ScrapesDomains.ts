@@ -1,4 +1,4 @@
-import { REFERENCE_FILE_NAMES } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
+import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
 import { type BaseScraper } from "@/database/packages/dnd35-from-parser/tools/scraper/BaseScraper.ts";
 import {
   type DomainPageSpell,
@@ -89,7 +89,7 @@ export function ScrapesDomains<B extends Constructor<BaseScraper>>(Base: B) {
       }
 
       this.saveReference(
-        this.referencePath(REFERENCE_FILE_NAMES.domain),
+        References.path(this.book, "domain"),
         { type: "domain", sourceUrl: DOMAIN_INDEX_URL, book: this.book, scrapedAt: new Date().toISOString() },
         raw,
       );

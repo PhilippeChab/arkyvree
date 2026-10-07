@@ -5,7 +5,7 @@ import { join, relative } from "node:path";
 
 import { generateAtomically } from "@/database/packages/dnd35-from-parser/tools/generator/atomicGeneration.ts";
 import { Generator } from "@/database/packages/dnd35-from-parser/tools/generator/Generator.ts";
-import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
+import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
 
 const GENERATED = join(import.meta.dirname, "../../../database/packages/dnd35-from-parser/generated");
 
@@ -59,7 +59,7 @@ describe("The generator", () => {
       expect(
         generateAtomically(folder, (copy) => {
           const generator = new Generator(copy, true);
-          return references.flatMap((reference) => generator.generateReference(join(REFERENCE_DIR, reference)));
+          return references.flatMap((reference) => generator.generateReference(join(References.dir, reference)));
         }),
       ).toEqual([]);
       expectCommitted(folder);
@@ -75,7 +75,7 @@ describe("The generator", () => {
       for (const book of ["srd", "complete-divine"]) writeFileSync(join(folder, book, "classes/retired.ts"), code("x"));
       expect(
         generateAtomically(folder, (copy) =>
-          new Generator(copy, true).generateReference(join(REFERENCE_DIR, "srd/classes/wizard.json")),
+          new Generator(copy, true).generateReference(join(References.dir, "srd/classes/wizard.json")),
         ),
       ).toEqual([]);
       expect(filesOf(folder).filter((file) => file.endsWith("retired.ts"))).toEqual([
@@ -90,7 +90,7 @@ describe("The generator", () => {
     const folder = mkdtempSync(join(tmpdir(), "reference-"));
     try {
       const copy = join(folder, "wizard.json");
-      cpSync(join(REFERENCE_DIR, "srd/classes/wizard.json"), copy);
+      cpSync(join(References.dir, "srd/classes/wizard.json"), copy);
       expect(() => new Generator(folder, true).generateReference(copy)).toThrow("isn't a reference file");
     } finally {
       rmSync(folder, { recursive: true, force: true });

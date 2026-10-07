@@ -58,7 +58,7 @@ database/packages/dnd35-from-parser/
 └── tools/                # Scraper, generator, validate, overrides
     ├── cli/              # The commands (parser:scrape, generate, sync, overrides, validate) and their arguments
     ├── types/            # A reference's types, a module per kind of reference
-    ├── references/       # The reference files: finding, reading and loading them (ReferenceLoader), resolving what's derived
+    ├── references/       # The reference files (References): finding, reading, writing and loading them, what's derived resolved by each kind's detector
     ├── scraper/          # Pages → reference/
     │   ├── BaseScraper.ts    # A scraper's core: its book, its HttpClient, the listings, saving a reference
     │   ├── Scraper.ts        # A concern per kind of reference (concerns/): ScrapesClasses, ScrapesFeats…
@@ -66,7 +66,7 @@ database/packages/dnd35-from-parser/
     ├── detect/           # A reference's raw → its detected and mapping: a detector per kind (ClassDetector in classes/, with its concerns and its ClassMapping; FeatDetector, SpellDetector…)
     │   └── readers/          # What a phrase says, in any kind of reference: requirements/ (FeatPrerequisites, ClassPrerequisites), modifiers/ (BonusText, a reading per kind of text), items/ (cost, weight, stats, base item)
     ├── text/             # The scraped text: sanitized, normalized, entry names
-    ├── vocabulary/       # The names the books give abilities, saves, skills, races and numbers, and their slugs and paths: a module per subject
+    ├── vocabulary/       # The names the books give abilities, saves, skills, races and numbers, their slugs and paths, and the core rules' book: a module per subject
     ├── seeds/            # A book's seeds (BookSeeds, one per book on the Library: a concern per kind, each built once), from each reference's builder (a class's seed and feats: classes/ClassSeeds.ts); what a book copies (copies.ts) and the aptitudes it uses (aptitudes.ts)
     ├── validate/         # What parser:validate reports, and the overrides that change nothing
     └── generator/        # The seeds → generated/
@@ -153,7 +153,7 @@ A reference file (`reference/<book>/…json`) has three parts:
 - **`raw`** — what the scraper read. Re-scraping replaces it.
 - **`overrides`** — corrections made by hand. Re-scraping keeps them. Nothing else in the file is hand-edited.
 
-What the generator reads is derived from the two each time a reference is loaded (`ReferenceLoader`, which derives them with `tools/references/resolve.ts` and the detectors in `tools/detect/`): `detected` (BAB, saves, requirements, modifiers… parsed from `raw`; wizard schools have none) and `mapping` (each entity as the seeds make it, its overrides applied, which win over both). The seeds read the mapping, never the overrides. So a correction takes effect at the next `parser:generate`, and can't be lost to a re-scrape. See `reference/README.md` for a class reference's shape.
+What the generator reads is derived from the two each time a reference is loaded (`References`, which derives them with the detectors in `tools/detect/`): `detected` (BAB, saves, requirements, modifiers… parsed from `raw`; wizard schools have none) and `mapping` (each entity as the seeds make it, its overrides applied, which win over both). The seeds read the mapping, never the overrides. So a correction takes effect at the next `parser:generate`, and can't be lost to a re-scrape. See `reference/README.md` for a class reference's shape.
 
 `bun run parser:validate` lists:
 - unresolved detections, and items without a definition (the generator leaves them out), not yet listed in `overrides.reviewed`; and entries of `overrides.reviewed` that cover none of them, or repeat one;

@@ -16,10 +16,7 @@
  *   bun run parser:validate complete-warrior              # only a specific book
  */
 
-import {
-  filterReferenceFiles,
-  listReferenceFiles,
-} from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
+import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
 import {
   findReferenceIssues,
   type Issue,
@@ -30,7 +27,7 @@ import { parseCliArgs } from "./args.ts";
 function main() {
   const { bookFilter, typeFilter } = parseCliArgs();
 
-  const refs = filterReferenceFiles(listReferenceFiles(), { bookFilter, typeFilter });
+  const refs = References.files({ bookFilter, typeFilter });
 
   const issues = findReferenceIssues(refs);
   if (issues.length === 0) {

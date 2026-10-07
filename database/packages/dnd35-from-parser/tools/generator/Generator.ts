@@ -1,13 +1,8 @@
 import { relative, resolve } from "node:path";
 
-import type { parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/cli/args.ts";
-import {
-  filterReferenceFiles,
-  listReferenceBooks,
-  listReferenceFiles,
-  REFERENCE_DIR,
-} from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
+import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
 import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
+import type { ReferenceFilters } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
 import { include } from "@/server/mixins.ts";
 
 import { BaseGenerator } from "./BaseGenerator.ts";
@@ -57,8 +52,8 @@ export class Generator extends include(
    * Regenerates the books the references a filter picks are of (a book, a type of reference or a name, when given):
    * every book when none is. The books that failed are returned.
    */
-  generateAll({ bookFilter, typeFilter, nameFilter }: ReturnType<typeof parseCliArgs>): string[] {
-    const refs = filterReferenceFiles(listReferenceFiles(), { bookFilter, typeFilter, nameFilter });
+  generateAll(filters: ReferenceFilters): string[] {
+    const refs = References.files(filters);
     return this.generateBooks([...new Set(refs.map((ref) => ref.book))].sort());
   }
 
@@ -103,7 +98,7 @@ export class Generator extends include(
     this.writeBookIndex(book);
     this.removeUnwritten(book);
 
-    if (spellRef) for (const other of listReferenceBooks()) if (other !== book) this.writeCowSpells(other);
+    if (spellRef) for (const other of References.books()) if (other !== book) this.writeCowSpells(other);
     this.log(`\nDone! Review the generated files and copy to database/packages/dnd35/ when ready.`);
   }
 
@@ -112,8 +107,8 @@ export class Generator extends include(
    * would be ignored, so it's refused. The book's failure is returned.
    */
   generateReference(jsonPath: string): string[] {
-    const ref = listReferenceFiles().find(({ path }) => path === resolve(jsonPath));
-    const dir = relative(process.cwd(), REFERENCE_DIR);
+    const ref = References.files().find(({ path }) => path === resolve(jsonPath));
+    const dir = relative(process.cwd(), References.dir);
     if (!ref) throw new Error(`${jsonPath} isn't a reference file of ${dir}/: a book is generated from its own`);
     return this.generateBooks([ref.book]);
   }

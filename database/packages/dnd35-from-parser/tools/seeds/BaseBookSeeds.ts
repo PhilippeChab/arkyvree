@@ -1,7 +1,5 @@
 import { findFamilyFeat } from "@/database/packages/dnd35-from-parser/tools/detect/readers/requirements/featOptions.ts";
-import { CORE_BOOK } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
-import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
-import type { ReferenceByType, ReferenceType } from "@/database/packages/dnd35-from-parser/tools/references/resolve.ts";
+import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
 import type {
   ClassReferenceFile,
   InheritedSpellList,
@@ -9,6 +7,8 @@ import type {
 import type { DomainReference } from "@/database/packages/dnd35-from-parser/tools/types/domains.ts";
 import type { FeatReference } from "@/database/packages/dnd35-from-parser/tools/types/feats.ts";
 import type { ItemReference } from "@/database/packages/dnd35-from-parser/tools/types/items.ts";
+import type { ReferenceByType, ReferenceType } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
+import { CORE_BOOK } from "@/database/packages/dnd35-from-parser/tools/vocabulary/books.ts";
 import { classSpells } from "@/database/packages/dnd35/content/aptitudes/names.ts";
 import type { DomainSeed } from "@/database/packages/dnd35/content/domains/types.ts";
 import type { FeatSeed } from "@/database/packages/dnd35/content/feats/types.ts";
@@ -62,7 +62,7 @@ export class BaseBookSeeds {
       const feats = new Map<string, string>();
       // A template family ("Weapon Specialization") expands into a feat per option: its bare name is never seeded
       for (const book of [this.book, CORE_BOOK]) {
-        const ref = ReferenceLoader.find(book, "feat");
+        const ref = References.find(book, "feat");
         for (const feat of ref?.raw ?? []) if (!ref?.mapping[feat.name]?.template) feats.set(feat.name, feat.name);
       }
       return new Map([...feats.keys()].map((feat) => [stripSeparators(feat), feat]));
@@ -119,7 +119,7 @@ export class BaseBookSeeds {
 
   /** The book's class references, by file: none for a book without classes. */
   classReferences(): ClassReferenceFile[] {
-    return ReferenceLoader.loadClasses(this.book);
+    return References.loadClasses(this.book);
   }
 
   /** The spells the book's domains can name, by their lowercase name: the core rules' and the book's. */
@@ -165,7 +165,7 @@ export class BaseBookSeeds {
 
   /** The book's reference of `type`: none when the book has none. */
   reference<T extends Exclude<ReferenceType, "class">>(type: T): ReferenceByType[T] | undefined {
-    return ReferenceLoader.find(this.book, type);
+    return References.find(this.book, type);
   }
 
   /**
