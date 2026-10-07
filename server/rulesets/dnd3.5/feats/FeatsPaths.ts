@@ -4,9 +4,10 @@ import type { PathCategory } from "@/server/rulesets/engine/paths/PathCategory.t
 import { NUMERIC_REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
-import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 import type { Feat } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
+
+import { readFeatFields } from "./featFields.ts";
 
 const FAMILY_PATHS = [
   { path: "possessed", description: "Whether this feat is possessed", type: "boolean" as const },
@@ -128,8 +129,9 @@ export default class FeatsPaths implements PathCategory<Dnd35Components> {
     const featGroupingLabels: Record<string, string> = Object.fromEntries(
       FEAT_FAMILIES.map((family) => [stripSeparators(family), family]),
     );
-    for (const prop of rulesetData.propertiesByEntityType.get("feats") ?? [])
-      if (prop.type === FEAT_FAMILY) featGroupingLabels[stripSeparators(prop.value)] = prop.value;
+    // Every family a feat of the ruleset names
+    for (const family of readFeatFields(rulesetData.propertiesByEntityType.get("feats") ?? []).families)
+      featGroupingLabels[stripSeparators(family)] = family;
 
     return featGroupingLabels;
   }

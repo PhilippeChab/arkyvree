@@ -1,7 +1,7 @@
 import type { RulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 
-import type { ClassFields, ClassLevelFields, PowerFields, RaceFields, SkillFlags } from "./rules.ts";
+import type { ClassFields, ClassLevelFields, FeatFields, PowerFields, RaceFields, SkillFlags } from "./rules.ts";
 
 /** What a ruleset writes when a class is saved: its fields. */
 export interface ClassesEffects {
@@ -15,6 +15,12 @@ export interface ClassLevelsEffects {
   requirePreviousLevel(tx: Db, klassLevel: { id: string; level: number }, className: string): Promise<void>;
   /** Stores the level's fields as its properties, in place of those it stored before. */
   syncProperties(tx: Db, levelId: string, fields: ClassLevelFields): Promise<void>;
+}
+
+/** What a ruleset writes when a feat is saved: its fields. */
+export interface FeatsEffects {
+  /** Stores the feat's fields as its properties, in place of those it stored before. */
+  syncProperties(tx: Db, featId: string, fields: FeatFields): Promise<void>;
 }
 
 /** What a ruleset writes when a power is saved: its fields, and the feats of its grouping. */
@@ -38,6 +44,7 @@ export interface RacesEffects {
 export interface RulesetEffects {
   classes: ClassesEffects;
   classLevels: ClassLevelsEffects;
+  feats: FeatsEffects;
   powers: PowersEffects;
   races: RacesEffects;
   skills: SkillsEffects;

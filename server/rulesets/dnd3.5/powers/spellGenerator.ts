@@ -1,10 +1,10 @@
 import type { RulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { Feats, FeatsAptitudes, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
+import { NO_FEAT_FIELDS, toFeatProperties } from "@/server/rulesets/dnd3.5/feats/featFields.ts";
 import FeatsPaths from "@/server/rulesets/dnd3.5/feats/FeatsPaths.ts";
 import { Dnd35LevelsRules } from "@/server/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
 import {
-  FEAT_FAMILY,
   SPELL_AREA_OF_EFFECT,
   SPELL_CASTING_TIME,
   SPELL_COMPONENT,
@@ -83,9 +83,7 @@ export async function generateSpellFocusFeats(tx: Db, scope: RulesetScope, schoo
     },
   ]);
 
-  await Properties.createMany(tx, [
-    { entityId: spellFocus.id, entityType: "feats", type: FEAT_FAMILY, value: "Spell Focus" },
-  ]);
+  await Properties.createMany(tx, toFeatProperties(spellFocus.id, { ...NO_FEAT_FIELDS, families: ["Spell Focus"] }));
 
   const [greaterSpellFocus] = await Feats.create(tx, {
     name: `Greater Spell Focus: ${schoolName}`,
@@ -107,9 +105,10 @@ export async function generateSpellFocusFeats(tx: Db, scope: RulesetScope, schoo
     },
   ]);
 
-  await Properties.createMany(tx, [
-    { entityId: greaterSpellFocus.id, entityType: "feats", type: FEAT_FAMILY, value: "Greater Spell Focus" },
-  ]);
+  await Properties.createMany(
+    tx,
+    toFeatProperties(greaterSpellFocus.id, { ...NO_FEAT_FIELDS, families: ["Greater Spell Focus"] }),
+  );
 
   await Requirements.createMany(tx, [
     {
