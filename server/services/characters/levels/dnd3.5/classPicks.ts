@@ -174,7 +174,7 @@ export async function getAvailableKlasses(
         requirementGroups: requirementsByKlassLevel.get(k.nextKlassLevel.id)!,
       }));
       const projectedCharLevel = buildProjectedCharacterLevel(characterId, "");
-      const evaluationResults = await levelUpProjector.evaluateClassAvailability(evaluated, projectedCharLevel);
+      const evaluationResults = levelUpProjector.evaluateClassAvailability(evaluated, projectedCharLevel);
       for (const [klassLevelId, result] of evaluationResults) evaluationResultMap.set(klassLevelId, result);
     }
 

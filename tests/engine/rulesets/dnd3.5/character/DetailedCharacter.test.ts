@@ -485,7 +485,7 @@ describe("DetailedCharacter", () => {
       const record = await findSeededCharacter("Elara Starweaver");
       const elara = await build(record);
       const targetPaths = new Dnd35TargetPaths();
-      const { paths } = await withRulesetScope(db, record.rulesetId, ({ rulesetData }) =>
+      const { paths } = await withRulesetScope(db, record.rulesetId, async ({ rulesetData }) =>
         targetPaths.getTargetPathsAndLabels(rulesetData, "requirement"),
       );
       // The spells it has: their entries carry their properties (a spell it hasn't is #335's)
@@ -564,7 +564,7 @@ describe("DetailedCharacter", () => {
         await build({ ...bjorn, age: null, height: null, weight: null }),
         await buildSeeded("Elara Starweaver"),
       ];
-      const { paths } = await withRulesetScope(db, bjorn.rulesetId, ({ rulesetData }) =>
+      const { paths } = await withRulesetScope(db, bjorn.rulesetId, async ({ rulesetData }) =>
         targetPaths.getTargetPathsAndLabels(rulesetData, "requirement"),
       );
       expect(paths.length).toBeGreaterThan(5000);

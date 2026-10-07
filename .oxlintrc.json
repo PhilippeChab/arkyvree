@@ -74,6 +74,7 @@
     "arkyvree/route-conventions": "error",
     "arkyvree/order-through-repository": "error",
     "arkyvree/shared-runtime": "error",
+    "arkyvree/engine-sync": "error",
     "arkyvree/session-param": "error",
     "arkyvree/environment": "error",
     "arkyvree/no-disable-comments": "error",

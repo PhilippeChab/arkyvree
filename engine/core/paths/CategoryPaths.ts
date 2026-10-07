@@ -68,6 +68,33 @@ export default abstract class CategoryPaths<C = Components> implements TargetPat
     return Object.assign({}, ...this.categories.map(({ pathDescriptions }) => pathDescriptions));
   }
 
+  /**
+   * Every path each category lists, in the categories' order, and each segment's label. A template's paths are the
+   * requirement's that read one value from the sheet: no wildcard, no path that reaches several values or a list
+   * (`readsMany`), and none that reads its source (an item's own weapon), which a template has none of.
+   */
+  getTargetPathsAndLabels(
+    rulesetData: RulesetData,
+    kind: TargetPathKind,
+  ): { paths: TargetPath[]; segmentLabels: Record<string, string> } {
+    if (kind === "template") {
+      const { paths, segmentLabels } = this.getTargetPathsAndLabels(rulesetData, "requirement");
+      return {
+        paths: paths.filter(({ path, readsMany }) => !readsMany && !path.includes("*") && !this.readsSource(path)),
+        segmentLabels,
+      };
+    }
+    const segmentLabels: Record<string, string> = {
+      "*": "All",
+      ...this.labelOf,
+      ...Object.assign({}, ...this.categories.map((category) => category.getSegmentLabels?.())),
+    };
+    return {
+      paths: this.categories.flatMap((category) => category.generate?.(rulesetData, kind) ?? []),
+      segmentLabels: this.labelNames(rulesetData, segmentLabels),
+    };
+  }
+
   /** Whether a target reads its source itself, not the sheet: its category says. */
   readsSource(target: string): boolean {
     const [category] = target.split(".");
@@ -84,32 +111,5 @@ export default abstract class CategoryPaths<C = Components> implements TargetPat
     } catch (error) {
       return PathTraverser.failed(null, target, `Failed to traverse path: ${error}`);
     }
-  }
-
-  /**
-   * Every path each category lists, in the categories' order, and each segment's label. A template's paths are the
-   * requirement's that read one value from the sheet: no wildcard, no path that reaches several values or a list
-   * (`readsMany`), and none that reads its source (an item's own weapon), which a template has none of.
-   */
-  async getTargetPathsAndLabels(
-    rulesetData: RulesetData,
-    kind: TargetPathKind,
-  ): Promise<{ paths: TargetPath[]; segmentLabels: Record<string, string> }> {
-    if (kind === "template") {
-      const { paths, segmentLabels } = await this.getTargetPathsAndLabels(rulesetData, "requirement");
-      return {
-        paths: paths.filter(({ path, readsMany }) => !readsMany && !path.includes("*") && !this.readsSource(path)),
-        segmentLabels,
-      };
-    }
-    const segmentLabels: Record<string, string> = {
-      "*": "All",
-      ...this.labelOf,
-      ...Object.assign({}, ...this.categories.map((category) => category.getSegmentLabels?.())),
-    };
-    return {
-      paths: this.categories.flatMap((category) => category.generate?.(rulesetData, kind) ?? []),
-      segmentLabels: this.labelNames(rulesetData, segmentLabels),
-    };
   }
 }

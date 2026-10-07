@@ -97,11 +97,7 @@ async function planSkills(
       skills: levelUpProjector.getCharacterEnrichedSkills(rulesetData.skills, classSkills.merged),
       ...levelUpProjector.getSkillPointBases(),
     },
-    perLevelSkillPoints: await levelUpProjector.computeSkillPointsPerLevel(
-      klassLevelIds,
-      existingLevelCount,
-      rulesetData,
-    ),
+    perLevelSkillPoints: levelUpProjector.computeSkillPointsPerLevel(klassLevelIds, existingLevelCount, rulesetData),
     perLevelSkillPointBases: levelUpProjector.computeSkillPointBasesPerLevel(klassLevelIds, rulesetData),
     perLevelClassSkillIds: classSkills.perLevel,
   };

@@ -68,7 +68,7 @@ export async function buildCharacter<C extends DetailedCharacterInterface, K ext
   return await inScope(database, record.rulesetId, scope, async (view) => {
     const character = module.createDetailedCharacter(record, kind);
     const master = record.parentCharacterId ? await buildMaster(module, record.parentCharacterId, view) : undefined;
-    await character.build(rows ?? (await readCharacterRows(database, record)), view, projected, master);
+    character.build(rows ?? (await readCharacterRows(database, record)), view, projected, master);
     return character;
   });
 }

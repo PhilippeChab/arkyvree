@@ -76,18 +76,12 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
     return { budget: [], ranks: [] };
   }
 
-  /** The creature's master, which its build is given: one it was saved with and its build lacks is an error. */
-  protected requireMaster(): Dnd35DetailedCharacter {
-    if (!this.master) throw new Error(`Bonded's master not built: ${this.character.parentCharacterId}`);
-    return this.master;
-  }
-
   /**
    * The creature's master and stat block set its inputs (hit dice, base saves, natural armor and attacks, the stat
    * block's feats and skill totals) before requirements read the sheet and modifiers change it: an item's or a feat's
    * modifier adds on top. Then the character's own setup, Weapon Finesse on the natural attacks included.
    */
-  protected override async preRequirementProcessing(rulesetData: RulesetData): Promise<void> {
+  protected override preRequirementProcessing(rulesetData: RulesetData): void {
     if (this.character.parentCharacterId) this.applyMasterDerivation(this.requireMaster());
 
     const raceStats = getBondedRaceStats(this.race?.name);
@@ -102,17 +96,23 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
 
     if (this.cachedTotalHD !== null) this.components.combat.setHitDiceOverride(this.cachedTotalHD);
 
-    await super.preRequirementProcessing(rulesetData);
+    super.preRequirementProcessing(rulesetData);
+  }
+
+  /** The creature's master, which its build is given: one it was saved with and its build lacks is an error. */
+  protected requireMaster(): Dnd35DetailedCharacter {
+    if (!this.master) throw new Error(`Bonded's master not built: ${this.character.parentCharacterId}`);
+    return this.master;
   }
 
   /** Builds the creature from its rows, its sheet derived from its `master`'s, which comes built. */
-  override async build(
+  override build(
     rows: CharacterRows,
     view: RulesetView,
     projectedData?: Dnd35ProjectedCharacterData,
     master?: Dnd35DetailedCharacter,
   ) {
     this.master = master;
-    await super.build(rows, view, projectedData, master);
+    super.build(rows, view, projectedData, master);
   }
 }

@@ -242,6 +242,35 @@ describe("conventions", () => {
     ]);
   });
 
+  test("engine/ computes without waiting: no async function, no await, no Promise", async () => {
+    expect(
+      await lintRepo(
+        {
+          "engine/core/a.ts": "export async function a() {}\n",
+          "engine/core/b.ts": "export const b = async () => 1;\n",
+          "engine/rulesets/c.ts": "export class C {\n  async c() {}\n}\n",
+          "engine/rulesets/d.ts": "export function d(): Promise<number> {\n  return f();\n}\n",
+          "engine/rulesets/e.ts": "export const e = await f();\n",
+          "engine/rulesets/f.ts": "export function f(x: number) {\n  return [x].map((y) => y + 1);\n}\n",
+          "engine/rulesets/g.ts": "export const g = () => Promise.resolve(1);\n",
+          "engine/rulesets/h.ts": "export const h = new Promise(() => {});\n",
+          "engine/rulesets/i.ts": "export const i = [];\nfor await (const x of y) i.push(x);\n",
+          "server/g.ts": "export async function g() {\n  await f();\n}\n",
+        },
+        ["engine-sync"],
+      ),
+    ).toEqual([
+      "engine-sync engine/core/a.ts",
+      "engine-sync engine/core/b.ts",
+      "engine-sync engine/rulesets/c.ts",
+      "engine-sync engine/rulesets/d.ts",
+      "engine-sync engine/rulesets/e.ts",
+      "engine-sync engine/rulesets/g.ts",
+      "engine-sync engine/rulesets/h.ts",
+      "engine-sync engine/rulesets/i.ts",
+    ]);
+  });
+
   test("a repository write or lock outside the repositories takes a transaction's handle", async () => {
     expect(
       await lintRepo(

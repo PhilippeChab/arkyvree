@@ -119,7 +119,7 @@ export interface LevelUpProjector {
   evaluateClassAvailability(
     candidates: { klassLevel: KlassLevel; klassName: string; requirementGroups: Requirement[][] }[],
     projectedCharacterLevel: ProjectedCharacterLevel,
-  ): Promise<Map<string, boolean>>;
+  ): Map<string, boolean>;
 }
 
 /** Base result of character data loading. Rulesets extend with specific fields. */
@@ -211,7 +211,7 @@ export interface TargetPathsInterface extends TargetPathsTraverser {
   getTargetPathsAndLabels(
     rulesetData: RulesetData,
     kind: TargetPathKind,
-  ): Promise<{ paths: TargetPath[]; segmentLabels: Record<string, string> }>;
+  ): { paths: TargetPath[]; segmentLabels: Record<string, string> };
 }
 export interface TargetPathsTraverser {
   /** Whether a target reads its source itself (a weapon's own paths: the place its item is held), not the sheet. */

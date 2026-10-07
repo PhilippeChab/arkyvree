@@ -41,11 +41,7 @@ export interface Dnd35LevelUpProjector extends LevelUpProjector {
   /** Each planned level's points per level before the minimum, in the batch's order (class + ability modifier). */
   computeSkillPointBasesPerLevel(klassLevelIds: string[], rulesetData: RulesetData): number[];
   /** Each klass level's skill points, the skill point ability's modifier included, four times over at the first level. */
-  computeSkillPointsPerLevel(
-    klassLevelIds: string[],
-    existingLevelCount: number,
-    rulesetData: RulesetData,
-  ): Promise<number[]>;
+  computeSkillPointsPerLevel(klassLevelIds: string[], existingLevelCount: number, rulesetData: RulesetData): number[];
   /** Enriches a skill list with class-skill flags and current rank — 3.5 skill ranks. */
   getCharacterEnrichedSkills<T extends { id: string; name: string }>(
     allSkills: T[],
