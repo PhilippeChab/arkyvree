@@ -27,7 +27,6 @@ interface CompletionAutocompleteProps<
   TData extends InfiniteData<TPage, unknown>,
 > {
   disabled?: boolean;
-  enabled: boolean;
   error?: boolean;
   fullWidth?: boolean;
   helperText?: string;
@@ -61,7 +60,6 @@ export function CompletionAutocomplete<
   value,
   onChange,
   query,
-  enabled,
   inputRef,
   label,
   placeholder,
@@ -85,7 +83,7 @@ export function CompletionAutocomplete<
     onScroll,
   } = useListboxQuery({
     ...query(debouncedInputValue),
-    enabled: enabled && !disabled,
+    enabled: !disabled,
     placeholderData: keepPreviousData,
   });
 

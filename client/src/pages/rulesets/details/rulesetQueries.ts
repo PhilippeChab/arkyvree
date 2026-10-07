@@ -6,6 +6,7 @@
 import { infiniteQueryOptions, queryOptions, skipToken } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 
+import { nextPage } from "@/client/src/lib/pageItems.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
@@ -29,7 +30,7 @@ export function rulesetContributorsQuery(rulesetId: string) {
         }),
       ),
     initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    getNextPageParam: nextPage,
   });
 }
 

@@ -82,6 +82,8 @@ describe("wording rules", () => {
           "client/src/mark.tsx": 'export const m = <TextField placeholder="Search races…" />;\n',
           "client/src/spread.tsx": "export const s = <Box {...props} />;\n",
           "client/src/dash.tsx": "export const h = <Typography>Level 3 - Requirements not met</Typography>;\n",
+          "client/src/template.tsx": "export const p = `${pool.name} - ${level} ${picked}/${available}`;\n",
+          "client/src/sum.tsx": "export const n = `${total - spent} left`;\n",
           "client/src/math.tsx": 'export const c = <Box sx={{ left: "calc(50% - 24px)" }} />;\n',
           "client/src/cut.tsx": "export const t = `${text.slice(0, 60)}…`;\n",
           "client/src/lib/truncate.ts": "export const u = `${text.slice(0, length)}…`;\n",
@@ -92,6 +94,7 @@ describe("wording rules", () => {
       "typography-marks client/src/cut.tsx",
       "typography-marks client/src/dash.tsx",
       "typography-marks client/src/dots.tsx",
+      "typography-marks client/src/template.tsx",
     ]);
   });
 });

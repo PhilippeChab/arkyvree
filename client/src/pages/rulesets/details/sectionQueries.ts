@@ -13,6 +13,7 @@ import {
 } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 
+import { nextPage } from "@/client/src/lib/pageItems.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
@@ -50,6 +51,16 @@ export type RulesetSection =
   | "abilities"
   | "mechanics";
 
+/** A list's query where an entity's kind and its sort narrow and order it too (the races, the classes). */
+function entityListQuery(pageParam: number, filters: EntityFilters) {
+  return { ...listQuery(pageParam, filters), kind: filters.kind, orderBy: filters.orderBy, orderDir: filters.orderDir };
+}
+
+/** The key of a list an entity's kind and its sort narrow and order. */
+function entitySectionKey(rulesetId: string, section: RulesetSection, filters: EntityFilters) {
+  return [...sectionKey(rulesetId, section, filters), filters.kind, filters.orderBy, filters.orderDir] as const;
+}
+
 function listQuery(pageParam: number, { search, childOnly }: ListFilters) {
   return {
     page: pageParam.toString(),
@@ -59,24 +70,22 @@ function listQuery(pageParam: number, { search, childOnly }: ListFilters) {
   };
 }
 
-function nextPage(lastPage: { nextPage?: number }) {
-  return lastPage.nextPage;
-}
-
 function sectionKey(rulesetId: string, section: RulesetSection, filters: ListFilters) {
   return [...QUERY_KEYS.rulesets.section(rulesetId, section), filters.search, filters.childOnly] as const;
 }
 
-export function abilitiesQuery(rulesetId: string, childOnly: boolean) {
-  return queryOptions({
-    queryKey: [...QUERY_KEYS.rulesets.section(rulesetId, "abilities"), childOnly],
-    queryFn: () =>
+export function abilitiesQuery(rulesetId: string, filters: ListFilters) {
+  return infiniteQueryOptions({
+    queryKey: sectionKey(rulesetId, "abilities", filters),
+    queryFn: ({ pageParam }) =>
       parseResponse(
         rpc.api.rulesets[":id"].abilities.$get({
           param: { id: rulesetId },
-          query: { page: "1", limit: "10", childOnly: childOnly ? "true" : undefined },
+          query: listQuery(pageParam, filters),
         }),
       ),
+    initialPageParam: 1,
+    getNextPageParam: nextPage,
   });
 }
 
@@ -97,17 +106,12 @@ export function aptitudesQuery(rulesetId: string, filters: ListFilters) {
 
 export function classesQuery(rulesetId: string, filters: EntityFilters) {
   return infiniteQueryOptions({
-    queryKey: [...sectionKey(rulesetId, "classes", filters), filters.kind, filters.orderBy, filters.orderDir],
+    queryKey: entitySectionKey(rulesetId, "classes", filters),
     queryFn: ({ pageParam }) =>
       parseResponse(
         rpc.api.rulesets[":id"].classes.$get({
           param: { id: rulesetId },
-          query: {
-            ...listQuery(pageParam, filters),
-            kind: filters.kind,
-            orderBy: filters.orderBy,
-            orderDir: filters.orderDir,
-          },
+          query: entityListQuery(pageParam, filters),
         }),
       ),
     initialPageParam: 1,
@@ -287,23 +291,18 @@ export function prefetchSection(
     case "mechanics":
       return queryClient.prefetchInfiniteQuery(mechanicsQuery(rulesetId, filters));
     case "abilities":
-      return queryClient.prefetchQuery(abilitiesQuery(rulesetId, childOnly));
+      return queryClient.prefetchInfiniteQuery(abilitiesQuery(rulesetId, filters));
   }
 }
 
 export function racesQuery(rulesetId: string, filters: EntityFilters) {
   return infiniteQueryOptions({
-    queryKey: [...sectionKey(rulesetId, "races", filters), filters.kind, filters.orderBy, filters.orderDir],
+    queryKey: entitySectionKey(rulesetId, "races", filters),
     queryFn: ({ pageParam }) =>
       parseResponse(
         rpc.api.rulesets[":id"].races.$get({
           param: { id: rulesetId },
-          query: {
-            ...listQuery(pageParam, filters),
-            kind: filters.kind,
-            orderBy: filters.orderBy,
-            orderDir: filters.orderDir,
-          },
+          query: entityListQuery(pageParam, filters),
         }),
       ),
     initialPageParam: 1,

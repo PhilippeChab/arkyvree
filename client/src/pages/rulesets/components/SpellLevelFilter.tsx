@@ -1,6 +1,6 @@
 import { MenuItem, TextField } from "@mui/material";
 
-import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
+import { SPELL_LEVELS } from "@/shared/dnd3.5/spells.ts";
 
 interface SpellLevelFilterProps {
   /** Adds an "All" choice. */
@@ -9,8 +9,6 @@ interface SpellLevelFilterProps {
   /** The level, or "" for all of them. */
   value: number | "";
 }
-
-const SPELL_LEVELS = Array.from({ length: MAX_SPELL_LEVEL + 1 }, (_, level) => level);
 
 /** The spell level select in a spell list's search bar. */
 export function SpellLevelFilter({ value, onChange, allowAll }: SpellLevelFilterProps) {

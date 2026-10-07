@@ -4,6 +4,7 @@ import { infiniteQueryOptions, type QueryClient, queryOptions, skipToken } from 
 import { parseResponse } from "hono/client";
 
 import { FIVE_SECONDS } from "@/client/src/lib/durations.ts";
+import { nextPage } from "@/client/src/lib/pageItems.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
@@ -30,7 +31,7 @@ export function aptitudeOptionsQuery(rulesetId: string, search: string, scope?: 
       );
     },
     initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    getNextPageParam: nextPage,
   });
 }
 
@@ -38,20 +39,23 @@ export function aptitudeOptionsQuery(rulesetId: string, search: string, scope?: 
 export function propertyTypeCompletionsQuery(rulesetId: string, search: string, entityType?: PropertyEntityType) {
   return infiniteQueryOptions({
     queryKey: QUERY_KEYS.rulesets.propertyTypeCompletions(rulesetId, search, entityType),
-    queryFn: ({ pageParam }) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].customization.properties.types.completions.$get({
-          param: { id: rulesetId },
-          query: {
-            query: search,
-            limit: "10",
-            page: pageParam.toString(),
-            entityType: entityType ? getUrlSegment(entityType) : undefined,
-          },
-        }),
-      ),
+    // Skipped without a ruleset
+    queryFn: !rulesetId
+      ? skipToken
+      : ({ pageParam }) =>
+          parseResponse(
+            rpc.api.rulesets[":id"].customization.properties.types.completions.$get({
+              param: { id: rulesetId },
+              query: {
+                query: search,
+                limit: "10",
+                page: pageParam.toString(),
+                entityType: entityType ? getUrlSegment(entityType) : undefined,
+              },
+            }),
+          ),
     initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    getNextPageParam: nextPage,
     staleTime: FIVE_SECONDS,
   });
 }
@@ -60,15 +64,18 @@ export function propertyTypeCompletionsQuery(rulesetId: string, search: string, 
 export function propertyValueCompletionsQuery(rulesetId: string, propertyType: string, search: string) {
   return infiniteQueryOptions({
     queryKey: QUERY_KEYS.rulesets.propertyValueCompletions(rulesetId, propertyType, search),
-    queryFn: ({ pageParam }) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].customization.properties.values.completions.$get({
-          param: { id: rulesetId },
-          query: { type: propertyType, query: search, limit: "10", page: pageParam.toString() },
-        }),
-      ),
+    // Skipped without a ruleset
+    queryFn: !rulesetId
+      ? skipToken
+      : ({ pageParam }) =>
+          parseResponse(
+            rpc.api.rulesets[":id"].customization.properties.values.completions.$get({
+              param: { id: rulesetId },
+              query: { type: propertyType, query: search, limit: "10", page: pageParam.toString() },
+            }),
+          ),
     initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    getNextPageParam: nextPage,
     staleTime: FIVE_SECONDS,
   });
 }
@@ -125,7 +132,7 @@ export function targetCompletionsQuery(
         }
       : skipToken,
     initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    getNextPageParam: nextPage,
     staleTime: FIVE_SECONDS,
   });
 }

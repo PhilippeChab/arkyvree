@@ -52,7 +52,6 @@ export function PropertyValueInput({
       placeholder={placeholder}
       fullWidth={fullWidth}
       query={(search) => propertyValueCompletionsQuery(rulesetId, propertyType, search)}
-      enabled={!!rulesetId}
       loadingText="Loading values…"
       noOptionsText="No values found"
     />

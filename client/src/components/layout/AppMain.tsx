@@ -1,8 +1,9 @@
-import { Box, type CSSObject, Stack } from "@mui/material";
+import { Box, Stack } from "@mui/material";
 import { type ReactNode, Suspense, useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 
 import { PageLoader } from "@/client/src/components/common/index.ts";
+import { TOOLBAR_HEIGHT } from "@/client/src/theme/appTheme.ts";
 
 import { Footer } from "./Footer.tsx";
 
@@ -10,20 +11,6 @@ interface AppMainProps {
   banner?: ReactNode;
   /** Width of a permanent side rail to keep clear; an expanded drawer still overlays the page. */
   railWidth?: number;
-}
-
-/**
- * Place the main area right under the fixed app bar: the theme's toolbar mixin with `top` for `minHeight`, media
- * queries included.
- */
-function belowToolbar(toolbar: CSSObject): CSSObject {
-  return Object.fromEntries(
-    Object.entries(toolbar).map(([key, value]) =>
-      key === "minHeight"
-        ? ["top", value]
-        : [key, typeof value === "object" && value ? belowToolbar(value as CSSObject) : value],
-    ),
-  );
 }
 
 /** Logo and wordmark shown in the app bar. */
@@ -73,19 +60,18 @@ export function AppMain({ banner, railWidth = 0 }: AppMainProps) {
     <Stack
       ref={mainRef}
       component="main"
-      sx={[
-        (theme) => belowToolbar(theme.mixins.toolbar),
-        {
-          position: "fixed",
-          left: railWidth,
-          right: 0,
-          bottom: 0,
-          bgcolor: "background.default",
-          overflow: "auto",
-          scrollbarGutter: "stable",
-          alignItems: "center",
-        },
-      ]}
+      sx={{
+        position: "fixed",
+        // Right under the fixed app bar
+        top: TOOLBAR_HEIGHT,
+        left: railWidth,
+        right: 0,
+        bottom: 0,
+        bgcolor: "background.default",
+        overflow: "auto",
+        scrollbarGutter: "stable",
+        alignItems: "center",
+      }}
     >
       {banner}
       <Stack spacing={2} sx={{ flex: 1, width: "100%", alignItems: "center" }}>

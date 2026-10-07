@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 
 import {
   BlankState,
@@ -32,10 +32,11 @@ import {
   TableFrame,
   toggleProps,
 } from "@/client/src/components/common/index.ts";
-import { type Aptitude, AptitudeAutocomplete } from "@/client/src/components/customization/index.ts";
+import { AptitudeAutocomplete } from "@/client/src/components/customization/index.ts";
 import { FeatsIcon } from "@/client/src/components/icons/index.ts";
 import { useSearchParam, useSearchText, useToggleSet } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
+import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import { EMPTY_FEAT, type FeatFormData, FeatFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import {
@@ -50,7 +51,7 @@ import {
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { featFamilyQuery, featsGroupedQuery, featsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
-import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useAptitudeFilter, useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { fadeInUpSx } from "@/client/src/theme/animations.ts";
 
@@ -202,9 +203,9 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   const queryClient = useQueryClient();
 
   const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("search");
-  const [selectedAptitude, setSelectedAptitude] = useState<Aptitude | null>(null);
+  const { aptitude, aptitudeError, aptitudeId, setAptitude } = useAptitudeFilter(ruleset.id);
   const { value: groupedParam, setValue: setGroupedParam } = useSearchParam("grouped", "true");
-  const grouped = groupedParam === "true";
+  const grouped = oneOf(groupedParam, ["true", "false"], "true") === "true";
   const { keys: expandedFamilies, toggle: toggleFamily, clear: collapseFamilies } = useToggleSet();
 
   const { setCreateDialogOpen, createForm, createDialogProps } = useRulesetSection<Feat, FeatFormData>({
@@ -219,14 +220,14 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
 
   // Flat query (used when grouped is off)
   const flatQuery = useInfiniteQuery({
-    ...featsQuery(ruleset.id, { search: searchQuery, childOnly, aptitudeId: selectedAptitude?.id }),
+    ...featsQuery(ruleset.id, { search: searchQuery, childOnly, aptitudeId }),
     placeholderData: keepPreviousData,
     enabled: !grouped,
   });
 
   // Grouped query (used when grouped is on)
   const groupedQuery = useInfiniteQuery({
-    ...featsGroupedQuery(ruleset.id, { search: searchQuery, childOnly, aptitudeId: selectedAptitude?.id }),
+    ...featsGroupedQuery(ruleset.id, { search: searchQuery, childOnly, aptitudeId }),
     placeholderData: keepPreviousData,
     enabled: grouped,
   });
@@ -366,8 +367,9 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
             <Box sx={{ width: { xs: "100%", sm: 200 } }}>
               <AptitudeAutocomplete
                 rulesetId={ruleset.id}
-                value={selectedAptitude}
-                onChange={setSelectedAptitude}
+                value={aptitude}
+                loadError={aptitudeError}
+                onChange={setAptitude}
                 size="small"
                 scope="feats"
               />

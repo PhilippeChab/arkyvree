@@ -36,7 +36,6 @@ export {
   Download as DownloadIcon,
   EditNote as DraftIcon,
   Edit as EditIcon,
-  ExpandLess as ExpandLessIcon,
   ExpandMore as ExpandMoreIcon,
   Extension as ExtensionIcon,
   HelpOutlined as FaqIcon,

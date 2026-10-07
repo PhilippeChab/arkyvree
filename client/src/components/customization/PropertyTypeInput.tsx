@@ -34,7 +34,6 @@ export function PropertyTypeInput({
       label={label}
       placeholder={placeholder}
       query={(search) => propertyTypeCompletionsQuery(rulesetId, search, entityType)}
-      enabled={!!rulesetId}
       loadingText="Loading property types…"
       noOptionsText="No property types found"
     />

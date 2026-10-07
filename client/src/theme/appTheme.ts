@@ -118,6 +118,12 @@ interface TextShadows {
   stat: string;
 }
 
+/**
+ * The app bar's height, by breakpoint: MUI's default drops to 48px on landscape phones, but the account button keeps
+ * the bar at 56px there. The toolbars, the drawer's spacer and the page under the bar (`AppMain`'s `top`) take it.
+ */
+export const TOOLBAR_HEIGHT = { xs: 56, sm: 64 };
+
 function containedBorderColor(color: ContainedColor, darkMode: boolean) {
   switch (color) {
     case "error":
@@ -271,13 +277,10 @@ export function createAppTheme(darkMode: boolean): Theme {
       shape: {
         borderRadius: 8,
       },
-      // MUI's default drops to 48px on landscape phones, but the account button
-      // keeps the app bar at 56px there; one height per breakpoint keeps the
-      // bars, the drawer spacer and the page offset (AppMain) in step.
       mixins: {
         toolbar: {
-          minHeight: 56,
-          "@media (min-width:600px)": { minHeight: 64 },
+          minHeight: TOOLBAR_HEIGHT.xs,
+          "@media (min-width:600px)": { minHeight: TOOLBAR_HEIGHT.sm },
         },
       },
       spacing: 8,

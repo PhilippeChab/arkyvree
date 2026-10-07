@@ -1,12 +1,12 @@
 import { Box, Stack } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 
 import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
-import { type Aptitude, AptitudeAutocomplete } from "@/client/src/components/customization/index.ts";
+import { AptitudeAutocomplete } from "@/client/src/components/customization/index.ts";
 import { PowersIcon } from "@/client/src/components/icons/index.ts";
-import { useRulesetSaves, useSearchParam, useSearchText } from "@/client/src/hooks/index.ts";
+import { useRulesetSaves, useSearchText } from "@/client/src/hooks/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import {
   EMPTY_SPELL,
@@ -23,7 +23,12 @@ import {
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { powersQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
-import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import {
+  useAptitudeFilter,
+  useOpenEntity,
+  useRulesetSection,
+  useSpellLevelFilter,
+} from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 type Spell = SpellsPaginated["items"][number];
@@ -40,10 +45,8 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
   const queryClient = useQueryClient();
 
   const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("search");
-  const [selectedAptitude, setSelectedAptitude] = useState<Aptitude | null>(null);
-  const { value: levelParam, setValue: setLevelParam } = useSearchParam("level");
-  const parsed = Number(levelParam);
-  const selectedLevel: number | "" = levelParam === "" || Number.isNaN(parsed) ? "" : parsed;
+  const { aptitude, aptitudeError, aptitudeId, setAptitude } = useAptitudeFilter(ruleset.id);
+  const { level: selectedLevel, setLevel: setSelectedLevel } = useSpellLevelFilter(true);
 
   const { createDialogOpen, setCreateDialogOpen, createForm, createDialogProps } = useRulesetSection<
     Spell,
@@ -62,7 +65,7 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
     ...powersQuery(ruleset.id, {
       search: searchQuery,
       childOnly,
-      aptitudeId: selectedAptitude?.id,
+      aptitudeId,
       level: selectedLevel === "" ? undefined : selectedLevel,
     }),
     placeholderData: keepPreviousData,
@@ -112,13 +115,14 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
               <Box sx={{ width: { xs: "100%", sm: 200 } }}>
                 <AptitudeAutocomplete
                   rulesetId={ruleset.id}
-                  value={selectedAptitude}
-                  onChange={setSelectedAptitude}
+                  value={aptitude}
+                  loadError={aptitudeError}
+                  onChange={setAptitude}
                   size="small"
                   scope="spells"
                 />
               </Box>
-              <SpellLevelFilter value={selectedLevel} onChange={(level) => setLevelParam(String(level))} allowAll />
+              <SpellLevelFilter value={selectedLevel} onChange={setSelectedLevel} allowAll />
             </>
           }
           actions={

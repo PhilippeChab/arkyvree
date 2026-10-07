@@ -46,6 +46,8 @@ export const SPELL_DURATION_TYPES = [
   "Dismissible",
   "See Text",
 ] as const;
+/** Every spell level, 0 to `MAX_SPELL_LEVEL`. */
+export const SPELL_LEVELS = Array.from({ length: MAX_SPELL_LEVEL + 1 }, (_, level) => level);
 export const SPELL_RANGE_TYPES = ["Personal", "Touch", "Close", "Medium", "Long", "Unlimited"] as const;
 export const SPELL_RESISTANCE_OPTIONS = ["Yes", "No"] as const;
 export const SPELL_SAVING_THROWS = [

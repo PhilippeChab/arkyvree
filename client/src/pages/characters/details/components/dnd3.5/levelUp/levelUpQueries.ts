@@ -8,6 +8,7 @@ import { infiniteQueryOptions, queryOptions, skipToken } from "@tanstack/react-q
 import { parseResponse } from "hono/client";
 
 import { FOREVER } from "@/client/src/lib/durations.ts";
+import { nextPage } from "@/client/src/lib/pageItems.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
@@ -86,7 +87,7 @@ export function availableClassesQuery(
         }),
       ),
     initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    getNextPageParam: nextPage,
   });
 }
 
@@ -113,7 +114,7 @@ export function availableFeatFamilyQuery(characterId: string, aptitudeId: string
           )
       : skipToken,
     initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    getNextPageParam: nextPage,
   });
 }
 
@@ -148,7 +149,7 @@ export function availableFeatsGroupedQuery(
           )
       : skipToken,
     initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    getNextPageParam: nextPage,
   });
 }
 
@@ -184,7 +185,7 @@ export function availablePowersQuery(
           )
       : skipToken,
     initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    getNextPageParam: nextPage,
   });
 }
 

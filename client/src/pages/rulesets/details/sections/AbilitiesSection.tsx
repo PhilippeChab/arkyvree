@@ -1,10 +1,11 @@
 import { Stack } from "@mui/material";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 
-import { SectionContent } from "@/client/src/components/common/index.ts";
+import { LoadMoreButton, SectionContent } from "@/client/src/components/common/index.ts";
 import { AbilitiesIcon } from "@/client/src/components/icons/index.ts";
 import type { RulesetAbility } from "@/client/src/hooks/index.ts";
+import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import { abilityQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
@@ -22,9 +23,12 @@ export function AbilitiesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
   const openEntity = useOpenEntity(ruleset.id);
   const queryClient = useQueryClient();
 
-  const { data, isLoading, error } = useQuery(abilitiesQuery(ruleset.id, childOnly));
+  const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+    ...abilitiesQuery(ruleset.id, { search: "", childOnly }),
+    placeholderData: keepPreviousData,
+  });
 
-  const abilities = data?.items ?? [];
+  const abilities = pageItems(data);
 
   const renderCell = (ability: Ability, columnKey: string) => {
     switch (columnKey) {
@@ -67,6 +71,11 @@ export function AbilitiesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
           emptyIcon={AbilitiesIcon}
           emptyTitle="No abilities"
           emptyDescription="No abilities available for this ruleset."
+        />
+        <LoadMoreButton
+          hasNextPage={hasNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+          onClick={() => fetchNextPage()}
         />
       </Stack>
     </SectionContent>
