@@ -77,9 +77,11 @@ export function detectSlotFromItem(item: ItemColumns): ItemLocation | null {
   return LOCATION_OPTIONS.find((v) => v.toLowerCase() === item.slot.toLowerCase()) ?? null;
 }
 
-/** Where an entry is worn ("Main Hand (Set 1)"), or a dash when it's carried. */
-export function formatSlotDisplay(entry: Pick<EquipmentRow, "equipped" | "location" | "weaponSet">): string {
-  if (!entry.equipped || !entry.location) return "—";
+/** Where an entry is worn ("Main Hand (Set 1)"), or undefined when it's carried. */
+export function formatSlotDisplay(
+  entry: Pick<EquipmentRow, "equipped" | "location" | "weaponSet">,
+): string | undefined {
+  if (!entry.equipped || !entry.location) return undefined;
   if (isHandLocation(entry.location) && entry.weaponSet !== null)
     return `${entry.location} (Set ${shownWeaponSet(entry.weaponSet)})`;
 

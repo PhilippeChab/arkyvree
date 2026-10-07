@@ -14,6 +14,7 @@ import {
   NameField,
   RulesetPicker,
   SelectField,
+  SubsectionTitle,
 } from "@/client/src/components/common/index.ts";
 import { AddIcon, CasinoIcon, RemoveIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
@@ -526,182 +527,196 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
     >
       <BaseRulesetAlert ruleset={selectedRuleset} />
       {/* Basic Info */}
-      <Typography variant="h6" component="h3">
-        Basic Information
-      </Typography>
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-        <NameField control={control} name="name" rules={NAME_RULES} label="Character Name" />
-        <FormTextField
-          control={control}
-          name="xp"
-          rules={wholeNumberRules(0, "Experience points are required")}
-          number
-          label="Experience Points"
-          fullWidth
-        />
-      </Stack>
-
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-        <Controller
-          name="rulesetId"
-          control={control}
-          rules={requiredRules("Ruleset is required")}
-          render={({ field, fieldState }) => (
-            <RulesetPicker
-              rulesets={rulesets}
-              value={selectedRuleset}
-              // Another ruleset's abilities start from their defaults
-              onChange={(ruleset) => {
-                setSelectedRuleset(ruleset);
-                field.onChange(ruleset?.id ?? "");
-                setValue("abilities", {});
-                if (!ruleset) setValue("raceId", "");
-              }}
-              onSearch={setRulesetSearch}
-              onScroll={handleRulesetsScroll}
-              loading={isRulesetsLoading || isCampaignRulesetsLoading || isMyDraftsLoading}
-              loadError={rulesetsError ?? campaignRulesetsError ?? myDraftsError}
-              error={fieldState.error}
-              inputRef={field.ref}
+      <Stack spacing={1}>
+        <SubsectionTitle>Basic Information</SubsectionTitle>
+        <Stack spacing={3}>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+            <NameField control={control} name="name" rules={NAME_RULES} label="Character Name" />
+            <FormTextField
+              control={control}
+              name="xp"
+              rules={wholeNumberRules(0, "Experience points are required")}
+              number
+              label="Experience Points"
+              fullWidth
             />
-          )}
-        />
+          </Stack>
 
-        <SelectField
-          control={control}
-          name="raceId"
-          label="Race"
-          rules={raceRules}
-          helperText={racesError ? loadFailureMessage("Races", racesError) : raceIssue(selectedRaceId)}
-          options={races.map((race) => ({ value: race.id, label: race.name, disabled: !race.eligible }))}
-          disabled={!selectedRulesetId}
-          onMenuScroll={handleRacesScroll}
-        />
-      </Stack>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+            <Controller
+              name="rulesetId"
+              control={control}
+              rules={requiredRules("Ruleset is required")}
+              render={({ field, fieldState }) => (
+                <RulesetPicker
+                  rulesets={rulesets}
+                  value={selectedRuleset}
+                  // Another ruleset's abilities start from their defaults
+                  onChange={(ruleset) => {
+                    setSelectedRuleset(ruleset);
+                    field.onChange(ruleset?.id ?? "");
+                    setValue("abilities", {});
+                    if (!ruleset) setValue("raceId", "");
+                  }}
+                  onSearch={setRulesetSearch}
+                  onScroll={handleRulesetsScroll}
+                  loading={isRulesetsLoading || isCampaignRulesetsLoading || isMyDraftsLoading}
+                  loadError={rulesetsError ?? campaignRulesetsError ?? myDraftsError}
+                  error={fieldState.error}
+                  inputRef={field.ref}
+                />
+              )}
+            />
 
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-        <SelectField
-          control={control}
-          name="alignment"
-          label="Alignment"
-          rules={requiredRules("Alignment is required")}
-          options={ALIGNMENT_OPTIONS}
-        />
-        <SelectField
-          control={control}
-          name="gender"
-          label="Gender"
-          rules={requiredRules("Gender is required")}
-          options={GENDER_OPTIONS}
-        />
+            <SelectField
+              control={control}
+              name="raceId"
+              label="Race"
+              rules={raceRules}
+              helperText={racesError ? loadFailureMessage("Races", racesError) : raceIssue(selectedRaceId)}
+              options={races.map((race) => ({ value: race.id, label: race.name, disabled: !race.eligible }))}
+              disabled={!selectedRulesetId}
+              onMenuScroll={handleRacesScroll}
+            />
+          </Stack>
+
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+            <SelectField
+              control={control}
+              name="alignment"
+              label="Alignment"
+              rules={requiredRules("Alignment is required")}
+              options={ALIGNMENT_OPTIONS}
+            />
+            <SelectField
+              control={control}
+              name="gender"
+              label="Gender"
+              rules={requiredRules("Gender is required")}
+              options={GENDER_OPTIONS}
+            />
+          </Stack>
+        </Stack>
       </Stack>
 
       {/* Ability Scores */}
-      <Typography variant="h6" component="h3">
-        Ability Scores
-      </Typography>
-      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-        <TextField
-          select
-          label="Method"
-          value={rollMethod}
-          onChange={(e) => {
-            // Another method's scores start from its defaults
-            const method = ROLL_METHODS.find((m) => m.id === e.target.value);
-            if (!method) return;
-            setRollMethod(method.id);
-            setValue("abilities", {});
-          }}
-          size="small"
-          sx={{ minWidth: 200 }}
-        >
-          {ROLL_METHODS.map((m) => (
-            <MenuItem key={m.id} value={m.id}>
-              {m.label}
-            </MenuItem>
-          ))}
-        </TextField>
-        {isDiceMethod(rollMethod) && (
-          <IconButton
-            onClick={() => abilityScoresRef.current?.rollAll()}
-            disabled={!rulesetAbilities.length || abilityRolling}
-            color="primary"
-            size="small"
-            aria-label="Roll All Ability Scores"
-          >
-            <CasinoIcon />
-          </IconButton>
-        )}
-        {rollMethod === "point-buy" &&
-          (() => {
-            const scores = scoresOf(rulesetAbilities, watch("abilities"), rollMethod);
-            const spent = rulesetAbilities.reduce((sum, a) => sum + (POINT_BUY_COSTS[scores[a.id]] ?? 0), 0);
-            const remaining = POINT_BUY_TOTAL - spent;
-            return (
-              <Chip
-                label={`${remaining} / ${POINT_BUY_TOTAL} pts`}
-                color={remaining < 0 ? "error" : remaining === 0 ? "success" : "default"}
+      <Stack spacing={1}>
+        <SubsectionTitle>Ability Scores</SubsectionTitle>
+        <Stack spacing={3}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+            <TextField
+              select
+              label="Method"
+              value={rollMethod}
+              onChange={(e) => {
+                // Another method's scores start from its defaults
+                const method = ROLL_METHODS.find((m) => m.id === e.target.value);
+                if (!method) return;
+                setRollMethod(method.id);
+                setValue("abilities", {});
+              }}
+              size="small"
+              sx={{ minWidth: 200 }}
+            >
+              {ROLL_METHODS.map((m) => (
+                <MenuItem key={m.id} value={m.id}>
+                  {m.label}
+                </MenuItem>
+              ))}
+            </TextField>
+            {isDiceMethod(rollMethod) && (
+              <IconButton
+                onClick={() => abilityScoresRef.current?.rollAll()}
+                disabled={!rulesetAbilities.length || abilityRolling}
+                color="primary"
                 size="small"
-              />
-            );
-          })()}
-      </Stack>
-      {rulesetAbilities.length > 0 ? (
-        <AbilityScoresSection
-          ref={abilityScoresRef}
-          abilities={rulesetAbilities}
-          control={control}
-          onRollingChange={setAbilityRolling}
-          method={rollMethod}
-        />
-      ) : abilitiesError ? (
-        <LoadError what="Abilities" error={abilitiesError} />
-      ) : (
-        <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap" }}>
-          {Array.from({ length: 6 }, (_, i) => (
-            <Skeleton key={i} variant="rounded" height={100} sx={{ minWidth: 100, flex: "1 1 0" }} />
-          ))}
+                aria-label="Roll All Ability Scores"
+              >
+                <CasinoIcon />
+              </IconButton>
+            )}
+            {rollMethod === "point-buy" &&
+              (() => {
+                const scores = scoresOf(rulesetAbilities, watch("abilities"), rollMethod);
+                const spent = rulesetAbilities.reduce((sum, a) => sum + (POINT_BUY_COSTS[scores[a.id]] ?? 0), 0);
+                const remaining = POINT_BUY_TOTAL - spent;
+                return (
+                  <Chip
+                    label={`${remaining} / ${POINT_BUY_TOTAL} pts`}
+                    color={remaining < 0 ? "error" : remaining === 0 ? "success" : "default"}
+                    size="small"
+                  />
+                );
+              })()}
+          </Stack>
+          {rulesetAbilities.length > 0 ? (
+            <AbilityScoresSection
+              ref={abilityScoresRef}
+              abilities={rulesetAbilities}
+              control={control}
+              onRollingChange={setAbilityRolling}
+              method={rollMethod}
+            />
+          ) : abilitiesError ? (
+            <LoadError what="Abilities" error={abilitiesError} />
+          ) : (
+            <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap" }}>
+              {Array.from({ length: 6 }, (_, i) => (
+                <Skeleton key={i} variant="rounded" height={100} sx={{ minWidth: 100, flex: "1 1 0" }} />
+              ))}
+            </Stack>
+          )}
         </Stack>
-      )}
+      </Stack>
 
       {/* Physical Details */}
-      <Typography variant="h6" component="h3">
-        Physical Details
-      </Typography>
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-        <FormTextField
-          control={control}
-          name="age"
-          rules={wholeNumberRules(1)}
-          number
-          label="Age"
-          slotProps={{ htmlInput: { min: 1 } }}
-          fullWidth
-        />
-        <FormTextField control={control} name="height" label="Height" placeholder="e.g., 5 feet 8 inches" fullWidth />
-        <FormTextField control={control} name="weight" label="Weight" placeholder="e.g., 150 lbs, 68kg" fullWidth />
+      <Stack spacing={1}>
+        <SubsectionTitle>Physical Details</SubsectionTitle>
+        <Stack spacing={3}>
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+            <FormTextField
+              control={control}
+              name="age"
+              rules={wholeNumberRules(1)}
+              number
+              label="Age"
+              slotProps={{ htmlInput: { min: 1 } }}
+              fullWidth
+            />
+            <FormTextField
+              control={control}
+              name="height"
+              label="Height"
+              placeholder="e.g., 5 feet 8 inches"
+              fullWidth
+            />
+            <FormTextField control={control} name="weight" label="Weight" placeholder="e.g., 150 lbs, 68kg" fullWidth />
+          </Stack>
+        </Stack>
       </Stack>
 
       {/* Optional Details */}
-      <Typography variant="h6" component="h3">
-        Optional Details
-      </Typography>
-      <FormTextField control={control} name="deity" label="Deity" fullWidth />
-      <DescriptionField
-        control={control}
-        name="description"
-        placeholder="Character appearance, personality, or background…"
-      />
-      <FormTextField
-        control={control}
-        name="notes"
-        label="Notes"
-        multiline
-        minRows={3}
-        placeholder="Campaign notes, character development, reminders…"
-        fullWidth
-        sx={{ "& textarea": { resize: "vertical" } }}
-      />
+      <Stack spacing={1}>
+        <SubsectionTitle>Optional Details</SubsectionTitle>
+        <Stack spacing={3}>
+          <FormTextField control={control} name="deity" label="Deity" fullWidth />
+          <DescriptionField
+            control={control}
+            name="description"
+            placeholder="Character appearance, personality, or background…"
+          />
+          <FormTextField
+            control={control}
+            name="notes"
+            label="Notes"
+            multiline
+            minRows={3}
+            placeholder="Campaign notes, character development, reminders…"
+            fullWidth
+            sx={{ "& textarea": { resize: "vertical" } }}
+          />
+        </Stack>
+      </Stack>
     </CreateDialog>
   );
 }

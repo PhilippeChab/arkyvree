@@ -1,6 +1,7 @@
 import { Box, Stack, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 
+import { SubsectionTitle } from "@/client/src/components/common/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 
 import type { LevelReviewState } from "./levelUpFactory.ts";
@@ -43,10 +44,8 @@ export function LevelReview({ wizard, children }: LevelReviewProps) {
 
   return (
     // The review's own space under its last group, at the end of the wizard's scroll
-    <Box sx={{ pb: 3 }}>
-      <Typography component="h3" gutterBottom sx={{ typography: { xs: "h6", sm: "h5" } }}>
-        Review Changes
-      </Typography>
+    <Stack spacing={1} sx={{ pb: 3 }}>
+      <SubsectionTitle>Review Changes</SubsectionTitle>
       <Stack spacing={3}>
         {children}
         {selectedSkills.length > 0 && (
@@ -107,18 +106,16 @@ export function LevelReview({ wizard, children }: LevelReviewProps) {
           </ReviewGroup>
         )}
       </Stack>
-    </Box>
+    </Stack>
   );
 }
 
 /** A titled group of a level review ("Class Advancement", "New Feats"). */
 export function ReviewGroup({ title, children }: ReviewGroupProps) {
   return (
-    <Box>
-      <Typography variant="h6" component="h4" gutterBottom>
-        {title}
-      </Typography>
+    <Stack spacing={1}>
+      <SubsectionTitle component="h4">{title}</SubsectionTitle>
       {children}
-    </Box>
+    </Stack>
   );
 }

@@ -12,7 +12,7 @@ import {
 import { useMemo } from "react";
 
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
-import { BlankNote } from "@/client/src/components/common/index.ts";
+import { BlankNote, EmptyValue } from "@/client/src/components/common/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 
 import { GroupedSkillRows, SkillRow } from "./GroupedSkillRows.tsx";
@@ -76,8 +76,10 @@ export function SkillsSection({ skills }: Dnd35SkillsSectionProps) {
                     >
                       <TableCell align="center">{skill.rank || 0}</TableCell>
                       <TableCell align="center">{formatSigned(skill.ability)}</TableCell>
-                      <TableCell align="center">{skill.misc !== 0 ? formatSigned(skill.misc) : "—"}</TableCell>
-                      <TableCell align="center">{skill.weight ? `-${skill.weight}` : "—"}</TableCell>
+                      <TableCell align="center">
+                        {skill.misc !== 0 ? formatSigned(skill.misc) : <EmptyValue />}
+                      </TableCell>
+                      <TableCell align="center">{skill.weight ? `-${skill.weight}` : <EmptyValue />}</TableCell>
                       <TableCell align="center" sx={{ fontWeight: 600 }}>
                         {formatSigned(skill.total)}
                       </TableCell>

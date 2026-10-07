@@ -13,6 +13,7 @@ import {
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 
+import { EmptyValue } from "@/client/src/components/common/index.ts";
 import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { capitalize } from "@/shared/text.ts";
 
@@ -77,16 +78,18 @@ export function EquipmentTable<T extends EquipmentTableRow>({
                   )}
                 </TableCell>
                 <TableCell align="center" sx={NO_WRAP_SX}>
-                  <Typography variant="body2">{formatSlotDisplay(entry)}</Typography>
+                  <Typography variant="body2">{formatSlotDisplay(entry) ?? <EmptyValue />}</Typography>
                 </TableCell>
                 <TableCell align="center">{entry.quantity || 1}</TableCell>
                 <TableCell align="center" sx={NO_WRAP_SX}>
-                  {formatWeight(entry.weight) ?? "—"}
+                  {formatWeight(entry.weight) ?? <EmptyValue />}
                 </TableCell>
                 <TableCell align="center" sx={NO_WRAP_SX}>
-                  {formatCost(entry.costGp) ?? "—"}
+                  {formatCost(entry.costGp) ?? <EmptyValue />}
                 </TableCell>
-                <TableCell sx={{ fontSize: "0.875rem", minWidth: 220 }}>{entry.description || "—"}</TableCell>
+                <TableCell sx={{ fontSize: "0.875rem", minWidth: 220 }}>
+                  {entry.description || <EmptyValue />}
+                </TableCell>
                 {renderActions && <TableCell align="center">{renderActions(entry)}</TableCell>}
               </TableRow>
             ))}

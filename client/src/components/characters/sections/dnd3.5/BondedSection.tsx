@@ -1,6 +1,7 @@
-import { Box, Link as MuiLink, Stack, Typography } from "@mui/material";
+import { Box, Link as MuiLink, Stack } from "@mui/material";
 import { Link } from "react-router-dom";
 
+import { EntryTitle, SubsectionTitle } from "@/client/src/components/common/index.ts";
 import { sortAbilities } from "@/client/src/lib/abilityOrder.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import { computeAbilityModifier } from "@/shared/dnd3.5/abilities.ts";
@@ -33,15 +34,9 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
     .map((feat) => feat.name)
     .sort();
 
-  const nameSx = {
-    fontWeight: 600,
-    color: "primary.main",
-    typography: { xs: "body1", sm: "h6" },
-    width: "fit-content",
-  };
   // A heading under its feat's: the creature's name, a link to its sheet where it has one
   const nameNode = (
-    <Typography component="h4" sx={nameSx}>
+    <EntryTitle component="h4" sx={{ width: "fit-content" }}>
       {linkable ? (
         <MuiLink component={Link} to={`/characters/${bonded.id}`} underline="hover">
           {bonded.name}
@@ -49,7 +44,7 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
       ) : (
         bonded.name
       )}
-    </Typography>
+    </EntryTitle>
   );
 
   return (
@@ -57,10 +52,8 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
       <Stack sx={{ minWidth: 0 }}>{nameNode}</Stack>
 
       <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
-        <Stack spacing={1.5} sx={{ flex: "0 0 auto" }}>
-          <Typography component="h5" sx={{ color: "text.secondary" }}>
-            Abilities
-          </Typography>
+        <Stack spacing={1} sx={{ flex: "0 0 auto" }}>
+          <SubsectionTitle component="h5">Abilities</SubsectionTitle>
           <Box
             sx={{
               display: "grid",
@@ -77,10 +70,8 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
         </Stack>
 
         <Stack spacing={3} sx={{ flex: 1, minWidth: { md: 260 } }}>
-          <Stack spacing={1.5}>
-            <Typography component="h5" sx={{ color: "text.secondary" }}>
-              Combat &amp; Saves
-            </Typography>
+          <Stack spacing={1}>
+            <SubsectionTitle component="h5">Combat &amp; Saves</SubsectionTitle>
             <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", columnGap: 2, rowGap: 1.5 }}>
               <Stack spacing={1.5}>
                 <StatField label="HP" value={combat?.hp?.total ?? 0} />
@@ -98,9 +89,7 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
 
           {featNames.length > 0 && (
             <Stack spacing={1}>
-              <Typography component="h5" sx={{ color: "text.secondary" }}>
-                Features
-              </Typography>
+              <SubsectionTitle component="h5">Features</SubsectionTitle>
               <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap" }}>
                 {featNames.map((n) => (
                   <Box

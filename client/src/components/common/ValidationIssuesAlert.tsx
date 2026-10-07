@@ -1,8 +1,9 @@
-import { Button, Stack, Typography } from "@mui/material";
+import { Button, Stack } from "@mui/material";
 
 import type { ApiValidationIssue } from "@/client/src/services/ApiError.ts";
 
 import { AnimatedAlert } from "./AnimatedAlert.tsx";
+import { SubsectionTitle } from "./SubsectionTitle.tsx";
 import { ValidationIssueList } from "./ValidationIssueList.tsx";
 
 interface ValidationIssuesAlertProps {
@@ -53,10 +54,8 @@ export function ValidationIssuesAlert({
       gutter={gutter}
       sx={{ "& .MuiAlert-action": { alignItems: "flex-start", pt: 0.5 } }}
     >
-      <Stack spacing={0.5}>
-        <Typography variant="subtitle2" component="h3">
-          {title}
-        </Typography>
+      <Stack spacing={1}>
+        <SubsectionTitle>{title}</SubsectionTitle>
         <ValidationIssueList issues={issues} />
       </Stack>
     </AnimatedAlert>

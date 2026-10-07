@@ -7,6 +7,7 @@ import {
   DeleteDialog,
   DescriptionField,
   EditDialog,
+  EmptyValue,
   SectionContent,
 } from "@/client/src/components/common/index.ts";
 import { PropertyTypeInput, PropertyValueInput } from "@/client/src/components/customization/index.ts";
@@ -145,9 +146,7 @@ export function PropertiesSection({
         return property.type ? (
           <Chip label={property.type} size="small" color="primary" variant="outlined" />
         ) : (
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            —
-          </Typography>
+          <EmptyValue />
         );
       case "description":
         return (

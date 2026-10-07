@@ -22,6 +22,7 @@ import {
   ExpandArrow,
   LoadError,
   NextPageSpinner,
+  SubsectionTitle,
   ToggleLabel,
 } from "@/client/src/components/common/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
@@ -62,11 +63,11 @@ function AutoGrantedFeats({ feats, defaultCollapsed }: AutoGrantedFeatsProps) {
   const [open, setOpen] = useState(!defaultCollapsed);
   return (
     <Box>
-      <Typography variant="subtitle1" component="h4">
+      <SubsectionTitle component="h4">
         <ToggleLabel open={open} onToggle={() => setOpen(!open)}>
           Auto-Granted Feats ({feats.length})
         </ToggleLabel>
-      </Typography>
+      </SubsectionTitle>
       <Collapse in={open}>
         <List dense>
           {feats.map((feat, i) => (
@@ -216,10 +217,8 @@ export function LevelUpFeatsStep({
 
   return (
     <Stack spacing={3} sx={{ flex: 1, minHeight: 0 }}>
-      <Box sx={{ flexShrink: 0 }}>
-        <Typography variant="h6" component="h3" gutterBottom>
-          Select Feats by Aptitude
-        </Typography>
+      <Stack spacing={1} sx={{ flexShrink: 0 }}>
+        <SubsectionTitle>Select Feats by Aptitude</SubsectionTitle>
 
         <Stack spacing={1}>
           {featData.autoGrantedFeats.length > 0 && (
@@ -256,7 +255,7 @@ export function LevelUpFeatsStep({
             </Stack>
           )}
         </Stack>
-      </Box>
+      </Stack>
 
       {/* Feat Selection Interface for Selected Aptitude */}
       {selectedAptitude &&
@@ -268,9 +267,9 @@ export function LevelUpFeatsStep({
             <Stack spacing={2} sx={{ flex: 1, minHeight: 0 }}>
               {/* Selected Feats (always reserve space) */}
               <Stack spacing={1} sx={{ flexShrink: 0 }}>
-                <Typography variant="subtitle2" component="h4">
+                <SubsectionTitle component="h4">
                   Selected {currentPool?.name} Feats ({currentPoolFeats.length}/{currentPool?.available || 0}):
-                </Typography>
+                </SubsectionTitle>
                 <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
                   {currentPoolFeats.length > 0
                     ? currentPoolFeats.map((feat) => (

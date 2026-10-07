@@ -12,13 +12,19 @@ import {
   Paper,
   Stack,
   Tooltip,
-  Typography,
 } from "@mui/material";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 import { Link } from "react-router-dom";
 
-import { BlankNote, DialogFooter, DiceSpinner, LoadError, Modal } from "@/client/src/components/common/index.ts";
+import {
+  BlankNote,
+  DialogFooter,
+  DiceSpinner,
+  LoadError,
+  Modal,
+  SubsectionTitle,
+} from "@/client/src/components/common/index.ts";
 import { CompareArrowsIcon, RestoreIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -114,9 +120,7 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
             {[...grouped.entries()].map(([entityType, items]) => (
               <Paper key={entityType} variant="outlined" sx={{ overflow: "hidden" }}>
                 <Stack direction="row" spacing={1} sx={{ px: 2, py: 1, bgcolor: "action.hover", alignItems: "center" }}>
-                  <Typography variant="subtitle2" component="h3" sx={{ fontWeight: 600 }}>
-                    {entityTypeLabel(entityType, baseRules, true)}
-                  </Typography>
+                  <SubsectionTitle>{entityTypeLabel(entityType, baseRules, true)}</SubsectionTitle>
                   <Chip label={items.length} size="small" sx={{ height: 20, fontSize: "0.75rem" }} />
                 </Stack>
                 <List dense disablePadding>

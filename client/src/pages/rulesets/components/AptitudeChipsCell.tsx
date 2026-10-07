@@ -1,4 +1,6 @@
-import { Chip, Stack, Typography } from "@mui/material";
+import { Chip, Stack } from "@mui/material";
+
+import { EmptyValue } from "@/client/src/components/common/index.ts";
 
 interface AptitudeChipsCellProps {
   links: AptitudeLink[] | null | undefined;
@@ -17,13 +19,8 @@ function byListName(a: AptitudeLink, b: AptitudeLink) {
 
 /** A section table's aptitudes column: a chip per aptitude, by name, or a dash. */
 export function AptitudeChipsCell({ links }: AptitudeChipsCellProps) {
-  if (!links?.length) {
-    return (
-      <Typography variant="body2" sx={{ color: "text.secondary" }}>
-        —
-      </Typography>
-    );
-  }
+  if (!links?.length) return <EmptyValue />;
+
   return (
     <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
       {links.toSorted(byListName).map((link) => (

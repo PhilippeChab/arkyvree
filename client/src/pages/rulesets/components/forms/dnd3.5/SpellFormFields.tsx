@@ -1,7 +1,13 @@
 import { Autocomplete, Chip, Stack, TextField, Typography } from "@mui/material";
 import { Controller, useController, type UseFormReturn } from "react-hook-form";
 
-import { DescriptionField, FormTextField, NameField, SelectField } from "@/client/src/components/common/index.ts";
+import {
+  DescriptionField,
+  FormTextField,
+  NameField,
+  SelectField,
+  SubsectionTitle,
+} from "@/client/src/components/common/index.ts";
 import { type Aptitude, AptitudesAutocomplete } from "@/client/src/components/customization/index.ts";
 import type { RulesetSave } from "@/client/src/hooks/index.ts";
 import { NAME_RULES } from "@/client/src/lib/validation.ts";
@@ -200,10 +206,8 @@ export function SpellFormFields({
         }}
       />
       {selectedAptitudes.length > 0 && (
-        <Stack spacing={1.5}>
-          <Typography variant="subtitle2" component="h3" sx={{ color: "text.secondary" }}>
-            Aptitude Settings
-          </Typography>
+        <Stack spacing={1}>
+          <SubsectionTitle>Aptitude Settings</SubsectionTitle>
           {selectedAptitudes.map((apt) => {
             return (
               <Stack key={apt.id} direction="row" spacing={1.5} sx={{ alignItems: "center" }}>

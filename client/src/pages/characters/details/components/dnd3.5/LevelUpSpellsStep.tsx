@@ -1,4 +1,4 @@
-import { Box, Chip, List, ListItemButton, ListItemText, Skeleton, Stack, TextField, Typography } from "@mui/material";
+import { Chip, List, ListItemButton, ListItemText, Skeleton, Stack, TextField, Typography } from "@mui/material";
 import { useController } from "react-hook-form";
 
 import {
@@ -7,6 +7,7 @@ import {
   DiceSpinner,
   LoadError,
   NextPageSpinner,
+  SubsectionTitle,
 } from "@/client/src/components/common/index.ts";
 
 import { type PowerAptitudePool, withoutPick } from "./levelUp/index.ts";
@@ -68,17 +69,13 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
 
   return (
     <Stack spacing={3} sx={{ flex: 1, minHeight: 0 }}>
-      <Box sx={{ flexShrink: 0 }}>
-        <Typography variant="h6" component="h3" gutterBottom>
-          Select Spells by Aptitude
-        </Typography>
+      <Stack spacing={1} sx={{ flexShrink: 0 }}>
+        <SubsectionTitle>Select Spells by Aptitude</SubsectionTitle>
 
         <Stack spacing={1}>
           {autoGrantedFree.length > 0 && (
-            <Stack spacing={0.5}>
-              <Typography variant="subtitle1" component="h4">
-                Auto-Granted Class Abilities
-              </Typography>
+            <Stack spacing={1}>
+              <SubsectionTitle component="h4">Auto-Granted Class Abilities</SubsectionTitle>
               <List dense>
                 {autoGrantedFree.map((power) => (
                   <ListItemText key={power.id} primary={power.name} />
@@ -88,10 +85,8 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
           )}
 
           {autoGrantedNonFree.length > 0 && (
-            <Stack spacing={0.5}>
-              <Typography variant="subtitle1" component="h4">
-                Auto-Granted Spells
-              </Typography>
+            <Stack spacing={1}>
+              <SubsectionTitle component="h4">Auto-Granted Spells</SubsectionTitle>
               <List dense>
                 {autoGrantedNonFree.map((power) => (
                   <ListItemText key={power.id} primary={power.name} />
@@ -152,7 +147,7 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
             </Stack>
           )}
         </Stack>
-      </Box>
+      </Stack>
       {/* Spell Selection Interface for Selected Aptitude */}
       {selectedPowerAptitude &&
         (() => {
@@ -183,10 +178,10 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
             <Stack spacing={2} sx={{ flex: 1, minHeight: 0 }}>
               {/* Selected Spells (always reserve space) */}
               <Stack spacing={1} sx={{ flexShrink: 0 }}>
-                <Typography variant="subtitle2" component="h4">
+                <SubsectionTitle component="h4">
                   Selected {currentPool?.name}
                   {levelLabel ? ` ${levelLabel}` : ""} Spells ({levelPowers.length}/{poolAvailable}):
-                </Typography>
+                </SubsectionTitle>
                 <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
                   {levelPowers.length > 0
                     ? levelPowers.map((power) => (

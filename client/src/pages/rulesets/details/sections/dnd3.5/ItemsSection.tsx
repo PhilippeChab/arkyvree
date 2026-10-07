@@ -3,7 +3,13 @@ import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from 
 import { parseResponse } from "hono/client";
 import { useCallback, useState } from "react";
 
-import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
+import {
+  CreateDialog,
+  EmptyValue,
+  LoadMoreButton,
+  SearchBar,
+  SectionContent,
+} from "@/client/src/components/common/index.ts";
 import { ItemsIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDialogState, useFormWith, useSearchText } from "@/client/src/hooks/index.ts";
@@ -168,13 +174,13 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       case "type":
         return (
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            {item.type || "—"}
+            {item.type || <EmptyValue />}
           </Typography>
         );
       case "cost":
-        return <Typography variant="body2">{formatCost(item.costGp) ?? "—"}</Typography>;
+        return <Typography variant="body2">{formatCost(item.costGp) ?? <EmptyValue />}</Typography>;
       case "weight":
-        return <Typography variant="body2">{formatWeight(item.weight) ?? "—"}</Typography>;
+        return <Typography variant="body2">{formatWeight(item.weight) ?? <EmptyValue />}</Typography>;
       case "description":
         return <DescriptionCell text={item.description} />;
       default:

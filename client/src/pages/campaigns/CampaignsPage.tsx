@@ -78,7 +78,7 @@ export default function CampaignsPage() {
   return (
     <PageTransition>
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Stack spacing={3}>
+        <Stack spacing={4}>
           <PageHeader
             variant="tinted"
             title="Campaigns"

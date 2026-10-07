@@ -3,7 +3,13 @@ import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/re
 import { parseResponse } from "hono/client";
 import { useCallback } from "react";
 
-import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
+import {
+  CreateDialog,
+  EmptyValue,
+  LoadMoreButton,
+  SearchBar,
+  SectionContent,
+} from "@/client/src/components/common/index.ts";
 import { LanguagesIcon } from "@/client/src/components/icons/index.ts";
 import { type RulesetLanguage, useSearchText } from "@/client/src/hooks/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
@@ -72,7 +78,7 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
       case "name":
         return language.name;
       case "type":
-        return language.type || "—";
+        return language.type || <EmptyValue />;
       case "description":
         return <DescriptionCell text={language.description} />;
       default:

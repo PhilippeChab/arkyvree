@@ -17,7 +17,14 @@ import {
 } from "@mui/material";
 import { Fragment, type ReactNode, useMemo } from "react";
 
-import { CardTitle, CLICKABLE_SX, ExpandArrow, toggleProps } from "@/client/src/components/common/index.ts";
+import {
+  CardTitle,
+  CLICKABLE_SX,
+  EmptyValue,
+  ExpandArrow,
+  SubsectionTitle,
+  toggleProps,
+} from "@/client/src/components/common/index.ts";
 import { ExpandMoreIcon } from "@/client/src/components/icons/index.ts";
 import { useToggleSet } from "@/client/src/hooks/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
@@ -73,7 +80,7 @@ interface RuleCellsRowProps {
 interface RuleGroup {
   key: string;
   rules: RuleCells[];
-  source: string;
+  source: ReactNode;
 }
 
 interface SkippedModifierTableProps {
@@ -90,9 +97,9 @@ function DiagnosticsGroup({ label, count, children }: DiagnosticsGroupProps) {
   return (
     <Accordion disableGutters sx={ACCORDION_SX}>
       <AccordionSummary expandIcon={<ExpandMoreIcon fontSize="small" />} sx={SUMMARY_SX}>
-        <Typography variant="subtitle2" component="h4">
+        <SubsectionTitle component="h4">
           {label} ({count})
-        </Typography>
+        </SubsectionTitle>
       </AccordionSummary>
       <AccordionDetails sx={{ px: 0, pt: 1 }}>
         <TableContainer>
@@ -191,7 +198,7 @@ function InvalidRequirementTable({ items }: InvalidRequirementTableProps) {
           <TableRow key={i}>
             <TableCell sx={TABLE_CELL_SX}>{item.sourceName ?? item.requirement.entityType}</TableCell>
             <TableCell sx={TABLE_CELL_SX}>{item.requirement.level}</TableCell>
-            <TableCell sx={TABLE_CELL_SX}>{item.requirement.target || "—"}</TableCell>
+            <TableCell sx={TABLE_CELL_SX}>{item.requirement.target || <EmptyValue />}</TableCell>
             <TableCell sx={TABLE_CELL_SX}>{item.warning}</TableCell>
           </TableRow>
         ))}
@@ -224,13 +231,8 @@ function RequirementTable({ groups, label }: RequirementTableProps) {
       lastColumn="Chaining"
       groups={groups.map((group, index) => ({
         key: String(index),
-        source: group.sourceName ?? group.sourceType ?? "—",
-        rules: group.requirements.map((req): RuleCells => [
-          req.target || "—",
-          req.operator || "—",
-          req.value || "—",
-          req.chainingOperator || "—",
-        ]),
+        source: group.sourceName ?? group.sourceType ?? <EmptyValue />,
+        rules: group.requirements.map((req): RuleCells => [req.target, req.operator, req.value, req.chainingOperator]),
       }))}
     />
   );
@@ -240,14 +242,19 @@ function RuleCellsRow({ cells }: RuleCellsRowProps) {
   const [target, ...rest] = cells;
   return (
     <>
-      <TableCell sx={TABLE_CELL_SX}>{target}</TableCell>
+      <TableCell sx={TABLE_CELL_SX}>{shownCell(target)}</TableCell>
       {rest.map((cell, i) => (
         <TableCell key={i} sx={TABLE_CELL_SX} align="center">
-          {cell}
+          {shownCell(cell)}
         </TableCell>
       ))}
     </>
   );
+}
+
+/** A rule's cell, a dash where it has nothing (a requirement without a chaining operator); a 0 is shown. */
+function shownCell(cell: ReactNode) {
+  return cell === "" || cell == null ? <EmptyValue /> : cell;
 }
 
 function SkippedModifierTable({ items }: SkippedModifierTableProps) {
@@ -286,9 +293,7 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
             {/* Validation Issues */}
             {validation.issues.length > 0 && (
               <Stack spacing={1}>
-                <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 600 }}>
-                  Issues
-                </Typography>
+                <SubsectionTitle>Issues</SubsectionTitle>
                 <Box>
                   {validation.issues.map((issue, i) => (
                     <Typography key={i} variant="body2" sx={{ pl: 1, py: 0.25 }}>
@@ -303,9 +308,7 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
             <Box>
               {/* Its tables follow as one list of accordions, the space above them the title's */}
               <Stack direction="row" spacing={2} sx={{ alignItems: "center", pb: 1 }}>
-                <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 600 }}>
-                  Requirements
-                </Typography>
+                <SubsectionTitle>Requirements</SubsectionTitle>
                 <Stack direction="row" spacing={1}>
                   <Chip
                     label={`Fulfilled: ${requirements.fulfilledRequirementGroups.length}`}
@@ -338,9 +341,7 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
             <Box>
               {/* Its tables follow as one list of accordions, the space above them the title's */}
               <Stack direction="row" spacing={2} sx={{ alignItems: "center", pb: 1 }}>
-                <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 600 }}>
-                  Modifiers
-                </Typography>
+                <SubsectionTitle>Modifiers</SubsectionTitle>
                 <Stack direction="row" sx={{ flexWrap: "wrap", columnGap: 1.5, rowGap: 0.5 }}>
                   <Chip
                     label={`Applied: ${modifiers.appliedModifiers.length}`}
