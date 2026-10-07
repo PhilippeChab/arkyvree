@@ -1,7 +1,6 @@
 import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
 import { type BaseScraper } from "@/database/packages/dnd35-from-parser/tools/scraper/BaseScraper.ts";
-import { buildListingUrl } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
-import { parseSpellDetailHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/spell.ts";
+import { SpellPage } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/SpellPage.ts";
 import { type SpellReference } from "@/database/packages/dnd35-from-parser/tools/types/spells.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
@@ -12,7 +11,7 @@ export function ScrapesSpells<B extends Constructor<BaseScraper>>(Base: B) {
     async scrapeSpell(url: string) {
       console.log(`Fetching ${url}...`);
       const html = await this.http.fetchHtml(url);
-      const spell = parseSpellDetailHtml(html, url);
+      const spell = new SpellPage(html, url).read();
       if (!spell) {
         console.error(`Could not parse spell from ${url}`);
         process.exit(1);
@@ -24,17 +23,14 @@ export function ScrapesSpells<B extends Constructor<BaseScraper>>(Base: B) {
 
     /** Every spell of the book. */
     async scrapeSpells() {
-      const listingUrl = buildListingUrl("spells", this.book);
-      console.log(`Discovering spells from ${listingUrl}...`);
-
-      const spellUrls = await this.discover(listingUrl, "spells");
+      const { entries: spellUrls, url: listingUrl } = await this.listing("spells");
 
       console.log(`Found ${spellUrls.length} spells, fetching detail pages...`);
 
       const raw: SpellReference["raw"] = [];
       for (const entry of spellUrls) {
         const html = await this.http.fetchHtml(entry.url);
-        const spell = parseSpellDetailHtml(html, entry.url);
+        const spell = new SpellPage(html, entry.url).read();
         if (spell) raw.push(spell);
         else console.warn(`  SKIP: Could not parse ${entry.name} at ${entry.url}`);
       }
@@ -46,18 +42,7 @@ export function ScrapesSpells<B extends Constructor<BaseScraper>>(Base: B) {
 
       for (const [school, count] of [...schools.entries()].sort()) console.log(`  ${school}: ${count}`);
 
-      const outPath = References.path(this.book, "spell");
-
-      this.saveReference(
-        outPath,
-        {
-          type: "spell",
-          sourceUrl: listingUrl,
-          book: this.book,
-          scrapedAt: new Date().toISOString(),
-        },
-        raw,
-      );
+      this.saveReference(References.path(this.book, "spell"), this.meta("spell", { sourceUrl: listingUrl }), raw);
     }
   }
   return ScrapingSpells;

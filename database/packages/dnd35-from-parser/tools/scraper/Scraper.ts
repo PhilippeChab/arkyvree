@@ -11,7 +11,7 @@ import { ScrapesSpells } from "./concerns/ScrapesSpells.ts";
 
 /**
  * Scrapes a book's pages into its references: a concern per kind of reference (`concerns/`), each reading the pages
- * with its parser (`parsers/`) and saving what it read, the reference's overrides kept.
+ * with its page (`pages/`) and saving what it read, the reference's overrides kept.
  */
 export class Scraper extends include(
   BaseScraper,

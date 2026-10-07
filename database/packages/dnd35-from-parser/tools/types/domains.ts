@@ -11,6 +11,9 @@ type DomainFeatPool = {
   namePrefix: string;
 };
 
+/** A domain version of the domain index (dnd.arkalseif.info): its page's slug ("celerity-cd") and its label ("Celerity (CD)"). */
+export type DomainIndexEntry = { label: string; slug: string };
+
 export type DomainReference = {
   _meta: ScrapedMeta<"domain">;
 
@@ -44,3 +47,18 @@ export type DomainReference = {
     spells: { level: number; name: string }[];
   }[];
 };
+
+/**
+ * A domain version, as its page gives it: its label, its book (the rulebook's slug, "complete-divine--56") and page,
+ * its granted power, its spells.
+ */
+export type DomainVersion = {
+  bookSlug?: string;
+  description: string;
+  label: string;
+  page?: number;
+  spells: DomainVersionSpell[];
+};
+
+/** A spell a domain version's page lists: its page (`<book>/<spell>`), its name and its edition ("Core (3.5)"). */
+export type DomainVersionSpell = { edition: string; name: string; path: string };

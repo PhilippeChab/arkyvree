@@ -1,7 +1,6 @@
 import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
-import { type BaseScraper } from "@/database/packages/dnd35-from-parser/tools/scraper/BaseScraper.ts";
-import { BASE_URL } from "@/database/packages/dnd35-from-parser/tools/scraper/books.ts";
-import { parseClassHtml } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/class/classPage.ts";
+import { BaseScraper } from "@/database/packages/dnd35-from-parser/tools/scraper/BaseScraper.ts";
+import { ClassPage } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/class/ClassPage.ts";
 import { toCamelCase } from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
@@ -20,7 +19,7 @@ export function ScrapesClasses<B extends Constructor<BaseScraper>>(Base: B) {
         if (err instanceof Error && err.message.includes("404")) {
           const slugMatch = url.match(/\/classes\/[^/]+\/([^/]+)\/?$/);
           if (slugMatch) {
-            const fallbackUrl = `${BASE_URL}/classes/${slugMatch[1]}/`;
+            const fallbackUrl = `${BaseScraper.site}/classes/${slugMatch[1]}/`;
             console.log(`  404 — trying fallback: ${fallbackUrl}`);
             html = await this.http.fetchHtml(fallbackUrl);
             url = fallbackUrl; // Update for _meta.sourceUrl
@@ -33,7 +32,7 @@ export function ScrapesClasses<B extends Constructor<BaseScraper>>(Base: B) {
       }
       console.log(`Parsing class HTML (${html.length} bytes)...`);
 
-      const { _meta, ...raw } = parseClassHtml(html, url, this.book);
+      const raw = new ClassPage(html).read();
 
       console.log(`Detected class: ${raw.name}`);
       console.log(`  Levels: ${raw.progression.length}`);
@@ -42,7 +41,7 @@ export function ScrapesClasses<B extends Constructor<BaseScraper>>(Base: B) {
       const slug = toCamelCase(raw.name);
       const outPath = References.classPath(this.book, slug);
 
-      const { detected } = this.saveResolvedReference(outPath, _meta, raw);
+      const { detected } = this.saveResolvedReference(outPath, this.meta("class", { sourceUrl: url }), raw);
       console.log(`  BAB: ${detected.bab}`);
       console.log(`  Saves: fort=${detected.saves.fortitude} ref=${detected.saves.reflex} will=${detected.saves.will}`);
       if (detected.casterLevelAdvancement) {
@@ -54,13 +53,8 @@ export function ScrapesClasses<B extends Constructor<BaseScraper>>(Base: B) {
 
     /** Every class of the book. */
     async scrapeClasses() {
-      // dndtools.net doesn't support /classes/{book}/ URLs — use the full listing
-      // and filter by book slug in the class URL path
-      const bookSlug = this.bookSlug();
-      const listingUrl = `${BASE_URL}/classes/`;
-      console.log(`Discovering classes from ${listingUrl} (filtering for ${bookSlug})...`);
-
-      const classUrls = await this.discover(listingUrl, "classes", bookSlug);
+      // dndtools.net has no /classes/{book}/ listing: every book's classes are listed together
+      const { entries: classUrls } = await this.listing("classes");
 
       console.log(`Found ${classUrls.length} classes`);
 

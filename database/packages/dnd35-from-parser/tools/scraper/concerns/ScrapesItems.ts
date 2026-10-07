@@ -1,10 +1,6 @@
 import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
 import { type BaseScraper } from "@/database/packages/dnd35-from-parser/tools/scraper/BaseScraper.ts";
-import {
-  parseArmorHtml,
-  parseGoodsHtml,
-  parseWeaponsHtml,
-} from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/item.ts";
+import { EquipmentPage } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/EquipmentPage.ts";
 import { type ItemReference } from "@/database/packages/dnd35-from-parser/tools/types/items.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
@@ -29,15 +25,15 @@ export function ScrapesItems<B extends Constructor<BaseScraper>>(Base: B) {
       ]);
 
       console.log(`Parsing weapons (${weaponsHtml.length} bytes)...`);
-      const rawWeapons = parseWeaponsHtml(weaponsHtml);
+      const rawWeapons = new EquipmentPage(weaponsHtml).weapons();
       console.log(`  Found ${rawWeapons.length} weapons`);
 
       console.log(`Parsing armor (${armorHtml.length} bytes)...`);
-      const rawArmor = parseArmorHtml(armorHtml);
+      const rawArmor = new EquipmentPage(armorHtml).armor();
       console.log(`  Found ${rawArmor.length} armor/shield entries`);
 
       console.log(`Parsing goods (${goodsHtml.length} bytes)...`);
-      const rawGoods = parseGoodsHtml(goodsHtml);
+      const rawGoods = new EquipmentPage(goodsHtml).goods();
       console.log(`  Found ${rawGoods.length} goods`);
 
       const raw: ItemReference["raw"] = {
@@ -48,11 +44,7 @@ export function ScrapesItems<B extends Constructor<BaseScraper>>(Base: B) {
 
       const outPath = References.path(this.book, "item");
 
-      const { detected } = this.saveResolvedReference(
-        outPath,
-        { type: "item", sourceUrls: D20SRD_URLS, book: this.book, scrapedAt: new Date().toISOString() },
-        raw,
-      );
+      const { detected } = this.saveResolvedReference(outPath, this.meta("item", { sourceUrls: D20SRD_URLS }), raw);
       console.log(`\nDetection results:`);
       const matchedWeapons = Object.values(detected.weapons).filter((w) => w.generatorName).length;
       const matchedArmor = Object.values(detected.armor).filter((a) => a.generatorName).length;

@@ -1,14 +1,6 @@
 import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
 import { type BaseScraper } from "@/database/packages/dnd35-from-parser/tools/scraper/BaseScraper.ts";
-import {
-  parseMagicArmorHtml,
-  parseMagicShieldsHtml,
-  parseMagicWeaponsHtml,
-  parseRingsHtml,
-  parseRodsHtml,
-  parseStaffsHtml,
-  parseWondrousItemsHtml,
-} from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/magicItem.ts";
+import { MagicItemPage } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/MagicItemPage.ts";
 import { type MagicItemReference } from "@/database/packages/dnd35-from-parser/tools/types/magicItems.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
@@ -40,30 +32,30 @@ export function ScrapesMagicItems<B extends Constructor<BaseScraper>>(Base: B) {
 
       // magicArmor.htm contains both specific armors and specific shields
       console.log(`Parsing specific armors (${armorHtml.length} bytes)...`);
-      const rawArmor = parseMagicArmorHtml(armorHtml);
+      const rawArmor = new MagicItemPage(armorHtml).items("Specific Armors", "specificArmor");
       console.log(`  Found ${rawArmor.length} specific armors`);
 
-      const rawShields = parseMagicShieldsHtml(armorHtml);
+      const rawShields = new MagicItemPage(armorHtml).items("Specific Shields", "specificShield");
       console.log(`  Found ${rawShields.length} specific shields`);
 
       console.log(`Parsing specific weapons (${weaponsHtml.length} bytes)...`);
-      const rawWeapons = parseMagicWeaponsHtml(weaponsHtml);
+      const rawWeapons = new MagicItemPage(weaponsHtml).items("Specific Weapons", "specificWeapon");
       console.log(`  Found ${rawWeapons.length} specific weapons`);
 
       console.log(`Parsing wondrous items (${wondrousHtml.length} bytes)...`);
-      const rawWondrous = parseWondrousItemsHtml(wondrousHtml);
+      const rawWondrous = new MagicItemPage(wondrousHtml).wondrousItems();
       console.log(`  Found ${rawWondrous.length} wondrous items`);
 
       console.log(`Parsing rings (${ringsHtml.length} bytes)...`);
-      const rawRings = parseRingsHtml(ringsHtml);
+      const rawRings = new MagicItemPage(ringsHtml).items("Ring Descriptions", "ring");
       console.log(`  Found ${rawRings.length} rings`);
 
       console.log(`Parsing rods (${rodsHtml.length} bytes)...`);
-      const rawRods = parseRodsHtml(rodsHtml);
+      const rawRods = new MagicItemPage(rodsHtml).items("Rod Descriptions", "rod");
       console.log(`  Found ${rawRods.length} rods`);
 
       console.log(`Parsing staffs (${staffsHtml.length} bytes)...`);
-      const rawStaffs = parseStaffsHtml(staffsHtml);
+      const rawStaffs = new MagicItemPage(staffsHtml).items("Staff Descriptions", "staff");
       console.log(`  Found ${rawStaffs.length} staffs`);
 
       const raw: MagicItemReference["raw"] = [
@@ -86,11 +78,7 @@ export function ScrapesMagicItems<B extends Constructor<BaseScraper>>(Base: B) {
       console.log(`\nDetection results:`);
       for (const [cat, count] of Object.entries(categoryCounts).sort()) console.log(`  ${cat}: ${count}`);
 
-      this.saveReference(
-        outPath,
-        { type: "magicItem", sourceUrls: D20SRD_MAGIC_URLS, book: this.book, scrapedAt: new Date().toISOString() },
-        raw,
-      );
+      this.saveReference(outPath, this.meta("magicItem", { sourceUrls: D20SRD_MAGIC_URLS }), raw);
     }
   }
   return ScrapingMagicItems;

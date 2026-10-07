@@ -1,5 +1,5 @@
 /**
- * Class features — driven by the advancement table's Special column
+ * A class's features, driven by its advancement table's Special column
  *
  * Strategy:
  *   1. Collect unique feature names from the Special column (authoritative list)
@@ -11,12 +11,10 @@
 import type * as cheerio from "cheerio";
 import { type AnyNode } from "domhandler";
 
-import { findSectionElements, getTagName } from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/page.ts";
+import { Page } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/Page.ts";
+import { capitalizeTitle } from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import { type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
-
-import { capitalizeTitle } from "./capitalizeTitle.ts";
-import { findSectionHeader } from "./sections.ts";
 
 /** A feature's type (Ex, Su, Sp), when its heading gives one, and its description. */
 type FeatureDescription = { desc: string; type?: string };
@@ -237,21 +235,39 @@ function subOptionRows(
 }
 
 /**
- * The descriptions a class's page gives its features, by their normalized name, read from its Class Features section
- * element by element: an <h4> heading, a <p><strong>Name:</strong> desc, a plain "Name:" paragraph, a paragraph
- * continuing the feature before it, a table of a feature's sub-options.
+ * A class's features, as its page describes them: the names its advancement's Special column gives (and the implicit
+ * ones), each with the description its Class Features section gives it, read element by element (an <h4> heading, a
+ * <p><strong>Name:</strong> desc, a plain "Name:" paragraph, a paragraph continuing the feature before it, a table of
+ * a feature's sub-options), and the sub-options of the page's tables.
  */
-class FeatureDescriptions {
+export class ClassFeatures {
   constructor(
     private readonly $: cheerio.CheerioAPI,
-    private readonly featureNames: Set<string>,
-  ) {}
+    private readonly progression: ClassReference["raw"]["progression"],
+  ) {
+    this.featureNames = knownFeatureNames(progression);
+  }
 
   /** Each feature's type and description, by its normalized name. */
-  readonly byKey = new Map<string, FeatureDescription>();
+  private readonly byKey = new Map<string, FeatureDescription>();
+
+  /** The names the class's features go by, normalized (`knownFeatureNames`). */
+  private readonly featureNames: Set<string>;
 
   /** The feature the next paragraphs continue, if any. */
   private currentFeature: string | null = null;
+
+  /** An element of the Class Features section. */
+  private readElement(el: cheerio.Cheerio<AnyNode>) {
+    const tag = Page.tagName(el);
+    // h4 heading — potential feature or sub-section header
+    if (tag === "h4") return this.readHeading(el);
+    // Paragraph — could be inline feature or continuation
+    if (tag === "p") this.readParagraph(el);
+    // Table — check for sub-option tables (e.g. Loremaster Secrets)
+    if (tag === "table" && this.currentFeature)
+      for (const { key, desc } of subOptionRows(this.$, el, this.currentFeature)) this.byKey.set(key, { desc });
+  }
 
   /** An <h4>: a known feature's heading, or a "Feature Benefits" / "Feature Options" sub-section's. */
   private readHeading(el: cheerio.Cheerio<AnyNode>) {
@@ -272,6 +288,35 @@ class FeatureDescriptions {
     const subMatch = name.match(/^(.+?)\s+(?:Benefits|Options|Choices|Selections)$/i);
     if (subMatch) this.readSubSection(el, subMatch[1]);
     this.currentFeature = null;
+  }
+
+  /**
+   * The sub-option tables anywhere on the page (some, like Loremaster Secrets, are outside the Class Features
+   * section), each a known feature's by its title: the sub-options not already described.
+   */
+  private readPageTables() {
+    const $ = this.$;
+    $("table").each((_, table) => {
+      if (findSubOptionColumns($, $(table)).nameCol < 0) return;
+
+      // Find the parent feature from the table title (first th in first row, often spanning)
+      const titleRow = $(table).find("tr").first();
+      const titleTh = titleRow.find("th[colspan], th").first();
+      const titleText = titleTh.text().trim().toLowerCase();
+
+      // Match title to a known feature (e.g. "Loremaster Secrets" → "secret")
+      let parentKey: string | null = null;
+      for (const [key] of this.byKey) {
+        if (titleText.includes(key) || key.includes(titleText.replace(/s$/, ""))) {
+          parentKey = key;
+          break;
+        }
+      }
+      if (!parentKey) return;
+
+      for (const { key, desc } of subOptionRows($, $(table), parentKey))
+        if (!this.byKey.has(key)) this.byKey.set(key, { desc });
+    });
   }
 
   /**
@@ -340,8 +385,8 @@ class FeatureDescriptions {
 
   /** A sub-section's paragraphs ("Name: desc"), each a sub-feature of `parentName`'s ("Terrain Mastery: X"). */
   private readSubSection(el: cheerio.Cheerio<AnyNode>, parentName: string) {
-    for (const next of findSectionElements(el, ["h2", "h3", "h4", "table"])) {
-      if (getTagName(next) === "p") {
+    for (const next of Page.section(el, ["h2", "h3", "h4", "table"])) {
+      if (Page.tagName(next) === "p") {
         const pText = next.text().trim();
         const subFeatureMatch = pText.match(/^([A-Z][^:]{1,60}?)\s*:\s*([\s\S]*)/);
         if (subFeatureMatch) {
@@ -354,68 +399,10 @@ class FeatureDescriptions {
     }
   }
 
-  /** An element of the Class Features section. */
-  read(el: cheerio.Cheerio<AnyNode>) {
-    const tag = getTagName(el);
-    // h4 heading — potential feature or sub-section header
-    if (tag === "h4") return this.readHeading(el);
-    // Paragraph — could be inline feature or continuation
-    if (tag === "p") this.readParagraph(el);
-    // Table — check for sub-option tables (e.g. Loremaster Secrets)
-    if (tag === "table" && this.currentFeature)
-      for (const { key, desc } of subOptionRows(this.$, el, this.currentFeature)) this.byKey.set(key, { desc });
+  /** The class's features, in progression order (`orderedFeatures`): `section` (its Class Features section) read. */
+  read(section: cheerio.Cheerio<AnyNode>[]): ClassReference["raw"]["classFeatures"] {
+    for (const el of section) this.readElement(el);
+    this.readPageTables();
+    return orderedFeatures(this.progression, this.byKey);
   }
-
-  /**
-   * The sub-option tables anywhere on the page (some, like Loremaster Secrets, are outside the Class Features
-   * section), each a known feature's by its title: the sub-options not already described.
-   */
-  readPageTables() {
-    const $ = this.$;
-    $("table").each((_, table) => {
-      if (findSubOptionColumns($, $(table)).nameCol < 0) return;
-
-      // Find the parent feature from the table title (first th in first row, often spanning)
-      const titleRow = $(table).find("tr").first();
-      const titleTh = titleRow.find("th[colspan], th").first();
-      const titleText = titleTh.text().trim().toLowerCase();
-
-      // Match title to a known feature (e.g. "Loremaster Secrets" → "secret")
-      let parentKey: string | null = null;
-      for (const [key] of this.byKey) {
-        if (titleText.includes(key) || key.includes(titleText.replace(/s$/, ""))) {
-          parentKey = key;
-          break;
-        }
-      }
-      if (!parentKey) return;
-
-      for (const { key, desc } of subOptionRows($, $(table), parentKey))
-        if (!this.byKey.has(key)) this.byKey.set(key, { desc });
-    });
-  }
-}
-
-export function parseClassFeatures(
-  $: cheerio.CheerioAPI,
-  progression: ClassReference["raw"]["progression"],
-): ClassReference["raw"]["classFeatures"] {
-  // Step 1: Build the authoritative feature name list from the Special column
-  const featureNames = knownFeatureNames(progression);
-
-  // Step 2: Collect all text blocks from the Class Features section
-  let cfHeader = findSectionHeader($, /^Class Features$/i);
-  if (cfHeader.length === 0) {
-    cfHeader = $("h6")
-      .filter((_, el) => /^Class Features$/i.test($(el).text().trim()))
-      .first();
-  }
-  if (cfHeader.length === 0) return [];
-
-  const descriptions = new FeatureDescriptions($, featureNames);
-  for (const el of findSectionElements(cfHeader)) descriptions.read(el);
-  descriptions.readPageTables();
-
-  // Step 3: Build the features array in progression order
-  return orderedFeatures(progression, descriptions.byKey);
 }

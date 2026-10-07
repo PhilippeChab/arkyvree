@@ -1,16 +1,12 @@
 import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
 import { type BaseScraper } from "@/database/packages/dnd35-from-parser/tools/scraper/BaseScraper.ts";
-import {
-  type DomainPageSpell,
-  parseDomainBookCode,
-  parseDomainIndexHtml,
-  parseDomainName,
-  parseDomainPageHtml,
-  parseSpellDomainLevelsHtml,
-} from "@/database/packages/dnd35-from-parser/tools/scraper/parsers/domain.ts";
+import { DomainIndexPage } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/DomainIndexPage.ts";
+import { DomainPage } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/DomainPage.ts";
+import { SpellDomainsPage } from "@/database/packages/dnd35-from-parser/tools/scraper/pages/SpellDomainsPage.ts";
+import type { DomainVersionSpell } from "@/database/packages/dnd35-from-parser/tools/types/domains.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
-/** dndtools' domains as its copy at dnd.arkalseif.info keeps them: a page per book's version (`parsers/domain.ts`). */
+/** dndtools' domains as its copy at dnd.arkalseif.info keeps them: a page per book's version (`DomainPage`). */
 const DOMAIN_SITE = "https://dnd.arkalseif.info/spells";
 
 const DOMAIN_INDEX_URL = `${DOMAIN_SITE}/domains/index.html`;
@@ -25,10 +21,10 @@ export function ScrapesDomains<B extends Constructor<BaseScraper>>(Base: B) {
 
     /** Every domain version of the index, with its page. */
     private async fetchDomainPages() {
-      const first = parseDomainIndexHtml(await this.http.fetchHtml(this.domainIndexPageUrl(1)));
+      const first = new DomainIndexPage(await this.http.fetchHtml(this.domainIndexPageUrl(1))).read();
       const entries = [...first.entries];
       for (let page = 2; entries.length < first.total; page++) {
-        const { entries: more } = parseDomainIndexHtml(await this.http.fetchHtml(this.domainIndexPageUrl(page)));
+        const { entries: more } = new DomainIndexPage(await this.http.fetchHtml(this.domainIndexPageUrl(page))).read();
         if (more.length === 0) break;
         entries.push(...more);
       }
@@ -36,7 +32,7 @@ export function ScrapesDomains<B extends Constructor<BaseScraper>>(Base: B) {
       for (const entry of entries) {
         pages.push({
           ...entry,
-          ...parseDomainPageHtml(await this.http.fetchHtml(`${DOMAIN_SITE}/domains/${entry.slug}/index.html`)),
+          ...new DomainPage(await this.http.fetchHtml(`${DOMAIN_SITE}/domains/${entry.slug}/index.html`)).read(),
         });
       }
       return pages;
@@ -53,11 +49,11 @@ export function ScrapesDomains<B extends Constructor<BaseScraper>>(Base: B) {
       // A version whose page names no book (Glory (CD)'s) is the book's when its label ends with the book's code, the
       // code ("CD") the versions that name the book end with
       const codes = new Set(
-        pages.filter((page) => page.bookSlug === bookSlug).map((page) => parseDomainBookCode(page.label)),
+        pages.filter((page) => page.bookSlug === bookSlug).map((page) => DomainPage.bookCodeOf(page.label)),
       );
       codes.delete(undefined);
       const versions = pages.filter(
-        (page) => page.bookSlug === bookSlug || (!page.bookSlug && codes.has(parseDomainBookCode(page.label))),
+        (page) => page.bookSlug === bookSlug || (!page.bookSlug && codes.has(DomainPage.bookCodeOf(page.label))),
       );
       const bookless = pages.filter((page) => !page.bookSlug && !versions.includes(page)).length;
       console.log(
@@ -66,16 +62,16 @@ export function ScrapesDomains<B extends Constructor<BaseScraper>>(Base: B) {
 
       const raw = [];
       for (const version of versions) {
-        const name = parseDomainName(version.label);
-        const candidates = new Map<string, DomainPageSpell>();
-        for (const page of pages.filter((p) => parseDomainName(p.label) === name))
+        const name = DomainPage.nameOf(version.label);
+        const candidates = new Map<string, DomainVersionSpell>();
+        for (const page of pages.filter((p) => DomainPage.nameOf(p.label) === name))
           for (const spell of page.spells) if (spell.edition.includes("3.5")) candidates.set(spell.path, spell);
 
         const spells = [];
         for (const spell of candidates.values()) {
-          const levels = parseSpellDomainLevelsHtml(
+          const levels = new SpellDomainsPage(
             await this.http.fetchHtml(`${DOMAIN_SITE}/${spell.path}/index.html`),
-          );
+          ).levels();
           const level = levels.get(version.slug);
           if (level !== undefined) spells.push({ name: spell.name, level });
         }
@@ -90,7 +86,7 @@ export function ScrapesDomains<B extends Constructor<BaseScraper>>(Base: B) {
 
       this.saveReference(
         References.path(this.book, "domain"),
-        { type: "domain", sourceUrl: DOMAIN_INDEX_URL, book: this.book, scrapedAt: new Date().toISOString() },
+        this.meta("domain", { sourceUrl: DOMAIN_INDEX_URL }),
         raw,
       );
     }

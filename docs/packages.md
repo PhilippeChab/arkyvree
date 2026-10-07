@@ -60,9 +60,9 @@ database/packages/dnd35-from-parser/
     ├── types/            # A reference's types, a module per kind of reference
     ├── references/       # The reference files (References): finding, reading, writing and loading them, what's derived resolved by each kind's detector
     ├── scraper/          # Pages → reference/
-    │   ├── BaseScraper.ts    # A scraper's core: its book, its HttpClient, the listings, saving a reference
+    │   ├── BaseScraper.ts    # A scraper's core: its book and its slug, its HttpClient, the listings, a reference's meta, saving it
     │   ├── Scraper.ts        # A concern per kind of reference (concerns/): ScrapesClasses, ScrapesFeats…
-    │   └── parsers/          # A page's HTML → what its reference stores
+    │   └── pages/            # A page's HTML → what its reference stores: a class per kind of page (Page, DndToolsPage, FeatPage…; class/ClassPage with its concerns)
     ├── detect/           # A reference's raw → its detected and mapping: a detector per kind (ClassDetector in classes/, with its concerns and its ClassMapping; FeatDetector, SpellDetector…)
     │   └── readers/          # What a phrase says, in any kind of reference: requirements/ (FeatPrerequisites, ClassPrerequisites), modifiers/ (BonusText, a reading per kind of text), items/ (cost, weight, stats, base item)
     ├── text/             # The scraped text: sanitized, normalized, entry names
@@ -114,7 +114,7 @@ const dnd35Dmg: ContentPackage = {
 
 ### Adding an extension
 
-1. Add the book to the scraper (`tools/scraper/books.ts`), scrape it, and generate it (`bun run parser:generate <book>`).
+1. Add the book to the scraper (its slug in `tools/scraper/BaseScraper.ts`), scrape it, and generate it (`bun run parser:generate <book>`).
 2. Add its display name to `names.ts` and a package file under `extensions/` with `seedsVersion: 1`.
 3. Register it in `registry.ts`, after the core rules.
 
