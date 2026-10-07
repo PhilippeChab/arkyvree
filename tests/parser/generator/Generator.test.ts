@@ -59,8 +59,7 @@ describe("The generator", () => {
       expect(
         generateAtomically(folder, (copy) => {
           const generator = new Generator(copy, true);
-          for (const reference of references) generator.generateReference(join(REFERENCE_DIR, reference));
-          return [];
+          return references.flatMap((reference) => generator.generateReference(join(REFERENCE_DIR, reference)));
         }),
       ).toEqual([]);
       expectCommitted(folder);
@@ -75,10 +74,9 @@ describe("The generator", () => {
       cpSync(GENERATED, folder, { recursive: true });
       for (const book of ["srd", "complete-divine"]) writeFileSync(join(folder, book, "classes/retired.ts"), code("x"));
       expect(
-        generateAtomically(folder, (copy) => {
-          new Generator(copy, true).generateReference(join(REFERENCE_DIR, "srd/classes/wizard.json"));
-          return [];
-        }),
+        generateAtomically(folder, (copy) =>
+          new Generator(copy, true).generateReference(join(REFERENCE_DIR, "srd/classes/wizard.json")),
+        ),
       ).toEqual([]);
       expect(filesOf(folder).filter((file) => file.endsWith("retired.ts"))).toEqual([
         "complete-divine/classes/retired.ts",
@@ -87,6 +85,17 @@ describe("The generator", () => {
       rmSync(folder, { recursive: true, force: true });
     }
   }, 60_000);
+
+  test("refuses a reference file outside the references, whose edits it would ignore", () => {
+    const folder = mkdtempSync(join(tmpdir(), "reference-"));
+    try {
+      const copy = join(folder, "wizard.json");
+      cpSync(join(REFERENCE_DIR, "srd/classes/wizard.json"), copy);
+      expect(() => new Generator(folder, true).generateReference(copy)).toThrow("isn't a reference file");
+    } finally {
+      rmSync(folder, { recursive: true, force: true });
+    }
+  });
 
   test("leaves its folder as it was when a generation fails or throws, and replaces it when one succeeds", () => {
     const parent = mkdtempSync(join(tmpdir(), "generation-"));

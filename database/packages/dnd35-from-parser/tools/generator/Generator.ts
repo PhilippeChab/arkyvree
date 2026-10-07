@@ -1,11 +1,11 @@
-import { readFileSync } from "node:fs";
+import { relative, resolve } from "node:path";
 
 import type { parseCliArgs } from "@/database/packages/dnd35-from-parser/tools/cli/args.ts";
 import {
   filterReferenceFiles,
   listReferenceBooks,
   listReferenceFiles,
-  REFERENCE_FILE_NAMES,
+  REFERENCE_DIR,
 } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
 import { include } from "@/server/mixins.ts";
@@ -24,7 +24,8 @@ import { GeneratesWizardSchools } from "./concerns/GeneratesWizardSchools.ts";
 
 /**
  * Generates the content package's seed data from the references, into `dir`, a book at a time (`generateBook`), from
- * its seeds: a step that writes one kind of file is a concern (`concerns/`), and a book's, made of them all, is its own.
+ * its seeds: a step that writes one kind of file is a concern (`concerns/`), and a book's, made of them all, is its
+ * own.
  */
 export class Generator extends include(
   BaseGenerator,
@@ -39,14 +40,10 @@ export class Generator extends include(
   GeneratesSpells,
   GeneratesWizardSchools,
 ) {
-  /**
-   * Regenerates the books the references a filter picks are of (a book, a type of reference or a name, when given):
-   * every book when none is. A book that fails doesn't stop the others: the failures are returned.
-   */
-  generateAll({ bookFilter, typeFilter, nameFilter }: ReturnType<typeof parseCliArgs>): string[] {
-    const refs = filterReferenceFiles(listReferenceFiles(), { bookFilter, typeFilter, nameFilter });
+  /** Regenerates each of `books` (`generateBook`): one that fails doesn't stop the others, its failure is returned. */
+  private generateBooks(books: string[]): string[] {
     const failures: string[] = [];
-    for (const book of [...new Set(refs.map((ref) => ref.book))].sort()) {
+    for (const book of books) {
       try {
         this.generateBook(book);
       } catch (error) {
@@ -54,6 +51,15 @@ export class Generator extends include(
       }
     }
     return failures;
+  }
+
+  /**
+   * Regenerates the books the references a filter picks are of (a book, a type of reference or a name, when given):
+   * every book when none is. The books that failed are returned.
+   */
+  generateAll({ bookFilter, typeFilter, nameFilter }: ReturnType<typeof parseCliArgs>): string[] {
+    const refs = filterReferenceFiles(listReferenceFiles(), { bookFilter, typeFilter, nameFilter });
+    return this.generateBooks([...new Set(refs.map((ref) => ref.book))].sort());
   }
 
   /**
@@ -101,12 +107,14 @@ export class Generator extends include(
     this.log(`\nDone! Review the generated files and copy to database/packages/dnd35/ when ready.`);
   }
 
-  /** Regenerates a reference's book (`generateBook`): its files, and what they make together, agree. */
-  generateReference(jsonPath: string) {
-    const meta = JSON.parse(readFileSync(jsonPath, "utf-8"))._meta;
-    if (!meta) throw new Error(`Invalid reference file: missing _meta in ${jsonPath}`);
-    const types = ["class", ...Object.keys(REFERENCE_FILE_NAMES)];
-    if (!types.includes(meta.type)) throw new Error(`Unknown type: ${meta.type}. Supported: ${types.join(", ")}`);
-    this.generateBook(meta.book);
+  /**
+   * Regenerates a reference file's book (`generateBook`), from its references: a file outside them (an edited copy)
+   * would be ignored, so it's refused. The book's failure is returned.
+   */
+  generateReference(jsonPath: string): string[] {
+    const ref = listReferenceFiles().find(({ path }) => path === resolve(jsonPath));
+    const dir = relative(process.cwd(), REFERENCE_DIR);
+    if (!ref) throw new Error(`${jsonPath} isn't a reference file of ${dir}/: a book is generated from its own`);
+    return this.generateBooks([ref.book]);
   }
 }

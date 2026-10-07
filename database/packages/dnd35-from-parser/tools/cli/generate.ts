@@ -25,20 +25,15 @@ function main() {
     console.error(`parser:generate <reference>.json takes nothing after the reference: ${args.slice(1).join(" ")}`);
     process.exit(1);
   }
-  const generate = (dir: string) => {
-    if (!args[0]?.endsWith(".json")) return new Generator(dir, true).generateAll(parseCliArgs());
-    try {
-      new Generator(dir, false).generateReference(args[0]);
-      return [];
-    } catch (error) {
-      return [error instanceof Error ? error.message : String(error)];
-    }
-  };
+  const generate = (dir: string) =>
+    args[0]?.endsWith(".json")
+      ? new Generator(dir, false).generateReference(args[0])
+      : new Generator(dir, true).generateAll(parseCliArgs());
   let failures: string[];
   try {
     failures = generateAtomically(GENERATED_DIR, generate);
   } catch (error) {
-    // Another generation running, or the copy or the swap failing: generated/ is as it was
+    // A reference file refused, another generation running, or the copy or the swap failing: generated/ is as it was
     console.error(error instanceof Error ? error.message : error);
     process.exit(1);
   }
