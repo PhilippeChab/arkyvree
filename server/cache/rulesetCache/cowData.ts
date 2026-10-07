@@ -1,10 +1,4 @@
-import {
-  type CowData,
-  CowDataBuilder,
-  getCowReads,
-  getPairedKlassIds,
-  type RulesetSources,
-} from "@/engine/core/cow/index.ts";
+import { buildCowData, type CowData, getCowReads, getPairedKlassIds, type RulesetSources } from "@/engine/index.ts";
 import { type Db, withCowContext } from "@/server/database/index.ts";
 import { Aptitudes, EntitySnapshots, KlassLevels, RulesetEntities } from "@/server/repositories/index.ts";
 
@@ -20,6 +14,6 @@ export async function readCowData(database: Db, ruleset: RulesetSources): Promis
     const namesakes = await RulesetEntities.findNativeNames(database, reads.namesakes);
     const klassLevels = await KlassLevels.findMany(database, { klassIds: getPairedKlassIds(ruleset.id, snapshots) });
     const aptitudes = await Aptitudes.findMany(database, { rulesetIds: reads.aptitudeRulesetIds });
-    return CowDataBuilder.build(ruleset, { aptitudes, klassLevels, namesakes, snapshots });
+    return buildCowData(ruleset, { aptitudes, klassLevels, namesakes, snapshots });
   });
 }

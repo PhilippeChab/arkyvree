@@ -7,7 +7,7 @@
  * class's skill or granted feat…).
  */
 
-import { buildSourceChain, type RulesetSources } from "@/engine/core/cow/index.ts";
+import { buildSourceChain, type RulesetSources } from "@/engine/index.ts";
 import { readCowData } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";

@@ -37,6 +37,16 @@ export {
 } from "./api/levelUp.ts";
 export { checkTargetValue, getTargetPathCompletions, listTargetPaths, validateTargetPath } from "./api/paths.ts";
 export { getPropertyTypes, getPropertyValues } from "./api/properties.ts";
+export { buildCowData, buildRulesetView } from "./api/rulesets.ts";
+export {
+  buildSourceChain,
+  checkExtensionNames,
+  type CowData,
+  type CowRows,
+  getCowReads,
+  getPairedKlassIds,
+  type RulesetSources,
+} from "./core/cow/index.ts";
 export type {
   CharacterInput,
   CharacterRows,
@@ -46,4 +56,14 @@ export type {
   PropertiesWrite,
   RequirementWrite,
 } from "./core/module/index.ts";
+export { default as RulesError } from "./core/RulesError.ts";
 export type { RulesetView } from "./core/types.ts";
+export {
+  type EntityCustomizations,
+  getListFeatIds,
+  getListPowerIds,
+  mergeSiblingAptitudeLinks,
+  mergeSiblingCustomizations,
+  type RulesetData,
+  type RulesetRawData,
+} from "./core/view/index.ts";

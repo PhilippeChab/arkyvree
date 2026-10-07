@@ -1,4 +1,4 @@
-import type { RulesetRawData } from "@/engine/core/view/index.ts";
+import type { RulesetRawData } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
   Abilities,

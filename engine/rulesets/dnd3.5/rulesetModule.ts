@@ -1,4 +1,5 @@
-import type { Character as CharacterRecord } from "@/shared/relations.ts";
+import { sortProperties } from "@/shared/dnd3.5/properties/index.ts";
+import type { Character as CharacterRecord, Property } from "@/shared/relations.ts";
 
 import { createCharacter } from "./character/buildCharacter.ts";
 import { Dnd35Characters } from "./character/Dnd35Characters.ts";
@@ -28,6 +29,10 @@ export function createRulesetModule(): Dnd35RulesetModule {
 
     createPropertyTypes() {
       return new Dnd35PropertyTypes();
+    },
+
+    orderProperties(properties: Property[]) {
+      return sortProperties(properties);
     },
   };
 }

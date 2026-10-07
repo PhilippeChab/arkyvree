@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { rulesetsInRules } from "@/drizzle/schema.ts";
-import { NAME_FALLBACK_ENTITY_TYPES } from "@/engine/core/cow/index.ts";
+import { checkExtensionNames } from "@/engine/index.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { ENTITY_REPOS } from "@/server/cow/index.ts";
 import { type Db, db, withCowContext, withTransaction } from "@/server/database/index.ts";
@@ -30,9 +30,8 @@ import { repointDepartingReferences } from "./departingReferences.ts";
 
 class RulesetExtensionsService {
   // Rejects a subscribe action that would surface two entities of the same name in
-  // the host's source chain. Compares locally-owned (non-shadow) rows in the host,
-  // already-subscribed extensions, and the new extensions; aptitudes are skipped
-  // because the sibling mechanism already dedups them by name at compose time.
+  // the host's source chain, as the engine pairs them: locally-owned (non-shadow)
+  // rows in the host, already-subscribed extensions, and the new extensions.
   private async assertExtensionsNameCompatible(
     tx: Db,
     hostId: string,
@@ -43,50 +42,9 @@ class RulesetExtensionsService {
 
     const rulesetIds = [hostId, ...newExtensionIds, ...existingExtensionRulesetIds];
 
-    const entityTypes = RULESET_ENTITY_TYPES.filter((t) => t !== "aptitudes");
-    const rows = await RulesetEntities.findNativeNames(tx, { rulesetIds, entityTypes });
+    const names = await RulesetEntities.findNativeNames(tx, { rulesetIds, entityTypes: RULESET_ENTITY_TYPES });
 
-    const ownersByType = new Map<RulesetEntityType, Map<string, Set<string>>>();
-    for (const r of rows) {
-      const type = r.entityType as RulesetEntityType;
-      let byName = ownersByType.get(type);
-      if (!byName) {
-        byName = new Map<string, Set<string>>();
-        ownersByType.set(type, byName);
-      }
-      let set = byName.get(r.name);
-      if (!set) {
-        set = new Set<string>();
-        byName.set(r.name, set);
-      }
-      set.add(r.rulesetId);
-    }
-
-    // Feats and powers participate in the runtime name-fallback pairing in
-    // cow/ — extension-only collisions on those types get merged into one
-    // entity at compose, so allow them. The host's own native rows can't be
-    // sibling-paired (host isn't part of its own source chain), so a
-    // host+extension collision would produce visible duplicates and must be
-    // blocked even for paired types. All other entity types (races, classes,
-    // abilities, etc.) have no name-fallback pairing — extension+extension
-    // collisions there would surface as UI duplicates, so block them.
-    const pairableTypes = new Set<RulesetEntityType>(NAME_FALLBACK_ENTITY_TYPES);
-    for (const [entityType, byName] of ownersByType) {
-      const isPairableType = pairableTypes.has(entityType);
-      for (const [name, ownerIds] of byName) {
-        if (ownerIds.size <= 1) continue;
-        const involvesNew = newExtensionIds.some((id) => ownerIds.has(id));
-        if (!involvesNew) continue;
-        if (isPairableType) {
-          const involvesHost = ownerIds.has(hostId);
-          if (!involvesHost) continue;
-          throw new ConflictError(`Cannot subscribe: ${entityType} "${name}" already exists in this ruleset`);
-        }
-        throw new ConflictError(
-          `Cannot subscribe: ${entityType} "${name}" already exists in this ruleset or another subscribed extension`,
-        );
-      }
-    }
+    checkExtensionNames(hostId, newExtensionIds, names);
   }
 
   // Returns true iff any character on `hostRulesetId` has picked an entity that

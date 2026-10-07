@@ -1,10 +1,16 @@
-import { buildSourceChain, type CowData, type RulesetSources } from "@/engine/core/cow/index.ts";
-import { RulesetComposition, type RulesetData, type RulesetRawData } from "@/engine/core/view/index.ts";
+import {
+  buildRulesetView,
+  buildSourceChain,
+  type CowData,
+  type RulesetData,
+  type RulesetRawData,
+  type RulesetSources,
+} from "@/engine/index.ts";
 import DependentCache from "@/server/cache/DependentCache.ts";
 import { db, withCowContext } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 import type { TargetPathCatalog, TargetPathKind } from "@/shared/customization/target.ts";
-import { sortProperties } from "@/shared/dnd3.5/properties/index.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 
 import { readCowData } from "./cowData.ts";
 import { fetchRulesetRawData } from "./rawData.ts";
@@ -66,13 +72,13 @@ class RulesetCache {
   }
 
   /** A ruleset's view: its own rows and its source chain's, composed by its copy-on-write data. */
-  async getData(ruleset: RulesetSources, campaignId?: string): Promise<RulesetData> {
+  async getData(ruleset: RulesetSources & { baseRules: BaseRules }, campaignId?: string): Promise<RulesetData> {
     const cowData = await this.getCowData(ruleset);
     const chain = await Promise.all([
       this.getRawData(ruleset.id, campaignId),
       ...cowData.sourceChain.map((id) => this.getRawData(id)),
     ]);
-    return new RulesetComposition(chain, cowData, sortProperties).build();
+    return buildRulesetView(ruleset, chain, cowData);
   }
 
   /** A ruleset's own rows (a campaign's, with one), none of its ancestors': pinned when it's a system ruleset. */

@@ -1,8 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { powersInRules } from "@/drizzle/schema.ts";
-import { getListPowerIds } from "@/engine/core/view/index.ts";
-import { planPowerSave } from "@/engine/index.ts";
+import { getListPowerIds, planPowerSave } from "@/engine/index.ts";
 import { findScopedEntity, RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { type Db, db, withTransaction } from "@/server/database/index.ts";

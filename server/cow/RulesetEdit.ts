@@ -1,4 +1,4 @@
-import { type CowData, type RulesetSources } from "@/engine/core/cow/index.ts";
+import type { CowData, RulesetSources } from "@/engine/index.ts";
 import { type Db, withCowContext } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import {

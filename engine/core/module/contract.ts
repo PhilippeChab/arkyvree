@@ -21,6 +21,7 @@ import type {
   Item,
   Modifier,
   Player,
+  Property,
   Requirement,
   Ruleset,
 } from "@/shared/relations.ts";
@@ -91,4 +92,6 @@ export interface RulesetModule<
   entities: object;
   /** What the ruleset answers a character's level-up, from the rows the server reads */
   levelUp: object;
+  /** An entity's properties in the order its rules list them, which its view keeps them in */
+  orderProperties(properties: Property[]): Property[];
 }

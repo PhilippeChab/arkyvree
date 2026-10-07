@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { rulesetsInRules } from "@/drizzle/schema.ts";
-import { buildSourceChain } from "@/engine/core/cow/index.ts";
+import { buildSourceChain } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { withTransaction } from "@/server/database/index.ts";

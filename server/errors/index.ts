@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/bun";
 
-import RulesError from "@/engine/core/RulesError.ts";
+import { RulesError } from "@/engine/index.ts";
 import { isDevelopment } from "@/server/environment.ts";
 
 type Code = 400 | 401 | 403 | 404 | 409 | 422 | 429 | 500;

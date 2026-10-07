@@ -1,4 +1,4 @@
-import type { RulesetData } from "@/engine/core/view/index.ts";
+import type { RulesetData } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import {

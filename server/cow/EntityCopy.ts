@@ -1,10 +1,10 @@
-import { type CowData, type RulesetSources } from "@/engine/core/cow/index.ts";
 import {
+  type CowData,
+  type EntityCustomizations,
   mergeSiblingAptitudeLinks,
-  mergeSiblingModifiers,
-  mergeSiblingProperties,
-  mergeSiblingRequirements,
-} from "@/engine/core/view/index.ts";
+  mergeSiblingCustomizations,
+  type RulesetSources,
+} from "@/engine/index.ts";
 import { readCowData } from "@/server/cache/rulesetCache/index.ts";
 import { type Db, withCowContext } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
@@ -22,7 +22,7 @@ import {
 import { isCustomizableEntityType } from "@/shared/customization/entities.ts";
 
 import { copyEntityCustomizations } from "./copyCustomizations.ts";
-import { type EntityCustomizations, fetchEntityCustomizations, fetchSiblingCustomizations } from "./customizations.ts";
+import { fetchEntityCustomizations, fetchSiblingCustomizations } from "./customizations.ts";
 import { ENTITY_REPOS, type EntityWithId } from "./entityRepositories.ts";
 
 /**
@@ -303,32 +303,8 @@ export default class EntityCopy {
     // copying raw rows by id).
     const siblingCusts = await fetchSiblingCustomizations(tx, siblingIds, this.entityType, this.sourceType);
     const siblings = siblingIds.flatMap((id) => siblingCusts.get(id) ?? []);
-    const modifiers = mergeSiblingModifiers(
-      own.modifiers,
-      siblings.map((cust) => cust.modifiers),
-    );
-    const modifierIds = new Set(modifiers.map((m) => m.id));
-    await copyEntityCustomizations(
-      tx,
-      targetEntityId,
-      this.entityType,
-      {
-        modifiers,
-        modifierRequirements: siblings
-          .flatMap((cust) => cust.modifierRequirements)
-          .filter((r) => modifierIds.has(r.entityId)),
-        properties: mergeSiblingProperties(
-          own.properties,
-          siblings.map((cust) => cust.properties),
-        ),
-        requirements: mergeSiblingRequirements(
-          own.requirements,
-          siblings.map((cust) => cust.requirements),
-          targetEntityId,
-        ),
-      },
-      this.copiedIds,
-    );
+    const merged = mergeSiblingCustomizations(own, siblings, targetEntityId);
+    await copyEntityCustomizations(tx, targetEntityId, this.entityType, merged, this.copiedIds);
     await this.mergeAptitudeLinks(tx, targetEntityId, siblingIds, cow);
   }
 }
