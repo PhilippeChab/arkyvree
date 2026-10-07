@@ -39,12 +39,17 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
     typography: { xs: "body1", sm: "h6" },
     width: "fit-content",
   };
-  const nameNode = linkable ? (
-    <MuiLink component={Link} to={`/characters/${bonded.id}`} underline="hover" sx={nameSx}>
-      {bonded.name}
-    </MuiLink>
-  ) : (
-    <Typography sx={nameSx}>{bonded.name}</Typography>
+  // A heading under its feat's: the creature's name, a link to its sheet where it has one
+  const nameNode = (
+    <Typography component="h4" sx={nameSx}>
+      {linkable ? (
+        <MuiLink component={Link} to={`/characters/${bonded.id}`} underline="hover">
+          {bonded.name}
+        </MuiLink>
+      ) : (
+        bonded.name
+      )}
+    </Typography>
   );
 
   return (
@@ -53,7 +58,9 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
 
       <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
         <Stack spacing={1.5} sx={{ flex: "0 0 auto" }}>
-          <Typography sx={{ color: "text.secondary" }}>Abilities</Typography>
+          <Typography component="h5" sx={{ color: "text.secondary" }}>
+            Abilities
+          </Typography>
           <Box
             sx={{
               display: "grid",
@@ -71,7 +78,9 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
 
         <Stack spacing={3} sx={{ flex: 1, minWidth: { md: 260 } }}>
           <Stack spacing={1.5}>
-            <Typography sx={{ color: "text.secondary" }}>Combat &amp; Saves</Typography>
+            <Typography component="h5" sx={{ color: "text.secondary" }}>
+              Combat &amp; Saves
+            </Typography>
             <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", columnGap: 2, rowGap: 1.5 }}>
               <Stack spacing={1.5}>
                 <StatField label="HP" value={combat?.hp?.total ?? 0} />
@@ -89,7 +98,9 @@ export function BondedSection({ bonded, linkable = false }: Dnd35BondedSectionPr
 
           {featNames.length > 0 && (
             <Stack spacing={1}>
-              <Typography sx={{ color: "text.secondary" }}>Features</Typography>
+              <Typography component="h5" sx={{ color: "text.secondary" }}>
+                Features
+              </Typography>
               <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap" }}>
                 {featNames.map((n) => (
                   <Box

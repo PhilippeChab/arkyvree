@@ -1,6 +1,7 @@
 import {
   Chip,
   DialogContent,
+  DialogTitle,
   IconButton,
   Stack,
   Table,
@@ -8,7 +9,6 @@ import {
   TableCell,
   TableHead,
   TableRow,
-  Toolbar,
   Typography,
 } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -20,6 +20,7 @@ import {
   BlankNote,
   CreateDialog,
   DeleteDialog,
+  DialogFooter,
   DiceSpinner,
   EditDialog,
   FaqHelpIcon,
@@ -35,7 +36,7 @@ import {
   type ModifierFormData,
   TargetPathBreadcrumbs,
 } from "@/client/src/components/customization/index.ts";
-import { CloseIcon, ContentCopyIcon, DeleteIcon, EditIcon } from "@/client/src/components/icons/index.ts";
+import { ContentCopyIcon, DeleteIcon, EditIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
 import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
@@ -164,108 +165,111 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
       <Modal
         open={open}
         onClose={onClose}
-        aria-labelledby="character-modifiers-title"
         maxWidth="md"
         slotProps={{
           paper: { sx: { minHeight: { sm: "50vh" } } },
         }}
       >
-        <Toolbar sx={{ borderBottom: 1, borderColor: "divider" }}>
-          <Stack direction="row" spacing={0.5} sx={{ alignItems: "center", flex: 1 }}>
-            <Typography id="character-modifiers-title" variant="h6" component="h2" sx={{ fontWeight: 600 }}>
-              Manage Modifiers
-            </Typography>
+        <DialogTitle>
+          <Stack component="span" direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+            Manage Modifiers
             <FaqHelpIcon
               text="Modifiers affect character attributes with operations like add, subtract, multiply. They can modify things like strength, AC, skills, etc."
               size={18}
             />
           </Stack>
-          <Stack direction="row" spacing={1}>
-            <AddButton size="small" label="Add" onClick={handleAdd} />
-            <IconButton aria-label="Close" onClick={onClose}>
-              <CloseIcon />
-            </IconButton>
-          </Stack>
-        </Toolbar>
-
+        </DialogTitle>
         <DialogContent sx={{ overflowY: "auto", scrollbarGutter: "stable" }}>
-          {isLoading ? (
-            <DiceSpinner sx={{ py: 8 }} />
-          ) : error && modifiers.length === 0 ? (
-            <LoadError what="Modifiers" error={error} />
-          ) : modifiers.length === 0 ? (
-            <BlankNote>No modifiers</BlankNote>
-          ) : (
-            <TableFrame>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ width: "40%" }}>Target</TableCell>
-                    <TableCell sx={{ width: "15%" }}>Operator</TableCell>
-                    <TableCell sx={{ width: "25%" }}>Value</TableCell>
-                    <TableCell align="right" sx={{ width: "20%" }} />
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {modifiers.map((mod) => (
-                    <TableRow
-                      key={mod.id}
-                      hover
-                      sx={{
-                        position: "relative",
-                        ...ROW_ACTIONS_HOVER_SX,
-                      }}
-                    >
-                      <TableCell>
-                        <TargetPathBreadcrumbs target={mod.target} targetLabels={mod.targetLabels} />
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={MODIFIER_OPERATOR_LABELS[mod.operator] || mod.operator}
-                          size="small"
-                          color="secondary"
-                          variant="outlined"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {(() => {
-                          const templatePath = extractTemplatePath(mod.value);
-                          if (templatePath)
-                            return <TargetPathBreadcrumbs target={templatePath} targetLabels={mod.targetLabels} />;
-
-                          return <Typography variant="body2">{mod.value}</Typography>;
-                        })()}
-                      </TableCell>
-                      <TableCell align="right">
-                        <Stack
-                          direction="row"
-                          spacing={0.5}
-                          className="row-actions"
-                          sx={{ justifyContent: "flex-end", ...ROW_ACTIONS_SX }}
-                        >
-                          <IconButton size="small" aria-label="Edit Modifier" onClick={() => handleEdit(mod)}>
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton size="small" aria-label="Duplicate Modifier" onClick={() => handleDuplicate(mod)}>
-                            <ContentCopyIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            color="error"
-                            aria-label="Delete Modifier"
-                            onClick={() => handleDelete(mod)}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Stack>
-                      </TableCell>
+          <Stack spacing={2}>
+            <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                Custom bonuses and overrides of this character's own.
+              </Typography>
+              <AddButton label="Add" onClick={handleAdd} />
+            </Stack>
+            {isLoading ? (
+              <DiceSpinner sx={{ py: 8 }} />
+            ) : error && modifiers.length === 0 ? (
+              <LoadError what="Modifiers" error={error} />
+            ) : modifiers.length === 0 ? (
+              <BlankNote>No modifiers</BlankNote>
+            ) : (
+              <TableFrame>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ width: "40%" }}>Target</TableCell>
+                      <TableCell sx={{ width: "15%" }}>Operator</TableCell>
+                      <TableCell sx={{ width: "25%" }}>Value</TableCell>
+                      <TableCell align="right" sx={{ width: "20%" }} />
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableFrame>
-          )}
+                  </TableHead>
+                  <TableBody>
+                    {modifiers.map((mod) => (
+                      <TableRow
+                        key={mod.id}
+                        hover
+                        sx={{
+                          position: "relative",
+                          ...ROW_ACTIONS_HOVER_SX,
+                        }}
+                      >
+                        <TableCell>
+                          <TargetPathBreadcrumbs target={mod.target} targetLabels={mod.targetLabels} />
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={MODIFIER_OPERATOR_LABELS[mod.operator] || mod.operator}
+                            size="small"
+                            color="secondary"
+                            variant="outlined"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          {(() => {
+                            const templatePath = extractTemplatePath(mod.value);
+                            if (templatePath)
+                              return <TargetPathBreadcrumbs target={templatePath} targetLabels={mod.targetLabels} />;
+
+                            return <Typography variant="body2">{mod.value}</Typography>;
+                          })()}
+                        </TableCell>
+                        <TableCell align="right">
+                          <Stack
+                            direction="row"
+                            spacing={0.5}
+                            className="row-actions"
+                            sx={{ justifyContent: "flex-end", ...ROW_ACTIONS_SX }}
+                          >
+                            <IconButton size="small" aria-label="Edit Modifier" onClick={() => handleEdit(mod)}>
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              aria-label="Duplicate Modifier"
+                              onClick={() => handleDuplicate(mod)}
+                            >
+                              <ContentCopyIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              color="error"
+                              aria-label="Delete Modifier"
+                              onClick={() => handleDelete(mod)}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Stack>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableFrame>
+            )}
+          </Stack>
         </DialogContent>
+        <DialogFooter onCancel={onClose} cancelLabel="Close" />
       </Modal>
       <CreateDialog
         open={createOpen}

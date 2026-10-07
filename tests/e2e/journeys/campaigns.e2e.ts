@@ -78,6 +78,6 @@ test.describe("Campaigns", () => {
     const linked = apiResponse(page, "POST", /\/api\/campaigns\/[a-f0-9-]+\/characters(?:\?|$)/);
     await dialog.getByRole("button", { name: /^Link Character$/ }).click();
     await linked;
-    await expect(page.locator(`h6:has-text("${characterName}")`).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: characterName })).toBeVisible({ timeout: 15_000 });
   });
 });

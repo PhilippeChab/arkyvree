@@ -1,6 +1,5 @@
 import {
   Autocomplete,
-  Avatar,
   Box,
   Chip,
   DialogContent,
@@ -23,6 +22,7 @@ import {
   DialogFooter,
   DiceSpinner,
   faqTooltip,
+  ListCard,
   LoadError,
   LoadMoreButton,
   Modal,
@@ -30,7 +30,6 @@ import {
   ScrollSafeListbox,
   SearchBar,
   SectionContent,
-  StyledCard,
 } from "@/client/src/components/common/index.ts";
 import { CharacterIcon, VisibilityIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
@@ -50,8 +49,6 @@ import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { campaignCharacterQuery, unlinkedCharactersQuery } from "@/client/src/pages/campaigns/campaignQueries.ts";
 import { campaignCharactersQuery } from "@/client/src/pages/campaigns/details/sectionQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { lineClampSx } from "@/client/src/theme/text.ts";
-import { getInitial } from "@/shared/text.ts";
 
 type CampaignCharacter = CampaignCharactersPaginated["items"][number];
 
@@ -133,121 +130,66 @@ function CharacterCard({
   const canEditVisibility = character.isOwn && !isArchived;
 
   return (
-    <StyledCard
+    <ListCard
       onClick={handleViewSheet}
       animationIndex={animationIndex}
       animationOffset={animationOffset}
       onMouseEnter={prefetchSheet}
       onFocus={prefetchSheet}
-    >
-      {/* The card's body: its head (title, pills) above its description, which fills what the card has left */}
-      <Stack spacing={{ xs: 3.5, sm: 4 }} sx={{ p: { xs: 2, sm: 3 }, flex: 1 }}>
-        <Stack spacing={1}>
-          {/* Title Row */}
-          <Stack direction="row" spacing={2} sx={{ justifyContent: "space-between", alignItems: "center" }}>
-            <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", minWidth: 0, flex: 1 }}>
-              <Avatar
-                src={portraitUrl ?? undefined}
-                sx={{
-                  width: 36,
-                  height: 36,
-                  border: 2,
-                  borderColor: "secondary.main",
-                  background: (theme) =>
-                    `linear-gradient(135deg, ${theme.palette.primary.light}, ${theme.palette.primary.main})`,
-                  fontSize: "1rem",
-                  fontWeight: 700,
-                  flexShrink: 0,
-                }}
-              >
-                {getInitial(character.name)}
-              </Avatar>
-              <Typography
-                variant="h6"
-                component="h6"
-                noWrap
-                sx={{
-                  fontWeight: 600,
-                  color: "text.primary",
-                  lineHeight: 1.2,
-                  textAlign: "left",
-                  flex: 1,
-                  minWidth: 0,
-                }}
-              >
-                {character.name}
-              </Typography>
-            </Stack>
-            <Chip
-              label={
-                <Stack
-                  direction="row"
-                  spacing={0.5}
-                  sx={{
-                    alignItems: "center",
+      avatarSrc={portraitUrl ?? undefined}
+      title={character.name}
+      description={character.description}
+      action={
+        <>
+          <Chip
+            label={
+              <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+                <span>{character.visibility}</span>
+                <VisibilityIcon sx={{ fontSize: 14 }} />
+              </Stack>
+            }
+            size="small"
+            variant="outlined"
+            onClick={canEditVisibility ? menu.openMenu : undefined}
+            sx={{ fontWeight: 500, fontSize: "0.7rem", cursor: canEditVisibility ? "pointer" : undefined }}
+          />
+          {canEditVisibility && (
+            <Menu anchorEl={menu.anchorEl} open={menu.open} onClose={menu.closeMenu}>
+              {VISIBILITY_OPTIONS.map((option) => (
+                <MenuItem
+                  key={option}
+                  selected={option === character.visibility}
+                  onClick={() => {
+                    menu.closeMenu();
+                    if (option !== character.visibility) updateVisibility(option);
                   }}
                 >
-                  <span>{character.visibility}</span>
-                  <VisibilityIcon sx={{ fontSize: 14 }} />
-                </Stack>
-              }
-              size="small"
-              variant="outlined"
-              onClick={canEditVisibility ? menu.openMenu : undefined}
-              sx={{ fontWeight: 500, fontSize: "0.7rem", cursor: canEditVisibility ? "pointer" : undefined }}
-            />
-            {canEditVisibility && (
-              <Menu anchorEl={menu.anchorEl} open={menu.open} onClose={menu.closeMenu}>
-                {VISIBILITY_OPTIONS.map((option) => (
-                  <MenuItem
-                    key={option}
-                    selected={option === character.visibility}
-                    onClick={() => {
-                      menu.closeMenu();
-                      if (option !== character.visibility) updateVisibility(option);
-                    }}
-                  >
-                    {option}
-                  </MenuItem>
-                ))}
-              </Menu>
-            )}
-          </Stack>
-
-          {/* Race and Class Level Pills */}
-          <Stack
-            direction="row"
-            sx={{ alignItems: "center", justifyContent: "flex-start", flexWrap: "wrap", columnGap: 2, rowGap: 1 }}
-          >
+                  {option}
+                </MenuItem>
+              ))}
+            </Menu>
+          )}
+        </>
+      }
+      pills={
+        <>
+          <Chip
+            label={character.race}
+            size="small"
+            variant="outlined"
+            sx={{ borderColor: "secondary.main", color: "secondary.main", fontWeight: 500 }}
+          />
+          {character.levels.map((level, index) => (
             <Chip
-              label={character.race}
+              key={index}
+              label={`${level.klass} ${level.level}`}
               size="small"
-              variant="outlined"
-              sx={{ borderColor: "secondary.main", color: "secondary.main", fontWeight: 500 }}
+              sx={{ bgcolor: "primary.main", color: "primary.contrastText", fontWeight: 500 }}
             />
-            {character.levels.map((level, index) => (
-              <Chip
-                key={index}
-                label={`${level.klass} ${level.level}`}
-                size="small"
-                sx={{ bgcolor: "primary.main", color: "primary.contrastText", fontWeight: 500 }}
-              />
-            ))}
-          </Stack>
-        </Stack>
-        <Typography
-          variant="body2"
-          sx={{
-            ...lineClampSx(4),
-            color: "text.secondary",
-            lineHeight: 1.6,
-            minHeight: "6.4em",
-          }}
-        >
-          {character.description || "No description available"}
-        </Typography>
-      </Stack>
-    </StyledCard>
+          ))}
+        </>
+      }
+    />
   );
 }
 
