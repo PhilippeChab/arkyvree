@@ -5,7 +5,7 @@ import { BlankState } from "@/client/src/components/common/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import { capitalize } from "@/shared/text.ts";
 
-import { StatField } from "./statHelpers.tsx";
+import { StatField } from "./StatField.tsx";
 import type { Dnd35CombatAndSavesSectionProps } from "./types.ts";
 
 /** The parts of the AC the breakdown lists, by their label */
@@ -22,9 +22,8 @@ const AC_PARTS = [
 
 function iterativeAttacks(bab: number): string {
   const attacks: string[] = [];
-  for (let bonus = bab; bonus > 0; bonus -= 5) {
-    attacks.push(formatSigned(bonus));
-  }
+  for (let bonus = bab; bonus > 0; bonus -= 5) attacks.push(formatSigned(bonus));
+
   return attacks.length > 0 ? attacks.join("/") : formatSigned(bab);
 }
 

@@ -1,8 +1,6 @@
-import { Add as AddIcon, Casino as CasinoIcon, Remove as RemoveIcon } from "@mui/icons-material";
 import { Chip, IconButton, MenuItem, Paper, Skeleton, Stack, TextField, Typography } from "@mui/material";
-import { keepPreviousData, skipToken, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { InferRequestType } from "hono/client";
-import { parseResponse } from "hono/client";
+import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { type InferRequestType, parseResponse } from "hono/client";
 import { type Ref, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { type Control, Controller, useController } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
@@ -16,6 +14,7 @@ import {
   RulesetPicker,
   SelectField,
 } from "@/client/src/components/common/index.ts";
+import { AddIcon, CasinoIcon, RemoveIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import {
   type RulesetAbility,
@@ -39,16 +38,41 @@ import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { rulesetPickerQuery } from "@/client/src/lib/queries.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { nameRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
+import { NAME_RULES, requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
+import { availableRacesQuery } from "@/client/src/pages/characters/characterQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { computeAbilityModifier } from "@/shared/dnd3.5/abilities.ts";
 import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/shared/enums.ts";
+
+interface AbilityCardProps {
+  name: string;
+  score: number;
+  onIncrease: () => void;
+  onDecrease: () => void;
+  canIncrease: boolean;
+  canDecrease: boolean;
+  bottomInfo: string;
+  isSettled?: boolean;
+}
 
 type AbilityOption = Pick<RulesetAbility, "id" | "name">;
 
 interface AbilityScoresHandle {
   rollAll: () => void;
+}
+
+interface AbilityScoresSectionProps {
+  ref: Ref<AbilityScoresHandle>;
+  abilities: AbilityOption[];
+  control: Control<CreateCharacterFormData>;
+  onRollingChange: (rolling: boolean) => void;
+  method: RollMethodId;
+}
+
+interface CreateCharacterDialogProps {
+  open: boolean;
+  onClose: () => void;
 }
 
 /** What the character is created with, its alignment and gender unpicked ("") until they're chosen. */
@@ -59,6 +83,18 @@ type CreateCharacterFormData = Omit<CreateCharacterRequest, "alignment" | "gende
 
 type CreateCharacterRequest = InferRequestType<typeof rpc.api.characters.$post>["json"];
 
+interface PointBuyScoresProps {
+  abilities: AbilityOption[];
+  abilityValues: Record<string, number> | undefined;
+  onChange: (scores: Record<string, number>) => void;
+}
+
+interface StandardArrayScoresProps {
+  abilities: AbilityOption[];
+  abilityValues: Record<string, number> | undefined;
+  onChange: (scores: Record<string, number>) => void;
+}
+
 function AbilityCard({
   name,
   score,
@@ -68,16 +104,7 @@ function AbilityCard({
   canDecrease,
   bottomInfo,
   isSettled,
-}: {
-  name: string;
-  score: number;
-  onIncrease: () => void;
-  onDecrease: () => void;
-  canIncrease: boolean;
-  canDecrease: boolean;
-  bottomInfo: string;
-  isSettled?: boolean;
-}) {
+}: AbilityCardProps) {
   return (
     <Paper
       variant="outlined"
@@ -117,19 +144,7 @@ function AbilityCard({
   );
 }
 
-function AbilityScoresSection({
-  ref,
-  abilities,
-  control,
-  onRollingChange,
-  method,
-}: {
-  ref: Ref<AbilityScoresHandle>;
-  abilities: AbilityOption[];
-  control: Control<CreateCharacterFormData>;
-  onRollingChange: (rolling: boolean) => void;
-  method: RollMethodId;
-}) {
+function AbilityScoresSection({ ref, abilities, control, onRollingChange, method }: AbilityScoresSectionProps) {
   const {
     field: { value, onChange },
   } = useController({ control, name: "abilities" });
@@ -142,12 +157,9 @@ function AbilityScoresSection({
 
   useEffect(() => {
     return () => {
-      for (const id of intervalsRef.current) {
-        clearInterval(id);
-      }
-      for (const id of timeoutsRef.current) {
-        clearTimeout(id);
-      }
+      for (const id of intervalsRef.current) clearInterval(id);
+
+      for (const id of timeoutsRef.current) clearTimeout(id);
     };
   }, []);
 
@@ -155,12 +167,10 @@ function AbilityScoresSection({
     const rollFn = getRollFunction(method);
     if (rolling || !rollFn) return;
 
-    for (const id of intervalsRef.current) {
-      clearInterval(id);
-    }
-    for (const id of timeoutsRef.current) {
-      clearTimeout(id);
-    }
+    for (const id of intervalsRef.current) clearInterval(id);
+
+    for (const id of timeoutsRef.current) clearTimeout(id);
+
     intervalsRef.current = [];
     timeoutsRef.current = [];
 
@@ -206,13 +216,11 @@ function AbilityScoresSection({
 
   useImperativeHandle(ref, () => ({ rollAll: handleRollAll }));
 
-  if (method === "standard-array") {
+  if (method === "standard-array")
     return <StandardArrayScores abilities={abilities} abilityValues={abilityValues} onChange={onChange} />;
-  }
 
-  if (method === "point-buy") {
+  if (method === "point-buy")
     return <PointBuyScores abilities={abilities} abilityValues={abilityValues} onChange={onChange} />;
-  }
 
   return (
     <Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: "wrap" }}>
@@ -247,15 +255,7 @@ function defaultScore(method: RollMethodId, index: number) {
   return 10;
 }
 
-function PointBuyScores({
-  abilities,
-  abilityValues,
-  onChange,
-}: {
-  abilities: AbilityOption[];
-  abilityValues: Record<string, number> | undefined;
-  onChange: (scores: Record<string, number>) => void;
-}) {
+function PointBuyScores({ abilities, abilityValues, onChange }: PointBuyScoresProps) {
   const pointsSpent = useMemo(() => {
     if (!abilityValues) return 0;
     return abilities.reduce((sum, a) => sum + (POINT_BUY_COSTS[abilityValues[a.id] ?? 8] ?? 0), 0);
@@ -296,15 +296,7 @@ function scoresOf(abilities: AbilityOption[], values: Record<string, number> | u
   );
 }
 
-function StandardArrayScores({
-  abilities,
-  abilityValues,
-  onChange,
-}: {
-  abilities: AbilityOption[];
-  abilityValues: Record<string, number> | undefined;
-  onChange: (scores: Record<string, number>) => void;
-}) {
+function StandardArrayScores({ abilities, abilityValues, onChange }: StandardArrayScoresProps) {
   // A score already given to another ability swaps with this one's
   const handleChange = (abilityId: string, newValue: number) => {
     if (!abilityValues) return;
@@ -342,7 +334,7 @@ function StandardArrayScores({
   );
 }
 
-export function CreateCharacterDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
@@ -412,9 +404,8 @@ export function CreateCharacterDialog({ open, onClose }: { open: boolean; onClos
     const campaignRulesets = pageItems(campaignRulesetsData);
     const seenIds = new Set(draftRulesets.map((r) => r.id));
     const dedupedPublished = publishedRulesets.filter((r) => !seenIds.has(r.id));
-    for (const r of dedupedPublished) {
-      seenIds.add(r.id);
-    }
+    for (const r of dedupedPublished) seenIds.add(r.id);
+
     const dedupedCampaign = campaignRulesets.filter((r) => !seenIds.has(r.id));
     return [
       ...draftRulesets.map((r) => ({ ...r, group: "My Drafts" as const })),
@@ -433,27 +424,7 @@ export function CreateCharacterDialog({ open, onClose }: { open: boolean; onClos
     isError: isRacesError,
     onScroll: handleRacesScroll,
   } = useListboxQuery({
-    queryKey: queryKeys.characters.availableRaces(selectedRulesetId ?? "", {
-      alignment: selectedAlignment,
-      gender: selectedGender,
-    }),
-    queryFn: selectedRulesetId
-      ? async ({ pageParam }) => {
-          return parseResponse(
-            rpc.api.characters["available-races"].$get({
-              query: {
-                rulesetId: selectedRulesetId,
-                alignment: selectedAlignment || undefined,
-                gender: selectedGender || undefined,
-                limit: "100",
-                page: pageParam.toString(),
-              },
-            }),
-          );
-        }
-      : skipToken,
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    ...availableRacesQuery(selectedRulesetId, selectedAlignment, selectedGender),
     placeholderData: keepPreviousData,
   });
 
@@ -517,7 +488,7 @@ export function CreateCharacterDialog({ open, onClose }: { open: boolean; onClos
       );
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.characters.lists });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.lists });
       reset();
       onClose();
       navigate(`/characters/${data.id}`, { state: { openLevelUp: true } });
@@ -528,10 +499,16 @@ export function CreateCharacterDialog({ open, onClose }: { open: boolean; onClos
   });
 
   // The alignment and gender are required: a submit always has them. The scores not set yet are their method's defaults
-  const onSubmit = ({ alignment, gender, ...data }: CreateCharacterFormData) => {
+  const handleCreate = ({ alignment, gender, ...data }: CreateCharacterFormData) => {
     if (!alignment || !gender) return;
     const abilities = scoresOf(rulesetAbilities, data.abilities, rollMethod);
     createCharacterMutation.mutate({ ...data, alignment, gender, abilities });
+  };
+
+  // A race the ruleset's list no longer offers is refused, with why
+  const raceRules = {
+    required: "Race is required",
+    validate: (raceId: unknown) => (typeof raceId === "string" && raceIssue(raceId)) || true,
   };
 
   return (
@@ -540,7 +517,7 @@ export function CreateCharacterDialog({ open, onClose }: { open: boolean; onClos
       onClose={onClose}
       title="Create New Character"
       form={form}
-      onSubmit={onSubmit}
+      onSubmit={handleCreate}
       isLoading={createCharacterMutation.isPending}
       maxWidth="md"
     >
@@ -548,14 +525,13 @@ export function CreateCharacterDialog({ open, onClose }: { open: boolean; onClos
       {/* Basic Info */}
       <Typography variant="h6">Basic Information</Typography>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-        <NameField control={control} name="name" rules={nameRules} label="Character Name" />
+        <NameField control={control} name="name" rules={NAME_RULES} label="Character Name" />
         <FormTextField
           control={control}
           name="xp"
           rules={wholeNumberRules(0, "Experience points are required")}
           number
           label="Experience Points"
-          type="number"
           fullWidth
         />
       </Stack>
@@ -564,7 +540,7 @@ export function CreateCharacterDialog({ open, onClose }: { open: boolean; onClos
         <Controller
           name="rulesetId"
           control={control}
-          rules={{ required: "Ruleset is required" }}
+          rules={requiredRules("Ruleset is required")}
           render={({ field, fieldState }) => (
             <RulesetPicker
               rulesets={rulesets}
@@ -589,10 +565,7 @@ export function CreateCharacterDialog({ open, onClose }: { open: boolean; onClos
           control={control}
           name="raceId"
           label="Race"
-          rules={{
-            required: "Race is required",
-            validate: (raceId) => (typeof raceId === "string" && raceIssue(raceId)) || true,
-          }}
+          rules={raceRules}
           helperText={raceIssue(selectedRaceId)}
           options={races.map((race) => ({ value: race.id, label: race.name, disabled: !race.eligible }))}
           disabled={!selectedRulesetId}
@@ -605,14 +578,14 @@ export function CreateCharacterDialog({ open, onClose }: { open: boolean; onClos
           control={control}
           name="alignment"
           label="Alignment"
-          rules={{ required: "Alignment is required" }}
+          rules={requiredRules("Alignment is required")}
           options={ALIGNMENT_OPTIONS}
         />
         <SelectField
           control={control}
           name="gender"
           label="Gender"
-          rules={{ required: "Gender is required" }}
+          rules={requiredRules("Gender is required")}
           options={GENDER_OPTIONS}
         />
       </Stack>
@@ -687,10 +660,9 @@ export function CreateCharacterDialog({ open, onClose }: { open: boolean; onClos
         <FormTextField
           control={control}
           name="age"
-          rules={{ min: 1 }}
+          rules={wholeNumberRules(1)}
           number
           label="Age"
-          type="number"
           slotProps={{ htmlInput: { min: 1 } }}
           fullWidth
         />

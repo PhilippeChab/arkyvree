@@ -32,9 +32,8 @@ function pendingInviteOf(player: CampaignPlayer): PendingInvite | undefined {
 export function getPlayerSlot(player: CampaignPlayer): PlayerSlot {
   const pendingInvite = pendingInviteOf(player);
   const user = player.usersInAccount;
-  if (player.userId && user?.id) {
-    return { state: "assigned", name: user.username ?? user.emailAddress, pendingInvite };
-  }
+  if (player.userId && user?.id) return { state: "assigned", name: user.username ?? user.emailAddress, pendingInvite };
+
   if (pendingInvite) {
     const invitee = pendingInvite.usersInAccount;
     return {

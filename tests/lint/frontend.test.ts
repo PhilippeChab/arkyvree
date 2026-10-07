@@ -6,7 +6,7 @@ import { lintRepo } from "./lintRepo.ts";
 setDefaultTimeout(30_000);
 
 describe("frontend rules", () => {
-  test("an icon button has an accessible name: an aria-label, or a Tooltip right around it", async () => {
+  test("an icon button is named by its aria-label, whether or not a Tooltip shows its name", async () => {
     expect(
       await lintRepo(
         {
@@ -14,17 +14,11 @@ describe("frontend rules", () => {
           "client/src/b.tsx": 'export const b = (\n  <Tooltip title="Delete">\n    <IconButton />\n  </Tooltip>\n);\n',
           "client/src/c.tsx": "export const c = <IconButton />;\n",
           "client/src/d.tsx":
-            'export const d = (\n  <Tooltip title="Delete">\n    <span>\n      <IconButton disabled />\n    </span>\n  </Tooltip>\n);\n',
-          "client/src/e.tsx":
-            'export const e = (\n  <Tooltip title="Delete" describeChild>\n    <IconButton />\n  </Tooltip>\n);\n',
+            'export const d = (\n  <Tooltip title="Delete">\n    <IconButton aria-label="Delete" />\n  </Tooltip>\n);\n',
         },
         ["accessible-icon-buttons"],
       ),
-    ).toEqual([
-      "accessible-icon-buttons client/src/c.tsx",
-      "accessible-icon-buttons client/src/d.tsx",
-      "accessible-icon-buttons client/src/e.tsx",
-    ]);
+    ).toEqual(["accessible-icon-buttons client/src/b.tsx", "accessible-icon-buttons client/src/c.tsx"]);
   });
 
   test("a dialog goes full screen on a phone, and a form is never in a Modal", async () => {
@@ -52,8 +46,8 @@ describe("frontend rules", () => {
     expect(
       await lintRepo(
         {
-          "client/src/a.ts": "export const a = { queryKey: [...queryKeys.feats(id), search] };\n",
-          "client/src/b.ts": "export const b = { queryKey: queryKeys.feats(id) };\n",
+          "client/src/a.ts": "export const a = { queryKey: [...QUERY_KEYS.feats(id), search] };\n",
+          "client/src/b.ts": "export const b = { queryKey: QUERY_KEYS.feats(id) };\n",
           "client/src/c.ts": 'export const c = { queryKey: ["feats", id] };\n',
           "client/src/lib/queryKeys.ts": 'export const k = { queryKey: ["feats"] };\n',
         },
@@ -180,5 +174,306 @@ describe("frontend rules", () => {
         ["load-errors"],
       ),
     ).toEqual(["load-errors client/src/worded.tsx", "load-errors client/src/written.tsx"]);
+  });
+
+  test("a component destructures its props in its signature, typed by one named type", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/Named.tsx": "export function Named({ title }: NamedProps) {\n  return title;\n}\n",
+          "client/src/Inline.tsx": "export function Inline({ title }: { title: string }) {\n  return title;\n}\n",
+          "client/src/Omitted.tsx":
+            'export function Omitted({ title }: Omit<NamedProps, "id">) {\n  return title;\n}\n',
+          "client/src/Joined.tsx":
+            "export function Joined({ title }: NamedProps & { id: string }) {\n  return title;\n}\n",
+          "client/src/Whole.tsx": "export function Whole(props: NamedProps) {\n  return props.title;\n}\n",
+          "client/src/Spread.tsx":
+            "export function Spread({ ...props }: NamedProps) {\n  return <Card {...props} />;\n}\n",
+          "client/src/Wrapped.tsx":
+            "export const W = memo(function Wrapped({ title }: { title: string }) {\n  return title;\n});\n",
+          "client/src/helper.ts": "export function helper(value: { a: number }) {\n  return value.a;\n}\n",
+        },
+        ["component-props"],
+      ),
+    ).toEqual([
+      "component-props client/src/Inline.tsx",
+      "component-props client/src/Joined.tsx",
+      "component-props client/src/Omitted.tsx",
+      "component-props client/src/Whole.tsx",
+      "component-props client/src/Wrapped.tsx",
+    ]);
+  });
+
+  test("React's types and functions are named imports, and a ref is a prop", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/named.tsx": 'import { type ReactNode, StrictMode } from "react";\nexport type N = ReactNode;\n',
+          "client/src/default.tsx": 'import React from "react";\nexport const d = React;\n',
+          "client/src/namespace.tsx": "export type N = React.ReactNode;\n",
+          "client/src/member.tsx": "export const m = React.StrictMode;\n",
+          "client/src/forwarded.tsx": 'import { forwardRef } from "react";\nexport const f = forwardRef;\n',
+        },
+        ["react-imports"],
+      ),
+    ).toEqual([
+      "react-imports client/src/default.tsx",
+      "react-imports client/src/forwarded.tsx",
+      "react-imports client/src/member.tsx",
+      "react-imports client/src/namespace.tsx",
+    ]);
+  });
+
+  test("an icon comes from components/icons", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/named.tsx":
+            'import { AddIcon } from "@/client/src/components/icons/index.ts";\nexport const n = AddIcon;\n',
+          "client/src/barrel.tsx": 'import { Add as AddIcon } from "@mui/icons-material";\nexport const b = AddIcon;\n',
+          "client/src/path.tsx": 'import AddIcon from "@mui/icons-material/Add";\nexport const p = AddIcon;\n',
+          "client/src/components/icons/index.ts": 'export { Add as AddIcon } from "@mui/icons-material";\n',
+        },
+        ["icons"],
+      ),
+    ).toEqual(["icons client/src/barrel.tsx", "icons client/src/path.tsx"]);
+  });
+
+  test("what shows on a condition only is cond && <X />; a chain of alternatives ends in null", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/and.tsx": "export const a = (open: boolean) => open && <Panel />;\n",
+          "client/src/lone.tsx": "export const l = (open: boolean) => (open ? <Panel /> : null);\n",
+          "client/src/flipped.tsx": "export const f = (open: boolean) => (open ? null : <Panel />);\n",
+          "client/src/chain.tsx": "export const c = (a: boolean, b: boolean) => (a ? <A /> : b ? <B /> : null);\n",
+          "client/src/value.tsx": "export const v = (a: boolean) => (a ? 1 : null);\n",
+        },
+        ["jsx-conditionals"],
+      ),
+    ).toEqual(["jsx-conditionals client/src/flipped.tsx", "jsx-conditionals client/src/lone.tsx"]);
+  });
+
+  test("a component file is named for what it exports, and a page is XPage.tsx", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/components/Card.tsx":
+            "export function Card() {\n  return null;\n}\nexport function CardBody() {\n  return null;\n}\n",
+          "client/src/components/Panel.tsx": "export function Box() {\n  return null;\n}\n",
+          "client/src/components/FormFields.tsx":
+            "export function NameField() {\n  return null;\n}\nexport function EmailField() {\n  return null;\n}\n",
+          "client/src/components/statHelpers.tsx": "export function StatField() {\n  return null;\n}\n",
+          "client/src/components/tooltips.tsx": "export function faqTooltip() {\n  return null;\n}\n",
+          "client/src/pages/a/SignIn.tsx": "export default function SignIn() {\n  return null;\n}\n",
+          "client/src/pages/a/LegalPage.tsx": "export default function LegalPage() {\n  return null;\n}\n",
+          "client/src/App.tsx": "function App() {\n  return null;\n}\nexport default App;\n",
+        },
+        ["component-files"],
+      ),
+    ).toEqual([
+      "component-files client/src/App.tsx",
+      "component-files client/src/components/Panel.tsx",
+      "component-files client/src/components/statHelpers.tsx",
+      "component-files client/src/pages/a/SignIn.tsx",
+    ]);
+  });
+
+  test("a hook is the one its own module is named for, and gives an object", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/hooks/useOpen.ts": "export function useOpen() {\n  return { open: true };\n}\n",
+          "client/src/hooks/useTwo.ts":
+            "export function useTwo() {\n  return { a: 1 };\n}\nexport function useOther() {\n  return { b: 2 };\n}\n",
+          "client/src/hooks/useTuple.ts": "export function useTuple() {\n  return [1, 2] as const;\n}\n",
+          "client/src/components/Card.tsx":
+            "function useCard() {\n  return { a: 1 };\n}\nexport function Card() {\n  return useCard().a;\n}\n",
+        },
+        ["hook-files"],
+      ),
+    ).toEqual([
+      "hook-files client/src/components/Card.tsx",
+      "hook-files client/src/hooks/useTuple.ts",
+      "hook-files client/src/hooks/useTwo.ts",
+    ]);
+  });
+
+  test("a component's own handler is handleX; onX names a prop", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/Handled.tsx":
+            "export function Handled() {\n  const handleClick = () => 1;\n  return <Button onClick={handleClick} />;\n}\n",
+          "client/src/Prop.tsx":
+            "export function Prop() {\n  const onClick = () => 1;\n  return <Button onClick={onClick} />;\n}\n",
+          "client/src/Callback.tsx":
+            "export function Callback() {\n  const onSave = useCallback(() => 1, []);\n  return <Button onClick={onSave} />;\n}\n",
+          "client/src/helper.ts": "export const onReady = () => 1;\n",
+        },
+        ["handler-names"],
+      ),
+    ).toEqual(["handler-names client/src/Callback.tsx", "handler-names client/src/Prop.tsx"]);
+  });
+
+  test("a constant built from a literal is SCREAMING_CASE, and one sx takes ends in _SX", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/named.tsx":
+            "const PAGE_SIZE = 20;\nconst CELL_SX = { px: 1 };\nexport const n = <Box sx={CELL_SX} key={PAGE_SIZE} />;\n",
+          "client/src/camel.tsx": "const pageSize = 20;\nexport const c = pageSize;\n",
+          "client/src/style.tsx": "const CELL = { px: 1 };\nexport const s = <Box sx={{ ...CELL, py: 1 }} />;\n",
+          "client/src/computed.tsx":
+            "const client = new QueryClient();\nconst toLabel = (x: string) => x;\nexport const used = useThing(client, toLabel);\n",
+        },
+        ["constant-names"],
+      ),
+    ).toEqual(["constant-names client/src/camel.tsx", "constant-names client/src/style.tsx"]);
+  });
+
+  test("a query's options come from a factory; it waits with skipToken, keeps data with keepPreviousData, names its times", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/lib/queries.ts":
+            "export const q = queryOptions({ queryKey: k, queryFn: () => f(), staleTime: FIVE_MINUTES });\n",
+          "client/src/pages/a/featQueries.ts": "export const f = queryOptions({ queryKey: k, queryFn: () => f() });\n",
+          "client/src/pages/a/Inline.tsx": "export const i = () => useQuery({ queryKey: k, queryFn: () => f() });\n",
+          "client/src/pages/a/Factory.tsx": "export const y = () => useQuery({ ...featQuery(id), enabled: open });\n",
+          "client/src/pages/a/Gated.tsx": "export const g = () => useQuery({ ...featQuery(id), enabled: !!id });\n",
+          "client/src/pages/a/Kept.tsx":
+            "export const p = () => useQuery({ ...featQuery(id), placeholderData: (prev) => prev });\n",
+          "client/src/pages/a/Timed.tsx": "export const t = () => useQuery({ ...featQuery(id), staleTime: 5000 });\n",
+          "client/src/pages/a/Written.tsx": "export const w = () => queryClient.setQueryData(k, v);\n",
+          "client/src/pages/a/Mutated.tsx":
+            "export const m = () => useMutation({ mutationFn: f, onSuccess: (v) => queryClient.setQueryData(k, v) });\n",
+          "client/src/pages/a/Paged.tsx": "export const n = (data: Data) => data.pages.flatMap((p) => p.items);\n",
+        },
+        ["queries"],
+      ),
+    ).toEqual([
+      "queries client/src/pages/a/Gated.tsx",
+      "queries client/src/pages/a/Inline.tsx",
+      "queries client/src/pages/a/Kept.tsx",
+      "queries client/src/pages/a/Paged.tsx",
+      "queries client/src/pages/a/Timed.tsx",
+      "queries client/src/pages/a/Written.tsx",
+    ]);
+  });
+
+  test("a request's answer is read with parseResponse", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/parsed.ts":
+            "export const p = { mutationFn: () => parseResponse(rpc.api.feats.$post({ json })) };\n",
+          "client/src/raw.ts": "export const r = { mutationFn: () => rpc.api.feats.$post({ json }) };\n",
+        },
+        ["parsed-responses"],
+      ),
+    ).toEqual(["parsed-responses client/src/raw.ts"]);
+  });
+
+  test("an error's toast names what failed, and an error shows through errorMessage", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/named.ts": 'export const n = () => snackbar.error(error, "Failed to save feat");\n',
+          "client/src/worded.ts": 'export const w = () => snackbar.error("Nothing to save");\n',
+          "client/src/bare.ts": "export const b = () => snackbar.error(error);\n",
+          "client/src/raw.ts": "export const r = { onError: (error: Error) => setError(error.message) };\n",
+          "client/src/caught.ts":
+            "export function c() {\n  try {\n    f();\n  } catch (e) {\n    show(e.message);\n  }\n}\n",
+          "client/src/field.ts": "export const f = (error: FieldError) => error.message;\n",
+        },
+        ["error-reads"],
+      ),
+    ).toEqual(["error-reads client/src/bare.ts", "error-reads client/src/caught.ts", "error-reads client/src/raw.ts"]);
+  });
+
+  test("what the browser keeps is a store's", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/stores/prefs.ts": 'export const p = () => localStorage.getItem("x");\n',
+          "client/src/page.ts": 'export const g = () => localStorage.getItem("x");\n',
+          "client/src/session.ts": 'export const s = () => window.sessionStorage.setItem("x", "1");\n',
+          "client/src/own.ts": "export const o = (x: { localStorage: string }) => x.localStorage;\n",
+        },
+        ["browser-storage"],
+      ),
+    ).toEqual(["browser-storage client/src/page.ts", "browser-storage client/src/session.ts"]);
+  });
+
+  test("a date is shown through lib/formatDate.ts", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/lib/formatDate.ts": "export const f = (d: Date) => d.toLocaleDateString();\n",
+          "client/src/local.ts": "export const l = (d: Date) => d.toLocaleDateString();\n",
+          "client/src/intl.ts": "export const i = new Intl.DateTimeFormat();\n",
+          "client/src/number.ts": "export const n = (x: number) => x.toLocaleString();\n",
+        },
+        ["date-formats"],
+      ),
+    ).toEqual(["date-formats client/src/intl.ts", "date-formats client/src/local.ts"]);
+  });
+
+  test("a control that only navigates is a link, an external one an anchor, the URL read through the shared hooks", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/linked.tsx": 'export const l = <Button component={Link} to="/x">Go</Button>;\n',
+          "client/src/clicked.tsx": 'export const c = <Button onClick={() => navigate("/x")}>Go</Button>;\n',
+          "client/src/back.tsx": "export const b = <Button onClick={() => navigate(-1)}>Back</Button>;\n",
+          "client/src/card.tsx": 'export const d = <ListCard onClick={() => navigate("/x")} />;\n',
+          "client/src/window.tsx": 'export const w = () => window.open("https://x", "_blank");\n',
+          "client/src/params.tsx":
+            'import { useSearchParams } from "react-router-dom";\nexport const p = useSearchParams;\n',
+          "client/src/hooks/useParam.ts":
+            'import { useSearchParams } from "react-router-dom";\nexport const h = useSearchParams;\n',
+          "client/src/alias.tsx":
+            'import { Link as RouterLink } from "react-router-dom";\nexport const a = RouterLink;\n',
+        },
+        ["navigation"],
+      ),
+    ).toEqual([
+      "navigation client/src/alias.tsx",
+      "navigation client/src/clicked.tsx",
+      "navigation client/src/params.tsx",
+      "navigation client/src/window.tsx",
+    ]);
+  });
+
+  test("an element that opens on click spreads clickableProps", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/row.tsx": "export const r = <TableRow {...clickableProps(open)} sx={CLICKABLE_SX} />;\n",
+          "client/src/bare.tsx": "export const b = <Box onClick={open} />;\n",
+          "client/src/button.tsx": "export const t = <Button onClick={open}>Open</Button>;\n",
+        },
+        ["clickable-elements"],
+      ),
+    ).toEqual(["clickable-elements client/src/bare.tsx"]);
+  });
+
+  test("a Tooltip wraps a control that can be disabled in a span, and describes one its text names", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/span.tsx":
+            'export const s = (\n  <Tooltip title="Why">\n    <span>\n      <Button disabled>Save</Button>\n    </span>\n  </Tooltip>\n);\n',
+          "client/src/bare.tsx":
+            'export const b = (\n  <Tooltip title="Why">\n    <IconButton aria-label="Save" disabled />\n  </Tooltip>\n);\n',
+          "client/src/named.tsx":
+            'export const n = (\n  <Tooltip title="Saves the feat">\n    <Button>Save</Button>\n  </Tooltip>\n);\n',
+          "client/src/described.tsx":
+            'export const d = (\n  <Tooltip title="Saves the feat" describeChild>\n    <Button>Save</Button>\n  </Tooltip>\n);\n',
+        },
+        ["tooltips"],
+      ),
+    ).toEqual(["tooltips client/src/bare.tsx", "tooltips client/src/named.tsx"]);
   });
 });

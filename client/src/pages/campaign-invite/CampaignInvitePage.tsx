@@ -1,9 +1,9 @@
-import { Mail as InviteIcon } from "@mui/icons-material";
 import { parseResponse } from "hono/client";
 import { useParams } from "react-router-dom";
 
+import { InviteIcon } from "@/client/src/components/icons/index.ts";
 import { InviteLandingPage } from "@/client/src/components/invites/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 export default function CampaignInvitePage() {
@@ -17,7 +17,7 @@ export default function CampaignInvitePage() {
       entityPath={(id) => `/campaigns/${id}`}
       listPath="/campaigns"
       icon={InviteIcon}
-      queryKey={queryKeys.invites.detail("campaign", inviteId)}
+      queryKey={QUERY_KEYS.invites.detail("campaign", inviteId)}
       inviteFn={async () => {
         const invite = await parseResponse(rpc.api.campaigns.invites[":inviteId"].$get(param));
         const campaign = invite.playersInCampaign?.campaignsInCampaign;
@@ -29,12 +29,12 @@ export default function CampaignInvitePage() {
           invitedAt: invite.createdAt,
         };
       }}
-      acceptFn={() => rpc.api.campaigns.invites[":inviteId"].accept.$post(param)}
-      rejectFn={() => rpc.api.campaigns.invites[":inviteId"].reject.$post(param)}
+      acceptFn={() => parseResponse(rpc.api.campaigns.invites[":inviteId"].accept.$post(param))}
+      rejectFn={() => parseResponse(rpc.api.campaigns.invites[":inviteId"].reject.$post(param))}
       acceptedStatus="Accepted"
       joinVerb="join"
       description="You've been invited to join this campaign. Would you like to accept or reject this invitation?"
-      invalidateOnAccept={queryKeys.campaigns.lists}
+      invalidateOnAccept={QUERY_KEYS.campaigns.lists}
     />
   );
 }

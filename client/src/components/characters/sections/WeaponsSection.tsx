@@ -29,9 +29,7 @@ export function WeaponsSection({ combat }: WeaponsSectionProps) {
           const weapons: { weapon: WeaponSlot; slot: string }[] = [];
           for (const slotKey of ["mainhand", "offhand", "twohanded"] as const) {
             const weapon = set?.[slotKey];
-            if (weapon) {
-              weapons.push({ weapon, slot: describeWeaponSlot(weapon, slotKey) });
-            }
+            if (weapon) weapons.push({ weapon, slot: describeWeaponSlot(weapon, slotKey) });
           }
           if (weapons.length === 0) return null;
 

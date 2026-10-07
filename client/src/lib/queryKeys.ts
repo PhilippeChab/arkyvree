@@ -1,4 +1,4 @@
-export const queryKeys = {
+export const QUERY_KEYS = {
   auth: {
     me: ["auth", "me"] as const,
     /** Every sign-in, sign-up, verification, reset and sign-out request: whether one is in flight, whichever page sent it. */

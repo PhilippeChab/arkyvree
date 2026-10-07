@@ -66,9 +66,8 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
     0,
   );
 
-  if (totalPowersToSelect === 0 && autoGrantedFree.length === 0 && autoGrantedNonFree.length === 0) {
+  if (totalPowersToSelect === 0 && autoGrantedFree.length === 0 && autoGrantedNonFree.length === 0)
     return <Alert severity="info">No spells to select at this level.</Alert>;
-  }
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>

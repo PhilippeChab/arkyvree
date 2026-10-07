@@ -7,12 +7,12 @@ import { AuthPage, AuthSubmitButton } from "@/client/src/components/auth/index.t
 import { EmailField } from "@/client/src/components/common/index.ts";
 import { useAuthRequests, useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
-import { emailRules } from "@/client/src/lib/validation.ts";
+import { EMAIL_RULES } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
 type ForgotPasswordFormData = InferRequestType<(typeof rpc.auth)["forgot-password"]["$post"]>["json"];
 
-export default function ForgotPassword() {
+export default function ForgotPasswordPage() {
   usePageTitle("Forgot Password");
   const auth = useAuthRequests();
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +22,7 @@ export default function ForgotPassword() {
     emailAddress: "",
   });
 
-  const onSubmit = (data: ForgotPasswordFormData) => {
+  const handleSendCode = (data: ForgotPasswordFormData) => {
     setError(null);
     auth.forgotPassword.mutate(data.emailAddress, {
       onSuccess: () => navigate("/reset-password"),
@@ -36,8 +36,8 @@ export default function ForgotPassword() {
       title="Forgot Password"
       subtitle="Enter your email address and we'll send you a code to reset your password."
     >
-      <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <EmailField control={control} name="emailAddress" rules={emailRules} />
+      <form onSubmit={handleSubmit(handleSendCode)} noValidate>
+        <EmailField control={control} name="emailAddress" rules={EMAIL_RULES} />
 
         <AuthSubmitButton loading={auth.pending}>Send Reset Code</AuthSubmitButton>
       </form>

@@ -7,7 +7,7 @@ import { computeAbilityModifier } from "@/shared/dnd3.5/abilities.ts";
 import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
 
 import { AbilityScoreBox } from "./AbilityScoreBox.tsx";
-import { StatField } from "./statHelpers.tsx";
+import { StatField } from "./StatField.tsx";
 import type { Dnd35BondedSectionProps } from "./types.ts";
 
 type FeatEntry = NonNullable<Dnd35BondedSectionProps["bonded"]["feats"]>[string];

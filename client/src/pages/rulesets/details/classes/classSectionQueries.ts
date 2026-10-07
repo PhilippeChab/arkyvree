@@ -3,11 +3,11 @@
  * the key its section reads.
  */
 
-import { type QueryClient, queryOptions } from "@tanstack/react-query";
-import type { InferResponseType } from "hono/client";
-import { parseResponse } from "hono/client";
+import { infiniteQueryOptions, type QueryClient, queryOptions, skipToken } from "@tanstack/react-query";
+import { type InferResponseType, parseResponse } from "hono/client";
 
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
+import { powersQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 export type ClassDetail = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["$get"], 200>;
@@ -30,14 +30,14 @@ function classParam(rulesetId: string, classId: string) {
 /** The class itself, shared by the class page and the classes table's row hover. */
 export function classDetailQuery(rulesetId: string, classId: string) {
   return queryOptions({
-    queryKey: queryKeys.rulesets.classDetail(rulesetId, classId),
+    queryKey: QUERY_KEYS.rulesets.classDetail(rulesetId, classId),
     queryFn: () => parseResponse(rpc.api.rulesets[":id"].classes[":classId"].$get(classParam(rulesetId, classId))),
   });
 }
 
 export function classFeatPoolsQuery(rulesetId: string, classId: string) {
   return queryOptions({
-    queryKey: queryKeys.rulesets.classFeatPools(rulesetId, classId),
+    queryKey: QUERY_KEYS.rulesets.classFeatPools(rulesetId, classId),
     queryFn: () =>
       parseResponse(rpc.api.rulesets[":id"].classes[":classId"]["feat-pools"].$get(classParam(rulesetId, classId))),
   });
@@ -45,7 +45,7 @@ export function classFeatPoolsQuery(rulesetId: string, classId: string) {
 
 export function classLevelsQuery(rulesetId: string, classId: string) {
   return queryOptions({
-    queryKey: queryKeys.rulesets.classLevels(rulesetId, classId),
+    queryKey: QUERY_KEYS.rulesets.classLevels(rulesetId, classId),
     queryFn: () =>
       parseResponse(rpc.api.rulesets[":id"].classes[":classId"].levels.$get(classParam(rulesetId, classId))),
   });
@@ -53,7 +53,7 @@ export function classLevelsQuery(rulesetId: string, classId: string) {
 
 export function classSkillsQuery(rulesetId: string, classId: string) {
   return queryOptions({
-    queryKey: queryKeys.rulesets.classSkills(rulesetId, classId),
+    queryKey: QUERY_KEYS.rulesets.classSkills(rulesetId, classId),
     queryFn: () =>
       parseResponse(rpc.api.rulesets[":id"].classes[":classId"].skills.$get(classParam(rulesetId, classId))),
   });
@@ -62,7 +62,7 @@ export function classSkillsQuery(rulesetId: string, classId: string) {
 /** The spell lists a class casts from, its own first: the spell list tab's picker. */
 export function classSpellListsQuery(rulesetId: string, classId: string) {
   return queryOptions({
-    queryKey: queryKeys.rulesets.classSpellLists(rulesetId, classId),
+    queryKey: QUERY_KEYS.rulesets.classSpellLists(rulesetId, classId),
     queryFn: () =>
       parseResponse(rpc.api.rulesets[":id"].classes[":classId"]["spell-lists"].$get(classParam(rulesetId, classId))),
   });
@@ -70,7 +70,7 @@ export function classSpellListsQuery(rulesetId: string, classId: string) {
 
 export function classSpellsKnownQuery(rulesetId: string, classId: string) {
   return queryOptions({
-    queryKey: queryKeys.rulesets.classSpellsKnown(rulesetId, classId),
+    queryKey: QUERY_KEYS.rulesets.classSpellsKnown(rulesetId, classId),
     queryFn: () =>
       parseResponse(rpc.api.rulesets[":id"].classes[":classId"]["spells-known"].$get(classParam(rulesetId, classId))),
   });
@@ -78,7 +78,7 @@ export function classSpellsKnownQuery(rulesetId: string, classId: string) {
 
 export function classSpellsQuery(rulesetId: string, classId: string) {
   return queryOptions({
-    queryKey: queryKeys.rulesets.classSpells(rulesetId, classId),
+    queryKey: QUERY_KEYS.rulesets.classSpells(rulesetId, classId),
     queryFn: () =>
       parseResponse(rpc.api.rulesets[":id"].classes[":classId"].spells.$get(classParam(rulesetId, classId))),
   });
@@ -110,4 +110,29 @@ export function prefetchClassSection(
     case "requirements":
       return;
   }
+}
+
+/** The ruleset's skills the Skills tab adds to a class, searched on the server and paged in as its listbox scrolls. */
+export function skillOptionsQuery(rulesetId: string, search: string) {
+  return infiniteQueryOptions({
+    queryKey: QUERY_KEYS.rulesets.sectionSearch(rulesetId, "skills", search),
+    queryFn: ({ pageParam }) =>
+      parseResponse(
+        rpc.api.rulesets[":id"].skills.$get({
+          param: { id: rulesetId },
+          query: { limit: "20", page: pageParam.toString(), search: search || undefined },
+        }),
+      ),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => lastPage.nextPage,
+  });
+}
+
+/**
+ * The spells of one of a class's spell lists at a level, as its Spells tab searches them: none is asked until the
+ * class's lists have loaded and it has one (`listId`).
+ */
+export function spellListSpellsQuery(rulesetId: string, listId: string | undefined, level: number, search: string) {
+  const spells = powersQuery(rulesetId, { search, childOnly: false, aptitudeId: listId, level });
+  return infiniteQueryOptions({ ...spells, queryFn: listId === undefined ? skipToken : spells.queryFn });
 }

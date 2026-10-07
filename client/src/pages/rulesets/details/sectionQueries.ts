@@ -3,13 +3,13 @@
  * factories, so a hovered tab's first page is already cached under the exact key the section asks for.
  */
 
-import { infiniteQueryOptions, type QueryClient, queryOptions } from "@tanstack/react-query";
+import { infiniteQueryOptions, type QueryClient, queryOptions, skipToken } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-import { DEFAULT_ENTITY_FILTERS, type EntityKind, type EntitySortField } from "./entityFilters.ts";
+import { DEFAULT_ENTITY_FILTERS, type EntityKind, type EntitySortField } from "./useEntityFilters.ts";
 
 interface AptitudeFilters extends ListFilters {
   aptitudeId?: string;
@@ -57,12 +57,12 @@ function nextPage(lastPage: { nextPage?: number }) {
 }
 
 function sectionKey(rulesetId: string, section: RulesetSection, filters: ListFilters) {
-  return [...queryKeys.rulesets.section(rulesetId, section), filters.search, filters.childOnly] as const;
+  return [...QUERY_KEYS.rulesets.section(rulesetId, section), filters.search, filters.childOnly] as const;
 }
 
 export function abilitiesQuery(rulesetId: string, childOnly: boolean) {
   return queryOptions({
-    queryKey: [...queryKeys.rulesets.section(rulesetId, "abilities"), childOnly],
+    queryKey: [...QUERY_KEYS.rulesets.section(rulesetId, "abilities"), childOnly],
     queryFn: () =>
       parseResponse(
         rpc.api.rulesets[":id"].abilities.$get({
@@ -108,11 +108,29 @@ export function classesQuery(rulesetId: string, filters: EntityFilters) {
   });
 }
 
+/** The variants of a feat family, which its grouped row lists as it expands; a row of one feat has none to ask for. */
+export function featFamilyQuery(rulesetId: string, family: string | null, childOnly: boolean) {
+  return infiniteQueryOptions({
+    queryKey: QUERY_KEYS.rulesets.familyVariants(rulesetId, family ?? "", childOnly),
+    queryFn: family
+      ? ({ pageParam }) =>
+          parseResponse(
+            rpc.api.rulesets[":id"].feats.$get({
+              param: { id: rulesetId },
+              query: { limit: "50", page: pageParam.toString(), family, childOnly: childOnly ? "true" : undefined },
+            }),
+          )
+      : skipToken,
+    initialPageParam: 1,
+    getNextPageParam: nextPage,
+  });
+}
+
 /** Feats with variant families collapsed into one row each — the Feats tab's default view. */
 export function featsGroupedQuery(rulesetId: string, filters: AptitudeFilters) {
   return infiniteQueryOptions({
     queryKey: [
-      ...queryKeys.rulesets.sectionGrouped(rulesetId, "feats"),
+      ...QUERY_KEYS.rulesets.sectionGrouped(rulesetId, "feats"),
       filters.search,
       filters.childOnly,
       filters.aptitudeId,

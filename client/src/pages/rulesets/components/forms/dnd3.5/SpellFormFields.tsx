@@ -4,9 +4,10 @@ import { Controller, useController, type UseFormReturn } from "react-hook-form";
 import { DescriptionField, FormTextField, NameField, SelectField } from "@/client/src/components/common/index.ts";
 import { type Aptitude, AptitudesAutocomplete } from "@/client/src/components/customization/index.ts";
 import type { RulesetSave } from "@/client/src/hooks/index.ts";
-import { nameRules } from "@/client/src/lib/validation.ts";
-import { byName, useAptitudeLookup } from "@/client/src/pages/rulesets/components/forms/aptitudeLookup.ts";
+import { NAME_RULES } from "@/client/src/lib/validation.ts";
+import { byName, useAptitudeLookup } from "@/client/src/pages/rulesets/components/forms/useAptitudeLookup.ts";
 import {
+  MAX_SPELL_LEVEL,
   SPELL_COMPONENTS,
   SPELL_DESCRIPTORS,
   SPELL_RANGE_TYPES,
@@ -14,7 +15,6 @@ import {
   SPELL_SCHOOLS,
   SPELL_SUBSCHOOLS,
 } from "@/shared/dnd3.5/spells.ts";
-import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
 
 import { spellAptitude, type SpellAptitude, type SpellFormData } from "./spellForm.ts";
 
@@ -29,7 +29,18 @@ interface SpellFormFieldsProps {
   knownAptitudes?: Aptitude[];
 }
 
-function SpellPropertyFields({ form }: { form: UseFormReturn<SpellFormData> }) {
+interface SpellPropertyFieldsProps {
+  form: UseFormReturn<SpellFormData>;
+}
+
+interface TagsFieldProps {
+  form: UseFormReturn<SpellFormData>;
+  name: "descriptors" | "components";
+  label: string;
+  options: readonly string[];
+}
+
+function SpellPropertyFields({ form }: SpellPropertyFieldsProps) {
   return (
     <>
       <Box sx={{ display: "flex", gap: 2, flexDirection: { xs: "column", sm: "row" } }}>
@@ -131,17 +142,7 @@ function SpellPropertyFields({ form }: { form: UseFormReturn<SpellFormData> }) {
 }
 
 /** A free-text list with suggestions, shown as chips. */
-function TagsField({
-  form,
-  name,
-  label,
-  options,
-}: {
-  form: UseFormReturn<SpellFormData>;
-  name: "descriptors" | "components";
-  label: string;
-  options: readonly string[];
-}) {
+function TagsField({ form, name, label, options }: TagsFieldProps) {
   return (
     <Controller
       name={name}
@@ -177,7 +178,7 @@ export function SpellFormFields({ form, rulesetId, saves, hideProperties, knownA
 
   return (
     <>
-      <NameField control={form.control} name="name" rules={nameRules} />
+      <NameField control={form.control} name="name" rules={NAME_RULES} />
       <DescriptionField control={form.control} name="description" />
       <SelectField
         control={form.control}

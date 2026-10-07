@@ -5,6 +5,10 @@ import type { FieldError } from "react-hook-form";
 import { AnimatedAlert } from "./AnimatedAlert.tsx";
 import { ScrollSafeListbox } from "./ScrollSafeListbox.tsx";
 
+interface BaseRulesetAlertProps {
+  ruleset: PickableRuleset | null;
+}
+
 interface PickableRuleset {
   id: string;
   name: string;
@@ -30,7 +34,7 @@ interface RulesetPickerProps<R extends PickableRuleset> {
 }
 
 /** The warning shown once a base ruleset is picked: it can't be edited until forked. */
-export function BaseRulesetAlert({ ruleset }: { ruleset: PickableRuleset | null }) {
+export function BaseRulesetAlert({ ruleset }: BaseRulesetAlertProps) {
   return (
     <AnimatedAlert in={ruleset !== null && !ruleset.userId} severity="warning" sx={{ mb: 2 }}>
       Base rulesets are read-only templates. Fork it first to customize rules for your group.

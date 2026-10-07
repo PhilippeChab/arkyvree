@@ -3,9 +3,12 @@ import type { InferRequestType } from "hono/client";
 import { useController, type UseFormReturn } from "react-hook-form";
 
 import { SelectField } from "@/client/src/components/common/index.ts";
+import { requiredRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
 import { ConditionFields } from "./ConditionFields.tsx";
+
+type RequirementConditionFieldsProps = Pick<RequirementFormProps, "form" | "rulesetId" | "mode">;
 
 interface RequirementFormProps {
   form: UseFormReturn<RequirementFormData>;
@@ -28,11 +31,7 @@ const CHAINING_OPERATORS = [
 ];
 
 /** A condition's fields, bound while the requirement is a condition (a chaining node drops them). */
-function RequirementConditionFields({
-  form,
-  rulesetId,
-  mode,
-}: Pick<RequirementFormProps, "form" | "rulesetId" | "mode">) {
+function RequirementConditionFields({ form, rulesetId, mode }: RequirementConditionFieldsProps) {
   const target = useController({ control: form.control, name: "target" });
   const operator = useController({ control: form.control, name: "operator" });
   const value = useController({ control: form.control, name: "value" });
@@ -78,7 +77,7 @@ export function RequirementForm({ form, type, onTypeChange, rulesetId, mode }: R
           control={form.control}
           name="chainingOperator"
           label="Chaining Operator"
-          rules={{ required: "Chaining operator is required" }}
+          rules={requiredRules("Chaining operator is required")}
           options={CHAINING_OPERATORS}
         />
       ) : (

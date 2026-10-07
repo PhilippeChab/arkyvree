@@ -1,11 +1,7 @@
-import { parseResponse } from "hono/client";
-
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
-import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import { CompletionAutocomplete } from "./CompletionAutocomplete.tsx";
+import { propertyTypeCompletionsQuery } from "./customizationQueries.ts";
 
 interface PropertyTypeInputProps {
   value: string;
@@ -33,20 +29,7 @@ export function PropertyTypeInput({
       {...props}
       label={label}
       placeholder={placeholder}
-      queryKey={(search) => queryKeys.rulesets.propertyTypeCompletions(rulesetId, search, entityType)}
-      pageFn={(search, page) =>
-        parseResponse(
-          rpc.api.rulesets[":id"].customization.properties.types.completions.$get({
-            param: { id: rulesetId },
-            query: {
-              query: search,
-              limit: "10",
-              page: page.toString(),
-              entityType: entityType ? getUrlSegment(entityType) : undefined,
-            },
-          }),
-        )
-      }
+      query={(search) => propertyTypeCompletionsQuery(rulesetId, search, entityType)}
       enabled={!!rulesetId}
       loadingText="Loading property types..."
       noOptionsText="No property types found"

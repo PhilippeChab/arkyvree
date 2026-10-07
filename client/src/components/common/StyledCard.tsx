@@ -1,7 +1,7 @@
 import { Card, type CardProps } from "@mui/material";
 import { type ReactNode } from "react";
 
-import { fadeInUpSx, prefersReducedMotion } from "@/client/src/lib/animations.ts";
+import { fadeInUpSx, PREFERS_REDUCED_MOTION } from "@/client/src/lib/animations.ts";
 
 import { CLICKABLE_SX, clickableProps } from "./clickable.ts";
 
@@ -54,7 +54,7 @@ export function StyledCard({
               opacity: 1,
             }
           : {},
-        [prefersReducedMotion]: {
+        [PREFERS_REDUCED_MOTION]: {
           "&:hover": { transform: "none" },
         },
         "&:before": {
@@ -65,12 +65,12 @@ export function StyledCard({
           right: 0,
           height: 4,
           background: (theme) => {
-            if (isArchived) {
+            if (isArchived)
               return `linear-gradient(90deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`;
-            }
-            if (isPrivate) {
+
+            if (isPrivate)
               return `linear-gradient(90deg, ${theme.palette.warning.main}, ${theme.palette.warning.dark})`;
-            }
+
             return `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`;
           },
         },

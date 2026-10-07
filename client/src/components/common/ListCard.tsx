@@ -5,6 +5,10 @@ import { getInitial } from "@/shared/text.ts";
 
 import { StyledCard } from "./StyledCard.tsx";
 
+interface ListCardGridProps {
+  children: ReactNode;
+}
+
 interface ListCardProps extends Omit<ComponentProps<typeof StyledCard>, "children" | "title"> {
   /** Defaults to the title's initial. */
   avatar?: ReactNode;
@@ -81,7 +85,7 @@ export function ListCard({
 }
 
 /** Responsive grid the list cards sit in. */
-export function ListCardGrid({ children }: { children: ReactNode }) {
+export function ListCardGrid({ children }: ListCardGridProps) {
   return (
     <Box
       sx={{

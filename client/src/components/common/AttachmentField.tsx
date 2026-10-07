@@ -1,14 +1,17 @@
-import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutlineOutlined";
-import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
-import PhotoCameraOutlinedIcon from "@mui/icons-material/PhotoCameraOutlined";
 import { Avatar, Box, IconButton, Stack, Tooltip, Typography } from "@mui/material";
-import { useRef, useState } from "react";
+import { type DragEvent, useState } from "react";
 
+import {
+  CloudUploadOutlinedIcon,
+  DeleteOutlineIcon,
+  ImageOutlinedIcon,
+  PhotoCameraOutlinedIcon,
+} from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useAttachment, useDemoTimeRemaining, useDetachAttachment, useDirectUpload } from "@/client/src/hooks/index.ts";
 import { ALLOWED_IMAGE_TYPES } from "@/shared/attachments.ts";
 
+import { CLICKABLE_SX, clickableProps } from "./clickable.ts";
 import { DiceSpinner } from "./DiceSpinner.tsx";
 
 interface AttachmentFieldProps {
@@ -44,7 +47,8 @@ export function AttachmentField({
   const isAvatar = variant === "avatar";
   const dimension = size ?? (isAvatar ? 128 : 220);
   const radius = isAvatar ? "50%" : 2;
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  // The hidden file input, in state: the clickable box hands its click on to it
+  const [fileInput, setFileInput] = useState<HTMLInputElement | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const snackbar = useSnackbar();
 
@@ -65,7 +69,7 @@ export function AttachmentField({
 
   function pick() {
     if (!interactive) return;
-    inputRef.current?.click();
+    fileInput?.click();
   }
 
   function handleFile(file: File | undefined) {
@@ -77,13 +81,13 @@ export function AttachmentField({
     upload.mutate(file);
   }
 
-  function onDrop(e: React.DragEvent) {
+  function handleDrop(e: DragEvent) {
     e.preventDefault();
     setDragOver(false);
     handleFile(e.dataTransfer.files?.[0]);
   }
 
-  function onDragOver(e: React.DragEvent) {
+  function handleDragOver(e: DragEvent) {
     if (!interactive) return;
     e.preventDefault();
     if (!dragOver) setDragOver(true);
@@ -99,21 +103,14 @@ export function AttachmentField({
 
       <Box sx={{ position: "relative" }}>
         <Box
-          onClick={interactive ? pick : undefined}
-          onDrop={onDrop}
-          onDragOver={onDragOver}
+          {...(interactive ? clickableProps(pick) : { tabIndex: -1 })}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
           onDragLeave={() => setDragOver(false)}
           role={interactive ? "button" : undefined}
           aria-label={canUpload ? (url ? `Change ${label ?? name}` : `Upload ${label ?? name}`) : undefined}
-          tabIndex={interactive ? 0 : -1}
-          onKeyDown={(e) => {
-            if (!interactive) return;
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              pick();
-            }
-          }}
           sx={{
+            ...CLICKABLE_SX,
             position: "relative",
             width: dimension,
             height: dimension,
@@ -187,12 +184,9 @@ export function AttachmentField({
 
           {/* Hover overlay over an existing image */}
           {url && interactive && (
+            // A click on the overlay is the image's: it bubbles to it
             <Box
               className="attachment-overlay"
-              onClick={(e) => {
-                e.stopPropagation();
-                pick();
-              }}
               sx={{
                 position: "absolute",
                 inset: 0,
@@ -235,6 +229,7 @@ export function AttachmentField({
         {interactive && (
           <Tooltip title={url ? `Change ${label ?? name}` : `Upload ${label ?? name}`}>
             <IconButton
+              aria-label={url ? `Change ${label ?? name}` : `Upload ${label ?? name}`}
               onClick={pick}
               tabIndex={-1}
               aria-hidden
@@ -285,7 +280,7 @@ export function AttachmentField({
 
       {!readOnly && (
         <input
-          ref={inputRef}
+          ref={setFileInput}
           type="file"
           accept={ACCEPT}
           hidden

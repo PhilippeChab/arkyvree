@@ -1,33 +1,35 @@
-import { ExpandLess as ExpandLessIcon, ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
 import { Box, Collapse, IconButton, Link as MuiLink, Stack, Typography } from "@mui/material";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { BlankState } from "@/client/src/components/common/index.ts";
+import { BlankState, CLICKABLE_SX, clickableProps } from "@/client/src/components/common/index.ts";
+import { ExpandLessIcon, ExpandMoreIcon } from "@/client/src/components/icons/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 
 import { SheetSection } from "./SheetSection.tsx";
 
 type Feat = CharacterDetail["classes"][string]["levels"][number]["feats"][number];
 
+interface FeatRowProps {
+  name: ReactNode;
+  label: string;
+  description?: string | null;
+  extra?: ReactNode;
+}
+
 interface FeatsSectionProps {
   classes: CharacterDetail["classes"];
   virtualFeats?: CharacterDetail["virtualFeats"];
   rulesetId?: string;
-  renderFeatExtra?: (feat: Feat) => React.ReactNode;
+  renderFeatExtra?: (feat: Feat) => ReactNode;
 }
 
-function FeatRow({
-  name,
-  label,
-  description,
-  extra,
-}: {
-  name: React.ReactNode;
-  label: string;
-  description?: string | null;
-  extra?: React.ReactNode;
-}) {
+interface GrantedFeatsSectionProps {
+  feats: NonNullable<FeatsSectionProps["virtualFeats"]>;
+  rulesetId?: string;
+}
+
+function FeatRow({ name, label, description, extra }: FeatRowProps) {
   const [open, setOpen] = useState(false);
   const hasExtra = extra != null && extra !== false;
 
@@ -61,20 +63,14 @@ function FeatRow({
   );
 }
 
-function GrantedFeatsSection({
-  feats,
-  rulesetId,
-}: {
-  feats: NonNullable<FeatsSectionProps["virtualFeats"]>;
-  rulesetId?: string;
-}) {
+function GrantedFeatsSection({ feats, rulesetId }: GrantedFeatsSectionProps) {
   const [open, setOpen] = useState(false);
 
   return (
     <Box>
       <Box
-        onClick={() => setOpen((prev) => !prev)}
-        sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", mb: 2 }}
+        {...clickableProps(() => setOpen((prev) => !prev))}
+        sx={{ ...CLICKABLE_SX, display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}
       >
         <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
           Granted ({feats.length})
@@ -128,9 +124,8 @@ export function FeatsSection({ classes, virtualFeats, rulesetId, renderFeatExtra
 
   // Group feats by name
   const groupedFeats = allFeats.reduce<Record<string, typeof allFeats>>((acc, feat) => {
-    if (!acc[feat.name]) {
-      acc[feat.name] = [];
-    }
+    if (!acc[feat.name]) acc[feat.name] = [];
+
     acc[feat.name].push(feat);
     return acc;
   }, {});

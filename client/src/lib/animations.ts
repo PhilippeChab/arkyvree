@@ -30,7 +30,7 @@ export const fadeInUp = keyframes`
   to   { opacity: 1; transform: translateY(0); }
 `;
 
-export const prefersReducedMotion = "@media (prefers-reduced-motion: reduce)" as const;
+export const PREFERS_REDUCED_MOTION = "@media (prefers-reduced-motion: reduce)" as const;
 
 export const pulse = keyframes`
   0%, 100% { opacity: 0.4; }
@@ -50,6 +50,6 @@ export function fadeInUpSx(index: number, offset = 0) {
     // but don't pin the last one, which would override hover transforms and
     // opacity on the animated card once it has finished.
     animation: `${fadeInUp} ${DURATION.normal}ms ${EASING.decelerate} ${delay}ms backwards`,
-    [prefersReducedMotion]: { animation: "none" },
+    [PREFERS_REDUCED_MOTION]: { animation: "none" },
   } as const;
 }

@@ -1,4 +1,4 @@
-import type React from "react";
+import { type UIEvent } from "react";
 
 interface InfiniteList {
   hasNextPage: boolean;
@@ -18,7 +18,7 @@ const scrollLocks = new WeakMap<Element, () => void>();
  * with `ScrollSafeListbox` so the appended options don't reset the scroll.
  */
 export function createListboxScrollHandler(lists: InfiniteList | InfiniteList[]) {
-  return (event: React.UIEvent<HTMLElement>) => {
+  return (event: UIEvent<HTMLElement>) => {
     const target = event.currentTarget;
     if (target.scrollHeight - target.scrollTop > target.clientHeight + 50) return;
     const pending = (Array.isArray(lists) ? lists : [lists]).filter(

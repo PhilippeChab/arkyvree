@@ -1,12 +1,3 @@
-import {
-  MenuBook as BookIcon,
-  Extension as ExtensionIcon,
-  ContentCopy as ForkIcon,
-  Lock as LockIcon,
-  Public as PublicIcon,
-  StarBorder as StarBorderIcon,
-  Star as StarIcon,
-} from "@mui/icons-material";
 import { Container, IconButton, Stack, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -28,15 +19,30 @@ import {
   type SortOption,
   UPDATED_SORTS,
 } from "@/client/src/components/common/index.ts";
+import {
+  BookIcon,
+  ExtensionIcon,
+  ForkIcon,
+  LockIcon,
+  PublicIcon,
+  StarBorderIcon,
+  StarIcon,
+} from "@/client/src/components/icons/index.ts";
 import { useListParams, usePageTitle, useStaggerAnimation } from "@/client/src/hooks/index.ts";
+import { TEN_MINUTES } from "@/client/src/lib/durations.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { rulesetDetailQuery, type RulesetListFilters, rulesetListQuery } from "@/client/src/lib/queries.ts";
-import { RULESET_STATUS } from "@/client/src/pages/rulesets/components/index.ts";
-import { prefetchSection } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
-import { useToggleRulesetStar } from "@/client/src/pages/rulesets/hooks/index.ts";
+
+import { RULESET_STATUS } from "./components/index.ts";
+import { prefetchSection } from "./details/sectionQueries.ts";
+import { useToggleRulesetStar } from "./hooks/index.ts";
 
 type FilterScope = (typeof SCOPES)[number];
+
+interface RulesetListProps {
+  filters: RulesetListFilters;
+}
 type SortField = RulesetListFilters["orderBy"];
 
 const RULESET_FILTER_OPTIONS: FilterOption<FilterScope>[] = [
@@ -64,7 +70,7 @@ const SCOPES = [
   "archived",
 ] as const;
 
-function RulesetList({ filters }: { filters: RulesetListFilters }) {
+function RulesetList({ filters }: RulesetListProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const toggleStar = useToggleRulesetStar();
@@ -74,19 +80,15 @@ function RulesetList({ filters }: { filters: RulesetListFilters }) {
 
   const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     ...listQuery,
-    staleTime: 10 * 60 * 1000,
+    staleTime: TEN_MINUTES,
     placeholderData: keepPreviousData,
   });
 
   const rulesets = pageItems(data);
 
-  if (isLoading) {
-    return <DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />;
-  }
+  if (isLoading) return <DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />;
 
-  if (error) {
-    return <LoadError what="Rulesets" error={error} />;
-  }
+  if (error) return <LoadError what="Rulesets" error={error} />;
 
   if (rulesets.length === 0) {
     return filters.search ? (

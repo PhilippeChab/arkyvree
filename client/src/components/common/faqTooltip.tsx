@@ -1,6 +1,6 @@
 import { Box, Link as MuiLink, Typography } from "@mui/material";
 
-import { externalLinks } from "@/client/src/lib/externalLinks.ts";
+import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 
 export function faqTooltip(text: string) {
   return (
@@ -10,7 +10,7 @@ export function faqTooltip(text: string) {
       </Typography>
       <Typography variant="body2">
         Learn more{" "}
-        <MuiLink href={externalLinks.help} target="_blank" rel="noopener noreferrer" variant="body2">
+        <MuiLink href={EXTERNAL_LINKS.help} target="_blank" rel="noopener noreferrer" variant="body2">
           here
         </MuiLink>
         !

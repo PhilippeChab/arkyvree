@@ -38,7 +38,10 @@ export interface InventoryFormData {
 }
 
 /** The item fields placement depends on. */
-export type ItemColumns = { type: string | null; slot: string };
+export interface ItemColumns {
+  type: string | null;
+  slot: string;
+}
 
 export type PlacementProfile = ReturnType<typeof placementProfile>;
 
@@ -77,9 +80,9 @@ export function detectSlotFromItem(item: ItemColumns): ItemLocation | null {
 /** Where an entry is worn ("Main Hand (Set 1)"), or a dash when it's carried. */
 export function formatSlotDisplay(entry: Pick<EquipmentRow, "equipped" | "location" | "weaponSet">): string {
   if (!entry.equipped || !entry.location) return "—";
-  if (isHandLocation(entry.location) && entry.weaponSet !== null) {
+  if (isHandLocation(entry.location) && entry.weaponSet !== null)
     return `${entry.location} (Set ${shownWeaponSet(entry.weaponSet)})`;
-  }
+
   return entry.location;
 }
 

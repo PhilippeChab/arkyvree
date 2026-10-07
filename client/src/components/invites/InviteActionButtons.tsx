@@ -1,5 +1,6 @@
-import { Check, Close } from "@mui/icons-material";
 import { Box, Button, type SxProps, type Theme } from "@mui/material";
+
+import { CheckIcon, CloseIcon } from "@/client/src/components/icons/index.ts";
 
 interface InviteActionButtonsProps {
   onAccept: () => void;
@@ -20,7 +21,7 @@ export function InviteActionButtons({ onAccept, onReject, disabled, prominent = 
         fullWidth={prominent}
         variant="contained"
         color="success"
-        startIcon={<Check />}
+        startIcon={<CheckIcon />}
         onClick={onAccept}
         disabled={disabled}
       >
@@ -31,7 +32,7 @@ export function InviteActionButtons({ onAccept, onReject, disabled, prominent = 
         fullWidth={prominent}
         variant="contained"
         color="error"
-        startIcon={<Close />}
+        startIcon={<CloseIcon />}
         onClick={onReject}
         disabled={disabled}
       >

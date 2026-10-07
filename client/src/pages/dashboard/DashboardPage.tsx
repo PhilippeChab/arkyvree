@@ -1,21 +1,27 @@
 import {
-  HelpOutlined as FaqIcon,
-  Map as MapIcon,
-  Person as PersonIcon,
-  MenuBook as RulesetIcon,
-} from "@mui/icons-material";
-import { Box, Card, CardActionArea, CardContent, Container, Link, Paper, type Theme, Typography } from "@mui/material";
+  Box,
+  Card,
+  CardActionArea,
+  CardContent,
+  Container,
+  Link as MuiLink,
+  Paper,
+  type Theme,
+  Typography,
+} from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import type { ElementType } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { DiceSpinner, GoldDivider, LoadError, PageTransition } from "@/client/src/components/common/index.ts";
+import { FaqIcon, MapIcon, PersonIcon, RulesetIcon } from "@/client/src/components/icons/index.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
 import { brandGoldTint } from "@/client/src/lib/brandGold.ts";
-import { externalLinks } from "@/client/src/lib/externalLinks.ts";
+import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 import { dashboardStatsQuery } from "@/client/src/lib/queries.ts";
-import { RecentNotificationsCard } from "@/client/src/pages/dashboard/components/index.ts";
+
+import { RecentNotificationsCard } from "./components/index.ts";
 
 interface StatCardProps {
   icon: ElementType;
@@ -28,7 +34,7 @@ interface StatCardProps {
   animationIndex: number;
 }
 
-const textShadow = "0px 2px 4px rgba(0,0,0,0.3)";
+const TEXT_SHADOW = "0px 2px 4px rgba(0,0,0,0.3)";
 
 function StatCard({ icon: Icon, count, label, tagline, onClick, colors, animationIndex }: StatCardProps) {
   return (
@@ -53,13 +59,13 @@ function StatCard({ icon: Icon, count, label, tagline, onClick, colors, animatio
         <CardActionArea onClick={onClick} sx={{ height: "100%" }}>
           <CardContent sx={{ textAlign: "center", p: { xs: 2, sm: 4 } }}>
             <Icon sx={{ fontSize: { xs: 48, sm: 60 }, mb: 2 }} />
-            <Typography sx={{ typography: { xs: "h4", md: "h2" }, fontWeight: 800, mb: 1, textShadow }}>
+            <Typography sx={{ typography: { xs: "h4", md: "h2" }, fontWeight: 800, mb: 1, textShadow: TEXT_SHADOW }}>
               {count}
             </Typography>
-            <Typography component="h2" variant="h6" sx={{ textShadow }}>
+            <Typography component="h2" variant="h6" sx={{ textShadow: TEXT_SHADOW }}>
               {label}
             </Typography>
-            <Typography variant="body2" sx={{ opacity: 0.9, mt: 1, textShadow }}>
+            <Typography variant="body2" sx={{ opacity: 0.9, mt: 1, textShadow: TEXT_SHADOW }}>
               {tagline}
             </Typography>
           </CardContent>
@@ -204,8 +210,8 @@ export default function DashboardPage() {
           >
             Your programmable ruleset engine. Build characters, manage campaigns.
           </Typography>
-          <Link
-            href={externalLinks.help}
+          <MuiLink
+            href={EXTERNAL_LINKS.help}
             target="_blank"
             rel="noopener noreferrer"
             sx={{
@@ -221,7 +227,7 @@ export default function DashboardPage() {
           >
             <FaqIcon sx={{ fontSize: 18 }} />
             Help
-          </Link>
+          </MuiLink>
         </Paper>
 
         <GoldDivider />

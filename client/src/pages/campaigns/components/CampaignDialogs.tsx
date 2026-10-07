@@ -1,12 +1,3 @@
-import {
-  Edit as EditIcon,
-  AdminPanelSettings as GMIcon,
-  ExitToApp as LeaveIcon,
-  PersonAdd as PersonAddIcon,
-  Person as PersonIcon,
-  PersonRemove as PersonRemoveIcon,
-  Send as SendIcon,
-} from "@mui/icons-material";
 import { Alert, Box, TextField, Typography } from "@mui/material";
 import type { InferRequestType } from "hono/client";
 import { type ElementType, useState } from "react";
@@ -23,10 +14,19 @@ import {
   RulesetPicker,
   SelectField,
 } from "@/client/src/components/common/index.ts";
+import {
+  EditIcon,
+  GMIcon,
+  LeaveIcon,
+  PersonAddIcon,
+  PersonIcon,
+  PersonRemoveIcon,
+  SendIcon,
+} from "@/client/src/components/icons/index.ts";
 import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
-import { formatDate } from "@/client/src/lib/activityFormatters.ts";
+import { formatDate } from "@/client/src/lib/formatDate.ts";
 import { rulesetPickerQuery } from "@/client/src/lib/queries.ts";
-import { nameRules } from "@/client/src/lib/validation.ts";
+import { NAME_RULES, requiredRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
 import type { PlayerFormData, PlayerSlot } from "./players.ts";
@@ -80,6 +80,11 @@ interface RemovePlayerDialogProps {
   slot: PlayerSlot | null;
 }
 
+interface RoleLabelProps {
+  icon: ElementType;
+  label: string;
+}
+
 export type CreateCampaignFormData = InferRequestType<(typeof rpc.api.campaigns)["$post"]>["json"];
 
 export type EditCampaignFormData = InferRequestType<(typeof rpc.api.campaigns)[":id"]["$put"]>["json"];
@@ -104,7 +109,7 @@ function PlayerRoleSelect({ form, isLoading }: PlayerFieldProps) {
       control={form.control}
       name="role"
       label="Role"
-      rules={{ required: "Role is required" }}
+      rules={requiredRules("Role is required")}
       disabled={isLoading}
       options={[
         { value: "Player Character", label: <RoleLabel icon={PersonIcon} label="Player Character" /> },
@@ -114,7 +119,7 @@ function PlayerRoleSelect({ form, isLoading }: PlayerFieldProps) {
   );
 }
 
-function RoleLabel({ icon: Icon, label }: { icon: ElementType; label: string }) {
+function RoleLabel({ icon: Icon, label }: RoleLabelProps) {
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
       <Icon sx={{ fontSize: 20 }} />
@@ -176,11 +181,11 @@ export function CreateCampaignDialog({ open, onClose, form, onSubmit, isLoading 
       isLoading={isLoading}
     >
       <BaseRulesetAlert ruleset={selectedRuleset} />
-      <NameField control={form.control} name="name" rules={nameRules} autoFocus disabled={isLoading} />
+      <NameField control={form.control} name="name" rules={NAME_RULES} autoFocus disabled={isLoading} />
       <Controller
         name="rulesetId"
         control={form.control}
-        rules={{ required: "Ruleset is required" }}
+        rules={requiredRules("Ruleset is required")}
         render={({ field, fieldState }) => (
           <RulesetPicker
             rulesets={rulesets}
@@ -214,7 +219,7 @@ export function EditCampaignDialog({ open, onClose, form, onSubmit, isLoading }:
       isLoading={isLoading}
       submitLabel="Save Changes"
     >
-      <NameField control={form.control} name="name" rules={nameRules} autoFocus disabled={isLoading} />
+      <NameField control={form.control} name="name" rules={NAME_RULES} autoFocus disabled={isLoading} />
       <DescriptionField control={form.control} name="description" disabled={isLoading} rows={4} />
     </EditDialog>
   );

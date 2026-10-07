@@ -2,8 +2,12 @@ import { useController, type UseFormReturn } from "react-hook-form";
 
 import { CreateDialog, DeleteDialog, FormTextField } from "@/client/src/components/common/index.ts";
 import { useRulesetSaves } from "@/client/src/hooks/index.ts";
-import type { CreateLevelFormData } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
-import { allLevelSaves, ClassLevelFields } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
+import { requiredRules } from "@/client/src/lib/validation.ts";
+import {
+  allLevelSaves,
+  ClassLevelFields,
+  type CreateLevelFormData,
+} from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { MAX_CLASS_LEVEL } from "@/shared/dnd3.5/classes.ts";
 
 interface ConfirmActionProps {
@@ -43,10 +47,9 @@ export function CreateLevelDialog({ open, onClose, form, onSubmit, isLoading, ru
       <FormTextField
         control={form.control}
         name="level"
-        rules={{ required: "Level is required" }}
+        rules={requiredRules("Level is required")}
         number
         label="Level"
-        type="number"
         fullWidth
         slotProps={{
           htmlInput: { min: 1, max: MAX_CLASS_LEVEL },
@@ -55,10 +58,9 @@ export function CreateLevelDialog({ open, onClose, form, onSubmit, isLoading, ru
       <FormTextField
         control={form.control}
         name="bab"
-        rules={{ required: "Base Attack Bonus is required" }}
+        rules={requiredRules("Base Attack Bonus is required")}
         number
         label="Base Attack Bonus"
-        type="number"
         fullWidth
         slotProps={{
           htmlInput: { min: 0 },
@@ -67,10 +69,9 @@ export function CreateLevelDialog({ open, onClose, form, onSubmit, isLoading, ru
       <FormTextField
         control={form.control}
         name="skills"
-        rules={{ required: "Skill points are required" }}
+        rules={requiredRules("Skill points are required")}
         number
         label="Skill Points"
-        type="number"
         fullWidth
         slotProps={{
           htmlInput: { min: 1 },
@@ -87,7 +88,7 @@ export function CreateLevelDialog({ open, onClose, form, onSubmit, isLoading, ru
   );
 }
 
-export function RemoveSkillDialog(props: ConfirmActionProps) {
+export function RemoveSkillDialog({ ...props }: ConfirmActionProps) {
   return (
     <DeleteDialog
       {...props}

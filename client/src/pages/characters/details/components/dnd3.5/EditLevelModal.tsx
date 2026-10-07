@@ -1,17 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
-import { parseResponse } from "hono/client";
 import { useMemo } from "react";
 
 import { LoadError } from "@/client/src/components/common/index.ts";
 import { useFormSync } from "@/client/src/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
 import type { EditingLevel } from "@/client/src/types/character.ts";
 
 import {
   type BaseRules,
-  editStepContent,
-  editStepLabels,
+  characterLevelQuery,
+  EDIT_STEP_CONTENT,
+  EDIT_STEP_LABELS,
   type LevelUpFormData,
   useLevelWizard,
 } from "./levelUp/index.ts";
@@ -35,17 +33,7 @@ export function EditLevelModal({ open, onClose, characterId, baseRules, editingL
     data: editLevelData,
     isLoading: isLoadingLevel,
     error: levelError,
-  } = useQuery({
-    queryKey: queryKeys.characters.levelUp.levelData(characterId, editingLevelId),
-    queryFn: async () => {
-      return parseResponse(
-        rpc.api.characters.levels[":characterId"][":characterLevelId"]["$get"]({
-          param: { characterId, characterLevelId: editingLevelId },
-        }),
-      );
-    },
-    enabled: open && !!editingLevelId,
-  });
+  } = useQuery({ ...characterLevelQuery(characterId, editingLevelId), enabled: open });
 
   // The saved level, as the wizard's picks: the form takes them once it loads
   const savedPicks = useMemo<LevelUpFormData | undefined>(
@@ -73,7 +61,7 @@ export function EditLevelModal({ open, onClose, characterId, baseRules, editingL
   // Next waits for both, and a load that failed stops the wizard at the step that shows its error.
   const loading =
     isLoadingLevel || (!!editLevelData && !wizard.selectedClass) || wizard.isLoadingFeats || wizard.isLoadingPowers;
-  const step = editStepContent[wizard.activeStep];
+  const step = EDIT_STEP_CONTENT[wizard.activeStep];
   const failed = !editLevelData || (step === "feats" && !wizard.featData) || (step === "powers" && !wizard.powerData);
 
   const Sections = wizard.levelUpSections;
@@ -112,7 +100,7 @@ export function EditLevelModal({ open, onClose, characterId, baseRules, editingL
       open={open}
       title="Edit Level"
       wizard={{ ...wizard, isNextDisabled: wizard.isNextDisabled || loading || failed }}
-      stepLabels={editStepLabels}
+      stepLabels={EDIT_STEP_LABELS}
       finishLabel="Finish"
       isSaving={wizard.finalizeMutation.isPending}
     >

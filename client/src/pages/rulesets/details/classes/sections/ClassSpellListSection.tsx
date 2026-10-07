@@ -1,10 +1,10 @@
-import { Bolt as SpellListIcon } from "@mui/icons-material";
 import { Box, MenuItem, TextField } from "@mui/material";
-import { keepPreviousData, skipToken, useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useState } from "react";
 
 import { LoadMoreButton, SearchBar } from "@/client/src/components/common/index.ts";
+import { SpellListIcon } from "@/client/src/components/icons/index.ts";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import {
@@ -12,8 +12,10 @@ import {
   RulesetSectionTable,
   SpellLevelFilter,
 } from "@/client/src/pages/rulesets/components/index.ts";
-import { classSpellListsQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
-import { powersQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
+import {
+  classSpellListsQuery,
+  spellListSpellsQuery,
+} from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import { useOpenEntity } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { type rpc } from "@/client/src/services/rpc.ts";
 
@@ -37,11 +39,14 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
   // The class's own list opens first; one it casts from too (a pious templar's blackguard list) is picked
   const listId = lists.some((list) => list.id === chosenListId) ? chosenListId : lists[0]?.id;
 
-  const spellsQuery = powersQuery(rulesetId, { search, childOnly: false, aptitudeId: listId, level: selectedLevel });
+  // Another level or search keeps the list's spells showing; without a list there's nothing to keep
+  function keepListSpells<T>(previous: T | undefined) {
+    return listId === undefined ? undefined : keepPreviousData(previous);
+  }
+
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    ...spellsQuery,
-    queryFn: listId === undefined ? skipToken : spellsQuery.queryFn,
-    placeholderData: listId === undefined ? undefined : keepPreviousData,
+    ...spellListSpellsQuery(rulesetId, listId, selectedLevel, search),
+    placeholderData: keepListSpells,
   });
 
   // Without a list the key is the ruleset's own "all lists" one, whose cached spells aren't this class's

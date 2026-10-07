@@ -1,4 +1,7 @@
-type Words = { one: string; many: string };
+interface Words {
+  one: string;
+  many: string;
+}
 
 /** The engine's word for each entity type, which a ruleset can rename. */
 const ENTITY_WORDS: Record<string, Words> = {

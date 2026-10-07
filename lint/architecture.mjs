@@ -174,9 +174,8 @@ function createQueriesInRepositories(context) {
         callee.object.type === "Identifier" &&
         ["db", "tx"].includes(callee.object.name) &&
         QUERY_METHODS.has(callee.property.name)
-      ) {
+      )
         context.report({ node, message });
-      }
     },
     // db.query.someTable.findMany(…)
     MemberExpression(node) {
@@ -185,9 +184,8 @@ function createQueriesInRepositories(context) {
         ["db", "tx"].includes(node.object.name) &&
         node.property.name === "query" &&
         node.parent?.type === "MemberExpression"
-      ) {
+      )
         context.report({ node, message });
-      }
     },
     // withTransaction((tx) => …), db.transaction((tx) => …): the handle this rule knows is `tx`.
     "CallExpression:exit"(node) {
@@ -209,9 +207,8 @@ function createQueriesInRepositories(context) {
     // unionAll and the other set operators
     ImportDeclaration(node) {
       if (!String(node.source.value).startsWith("drizzle-orm")) return;
-      for (const s of node.specifiers ?? []) {
+      for (const s of node.specifiers ?? [])
         if (s.type === "ImportSpecifier" && SET_OPERATORS.has(s.imported.name)) context.report({ node: s, message });
-      }
     },
   };
 }
@@ -228,9 +225,9 @@ function createReExports(context) {
       const reExporting = program.body.filter((s) => reExports(s, imported));
       // An index that re-exports is its folder's entry: it re-exports from the modules themselves, and holds nothing else
       if (isIndex && reExporting.length > 0) {
-        for (const statement of program.body.filter((s) => !reExportsFrom(s))) {
+        for (const statement of program.body.filter((s) => !reExportsFrom(s)))
           context.report({ node: statement, message: ENTRY_ONLY_RE_EXPORTS });
-        }
+
         return;
       }
       for (const statement of reExporting) context.report({ node: statement, message: MODULE_EXPORTS_ITS_OWN });
@@ -239,9 +236,8 @@ function createReExports(context) {
 }
 
 function hasIndex(dir) {
-  if (!indexCache.has(dir)) {
-    indexCache.set(dir, fs.existsSync(`${dir}/index.ts`) || fs.existsSync(`${dir}/index.tsx`));
-  }
+  if (!indexCache.has(dir)) indexCache.set(dir, fs.existsSync(`${dir}/index.ts`) || fs.existsSync(`${dir}/index.tsx`));
+
   return indexCache.get(dir);
 }
 

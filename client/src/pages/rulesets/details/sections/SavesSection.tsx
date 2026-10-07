@@ -1,12 +1,11 @@
-import { Shield as SavesIcon } from "@mui/icons-material";
 import { Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useCallback } from "react";
 
 import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
-import type { RulesetSave } from "@/client/src/hooks/index.ts";
-import { useRulesetAbilities, useSearchText } from "@/client/src/hooks/index.ts";
+import { SavesIcon } from "@/client/src/components/icons/index.ts";
+import { type RulesetSave, useRulesetAbilities, useSearchText } from "@/client/src/hooks/index.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { EMPTY_SAVE, type SaveFormData, SaveFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";

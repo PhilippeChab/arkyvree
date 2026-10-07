@@ -1,7 +1,7 @@
-import { Close as CloseIcon } from "@mui/icons-material";
 import { Autocomplete, Box, Chip, Paper, Skeleton, TextField, Typography } from "@mui/material";
 
 import { BlankState, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
+import { CloseIcon } from "@/client/src/components/icons/index.ts";
 import { RemoveSkillDialog } from "@/client/src/pages/rulesets/details/classes/components/index.ts";
 import { useClassSkills, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 

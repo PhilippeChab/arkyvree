@@ -1,9 +1,8 @@
-import { skipToken, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
-import { parseResponse } from "hono/client";
 
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { rulesetLanguagesQuery } from "@/client/src/lib/queries.ts";
+import type { rpc } from "@/client/src/services/rpc.ts";
 
 export type RulesetLanguage = InferResponseType<
   (typeof rpc.api.rulesets)[":id"]["languages"]["$get"],
@@ -12,19 +11,5 @@ export type RulesetLanguage = InferResponseType<
 
 /** Every language of a ruleset, for pickers: the first 100, the most one request returns. */
 export function useRulesetLanguages(rulesetId: string | undefined, enabled = true) {
-  return useQuery({
-    queryKey: queryKeys.rulesets.languages(rulesetId ?? ""),
-    queryFn: rulesetId
-      ? async () => {
-          const page = await parseResponse(
-            rpc.api.rulesets[":id"].languages.$get({
-              param: { id: rulesetId },
-              query: { page: "1", limit: "100" },
-            }),
-          );
-          return page.items;
-        }
-      : skipToken,
-    enabled,
-  });
+  return useQuery({ ...rulesetLanguagesQuery(rulesetId), enabled });
 }

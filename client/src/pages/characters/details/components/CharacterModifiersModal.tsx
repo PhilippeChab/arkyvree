@@ -1,12 +1,4 @@
 import {
-  Add as AddIcon,
-  Close as CloseIcon,
-  ContentCopy as ContentCopyIcon,
-  Delete as DeleteIcon,
-  Edit as EditIcon,
-  Tune as TuneIcon,
-} from "@mui/icons-material";
-import {
   Box,
   Button,
   Chip,
@@ -23,8 +15,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { InferResponseType } from "hono/client";
-import { parseResponse } from "hono/client";
+import { type InferResponseType, parseResponse } from "hono/client";
 import { useState } from "react";
 
 import {
@@ -44,11 +35,20 @@ import {
   type ModifierFormData,
   TargetPathBreadcrumbs,
 } from "@/client/src/components/customization/index.ts";
+import {
+  AddIcon,
+  CloseIcon,
+  ContentCopyIcon,
+  DeleteIcon,
+  EditIcon,
+  TuneIcon,
+} from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
 import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { extractTemplatePath } from "@/client/src/lib/templateValues.ts";
+import { characterModifiersQuery } from "@/client/src/pages/characters/characterQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 interface CharacterModifiersModalProps {
@@ -75,20 +75,10 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
   const createForm = useFormWith<ModifierFormData>(EMPTY_MODIFIER);
   const editForm = useFormWith<ModifierFormData>(EMPTY_MODIFIER);
 
-  const { data: modifiers = [], isLoading } = useQuery({
-    queryKey: queryKeys.characters.modifiers(characterId),
-    queryFn: async () => {
-      return parseResponse(
-        rpc.api.characters.modifiers[":characterId"].modifiers.$get({
-          param: { characterId },
-        }),
-      );
-    },
-    enabled: open,
-  });
+  const { data: modifiers = [], isLoading } = useQuery({ ...characterModifiersQuery(characterId), enabled: open });
 
   const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.characters.detail(characterId) });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.detail(characterId) });
   };
 
   const createMutation = useMutation({
@@ -105,7 +95,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
       setCreateOpen(false);
       invalidate();
     },
-    onError: (error) => snackbar.error(error),
+    onError: (error) => snackbar.error(error, "Failed to create modifier"),
   });
 
   const updateMutation = useMutation({
@@ -123,7 +113,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
       setSelectedModifier(null);
       invalidate();
     },
-    onError: (error) => snackbar.error(error),
+    onError: (error) => snackbar.error(error, "Failed to update modifier"),
   });
 
   const deleteMutation = useMutation({
@@ -140,7 +130,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
       setSelectedModifier(null);
       invalidate();
     },
-    onError: (error) => snackbar.error(error),
+    onError: (error) => snackbar.error(error, "Failed to delete modifier"),
   });
 
   const handleEdit = (modifier: Modifier) => {
@@ -247,9 +237,9 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
                       <TableCell>
                         {(() => {
                           const templatePath = extractTemplatePath(mod.value);
-                          if (templatePath) {
+                          if (templatePath)
                             return <TargetPathBreadcrumbs target={templatePath} targetLabels={mod.targetLabels} />;
-                          }
+
                           return <Typography variant="body2">{mod.value}</Typography>;
                         })()}
                       </TableCell>

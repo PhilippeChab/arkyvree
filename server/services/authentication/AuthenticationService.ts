@@ -3,7 +3,13 @@ import { getTableName } from "drizzle-orm";
 import { sessionsInAccount, usersInAccount } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { emailService, EmailTemplate } from "@/server/emails/index.ts";
-import { BadRequestError, ConflictError, InternalError, UnauthorizedError } from "@/server/errors/index.ts";
+import {
+  BadRequestError,
+  ConflictError,
+  EmailNotVerifiedError,
+  InternalError,
+  UnauthorizedError,
+} from "@/server/errors/index.ts";
 import { hashPassword, verifyPassword } from "@/server/password.ts";
 import {
   Activities,
@@ -140,7 +146,7 @@ class AuthenticationService {
     const { verified, needsRehash } = await verifyPassword(password, user.passwordDigest);
     if (!verified) throw new UnauthorizedError("Invalid email or password");
 
-    if (!user.emailVerifiedAt) throw new UnauthorizedError("Email not verified");
+    if (!user.emailVerifiedAt) throw new EmailNotVerifiedError();
 
     return await withTransaction(async (tx) => {
       if (needsRehash) {

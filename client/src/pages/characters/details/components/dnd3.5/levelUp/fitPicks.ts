@@ -26,11 +26,8 @@ function growFeatPools(aptitudePools: Record<string, AptitudePool>, feats: Feats
   const adjustments = new Map<string, number>();
   for (const picks of Object.values(feats)) {
     for (const feat of picks) {
-      for (const mod of feat.aptitudeModifiers ?? []) {
-        if (mod.operator === "add") {
-          adjustments.set(mod.aptitudeId, (adjustments.get(mod.aptitudeId) ?? 0) + mod.value);
-        }
-      }
+      for (const mod of feat.aptitudeModifiers ?? [])
+        if (mod.operator === "add") adjustments.set(mod.aptitudeId, (adjustments.get(mod.aptitudeId) ?? 0) + mod.value);
     }
   }
   for (const [aptitudeId, delta] of adjustments) {

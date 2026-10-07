@@ -1,11 +1,3 @@
-import {
-  Archive as ArchiveIcon,
-  Extension as ExtensionIcon,
-  Lock as LockIcon,
-  Public as PublicIcon,
-  Publish as PublishIcon,
-  MenuBook as RulesetIcon,
-} from "@mui/icons-material";
 import { Box, Stack, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import type { InferRequestType } from "hono/client";
 import { Controller, type UseFormReturn } from "react-hook-form";
@@ -17,7 +9,15 @@ import {
   EditDialog,
   NameField,
 } from "@/client/src/components/common/index.ts";
-import { nameRules } from "@/client/src/lib/validation.ts";
+import {
+  ArchiveIcon,
+  ExtensionIcon,
+  LockIcon,
+  PublicIcon,
+  PublishIcon,
+  RulesetIcon,
+} from "@/client/src/components/icons/index.ts";
+import { NAME_RULES } from "@/client/src/lib/validation.ts";
 import type { PublishKind } from "@/client/src/pages/rulesets/hooks/index.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
@@ -46,6 +46,12 @@ interface ForkRulesetDialogProps {
   isLoading: boolean;
 }
 
+interface PrivacyToggleProps {
+  value: boolean;
+  onChange: (isPrivate: boolean) => void;
+  disabled: boolean;
+}
+
 interface PublishRulesetDialogProps {
   open: boolean;
   onClose: () => void;
@@ -55,6 +61,12 @@ interface PublishRulesetDialogProps {
   /** What it's published as, which its opener sets to the ruleset's kind */
   kind: PublishKind;
   onKindChange: (kind: PublishKind) => void;
+}
+
+interface RulesetKindToggleProps {
+  value: PublishKind;
+  onChange: (kind: PublishKind) => void;
+  disabled: boolean;
 }
 
 interface UnsubscribeExtensionDialogProps {
@@ -70,15 +82,7 @@ export type EditRulesetFormData = InferRequestType<(typeof rpc.api.rulesets)[":i
 export type ForkRulesetFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["fork"]["$post"]>["json"];
 
 /** Public / Private choice; the selected option can't be toggled off. */
-function PrivacyToggle({
-  value,
-  onChange,
-  disabled,
-}: {
-  value: boolean;
-  onChange: (isPrivate: boolean) => void;
-  disabled: boolean;
-}) {
+function PrivacyToggle({ value, onChange, disabled }: PrivacyToggleProps) {
   return (
     <Box>
       <Typography variant="subtitle2" gutterBottom sx={{ color: "text.secondary" }}>
@@ -109,15 +113,7 @@ function PrivacyToggle({
 }
 
 /** Ruleset / Extension choice made when publishing; the selected option can't be toggled off. */
-function RulesetKindToggle({
-  value,
-  onChange,
-  disabled,
-}: {
-  value: PublishKind;
-  onChange: (kind: PublishKind) => void;
-  disabled: boolean;
-}) {
+function RulesetKindToggle({ value, onChange, disabled }: RulesetKindToggleProps) {
   return (
     <Box>
       <Typography variant="subtitle2" gutterBottom sx={{ color: "text.secondary" }}>
@@ -185,7 +181,7 @@ export function EditRulesetDialog({
       isLoading={isLoading}
       submitLabel="Save Changes"
     >
-      <NameField control={form.control} name="name" rules={nameRules} autoFocus disabled={isLoading} />
+      <NameField control={form.control} name="name" rules={NAME_RULES} autoFocus disabled={isLoading} />
       <DescriptionField control={form.control} name="description" disabled={isLoading} rows={4} />
       {!isPublic && (
         <Controller
@@ -220,7 +216,14 @@ export function ForkRulesetDialog({ open, onClose, form, onSubmit, isLoading }: 
       isLoading={isLoading}
       submitLabel="Fork Ruleset"
     >
-      <NameField control={form.control} name="name" rules={nameRules} label="New Name" autoFocus disabled={isLoading} />
+      <NameField
+        control={form.control}
+        name="name"
+        rules={NAME_RULES}
+        label="New Name"
+        autoFocus
+        disabled={isLoading}
+      />
       <DescriptionField control={form.control} name="description" disabled={isLoading} rows={4} />
       <Controller
         control={form.control}

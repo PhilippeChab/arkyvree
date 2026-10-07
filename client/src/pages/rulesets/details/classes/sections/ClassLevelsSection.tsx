@@ -1,15 +1,19 @@
-import { Add as AddIcon, FormatListNumbered as LevelsIcon } from "@mui/icons-material";
 import { Box, Button, Chip, Tooltip, Typography } from "@mui/material";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 
+import { AddIcon, LevelsIcon } from "@/client/src/components/icons/index.ts";
 import { useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { CreateLevelDialog } from "@/client/src/pages/rulesets/details/classes/components/index.ts";
-import type { Level } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { useClassLevels, useOpenEntity, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import {
+  type Level,
+  useClassLevels,
+  useOpenEntity,
+  useRulesetPermissions,
+} from "@/client/src/pages/rulesets/hooks/index.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 
 import type { ClassSectionProps } from "./types.ts";

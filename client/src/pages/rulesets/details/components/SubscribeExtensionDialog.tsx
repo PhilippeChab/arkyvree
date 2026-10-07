@@ -1,4 +1,3 @@
-import { Extension as ExtensionIcon } from "@mui/icons-material";
 import {
   Autocomplete,
   Button,
@@ -13,9 +12,9 @@ import {
 import { useMemo, useState } from "react";
 
 import { DiceSpinner, Modal, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
+import { ExtensionIcon } from "@/client/src/components/icons/index.ts";
 import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
-import { rulesetPickerQuery } from "@/client/src/lib/queries.ts";
-import type { RulesetListItem } from "@/client/src/lib/queries.ts";
+import { type RulesetListItem, rulesetPickerQuery } from "@/client/src/lib/queries.ts";
 
 type ExtensionRuleset = RulesetListItem;
 
@@ -27,13 +26,15 @@ interface SubscribeExtensionDialogProps {
   subscribedExtensionIds: string[];
 }
 
+type SubscribeExtensionFormProps = Omit<SubscribeExtensionDialogProps, "open">;
+
 /** The dialog's content: its selection and search are its own, so each opening starts with none (MUI unmounts it). */
 function SubscribeExtensionForm({
   onClose,
   onConfirm,
   isLoading,
   subscribedExtensionIds,
-}: Omit<SubscribeExtensionDialogProps, "open">) {
+}: SubscribeExtensionFormProps) {
   const [selected, setSelected] = useState<ExtensionRuleset[]>([]);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);

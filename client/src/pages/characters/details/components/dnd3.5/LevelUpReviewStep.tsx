@@ -6,9 +6,7 @@ import type { LevelUpReviewStepProps } from "./levelUpFactory.ts";
 
 export function LevelUpReviewStep({ wizard }: LevelUpReviewStepProps) {
   const { selectedClass, selectedHP, selectedAttribute, attributeData } = wizard;
-  if (!selectedClass || !selectedHP) {
-    return <Alert severity="error">Missing required selections.</Alert>;
-  }
+  if (!selectedClass || !selectedHP) return <Alert severity="error">Missing required selections.</Alert>;
 
   return (
     <LevelReview wizard={wizard}>

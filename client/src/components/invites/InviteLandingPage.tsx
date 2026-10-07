@@ -1,17 +1,17 @@
-import { Check } from "@mui/icons-material";
 import { Avatar, Box, Button, Card, CardContent, Chip, Container, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ElementType, ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { DiceSpinner, LoadError, PageTransition } from "@/client/src/components/common/index.ts";
+import { CheckIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
-import { formatDate } from "@/client/src/lib/activityFormatters.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { ApiError } from "@/client/src/services/ApiError.ts";
+import { formatDate } from "@/client/src/lib/formatDate.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 
 import { InviteActionButtons } from "./InviteActionButtons.tsx";
+import { inviteQuery } from "./inviteQueries.ts";
 
 /** What the landing page needs to know about an invite, whatever its kind. */
 interface InviteDetails {
@@ -45,17 +45,14 @@ interface InviteLandingPageProps {
   invalidateOnAccept: readonly unknown[];
 }
 
-function InviteStateCard({
-  icon,
-  title,
-  children,
-  action,
-}: {
+interface InviteStateCardProps {
   icon: ReactNode;
   title: string;
   children: ReactNode;
   action: ReactNode;
-}) {
+}
+
+function InviteStateCard({ icon, title, children, action }: InviteStateCardProps) {
   return (
     <Container maxWidth="sm" sx={{ py: { xs: 4, sm: 8 } }}>
       <Card>
@@ -103,7 +100,7 @@ export function InviteLandingPage({
     onSuccess: () => {
       snackbar.success("Invitation accepted!");
       queryClient.invalidateQueries({ queryKey: invalidateOnAccept });
-      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notifications.all });
     },
     onError: (error) => snackbar.error(error, "Failed to accept invitation"),
   });
@@ -112,7 +109,7 @@ export function InviteLandingPage({
     mutationFn: rejectFn,
     onSuccess: () => {
       snackbar.success("Invitation rejected");
-      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notifications.all });
       navigate("/dashboard");
     },
     onError: (error) => snackbar.error(error, "Failed to reject invitation"),
@@ -123,29 +120,10 @@ export function InviteLandingPage({
   const isAnswering =
     acceptMutation.isPending || rejectMutation.isPending || acceptMutation.isSuccess || rejectMutation.isSuccess;
 
-  const {
-    data: invite,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey,
-    queryFn: async () => {
-      try {
-        return await inviteFn();
-      } catch (err) {
-        // Revoked, or addressed to someone else.
-        if (err instanceof ApiError && err.status === 404) return null;
-        throw err;
-      }
-    },
-    enabled: !isAnswering,
-    // Drop the invite once the page closes: it may be answered elsewhere (the
-    // bell, the dashboard), and a cached "Pending" would offer dead buttons.
-    gcTime: 0,
-  });
+  const { data: invite, isLoading, error } = useQuery({ ...inviteQuery(queryKey, inviteFn), enabled: !isAnswering });
 
   const goToDashboard = (
-    <Button variant="contained" onClick={() => navigate("/dashboard")}>
+    <Button variant="contained" component={Link} to="/dashboard">
       Go to Dashboard
     </Button>
   );
@@ -181,11 +159,11 @@ export function InviteLandingPage({
   if (!isAnswering && invite.status === acceptedStatus) {
     return (
       <InviteStateCard
-        icon={<Check sx={{ fontSize: { xs: 48, sm: 64 }, color: "success.main", mb: 2 }} />}
+        icon={<CheckIcon sx={{ fontSize: { xs: 48, sm: 64 }, color: "success.main", mb: 2 }} />}
         title="Already Accepted"
         action={
           entityId && (
-            <Button variant="contained" onClick={() => navigate(entityPath(entityId))}>
+            <Button variant="contained" component={Link} to={entityPath(entityId)}>
               Go to {entityLabel}
             </Button>
           )

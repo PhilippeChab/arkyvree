@@ -1,7 +1,6 @@
 import { Box, Button, Typography } from "@mui/material";
 import * as Sentry from "@sentry/react";
-import { Component } from "react";
-import type { ErrorInfo, ReactNode } from "react";
+import { Component, type ErrorInfo, type ReactNode } from "react";
 
 import { isChunkLoadError, reloadForStaleChunks } from "@/client/src/lib/chunkReload.ts";
 

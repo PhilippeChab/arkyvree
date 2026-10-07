@@ -11,7 +11,7 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import { mechanicQuery } from "./entityDetailQueries.ts";
 import { RulesetEntityDetail } from "./RulesetEntityDetail.tsx";
 
-export default function MechanicDetailPage() {
+export default function MechanicDetailsPage() {
   const { id: rulesetId = "", mechanicId = "" } = useParams<{ id: string; mechanicId: string }>();
   const param = { id: rulesetId, mechanicId };
   const endpoint = rpc.api.rulesets[":id"].mechanics[":mechanicId"];

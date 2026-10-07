@@ -1,7 +1,8 @@
 import { hc } from "hono/client";
 
-import { apiFetch } from "@/client/src/services/apiFetch.ts";
 import type { Application } from "@/server/routers/application.ts";
+
+import { apiFetch } from "./apiFetch.ts";
 
 export type RPC = typeof _rpc;
 

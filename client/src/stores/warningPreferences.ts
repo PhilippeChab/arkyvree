@@ -6,7 +6,9 @@ export interface WarningPreference {
 }
 
 /** The warnings a state holds, by key. */
-export type WarningsState = { warnings: Record<WarningKey, WarningPreference> };
+export interface WarningsState {
+  warnings: Record<WarningKey, WarningPreference>;
+}
 
 export const WARNING_DEFAULTS: Record<WarningKey, WarningPreference> = {
   abilityDecrease: { enabled: true, suppressedThisSession: false },

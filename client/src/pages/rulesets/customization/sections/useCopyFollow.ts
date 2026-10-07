@@ -9,9 +9,7 @@ export function useCopyFollow(entityId: string, onEntityIdChange?: (copyId: stri
     request.then((res) => ({ ...res, sourceEntityId: entityId }));
   // Only a tagged response can be followed: an untagged request is a type error.
   const follow = ({ resolvedEntityId, sourceEntityId }: { resolvedEntityId?: string; sourceEntityId: string }) => {
-    if (resolvedEntityId && resolvedEntityId !== sourceEntityId) {
-      onEntityIdChange?.(resolvedEntityId, sourceEntityId);
-    }
+    if (resolvedEntityId && resolvedEntityId !== sourceEntityId) onEntityIdChange?.(resolvedEntityId, sourceEntityId);
   };
   /** `useRulesetSection` callbacks that follow a copy made by any save. */
   const followCopies = { onCreateSuccess: follow, onUpdateSuccess: follow, onDeleteSuccess: follow };

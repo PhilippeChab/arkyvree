@@ -1,7 +1,8 @@
 import { Box, FormControl, FormHelperText, InputLabel } from "@mui/material";
 
+import type { PathInfo } from "./pathValues.ts";
 import { TargetPathBrowser } from "./TargetPathBrowser.tsx";
-import { type PathInfo, useTargetPath } from "./useTargetPath.ts";
+import { useTargetPath } from "./useTargetPath.ts";
 
 interface TargetPathInputProps {
   value: string;

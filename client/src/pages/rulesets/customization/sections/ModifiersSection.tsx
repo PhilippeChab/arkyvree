@@ -1,20 +1,23 @@
-import { Tune as ModifiersIcon } from "@mui/icons-material";
 import { Chip, Typography } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { InferRequestType, InferResponseType } from "hono/client";
-import { parseResponse } from "hono/client";
+import { type InferRequestType, type InferResponseType, parseResponse } from "hono/client";
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { CreateDialog, DeleteDialog, EditDialog, SectionContent } from "@/client/src/components/common/index.ts";
 import { EMPTY_MODIFIER, ModifierForm, TargetPathBreadcrumbs } from "@/client/src/components/customization/index.ts";
+import { TuneIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { formatDate } from "@/client/src/lib/activityFormatters.ts";
+import { formatDate } from "@/client/src/lib/formatDate.ts";
 import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { extractTemplatePath } from "@/client/src/lib/templateValues.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
+import {
+  customizationSection,
+  modifiersQuery,
+} from "@/client/src/pages/rulesets/customization/customizationQueries.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
@@ -85,18 +88,10 @@ export function ModifiersSection({
   } = useRulesetSection({
     createDefaults: EMPTY_MODIFIER,
     rulesetId: ruleset.id,
-    sectionName: `customization-${entityType}-${entityId}-modifiers`,
+    sectionName: customizationSection(entityType, entityId, "modifiers"),
     label: "Modifier",
     data: externalData,
-    queryFn: !externalData
-      ? async () => {
-          return parseResponse(
-            rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].modifiers.$get({
-              param: entityParam,
-            }),
-          );
-        }
-      : undefined,
+    query: modifiersQuery(ruleset.id, entityType, entityId),
     queryKeysToInvalidate,
     createFn: async (data: ModifierFormData) => {
       return tag(
@@ -178,13 +173,10 @@ export function ModifiersSection({
     },
     onSuccess: (data) => {
       snackbar.success("Modifier created successfully");
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.rulesets.section(ruleset.id, `customization-${entityType}-${entityId}-modifiers`),
-      });
-      for (const queryKey of queryKeysToInvalidate ?? []) {
-        queryClient.invalidateQueries({ queryKey });
-      }
-      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.changes(ruleset.id) });
+      queryClient.invalidateQueries({ queryKey: modifiersQuery(ruleset.id, entityType, entityId).queryKey });
+      for (const queryKey of queryKeysToInvalidate ?? []) queryClient.invalidateQueries({ queryKey });
+
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.changes(ruleset.id) });
       setCreateDialogOpen(false);
       setDuplicateSourceId(null);
       createForm.reset();
@@ -212,9 +204,8 @@ export function ModifiersSection({
         return <TargetPathBreadcrumbs target={modifier.target} targetLabels={modifier.targetLabels} />;
       case "value": {
         const templatePath = extractTemplatePath(modifier.value);
-        if (templatePath) {
-          return <TargetPathBreadcrumbs target={templatePath} targetLabels={modifier.targetLabels} />;
-        }
+        if (templatePath) return <TargetPathBreadcrumbs target={templatePath} targetLabels={modifier.targetLabels} />;
+
         return <Typography variant="body2">{modifier.valueLabel || modifier.value}</Typography>;
       }
       case "operator":
@@ -253,7 +244,7 @@ export function ModifiersSection({
         onRowClick={handleRowClick}
         onRowMouseEnter={handleRowMouseEnter}
         renderCell={renderCell}
-        emptyIcon={ModifiersIcon}
+        emptyIcon={TuneIcon}
         emptyTitle="No modifiers"
         emptyDescription="No modifiers defined for this entity."
       />
@@ -267,11 +258,8 @@ export function ModifiersSection({
         title="Create New Modifier"
         form={createForm}
         onSubmit={(data) => {
-          if (duplicateSourceId) {
-            duplicateMutation.mutate({ sourceId: duplicateSourceId, data });
-          } else {
-            createMutation.mutate(data);
-          }
+          if (duplicateSourceId) duplicateMutation.mutate({ sourceId: duplicateSourceId, data });
+          else createMutation.mutate(data);
         }}
         isLoading={createMutation.isPending || duplicateMutation.isPending}
         maxWidth="md"

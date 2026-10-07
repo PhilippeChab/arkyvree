@@ -1,5 +1,9 @@
 import { Box, Chip, Typography } from "@mui/material";
 
+interface AptitudeChipsCellProps {
+  links: AptitudeLink[] | null | undefined;
+}
+
 /** An entity's link to an aptitude, as the feats and spells lists include it. */
 interface AptitudeLink {
   aptitudeId: string;
@@ -12,7 +16,7 @@ function byListName(a: AptitudeLink, b: AptitudeLink) {
 }
 
 /** A section table's aptitudes column: a chip per aptitude, by name, or a dash. */
-export function AptitudeChipsCell({ links }: { links: AptitudeLink[] | null | undefined }) {
+export function AptitudeChipsCell({ links }: AptitudeChipsCellProps) {
   if (!links?.length) {
     return (
       <Typography variant="body2" sx={{ color: "text.secondary" }}>

@@ -1,11 +1,10 @@
-import { ArrowBack, MoreVert as MoreVertIcon } from "@mui/icons-material";
 import { Box, IconButton, Menu, MenuItem, Skeleton, Typography } from "@mui/material";
-import type { ComponentProps, ReactNode } from "react";
-import { useState } from "react";
+import { type ComponentProps, type ReactNode, useState } from "react";
 
 import { PageError } from "@/client/src/components/common/index.ts";
+import { ArrowBackIcon, MoreVertIcon } from "@/client/src/components/icons/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
-import { DURATION, EASING, fadeInUp, prefersReducedMotion } from "@/client/src/lib/animations.ts";
+import { DURATION, EASING, fadeInUp, PREFERS_REDUCED_MOTION } from "@/client/src/lib/animations.ts";
 
 interface EntityDetailLayoutProps {
   entityName?: string;
@@ -20,6 +19,8 @@ interface EntityDetailLayoutProps {
   isLoading?: boolean;
   children: ReactNode;
 }
+
+type EntityPageErrorProps = ComponentProps<typeof PageError>;
 
 /** An entity page's column: centered, up to 1200px. */
 const PAGE_SX = { maxWidth: 1200, margin: "0 auto", p: { xs: 2, sm: 3 } } as const;
@@ -68,7 +69,7 @@ export function EntityDetailLayout({
       sx={{
         ...PAGE_SX,
         animation: `${fadeInUp} ${DURATION.normal}ms ${EASING.decelerate} both`,
-        [prefersReducedMotion]: { animation: "none" },
+        [PREFERS_REDUCED_MOTION]: { animation: "none" },
       }}
     >
       <Box
@@ -93,7 +94,7 @@ export function EntityDetailLayout({
             "&:hover": { bgcolor: "action.hover" },
           }}
         >
-          <ArrowBack />
+          <ArrowBackIcon />
         </IconButton>
         <Box
           sx={{
@@ -149,7 +150,7 @@ export function EntityDetailLayout({
 }
 
 /** An entity page that couldn't load its entity, in the page's column. */
-export function EntityPageError(props: ComponentProps<typeof PageError>) {
+export function EntityPageError({ ...props }: EntityPageErrorProps) {
   return (
     <Box sx={PAGE_SX}>
       <PageError {...props} />

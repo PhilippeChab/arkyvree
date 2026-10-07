@@ -1,4 +1,3 @@
-import { ExpandLess as ExpandLessIcon, ExpandMore as ExpandMoreIcon } from "@mui/icons-material";
 import {
   Alert,
   Box,
@@ -14,7 +13,6 @@ import {
   Typography,
 } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
-import { parseResponse } from "hono/client";
 import { useState } from "react";
 import { useController } from "react-hook-form";
 
@@ -25,22 +23,41 @@ import {
   LoadError,
   NoMatchesState,
 } from "@/client/src/components/common/index.ts";
+import { ExpandLessIcon, ExpandMoreIcon } from "@/client/src/components/icons/index.ts";
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
-import { pageItems } from "@/client/src/lib/pageItems.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 
-import { type AptitudePool, type FeatsData, type SelectedFeat, withoutPick } from "./levelUp/index.ts";
+import {
+  type AptitudePool,
+  availableFeatFamilyQuery,
+  type FeatsData,
+  type SelectedFeat,
+  withoutPick,
+} from "./levelUp/index.ts";
 import type { LevelUpFeatsStepProps } from "./levelUpFactory.ts";
 
-function AutoGrantedFeats({
-  feats,
-  defaultCollapsed,
-}: {
+interface AutoGrantedFeatsProps {
   feats: FeatsData["autoGrantedFeats"];
   defaultCollapsed: boolean;
-}) {
+}
+
+interface FeatFamilyExpansionProps {
+  characterId: string;
+  aptitudeId: string;
+  klassId: string;
+  klassLevel: number;
+  family: string;
+  editingLevelId?: string;
+  allSelectedFeatPickString?: string;
+  pendingLevelKlassLevelIds?: string;
+  pendingLevelFeatPicks?: string;
+  selectedAptitude: string;
+  selectedFeats: Record<string, SelectedFeat[]>;
+  onSelectedFeatsChange: (value: Record<string, SelectedFeat[]>) => void;
+}
+
+function AutoGrantedFeats({ feats, defaultCollapsed }: AutoGrantedFeatsProps) {
   const [open, setOpen] = useState(!defaultCollapsed);
   return (
     <Box sx={{ mb: 1 }}>
@@ -78,57 +95,21 @@ function FeatFamilyExpansion({
   selectedAptitude,
   selectedFeats,
   onSelectedFeatsChange,
-}: {
-  characterId: string;
-  aptitudeId: string;
-  klassId: string;
-  klassLevel: number;
-  family: string;
-  editingLevelId?: string;
-  allSelectedFeatPickString?: string;
-  pendingLevelKlassLevelIds?: string;
-  pendingLevelFeatPicks?: string;
-  selectedAptitude: string;
-  selectedFeats: Record<string, SelectedFeat[]>;
-  onSelectedFeatsChange: (value: Record<string, SelectedFeat[]>) => void;
-}) {
+}: FeatFamilyExpansionProps) {
   const query = useInfiniteQuery({
-    queryKey: queryKeys.characters.levelUp.availableFeatFamily(
-      characterId,
-      aptitudeId,
-      family,
-      klassId,
-      editingLevelId,
-      allSelectedFeatPickString,
-      pendingLevelKlassLevelIds,
-    ),
-    queryFn: async ({ pageParam }) => {
-      return parseResponse(
-        rpc.api.characters.levels[":characterId"]["available-feats"]["$get"]({
-          param: { characterId },
-          query: {
-            aptitudeId,
-            classId: klassId,
-            level: klassLevel.toString(),
-            limit: "50",
-            page: pageParam.toString(),
-            family,
-            characterLevelId: editingLevelId || undefined,
-            selectedFeatPicks: allSelectedFeatPickString || undefined,
-            pendingLevelClassLevelIds: pendingLevelKlassLevelIds || undefined,
-            pendingLevelFeatPicks: pendingLevelFeatPicks || undefined,
-          },
-        }),
-      );
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    ...availableFeatFamilyQuery(characterId, aptitudeId, family, {
+      classId: klassId,
+      level: klassLevel,
+      characterLevelId: editingLevelId,
+      selectedFeatPicks: allSelectedFeatPickString,
+      pendingKlassLevelIds: pendingLevelKlassLevelIds,
+      pendingFeatPicks: pendingLevelFeatPicks,
+    }),
     placeholderData: keepPreviousData,
   });
 
   const variants = pageItems(query.data);
-  const pages = query.data?.pages ?? [];
-  const previousItemCount = pages.slice(0, -1).reduce((sum, p) => sum + p.items.length, 0);
+  const previousItemCount = itemsBeforeLastPage(query.data);
 
   if (query.isLoading) {
     return (
@@ -236,9 +217,8 @@ export function LevelUpFeatsStep({
 
   const hasSelectableFeats = aptitudePools.some((pool) => pool.available > 0);
 
-  if (!hasSelectableFeats && featData.autoGrantedFeats.length === 0) {
+  if (!hasSelectableFeats && featData.autoGrantedFeats.length === 0)
     return <Alert severity="info">No feats to select at this level.</Alert>;
-  }
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>

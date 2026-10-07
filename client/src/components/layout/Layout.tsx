@@ -1,21 +1,4 @@
 import {
-  AccountCircle,
-  MenuBook as BookIcon,
-  RocketLaunch as ChangelogIcon,
-  ChevronLeft,
-  ChevronRight,
-  Dashboard as DashboardIcon,
-  HelpOutlined as FaqIcon,
-  History as HistoryIcon,
-  Logout,
-  Map as MapIcon,
-  Menu as MenuIcon,
-  Notifications as NotificationsIcon,
-  Person as PersonIcon,
-  Settings as SettingsIcon,
-  Favorite as SupportIcon,
-} from "@mui/icons-material";
-import {
   AppBar,
   Avatar,
   Box,
@@ -33,14 +16,32 @@ import {
   useTheme,
 } from "@mui/material";
 import { type QueryClient, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { parseResponse } from "hono/client";
+import { type MouseEvent, useCallback, useMemo, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { ActionMenuItem } from "@/client/src/components/common/index.ts";
+import {
+  AccountCircleIcon,
+  BookIcon,
+  ChangelogIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  DashboardIcon,
+  FaqIcon,
+  HistoryIcon,
+  LogoutIcon,
+  MapIcon,
+  MenuIcon,
+  NotificationsIcon,
+  PersonIcon,
+  SettingsIcon,
+  SupportIcon,
+} from "@/client/src/components/icons/index.ts";
 import { Onboarding } from "@/client/src/components/onboarding/index.ts";
 import { useAttachment, useAuthRequests, useDemoTimeRemaining, useIsMobile } from "@/client/src/hooks/index.ts";
 import { brandGold, brandGoldTint } from "@/client/src/lib/brandGold.ts";
-import { externalLinks } from "@/client/src/lib/externalLinks.ts";
+import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 import {
   campaignListQuery,
   characterListQuery,
@@ -50,22 +51,22 @@ import {
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
-import { AppBrand, AppMain } from "./AppShell.tsx";
+import { AppBrand, AppMain } from "./AppMain.tsx";
 import { DemoBanner } from "./DemoBanner.tsx";
 import { FeedbackButton } from "./FeedbackButton.tsx";
 import { NotificationBell } from "./NotificationBell.tsx";
 
 /** How a list page opens by default, which a prefetch asks for. */
 const DEFAULT_LIST = { search: "", orderBy: "createdAt", orderDir: "desc" } as const;
-const drawerWidth = 72;
+const DRAWER_WIDTH = 72;
 
-const expandedDrawerWidth = 240;
+const EXPANDED_DRAWER_WIDTH = 240;
 
 /**
  * Warm the first page of a section when its sidebar item is hovered. The options are the ones the pages use, filtered
  * the way a page opens by default.
  */
-const prefetchers: Partial<Record<string, (queryClient: QueryClient) => void>> = {
+const PREFETCHERS: Partial<Record<string, (queryClient: QueryClient) => void>> = {
   dashboard: (queryClient) => void queryClient.prefetchQuery(dashboardStatsQuery()),
   rulesets: (queryClient) =>
     void queryClient.prefetchInfiniteQuery(rulesetListQuery({ scope: undefined, ...DEFAULT_LIST })),
@@ -75,7 +76,7 @@ const prefetchers: Partial<Record<string, (queryClient: QueryClient) => void>> =
     void queryClient.prefetchInfiniteQuery(campaignListQuery({ view: "active", ...DEFAULT_LIST })),
 };
 
-const sidebarItems = [
+const SIDEBAR_ITEMS = [
   {
     id: "dashboard" as const,
     label: "Dashboard",
@@ -116,7 +117,7 @@ const sidebarItems = [
     label: "Help",
     icon: <FaqIcon />,
     description: "Help center",
-    path: externalLinks.help,
+    path: EXTERNAL_LINKS.help,
     external: true,
   },
   {
@@ -124,7 +125,7 @@ const sidebarItems = [
     label: "Changelog",
     icon: <ChangelogIcon />,
     description: "What's new",
-    path: externalLinks.changelog,
+    path: EXTERNAL_LINKS.changelog,
     external: true,
   },
   {
@@ -132,11 +133,11 @@ const sidebarItems = [
     label: "Support Arkyvree",
     icon: <SupportIcon />,
     description: "Buy me a coffee",
-    path: externalLinks.support,
+    path: EXTERNAL_LINKS.support,
     external: true,
   },
 ];
-const stepToSidebarId: Record<number, string> = { 1: "rulesets", 2: "characters", 3: "campaigns" };
+const STEP_TO_SIDEBAR_ID: Record<number, string> = { 1: "rulesets", 2: "characters", 3: "campaigns" };
 
 export function Layout() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -163,16 +164,20 @@ export function Layout() {
   const sidebarItemRefs = useMemo(
     () =>
       Object.fromEntries(
-        sidebarItems.map(({ id }) => [
+        SIDEBAR_ITEMS.map(({ id }) => [
           id,
-          (el: HTMLElement | null) => setSidebarItemEls((prev) => (prev[id] === el ? prev : { ...prev, [id]: el })),
+          // A router Link hands its ref a new callback each render, detaching it (null) first: keep the element, or
+          // each render would set state again
+          (el: HTMLElement | null) => {
+            if (el) setSidebarItemEls((prev) => (prev[id] === el ? prev : { ...prev, [id]: el }));
+          },
         ]),
       ),
     [],
   );
 
-  const isPopoverStep = onboardingOpen && !isMobile && stepToSidebarId[onboardingStep];
-  const onboardingHighlightId = isPopoverStep ? stepToSidebarId[onboardingStep] : null;
+  const isPopoverStep = onboardingOpen && !isMobile && STEP_TO_SIDEBAR_ID[onboardingStep];
+  const onboardingHighlightId = isPopoverStep ? STEP_TO_SIDEBAR_ID[onboardingStep] : null;
   const effectiveExpanded = sidebarExpanded || !!isPopoverStep;
 
   const darkMode = theme.palette.mode === "dark";
@@ -180,7 +185,7 @@ export function Layout() {
   const goldFaint = brandGoldTint(darkMode, darkMode ? 0.25 : 0.2);
 
   const { mutate: completeOnboarding } = useMutation({
-    mutationFn: () => rpc.auth["complete-onboarding"].$post(),
+    mutationFn: () => parseResponse(rpc.auth["complete-onboarding"].$post()),
   });
 
   const handleOnboardingClose = useCallback(() => {
@@ -196,11 +201,11 @@ export function Layout() {
   // Sidebar item of the first path segment ("rulesets" for /rulesets/123);
   // pages outside the sidebar (profile, invites) keep Dashboard highlighted.
   const pathSection = location.pathname.split("/")[1];
-  const activeSection = sidebarItems.some((item) => !("external" in item) && item.id === pathSection)
+  const activeSection = SIDEBAR_ITEMS.some((item) => !("external" in item) && item.id === pathSection)
     ? pathSection
     : "dashboard";
 
-  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+  const handleMenuOpen = (event: MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
 
@@ -247,7 +252,7 @@ export function Layout() {
               <MenuIcon />
             </IconButton>
           ) : (
-            <Box sx={{ width: drawerWidth }} />
+            <Box sx={{ width: DRAWER_WIDTH }} />
           )}
 
           <Typography
@@ -278,14 +283,14 @@ export function Layout() {
             {!isDemo && (
               <IconButton size="large" onClick={handleMenuOpen} color="inherit" aria-label="Account menu">
                 <Avatar src={avatarAttachment?.url ?? undefined} sx={{ width: 32, height: 32 }}>
-                  <AccountCircle />
+                  <AccountCircleIcon />
                 </Avatar>
               </IconButton>
             )}
           </Box>
 
           <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-            <ActionMenuItem icon={AccountCircle} label="Profile" onClick={handleProfile} />
+            <ActionMenuItem icon={AccountCircleIcon} label="Profile" onClick={handleProfile} />
             <ActionMenuItem
               icon={HistoryIcon}
               label="Activity"
@@ -296,17 +301,17 @@ export function Layout() {
             />
             <ActionMenuItem icon={SettingsIcon} label="Settings" onClick={handleSettings} />
             <Divider />
-            <ActionMenuItem icon={Logout} label="Sign Out" onClick={handleSignOut} />
+            <ActionMenuItem icon={LogoutIcon} label="Sign Out" onClick={handleSignOut} />
           </Menu>
         </Toolbar>
       </AppBar>
       {/* Sidebar */}
       <Drawer
         sx={{
-          width: isMobile ? expandedDrawerWidth : effectiveExpanded ? expandedDrawerWidth : drawerWidth,
+          width: isMobile ? EXPANDED_DRAWER_WIDTH : effectiveExpanded ? EXPANDED_DRAWER_WIDTH : DRAWER_WIDTH,
           flexShrink: 0,
           "& .MuiDrawer-paper": {
-            width: isMobile ? expandedDrawerWidth : effectiveExpanded ? expandedDrawerWidth : drawerWidth,
+            width: isMobile ? EXPANDED_DRAWER_WIDTH : effectiveExpanded ? EXPANDED_DRAWER_WIDTH : DRAWER_WIDTH,
             boxSizing: "border-box",
             borderRight: "none",
             transition: "all 0.35s cubic-bezier(0.2, 0, 0, 1)",
@@ -324,20 +329,18 @@ export function Layout() {
         <Toolbar />
         <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, position: "relative" }}>
           <List sx={{ flex: 1, pt: 2, px: 1 }}>
-            {sidebarItems.map((item) => (
+            {SIDEBAR_ITEMS.map((item) => (
               <ListItem key={item.id} disablePadding sx={{ mb: 1 }}>
                 <ListItemButton
                   ref={sidebarItemRefs[item.id]}
+                  {...("external" in item && item.external
+                    ? { component: "a", href: item.path, target: "_blank", rel: "noopener noreferrer" }
+                    : { component: Link, to: item.path })}
                   selected={!("external" in item) && activeSection === item.id}
                   onClick={() => {
-                    if ("external" in item && item.external) {
-                      window.open(item.path, "_blank", "noopener,noreferrer");
-                    } else {
-                      navigate(item.path);
-                    }
                     if (isMobile) setMobileDrawerOpen(false);
                   }}
-                  onMouseEnter={() => prefetchers[item.id]?.(queryClient)}
+                  onMouseEnter={() => PREFETCHERS[item.id]?.(queryClient)}
                   sx={{
                     height: 48,
                     minHeight: "unset",
@@ -485,16 +488,16 @@ export function Layout() {
                 size="small"
               >
                 {effectiveExpanded ? (
-                  <ChevronLeft sx={{ transition: "transform 0.25s ease" }} />
+                  <ChevronLeftIcon sx={{ transition: "transform 0.25s ease" }} />
                 ) : (
-                  <ChevronRight sx={{ transition: "transform 0.25s ease" }} />
+                  <ChevronRightIcon sx={{ transition: "transform 0.25s ease" }} />
                 )}
               </IconButton>
             </Box>
           )}
         </Box>
       </Drawer>
-      <AppMain banner={isDemo && <DemoBanner />} railWidth={isMobile ? 0 : drawerWidth} />
+      <AppMain banner={isDemo && <DemoBanner />} railWidth={isMobile ? 0 : DRAWER_WIDTH} />
       <Onboarding
         open={onboardingOpen}
         onClose={handleOnboardingClose}

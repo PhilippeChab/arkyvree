@@ -101,15 +101,12 @@ const NOTIFICATION_MESSAGES: Record<string, (actor: string, d: Record<string, un
 
 function formatChange(change: ChangedField): string {
   const label = FIELD_LABELS[change.field] ?? change.field;
-  if (change.from == null && change.to == null) {
-    return `${label} updated`;
-  }
-  if (change.from && change.to) {
-    return `${label}: ${change.from} → ${change.to}`;
-  }
-  if (change.to) {
-    return `${label} set to ${change.to}`;
-  }
+  if (change.from == null && change.to == null) return `${label} updated`;
+
+  if (change.from && change.to) return `${label}: ${change.from} → ${change.to}`;
+
+  if (change.to) return `${label} set to ${change.to}`;
+
   return `${label} cleared`;
 }
 
@@ -122,36 +119,22 @@ function payload(data: unknown): Record<string, unknown> {
   return isRecord(data) ? data : {};
 }
 
-export function formatActivityDate(dateString: string): string {
-  return new Intl.DateTimeFormat("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(dateString));
-}
-
 export function formatActivityDetails(data: unknown): string | null {
   const d = payload(data);
   const parts: string[] = [];
 
-  if (Array.isArray(d.changedFields)) {
-    for (const change of d.changedFields.filter(isChangedField)) {
-      parts.push(formatChange(change));
-    }
-  }
-  if (d.level != null) {
-    parts.push(`Level ${d.level}`);
-  }
+  if (Array.isArray(d.changedFields))
+    for (const change of d.changedFields.filter(isChangedField)) parts.push(formatChange(change));
+
+  if (d.level != null) parts.push(`Level ${d.level}`);
+
   // Modifier details
-  if (d.target && d.operator) {
-    parts.push(`${d.operator} ${d.value ?? ""} on ${d.target}`.trim());
-  }
+  if (d.target && d.operator) parts.push(`${d.operator} ${d.value ?? ""} on ${d.target}`.trim());
+
   // Property details
-  if (typeof d.propertyType === "string" && d.propertyType) {
+  if (typeof d.propertyType === "string" && d.propertyType)
     parts.push(`${FIELD_LABELS[d.propertyType] ?? d.propertyType}: ${d.value ?? ""}`);
-  }
+
   return parts.length > 0 ? parts.join("\n") : null;
 }
 
@@ -161,21 +144,12 @@ export function formatActivityType(type: string, data?: unknown): string {
   const d = payload(data);
   if (typeof d.baseRules === "string") {
     const overrides = getActivityLabelOverrides(d.baseRules);
-    for (const [generic, specific] of Object.entries(overrides)) {
-      formatted = formatted.replaceAll(generic, specific);
-    }
+    for (const [generic, specific] of Object.entries(overrides)) formatted = formatted.replaceAll(generic, specific);
   }
 
-  if (d.entityName) {
-    formatted += `: ${d.entityName}`;
-  }
+  if (d.entityName) formatted += `: ${d.entityName}`;
 
   return formatted;
-}
-
-/** A date on its own ("9/27/2026"), in the viewer's locale. */
-export function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString();
 }
 
 export function formatNotificationMessage(type: string, data: unknown): string {
@@ -187,19 +161,4 @@ export function formatNotificationMessage(type: string, data: unknown): string {
 
   const typeFormatted = formatActivityType(type, data).toLowerCase();
   return `${actorName}: ${typeFormatted}`;
-}
-
-export function formatRelativeTime(dateString: string): string {
-  const now = Date.now();
-  const then = new Date(dateString).getTime();
-  const diff = now - then;
-
-  const minutes = Math.floor(diff / 60000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}d ago`;
-  return formatActivityDate(dateString);
 }

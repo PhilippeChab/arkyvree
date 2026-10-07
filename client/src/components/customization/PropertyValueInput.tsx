@@ -1,10 +1,7 @@
 import { TextField } from "@mui/material";
-import { parseResponse } from "hono/client";
-
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
 
 import { CompletionAutocomplete } from "./CompletionAutocomplete.tsx";
+import { propertyValueCompletionsQuery } from "./customizationQueries.ts";
 
 interface PropertyValueInputProps {
   value: string;
@@ -51,15 +48,7 @@ export function PropertyValueInput({
       label={label}
       placeholder={placeholder}
       fullWidth={fullWidth}
-      queryKey={(search) => queryKeys.rulesets.propertyValueCompletions(rulesetId, propertyType, search)}
-      pageFn={(search, page) =>
-        parseResponse(
-          rpc.api.rulesets[":id"].customization.properties.values.completions.$get({
-            param: { id: rulesetId },
-            query: { type: propertyType, query: search, limit: "10", page: page.toString() },
-          }),
-        )
-      }
+      query={(search) => propertyValueCompletionsQuery(rulesetId, propertyType, search)}
       enabled={!!rulesetId}
       loadingText="Loading values..."
       noOptionsText="No values found"

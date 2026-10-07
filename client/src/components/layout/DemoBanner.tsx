@@ -1,7 +1,7 @@
-import { Science as ScienceIcon } from "@mui/icons-material";
 import { Box, Button, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
+import { ScienceIcon } from "@/client/src/components/icons/index.ts";
 import { useDemoTimeRemaining } from "@/client/src/hooks/index.ts";
 import { brandGoldTint } from "@/client/src/lib/brandGold.ts";
 

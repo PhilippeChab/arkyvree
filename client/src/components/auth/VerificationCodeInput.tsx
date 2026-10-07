@@ -1,5 +1,5 @@
 import { Box, TextField } from "@mui/material";
-import { useRef } from "react";
+import { type KeyboardEvent, useRef } from "react";
 
 import { VERIFICATION_CODE_LENGTH } from "@/client/src/lib/verificationCode.ts";
 
@@ -21,9 +21,8 @@ export function VerificationCodeInput({ digits, onChange }: VerificationCodeInpu
     if (value.length > 1) {
       const pasted = value.replace(/\D/g, "").slice(0, VERIFICATION_CODE_LENGTH);
       if (pasted.length > 0) {
-        for (let i = 0; i < pasted.length && i + index < VERIFICATION_CODE_LENGTH; i++) {
-          next[i + index] = pasted[i];
-        }
+        for (let i = 0; i < pasted.length && i + index < VERIFICATION_CODE_LENGTH; i++) next[i + index] = pasted[i];
+
         onChange(next);
         inputRefs.current[Math.min(index + pasted.length, lastIndex)]?.focus();
         return;
@@ -33,15 +32,11 @@ export function VerificationCodeInput({ digits, onChange }: VerificationCodeInpu
     const digit = value.replace(/\D/g, "").slice(-1);
     next[index] = digit;
     onChange(next);
-    if (digit && index < lastIndex) {
-      inputRefs.current[index + 1]?.focus();
-    }
+    if (digit && index < lastIndex) inputRefs.current[index + 1]?.focus();
   };
 
-  const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === "Backspace" && !digits[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
+  const handleKeyDown = (index: number, e: KeyboardEvent) => {
+    if (e.key === "Backspace" && !digits[index] && index > 0) inputRefs.current[index - 1]?.focus();
   };
 
   return (

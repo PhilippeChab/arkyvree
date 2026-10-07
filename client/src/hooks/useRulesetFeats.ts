@@ -1,8 +1,6 @@
 import { keepPreviousData } from "@tanstack/react-query";
-import { parseResponse } from "hono/client";
 
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { rulesetFeatsQuery } from "@/client/src/lib/queries.ts";
 
 import { useListboxQuery } from "./useListboxQuery.ts";
 
@@ -12,18 +10,5 @@ import { useListboxQuery } from "./useListboxQuery.ts";
  * The previous results stay listed while the next search loads.
  */
 export function useRulesetFeats(rulesetId: string, search = "", enabled = true) {
-  return useListboxQuery({
-    queryKey: queryKeys.rulesets.sectionSearch(rulesetId, "feats", search),
-    queryFn: async ({ pageParam }) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].feats.$get({
-          param: { id: rulesetId },
-          query: { page: pageParam.toString(), limit: "50", search: search || undefined },
-        }),
-      ),
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
-    placeholderData: keepPreviousData,
-    enabled,
-  });
+  return useListboxQuery({ ...rulesetFeatsQuery(rulesetId, search), placeholderData: keepPreviousData, enabled });
 }

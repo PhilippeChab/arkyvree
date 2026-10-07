@@ -1,38 +1,24 @@
-import {
-  ArrowBack as ArrowBackIcon,
-  Download as DownloadIcon,
-  Edit as EditIcon,
-  MoreVert as MoreVertIcon,
-} from "@mui/icons-material";
 import { Alert, Container, Fade, IconButton, Menu, Paper, Stack, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
-import { parseResponse } from "hono/client";
 import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { CharacterDetailSkeleton, CharacterSheetBody } from "@/client/src/components/characters/index.ts";
 import { ActionMenuItem, PageError } from "@/client/src/components/common/index.ts";
+import { ArrowBackIcon, DownloadIcon, EditIcon, MoreVertIcon } from "@/client/src/components/icons/index.ts";
 import { usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
 import { DURATION } from "@/client/src/lib/animations.ts";
 import { accessLost, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
+
+import { campaignCharacterQuery } from "./campaignQueries.ts";
+
 export default function CampaignCharacterPage() {
   const { id: campaignId = "", characterId = "" } = useParams<{ id: string; characterId: string }>();
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: queryKeys.campaigns.characterDetail(campaignId, characterId),
-    queryFn: async () => {
-      return parseResponse(
-        rpc.api.campaigns[":id"].characters[":characterId"]["$get"]({
-          param: { id: campaignId, characterId },
-        }),
-      );
-    },
-    enabled: !!campaignId && !!characterId,
-  });
+  const { data, isLoading, error } = useQuery(campaignCharacterQuery(campaignId, characterId));
 
   const pdfExport = usePdfExport(() =>
     rpc.api.campaigns[":id"].characters[":characterId"]["pdf"]["$post"]({
@@ -84,7 +70,7 @@ export default function CampaignCharacterPage() {
       <Paper sx={{ p: 2, mb: 2 }}>
         <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
           <Stack direction="row" spacing={2} sx={{ alignItems: "center", minWidth: 0 }}>
-            <IconButton aria-label="Back" onClick={() => navigate(`/campaigns/${campaignId}`)}>
+            <IconButton aria-label="Back" component={Link} to={`/campaigns/${campaignId}`}>
               <ArrowBackIcon />
             </IconButton>
             <Typography sx={{ fontWeight: 700, typography: { xs: "h5", md: "h4" } }} noWrap>

@@ -1,12 +1,9 @@
-import { Autocomplete, type AutocompleteInputChangeReason, Chip, TextField } from "@mui/material";
-import type { InferResponseType } from "hono/client";
-import { parseResponse } from "hono/client";
-import { useState } from "react";
+import { Autocomplete, Chip, TextField } from "@mui/material";
+import { type InferResponseType } from "hono/client";
 
-import { ScrollSafeListbox } from "@/client/src/components/common/index.ts";
-import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { type rpc } from "@/client/src/services/rpc.ts";
+
+import { useAptitudeOptions } from "./useAptitudeOptions.ts";
 
 interface AptitudeAutocompleteProps {
   rulesetId: string;
@@ -29,49 +26,6 @@ interface AptitudesAutocompleteProps {
 type AptitudesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["aptitudes"]["$get"], 200>;
 
 export type Aptitude = AptitudesPaginated["items"][number];
-
-function useAptitudeOptions(rulesetId: string, scope?: "feats" | "spells") {
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebouncedValue(search);
-
-  const {
-    items: fetchedOptions,
-    isLoading,
-    onScroll,
-  } = useListboxQuery({
-    queryKey: queryKeys.rulesets.sectionSearch(rulesetId, "aptitudes", debouncedSearch, scope),
-    queryFn: async ({ pageParam }) => {
-      return parseResponse(
-        rpc.api.rulesets[":id"].aptitudes.$get({
-          param: { id: rulesetId },
-          query: {
-            limit: "10",
-            page: pageParam.toString(),
-            search: debouncedSearch || undefined,
-            scope: scope || undefined,
-          },
-        }),
-      );
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
-  });
-
-  // The server searches and pages the list; the Autocomplete only shows it.
-  const autocompleteProps = {
-    getOptionLabel: (option: Aptitude) => option.name,
-    isOptionEqualToValue: (option: Aptitude, val: Aptitude) => option.id === val.id,
-    onInputChange: (_: unknown, inputValue: string, reason: AutocompleteInputChangeReason) => {
-      if (reason === "input") setSearch(inputValue);
-    },
-    filterOptions: (options: Aptitude[]) => options,
-    loading: isLoading,
-    fullWidth: true,
-    slotProps: { listbox: { component: ScrollSafeListbox, onScroll } },
-  };
-
-  return { fetchedOptions, autocompleteProps };
-}
 
 export function AptitudeAutocomplete({
   rulesetId,

@@ -1,8 +1,7 @@
 import { Box, type SxProps, type Theme, Typography } from "@mui/material";
-import type { ReactNode } from "react";
-import { useLayoutEffect, useRef, useState } from "react";
+import { type ReactNode, useLayoutEffect, useRef, useState } from "react";
 
-import { diceRoll, EASING, prefersReducedMotion } from "@/client/src/lib/animations.ts";
+import { diceRoll, EASING, PREFERS_REDUCED_MOTION } from "@/client/src/lib/animations.ts";
 
 interface DiceSpinnerProps {
   size?: "small" | "medium" | "large";
@@ -33,9 +32,7 @@ export function DiceSpinner({ size = "medium", loading, children, sx }: DiceSpin
   useLayoutEffect(() => {
     if (size !== "small" || !ref.current?.parentElement) return;
     const pos = getComputedStyle(ref.current.parentElement).position;
-    if (pos === "relative" || pos === "sticky") {
-      setOverlay(true);
-    }
+    if (pos === "relative" || pos === "sticky") setOverlay(true);
   }, [size]);
 
   const dice = (
@@ -47,7 +44,7 @@ export function DiceSpinner({ size = "medium", loading, children, sx }: DiceSpin
         lineHeight: 1,
         display: "inline-block",
         animation: `${diceRoll} 1.6s ${EASING.decelerate} infinite`,
-        [prefersReducedMotion]: { animation: "none" },
+        [PREFERS_REDUCED_MOTION]: { animation: "none" },
       }}
     >
       🎲
@@ -76,12 +73,13 @@ export function DiceSpinner({ size = "medium", loading, children, sx }: DiceSpin
     );
   }
 
-  if (size === "small" && overlay)
+  if (size === "small" && overlay) {
     return (
       <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
         {dice}
       </Box>
     );
+  }
 
   if (size === "small") return dice;
 

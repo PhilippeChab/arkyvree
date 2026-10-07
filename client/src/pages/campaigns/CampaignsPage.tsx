@@ -1,9 +1,3 @@
-import {
-  Archive as ArchiveIcon,
-  Map as CampaignIcon,
-  Group as GroupIcon,
-  AutoStories as RulesetIcon,
-} from "@mui/icons-material";
 import { Button, Container } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -27,15 +21,17 @@ import {
   type SortOption,
   UPDATED_SORTS,
 } from "@/client/src/components/common/index.ts";
+import { ArchiveIcon, AutoStoriesIcon, CampaignIcon, GroupIcon } from "@/client/src/components/icons/index.ts";
 import { useListParams, usePageTitle, useStaggerAnimation } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { campaignDetailQuery, type CampaignListFilters, campaignListQuery } from "@/client/src/lib/queries.ts";
-import { CreateCampaignDialog } from "@/client/src/pages/campaigns/components/index.ts";
-import { prefetchCampaignSections } from "@/client/src/pages/campaigns/details/sectionQueries.ts";
-import { useCampaignOperations } from "@/client/src/pages/campaigns/hooks/index.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
+
+import { CreateCampaignDialog } from "./components/index.ts";
+import { prefetchCampaignSections } from "./details/sectionQueries.ts";
+import { useCampaignOperations } from "./hooks/index.ts";
 
 type SortField = CampaignListFilters["orderBy"];
 
@@ -128,7 +124,7 @@ export default function CampaignsPage() {
                           tooltip={`${players} in this campaign`}
                         />
                         <InfoPill
-                          icon={RulesetIcon}
+                          icon={AutoStoriesIcon}
                           label={campaign.rulesetName}
                           color="secondary"
                           tooltip={campaign.rulesetName}

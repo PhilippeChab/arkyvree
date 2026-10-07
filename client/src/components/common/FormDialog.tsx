@@ -1,9 +1,10 @@
 import { type ReactNode } from "react";
 import type { FieldValues, UseFormReturn } from "react-hook-form";
 
-import { Modal, type ModalProps } from "@/client/src/components/common/Modal.tsx";
 import { useDirtyForm } from "@/client/src/hooks/index.ts";
 import { valuesEqual } from "@/client/src/lib/valuesEqual.ts";
+
+import { Modal, type ModalProps } from "./Modal.tsx";
 
 export interface FormDialogProps<TFormValues extends FieldValues = FieldValues> extends Omit<
   ModalProps,

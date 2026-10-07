@@ -1,7 +1,8 @@
 import { Box, Button } from "@mui/material";
+import { type RefObject } from "react";
 
 interface GoogleSignInButtonProps {
-  overlayRef: React.RefObject<HTMLDivElement | null>;
+  overlayRef: RefObject<HTMLDivElement | null>;
   disabled?: boolean;
   label?: string;
   fullWidth?: boolean;

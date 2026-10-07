@@ -3,7 +3,7 @@ import { parseResponse } from "hono/client";
 
 import { useFormSync, useFormWith } from "@/client/src/hooks/index.ts";
 import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
   EMPTY_ITEM,
   ItemFormFields,
@@ -34,7 +34,7 @@ export function ItemEditor({
     sync,
     entityId,
     onSaved,
-    listKey: queryKeys.rulesets.section(rulesetId, "items"),
+    listKey: QUERY_KEYS.rulesets.section(rulesetId, "items"),
     label: "Item",
     saveFn: (data: ItemFormInternal) =>
       parseResponse(

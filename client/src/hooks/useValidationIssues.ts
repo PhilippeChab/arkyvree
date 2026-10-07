@@ -13,11 +13,8 @@ export function useValidationIssues(fallback?: string) {
 
   const handleSaveError = useCallback(
     (error: Error) => {
-      if (error instanceof ApiError && error.issues && error.issues.length > 0) {
-        setValidationErrors(error.issues);
-      } else {
-        snackbar.error(error, fallback);
-      }
+      if (error instanceof ApiError && error.issues && error.issues.length > 0) setValidationErrors(error.issues);
+      else snackbar.error(error, fallback);
     },
     [snackbar, fallback],
   );

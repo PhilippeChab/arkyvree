@@ -26,7 +26,6 @@ export function InventoryPlacementFields({ form, profile }: InventoryPlacementFi
         rules={wholeNumberRules(1, "Quantity is required")}
         number
         label="Quantity"
-        type="number"
         fullWidth
       />
       {profile && (
@@ -54,7 +53,6 @@ export function InventoryPlacementFields({ form, profile }: InventoryPlacementFi
               rules={wholeNumberRules(1, "Weapon set is required")}
               number
               label="Weapon Set"
-              type="number"
               fullWidth
             />
           )}
@@ -66,7 +64,6 @@ export function InventoryPlacementFields({ form, profile }: InventoryPlacementFi
                 rules={wholeNumberRules(0)}
                 number
                 label="Total Charges"
-                type="number"
                 fullWidth
               />
               <FormTextField
@@ -75,7 +72,6 @@ export function InventoryPlacementFields({ form, profile }: InventoryPlacementFi
                 rules={wholeNumberRules(0)}
                 number
                 label="Remaining Charges"
-                type="number"
                 fullWidth
               />
             </Stack>

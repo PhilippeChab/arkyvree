@@ -1,4 +1,3 @@
-import { CompareArrows as CompareArrowsIcon, Restore as RestoreIcon } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -16,15 +15,16 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { InferResponseType } from "hono/client";
-import { parseResponse } from "hono/client";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { type InferResponseType, parseResponse } from "hono/client";
 import { Link } from "react-router-dom";
 
 import { DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
+import { CompareArrowsIcon, RestoreIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
+import { rulesetChangesQuery } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { buildCustomizationPath, CUSTOMIZATION_PAGE_TYPES } from "@/shared/customization/entities.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
@@ -61,16 +61,9 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
   const snackbar = useSnackbar();
 
   const { data: changes, isLoading } = useQuery({
-    queryKey: queryKeys.rulesets.changes(rulesetId),
-    queryFn: async () => {
-      return parseResponse(
-        rpc.api.rulesets[":id"].changes.$get({
-          param: { id: rulesetId },
-        }),
-      );
-    },
+    ...rulesetChangesQuery(rulesetId),
     enabled: open,
-    placeholderData: (prev) => prev,
+    placeholderData: keepPreviousData,
   });
 
   const revertMutation = useMutation({
@@ -80,7 +73,7 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.rulesets.detail(rulesetId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.detail(rulesetId) });
       snackbar.success("Change reverted");
     },
     onError: (err) => {
@@ -151,19 +144,22 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
                         )}
                         {showRevert && (
                           <Tooltip title="Revert to parent version">
-                            <IconButton
-                              size="small"
-                              onClick={() =>
-                                revertMutation.mutate({
-                                  entityType: change.entityType,
-                                  sourceEntityId: change.sourceEntityId,
-                                })
-                              }
-                              disabled={revertMutation.isPending}
-                              sx={{ flexShrink: 0, ml: 0.5 }}
-                            >
-                              <RestoreIcon fontSize="small" />
-                            </IconButton>
+                            <span>
+                              <IconButton
+                                aria-label="Revert to parent version"
+                                size="small"
+                                onClick={() =>
+                                  revertMutation.mutate({
+                                    entityType: change.entityType,
+                                    sourceEntityId: change.sourceEntityId,
+                                  })
+                                }
+                                disabled={revertMutation.isPending}
+                                sx={{ flexShrink: 0, ml: 0.5 }}
+                              >
+                                <RestoreIcon fontSize="small" />
+                              </IconButton>
+                            </span>
                           </Tooltip>
                         )}
                       </ListItem>

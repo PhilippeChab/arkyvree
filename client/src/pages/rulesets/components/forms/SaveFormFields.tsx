@@ -3,7 +3,7 @@ import type { UseFormReturn } from "react-hook-form";
 
 import { DescriptionField, NameField, SelectField } from "@/client/src/components/common/index.ts";
 import type { RulesetAbility } from "@/client/src/hooks/index.ts";
-import { nameRules } from "@/client/src/lib/validation.ts";
+import { NAME_RULES, requiredRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
 type Ability = RulesetAbility;
@@ -18,13 +18,13 @@ export type SaveFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["sa
 export function SaveFormFields({ form, abilities }: SaveFormFieldsProps) {
   return (
     <>
-      <NameField control={form.control} name="name" rules={nameRules} />
+      <NameField control={form.control} name="name" rules={NAME_RULES} />
       <DescriptionField control={form.control} name="description" />
       <SelectField
         control={form.control}
         name="abilityId"
         label="Linked Ability"
-        rules={{ required: "Ability is required" }}
+        rules={requiredRules("Ability is required")}
         options={abilities.map((ability) => ({ value: ability.id, label: ability.name }))}
       />
     </>

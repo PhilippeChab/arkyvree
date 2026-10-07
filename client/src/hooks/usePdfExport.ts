@@ -13,11 +13,9 @@ export function usePdfExport(requestPdf: () => Promise<unknown>) {
       snackbar.info("Your PDF is being generated. You'll be notified when it's ready.");
     },
     onError: (error) => {
-      if (error instanceof ApiError && error.status === 429) {
+      if (error instanceof ApiError && error.status === 429)
         snackbar.warning("Too many PDF requests. Please wait a minute before trying again.");
-      } else {
-        snackbar.error(error, "Failed to start PDF generation");
-      }
+      else snackbar.error(error, "Failed to start PDF generation");
     },
   });
 }

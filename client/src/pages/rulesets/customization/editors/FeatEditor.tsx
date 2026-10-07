@@ -2,7 +2,7 @@ import { Chip } from "@mui/material";
 import { parseResponse } from "hono/client";
 
 import { useFormSync, useFormWith } from "@/client/src/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
   byName,
   EMPTY_FEAT,
@@ -44,7 +44,7 @@ export function FeatEditor({
     sync,
     entityId,
     onSaved,
-    listKey: queryKeys.rulesets.section(rulesetId, "feats"),
+    listKey: QUERY_KEYS.rulesets.section(rulesetId, "feats"),
     label: "Feat",
     saveFn: (data: FeatFormData) =>
       parseResponse(

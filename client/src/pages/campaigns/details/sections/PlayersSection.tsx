@@ -1,15 +1,4 @@
 import {
-  Add as AddIcon,
-  Delete as DeleteIcon,
-  Edit as EditIcon,
-  AdminPanelSettings as GMIcon,
-  ExitToApp as LeaveIcon,
-  HourglassEmpty as PendingIcon,
-  Person as PlayerIcon,
-  Close as RevokeIcon,
-  PersonOff as UnassignedIcon,
-} from "@mui/icons-material";
-import {
   Box,
   Button,
   Chip,
@@ -41,12 +30,23 @@ import {
   SearchBar,
   SectionContent,
 } from "@/client/src/components/common/index.ts";
+import {
+  AddIcon,
+  DeleteIcon,
+  EditIcon,
+  GMIcon,
+  LeaveIcon,
+  PendingIcon,
+  PlayerIcon,
+  RevokeIcon,
+  UnassignedIcon,
+} from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith, useSearchText } from "@/client/src/hooks/index.ts";
-import { formatDate } from "@/client/src/lib/activityFormatters.ts";
+import { formatDate } from "@/client/src/lib/formatDate.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import type { CampaignDetail } from "@/client/src/lib/queries.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
   AddPlayerDialog,
   type CampaignPlayer,
@@ -125,14 +125,14 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
     },
     onSuccess: () => {
       snackbar.success("Player added successfully");
-      queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.detail(campaign.id) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.section(campaign.id, "players") });
-      queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.lists });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.detail(campaign.id) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.section(campaign.id, "players") });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.lists });
       setAddDialogOpen(false);
       addForm.reset();
     },
     onError: (error) => {
-      snackbar.error(error);
+      snackbar.error(error, "Failed to add player");
     },
   });
 
@@ -147,13 +147,13 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
     },
     onSuccess: () => {
       snackbar.success("Player updated successfully");
-      queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.detail(campaign.id) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.section(campaign.id, "players") });
-      queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.lists });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.detail(campaign.id) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.section(campaign.id, "players") });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.lists });
       setEditDialogOpen(false);
     },
     onError: (error) => {
-      snackbar.error(error);
+      snackbar.error(error, "Failed to update player");
     },
   });
 
@@ -170,17 +170,17 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
       snackbar.success(removedSelf ? "You left the campaign" : "Player removed successfully");
       if (removedSelf) {
         navigate("/campaigns", { replace: true });
-        queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.lists });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.lists });
       } else {
-        queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.detail(campaign.id) });
-        queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.section(campaign.id, "players") });
-        queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.section(campaign.id, "characters") });
-        queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.lists });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.detail(campaign.id) });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.section(campaign.id, "players") });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.section(campaign.id, "characters") });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.lists });
         setRemoveDialogOpen(false);
       }
     },
     onError: (error) => {
-      snackbar.error(error);
+      snackbar.error(error, "Failed to remove player");
     },
   });
 
@@ -194,12 +194,12 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
     },
     onSuccess: () => {
       snackbar.success("Invitation revoked successfully");
-      queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.section(campaign.id, "players") });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.section(campaign.id, "players") });
       setRevokeDialogOpen(false);
       setSelectedInviteId(null);
     },
     onError: (error) => {
-      snackbar.error(error);
+      snackbar.error(error, "Failed to revoke invitation");
     },
   });
 
@@ -209,9 +209,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
   };
 
   const confirmRevokeInvite = () => {
-    if (selectedInviteId) {
-      revokeInviteMutation.mutate(selectedInviteId);
-    }
+    if (selectedInviteId) revokeInviteMutation.mutate(selectedInviteId);
   };
 
   const handleAddPlayer = () => {
@@ -268,126 +266,129 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
       {/* Error State */}
       {playersError && <LoadError what="Players" error={playersError} sx={{ mb: 3 }} />}
       {/* Table */}
-      {!playersLoading && !playersError && (
-        <>
-          {players.length > 0 ? (
-            <>
-              <TableContainer
-                component={Paper}
-                sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider", overflowX: "auto" }}
-              >
-                <Table sx={{ width: "100%" }}>
-                  <TableHead>
-                    <TableRow sx={{ bgcolor: "action.hover" }}>
-                      <TableCell sx={{ fontWeight: 600, width: "20%" }}>Player</TableCell>
-                      <TableCell sx={{ fontWeight: 600, width: "20%" }}>Role</TableCell>
-                      <TableCell sx={{ fontWeight: 600, width: "20%" }}>Status</TableCell>
-                      <TableCell sx={{ fontWeight: 600, width: "20%" }}>Joined</TableCell>
-                      <TableCell sx={{ fontWeight: 600, width: "10%" }}>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {players.map((player) => {
-                      const slot = getPlayerSlot(player);
-                      const displayInfo = { ...playerDisplay(player, slot), statusChip: STATUS_CHIPS[slot.state] };
-                      const isGameMaster = player.role === "Game Master";
-                      const isCurrentUser = player.userId === currentUserId;
-                      const canRevokeInvite = slot.state === "pending" && canManageInvites && !campaign.deletedAt;
-                      const canEditPlayer =
-                        (!campaign.deletedAt &&
-                          ((canManagePlayers && (!isGameMaster || slot.state !== "assigned")) || isCurrentUser)) ||
-                        canRevokeInvite;
+      {!playersLoading &&
+        !playersError &&
+        (players.length > 0 ? (
+          <>
+            <TableContainer
+              component={Paper}
+              sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider", overflowX: "auto" }}
+            >
+              <Table sx={{ width: "100%" }}>
+                <TableHead>
+                  <TableRow sx={{ bgcolor: "action.hover" }}>
+                    <TableCell sx={{ fontWeight: 600, width: "20%" }}>Player</TableCell>
+                    <TableCell sx={{ fontWeight: 600, width: "20%" }}>Role</TableCell>
+                    <TableCell sx={{ fontWeight: 600, width: "20%" }}>Status</TableCell>
+                    <TableCell sx={{ fontWeight: 600, width: "20%" }}>Joined</TableCell>
+                    <TableCell sx={{ fontWeight: 600, width: "10%" }}>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {players.map((player) => {
+                    const slot = getPlayerSlot(player);
+                    const displayInfo = { ...playerDisplay(player, slot), statusChip: STATUS_CHIPS[slot.state] };
+                    const isGameMaster = player.role === "Game Master";
+                    const isCurrentUser = player.userId === currentUserId;
+                    const canRevokeInvite = slot.state === "pending" && canManageInvites && !campaign.deletedAt;
+                    const canEditPlayer =
+                      (!campaign.deletedAt &&
+                        ((canManagePlayers && (!isGameMaster || slot.state !== "assigned")) || isCurrentUser)) ||
+                      canRevokeInvite;
 
-                      return (
-                        <TableRow
-                          key={player.id}
-                          hover
-                          sx={{
-                            position: "relative",
-                            ...ROW_ACTIONS_HOVER_SX,
-                          }}
-                        >
-                          <TableCell>
-                            <Box>
-                              <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                {displayInfo.name}
-                              </Typography>
-                              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                                {displayInfo.email}
-                              </Typography>
-                            </Box>
-                          </TableCell>
-                          <TableCell>
+                    return (
+                      <TableRow
+                        key={player.id}
+                        hover
+                        sx={{
+                          position: "relative",
+                          ...ROW_ACTIONS_HOVER_SX,
+                        }}
+                      >
+                        <TableCell>
+                          <Box>
+                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                              {displayInfo.name}
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                              {displayInfo.email}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            icon={
+                              isGameMaster ? <GMIcon sx={{ fontSize: 14 }} /> : <PlayerIcon sx={{ fontSize: 14 }} />
+                            }
+                            label={player.role}
+                            size="small"
+                            color={isGameMaster ? "warning" : "primary"}
+                            variant="filled"
+                            sx={{ fontWeight: 500 }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          {displayInfo.statusChip ? (
                             <Chip
-                              icon={
-                                isGameMaster ? <GMIcon sx={{ fontSize: 14 }} /> : <PlayerIcon sx={{ fontSize: 14 }} />
-                              }
-                              label={player.role}
+                              icon={displayInfo.statusChip.icon}
+                              label={displayInfo.statusChip.label}
                               size="small"
-                              color={isGameMaster ? "warning" : "primary"}
-                              variant="filled"
+                              color={displayInfo.statusChip.color}
+                              variant="outlined"
                               sx={{ fontWeight: 500 }}
                             />
-                          </TableCell>
-                          <TableCell>
-                            {displayInfo.statusChip ? (
-                              <Chip
-                                icon={displayInfo.statusChip.icon}
-                                label={displayInfo.statusChip.label}
-                                size="small"
-                                color={displayInfo.statusChip.color}
-                                variant="outlined"
-                                sx={{ fontWeight: 500 }}
-                              />
-                            ) : (
-                              <Chip
-                                icon={<PlayerIcon sx={{ fontSize: 14 }} />}
-                                label="Active"
-                                size="small"
-                                color="success"
-                                variant="outlined"
-                                sx={{ fontWeight: 500 }}
-                              />
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {slot.state === "assigned" ? (
-                              <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                                {formatDate(player.createdAt)}
-                              </Typography>
-                            ) : (
-                              <Typography variant="body2" sx={{ color: "text.disabled" }}>
-                                —
-                              </Typography>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {canEditPlayer && (
-                              <Box
-                                className="row-actions"
-                                sx={{
-                                  ...ROW_ACTIONS_SX,
-                                  display: "flex",
-                                  gap: 0.5,
-                                }}
-                              >
-                                {canManagePlayers && (
-                                  <Tooltip title="Edit">
+                          ) : (
+                            <Chip
+                              icon={<PlayerIcon sx={{ fontSize: 14 }} />}
+                              label="Active"
+                              size="small"
+                              color="success"
+                              variant="outlined"
+                              sx={{ fontWeight: 500 }}
+                            />
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {slot.state === "assigned" ? (
+                            <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                              {formatDate(player.createdAt)}
+                            </Typography>
+                          ) : (
+                            <Typography variant="body2" sx={{ color: "text.disabled" }}>
+                              —
+                            </Typography>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {canEditPlayer && (
+                            <Box
+                              className="row-actions"
+                              sx={{
+                                ...ROW_ACTIONS_SX,
+                                display: "flex",
+                                gap: 0.5,
+                              }}
+                            >
+                              {canManagePlayers && (
+                                <Tooltip title="Edit">
+                                  <IconButton
+                                    aria-label="Edit"
+                                    size="small"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleEditPlayer(player);
+                                    }}
+                                    sx={{ color: "primary.main" }}
+                                  >
+                                    <EditIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                              )}
+                              {slot.state === "pending" && canManageInvites && !campaign.deletedAt && (
+                                <Tooltip title="Revoke Invite">
+                                  <span>
                                     <IconButton
-                                      size="small"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleEditPlayer(player);
-                                      }}
-                                      sx={{ color: "primary.main" }}
-                                    >
-                                      <EditIcon fontSize="small" />
-                                    </IconButton>
-                                  </Tooltip>
-                                )}
-                                {slot.state === "pending" && canManageInvites && !campaign.deletedAt && (
-                                  <Tooltip title="Revoke Invite">
-                                    <IconButton
+                                      aria-label="Revoke Invite"
                                       size="small"
                                       onClick={(e) => {
                                         e.stopPropagation();
@@ -398,54 +399,54 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                                     >
                                       <RevokeIcon fontSize="small" />
                                     </IconButton>
-                                  </Tooltip>
-                                )}
-                                <Tooltip title={isCurrentUser ? "Leave" : "Remove"}>
-                                  <IconButton
-                                    size="small"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleRemovePlayer(player);
-                                    }}
-                                    sx={{ color: isCurrentUser ? "warning.main" : "error.main" }}
-                                  >
-                                    {isCurrentUser ? <LeaveIcon fontSize="small" /> : <DeleteIcon fontSize="small" />}
-                                  </IconButton>
+                                  </span>
                                 </Tooltip>
-                              </Box>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                              )}
+                              <Tooltip title={isCurrentUser ? "Leave" : "Remove"}>
+                                <IconButton
+                                  aria-label={isCurrentUser ? "Leave" : "Remove"}
+                                  size="small"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRemovePlayer(player);
+                                  }}
+                                  sx={{ color: isCurrentUser ? "warning.main" : "error.main" }}
+                                >
+                                  {isCurrentUser ? <LeaveIcon fontSize="small" /> : <DeleteIcon fontSize="small" />}
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
 
-              <LoadMoreButton
-                hasNextPage={hasNextPage}
-                isFetchingNextPage={isFetchingNextPage}
-                onClick={() => fetchNextPage()}
-              />
-            </>
-          ) : searchQuery ? (
-            <NoMatchesState search={searchQuery} />
-          ) : (
-            <BlankState
-              icon={PlayerIcon}
-              title="No players in this campaign"
-              description="Add players to start your adventure together"
-              action={
-                canManagePlayers && !campaign.deletedAt ? (
-                  <Button variant="outlined" startIcon={<AddIcon />} size="large" onClick={handleAddPlayer}>
-                    Add Your First Player
-                  </Button>
-                ) : undefined
-              }
+            <LoadMoreButton
+              hasNextPage={hasNextPage}
+              isFetchingNextPage={isFetchingNextPage}
+              onClick={() => fetchNextPage()}
             />
-          )}
-        </>
-      )}
+          </>
+        ) : searchQuery ? (
+          <NoMatchesState search={searchQuery} />
+        ) : (
+          <BlankState
+            icon={PlayerIcon}
+            title="No players in this campaign"
+            description="Add players to start your adventure together"
+            action={
+              canManagePlayers && !campaign.deletedAt ? (
+                <Button variant="outlined" startIcon={<AddIcon />} size="large" onClick={handleAddPlayer}>
+                  Add Your First Player
+                </Button>
+              ) : undefined
+            }
+          />
+        ))}
       {/* Add Player Dialog */}
       <AddPlayerDialog
         open={addDialogOpen}

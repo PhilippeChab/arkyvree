@@ -28,7 +28,7 @@ AppRoutes
 
 | Wrapper | File | Renders for | Guard behavior |
 |---|---|---|---|
-| `AuthLayoutRoute` | `client/src/components/auth/AuthLayout.tsx` | Unauth users on auth-flow pages | Demo → `signOut()` then form. Real user → `/dashboard`. Unauth → form. |
+| `AuthLayoutRoute` | `client/src/components/auth/AuthLayoutRoute.tsx` | Unauth users on auth-flow pages | Demo → `signOut()` then form. Real user → `/dashboard`. Unauth → form. |
 | `PublicLayout` | `client/src/components/layout/PublicLayout.tsx` | Anyone | None. Toolbar swaps "Sign up" ↔ "Dashboard" by auth state. |
 | `PrivateRoute` | `client/src/App.tsx` (helper) | Authenticated users | Authed → `<Outlet/>`. Unauth → `/demo-expired` if `DEMO_EXPIRED_FLAG` set, else `/sign-in?redirect=<path>`. |
 
@@ -115,7 +115,7 @@ There's no `BroadcastChannel`-based active sync today. Recovery happens lazily v
 | File | Purpose |
 |---|---|
 | `client/src/App.tsx` | `AppRoutes` static tree, `PrivateRoute` guard, `handleGlobalError` 401 handler |
-| `client/src/components/auth/AuthLayout.tsx` | `AuthLayoutRoute` — demo signOut on entry, real-user redirect |
+| `client/src/components/auth/AuthLayoutRoute.tsx` | `AuthLayoutRoute` — demo signOut on entry, real-user redirect |
 | `client/src/components/layout/PublicLayout.tsx` | Public toolbar with auth-aware CTA |
 | `client/src/components/layout/Layout.tsx` | In-app shell, `isDemo` feature gates |
 | `client/src/stores/authStore.ts` | Zustand store + persist: who is signed in, the emails waiting for a code; `clearSession`, `updateUser` |

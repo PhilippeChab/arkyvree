@@ -48,9 +48,8 @@ export function ClassLevelCountsTable<L extends { id: string; level: number }>({
   const sortedLevels = useMemo(() => levels && [...levels].sort((a, b) => a.level - b.level), [levels]);
 
   const renderCell = (level: L, columnKey: string) => {
-    if (columnKey === "level") {
-      return <Chip label={level.level} size="small" color="primary" />;
-    }
+    if (columnKey === "level") return <Chip label={level.level} size="small" color="primary" />;
+
     const value = countOf(level, columnKey.replace("count_", ""));
     return (
       <Typography variant="body2" sx={{ color: value != null ? "text.primary" : "text.secondary" }}>

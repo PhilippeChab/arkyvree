@@ -40,9 +40,9 @@ const RUN_ORDERS = {
 function checkChain(context, outermost) {
   const text = context.sourceCode.text;
   const calls = [];
-  for (let n = outermost; n.type === "CallExpression" && n.callee.type === "MemberExpression"; n = n.callee.object) {
+  for (let n = outermost; n.type === "CallExpression" && n.callee.type === "MemberExpression"; n = n.callee.object)
     calls.unshift(n);
-  }
+
   // Runs of consecutive routes and sub-routers.
   let run = [];
   const flush = () => {
@@ -92,7 +92,9 @@ function checkChain(context, outermost) {
     if (isRoute(call) || isMount(call)) {
       run.push(call);
       routed = true;
-    } else flush();
+    } else {
+      flush();
+    }
   }
   flush();
 }
@@ -338,9 +340,9 @@ function sortableOf(item) {
     };
   }
   const declaration = declarationOf(item.statement);
-  if (item.kind === "type" && /^TS(TypeAlias|Interface)Declaration$/.test(declaration?.type)) {
+  if (item.kind === "type" && /^TS(TypeAlias|Interface)Declaration$/.test(declaration?.type))
     return { kind: "type", node: declaration.id, name: declaration.id.name, rank: [item.rank, declaration.id.name] };
-  }
+
   if (item.kind === "constant" && item.names.length > 0) {
     const runs = runsAtLoad(item.statement);
     return { kind: "constant", node: declaration, name: item.names[0], runs, rank: [item.rank, item.names[0]] };

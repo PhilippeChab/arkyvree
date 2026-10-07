@@ -1,29 +1,20 @@
-import { Notifications as NotificationsIcon } from "@mui/icons-material";
 import { Box, Button, Paper, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
-import { parseResponse } from "hono/client";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 import { BlankState, CLICKABLE_SX, clickableProps, DiceSpinner } from "@/client/src/components/common/index.ts";
+import { NotificationsIcon } from "@/client/src/components/icons/index.ts";
 import { InviteActionButtons } from "@/client/src/components/invites/index.ts";
 import { useNotificationActions } from "@/client/src/hooks/index.ts";
-import {
-  formatActivityDetails,
-  formatNotificationMessage,
-  formatRelativeTime,
-} from "@/client/src/lib/activityFormatters.ts";
+import { formatActivityDetails, formatNotificationMessage } from "@/client/src/lib/activityFormatters.ts";
 import { fadeInUpSx } from "@/client/src/lib/animations.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { formatRelativeTime } from "@/client/src/lib/formatDate.ts";
+import { recentNotificationsQuery } from "@/client/src/lib/queries.ts";
 
 export function RecentNotificationsCard() {
-  const navigate = useNavigate();
   const actions = useNotificationActions();
 
-  const { data: notifications, isLoading } = useQuery({
-    queryKey: queryKeys.notifications.list({ limit: 5, page: 1 }),
-    queryFn: () => parseResponse(rpc.api.notifications.$get({ query: { limit: "5", page: "1" } })),
-  });
+  const { data: notifications, isLoading } = useQuery(recentNotificationsQuery());
 
   const items = notifications?.items ?? [];
 
@@ -34,7 +25,7 @@ export function RecentNotificationsCard() {
           Notifications
         </Typography>
         {items.length > 0 && (
-          <Button variant="outlined" startIcon={<NotificationsIcon />} onClick={() => navigate("/notifications")}>
+          <Button variant="outlined" startIcon={<NotificationsIcon />} component={Link} to="/notifications">
             View All
           </Button>
         )}

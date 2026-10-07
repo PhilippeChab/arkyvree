@@ -12,7 +12,7 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import { languageQuery } from "./entityDetailQueries.ts";
 import { RulesetEntityDetail } from "./RulesetEntityDetail.tsx";
 
-export default function LanguageDetailPage() {
+export default function LanguageDetailsPage() {
   const { id: rulesetId = "", languageId = "" } = useParams<{ id: string; languageId: string }>();
   const param = { id: rulesetId, languageId };
   const endpoint = rpc.api.rulesets[":id"].languages[":languageId"];

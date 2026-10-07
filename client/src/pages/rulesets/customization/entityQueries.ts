@@ -3,11 +3,10 @@
  * they cache the same shape. Tagged with its type, so the page narrows on `type` instead of casting.
  */
 
-import { queryOptions } from "@tanstack/react-query";
-import type { InferResponseType } from "hono/client";
-import { parseResponse } from "hono/client";
+import { queryOptions, skipToken } from "@tanstack/react-query";
+import { type InferResponseType, parseResponse } from "hono/client";
 
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import type { CustomizationPageType } from "@/shared/customization/entities.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
@@ -74,9 +73,10 @@ async function fetchEntity(id: string, type: CustomizationPageType, entityId: st
   }
 }
 
-export function customizationEntityQuery(rulesetId: string, type: CustomizationPageType, entityId: string) {
+/** The entity, once its page's URL names a type it customizes (`type`) and an entity: nothing is asked before. */
+export function customizationEntityQuery(rulesetId: string, type: CustomizationPageType | undefined, entityId: string) {
   return queryOptions({
-    queryKey: queryKeys.rulesets.entity(rulesetId, type, entityId),
-    queryFn: () => fetchEntity(rulesetId, type, entityId),
+    queryKey: QUERY_KEYS.rulesets.entity(rulesetId, type ?? "", entityId),
+    queryFn: type && entityId ? () => fetchEntity(rulesetId, type, entityId) : skipToken,
   });
 }

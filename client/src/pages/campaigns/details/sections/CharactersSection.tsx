@@ -1,4 +1,3 @@
-import { Add as AddIcon, Person as CharacterIcon, Visibility as VisibilityIcon } from "@mui/icons-material";
 import {
   Autocomplete,
   Avatar,
@@ -16,9 +15,8 @@ import {
   Typography,
 } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { InferRequestType, InferResponseType } from "hono/client";
-import { parseResponse } from "hono/client";
-import { useCallback, useMemo, useState } from "react";
+import { type InferRequestType, type InferResponseType, parseResponse } from "hono/client";
+import { type SyntheticEvent, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -34,27 +32,43 @@ import {
   SectionContent,
   StyledCard,
 } from "@/client/src/components/common/index.ts";
+import { AddIcon, CharacterIcon, VisibilityIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import {
   useAttachments,
   useDebouncedValue,
   useListboxQuery,
-  usePrefetch,
   useSearchText,
   useStaggerAnimation,
 } from "@/client/src/hooks/index.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
 import type { CampaignDetail } from "@/client/src/lib/queries.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
+import { campaignCharacterQuery, unlinkedCharactersQuery } from "@/client/src/pages/campaigns/campaignQueries.ts";
 import { campaignCharactersQuery } from "@/client/src/pages/campaigns/details/sectionQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { getInitial } from "@/shared/text.ts";
 
 type CampaignCharacter = CampaignCharactersPaginated["items"][number];
+
 type CampaignCharactersPaginated = InferResponseType<(typeof rpc.api.campaigns)[":id"]["characters"]["$get"], 200>;
+
+interface CharacterCardProps {
+  character: CampaignCharacter;
+  campaignId: string;
+  isArchived: boolean;
+  animationIndex: number;
+  animationOffset: number;
+  portraitUrl: string | null;
+}
 interface CharactersSectionProps {
   campaign: CampaignDetail;
+}
+interface LinkCharacterDialogProps {
+  open: boolean;
+  onClose: () => void;
+  campaignId: string;
 }
 
 type UnlinkedCharacter = InferResponseType<
@@ -80,31 +94,14 @@ function CharacterCard({
   animationIndex,
   animationOffset,
   portraitUrl,
-}: {
-  character: CampaignCharacter;
-  campaignId: string;
-  isArchived: boolean;
-  animationIndex: number;
-  animationOffset: number;
-  portraitUrl: string | null;
-}) {
+}: CharacterCardProps) {
   const navigate = useNavigate();
   const snackbar = useSnackbar();
   const queryClient = useQueryClient();
   const [menuAnchorEl, setMenuAnchorEl] = useState<HTMLElement | null>(null);
 
-  const queryKey = useMemo(
-    () => queryKeys.campaigns.characterDetail(campaignId, character.id),
-    [campaignId, character.id],
-  );
-  const queryFn = useCallback(async () => {
-    return parseResponse(
-      rpc.api.campaigns[":id"].characters[":characterId"]["$get"]({
-        param: { id: campaignId, characterId: character.id },
-      }),
-    );
-  }, [campaignId, character.id]);
-  const prefetchHandlers = usePrefetch(queryKey, queryFn);
+  // Warm the sheet while the pointer is on the card.
+  const prefetchSheet = () => void queryClient.prefetchQuery(campaignCharacterQuery(campaignId, character.id));
 
   const { mutate: updateVisibility } = useMutation({
     mutationFn: async (visibility: Visibility) => {
@@ -118,11 +115,11 @@ function CharacterCard({
     onSuccess: () => {
       snackbar.success("Visibility updated");
       queryClient.invalidateQueries({
-        queryKey: queryKeys.campaigns.section(campaignId, "characters"),
+        queryKey: QUERY_KEYS.campaigns.section(campaignId, "characters"),
       });
     },
     onError: (error) => {
-      snackbar.error(error);
+      snackbar.error(error, "Failed to update visibility");
     },
   });
 
@@ -137,7 +134,8 @@ function CharacterCard({
       onClick={handleViewSheet}
       animationIndex={animationIndex}
       animationOffset={animationOffset}
-      {...prefetchHandlers}
+      onMouseEnter={prefetchSheet}
+      onFocus={prefetchSheet}
     >
       <Box sx={{ p: { xs: 2, sm: 3 }, pb: { xs: 1.5, sm: 2 } }}>
         {/* Title Row */}
@@ -200,7 +198,7 @@ function CharacterCard({
             <Menu
               anchorEl={menuAnchorEl}
               open={Boolean(menuAnchorEl)}
-              onClose={(e: React.SyntheticEvent) => {
+              onClose={(e: SyntheticEvent) => {
                 e.stopPropagation?.();
                 setMenuAnchorEl(null);
               }}
@@ -212,9 +210,7 @@ function CharacterCard({
                   onClick={(e) => {
                     e.stopPropagation();
                     setMenuAnchorEl(null);
-                    if (option !== character.visibility) {
-                      updateVisibility(option);
-                    }
+                    if (option !== character.visibility) updateVisibility(option);
                   }}
                 >
                   {option}
@@ -266,15 +262,7 @@ function CharacterCard({
   );
 }
 
-function LinkCharacterDialog({
-  open,
-  onClose,
-  campaignId,
-}: {
-  open: boolean;
-  onClose: () => void;
-  campaignId: string;
-}) {
+function LinkCharacterDialog({ open, onClose, campaignId }: LinkCharacterDialogProps) {
   const queryClient = useQueryClient();
   const [selectedCharacter, setSelectedCharacter] = useState<UnlinkedCharacter | null>(null);
   const [characterSearch, setCharacterSearch] = useState("");
@@ -285,24 +273,7 @@ function LinkCharacterDialog({
     items: unlinkedCharacters,
     isLoading,
     onScroll: handleCharactersScroll,
-  } = useListboxQuery({
-    queryKey: queryKeys.characters.unlinked(campaignId, { search: debouncedCharacterSearch }),
-    queryFn: async ({ pageParam }) => {
-      return parseResponse(
-        rpc.api.characters.unlinked[":campaignId"].$get({
-          param: { campaignId },
-          query: {
-            limit: "10",
-            page: pageParam.toString(),
-            search: debouncedCharacterSearch || undefined,
-          },
-        }),
-      );
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
-    enabled: open,
-  });
+  } = useListboxQuery({ ...unlinkedCharactersQuery(campaignId, debouncedCharacterSearch), enabled: open });
 
   const snackbar = useSnackbar();
   const { mutate: linkCharacter, isPending: isLinking } = useMutation({
@@ -317,10 +288,10 @@ function LinkCharacterDialog({
     onSuccess: () => {
       snackbar.success("Character linked successfully");
       queryClient.invalidateQueries({
-        queryKey: queryKeys.campaigns.section(campaignId, "characters"),
+        queryKey: QUERY_KEYS.campaigns.section(campaignId, "characters"),
       });
       queryClient.invalidateQueries({
-        queryKey: queryKeys.characters.unlinked(campaignId),
+        queryKey: QUERY_KEYS.characters.unlinked(campaignId),
       });
       setSelectedCharacter(null);
       setCharacterSearch("");
@@ -328,14 +299,12 @@ function LinkCharacterDialog({
       onClose();
     },
     onError: (error) => {
-      snackbar.error(error);
+      snackbar.error(error, "Failed to link character");
     },
   });
 
   const handleLinkCharacter = () => {
-    if (selectedCharacter) {
-      linkCharacter({ characterId: selectedCharacter.id, visibility });
-    }
+    if (selectedCharacter) linkCharacter({ characterId: selectedCharacter.id, visibility });
   };
 
   return (
@@ -471,56 +440,54 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
       {charactersError && <LoadError what="Characters" error={charactersError} sx={{ mb: 3 }} />}
 
       {/* Characters Grid */}
-      {!charactersLoading && !charactersError && (
-        <>
-          {characters.length > 0 ? (
-            <>
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: {
-                    xs: "1fr",
-                    md: "repeat(2, 1fr)",
-                    lg: "repeat(3, 1fr)",
-                  },
-                  gap: 3,
-                  mb: 3,
-                }}
-              >
-                {characters.map((character, index) => (
-                  <CharacterCard
-                    key={character.id}
-                    character={character}
-                    campaignId={campaign.id}
-                    isArchived={!!campaign.deletedAt}
-                    animationIndex={index}
-                    animationOffset={offset}
-                    portraitUrl={portraitsByCharacterId?.get(character.id) ?? null}
-                  />
-                ))}
-              </Box>
-              <LoadMoreButton
-                size="large"
-                label="Load More Characters"
-                hasNextPage={hasNextPage}
-                isFetchingNextPage={isFetchingNextPage}
-                onClick={() => {
-                  updateOffset(characters.length);
-                  fetchNextPage();
-                }}
-              />
-            </>
-          ) : searchQuery ? (
-            <NoMatchesState search={searchQuery} />
-          ) : (
-            <BlankState
-              icon={CharacterIcon}
-              title="No characters in this campaign"
-              description="Link your existing characters to this campaign to get started"
+      {!charactersLoading &&
+        !charactersError &&
+        (characters.length > 0 ? (
+          <>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  md: "repeat(2, 1fr)",
+                  lg: "repeat(3, 1fr)",
+                },
+                gap: 3,
+                mb: 3,
+              }}
+            >
+              {characters.map((character, index) => (
+                <CharacterCard
+                  key={character.id}
+                  character={character}
+                  campaignId={campaign.id}
+                  isArchived={!!campaign.deletedAt}
+                  animationIndex={index}
+                  animationOffset={offset}
+                  portraitUrl={portraitsByCharacterId?.get(character.id) ?? null}
+                />
+              ))}
+            </Box>
+            <LoadMoreButton
+              size="large"
+              label="Load More Characters"
+              hasNextPage={hasNextPage}
+              isFetchingNextPage={isFetchingNextPage}
+              onClick={() => {
+                updateOffset(characters.length);
+                fetchNextPage();
+              }}
             />
-          )}
-        </>
-      )}
+          </>
+        ) : searchQuery ? (
+          <NoMatchesState search={searchQuery} />
+        ) : (
+          <BlankState
+            icon={CharacterIcon}
+            title="No characters in this campaign"
+            description="Link your existing characters to this campaign to get started"
+          />
+        ))}
     </SectionContent>
   );
 }

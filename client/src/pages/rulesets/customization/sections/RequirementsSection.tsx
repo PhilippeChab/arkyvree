@@ -1,17 +1,8 @@
-import {
-  Add as AddIcon,
-  ChevronRight as ChevronRightIcon,
-  Delete as DeleteIcon,
-  Edit as EditIcon,
-  ExpandMore as ExpandMoreIcon,
-  Rule as RequirementsIcon,
-} from "@mui/icons-material";
 import { Alert, Box, Card, CardContent, Chip, IconButton, Stack, Typography } from "@mui/material";
 import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
 import { TreeItem } from "@mui/x-tree-view/TreeItem";
-import type { InferResponseType } from "hono/client";
-import { parseResponse } from "hono/client";
-import { useCallback, useMemo, useState } from "react";
+import { type InferResponseType, parseResponse } from "hono/client";
+import { type ReactNode, useCallback, useMemo, useState } from "react";
 
 import {
   BlankState,
@@ -28,9 +19,21 @@ import {
   type RequirementType,
   TargetPathBreadcrumbs,
 } from "@/client/src/components/customization/index.ts";
-import { formatDate } from "@/client/src/lib/activityFormatters.ts";
+import {
+  AddIcon,
+  ChevronRightIcon,
+  DeleteIcon,
+  EditIcon,
+  ExpandMoreIcon,
+  RequirementsIcon,
+} from "@/client/src/components/icons/index.ts";
+import { formatDate } from "@/client/src/lib/formatDate.ts";
 import { REQUIREMENT_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
+import {
+  customizationSection,
+  requirementsQuery,
+} from "@/client/src/pages/rulesets/customization/customizationQueries.ts";
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import type { CustomizationOwnerType } from "@/shared/customization/entities.ts";
@@ -117,18 +120,10 @@ export function RequirementsSection({
   } = useRulesetSection({
     createDefaults: EMPTY_REQUIREMENT,
     rulesetId: ruleset.id,
-    sectionName: `customization-${entityType}-${entityId}-requirements`,
+    sectionName: customizationSection(entityType, entityId, "requirements"),
     label: "Requirement",
     data: externalData,
-    queryFn: !externalData
-      ? async () => {
-          return parseResponse(
-            rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].requirements.$get({
-              param: entityParam,
-            }),
-          );
-        }
-      : undefined,
+    query: requirementsQuery(ruleset.id, entityType, entityId),
     queryKeysToInvalidate,
     createFn: async (data: RequirementFormData) => {
       return tag(
@@ -263,14 +258,11 @@ export function RequirementsSection({
 
   const handleEditRequirement = (requirement: Requirement) => {
     const requirementIsChaining = isChaining(requirement);
-    if (requirementIsChaining) {
-      handleEditChaining(requirement);
-    } else {
-      handleEditCondition(requirement);
-    }
+    if (requirementIsChaining) handleEditChaining(requirement);
+    else handleEditCondition(requirement);
   };
 
-  const renderRequirementNode = (node: RequirementTreeNode): React.ReactNode => {
+  const renderRequirementNode = (node: RequirementTreeNode): ReactNode => {
     const requirement = node.requirement;
     const requirementIsChaining = isChaining(requirement);
 
@@ -395,29 +387,26 @@ export function RequirementsSection({
       {/* Loading State */}
       {isLoading && <DiceSpinner sx={{ py: 4 }} />}
       {/* Content */}
-      {!isLoading && (
-        <>
-          {requirementsTree.length === 0 ? (
-            <BlankState
-              icon={RequirementsIcon}
-              title="No requirements"
-              description="No requirements defined for this entity."
-            />
-          ) : (
-            <SimpleTreeView
-              slots={{
-                collapseIcon: ExpandMoreIcon,
-                expandIcon: ChevronRightIcon,
-              }}
-              sx={{ flexGrow: 1, maxWidth: "100%", overflowY: "auto" }}
-              expandedItems={expandedItems}
-              onExpandedItemsChange={(_, ids) => setCollapsedIds(new Set(parentIds.filter((id) => !ids.includes(id))))}
-            >
-              {requirementsTree.map(renderRequirementNode)}
-            </SimpleTreeView>
-          )}
-        </>
-      )}
+      {!isLoading &&
+        (requirementsTree.length === 0 ? (
+          <BlankState
+            icon={RequirementsIcon}
+            title="No requirements"
+            description="No requirements defined for this entity."
+          />
+        ) : (
+          <SimpleTreeView
+            slots={{
+              collapseIcon: ExpandMoreIcon,
+              expandIcon: ChevronRightIcon,
+            }}
+            sx={{ flexGrow: 1, maxWidth: "100%", overflowY: "auto" }}
+            expandedItems={expandedItems}
+            onExpandedItemsChange={(_, ids) => setCollapsedIds(new Set(parentIds.filter((id) => !ids.includes(id))))}
+          >
+            {requirementsTree.map(renderRequirementNode)}
+          </SimpleTreeView>
+        ))}
       <CreateDialog
         open={createDialogOpen}
         onClose={() => {

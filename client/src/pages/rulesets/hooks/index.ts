@@ -1,4 +1,5 @@
-export { useClassLevels, useClassSkills, type Level } from "./useClassOperations.ts";
+export { type Level, useClassLevels } from "./useClassLevels.ts";
+export { useClassSkills } from "./useClassSkills.ts";
 export { type PublishKind, useRulesetOperations } from "./useRulesetOperations.ts";
 export { useRulesetPermissions } from "./useRulesetPermissions.ts";
 export { useRulesetSection } from "./useRulesetSection.ts";

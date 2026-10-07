@@ -6,7 +6,7 @@
 import { infiniteQueryOptions, type QueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 export type CampaignSection = "characters" | "players";
@@ -17,7 +17,7 @@ function nextPage(lastPage: { nextPage?: number }) {
 
 export function campaignCharactersQuery(campaignId: string, search: string) {
   return infiniteQueryOptions({
-    queryKey: [...queryKeys.campaigns.section(campaignId, "characters"), search],
+    queryKey: [...QUERY_KEYS.campaigns.section(campaignId, "characters"), search],
     queryFn: ({ pageParam }) =>
       parseResponse(
         rpc.api.campaigns[":id"].characters.$get({
@@ -32,7 +32,7 @@ export function campaignCharactersQuery(campaignId: string, search: string) {
 
 export function campaignPlayersQuery(campaignId: string, search: string) {
   return infiniteQueryOptions({
-    queryKey: [...queryKeys.campaigns.section(campaignId, "players"), search],
+    queryKey: [...QUERY_KEYS.campaigns.section(campaignId, "players"), search],
     queryFn: ({ pageParam }) =>
       parseResponse(
         rpc.api.campaigns[":id"].players.$get({

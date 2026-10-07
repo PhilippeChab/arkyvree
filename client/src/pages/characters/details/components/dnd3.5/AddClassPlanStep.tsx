@@ -1,9 +1,8 @@
-import AddIcon from "@mui/icons-material/Add";
-import CloseIcon from "@mui/icons-material/Close";
 import { Autocomplete, Box, Button, Chip, IconButton, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import { useMemo } from "react";
 
 import { ScrollSafeListbox } from "@/client/src/components/common/index.ts";
+import { AddIcon, CloseIcon } from "@/client/src/components/icons/index.ts";
 
 import type { AvailableKlass } from "./levelUp/index.ts";
 import type { AddClassPlanStepProps } from "./levelUpFactory.ts";
@@ -38,9 +37,8 @@ export function AddClassPlanStep({
   // classPlan, so double-adjusting here would cause level skips.
   const queuedCounts = useMemo(() => {
     const m = new Map<string, number>();
-    for (const k of levels) {
-      if (k) m.set(k.id, (m.get(k.id) ?? 0) + 1);
-    }
+    for (const k of levels) if (k) m.set(k.id, (m.get(k.id) ?? 0) + 1);
+
     return m;
   }, [levels]);
 

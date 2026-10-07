@@ -11,22 +11,33 @@ function routeReading(handler: string) {
 setDefaultTimeout(30_000);
 
 describe("conventions", () => {
-  test("a file imports another folder's module through @/, and --fix rewrites a ../ import", async () => {
+  test("a file imports another folder's module through @/ and its own folder's directly, and --fix rewrites both", async () => {
     expect(
       await lintRepo(
         {
           "server/a/b/c.ts": 'import { d } from "../d.ts";\nimport { e } from "./e.ts";\nexport const c = [d, e];\n',
           "server/a/b/e.ts": 'import { d } from "@/server/a/d.ts";\nexport const e = d;\n',
+          "server/a/b/f.ts":
+            'import { e } from "@/server/a/b/e.ts";\nimport { g } from "@/server/a/b/g/g.ts";\nexport const f = [e, g];\n',
           "lint/rules/x.mjs": 'import { d } from "../d.mjs";\nexport const x = d;\n',
         },
         ["no-parent-imports"],
       ),
-    ).toEqual(["no-parent-imports server/a/b/c.ts"]);
-
-    const fixed = await fixRepo({ "server/a/b/c.ts": 'import { d } from "../d.ts";\nexport const c = d;\n' }, [
-      "no-parent-imports",
+    ).toEqual([
+      "no-parent-imports server/a/b/c.ts",
+      "no-parent-imports server/a/b/f.ts",
+      "no-parent-imports server/a/b/f.ts",
     ]);
+
+    const fixed = await fixRepo(
+      {
+        "server/a/b/c.ts": 'import { d } from "../d.ts";\nexport const c = d;\n',
+        "server/a/b/f.ts": 'import { e } from "@/server/a/b/e.ts";\nexport const f = e;\n',
+      },
+      ["no-parent-imports"],
+    );
     expect(fixed["server/a/b/c.ts"]).toStartWith('import { d } from "@/server/a/d.ts";');
+    expect(fixed["server/a/b/f.ts"]).toStartWith('import { e } from "./e.ts";');
   });
 
   test("a helper is a module named for what it does, anywhere", async () => {

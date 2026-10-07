@@ -1,9 +1,8 @@
-import { SearchOff as SearchOffIcon } from "@mui/icons-material";
-import { Box, Typography } from "@mui/material";
-import type { SxProps, Theme } from "@mui/material";
+import { Box, type SxProps, type Theme, Typography } from "@mui/material";
 import type { ElementType, ReactNode } from "react";
 
-import { DURATION, EASING, fadeIn, prefersReducedMotion } from "@/client/src/lib/animations.ts";
+import { SearchOffIcon } from "@/client/src/components/icons/index.ts";
+import { DURATION, EASING, fadeIn, PREFERS_REDUCED_MOTION } from "@/client/src/lib/animations.ts";
 
 interface BlankStateProps {
   /** Icon component, sized and tinted here so every empty state looks alike. */
@@ -11,6 +10,11 @@ interface BlankStateProps {
   title: string;
   description?: string;
   action?: ReactNode;
+  sx?: SxProps<Theme>;
+}
+
+interface NoMatchesStateProps {
+  search: string;
   sx?: SxProps<Theme>;
 }
 
@@ -28,7 +32,7 @@ export function BlankState({ icon: Icon, title, description, action, sx }: Blank
           background: (theme) =>
             `linear-gradient(135deg, ${theme.palette.background.paper}, ${theme.palette.background.default})`,
           animation: `${fadeIn} ${DURATION.slow}ms ${EASING.decelerate} both`,
-          [prefersReducedMotion]: { animation: "none" },
+          [PREFERS_REDUCED_MOTION]: { animation: "none" },
         },
         ...(Array.isArray(sx) ? sx : [sx]),
       ]}
@@ -53,7 +57,7 @@ export function BlankState({ icon: Icon, title, description, action, sx }: Blank
 }
 
 /** A search that found nothing, told apart from a list that has nothing yet. */
-export function NoMatchesState({ search, sx }: { search: string; sx?: SxProps<Theme> }) {
+export function NoMatchesState({ search, sx }: NoMatchesStateProps) {
   return (
     <BlankState
       icon={SearchOffIcon}

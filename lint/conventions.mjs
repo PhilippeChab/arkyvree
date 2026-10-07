@@ -1,7 +1,8 @@
 /**
  * The conventions AGENTS.md lists, as rules, so code can't drift from them:
  *
- * - `no-parent-imports`: a file imports another folder's module through `@/` (the repo's root), never `../`.
+ * - `no-parent-imports`: a file imports another folder's module through `@/` (the repo's root), never `../`, and a
+ *   module of its own folder (or one under it) directly (`./x.ts`), never through `@/`.
  *   `oxlint --fix` rewrites one. Not in `lint/`, whose plugins node loads without the alias.
  * - `no-helpers-modules`: a helper is a module named for what it does, never a `helpers` or `utils` grab bag, file or
  *   folder, anywhere (the tests' shared code is `tests/support/`'s topic modules).
@@ -113,18 +114,17 @@ function* callsIn(node) {
   if (node.type === "CallExpression") yield node;
   for (const [key, value] of Object.entries(node)) {
     if (key === "parent") continue;
-    for (const child of Array.isArray(value) ? value : [value]) {
+    for (const child of Array.isArray(value) ? value : [value])
       if (typeof child?.type === "string") yield* callsIn(child);
-    }
   }
 }
 
 /** What a call or member chain starts from: `itemBody` in `itemBody.partial()`, `z` in `z.object({…})`. */
 function chainRootOf(node) {
   let current = node;
-  while (current?.type === "CallExpression" || current?.type === "MemberExpression") {
+  while (current?.type === "CallExpression" || current?.type === "MemberExpression")
     current = current.type === "CallExpression" ? current.callee : current.object;
-  }
+
   return current;
 }
 
@@ -177,9 +177,9 @@ function checkNamedInputs(context, named, constants) {
 /** A router's top-level constants: a router is its module's export, and a schema is named for what it validates. */
 function checkRouterTop(context, program, constants) {
   for (const statement of program.body) {
-    if (statement.type === "ExportDefaultDeclaration" && statement.declaration.type === "Identifier") {
+    if (statement.type === "ExportDefaultDeclaration" && statement.declaration.type === "Identifier")
       context.report({ node: statement, message: "A router is its module's export: `export default new Hono()…`." });
-    }
+
     const exported = statement.type === "ExportNamedDeclaration";
     const declaration = exported ? statement.declaration : statement;
     if (declaration?.type !== "VariableDeclaration") continue;
@@ -250,9 +250,8 @@ function createClassFileNames(context) {
       // `export const x = new X()`)
       const exportOf = (node) => {
         if (node?.type === "Identifier" && classes.has(node.name)) exported.set(node.name, node);
-        if (node?.type === "NewExpression" && node.callee.type === "Identifier" && classes.has(node.callee.name)) {
+        if (node?.type === "NewExpression" && node.callee.type === "Identifier" && classes.has(node.callee.name))
           exported.set(node.callee.name, node.callee);
-        }
       };
       for (const statement of program.body) {
         if (statement.type === "ExportDefaultDeclaration") exportOf(statement.declaration);
@@ -278,9 +277,9 @@ function createConcernShape(context) {
     FunctionDeclaration(fn) {
       if (!fn.id || !isConcern(fn) || fn.parent?.type !== "ExportNamedDeclaration") return;
       const name = fn.id.name;
-      if (path.posix.basename(file).replace(/\.tsx?$/, "") !== name) {
+      if (path.posix.basename(file).replace(/\.tsx?$/, "") !== name)
         context.report({ node: fn.id, message: `A concern sits in a file of its name: \`${name}.ts\`.` });
-      }
+
       const [verb, rest] = [/^[A-Z][a-z]*/.exec(name)?.[0] ?? name, name.replace(/^[A-Z][a-z]*/, "")];
       const allowed = [`With${name}`, ...(verb.endsWith("s") ? gerunds(verb).map((g) => g + rest) : [])];
       for (const statement of fn.body.body) {
@@ -321,9 +320,9 @@ function createEmptyListReads(context) {
         for (const call of callsIn(body)) {
           if (call.callee.type !== "Identifier" || call.callee.name !== "inArray") continue;
           const list = call.arguments[1];
-          if (list?.type !== "MemberExpression" || list.object.type !== "Identifier" || list.object.name !== "where") {
+          if (list?.type !== "MemberExpression" || list.object.type !== "Identifier" || list.object.name !== "where")
             continue;
-          }
+
           if (!isUnderCall(call, body, ["or", "not"])) lists.add(textOf(list));
         }
         const guarded = new Set();
@@ -373,9 +372,8 @@ function createEmptyListReads(context) {
   return {
     ImportDeclaration(node) {
       if (!String(node.source.value).startsWith("@/server/repositories/")) return;
-      for (const specifier of node.specifiers) {
+      for (const specifier of node.specifiers)
         if (specifier.type === "ImportSpecifier") repositories.add(specifier.local.name);
-      }
     },
     ConditionalExpression(node) {
       const test = emptinessTest(node.test);
@@ -514,9 +512,7 @@ function createNoNullReads(context) {
       if (!fn.body || node.accessibility === "private" || !READ_VERBS.some((verb) => startsWithVerb(name, verb)))
         return;
       if (hasNullMember(fn.returnType?.typeAnnotation)) report(fn.returnType);
-      for (const statement of returnsOf(fn.body)) {
-        if (isNullFallback(statement.argument)) report(statement);
-      }
+      for (const statement of returnsOf(fn.body)) if (isNullFallback(statement.argument)) report(statement);
     },
   };
 }
@@ -525,9 +521,19 @@ function createNoParentImports(context) {
   const file = repoPath(context.filename);
   // Node loads lint/'s plugins as they are, without the `@/` alias the app's bundlers resolve.
   if (file.startsWith("lint/")) return {};
+  const folder = path.posix.dirname(file);
   return onImports((node, spec) => {
+    const target = targetOf(file, spec);
+    if (spec.startsWith("@/") && target.startsWith(`${folder}/`)) {
+      const fixed = `./${path.posix.relative(folder, target)}`;
+      context.report({
+        node: node.source,
+        message: `Import a module of your own folder directly: \`${fixed}\`, not \`${spec}\`.`,
+        fix: (fixer) => fixer.replaceText(node.source, JSON.stringify(fixed)),
+      });
+    }
     if (!spec.startsWith("../")) return;
-    const fixed = `@/${targetOf(file, spec)}`;
+    const fixed = `@/${target}`;
     context.report({
       node: node.source,
       message: `Import another folder's module through \`@/\`: \`${fixed}\`, not \`${spec}\`.`,
@@ -573,9 +579,8 @@ function createOrderThroughRepository(context) {
         node.object.type === "Identifier" &&
         namespaces.has(node.object.name) &&
         ["asc", "desc"].includes(node.property.name)
-      ) {
+      )
         context.report({ node, message });
-      }
     },
   };
 }
@@ -681,11 +686,10 @@ function createRouteConventions(context) {
       for (const segment of routePath.split("/")) {
         if (segment === "") continue;
         const param = segment.startsWith(":") ? segment.slice(1).replace(/[{?].*$/, "") : null;
-        if (param !== null && !CAMEL_CASE.test(param)) {
+        if (param !== null && !CAMEL_CASE.test(param))
           context.report({ node: route, message: `A path param is camelCase: \`:${param}\` isn't.` });
-        } else if (param === null && !FIXED_SEGMENT.test(segment)) {
+        else if (param === null && !FIXED_SEGMENT.test(segment))
           context.report({ node: route, message: `A path's fixed segment is kebab-case: \`${segment}\` isn't.` });
-        }
       }
     },
     // A try that only cleans up (`finally`) lets the error through.
@@ -734,9 +738,8 @@ function createSharedRuntime(context) {
   if (!repoPath(context.filename).startsWith("shared/")) return {};
   return {
     ...onImports((node, spec) => {
-      if (spec === "bun" || spec.startsWith("bun:") || isBuiltin(spec)) {
+      if (spec === "bun" || spec.startsWith("bun:") || isBuiltin(spec))
         context.report({ node, message: `\`shared/\` runs in the client too: it doesn't import \`${spec}\`.` });
-      }
     }),
     // Bun.file(…) needs no import.
     Identifier(node) {
@@ -744,9 +747,8 @@ function createSharedRuntime(context) {
       const isName =
         (parent?.type === "MemberExpression" && parent.property === node && !parent.computed) ||
         (parent?.type === "Property" && parent.key === node && !parent.computed);
-      if (node.name === "Bun" && !isName) {
+      if (node.name === "Bun" && !isName)
         context.report({ node, message: "`shared/` runs in the client too: it doesn't use `Bun`." });
-      }
     },
   };
 }
@@ -799,9 +801,8 @@ function createWritesInTransactions(context) {
   return {
     ImportDeclaration(node) {
       if (!String(node.source.value).startsWith("@/server/repositories/")) return;
-      for (const specifier of node.specifiers) {
+      for (const specifier of node.specifiers)
         if (specifier.type === "ImportSpecifier") repositories.add(specifier.local.name);
-      }
     },
     CallExpression(node) {
       const callee = node.callee;
@@ -953,9 +954,9 @@ function isEmptyValue(node) {
 /** Whether `node` chains a router's routes on its `new Hono()`. */
 function isHonoChain(node) {
   let current = node;
-  while (current?.type === "CallExpression" && current.callee.type === "MemberExpression") {
+  while (current?.type === "CallExpression" && current.callee.type === "MemberExpression")
     current = current.callee.object;
-  }
+
   return current?.type === "NewExpression" && current.callee.type === "Identifier" && current.callee.name === "Hono";
 }
 
@@ -970,9 +971,9 @@ function isNullFallback(node) {
 
 /** Whether `name` is a parameter of a function `node` sits in: a handle it's given, which may be a transaction. */
 function isParameterOf(node, name) {
-  for (let p = node.parent; p; p = p.parent) {
+  for (let p = node.parent; p; p = p.parent)
     if (p.params?.some((param) => parameter(param)?.name === name)) return true;
-  }
+
   return false;
 }
 
@@ -989,9 +990,8 @@ function isUnderCall(node, root, names) {
       current.type === "CallExpression" &&
       current.callee.type === "Identifier" &&
       names.includes(current.callee.name)
-    ) {
+    )
       return true;
-    }
   }
   return false;
 }
@@ -1013,8 +1013,9 @@ function modulesIn(root, tree) {
     if (!fs.existsSync(path.join(root, dir))) return;
     for (const entry of fs.readdirSync(path.join(root, dir), { withFileTypes: true })) {
       const rel = `${dir}${entry.name}`;
-      if (entry.isDirectory()) walk(`${rel}/`);
-      else if (/\.(tsx?|mjs)$/.test(entry.name) && !/\.d\.m?ts$/.test(entry.name)) {
+      if (entry.isDirectory()) {
+        walk(`${rel}/`);
+      } else if (/\.(tsx?|mjs)$/.test(entry.name) && !/\.d\.m?ts$/.test(entry.name)) {
         const name = entry.name.replace(/\.(tsx?|mjs)$/, "");
         byName.set(name, [...(byName.get(name) ?? []), rel]);
       }
@@ -1079,9 +1080,8 @@ function* returnsOf(node, fn = node) {
   if (node.type === "ReturnStatement") yield node;
   for (const [key, value] of Object.entries(node)) {
     if (key === "parent") continue;
-    for (const child of Array.isArray(value) ? value : [value]) {
+    for (const child of Array.isArray(value) ? value : [value])
       if (typeof child?.type === "string") yield* returnsOf(child, fn);
-    }
   }
 }
 

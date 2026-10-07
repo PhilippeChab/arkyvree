@@ -33,6 +33,9 @@
     // State a prop drives is reset in the render that sees it change (`useOnChange`), never by an effect.
     "react/incompatible-library": "off",
     "react/set-state-in-effect": "error",
+    // A fragment is `<>`, and never wraps a lone child.
+    "react/jsx-fragments": ["error", "syntax"],
+    "react/jsx-no-useless-fragment": "error",
 
     // Unicorn
     "unicorn/no-array-for-each": "error",
@@ -43,7 +46,12 @@
 
     // General
     "no-console": "error",
+    // A body that fits on its statement's line takes no braces; a longer or nested one takes them, and so do all of
+    // an if-else chain's when one does.
+    "curly": ["error", "multi-or-nest", "consistent"],
     "import/no-empty-named-blocks": "error",
+    // A module is imported once: its types and values in one import (`import { type A, b } from "x"`).
+    "import/no-duplicates": ["error", { "preferInline": true }],
     // Every declaration and method by name, every route by method and path (lint/memberOrder.mjs): `bun run lint --fix`
     // sorts them.
     "arkyvree/member-order": "error",
@@ -88,6 +96,23 @@
     "arkyvree/effect-writes": "error",
     "arkyvree/api-calls-in-queries": "error",
     "arkyvree/load-errors": "error",
+    "arkyvree/component-props": "error",
+    "arkyvree/react-imports": "error",
+    "arkyvree/icons": "error",
+    "arkyvree/jsx-conditionals": "error",
+    "arkyvree/component-files": "error",
+    "arkyvree/hook-files": "error",
+    "arkyvree/handler-names": "error",
+    "arkyvree/constant-names": "error",
+    "arkyvree/queries": "error",
+    "arkyvree/parsed-responses": "error",
+    "arkyvree/error-reads": "error",
+    "arkyvree/browser-storage": "error",
+    "arkyvree/date-formats": "error",
+    "arkyvree/navigation": "error",
+    "arkyvree/clickable-elements": "error",
+    "arkyvree/tooltips": "error",
+    "arkyvree/form-fields": "error",
     "arkyvree/test-conventions": "error",
     // A function holds at most 80 of its own lines (lint/size.mjs): a longer one splits into named steps.
     "arkyvree/function-length": "error",
@@ -129,6 +154,10 @@
               "!**/index.ts"
             ],
             "message": "Import from the barrel index instead."
+          },
+          {
+            "group": ["@mui/material/*"],
+            "message": "MUI is imported from its one entry, @mui/material (its styles, its CssBaseline too)."
           }
         ]
       }
@@ -167,6 +196,13 @@
       ],
       "rules": {
         "import/no-default-export": "error"
+      }
+    },
+    // The client's object types are interfaces; a `type` names a union, a mapped or a derived type (`Omit<…>`)
+    {
+      "files": ["client/**/*.{ts,tsx}"],
+      "rules": {
+        "typescript/consistent-type-definitions": ["error", "interface"]
       }
     },
     // Fast Refresh reloads the client's components as they're edited: a module of them exports components only

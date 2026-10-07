@@ -3,7 +3,7 @@ import { parseResponse } from "hono/client";
 import { useController } from "react-hook-form";
 
 import { useFormSync, useFormWith, useRulesetSaves } from "@/client/src/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
   allLevelSaves,
   ClassLevelFields,
@@ -64,7 +64,7 @@ export function ClassLevelEditor({
     sync,
     entityId,
     onSaved,
-    listKey: queryKeys.rulesets.classLevels(rulesetId, level.klassId),
+    listKey: QUERY_KEYS.rulesets.classLevels(rulesetId, level.klassId),
     label: "Class level",
     saveFn: (data: ClassLevelForm) =>
       parseResponse(

@@ -1,16 +1,15 @@
 import { MenuItem, TextField } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
-import { parseResponse } from "hono/client";
+import { type ChangeEvent } from "react";
 import { useController, type UseFormReturn } from "react-hook-form";
 
 import { DescriptionField, FormTextField, NameField } from "@/client/src/components/common/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { nameRules } from "@/client/src/lib/validation.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { NAME_RULES } from "@/client/src/lib/validation.ts";
 import { ITEM_TYPE_OPTIONS } from "@/shared/dnd3.5/items.ts";
 import { LOCATION_OPTIONS } from "@/shared/enums.ts";
 
 import { DECIMAL_PATTERN, isTemplateType, type ItemFormInternal, type TemplateType } from "./itemForm.ts";
+import { itemTemplatesQuery } from "./itemFormQueries.ts";
 
 interface ItemFormFieldsProps {
   form: UseFormReturn<ItemFormInternal>;
@@ -26,11 +25,11 @@ interface TemplateSelectorProps {
   disabled?: boolean;
 }
 
+/** A cost or a weight: a decimal number, or empty. */
+const DECIMAL_RULES = { pattern: DECIMAL_PATTERN };
+
 function TemplateSelector({ form, rulesetId, type, disabled }: TemplateSelectorProps) {
-  const { data: templates, isLoading } = useQuery({
-    queryKey: queryKeys.rulesets.section(rulesetId, `templates-${type}`),
-    queryFn: () => parseResponse(rpc.api.rulesets[":id"].templates.$get({ param: { id: rulesetId }, query: { type } })),
-  });
+  const { data: templates, isLoading } = useQuery(itemTemplatesQuery(rulesetId, type));
 
   const { field } = useController({ control: form.control, name: "sourceItemId" });
   const rawValue = field.value || "";
@@ -64,7 +63,7 @@ export function ItemFormFields({ form, rulesetId, lockType }: ItemFormFieldsProp
   const itemType = typeField.value;
   const isTemplate = form.watch("isTemplate");
 
-  const handleTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTypeChange = (e: ChangeEvent<HTMLInputElement>) => {
     const newType = e.target.value;
     typeField.onChange(newType);
     if (isTemplateType(newType)) {
@@ -75,12 +74,12 @@ export function ItemFormFields({ form, rulesetId, lockType }: ItemFormFieldsProp
 
   return (
     <>
-      <NameField control={form.control} name="name" rules={nameRules} />
+      <NameField control={form.control} name="name" rules={NAME_RULES} />
       <DescriptionField control={form.control} name="description" />
       <FormTextField
         control={form.control}
         name="costGp"
-        rules={{ pattern: DECIMAL_PATTERN }}
+        rules={DECIMAL_RULES}
         label="Cost (gp)"
         type="text"
         fullWidth
@@ -91,7 +90,7 @@ export function ItemFormFields({ form, rulesetId, lockType }: ItemFormFieldsProp
       <FormTextField
         control={form.control}
         name="weight"
-        rules={{ pattern: DECIMAL_PATTERN }}
+        rules={DECIMAL_RULES}
         label="Weight (lbs)"
         type="text"
         fullWidth

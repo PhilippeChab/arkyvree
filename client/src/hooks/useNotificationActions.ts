@@ -1,10 +1,10 @@
 import { useMutation, useMutationState, useQueryClient } from "@tanstack/react-query";
-import type { InferResponseType } from "hono/client";
+import { type InferResponseType, parseResponse } from "hono/client";
 import { useNavigate } from "react-router-dom";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { saveBlob } from "@/client/src/lib/download.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { ApiError } from "@/client/src/services/ApiError.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { isRecord } from "@/shared/isRecord.ts";
@@ -37,23 +37,29 @@ const ANSWER_INVITE_KEY = ["notifications", "answerInvite"] as const;
 const INVITES = {
   createCampaignInvite: {
     label: "Campaign invite",
-    acceptFn: (id: string) => rpc.api.campaigns.invites[":inviteId"].accept.$post({ param: { inviteId: id } }),
-    rejectFn: (id: string) => rpc.api.campaigns.invites[":inviteId"].reject.$post({ param: { inviteId: id } }),
-    listKey: queryKeys.campaigns.lists,
+    acceptFn: (id: string) =>
+      parseResponse(rpc.api.campaigns.invites[":inviteId"].accept.$post({ param: { inviteId: id } })),
+    rejectFn: (id: string) =>
+      parseResponse(rpc.api.campaigns.invites[":inviteId"].reject.$post({ param: { inviteId: id } })),
+    listKey: QUERY_KEYS.campaigns.lists,
     path: (d: NotificationData) => (d.campaignId ? `/campaigns/${d.campaignId}` : "/campaigns"),
   },
   inviteContributor: {
     label: "Contributor invite",
-    acceptFn: (id: string) => rpc.api.rulesets.contributors.invites[":id"].accept.$post({ param: { id } }),
-    rejectFn: (id: string) => rpc.api.rulesets.contributors.invites[":id"].reject.$post({ param: { id } }),
-    listKey: queryKeys.rulesets.lists,
+    acceptFn: (id: string) =>
+      parseResponse(rpc.api.rulesets.contributors.invites[":id"].accept.$post({ param: { id } })),
+    rejectFn: (id: string) =>
+      parseResponse(rpc.api.rulesets.contributors.invites[":id"].reject.$post({ param: { id } })),
+    listKey: QUERY_KEYS.rulesets.lists,
     path: (d: NotificationData) => (d.rulesetId ? `/rulesets/${d.rulesetId}` : "/rulesets"),
   },
   inviteCharacterContributor: {
     label: "Contributor invite",
-    acceptFn: (id: string) => rpc.api.characters.contributors.invites[":id"].accept.$post({ param: { id } }),
-    rejectFn: (id: string) => rpc.api.characters.contributors.invites[":id"].reject.$post({ param: { id } }),
-    listKey: queryKeys.characters.lists,
+    acceptFn: (id: string) =>
+      parseResponse(rpc.api.characters.contributors.invites[":id"].accept.$post({ param: { id } })),
+    rejectFn: (id: string) =>
+      parseResponse(rpc.api.characters.contributors.invites[":id"].reject.$post({ param: { id } })),
+    listKey: QUERY_KEYS.characters.lists,
     path: (d: NotificationData) => (d.characterId ? `/characters/${d.characterId}` : "/characters"),
   },
 } as const;
@@ -82,17 +88,18 @@ export function useNotificationActions() {
   const navigate = useNavigate();
   const openTarget = useOpenActivityTarget();
 
-  const invalidateNotifications = () => queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
+  const invalidateNotifications = () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notifications.all });
 
   // Best-effort: failing to mark read (already read, or gone) must not block what the user clicked. Refetch either way
   // to show the current state.
   const markRead = useMutation({
-    mutationFn: (notificationId: string) => rpc.api.notifications[":id"].read.$post({ param: { id: notificationId } }),
+    mutationFn: (notificationId: string) =>
+      parseResponse(rpc.api.notifications[":id"].read.$post({ param: { id: notificationId } })),
     onSettled: invalidateNotifications,
   });
 
   const markAllRead = useMutation({
-    mutationFn: () => rpc.api.notifications["read-all"].$post(),
+    mutationFn: () => parseResponse(rpc.api.notifications["read-all"].$post()),
     onSuccess: invalidateNotifications,
     onError: (error) => snackbar.error(error, "Failed to mark all notifications as read"),
   });
@@ -154,17 +161,14 @@ export function useNotificationActions() {
     !isActionable(n) && (isDownloadable(n) || isNavigableTarget(n.targetTable) || !n.readAt);
 
   const download = useMutation({
-    mutationFn: async ({ exportId }: { exportId: string; fileName: string }) => {
-      const response = await rpc.api.exports[":id"].download.$get({ param: { id: exportId } });
-      return response.blob();
-    },
+    // A file: its body is a blob, never JSON
+    mutationFn: async ({ exportId }: { exportId: string; fileName: string }) =>
+      (await rpc.api.exports[":id"].download.$get({ param: { id: exportId } })).blob(),
     onSuccess: (blob, { fileName }) => saveBlob(blob, fileName),
     onError: (error) => {
-      if (error instanceof ApiError && error.status === 404) {
+      if (error instanceof ApiError && error.status === 404)
         snackbar.warning("This export has expired. Please generate a new one.");
-      } else {
-        snackbar.error(error, "Failed to download export");
-      }
+      else snackbar.error(error, "Failed to download export");
     },
   });
 

@@ -1,94 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { InferResponseType } from "hono/client";
 import { parseResponse } from "hono/client";
 import { useState } from "react";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useDebouncedValue, useFormWith, useListboxQuery } from "@/client/src/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import type { CreateLevelFormData } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
-import { classLevelsQuery, classSkillsQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
+import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
+import {
+  classSkillsQuery,
+  skillOptionsQuery,
+} from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-
-type LevelsArray = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"]["$get"], 200>;
-export type Level = LevelsArray[number];
-
-export function useClassLevels(rulesetId: string, classId: string) {
-  const queryClient = useQueryClient();
-  const snackbar = useSnackbar();
-
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-
-  const createForm = useFormWith<CreateLevelFormData>({
-    level: 1,
-    bab: 0,
-    skills: 1,
-    saves: [],
-    feats: [],
-  });
-
-  const { data: levels, isLoading } = useQuery({
-    ...classLevelsQuery(rulesetId, classId),
-    enabled: !!rulesetId && !!classId,
-  });
-
-  const createMutation = useMutation({
-    mutationFn: async (data: CreateLevelFormData) => {
-      return parseResponse(
-        rpc.api.rulesets[":id"].classes[":classId"].levels.$post({
-          param: { id: rulesetId, classId },
-          json: data,
-        }),
-      );
-    },
-    onSuccess: () => {
-      snackbar.success("Level created successfully");
-      queryClient.invalidateQueries({
-        queryKey: classLevelsQuery(rulesetId, classId).queryKey,
-      });
-      setCreateDialogOpen(false);
-      createForm.reset();
-    },
-    onError: (error) => {
-      snackbar.error(error, "Failed to create level");
-    },
-  });
-
-  // Compute highest level for defaults
-  const highestLevel = levels?.slice().sort((a, b) => b.level - a.level)[0] ?? null;
-
-  const handleCreate = () => {
-    createForm.reset({
-      level: highestLevel ? highestLevel.level + 1 : 1,
-      bab: highestLevel?.bab ?? 0,
-      skills: highestLevel?.skills ?? 1,
-      saves: highestLevel?.saves?.map((s) => ({ saveId: s.saveId, base: s.base })) ?? [],
-      feats: [],
-    });
-    setCreateDialogOpen(true);
-  };
-
-  const confirmCreate = (data: CreateLevelFormData) => {
-    createMutation.mutate(data);
-  };
-
-  return {
-    levels,
-    isLoading,
-
-    createDialogOpen,
-    setCreateDialogOpen,
-
-    highestLevel,
-
-    createForm,
-
-    createMutation,
-
-    handleCreate,
-    confirmCreate,
-  };
-}
 
 export function useClassSkills(rulesetId: string, classId: string) {
   const queryClient = useQueryClient();
@@ -100,7 +20,7 @@ export function useClassSkills(rulesetId: string, classId: string) {
 
   const skillsQuery = classSkillsQuery(rulesetId, classId);
   const classSkillsKey = skillsQuery.queryKey;
-  const { data: classSkills, isLoading } = useQuery({ ...skillsQuery, enabled: !!rulesetId && !!classId });
+  const { data: classSkills, isLoading } = useQuery(skillsQuery);
 
   // Available skills with server-side search and pagination
   const [skillSearch, setSkillSearch] = useState("");
@@ -110,24 +30,7 @@ export function useClassSkills(rulesetId: string, classId: string) {
     items: availableSkills,
     isLoading: isAvailableSkillsLoading,
     onScroll: handleSkillsScroll,
-  } = useListboxQuery({
-    queryKey: queryKeys.rulesets.sectionSearch(rulesetId, "skills", debouncedSkillSearch),
-    queryFn: async ({ pageParam }) => {
-      return parseResponse(
-        rpc.api.rulesets[":id"].skills.$get({
-          param: { id: rulesetId },
-          query: {
-            limit: "20",
-            page: pageParam.toString(),
-            search: debouncedSkillSearch || undefined,
-          },
-        }),
-      );
-    },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
-    enabled: !!rulesetId,
-  });
+  } = useListboxQuery(skillOptionsQuery(rulesetId, debouncedSkillSearch));
 
   const addSkillMutation = useMutation({
     mutationFn: async (skillId: string) => {
@@ -235,9 +138,7 @@ export function useClassSkills(rulesetId: string, classId: string) {
   };
 
   const confirmRemoveSkill = () => {
-    if (skillToRemove) {
-      removeSkillMutation.mutate(skillToRemove);
-    }
+    if (skillToRemove) removeSkillMutation.mutate(skillToRemove);
   };
 
   return {

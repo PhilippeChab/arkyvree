@@ -1,19 +1,18 @@
-import { keepPreviousData, skipToken, useMutation, useQuery } from "@tanstack/react-query";
-import type { InferRequestType } from "hono/client";
-import { parseResponse } from "hono/client";
+import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
+import { type InferRequestType, parseResponse } from "hono/client";
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useListboxQuery } from "@/client/src/hooks/index.ts";
 import { rollDie } from "@/client/src/lib/dice.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { getLevelUpSections } from "@/client/src/pages/characters/details/components/dnd3.5/levelUpFactory.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { computeAbilityModifier } from "@/shared/dnd3.5/abilities.ts";
 import { computeLevelSkillPoints } from "@/shared/dnd3.5/skills.ts";
 
 import { featPickString, fitFeats, fitPowers, fitSkillPoints, openPoolOf } from "./fitPicks.ts";
+import { availableFeatsGroupedQuery, availablePowersQuery, levelPreviewQuery } from "./levelUpQueries.ts";
 import type { BaseRules, SelectedKlass } from "./levelUpTypes.ts";
 import { pickIds, useLevelWizardBase } from "./useLevelWizardBase.ts";
 
@@ -26,9 +25,9 @@ interface UseAddLevelWizardParams {
   baseRules: BaseRules;
 }
 
-export const addStepContent = ["class-plan", "hp", "attributes", "skills", "feats", "powers", "review"] as const;
+export const ADD_STEP_CONTENT = ["class-plan", "hp", "attributes", "skills", "feats", "powers", "review"] as const;
 
-export const addStepLabels = [
+export const ADD_STEP_LABELS = [
   "Class Plan",
   "Select HP",
   "Attribute Increase",
@@ -57,8 +56,8 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
   } = base;
   const levelUpSections = getLevelUpSections(baseRules);
 
-  const featsStep = addStepContent.indexOf("feats");
-  const powersStep = addStepContent.indexOf("powers");
+  const featsStep = ADD_STEP_CONTENT.indexOf("feats");
+  const powersStep = ADD_STEP_CONTENT.indexOf("powers");
 
   const slotCounter = useRef(0);
   const [slotKeys, setSlotKeys] = useState<number[]>([]);
@@ -175,38 +174,17 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
   const validClassCount = useMemo(() => classPlan.filter((k) => k !== null).length, [classPlan]);
 
   // In plan order: the preview's levels pair by index with the plan's HP and ability increases.
-  const classPlanKey = useMemo(
+  const plannedLevels = useMemo(
     () =>
       adjustedClassPlan
         .filter((k): k is SelectedKlass => k !== null)
-        .map((k) => `${k.id}:${k.nextLevel}`)
-        .join("|"),
+        .map((k) => ({ klassId: k.id, level: k.nextLevel })),
     [adjustedClassPlan],
   );
 
   const previewQuery = useQuery({
-    queryKey: queryKeys.characters.levelUp.preview(characterId, classPlanKey),
-    queryFn: async () => {
-      const levels = adjustedClassPlan
-        .filter((k): k is SelectedKlass => k !== null)
-        .map((k) => ({ klassId: k.id, level: k.nextLevel }));
-
-      // Ability increases are applied client-side (see attributeData /
-      // perLevelSkillPoints memos). Sending nulls keeps the server response
-      // deterministic per classPlanKey — otherwise, a refetch triggered by a
-      // classPlanKey change would read current abilityIncreases via closure,
-      // server would apply the bump, and the client memo would double-count.
-      const abilityIds = levels.map(() => null);
-
-      return parseResponse(
-        rpc.api.characters.levels[":characterId"]["preview"]["$post"]({
-          param: { characterId },
-          json: { levels, abilityIds },
-        }),
-      );
-    },
+    ...levelPreviewQuery(characterId, plannedLevels),
     enabled: open && validClassCount >= 1 && activeStep > 0,
-    staleTime: Infinity,
     placeholderData: keepPreviousData,
   });
 
@@ -218,17 +196,14 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
 
   const attributeData = useMemo(() => {
     if (!previewQuery.data) return undefined;
-    if (abilityIncreaseLevels.length === 0) {
-      return { isAvailable: false as const, attributes: {} };
-    }
+    if (abilityIncreaseLevels.length === 0) return { isAvailable: false as const, attributes: {} };
 
     // Adjust attributes client-side for user-selected ability increases
     // (preview is cached per class plan only, doesn't refire on ability changes).
     const baseAttrs = previewQuery.data.attributes.attributes;
     const increaseCounts: Record<string, number> = {};
-    for (const abilityId of Object.values(abilityIncreases)) {
+    for (const abilityId of Object.values(abilityIncreases))
       if (abilityId) increaseCounts[abilityId] = (increaseCounts[abilityId] ?? 0) + 1;
-    }
 
     const adjusted = Object.fromEntries(
       Object.entries(baseAttrs).map(([key, attr]) => {
@@ -384,39 +359,16 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
     onScroll: handleFeatsScroll,
     isFetchingNextPage: isFetchingNextFeatsPage,
   } = useListboxQuery({
-    queryKey: queryKeys.characters.levelUp.availableFeatsGrouped(
-      characterId,
-      selectedAptitude,
-      slotLevelDetail?.klassId ?? firstClass?.id,
-      debouncedFeatSearch,
-      undefined, // no editingLevelId
-      allSelectedFeatPickString,
-      pendingKlassLevelIdsUpToSlot,
-      allSelectedFeatPickString,
-    ),
-    queryFn:
-      open && activeStep === featsStep && selectedAptitude && slotLevelDetail
-        ? ({ pageParam }) =>
-            parseResponse(
-              rpc.api.characters.levels[":characterId"]["available-feats"]["grouped"]["$get"]({
-                param: { characterId },
-                query: {
-                  aptitudeId: selectedAptitude,
-                  classId: slotLevelDetail.klassId,
-                  level: slotLevelDetail.level.toString(),
-                  limit: "20",
-                  page: pageParam.toString(),
-                  search: debouncedFeatSearch || undefined,
-                  selectedFeatPicks: allSelectedFeatPickString || undefined,
-                  pendingLevelClassLevelIds: pendingKlassLevelIdsUpToSlot || undefined,
-                  pendingLevelAbilityIds: pendingAbilityIdsUpToSlot || undefined,
-                  pendingLevelFeatPicks: allSelectedFeatPickString || undefined,
-                },
-              }),
-            )
-        : skipToken,
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    ...availableFeatsGroupedQuery(characterId, selectedAptitude, debouncedFeatSearch, {
+      classId: slotLevelDetail?.klassId ?? firstClass?.id,
+      level: slotLevelDetail?.level,
+      selectedFeatPicks: allSelectedFeatPickString,
+      pendingKlassLevelIds: pendingKlassLevelIdsUpToSlot,
+      pendingAbilityIds: pendingAbilityIdsUpToSlot,
+      // None of the picks is saved yet: they're all pending
+      pendingFeatPicks: allSelectedFeatPickString,
+    }),
+    enabled: open && activeStep === featsStep,
   });
 
   const {
@@ -425,42 +377,15 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
     onScroll: handlePowersScroll,
     isFetchingNextPage: isFetchingNextPowersPage,
   } = useListboxQuery({
-    queryKey: queryKeys.characters.levelUp.availablePowers(
-      characterId,
-      selectedPowerAptitude,
-      selectedPowerLevel,
-      firstClass?.id,
-      debouncedPowerSearch,
-      undefined, // no editingLevelId
-      allSelectedFeatPickString,
-      allKlassLevelIds,
-      // All feat picks are "pending" (none are persisted yet),
-      // so selectedFeatPicks and pendingLevelFeatPicks are the same set.
-      allSelectedFeatPickString,
-    ),
-    queryFn:
-      open && activeStep === powersStep && selectedPowerAptitude && firstClass
-        ? ({ pageParam }) =>
-            parseResponse(
-              rpc.api.characters.levels[":characterId"]["available-powers"]["$get"]({
-                param: { characterId },
-                query: {
-                  aptitudeId: selectedPowerAptitude,
-                  classId: firstClass.id,
-                  level: lastLevel.toString(),
-                  powerLevel: selectedPowerLevel?.toString(),
-                  limit: "20",
-                  page: pageParam.toString(),
-                  search: debouncedPowerSearch || undefined,
-                  selectedFeatPicks: allSelectedFeatPickString || undefined,
-                  pendingLevelClassLevelIds: allKlassLevelIds || undefined,
-                  pendingLevelFeatPicks: allSelectedFeatPickString || undefined,
-                },
-              }),
-            )
-        : skipToken,
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => lastPage.nextPage,
+    ...availablePowersQuery(characterId, selectedPowerAptitude, selectedPowerLevel, debouncedPowerSearch, {
+      classId: firstClass?.id,
+      level: lastLevel,
+      selectedFeatPicks: allSelectedFeatPickString,
+      pendingKlassLevelIds: allKlassLevelIds,
+      // None of the picks is saved yet: they're all pending
+      pendingFeatPicks: allSelectedFeatPickString,
+    }),
+    enabled: open && activeStep === powersStep,
   });
 
   const resetWizard = useCallback(() => {
@@ -484,7 +409,7 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
     onError: handleSaveError,
   });
 
-  const isLastStep = activeStep === addStepContent.length - 1;
+  const isLastStep = activeStep === ADD_STEP_CONTENT.length - 1;
 
   // Pool-level picks; the backend distributes them to the levels.
   const finalize = useCallback(
@@ -517,11 +442,8 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
   );
 
   const handleNext = useCallback(() => {
-    if (isLastStep) {
-      finalize(false);
-    } else {
-      setActiveStep((prev) => prev + 1);
-    }
+    if (isLastStep) finalize(false);
+    else setActiveStep((prev) => prev + 1);
   }, [isLastStep, finalize, setActiveStep]);
 
   const handleForceSubmit = useCallback(() => {
@@ -532,11 +454,8 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
   const hasProgress = activeStep > 0 || classPlan.some((k) => k !== null);
 
   const handleCancel = useCallback(() => {
-    if (hasProgress) {
-      setShowCancelConfirm(true);
-    } else {
-      onClose();
-    }
+    if (hasProgress) setShowCancelConfirm(true);
+    else onClose();
   }, [hasProgress, onClose, setShowCancelConfirm]);
 
   const handleConfirmCancel = useCallback(() => {
@@ -546,7 +465,7 @@ export function useAddLevelWizard({ open, onClose, characterId, baseRules }: Use
 
   // The dialog also disables it while the save runs.
   const isNextDisabled = useMemo(() => {
-    const content = addStepContent[activeStep];
+    const content = ADD_STEP_CONTENT[activeStep];
     switch (content) {
       case "class-plan":
         return validClassCount < 1;

@@ -1,4 +1,5 @@
-const LAST_RELOAD_KEY = "chunk_reload";
+import { readChunkReloadTime, saveChunkReloadTime } from "@/client/src/stores/chunkReloadTime.ts";
+
 const RELOAD_WINDOW_MS = 10_000;
 
 /**
@@ -19,9 +20,9 @@ export function isChunkLoadError(error: unknown): boolean {
  */
 export function reloadForStaleChunks(): boolean {
   try {
-    const lastReload = Number(sessionStorage.getItem(LAST_RELOAD_KEY));
+    const lastReload = readChunkReloadTime();
     if (lastReload && Date.now() - lastReload < RELOAD_WINDOW_MS) return false;
-    sessionStorage.setItem(LAST_RELOAD_KEY, String(Date.now()));
+    saveChunkReloadTime(Date.now());
   } catch {
     return false;
   }

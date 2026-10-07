@@ -1,7 +1,10 @@
 import { type QueryClient, useIsMutating, useMutation } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { NO_TIME } from "@/client/src/lib/durations.ts";
+import { currentUserQuery } from "@/client/src/lib/queries.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
+import { ApiError } from "@/client/src/services/ApiError.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { type AuthUser, toAuthUser } from "@/client/src/stores/authUser.ts";
@@ -23,14 +26,12 @@ function signedIn(user: AuthUser) {
  */
 export function checkSession(queryClient: QueryClient): Promise<void> {
   if (useAuthStore.getState().isAuthenticated) return Promise.resolve();
-  return queryClient
-    .fetchQuery({ queryKey: queryKeys.auth.me, queryFn: () => parseResponse(rpc.auth.me.$get()), staleTime: 0 })
-    .then(
-      (user) => signedIn(user),
-      () => {
-        useAuthStore.setState({ user: null, isAuthenticated: false });
-      },
-    );
+  return queryClient.fetchQuery({ ...currentUserQuery(), staleTime: NO_TIME }).then(
+    (user) => signedIn(user),
+    () => {
+      useAuthStore.setState({ user: null, isAuthenticated: false });
+    },
+  );
 }
 
 /**
@@ -43,7 +44,7 @@ export function checkSession(queryClient: QueryClient): Promise<void> {
  * signed-out one leaves the private pages for sign in (`PrivateRoute`).
  */
 export function useAuthRequests() {
-  const mutationKey = queryKeys.auth.requests;
+  const mutationKey = QUERY_KEYS.auth.requests;
   const pending = useIsMutating({ mutationKey }) > 0;
 
   const signIn = useMutation({
@@ -53,7 +54,7 @@ export function useAuthRequests() {
     onSuccess: signedIn,
     // An unverified email waits for its code
     onError: (error, { emailAddress }) => {
-      const isUnverified = error instanceof Error && error.message === "Email not verified";
+      const isUnverified = error instanceof ApiError && error.errorName === "EmailNotVerifiedError";
       useAuthStore.setState({
         user: null,
         isAuthenticated: false,

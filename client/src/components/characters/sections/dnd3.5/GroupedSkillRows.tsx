@@ -1,7 +1,8 @@
-import { ExpandLess } from "@mui/icons-material";
 import { IconButton, TableCell, TableRow } from "@mui/material";
 import { type ReactNode, useMemo } from "react";
 
+import { CLICKABLE_SX, clickableProps } from "@/client/src/components/common/index.ts";
+import { ExpandLessIcon } from "@/client/src/components/icons/index.ts";
 import { useToggleSet } from "@/client/src/hooks/index.ts";
 
 import { groupSkills } from "./skillGroups.ts";
@@ -28,7 +29,7 @@ interface SkillRowProps extends SkillPlacement {
   children: ReactNode;
 }
 
-const fadeInSx = {
+const FADE_IN_SX = {
   animation: "fadeInRow 200ms ease-out",
   "@keyframes fadeInRow": { from: { opacity: 0 }, to: { opacity: 1 } },
 };
@@ -42,7 +43,7 @@ export function GroupedSkillRows<S extends { name: string }>({
   columns,
   renderSkill,
 }: GroupedSkillRowsProps<S>) {
-  const [expanded, toggle] = useToggleSet();
+  const { keys: expanded, toggle } = useToggleSet();
   const rows = useMemo(() => groupSkills(skills), [skills]);
 
   return (
@@ -56,8 +57,8 @@ export function GroupedSkillRows<S extends { name: string }>({
         return (
           <TableRow
             key={`group-${row.prefix}`}
-            sx={{ bgcolor: "action.hover", cursor: "pointer" }}
-            onClick={() => toggle(row.prefix)}
+            {...clickableProps(() => toggle(row.prefix))}
+            sx={{ ...CLICKABLE_SX, bgcolor: "action.hover" }}
           >
             <TableCell sx={{ fontWeight: 600 }}>
               {row.prefix} ({row.count})
@@ -69,7 +70,7 @@ export function GroupedSkillRows<S extends { name: string }>({
                 aria-label={`${isExpanded ? "Hide" : "Show"} ${row.prefix} skills`}
                 sx={{ transition: "transform 200ms", transform: isExpanded ? "rotate(0deg)" : "rotate(-90deg)" }}
               >
-                <ExpandLess fontSize="small" />
+                <ExpandLessIcon fontSize="small" />
               </IconButton>
             </TableCell>
           </TableRow>
@@ -83,7 +84,7 @@ export function GroupedSkillRows<S extends { name: string }>({
 export function SkillRow({ name, indented, hidden, renderName = (label) => label, children }: SkillRowProps) {
   const label = indented ? name.replace(/^.+?\s*\(/, "(") : name;
   return (
-    <TableRow sx={hidden ? { display: "none" } : indented ? fadeInSx : undefined}>
+    <TableRow sx={hidden ? { display: "none" } : indented ? FADE_IN_SX : undefined}>
       <TableCell sx={indented ? { pl: 5 } : undefined}>{renderName(label)}</TableCell>
       {children}
     </TableRow>

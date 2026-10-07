@@ -1,9 +1,11 @@
 import { matchMutation, MutationCache, QueryCache, QueryClient } from "@tanstack/react-query";
 
-import { DEMO_EXPIRED_FLAG } from "@/client/src/lib/demo.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
 import { ApiError } from "@/client/src/services/ApiError.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
+import { markDemoExpired } from "@/client/src/stores/demoExpiredFlag.ts";
+
+import { FIVE_MINUTES } from "./durations.ts";
+import { QUERY_KEYS } from "./queryKeys.ts";
 
 /** A 401 signs the session out: the server no longer knows it. */
 function handleGlobalError(error: unknown) {
@@ -12,13 +14,8 @@ function handleGlobalError(error: unknown) {
     if (!useAuthStore.getState().isAuthenticated) return;
     // If the cleared user was a demo, leave a breadcrumb so the post-clear
     // catch-all can route to /demo-expired instead of /sign-in.
-    if (useAuthStore.getState().user?.expiresAt) {
-      try {
-        localStorage.setItem(DEMO_EXPIRED_FLAG, "1");
-      } catch {
-        // storage disabled
-      }
-    }
+    if (useAuthStore.getState().user?.expiresAt) markDemoExpired();
+
     useAuthStore.getState().clearSession();
   }
 }
@@ -32,7 +29,7 @@ export function createQueryClient() {
     defaultOptions: {
       queries: {
         retry: false,
-        staleTime: 5 * 60 * 1000,
+        staleTime: FIVE_MINUTES,
       },
     },
     queryCache: new QueryCache({
@@ -41,7 +38,7 @@ export function createQueryClient() {
     // An auth request handles its own 401: a wrong password, a session already gone at sign-out
     mutationCache: new MutationCache({
       onError: (error, _variables, _context, mutation) => {
-        if (!matchMutation({ mutationKey: queryKeys.auth.requests }, mutation)) handleGlobalError(error);
+        if (!matchMutation({ mutationKey: QUERY_KEYS.auth.requests }, mutation)) handleGlobalError(error);
       },
     }),
   });

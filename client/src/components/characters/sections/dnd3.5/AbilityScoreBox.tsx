@@ -1,6 +1,6 @@
-import { Add as AddIcon, Remove as RemoveIcon } from "@mui/icons-material";
 import { Box, IconButton, Paper, Stack, Typography } from "@mui/material";
 
+import { AddIcon, RemoveIcon } from "@/client/src/components/icons/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 

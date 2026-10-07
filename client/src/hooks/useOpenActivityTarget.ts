@@ -1,11 +1,11 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { parseResponse } from "hono/client";
 import { useNavigate } from "react-router-dom";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { NO_TIME } from "@/client/src/lib/durations.ts";
+import { errorMessage } from "@/client/src/lib/errorMessage.ts";
+import { activityTargetQuery } from "@/client/src/lib/queries.ts";
 import { ApiError } from "@/client/src/services/ApiError.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
 
 /** Activities about accounts and sessions have no page to open. */
 const NON_NAVIGABLE_TABLES = new Set(["users", "sessions"]);
@@ -26,24 +26,15 @@ export function useOpenActivityTarget() {
   const queryClient = useQueryClient();
 
   return (targetTable: string, targetId: string) => {
-    queryClient
-      .fetchQuery({
-        queryKey: queryKeys.activities.target(targetTable, targetId),
-        queryFn: () =>
-          parseResponse(
-            rpc.api.activities.resolve[":targetTable"][":targetId"].$get({ param: { targetTable, targetId } }),
-          ),
-        staleTime: 0,
-      })
-      .then(
-        ({ url }) => navigate(url),
-        // 403 says why ("You no longer have access to this character."); anything else means the entity is gone.
-        (error) =>
-          snackbar.warning(
-            error instanceof ApiError && error.status === 403
-              ? error.message
-              : "This item has been deleted and is no longer available.",
-          ),
-      );
+    queryClient.fetchQuery({ ...activityTargetQuery(targetTable, targetId), staleTime: NO_TIME }).then(
+      ({ url }) => navigate(url),
+      // 403 says why ("You no longer have access to this character."); anything else means the entity is gone.
+      (error) =>
+        snackbar.warning(
+          error instanceof ApiError && error.status === 403
+            ? errorMessage(error, "You no longer have access to this item.")
+            : "This item has been deleted and is no longer available.",
+        ),
+    );
   };
 }

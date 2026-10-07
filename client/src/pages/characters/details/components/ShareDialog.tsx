@@ -1,4 +1,3 @@
-import { ContentCopy as CopyIcon, LinkOff as LinkOffIcon, Refresh as RefreshIcon } from "@mui/icons-material";
 import {
   Button,
   DialogActions,
@@ -15,8 +14,9 @@ import { parseResponse } from "hono/client";
 import { useState } from "react";
 
 import { DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
+import { CopyIcon, LinkOffIcon, RefreshIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 interface ShareDialogProps {
@@ -42,7 +42,7 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.characters.detail(characterId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.detail(characterId) });
       snackbar.success("Share link generated");
     },
     onError: (err) => {
@@ -59,7 +59,7 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.characters.detail(characterId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.detail(characterId) });
       setConfirmRevoke(false);
       snackbar.success("Share link revoked");
     },

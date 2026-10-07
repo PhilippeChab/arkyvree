@@ -1,4 +1,3 @@
-import { FilterList as FilterIcon, Search as SearchIcon, Sort as SortIcon } from "@mui/icons-material";
 import {
   Box,
   IconButton,
@@ -11,7 +10,9 @@ import {
   Toolbar,
   Tooltip,
 } from "@mui/material";
-import { useState } from "react";
+import { type MouseEvent, type ReactNode, useState } from "react";
+
+import { FilterIcon, SearchIcon, SortIcon } from "@/client/src/components/icons/index.ts";
 
 interface SearchBarProps<TFilter extends string = string, TSort extends string = string> {
   searchValue: string;
@@ -27,8 +28,8 @@ interface SearchBarProps<TFilter extends string = string, TSort extends string =
   sortDirection?: "asc" | "desc";
   onSortChange?: (field: TSort, direction: "asc" | "desc") => void;
 
-  filters?: React.ReactNode;
-  actions?: React.ReactNode;
+  filters?: ReactNode;
+  actions?: ReactNode;
 }
 
 export interface FilterOption<T extends string = string> {
@@ -59,7 +60,7 @@ export function SearchBar<TFilter extends string = string, TSort extends string 
   const [filterAnchorEl, setFilterAnchorEl] = useState<null | HTMLElement>(null);
   const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
 
-  const handleFilterClick = (event: React.MouseEvent<HTMLElement>) => {
+  const handleFilterClick = (event: MouseEvent<HTMLElement>) => {
     setFilterAnchorEl(event.currentTarget);
   };
 
@@ -72,7 +73,7 @@ export function SearchBar<TFilter extends string = string, TSort extends string 
     handleFilterClose();
   };
 
-  const handleSortClick = (event: React.MouseEvent<HTMLElement>) => {
+  const handleSortClick = (event: MouseEvent<HTMLElement>) => {
     setSortAnchorEl(event.currentTarget);
   };
 
@@ -115,7 +116,7 @@ export function SearchBar<TFilter extends string = string, TSort extends string 
           {filterOptions && filterOptions.length > 0 && (
             <>
               <Tooltip title="Filter">
-                <IconButton size="small" onClick={handleFilterClick}>
+                <IconButton aria-label="Filter" size="small" onClick={handleFilterClick}>
                   <FilterIcon />
                 </IconButton>
               </Tooltip>
@@ -136,7 +137,7 @@ export function SearchBar<TFilter extends string = string, TSort extends string 
           {sortOptions && sortOptions.length > 0 && (
             <>
               <Tooltip title="Sort">
-                <IconButton size="small" onClick={handleSortClick}>
+                <IconButton aria-label="Sort" size="small" onClick={handleSortClick}>
                   <SortIcon />
                 </IconButton>
               </Tooltip>

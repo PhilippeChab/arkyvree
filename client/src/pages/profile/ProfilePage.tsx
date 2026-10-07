@@ -16,12 +16,21 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormSync, useFormWith, useGoogleSignIn, usePageTitle } from "@/client/src/hooks/index.ts";
-import { queryKeys } from "@/client/src/lib/queryKeys.ts";
-import { confirmPasswordRules, emailRules, newPasswordRules, usernameRules } from "@/client/src/lib/validation.ts";
-import { DeleteAccountDialog, EmailChangeVerificationDialog } from "@/client/src/pages/profile/components/index.ts";
+import { currentUserQuery } from "@/client/src/lib/queries.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
+import {
+  confirmPasswordRules,
+  EMAIL_RULES,
+  NEW_PASSWORD_RULES,
+  requiredRules,
+  USERNAME_RULES,
+} from "@/client/src/lib/validation.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import type { AuthUser } from "@/client/src/stores/authUser.ts";
+
+import { DeleteAccountDialog, EmailChangeVerificationDialog } from "./components/index.ts";
+import { linkedAccountsQuery } from "./profileQueries.ts";
 
 interface PasswordFormData {
   currentPassword: string;
@@ -29,12 +38,18 @@ interface PasswordFormData {
   newPasswordConfirmation: string;
 }
 
+interface ProfileCardProps {
+  title: string;
+  children: ReactNode;
+  danger?: boolean;
+}
+
 interface ProfileFormData {
   username: string;
   emailAddress: string;
 }
 
-function ProfileCard({ title, children, danger = false }: { title: string; children: ReactNode; danger?: boolean }) {
+function ProfileCard({ title, children, danger = false }: ProfileCardProps) {
   return (
     <Card sx={{ mb: 3, ...(danger && { borderColor: "error.main", borderWidth: 1, borderStyle: "solid" }) }}>
       <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
@@ -70,24 +85,18 @@ export default function ProfilePage() {
   const [verifyDialogOpen, setVerifyDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  const { data: userData, isLoading } = useQuery({
-    queryKey: queryKeys.auth.me,
-    queryFn: () => parseResponse(rpc.auth.me.$get()),
-  });
+  const { data: userData, isLoading } = useQuery(currentUserQuery());
 
   const hasPassword = userData?.hasPassword ?? true;
 
-  const { data: linkedAccounts } = useQuery({
-    queryKey: queryKeys.auth.linkedAccounts,
-    queryFn: () => parseResponse(rpc.auth["linked-accounts"].$get()),
-  });
+  const { data: linkedAccounts } = useQuery(linkedAccountsQuery());
 
   const isGoogleLinked = linkedAccounts?.some((a) => a.provider === "google") ?? false;
 
   const linkGoogle = useMutation({
-    mutationFn: (idToken: string) => rpc.auth["link-google"].$post({ json: { idToken } }),
+    mutationFn: (idToken: string) => parseResponse(rpc.auth["link-google"].$post({ json: { idToken } })),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.auth.linkedAccounts });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.auth.linkedAccounts });
       snackbar.success("Google account linked");
     },
     onError: (error) => snackbar.error(error, "Failed to link Google account"),
@@ -95,9 +104,9 @@ export default function ProfilePage() {
   const { overlayRef, isAvailable: isGoogleAvailable } = useGoogleSignIn((idToken) => linkGoogle.mutate(idToken));
 
   const unlinkOauthMutation = useMutation({
-    mutationFn: (provider: string) => rpc.auth["unlink-oauth"].$post({ json: { provider } }),
+    mutationFn: (provider: string) => parseResponse(rpc.auth["unlink-oauth"].$post({ json: { provider } })),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.auth.linkedAccounts });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.auth.linkedAccounts });
       snackbar.success("Account unlinked");
     },
     onError: (error) => snackbar.error(error, "Failed to unlink account"),
@@ -128,7 +137,7 @@ export default function ProfilePage() {
       // The server's values, not the submitted ones: a new email stays pending
       // until verified, so the field keeps the current address.
       profileSync.saved(toProfileForm(data));
-      queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.auth.me });
       updateUser({
         emailAddress: data.emailAddress,
         username: data.username,
@@ -148,22 +157,24 @@ export default function ProfilePage() {
   const passwordMutation = useMutation({
     mutationFn: (data: PasswordFormData) =>
       hasPassword
-        ? rpc.auth.password.$put({ json: data })
-        : rpc.auth["set-password"].$post({
-            json: { newPassword: data.newPassword, newPasswordConfirmation: data.newPasswordConfirmation },
-          }),
+        ? parseResponse(rpc.auth.password.$put({ json: data }))
+        : parseResponse(
+            rpc.auth["set-password"].$post({
+              json: { newPassword: data.newPassword, newPasswordConfirmation: data.newPasswordConfirmation },
+            }),
+          ),
     onSuccess: () => {
       passwordForm.reset();
-      queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.auth.me });
       snackbar.success(hasPassword ? "Password updated successfully" : "Password set successfully");
     },
     onError: (error) => snackbar.error(error, hasPassword ? "Failed to update password" : "Failed to set password"),
   });
 
   const cancelEmailChangeMutation = useMutation({
-    mutationFn: () => rpc.auth["cancel-email-change"].$post(),
+    mutationFn: () => parseResponse(rpc.auth["cancel-email-change"].$post()),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.auth.me });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.auth.me });
       updateUser({ pendingEmailAddress: null });
       snackbar.success("Email change cancelled");
     },
@@ -234,7 +245,7 @@ export default function ProfilePage() {
                 <FormTextField
                   control={profileForm.control}
                   name="username"
-                  rules={usernameRules}
+                  rules={USERNAME_RULES}
                   label="Username"
                   variant="outlined"
                   fullWidth
@@ -245,7 +256,7 @@ export default function ProfilePage() {
                 <EmailField
                   control={profileForm.control}
                   name="emailAddress"
-                  rules={emailRules}
+                  rules={EMAIL_RULES}
                   label="Email Address"
                 />
 
@@ -304,7 +315,7 @@ export default function ProfilePage() {
               <PasswordField
                 control={passwordForm.control}
                 name="currentPassword"
-                rules={{ required: "Current password is required" }}
+                rules={requiredRules("Current password is required")}
                 label="Current Password"
                 autoComplete="current-password"
               />
@@ -313,7 +324,7 @@ export default function ProfilePage() {
             <PasswordField
               control={passwordForm.control}
               name="newPassword"
-              rules={newPasswordRules}
+              rules={NEW_PASSWORD_RULES}
               label="New Password"
               autoComplete="new-password"
             />

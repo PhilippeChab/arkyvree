@@ -4,16 +4,16 @@ import { sanitizeText } from "@/shared/text.ts";
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** React Hook Form rules for a required email address field. */
-export const emailRules = {
+export const EMAIL_RULES = {
   required: "Email is required",
   pattern: { value: EMAIL_PATTERN, message: "Please enter a valid email address" },
 } as const;
 
 /** React Hook Form rules for an entity's required name. */
-export const nameRules = { required: "Name is required" } as const;
+export const NAME_RULES = { required: "Name is required" } as const;
 
 /** React Hook Form rules for a password the user is choosing, measured as it's stored (`sanitizeText`). */
-export const newPasswordRules = {
+export const NEW_PASSWORD_RULES = {
   required: "Password is required",
   validate: (value: unknown) =>
     sanitizeText(String(value)).length >= PASSWORD_MIN_LENGTH ||
@@ -21,7 +21,7 @@ export const newPasswordRules = {
 } as const;
 
 /** React Hook Form rules for an optional username, measured as it's stored (`sanitizeText`): 3 to 50 characters. */
-export const usernameRules = {
+export const USERNAME_RULES = {
   validate: (value: unknown) => {
     if (value === "" || value == null) return true;
     const length = sanitizeText(String(value)).length;
@@ -36,6 +36,11 @@ export function confirmPasswordRules<T extends object>(passwordField: keyof T) {
     required: "Please confirm your password",
     validate: (value: unknown, formValues: T) => value === formValues[passwordField] || "Passwords do not match",
   };
+}
+
+/** React Hook Form rules for a field that must be filled, saying so in `message` ("Level is required"). */
+export function requiredRules(message: string) {
+  return { required: message };
 }
 
 /**

@@ -3,7 +3,7 @@ import type { InferRequestType } from "hono/client";
 
 import { DiceSpinner, EmailField, FormDialog, SelectField } from "@/client/src/components/common/index.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
-import { emailRules } from "@/client/src/lib/validation.ts";
+import { EMAIL_RULES } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
 interface InviteContributorDialogProps {
@@ -38,7 +38,7 @@ export function InviteContributorDialog({ open, onClose, onSubmit, isLoading, ro
       <form onSubmit={form.handleSubmit((data) => onSubmit(data, () => form.reset()))} noValidate>
         <DialogTitle>Invite Contributor</DialogTitle>
         <DialogContent>
-          <EmailField control={form.control} name="email" rules={emailRules} label="Email address" autoFocus />
+          <EmailField control={form.control} name="email" rules={EMAIL_RULES} label="Email address" autoFocus />
           {roles && <SelectField control={form.control} name="role" label="Role" options={roles} margin="normal" />}
         </DialogContent>
         <DialogActions>

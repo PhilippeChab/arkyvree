@@ -11,9 +11,7 @@ export function LevelUpAttributeStep({ wizard, baseRules }: LevelUpAttributeStep
   const { field } = useController({ control, name: "selectedAttribute" });
   if (isLoadingAttributes) return <DiceSpinner />;
   if (attributesError) return <LoadError what="Attributes" error={attributesError} />;
-  if (!attributeData?.isAvailable) {
-    return <Alert severity="info">No attribute increase at this level.</Alert>;
-  }
+  if (!attributeData?.isAvailable) return <Alert severity="info">No attribute increase at this level.</Alert>;
 
   return (
     <AttributeIncreaseField
