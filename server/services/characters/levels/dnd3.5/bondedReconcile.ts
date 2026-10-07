@@ -134,8 +134,8 @@ async function syncBondedLevels(
     return;
   }
 
-  const sorted = [...existingLevels].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  for (let i = 0; i < currentHD - targetHD; i++) await CharacterLevels.delete(tx, { id: sorted[i].id });
+  // The creature loses its last levels: its levels are in the order it took them
+  for (const level of existingLevels.slice(targetHD)) await CharacterLevels.delete(tx, { id: level.id });
 }
 
 export async function reconcileAllBondedKinds(

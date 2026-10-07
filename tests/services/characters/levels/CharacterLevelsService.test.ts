@@ -1,6 +1,4 @@
-import { describe, expect, test } from "bun:test";
-
-import { eq } from "drizzle-orm";
+import { afterAll, describe, expect, test } from "bun:test";
 
 import { DND35_DMG_NAME } from "@/database/packages/dnd35/names.ts";
 import { addClassLevels, addFeats, addPowers, addSkills } from "@/database/seeds/seedCharacter.ts";
@@ -9,12 +7,12 @@ import {
   abilitiesInRules,
   featsInRules,
   klassLevelPowersInRules,
-  levelsInCharacter,
   powersInRules,
   skillsInRules,
 } from "@/drizzle/schema.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
+import { createTestPool } from "@/server/database/test.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
 import {
   Aptitudes,
@@ -45,7 +43,7 @@ import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { FEAT_FAMILY, KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/shared/dnd3.5/properties/index.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
-import { insertRows, measure } from "@/tests/support/database.ts";
+import { insertRows, measure, runWhileLocked } from "@/tests/support/database.ts";
 import {
   addFighterLevels,
   createSeedCharacter,
@@ -58,7 +56,7 @@ import {
 } from "@/tests/support/levelFixtures.ts";
 import { addCharacterLevel, addOneLevel, findKlassLevel } from "@/tests/support/levels.ts";
 import { createSeededTestRuleset, createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
-import { findSeededRuleset, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
+import { findSeededCharacter, findSeededRuleset, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
 /** The levels, ability increases, feats and skill ranks being added, which getAvailableKlasses takes after its paging. */
@@ -73,6 +71,7 @@ type PendingPicks =
     ? Rest
     : never;
 
+const lockPool = createTestPool();
 const page = { limit: 500, page: 1 };
 const session = makeSession();
 
@@ -149,13 +148,6 @@ async function setupMulticlass(fighterLevels: number) {
   const levelIds = [(await addClassLevels(db, ctx, characterId, "Barbarian", [1], [12]))[0]];
   for (let level = 1; level <= fighterLevels; level++)
     levelIds.push((await addClassLevels(db, ctx, characterId, "Fighter", [level], [8]))[0]);
-  // Rows made in one transaction share a creation time: order them.
-  for (const [offset, id] of levelIds.entries()) {
-    await db
-      .update(levelsInCharacter)
-      .set({ createdAt: new Date(Date.UTC(2026, 0, 1, 0, 0, offset)).toISOString() })
-      .where(eq(levelsInCharacter.id, id));
-  }
   return { ctx, characterId, levelIds };
 }
 
@@ -266,6 +258,8 @@ async function spellNames(characterId: string, level: number, where: object = {}
     ).items,
   );
 }
+
+afterAll(() => lockPool.end());
 
 describe("LevelsService", () => {
   test("refuses a missing character, another user's, a missing class level, and removing from a character without levels", async () => {
@@ -1595,13 +1589,11 @@ describe("LevelsService", () => {
         characterId,
         klassLevelId: await klassLevel("Fighter", 2),
         hp: 10,
-        createdAt: "2020-01-01T00:00:00.000Z",
       });
       const [rogue1] = await CharacterLevels.create(db, {
         characterId,
         klassLevelId: await klassLevel("Rogue", 1),
         hp: 6,
-        createdAt: "2020-01-02T00:00:00.000Z",
       });
       await addSkills(db, ctx, [rogue1.id], [{ levelIndex: 0, skillName: "Hide", rank: 4 }]);
       await addFeats(db, ctx, [rogue1.id], [{ levelIndex: 0, featName: "Dodge", aptitude: "General" }]);
@@ -1610,6 +1602,30 @@ describe("LevelsService", () => {
       expect(await CharacterLevels.findMany(db, { characterId })).toMatchObject([{ id: fighter2.id }]);
       expect(await CharacterLevelSkills.findMany(db, { characterLevelIds: [rogue1.id] })).toEqual([]);
       expect(await CharacterLevelFeats.findMany(db, { characterLevelIds: [rogue1.id] })).toEqual([]);
+    });
+  });
+
+  describe("the order of a character's levels", () => {
+    test("numbers them in the order they were made, though the test's one transaction made them at one time", async () => {
+      const { ctx, characterId, levelIds } = await setupMulticlass(2);
+      const positions = async () =>
+        (await CharacterLevels.findMany(db, { characterId })).map((level) => [level.id, level.position]);
+      expect(await positions()).toEqual(levelIds.map((id, index) => [id, index + 1]));
+      // The last one goes, and the next takes its place
+      await CharacterLevelsService.removeLevel(session, characterId);
+      const [fighter2] = await addClassLevels(db, ctx, characterId, "Fighter", [2], [8]);
+      expect(await positions()).toEqual([...levelIds.slice(0, 2).map((id, index) => [id, index + 1]), [fighter2, 3]]);
+    });
+
+    test("runs a character's level flows one at a time: a removal waits for the flow that holds the character", async () => {
+      const kael = await findSeededCharacter("Kael Stormborn");
+      const levels = await CharacterLevels.findMany(db, { characterId: kael.id });
+      await runWhileLocked(
+        lockPool,
+        (blockerDb) => Characters.lock(blockerDb, { id: kael.id }),
+        () => CharacterLevelsService.removeLevel(session, kael.id),
+      );
+      expect(await CharacterLevels.findMany(db, { characterId: kael.id })).toEqual(levels.slice(0, -1));
     });
   });
 });

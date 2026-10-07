@@ -1,4 +1,4 @@
-import { and, eq, getTableColumns, inArray, type InferInsertModel, isNull, or, sql } from "drizzle-orm";
+import { and, eq, inArray, type InferInsertModel, isNull, or, sql } from "drizzle-orm";
 
 import {
   charactersInCharacter,
@@ -71,8 +71,20 @@ class CharacterLevelsRepository extends include(
     return rows.length > 0;
   }
 
-  async create(db: Db, values: InferInsertModel<typeof levelsInCharacter>) {
-    return await db.insert(this.table).values(values).returning();
+  /**
+   * A level after the character's last: its position one past theirs, read in the insert. Two inserts for one
+   * character read the same last position unless the first commits before the second reads: a level flow locks the
+   * character first (`Characters.lock`), and the unique index refuses a second level at a position.
+   */
+  async create(db: Db, values: Omit<InferInsertModel<typeof levelsInCharacter>, "position">) {
+    const nextPosition = sql<number>`(
+      SELECT coalesce(max(${this.table.position}), 0) + 1 FROM ${this.table}
+      WHERE ${this.table.characterId} = ${values.characterId} AND ${this.table.deletedAt} IS NULL
+    )`;
+    return await db
+      .insert(this.table)
+      .values({ ...values, position: nextPosition })
+      .returning();
   }
 
   // Intentional removal — hard delete
@@ -97,17 +109,13 @@ class CharacterLevelsRepository extends include(
   }
 
   async findLatest(db: Db, where: { characterId: string }) {
-    const result = await db
-      .select(getTableColumns(this.table))
-      .from(this.table)
-      .innerJoin(klassLevelsInRules, eq(this.table.klassLevelId, klassLevelsInRules.id))
-      .where(and(eq(this.table.characterId, where.characterId), isNull(this.table.deletedAt)))
-      .orderBy(this.orderBy(this.table.createdAt, "desc"), this.orderBy(klassLevelsInRules.level, "desc"))
-      .limit(1);
-
-    return result[0];
+    return await db.query.levelsInCharacter.findFirst({
+      where: and(eq(this.table.characterId, where.characterId), isNull(this.table.deletedAt)),
+      orderBy: this.orderBy(this.table.position, "desc"),
+    });
   }
 
+  /** The levels in the order the character took them (`position`), a character's after another's by its id. */
   async findMany(db: Db, where: { characterId: string } | { characterIds: string[] }) {
     if ("characterIds" in where && where.characterIds.length === 0) return [];
     return await db.query.levelsInCharacter.findMany({
@@ -118,6 +126,7 @@ class CharacterLevelsRepository extends include(
         ],
         [isNull(this.table.deletedAt)],
       ),
+      orderBy: [this.orderBy(this.table.characterId), this.orderBy(this.table.position)],
     });
   }
 

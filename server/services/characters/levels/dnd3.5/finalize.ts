@@ -18,6 +18,7 @@ import {
   CharacterLevelPowers,
   CharacterLevels,
   CharacterLevelSkills,
+  Characters,
 } from "@/server/repositories/index.ts";
 import type {
   AptitudesComponent,
@@ -26,7 +27,7 @@ import type {
 } from "@/server/rulesets/dnd3.5/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
-import type { Character, Session } from "@/shared/relations.ts";
+import type { Character, CharacterLevel, Session } from "@/shared/relations.ts";
 
 import { reconcileAllBondedKinds } from "./bondedReconcile.ts";
 import { getPlannedClassSkills, getPlannedKlassLevels, getSavedKlassLevel } from "./classes.ts";
@@ -79,7 +80,7 @@ function poolIds(aptitudesInstance: AptitudesComponent, rulesetData: RulesetData
 /** The edited level's projection: the level with its new HP, ability and selections, in place of its saved row. */
 function projectEdit(
   characterId: string,
-  characterLevel: { id: string; createdAt: string },
+  characterLevel: CharacterLevel,
   klassLevelId: string,
   hp: number,
   abilityId: string | null,
@@ -114,6 +115,7 @@ function projectEdit(
         createdAt: characterLevel.createdAt,
         updatedAt: new Date().toISOString(),
         deletedAt: null,
+        position: characterLevel.position,
       },
     ],
     ...buildProjectedSelections(klassLevelId, projectedLevelId, skills, validationResult),
@@ -167,12 +169,6 @@ async function insertPlannedLevels(
 ) {
   const createdLevels: Awaited<ReturnType<typeof CharacterLevels.create>>[number][] = [];
 
-  // Stagger createdAt by row so multi-level batches retain their order even
-  // after the transaction commits. Without this every row in the loop gets
-  // the same now() (transaction start time) and any subsequent edit-level
-  // flow ordering by createdAt would be non-deterministic.
-  const batchStartedAt = Date.now();
-
   for (let i = 0; i < levels.length; i++) {
     const { hp, abilityId } = levels[i];
     const { klass, klassLevel } = klassLevelEntries[i];
@@ -210,14 +206,11 @@ async function insertPlannedLevels(
       rulesetData,
     });
     // Insert records — subsequent iterations will see these via read-your-writes
-    const rowCreatedAt = new Date(batchStartedAt + i).toISOString();
     const rows = await CharacterLevels.create(tx, {
       characterId,
       klassLevelId: klassLevel.id,
       hp,
       abilityId: abilityId || null,
-      createdAt: rowCreatedAt,
-      updatedAt: rowCreatedAt,
     });
     const characterLevel = rows[0];
     createdLevels.push(characterLevel);
@@ -286,6 +279,16 @@ async function levelDistributionData(
 }
 
 /**
+ * The character the session may edit, locked until the transaction ends: its level flows run one at a time, so each
+ * reads the levels the one before saved, and the level it adds goes after them (`CharacterLevels.create`).
+ */
+async function lockEditableCharacter(tx: Db, session: Session, characterId: string) {
+  const characterRecord = await getEditableCharacter(tx, session, characterId);
+  await Characters.lock(tx, { id: characterRecord.id });
+  return characterRecord;
+}
+
+/**
  * The aptitude pools the edited level contributes to: those the character allows more of with the level than before
  * it. Both builds leave out the level and every later one, so only what THIS level grants counts.
  */
@@ -294,7 +297,7 @@ async function ownedPoolNames(
   rulesetModule: Dnd35RulesetModule,
   scope: RulesetScope,
   characterRecord: Character,
-  existingLevels: { id: string; createdAt: string }[],
+  existingLevels: { id: string; position: number }[],
   characterLevelId: string,
   klassLevelId: string,
   skills: Record<string, number>,
@@ -353,7 +356,7 @@ export async function finalizeLevelUp(
   force: boolean = false,
 ) {
   return await withTransaction(async (tx) => {
-    const characterRecord = await getEditableCharacter(tx, session, characterId);
+    const characterRecord = await lockEditableCharacter(tx, session, characterId);
 
     return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
       const { ruleset, rulesetData } = scope;
@@ -434,7 +437,7 @@ export async function finalizeLevelUp(
 /** Removes the most recent character level and all its children (skills, feats, powers). */
 export async function removeLevel(session: Session, characterId: string) {
   return await withTransaction(async (tx) => {
-    const characterRecord = await getEditableCharacter(tx, session, characterId);
+    const characterRecord = await lockEditableCharacter(tx, session, characterId);
 
     const lastLevel = await CharacterLevels.findLatest(tx, {
       characterId,
@@ -475,7 +478,7 @@ export async function updateLevel(
   force: boolean = false,
 ) {
   return await withTransaction(async (tx) => {
-    const characterRecord = await getEditableCharacter(tx, session, characterId);
+    const characterRecord = await lockEditableCharacter(tx, session, characterId);
 
     return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
       const { ruleset, rulesetData } = scope;
@@ -488,12 +491,9 @@ export async function updateLevel(
       const { klassLevel, klass } = getSavedKlassLevel(rulesetData, characterLevel);
 
       const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
+      // The levels in the order the character took them: the edited level's index is its total level less one
       const existingLevels = await CharacterLevels.findMany(tx, { characterId });
-      // Use the position of the edited level (sorted by creation order) as the totalLevel
-      const sortedLevels = [...existingLevels].sort(
-        (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-      );
-      const levelIndex = sortedLevels.findIndex((l) => l.id === characterLevelId);
+      const levelIndex = existingLevels.findIndex((l) => l.id === characterLevelId);
       checkAbilityIncrease(rulesetModule.rules.levels.isAbilityIncreaseLevel(levelIndex), abilityId);
       const validationResult = await validateAndFetchLevelSelections(tx, {
         klass,
