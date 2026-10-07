@@ -5,6 +5,8 @@ import type { ModifierSeed } from "@/database/packages/dnd35/content/customizati
 import { EXOTIC_WEAPONS, MARTIAL_WEAPONS, SIMPLE_WEAPONS } from "@/database/packages/dnd35/content/items/weapons.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
+import { ModifierReading } from "./ModifierReading.ts";
+
 /** Aliases for description text → canonical weapon names */
 const WEAPON_ALIASES: Record<string, string[]> = {
   "crossbow (light or heavy)": ["Light Crossbow", "Heavy Crossbow"],
@@ -70,7 +72,7 @@ function detectSpecificWeapons(desc: string): string[] {
 }
 
 /** The proficiency feats a class's proficiency text grants, as modifiers that grant them. */
-export function readProficiencyModifiers(desc: string): ModifierSeed[] {
+function proficiencyModifiers(desc: string): ModifierSeed[] {
   const mods: ModifierSeed[] = [];
   const d = desc.toLowerCase();
 
@@ -124,4 +126,15 @@ export function readProficiencyModifiers(desc: string): ModifierSeed[] {
     mods.push(grantFeat("towershieldproficiency"));
 
   return mods;
+}
+
+/**
+ * The modifiers a class's "Weapon and Armor Proficiency" feature gives: the proficiency feats it grants. Their paths
+ * aren't checked: a feat granted (`feats.*`) is none the engine's modifier paths list.
+ */
+export class ProficiencyModifiers extends ModifierReading {
+  constructor(text: string) {
+    super();
+    this.modifiers.push(...proficiencyModifiers(text));
+  }
 }

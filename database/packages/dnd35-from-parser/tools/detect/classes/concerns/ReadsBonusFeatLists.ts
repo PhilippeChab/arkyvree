@@ -1,10 +1,5 @@
 import type { BaseClassDetector } from "@/database/packages/dnd35-from-parser/tools/detect/classes/BaseClassDetector.ts";
-import {
-  readBonusFeatList,
-  readPerLevelBonusFeatLists,
-  readPoolSubOptions,
-  readTreatedAsHavingFeats,
-} from "@/database/packages/dnd35-from-parser/tools/detect/classes/featureText.ts";
+import { FeatureText } from "@/database/packages/dnd35-from-parser/tools/detect/classes/FeatureText.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import { type BonusFeatList } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import type { Constructor } from "@/server/mixins.ts";
@@ -15,8 +10,8 @@ function ordinal(level: number): string {
 }
 
 /** Reading a class's bonus feat lists: the existing feats its player picks from. */
-export function BonusFeatLists<B extends Constructor<BaseClassDetector>>(Base: B) {
-  abstract class WithBonusFeatLists extends Base {
+export function ReadsBonusFeatLists<B extends Constructor<BaseClassDetector>>(Base: B) {
+  abstract class ReadingBonusFeatLists extends Base {
     /**
      * The class's bonus feat lists, each an aptitude of the existing feats its player picks from: a feature's list
      * ("from the following list: X, Y, Z"), one per level ("At 1st level… select either X or Y"), or the feats a
@@ -30,11 +25,11 @@ export function BonusFeatLists<B extends Constructor<BaseClassDetector>>(Base: B
         const cf = this.findFeature(occ.name);
         if (!cf) continue;
 
-        const desc = normalizeWs(cf.description);
+        const text = new FeatureText(normalizeWs(cf.description));
 
         // Single-level features: check for "treated as having" pattern (ranger combat style)
         if (occ.levels.length === 1) {
-          const treatedFeats = readTreatedAsHavingFeats(desc);
+          const treatedFeats = text.treatedAsHavingFeats();
           if (!treatedFeats) continue;
           lists.push({
             aptitude: `${raw.name} ${occ.name} (${ordinal(occ.levels[0])})`,
@@ -45,11 +40,10 @@ export function BonusFeatLists<B extends Constructor<BaseClassDetector>>(Base: B
         }
 
         // Don't flag features that are pool sub-options (those have "Name: description" patterns)
-        const parsed = readPoolSubOptions(desc);
-        if (parsed && parsed.options.length >= 2) continue;
+        if (text.poolSubOptions()) continue;
 
         // Try per-level parsing first (e.g. "At 1st level... select X or Y. At 2nd level... select A or B")
-        const perLevel = readPerLevelBonusFeatLists(desc);
+        const perLevel = text.perLevelBonusFeatLists();
         if (perLevel) {
           const baseAptitude = `${raw.name} ${occ.name}`;
           for (const entry of perLevel) {
@@ -63,7 +57,7 @@ export function BonusFeatLists<B extends Constructor<BaseClassDetector>>(Base: B
         }
 
         // Fall back to shared pool parsing ("from the following list: X, Y, Z")
-        const feats = readBonusFeatList(desc);
+        const feats = text.bonusFeatList();
         if (!feats) continue;
 
         const aptitude = `${raw.name} ${occ.name}`;
@@ -73,5 +67,5 @@ export function BonusFeatLists<B extends Constructor<BaseClassDetector>>(Base: B
       return lists.length > 0 ? { bonusFeatLists: lists } : {};
     }
   }
-  return WithBonusFeatLists;
+  return ReadingBonusFeatLists;
 }

@@ -63,7 +63,7 @@ database/packages/dnd35-from-parser/
     │   ├── BaseScraper.ts    # A scraper's core: its book and its slug, its HttpClient, the listings, a reference's meta, saving it
     │   ├── Scraper.ts        # A concern per kind of reference (concerns/): ScrapesClasses, ScrapesFeats…
     │   └── pages/            # A page's HTML → what its reference stores: a class per kind of page (Page, DndToolsPage, FeatPage…; class/ClassPage with its concerns)
-    ├── detect/           # A reference's raw → its detected and mapping: a detector per kind on a BaseDetector (ClassDetector in classes/, with its concerns and its ClassMapping; FeatDetector, SpellDetector…)
+    ├── detect/           # A reference's raw → its detected and mapping: a detector per kind on a BaseDetector (ClassDetector in classes/, with its concerns, its ClassTable and FeatureText readers, its ClassMapping and ClassPools; FeatDetector, SpellDetector…)
     │   └── readers/          # What a text says, a reader class each: requirements/ (RequirementReading and its concerns; FeatPrerequisites, ClassPrerequisites), modifiers/ (BonusText, a reading per kind of text), items/ (MagicItemText, MagicItemMetadata); the target paths a reading's must be (TargetPaths)
     ├── text/             # The scraped text: sanitized, normalized, entry names, amounts (cost, weight), stable JSON
     ├── vocabulary/       # The names the books give abilities, saves, skills, races and numbers, their slugs and paths, a feat family's options, and the core rules' book: a module per subject

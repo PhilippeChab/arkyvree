@@ -1,18 +1,18 @@
 import { BenefitModifiers } from "@/database/packages/dnd35-from-parser/tools/detect/readers/modifiers/BenefitModifiers.ts";
-import { readProficiencyModifiers } from "@/database/packages/dnd35-from-parser/tools/detect/readers/modifiers/proficiencies.ts";
-import { isPluralVariantOf } from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
+import { ProficiencyModifiers } from "@/database/packages/dnd35-from-parser/tools/detect/readers/modifiers/ProficiencyModifiers.ts";
+import {
+  getFeatureBaseName,
+  isPluralVariantOf,
+  isVariantOf,
+} from "@/database/packages/dnd35-from-parser/tools/text/names.ts";
 import { normalizeWs } from "@/database/packages/dnd35-from-parser/tools/text/scrapedText.ts";
 import { type AptitudePick, type ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
-import { type NamedText } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
 import { bonus } from "@/database/packages/dnd35/content/customization/modifiers.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import type { BaseClassDetector, ClassFeature } from "./BaseClassDetector.ts";
-import { getFeatureBaseName, isVariantOf, normalizeFeatureName } from "./featureNames.ts";
-import { CHOICE_PATTERN, readPoolSubOptions } from "./featureText.ts";
-
-/** A pool's aptitude, the level it opens at, and whether its picks stack. */
-type PoolAptitude = { aptitude: string; level: number; stackable?: true };
+import { ClassPools } from "./ClassPools.ts";
+import { FeatureText } from "./FeatureText.ts";
 
 /** Its detected aptitude picks, an override's for the same aptitude replacing a detected one. */
 function mergeAptitudePicks(detected?: AptitudePick[], overrides?: AptitudePick[]): AptitudePick[] | undefined {
@@ -23,33 +23,22 @@ function mergeAptitudePicks(detected?: AptitudePick[], overrides?: AptitudePick[
 }
 
 /**
- * A class reference's mapping, built step by step from what its detector read: its pools (features whose description
- * offers a choice) and their sub-options (inline, separate features, or a table's), its features, the aptitude picks
- * they own, and its spells; its overrides applied, and each occurrence its table names mapped to its feature.
+ * A class reference's mapping, built step by step from what its detector read: its features (a pool's sub-options for
+ * a pool, `ClassPools`), the aptitude picks they own, and its spells; its overrides applied, and each occurrence its
+ * table names mapped to its feature.
  */
 export class ClassMapping {
   constructor(
     private readonly detector: BaseClassDetector,
     private readonly detected: ClassReference["detected"],
-  ) {}
+  ) {
+    this.pools = new ClassPools(detector, detected);
+  }
 
   /** The mapping's features, by name. */
   private readonly features: ClassReference["mapping"]["features"] = {};
-
-  /** Each pool sub-option's sub-options, the separate features (or table rows) that follow it, by its lowercased name. */
-  private readonly orphanSubOptions = new Map<string, NamedText[]>();
-
-  /**
-   * Each pool's aptitude by its sub-option's name, and by its own as `__pool__<name>` (a pool with no inline
-   * sub-options too, whose sub-options are separate features).
-   */
-  private readonly poolAptitudes = new Map<string, PoolAptitude>();
-
-  /** The pool features, lowercased: their sub-options are features, not they. */
-  private readonly poolFeatureNames = new Set<string>();
-
-  /** The "table: X" features and their rows, lowercased: sub-options, not features. */
-  private readonly tableSkipNames = new Set<string>();
+  /** The class's pools and their sub-options. */
+  private readonly pools: ClassPools;
 
   /**
    * Add aptitude pick modifiers to features that have matching picks (e.g. Fighter's "Bonus Feats", Rogue's "Special
@@ -143,7 +132,8 @@ export class ClassMapping {
 
     const normalizedDesc = normalizeWs(cf.description);
     const { modifiers } = new BenefitModifiers(normalizedDesc);
-    const wapMods = baseName === "Weapon and Armor Proficiency" ? readProficiencyModifiers(normalizedDesc) : [];
+    const wapMods =
+      baseName === "Weapon and Armor Proficiency" ? new ProficiencyModifiers(normalizedDesc).modifiers : [];
     const allModifiers = [...wapMods, ...modifiers];
 
     this.features[baseName] = {
@@ -174,10 +164,10 @@ export class ClassMapping {
       level: poolLevel,
       ...(poolStackable ? { stackable: true } : {}),
     };
-    const parsed = readPoolSubOptions(normalizedDesc);
+    const parsed = new FeatureText(normalizedDesc).poolSubOptions();
     if (parsed) {
       for (const opt of parsed.options) {
-        const pool = this.poolAptitudes.get(opt.name);
+        const pool = this.pools.optionAptitude(opt.name);
         if (!pool) continue;
         this.features[opt.name] = {
           description: opt.description,
@@ -190,11 +180,9 @@ export class ClassMapping {
     }
 
     // Fallback: orphan sub-options (separate classFeature entries)
-    const orphans = this.orphanSubOptions.get(baseName.toLowerCase());
+    const orphans = this.pools.orphansOf(baseName);
     if (!orphans) return;
-    const poolInfo =
-      this.poolAptitudes.get(`__pool__${baseName.toLowerCase()}`) ??
-      this.poolAptitudes.get(`__pool__${cf.name.toLowerCase()}`);
+    const poolInfo = this.pools.poolAptitude(baseName) ?? this.pools.poolAptitude(cf.name);
     if (!poolInfo) return;
     for (const orphan of orphans) {
       this.features[orphan.name] = {
@@ -223,173 +211,6 @@ export class ClassMapping {
       const feature: Record<string, unknown> = Object.assign(mapping.features[name] ?? {}, fields);
       for (const [key, value] of Object.entries(feature)) if (value === null) delete feature[key];
       mapping.features[name] = feature;
-    }
-  }
-
-  /** The ability the class's bonus spells come from: its own, else the one its features' text names. */
-  private bonusSpellAbility(): string | undefined {
-    // Auto-populate bonusSpellAbility from raw or class feature descriptions
-    if (this.raw.bonusSpellAbility) return this.raw.bonusSpellAbility;
-    for (const cf of this.raw.classFeatures) {
-      const m =
-        cf.description.match(
-          /must have (?:a |an )?(Intelligence|Wisdom|Charisma) score (?:equal to )?(?:at )?least 10/i,
-        ) ?? cf.description.match(/bonus spells for a high (Intelligence|Wisdom|Charisma)/i);
-      if (m) return m[1];
-    }
-    return undefined;
-  }
-
-  /**
-   * Detect orphan sub-options: classFeature entries that follow a pool parent and don't appear in the progression
-   * table (e.g. Stonelord's Stone Power sub-options). Uses poolAptitudes' __pool__ entries (broader than
-   * poolFeatureNames, which only has inline-sub features).
-   */
-  private detectOrphanSubOptions() {
-    const { raw } = this;
-    // Build a set of feature names that appear in the progression table
-    // (used to detect "orphan" classFeature entries that are pool sub-options)
-    const progressionFeatureNames = new Set<string>();
-    for (const row of raw.progression) {
-      for (const special of row.special)
-        if (special) progressionFeatureNames.add(normalizeFeatureName(special).toLowerCase());
-    }
-
-    for (let i = 0; i < raw.classFeatures.length; i++) {
-      const cf = raw.classFeatures[i];
-      const baseName = getFeatureBaseName(cf.name);
-      if (
-        !this.poolAptitudes.has(`__pool__${cf.name.toLowerCase()}`) &&
-        !this.poolAptitudes.has(`__pool__${baseName.toLowerCase()}`)
-      )
-        continue;
-
-      // This is a pool parent — check if it has inline sub-options
-      const normalizedDesc = normalizeWs(cf.description);
-      const parsed = readPoolSubOptions(normalizedDesc);
-      if (parsed && parsed.options.length >= 2) continue; // Handled by inline parsing
-
-      // No inline sub-options — collect orphan features that follow
-      const orphans: NamedText[] = [];
-      for (let j = i + 1; j < raw.classFeatures.length; j++) {
-        const next = raw.classFeatures[j];
-        const nextBase = getFeatureBaseName(next.name);
-        const nextNorm = normalizeFeatureName(nextBase).toLowerCase();
-        // Stop when we hit a feature that appears in the progression table
-        if (progressionFeatureNames.has(nextNorm) || progressionFeatureNames.has(nextBase.toLowerCase())) break;
-        // Skip "Weapon and Armor Proficiency" — it's not a sub-option
-        if (nextBase.toLowerCase() === "weapon and armor proficiency") continue;
-        orphans.push({ name: nextBase, description: normalizeWs(next.description) });
-      }
-      if (orphans.length >= 2) {
-        this.orphanSubOptions.set(baseName.toLowerCase(), orphans);
-        this.poolFeatureNames.add(cf.name.toLowerCase());
-        this.poolFeatureNames.add(baseName.toLowerCase());
-      }
-    }
-  }
-
-  /**
-   * The class's pools, from its detected aptitude picks: each feature whose description offers a choice, its aptitude
-   * ("<Class> <Feature>"), and its sub-options the description lists.
-   */
-  private detectPools() {
-    const { raw, detected } = this;
-    if (!detected.aptitudePicks) return;
-    const { classSlug } = this.detector;
-
-    for (const pick of detected.aptitudePicks) {
-      // Extract feature slug from target: "aptitudes.roguespecialability.allowed" → "roguespecialability"
-      const slugMatch = pick.target.match(/^aptitudes\.(.+)\.allowed$/);
-      if (!slugMatch) continue;
-      const pickSlug = slugMatch[1].replace(new RegExp(`^${classSlug}`), "");
-
-      // Find the matching feature occurrence
-      const occ = detected.featureOccurrences.find((fo) => {
-        const featureSlug = stripSeparators(fo.name);
-        return featureSlug === pickSlug;
-      });
-      if (!occ) continue;
-
-      // Find the raw class feature description
-      const cf = this.detector.findFeature(occ.name);
-      if (!cf) continue;
-
-      const normalizedDesc = normalizeWs(cf.description);
-
-      // Check for choice language — this is a pool feature if description mentions selection
-      if (!CHOICE_PATTERN.test(normalizedDesc)) continue;
-
-      const aptName = `${raw.name} ${occ.name}`;
-      const minLevel = Math.min(...occ.levels);
-
-      const parsed = readPoolSubOptions(normalizedDesc);
-      const hasInlineSubs = parsed && parsed.options.length >= 2;
-
-      if (hasInlineSubs) {
-        for (const opt of parsed.options) {
-          this.poolAptitudes.set(opt.name, {
-            aptitude: aptName,
-            level: minLevel,
-            ...(opt.stackable ? { stackable: true } : {}),
-          });
-        }
-      }
-
-      // Only treat as a pool feature if it has inline sub-options;
-      // orphan sub-options are detected below and will add to poolFeatureNames then
-      if (hasInlineSubs) {
-        this.poolFeatureNames.add(cf.name.toLowerCase());
-        this.poolFeatureNames.add(occ.name.toLowerCase());
-      }
-
-      // Store aptitude info for orphan sub-option detection
-      // Always set this — even without inline subs, orphan detection needs it
-      // (e.g. Stonelord Stone Power has sub-options as separate classFeatures)
-      this.poolAptitudes.set(`__pool__${cf.name.toLowerCase()}`, { aptitude: aptName, level: minLevel });
-    }
-  }
-
-  /**
-   * Detect table-based sub-options: "table: X" → "X: Y" features (e.g. "table: Loremaster Secrets" followed by
-   * "Loremaster Secrets: Instant Mastery"), each table a pool's whose name its slug ends with.
-   */
-  private detectTableSubOptions() {
-    const { raw } = this;
-    for (let i = 0; i < raw.classFeatures.length; i++) {
-      const cf = raw.classFeatures[i];
-      if (!cf.name.startsWith("table: ")) continue;
-      const tableName = cf.name.replace(/^table:\s*/, "");
-      this.tableSkipNames.add(cf.name.toLowerCase()); // skip the "table: X" feature itself
-
-      // Find matching pool parent by checking if table slug ends with pool parent slug
-      let matchedParent: string | undefined;
-      for (const [key] of this.poolAptitudes) {
-        if (!key.startsWith("__pool__")) continue;
-        const parentSlug = key.replace("__pool__", "");
-        const tableSlug = stripSeparators(tableName);
-        if (tableSlug.endsWith(parentSlug) || tableSlug.endsWith(parentSlug + "s")) {
-          matchedParent = parentSlug;
-          break;
-        }
-      }
-      if (!matchedParent) continue;
-
-      // Collect prefixed sub-option features
-      const prefix = tableName + ": ";
-      const orphans: NamedText[] = [];
-      for (let j = i + 1; j < raw.classFeatures.length; j++) {
-        const next = raw.classFeatures[j];
-        if (!next.name.startsWith(prefix)) break;
-        const subName = next.name.substring(prefix.length);
-        orphans.push({ name: subName, description: normalizeWs(next.description) });
-        this.tableSkipNames.add(next.name.toLowerCase());
-      }
-
-      if (orphans.length >= 2) {
-        this.orphanSubOptions.set(matchedParent, orphans);
-        this.poolFeatureNames.add(matchedParent);
-      }
     }
   }
 
@@ -479,29 +300,15 @@ export class ClassMapping {
   /** The class's mapping: its pools and features, their aptitude picks, its spells and its bonus spells' ability. */
   build(): ClassReference["mapping"] {
     const { raw, detected } = this;
-    this.detectPools();
-    this.detectOrphanSubOptions();
-    this.detectTableSubOptions();
-
     for (const cf of raw.classFeatures) {
       const baseName = getFeatureBaseName(cf.name);
 
-      // Skip "Table:" entries — not class features
-      if (baseName.startsWith("Table:")) continue;
-      // Skip table features and their sub-options — handled via orphan sub-option detection
-      if (this.tableSkipNames.has(cf.name.toLowerCase())) continue;
-
-      // If this is a pool feature, skip it and add its sub-options instead
-      if (this.poolFeatureNames.has(cf.name.toLowerCase()) || this.poolFeatureNames.has(baseName.toLowerCase())) {
+      // A pool feature adds its sub-options; an orphan sub-option is its pool's
+      if (this.pools.isPool(cf.name, baseName)) {
         this.addPoolFeature(cf, baseName);
         continue;
       }
-
-      // Skip orphan features — they were already added as sub-options above
-      const isOrphan = [...this.orphanSubOptions.values()].some((orphans) =>
-        orphans.some((o) => o.name.toLowerCase() === baseName.toLowerCase()),
-      );
-      if (isOrphan) continue;
+      if (this.pools.isOrphan(baseName)) continue;
 
       this.addFeature(cf, baseName);
     }
@@ -526,8 +333,7 @@ export class ClassMapping {
       };
     }
 
-    const bonusSpellAbility = this.bonusSpellAbility();
-    if (bonusSpellAbility) mapping.bonusSpellAbility = bonusSpellAbility;
+    if (raw.bonusSpellAbility) mapping.bonusSpellAbility = raw.bonusSpellAbility;
 
     this.applyOverrides(mapping);
     mapping.occurrenceMap = this.occurrenceMap(mapping.features);
