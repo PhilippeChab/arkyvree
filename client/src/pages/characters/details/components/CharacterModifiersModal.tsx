@@ -188,7 +188,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
               <AddButton label="Add" onClick={handleAdd} />
             </Stack>
             {isLoading ? (
-              <DiceSpinner sx={{ py: 8 }} />
+              <DiceSpinner sx={{ py: 4 }} />
             ) : error && modifiers.length === 0 ? (
               <LoadError what="Modifiers" error={error} />
             ) : modifiers.length === 0 ? (

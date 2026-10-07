@@ -2,7 +2,7 @@ import { Chip, Stack, Tooltip, Typography } from "@mui/material";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 
-import { AddButton, ListToolbar, LoadError } from "@/client/src/components/common/index.ts";
+import { AddButton, EmptyValue, ListToolbar, LoadError } from "@/client/src/components/common/index.ts";
 import { LevelsIcon } from "@/client/src/components/icons/index.ts";
 import { useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
@@ -101,9 +101,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
                 );
               })
             ) : (
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                —
-              </Typography>
+              <EmptyValue />
             )}
           </Stack>
         );

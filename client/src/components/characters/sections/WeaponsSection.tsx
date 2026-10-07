@@ -10,7 +10,7 @@ import {
   Typography,
 } from "@mui/material";
 
-import { BlankNote } from "@/client/src/components/common/index.ts";
+import { BlankNote, EmptyValue, SubsectionTitle } from "@/client/src/components/common/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import { buildAttackRows, describeWeaponSlot } from "@/shared/dnd3.5/weaponAttacks.ts";
@@ -48,9 +48,7 @@ export function WeaponsSection({ combat }: WeaponsSectionProps) {
             return (
               <TableContainer key={setIndex} sx={{ overflowX: "auto" }}>
                 <Stack spacing={1}>
-                  <Typography variant="subtitle2" component="h3" sx={{ color: "text.secondary" }}>
-                    Set {shownWeaponSet(Number(setIndex))}
-                  </Typography>
+                  <SubsectionTitle>Set {shownWeaponSet(Number(setIndex))}</SubsectionTitle>
                   <Table size="small" sx={{ minWidth: 600 }}>
                     <colgroup>
                       <Box component="col" sx={{ width: "25%" }} />
@@ -91,7 +89,9 @@ export function WeaponsSection({ combat }: WeaponsSectionProps) {
                             <TableCell align="center">
                               {row.attack.length ? row.attack.map(formatSigned).join("/") : "+0"}
                             </TableCell>
-                            <TableCell align="center">{row.damage ?? (weapon.damage?.total || "—")}</TableCell>
+                            <TableCell align="center">
+                              {row.damage ?? (weapon.damage?.total || <EmptyValue />)}
+                            </TableCell>
                             <TableCell align="center">
                               {weapon.damage?.critical
                                 ? `${
@@ -103,7 +103,7 @@ export function WeaponsSection({ combat }: WeaponsSectionProps) {
                             </TableCell>
                             <TableCell align="center">{row.range}</TableCell>
                             <TableCell align="center">
-                              {weapon.damage?.types ? weapon.damage.types.join(", ") : "—"}
+                              {weapon.damage?.types ? weapon.damage.types.join(", ") : <EmptyValue />}
                             </TableCell>
                           </TableRow>
                         )),

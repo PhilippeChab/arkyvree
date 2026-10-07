@@ -1,7 +1,14 @@
 import { DialogContent, DialogTitle, Stack, Typography } from "@mui/material";
 import { useState } from "react";
 
-import { DialogFooter, DiceSpinner, LinkButton, LoadError, Modal } from "@/client/src/components/common/index.ts";
+import {
+  DialogFooter,
+  DiceSpinner,
+  LinkButton,
+  LoadError,
+  Modal,
+  SubsectionTitle,
+} from "@/client/src/components/common/index.ts";
 import { useOglLicense } from "@/client/src/hooks/index.ts";
 
 interface RulesetLicenseNoticeProps {
@@ -24,9 +31,7 @@ export function RulesetLicenseNotice({ name }: RulesetLicenseNoticeProps) {
         <DialogContent dividers>
           <Stack spacing={3}>
             <Stack spacing={1}>
-              <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 600 }}>
-                {name}
-              </Typography>
+              <SubsectionTitle>{name}</SubsectionTitle>
               <Typography variant="body2">
                 This notice applies to the SRD-derived Open Game Content in this system source package. It does not
                 license the application code or designate independent user-created content as Open Game Content.

@@ -2,7 +2,13 @@ import { Box, Collapse, Link as MuiLink, Stack, Typography } from "@mui/material
 import { type ReactNode, useState } from "react";
 import { Link } from "react-router-dom";
 
-import { BlankNote, ToggleLabel } from "@/client/src/components/common/index.ts";
+import {
+  BlankNote,
+  EmptyValue,
+  EntryTitle,
+  SubsectionTitle,
+  ToggleLabel,
+} from "@/client/src/components/common/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 
 import { SheetSection } from "./SheetSection.tsx";
@@ -36,10 +42,7 @@ function FeatRow({ name, label, description, extra }: FeatRowProps) {
     // Without details, the bar runs a little past the description
     <Stack spacing={1} sx={{ borderLeft: 4, borderColor: "primary.main", pl: 2, pb: hasExtra ? 0 : 1 }}>
       <Box>
-        <Typography
-          component="h3"
-          sx={{ fontWeight: 600, color: "primary.main", typography: { xs: "body1", sm: "h6" } }}
-        >
+        <EntryTitle>
           {hasExtra ? (
             <ToggleLabel open={open} onToggle={() => setOpen((p) => !p)} label={`${label} Details`}>
               {name}
@@ -47,9 +50,9 @@ function FeatRow({ name, label, description, extra }: FeatRowProps) {
           ) : (
             name
           )}
-        </Typography>
+        </EntryTitle>
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
-          {description || "—"}
+          {description || <EmptyValue />}
         </Typography>
       </Box>
       {hasExtra && (
@@ -66,12 +69,12 @@ function GrantedFeatsSection({ feats, rulesetId }: GrantedFeatsSectionProps) {
   const [open, setOpen] = useState(false);
 
   return (
-    <Stack spacing={2}>
-      <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 600 }}>
+    <Stack spacing={1}>
+      <SubsectionTitle>
         <ToggleLabel open={open} onToggle={() => setOpen((prev) => !prev)}>
           Granted ({feats.length})
         </ToggleLabel>
-      </Typography>
+      </SubsectionTitle>
       {/* Mounted while closed: the space above it stays, as the list opens and closes within it */}
       <Collapse in={open} timeout="auto">
         <Stack spacing={3}>
@@ -79,10 +82,7 @@ function GrantedFeatsSection({ feats, rulesetId }: GrantedFeatsSectionProps) {
             const featLink = rulesetId && feat.id ? `/rulesets/${rulesetId}/feats/${feat.id}/customization` : undefined;
             return (
               <Box key={feat.id} sx={{ borderLeft: 4, borderColor: "primary.main", pl: 2, pb: 1 }}>
-                <Typography
-                  component="h4"
-                  sx={{ fontWeight: 600, color: "primary.main", typography: { xs: "body1", sm: "h6" } }}
-                >
+                <EntryTitle component="h4">
                   {featLink ? (
                     <MuiLink
                       component={Link}
@@ -96,9 +96,9 @@ function GrantedFeatsSection({ feats, rulesetId }: GrantedFeatsSectionProps) {
                   ) : (
                     feat.name
                   )}
-                </Typography>
+                </EntryTitle>
                 <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                  {feat.description || "—"}
+                  {feat.description || <EmptyValue />}
                 </Typography>
               </Box>
             );

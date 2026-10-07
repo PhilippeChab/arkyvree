@@ -1,6 +1,6 @@
-import { Box, Stack, Typography } from "@mui/material";
+import { Box, Stack } from "@mui/material";
 
-import { BlankNote, DiceSpinner, LoadError } from "@/client/src/components/common/index.ts";
+import { BlankNote, DiceSpinner, LoadError, SubsectionTitle } from "@/client/src/components/common/index.ts";
 
 import { AttributeIncreaseField } from "./AttributeIncreaseField.tsx";
 import type { AddAttributeStepProps } from "./levelUpFactory.ts";
@@ -27,10 +27,10 @@ export function AddAttributeStep({ wizard, baseRules }: AddAttributeStepProps) {
         const selected = abilityIncreases[index] ?? null;
 
         return (
-          <Stack key={index} spacing={0.25}>
-            <Typography variant="h6" component="h3">
+          <Stack key={index} spacing={1}>
+            <SubsectionTitle>
               {detail ? `${detail.klassName} Level ${detail.level}` : `Level ${index + 1}`}
-            </Typography>
+            </SubsectionTitle>
             {/* The field sits on a line of the block's text, as it did under the title */}
             <Box>
               <AttributeIncreaseField

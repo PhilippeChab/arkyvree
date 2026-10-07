@@ -1,7 +1,7 @@
 import { Chip, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 
-import { ROW_ACTIONS_HOVER_SX, ROW_ACTIONS_SX, TableFrame } from "@/client/src/components/common/index.ts";
+import { EmptyValue, ROW_ACTIONS_HOVER_SX, ROW_ACTIONS_SX, TableFrame } from "@/client/src/components/common/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
 
 interface ContributorRow {
@@ -57,7 +57,7 @@ export function ContributorsTable<T extends ContributorRow>({
   const userCell = (username: string | null | undefined, email: string) => (
     <TableCell>
       <Typography variant="body2" sx={{ fontWeight: 500 }}>
-        {username || "—"}
+        {username || <EmptyValue />}
       </Typography>
       {isMobile && (
         <Typography variant="caption" sx={{ color: "text.secondary" }}>

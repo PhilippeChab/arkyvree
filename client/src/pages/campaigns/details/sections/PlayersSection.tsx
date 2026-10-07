@@ -21,6 +21,7 @@ import {
   BlankState,
   ConfirmDialog,
   DiceSpinner,
+  EmptyValue,
   LoadError,
   LoadMoreButton,
   NoMatchesState,
@@ -348,9 +349,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                                 {formatDate(player.createdAt)}
                               </Typography>
                             ) : (
-                              <Typography variant="body2" sx={{ color: "text.disabled" }}>
-                                —
-                              </Typography>
+                              <EmptyValue />
                             )}
                           </TableCell>
                           <TableCell>

@@ -1,5 +1,6 @@
 import { Typography } from "@mui/material";
 
+import { EmptyValue } from "@/client/src/components/common/index.ts";
 import { lineClampSx } from "@/client/src/theme/text.ts";
 
 interface DescriptionCellProps {
@@ -17,7 +18,7 @@ export function DescriptionCell({ text }: DescriptionCellProps) {
         textOverflow: "ellipsis",
       }}
     >
-      {text || "—"}
+      {text || <EmptyValue />}
     </Typography>
   );
 }

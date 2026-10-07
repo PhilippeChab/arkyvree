@@ -14,7 +14,7 @@ interface ToggleLabelProps {
 
 /**
  * A heading's toggle: its arrow, then its label, one button that shows or hides what the heading titles. The heading
- * holds it, so it stays a heading: `<Typography component="h3"><ToggleLabel …>Granted (3)</ToggleLabel></Typography>`.
+ * holds it, so it stays a heading: `<SubsectionTitle><ToggleLabel …>Granted (3)</ToggleLabel></SubsectionTitle>`.
  */
 export function ToggleLabel({ open, onToggle, label, children }: ToggleLabelProps) {
   if (label) {

@@ -1,7 +1,7 @@
 import { Box, Chip, IconButton, Stack, TextField, Typography } from "@mui/material";
 import { useController } from "react-hook-form";
 
-import { DiceSpinner } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, SubsectionTitle } from "@/client/src/components/common/index.ts";
 import { CasinoIcon } from "@/client/src/components/icons/index.ts";
 import { PREFERS_REDUCED_MOTION, settleAnimation } from "@/client/src/theme/animations.ts";
 
@@ -18,9 +18,7 @@ export function LevelUpHpStep({ wizard }: LevelUpHpStepProps) {
     <Stack spacing={2} sx={{ pb: 1 }}>
       <Box>
         <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-          <Typography variant="h6" component="h3">
-            Set HP for Level {selectedClass.nextLevel}
-          </Typography>
+          <SubsectionTitle>Set HP for Level {selectedClass.nextLevel}</SubsectionTitle>
           <IconButton
             onClick={() => triggerHpRoll(selectedClass.hd)}
             disabled={hpRolling}

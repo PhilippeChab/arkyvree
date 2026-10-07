@@ -16,7 +16,14 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
-import { CLICKABLE_SX, ExpandArrow, ToggleLabel, toggleProps } from "@/client/src/components/common/index.ts";
+import {
+  CLICKABLE_SX,
+  EmptyValue,
+  ExpandArrow,
+  SubsectionTitle,
+  ToggleLabel,
+  toggleProps,
+} from "@/client/src/components/common/index.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { type AptitudeSpells, buildSpellGroups, type SpellGroup, type SpellRow } from "@/shared/dnd3.5/spellGroups.ts";
@@ -45,11 +52,11 @@ function CollapsibleClass({ apt, rulesetId }: CollapsibleClassProps) {
   return (
     // The last class, closed, keeps the space its title has to its spells
     <Stack spacing={1} sx={{ "&:last-child": { pb: open ? 0 : 1 } }}>
-      <Typography variant="h6" component="h3" sx={{ fontWeight: 600 }}>
+      <SubsectionTitle>
         <ToggleLabel open={open} onToggle={() => setOpen((prev) => !prev)}>
           {apt.aptitudeName} ({totalSpells})
         </ToggleLabel>
-      </Typography>
+      </SubsectionTitle>
       <Collapse in={open} timeout="auto" unmountOnExit>
         <Stack spacing={1} sx={{ pl: 1 }}>
           {apt.levels.map((group) => (
@@ -67,13 +74,13 @@ function CollapsibleLevel({ group, rulesetId }: CollapsibleLevelProps) {
 
   return (
     // The last level, closed, keeps the space its title has to its spells
-    <Stack spacing={0.5} sx={{ "&:last-child": { pb: open ? 0 : 0.5 } }}>
+    <Stack spacing={1} sx={{ "&:last-child": { pb: open ? 0 : 1 } }}>
       <Stack direction="row" spacing={1} sx={{ alignItems: "baseline" }}>
-        <Typography variant="subtitle2" component="h4" sx={{ fontWeight: 600 }}>
+        <SubsectionTitle component="h4">
           <ToggleLabel open={open} onToggle={() => setOpen((prev) => !prev)}>
             {label} ({group.spells.length})
           </ToggleLabel>
-        </Typography>
+        </SubsectionTitle>
         {group.uses != null && (
           // Italic as the level's label it follows
           <Typography variant="body2" sx={{ color: "text.secondary", fontStyle: "italic" }}>
@@ -150,7 +157,7 @@ function SpellRowItem({ spell, rulesetId }: SpellRowItemProps) {
         </TableCell>
         <TableCell>{spell.school}</TableCell>
         <TableCell>{spell.save}</TableCell>
-        <TableCell align="center">{spell.dc ?? "—"}</TableCell>
+        <TableCell align="center">{spell.dc ?? <EmptyValue />}</TableCell>
       </TableRow>
       <TableRow>
         <TableCell colSpan={4} sx={{ py: 0, borderBottom: open ? undefined : "none" }}>

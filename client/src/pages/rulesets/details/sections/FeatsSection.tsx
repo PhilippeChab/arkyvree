@@ -22,6 +22,7 @@ import {
   clickableProps,
   CreateDialog,
   DiceSpinner,
+  EmptyValue,
   ExpandArrow,
   LoadError,
   LoadMoreButton,
@@ -191,9 +192,7 @@ function GroupedRow({
         <Typography variant="body2">{row.displayName}</Typography>
       </TableCell>
       <TableCell>
-        <Typography variant="body2" sx={{ color: "text.secondary" }}>
-          —
-        </Typography>
+        <EmptyValue />
       </TableCell>
     </TableRow>
   );

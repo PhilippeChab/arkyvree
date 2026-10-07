@@ -10,6 +10,7 @@ import {
   DeleteDialog,
   DiceSpinner,
   EditDialog,
+  EmptyValue,
   ExpandArrow,
   SectionContent,
 } from "@/client/src/components/common/index.ts";
@@ -301,9 +302,7 @@ export function RequirementsSection({
                     {requirement.target ? (
                       <TargetPathBreadcrumbs target={requirement.target} targetLabels={requirement.targetLabels} />
                     ) : (
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        —
-                      </Typography>
+                      <EmptyValue />
                     )}
                     {requirement.operator && (
                       <Chip
@@ -313,7 +312,9 @@ export function RequirementsSection({
                         variant="outlined"
                       />
                     )}
-                    <Typography variant="body2">{requirement.valueLabel || requirement.value || "—"}</Typography>
+                    <Typography variant="body2">
+                      {requirement.valueLabel || requirement.value || <EmptyValue />}
+                    </Typography>
                   </>
                 )}
 

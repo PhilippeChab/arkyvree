@@ -1,6 +1,7 @@
 import { Chip, Typography } from "@mui/material";
 import { type ElementType, useMemo } from "react";
 
+import { EmptyValue } from "@/client/src/components/common/index.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 
 interface ClassLevelCountsTableProps<L extends { id: string; level: number }> {
@@ -57,7 +58,7 @@ export function ClassLevelCountsTable<L extends { id: string; level: number }>({
     const value = countOf(level, columnKey.replace("count_", ""));
     return (
       <Typography variant="body2" sx={{ color: value != null ? "text.primary" : "text.secondary" }}>
-        {value ?? "—"}
+        {value ?? <EmptyValue />}
       </Typography>
     );
   };

@@ -290,7 +290,7 @@ describe("component rules", () => {
     ).toEqual(["blank-notes client/src/alert.tsx", "blank-notes client/src/line.tsx"]);
   });
 
-  test("a page's first load is a PageLoader, and no spinner takes a height or the large size", async () => {
+  test("a page's first load is a PageLoader, and any other spinner takes a section's spacing alone", async () => {
     const page = "export const p = <DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />;\n";
     const large = 'export const l = <DiceSpinner size="large" />;\n';
     expect(
@@ -300,15 +300,82 @@ describe("component rules", () => {
           "client/src/large.tsx": large,
           "client/src/page.tsx": page,
           "client/src/section.tsx": "export const s = <DiceSpinner sx={{ py: 4 }} />;\n",
+          "client/src/centred.tsx": "export const c = <DiceSpinner sx={{ flex: 1 }} />;\n",
+          "client/src/deeper.tsx": "export const d = <DiceSpinner sx={{ py: 8 }} />;\n",
+          "client/src/plain.tsx": "export const n = <DiceSpinner />;\n",
           "client/src/components/common/PageLoader.tsx": page,
           "client/src/components/characters/CharacterDetailSkeleton.tsx": large,
         },
         ["page-loaders"],
       ),
     ).toEqual([
+      "page-loaders client/src/centred.tsx",
+      "page-loaders client/src/deeper.tsx",
       "page-loaders client/src/large.tsx",
       "page-loaders client/src/page.tsx",
       "page-loaders client/src/tall.tsx",
+    ]);
+  });
+
+  test("a heading under a card's is a SubsectionTitle 8px above its content, an entry's name an EntryTitle", async () => {
+    const own = 'export const o = <Typography variant="subtitle1" component="h3">Granted</Typography>;\n';
+    expect(
+      await lintRepo(
+        {
+          "client/src/sub.tsx": 'export const s = <Typography variant="h6" component="h3">Combat Stats</Typography>;\n',
+          "client/src/entry.tsx": 'export const e = <Typography component="h4">Dodge</Typography>;\n',
+          "client/src/card.tsx": 'export const c = <Typography component="h2">Skills</Typography>;\n',
+          "client/src/wide.tsx":
+            "export const w = <Stack spacing={2}><SubsectionTitle>Combat Stats</SubsectionTitle><Box /></Stack>;\n",
+          "client/src/tight.tsx":
+            "export const t = <Stack spacing={1}>{/* Its stats */}<SubsectionTitle>Stats</SubsectionTitle><Box /></Stack>;\n",
+          "client/src/row.tsx":
+            'export const r = <Stack direction="row" spacing={2}><SubsectionTitle>Stats</SubsectionTitle><Chip /></Stack>;\n',
+          "client/src/components/common/SubsectionTitle.tsx": own,
+          "client/src/components/common/EntryTitle.tsx": own,
+        },
+        ["section-headings"],
+      ),
+    ).toEqual([
+      "section-headings client/src/entry.tsx",
+      "section-headings client/src/sub.tsx",
+      "section-headings client/src/wide.tsx",
+    ]);
+  });
+
+  test("a page's content sits 32px under its header", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/list.tsx":
+            'export const l = <Stack spacing={3}><PageHeader title="Characters" /><Box /></Stack>;\n',
+          "client/src/sheet.tsx": "export const s = <Stack spacing={2}><CharacterHeader /><Box /></Stack>;\n",
+          "client/src/page.tsx": "export const p = <Stack spacing={4}><DetailPageHeader /><Box /></Stack>;\n",
+          "client/src/other.tsx": "export const o = <Stack spacing={2}><Box /><Box /></Stack>;\n",
+        },
+        ["page-gaps"],
+      ),
+    ).toEqual(["page-gaps client/src/list.tsx", "page-gaps client/src/sheet.tsx"]);
+  });
+
+  test("a value that isn't there is an EmptyValue", async () => {
+    const own = "export const o = <Box>—</Box>;\n";
+    expect(
+      await lintRepo(
+        {
+          "client/src/text.tsx": "export const t = <Typography>—</Typography>;\n",
+          "client/src/fallback.tsx": 'export const f = <TableCell>{value || "—"}</TableCell>;\n',
+          "client/src/helper.ts": 'export function slot(worn: boolean) {\n  return worn ? "Hand" : "—";\n}\n',
+          "client/src/separator.tsx": "export const s = <Typography>— {uses}/day</Typography>;\n",
+          "client/src/value.tsx": "export const v = <TableCell>{value ?? <EmptyValue />}</TableCell>;\n",
+          "client/src/components/common/EmptyValue.tsx": own,
+        },
+        ["empty-values"],
+      ),
+    ).toEqual([
+      "empty-values client/src/fallback.tsx",
+      "empty-values client/src/helper.ts",
+      "empty-values client/src/text.tsx",
     ]);
   });
 });

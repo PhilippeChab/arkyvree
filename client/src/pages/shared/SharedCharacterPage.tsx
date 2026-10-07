@@ -50,7 +50,7 @@ export default function SharedCharacterPage() {
   return (
     <PageTransition>
       <Container maxWidth="xl" sx={{ py: 2 }}>
-        <Stack spacing={2}>
+        <Stack spacing={4}>
           <CharacterHeader
             name={character.identity?.physiology?.name ?? ""}
             rulesetName={character.rulesetName}

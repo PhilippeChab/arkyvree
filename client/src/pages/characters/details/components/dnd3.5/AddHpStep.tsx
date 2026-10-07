@@ -1,5 +1,6 @@
 import { Box, Button, Chip, IconButton, Stack, TextField, Typography } from "@mui/material";
 
+import { SubsectionTitle } from "@/client/src/components/common/index.ts";
 import { CasinoIcon } from "@/client/src/components/icons/index.ts";
 
 import type { AddHpStepProps } from "./levelUpFactory.ts";
@@ -29,9 +30,9 @@ export function AddHpStep({ wizard }: AddHpStepProps) {
           <Stack key={index} spacing={2}>
             <Box>
               <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                <Typography variant="h6" component="h3">
+                <SubsectionTitle>
                   Set HP for {level.className} Level {level.nextLevel}
-                </Typography>
+                </SubsectionTitle>
                 <IconButton onClick={() => onRoll(index)} color="primary" size="small" aria-label={`Roll d${level.hd}`}>
                   <CasinoIcon />
                 </IconButton>

@@ -1,7 +1,7 @@
 import { Box, Stack, Typography } from "@mui/material";
 
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
-import { BlankNote } from "@/client/src/components/common/index.ts";
+import { BlankNote, SubsectionTitle } from "@/client/src/components/common/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import { capitalize } from "@/shared/text.ts";
 
@@ -34,13 +34,8 @@ export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSect
     <SheetSection title="Combat & Saves">
       <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
         {/* Left column: Combat Stats */}
-        <Stack spacing={2} sx={{ flex: 1, minWidth: { md: 350 } }}>
-          <Typography
-            component="h3"
-            sx={{ fontWeight: 600, color: "text.secondary", typography: { xs: "body1", sm: "h6" } }}
-          >
-            Combat Stats
-          </Typography>
+        <Stack spacing={1} sx={{ flex: 1, minWidth: { md: 350 } }}>
+          <SubsectionTitle>Combat Stats</SubsectionTitle>
           <Stack spacing={2}>
             {/* Combat stat grid — single grid so columns align across rows */}
             <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: { xs: 1, sm: 2 } }}>
@@ -69,13 +64,8 @@ export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSect
         </Stack>
 
         {/* Right column: Saving Throws */}
-        <Stack spacing={2} sx={{ flex: 1, minWidth: { md: 300 } }}>
-          <Typography
-            component="h3"
-            sx={{ fontWeight: 600, color: "text.secondary", typography: { xs: "body1", sm: "h6" } }}
-          >
-            Saving Throws
-          </Typography>
+        <Stack spacing={1} sx={{ flex: 1, minWidth: { md: 300 } }}>
+          <SubsectionTitle>Saving Throws</SubsectionTitle>
           {Object.keys(saves).length > 0 ? (
             <Stack spacing={3}>
               {Object.entries(saves).map(([save, saveData]) => {

@@ -29,8 +29,12 @@
  * - `blank-notes`: an empty list's line ("No local changes") is a `BlankNote` in a panel, a dialog, a menu or the level
  *   wizard, and a page's or a tab's is a `BlankState`, its icon and its line required: never a `Typography` or an
  *   `Alert` of its own.
- * - `page-loaders`: a page's first load is a `PageLoader` (the character sheet draws its skeleton); a spinner never
- *   takes a height or the large size, and a section's takes its block's spacing.
+ * - `page-loaders`: a page's first load is a `PageLoader` (the character sheet draws its skeleton); a section's or a
+ *   dialog's spinner takes a section's spacing (`py: 4`) and nothing else, never the large size.
+ * - `section-headings`: a heading under a card's title is a `SubsectionTitle` (8px above its content: the column it
+ *   leads takes `spacing={1}`), and an entry's name in a panel's list an `EntryTitle`: never a Typography of its own.
+ * - `page-gaps`: a page's content sits 32px under its header: the column holding the header takes `spacing={4}`.
+ * - `empty-values`: a value that isn't there is an `EmptyValue`, never a dash of its own.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
@@ -43,6 +47,12 @@ const HEADER_STYLE_KEYS = new Set(["backgroundColor", "bgcolor", "color", "fontW
 
 /** The pairs of words whose labels name a state and its opposite, A to Z within each; `Un…` pairs aside. */
 const OPPOSITES = new Set(["Close Open", "Collapse Expand", "Hide Show"]);
+
+/** The headers a page opens on, its content 32px below them. */
+const PAGE_HEADERS = new Set(["CharacterHeader", "DetailPageHeader", "PageHeader"]);
+
+/** The levels under a card's `h2`: a sub-heading's or an entry's. */
+const SUBHEADING_LEVELS = new Set(["h3", "h4", "h5", "h6"]);
 
 /** The attribute `name` of a JSX element, when it has one. */
 function attribute(element, name) {
@@ -159,6 +169,21 @@ function createDialogFooters(context) {
         node,
         message: "A dialog's footer is a `DialogFooter` (its way out, then its action or its own steps).",
       });
+    },
+  };
+}
+
+function createEmptyValues(context) {
+  if (!inClient(context) || inFile(context, "client/src/components/common/EmptyValue.tsx")) return {};
+  const message = "A value that isn't there is an `EmptyValue` (`components/common`), never a dash of its own.";
+  return {
+    JSXText(node) {
+      // A dash alone in its element; one between words ("— 3/day") is punctuation
+      const children = node.parent.children.filter((child) => child.type !== "JSXText" || child.value.trim());
+      if (node.value.trim() === "—" && children.length === 1) context.report({ node, message });
+    },
+    Literal(node) {
+      if (node.value === "—") context.report({ node, message });
     },
   };
 }
@@ -294,6 +319,22 @@ function createOptionTooltips(context) {
   };
 }
 
+function createPageGaps(context) {
+  if (!inClient(context)) return {};
+  return {
+    JSXElement(node) {
+      if (elementName(node) !== "Stack") return;
+      if (!node.children.some((child) => child.type === "JSXElement" && PAGE_HEADERS.has(elementName(child)))) return;
+      const spacing = attributeValue(attribute(node, "spacing"));
+      if (spacing?.type === "Literal" && spacing.value === 4) return;
+      context.report({
+        node: node.openingElement,
+        message: "A page's content sits 32px under its header: the column holding the header takes `spacing={4}`.",
+      });
+    },
+  };
+}
+
 function createPageLoaders(context) {
   if (!inClient(context)) return {};
   const ownLoader = inFile(context, "client/src/components/common/PageLoader.tsx");
@@ -304,16 +345,49 @@ function createPageLoaders(context) {
       const size = attributeValue(attribute(node, "size"));
       const properties = styleProperties(attributeValue(attribute(node, "sx")), node);
       const large = size?.type === "Literal" && size.value === "large" && !skeleton;
-      const tall = properties.some((property) => propertyKey(property) === "minHeight");
-      const pageSpacing =
+      // A section's or a dialog's spinner: `py: 4` alone
+      const styled =
         !ownLoader &&
-        properties.some((property) => propertyKey(property) === "py" && property.value.type === "ObjectExpression");
-      if (!large && !tall && !pageSpacing) return;
+        properties.some(
+          (property) =>
+            propertyKey(property) !== "py" || property.value.type !== "Literal" || property.value.value !== 4,
+        );
+      if (!large && !styled) return;
       context.report({
         node: node.openingElement,
         message:
-          "A page's first load is a `PageLoader` (the character sheet draws its skeleton); a section's spinner takes " +
-          "its block's spacing (`py`), never a height or the large size.",
+          "A page's first load is a `PageLoader` (the character sheet draws its skeleton); a section's or a " +
+          "dialog's spinner takes a section's spacing (`sx={{ py: 4 }}`) and nothing else, never the large size.",
+      });
+    },
+  };
+}
+
+function createSectionHeadings(context) {
+  if (!inClient(context)) return {};
+  const owner =
+    inFile(context, "client/src/components/common/SubsectionTitle.tsx") ||
+    inFile(context, "client/src/components/common/EntryTitle.tsx");
+  return {
+    JSXElement(node) {
+      const name = elementName(node);
+      if (name === "Typography") {
+        const component = attributeValue(attribute(node, "component"));
+        if (owner || component?.type !== "Literal" || !SUBHEADING_LEVELS.has(component.value)) return;
+        context.report({
+          node: node.openingElement,
+          message:
+            "A heading under a card's title is a `SubsectionTitle`, and an entry's name in a panel's list an " +
+            "`EntryTitle`: never a Typography of its own.",
+        });
+        return;
+      }
+      if (name !== "Stack" || !leadsWith(node, "SubsectionTitle") || isRow(node)) return;
+      const spacing = attributeValue(attribute(node, "spacing"));
+      if (spacing?.type === "Literal" && spacing.value === 1) return;
+      context.report({
+        node: node.openingElement,
+        message: "A sub-heading sits 8px above its content: the column a `SubsectionTitle` leads takes `spacing={1}`.",
       });
     },
   };
@@ -440,6 +514,22 @@ function inTableHead(node) {
   return false;
 }
 
+/** Whether a `Stack` lays its children in a row, on any screen. */
+function isRow(stack) {
+  const direction = attributeValue(attribute(stack, "direction"));
+  return !!direction && !(direction.type === "Literal" && direction.value === "column");
+}
+
+/** Whether an element's first child (text and comments aside) is the element `name`. */
+function leadsWith(element, name) {
+  const first = element.children.find(
+    (child) =>
+      child.type === "JSXElement" ||
+      (child.type === "JSXExpressionContainer" && child.expression.type !== "JSXEmptyExpression"),
+  );
+  return first?.type === "JSXElement" && elementName(first) === name;
+}
+
 /** Whether two words name a state and its opposite: `Star` and `Unstar`, `Expand` and `Collapse`. */
 function opposite(a, b) {
   if (!a || !b) return false;
@@ -480,7 +570,10 @@ export default {
   "blank-notes": { meta: { type: "suggestion" }, create: createBlankNotes },
   "card-titles": { meta: { type: "suggestion" }, create: createCardTitles },
   "confirm-dialogs": { meta: { type: "suggestion" }, create: createConfirmDialogs },
+  "empty-values": { meta: { type: "suggestion" }, create: createEmptyValues },
+  "page-gaps": { meta: { type: "suggestion" }, create: createPageGaps },
   "page-loaders": { meta: { type: "suggestion" }, create: createPageLoaders },
+  "section-headings": { meta: { type: "suggestion" }, create: createSectionHeadings },
   "table-frames": { meta: { type: "suggestion" }, create: createTableFrames },
   "link-buttons": { meta: { type: "suggestion" }, create: createLinkButtons },
   "next-page-spinners": { meta: { type: "suggestion" }, create: createNextPageSpinners },

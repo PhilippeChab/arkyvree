@@ -5,6 +5,7 @@ import { useCallback } from "react";
 
 import {
   CreateDialog,
+  EmptyValue,
   LoadError,
   LoadMoreButton,
   SearchBar,
@@ -79,7 +80,7 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       case "description":
         return <DescriptionCell text={save.description} />;
       case "ability":
-        return <Typography variant="body2">{abilityLookup.get(save.abilityId) || "—"}</Typography>;
+        return <Typography variant="body2">{abilityLookup.get(save.abilityId) || <EmptyValue />}</Typography>;
       default:
         return null;
     }

@@ -55,7 +55,7 @@ export default function CampaignCharacterPage() {
 
   return (
     <Container maxWidth="xl" sx={{ py: 2 }}>
-      <Stack spacing={2}>
+      <Stack spacing={4}>
         <CharacterHeader
           name={data.identity?.physiology?.name ?? ""}
           rulesetName={data.rulesetName}

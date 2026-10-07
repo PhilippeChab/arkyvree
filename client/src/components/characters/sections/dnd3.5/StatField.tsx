@@ -1,5 +1,7 @@
 import { Stack, Typography } from "@mui/material";
 
+import { EmptyValue } from "@/client/src/components/common/index.ts";
+
 interface StatFieldProps {
   label: string;
   value: string | number;
@@ -15,7 +17,7 @@ export function StatField({ label, value }: StatFieldProps) {
         variant="body1"
         sx={{ fontWeight: 500, borderBottom: 1, borderColor: "divider", px: 1, minWidth: 40, whiteSpace: "nowrap" }}
       >
-        {value ?? "—"}
+        {value ?? <EmptyValue />}
       </Typography>
     </Stack>
   );

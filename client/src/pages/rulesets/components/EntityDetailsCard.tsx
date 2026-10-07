@@ -1,7 +1,7 @@
 import { Box, Button, Card, CardContent, Stack, type SxProps, type Theme, Typography } from "@mui/material";
 import type { FormEventHandler, ReactNode } from "react";
 
-import { DiceSpinner } from "@/client/src/components/common/index.ts";
+import { CardTitle, DiceSpinner } from "@/client/src/components/common/index.ts";
 
 interface EntityDetailsCardProps {
   /** Facts shown next to the title in the read-only view. */
@@ -27,15 +27,13 @@ export function EntityDetailsCard({ title, chips, description, readOnlyBody, edi
       sx={[{ boxShadow: 2, borderRadius: 2, border: 1, borderColor: "divider" }, ...(Array.isArray(sx) ? sx : [sx])]}
     >
       <CardContent sx={{ p: 0 }}>
-        <Box sx={{ p: { xs: 2, sm: 3 }, pb: 2, borderBottom: 1, borderColor: "divider", bgcolor: "action.hover" }}>
+        <Box sx={{ p: { xs: 2, sm: 3 }, pb: 0 }}>
           <Stack
             direction="row"
             spacing={1}
             sx={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}
           >
-            <Typography component="h2" variant="h6" sx={{ fontWeight: 600, color: "primary.main" }}>
-              {title}
-            </Typography>
+            <CardTitle>{title}</CardTitle>
             {!edit && chips && (
               <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
                 {chips}
