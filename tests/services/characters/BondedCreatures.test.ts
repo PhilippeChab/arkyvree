@@ -2,13 +2,13 @@ import { describe, expect, test } from "bun:test";
 
 import { addClassLevels, addFeats } from "@/database/seeds/seedCharacter.ts";
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
+import { getBondedRaceStats } from "@/engine/rulesets/dnd3.5/bonded/bondedRaceData.ts";
 import DetailedCharacterAnimalCompanion from "@/engine/rulesets/dnd3.5/bonded/DetailedCharacterAnimalCompanion.ts";
 import DetailedCharacterFamiliar from "@/engine/rulesets/dnd3.5/bonded/DetailedCharacterFamiliar.ts";
 import DetailedCharacterMount from "@/engine/rulesets/dnd3.5/bonded/DetailedCharacterMount.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import { CARRYING_CAPACITY } from "@/engine/rulesets/dnd3.5/constants.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
-import { getBondedRaceStats } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";

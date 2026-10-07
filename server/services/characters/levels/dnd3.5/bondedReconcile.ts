@@ -1,55 +1,36 @@
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import { type Dnd35DetailedCharacter, getBondedRaceStats } from "@/engine/rulesets/dnd3.5/index.ts";
+import {
+  type Dnd35DetailedCharacter,
+  type NewBondedCreature,
+  planBondedCreature,
+  planBondedLevels,
+} from "@/engine/rulesets/dnd3.5/index.ts";
 import type { Db } from "@/server/database/index.ts";
-import { BadRequestError } from "@/server/errors/index.ts";
 import { CharacterAbilities, CharacterLevels, Characters } from "@/server/repositories/index.ts";
-import { BONDED_KIND_BY_SLUG, BONDED_KIND_SLUGS, type BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
+import { BONDED_KIND_SLUGS, type BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
 import type { Character } from "@/shared/relations.ts";
 
-function computeBondedTargetHD(kind: BondedKind, detailedMaster: Dnd35DetailedCharacter): number {
-  // Each grant feat writes its contribution to bonded.<kind>.level via a
-  // template modifier (e.g. Druid → `{{ [classes.druid.level] }}`, Ranger →
-  // `{{ floor([classes.ranger.level] / 2) }}`). Adding a new contributor
-  // class needs only a feat with the right template — no change here.
-  return Math.max(1, detailedMaster.components.bonded.getBondedLevel(kind));
-}
-
-async function createBonded(
-  tx: Db,
-  master: Character,
-  kind: BondedKind,
-  raceId: string,
-  raceName: string,
-  rulesetData: RulesetData,
-): Promise<string> {
-  const inserted = await Characters.create(tx, {
+/** The master's new creature of `kind`: the master's, in its ruleset, of its alignment and gender. */
+async function createBonded(tx: Db, master: Character, kind: BondedKind, creature: NewBondedCreature) {
+  const [bonded] = await Characters.create(tx, {
     userId: master.userId,
     rulesetId: master.rulesetId,
-    raceId,
+    raceId: creature.raceId,
     kind,
     parentCharacterId: master.id,
-    name: raceName,
+    name: creature.name,
     alignment: master.alignment,
     gender: master.gender,
     xp: 0,
   });
-  const bonded = inserted[0];
-
-  // Seed ability scores from the SRD stat block (Cat str=3, Heavy Warhorse
-  // str=18, etc.). Falls back to 10 if no stat block exists for the race.
-  const raceStats = getBondedRaceStats(raceName);
   await CharacterAbilities.createMany(
     tx,
-    rulesetData.abilities.map((ability) => ({
-      characterId: bonded.id,
-      abilityId: ability.id,
-      score: raceStats?.abilities[ability.name.toLowerCase() as keyof typeof raceStats.abilities] ?? 10,
-    })),
+    creature.abilities.map((ability) => ({ characterId: bonded.id, ...ability })),
   );
-
   return bonded.id;
 }
 
+/** The master's creature of `kind` made, kept or removed, and its levels taken or lost, as the 3.5 module plans. */
 async function reconcileBonded(
   tx: Db,
   masterRecord: Character,
@@ -57,9 +38,6 @@ async function reconcileBonded(
   detailedMaster: Dnd35DetailedCharacter,
   rulesetData: RulesetData,
 ): Promise<void> {
-  const { className } = BONDED_KIND_BY_SLUG[kind];
-  const targetRaceName = detailedMaster.components.bonded.getBondedRace(kind);
-
   // SELECT … FOR UPDATE on the master serializes concurrent reconciles for
   // the same character — without it, two overlapping finalizeLevelUp /
   // updateLevel transactions both observe "no existing bonded" and both
@@ -74,68 +52,16 @@ async function reconcileBonded(
   // (the cascade already ran), leaving an orphan visible only by deep link.
   if (!(await Characters.lock(tx, { id: masterRecord.id }))) return;
 
-  const existing = await Characters.findOne(tx, {
-    parentCharacterId: masterRecord.id,
-    kind,
-  });
+  const existing = await Characters.findOne(tx, { parentCharacterId: masterRecord.id, kind });
+  const plan = planBondedCreature(detailedMaster, kind, existing, rulesetData);
+  if (plan.removedId) await Characters.delete(tx, { id: plan.removedId });
+  if (!plan.levels) return;
 
-  if (!targetRaceName) {
-    if (existing) await Characters.delete(tx, { id: existing.id });
-    return;
-  }
-
-  const targetRace = rulesetData.races.find((r) => r.name === targetRaceName && r.kind === kind);
-  if (!targetRace) throw new BadRequestError(`Bonded ${kind} race "${targetRaceName}" not found in ruleset`);
-
-  const bondedKlass = rulesetData.klasses.find((k) => k.name === className && k.kind === kind);
-  if (!bondedKlass) throw new BadRequestError(`${className} class not found in ruleset — content seed missing`);
-
-  const targetHD = computeBondedTargetHD(kind, detailedMaster);
-
-  if (existing && existing.raceId === targetRace.id) {
-    await syncBondedLevels(tx, existing.id, bondedKlass.id, targetHD, rulesetData);
-    return;
-  }
-
-  if (existing) await Characters.delete(tx, { id: existing.id });
-
-  const bondedId = await createBonded(tx, masterRecord, kind, targetRace.id, targetRaceName, rulesetData);
-  await syncBondedLevels(tx, bondedId, bondedKlass.id, targetHD, rulesetData);
-}
-
-async function syncBondedLevels(
-  tx: Db,
-  bondedId: string,
-  bondedKlassId: string,
-  targetHD: number,
-  rulesetData: RulesetData,
-): Promise<void> {
-  const existingLevels = await CharacterLevels.findMany(tx, {
-    characterId: bondedId,
-  });
-  const currentHD = existingLevels.length;
-
-  if (currentHD === targetHD) return;
-
-  if (currentHD < targetHD) {
-    const klassLevels = rulesetData.klassLevelsByKlassId.get(bondedKlassId) ?? [];
-    const klassLevelByLevel = new Map(klassLevels.map((kl) => [kl.level, kl]));
-    for (let lv = currentHD + 1; lv <= targetHD; lv++) {
-      const kl = klassLevelByLevel.get(lv);
-      if (!kl) throw new BadRequestError(`Bonded class is missing level ${lv} — content seed incomplete`);
-
-      await CharacterLevels.create(tx, {
-        characterId: bondedId,
-        klassLevelId: kl.id,
-        hp: 1,
-        abilityId: null,
-      });
-    }
-    return;
-  }
-
-  // The creature loses its last levels: its levels are in the order it took them
-  for (const level of existingLevels.slice(targetHD)) await CharacterLevels.delete(tx, { id: level.id });
+  const bondedId = "created" in plan ? await createBonded(tx, masterRecord, kind, plan.created) : plan.keptId;
+  const levels = await CharacterLevels.findMany(tx, { characterId: bondedId });
+  const { added, removedIds } = planBondedLevels(levels, plan.levels, rulesetData);
+  for (const level of added) await CharacterLevels.create(tx, { characterId: bondedId, ...level });
+  for (const id of removedIds) await CharacterLevels.delete(tx, { id });
 }
 
 export async function reconcileAllBondedKinds(
