@@ -11,6 +11,7 @@ import DetailedCharacterFamiliar from "@/server/rulesets/dnd3.5/bonded/DetailedC
 import DetailedCharacterMount from "@/server/rulesets/dnd3.5/bonded/DetailedCharacterMount.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import { CARRYING_CAPACITY } from "@/server/rulesets/dnd3.5/constants.ts";
+import Dnd35TargetPaths from "@/server/rulesets/dnd3.5/Dnd35TargetPaths.ts";
 import { getBondedRaceStats } from "@/server/rulesets/dnd3.5/index.ts";
 import { CampaignCharactersService } from "@/server/services/campaigns/characters/index.ts";
 import { CharacterContributorsService } from "@/server/services/characters/contributors/index.ts";
@@ -360,6 +361,13 @@ describe("A familiar's benefit", () => {
 });
 
 describe("Stat blocks", () => {
+  test("replace the creature's weapons with its natural attacks: no item group reaches a weapon it no longer has", async () => {
+    const cat = await build(new DetailedCharacterFamiliar((await createWizardWithFamiliar("Cat Familiar")).bonded));
+    expect(cat.components.combat.getCombat().weaponsets["0"]?.mainhand?.name).not.toBe("Unarmed Strike");
+    expect(cat.components.weapons.getWeapons()).toEqual({});
+    expect(new Dnd35TargetPaths().traversePathInit("items.weapons.unarmedstrike.damage", cat.components)).toEqual([]);
+  });
+
   test("take a familiar's own modifiers on top: its master and stat block set it up before they apply", async () => {
     // A modifier on the cat race: +3 hit points and +2 Intelligence, which the master's derivation used to reset
     const { ctx, bonded } = await createWizardWithFamiliar("Cat Familiar");
