@@ -1,0 +1,137 @@
+import type { Holder, TraversePathResult } from "@/server/rulesets/engine/types.ts";
+import { stripSeparators } from "@/shared/text.ts";
+
+import { isTraversable } from "./isTraversable.ts";
+
+/** The entries of `value` that are objects and whose slug starts with `slug` (but isn't it): a skill's subtypes. */
+function subtypesOf(value: Record<string, unknown>, slug: string) {
+  return Object.entries(value).filter(
+    ([key, entry]) =>
+      entry !== null &&
+      typeof entry === "object" &&
+      stripSeparators(key).startsWith(slug) &&
+      stripSeparators(key) !== slug,
+  );
+}
+
+/**
+ * Walks a target path through a component's data, element by element: an entry by its slug, or a wildcard (`*`,
+ * `prefix*`) over the entries it matches. In a category of `subtypeCategories`, an entry's name also reaches the
+ * entries its name starts: a skill's subtypes.
+ */
+export default class PathTraverser {
+  constructor(private readonly subtypeCategories: ReadonlySet<string>) {}
+
+  /** A path that reaches no value, with why. */
+  static failed(holder: Holder | null, key: string, error: string): TraversePathResult[] {
+    return [{ holder, object: null, data: null, key, resolvedPath: null, error }];
+  }
+
+  /** Each of `entries` traversed with the rest of the path, under its own slug: a skill and its subtypes. */
+  private traverseEach(
+    holder: Holder,
+    entries: [string, unknown][],
+    rest: string[],
+    maxDepth: number,
+    pathParts: string[],
+  ): TraversePathResult[] {
+    return entries.flatMap(([key, value]) => {
+      const slug = stripSeparators(key);
+      return this.traverse(holder, rest, value as Record<string, unknown>, slug, maxDepth, [...pathParts, slug]);
+    });
+  }
+
+  /**
+   * A wildcard element (`*`, or `prefix*`): every object entry whose slug starts with the prefix, each traversed with
+   * the rest of the path. A matched entry without the next element is a group: its children are tested with a
+   * wildcard in turn. A wildcard can't end a path.
+   */
+  private traverseWildcard(
+    holder: Holder,
+    next: string,
+    rest: string[],
+    currentValue: unknown,
+    lastKey: string,
+    maxDepth: number,
+    pathParts: string[],
+  ): TraversePathResult[] {
+    // A wildcard past nothing fails the path whole (as above); past a value, it matches nothing.
+    if (currentValue === null || currentValue === undefined) throw new Error(`Element not found: ${next}`);
+    if (!isTraversable(currentValue)) return [];
+    const prefix = next === "*" ? "" : stripSeparators(next.slice(0, -1));
+    const results: TraversePathResult[] = [];
+    for (const [key, value] of Object.entries(currentValue)) {
+      // Skip null values and non-object primitives
+      if (value === null || typeof value !== "object") continue;
+      const formattedKey = stripSeparators(key);
+      if (!formattedKey || (prefix && !formattedKey.startsWith(prefix))) continue;
+      if (rest.length === 0)
+        return PathTraverser.failed(holder, lastKey, `Wildcard modifier not supported as last element`);
+      const nextElement = stripSeparators(rest[0]);
+      // A value without the next path element is a group: recurse with a wildcard into its children.
+      const elements = nextElement && !(nextElement in value) ? ["*", ...rest] : rest;
+      results.push(...this.traverse(holder, elements, value, key, maxDepth, [...pathParts, formattedKey]));
+    }
+    return results;
+  }
+
+  /** The rest of a path (`elements`) walked from `currentValue`, which `pathParts` reached. */
+  traverse(
+    holder: Holder,
+    elements: string[],
+    currentValue: unknown,
+    lastKey: string,
+    maxDepth: number = 0,
+    pathParts: string[] = [],
+  ): TraversePathResult[] {
+    if (maxDepth > 10) return PathTraverser.failed(holder, lastKey, `Max depth reached`);
+    maxDepth++;
+    const [next, ...rest] = elements;
+    if (next === "*" || next.endsWith("*")) {
+      return this.traverseWildcard(holder, next, rest, currentValue, lastKey, maxDepth, pathParts);
+    }
+
+    const formattedKey = stripSeparators(next);
+    // Only a skill's name also reaches its subtypes, the skills its name starts ("craft" → "craftarmorsmithing").
+    // Anywhere else, a name another starts is another entry: a feat's ("dodge" isn't "dodgebonusswashbuckler",
+    // "light" isn't "lightningreflexes"), checked by its family's group if it has one (`feats.weaponfocus.*`)
+    const reachesSubtypes = rest.length > 0 && this.subtypeCategories.has(pathParts[0]);
+    if (!formattedKey) return PathTraverser.failed(holder, formattedKey, `Element not found: ${next}`);
+    // A path that steps past a value (`abilities.strength.total.x`) fails whole, wildcard branches and all:
+    // traversePathInit answers the throw with the path's one error.
+    if (!isTraversable(currentValue)) throw new Error(`Element not found: ${next}`);
+    if (!(formattedKey in currentValue)) {
+      // A skill not found may name only its subtypes ("knowledge" for "knowledgearcana", "knowledgehistory"…):
+      // expand to all of them like an implicit wildcard
+      const prefixMatches = reachesSubtypes ? subtypesOf(currentValue, formattedKey) : [];
+      if (prefixMatches.length === 0) return PathTraverser.failed(holder, formattedKey, `Element not found: ${next}`);
+      return this.traverseEach(holder, prefixMatches, rest, maxDepth, pathParts);
+    }
+    const subtypeMatches = reachesSubtypes ? subtypesOf(currentValue, formattedKey) : [];
+    if (subtypeMatches.length > 0) {
+      // The skill itself, then its subtypes.
+      return this.traverseEach(
+        holder,
+        [[formattedKey, currentValue[formattedKey]], ...subtypeMatches],
+        rest,
+        maxDepth,
+        pathParts,
+      );
+    }
+
+    const path = [...pathParts, formattedKey];
+    if (rest.length !== 0) {
+      return this.traverse(holder, rest, currentValue[formattedKey], formattedKey, maxDepth, path);
+    }
+    return [
+      {
+        holder,
+        object: currentValue,
+        data: currentValue[formattedKey],
+        key: formattedKey,
+        resolvedPath: path.join("."),
+        error: null,
+      },
+    ];
+  }
+}
