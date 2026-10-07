@@ -178,7 +178,7 @@ function CustomizationView({
     <EntityDetailLayout
       entityName={`Customize ${title}`}
       subtitle={subtitle ?? `${label} in ${ruleset.name}`}
-      onBack={() => navigate(backPath ?? listPath)}
+      backTo={backPath ?? listPath}
       backDisabled={locked}
       canDelete={canEdit && isEditable(data) && !locked}
       onDelete={() => setDeleteDialogOpen(true)}
@@ -352,7 +352,6 @@ export default function CustomizationPage() {
     entityId: string;
     section?: string;
   }>();
-  const navigate = useNavigate();
   const location = useLocation();
   const validType = parseCustomizationSegment(entityType);
 
@@ -421,14 +420,14 @@ export default function CustomizationPage() {
               : loadFailureMessage(entityTypeLabel(validType, ruleset?.baseRules), entityError)
         }
         backLabel="Back to Ruleset"
-        onBack={() => navigate(`/rulesets/${rulesetId}`)}
+        backTo={`/rulesets/${rulesetId}`}
       />
     );
   }
 
   if (!ruleset || !data || !currentTab) {
     return (
-      <EntityDetailLayout onBack={() => navigate(-1)} canDelete={false} isLoading>
+      <EntityDetailLayout backTo={`/rulesets/${rulesetId}`} canDelete={false} isLoading>
         {null}
       </EntityDetailLayout>
     );

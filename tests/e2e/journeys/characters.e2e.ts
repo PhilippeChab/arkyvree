@@ -10,13 +10,13 @@ import { openContext, signedInPage, signIn } from "@/tests/e2e/support/signIn.ts
 
 /** Renames the character whose sheet is open, in place: clicking its name edits it. */
 async function renameInPlace(page: Page, name: string, newName: string) {
-  await page.locator(`h5:has-text("${name}")`).first().click();
+  await page.getByRole("heading", { level: 1 }).getByRole("button", { name }).click();
   const field = page.locator("input:focus");
   await field.fill(newName);
   const renamed = apiResponse(page, "PUT", /\/api\/characters\/[a-f0-9-]+(?:\?|$)/);
   await field.press("Enter");
   await renamed;
-  await expect(page.locator(`h5:has-text("${newName}")`)).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("heading", { level: 1, name: newName })).toBeVisible({ timeout: 15_000 });
 }
 
 test.describe("Characters", () => {
@@ -131,7 +131,7 @@ test.describe("Characters", () => {
     await expect(page).toHaveURL(/view=archived/);
     await page.locator(`text="${name} renamed"`).first().click();
     await openActionsMenu(page, /^Unarchive$/);
-    await expect(page.locator(`h5:has-text("${name} renamed")`)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("heading", { level: 1, name: `${name} renamed` })).toBeVisible({ timeout: 10_000 });
     await page.getByRole("button", { name: "More Actions" }).first().click();
     await expect(page.getByRole("menu").getByRole("menuitem", { name: /^Archive$/ })).toBeVisible();
   });
@@ -148,7 +148,7 @@ test.describe("Characters", () => {
       // A saved form is clean again.
       await expect(save).toBeDisabled({ timeout: 10_000 });
       await page.reload();
-      await expect(page.locator(`h5:has-text("${name}")`)).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByRole("heading", { level: 1, name })).toBeVisible({ timeout: 10_000 });
     };
 
     await selectOption(page, "Alignment", "Chaotic Good");
@@ -185,14 +185,12 @@ test.describe("Characters", () => {
 
     const anyone = await (await openContext(browser, { acceptDownloads: true })).newPage();
     await anyone.goto(shareUrl);
-    await expect(
-      anyone.locator(`h5:has-text("${name}"), h4:has-text("${name}"), h3:has-text("${name}")`).first(),
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(anyone.getByRole("heading", { level: 1, name })).toBeVisible({ timeout: 10_000 });
     const pdf = anyone.waitForResponse((r) => /\/api\/shared\/characters\/[^/]+\/pdf$/.test(r.url()), {
       timeout: 60_000,
     });
     const download = anyone.waitForEvent("download", { timeout: 60_000 });
-    await anyone.getByRole("button", { name: "Download PDF" }).first().click();
+    await openActionsMenu(anyone, /^Download PDF$/);
     expect((await pdf).headers()["content-type"]).toContain("application/pdf");
     const file = await download;
     expect(file.suggestedFilename()).toMatch(/\.pdf$/i);

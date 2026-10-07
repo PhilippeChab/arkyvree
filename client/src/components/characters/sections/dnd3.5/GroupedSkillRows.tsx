@@ -1,10 +1,9 @@
-import { IconButton, TableCell, TableRow } from "@mui/material";
+import { Box, Stack, TableCell, TableRow } from "@mui/material";
 import { type ReactNode, useMemo } from "react";
 
-import { CLICKABLE_SX, clickableProps } from "@/client/src/components/common/index.ts";
-import { ExpandLessIcon } from "@/client/src/components/icons/index.ts";
+import { CLICKABLE_SX, ExpandArrow, toggleProps } from "@/client/src/components/common/index.ts";
 import { useToggleSet } from "@/client/src/hooks/index.ts";
-import { DURATION, EASING, fadeIn, PREFERS_REDUCED_MOTION, transitionOf } from "@/client/src/theme/animations.ts";
+import { DURATION, EASING, fadeIn, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
 
 import { groupSkills } from "./skillGroups.ts";
 
@@ -58,26 +57,18 @@ export function GroupedSkillRows<S extends { name: string }>({
         return (
           <TableRow
             key={`group-${row.prefix}`}
-            {...clickableProps(() => toggle(row.prefix))}
+            {...toggleProps(isExpanded, () => toggle(row.prefix), "row")}
             sx={{ ...CLICKABLE_SX, bgcolor: "action.hover" }}
           >
             <TableCell sx={{ fontWeight: 600 }}>
-              {row.prefix} ({row.count})
+              <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+                <ExpandArrow open={isExpanded} />
+                <Box component="span">
+                  {row.prefix} ({row.count})
+                </Box>
+              </Stack>
             </TableCell>
-            <TableCell colSpan={columns - 2} />
-            <TableCell align="center">
-              <IconButton
-                size="small"
-                aria-label={`${row.prefix} Skills`}
-                aria-expanded={isExpanded}
-                sx={{
-                  transition: transitionOf(["transform"], DURATION.brisk),
-                  transform: isExpanded ? "rotate(0deg)" : "rotate(-90deg)",
-                }}
-              >
-                <ExpandLessIcon fontSize="small" />
-              </IconButton>
-            </TableCell>
+            <TableCell colSpan={columns - 1} />
           </TableRow>
         );
       })}

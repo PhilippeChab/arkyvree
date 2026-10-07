@@ -2,7 +2,7 @@ import { Chip, Stack, Tooltip, Typography } from "@mui/material";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 
-import { AddButton, LoadError } from "@/client/src/components/common/index.ts";
+import { AddButton, ListToolbar, LoadError } from "@/client/src/components/common/index.ts";
 import { LevelsIcon } from "@/client/src/components/icons/index.ts";
 import { useRulesetSaves } from "@/client/src/hooks/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
@@ -114,12 +114,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
 
   return (
     <Stack spacing={2}>
-      <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
-        <Typography variant="h6" component="h2">
-          Class Levels
-        </Typography>
-        {canEdit && <AddButton label="Add Level" onClick={handleCreate} />}
-      </Stack>
+      {canEdit && <ListToolbar actions={<AddButton label="Add Level" onClick={handleCreate} />} />}
 
       {!!savesError && !rulesetSaves && <LoadError what="Saves" error={savesError} />}
       <RulesetSectionTable

@@ -1,10 +1,14 @@
-import { Alert, Container, IconButton, Menu, Paper, Stack, Typography } from "@mui/material";
+import { Alert, Container, Menu, Stack } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
-import { CharacterDetailSkeleton, CharacterSheetBody } from "@/client/src/components/characters/index.ts";
+import {
+  CharacterDetailSkeleton,
+  CharacterHeader,
+  CharacterSheetBody,
+} from "@/client/src/components/characters/index.ts";
 import { ActionMenuItem, PageError } from "@/client/src/components/common/index.ts";
-import { ArrowBackIcon, DownloadIcon, EditIcon, MoreVertIcon } from "@/client/src/components/icons/index.ts";
+import { DownloadIcon, EditIcon } from "@/client/src/components/icons/index.ts";
 import { useAnchorMenu, usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
 import { accessLost, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
@@ -43,7 +47,7 @@ export default function CampaignCharacterPage() {
         <PageError
           message={loadFailureMessage("Character", error)}
           backLabel="Back to Campaign"
-          onBack={() => navigate(`/campaigns/${campaignId}/characters`)}
+          backTo={`/campaigns/${campaignId}/characters`}
         />
       </Container>
     );
@@ -52,44 +56,26 @@ export default function CampaignCharacterPage() {
   return (
     <Container maxWidth="xl" sx={{ py: 2 }}>
       <Stack spacing={2}>
-        <Paper sx={{ p: 2 }}>
-          <Stack
-            direction="row"
-            spacing={1}
-            sx={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}
-          >
-            <Stack direction="row" spacing={2} sx={{ alignItems: "center", minWidth: 0 }}>
-              <IconButton aria-label="Back" component={Link} to={`/campaigns/${campaignId}`}>
-                <ArrowBackIcon />
-              </IconButton>
-              <Typography component="h1" sx={{ fontWeight: 700, typography: { xs: "h5", md: "h4" } }} noWrap>
-                {data.rulesetName || "Character Sheet"}
-              </Typography>
-            </Stack>
-
-            {data.canDownloadPdf && !data.deletedAt && (
-              <Stack direction="row" spacing={1}>
-                <IconButton aria-label="More Actions" onClick={menu.openMenu} sx={{ color: "text.secondary" }}>
-                  <MoreVertIcon />
-                </IconButton>
-                <Menu anchorEl={menu.anchorEl} open={menu.open} onClose={menu.closeMenu}>
-                  {data.canEdit && (
-                    <ActionMenuItem
-                      icon={EditIcon}
-                      label="Edit Character"
-                      onClick={menu.closeMenuAnd(() => navigate(`/characters/${characterId}`))}
-                    />
-                  )}
-                  <ActionMenuItem
-                    icon={DownloadIcon}
-                    label="Download PDF"
-                    onClick={menu.closeMenuAnd(() => pdfExport.mutate())}
-                  />
-                </Menu>
-              </Stack>
-            )}
-          </Stack>
-        </Paper>
+        <CharacterHeader
+          name={data.identity?.physiology?.name ?? ""}
+          rulesetName={data.rulesetName}
+          backTo={`/campaigns/${campaignId}`}
+          onMenuOpen={data.canDownloadPdf && !data.deletedAt ? menu.openMenu : undefined}
+        />
+        <Menu anchorEl={menu.anchorEl} open={menu.open} onClose={menu.closeMenu}>
+          {data.canEdit && (
+            <ActionMenuItem
+              icon={EditIcon}
+              label="Edit Character"
+              onClick={menu.closeMenuAnd(() => navigate(`/characters/${characterId}`))}
+            />
+          )}
+          <ActionMenuItem
+            icon={DownloadIcon}
+            label="Download PDF"
+            onClick={menu.closeMenuAnd(() => pdfExport.mutate())}
+          />
+        </Menu>
         <CharacterSheetBody
           character={data}
           characterId={characterId}

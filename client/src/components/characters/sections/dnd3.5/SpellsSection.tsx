@@ -2,7 +2,6 @@ import {
   Box,
   Chip,
   Collapse,
-  IconButton,
   Link as MuiLink,
   Stack,
   Table,
@@ -13,12 +12,11 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import { type MouseEvent, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
-import { CLICKABLE_SX, clickableProps } from "@/client/src/components/common/index.ts";
-import { ExpandLessIcon, ExpandMoreIcon } from "@/client/src/components/icons/index.ts";
+import { CLICKABLE_SX, ExpandArrow, ToggleLabel, toggleProps } from "@/client/src/components/common/index.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { type AptitudeSpells, buildSpellGroups, type SpellGroup, type SpellRow } from "@/shared/dnd3.5/spellGroups.ts";
@@ -47,19 +45,11 @@ function CollapsibleClass({ apt, rulesetId }: CollapsibleClassProps) {
   return (
     // The last class, closed, keeps the space its title has to its spells
     <Stack spacing={1} sx={{ "&:last-child": { pb: open ? 0 : 1 } }}>
-      <Stack
-        direction="row"
-        spacing={0.5}
-        {...clickableProps(() => setOpen((prev) => !prev))}
-        sx={[CLICKABLE_SX, { alignItems: "center" }]}
-      >
-        <IconButton size="small" aria-label={apt.aptitudeName} aria-expanded={open} sx={{ p: 0 }}>
-          {open ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-        </IconButton>
-        <Typography variant="h6" component="h3" sx={{ fontWeight: 600 }}>
+      <Typography variant="h6" component="h3" sx={{ fontWeight: 600 }}>
+        <ToggleLabel open={open} onToggle={() => setOpen((prev) => !prev)}>
           {apt.aptitudeName} ({totalSpells})
-        </Typography>
-      </Stack>
+        </ToggleLabel>
+      </Typography>
       <Collapse in={open} timeout="auto" unmountOnExit>
         <Stack spacing={1} sx={{ pl: 1 }}>
           {apt.levels.map((group) => (
@@ -78,26 +68,18 @@ function CollapsibleLevel({ group, rulesetId }: CollapsibleLevelProps) {
   return (
     // The last level, closed, keeps the space its title has to its spells
     <Stack spacing={0.5} sx={{ "&:last-child": { pb: open ? 0 : 0.5 } }}>
-      <Stack
-        direction="row"
-        spacing={0.5}
-        {...clickableProps(() => setOpen((prev) => !prev))}
-        sx={[CLICKABLE_SX, { alignItems: "center" }]}
-      >
-        <IconButton size="small" aria-label={`${label} Spells`} aria-expanded={open} sx={{ p: 0 }}>
-          {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
-        </IconButton>
-        <Stack direction="row" spacing={1} sx={{ alignItems: "baseline" }}>
-          <Typography variant="subtitle2" component="h4" sx={{ fontWeight: 600 }}>
+      <Stack direction="row" spacing={1} sx={{ alignItems: "baseline" }}>
+        <Typography variant="subtitle2" component="h4" sx={{ fontWeight: 600 }}>
+          <ToggleLabel open={open} onToggle={() => setOpen((prev) => !prev)}>
             {label} ({group.spells.length})
+          </ToggleLabel>
+        </Typography>
+        {group.uses != null && (
+          // Italic as the level's label it follows
+          <Typography variant="body2" sx={{ color: "text.secondary", fontStyle: "italic" }}>
+            — {group.uses}/day
           </Typography>
-          {group.uses != null && (
-            // Italic as the level's label it follows
-            <Typography variant="body2" sx={{ color: "text.secondary", fontStyle: "italic" }}>
-              — {group.uses}/day
-            </Typography>
-          )}
-        </Stack>
+        )}
       </Stack>
       <Collapse in={open} timeout="auto" unmountOnExit>
         <TableContainer sx={{ overflowX: "auto" }}>
@@ -140,24 +122,16 @@ function SpellRowItem({ spell, rulesetId }: SpellRowItemProps) {
     <>
       <TableRow
         hover
-        {...clickableProps(() => setOpen((prev) => !prev))}
+        {...toggleProps(open, () => setOpen((prev) => !prev), "row")}
         sx={{ ...CLICKABLE_SX, "& > td": { borderBottom: open ? "none" : undefined } }}
       >
         <TableCell>
           <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
-            <IconButton size="small" aria-label={`${spell.name}'s Details`} aria-expanded={open} sx={{ p: 0 }}>
-              {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
-            </IconButton>
+            <ExpandArrow open={open} />
             {/* A tag sits twice the row's gap from the name, and from the next tag */}
             <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
               {spellLink ? (
-                <MuiLink
-                  component={Link}
-                  to={spellLink}
-                  target="_blank"
-                  underline="hover"
-                  onClick={(e: MouseEvent) => e.stopPropagation()}
-                >
+                <MuiLink component={Link} to={spellLink} target="_blank" underline="hover">
                   {spell.name}
                 </MuiLink>
               ) : (

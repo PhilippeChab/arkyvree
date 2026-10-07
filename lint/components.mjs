@@ -15,6 +15,9 @@
  * - `form-validation`: a form is `noValidate`, so its rules check its fields and say why, never the browser; a bound
  *   field that asks the browser to check it (`required`, `type="email"`) has `rules`, and one with native bounds
  *   (`htmlInput: { min, max }`, which its stepper keeps) checks them with `wholeNumberRules`.
+ * - `expand-arrows`: a toggle that shows or hides something leads with one arrow, `ExpandArrow`: a heading's is its
+ *   `ToggleLabel`, a row's its first cell's, under `toggleProps` (an accordion's is MUI's, which the theme puts first).
+ *   No other expand icon, and no arrow-only button but a `ToggleLabel`'s.
  * - `toggle-states`: a button that flips between two states keeps one label, naming what it turns on, and says which
  *   state it's in: `aria-pressed`, or `aria-expanded` when it shows or hides something.
  *
@@ -87,6 +90,38 @@ function createDialogFooters(context) {
       context.report({
         node,
         message: "A dialog's footer is a `DialogFooter` (its way out, then its action or its own steps).",
+      });
+    },
+  };
+}
+
+function createExpandArrows(context) {
+  if (!inClient(context)) return {};
+  const file = repoPath(context.filename);
+  return {
+    JSXElement(node) {
+      const name = elementName(node);
+      const asExpandIcon =
+        node.parent?.type === "JSXExpressionContainer" && node.parent.parent?.name?.name === "expandIcon";
+      const arrow =
+        name === "ExpandLessIcon" ||
+        (name === "ExpandMoreIcon" && !asExpandIcon && file !== "client/src/components/common/ExpandArrow.tsx");
+      // An arrow-only toggle is a `ToggleLabel`'s (the sidebar's chevron says which way it slides, not what it shows)
+      const toggleButton =
+        name === "IconButton" &&
+        node.children.some((child) => child.type === "JSXElement" && elementName(child) === "ExpandArrow") &&
+        file !== "client/src/components/common/ToggleLabel.tsx";
+      const clickableToggle =
+        hasAttribute(node, "aria-expanded") &&
+        node.openingElement.attributes.some(
+          (a) => a.type === "JSXSpreadAttribute" && context.sourceCode.getText(a).includes("clickableProps("),
+        );
+      if (!arrow && !toggleButton && !clickableToggle) return;
+      context.report({
+        node: node.openingElement,
+        message:
+          "A toggle leads with one arrow, `ExpandArrow`: a heading's is its `ToggleLabel`, a row's its first cell's " +
+          'under `toggleProps(open, onToggle, "row")`; an accordion\'s is its `expandIcon`.',
       });
     },
   };
@@ -268,6 +303,7 @@ export default {
   "anchor-menus": { meta: { type: "suggestion" }, create: createAnchorMenus },
   "choice-chips": { meta: { type: "suggestion" }, create: createChoiceChips },
   "dialog-footers": { meta: { type: "suggestion" }, create: createDialogFooters },
+  "expand-arrows": { meta: { type: "suggestion" }, create: createExpandArrows },
   "form-validation": { meta: { type: "suggestion" }, create: createFormValidation },
   "link-buttons": { meta: { type: "suggestion" }, create: createLinkButtons },
   "next-page-spinners": { meta: { type: "suggestion" }, create: createNextPageSpinners },

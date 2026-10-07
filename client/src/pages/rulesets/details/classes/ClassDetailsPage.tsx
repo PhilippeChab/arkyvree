@@ -208,7 +208,7 @@ export default function ClassDetailsPage() {
       <EntityPageError
         message={!ruleset ? loadFailureMessage("Ruleset", rulesetError) : loadFailureMessage("Class", classError)}
         backLabel="Back"
-        onBack={() => navigate(backUrl)}
+        backTo={backUrl}
       />
     );
   }
@@ -221,7 +221,7 @@ export default function ClassDetailsPage() {
       <EntityDetailLayout
         entityName={classData?.name}
         rulesetName={ruleset?.name}
-        onBack={() => navigate(backUrl)}
+        backTo={backUrl}
         canDelete={canEdit}
         onDelete={() => setDeleteDialogOpen(true)}
         isLoading={isLoading}

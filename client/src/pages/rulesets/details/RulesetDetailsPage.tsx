@@ -250,11 +250,7 @@ export default function RulesetDetailsPage() {
   if (!ruleset) {
     return (
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        <PageError
-          message={loadFailureMessage("Ruleset", error)}
-          backLabel="Back to Rulesets"
-          onBack={() => navigate("/rulesets")}
-        />
+        <PageError message={loadFailureMessage("Ruleset", error)} backLabel="Back to Rulesets" backTo={"/rulesets"} />
       </Container>
     );
   }
@@ -283,7 +279,7 @@ export default function RulesetDetailsPage() {
                 </IconButton>
               )
             }
-            onBack={() => navigate("/rulesets")}
+            backTo={"/rulesets"}
             onMenuOpen={hasMenuItems ? menu.openMenu : undefined}
             chips={
               <>

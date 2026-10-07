@@ -64,7 +64,6 @@ export function CharacterSheetBody({
   return (
     <Stack spacing={3}>
       <CharacterIdentitySection
-        characterName={character.identity?.physiology?.name || ""}
         characterId={characterId}
         rulesetId={rulesetId}
         character={character}

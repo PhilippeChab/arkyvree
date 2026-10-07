@@ -18,14 +18,13 @@ import { useController } from "react-hook-form";
 
 import {
   ChoiceChip,
-  CLICKABLE_SX,
-  clickableProps,
   DiceSpinner,
+  ExpandArrow,
   LoadError,
   NextPageSpinner,
   NoMatchesState,
+  ToggleLabel,
 } from "@/client/src/components/common/index.ts";
-import { ExpandLessIcon, ExpandMoreIcon } from "@/client/src/components/icons/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import { fadeInUpSx } from "@/client/src/theme/animations.ts";
@@ -64,17 +63,11 @@ function AutoGrantedFeats({ feats, defaultCollapsed }: AutoGrantedFeatsProps) {
   const [open, setOpen] = useState(!defaultCollapsed);
   return (
     <Box>
-      <Stack
-        direction="row"
-        {...clickableProps(() => setOpen(!open))}
-        aria-expanded={open}
-        sx={[{ alignItems: "center" }, CLICKABLE_SX]}
-      >
-        <Typography variant="subtitle1" component="h4" sx={{ flex: 1 }}>
+      <Typography variant="subtitle1" component="h4">
+        <ToggleLabel open={open} onToggle={() => setOpen(!open)}>
           Auto-Granted Feats ({feats.length})
-        </Typography>
-        {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
-      </Stack>
+        </ToggleLabel>
+      </Typography>
       <Collapse in={open}>
         <List dense>
           {feats.map((feat, i) => (
@@ -321,8 +314,12 @@ export function LevelUpFeatsStep({
                         if (family !== null) {
                           return (
                             <Box key={row.family}>
-                              <ListItemButton onClick={() => toggleFeatFamily(family)} sx={{ gap: 1 }}>
-                                {isExpanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+                              <ListItemButton
+                                onClick={() => toggleFeatFamily(family)}
+                                aria-expanded={isExpanded}
+                                sx={{ gap: 0.5 }}
+                              >
+                                <ExpandArrow open={isExpanded} />
                                 <ListItemText
                                   primary={row.displayName}
                                   secondary={formatCount(row.variantCount, "variant")}

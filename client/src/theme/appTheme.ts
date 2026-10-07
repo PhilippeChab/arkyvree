@@ -370,6 +370,12 @@ export function createAppTheme(darkMode: boolean): Theme {
             },
           },
         },
+        MuiAccordionSummary: {
+          styleOverrides: {
+            // Its arrow leads its title, as every toggle's does
+            root: { flexDirection: "row-reverse", gap: 8 },
+          },
+        },
         MuiAppBar: {
           styleOverrides: {
             root: {

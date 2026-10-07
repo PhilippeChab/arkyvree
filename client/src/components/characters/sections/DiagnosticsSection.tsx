@@ -5,7 +5,6 @@ import {
   Box,
   Chip,
   Collapse,
-  IconButton,
   Paper,
   Stack,
   Table,
@@ -18,8 +17,8 @@ import {
 } from "@mui/material";
 import { Fragment, type ReactNode, useMemo } from "react";
 
-import { CLICKABLE_SX, clickableProps } from "@/client/src/components/common/index.ts";
-import { ChevronRightIcon, ExpandMoreIcon } from "@/client/src/components/icons/index.ts";
+import { CLICKABLE_SX, ExpandArrow, toggleProps } from "@/client/src/components/common/index.ts";
+import { ExpandMoreIcon } from "@/client/src/components/icons/index.ts";
 import { useToggleSet } from "@/client/src/hooks/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 
@@ -91,7 +90,7 @@ function DiagnosticsGroup({ label, count, children }: DiagnosticsGroupProps) {
   if (count === 0) return null;
   return (
     <Accordion disableGutters sx={ACCORDION_SX}>
-      <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={SUMMARY_SX}>
+      <AccordionSummary expandIcon={<ExpandMoreIcon fontSize="small" />} sx={SUMMARY_SX}>
         <Typography variant="subtitle2" component="h4">
           {label} ({count})
         </Typography>
@@ -137,11 +136,9 @@ function GroupedRuleTable({ label, count, lastColumn, groups }: GroupedRuleTable
           const isOpen = expanded.has(key);
           return (
             <Fragment key={key}>
-              <TableRow hover {...clickableProps(() => toggle(key))} sx={CLICKABLE_SX}>
+              <TableRow hover {...toggleProps(isOpen, () => toggle(key), "row")} sx={CLICKABLE_SX}>
                 <TableCell sx={{ ...TABLE_CELL_SX, pr: 0 }}>
-                  <IconButton size="small" aria-label={`${source}'s Rules`} aria-expanded={isOpen} sx={{ p: 0 }}>
-                    {isOpen ? <ExpandMoreIcon fontSize="small" /> : <ChevronRightIcon fontSize="small" />}
-                  </IconButton>
+                  <ExpandArrow open={isOpen} />
                 </TableCell>
                 <TableCell sx={{ ...TABLE_CELL_SX, fontWeight: 600 }}>{source}</TableCell>
                 <TableCell sx={TABLE_CELL_SX} colSpan={4}>
@@ -275,7 +272,7 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
   return (
     <Paper sx={{ p: { xs: 2, sm: 3 } }}>
       <Accordion defaultExpanded={false} disableGutters sx={ACCORDION_SX}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={SUMMARY_SX}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon fontSize="small" />} sx={SUMMARY_SX}>
           <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
             <Typography variant="h6" component="h2">
               Diagnostics

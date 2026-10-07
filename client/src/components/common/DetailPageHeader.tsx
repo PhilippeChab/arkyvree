@@ -1,14 +1,19 @@
 import { Box, IconButton, Stack, Tab, Tabs, Typography } from "@mui/material";
 import { type ElementType, type MouseEvent, type ReactNode, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 
 import { ArrowBackIcon, MoreVertIcon } from "@/client/src/components/icons/index.ts";
 import { DURATION } from "@/client/src/theme/animations.ts";
 
 interface DetailPageHeaderProps {
-  title: string;
+  /** Its text, or what renames it (a character's name, clicked) */
+  title: ReactNode;
+  /** Shown in the title's place while the page's record is renamed */
+  titleEditor?: ReactNode;
   /** Inline control after the title, e.g. a star toggle. */
   titleAdornment?: ReactNode;
-  onBack: () => void;
+  /** Where Back goes, a link; without it (a shared sheet's viewer has nowhere to go back to), its corner stays empty */
+  backTo?: string;
   /** Opens the page's action menu; the button is hidden when omitted. */
   onMenuOpen?: (event: MouseEvent<HTMLElement>) => void;
   chips?: ReactNode;
@@ -35,11 +40,12 @@ export interface SectionTab<K extends string> {
   icon: ElementType;
 }
 
-/** Centered title block of a ruleset or campaign page, with back and menu buttons. */
+/** Centered title block of a ruleset, campaign or character page, with back and menu buttons. */
 export function DetailPageHeader({
   title,
+  titleEditor,
   titleAdornment,
-  onBack,
+  backTo,
   onMenuOpen,
   chips,
   description,
@@ -58,9 +64,11 @@ export function DetailPageHeader({
         position: "relative",
       }}
     >
-      <IconButton onClick={onBack} size="large" aria-label="Back" sx={{ ...cornerButtonSx, left: 0 }}>
-        <ArrowBackIcon />
-      </IconButton>
+      {backTo && (
+        <IconButton component={Link} to={backTo} size="large" aria-label="Back" sx={{ ...cornerButtonSx, left: 0 }}>
+          <ArrowBackIcon />
+        </IconButton>
+      )}
       {onMenuOpen && (
         <IconButton onClick={onMenuOpen} size="large" aria-label="More Actions" sx={{ ...cornerButtonSx, right: 0 }}>
           <MoreVertIcon />
@@ -69,9 +77,11 @@ export function DetailPageHeader({
       <Box sx={{ flexGrow: 1, textAlign: "center", px: { xs: 5, md: 8 } }}>
         <Stack spacing={1}>
           <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "center" }}>
-            <Typography component="h1" sx={{ fontWeight: 700, typography: { xs: "h4", md: "h3" } }}>
-              {title}
-            </Typography>
+            {titleEditor ?? (
+              <Typography component="h1" sx={{ fontWeight: 700, typography: { xs: "h4", md: "h3" } }}>
+                {title}
+              </Typography>
+            )}
             {titleAdornment}
           </Stack>
           <Stack spacing={2}>

@@ -1,9 +1,10 @@
-import { Chip, Stack, Typography } from "@mui/material";
+import { Chip, Typography } from "@mui/material";
 import { type ElementType, useMemo } from "react";
 
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 
 interface ClassLevelCountsTableProps<L extends { id: string; level: number }> {
+  /** What it counts, as a failure names it ("Feat Pools"); its tab names it on the page. */
   title: string;
   levels: L[] | undefined;
   isLoading: boolean;
@@ -62,24 +63,16 @@ export function ClassLevelCountsTable<L extends { id: string; level: number }>({
   };
 
   return (
-    <Stack spacing={2}>
-      <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center" }}>
-        <Typography variant="h6" component="h2">
-          {title}
-        </Typography>
-      </Stack>
-
-      <RulesetSectionTable
-        what={title}
-        error={error}
-        data={keys.length > 0 ? sortedLevels : undefined}
-        isLoading={isLoading}
-        columns={columns}
-        renderCell={renderCell}
-        emptyIcon={emptyIcon}
-        emptyTitle={emptyTitle}
-        emptyDescription={emptyDescription}
-      />
-    </Stack>
+    <RulesetSectionTable
+      what={title}
+      error={error}
+      data={keys.length > 0 ? sortedLevels : undefined}
+      isLoading={isLoading}
+      columns={columns}
+      renderCell={renderCell}
+      emptyIcon={emptyIcon}
+      emptyTitle={emptyTitle}
+      emptyDescription={emptyDescription}
+    />
   );
 }

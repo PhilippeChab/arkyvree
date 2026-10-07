@@ -247,9 +247,6 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
   return (
     <SectionContent>
       <Stack spacing={3}>
-        <Typography component="h2" sx={{ fontWeight: 600, typography: { xs: "h6", sm: "h5" } }}>
-          Players
-        </Typography>
         <SearchBar
           {...searchTextProps}
           searchPlaceholder="Search players…"
@@ -368,10 +365,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                                     <IconButton
                                       aria-label="Edit"
                                       size="small"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleEditPlayer(player);
-                                      }}
+                                      onClick={() => handleEditPlayer(player)}
                                       sx={{ color: "primary.main" }}
                                     >
                                       <EditIcon fontSize="small" />
@@ -384,10 +378,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                                       <IconButton
                                         aria-label="Revoke Invite"
                                         size="small"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleRevokeInvite(slot.pendingInvite.id);
-                                        }}
+                                        onClick={() => handleRevokeInvite(slot.pendingInvite.id)}
                                         sx={{ color: "warning.main" }}
                                         disabled={revokeInviteMutation.isPending}
                                       >
@@ -400,10 +391,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                                   <IconButton
                                     aria-label={isCurrentUser ? "Leave" : "Remove"}
                                     size="small"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleRemovePlayer(player);
-                                    }}
+                                    onClick={() => handleRemovePlayer(player)}
                                     sx={{ color: isCurrentUser ? "warning.main" : "error.main" }}
                                   >
                                     {isCurrentUser ? <LeaveIcon fontSize="small" /> : <DeleteIcon fontSize="small" />}

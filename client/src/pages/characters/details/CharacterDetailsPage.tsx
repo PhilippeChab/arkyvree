@@ -1,10 +1,14 @@
-import { Alert, Container, IconButton, Menu, Paper, Stack, Typography } from "@mui/material";
+import { Alert, Container, Menu, Stack, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useState } from "react";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 
-import { CharacterDetailSkeleton, CharacterSheetBody } from "@/client/src/components/characters/index.ts";
+import {
+  CharacterDetailSkeleton,
+  CharacterHeader,
+  CharacterSheetBody,
+} from "@/client/src/components/characters/index.ts";
 import {
   ActionMenuItem,
   ConfirmDialog,
@@ -15,11 +19,9 @@ import {
 import {
   AddIcon,
   ArchiveIcon,
-  ArrowBackIcon,
   DeleteForeverIcon,
   DownloadIcon,
   GroupIcon,
-  MoreVertIcon,
   RemoveIcon,
   ShareIcon,
   TuneIcon,
@@ -140,7 +142,7 @@ export default function CharacterDetailsPage() {
         <PageError
           message={loadFailureMessage("Character", error)}
           backLabel="Back to Characters"
-          onBack={() => navigate("/characters")}
+          backTo={"/characters"}
         />
       </Container>
     );
@@ -155,126 +157,104 @@ export default function CharacterDetailsPage() {
     <PageTransition>
       <Container maxWidth="xl" sx={{ py: 2 }}>
         <Stack spacing={2}>
-          {/* Header with controls */}
-          <Paper sx={{ p: 2 }}>
-            <Stack
-              direction="row"
-              spacing={1}
-              sx={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}
-            >
-              <Stack direction="row" spacing={2} sx={{ alignItems: "center", minWidth: 0 }}>
-                <IconButton
-                  aria-label="Back"
-                  component={Link}
-                  to={isBonded && parentCharacterId ? `/characters/${parentCharacterId}` : "/characters"}
-                >
-                  <ArrowBackIcon />
-                </IconButton>
-                <Typography component="h1" sx={{ fontWeight: 700, typography: { xs: "h5", md: "h4" } }} noWrap>
-                  {character.rulesetName || "Character Sheet"}
-                </Typography>
-              </Stack>
-
-              {!(isBonded && isArchived) && (
-                <Stack direction="row" spacing={1}>
-                  <IconButton aria-label="More Actions" onClick={menu.openMenu} sx={{ color: "text.secondary" }}>
-                    <MoreVertIcon />
-                  </IconButton>
-                  <Menu anchorEl={menu.anchorEl} open={menu.open} onClose={menu.closeMenu}>
-                    {isBonded ? (
-                      <ActionMenuItem
-                        key="download-pdf"
-                        icon={DownloadIcon}
-                        label="Download PDF"
-                        onClick={menu.closeMenuAnd(() => pdfExport.mutate())}
-                      />
-                    ) : isArchived ? (
-                      [
-                        isOwner && (
-                          <ActionMenuItem
-                            key="unarchive"
-                            icon={UnarchiveIcon}
-                            label="Unarchive"
-                            intent="positive"
-                            onClick={menu.closeMenuAnd(() => unarchiveMutation.mutate())}
-                          />
-                        ),
-                        !isDemo && (
-                          <ActionMenuItem
-                            key="contributors"
-                            icon={GroupIcon}
-                            label="Contributors"
-                            onClick={menu.closeMenuAnd(() => setContributorsOpen(true))}
-                          />
-                        ),
-                        isOwner && (
-                          <ActionMenuItem
-                            key="hard-delete"
-                            icon={DeleteForeverIcon}
-                            label="Delete Permanently"
-                            intent="destructive"
-                            onClick={menu.closeMenuAnd(() => setHardDeleteConfirmOpen(true))}
-                          />
-                        ),
-                      ]
-                    ) : (
-                      [
-                        <ActionMenuItem
-                          key="add-level"
-                          icon={AddIcon}
-                          label="Add Level"
-                          onClick={menu.closeMenuAnd(() => addLevel.openWith(true))}
-                        />,
-                        <ActionMenuItem
-                          key="remove-level"
-                          icon={RemoveIcon}
-                          label="Remove Level"
-                          onClick={menu.closeMenuAnd(() => setConfirmOpen(true))}
-                        />,
-                        <ActionMenuItem
-                          key="manage-modifiers"
-                          icon={TuneIcon}
-                          label="Manage Modifiers"
-                          onClick={menu.closeMenuAnd(() => setModifiersOpen(true))}
-                        />,
-                        <ActionMenuItem
-                          key="download-pdf"
-                          icon={DownloadIcon}
-                          label="Download PDF"
-                          onClick={menu.closeMenuAnd(() => pdfExport.mutate())}
-                        />,
-                        !isDemo && (
-                          <ActionMenuItem
-                            key="contributors"
-                            icon={GroupIcon}
-                            label="Contributors"
-                            onClick={menu.closeMenuAnd(() => setContributorsOpen(true))}
-                          />
-                        ),
-                        isOwner && !isDemo && (
-                          <ActionMenuItem
-                            key="share"
-                            icon={ShareIcon}
-                            label="Share"
-                            onClick={menu.closeMenuAnd(() => setShareOpen(true))}
-                          />
-                        ),
-                        isOwner && (
-                          <ActionMenuItem
-                            key="archive"
-                            icon={ArchiveIcon}
-                            label="Archive"
-                            intent="caution"
-                            onClick={menu.closeMenuAnd(() => setArchiveConfirmOpen(true))}
-                          />
-                        ),
-                      ]
-                    )}
-                  </Menu>
-                </Stack>
-              )}
-            </Stack>
-          </Paper>
+          <CharacterHeader
+            name={character.identity?.physiology?.name ?? ""}
+            rulesetName={character.rulesetName}
+            backTo={isBonded && parentCharacterId ? `/characters/${parentCharacterId}` : "/characters"}
+            onMenuOpen={isBonded && isArchived ? undefined : menu.openMenu}
+            rename={isArchived ? undefined : { characterId: id, updatedAt: character.updatedAt, parentCharacterId }}
+          />
+          <Menu anchorEl={menu.anchorEl} open={menu.open} onClose={menu.closeMenu}>
+            {isBonded ? (
+              <ActionMenuItem
+                key="download-pdf"
+                icon={DownloadIcon}
+                label="Download PDF"
+                onClick={menu.closeMenuAnd(() => pdfExport.mutate())}
+              />
+            ) : isArchived ? (
+              [
+                isOwner && (
+                  <ActionMenuItem
+                    key="unarchive"
+                    icon={UnarchiveIcon}
+                    label="Unarchive"
+                    intent="positive"
+                    onClick={menu.closeMenuAnd(() => unarchiveMutation.mutate())}
+                  />
+                ),
+                !isDemo && (
+                  <ActionMenuItem
+                    key="contributors"
+                    icon={GroupIcon}
+                    label="Contributors"
+                    onClick={menu.closeMenuAnd(() => setContributorsOpen(true))}
+                  />
+                ),
+                isOwner && (
+                  <ActionMenuItem
+                    key="hard-delete"
+                    icon={DeleteForeverIcon}
+                    label="Delete Permanently"
+                    intent="destructive"
+                    onClick={menu.closeMenuAnd(() => setHardDeleteConfirmOpen(true))}
+                  />
+                ),
+              ]
+            ) : (
+              [
+                <ActionMenuItem
+                  key="add-level"
+                  icon={AddIcon}
+                  label="Add Level"
+                  onClick={menu.closeMenuAnd(() => addLevel.openWith(true))}
+                />,
+                <ActionMenuItem
+                  key="remove-level"
+                  icon={RemoveIcon}
+                  label="Remove Level"
+                  onClick={menu.closeMenuAnd(() => setConfirmOpen(true))}
+                />,
+                <ActionMenuItem
+                  key="manage-modifiers"
+                  icon={TuneIcon}
+                  label="Manage Modifiers"
+                  onClick={menu.closeMenuAnd(() => setModifiersOpen(true))}
+                />,
+                <ActionMenuItem
+                  key="download-pdf"
+                  icon={DownloadIcon}
+                  label="Download PDF"
+                  onClick={menu.closeMenuAnd(() => pdfExport.mutate())}
+                />,
+                !isDemo && (
+                  <ActionMenuItem
+                    key="contributors"
+                    icon={GroupIcon}
+                    label="Contributors"
+                    onClick={menu.closeMenuAnd(() => setContributorsOpen(true))}
+                  />
+                ),
+                isOwner && !isDemo && (
+                  <ActionMenuItem
+                    key="share"
+                    icon={ShareIcon}
+                    label="Share"
+                    onClick={menu.closeMenuAnd(() => setShareOpen(true))}
+                  />
+                ),
+                isOwner && (
+                  <ActionMenuItem
+                    key="archive"
+                    icon={ArchiveIcon}
+                    label="Archive"
+                    intent="caution"
+                    onClick={menu.closeMenuAnd(() => setArchiveConfirmOpen(true))}
+                  />
+                ),
+              ]
+            )}
+          </Menu>
 
           <DeleteDialog
             open={isConfirmOpen}
