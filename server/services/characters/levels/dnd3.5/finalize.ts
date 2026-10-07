@@ -11,27 +11,20 @@ import { getTableName } from "drizzle-orm";
 import { levelsInCharacter } from "@/drizzle/schema.ts";
 import { type RulesetData } from "@/engine/core/view/index.ts";
 import {
-  buildPowerLevelLookup,
   buildProjectedAutoGrantedFeats,
   buildProjectedCharacterLevel,
   buildProjectedGivenFeats,
   buildProjectedSelections,
-  buildSkillContexts,
   checkAbilityIncrease,
   checkSelections,
-  computePerLevelAptitudeSlots,
-  distributePoolSelections,
+  distributePlannedPicks,
   type Dnd35ProjectedCharacterData,
   type Dnd35RulesetModule,
-  getDeferredAptitudeSources,
   getLevelIdsFromOnward,
-  getPlannedClassSkills,
   getPlannedKlassLevels,
   getSavedKlassLevel,
-  type PerLevelDistributionData,
-  projectPlannedLevels,
 } from "@/engine/rulesets/dnd3.5/index.ts";
-import { buildCharacter, readCharacterRows } from "@/server/builds/index.ts";
+import { buildCharacter } from "@/server/builds/index.ts";
 import { type RulesetScope, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { type Db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
@@ -47,8 +40,8 @@ import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Character, CharacterLevel, Session } from "@/shared/relations.ts";
 
-import { buildBaselineAptitudes } from "./baseline.ts";
 import { reconcileAllBondedKinds } from "./bondedReconcile.ts";
+import { buildPlannedLevels } from "./plannedLevels.ts";
 import { validateAndFetchLevelSelections } from "./validation.ts";
 
 type LevelSelections = Awaited<ReturnType<typeof validateAndFetchLevelSelections>>;
@@ -140,7 +133,7 @@ async function insertPlannedLevels(
   characterId: string,
   levels: { abilityId: string | null; hp: number }[],
   klassLevelEntries: ReturnType<typeof getPlannedKlassLevels>,
-  distributedLevels: ReturnType<typeof distributePoolSelections>,
+  distributedLevels: ReturnType<typeof distributePlannedPicks>,
   baseExistingLevels: Awaited<ReturnType<typeof CharacterLevels.findMany>>,
 ) {
   const createdLevels: Awaited<ReturnType<typeof CharacterLevels.create>>[number][] = [];
@@ -194,60 +187,6 @@ async function insertPlannedLevels(
     await insertLevelChildren(tx, characterLevel.id, levelSkills, levelFeats, levelPowers);
   }
   return createdLevels;
-}
-
-/**
- * Phase 1's distribution data: each planned level's skill points, class skills and pool slots, from the character
- * built with every planned level, and its skills as they are.
- */
-async function levelDistributionData(
-  tx: Db,
-  rulesetModule: Dnd35RulesetModule,
-  characterRecord: Character,
-  scope: RulesetScope,
-  klassLevelEntries: ReturnType<typeof getPlannedKlassLevels>,
-  baseLevelCount: number,
-): Promise<PerLevelDistributionData> {
-  const { rulesetData } = scope;
-  const { projectedData, allAutoGrantedFeatRecords } = projectPlannedLevels(
-    characterRecord.id,
-    klassLevelEntries,
-    rulesetData,
-  );
-
-  // Build full character with all planned levels to get aptitude pools, and the baseline from the same rows
-  const rows = await readCharacterRows(tx, characterRecord);
-  const fullCharacter = await buildCharacter(rulesetModule, characterRecord, { projected: projectedData, rows, scope });
-  const levelUpProjector = rulesetModule.createLevelUpProjector(fullCharacter);
-  const { featPools, powerPools } = fullCharacter.components.aptitudes.getLevelUpPools(rulesetData);
-
-  // Compute per-level feat/power slots from modifier data directly
-  const baselineApts = await buildBaselineAptitudes(rulesetModule, characterRecord, rows, scope);
-  const klassLevelIds = klassLevelEntries.map(({ klassLevel }) => klassLevel.id);
-  const { perLevelFeatSlots, perLevelPowerSlots } = computePerLevelAptitudeSlots(
-    rulesetData,
-    klassLevelIds,
-    allAutoGrantedFeatRecords,
-    Object.keys(featPools),
-    Object.keys(powerPools),
-    baseLevelCount,
-    baselineApts,
-  );
-
-  const perLevelSkillPoints = levelUpProjector.computeSkillPointsPerLevel(klassLevelIds, baseLevelCount, rulesetData);
-  const classSkills = getPlannedClassSkills(
-    rulesetData,
-    klassLevelEntries.map(({ klass }) => klass.id),
-  );
-
-  return {
-    perLevelSkillPoints,
-    perLevelClassSkillIds: classSkills.perLevel,
-    perLevelFeatSlots,
-    perLevelPowerSlots,
-    baseCharacterLevel: baseLevelCount,
-    skillContexts: buildSkillContexts(levelUpProjector, rulesetData.skills, classSkills.merged),
-  };
 }
 
 /**
@@ -360,7 +299,7 @@ export async function finalizeLevelUp(
         characterId,
       });
 
-      const distributionData = await levelDistributionData(
+      const planned = await buildPlannedLevels(
         tx,
         rulesetModule,
         characterRecord,
@@ -368,14 +307,7 @@ export async function finalizeLevelUp(
         klassLevelEntries,
         baseExistingLevels.length,
       );
-      const distributedLevels = distributePoolSelections(
-        distributionData,
-        skills,
-        feats,
-        powers,
-        buildPowerLevelLookup(rulesetData, Object.values(powers).flat()),
-        getDeferredAptitudeSources(rulesetData, feats, distributionData.perLevelFeatSlots),
-      );
+      const distributedLevels = distributePlannedPicks(planned, skills, feats, powers, rulesetData);
 
       // Phase 2: Per-level validation and insertion
       const createdLevels = await insertPlannedLevels(
