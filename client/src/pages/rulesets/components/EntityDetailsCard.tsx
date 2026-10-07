@@ -1,4 +1,4 @@
-import { Box, Button, Card, CardContent, type SxProps, type Theme, Typography } from "@mui/material";
+import { Box, Button, Card, CardContent, Stack, type SxProps, type Theme, Typography } from "@mui/material";
 import type { FormEventHandler, ReactNode } from "react";
 
 import { DiceSpinner } from "@/client/src/components/common/index.ts";
@@ -28,29 +28,33 @@ export function EntityDetailsCard({ title, chips, description, readOnlyBody, edi
     >
       <CardContent sx={{ p: 0 }}>
         <Box sx={{ p: { xs: 2, sm: 3 }, pb: 2, borderBottom: 1, borderColor: "divider", bgcolor: "action.hover" }}>
-          <Box
-            sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1 }}
+          <Stack
+            direction="row"
+            spacing={1}
+            sx={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}
           >
             <Typography component="h2" variant="h6" sx={{ fontWeight: 600, color: "primary.main" }}>
               {title}
             </Typography>
-            {!edit && chips && <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>{chips}</Box>}
-          </Box>
+            {!edit && chips && (
+              <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
+                {chips}
+              </Stack>
+            )}
+          </Stack>
         </Box>
         <Box sx={{ p: { xs: 2, sm: 3 } }}>
           {edit ? (
-            <form onSubmit={edit.onSubmit}>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                {edit.fields}
-                <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
-                  <Button type="submit" variant="contained" disabled={!edit.canSave || edit.isSaving}>
-                    <DiceSpinner size="small" loading={edit.isSaving}>
-                      Save
-                    </DiceSpinner>
-                  </Button>
-                </Box>
-              </Box>
-            </form>
+            <Stack component="form" onSubmit={edit.onSubmit} spacing={2}>
+              {edit.fields}
+              <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end" }}>
+                <Button type="submit" variant="contained" disabled={!edit.canSave || edit.isSaving}>
+                  <DiceSpinner size="small" loading={edit.isSaving}>
+                    Save
+                  </DiceSpinner>
+                </Button>
+              </Stack>
+            </Stack>
           ) : (
             (readOnlyBody ?? (
               <Typography variant="body1" sx={{ color: "text.secondary", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>

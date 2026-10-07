@@ -1,4 +1,4 @@
-import { Box } from "@mui/material";
+import { Box, Stack } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 import { useCallback, useState } from "react";
@@ -106,52 +106,54 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
 
   return (
     <SectionContent>
-      <SearchBar
-        {...searchTextProps}
-        searchPlaceholder="Search spells..."
-        filters={
-          <>
-            <Box sx={{ width: { xs: "100%", sm: 200 } }}>
-              <AptitudeAutocomplete
-                rulesetId={ruleset.id}
-                value={selectedAptitude}
-                onChange={setSelectedAptitude}
-                size="small"
-                scope="spells"
-              />
-            </Box>
-            <SpellLevelFilter value={selectedLevel} onChange={(level) => setLevelParam(String(level))} allowAll />
-          </>
-        }
-        actions={
-          <SectionActions
-            ruleset={ruleset}
-            childOnly={childOnly}
-            onChildOnlyChange={onChildOnlyChange}
-            addLabel="Add Spell"
-            onAdd={handleCreate}
+      <Stack spacing={3}>
+        <SearchBar
+          {...searchTextProps}
+          searchPlaceholder="Search spells..."
+          filters={
+            <>
+              <Box sx={{ width: { xs: "100%", sm: 200 } }}>
+                <AptitudeAutocomplete
+                  rulesetId={ruleset.id}
+                  value={selectedAptitude}
+                  onChange={setSelectedAptitude}
+                  size="small"
+                  scope="spells"
+                />
+              </Box>
+              <SpellLevelFilter value={selectedLevel} onChange={(level) => setLevelParam(String(level))} allowAll />
+            </>
+          }
+          actions={
+            <SectionActions
+              ruleset={ruleset}
+              childOnly={childOnly}
+              onChildOnlyChange={onChildOnlyChange}
+              addLabel="Add Spell"
+              onAdd={handleCreate}
+            />
+          }
+        />
+        <Stack spacing={2}>
+          <RulesetSectionTable
+            data={spells}
+            search={searchQuery}
+            isLoading={isLoading}
+            columns={SPELLS_COLUMNS}
+            onRowClick={handleRowClick}
+            onRowMouseEnter={handleRowMouseEnter}
+            renderCell={renderCell}
+            emptyIcon={PowersIcon}
+            emptyTitle="No spells"
+            emptyDescription="No spells available for this ruleset."
           />
-        }
-      />
-
-      <RulesetSectionTable
-        data={spells}
-        search={searchQuery}
-        isLoading={isLoading}
-        columns={SPELLS_COLUMNS}
-        onRowClick={handleRowClick}
-        onRowMouseEnter={handleRowMouseEnter}
-        renderCell={renderCell}
-        emptyIcon={PowersIcon}
-        emptyTitle="No spells"
-        emptyDescription="No spells available for this ruleset."
-      />
-
-      <LoadMoreButton
-        hasNextPage={hasNextPage}
-        isFetchingNextPage={isFetchingNextPage}
-        onClick={() => fetchNextPage()}
-      />
+          <LoadMoreButton
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            onClick={() => fetchNextPage()}
+          />
+        </Stack>
+      </Stack>
 
       <CreateDialog {...createDialogProps} title="Create New Spell" maxWidth="md" fixedHeight>
         <SpellFormFields form={createForm} rulesetId={ruleset.id} saves={createSaves} />

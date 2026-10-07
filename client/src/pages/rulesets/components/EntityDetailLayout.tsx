@@ -1,10 +1,10 @@
-import { Box, IconButton, Menu, MenuItem, Skeleton, Typography } from "@mui/material";
+import { Box, IconButton, Menu, MenuItem, Skeleton, Stack, Typography } from "@mui/material";
 import { type ComponentProps, type ReactNode, useState } from "react";
 
 import { PageError } from "@/client/src/components/common/index.ts";
 import { ArrowBackIcon, MoreVertIcon } from "@/client/src/components/icons/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
-import { DURATION, EASING, fadeInUp, PREFERS_REDUCED_MOTION } from "@/client/src/lib/animations.ts";
+import { DURATION, EASING, fadeInUp, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
 
 interface EntityDetailLayoutProps {
   entityName?: string;
@@ -23,7 +23,7 @@ interface EntityDetailLayoutProps {
 type EntityPageErrorProps = ComponentProps<typeof PageError>;
 
 /** An entity page's column: centered, up to 1200px. */
-const PAGE_SX = { maxWidth: 1200, margin: "0 auto", p: { xs: 2, sm: 3 } } as const;
+const PAGE_SX = { maxWidth: 1200, mx: "auto", p: { xs: 2, sm: 3 } } as const;
 
 export function EntityDetailLayout({
   entityName,
@@ -41,47 +41,35 @@ export function EntityDetailLayout({
 
   if (isLoading) {
     return (
-      <Box sx={PAGE_SX}>
-        <Box
-          sx={{
-            mb: 4,
-            display: "flex",
-            alignItems: "center",
-            py: 2,
-            borderBottom: 1,
-            borderColor: "divider",
-            position: "relative",
-          }}
+      <Stack spacing={4} sx={PAGE_SX}>
+        <Stack
+          direction="row"
+          sx={{ alignItems: "center", py: 2, borderBottom: 1, borderColor: "divider", position: "relative" }}
         >
           <Skeleton variant="circular" width={40} height={40} sx={{ position: "absolute", left: 0 }} />
           <Box sx={{ flexGrow: 1, textAlign: "center", px: { xs: 5, sm: 8 } }}>
             <Skeleton variant="text" width={200} height={40} sx={{ mx: "auto" }} />
             <Skeleton variant="text" width={150} height={24} sx={{ mx: "auto" }} />
           </Box>
-        </Box>
+        </Stack>
         <Skeleton variant="rounded" height={200} sx={{ borderRadius: 2 }} />
-      </Box>
+      </Stack>
     );
   }
 
   return (
-    <Box
+    // The page's blocks: its header, then what the page holds (a details card, its tabs, a tab's panel)
+    <Stack
+      spacing={4}
       sx={{
         ...PAGE_SX,
         animation: `${fadeInUp} ${DURATION.normal}ms ${EASING.decelerate} both`,
         [PREFERS_REDUCED_MOTION]: { animation: "none" },
       }}
     >
-      <Box
-        sx={{
-          mb: 4,
-          display: "flex",
-          alignItems: "center",
-          py: 2,
-          borderBottom: 1,
-          borderColor: "divider",
-          position: "relative",
-        }}
+      <Stack
+        direction="row"
+        sx={{ alignItems: "center", py: 2, borderBottom: 1, borderColor: "divider", position: "relative" }}
       >
         <IconButton
           aria-label="Back"
@@ -96,18 +84,14 @@ export function EntityDetailLayout({
         >
           <ArrowBackIcon />
         </IconButton>
-        <Box
-          sx={{
-            flexGrow: 1,
-            textAlign: "center",
-            px: { xs: 5, sm: 8 },
-          }}
-        >
-          <Typography sx={{ fontWeight: 600, mb: 0.5, typography: { xs: "h5", md: "h4" } }}>{entityName}</Typography>
+        <Stack spacing={0.5} sx={{ flexGrow: 1, textAlign: "center", px: { xs: 5, sm: 8 } }}>
+          <Typography component="h1" sx={{ fontWeight: 600, typography: { xs: "h5", md: "h4" } }}>
+            {entityName}
+          </Typography>
           <Typography component="div" variant="body2" sx={{ color: "text.secondary" }}>
             {subtitle || `${rulesetName} Ruleset`}
           </Typography>
-        </Box>
+        </Stack>
         {canDelete && onDelete && (
           <>
             <IconButton
@@ -143,9 +127,9 @@ export function EntityDetailLayout({
             </Menu>
           </>
         )}
-      </Box>
+      </Stack>
       {children}
-    </Box>
+    </Stack>
   );
 }
 

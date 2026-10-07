@@ -23,8 +23,8 @@ const INTENT_COLORS = {
 export function ActionMenuItem({ icon: Icon, label, description, intent = "default", onClick }: ActionMenuItemProps) {
   const color = intent === "default" ? undefined : INTENT_COLORS[intent];
   return (
-    <MenuItem onClick={onClick} sx={color ? { color } : undefined}>
-      <ListItemIcon sx={color ? { color: "inherit" } : undefined}>
+    <MenuItem onClick={onClick} sx={{ color }}>
+      <ListItemIcon sx={{ color: color && "inherit" }}>
         <Icon fontSize="small" />
       </ListItemIcon>
       <ListItemText primary={label} secondary={description} />

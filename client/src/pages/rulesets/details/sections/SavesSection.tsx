@@ -1,4 +1,4 @@
-import { Typography } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useCallback } from "react";
@@ -81,38 +81,40 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
 
   return (
     <SectionContent>
-      <SearchBar
-        {...searchTextProps}
-        searchPlaceholder="Search saves..."
-        actions={
-          <SectionActions
-            ruleset={ruleset}
-            childOnly={childOnly}
-            onChildOnlyChange={onChildOnlyChange}
-            addLabel="Add Save"
-            onAdd={handleCreate}
+      <Stack spacing={3}>
+        <SearchBar
+          {...searchTextProps}
+          searchPlaceholder="Search saves..."
+          actions={
+            <SectionActions
+              ruleset={ruleset}
+              childOnly={childOnly}
+              onChildOnlyChange={onChildOnlyChange}
+              addLabel="Add Save"
+              onAdd={handleCreate}
+            />
+          }
+        />
+        <Stack spacing={2}>
+          <RulesetSectionTable
+            data={saves}
+            search={searchQuery}
+            isLoading={isLoading}
+            columns={SAVES_COLUMNS}
+            onRowClick={handleRowClick}
+            onRowMouseEnter={handleRowMouseEnter}
+            renderCell={renderCell}
+            emptyIcon={SavesIcon}
+            emptyTitle="No saves"
+            emptyDescription="No saving throws available for this ruleset."
           />
-        }
-      />
-
-      <RulesetSectionTable
-        data={saves}
-        search={searchQuery}
-        isLoading={isLoading}
-        columns={SAVES_COLUMNS}
-        onRowClick={handleRowClick}
-        onRowMouseEnter={handleRowMouseEnter}
-        renderCell={renderCell}
-        emptyIcon={SavesIcon}
-        emptyTitle="No saves"
-        emptyDescription="No saving throws available for this ruleset."
-      />
-
-      <LoadMoreButton
-        hasNextPage={hasNextPage}
-        isFetchingNextPage={isFetchingNextPage}
-        onClick={() => fetchNextPage()}
-      />
+          <LoadMoreButton
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            onClick={() => fetchNextPage()}
+          />
+        </Stack>
+      </Stack>
 
       <CreateDialog {...createDialogProps} title="Create New Save">
         <SaveFormFields form={createForm} abilities={abilities} />

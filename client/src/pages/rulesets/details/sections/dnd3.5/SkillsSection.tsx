@@ -1,4 +1,4 @@
-import { Chip, Typography } from "@mui/material";
+import { Chip, Stack, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 import { useCallback } from "react";
@@ -96,38 +96,40 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
 
   return (
     <SectionContent>
-      <SearchBar
-        {...searchTextProps}
-        searchPlaceholder="Search skills..."
-        actions={
-          <SectionActions
-            ruleset={ruleset}
-            childOnly={childOnly}
-            onChildOnlyChange={onChildOnlyChange}
-            addLabel="Add Skill"
-            onAdd={handleCreate}
+      <Stack spacing={3}>
+        <SearchBar
+          {...searchTextProps}
+          searchPlaceholder="Search skills..."
+          actions={
+            <SectionActions
+              ruleset={ruleset}
+              childOnly={childOnly}
+              onChildOnlyChange={onChildOnlyChange}
+              addLabel="Add Skill"
+              onAdd={handleCreate}
+            />
+          }
+        />
+        <Stack spacing={2}>
+          <RulesetSectionTable
+            data={skills}
+            search={searchQuery}
+            isLoading={isLoading}
+            columns={SKILLS_COLUMNS}
+            onRowClick={handleRowClick}
+            onRowMouseEnter={handleRowMouseEnter}
+            renderCell={renderCell}
+            emptyIcon={SkillsIcon}
+            emptyTitle="No skills"
+            emptyDescription="No skills available for this ruleset."
           />
-        }
-      />
-
-      <RulesetSectionTable
-        data={skills}
-        search={searchQuery}
-        isLoading={isLoading}
-        columns={SKILLS_COLUMNS}
-        onRowClick={handleRowClick}
-        onRowMouseEnter={handleRowMouseEnter}
-        renderCell={renderCell}
-        emptyIcon={SkillsIcon}
-        emptyTitle="No skills"
-        emptyDescription="No skills available for this ruleset."
-      />
-
-      <LoadMoreButton
-        hasNextPage={hasNextPage}
-        isFetchingNextPage={isFetchingNextPage}
-        onClick={() => fetchNextPage()}
-      />
+          <LoadMoreButton
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            onClick={() => fetchNextPage()}
+          />
+        </Stack>
+      </Stack>
 
       <CreateDialog {...createDialogProps} title="Create New Skill">
         <SkillFormFields form={createForm} abilities={rulesetAbilities} />

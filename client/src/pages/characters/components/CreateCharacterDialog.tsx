@@ -24,7 +24,6 @@ import {
   useRulesetAbilities,
 } from "@/client/src/hooks/index.ts";
 import { sortAbilities } from "@/client/src/lib/abilityOrder.ts";
-import { settledPulse } from "@/client/src/lib/animations.ts";
 import {
   getRollFunction,
   isDiceMethod,
@@ -42,6 +41,7 @@ import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { NAME_RULES, requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
 import { availableRacesQuery } from "@/client/src/pages/characters/characterQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
+import { ANIMATIONS, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
 import { computeAbilityModifier } from "@/shared/dnd3.5/abilities.ts";
 import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/shared/enums.ts";
 
@@ -106,21 +106,19 @@ function AbilityCard({
   isSettled,
 }: AbilityCardProps) {
   return (
-    <Paper
+    <Stack
+      component={Paper}
       variant="outlined"
       sx={{
         p: 1.5,
         minWidth: 100,
         flex: "1 1 0",
         textAlign: "center",
-        display: "flex",
-        flexDirection: "column",
         alignItems: "center",
         justifyContent: "space-between",
         minHeight: 100,
-        ...(isSettled && {
-          animation: `${settledPulse} 0.4s cubic-bezier(0.4, 0, 0.2, 1)`,
-        }),
+        animation: isSettled ? ANIMATIONS.settle : undefined,
+        [PREFERS_REDUCED_MOTION]: { animation: "none" },
       }}
     >
       <Typography variant="caption" sx={{ color: "text.secondary" }}>
@@ -130,7 +128,7 @@ function AbilityCard({
         <IconButton size="small" aria-label={`Lower ${name}`} onClick={onDecrease} disabled={!canDecrease}>
           <RemoveIcon fontSize="small" />
         </IconButton>
-        <Typography variant="h6" sx={{ minWidth: 28 }}>
+        <Typography variant="h6" component="p" sx={{ minWidth: 28 }}>
           {score}
         </Typography>
         <IconButton size="small" aria-label={`Raise ${name}`} onClick={onIncrease} disabled={!canIncrease}>
@@ -140,7 +138,7 @@ function AbilityCard({
       <Typography variant="caption" sx={{ color: "text.secondary" }}>
         {bottomInfo}
       </Typography>
-    </Paper>
+    </Stack>
   );
 }
 
@@ -223,7 +221,7 @@ function AbilityScoresSection({ ref, abilities, control, onRollingChange, method
     return <PointBuyScores abilities={abilities} abilityValues={abilityValues} onChange={onChange} />;
 
   return (
-    <Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: "wrap" }}>
+    <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap" }}>
       {abilities.map((ability) => {
         const isSettled = settledIds.has(ability.id);
         const displayValue = rolling
@@ -264,7 +262,7 @@ function PointBuyScores({ abilities, abilityValues, onChange }: PointBuyScoresPr
   const pointsRemaining = POINT_BUY_TOTAL - pointsSpent;
 
   return (
-    <Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: "wrap" }}>
+    <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap" }}>
       {abilities.map((ability) => {
         const score = abilityValues?.[ability.id] ?? 8;
         const costNow = POINT_BUY_COSTS[score] ?? 0;
@@ -310,7 +308,7 @@ function StandardArrayScores({ abilities, abilityValues, onChange }: StandardArr
   const sortedAsc = useMemo(() => [...STANDARD_ARRAY].sort((a, b) => a - b), []);
 
   return (
-    <Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: "wrap" }}>
+    <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap" }}>
       {abilities.map((ability) => {
         const score = abilityValues?.[ability.id] ?? STANDARD_ARRAY[0];
         const idx = sortedAsc.indexOf(score);
@@ -523,7 +521,9 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
     >
       <BaseRulesetAlert ruleset={selectedRuleset} />
       {/* Basic Info */}
-      <Typography variant="h6">Basic Information</Typography>
+      <Typography variant="h6" component="h3">
+        Basic Information
+      </Typography>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
         <NameField control={control} name="name" rules={NAME_RULES} label="Character Name" />
         <FormTextField
@@ -591,7 +591,9 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
       </Stack>
 
       {/* Ability Scores */}
-      <Typography variant="h6">Ability Scores</Typography>
+      <Typography variant="h6" component="h3">
+        Ability Scores
+      </Typography>
       <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
         <TextField
           select
@@ -647,7 +649,7 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
           method={rollMethod}
         />
       ) : (
-        <Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: "wrap" }}>
+        <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap" }}>
           {Array.from({ length: 6 }, (_, i) => (
             <Skeleton key={i} variant="rounded" height={100} sx={{ minWidth: 100, flex: "1 1 0" }} />
           ))}
@@ -655,7 +657,9 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
       )}
 
       {/* Physical Details */}
-      <Typography variant="h6">Physical Details</Typography>
+      <Typography variant="h6" component="h3">
+        Physical Details
+      </Typography>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
         <FormTextField
           control={control}
@@ -671,7 +675,9 @@ export function CreateCharacterDialog({ open, onClose }: CreateCharacterDialogPr
       </Stack>
 
       {/* Optional Details */}
-      <Typography variant="h6">Optional Details</Typography>
+      <Typography variant="h6" component="h3">
+        Optional Details
+      </Typography>
       <FormTextField control={control} name="deity" label="Deity" fullWidth />
       <DescriptionField
         control={control}

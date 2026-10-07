@@ -1,4 +1,4 @@
-import { Autocomplete, Box, Chip, Paper, Skeleton, TextField, Typography } from "@mui/material";
+import { Autocomplete, Box, Chip, Paper, Skeleton, Stack, TextField, Typography } from "@mui/material";
 
 import { BlankState, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
 import { CloseIcon } from "@/client/src/components/icons/index.ts";
@@ -30,18 +30,15 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
   const unassignedSkills = availableSkills.filter((skill) => !classSkills?.some((cs) => cs.skillId === skill.id));
 
   return (
-    <Box>
-      <Box
-        sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          mb: 2,
-          gap: 2,
-        }}
+    <Stack spacing={2}>
+      <Stack
+        direction="row"
+        spacing={2}
+        sx={{ flexWrap: "wrap", justifyContent: "space-between", alignItems: "flex-start" }}
       >
-        <Typography variant="h6">Class Skills</Typography>
+        <Typography variant="h6" component="h2">
+          Class Skills
+        </Typography>
         {canEdit && (
           <Box sx={{ minWidth: { xs: "100%", sm: 300 } }}>
             <Autocomplete
@@ -96,13 +93,13 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
             />
           </Box>
         )}
-      </Box>
+      </Stack>
       {isLoading ? (
-        <Box>
+        <Stack spacing={1}>
           {[...Array(3)].map((_, index) => (
-            <Skeleton key={index} variant="rectangular" height={40} sx={{ mb: 1 }} />
+            <Skeleton key={index} variant="rectangular" height={40} />
           ))}
-        </Box>
+        </Stack>
       ) : !classSkills || classSkills.length === 0 ? (
         <BlankState
           title="No class skills assigned"
@@ -114,7 +111,7 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
         />
       ) : (
         <Paper sx={{ p: 2, boxShadow: 1, borderRadius: 2 }}>
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+          <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
             {classSkills.map((classSkill) => (
               <Chip
                 key={classSkill.skillId}
@@ -130,7 +127,7 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
                 }}
               />
             ))}
-          </Box>
+          </Stack>
         </Paper>
       )}
       <RemoveSkillDialog
@@ -139,6 +136,6 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
         onConfirm={confirmRemoveSkill}
         isLoading={removeSkillMutation.isPending}
       />
-    </Box>
+    </Stack>
   );
 }

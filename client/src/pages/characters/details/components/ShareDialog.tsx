@@ -84,7 +84,7 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
     <Modal open={open} onClose={() => !isLoading && onClose()}>
       <DialogTitle>Share Character Sheet</DialogTitle>
       <DialogContent>
-        <Stack spacing={2} sx={{ mt: 1 }}>
+        <Stack spacing={2} sx={{ pt: 1 }}>
           {shareUrl ? (
             <>
               <Typography variant="body2" sx={{ color: "text.secondary" }}>

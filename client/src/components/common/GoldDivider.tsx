@@ -1,4 +1,4 @@
-import { Box, type SxProps, type Theme, Typography } from "@mui/material";
+import { Box, Stack, type SxProps, type Theme, Typography } from "@mui/material";
 
 interface GoldDividerProps {
   label?: string;
@@ -15,7 +15,6 @@ export function GoldDivider({ label, sx }: GoldDividerProps) {
       <Box
         sx={[
           {
-            my: 3,
             height: "1px",
             background: gradientLine,
             opacity: 0.4,
@@ -27,17 +26,7 @@ export function GoldDivider({ label, sx }: GoldDividerProps) {
   }
 
   return (
-    <Box
-      sx={[
-        {
-          my: 3,
-          display: "flex",
-          alignItems: "center",
-          gap: 2,
-        },
-        ...(Array.isArray(sx) ? sx : [sx]),
-      ]}
-    >
+    <Stack direction="row" spacing={2} sx={[{ alignItems: "center" }, ...(Array.isArray(sx) ? sx : [sx])]}>
       <Box sx={{ flex: 1, height: "1px", background: gradientLine, opacity: 0.4 }} />
       <Typography
         variant="caption"
@@ -52,6 +41,6 @@ export function GoldDivider({ label, sx }: GoldDividerProps) {
         {label}
       </Typography>
       <Box sx={{ flex: 1, height: "1px", background: gradientLine, opacity: 0.4 }} />
-    </Box>
+    </Stack>
   );
 }

@@ -12,6 +12,7 @@ import {
   ListItemButton,
   ListItemText,
   Paper,
+  Stack,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -26,6 +27,7 @@ import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { rulesetChangesQuery } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
+import { DURATION } from "@/client/src/theme/animations.ts";
 import { buildCustomizationPath, CUSTOMIZATION_PAGE_TYPES } from "@/shared/customization/entities.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
@@ -93,27 +95,29 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
 
   return (
     <Modal open={open} onClose={onClose}>
-      <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <CompareArrowsIcon />
-        Local changes
+      <DialogTitle>
+        <Stack component="span" direction="row" spacing={1} sx={{ alignItems: "center" }}>
+          <CompareArrowsIcon />
+          Local changes
+        </Stack>
       </DialogTitle>
       <DialogContent sx={{ maxHeight: "60vh" }}>
         {isLoading && <DiceSpinner sx={{ py: 4 }} />}
-        <Collapse in={!isLoading && !!changes && changes.length === 0} timeout={250} unmountOnExit>
+        <Collapse in={!isLoading && !!changes && changes.length === 0} timeout={DURATION.normal} unmountOnExit>
           <Typography variant="body2" sx={{ color: "text.secondary", py: 2 }}>
             No local changes
           </Typography>
         </Collapse>
-        <Collapse in={!isLoading && !!changes && changes.length > 0} timeout={300} unmountOnExit>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}>
+        <Collapse in={!isLoading && !!changes && changes.length > 0} timeout={DURATION.moderate} unmountOnExit>
+          <Stack spacing={2} sx={{ pt: 1 }}>
             {[...grouped.entries()].map(([entityType, items]) => (
               <Paper key={entityType} variant="outlined" sx={{ overflow: "hidden" }}>
-                <Box sx={{ px: 2, py: 1, bgcolor: "action.hover", display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                <Stack direction="row" spacing={1} sx={{ px: 2, py: 1, bgcolor: "action.hover", alignItems: "center" }}>
+                  <Typography variant="subtitle2" component="h3" sx={{ fontWeight: 600 }}>
                     {entityTypeLabel(entityType, baseRules, true)}
                   </Typography>
                   <Chip label={items.length} size="small" sx={{ height: 20, fontSize: "0.75rem" }} />
-                </Box>
+                </Stack>
                 <List dense disablePadding>
                   {items.map((change) => {
                     const key = change.status === "deleted" ? change.sourceEntityId : change.entityId;
@@ -122,7 +126,7 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
                     const url = getEntityUrl(rulesetId, change);
                     const showRevert = canEdit && change.status !== "added";
                     const rowContent = (
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                         <ListItemText primary={change.name} sx={{ my: 0, flexGrow: 0 }} />
                         <Chip
                           label={change.status}
@@ -131,10 +135,10 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
                           variant="outlined"
                           sx={{ height: 20, fontSize: "0.7rem", flexShrink: 0 }}
                         />
-                      </Box>
+                      </Stack>
                     );
                     return (
-                      <ListItem key={key} disablePadding sx={{ pr: showRevert ? 1 : 0 }}>
+                      <ListItem key={key} disablePadding sx={{ gap: 0.5, pr: showRevert ? 1 : 0 }}>
                         {url ? (
                           <ListItemButton component={Link} to={url} target="_blank">
                             {rowContent}
@@ -155,7 +159,7 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
                                   })
                                 }
                                 disabled={revertMutation.isPending}
-                                sx={{ flexShrink: 0, ml: 0.5 }}
+                                sx={{ flexShrink: 0 }}
                               >
                                 <RestoreIcon fontSize="small" />
                               </IconButton>
@@ -168,7 +172,7 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
                 </List>
               </Paper>
             ))}
-          </Box>
+          </Stack>
         </Collapse>
       </DialogContent>
       <DialogActions>

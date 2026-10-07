@@ -1,4 +1,4 @@
-import { Alert, Box, Button, Card, CardContent, Chip, Container, Typography } from "@mui/material";
+import { Alert, Box, Button, Card, CardContent, Chip, Container, Stack, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { type ReactNode, useState } from "react";
@@ -51,20 +51,17 @@ interface ProfileFormData {
 
 function ProfileCard({ title, children, danger = false }: ProfileCardProps) {
   return (
-    <Card sx={{ mb: 3, ...(danger && { borderColor: "error.main", borderWidth: 1, borderStyle: "solid" }) }}>
+    <Card sx={[danger && { border: 1, borderColor: "error.main" }]}>
       <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
-        <Typography
-          component="h2"
-          sx={{
-            fontWeight: 700,
-            mb: danger ? 1 : 3,
-            typography: { xs: "h6", sm: "h5" },
-            color: danger ? "error.main" : undefined,
-          }}
-        >
-          {title}
-        </Typography>
-        {children}
+        <Stack spacing={danger ? 1 : 3}>
+          <Typography
+            component="h2"
+            sx={{ fontWeight: 700, typography: { xs: "h6", sm: "h5" }, color: danger ? "error.main" : undefined }}
+          >
+            {title}
+          </Typography>
+          <Box>{children}</Box>
+        </Stack>
       </CardContent>
     </Card>
   );
@@ -202,171 +199,178 @@ export default function ProfilePage() {
 
   return (
     <PageTransition>
-      <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 } }}>
-        <PageHeader title="Profile" subtitle="Manage your account information and security settings" />
+      {/* Deeper at the bottom, under the last card */}
+      <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 }, pb: { xs: 5, sm: 7 } }}>
+        <Stack spacing={4}>
+          <PageHeader title="Profile" subtitle="Manage your account information and security settings" />
 
-        {userData?.pendingEmailAddress && (
-          <Alert
-            severity="info"
-            sx={{ mb: 3 }}
-            action={
-              <Box sx={{ display: "flex", gap: 1 }}>
-                <Button size="small" variant="contained" onClick={() => setVerifyDialogOpen(true)}>
-                  Verify
-                </Button>
-                <Button
-                  size="small"
-                  color="inherit"
-                  onClick={() => cancelEmailChangeMutation.mutate()}
-                  disabled={cancelEmailChangeMutation.isPending}
-                >
-                  Cancel
-                </Button>
-              </Box>
-            }
-          >
-            Pending email change to <strong>{userData.pendingEmailAddress}</strong>
-          </Alert>
-        )}
-
-        <ProfileCard title="Basic Information">
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: { xs: "column", sm: "row" },
-              alignItems: { xs: "center", sm: "flex-start" },
-              gap: { xs: 2, sm: 4 },
-            }}
-          >
-            <AttachmentField recordType="User" recordId={userData?.id} name="avatar" variant="avatar" size={140} />
-
-            <Box sx={{ flex: 1, width: "100%" }}>
-              <form onSubmit={profileSync.handleSubmit((data) => profileMutation.mutate(data))} noValidate>
-                <FormTextField
-                  control={profileForm.control}
-                  name="username"
-                  rules={USERNAME_RULES}
-                  label="Username"
-                  variant="outlined"
-                  fullWidth
-                  margin="normal"
-                  helperText={profileErrors.username?.message || "Optional: Choose a display name"}
-                />
-
-                <EmailField
-                  control={profileForm.control}
-                  name="emailAddress"
-                  rules={EMAIL_RULES}
-                  label="Email Address"
-                />
-
-                <Button
-                  type="submit"
-                  variant="contained"
-                  color="primary"
-                  sx={{ mt: 2 }}
-                  disabled={profileMutation.isPending}
-                >
-                  <DiceSpinner size="small" loading={profileMutation.isPending}>
-                    Save Changes
-                  </DiceSpinner>
-                </Button>
-              </form>
-            </Box>
-          </Box>
-        </ProfileCard>
-
-        <ProfileCard title="Linked Accounts">
-          <Box
-            sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, flexWrap: "wrap" }}
-          >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <Typography variant="body1">Google</Typography>
-              {isGoogleLinked && <Chip label="Linked" size="small" color="success" />}
-            </Box>
-            <Box sx={{ width: { xs: "100%", sm: 200 } }}>
-              {isGoogleLinked ? (
-                <Button
-                  fullWidth
-                  variant="contained"
-                  color="error"
-                  onClick={() => unlinkOauthMutation.mutate("google")}
-                  disabled={unlinkOauthMutation.isPending || !hasPassword}
-                >
-                  <DiceSpinner size="small" loading={unlinkOauthMutation.isPending}>
-                    Unlink
-                  </DiceSpinner>
-                </Button>
-              ) : isGoogleAvailable ? (
-                <GoogleSignInButton overlayRef={overlayRef} label="Link Google" />
-              ) : null}
-            </Box>
-          </Box>
-          {isGoogleLinked && !hasPassword && (
-            <Typography variant="caption" sx={{ color: "text.secondary", mt: 1, display: "block" }}>
-              Set a password before unlinking Google
-            </Typography>
-          )}
-        </ProfileCard>
-
-        <ProfileCard title={hasPassword ? "Change Password" : "Set Password"}>
-          <form onSubmit={passwordForm.handleSubmit((data) => passwordMutation.mutate(data))} noValidate>
-            {hasPassword && (
-              <PasswordField
-                control={passwordForm.control}
-                name="currentPassword"
-                rules={requiredRules("Current password is required")}
-                label="Current Password"
-                autoComplete="current-password"
-              />
+          <Stack spacing={3}>
+            {userData?.pendingEmailAddress && (
+              <Alert
+                severity="info"
+                action={
+                  <Stack direction="row" spacing={1}>
+                    <Button size="small" variant="contained" onClick={() => setVerifyDialogOpen(true)}>
+                      Verify
+                    </Button>
+                    <Button
+                      size="small"
+                      color="inherit"
+                      onClick={() => cancelEmailChangeMutation.mutate()}
+                      disabled={cancelEmailChangeMutation.isPending}
+                    >
+                      Cancel
+                    </Button>
+                  </Stack>
+                }
+              >
+                Pending email change to <strong>{userData.pendingEmailAddress}</strong>
+              </Alert>
             )}
 
-            <PasswordField
-              control={passwordForm.control}
-              name="newPassword"
-              rules={NEW_PASSWORD_RULES}
-              label="New Password"
-              autoComplete="new-password"
+            <ProfileCard title="Basic Information">
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={{ xs: 2, sm: 4 }}
+                sx={{ alignItems: { xs: "center", sm: "flex-start" } }}
+              >
+                <AttachmentField recordType="User" recordId={userData?.id} name="avatar" variant="avatar" size={140} />
+
+                <Box sx={{ flex: 1, width: "100%" }}>
+                  <Stack
+                    component="form"
+                    onSubmit={profileSync.handleSubmit((data) => profileMutation.mutate(data))}
+                    noValidate
+                    spacing={3}
+                    sx={{ pt: 2, alignItems: "flex-start" }}
+                  >
+                    <FormTextField
+                      control={profileForm.control}
+                      name="username"
+                      rules={USERNAME_RULES}
+                      label="Username"
+                      variant="outlined"
+                      fullWidth
+                      helperText={profileErrors.username?.message || "Optional: Choose a display name"}
+                    />
+
+                    <EmailField
+                      control={profileForm.control}
+                      name="emailAddress"
+                      rules={EMAIL_RULES}
+                      label="Email Address"
+                    />
+
+                    <Button type="submit" variant="contained" color="primary" disabled={profileMutation.isPending}>
+                      <DiceSpinner size="small" loading={profileMutation.isPending}>
+                        Save Changes
+                      </DiceSpinner>
+                    </Button>
+                  </Stack>
+                </Box>
+              </Stack>
+            </ProfileCard>
+
+            <ProfileCard title="Linked Accounts">
+              <Stack spacing={1}>
+                <Stack
+                  direction="row"
+                  spacing={2}
+                  sx={{ alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" }}
+                >
+                  <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+                    <Typography variant="body1">Google</Typography>
+                    {isGoogleLinked && <Chip label="Linked" size="small" color="success" />}
+                  </Stack>
+                  <Box sx={{ width: { xs: "100%", sm: 200 } }}>
+                    {isGoogleLinked ? (
+                      <Button
+                        fullWidth
+                        variant="contained"
+                        color="error"
+                        onClick={() => unlinkOauthMutation.mutate("google")}
+                        disabled={unlinkOauthMutation.isPending || !hasPassword}
+                      >
+                        <DiceSpinner size="small" loading={unlinkOauthMutation.isPending}>
+                          Unlink
+                        </DiceSpinner>
+                      </Button>
+                    ) : isGoogleAvailable ? (
+                      <GoogleSignInButton overlayRef={overlayRef} label="Link Google" />
+                    ) : null}
+                  </Box>
+                </Stack>
+                {isGoogleLinked && !hasPassword && (
+                  <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
+                    Set a password before unlinking Google
+                  </Typography>
+                )}
+              </Stack>
+            </ProfileCard>
+
+            <ProfileCard title={hasPassword ? "Change Password" : "Set Password"}>
+              <Stack
+                component="form"
+                onSubmit={passwordForm.handleSubmit((data) => passwordMutation.mutate(data))}
+                noValidate
+                spacing={3}
+                sx={{ pt: 2, alignItems: "flex-start" }}
+              >
+                {hasPassword && (
+                  <PasswordField
+                    control={passwordForm.control}
+                    name="currentPassword"
+                    rules={requiredRules("Current password is required")}
+                    label="Current Password"
+                    autoComplete="current-password"
+                  />
+                )}
+
+                <PasswordField
+                  control={passwordForm.control}
+                  name="newPassword"
+                  rules={NEW_PASSWORD_RULES}
+                  label="New Password"
+                  autoComplete="new-password"
+                />
+
+                <PasswordField
+                  control={passwordForm.control}
+                  name="newPasswordConfirmation"
+                  rules={confirmPasswordRules<PasswordFormData>("newPassword")}
+                  label="Confirm New Password"
+                  autoComplete="new-password"
+                />
+
+                <Button type="submit" variant="contained" color="primary" disabled={passwordMutation.isPending}>
+                  <DiceSpinner size="small" loading={passwordMutation.isPending}>
+                    {hasPassword ? "Update Password" : "Set Password"}
+                  </DiceSpinner>
+                </Button>
+              </Stack>
+            </ProfileCard>
+
+            <ProfileCard title="Delete Account" danger>
+              <Stack spacing={2} sx={{ alignItems: "flex-start" }}>
+                <Typography variant="body2">
+                  Permanently delete your account and all associated data. This action cannot be undone.
+                </Typography>
+                <Button variant="contained" color="error" onClick={() => setDeleteDialogOpen(true)}>
+                  Delete Account
+                </Button>
+              </Stack>
+            </ProfileCard>
+          </Stack>
+
+          {userData?.pendingEmailAddress && (
+            <EmailChangeVerificationDialog
+              open={verifyDialogOpen}
+              onClose={() => setVerifyDialogOpen(false)}
+              pendingEmail={userData.pendingEmailAddress}
             />
+          )}
+        </Stack>
 
-            <PasswordField
-              control={passwordForm.control}
-              name="newPasswordConfirmation"
-              rules={confirmPasswordRules<PasswordFormData>("newPassword")}
-              label="Confirm New Password"
-              autoComplete="new-password"
-            />
-
-            <Button
-              type="submit"
-              variant="contained"
-              color="primary"
-              sx={{ mt: 2 }}
-              disabled={passwordMutation.isPending}
-            >
-              <DiceSpinner size="small" loading={passwordMutation.isPending}>
-                {hasPassword ? "Update Password" : "Set Password"}
-              </DiceSpinner>
-            </Button>
-          </form>
-        </ProfileCard>
-
-        <ProfileCard title="Delete Account" danger>
-          <Typography variant="body2" sx={{ mb: 2 }}>
-            Permanently delete your account and all associated data. This action cannot be undone.
-          </Typography>
-          <Button variant="contained" color="error" onClick={() => setDeleteDialogOpen(true)}>
-            Delete Account
-          </Button>
-        </ProfileCard>
-
-        {userData?.pendingEmailAddress && (
-          <EmailChangeVerificationDialog
-            open={verifyDialogOpen}
-            onClose={() => setVerifyDialogOpen(false)}
-            pendingEmail={userData.pendingEmailAddress}
-          />
-        )}
         <DeleteAccountDialog
           open={deleteDialogOpen}
           onClose={() => setDeleteDialogOpen(false)}

@@ -259,10 +259,12 @@ export function EquipmentSection({
         }
         sx={{ mb: 0, "& .MuiAlert-action": { alignItems: "flex-start", pt: 0.5 } }}
       >
-        <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
-          Equipment warnings
-        </Typography>
-        <ValidationIssueList issues={validationErrors} />
+        <Stack spacing={0.5}>
+          <Typography variant="subtitle2" component="h3">
+            Equipment warnings
+          </Typography>
+          <ValidationIssueList issues={validationErrors} />
+        </Stack>
       </AnimatedAlert>
     );
 

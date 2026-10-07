@@ -67,7 +67,6 @@ export function SpellEditor({
   return (
     <EntityDetailsCard
       title="Spell Details"
-      sx={{ mb: 4 }}
       description={power.description}
       chips={
         <>

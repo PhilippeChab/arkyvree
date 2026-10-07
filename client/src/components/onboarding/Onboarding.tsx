@@ -7,9 +7,9 @@ import {
   Link as MuiLink,
   Paper,
   Popper,
+  Stack,
   Tooltip,
   Typography,
-  useTheme,
 } from "@mui/material";
 import type { Instance } from "@popperjs/core";
 import { type ReactNode, useEffect, useRef, useState } from "react";
@@ -23,9 +23,8 @@ import {
   RulesetIcon,
   type SvgIconComponent,
 } from "@/client/src/components/icons/index.ts";
-import { DURATION, EASING, fadeInUp, PREFERS_REDUCED_MOTION } from "@/client/src/lib/animations.ts";
-import { brandGold, brandGoldTint } from "@/client/src/lib/brandGold.ts";
 import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
+import { DURATION, EASING, fadeInUp, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
 
 interface OnboardingPopperProps {
   anchorEl: HTMLElement;
@@ -111,13 +110,13 @@ function OnboardingPopper({ anchorEl, onClose, children }: OnboardingPopperProps
 
   return (
     <>
-      <Backdrop open sx={{ zIndex: (t) => t.zIndex.drawer + 2 }} onClick={onClose} />
+      <Backdrop open sx={{ zIndex: (theme) => theme.zIndex.drawer + 2 }} onClick={onClose} />
       <Popper
         open
         popperRef={popperRef}
         anchorEl={anchorEl}
         placement="right-start"
-        sx={{ zIndex: (t) => t.zIndex.drawer + 3 }}
+        sx={{ zIndex: (theme) => theme.zIndex.drawer + 3 }}
         modifiers={[{ name: "offset", options: { offset: [0, 16] } }]}
       >
         <Paper elevation={8} sx={{ width: 360, position: "relative" }}>
@@ -129,10 +128,13 @@ function OnboardingPopper({ anchorEl, onClose, children }: OnboardingPopperProps
               top: 20,
               width: 0,
               height: 0,
-              borderTop: "8px solid transparent",
-              borderBottom: "8px solid transparent",
-              borderRight: (t) => `8px solid ${t.palette.background.paper}`,
-              filter: "drop-shadow(-2px 0 2px rgba(0,0,0,0.1))",
+              borderTop: 8,
+              borderBottom: 8,
+              borderRight: 8,
+              borderTopColor: "transparent",
+              borderBottomColor: "transparent",
+              borderRightColor: "background.paper",
+              filter: (theme) => theme.dropShadows.popperArrow,
             }}
           />
           {children}
@@ -143,12 +145,6 @@ function OnboardingPopper({ anchorEl, onClose, children }: OnboardingPopperProps
 }
 
 export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, isMobile }: OnboardingProps) {
-  const theme = useTheme();
-  const darkMode = theme.palette.mode === "dark";
-
-  const gold = brandGold(darkMode);
-  const goldFaint = brandGoldTint(darkMode, darkMode ? 0.12 : 0.1);
-
   const step = STEPS[activeStep];
   const isLastStep = activeStep === STEPS.length - 1;
   const effectiveMode = isMobile || !anchorEl ? "dialog" : "popper";
@@ -168,16 +164,15 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
     <Box
       sx={{
         height: 6,
-        background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${gold}, ${theme.palette.secondary.main})`,
+        background: (theme) =>
+          `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.gold.main}, ${theme.palette.secondary.main})`,
       }}
     />
   );
 
   const stepContent = (
-    <Box
+    <Stack
       sx={{
-        display: "flex",
-        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
         textAlign: "center",
@@ -186,38 +181,38 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
         minHeight: effectiveMode === "dialog" ? { xs: "auto", sm: 380 } : "auto",
       }}
     >
-      <Box
+      <Stack
         key={activeStep}
+        spacing={3}
         sx={{
-          display: "flex",
-          flexDirection: "column",
           alignItems: "center",
           animation: `${fadeInUp} ${DURATION.normal}ms ${EASING.decelerate} both`,
           [PREFERS_REDUCED_MOTION]: { animation: "none" },
         }}
       >
         {/* Icon circle */}
-        <Box sx={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", mb: 3 }}>
+        <Stack direction="row" sx={{ position: "relative", alignItems: "center", justifyContent: "center" }}>
           <Box
             sx={{
               position: "absolute",
               width: effectiveMode === "dialog" ? 140 : 100,
               height: effectiveMode === "dialog" ? 140 : 100,
               borderRadius: "50%",
-              background: `radial-gradient(circle, ${goldFaint} 0%, transparent 70%)`,
+              background: (theme) => `radial-gradient(circle, ${theme.palette.gold.faint} 0%, transparent 70%)`,
               pointerEvents: "none",
             }}
           />
-          <Box
+          <Stack
+            direction="row"
             sx={{
               width: effectiveMode === "dialog" ? 88 : 64,
               height: effectiveMode === "dialog" ? 88 : 64,
               borderRadius: "50%",
-              display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-              boxShadow: `0 4px 20px ${goldFaint}`,
+              background: (theme) =>
+                `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+              boxShadow: (theme) => theme.boxShadows.onboardingIcon,
               position: "relative",
             }}
           >
@@ -229,89 +224,90 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
                 sx={{
                   width: effectiveMode === "dialog" ? 48 : 34,
                   height: effectiveMode === "dialog" ? 48 : 34,
-                  filter: `drop-shadow(0 2px 8px ${brandGoldTint(false, 0.35)})`,
+                  filter: (theme) => theme.dropShadows.onboardingLogo,
                 }}
               />
             ) : step.icon ? (
               <step.icon
                 sx={{
                   fontSize: effectiveMode === "dialog" ? 44 : 32,
-                  color: "white",
-                  filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.3))",
+                  color: "common.white",
+                  filter: (theme) => theme.dropShadows.onboardingIcon,
                 }}
               />
             ) : null}
-          </Box>
-        </Box>
+          </Stack>
+        </Stack>
 
-        <Typography
-          id="onboarding-step-title"
-          variant={effectiveMode === "dialog" ? "h5" : "h6"}
-          sx={{ fontWeight: 700, mb: 2, letterSpacing: "0.02em" }}
-        >
-          {step.title}
-        </Typography>
+        <Stack spacing={2} sx={{ alignItems: "center" }}>
+          <Typography
+            id="onboarding-step-title"
+            variant={effectiveMode === "dialog" ? "h5" : "h6"}
+            sx={{ fontWeight: 700, letterSpacing: "0.02em" }}
+          >
+            {step.title}
+          </Typography>
 
-        <Box
-          sx={{
-            width: 60,
-            height: 2,
-            background: `linear-gradient(90deg, transparent, ${gold}, transparent)`,
-            mb: 2,
-          }}
-        />
+          <Box
+            sx={{
+              width: 60,
+              height: 2,
+              background: (theme) => `linear-gradient(90deg, transparent, ${theme.palette.gold.main}, transparent)`,
+            }}
+          />
 
-        <Typography
-          variant="body1"
-          sx={{
-            color: "text.secondary",
-            maxWidth: effectiveMode === "dialog" ? 400 : 300,
-            lineHeight: 1.7,
-            fontSize: effectiveMode === "popper" ? "0.9rem" : undefined,
-          }}
-        >
-          {step.description.includes("{faq}")
-            ? step.description.split("{faq}").map((part, i) => (
-                <span key={i}>
-                  {part}
-                  {i === 0 && (
-                    <MuiLink
-                      href={EXTERNAL_LINKS.help}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={onClose}
-                      sx={{ fontSize: "inherit", verticalAlign: "baseline" }}
-                    >
-                      FAQ
-                    </MuiLink>
-                  )}
-                </span>
-              ))
-            : step.description}
-        </Typography>
+          <Typography
+            variant="body1"
+            sx={{
+              color: "text.secondary",
+              maxWidth: effectiveMode === "dialog" ? 400 : 300,
+              lineHeight: 1.7,
+              fontSize: effectiveMode === "popper" ? "0.9rem" : undefined,
+            }}
+          >
+            {step.description.includes("{faq}")
+              ? step.description.split("{faq}").map((part, i) => (
+                  <span key={i}>
+                    {part}
+                    {i === 0 && (
+                      <MuiLink
+                        href={EXTERNAL_LINKS.help}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={onClose}
+                        sx={{ fontSize: "inherit", verticalAlign: "baseline" }}
+                      >
+                        FAQ
+                      </MuiLink>
+                    )}
+                  </span>
+                ))
+              : step.description}
+          </Typography>
 
-        {step.tooltip && (
-          <Tooltip describeChild title={step.tooltip} arrow placement="top">
-            <Box
-              sx={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 0.5,
-                mt: 2,
-                color: gold,
-                cursor: "help",
-                fontSize: "0.85rem",
-              }}
-            >
-              <HelpIcon sx={{ fontSize: 18 }} />
-              <Typography variant="caption" sx={{ color: "inherit", fontWeight: 500 }}>
-                Forking & Extensions
-              </Typography>
-            </Box>
-          </Tooltip>
-        )}
-      </Box>
-    </Box>
+          {step.tooltip && (
+            <Tooltip describeChild title={step.tooltip} arrow placement="top">
+              <Stack
+                direction="row"
+                spacing={0.5}
+                sx={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  color: "gold.main",
+                  cursor: "help",
+                  fontSize: "0.85rem",
+                }}
+              >
+                <HelpIcon sx={{ fontSize: 18 }} />
+                <Typography variant="caption" sx={{ color: "inherit", fontWeight: 500 }}>
+                  Forking & Extensions
+                </Typography>
+              </Stack>
+            </Tooltip>
+          )}
+        </Stack>
+      </Stack>
+    </Stack>
   );
 
   const stepperDots = (
@@ -325,7 +321,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
         background: "transparent",
         pb: 0,
         "& .MuiMobileStepper-dot": { mx: 0.5 },
-        "& .MuiMobileStepper-dotActive": { backgroundColor: gold },
+        "& .MuiMobileStepper-dotActive": { bgcolor: "gold.main" },
       }}
       backButton={null}
       nextButton={null}
@@ -333,11 +329,11 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
   );
 
   const navButtons = (
-    <Box sx={{ display: "flex", alignItems: "center", px: 3, pb: 3, pt: 2 }}>
+    <Stack direction="row" sx={{ alignItems: "center", px: 3, pb: 3, pt: 2 }}>
       <Button onClick={onClose} color="inherit" sx={{ opacity: 0.7 }}>
         Skip
       </Button>
-      <Box sx={{ flex: 1 }} />
+      <Box sx={{ flexGrow: 1 }} />
       {activeStep > 0 && (
         <Button onClick={handleBack} color="inherit">
           Back
@@ -346,7 +342,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
       <Button onClick={handleNext} variant="contained">
         {isLastStep ? "Get Started" : "Next"}
       </Button>
-    </Box>
+    </Stack>
   );
 
   if (effectiveMode === "dialog" || !anchorEl) {

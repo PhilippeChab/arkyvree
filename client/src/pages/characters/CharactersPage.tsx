@@ -1,4 +1,4 @@
-import { Button, Chip, Container } from "@mui/material";
+import { Button, Chip, Container, Stack } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -84,101 +84,102 @@ export default function CharactersPage() {
   return (
     <PageTransition>
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        <PageHeader
-          variant="tinted"
-          title="Characters"
-          subtitle="View and manage your character collection"
-          action={createButton("Create Character")}
-        />
+        <Stack spacing={3}>
+          <PageHeader
+            variant="tinted"
+            title="Characters"
+            subtitle="View and manage your character collection"
+            action={createButton("Create Character")}
+          />
 
-        <SearchBar
-          {...searchBarProps}
-          searchPlaceholder="Search characters..."
-          filterOptions={CHARACTER_FILTER_OPTIONS}
-          filterValue={view}
-          onFilterChange={(value) => updateSearchParams({ view: value })}
-          sortOptions={CHARACTER_SORT_OPTIONS}
-        />
+          <SearchBar
+            {...searchBarProps}
+            searchPlaceholder="Search characters..."
+            filterOptions={CHARACTER_FILTER_OPTIONS}
+            filterValue={view}
+            onFilterChange={(value) => updateSearchParams({ view: value })}
+            sortOptions={CHARACTER_SORT_OPTIONS}
+          />
 
-        {isLoading ? (
-          <DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />
-        ) : error ? (
-          <LoadError what="Characters" error={error} />
-        ) : characters.length > 0 ? (
-          <>
-            <ListCardGrid>
-              {characters.map((character, index) => (
-                <ListCard
-                  key={character.id}
-                  isArchived={view === "archived"}
-                  animationIndex={index}
-                  animationOffset={offset}
-                  onClick={() => navigate(`/characters/${character.id}`)}
-                  onMouseEnter={() => prefetchCharacter(character.id)}
-                  onFocus={() => prefetchCharacter(character.id)}
-                  avatarSrc={portraitsByCharacterId.get(character.id) ?? undefined}
-                  title={character.name}
-                  description={character.description}
-                  pills={
-                    <>
-                      {character.accessRole === "contributor" && (
-                        <Chip label="Shared" size="small" color="info" variant="outlined" />
-                      )}
-                      <Chip
-                        label={character.race}
-                        size="small"
-                        variant="outlined"
-                        sx={{ borderColor: "secondary.main", color: "secondary.main", fontWeight: 500 }}
-                      />
-                      {character.levels.map((level) => (
+          {isLoading ? (
+            <DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />
+          ) : error ? (
+            <LoadError what="Characters" error={error} />
+          ) : characters.length > 0 ? (
+            <Stack spacing={3} sx={{ pb: hasNextPage ? 0 : 3 }}>
+              <ListCardGrid>
+                {characters.map((character, index) => (
+                  <ListCard
+                    key={character.id}
+                    isArchived={view === "archived"}
+                    animationIndex={index}
+                    animationOffset={offset}
+                    onClick={() => navigate(`/characters/${character.id}`)}
+                    onMouseEnter={() => prefetchCharacter(character.id)}
+                    onFocus={() => prefetchCharacter(character.id)}
+                    avatarSrc={portraitsByCharacterId.get(character.id) ?? undefined}
+                    title={character.name}
+                    description={character.description}
+                    pills={
+                      <>
+                        {character.accessRole === "contributor" && (
+                          <Chip label="Shared" size="small" color="info" variant="outlined" />
+                        )}
                         <Chip
-                          key={level.klass}
-                          label={`${level.klass} ${level.level}`}
+                          label={character.race}
                           size="small"
-                          sx={{ bgcolor: "primary.main", color: "primary.contrastText", fontWeight: 500 }}
+                          variant="outlined"
+                          sx={{ borderColor: "secondary.main", color: "secondary.main", fontWeight: 500 }}
                         />
-                      ))}
-                    </>
-                  }
-                />
-              ))}
-            </ListCardGrid>
-            <LoadMoreButton
-              size="large"
-              label="Load More Characters"
-              hasNextPage={hasNextPage}
-              isFetchingNextPage={isFetchingNextPage}
-              onClick={() => {
-                updateOffset(characters.length);
-                fetchNextPage();
-              }}
+                        {character.levels.map((level) => (
+                          <Chip
+                            key={level.klass}
+                            label={`${level.klass} ${level.level}`}
+                            size="small"
+                            sx={{ bgcolor: "primary.main", color: "primary.contrastText", fontWeight: 500 }}
+                          />
+                        ))}
+                      </>
+                    }
+                  />
+                ))}
+              </ListCardGrid>
+              <LoadMoreButton
+                size="large"
+                label="Load More Characters"
+                hasNextPage={hasNextPage}
+                isFetchingNextPage={isFetchingNextPage}
+                onClick={() => {
+                  updateOffset(characters.length);
+                  fetchNextPage();
+                }}
+              />
+            </Stack>
+          ) : search ? (
+            <NoMatchesState search={search} />
+          ) : view === "archived" ? (
+            <BlankState
+              icon={ArchiveIcon}
+              title="No archived characters"
+              description="Characters you archive will appear here. You can restore them at any time."
+              action={viewActiveButton}
             />
-          </>
-        ) : search ? (
-          <NoMatchesState search={search} />
-        ) : view === "archived" ? (
-          <BlankState
-            icon={ArchiveIcon}
-            title="No archived characters"
-            description="Characters you archive will appear here. You can restore them at any time."
-            action={viewActiveButton}
-          />
-        ) : view === "shared" ? (
-          <BlankState
-            icon={GroupIcon}
-            title="No shared characters"
-            description="Characters other users invite you to contribute to will appear here."
-            action={viewActiveButton}
-          />
-        ) : (
-          <BlankState
-            icon={ShieldIcon}
-            title="No characters yet"
-            description="Create your first character to start your adventure"
-            action={createButton("Create Your First Character")}
-          />
-        )}
-
+          ) : view === "shared" ? (
+            <BlankState
+              icon={GroupIcon}
+              title="No shared characters"
+              description="Characters other users invite you to contribute to will appear here."
+              action={viewActiveButton}
+            />
+          ) : (
+            <BlankState
+              icon={ShieldIcon}
+              title="No characters yet"
+              description="Create your first character to start your adventure"
+              action={createButton("Create Your First Character")}
+            />
+          )}
+        </Stack>
         <CreateCharacterDialog open={createModalOpen} onClose={() => setCreateModalOpen(false)} />
       </Container>
     </PageTransition>

@@ -1,4 +1,4 @@
-import { Box } from "@mui/material";
+import { Stack } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 
@@ -50,21 +50,23 @@ export function AbilitiesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
 
   return (
     <SectionContent>
-      {/* No search bar here: the actions sit alone, and take no space when there are none. */}
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 1, "&:empty": { display: "none" } }}>
-        <SectionActions ruleset={ruleset} childOnly={childOnly} onChildOnlyChange={onChildOnlyChange} />
-      </Box>
-      <RulesetSectionTable
-        data={abilities}
-        isLoading={isLoading}
-        columns={ABILITIES_COLUMNS}
-        onRowClick={handleRowClick}
-        onRowMouseEnter={handleRowMouseEnter}
-        renderCell={renderCell}
-        emptyIcon={AbilitiesIcon}
-        emptyTitle="No abilities"
-        emptyDescription="No abilities available for this ruleset."
-      />
+      <Stack spacing={1}>
+        {/* No search bar here: the actions sit alone, and take no space when there are none. */}
+        <Stack direction="row" sx={{ justifyContent: "flex-end", "&:empty": { display: "none" } }}>
+          <SectionActions ruleset={ruleset} childOnly={childOnly} onChildOnlyChange={onChildOnlyChange} />
+        </Stack>
+        <RulesetSectionTable
+          data={abilities}
+          isLoading={isLoading}
+          columns={ABILITIES_COLUMNS}
+          onRowClick={handleRowClick}
+          onRowMouseEnter={handleRowMouseEnter}
+          renderCell={renderCell}
+          emptyIcon={AbilitiesIcon}
+          emptyTitle="No abilities"
+          emptyDescription="No abilities available for this ruleset."
+        />
+      </Stack>
     </SectionContent>
   );
 }

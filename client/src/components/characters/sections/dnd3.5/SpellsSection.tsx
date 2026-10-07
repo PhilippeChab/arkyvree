@@ -4,6 +4,7 @@ import {
   Collapse,
   IconButton,
   Link as MuiLink,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -44,26 +45,29 @@ function CollapsibleClass({ apt, rulesetId }: CollapsibleClassProps) {
   const totalSpells = apt.levels.reduce((sum, g) => sum + g.spells.length, 0);
 
   return (
-    <Box sx={{ mb: 3, "&:last-child": { mb: 0 } }}>
-      <Box
+    // The last class, closed, keeps the space its title has to its spells
+    <Stack spacing={1} sx={{ "&:last-child": { pb: open ? 0 : 1 } }}>
+      <Stack
+        direction="row"
+        spacing={0.5}
         {...clickableProps(() => setOpen((prev) => !prev))}
-        sx={{ ...CLICKABLE_SX, display: "flex", alignItems: "center", gap: 0.5, mb: 1 }}
+        sx={[CLICKABLE_SX, { alignItems: "center" }]}
       >
         <IconButton size="small" aria-label={`${open ? "Hide" : "Show"} ${apt.aptitudeName}`} sx={{ p: 0 }}>
           {open ? <ExpandLessIcon /> : <ExpandMoreIcon />}
         </IconButton>
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+        <Typography variant="h6" component="h3" sx={{ fontWeight: 600 }}>
           {apt.aptitudeName} ({totalSpells})
         </Typography>
-      </Box>
+      </Stack>
       <Collapse in={open} timeout="auto" unmountOnExit>
-        <Box sx={{ pl: 1 }}>
+        <Stack spacing={1} sx={{ pl: 1 }}>
           {apt.levels.map((group) => (
             <CollapsibleLevel key={group.level} group={group} rulesetId={rulesetId} />
           ))}
-        </Box>
+        </Stack>
       </Collapse>
-    </Box>
+    </Stack>
   );
 }
 
@@ -72,31 +76,37 @@ function CollapsibleLevel({ group, rulesetId }: CollapsibleLevelProps) {
   const label = group.level === 0 ? "Cantrips" : `Level ${group.level}`;
 
   return (
-    <Box sx={{ mb: 1, "&:last-child": { mb: 0 } }}>
-      <Box
+    // The last level, closed, keeps the space its title has to its spells
+    <Stack spacing={0.5} sx={{ "&:last-child": { pb: open ? 0 : 0.5 } }}>
+      <Stack
+        direction="row"
+        spacing={0.5}
         {...clickableProps(() => setOpen((prev) => !prev))}
-        sx={{ ...CLICKABLE_SX, display: "flex", alignItems: "center", gap: 0.5, mb: 0.5 }}
+        sx={[CLICKABLE_SX, { alignItems: "center" }]}
       >
         <IconButton size="small" aria-label={`${open ? "Hide" : "Show"} ${label} spells`} sx={{ p: 0 }}>
           {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
         </IconButton>
-        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-          {label} ({group.spells.length})
+        <Stack direction="row" spacing={1} sx={{ alignItems: "baseline" }}>
+          <Typography variant="subtitle2" component="h4" sx={{ fontWeight: 600 }}>
+            {label} ({group.spells.length})
+          </Typography>
           {group.uses != null && (
-            <Typography component="span" variant="body2" sx={{ color: "text.secondary", ml: 1 }}>
+            // Italic as the level's label it follows
+            <Typography variant="body2" sx={{ color: "text.secondary", fontStyle: "italic" }}>
               — {group.uses}/day
             </Typography>
           )}
-        </Typography>
-      </Box>
+        </Stack>
+      </Stack>
       <Collapse in={open} timeout="auto" unmountOnExit>
         <TableContainer sx={{ overflowX: "auto" }}>
           <Table size="small">
             <colgroup>
-              <col style={{ width: "40%" }} />
-              <col style={{ width: "20%" }} />
-              <col style={{ width: "30%" }} />
-              <col style={{ width: "10%" }} />
+              <Box component="col" sx={{ width: "40%" }} />
+              <Box component="col" sx={{ width: "20%" }} />
+              <Box component="col" sx={{ width: "30%" }} />
+              <Box component="col" sx={{ width: "10%" }} />
             </colgroup>
             <TableHead>
               <TableRow>
@@ -116,7 +126,7 @@ function CollapsibleLevel({ group, rulesetId }: CollapsibleLevelProps) {
           </Table>
         </TableContainer>
       </Collapse>
-    </Box>
+    </Stack>
   );
 }
 
@@ -134,34 +144,37 @@ function SpellRowItem({ spell, rulesetId }: SpellRowItemProps) {
         sx={{ ...CLICKABLE_SX, "& > td": { borderBottom: open ? "none" : undefined } }}
       >
         <TableCell>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+          <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
             <IconButton size="small" aria-label={`${open ? "Hide" : "Show"} ${spell.name}'s details`} sx={{ p: 0 }}>
               {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
             </IconButton>
-            {spellLink ? (
-              <MuiLink
-                component={Link}
-                to={spellLink}
-                target="_blank"
-                underline="hover"
-                onClick={(e: MouseEvent) => e.stopPropagation()}
-              >
-                {spell.name}
-              </MuiLink>
-            ) : (
-              spell.name
-            )}
-            {spell.tags?.map((tag) => (
-              <Chip
-                key={tag.name}
-                label={tag.name}
-                size="small"
-                variant="outlined"
-                color={tag.joinsClassList ? "secondary" : "primary"}
-                sx={{ ml: 0.5, height: 20, fontSize: "0.7rem" }}
-              />
-            ))}
-          </Box>
+            {/* A tag sits twice the row's gap from the name, and from the next tag */}
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+              {spellLink ? (
+                <MuiLink
+                  component={Link}
+                  to={spellLink}
+                  target="_blank"
+                  underline="hover"
+                  onClick={(e: MouseEvent) => e.stopPropagation()}
+                >
+                  {spell.name}
+                </MuiLink>
+              ) : (
+                spell.name
+              )}
+              {spell.tags?.map((tag) => (
+                <Chip
+                  key={tag.name}
+                  label={tag.name}
+                  size="small"
+                  variant="outlined"
+                  color={tag.joinsClassList ? "secondary" : "primary"}
+                  sx={{ height: 20, fontSize: "0.7rem" }}
+                />
+              ))}
+            </Stack>
+          </Stack>
         </TableCell>
         <TableCell>{spell.school}</TableCell>
         <TableCell>{spell.save}</TableCell>
@@ -170,14 +183,13 @@ function SpellRowItem({ spell, rulesetId }: SpellRowItemProps) {
       <TableRow>
         <TableCell colSpan={4} sx={{ py: 0, borderBottom: open ? undefined : "none" }}>
           <Collapse in={open} timeout="auto" unmountOnExit>
-            <Box sx={{ py: 1.5, px: 1 }}>
+            <Stack spacing={1.5} sx={{ py: 1.5, px: 1 }}>
               {detailProps.length > 0 && (
                 <Box
                   sx={{
                     display: "grid",
                     gridTemplateColumns: { xs: "repeat(2, 1fr)", sm: "repeat(3, 1fr)" },
                     gap: 0.5,
-                    mb: spell.description ? 1.5 : 0,
                   }}
                 >
                   {detailProps.map(([key, value]) => (
@@ -192,7 +204,7 @@ function SpellRowItem({ spell, rulesetId }: SpellRowItemProps) {
                   {spell.description}
                 </Typography>
               )}
-            </Box>
+            </Stack>
           </Collapse>
         </TableCell>
       </TableRow>
@@ -218,9 +230,11 @@ export function SpellsSection({
 
   return (
     <SheetSection title="Spells">
-      {groups.map((apt) => (
-        <CollapsibleClass key={apt.aptitudeName} apt={apt} rulesetId={rulesetId} />
-      ))}
+      <Stack spacing={3}>
+        {groups.map((apt) => (
+          <CollapsibleClass key={apt.aptitudeName} apt={apt} rulesetId={rulesetId} />
+        ))}
+      </Stack>
     </SheetSection>
   );
 }

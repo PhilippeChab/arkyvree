@@ -1,3 +1,4 @@
+import { DURATION, transitionOf } from "@/client/src/theme/animations.ts";
 /** A table row whose `row-actions` buttons appear on hover or keyboard focus: spread into the row's `sx`. */
 export const ROW_ACTIONS_HOVER_SX = { "&:hover .row-actions, &:focus-visible .row-actions": { opacity: 1 } };
 
@@ -8,5 +9,5 @@ export const ROW_ACTIONS_HOVER_SX = { "&:hover .row-actions, &:focus-visible .ro
 export const ROW_ACTIONS_SX = {
   "@media (hover: hover)": { opacity: 0 },
   "&:focus-within": { opacity: 1 },
-  transition: "opacity 0.2s ease",
+  transition: transitionOf(["opacity"], DURATION.brisk),
 };

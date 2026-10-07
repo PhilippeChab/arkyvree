@@ -195,16 +195,11 @@ export function CharacterIdentitySection({
 
   return (
     <Paper sx={{ p: { xs: 2, sm: 3 } }}>
-      <form onSubmit={sync.handleSubmit((formData) => saveIdentity.mutate(formData))}>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 3,
-            flexWrap: "wrap",
-            gap: 1,
-          }}
+      <Stack component="form" spacing={3} onSubmit={sync.handleSubmit((formData) => saveIdentity.mutate(formData))}>
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}
         >
           {nameEditing ? (
             <TextField
@@ -240,16 +235,18 @@ export function CharacterIdentitySection({
                   nameForm.reset({ name: characterName });
                   setNameEditing(true);
                 }))}
-              sx={{
-                ...(canEditName && CLICKABLE_SX),
-                fontWeight: 600,
-                color: "primary.main",
-                typography: { xs: "h6", sm: "h5" },
-                cursor: canEditName ? "pointer" : "default",
-                "&:hover": canEditName
-                  ? { textDecoration: "underline", textDecorationStyle: "dotted", textUnderlineOffset: "4px" }
-                  : undefined,
-              }}
+              sx={[
+                canEditName && CLICKABLE_SX,
+                {
+                  fontWeight: 600,
+                  color: "primary.main",
+                  typography: { xs: "h6", sm: "h5" },
+                  cursor: canEditName ? "pointer" : "default",
+                },
+                canEditName && {
+                  "&:hover": { textDecoration: "underline", textDecorationStyle: "dotted", textUnderlineOffset: "4px" },
+                },
+              ]}
             >
               {characterName || "Unnamed Character"}
             </Typography>
@@ -265,15 +262,12 @@ export function CharacterIdentitySection({
               Save
             </DiceSpinner>
           </Button>
-        </Box>
+        </Stack>
 
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: { xs: "column", sm: "row" },
-            alignItems: { xs: "center", sm: "flex-start" },
-            gap: { xs: 2, sm: 4 },
-          }}
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={{ xs: 2, sm: 4 }}
+          sx={{ alignItems: { xs: "center", sm: "flex-start" } }}
         >
           <AttachmentField
             recordType="Character"
@@ -285,14 +279,13 @@ export function CharacterIdentitySection({
             url={portraitUrl}
           />
 
-          <Box sx={{ flex: 1, width: "100%", minWidth: 0 }}>
+          <Stack spacing={2} sx={{ flex: 1, width: "100%", minWidth: 0 }}>
             {/* Line 1: Race, Alignment, Experience, Deity */}
             <Box
               sx={{
                 display: "grid",
                 gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr 1fr" },
                 gap: 3,
-                mb: 2,
               }}
             >
               <FormTextField control={form.control} name="race" label="Race" size="small" variant="outlined" disabled />
@@ -343,7 +336,6 @@ export function CharacterIdentitySection({
                 display: "grid",
                 gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr 1fr" },
                 gap: 3,
-                mb: 2,
               }}
             >
               <FormTextField
@@ -386,10 +378,10 @@ export function CharacterIdentitySection({
 
             {/* Languages */}
             {!partial && (
-              <Box sx={{ mb: 2 }}>
+              <Box>
                 {readOnly ? (
-                  <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
-                    <Typography variant="body2" sx={{ color: "text.secondary", mr: 1 }}>
+                  <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
+                    <Typography variant="body2" sx={{ color: "text.secondary", pr: 1 }}>
                       Languages:
                     </Typography>
                     {selectedLanguages.length === 0 ? (
@@ -399,7 +391,7 @@ export function CharacterIdentitySection({
                     ) : (
                       selectedLanguages.map((lang) => <Chip key={lang.id} label={lang.name} size="small" />)
                     )}
-                  </Box>
+                  </Stack>
                 ) : (
                   <Autocomplete
                     multiple
@@ -429,7 +421,7 @@ export function CharacterIdentitySection({
               </Stack>
             ) : (
               <>
-                <Box sx={{ display: "grid", gridTemplateColumns: "1fr", gap: 3, mb: 2 }}>
+                <Box sx={{ display: "grid", gridTemplateColumns: "1fr", gap: 3 }}>
                   <FormTextField
                     control={form.control}
                     name="description"
@@ -460,9 +452,9 @@ export function CharacterIdentitySection({
                 </Box>
               </>
             )}
-          </Box>
-        </Box>
-      </form>
+          </Stack>
+        </Stack>
+      </Stack>
     </Paper>
   );
 }

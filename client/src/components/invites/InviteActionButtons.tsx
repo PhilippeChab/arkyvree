@@ -1,4 +1,4 @@
-import { Box, Button, type SxProps, type Theme } from "@mui/material";
+import { Button, Stack, type SxProps, type Theme } from "@mui/material";
 
 import { CheckIcon, CloseIcon } from "@/client/src/components/icons/index.ts";
 
@@ -15,7 +15,7 @@ interface InviteActionButtonsProps {
 export function InviteActionButtons({ onAccept, onReject, disabled, prominent = false, sx }: InviteActionButtonsProps) {
   const size = prominent ? "medium" : "small";
   return (
-    <Box sx={[{ display: "flex", gap: prominent ? 2 : 1 }, ...(Array.isArray(sx) ? sx : [sx])]}>
+    <Stack direction="row" spacing={prominent ? 2 : 1} sx={sx}>
       <Button
         size={size}
         fullWidth={prominent}
@@ -38,6 +38,6 @@ export function InviteActionButtons({ onAccept, onReject, disabled, prominent = 
       >
         Reject
       </Button>
-    </Box>
+    </Stack>
   );
 }

@@ -1,4 +1,5 @@
 import {
+  alpha,
   AppBar,
   Avatar,
   Box,
@@ -11,9 +12,9 @@ import {
   ListItemIcon,
   ListItemText,
   Menu,
+  Stack,
   Toolbar,
   Typography,
-  useTheme,
 } from "@mui/material";
 import { type QueryClient, useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
@@ -40,7 +41,6 @@ import {
 } from "@/client/src/components/icons/index.ts";
 import { Onboarding } from "@/client/src/components/onboarding/index.ts";
 import { useAttachment, useAuthRequests, useDemoTimeRemaining, useIsMobile } from "@/client/src/hooks/index.ts";
-import { brandGold, brandGoldTint } from "@/client/src/lib/brandGold.ts";
 import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 import {
   campaignListQuery,
@@ -50,6 +50,7 @@ import {
 } from "@/client/src/lib/queries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
+import { DURATION, EASING, PREFERS_REDUCED_MOTION, transitionOf } from "@/client/src/theme/animations.ts";
 
 import { AppBrand, AppMain } from "./AppMain.tsx";
 import { DemoBanner } from "./DemoBanner.tsx";
@@ -144,7 +145,6 @@ export function Layout() {
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const isMobile = useIsMobile();
-  const theme = useTheme();
 
   const user = useAuthStore((s) => s.user);
   const updateUser = useAuthStore((s) => s.updateUser);
@@ -179,10 +179,6 @@ export function Layout() {
   const isPopoverStep = onboardingOpen && !isMobile && STEP_TO_SIDEBAR_ID[onboardingStep];
   const onboardingHighlightId = isPopoverStep ? STEP_TO_SIDEBAR_ID[onboardingStep] : null;
   const effectiveExpanded = sidebarExpanded || !!isPopoverStep;
-
-  const darkMode = theme.palette.mode === "dark";
-  const gold = brandGold(darkMode);
-  const goldFaint = brandGoldTint(darkMode, darkMode ? 0.25 : 0.2);
 
   const { mutate: completeOnboarding } = useMutation({
     mutationFn: () => parseResponse(rpc.auth["complete-onboarding"].$post()),
@@ -231,7 +227,7 @@ export function Layout() {
   };
 
   return (
-    <Box sx={{ display: "flex" }}>
+    <Stack direction="row">
       {/* App Bar */}
       <AppBar
         position="fixed"
@@ -241,7 +237,7 @@ export function Layout() {
             `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
         }}
       >
-        <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
+        <Toolbar sx={{ justifyContent: "space-between" }}>
           {isMobile ? (
             <IconButton
               color="inherit"
@@ -277,7 +273,7 @@ export function Layout() {
             <AppBrand />
           </Typography>
 
-          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0.5, sm: 2 }, flexShrink: 0 }}>
+          <Stack direction="row" spacing={{ xs: 0.5, sm: 2 }} sx={{ alignItems: "center", flexShrink: 0 }}>
             {!isDemo && <FeedbackButton />}
             {!isDemo && <NotificationBell />}
             {!isDemo && (
@@ -287,7 +283,7 @@ export function Layout() {
                 </Avatar>
               </IconButton>
             )}
-          </Box>
+          </Stack>
 
           <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
             <ActionMenuItem icon={AccountCircleIcon} label="Profile" onClick={handleProfile} />
@@ -314,11 +310,10 @@ export function Layout() {
             width: isMobile ? EXPANDED_DRAWER_WIDTH : effectiveExpanded ? EXPANDED_DRAWER_WIDTH : DRAWER_WIDTH,
             boxSizing: "border-box",
             borderRight: "none",
-            transition: "all 0.35s cubic-bezier(0.2, 0, 0, 1)",
+            transition: transitionOf(["all"], DURATION.deliberate, EASING.emphasized),
             overflow: "hidden",
             bgcolor: (theme) => (theme.palette.mode === "dark" ? "background.paper" : "grey.50"),
-            boxShadow: (theme) =>
-              theme.palette.mode === "dark" ? "2px 0 8px rgba(0,0,0,0.3)" : "2px 0 8px rgba(0,0,0,0.08)",
+            boxShadow: (theme) => theme.boxShadows.drawer,
           },
         }}
         variant={isMobile ? "temporary" : "permanent"}
@@ -327,10 +322,10 @@ export function Layout() {
         onClose={() => setMobileDrawerOpen(false)}
       >
         <Toolbar />
-        <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, position: "relative" }}>
-          <List sx={{ flex: 1, pt: 2, px: 1 }}>
+        <Stack sx={{ flex: 1, minHeight: 0, position: "relative" }}>
+          <Stack component={List} spacing={1} sx={{ flex: 1, pt: 2, pb: 2, px: 1.5 }}>
             {SIDEBAR_ITEMS.map((item) => (
-              <ListItem key={item.id} disablePadding sx={{ mb: 1 }}>
+              <ListItem key={item.id} disablePadding>
                 <ListItemButton
                   ref={sidebarItemRefs[item.id]}
                   {...("external" in item && item.external
@@ -344,19 +339,15 @@ export function Layout() {
                   sx={{
                     height: 48,
                     minHeight: "unset",
-                    ...(onboardingHighlightId === item.id && {
-                      boxShadow: `0 0 0 2px ${gold}, 0 0 12px ${goldFaint}`,
-                    }),
-                    display: "flex",
+                    boxShadow: (theme) => (onboardingHighlightId === item.id ? theme.boxShadows.highlight : undefined),
                     alignItems: "center",
                     justifyContent: isMobile || effectiveExpanded ? "flex-start" : "center",
                     px: isMobile || effectiveExpanded ? 2 : 1.5,
                     py: 1,
                     borderRadius: 3,
-                    mx: 0.5,
                     position: "relative",
                     overflow: "hidden",
-                    transition: "all 0.25s cubic-bezier(0.2, 0, 0, 1)",
+                    transition: transitionOf(["all"], DURATION.normal, EASING.emphasized),
                     "&::before": {
                       content: '""',
                       position: "absolute",
@@ -364,14 +355,15 @@ export function Layout() {
                       left: 0,
                       right: 0,
                       bottom: 0,
-                      background: "linear-gradient(135deg, transparent, rgba(255,255,255,0.1))",
+                      background: (theme) =>
+                        `linear-gradient(135deg, transparent, ${alpha(theme.palette.common.white, 0.1)})`,
                       opacity: 0,
-                      transition: "opacity 0.25s ease",
+                      transition: transitionOf(["opacity"], DURATION.normal),
                     },
                     "&.Mui-selected": {
-                      backgroundColor: "primary.main",
-                      color: "white",
-                      boxShadow: (theme) => `0 4px 12px ${theme.palette.primary.main}40`,
+                      bgcolor: "primary.main",
+                      color: "common.white",
+                      boxShadow: (theme) => theme.boxShadows.selectedItem,
                       "&::before": {
                         opacity: 1,
                       },
@@ -383,26 +375,28 @@ export function Layout() {
                         bottom: 4,
                         width: 3,
                         borderRadius: 2,
-                        backgroundColor: "secondary.main",
+                        bgcolor: "secondary.main",
                       },
                       "&:hover": {
-                        backgroundColor: "primary.dark",
+                        bgcolor: "primary.dark",
                       },
                       "& .MuiListItemIcon-root": {
-                        color: "white",
+                        color: "common.white",
                       },
                       "& .MuiListItemText-primary": {
                         fontWeight: 600,
-                        color: "white",
+                        color: "common.white",
                       },
                       "& .MuiListItemText-secondary": {
-                        color: "rgba(255,255,255,0.8)",
+                        color: (theme) => alpha(theme.palette.common.white, 0.8),
                       },
                     },
                     "&:hover": {
-                      backgroundColor: (theme) =>
-                        theme.palette.mode === "dark" ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)",
+                      bgcolor: "action.hover",
                       transform: "translateX(2px)",
+                    },
+                    [PREFERS_REDUCED_MOTION]: {
+                      "&:hover": { transform: "none" },
                     },
                     "& .MuiListItemIcon-root": {
                       color: (theme) => (theme.palette.mode === "dark" ? "grey.400" : "grey.700"),
@@ -420,11 +414,11 @@ export function Layout() {
                     sx={{
                       minWidth: 0,
                       justifyContent: "center",
-                      mr: isMobile || effectiveExpanded ? 2 : 0,
-                      transition: "all 0.35s cubic-bezier(0.2, 0, 0, 1)",
+                      pr: isMobile || effectiveExpanded ? 2 : 0,
+                      transition: transitionOf(["all"], DURATION.deliberate, EASING.emphasized),
                       "& .MuiSvgIcon-root": {
                         fontSize: "1.4rem",
-                        transition: "transform 0.25s ease",
+                        transition: transitionOf(["transform"], DURATION.normal),
                       },
                     }}
                   >
@@ -436,8 +430,8 @@ export function Layout() {
                     sx={{
                       opacity: isMobile || effectiveExpanded ? 1 : 0,
                       transform: isMobile || effectiveExpanded ? "translateX(0)" : "translateX(-10px)",
-                      transition: "all 0.35s cubic-bezier(0.2, 0, 0, 1)",
-                      transitionDelay: isMobile || effectiveExpanded ? "0.05s" : "0s",
+                      transition: transitionOf(["all"], DURATION.deliberate, EASING.emphasized),
+                      transitionDelay: `${isMobile || effectiveExpanded ? DURATION.beat : 0}ms`,
                     }}
                     slotProps={{
                       primary: {
@@ -451,17 +445,17 @@ export function Layout() {
                 </ListItemButton>
               </ListItem>
             ))}
-          </List>
+          </Stack>
 
           {/* Toggle button at the bottom — hidden on mobile and during popover steps */}
           {!isMobile && !isPopoverStep && (
-            <Box
+            <Stack
+              direction="row"
               sx={{
                 p: 2,
                 pt: 3,
-                display: "flex",
                 justifyContent: "center",
-                borderTop: "1px solid",
+                borderTop: 1,
                 borderColor: "divider",
                 bgcolor: (theme) => (theme.palette.mode === "dark" ? "background.default" : "background.paper"),
               }}
@@ -471,31 +465,31 @@ export function Layout() {
                 aria-label={effectiveExpanded ? "Collapse sidebar" : "Expand sidebar"}
                 sx={{
                   color: (theme) => (theme.palette.mode === "dark" ? "grey.400" : "grey.700"),
-                  backgroundColor: (theme) =>
-                    theme.palette.mode === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)",
-                  border: "2px solid",
-                  borderColor: (theme) =>
-                    theme.palette.mode === "dark" ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.12)",
-                  transition: "all 0.25s cubic-bezier(0.2, 0, 0, 1)",
+                  bgcolor: "sidebar.toggle",
+                  border: 2,
+                  borderColor: "divider",
+                  transition: transitionOf(["all"], DURATION.normal, EASING.emphasized),
                   "&:hover": {
-                    backgroundColor: (theme) =>
-                      theme.palette.mode === "dark" ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)",
+                    bgcolor: "sidebar.toggleHover",
                     borderColor: "primary.main",
                     color: "primary.main",
                     transform: "scale(1.1)",
+                  },
+                  [PREFERS_REDUCED_MOTION]: {
+                    "&:hover": { transform: "none" },
                   },
                 }}
                 size="small"
               >
                 {effectiveExpanded ? (
-                  <ChevronLeftIcon sx={{ transition: "transform 0.25s ease" }} />
+                  <ChevronLeftIcon sx={{ transition: transitionOf(["transform"], DURATION.normal) }} />
                 ) : (
-                  <ChevronRightIcon sx={{ transition: "transform 0.25s ease" }} />
+                  <ChevronRightIcon sx={{ transition: transitionOf(["transform"], DURATION.normal) }} />
                 )}
               </IconButton>
-            </Box>
+            </Stack>
           )}
-        </Box>
+        </Stack>
       </Drawer>
       <AppMain banner={isDemo && <DemoBanner />} railWidth={isMobile ? 0 : DRAWER_WIDTH} />
       <Onboarding
@@ -506,6 +500,6 @@ export function Layout() {
         anchorEl={onboardingHighlightId ? (sidebarItemEls[onboardingHighlightId] ?? null) : null}
         isMobile={isMobile}
       />
-    </Box>
+    </Stack>
   );
 }

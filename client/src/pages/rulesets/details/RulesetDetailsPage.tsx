@@ -12,6 +12,7 @@ import {
   Menu,
   MenuItem,
   Popover,
+  Stack,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -263,147 +264,153 @@ export default function RulesetDetailsPage() {
   return (
     <PageTransition>
       <Container maxWidth="xl" sx={{ py: 4 }}>
-        <DetailPageHeader
-          title={ruleset.name}
-          titleAdornment={
-            ruleset.isStarrable && (
-              <IconButton
-                onClick={() => toggleStar(ruleset.id, ruleset.isStarred)}
-                size="small"
-                aria-label={ruleset.isStarred ? "Unstar ruleset" : "Star ruleset"}
-                sx={{
-                  flexShrink: 0,
-                  p: 0,
-                  color: ruleset.isStarred ? "warning.main" : "action.disabled",
-                  "&:hover": { color: "warning.main", backgroundColor: "transparent" },
-                }}
-              >
-                {ruleset.isStarred ? <StarIcon fontSize="medium" /> : <StarBorderIcon fontSize="medium" />}
-              </IconButton>
-            )
-          }
-          onBack={() => navigate("/rulesets")}
-          onMenuOpen={hasMenuItems ? (e) => setAnchorEl(e.currentTarget) : undefined}
-          chips={
-            <>
-              {getStatusChip(ruleset.status)}
-              <Chip
-                icon={ruleset.private ? <PrivateIcon /> : <PublicIcon />}
-                label={ruleset.private ? "Private" : "Public"}
-                size="medium"
-                color={ruleset.private ? "warning" : "success"}
-                variant="filled"
-                sx={{ fontWeight: 600 }}
-              />
-              {isExtension && (
+        <Stack spacing={4}>
+          <DetailPageHeader
+            title={ruleset.name}
+            titleAdornment={
+              ruleset.isStarrable && (
+                <IconButton
+                  onClick={() => toggleStar(ruleset.id, ruleset.isStarred)}
+                  size="small"
+                  aria-label={ruleset.isStarred ? "Unstar ruleset" : "Star ruleset"}
+                  sx={{
+                    flexShrink: 0,
+                    p: 0,
+                    color: ruleset.isStarred ? "warning.main" : "action.disabled",
+                    "&:hover": { color: "warning.main", bgcolor: "transparent" },
+                  }}
+                >
+                  {ruleset.isStarred ? <StarIcon fontSize="medium" /> : <StarBorderIcon fontSize="medium" />}
+                </IconButton>
+              )
+            }
+            onBack={() => navigate("/rulesets")}
+            onMenuOpen={hasMenuItems ? (e) => setAnchorEl(e.currentTarget) : undefined}
+            chips={
+              <>
+                {getStatusChip(ruleset.status)}
                 <Chip
-                  icon={<ExtensionIcon />}
-                  label="Extension"
+                  icon={ruleset.private ? <PrivateIcon /> : <PublicIcon />}
+                  label={ruleset.private ? "Private" : "Public"}
                   size="medium"
-                  color="secondary"
+                  color={ruleset.private ? "warning" : "success"}
                   variant="filled"
                   sx={{ fontWeight: 600 }}
                 />
-              )}
-              {ruleset.rulesetId && ruleset.rulesetName && (
-                <Chip
-                  icon={<ForkIcon />}
-                  label={`Forked from ${ruleset.rulesetName}`}
-                  size="medium"
-                  color="info"
-                  variant="outlined"
-                  component={Link}
-                  to={`/rulesets/${ruleset.rulesetId}`}
-                  clickable
-                  sx={{ fontWeight: 500 }}
-                  onMouseEnter={prefetchParent}
-                  onFocus={prefetchParent}
-                />
-              )}
-              {subscribedExtensions && subscribedExtensions.length > 0 && (
-                <>
+                {isExtension && (
                   <Chip
                     icon={<ExtensionIcon />}
-                    label={formatCount(subscribedExtensions.length, "extension")}
+                    label="Extension"
                     size="medium"
-                    color={subscribedExtensions.some((ext) => ext.updateAvailable) ? "warning" : "default"}
-                    variant="outlined"
-                    clickable
-                    onClick={(e) => setExtensionsAnchor(e.currentTarget)}
-                    sx={{ fontWeight: 500 }}
+                    color="secondary"
+                    variant="filled"
+                    sx={{ fontWeight: 600 }}
                   />
-                  <Popover
-                    open={Boolean(extensionsAnchor)}
-                    anchorEl={extensionsAnchor}
-                    onClose={() => setExtensionsAnchor(null)}
-                    anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-                    transformOrigin={{ vertical: "top", horizontal: "center" }}
-                  >
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, p: 1.5, maxWidth: 360 }}>
-                      {subscribedExtensions.map((ext) => (
-                        <Chip
-                          key={ext.extensionId}
-                          icon={<ExtensionIcon />}
-                          label={ext.extensionName}
-                          size="medium"
-                          color={ext.updateAvailable ? "warning" : "default"}
-                          variant="outlined"
-                          component={Link}
-                          to={`/rulesets/${ext.extensionId}`}
-                          clickable
-                          sx={{ fontWeight: 500, justifyContent: "flex-start" }}
-                          onDelete={
-                            isOwner
-                              ? (e: MouseEvent) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  handleUnsubscribe(ruleset.id, ext.extensionId, ext.extensionName);
-                                }
-                              : undefined
-                          }
-                        />
-                      ))}
-                    </Box>
-                  </Popover>
-                </>
-              )}
-            </>
-          }
-          description={ruleset.description || "Explore the complete rules and content for this game system"}
-        >
-          {ruleset.system && ruleset.baseRules === "Dungeons & Dragons: 3.5" && (
-            <RulesetLicenseNotice key={ruleset.id} name={ruleset.name} />
-          )}
-        </DetailPageHeader>
+                )}
+                {ruleset.rulesetId && ruleset.rulesetName && (
+                  <Chip
+                    icon={<ForkIcon />}
+                    label={`Forked from ${ruleset.rulesetName}`}
+                    size="medium"
+                    color="info"
+                    variant="outlined"
+                    component={Link}
+                    to={`/rulesets/${ruleset.rulesetId}`}
+                    clickable
+                    sx={{ fontWeight: 500 }}
+                    onMouseEnter={prefetchParent}
+                    onFocus={prefetchParent}
+                  />
+                )}
+                {subscribedExtensions && subscribedExtensions.length > 0 && (
+                  <>
+                    <Chip
+                      icon={<ExtensionIcon />}
+                      label={formatCount(subscribedExtensions.length, "extension")}
+                      size="medium"
+                      color={subscribedExtensions.some((ext) => ext.updateAvailable) ? "warning" : "default"}
+                      variant="outlined"
+                      clickable
+                      onClick={(e) => setExtensionsAnchor(e.currentTarget)}
+                      sx={{ fontWeight: 500 }}
+                    />
+                    <Popover
+                      open={Boolean(extensionsAnchor)}
+                      anchorEl={extensionsAnchor}
+                      onClose={() => setExtensionsAnchor(null)}
+                      anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+                      transformOrigin={{ vertical: "top", horizontal: "center" }}
+                    >
+                      <Stack spacing={1} sx={{ p: 1.5, maxWidth: 360 }}>
+                        {subscribedExtensions.map((ext) => (
+                          <Chip
+                            key={ext.extensionId}
+                            icon={<ExtensionIcon />}
+                            label={ext.extensionName}
+                            size="medium"
+                            color={ext.updateAvailable ? "warning" : "default"}
+                            variant="outlined"
+                            component={Link}
+                            to={`/rulesets/${ext.extensionId}`}
+                            clickable
+                            sx={{ fontWeight: 500, justifyContent: "flex-start" }}
+                            onDelete={
+                              isOwner
+                                ? (e: MouseEvent) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleUnsubscribe(ruleset.id, ext.extensionId, ext.extensionName);
+                                  }
+                                : undefined
+                            }
+                          />
+                        ))}
+                      </Stack>
+                    </Popover>
+                  </>
+                )}
+              </>
+            }
+            description={ruleset.description || "Explore the complete rules and content for this game system"}
+          >
+            {ruleset.system && ruleset.baseRules === "Dungeons & Dragons: 3.5" && (
+              <RulesetLicenseNotice key={ruleset.id} name={ruleset.name} />
+            )}
+          </DetailPageHeader>
 
-        {/* Read-Only Banner for Archived Rulesets */}
-        {ruleset.status === "Archived" && (
-          <Alert severity="info" sx={{ mb: 3 }}>
-            <Typography variant="body2">
-              <strong>This ruleset is archived and read-only.</strong> You can view all content but cannot make changes.
-              {isOwner && " Unarchive it to edit it again."}
-            </Typography>
-          </Alert>
-        )}
+          {/* An archived ruleset's notice, above its tabs */}
+          <Stack spacing={3}>
+            {/* Read-Only Banner for Archived Rulesets */}
+            {ruleset.status === "Archived" && (
+              <Alert severity="info">
+                <Typography variant="body2">
+                  <strong>This ruleset is archived and read-only.</strong> You can view all content but cannot make
+                  changes.
+                  {isOwner && " Unarchive it to edit it again."}
+                </Typography>
+              </Alert>
+            )}
 
-        <SectionTabs
-          tabs={tabConfig}
-          value={currentTab.key}
-          onChange={(key) => navigate(`/rulesets/${id}/${key}`)}
-          // Changing tab clears the URL's filters, so it opens with the ruleset's default "Local changes".
-          onTabHover={(key) => void prefetchSection(queryClient, id, key, isExtension)}
-          aria-label="ruleset details tabs"
-        />
+            <SectionTabs
+              tabs={tabConfig}
+              value={currentTab.key}
+              onChange={(key) => navigate(`/rulesets/${id}/${key}`)}
+              // Changing tab clears the URL's filters, so it opens with the ruleset's default "Local changes".
+              onTabHover={(key) => void prefetchSection(queryClient, id, key, isExtension)}
+              aria-label="ruleset details tabs"
+            />
+          </Stack>
 
-        <Box role="tabpanel" sx={{ py: 3 }}>
-          {/* Keyed by ruleset: a tab's list keeps its previous data while a search loads, never another ruleset's. */}
-          <currentTab.component
-            key={ruleset.id}
-            ruleset={ruleset}
-            childOnly={childOnly}
-            onChildOnlyChange={setChildOnly}
-          />
-        </Box>
+          <Box role="tabpanel" sx={{ py: 3 }}>
+            {/* Keyed by ruleset: a tab's list keeps its previous data while a search loads, never another ruleset's. */}
+            <currentTab.component
+              key={ruleset.id}
+              ruleset={ruleset}
+              childOnly={childOnly}
+              onChildOnlyChange={setChildOnly}
+            />
+          </Box>
+        </Stack>
 
         <Menu
           anchorEl={anchorEl}
@@ -584,8 +591,10 @@ export default function RulesetDetailsPage() {
         )}
 
         <Modal open={contributorsDialogOpen} onClose={() => setContributorsDialogOpen(false)} maxWidth="md">
-          <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <GroupIcon /> Contributors
+          <DialogTitle>
+            <Stack component="span" direction="row" spacing={1} sx={{ alignItems: "center" }}>
+              <GroupIcon /> Contributors
+            </Stack>
           </DialogTitle>
           <DialogContent>
             <ContributorsSection ruleset={ruleset} onLeave={() => navigate("/rulesets")} />

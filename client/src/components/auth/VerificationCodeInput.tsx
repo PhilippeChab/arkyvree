@@ -1,4 +1,4 @@
-import { Box, TextField } from "@mui/material";
+import { Stack, TextField } from "@mui/material";
 import { type KeyboardEvent, useRef } from "react";
 
 import { VERIFICATION_CODE_LENGTH } from "@/client/src/lib/verificationCode.ts";
@@ -40,7 +40,7 @@ export function VerificationCodeInput({ digits, onChange }: VerificationCodeInpu
   };
 
   return (
-    <Box sx={{ display: "flex", gap: 1, justifyContent: "center", mb: 3 }}>
+    <Stack direction="row" spacing={1} sx={{ justifyContent: "center" }}>
       {digits.map((digit, index) => (
         <TextField
           key={index}
@@ -50,22 +50,19 @@ export function VerificationCodeInput({ digits, onChange }: VerificationCodeInpu
           value={digit}
           onChange={(e) => handleChange(index, e.target.value)}
           onKeyDown={(e) => handleKeyDown(index, e)}
-          sx={{ width: { xs: 36, sm: 44 } }}
+          sx={{
+            width: { xs: 36, sm: 44 },
+            "& .MuiInputBase-input": { textAlign: "center", fontSize: "1.5rem", fontWeight: 700, py: 1.5, px: 0 },
+          }}
           slotProps={{
             htmlInput: {
               maxLength: VERIFICATION_CODE_LENGTH,
               "aria-label": `Digit ${index + 1}`,
-              style: {
-                textAlign: "center",
-                fontSize: "1.5rem",
-                fontWeight: "bold",
-                padding: "12px 0",
-              },
               inputMode: "numeric",
             },
           }}
         />
       ))}
-    </Box>
+    </Stack>
   );
 }

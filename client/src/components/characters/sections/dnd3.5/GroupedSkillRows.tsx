@@ -4,6 +4,7 @@ import { type ReactNode, useMemo } from "react";
 import { CLICKABLE_SX, clickableProps } from "@/client/src/components/common/index.ts";
 import { ExpandLessIcon } from "@/client/src/components/icons/index.ts";
 import { useToggleSet } from "@/client/src/hooks/index.ts";
+import { DURATION, EASING, fadeIn, PREFERS_REDUCED_MOTION, transitionOf } from "@/client/src/theme/animations.ts";
 
 import { groupSkills } from "./skillGroups.ts";
 
@@ -30,8 +31,8 @@ interface SkillRowProps extends SkillPlacement {
 }
 
 const FADE_IN_SX = {
-  animation: "fadeInRow 200ms ease-out",
-  "@keyframes fadeInRow": { from: { opacity: 0 }, to: { opacity: 1 } },
+  animation: `${fadeIn} ${DURATION.brisk}ms ${EASING.easeOut}`,
+  [PREFERS_REDUCED_MOTION]: { animation: "none" },
 };
 
 /**
@@ -68,7 +69,10 @@ export function GroupedSkillRows<S extends { name: string }>({
               <IconButton
                 size="small"
                 aria-label={`${isExpanded ? "Hide" : "Show"} ${row.prefix} skills`}
-                sx={{ transition: "transform 200ms", transform: isExpanded ? "rotate(0deg)" : "rotate(-90deg)" }}
+                sx={{
+                  transition: transitionOf(["transform"], DURATION.brisk),
+                  transform: isExpanded ? "rotate(0deg)" : "rotate(-90deg)",
+                }}
               >
                 <ExpandLessIcon fontSize="small" />
               </IconButton>
@@ -84,8 +88,8 @@ export function GroupedSkillRows<S extends { name: string }>({
 export function SkillRow({ name, indented, hidden, renderName = (label) => label, children }: SkillRowProps) {
   const label = indented ? name.replace(/^.+?\s*\(/, "(") : name;
   return (
-    <TableRow sx={hidden ? { display: "none" } : indented ? FADE_IN_SX : undefined}>
-      <TableCell sx={indented ? { pl: 5 } : undefined}>{renderName(label)}</TableCell>
+    <TableRow sx={[hidden && { display: "none" }, !hidden && indented && FADE_IN_SX]}>
+      <TableCell sx={{ pl: indented ? 5 : undefined }}>{renderName(label)}</TableCell>
       {children}
     </TableRow>
   );

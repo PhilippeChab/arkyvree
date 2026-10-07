@@ -1,4 +1,4 @@
-import { Avatar, Box, Button, Card, CardContent, Chip, Container, Typography } from "@mui/material";
+import { Avatar, Box, Button, Card, CardContent, Chip, Container, Stack, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ElementType, ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -57,14 +57,20 @@ function InviteStateCard({ icon, title, children, action }: InviteStateCardProps
     <Container maxWidth="sm" sx={{ py: { xs: 4, sm: 8 } }}>
       <Card>
         <CardContent sx={{ textAlign: "center", py: { xs: 3, sm: 6 } }}>
-          {icon}
-          <Typography variant="h5" gutterBottom>
-            {title}
-          </Typography>
-          <Typography variant="body1" sx={{ color: "text.secondary", mb: 3 }}>
-            {children}
-          </Typography>
-          {action}
+          <Stack spacing={2}>
+            <Box>{icon}</Box>
+            <Stack spacing={3}>
+              <Box>
+                <Typography variant="h5" component="h1" gutterBottom>
+                  {title}
+                </Typography>
+                <Typography variant="body1" sx={{ color: "text.secondary" }}>
+                  {children}
+                </Typography>
+              </Box>
+              {action && <Box>{action}</Box>}
+            </Stack>
+          </Stack>
         </CardContent>
       </Card>
     </Container>
@@ -127,7 +133,7 @@ export function InviteLandingPage({
       Go to Dashboard
     </Button>
   );
-  const stateIcon = <Icon sx={{ fontSize: { xs: 48, sm: 64 }, color: "text.secondary", mb: 2 }} />;
+  const stateIcon = <Icon sx={{ fontSize: { xs: 48, sm: 64 }, color: "text.secondary" }} />;
 
   if (isLoading) {
     return (
@@ -159,7 +165,7 @@ export function InviteLandingPage({
   if (!isAnswering && invite.status === acceptedStatus) {
     return (
       <InviteStateCard
-        icon={<CheckIcon sx={{ fontSize: { xs: 48, sm: 64 }, color: "success.main", mb: 2 }} />}
+        icon={<CheckIcon sx={{ fontSize: { xs: 48, sm: 64 }, color: "success.main" }} />}
         title="Already Accepted"
         action={
           entityId && (
@@ -185,14 +191,7 @@ export function InviteLandingPage({
   if (!isAnswering && invite.status !== "Pending") {
     return (
       <InviteStateCard
-        icon={
-          <Chip
-            label={invite.status}
-            color={invite.status === "Rejected" ? "error" : "default"}
-            size="medium"
-            sx={{ mb: 2 }}
-          />
-        }
+        icon={<Chip label={invite.status} color={invite.status === "Rejected" ? "error" : "default"} size="medium" />}
         title={`Invitation ${invite.status}`}
         action={goToDashboard}
       >
@@ -206,42 +205,48 @@ export function InviteLandingPage({
       <Container maxWidth="sm" sx={{ py: { xs: 4, sm: 8 } }}>
         <Card>
           <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
-            <Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-              <Avatar sx={{ width: 56, height: 56, mr: 2 }}>
-                <Icon />
-              </Avatar>
-              <Box>
-                <Typography variant="h5">{name}</Typography>
-                {invite.role && (
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5 }}>
-                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                      Invited as
+            <Stack spacing={3}>
+              <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+                <Avatar sx={{ width: 56, height: 56 }}>
+                  <Icon />
+                </Avatar>
+                <Stack>
+                  <Stack spacing={0.5}>
+                    <Typography variant="h5" component="h1">
+                      {name}
                     </Typography>
-                    <Chip label={invite.role} size="small" variant="outlined" />
-                  </Box>
-                )}
-                {invite.invitedAt && (
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                    Invited on {formatDate(invite.invitedAt)}
-                  </Typography>
-                )}
-              </Box>
-            </Box>
+                    {invite.role && (
+                      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                        <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                          Invited as
+                        </Typography>
+                        <Chip label={invite.role} size="small" variant="outlined" />
+                      </Stack>
+                    )}
+                  </Stack>
+                  {invite.invitedAt && (
+                    <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                      Invited on {formatDate(invite.invitedAt)}
+                    </Typography>
+                  )}
+                </Stack>
+              </Stack>
 
-            <Typography variant="body1" sx={{ mb: 4 }}>
-              {description}
-            </Typography>
+              <Stack spacing={4}>
+                <Typography variant="body1">{description}</Typography>
 
-            <InviteActionButtons
-              prominent
-              onAccept={() =>
-                acceptMutation.mutate(undefined, {
-                  onSuccess: () => navigate(entityId ? entityPath(entityId) : listPath),
-                })
-              }
-              onReject={() => rejectMutation.mutate()}
-              disabled={isAnswering}
-            />
+                <InviteActionButtons
+                  prominent
+                  onAccept={() =>
+                    acceptMutation.mutate(undefined, {
+                      onSuccess: () => navigate(entityId ? entityPath(entityId) : listPath),
+                    })
+                  }
+                  onReject={() => rejectMutation.mutate()}
+                  disabled={isAnswering}
+                />
+              </Stack>
+            </Stack>
           </CardContent>
         </Card>
       </Container>

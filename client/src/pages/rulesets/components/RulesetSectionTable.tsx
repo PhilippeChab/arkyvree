@@ -3,6 +3,7 @@ import {
   IconButton,
   Paper,
   Skeleton,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -23,9 +24,9 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { ContentCopyIcon, DeleteIcon, EditIcon, LibraryAddIcon } from "@/client/src/components/icons/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
-import { fadeInUpSx } from "@/client/src/lib/animations.ts";
+import { fadeInUpSx } from "@/client/src/theme/animations.ts";
 
-import { TABLE_CONTAINER_LOADING_STYLE, TABLE_CONTAINER_STYLE, TABLE_STYLE } from "./tableStyles.ts";
+import { TABLE_CONTAINER_LOADING_SX, TABLE_CONTAINER_SX, TABLE_SX } from "./tableStyles.ts";
 
 interface Column {
   key: string;
@@ -84,8 +85,8 @@ export function RulesetSectionTable<T extends { id: string }>({
 
   if (isLoading) {
     return (
-      <TableContainer component={Paper} variant="outlined" sx={TABLE_CONTAINER_LOADING_STYLE}>
-        <Table sx={TABLE_STYLE}>
+      <TableContainer component={Paper} variant="outlined" sx={TABLE_CONTAINER_LOADING_SX}>
+        <Table sx={TABLE_SX}>
           <TableHead>
             <TableRow>
               {visibleColumns.map((column) => (
@@ -120,8 +121,8 @@ export function RulesetSectionTable<T extends { id: string }>({
   }
 
   return (
-    <TableContainer component={Paper} variant="outlined" sx={TABLE_CONTAINER_STYLE}>
-      <Table sx={TABLE_STYLE}>
+    <TableContainer component={Paper} variant="outlined" sx={TABLE_CONTAINER_SX}>
+      <Table sx={TABLE_SX}>
         <TableHead>
           <TableRow>
             {visibleColumns.map((column) => (
@@ -147,12 +148,7 @@ export function RulesetSectionTable<T extends { id: string }>({
               }
               onMouseLeave={onRowMouseEnter ? () => clearTimeout(hoverTimer.current) : undefined}
               onFocus={onRowMouseEnter ? () => onRowMouseEnter(item) : undefined}
-              sx={{
-                position: "relative",
-                ...(onRowClick && CLICKABLE_SX),
-                ...ROW_ACTIONS_HOVER_SX,
-                ...fadeInUpSx(index),
-              }}
+              sx={[{ position: "relative" }, !!onRowClick && CLICKABLE_SX, ROW_ACTIONS_HOVER_SX, fadeInUpSx(index)]}
             >
               {visibleColumns.map((column, index) => (
                 <TableCell
@@ -174,16 +170,16 @@ export function RulesetSectionTable<T extends { id: string }>({
                       >
                         {renderCell(item, column.key)}
                       </Box>
-                      <Box
+                      <Stack
                         className="row-actions"
+                        direction="row"
+                        spacing={0.5}
                         sx={{
                           position: "absolute",
                           right: 8,
                           top: "50%",
                           transform: "translateY(-50%)",
                           ...ROW_ACTIONS_SX,
-                          display: "flex",
-                          gap: 0.5,
                           bgcolor: "background.paper",
                           borderRadius: 1,
                           boxShadow: 1,
@@ -249,7 +245,7 @@ export function RulesetSectionTable<T extends { id: string }>({
                             </IconButton>
                           </Tooltip>
                         )}
-                      </Box>
+                      </Stack>
                     </>
                   ) : (
                     renderCell(item, column.key)

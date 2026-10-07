@@ -75,7 +75,6 @@ interface SelectFieldProps<T extends FieldValues> {
   helperText?: ReactNode;
   disabled?: boolean;
   size?: "small" | "medium";
-  margin?: "normal";
   sx?: SxProps<Theme>;
   /** Loads more options as the open menu nears its end (see `createListboxScrollHandler`). */
   onMenuScroll?: UIEventHandler<HTMLElement>;
@@ -125,7 +124,6 @@ export function EmailField<T extends FieldValues>({ label = "Email", ...field }:
       type="email"
       variant="outlined"
       fullWidth
-      margin="normal"
       slotProps={{ htmlInput: { autoComplete: "email" } }}
     />
   );
@@ -177,7 +175,6 @@ export function PasswordField<T extends FieldValues>({ label, autoComplete, ...f
       type="password"
       variant="outlined"
       fullWidth
-      margin="normal"
       slotProps={{ htmlInput: { autoComplete } }}
     />
   );
@@ -194,7 +191,6 @@ export function SelectField<T extends FieldValues>({
   helperText,
   disabled,
   size,
-  margin,
   sx,
   onMenuScroll,
 }: SelectFieldProps<T>) {
@@ -218,7 +214,6 @@ export function SelectField<T extends FieldValues>({
           helperText={fieldState.error?.message ?? helperText}
           disabled={disabled}
           size={size}
-          margin={margin}
           sx={sx}
           slotProps={
             onMenuScroll && {

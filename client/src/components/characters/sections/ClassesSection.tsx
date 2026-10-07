@@ -2,7 +2,6 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Box,
   Chip,
   IconButton,
   Link as MuiLink,
@@ -60,7 +59,7 @@ export function ClassesSection({
       }
     >
       {classes && Object.keys(classes).length > 0 ? (
-        <Box sx={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 1 }}>
+        <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", justifyContent: "center" }}>
           {Object.values(classes).map((cls) => {
             const { klass } = cls;
             const levels = cls.levels ?? [];
@@ -101,9 +100,9 @@ export function ClassesSection({
                   width: "100%",
                   boxShadow: "none",
                   "&::before": { display: "none" },
-                  border: "1px solid",
+                  border: 1,
                   borderColor: "divider",
-                  borderRadius: "8px !important",
+                  borderRadius: 1,
                 }}
               >
                 <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -139,7 +138,7 @@ export function ClassesSection({
                         py: 0.5,
                         px: 1,
                         borderRadius: 1,
-                        "&:hover": { backgroundColor: "action.hover" },
+                        "&:hover": { bgcolor: "action.hover" },
                       }}
                     >
                       <Typography variant="body2">
@@ -168,7 +167,7 @@ export function ClassesSection({
               </Accordion>
             );
           })}
-        </Box>
+        </Stack>
       ) : (
         <BlankState title="No classes available" />
       )}

@@ -1,4 +1,4 @@
-import { Box, Button, IconButton, Tooltip } from "@mui/material";
+import { Button, IconButton, Stack, Tooltip } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { type InferRequestType, type InferResponseType, parseResponse } from "hono/client";
 import { useState } from "react";
@@ -130,9 +130,9 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
   const canLeave = !isOwner && !!ruleset.contributorRole;
 
   return (
-    <Box>
+    <Stack spacing={2}>
       {(canLeave || canInvite) && (
-        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mb: 2 }}>
+        <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end" }}>
           {canLeave && (
             <Button
               variant="outlined"
@@ -149,7 +149,7 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
               Invite
             </Button>
           )}
-        </Box>
+        </Stack>
       )}
       {contributors.length === 0 && !owner ? (
         <BlankState
@@ -167,7 +167,7 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
           }
         />
       ) : (
-        <>
+        <Stack spacing={2}>
           <ContributorsTable
             owner={owner}
             contributors={contributors}
@@ -216,7 +216,7 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
             isFetchingNextPage={isFetchingNextPage}
             onClick={() => fetchNextPage()}
           />
-        </>
+        </Stack>
       )}
 
       <InviteContributorDialog
@@ -267,6 +267,6 @@ export function ContributorsSection({ ruleset, onLeave }: ContributorsSectionPro
         confirmColor="warning"
         maxWidth="xs"
       />
-    </Box>
+    </Stack>
   );
 }

@@ -3,7 +3,7 @@ import { useController } from "react-hook-form";
 
 import { DiceSpinner } from "@/client/src/components/common/index.ts";
 import { CasinoIcon } from "@/client/src/components/icons/index.ts";
-import { settledPulse } from "@/client/src/lib/animations.ts";
+import { ANIMATIONS, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
 
 import type { LevelUpHpStepProps } from "./levelUpFactory.ts";
 
@@ -14,29 +14,35 @@ export function LevelUpHpStep({ wizard }: LevelUpHpStepProps) {
   if (!selectedClass) return <DiceSpinner />;
 
   return (
-    <Box>
-      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-        <Typography variant="h6">Set HP for Level {selectedClass.nextLevel}</Typography>
-        <IconButton
-          onClick={() => triggerHpRoll(selectedClass.hd)}
-          disabled={hpRolling}
-          color="primary"
-          size="small"
-          aria-label={`Roll d${selectedClass.hd}`}
-        >
-          <CasinoIcon />
-        </IconButton>
-        <Chip
-          label="MAX"
-          size="small"
-          variant="outlined"
-          onClick={() => field.onChange(selectedClass.hd)}
-          disabled={hpRolling}
-        />
-      </Stack>
-      <Typography variant="body2" sx={{ color: "text.secondary" }} gutterBottom>
-        Enter HP gain (1 to {selectedClass.hd}). Average: {Math.ceil(selectedClass.hd / 2)}, Maximum: {selectedClass.hd}
-      </Typography>
+    // The step's own space under its field
+    <Stack spacing={2} sx={{ pb: 1 }}>
+      <Box>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+          <Typography variant="h6" component="h3">
+            Set HP for Level {selectedClass.nextLevel}
+          </Typography>
+          <IconButton
+            onClick={() => triggerHpRoll(selectedClass.hd)}
+            disabled={hpRolling}
+            color="primary"
+            size="small"
+            aria-label={`Roll d${selectedClass.hd}`}
+          >
+            <CasinoIcon />
+          </IconButton>
+          <Chip
+            label="MAX"
+            size="small"
+            variant="outlined"
+            onClick={() => field.onChange(selectedClass.hd)}
+            disabled={hpRolling}
+          />
+        </Stack>
+        <Typography variant="body2" sx={{ color: "text.secondary" }} gutterBottom>
+          Enter HP gain (1 to {selectedClass.hd}). Average: {Math.ceil(selectedClass.hd / 2)}, Maximum:{" "}
+          {selectedClass.hd}
+        </Typography>
+      </Box>
       <TextField
         label="HP Gain"
         type="number"
@@ -49,12 +55,7 @@ export function LevelUpHpStep({ wizard }: LevelUpHpStepProps) {
         inputRef={field.ref}
         disabled={hpRolling}
         fullWidth
-        margin="normal"
-        sx={{
-          ...(hpSettled && {
-            animation: `${settledPulse} 0.4s cubic-bezier(0.4, 0, 0.2, 1)`,
-          }),
-        }}
+        sx={{ animation: hpSettled ? ANIMATIONS.settle : undefined, [PREFERS_REDUCED_MOTION]: { animation: "none" } }}
         slotProps={{
           htmlInput: {
             min: 1,
@@ -63,6 +64,6 @@ export function LevelUpHpStep({ wizard }: LevelUpHpStepProps) {
           },
         }}
       />
-    </Box>
+    </Stack>
   );
 }

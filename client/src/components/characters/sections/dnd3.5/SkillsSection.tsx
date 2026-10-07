@@ -1,4 +1,14 @@
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
+import {
+  Box,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from "@mui/material";
 import { useMemo } from "react";
 
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
@@ -17,8 +27,8 @@ export function SkillsSection({ skills }: Dnd35SkillsSectionProps) {
   return (
     <SheetSection title="Skills">
       {sortedSkills.length > 0 ? (
-        <>
-          <Typography variant="body2" sx={{ mb: 2, color: "text.secondary", fontStyle: "italic" }}>
+        <Stack spacing={2}>
+          <Typography variant="body2" sx={{ color: "text.secondary", fontStyle: "italic" }}>
             * indicates a class skill
           </Typography>
           <TableContainer
@@ -27,11 +37,11 @@ export function SkillsSection({ skills }: Dnd35SkillsSectionProps) {
             <Table size="small" sx={{ minWidth: 400, tableLayout: "fixed" }}>
               <colgroup>
                 <col />
-                <col style={{ width: 50 }} />
-                <col style={{ width: 50 }} />
-                <col style={{ width: 50 }} />
-                <col style={{ width: 50 }} />
-                <col style={{ width: 50 }} />
+                <Box component="col" sx={{ width: 50 }} />
+                <Box component="col" sx={{ width: 50 }} />
+                <Box component="col" sx={{ width: 50 }} />
+                <Box component="col" sx={{ width: 50 }} />
+                <Box component="col" sx={{ width: 50 }} />
               </colgroup>
               <TableHead>
                 <TableRow>
@@ -77,7 +87,7 @@ export function SkillsSection({ skills }: Dnd35SkillsSectionProps) {
               </TableBody>
             </Table>
           </TableContainer>
-        </>
+        </Stack>
       ) : (
         <BlankState title="No skills available" />
       )}

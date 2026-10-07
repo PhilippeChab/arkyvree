@@ -1,4 +1,4 @@
-import { Autocomplete, Chip, ListItem, ListItemText, TextField } from "@mui/material";
+import { Autocomplete, Chip, ListItem, ListItemText, Stack, TextField } from "@mui/material";
 import {
   type DefaultError,
   type InfiniteData,
@@ -108,7 +108,7 @@ export function CompletionAutocomplete<
           ) : (
             <ListItemText
               primary={
-                <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <Stack component="span" direction="row" spacing={1} sx={{ alignItems: "center" }}>
                   {option.label}
                   <Chip
                     label={option.kind}
@@ -116,7 +116,7 @@ export function CompletionAutocomplete<
                     variant="outlined"
                     color={option.kind === "engine" ? "primary" : "default"}
                   />
-                </span>
+                </Stack>
               }
               secondary={option.detail}
             />

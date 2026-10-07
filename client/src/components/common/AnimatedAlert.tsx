@@ -1,15 +1,28 @@
-import { Alert, type AlertProps, Collapse } from "@mui/material";
+import { Alert, type AlertProps, Box, Collapse } from "@mui/material";
 
-import { fadeIn } from "@/client/src/lib/animations.ts";
+import { DURATION, EASING, fadeIn, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
 
 interface AnimatedAlertProps extends AlertProps {
   in: boolean;
+  /** The space under the alert, in the theme's units, which opens and closes with it. */
+  gutter?: number;
 }
 
-export function AnimatedAlert({ in: show, sx, ...alertProps }: AnimatedAlertProps) {
+export function AnimatedAlert({ in: show, gutter = 0, sx, ...alertProps }: AnimatedAlertProps) {
   return (
     <Collapse in={show}>
-      <Alert {...alertProps} sx={{ animation: `${fadeIn} 300ms ease-in`, ...sx }} />
+      <Box sx={{ pb: gutter }}>
+        <Alert
+          {...alertProps}
+          sx={[
+            {
+              animation: `${fadeIn} ${DURATION.moderate}ms ${EASING.easeIn}`,
+              [PREFERS_REDUCED_MOTION]: { animation: "none" },
+            },
+            ...(Array.isArray(sx) ? sx : [sx]),
+          ]}
+        />
+      </Box>
     </Collapse>
   );
 }

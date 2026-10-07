@@ -1,9 +1,8 @@
-import { Box, Button, Typography } from "@mui/material";
+import { alpha, Button, Stack, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
 import { ScienceIcon } from "@/client/src/components/icons/index.ts";
 import { useDemoTimeRemaining } from "@/client/src/hooks/index.ts";
-import { brandGoldTint } from "@/client/src/lib/brandGold.ts";
 
 export function DemoBanner() {
   const navigate = useNavigate();
@@ -21,39 +20,39 @@ export function DemoBanner() {
         : `Demo mode — ${hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`} left`;
 
   return (
-    <Box sx={{ position: "sticky", top: 0, zIndex: 1, display: "flex", justifyContent: "center", pt: 1.5, px: 2 }}>
-      <Box
+    <Stack direction="row" sx={{ position: "sticky", top: 0, zIndex: 1, justifyContent: "center", pt: 1.5, px: 2 }}>
+      <Stack
+        direction="row"
+        spacing={2}
         sx={{
-          display: "flex",
           alignItems: "center",
-          gap: 1.5,
           py: 0.75,
           px: 2.5,
           borderRadius: 6,
           // The bright gold on both themes: the pill reads as a highlight.
-          bgcolor: (theme) => brandGoldTint(true, theme.palette.mode === "dark" ? 0.12 : 0.15),
-          border: "1px solid",
-          borderColor: (theme) => brandGoldTint(theme.palette.mode === "dark", 0.3),
+          bgcolor: (theme) => alpha(theme.palette.gold.light, theme.palette.mode === "dark" ? 0.12 : 0.15),
+          border: 1,
+          borderColor: (theme) => alpha(theme.palette.gold.main, 0.3),
           backdropFilter: "blur(12px)",
-          boxShadow: (theme) =>
-            theme.palette.mode === "dark" ? "0 2px 12px rgba(0,0,0,0.3)" : "0 2px 12px rgba(0,0,0,0.08)",
+          boxShadow: (theme) => theme.boxShadows.banner,
         }}
       >
-        <ScienceIcon sx={{ fontSize: 18, color: "warning.main" }} />
-        <Typography
-          variant="body2"
-          sx={{
-            fontWeight: 500,
-            color: (theme) => (theme.palette.mode === "dark" ? "warning.light" : "warning.dark"),
-          }}
-        >
-          {label}
-        </Typography>
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+          <ScienceIcon sx={{ fontSize: 18, color: "warning.main" }} />
+          <Typography
+            variant="body2"
+            sx={{
+              fontWeight: 500,
+              color: (theme) => (theme.palette.mode === "dark" ? "warning.light" : "warning.dark"),
+            }}
+          >
+            {label}
+          </Typography>
+        </Stack>
         <Button
           size="small"
           onClick={goToSignUp}
           sx={{
-            ml: 0.5,
             py: 0,
             px: 1.5,
             minHeight: 26,
@@ -61,17 +60,15 @@ export function DemoBanner() {
             fontWeight: 600,
             borderRadius: 4,
             color: (theme) => (theme.palette.mode === "dark" ? "warning.light" : "warning.dark"),
-            bgcolor: (theme) =>
-              brandGoldTint(theme.palette.mode === "dark", theme.palette.mode === "dark" ? 0.15 : 0.12),
+            bgcolor: (theme) => alpha(theme.palette.gold.main, theme.palette.mode === "dark" ? 0.15 : 0.12),
             "&:hover": {
-              bgcolor: (theme) =>
-                brandGoldTint(theme.palette.mode === "dark", theme.palette.mode === "dark" ? 0.25 : 0.2),
+              bgcolor: (theme) => alpha(theme.palette.gold.main, theme.palette.mode === "dark" ? 0.25 : 0.2),
             },
           }}
         >
           Sign up
         </Button>
-      </Box>
-    </Box>
+      </Stack>
+    </Stack>
   );
 }

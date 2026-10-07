@@ -8,6 +8,7 @@ import {
   ListItemButton,
   ListItemText,
   Skeleton,
+  Stack,
   TextField,
   Tooltip,
   Typography,
@@ -24,9 +25,9 @@ import {
   NoMatchesState,
 } from "@/client/src/components/common/index.ts";
 import { ExpandLessIcon, ExpandMoreIcon } from "@/client/src/components/icons/index.ts";
-import { fadeInUpSx } from "@/client/src/lib/animations.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
+import { fadeInUpSx } from "@/client/src/theme/animations.ts";
 
 import {
   type AptitudePool,
@@ -60,17 +61,18 @@ interface FeatFamilyExpansionProps {
 function AutoGrantedFeats({ feats, defaultCollapsed }: AutoGrantedFeatsProps) {
   const [open, setOpen] = useState(!defaultCollapsed);
   return (
-    <Box sx={{ mb: 1 }}>
-      <Box
+    <Box>
+      <Stack
+        direction="row"
         {...clickableProps(() => setOpen(!open))}
         aria-expanded={open}
-        sx={{ display: "flex", alignItems: "center", ...CLICKABLE_SX }}
+        sx={[{ alignItems: "center" }, CLICKABLE_SX]}
       >
-        <Typography variant="subtitle1" sx={{ flex: 1 }}>
+        <Typography variant="subtitle1" component="h4" sx={{ flex: 1 }}>
           Auto-Granted Feats ({feats.length})
         </Typography>
         {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
-      </Box>
+      </Stack>
       <Collapse in={open}>
         <List dense>
           {feats.map((feat, i) => (
@@ -134,14 +136,14 @@ function FeatFamilyExpansion({
             arrow
             slotProps={{
               tooltip: {
-                sx:
-                  !feat.eligible && feat.requirementTree
-                    ? { maxWidth: "none", whiteSpace: "pre", fontFamily: "monospace" }
-                    : {},
+                sx: [
+                  !feat.eligible &&
+                    !!feat.requirementTree && { maxWidth: "none", whiteSpace: "pre", fontFamily: "monospace" },
+                ],
               },
             }}
           >
-            <Box component="span" sx={{ display: "block", ...(isNew ? fadeInUpSx(i - previousItemCount) : undefined) }}>
+            <Box component="span" sx={[{ display: "block" }, isNew && fadeInUpSx(i - previousItemCount)]}>
               <ListItemButton
                 sx={{ pl: 6 }}
                 disabled={!feat.eligible}
@@ -221,46 +223,48 @@ export function LevelUpFeatsStep({
     return <Alert severity="info">No feats to select at this level.</Alert>;
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+    <Stack spacing={3} sx={{ flex: 1, minHeight: 0 }}>
       <Box sx={{ flexShrink: 0 }}>
-        <Typography variant="h6" gutterBottom>
+        <Typography variant="h6" component="h3" gutterBottom>
           Select Feats by Aptitude
         </Typography>
 
-        {featData.autoGrantedFeats.length > 0 && (
-          <AutoGrantedFeats feats={featData.autoGrantedFeats} defaultCollapsed={hasSelectableFeats} />
-        )}
+        <Stack spacing={1}>
+          {featData.autoGrantedFeats.length > 0 && (
+            <AutoGrantedFeats feats={featData.autoGrantedFeats} defaultCollapsed={hasSelectableFeats} />
+          )}
 
-        {aptitudePools.some((pool) => pool.available > 0) && (
-          <>
-            <Typography variant="subtitle1" sx={{ mb: 0.5 }}>
-              Choose an aptitude to select feats from:
-            </Typography>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-              {aptitudePools
-                .filter((pool) => pool.available > 0)
-                .map((pool) => {
-                  const currentPoolFeats = selectedFeats[pool.id] || [];
-                  const isSelected = selectedAptitude === pool.id;
+          {aptitudePools.some((pool) => pool.available > 0) && (
+            <Stack spacing={0.5}>
+              <Typography variant="subtitle1" component="p">
+                Choose an aptitude to select feats from:
+              </Typography>
+              <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
+                {aptitudePools
+                  .filter((pool) => pool.available > 0)
+                  .map((pool) => {
+                    const currentPoolFeats = selectedFeats[pool.id] || [];
+                    const isSelected = selectedAptitude === pool.id;
 
-                  return (
-                    <Chip
-                      key={pool.id}
-                      label={`${pool.name} ${currentPoolFeats.length}/${pool.available}${pool.shared ? " (optional)" : ""}`}
-                      variant={isSelected ? "filled" : "outlined"}
-                      color={isSelected ? "primary" : "default"}
-                      onClick={() => {
-                        if (isSelected) return;
-                        // A search typed for the last pool would filter this one.
-                        setSelectedAptitude(pool.id);
-                        setFeatSearch("");
-                      }}
-                    />
-                  );
-                })}
-            </Box>
-          </>
-        )}
+                    return (
+                      <Chip
+                        key={pool.id}
+                        label={`${pool.name} ${currentPoolFeats.length}/${pool.available}${pool.shared ? " (optional)" : ""}`}
+                        variant={isSelected ? "filled" : "outlined"}
+                        color={isSelected ? "primary" : "default"}
+                        onClick={() => {
+                          if (isSelected) return;
+                          // A search typed for the last pool would filter this one.
+                          setSelectedAptitude(pool.id);
+                          setFeatSearch("");
+                        }}
+                      />
+                    );
+                  })}
+              </Stack>
+            </Stack>
+          )}
+        </Stack>
       </Box>
 
       {/* Feat Selection Interface for Selected Aptitude */}
@@ -270,13 +274,13 @@ export function LevelUpFeatsStep({
           const currentPoolFeats = selectedFeats[selectedAptitude] || [];
 
           return (
-            <Box sx={{ display: "flex", flexDirection: "column", mt: 3, flex: 1, minHeight: 0 }}>
+            <Stack spacing={2} sx={{ flex: 1, minHeight: 0 }}>
               {/* Selected Feats (always reserve space) */}
-              <Box sx={{ flexShrink: 0, mb: 2 }}>
-                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+              <Stack spacing={1} sx={{ flexShrink: 0 }}>
+                <Typography variant="subtitle2" component="h4">
                   Selected {currentPool?.name} Feats ({currentPoolFeats.length}/{currentPool?.available || 0}):
                 </Typography>
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
                   {currentPoolFeats.length > 0
                     ? currentPoolFeats.map((feat) => (
                         <Tooltip
@@ -302,19 +306,19 @@ export function LevelUpFeatsStep({
                     : Array.from({ length: currentPool?.available || 0 }, (_, i) => (
                         <Skeleton key={i} variant="rounded" width={100} height={32} />
                       ))}
-                </Box>
-              </Box>
+                </Stack>
+              </Stack>
 
               {/* Add Feat List (Grouped) */}
               {currentPoolFeats.length < (currentPool?.available || 0) && (
-                <Box sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+                <Stack spacing={1} sx={{ flex: 1, minHeight: 0 }}>
                   <TextField
                     label={`Search ${currentPool?.name} Feats`}
                     placeholder="Search feats..."
                     value={featSearch}
                     onChange={(e) => setFeatSearch(e.target.value)}
                     fullWidth
-                    sx={{ mb: 1, flexShrink: 0 }}
+                    sx={{ flexShrink: 0 }}
                   />
                   {isLoadingAvailableFeats && groupedFeats.length === 0 ? (
                     <DiceSpinner />
@@ -329,12 +333,8 @@ export function LevelUpFeatsStep({
                         if (family !== null) {
                           return (
                             <Box key={row.family}>
-                              <ListItemButton onClick={() => toggleFeatFamily(family)}>
-                                {isExpanded ? (
-                                  <ExpandLessIcon fontSize="small" sx={{ mr: 1 }} />
-                                ) : (
-                                  <ExpandMoreIcon fontSize="small" sx={{ mr: 1 }} />
-                                )}
+                              <ListItemButton onClick={() => toggleFeatFamily(family)} sx={{ gap: 1 }}>
+                                {isExpanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
                                 <ListItemText
                                   primary={row.displayName}
                                   secondary={formatCount(row.variantCount, "variant")}
@@ -378,10 +378,14 @@ export function LevelUpFeatsStep({
                             arrow
                             slotProps={{
                               tooltip: {
-                                sx:
-                                  !row.eligible && "requirementTree" in row
-                                    ? { maxWidth: "none", whiteSpace: "pre", fontFamily: "monospace" }
-                                    : {},
+                                sx: [
+                                  !row.eligible &&
+                                    "requirementTree" in row && {
+                                      maxWidth: "none",
+                                      whiteSpace: "pre",
+                                      fontFamily: "monospace",
+                                    },
+                                ],
                               },
                             }}
                           >
@@ -410,17 +414,17 @@ export function LevelUpFeatsStep({
                         );
                       })}
                       {isFetchingNextFeatsPage && (
-                        <Box sx={{ display: "flex", justifyContent: "center", py: 1 }}>
+                        <Stack direction="row" sx={{ justifyContent: "center", py: 1 }}>
                           <DiceSpinner size="small" />
-                        </Box>
+                        </Stack>
                       )}
                     </List>
                   )}
-                </Box>
+                </Stack>
               )}
-            </Box>
+            </Stack>
           );
         })()}
-    </Box>
+    </Stack>
   );
 }

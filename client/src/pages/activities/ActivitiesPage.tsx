@@ -1,7 +1,9 @@
 import {
+  Box,
   Chip,
   Container,
   Paper,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -60,89 +62,95 @@ export default function ActivitiesPage() {
   return (
     <PageTransition>
       <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 } }}>
-        <PageHeader title="Activity" subtitle="View your activity history and track actions" />
+        <Stack spacing={4}>
+          <PageHeader title="Activity" subtitle="View your activity history and track actions" />
+          <Stack spacing={3}>
+            <SearchBar
+              {...searchBarProps}
+              searchPlaceholder="Search activity logs..."
+              sortOptions={ACTIVITY_SORT_OPTIONS}
+            />
 
-        <SearchBar
-          {...searchBarProps}
-          searchPlaceholder="Search activity logs..."
-          sortOptions={ACTIVITY_SORT_OPTIONS}
-        />
-
-        {isLoading ? (
-          <DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />
-        ) : error ? (
-          <LoadError what="Activity logs" error={error} />
-        ) : activities.length > 0 ? (
-          <>
-            <TableContainer component={Paper} sx={{ mb: 3, overflowX: "auto" }}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>
-                      <strong>Action</strong>
-                    </TableCell>
-                    <TableCell>
-                      <strong>Date</strong>
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {activities.map((activity) => {
-                    const isNavigable = isNavigableTarget(activity.targetTable);
-                    return (
-                      <TableRow
-                        key={activity.id}
-                        {...(isNavigable && clickableProps(() => openTarget(activity.targetTable, activity.targetId)))}
-                        sx={{
-                          "&:hover": { bgcolor: "action.hover" },
-                          ...(isNavigable && CLICKABLE_SX),
-                        }}
-                      >
+            {isLoading ? (
+              <DiceSpinner sx={{ py: { xs: 4, sm: 8 } }} />
+            ) : error ? (
+              <LoadError what="Activity logs" error={error} />
+            ) : activities.length > 0 ? (
+              // With nothing more to load, the page ends three units below the table, as the table's margin left it
+              <Stack spacing={3} sx={{ pb: hasNextPage ? 0 : 3 }}>
+                <TableContainer component={Paper} sx={{ overflowX: "auto" }}>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
                         <TableCell>
-                          <Tooltip
-                            describeChild
-                            title={formatActivityDetails(activity.data) ?? ""}
-                            arrow
-                            enterDelay={300}
-                            slotProps={{ tooltip: { sx: { whiteSpace: "pre-line" } } }}
-                          >
-                            <Chip
-                              label={formatActivityType(activity.type, activity.data)}
-                              size="small"
-                              sx={{ fontWeight: 500 }}
-                            />
-                          </Tooltip>
+                          <strong>Action</strong>
                         </TableCell>
                         <TableCell>
-                          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                            {formatDateTime(activity.createdAt)}
-                          </Typography>
+                          <strong>Date</strong>
                         </TableCell>
                       </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                    </TableHead>
+                    <TableBody>
+                      {activities.map((activity) => {
+                        const isNavigable = isNavigableTarget(activity.targetTable);
+                        return (
+                          <TableRow
+                            key={activity.id}
+                            {...(isNavigable &&
+                              clickableProps(() => openTarget(activity.targetTable, activity.targetId)))}
+                            sx={[{ "&:hover": { bgcolor: "action.hover" } }, isNavigable && CLICKABLE_SX]}
+                          >
+                            <TableCell>
+                              <Tooltip
+                                describeChild
+                                title={formatActivityDetails(activity.data) ?? ""}
+                                arrow
+                                enterDelay={300}
+                                slotProps={{ tooltip: { sx: { whiteSpace: "pre-line" } } }}
+                              >
+                                <Chip
+                                  label={formatActivityType(activity.type, activity.data)}
+                                  size="small"
+                                  sx={{ fontWeight: 500 }}
+                                />
+                              </Tooltip>
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                                {formatDateTime(activity.createdAt)}
+                              </Typography>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
 
-            <LoadMoreButton
-              size="large"
-              label="Load More Activities"
-              hasNextPage={hasNextPage}
-              isFetchingNextPage={isFetchingNextPage}
-              onClick={() => fetchNextPage()}
-            />
-          </>
-        ) : search ? (
-          <NoMatchesState search={search} sx={{ mt: 4 }} />
-        ) : (
-          <BlankState
-            icon={HistoryIcon}
-            title="No activity logs found"
-            description="Your activity history will appear here as you interact with the application."
-            sx={{ mt: 4 }}
-          />
-        )}
+                <LoadMoreButton
+                  size="large"
+                  label="Load More Activities"
+                  hasNextPage={hasNextPage}
+                  isFetchingNextPage={isFetchingNextPage}
+                  onClick={() => fetchNextPage()}
+                />
+              </Stack>
+            ) : search ? (
+              // An empty page's state sits a unit lower than its table, as its margin placed it
+              <Box sx={{ pt: 1 }}>
+                <NoMatchesState search={search} />
+              </Box>
+            ) : (
+              <Box sx={{ pt: 1 }}>
+                <BlankState
+                  icon={HistoryIcon}
+                  title="No activity logs found"
+                  description="Your activity history will appear here as you interact with the application."
+                />
+              </Box>
+            )}
+          </Stack>
+        </Stack>
       </Container>
     </PageTransition>
   );

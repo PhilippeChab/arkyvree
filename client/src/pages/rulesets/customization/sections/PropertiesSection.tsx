@@ -1,4 +1,4 @@
-import { Chip, Typography } from "@mui/material";
+import { Chip, Stack, Typography } from "@mui/material";
 import { type InferRequestType, type InferResponseType, parseResponse } from "hono/client";
 import { Controller } from "react-hook-form";
 
@@ -157,21 +157,23 @@ export function PropertiesSection({
 
   return (
     <SectionContent>
-      {canEdit && <SectionAddButton label="Add Property" onClick={handleCreate} />}
+      <Stack spacing={2}>
+        {canEdit && <SectionAddButton label="Add Property" onClick={handleCreate} />}
 
-      <RulesetSectionTable
-        data={properties}
-        isLoading={isLoading}
-        columns={PROPERTIES_COLUMNS}
-        canEdit={canEdit}
-        canDelete={canDelete}
-        onEdit={handleEditProperty}
-        onDelete={handleDelete}
-        renderCell={renderCell}
-        emptyIcon={ListAltIcon}
-        emptyTitle="No properties"
-        emptyDescription="No properties defined for this entity."
-      />
+        <RulesetSectionTable
+          data={properties}
+          isLoading={isLoading}
+          columns={PROPERTIES_COLUMNS}
+          canEdit={canEdit}
+          canDelete={canDelete}
+          onEdit={handleEditProperty}
+          onDelete={handleDelete}
+          renderCell={renderCell}
+          emptyIcon={ListAltIcon}
+          emptyTitle="No properties"
+          emptyDescription="No properties defined for this entity."
+        />
+      </Stack>
 
       <CreateDialog {...createDialogProps} title="Create New Property" fixedHeight="40vh">
         <Controller

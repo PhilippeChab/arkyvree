@@ -76,15 +76,15 @@ function FormActionDialog<T extends FieldValues = FieldValues>({
           : undefined,
       }}
     >
-      <form
+      {/* A column only in a dialog of a fixed height, whose content scrolls between the title and the actions */}
+      <Stack
+        component="form"
         onSubmit={form.handleSubmit(onSubmit)}
-        style={fixedHeight ? { display: "flex", flexDirection: "column", flex: 1, minHeight: 0 } : undefined}
+        sx={[{ display: fixedHeight ? "flex" : "block" }, !!fixedHeight && { flex: 1, minHeight: 0 }]}
       >
         <DialogTitle>{title}</DialogTitle>
-        <DialogContent
-          sx={fixedHeight ? { flex: 1, minHeight: 0, overflowY: "auto", scrollbarGutter: "stable" } : undefined}
-        >
-          <Stack spacing={3} sx={{ mt: 1 }}>
+        <DialogContent sx={[!!fixedHeight && { flex: 1, minHeight: 0, overflowY: "auto", scrollbarGutter: "stable" }]}>
+          <Stack spacing={3} sx={{ pt: 1 }}>
             {children}
           </Stack>
         </DialogContent>
@@ -98,7 +98,7 @@ function FormActionDialog<T extends FieldValues = FieldValues>({
             </DiceSpinner>
           </Button>
         </DialogActions>
-      </form>
+      </Stack>
     </FormDialog>
   );
 }

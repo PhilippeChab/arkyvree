@@ -1,4 +1,4 @@
-import { Box, Link as MuiLink, Typography } from "@mui/material";
+import { Link as MuiLink, Stack, Typography } from "@mui/material";
 import { Controller } from "react-hook-form";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 
@@ -70,41 +70,45 @@ export default function ResetPasswordPage() {
         </>
       }
     >
-      <form onSubmit={form.handleSubmit(handleReset)} noValidate>
-        <Controller
-          control={form.control}
-          name="digits"
-          render={({ field }) => <VerificationCodeInput digits={field.value} onChange={field.onChange} />}
-        />
+      <Stack spacing={2}>
+        <Stack component="form" onSubmit={form.handleSubmit(handleReset)} noValidate spacing={5}>
+          <Controller
+            control={form.control}
+            name="digits"
+            render={({ field }) => <VerificationCodeInput digits={field.value} onChange={field.onChange} />}
+          />
 
-        <PasswordField
-          control={form.control}
-          name="newPassword"
-          rules={NEW_PASSWORD_RULES}
-          label="New Password"
-          autoComplete="new-password"
-        />
+          <Stack spacing={3}>
+            <PasswordField
+              control={form.control}
+              name="newPassword"
+              rules={NEW_PASSWORD_RULES}
+              label="New Password"
+              autoComplete="new-password"
+            />
 
-        <PasswordField
-          control={form.control}
-          name="newPasswordConfirmation"
-          rules={confirmPasswordRules<ResetPasswordFormData>("newPassword")}
-          label="Confirm New Password"
-          autoComplete="new-password"
-        />
+            <PasswordField
+              control={form.control}
+              name="newPasswordConfirmation"
+              rules={confirmPasswordRules<ResetPasswordFormData>("newPassword")}
+              label="Confirm New Password"
+              autoComplete="new-password"
+            />
 
-        <AuthSubmitButton loading={auth.pending} disabled={!isComplete}>
-          Reset Password
-        </AuthSubmitButton>
-      </form>
-      <Box sx={{ textAlign: "center" }}>
-        <ResendCodeLink onResend={handleResend} disabled={auth.pending} />
-        <Typography variant="body2" sx={{ mt: 1 }}>
-          <MuiLink component={Link} to="/sign-in" underline="hover">
-            Back to Sign In
-          </MuiLink>
-        </Typography>
-      </Box>
+            <AuthSubmitButton loading={auth.pending} disabled={!isComplete}>
+              Reset Password
+            </AuthSubmitButton>
+          </Stack>
+        </Stack>
+        <Stack spacing={1} sx={{ textAlign: "center" }}>
+          <ResendCodeLink onResend={handleResend} disabled={auth.pending} />
+          <Typography variant="body2">
+            <MuiLink component={Link} to="/sign-in" underline="hover">
+              Back to Sign In
+            </MuiLink>
+          </Typography>
+        </Stack>
+      </Stack>
     </AuthPage>
   );
 }

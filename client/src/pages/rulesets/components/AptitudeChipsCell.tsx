@@ -1,4 +1,4 @@
-import { Box, Chip, Typography } from "@mui/material";
+import { Chip, Stack, Typography } from "@mui/material";
 
 interface AptitudeChipsCellProps {
   links: AptitudeLink[] | null | undefined;
@@ -25,7 +25,7 @@ export function AptitudeChipsCell({ links }: AptitudeChipsCellProps) {
     );
   }
   return (
-    <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
+    <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
       {links.toSorted(byListName).map((link) => (
         <Chip
           key={link.aptitudeId}
@@ -35,6 +35,6 @@ export function AptitudeChipsCell({ links }: AptitudeChipsCellProps) {
           variant="outlined"
         />
       ))}
-    </Box>
+    </Stack>
   );
 }

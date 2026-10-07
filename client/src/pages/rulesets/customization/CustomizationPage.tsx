@@ -1,4 +1,4 @@
-import { Box, Typography } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import { type QueryKey, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
@@ -196,38 +196,39 @@ function CustomizationView({
           locked,
           onSaved: handleSaved,
         })}
+      <Stack spacing={4}>
+        <SectionTabs
+          tabs={tabs}
+          value={section}
+          // While locked the entry still says where the copy came from: replace it
+          // rather than leave more entries to clean up.
+          onChange={(key) =>
+            navigate(`/rulesets/${rulesetId}/${buildCustomizationPath(type, entityId)}/${key}`, {
+              state: location.state,
+              replace: locked,
+            })
+          }
+          aria-label="customization tabs"
+        />
 
-      <SectionTabs
-        tabs={tabs}
-        value={section}
-        // While locked the entry still says where the copy came from: replace it
-        // rather than leave more entries to clean up.
-        onChange={(key) =>
-          navigate(`/rulesets/${rulesetId}/${buildCustomizationPath(type, entityId)}/${key}`, {
-            state: location.state,
-            replace: locked,
-          })
-        }
-        aria-label="customization tabs"
-      />
-
-      <Box role="tabpanel" sx={{ py: 3 }}>
-        {/* The source's customizations don't belong to the copy: wait for it. */}
-        {locked ? (
-          <DiceSpinner sx={{ py: 4 }} />
-        ) : section === "requirements" ? (
-          <RequirementsSection {...sectionProps} entityType={type} queryKeysToInvalidate={[entityKey]} />
-        ) : data.type === "modifiers" ? null : section === "modifiers" ? (
-          <ModifiersSection {...sectionProps} entityType={data.type} queryKeysToInvalidate={[entityKey]} />
-        ) : (
-          <PropertiesSection
-            {...sectionProps}
-            entityType={data.type}
-            data={"properties" in data.entity ? data.entity.properties : undefined}
-            queryKeysToInvalidate={klassLevelsKey ? [entityKey, klassLevelsKey] : [entityKey]}
-          />
-        )}
-      </Box>
+        <Box role="tabpanel" sx={{ py: 3 }}>
+          {/* The source's customizations don't belong to the copy: wait for it. */}
+          {locked ? (
+            <DiceSpinner sx={{ py: 4 }} />
+          ) : section === "requirements" ? (
+            <RequirementsSection {...sectionProps} entityType={type} queryKeysToInvalidate={[entityKey]} />
+          ) : data.type === "modifiers" ? null : section === "modifiers" ? (
+            <ModifiersSection {...sectionProps} entityType={data.type} queryKeysToInvalidate={[entityKey]} />
+          ) : (
+            <PropertiesSection
+              {...sectionProps}
+              entityType={data.type}
+              data={"properties" in data.entity ? data.entity.properties : undefined}
+              queryKeysToInvalidate={klassLevelsKey ? [entityKey, klassLevelsKey] : [entityKey]}
+            />
+          )}
+        </Box>
+      </Stack>
 
       <DeleteDialog
         open={deleteDialogOpen}
@@ -258,12 +259,12 @@ function describe(
         title: modifier.sourceName,
         pageTitle: `${modifier.target} ${modifier.operator} ${modifier.value}`,
         subtitle: (
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1 }}>
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center", justifyContent: "center" }}>
             <TargetPathBreadcrumbs target={modifier.target} targetLabels={modifier.targetLabels} />
-            <Typography sx={{ typography: { xs: "body1", sm: "h6" }, color: "text.secondary" }}>
+            <Typography component="p" sx={{ typography: { xs: "body1", sm: "h6" }, color: "text.secondary" }}>
               {MODIFIER_OPERATOR_LABELS[modifier.operator]} {modifier.value}
             </Typography>
-          </Box>
+          </Stack>
         ),
         backPath: modifierSourcePath(rulesetId, modifier.sourceType, modifier.sourceId),
       };

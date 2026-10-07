@@ -1,4 +1,4 @@
-import { Box, Link as MuiLink, Typography } from "@mui/material";
+import { Box, Link as MuiLink, Stack, Typography } from "@mui/material";
 import type { InferRequestType } from "hono/client";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -37,44 +37,49 @@ export default function SignUpPage() {
 
   return (
     <AuthPage error={error} title="Sign Up">
-      <form onSubmit={handleSubmit(handleSignUp)} noValidate>
-        <EmailField control={control} name="emailAddress" rules={EMAIL_RULES} />
+      <Stack spacing={4}>
+        {/* The first field's own top, which adds to the gap above the form */}
+        <Stack component="form" onSubmit={handleSubmit(handleSignUp)} noValidate spacing={3} sx={{ pt: 2 }}>
+          <EmailField control={control} name="emailAddress" rules={EMAIL_RULES} />
 
-        <PasswordField
-          control={control}
-          name="password"
-          rules={NEW_PASSWORD_RULES}
-          label="Password"
-          autoComplete="new-password"
-        />
+          <PasswordField
+            control={control}
+            name="password"
+            rules={NEW_PASSWORD_RULES}
+            label="Password"
+            autoComplete="new-password"
+          />
 
-        <PasswordField
-          control={control}
-          name="passwordConfirmation"
-          rules={confirmPasswordRules<SignUpFormData>("password")}
-          label="Confirm Password"
-          autoComplete="new-password"
-        />
+          <PasswordField
+            control={control}
+            name="passwordConfirmation"
+            rules={confirmPasswordRules<SignUpFormData>("password")}
+            label="Confirm Password"
+            autoComplete="new-password"
+          />
 
-        <AuthSubmitButton loading={auth.pending}>Sign Up</AuthSubmitButton>
-      </form>
-      <GoogleSignInSection
-        label="Sign up with Google"
-        disabled={auth.pending}
-        onError={(error) => setError(errorMessage(error, "Failed to sign up with Google"))}
-      />
-      <Box sx={{ mt: 2, textAlign: "center" }}>
-        <Typography variant="body2">
-          Already have an account?{" "}
-          <MuiLink
-            component={Link}
-            to={redirect ? `/sign-in?redirect=${encodeURIComponent(redirect)}` : "/sign-in"}
-            underline="hover"
-          >
-            Sign in
-          </MuiLink>
-        </Typography>
-      </Box>
+          <AuthSubmitButton loading={auth.pending}>Sign Up</AuthSubmitButton>
+        </Stack>
+        <Stack spacing={2}>
+          <GoogleSignInSection
+            label="Sign up with Google"
+            disabled={auth.pending}
+            onError={(error) => setError(errorMessage(error, "Failed to sign up with Google"))}
+          />
+          <Box sx={{ textAlign: "center" }}>
+            <Typography variant="body2">
+              Already have an account?{" "}
+              <MuiLink
+                component={Link}
+                to={redirect ? `/sign-in?redirect=${encodeURIComponent(redirect)}` : "/sign-in"}
+                underline="hover"
+              >
+                Sign in
+              </MuiLink>
+            </Typography>
+          </Box>
+        </Stack>
+      </Stack>
     </AuthPage>
   );
 }

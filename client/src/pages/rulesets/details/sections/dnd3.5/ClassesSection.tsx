@@ -1,4 +1,4 @@
-import { Chip, Typography } from "@mui/material";
+import { Chip, Stack, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 import { useCallback } from "react";
@@ -93,38 +93,40 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
 
   return (
     <SectionContent>
-      <SearchBar
-        {...searchBarProps}
-        searchPlaceholder="Search classes..."
-        actions={
-          <SectionActions
-            ruleset={ruleset}
-            childOnly={childOnly}
-            onChildOnlyChange={onChildOnlyChange}
-            addLabel="Add Class"
-            onAdd={handleCreate}
+      <Stack spacing={3}>
+        <SearchBar
+          {...searchBarProps}
+          searchPlaceholder="Search classes..."
+          actions={
+            <SectionActions
+              ruleset={ruleset}
+              childOnly={childOnly}
+              onChildOnlyChange={onChildOnlyChange}
+              addLabel="Add Class"
+              onAdd={handleCreate}
+            />
+          }
+        />
+        <Stack spacing={2}>
+          <RulesetSectionTable
+            data={classes}
+            search={search}
+            isLoading={isLoading}
+            columns={CLASSES_COLUMNS}
+            onRowClick={handleRowClick}
+            onRowMouseEnter={handleRowMouseEnter}
+            renderCell={renderCell}
+            emptyIcon={ClassesIcon}
+            emptyTitle="No classes"
+            emptyDescription="No classes available for this ruleset."
           />
-        }
-      />
-
-      <RulesetSectionTable
-        data={classes}
-        search={search}
-        isLoading={isLoading}
-        columns={CLASSES_COLUMNS}
-        onRowClick={handleRowClick}
-        onRowMouseEnter={handleRowMouseEnter}
-        renderCell={renderCell}
-        emptyIcon={ClassesIcon}
-        emptyTitle="No classes"
-        emptyDescription="No classes available for this ruleset."
-      />
-
-      <LoadMoreButton
-        hasNextPage={hasNextPage}
-        isFetchingNextPage={isFetchingNextPage}
-        onClick={() => fetchNextPage()}
-      />
+          <LoadMoreButton
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            onClick={() => fetchNextPage()}
+          />
+        </Stack>
+      </Stack>
 
       <CreateDialog {...createDialogProps} title="Add New Class" maxWidth="xs">
         <ClassFormFields form={createForm} />

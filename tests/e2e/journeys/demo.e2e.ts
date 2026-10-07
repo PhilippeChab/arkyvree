@@ -18,7 +18,7 @@ test.describe("Demo", () => {
   test("lasts through the app, and ends on reaching sign-in", async ({ page }) => {
     await startDemo(page);
     await visitCoreRulesetList(page);
-    await expect(page.locator('h6:has-text("Core SRD 3.5")')).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole("heading", { name: "Core SRD 3.5" })).toBeVisible({ timeout: 10_000 });
     await expect(page.getByText(/Demo mode/)).toBeVisible();
 
     // Signing in is for returning users: it ends the demo, and offers none.

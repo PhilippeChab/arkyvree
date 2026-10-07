@@ -32,55 +32,55 @@ export function AbilityScoreBox({
   const breakdown = compact ? undefined : abilityData;
 
   return (
-    <Paper
+    <Stack
+      component={Paper}
       variant="outlined"
-      sx={{
-        p: compact ? 1 : 2,
-        textAlign: "center",
-        ...(compact
-          ? { display: "flex", flexDirection: "column", gap: 0.5 }
-          : { minHeight: 180, display: "flex", flexDirection: "column", justifyContent: "space-between" }),
-      }}
+      spacing={compact ? 0.5 : 0}
+      sx={[
+        { p: compact ? 1 : 2, textAlign: "center" },
+        !compact && { minHeight: 180, justifyContent: "space-between" },
+      ]}
     >
       <Typography
         variant={compact ? "caption" : "h6"}
         sx={{
           fontWeight: 600,
           textTransform: "uppercase",
-          ...(compact ? { lineHeight: 1 } : { fontSize: "0.9rem" }),
+          lineHeight: compact ? 1 : undefined,
+          fontSize: compact ? undefined : "0.9rem",
         }}
       >
         {label}
       </Typography>
-      <Box>
-        <Typography
-          sx={{
-            fontWeight: 700,
-            lineHeight: 1,
-            typography: compact ? { xs: "h6", sm: "h5" } : { xs: "h5", sm: "h4" },
-          }}
-        >
-          {score}
-        </Typography>
+      <Stack spacing={compact ? 0 : 2}>
+        <Stack spacing={compact ? 0.5 : 1}>
+          <Typography
+            sx={{
+              fontWeight: 700,
+              lineHeight: 1,
+              typography: compact ? { xs: "h6", sm: "h5" } : { xs: "h5", sm: "h4" },
+            }}
+          >
+            {score}
+          </Typography>
 
-        <Typography
-          variant={compact ? "caption" : "body1"}
-          sx={{
-            fontWeight: 600,
-            color: modifier >= 0 ? "success.main" : "error.main",
-            border: "1px solid",
-            borderColor: "divider",
-            borderRadius: 1,
-            py: compact ? 0.25 : 0.5,
-            px: 1,
-            mt: compact ? 0.5 : 1,
-            mb: compact ? 0 : 2,
-            display: "inline-block",
-            minWidth: compact ? 32 : 40,
-          }}
-        >
-          {formatSigned(modifier)}
-        </Typography>
+          <Typography
+            variant={compact ? "caption" : "body1"}
+            sx={{
+              alignSelf: "center",
+              fontWeight: 600,
+              color: modifier >= 0 ? "success.main" : "error.main",
+              border: 1,
+              borderColor: "divider",
+              borderRadius: 1,
+              py: compact ? 0.25 : 0.5,
+              px: 1,
+              minWidth: compact ? 32 : 40,
+            }}
+          >
+            {formatSigned(modifier)}
+          </Typography>
+        </Stack>
 
         {breakdown && (
           <Box sx={{ fontSize: "0.75rem", textAlign: "center" }}>
@@ -121,7 +121,7 @@ export function AbilityScoreBox({
             </Typography>
           </Box>
         )}
-      </Box>
-    </Paper>
+      </Stack>
+    </Stack>
   );
 }

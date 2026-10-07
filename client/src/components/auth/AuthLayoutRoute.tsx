@@ -1,14 +1,13 @@
-import { Alert, Box, Card, CardContent, Link as MuiLink, Typography, useTheme } from "@mui/material";
+import { Alert, alpha, Box, Card, CardContent, Link as MuiLink, Stack, Typography } from "@mui/material";
 import { type ReactNode, Suspense, useEffect, useRef, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 
 import { DiceSpinner, PageTransition } from "@/client/src/components/common/index.ts";
 import { useAuthRequests, useIsMobile, useSearchParam, useStartDemo } from "@/client/src/hooks/index.ts";
-import { DURATION, EASING, fadeInUp, PREFERS_REDUCED_MOTION } from "@/client/src/lib/animations.ts";
-import { brandGold, brandGoldTint } from "@/client/src/lib/brandGold.ts";
 import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 import { safeRedirectPath } from "@/client/src/lib/safeRedirect.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
+import { DURATION, EASING, fadeInUp, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
 
 interface AuthPageProps {
   children: ReactNode;
@@ -25,13 +24,12 @@ function AuthFooterLinks() {
   // The demo is for newcomers, so only sign-up offers it.
   const showDemo = useLocation().pathname === "/sign-up";
   return (
-    <Box
+    <Stack
+      direction="row"
       sx={{
-        display: "flex",
         flexWrap: "wrap",
         columnGap: { xs: 1, sm: 2 },
         rowGap: 0.5,
-        mt: 2,
         alignItems: "center",
         justifyContent: "center",
         width: "100%",
@@ -56,7 +54,9 @@ function AuthFooterLinks() {
           </Typography>
         </>
       )}
-      <MuiLink
+      <Stack
+        component={MuiLink}
+        direction="row"
         href={EXTERNAL_LINKS.source}
         target="_blank"
         rel="noopener noreferrer"
@@ -65,40 +65,32 @@ function AuthFooterLinks() {
         sx={{ color: "text.secondary", display: "inline-flex", alignItems: "center", minHeight: 44 }}
       >
         Source
-      </MuiLink>
-    </Box>
+      </Stack>
+    </Stack>
   );
 }
 
 /** The branding panel on a wide screen, which the layout route renders once. */
 function DesktopBranding() {
-  const theme = useTheme();
-  const darkMode = theme.palette.mode === "dark";
-
-  const gold = brandGold(darkMode);
-  const goldFaint = brandGoldTint(darkMode, darkMode ? 0.12 : 0.1);
-
   const animBase = {
     [PREFERS_REDUCED_MOTION]: { animation: "none" },
   } as const;
 
   const stagger = (i: number) => ({
-    animation: `${fadeInUp} ${DURATION.slow}ms ${EASING.decelerate} ${i * 80}ms both`,
+    animation: `${fadeInUp} ${DURATION.slow}ms ${EASING.decelerate} ${i * DURATION.slowStagger}ms both`,
     ...animBase,
   });
 
   return (
-    <Box
+    <Stack
+      spacing={3}
       sx={{
         position: "relative",
         width: "45%",
-        display: "flex",
-        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        background: darkMode
-          ? "linear-gradient(160deg, #3d2020 0%, #2a1515 50%, #1a0f0f 100%)"
-          : "linear-gradient(160deg, #8d1e1e 0%, #6b1717 50%, #4a1010 100%)",
+        background: (theme) =>
+          `linear-gradient(160deg, ${theme.palette.backdrop.top} 0%, ${theme.palette.backdrop.middle} 50%, ${theme.palette.backdrop.bottom} 100%)`,
         overflow: "hidden",
         py: 6,
         px: 4,
@@ -112,10 +104,11 @@ function DesktopBranding() {
           left: 16,
           width: 40,
           height: 40,
-          borderTop: `2px solid ${gold}`,
-          borderLeft: `2px solid ${gold}`,
+          borderTop: 2,
+          borderLeft: 2,
+          borderColor: "gold.main",
           opacity: 0.3,
-          borderTopLeftRadius: 4,
+          borderRadius: 0.5,
         }}
       />
       {/* Corner filigree bottom-right */}
@@ -126,10 +119,11 @@ function DesktopBranding() {
           right: 16,
           width: 40,
           height: 40,
-          borderBottom: `2px solid ${gold}`,
-          borderRight: `2px solid ${gold}`,
+          borderBottom: 2,
+          borderRight: 2,
+          borderColor: "gold.main",
           opacity: 0.3,
-          borderBottomRightRadius: 4,
+          borderRadius: 0.5,
         }}
       />
 
@@ -140,7 +134,7 @@ function DesktopBranding() {
           width: 300,
           height: 300,
           borderRadius: "50%",
-          background: `radial-gradient(circle, ${goldFaint} 0%, transparent 70%)`,
+          background: (theme) => `radial-gradient(circle, ${theme.palette.gold.faint} 0%, transparent 70%)`,
           pointerEvents: "none",
         }}
       />
@@ -154,102 +148,105 @@ function DesktopBranding() {
           width: 120,
           height: 120,
           position: "relative",
-          filter: `drop-shadow(0 4px 12px ${brandGoldTint(false, darkMode ? 0.4 : 0.3)})`,
+          filter: (theme) => theme.dropShadows.authLogo,
           ...stagger(0),
         }}
       />
 
-      {/* Title */}
-      <Typography
-        variant="h3"
-        sx={{
-          mt: 3,
-          color: "#fff",
-          fontWeight: 700,
-          letterSpacing: "0.04em",
-          textShadow: "0 2px 4px rgba(0,0,0,0.4)",
-          textAlign: "center",
-          position: "relative",
-          ...stagger(1),
-        }}
-      >
-        Arkyvree
-      </Typography>
+      <Stack spacing={2} sx={{ alignItems: "center" }}>
+        {/* Title */}
+        <Typography
+          variant="h3"
+          component="p"
+          sx={{
+            color: "common.white",
+            fontWeight: 700,
+            letterSpacing: "0.04em",
+            textShadow: (theme) => theme.textShadows.brand,
+            textAlign: "center",
+            position: "relative",
+            ...stagger(1),
+          }}
+        >
+          Arkyvree
+        </Typography>
 
-      {/* Gold gradient divider */}
-      <Box
-        sx={{
-          mt: 2,
-          width: 120,
-          height: 2,
-          background: `linear-gradient(90deg, transparent, ${gold}, transparent)`,
-          borderRadius: 1,
-          position: "relative",
-          ...stagger(2),
-        }}
-      />
+        {/* Gold gradient divider */}
+        <Box
+          sx={{
+            width: 120,
+            height: 2,
+            background: (theme) => `linear-gradient(90deg, transparent, ${theme.palette.gold.main}, transparent)`,
+            borderRadius: 1,
+            position: "relative",
+            ...stagger(2),
+          }}
+        />
 
-      {/* Tagline */}
-      <Typography
-        variant="subtitle1"
-        sx={{
-          mt: 2,
-          color: "rgba(255,255,255,0.7)",
-          fontStyle: "italic",
-          textAlign: "center",
-          position: "relative",
-          ...stagger(3),
-        }}
-      >
-        A programmable engine for tabletop rulesets
-      </Typography>
-    </Box>
+        {/* Tagline */}
+        <Typography
+          variant="subtitle1"
+          component="p"
+          sx={{
+            color: (theme) => alpha(theme.palette.common.white, 0.7),
+            fontStyle: "italic",
+            textAlign: "center",
+            position: "relative",
+            ...stagger(3),
+          }}
+        >
+          A programmable engine for tabletop rulesets
+        </Typography>
+      </Stack>
+    </Stack>
   );
 }
 
 /** The branding on a small screen, above the page, which the layout route renders once. */
 function MobileBranding() {
-  const theme = useTheme();
-  const darkMode = theme.palette.mode === "dark";
-
   return (
-    <Box
+    <Stack
+      direction="row"
+      spacing={2}
       sx={{
-        display: "flex",
         alignItems: "center",
-        gap: 2,
         px: 2,
         py: 2.5,
-        background: darkMode
-          ? "linear-gradient(135deg, #3d2020, #2a1515)"
-          : "linear-gradient(135deg, #8d1e1e, #6b1717)",
-        borderRadius: "8px 8px 0 0",
+        background: (theme) =>
+          `linear-gradient(135deg, ${theme.palette.backdrop.top}, ${theme.palette.backdrop.middle})`,
+        borderRadius: 1,
+        borderBottomLeftRadius: 0,
+        borderBottomRightRadius: 0,
       }}
     >
       <Box
         component="img"
         src="/pwa-192x192.png"
         alt="Arkyvree"
-        sx={{ width: 48, height: 48, filter: `drop-shadow(0 2px 6px ${brandGoldTint(false, 0.3)})` }}
+        sx={{ width: 48, height: 48, filter: (theme) => theme.dropShadows.authLogoCompact }}
       />
       <Box>
         <Typography
           variant="h5"
+          component="p"
           sx={{
-            color: "#fff",
+            color: "common.white",
             fontWeight: 700,
             letterSpacing: "0.03em",
-            textShadow: "0 1px 3px rgba(0,0,0,0.3)",
+            textShadow: (theme) => theme.textShadows.brandCompact,
             lineHeight: 1.2,
           }}
         >
           Arkyvree
         </Typography>
-        <Typography variant="body2" sx={{ color: "rgba(255,255,255,0.6)", fontStyle: "italic" }}>
+        <Typography
+          variant="body2"
+          sx={{ color: (theme) => alpha(theme.palette.common.white, 0.6), fontStyle: "italic" }}
+        >
           A programmable engine for tabletop rulesets
         </Typography>
       </Box>
-    </Box>
+    </Stack>
   );
 }
 
@@ -285,9 +282,7 @@ export function AuthLayoutRoute() {
 
   if (isMobile) {
     return (
-      <Box
-        sx={{ display: "flex", flexDirection: "column", minHeight: "100vh", justifyContent: "center", px: 2, py: 4 }}
-      >
+      <Stack spacing={2} sx={{ minHeight: "100vh", justifyContent: "center", px: 2, py: 4 }}>
         <Card sx={{ width: "100%", maxWidth: 450, mx: "auto", overflow: "hidden" }}>
           <MobileBranding />
           <Suspense fallback={<DiceSpinner sx={{ py: 8 }} />}>
@@ -295,68 +290,54 @@ export function AuthLayoutRoute() {
           </Suspense>
         </Card>
         <AuthFooterLinks />
-      </Box>
+      </Stack>
     );
   }
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh" }}>
+    <Stack direction="row" sx={{ minHeight: "100vh" }}>
       <DesktopBranding />
 
-      <Box
-        sx={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          px: 4,
-        }}
-      >
+      <Stack spacing={2} sx={{ flex: 1, alignItems: "center", justifyContent: "center", px: 4 }}>
         <Suspense fallback={<DiceSpinner sx={{ py: 8 }} />}>
           <Outlet />
         </Suspense>
         <AuthFooterLinks />
-      </Box>
-    </Box>
+      </Stack>
+    </Stack>
   );
 }
 
 /** The frame each auth page puts its content in: its title, subtitle, error and notice. */
 export function AuthPage({ children, title, subtitle, error, notice }: AuthPageProps) {
   return (
-    <PageTransition>
-      <Card sx={{ width: "100%", maxWidth: 450 }}>
+    <PageTransition sx={{ width: "100%", maxWidth: 450 }}>
+      <Card sx={{ width: "100%" }}>
         <CardContent sx={{ p: { xs: 2, sm: 4 } }}>
-          <Box
+          <Stack
             sx={{
               animation: `${fadeInUp} ${DURATION.slow}ms ${EASING.decelerate} both`,
               [PREFERS_REDUCED_MOTION]: { animation: "none" },
             }}
           >
-            <Typography sx={{ typography: { xs: "h5", sm: "h4" } }} component="h1" gutterBottom align="center">
+            <Typography sx={{ typography: { xs: "h5", sm: "h4" }, textAlign: "center" }} component="h1" gutterBottom>
               {title}
             </Typography>
 
-            {subtitle && (
-              <Typography variant="body2" align="center" sx={{ mb: 3 }}>
-                {subtitle}
-              </Typography>
-            )}
+            <Stack spacing={3}>
+              {subtitle && (
+                <Typography variant="body2" sx={{ textAlign: "center" }}>
+                  {subtitle}
+                </Typography>
+              )}
 
-            {error && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {error}
-              </Alert>
-            )}
-            {notice && (
-              <Alert severity="success" sx={{ mb: 2 }}>
-                {notice}
-              </Alert>
-            )}
-
-            {children}
-          </Box>
+              <Stack spacing={2}>
+                {error && <Alert severity="error">{error}</Alert>}
+                {notice && <Alert severity="success">{notice}</Alert>}
+                <Box>{children}</Box>
+              </Stack>
+            </Stack>
+          </Stack>
         </CardContent>
       </Card>
     </PageTransition>

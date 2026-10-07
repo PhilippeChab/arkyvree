@@ -4,6 +4,7 @@ import {
   Chip,
   Paper,
   Skeleton,
+  Stack,
   Table,
   TableBody,
   TableCell,
@@ -31,7 +32,6 @@ import {
 import { type Aptitude, AptitudeAutocomplete } from "@/client/src/components/customization/index.ts";
 import { ExpandLessIcon, ExpandMoreIcon, FeatsIcon } from "@/client/src/components/icons/index.ts";
 import { useSearchParam, useSearchText, useToggleSet } from "@/client/src/hooks/index.ts";
-import { fadeInUpSx } from "@/client/src/lib/animations.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import { EMPTY_FEAT, type FeatFormData, FeatFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
@@ -40,15 +40,16 @@ import {
   DescriptionCell,
   RulesetSectionTable,
   SectionActions,
-  TABLE_CONTAINER_LOADING_STYLE,
-  TABLE_CONTAINER_STYLE,
-  TABLE_STYLE,
+  TABLE_CONTAINER_LOADING_SX,
+  TABLE_CONTAINER_SX,
+  TABLE_SX,
 } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { featFamilyQuery, featsGroupedQuery, featsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
+import { fadeInUpSx } from "@/client/src/theme/animations.ts";
 
 type Feat = FeatsPaginated["items"][number];
 
@@ -110,12 +111,12 @@ function GroupedRow({
           sx={{ ...CLICKABLE_SX, ...fadeInUpSx(rowIndex) }}
         >
           <TableCell>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
               {isExpanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
               <Typography variant="body2" sx={{ fontWeight: 500 }}>
                 {row.displayName}
               </Typography>
-            </Box>
+            </Stack>
           </TableCell>
           <TableCell>
             <Chip label={formatCount(row.variantCount, "variant")} size="small" variant="outlined" />
@@ -139,7 +140,7 @@ function GroupedRow({
                 {...clickableProps(() => onVariantClick(feat))}
                 onMouseEnter={() => onVariantMouseEnter(feat)}
                 onFocus={() => onVariantMouseEnter(feat)}
-                sx={{ ...CLICKABLE_SX, ...(isNew ? fadeInUpSx(i - previousItemCount) : undefined) }}
+                sx={[CLICKABLE_SX, isNew && fadeInUpSx(i - previousItemCount)]}
               >
                 <TableCell sx={{ pl: 6 }}>
                   <Typography variant="body2">{feat.name}</Typography>
@@ -275,8 +276,8 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   const renderGroupedTable = () => {
     if (groupedQuery.isLoading) {
       return (
-        <TableContainer component={Paper} variant="outlined" sx={TABLE_CONTAINER_LOADING_STYLE}>
-          <Table sx={TABLE_STYLE}>
+        <TableContainer component={Paper} variant="outlined" sx={TABLE_CONTAINER_LOADING_SX}>
+          <Table sx={TABLE_SX}>
             <TableHead>
               <TableRow>
                 {GROUPED_COLUMNS.map((col) => (
@@ -313,8 +314,8 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     let rowIndex = 0;
 
     return (
-      <TableContainer component={Paper} variant="outlined" sx={TABLE_CONTAINER_STYLE}>
-        <Table sx={TABLE_STYLE}>
+      <TableContainer component={Paper} variant="outlined" sx={TABLE_CONTAINER_SX}>
+        <Table sx={TABLE_SX}>
           <TableHead>
             <TableRow>
               {GROUPED_COLUMNS.map((col) => (
@@ -355,62 +356,64 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
 
   return (
     <SectionContent>
-      <SearchBar
-        {...searchTextProps}
-        searchPlaceholder="Search feats..."
-        filters={
-          <Box sx={{ width: { xs: "100%", sm: 200 } }}>
-            <AptitudeAutocomplete
-              rulesetId={ruleset.id}
-              value={selectedAptitude}
-              onChange={setSelectedAptitude}
-              size="small"
-              scope="feats"
-            />
-          </Box>
-        }
-        actions={
-          <SectionActions
-            ruleset={ruleset}
-            childOnly={childOnly}
-            onChildOnlyChange={onChildOnlyChange}
-            addLabel="Add Feat"
-            onAdd={handleCreate}
-          >
-            <ToggleButton
-              value="grouped"
-              selected={grouped}
-              onChange={handleGroupedToggle}
-              sx={{ textTransform: "none" }}
+      <Stack spacing={3}>
+        <SearchBar
+          {...searchTextProps}
+          searchPlaceholder="Search feats..."
+          filters={
+            <Box sx={{ width: { xs: "100%", sm: 200 } }}>
+              <AptitudeAutocomplete
+                rulesetId={ruleset.id}
+                value={selectedAptitude}
+                onChange={setSelectedAptitude}
+                size="small"
+                scope="feats"
+              />
+            </Box>
+          }
+          actions={
+            <SectionActions
+              ruleset={ruleset}
+              childOnly={childOnly}
+              onChildOnlyChange={onChildOnlyChange}
+              addLabel="Add Feat"
+              onAdd={handleCreate}
             >
-              Group families
-            </ToggleButton>
-          </SectionActions>
-        }
-      />
-
-      {grouped ? (
-        renderGroupedTable()
-      ) : (
-        <RulesetSectionTable
-          data={feats}
-          search={searchQuery}
-          isLoading={isLoading}
-          columns={FEATS_COLUMNS}
-          onRowClick={handleRowClick}
-          onRowMouseEnter={handleRowMouseEnter}
-          renderCell={renderCell}
-          emptyIcon={FeatsIcon}
-          emptyTitle="No feats"
-          emptyDescription="No feats available for this ruleset."
+              <ToggleButton
+                value="grouped"
+                selected={grouped}
+                onChange={handleGroupedToggle}
+                sx={{ textTransform: "none" }}
+              >
+                Group families
+              </ToggleButton>
+            </SectionActions>
+          }
         />
-      )}
-
-      <LoadMoreButton
-        hasNextPage={hasNextPage}
-        isFetchingNextPage={isFetchingNextPage}
-        onClick={() => fetchNextPage()}
-      />
+        <Stack spacing={2}>
+          {grouped ? (
+            renderGroupedTable()
+          ) : (
+            <RulesetSectionTable
+              data={feats}
+              search={searchQuery}
+              isLoading={isLoading}
+              columns={FEATS_COLUMNS}
+              onRowClick={handleRowClick}
+              onRowMouseEnter={handleRowMouseEnter}
+              renderCell={renderCell}
+              emptyIcon={FeatsIcon}
+              emptyTitle="No feats"
+              emptyDescription="No feats available for this ruleset."
+            />
+          )}
+          <LoadMoreButton
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            onClick={() => fetchNextPage()}
+          />
+        </Stack>
+      </Stack>
 
       <CreateDialog {...createDialogProps} title="Create New Feat">
         <FeatFormFields form={createForm} rulesetId={ruleset.id} />

@@ -32,10 +32,13 @@ export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSect
 
   return (
     <SheetSection title="Combat & Saves">
-      <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 3 }}>
+      <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
         {/* Left column: Combat Stats */}
-        <Box sx={{ flex: 1, minWidth: { md: 350 } }}>
-          <Typography sx={{ fontWeight: 600, mb: 2, color: "text.secondary", typography: { xs: "body1", sm: "h6" } }}>
+        <Stack spacing={2} sx={{ flex: 1, minWidth: { md: 350 } }}>
+          <Typography
+            component="h3"
+            sx={{ fontWeight: 600, color: "text.secondary", typography: { xs: "body1", sm: "h6" } }}
+          >
             Combat Stats
           </Typography>
           <Stack spacing={2}>
@@ -55,7 +58,7 @@ export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSect
             </Box>
 
             {/* AC Breakdown */}
-            <Box sx={{ ml: 2, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
+            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
               {AC_PARTS.map(([label, part]) => (
                 <Typography key={part} variant="caption" sx={{ color: "text.secondary" }}>
                   {label}: {formatSigned(combat?.ac?.[part])}
@@ -63,11 +66,14 @@ export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSect
               ))}
             </Box>
           </Stack>
-        </Box>
+        </Stack>
 
         {/* Right column: Saving Throws */}
-        <Box sx={{ flex: 1, minWidth: { md: 300 } }}>
-          <Typography sx={{ fontWeight: 600, mb: 2, color: "text.secondary", typography: { xs: "body1", sm: "h6" } }}>
+        <Stack spacing={2} sx={{ flex: 1, minWidth: { md: 300 } }}>
+          <Typography
+            component="h3"
+            sx={{ fontWeight: 600, color: "text.secondary", typography: { xs: "body1", sm: "h6" } }}
+          >
             Saving Throws
           </Typography>
           {Object.keys(saves).length > 0 ? (
@@ -76,11 +82,11 @@ export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSect
                 const total = saveData?.total ?? 0;
                 const displayName = saveData?.name || capitalize(save);
                 return (
-                  <Box key={save}>
-                    <Typography variant="body2" sx={{ fontWeight: 500, color: "text.secondary", mb: 1 }}>
+                  <Stack key={save} spacing={1}>
+                    <Typography variant="body2" sx={{ fontWeight: 500, color: "text.secondary" }}>
                       {displayName}: {formatSigned(total)}
                     </Typography>
-                    <Box sx={{ ml: 2, display: "flex", gap: 3 }}>
+                    <Stack direction="row" spacing={3} sx={{ pl: 2 }}>
                       <Typography variant="caption" sx={{ color: "text.secondary" }}>
                         Base: {formatSigned(saveData?.base)}
                       </Typography>
@@ -90,16 +96,16 @@ export function CombatAndSavesSection({ combat, saves }: Dnd35CombatAndSavesSect
                       <Typography variant="caption" sx={{ color: "text.secondary" }}>
                         Misc: {formatSigned(saveData?.misc)}
                       </Typography>
-                    </Box>
-                  </Box>
+                    </Stack>
+                  </Stack>
                 );
               })}
             </Stack>
           ) : (
             <BlankState title="No saving throws available" />
           )}
-        </Box>
-      </Box>
+        </Stack>
+      </Stack>
     </SheetSection>
   );
 }

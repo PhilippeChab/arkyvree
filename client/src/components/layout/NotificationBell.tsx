@@ -1,4 +1,4 @@
-import { Badge, Box, Button, Divider, IconButton, keyframes, Menu, MenuItem, Tooltip, Typography } from "@mui/material";
+import { Badge, Box, Button, Divider, IconButton, Menu, MenuItem, Stack, Tooltip, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useEffect, useRef, useState } from "react";
@@ -13,6 +13,7 @@ import { formatRelativeTime } from "@/client/src/lib/formatDate.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { unreadNotificationsQuery } from "@/client/src/lib/queries.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
+import { ANIMATIONS, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
 
 interface NotificationSummaryProps {
   notification: UnreadNotification;
@@ -20,23 +21,14 @@ interface NotificationSummaryProps {
 
 type UnreadNotification = InferResponseType<typeof rpc.api.notifications.unread.$get, 200>["items"][number];
 
-const bellShake = keyframes`
-  0%, 100% { transform: rotate(0deg); }
-  15% { transform: rotate(14deg); }
-  30% { transform: rotate(-12deg); }
-  45% { transform: rotate(10deg); }
-  60% { transform: rotate(-8deg); }
-  75% { transform: rotate(4deg); }
-`;
-
 function NotificationSummary({ notification }: NotificationSummaryProps) {
   return (
-    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 1, width: "100%" }}>
+    <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "baseline", width: "100%" }}>
       <Typography variant="body2">{formatNotificationMessage(notification.type, notification.data)}</Typography>
       <Typography variant="caption" sx={{ color: "text.secondary", flexShrink: 0 }}>
         {formatRelativeTime(notification.createdAt)}
       </Typography>
-    </Box>
+    </Stack>
   );
 }
 
@@ -75,7 +67,7 @@ export function NotificationBell() {
         color="inherit"
         onClick={(e) => setAnchorEl(e.currentTarget)}
         aria-label={formatCount(unreadCount, "unread notification")}
-        sx={shake ? { animation: `${bellShake} 0.6s ease-in-out` } : undefined}
+        sx={{ animation: shake ? ANIMATIONS.bellShake : undefined, [PREFERS_REDUCED_MOTION]: { animation: "none" } }}
         onAnimationEnd={() => setShake(false)}
       >
         <Badge badgeContent={unreadCount} color="error">
@@ -100,11 +92,12 @@ export function NotificationBell() {
           </Box>
         ) : (
           [
-            <Box
+            <Stack
               key="header"
-              sx={{ px: 2, py: 1, display: "flex", justifyContent: "space-between", alignItems: "center" }}
+              direction="row"
+              sx={{ px: 2, py: 1, justifyContent: "space-between", alignItems: "center" }}
             >
-              <Typography variant="subtitle2" sx={{ color: "text.secondary" }}>
+              <Typography variant="subtitle2" component="p" sx={{ color: "text.secondary" }}>
                 Notifications
               </Typography>
               <Button
@@ -114,19 +107,18 @@ export function NotificationBell() {
               >
                 Mark all read
               </Button>
-            </Box>,
+            </Stack>,
             <Divider key="divider" />,
             ...notifications.map((notification) =>
               actions.isActionable(notification) ? (
-                <Box key={notification.id} sx={{ px: 2, py: 1.5 }}>
+                <Stack key={notification.id} spacing={1} sx={{ px: 2, py: 1.5 }}>
                   <NotificationSummary notification={notification} />
                   <InviteActionButtons
-                    sx={{ mt: 1 }}
                     onAccept={() => actions.accept(notification, (path) => closeAnd(() => navigate(path)))}
                     onReject={() => actions.reject(notification)}
                     disabled={actions.isAnswering(notification)}
                   />
-                </Box>
+                </Stack>
               ) : (
                 <Tooltip
                   describeChild

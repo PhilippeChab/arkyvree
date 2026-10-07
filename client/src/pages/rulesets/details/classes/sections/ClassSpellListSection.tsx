@@ -1,4 +1,4 @@
-import { Box, MenuItem, TextField } from "@mui/material";
+import { Box, MenuItem, Stack, TextField } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import type { InferResponseType } from "hono/client";
 import { useState } from "react";
@@ -68,7 +68,7 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
   };
 
   return (
-    <Box>
+    <Stack spacing={3}>
       <SearchBar
         searchValue={searchText}
         onSearchChange={setSearchText}
@@ -98,27 +98,29 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
         }
       />
 
-      <RulesetSectionTable
-        data={spells}
-        search={search}
-        isLoading={isLoadingLists || isLoading}
-        columns={COLUMNS}
-        onRowClick={handleRowClick}
-        renderCell={renderCell}
-        emptyIcon={SpellListIcon}
-        emptyTitle="No spells"
-        emptyDescription={
-          lists.length === 0 && !isLoadingLists
-            ? "This class has no spell list of its own."
-            : "No spells found for this class at the selected level."
-        }
-      />
+      <Stack spacing={2}>
+        <RulesetSectionTable
+          data={spells}
+          search={search}
+          isLoading={isLoadingLists || isLoading}
+          columns={COLUMNS}
+          onRowClick={handleRowClick}
+          renderCell={renderCell}
+          emptyIcon={SpellListIcon}
+          emptyTitle="No spells"
+          emptyDescription={
+            lists.length === 0 && !isLoadingLists
+              ? "This class has no spell list of its own."
+              : "No spells found for this class at the selected level."
+          }
+        />
 
-      <LoadMoreButton
-        hasNextPage={hasNextPage}
-        isFetchingNextPage={isFetchingNextPage}
-        onClick={() => fetchNextPage()}
-      />
-    </Box>
+        <LoadMoreButton
+          hasNextPage={hasNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+          onClick={() => fetchNextPage()}
+        />
+      </Stack>
+    </Stack>
   );
 }

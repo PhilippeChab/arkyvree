@@ -1,4 +1,4 @@
-import { Alert, Box, Card, CardContent, Chip, IconButton, Stack, Typography } from "@mui/material";
+import { Alert, Card, CardContent, Chip, IconButton, Stack, Typography } from "@mui/material";
 import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
 import { TreeItem } from "@mui/x-tree-view/TreeItem";
 import { type InferResponseType, parseResponse } from "hono/client";
@@ -270,19 +270,23 @@ export function RequirementsSection({
       <TreeItem
         key={node.requirement.id}
         itemId={node.requirement.id}
+        sx={{
+          // Its own row, not its children's: the row's room around its card, and a child's indent
+          "& > .MuiTreeItem-content": { py: 1 },
+          "& > .MuiTreeItem-content > .MuiTreeItem-label": {
+            pl: node.requirement.level.split(".").length > 1 ? { xs: 0, sm: 1 } : 0,
+          },
+        }}
         label={
           <Card
             variant="outlined"
             sx={{
-              my: 0.5,
-              mx: 0,
-              ml: node.requirement.level.split(".").length > 1 ? { xs: 0, sm: 1 } : 0, // Indent children
-              borderLeft: node.requirement.level.split(".").length > 1 ? "3px solid" : "none", // Visual hierarchy
+              borderLeft: node.requirement.level.split(".").length > 1 ? 3 : "none", // Visual hierarchy
               borderColor: "primary.main",
             }}
           >
             <CardContent sx={{ py: 1.5, px: 2, "&:last-child": { pb: 1.5 } }}>
-              <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 1 }}>
+              <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
                 <Chip
                   label={requirement.level}
                   size="small"
@@ -319,7 +323,7 @@ export function RequirementsSection({
                   </>
                 )}
 
-                <Box sx={{ ml: "auto", display: "flex", alignItems: "center", gap: 0.5, flexShrink: 0 }}>
+                <Stack direction="row" spacing={0.5} sx={{ ml: "auto", alignItems: "center", flexShrink: 0 }}>
                   <Typography
                     variant="caption"
                     sx={{
@@ -370,8 +374,8 @@ export function RequirementsSection({
                       <DeleteIcon fontSize="small" />
                     </IconButton>
                   )}
-                </Box>
-              </Box>
+                </Stack>
+              </Stack>
             </CardContent>
           </Card>
         }
@@ -383,30 +387,32 @@ export function RequirementsSection({
 
   return (
     <SectionContent>
-      {canEdit && <SectionAddButton label="Add Requirement" onClick={() => openCreate(null)} />}
-      {/* Loading State */}
-      {isLoading && <DiceSpinner sx={{ py: 4 }} />}
-      {/* Content */}
-      {!isLoading &&
-        (requirementsTree.length === 0 ? (
-          <BlankState
-            icon={RequirementsIcon}
-            title="No requirements"
-            description="No requirements defined for this entity."
-          />
-        ) : (
-          <SimpleTreeView
-            slots={{
-              collapseIcon: ExpandMoreIcon,
-              expandIcon: ChevronRightIcon,
-            }}
-            sx={{ flexGrow: 1, maxWidth: "100%", overflowY: "auto" }}
-            expandedItems={expandedItems}
-            onExpandedItemsChange={(_, ids) => setCollapsedIds(new Set(parentIds.filter((id) => !ids.includes(id))))}
-          >
-            {requirementsTree.map(renderRequirementNode)}
-          </SimpleTreeView>
-        ))}
+      <Stack spacing={2}>
+        {canEdit && <SectionAddButton label="Add Requirement" onClick={() => openCreate(null)} />}
+        {/* Loading State */}
+        {isLoading && <DiceSpinner sx={{ py: 4 }} />}
+        {/* Content */}
+        {!isLoading &&
+          (requirementsTree.length === 0 ? (
+            <BlankState
+              icon={RequirementsIcon}
+              title="No requirements"
+              description="No requirements defined for this entity."
+            />
+          ) : (
+            <SimpleTreeView
+              slots={{
+                collapseIcon: ExpandMoreIcon,
+                expandIcon: ChevronRightIcon,
+              }}
+              sx={{ flexGrow: 1, maxWidth: "100%", overflowY: "auto" }}
+              expandedItems={expandedItems}
+              onExpandedItemsChange={(_, ids) => setCollapsedIds(new Set(parentIds.filter((id) => !ids.includes(id))))}
+            >
+              {requirementsTree.map(renderRequirementNode)}
+            </SimpleTreeView>
+          ))}
+      </Stack>
       <CreateDialog
         open={createDialogOpen}
         onClose={() => {

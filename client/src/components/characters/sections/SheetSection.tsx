@@ -1,4 +1,4 @@
-import { Paper, Stack, Typography } from "@mui/material";
+import { Box, Paper, Stack, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 
 interface SheetSectionProps {
@@ -11,17 +11,18 @@ interface SheetSectionProps {
 /** Titled panel of the character sheet. */
 export function SheetSection({ title, action, children }: SheetSectionProps) {
   return (
-    <Paper sx={{ p: { xs: 2, sm: 3 } }}>
+    <Stack component={Paper} spacing={3} sx={{ p: { xs: 2, sm: 3 } }}>
       <Stack
         direction="row"
-        sx={{ alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1, mb: 3 }}
+        spacing={1}
+        sx={{ alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" }}
       >
         <Typography component="h2" sx={{ fontWeight: 600, color: "primary.main", typography: { xs: "h6", sm: "h5" } }}>
           {title}
         </Typography>
         {action}
       </Stack>
-      {children}
-    </Paper>
+      <Box>{children}</Box>
+    </Stack>
   );
 }

@@ -13,7 +13,7 @@ export function ValidationIssueList({ issues }: ValidationIssueListProps) {
       {issues.map((issue, i) => (
         <li key={i}>
           {issue.entityName && (
-            <Typography component="span" variant="body2" sx={{ fontWeight: "bold" }}>
+            <Typography component="span" variant="body2" sx={{ fontWeight: 700 }}>
               {issue.entityName}
               {issue.entityType ? ` (${issue.entityType})` : ""}
               {": "}
@@ -23,22 +23,23 @@ export function ValidationIssueList({ issues }: ValidationIssueListProps) {
             {issue.message}
           </Typography>
           {issue.requirementTree && (
-            <Typography
-              component="pre"
-              variant="caption"
-              sx={{
-                mt: 0.5,
-                whiteSpace: "pre-wrap",
-                fontFamily: "monospace",
-                bgcolor: "action.hover",
-                p: 0.5,
-                borderRadius: 0.5,
-                maxWidth: "100%",
-                overflow: "auto",
-              }}
-            >
-              {issue.requirementTree}
-            </Typography>
+            <Box sx={{ pt: 0.5 }}>
+              <Typography
+                component="pre"
+                variant="caption"
+                sx={{
+                  whiteSpace: "pre-wrap",
+                  fontFamily: "monospace",
+                  bgcolor: "action.hover",
+                  p: 0.5,
+                  borderRadius: 0.5,
+                  maxWidth: "100%",
+                  overflow: "auto",
+                }}
+              >
+                {issue.requirementTree}
+              </Typography>
+            </Box>
           )}
         </li>
       ))}

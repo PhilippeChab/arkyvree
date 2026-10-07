@@ -66,14 +66,14 @@ export function BulkVariantsDialog({
       <form onSubmit={form.handleSubmit(submit)}>
         <DialogTitle>Create variants of {baseItemName}</DialogTitle>
         <DialogContent>
-          <Stack spacing={2} sx={{ mt: 1 }}>
+          <Stack spacing={2} sx={{ pt: 1 }}>
             <Typography variant="body2" sx={{ color: "text.secondary" }}>
               Each variant copies the base item's cost, weight, type, and slot. You'll be able to customize them
               individually after.
             </Typography>
             <Stack spacing={3}>
               {fields.map((field, index) => (
-                <Box key={field.id} sx={{ display: "flex", gap: 1, alignItems: "flex-start" }}>
+                <Stack key={field.id} direction="row" spacing={1} sx={{ alignItems: "flex-start" }}>
                   <Stack spacing={1} sx={{ flex: 1 }}>
                     <FormTextField
                       control={form.control}
@@ -94,19 +94,18 @@ export function BulkVariantsDialog({
                     />
                   </Stack>
                   <Tooltip title="Remove variant">
-                    <span>
+                    <Box component="span" sx={{ pt: 0.5 }}>
                       <IconButton
                         size="small"
                         aria-label="Remove variant"
                         onClick={() => remove(index)}
                         disabled={fields.length === 1 || isLoading}
-                        sx={{ mt: 0.5 }}
                       >
                         <CloseIcon fontSize="small" />
                       </IconButton>
-                    </span>
+                    </Box>
                   </Tooltip>
-                </Box>
+                </Stack>
               ))}
             </Stack>
             <Button

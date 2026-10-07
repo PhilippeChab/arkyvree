@@ -38,8 +38,9 @@ export function TargetPathInput({
   const segments = value ? value.split(".").filter(Boolean) : [];
 
   return (
-    <FormControl fullWidth={fullWidth} error={error}>
-      <InputLabel shrink required={required} sx={{ backgroundColor: "background.paper", px: 0.5 }}>
+    // The field's border sits below its label, which the control holds over its top padding
+    <FormControl fullWidth={fullWidth} error={error} sx={{ pt: 2 }}>
+      <InputLabel shrink required={required} sx={{ bgcolor: "background.paper", px: 0.5 }}>
         {label}
       </InputLabel>
       <Box
@@ -49,7 +50,6 @@ export function TargetPathInput({
           borderRadius: 1,
           px: 1.5,
           py: 1,
-          mt: "16px",
           "&:hover": {
             borderColor: error ? "error.main" : "text.primary",
           },

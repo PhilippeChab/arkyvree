@@ -48,6 +48,7 @@ import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { campaignCharacterQuery, unlinkedCharactersQuery } from "@/client/src/pages/campaigns/campaignQueries.ts";
 import { campaignCharactersQuery } from "@/client/src/pages/campaigns/details/sectionQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
+import { lineClampSx } from "@/client/src/theme/text.ts";
 import { getInitial } from "@/shared/text.ts";
 
 type CampaignCharacter = CampaignCharactersPaginated["items"][number];
@@ -137,127 +138,128 @@ function CharacterCard({
       onMouseEnter={prefetchSheet}
       onFocus={prefetchSheet}
     >
-      <Box sx={{ p: { xs: 2, sm: 3 }, pb: { xs: 1.5, sm: 2 } }}>
-        {/* Title Row */}
-        <Stack direction="row" spacing={2} sx={{ justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", minWidth: 0, flex: 1 }}>
-            <Avatar
-              src={portraitUrl ?? undefined}
-              sx={{
-                width: 36,
-                height: 36,
-                border: "2px solid",
-                borderColor: "secondary.main",
-                background: (theme) =>
-                  `linear-gradient(135deg, ${theme.palette.primary.light}, ${theme.palette.primary.main})`,
-                fontSize: "1rem",
-                fontWeight: 700,
-                flexShrink: 0,
-              }}
-            >
-              {getInitial(character.name)}
-            </Avatar>
-            <Typography
-              variant="h6"
-              noWrap
-              sx={{ fontWeight: 600, color: "text.primary", lineHeight: 1.2, textAlign: "left", flex: 1, minWidth: 0 }}
-            >
-              {character.name}
-            </Typography>
-          </Stack>
-          <Chip
-            label={
-              <Stack
-                direction="row"
-                spacing={0.5}
+      {/* The card's body: its head (title, pills) above its description, which fills what the card has left */}
+      <Stack spacing={{ xs: 3.5, sm: 4 }} sx={{ p: { xs: 2, sm: 3 }, flex: 1 }}>
+        <Stack spacing={1}>
+          {/* Title Row */}
+          <Stack direction="row" spacing={2} sx={{ justifyContent: "space-between", alignItems: "center" }}>
+            <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", minWidth: 0, flex: 1 }}>
+              <Avatar
+                src={portraitUrl ?? undefined}
                 sx={{
-                  alignItems: "center",
+                  width: 36,
+                  height: 36,
+                  border: 2,
+                  borderColor: "secondary.main",
+                  background: (theme) =>
+                    `linear-gradient(135deg, ${theme.palette.primary.light}, ${theme.palette.primary.main})`,
+                  fontSize: "1rem",
+                  fontWeight: 700,
+                  flexShrink: 0,
                 }}
               >
-                <span>{character.visibility}</span>
-                <VisibilityIcon sx={{ fontSize: 14 }} />
-              </Stack>
-            }
-            size="small"
-            variant="outlined"
-            onClick={
-              canEditVisibility
-                ? (e) => {
-                    e.stopPropagation();
-                    setMenuAnchorEl(e.currentTarget);
-                  }
-                : undefined
-            }
-            sx={{
-              fontWeight: 500,
-              fontSize: "0.7rem",
-              ...(canEditVisibility && { cursor: "pointer" }),
-            }}
-          />
-          {canEditVisibility && (
-            <Menu
-              anchorEl={menuAnchorEl}
-              open={Boolean(menuAnchorEl)}
-              onClose={(e: SyntheticEvent) => {
-                e.stopPropagation?.();
-                setMenuAnchorEl(null);
-              }}
-            >
-              {VISIBILITY_OPTIONS.map((option) => (
-                <MenuItem
-                  key={option}
-                  selected={option === character.visibility}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setMenuAnchorEl(null);
-                    if (option !== character.visibility) updateVisibility(option);
+                {getInitial(character.name)}
+              </Avatar>
+              <Typography
+                variant="h6"
+                component="h6"
+                noWrap
+                sx={{
+                  fontWeight: 600,
+                  color: "text.primary",
+                  lineHeight: 1.2,
+                  textAlign: "left",
+                  flex: 1,
+                  minWidth: 0,
+                }}
+              >
+                {character.name}
+              </Typography>
+            </Stack>
+            <Chip
+              label={
+                <Stack
+                  direction="row"
+                  spacing={0.5}
+                  sx={{
+                    alignItems: "center",
                   }}
                 >
-                  {option}
-                </MenuItem>
-              ))}
-            </Menu>
-          )}
-        </Stack>
-
-        {/* Race and Class Level Pills */}
-        <Stack
-          direction="row"
-          spacing={1}
-          sx={{ alignItems: "center", justifyContent: "flex-start", flexWrap: "wrap", gap: 1, mb: 2 }}
-        >
-          <Chip
-            label={character.race}
-            size="small"
-            variant="outlined"
-            sx={{ borderColor: "secondary.main", color: "secondary.main", fontWeight: 500 }}
-          />
-          {character.levels.map((level, index) => (
-            <Chip
-              key={index}
-              label={`${level.klass} ${level.level}`}
+                  <span>{character.visibility}</span>
+                  <VisibilityIcon sx={{ fontSize: 14 }} />
+                </Stack>
+              }
               size="small"
-              sx={{ bgcolor: "primary.main", color: "primary.contrastText", fontWeight: 500 }}
+              variant="outlined"
+              onClick={
+                canEditVisibility
+                  ? (e) => {
+                      e.stopPropagation();
+                      setMenuAnchorEl(e.currentTarget);
+                    }
+                  : undefined
+              }
+              sx={{ fontWeight: 500, fontSize: "0.7rem", cursor: canEditVisibility ? "pointer" : undefined }}
             />
-          ))}
+            {canEditVisibility && (
+              <Menu
+                anchorEl={menuAnchorEl}
+                open={Boolean(menuAnchorEl)}
+                onClose={(e: SyntheticEvent) => {
+                  e.stopPropagation?.();
+                  setMenuAnchorEl(null);
+                }}
+              >
+                {VISIBILITY_OPTIONS.map((option) => (
+                  <MenuItem
+                    key={option}
+                    selected={option === character.visibility}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMenuAnchorEl(null);
+                      if (option !== character.visibility) updateVisibility(option);
+                    }}
+                  >
+                    {option}
+                  </MenuItem>
+                ))}
+              </Menu>
+            )}
+          </Stack>
+
+          {/* Race and Class Level Pills */}
+          <Stack
+            direction="row"
+            sx={{ alignItems: "center", justifyContent: "flex-start", flexWrap: "wrap", columnGap: 2, rowGap: 1 }}
+          >
+            <Chip
+              label={character.race}
+              size="small"
+              variant="outlined"
+              sx={{ borderColor: "secondary.main", color: "secondary.main", fontWeight: 500 }}
+            />
+            {character.levels.map((level, index) => (
+              <Chip
+                key={index}
+                label={`${level.klass} ${level.level}`}
+                size="small"
+                sx={{ bgcolor: "primary.main", color: "primary.contrastText", fontWeight: 500 }}
+              />
+            ))}
+          </Stack>
         </Stack>
-      </Box>
-      <Box sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 2, sm: 3 }, flex: 1 }}>
         <Typography
           variant="body2"
           sx={{
+            ...lineClampSx(4),
             color: "text.secondary",
             lineHeight: 1.6,
             minHeight: "6.4em",
-            display: "-webkit-box",
-            WebkitLineClamp: 4,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
           }}
         >
           {character.description || "No description available"}
         </Typography>
-      </Box>
+      </Stack>
     </StyledCard>
   );
 }
@@ -311,7 +313,7 @@ function LinkCharacterDialog({ open, onClose, campaignId }: LinkCharacterDialogP
     <Modal open={open} onClose={onClose}>
       <DialogTitle>Link Character to Campaign</DialogTitle>
       <DialogContent>
-        <Stack spacing={3} sx={{ mt: 2 }}>
+        <Stack spacing={3} sx={{ pt: 2 }}>
           <Autocomplete
             options={unlinkedCharacters}
             getOptionLabel={(option) => option.name}
@@ -339,7 +341,7 @@ function LinkCharacterDialog({ open, onClose, campaignId }: LinkCharacterDialogP
             }}
           />
 
-          <Stack>
+          <Stack spacing={0.5}>
             <TextField
               select
               fullWidth
@@ -365,7 +367,7 @@ function LinkCharacterDialog({ open, onClose, campaignId }: LinkCharacterDialogP
             >
               <Typography
                 variant="caption"
-                sx={{ color: "text.secondary", mt: 0.5, cursor: "help", alignSelf: "flex-end", fontSize: "0.7rem" }}
+                sx={{ color: "text.secondary", cursor: "help", alignSelf: "flex-end", fontSize: "0.7rem" }}
               >
                 What's this?
               </Typography>
@@ -416,78 +418,86 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
 
   return (
     <SectionContent>
-      {/* Header */}
-      <Typography sx={{ fontWeight: 600, mb: 3, typography: { xs: "h6", sm: "h5" } }}>Characters</Typography>
+      <Stack spacing={3}>
+        <Typography component="h2" sx={{ fontWeight: 600, typography: { xs: "h6", sm: "h5" } }}>
+          Characters
+        </Typography>
 
-      <SearchBar
-        {...searchTextProps}
-        searchPlaceholder="Search characters..."
-        actions={
-          !campaign.deletedAt && (
-            <Button variant="contained" startIcon={<AddIcon />} size="medium" onClick={() => setLinkDialogOpen(true)}>
-              Link Character
-            </Button>
-          )
-        }
-      />
+        <SearchBar
+          {...searchTextProps}
+          searchPlaceholder="Search characters..."
+          actions={
+            !campaign.deletedAt && (
+              <Button variant="contained" startIcon={<AddIcon />} size="medium" onClick={() => setLinkDialogOpen(true)}>
+                Link Character
+              </Button>
+            )
+          }
+        />
+
+        {/* Loading State */}
+        {charactersLoading && <DiceSpinner sx={{ py: 4 }} />}
+
+        {/* Error State */}
+        {charactersError && (
+          // The room below the error, at the end of the tab
+          <Box sx={{ pb: 3 }}>
+            <LoadError what="Characters" error={charactersError} />
+          </Box>
+        )}
+
+        {/* Characters Grid */}
+        {!charactersLoading &&
+          !charactersError &&
+          (characters.length > 0 ? (
+            // With nothing more to load, the tab ends three units below the grid, as the grid's margin left it
+            <Stack spacing={3} sx={{ pb: hasNextPage ? 0 : 3 }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: {
+                    xs: "1fr",
+                    md: "repeat(2, 1fr)",
+                    lg: "repeat(3, 1fr)",
+                  },
+                  gap: 3,
+                }}
+              >
+                {characters.map((character, index) => (
+                  <CharacterCard
+                    key={character.id}
+                    character={character}
+                    campaignId={campaign.id}
+                    isArchived={!!campaign.deletedAt}
+                    animationIndex={index}
+                    animationOffset={offset}
+                    portraitUrl={portraitsByCharacterId?.get(character.id) ?? null}
+                  />
+                ))}
+              </Box>
+              <LoadMoreButton
+                size="large"
+                label="Load More Characters"
+                hasNextPage={hasNextPage}
+                isFetchingNextPage={isFetchingNextPage}
+                onClick={() => {
+                  updateOffset(characters.length);
+                  fetchNextPage();
+                }}
+              />
+            </Stack>
+          ) : searchQuery ? (
+            <NoMatchesState search={searchQuery} />
+          ) : (
+            <BlankState
+              icon={CharacterIcon}
+              title="No characters in this campaign"
+              description="Link your existing characters to this campaign to get started"
+            />
+          ))}
+      </Stack>
 
       <LinkCharacterDialog open={isLinkDialogOpen} onClose={() => setLinkDialogOpen(false)} campaignId={campaign.id} />
-
-      {/* Loading State */}
-      {charactersLoading && <DiceSpinner sx={{ py: 4 }} />}
-
-      {/* Error State */}
-      {charactersError && <LoadError what="Characters" error={charactersError} sx={{ mb: 3 }} />}
-
-      {/* Characters Grid */}
-      {!charactersLoading &&
-        !charactersError &&
-        (characters.length > 0 ? (
-          <>
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: {
-                  xs: "1fr",
-                  md: "repeat(2, 1fr)",
-                  lg: "repeat(3, 1fr)",
-                },
-                gap: 3,
-                mb: 3,
-              }}
-            >
-              {characters.map((character, index) => (
-                <CharacterCard
-                  key={character.id}
-                  character={character}
-                  campaignId={campaign.id}
-                  isArchived={!!campaign.deletedAt}
-                  animationIndex={index}
-                  animationOffset={offset}
-                  portraitUrl={portraitsByCharacterId?.get(character.id) ?? null}
-                />
-              ))}
-            </Box>
-            <LoadMoreButton
-              size="large"
-              label="Load More Characters"
-              hasNextPage={hasNextPage}
-              isFetchingNextPage={isFetchingNextPage}
-              onClick={() => {
-                updateOffset(characters.length);
-                fetchNextPage();
-              }}
-            />
-          </>
-        ) : searchQuery ? (
-          <NoMatchesState search={searchQuery} />
-        ) : (
-          <BlankState
-            icon={CharacterIcon}
-            title="No characters in this campaign"
-            description="Link your existing characters to this campaign to get started"
-          />
-        ))}
     </SectionContent>
   );
 }

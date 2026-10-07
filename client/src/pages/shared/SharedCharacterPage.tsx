@@ -49,28 +49,31 @@ export default function SharedCharacterPage() {
   return (
     <PageTransition>
       <Container maxWidth="xl" sx={{ py: 2 }}>
-        <Paper sx={{ p: 2, mb: 2 }}>
-          <Stack
-            direction="row"
-            sx={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1 }}
-          >
-            <Typography sx={{ fontWeight: 700, typography: { xs: "h5", md: "h4" } }} noWrap>
-              {character.rulesetName || "Character Sheet"}
-            </Typography>
+        <Stack spacing={2}>
+          <Paper sx={{ p: 2 }}>
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}
+            >
+              <Typography component="p" sx={{ fontWeight: 700, typography: { xs: "h5", md: "h4" } }} noWrap>
+                {character.rulesetName || "Character Sheet"}
+              </Typography>
 
-            <IconButton aria-label="Download PDF" onClick={handleDownloadPdf} sx={{ color: "text.secondary" }}>
-              <DownloadIcon />
-            </IconButton>
-          </Stack>
-        </Paper>
+              <IconButton aria-label="Download PDF" onClick={handleDownloadPdf} sx={{ color: "text.secondary" }}>
+                <DownloadIcon />
+              </IconButton>
+            </Stack>
+          </Paper>
 
-        <CharacterSheetBody
-          character={character}
-          characterId={character.id}
-          readOnly
-          equipmentMode="readonly"
-          portraitUrl={character.portraitUrl ?? null}
-        />
+          <CharacterSheetBody
+            character={character}
+            characterId={character.id}
+            readOnly
+            equipmentMode="readonly"
+            portraitUrl={character.portraitUrl ?? null}
+          />
+        </Stack>
       </Container>
     </PageTransition>
   );
