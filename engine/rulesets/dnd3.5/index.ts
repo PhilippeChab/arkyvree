@@ -25,6 +25,15 @@ export {
 } from "./levelUp/projection.ts";
 export type { FeatPick } from "./levelUp/projection.ts";
 export {
+  buildFeatSlots,
+  buildPowerSlots,
+  buildSkillSlots,
+  projectAttributeStep,
+  projectFeatStep,
+  projectStepLevel,
+} from "./levelUp/steps.ts";
+export type { StepProjection } from "./levelUp/steps.ts";
+export {
   annotateRequirements,
   checkAbilityIncrease,
   checkIssues,
