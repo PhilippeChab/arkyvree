@@ -130,6 +130,31 @@ export function include<
   m8: Module<M7 & M6 & M5 & M4 & M3 & M2 & M1 & B, M8>,
   m9: Module<M8 & M7 & M6 & M5 & M4 & M3 & M2 & M1 & B, M9>,
 ): M9 & M8 & M7 & M6 & M5 & M4 & M3 & M2 & M1 & B;
+export function include<
+  B extends Constructor,
+  M1 extends Constructor,
+  M2 extends Constructor,
+  M3 extends Constructor,
+  M4 extends Constructor,
+  M5 extends Constructor,
+  M6 extends Constructor,
+  M7 extends Constructor,
+  M8 extends Constructor,
+  M9 extends Constructor,
+  M10 extends Constructor,
+>(
+  base: B,
+  m1: Module<B, M1>,
+  m2: Module<M1 & B, M2>,
+  m3: Module<M2 & M1 & B, M3>,
+  m4: Module<M3 & M2 & M1 & B, M4>,
+  m5: Module<M4 & M3 & M2 & M1 & B, M5>,
+  m6: Module<M5 & M4 & M3 & M2 & M1 & B, M6>,
+  m7: Module<M6 & M5 & M4 & M3 & M2 & M1 & B, M7>,
+  m8: Module<M7 & M6 & M5 & M4 & M3 & M2 & M1 & B, M8>,
+  m9: Module<M8 & M7 & M6 & M5 & M4 & M3 & M2 & M1 & B, M9>,
+  m10: Module<M9 & M8 & M7 & M6 & M5 & M4 & M3 & M2 & M1 & B, M10>,
+): M10 & M9 & M8 & M7 & M6 & M5 & M4 & M3 & M2 & M1 & B;
 export function include(base: Constructor, ...modules: Module<Constructor, Constructor>[]): Constructor {
   return modules.reduce((included, module) => module(included), base);
 }
