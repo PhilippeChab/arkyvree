@@ -2,13 +2,14 @@ import References from "@/database/packages/dnd35-from-parser/tools/references/R
 import { classSpells } from "@/database/packages/dnd35/content/aptitudes/names.ts";
 
 import { BookSeeds } from "./BookSeeds.ts";
+import { Memos } from "./Memos.ts";
 
 /** Every book's seeds (`book`), each book's built once, and what a book's seeds read across books. */
 class Library {
   /** Each book's seeds, by book. */
   private readonly books = new Map<string, BookSeeds>();
-  /** Each class's spell list by its name, once read. */
-  private spellLists?: Record<string, string>;
+  /** What's built across books, by what it is. */
+  private readonly memos = new Memos();
 
   /** A book's seeds. */
   book(name: string): BookSeeds {
@@ -30,18 +31,19 @@ class Library {
    * Spells", for every book's spellcasting classes (those with a spell list).
    */
   classSpellLists(): Record<string, string> {
-    this.spellLists ??= Object.fromEntries(
-      this.bookNames().flatMap((book) =>
-        this.book(book)
-          .classReferences()
-          .filter(({ ref }) => ref.mapping?.spells && ref.raw?.name)
-          .flatMap(({ ref }) => [
-            [ref.raw.name, classSpells(ref.raw.name)],
-            [ref.raw.name.toLowerCase(), classSpells(ref.raw.name)],
-          ]),
+    return this.memos.of("classSpellLists", () =>
+      Object.fromEntries(
+        this.bookNames().flatMap((book) =>
+          this.book(book)
+            .classReferences()
+            .filter(({ ref }) => ref.mapping?.spells && ref.raw?.name)
+            .flatMap(({ ref }) => [
+              [ref.raw.name, classSpells(ref.raw.name)],
+              [ref.raw.name.toLowerCase(), classSpells(ref.raw.name)],
+            ]),
+        ),
       ),
     );
-    return this.spellLists;
   }
 }
 

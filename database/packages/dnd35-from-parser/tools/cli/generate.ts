@@ -10,7 +10,7 @@
 
 import { join } from "node:path";
 
-import { generateAtomically } from "@/database/packages/dnd35-from-parser/tools/generator/atomicGeneration.ts";
+import { GeneratedFolder } from "@/database/packages/dnd35-from-parser/tools/generator/GeneratedFolder.ts";
 import { Generator } from "@/database/packages/dnd35-from-parser/tools/generator/Generator.ts";
 
 import { parseCliArgs } from "./args.ts";
@@ -31,7 +31,7 @@ function main() {
       : new Generator(dir, true).generateAll(parseCliArgs());
   let failures: string[];
   try {
-    failures = generateAtomically(GENERATED_DIR, generate);
+    failures = GeneratedFolder.generateAtomically(GENERATED_DIR, generate);
   } catch (error) {
     // A reference file refused, another generation running, or the copy or the swap failing: generated/ is as it was
     console.error(error instanceof Error ? error.message : error);

@@ -4,8 +4,6 @@ import { join } from "node:path";
 import { ALL_APTITUDES } from "@/database/packages/dnd35-from-parser/generated/srd/aptitudes.ts";
 import { WIZARD_SCHOOLS } from "@/database/packages/dnd35-from-parser/generated/srd/wizardSchools.ts";
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
-import { formatImports, IMPORT_TABLE } from "@/database/packages/dnd35-from-parser/tools/generator/code/imports.ts";
-import { escapeTemplate, quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
 import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
@@ -124,7 +122,9 @@ describe("A generated requirement check", () => {
   });
 
   test("names a builder its file can import", () => {
-    expect(() => formatImports(new Set(["eq", "xor"]), IMPORT_TABLE)).toThrow("xor");
+    const file = new CodeFile();
+    file.uses.add("eq").add("xor");
+    expect(() => file.code()).toThrow("The generated code uses xor, which no import provides");
   });
 
   test("with a number where its value is text is written as the number's text", () => {
@@ -163,8 +163,9 @@ describe("A generated requirement check", () => {
 
 describe("Generated strings", () => {
   test("are escaped for a string literal", () => {
-    expect(quote(`a "b" \\ c\nd`)).toBe(`"a \\"b\\" \\\\ c\\nd"`);
-    for (const text of ["line\r\nbreak", "tab\there", "nul\u0000"]) expect(JSON.parse(quote(text))).toBe(text);
+    const file = new CodeFile();
+    expect(file.quote(`a "b" \\ c\nd`)).toBe(`"a \\"b\\" \\\\ c\\nd"`);
+    for (const text of ["line\r\nbreak", "tab\there", "nul\u0000"]) expect(JSON.parse(file.quote(text))).toBe(text);
     expect(new CodeFile().plainModifier({ target: `x."y"`, operator: "add", value: "1", valueType: "number" })).toBe(
       `{ target: "x.\\"y\\"", operator: "add", value: "1", valueType: "number" }`,
     );
@@ -177,9 +178,12 @@ describe("Generated strings", () => {
   });
 
   test("are escaped for a template literal: its backticks and interpolations too", () => {
+    const ref = structuredClone(References.load(join(References.dir, "srd", "feats.json"), "feat"));
     const text = 'a `b` ${c} "d"';
-    expect(escapeTemplate(text)).toBe('a \\`b\\` \\${c} \\"d\\"');
-    expect(new Function(`return \`${escapeTemplate(text)}\`;`)()).toBe(text);
+    ref.mapping["Weapon Focus"].description = text;
+    const escaped = 'a \\`b\\` \\${c} \\"d\\"';
+    expect(featsCode(ref)).toContain(`description: \`${escaped}\`,`);
+    expect(new Function(`return \`${escaped}\`;`)()).toBe(text);
   });
 });
 

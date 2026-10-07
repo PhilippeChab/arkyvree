@@ -1,7 +1,6 @@
 import { isDeepStrictEqual } from "node:util";
 
 import type { BaseCodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/BaseCodeFile.ts";
-import { listField, quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import type { Property, RequirementEntry } from "@/database/packages/dnd35/content/customization/types.ts";
 import { getArmorDefinition, getShieldDefinition } from "@/database/packages/dnd35/content/items/armor.ts";
 import {
@@ -74,7 +73,7 @@ export function WritesItems<B extends Constructor<BaseCodeFile>>(Base: B) {
       const builder = builders.find(({ of }) => isDeepStrictEqual(of(item), values));
       if (builder) {
         this.uses.add(builder.name);
-        return builder.called ? `${builder.name}(${quote(item)})` : builder.name;
+        return builder.called ? `${builder.name}(${this.quote(item)})` : builder.name;
       }
       return values.length === 0 ? "[]" : `[\n${values.map((value) => `      ${write(value)},`).join("\n")}\n    ]`;
     }
@@ -87,18 +86,18 @@ export function WritesItems<B extends Constructor<BaseCodeFile>>(Base: B) {
       const { name, description, weight, costGp, type, slot, isTemplate, requirements, sourceItem, properties } = item;
       return [
         `  {`,
-        `    name: ${quote(name)},`,
-        `    description: ${quote(description)},`,
-        `    weight: ${quote(weight)}, costGp: ${quote(costGp)}, type: ${quote(type)},${slot ? ` slot: ${quote(slot)},` : ""}`,
+        `    name: ${this.quote(name)},`,
+        `    description: ${this.quote(description)},`,
+        `    weight: ${this.quote(weight)}, costGp: ${this.quote(costGp)}, type: ${this.quote(type)},${slot ? ` slot: ${this.quote(slot)},` : ""}`,
         ...(isTemplate ? [`    isTemplate: true,`] : []),
         ...(requirements
           ? [
               `    requirements: ${this.itemField(name, requirements, ITEM_REQUIREMENTS, (r) => this.requirement(r, 3))},`,
             ]
           : []),
-        ...(sourceItem ? [`    sourceItem: ${quote(sourceItem)},`] : []),
+        ...(sourceItem ? [`    sourceItem: ${this.quote(sourceItem)},`] : []),
         `    properties: ${this.itemField(name, properties, ITEM_PROPERTIES, (p) => this.property(p))},`,
-        ...listField(
+        ...this.listField(
           "modifiers",
           (item.modifiers ?? []).map((m) => this.plainModifier(m)),
           "    ",

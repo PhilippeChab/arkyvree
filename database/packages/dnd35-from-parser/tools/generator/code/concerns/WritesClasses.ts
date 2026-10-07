@@ -1,10 +1,5 @@
-import { getClassFile } from "@/database/packages/dnd35-from-parser/tools/generator/bookLayout.ts";
+import BookLayout from "@/database/packages/dnd35-from-parser/tools/generator/BookLayout.ts";
 import type { BaseCodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/BaseCodeFile.ts";
-import {
-  formatStringArray,
-  listField,
-  quote,
-} from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import type { ClassSeed } from "@/database/packages/dnd35/content/classes/types.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
@@ -17,7 +12,7 @@ export function WritesClasses<B extends Constructor<BaseCodeFile>>(Base: B) {
       if (!aptitudePicks) return;
       this.lines.push(`  aptitudePicks: [`);
       for (const pick of aptitudePicks)
-        this.lines.push(`    { levels: [${pick.levels.join(", ")}], target: ${quote(pick.target)} },`);
+        this.lines.push(`    { levels: [${pick.levels.join(", ")}], target: ${this.quote(pick.target)} },`);
 
       this.lines.push(`  ],`);
     }
@@ -25,8 +20,8 @@ export function WritesClasses<B extends Constructor<BaseCodeFile>>(Base: B) {
     /** The class's spellcasting: its bonus spells' ability and its caster type. */
     private writeCasting(seed: ClassSeed) {
       const { bonusSpellAbility, casterType } = seed;
-      if (bonusSpellAbility) this.lines.push(`  bonusSpellAbility: ${quote(bonusSpellAbility)},`);
-      if (casterType) this.lines.push(`  casterType: ${quote(casterType)},`);
+      if (bonusSpellAbility) this.lines.push(`  bonusSpellAbility: ${this.quote(bonusSpellAbility)},`);
+      if (casterType) this.lines.push(`  casterType: ${this.quote(casterType)},`);
     }
 
     /** The class's features by level, its proficiencies, and the feats it gives. */
@@ -34,13 +29,14 @@ export function WritesClasses<B extends Constructor<BaseCodeFile>>(Base: B) {
       const { classFeatures, freeFeats, proficiencies } = seed;
       if (classFeatures) {
         this.lines.push(`  classFeatures: [`);
-        for (const [level, name] of classFeatures) this.lines.push(`    [${level}, ${quote(name)}],`);
+        for (const [level, name] of classFeatures) this.lines.push(`    [${level}, ${this.quote(name)}],`);
         this.lines.push(`  ],`);
       }
-      if (proficiencies) this.lines.push(`  proficiencies: ${formatStringArray(proficiencies, 1)},`);
+      if (proficiencies) this.lines.push(`  proficiencies: ${this.formatStringArray(proficiencies, 1)},`);
       if (freeFeats) {
         this.lines.push(`  freeFeats: [`);
-        for (const [level, feat, apt] of freeFeats) this.lines.push(`    [${level}, ${quote(feat)}, ${quote(apt)}],`);
+        for (const [level, feat, apt] of freeFeats)
+          this.lines.push(`    [${level}, ${this.quote(feat)}, ${this.quote(apt)}],`);
         this.lines.push(`  ],`);
       }
     }
@@ -61,7 +57,7 @@ export function WritesClasses<B extends Constructor<BaseCodeFile>>(Base: B) {
       const { spells } = seed;
       if (!spells) return;
       this.lines.push(`  spells: {`);
-      this.lines.push(`    slug: ${quote(spells.slug)},`);
+      this.lines.push(`    slug: ${this.quote(spells.slug)},`);
       this.lines.push(`    perDay: [`);
       for (const row of spells.perDay) this.lines.push(`      [${row.join(", ")}],`);
       this.lines.push(`    ],`);
@@ -76,7 +72,7 @@ export function WritesClasses<B extends Constructor<BaseCodeFile>>(Base: B) {
         this.lines.push(`    lists: [`);
         for (const list of spells.lists) {
           const requirements = list.requirements.map((r) => this.requirement(r, 3));
-          this.lines.push(`      { slug: ${quote(list.slug)}, requirements: [${requirements.join(", ")}] },`);
+          this.lines.push(`      { slug: ${this.quote(list.slug)}, requirements: [${requirements.join(", ")}] },`);
         }
         this.lines.push(`    ],`);
       }
@@ -86,17 +82,17 @@ export function WritesClasses<B extends Constructor<BaseCodeFile>>(Base: B) {
     /** The class's opening fields: its name and description, hit die, levels, skills, BAB, saves and requirements. */
     private writeSummary(seed: ClassSeed) {
       const { bab, classSkills, description, hd, levels, name, requirements, saves, skillPoints } = seed;
-      this.lines.push(`export const ${getClassFile(name).list}: ClassSeed = {`);
-      this.lines.push(`  name: ${quote(name)},`);
-      this.lines.push(`  description: ${quote(description)},`);
+      this.lines.push(`export const ${BookLayout.classFile(name).list}: ClassSeed = {`);
+      this.lines.push(`  name: ${this.quote(name)},`);
+      this.lines.push(`  description: ${this.quote(description)},`);
       this.lines.push(`  hd: ${hd}, levels: ${levels}, skillPoints: ${skillPoints},`);
-      this.lines.push(`  bab: ${quote(bab)},`);
+      this.lines.push(`  bab: ${this.quote(bab)},`);
       this.lines.push(
-        `  saves: { fortitude: ${quote(saves.fortitude)}, reflex: ${quote(saves.reflex)}, will: ${quote(saves.will)} },`,
+        `  saves: { fortitude: ${this.quote(saves.fortitude)}, reflex: ${this.quote(saves.reflex)}, will: ${this.quote(saves.will)} },`,
       );
-      this.lines.push(`  classSkills: ${formatStringArray(classSkills, 1)},`);
+      this.lines.push(`  classSkills: ${this.formatStringArray(classSkills, 1)},`);
       this.lines.push(
-        ...listField(
+        ...this.listField(
           "requirements",
           (requirements ?? []).map((req) => this.requirement(req, 2)),
           "  ",
@@ -104,15 +100,17 @@ export function WritesClasses<B extends Constructor<BaseCodeFile>>(Base: B) {
       );
     }
 
-    /** A class's seed written as code, the list its file exports (`getClassFile`), and the content type it's of. */
+    /**
+     * A class's seed written as code, the list its file exports (`BookLayout.classFile`), and the content type it's of.
+     */
     classSeed(seed: ClassSeed): void {
       const { casterLevelAdvancement, classFeatureAptitude } = seed;
       this.writeSummary(seed);
       if (casterLevelAdvancement) {
         const { type, levels } = casterLevelAdvancement;
-        this.lines.push(`  casterLevelAdvancement: { type: ${quote(type)}, levels: [${levels.join(", ")}] },`);
+        this.lines.push(`  casterLevelAdvancement: { type: ${this.quote(type)}, levels: [${levels.join(", ")}] },`);
       }
-      if (classFeatureAptitude) this.lines.push(`  classFeatureAptitude: ${quote(classFeatureAptitude)},`);
+      if (classFeatureAptitude) this.lines.push(`  classFeatureAptitude: ${this.quote(classFeatureAptitude)},`);
       this.writeFeatures(seed);
       this.writeCasting(seed);
       this.writeSpells(seed);

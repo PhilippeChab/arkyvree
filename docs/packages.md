@@ -70,11 +70,12 @@ database/packages/dnd35-from-parser/
     ├── seeds/            # A book's seeds (BookSeeds, one per book on the Library), a class per kind built once per reference (FeatSeeds, SpellSeeds…; a class's: classes/ClassSeeds.ts); what a book copies and the aptitudes it uses, its concerns
     ├── validate/         # What parser:validate reports, and the overrides that change nothing
     └── generator/        # The seeds → generated/
-        ├── BaseGenerator.ts  # A generator's core: the folder it writes to, the files it wrote, the writes kinds of files share
-        ├── Generator.ts      # generateBook: a book's files, whole; generateAll, generateReference pick the books
-        ├── concerns/         # A kind of file per concern: GeneratesClasses, GeneratesFeats…
-        ├── bookLayout.ts     # A book's generated tree: each file's path and the list it exports, which the writers and the indexes name
-        └── code/             # A file's code, written from its seeds: CodeFile (BaseCodeFile: its lines, its imports, the customization values), a concern per kind of seed (WritesClasses, WritesFeats…)
+        ├── Generator.ts      # Picks the books (generateAll, generateReference) and generates each whole, a BookGenerator each
+        ├── GeneratedFolder.ts  # The folder a generation writes: a run in a copy that replaces it whole (generateAtomically), the files it wrote
+        ├── BookGenerator.ts  # A book's files, from its seeds (BaseBookGenerator: the book, its seeds, the writes kinds of files share)
+        ├── concerns/         # A kind of file per concern: GeneratesClasses, GeneratesFeats…, GeneratesIndexes
+        ├── BookLayout.ts     # A book's generated tree: each file's path and the list it exports, which the writers and the indexes name
+        └── code/             # A file's code, written from its seeds: CodeFile (BaseCodeFile: its lines, its imports, how a value is written, the customization values), a concern per kind of seed (WritesClasses, WritesFeats…) and WritesIndexes
 ```
 
 `content/` and `data/` never touch the database: the generated data, the parser and the seeds import them. `generated/` holds only what the generator writes; hand-written content goes in `data/`, what content is written with in `content/`, which imports none of them (`arkyvree/layers`): a table a builder reads (the weapons, the armor) is content.

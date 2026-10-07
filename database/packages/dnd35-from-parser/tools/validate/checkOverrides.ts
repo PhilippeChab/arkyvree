@@ -1,12 +1,10 @@
-import { getClassFeatsFile } from "@/database/packages/dnd35-from-parser/tools/generator/bookLayout.ts";
+import BookLayout from "@/database/packages/dnd35-from-parser/tools/generator/BookLayout.ts";
 import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
 import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
 import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
 import { sortKeysDeep } from "@/database/packages/dnd35-from-parser/tools/text/json.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import type { StoredReference } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
-
-import { getClassReviewNotes } from "./classReview.ts";
 
 type ClassOverrides = NonNullable<StoredReference<"class">["overrides"]>;
 
@@ -23,19 +21,16 @@ function alike(a: unknown, b: unknown) {
  */
 function generated(ref: ClassReference): string | Error {
   try {
-    const seeds = Library.book(ref._meta.book);
+    const seeds = Library.book(ref._meta.book).classes(ref);
     const classFile = new CodeFile();
-    classFile.classSeed(seeds.classes(ref).seed());
+    classFile.classSeed(seeds.seed());
     const featsFile = new CodeFile();
     featsFile.list(
-      getClassFeatsFile(ref.raw.name).list,
+      BookLayout.classFeatsFile(ref.raw.name).list,
       "FeatSeed",
-      seeds
-        .classes(ref)
-        .feats()
-        .flatMap((feat) => featsFile.feat(feat)),
+      seeds.feats().flatMap((feat) => featsFile.feat(feat)),
     );
-    return [...getClassReviewNotes(ref), classFile.code(), featsFile.code()].join("\n");
+    return [...seeds.reviewNotes(), classFile.code(), featsFile.code()].join("\n");
   } catch (error) {
     return error instanceof Error ? error : new Error(String(error));
   }

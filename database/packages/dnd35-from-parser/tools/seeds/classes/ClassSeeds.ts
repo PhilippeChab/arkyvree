@@ -33,6 +33,26 @@ export class ClassSeeds extends include(
   }
 
   /**
+   * What's left to review in the class, which opens its generated file: what the detection couldn't resolve, unless
+   * the overrides name the key (even empty: reviewed).
+   */
+  reviewNotes(): string[] {
+    const { detected } = this.ref;
+    const overrides = this.ref.overrides ?? {};
+    const todos: string[] = [];
+    if (!("requirements" in overrides) && detected.unresolvedPrereqs?.length)
+      for (const p of detected.unresolvedPrereqs) todos.push(p);
+
+    if (!("aptitudePicks" in overrides) && detected.unresolvedAptitudePicks?.length)
+      for (const a of detected.unresolvedAptitudePicks) todos.push(`Unresolved aptitude pick: "${a}"`);
+
+    if (!("modifiers" in overrides) && !("columns" in overrides))
+      todos.push("No modifiers defined — review if this class needs any");
+
+    return todos;
+  }
+
+  /**
    * The class's seed: its summary (name, description, hit die, levels, skills, BAB, saves, requirements), its features
    * and the feats it grants, its spellcasting, its level modifiers and its aptitude picks. Each is built in the order
    * its file is written, so a class the generator refuses fails on the same field.

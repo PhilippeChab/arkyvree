@@ -1,21 +1,18 @@
-import { join } from "node:path";
-
-import { type BaseGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseGenerator.ts";
-import { BOOK_FILES } from "@/database/packages/dnd35-from-parser/tools/generator/bookLayout.ts";
-import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
+import { type BaseBookGenerator } from "@/database/packages/dnd35-from-parser/tools/generator/BaseBookGenerator.ts";
+import BookLayout from "@/database/packages/dnd35-from-parser/tools/generator/BookLayout.ts";
 import type { RaceReference } from "@/database/packages/dnd35-from-parser/tools/types/races.ts";
 import type { Constructor } from "@/server/mixins.ts";
 
 /** Generating a book's races. */
-export function GeneratesRaces<B extends Constructor<BaseGenerator>>(Base: B) {
+export function GeneratesRaces<B extends Constructor<BaseBookGenerator>>(Base: B) {
   abstract class GeneratingRaces extends Base {
-    /** A book's races file (races.ts). */
-    writeRaces(ref: RaceReference, book: string) {
-      const seeds = Library.book(book).races(ref).seeds();
+    /** A race reference's races file (races.ts). */
+    writeRaces(ref: RaceReference) {
+      const seeds = this.seeds.races(ref).seeds();
       this.log(`Built ${seeds.length} race seeds`);
 
-      const { path, list } = BOOK_FILES.races;
-      this.writeList(join(this.dir, book, path), list, "RaceSeed", seeds, (file, race) => file.race(race));
+      const { path, list } = BookLayout.files.races;
+      this.writeList(path, list, "RaceSeed", seeds, (file, race) => file.race(race));
 
       this.log(`\nDone!`);
     }
