@@ -3,6 +3,11 @@ import { stripSeparators } from "@/shared/text.ts";
 
 import { isTraversable } from "./isTraversable.ts";
 
+/** The key of `value` whose slug is `slug`: one written its own way, as a spell's property types are (`SPELL_COMPONENT`). */
+function keyBySlug(value: Record<string, unknown>, slug: string) {
+  return Object.keys(value).find((key) => stripSeparators(key) === slug);
+}
+
 /** The entries of `value` that are objects and whose slug starts with `slug` (but isn't it): a skill's subtypes. */
 function subtypesOf(value: Record<string, unknown>, slug: string) {
   return Object.entries(value).filter(
@@ -100,7 +105,9 @@ export default class PathTraverser {
     // A path that steps past a value (`abilities.strength.total.x`) fails whole, wildcard branches and all:
     // traversePathInit answers the throw with the path's one error.
     if (!isTraversable(currentValue)) throw new Error(`Element not found: ${next}`);
-    if (!(formattedKey in currentValue)) {
+    // The entry whose slug the element is: its key, or one written its own way
+    const key = formattedKey in currentValue ? formattedKey : keyBySlug(currentValue, formattedKey);
+    if (key === undefined) {
       // A skill not found may name only its subtypes ("knowledge" for "knowledgearcana", "knowledgehistory"…):
       // expand to all of them like an implicit wildcard
       const prefixMatches = reachesSubtypes ? subtypesOf(currentValue, formattedKey) : [];
@@ -111,25 +118,19 @@ export default class PathTraverser {
     const subtypeMatches = reachesSubtypes ? subtypesOf(currentValue, formattedKey) : [];
     if (subtypeMatches.length > 0) {
       // The skill itself, then its subtypes.
-      return this.traverseEach(
-        component,
-        [[formattedKey, currentValue[formattedKey]], ...subtypeMatches],
-        rest,
-        maxDepth,
-        pathParts,
-      );
+      return this.traverseEach(component, [[key, currentValue[key]], ...subtypeMatches], rest, maxDepth, pathParts);
     }
 
     const path = [...pathParts, formattedKey];
     if (rest.length !== 0) {
-      return this.traverse(component, rest, currentValue[formattedKey], formattedKey, maxDepth, path);
+      return this.traverse(component, rest, currentValue[key], key, maxDepth, path);
     }
     return [
       {
         component,
         object: currentValue,
-        data: currentValue[formattedKey],
-        key: formattedKey,
+        data: currentValue[key],
+        key,
         resolvedPath: path.join("."),
         error: null,
       },

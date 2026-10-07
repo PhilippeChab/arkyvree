@@ -19,7 +19,6 @@ type IdentityData = {
   };
   background: {
     notes: string;
-    privateNotes: string;
   };
   meta: {
     level: number;
@@ -35,8 +34,19 @@ export default class IdentityComponent {
 
   protected readonly identity: IdentityData = {} as IdentityData;
 
+  /**
+   * The GM's notes on the character, held apart from the identity the target paths walk: no modifier or requirement
+   * reads them, so none can copy them into a field others see, or tell them by whether it's met.
+   */
+  private privateNotes = "";
+
   getIdentity() {
     return this.identity;
+  }
+
+  /** The GM's notes on the character (`privateNotes`), which the sheet's response shows its owner. */
+  getPrivateNotes(): string {
+    return this.privateNotes;
   }
 
   initialize(character: Character, race: Race, languages: Language[]) {
@@ -59,8 +69,8 @@ export default class IdentityComponent {
     };
     this.identity.background = {
       notes: character.notes || "",
-      privateNotes: character.privateNotes || "",
     };
+    this.privateNotes = character.privateNotes || "";
 
     this.identity.meta = {
       level,

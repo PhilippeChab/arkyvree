@@ -41,6 +41,7 @@ import {
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
 import DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import type { WeaponSlot } from "@/server/rulesets/dnd3.5/combat/CombatState.ts";
+import Dnd35TargetPaths from "@/server/rulesets/dnd3.5/Dnd35TargetPaths.ts";
 import {
   buildFullCharacterResponse,
   buildVirtualEntities,
@@ -75,6 +76,7 @@ import {
 } from "@/shared/dnd3.5/properties/index.ts";
 import { buildSpellGroups } from "@/shared/dnd3.5/spellGroups.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
+import { isRecord } from "@/shared/isRecord.ts";
 import type { Character, Requirement } from "@/shared/relations.ts";
 import { seededRows } from "@/tests/seeds/seededRows.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
@@ -477,6 +479,46 @@ describe("DetailedCharacter", () => {
         const { timing } = await measure(() => detailed.build(db, undefined, otherScope));
         expect(timing.cacheHits + timing.cacheMisses).toBe(ownScope.timing.cacheHits + ownScope.timing.cacheMisses);
         expect(detailed.getRuleset()?.id).toBe(bjorn.rulesetId);
+      });
+    });
+
+    test("resolves every property path listed for the spells it has, each type written its own way", async () => {
+      const record = await findSeededCharacter("Elara Starweaver");
+      const elara = await build(record);
+      const targetPaths = new Dnd35TargetPaths();
+      const { paths } = await withRulesetScope(db, record.rulesetId, ({ rulesetData }) =>
+        targetPaths.getTargetPathsAndLabels(rulesetData, "requirement"),
+      );
+      // The spells it has: their entries carry their properties (a spell it hasn't is #335's)
+      const spells = new Set(
+        Object.entries(elara.components.powers.getPowers())
+          .filter(([, entry]) => isRecord(entry) && "properties" in entry)
+          .map(([slug]) => slug),
+      );
+      const propertyPaths = paths
+        .map(({ path }) => path)
+        .filter((path) => /^powers\.[a-z0-9]+\.properties\./.test(path) && spells.has(path.split(".")[1]));
+      expect(propertyPaths.length).toBeGreaterThan(0);
+      const errors = propertyPaths.flatMap((path) =>
+        targetPaths
+          .traversePathInit(path, elara.components)
+          .flatMap((result) => (result.error === null ? [] : [`${path}: ${result.error}`])),
+      );
+      expect(errors).toEqual([]);
+    });
+
+    test("keeps the GM's private notes from every path, and in the sheet's response", async () => {
+      const bjorn = await findSeededCharacter("Bjorn Ironhand");
+      const detailed = await build({ ...bjorn, notes: "A wandering smith", privateNotes: "Owes the thieves' guild" });
+      const targetPaths = new Dnd35TargetPaths();
+      const read = (path: string) =>
+        targetPaths.traversePathInit(path, detailed.components).map((r) => r.error ?? r.data);
+      expect(read("identity.background.notes")).toEqual(["A wandering smith"]);
+      expect(read("identity.background.privateNotes")).toEqual(["Element not found: privateNotes"]);
+      expect(detailed.components.identity.getIdentity().background).toEqual({ notes: "A wandering smith" });
+      expect(buildFullCharacterResponse(bjorn, detailed).identity.background).toEqual({
+        notes: "A wandering smith",
+        privateNotes: "Owes the thieves' guild",
       });
     });
 

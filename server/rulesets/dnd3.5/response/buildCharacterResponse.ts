@@ -63,6 +63,13 @@ function equipmentOf(dc: Dnd35DetailedCharacter) {
   }));
 }
 
+/** The character's identity, with the GM's notes in its background, where the response has always held them. */
+function identityWithPrivateNotes(detailedCharacter: Dnd35DetailedCharacter) {
+  const { identity } = detailedCharacter.components;
+  const data = identity.getIdentity();
+  return { ...data, background: { ...data.background, privateNotes: identity.getPrivateNotes() } };
+}
+
 export function buildBondedMap(
   bondedByKind: Partial<Record<string, { record: InferSelectModel<typeof charactersInCharacter>; detailed: unknown }>>,
   transform?: (entry: ReturnType<typeof buildBondedResponse>) => ReturnType<typeof buildBondedResponse>,
@@ -109,7 +116,7 @@ export function buildFullCharacterResponse(
     deletedAt: character.deletedAt,
     updatedAt: character.updatedAt,
     shareToken: character.shareToken ?? null,
-    identity: detailedCharacter.components.identity.getIdentity(),
+    identity: identityWithPrivateNotes(detailedCharacter),
     skillBudget: detailedCharacter.components.skills.getSkillBudget(),
     abilities: detailedCharacter.components.abilities.getAbilitiesWithIds(),
     combat: detailedCharacter.components.combat.getCombat(),
