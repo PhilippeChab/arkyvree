@@ -1,3 +1,4 @@
+import type { RulesetData } from "@/engine/core/view/index.ts";
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/classes/ClassesComponent.ts";
 import type IdentityComponent from "@/engine/rulesets/dnd3.5/identity/IdentityComponent.ts";
 import { Dnd35LevelsRules } from "@/engine/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
@@ -23,6 +24,20 @@ type AptitudesData = {
   };
 };
 
+/** A pool a level-up picks feats in: an unleveled aptitude, `shared` when its aptitude has powers too. */
+type FeatPool = { allowed: number; available: number; id: string; name: string; shared: boolean; spent: number };
+
+/** A pool a level-up picks powers in: a leveled aptitude, with each spell level it has left (`levels`), or a shared one. */
+type PowerPool = {
+  allowed: number;
+  available: number;
+  id: string;
+  leveled?: boolean;
+  levels?: Record<string, { allowed: number; available: number; spent: number }>;
+  name: string;
+  spent: number;
+};
+
 export type AptitudeLevelData = {
   allowed: number;
   available: number;
@@ -31,6 +46,11 @@ export type AptitudeLevelData = {
 };
 
 export const ALLOWED_ALL = -1;
+
+/** What's left to pick in all of `pools`. */
+function sumAvailable(pools: { available: number }[]) {
+  return pools.reduce((total, pool) => total + pool.available, 0);
+}
 
 export default class AptitudesComponent {
   constructor(
@@ -169,116 +189,60 @@ export default class AptitudesComponent {
     };
   }
 
+  /** A leveled aptitude's power pool: what each spell level that has any left gives, and all of them. */
+  private toLeveledPool(aptitude: AptitudesData[string]): PowerPool {
+    const levelsByKey = aptitude as Record<string, unknown>;
+    const levels: Record<string, { allowed: number; available: number; spent: number }> = {};
+    let available = 0;
+    for (let spellLevel = 0; spellLevel <= MAX_SPELL_LEVEL; spellLevel++) {
+      const levelData = levelsByKey[String(spellLevel)] as AptitudeLevelData | undefined;
+      if (levelData && levelData.available > 0) {
+        levels[String(spellLevel)] = {
+          allowed: levelData.allowed,
+          spent: levelData.spent,
+          available: levelData.available,
+        };
+        available += levelData.available;
+      }
+    }
+    const { id, name, allowed, spent } = aptitude;
+    return { id, name, allowed, spent, available, leveled: true, levels };
+  }
+
   /** Takes a spell level's all known back: its known slots a count again, none. */
   clearAllKnown(level: AptitudeLevelData): void {
     this.allKnownLevels.delete(level);
     level.allowed = 0;
   }
 
-  /**
-   * Extracts non-leveled aptitude pools formatted for feat selection.
-   * Returns pool objects keyed by aptitude ID.
-   */
-  extractFeatPools(): Record<
-    string,
-    { allowed: number; available: number; id: string; name: string; shared: boolean; spent: number }
-  > {
-    const pools: Record<
-      string,
-      { allowed: number; available: number; id: string; name: string; shared: boolean; spent: number }
-    > = {};
-    for (const [key, aptitude] of Object.entries(this.aptitudes)) {
-      if (this.leveledAptitudeKeys.has(key)) continue;
-      pools[aptitude.id] = {
-        id: aptitude.id,
-        name: aptitude.name,
-        allowed: aptitude.allowed,
-        spent: aptitude.spent,
-        available: aptitude.available,
-        shared: false,
-      };
-    }
-    return pools;
-  }
-
-  /**
-   * Extracts aptitude pools formatted for power/spell selection.
-   * Includes leveled aptitudes with per-spell-level breakdowns.
-   */
-  extractPowerPools(): Record<
-    string,
-    {
-      allowed: number;
-      available: number;
-      id: string;
-      leveled?: boolean;
-      levels?: Record<string, { allowed: number; available: number; spent: number }>;
-      name: string;
-      spent: number;
-    }
-  > {
-    const pools: Record<
-      string,
-      {
-        allowed: number;
-        available: number;
-        id: string;
-        leveled?: boolean;
-        levels?: Record<string, { allowed: number; available: number; spent: number }>;
-        name: string;
-        spent: number;
-      }
-    > = {};
-
-    for (const [key, aptitude] of Object.entries(this.aptitudes)) {
-      if (this.leveledAptitudeKeys.has(key)) {
-        const aptitudeObj = aptitude as Record<string, unknown>;
-        const levels: Record<string, { allowed: number; available: number; spent: number }> = {};
-        let totalAvailable = 0;
-
-        for (let spellLevel = 0; spellLevel <= MAX_SPELL_LEVEL; spellLevel++) {
-          const levelData = aptitudeObj[String(spellLevel)] as AptitudeLevelData | undefined;
-          if (levelData && levelData.available > 0) {
-            levels[String(spellLevel)] = {
-              allowed: levelData.allowed,
-              spent: levelData.spent,
-              available: levelData.available,
-            };
-            totalAvailable += levelData.available;
-          }
-        }
-
-        pools[aptitude.id] = {
-          id: aptitude.id,
-          name: aptitude.name,
-          allowed: aptitude.allowed,
-          spent: aptitude.spent,
-          available: totalAvailable,
-          leveled: true,
-          levels,
-        };
-      } else {
-        pools[aptitude.id] = {
-          id: aptitude.id,
-          name: aptitude.name,
-          allowed: aptitude.allowed,
-          spent: aptitude.spent,
-          available: aptitude.available,
-        };
-      }
-    }
-    return pools;
-  }
-
   getAptitudes() {
     return this.aptitudes;
   }
 
-  /** Returns IDs of all non-leveled aptitudes. */
-  getNonLeveledAptitudeIds(): string[] {
-    return Object.entries(this.aptitudes)
-      .filter(([key]) => !this.leveledAptitudeKeys.has(key))
-      .map(([, apt]) => apt.id);
+  /**
+   * The pools a level-up picks in, by aptitude id, and what's left to pick in each kind. An unleveled aptitude is a
+   * feat pool, `shared` when its aptitude has powers too, which makes it a power pool as well: its picks count as
+   * powers. A leveled aptitude is a power pool, with what each spell level it has left gives.
+   */
+  getLevelUpPools(rulesetData: Pick<RulesetData, "aptitudeIdsByHavingPowers">) {
+    const featPools: Record<string, FeatPool> = {};
+    const powerPools: Record<string, PowerPool> = {};
+    for (const [key, aptitude] of Object.entries(this.aptitudes)) {
+      const { id, name, allowed, spent, available } = aptitude;
+      if (this.leveledAptitudeKeys.has(key)) {
+        powerPools[id] = this.toLeveledPool(aptitude);
+        continue;
+      }
+      const shared = rulesetData.aptitudeIdsByHavingPowers.has(id);
+      featPools[id] = { id, name, allowed, spent, available, shared };
+      if (shared) powerPools[id] = { id, name, allowed, spent, available };
+    }
+    return {
+      featPools,
+      featsToSelect: sumAvailable(Object.values(featPools).filter((pool) => !pool.shared)),
+      powerPools,
+      powersToSelect: sumAvailable(Object.values(powerPools)),
+    };
   }
 
   /** The general feats the character's level gives that count toward no aptitude: its ruleset has no General. */
