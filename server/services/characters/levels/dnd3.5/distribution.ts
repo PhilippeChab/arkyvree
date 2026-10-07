@@ -282,7 +282,7 @@ function levelDeltas(
     add(modifiersBySourceId.get(rec.featsInRule.id) ?? []);
   }
 
-  const generalAptId = aptitudeSlugToId.get("general");
+  const generalAptId = aptitudeSlugToId.get(Dnd35LevelsRules.GENERAL_FEATS_APTITUDE_SLUG);
   if (generalAptId && perLevelFeatSlots[generalAptId]) {
     const generalDelta =
       Dnd35LevelsRules.countGeneralFeats(charLevel) - Dnd35LevelsRules.countGeneralFeats(charLevel - 1);

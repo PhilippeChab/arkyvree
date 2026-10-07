@@ -1,6 +1,8 @@
+import type { RulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
-import { Aptitudes, Feats, FeatsAptitudes, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
+import { Feats, FeatsAptitudes, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
 import FeatsPaths from "@/server/rulesets/dnd3.5/feats/FeatsPaths.ts";
+import { Dnd35LevelsRules } from "@/server/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
 import {
   FEAT_FAMILY,
   SPELL_AREA_OF_EFFECT,
@@ -43,7 +45,9 @@ export const SPELL_FIELD_PROPERTY_TYPES = [
   SPELL_COMPONENT,
 ] as const;
 
-export async function generateSpellFocusFeats(tx: Db, rulesetId: string, sourceChain: string[], schoolName: string) {
+export async function generateSpellFocusFeats(tx: Db, scope: RulesetScope, schoolName: string) {
+  const rulesetId = scope.ruleset.id;
+  const { sourceChain } = scope.rulesetData.cow;
   // Check child and all ancestors for existing feat
   let existing = await Feats.findOne(tx, { name: `Spell Focus: ${schoolName}`, rulesetId });
   if (!existing) {
@@ -54,14 +58,8 @@ export async function generateSpellFocusFeats(tx: Db, rulesetId: string, sourceC
   }
   if (existing) return;
 
-  let generalAptitude = await Aptitudes.findOne(tx, { name: "General", rulesetId });
-  if (!generalAptitude) {
-    for (const ancestorId of sourceChain) {
-      generalAptitude = await Aptitudes.findOne(tx, { name: "General", rulesetId: ancestorId });
-      if (generalAptitude) break;
-    }
-  }
-  if (!generalAptitude) return;
+  const generalAptitudeId = scope.rulesetData.aptitudeIdBySlug.get(Dnd35LevelsRules.GENERAL_FEATS_APTITUDE_SLUG);
+  if (!generalAptitudeId) return;
 
   const strippedSchool = stripSeparators(schoolName);
 
@@ -72,7 +70,7 @@ export async function generateSpellFocusFeats(tx: Db, rulesetId: string, sourceC
     rulesetId,
   });
 
-  await FeatsAptitudes.create(tx, { featId: spellFocus.id, aptitudeId: generalAptitude.id });
+  await FeatsAptitudes.create(tx, { featId: spellFocus.id, aptitudeId: generalAptitudeId });
 
   await Modifiers.createMany(tx, [
     {
@@ -96,7 +94,7 @@ export async function generateSpellFocusFeats(tx: Db, rulesetId: string, sourceC
     rulesetId,
   });
 
-  await FeatsAptitudes.create(tx, { featId: greaterSpellFocus.id, aptitudeId: generalAptitude.id });
+  await FeatsAptitudes.create(tx, { featId: greaterSpellFocus.id, aptitudeId: generalAptitudeId });
 
   await Modifiers.createMany(tx, [
     {

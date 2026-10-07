@@ -9,7 +9,7 @@ import {
   powersAptitudesInRules,
 } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
-import { ConflictError } from "@/server/errors/index.ts";
+import { ConflictError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { Feats, Klasses, Powers } from "@/server/repositories/index.ts";
 import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
@@ -34,6 +34,31 @@ describe("AptitudesService", () => {
       description: "Updated",
     });
     expect(updated.description).toBe("Updated");
+  });
+
+  test("keeps General, which the general feats count toward: neither renamed nor deleted, still described", async () => {
+    const {
+      session,
+      ruleset,
+      aptitudeIds: [generalId],
+    } = await createTestUserAndRuleset(["General"]);
+    await expect(
+      AptitudesService.updateAptitude(session, ruleset.id, generalId, { name: "General Feats" }),
+    ).rejects.toThrow(UnprocessableEntityError);
+    await expect(AptitudesService.deleteAptitude(session, ruleset.id, generalId)).rejects.toThrow(
+      UnprocessableEntityError,
+    );
+    const described = await AptitudesService.updateAptitude(session, ruleset.id, generalId, {
+      name: "General",
+      description: "Any feat",
+    });
+    expect(described.description).toBe("Any feat");
+    // By its slug, which the engine and the target paths know it by: a new case is no change to them
+    const recased = await AptitudesService.updateAptitude(session, ruleset.id, generalId, { name: "GENERAL" });
+    expect(recased.name).toBe("GENERAL");
+    await expect(AptitudesService.deleteAptitude(session, ruleset.id, generalId)).rejects.toThrow(
+      UnprocessableEntityError,
+    );
   });
 
   test("deletes the feat, power and class-level links of a deleted aptitude", async () => {

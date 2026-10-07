@@ -422,7 +422,8 @@ server/
 │       ├── response/                      (buildCharacterResponse: the 3.5 API response shape)
 │       ├── abilities/ aptitudes/ feats/ identity/ saves/
 │       │                                  (each domain's component and its paths' category: AbilitiesComponent,
-│       │                                  AbilitiesPaths, …; feats/ also holds FeatGroupingsComponent)
+│       │                                  AbilitiesPaths, …; aptitudes/ also holds Dnd35AptitudesRules, feats/
+│       │                                  FeatGroupingsComponent)
 │       ├── classes/                       (ClassesComponent, ClassesPaths, Dnd35ClassesRules, Dnd35ClassLevelsRules,
 │       │                                  Dnd35ClassLevelsEffects)
 │       ├── powers/                        (PowersComponent, PowerGroupingsComponent, PowersPaths, Dnd35PowersRules,
@@ -649,7 +650,7 @@ An audit on 2026-04-16 identified real leaks and some false alarms. It predates 
 | `server/rulesets/dnd3.5/types.ts` | 3.5's types (`Dnd35RulesetModule`, `CharacterKind`, `Dnd35ProjectedCharacterData`, `Dnd35LevelUpProjector`) |
 | `server/rulesets/dnd3.5/character/` | The 3.5 character: its state (`CharacterState`), its concerns (`Builds`, `Validates`, `PossessesVirtually`), its components (`components.ts`), and `DetailedCharacter`, which wires them |
 | `server/rulesets/engine/` | The machinery: `ModifierEvaluator`, `RequirementEvaluator`, the path helpers (`paths/`), the rules and effects a ruleset gives the services (`module/`), the module's contract (`types.ts`) |
-| `server/rulesets/dnd3.5/` | 3.5 implementation: the character (`character/`), its loader (`loading/`), its components and path categories by domain (`abilities/`, `skills/`, `combat/`…), with the rules and effects of the areas that have them (`classes/`, `items/`, `levels/`, `powers/`, `skills/`), `Dnd35TargetPaths`, `response/buildCharacterResponse` |
+| `server/rulesets/dnd3.5/` | 3.5 implementation: the character (`character/`), its loader (`loading/`), its components and path categories by domain (`abilities/`, `skills/`, `combat/`…), with the rules and effects of the areas that have them (`aptitudes/`, `classes/`, `items/`, `levels/`, `powers/`, `skills/`), `Dnd35TargetPaths`, `response/buildCharacterResponse` |
 | `server/rulesets/dnd3.5/character/concerns/Builds.ts` | The build: the loader (`loading/`) gives each entity the modifiers and requirements the compose step merged into `rulesetData`, then the components, the possession pre-pass and the modifier rounds run |
 | `database/packages/dnd35/seed/concerns/CopiesOnWrite.ts` | Seed-time COW: copies the core feats and spells an extension changes |
 | `tests/services/rulesets/Extensions.test.ts` | Extensions, COW, fork inheritance, merge, name conflicts, publish validation, sibling merge (feats + powers: aptitudes, requirements, modifiers across all endpoints) |

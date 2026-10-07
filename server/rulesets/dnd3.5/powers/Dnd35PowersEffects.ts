@@ -22,7 +22,7 @@ export class Dnd35PowersEffects implements PowersEffects {
   }
 
   async generateGroupingFeats(tx: Db, scope: RulesetScope, value: string): Promise<void> {
-    await generateSpellFocusFeats(tx, scope.ruleset.id, scope.rulesetData.cow.sourceChain, value);
+    await generateSpellFocusFeats(tx, scope, value);
   }
 
   async generateProperties(tx: Db, powerId: string, body: PowerBody): Promise<void> {
