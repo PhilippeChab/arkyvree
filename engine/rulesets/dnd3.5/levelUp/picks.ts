@@ -66,6 +66,28 @@ function projectPickLevels(characterId: string, klassLevelId: string, pick: Pick
   return { excludeIds, level, pendingLevels };
 }
 
+/** Resolves aptitude-targeting modifiers (aptitudes.<slug>.allowed) for feats, grouped by feat ID. */
+function resolveAptitudeModifiers(featIds: string[], rulesetData: RulesetData) {
+  const result = new Map<string, AptitudeModifier[]>();
+  for (const featId of featIds) {
+    for (const mod of rulesetData.modifiersBySource.get(featId) ?? []) {
+      if (mod.sourceType !== "feats") continue;
+      const pool = parseAptitudePool(mod.target);
+      if (pool === undefined) continue;
+      const resolvedAptitudeId = rulesetData.aptitudeIdBySlug.get(pool);
+      const value = parseLiteralValue(mod.value, "number");
+      if (!resolvedAptitudeId || typeof value !== "number") continue;
+      let group = result.get(mod.sourceId);
+      if (!group) {
+        group = [];
+        result.set(mod.sourceId, group);
+      }
+      group.push({ aptitudeId: resolvedAptitudeId, value, operator: mod.operator });
+    }
+  }
+  return result;
+}
+
 /**
  * The grouped feat options of a page: a feat without variants annotated as a flat option is, a family's row eligible,
  * its variants annotated when the picker opens it.
@@ -383,26 +405,4 @@ export function projectPowerPick(
       saveName: null,
     })),
   };
-}
-
-/** Resolves aptitude-targeting modifiers (aptitudes.<slug>.allowed) for feats, grouped by feat ID. */
-export function resolveAptitudeModifiers(featIds: string[], rulesetData: RulesetData) {
-  const result = new Map<string, AptitudeModifier[]>();
-  for (const featId of featIds) {
-    for (const mod of rulesetData.modifiersBySource.get(featId) ?? []) {
-      if (mod.sourceType !== "feats") continue;
-      const pool = parseAptitudePool(mod.target);
-      if (pool === undefined) continue;
-      const resolvedAptitudeId = rulesetData.aptitudeIdBySlug.get(pool);
-      const value = parseLiteralValue(mod.value, "number");
-      if (!resolvedAptitudeId || typeof value !== "number") continue;
-      let group = result.get(mod.sourceId);
-      if (!group) {
-        group = [];
-        result.set(mod.sourceId, group);
-      }
-      group.push({ aptitudeId: resolvedAptitudeId, value, operator: mod.operator });
-    }
-  }
-  return result;
 }
