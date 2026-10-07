@@ -6,6 +6,7 @@ import {
   describeClassSpells,
   describeClassSpellsKnown,
 } from "./classes/classTable.ts";
+import { getFeatFamilyType } from "./feats/featEntity.ts";
 import { planItemSave } from "./items/itemEntity.ts";
 import { planPowerSave } from "./powers/powerEntity.ts";
 import { describeSkills, planSkillDelete, planSkillSave } from "./skills/skillEntity.ts";
@@ -30,6 +31,8 @@ export class Dnd35Entities {
   readonly describeClassSpellsKnown = describeClassSpellsKnown;
 
   readonly describeSkills = describeSkills;
+
+  readonly getFeatFamilyType = getFeatFamilyType;
 
   readonly planClassLevelSave = planClassLevelSave;
 

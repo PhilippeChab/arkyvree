@@ -6,7 +6,6 @@ import type { Db } from "@/server/database/index.ts";
 import { ResolvesCopies } from "@/server/repositories/concerns/ResolvesCopies.ts";
 import { type RulesetEntityFilters } from "@/server/repositories/concerns/ScopesToRuleset.ts";
 import RulesetEntityRepository from "@/server/repositories/RulesetEntityRepository.ts";
-import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 
 class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRules>, ResolvesCopies) {
   constructor() {
@@ -20,6 +19,7 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
     where: {
       ancestorRulesetIds?: string[];
       childOnly?: boolean;
+      familyType: string;
       ids?: string[];
       rulesetId: string;
       search?: string;
@@ -47,7 +47,7 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
         and(
           eq(prop.entityId, this.table.id),
           eq(prop.entityType, "feats"),
-          eq(prop.type, FEAT_FAMILY),
+          eq(prop.type, where.familyType),
           isNull(prop.deletedAt),
         ),
       )
@@ -106,13 +106,16 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
     });
   }
 
-  /** A picker's page of these feats (a list's, as the ruleset composes it), a family's variants as one row. */
+  /**
+   * A picker's page of these feats (a list's, as the ruleset composes it), a family's variants as one row: a feat's
+   * family is the value of its property of `familyType`.
+   */
   async findOptionGroupPage(
     db: Db,
-    where: { excludeFeatIds?: string[]; ids: string[]; search?: string },
+    where: { excludeFeatIds?: string[]; familyType: string; ids: string[]; search?: string },
     pagination: { limit: number; page: number },
   ) {
-    const { ids, excludeFeatIds, search } = where;
+    const { ids, excludeFeatIds, familyType, search } = where;
     const searchCondition = this.search(search, [featsInRules.name]);
     const { limit, offset } = this.paginate(pagination);
 
@@ -135,7 +138,7 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
         and(
           eq(prop.entityId, featsInRules.id),
           eq(prop.entityType, "feats"),
-          eq(prop.type, FEAT_FAMILY),
+          eq(prop.type, familyType),
           isNull(prop.deletedAt),
           sql`${featsInRules.name} LIKE ${prop.value} || '%'`,
         ),
@@ -163,10 +166,13 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
     return this.paginated(rows, pagination);
   }
 
-  /** A picker's page of these feats (a list's, as the ruleset composes it), by name: a family's, when one is given. */
+  /**
+   * A picker's page of these feats (a list's, as the ruleset composes it), by name: a family's, when one is given (the
+   * value of a feat's property of its `type`).
+   */
   async findOptionPage(
     db: Db,
-    where: { excludeFeatIds?: string[]; family?: string; ids: string[]; search?: string },
+    where: { excludeFeatIds?: string[]; family?: { type: string; value: string }; ids: string[]; search?: string },
     pagination: { limit: number; page: number },
   ) {
     const { ids, excludeFeatIds, family, search } = where;
@@ -182,8 +188,8 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
             .where(
               and(
                 eq(propertiesInCustomization.entityType, "feats"),
-                eq(propertiesInCustomization.type, FEAT_FAMILY),
-                eq(propertiesInCustomization.value, family),
+                eq(propertiesInCustomization.type, family.type),
+                eq(propertiesInCustomization.value, family.value),
                 isNull(propertiesInCustomization.deletedAt),
               ),
             ),
@@ -216,7 +222,7 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
 
   async findPage(
     db: Db,
-    where: RulesetEntityFilters<{ family?: string; ids?: string[] }>,
+    where: RulesetEntityFilters<{ family?: { type: string; value: string }; ids?: string[] }>,
     pagination: { limit: number; page: number },
   ) {
     if (where.ids !== undefined && where.ids.length === 0) return this.paginated([], pagination);
@@ -233,8 +239,8 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
             .where(
               and(
                 eq(propertiesInCustomization.entityType, "feats"),
-                eq(propertiesInCustomization.type, FEAT_FAMILY),
-                eq(propertiesInCustomization.value, where.family),
+                eq(propertiesInCustomization.type, where.family.type),
+                eq(propertiesInCustomization.value, where.family.value),
                 isNull(propertiesInCustomization.deletedAt),
               ),
             ),

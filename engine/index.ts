@@ -20,6 +20,7 @@ export {
   describeClassSpells,
   describeClassSpellsKnown,
   describeSkills,
+  getFeatFamilyType,
   planClassLevelSave,
   planItemSave,
   planPowerSave,
@@ -73,3 +74,5 @@ export {
   type RulesetData,
   type RulesetRawData,
 } from "./core/view/index.ts";
+/** The one base rules' today: a second module's fields and limits join these, which a route validates a body with */
+export { ENTITY_FIELDS, RULESET_LIMITS } from "./rulesets/dnd3.5/index.ts";

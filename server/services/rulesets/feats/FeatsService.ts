@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { featsInRules } from "@/drizzle/schema.ts";
-import { getListFeatIds } from "@/engine/index.ts";
+import { getFeatFamilyType, getListFeatIds } from "@/engine/index.ts";
 import { findScopedEntity, RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { type Db, db, withCowContext, withTransaction } from "@/server/database/index.ts";
@@ -131,11 +131,17 @@ class FeatsService {
     where: { aptitudeId?: string; childOnly?: boolean; search?: string },
     pagination: { limit: number; page: number },
   ) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+    return await withRulesetScope(db, rulesetId, async (scope) => {
+      const { rulesetData } = scope;
       const { sourceChain } = rulesetData.cow;
       const { aptitudeId, ...filters } = where;
       const ids = aptitudeId === undefined ? undefined : getListFeatIds(rulesetData, aptitudeId);
-      return await Feats.findGroupPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ids, ...filters }, pagination);
+      const familyType = getFeatFamilyType(scope);
+      return await Feats.findGroupPage(
+        db,
+        { rulesetId, ancestorRulesetIds: sourceChain, ids, familyType, ...filters },
+        pagination,
+      );
     });
   }
 
@@ -151,13 +157,15 @@ class FeatsService {
     },
     pagination: { limit: number; page: number },
   ) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+    return await withRulesetScope(db, rulesetId, async (scope) => {
+      const { rulesetData } = scope;
       const { sourceChain } = rulesetData.cow;
-      const { aptitudeId, ...filters } = where;
+      const { aptitudeId, family, ...filters } = where;
       const ids = aptitudeId === undefined ? undefined : getListFeatIds(rulesetData, aptitudeId);
+      const familyOf = family ? { type: getFeatFamilyType(scope), value: family } : undefined;
       const result = await Feats.findPage(
         db,
-        { rulesetId, ancestorRulesetIds: sourceChain, ...filters, ids },
+        { rulesetId, ancestorRulesetIds: sourceChain, ...filters, family: familyOf, ids },
         pagination,
       );
       // Each inherited feat's lists as the ruleset composes them: its siblings' links merged in, their ids remapped

@@ -7,6 +7,7 @@ import { buildCharacter } from "@/engine/rulesets/dnd3.5/character/buildCharacte
 import type Dnd35DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import Dnd35LevelUpProjector from "@/engine/rulesets/dnd3.5/character/Dnd35LevelUpProjector.ts";
 import type { Dnd35ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/types.ts";
+import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 import type { CharacterLevel, Klass, KlassLevel, Requirement } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -245,7 +246,11 @@ function getClassPick(klasses: Klass[], maxLevels: Map<string, number>, rulesetD
  * can't take again (a feat that doesn't stack, held already).
  */
 function getFeatPickFilters(character: Dnd35DetailedCharacter, aptitudeId: string, rulesetData: RulesetData) {
-  return { ids: getListFeatIds(rulesetData, aptitudeId), excludeFeatIds: character.getHeldNonStackableFeatIds() };
+  return {
+    ids: getListFeatIds(rulesetData, aptitudeId),
+    excludeFeatIds: character.getHeldNonStackableFeatIds(),
+    familyType: FEAT_FAMILY,
+  };
 }
 
 /**

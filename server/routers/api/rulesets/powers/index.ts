@@ -1,31 +1,18 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
+import { ENTITY_FIELDS, RULESET_LIMITS } from "@/engine/index.ts";
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
-import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
 
 /** The aptitudes a power is linked to, each at its spell level. */
 const aptitudeLinks = z.array(
   z.object({
     id: z.string().uuid(),
-    level: z.number().int().min(0).max(MAX_SPELL_LEVEL).optional(),
+    level: z.number().int().min(0).max(RULESET_LIMITS.spellLevel).optional(),
   }),
 );
-
-const spellFields = {
-  school: z.string().optional(),
-  subschool: z.string().optional(),
-  descriptors: z.array(z.string()).optional(),
-  castingTime: z.string().optional(),
-  rangeType: z.string().optional(),
-  target: z.string().optional(),
-  areaOfEffect: z.string().optional(),
-  duration: z.string().optional(),
-  spellResistance: z.string().optional(),
-  components: z.array(z.string()).optional(),
-};
 
 /** A power's fields, its create's and its update's. */
 const powerFields = {
@@ -44,7 +31,7 @@ const powerFields = {
     .nullable()
     .optional()
     .transform((v) => v || null),
-  ...spellFields,
+  ...ENTITY_FIELDS.powers,
 };
 
 const powerParams = idParam.extend({ powerId: z.string().uuid() });
@@ -61,7 +48,7 @@ export default new Hono<SessionContext>()
         search: z.string().optional(),
         childOnly: z.coerce.boolean().optional(),
         aptitudeId: z.string().uuid().optional(),
-        level: z.coerce.number().min(0).max(MAX_SPELL_LEVEL).optional(),
+        level: z.coerce.number().min(0).max(RULESET_LIMITS.spellLevel).optional(),
         orderBy: entityOrderBy,
         orderDir: orderDirAsc,
       }),

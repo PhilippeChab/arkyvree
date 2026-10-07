@@ -33,11 +33,9 @@ export async function getAvailableFeats(
       pendingLevelAbilityIds,
       pendingLevelKlassLevelIds,
     });
-    const result = await Feats.findOptionPage(
-      db,
-      { ...picker.filters, family: where.family, search: where.search },
-      pagination,
-    );
+    const { familyType, ...filters } = picker.filters;
+    const family = where.family ? { type: familyType, value: where.family } : undefined;
+    const result = await Feats.findOptionPage(db, { ...filters, family, search: where.search }, pagination);
     return { items: picker.annotate(result.items), page: result.page, nextPage: result.nextPage };
   });
 }

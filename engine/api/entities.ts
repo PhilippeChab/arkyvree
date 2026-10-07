@@ -58,6 +58,11 @@ export function describeSkills<T extends { id: string }>(
   return entitiesOf(view).describeSkills(view, skills, properties);
 }
 
+/** The property type that names a feat's family, which groups a family's variants. */
+export function getFeatFamilyType(view: RulesetView) {
+  return entitiesOf(view).getFeatFamilyType(view);
+}
+
 /** What saving a class's level writes beside its row. */
 export function planClassLevelSave(view: RulesetView, ...args: After<Entities["planClassLevelSave"]>) {
   return entitiesOf(view).planClassLevelSave(view, ...args);

@@ -1,7 +1,7 @@
 /**
- * All level operations are currently 3.5-only (the underlying types + flows assume 3.5 concepts: skill ranks, spell
- * levels, class skills, wizard schools). When a second ruleset ships, route to it from here by looking up the
- * character's ruleset before dispatching.
+ * A character's levels: the level-up wizard's steps, pickers and preview, a saved level's selections, and a level's
+ * save, edit and removal. Each reads the character's rows and asks the engine, which answers by the character's
+ * ruleset.
  */
 
 import { getAvailableKlasses } from "./classPicks.ts";
