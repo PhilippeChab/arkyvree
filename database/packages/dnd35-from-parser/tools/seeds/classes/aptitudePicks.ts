@@ -1,11 +1,12 @@
-/** A class's aptitude picks: detected, overridden, and split per level where a bonus feat list has one per level. */
+/** A class's aptitude picks split per level, where a bonus feat list has one per level. */
 
-import {
-  type AptitudePick,
-  type BonusFeatList,
-  type ClassReference,
-} from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
+import { type AptitudePick, type BonusFeatList } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { stripSeparators } from "@/shared/text.ts";
+
+/**
+ * A class's aptitude picks split per level, the first level each aptitude gets one, and how the split retargets them.
+ */
+export type ClassAptitudePicks = ReturnType<typeof expandAptitudePicks>;
 
 export type PerLevelExpansion = { levels: number[]; newTarget: string; ordinal: string };
 
@@ -77,38 +78,17 @@ function expandPerLevelAptitudePicks(
   return result;
 }
 
-/** A class's aptitude picks (`picks`), but those its features' modifiers already give (`remap`ped or split `perLevel`). */
-export function buildClassAptitudePicks(
-  ref: ClassReference,
-  { aptitudePicks, remap, perLevel }: ReturnType<typeof getClassAptitudePicks>,
-): AptitudePick[] {
-  if (!aptitudePicks || aptitudePicks.length === 0) return [];
-  const featModTargets = new Set<string>();
-  for (const feat of Object.values(ref.mapping.features)) {
-    for (const m of feat.modifiers ?? []) {
-      if (m.operator !== "add" || !m.target.startsWith("aptitudes.") || !m.target.endsWith(".allowed")) continue;
-      const remapped = remap.get(m.target);
-      const expansions = perLevel.get(m.target);
-      if (remapped) featModTargets.add(remapped);
-      else if (expansions) for (const exp of expansions) featModTargets.add(exp.newTarget);
-      else featModTargets.add(m.target);
-    }
-  }
-  return aptitudePicks.filter((p) => !featModTargets.has(p.target));
-}
-
 /**
- * A class's aptitude picks: its mapping's (detected, with the overrides'), then split per level where a bonus feat list has one per
- * level (`aptitudePicks`); the first level each aptitude gets a pick (`aptitudeMinLevel`, by slug); and how the split
- * retargets the merged picks (`remap` one to one, `perLevel` one to several).
+ * A class's aptitude picks (`picks`, its mapping's: detected, with the overrides'), split per level where a bonus feat
+ * list has one per level (`aptitudePicks`); the first level each aptitude gets a pick (`aptitudeMinLevel`, by slug);
+ * and how the split retargets the merged picks (`remap` one to one, `perLevel` one to several).
  */
-export function getClassAptitudePicks(ref: ClassReference) {
-  const mergedPicks = ref.mapping.aptitudePicks;
-  const aptitudePicks = expandPerLevelAptitudePicks(mergedPicks, ref.mapping.bonusFeatLists);
+export function expandAptitudePicks(picks: AptitudePick[] | undefined, bonusFeatLists: BonusFeatList[] | undefined) {
+  const aptitudePicks = expandPerLevelAptitudePicks(picks, bonusFeatLists);
   const aptitudeMinLevel = new Map<string, number>();
   for (const pick of aptitudePicks ?? []) {
     const slug = pick.target.match(/^aptitudes\.(.+)\.allowed$/)?.[1];
     if (slug) aptitudeMinLevel.set(slug, Math.min(...pick.levels));
   }
-  return { aptitudePicks, aptitudeMinLevel, ...buildAptitudeExpansionMaps(mergedPicks, aptitudePicks) };
+  return { aptitudePicks, aptitudeMinLevel, ...buildAptitudeExpansionMaps(picks, aptitudePicks) };
 }

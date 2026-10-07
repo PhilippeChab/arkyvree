@@ -13,8 +13,6 @@ import {
 import { escapeTemplate, quote } from "@/database/packages/dnd35-from-parser/tools/generator/code/literals.ts";
 import { REFERENCE_DIR } from "@/database/packages/dnd35-from-parser/tools/references/files.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
-import { buildClassFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/featSeeds.ts";
-import { buildClassModifiers } from "@/database/packages/dnd35-from-parser/tools/seeds/classes/modifiers.ts";
 import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
 import type { ClassReference } from "@/database/packages/dnd35-from-parser/tools/types/classes.ts";
 import { and, eq, eqNum, eqStr, feat, gte, or } from "@/database/packages/dnd35/content/customization/requirements.ts";
@@ -291,7 +289,9 @@ describe("A generated class", () => {
   test("reads its table's columns into level modifiers: a number's rise, a text where it changes", () => {
     const monk = structuredClone(classRef("srd", "monk"));
     const modifiers = (column: string) =>
-      buildClassModifiers(monk)
+      Library.book(monk._meta.book)
+        .classSeeds(monk)
+        .levelModifiers()
         .filter(({ target }) => target === monk.mapping.columns?.[column]?.target)
         .map(({ level, value, operator }) => `${level} ${operator} ${value}`);
     // "+0 ft." … "+60 ft."; "+0" … "+4"; "1d6" … "2d10"
@@ -313,16 +313,21 @@ describe("A generated class", () => {
       "20 set 2d10",
     ]);
     // Gated as its mapping says
-    expect(buildClassModifiers(monk).find(({ target }) => target === "combat.speed.base")?.requirements).toEqual(
-      monk.mapping.columns?.["Unarmored Speed Bonus"]?.requirements,
-    );
+    expect(
+      Library.book(monk._meta.book)
+        .classSeeds(monk)
+        .levelModifiers()
+        .find(({ target }) => target === "combat.speed.base")?.requirements,
+    ).toEqual(monk.mapping.columns?.["Unarmored Speed Bonus"]?.requirements);
     // A blank cell keeps the value above it, and a typographic minus is a minus
     monk.raw.progression[5].columns!["AC Bonus"] = "";
     monk.raw.progression[6].columns!["AC Bonus"] = "\u22121";
     expect(modifiers("AC Bonus").slice(0, 4)).toEqual(["5 add 1", "7 add -2", "8 add 2", "10 add 1"]);
     // A column its table doesn't have
     monk.mapping.columns = { "Ki Points": { target: "combat.ac.misc", operator: "add" } };
-    expect(() => buildClassModifiers(monk)).toThrow('Monk: its table has no "Ki Points" column');
+    expect(() => Library.book(monk._meta.book).classSeeds(monk).levelModifiers()).toThrow(
+      'Monk: its table has no "Ki Points" column',
+    );
   });
 
   test("grants the existing feat a feature is, named in another case or by a family's option, not a copy of it", () => {
@@ -348,7 +353,11 @@ describe("A generated class", () => {
     ] as const) {
       const ref = classRef(book, slug);
       expect(classCode(ref)).toContain(granted);
-      expect(buildClassFeatSeeds(ref, Library.book(ref._meta.book)).map((f) => f.name)).not.toContain(feature);
+      expect(
+        Library.book(ref._meta.book)
+          .classFeatSeeds(ref)
+          .map((f) => f.name),
+      ).not.toContain(feature);
     }
   });
 });
