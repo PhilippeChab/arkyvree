@@ -7,14 +7,7 @@ import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { include } from "@/server/mixins.ts";
-import {
-  KlassLevelFeats,
-  KlassLevels,
-  KlassLevelSaves,
-  Properties,
-  Requirements,
-} from "@/server/repositories/index.ts";
-import { ClassesPaths } from "@/server/rulesets/dnd3.5/index.ts";
+import { KlassLevelFeats, KlassLevels, KlassLevelSaves, Properties } from "@/server/repositories/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
@@ -29,7 +22,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
     rulesetData: RulesetData,
     level: L,
   ) {
-    const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
+    const { rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
     const properties = rulesetData.propertiesByEntity.get(level.id) ?? [];
     const modifiers = rulesetData.modifiersBySource.get(level.id) ?? [];
     const requirements = rulesetData.requirementsByEntity.get(level.id) ?? [];
@@ -49,7 +42,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
     const savesData = levelSaves.map((ls) => ({ saveId: ls.saveId, base: ls.base }));
 
     return {
-      ...hooks.classLevels.enrichWithProperties([level], properties)[0],
+      ...rules.classLevels.enrichWithProperties([level], properties)[0],
       feats: featsData,
       saves: savesData,
       modifiers,
@@ -63,7 +56,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
       const { sourceChain } = rulesetData.cow;
       const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
 
-      const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
+      const { rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
       const levels = rulesetData.klassLevelsByKlassId.get(klass.id) ?? [];
 
       const levelProperties: Property[] = [];
@@ -96,7 +89,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
         };
       });
 
-      return hooks.classLevels.enrichWithProperties(enrichedLevels, levelProperties);
+      return rules.classLevels.enrichWithProperties(enrichedLevels, levelProperties);
     });
   }
 
@@ -123,7 +116,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
         const edit = new RulesetEdit(ruleset, rulesetData.cow);
         const { id: targetKlassId } = await edit.cowToEdit(tx, "klasses", klass);
 
-        const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
+        const { effects } = RulesetFactory.fromBaseRules(ruleset.baseRules);
         const { feats, saves, bab, skills, ...levelData } = body;
         const rows = await KlassLevels.create(tx, {
           ...levelData,
@@ -131,7 +124,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
         });
         const klassLevel = rows[0];
 
-        await hooks.classLevels.syncProperties(tx, klassLevel.id, { bab, skills });
+        await effects.classLevels.syncProperties(tx, klassLevel.id, { bab, skills });
 
         if (feats && feats.length > 0) {
           for (const feat of feats) {
@@ -155,17 +148,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
           );
         }
 
-        if (klassLevel.level > 1) {
-          await Requirements.create(tx, {
-            entityId: klassLevel.id,
-            entityType: "klass_levels",
-            level: "1",
-            target: ClassesPaths.level(klass.name),
-            value: (klassLevel.level - 1).toString(),
-            valueType: "number",
-            operator: "greater_than",
-          });
-        }
+        await effects.classLevels.requirePreviousLevel(tx, klassLevel, klass.name);
 
         await createActivityWithNotifications(tx, {
           userId: session.userId,
@@ -239,7 +222,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
       const { sourceChain } = rulesetData.cow;
       const klass = findScopedEntity(rulesetData.klassesById, classId, rulesetId, sourceChain, "Class");
 
-      const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
+      const { rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
       const levels = rulesetData.klassLevelsByKlassId.get(klass.id) ?? [];
 
       const levelModifiers: Modifier[] = [];
@@ -263,7 +246,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
         }
       }
 
-      return hooks.classLevels.enrichWithFeatPools(
+      return rules.classLevels.enrichWithFeatPools(
         levels,
         [...levelModifiers, ...remappedFeatModifiers],
         rulesetData.aptitudes,
@@ -316,7 +299,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
         const edit = new RulesetEdit(ruleset, rulesetData.cow);
         const resolvedLevelId = await edit.cowOwner(tx, "klass_levels", level.id);
 
-        const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
+        const { effects, rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
         const { feats, saves, bab, skills } = body;
 
         if (bab !== undefined || skills !== undefined) {
@@ -328,9 +311,9 @@ class ClassLevelsService extends include(Object, ListsSpells) {
             resolvedLevelId === level.id
               ? (rulesetData.propertiesByEntity.get(resolvedLevelId) ?? [])
               : await Properties.findMany(tx, { entityIds: [resolvedLevelId], entityType: "klass_levels" });
-          const currentValues = hooks.classLevels.readCurrentValues(currentProps);
+          const currentValues = rules.classLevels.readCurrentValues(currentProps);
 
-          await hooks.classLevels.syncProperties(tx, resolvedLevelId, {
+          await effects.classLevels.syncProperties(tx, resolvedLevelId, {
             bab: bab ?? currentValues.bab,
             skills: skills ?? currentValues.skills,
           });
@@ -380,7 +363,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
           entityType: "klass_levels",
         });
 
-        return hooks.classLevels.enrichWithProperties([{ ...level, id: resolvedLevelId }], finalProps)[0];
+        return rules.classLevels.enrichWithProperties([{ ...level, id: resolvedLevelId }], finalProps)[0];
       });
     });
     RulesetCache.invalidate(rulesetId);

@@ -1,33 +1,11 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
-import type { Db } from "@/server/database/index.ts";
-import { Properties } from "@/server/repositories/index.ts";
 import { collectClassLists } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
-import type { ClassLevelsHooks } from "@/server/rulesets/engine/hooks/index.ts";
-import type { PropertyRecord } from "@/server/rulesets/engine/hooks/index.ts";
+import type { ClassLevelsRules } from "@/server/rulesets/engine/module/index.ts";
 import { parseLiteralValue } from "@/server/rulesets/engine/paths/literalValue.ts";
 import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/shared/dnd3.5/properties/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-export class Dnd35ClassLevelsHooks implements ClassLevelsHooks {
-  buildProperties(levelId: string, body: { bab: number; skills: number }): PropertyRecord[] {
-    const { bab, skills } = body;
-
-    return [
-      {
-        entityId: levelId,
-        entityType: "klass_levels",
-        type: KLASS_LEVEL_BAB,
-        value: String(bab),
-      },
-      {
-        entityId: levelId,
-        entityType: "klass_levels",
-        type: KLASS_LEVEL_SKILL_POINTS,
-        value: String(skills),
-      },
-    ];
-  }
-
+export class Dnd35ClassLevelsRules implements ClassLevelsRules {
   enrichWithFeatPools<T extends { id: string; level: number }>(
     levels: T[],
     modifiers: { sourceId: string; target: string; value: string; operator: string }[],
@@ -223,16 +201,5 @@ export class Dnd35ClassLevelsHooks implements ClassLevelsHooks {
       if (prop.type === KLASS_LEVEL_SKILL_POINTS) skills = Number(prop.value);
     }
     return { bab, skills };
-  }
-
-  async syncProperties(tx: Db, levelId: string, body: { bab: number; skills: number }): Promise<void> {
-    await Properties.delete(tx, {
-      entityIds: [levelId],
-      entityType: "klass_levels",
-      types: [KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS],
-    });
-
-    const records = this.buildProperties(levelId, body);
-    await Properties.createMany(tx, records);
   }
 }

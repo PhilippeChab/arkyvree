@@ -1,13 +1,13 @@
 import { getTableName } from "drizzle-orm";
 
 import { powersInRules } from "@/drizzle/schema.ts";
-import { findScopedEntity, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { findScopedEntity, RulesetCache, type RulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { type Db, db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { FeatsAptitudes, Powers, PowersAptitudes, Properties } from "@/server/repositories/index.ts";
-import type { ServiceHooks } from "@/server/rulesets/engine/hooks/index.ts";
+import type { RulesetModule } from "@/server/rulesets/engine/types.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
@@ -62,31 +62,31 @@ class PowersService {
    */
   private async regenerateSpellProperties(
     tx: Db,
-    hooks: ServiceHooks,
-    rulesetId: string,
-    sourceChain: string[],
+    rulesetModule: Pick<RulesetModule, "effects" | "rules">,
+    scope: RulesetScope,
     powerId: string,
     body: PowerBody,
   ) {
+    const { effects, rules } = rulesetModule;
     const existingProps = await Properties.findMany(tx, {
       entityIds: [powerId],
       entityType: "powers",
-      type: hooks.powers.primaryGroupingType,
+      type: rules.powers.primaryGroupingType,
     });
     const oldGroupingValue = existingProps.length > 0 ? existingProps[0].value : null;
 
     await Properties.delete(tx, {
       entityIds: [powerId],
       entityType: "powers",
-      types: hooks.powers.generatedPropertyTypes,
+      types: rules.powers.generatedPropertyTypes,
     });
 
-    const newGroupingValue = hooks.powers.extractGroupingValue(body);
+    const newGroupingValue = rules.powers.extractGroupingValue(body);
     if (newGroupingValue) {
-      await hooks.powers.generateProperties(tx, powerId, body);
+      await effects.powers.generateProperties(tx, powerId, body);
 
       if (newGroupingValue !== oldGroupingValue) {
-        await hooks.powers.generateGroupingFeats(tx, rulesetId, sourceChain, newGroupingValue);
+        await effects.powers.generateGroupingFeats(tx, scope, newGroupingValue);
       }
     }
   }
@@ -115,8 +115,6 @@ class PowersService {
   async createPower(session: Session, rulesetId: string, body: PowerBody) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
-
         (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
         const edit = new RulesetEdit(ruleset, rulesetData.cow);
@@ -131,7 +129,7 @@ class PowersService {
           body.aptitudes.map((a) => a.id),
         );
 
-        const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
+        const { effects, rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
 
         const rows = await Powers.create(tx, {
           name: body.name,
@@ -154,10 +152,10 @@ class PowersService {
           });
         }
 
-        const groupingValue = hooks.powers.extractGroupingValue(body);
+        const groupingValue = rules.powers.extractGroupingValue(body);
         if (groupingValue) {
-          await hooks.powers.generateProperties(tx, power.id, body);
-          await hooks.powers.generateGroupingFeats(tx, rulesetId, sourceChain, groupingValue);
+          await effects.powers.generateProperties(tx, power.id, body);
+          await effects.powers.generateGroupingFeats(tx, { ruleset, rulesetData }, groupingValue);
         }
 
         await createActivityWithNotifications(tx, {
@@ -269,7 +267,7 @@ class PowersService {
         const { id: targetId, copied } = await edit.cowToEdit(tx, "powers", power);
         const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
-        const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
+        const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
 
         const rows = await Powers.update(
           tx,
@@ -290,7 +288,7 @@ class PowersService {
           await this.replaceAptitudes(tx, targetId, body.aptitudes);
         }
         if (SPELL_FIELDS.some((field) => body[field] !== undefined)) {
-          await this.regenerateSpellProperties(tx, hooks, rulesetId, sourceChain, targetId, body);
+          await this.regenerateSpellProperties(tx, rulesetModule, { ruleset, rulesetData }, targetId, body);
         }
 
         await createActivityWithNotifications(tx, {

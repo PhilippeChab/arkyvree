@@ -71,5 +71,13 @@ export interface Dnd35ProjectedCharacterData extends ProjectedCharacterData {
   powers?: Dnd35ProjectedPower[];
 }
 
+/** A property row a 3.5 effect writes for an entity: a skill's flags, a class level's base attack and skill points. */
+export type PropertyRecord = {
+  entityId: string;
+  entityType: string;
+  type: string;
+  value: string;
+};
+
 /** What a weapon's stats read of a property: its type and its value (an item's, or a natural attack's). */
 export type WeaponProperty = Pick<Property, "type" | "value">;

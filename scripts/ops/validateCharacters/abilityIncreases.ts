@@ -29,10 +29,10 @@ export async function checkAbilityIncreases(characters: Character[]) {
 
   for (const char of characters) {
     if (char.kind !== "pc") continue;
-    const { hooks } = await moduleOf(char.rulesetId);
+    const { rules } = await moduleOf(char.rulesetId);
     // A level's position, by creation, is what the ruleset's rule reads (0 for the first)
     for (const [position, level] of levels.filter((l) => l.characterId === char.id).entries()) {
-      const due = hooks.levels.isAbilityIncreaseLevel(position);
+      const due = rules.levels.isAbilityIncreaseLevel(position);
       if (due === (level.abilityId !== null)) continue;
       issues++;
       const which = `level ${position + 1} (${level.klass} ${level.klassLevel})`;

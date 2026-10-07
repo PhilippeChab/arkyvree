@@ -6,13 +6,13 @@ import AbstractDetailedCharacter, {
 } from "@/server/rulesets/dnd3.5/character/AbstractDetailedCharacter.ts";
 import { buildComponents, type Dnd35Components } from "@/server/rulesets/dnd3.5/character/components.ts";
 import TargetPaths from "@/server/rulesets/dnd3.5/Dnd35TargetPaths.ts";
-import { Dnd35LevelsHooks } from "@/server/rulesets/dnd3.5/levels/Dnd35LevelsHooks.ts";
+import { Dnd35LevelsRules } from "@/server/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
 import DetailedCharacterDataLoader, {
   type Dnd35LoadedCharacterData,
 } from "@/server/rulesets/dnd3.5/loading/DetailedCharacterDataLoader.ts";
 import type { Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/types.ts";
-import type { SkillFlags } from "@/server/rulesets/engine/hooks/index.ts";
 import ModifierEvaluator from "@/server/rulesets/engine/modifiers/ModifierEvaluator.ts";
+import type { SkillFlags } from "@/server/rulesets/engine/module/index.ts";
 import RequirementEvaluator from "@/server/rulesets/engine/requirements/RequirementEvaluator.ts";
 import type {
   FeatWithPMR,
@@ -92,9 +92,9 @@ export default class DetailedCharacter extends AbstractDetailedCharacter {
     this.klassCasterTypeMap = data.klassCasterTypeMap;
   }
 
-  /** The general feats the character has at its total level (`Dnd35LevelsHooks.countGeneralFeats`). */
+  /** The general feats the character has at its total level (`Dnd35LevelsRules.countGeneralFeats`). */
   protected countGeneralFeats(totalLevel: number): number {
-    return Dnd35LevelsHooks.countGeneralFeats(totalLevel);
+    return Dnd35LevelsRules.countGeneralFeats(totalLevel);
   }
 
   protected createDataLoader(): DataLoader {

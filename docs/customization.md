@@ -154,11 +154,11 @@ Example: `"Martial Weapon Proficiency: Battleaxe"` → `"martialweaponproficienc
 
 ## Auto-Generated Customization
 
-Some entities get properties, requirements, or feats auto-generated on create/update/delete. Generators live in the 3.5 domain folders (`server/rulesets/dnd3.5/items/armorGenerator.ts`, `weaponGenerator.ts`, `powers/spellGenerator.ts`), triggered by each domain's hooks (`dnd3.5/items/Dnd35ItemsHooks.ts`, `powers/Dnd35PowersHooks.ts`, `skills/Dnd35SkillsHooks.ts`…).
+Some entities get properties, requirements, or feats generated. Spells, skills and class levels get theirs when they're saved, from their domain's effects (`server/rulesets/dnd3.5/powers/Dnd35PowersEffects.ts` with `powers/spellGenerator.ts`, `skills/Dnd35SkillsEffects.ts`, `classes/Dnd35ClassLevelsEffects.ts`). Weapons, armors and shields get theirs from their type's definition when the content packages write them (`database/packages/dnd35/data/weaponDefinitions.ts`, `armorDefinitions.ts`).
 
 ### Weapons (type = "Weapon")
 
-Properties generated from `WEAPON_TYPE_DEFINITIONS` in `weaponGenerator.ts`:
+Properties generated from `WEAPON_TYPE_DEFINITIONS` in `weaponDefinitions.ts`:
 
 | Property Type              | Example (Longsword)                 |
 |----------------------------|-------------------------------------|
@@ -189,7 +189,7 @@ How the engine reads a weapon's attack (`combat/Attacks.ts`), the SRD's rules:
 - A **crossbow** takes two hands to load: held in one (main or off hand), it fires at its `WEAPON_ONE_HANDED_PENALTY`, −2 for a light crossbow and −4 for a heavy one, a repeating one as the crossbow of its size. A hand crossbow, made for one hand, has none.
 - **The gear** (`tohit.gearpenalty`, on every attack): the armor check penalty of each armor and shield worn without proficiency, and −2 with a tower shield, for its bulk.
 - A weapon with `WEAPON_ONE_HAND_TRAINING` (the bastard sword, the dwarven waraxe) is **too large for one hand without training**: the inventory refuses it there, unless forced, when the character lacks its proficiency in one hand: its proficiency read in no hand (`areRequirementsMet(…, { sourceId: null })`), which a dwarf's familiarity meets and what only two hands give doesn't. Without, it's "as impossible as wielding a greatsword one-handed" (FAQ), not a −4.
-- A weapon whose `WEAPON_SIZE` is Large is **two-handed**: the inventory refuses it in one hand (`InventoryHooks.validateWeaponHands`), whatever the wielder's size. The bows are Large: "you need at least two hands to use a bow, regardless of its size".
+- A weapon whose `WEAPON_SIZE` is Large is **two-handed**: the inventory refuses it in one hand (`InventoryRules.validateWeaponHands`), whatever the wielder's size. The bows are Large: "you need at least two hands to use a bow, regardless of its size".
 - **Thrown weapons and slings** (a ranged weapon Strength adds to by the hand, so not a bow or a crossbow) take `combat.throwing.tohit` to attack, and so does a melee weapon's thrown attack: a halfling's +1.
 - **Natural attacks** (a bonded creature's, by its stat block in `bondedRaceData.ts`): each sits in a set's main or off hand for the sheets, which label it Primary or Secondary, but the hand doesn't count. A primary attack adds its whole Strength bonus to damage, one and a half when it's the creature's only attack. A secondary one takes `combat.naturalattacks.secondarypenalty` (−5) to attack and adds half. Each attacks once a round, whatever the base attack bonus. The first primary one also makes `combat.naturalattacks.extraattacks` extra attacks, each at −5. An animal companion's Multiattack sets the penalty to −2 with three or more attacks (`combat.naturalattacks.count`), and gives one extra primary attack with fewer.
 - **Two weapons**: when a set holds an equipped weapon in each hand (an unarmed strike or a natural attack doesn't count), each weapon slot carries a `twoweapon` attack, which the sheets list as more rows: the main hand's attacks with `combat.twoweapon.mainhandpenalty` (−6), the off hand's first attack and `combat.twoweapon.offhandattacks` − 1 more, each 5 lower, with `combat.twoweapon.offhandpenalty` (−10). A light off-hand weapon lessens both penalties by 2, and so does a one-handed one with a feat with `FEAT_OVERSIZED_TWO_WEAPON_FIGHTING` (Complete Adventurer's Oversized Two-Weapon Fighting). The feats change these fields through modifiers. A **double weapon** (`WEAPON_DOUBLE_DAMAGE`) held in two hands fights as two weapons too, its other end a light off-hand one: its `twoweapon` attacks are the main end's, with its whole Strength bonus (its row's damage), and its `offend` the other end's, with its own dice and half the Strength bonus. A sling counts as a one-handed weapon, not a light one (its size is Medium).
@@ -205,7 +205,7 @@ An item's proficiency is its base item's requirements: its template's, or its ow
 
 ### Armor (type = "Armor")
 
-Properties generated from `ARMOR_TYPE_DEFINITIONS` in `armorGenerator.ts`:
+Properties generated from `ARMOR_TYPE_DEFINITIONS` in `armorDefinitions.ts`:
 
 | Property Type        | Example (Chain Mail) |
 |----------------------|----------------------|
@@ -225,7 +225,7 @@ Armor or a shield is equipped only when its proficiency is met, unless forced. W
 
 ### Shields (type = "Shield")
 
-Properties generated from `SHIELD_TYPE_DEFINITIONS` in `armorGenerator.ts`:
+Properties generated from `SHIELD_TYPE_DEFINITIONS` in `armorDefinitions.ts`:
 
 | Property Type        | Example (Heavy Steel Shield) |
 |----------------------|------------------------------|
@@ -241,7 +241,7 @@ Proficiency requirements:
 
 ### Class Levels
 
-Properties and requirements auto-generated in `ClassLevelsHooks.syncProperties()`:
+Properties and requirements auto-generated in `ClassLevelsEffects.syncProperties()`:
 
 | Property Type              | Description                              |
 |----------------------------|------------------------------------------|
@@ -255,12 +255,12 @@ On update: changing BAB progression or skill points re-syncs the properties (del
 
 ### Skills
 
-Properties auto-generated from the skill form's fields in `SkillsHooks.syncProperties()`, and read back by `readSkillFlags` (`server/rulesets/dnd3.5/skills/skillFlags.ts`) for the skill API and the engine alike:
+Properties auto-generated from the skill form's fields in `SkillsEffects.syncProperties()`, and read back by `readSkillFlags` (`server/rulesets/dnd3.5/skills/skillFlags.ts`) for the skill API and the engine alike:
 - `SKILL_IMPACTED_BY_WEIGHT` — whether armor check penalty applies
 - `SKILL_CHECK_PENALTY_MULTIPLIER` — how many times over a skill armor weighs on takes the penalty (2 on Swim; absent means 1)
 - `SKILL_USABLE_WITHOUT_TRAINING` — whether untrained use is allowed
 
-Feat auto-generated per skill in `SkillsHooks.generateSkillFeat()`:
+Feat auto-generated per skill in `SkillsEffects.generateSkillFeat()`:
 - `Skill Focus: <name>` — +3 `skills.<stripped>.misc`, linked to General aptitude
 - Deleted on skill delete, regenerated on skill rename
 

@@ -28,8 +28,6 @@ class SkillsService {
   ) {
     const result = await withTransaction(async (tx) => {
       return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-        const { sourceChain } = rulesetData.cow;
-
         (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
         if (stripSeparators(body.name) === "budget") {
@@ -39,7 +37,7 @@ class SkillsService {
         const edit = new RulesetEdit(ruleset, rulesetData.cow);
         const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "skills", body.name);
 
-        const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
+        const { effects } = RulesetFactory.fromBaseRules(ruleset.baseRules);
 
         const { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining, ...skillData } = body;
         const flags = { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining };
@@ -50,8 +48,8 @@ class SkillsService {
           await edit.repointTombstone(tx, "skills", tombstoneAncestorId, skill.id);
         }
 
-        const storedFlags = await hooks.skills.syncProperties(tx, skill.id, flags);
-        await hooks.skills.generateSkillFeat(tx, rulesetId, sourceChain, body.name);
+        const storedFlags = await effects.skills.syncProperties(tx, skill.id, flags);
+        await effects.skills.generateSkillFeat(tx, { ruleset, rulesetData }, body.name);
 
         await createActivityWithNotifications(tx, {
           userId: session.userId,
@@ -81,8 +79,8 @@ class SkillsService {
         const edit = new RulesetEdit(ruleset, rulesetData.cow);
         const targetId = await edit.cowToDelete(tx, "skills", skill);
 
-        const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
-        await hooks.skills.deleteSkillFeat(tx, ruleset, rulesetData, skill.name);
+        const { effects } = RulesetFactory.fromBaseRules(ruleset.baseRules);
+        await effects.skills.deleteSkillFeat(tx, { ruleset, rulesetData }, skill.name);
 
         // FK CASCADE on klass_skills.skill_id wipes those join rows.
         // The database deletes its customizations with it.
@@ -109,9 +107,9 @@ class SkillsService {
       const { sourceChain } = rulesetData.cow;
       const skill = findScopedEntity(rulesetData.skillsById, skillId, rulesetId, sourceChain, "Skill");
 
-      const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
+      const { rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
       const properties = rulesetData.propertiesByEntity.get(skill.id) ?? [];
-      const [enriched] = hooks.skills.enrichWithProperties([skill], properties);
+      const [enriched] = rules.skills.enrichWithProperties([skill], properties);
       return enriched;
     });
   }
@@ -128,7 +126,7 @@ class SkillsService {
   ) {
     return await withRulesetScope(db, rulesetId, async ({ ruleset, rulesetData }) => {
       const { sourceChain } = rulesetData.cow;
-      const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
+      const { rules } = RulesetFactory.fromBaseRules(ruleset.baseRules);
       const result = await Skills.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
 
       // Flatten per-skill properties from the cache into a single array for
@@ -141,7 +139,7 @@ class SkillsService {
 
       return {
         ...result,
-        items: hooks.skills.enrichWithProperties(result.items, properties),
+        items: rules.skills.enrichWithProperties(result.items, properties),
       };
     });
   }
@@ -176,7 +174,7 @@ class SkillsService {
         const { id: targetId, copied } = await edit.cowToEdit(tx, "skills", skill);
         const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
-        const hooks = RulesetFactory.fromBaseRules(ruleset.baseRules).hooks;
+        const { effects } = RulesetFactory.fromBaseRules(ruleset.baseRules);
         const { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining, updatedAt: _u, ...skillData } = body;
         const flags = { impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining };
         const rows = await Skills.update(tx, skillData, { id: targetId, expectedUpdatedAt });
@@ -185,11 +183,11 @@ class SkillsService {
         }
         const updatedSkill = rows[0];
 
-        const storedFlags = await hooks.skills.syncProperties(tx, targetId, flags);
+        const storedFlags = await effects.skills.syncProperties(tx, targetId, flags);
 
         if (skill.name !== body.name) {
-          await hooks.skills.deleteSkillFeat(tx, ruleset, rulesetData, skill.name);
-          await hooks.skills.generateSkillFeat(tx, rulesetId, sourceChain, body.name);
+          await effects.skills.deleteSkillFeat(tx, { ruleset, rulesetData }, skill.name);
+          await effects.skills.generateSkillFeat(tx, { ruleset, rulesetData }, body.name);
         }
 
         await createActivityWithNotifications(tx, {

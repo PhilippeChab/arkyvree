@@ -112,7 +112,7 @@ server/
   repositories/         # Database access layer (Drizzle ORM), in folders by domain
   rulesets/             # Ruleset engine; RulesetFactory picks a ruleset's module
     engine/             # Machinery: modifiers, requirements, path traversal, the module's contract
-    dnd3.5/             # D&D 3.5e: the character, its components by domain, hooks, sheet
+    dnd3.5/             # D&D 3.5e: the character, its components by domain, rules and effects, sheet
   middlewares/          # Session, rate limiting, request logging
   errors/               # Error classes
   cache/                # In-memory cache (ruleset COW data)

@@ -31,7 +31,7 @@ import type {
   Skill,
 } from "@/shared/relations.ts";
 
-import type { ServiceHooks } from "./hooks/index.ts";
+import type { RulesetEffects, RulesetRules } from "./module/index.ts";
 
 type ProjectedFeat = Feat & {
   klassLevelId: string;
@@ -238,14 +238,11 @@ export type RequirementIssue = {
 };
 
 export interface RulesetModule {
-  hooks: ServiceHooks;
+  /** What the ruleset answers the services, without the database */
+  rules: RulesetRules;
+  /** What the ruleset does in a service's transaction */
+  effects: RulesetEffects;
   seedTemplateItems(tx: Db, rulesetId: string): Promise<void>;
-  remapRulesetProperties(
-    tx: Db,
-    sourceProperties: Property[],
-    newRulesetId: string,
-    idMaps: Record<string, Record<string, string>>,
-  ): Promise<void>;
   createDetailedCharacter(record: CharacterRecord, kind?: CharacterKind): DetailedCharacterInterface;
   createLevelUpProjector(character: DetailedCharacterInterface): LevelUpProjector;
   createDetailedCharacterWithSheet(record: CharacterRecord, kind?: CharacterKind): Promise<DetailedCharacterWithSheet>;

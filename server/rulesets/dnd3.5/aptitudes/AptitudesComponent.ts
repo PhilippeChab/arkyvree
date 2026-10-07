@@ -36,7 +36,7 @@ export default class AptitudesComponent {
     private readonly characterClasses: ClassesComponent,
     /** Largest spell/power level a leveled aptitude enumerates (inclusive).
      *  Required — each ruleset must pass its own value (e.g.
-     *  `Dnd35LevelsHooks.MAX_SPELL_LEVEL`). No default so a universal file
+     *  `Dnd35LevelsRules.MAX_SPELL_LEVEL`). No default so a universal file
      *  never carries a ruleset-specific constant. */
     readonly maxSpellLevel: number,
     /** The general feats a character has at its total level: the ruleset's rule, which a bonded creature has none of. */

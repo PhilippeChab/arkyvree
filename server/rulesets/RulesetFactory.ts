@@ -7,14 +7,18 @@ import type { BaseRules } from "@/shared/enums.ts";
 import { createRulesetModule as createDnd35Module } from "./dnd3.5/index.ts";
 import type { RulesetModule } from "./engine/types.ts";
 
-/** Each base rules' module: one the database's enum gains has to be written here, or the server doesn't compile. */
-const MODULES: Record<BaseRules, () => RulesetModule> = {
-  "Dungeons & Dragons: 3.5": createDnd35Module,
+/**
+ * Each base rules' module, built once: a module keeps no state (its rules and effects are fieldless, its factories make
+ * a new character, sheet or path set on each call). One the database's enum gains has to be written here, or the server
+ * doesn't compile.
+ */
+const MODULES: Record<BaseRules, RulesetModule> = {
+  "Dungeons & Dragons: 3.5": createDnd35Module(),
 };
 
 export class RulesetFactory {
   static fromBaseRules(baseRules: BaseRules): RulesetModule {
-    return MODULES[baseRules]();
+    return MODULES[baseRules];
   }
 
   static async fromRulesetId(rulesetId: string): Promise<RulesetModule> {

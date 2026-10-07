@@ -402,10 +402,9 @@ server/
 │   ├── RulesetFactory.ts                  ← ruleset module loader
 │   ├── engine/                            ← machinery, no game vocabulary
 │   │   ├── types.ts                       ← universal types (ProjectedCharacterData, LevelUpProjector, RulesetModule, …)
-│   │   ├── hooks/                         ← hook interfaces
-│   │   │   ├── LevelsHooks.ts             (isAbilityIncreaseLevel, maxSpellLevel, …)
-│   │   │   ├── ClassesHooks.ts
-│   │   │   └── …
+│   │   ├── module/                        ← the rules and effects a ruleset gives the services
+│   │   │   ├── rules.ts                   (LevelsRules, ClassLevelsRules, …)
+│   │   │   └── effects.ts                 (SkillsEffects, PowersEffects, …)
 │   │   ├── modifiers/ModifierEvaluator.ts
 │   │   ├── requirements/RequirementEvaluator.ts
 │   │   └── paths/                         (PathTraverser, CategoryPaths, PathCategory, readComponent, templateExpression, …)
@@ -418,13 +417,13 @@ server/
 │       ├── loading/                       (DetailedCharacterDataLoader)
 │       ├── response/                      (buildCharacterResponse: the 3.5 API response shape)
 │       ├── abilities/ aptitudes/ classes/ feats/ identity/ powers/ saves/
-│       │                                  (each domain's component, its paths' category and its hooks:
+│       │                                  (each domain's component, its paths' category, its rules and effects:
 │       │                                  AbilitiesComponent, AbilitiesPaths, …)
-│       ├── skills/                        (SkillsComponent: the 3.5 rank system, Dnd35SkillsHooks)
+│       ├── skills/                        (SkillsComponent: the 3.5 rank system, Dnd35SkillsRules, Dnd35SkillsEffects)
 │       ├── combat/                        (CombatComponent, which includes ArmorClass, HitPoints, Attacks, InitiativeAndSpeed;
 │       │                                  ArmorsComponent, ShieldsComponent, WeaponsComponent, EncumbranceComponent)
 │       ├── spellcasting/                  (SpellcastingComponent, which includes BonusCasterLevels, KnownPowers)
-│       ├── items/ levels/ bonded/         (InventoryComponent, the items' hooks; Dnd35LevelsHooks; the bonded creatures)
+│       ├── items/ levels/ bonded/         (InventoryComponent, the items' rules; Dnd35LevelsRules; the bonded creatures)
 │       └── sheet/                         (the PDF sheet)
 ├── services/
 │   ├── characters/
@@ -458,7 +457,7 @@ server/
 - No hardcoded game values (spell level = 9, class names, save names, skill rank bounds).
 - No `SPELL_SCHOOL` / `WIZARD_PROHIBITED_SCHOOL` / 3.5-specific property constants.
 - Doesn't cast to `Dnd35DetailedCharacter` or narrow to 3.5 types.
-- Reads per-ruleset values through hooks (`module.hooks.levels.maxSpellLevel`, `module.hooks.levels.isAbilityIncreaseLevel`) instead of hardcoding.
+- Reads per-ruleset values through the module's rules (`module.rules.levels.isAbilityIncreaseLevel`) instead of hardcoding.
 
 #### Ruleset-specific (signs the file belongs in `dnd3.5/` or a sibling ruleset dir)
 
@@ -510,29 +509,31 @@ const levelUpProjector = rulesetModule.createLevelUpProjector(dc) as Dnd35LevelU
 
 The cast is local to 3.5 code — generic consumers never see 3.5 vocabulary.
 
-### The hooks pattern
+### Rules and effects
 
-Short per-ruleset predicates / constants live in `server/rulesets/engine/hooks/*` as interfaces, and each ruleset provides an implementation in its domain folders (`dnd3.5/levels/`, `dnd3.5/skills/`, …):
+What a ruleset answers the services, and what it does in their transactions, are its module's `rules` and `effects`: interfaces in `server/rulesets/engine/module/` (`rules.ts`, `effects.ts`), implemented per area in the ruleset's domain folders (`dnd3.5/levels/Dnd35LevelsRules.ts`, `dnd3.5/skills/Dnd35SkillsEffects.ts`, …).
+
+- **A rule** reads no database: a predicate, a constant, or a reading of rows the service already has (`rules.levels.isAbilityIncreaseLevel`, `rules.classLevels.enrichWithSpellsPerDay`, `rules.inventory.validateWeaponHands`).
+- **An effect** writes in the service's transaction (`effects.skills.syncProperties`, `effects.powers.generateProperties`). One that reads the ruleset takes the caller's scope (`RulesetScope`: the ruleset and its view, `withRulesetScope`'s), and runs in its copy-on-write context: `effects.skills.generateSkillFeat(tx, scope, name)`.
 
 ```ts
-// server/rulesets/engine/hooks/LevelsHooks.ts  (engine interface)
-export interface LevelsHooks {
+// server/rulesets/engine/module/rules.ts  (engine interface)
+export interface LevelsRules {
   isAbilityIncreaseLevel(totalLevel: number): boolean;
-  readonly maxSpellLevel: number;
 }
 
-// server/rulesets/dnd3.5/levels/Dnd35LevelsHooks.ts  (3.5 impl)
-export class Dnd35LevelsHooks implements LevelsHooks {
-  readonly maxSpellLevel = 9;
+// server/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts  (3.5 impl)
+export class Dnd35LevelsRules implements LevelsRules {
+  static readonly MAX_SPELL_LEVEL = 9;
   isAbilityIncreaseLevel(totalLevel: number): boolean {
-    return totalLevel > 0 && totalLevel % 4 === 0;
+    return (totalLevel + 1) % 4 === 0;
   }
 }
 ```
 
-Universal code that needs a per-ruleset value threads it in rather than hardcoding. `AptitudesComponent` takes `maxSpellLevel` as a constructor param; `Dnd35DetailedCharacter` passes `new Dnd35LevelsHooks().maxSpellLevel` when it instantiates the aptitudes sub-component.
+Universal code that needs a per-ruleset value threads it in rather than hardcoding. `AptitudesComponent` takes `maxSpellLevel` as a constructor param; `buildComponents` passes `Dnd35LevelsRules.MAX_SPELL_LEVEL` when it instantiates the aptitudes component.
 
-Hooks are for **small predicates and constants**. More complex operations (bound to the detailed character, returning rich data, potentially mutating internal state) belong on the ruleset-specific projector or `DetailedCharacter` subclass instead.
+Rules are for **small predicates and constants**. More complex operations (bound to the detailed character, returning rich data, potentially mutating internal state) belong on the ruleset-specific projector or `DetailedCharacter` subclass instead.
 
 ### The service split pattern
 
@@ -582,7 +583,7 @@ The 3.5-ness in these tables lives in the **seeded values**, not the schema shap
 
 ### How to add a new ruleset
 
-1. **Define the module**: `server/rulesets/<ruleset>/index.ts` implementing `RulesetModule`. Provide `hooks` (levels, classes, skills, …), `createDetailedCharacter`, `createLevelUpProjector`, `seedTemplateItems`, etc.
+1. **Define the module**: `server/rulesets/<ruleset>/index.ts` implementing `RulesetModule`. Provide `rules` and `effects` (levels, classes, skills, …), `createDetailedCharacter`, `createLevelUpProjector`, `seedTemplateItems`, etc.
 2. **Subclass `AbstractDetailedCharacter`** in `server/rulesets/<ruleset>/DetailedCharacter.ts`. Instantiate its components (`AbilitiesComponent`, `ClassesComponent`, …), the ruleset's own (`<Ruleset>SkillsComponent`, etc.).
 3. **Extend the types** in `server/rulesets/<ruleset>/types.ts`:
    - `<Ruleset>ProjectedCharacterData extends ProjectedCharacterData` (add skill/power shapes if your ruleset has ranked skills or leveled spells).
@@ -594,11 +595,11 @@ The 3.5-ness in these tables lives in the **seeded values**, not the schema shap
 ### How to extend `engine/` without leaking a ruleset
 
 If you need a per-ruleset value in a universal file:
-- Add a method or `readonly` field to an existing hook interface (`LevelsHooks`, `ClassesHooks`, …).
+- Add a method or `readonly` field to an existing rules interface (`LevelsRules`, `ClassesRules`, …).
 - Accept that value as a **constructor param** on the universal class. Default it to the least-surprising value for back-compat. Each ruleset passes its own.
 - Do **not** import from `@/server/rulesets/<ruleset>/*` inside `engine/`. If you feel you have to, the file probably doesn't belong in `engine/`.
 
-If you need a per-ruleset behavior too complex for a small hook (takes the detailed character, returns rich data, touches multiple sub-systems), don't bend the hook pattern — make it a method on the ruleset's `LevelUpProjector` / `DetailedCharacter` subclass and let consumers narrow the type at the call site.
+If you need a per-ruleset behavior too complex for a small rule (takes the detailed character, returns rich data, touches multiple sub-systems), don't bend the hook pattern — make it a method on the ruleset's `LevelUpProjector` / `DetailedCharacter` subclass and let consumers narrow the type at the call site.
 
 ### Grey areas and audit findings
 
@@ -630,8 +631,8 @@ An audit on 2026-04-16 identified real leaks and some false alarms:
 | `server/rulesets/engine/types.ts` | Universal types (`ProjectedCharacterData`, `LevelUpProjector`, `RulesetModule`, …) |
 | `server/rulesets/dnd3.5/types.ts` | 3.5 type extensions (`Dnd35ProjectedCharacterData`, `Dnd35LevelUpProjector`) |
 | `server/rulesets/dnd3.5/character/AbstractDetailedCharacter.ts` | The character's base class; `DetailedCharacter` extends it |
-| `server/rulesets/engine/` | The machinery: `ModifierEvaluator`, `RequirementEvaluator`, the path helpers (`paths/`), the hook interfaces (`hooks/`) |
-| `server/rulesets/dnd3.5/` | 3.5 implementation: the character (`character/`), its components by domain (`abilities/`, `skills/`, `combat/`…), each with its hooks, `TargetPaths`, `response/buildCharacterResponse` |
+| `server/rulesets/engine/` | The machinery: `ModifierEvaluator`, `RequirementEvaluator`, the path helpers (`paths/`), the rules and effects a ruleset gives the services (`module/`) (`hooks/`) |
+| `server/rulesets/dnd3.5/` | 3.5 implementation: the character (`character/`), its components by domain (`abilities/`, `skills/`, `combat/`…), each with its rules and effects, `TargetPaths`, `response/buildCharacterResponse` |
 | `server/rulesets/dnd3.5/character/DetailedCharacter.ts` | Character builder — reads sibling requirements and modifiers already merged into `rulesetData` by the compose step |
 | `database/packages/dnd35/seed/concerns/CopiesOnWrite.ts` | Seed-time COW: copies the core feats and spells an extension changes |
 | `tests/services/rulesets/Extensions.test.ts` | Extensions, COW, fork inheritance, merge, name conflicts, publish validation, sibling merge (feats + powers: aptitudes, requirements, modifiers across all endpoints) |

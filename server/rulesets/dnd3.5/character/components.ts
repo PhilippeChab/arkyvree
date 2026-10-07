@@ -11,7 +11,7 @@ import FeatGroupingsComponent from "@/server/rulesets/dnd3.5/feats/FeatGroupings
 import FeatsComponent from "@/server/rulesets/dnd3.5/feats/FeatsComponent.ts";
 import IdentityComponent from "@/server/rulesets/dnd3.5/identity/IdentityComponent.ts";
 import InventoryComponent from "@/server/rulesets/dnd3.5/items/InventoryComponent.ts";
-import { Dnd35LevelsHooks } from "@/server/rulesets/dnd3.5/levels/Dnd35LevelsHooks.ts";
+import { Dnd35LevelsRules } from "@/server/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
 import PowerGroupingsComponent from "@/server/rulesets/dnd3.5/powers/PowerGroupingsComponent.ts";
 import PowersComponent from "@/server/rulesets/dnd3.5/powers/PowersComponent.ts";
 import SavingThrowsComponent from "@/server/rulesets/dnd3.5/saves/SavingThrowsComponent.ts";
@@ -64,7 +64,7 @@ export function buildComponents(
   const savingThrows = new SavingThrowsComponent(abilities, classes);
   const identity = new IdentityComponent(abilities, classes);
   // Aptitude pools enumerate per-level slots up to the ruleset's maxSpellLevel (3.5 caps at 9; other systems differ).
-  const aptitudes = new AptitudesComponent(identity, classes, Dnd35LevelsHooks.MAX_SPELL_LEVEL, countGeneralFeats);
+  const aptitudes = new AptitudesComponent(identity, classes, Dnd35LevelsRules.MAX_SPELL_LEVEL, countGeneralFeats);
   const skills = new SkillsComponent(abilities, classes);
   const combat = new CombatComponent(abilities, classes);
   const weapons = new WeaponsComponent(combat);
