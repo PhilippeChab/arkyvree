@@ -164,7 +164,7 @@ What the generator reads is derived from the two each time a reference is loaded
 
 ## COW-ing core entities into extensions
 
-When an extension changes a core entity (a feat its classes take in more aptitudes, a spell it adds to its spell lists), it copies it (copy on write) rather than recreating it: `seed/concerns/CopiesOnWrite.ts` copies the entity and its customizations and records the copy in `entity_snapshots`, the same way a fork does. Each extension book's generated `cowFeats.ts` and `cowSpells.ts` list what it changes (`tools/seeds/copies.ts`).
+When an extension changes a core entity (a feat its classes take in more aptitudes, a spell it adds to its spell lists), it copies it (copy on write) rather than recreating it: `seed/concerns/CopiesOnWrite.ts` copies the entity and its customizations and records the copy in `entity_snapshots`, the same way a fork does. Each extension book's generated `cowFeats.ts` and `cowSpells.ts` list what it changes (`tools/seeds/concerns/Copies.ts`, a concern of `BookSeeds`).
 
 ### Aptitude ownership rules
 
