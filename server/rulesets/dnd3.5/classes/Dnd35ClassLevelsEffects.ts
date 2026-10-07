@@ -1,31 +1,11 @@
 import type { Db } from "@/server/database/index.ts";
 import { Properties, Requirements } from "@/server/repositories/index.ts";
-import type { PropertyRecord } from "@/server/rulesets/dnd3.5/types.ts";
 import type { ClassLevelFields, ClassLevelsEffects } from "@/server/rulesets/engine/module/index.ts";
-import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/shared/dnd3.5/properties/index.ts";
 
 import ClassesPaths from "./ClassesPaths.ts";
+import { CLASS_LEVEL_FIELD_PROPERTY_TYPES, toClassLevelProperties } from "./classLevelFields.ts";
 
 export class Dnd35ClassLevelsEffects implements ClassLevelsEffects {
-  private buildProperties(levelId: string, fields: ClassLevelFields): PropertyRecord[] {
-    const { bab, skills } = fields;
-
-    return [
-      {
-        entityId: levelId,
-        entityType: "klass_levels",
-        type: KLASS_LEVEL_BAB,
-        value: String(bab),
-      },
-      {
-        entityId: levelId,
-        entityType: "klass_levels",
-        type: KLASS_LEVEL_SKILL_POINTS,
-        value: String(skills),
-      },
-    ];
-  }
-
   /** A level past a class's first requires the class's previous level: `classes.<slug>.level` above it. */
   async requirePreviousLevel(tx: Db, klassLevel: { id: string; level: number }, className: string): Promise<void> {
     if (klassLevel.level > 1) {
@@ -45,10 +25,9 @@ export class Dnd35ClassLevelsEffects implements ClassLevelsEffects {
     await Properties.delete(tx, {
       entityIds: [levelId],
       entityType: "klass_levels",
-      types: [KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS],
+      types: CLASS_LEVEL_FIELD_PROPERTY_TYPES,
     });
 
-    const records = this.buildProperties(levelId, fields);
-    await Properties.createMany(tx, records);
+    await Properties.createMany(tx, toClassLevelProperties(levelId, fields));
   }
 }

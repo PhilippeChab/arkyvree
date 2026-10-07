@@ -1,10 +1,11 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { parseAptitudePool, parseAptitudeSpellLevel } from "@/server/rulesets/dnd3.5/aptitudes/aptitudeTargets.ts";
 import { collectClassLists } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
-import type { ClassLevelsRules } from "@/server/rulesets/engine/module/index.ts";
+import type { ClassLevelFields, ClassLevelsRules } from "@/server/rulesets/engine/module/index.ts";
 import { parseLiteralValue } from "@/server/rulesets/engine/paths/literalValue.ts";
-import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/shared/dnd3.5/properties/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
+
+import { readClassLevelFields } from "./classLevelFields.ts";
 
 export class Dnd35ClassLevelsRules implements ClassLevelsRules {
   enrichWithFeatPools<T extends { id: string; level: number }>(
@@ -55,28 +56,9 @@ export class Dnd35ClassLevelsRules implements ClassLevelsRules {
   enrichWithProperties<T extends { id: string }>(
     levels: T[],
     properties: { entityId: string; type: string; value: string }[],
-  ): (T & { bab: number; skills: number })[] {
-    const propsByLevelId = new Map<string, { bab: number; skills: number }>();
-
-    for (const prop of properties) {
-      let entry = propsByLevelId.get(prop.entityId);
-      if (!entry) {
-        entry = { bab: 0, skills: 0 };
-        propsByLevelId.set(prop.entityId, entry);
-      }
-      if (prop.type === KLASS_LEVEL_BAB) entry.bab = Number(prop.value);
-
-      if (prop.type === KLASS_LEVEL_SKILL_POINTS) entry.skills = Number(prop.value);
-    }
-
-    return levels.map((level) => {
-      const props = propsByLevelId.get(level.id);
-      return {
-        ...level,
-        bab: props?.bab ?? 0,
-        skills: props?.skills ?? 0,
-      };
-    });
+  ): (T & ClassLevelFields)[] {
+    const propertiesByLevelId = Map.groupBy(properties, (property) => property.entityId);
+    return levels.map((level) => ({ ...level, ...readClassLevelFields(propertiesByLevelId.get(level.id) ?? []) }));
   }
 
   enrichWithSpellsKnown<T extends { id: string; level: number }>(
@@ -177,13 +159,7 @@ export class Dnd35ClassLevelsRules implements ClassLevelsRules {
     );
   }
 
-  readProperties(properties: { type: string; value: string }[]): { bab: number; skills: number } {
-    let bab = 0;
-    let skills = 0;
-    for (const prop of properties) {
-      if (prop.type === KLASS_LEVEL_BAB) bab = Number(prop.value);
-      if (prop.type === KLASS_LEVEL_SKILL_POINTS) skills = Number(prop.value);
-    }
-    return { bab, skills };
+  readProperties(properties: { type: string; value: string }[]): ClassLevelFields {
+    return readClassLevelFields(properties);
   }
 }
