@@ -3,11 +3,9 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 
+import { buildClassDomainPickFeats } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes/domainPicks.ts";
 import { buildClassFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes/featSeeds.ts";
-import {
-  buildClassDomainPickFeats,
-  getClassSpellLists,
-} from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes/spellSlots.ts";
+import { getClassSpellLists } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/classes/spellSlots.ts";
 import { buildBookDomainSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/domains.ts";
 import { buildSpellSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/spells.ts";
 import { buildWizardSchoolSeeds } from "@/database/packages/dnd35-from-parser/tools/buildSeeds/wizardSchools.ts";
