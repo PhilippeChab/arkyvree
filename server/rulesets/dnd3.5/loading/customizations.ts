@@ -9,7 +9,7 @@ import type {
   InventoryEntry,
 } from "@/server/rulesets/engine/types.ts";
 import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/shared/dnd3.5/properties/index.ts";
-import type { KlassLevel, Modifier, Race, Requirement } from "@/shared/relations.ts";
+import type { FeatWithAptitudes, KlassLevel, Modifier, Race, Requirement } from "@/shared/relations.ts";
 
 import type { SharedCharacterData } from "./DetailedCharacterDataLoader.ts";
 import type { buildFeats, buildPowers } from "./picks.ts";
@@ -96,16 +96,7 @@ export function toCustomizedFeats(
   for (const featId of virtuallyPossessedFeatIds) {
     const featRow = rulesetData.featsById.get(featId);
     if (!featRow) continue;
-    virtualFeats.push({
-      ...featRow,
-      klassLevelId: "",
-      characterLevelId: "",
-      aptitudeId: "",
-      virtual: true,
-      properties: rulesetData.propertiesByEntity.get(featId) ?? [],
-      modifiers: rulesetData.modifiersBySource.get(featId) ?? [],
-      requirements: rulesetData.requirementsByEntity.get(featId) ?? [],
-    });
+    virtualFeats.push(toVirtualFeat(featRow, rulesetData));
   }
   return [...realFeats, ...virtualFeats];
 }
@@ -212,5 +203,19 @@ export function toCustomizedRace(race: Race, rulesetData: RulesetData): Customiz
     properties: rulesetData.propertiesByEntity.get(race.id) ?? [],
     modifiers: rulesetData.modifiersBySource.get(race.id) ?? [],
     requirements: rulesetData.requirementsByEntity.get(race.id) ?? [],
+  };
+}
+
+/** A feat the character has without a pick, from a modifier or a bonded creature's stat block: no level picked it. */
+export function toVirtualFeat(featRow: FeatWithAptitudes, rulesetData: RulesetData): CustomizedFeat {
+  return {
+    ...featRow,
+    klassLevelId: "",
+    characterLevelId: "",
+    aptitudeId: "",
+    virtual: true,
+    properties: rulesetData.propertiesByEntity.get(featRow.id) ?? [],
+    modifiers: rulesetData.modifiersBySource.get(featRow.id) ?? [],
+    requirements: rulesetData.requirementsByEntity.get(featRow.id) ?? [],
   };
 }

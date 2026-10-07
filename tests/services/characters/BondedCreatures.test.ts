@@ -361,6 +361,18 @@ describe("A familiar's benefit", () => {
 });
 
 describe("Stat blocks", () => {
+  test("count a stat block's feats and list them with the creature's granted feats, as any granted feat", async () => {
+    // A druid 12's dog: 9 hit dice, so Alertness and three feats from its priority, Toughness among them
+    const dog = await build(
+      new DetailedCharacterAnimalCompanion((await createDruidWithCompanion(12, "Dog Animal Companion")).bonded),
+    );
+    expect(dog.components.feats.getFeat("Toughness")).toMatchObject({ possessed: true, count: 1 });
+    expect(dog.components.feats.getFeat("Alertness")).toMatchObject({ possessed: true, count: 1 });
+    expect(dog.getVirtuallyPossessedFeats().map((feat) => feat.name)).toEqual(
+      expect.arrayContaining(["Alertness", "Toughness"]),
+    );
+  });
+
   test("replace the creature's weapons with its natural attacks: no item group reaches a weapon it no longer has", async () => {
     const cat = await build(new DetailedCharacterFamiliar((await createWizardWithFamiliar("Cat Familiar")).bonded));
     expect(cat.components.combat.getCombat().weaponsets["0"]?.mainhand?.name).not.toBe("Unarmed Strike");
