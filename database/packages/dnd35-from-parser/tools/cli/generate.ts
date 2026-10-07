@@ -13,7 +13,7 @@ import { join } from "node:path";
 import { GeneratedFolder } from "@/database/packages/dnd35-from-parser/tools/generator/GeneratedFolder.ts";
 import { Generator } from "@/database/packages/dnd35-from-parser/tools/generator/Generator.ts";
 
-import { parseCliArgs } from "./args.ts";
+import { CommandLine } from "./CommandLine.ts";
 
 /** What the generator writes: the content package's seed data. */
 const GENERATED_DIR = join(import.meta.dirname!, "../../generated");
@@ -28,7 +28,7 @@ function main() {
   const generate = (dir: string) =>
     args[0]?.endsWith(".json")
       ? new Generator(dir, false).generateReference(args[0])
-      : new Generator(dir, true).generateAll(parseCliArgs());
+      : new Generator(dir, true).generateAll(CommandLine.filters());
   let failures: string[];
   try {
     failures = GeneratedFolder.generateAtomically(GENERATED_DIR, generate);

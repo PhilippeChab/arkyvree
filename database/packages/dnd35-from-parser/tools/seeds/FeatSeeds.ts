@@ -86,7 +86,7 @@ export class FeatSeeds extends ReferenceSeeds<FeatReference> {
     ];
   }
 
-  /** Its feats, by feat type. */
+  /** Its feats, by feat type, each check of a family by its own name made a check of any of its feats (\`familyChecks\`). */
   byType(): Map<string, FeatSeed[]> {
     return this.memo("byType", () => {
       const byType = new Map<string, FeatSeed[]>();
@@ -101,7 +101,7 @@ export class FeatSeeds extends ReferenceSeeds<FeatReference> {
           ...(mapped.stackable ? { stackable: true } : {}),
           ...(mapped.selectable === false ? { selectable: false } : {}),
           aptitudes: mapped.aptitudes ?? [],
-          requirements: mapped.requirements ?? [],
+          requirements: this.book.familyChecks(mapped.requirements ?? []),
           modifiers: [
             ...(mapped.modifiers ?? []),
             ...new GrantText(name, mapped.description ?? entry.benefit ?? "").companionModifiers(),

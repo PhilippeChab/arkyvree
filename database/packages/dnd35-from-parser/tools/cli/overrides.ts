@@ -14,7 +14,7 @@ import { basename } from "node:path";
 import References from "@/database/packages/dnd35-from-parser/tools/references/References.ts";
 import type { StoredReference } from "@/database/packages/dnd35-from-parser/tools/types/reference.ts";
 
-import { parseCliArgs } from "./args.ts";
+import { CommandLine } from "./CommandLine.ts";
 
 type OverrideEntry = {
   book: string;
@@ -67,7 +67,7 @@ function collectEntryOverrides(
 }
 
 function main() {
-  const { bookFilter, typeFilter, nameFilter, keyFilter } = parseCliArgs();
+  const { bookFilter, typeFilter, nameFilter, keyFilter } = CommandLine.filters();
 
   const refs = References.files({ bookFilter, typeFilter, nameFilter });
 

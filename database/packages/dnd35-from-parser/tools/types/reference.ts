@@ -44,7 +44,7 @@ export type ReferenceByType = {
 /** A reference file: where it is, and the type, page and book its `_meta` names. */
 export type ReferenceFile = { book: string; path: string; type: ReferenceType; url?: string };
 
-/** What a command selects reference files by (`parseCliArgs`): a book, a type, a name (its file's, lowercased). */
+/** What a command selects reference files by (`CommandLine.filters`): a book, a type, a name (its file's, lowercased). */
 export type ReferenceFilters = { bookFilter?: string; nameFilter?: string; typeFilter?: string };
 
 /** A type of reference, as a reference's `_meta` names it. */
