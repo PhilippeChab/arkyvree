@@ -1,5 +1,4 @@
 import type { Db } from "@/server/database/index.ts";
-import type { CharacterKind, DetailedCharacterWithSheet, RulesetModule } from "@/server/rulesets/engine/types.ts";
 import type { Character as CharacterRecord } from "@/shared/relations.ts";
 
 import Dnd35DetailedCharacterAnimalCompanion from "./bonded/DetailedCharacterAnimalCompanion.ts";
@@ -22,6 +21,7 @@ import { Dnd35PowersRules } from "./powers/Dnd35PowersRules.ts";
 import Dnd35DetailedCharacterSheet from "./sheet/DetailedCharacterSheet.tsx";
 import { Dnd35SkillsEffects } from "./skills/Dnd35SkillsEffects.ts";
 import { Dnd35SkillsRules } from "./skills/Dnd35SkillsRules.ts";
+import type { CharacterKind, Dnd35RulesetModule } from "./types.ts";
 
 function createBonded(record: CharacterRecord, kind: CharacterKind): Dnd35DetailedCharacterBonded | null {
   switch (kind) {
@@ -40,7 +40,7 @@ function createBonded(record: CharacterRecord, kind: CharacterKind): Dnd35Detail
  * The 3.5 rules as a ruleset module: what they answer the services and do in their transactions, characters, sheets
  * and level-ups, paths and properties.
  */
-export function createRulesetModule(): RulesetModule {
+export function createRulesetModule(): Dnd35RulesetModule {
   return {
     rules: {
       classes: new Dnd35ClassesRules(),
@@ -68,7 +68,7 @@ export function createRulesetModule(): RulesetModule {
     },
 
     createLevelUpProjector(character) {
-      return new Dnd35LevelUpProjector(character as Dnd35DetailedCharacter);
+      return new Dnd35LevelUpProjector(character);
     },
 
     async createDetailedCharacterWithSheet(record: CharacterRecord, kind: CharacterKind = "pc") {
@@ -76,7 +76,7 @@ export function createRulesetModule(): RulesetModule {
       await detailedCharacter.build();
       return {
         detailedCharacter,
-        CharacterSheetComponent: Dnd35DetailedCharacterSheet as DetailedCharacterWithSheet["CharacterSheetComponent"],
+        CharacterSheetComponent: Dnd35DetailedCharacterSheet,
       };
     },
 

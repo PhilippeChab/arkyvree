@@ -12,11 +12,7 @@ import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { CharacterLevels } from "@/server/repositories/index.ts";
-import type {
-  AptitudesComponent,
-  Dnd35LevelUpProjector,
-  Dnd35ProjectedCharacterData,
-} from "@/server/rulesets/dnd3.5/index.ts";
+import type { AptitudesComponent, Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -243,7 +239,7 @@ export async function getSkillSlots(
     const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
     await detailedCharacter.build(undefined, projectedData);
 
-    const levelUpProjector = rulesetModule.createLevelUpProjector(detailedCharacter) as Dnd35LevelUpProjector;
+    const levelUpProjector = rulesetModule.createLevelUpProjector(detailedCharacter);
     const skillsBreakdown = levelUpProjector.getSkillBudget();
 
     // isClassSkill = class skill for ANY of the character's classes (for max rank).

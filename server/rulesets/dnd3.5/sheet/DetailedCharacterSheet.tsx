@@ -2,6 +2,7 @@ import { Document } from "@react-pdf/renderer";
 
 import { isProduction } from "@/server/environment.ts";
 import type DetailedCharacter from "@/server/rulesets/dnd3.5/character/DetailedCharacter.ts";
+import type { CharacterKind } from "@/server/rulesets/dnd3.5/types.ts";
 
 import DiagnosticsPage from "./DiagnosticsPage.tsx";
 import FeatsPage from "./FeatsPage.tsx";
@@ -16,7 +17,7 @@ function DetailedCharacterSheet({
   portraitUrl,
 }: {
   detailedCharacter: DetailedCharacter;
-  kind?: "pc" | "familiar" | "animalcompanion" | "mount";
+  kind?: CharacterKind;
   portraitUrl?: string | null;
 }) {
   const isBonded = kind !== "pc";

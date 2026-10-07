@@ -22,11 +22,10 @@ import {
 } from "@/server/repositories/index.ts";
 import type {
   AptitudesComponent,
-  Dnd35DetailedCharacter,
-  Dnd35LevelUpProjector,
   Dnd35ProjectedCharacterData,
+  Dnd35RulesetModule,
 } from "@/server/rulesets/dnd3.5/index.ts";
-import type { PreloadedRulesetData, RulesetModule } from "@/server/rulesets/engine/types.ts";
+import type { PreloadedRulesetData } from "@/server/rulesets/engine/types.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Character, Session } from "@/shared/relations.ts";
@@ -164,7 +163,7 @@ async function insertLevelChildren(
  */
 async function insertPlannedLevels(
   tx: Db,
-  rulesetModule: RulesetModule,
+  rulesetModule: Dnd35RulesetModule,
   rulesetData: RulesetData,
   characterId: string,
   levels: { hp: number; abilityId: string | null }[],
@@ -242,7 +241,7 @@ async function insertPlannedLevels(
  */
 async function levelDistributionData(
   tx: Db,
-  rulesetModule: RulesetModule,
+  rulesetModule: Dnd35RulesetModule,
   characterRecord: Character,
   rulesetData: RulesetData,
   klassLevelEntries: ReturnType<typeof getPlannedKlassLevels>,
@@ -257,7 +256,7 @@ async function levelDistributionData(
   // Build full character with all planned levels to get aptitude pools
   const fullCharacter = rulesetModule.createDetailedCharacter(characterRecord);
   await fullCharacter.build(tx, projectedData);
-  const levelUpProjector = rulesetModule.createLevelUpProjector(fullCharacter) as Dnd35LevelUpProjector;
+  const levelUpProjector = rulesetModule.createLevelUpProjector(fullCharacter);
   const { featPoolIds, powerPoolIds } = poolIds(fullCharacter.components.aptitudes, rulesetData);
 
   // Compute per-level feat/power slots from modifier data directly
@@ -299,7 +298,7 @@ async function levelDistributionData(
  */
 async function ownedPoolNames(
   tx: Db,
-  rulesetModule: RulesetModule,
+  rulesetModule: Dnd35RulesetModule,
   characterRecord: Character,
   existingLevels: { id: string; createdAt: string }[],
   characterLevelId: string,
@@ -420,7 +419,7 @@ export async function finalizeLevelUp(
         baseExistingLevels,
       );
 
-      const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord) as Dnd35DetailedCharacter;
+      const detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
       await detailedCharacter.build(tx, undefined, preloadedRuleset);
 
       if (!force) {
@@ -462,7 +461,7 @@ export async function removeLevel(session: Session, characterId: string) {
 
     await withRulesetScope(tx, characterRecord.rulesetId, async ({ ruleset, rulesetData }) => {
       const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
-      const reconcileCharacter = rulesetModule.createDetailedCharacter(characterRecord) as Dnd35DetailedCharacter;
+      const reconcileCharacter = rulesetModule.createDetailedCharacter(characterRecord);
       await reconcileCharacter.build(tx, undefined, {
         ruleset,
         cowData: rulesetData.cow,
@@ -563,7 +562,7 @@ export async function updateLevel(
       );
 
       await insertLevelChildren(tx, characterLevelId, skills, feats, powers);
-      await reconcileAllBondedKinds(tx, characterRecord, detailedCharacter as Dnd35DetailedCharacter, rulesetData);
+      await reconcileAllBondedKinds(tx, characterRecord, detailedCharacter, rulesetData);
 
       await Activities.create(tx, {
         userId: session.userId,

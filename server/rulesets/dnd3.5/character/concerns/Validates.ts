@@ -1,7 +1,6 @@
 import type { Constructor } from "@/server/mixins.ts";
 import { ALLOWED_ALL } from "@/server/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
 import type CharacterState from "@/server/rulesets/dnd3.5/character/CharacterState.ts";
-import type { ValidationIssue, ValidationResult } from "@/server/rulesets/dnd3.5/character/CharacterState.ts";
 import RequirementEvaluator from "@/server/rulesets/engine/requirements/RequirementEvaluator.ts";
 import type {
   CustomizedFeat,
@@ -9,6 +8,8 @@ import type {
   CustomizedPower,
   InventoryEntry,
   RequirementIssue,
+  ValidationIssue,
+  ValidationResult,
 } from "@/server/rulesets/engine/types.ts";
 import RequirementTree, { type RequirementNode } from "@/shared/customization/RequirementTree.ts";
 import type { Klass, Modifier, Requirement } from "@/shared/relations.ts";

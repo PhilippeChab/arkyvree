@@ -6,8 +6,8 @@ import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels, Klasses } from "@/server/repositories/index.ts";
-import type { Dnd35LevelUpProjector, Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/index.ts";
-import type { DetailedCharacterInterface, PreloadedRulesetData } from "@/server/rulesets/engine/types.ts";
+import type { Dnd35DetailedCharacter, Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/index.ts";
+import type { PreloadedRulesetData } from "@/server/rulesets/engine/types.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Klass, KlassLevel, Requirement, Session } from "@/shared/relations.ts";
@@ -159,7 +159,7 @@ export async function getAvailableKlasses(
 
     // For candidates with requirements, build the character once and evaluate via projector.
     const evaluationResultMap = new Map<string, boolean>();
-    let detailedCharacter: DetailedCharacterInterface | undefined;
+    let detailedCharacter: Dnd35DetailedCharacter | undefined;
     if (withRequirements.length > 0) {
       const rulesetModule = RulesetFactory.fromBaseRules(ruleset.baseRules);
       detailedCharacter = rulesetModule.createDetailedCharacter(characterRecord);
@@ -176,7 +176,7 @@ export async function getAvailableKlasses(
       );
       await detailedCharacter.build(undefined, projectedData, preloaded);
 
-      const levelUpProjector = rulesetModule.createLevelUpProjector(detailedCharacter) as Dnd35LevelUpProjector;
+      const levelUpProjector = rulesetModule.createLevelUpProjector(detailedCharacter);
       const evaluated = withRequirements.map((k) => ({
         klassName: stripSeparators(k.klass.name),
         klassLevel: k.nextKlassLevel,

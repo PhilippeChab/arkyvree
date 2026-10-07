@@ -5,7 +5,7 @@
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels, Powers } from "@/server/repositories/index.ts";
-import type { Dnd35LevelUpProjector, Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/index.ts";
+import type { Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/index.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import { getListPowerIds } from "@/server/services/rulesets/aptitudes/index.ts";
@@ -108,7 +108,7 @@ export async function getAvailablePowers(
     excludePowerIds.push(...virtualPowerIds);
 
     // Exclude powers from wizard-prohibited schools (delegated to ruleset-specific projector)
-    const levelUpProjector = rulesetModule.createLevelUpProjector(detailedCharacter) as Dnd35LevelUpProjector;
+    const levelUpProjector = rulesetModule.createLevelUpProjector(detailedCharacter);
     const wizardExcluded = await levelUpProjector.getExcludedPowerIds(
       db,
       aptitudeId,

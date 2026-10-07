@@ -14,12 +14,12 @@
 
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Db } from "@/server/database/index.ts";
-import type { Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/index.ts";
 import type {
-  DetailedCharacterInterface,
-  ProjectedCharacterData,
-  RulesetModule,
-} from "@/server/rulesets/engine/types.ts";
+  Dnd35DetailedCharacter,
+  Dnd35ProjectedCharacterData,
+  Dnd35RulesetModule,
+} from "@/server/rulesets/dnd3.5/index.ts";
+import type { ProjectedCharacterData } from "@/server/rulesets/engine/types.ts";
 import type { Character, Modifier, Property, Requirement } from "@/shared/relations.ts";
 
 export type FeatPick = { featId: string; aptitudeId: string };
@@ -276,9 +276,9 @@ export function projectPlannedLevels(
 /** The aptitudes of the character as saved, before its planned levels: built from the projected character's data. */
 export async function buildBaselineAptitudes(
   database: Db,
-  rulesetModule: RulesetModule,
+  rulesetModule: Dnd35RulesetModule,
   characterRecord: Character,
-  projectedCharacter: DetailedCharacterInterface,
+  projectedCharacter: Dnd35DetailedCharacter,
 ) {
   const preloaded = await projectedCharacter.preload();
   const baselineCharacter = rulesetModule.createDetailedCharacter(characterRecord);
