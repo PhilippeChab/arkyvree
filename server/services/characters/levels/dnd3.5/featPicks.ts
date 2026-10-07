@@ -6,7 +6,8 @@ import type { RulesetData, RulesetScope } from "@/server/cache/rulesetCache/inde
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels, Feats } from "@/server/repositories/index.ts";
-import type { Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/index.ts";
+import { type Dnd35ProjectedCharacterData } from "@/server/rulesets/dnd3.5/index.ts";
+import { parseAptitudePool } from "@/server/rulesets/dnd3.5/index.ts";
 import { parseLiteralValue } from "@/server/rulesets/engine/paths/literalValue.ts";
 import type { DetailedCharacterInterface } from "@/server/rulesets/engine/types.ts";
 import { RulesetFactory } from "@/server/rulesets/RulesetFactory.ts";
@@ -175,9 +176,9 @@ export function resolveAptitudeModifiers(featIds: string[], rulesetData: Ruleset
     if (!mods) continue;
     for (const mod of mods) {
       if (mod.sourceType !== "feats") continue;
-      const match = mod.target.match(/^aptitudes\.([a-z0-9]+)\.allowed$/);
-      if (!match) continue;
-      const resolvedAptitudeId = rulesetData.aptitudeIdBySlug.get(match[1]);
+      const pool = parseAptitudePool(mod.target);
+      if (pool === undefined) continue;
+      const resolvedAptitudeId = rulesetData.aptitudeIdBySlug.get(pool);
       const value = parseLiteralValue(mod.value, "number");
       if (!resolvedAptitudeId || typeof value !== "number") continue;
 

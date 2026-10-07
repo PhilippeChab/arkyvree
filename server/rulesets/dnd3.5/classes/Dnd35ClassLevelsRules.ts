@@ -1,4 +1,5 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
+import { parseAptitudePool, parseAptitudeSpellLevel } from "@/server/rulesets/dnd3.5/aptitudes/aptitudeTargets.ts";
 import { collectClassLists } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
 import type { ClassLevelsRules } from "@/server/rulesets/engine/module/index.ts";
 import { parseLiteralValue } from "@/server/rulesets/engine/paths/literalValue.ts";
@@ -11,8 +12,6 @@ export class Dnd35ClassLevelsRules implements ClassLevelsRules {
     modifiers: { sourceId: string; target: string; value: string; operator: string }[],
     aptitudes: { name: string }[],
   ): (T & { featPools: Record<string, number> })[] {
-    const featPoolRegex = /^aptitudes\.(\w+)\.allowed$/;
-
     // Build slug → display name map from aptitudes
     const slugToName = new Map<string, string>();
     for (const apt of aptitudes) {
@@ -22,9 +21,8 @@ export class Dnd35ClassLevelsRules implements ClassLevelsRules {
     // Build levelId → { [aptitudeName]: delta } map
     const deltasByLevelId = new Map<string, Record<string, number>>();
     for (const mod of modifiers) {
-      const match = featPoolRegex.exec(mod.target);
-      if (!match) continue;
-      const slug = stripSeparators(match[1]);
+      const slug = parseAptitudePool(mod.target);
+      if (slug === undefined) continue;
       const name = slugToName.get(slug);
       const value = parseLiteralValue(mod.value, "number");
       if (!name || typeof value !== "number") continue;
@@ -92,15 +90,13 @@ export class Dnd35ClassLevelsRules implements ClassLevelsRules {
     levels: T[],
     modifiers: { sourceId: string; target: string; value: string; operator: string }[],
   ): (T & { spellsKnown: Record<number, number | "All"> })[] {
-    const knownRegex = /^aptitudes\.\w+\.(\d+)\.allowed$/;
-
     // Build a map of levelId → { [spellLevel]: { delta, operator } }[]
     const deltasByLevelId = new Map<string, { spellLevel: number; delta: number; operator: string }[]>();
     for (const mod of modifiers) {
-      const match = knownRegex.exec(mod.target);
+      const target = parseAptitudeSpellLevel(mod.target);
       const value = parseLiteralValue(mod.value, "number");
-      if (!match || typeof value !== "number") continue;
-      const spellLevel = Number(match[1]);
+      if (target?.field !== "allowed" || typeof value !== "number") continue;
+      const spellLevel = target.level;
       let entry = deltasByLevelId.get(mod.sourceId);
       if (!entry) {
         entry = [];
@@ -139,15 +135,13 @@ export class Dnd35ClassLevelsRules implements ClassLevelsRules {
     levels: T[],
     modifiers: { sourceId: string; target: string; value: string; operator: string }[],
   ): (T & { spellsPerDay: Record<number, number> })[] {
-    const spellsRegex = /^aptitudes\.\w+\.(\d+)\.uses$/;
-
     // Build a map of levelId → { [spellLevel]: delta }
     const deltasByLevelId = new Map<string, Record<number, number>>();
     for (const mod of modifiers) {
-      const match = spellsRegex.exec(mod.target);
+      const target = parseAptitudeSpellLevel(mod.target);
       const value = parseLiteralValue(mod.value, "number");
-      if (!match || typeof value !== "number") continue;
-      const spellLevel = Number(match[1]);
+      if (target?.field !== "uses" || typeof value !== "number") continue;
+      const spellLevel = target.level;
       let entry = deltasByLevelId.get(mod.sourceId);
       if (!entry) {
         entry = {};

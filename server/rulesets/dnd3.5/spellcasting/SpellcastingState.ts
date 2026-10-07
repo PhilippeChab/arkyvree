@@ -2,10 +2,11 @@ import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type AbilitiesComponent from "@/server/rulesets/dnd3.5/abilities/AbilitiesComponent.ts";
 import type AptitudesComponent from "@/server/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
+import { parseAptitudeJoin } from "@/server/rulesets/dnd3.5/aptitudes/aptitudeTargets.ts";
 import type ClassesComponent from "@/server/rulesets/dnd3.5/classes/ClassesComponent.ts";
 import type PowerGroupingsComponent from "@/server/rulesets/dnd3.5/powers/PowerGroupingsComponent.ts";
 import type PowersComponent from "@/server/rulesets/dnd3.5/powers/PowersComponent.ts";
-import { collectClassLists, JOIN_TARGET } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
+import { collectClassLists } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
 import type ModifierEvaluator from "@/server/rulesets/engine/modifiers/ModifierEvaluator.ts";
 import type { SpellTagLists } from "@/shared/dnd3.5/spellGroups.ts";
 import type { KlassLevel, Modifier, Power, Property } from "@/shared/relations.ts";
@@ -99,7 +100,7 @@ export default abstract class SpellcastingState {
 
     const joining = new Map<string, Set<string>>();
     for (const modifier of this.modifierEvaluator.getModifiers().appliedModifiers) {
-      const list = JOIN_TARGET.exec(modifier.target)?.[1];
+      const list = parseAptitudeJoin(modifier.target);
       if (list === undefined || aptitudes[list]?.joinsclasslist !== true || modifier.value === "false") continue;
       const className = classOf(modifier);
       if (!className) continue;

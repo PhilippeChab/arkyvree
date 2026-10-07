@@ -1,8 +1,9 @@
 import type { RulesetData } from "@/server/cache/rulesetCache/index.ts";
 import type { Constructor } from "@/server/mixins.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/server/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
+import { parseAptitudeJoin, parseAptitudeList } from "@/server/rulesets/dnd3.5/aptitudes/aptitudeTargets.ts";
 import type SpellcastingState from "@/server/rulesets/dnd3.5/spellcasting/SpellcastingState.ts";
-import { JOIN_TARGET, listOpenedBy } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
+import { listOpenedBy } from "@/server/rulesets/dnd3.5/spellcasting/spellLists.ts";
 import type { CustomizedFeat, CustomizedKlassLevel, CustomizedPower } from "@/server/rulesets/engine/types.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
@@ -25,9 +26,9 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
 
       for (const modifier of appliedModifiers) {
         if (modifier.sourceType !== "klass_levels") continue;
-        const parts = modifier.target.split(".");
-        if (parts[0] !== "aptitudes") continue;
-        const aptitude = aptitudes[parts[1]];
+        const list = parseAptitudeList(modifier.target);
+        if (list === undefined) continue;
+        const aptitude = aptitudes[list];
         if (!aptitude || !aptitudePowerAptitudeIds.has(aptitude.id) || aptitudeIdToClassName.has(aptitude.id)) continue;
         // Find which class owns this klass level
         for (const [className, klassData] of Object.entries(classes)) {
@@ -191,7 +192,7 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
         for (const list of lists) {
           const aptitude = aptitudes[list];
           if (!aptitude || !featListIds.has(aptitude.id)) continue;
-          const joinsClassList = feat.modifiers.some((modifier) => JOIN_TARGET.exec(modifier.target)?.[1] === list);
+          const joinsClassList = feat.modifiers.some((modifier) => parseAptitudeJoin(modifier.target) === list);
           // A feat opening several lists shows its tag on each of them
           const tagged = this.spellTagLists[feat.name] ?? { aptitudeIds: classListIds, joinsClassList: false };
           this.spellTagLists[feat.name] = {

@@ -9,7 +9,6 @@ import type { Aptitude } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 const ALLOWED_ENTITY_TYPES = ["feats", "klass_levels", "races"];
-
 const NAVIGATABLE_PATHS = [
   {
     path: "uses",
@@ -24,7 +23,6 @@ const NAVIGATABLE_PATHS = [
     allowedEntityTypes: ALLOWED_ENTITY_TYPES,
   },
 ];
-
 const POOL_SLOT_MODIFIERS: Pick<TargetPath, "operators" | "literalOnly" | "minValue"> = {
   operators: ["add"],
   literalOnly: true,
