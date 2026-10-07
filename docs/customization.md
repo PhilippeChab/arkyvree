@@ -155,11 +155,11 @@ Example: `"Martial Weapon Proficiency: Battleaxe"` → `"martialweaponproficienc
 
 ## Auto-Generated Customization
 
-Some entities get properties, requirements, or feats generated. Spells, skills and class levels get theirs when they're saved, from their domain's effects (`server/rulesets/dnd3.5/powers/Dnd35PowersEffects.ts` with `powers/powerFields.ts` and `powers/spellGenerator.ts`, `skills/Dnd35SkillsEffects.ts`, `classes/Dnd35ClassLevelsEffects.ts`). Weapons, armors and shields get theirs from their type's definition when the content packages write them (`database/packages/dnd35/content/items/weapons.ts`, `armor.ts`). They're an item's fields: `ItemsRules.readProperties` reads them (`items/itemFields.ts`, which the combat components and the inventory's rules read with too), and `ItemsEffects.syncProperties` stores them. An item made from a template stores only the types it overrides, and `RulesetData.itemProperties` merges its rows with the template's before they're read.
+Some entities get properties, requirements, or feats generated. Spells, skills and class levels get theirs when they're saved, from their domain's effects (`server/rulesets/dnd3.5/powers/Dnd35PowersEffects.ts` with `powers/powerFields.ts` and `powers/spellGenerator.ts`, `skills/Dnd35SkillsEffects.ts`, `classes/Dnd35ClassLevelsEffects.ts`). Weapons, armors and shields get theirs from their type's definition when the content packages write them (`database/packages/dnd35/content/items/weapons.ts`, `armor.ts`). They're an item's fields: `ItemsRules.readProperties` reads them (`items/itemFields.ts`, which the combat components and the inventory's rules read with too), and `ItemsEffects.properties` says how they're stored. An item made from a template stores only the types it overrides, and `RulesetData.itemProperties` merges its rows with the template's before they're read.
 
-Every area's effects take one shape:
-- `syncProperties(tx, id, fields)` stores the fields of the entity's form as its properties, in place of those it stored before. Its other properties stay.
-- `generateFeats(tx, scope, name)` makes the feats the entity brings, and `deleteFeats` removes them, where they're the entity's own.
+Every area's effects take one shape: each says what to write, and the service writes it (`server/services/rulesets/effectWrites.ts`).
+- `properties(id, fields)` gives the fields of the entity's form as its properties, in place of those it stored before (`writeProperties`). Its other properties stay.
+- `generatedFeats(name)` gives the feats the entity brings (`writeGeneratedFeats`), and `removedFeat` the one that goes with it, where it's the entity's own (`removeGeneratedFeat`).
 - A feat that's one entity's own (a skill's Skill Focus) is made, renamed and deleted with it: a new skill brings its own, even in a fork that deleted the one it inherited.
 - A feat that a grouping's entities share (a school's Spell Focus) is made when the first of them is saved, unless the ruleset or one of its sources has it, even in a fork that deleted the copy it inherited, and none goes with an entity.
 
@@ -248,28 +248,28 @@ Proficiency requirements:
 
 ### Class Levels
 
-Properties auto-generated in `ClassLevelsEffects.syncProperties()`:
+Properties auto-generated in `ClassLevelsEffects.properties()`:
 
 | Property Type              | Description                              |
 |----------------------------|------------------------------------------|
 | `KLASS_LEVEL_BAB`          | BAB for this level, based on progression type (Full/Medium/Poor) |
 | `KLASS_LEVEL_SKILL_POINTS` | Skill points per level from class definition |
 
-Requirement auto-generated for level 2+, when the level is created (`ClassLevelsEffects.requirePreviousLevel()`):
+Requirement auto-generated for level 2+, when the level is created (`ClassLevelsEffects.previousLevelRequirement()`):
 - `classes.<normalized_class_name>.level > N-1` — ensures the character has reached the previous level before gaining the next
 
 On update: changing BAB progression or skill points re-syncs the properties (deletes old, creates new).
 
 ### Skills
 
-Properties auto-generated from the skill form's fields in `SkillsEffects.syncProperties()`. They're a skill's fields: `SkillsRules.readProperties` reads them (`readSkillFields` in `server/rulesets/dnd3.5/skills/skillFields.ts`, which the skill API and the engine read with too), and the core rules' seeder writes them with `toSkillProperties`, as the effects do:
+Properties auto-generated from the skill form's fields in `SkillsEffects.properties()`. They're a skill's fields: `SkillsRules.readProperties` reads them (`readSkillFields` in `server/rulesets/dnd3.5/skills/skillFields.ts`, which the skill API and the engine read with too), and the core rules' seeder writes them with `toSkillProperties`, as the effects do:
 - `SKILL_IMPACTED_BY_WEIGHT` — whether armor check penalty applies
 - `SKILL_CHECK_PENALTY_MULTIPLIER` — how many times over a skill armor weighs on takes the penalty (2 on Swim; absent means 1)
 - `SKILL_USABLE_WITHOUT_TRAINING` — whether untrained use is allowed
 
-Feat auto-generated per skill in `SkillsEffects.generateFeats()`:
+Feat auto-generated per skill in `SkillsEffects.generatedFeats()`:
 - `Skill Focus: <name>` — +3 `skills.<stripped>.misc`, linked to General aptitude
-- Deleted on skill delete (`SkillsEffects.deleteFeats()`, refused while a character picked it), regenerated on skill rename
+- Deleted on skill delete (`SkillsEffects.removedFeat()`, refused while a character picked it), regenerated on skill rename
 
 Generated feat names cannot be edited directly. A feat is generated (`feats.generated`) when a family's feat is made
 for each of its options, its name naming the option (`Weapon Focus: Longsword`): by the seeds (the parser's template
@@ -291,7 +291,7 @@ A ruleset's own property, `RULESET_SKILL_POINT_ABILITY_ID`: the ability its char
 
 ### Spells / Powers
 
-Properties auto-generated from spell form fields in `PowersEffects.syncProperties()`. They're a power's fields: `PowersRules.readProperties` reads them (`readPowerFields` in `powers/powerFields.ts`, which the power groupings read a spell's school and descriptors with too), and `toPowerProperties` builds their rows:
+Properties auto-generated from spell form fields in `PowersEffects.properties()`. They're a power's fields: `PowersRules.readProperties` reads them (`readPowerFields` in `powers/powerFields.ts`, which the power groupings read a spell's school and descriptors with too), and `toPowerProperties` builds their rows:
 
 | Property Type | Description |
 |---|---|
@@ -306,11 +306,11 @@ Properties auto-generated from spell form fields in `PowersEffects.syncPropertie
 | `SPELL_RESISTANCE` | Whether spell resistance applies (optional) |
 | `SPELL_COMPONENT` | Required components — one property row per value (optional, multi) |
 
-On create: with a school, generates the properties from the form's fields, and the school's Spell Focus feats unless they're there (`PowersEffects.generateFeats()`).
+On create: with a school, generates the properties from the form's fields, and the school's Spell Focus feats unless they're there (`PowersEffects.generatedFeats()`).
 On update: replaces the generated property types (the spell's fields) with the form's, none without a school, and creates the feats of a school that's new. The spell's other properties remain, and so do existing school feats.
 On delete: cleans up the spell's customizations. School feats remain even if the school has no spells left.
 
-Feats auto-generated per unique school in `PowersEffects.generateFeats()` (`powers/spellGenerator.generateSpellFocusFeats()`):
+Feats auto-generated per unique school in `PowersEffects.generatedFeats()` (`powers/spellGenerator.buildSpellFocusFeats()`):
 - `Spell Focus: <school>` — +1 `powers.groups.<stripped_school>.*.dc.misc`, linked to General aptitude
 - `Greater Spell Focus: <school>` — +1 `powers.groups.<stripped_school>.*.dc.misc`, requires `feats.spellfocus<stripped_school>.possessed == true`, linked to General aptitude
 - Created idempotently (skipped if already exist for the school)

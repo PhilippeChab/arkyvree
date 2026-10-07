@@ -5,6 +5,7 @@ import { db } from "@/server/database/index.ts";
 import { Properties } from "@/server/repositories/index.ts";
 import { Dnd35ClassesEffects } from "@/server/rulesets/dnd3.5/classes/Dnd35ClassesEffects.ts";
 import { Dnd35ClassesRules } from "@/server/rulesets/dnd3.5/classes/Dnd35ClassesRules.ts";
+import { writeProperties } from "@/server/services/rulesets/effectWrites.ts";
 import { insertRows } from "@/tests/support/database.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
@@ -28,13 +29,13 @@ describe("A class's effects", () => {
     const effects = new Dnd35ClassesEffects();
     const rules = new Dnd35ClassesRules();
 
-    await effects.syncProperties(db, klass.id, { bonusSpellAbilityId: "wisdom-id", casterType: "Divine" });
+    await writeProperties(db, effects.properties(klass.id, { bonusSpellAbilityId: "wisdom-id", casterType: "Divine" }));
     const stored = await readClass(klass.id);
     expect(rules.readProperties(stored)).toEqual({ bonusSpellAbilityId: "wisdom-id", casterType: "Divine" });
     const ids = rules.getPropertyIds(stored);
     expect([ids.bonusSpellAbilityId, ids.casterType].every((id) => stored.some((p) => p.id === id))).toBe(true);
 
-    await effects.syncProperties(db, klass.id, { bonusSpellAbilityId: null, casterType: "Arcane" });
+    await writeProperties(db, effects.properties(klass.id, { bonusSpellAbilityId: null, casterType: "Arcane" }));
     const properties = await readClass(klass.id);
     expect(rules.readProperties(properties)).toEqual({ bonusSpellAbilityId: null, casterType: "Arcane" });
     expect(properties.map((property) => property.type).toSorted()).toEqual(["KLASS_CASTER_TYPE", "SOMETHING_ELSE"]);

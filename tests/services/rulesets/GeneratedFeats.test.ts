@@ -19,6 +19,7 @@ import {
 import { Dnd35SkillsEffects } from "@/server/rulesets/dnd3.5/skills/Dnd35SkillsEffects.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
+import { removeGeneratedFeat } from "@/server/services/rulesets/effectWrites.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
@@ -367,7 +368,7 @@ describe("an inherited skill's Skill Focus", () => {
     const { fork } = await seededForkWithClimb();
     await withRulesetScope(db, fork.id, async ({ ruleset, rulesetData }) => {
       const { timing } = await measure(() =>
-        new Dnd35SkillsEffects().deleteFeats(db, { ruleset, rulesetData }, "No generated feat"),
+        removeGeneratedFeat(db, { ruleset, rulesetData }, new Dnd35SkillsEffects().removedFeat("No generated feat")),
       );
       expect(timing).toMatchObject({ queryCount: 0, cacheHits: 0, cacheMisses: 0 });
     });

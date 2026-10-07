@@ -1,5 +1,5 @@
-import type { RulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import type { Db } from "@/server/database/index.ts";
+import type { PropertyEntityType } from "@/shared/customization/entities.ts";
+import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 import type {
   ClassFields,
@@ -12,37 +12,70 @@ import type {
   SkillFields,
 } from "./rules.ts";
 
+/** A requirement a write creates on an entity: what it asks of the character. */
+type RequirementRow = Pick<Requirement, "level" | "operator" | "target" | "value" | "valueType">;
+
 /** What a ruleset writes when a class is saved: its fields. */
 export interface ClassesEffects {
-  /** Stores the class's fields as its properties, in place of those it stored before. */
-  syncProperties(tx: Db, klassId: string, fields: ClassFields): Promise<void>;
+  /** The class's fields, as the properties stored in place of those it stored before. */
+  properties(klassId: string, fields: ClassFields): PropertiesWrite;
 }
 
 /** What a ruleset writes when a class level is saved: its fields, and what it requires of the class's earlier levels. */
 export interface ClassLevelsEffects {
-  /** What a level past the class's first requires of the class's earlier levels. */
-  requirePreviousLevel(tx: Db, klassLevel: { id: string; level: number }, className: string): Promise<void>;
-  /** Stores the level's fields as its properties, in place of those it stored before. */
-  syncProperties(tx: Db, levelId: string, fields: ClassLevelFields): Promise<void>;
+  /** What a level past the class's first requires of the class's earlier levels: none for its first. */
+  previousLevelRequirement(klassLevel: { id: string; level: number }, className: string): RequirementWrite | undefined;
+  /** The level's fields, as the properties stored in place of those it stored before. */
+  properties(levelId: string, fields: ClassLevelFields): PropertiesWrite;
 }
 
 /** What a ruleset writes when a feat is saved: its fields. */
 export interface FeatsEffects {
-  /** Stores the feat's fields as its properties, in place of those it stored before. */
-  syncProperties(tx: Db, featId: string, fields: FeatFields): Promise<void>;
+  /** The feat's fields, as the properties stored in place of those it stored before. */
+  properties(featId: string, fields: FeatFields): PropertiesWrite;
+}
+
+/**
+ * A feat a ruleset makes with an entity (a skill's Skill Focus) or for a grouping its entities share (a school's Spell
+ * Focus): generated, in the pool `aptitudeSlug` names, with its fields, modifiers and requirements. None is made when
+ * the ruleset has no such pool.
+ */
+export interface GeneratedFeat {
+  aptitudeSlug: string;
+  description: string;
+  /** Its fields, which its properties store (`FeatsEffects.properties`) once it's made. */
+  fields: FeatFields;
+  modifiers: Pick<Modifier, "operator" | "target" | "value" | "valueType">[];
+  name: string;
+  requirements: RequirementRow[];
+}
+
+/** A generated feat a write removes from the ruleset, refused (`inUse`) while a character in it picked the feat. */
+export interface GeneratedFeatRemoval {
+  inUse: string;
+  name: string;
+}
+
+/** The feats a write makes, unless the ruleset or its chain has a feat named `unlessPresent` already. */
+export interface GeneratedFeatsWrite {
+  feats: GeneratedFeat[];
+  unlessPresent?: string;
 }
 
 /** What a ruleset writes when an item is saved: its fields. */
 export interface ItemsEffects {
   /**
-   * Stores exactly the item's fields given, as its own properties, in place of those it stored before: for an item made
-   * from a template, the fields it overrides, which its template's fill in when read (`RulesetData.itemProperties`). A
-   * list can't be overridden to none: an item without damage types or magic auras of its own reads its template's.
+   * Exactly the item's fields given, as its own properties, in place of those it stored before: for an item made from a
+   * template, the fields it overrides, which its template's fill in when read (`RulesetData.itemProperties`). A list
+   * can't be overridden to none: an item without damage types or magic auras of its own reads its template's.
    */
-  syncProperties(tx: Db, itemId: string, fields: ItemFields): Promise<void>;
+  properties(itemId: string, fields: ItemFields): PropertiesWrite;
 }
 
-/** What a ruleset does in a service's transaction, one set of effects per area. */
+/**
+ * What a ruleset writes, one set of effects per area: each says what to write, and the service writes it in its
+ * transaction (`server/services/rulesets/effectWrites.ts`).
+ */
 export interface ModuleEffects {
   classes: ClassesEffects;
   classLevels: ClassLevelsEffects;
@@ -57,32 +90,43 @@ export interface ModuleEffects {
 /** What a ruleset writes when a power is saved: its fields, and the feats of its grouping. */
 export interface PowersEffects {
   /**
-   * The feats a grouping (a spell's school) brings, in the ruleset the caller's scope is in, unless they're there. Every
-   * power of the grouping shares them, so none goes with a power.
+   * The feats a grouping (a spell's school) brings, unless the ruleset or its chain has them. Every power of the
+   * grouping shares them, so none goes with a power.
    */
-  generateFeats(tx: Db, scope: RulesetScope, grouping: string): Promise<void>;
-  /** Stores the power's fields as its properties, in place of those it stored before; its other properties stay. */
-  syncProperties(tx: Db, powerId: string, fields: PowerFields): Promise<void>;
+  generatedFeats(grouping: string): GeneratedFeatsWrite;
+  /** The power's fields, as the properties stored in place of those it stored before; its other properties stay. */
+  properties(powerId: string, fields: PowerFields): PropertiesWrite;
+}
+
+/** The properties an entity's fields are stored as: those of `types` it has give way to `rows`. */
+export interface PropertiesWrite {
+  entityId: string;
+  entityType: PropertyEntityType;
+  rows: { entityId: string; entityType: string; type: string; value: string }[];
+  types: readonly string[];
 }
 
 /** What a ruleset writes when a race is saved: its fields. */
 export interface RacesEffects {
-  /** Stores the race's fields as its properties, in place of those it stored before. */
-  syncProperties(tx: Db, raceId: string, fields: RaceFields): Promise<void>;
+  /** The race's fields, as the properties stored in place of those it stored before. */
+  properties(raceId: string, fields: RaceFields): PropertiesWrite;
 }
+
+/** A requirement a write creates on an entity (`entityId`, of `entityType`). */
+export type RequirementWrite = RequirementRow & { entityId: string; entityType: PropertyEntityType };
 
 /** What a ruleset writes when its own fields are saved. */
 export interface RulesetsEffects {
-  /** Stores the ruleset's own fields as its properties, in place of those it stored before. */
-  syncProperties(tx: Db, rulesetId: string, fields: RulesetFields): Promise<void>;
+  /** The ruleset's own fields, as the properties stored in place of those it stored before. */
+  properties(rulesetId: string, fields: RulesetFields): PropertiesWrite;
 }
 
 /** What a ruleset writes when a skill is saved or deleted: its fields, and the feat that's the skill's own. */
 export interface SkillsEffects {
-  /** The skill's own feat, deleted with the skill, unless a character picked it. */
-  deleteFeats(tx: Db, scope: RulesetScope, skillName: string): Promise<void>;
   /** The feat that's the skill's own (its Skill Focus), made with the skill. */
-  generateFeats(tx: Db, scope: RulesetScope, skillName: string): Promise<void>;
-  /** Stores the skill's fields as its properties, in place of those it stored before. */
-  syncProperties(tx: Db, skillId: string, fields: SkillFields): Promise<void>;
+  generatedFeats(skillName: string): GeneratedFeatsWrite;
+  /** The skill's fields, as the properties stored in place of those it stored before. */
+  properties(skillId: string, fields: SkillFields): PropertiesWrite;
+  /** The skill's own feat, removed with the skill (or its old name), unless a character picked it. */
+  removedFeat(skillName: string): GeneratedFeatRemoval;
 }

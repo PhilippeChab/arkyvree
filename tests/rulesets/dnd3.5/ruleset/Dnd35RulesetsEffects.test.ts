@@ -4,6 +4,7 @@ import { db } from "@/server/database/index.ts";
 import { Properties } from "@/server/repositories/index.ts";
 import { Dnd35RulesetsEffects } from "@/server/rulesets/dnd3.5/ruleset/Dnd35RulesetsEffects.ts";
 import { Dnd35RulesetsRules } from "@/server/rulesets/dnd3.5/ruleset/Dnd35RulesetsRules.ts";
+import { writeProperties } from "@/server/services/rulesets/effectWrites.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
@@ -22,10 +23,10 @@ describe("A ruleset's effects", () => {
     const effects = new Dnd35RulesetsEffects();
     const rules = new Dnd35RulesetsRules();
 
-    await effects.syncProperties(db, ruleset.id, { skillPointAbilityId: abilityMap.Wisdom });
+    await writeProperties(db, effects.properties(ruleset.id, { skillPointAbilityId: abilityMap.Wisdom }));
     expect(rules.readProperties(await readRuleset(ruleset.id))).toEqual({ skillPointAbilityId: abilityMap.Wisdom });
 
-    await effects.syncProperties(db, ruleset.id, { skillPointAbilityId: null });
+    await writeProperties(db, effects.properties(ruleset.id, { skillPointAbilityId: null }));
     expect((await readRuleset(ruleset.id)).map((property) => property.type)).toEqual(["SOMETHING_ELSE"]);
   });
 });
