@@ -1,7 +1,7 @@
+import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import type { Db } from "@/server/database/index.ts";
-import { ConflictError } from "@/server/errors/index.ts";
 import { Feats, FeatsAptitudes, Modifiers, Properties } from "@/server/repositories/index.ts";
 import { Dnd35LevelsRules } from "@/server/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
 import type { SkillFields, SkillsEffects } from "@/server/rulesets/engine/module/index.ts";
@@ -15,7 +15,7 @@ export class Dnd35SkillsEffects implements SkillsEffects {
     const feat = rulesetData.feats.find((f) => f.name === `Skill Focus: ${skillName}`);
     if (!feat) return;
     if (await hasCharacterPicks(tx, "feats", feat.id, ruleset.id))
-      throw new ConflictError("Cannot remove a Skill Focus feat in use by a character in this ruleset");
+      throw new RulesError("conflict", "Cannot remove a Skill Focus feat in use by a character in this ruleset");
 
     // Deleting the local COW copy leaves a tombstone snapshot: the obsolete
     // inherited feat disappears from this fork while its ancestor stays intact.

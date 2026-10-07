@@ -31,6 +31,17 @@ describe("rulesets aptitudes", () => {
     await expectStatus(aptitude.$get({ param }), 404);
   });
 
+  test("refuses renaming General, which the rules count on, as an unprocessable entity", async () => {
+    const { id } = await createSeededTestRuleset(SEED_USER_ID);
+    const list = await expectOk(aptitudes.$get({ param: { id }, query: { search: "General" } }));
+    const general = list.items.find((a) => a.name === "General");
+    const response = await expectStatus(
+      aptitude.$put({ param: { id, aptitudeId: general!.id }, json: { name: "General Feats" } }),
+      422,
+    );
+    expect(await response.json()).toMatchObject({ error: "UnprocessableEntityError", cause: "unprocessableEntity" });
+  });
+
   test("requires a session", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     await expectStatus(guestApi.api.rulesets[":id"].aptitudes.$get({ param: { id }, query: {} }), 401);

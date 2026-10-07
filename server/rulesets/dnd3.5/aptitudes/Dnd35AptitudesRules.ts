@@ -1,4 +1,4 @@
-import { UnprocessableEntityError } from "@/server/errors/index.ts";
+import RulesError from "@/engine/core/RulesError.ts";
 import { Dnd35LevelsRules } from "@/server/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
 import type { AptitudesRules } from "@/server/rulesets/engine/module/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -12,7 +12,8 @@ export class Dnd35AptitudesRules implements AptitudesRules {
     const slug = Dnd35LevelsRules.GENERAL_FEATS_APTITUDE_SLUG;
     if (stripSeparators(aptitude.name) !== slug) return;
     if (name !== undefined && stripSeparators(name) === slug) return;
-    throw new UnprocessableEntityError(
+    throw new RulesError(
+      "unprocessable",
       `${aptitude.name} is the aptitude a character's general feats count toward: it can be neither renamed nor deleted`,
     );
   }
