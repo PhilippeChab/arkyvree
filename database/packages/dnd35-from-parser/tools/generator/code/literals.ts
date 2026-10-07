@@ -34,11 +34,3 @@ export function listField(key: string, items: string[], prefix: string): string[
 export function quote(s: string): string {
   return `"${escapeString(s)}"`;
 }
-
-export function toConstName(name: string): string {
-  return name
-    .replace(/[()'']/g, "")
-    .replace(/[^a-zA-Z0-9]+/g, "_")
-    .replace(/^_|_$/g, "")
-    .toUpperCase();
-}

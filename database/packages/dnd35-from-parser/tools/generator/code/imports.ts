@@ -3,12 +3,41 @@
 /** Modules and the names a generated file can import from them, in the order its imports list them. */
 export type ImportTable = [string, string[]][];
 
-/** The requirement builders a generated file imports. */
-export const REQUIREMENT_IMPORTS: ImportTable = [
+/**
+ * Where each name a generated file's code can use comes from, in the order its imports list them: the requirement
+ * builders, the weapon lists and the item builders a feat template or an item is written with, the skills and schools
+ * a template is made over.
+ */
+export const IMPORT_TABLE: ImportTable = [
   [
     "@/database/packages/dnd35/content/customization/requirements.ts",
     ["and", "eq", "eqNum", "eqStr", "feat", "gte", "or"],
   ],
+  [
+    "@/database/packages/dnd35/content/items/weapons.ts",
+    ["ALL_WEAPONS", "SIMPLE_WEAPONS", "MARTIAL_WEAPONS", "EXOTIC_WEAPONS", "CROSSBOW_WEAPONS"],
+  ],
+  [
+    "@/database/packages/dnd35/content/items/proficiencies.ts",
+    [
+      "proficiencyRequirements",
+      "simple",
+      "martial",
+      "exotic",
+      "HEAVY_ARMOR_PROF",
+      "LIGHT_ARMOR_PROF",
+      "MEDIUM_ARMOR_PROF",
+      "SHIELD_PROF",
+      "TOWER_SHIELD_PROF",
+    ],
+  ],
+  [
+    "@/database/packages/dnd35/content/items/properties.ts",
+    ["weaponProperties", "armorProperties", "shieldProperties"],
+  ],
+  ["@/database/packages/dnd35/data/skills.ts", ["SKILL_NAMES"]],
+  ["@/shared/dnd3.5/spells.ts", ["MAGIC_SCHOOLS"]],
+  ["@/shared/text.ts", ["stripSeparators"]],
 ];
 
 /** Two names in lint's order, which ignores case (`sort-imports`, `member-order`). */

@@ -1,5 +1,5 @@
-import { generateClassFeatSeeds } from "@/database/packages/dnd35-from-parser/tools/generator/code/classFeatsFile.ts";
-import { ClassFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/ClassFile.ts";
+import { getClassFeatsFile } from "@/database/packages/dnd35-from-parser/tools/generator/bookLayout.ts";
+import { CodeFile } from "@/database/packages/dnd35-from-parser/tools/generator/code/CodeFile.ts";
 import ReferenceLoader from "@/database/packages/dnd35-from-parser/tools/references/ReferenceLoader.ts";
 import { type StoredReference } from "@/database/packages/dnd35-from-parser/tools/references/resolve.ts";
 import Library from "@/database/packages/dnd35-from-parser/tools/seeds/Library.ts";
@@ -17,14 +17,22 @@ function alike(a: unknown, b: unknown) {
   return JSON.stringify(normal(a)) === JSON.stringify(normal(b));
 }
 
-/** What the generator writes for a class (what's left to review in it, its class file and its feats file), or why it refuses the class. */
+/**
+ * What the generator writes for a class (what's left to review in it, its class file and its feats file), or why it
+ * refuses the class.
+ */
 function generated(ref: ClassReference): string | Error {
   try {
-    return [
-      ...getClassReviewNotes(ref),
-      new ClassFile(Library.book(ref._meta.book).classSeed(ref)).classCode(),
-      generateClassFeatSeeds(ref),
-    ].join("\n");
+    const seeds = Library.book(ref._meta.book);
+    const classFile = new CodeFile();
+    classFile.classSeed(seeds.classSeed(ref));
+    const featsFile = new CodeFile();
+    featsFile.list(
+      getClassFeatsFile(ref.raw.name).list,
+      "FeatSeed",
+      seeds.classFeatSeeds(ref).flatMap((feat) => featsFile.feat(feat)),
+    );
+    return [...getClassReviewNotes(ref), classFile.code(), featsFile.code()].join("\n");
   } catch (error) {
     return error instanceof Error ? error : new Error(String(error));
   }

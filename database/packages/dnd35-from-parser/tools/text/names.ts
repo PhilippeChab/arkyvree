@@ -50,3 +50,12 @@ export function toCamelCase(name: string): string {
     .map((word, i) => (i === 0 ? word.toLowerCase() : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()))
     .join("");
 }
+
+/** A name as a constant's: "Arcane Archer" → "ARCANE_ARCHER". */
+export function toConstName(name: string): string {
+  return name
+    .replace(/[()'']/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, "_")
+    .replace(/^_|_$/g, "")
+    .toUpperCase();
+}
