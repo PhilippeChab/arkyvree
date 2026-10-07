@@ -1,9 +1,9 @@
-import { Button, DialogActions, DialogContent, DialogTitle, Stack, Typography } from "@mui/material";
+import { DialogContent, DialogTitle, Stack, Typography } from "@mui/material";
 import { useMutation } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useState } from "react";
 
-import { AnimatedAlert, DiceSpinner, FormDialog, FormTextField } from "@/client/src/components/common/index.ts";
+import { AnimatedAlert, DialogFooter, FormDialog, FormTextField } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
@@ -60,9 +60,7 @@ export function DeleteAccountDialog({ open, onClose, hasPassword }: DeleteAccoun
     deleteMutation.mutate(hasPassword ? data.password : undefined);
   };
 
-  const isSubmitDisabled = hasPassword
-    ? deleteMutation.isPending || !password
-    : deleteMutation.isPending || confirmText !== "DELETE";
+  const isConfirmed = hasPassword ? !!password : confirmText === "DELETE";
 
   return (
     <FormDialog open={open} onClose={handleClose} form={form} isLoading={deleteMutation.isPending} maxWidth="xs">
@@ -102,16 +100,11 @@ export function DeleteAccountDialog({ open, onClose, hasPassword }: DeleteAccoun
             )}
           </Stack>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose} disabled={deleteMutation.isPending} variant="outlined" color="inherit">
-            Cancel
-          </Button>
-          <Button type="submit" variant="contained" color="error" disabled={isSubmitDisabled}>
-            <DiceSpinner size="small" loading={deleteMutation.isPending}>
-              Delete Account
-            </DiceSpinner>
-          </Button>
-        </DialogActions>
+        <DialogFooter
+          onCancel={handleClose}
+          pending={deleteMutation.isPending}
+          action={{ label: "Delete Account", color: "error", disabled: !isConfirmed }}
+        />
       </form>
     </FormDialog>
   );

@@ -71,9 +71,7 @@ export default function CharactersPage() {
 
   const prefetchCharacter = (id: string) => void queryClient.prefetchQuery(characterDetailQuery(id));
 
-  const createButton = (label: string) => (
-    <PageActionButton onClick={() => setCreateModalOpen(true)}>{label}</PageActionButton>
-  );
+  const createButton = (label: string) => <PageActionButton label={label} onClick={() => setCreateModalOpen(true)} />;
 
   const viewActiveButton = (
     <Button variant="outlined" onClick={() => updateSearchParams({ view: null })}>

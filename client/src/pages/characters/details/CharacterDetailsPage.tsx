@@ -1,7 +1,7 @@
 import { Alert, Container, IconButton, Menu, Paper, Stack, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
-import { type MouseEvent, useState } from "react";
+import { useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { CharacterDetailSkeleton, CharacterSheetBody } from "@/client/src/components/characters/index.ts";
@@ -26,7 +26,7 @@ import {
   UnarchiveIcon,
 } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useDemoTimeRemaining, usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
+import { useAnchorMenu, useDemoTimeRemaining, usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { characterDetailQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -46,7 +46,7 @@ export default function CharacterDetailsPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { id = "" } = useParams<{ id: string }>();
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const menu = useAnchorMenu();
   const [isConfirmOpen, setConfirmOpen] = useState(false);
   const [isArchiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
   const [isHardDeleteConfirmOpen, setHardDeleteConfirmOpen] = useState(false);
@@ -74,18 +74,6 @@ export default function CharacterDetailsPage() {
   const closeAddLevel = () => {
     setAddLevelOpen(false);
     if (location.state?.openLevelUp) navigate(location.pathname, { replace: true, state: {} });
-  };
-
-  const handleClick = (event: MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-  const closeMenuAnd = (then: () => void) => () => {
-    handleClose();
-    then();
   };
 
   const invalidateCharacter = () =>
@@ -183,16 +171,16 @@ export default function CharacterDetailsPage() {
 
               {!(isBonded && isArchived) && (
                 <Stack direction="row" spacing={1}>
-                  <IconButton aria-label="More actions" onClick={handleClick} sx={{ color: "text.secondary" }}>
+                  <IconButton aria-label="More actions" onClick={menu.openMenu} sx={{ color: "text.secondary" }}>
                     <MoreVertIcon />
                   </IconButton>
-                  <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
+                  <Menu anchorEl={menu.anchorEl} open={menu.open} onClose={menu.closeMenu}>
                     {isBonded ? (
                       <ActionMenuItem
                         key="download-pdf"
                         icon={DownloadIcon}
                         label="Download PDF"
-                        onClick={closeMenuAnd(() => pdfExport.mutate())}
+                        onClick={menu.closeMenuAnd(() => pdfExport.mutate())}
                       />
                     ) : isArchived ? (
                       [
@@ -202,7 +190,7 @@ export default function CharacterDetailsPage() {
                             icon={UnarchiveIcon}
                             label="Unarchive"
                             intent="positive"
-                            onClick={closeMenuAnd(() => unarchiveMutation.mutate())}
+                            onClick={menu.closeMenuAnd(() => unarchiveMutation.mutate())}
                           />
                         ),
                         !isDemo && (
@@ -210,7 +198,7 @@ export default function CharacterDetailsPage() {
                             key="contributors"
                             icon={GroupIcon}
                             label="Contributors"
-                            onClick={closeMenuAnd(() => setContributorsOpen(true))}
+                            onClick={menu.closeMenuAnd(() => setContributorsOpen(true))}
                           />
                         ),
                         isOwner && (
@@ -219,7 +207,7 @@ export default function CharacterDetailsPage() {
                             icon={DeleteForeverIcon}
                             label="Delete permanently"
                             intent="destructive"
-                            onClick={closeMenuAnd(() => setHardDeleteConfirmOpen(true))}
+                            onClick={menu.closeMenuAnd(() => setHardDeleteConfirmOpen(true))}
                           />
                         ),
                       ]
@@ -229,32 +217,32 @@ export default function CharacterDetailsPage() {
                           key="add-level"
                           icon={AddIcon}
                           label="Add Level"
-                          onClick={closeMenuAnd(() => setAddLevelOpen(true))}
+                          onClick={menu.closeMenuAnd(() => setAddLevelOpen(true))}
                         />,
                         <ActionMenuItem
                           key="remove-level"
                           icon={RemoveIcon}
                           label="Remove Level"
-                          onClick={closeMenuAnd(() => setConfirmOpen(true))}
+                          onClick={menu.closeMenuAnd(() => setConfirmOpen(true))}
                         />,
                         <ActionMenuItem
                           key="manage-modifiers"
                           icon={TuneIcon}
                           label="Manage Modifiers"
-                          onClick={closeMenuAnd(() => setModifiersOpen(true))}
+                          onClick={menu.closeMenuAnd(() => setModifiersOpen(true))}
                         />,
                         <ActionMenuItem
                           key="download-pdf"
                           icon={DownloadIcon}
                           label="Download PDF"
-                          onClick={closeMenuAnd(() => pdfExport.mutate())}
+                          onClick={menu.closeMenuAnd(() => pdfExport.mutate())}
                         />,
                         !isDemo && (
                           <ActionMenuItem
                             key="contributors"
                             icon={GroupIcon}
                             label="Contributors"
-                            onClick={closeMenuAnd(() => setContributorsOpen(true))}
+                            onClick={menu.closeMenuAnd(() => setContributorsOpen(true))}
                           />
                         ),
                         isOwner && !isDemo && (
@@ -262,7 +250,7 @@ export default function CharacterDetailsPage() {
                             key="share"
                             icon={ShareIcon}
                             label="Share"
-                            onClick={closeMenuAnd(() => setShareOpen(true))}
+                            onClick={menu.closeMenuAnd(() => setShareOpen(true))}
                           />
                         ),
                         isOwner && (
@@ -271,7 +259,7 @@ export default function CharacterDetailsPage() {
                             icon={ArchiveIcon}
                             label="Archive"
                             intent="caution"
-                            onClick={closeMenuAnd(() => setArchiveConfirmOpen(true))}
+                            onClick={menu.closeMenuAnd(() => setArchiveConfirmOpen(true))}
                           />
                         ),
                       ]

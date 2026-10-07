@@ -1,17 +1,7 @@
-import {
-  Autocomplete,
-  Button,
-  Chip,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Stack,
-  TextField,
-} from "@mui/material";
+import { Autocomplete, Chip, DialogContent, DialogContentText, DialogTitle, Stack, TextField } from "@mui/material";
 import { useMemo, useState } from "react";
 
-import { DiceSpinner, Modal, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
+import { DialogFooter, Modal, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
 import { ExtensionIcon } from "@/client/src/components/icons/index.ts";
 import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
 import { type RulesetListItem, rulesetPickerQuery } from "@/client/src/lib/queries.ts";
@@ -91,22 +81,16 @@ function SubscribeExtensionForm({
           />
         </Stack>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={isLoading} variant="outlined" color="inherit">
-          Cancel
-        </Button>
-        <Button
-          onClick={() => selected.length > 0 && onConfirm(selected.map((s) => s.id))}
-          variant="contained"
-          disabled={selected.length === 0 || isLoading}
-          startIcon={<ExtensionIcon />}
-        >
-          <DiceSpinner
-            size="small"
-            loading={isLoading}
-          >{`Subscribe${selected.length > 1 ? ` (${selected.length})` : ""}`}</DiceSpinner>
-        </Button>
-      </DialogActions>
+      <DialogFooter
+        onCancel={onClose}
+        pending={isLoading}
+        action={{
+          label: `Subscribe${selected.length > 1 ? ` (${selected.length})` : ""}`,
+          onClick: () => selected.length > 0 && onConfirm(selected.map((s) => s.id)),
+          icon: <ExtensionIcon />,
+          disabled: selected.length === 0,
+        }}
+      />
     </>
   );
 }

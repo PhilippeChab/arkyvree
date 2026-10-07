@@ -1,10 +1,8 @@
 import {
   Alert,
   Box,
-  Button,
   Chip,
   Container,
-  DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
@@ -23,6 +21,7 @@ import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import {
   ActionMenuItem,
   DetailPageHeader,
+  DialogFooter,
   DiceSpinner,
   HelpLabel,
   Modal,
@@ -56,7 +55,7 @@ import {
   StarIcon,
   UnarchiveIcon,
 } from "@/client/src/components/icons/index.ts";
-import { usePageTitle, useSearchParam } from "@/client/src/hooks/index.ts";
+import { useAnchorMenu, usePageTitle, useSearchParam } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
@@ -171,13 +170,9 @@ export default function RulesetDetailsPage() {
   const { value: childOnlyParam, setValue: setChildOnlyParam } = useSearchParam("childOnly");
   const childOnly = childOnlyParam ? childOnlyParam === "true" : isExtension;
   const setChildOnly = (value: boolean) => setChildOnlyParam(value ? "true" : "false");
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const closeMenuAnd = (then: () => void) => () => {
-    setAnchorEl(null);
-    then();
-  };
-  const [extensionsAnchor, setExtensionsAnchor] = useState<null | HTMLElement>(null);
-  if (!subscribedExtensions?.length && extensionsAnchor !== null) setExtensionsAnchor(null);
+  const menu = useAnchorMenu();
+  const extensionsMenu = useAnchorMenu();
+  if (!subscribedExtensions?.length && extensionsMenu.open) extensionsMenu.closeMenu();
 
   const { isOwner, isContributor, canEditRuleset, canPublish } = useRulesetPermissions(ruleset);
   const isFork = !!ruleset?.rulesetId && !isExtension;
@@ -272,7 +267,8 @@ export default function RulesetDetailsPage() {
                 <IconButton
                   onClick={() => toggleStar(ruleset.id, ruleset.isStarred)}
                   size="small"
-                  aria-label={ruleset.isStarred ? "Unstar ruleset" : "Star ruleset"}
+                  aria-label="Star ruleset"
+                  aria-pressed={ruleset.isStarred}
                   sx={{
                     flexShrink: 0,
                     p: 0,
@@ -285,7 +281,7 @@ export default function RulesetDetailsPage() {
               )
             }
             onBack={() => navigate("/rulesets")}
-            onMenuOpen={hasMenuItems ? (e) => setAnchorEl(e.currentTarget) : undefined}
+            onMenuOpen={hasMenuItems ? menu.openMenu : undefined}
             chips={
               <>
                 {getStatusChip(ruleset.status)}
@@ -331,13 +327,13 @@ export default function RulesetDetailsPage() {
                       color={subscribedExtensions.some((ext) => ext.updateAvailable) ? "warning" : "default"}
                       variant="outlined"
                       clickable
-                      onClick={(e) => setExtensionsAnchor(e.currentTarget)}
+                      onClick={extensionsMenu.openMenu}
                       sx={{ fontWeight: 500 }}
                     />
                     <Popover
-                      open={Boolean(extensionsAnchor)}
-                      anchorEl={extensionsAnchor}
-                      onClose={() => setExtensionsAnchor(null)}
+                      open={extensionsMenu.open}
+                      anchorEl={extensionsMenu.anchorEl}
+                      onClose={extensionsMenu.closeMenu}
                       anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
                       transformOrigin={{ vertical: "top", horizontal: "center" }}
                     >
@@ -413,9 +409,9 @@ export default function RulesetDetailsPage() {
         </Stack>
 
         <Menu
-          anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
-          onClose={() => setAnchorEl(null)}
+          anchorEl={menu.anchorEl}
+          open={menu.open}
+          onClose={menu.closeMenu}
           slotProps={{ paper: { sx: { minWidth: 200 } } }}
         >
           {ruleset.status === "Published" && !isExtension && !isFork && (
@@ -423,7 +419,7 @@ export default function RulesetDetailsPage() {
               icon={ForkIcon}
               label="Fork"
               description="Create your own editable copy"
-              onClick={closeMenuAnd(() => handleFork(ruleset))}
+              onClick={menu.closeMenuAnd(() => handleFork(ruleset))}
             />
           )}
           {!!ruleset.rulesetId && (
@@ -431,7 +427,7 @@ export default function RulesetDetailsPage() {
               icon={CompareArrowsIcon}
               label="Local changes"
               description="View added, modified, and deleted entities"
-              onClick={closeMenuAnd(() => setOverridesDialogOpen(true))}
+              onClick={menu.closeMenuAnd(() => setOverridesDialogOpen(true))}
             />
           )}
           {isOwner &&
@@ -443,7 +439,7 @@ export default function RulesetDetailsPage() {
                 icon={ExtensionIcon}
                 label="Subscribe"
                 description="Add content from a sourcebook"
-                onClick={closeMenuAnd(() => handleSubscribe(ruleset))}
+                onClick={menu.closeMenuAnd(() => handleSubscribe(ruleset))}
               />
             )}
           {showContributorsMenu && (
@@ -451,7 +447,7 @@ export default function RulesetDetailsPage() {
               icon={GroupIcon}
               label="Contributors"
               description="Admin, Editor, Viewer"
-              onClick={closeMenuAnd(() => setContributorsDialogOpen(true))}
+              onClick={menu.closeMenuAnd(() => setContributorsDialogOpen(true))}
             />
           )}
           {isOwner &&
@@ -464,7 +460,7 @@ export default function RulesetDetailsPage() {
                 href={EXTERNAL_LINKS.help}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={() => setAnchorEl(null)}
+                onClick={menu.closeMenu}
                 sx={{ justifyContent: "center" }}
               >
                 <Typography variant="caption" sx={{ color: "text.secondary" }}>
@@ -478,7 +474,7 @@ export default function RulesetDetailsPage() {
                 key="edit"
                 icon={EditIcon}
                 label="Edit"
-                onClick={closeMenuAnd(() => handleEdit(ruleset))}
+                onClick={menu.closeMenuAnd(() => handleEdit(ruleset))}
               />,
               canPublish && ruleset.status === "Draft" && (
                 <ActionMenuItem
@@ -486,7 +482,7 @@ export default function RulesetDetailsPage() {
                   icon={PublishIcon}
                   label="Publish"
                   intent="positive"
-                  onClick={closeMenuAnd(() => handlePublish(ruleset))}
+                  onClick={menu.closeMenuAnd(() => handlePublish(ruleset))}
                 />
               ),
               <ActionMenuItem
@@ -494,7 +490,7 @@ export default function RulesetDetailsPage() {
                 icon={ArchiveIcon}
                 label="Archive"
                 intent="caution"
-                onClick={closeMenuAnd(() => handleArchive(ruleset))}
+                onClick={menu.closeMenuAnd(() => handleArchive(ruleset))}
               />,
             ]}
           {isOwner && ruleset.status === "Archived" && (
@@ -502,7 +498,7 @@ export default function RulesetDetailsPage() {
               icon={UnarchiveIcon}
               label="Unarchive"
               intent="positive"
-              onClick={closeMenuAnd(() => unarchiveMutation.mutate(ruleset.id))}
+              onClick={menu.closeMenuAnd(() => unarchiveMutation.mutate(ruleset.id))}
             />
           )}
         </Menu>
@@ -599,11 +595,7 @@ export default function RulesetDetailsPage() {
           <DialogContent>
             <ContributorsSection ruleset={ruleset} onLeave={() => navigate("/rulesets")} />
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setContributorsDialogOpen(false)} variant="outlined" color="inherit">
-              Close
-            </Button>
-          </DialogActions>
+          <DialogFooter onCancel={() => setContributorsDialogOpen(false)} cancelLabel="Close" />
         </Modal>
       </Container>
     </PageTransition>

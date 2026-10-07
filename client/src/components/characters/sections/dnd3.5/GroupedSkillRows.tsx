@@ -68,7 +68,8 @@ export function GroupedSkillRows<S extends { name: string }>({
             <TableCell align="center">
               <IconButton
                 size="small"
-                aria-label={`${isExpanded ? "Hide" : "Show"} ${row.prefix} skills`}
+                aria-label={`${row.prefix} skills`}
+                aria-expanded={isExpanded}
                 sx={{
                   transition: transitionOf(["transform"], DURATION.brisk),
                   transform: isExpanded ? "rotate(0deg)" : "rotate(-90deg)",

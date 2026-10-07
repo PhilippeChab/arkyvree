@@ -1,4 +1,6 @@
-import { Link as MuiLink, Typography } from "@mui/material";
+import { Typography } from "@mui/material";
+
+import { LinkButton } from "@/client/src/components/common/index.ts";
 
 interface ResendCodeLinkProps {
   onResend: () => void;
@@ -10,16 +12,9 @@ export function ResendCodeLink({ onResend, disabled }: ResendCodeLinkProps) {
   return (
     <Typography variant="body2">
       Didn't receive the code?{" "}
-      <MuiLink
-        component="button"
-        type="button"
-        underline="hover"
-        onClick={onResend}
-        disabled={disabled}
-        sx={{ verticalAlign: "baseline", font: "inherit" }}
-      >
+      <LinkButton onClick={onResend} disabled={disabled} sx={{ verticalAlign: "baseline", font: "inherit" }}>
         Resend
-      </MuiLink>
+      </LinkButton>
     </Typography>
   );
 }

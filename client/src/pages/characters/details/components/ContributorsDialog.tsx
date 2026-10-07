@@ -1,28 +1,21 @@
-import {
-  Button,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  Stack,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Button, DialogContent, DialogTitle, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
+  AddButton,
   BlankState,
   ConfirmDialog,
+  DialogFooter,
   DiceSpinner,
   LoadError,
   LoadMoreButton,
   Modal,
 } from "@/client/src/components/common/index.ts";
 import { ContributorsTable, InviteContributorDialog } from "@/client/src/components/contributors/index.ts";
-import { AddIcon, ContributorsIcon, DeleteIcon, LeaveIcon } from "@/client/src/components/icons/index.ts";
+import { ContributorsIcon, DeleteIcon, LeaveIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { firstPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -109,9 +102,7 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
                 Contributors can edit this character and download its PDF.
               </Typography>
               {canInvite ? (
-                <Button variant="contained" startIcon={<AddIcon />} onClick={() => setInviteOpen(true)}>
-                  Invite
-                </Button>
+                <AddButton label="Invite" onClick={() => setInviteOpen(true)} />
               ) : !isOwner ? (
                 <Button
                   variant="outlined"
@@ -141,9 +132,7 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
                   }
                   action={
                     canInvite ? (
-                      <Button variant="outlined" startIcon={<AddIcon />} onClick={() => setInviteOpen(true)}>
-                        Invite a Contributor
-                      </Button>
+                      <AddButton variant="outlined" label="Invite a Contributor" onClick={() => setInviteOpen(true)} />
                     ) : undefined
                   }
                 />
@@ -179,11 +168,7 @@ export function ContributorsDialog({ open, onClose, characterId, isOwner, isArch
             </Stack>
           </Stack>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={onClose} variant="outlined" color="inherit">
-            Close
-          </Button>
-        </DialogActions>
+        <DialogFooter onCancel={onClose} cancelLabel="Close" />
       </Modal>
 
       <InviteContributorDialog

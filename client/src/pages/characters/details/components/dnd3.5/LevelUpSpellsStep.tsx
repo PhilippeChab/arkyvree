@@ -8,15 +8,21 @@ import {
   Skeleton,
   Stack,
   TextField,
-  Tooltip,
   Typography,
 } from "@mui/material";
 import { useController } from "react-hook-form";
 
-import { DiceSpinner, LoadError, NoMatchesState } from "@/client/src/components/common/index.ts";
+import {
+  ChoiceChip,
+  DiceSpinner,
+  LoadError,
+  NextPageSpinner,
+  NoMatchesState,
+} from "@/client/src/components/common/index.ts";
 
 import { type PowerAptitudePool, withoutPick } from "./levelUp/index.ts";
 import type { LevelUpPowersStepProps } from "./levelUpFactory.ts";
+import { OptionTooltip } from "./OptionTooltip.tsx";
 
 export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
   const {
@@ -128,11 +134,10 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
                           const levelLabel = level === "0" ? "Cantrips" : `Level ${level}`;
 
                           return (
-                            <Chip
+                            <ChoiceChip
                               key={`${pool.id}-${level}`}
                               label={`${pool.name} - ${levelLabel} ${powersInLevel}/${levelAvailable}`}
-                              variant={isSelected ? "filled" : "outlined"}
-                              color={isSelected ? "primary" : "default"}
+                              selected={isSelected}
                               onClick={() => openPool(pool.id, Number(level))}
                             />
                           );
@@ -145,11 +150,10 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
                     const isSelected = selectedPowerAptitude === pool.id && selectedPowerLevel === null;
 
                     return [
-                      <Chip
+                      <ChoiceChip
                         key={pool.id}
                         label={`${pool.name} ${currentPoolPowers.length}/${poolAvailable}`}
-                        variant={isSelected ? "filled" : "outlined"}
-                        color={isSelected ? "primary" : "default"}
+                        selected={isSelected}
                         onClick={() => openPool(pool.id, null)}
                       />,
                     ];
@@ -196,27 +200,14 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
                 <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
                   {levelPowers.length > 0
                     ? levelPowers.map((power) => (
-                        <Tooltip
-                          describeChild
-                          key={power.id}
-                          title={
-                            power.description
-                              ? power.description.length > 200
-                                ? `${power.description.slice(0, 200)}…`
-                                : power.description
-                              : ""
-                          }
-                          placement="right"
-                          enterDelay={300}
-                          arrow
-                        >
+                        <OptionTooltip key={power.id} description={power.description} maxLength={200}>
                           <Chip
                             label={power.name}
                             onDelete={() =>
                               powers.onChange(withoutPick(selectedPowers, selectedPowerAptitude, power.id))
                             }
                           />
-                        </Tooltip>
+                        </OptionTooltip>
                       ))
                     : Array.from({ length: poolAvailable }, (_, i) => (
                         <Skeleton key={i} variant="rounded" width={100} height={32} />
@@ -242,14 +233,7 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
                   ) : (
                     <List dense sx={{ flex: 1, minHeight: 0, overflow: "auto" }} onScroll={handlePowersScroll}>
                       {pickablePowers.map((power) => (
-                        <Tooltip
-                          describeChild
-                          key={power.id}
-                          title={power.description ?? ""}
-                          placement="right"
-                          enterDelay={300}
-                          arrow
-                        >
+                        <OptionTooltip key={power.id} description={power.description}>
                           <span>
                             <ListItemButton
                               disabled={!power.eligible}
@@ -271,13 +255,9 @@ export function LevelUpSpellsStep({ wizard }: LevelUpPowersStepProps) {
                               <ListItemText primary={power.name} />
                             </ListItemButton>
                           </span>
-                        </Tooltip>
+                        </OptionTooltip>
                       ))}
-                      {isFetchingNextPowersPage && (
-                        <Stack direction="row" sx={{ justifyContent: "center", py: 1 }}>
-                          <DiceSpinner size="small" />
-                        </Stack>
-                      )}
+                      <NextPageSpinner loading={isFetchingNextPowersPage} />
                     </List>
                   )}
                 </Stack>

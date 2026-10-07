@@ -1,10 +1,13 @@
 export { ActionMenuItem } from "./ActionMenuItem.tsx";
+export { AddButton } from "./AddButton.tsx";
 export { AnimatedAlert } from "./AnimatedAlert.tsx";
 export { AttachmentField } from "./AttachmentField.tsx";
 export { BlankState, NoMatchesState } from "./BlankState.tsx";
+export { ChoiceChip } from "./ChoiceChip.tsx";
 export { CLICKABLE_SX, clickableProps } from "./clickable.ts";
 export { Crossfade } from "./Crossfade.tsx";
 export { DetailPageHeader, SectionContent, SectionTabs, type SectionTab } from "./DetailPageHeader.tsx";
+export { DialogFooter } from "./DialogFooter.tsx";
 export { DiceSpinner } from "./DiceSpinner.tsx";
 export {
   DescriptionField,
@@ -18,6 +21,7 @@ export {
 export { ErrorBoundary } from "./ErrorBoundary.tsx";
 export { FormDialog } from "./FormDialog.tsx";
 export { InfoPill } from "./InfoPill.tsx";
+export { LinkButton } from "./LinkButton.tsx";
 export { ListCard, ListCardGrid } from "./ListCard.tsx";
 export { LoadError } from "./LoadError.tsx";
 export { LoadMoreButton } from "./LoadMoreButton.tsx";
@@ -26,6 +30,7 @@ export { faqTooltip } from "./faqTooltip.tsx";
 export { FaqHelpIcon } from "./FaqHelpIcon.tsx";
 export { HelpLabel } from "./HelpLabel.tsx";
 export { GoldDivider } from "./GoldDivider.tsx";
+export { NextPageSpinner } from "./NextPageSpinner.tsx";
 export { PageActionButton } from "./PageActionButton.tsx";
 export { PageError } from "./PageError.tsx";
 export { PageHeader } from "./PageHeader.tsx";

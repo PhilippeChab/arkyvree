@@ -69,8 +69,12 @@ interface SelectFieldProps<T extends FieldValues> {
   /** The choices; a plain string is both value and label. */
   options: readonly SelectOption[];
   rules?: ControllerProps<T>["rules"];
-  /** A first choice for no value ("None"); picking it stores null. */
+  /** A first choice for no value ("None"); picking it stores `emptyValue`. */
   emptyLabel?: string;
+  /** What the first choice stores: null by default, or the empty value the field keeps (`""`). */
+  emptyValue?: string | null;
+  /** What follows from a pick, in the same event: the fields that depended on the old value reset. */
+  onChange?: (value: SelectValue | null) => void;
   /** Shown under it while its value has no error. */
   helperText?: ReactNode;
   disabled?: boolean;
@@ -80,7 +84,10 @@ interface SelectFieldProps<T extends FieldValues> {
   onMenuScroll?: UIEventHandler<HTMLElement>;
 }
 
-type SelectOption = string | { value: string; label: ReactNode; disabled?: boolean };
+type SelectOption = string | { value: SelectValue; label: ReactNode; disabled?: boolean };
+
+/** What a select's choice holds: a word, or a number (a hit die) */
+type SelectValue = string | number;
 
 interface SwitchFieldProps<T extends FieldValues> extends BoundFieldProps<T> {
   label: string;
@@ -188,6 +195,8 @@ export function SelectField<T extends FieldValues>({
   options,
   rules,
   emptyLabel,
+  emptyValue = null,
+  onChange,
   helperText,
   disabled,
   size,
@@ -209,7 +218,11 @@ export function SelectField<T extends FieldValues>({
           fullWidth
           label={label}
           value={choices.some((choice) => choice.value === field.value) ? field.value : ""}
-          onChange={(event) => field.onChange(emptyLabel && !event.target.value ? null : event.target.value)}
+          onChange={(event) => {
+            const value = emptyLabel && event.target.value === "" ? emptyValue : event.target.value;
+            field.onChange(value);
+            onChange?.(value);
+          }}
           error={!!fieldState.error}
           helperText={fieldState.error?.message ?? helperText}
           disabled={disabled}

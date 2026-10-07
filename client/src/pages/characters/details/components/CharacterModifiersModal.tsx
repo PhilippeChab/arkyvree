@@ -1,5 +1,4 @@
 import {
-  Button,
   Chip,
   DialogContent,
   IconButton,
@@ -18,6 +17,7 @@ import { type InferResponseType, parseResponse } from "hono/client";
 import { useState } from "react";
 
 import {
+  AddButton,
   BlankState,
   CreateDialog,
   DeleteDialog,
@@ -34,14 +34,7 @@ import {
   type ModifierFormData,
   TargetPathBreadcrumbs,
 } from "@/client/src/components/customization/index.ts";
-import {
-  AddIcon,
-  CloseIcon,
-  ContentCopyIcon,
-  DeleteIcon,
-  EditIcon,
-  TuneIcon,
-} from "@/client/src/components/icons/index.ts";
+import { CloseIcon, ContentCopyIcon, DeleteIcon, EditIcon, TuneIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
 import { MODIFIER_OPERATOR_LABELS } from "@/client/src/lib/operatorLabels.ts";
@@ -183,9 +176,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
             />
           </Stack>
           <Stack direction="row" spacing={1}>
-            <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={handleAdd}>
-              Add
-            </Button>
+            <AddButton size="small" label="Add" onClick={handleAdd} />
             <IconButton aria-label="Close" onClick={onClose}>
               <CloseIcon />
             </IconButton>

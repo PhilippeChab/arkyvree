@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 
 import { NotificationsIcon } from "@/client/src/components/icons/index.ts";
 import { InviteActionButtons } from "@/client/src/components/invites/index.ts";
-import { useNotificationActions } from "@/client/src/hooks/index.ts";
+import { useAnchorMenu, useNotificationActions } from "@/client/src/hooks/index.ts";
 import { formatActivityDetails, formatNotificationMessage } from "@/client/src/lib/activityFormatters.ts";
 import { ONE_MINUTE } from "@/client/src/lib/durations.ts";
 import { formatRelativeTime } from "@/client/src/lib/formatDate.ts";
@@ -33,7 +33,7 @@ function NotificationSummary({ notification }: NotificationSummaryProps) {
 }
 
 export function NotificationBell() {
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const menu = useAnchorMenu();
   const navigate = useNavigate();
   const actions = useNotificationActions();
 
@@ -55,17 +55,12 @@ export function NotificationBell() {
     prevCountRef.current = unreadCount;
   }, [unreadCount, unreadData]);
 
-  const closeAnd = (then: () => void) => {
-    setAnchorEl(null);
-    then();
-  };
-
   return (
     <>
       <IconButton
         size="large"
         color="inherit"
-        onClick={(e) => setAnchorEl(e.currentTarget)}
+        onClick={menu.openMenu}
         aria-label={formatCount(unreadCount, "unread notification")}
         sx={{ animation: shake ? ANIMATIONS.bellShake : undefined, [PREFERS_REDUCED_MOTION]: { animation: "none" } }}
         onAnimationEnd={() => setShake(false)}
@@ -75,9 +70,9 @@ export function NotificationBell() {
         </Badge>
       </IconButton>
       <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={() => setAnchorEl(null)}
+        anchorEl={menu.anchorEl}
+        open={menu.open}
+        onClose={menu.closeMenu}
         slotProps={{
           paper: {
             sx: { width: { xs: "90vw", sm: 450 }, maxHeight: 480 },
@@ -102,7 +97,7 @@ export function NotificationBell() {
               </Typography>
               <Button
                 size="small"
-                onClick={() => actions.markAllRead.mutate(undefined, { onSuccess: () => setAnchorEl(null) })}
+                onClick={() => actions.markAllRead.mutate(undefined, { onSuccess: menu.closeMenu })}
                 disabled={actions.markAllRead.isPending}
               >
                 Mark all read
@@ -114,7 +109,7 @@ export function NotificationBell() {
                 <Stack key={notification.id} spacing={1} sx={{ px: 2, py: 1.5 }}>
                   <NotificationSummary notification={notification} />
                   <InviteActionButtons
-                    onAccept={() => actions.accept(notification, (path) => closeAnd(() => navigate(path)))}
+                    onAccept={() => actions.accept(notification, (path) => menu.closeMenuAnd(() => navigate(path))())}
                     onReject={() => actions.reject(notification)}
                     disabled={actions.isAnswering(notification)}
                   />
@@ -130,7 +125,7 @@ export function NotificationBell() {
                   slotProps={{ tooltip: { sx: { whiteSpace: "pre-line" } } }}
                 >
                   <MenuItem
-                    onClick={() => closeAnd(() => actions.open(notification))}
+                    onClick={menu.closeMenuAnd(() => actions.open(notification))}
                     sx={{ py: 1.5, whiteSpace: "normal" }}
                   >
                     <NotificationSummary notification={notification} />
@@ -141,7 +136,7 @@ export function NotificationBell() {
             <Divider key="divider-bottom" />,
             <MenuItem
               key="view-all"
-              onClick={() => closeAnd(() => navigate("/notifications"))}
+              onClick={menu.closeMenuAnd(() => navigate("/notifications"))}
               sx={{ justifyContent: "center" }}
             >
               <Typography variant="body2" sx={{ color: "primary.main" }}>

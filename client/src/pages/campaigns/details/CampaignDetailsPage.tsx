@@ -24,7 +24,7 @@ import {
   UnarchiveIcon,
 } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
+import { useAnchorMenu, useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { accessLost, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { campaignDetailQuery } from "@/client/src/lib/queries.ts";
@@ -66,7 +66,7 @@ export default function CampaignDetailsPage() {
 
   usePageTitle(campaign?.name);
 
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const menu = useAnchorMenu();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const [hardDeleteDialogOpen, setHardDeleteDialogOpen] = useState(false);
@@ -142,11 +142,6 @@ export default function CampaignDetailsPage() {
     );
   }
 
-  const closeMenuAnd = (then: () => void) => () => {
-    setAnchorEl(null);
-    then();
-  };
-
   return (
     <PageTransition>
       <Container maxWidth="xl" sx={{ py: 4 }}>
@@ -154,7 +149,7 @@ export default function CampaignDetailsPage() {
           <DetailPageHeader
             title={`⚔️ ${campaign.name}`}
             onBack={() => navigate("/campaigns")}
-            onMenuOpen={canEdit ? (e) => setAnchorEl(e.currentTarget) : undefined}
+            onMenuOpen={canEdit ? menu.openMenu : undefined}
             chips={
               <>
                 <Chip label={formatCount(campaign.currentPlayers, "player")} color="primary" sx={{ fontWeight: 600 }} />
@@ -196,9 +191,9 @@ export default function CampaignDetailsPage() {
         </Stack>
 
         <Menu
-          anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
-          onClose={() => setAnchorEl(null)}
+          anchorEl={menu.anchorEl}
+          open={menu.open}
+          onClose={menu.closeMenu}
           slotProps={{ paper: { sx: { minWidth: 200 } } }}
         >
           {campaign.deletedAt
@@ -208,14 +203,14 @@ export default function CampaignDetailsPage() {
                   icon={UnarchiveIcon}
                   label="Unarchive"
                   intent="positive"
-                  onClick={closeMenuAnd(() => unarchiveMutation.mutate())}
+                  onClick={menu.closeMenuAnd(() => unarchiveMutation.mutate())}
                 />,
                 <ActionMenuItem
                   key="hard-delete"
                   icon={DeleteForeverIcon}
                   label="Delete permanently"
                   intent="destructive"
-                  onClick={closeMenuAnd(() => setHardDeleteDialogOpen(true))}
+                  onClick={menu.closeMenuAnd(() => setHardDeleteDialogOpen(true))}
                 />,
               ]
             : [
@@ -223,7 +218,7 @@ export default function CampaignDetailsPage() {
                   key="edit"
                   icon={EditIcon}
                   label="Edit"
-                  onClick={closeMenuAnd(() => {
+                  onClick={menu.closeMenuAnd(() => {
                     editForm.reset({
                       name: campaign.name,
                       description: campaign.description ?? "",
@@ -236,7 +231,7 @@ export default function CampaignDetailsPage() {
                   icon={ArchiveIcon}
                   label="Archive"
                   intent="caution"
-                  onClick={closeMenuAnd(() => setArchiveDialogOpen(true))}
+                  onClick={menu.closeMenuAnd(() => setArchiveDialogOpen(true))}
                 />,
               ]}
         </Menu>

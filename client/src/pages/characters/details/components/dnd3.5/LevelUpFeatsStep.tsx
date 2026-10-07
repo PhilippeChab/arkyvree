@@ -10,7 +10,6 @@ import {
   Skeleton,
   Stack,
   TextField,
-  Tooltip,
   Typography,
 } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
@@ -18,10 +17,12 @@ import { useState } from "react";
 import { useController } from "react-hook-form";
 
 import {
+  ChoiceChip,
   CLICKABLE_SX,
   clickableProps,
   DiceSpinner,
   LoadError,
+  NextPageSpinner,
   NoMatchesState,
 } from "@/client/src/components/common/index.ts";
 import { ExpandLessIcon, ExpandMoreIcon } from "@/client/src/components/icons/index.ts";
@@ -37,6 +38,7 @@ import {
   withoutPick,
 } from "./levelUp/index.ts";
 import type { LevelUpFeatsStepProps } from "./levelUpFactory.ts";
+import { OptionTooltip } from "./OptionTooltip.tsx";
 
 interface AutoGrantedFeatsProps {
   feats: FeatsData["autoGrantedFeats"];
@@ -127,21 +129,10 @@ function FeatFamilyExpansion({
       {variants.map((feat, i) => {
         const isNew = i >= previousItemCount;
         return (
-          <Tooltip
-            describeChild
+          <OptionTooltip
             key={feat.id}
-            title={!feat.eligible && feat.requirementTree ? feat.requirementTree : (feat.description ?? "")}
-            placement="right"
-            enterDelay={300}
-            arrow
-            slotProps={{
-              tooltip: {
-                sx: [
-                  !feat.eligible &&
-                    !!feat.requirementTree && { maxWidth: "none", whiteSpace: "pre", fontFamily: "monospace" },
-                ],
-              },
-            }}
+            description={feat.description}
+            requirementTree={!feat.eligible ? feat.requirementTree : undefined}
           >
             <Box component="span" sx={[{ display: "block" }, isNew && fadeInUpSx(i - previousItemCount)]}>
               <ListItemButton
@@ -165,7 +156,7 @@ function FeatFamilyExpansion({
                 <ListItemText primary={feat.name} />
               </ListItemButton>
             </Box>
-          </Tooltip>
+          </OptionTooltip>
         );
       })}
       {query.hasNextPage && (
@@ -247,11 +238,10 @@ export function LevelUpFeatsStep({
                     const isSelected = selectedAptitude === pool.id;
 
                     return (
-                      <Chip
+                      <ChoiceChip
                         key={pool.id}
                         label={`${pool.name} ${currentPoolFeats.length}/${pool.available}${pool.shared ? " (optional)" : ""}`}
-                        variant={isSelected ? "filled" : "outlined"}
-                        color={isSelected ? "primary" : "default"}
+                        selected={isSelected}
                         onClick={() => {
                           if (isSelected) return;
                           // A search typed for the last pool would filter this one.
@@ -283,25 +273,12 @@ export function LevelUpFeatsStep({
                 <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
                   {currentPoolFeats.length > 0
                     ? currentPoolFeats.map((feat) => (
-                        <Tooltip
-                          describeChild
-                          key={feat.id}
-                          title={
-                            feat.description
-                              ? feat.description.length > 200
-                                ? `${feat.description.slice(0, 200)}…`
-                                : feat.description
-                              : ""
-                          }
-                          placement="right"
-                          enterDelay={300}
-                          arrow
-                        >
+                        <OptionTooltip key={feat.id} description={feat.description} maxLength={200}>
                           <Chip
                             label={feat.name}
                             onDelete={() => feats.onChange(withoutPick(selectedFeats, selectedAptitude, feat.id))}
                           />
-                        </Tooltip>
+                        </OptionTooltip>
                       ))
                     : Array.from({ length: currentPool?.available || 0 }, (_, i) => (
                         <Skeleton key={i} variant="rounded" width={100} height={32} />
@@ -367,27 +344,10 @@ export function LevelUpFeatsStep({
                         // Wizard Spellcasting on multi-level Archmage)
                         // should remain pickable across batch levels.
                         return (
-                          <Tooltip
-                            describeChild
+                          <OptionTooltip
                             key={row.representativeId}
-                            title={
-                              !row.eligible && "requirementTree" in row ? String(row.requirementTree) : row.description
-                            }
-                            placement="right"
-                            enterDelay={300}
-                            arrow
-                            slotProps={{
-                              tooltip: {
-                                sx: [
-                                  !row.eligible &&
-                                    "requirementTree" in row && {
-                                      maxWidth: "none",
-                                      whiteSpace: "pre",
-                                      fontFamily: "monospace",
-                                    },
-                                ],
-                              },
-                            }}
+                            description={row.description}
+                            requirementTree={!row.eligible ? row.requirementTree : undefined}
                           >
                             <span>
                               <ListItemButton
@@ -410,14 +370,10 @@ export function LevelUpFeatsStep({
                                 <ListItemText primary={row.displayName} />
                               </ListItemButton>
                             </span>
-                          </Tooltip>
+                          </OptionTooltip>
                         );
                       })}
-                      {isFetchingNextFeatsPage && (
-                        <Stack direction="row" sx={{ justifyContent: "center", py: 1 }}>
-                          <DiceSpinner size="small" />
-                        </Stack>
-                      )}
+                      <NextPageSpinner loading={isFetchingNextFeatsPage} />
                     </List>
                   )}
                 </Stack>

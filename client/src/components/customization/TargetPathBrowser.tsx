@@ -14,7 +14,7 @@ import {
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 
-import { DiceSpinner } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, NextPageSpinner } from "@/client/src/components/common/index.ts";
 import { ChevronRightIcon, ClearIcon, FilterListIcon, PublicIcon } from "@/client/src/components/icons/index.ts";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
@@ -186,7 +186,8 @@ export function TargetPathBrowser({
                 size="small"
                 onClick={() => setSearchEverywhere((prev) => !prev)}
                 color={searchEverywhere ? "primary" : "default"}
-                aria-label="Toggle search scope"
+                aria-label="Search everywhere"
+                aria-pressed={searchEverywhere}
               >
                 {searchEverywhere ? <PublicIcon fontSize="small" /> : <FilterListIcon fontSize="small" />}
               </IconButton>
@@ -258,11 +259,7 @@ export function TargetPathBrowser({
                 No results
               </Typography>
             )}
-            {isFetchingNextPage && (
-              <Stack direction="row" sx={{ justifyContent: "center", py: 1 }}>
-                <DiceSpinner size="small" />
-              </Stack>
-            )}
+            <NextPageSpinner loading={isFetchingNextPage} />
           </List>
         </>
       )}

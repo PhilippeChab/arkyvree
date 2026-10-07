@@ -5,7 +5,7 @@ import { type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { classParams } from "@/server/routers/api/rulesets/classes/validation.ts";
 import { idParam } from "@/server/routers/api/validation.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
-import { MAX_CLASS_LEVEL } from "@/shared/dnd3.5/classes.ts";
+import { MAX_CLASS_LEVEL, MAX_SAVE_BASE } from "@/shared/dnd3.5/classes.ts";
 
 const classLevelParams = idParam.extend({ classLevelId: z.string().uuid() });
 const levelFeats = z
@@ -14,7 +14,9 @@ const levelFeats = z
 
 const levelParams = classParams.extend({ levelId: z.string().uuid() });
 /** A class level's saves (each its base bonus) and granted feats, its create's and its update's. */
-const levelSaves = z.array(z.object({ saveId: z.string().uuid(), base: z.number().int().min(0).max(12) })).optional();
+const levelSaves = z
+  .array(z.object({ saveId: z.string().uuid(), base: z.number().int().min(0).max(MAX_SAVE_BASE) }))
+  .optional();
 
 export default new Hono<SessionContext>()
   .get("/:id/class-levels/:classLevelId", validate("param", classLevelParams), async (c) => {

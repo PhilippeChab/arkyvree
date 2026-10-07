@@ -6,6 +6,7 @@ import { useFormSync, useFormWith, useRulesetSaves } from "@/client/src/hooks/in
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
   allLevelSaves,
+  areSaveBasesValid,
   ClassLevelFields,
   featKey,
   type LevelFeat,
@@ -56,7 +57,11 @@ export function ClassLevelEditor({
   onSaved,
 }: EditorProps<ClassLevel>) {
   const form = useFormWith<ClassLevelForm>({ saves: [], feats: [] });
-  const { field: saves } = useController({ control: form.control, name: "saves" });
+  const { field: saves, fieldState: savesState } = useController({
+    control: form.control,
+    name: "saves",
+    rules: { validate: areSaveBasesValid },
+  });
   const { field: feats } = useController({ control: form.control, name: "feats" });
   const sync = useFormSync(form, toClassLevelForm(level), { key: recordKey, adoptKey });
   const { data: rulesetSaves } = useRulesetSaves(rulesetId);
@@ -110,6 +115,7 @@ export function ClassLevelEditor({
                   rulesetId={rulesetId}
                   saves={saves.value ?? []}
                   onSavesChange={saves.onChange}
+                  savesInvalid={!!savesState.error}
                   feats={feats.value ?? []}
                   onFeatsChange={feats.onChange}
                   featLabels={new Map(level.feats.map((feat) => [featKey(asLevelFeat(feat)), featLabel(feat)]))}

@@ -22,6 +22,7 @@ import {
 } from "@/client/src/hooks/index.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
+import { wholeNumberRules } from "@/client/src/lib/validation.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { type Alignment, ALIGNMENT_OPTIONS, type Gender, GENDER_OPTIONS } from "@/shared/enums.ts";
 
@@ -195,7 +196,12 @@ export function CharacterIdentitySection({
 
   return (
     <Paper sx={{ p: { xs: 2, sm: 3 } }}>
-      <Stack component="form" spacing={3} onSubmit={sync.handleSubmit((formData) => saveIdentity.mutate(formData))}>
+      <Stack
+        component="form"
+        noValidate
+        spacing={3}
+        onSubmit={sync.handleSubmit((formData) => saveIdentity.mutate(formData))}
+      >
         <Stack
           direction="row"
           spacing={1}
@@ -309,6 +315,7 @@ export function CharacterIdentitySection({
                   <FormTextField
                     control={form.control}
                     name="experience"
+                    rules={wholeNumberRules(0)}
                     number
                     label="Experience"
                     size="small"

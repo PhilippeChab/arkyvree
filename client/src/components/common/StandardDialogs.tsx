@@ -1,16 +1,8 @@
-import {
-  Button,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  type DialogProps,
-  DialogTitle,
-  Stack,
-} from "@mui/material";
+import { DialogContent, DialogContentText, type DialogProps, DialogTitle, Stack } from "@mui/material";
 import { type ReactNode } from "react";
 import { type FieldValues, type UseFormReturn } from "react-hook-form";
 
-import { DiceSpinner } from "./DiceSpinner.tsx";
+import { DialogFooter } from "./DialogFooter.tsx";
 import { FormDialog } from "./FormDialog.tsx";
 import { Modal } from "./Modal.tsx";
 
@@ -79,6 +71,7 @@ function FormActionDialog<T extends FieldValues = FieldValues>({
       {/* A column only in a dialog of a fixed height, whose content scrolls between the title and the actions */}
       <Stack
         component="form"
+        noValidate
         onSubmit={form.handleSubmit(onSubmit)}
         sx={[{ display: fixedHeight ? "flex" : "block" }, !!fixedHeight && { flex: 1, minHeight: 0 }]}
       >
@@ -88,16 +81,7 @@ function FormActionDialog<T extends FieldValues = FieldValues>({
             {children}
           </Stack>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={onClose} disabled={isLoading} variant="outlined" color="inherit">
-            Cancel
-          </Button>
-          <Button type="submit" variant="contained" disabled={isLoading} startIcon={submitIcon}>
-            <DiceSpinner size="small" loading={isLoading}>
-              {submitLabel}
-            </DiceSpinner>
-          </Button>
-        </DialogActions>
+        <DialogFooter onCancel={onClose} pending={isLoading} action={{ label: submitLabel, icon: submitIcon }} />
       </Stack>
     </FormDialog>
   );
@@ -123,22 +107,11 @@ export function ConfirmDialog({
         <DialogContentText>{message}</DialogContentText>
         {children}
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={isLoading} variant="outlined" color="inherit">
-          Cancel
-        </Button>
-        <Button
-          onClick={onConfirm}
-          variant="contained"
-          color={confirmColor}
-          disabled={isLoading}
-          startIcon={confirmIcon}
-        >
-          <DiceSpinner size="small" loading={isLoading}>
-            {confirmLabel}
-          </DiceSpinner>
-        </Button>
-      </DialogActions>
+      <DialogFooter
+        onCancel={onClose}
+        pending={isLoading}
+        action={{ label: confirmLabel, onClick: onConfirm, color: confirmColor, icon: confirmIcon }}
+      />
     </Modal>
   );
 }

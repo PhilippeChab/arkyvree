@@ -2,7 +2,7 @@ import { Alert, alpha, Box, Card, CardContent, Link as MuiLink, Stack, Typograph
 import { type ReactNode, Suspense, useEffect, useRef, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 
-import { DiceSpinner, PageTransition } from "@/client/src/components/common/index.ts";
+import { DiceSpinner, LinkButton, PageTransition } from "@/client/src/components/common/index.ts";
 import { useAuthRequests, useIsMobile, useSearchParam, useStartDemo } from "@/client/src/hooks/index.ts";
 import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 import { safeRedirectPath } from "@/client/src/lib/safeRedirect.ts";
@@ -38,17 +38,14 @@ function AuthFooterLinks() {
     >
       {showDemo && (
         <>
-          <MuiLink
-            component="button"
-            type="button"
+          <LinkButton
             onClick={() => start()}
             disabled={isPending}
             variant="body2"
-            underline="hover"
             sx={{ color: "text.secondary", background: "none", border: 0, cursor: "pointer", p: 0 }}
           >
             {isPending ? "Starting…" : "Try the demo"}
-          </MuiLink>
+          </LinkButton>
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
             |
           </Typography>

@@ -1,7 +1,7 @@
-import { Button, DialogActions, DialogContent, DialogTitle, Link as MuiLink, Stack, Typography } from "@mui/material";
+import { DialogContent, DialogTitle, Stack, Typography } from "@mui/material";
 import { useState } from "react";
 
-import { DiceSpinner, LoadError, Modal } from "@/client/src/components/common/index.ts";
+import { DialogFooter, DiceSpinner, LinkButton, LoadError, Modal } from "@/client/src/components/common/index.ts";
 import { useOglLicense } from "@/client/src/hooks/index.ts";
 
 interface RulesetLicenseNoticeProps {
@@ -15,9 +15,9 @@ export function RulesetLicenseNotice({ name }: RulesetLicenseNoticeProps) {
   return (
     <>
       <Stack sx={{ alignItems: "center" }}>
-        <MuiLink component="button" type="button" variant="body2" underline="hover" onClick={() => setOpen(true)}>
+        <LinkButton variant="body2" onClick={() => setOpen(true)}>
           License & attribution
-        </MuiLink>
+        </LinkButton>
       </Stack>
       <Modal open={open} onClose={() => setOpen(false)} maxWidth="md" aria-labelledby="ruleset-license-title">
         <DialogTitle id="ruleset-license-title">License & attribution</DialogTitle>
@@ -54,11 +54,7 @@ export function RulesetLicenseNotice({ name }: RulesetLicenseNoticeProps) {
             )}
           </Stack>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpen(false)} variant="outlined" color="inherit">
-            Close
-          </Button>
-        </DialogActions>
+        <DialogFooter onCancel={() => setOpen(false)} cancelLabel="Close" />
       </Modal>
     </>
   );

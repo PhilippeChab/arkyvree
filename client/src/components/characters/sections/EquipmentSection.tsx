@@ -6,6 +6,7 @@ import { Controller } from "react-hook-form";
 import { Link } from "react-router-dom";
 
 import {
+  AddButton,
   AnimatedAlert,
   BlankState,
   CreateDialog,
@@ -15,7 +16,7 @@ import {
   ScrollSafeListbox,
   ValidationIssueList,
 } from "@/client/src/components/common/index.ts";
-import { AddIcon, DeleteIcon, EditIcon } from "@/client/src/components/icons/index.ts";
+import { DeleteIcon, EditIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDebouncedValue, useFormWith, useListboxQuery, useValidationIssues } from "@/client/src/hooks/index.ts";
 import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
@@ -330,13 +331,7 @@ export function EquipmentSection({
         <BlankState
           title="No equipment"
           description="Add items to this character's inventory."
-          action={
-            !isArchived ? (
-              <Button variant="contained" startIcon={<AddIcon />} onClick={handleAddItem}>
-                Add Item
-              </Button>
-            ) : undefined
-          }
+          action={!isArchived ? <AddButton label="Add Item" onClick={handleAddItem} /> : undefined}
         />
       )}
       {/* Add Item Dialog */}

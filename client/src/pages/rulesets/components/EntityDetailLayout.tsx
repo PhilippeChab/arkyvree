@@ -1,9 +1,9 @@
 import { Box, IconButton, Menu, MenuItem, Skeleton, Stack, Typography } from "@mui/material";
-import { type ComponentProps, type ReactNode, useState } from "react";
+import { type ComponentProps, type ReactNode } from "react";
 
 import { PageError } from "@/client/src/components/common/index.ts";
 import { ArrowBackIcon, MoreVertIcon } from "@/client/src/components/icons/index.ts";
-import { useIsMobile } from "@/client/src/hooks/index.ts";
+import { useAnchorMenu, useIsMobile } from "@/client/src/hooks/index.ts";
 import { DURATION, EASING, fadeInUp, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
 
 interface EntityDetailLayoutProps {
@@ -37,7 +37,7 @@ export function EntityDetailLayout({
   children,
 }: EntityDetailLayoutProps) {
   const isMobile = useIsMobile();
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const menu = useAnchorMenu();
 
   if (isLoading) {
     return (
@@ -97,7 +97,7 @@ export function EntityDetailLayout({
             <IconButton
               aria-label="More actions"
               size={isMobile ? "medium" : "large"}
-              onClick={(e) => setAnchorEl(e.currentTarget)}
+              onClick={menu.openMenu}
               sx={{
                 position: "absolute",
                 right: 0,
@@ -107,21 +107,15 @@ export function EntityDetailLayout({
               <MoreVertIcon />
             </IconButton>
             <Menu
-              anchorEl={anchorEl}
+              anchorEl={menu.anchorEl}
               // The menu button can unmount and come back (e.g. while a copy loads): only
               // anchor to one still on the page.
-              open={!!anchorEl?.isConnected}
-              onClose={() => setAnchorEl(null)}
+              open={!!menu.anchorEl?.isConnected}
+              onClose={menu.closeMenu}
               anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
               transformOrigin={{ vertical: "top", horizontal: "right" }}
             >
-              <MenuItem
-                onClick={() => {
-                  setAnchorEl(null);
-                  onDelete();
-                }}
-                sx={{ color: "error.main" }}
-              >
+              <MenuItem onClick={menu.closeMenuAnd(onDelete)} sx={{ color: "error.main" }}>
                 Delete
               </MenuItem>
             </Menu>

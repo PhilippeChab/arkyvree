@@ -1,20 +1,11 @@
-import {
-  Box,
-  Button,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Link as MuiLink,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Box, DialogContent, DialogTitle, Stack, Typography } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useState } from "react";
 import { Controller } from "react-hook-form";
 
 import { VerificationCodeInput } from "@/client/src/components/auth/index.ts";
-import { AnimatedAlert, DiceSpinner, FormDialog } from "@/client/src/components/common/index.ts";
+import { AnimatedAlert, DialogFooter, FormDialog, LinkButton } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
@@ -108,31 +99,20 @@ export function EmailChangeVerificationDialog({ open, onClose, pendingEmail }: E
                 <Box sx={{ textAlign: "center" }}>
                   <Typography variant="body2">
                     Didn't receive the code?{" "}
-                    <MuiLink
-                      component="button"
-                      type="button"
-                      underline="hover"
-                      onClick={() => resendMutation.mutate()}
-                      disabled={resendMutation.isPending}
-                    >
+                    <LinkButton onClick={() => resendMutation.mutate()} disabled={resendMutation.isPending}>
                       Resend
-                    </MuiLink>
+                    </LinkButton>
                   </Typography>
                 </Box>
               </Stack>
             </Box>
           </Stack>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose} disabled={verifyMutation.isPending} variant="outlined" color="inherit">
-            Cancel
-          </Button>
-          <Button type="submit" variant="contained" disabled={verifyMutation.isPending || !isComplete}>
-            <DiceSpinner size="small" loading={verifyMutation.isPending}>
-              Verify
-            </DiceSpinner>
-          </Button>
-        </DialogActions>
+        <DialogFooter
+          onCancel={handleClose}
+          pending={verifyMutation.isPending}
+          action={{ label: "Verify", disabled: !isComplete }}
+        />
       </form>
     </FormDialog>
   );

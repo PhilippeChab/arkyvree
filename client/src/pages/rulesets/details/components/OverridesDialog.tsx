@@ -1,9 +1,7 @@
 import {
   Box,
-  Button,
   Chip,
   Collapse,
-  DialogActions,
   DialogContent,
   DialogTitle,
   IconButton,
@@ -20,7 +18,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 import { type InferResponseType, parseResponse } from "hono/client";
 import { Link } from "react-router-dom";
 
-import { DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
+import { DialogFooter, DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
 import { CompareArrowsIcon, RestoreIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -175,11 +173,7 @@ export function OverridesDialog({ open, onClose, rulesetId, baseRules, canEdit =
           </Stack>
         </Collapse>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} variant="outlined" color="inherit">
-          Close
-        </Button>
-      </DialogActions>
+      <DialogFooter onCancel={onClose} cancelLabel="Close" />
     </Modal>
   );
 }

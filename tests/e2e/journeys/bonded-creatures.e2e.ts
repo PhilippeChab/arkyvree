@@ -28,7 +28,7 @@ test.describe("A bonded creature", () => {
 
       await page.goto(`/characters/${masterId}`);
       // The feat's details hold the creature's summary
-      await page.getByRole("button", { name: `Show ${feat} details` }).click();
+      await page.getByRole("button", { name: `${feat} details` }).click();
       const link = page.getByRole("link", { name: creature, exact: true });
       await expect(link).toBeVisible();
       // The summary: the innermost block holding the link and its stats

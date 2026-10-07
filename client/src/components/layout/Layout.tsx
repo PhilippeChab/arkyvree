@@ -18,7 +18,7 @@ import {
 } from "@mui/material";
 import { type QueryClient, useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
-import { type MouseEvent, useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { ActionMenuItem } from "@/client/src/components/common/index.ts";
@@ -40,7 +40,13 @@ import {
   SupportIcon,
 } from "@/client/src/components/icons/index.ts";
 import { Onboarding } from "@/client/src/components/onboarding/index.ts";
-import { useAttachment, useAuthRequests, useDemoTimeRemaining, useIsMobile } from "@/client/src/hooks/index.ts";
+import {
+  useAnchorMenu,
+  useAttachment,
+  useAuthRequests,
+  useDemoTimeRemaining,
+  useIsMobile,
+} from "@/client/src/hooks/index.ts";
 import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 import {
   campaignListQuery,
@@ -141,7 +147,7 @@ const SIDEBAR_ITEMS = [
 const STEP_TO_SIDEBAR_ID: Record<number, string> = { 1: "rulesets", 2: "characters", 3: "campaigns" };
 
 export function Layout() {
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const menu = useAnchorMenu();
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const isMobile = useIsMobile();
@@ -201,28 +207,20 @@ export function Layout() {
     ? pathSection
     : "dashboard";
 
-  const handleMenuOpen = (event: MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-  };
-
   // Clearing the session clears the cache (`createQueryClient`), and the private route sends the user to sign in
   const handleSignOut = () => {
-    handleMenuClose();
+    menu.closeMenu();
     void queryClient.cancelQueries();
     signOut.mutate();
   };
 
   const handleProfile = () => {
-    handleMenuClose();
+    menu.closeMenu();
     navigate("/profile");
   };
 
   const handleSettings = () => {
-    handleMenuClose();
+    menu.closeMenu();
     navigate("/settings");
   };
 
@@ -277,7 +275,7 @@ export function Layout() {
             {!isDemo && <FeedbackButton />}
             {!isDemo && <NotificationBell />}
             {!isDemo && (
-              <IconButton size="large" onClick={handleMenuOpen} color="inherit" aria-label="Account menu">
+              <IconButton size="large" onClick={menu.openMenu} color="inherit" aria-label="Account menu">
                 <Avatar src={avatarAttachment?.url ?? undefined} sx={{ width: 32, height: 32 }}>
                   <AccountCircleIcon />
                 </Avatar>
@@ -285,13 +283,13 @@ export function Layout() {
             )}
           </Stack>
 
-          <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+          <Menu anchorEl={menu.anchorEl} open={menu.open} onClose={menu.closeMenu}>
             <ActionMenuItem icon={AccountCircleIcon} label="Profile" onClick={handleProfile} />
             <ActionMenuItem
               icon={HistoryIcon}
               label="Activity"
               onClick={() => {
-                handleMenuClose();
+                menu.closeMenu();
                 navigate("/activities");
               }}
             />
@@ -462,7 +460,8 @@ export function Layout() {
             >
               <IconButton
                 onClick={() => setSidebarExpanded(!sidebarExpanded)}
-                aria-label={effectiveExpanded ? "Collapse sidebar" : "Expand sidebar"}
+                aria-label="Sidebar"
+                aria-expanded={effectiveExpanded}
                 sx={{
                   color: (theme) => (theme.palette.mode === "dark" ? "grey.400" : "grey.700"),
                   bgcolor: "sidebar.toggle",

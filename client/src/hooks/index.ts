@@ -1,3 +1,4 @@
+export { useAnchorMenu } from "./useAnchorMenu.ts";
 export { useAttachment } from "./useAttachment.ts";
 export { useAttachments } from "./useAttachments.ts";
 export { checkSession, useAuthRequests } from "./useAuthRequests.ts";

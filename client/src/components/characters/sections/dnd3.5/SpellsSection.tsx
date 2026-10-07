@@ -53,7 +53,7 @@ function CollapsibleClass({ apt, rulesetId }: CollapsibleClassProps) {
         {...clickableProps(() => setOpen((prev) => !prev))}
         sx={[CLICKABLE_SX, { alignItems: "center" }]}
       >
-        <IconButton size="small" aria-label={`${open ? "Hide" : "Show"} ${apt.aptitudeName}`} sx={{ p: 0 }}>
+        <IconButton size="small" aria-label={apt.aptitudeName} aria-expanded={open} sx={{ p: 0 }}>
           {open ? <ExpandLessIcon /> : <ExpandMoreIcon />}
         </IconButton>
         <Typography variant="h6" component="h3" sx={{ fontWeight: 600 }}>
@@ -84,7 +84,7 @@ function CollapsibleLevel({ group, rulesetId }: CollapsibleLevelProps) {
         {...clickableProps(() => setOpen((prev) => !prev))}
         sx={[CLICKABLE_SX, { alignItems: "center" }]}
       >
-        <IconButton size="small" aria-label={`${open ? "Hide" : "Show"} ${label} spells`} sx={{ p: 0 }}>
+        <IconButton size="small" aria-label={`${label} spells`} aria-expanded={open} sx={{ p: 0 }}>
           {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
         </IconButton>
         <Stack direction="row" spacing={1} sx={{ alignItems: "baseline" }}>
@@ -145,7 +145,7 @@ function SpellRowItem({ spell, rulesetId }: SpellRowItemProps) {
       >
         <TableCell>
           <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
-            <IconButton size="small" aria-label={`${open ? "Hide" : "Show"} ${spell.name}'s details`} sx={{ p: 0 }}>
+            <IconButton size="small" aria-label={`${spell.name}'s details`} aria-expanded={open} sx={{ p: 0 }}>
               {open ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
             </IconButton>
             {/* A tag sits twice the row's gap from the name, and from the next tag */}

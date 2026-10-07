@@ -45,7 +45,7 @@ export function EntityDetailsCard({ title, chips, description, readOnlyBody, edi
         </Box>
         <Box sx={{ p: { xs: 2, sm: 3 } }}>
           {edit ? (
-            <Stack component="form" onSubmit={edit.onSubmit} spacing={2}>
+            <Stack component="form" noValidate onSubmit={edit.onSubmit} spacing={2}>
               {edit.fields}
               <Stack direction="row" spacing={1} sx={{ justifyContent: "flex-end" }}>
                 <Button type="submit" variant="contained" disabled={!edit.canSave || edit.isSaving}>

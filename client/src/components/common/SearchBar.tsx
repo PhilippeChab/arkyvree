@@ -10,9 +10,10 @@ import {
   Toolbar,
   Tooltip,
 } from "@mui/material";
-import { type MouseEvent, type ReactNode, useState } from "react";
+import { type ReactNode } from "react";
 
 import { FilterIcon, SearchIcon, SortIcon } from "@/client/src/components/icons/index.ts";
+import { useAnchorMenu } from "@/client/src/hooks/index.ts";
 
 interface SearchBarProps<TFilter extends string = string, TSort extends string = string> {
   searchValue: string;
@@ -57,33 +58,17 @@ export function SearchBar<TFilter extends string = string, TSort extends string 
   filters,
   actions,
 }: SearchBarProps<TFilter, TSort>) {
-  const [filterAnchorEl, setFilterAnchorEl] = useState<null | HTMLElement>(null);
-  const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
-
-  const handleFilterClick = (event: MouseEvent<HTMLElement>) => {
-    setFilterAnchorEl(event.currentTarget);
-  };
-
-  const handleFilterClose = () => {
-    setFilterAnchorEl(null);
-  };
+  const filterMenu = useAnchorMenu();
+  const sortMenu = useAnchorMenu();
 
   const handleFilterSelect = (value: TFilter | undefined) => {
     onFilterChange?.(value);
-    handleFilterClose();
-  };
-
-  const handleSortClick = (event: MouseEvent<HTMLElement>) => {
-    setSortAnchorEl(event.currentTarget);
-  };
-
-  const handleSortClose = () => {
-    setSortAnchorEl(null);
+    filterMenu.closeMenu();
   };
 
   const handleSortSelect = (field: TSort, direction: "asc" | "desc") => {
     onSortChange?.(field, direction);
-    handleSortClose();
+    sortMenu.closeMenu();
   };
 
   return (
@@ -116,11 +101,11 @@ export function SearchBar<TFilter extends string = string, TSort extends string 
           {filterOptions && filterOptions.length > 0 && (
             <>
               <Tooltip title="Filter">
-                <IconButton aria-label="Filter" size="small" onClick={handleFilterClick}>
+                <IconButton aria-label="Filter" size="small" onClick={filterMenu.openMenu}>
                   <FilterIcon />
                 </IconButton>
               </Tooltip>
-              <Menu anchorEl={filterAnchorEl} open={Boolean(filterAnchorEl)} onClose={handleFilterClose}>
+              <Menu anchorEl={filterMenu.anchorEl} open={filterMenu.open} onClose={filterMenu.closeMenu}>
                 {filterOptions.map((option) => (
                   <MenuItem
                     key={option.value ?? "all"}
@@ -137,11 +122,11 @@ export function SearchBar<TFilter extends string = string, TSort extends string 
           {sortOptions && sortOptions.length > 0 && (
             <>
               <Tooltip title="Sort">
-                <IconButton aria-label="Sort" size="small" onClick={handleSortClick}>
+                <IconButton aria-label="Sort" size="small" onClick={sortMenu.openMenu}>
                   <SortIcon />
                 </IconButton>
               </Tooltip>
-              <Menu anchorEl={sortAnchorEl} open={Boolean(sortAnchorEl)} onClose={handleSortClose}>
+              <Menu anchorEl={sortMenu.anchorEl} open={sortMenu.open} onClose={sortMenu.closeMenu}>
                 {sortOptions.map((option) => (
                   <MenuItem
                     key={`${option.field}-${option.direction}`}

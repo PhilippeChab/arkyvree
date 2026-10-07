@@ -1,6 +1,6 @@
-import { Button, Stack } from "@mui/material";
+import { Stack } from "@mui/material";
 
-import { AddIcon } from "@/client/src/components/icons/index.ts";
+import { AddButton } from "@/client/src/components/common/index.ts";
 
 interface SectionAddButtonProps {
   label: string;
@@ -11,9 +11,7 @@ interface SectionAddButtonProps {
 export function SectionAddButton({ label, onClick }: SectionAddButtonProps) {
   return (
     <Stack direction="row" sx={{ justifyContent: "flex-end" }}>
-      <Button variant="contained" startIcon={<AddIcon />} onClick={onClick}>
-        {label}
-      </Button>
+      <AddButton label={label} onClick={onClick} />
     </Stack>
   );
 }

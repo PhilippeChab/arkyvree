@@ -1,7 +1,7 @@
-import { Button, DialogActions, DialogContent, DialogTitle, Stack } from "@mui/material";
+import { DialogContent, DialogTitle, Stack } from "@mui/material";
 import type { InferRequestType } from "hono/client";
 
-import { DiceSpinner, EmailField, FormDialog, SelectField } from "@/client/src/components/common/index.ts";
+import { DialogFooter, EmailField, FormDialog, SelectField } from "@/client/src/components/common/index.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
 import { EMAIL_RULES } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
@@ -45,16 +45,7 @@ export function InviteContributorDialog({ open, onClose, onSubmit, isLoading, ro
             {roles && <SelectField control={form.control} name="role" label="Role" options={roles} />}
           </Stack>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose} disabled={isLoading} variant="outlined" color="inherit">
-            Cancel
-          </Button>
-          <Button type="submit" variant="contained" disabled={isLoading}>
-            <DiceSpinner size="small" loading={isLoading}>
-              Invite
-            </DiceSpinner>
-          </Button>
-        </DialogActions>
+        <DialogFooter onCancel={handleClose} pending={isLoading} action={{ label: "Invite" }} />
       </form>
     </FormDialog>
   );
