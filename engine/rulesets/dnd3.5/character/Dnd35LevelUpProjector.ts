@@ -1,7 +1,9 @@
-import type { ProjectedCharacterLevel } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { readClassLevelFields } from "@/engine/rulesets/dnd3.5/classes/classLevelFields.ts";
-import type { Dnd35LevelUpProjector as Dnd35LevelUpProjectorInterface } from "@/engine/rulesets/dnd3.5/types.ts";
+import {
+  type Dnd35LevelUpProjector as Dnd35LevelUpProjectorInterface,
+  type ProjectedCharacterLevel,
+} from "@/engine/rulesets/dnd3.5/types.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { computeLevelSkillPoints } from "@/shared/dnd3.5/skills.ts";
 import type { KlassLevel, Requirement } from "@/shared/relations.ts";

@@ -1,5 +1,5 @@
-import type { CustomizedRace } from "@/engine/core/types.ts";
 import { readRaceFields } from "@/engine/rulesets/dnd3.5/races/raceFields.ts";
+import type { CustomizedRace } from "@/engine/rulesets/dnd3.5/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 import type CombatState from "./CombatState.ts";

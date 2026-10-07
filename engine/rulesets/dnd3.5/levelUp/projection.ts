@@ -11,9 +11,12 @@
  * - projectPlannedLevels — projects planned levels with the feats their class levels grant
  */
 
-import type { ProjectedCharacterData, ProjectedCharacterLevel } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import type { Dnd35ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/types.ts";
+import {
+  type Dnd35ProjectedCharacterData,
+  type ProjectedCharacterData,
+  type ProjectedCharacterLevel,
+} from "@/engine/rulesets/dnd3.5/types.ts";
 import type { Modifier, Property, Requirement } from "@/shared/relations.ts";
 
 export type FeatPick = { aptitudeId: string; featId: string };

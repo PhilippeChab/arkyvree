@@ -57,14 +57,9 @@ export interface DetailedCharacterInterface {
   readonly components: Components;
   formatRequirements(requirements: Requirement[]): string;
   getCampaign(): Campaign | undefined;
-  /** The feats the character holds that don't stack: picked, granted, planned or from its modifiers. */
-  getHeldNonStackableFeatIds(): string[];
-  /** The powers the character knows in a pool: picked, granted, planned or from its modifiers. */
-  getKnownPowerIds(aptitudeId: string): string[];
   getPlayer(): Player | undefined;
   getRuleset(): Ruleset | undefined;
   getUnmetRequirementIssues(requirementGroups: Requirement[][]): RequirementIssue[];
-  getVirtuallyPossessedPowerIds(): string[];
   validate(): ValidationResult;
 }
 

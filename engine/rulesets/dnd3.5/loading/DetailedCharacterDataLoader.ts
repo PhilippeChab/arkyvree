@@ -1,8 +1,8 @@
 import { type CharacterRows } from "@/engine/core/module/index.ts";
-import type { LoadedCharacterData, RulesetView } from "@/engine/core/types.ts";
+import type { RulesetView } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type SkillFields } from "@/engine/rulesets/dnd3.5/module/index.ts";
-import type { Dnd35ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/types.ts";
+import { type Dnd35ProjectedCharacterData, type LoadedCharacterData } from "@/engine/rulesets/dnd3.5/types.ts";
 import type { Character, Modifier, Requirement } from "@/shared/relations.ts";
 
 import {
