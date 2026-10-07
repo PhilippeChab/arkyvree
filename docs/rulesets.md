@@ -14,22 +14,22 @@ Base Ruleset (D&D 3.5)           ← system-owned, userId: null, no parent
 └── Another User's Fork
 ```
 
-| Type                      | `userId` | `rulesetId` | `kind`      | Description                                                                                                                                        |
-| ------------------------- | -------- | ----------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Base**                  | `null`   | `null`      | `ruleset`   | System-owned root ruleset (e.g., D&D 3.5). Immutable                                                                                               |
-| **System Extension**      | `null`   | parent ID   | `extension` | System-owned supplement (e.g., Complete Warrior). Published, subscribed to by reference                                                            |
-| **User Fork (playable)**  | user ID  | parent ID   | `ruleset`   | User's editable copy of a published ruleset; intended to be played directly                                                                        |
-| **User Fork (extension)** | user ID  | parent ID   | `extension` | User fork published as an extension; can be subscribed to by other users' forks of the same base, but cannot be used to create characters directly |
+| Type | `userId` | `rulesetId` | `kind` | Description |
+|---|---|---|---|---|
+| **Base** | `null` | `null` | `ruleset` | System-owned root ruleset (e.g., D&D 3.5). Immutable |
+| **System Extension** | `null` | parent ID | `extension` | System-owned supplement (e.g., Complete Warrior). Published, subscribed to by reference |
+| **User Fork (playable)** | user ID | parent ID | `ruleset` | User's editable copy of a published ruleset; intended to be played directly |
+| **User Fork (extension)** | user ID | parent ID | `extension` | User fork published as an extension; can be subscribed to by other users' forks of the same base, but cannot be used to create characters directly |
 
 ### Key Fields on `rulesetsInRules`
 
-| Field                 | Description                                                                                                                                                                                                                                                                                                                                                                                                               |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `rulesetId`           | Parent ruleset (null for base rulesets)                                                                                                                                                                                                                                                                                                                                                                                   |
-| `ancestorRulesetIds`  | `[parentId]` — only base rulesets can be forked, so the chain has at most one entry                                                                                                                                                                                                                                                                                                                                       |
-| `extensionRulesetIds` | Subscribed extension IDs (appended on subscribe, removed on unsubscribe)                                                                                                                                                                                                                                                                                                                                                  |
-| `status`              | `Draft`, `Published`, or `Archived`                                                                                                                                                                                                                                                                                                                                                                                       |
-| `kind`                | `ruleset` (default; playable) or `extension` (subscribable add-on). The character-creation picker shows only `kind = 'ruleset'`; the subscribe-extension picker shows only `kind = 'extension'`. Author chooses at publish time and can change later via the edit dialog. Setting `kind = 'extension'` requires the row to be a fork (`rulesetId IS NOT NULL`) and to have no own extensions (`extensionRulesetIds = []`) |
+| Field | Description |
+|---|---|
+| `rulesetId` | Parent ruleset (null for base rulesets) |
+| `ancestorRulesetIds` | `[parentId]` — only base rulesets can be forked, so the chain has at most one entry |
+| `extensionRulesetIds` | Subscribed extension IDs (appended on subscribe, removed on unsubscribe) |
+| `status` | `Draft`, `Published`, or `Archived` |
+| `kind` | `ruleset` (default; playable) or `extension` (subscribable add-on). The character-creation picker shows only `kind = 'ruleset'`; the subscribe-extension picker shows only `kind = 'extension'`. Author chooses at publish time and can change later via the edit dialog. Setting `kind = 'extension'` requires the row to be a fork (`rulesetId IS NOT NULL`) and to have no own extensions (`extensionRulesetIds = []`) |
 
 ## Ruleset Lifecycle
 
@@ -54,13 +54,13 @@ Transitions a Draft ruleset to Published. One-way (no Published → Draft path).
 
 After the policy loosening (`inUse` + COW tombstones now do the protection that the Draft-only edit gates used to), the difference is narrow:
 
-| Capability                                                        | Draft                 | Published |
-| ----------------------------------------------------------------- | --------------------- | --------- |
-| Edit/delete entities                                              | ✓                     | ✓         |
-| Subscribe / unsubscribe extensions                                | ✓                     | ✓         |
-| **Be used by other users** (characters, campaigns, subscriptions) | ✗                     | ✓         |
-| **Appear in public lists** (when `private = false`)               | ✗                     | ✓         |
-| Publish transition                                                | ✓ (Draft → Published) | ✗         |
+| Capability | Draft | Published |
+|---|---|---|
+| Edit/delete entities | ✓ | ✓ |
+| Subscribe / unsubscribe extensions | ✓ | ✓ |
+| **Be used by other users** (characters, campaigns, subscriptions) | ✗ | ✓ |
+| **Appear in public lists** (when `private = false`) | ✗ | ✓ |
+| Publish transition | ✓ (Draft → Published) | ✗ |
 
 Published is purely an **outward-facing stability marker** — "others can build on this baseline" and "this shows up in public discovery." Only base rulesets can be forked, so publishing a user ruleset never makes it forkable. It doesn't restrict what you can do to your own ruleset.
 
@@ -151,16 +151,15 @@ The child's own entities are always included. Ancestor entities are included onl
 ### Override Map
 
 `CowDataBuilder` builds a ruleset's `CowData`: a mapping of `sourceEntityId → forkedEntityId` across the full snapshot chain, and of each sibling loser to its winner. Used for:
-
 - **FK remapping**: When copying entities, foreign keys pointing to inherited entities are remapped to their COW copies (`CowDataBuilder.build` through the copy's transaction, `CowData.resolve`): the same passes as the ruleset's view, so a copy stores what the view shows (a losing copy of a list resolves to the winning one)
 - **Detail views**: `CowData.resolveRows()` remaps ID references in query results
 
 ### Snapshots
 
-| Field            | Description                 |
-| ---------------- | --------------------------- |
+| Field | Description |
+|---|---|
 | `sourceEntityId` | Original ancestor entity ID |
-| `forkedEntityId` | Child's local COW copy ID   |
+| `forkedEntityId` | Child's local COW copy ID |
 
 ### Names of new entities
 
@@ -223,7 +222,7 @@ until the override is restored.
 
 ### Aptitudes and the Sibling Map
 
-Aptitudes are named pools — they have `name` but no per-ruleset content — so the seed only creates a row in the ruleset that _introduces_ the name (see `docs/packages.md`: COW-ing core entities into extensions → Aptitude ownership rules). Two cases matter here:
+Aptitudes are named pools — they have `name` but no per-ruleset content — so the seed only creates a row in the ruleset that *introduces* the name (see `docs/packages.md`: COW-ing core entities into extensions → Aptitude ownership rules). Two cases matter here:
 
 - **Base-inherited names** (`General`, `Cleric Domain`, `Fighter Bonus Feat`, etc.): exactly one row exists, in base. Extensions and forks adding new feats/spells just link to base's id via `aptMap`. No sibling rows, no dedup needed.
 - **Sibling-shared names** (e.g. `Assassin Spells`, `Blackguard Spells`, `Hexblade Spells`): multiple extensions each create their own copy because siblings can't FK to each other. A book copies another book's spell list that its spells are on: one its spells' level line names (a Complete Adventurer spell's "Assassin 1"), or one that draws on other classes' lists (`spells.inheritsFrom`: Complete Arcane's `Sublime Chord Spells` takes Complete Adventurer's bard and sorcerer spells), so a list holds the spells of every book a ruleset takes, as the copies of a core spell merge. The sibling mechanism (`CowDataBuilder`'s aptitude pass, `cache/rulesetCache/CowDataBuilder.ts`) picks a winner per name across the source chain, closest first. Losers become the winner's siblings (`CowData.siblingIds`), so the compose step drops them, and its aliases, so references to a loser resolve to the visible winner (its local copy, if the fork has one). They are intentionally not overrides, which are for true copies only. The user never sees duplicates. A list's feats and spells, on the ruleset's pages and in the level-up's pickers, are the composed view's (`getListFeatIds` / `getListPowerIds`, `services/rulesets/aptitudes/listMembers.ts`), never the stored links: the winning copy of a feat or a spell takes every copy's links, so a link stored on a losing copy of either, or of the list, still counts.
@@ -249,12 +248,12 @@ After COW:
 
 The sibling merge (`EntityCopy`'s `mergeSiblings`) merges four types of customizations by the read-time merge's rules (`siblingMerge.ts`), against the winner's rows it just copied, so the copy holds what the view showed (`tests/services/rulesets/SiblingSemantics.test.ts` copies every winner of a fork of every extension and compares):
 
-| Type               | Merge strategy                                                                                                                                                           | Deduplication key                                |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------ |
-| **Requirements**   | `mergeSiblingRequirements`: appends each sibling tree at a fresh top-level position (ANDed), chains kept intact                                                          | top-level standalone `target + operator + value` |
-| **Modifiers**      | `mergeSiblingModifiers`: inserts sibling modifiers (with their own requirements)                                                                                         | `target + value + operator + valueType`          |
-| **Properties**     | `mergeSiblingProperties`: inserts sibling properties                                                                                                                     | `type + value`                                   |
-| **Aptitude links** | `mergeSiblingAptitudeLinks`: inserts sibling `feats_aptitudes` / `powers_aptitudes` rows, on the aptitude the copy's `CowData` resolves each to, as the copy's own links | resolved `aptitudeId`                            |
+| Type | Merge strategy | Deduplication key |
+|---|---|---|
+| **Requirements** | `mergeSiblingRequirements`: appends each sibling tree at a fresh top-level position (ANDed), chains kept intact | top-level standalone `target + operator + value` |
+| **Modifiers** | `mergeSiblingModifiers`: inserts sibling modifiers (with their own requirements) | `target + value + operator + valueType` |
+| **Properties** | `mergeSiblingProperties`: inserts sibling properties | `type + value` |
+| **Aptitude links** | `mergeSiblingAptitudeLinks`: inserts sibling `feats_aptitudes` / `powers_aptitudes` rows, on the aptitude the copy's `CowData` resolves each to, as the copy's own links | resolved `aptitudeId` |
 
 The customizations are copied whole, as the winner's own (`copyEntityCustomizations`), and each copied row's new ID is recorded, so the mutation that triggered the copy changes the exact copied row. This ensures the user's local copy is self-contained. If they later unsubscribe from one of the extensions, their fork retains the full merged data since it's baked into their own copy, its links to the extension's lists moved to the lists of the same names its other books have (see Unsubscribe below).
 
@@ -291,7 +290,6 @@ No entities are copied. They become visible immediately via the source chain.
 ### Fork Inheritance
 
 When a ruleset with extensions is forked, the child inherits:
-
 - `extensionRulesetIds` — copied as-is
 - `ruleset_extensions` metadata rows — duplicated for the child
 
@@ -333,7 +331,7 @@ See [docs/access.md](./access.md) for the full policy matrix across rulesets, ch
   (`level_feats_in_character.feat_id`), so the character-side check already
   covers that case.
 
-The principle: only protect what the user _invested_ in (their character
+The principle: only protect what the user *invested* in (their character
 picks). Author-owned data that breaks via cascade is recoverable by the author.
 
 The shared check lives in `cow/characterPicks.ts` as `hasCharacterPicks(tx, entityType,
@@ -381,6 +379,7 @@ Key constraints:
 - The in-app notice is shown only on system-seeded 3.5 source packages (`system: true`), not user forks. This display rule does not change content licensing.
 
 See [OGL.md](../OGL.md) for the full license text and copyright notices.
+
 
 ## Universal vs Ruleset-Specific Code
 
@@ -542,7 +541,7 @@ A module is typed by what it builds: `RulesetModule<Character, Projector, Kind>`
 
 ```ts
 // inside server/services/characters/levels/dnd3.5/…
-const projectedData: Dnd35ProjectedCharacterData = {/* skills, powers */};
+const projectedData: Dnd35ProjectedCharacterData = { /* skills, powers */ };
 const levelUpProjector = rulesetModule.createLevelUpProjector(detailedCharacter); // a Dnd35LevelUpProjector
 ```
 
@@ -557,20 +556,20 @@ What a ruleset answers the services, and what it does in their transactions, are
 
 Each rule starts with the verb of what it does, and each effect is named for the write it returns, the same in every area:
 
-| Side    | Verb             | What it does                                                                                                                                   | Example                                                                             |
-| ------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| Rules   | `read…`          | reads typed values off properties                                                                                                              | `classLevels.readProperties`                                                        |
-| Rules   | `enrichWith…`    | adds those values to rows                                                                                                                      | `skills.enrichWithProperties`                                                       |
-| Rules   | `get…`           | looks a value up                                                                                                                               | `classLevels.getSpellListIds`                                                       |
-| Rules   | `is…`            | answers yes or no                                                                                                                              | `levels.isAbilityIncreaseLevel`                                                     |
-| Rules   | `resolve…`       | picks among candidates                                                                                                                         | `items.resolveSlot`                                                                 |
-| Rules   | `extract…`       | reads a value out of a request's fields                                                                                                        | `powers.extractGroupingValue`                                                       |
-| Rules   | `normalize…`     | gives fields the shape they're stored in                                                                                                       | `skills.normalizeFields`                                                            |
-| Rules   | `validate…`      | throws                                                                                                                                         | `inventory.validateWeaponHands`                                                     |
-| Effects | `properties`     | an entity's fields, as the properties stored in place of those it stored before (`PropertiesWrite`)                                            | `classes`, `classLevels`, `feats`, `items`, `powers`, `races`, `rulesets`, `skills` |
-| Effects | `generatedFeats` | the feats an entity brings, or its grouping shares (`GeneratedFeatsWrite`; see [customization](customization.md#auto-generated-customization)) | `skills`, `powers`                                                                  |
-| Effects | `removedFeat`    | the feat that's an entity's own, removed with it (`GeneratedFeatRemoval`)                                                                      | `skills`                                                                            |
-| Effects | `…Requirement`   | what an entity requires (`RequirementWrite`)                                                                                                   | `classLevels.previousLevelRequirement`                                              |
+| Side | Verb | What it does | Example |
+|---|---|---|---|
+| Rules | `read…` | reads typed values off properties | `classLevels.readProperties` |
+| Rules | `enrichWith…` | adds those values to rows | `skills.enrichWithProperties` |
+| Rules | `get…` | looks a value up | `classLevels.getSpellListIds` |
+| Rules | `is…` | answers yes or no | `levels.isAbilityIncreaseLevel` |
+| Rules | `resolve…` | picks among candidates | `items.resolveSlot` |
+| Rules | `extract…` | reads a value out of a request's fields | `powers.extractGroupingValue` |
+| Rules | `normalize…` | gives fields the shape they're stored in | `skills.normalizeFields` |
+| Rules | `validate…` | throws | `inventory.validateWeaponHands` |
+| Effects | `properties` | an entity's fields, as the properties stored in place of those it stored before (`PropertiesWrite`) | `classes`, `classLevels`, `feats`, `items`, `powers`, `races`, `rulesets`, `skills` |
+| Effects | `generatedFeats` | the feats an entity brings, or its grouping shares (`GeneratedFeatsWrite`; see [customization](customization.md#auto-generated-customization)) | `skills`, `powers` |
+| Effects | `removedFeat` | the feat that's an entity's own, removed with it (`GeneratedFeatRemoval`) | `skills` |
+| Effects | `…Requirement` | what an entity requires (`RequirementWrite`) | `classLevels.previousLevelRequirement` |
 
 ```ts
 // engine/core/module/rules/levels.ts  (engine interface)
@@ -655,7 +654,6 @@ The server builds a character through `buildCharacter` (`server/builds/`), with 
 The engine is the machinery every ruleset runs on: the evaluators, the path walk, the module's contract. It imports nothing from a ruleset, not even a type (`arkyvree/layers`). If you feel you have to, the file probably belongs to the ruleset.
 
 If the services need a per-ruleset value or answer:
-
 - Add a method or `readonly` field to an existing rules interface (`LevelsRules`, `ClassesRules`, …), which each ruleset implements.
 - A value the client and the API need too lives in the ruleset's `shared/<ruleset>/` (`MAX_SPELL_LEVEL`), never in a file another ruleset would read.
 
@@ -666,13 +664,11 @@ If you need a per-ruleset behavior too complex for a small rule (takes the detai
 An audit on 2026-04-16 identified real leaks and some false alarms. It predates the engine's restructure, which moved every component under `dnd3.5/`: the components it calls generic are 3.5's, and generic in that a second ruleset could take them as they are.
 
 **Fixed:**
-
 - `MAX_SPELL_LEVEL = 9` was hardcoded in the aptitudes component (`dnd3.5/aptitudes/AptitudesComponent.ts`) — now one constant in `shared/dnd3.5/spells.ts`, which the spellcasting, the routes and the client read too.
 - `buildCharacterResponse.ts` lived in `routers/api/` with a cast to `Dnd35DetailedCharacter` — moved to `engine/rulesets/dnd3.5/response/buildCharacterResponse.ts`.
 - `server/routers/api/characters/levels/` had 3.5-shaped query params (`powerLevel`, `excludeSchools`) — moved under `dnd3.5/`.
 
 **Not leaks (confirmed generic):**
-
 - `SkillWithRank.rank: number`, `CustomizedPower.powerLevel: number | null`, `CustomizedPower.saveName: string | null` — neutral primitive fields with 3.5-flavored seeded content but no schema constraint forcing 3.5 semantics.
 - Aptitudes, saves, requirements/modifiers/properties tables — generic primitives; see "What's intentionally generic" above.
 - `SavingThrowsComponent` (`dnd3.5/saves/`) — iterates generic save data, no 3.5 hardcoding.
@@ -680,24 +676,24 @@ An audit on 2026-04-16 identified real leaks and some false alarms. It predates 
 
 ## Key Files
 
-| File                                                                                                                                      | Purpose                                                                                                                                                                                                                                                                                                                                            |
-| ----------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `server/cache/rulesetCache/`                                                                                                              | `withRulesetScope` / `withRulesetScopes` (consumer entry points), `CowDataBuilder` (the overrides and sibling pairs), `RulesetCache.getCowData`: copy-on-write's read side. `CowData` itself (`engine/core/cow/CowData.ts`) is what a scope resolves ids through.                                                                                  |
-| `server/cow/`                                                                                                                             | `RulesetEdit` (the rows a change writes) and `EntityCopy` (a copy of an inherited entity): copy-on-write's write side. `EntityCopy` merges sibling data into newly COW'd local copies. Sibling read-time merging lives in the compose step (`engine/core/view/RulesetComposition.ts`).                                                             |
-| `server/services/rulesets/RulesetsService.ts`                                                                                             | `forkRuleset`, `publishRuleset`, `archiveRuleset`                                                                                                                                                                                                                                                                                                  |
-| `server/services/rulesets/extensions/RulesetExtensionsService.ts`                                                                         | `subscribeExtension`, `unsubscribeExtension`, `getExtensions`                                                                                                                                                                                                                                                                                      |
-| `server/services/rulesets/changes/RulesetChangesService.ts`                                                                               | `getChanges`, `revertOverride`                                                                                                                                                                                                                                                                                                                     |
-| `server/services/policies/RulesetsPolicy.ts`                                                                                              | Authorization checks for all ruleset operations: the ruleset's own, plus the concerns in `policies/concerns/` (entities, contributors, extensions, creating campaigns and characters), over the roles in `RulesetRoles.ts`                                                                                                                         |
-| `server/services/rulesets/*/`                                                                                                             | Entity services (feats, powers, classes, etc.) using the COW pattern                                                                                                                                                                                                                                                                               |
-| `server/repositories/*Repository.ts`                                                                                                      | COW-aware SQL queries with snapshot exclusion                                                                                                                                                                                                                                                                                                      |
-| `engine/core/types.ts`                                                                                                                    | The universal types (`ProjectedCharacterData`, `LevelUpProjector`, `LoadedCharacterData`, the paths' `TargetPathsInterface`, …)                                                                                                                                                                                                                    |
-| `engine/core/module/`                                                                                                                     | The module's contract (`contract.ts`: `RulesetModule`, `DetailedCharacterInterface`, `CharacterRows`, `ModuleRules`, `ModuleEffects`), and the rules and effects a ruleset gives the services (`rules/`, `effects/`: a file per area)                                                                                                              |
-| `engine/rulesets/dnd3.5/types.ts`                                                                                                         | 3.5's types (`Dnd35RulesetModule`, `CharacterKind`, `Dnd35ProjectedCharacterData`, `Dnd35LevelUpProjector`)                                                                                                                                                                                                                                        |
-| `engine/rulesets/dnd3.5/character/`                                                                                                       | The 3.5 character: its state (`CharacterState`), its concerns (`Builds`, `Validates`, `PossessesVirtually`), its components (`components.ts`), and `DetailedCharacter`, which wires them                                                                                                                                                           |
-| `engine/core/`                                                                                                                            | The machinery: `ModifierEvaluator`, `RequirementEvaluator`, the path helpers (`paths/`), the ruleset view (`view/`), copy-on-write's state (`cow/`)                                                                                                                                                                                                |
-| `server/rulesets/RulesetFactory.ts`                                                                                                       | The registry of the engine's modules, by base rules, and a ruleset's base rules                                                                                                                                                                                                                                                                    |
-| `engine/rulesets/dnd3.5/`                                                                                                                 | 3.5 implementation: the character (`character/`), its loader (`loading/`), its components and path categories by domain (`abilities/`, `skills/`, `combat/`…), with the rules and effects of the areas that have them (`aptitudes/`, `classes/`, `items/`, `levels/`, `powers/`, `skills/`), `Dnd35TargetPaths`, `response/buildCharacterResponse` |
-| `engine/rulesets/dnd3.5/character/concerns/Builds.ts`                                                                                     | The build: the loader (`loading/`) gives each entity the modifiers and requirements the compose step merged into `rulesetData`, then the components, the possession pre-pass and the modifier rounds run                                                                                                                                           |
-| `database/packages/dnd35/seed/concerns/CopiesOnWrite.ts`                                                                                  | Seed-time COW: copies the core feats and spells an extension changes                                                                                                                                                                                                                                                                               |
-| `tests/services/rulesets/Extensions.test.ts`                                                                                              | Extensions, COW, fork inheritance, merge, name conflicts, publish validation, sibling merge (feats + powers: aptitudes, requirements, modifiers across all endpoints)                                                                                                                                                                              |
-| `tests/services/rulesets/Sibling*.test.ts`, `tests/services/rulesets/customization/Sibling*.test.ts`, `tests/cache/aptitudeDedup.test.ts` | Siblings: what the composed view shows, edits and customization writes on a sibling-merged entity, aptitude deduplication                                                                                                                                                                                                                          |
+| File | Purpose |
+|---|---|
+| `server/cache/rulesetCache/` | `withRulesetScope` / `withRulesetScopes` (consumer entry points), `CowDataBuilder` (the overrides and sibling pairs), `RulesetCache.getCowData`: copy-on-write's read side. `CowData` itself (`engine/core/cow/CowData.ts`) is what a scope resolves ids through. |
+| `server/cow/` | `RulesetEdit` (the rows a change writes) and `EntityCopy` (a copy of an inherited entity): copy-on-write's write side. `EntityCopy` merges sibling data into newly COW'd local copies. Sibling read-time merging lives in the compose step (`engine/core/view/RulesetComposition.ts`). |
+| `server/services/rulesets/RulesetsService.ts` | `forkRuleset`, `publishRuleset`, `archiveRuleset` |
+| `server/services/rulesets/extensions/RulesetExtensionsService.ts` | `subscribeExtension`, `unsubscribeExtension`, `getExtensions` |
+| `server/services/rulesets/changes/RulesetChangesService.ts` | `getChanges`, `revertOverride` |
+| `server/services/policies/RulesetsPolicy.ts` | Authorization checks for all ruleset operations: the ruleset's own, plus the concerns in `policies/concerns/` (entities, contributors, extensions, creating campaigns and characters), over the roles in `RulesetRoles.ts` |
+| `server/services/rulesets/*/` | Entity services (feats, powers, classes, etc.) using the COW pattern |
+| `server/repositories/*Repository.ts` | COW-aware SQL queries with snapshot exclusion |
+| `engine/core/types.ts` | The universal types (`ProjectedCharacterData`, `LevelUpProjector`, `LoadedCharacterData`, the paths' `TargetPathsInterface`, …) |
+| `engine/core/module/` | The module's contract (`contract.ts`: `RulesetModule`, `DetailedCharacterInterface`, `CharacterRows`, `ModuleRules`, `ModuleEffects`), and the rules and effects a ruleset gives the services (`rules/`, `effects/`: a file per area) |
+| `engine/rulesets/dnd3.5/types.ts` | 3.5's types (`Dnd35RulesetModule`, `CharacterKind`, `Dnd35ProjectedCharacterData`, `Dnd35LevelUpProjector`) |
+| `engine/rulesets/dnd3.5/character/` | The 3.5 character: its state (`CharacterState`), its concerns (`Builds`, `Validates`, `PossessesVirtually`), its components (`components.ts`), and `DetailedCharacter`, which wires them |
+| `engine/core/` | The machinery: `ModifierEvaluator`, `RequirementEvaluator`, the path helpers (`paths/`), the ruleset view (`view/`), copy-on-write's state (`cow/`) |
+| `server/rulesets/RulesetFactory.ts` | The registry of the engine's modules, by base rules, and a ruleset's base rules |
+| `engine/rulesets/dnd3.5/` | 3.5 implementation: the character (`character/`), its loader (`loading/`), its components and path categories by domain (`abilities/`, `skills/`, `combat/`…), with the rules and effects of the areas that have them (`aptitudes/`, `classes/`, `items/`, `levels/`, `powers/`, `skills/`), `Dnd35TargetPaths`, `response/buildCharacterResponse` |
+| `engine/rulesets/dnd3.5/character/concerns/Builds.ts` | The build: the loader (`loading/`) gives each entity the modifiers and requirements the compose step merged into `rulesetData`, then the components, the possession pre-pass and the modifier rounds run |
+| `database/packages/dnd35/seed/concerns/CopiesOnWrite.ts` | Seed-time COW: copies the core feats and spells an extension changes |
+| `tests/services/rulesets/Extensions.test.ts` | Extensions, COW, fork inheritance, merge, name conflicts, publish validation, sibling merge (feats + powers: aptitudes, requirements, modifiers across all endpoints) |
+| `tests/services/rulesets/Sibling*.test.ts`, `tests/services/rulesets/customization/Sibling*.test.ts`, `tests/cache/aptitudeDedup.test.ts` | Siblings: what the composed view shows, edits and customization writes on a sibling-merged entity, aptitude deduplication |
