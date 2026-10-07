@@ -900,7 +900,7 @@ function createQueries(context) {
           if (value.type === "Literal" || value.type === "BinaryExpression") {
             report(
               node,
-              `A query's \`${node.key.name}\` is a named duration (\`lib/queryTimes.ts\`), never a number written in place.`,
+              `A query's \`${node.key.name}\` is a named duration (\`lib/durations.ts\`), never a number written in place.`,
             );
           }
           break;

@@ -3,12 +3,12 @@
  * theme's (`client/src/theme/`, where they're written out); everywhere else a style names one.
  *
  * - `sx-styles`: a style is written with `sx`: never `styled()`, no stylesheet but the fonts `main.tsx` loads (the
- *   page's own styles are the theme's `MuiCssBaseline`), and `style` only passes on one a component is given
- *   (`{ ...props.style, … }`). A table's column is a `Box component="col"`.
+ *   page's own styles are `theme/globalStyles.ts`' `GLOBAL_STYLES`), and `style` only passes on one a component is
+ *   given (`{ ...props.style, … }`). A table's column is a `Box component="col"`.
  * - `theme-colors`: a color is the theme's: a palette token (`"text.secondary"`, `theme.palette.gold.main`),
  *   translucent through `alpha()`; never a hex, `rgb()` or `hsl()` color, a CSS color name, or a hex alpha appended.
  * - `shadows`: a shadow is the theme's: an elevation (`boxShadow: 2`) or one of its named shadows
- *   (`theme.boxShadows.raised`, `theme.textShadows.hero`, `theme.dropShadows.logo`), never one written out.
+ *   (`theme.boxShadows.banner`, `theme.textShadows.hero`, `theme.dropShadows.authLogo`), never one written out.
  * - `shape`: a corner is in the theme's units (`borderRadius: 1`) or a circle (`"50%"`), and a corner of its own
  *   only drops to `0` beside it; spacing is in the theme's units (`p: 1.5`), never pixels; a layer above the page is
  *   the theme's (`theme.zIndex.drawer + 1`), a number orders siblings only (`0`, `1`).
@@ -311,8 +311,8 @@ function createShadows(context) {
       context.report({
         node: node.value,
         message:
-          "A shadow is the theme's: an elevation (`boxShadow: 2`) or one it names (`theme.boxShadows.raised`, " +
-          "`theme.textShadows.hero`, `theme.dropShadows.logo`), never one written out.",
+          "A shadow is the theme's: an elevation (`boxShadow: 2`) or one it names (`theme.boxShadows.banner`, " +
+          "`theme.textShadows.hero`, `theme.dropShadows.authLogo`), never one written out.",
       });
     },
   };
@@ -478,8 +478,8 @@ function createSxStyles(context) {
       node,
       message:
         "A style is written with `sx`: never `styled()`, no stylesheet but the fonts `main.tsx` loads (the page's own " +
-        "are the theme's `MuiCssBaseline`), and `style` only passes on one a component is given (`{ ...props.style " +
-        '}`); a table\'s column is a `Box component="col"`.',
+        "are `theme/globalStyles.ts`' `GLOBAL_STYLES`), and `style` only passes on one a component is given " +
+        '(`{ ...props.style }`); a table\'s column is a `Box component="col"`.',
     });
   // What a file imports MUI's packages whole as (`import * as M from "@mui/material"`), whose `M.styled` it reports
   const namespaces = new Set();
