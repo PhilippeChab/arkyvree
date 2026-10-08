@@ -23,9 +23,8 @@ import {
   readCharacterInput,
 } from "@/server/services/characters/index.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
+import type { CharacterVisibility } from "@/shared/campaigns.ts";
 import type { Session } from "@/shared/relations.ts";
-
-type VisibilityType = "Private" | "Public" | "Partial";
 
 class CampaignCharactersService {
   /**
@@ -79,7 +78,7 @@ class CampaignCharactersService {
     const isPartial = this.isPartial(link.visibility, { canEdit, isGM, isOwner });
 
     const viewer = {
-      visibility: link.visibility as VisibilityType,
+      visibility: link.visibility as CharacterVisibility,
       isOwner,
       canEdit,
       canDownloadPdf: canEdit || isGM,
@@ -191,7 +190,7 @@ class CampaignCharactersService {
     );
   }
 
-  async linkCharacter(session: Session, campaignId: string, characterId: string, visibility: VisibilityType) {
+  async linkCharacter(session: Session, campaignId: string, characterId: string, visibility: CharacterVisibility) {
     return await withTransaction(async (tx) => {
       const campaign = await Campaigns.findOne(tx, { id: campaignId }, Visibility.All);
       if (!campaign) throw new NotFoundError("Campaign not found");
@@ -245,7 +244,7 @@ class CampaignCharactersService {
     session: Session,
     campaignId: string,
     characterId: string,
-    visibility: VisibilityType,
+    visibility: CharacterVisibility,
   ) {
     return await withTransaction(async (tx) => {
       const campaign = await Campaigns.findOne(tx, { id: campaignId }, Visibility.All);

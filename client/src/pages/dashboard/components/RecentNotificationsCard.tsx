@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import {
   BlankNote,
   CardTitle,
-  CLICKABLE_SX,
+  CLICKABLE_ROW_SX,
   clickableProps,
   DiceSpinner,
   LoadError,
@@ -57,8 +57,7 @@ export function RecentNotificationsCard() {
                   sx={[
                     { justifyContent: "space-between", alignItems: "center", p: 2, borderRadius: 2 },
                     !notification.readAt && UNREAD_NOTIFICATION_SX,
-                    openable && CLICKABLE_SX,
-                    openable && { "&:hover": { bgcolor: "action.hover" } },
+                    openable && CLICKABLE_ROW_SX,
                     fadeInUpSx(index),
                   ]}
                 >

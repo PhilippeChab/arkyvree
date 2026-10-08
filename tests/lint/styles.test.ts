@@ -246,10 +246,14 @@ describe("style rules", () => {
           "client/src/mode.tsx": 'const darkMode = theme.palette.mode === "dark";\nexport const d = darkMode;\n',
           "client/src/param.tsx": "export const t = <Box sx={{ zIndex: (t) => t.zIndex.drawer + 1 }} />;\n",
           "client/src/named.tsx": "export const n = <Box sx={[ROW_SX, open && OPEN_STYLE]} />;\n",
+          "client/src/bar.tsx":
+            "export const b = <AppBar sx={{ background: (theme) => theme.palette.primary.main }} />;\n",
+          "client/src/layer.tsx": "export const y = <AppBar sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }} />;\n",
         },
         ["sx-conventions"],
       ),
     ).toEqual([
+      "sx-conventions client/src/bar.tsx",
       "sx-conventions client/src/callback.tsx",
       "sx-conventions client/src/caller.tsx",
       "sx-conventions client/src/empty.tsx",

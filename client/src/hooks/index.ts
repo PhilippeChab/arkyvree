@@ -18,7 +18,7 @@ export { useListPageQuery } from "./useListPageQuery.ts";
 export { useListParams } from "./useListParams.ts";
 export { useNotificationActions } from "./useNotificationActions.ts";
 export { useOglLicense } from "./useOglLicense.ts";
-export { isNavigableTarget, useOpenActivityTarget } from "./useOpenActivityTarget.ts";
+export { useOpenActivityTarget } from "./useOpenActivityTarget.ts";
 export { usePageTitle } from "./usePageTitle.ts";
 export { usePdfExport } from "./usePdfExport.ts";
 export { type RulesetAbility, useRulesetAbilities } from "./useRulesetAbilities.ts";

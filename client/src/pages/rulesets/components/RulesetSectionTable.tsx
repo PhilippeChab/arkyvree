@@ -3,7 +3,7 @@ import { type ElementType, type ReactNode, useMemo, useRef } from "react";
 
 import {
   BlankState,
-  CLICKABLE_SX,
+  CLICKABLE_ROW_SX,
   clickableProps,
   LoadError,
   NoMatchesState,
@@ -114,7 +114,6 @@ export function RulesetSectionTable<T extends { id: string }>({
           {data.map((item, index) => (
             <TableRow
               key={item.id}
-              hover
               {...(onRowClick && clickableProps(() => onRowClick(item)))}
               onMouseEnter={
                 onRowMouseEnter
@@ -126,7 +125,7 @@ export function RulesetSectionTable<T extends { id: string }>({
               }
               onMouseLeave={onRowMouseEnter ? () => clearTimeout(hoverTimer.current) : undefined}
               onFocus={onRowMouseEnter ? () => onRowMouseEnter(item) : undefined}
-              sx={[!!onRowClick && CLICKABLE_SX, ROW_ACTIONS_HOVER_SX, fadeInUpSx(index)]}
+              sx={[!!onRowClick && CLICKABLE_ROW_SX, ROW_ACTIONS_HOVER_SX, fadeInUpSx(index)]}
             >
               {visibleColumns.map((column) => (
                 <TableCell key={column.key}>{renderCell(item, column.key)}</TableCell>

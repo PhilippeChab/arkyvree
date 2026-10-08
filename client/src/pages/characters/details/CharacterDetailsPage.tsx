@@ -1,4 +1,4 @@
-import { Alert, Container, Menu, Stack, Typography } from "@mui/material";
+import { Container, Menu, Stack } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useState } from "react";
@@ -12,11 +12,13 @@ import {
 } from "@/client/src/components/characters/index.ts";
 import {
   ActionMenuItem,
+  ArchivedNotice,
   ConfirmDialog,
   DeleteDialog,
   PageError,
   PageTransition,
 } from "@/client/src/components/common/index.ts";
+import { ContributorsDialog } from "@/client/src/components/contributors/index.ts";
 import {
   AddIcon,
   ArchiveIcon,
@@ -33,17 +35,12 @@ import { useAnchorMenu, useDialogState, useIsDemo, usePageTitle, usePdfExport } 
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { characterDetailQuery, invalidateCharacter, invalidateCharacterListings } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
+import { characterPageState } from "@/client/src/pages/characters/characterPageState.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
 
-import {
-  AddLevelModal,
-  CharacterModifiersModal,
-  ContributorsDialog,
-  EditLevelModal,
-  ShareDialog,
-} from "./components/index.ts";
+import { AddLevelModal, CharacterModifiersModal, EditLevelModal, ShareDialog } from "./components/index.ts";
 export default function CharacterDetailsPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -53,7 +50,8 @@ export default function CharacterDetailsPage() {
   const [isArchiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
   const [isHardDeleteConfirmOpen, setHardDeleteConfirmOpen] = useState(false);
   // A new character arrives with the Add Level wizard open (`openLevelUp`)
-  const addLevel = useDialogState(location.state?.openLevelUp === true ? true : null);
+  const { openLevelUp } = characterPageState(location.state);
+  const addLevel = useDialogState(openLevelUp ? true : null);
   const editLevel = useDialogState<EditingLevel>();
   const [isShareOpen, setShareOpen] = useState(false);
   const [isContributorsOpen, setContributorsOpen] = useState(false);
@@ -74,7 +72,7 @@ export default function CharacterDetailsPage() {
   // open it again
   const closeAddLevel = () => {
     addLevel.close();
-    if (location.state?.openLevelUp) navigate(location.pathname, { replace: true, state: {} });
+    if (openLevelUp) navigate(location.pathname, { replace: true, state: {} });
   };
 
   const removeLevelMutation = useMutation({
@@ -256,10 +254,10 @@ export default function CharacterDetailsPage() {
             onClose={() => setArchiveConfirmOpen(false)}
             onConfirm={() => archiveMutation.mutate()}
             title="Archive Character"
-            message="Are you sure you want to archive this character? You can restore it later from the Archived view."
+            message="Are you sure you want to archive this character? You can unarchive it at any time from the Archived filter."
             isLoading={archiveMutation.isPending}
             confirmLabel="Archive Character"
-            confirmColor="warning"
+            intent="caution"
             confirmIcon={<ArchiveIcon />}
           />
 
@@ -281,11 +279,13 @@ export default function CharacterDetailsPage() {
           />
 
           <ContributorsDialog
+            kind="character"
+            id={id}
             open={isContributorsOpen}
             onClose={() => setContributorsOpen(false)}
-            characterId={id}
-            isOwner={isOwner}
-            isArchived={isArchived}
+            canInvite={isOwner && !isArchived}
+            canLeave={!isOwner}
+            canRemove={isOwner ? () => true : undefined}
           />
 
           <CharacterModifiersModal
@@ -295,15 +295,7 @@ export default function CharacterDetailsPage() {
             rulesetId={character.rulesetId}
           />
 
-          {/* Read-Only Banner for Archived Characters */}
-          {isArchived && (
-            <Alert severity="info">
-              <Typography variant="body2">
-                <strong>This character is archived and read-only.</strong> You can view all content but cannot make
-                changes.
-              </Typography>
-            </Alert>
-          )}
+          {isArchived && <ArchivedNotice what="character" canUnarchive={isOwner && !isBonded} />}
 
           {addLevel.target && (
             <AddLevelModal

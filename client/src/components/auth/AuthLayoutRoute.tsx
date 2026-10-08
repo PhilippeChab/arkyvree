@@ -4,12 +4,12 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 
 import { DiceSpinner, GoldDivider, LinkButton, PageLoader } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useAuthRequests, useIsDemo, useIsMobile, useSearchParam } from "@/client/src/hooks/index.ts";
+import { useAuthRequests, useIsDemo, useIsMobile } from "@/client/src/hooks/index.ts";
 import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { DURATION, EASING, fadeInUp, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
 
-import { safeRedirectPath } from "./safeRedirect.ts";
+import { useAuthRedirect } from "./useAuthRedirect.ts";
 
 function AuthFooterLinks() {
   const snackbar = useSnackbar();
@@ -246,10 +246,8 @@ export function AuthLayoutRoute() {
   const demoSignOutStarted = useRef(false);
   const { signOut } = useAuthRequests();
   const signOutDemo = signOut.mutate;
-  const location = useLocation();
-  const { value: redirectParam } = useSearchParam("redirect");
   // Where a user signing in was going: the page that sent them to sign in, which verifying an email carries along
-  const destination = safeRedirectPath(redirectParam || location.state?.redirect) ?? "/dashboard";
+  const destination = useAuthRedirect() ?? "/dashboard";
 
   // Demo sessions live only inside the app — drop the demo on entry to any auth route.
   // A sign-out that fails (server already 401'd, network blip) still ends signed out locally: the server-side demo may

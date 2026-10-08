@@ -4,7 +4,7 @@ import { parseResponse } from "hono/client";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import type { AttachmentSlot } from "@/client/src/lib/queries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { MAX_UPLOAD_BYTES } from "@/shared/attachments.ts";
+import { ATTACHMENT_SLOTS, MAX_UPLOAD_BYTES } from "@/shared/attachments.ts";
 
 import { refreshAttachmentSlot } from "./refreshAttachmentSlot.ts";
 
@@ -20,9 +20,8 @@ export function useDirectUpload(slot: AttachmentSlot) {
       const { signedId, presignedUrl, headers } = await parseResponse(
         rpc.api.attachments["direct-uploads"].$post({
           json: {
-            recordType: slot.recordType,
+            ...ATTACHMENT_SLOTS[slot.name],
             recordId: slot.recordId,
-            name: slot.name,
             filename: file.name,
             contentType: file.type,
             byteSize: file.size,

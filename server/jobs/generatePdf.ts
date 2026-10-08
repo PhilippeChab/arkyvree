@@ -56,7 +56,7 @@ export async function generatePdfTask(payload: unknown, helpers: JobHelpers): Pr
       return;
     }
 
-    const portraitUrl = await getSlotUrl("Character", characterRecord.id, "portrait");
+    const portraitUrl = await getSlotUrl("portrait", characterRecord.id);
     const sheet = await withRulesetScope(db, characterRecord.rulesetId, async (scope) =>
       describeCharacterSheet(scope, await readCharacterInput(db, characterRecord), {
         diagnostics: !isProduction(),

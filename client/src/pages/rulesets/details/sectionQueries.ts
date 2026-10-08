@@ -1,7 +1,7 @@
 /**
  * List queries of the ruleset tabs. Each section renders with these, and the tab bar prefetches with the same
  * factories, so a hovered tab's first page is already cached under the exact key the section asks for. The pickers the
- * ruleset's forms offer read its lists here too: its aptitudes, its feats and its saves.
+ * ruleset's forms offer read its lists here too: its aptitudes and its feats.
  */
 
 import {
@@ -357,24 +357,6 @@ export function rulesetFeatsQuery(rulesetId: string, search: string) {
       ),
     initialPageParam: 1,
     getNextPageParam: nextPage,
-  });
-}
-
-/** Every save of a ruleset, for pickers, columns and lookups: the first 100, the most one request returns. */
-export function rulesetSavesQuery(rulesetId: string | undefined) {
-  return queryOptions({
-    queryKey: QUERY_KEYS.rulesets.saves(rulesetId ?? ""),
-    queryFn: rulesetId
-      ? async () => {
-          const page = await parseResponse(
-            rpc.api.rulesets[":id"].saves.$get({
-              param: { id: rulesetId },
-              query: { page: "1", limit: "100" },
-            }),
-          );
-          return page.items;
-        }
-      : skipToken,
   });
 }
 

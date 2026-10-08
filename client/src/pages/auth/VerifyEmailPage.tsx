@@ -4,8 +4,11 @@ import { Link, Navigate, useLocation } from "react-router-dom";
 
 import {
   AuthPage,
+  authPageState,
   AuthSubmitButton,
+  CodeSentMessage,
   EMPTY_VERIFICATION_CODE,
+  isCodeComplete,
   ResendCodeLink,
   useResendCode,
   VerificationCodeInput,
@@ -22,7 +25,7 @@ export default function VerifyEmailPage() {
   usePageTitle("Verify Email");
   const pendingVerificationEmail = useAuthStore((s) => s.pendingVerificationEmail);
   const location = useLocation();
-  const fromSignIn = location.state?.from === "sign-in";
+  const fromSignIn = authPageState(location.state).from === "sign-in";
   const auth = useAuthRequests();
 
   const form = useFormWith<VerifyEmailFormData>({ digits: EMPTY_VERIFICATION_CODE });
@@ -38,22 +41,16 @@ export default function VerifyEmailPage() {
     setError(null);
     auth.verifyEmail.mutate(
       { emailAddress: pendingVerificationEmail, code: data.digits.join("") },
-      { onError: (error) => setError(errorMessage(error, "Verification failed")) },
+      { onError: (error) => setError(errorMessage(error, "Failed to verify the code")) },
     );
   };
-
-  const isComplete = digits.every((d) => d !== "");
 
   return (
     <AuthPage
       error={error}
       notice={notice}
       title="Verify Email"
-      subtitle={
-        <>
-          We sent an 8-digit code to <strong>{pendingVerificationEmail}</strong>
-        </>
-      }
+      subtitle={<CodeSentMessage email={pendingVerificationEmail} />}
     >
       <Stack spacing={2}>
         <Stack component="form" onSubmit={form.handleSubmit(handleVerify)} noValidate spacing={5}>
@@ -63,7 +60,7 @@ export default function VerifyEmailPage() {
             render={({ field }) => <VerificationCodeInput digits={field.value} onChange={field.onChange} />}
           />
 
-          <AuthSubmitButton loading={auth.pending} disabled={!isComplete}>
+          <AuthSubmitButton loading={auth.pending} disabled={!isCodeComplete(digits)}>
             Verify
           </AuthSubmitButton>
         </Stack>

@@ -156,9 +156,9 @@ export function ArchiveRulesetDialog({ open, onClose, onConfirm, isLoading }: Ar
       onConfirm={onConfirm}
       isLoading={isLoading}
       title="Archive Ruleset"
-      message="Are you sure you want to archive this ruleset? You can restore it later from the archived rulesets section."
+      message="Are you sure you want to archive this ruleset? You can unarchive it at any time from the Archived filter."
       confirmLabel="Archive Ruleset"
-      confirmColor="warning"
+      intent="caution"
       confirmIcon={<ArchiveIcon />}
     />
   );
@@ -255,7 +255,7 @@ export function PublishRulesetDialog({
       title="Publish Ruleset"
       message="Are you sure you want to publish this ruleset? Once published, other users can find it and use it, unless it's private."
       confirmLabel="Publish Ruleset"
-      confirmColor="success"
+      intent="positive"
       confirmIcon={<PublishIcon />}
     >
       {canBeExtension && (
@@ -289,7 +289,7 @@ export function UnsubscribeExtensionDialog({
         </>
       }
       confirmLabel="Unsubscribe"
-      confirmColor="error"
+      intent="destructive"
       confirmIcon={<ExtensionIcon />}
     />
   );

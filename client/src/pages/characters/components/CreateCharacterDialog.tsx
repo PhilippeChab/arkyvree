@@ -35,6 +35,7 @@ import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { rulesetPickerQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { NAME_RULES, requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
+import type { CharacterPageState } from "@/client/src/pages/characters/characterPageState.ts";
 import { availableRacesQuery } from "@/client/src/pages/characters/characterQueries.ts";
 import {
   getRollFunction,
@@ -507,7 +508,7 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.lists });
       onClose();
-      navigate(`/characters/${data.id}`, { state: { openLevelUp: true } });
+      navigate(`/characters/${data.id}`, { state: { openLevelUp: true } satisfies CharacterPageState });
     },
     onError: (error) => {
       snackbar.error(error, "Failed to create character");

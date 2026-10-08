@@ -12,7 +12,7 @@ The frontend uses MUI Buttons + MenuItems for actions. Color and variant carry *
 | **Positive** | Publish, Accept, Unarchive, Restore | `variant="contained" color="success"` | `sx={{ color: "success.main" }}` |
 | **Cancel / Close / Dismiss** | Cancel, Close, Dismiss (in dialogs) | `variant="outlined" color="inherit"` | n/a |
 
-Page action menus use `ActionMenuItem` (`components/common`), whose `intent` (`destructive` / `caution` / `positive`) applies the MenuItem column, and a row's actions `RowAction`, whose `intent` (`destructive` / `caution`) colors its icon: grey otherwise, Edit included.
+Page action menus use `ActionMenuItem` (`components/common`), whose `intent` (`destructive` / `caution` / `positive`) applies the MenuItem column, and a row's actions `RowAction`, whose `intent` colors its icon: grey otherwise, Edit included.
 
 `arkyvree/button-intents` holds the Button column: a `Button` colored `error`, `warning` or `success` is `variant="contained"`, wherever it stands (a dialog, a panel's row, an alert).
 
@@ -28,7 +28,7 @@ Apply the matrix even when the destructive action fires directly with no confirm
 
 Cancel/Close sits **left** of the primary action in `<DialogActions>`. The four wrappers in `client/src/components/common/StandardDialogs.tsx` already do this — prefer them over hand-rolling a dialog so the convention stays automatic.
 
-For confirmations, `ConfirmDialog` takes the intent directly: `confirmColor="warning"` for Archive / Leave, `"success"` for Publish, `"error"` for destructive actions (`DeleteDialog` is that preset), plus a `confirmLabel` naming the action and an optional `confirmIcon`.
+For confirmations, `ConfirmDialog` takes the intent directly: `intent="caution"` for Archive / Leave, `"positive"` for Publish, `"destructive"` for destructive actions (`DeleteDialog` is that preset), plus a `confirmLabel` naming the action and an optional `confirmIcon`. `DialogFooter`'s action takes its `intent` the same way: the one type and color map is `Intent` (`components/common/intent.ts`), shared with `ActionMenuItem` and `RowAction`.
 
 ## Pair patterns to know
 
@@ -42,7 +42,7 @@ For confirmations, `ConfirmDialog` takes the intent directly: `confirmColor="war
 - ❌ `<Button variant="contained" sx={{ background: "red" }}>Delete</Button>` — bypasses the theme and the dark-mode palette. Use `color="error"` instead.
 - ❌ `<Button>Delete</Button>` with no color on a destructive confirm — reads as a default action. Use `color="error" variant="contained"`.
 - ❌ `<Button>Cancel</Button>` in a dialog with no variant/color — reads heavier than intended next to a contained submit. Use `variant="outlined" color="inherit"`, or rely on `StandardDialogs`.
-- ❌ Confirming an Archive with `DeleteDialog` — its red "Delete" button reads as destruction. Use `ConfirmDialog` with `confirmColor="warning"` and a label like "Archive Character".
+- ❌ Confirming an Archive with `DeleteDialog` — its red "Delete" button reads as destruction. Use `ConfirmDialog` with `intent="caution"` and a label like "Archive Character".
 - ❌ Splitting Cancel into a Modal that wraps a `<form>` — `Modal` doesn't run the dirty-form close guard. Use `FormDialog` (see [AGENTS.md](../AGENTS.md) → Dialog Conventions).
 
 ## Loading state

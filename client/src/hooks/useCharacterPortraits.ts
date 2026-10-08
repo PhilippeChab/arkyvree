@@ -12,7 +12,7 @@ export function useCharacterPortraits(characters: readonly { id: string }[]) {
   // The queries read the ids: the same array while the list stays the same
   const recordIds = useMemo(() => characters.map((character) => character.id), [characters]);
   const queries = useQueries({
-    queries: recordIds.map((recordId) => attachmentSlotQuery({ recordType: "Character", recordId, name: "portrait" })),
+    queries: recordIds.map((recordId) => attachmentSlotQuery({ name: "portrait", recordId })),
   });
   return new Map(recordIds.map((recordId, index) => [recordId, queries[index]?.data?.url ?? null]));
 }

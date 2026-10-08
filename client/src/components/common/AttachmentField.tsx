@@ -28,24 +28,22 @@ interface AttachmentFieldProps extends AttachmentSlot {
   size?: number;
   /** Pre-resolved URL for unauthenticated views (e.g. shared character page). Skips the GET and forces readOnly. */
   url?: string | null;
-  variant?: "avatar" | "portrait";
 }
 
 const ACCEPT = ALLOWED_IMAGE_TYPES.join(",");
 const ACCEPTED_TYPES: readonly string[] = ALLOWED_IMAGE_TYPES;
 
 export function AttachmentField({
-  recordType,
   recordId,
   name,
   label,
-  variant = "portrait",
   size,
   readOnly = false,
   ring = false,
   url: urlOverride,
 }: AttachmentFieldProps) {
-  const isAvatar = variant === "avatar";
+  // A user's avatar is round, a character's portrait a framed picture
+  const isAvatar = name === "avatar";
   const dimension = size ?? (isAvatar ? 128 : 220);
   const radius = isAvatar ? "50%" : 2;
   // The hidden file input, in state: the clickable box hands its click on to it
@@ -55,7 +53,7 @@ export function AttachmentField({
 
   const sharedMode = urlOverride !== undefined;
   const isDemo = useIsDemo();
-  const slot = { recordType, recordId, name };
+  const slot = { name, recordId };
   const attachmentQuery = useAttachment({ ...slot, enabled: !sharedMode });
   const upload = useDirectUpload(slot);
   const detach = useDetachAttachment(slot);

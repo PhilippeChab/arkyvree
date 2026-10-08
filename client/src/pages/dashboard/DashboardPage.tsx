@@ -13,12 +13,11 @@ import {
 } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import type { ElementType } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
-import { GoldDivider, PageError, PageLoader, PageTransition } from "@/client/src/components/common/index.ts";
+import { GoldDivider, LoadError, PageLoader, PageTransition } from "@/client/src/components/common/index.ts";
 import { CampaignIcon, CharacterIcon, HelpIcon, RulesetIcon } from "@/client/src/components/icons/index.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
-import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 import { dashboardStatsQuery } from "@/client/src/lib/queries.ts";
 import { DURATION, EASING, fadeInUpSx, PREFERS_REDUCED_MOTION, transitionOf } from "@/client/src/theme/animations.ts";
@@ -32,11 +31,12 @@ interface StatCardProps {
   count: number;
   icon: ElementType;
   label: string;
-  onClick: () => void;
   tagline: string;
+  /** The list it counts, which it opens: a link. */
+  to: string;
 }
 
-function StatCard({ icon: Icon, count, label, tagline, onClick, colors, animationIndex }: StatCardProps) {
+function StatCard({ icon: Icon, count, label, tagline, to, colors, animationIndex }: StatCardProps) {
   return (
     <Box sx={{ flex: "1 1 300px", minWidth: { xs: 0, sm: 300 } }}>
       <Card
@@ -60,7 +60,7 @@ function StatCard({ icon: Icon, count, label, tagline, onClick, colors, animatio
           fadeInUpSx(animationIndex),
         ]}
       >
-        <CardActionArea onClick={onClick} sx={{ height: "100%" }}>
+        <CardActionArea component={Link} to={to} sx={{ height: "100%" }}>
           <CardContent sx={{ textAlign: "center", p: { xs: 2, sm: 4 } }}>
             <Stack spacing={2}>
               <Box>
@@ -94,22 +94,12 @@ function StatCard({ icon: Icon, count, label, tagline, onClick, colors, animatio
 
 export default function DashboardPage() {
   usePageTitle("Dashboard");
-  const navigate = useNavigate();
-
   const { data: dashboardStats, isLoading, error } = useQuery(dashboardStatsQuery());
 
   if (isLoading) {
     return (
       <Container maxWidth="xl">
         <PageLoader />
-      </Container>
-    );
-  }
-
-  if (error && !dashboardStats) {
-    return (
-      <Container maxWidth="xl">
-        <PageError message={loadFailureMessage("Dashboard", error)} />
       </Container>
     );
   }
@@ -231,35 +221,40 @@ export default function DashboardPage() {
           <Stack spacing={3}>
             <GoldDivider sx={{ opacity: 0.4 }} />
 
-            <Stack direction="row" spacing={3} sx={{ flexWrap: "wrap" }}>
-              <StatCard
-                icon={CharacterIcon}
-                count={dashboardStats?.totalCharacters ?? 0}
-                label="Characters"
-                tagline="Heroes ready for adventure"
-                onClick={() => navigate("/characters")}
-                colors={(theme) => [theme.palette.primary.light, theme.palette.primary.main]}
-                animationIndex={0}
-              />
-              <StatCard
-                icon={CampaignIcon}
-                count={dashboardStats?.totalCampaigns ?? 0}
-                label="Campaigns"
-                tagline="Epic quests in progress"
-                onClick={() => navigate("/campaigns")}
-                colors={(theme) => [theme.palette.secondary.light, theme.palette.secondary.main]}
-                animationIndex={1}
-              />
-              <StatCard
-                icon={RulesetIcon}
-                count={dashboardStats?.totalRulesets ?? 0}
-                label="Rulesets"
-                tagline="Game systems available"
-                onClick={() => navigate("/rulesets")}
-                colors={(theme) => [theme.palette.primary.dark, theme.palette.primary.dark]}
-                animationIndex={2}
-              />
-            </Stack>
+            {/* The statistics that failed to load say so where they show, the rest of the page kept */}
+            {dashboardStats ? (
+              <Stack direction="row" spacing={3} sx={{ flexWrap: "wrap" }}>
+                <StatCard
+                  icon={CharacterIcon}
+                  count={dashboardStats.totalCharacters}
+                  label="Characters"
+                  tagline="Heroes ready for adventure"
+                  to="/characters"
+                  colors={(theme) => [theme.palette.primary.light, theme.palette.primary.main]}
+                  animationIndex={0}
+                />
+                <StatCard
+                  icon={CampaignIcon}
+                  count={dashboardStats.totalCampaigns}
+                  label="Campaigns"
+                  tagline="Epic quests in progress"
+                  to="/campaigns"
+                  colors={(theme) => [theme.palette.secondary.light, theme.palette.secondary.main]}
+                  animationIndex={1}
+                />
+                <StatCard
+                  icon={RulesetIcon}
+                  count={dashboardStats.totalRulesets}
+                  label="Rulesets"
+                  tagline="Game systems available"
+                  to="/rulesets"
+                  colors={(theme) => [theme.palette.primary.dark, theme.palette.primary.dark]}
+                  animationIndex={2}
+                />
+              </Stack>
+            ) : (
+              <LoadError what="Statistics" error={error} />
+            )}
           </Stack>
 
           <Stack spacing={3}>

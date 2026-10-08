@@ -189,10 +189,8 @@ export function CharacterIdentitySection({
           sx={{ alignItems: { xs: "center", sm: "flex-start" } }}
         >
           <AttachmentField
-            recordType="Character"
-            recordId={characterId}
             name="portrait"
-            variant="portrait"
+            recordId={characterId}
             size={140}
             readOnly={portraitReadOnly}
             url={portraitUrl}

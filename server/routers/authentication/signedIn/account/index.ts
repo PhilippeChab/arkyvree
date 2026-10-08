@@ -3,7 +3,11 @@ import { z } from "zod";
 
 import { deleteSessionCookie, denyDemoUser, type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { sanitizedEmail, sanitizedText } from "@/server/routers/api/validation.ts";
-import { checkPasswordConfirmation, sanitizedPassword } from "@/server/routers/authentication/validation.ts";
+import {
+  checkPasswordConfirmation,
+  sanitizedPassword,
+  sanitizedUsername,
+} from "@/server/routers/authentication/validation.ts";
 import { AccountService } from "@/server/services/authentication/account/index.ts";
 
 export default new Hono<SessionContext>()
@@ -69,10 +73,7 @@ export default new Hono<SessionContext>()
   .put(
     "/profile",
     denyDemoUser,
-    validate(
-      "json",
-      z.object({ username: sanitizedText.min(3).max(50).optional(), emailAddress: sanitizedEmail.optional() }),
-    ),
+    validate("json", z.object({ username: sanitizedUsername.optional(), emailAddress: sanitizedEmail.optional() })),
     async (c) => {
       const { username, emailAddress } = c.req.valid("json");
       return c.json(await AccountService.updateProfile(c.var.requestSession, username, emailAddress), 200);

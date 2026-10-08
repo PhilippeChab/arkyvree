@@ -68,7 +68,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
         title="Refresh Arkyvree"
         message="Are you sure you want to refresh? Your unsaved changes will be lost."
         confirmLabel="Refresh"
-        confirmColor="warning"
+        intent="caution"
       />
     </>
   );

@@ -206,7 +206,7 @@ export function RemovePlayerDialog({
         )
       }
       confirmLabel={isSelfRemoval ? "Leave" : "Remove Player"}
-      confirmColor={isSelfRemoval ? "warning" : "error"}
+      intent={isSelfRemoval ? "caution" : "destructive"}
       confirmIcon={isSelfRemoval ? <LeaveIcon /> : <DeleteIcon />}
     />
   );

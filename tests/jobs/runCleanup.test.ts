@@ -26,8 +26,8 @@ describe("runCleanup", () => {
     await Users.update(db, { expiresAt: new Date(Date.now() - 1000).toISOString() }, { id: expired.user.id });
     const character = await createTestCharacter(expired.user.id);
     const attachments = [
-      await createTestAttachment("User", expired.user.id),
-      await createTestAttachment("Character", character.id),
+      await createTestAttachment("avatar", expired.user.id),
+      await createTestAttachment("portrait", character.id),
     ];
 
     await runCleanupTask({}, silentJobHelpers);

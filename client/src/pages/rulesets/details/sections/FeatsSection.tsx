@@ -16,7 +16,7 @@ import { useCallback } from "react";
 
 import {
   BlankState,
-  CLICKABLE_SX,
+  CLICKABLE_ROW_SX,
   clickableProps,
   CountChip,
   CreateDialog,
@@ -107,9 +107,8 @@ function GroupedRow({
     return (
       <>
         <TableRow
-          hover
           {...toggleProps(isExpanded, () => onToggleFamily(family), "row")}
-          sx={{ ...CLICKABLE_SX, ...fadeInUpSx(rowIndex) }}
+          sx={[CLICKABLE_ROW_SX, fadeInUpSx(rowIndex)]}
         >
           <TableCell>
             <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
@@ -144,11 +143,10 @@ function GroupedRow({
             return (
               <TableRow
                 key={feat.id}
-                hover
                 {...clickableProps(() => onVariantClick(feat))}
                 onMouseEnter={() => onVariantMouseEnter(feat)}
                 onFocus={() => onVariantMouseEnter(feat)}
-                sx={[CLICKABLE_SX, isNew && fadeInUpSx(i - previousItemCount)]}
+                sx={[CLICKABLE_ROW_SX, isNew && fadeInUpSx(i - previousItemCount)]}
               >
                 <TableCell sx={{ pl: 6 }}>
                   <Typography variant="body2">{feat.name}</Typography>
@@ -177,11 +175,10 @@ function GroupedRow({
   // Non-family row — navigate to the representative feat
   return (
     <TableRow
-      hover
       {...clickableProps(() => onRowClick({ id: row.representativeId }))}
       onMouseEnter={() => onRowMouseEnter({ id: row.representativeId })}
       onFocus={() => onRowMouseEnter({ id: row.representativeId })}
-      sx={{ ...CLICKABLE_SX, ...fadeInUpSx(rowIndex) }}
+      sx={[CLICKABLE_ROW_SX, fadeInUpSx(rowIndex)]}
     >
       <TableCell>
         <Typography variant="body2">{row.displayName}</Typography>

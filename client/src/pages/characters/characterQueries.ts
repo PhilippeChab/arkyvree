@@ -1,4 +1,4 @@
-/** Queries of the character pages: the races a new character can take, and a character's modifiers and contributors. */
+/** Queries of the character pages: the races a new character can take, and a character's modifiers. */
 
 import { infiniteQueryOptions, queryOptions, skipToken } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
@@ -28,22 +28,6 @@ export function availableRacesQuery(rulesetId: string, alignment: string, gender
             }),
           )
       : skipToken,
-    initialPageParam: 1,
-    getNextPageParam: nextPage,
-  });
-}
-
-/** A character's contributors, a page at a time; each page also names its owner. */
-export function characterContributorsQuery(characterId: string) {
-  return infiniteQueryOptions({
-    queryKey: QUERY_KEYS.characters.contributors(characterId),
-    queryFn: ({ pageParam }) =>
-      parseResponse(
-        rpc.api.characters[":id"].contributors.$get({
-          param: { id: characterId },
-          query: { page: pageParam.toString(), limit: "10" },
-        }),
-      ),
     initialPageParam: 1,
     getNextPageParam: nextPage,
   });

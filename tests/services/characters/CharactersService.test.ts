@@ -350,8 +350,8 @@ describe("CharactersService", () => {
           .returning();
 
         const portraits = [
-          await createTestAttachment("Character", character.id),
-          await createTestAttachment("Character", familiar.id),
+          await createTestAttachment("portrait", character.id),
+          await createTestAttachment("portrait", familiar.id),
         ];
 
         await CharactersService.archiveCharacter(session, character.id);

@@ -1,12 +1,11 @@
 /**
- * The ruleset page's queries beside its tabs' lists (`sectionQueries.ts`): the extensions it subscribes to, and what
- * its dialogs show, its local changes and its contributors.
+ * The ruleset page's queries beside its tabs' lists (`sectionQueries.ts`): the extensions it subscribes to, and its
+ * local changes, which a dialog shows.
  */
 
-import { infiniteQueryOptions, queryOptions, skipToken } from "@tanstack/react-query";
+import { queryOptions, skipToken } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 
-import { nextPage } from "@/client/src/lib/pageItems.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
@@ -15,22 +14,6 @@ export function rulesetChangesQuery(rulesetId: string) {
   return queryOptions({
     queryKey: QUERY_KEYS.rulesets.changes(rulesetId),
     queryFn: () => parseResponse(rpc.api.rulesets[":id"].changes.$get({ param: { id: rulesetId } })),
-  });
-}
-
-/** A ruleset's contributors and its owner, a page at a time: the Contributors dialog's list. */
-export function rulesetContributorsQuery(rulesetId: string) {
-  return infiniteQueryOptions({
-    queryKey: QUERY_KEYS.rulesets.section(rulesetId, "contributors"),
-    queryFn: ({ pageParam }) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].contributors.$get({
-          param: { id: rulesetId },
-          query: { page: pageParam.toString(), limit: "10" },
-        }),
-      ),
-    initialPageParam: 1,
-    getNextPageParam: nextPage,
   });
 }
 

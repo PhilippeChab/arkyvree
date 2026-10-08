@@ -1,4 +1,4 @@
-import { Alert, Container, Menu, Stack, Typography } from "@mui/material";
+import { Container, Menu, Stack } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useState } from "react";
@@ -6,6 +6,7 @@ import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom"
 
 import {
   ActionMenuItem,
+  ArchivedNotice,
   ConfirmDialog,
   CountChip,
   DeleteDialog,
@@ -164,14 +165,7 @@ export default function CampaignDetailsPage() {
 
           {/* An archived campaign's notice, above its tabs */}
           <Stack spacing={3}>
-            {campaign.deletedAt && (
-              <Alert severity="info">
-                <Typography variant="body2">
-                  <strong>This campaign is archived and read-only.</strong> You can view all content but cannot make
-                  changes.
-                </Typography>
-              </Alert>
-            )}
+            {!!campaign.deletedAt && <ArchivedNotice what="campaign" canUnarchive={canEdit} />}
 
             <SectionTabs
               tabs={TABS}
@@ -248,9 +242,9 @@ export default function CampaignDetailsPage() {
           onConfirm={() => archiveMutation.mutate()}
           isLoading={archiveMutation.isPending}
           title="Archive Campaign"
-          message="Are you sure you want to archive this campaign? You can restore it later from the archived campaigns section."
+          message="Are you sure you want to archive this campaign? You can unarchive it at any time from the Archived filter."
           confirmLabel="Archive Campaign"
-          confirmColor="warning"
+          intent="caution"
           confirmIcon={<ArchiveIcon />}
         />
 

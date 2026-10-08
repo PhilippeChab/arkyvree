@@ -1,6 +1,6 @@
 import { Avatar, Box, Button, Container, Stack, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
-import type { ElementType, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import {
@@ -15,39 +15,16 @@ import { CheckIcon } from "@/client/src/components/icons/index.ts";
 import { useAnswerInvite, usePageTitle } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { formatDate } from "@/client/src/lib/formatDate.ts";
-import type { InviteKind } from "@/client/src/lib/invites.ts";
+import { acceptedPath, INVITE_KINDS, type InviteKind } from "@/client/src/lib/invites.ts";
 
 import { InviteActionButtons } from "./InviteActionButtons.tsx";
 import { inviteQuery } from "./inviteQueries.ts";
 
-/** What the landing page needs to know about an invite, whatever its kind. */
-interface InviteDetails {
-  entityId: string | null | undefined;
-  entityName: string | undefined;
-  invitedAt?: string;
-  isArchived: boolean;
-  /** Contributor role offered by the invite. */
-  role?: string;
-  status: string;
-}
-
 interface InviteLandingPageProps {
-  /** Status an accepted invite ends in ("Accepted" for campaigns, "Active" for contributors). */
-  acceptedStatus: string;
-  description: string;
-  /** "Campaign", "Ruleset", "Character". */
-  entityLabel: string;
-  entityPath: (entityId: string) => string;
-  icon: ElementType;
-  inviteFn: () => Promise<InviteDetails>;
+  /** The invite's id, from its page's URL. */
   inviteId: string;
-  /** Completes "invitation to …": "join", "contribute to". */
-  joinVerb: string;
-  /** What the invite is to, answered as every invite of its kind is (`useAnswerInvite`). */
+  /** What the invite is to: its page's facts and its answers (`INVITE_KINDS`). */
   kind: InviteKind;
-  /** Where accepting lands when the invite doesn't name its entity. */
-  listPath: string;
-  pageTitle: string;
 }
 
 interface InviteStateCardProps {
@@ -87,19 +64,8 @@ function InviteStateCard({ icon, title, children, action }: InviteStateCardProps
  * Page reached from an invitation email: shows the invite and lets the user
  * accept or reject it, or explains why it can no longer be answered.
  */
-export function InviteLandingPage({
-  pageTitle,
-  entityLabel,
-  entityPath,
-  listPath,
-  icon: Icon,
-  kind,
-  inviteId,
-  inviteFn,
-  acceptedStatus,
-  joinVerb,
-  description,
-}: InviteLandingPageProps) {
+export function InviteLandingPage({ kind, inviteId }: InviteLandingPageProps) {
+  const { pageTitle, icon: Icon, entityLabel, entityPath, verb, acceptedStatus } = INVITE_KINDS[kind];
   usePageTitle(pageTitle);
   const navigate = useNavigate();
   // An invite answered or revoked elsewhere refreshes, and the page shows why it can't be answered anymore
@@ -111,11 +77,7 @@ export function InviteLandingPage({
   const isAnswering =
     acceptMutation.isPending || rejectMutation.isPending || acceptMutation.isSuccess || rejectMutation.isSuccess;
 
-  const {
-    data: invite,
-    isLoading,
-    error,
-  } = useQuery({ ...inviteQuery(kind, inviteId, inviteFn), enabled: !isAnswering });
+  const { data: invite, isLoading, error } = useQuery({ ...inviteQuery(kind, inviteId), enabled: !isAnswering });
 
   const goToDashboard = (
     <Button variant="contained" component={Link} to="/dashboard">
@@ -168,7 +130,7 @@ export function InviteLandingPage({
           )
         }
       >
-        You've already accepted the invitation to {joinVerb} <strong>{name}</strong>.
+        You've already accepted the invitation to {verb} <strong>{name}</strong>.
       </InviteStateCard>
     );
   }
@@ -188,7 +150,7 @@ export function InviteLandingPage({
         title={`Invitation ${invite.status}`}
         action={goToDashboard}
       >
-        This invitation to {joinVerb} <strong>{name}</strong> is no longer pending.
+        This invitation to {verb} <strong>{name}</strong> is no longer pending.
       </InviteStateCard>
     );
   }
@@ -216,22 +178,23 @@ export function InviteLandingPage({
                     </Stack>
                   )}
                 </Stack>
-                {invite.invitedAt && (
-                  <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                    Invited on {formatDate(invite.invitedAt)}
-                  </Typography>
-                )}
+                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                  Invited on {formatDate(invite.invitedAt)}
+                </Typography>
               </Stack>
             </Stack>
 
             <Stack spacing={4}>
-              <Typography variant="body1">{description}</Typography>
+              <Typography variant="body1">
+                You've been invited to {verb} this {entityLabel.toLowerCase()}. Would you like to accept or reject this
+                invitation?
+              </Typography>
 
               <InviteActionButtons
                 prominent
                 onAccept={() =>
                   acceptMutation.mutate(answer, {
-                    onSuccess: () => navigate(entityId ? entityPath(entityId) : listPath),
+                    onSuccess: () => navigate(acceptedPath(kind, entityId)),
                   })
                 }
                 onReject={() => rejectMutation.mutate(answer, { onSuccess: () => navigate("/dashboard") })}

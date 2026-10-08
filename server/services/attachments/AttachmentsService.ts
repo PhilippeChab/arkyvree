@@ -5,7 +5,7 @@ import { readEnv } from "@/server/environment.ts";
 import { BadRequestError, ConflictError, ForbiddenError, InternalError, NotFoundError } from "@/server/errors/index.ts";
 import { Attachments, Blobs, Characters } from "@/server/repositories/index.ts";
 import ObjectStorage from "@/server/storage/ObjectStorage.ts";
-import { ALLOWED_IMAGE_TYPES, MAX_UPLOAD_BYTES } from "@/shared/attachments.ts";
+import { ALLOWED_IMAGE_TYPES, ATTACHMENT_SLOTS, MAX_UPLOAD_BYTES } from "@/shared/attachments.ts";
 import type { Session } from "@/shared/relations.ts";
 
 import { canAnySessionRead } from "./readers.ts";
@@ -36,16 +36,16 @@ const imagePolicy: UploadPolicy = {
 /** The records that take attachments: who may attach to one and read them, what they take, under which names. */
 const ATTACHABLE_TYPES = new Map<string, AttachableConfig>([
   [
-    "User",
+    ATTACHMENT_SLOTS.avatar.recordType,
     {
       isOwner: async (session, recordId) => session.userId === recordId,
       isReader: canAnySessionRead,
       policy: imagePolicy,
-      names: ["avatar"],
+      names: [ATTACHMENT_SLOTS.avatar.name],
     },
   ],
   [
-    "Character",
+    ATTACHMENT_SLOTS.portrait.recordType,
     {
       isOwner: async (session, recordId) => {
         const character = await Characters.findOne(db, { id: recordId });
@@ -61,7 +61,7 @@ const ATTACHABLE_TYPES = new Map<string, AttachableConfig>([
       },
       isReader: canAnySessionRead,
       policy: imagePolicy,
-      names: ["portrait"],
+      names: [ATTACHMENT_SLOTS.portrait.name],
     },
   ],
 ]);

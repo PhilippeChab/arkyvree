@@ -32,13 +32,16 @@
  *   may read the theme (`color: (theme) => …`), never a function of its own; a caller's `sx` and a style on a
  *   condition join it as an array (`sx={[{ … }, open && { … }, ...(Array.isArray(sx) ? sx : [sx])]}`); no `!important`. The theme's
  *   mode is branched on as `theme.palette.mode === "dark"`, in a style; MUI's `useTheme` and `useMediaQuery` are
- *   `useIsMobile`'s.
+ *   `useIsMobile`'s. The theme paints the app bar (`MuiAppBar`): an `AppBar`'s `sx` sets no background.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
 
 import { elementName, hasAttribute, inClient } from "./jsx.mjs";
 import { repoPath } from "./paths.mjs";
+
+/** What paints a surface, which the theme does for the app bar (`MuiAppBar`) */
+const BACKGROUND_KEYS = new Set(["background", "backgroundColor", "backgroundImage", "bgcolor"]);
 
 /** The border shorthands, which the theme writes from a width (`border: 1` is `1px solid`) */
 const BORDER_SIDES = new Set(["border", "borderBottom", "borderLeft", "borderRight", "borderTop"]);
@@ -437,6 +440,13 @@ function createSxConventions(context) {
     },
     Property(node) {
       const key = keyName(node);
+      if (BACKGROUND_KEYS.has(key) && node.parent.type === "ObjectExpression" && sxOwner(node.parent) === "AppBar") {
+        context.report({
+          node: node.key,
+          message:
+            "The theme paints the app bar (`MuiAppBar`, `theme/appTheme.ts`): an `AppBar`'s `sx` sets no background.",
+        });
+      }
       if (!LONGHANDS.has(key) || !inSx(node)) return;
       context.report({ node: node.key, message: `\`sx\` writes \`${LONGHANDS.get(key)}\`, MUI's shorthand.` });
     },

@@ -57,12 +57,14 @@ describe("wording rules", () => {
     ]);
   });
 
-  test("a confirmation asks, and a deletion says it can't be undone", async () => {
+  test("a confirmation asks, a deletion says it can't be undone, and an archive how it comes back", async () => {
     expect(
       await lintRepo(
         {
           "client/src/asks.tsx":
-            'export const a = <ConfirmDialog message="Are you sure you want to archive this campaign? You can restore it later." />;\n',
+            'export const a = <ConfirmDialog message="Are you sure you want to archive this campaign? You can unarchive it at any time from the Archived filter." />;\n',
+          "client/src/archive.tsx":
+            'export const r = <ConfirmDialog message="Are you sure you want to archive this campaign? You can restore it later." />;\n',
           "client/src/says.tsx": 'export const s = <ConfirmDialog message="This may break prerequisites." />;\n',
           "client/src/delete.tsx":
             'export const d = <DeleteDialog message="Are you sure you want to delete this modifier? This action cannot be undone." />;\n',
@@ -76,6 +78,7 @@ describe("wording rules", () => {
         ["confirm-wording"],
       ),
     ).toEqual([
+      "confirm-wording client/src/archive.tsx",
       "confirm-wording client/src/says.tsx",
       "confirm-wording client/src/undone.tsx",
       "confirm-wording client/src/unsaid.tsx",

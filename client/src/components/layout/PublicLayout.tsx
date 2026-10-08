@@ -12,13 +12,7 @@ export function PublicLayout() {
 
   return (
     <>
-      <AppBar
-        position="fixed"
-        sx={{
-          background: (theme) =>
-            `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-        }}
-      >
+      <AppBar position="fixed">
         <Toolbar sx={{ justifyContent: "space-between" }}>
           <Typography
             variant="h6"

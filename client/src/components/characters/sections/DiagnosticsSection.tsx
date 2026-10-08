@@ -17,7 +17,7 @@ import { Fragment, type ReactNode, useMemo } from "react";
 
 import {
   CardTitle,
-  CLICKABLE_SX,
+  CLICKABLE_ROW_SX,
   CountChip,
   EmptyValue,
   ExpandArrow,
@@ -143,7 +143,7 @@ function GroupedRuleTable({ label, count, lastColumn, groups }: GroupedRuleTable
           const isOpen = expanded.has(key);
           return (
             <Fragment key={key}>
-              <TableRow hover {...toggleProps(isOpen, () => toggle(key), "row")} sx={CLICKABLE_SX}>
+              <TableRow {...toggleProps(isOpen, () => toggle(key), "row")} sx={CLICKABLE_ROW_SX}>
                 <TableCell sx={{ ...TABLE_CELL_SX, pr: 0 }}>
                   <ExpandArrow open={isOpen} />
                 </TableCell>

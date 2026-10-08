@@ -1,13 +1,10 @@
 import { ConfirmDialog } from "@/client/src/components/common/index.ts";
 
-import type { ContributorRow } from "./ContributorsTable.tsx";
-
-/** What the confirmation names a contributor by, as the table does. */
-type RemovableContributor = Pick<ContributorRow, "email" | "user">;
+import type { Contributor } from "./contributorKinds.ts";
 
 interface RemoveContributorDialogProps {
   /** The contributor it asks about, kept while it fades out (`useDialogState`'s `target`). */
-  contributor: RemovableContributor | null;
+  contributor: Contributor | null;
   isLoading: boolean;
   onClose: () => void;
   onConfirm: () => void;
@@ -36,7 +33,7 @@ export function RemoveContributorDialog({
         </>
       }
       confirmLabel="Remove"
-      confirmColor="error"
+      intent="destructive"
     />
   );
 }

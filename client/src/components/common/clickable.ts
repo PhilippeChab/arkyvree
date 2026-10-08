@@ -1,13 +1,19 @@
 import type { KeyboardEvent, MouseEvent } from "react";
 
-/** What can sit inside a clickable element and act on its own: its click isn't the element's */
-const INNER_CONTROLS = "a, button, input, select, textarea, [role='button']";
+/** What can sit inside a clickable element and act on its own: its click isn't the element's (a card's select too) */
+const INNER_CONTROLS = "a, button, input, select, textarea, [role='button'], [role='combobox']";
 
 /** The pointer and the keyboard focus ring of a `clickableProps` element. */
 export const CLICKABLE_SX = {
   cursor: "pointer",
   "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: -2 },
 };
+
+/**
+ * A row that opens or expands on click (a table's, a list's): `CLICKABLE_SX`, and the tint a pointer on it shows, which
+ * says it opens: a row that doesn't keeps its look.
+ */
+export const CLICKABLE_ROW_SX = { ...CLICKABLE_SX, "&:hover": { bgcolor: "action.hover" } };
 
 /**
  * A row or card that opens or expands on click, reachable from the keyboard too: focusable

@@ -12,20 +12,13 @@ import {
 import { useIsMobile } from "@/client/src/hooks/index.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
 
-interface ContributorsTableProps<T extends ContributorRow> {
-  contributors: T[];
-  owner: { emailAddress: string; username?: string | null } | null;
-  /** A row's `RowAction`s; when omitted there is no Actions column. */
-  renderActions?: (contributor: T) => ReactNode;
-}
+import type { Contributor, ContributorsPage } from "./contributorKinds.ts";
 
-/** A contributor's row, a ruleset's or a character's: who, their role and their invite's status. */
-export interface ContributorRow {
-  email: string;
-  id: string;
-  role: ContributorRole;
-  status: string;
-  user?: { username?: string | null } | null;
+interface ContributorsTableProps {
+  contributors: Contributor[];
+  owner: ContributorsPage["owner"];
+  /** A row's `RowAction`s; when omitted there is no Actions column. */
+  renderActions?: (contributor: Contributor) => ReactNode;
 }
 
 function contributorStatusColor(status: string): "warning" | "success" | "error" | "default" {
@@ -53,11 +46,7 @@ function roleColor(role: ContributorRole): "error" | "primary" | "default" {
 }
 
 /** Owner row followed by the invited contributors, with their role and their status. */
-export function ContributorsTable<T extends ContributorRow>({
-  owner,
-  contributors,
-  renderActions,
-}: ContributorsTableProps<T>) {
+export function ContributorsTable({ owner, contributors, renderActions }: ContributorsTableProps) {
   const isMobile = useIsMobile();
 
   const userCell = (username: string | null | undefined, email: string) => (

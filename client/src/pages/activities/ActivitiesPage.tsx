@@ -2,7 +2,7 @@ import { Container, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typ
 
 import {
   BlankState,
-  CLICKABLE_SX,
+  CLICKABLE_ROW_SX,
   clickableProps,
   CREATED_SORTS,
   ListPageResults,
@@ -15,15 +15,10 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { HistoryIcon } from "@/client/src/components/icons/index.ts";
 import { ActivityDetails } from "@/client/src/components/notifications/index.ts";
-import {
-  isNavigableTarget,
-  useListPageQuery,
-  useListParams,
-  useOpenActivityTarget,
-  usePageTitle,
-} from "@/client/src/hooks/index.ts";
+import { useListPageQuery, useListParams, useOpenActivityTarget, usePageTitle } from "@/client/src/hooks/index.ts";
 import { formatActivityType } from "@/client/src/lib/activityFormatters.ts";
 import { formatDateTime } from "@/client/src/lib/formatDate.ts";
+import { isNavigableTarget } from "@/shared/activity.ts";
 
 import { activityListQuery } from "./activityQueries.ts";
 
@@ -87,7 +82,7 @@ export default function ActivitiesPage() {
                           key={activity.id}
                           {...(isNavigable &&
                             clickableProps(() => openTarget(activity.targetTable, activity.targetId)))}
-                          sx={[{ "&:hover": { bgcolor: "action.hover" } }, isNavigable && CLICKABLE_SX]}
+                          sx={[isNavigable && CLICKABLE_ROW_SX]}
                         >
                           <TableCell>
                             <Stack spacing={0.5} sx={{ alignItems: "flex-start" }}>

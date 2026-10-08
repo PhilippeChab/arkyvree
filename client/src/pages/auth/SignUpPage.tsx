@@ -5,12 +5,14 @@ import { Link, useNavigate } from "react-router-dom";
 
 import {
   AuthPage,
+  authPagePath,
+  type AuthPageState,
   AuthSubmitButton,
   GoogleSignInSection,
-  safeRedirectPath,
+  useAuthRedirect,
 } from "@/client/src/components/auth/index.ts";
 import { EmailField, PasswordField } from "@/client/src/components/common/index.ts";
-import { useAuthRequests, useFormWith, usePageTitle, useSearchParam } from "@/client/src/hooks/index.ts";
+import { useAuthRequests, useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 import { confirmPasswordRules, EMAIL_RULES, NEW_PASSWORD_RULES } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
@@ -21,9 +23,8 @@ export default function SignUpPage() {
   usePageTitle("Sign Up");
   const auth = useAuthRequests();
   const [error, setError] = useState<string | null>(null);
-  const { value: redirectParam } = useSearchParam("redirect");
   const navigate = useNavigate();
-  const redirect = safeRedirectPath(redirectParam || null);
+  const redirect = useAuthRedirect();
 
   const { control, handleSubmit } = useFormWith<SignUpFormData>({
     emailAddress: "",
@@ -34,7 +35,7 @@ export default function SignUpPage() {
   const handleSignUp = (data: SignUpFormData) => {
     setError(null);
     auth.signUp.mutate(data, {
-      onSuccess: () => navigate("/verify-email", { state: { redirect } }),
+      onSuccess: () => navigate("/verify-email", { state: { redirect } satisfies AuthPageState }),
       onError: (error) => setError(errorMessage(error, "Failed to sign up")),
     });
   };
@@ -73,11 +74,7 @@ export default function SignUpPage() {
           <Box sx={{ textAlign: "center" }}>
             <Typography variant="body2">
               Already have an account?{" "}
-              <MuiLink
-                component={Link}
-                to={redirect ? `/sign-in?redirect=${encodeURIComponent(redirect)}` : "/sign-in"}
-                underline="hover"
-              >
+              <MuiLink component={Link} to={authPagePath("/sign-in", redirect)} underline="hover">
                 Sign in
               </MuiLink>
             </Typography>

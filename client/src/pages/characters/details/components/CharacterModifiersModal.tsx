@@ -193,7 +193,6 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
                     {modifiers.map((mod) => (
                       <TableRow
                         key={mod.id}
-                        hover
                         sx={{
                           position: "relative",
                           ...ROW_ACTIONS_HOVER_SX,

@@ -1,12 +1,13 @@
 export { ActionMenuItem } from "./ActionMenuItem.tsx";
 export { AddButton } from "./AddButton.tsx";
 export { AnimatedAlert } from "./AnimatedAlert.tsx";
+export { ArchivedNotice } from "./ArchivedNotice.tsx";
 export { AttachmentField } from "./AttachmentField.tsx";
 export { BlankNote, BlankState, NoMatchesState } from "./BlankState.tsx";
 export { CardTitle } from "./CardTitle.tsx";
 export { CountChip, RoleChip, StatusChip, ValueChip } from "./Chips.tsx";
 export { ChoiceChip } from "./ChoiceChip.tsx";
-export { CLICKABLE_SX, clickableProps, toggleProps } from "./clickable.ts";
+export { CLICKABLE_ROW_SX, CLICKABLE_SX, clickableProps, toggleProps } from "./clickable.ts";
 export { Crossfade } from "./Crossfade.tsx";
 export { DetailPageHeader } from "./DetailPageHeader.tsx";
 export { DialogFooter } from "./DialogFooter.tsx";
@@ -27,7 +28,6 @@ export {
 } from "./FormFields.tsx";
 export { GoldDivider } from "./GoldDivider.tsx";
 export { HelpLabel } from "./HelpLabel.tsx";
-export { InfoPill } from "./InfoPill.tsx";
 export { LinkButton } from "./LinkButton.tsx";
 export { ListCard, ListCardGrid } from "./ListCard.tsx";
 export { ListPageResults } from "./ListPageResults.tsx";

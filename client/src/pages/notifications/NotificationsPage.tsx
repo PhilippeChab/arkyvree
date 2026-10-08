@@ -2,7 +2,7 @@ import { Container, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typ
 
 import {
   BlankState,
-  CLICKABLE_SX,
+  CLICKABLE_ROW_SX,
   clickableProps,
   CREATED_SORTS,
   type FilterOption,
@@ -98,11 +98,7 @@ export default function NotificationsPage() {
                         <TableRow
                           key={notification.id}
                           {...(openable && clickableProps(() => actions.open(notification)))}
-                          sx={[
-                            openable && { "&:hover": { bgcolor: "action.hover" } },
-                            openable && CLICKABLE_SX,
-                            isUnread && UNREAD_NOTIFICATION_SX,
-                          ]}
+                          sx={[openable && CLICKABLE_ROW_SX, isUnread && UNREAD_NOTIFICATION_SX]}
                         >
                           <TableCell>
                             <NotificationMessage notification={notification} unread={isUnread} />

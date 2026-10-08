@@ -381,13 +381,12 @@ export function createAppTheme(darkMode: boolean): Theme {
         },
         MuiAppBar: {
           styleOverrides: {
-            root: {
+            // The app's and the public pages' bars alike, the brand's gradient: no bar paints its own
+            root: ({ theme }) => ({
               boxShadow: darkMode ? "0px 2px 8px rgba(0, 0, 0, 0.25)" : "0px 2px 8px rgba(62, 39, 35, 0.2)",
-              background: darkMode
-                ? "linear-gradient(135deg, #a0522d, #8b4513)"
-                : "linear-gradient(135deg, #8d1e1e, #5d1313)",
+              background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
               borderBottom: darkMode ? "2px solid #f57f17" : "2px solid #bf9000",
-            },
+            }),
           },
         },
         MuiContainer: {

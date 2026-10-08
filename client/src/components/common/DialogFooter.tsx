@@ -1,13 +1,15 @@
-import { Box, Button, type ButtonProps, DialogActions, type SxProps, type Theme } from "@mui/material";
+import { Box, Button, DialogActions, type SxProps, type Theme } from "@mui/material";
 import type { ReactNode } from "react";
 
 import { DiceSpinner } from "./DiceSpinner.tsx";
+import { type Intent, INTENT_COLORS } from "./intent.ts";
 
 /** A dialog's action: its words, and a form's submit unless it has a click of its own. */
 interface DialogAction {
-  color?: ButtonProps["color"];
   disabled?: boolean;
   icon?: ReactNode;
+  /** What it does, its color (`intent.ts`): the theme's gold by default, red for what destroys, orange for leaving. */
+  intent?: Intent;
   label: ReactNode;
   onClick?: () => void;
 }
@@ -49,7 +51,7 @@ export function DialogFooter({
           type={action.onClick ? "button" : "submit"}
           onClick={action.onClick}
           variant="contained"
-          color={action.color}
+          color={INTENT_COLORS[action.intent ?? "default"]}
           disabled={pending || action.disabled}
           startIcon={action.icon}
         >

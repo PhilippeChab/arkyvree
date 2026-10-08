@@ -67,8 +67,12 @@
  *   a demo's countdown, `useDemoTimeRemaining`, which re-renders as it ticks, is the demo banner's alone.
  * - `navigation`: a control that only navigates is a link (`component={Link} to`), an external link an anchor, never
  *   `window.open`; the URL's search params are read through the shared hooks; React Router's `Link` is `Link`, MUI's
- *   `MuiLink`.
- * - `clickable-elements`: an element that opens or expands on click spreads `clickableProps` (and `CLICKABLE_SX`).
+ *   `MuiLink`. A page's router state is read through its guard (`entityPageState(location.state)`), never a member of
+ *   `location.state`; the `?redirect=` an auth page carries along is built by `authPagePath` and read by
+ *   `useAuthRedirect` (`components/auth`), nowhere else.
+ * - `clickable-elements`: an element that opens or expands on click spreads `clickableProps` (and `CLICKABLE_SX`); a row
+ *   that does takes `CLICKABLE_ROW_SX`, whose hover tint says it opens: a table's row spreading `clickableProps` or
+ *   `toggleProps` names it in its `sx`, and no row tints itself (MUI's `hover`, an `"&:hover"` of its own).
  * - `tooltips`: a `Tooltip` has no arrow; one around a control that can be disabled wraps it in a `<span>`; one on a
  *   control its own text names takes `describeChild`.
  * - `form-fields`: a number field is `FormTextField number`, without a `type`; a field's rules are named
@@ -89,8 +93,14 @@ import path from "node:path";
 import { calleeName, elementName, hasAttribute, inClient, parentElement } from "./jsx.mjs";
 import { repoPath } from "./paths.mjs";
 
+/** The hook that reads an auth page's `?redirect=` back (`useAuthRedirect`). */
+const AUTH_REDIRECT_HOOK = "client/src/components/auth/useAuthRedirect.ts";
+
+/** The module that builds an auth page's `?redirect=` link (`authPagePath`). */
+const AUTH_REDIRECT_MODULE = "client/src/components/auth/authRedirect.ts";
+
 /** What a card renders: a container that opens on click and holds content of its own, so it can't be a link */
-const CARDS = new Set(["ListCard", "StatCard"]);
+const CARDS = new Set(["ListCard"]);
 
 /** The wrappers a component's function is handed to */
 const COMPONENT_WRAPPERS = new Set(["forwardRef", "memo"]);
@@ -180,11 +190,11 @@ const TYPES_GRAB_BAG = /(^|\/)types(\.tsx?$|\/)/;
 const VALUE_PROPS = new Set(["value", "values", "checked", "digits", "selected"]);
 
 /** Whether a spread is `clickableProps(…)`'s, maybe on a condition (`interactive && clickableProps(pick)`) */
-function callsClickableProps(node) {
-  if (node.type === "CallExpression") return calleeName(node) === "clickableProps";
-  if (node.type === "LogicalExpression") return callsClickableProps(node.right);
+function callsClickableProps(node, names = ["clickableProps"]) {
+  if (node.type === "CallExpression") return names.includes(calleeName(node));
+  if (node.type === "LogicalExpression") return callsClickableProps(node.right, names);
   if (node.type === "ConditionalExpression")
-    return callsClickableProps(node.consequent) || callsClickableProps(node.alternate);
+    return callsClickableProps(node.consequent, names) || callsClickableProps(node.alternate, names);
   return false;
 }
 
@@ -237,6 +247,13 @@ function checkDialogContent(content, context) {
       message: "A dialog's lead line is a `DialogContentText`, as a confirmation's: body1, grey.",
     });
   }
+}
+
+/** Whether an element opens or expands on click: it spreads `clickableProps(…)` or `toggleProps(…)`. */
+function clicks(element) {
+  return element.openingElement.attributes.some(
+    (a) => a.type === "JSXSpreadAttribute" && callsClickableProps(a.argument, ["clickableProps", "toggleProps"]),
+  );
 }
 
 function createAccessibleIconButtons(context) {
@@ -296,9 +313,20 @@ function createBrowserStorage(context) {
 
 function createClickableElements(context) {
   if (!inClient(context)) return {};
+  const rowMessage =
+    "A row that opens or expands on click takes `CLICKABLE_ROW_SX`, whose hover tint says it opens: a table's row " +
+    'spreading `clickableProps` or `toggleProps` names it in its `sx`, and no row tints itself (MUI\'s `hover`, an `"&:hover"` of its own).';
   return {
     JSXElement(node) {
       const name = elementName(node);
+      const sx = node.openingElement.attributes.find((a) => a.type === "JSXAttribute" && a.name.name === "sx");
+      const sxValue = sx?.value?.type === "JSXExpressionContainer" ? sx.value.expression : null;
+      const tintsItself = name === "TableRow" && hasAttribute(node, "hover");
+      const untinted = name === "TableRow" && clicks(node) && !namesIdentifier(sxValue, "CLICKABLE_ROW_SX");
+      if (tintsItself || untinted || (clicks(node) && hoverTint(sxValue))) {
+        context.report({ node: node.openingElement, message: rowMessage });
+        return;
+      }
       if (!NON_INTERACTIVE.has(name) || !hasAttribute(node, "onClick")) return;
       const spreadsClickable = node.openingElement.attributes.some(
         (a) => a.type === "JSXSpreadAttribute" && callsClickableProps(a.argument),
@@ -968,7 +996,37 @@ function createLoadErrors(context) {
 function createNavigation(context) {
   if (!inClient(context)) return {};
   const file = repoPath(context.filename);
+  const reportRedirect = (node) =>
+    context.report({
+      node,
+      message:
+        "The `?redirect=` an auth page carries along is built by `authPagePath` and read by `useAuthRedirect` " +
+        "(`components/auth`): never written or read again.",
+    });
   return {
+    Literal(node) {
+      if (typeof node.value === "string" && node.value.includes("redirect=") && file !== AUTH_REDIRECT_MODULE)
+        reportRedirect(node);
+    },
+    TemplateElement(node) {
+      if (node.value.raw.includes("redirect=") && file !== AUTH_REDIRECT_MODULE) reportRedirect(node);
+    },
+    MemberExpression(node) {
+      const state = node.object;
+      const readsState =
+        state.type === "MemberExpression" &&
+        !state.computed &&
+        state.property.name === "state" &&
+        state.object.type === "Identifier" &&
+        state.object.name === "location";
+      if (!readsState) return;
+      context.report({
+        node,
+        message:
+          "A page's router state is read through its guard (`entityPageState`, `authPageState`, " +
+          "`characterPageState`), which checks what it holds: never a member of `location.state`.",
+      });
+    },
     JSXAttribute(node) {
       if (node.name.name !== "onClick" || CARDS.has(elementName(node.parent.parent))) return;
       if (node.value?.type !== "JSXExpressionContainer" || !onlyNavigates(node.value.expression)) return;
@@ -981,6 +1039,12 @@ function createNavigation(context) {
     },
     CallExpression(node) {
       const callee = node.callee;
+      const readsRedirect =
+        calleeName(node) === "useSearchParam" &&
+        node.arguments[0]?.type === "Literal" &&
+        node.arguments[0].value === "redirect" &&
+        file !== AUTH_REDIRECT_HOOK;
+      if (readsRedirect) reportRedirect(node);
       const opensWindow =
         callee.type === "MemberExpression" &&
         callee.object.type === "Identifier" &&
@@ -1235,6 +1299,18 @@ function gatesOnValue(node) {
   return false;
 }
 
+/** Whether an `sx` tints its element on hover itself: an `"&:hover"` that sets its background. */
+function hoverTint(expression) {
+  if (!expression || typeof expression !== "object") return false;
+  if (expression.type === "Property" && (expression.key.value ?? expression.key.name) === "&:hover")
+    return expression.value.type === "ObjectExpression" && expression.value.properties.some(paintsBackground);
+  return Object.entries(expression).some(
+    ([key, child]) =>
+      key !== "parent" &&
+      (Array.isArray(child) ? child.some(hoverTint) : typeof child?.type === "string" && hoverTint(child)),
+  );
+}
+
 /** Whether `node` is among a card's chips: what its `chips` (or `renderChips`) attribute holds or returns. */
 function inChips(node) {
   for (let p = node.parent; p; p = p.parent)
@@ -1344,6 +1420,19 @@ function marksDirty(options) {
   );
 }
 
+/** Whether `expression` names `name` anywhere in it: `sx={[open && CLICKABLE_ROW_SX, ROW_SX]}` names both. */
+function namesIdentifier(expression, name) {
+  if (!expression || typeof expression !== "object") return false;
+  if (expression.type === "Identifier") return expression.name === name;
+  return Object.entries(expression).some(
+    ([key, child]) =>
+      key !== "parent" &&
+      (Array.isArray(child)
+        ? child.some((item) => namesIdentifier(item, name))
+        : typeof child?.type === "string" && namesIdentifier(child, name)),
+  );
+}
+
 /** Whether `node` names one of `names`. */
 function namesOne(node, names) {
   if (!node || typeof node !== "object") return false;
@@ -1384,6 +1473,12 @@ function onlyNavigates(handler, from = handler) {
   return (
     closes && isNavigate && !(to.type === "Literal" && typeof to.value === "number") && to.type !== "UnaryExpression"
   );
+}
+
+/** Whether a style property sets a background (`bgcolor: "action.hover"`). */
+function paintsBackground(property) {
+  const key = property.type === "Property" ? (property.key.value ?? property.key.name) : null;
+  return key === "bgcolor" || key === "backgroundColor" || key === "background";
 }
 
 /** The name a style property goes by, written as a name or a string; null for a computed one. */

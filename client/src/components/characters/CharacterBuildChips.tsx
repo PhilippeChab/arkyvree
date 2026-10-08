@@ -6,7 +6,7 @@ interface CharacterBuildChipsProps {
   race: string;
 }
 
-/** A character card's build, among its pills: its race, gold, then each of its classes and its level. */
+/** A character card's build, among its chips: its race, gold, then each of its classes and its level. */
 export function CharacterBuildChips({ levels, race }: CharacterBuildChipsProps) {
   return (
     <>
