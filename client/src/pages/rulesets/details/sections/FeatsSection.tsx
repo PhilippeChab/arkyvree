@@ -262,7 +262,6 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
                 value={aptitude}
                 loadError={aptitudeError}
                 onChange={setAptitude}
-                size="small"
                 scope="feats"
               />
             </Box>

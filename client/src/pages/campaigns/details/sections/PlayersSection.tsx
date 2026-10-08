@@ -69,10 +69,10 @@ const PLAYER_COLUMNS = [
 ];
 
 const STATUS_CHIPS = {
-  assigned: null,
+  assigned: { icon: <CharacterIcon sx={{ fontSize: 14 }} />, label: "Active", color: "success" },
   pending: { icon: <PendingIcon sx={{ fontSize: 14 }} />, label: "Invite Pending", color: "warning" },
   unassigned: { icon: <UnassignedIcon sx={{ fontSize: 14 }} />, label: "Unassigned", color: "default" },
-} as const satisfies Record<PlayerState, { color: "warning" | "default"; icon: ReactNode; label: string } | null>;
+} as const satisfies Record<PlayerState, { color: "default" | "success" | "warning"; icon: ReactNode; label: string }>;
 
 export function PlayersSection({ campaign }: PlayersSectionProps) {
   const queryClient = useQueryClient();
@@ -87,7 +87,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
   // Search state with debounce
   const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("playerSearch");
 
-  const { canManagePlayers, canManageInvites } = useCampaignPermissions(campaign);
+  const { canManagePlayers } = useCampaignPermissions(campaign);
   const currentUserId = useAuthStore((s) => s.user?.id);
 
   const addForm = useFormWith<PlayerFormData>({
@@ -248,10 +248,11 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
               <TableBody>
                 {players.items.map((player) => {
                   const slot = getPlayerSlot(player);
-                  const displayInfo = { ...playerDisplay(player, slot), statusChip: STATUS_CHIPS[slot.state] };
+                  const displayInfo = playerDisplay(player, slot);
+                  const statusChip = STATUS_CHIPS[slot.state];
                   const isGameMaster = player.role === "Game Master";
                   const isCurrentUser = player.userId === currentUserId;
-                  const canRevokeInvite = slot.state === "pending" && canManageInvites && !campaign.deletedAt;
+                  const canRevokeInvite = slot.state === "pending" && canManagePlayers && !campaign.deletedAt;
                   const canEditPlayer =
                     (!campaign.deletedAt &&
                       ((canManagePlayers && (!isGameMaster || slot.state !== "assigned")) || isCurrentUser)) ||
@@ -285,15 +286,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                         />
                       </TableCell>
                       <TableCell>
-                        {displayInfo.statusChip ? (
-                          <StatusChip
-                            icon={displayInfo.statusChip.icon}
-                            label={displayInfo.statusChip.label}
-                            color={displayInfo.statusChip.color}
-                          />
-                        ) : (
-                          <StatusChip icon={<CharacterIcon sx={{ fontSize: 14 }} />} label="Active" color="success" />
-                        )}
+                        <StatusChip icon={statusChip.icon} label={statusChip.label} color={statusChip.color} />
                       </TableCell>
                       <TableCell>
                         {slot.state === "assigned" ? (
@@ -310,7 +303,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                             {canManagePlayers && (
                               <RowAction icon={EditIcon} label="Edit" onClick={() => handleEditPlayer(player)} />
                             )}
-                            {slot.state === "pending" && canManageInvites && !campaign.deletedAt && (
+                            {canRevokeInvite && (
                               <RowAction
                                 icon={RevokeIcon}
                                 label="Revoke Invite"
@@ -336,7 +329,6 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
           </TableFrame>
         </ListPageResults>
       </Stack>
-      {/* Add Player Dialog */}
       <AddPlayerDialog
         open={addDialogOpen}
         onClose={() => setAddDialogOpen(false)}
@@ -344,7 +336,6 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
         onSubmit={confirmAddPlayer}
         isLoading={addMutation.isPending}
       />
-      {/* Edit Player Dialog */}
       <EditPlayerDialog
         open={editDialog.open}
         onClose={editDialog.close}
@@ -353,7 +344,6 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
         isLoading={editMutation.isPending}
         slot={editDialog.target && getPlayerSlot(editDialog.target)}
       />
-      {/* Remove Player Dialog */}
       <RemovePlayerDialog
         open={removeDialog.open}
         onClose={removeDialog.close}
@@ -362,7 +352,6 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
         isSelfRemoval={removeDialog.target?.userId === currentUserId}
         slot={removeDialog.target && getPlayerSlot(removeDialog.target)}
       />
-      {/* Revoke Invite Dialog */}
       <ConfirmDialog
         open={revokeDialog.open}
         onClose={revokeDialog.close}

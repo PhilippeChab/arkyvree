@@ -48,7 +48,6 @@ type RequirementsArray = InferResponseType<
 >;
 
 interface RequirementsSectionProps {
-  data?: Requirement[];
   entityId: string;
   entityType: CustomizationOwnerType;
   onEntityIdChange?: (copyId: string, sourceId: string) => void;
@@ -80,7 +79,6 @@ export function RequirementsSection({
   ruleset,
   entityType,
   entityId,
-  data: externalData,
   queryKeysToInvalidate,
   onEntityIdChange,
   restorable,
@@ -117,7 +115,6 @@ export function RequirementsSection({
     createDefaults: EMPTY_REQUIREMENT,
     rulesetId: ruleset.id,
     label: "Requirement",
-    data: externalData,
     query: requirementsQuery(ruleset.id, entityType, entityId),
     queryKeysToInvalidate,
     createFn: async (data: RequirementFormData) =>
@@ -360,11 +357,9 @@ export function RequirementsSection({
     <SectionContent>
       <Stack spacing={3}>
         {canEdit && <ListToolbar actions={<AddButton label="Add Requirement" onClick={() => openCreate(null)} />} />}
-        {/* Loading State */}
         {isLoading && <DiceSpinner sx={{ py: 4 }} />}
-        {/* Error State: only while nothing has loaded, a failed refetch keeping the tree */}
+        {/* Its failure only while nothing has loaded: a failed refetch keeps the tree */}
         {loadFailed && <LoadError what="Requirements" error={error} />}
-        {/* Content */}
         {!isLoading &&
           !loadFailed &&
           (requirementsTree.length === 0 ? (

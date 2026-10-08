@@ -75,7 +75,7 @@ function AppRoutes() {
           <Route path="rulesets/:id" element={<RulesetDetailsPage />} />
           <Route path="rulesets/:id/:section" element={<RulesetDetailsPage />} />
 
-          {/* Entity detail pages (non-customizable) */}
+          {/* A simple entity's page: one without customizations */}
           <Route path="rulesets/:id/languages/:languageId" element={<LanguageDetailsPage />} />
           <Route path="rulesets/:id/skills/:skillId" element={<SkillDetailsPage />} />
           <Route path="rulesets/:id/saves/:saveId" element={<SaveDetailsPage />} />
@@ -83,11 +83,10 @@ function AppRoutes() {
           <Route path="rulesets/:id/aptitudes/:aptitudeId" element={<AptitudeDetailsPage />} />
           <Route path="rulesets/:id/abilities/:abilityId" element={<AbilityDetailsPage />} />
 
-          {/* Class detail page */}
           <Route path="rulesets/:id/classes/:classId" element={<ClassDetailsPage />} />
           <Route path="rulesets/:id/classes/:classId/:section" element={<ClassDetailsPage />} />
 
-          {/* Customization pages (new URL structure: /:entityType/:entityId/customization) */}
+          {/* A customizable entity's page: its details and its customizations' tabs */}
           <Route path="rulesets/:id/:entityType/:entityId/customization" element={<CustomizationPage />} />
           <Route path="rulesets/:id/:entityType/:entityId/customization/:section" element={<CustomizationPage />} />
           <Route path="campaigns" element={<CampaignsPage />} />

@@ -50,12 +50,12 @@ export function useLevelWizardBase(characterId: string) {
   const { keys: expandedFeatFamilies, toggle: toggleFeatFamily, clear: collapseFeatFamilies } = useToggleSet();
   const [powerSearch, setPowerSearch] = useState("");
   const debouncedPowerSearch = useDebouncedValue(powerSearch);
-  const { validationErrors, setValidationErrors, handleSaveError } = useValidationIssues("Failed to finalize level up");
+  const { issues, setIssues, handleSaveError } = useValidationIssues("Failed to finalize level up");
 
   const handleBack = useCallback(() => {
-    setValidationErrors([]);
+    setIssues([]);
     setActiveStep((prev) => prev - 1);
-  }, [setValidationErrors]);
+  }, [setIssues]);
 
   const resetPicks = useCallback(() => {
     setShowCancelConfirm(false);
@@ -66,9 +66,9 @@ export function useLevelWizardBase(characterId: string) {
     setFeatSearch("");
     collapseFeatFamilies();
     setPowerSearch("");
-    setValidationErrors([]);
+    setIssues([]);
     setActiveStep(0);
-  }, [reset, setValidationErrors, collapseFeatFamilies]);
+  }, [reset, setIssues, collapseFeatFamilies]);
 
   /** Drops the wizard's cached slots and refetches the sheet once the save lands. */
   const refreshAfterSave = useCallback(async () => {
@@ -104,8 +104,8 @@ export function useLevelWizardBase(characterId: string) {
     powerSearch,
     setPowerSearch,
     debouncedPowerSearch,
-    validationErrors,
-    setValidationErrors,
+    issues,
+    setIssues,
     handleBack,
     resetPicks,
     refreshAfterSave,

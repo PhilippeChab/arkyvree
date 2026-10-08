@@ -109,7 +109,6 @@ export default function DashboardPage() {
     <PageTransition>
       <Container maxWidth="xl">
         <Stack spacing={4}>
-          {/* Hero Section */}
           <Paper
             sx={{
               background: (theme) =>

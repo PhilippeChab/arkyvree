@@ -70,9 +70,9 @@ type UnlinkedCharacter = InferResponseType<
 >["items"][number];
 
 const VISIBILITY_DESCRIPTIONS: Record<CharacterVisibility, string> = {
-  Private: "Only visible to you",
+  Private: "Hidden from the other players: the Game Masters alone see it",
   Public: "Visible to all campaign members",
-  Partial: "Limited information visible to others",
+  Partial: "The other players see its physical traits only",
 };
 
 function CharacterCard({

@@ -1,4 +1,3 @@
-import { Typography } from "@mui/material";
 import { keepPreviousData } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
@@ -93,8 +92,6 @@ export function AddLevelModal({ open, onClose, onExited, characterId, baseRules 
         return <Sections.PowersStep wizard={wizard} />;
       case "review":
         return <Sections.AddReviewStep wizard={wizard} />;
-      default:
-        return <Typography>Unknown step</Typography>;
     }
   };
 

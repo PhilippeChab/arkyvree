@@ -11,9 +11,9 @@ import { AbilityScoreBox } from "./AbilityScoreBox.tsx";
 import { formatSpeed, iterativeAttacks } from "./combatValues.ts";
 import { StatField } from "./StatField.tsx";
 
-type FeatEntry = NonNullable<BondedSectionProps["bonded"]["feats"]>[string];
+type FeatEntry = NonNullable<BondedCreatureProps["bonded"]["feats"]>[string];
 
-export interface BondedSectionProps {
+export interface BondedCreatureProps {
   bonded: NonNullable<CharacterDetail["bonded"][string]>;
   /** The creature's name links to its sheet. */
   linkable?: boolean;
@@ -24,7 +24,7 @@ function isFeat(entry: FeatEntry): entry is Extract<FeatEntry, { possessed: bool
   return "possessed" in entry && typeof entry.possessed === "boolean";
 }
 
-export function BondedSection({ bonded, linkable = false }: BondedSectionProps) {
+export function BondedCreature({ bonded, linkable = false }: BondedCreatureProps) {
   const abilityEntries = sortAbilities(
     Object.entries(bonded.abilities ?? {}),
     bonded.baseRules ?? DEFAULT_BASE_RULES,

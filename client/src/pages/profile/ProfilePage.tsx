@@ -230,7 +230,7 @@ export default function ProfilePage() {
                 spacing={{ xs: 2, sm: 4 }}
                 sx={{ alignItems: { xs: "center", sm: "flex-start" } }}
               >
-                <AttachmentField name="avatar" recordId={userData?.id} size={140} />
+                <AttachmentField name="avatar" label="Avatar" recordId={userData?.id} />
 
                 <Box sx={{ flex: 1, width: "100%" }}>
                   <Stack

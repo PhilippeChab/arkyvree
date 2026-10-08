@@ -87,7 +87,7 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
           </Typography>
         );
       case "hitDie":
-        return <ValueChip label={formatHitDie(klass.hd || 8)} />;
+        return <ValueChip label={formatHitDie(klass.hd)} />;
       case "description":
         return <DescriptionCell text={klass.description} />;
       default:

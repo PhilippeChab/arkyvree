@@ -62,7 +62,7 @@ interface AbilityCardProps {
 
 type AbilityOption = Pick<RulesetAbility, "id" | "name">;
 
-interface AbilityScoresSectionProps {
+interface AbilityScoresFieldProps {
   abilities: AbilityOption[];
   control: Control<CreateCharacterFormData>;
   /** The dialog's roll of the scores, which they show as it tumbles. */
@@ -144,7 +144,8 @@ function AbilityCard({
   );
 }
 
-function AbilityScoresSection({ abilities, control, diceRoll, method }: AbilityScoresSectionProps) {
+/** The new character's ability scores, its form's `abilities`, set the way its roll method sets them. */
+function AbilityScoresField({ abilities, control, diceRoll, method }: AbilityScoresFieldProps) {
   const {
     field: { value, onChange },
   } = useController({ control, name: "abilities" });
@@ -404,7 +405,6 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
       onExited={onExited}
     >
       <BaseRulesetAlert ruleset={selectedRuleset} />
-      {/* Basic Info */}
       <Stack spacing={1}>
         <SubsectionTitle>Basic Information</SubsectionTitle>
         <Stack spacing={3}>
@@ -473,7 +473,6 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
         </Stack>
       </Stack>
 
-      {/* Ability Scores */}
       <Stack spacing={1}>
         <SubsectionTitle>Ability Scores</SubsectionTitle>
         <Stack spacing={3}>
@@ -515,7 +514,7 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
             )}
           </Stack>
           {rulesetAbilities.length > 0 ? (
-            <AbilityScoresSection
+            <AbilityScoresField
               abilities={rulesetAbilities}
               control={control}
               diceRoll={diceRoll}
@@ -533,7 +532,6 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
         </Stack>
       </Stack>
 
-      {/* Physical Details */}
       <Stack spacing={1}>
         <SubsectionTitle>Physical Details</SubsectionTitle>
         <Stack spacing={3}>
@@ -559,7 +557,6 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
         </Stack>
       </Stack>
 
-      {/* Optional Details */}
       <Stack spacing={1}>
         <SubsectionTitle>Optional Details</SubsectionTitle>
         <Stack spacing={3}>

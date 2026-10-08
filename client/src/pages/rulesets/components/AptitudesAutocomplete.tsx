@@ -9,38 +9,26 @@ import type { Aptitude, AptitudeScope } from "@/client/src/pages/rulesets/detail
 import { useAptitudeOptions } from "./useAptitudeOptions.ts";
 
 interface AptitudeAutocompleteProps {
-  disabled?: boolean;
-  label?: string;
   /** The picked aptitude's failure to load, said under the field. */
   loadError?: unknown;
   onChange: (aptitude: Aptitude | null) => void;
   rulesetId: string;
-  scope?: AptitudeScope;
-  size?: "small" | "medium";
+  /** The aptitudes its list filters by: the feats' or the spells'. */
+  scope: AptitudeScope;
   value: Aptitude | null;
 }
 
 interface AptitudesAutocompleteProps {
-  disabled?: boolean;
   error?: FieldError;
   /** Its form field's `ref`, so a failed submit focuses it. */
   inputRef?: Ref<HTMLInputElement>;
   onChange: (aptitudes: Aptitude[]) => void;
   rulesetId: string;
-  scope?: AptitudeScope;
   value: Aptitude[];
 }
 
-export function AptitudeAutocomplete({
-  rulesetId,
-  value,
-  onChange,
-  disabled,
-  label = "Aptitude",
-  loadError,
-  size,
-  scope,
-}: AptitudeAutocompleteProps) {
+/** A list's aptitude filter, in its toolbar: one aptitude, or none. */
+export function AptitudeAutocomplete({ rulesetId, value, onChange, loadError, scope }: AptitudeAutocompleteProps) {
   const { fetchedOptions, autocompleteProps } = useAptitudeOptions(rulesetId, scope);
 
   // Ensure selected value always appears in options
@@ -53,30 +41,22 @@ export function AptitudeAutocomplete({
       {...autocompleteProps}
       value={value}
       onChange={(_, newValue) => onChange(newValue)}
-      disabled={disabled}
-      size={size}
+      size="small"
       renderInput={(params) => (
         <TextField
           {...params}
-          label={label}
+          label="Aptitude"
           error={!!loadError}
-          helperText={loadError ? loadFailureMessage(label, loadError) : undefined}
+          helperText={loadError ? loadFailureMessage("Aptitude", loadError) : undefined}
         />
       )}
     />
   );
 }
 
-export function AptitudesAutocomplete({
-  rulesetId,
-  value,
-  onChange,
-  disabled,
-  scope,
-  inputRef,
-  error,
-}: AptitudesAutocompleteProps) {
-  const { fetchedOptions, autocompleteProps } = useAptitudeOptions(rulesetId, scope);
+/** A form's aptitudes, any of the ruleset's (a feat's, a spell's lists). */
+export function AptitudesAutocomplete({ rulesetId, value, onChange, inputRef, error }: AptitudesAutocompleteProps) {
+  const { fetchedOptions, autocompleteProps } = useAptitudeOptions(rulesetId);
 
   // Merge selected values with fetched options so selected items always appear
   const selectedIds = new Set(value.map((v) => v.id));
@@ -89,7 +69,6 @@ export function AptitudesAutocomplete({
       {...autocompleteProps}
       value={value}
       onChange={(_, newValue) => onChange(newValue)}
-      disabled={disabled}
       renderValue={(tagValue, getItemProps) =>
         tagValue.map((option, index) => {
           const { key, ...chipProps } = getItemProps({ index });

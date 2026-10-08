@@ -47,7 +47,7 @@ export function AddAttributeStep({ wizard, baseRules }: AddAttributeStepProps) {
             <SubsectionTitle>
               {detail ? `${detail.klassName} Level ${detail.level}` : `Level ${index + 1}`}
             </SubsectionTitle>
-            {/* The field sits on a line of the block's text, as it did under the title */}
+            {/* The field on a line of its own, under the level's title */}
             <Box>
               <AttributeIncreaseField
                 attributes={attributeData.attributes}

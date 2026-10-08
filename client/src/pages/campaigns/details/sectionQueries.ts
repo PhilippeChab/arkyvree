@@ -12,8 +12,8 @@ import { rpc } from "@/client/src/services/rpc.ts";
 
 export type CampaignSection = "characters" | "players";
 
-/** A tab's request: its page, ten rows at a time, and its search. */
-function listQuery(pageParam: number, search: string) {
+/** A tab's search params: its page, ten rows at a time, and its search. */
+function pageSearchParams(pageParam: number, search: string) {
   return { page: pageParam.toString(), limit: "10", search: search || undefined };
 }
 
@@ -26,7 +26,10 @@ export function campaignCharactersQuery(campaignId: string, search: string) {
     queryKey: sectionKey(campaignId, "characters", search),
     queryFn: ({ pageParam }) =>
       parseResponse(
-        rpc.api.campaigns[":id"].characters.$get({ param: { id: campaignId }, query: listQuery(pageParam, search) }),
+        rpc.api.campaigns[":id"].characters.$get({
+          param: { id: campaignId },
+          query: pageSearchParams(pageParam, search),
+        }),
       ),
     initialPageParam: 1,
     getNextPageParam: nextPage,
@@ -38,7 +41,10 @@ export function campaignPlayersQuery(campaignId: string, search: string) {
     queryKey: sectionKey(campaignId, "players", search),
     queryFn: ({ pageParam }) =>
       parseResponse(
-        rpc.api.campaigns[":id"].players.$get({ param: { id: campaignId }, query: listQuery(pageParam, search) }),
+        rpc.api.campaigns[":id"].players.$get({
+          param: { id: campaignId },
+          query: pageSearchParams(pageParam, search),
+        }),
       ),
     initialPageParam: 1,
     getNextPageParam: nextPage,
@@ -70,7 +76,10 @@ export function unlinkedCharactersQuery(campaignId: string, search: string) {
     queryKey: QUERY_KEYS.characters.unlinked(campaignId, { search }),
     queryFn: ({ pageParam }) =>
       parseResponse(
-        rpc.api.characters.unlinked[":campaignId"].$get({ param: { campaignId }, query: listQuery(pageParam, search) }),
+        rpc.api.characters.unlinked[":campaignId"].$get({
+          param: { campaignId },
+          query: pageSearchParams(pageParam, search),
+        }),
       ),
     initialPageParam: 1,
     getNextPageParam: nextPage,

@@ -258,7 +258,7 @@ export default function ClassDetailsPage() {
               description={classData.description}
               chips={
                 <>
-                  <ValueChip label={`Hit Die: d${classData.hd || 8}`} />
+                  <ValueChip label={`Hit Die: d${classData.hd}`} />
                   {bonusSpellAbility && (
                     <ValueChip label={`Bonus Spell Ability: ${bonusSpellAbility.name}`} color="info" />
                   )}

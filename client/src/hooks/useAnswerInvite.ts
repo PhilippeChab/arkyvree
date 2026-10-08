@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { ANSWER_INVITE_KEY, INVITE_KINDS, type InviteAnswer } from "@/client/src/lib/invites.ts";
+import { INVITE_KINDS, type InviteAnswer } from "@/client/src/lib/invites.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { ApiError } from "@/client/src/services/ApiError.ts";
 
@@ -32,7 +32,7 @@ export function useAnswerInvite(onNoLongerPending?: (answer: InviteAnswer) => vo
   };
 
   const accept = useMutation({
-    mutationKey: [...ANSWER_INVITE_KEY, "accept"],
+    mutationKey: [...QUERY_KEYS.invites.answer, "accept"],
     mutationFn: async ({ kind, inviteId }: InviteAnswer) => {
       await INVITE_KINDS[kind].acceptFn(inviteId);
     },
@@ -45,7 +45,7 @@ export function useAnswerInvite(onNoLongerPending?: (answer: InviteAnswer) => vo
   });
 
   const reject = useMutation({
-    mutationKey: [...ANSWER_INVITE_KEY, "reject"],
+    mutationKey: [...QUERY_KEYS.invites.answer, "reject"],
     mutationFn: async ({ kind, inviteId }: InviteAnswer) => {
       await INVITE_KINDS[kind].rejectFn(inviteId);
     },

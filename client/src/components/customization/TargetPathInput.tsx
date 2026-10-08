@@ -9,18 +9,15 @@ import { TargetPathBrowser } from "./TargetPathBrowser.tsx";
 import { useTargetPath } from "./useTargetPath.ts";
 
 interface TargetPathInputProps {
-  disabled?: boolean;
   entityType?: string;
   error?: boolean;
-  fullWidth?: boolean;
   helperText?: string;
   /** Its form field's `ref`, so a failed submit focuses its search. */
   inputRef?: Ref<HTMLInputElement>;
   kind: TargetPathKind;
-  label?: string;
+  label: string;
   /** The new path, and what it takes when it's a complete one picked from the list. */
   onChange: (value: string, picked?: PathInfo) => void;
-  required?: boolean;
   rulesetId: string;
   value: string;
 }
@@ -31,12 +28,9 @@ export function TargetPathInput({
   rulesetId,
   kind,
   entityType,
-  label = "Target Path",
-  required = false,
+  label,
   error = false,
   helperText,
-  disabled = false,
-  fullWidth = true,
   inputRef,
 }: TargetPathInputProps) {
   const { target, error: targetError, pick } = useTargetPath(rulesetId, kind, entityType, value);
@@ -46,8 +40,8 @@ export function TargetPathInput({
 
   return (
     // The field's border sits below its label, which the control holds over its top padding
-    <FormControl fullWidth={fullWidth} error={error || !!targetError} sx={{ pt: 2 }}>
-      <InputLabel shrink required={required} sx={{ bgcolor: "background.paper", px: 0.5 }}>
+    <FormControl fullWidth error={error || !!targetError} sx={{ pt: 2 }}>
+      <InputLabel shrink sx={{ bgcolor: "background.paper", px: 0.5 }}>
         {label}
       </InputLabel>
       <Box
@@ -68,7 +62,6 @@ export function TargetPathInput({
           entityType={entityType}
           segments={segments}
           isComplete={target !== null}
-          disabled={disabled}
           inputRef={inputRef}
           onChange={(path, picked) => {
             if (picked) pick(picked);

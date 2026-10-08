@@ -4,15 +4,7 @@
  * rules={NAME_RULES} />`. `FormTextField` binds any text field; the others are its presets, and `SelectField` a select.
  */
 
-import {
-  FormControlLabel,
-  MenuItem,
-  Switch,
-  type SxProps,
-  TextField,
-  type TextFieldProps,
-  type Theme,
-} from "@mui/material";
+import { FormControlLabel, MenuItem, Switch, TextField, type TextFieldProps } from "@mui/material";
 import type { ReactNode, UIEventHandler } from "react";
 import {
   type Control,
@@ -85,7 +77,6 @@ interface SelectFieldProps<T extends FieldValues> {
   readOnly?: boolean;
   rules?: ControllerProps<T>["rules"];
   size?: "small" | "medium";
-  sx?: SxProps<Theme>;
 }
 
 type SelectOption = string | { disabled?: boolean; label: ReactNode; value: SelectValue };
@@ -205,7 +196,6 @@ export function SelectField<T extends FieldValues>({
   disabled,
   readOnly,
   size,
-  sx,
   onMenuScroll,
 }: SelectFieldProps<T>) {
   const choices = options.map((option) => (typeof option === "string" ? { value: option, label: option } : option));
@@ -231,7 +221,6 @@ export function SelectField<T extends FieldValues>({
           helperText={fieldState.error?.message ?? (loadError ? loadFailureMessage(label, loadError) : helperText)}
           disabled={disabled}
           size={size}
-          sx={sx}
           slotProps={{
             input: { readOnly },
             select: onMenuScroll && {

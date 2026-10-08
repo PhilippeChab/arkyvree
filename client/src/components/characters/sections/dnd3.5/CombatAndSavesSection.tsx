@@ -35,11 +35,10 @@ export function CombatAndSavesSection({ combat, saves }: CombatAndSavesSectionPr
   return (
     <SheetSection title="Combat & Saves">
       <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
-        {/* Left column: Combat Stats */}
         <Stack spacing={1} sx={{ flex: 1, minWidth: { md: 350 } }}>
           <SubsectionTitle>Combat Stats</SubsectionTitle>
           <Stack spacing={2}>
-            {/* Combat stat grid — single grid so columns align across rows */}
+            {/* One grid, so its columns line up across its rows */}
             <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: { xs: 1, sm: 2 } }}>
               <StatField label="HP" value={combat?.hp?.total ?? 0} />
               <StatField label="Initiative" value={formatSigned(combat?.initiative?.total)} />
@@ -54,7 +53,6 @@ export function CombatAndSavesSection({ combat, saves }: CombatAndSavesSectionPr
               <StatField label="Flat-footed" value={combat?.ac?.flatfooted ?? 10} />
             </Box>
 
-            {/* AC Breakdown */}
             <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
               {AC_PARTS.map(([label, part]) => (
                 <Typography key={part} variant="caption" sx={{ color: "text.secondary" }}>
@@ -65,7 +63,6 @@ export function CombatAndSavesSection({ combat, saves }: CombatAndSavesSectionPr
           </Stack>
         </Stack>
 
-        {/* Right column: Saving Throws */}
         <Stack spacing={1} sx={{ flex: 1, minWidth: { md: 300 } }}>
           <SubsectionTitle>Saving Throws</SubsectionTitle>
           {Object.keys(saves).length > 0 ? (

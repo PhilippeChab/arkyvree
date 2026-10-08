@@ -28,8 +28,8 @@ type WizardControls = Pick<
   | "showCancelConfirm"
   | "setShowCancelConfirm"
   | "handleConfirmCancel"
-  | "validationErrors"
-  | "setValidationErrors"
+  | "issues"
+  | "setIssues"
   | "handleForceSubmit"
   | "handleCancel"
   | "handleBack"
@@ -66,16 +66,15 @@ export function LevelWizardDialog({
         <DialogTitle>{title}</DialogTitle>
         <Stack component={DialogContent} sx={{ height: "100%", overflow: "hidden" }}>
           <ValidationIssuesAlert
-            issues={wizard.validationErrors}
+            issues={wizard.issues}
             title="Validation warnings"
-            onClose={() => wizard.setValidationErrors([])}
+            onClose={() => wizard.setIssues([])}
             onProceed={wizard.handleForceSubmit}
             pending={isSaving}
             gutter={2}
           />
 
           <Stack spacing={3} sx={{ flex: 1, minHeight: 0 }}>
-            {/* Stepper */}
             <Stepper
               activeStep={wizard.activeStep}
               alternativeLabel={isMobile}
@@ -102,7 +101,6 @@ export function LevelWizardDialog({
               ))}
             </Stepper>
 
-            {/* Step content */}
             <Stack sx={{ flex: 1, overflow: "auto", minHeight: 0 }}>{children}</Stack>
           </Stack>
         </Stack>

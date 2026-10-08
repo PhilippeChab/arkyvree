@@ -13,17 +13,11 @@ import {
 import type { Instance } from "@popperjs/core";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
-import { GoldDivider, HelpLabel, Modal } from "@/client/src/components/common/index.ts";
-import {
-  CampaignIcon,
-  CharacterIcon,
-  HelpIcon,
-  RulesetIcon,
-  type SvgIconComponent,
-} from "@/client/src/components/icons/index.ts";
-import { TAGLINE, TAGLINE_DETAIL } from "@/client/src/lib/brand.ts";
+import { DialogFooter, GoldDivider, HelpLabel, Modal } from "@/client/src/components/common/index.ts";
 import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 import { DURATION, EASING, fadeInUp, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
+
+import { ONBOARDING_STEPS } from "./onboardingSteps.ts";
 
 interface OnboardingPopperProps {
   anchorEl: HTMLElement;
@@ -33,61 +27,15 @@ interface OnboardingPopperProps {
 
 interface OnboardingProps {
   activeStep: number;
+  /** The sidebar's item its step points at, beside which it shows (`sidebarId`); none shows it as a dialog. */
   anchorEl: HTMLElement | null;
-  isMobile: boolean;
   onClose: () => void;
   onStepChange: (step: number) => void;
   open: boolean;
 }
 
-interface OnboardingStep {
-  description: string;
-  icon: SvgIconComponent | null;
-  logo?: boolean;
-  mode: "dialog" | "popper";
-  title: string;
-  tooltip?: string;
-}
-
 /** How long the sidebar takes to expand: its width's transition, and its labels' fade a beat behind it (`Layout`) */
 const SIDEBAR_EXPANSION_MS = DURATION.deliberate + DURATION.beat;
-
-const STEPS: OnboardingStep[] = [
-  {
-    icon: null,
-    logo: true,
-    title: "Welcome to Arkyvree",
-    description: `${TAGLINE}. ${TAGLINE_DETAIL}`,
-    mode: "dialog",
-  },
-  {
-    icon: RulesetIcon,
-    title: "Rulesets",
-    description:
-      "The foundation — browse base and community rulesets, fork a base ruleset to create your own, and customize rules to fit your table.",
-    tooltip:
-      "Forking creates your own editable copy of a base ruleset — it inherits all entities and only copies what you change. Extensions let you subscribe to sourcebook content packages that add new feats, items, classes, and more.",
-    mode: "popper",
-  },
-  {
-    icon: CharacterIcon,
-    title: "Characters",
-    description: "Create characters using any ruleset — build sheets with stats, feats, equipment, and more.",
-    mode: "popper",
-  },
-  {
-    icon: CampaignIcon,
-    title: "Campaigns",
-    description: "Organize your games — create campaigns, invite players, and manage characters together.",
-    mode: "popper",
-  },
-  {
-    icon: HelpIcon,
-    title: "Learn More",
-    description: "Want to dive deeper? {help} covers rulesets, forking, the customization system, and more.",
-    mode: "dialog",
-  },
-];
 
 /**
  * The steps beside the sidebar, shown once its expansion, which entering popper mode starts, has finished: it mounts as
@@ -144,10 +92,10 @@ function OnboardingPopper({ anchorEl, onClose, children }: OnboardingPopperProps
   );
 }
 
-export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, isMobile }: OnboardingProps) {
-  const step = STEPS[activeStep];
-  const isLastStep = activeStep === STEPS.length - 1;
-  const effectiveMode = isMobile || !anchorEl ? "dialog" : "popper";
+export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl }: OnboardingProps) {
+  const step = ONBOARDING_STEPS[activeStep];
+  const isLastStep = activeStep === ONBOARDING_STEPS.length - 1;
+  const effectiveMode = anchorEl ? "popper" : "dialog";
 
   const handleNext = () => {
     if (isLastStep) onClose();
@@ -188,7 +136,6 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
           [PREFERS_REDUCED_MOTION]: { animation: "none" },
         }}
       >
-        {/* Icon circle */}
         <Stack direction="row" sx={{ position: "relative", alignItems: "center", justifyContent: "center" }}>
           <Box
             sx={{
@@ -240,6 +187,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
         <Stack spacing={2} sx={{ alignItems: "center" }}>
           <Typography
             id="onboarding-step-title"
+            component="h2"
             variant={effectiveMode === "dialog" ? "h5" : "h6"}
             sx={{ fontWeight: 700, letterSpacing: "0.02em" }}
           >
@@ -290,7 +238,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
   const stepperDots = (
     <MobileStepper
       variant="dots"
-      steps={STEPS.length}
+      steps={ONBOARDING_STEPS.length}
       position="static"
       activeStep={activeStep}
       sx={{
@@ -306,23 +254,16 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
   );
 
   const navButtons = (
-    <Stack direction="row" sx={{ alignItems: "center", px: 3, pb: 3, pt: 2 }}>
-      <Button onClick={onClose} color="inherit" sx={{ opacity: 0.7 }}>
-        Skip
-      </Button>
-      <Box sx={{ flexGrow: 1 }} />
-      {activeStep > 0 && (
-        <Button onClick={handleBack} color="inherit">
-          Back
-        </Button>
-      )}
-      <Button onClick={handleNext} variant="contained">
-        {isLastStep ? "Get Started" : "Next"}
-      </Button>
-    </Stack>
+    <DialogFooter
+      onCancel={onClose}
+      cancelLabel="Skip"
+      action={{ label: isLastStep ? "Get Started" : "Next", onClick: handleNext }}
+    >
+      {activeStep > 0 && <Button onClick={handleBack}>Back</Button>}
+    </DialogFooter>
   );
 
-  if (effectiveMode === "dialog" || !anchorEl) {
+  if (!anchorEl) {
     return (
       <Modal open={open} onClose={onClose} aria-labelledby="onboarding-step-title">
         {gradientBar}

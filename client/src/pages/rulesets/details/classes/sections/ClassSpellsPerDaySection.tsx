@@ -11,7 +11,7 @@ export function ClassSpellsPerDaySection({ rulesetId, classId }: ClassSectionPro
   const { data, isLoading, error } = useQuery(classSpellsPerDayQuery(rulesetId, classId));
   return (
     <ClassLevelCountsTable
-      title="Spells per Day"
+      what="Spells per Day"
       levels={data}
       isLoading={isLoading}
       error={error}

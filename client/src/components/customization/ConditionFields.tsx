@@ -157,7 +157,7 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, fields }: C
             />
           }
         />
-        {templateMode && <TemplateExpressionToolbar inputRef={expressionInputRef} disabled={!templateMode} />}
+        {templateMode && <TemplateExpressionToolbar inputRef={expressionInputRef} />}
       </Stack>
       <Crossfade
         showFirst={!templateMode}

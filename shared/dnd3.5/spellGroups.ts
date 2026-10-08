@@ -33,6 +33,12 @@ interface LevelSpell {
   saveName?: string | null;
 }
 
+/** A tag a spell row shows. */
+interface SpellRowTag {
+  joinsClassList: boolean;
+  name: string;
+}
+
 export interface AptitudeSpells {
   aptitudeName: string;
   levels: SpellGroup[];
@@ -54,12 +60,6 @@ export interface SpellRow {
   save: string;
   school: string;
   tags?: SpellRowTag[];
-}
-
-/** A tag a spell row shows. */
-export interface SpellRowTag {
-  joinsClassList: boolean;
-  name: string;
 }
 
 /** What the groups read of a character: its classes' levels, its computed powers, its aptitudes and spell tags. */

@@ -70,7 +70,7 @@ export default function NotificationsPage() {
               list={notifications}
               what="Notifications"
               search={search}
-              // An empty page's state sits a unit lower than its table, as its margin placed it
+              // An empty page's state sits a unit lower than its table would
               emptySx={{ pt: 1 }}
               empty={
                 <BlankState

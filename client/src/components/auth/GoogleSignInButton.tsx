@@ -3,7 +3,6 @@ import { type RefObject } from "react";
 
 interface GoogleSignInButtonProps {
   disabled?: boolean;
-  fullWidth?: boolean;
   label?: string;
   overlayRef: RefObject<HTMLDivElement | null>;
 }
@@ -13,24 +12,19 @@ function GoogleIcon() {
   return <Box component="img" src="/google-mark.svg" alt="" sx={{ width: 18, height: 18 }} />;
 }
 
-export function GoogleSignInButton({
-  overlayRef,
-  disabled,
-  label = "Continue with Google",
-  fullWidth = true,
-}: GoogleSignInButtonProps) {
+export function GoogleSignInButton({ overlayRef, disabled, label = "Continue with Google" }: GoogleSignInButtonProps) {
   return (
     <Box
       sx={{
         position: "relative",
-        width: fullWidth ? "100%" : "auto",
+        width: "100%",
         "&:hover .MuiButton-root": {
           background: (theme) => theme.palette.action.hover,
         },
       }}
     >
       <Button
-        fullWidth={fullWidth}
+        fullWidth
         disabled={disabled}
         startIcon={<GoogleIcon />}
         sx={{

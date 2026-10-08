@@ -107,7 +107,7 @@ export function LocalChangesDialog({ open, onClose, rulesetId, baseRules, canEdi
       <DialogTitle>Local Changes</DialogTitle>
       <DialogContent sx={{ maxHeight: "60vh" }}>
         {isLoading && <DiceSpinner sx={{ py: 4 }} />}
-        {!!error && !changes && <LoadError what="Local changes" error={error} />}
+        {!!error && !changes && <LoadError what="Local Changes" error={error} />}
         <Collapse in={!isLoading && !!changes && changes.length === 0} timeout={DURATION.normal} unmountOnExit>
           <BlankNote sx={{ py: 2 }}>No local changes</BlankNote>
         </Collapse>

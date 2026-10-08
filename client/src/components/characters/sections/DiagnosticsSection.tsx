@@ -288,7 +288,6 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
         </AccordionSummary>
         <AccordionDetails sx={{ px: 0, pt: 2 }}>
           <Stack spacing={3}>
-            {/* Validation Issues */}
             {validation.issues.length > 0 && (
               <Stack spacing={1}>
                 <SubsectionTitle>Issues</SubsectionTitle>
@@ -302,7 +301,6 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
               </Stack>
             )}
 
-            {/* Requirements System Status */}
             <Box>
               {/* Its tables follow as one list of accordions, the space above them the title's */}
               <Stack direction="row" spacing={2} sx={{ alignItems: "center", pb: 1 }}>
@@ -320,7 +318,6 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
               <InvalidRequirementTable items={requirements.invalidRequirements} />
             </Box>
 
-            {/* Modifier System Status */}
             <Box>
               {/* Its tables follow as one list of accordions, the space above them the title's */}
               <Stack direction="row" spacing={2} sx={{ alignItems: "center", pb: 1 }}>

@@ -105,7 +105,7 @@ export default function RulesetsPage() {
             >
               <ListCardGrid>
                 {rulesets.items.map((ruleset, index) => {
-                  // The page opens on the Races tab, with "Local changes" on for extensions.
+                  // The page opens on the Races tab, with "Local Changes" on for extensions.
                   const prefetch = () => {
                     void queryClient.prefetchQuery(rulesetDetailQuery(ruleset.id));
                     void prefetchSection(queryClient, ruleset.id, "races", ruleset.kind === "extension");

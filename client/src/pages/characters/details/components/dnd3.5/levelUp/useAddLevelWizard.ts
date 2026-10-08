@@ -57,7 +57,7 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     setShowCancelConfirm,
     debouncedFeatSearch,
     debouncedPowerSearch,
-    setValidationErrors,
+    setIssues,
     resetPicks,
     refreshAfterSave,
     handleSaveError,
@@ -150,9 +150,6 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     setAbilityIncreases((prev) => ({ ...prev, [index]: abilityId }));
   }, []);
 
-  // Derived: valid class count and class plan key
-  const validClassCount = useMemo(() => classPlan.filter((k) => k !== null).length, [classPlan]);
-
   // In plan order: the preview's levels pair by index with the plan's HP and ability increases.
   const plannedLevels = useMemo(
     () =>
@@ -164,7 +161,7 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
 
   const previewQuery = useQuery({
     ...levelPreviewQuery(characterId, plannedLevels),
-    enabled: open && validClassCount >= 1 && activeStep > 0,
+    enabled: open && validClassPlan.length >= 1 && activeStep > 0,
     placeholderData: keepPreviousData,
   });
 
@@ -209,41 +206,32 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
   // Skill data (from preview)
   const perLevelClassSkillIds = previewQuery.data?.perLevelClassSkillIds;
 
-  // Adjust skill points client-side when INT is increased (preview is cached per class plan only).
-  // D&D 3.5: INT increases retroactively grant skill points for all levels.
-  // Returns the modifier delta vs the preview's INT mod, plus context needed to
-  // adjust both the per-level array and the wizard-wide skillPointsToSpend total.
-  const intModAdjustment = useMemo(() => {
-    const attrs = previewQuery.data?.attributes.attributes;
-    const intAttr = attrs?.intelligence;
-    if (!intAttr) return null;
+  // How much the plan's ability increases raise the INT modifier over the preview's, which is cached per class plan
+  // only: D&D 3.5's INT increases grant skill points retroactively, for every level
+  const modDelta = useMemo(() => {
+    const intAttr = previewQuery.data?.attributes.attributes.intelligence;
+    if (!intAttr) return 0;
     const intIncreases = Object.values(abilityIncreases).filter((id) => id === intAttr.abilityId).length;
-    if (intIncreases === 0) return null;
-    const newIntMod = computeAbilityModifier(intAttr.total + intIncreases);
-    const modDelta = newIntMod - intAttr.modifier;
-    if (modDelta === 0) return null;
-    return { modDelta };
+    return computeAbilityModifier(intAttr.total + intIncreases) - intAttr.modifier;
   }, [previewQuery.data, abilityIncreases]);
 
   // Each planned level's points, recomputed from its points before the minimum with the raised modifier
   const perLevelSkillPoints = useMemo(() => {
     const data = previewQuery.data;
     if (!data) return undefined;
-    if (!intModAdjustment) return data.perLevelSkillPoints;
-    const { modDelta } = intModAdjustment;
+    if (modDelta === 0) return data.perLevelSkillPoints;
     const existingLevelCount = data.skills.totalCharacterLevel - data.perLevelSkillPointBases.length;
     return data.perLevelSkillPointBases.map((points, i) =>
       computeLevelSkillPoints(points + modDelta, data.skills.bonusPerLevel, existingLevelCount === 0 && i === 0),
     );
-  }, [previewQuery.data, intModAdjustment]);
+  }, [previewQuery.data, modDelta]);
 
   // The total ceiling follows every level's points the same way (existing and planned, the first ×4). Without this,
   // the skills step's "X / Y" cap stays at the pre-bump value and silently caps input below what the bump grants.
   const skillData = useMemo(() => {
     const base = previewQuery.data?.skills ?? null;
     if (!base) return null;
-    if (!intModAdjustment) return base;
-    const { modDelta } = intModAdjustment;
+    if (modDelta === 0) return base;
     const gained = base.pointsPerLevel.reduce(
       (acc, points, i) =>
         acc +
@@ -252,7 +240,7 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
       0,
     );
     return { ...base, skillPointsToSpend: Math.max(1, base.skillPointsToSpend + gained) };
-  }, [previewQuery.data, intModAdjustment]);
+  }, [previewQuery.data, modDelta]);
 
   const isLoadingSkills = previewQuery.isLoading;
   const skillsError = previewQuery.error;
@@ -404,7 +392,7 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     },
     onSuccess: async () => {
       await refreshAfterSave();
-      snackbar.success(`Added ${formatCount(validClassCount, "level")}`);
+      snackbar.success(`Added ${formatCount(validClassPlan.length, "level")}`);
       resetWizard();
       onClose();
     },
@@ -419,9 +407,9 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
   }, [isLastStep, finalizeMutation, setActiveStep]);
 
   const handleForceSubmit = useCallback(() => {
-    setValidationErrors([]);
+    setIssues([]);
     finalizeMutation.mutate({ force: true });
-  }, [finalizeMutation, setValidationErrors]);
+  }, [finalizeMutation, setIssues]);
 
   const hasProgress = activeStep > 0 || classPlan.some((k) => k !== null);
 
@@ -440,13 +428,13 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     const content = ADD_STEP_CONTENT[activeStep];
     switch (content) {
       case "class-plan":
-        return validClassCount < 1;
+        return validClassPlan.length < 1;
       case "hp":
         return !hpSet(hpLevels, hpValues);
       default:
         return false;
     }
-  }, [activeStep, validClassCount, hpLevels, hpValues]);
+  }, [activeStep, validClassPlan, hpLevels, hpValues]);
 
   return {
     ...base,
@@ -514,8 +502,6 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
 
     finalizeMutation,
 
-    preview: previewQuery.data,
-    isLoadingPreview: previewQuery.isLoading,
     levelDetails: previewQuery.data?.levelDetails ?? [],
   };
 }

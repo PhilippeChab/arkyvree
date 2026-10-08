@@ -22,22 +22,18 @@ interface CompletionAutocompleteProps<
   TKey extends QueryKey,
   TData extends InfiniteData<TPage, unknown>,
 > {
-  disabled?: boolean;
   error?: boolean;
-  fullWidth?: boolean;
   helperText?: string;
   /** Its form field's `ref`, so a failed submit focuses it. */
   inputRef?: Ref<HTMLInputElement>;
   label: string;
   loadingText: string;
-  multiline?: boolean;
   noOptionsText: string;
   onChange: (value: string) => void;
   placeholder: string;
   /** The completions for what's typed, a page at a time: a factory of `customizationQueries.ts`. */
   query: (search: string) => UseInfiniteQueryOptions<TPage, DefaultError, TData, TKey, number>;
   required?: boolean;
-  rows?: number;
   value: string;
 }
 
@@ -63,10 +59,6 @@ export function CompletionAutocomplete<
   required = false,
   error = false,
   helperText,
-  disabled = false,
-  fullWidth = true,
-  multiline = false,
-  rows,
 }: CompletionAutocompleteProps<TPage, TKey, TData>) {
   // Controlled: what's typed is the value, which every keystroke and pick reports
   const debouncedInputValue = useDebouncedValue(value);
@@ -78,7 +70,6 @@ export function CompletionAutocomplete<
     onScroll,
   } = useListboxQuery({
     ...query(debouncedInputValue),
-    enabled: !disabled,
     placeholderData: keepPreviousData,
   });
 
@@ -121,8 +112,7 @@ export function CompletionAutocomplete<
         </ListItem>
       )}
       freeSolo
-      fullWidth={fullWidth}
-      disabled={disabled}
+      fullWidth
       loading={isLoading}
       loadingText={loadingText}
       noOptionsText={emptyOptionsText("Suggestions", loadError, noOptionsText)}
@@ -142,8 +132,6 @@ export function CompletionAutocomplete<
           error={error}
           helperText={helperText}
           placeholder={placeholder}
-          multiline={multiline}
-          rows={rows}
         />
       )}
     />

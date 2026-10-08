@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { saveBlob } from "@/client/src/lib/download.ts";
-import { acceptedPath, ANSWER_INVITE_KEY } from "@/client/src/lib/invites.ts";
+import { acceptedPath } from "@/client/src/lib/invites.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { ApiError } from "@/client/src/services/ApiError.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
@@ -88,7 +88,7 @@ export function useNotificationActions() {
   });
 
   const pendingAnswers = useMutationState({
-    filters: { mutationKey: ANSWER_INVITE_KEY, status: "pending" },
+    filters: { mutationKey: QUERY_KEYS.invites.answer, status: "pending" },
     select: (mutation) => pendingAnswerOf(mutation.options.mutationKey, mutation.state.variables),
   });
 

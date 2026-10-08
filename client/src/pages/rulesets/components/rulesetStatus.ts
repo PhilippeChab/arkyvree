@@ -5,7 +5,8 @@ export const RULESET_STATUS = {
   Draft: {
     icon: DraftIcon,
     color: "info",
-    tooltip: "Fully editable — add, edit, and delete entities. Only visible to you until published.",
+    tooltip:
+      "Fully editable — add, edit, and delete entities. Only you and its contributors see it until it's published.",
   },
   Published: {
     icon: PublishedIcon,

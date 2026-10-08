@@ -32,12 +32,6 @@ export interface InviteDetails {
 export type InviteKind = "campaign" | "characterContributor" | "rulesetContributor";
 
 /**
- * Shared by accept and reject, so every surface can tell which invites are being answered, whichever surface the click
- * came from.
- */
-export const ANSWER_INVITE_KEY = ["invites", "answer"] as const;
-
-/**
  * Each kind's name in a toast (`label`), its answers' requests, and the list that gains its entity once it's accepted
  * (`listKey`); its page's facts: its title, its icon, what it's to (`entityLabel`, what accepting does, `verb`), the
  * invite read for it (`inviteFn`) and the status an accepted one ends in; and where accepting lands: its entity's

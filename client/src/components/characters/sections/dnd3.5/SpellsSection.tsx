@@ -32,7 +32,7 @@ import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { type AptitudeSpells, buildSpellGroups, type SpellGroup, type SpellRow } from "@/shared/dnd3.5/spellGroups.ts";
 import { formatSpellLevel } from "@/shared/dnd3.5/spells.ts";
 
-interface CollapsibleClassProps {
+interface CollapsibleAptitudeProps {
   apt: AptitudeSpells;
   rulesetId?: string;
 }
@@ -57,12 +57,12 @@ export interface SpellsSectionProps {
   virtualPowers?: CharacterDetail["virtualPowers"];
 }
 
-function CollapsibleClass({ apt, rulesetId }: CollapsibleClassProps) {
+function CollapsibleAptitude({ apt, rulesetId }: CollapsibleAptitudeProps) {
   const [open, setOpen] = useState(false);
   const totalSpells = apt.levels.reduce((sum, g) => sum + g.spells.length, 0);
 
   return (
-    // The last class, closed, keeps the space its title has to its spells
+    // The last list, closed, keeps the space its title has to its spells
     <Stack spacing={1} sx={{ "&:last-child": { pb: open ? 0 : 1 } }}>
       <SubsectionTitle>
         <ToggleLabel open={open} onToggle={() => setOpen((prev) => !prev)}>
@@ -216,7 +216,7 @@ export function SpellsSection({
     <SheetSection title="Spells">
       <Stack spacing={3}>
         {groups.map((apt) => (
-          <CollapsibleClass key={apt.aptitudeName} apt={apt} rulesetId={rulesetId} />
+          <CollapsibleAptitude key={apt.aptitudeName} apt={apt} rulesetId={rulesetId} />
         ))}
       </Stack>
     </SheetSection>

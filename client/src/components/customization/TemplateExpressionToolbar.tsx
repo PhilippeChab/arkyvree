@@ -4,7 +4,6 @@ import type { RefObject } from "react";
 import type { TemplateExpressionInputRef } from "./TemplateExpressionInput.tsx";
 
 interface TemplateExpressionToolbarProps {
-  disabled?: boolean;
   inputRef: RefObject<TemplateExpressionInputRef | null>;
 }
 
@@ -24,37 +23,31 @@ const OPERATORS: { display: string; insert: string }[] = [
  * literal/template toggle so the user sees their authoring options at a
  * glance once template mode is on.
  */
-export function TemplateExpressionToolbar({ inputRef, disabled }: TemplateExpressionToolbarProps) {
+export function TemplateExpressionToolbar({ inputRef }: TemplateExpressionToolbarProps) {
   return (
     <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
       {OPERATORS.map((op) => (
-        <Tooltip key={op.insert} title={`Insert ${op.display}`}>
-          <span>
-            <Button
-              size="small"
-              variant="outlined"
-              onClick={() => inputRef.current?.insertText(op.insert)}
-              disabled={disabled}
-              sx={{ minWidth: 28, fontFamily: "monospace", px: 0.75, py: 0.25 }}
-            >
-              {op.display}
-            </Button>
-          </span>
+        <Tooltip key={op.insert} describeChild title={`Insert ${op.display}`}>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => inputRef.current?.insertText(op.insert)}
+            sx={{ minWidth: 28, fontFamily: "monospace", px: 0.75, py: 0.25 }}
+          >
+            {op.display}
+          </Button>
         </Tooltip>
       ))}
       {FUNCTIONS.map((fn) => (
-        <Tooltip key={fn} title={`Wrap Selection in ${fn}()`}>
-          <span>
-            <Button
-              size="small"
-              variant="outlined"
-              onClick={() => inputRef.current?.wrapSelection(`${fn}(`, ")")}
-              disabled={disabled}
-              sx={{ fontFamily: "monospace", px: 0.75, py: 0.25 }}
-            >
-              {fn}()
-            </Button>
-          </span>
+        <Tooltip key={fn} describeChild title={`Wrap Selection in ${fn}()`}>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => inputRef.current?.wrapSelection(`${fn}(`, ")")}
+            sx={{ fontFamily: "monospace", px: 0.75, py: 0.25 }}
+          >
+            {fn}()
+          </Button>
         </Tooltip>
       ))}
     </Stack>

@@ -1,4 +1,4 @@
-/** The client's dates, in the viewer's language: a date, a date and its time, and how long ago. */
+/** The client's dates: a date, and a date and its time, in the viewer's language; how long ago, in English. */
 
 /** A date on its own ("9/27/2026"), in the viewer's locale. */
 export function formatDate(dateString: string): string {
@@ -16,7 +16,7 @@ export function formatDateTime(dateString: string): string {
   }).format(new Date(dateString));
 }
 
-/** How long ago a date was ("5m ago", "3d ago"), its date and time past a month. */
+/** How long ago a date was, in English ("5m ago", "3d ago"), its date and time past a month. */
 export function formatRelativeTime(dateString: string): string {
   const now = Date.now();
   const then = new Date(dateString).getTime();
