@@ -1,4 +1,4 @@
-import { Box, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
+import { Box, Stack, Table, TableBody, TableCell, TableRow, Typography } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { type ReactNode, useState } from "react";
@@ -17,6 +17,7 @@ import {
   SearchBar,
   SectionContent,
   StatusChip,
+  TableColumnsHead,
   TableFrame,
   TableSkeleton,
 } from "@/client/src/components/common/index.ts";
@@ -243,15 +244,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
         >
           <TableFrame>
             <Table sx={{ width: "100%" }}>
-              <TableHead>
-                <TableRow>
-                  {PLAYER_COLUMNS.map((column) => (
-                    <TableCell key={column.key} align={column.align} sx={{ width: column.width }}>
-                      {column.label}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
+              <TableColumnsHead columns={PLAYER_COLUMNS} />
               <TableBody>
                 {players.items.map((player) => {
                   const slot = getPlayerSlot(player);

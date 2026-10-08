@@ -1,10 +1,10 @@
-const ORDINALS: Record<string, string> = { 0: "0th", 1: "1st", 2: "2nd", 3: "3rd" };
+import { formatSpellLevel } from "@/shared/dnd3.5/spells.ts";
 
 export function bySpellLevel(a: string, b: string) {
   return Number(a) - Number(b);
 }
 
-/** A spell level column's label: "1st", "2nd"… */
+/** A spell level column's label, its key read as the level: "Cantrips", "Level 1"… */
 export function spellLevelLabel(key: string) {
-  return ORDINALS[key] ?? `${key}th`;
+  return formatSpellLevel(Number(key));
 }

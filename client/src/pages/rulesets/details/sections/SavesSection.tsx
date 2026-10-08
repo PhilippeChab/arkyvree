@@ -1,4 +1,4 @@
-import { Stack, Typography } from "@mui/material";
+import { Stack } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useCallback } from "react";
@@ -10,6 +10,7 @@ import {
   LoadMoreButton,
   SearchBar,
   SectionContent,
+  ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { SavesIcon } from "@/client/src/components/icons/index.ts";
 import { useRulesetAbilities, useSearchText } from "@/client/src/hooks/index.ts";
@@ -76,8 +77,10 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
         return save.name;
       case "description":
         return <DescriptionCell text={save.description} />;
-      case "ability":
-        return <Typography variant="body2">{abilityLookup.get(save.abilityId) || <EmptyValue />}</Typography>;
+      case "ability": {
+        const abilityName = abilityLookup.get(save.abilityId);
+        return abilityName ? <ValueChip label={abilityName} /> : <EmptyValue />;
+      }
       default:
         return null;
     }

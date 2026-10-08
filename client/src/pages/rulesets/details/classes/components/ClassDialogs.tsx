@@ -1,12 +1,11 @@
-import { useController, type UseFormReturn } from "react-hook-form";
+import type { UseFormReturn } from "react-hook-form";
 
 import { CreateDialog, DeleteDialog, FormTextField } from "@/client/src/components/common/index.ts";
 import { wholeNumberRules } from "@/client/src/lib/validation.ts";
 import {
   allLevelSaves,
-  areSaveBasesValid,
   ClassLevelFields,
-  type CreateLevelFormData,
+  type ClassLevelFormData,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { useRulesetSaves } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { MAX_CLASS_LEVEL } from "@/shared/dnd3.5/classes.ts";
@@ -19,25 +18,19 @@ interface ConfirmActionProps {
 }
 
 interface CreateLevelDialogProps {
-  form: UseFormReturn<CreateLevelFormData>;
+  form: UseFormReturn<ClassLevelFormData>;
   isLoading: boolean;
   onClose: () => void;
-  onSubmit: (data: CreateLevelFormData) => void;
+  onSubmit: (data: ClassLevelFormData) => void;
   open: boolean;
   rulesetId: string;
 }
 
 export function CreateLevelDialog({ open, onClose, form, onSubmit, isLoading, rulesetId }: CreateLevelDialogProps) {
   const { data: rulesetSaves, error: savesError } = useRulesetSaves(rulesetId, open);
-  const { field: saves, fieldState: savesState } = useController({
-    control: form.control,
-    name: "saves",
-    rules: { validate: areSaveBasesValid },
-  });
-  const { field: feats } = useController({ control: form.control, name: "feats" });
 
   // The endpoint takes every ruleset save, 0 when unset.
-  const handleSubmit = (data: CreateLevelFormData) =>
+  const handleSubmit = (data: ClassLevelFormData) =>
     onSubmit({ ...data, saves: allLevelSaves(rulesetSaves, data.saves ?? []) });
 
   return (
@@ -82,16 +75,7 @@ export function CreateLevelDialog({ open, onClose, form, onSubmit, isLoading, ru
           htmlInput: { min: 1 },
         }}
       />
-      <ClassLevelFields
-        rulesetId={rulesetId}
-        rulesetSaves={rulesetSaves}
-        savesError={savesError}
-        saves={saves.value ?? []}
-        onSavesChange={saves.onChange}
-        savesInvalid={!!savesState.error}
-        feats={feats.value ?? []}
-        onFeatsChange={feats.onChange}
-      />
+      <ClassLevelFields form={form} rulesetId={rulesetId} rulesetSaves={rulesetSaves} savesError={savesError} />
     </CreateDialog>
   );
 }

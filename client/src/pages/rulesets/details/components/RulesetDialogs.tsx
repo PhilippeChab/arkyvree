@@ -1,4 +1,4 @@
-import { Box, Stack, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
+import { Box } from "@mui/material";
 import type { InferRequestType } from "hono/client";
 import { Controller, type UseFormReturn } from "react-hook-form";
 
@@ -8,6 +8,7 @@ import {
   DescriptionField,
   EditDialog,
   NameField,
+  OptionToggle,
 } from "@/client/src/components/common/index.ts";
 import {
   ArchiveIcon,
@@ -46,12 +47,6 @@ interface ForkRulesetDialogProps {
   open: boolean;
 }
 
-interface PrivacyToggleProps {
-  disabled: boolean;
-  onChange: (isPrivate: boolean) => void;
-  value: boolean;
-}
-
 interface PublishRulesetDialogProps {
   canBeExtension: boolean;
   isLoading: boolean;
@@ -61,12 +56,6 @@ interface PublishRulesetDialogProps {
   onConfirm: (kind: PublishKind) => void;
   onKindChange: (kind: PublishKind) => void;
   open: boolean;
-}
-
-interface RulesetKindToggleProps {
-  disabled: boolean;
-  onChange: (kind: PublishKind) => void;
-  value: PublishKind;
 }
 
 interface UnsubscribeExtensionDialogProps {
@@ -81,72 +70,20 @@ export type EditRulesetFormData = InferRequestType<(typeof rpc.api.rulesets)[":i
 
 export type ForkRulesetFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["fork"]["$post"]>["json"];
 
-/** Public / Private choice; the selected option can't be toggled off. */
-function PrivacyToggle({ value, onChange, disabled }: PrivacyToggleProps) {
-  return (
-    <Box>
-      <Typography variant="subtitle2" component="p" gutterBottom sx={{ color: "text.secondary" }}>
-        Privacy
-      </Typography>
-      <ToggleButtonGroup
-        value={value}
-        exclusive
-        onChange={(_, next: boolean | null) => next !== null && onChange(next)}
-        disabled={disabled}
-        size="small"
-      >
-        <ToggleButton value={false}>
-          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-            <PublicIcon fontSize="small" />
-            <Typography variant="body2">Public</Typography>
-          </Stack>
-        </ToggleButton>
-        <ToggleButton value>
-          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-            <PrivateIcon fontSize="small" />
-            <Typography variant="body2">Private</Typography>
-          </Stack>
-        </ToggleButton>
-      </ToggleButtonGroup>
-    </Box>
-  );
-}
+/** What publishing as each kind means */
+const KIND_CAPTION = "Rulesets are playable directly. Extensions are content packs that other rulesets subscribe to.";
 
-/** Ruleset / Extension choice made when publishing; the selected option can't be toggled off. */
-function RulesetKindToggle({ value, onChange, disabled }: RulesetKindToggleProps) {
-  return (
-    <Box>
-      <Typography variant="subtitle2" component="p" gutterBottom sx={{ color: "text.secondary" }}>
-        Publish as
-      </Typography>
-      <Stack spacing={1} sx={{ alignItems: "flex-start" }}>
-        <ToggleButtonGroup
-          value={value}
-          exclusive
-          onChange={(_, next: PublishKind | null) => next && onChange(next)}
-          disabled={disabled}
-          size="small"
-        >
-          <ToggleButton value="ruleset">
-            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-              <RulesetIcon fontSize="small" />
-              <Typography variant="body2">Ruleset</Typography>
-            </Stack>
-          </ToggleButton>
-          <ToggleButton value="extension">
-            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-              <ExtensionIcon fontSize="small" />
-              <Typography variant="body2">Extension</Typography>
-            </Stack>
-          </ToggleButton>
-        </ToggleButtonGroup>
-        <Typography variant="caption" sx={{ color: "text.secondary" }}>
-          Rulesets are playable directly. Extensions are content packs that other rulesets subscribe to.
-        </Typography>
-      </Stack>
-    </Box>
-  );
-}
+/** What a ruleset is published as: one to play, or an extension other rulesets subscribe to */
+const KIND_OPTIONS = [
+  { value: "ruleset", label: "Ruleset", icon: RulesetIcon },
+  { value: "extension", label: "Extension", icon: ExtensionIcon },
+] as const;
+
+/** A ruleset's privacy: public, or private */
+const PRIVACY_OPTIONS = [
+  { value: false, label: "Public", icon: PublicIcon },
+  { value: true, label: "Private", icon: PrivateIcon },
+] as const;
 
 export function ArchiveRulesetDialog({ open, onClose, onConfirm, isLoading }: ArchiveRulesetDialogProps) {
   return (
@@ -189,7 +126,13 @@ export function EditRulesetDialog({
           control={form.control}
           name="private"
           render={({ field }) => (
-            <PrivacyToggle value={field.value ?? false} onChange={field.onChange} disabled={isLoading} />
+            <OptionToggle
+              label="Privacy"
+              options={PRIVACY_OPTIONS}
+              value={field.value ?? false}
+              onChange={field.onChange}
+              disabled={isLoading}
+            />
           )}
         />
       )}
@@ -198,7 +141,14 @@ export function EditRulesetDialog({
           control={form.control}
           name="kind"
           render={({ field }) => (
-            <RulesetKindToggle value={field.value ?? "ruleset"} onChange={field.onChange} disabled={isLoading} />
+            <OptionToggle
+              label="Publish as"
+              options={KIND_OPTIONS}
+              caption={KIND_CAPTION}
+              value={field.value ?? "ruleset"}
+              onChange={field.onChange}
+              disabled={isLoading}
+            />
           )}
         />
       )}
@@ -230,7 +180,13 @@ export function ForkRulesetDialog({ open, onClose, form, onSubmit, isLoading }: 
         control={form.control}
         name="private"
         render={({ field }) => (
-          <PrivacyToggle value={field.value ?? false} onChange={field.onChange} disabled={isLoading} />
+          <OptionToggle
+            label="Privacy"
+            options={PRIVACY_OPTIONS}
+            value={field.value ?? false}
+            onChange={field.onChange}
+            disabled={isLoading}
+          />
         )}
       />
     </CreateDialog>
@@ -261,7 +217,14 @@ export function PublishRulesetDialog({
       {canBeExtension && (
         // Its room below the dialog's question
         <Box sx={{ pt: 2 }}>
-          <RulesetKindToggle value={kind} onChange={onKindChange} disabled={isLoading} />
+          <OptionToggle
+            label="Publish as"
+            options={KIND_OPTIONS}
+            caption={KIND_CAPTION}
+            value={kind}
+            onChange={onKindChange}
+            disabled={isLoading}
+          />
         </Box>
       )}
     </ConfirmDialog>

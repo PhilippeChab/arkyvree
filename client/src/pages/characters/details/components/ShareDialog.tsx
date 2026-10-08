@@ -16,7 +16,7 @@ import { useState } from "react";
 import { ConfirmDialog, DialogFooter, DiceSpinner, Modal } from "@/client/src/components/common/index.ts";
 import { CopyIcon, RefreshIcon, RevokeIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
+import { invalidateCharacter } from "@/client/src/lib/queries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 interface ShareDialogProps {
@@ -41,7 +41,7 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
         }),
       ),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.detail(characterId) });
+      invalidateCharacter(queryClient, characterId);
       snackbar.success("Share link generated");
     },
     onError: (error) => {
@@ -57,7 +57,7 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
         }),
       ),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.detail(characterId) });
+      invalidateCharacter(queryClient, characterId);
       setConfirmRevoke(false);
       snackbar.success("Share link revoked");
     },

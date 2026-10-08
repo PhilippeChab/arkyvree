@@ -25,6 +25,9 @@ type SlotConflict<T extends EquippedEntry> =
 
 export type HandLocation = (typeof HAND_LOCATIONS)[number];
 
+/** An item type that sets the locations its items go to (`ITEM_TYPE_LOCATIONS`). */
+export type LocatedItemType = keyof typeof ITEM_TYPE_LOCATIONS;
+
 export type SlotConflictReason = "occupied" | "fingers" | "hands" | "twoHanded" | "sameHand";
 
 /** The locations that hold one item. */
@@ -41,6 +44,13 @@ const SINGLE_OCCUPANCY_LOCATIONS = [
 
 /** The locations a weapon set applies to: the hands. */
 export const HAND_LOCATIONS = ["Main Hand", "Off Hand", "Two Handed"] as const satisfies readonly ItemLocation[];
+
+/** The item types that go to set locations, with them: a weapon to a hand, body armor to the torso, a shield to the off hand. */
+export const ITEM_TYPE_LOCATIONS = {
+  Armor: ["Torso"],
+  Shield: ["Off Hand"],
+  Weapon: HAND_LOCATIONS,
+} as const satisfies Record<string, readonly ItemLocation[]>;
 
 /** How many rings a character can wear. */
 export const MAX_FINGER_ITEMS = 2;
@@ -74,7 +84,17 @@ export function findSlotConflict<T extends EquippedEntry>(
   return null;
 }
 
+/** The locations an item of `type` can be equipped at when its type sets them (a weapon's hands), else undefined: any. */
+export function getItemTypeLocations(type: string | null): readonly ItemLocation[] | undefined {
+  return isLocatedItemType(type) ? ITEM_TYPE_LOCATIONS[type] : undefined;
+}
+
 /** Whether `location` is a hand, which a weapon set applies to. */
 export function isHandLocation(location: unknown): location is HandLocation {
   return isOneOf(location, HAND_LOCATIONS);
+}
+
+/** Whether `type` sets the locations its items go to: a weapon, body armor or a shield. */
+export function isLocatedItemType(type: string | null): type is LocatedItemType {
+  return type !== null && Object.hasOwn(ITEM_TYPE_LOCATIONS, type);
 }

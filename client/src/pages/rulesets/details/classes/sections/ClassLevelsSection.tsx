@@ -1,18 +1,29 @@
 import { Stack, Tooltip, Typography } from "@mui/material";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { parseResponse } from "hono/client";
 import { useCallback, useMemo } from "react";
 
 import { AddButton, EmptyValue, ListToolbar, LoadError, ValueChip } from "@/client/src/components/common/index.ts";
 import { LevelsIcon } from "@/client/src/components/icons/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
+import { type ClassLevelFormData, nextClassLevel } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
+import {
+  type ClassLevelRow,
+  classLevelsQuery,
+} from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import { CreateLevelDialog } from "@/client/src/pages/rulesets/details/classes/components/index.ts";
-import { useOpenEntity, useRulesetPermissions, useRulesetSaves } from "@/client/src/pages/rulesets/hooks/index.ts";
+import {
+  useOpenEntity,
+  useRulesetPermissions,
+  useRulesetSaves,
+  useRulesetSection,
+} from "@/client/src/pages/rulesets/hooks/index.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 
 import type { ClassSectionProps } from "./classSections.ts";
-import { type Level, useClassLevels } from "./useClassLevels.ts";
 
 export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: ClassSectionProps) {
   const openEntity = useOpenEntity(rulesetId);
@@ -37,30 +48,33 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
     ];
   }, [rulesetSaves]);
 
-  const {
-    levels,
-    isLoading,
-    error,
-    createDialogOpen,
-    setCreateDialogOpen,
-    createForm,
-    createMutation,
-    handleCreate,
-    confirmCreate,
-  } = useClassLevels(rulesetId, classId);
+  const query = classLevelsQuery(rulesetId, classId);
+  const { data: levels, isLoading, error } = useQuery(query);
+  const { createDialogProps, handleCreate } = useRulesetSection({
+    // Its create opens on the class's next level
+    createDefaults: nextClassLevel(levels),
+    rulesetId,
+    label: "Class level",
+    query,
+    data: levels,
+    createFn: async (level: ClassLevelFormData) =>
+      parseResponse(
+        rpc.api.rulesets[":id"].classes[":classId"].levels.$post({ param: { id: rulesetId, classId }, json: level }),
+      ),
+  });
 
-  const handleRowClick = (level: Level) => {
+  const handleRowClick = (level: ClassLevelRow) => {
     openEntity(buildCustomizationPath("klass_levels", level.id));
   };
 
   const handleRowMouseEnter = useCallback(
-    (level: Level) => {
+    (level: ClassLevelRow) => {
       void queryClient.prefetchQuery(customizationEntityQuery(rulesetId, "klass_levels", level.id));
     },
     [queryClient, rulesetId],
   );
 
-  const renderCell = (level: Level, columnKey: string) => {
+  const renderCell = (level: ClassLevelRow, columnKey: string) => {
     if (columnKey.startsWith("save_")) {
       const saveId = columnKey.replace("save_", "");
       const levelSave = level.saves?.find((s) => s.saveId === saveId);
@@ -127,14 +141,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
         }
       />
 
-      <CreateLevelDialog
-        open={createDialogOpen}
-        onClose={() => setCreateDialogOpen(false)}
-        form={createForm}
-        onSubmit={confirmCreate}
-        isLoading={createMutation.isPending}
-        rulesetId={rulesetId}
-      />
+      <CreateLevelDialog {...createDialogProps} rulesetId={rulesetId} />
     </Stack>
   );
 }

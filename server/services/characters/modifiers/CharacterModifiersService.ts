@@ -5,11 +5,7 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Activities, Modifiers } from "@/server/repositories/index.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
-import {
-  getTargetPathsWithLabels,
-  resolvePathValueType,
-} from "@/server/services/rulesets/customization/targetPaths/index.ts";
-import { pickTargetLabels } from "@/shared/customization/target.ts";
+import { annotateModifiers, resolvePathValueType } from "@/server/services/rulesets/customization/targetPaths/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class CharacterModifiersService {
@@ -83,15 +79,8 @@ class CharacterModifiersService {
   async getModifiers(session: Session, characterId: string) {
     const character = await getEditableCharacter(db, session, characterId);
 
-    const [modifiers, { segmentLabels }] = await Promise.all([
-      Modifiers.findMany(db, {
-        sourceIds: [characterId],
-        sourceType: "characters",
-      }),
-      getTargetPathsWithLabels(character.rulesetId, "modifier"),
-    ]);
-
-    return modifiers.map((m) => ({ ...m, targetLabels: pickTargetLabels([m.target, m.value], segmentLabels) }));
+    const modifiers = await Modifiers.findMany(db, { sourceIds: [characterId], sourceType: "characters" });
+    return annotateModifiers(character.rulesetId, modifiers);
   }
 
   async updateModifier(

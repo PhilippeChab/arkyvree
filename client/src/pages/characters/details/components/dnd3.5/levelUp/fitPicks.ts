@@ -54,12 +54,6 @@ function trimPools<T>(picks: Record<string, T[]>, roomOf: (poolId: string, picks
   return changed ? trimmed : picks;
 }
 
-/** The picked feats as the "featId:aptitudeId" list the picker endpoints take. */
-export function featPickString(feats: Feats) {
-  const pairs = Object.entries(feats).flatMap(([aptitudeId, picks]) => picks.map((f) => `${f.id}:${aptitudeId}`));
-  return pairs.length > 0 ? pairs.sort().join(",") : undefined;
-}
-
 /**
  * The feats each pool has room for, and the pools they grow. A feat dropped takes the slots it granted with it, which
  * may drop more. Until the pools load, the picks stand.
@@ -142,4 +136,9 @@ export function openPoolOf(aptitudeId: string | null, pools: Record<string, Apti
 /** The picks without one: a chip's delete. */
 export function withoutPick<T extends { id: string }>(picks: Record<string, T[]>, aptitudeId: string, id: string) {
   return { ...picks, [aptitudeId]: (picks[aptitudeId] ?? []).filter((pick) => pick.id !== id) };
+}
+
+/** The picks with one more, last in its pool: an option's click. */
+export function withPick<T>(picks: Record<string, T[]>, aptitudeId: string, pick: T) {
+  return { ...picks, [aptitudeId]: [...(picks[aptitudeId] ?? []), pick] };
 }

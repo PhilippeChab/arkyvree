@@ -1,3 +1,5 @@
+import { pointsSpent } from "./pointsSpent.ts";
+
 export type RollMethodId = "4d6-drop-lowest" | "3d6-straight" | "standard-array" | "point-buy";
 
 export const POINT_BUY_COSTS: Record<number, number> = {
@@ -48,6 +50,11 @@ export function getRollFunction(method: RollMethodId): (() => number) | null {
 
 export function isDiceMethod(method: RollMethodId): boolean {
   return method === "4d6-drop-lowest" || method === "3d6-straight";
+}
+
+/** The points a point-buy's scores cost (`POINT_BUY_COSTS`), out of `POINT_BUY_TOTAL`. */
+export function pointBuySpent(scores: number[]) {
+  return pointsSpent(scores.map((score) => POINT_BUY_COSTS[score] ?? 0));
 }
 
 export function rollDie(sides: number): number {

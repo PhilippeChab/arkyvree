@@ -36,6 +36,8 @@ export { LoadError } from "./LoadError.tsx";
 export { LoadMoreButton } from "./LoadMoreButton.tsx";
 export { Modal } from "./Modal.tsx";
 export { NextPageSpinner } from "./NextPageSpinner.tsx";
+export { OglLicenseText } from "./OglLicenseText.tsx";
+export { OptionToggle } from "./OptionToggle.tsx";
 export { PageActionButton } from "./PageActionButton.tsx";
 export { PageError } from "./PageError.tsx";
 export { PageHeader } from "./PageHeader.tsx";
@@ -51,6 +53,7 @@ export { SectionContent, type SectionTab, SectionTabPanel, SectionTabs } from ".
 export { CREATED_SORTS, NAME_SORTS, UPDATED_SORTS } from "./sortOptions.ts";
 export { ConfirmDialog, CreateDialog, DeleteDialog, EditDialog } from "./StandardDialogs.tsx";
 export { SubsectionTitle } from "./SubsectionTitle.tsx";
+export { type TableColumn, TableColumnsHead } from "./TableColumnsHead.tsx";
 export { TableFrame } from "./TableFrame.tsx";
-export { type TableColumn, TableSkeleton } from "./TableSkeleton.tsx";
+export { TableSkeleton } from "./TableSkeleton.tsx";
 export { ToggleLabel } from "./ToggleLabel.tsx";

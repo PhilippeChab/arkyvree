@@ -1,7 +1,7 @@
 import { IconButton, MenuItem, Paper, Stack, TextField, Typography } from "@mui/material";
-import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQueryClient } from "@tanstack/react-query";
 import { type InferRequestType, parseResponse } from "hono/client";
-import { type Ref, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { type Control, Controller, useController } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
@@ -19,20 +19,16 @@ import {
   SubsectionTitle,
 } from "@/client/src/components/common/index.ts";
 import { AddIcon, RemoveIcon } from "@/client/src/components/icons/index.ts";
-import { BaseRulesetAlert, RulesetPicker } from "@/client/src/components/rulesets/index.ts";
-import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import {
-  type RulesetAbility,
-  useDebouncedValue,
-  useFormWith,
-  useListboxQuery,
-  useRulesetAbilities,
-} from "@/client/src/hooks/index.ts";
+  BaseRulesetAlert,
+  type RulesetOption,
+  RulesetPicker,
+  useRulesetPickerOptions,
+} from "@/client/src/components/rulesets/index.ts";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
+import { type RulesetAbility, useFormWith, useListboxQuery, useRulesetAbilities } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
-import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
-import { pageItems } from "@/client/src/lib/pageItems.ts";
-import { rulesetPickerQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { NAME_RULES, requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
 import type { CharacterPageState } from "@/client/src/pages/characters/characterPageState.ts";
@@ -42,10 +38,13 @@ import {
   isDiceMethod,
   POINT_BUY_COSTS,
   POINT_BUY_TOTAL,
+  pointBuySpent,
   ROLL_METHODS,
   type RollMethodId,
   STANDARD_ARRAY,
 } from "@/client/src/pages/characters/dice.ts";
+import { formatPointsSpent } from "@/client/src/pages/characters/pointsSpent.ts";
+import { type DiceRoll, useDiceRoll } from "@/client/src/pages/characters/useDiceRoll.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { PREFERS_REDUCED_MOTION, settleAnimation } from "@/client/src/theme/animations.ts";
 import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/shared/enums.ts";
@@ -63,16 +62,12 @@ interface AbilityCardProps {
 
 type AbilityOption = Pick<RulesetAbility, "id" | "name">;
 
-interface AbilityScoresHandle {
-  rollAll: () => void;
-}
-
 interface AbilityScoresSectionProps {
   abilities: AbilityOption[];
   control: Control<CreateCharacterFormData>;
+  /** The dialog's roll of the scores, which they show as it tumbles. */
+  diceRoll: DiceRoll;
   method: RollMethodId;
-  onRollingChange: (rolling: boolean) => void;
-  ref: Ref<AbilityScoresHandle>;
 }
 
 interface CreateCharacterDialogProps {
@@ -149,78 +144,11 @@ function AbilityCard({
   );
 }
 
-function AbilityScoresSection({ ref, abilities, control, onRollingChange, method }: AbilityScoresSectionProps) {
+function AbilityScoresSection({ abilities, control, diceRoll, method }: AbilityScoresSectionProps) {
   const {
     field: { value, onChange },
   } = useController({ control, name: "abilities" });
   const abilityValues = scoresOf(abilities, value, method);
-  const [rolling, setRolling] = useState(false);
-  const [rollingValues, setRollingValues] = useState<Record<string, number>>({});
-  const [settledIds, setSettledIds] = useState<Set<string>>(new Set());
-  const intervalsRef = useRef<ReturnType<typeof setInterval>[]>([]);
-  const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
-
-  useEffect(
-    () => () => {
-      for (const id of intervalsRef.current) clearInterval(id);
-
-      for (const id of timeoutsRef.current) clearTimeout(id);
-    },
-    [],
-  );
-
-  const handleRollAll = () => {
-    const rollFn = getRollFunction(method);
-    if (rolling || !rollFn) return;
-
-    for (const id of intervalsRef.current) clearInterval(id);
-
-    for (const id of timeoutsRef.current) clearTimeout(id);
-
-    intervalsRef.current = [];
-    timeoutsRef.current = [];
-
-    setRolling(true);
-    onRollingChange(true);
-    setSettledIds(new Set());
-    // Each score settles on its own timer: the roll keeps the scores so far, written at each
-    const rolled = { ...abilityValues };
-
-    for (const ability of abilities) {
-      const interval = setInterval(() => {
-        setRollingValues((prev) => ({
-          ...prev,
-          [ability.id]: Math.floor(Math.random() * 16) + 3,
-        }));
-      }, 50);
-      intervalsRef.current.push(interval);
-    }
-
-    for (const [index, ability] of abilities.entries()) {
-      const delay = 800 + index * 150;
-      const timeout = setTimeout(() => {
-        clearInterval(intervalsRef.current[index]);
-
-        const result = rollFn();
-        setRollingValues((prev) => ({ ...prev, [ability.id]: result }));
-        rolled[ability.id] = result;
-        onChange({ ...rolled });
-        setSettledIds((prev) => new Set(prev).add(ability.id));
-
-        if (index === abilities.length - 1) {
-          const doneTimeout = setTimeout(() => {
-            setRolling(false);
-            onRollingChange(false);
-            setSettledIds(new Set());
-          }, 400);
-          timeoutsRef.current.push(doneTimeout);
-        }
-      }, delay);
-      timeoutsRef.current.push(timeout);
-    }
-  };
-
-  useImperativeHandle(ref, () => ({ rollAll: handleRollAll }));
 
   if (method === "standard-array")
     return <StandardArrayScores abilities={abilities} abilityValues={abilityValues} onChange={onChange} />;
@@ -231,22 +159,19 @@ function AbilityScoresSection({ ref, abilities, control, onRollingChange, method
   return (
     <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap" }}>
       {abilities.map((ability) => {
-        const isSettled = settledIds.has(ability.id);
-        const displayValue = rolling
-          ? (rollingValues[ability.id] ?? abilityValues[ability.id])
-          : abilityValues[ability.id];
-
+        // A score rolling shows its die's faces until it lands
+        const score = diceRoll.faceOf(ability.id) ?? abilityValues[ability.id];
         return (
           <AbilityCard
             key={ability.id}
             name={ability.name}
-            score={displayValue}
-            onIncrease={() => onChange({ ...abilityValues, [ability.id]: Math.min(100, displayValue + 1) })}
-            onDecrease={() => onChange({ ...abilityValues, [ability.id]: Math.max(1, displayValue - 1) })}
-            canIncrease={!rolling && displayValue < 100}
-            canDecrease={!rolling && displayValue > 1}
-            bottomInfo={`Mod: ${formatSigned(computeAbilityModifier(displayValue))}`}
-            isSettled={isSettled}
+            score={score}
+            onIncrease={() => onChange({ ...abilityValues, [ability.id]: Math.min(100, score + 1) })}
+            onDecrease={() => onChange({ ...abilityValues, [ability.id]: Math.max(1, score - 1) })}
+            canIncrease={!diceRoll.rolling && score < 100}
+            canDecrease={!diceRoll.rolling && score > 1}
+            bottomInfo={`Mod: ${formatSigned(computeAbilityModifier(score))}`}
+            isSettled={diceRoll.hasLanded(ability.id)}
           />
         );
       })}
@@ -262,12 +187,7 @@ function defaultScore(method: RollMethodId, index: number) {
 }
 
 function PointBuyScores({ abilities, abilityValues, onChange }: PointBuyScoresProps) {
-  const pointsSpent = useMemo(() => {
-    if (!abilityValues) return 0;
-    return abilities.reduce((sum, a) => sum + (POINT_BUY_COSTS[abilityValues[a.id] ?? 8] ?? 0), 0);
-  }, [abilities, abilityValues]);
-
-  const pointsRemaining = POINT_BUY_TOTAL - pointsSpent;
+  const pointsRemaining = POINT_BUY_TOTAL - pointBuySpent(abilities.map((a) => abilityValues?.[a.id] ?? 8));
 
   return (
     <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap" }}>
@@ -348,8 +268,7 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
-  const abilityScoresRef = useRef<AbilityScoresHandle>(null);
-  const [abilityRolling, setAbilityRolling] = useState(false);
+  const diceRoll = useDiceRoll();
   const [rollMethod, setRollMethod] = useState<RollMethodId>("4d6-drop-lowest");
   const form = useFormWith<CreateCharacterFormData>({
     rulesetId: "",
@@ -367,68 +286,14 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
     notes: "",
     privateNotes: "",
   });
-  const { control, watch, setValue } = form;
+  const { control, getValues, watch, setValue } = form;
 
   const selectedRulesetId = watch("rulesetId");
   const selectedAlignment = watch("alignment");
   const selectedGender = watch("gender");
 
-  const [rulesetSearch, setRulesetSearch] = useState("");
-  const debouncedRulesetSearch = useDebouncedValue(rulesetSearch);
-
-  const {
-    data: rulesetsData,
-    isLoading: isRulesetsLoading,
-    error: rulesetsError,
-    fetchNextPage: fetchNextRulesetsPage,
-    hasNextPage: hasNextRulesetsPage,
-    isFetchingNextPage: isFetchingNextRulesetsPage,
-  } = useInfiniteQuery({
-    ...rulesetPickerQuery("published", debouncedRulesetSearch),
-    enabled: open,
-  });
-
-  const {
-    data: campaignRulesetsData,
-    isLoading: isCampaignRulesetsLoading,
-    error: campaignRulesetsError,
-    fetchNextPage: fetchNextCampaignRulesetsPage,
-    hasNextPage: hasNextCampaignRulesetsPage,
-    isFetchingNextPage: isFetchingNextCampaignRulesetsPage,
-  } = useInfiniteQuery({
-    ...rulesetPickerQuery("campaignAccessible", debouncedRulesetSearch),
-    enabled: open,
-  });
-
-  const {
-    data: myDraftsData,
-    isLoading: isMyDraftsLoading,
-    error: myDraftsError,
-    fetchNextPage: fetchNextMyDraftsPage,
-    hasNextPage: hasNextMyDraftsPage,
-    isFetchingNextPage: isFetchingNextMyDraftsPage,
-  } = useInfiniteQuery({
-    ...rulesetPickerQuery("myDrafts", debouncedRulesetSearch),
-    enabled: open,
-  });
-
-  const rulesets = useMemo(() => {
-    const draftRulesets = pageItems(myDraftsData);
-    const publishedRulesets = pageItems(rulesetsData);
-    const campaignRulesets = pageItems(campaignRulesetsData);
-    const seenIds = new Set(draftRulesets.map((r) => r.id));
-    const dedupedPublished = publishedRulesets.filter((r) => !seenIds.has(r.id));
-    for (const r of dedupedPublished) seenIds.add(r.id);
-
-    const dedupedCampaign = campaignRulesets.filter((r) => !seenIds.has(r.id));
-    return [
-      ...draftRulesets.map((r) => ({ ...r, group: "My Drafts" as const })),
-      ...dedupedPublished.map((r) => ({ ...r, group: "Published" as const })),
-      ...dedupedCampaign.map((r) => ({ ...r, group: "Campaign" as const })),
-    ];
-  }, [myDraftsData, rulesetsData, campaignRulesetsData]);
-
-  const [selectedRuleset, setSelectedRuleset] = useState<(typeof rulesets)[number] | null>(null);
+  const rulesetOptions = useRulesetPickerOptions("character", open);
+  const [selectedRuleset, setSelectedRuleset] = useState<RulesetOption | null>(null);
 
   // Fetch races for selected ruleset, annotated with eligibility
   const {
@@ -465,23 +330,22 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
     return sortAbilities(items, baseRules, (a) => a.name);
   }, [abilityItems, baseRules]);
 
-  const handleRulesetsScroll = createListboxScrollHandler([
-    {
-      hasNextPage: hasNextMyDraftsPage,
-      isFetchingNextPage: isFetchingNextMyDraftsPage,
-      fetchNextPage: fetchNextMyDraftsPage,
-    },
-    {
-      hasNextPage: hasNextRulesetsPage,
-      isFetchingNextPage: isFetchingNextRulesetsPage,
-      fetchNextPage: fetchNextRulesetsPage,
-    },
-    {
-      hasNextPage: hasNextCampaignRulesetsPage,
-      isFetchingNextPage: isFetchingNextCampaignRulesetsPage,
-      fetchNextPage: fetchNextCampaignRulesetsPage,
-    },
-  ]);
+  // What a point-buy's scores cost, its chip says
+  const pointBuyPoints = pointBuySpent(Object.values(scoresOf(rulesetAbilities, watch("abilities"), rollMethod)));
+
+  // Each score lands on its own: the roll keeps the scores so far, written as each lands
+  const handleRollAll = () => {
+    const rollScore = getRollFunction(rollMethod);
+    if (!rollScore) return;
+    const rolled = scoresOf(rulesetAbilities, getValues("abilities"), rollMethod);
+    diceRoll.roll(
+      rulesetAbilities.map((ability) => ({ key: ability.id, roll: rollScore })),
+      (abilityId, score) => {
+        rolled[abilityId] = score;
+        setValue("abilities", { ...rolled }, { shouldDirty: true });
+      },
+    );
+  };
 
   const createCharacterMutation = useMutation({
     mutationFn: async (data: CreateCharacterRequest) =>
@@ -563,7 +427,7 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
               rules={requiredRules("Ruleset is required")}
               render={({ field, fieldState }) => (
                 <RulesetPicker
-                  rulesets={rulesets}
+                  options={rulesetOptions}
                   value={selectedRuleset}
                   // Another ruleset's abilities start from their defaults
                   onChange={(ruleset) => {
@@ -572,10 +436,6 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
                     setValue("abilities", {}, { shouldDirty: true });
                     if (!ruleset) setValue("raceId", "", { shouldDirty: true });
                   }}
-                  onSearch={setRulesetSearch}
-                  onScroll={handleRulesetsScroll}
-                  loading={isRulesetsLoading || isCampaignRulesetsLoading || isMyDraftsLoading}
-                  loadError={rulesetsError ?? campaignRulesetsError ?? myDraftsError}
                   error={fieldState.error}
                   inputRef={field.ref}
                 />
@@ -639,30 +499,26 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
               ))}
             </TextField>
             {isDiceMethod(rollMethod) && (
-              <RollAllButton
-                onClick={() => abilityScoresRef.current?.rollAll()}
-                disabled={!rulesetAbilities.length || abilityRolling}
+              <RollAllButton onClick={handleRollAll} disabled={!rulesetAbilities.length || diceRoll.rolling} />
+            )}
+            {rollMethod === "point-buy" && (
+              <CountChip
+                label={formatPointsSpent(pointBuyPoints, POINT_BUY_TOTAL)}
+                color={
+                  pointBuyPoints > POINT_BUY_TOTAL
+                    ? "error"
+                    : pointBuyPoints === POINT_BUY_TOTAL
+                      ? "success"
+                      : "default"
+                }
               />
             )}
-            {rollMethod === "point-buy" &&
-              (() => {
-                const scores = scoresOf(rulesetAbilities, watch("abilities"), rollMethod);
-                const spent = rulesetAbilities.reduce((sum, a) => sum + (POINT_BUY_COSTS[scores[a.id]] ?? 0), 0);
-                const remaining = POINT_BUY_TOTAL - spent;
-                return (
-                  <CountChip
-                    label={`${remaining} / ${POINT_BUY_TOTAL} pts`}
-                    color={remaining < 0 ? "error" : remaining === 0 ? "success" : "default"}
-                  />
-                );
-              })()}
           </Stack>
           {rulesetAbilities.length > 0 ? (
             <AbilityScoresSection
-              ref={abilityScoresRef}
               abilities={rulesetAbilities}
               control={control}
-              onRollingChange={setAbilityRolling}
+              diceRoll={diceRoll}
               method={rollMethod}
             />
           ) : abilitiesError ? (

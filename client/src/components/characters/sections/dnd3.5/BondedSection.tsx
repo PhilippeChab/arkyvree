@@ -2,7 +2,7 @@ import { Box, Link as MuiLink, Stack } from "@mui/material";
 import { Link } from "react-router-dom";
 
 import { sortAbilities } from "@/client/src/components/characters/sections/abilityOrder.ts";
-import { EntryTitle, SubsectionTitle } from "@/client/src/components/common/index.ts";
+import { EntryTitle, SubsectionTitle, ValueChip } from "@/client/src/components/common/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
@@ -95,20 +95,8 @@ export function BondedSection({ bonded, linkable = false }: BondedSectionProps) 
             <Stack spacing={1}>
               <SubsectionTitle component="h5">Features</SubsectionTitle>
               <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap" }}>
-                {featNames.map((n) => (
-                  <Box
-                    key={n}
-                    sx={{
-                      px: 1,
-                      py: 0.25,
-                      border: 1,
-                      borderColor: "divider",
-                      borderRadius: 1,
-                      fontSize: "0.85rem",
-                    }}
-                  >
-                    {n}
-                  </Box>
+                {featNames.map((name) => (
+                  <ValueChip key={name} color="default" label={name} />
                 ))}
               </Stack>
             </Stack>

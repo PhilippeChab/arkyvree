@@ -2,7 +2,7 @@ import { IconButton, List, ListItemButton, ListItemText, Stack, TextField, Toolt
 import { keepPreviousData, useInfiniteQuery } from "@tanstack/react-query";
 import { type Ref, useMemo, useState } from "react";
 
-import { BlankNote, LoadError, NextPageSpinner, ValueChip } from "@/client/src/components/common/index.ts";
+import { BlankNote, LoadError, NextPageSpinner } from "@/client/src/components/common/index.ts";
 import { ChevronRightIcon, ClearIcon, FilterIcon, PublicIcon } from "@/client/src/components/icons/index.ts";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
@@ -11,6 +11,7 @@ import { formatSegment, type PathCompletion, type TargetPathKind } from "@/share
 
 import { targetCompletionsQuery } from "./customizationQueries.ts";
 import { type PathInfo, toPathInfo } from "./pathValues.ts";
+import { TargetPathBreadcrumbs } from "./TargetPathBreadcrumbs.tsx";
 
 interface TargetPathBrowserProps {
   disabled?: boolean;
@@ -124,32 +125,26 @@ export function TargetPathBrowser({
 
   const handleScroll = createListboxScrollHandler({ hasNextPage, isFetchingNextPage, fetchNextPage });
 
-  const breadcrumbSegments = segments;
-
   return (
     <Stack spacing={1}>
-      {/* Breadcrumbs: a segment's chevron a quarter unit from its chip, three from the chip before */}
-      <Stack direction="row" spacing={0.75} sx={{ flexWrap: "wrap", alignItems: "center", rowGap: 0.5, minHeight: 32 }}>
-        {breadcrumbSegments.map((segment, index) => (
-          <Stack key={index} direction="row" spacing={0.25} sx={{ alignItems: "center" }}>
-            {index > 0 && <ChevronRightIcon sx={{ fontSize: 16, color: "text.secondary" }} />}
-            <ValueChip
-              label={segmentLabels[segment] || formatSegment(segment)}
-              color={isComplete ? "success" : "info"}
-              onClick={disabled ? undefined : () => handleBreadcrumbClick(index)}
-            />
-          </Stack>
-        ))}
-        {breadcrumbSegments.length > 0 && !disabled && (
+      <TargetPathBreadcrumbs
+        target={segments.join(".")}
+        targetLabels={segmentLabels}
+        color={isComplete ? "success" : "info"}
+        onSegmentClick={disabled ? undefined : handleBreadcrumbClick}
+        wrap
+      >
+        {segments.length === 0 ? (
+          <BlankNote>No path picked yet</BlankNote>
+        ) : !disabled ? (
           // A unit from the last chip
           <Stack direction="row" sx={{ pl: 0.25 }}>
             <IconButton size="small" aria-label="Clear Path" onClick={handleClear}>
               <ClearIcon fontSize="small" />
             </IconButton>
           </Stack>
-        )}
-        {breadcrumbSegments.length === 0 && <BlankNote>No path picked yet</BlankNote>}
-      </Stack>
+        ) : null}
+      </TargetPathBreadcrumbs>
       {/* Search + List */}
       {!disabled && (
         <>

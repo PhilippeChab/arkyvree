@@ -131,6 +131,39 @@ describe("frontend rules", () => {
     ).toEqual(["query-keys client/src/c.ts"]);
   });
 
+  test("a field the viewer can't edit is readOnly, never a disabled one restyled", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/restyled.tsx":
+            'export const r = <TextField disabled sx={{ "& .MuiInputBase-input.Mui-disabled": { color: "text.primary" } }} />;\n',
+          "client/src/label.tsx":
+            'export const l = { "& .MuiInputLabel-root.Mui-disabled": { color: "text.secondary" } };\n',
+          "client/src/readOnly.tsx": "export const o = <TextField slotProps={{ input: { readOnly } }} />;\n",
+          "client/src/tabs.tsx": 'export const t = { "& .MuiTabs-scrollButtons.Mui-disabled": { opacity: 0.3 } };\n',
+        },
+        ["form-fields"],
+      ),
+    ).toEqual(["form-fields client/src/label.tsx", "form-fields client/src/restyled.tsx"]);
+  });
+
+  test("a key its domain's helper invalidates is invalidated through it", async () => {
+    const invalidate = "queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.detail(id) })";
+    expect(
+      await lintRepo(
+        {
+          "client/src/sheet.ts": `export const s = () => ${invalidate};\n`,
+          "client/src/helper.ts": "export const h = () => invalidateCharacter(queryClient, id);\n",
+          "client/src/removed.ts":
+            "export const r = () => queryClient.removeQueries({ queryKey: QUERY_KEYS.characters.detail(id) });\n",
+          "client/src/query.ts": "export const q = { queryKey: QUERY_KEYS.characters.detail(id) };\n",
+          "client/src/lib/queries.ts": `export const i = () => ${invalidate};\n`,
+        },
+        ["query-keys"],
+      ),
+    ).toEqual(["query-keys client/src/sheet.ts"]);
+  });
+
   test("a mutation runs with mutate, and a loader is a DiceSpinner", async () => {
     expect(
       await lintRepo(
@@ -566,6 +599,8 @@ describe("frontend rules", () => {
           "client/src/pages/a/Written.tsx": "export const w = () => queryClient.setQueryData(k, v);\n",
           "client/src/pages/a/Mutated.tsx":
             "export const m = () => useMutation({ mutationFn: f, onSuccess: (v) => queryClient.setQueryData(k, v) });\n",
+          "client/src/pages/a/Saved.tsx":
+            "export const s = () => useEntitySave({ saveFn: f, storeSaved: (v) => queryClient.setQueryData(k, v) });\n",
           "client/src/pages/a/Paged.tsx": "export const n = (data: Data) => data.pages.flatMap((p) => p.items);\n",
         },
         ["queries"],
@@ -693,7 +728,7 @@ describe("frontend rules", () => {
     ).toEqual(["date-formats client/src/intl.ts", "date-formats client/src/local.ts"]);
   });
 
-  test("a control that only navigates is a link, an external one an anchor, the URL and router state read through their guards", async () => {
+  test("a control that only navigates is a link, an external one an anchor, the URL and router state read through their guards, a customization page's path built", async () => {
     expect(
       await lintRepo(
         {
@@ -719,6 +754,9 @@ describe("frontend rules", () => {
             'import { useSearchParams } from "react-router-dom";\nexport const h = useSearchParams;\n',
           "client/src/alias.tsx":
             'import { Link as RouterLink } from "react-router-dom";\nexport const a = RouterLink;\n',
+          "client/src/customized.tsx": "export const c = (id: string) => `feats/${id}/customization`;\n",
+          "client/src/built.tsx":
+            'export const b = (id: string) => `/rulesets/x/${buildCustomizationPath("feats", id)}/requirements`;\n',
           "client/src/state.tsx": "export const s = location.state?.openLevelUp === true;\n",
           "client/src/guarded.tsx": "export const g = entityPageState(location.state).from;\n",
           "client/src/redirectLink.tsx": "export const r = `/sign-in?redirect=${encodeURIComponent(to)}`;\n",
@@ -732,6 +770,7 @@ describe("frontend rules", () => {
     ).toEqual([
       "navigation client/src/alias.tsx",
       "navigation client/src/clicked.tsx",
+      "navigation client/src/customized.tsx",
       "navigation client/src/handler.tsx",
       "navigation client/src/menu.tsx",
       "navigation client/src/params.tsx",

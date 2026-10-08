@@ -1,4 +1,4 @@
-import { Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
+import { Table, TableBody, TableCell, TableRow } from "@mui/material";
 import { type ElementType, type ReactNode, useMemo, useRef } from "react";
 
 import {
@@ -11,6 +11,7 @@ import {
   RowAction,
   RowActions,
   type TableColumn,
+  TableColumnsHead,
   TableFrame,
   TableSkeleton,
 } from "@/client/src/components/common/index.ts";
@@ -101,15 +102,7 @@ export function RulesetSectionTable<T extends { id: string }>({
   return (
     <TableFrame sx={TABLE_CONTAINER_SX}>
       <Table sx={TABLE_SX}>
-        <TableHead>
-          <TableRow>
-            {headerColumns.map((column) => (
-              <TableCell key={column.key} align={column.align} sx={{ width: column.width }}>
-                {column.label}
-              </TableCell>
-            ))}
-          </TableRow>
-        </TableHead>
+        <TableColumnsHead columns={headerColumns} />
         <TableBody>
           {data.map((item, index) => (
             <TableRow

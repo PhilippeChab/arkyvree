@@ -15,7 +15,7 @@ import { getUrlSegment } from "@/shared/urlSegments.ts";
 const customizationApi = rpc.api.rulesets[":id"].customization[":entityType"][":entityId"];
 
 /** Where a customization tab's rows are cached, which its saves refresh: `customization-feats-<id>-modifiers`. */
-export function customizationSection(
+function customizationSection(
   entityType: CustomizationOwnerType,
   entityId: string,
   tab: "modifiers" | "properties" | "requirements",

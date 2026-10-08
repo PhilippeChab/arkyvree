@@ -10,8 +10,9 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { DECIMAL_RULES, NAME_RULES } from "@/client/src/lib/validation.ts";
 import { LOCATION_OPTIONS } from "@/shared/enums.ts";
+import { isTemplateItemType, type TemplateItemType } from "@/shared/itemTemplates.ts";
 
-import { isTemplateType, ITEM_TYPE_OPTIONS, type ItemFormInternal, type TemplateType } from "./itemForm.ts";
+import { ITEM_TYPE_OPTIONS, type ItemFormInternal } from "./itemForm.ts";
 import { itemTemplatesQuery } from "./itemFormQueries.ts";
 
 interface ItemFormFieldsProps {
@@ -25,7 +26,7 @@ interface TemplateSelectorProps {
   disabled?: boolean;
   form: UseFormReturn<ItemFormInternal>;
   rulesetId: string;
-  type: TemplateType;
+  type: TemplateItemType;
 }
 
 function TemplateSelector({ form, rulesetId, type, disabled }: TemplateSelectorProps) {
@@ -53,7 +54,7 @@ export function ItemFormFields({ form, rulesetId, lockType }: ItemFormFieldsProp
 
   // A template type has no slot, and starts with no template
   const handleTypeChange = (newType: unknown) => {
-    if (!isTemplateType(newType)) return;
+    if (!isTemplateItemType(newType)) return;
     form.setValue("slot", "", { shouldDirty: true });
     form.setValue("sourceItemId", "", { shouldDirty: true });
   };
@@ -93,7 +94,7 @@ export function ItemFormFields({ form, rulesetId, lockType }: ItemFormFieldsProp
         onChange={handleTypeChange}
         disabled={lockType}
       />
-      {isTemplateType(itemType) ? (
+      {isTemplateItemType(itemType) ? (
         !isTemplate && <TemplateSelector form={form} rulesetId={rulesetId} type={itemType} disabled={lockType} />
       ) : (
         <SelectField

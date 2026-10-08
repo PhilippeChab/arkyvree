@@ -1,6 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
-import { getRollFunction, isDiceMethod, POINT_BUY_COSTS, rollDie } from "@/client/src/pages/characters/dice.ts";
+import {
+  getRollFunction,
+  isDiceMethod,
+  POINT_BUY_COSTS,
+  pointBuySpent,
+  rollDie,
+} from "@/client/src/pages/characters/dice.ts";
 
 describe("Dice", () => {
   test("roll between one and their sides, and ability methods between 3 and 18", () => {
@@ -23,5 +29,10 @@ describe("Dice", () => {
       .sort((a, b) => a - b);
     for (const [i, score] of scores.slice(1).entries())
       expect(POINT_BUY_COSTS[score]).toBeGreaterThan(POINT_BUY_COSTS[scores[i]]);
+  });
+
+  test("spend a point-buy's points by each score's cost", () => {
+    expect(pointBuySpent([8, 10, 15])).toBe(0 + 2 + 8);
+    expect(pointBuySpent([])).toBe(0);
   });
 });

@@ -1,7 +1,7 @@
 import { Stack, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 
 import {
   CreateDialog,
@@ -30,6 +30,7 @@ import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/se
 import { invalidateRulesetEdit, itemsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { useOpenEntity, useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
+import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 
 import { type BulkVariantsFormValues, type VariantRow, variantRow } from "./bulkVariants.ts";
 import { BulkVariantsDialog } from "./BulkVariantsDialog.tsx";
@@ -46,14 +47,23 @@ const ITEMS_COLUMNS = [
   { key: "description", label: "Description", width: "37%" },
 ];
 
+/** An item's copy, as its duplicate's dialog opens on it: based on the item, or on the item's own template */
+function duplicateForm(item: Item): ItemFormInternal {
+  return {
+    ...toItemForm(item),
+    name: `${item.name} (Copy)`,
+    sourceItemId: item.isTemplate ? item.id : (item.sourceItemId ?? ""),
+    isTemplate: false,
+  };
+}
+
 export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetSectionProps) {
   const openEntity = useOpenEntity(ruleset.id);
   const queryClient = useQueryClient();
 
   const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("search");
-  const [duplicateSourceId, setDuplicateSourceId] = useState<string | null>(null);
 
-  const { createDialogOpen, setCreateDialogOpen, createForm, createMutation, handleCreate } = useRulesetSection<
+  const { createForm, createDialogProps, duplicateSource, handleCreate, handleDuplicate } = useRulesetSection<
     Item,
     ItemFormInternal
   >({
@@ -68,13 +78,15 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
           json: toItemPayload(data),
         }),
       ),
-    onCreateSuccess: (created) => openEntity(`items/${created.id}/customization`),
+    duplicateFn: async (itemId, data) =>
+      parseResponse(
+        rpc.api.rulesets[":id"].items[":itemId"].duplicate.$post({
+          param: { id: ruleset.id, itemId },
+          json: toItemPayload(data),
+        }),
+      ),
+    onCreateSuccess: (created) => openEntity(buildCustomizationPath("items", created.id)),
   });
-
-  const handleAddItem = () => {
-    setDuplicateSourceId(null);
-    handleCreate();
-  };
 
   const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     ...itemsQuery(ruleset.id, { search: searchQuery, childOnly }),
@@ -86,46 +98,12 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
 
   const handleRowClick = (item: Item) => {
-    openEntity(`items/${item.id}/customization`);
-  };
-
-  const handleDuplicate = (item: Item) => {
-    createForm.reset(
-      {
-        ...toItemForm(item),
-        name: `${item.name} (Copy)`,
-        // The copy is based on the source: on the template itself, or on the source's own template.
-        sourceItemId: item.isTemplate ? item.id : (item.sourceItemId ?? ""),
-        isTemplate: false,
-      },
-      { keepDefaultValues: true },
-    );
-    setDuplicateSourceId(item.id);
-    setCreateDialogOpen(true);
+    openEntity(buildCustomizationPath("items", item.id));
   };
 
   const snackbar = useSnackbar();
   const bulkDialog = useDialogState<Item>();
   const bulkForm = useFormWith<BulkVariantsFormValues>({ variants: [] });
-
-  const duplicateMutation = useMutation({
-    mutationFn: async ({ sourceId, data }: { data: ItemFormInternal; sourceId: string }) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].items[":itemId"].duplicate.$post({
-          param: { id: ruleset.id, itemId: sourceId },
-          json: toItemPayload(data),
-        }),
-      ),
-    onSuccess: (created) => {
-      snackbar.success("Item created");
-      invalidateRulesetEdit(queryClient, ruleset.id, [QUERY_KEYS.rulesets.section(ruleset.id, "items")]);
-      setCreateDialogOpen(false);
-      openEntity(`items/${created.id}/customization`);
-    },
-    onError: (error) => {
-      snackbar.error(error, "Failed to duplicate item");
-    },
-  });
 
   const bulkMutation = useMutation({
     mutationFn: async ({ itemId, variants }: { itemId: string; variants: VariantRow[] }) =>
@@ -196,7 +174,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
               childOnly={childOnly}
               onChildOnlyChange={onChildOnlyChange}
               addLabel="Add Item"
-              onAdd={handleAddItem}
+              onAdd={handleCreate}
             />
           }
         />
@@ -209,7 +187,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
             isLoading={isLoading}
             columns={ITEMS_COLUMNS}
             canEdit={canEdit}
-            onDuplicate={handleDuplicate}
+            onDuplicate={(item) => handleDuplicate(item, duplicateForm(item))}
             onCreateVariants={(item) => {
               bulkForm.reset({ variants: [variantRow(item, 1)] });
               bulkDialog.openWith(item);
@@ -228,19 +206,9 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
           />
         </Stack>
       </Stack>
-      <CreateDialog
-        open={createDialogOpen}
-        // Add and Duplicate set the source when they open it: clearing it here would unlock the type while it fades out.
-        onClose={() => setCreateDialogOpen(false)}
-        title="Create New Item"
-        form={createForm}
-        onSubmit={(data) => {
-          if (duplicateSourceId) duplicateMutation.mutate({ sourceId: duplicateSourceId, data });
-          else createMutation.mutate(data);
-        }}
-        isLoading={createMutation.isPending || duplicateMutation.isPending}
-      >
-        <ItemFormFields form={createForm} rulesetId={ruleset.id} lockType={!!duplicateSourceId} />
+      <CreateDialog {...createDialogProps} title="Create New Item">
+        {/* A duplicate keeps its source's type, while the dialog fades out too */}
+        <ItemFormFields form={createForm} rulesetId={ruleset.id} lockType={!!duplicateSource} />
       </CreateDialog>
       <BulkVariantsDialog
         open={bulkDialog.open}

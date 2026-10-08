@@ -1,6 +1,7 @@
 export { useEntityFilters } from "./dnd3.5/useEntityFilters.ts";
 export { useAptitudeFilter } from "./useAptitudeFilter.ts";
 export { useCopyOnWrite } from "./useCopyOnWrite.ts";
+export { useEntitySave } from "./useEntitySave.ts";
 export { useOpenEntity } from "./useOpenEntity.ts";
 export { useRestorableDelete } from "./useRestorableDelete.ts";
 export { useRulesetFeats } from "./useRulesetFeats.ts";

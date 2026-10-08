@@ -1,5 +1,5 @@
 export { AptitudeChipsCell } from "./AptitudeChipsCell.tsx";
-export { AptitudeAutocomplete, AptitudesAutocomplete } from "./AptitudesAutocomplete.tsx";
+export { AptitudeAutocomplete } from "./AptitudesAutocomplete.tsx";
 export { DescriptionCell } from "./DescriptionCell.tsx";
 export { EntityDeleteDialog } from "./EntityDeleteDialog.tsx";
 export { EntityDetailLayout, EntityPageError } from "./EntityDetailLayout.tsx";

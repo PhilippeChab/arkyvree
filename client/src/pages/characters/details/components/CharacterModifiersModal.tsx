@@ -8,7 +8,6 @@ import {
   TableCell,
   TableHead,
   TableRow,
-  Typography,
 } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
@@ -29,14 +28,15 @@ import {
   RowAction,
   RowActions,
   TableFrame,
-  ValueChip,
 } from "@/client/src/components/common/index.ts";
 import {
   EMPTY_MODIFIER,
   ModifierForm,
   type ModifierFormData,
+  ModifierOperatorCell,
   MODIFIERS_HELP,
-  TargetPathBreadcrumbs,
+  ModifierTargetCell,
+  ModifierValueCell,
 } from "@/client/src/components/customization/index.ts";
 import { CopyIcon, DeleteIcon, EditIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
@@ -44,8 +44,6 @@ import { useDialogState, useFormWith } from "@/client/src/hooks/index.ts";
 import { invalidateCharacter } from "@/client/src/lib/queries.ts";
 import { characterModifiersQuery } from "@/client/src/pages/characters/characterQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { formatOperator } from "@/shared/customization/operators.ts";
-import { extractTemplatePath } from "@/shared/customization/templateExpression.ts";
 
 interface CharacterModifiersModalProps {
   characterId: string;
@@ -199,19 +197,13 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
                         }}
                       >
                         <TableCell>
-                          <TargetPathBreadcrumbs target={mod.target} targetLabels={mod.targetLabels} />
+                          <ModifierTargetCell modifier={mod} />
                         </TableCell>
                         <TableCell>
-                          <ValueChip label={formatOperator("modifier", mod.operator)} color="secondary" />
+                          <ModifierOperatorCell modifier={mod} />
                         </TableCell>
                         <TableCell>
-                          {(() => {
-                            const templatePath = extractTemplatePath(mod.value);
-                            if (templatePath)
-                              return <TargetPathBreadcrumbs target={templatePath} targetLabels={mod.targetLabels} />;
-
-                            return <Typography variant="body2">{mod.value}</Typography>;
-                          })()}
+                          <ModifierValueCell modifier={mod} />
                         </TableCell>
                         <TableCell align="right">
                           <RowActions>

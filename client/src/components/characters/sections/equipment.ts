@@ -4,7 +4,7 @@ import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 import { ITEM_HAS_CHARGES } from "@/shared/dnd3.5/properties/index.ts";
 import { type ItemLocation, LOCATION_OPTIONS } from "@/shared/enums.ts";
-import { findSlotConflict, HAND_LOCATIONS, isHandLocation, type SlotConflictReason } from "@/shared/equipment.ts";
+import { findSlotConflict, getItemTypeLocations, isHandLocation, type SlotConflictReason } from "@/shared/equipment.ts";
 
 import type { RulesetItem } from "./equipmentQueries.ts";
 import { shownWeaponSet } from "./weaponSets.ts";
@@ -72,9 +72,8 @@ export const LOCATION_CHOICES = [...LOCATION_OPTIONS, "none"] as const;
 
 /** The slot an item goes to when picked, or null to leave the choice (a weapon's hand) to the user. */
 export function detectSlotFromItem(item: ItemColumns): ItemLocation | null {
-  if (item.type === "Weapon") return null; // hand slot picker
-  if (item.type === "Armor") return "Torso";
-  if (item.type === "Shield") return "Off Hand";
+  const typeLocations = getItemTypeLocations(item.type);
+  if (typeLocations) return typeLocations.length === 1 ? typeLocations[0] : null;
   return LOCATION_OPTIONS.find((v) => v.toLowerCase() === item.slot.toLowerCase()) ?? null;
 }
 
@@ -127,15 +126,8 @@ export function placementProfile(item: ItemColumns, properties: ItemProperties) 
   const isWeapon = item.type === "Weapon";
   const isShield = item.type === "Shield";
   const chargesProperty = properties.find((p) => p.type === ITEM_HAS_CHARGES);
-  const locationOptions: readonly ItemLocation[] = isWeapon
-    ? HAND_LOCATIONS
-    : isShield
-      ? ["Off Hand"]
-      : item.type === "Armor"
-        ? ["Torso"]
-        : item.slot === "Other"
-          ? ["Other"]
-          : LOCATION_OPTIONS;
+  const locationOptions: readonly ItemLocation[] =
+    getItemTypeLocations(item.type) ?? (item.slot === "Other" ? ["Other"] : LOCATION_OPTIONS);
   return {
     /** A weapon picks a hand rather than a slot. */
     isWeapon,

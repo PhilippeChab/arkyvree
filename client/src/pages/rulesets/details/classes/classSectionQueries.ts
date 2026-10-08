@@ -13,6 +13,12 @@ import { rpc } from "@/client/src/services/rpc.ts";
 
 export type ClassDetail = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["$get"], 200>;
 
+/** A class's level as its Levels tab lists it */
+export type ClassLevelRow = InferResponseType<
+  (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"]["$get"],
+  200
+>[number];
+
 export type ClassSection =
   | "levels"
   | "skills"

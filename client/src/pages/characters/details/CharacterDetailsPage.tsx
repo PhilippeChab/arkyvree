@@ -31,16 +31,17 @@ import {
   UnarchiveIcon,
 } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useAnchorMenu, useDialogState, useIsDemo, usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
+import { useAnchorMenu, useDialogState, usePageTitle, usePdfExport } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { characterDetailQuery, invalidateCharacter, invalidateCharacterListings } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { characterPageState } from "@/client/src/pages/characters/characterPageState.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
 
 import { AddLevelModal, CharacterModifiersModal, EditLevelModal, ShareDialog } from "./components/index.ts";
+import { useCharacterPermissions } from "./useCharacterPermissions.ts";
+
 export default function CharacterDetailsPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -60,11 +61,11 @@ export default function CharacterDetailsPage() {
   const snackbar = useSnackbar();
   const exportFn = () => parseResponse(rpc.api.characters[":characterId"].pdf.$post({ param: { characterId: id } }));
   const pdfExport = usePdfExport(exportFn);
-  const isDemo = useIsDemo();
-  const currentUserId = useAuthStore((s) => s.user?.id);
 
   // The route always gives an id
   const { data: character, isLoading, error } = useQuery(characterDetailQuery(id));
+  const { isArchived, isOwner, canArchive, canEdit, canEditPortrait, canManageContributors, canShare } =
+    useCharacterPermissions(character);
 
   usePageTitle(character?.identity?.physiology?.name);
 
@@ -78,6 +79,7 @@ export default function CharacterDetailsPage() {
   const removeLevelMutation = useMutation({
     mutationFn: () => parseResponse(rpc.api.characters.levels[":characterId"].$delete({ param: { characterId: id } })),
     onSuccess: async () => {
+      snackbar.success("Level removed");
       void invalidateCharacterListings(queryClient);
       await invalidateCharacter(queryClient, id);
       setConfirmOpen(false);
@@ -88,6 +90,7 @@ export default function CharacterDetailsPage() {
   const archiveMutation = useMutation({
     mutationFn: () => parseResponse(rpc.api.characters[":id"].$delete({ param: { id } })),
     onSuccess: () => {
+      snackbar.success("Character archived");
       void invalidateCharacter(queryClient, id);
       void invalidateCharacterListings(queryClient);
       navigate("/characters");
@@ -131,8 +134,6 @@ export default function CharacterDetailsPage() {
     );
   }
 
-  const isArchived = !!character.deletedAt;
-  const isOwner = !!currentUserId && character.userId === currentUserId;
   const isBonded = "kind" in character && character.kind !== "pc";
   const parentCharacterId = "parentCharacterId" in character ? character.parentCharacterId : null;
 
@@ -145,7 +146,7 @@ export default function CharacterDetailsPage() {
             rulesetName={character.rulesetName}
             backTo={isBonded && parentCharacterId ? `/characters/${parentCharacterId}` : "/characters"}
             onMenuOpen={isBonded && isArchived ? undefined : menu.openMenu}
-            rename={isArchived ? undefined : { characterId: id, updatedAt: character.updatedAt, parentCharacterId }}
+            rename={canEdit ? { characterId: id, updatedAt: character.updatedAt, parentCharacterId } : undefined}
           />
           <Menu anchorEl={menu.anchorEl} open={menu.open} onClose={menu.closeMenu}>
             {isBonded ? (
@@ -157,7 +158,7 @@ export default function CharacterDetailsPage() {
               />
             ) : isArchived ? (
               [
-                isOwner && (
+                canArchive && (
                   <ActionMenuItem
                     key="unarchive"
                     icon={UnarchiveIcon}
@@ -166,7 +167,7 @@ export default function CharacterDetailsPage() {
                     onClick={menu.closeMenuAnd(() => unarchiveMutation.mutate())}
                   />
                 ),
-                !isDemo && (
+                canManageContributors && (
                   <ActionMenuItem
                     key="contributors"
                     icon={ContributorsIcon}
@@ -174,7 +175,7 @@ export default function CharacterDetailsPage() {
                     onClick={menu.closeMenuAnd(() => setContributorsOpen(true))}
                   />
                 ),
-                isOwner && (
+                canArchive && (
                   <ActionMenuItem
                     key="hard-delete"
                     icon={DeleteIcon}
@@ -210,7 +211,7 @@ export default function CharacterDetailsPage() {
                   label="Download PDF"
                   onClick={menu.closeMenuAnd(() => pdfExport.mutate())}
                 />,
-                !isDemo && (
+                canManageContributors && (
                   <ActionMenuItem
                     key="contributors"
                     icon={ContributorsIcon}
@@ -218,7 +219,7 @@ export default function CharacterDetailsPage() {
                     onClick={menu.closeMenuAnd(() => setContributorsOpen(true))}
                   />
                 ),
-                isOwner && !isDemo && (
+                canShare && (
                   <ActionMenuItem
                     key="share"
                     icon={ShareIcon}
@@ -226,7 +227,7 @@ export default function CharacterDetailsPage() {
                     onClick={menu.closeMenuAnd(() => setShareOpen(true))}
                   />
                 ),
-                isOwner && (
+                canArchive && (
                   <ActionMenuItem
                     key="archive"
                     icon={ArchiveIcon}
@@ -322,7 +323,7 @@ export default function CharacterDetailsPage() {
               character={character}
               characterId={id}
               readOnly
-              identityReadOnly={isArchived}
+              identityReadOnly={!canEdit}
               equipmentMode="readonly"
               rulesetId={character.rulesetId}
               showPrivateNotes
@@ -331,10 +332,9 @@ export default function CharacterDetailsPage() {
             <CharacterSheetBody
               character={character}
               characterId={id}
-              readOnly={isArchived}
-              // Contributors edit the sheet, but only the owner changes a player character's portrait.
-              portraitReadOnly={isArchived || !isOwner}
-              onEditLevel={!isArchived ? editLevel.openWith : undefined}
+              readOnly={!canEdit}
+              portraitReadOnly={!canEditPortrait}
+              onEditLevel={canEdit ? editLevel.openWith : undefined}
               onAddLevel={() => addLevel.openWith(true)}
               onRemoveLevel={() => setConfirmOpen(true)}
               bondedLinkable

@@ -7,6 +7,7 @@ import { useController } from "react-hook-form";
 import {
   AttachmentField,
   BlankNote,
+  EmptyValue,
   FormTextField,
   Panel,
   SaveButton,
@@ -134,6 +135,7 @@ export function CharacterIdentitySection({
         }),
       ),
     onSuccess: async (saved, formData) => {
+      snackbar.success("Character updated");
       sync.saved(formData, saved.updatedAt);
       void invalidateCharacterListings(queryClient);
       await invalidateCharacter(queryClient, characterId);
@@ -159,21 +161,8 @@ export function CharacterIdentitySection({
     return selectedLanguageIds.map((id) => byId.get(id)).filter((l): l is LanguageOption => !!l);
   }, [selectedLanguageIds, availableLanguages, currentLanguages]);
 
-  // Style object to remove grayed-out appearance from disabled TextFields
-  const disabledFieldStyle = readOnly
-    ? {
-        "& .MuiInputBase-input.Mui-disabled": {
-          WebkitTextFillColor: "inherit",
-          color: "text.primary",
-        },
-        "& .MuiInputLabel-root.Mui-disabled": {
-          color: "text.secondary",
-        },
-        "& .MuiOutlinedInput-notchedOutline": {
-          borderColor: "divider",
-        },
-      }
-    : undefined;
+  // A viewer who can't edit the character reads its fields as they are
+  const fieldSlots = { input: { readOnly } };
 
   return (
     <Panel>
@@ -206,7 +195,15 @@ export function CharacterIdentitySection({
                 gap: 3,
               }}
             >
-              <FormTextField control={form.control} name="race" label="Race" size="small" variant="outlined" disabled />
+              <FormTextField
+                control={form.control}
+                name="race"
+                label="Race"
+                size="small"
+                variant="outlined"
+                // Its race is its creation's: the sheet shows it
+                slotProps={{ input: { readOnly: true } }}
+              />
               {!partial && (
                 <>
                   <SelectField
@@ -215,8 +212,7 @@ export function CharacterIdentitySection({
                     label="Alignment"
                     options={ALIGNMENT_OPTIONS}
                     size="small"
-                    disabled={readOnly}
-                    sx={disabledFieldStyle}
+                    readOnly={readOnly}
                   />
                   <FormTextField
                     control={form.control}
@@ -226,9 +222,7 @@ export function CharacterIdentitySection({
                     label="Experience"
                     size="small"
                     variant="outlined"
-                    slotProps={{ htmlInput: { min: 0 } }}
-                    disabled={readOnly}
-                    sx={disabledFieldStyle}
+                    slotProps={{ ...fieldSlots, htmlInput: { min: 0 } }}
                   />
                   <FormTextField
                     control={form.control}
@@ -236,8 +230,7 @@ export function CharacterIdentitySection({
                     label="Deity"
                     size="small"
                     variant="outlined"
-                    disabled={readOnly}
-                    sx={disabledFieldStyle}
+                    slotProps={fieldSlots}
                   />
                 </>
               )}
@@ -259,8 +252,7 @@ export function CharacterIdentitySection({
                 label="Age"
                 size="small"
                 variant="outlined"
-                disabled={readOnly}
-                sx={disabledFieldStyle}
+                slotProps={fieldSlots}
               />
               <SelectField
                 control={form.control}
@@ -268,8 +260,7 @@ export function CharacterIdentitySection({
                 label="Gender"
                 options={GENDER_OPTIONS}
                 size="small"
-                disabled={readOnly}
-                sx={disabledFieldStyle}
+                readOnly={readOnly}
               />
               <FormTextField
                 control={form.control}
@@ -277,8 +268,7 @@ export function CharacterIdentitySection({
                 label="Height"
                 size="small"
                 variant="outlined"
-                disabled={readOnly}
-                sx={disabledFieldStyle}
+                slotProps={fieldSlots}
               />
               <FormTextField
                 control={form.control}
@@ -286,8 +276,7 @@ export function CharacterIdentitySection({
                 label="Weight"
                 size="small"
                 variant="outlined"
-                disabled={readOnly}
-                sx={disabledFieldStyle}
+                slotProps={fieldSlots}
               />
             </Box>
 
@@ -300,9 +289,7 @@ export function CharacterIdentitySection({
                       Languages:
                     </Typography>
                     {selectedLanguages.length === 0 ? (
-                      <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                        None
-                      </Typography>
+                      <EmptyValue />
                     ) : (
                       selectedLanguages.map((lang) => <ValueChip color="default" key={lang.id} label={lang.name} />)
                     )}
@@ -345,8 +332,8 @@ export function CharacterIdentitySection({
                     multiline
                     minRows={3}
                     placeholder="Character appearance, personality, or background…"
-                    disabled={readOnly}
-                    sx={{ ...disabledFieldStyle, "& textarea": { resize: "vertical" } }}
+                    slotProps={fieldSlots}
+                    sx={{ "& textarea": { resize: "vertical" } }}
                   />
                 </Box>
 
@@ -360,8 +347,8 @@ export function CharacterIdentitySection({
                     multiline
                     minRows={4}
                     placeholder="Campaign notes, character development, reminders…"
-                    disabled={readOnly}
-                    sx={{ ...disabledFieldStyle, "& textarea": { resize: "vertical" } }}
+                    slotProps={fieldSlots}
+                    sx={{ "& textarea": { resize: "vertical" } }}
                   />
                   {showPrivateNotes && (
                     <FormTextField
@@ -373,8 +360,8 @@ export function CharacterIdentitySection({
                       multiline
                       minRows={4}
                       placeholder="Secrets and plans only the character's editors and the Game Master see…"
-                      disabled={readOnly}
-                      sx={{ ...disabledFieldStyle, "& textarea": { resize: "vertical" } }}
+                      slotProps={fieldSlots}
+                      sx={{ "& textarea": { resize: "vertical" } }}
                     />
                   )}
                 </Box>

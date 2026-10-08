@@ -1,7 +1,7 @@
 import { Stack, Typography } from "@mui/material";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -10,30 +10,24 @@ import {
   EditDialog,
   ListToolbar,
   SectionContent,
-  ValueChip,
 } from "@/client/src/components/common/index.ts";
 import {
   EMPTY_MODIFIER,
   ModifierForm,
   type ModifierFormData,
-  TargetPathBreadcrumbs,
+  ModifierOperatorCell,
+  ModifierTargetCell,
+  ModifierValueCell,
 } from "@/client/src/components/customization/index.ts";
 import { ModifiersIcon } from "@/client/src/components/icons/index.ts";
-import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { formatDate } from "@/client/src/lib/formatDate.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import { EntityDeleteDialog, RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
-import {
-  customizationSection,
-  modifiersQuery,
-} from "@/client/src/pages/rulesets/customization/customizationSectionQueries.ts";
+import { modifiersQuery } from "@/client/src/pages/rulesets/customization/customizationSectionQueries.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
-import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import type { CustomizableEntityType } from "@/shared/customization/entities.ts";
-import { formatOperator } from "@/shared/customization/operators.ts";
-import { extractTemplatePath } from "@/shared/customization/templateExpression.ts";
+import { buildCustomizationPath, type CustomizableEntityType } from "@/shared/customization/entities.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import { useCopyFollow } from "./useCopyFollow.ts";
@@ -62,6 +56,11 @@ const MODIFIERS_COLUMNS = [
   { key: "createdAt", label: "Created", width: "20%" },
 ];
 
+/** A modifier's values in its form: its edit's, and its duplicate's */
+function modifierForm(modifier: Modifier): ModifierFormData {
+  return { target: modifier.target, value: modifier.value, operator: modifier.operator };
+}
+
 export function ModifiersSection({
   ruleset,
   entityType,
@@ -73,18 +72,17 @@ export function ModifiersSection({
 }: ModifiersSectionProps) {
   const navigate = useNavigate();
 
-  const { tag, follow: handleResolvedEntityId, followCopies } = useCopyFollow(entityId, onEntityIdChange);
+  const { tag, followCopies } = useCopyFollow(entityId, onEntityIdChange);
   const entityParam = { id: ruleset.id, entityType: getUrlSegment(entityType), entityId };
 
   const {
     data: modifiers,
     isLoading,
     error,
-    setCreateDialogOpen,
     createForm,
     editForm,
-    createMutation,
     handleCreate,
+    handleDuplicate,
     handleEdit,
     handleDelete,
     createDialogProps,
@@ -93,7 +91,6 @@ export function ModifiersSection({
   } = useRulesetSection({
     createDefaults: EMPTY_MODIFIER,
     rulesetId: ruleset.id,
-    sectionName: customizationSection(entityType, entityId, "modifiers"),
     label: "Modifier",
     data: externalData,
     query: modifiersQuery(ruleset.id, entityType, entityId),
@@ -103,6 +100,15 @@ export function ModifiersSection({
         parseResponse(
           rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].modifiers.$post({
             param: entityParam,
+            json: data,
+          }),
+        ),
+      ),
+    duplicateFn: async (modifierId: string, data: ModifierFormData) =>
+      tag(
+        parseResponse(
+          rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].modifiers[":modifierId"].duplicate.$post({
+            param: { ...entityParam, modifierId },
             json: data,
           }),
         ),
@@ -130,63 +136,10 @@ export function ModifiersSection({
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
   const canDelete = canEdit;
 
-  const handleEditModifier = (modifier: Modifier) => {
-    handleEdit(modifier, {
-      target: modifier.target,
-      value: modifier.value,
-      operator: modifier.operator,
-    });
-  };
-
-  const [duplicateSourceId, setDuplicateSourceId] = useState<string | null>(null);
-
-  const handleAddModifier = () => {
-    setDuplicateSourceId(null);
-    handleCreate();
-  };
-
-  const handleDuplicateModifier = (modifier: Modifier) => {
-    createForm.reset(
-      {
-        target: modifier.target,
-        value: modifier.value,
-        operator: modifier.operator,
-      },
-      { keepDefaultValues: true },
-    );
-    setDuplicateSourceId(modifier.id);
-    setCreateDialogOpen(true);
-  };
-
   const queryClient = useQueryClient();
-  const snackbar = useSnackbar();
-
-  const duplicateMutation = useMutation({
-    mutationFn: async ({ sourceId, data }: { data: ModifierFormData; sourceId: string }) =>
-      tag(
-        parseResponse(
-          rpc.api.rulesets[":id"].customization[":entityType"][":entityId"].modifiers[":modifierId"].duplicate.$post({
-            param: { ...entityParam, modifierId: sourceId },
-            json: data,
-          }),
-        ),
-      ),
-    onSuccess: (data) => {
-      snackbar.success("Modifier created");
-      invalidateRulesetEdit(queryClient, ruleset.id, [
-        modifiersQuery(ruleset.id, entityType, entityId).queryKey,
-        ...(queryKeysToInvalidate ?? []),
-      ]);
-      setCreateDialogOpen(false);
-      handleResolvedEntityId(data);
-    },
-    onError: (error) => {
-      snackbar.error(error, "Failed to duplicate modifier");
-    },
-  });
 
   const handleRowClick = (modifier: Modifier) => {
-    navigate(`/rulesets/${ruleset.id}/modifiers/${modifier.id}/customization/requirements`);
+    navigate(`/rulesets/${ruleset.id}/${buildCustomizationPath("modifiers", modifier.id)}/requirements`);
   };
 
   const handleRowMouseEnter = useCallback(
@@ -199,15 +152,11 @@ export function ModifiersSection({
   const renderCell = (modifier: Modifier, columnKey: string) => {
     switch (columnKey) {
       case "target":
-        return <TargetPathBreadcrumbs target={modifier.target} targetLabels={modifier.targetLabels} />;
-      case "value": {
-        const templatePath = extractTemplatePath(modifier.value);
-        if (templatePath) return <TargetPathBreadcrumbs target={templatePath} targetLabels={modifier.targetLabels} />;
-
-        return <Typography variant="body2">{modifier.valueLabel || modifier.value}</Typography>;
-      }
+        return <ModifierTargetCell modifier={modifier} />;
+      case "value":
+        return <ModifierValueCell modifier={modifier} />;
       case "operator":
-        return <ValueChip label={formatOperator("modifier", modifier.operator)} color="secondary" />;
+        return <ModifierOperatorCell modifier={modifier} />;
       case "createdAt":
         return (
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
@@ -222,7 +171,7 @@ export function ModifiersSection({
   return (
     <SectionContent>
       <Stack spacing={3}>
-        {canEdit && <ListToolbar actions={<AddButton label="Add Modifier" onClick={handleAddModifier} />} />}
+        {canEdit && <ListToolbar actions={<AddButton label="Add Modifier" onClick={handleCreate} />} />}
 
         <RulesetSectionTable
           what="Modifiers"
@@ -232,10 +181,10 @@ export function ModifiersSection({
           columns={MODIFIERS_COLUMNS}
           canEdit={canEdit}
           canDelete={canDelete}
-          onEdit={handleEditModifier}
+          onEdit={(modifier) => handleEdit(modifier, modifierForm(modifier))}
           onDelete={handleDelete}
           restorable={restorable}
-          onDuplicate={handleDuplicateModifier}
+          onDuplicate={(modifier) => handleDuplicate(modifier, modifierForm(modifier))}
           onRowClick={handleRowClick}
           onRowMouseEnter={handleRowMouseEnter}
           renderCell={renderCell}
@@ -245,17 +194,7 @@ export function ModifiersSection({
         />
       </Stack>
 
-      <CreateDialog
-        {...createDialogProps}
-        title="Create New Modifier"
-        // Add and Duplicate set the source when they open it: the dialog keeps it while it fades out
-        onSubmit={(data) => {
-          if (duplicateSourceId) duplicateMutation.mutate({ sourceId: duplicateSourceId, data });
-          else createMutation.mutate(data);
-        }}
-        isLoading={createMutation.isPending || duplicateMutation.isPending}
-        maxWidth="md"
-      >
+      <CreateDialog {...createDialogProps} title="Create New Modifier" maxWidth="md">
         <ModifierForm form={createForm} rulesetId={ruleset.id} entityType={entityType} mode="create" />
       </CreateDialog>
 

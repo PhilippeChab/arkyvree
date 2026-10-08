@@ -1,6 +1,6 @@
 import { MenuItem, TextField } from "@mui/material";
 
-import { SPELL_LEVELS } from "@/shared/dnd3.5/spells.ts";
+import { formatSpellLevel, SPELL_LEVELS } from "@/shared/dnd3.5/spells.ts";
 
 interface SpellLevelFilterProps {
   /** Adds an "All" choice. */
@@ -24,7 +24,7 @@ export function SpellLevelFilter({ value, onChange, allowAll }: SpellLevelFilter
       {allowAll && <MenuItem value="">All</MenuItem>}
       {SPELL_LEVELS.map((level) => (
         <MenuItem key={level} value={level}>
-          {level}
+          {formatSpellLevel(level)}
         </MenuItem>
       ))}
     </TextField>

@@ -1,7 +1,13 @@
 import { describe, expect, test } from "bun:test";
 
-import { getSlotConflictWarning, placementPayload } from "@/client/src/components/characters/sections/equipment.ts";
-import type { ItemLocation } from "@/shared/enums.ts";
+import {
+  detectSlotFromItem,
+  getSlotConflictWarning,
+  placementPayload,
+  placementProfile,
+} from "@/client/src/components/characters/sections/equipment.ts";
+import { type ItemLocation, LOCATION_OPTIONS } from "@/shared/enums.ts";
+import { HAND_LOCATIONS } from "@/shared/equipment.ts";
 
 /** An equipped item named `name` at `location`, in `weaponSet` (stored from 0) for a hand: its entry's id `id`. */
 function placed(name: string, location: ItemLocation, weaponSet: number | null = null, id = name) {
@@ -64,5 +70,22 @@ describe("An inventory placement", () => {
     });
     expect(placementPayload({ ...form, location: "Neck" }, true)).toMatchObject({ weaponSet: null, totalCharges: 5 });
     expect(placementPayload({ ...form, location: "none" }, false)).toMatchObject({ equipped: false, location: null });
+  });
+});
+
+describe("A picked item's slot", () => {
+  test("is the one its type sets, the user's pick among a weapon's hands, else its own slot", () => {
+    expect(detectSlotFromItem({ type: "Armor", slot: "Other" })).toBe("Torso");
+    expect(detectSlotFromItem({ type: "Shield", slot: "Other" })).toBe("Off Hand");
+    expect(detectSlotFromItem({ type: "Weapon", slot: "Main Hand" })).toBeNull();
+    expect(detectSlotFromItem({ type: null, slot: "neck" })).toBe("Neck");
+    expect(detectSlotFromItem({ type: null, slot: "Saddle" })).toBeNull();
+  });
+
+  test("is offered among the locations its type sets, else its own slot's or every one", () => {
+    expect(placementProfile({ type: "Weapon", slot: "Other" }, []).locationOptions).toEqual(HAND_LOCATIONS);
+    expect(placementProfile({ type: "Shield", slot: "Other" }, []).locationOptions).toEqual(["Off Hand"]);
+    expect(placementProfile({ type: null, slot: "Other" }, []).locationOptions).toEqual(["Other"]);
+    expect(placementProfile({ type: null, slot: "Head" }, []).locationOptions).toEqual(LOCATION_OPTIONS);
   });
 });

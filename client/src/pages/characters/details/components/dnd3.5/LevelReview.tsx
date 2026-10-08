@@ -3,7 +3,9 @@ import type { ReactNode } from "react";
 
 import { SubsectionTitle } from "@/client/src/components/common/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
+import { formatPointsSpent, pointsSpent } from "@/client/src/pages/characters/pointsSpent.ts";
 
+import { CLASS_ABILITY_NOTE } from "./AutoGrantedPicks.tsx";
 import {
   type FeatsData,
   type LevelUpFormData,
@@ -55,7 +57,7 @@ function ReviewItem({ name, note }: ReviewItemProps) {
 export function LevelReview({ wizard, children }: LevelReviewProps) {
   const { skillPointAllocations, skillData, skillLevels, selectedFeats, featData, selectedPowers, powerData } = wizard;
   const selectedSkills = Object.entries(skillPointAllocations).filter(([, points]) => points > 0);
-  const pointsUsed = Object.values(skillPointAllocations).reduce((sum, points) => sum + points, 0);
+  const spent = pointsSpent(skillPointAllocations);
   const selectedFeatsData = Object.values(selectedFeats).flat();
   const selectedPowersData = Object.values(selectedPowers).flat();
   const autoGrantedFeats = featData?.autoGrantedFeats ?? [];
@@ -86,7 +88,7 @@ export function LevelReview({ wizard, children }: LevelReviewProps) {
                 })}
               </Box>
               <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                Total Points Used: {pointsUsed} / {skillData?.skillPointsToSpend}
+                {formatPointsSpent(spent, skillData?.skillPointsToSpend ?? 0)}
               </Typography>
             </Stack>
           </ReviewGroup>
@@ -120,7 +122,7 @@ export function LevelReview({ wizard, children }: LevelReviewProps) {
               <ReviewItem
                 key={`${power.id}-${i}`}
                 name={power.name}
-                note={power.free ? " (class ability)" : undefined}
+                note={power.free ? CLASS_ABILITY_NOTE : undefined}
               />
             ))}
           </ReviewGroup>

@@ -1,7 +1,6 @@
 import { MenuItem, Stack, TextField } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
-import { useState } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import {
@@ -35,7 +34,6 @@ import {
   EMPTY_CLASS,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import {
-  EntityDeleteDialog,
   EntityDetailLayout,
   EntityDetailsCard,
   EntityPageError,
@@ -44,7 +42,12 @@ import { propertiesQuery } from "@/client/src/pages/rulesets/customization/custo
 import { useCopyFollow } from "@/client/src/pages/rulesets/customization/sections/index.ts";
 import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { entityPageBack } from "@/client/src/pages/rulesets/entityPageState.ts";
-import { useCopyOnWrite, useRestorableDelete, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import {
+  useCopyOnWrite,
+  useEntitySave,
+  useRestorableDelete,
+  useRulesetPermissions,
+} from "@/client/src/pages/rulesets/hooks/index.ts";
 import { isStillOpen } from "@/client/src/pages/rulesets/stillOpen.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { HIT_DIE_VALUES } from "@/shared/dnd3.5/classes.ts";
@@ -110,7 +113,6 @@ export default function ClassDetailsPage() {
 
   usePageTitle(classData?.name);
 
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const editForm = useFormWith<ClassFormData>(EMPTY_CLASS);
 
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
@@ -126,45 +128,30 @@ export default function ClassDetailsPage() {
 
   const { data: abilities, error: abilitiesError } = useRulesetAbilities(rulesetId);
 
-  const updateMutation = useMutation({
-    mutationFn: async (data: ClassFormData) => ({
-      sourceId: classId,
-      saved: await parseResponse(
+  const updateMutation = useEntitySave({
+    rulesetId,
+    entityId: classId,
+    label: "Class",
+    listKey: QUERY_KEYS.rulesets.section(rulesetId, "classes"),
+    sync,
+    saveFn: (data: ClassFormData, updatedAt: string | undefined) =>
+      parseResponse(
         rpc.api.rulesets[":id"].classes[":classId"].$put({
           param: { id: rulesetId, classId },
-          json: { ...data, updatedAt: sync.updatedAt() },
+          json: { ...data, updatedAt },
         }),
       ),
-    }),
-    onSuccess: ({ saved: data, sourceId }) => {
-      // The page may have left that class while the save was in flight.
-      const stillOpen = isStillOpen(`/rulesets/${rulesetId}/classes/${sourceId}`);
-      sync.saved(toClassForm(data), data.updatedAt);
-      const savedKey = classDetailQuery(rulesetId, data.id).queryKey;
-      // The PUT returns the bare class row: keep showing the property fields
-      // (bonus spell ability, caster type) until the refetch brings the saved
-      // class's own; their selects stay disabled until then.
-      if (classData && stillOpen) queryClient.setQueryData(savedKey, { ...classData, ...data });
-      queryClient.invalidateQueries({ queryKey: savedKey, exact: true });
-      copy.followCopy(data.id, sourceId);
-
-      invalidateRulesetEdit(queryClient, rulesetId, [QUERY_KEYS.rulesets.section(rulesetId, "classes")]);
-      snackbar.success("Class updated");
+    toFormValues: toClassForm,
+    storeSaved: (saved, sourceId) => {
+      const savedKey = classDetailQuery(rulesetId, saved.id).queryKey;
+      // The PUT returns the bare class row: keep showing the property fields (bonus spell ability, caster type) until
+      // the refetch brings the saved class's own, their selects disabled until then; unless the page has left that
+      // class while the save was in flight
+      if (classData && isStillOpen(`/rulesets/${rulesetId}/classes/${sourceId}`))
+        queryClient.setQueryData(savedKey, { ...classData, ...saved });
+      void queryClient.invalidateQueries({ queryKey: savedKey, exact: true });
     },
-    onError: (error) => snackbar.error(error, "Failed to update class"),
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: () =>
-      parseResponse(rpc.api.rulesets[":id"].classes[":classId"].$delete({ param: { id: rulesetId, classId } })),
-    onSuccess: () => {
-      invalidateRulesetEdit(queryClient, rulesetId, [QUERY_KEYS.rulesets.section(rulesetId, "classes")]);
-      snackbar.success("Class deleted");
-      navigate(back.to);
-      // Gone, with its tabs: don't let Back render them from the cache
-      queryClient.removeQueries({ queryKey: classDetailQuery(rulesetId, classId).queryKey });
-    },
-    onError: (error) => snackbar.error(error, "Failed to delete class"),
+    followCopy: copy.followCopy,
   });
 
   // Create, update or clear (empty value) the class's single property of a type, as the Properties tab would: tagged
@@ -229,9 +216,23 @@ export default function ClassDetailsPage() {
         entityName={classData?.name}
         rulesetName={ruleset?.name}
         backTo={back.to}
-        canDelete={canEdit}
-        onDelete={() => setDeleteDialogOpen(true)}
-        restorable={restorable}
+        deletion={
+          canEdit
+            ? {
+                what: "Class",
+                rulesetId,
+                deleteFn: () =>
+                  parseResponse(
+                    rpc.api.rulesets[":id"].classes[":classId"].$delete({ param: { id: rulesetId, classId } }),
+                  ),
+                listKeys: [QUERY_KEYS.rulesets.section(rulesetId, "classes")],
+                // With its tabs
+                entityKey: classDetailQuery(rulesetId, classId).queryKey,
+                restorable,
+                changesError,
+              }
+            : undefined
+        }
         isLoading={isLoading}
       >
         {classData && ruleset && (
@@ -321,15 +322,6 @@ export default function ClassDetailsPage() {
           </>
         )}
       </EntityDetailLayout>
-      <EntityDeleteDialog
-        open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
-        what="Class"
-        restorable={restorable}
-        changesError={changesError}
-        onConfirm={() => deleteMutation.mutate()}
-        isLoading={deleteMutation.isPending}
-      />
     </>
   );
 }

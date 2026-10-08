@@ -103,13 +103,15 @@ export function AbilityScoresSection({ abilities, characterId, readOnly }: Abili
         message="Are you sure you want to decrease this ability score? It may break the prerequisites of what the character took."
         confirmLabel="Decrease"
         onConfirm={() => {
-          if (decreaseDialog.target) {
-            updateMutation.mutate(decreaseDialog.target);
-            decreaseDialog.close();
-            suppressWarningForSession("abilityDecrease");
-          }
+          if (!decreaseDialog.target) return;
+          updateMutation.mutate(decreaseDialog.target, {
+            onSuccess: () => {
+              decreaseDialog.close();
+              suppressWarningForSession("abilityDecrease");
+            },
+          });
         }}
-        isLoading={false}
+        isLoading={updateMutation.isPending}
       />
     </SheetSection>
   );

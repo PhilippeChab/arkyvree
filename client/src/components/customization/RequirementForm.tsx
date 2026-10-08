@@ -1,8 +1,7 @@
-import { Box, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import type { InferRequestType } from "hono/client";
 import { useController, type UseFormReturn } from "react-hook-form";
 
-import { SelectField } from "@/client/src/components/common/index.ts";
+import { OptionToggle, SelectField } from "@/client/src/components/common/index.ts";
 import { requiredRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
@@ -31,6 +30,12 @@ const CHAINING_OPERATORS = [
   { value: "or", label: "OR" },
 ];
 
+/** A requirement's types: a condition, or a chaining node */
+const REQUIREMENT_TYPE_OPTIONS = [
+  { value: "condition", label: "Condition" },
+  { value: "chaining", label: "Chaining" },
+] as const;
+
 /** A condition's fields, bound while the requirement is a condition (a chaining node drops them). */
 function RequirementConditionFields({ form, rulesetId, mode }: RequirementConditionFieldsProps) {
   const target = useController({ control: form.control, name: "target", rules: CONDITION_TARGET_RULES });
@@ -43,35 +48,22 @@ function RequirementConditionFields({ form, rulesetId, mode }: RequirementCondit
 export function RequirementForm({ form, type, onTypeChange, rulesetId, mode }: RequirementFormProps) {
   return (
     <>
-      <Box>
-        <Typography variant="subtitle2" component="p" gutterBottom sx={{ color: "text.secondary" }}>
-          Type
-        </Typography>
-        <ToggleButtonGroup
-          value={type}
-          exclusive
-          size="small"
-          onChange={(_, next: RequirementType | null) => {
-            if (!next) return;
-            onTypeChange(next);
-            // Only the chosen type's fields (and their rules) take part in the submit.
-            if (next === "chaining") {
-              form.unregister("target");
-              form.unregister("operator");
-              form.unregister("value");
-            } else {
-              form.unregister("chainingOperator");
-            }
-          }}
-        >
-          <ToggleButton value="condition">
-            <Typography variant="body2">Condition</Typography>
-          </ToggleButton>
-          <ToggleButton value="chaining">
-            <Typography variant="body2">Chaining</Typography>
-          </ToggleButton>
-        </ToggleButtonGroup>
-      </Box>
+      <OptionToggle
+        label="Type"
+        options={REQUIREMENT_TYPE_OPTIONS}
+        value={type}
+        onChange={(next) => {
+          onTypeChange(next);
+          // Only the chosen type's fields (and their rules) take part in the submit.
+          if (next === "chaining") {
+            form.unregister("target");
+            form.unregister("operator");
+            form.unregister("value");
+          } else {
+            form.unregister("chainingOperator");
+          }
+        }}
+      />
 
       {type === "chaining" ? (
         <SelectField

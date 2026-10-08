@@ -1,40 +1,52 @@
-import { type DefaultError, useMutation, useQuery, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";
-import { useState } from "react";
+import {
+  type DefaultError,
+  type QueryKey,
+  useMutation,
+  useQueries,
+  useQueryClient,
+  type UseQueryOptions,
+} from "@tanstack/react-query";
 import { type DefaultValues, type FieldValues } from "react-hook-form";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDialogState, useFormWith } from "@/client/src/hooks/index.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
-import { heldSectionQuery, invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
+import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
-interface RulesetSectionConfig<
+type RulesetSectionConfig<
   TData,
   TFormData extends FieldValues,
   TCreated extends { id: string },
   TUpdated,
   TDeleted,
-> {
+  TKey extends QueryKey,
+> = SectionRows<TData, TKey> & {
   /** Every field's value in an empty form: the create form's, and the edit form's until a row's values replace them */
   createDefaults: TFormData & DefaultValues<TFormData>;
   /** Resolves to the created entity; its id is handed to `onCreateSuccess`. */
   createFn: (data: TFormData) => Promise<TCreated>;
+  /** Its rows, handed over: its query stays idle */
   data?: TData[];
   deleteFn?: (id: string) => Promise<TDeleted>;
+  /** Copies a row (`handleDuplicate`): its id and the create form's values; resolves to the copy, as a create does. */
+  duplicateFn?: (sourceId: string, data: TFormData) => Promise<TCreated>;
   label: string;
+  /** After a create or a duplicate */
   onCreateSuccess?: (created: TCreated) => void;
   onDeleteSuccess?: (data: TDeleted) => void;
   onUpdateSuccess?: (data: TUpdated) => void;
-  /** The section's own rows, a factory's options (`modifiersQuery(…)`), read unless `data` hands them over */
-  query?: UseQueryOptions<TData[], DefaultError, TData[], SectionKey>;
   queryKeysToInvalidate?: readonly (readonly unknown[])[];
   rulesetId: string;
-  sectionName: string;
   /** Saves a row's edit, `updatedAt` its stale-edit token: the row's, as its edit dialog opened on it. */
   updateFn?: (id: string, data: TFormData, updatedAt: string | undefined) => Promise<TUpdated>;
-}
+};
 
 /** Where a section's rows are cached, which its saves refresh */
-type SectionKey = ReturnType<typeof QUERY_KEYS.rulesets.section>;
+type SectionRows<TData, TKey extends QueryKey> =
+  /** Its own rows, a factory's options (`modifiersQuery(…)`, `classLevelsQuery(…)`), read unless `data` holds them */
+  | { query: UseQueryOptions<TData[], DefaultError, TData[], TKey>; sectionName?: undefined }
+  /** A section that reads its rows itself (a paged list): the section they're cached under (`"feats"`) */
+  | { query?: undefined; sectionName: string };
 
 export function useRulesetSection<
   TData extends { id: string; updatedAt?: string },
@@ -42,59 +54,60 @@ export function useRulesetSection<
   TCreated extends { id: string } = { id: string },
   TUpdated = unknown,
   TDeleted = unknown,
->({
-  rulesetId,
-  sectionName,
-  label,
-  query,
-  data: externalData,
-  queryKeysToInvalidate,
-  createFn,
-  updateFn,
-  deleteFn,
-  onCreateSuccess,
-  onUpdateSuccess,
-  onDeleteSuccess,
-  createDefaults,
-}: RulesetSectionConfig<TData, TFormData, TCreated, TUpdated, TDeleted>) {
+  TKey extends QueryKey = QueryKey,
+>(config: RulesetSectionConfig<TData, TFormData, TCreated, TUpdated, TDeleted, TKey>) {
+  const {
+    rulesetId,
+    label,
+    data: externalData,
+    queryKeysToInvalidate,
+    createFn,
+    duplicateFn,
+    updateFn,
+    deleteFn,
+    onCreateSuccess,
+    onUpdateSuccess,
+    onDeleteSuccess,
+    createDefaults,
+  } = config;
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
 
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  // A row's edit and delete dialogs keep it while they fade out
+  // The create dialog opens empty (`true`) or on the row it duplicates; a row's edit and delete dialogs on it. Each
+  // keeps what it shows while it fades out.
+  const createDialog = useDialogState<TData | true>();
   const editDialog = useDialogState<TData>();
   const deleteDialog = useDialogState<string>();
+  const duplicateSource = createDialog.target === true ? null : createDialog.target;
 
   const createForm = useFormWith<TFormData>(createDefaults);
   const editForm = useFormWith<TFormData>(createDefaults);
 
-  // A section handed its rows, or with none of its own to read, keeps its query idle
-  const {
-    data: queryData,
-    isLoading,
-    error,
-  } = useQuery<TData[], DefaultError, TData[], SectionKey>(
-    query && !externalData ? query : heldSectionQuery<TData>(rulesetId, sectionName),
-  );
+  // A section handed its rows, or with none of its own to read, reads no query
+  const rowsQueries: UseQueryOptions<TData[], DefaultError, TData[], TKey>[] =
+    config.query && !externalData ? [config.query] : [];
+  const [rows] = useQueries({ queries: rowsQueries });
 
-  const data = externalData ?? queryData;
+  const data = externalData ?? rows?.data;
+  const rowsKey = config.query ? config.query.queryKey : QUERY_KEYS.rulesets.section(rulesetId, config.sectionName);
 
   const invalidateOnMutation = () =>
-    invalidateRulesetEdit(queryClient, rulesetId, [
-      QUERY_KEYS.rulesets.section(rulesetId, sectionName),
-      ...(queryKeysToInvalidate ?? []),
-    ]);
+    invalidateRulesetEdit(queryClient, rulesetId, [rowsKey, ...(queryKeysToInvalidate ?? [])]);
 
   const createMutation = useMutation({
-    mutationFn: createFn,
-    onSuccess: (data) => {
+    // A duplicate's source is fixed as it's sent
+    mutationFn: ({ data, sourceId }: { data: TFormData; sourceId?: string }) => {
+      if (sourceId === undefined) return createFn(data);
+      return duplicateFn ? duplicateFn(sourceId, data) : Promise.reject(new Error(`${label} can't be duplicated here`));
+    },
+    onSuccess: (created) => {
       snackbar.success(`${label} created`);
       invalidateOnMutation();
-      setCreateDialogOpen(false);
-      onCreateSuccess?.(data);
+      createDialog.close();
+      onCreateSuccess?.(created);
     },
-    onError: (error) => {
-      snackbar.error(error, `Failed to create ${label.toLowerCase()}`);
+    onError: (error, { sourceId }) => {
+      snackbar.error(error, `Failed to ${sourceId === undefined ? "create" : "duplicate"} ${label.toLowerCase()}`);
     },
   });
 
@@ -128,7 +141,14 @@ export function useRulesetSection<
   // Opened empty, whatever a cancelled one held
   const handleCreate = () => {
     createForm.reset(createDefaults);
-    setCreateDialogOpen(true);
+    createDialog.openWith(true);
+  };
+
+  // Opened on the row's values, which its save sends with the row's id; they differ from the empty form's, so a stray
+  // click never loses them
+  const handleDuplicate = (item: TData, values: TFormData) => {
+    createForm.reset(values, { keepDefaultValues: true });
+    createDialog.openWith(item);
   };
 
   // Opened on the row's values, whatever the form held before
@@ -141,37 +161,35 @@ export function useRulesetSection<
 
   return {
     data,
-    isLoading,
-    error,
+    isLoading: rows?.isLoading ?? false,
+    error: rows?.error ?? null,
 
-    createDialogOpen,
-    setCreateDialogOpen,
+    /** The row the create dialog duplicates, while it's open on one (`handleDuplicate`) */
+    duplicateSource,
     /** A row's edit dialog: `open`, `close`, and the row it edits (`target`). */
     editDialog,
-    /** A row's delete dialog: `open`, `close`, and the id it deletes (`target`). */
-    deleteDialog,
 
     createForm,
     editForm,
 
     createMutation,
     updateMutation,
-    deleteMutation,
 
     handleCreate,
+    handleDuplicate,
     handleEdit,
     handleDelete,
 
     /**
      * The dialogs' wiring: `<CreateDialog {...createDialogProps} title="…">`, `<EditDialog {...editDialogProps} …>`,
      * `<DeleteDialog {...deleteDialogProps} …>`. A section that sends something else than its form's values (a
-     * requirement's level, a duplicate's source) overrides `onSubmit` after the spread.
+     * requirement's level) overrides `onSubmit` after the spread.
      */
     createDialogProps: {
-      open: createDialogOpen,
-      onClose: () => setCreateDialogOpen(false),
+      open: createDialog.open,
+      onClose: createDialog.close,
       form: createForm,
-      onSubmit: (data: TFormData) => createMutation.mutate(data),
+      onSubmit: (data: TFormData) => createMutation.mutate({ data, sourceId: duplicateSource?.id }),
       isLoading: createMutation.isPending,
     },
     editDialogProps: {

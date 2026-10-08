@@ -7,18 +7,16 @@ import {
   type AddAttributeStepProps,
   AddClassPlanStep,
   type AddClassPlanStepProps,
-  AddHpStep,
-  type AddHpStepProps,
   AddReviewStep,
   type AddReviewStepProps,
   EditAttributeStep,
   type EditAttributeStepProps,
-  EditHpStep,
-  type EditHpStepProps,
   EditReviewStep,
   type EditReviewStepProps,
   FeatsStep,
   type FeatsStepProps,
+  HpStep,
+  type HpStepProps,
   SkillsStep,
   type SkillsStepProps,
   SpellsStep,
@@ -33,12 +31,11 @@ import {
 interface SectionMap {
   AddAttributeStep: ComponentType<AddAttributeStepProps>;
   AddClassPlanStep: ComponentType<AddClassPlanStepProps>;
-  AddHpStep: ComponentType<AddHpStepProps>;
   AddReviewStep: ComponentType<AddReviewStepProps>;
   EditAttributeStep: ComponentType<EditAttributeStepProps>;
-  EditHpStep: ComponentType<EditHpStepProps>;
   EditReviewStep: ComponentType<EditReviewStepProps>;
   FeatsStep: ComponentType<FeatsStepProps>;
+  HpStep: ComponentType<HpStepProps>;
   PowersStep: ComponentType<SpellsStepProps>;
   SkillsStep: ComponentType<SkillsStepProps>;
 }
@@ -47,12 +44,11 @@ const RULESET_SECTIONS: Record<BaseRules, SectionMap> = {
   "Dungeons & Dragons: 3.5": {
     AddAttributeStep,
     AddClassPlanStep,
-    AddHpStep,
     AddReviewStep,
     EditAttributeStep,
-    EditHpStep,
     EditReviewStep,
     FeatsStep,
+    HpStep,
     PowersStep: SpellsStep,
     SkillsStep,
   },

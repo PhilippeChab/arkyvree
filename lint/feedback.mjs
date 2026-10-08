@@ -40,7 +40,6 @@ const PAGE_ERRORS = new Set(["EntityPageError", "PageError"]);
 const QUERY_HOOKS = new Set([
   "useInfiniteQuery",
   "useListboxQuery",
-  "useOglLicense",
   "useQuery",
   "useRulesetAbilities",
   "useRulesetFeats",

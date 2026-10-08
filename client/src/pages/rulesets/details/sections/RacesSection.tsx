@@ -19,6 +19,7 @@ import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/se
 import { racesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { useEntityFilters, useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
+import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 
 type Race = RacesPaginated["items"][number];
 type RacesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["races"]["$get"], 200>;
@@ -48,7 +49,7 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
           json: data,
         }),
       ),
-    onCreateSuccess: (created) => openEntity(`races/${created.id}/customization`),
+    onCreateSuccess: (created) => openEntity(buildCustomizationPath("races", created.id)),
   });
 
   const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
@@ -59,7 +60,7 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   const races = pageItems(data);
 
   const handleRowClick = (race: Race) => {
-    openEntity(`races/${race.id}/customization`);
+    openEntity(buildCustomizationPath("races", race.id));
   };
 
   const handleRowMouseEnter = useCallback(

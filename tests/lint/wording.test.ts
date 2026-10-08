@@ -15,6 +15,7 @@ describe("wording rules", () => {
           "client/src/spinner.tsx":
             'export const s = <Button><DiceSpinner loading={busy} size="small">Save changes</DiceSpinner></Button>;\n',
           "client/src/field.tsx": 'export const f = <TextField label="Email address" />;\n',
+          "client/src/toggle.tsx": 'export const t = <OptionToggle label="Publish kind" />;\n',
           "client/src/dialog.tsx": 'export const d = <DeleteDialog title="Delete permanently" />;\n',
           "client/src/tooltip.tsx":
             'export const t = <Tooltip title="Edit role"><IconButton aria-label="Edit Role" /></Tooltip>;\n',
@@ -32,6 +33,7 @@ describe("wording rules", () => {
       "label-case client/src/dialog.tsx",
       "label-case client/src/field.tsx",
       "label-case client/src/spinner.tsx",
+      "label-case client/src/toggle.tsx",
       "label-case client/src/tooltip.tsx",
     ]);
   });

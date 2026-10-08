@@ -159,10 +159,13 @@
     "arkyvree/empty-values": "error",
     "arkyvree/notification-messages": "error",
     "arkyvree/row-actions": "error",
+    "arkyvree/target-paths": "error",
+    "arkyvree/entity-pages": "error",
     // The client's controls (lint/controls.mjs): each weighs what it does, one way.
     "arkyvree/button-intents": "error",
     "arkyvree/save-buttons": "error",
     "arkyvree/roll-buttons": "error",
+    "arkyvree/dice-rolls": "error",
     "arkyvree/page-actions": "error",
     "arkyvree/load-more-buttons": "error",
     "arkyvree/chips": "error",

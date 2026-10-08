@@ -11,10 +11,10 @@ import {
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { byName, EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
 import type { Power } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
-import { useRulesetSaves } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useEntitySave, useRulesetSaves } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-import { type EditorProps, useEditorSave } from "./useEditorSave.ts";
+import type { EditorProps } from "./renderEditor.tsx";
 
 /** The spell's aptitudes with their levels, in the form's (name) order. */
 function linkedAptitudes(power: Power) {
@@ -41,22 +41,25 @@ export function SpellEditor({
   entity: power,
   canEdit,
   locked,
-  onSaved,
+  followCopy,
+  refetchSaved,
 }: EditorProps<Power>) {
   const form = useFormWith<SpellFormData>(EMPTY_SPELL);
   const sync = useFormSync(form, toSpellForm(power), { key: recordKey, adoptKey, updatedAt: power.updatedAt });
   const { data: saves = [], error: savesError } = useRulesetSaves(rulesetId);
-  const saveMutation = useEditorSave({
-    sync,
+  const saveMutation = useEntitySave({
+    rulesetId,
     entityId,
-    onSaved,
+    sync,
+    followCopy,
+    storeSaved: refetchSaved,
     listKey: QUERY_KEYS.rulesets.section(rulesetId, "powers"),
     label: "Spell",
-    saveFn: (data: SpellFormData) =>
+    saveFn: (data: SpellFormData, updatedAt: string | undefined) =>
       parseResponse(
         rpc.api.rulesets[":id"].powers[":powerId"].$put({
           param: { id: rulesetId, powerId: entityId },
-          json: { ...data, updatedAt: sync.updatedAt() },
+          json: { ...data, updatedAt },
         }),
       ),
   });
