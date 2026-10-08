@@ -1,4 +1,4 @@
-import { Container, Divider, IconButton, Menu, Popover, Stack } from "@mui/material";
+import { Button, Container, Divider, IconButton, Menu, Popover, Stack } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type MouseEvent, type ReactNode, useMemo, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
@@ -6,7 +6,6 @@ import { Navigate, useNavigate, useParams } from "react-router-dom";
 import {
   ActionMenuItem,
   ArchivedNotice,
-  CountChip,
   DetailPageHeader,
   HelpLabel,
   LoadError,
@@ -45,7 +44,6 @@ import {
 import { useAnchorMenu, usePageTitle, useSearchParam } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
-import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
@@ -246,7 +244,7 @@ export default function RulesetDetailsPage() {
           <ActionMenuItem
             key="help"
             icon={HelpIcon}
-            label="Learn More in Help Center"
+            label="Help"
             href={EXTERNAL_LINKS.help}
             onClick={menu.closeMenu}
           />,
@@ -320,12 +318,17 @@ export default function RulesetDetailsPage() {
                 <RulesetFactChips ruleset={ruleset} onPrefetchParent={prefetchParent} />
                 {subscribedExtensions && subscribedExtensions.length > 0 && (
                   <>
-                    <CountChip
-                      icon={<ExtensionIcon />}
-                      label={formatCount(subscribedExtensions.length, "extension")}
-                      color={subscribedExtensions.some((ext) => ext.updateAvailable) ? "warning" : "default"}
+                    {/* Opens the list of its extensions; orange while one of them has an update */}
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      color={subscribedExtensions.some((ext) => ext.updateAvailable) ? "warning" : "inherit"}
+                      startIcon={<ExtensionIcon />}
                       onClick={extensionsMenu.openMenu}
-                    />
+                      aria-expanded={extensionsMenu.open}
+                    >
+                      Extensions ({subscribedExtensions.length})
+                    </Button>
                     <Popover
                       open={extensionsMenu.open}
                       anchorEl={extensionsMenu.anchorEl}

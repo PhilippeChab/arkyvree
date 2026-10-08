@@ -86,7 +86,7 @@ export function RemoveSkillDialog({ ...props }: ConfirmActionProps) {
       {...props}
       title="Remove Skill"
       message="Are you sure you want to remove this skill from the class? This action cannot be undone."
-      confirmLabel="Remove"
+      confirmLabel="Remove Skill"
     />
   );
 }

@@ -114,10 +114,10 @@ const SIDEBAR_ITEMS = [
     path: "/notifications",
   },
   {
-    id: "faq" as const,
+    id: "help" as const,
     label: "Help",
     icon: <HelpIcon />,
-    description: "Help center",
+    description: "How everything works",
     path: EXTERNAL_LINKS.help,
     external: true,
   },

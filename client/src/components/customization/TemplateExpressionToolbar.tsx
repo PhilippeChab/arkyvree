@@ -43,7 +43,7 @@ export function TemplateExpressionToolbar({ inputRef, disabled }: TemplateExpres
         </Tooltip>
       ))}
       {FUNCTIONS.map((fn) => (
-        <Tooltip key={fn} title={`Wrap selection in ${fn}()`}>
+        <Tooltip key={fn} title={`Wrap Selection in ${fn}()`}>
           <span>
             <Button
               size="small"

@@ -251,7 +251,7 @@ export function UnsubscribeExtensionDialog({
           from this extension.
         </>
       }
-      confirmLabel="Unsubscribe"
+      confirmLabel="Unsubscribe from Extension"
       intent="destructive"
       confirmIcon={<ExtensionIcon />}
     />

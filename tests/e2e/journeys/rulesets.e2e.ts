@@ -121,7 +121,8 @@ test.describe("Rulesets", () => {
     const subscribed = apiResponse(page, "POST", /\/api\/rulesets\/[a-f0-9-]+\/subscribe/);
     await dialog.getByRole("button", { name: /^Subscribe$/ }).click();
     await subscribed;
-    await expect(page.locator('text="1 extension"').first()).toBeVisible({ timeout: 15_000 });
+    const extensions = page.getByRole("button", { name: "Extensions (1)" });
+    await expect(extensions).toBeVisible({ timeout: 15_000 });
 
     // Cloud Chariot is one of Complete Arcane's own spells.
     const cloudChariot = page.getByRole("cell", { name: "Cloud Chariot", exact: true });
@@ -132,7 +133,7 @@ test.describe("Rulesets", () => {
     await searchSpells();
     await expect(cloudChariot).toBeVisible({ timeout: 10_000 });
 
-    await page.locator('text="1 extension"').first().click();
+    await extensions.click();
     await page
       .locator(".MuiChip-root")
       .filter({ hasText: "Complete Arcane" })
@@ -142,7 +143,7 @@ test.describe("Rulesets", () => {
     const unsubscribed = apiResponse(page, "POST", /\/api\/rulesets\/[a-f0-9-]+\/unsubscribe/);
     await page
       .getByRole("dialog", { name: "Unsubscribe from Extension" })
-      .getByRole("button", { name: /^Unsubscribe$/ })
+      .getByRole("button", { name: /^Unsubscribe from Extension$/ })
       .click();
     await unsubscribed;
     await expect(page.locator('text="1 extension"')).toHaveCount(0, { timeout: 15_000 });

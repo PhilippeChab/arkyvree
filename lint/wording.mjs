@@ -2,9 +2,12 @@
  * What the client says, said one way (docs/frontend.md):
  *
  * - `label-case`: a label is in Title Case ("Mark All as Read"): a button's, a menu item's, a field's, a dialog's
- *   title and its actions, a tooltip that names an icon button, and any element's `aria-label`.
+ *   title and its actions, a tooltip that names an icon button, any element's `aria-label`, any component's
+ *   `label` and `title` (but what says a sentence: a chip's value, an alert's or an empty state's line), and a page's
+ *   title (`usePageTitle`).
  * - `toast-wording`: a toast is a phrase ("Ruleset archived"), no final period or "!", no "successfully", no
- *   "Please"; an error's fallback names what failed ("Failed to remove item").
+ *   "Please", never opening on "You have"; an invite is an "invite", never an "invitation"; an error's fallback names
+ *   what failed ("Failed to remove item").
  * - `confirm-wording`: a confirmation asks "Are you sure you want to …?", then says what follows; a deletion ends
  *   "This action cannot be undone.", or "You can restore it from Local Changes." for what a fork inherits, each branch
  *   of a message that says either; an archive ends "You can unarchive it at any time from the Archived filter.", the
@@ -15,7 +18,7 @@
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
 
-import { calleeName, elementName, inClient } from "./jsx.mjs";
+import { attributeExpression, calleeName, elementName, inClient, texts, writtenText } from "./jsx.mjs";
 import { repoPath } from "./paths.mjs";
 
 /** How an archive's confirmation ends: where the record waits, and that it comes back */
@@ -46,6 +49,9 @@ const LABELLED = new Set([
 const LABELLED_BY_PROP =
   /^(ActionMenuItem|AddButton|Button|ChoiceChip|Tab|ToggleButton|DescriptionField|EmailField|FormControlLabel|FormTextField|LinkButton|NameField|OptionToggle|PageActionButton|PasswordField|SelectField|SwitchField|TextField|.*Dialog|Modal)$/;
 
+/** The components whose `label` or `title` is a sentence, not a label: a chip's value, an alert's or an empty state's */
+const SENTENCE_TITLED = /(Chip|Alert|^BlankState|^Tooltip)$/;
+
 /** The words a Title Case label leaves lowercase, but first */
 const SMALL_WORDS = new Set([
   "a",
@@ -60,16 +66,12 @@ const SMALL_WORDS = new Set([
   "of",
   "on",
   "or",
+  "per",
   "the",
   "to",
   "vs",
   "with",
 ]);
-
-/** What a JSX attribute holds: its expression, or its string. */
-function attributeExpression(node) {
-  return node.value?.type === "JSXExpressionContainer" ? node.value.expression : node.value;
-}
 
 function createConfirmWording(context) {
   if (!inClient(context)) return {};
@@ -103,18 +105,24 @@ function createLabelCase(context) {
   const report = (node, text) =>
     context.report({
       node,
-      message: `A label is in Title Case ("Mark All as Read"): a button's, a menu item's, a field's, a dialog's, an icon button's tooltip, an \`aria-label\`: "${text.trim()}".`,
+      message: `A label is in Title Case ("Mark All as Read"): a button's, a menu item's, a field's, a dialog's, a component's \`label\` and \`title\` (not a chip's, an alert's or an empty state's), an icon button's tooltip, an \`aria-label\`, a page's title: "${text.trim()}".`,
     });
   return {
+    CallExpression(node) {
+      if (calleeName(node) !== "usePageTitle") return;
+      for (const text of texts(node.arguments[0])) if (!inTitleCase(text)) report(node, text);
+    },
     JSXText(node) {
       if (labelledBy(node) && /[a-z]/i.test(node.value) && !inTitleCase(node.value)) report(node, node.value);
     },
     JSXAttribute(node) {
       const element = elementName(node.parent.parent) ?? "";
       const name = node.name.name;
+      // A component's label or title names what it shows, but a sentence's (a tooltip's describes, unless it names the
+      // icon button it wraps)
+      const component = /^[A-Z]/.test(element) && !SENTENCE_TITLED.test(element);
       const labels =
-        (LABEL_PROPS.has(name) && LABELLED_BY_PROP.test(element)) ||
-        (name === "title" && /(Dialog|^Modal)$/.test(element));
+        (LABEL_PROPS.has(name) && (LABELLED_BY_PROP.test(element) || component)) || (name === "title" && component);
       const namesIcon = name === "title" && element === "Tooltip" && wrapsIconButton(node.parent.parent);
       if (!labels && !namesIcon && name !== "aria-label") return;
       for (const text of texts(attributeExpression(node))) if (!inTitleCase(text)) report(node, text);
@@ -136,14 +144,20 @@ function createToastWording(context) {
       const errorFallback = callee.property.name === "error" && node.arguments.length > 1;
       const bad = node.arguments
         .flatMap(texts)
-        .find((text) => /[.!]$/.test(text.trim()) || /\bsuccessfully\b/i.test(text) || /^Please\b/.test(text));
+        .find(
+          (text) =>
+            /[.!]$/.test(text.trim()) ||
+            /\b(successfully|please|invitations?)\b/i.test(text) ||
+            /^You have\b/.test(text),
+        );
       const unnamed = errorFallback && texts(node.arguments[1]).some((text) => !/^Failed to\b/.test(text));
       if (!bad && !unnamed) return;
       context.report({
         node,
         message:
           'A toast is a phrase: "Ruleset archived", "This export expired: generate a new one", no final period ' +
-          'or "!", no "successfully" nor "Please"; an error\'s fallback names what failed ("Failed to remove item").',
+          'or "!", no "successfully" nor "Please", never "You have …"; an invite is an "invite"; an error\'s fallback ' +
+          'names what failed ("Failed to remove item").',
       });
     },
   };
@@ -203,16 +217,6 @@ function labelledBy(node) {
   return false;
 }
 
-/** The texts an expression can hold: a string, a template's (`…` for what it reads), each side of a condition. */
-function texts(expression) {
-  if (!expression) return [];
-  if (expression.type === "ConditionalExpression")
-    return [...texts(expression.consequent), ...texts(expression.alternate)];
-  if (expression.type === "LogicalExpression") return texts(expression.right);
-  const text = writtenText(expression);
-  return text === null ? [] : [text];
-}
-
 /** Whether a Tooltip names the icon button it wraps: its title is the button's name, not a description. */
 function wrapsIconButton(tooltip) {
   if (tooltip.openingElement.attributes.some((a) => a.type === "JSXAttribute" && a.name.name === "describeChild"))
@@ -223,13 +227,6 @@ function wrapsIconButton(tooltip) {
       ? children[0].children.find((c) => c.type === "JSXElement")
       : children[0];
   return !!inner && elementName(inner) === "IconButton";
-}
-
-/** What a string or a template says (`…` for what it reads), else null. */
-function writtenText(value) {
-  if (value?.type === "Literal" && typeof value.value === "string") return value.value;
-  if (value?.type === "TemplateLiteral") return value.quasis.map((quasi) => quasi.value.cooked).join("…");
-  return null;
 }
 
 export default {

@@ -57,7 +57,7 @@ test.describe("A class created in a fork", () => {
 
     await skill.locator(".MuiChip-deleteIcon").click();
     const removed = apiResponse(page, "DELETE", /\/classes\/[a-f0-9-]+\/skills\//);
-    await page.getByRole("dialog", { name: "Remove Skill" }).getByRole("button", { name: "Remove" }).click();
+    await page.getByRole("dialog", { name: "Remove Skill" }).getByRole("button", { name: "Remove Skill" }).click();
     await removed;
     await expect(skill).toHaveCount(0);
     await expect(page.getByText("No class skills assigned", { exact: true })).toBeVisible();

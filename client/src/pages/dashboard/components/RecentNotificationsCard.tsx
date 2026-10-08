@@ -33,7 +33,7 @@ export function RecentNotificationsCard() {
           <CardTitle>Notifications</CardTitle>
           {items.length > 0 && (
             <Button variant="outlined" startIcon={<NotificationsIcon />} component={Link} to="/notifications">
-              View All
+              View All Notifications
             </Button>
           )}
         </Stack>

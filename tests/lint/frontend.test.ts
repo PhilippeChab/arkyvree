@@ -436,6 +436,27 @@ describe("frontend rules", () => {
     ).toEqual(["icons client/src/barrel.tsx", "icons client/src/path.tsx"]);
   });
 
+  test("every removal shows the bin", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/menu.tsx": 'export const m = <ActionMenuItem icon={RemoveIcon} label="Remove Level" />;\n',
+          "client/src/button.tsx":
+            'export const b = <IconButton aria-label="Remove Level"><RemoveIcon fontSize="small" /></IconButton>;\n',
+          "client/src/row.tsx": "export const r = <RowAction icon={EditIcon} label={`Delete ${name}`} />;\n",
+          "client/src/bin.tsx": 'export const b = <RowAction icon={DeleteIcon} label="Remove" />;\n',
+          "client/src/restorable.tsx":
+            'export const r = <RowAction icon={DeleteIcon} label={restorable ? "Delete" : "Delete Permanently"} />;\n',
+          "client/src/lower.tsx":
+            'export const l = <IconButton aria-label="Lower Strength"><RemoveIcon /></IconButton>;\n',
+          "client/src/leave.tsx":
+            'export const l = <RowAction icon={me ? LeaveIcon : DeleteIcon} label={me ? "Leave" : "Remove"} />;\n',
+        },
+        ["icons"],
+      ),
+    ).toEqual(["icons client/src/button.tsx", "icons client/src/menu.tsx", "icons client/src/row.tsx"]);
+  });
+
   test("a glyph goes by one name in components/icons, one meaning per glyph", async () => {
     expect(
       await lintRepo(

@@ -24,7 +24,7 @@ import { ONE_MINUTE } from "@/client/src/lib/durations.ts";
 import { formatRelativeTime } from "@/client/src/lib/formatDate.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
-import { ANIMATIONS, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
+import { ANIMATIONS, DURATION, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
 
 import { unreadNotificationsQuery } from "./notificationBellQueries.ts";
 
@@ -68,7 +68,7 @@ export function NotificationBell() {
     if (unreadData === undefined) return;
     if (prevCountRef.current !== null && unreadCount > prevCountRef.current) {
       setShake(true);
-      const timer = setTimeout(() => setShake(false), 600);
+      const timer = setTimeout(() => setShake(false), DURATION.ring);
       prevCountRef.current = unreadCount;
       return () => clearTimeout(timer);
     }

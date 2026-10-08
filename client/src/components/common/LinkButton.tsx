@@ -9,7 +9,7 @@ interface LinkButtonProps {
   variant?: LinkProps["variant"];
 }
 
-/** An action written as a link (Resend, Try the demo): a button, underlined on hover. */
+/** An action written as a link (Resend, Try the Demo): a button, underlined on hover, in its own look. */
 export function LinkButton({ children, onClick, disabled, variant, sx }: LinkButtonProps) {
   return (
     <MuiLink

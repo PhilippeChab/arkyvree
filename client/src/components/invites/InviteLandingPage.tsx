@@ -97,19 +97,15 @@ export function InviteLandingPage({ kind, inviteId }: InviteLandingPageProps) {
   if (error && !invite) {
     return (
       <Container maxWidth="sm" sx={COLUMN_SX}>
-        <PageError
-          message={loadFailureMessage("Invitation", error)}
-          backLabel="Back to Dashboard"
-          backTo="/dashboard"
-        />
+        <PageError message={loadFailureMessage("Invite", error)} backLabel="Back to Dashboard" backTo="/dashboard" />
       </Container>
     );
   }
 
   if (!invite) {
     return (
-      <InviteStateCard icon={stateIcon} title="Invitation Not Found" action={goToDashboard}>
-        This invitation may have been revoked or doesn't belong to your account.
+      <InviteStateCard icon={stateIcon} title="Invite Not Found" action={goToDashboard}>
+        This invite may have been revoked or doesn't belong to your account.
       </InviteStateCard>
     );
   }
@@ -130,7 +126,7 @@ export function InviteLandingPage({ kind, inviteId }: InviteLandingPageProps) {
           )
         }
       >
-        You've already accepted the invitation to {verb} <strong>{name}</strong>.
+        You've already accepted the invite to {verb} <strong>{name}</strong>.
       </InviteStateCard>
     );
   }
@@ -138,7 +134,7 @@ export function InviteLandingPage({ kind, inviteId }: InviteLandingPageProps) {
   if (!isAnswering && invite.status === "Pending" && invite.isArchived) {
     return (
       <InviteStateCard icon={stateIcon} title={`${entityLabel} Archived`} action={goToDashboard}>
-        <strong>{name}</strong> has been archived. This invitation can no longer be accepted.
+        <strong>{name}</strong> has been archived. This invite can no longer be accepted.
       </InviteStateCard>
     );
   }
@@ -147,10 +143,10 @@ export function InviteLandingPage({ kind, inviteId }: InviteLandingPageProps) {
     return (
       <InviteStateCard
         icon={<StatusChip label={invite.status} color={invite.status === "Rejected" ? "error" : "default"} />}
-        title={`Invitation ${invite.status}`}
+        title={`Invite ${invite.status}`}
         action={goToDashboard}
       >
-        This invitation to {verb} <strong>{name}</strong> is no longer pending.
+        This invite to {verb} <strong>{name}</strong> is no longer pending.
       </InviteStateCard>
     );
   }
@@ -187,7 +183,7 @@ export function InviteLandingPage({ kind, inviteId }: InviteLandingPageProps) {
             <Stack spacing={4}>
               <Typography variant="body1">
                 You've been invited to {verb} this {entityLabel.toLowerCase()}. Would you like to accept or reject this
-                invitation?
+                invite?
               </Typography>
 
               <InviteActionButtons

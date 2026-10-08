@@ -48,6 +48,9 @@
  *   that opens on its own (the dashboard, the auth pages, an invite).
  * - `list-toolbars`: a list's actions sit in its `ListToolbar` (`SearchBar` is one), never a bare row; the list sits
  *   24px under it (`spacing={3}`), and its Load More 16px under the list (`spacing={2}`).
+ * - `list-results`: a searched list's results, a page's or a tab's, show one way: `ListPageResults` (a tab's
+ *   `variant="section"`), or a ruleset tab's `RulesetSectionTable`, each with its first load, its failure, the search
+ *   that found nothing (`NoMatchesState`) and its empty state. No other module draws a `NoMatchesState`.
  * - `empty-values`: a value that isn't there is an `EmptyValue`, never a dash of its own, and a description that isn't
  *   there says `NO_DESCRIPTION`, never a sentence of its own.
  * - `entity-pages`: a ruleset entity page saves its details through `useEntitySave` (no `sync.saved` of its own under
@@ -80,6 +83,13 @@ const HEADER_STYLE_KEYS = new Set(["backgroundColor", "bgcolor", "color", "fontW
 
 /** A list's own actions, which sit in its toolbar: its add button, a ruleset section's `SectionActions` */
 const LIST_ACTIONS = new Set(["AddButton", "SectionActions"]);
+
+/** The modules that show a searched list's results: its first load, its failure, its no matches, its empty state */
+const LIST_RESULTS_OWNERS = new Set([
+  "client/src/components/common/BlankState.tsx",
+  "client/src/components/common/ListPageResults.tsx",
+  "client/src/pages/rulesets/components/RulesetSectionTable.tsx",
+]);
 
 /** The bars above a list: its toolbar, or its search's */
 const LIST_TOOLBARS = new Set(["ListToolbar", "SearchBar"]);
@@ -501,6 +511,21 @@ function createLinkButtons(context) {
       const component = attributeValue(attribute(node, "component"));
       if (elementName(node) !== "MuiLink" || component?.type !== "Literal" || component.value !== "button") return;
       context.report({ node: node.openingElement, message: "An action written as a link is a `LinkButton`." });
+    },
+  };
+}
+
+function createListResults(context) {
+  if (!inClient(context) || LIST_RESULTS_OWNERS.has(repoPath(context.filename))) return {};
+  return {
+    JSXElement(node) {
+      if (elementName(node) !== "NoMatchesState") return;
+      context.report({
+        node: node.openingElement,
+        message:
+          "A searched list's results show one way: `ListPageResults` (a tab's `variant=\"section\"`) or a ruleset " +
+          "tab's `RulesetSectionTable`, whose search that found nothing is theirs: no `NoMatchesState` of its own.",
+      });
     },
   };
 }
@@ -1107,6 +1132,7 @@ export default {
   "confirm-dialogs": { meta: { type: "suggestion" }, create: createConfirmDialogs },
   "empty-values": { meta: { type: "suggestion" }, create: createEmptyValues },
   "entity-pages": { meta: { type: "suggestion" }, create: createEntityPages },
+  "list-results": { meta: { type: "suggestion" }, create: createListResults },
   "list-toolbars": { meta: { type: "suggestion" }, create: createListToolbars },
   "page-gaps": { meta: { type: "suggestion" }, create: createPageGaps },
   "page-loaders": { meta: { type: "suggestion" }, create: createPageLoaders },

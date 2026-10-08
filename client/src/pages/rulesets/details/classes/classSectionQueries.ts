@@ -25,7 +25,7 @@ export type ClassSection =
   | "feat-pools"
   | "spells-known"
   | "spell-list"
-  | "spells"
+  | "spells-per-day"
   | "properties"
   | "modifiers"
   | "requirements";
@@ -83,9 +83,9 @@ export function classSpellsKnownQuery(rulesetId: string, classId: string) {
   });
 }
 
-export function classSpellsQuery(rulesetId: string, classId: string) {
+export function classSpellsPerDayQuery(rulesetId: string, classId: string) {
   return queryOptions({
-    queryKey: QUERY_KEYS.rulesets.classSpells(rulesetId, classId),
+    queryKey: QUERY_KEYS.rulesets.classSpellsPerDay(rulesetId, classId),
     queryFn: () =>
       parseResponse(rpc.api.rulesets[":id"].classes[":classId"].spells.$get(classParam(rulesetId, classId))),
   });
@@ -107,8 +107,8 @@ export function prefetchClassSection(
       return queryClient.prefetchQuery(classFeatPoolsQuery(rulesetId, classId));
     case "spells-known":
       return queryClient.prefetchQuery(classSpellsKnownQuery(rulesetId, classId));
-    case "spells":
-      return queryClient.prefetchQuery(classSpellsQuery(rulesetId, classId));
+    case "spells-per-day":
+      return queryClient.prefetchQuery(classSpellsPerDayQuery(rulesetId, classId));
     case "spell-list":
       return queryClient.prefetchQuery(classSpellListsQuery(rulesetId, classId));
     // The customization tabs read their rows through their sections, as every entity's customization page does

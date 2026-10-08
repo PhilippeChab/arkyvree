@@ -6,7 +6,7 @@ import { DiceSpinner } from "./DiceSpinner.tsx";
 import { type Intent, INTENT_COLORS } from "./intent.ts";
 
 interface ActionMenuItemProps {
-  /** An outside page it opens, in a new tab (the help center). */
+  /** An outside page it opens, in a new tab (Help). */
   href?: string;
   icon: ElementType;
   intent?: Intent;

@@ -11,9 +11,9 @@ import {
   CreateDialog,
   EmptyValue,
   ExpandArrow,
+  ListPageResults,
   LoadError,
   LoadMoreButton,
-  NoMatchesState,
   SearchBar,
   SectionContent,
   TableColumnsHead,
@@ -22,7 +22,7 @@ import {
   toggleProps,
 } from "@/client/src/components/common/index.ts";
 import { FeatsIcon } from "@/client/src/components/icons/index.ts";
-import { useSearchParam, useSearchText, useToggleSet } from "@/client/src/hooks/index.ts";
+import { useListPageQuery, useSearchParam, useSearchText, useToggleSet } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
@@ -52,17 +52,19 @@ type GroupedFeatRow = GroupedPaginated["items"][number];
 
 type GroupedPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["feats"]["grouped"]["$get"], 200>;
 interface GroupedRowProps {
+  /** Its place in the list, which staggers its entry (`fadeInUpSx`), from the page that came in (`animationOffset`). */
+  animationIndex: number;
+  animationOffset: number;
   childOnly: boolean;
   /** Set on a row that groups several variants. */
   family: string | null;
   isExpanded: boolean;
+  /** Opens a feat's page: the row's own, or one of its variants'. */
   onRowClick: (feat: Pick<Feat, "id">) => void;
+  /** Warms a feat's page, as it's pointed at. */
   onRowMouseEnter: (feat: Pick<Feat, "id">) => void;
   onToggleFamily: (family: string) => void;
-  onVariantClick: (feat: Feat) => void;
-  onVariantMouseEnter: (feat: Feat) => void;
   row: GroupedFeatRow;
-  rowIndex: number;
   rulesetId: string;
 }
 
@@ -77,16 +79,18 @@ const GROUPED_COLUMNS = [
   { key: "variants", label: "Variants", width: "50%" },
 ];
 
+/** What the tab says while it lists no feat, grouped or not */
+const NO_FEATS = { title: "No feats", description: "No feats available for this ruleset." };
+
 function GroupedRow({
   row,
   rulesetId,
   childOnly,
   family,
   isExpanded,
-  rowIndex,
+  animationIndex,
+  animationOffset,
   onToggleFamily,
-  onVariantClick,
-  onVariantMouseEnter,
   onRowClick,
   onRowMouseEnter,
 }: GroupedRowProps) {
@@ -99,7 +103,7 @@ function GroupedRow({
       <>
         <TableRow
           {...toggleProps(isExpanded, () => onToggleFamily(family), "row")}
-          sx={[CLICKABLE_ROW_SX, fadeInUpSx(rowIndex)]}
+          sx={[CLICKABLE_ROW_SX, fadeInUpSx(animationIndex, animationOffset)]}
         >
           <TableCell>
             <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
@@ -134,9 +138,9 @@ function GroupedRow({
             return (
               <TableRow
                 key={feat.id}
-                {...clickableProps(() => onVariantClick(feat))}
-                onMouseEnter={() => onVariantMouseEnter(feat)}
-                onFocus={() => onVariantMouseEnter(feat)}
+                {...clickableProps(() => onRowClick(feat))}
+                onMouseEnter={() => onRowMouseEnter(feat)}
+                onFocus={() => onRowMouseEnter(feat)}
                 sx={[CLICKABLE_ROW_SX, isNew && fadeInUpSx(i - previousItemCount)]}
               >
                 <TableCell sx={{ pl: 6 }}>
@@ -169,7 +173,7 @@ function GroupedRow({
       {...clickableProps(() => onRowClick({ id: row.representativeId }))}
       onMouseEnter={() => onRowMouseEnter({ id: row.representativeId })}
       onFocus={() => onRowMouseEnter({ id: row.representativeId })}
-      sx={[CLICKABLE_ROW_SX, fadeInUpSx(rowIndex)]}
+      sx={[CLICKABLE_ROW_SX, fadeInUpSx(animationIndex, animationOffset)]}
     >
       <TableCell>
         <Typography variant="body2">{row.displayName}</Typography>
@@ -208,15 +212,13 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     enabled: !grouped,
   });
 
-  // Grouped query (used when grouped is on)
-  const groupedQuery = useInfiniteQuery({
+  // Grouped list (used when grouped is on)
+  const groupedList = useListPageQuery({
     ...featsGroupedQuery(ruleset.id, { search: searchQuery, childOnly, aptitudeId }),
-    placeholderData: keepPreviousData,
     enabled: grouped,
   });
 
   const feats = pageItems(flatQuery.data);
-  const groupedFeats = pageItems(groupedQuery.data);
 
   const handleRowClick = (feat: Pick<Feat, "id">) => {
     openEntity(buildCustomizationPath("feats", feat.id));
@@ -245,60 +247,6 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
       default:
         return null;
     }
-  };
-
-  const isLoading = grouped ? groupedQuery.isLoading : flatQuery.isLoading;
-  const hasNextPage = grouped ? groupedQuery.hasNextPage : flatQuery.hasNextPage;
-  const isFetchingNextPage = grouped ? groupedQuery.isFetchingNextPage : flatQuery.isFetchingNextPage;
-  const fetchNextPage = grouped ? groupedQuery.fetchNextPage : flatQuery.fetchNextPage;
-
-  const renderGroupedTable = () => {
-    if (groupedQuery.isLoading)
-      return <TableSkeleton columns={GROUPED_COLUMNS} sx={TABLE_CONTAINER_LOADING_SX} tableSx={TABLE_SX} />;
-
-    if (groupedQuery.error && groupedFeats.length === 0) return <LoadError what="Feats" error={groupedQuery.error} />;
-
-    if (groupedFeats.length === 0) {
-      return searchQuery ? (
-        <NoMatchesState search={searchQuery} />
-      ) : (
-        <BlankState icon={FeatsIcon} title="No feats" description="No feats available for this ruleset." />
-      );
-    }
-
-    let rowIndex = 0;
-
-    return (
-      <TableFrame sx={TABLE_CONTAINER_SX}>
-        <Table sx={TABLE_SX}>
-          <TableColumnsHead columns={GROUPED_COLUMNS} />
-          <TableBody>
-            {groupedFeats.map((row) => {
-              const family = row.variantCount > 1 ? row.family : null;
-              const isExpanded = family !== null && expandedFamilies.has(family);
-              const currentIndex = rowIndex++;
-
-              return (
-                <GroupedRow
-                  key={row.family ?? row.representativeId}
-                  row={row}
-                  rulesetId={ruleset.id}
-                  childOnly={childOnly}
-                  family={family}
-                  isExpanded={isExpanded}
-                  rowIndex={currentIndex}
-                  onToggleFamily={toggleFamily}
-                  onVariantClick={handleRowClick}
-                  onVariantMouseEnter={handleRowMouseEnter}
-                  onRowClick={handleRowClick}
-                  onRowMouseEnter={handleRowMouseEnter}
-                />
-              );
-            })}
-          </TableBody>
-        </Table>
-      </TableFrame>
-    );
   };
 
   return (
@@ -338,31 +286,64 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
             </SectionActions>
           }
         />
-        <Stack spacing={2}>
-          {grouped ? (
-            renderGroupedTable()
-          ) : (
+        {grouped ? (
+          <ListPageResults
+            variant="section"
+            list={groupedList}
+            search={searchQuery}
+            what="Feats"
+            skeleton={<TableSkeleton columns={GROUPED_COLUMNS} sx={TABLE_CONTAINER_LOADING_SX} tableSx={TABLE_SX} />}
+            empty={<BlankState icon={FeatsIcon} {...NO_FEATS} />}
+          >
+            <TableFrame sx={TABLE_CONTAINER_SX}>
+              <Table sx={TABLE_SX}>
+                <TableColumnsHead columns={GROUPED_COLUMNS} />
+                <TableBody>
+                  {groupedList.items.map((row, index) => {
+                    const family = row.variantCount > 1 ? row.family : null;
+                    return (
+                      <GroupedRow
+                        key={row.family ?? row.representativeId}
+                        row={row}
+                        rulesetId={ruleset.id}
+                        childOnly={childOnly}
+                        family={family}
+                        isExpanded={family !== null && expandedFamilies.has(family)}
+                        animationIndex={index}
+                        animationOffset={groupedList.offset}
+                        onToggleFamily={toggleFamily}
+                        onRowClick={handleRowClick}
+                        onRowMouseEnter={handleRowMouseEnter}
+                      />
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableFrame>
+          </ListPageResults>
+        ) : (
+          <Stack spacing={2}>
             <RulesetSectionTable
               what="Feats"
               error={flatQuery.error}
               data={feats}
               search={searchQuery}
-              isLoading={isLoading}
+              isLoading={flatQuery.isLoading}
               columns={FEATS_COLUMNS}
               onRowClick={handleRowClick}
               onRowMouseEnter={handleRowMouseEnter}
               renderCell={renderCell}
               emptyIcon={FeatsIcon}
-              emptyTitle="No feats"
-              emptyDescription="No feats available for this ruleset."
+              emptyTitle={NO_FEATS.title}
+              emptyDescription={NO_FEATS.description}
             />
-          )}
-          <LoadMoreButton
-            hasNextPage={hasNextPage}
-            isFetchingNextPage={isFetchingNextPage}
-            onClick={() => fetchNextPage()}
-          />
-        </Stack>
+            <LoadMoreButton
+              hasNextPage={flatQuery.hasNextPage}
+              isFetchingNextPage={flatQuery.isFetchingNextPage}
+              onClick={() => flatQuery.fetchNextPage()}
+            />
+          </Stack>
+        )}
       </Stack>
 
       <CreateDialog {...createDialogProps} title="Create New Feat">

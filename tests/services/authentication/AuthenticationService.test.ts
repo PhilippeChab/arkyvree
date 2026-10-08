@@ -531,7 +531,7 @@ describe("AuthenticationService", () => {
 
       const { user } = await signInAsGoogleAccount(googleAccount());
       await expect(LinkedAccountsService.unlinkOauthAccount(makeSession(user.id), "google")).rejects.toThrow(
-        "without a password set",
+        "Set a password before unlinking",
       );
       expect(await LinkedAccountsService.getLinkedAccounts(makeSession(user.id))).toHaveLength(1);
     });

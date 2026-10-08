@@ -169,12 +169,12 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
         }),
       ),
     onSuccess: () => {
-      snackbar.success("Invitation revoked");
+      snackbar.success("Invite revoked");
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.section(campaign.id, "players") });
       revokeDialog.close();
     },
     onError: (error) => {
-      snackbar.error(error, "Failed to revoke invitation");
+      snackbar.error(error, "Failed to revoke invite");
     },
   });
 
@@ -366,10 +366,11 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
       <ConfirmDialog
         open={revokeDialog.open}
         onClose={revokeDialog.close}
-        title="Confirm Revoke"
-        message="Are you sure you want to revoke this invitation? This action cannot be undone."
+        title="Revoke Invite"
+        message="Are you sure you want to revoke this invite? This action cannot be undone."
         onConfirm={confirmRevokeInvite}
-        confirmLabel="Revoke Invitation"
+        confirmLabel="Revoke Invite"
+        intent="caution"
         isLoading={revokeInviteMutation.isPending}
       />
     </SectionContent>

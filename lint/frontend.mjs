@@ -81,7 +81,8 @@
  *   (`lib/validation.ts`), never written in place. A field the viewer can't edit is `readOnly`, never a disabled one
  *   restyled to look editable.
  * - `icons`: an icon comes from `components/icons`, where every icon the app shows is named, never from
- *   `@mui/icons-material`; there, a glyph goes by one name, one meaning per glyph.
+ *   `@mui/icons-material`; there, a glyph goes by one name, one meaning per glyph. A control that removes or deletes
+ *   (named "Remove …", "Delete …") shows the bin, `DeleteIcon`.
  * - `no-types-modules`: a type lives with the code it describes (the component that owns it, the hook or the query that
  *   gives it), never in a `types/` folder nor a `types.ts` grab bag; a `.d.ts` declaring ambient globals stays.
  * - `react-imports`: React's types and functions are named imports (`import { type ReactNode, StrictMode } from
@@ -93,7 +94,7 @@
 
 import path from "node:path";
 
-import { calleeName, elementName, hasAttribute, inClient, parentElement } from "./jsx.mjs";
+import { attributeExpression, calleeName, elementName, hasAttribute, inClient, parentElement, texts } from "./jsx.mjs";
 import { repoPath } from "./paths.mjs";
 
 /** The hook that reads an auth page's `?redirect=` back (`useAuthRedirect`). */
@@ -936,6 +937,20 @@ function createIcons(context) {
           "An icon comes from `components/icons`, where every icon the app shows is named: never from `@mui/icons-material`.",
       });
     },
+    // Every removal shows the bin: a control named "Remove …" or "Delete …" (its label, its `aria-label`)
+    JSXElement(node) {
+      const named = node.openingElement.attributes.find(
+        (a) => a.type === "JSXAttribute" && (a.name.name === "label" || a.name.name === "aria-label"),
+      );
+      const names = named ? texts(attributeExpression(named)) : [];
+      if (names.length === 0 || !names.every((name) => /^(Remove|Delete)\b/.test(name))) return;
+      const icon = shownIcon(node);
+      if (!icon || icon === "DeleteIcon") return;
+      context.report({
+        node,
+        message: `Every removal shows the bin: "${names[0]}" takes \`DeleteIcon\`, not \`${icon}\`.`,
+      });
+    },
   };
 }
 
@@ -1557,6 +1572,32 @@ function requestMethod(callee) {
   if (callee.type !== "MemberExpression") return null;
   const name = callee.computed ? callee.property.value : callee.property.name;
   return REQUEST_METHODS.has(name) ? name : null;
+}
+
+/**
+ * The icon a control shows: its `icon` (or `startIcon`), else the first icon among its children (an icon button's,
+ * through its spinner); null when it can't be told (an icon on a condition).
+ */
+function shownIcon(control) {
+  const iconAttribute = control.openingElement.attributes.find(
+    (a) => a.type === "JSXAttribute" && (a.name.name === "icon" || a.name.name === "startIcon"),
+  );
+  if (iconAttribute) {
+    const icon = attributeExpression(iconAttribute);
+    if (icon?.type === "Identifier") return icon.name;
+    return icon?.type === "JSXElement" ? elementName(icon) : null;
+  }
+  const iconIn = (element) => {
+    for (const child of element.children) {
+      if (child.type !== "JSXElement") continue;
+      const name = elementName(child);
+      if (name?.endsWith("Icon")) return name;
+      const nested = iconIn(child);
+      if (nested) return nested;
+    }
+    return null;
+  };
+  return iconIn(control);
 }
 
 /** The properties an element's `sx` sets at its top, written as an object or an array of them. */

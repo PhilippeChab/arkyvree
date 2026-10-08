@@ -26,7 +26,6 @@ import {
   DeleteIcon,
   DownloadIcon,
   ModifiersIcon,
-  RemoveIcon,
   ShareIcon,
   UnarchiveIcon,
 } from "@/client/src/components/icons/index.ts";
@@ -195,7 +194,7 @@ export default function CharacterDetailsPage() {
                 />,
                 <ActionMenuItem
                   key="remove-level"
-                  icon={RemoveIcon}
+                  icon={DeleteIcon}
                   label="Remove Level"
                   onClick={menu.closeMenuAnd(() => setConfirmOpen(true))}
                 />,

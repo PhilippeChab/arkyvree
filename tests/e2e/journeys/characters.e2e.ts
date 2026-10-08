@@ -98,7 +98,7 @@ test.describe("Characters", () => {
     // Lowering a score may break prerequisites: it asks first, then not again this session
     const confirmed = saved();
     await lower.click();
-    await decrease.getByRole("button", { name: "Decrease" }).click();
+    await decrease.getByRole("button", { name: "Decrease Ability" }).click();
     await confirmed;
     await expect(base).toHaveText("Base: 11");
     const again = saved();

@@ -2,7 +2,7 @@
 
 import { alpha, createTheme, Grow, responsiveFontSizes, type Theme } from "@mui/material";
 
-import { PREFERS_REDUCED_MOTION } from "./animations.ts";
+import { DURATION, PREFERS_REDUCED_MOTION, transitionOf } from "./animations.ts";
 
 declare module "@mui/material/styles" {
   interface Palette {
@@ -436,7 +436,7 @@ export function createAppTheme(darkMode: boolean): Theme {
             root: ({ theme }) => ({
               color: theme.palette.primary.main,
               textDecorationColor: "transparent",
-              transition: "text-decoration-color 200ms ease",
+              transition: transitionOf(["text-decoration-color"], DURATION.brisk),
               "&:hover": {
                 textDecorationColor: "currentColor",
               },
@@ -486,8 +486,7 @@ export function createAppTheme(darkMode: boolean): Theme {
         },
         MuiDialog: {
           defaultProps: {
-            transitionDuration: { enter: 250, exit: 150 },
-
+            transitionDuration: { enter: DURATION.normal, exit: DURATION.fast },
             slots: {
               transition: Grow,
             },

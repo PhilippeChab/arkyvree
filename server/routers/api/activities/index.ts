@@ -57,7 +57,7 @@ export default new Hono()
         {
           error: "ForbiddenError",
           cause: "noAccess",
-          message: `You no longer have access to this ${value.entityType}.`,
+          message: `You no longer have access to this ${value.entityType}`,
         },
         403,
       );

@@ -64,7 +64,7 @@ test.describe("Ruleset contributors", () => {
     const left = apiResponse(contributor, "POST", /\/api\/rulesets\/[a-f0-9-]+\/contributors\/leave/);
     await contributor
       .getByRole("dialog", { name: "Leave Ruleset" })
-      .getByRole("button", { name: /^Leave$/ })
+      .getByRole("button", { name: /^Leave Ruleset$/ })
       .click();
     await left;
 

@@ -162,7 +162,7 @@ export function ContributorsDialog({
         isLoading={contributors.leaveMutation.isPending}
         title={`Leave ${label}`}
         message={`Are you sure you want to leave this ${noun}? You will lose a contributor's access unless you're invited again.`}
-        confirmLabel="Leave"
+        confirmLabel={`Leave ${label}`}
         intent="caution"
       />
     </>

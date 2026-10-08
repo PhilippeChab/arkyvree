@@ -22,13 +22,13 @@ export function useAnswerInvite(onNoLongerPending?: (answer: InviteAnswer) => vo
 
   const handleError = (verb: "accept" | "reject") => (error: Error, answer: InviteAnswer) => {
     if (error instanceof ApiError && error.status === 409) {
-      snackbar.warning("This invitation is no longer pending");
+      snackbar.warning("This invite is no longer pending");
       refresh();
       onNoLongerPending?.(answer);
       return;
     }
     // Still pending: its buttons stay, so the user can retry
-    snackbar.error(error, `Failed to ${verb} invitation`);
+    snackbar.error(error, `Failed to ${verb} invite`);
   };
 
   const accept = useMutation({

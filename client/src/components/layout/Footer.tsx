@@ -1,6 +1,6 @@
-import { Link as MuiLink, Stack, Typography } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 
-import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
+import { SourceLink } from "./SourceLink.tsx";
 
 export function Footer() {
   return (
@@ -19,19 +19,7 @@ export function Footer() {
       }}
     >
       <Typography variant="caption">© {new Date().getFullYear()} Arkyvree</Typography>
-      <Stack
-        component={MuiLink}
-        direction="row"
-        href={EXTERNAL_LINKS.source}
-        target="_blank"
-        rel="noopener noreferrer"
-        variant="caption"
-        color="inherit"
-        underline="hover"
-        sx={{ display: "inline-flex", alignItems: "center", minHeight: 44, px: 1 }}
-      >
-        Source
-      </Stack>
+      <SourceLink variant="caption" />
     </Stack>
   );
 }

@@ -201,11 +201,11 @@ export function RemovePlayerDialog({
         ) : (
           <>
             Are you sure you want to remove <strong>{slot?.name}</strong> from this campaign?
-            {slot?.pendingInvite && " This will also cancel any pending invitations."} This action cannot be undone.
+            {slot?.pendingInvite && " This will also cancel its pending invite."} This action cannot be undone.
           </>
         )
       }
-      confirmLabel={isSelfRemoval ? "Leave" : "Remove Player"}
+      confirmLabel={isSelfRemoval ? "Leave Campaign" : "Remove Player"}
       intent={isSelfRemoval ? "caution" : "destructive"}
       confirmIcon={isSelfRemoval ? <LeaveIcon /> : <DeleteIcon />}
     />

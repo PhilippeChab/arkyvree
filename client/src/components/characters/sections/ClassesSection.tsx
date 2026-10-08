@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import {
+  AddButton,
   BlankNote,
   ROW_ACTIONS_HOVER_SX,
   RowAction,
@@ -11,8 +12,9 @@ import {
   ToggleLabel,
   ValueChip,
 } from "@/client/src/components/common/index.ts";
-import { AddIcon, EditIcon, RemoveIcon } from "@/client/src/components/icons/index.ts";
+import { DeleteIcon, EditIcon } from "@/client/src/components/icons/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
+import { DURATION } from "@/client/src/theme/animations.ts";
 
 import type { CharacterData } from "./characterData.ts";
 import { SheetSection } from "./SheetSection.tsx";
@@ -74,7 +76,7 @@ function ClassGroup({ klass, levels, classLink, onEditLevel }: ClassGroupProps) 
           </ToggleLabel>
         )}
       </SubsectionTitle>
-      <Collapse in={open} timeout="auto" unmountOnExit>
+      <Collapse in={open} timeout={DURATION.normal} unmountOnExit>
         <Stack>
           {levels.map((lvl) => (
             <Stack
@@ -128,18 +130,16 @@ export function ClassesSection({
     <SheetSection
       title="Classes & Levels"
       action={
-        !readOnly && (
-          <Stack direction="row" spacing={0.5}>
-            <Tooltip title="Add Level">
-              <IconButton aria-label="Add Level" size="small" onClick={onAddLevel}>
-                <AddIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
+        !readOnly &&
+        onAddLevel &&
+        onRemoveLevel && (
+          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
             <Tooltip title="Remove Level">
               <IconButton aria-label="Remove Level" size="small" onClick={onRemoveLevel}>
-                <RemoveIcon fontSize="small" />
+                <DeleteIcon fontSize="small" />
               </IconButton>
             </Tooltip>
+            <AddButton label="Add Level" size="small" onClick={onAddLevel} />
           </Stack>
         )
       }

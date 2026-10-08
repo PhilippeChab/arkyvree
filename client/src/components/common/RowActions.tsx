@@ -9,7 +9,7 @@ interface RowActionProps {
   icon: ElementType;
   /** What it does, shown by its color (`intent.ts`): grey, red for what destroys, orange for leaving */
   intent?: Intent;
-  /** Its name, which its tooltip shows: "Edit", "Delete Requirement" */
+  /** Its name, which its tooltip shows: "Edit", "Revoke Invite" */
   label: string;
   onClick: MouseEventHandler<HTMLButtonElement>;
 }

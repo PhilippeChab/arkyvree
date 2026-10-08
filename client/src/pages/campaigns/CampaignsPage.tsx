@@ -75,7 +75,7 @@ export default function CampaignsPage() {
             variant="tinted"
             title="Campaigns"
             subtitle="Manage your campaigns and organize your adventuring parties"
-            action={!isDemo && createButton("Create New Campaign")}
+            action={!isDemo && createButton("Create Campaign")}
           />
 
           <Stack spacing={3}>

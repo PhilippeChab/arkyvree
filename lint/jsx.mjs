@@ -2,6 +2,11 @@
 
 import { repoPath } from "./paths.mjs";
 
+/** What a JSX attribute holds: its expression, or its string. */
+export function attributeExpression(node) {
+  return node.value?.type === "JSXExpressionContainer" ? node.value.expression : node.value;
+}
+
 /** The name a call goes by: `navigate(…)`'s `navigate`, `form.reset(…)`'s `reset`, else null. */
 export function calleeName(node) {
   const callee = node.callee.type === "ChainExpression" ? node.callee.expression : node.callee;
@@ -47,5 +52,22 @@ export function inClient(context) {
 /** The nearest JSX element around `node`. */
 export function parentElement(node) {
   for (let p = node.parent; p; p = p.parent) if (p.type === "JSXElement") return p;
+  return null;
+}
+
+/** The texts an expression can hold: a string, a template's (`…` for what it reads), each side of a condition. */
+export function texts(expression) {
+  if (!expression) return [];
+  if (expression.type === "ConditionalExpression")
+    return [...texts(expression.consequent), ...texts(expression.alternate)];
+  if (expression.type === "LogicalExpression") return texts(expression.right);
+  const text = writtenText(expression);
+  return text === null ? [] : [text];
+}
+
+/** What a string or a template says (`…` for what it reads), else null. */
+export function writtenText(value) {
+  if (value?.type === "Literal" && typeof value.value === "string") return value.value;
+  if (value?.type === "TemplateLiteral") return value.quasis.map((quasi) => quasi.value.cooked).join("…");
   return null;
 }

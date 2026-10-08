@@ -14,7 +14,8 @@
  *   in a list, a card or a page's header alike: a `RoleChip` (outlined), a `StatusChip` (filled), a `CountChip`
  *   (outlined), a `ValueChip` (outlined red, a link through its `to` when it names a record, never a link in its
  *   label) or a `ChoiceChip`; MUI's `Chip` is the
- *   family's alone. A chip is a value or a choice, never an action: a click with a fixed label is a `Button`'s.
+ *   family's alone. A chip is a value or a choice, never an action: a click with a fixed label, or one that opens
+ *   something (a menu, a popover), is a `Button`'s.
  * - `help-labels`: help is a `HelpLabel` wherever it's given (its question-mark icon, at 16px): never a help icon in a
  *   tooltip of its own, nor a "What's this?".
  *
@@ -95,10 +96,14 @@ function createChips(context) {
     JSXElement(node) {
       if (!CHIP_ROLES.has(elementName(node)) || !hasAttribute(node, "onClick")) return;
       const label = attributeValue(attribute(node, "label"));
-      if (label?.type !== "Literal") return;
+      // A click that opens something (a menu, a popover, a dialog: `menu.openMenu`, `setOpen(true)`) is an action's
+      const click = context.sourceCode.getText(attributeValue(attribute(node, "onClick")));
+      if (label?.type !== "Literal" && !/\bopen|set\w*Open\(/.test(click)) return;
       context.report({
         node: node.openingElement,
-        message: "A chip is a value or a choice, never an action: a click with a fixed label is a `Button`'s.",
+        message:
+          "A chip is a value or a choice, never an action: a click with a fixed label, or one that opens something, " +
+          "is a `Button`'s.",
       });
     },
   };

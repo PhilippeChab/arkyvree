@@ -51,19 +51,30 @@ import {
 import { isStillOpen } from "@/client/src/pages/rulesets/stillOpen.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { HIT_DIE_VALUES } from "@/shared/dnd3.5/classes.ts";
-import { KLASS_BONUS_SPELL_ABILITY_ID, KLASS_CASTER_TYPE } from "@/shared/dnd3.5/properties/index.ts";
+import {
+  ENTITY_PROPERTY_TYPES,
+  getStaticPropertyValues,
+  KLASS_BONUS_SPELL_ABILITY_ID,
+  KLASS_CASTER_TYPE,
+} from "@/shared/dnd3.5/properties/index.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import { type ClassDetail, classDetailQuery, type ClassSection, prefetchClassSection } from "./classSectionQueries.ts";
 import { CLASS_SECTIONS } from "./sections/index.ts";
+
+/** The caster types a class takes, the property's own options */
+const CASTER_TYPES = getStaticPropertyValues(KLASS_CASTER_TYPE) ?? [];
+
+/** What a class's properties are for, as their selects' help says it */
+const KLASS_PROPERTY_HELP = ENTITY_PROPERTY_TYPES.klasses ?? {};
 
 const TABS: SectionTab<ClassSection>[] = [
   { key: "levels", label: "Levels", icon: TrendingUpIcon },
   { key: "skills", label: "Skills", icon: SkillsIcon },
   { key: "feat-pools", label: "Feat Pools", icon: FeatPoolsIcon },
   { key: "spells-known", label: "Spells Known", icon: SpellsIcon },
-  { key: "spells", label: "Spell Uses", icon: SpellUsesIcon },
-  { key: "spell-list", label: "Spells", icon: PowersIcon },
+  { key: "spells-per-day", label: "Spells per Day", icon: SpellUsesIcon },
+  { key: "spell-list", label: "Spell List", icon: PowersIcon },
   { key: "properties", label: <HelpLabel label="Properties" help={PROPERTIES_HELP} />, icon: PropertiesIcon },
   { key: "modifiers", label: <HelpLabel label="Modifiers" help={MODIFIERS_HELP} />, icon: ModifiersIcon },
   { key: "requirements", label: <HelpLabel label="Requirements" help={REQUIREMENTS_HELP} />, icon: RequirementsIcon },
@@ -71,6 +82,11 @@ const TABS: SectionTab<ClassSection>[] = [
 
 function isClassSection(section: string | undefined): section is ClassSection {
   return TABS.some((tab) => tab.key === section);
+}
+
+/** A property select's help: what the property is for, and that it saves as it's picked, apart from the card's Save. */
+function propertyHelp(type: string) {
+  return `${KLASS_PROPERTY_HELP[type]}. Saves as it's picked.`;
 }
 
 function toClassForm(klass: Pick<ClassDetail, "name" | "description" | "hd">): ClassFormData {
@@ -238,12 +254,14 @@ export default function ClassDetailsPage() {
         {classData && ruleset && (
           <>
             <EntityDetailsCard
-              title="Class Overview"
+              title="Class Details"
               description={classData.description}
               chips={
                 <>
                   <ValueChip label={`Hit Die: d${classData.hd || 8}`} />
-                  {bonusSpellAbility && <ValueChip label={`Bonus Spells: ${bonusSpellAbility.name}`} color="info" />}
+                  {bonusSpellAbility && (
+                    <ValueChip label={`Bonus Spell Ability: ${bonusSpellAbility.name}`} color="info" />
+                  )}
                   {classData.casterTypeValue && (
                     <ValueChip label={`Caster Type: ${classData.casterTypeValue}`} color="info" />
                   )}
@@ -256,7 +274,7 @@ export default function ClassDetailsPage() {
                         <>
                           <ClassFormFields form={editForm} />
                           <TextField
-                            label="Spellcasting Ability"
+                            label="Bonus Spell Ability"
                             fullWidth
                             select
                             // Empty until the abilities load: a value with no option is out of range.
@@ -265,7 +283,9 @@ export default function ClassDetailsPage() {
                             disabled={!abilities || bonusSpellMutation.isPending || isClassFetching}
                             error={!!abilitiesError && !abilities}
                             helperText={
-                              !abilities && abilitiesError ? loadFailureMessage("Abilities", abilitiesError) : undefined
+                              !abilities && abilitiesError
+                                ? loadFailureMessage("Abilities", abilitiesError)
+                                : propertyHelp(KLASS_BONUS_SPELL_ABILITY_ID)
                             }
                           >
                             <MenuItem value="">None</MenuItem>
@@ -282,11 +302,14 @@ export default function ClassDetailsPage() {
                             value={classData.casterTypeValue ?? ""}
                             onChange={(e) => casterTypeMutation.mutate(e.target.value)}
                             disabled={casterTypeMutation.isPending || isClassFetching}
-                            helperText="Whether this class casts arcane or divine spells"
+                            helperText={propertyHelp(KLASS_CASTER_TYPE)}
                           >
                             <MenuItem value="">None</MenuItem>
-                            <MenuItem value="Arcane">Arcane</MenuItem>
-                            <MenuItem value="Divine">Divine</MenuItem>
+                            {CASTER_TYPES.map((casterType) => (
+                              <MenuItem key={casterType} value={casterType}>
+                                {casterType}
+                              </MenuItem>
+                            ))}
                           </TextField>
                         </>
                       ),

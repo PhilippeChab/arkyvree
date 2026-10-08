@@ -67,7 +67,7 @@ test.describe("A campaign invite link", () => {
     await expect(page.getByText("Campaign invite rejected", { exact: true })).toBeVisible();
 
     await page.goto(campaign.link);
-    await expect(page.getByText("Invitation Rejected", { exact: true })).toBeVisible();
+    await expect(page.getByText("Invite Rejected", { exact: true })).toBeVisible();
   });
 
   test("is not found by anyone else, and can't be accepted once the campaign is archived", async ({
@@ -81,7 +81,7 @@ test.describe("A campaign invite link", () => {
       const campaign = await campaignInvite(gm, user.email);
       // Not even the Game Master who sent it
       await gm.goto(campaign.link);
-      await expect(gm.getByText("Invitation Not Found", { exact: true })).toBeVisible();
+      await expect(gm.getByText("Invite Not Found", { exact: true })).toBeVisible();
       await parseResponse(apiOf(gm).api.campaigns[":id"].$delete({ param: { id: campaign.id } }));
 
       await signIn(page, user.email, user.password);

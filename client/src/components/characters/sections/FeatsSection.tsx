@@ -10,6 +10,7 @@ import {
   ToggleLabel,
 } from "@/client/src/components/common/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
+import { DURATION } from "@/client/src/theme/animations.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 
 import { SheetSection } from "./SheetSection.tsx";
@@ -77,7 +78,7 @@ function FeatRow({ feat, suffix, rulesetId, extra, component }: FeatRowProps) {
       </Box>
       {hasExtra && (
         // Mounted while closed: the space above it stays, as the details open and close within it
-        <Collapse in={open} timeout="auto">
+        <Collapse in={open} timeout={DURATION.normal}>
           <Box sx={{ pt: 1.5 }}>{extra}</Box>
         </Collapse>
       )}
@@ -96,7 +97,7 @@ function GrantedFeatsSection({ feats, rulesetId }: GrantedFeatsSectionProps) {
         </ToggleLabel>
       </SubsectionTitle>
       {/* Mounted while closed: the space above it stays, as the list opens and closes within it */}
-      <Collapse in={open} timeout="auto">
+      <Collapse in={open} timeout={DURATION.normal}>
         <Stack spacing={3}>
           {feats.map((feat) => (
             <FeatRow key={feat.id} feat={feat} rulesetId={rulesetId} component="h4" />

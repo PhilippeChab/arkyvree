@@ -118,7 +118,7 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, fields }: C
         error={!!errors.target}
         helperText={errors.target?.message}
         inputRef={fields.target.field.ref}
-        label={kind === "modifier" ? "Modifier Path" : "Target"}
+        label="Target"
       />
       <OperatorSelect
         kind={kind}

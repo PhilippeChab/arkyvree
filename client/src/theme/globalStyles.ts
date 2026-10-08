@@ -1,13 +1,13 @@
-/** The page's own styles, under every component's: the root's type and colors, the body's frame, thin scrollbars. */
+/**
+ * The page's own styles, under every component's: the root's text rendering (its font and colors are the theme's,
+ * through `CssBaseline`), the body's frame, thin scrollbars.
+ */
 
 export const GLOBAL_STYLES = {
   ":root": {
-    fontFamily: "Inter, system-ui, Avenir, Helvetica, Arial, sans-serif",
     lineHeight: 1.5,
     fontWeight: 400,
     colorScheme: "light dark",
-    color: "rgba(255, 255, 255, 0.87)",
-    backgroundColor: "#242424",
     fontSynthesis: "none",
     textRendering: "optimizeLegibility",
     WebkitFontSmoothing: "antialiased",

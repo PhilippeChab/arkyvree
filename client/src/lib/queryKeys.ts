@@ -32,7 +32,8 @@ export const QUERY_KEYS = {
     classDetail: (id: string, classId: string) => ["rulesets", "detail", id, "class", classId] as const,
     classLevels: (id: string, classId: string) => ["rulesets", "detail", id, "class", classId, "levels"] as const,
     classSkills: (id: string, classId: string) => ["rulesets", "detail", id, "class", classId, "skills"] as const,
-    classSpells: (id: string, classId: string) => ["rulesets", "detail", id, "class", classId, "spells"] as const,
+    classSpellsPerDay: (id: string, classId: string) =>
+      ["rulesets", "detail", id, "class", classId, "spells-per-day"] as const,
     classSpellsKnown: (id: string, classId: string) =>
       ["rulesets", "detail", id, "class", classId, "spellsKnown"] as const,
     classSpellLists: (id: string, classId: string) =>
