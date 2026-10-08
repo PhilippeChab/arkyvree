@@ -209,6 +209,8 @@ export default function RulesetDetailsPage() {
   }
 
   const isActive = ruleset.status !== "Archived";
+  // A user's fork that subscribes to none can be an extension: what its edit and its publish offer
+  const canBeExtension = !!ruleset.rulesetId && ruleset.userId !== null && ruleset.extensionRulesetIds.length === 0;
   // What the session may do here: the header's menu, whose button shows only when it holds something
   const menuItems = [
     ruleset.status === "Published" && !isExtension && !isFork && (
@@ -404,11 +406,7 @@ export default function RulesetDetailsPage() {
           }}
           isLoading={updateMutation.isPending}
           isPublic={editDialog.target ? !editDialog.target.private : false}
-          canBeExtension={
-            !!editDialog.target?.rulesetId &&
-            editDialog.target.userId !== null &&
-            editDialog.target.extensionRulesetIds.length === 0
-          }
+          canBeExtension={canBeExtension}
         />
 
         <ArchiveRulesetDialog
@@ -431,11 +429,7 @@ export default function RulesetDetailsPage() {
             if (publishDialog.target) publishMutation.mutate({ id: publishDialog.target.id, kind });
           }}
           isLoading={publishMutation.isPending}
-          canBeExtension={
-            !!publishDialog.target?.rulesetId &&
-            publishDialog.target.userId !== null &&
-            publishDialog.target.extensionRulesetIds.length === 0
-          }
+          canBeExtension={canBeExtension}
           kind={publishKind}
           onKindChange={setPublishKind}
         />

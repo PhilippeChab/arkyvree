@@ -1,38 +1,25 @@
 import { Autocomplete, TextField } from "@mui/material";
-import type { Ref, UIEventHandler } from "react";
+import type { Ref } from "react";
 import type { FieldError } from "react-hook-form";
 
 import { AnimatedAlert, ScrollSafeListbox } from "@/client/src/components/common/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 
+import type { RulesetOption, RulesetPickerOptions } from "./useRulesetPickerOptions.ts";
+
 interface BaseRulesetAlertProps {
-  ruleset: PickableRuleset | null;
+  ruleset: RulesetOption | null;
 }
 
-interface PickableRuleset {
-  /** The heading it's listed under ("My Drafts", "Published"…). */
-  group: string;
-  id: string;
-  name: string;
-  /** Null for a base ruleset. */
-  userId: string | null;
-}
-
-interface RulesetPickerProps<R extends PickableRuleset> {
+interface RulesetPickerProps {
   disabled?: boolean;
   error?: FieldError;
   /** The Controller's `field.ref`, so a failed submit focuses the input. */
   inputRef?: Ref<HTMLInputElement>;
-  /** Why the rulesets didn't load, said where they'd show. */
-  loadError?: unknown;
-  loading?: boolean;
-  onChange: (ruleset: R | null) => void;
-  /** Loads the next page as the list nears its end (see `createListboxScrollHandler`). */
-  onScroll: UIEventHandler<HTMLElement>;
-  /** The typed search; the list is filtered on the server. */
-  onSearch: (search: string) => void;
-  rulesets: R[];
-  value: R | null;
+  onChange: (ruleset: RulesetOption | null) => void;
+  /** What it lists, searched and paged on the server, and why it didn't load: `useRulesetPickerOptions`'. */
+  options: RulesetPickerOptions;
+  value: RulesetOption | null;
 }
 
 /**
@@ -49,18 +36,8 @@ export function BaseRulesetAlert({ ruleset }: BaseRulesetAlertProps) {
 }
 
 /** A create dialog's ruleset field, with the rulesets under their group headings. */
-export function RulesetPicker<R extends PickableRuleset>({
-  rulesets,
-  value,
-  onChange,
-  onSearch,
-  onScroll,
-  loading,
-  loadError,
-  disabled,
-  error,
-  inputRef,
-}: RulesetPickerProps<R>) {
+export function RulesetPicker({ options, value, onChange, disabled, error, inputRef }: RulesetPickerProps) {
+  const { rulesets, onSearch, onScroll, loading, loadError } = options;
   return (
     <Autocomplete
       options={rulesets}

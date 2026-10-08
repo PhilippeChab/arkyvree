@@ -1,6 +1,5 @@
 import { Stack } from "@mui/material";
 import { parseResponse } from "hono/client";
-import { useController } from "react-hook-form";
 
 import { BlankNote, ValueChip } from "@/client/src/components/common/index.ts";
 import { useFormSync, useFormWith } from "@/client/src/hooks/index.ts";
@@ -8,24 +7,19 @@ import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
   allLevelSaves,
-  areSaveBasesValid,
   ClassLevelFields,
+  type ClassLevelFormData,
+  EMPTY_CLASS_LEVEL,
   featKey,
   type LevelFeat,
   levelFeatLabel,
-  type LevelSave,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
 import type { ClassLevel } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
-import { useRulesetSaves } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useEntitySave, useRulesetSaves } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-import { type EditorProps, useEditorSave } from "./useEditorSave.ts";
-
-interface ClassLevelForm {
-  feats: LevelFeat[];
-  saves: LevelSave[];
-}
+import type { EditorProps } from "./renderEditor.tsx";
 
 type LevelFeatRow = ClassLevel["feats"][number];
 
@@ -41,8 +35,11 @@ function sortedFeats(level: ClassLevel) {
   return [...level.feats].sort((a, b) => featLabel(a).localeCompare(featLabel(b)));
 }
 
-function toClassLevelForm(level: ClassLevel): ClassLevelForm {
+function toClassLevelForm(level: ClassLevel): ClassLevelFormData {
   return {
+    level: level.level,
+    bab: level.bab,
+    skills: level.skills,
     saves: level.saves.map(({ saveId, base }) => ({ saveId, base })),
     feats: sortedFeats(level).map(asLevelFeat),
   };
@@ -56,30 +53,28 @@ export function ClassLevelEditor({
   entity: level,
   canEdit,
   locked,
-  onSaved,
+  followCopy,
+  refetchSaved,
 }: EditorProps<ClassLevel>) {
-  const form = useFormWith<ClassLevelForm>({ saves: [], feats: [] });
-  const { field: saves, fieldState: savesState } = useController({
-    control: form.control,
-    name: "saves",
-    rules: { validate: areSaveBasesValid },
-  });
-  const { field: feats } = useController({ control: form.control, name: "feats" });
+  const form = useFormWith<ClassLevelFormData>(EMPTY_CLASS_LEVEL);
   const sync = useFormSync(form, toClassLevelForm(level), { key: recordKey, adoptKey });
   const { data: rulesetSaves, error: savesError } = useRulesetSaves(rulesetId);
-  const saveMutation = useEditorSave({
-    sync,
+  const saveMutation = useEntitySave({
+    rulesetId,
     entityId,
-    onSaved,
+    sync,
+    followCopy,
+    storeSaved: refetchSaved,
     listKey: QUERY_KEYS.rulesets.classLevels(rulesetId, level.klassId),
     label: "Class level",
-    saveFn: (data: ClassLevelForm) =>
+    // A level's save takes no stale-edit token
+    saveFn: (data: ClassLevelFormData) =>
       parseResponse(
         rpc.api.rulesets[":id"].classes[":classId"].levels[":levelId"].$put({
           param: { id: rulesetId, classId: level.klassId, levelId: entityId },
           json: {
-            saves: allLevelSaves(rulesetSaves, data.saves),
-            feats: data.feats.map((feat) => ({ ...feat, free: true })),
+            saves: allLevelSaves(rulesetSaves, data.saves ?? []),
+            feats: (data.feats ?? []).map((feat) => ({ ...feat, free: true })),
           },
         }),
       ),
@@ -116,14 +111,10 @@ export function ClassLevelEditor({
           ? {
               fields: (
                 <ClassLevelFields
+                  form={form}
                   rulesetId={rulesetId}
                   rulesetSaves={rulesetSaves}
                   savesError={savesError}
-                  saves={saves.value ?? []}
-                  onSavesChange={saves.onChange}
-                  savesInvalid={!!savesState.error}
-                  feats={feats.value ?? []}
-                  onFeatsChange={feats.onChange}
                   featLabels={new Map(level.feats.map((feat) => [featKey(asLevelFeat(feat)), featLabel(feat)]))}
                 />
               ),

@@ -1,12 +1,13 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo } from "react";
+import { useController } from "react-hook-form";
 
 import { useListboxQuery } from "@/client/src/hooks/index.ts";
-import { rollDie } from "@/client/src/pages/characters/dice.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-import { featPickString, fitFeats, openPoolOf } from "./fitPicks.ts";
+import { fitFeats, openPoolOf } from "./fitPicks.ts";
+import { type HpLevel, hpSet } from "./hitPoints.ts";
 import {
   attributeSlotsQuery,
   availableFeatsGroupedQuery,
@@ -18,6 +19,7 @@ import {
   type StepLevel,
 } from "./levelUpQueries.ts";
 import type { LevelUpFormData } from "./levelUpTypes.ts";
+import { featPickString } from "./pendingPicks.ts";
 import { editedLevelSkills } from "./skillLevels.ts";
 import { pickIds, useLevelWizardBase } from "./useLevelWizardBase.ts";
 
@@ -46,7 +48,7 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevelId 
   const base = useLevelWizardBase(characterId);
   const {
     handleSubmit,
-    setValue,
+    control,
     watch,
     picked,
     activeStep,
@@ -67,29 +69,15 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevelId 
   const featsStep = EDIT_STEP_CONTENT.indexOf("feats");
   const powersStep = EDIT_STEP_CONTENT.indexOf("powers");
 
-  // HP roll animation
-  const [hpRolling, setHpRolling] = useState(false);
-  const [hpSettled, setHpSettled] = useState(false);
-  const [hpDisplayValue, setHpDisplayValue] = useState<number | null>(null);
-  const hpIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const hpTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const cleanupHpRoll = useCallback(() => {
-    if (hpIntervalRef.current) {
-      clearInterval(hpIntervalRef.current);
-      hpIntervalRef.current = null;
-    }
-    if (hpTimeoutRef.current) {
-      clearTimeout(hpTimeoutRef.current);
-      hpTimeoutRef.current = null;
-    }
-  }, []);
-
-  useEffect(() => cleanupHpRoll, [cleanupHpRoll]);
-
   const selectedClass = watch("selectedClass");
   const selectedHP = watch("selectedHP");
   const selectedAttribute = watch("selectedAttribute");
+
+  // The HP step's one level, the edited one, its HP the form's field
+  const { field: hpField } = useController({ control, name: "selectedHP" });
+  const hpLevels: HpLevel[] = selectedClass
+    ? [{ className: selectedClass.name, hd: selectedClass.hd, nextLevel: selectedClass.nextLevel }]
+    : [];
 
   // The edited level's class and level, which the slot and picker endpoints take.
   const step: StepLevel = {
@@ -210,33 +198,8 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevelId 
     onClose();
   }, [resetPicks, onClose]);
 
-  // HP roll trigger
-  const triggerHpRoll = useCallback(
-    (hd: number) => {
-      if (hpRolling) return;
-      cleanupHpRoll();
-      setHpRolling(true);
-      setHpSettled(false);
-
-      hpIntervalRef.current = setInterval(() => {
-        setHpDisplayValue(rollDie(hd));
-      }, 50);
-
-      hpTimeoutRef.current = setTimeout(() => {
-        cleanupHpRoll();
-        const result = rollDie(hd);
-        setHpDisplayValue(result);
-        setValue("selectedHP", result, { shouldDirty: true });
-        setHpRolling(false);
-        setHpSettled(true);
-        hpTimeoutRef.current = setTimeout(() => setHpSettled(false), 400);
-      }, 800);
-    },
-    [hpRolling, cleanupHpRoll, setValue],
-  );
-
   // The dialog also disables Next while the save runs.
-  const isNextDisabled = EDIT_STEP_CONTENT[activeStep] === "hp" && !selectedHP;
+  const isNextDisabled = EDIT_STEP_CONTENT[activeStep] === "hp" && !hpSet(hpLevels, [selectedHP]);
 
   return {
     ...base,
@@ -250,10 +213,10 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevelId 
     selectedAttribute,
     isLastStep,
 
-    hpRolling,
-    hpSettled,
-    hpDisplayValue,
-    triggerHpRoll,
+    hpLevels,
+    hpValues: [selectedHP],
+    handleHpChange: (_index: number, hp: number | null) => hpField.onChange(hp),
+    hpInputRef: hpField.ref,
 
     attributeData,
     isLoadingAttributes,

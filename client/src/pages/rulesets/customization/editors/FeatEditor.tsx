@@ -6,9 +6,10 @@ import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { EMPTY_FEAT, type FeatFormData, FeatFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { byName, EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
 import type { Feat } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
+import { useEntitySave } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-import { type EditorProps, useEditorSave } from "./useEditorSave.ts";
+import type { EditorProps } from "./renderEditor.tsx";
 
 function featAptitudes(feat: Feat) {
   return feat.featsAptitudesInRules.flatMap((fa) => fa.aptitudesInRule ?? []).sort(byName);
@@ -30,21 +31,24 @@ export function FeatEditor({
   entity: feat,
   canEdit,
   locked,
-  onSaved,
+  followCopy,
+  refetchSaved,
 }: EditorProps<Feat>) {
   const form = useFormWith<FeatFormData>(EMPTY_FEAT);
   const sync = useFormSync(form, toFeatForm(feat), { key: recordKey, adoptKey, updatedAt: feat.updatedAt });
-  const saveMutation = useEditorSave({
-    sync,
+  const saveMutation = useEntitySave({
+    rulesetId,
     entityId,
-    onSaved,
+    sync,
+    followCopy,
+    storeSaved: refetchSaved,
     listKey: QUERY_KEYS.rulesets.section(rulesetId, "feats"),
     label: "Feat",
-    saveFn: (data: FeatFormData) =>
+    saveFn: (data: FeatFormData, updatedAt: string | undefined) =>
       parseResponse(
         rpc.api.rulesets[":id"].feats[":featId"].$put({
           param: { id: rulesetId, featId: entityId },
-          json: { ...data, updatedAt: sync.updatedAt() },
+          json: { ...data, updatedAt },
         }),
       ),
   });

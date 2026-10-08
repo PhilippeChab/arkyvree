@@ -3,13 +3,11 @@ import { useState } from "react";
 
 import {
   DialogFooter,
-  DiceSpinner,
   LinkButton,
-  LoadError,
   Modal,
+  OglLicenseText,
   SubsectionTitle,
 } from "@/client/src/components/common/index.ts";
-import { useOglLicense } from "@/client/src/hooks/index.ts";
 
 interface RulesetLicenseNoticeProps {
   name: string;
@@ -17,7 +15,6 @@ interface RulesetLicenseNoticeProps {
 
 export function RulesetLicenseNotice({ name }: RulesetLicenseNoticeProps) {
   const [open, setOpen] = useState(false);
-  const { data: text, isPending, error, refetch } = useOglLicense(open);
 
   return (
     <>
@@ -37,28 +34,8 @@ export function RulesetLicenseNotice({ name }: RulesetLicenseNoticeProps) {
                 license the application code or designate independent user-created content as Open Game Content.
               </Typography>
             </Stack>
-            {isPending && (
-              <Stack
-                role="status"
-                aria-label="Loading License"
-                direction="row"
-                sx={{ justifyContent: "center", py: 4 }}
-              >
-                <DiceSpinner />
-              </Stack>
-            )}
-            {!!error && text === undefined && (
-              <LoadError what="License text" error={error} onRetry={() => void refetch()} />
-            )}
-            {text !== undefined && (
-              <Typography
-                component="pre"
-                variant="body2"
-                sx={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere", fontFamily: "inherit", m: 0 }}
-              >
-                {text}
-              </Typography>
-            )}
+            {/* Its dialog's content mounts as it opens: the license loads then */}
+            <OglLicenseText />
           </Stack>
         </DialogContent>
         <DialogFooter onCancel={() => setOpen(false)} cancelLabel="Close" />

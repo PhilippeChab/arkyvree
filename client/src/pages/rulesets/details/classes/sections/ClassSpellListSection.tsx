@@ -16,6 +16,7 @@ import {
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import type { Spell } from "@/client/src/pages/rulesets/details/sections/dnd3.5/index.ts";
 import { useOpenEntity, useSpellLevelFilter } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 
 import type { ClassSectionProps } from "./classSections.ts";
 
@@ -53,7 +54,7 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
   const spells = listId === undefined ? [] : pageItems(data);
 
   const handleRowClick = (spell: Spell) => {
-    openEntity(`powers/${spell.id}/customization`);
+    openEntity(buildCustomizationPath("powers", spell.id));
   };
 
   const renderCell = (spell: Spell, columnKey: string) => {

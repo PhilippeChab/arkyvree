@@ -243,7 +243,25 @@ describe("component rules", () => {
     ]);
   });
 
-  test("a table's frame is a TableFrame, and the theme draws its header", async () => {
+  test("a confirmation that sends a request closes in its mutation's onSuccess", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/closed.tsx":
+            "export const c = <ConfirmDialog onConfirm={() => { if (target) { save.mutate(target); dialog.close(); } }} />;\n",
+          "client/src/flag.tsx":
+            "export const f = <DeleteDialog onConfirm={() => { setDeleteOpen(false); remove.mutate(id); }} />;\n",
+          "client/src/success.tsx":
+            "export const s = <ConfirmDialog onConfirm={() => save.mutate(target, { onSuccess: () => dialog.close() })} />;\n",
+          "client/src/noRequest.tsx":
+            "export const n = <ConfirmDialog onConfirm={() => { discard(); onClose(); }} />;\n",
+        },
+        ["confirm-dialogs"],
+      ),
+    ).toEqual(["confirm-dialogs client/src/closed.tsx", "confirm-dialogs client/src/flag.tsx"]);
+  });
+
+  test("a table's frame is a TableFrame, the theme draws its header, and a TableColumnsHead its columns'", async () => {
     expect(
       await lintRepo(
         {
@@ -262,10 +280,17 @@ describe("component rules", () => {
             "export const y = <TableBody><TableRow><TableCell sx={{ fontWeight: 600 }}>Total</TableCell></TableRow></TableBody>;\n",
           "client/src/components/common/TableFrame.tsx":
             'export const o = <TableContainer component={Paper} variant="outlined" />;\n',
+          "client/src/columns.tsx":
+            "export const c = <TableHead><TableRow>{COLUMNS.map((column) => <TableCell key={column.key}>{column.label}</TableCell>)}</TableRow></TableHead>;\n",
+          "client/src/labels.tsx":
+            "export const l = <TableHead><TableRow>{labels.map((label) => <TableCell key={label}>{label}</TableCell>)}</TableRow></TableHead>;\n",
+          "client/src/components/common/TableColumnsHead.tsx":
+            "export const h = <TableHead><TableRow>{columns.map((column) => <TableCell key={column.key}>{column.label}</TableCell>)}</TableRow></TableHead>;\n",
         },
         ["table-frames"],
       ),
     ).toEqual([
+      "table-frames client/src/columns.tsx",
       "table-frames client/src/framed.tsx",
       "table-frames client/src/strong.tsx",
       "table-frames client/src/tinted.tsx",
@@ -610,6 +635,63 @@ describe("component rules", () => {
       "row-actions client/src/class.tsx",
       "row-actions client/src/hidden.tsx",
       "row-actions client/src/render.tsx",
+    ]);
+  });
+
+  test("a ruleset entity page saves through useEntitySave and deletes through its layout", async () => {
+    const page =
+      "export const p = <EntityDetailLayout backTo={back} deletion={deletion}>{card}</EntityDetailLayout>;\n";
+    const dialog = "export const d = <EntityDeleteDialog open={open} what={what} restorable={restorable} />;\n";
+    const saved = "export const s = () => sync.saved(values, saved.updatedAt);\n";
+    expect(
+      await lintRepo(
+        {
+          "client/src/pages/rulesets/Page.tsx": page,
+          "client/src/pages/rulesets/OwnDelete.tsx": page + dialog,
+          "client/src/pages/rulesets/Section.tsx": dialog,
+          "client/src/pages/rulesets/Editor.tsx": saved,
+          "client/src/pages/profile/ProfilePage.tsx": saved,
+          "client/src/pages/rulesets/hooks/useEntitySave.ts": saved,
+          "client/src/pages/rulesets/components/EntityDetailLayout.tsx": page + dialog,
+        },
+        ["entity-pages"],
+      ),
+    ).toEqual([
+      "entity-pages client/src/pages/rulesets/Editor.tsx",
+      "entity-pages client/src/pages/rulesets/OwnDelete.tsx",
+    ]);
+  });
+
+  test("a target path's breadcrumbs and a modifier's cells are drawn by their one module each", async () => {
+    const crumbs = lines(
+      "export const c = segments.map((segment, index) => (",
+      '  <Stack key={index} direction="row">',
+      "    {index > 0 && <ChevronRightIcon />}",
+      "    <ValueChip label={segment} />",
+      "  </Stack>",
+      "));",
+    );
+    const value = "export const v = extractTemplatePath(modifier.value);\n";
+    const operator = 'export const o = <ValueChip label={formatOperator("modifier", modifier.operator)} />;\n';
+    expect(
+      await lintRepo(
+        {
+          "client/src/crumbs.tsx": crumbs,
+          "client/src/value.tsx": value,
+          "client/src/operator.tsx": operator,
+          "client/src/requirement.tsx": 'export const r = <ValueChip label={formatOperator("requirement", op)} />;\n',
+          "client/src/group.tsx":
+            "export const g = <Stack><Typography>Abilities</Typography><ChevronRightIcon /></Stack>;\n",
+          "client/src/table.tsx": "export const t = <ModifierValueCell modifier={modifier} />;\n",
+          "client/src/components/customization/TargetPathBreadcrumbs.tsx": crumbs,
+          "client/src/components/customization/ModifierCells.tsx": value + operator,
+        },
+        ["target-paths"],
+      ),
+    ).toEqual([
+      "target-paths client/src/crumbs.tsx",
+      "target-paths client/src/operator.tsx",
+      "target-paths client/src/value.tsx",
     ]);
   });
 });

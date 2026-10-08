@@ -13,8 +13,20 @@ import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 /**
- * A picker's level (a `StepLevel`), and what its list is checked against: the feats picked so far (`featPickString`),
- * and the planned levels before it, not saved yet (their class levels, ability increases and feat picks).
+ * What the class picker's list is checked against, encoded by `pendingPicks.ts`: the planned levels before it, not
+ * saved yet (their class levels and ability increases), and the feats and skill points picked over them.
+ */
+export interface ClassPicker {
+  pendingAbilityIds?: string;
+  pendingFeatPicks?: string;
+  pendingKlassLevelIds?: string;
+  pendingSkillAllocations?: string;
+}
+
+/**
+ * A picker's level (a `StepLevel`), and what its list is checked against, encoded by `pendingPicks.ts`: the feats
+ * picked so far (`featPickString`), and the planned levels before it, not saved yet (their class levels, ability
+ * increases and feat picks).
  */
 export interface PickerLevel extends StepLevel {
   pendingAbilityIds?: string;
@@ -60,22 +72,15 @@ export function attributeSlotsQuery(characterId: string, characterLevelId: strin
   });
 }
 
-/** The classes a character can add a level in, after the levels planned before it (not saved yet). */
-export function availableClassesQuery(
-  characterId: string,
-  search: string,
-  pendingKlassLevelIds?: string,
-  pendingAbilityIds?: string,
-  pendingFeatPicks?: string,
-  pendingSkillAllocations?: string,
-) {
+/** The classes a character can add a level in, after the levels planned before it and what they pick (not saved yet). */
+export function availableClassesQuery(characterId: string, search: string, picker: ClassPicker) {
   const query = {
     limit: "10",
     search: search || undefined,
-    pendingLevelClassLevelIds: pendingKlassLevelIds || undefined,
-    pendingLevelAbilityIds: pendingAbilityIds || undefined,
-    pendingFeatPicks: pendingFeatPicks || undefined,
-    pendingSkillAllocations: pendingSkillAllocations || undefined,
+    pendingLevelClassLevelIds: picker.pendingKlassLevelIds || undefined,
+    pendingLevelAbilityIds: picker.pendingAbilityIds || undefined,
+    pendingFeatPicks: picker.pendingFeatPicks || undefined,
+    pendingSkillAllocations: picker.pendingSkillAllocations || undefined,
   };
   return infiniteQueryOptions({
     queryKey: QUERY_KEYS.characters.levelUp.availableClasses(characterId, query),

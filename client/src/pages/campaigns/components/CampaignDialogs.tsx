@@ -3,9 +3,12 @@ import { useState } from "react";
 import { Controller, type UseFormReturn } from "react-hook-form";
 
 import { CreateDialog, DescriptionField, EditDialog, NameField } from "@/client/src/components/common/index.ts";
-import { BaseRulesetAlert, RulesetPicker } from "@/client/src/components/rulesets/index.ts";
-import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
-import { rulesetPickerQuery } from "@/client/src/lib/queries.ts";
+import {
+  BaseRulesetAlert,
+  type RulesetOption,
+  RulesetPicker,
+  useRulesetPickerOptions,
+} from "@/client/src/components/rulesets/index.ts";
 import { NAME_RULES, requiredRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
@@ -40,23 +43,8 @@ export function CreateCampaignDialog({
   onSubmit,
   isLoading,
 }: CreateCampaignDialogProps) {
-  const [rulesetSearch, setRulesetSearch] = useState("");
-  const debouncedRulesetSearch = useDebouncedValue(rulesetSearch);
-
-  const {
-    items: publishedRulesets,
-    isLoading: rulesetsLoading,
-    error: rulesetsError,
-    onScroll: handleRulesetsScroll,
-  } = useListboxQuery({
-    ...rulesetPickerQuery("published", debouncedRulesetSearch),
-    enabled: open,
-  });
-
-  const rulesets = publishedRulesets
-    .map((r) => ({ ...r, group: r.status === "Draft" ? ("My Drafts" as const) : ("Published" as const) }))
-    .sort((a, b) => (a.group === b.group ? 0 : a.group === "My Drafts" ? -1 : 1));
-  const [selectedRuleset, setSelectedRuleset] = useState<(typeof rulesets)[number] | null>(null);
+  const rulesetOptions = useRulesetPickerOptions("campaign", open);
+  const [selectedRuleset, setSelectedRuleset] = useState<RulesetOption | null>(null);
 
   return (
     <CreateDialog
@@ -76,16 +64,12 @@ export function CreateCampaignDialog({
         rules={requiredRules("Ruleset is required")}
         render={({ field, fieldState }) => (
           <RulesetPicker
-            rulesets={rulesets}
+            options={rulesetOptions}
             value={selectedRuleset}
             onChange={(ruleset) => {
               setSelectedRuleset(ruleset);
               field.onChange(ruleset?.id ?? "");
             }}
-            onSearch={setRulesetSearch}
-            onScroll={handleRulesetsScroll}
-            loading={rulesetsLoading}
-            loadError={rulesetsError}
             disabled={isLoading}
             error={fieldState.error}
             inputRef={field.ref}

@@ -9,7 +9,8 @@
  *   icon; its lead line is a `DialogContentText`, as a confirmation's; its content keeps the theme's padding, and its
  *   first block sits 8px under the title (`pt: 1`), as a create dialog's fields, the title right above it (in its form).
  * - `query-keys`: every query key comes from `lib/queryKeys.ts`: a key written as an array starts by spreading one
- *   (`[...QUERY_KEYS.rulesets.section(id, "feats"), search]`).
+ *   (`[...QUERY_KEYS.rulesets.section(id, "feats"), search]`). A key its domain's helper invalidates (a character's
+ *   sheet: `invalidateCharacter`) is invalidated through it, which refreshes what goes with it.
  * - `client-apis`: a mutation runs with `.mutate()` and its callbacks, never `.mutateAsync()`, and a loader is a
  *   `DiceSpinner`, never MUI's `CircularProgress`.
  * - `controlled-inputs`: every input is controlled, and a form's field is bound one way: through `useController` (the
@@ -52,8 +53,8 @@
  *   whatever it holds) is named in SCREAMING_CASE, and one a style's `sx` takes ends in `_SX`.
  * - `queries`: a query's options come from a `queryOptions` factory in a `…Queries.ts` module (or `lib/queries.ts`);
  *   one that can't run yet passes `skipToken` (`enabled` is a plain switch); it keeps its previous data with
- *   `keepPreviousData`, and its durations are named. The cache is written in a mutation's callbacks, and an infinite
- *   query's items are `pageItems(data)`.
+ *   `keepPreviousData`, and its durations are named. The cache is written in a mutation's callbacks (an entity save's
+ *   `storeSaved` is one), and an infinite query's items are `pageItems(data)`.
  * - `parsed-responses`: a request's answer is read with `parseResponse(…)`.
  * - `dot-notation`: a member named by an identifier is read with a dot (`rpc.api.characters.share.$post`); brackets are
  *   for a name that isn't one (`[":id"]`, `["class-levels"]`).
@@ -67,16 +68,18 @@
  *   a demo's countdown, `useDemoTimeRemaining`, which re-renders as it ticks, is the demo banner's alone.
  * - `navigation`: a control that only navigates is a link (`component={Link} to`), an external link an anchor, never
  *   `window.open`; the URL's search params are read through the shared hooks; React Router's `Link` is `Link`, MUI's
- *   `MuiLink`. A page's router state is read through its guard (`entityPageState(location.state)`), never a member of
- *   `location.state`; the `?redirect=` an auth page carries along is built by `authPagePath` and read by
- *   `useAuthRedirect` (`components/auth`), nowhere else.
+ *   `MuiLink`; a customization page's path is `buildCustomizationPath(entityType, id)`, never written by hand. A page's
+ *   router state is read through its guard (`entityPageState(location.state)`), never a member of `location.state`;
+ *   the `?redirect=` an auth page carries along is built by `authPagePath` and read by `useAuthRedirect`
+ *   (`components/auth`), nowhere else.
  * - `clickable-elements`: an element that opens or expands on click spreads `clickableProps` (and `CLICKABLE_SX`); a row
  *   that does takes `CLICKABLE_ROW_SX`, whose hover tint says it opens: a table's row spreading `clickableProps` or
  *   `toggleProps` names it in its `sx`, and no row tints itself (MUI's `hover`, an `"&:hover"` of its own).
  * - `tooltips`: a `Tooltip` has no arrow; one around a control that can be disabled wraps it in a `<span>`; one on a
  *   control its own text names takes `describeChild`.
  * - `form-fields`: a number field is `FormTextField number`, without a `type`; a field's rules are named
- *   (`lib/validation.ts`), never written in place.
+ *   (`lib/validation.ts`), never written in place. A field the viewer can't edit is `readOnly`, never a disabled one
+ *   restyled to look editable.
  * - `icons`: an icon comes from `components/icons`, where every icon the app shows is named, never from
  *   `@mui/icons-material`; there, a glyph goes by one name, one meaning per glyph.
  * - `no-types-modules`: a type lives with the code it describes (the component that owns it, the hook or the query that
@@ -127,6 +130,11 @@ const EFFECTS = new Set(["useEffect", "useLayoutEffect"]);
 /** The form writes an effect never makes, but `useFormSync`'s. */
 const FIELD_WRITES = new Set(["setValue", "resetField", "reset"]);
 
+/** The keys a domain's helper invalidates, with what goes with them, which no other module invalidates on its own */
+const HELPER_INVALIDATED_KEYS = new Map([
+  ["QUERY_KEYS.characters.detail", { module: "client/src/lib/queries.ts", name: "invalidateCharacter" }],
+]);
+
 /** The types that write a component's props in place, rather than name them */
 const IN_PLACE_TYPES = new Set([
   "ComponentProps",
@@ -146,8 +154,8 @@ const INTL_DATE_FORMATS = new Set(["DateTimeFormat", "RelativeTimeFormat"]);
 /** The boxes a dialog's content lays its blocks in, its lead line or its first field first */
 const LAYOUT_ELEMENTS = new Set(["Box", "Stack"]);
 
-/** A mutation's callbacks, where its writes to the cache go */
-const MUTATION_CALLBACKS = new Set(["onError", "onMutate", "onSettled", "onSuccess"]);
+/** A mutation's callbacks, where its writes to the cache go, and an entity save's `storeSaved`, its `onSuccess`'s step */
+const MUTATION_CALLBACKS = new Set(["onError", "onMutate", "onSettled", "onSuccess", "storeSaved"]);
 
 /** The elements a click doesn't reach from the keyboard, unless they spread `clickableProps` */
 const NON_INTERACTIVE = new Set([
@@ -171,6 +179,10 @@ const NON_INTERACTIVE = new Set([
 
 /** The requests an `rpc` endpoint makes. */
 const REQUEST_METHODS = new Set(["$get", "$post", "$put", "$patch", "$delete"]);
+
+/** A style's selector that restyles a disabled field's input or label (`& .MuiInputBase-input.Mui-disabled`) */
+const RESTYLED_DISABLED_FIELD =
+  /\.Mui(FilledInput|FormLabel|Input|InputBase|InputLabel|OutlinedInput|Select)\b[^,]*\.Mui-disabled/;
 
 /** The elements whose text names them, which a `Tooltip` describes rather than names (`describeChild`) */
 const TEXT_CONTROLS = new Set([
@@ -812,6 +824,16 @@ function createFormFields(context) {
         });
       }
     },
+    Property(node) {
+      const key = node.key.type === "Literal" ? node.key.value : null;
+      if (typeof key !== "string" || !RESTYLED_DISABLED_FIELD.test(key)) return;
+      context.report({
+        node: node.key,
+        message:
+          "A field the viewer can't edit is `readOnly` (`slotProps={{ input: { readOnly } }}`, `SelectField`'s " +
+          "`readOnly`), never a disabled one restyled to look editable.",
+      });
+    },
   };
 }
 
@@ -1081,6 +1103,15 @@ function createNavigation(context) {
         message: "React Router's `Link` is imported as `Link`, MUI's as `MuiLink`: one name for each, in every file.",
       });
     },
+    TemplateLiteral(node) {
+      if (!node.quasis.some((quasi) => /\/customization\b/.test(quasi.value.cooked ?? ""))) return;
+      context.report({
+        node,
+        message:
+          "A customization page's path is `buildCustomizationPath(entityType, id)` (`shared/customization/entities.ts`), " +
+          "never written by hand.",
+      });
+    },
   };
 }
 
@@ -1193,12 +1224,23 @@ function createQueries(context) {
 }
 
 function createQueryKeyRule(context) {
-  if (!inClient(context) || repoPath(context.filename) === "client/src/lib/queryKeys.ts") return {};
+  const file = repoPath(context.filename);
+  if (!inClient(context) || file === "client/src/lib/queryKeys.ts") return {};
   return {
     Property(node) {
-      if (node.key.type !== "Identifier" || node.key.name !== "queryKey" || node.value.type !== "ArrayExpression")
+      if (node.key.type !== "Identifier" || node.key.name !== "queryKey") return;
+      if (node.value.type === "CallExpression") {
+        const helper = HELPER_INVALIDATED_KEYS.get(memberPath(node.value.callee));
+        const call = node.parent.parent;
+        if (!helper || file === helper.module || call?.type !== "CallExpression") return;
+        if (calleeName(call) !== "invalidateQueries") return;
+        context.report({
+          node: node.value,
+          message: `This key is invalidated through \`${helper.name}\` (\`${helper.module}\`), which refreshes what goes with it.`,
+        });
         return;
-      if (node.value.elements[0]?.type === "SpreadElement") return;
+      }
+      if (node.value.type !== "ArrayExpression" || node.value.elements[0]?.type === "SpreadElement") return;
       context.report({
         node: node.value,
         message: "A query key comes from `lib/queryKeys.ts`: spread one first (`[...QUERY_KEYS.x.y(id), filter]`).",
@@ -1418,6 +1460,14 @@ function marksDirty(options) {
       (p) => p.type === "Property" && p.key.name === "shouldDirty" && p.value.type === "Literal" && p.value.value,
     )
   );
+}
+
+/** A member chain's dotted path (`QUERY_KEYS.characters.detail`), or null for anything else. */
+function memberPath(node) {
+  if (node.type === "Identifier") return node.name;
+  if (node.type !== "MemberExpression" || node.computed) return null;
+  const object = memberPath(node.object);
+  return object && `${object}.${node.property.name}`;
 }
 
 /** Whether `expression` names `name` anywhere in it: `sx={[open && CLICKABLE_ROW_SX, ROW_SX]}` names both. */

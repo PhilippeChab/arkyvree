@@ -1,6 +1,13 @@
 import { describe, expect, test } from "bun:test";
 
-import { findSlotConflict, HAND_LOCATIONS, isHandLocation, MAX_FINGER_ITEMS } from "@/shared/equipment.ts";
+import {
+  findSlotConflict,
+  getItemTypeLocations,
+  HAND_LOCATIONS,
+  isHandLocation,
+  isLocatedItemType,
+  MAX_FINGER_ITEMS,
+} from "@/shared/equipment.ts";
 
 /** An equipped entry at `location`, in `weaponSet` (stored from 0) for a hand. */
 function at(location: string, weaponSet: number | null = null) {
@@ -42,5 +49,20 @@ describe("A slot conflict", () => {
     expect(findSlotConflict("Off Hand", 0, [greatsword])).toEqual({ reason: "twoHanded", entry: greatsword });
     expect(findSlotConflict("Main Hand", 0, [sword])).toEqual({ reason: "sameHand", entry: sword });
     expect(findSlotConflict("Two Handed", 0, [greatsword])).toEqual({ reason: "sameHand", entry: greatsword });
+  });
+});
+
+describe("An item type's locations", () => {
+  test("are a weapon's hands, body armor's torso and a shield's off hand", () => {
+    expect(getItemTypeLocations("Weapon")).toEqual(HAND_LOCATIONS);
+    expect(getItemTypeLocations("Armor")).toEqual(["Torso"]);
+    expect(getItemTypeLocations("Shield")).toEqual(["Off Hand"]);
+  });
+
+  test("are any for another type, none, or a name the table's object answers", () => {
+    for (const type of ["Wondrous Item", null, "weapon", "constructor", "toString"]) {
+      expect(isLocatedItemType(type)).toBe(false);
+      expect(getItemTypeLocations(type)).toBeUndefined();
+    }
   });
 });

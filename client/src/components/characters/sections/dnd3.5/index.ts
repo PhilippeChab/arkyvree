@@ -5,6 +5,5 @@ export { BondedSection, type BondedSectionProps } from "./BondedSection.tsx";
 export { CombatAndSavesSection, type CombatAndSavesSectionProps, type SheetCombat } from "./CombatAndSavesSection.tsx";
 export { GroupedSkillRows, SkillRow } from "./GroupedSkillRows.tsx";
 export { SkillsSection, type SkillsSectionProps } from "./SkillsSection.tsx";
-export { spellLevelName } from "./spellLevels.ts";
 export { SpellsSection, type SpellsSectionProps } from "./SpellsSection.tsx";
 export { WeaponsSection, type WeaponsSectionProps } from "./WeaponsSection.tsx";

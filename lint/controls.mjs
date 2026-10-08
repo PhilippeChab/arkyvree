@@ -6,12 +6,14 @@
  * - `save-buttons`: an inline form's submit is a `SaveButton`, at the form's end on the right, enabled once something
  *   changes; an auth page's is its `AuthSubmitButton`, and a dialog's its `DialogFooter`'s action.
  * - `roll-buttons`: a roll of every die a step asks for is a labelled `RollAllButton`, never a bare dice icon.
+ * - `dice-rolls`: a roll shows through `useDiceRoll`, timed by `DICE_ROLL`: never a timer of its own that rolls.
  * - `page-actions`: a page header's action is a `PageActionButton` (a create, or another action given its icon).
  * - `load-more-buttons`: the foot that loads a list's next page is a `LoadMoreButton`, labelled "Load More" wherever
  *   it shows.
  * - `chips`: a chip is one of the family (`components/common`), its role setting its look at the theme's small size,
  *   in a list, a card or a page's header alike: a `RoleChip` (outlined), a `StatusChip` (filled), a `CountChip`
- *   (outlined), a `ValueChip` (outlined red, a link when it names a record) or a `ChoiceChip`; MUI's `Chip` is the
+ *   (outlined), a `ValueChip` (outlined red, a link through its `to` when it names a record, never a link in its
+ *   label) or a `ChoiceChip`; MUI's `Chip` is the
  *   family's alone. A chip is a value or a choice, never an action: a click with a fixed label is a `Button`'s.
  * - `help-labels`: help is a `HelpLabel` wherever it's given (its question-mark icon, at 16px): never a help icon in a
  *   tooltip of its own, nor a "What's this?".
@@ -27,6 +29,9 @@ const CHIP_OWNERS = new Set(["client/src/components/common/ChoiceChip.tsx", "cli
 
 /** The chips of a role (a choice's is `ChoiceChip`, which a click picks). */
 const CHIP_ROLES = new Set(["Chip", "CountChip", "RoleChip", "StatusChip", "ValueChip"]);
+
+/** The module that shows a roll as it tumbles, its timers its own. */
+const DICE_ROLL_OWNER = "client/src/pages/characters/useDiceRoll.ts";
 
 /** The colors that carry an action's intent (docs/ui-buttons.md): destructive, caution, positive. */
 const INTENT_COLORS = new Set(["error", "success", "warning"]);
@@ -70,6 +75,14 @@ function createChips(context) {
   if (!inClient(context)) return {};
   const owner = CHIP_OWNERS.has(repoPath(context.filename));
   return {
+    JSXAttribute(node) {
+      if (node.name.name !== "label" || !CHIP_ROLES.has(elementName(node.parent.parent))) return;
+      if (!holdsLink(attributeValue(node))) return;
+      context.report({
+        node,
+        message: "A chip that names a record links through its `to` (`ValueChip`), never a link in its label.",
+      });
+    },
     ImportSpecifier(node) {
       if (owner || node.imported.name !== "Chip" || node.parent.source.value !== "@mui/material") return;
       context.report({
@@ -86,6 +99,21 @@ function createChips(context) {
       context.report({
         node: node.openingElement,
         message: "A chip is a value or a choice, never an action: a click with a fixed label is a `Button`'s.",
+      });
+    },
+  };
+}
+
+function createDiceRolls(context) {
+  if (!inClient(context) || inFile(context, DICE_ROLL_OWNER)) return {};
+  return {
+    CallExpression(node) {
+      if (!isRollCall(node) || !inTimer(node)) return;
+      context.report({
+        node,
+        message:
+          "A roll shows through `useDiceRoll` (`pages/characters`), timed by `DICE_ROLL`: never a timer of its own " +
+          "that rolls.",
       });
     },
   };
@@ -171,14 +199,53 @@ function createSaveButtons(context) {
   };
 }
 
+/** Whether `node`, an expression or an element, holds a link: React Router's or MUI's, or an element made one. */
+function holdsLink(node) {
+  if (!node) return false;
+  if (node.type === "ParenthesizedExpression") return holdsLink(node.expression);
+  if (node.type === "ConditionalExpression") return holdsLink(node.consequent) || holdsLink(node.alternate);
+  if (node.type === "LogicalExpression") return holdsLink(node.right);
+  if (node.type === "JSXFragment") return node.children.some(holdsLink);
+  if (node.type === "JSXExpressionContainer") return holdsLink(node.expression);
+  if (node.type !== "JSXElement") return false;
+  const component = attributeValue(attribute(node, "component"));
+  if (
+    ["Link", "MuiLink"].includes(elementName(node)) ||
+    (component?.type === "Identifier" && component.name === "Link")
+  )
+    return true;
+  return node.children.some(holdsLink);
+}
+
 /** Whether the linted file is `file`, the one module the rule leaves the raw pattern to. */
 function inFile(context, file) {
   return repoPath(context.filename) === file;
 }
 
+/** Whether a call runs in a timer's callback: `setInterval(() => …)`, `setTimeout(function () { … })`. */
+function inTimer(node) {
+  for (let p = node.parent; p; p = p.parent) {
+    if (p.type !== "ArrowFunctionExpression" && p.type !== "FunctionExpression") continue;
+    const call = p.parent;
+    if (call?.type !== "CallExpression" || call.arguments[0] !== p) continue;
+    const name = call.callee.type === "MemberExpression" ? call.callee.property.name : call.callee.name;
+    if (name === "setInterval" || name === "setTimeout") return true;
+  }
+  return false;
+}
+
+/** Whether a call rolls: a die's (`rollDie`), a roll method's (`roll()`, `rollScore()`), or a random number's. */
+function isRollCall(node) {
+  const callee = node.callee;
+  const name = callee.type === "MemberExpression" && !callee.computed ? callee.property.name : callee.name;
+  if (callee.type === "MemberExpression" && callee.object.name === "Math") return name === "random";
+  return /^roll(?:[A-Z]|$)/.test(name ?? "");
+}
+
 export default {
   "button-intents": { meta: { type: "suggestion" }, create: createButtonIntents },
   chips: { meta: { type: "suggestion" }, create: createChips },
+  "dice-rolls": { meta: { type: "suggestion" }, create: createDiceRolls },
   "help-labels": { meta: { type: "suggestion" }, create: createHelpLabels },
   "load-more-buttons": { meta: { type: "suggestion" }, create: createLoadMoreButtons },
   "page-actions": { meta: { type: "suggestion" }, create: createPageActions },

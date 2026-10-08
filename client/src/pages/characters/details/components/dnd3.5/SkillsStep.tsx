@@ -18,6 +18,7 @@ import { GroupedSkillRows, SkillRow } from "@/client/src/components/characters/s
 import { DiceSpinner, LoadError, SubsectionTitle } from "@/client/src/components/common/index.ts";
 import { CasinoIcon } from "@/client/src/components/icons/index.ts";
 import { useLatest } from "@/client/src/hooks/index.ts";
+import { formatPointsSpent, pointsSpent } from "@/client/src/pages/characters/pointsSpent.ts";
 import { computeMaxSkillRank } from "@/shared/dnd3.5/skills.ts";
 
 import {
@@ -173,10 +174,9 @@ export function SkillsStep({ wizard }: SkillsStepProps) {
     (skillId: string, rawPoints: number) => {
       if (!skillPointsToSpend) return;
       const allocs = latestAllocations.current;
-      const currentTotal = Object.entries(allocs)
-        .filter(([id]) => id !== skillId)
-        .reduce((sum, [, points]) => sum + points, 0);
-      const maxFromAvailable = skillPointsToSpend - currentTotal;
+      // What the other skills spend
+      const spentElsewhere = pointsSpent(allocs) - (allocs[skillId] ?? 0);
+      const maxFromAvailable = skillPointsToSpend - spentElsewhere;
       const clamped = Math.max(0, Math.min(rawPoints, maxFromAvailable));
       setAllocations({ ...allocs, [skillId]: clamped });
     },
@@ -187,8 +187,8 @@ export function SkillsStep({ wizard }: SkillsStepProps) {
   if (skillsError && !skillData) return <LoadError what="Skills" error={skillsError} />;
   if (!skillData || !skillLevels) return null;
 
-  const pointsSpent = Object.values(skillPointAllocations).reduce((sum, points) => sum + points, 0);
-  const pointsRemaining = skillData.skillPointsToSpend - pointsSpent;
+  const spent = pointsSpent(skillPointAllocations);
+  const pointsRemaining = skillData.skillPointsToSpend - spent;
 
   return (
     <Box>
@@ -206,14 +206,14 @@ export function SkillsStep({ wizard }: SkillsStepProps) {
             gutterBottom
             sx={{
               color:
-                pointsSpent > skillData.skillPointsToSpend
+                spent > skillData.skillPointsToSpend
                   ? "error.main"
-                  : pointsSpent === skillData.skillPointsToSpend
+                  : spent === skillData.skillPointsToSpend
                     ? "success.main"
                     : "text.secondary",
             }}
           >
-            Points Spent: {pointsSpent} / {skillData.skillPointsToSpend}
+            {formatPointsSpent(spent, skillData.skillPointsToSpend)}
           </Typography>
           {pointsRemaining > 0 && (
             <Typography variant="subtitle2" component="span" sx={{ color: "warning.main" }}>

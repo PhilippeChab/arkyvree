@@ -14,6 +14,7 @@ import {
   getCustomizableEntityName,
 } from "@/server/services/rulesets/customization/customizableEntities.ts";
 import {
+  annotateModifiers,
   getTargetPathsWithLabels,
   resolvePathValueType,
 } from "@/server/services/rulesets/customization/targetPaths/index.ts";
@@ -206,16 +207,10 @@ class ModifiersService {
       // Compose step pre-merges sibling modifiers into the winner's bucket with
       // sourceId remapped. Filter by sourceType to isolate the requested family.
       const allMods = rulesetData.modifiersBySource.get(resolvedId) ?? [];
-      const modifiers = allMods.filter((m) => m.sourceType === entityType);
-
-      const { paths, segmentLabels } = await getTargetPathsWithLabels(rulesetId, "modifier");
-      const pathMap = new Map(paths.map((p) => [p.path, p]));
-
-      return modifiers.map((m) => {
-        const pathDef = pathMap.get(m.target);
-        const valueLabel = pathDef?.possibleValues?.find((pv) => pv.value === m.value)?.label ?? null;
-        return { ...m, valueLabel, targetLabels: pickTargetLabels([m.target, m.value], segmentLabels) };
-      });
+      return annotateModifiers(
+        rulesetId,
+        allMods.filter((m) => m.sourceType === entityType),
+      );
     });
   }
 

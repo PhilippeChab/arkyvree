@@ -31,10 +31,7 @@ import { AddIcon, DeleteIcon, EditIcon, RequirementsIcon } from "@/client/src/co
 import { formatDate } from "@/client/src/lib/formatDate.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import { EntityDeleteDialog } from "@/client/src/pages/rulesets/components/index.ts";
-import {
-  customizationSection,
-  requirementsQuery,
-} from "@/client/src/pages/rulesets/customization/customizationSectionQueries.ts";
+import { requirementsQuery } from "@/client/src/pages/rulesets/customization/customizationSectionQueries.ts";
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import type { CustomizationOwnerType } from "@/shared/customization/entities.ts";
@@ -119,7 +116,6 @@ export function RequirementsSection({
   } = useRulesetSection({
     createDefaults: EMPTY_REQUIREMENT,
     rulesetId: ruleset.id,
-    sectionName: customizationSection(entityType, entityId, "requirements"),
     label: "Requirement",
     data: externalData,
     query: requirementsQuery(ruleset.id, entityType, entityId),
@@ -395,7 +391,9 @@ export function RequirementsSection({
         {...createDialogProps}
         title="Create Requirement"
         onSubmit={(data) =>
-          createMutation.mutate(requirementPayload(createRequirementType, computeNextLevel(createParentLevel), data))
+          createMutation.mutate({
+            data: requirementPayload(createRequirementType, computeNextLevel(createParentLevel), data),
+          })
         }
         maxWidth="md"
       >

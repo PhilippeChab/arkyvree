@@ -1,6 +1,6 @@
 import { Typography } from "@mui/material";
 import { keepPreviousData } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { DiceSpinner } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
@@ -25,34 +25,13 @@ export function AddLevelModal({ open, onClose, onExited, characterId, baseRules 
   const [klassSearch, setKlassSearch] = useState("");
   const debouncedKlassSearch = useDebouncedValue(klassSearch);
 
-  // One per planned level (empty slots don't count), as the server pairs them with the levels.
-  const allAbilityIds = useMemo(() => {
-    const levelCount = wizard.classPlan.filter((klass) => klass !== null).length;
-    if (levelCount === 0) return undefined;
-    return Array.from({ length: levelCount }, (_, i) => wizard.abilityIncreases[i] ?? "null").join(",");
-  }, [wizard.classPlan, wizard.abilityIncreases]);
-
-  const pendingSkillAllocations = useMemo(() => {
-    const entries = Object.entries(wizard.skillPointAllocations)
-      .filter(([, rank]) => rank > 0)
-      .map(([skillId, rank]) => `${skillId}:${rank}`);
-    return entries.length > 0 ? entries.join(",") : undefined;
-  }, [wizard.skillPointAllocations]);
-
   const {
     items: availableKlasses,
     isLoading: isLoadingKlasses,
     error: klassesError,
     onScroll: handleKlassListScroll,
   } = useListboxQuery({
-    ...availableClassesQuery(
-      characterId,
-      debouncedKlassSearch,
-      wizard.allKlassLevelIds,
-      allAbilityIds,
-      wizard.allSelectedFeatPickString,
-      pendingSkillAllocations,
-    ),
+    ...availableClassesQuery(characterId, debouncedKlassSearch, wizard.classPicker),
     enabled: open && wizard.activeStep === 0,
     // Adding a class to the plan re-keys the query, which would drop the
     // data while it refetches. Keep the previous result visible so the
@@ -103,7 +82,7 @@ export function AddLevelModal({ open, onClose, onExited, characterId, baseRules 
           />
         );
       case "hp":
-        return <Sections.AddHpStep wizard={wizard} />;
+        return <Sections.HpStep wizard={wizard} />;
       case "attributes":
         return <Sections.AddAttributeStep wizard={wizard} baseRules={baseRules} />;
       case "skills":

@@ -1,30 +1,13 @@
-import {
-  Skeleton,
-  type SxProps,
-  Table,
-  TableBody,
-  TableCell,
-  type TableCellProps,
-  TableHead,
-  TableRow,
-  type Theme,
-} from "@mui/material";
+import { Skeleton, type SxProps, Table, TableBody, TableCell, TableRow, type Theme } from "@mui/material";
 
+import { type TableColumn, TableColumnsHead } from "./TableColumnsHead.tsx";
 import { TableFrame } from "./TableFrame.tsx";
 
 interface TableSkeletonProps {
   /** The table's columns: their header and width */
-  columns: TableColumn[];
+  columns: readonly TableColumn[];
   sx?: SxProps<Theme>;
   tableSx?: SxProps<Theme>;
-}
-
-/** A table's column: its key, its header and its width. */
-export interface TableColumn {
-  align?: TableCellProps["align"];
-  key: string;
-  label: string;
-  width?: string;
 }
 
 /** A table's first load: its frame and header, over rows of placeholder lines. */
@@ -32,15 +15,7 @@ export function TableSkeleton({ columns, sx, tableSx }: TableSkeletonProps) {
   return (
     <TableFrame sx={sx}>
       <Table sx={tableSx}>
-        <TableHead>
-          <TableRow>
-            {columns.map((column) => (
-              <TableCell key={column.key} align={column.align} sx={{ width: column.width }}>
-                {column.label}
-              </TableCell>
-            ))}
-          </TableRow>
-        </TableHead>
+        <TableColumnsHead columns={columns} />
         <TableBody>
           {[...Array(5)].map((_, index) => (
             <TableRow key={index}>

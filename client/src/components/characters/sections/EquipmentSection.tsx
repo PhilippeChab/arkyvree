@@ -23,7 +23,7 @@ import { useDebouncedValue, useDialogState, useFormWith, useListboxQuery } from 
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
-import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
+import { invalidateCharacter } from "@/client/src/lib/queries.ts";
 import { requiredRules } from "@/client/src/lib/validation.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
@@ -171,9 +171,7 @@ export function EquipmentSection({
       ),
     onSuccess: () => {
       snackbar.success("Item added to inventory");
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.characters.detail(characterId),
-      });
+      invalidateCharacter(queryClient, characterId);
       setAddDialogOpen(false);
       setValidationErrors([]);
     },
@@ -198,9 +196,7 @@ export function EquipmentSection({
       ),
     onSuccess: () => {
       snackbar.success("Item updated");
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.characters.detail(characterId),
-      });
+      invalidateCharacter(queryClient, characterId);
       editDialog.close();
       setValidationErrors([]);
     },
@@ -216,9 +212,7 @@ export function EquipmentSection({
       ),
     onSuccess: () => {
       snackbar.success("Item removed from inventory");
-      queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.characters.detail(characterId),
-      });
+      invalidateCharacter(queryClient, characterId);
       deleteDialog.close();
     },
     onError: (error) => {

@@ -10,16 +10,20 @@ import {
   ToggleLabel,
 } from "@/client/src/components/common/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
+import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 
 import { SheetSection } from "./SheetSection.tsx";
 
 type Feat = CharacterDetail["classes"][string]["levels"][number]["feats"][number];
 
 interface FeatRowProps {
-  description?: string | null;
+  /** Its heading's level: `h4` under the Granted heading. */
+  component?: "h3" | "h4";
   extra?: ReactNode;
-  label: string;
-  name: ReactNode;
+  feat: Pick<Feat, "description" | "id" | "name">;
+  rulesetId?: string;
+  /** Said after its name: a stackable feat's count, "(x2)". */
+  suffix?: string;
 }
 
 interface FeatsSectionProps {
@@ -34,15 +38,31 @@ interface GrantedFeatsSectionProps {
   rulesetId?: string;
 }
 
-function FeatRow({ name, label, description, extra }: FeatRowProps) {
+/** A feat on the sheet: its name, a link to its page in the ruleset, over its description, and its details to open. */
+function FeatRow({ feat, suffix, rulesetId, extra, component }: FeatRowProps) {
   const [open, setOpen] = useState(false);
   const hasExtra = extra != null && extra !== false;
+  const label = suffix ? `${feat.name} ${suffix}` : feat.name;
+  const name =
+    rulesetId && feat.id ? (
+      <MuiLink
+        component={Link}
+        to={`/rulesets/${rulesetId}/${buildCustomizationPath("feats", feat.id)}`}
+        target="_blank"
+        underline="hover"
+        sx={{ color: "primary.main" }}
+      >
+        {label}
+      </MuiLink>
+    ) : (
+      label
+    );
 
   return (
     // Without details, the bar runs a little past the description
     <Stack spacing={1} sx={{ borderLeft: 4, borderColor: "primary.main", pl: 2, pb: hasExtra ? 0 : 1 }}>
       <Box>
-        <EntryTitle>
+        <EntryTitle component={component}>
           {hasExtra ? (
             <ToggleLabel open={open} onToggle={() => setOpen((p) => !p)} label={`${label} Details`}>
               {name}
@@ -52,7 +72,7 @@ function FeatRow({ name, label, description, extra }: FeatRowProps) {
           )}
         </EntryTitle>
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
-          {description || <EmptyValue />}
+          {feat.description || <EmptyValue />}
         </Typography>
       </Box>
       {hasExtra && (
@@ -78,31 +98,9 @@ function GrantedFeatsSection({ feats, rulesetId }: GrantedFeatsSectionProps) {
       {/* Mounted while closed: the space above it stays, as the list opens and closes within it */}
       <Collapse in={open} timeout="auto">
         <Stack spacing={3}>
-          {feats.map((feat) => {
-            const featLink = rulesetId && feat.id ? `/rulesets/${rulesetId}/feats/${feat.id}/customization` : undefined;
-            return (
-              <Box key={feat.id} sx={{ borderLeft: 4, borderColor: "primary.main", pl: 2, pb: 1 }}>
-                <EntryTitle component="h4">
-                  {featLink ? (
-                    <MuiLink
-                      component={Link}
-                      to={featLink}
-                      target="_blank"
-                      underline="hover"
-                      sx={{ color: "primary.main" }}
-                    >
-                      {feat.name}
-                    </MuiLink>
-                  ) : (
-                    feat.name
-                  )}
-                </EntryTitle>
-                <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                  {feat.description || <EmptyValue />}
-                </Typography>
-              </Box>
-            );
-          })}
+          {feats.map((feat) => (
+            <FeatRow key={feat.id} feat={feat} rulesetId={rulesetId} component="h4" />
+          ))}
         </Stack>
       </Collapse>
     </Stack>
@@ -122,18 +120,6 @@ export function FeatsSection({ classes, virtualFeats, rulesetId, renderFeatExtra
     return acc;
   }, {});
 
-  const renderFeatName = (feat: { id?: string; name: string }, suffix?: string) => {
-    const featLink = rulesetId && feat.id ? `/rulesets/${rulesetId}/feats/${feat.id}/customization` : undefined;
-    const label = suffix ? `${feat.name} ${suffix}` : feat.name;
-    return featLink ? (
-      <MuiLink component={Link} to={featLink} target="_blank" underline="hover" sx={{ color: "primary.main" }}>
-        {label}
-      </MuiLink>
-    ) : (
-      label
-    );
-  };
-
   const featElements = Object.values(groupedFeats).flatMap((featGroup, groupIndex) => {
     const feat = featGroup[0];
     const count = featGroup.length;
@@ -142,9 +128,9 @@ export function FeatsSection({ classes, virtualFeats, rulesetId, renderFeatExtra
       return (
         <FeatRow
           key={`${feat.name}-${groupIndex}`}
-          name={renderFeatName(feat, `(x${count})`)}
-          label={`${feat.name} (x${count})`}
-          description={feat.description}
+          feat={feat}
+          suffix={`(x${count})`}
+          rulesetId={rulesetId}
           extra={renderFeatExtra?.(feat)}
         />
       );
@@ -153,9 +139,8 @@ export function FeatsSection({ classes, virtualFeats, rulesetId, renderFeatExtra
     return featGroup.map((featInstance, instanceIndex) => (
       <FeatRow
         key={`${featInstance.name}-${groupIndex}-${instanceIndex}`}
-        name={renderFeatName(featInstance)}
-        label={featInstance.name}
-        description={featInstance.description}
+        feat={featInstance}
+        rulesetId={rulesetId}
         extra={renderFeatExtra?.(featInstance)}
       />
     ));

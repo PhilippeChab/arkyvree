@@ -81,6 +81,8 @@ interface SelectFieldProps<T extends FieldValues> {
   onMenuScroll?: UIEventHandler<HTMLElement>;
   /** The choices; a plain string is both value and label. */
   options: readonly SelectOption[];
+  /** Shown as it is, its menu closed: a viewer who can't edit it reads it (`readOnly`, never a disabled field). */
+  readOnly?: boolean;
   rules?: ControllerProps<T>["rules"];
   size?: "small" | "medium";
   sx?: SxProps<Theme>;
@@ -201,6 +203,7 @@ export function SelectField<T extends FieldValues>({
   helperText,
   loadError,
   disabled,
+  readOnly,
   size,
   sx,
   onMenuScroll,
@@ -229,11 +232,12 @@ export function SelectField<T extends FieldValues>({
           disabled={disabled}
           size={size}
           sx={sx}
-          slotProps={
-            onMenuScroll && {
-              select: { MenuProps: { slotProps: { paper: { sx: { maxHeight: 300 }, onScroll: onMenuScroll } } } },
-            }
-          }
+          slotProps={{
+            input: { readOnly },
+            select: onMenuScroll && {
+              MenuProps: { slotProps: { paper: { sx: { maxHeight: 300 }, onScroll: onMenuScroll } } },
+            },
+          }}
         >
           {emptyLabel && <MenuItem value="">{emptyLabel}</MenuItem>}
           {choices.map((choice) => (

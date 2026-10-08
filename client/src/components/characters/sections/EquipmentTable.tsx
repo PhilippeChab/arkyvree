@@ -14,6 +14,7 @@ import { Link } from "react-router-dom";
 
 import { EmptyValue, ROW_ACTIONS_HOVER_SX, RowActions, StatusChip } from "@/client/src/components/common/index.ts";
 import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
+import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 import { capitalize } from "@/shared/text.ts";
 
 import { type EncumbranceData, type EquipmentRow, formatSlotDisplay } from "./equipment.ts";
@@ -64,7 +65,7 @@ export function EquipmentTable<T extends EquipmentTableRow>({
                   {rulesetId ? (
                     <MuiLink
                       component={Link}
-                      to={`/rulesets/${rulesetId}/items/${entry.itemId}/customization`}
+                      to={`/rulesets/${rulesetId}/${buildCustomizationPath("items", entry.itemId)}`}
                       target="_blank"
                       underline="hover"
                     >

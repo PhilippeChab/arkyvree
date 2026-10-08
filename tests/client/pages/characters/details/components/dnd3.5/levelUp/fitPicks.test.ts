@@ -1,12 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
 import {
-  featPickString,
   fitFeats,
   fitPowers,
   fitSkillPoints,
   openPoolOf,
   withoutPick,
+  withPick,
 } from "@/client/src/pages/characters/details/components/dnd3.5/levelUp/fitPicks.ts";
 
 /** A feat that grants `grants` slots in pool `poolId`. */
@@ -61,15 +61,13 @@ describe("fitting a level's feats to its pools", () => {
     expect(fitFeats(feats, undefined)).toEqual({ feats, pools: {} });
   });
 
-  test("closes the picker of a pool with no slots, and lists the picks for the endpoints", () => {
+  test("closes the picker of a pool with no slots", () => {
     const pools = { general: featPool("general", 1), bonus: featPool("bonus", 0) };
     expect([openPoolOf("general", pools), openPoolOf("bonus", pools), openPoolOf(null, pools)]).toEqual([
       "general",
       null,
       null,
     ]);
-    expect(featPickString({ general: [feat("b"), feat("a")] })).toBe("a:general,b:general");
-    expect(featPickString({})).toBeUndefined();
   });
 });
 
@@ -96,7 +94,9 @@ describe("fitting a level's spells to its pools", () => {
     expect(fitPowers(powers, undefined)).toBe(powers);
   });
 
-  test("removes one pick", () => {
+  test("adds a pick last in its pool, and removes one", () => {
+    expect(withPick({ bard: [power("a")] }, "bard", power("b"))).toEqual({ bard: [power("a"), power("b")] });
+    expect(withPick({}, "bard", power("a"))).toEqual({ bard: [power("a")] });
     expect(withoutPick({ bard: [power("a"), power("b")] }, "bard", "a")).toEqual({ bard: [power("b")] });
   });
 });

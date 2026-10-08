@@ -6,18 +6,21 @@ import { computeAbilityModifier } from "@/client/src/components/characters/index
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useListboxQuery } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
-import { rollDie } from "@/client/src/pages/characters/dice.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { computeLevelSkillPoints } from "@/shared/dnd3.5/skills.ts";
 
-import { featPickString, fitFeats, fitPowers, fitSkillPoints, openPoolOf } from "./fitPicks.ts";
+import { plannedLevel } from "./classPlan.ts";
+import { fitFeats, fitPowers, fitSkillPoints, openPoolOf } from "./fitPicks.ts";
+import { type HpLevel, hpSet } from "./hitPoints.ts";
 import {
   availableFeatsGroupedQuery,
   availablePowersQuery,
+  type ClassPicker,
   levelPreviewQuery,
   type PickerLevel,
 } from "./levelUpQueries.ts";
 import type { SelectedKlass } from "./levelUpTypes.ts";
+import { featPickString, pendingLevelsOf, skillPointString } from "./pendingPicks.ts";
 import type { SkillLevels } from "./skillLevels.ts";
 import { pickIds, useLevelWizardBase } from "./useLevelWizardBase.ts";
 
@@ -75,16 +78,11 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     setClassPlan(next);
   };
 
-  // Derive adjusted nextLevel values — each duplicate class increments from the server's base
-  const adjustedClassPlan = useMemo(() => {
-    const counters = new Map<string, number>();
-    return classPlan.map((k) => {
-      if (!k) return k;
-      const count = counters.get(k.id) ?? 0;
-      counters.set(k.id, count + 1);
-      return { ...k, nextLevel: k.nextLevel + count };
-    });
-  }, [classPlan]);
+  // Each class at the level it takes in the plan: a class planned again takes the level after
+  const adjustedClassPlan = useMemo(
+    () => classPlan.map((k, index) => k && { ...k, nextLevel: plannedLevel(k, classPlan, index) }),
+    [classPlan],
+  );
 
   const handleAddLevel = useCallback(() => {
     const key = slotCounter.current++;
@@ -140,29 +138,7 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     });
   }, []);
 
-  const handleHpRoll = useCallback(
-    (index: number) => {
-      const klass = validClassPlan[index];
-      if (!klass) return;
-      const result = rollDie(klass.hd);
-      setHpValues((prev) => {
-        const next = [...prev];
-        next[index] = result;
-        return next;
-      });
-    },
-    [validClassPlan],
-  );
-
-  const handleHpRollAll = useCallback(() => {
-    setHpValues(validClassPlan.map((klass) => rollDie(klass.hd)));
-  }, [validClassPlan]);
-
-  const handleHpMaxAll = useCallback(() => {
-    setHpValues(validClassPlan.map((klass) => klass.hd));
-  }, [validClassPlan]);
-
-  const hpLevels = useMemo(
+  const hpLevels = useMemo<HpLevel[]>(
     () =>
       adjustedClassPlan
         .filter((k): k is SelectedKlass => k !== null)
@@ -313,13 +289,16 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
   const isLoadingPowers = previewQuery.isLoading;
   const powersError = previewQuery.error;
 
-  // Pending level context for feat/power queries
+  // The planned levels, not saved yet, which the pickers check their options after
   const previewLevelDetails = previewQuery.data?.levelDetails;
-  const allKlassLevelIds = useMemo(() => {
-    if (!previewLevelDetails) return undefined;
-    const ids = previewLevelDetails.map((d) => d.klassLevelId);
-    return ids.length > 0 ? ids.join(",") : undefined;
-  }, [previewLevelDetails]);
+  const pendingLevels = pendingLevelsOf(previewLevelDetails, abilityIncreases);
+
+  // The class picker's: every planned level, and what's picked over them so far
+  const classPicker: ClassPicker = {
+    ...pendingLevels,
+    pendingFeatPicks: allSelectedFeatPickString,
+    pendingSkillAllocations: skillPointString(skillPointAllocations),
+  };
 
   // Current slot level context (for feat/power queries)
   const firstClass = useMemo(
@@ -349,28 +328,14 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
 
   // Use the slot-level context: query available feats at the specific level
   // where the next pick will land, not the final planned level.
-  const slotLevelDetail = previewQuery.data?.levelDetails[currentFeatSlotLevelIndex];
-  const pendingKlassLevelIdsUpToSlot = useMemo(() => {
-    const details = previewQuery.data?.levelDetails;
-    if (!details) return undefined;
-    const ids = details.slice(0, currentFeatSlotLevelIndex + 1).map((d) => d.klassLevelId);
-    return ids.length > 0 ? ids.join(",") : undefined;
-  }, [previewQuery.data?.levelDetails, currentFeatSlotLevelIndex]);
-
-  const pendingAbilityIdsUpToSlot = useMemo(() => {
-    const details = previewQuery.data?.levelDetails;
-    if (!details) return undefined;
-    const ids = details.slice(0, currentFeatSlotLevelIndex + 1).map((_, i) => abilityIncreases[i] ?? "null");
-    return ids.join(",");
-  }, [previewQuery.data?.levelDetails, currentFeatSlotLevelIndex, abilityIncreases]);
+  const slotLevelDetail = previewLevelDetails?.[currentFeatSlotLevelIndex];
 
   // The level the next feat pick lands on, and what it's checked against: the feat list's, and a family's variants'
   const featPicker: PickerLevel = {
     classId: slotLevelDetail?.klassId ?? firstClass?.id,
     level: slotLevelDetail?.level,
     selectedFeatPicks: allSelectedFeatPickString,
-    pendingKlassLevelIds: pendingKlassLevelIdsUpToSlot,
-    pendingAbilityIds: pendingAbilityIdsUpToSlot,
+    ...pendingLevelsOf(previewLevelDetails, abilityIncreases, currentFeatSlotLevelIndex + 1),
     // None of the picks is saved yet: they're all pending
     pendingFeatPicks: allSelectedFeatPickString,
   };
@@ -397,7 +362,7 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
       classId: firstClass?.id,
       level: lastLevel,
       selectedFeatPicks: allSelectedFeatPickString,
-      pendingKlassLevelIds: allKlassLevelIds,
+      ...pendingLevels,
       // None of the picks is saved yet: they're all pending
       pendingFeatPicks: allSelectedFeatPickString,
     }),
@@ -477,11 +442,11 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
       case "class-plan":
         return validClassCount < 1;
       case "hp":
-        return hpValues.some((v) => v === null);
+        return !hpSet(hpLevels, hpValues);
       default:
         return false;
     }
-  }, [activeStep, validClassCount, hpValues]);
+  }, [activeStep, validClassCount, hpLevels, hpValues]);
 
   return {
     ...base,
@@ -489,7 +454,6 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     selectedPowers,
     skillPointAllocations,
     selectedAptitude,
-    allSelectedFeatPickString,
     isLastStep,
 
     // Class plan (step 1)
@@ -499,13 +463,11 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     handleAddLevel,
     handleQuickAddLevel,
     handleRemoveLevel,
+    classPicker,
 
     // HP (step 2)
     hpValues,
     handleHpChange,
-    handleHpRoll,
-    handleHpRollAll,
-    handleHpMaxAll,
     hpLevels,
 
     // Attributes (step 3)
@@ -531,7 +493,6 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     isLoadingAvailableFeats,
     availableFeatsError,
     isFetchingNextFeatsPage,
-    allKlassLevelIds,
     featPicker,
     handleFeatsScroll,
 

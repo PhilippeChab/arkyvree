@@ -82,6 +82,14 @@ export const SPELL_SUBSCHOOLS = [
 ] as const;
 
 /**
+ * A spell level's name, wherever one shows (a sheet's or the level wizard's spell list, a class's spells per day, a
+ * level filter): "Cantrips" for level 0, else "Level 3".
+ */
+export function formatSpellLevel(level: number) {
+  return level === 0 ? "Cantrips" : `Level ${level}`;
+}
+
+/**
  * The slug of a spell list's possession paths, from its aptitude's name without the " Spells" suffix ("Wizard Spells"
  * → "wizard", "Knowledge Domain Spells" → "knowledgedomain").
  */

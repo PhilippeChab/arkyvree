@@ -4,14 +4,7 @@
  * ruleset's forms offer read its lists here too: its aptitudes and its feats.
  */
 
-import {
-  type DefaultError,
-  infiniteQueryOptions,
-  type QueryClient,
-  type QueryKey,
-  queryOptions,
-  skipToken,
-} from "@tanstack/react-query";
+import { infiniteQueryOptions, type QueryClient, type QueryKey, skipToken } from "@tanstack/react-query";
 import { type InferRequestType, type InferResponseType, parseResponse } from "hono/client";
 
 import { nextPage } from "@/client/src/lib/pageItems.ts";
@@ -204,17 +197,6 @@ export function featsQuery(rulesetId: string, filters: AptitudeFilters) {
       ),
     initialPageParam: 1,
     getNextPageParam: nextPage,
-  });
-}
-
-/**
- * The rows of a section that doesn't read them itself (they're handed over, or it only creates): cached under the
- * section's key, which its saves refresh, and never fetched.
- */
-export function heldSectionQuery<TData>(rulesetId: string, sectionName: string) {
-  return queryOptions<TData[], DefaultError, TData[], ReturnType<typeof QUERY_KEYS.rulesets.section>>({
-    queryKey: QUERY_KEYS.rulesets.section(rulesetId, sectionName),
-    queryFn: skipToken,
   });
 }
 

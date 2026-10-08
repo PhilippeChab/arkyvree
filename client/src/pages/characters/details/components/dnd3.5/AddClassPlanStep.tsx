@@ -5,7 +5,7 @@ import { AddButton, ScrollSafeListbox, ValueChip } from "@/client/src/components
 import { DeleteIcon } from "@/client/src/components/icons/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 
-import type { AvailableKlass, SelectedKlass } from "./levelUp/index.ts";
+import { type AvailableKlass, plannedLevel, type SelectedKlass } from "./levelUp/index.ts";
 import { OptionTooltip } from "./OptionTooltip.tsx";
 
 interface AddClassPlanState {
@@ -48,30 +48,14 @@ export function AddClassPlanStep({
     handleQuickAddLevel: onQuickAddLevel,
     handleRemoveLevel: onRemoveLevel,
   } = wizard;
-  const getAdjustedNextLevel = (klassId: string, index: number) => {
-    const klass = availableKlasses.find((k) => k.id === klassId) ?? quickAddKlasses.find((k) => k.id === klassId);
-    if (!klass) return 0;
-    const selectedBefore = levels.slice(0, index).filter((k) => k !== null && k.id === klassId).length;
-    return klass.nextLevel + selectedBefore;
-  };
 
-  // Count of each class already queued in this session. Used to offset the
-  // button label so clicking "+ Wizard" after queueing Wizard 2 shows
-  // "Wizard 3". The underlying klass object stays raw — `adjustedClassPlan`
-  // in the wizard hook applies the same offset when the click pushes onto
-  // classPlan, so double-adjusting here would cause level skips.
-  const queuedCounts = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const k of levels) if (k) m.set(k.id, (m.get(k.id) ?? 0) + 1);
-
-    return m;
-  }, [levels]);
-
+  // A button adds a class at the end of the plan, at the level after those planned: "+ Wizard 3" once Wizard 2 is.
+  // It pushes the class as the server gives it, which the wizard numbers in its place.
   const quickAddClasses = useMemo(() => {
     // Start with the character's existing classes (nextLevel > 1 means already
     // taken). Use the unfiltered `quickAddKlasses` snapshot so searching in
     // the Autocomplete doesn't drop existing-class buttons from the row.
-    const existing = quickAddKlasses
+    const existing: SelectedKlass[] = quickAddKlasses
       .filter((k) => k.nextLevel > 1 && k.eligible)
       .map((k) => ({
         id: k.id,
@@ -80,7 +64,6 @@ export function AddClassPlanStep({
         maxLevel: k.maxLevel,
         hd: k.hd,
         eligible: k.eligible,
-        atMax: k.nextLevel + (queuedCounts.get(k.id) ?? 0) - 1 >= k.maxLevel,
       }));
 
     // Add any selected classes not already in the list
@@ -88,27 +71,24 @@ export function AddClassPlanStep({
     for (const k of levels) {
       if (!k || seen.has(k.id)) continue;
       seen.add(k.id);
-      existing.push({
-        ...k,
-        atMax: k.nextLevel + (queuedCounts.get(k.id) ?? 1) - 1 >= k.maxLevel,
-      });
+      existing.push(k);
     }
 
-    return existing;
-  }, [levels, quickAddKlasses, queuedCounts]);
+    return existing.map((klass) => ({ klass, level: plannedLevel(klass, levels) }));
+  }, [levels, quickAddKlasses]);
 
   return (
     <Stack spacing={0.5}>
       <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
         <AddButton variant="text" size="small" label="Add Level" onClick={onAddLevel} />
-        {quickAddClasses.map((klass) => (
+        {quickAddClasses.map(({ klass, level }) => (
           <AddButton
             key={klass.id}
             variant="text"
             size="small"
-            label={`${klass.name} ${klass.nextLevel + (queuedCounts.get(klass.id) ?? 0)}`}
+            label={`${klass.name} ${level}`}
             onClick={() => onQuickAddLevel(klass)}
-            disabled={klass.atMax}
+            disabled={level > klass.maxLevel}
           />
         ))}
       </Stack>
@@ -137,13 +117,13 @@ export function AddClassPlanStep({
               }}
               filterOptions={(x) => x}
               getOptionLabel={(option) => {
-                const adjustedLevel = getAdjustedNextLevel(option.id, index);
+                const adjustedLevel = plannedLevel(option, levels, index);
                 return `${option.name} — Level ${adjustedLevel}`;
               }}
               getOptionDisabled={(option) => !option.eligible}
               isOptionEqualToValue={(option, value) => option.id === value.id}
               renderOption={({ key, ...props }, option) => {
-                const adjustedLevel = getAdjustedNextLevel(option.id, index);
+                const adjustedLevel = plannedLevel(option, levels, index);
                 return (
                   <OptionTooltip
                     key={key}

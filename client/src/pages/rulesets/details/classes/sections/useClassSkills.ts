@@ -122,10 +122,6 @@ export function useClassSkills(rulesetId: string, classId: string) {
     },
   });
 
-  const handleAddSkill = (skillId: string) => {
-    addSkillMutation.mutate(skillId);
-  };
-
   const handleRemoveSkill = (skillId: string) => removeDialog.openWith(skillId);
 
   const confirmRemoveSkill = () => {
@@ -149,7 +145,6 @@ export function useClassSkills(rulesetId: string, classId: string) {
     addSkillMutation,
     removeSkillMutation,
 
-    handleAddSkill,
     handleRemoveSkill,
     confirmRemoveSkill,
   };

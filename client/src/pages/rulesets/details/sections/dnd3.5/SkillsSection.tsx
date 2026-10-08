@@ -5,6 +5,7 @@ import { useCallback } from "react";
 
 import {
   CreateDialog,
+  EmptyValue,
   LoadError,
   LoadMoreButton,
   SearchBar,
@@ -83,8 +84,8 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
       case "name":
         return skill.name;
       case "ability": {
-        const abilityName = rulesetAbilities.find((a) => a.id === skill.primaryAbilityId)?.name ?? "Unknown";
-        return <ValueChip label={abilityName} />;
+        const abilityName = rulesetAbilities.find((a) => a.id === skill.primaryAbilityId)?.name;
+        return abilityName ? <ValueChip label={abilityName} /> : <EmptyValue />;
       }
       case "trainedOnly":
         return skill.usableWithoutTraining === false ? (

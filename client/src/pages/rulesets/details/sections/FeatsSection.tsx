@@ -1,15 +1,4 @@
-import {
-  Box,
-  Skeleton,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  ToggleButton,
-  Typography,
-} from "@mui/material";
+import { Box, Skeleton, Stack, Table, TableBody, TableCell, TableRow, ToggleButton, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 import { useCallback } from "react";
@@ -27,6 +16,7 @@ import {
   NoMatchesState,
   SearchBar,
   SectionContent,
+  TableColumnsHead,
   TableFrame,
   TableSkeleton,
   toggleProps,
@@ -53,6 +43,7 @@ import { featFamilyQuery, featsGroupedQuery, featsQuery } from "@/client/src/pag
 import { useAptitudeFilter, useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { fadeInUpSx } from "@/client/src/theme/animations.ts";
+import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 
 type Feat = FeatsPaginated["items"][number];
 
@@ -200,14 +191,14 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   const grouped = oneOf(groupedParam, ["true", "false"], "true") === "true";
   const { keys: expandedFamilies, toggle: toggleFamily, clear: collapseFamilies } = useToggleSet();
 
-  const { setCreateDialogOpen, createForm, createDialogProps } = useRulesetSection<Feat, FeatFormData>({
+  const { createForm, createDialogProps, handleCreate } = useRulesetSection<Feat, FeatFormData>({
     createDefaults: EMPTY_FEAT,
     rulesetId: ruleset.id,
     sectionName: "feats",
     label: "Feat",
     createFn: async (data) =>
       parseResponse(rpc.api.rulesets[":id"].feats.$post({ param: { id: ruleset.id }, json: data })),
-    onCreateSuccess: (created) => openEntity(`feats/${created.id}/customization`),
+    onCreateSuccess: (created) => openEntity(buildCustomizationPath("feats", created.id)),
   });
 
   // Flat query (used when grouped is off)
@@ -227,13 +218,8 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   const feats = pageItems(flatQuery.data);
   const groupedFeats = pageItems(groupedQuery.data);
 
-  const handleCreate = () => {
-    createForm.reset();
-    setCreateDialogOpen(true);
-  };
-
   const handleRowClick = (feat: Pick<Feat, "id">) => {
-    openEntity(`feats/${feat.id}/customization`);
+    openEntity(buildCustomizationPath("feats", feat.id));
   };
 
   const handleRowMouseEnter = useCallback(
@@ -285,15 +271,7 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     return (
       <TableFrame sx={TABLE_CONTAINER_SX}>
         <Table sx={TABLE_SX}>
-          <TableHead>
-            <TableRow>
-              {GROUPED_COLUMNS.map((col) => (
-                <TableCell key={col.key} sx={{ width: col.width }}>
-                  {col.label}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
+          <TableColumnsHead columns={GROUPED_COLUMNS} />
           <TableBody>
             {groupedFeats.map((row) => {
               const family = row.variantCount > 1 ? row.family : null;

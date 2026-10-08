@@ -11,11 +11,6 @@ export type ItemFormInternal = Omit<ItemFormData, "weight" | "costGp"> & {
   weight?: string;
 };
 
-/** The item types that can be based on a template. */
-export type TemplateType = NonNullable<
-  InferRequestType<(typeof rpc.api.rulesets)[":id"]["templates"]["$get"]>["query"]["type"]
->;
-
 /** The types an item's form offers. */
 export const ITEM_TYPE_OPTIONS = [
   "Weapon",
@@ -32,10 +27,6 @@ function parseNumericField(value: string | undefined): number | undefined {
   if (value === undefined || value.trim() === "") return undefined;
   const n = Number(value);
   return Number.isFinite(n) ? n : undefined;
-}
-
-export function isTemplateType(type: unknown): type is TemplateType {
-  return type === "Weapon" || type === "Armor" || type === "Shield";
 }
 
 /** The form values of an existing item: the editor's, or a duplicate's starting point. */

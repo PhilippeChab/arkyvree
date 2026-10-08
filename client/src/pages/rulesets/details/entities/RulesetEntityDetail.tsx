@@ -1,22 +1,24 @@
-import { type QueryKey, useMutation, useQuery, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";
-import { type ReactNode, useState } from "react";
+import { type QueryKey, useQuery, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";
+import { type ReactNode } from "react";
 import type { DefaultValues, FieldValues, UseFormReturn } from "react-hook-form";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 
-import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormSync, useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
-  EntityDeleteDialog,
   EntityDetailLayout,
   EntityDetailsCard,
   EntityPageError,
 } from "@/client/src/pages/rulesets/components/index.ts";
-import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { entityPageBack } from "@/client/src/pages/rulesets/entityPageState.ts";
-import { useCopyOnWrite, useRestorableDelete, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import {
+  useCopyOnWrite,
+  useEntitySave,
+  useRestorableDelete,
+  useRulesetPermissions,
+} from "@/client/src/pages/rulesets/hooks/index.ts";
 
 type EditableDetailsProps<TEntity extends EntityBase, TForm extends FieldValues, TKey extends QueryKey> = Pick<
   RulesetEntityDetailProps<TEntity, TForm, TKey>,
@@ -79,7 +81,6 @@ function EditableDetails<TEntity extends EntityBase, TForm extends FieldValues, 
   chips,
 }: EditableDetailsProps<TEntity, TForm, TKey>) {
   const queryClient = useQueryClient();
-  const snackbar = useSnackbar();
 
   const copy = useCopyOnWrite(rulesetId, entityId, (id) => `${section}/${id}`);
   const form = useFormWith<TForm>(editing.empty);
@@ -91,23 +92,22 @@ function EditableDetails<TEntity extends EntityBase, TForm extends FieldValues, 
   // The copy's data is in as the page moves to it: the save seeds it
   const forgetSource = copy.forgetSource(true);
 
-  const saveMutation = useMutation({
-    mutationFn: async (data: TForm) => {
-      const saved = await editing.updateFn(data, sync.updatedAt());
-      return { sourceId: entityId, saved, values: editing.toFormValues(saved) };
-    },
-    onSuccess: ({ saved, sourceId, values }) => {
-      sync.saved(values, saved.updatedAt);
+  const saveMutation = useEntitySave({
+    rulesetId,
+    entityId,
+    label,
+    listKey: QUERY_KEYS.rulesets.section(rulesetId, section),
+    sync,
+    saveFn: editing.updateFn,
+    toFormValues: editing.toFormValues,
+    // The save's response is the whole entity: the copy's page shows it at once
+    storeSaved: (saved) => {
       const savedKey = query(saved.id).queryKey;
       queryClient.setQueryData<TEntity>(savedKey, saved);
       // Supersede any refetch that left before the save committed.
       void queryClient.invalidateQueries({ queryKey: savedKey, exact: true });
-      copy.followCopy(saved.id, sourceId);
-
-      invalidateRulesetEdit(queryClient, rulesetId, [QUERY_KEYS.rulesets.section(rulesetId, section)]);
-      snackbar.success(`${label} updated`);
     },
-    onError: (error) => snackbar.error(error, `Failed to update ${label.toLowerCase()}`),
+    followCopy: copy.followCopy,
   });
 
   return (
@@ -143,12 +143,8 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
   notice,
   renderChips,
 }: RulesetEntityDetailProps<TEntity, TForm, TKey>) {
-  const navigate = useNavigate();
   const location = useLocation();
-  const queryClient = useQueryClient();
-  const snackbar = useSnackbar();
   const back = entityPageBack(location.state, `/rulesets/${rulesetId}/${section}`);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const { data: ruleset, isLoading: isRulesetLoading, error: rulesetError } = useQuery(rulesetDetailQuery(rulesetId));
   const { data: entity, isLoading: isEntityLoading, error: entityError } = useQuery(query(entityId));
@@ -159,18 +155,6 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
   const canEdit = !!editing && canEditEntities;
   // Deleting an inherited entity can be undone
   const { restorable, error: changesError } = useRestorableDelete(ruleset, entity);
-
-  const deleteMutation = useMutation({
-    mutationFn: () => (editing ? editing.removeFn() : Promise.reject(new Error(`${label} can't be deleted`))),
-    onSuccess: () => {
-      invalidateRulesetEdit(queryClient, rulesetId, [QUERY_KEYS.rulesets.section(rulesetId, section)]);
-      snackbar.success(`${label} deleted`);
-      navigate(back.to);
-      // Gone: don't let Back render it from the cache
-      queryClient.removeQueries({ queryKey: query(entityId).queryKey });
-    },
-    onError: (error) => snackbar.error(error, `Failed to delete ${label.toLowerCase()}`),
-  });
 
   if (!isRulesetLoading && !isEntityLoading && (!ruleset || !entity)) {
     return (
@@ -183,46 +167,45 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
   }
 
   return (
-    <>
-      <EntityDetailLayout
-        entityName={entity?.name}
-        rulesetName={ruleset?.name}
-        backTo={back.to}
-        canDelete={canEdit}
-        onDelete={() => setDeleteDialogOpen(true)}
-        restorable={restorable}
-        isLoading={isRulesetLoading || isEntityLoading}
-      >
-        {entity &&
-          (canEdit ? (
-            <EditableDetails
-              rulesetId={rulesetId}
-              entityId={entityId}
-              section={section}
-              label={label}
-              query={query}
-              editing={editing}
-              entity={entity}
-              chips={renderChips?.(entity)}
-            />
-          ) : (
-            <EntityDetailsCard
-              title={`${label} Details`}
-              chips={renderChips?.(entity)}
-              notice={notice}
-              description={entity.description}
-            />
-          ))}
-      </EntityDetailLayout>
-      <EntityDeleteDialog
-        open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
-        what={label}
-        restorable={restorable}
-        changesError={changesError}
-        onConfirm={() => deleteMutation.mutate()}
-        isLoading={deleteMutation.isPending}
-      />
-    </>
+    <EntityDetailLayout
+      entityName={entity?.name}
+      rulesetName={ruleset?.name}
+      backTo={back.to}
+      deletion={
+        editing && canEdit
+          ? {
+              what: label,
+              rulesetId,
+              deleteFn: editing.removeFn,
+              listKeys: [QUERY_KEYS.rulesets.section(rulesetId, section)],
+              entityKey: query(entityId).queryKey,
+              restorable,
+              changesError,
+            }
+          : undefined
+      }
+      isLoading={isRulesetLoading || isEntityLoading}
+    >
+      {entity &&
+        (canEdit ? (
+          <EditableDetails
+            rulesetId={rulesetId}
+            entityId={entityId}
+            section={section}
+            label={label}
+            query={query}
+            editing={editing}
+            entity={entity}
+            chips={renderChips?.(entity)}
+          />
+        ) : (
+          <EntityDetailsCard
+            title={`${label} Details`}
+            chips={renderChips?.(entity)}
+            notice={notice}
+            description={entity.description}
+          />
+        ))}
+    </EntityDetailLayout>
   );
 }

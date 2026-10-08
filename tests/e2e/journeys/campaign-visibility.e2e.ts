@@ -93,7 +93,7 @@ test.describe("A campaign character", () => {
       await expect(page.getByText(name, { exact: true }).first()).toBeVisible({ timeout: 15_000 });
       await expect(buildShown(page)).toBeVisible();
       await expect(privateNotesShown(page)).toHaveValue(PRIVATE_NOTES);
-      await expect(privateNotesShown(page)).toBeDisabled();
+      await expect(privateNotesShown(page)).not.toBeEditable();
       await page.getByRole("button", { name: "More Actions" }).click();
       const menu = page.getByRole("menu");
       await expect(menu.getByRole("menuitem", { name: "Download PDF" })).toBeVisible();

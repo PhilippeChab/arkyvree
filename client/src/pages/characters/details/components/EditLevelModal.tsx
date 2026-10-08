@@ -75,7 +75,7 @@ export function EditLevelModal({ open, onClose, onExited, characterId, baseRules
 
     switch (step) {
       case "hp":
-        return <Sections.EditHpStep wizard={wizard} />;
+        return <Sections.HpStep wizard={wizard} />;
       case "attributes":
         return <Sections.EditAttributeStep wizard={wizard} baseRules={baseRules} />;
       case "skills":

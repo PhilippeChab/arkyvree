@@ -57,6 +57,12 @@ export const DURATION = {
   slow: 400,
 } as const;
 
+/**
+ * A roll of dice (`useDiceRoll`): a die shows a new face every `face`, lands on its result after `land`, each next die
+ * `stagger` after the one before, and its result pulses for `settle` (`settleAnimation`)
+ */
+export const DICE_ROLL = { face: DURATION.beat, land: 800, stagger: DURATION.fast, settle: DURATION.slow } as const;
+
 export const fadeIn = keyframes`
   from { opacity: 0; }
   to   { opacity: 1; }
@@ -80,12 +86,7 @@ export function fadeInUpSx(index: number, offset = 0) {
   } as const;
 }
 
-/**
- * A transition of `properties`, each over `duration` (`DURATION`) along `easing`: `transitionOf(["opacity"],
- * DURATION.fast)`.
- *
- * A value settling (a rolled score, the rolled HP): a ring of the theme's primary color, pulsed once.
- */
+/** A rolled die's result settling (a rolled score, the rolled HP): a ring of the theme's primary color, pulsed once. */
 export function settleAnimation(theme: Theme) {
   const ring = alpha(theme.palette.primary.main, 0.4);
   const settledPulse = keyframes`
@@ -93,9 +94,13 @@ export function settleAnimation(theme: Theme) {
     50%  { box-shadow: 0 0 0 3px ${ring}; }
     100% { box-shadow: none; }
   `;
-  return `${settledPulse} 0.4s ${EASING.standard}`;
+  return `${settledPulse} ${DICE_ROLL.settle}ms ${EASING.standard}`;
 }
 
+/**
+ * A transition of `properties`, each over `duration` (`DURATION`) along `easing`: `transitionOf(["opacity"],
+ * DURATION.fast)`.
+ */
 export function transitionOf(properties: string[], duration: number, easing: string = EASING.ease) {
   return properties.map((property) => `${property} ${duration}ms ${easing}`).join(", ");
 }

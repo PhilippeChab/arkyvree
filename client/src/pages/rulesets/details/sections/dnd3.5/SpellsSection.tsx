@@ -31,6 +31,7 @@ import {
   useSpellLevelFilter,
 } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
+import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 
 /** A ruleset's spell (its power), as its list gives it. */
 export type Spell = InferResponseType<(typeof rpc.api.rulesets)[":id"]["powers"]["$get"], 200>["items"][number];
@@ -49,17 +50,14 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
   const { aptitude, aptitudeError, aptitudeId, setAptitude } = useAptitudeFilter(ruleset.id);
   const { level: selectedLevel, setLevel: setSelectedLevel } = useSpellLevelFilter(true);
 
-  const { createDialogOpen, setCreateDialogOpen, createForm, createDialogProps } = useRulesetSection<
-    Spell,
-    SpellFormData
-  >({
+  const { createForm, createDialogProps, handleCreate } = useRulesetSection<Spell, SpellFormData>({
     createDefaults: EMPTY_SPELL,
     rulesetId: ruleset.id,
     sectionName: "powers",
     label: "Spell",
     createFn: async (data) =>
       parseResponse(rpc.api.rulesets[":id"].powers.$post({ param: { id: ruleset.id }, json: data })),
-    onCreateSuccess: (created) => openEntity(`powers/${created.id}/customization`),
+    onCreateSuccess: (created) => openEntity(buildCustomizationPath("powers", created.id)),
   });
 
   const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
@@ -74,15 +72,10 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
 
   const spells = pageItems(data);
 
-  const { data: createSaves = [], error: createSavesError } = useRulesetSaves(ruleset.id, createDialogOpen);
-
-  const handleCreate = () => {
-    createForm.reset();
-    setCreateDialogOpen(true);
-  };
+  const { data: createSaves = [], error: createSavesError } = useRulesetSaves(ruleset.id, createDialogProps.open);
 
   const handleRowClick = (spell: Spell) => {
-    openEntity(`powers/${spell.id}/customization`);
+    openEntity(buildCustomizationPath("powers", spell.id));
   };
 
   const handleRowMouseEnter = useCallback(

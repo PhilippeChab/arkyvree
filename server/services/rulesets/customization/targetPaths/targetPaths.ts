@@ -3,7 +3,24 @@ import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/inde
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
-import type { TargetPathCatalog, TargetPathKind } from "@/shared/customization/target.ts";
+import { pickTargetLabels, type TargetPathCatalog, type TargetPathKind } from "@/shared/customization/target.ts";
+
+/**
+ * Modifiers as a list shows them, an entity's or a character's: the labels of their target's and their template value's
+ * segments (`targetLabels`), and their value's name when their path names its values (`valueLabel`).
+ */
+export async function annotateModifiers<T extends { target: string; value: string }>(
+  rulesetId: string,
+  modifiers: T[],
+) {
+  const { paths, segmentLabels } = await getTargetPathsWithLabels(rulesetId, "modifier");
+  const pathMap = new Map(paths.map((path) => [path.path, path]));
+  return modifiers.map((modifier) => ({
+    ...modifier,
+    valueLabel: pathMap.get(modifier.target)?.possibleValues?.find((pv) => pv.value === modifier.value)?.label ?? null,
+    targetLabels: pickTargetLabels([modifier.target, modifier.value], segmentLabels),
+  }));
+}
 
 /**
  * The ruleset's target paths of a kind, with their segments' labels, as the engine lists them: cached for the ruleset

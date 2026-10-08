@@ -1,4 +1,6 @@
-export { withoutPick } from "./fitPicks.ts";
+export { plannedLevel } from "./classPlan.ts";
+export { withoutPick, withPick } from "./fitPicks.ts";
+export { hpError, type HpLevel } from "./hitPoints.ts";
 export {
   availableClassesQuery,
   availableFeatFamilyQuery,

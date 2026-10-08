@@ -51,6 +51,24 @@ describe("control rules", () => {
     ).toEqual(["roll-buttons client/src/bare.tsx"]);
   });
 
+  test("a roll shows through useDiceRoll, never a timer of its own", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/die.ts": "export const d = () => setInterval(() => setFace(rollDie(6)), 50);\n",
+          "client/src/random.ts":
+            "export const r = () => setInterval(() => setFace(Math.floor(Math.random() * 16) + 3), 50);\n",
+          "client/src/method.ts": "export const m = () => setTimeout(function () { land(rollScore()); }, 800);\n",
+          "client/src/click.ts": "export const c = () => setHp(rollDie(8));\n",
+          "client/src/bell.ts": "export const b = () => setTimeout(() => setShake(false), 600);\n",
+          "client/src/pages/characters/useDiceRoll.ts":
+            "export const o = () => setInterval(() => setFace(die.roll()), DICE_ROLL.face);\n",
+        },
+        ["dice-rolls"],
+      ),
+    ).toEqual(["dice-rolls client/src/die.ts", "dice-rolls client/src/method.ts", "dice-rolls client/src/random.ts"]);
+  });
+
   test("a page header's action is a PageActionButton", async () => {
     expect(
       await lintRepo(
@@ -109,6 +127,25 @@ describe("control rules", () => {
         ["chips"],
       ),
     ).toEqual(["chips client/src/action.tsx", "chips client/src/raw.tsx", "chips client/src/renamed.tsx"]);
+  });
+
+  test("a chip that names a record links through its to, never a link in its label", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/muiLink.tsx":
+            "export const m = <ValueChip label={to ? <MuiLink component={Link} to={to}>{name}</MuiLink> : name} />;\n",
+          "client/src/routerLink.tsx": "export const r = <StatusChip label={<><Link to={to}>{name}</Link> 3</>} />;\n",
+          "client/src/madeLink.tsx":
+            "export const l = <CountChip label={<Typography component={Link} to={to} />} />;\n",
+          "client/src/to.tsx": "export const t = <ValueChip label={name} to={to} />;\n",
+          "client/src/text.tsx": "export const x = <ValueChip label={<Typography>{name}</Typography>} />;\n",
+          "client/src/tooltip.tsx":
+            "export const p = <Tooltip title={<MuiLink href={href}>Help</MuiLink>}><ValueChip label={name} /></Tooltip>;\n",
+        },
+        ["chips"],
+      ),
+    ).toEqual(["chips client/src/madeLink.tsx", "chips client/src/muiLink.tsx", "chips client/src/routerLink.tsx"]);
   });
 
   test("help is a HelpLabel wherever it's given", async () => {

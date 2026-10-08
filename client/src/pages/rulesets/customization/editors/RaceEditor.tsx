@@ -6,9 +6,10 @@ import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { EMPTY_RACE, type RaceFormData, RaceFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
 import type { Race } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
+import { useEntitySave } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-import { type EditorProps, useEditorSave } from "./useEditorSave.ts";
+import type { EditorProps } from "./renderEditor.tsx";
 
 function toRaceForm(race: Race): RaceFormData {
   return {
@@ -27,21 +28,24 @@ export function RaceEditor({
   entity: race,
   canEdit,
   locked,
-  onSaved,
+  followCopy,
+  refetchSaved,
 }: EditorProps<Race>) {
   const form = useFormWith<RaceFormData>(EMPTY_RACE);
   const sync = useFormSync(form, toRaceForm(race), { key: recordKey, adoptKey, updatedAt: race.updatedAt });
-  const saveMutation = useEditorSave({
-    sync,
+  const saveMutation = useEntitySave({
+    rulesetId,
     entityId,
-    onSaved,
+    sync,
+    followCopy,
+    storeSaved: refetchSaved,
     listKey: QUERY_KEYS.rulesets.section(rulesetId, "races"),
     label: "Race",
-    saveFn: (data: RaceFormData) =>
+    saveFn: (data: RaceFormData, updatedAt: string | undefined) =>
       parseResponse(
         rpc.api.rulesets[":id"].races[":raceId"].$put({
           param: { id: rulesetId, raceId: entityId },
-          json: { ...data, updatedAt: sync.updatedAt() },
+          json: { ...data, updatedAt },
         }),
       ),
   });

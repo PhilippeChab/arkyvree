@@ -44,7 +44,7 @@ const LABELLED = new Set([
 
 /** The elements whose `label` names them: the actions, the fields, the dialogs */
 const LABELLED_BY_PROP =
-  /^(ActionMenuItem|AddButton|Button|ChoiceChip|Tab|ToggleButton|DescriptionField|EmailField|FormControlLabel|FormTextField|LinkButton|NameField|PageActionButton|PasswordField|SelectField|SwitchField|TextField|.*Dialog|Modal)$/;
+  /^(ActionMenuItem|AddButton|Button|ChoiceChip|Tab|ToggleButton|DescriptionField|EmailField|FormControlLabel|FormTextField|LinkButton|NameField|OptionToggle|PageActionButton|PasswordField|SelectField|SwitchField|TextField|.*Dialog|Modal)$/;
 
 /** The words a Title Case label leaves lowercase, but first */
 const SMALL_WORDS = new Set([

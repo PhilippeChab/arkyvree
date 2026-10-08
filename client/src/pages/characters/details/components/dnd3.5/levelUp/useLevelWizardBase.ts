@@ -3,7 +3,7 @@ import { useCallback, useState } from "react";
 
 import { useValidationIssues } from "@/client/src/components/characters/index.ts";
 import { useDebouncedValue, useFormWith, useToggleSet } from "@/client/src/hooks/index.ts";
-import { invalidateCharacterListings } from "@/client/src/lib/queries.ts";
+import { invalidateCharacter, invalidateCharacterListings } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 
 import type { LevelUpFormData } from "./levelUpTypes.ts";
@@ -75,7 +75,7 @@ export function useLevelWizardBase(characterId: string) {
     queryClient.removeQueries({ queryKey: QUERY_KEYS.characters.levelUp.all(characterId) });
     // Its cards show its levels
     void invalidateCharacterListings(queryClient);
-    await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.detail(characterId) });
+    await invalidateCharacter(queryClient, characterId);
   }, [queryClient, characterId]);
 
   return {

@@ -85,8 +85,6 @@ function ClassGroup({ klass, levels, classLink, onEditLevel }: ClassGroupProps) 
                 justifyContent: "space-between",
                 py: 0.5,
                 px: 1,
-                borderRadius: 1,
-                "&:hover": { bgcolor: "action.hover" },
                 ...ROW_ACTIONS_HOVER_SX,
               }}
             >
@@ -157,23 +155,8 @@ export function ClassesSection({
             const classLink = rulesetId && klass?.id ? `/rulesets/${rulesetId}/classes/${klass.id}` : undefined;
 
             // A class the sheet carries in full lists its levels, which an editor can edit; another is its chip.
-            if (!klass || levels.length === 0) {
-              return (
-                <ValueChip
-                  color="default"
-                  key={className}
-                  label={
-                    classLink ? (
-                      <MuiLink component={Link} to={classLink} target="_blank" underline="hover">
-                        {className} {currentLevel}
-                      </MuiLink>
-                    ) : (
-                      `${className} ${currentLevel}`
-                    )
-                  }
-                />
-              );
-            }
+            if (!klass || levels.length === 0)
+              return <ValueChip key={className} label={`${className} ${currentLevel}`} to={classLink} />;
 
             return (
               <ClassGroup

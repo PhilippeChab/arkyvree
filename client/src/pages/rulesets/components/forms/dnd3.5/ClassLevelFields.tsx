@@ -1,5 +1,6 @@
 import { Autocomplete, Box, TextField } from "@mui/material";
 import { useMemo, useState } from "react";
+import { useController, type UseFormReturn } from "react-hook-form";
 
 import { LoadError, ScrollSafeListbox, ValueChip } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
@@ -8,40 +9,42 @@ import { readNumberInput } from "@/client/src/lib/validation.ts";
 import { type RulesetSave, useRulesetFeats } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { MAX_SAVE_BASE } from "@/shared/dnd3.5/classes.ts";
 
-import { featKey, type LevelFeat, levelFeatLabel, type LevelSave, saveBaseError } from "./classLevelForm.ts";
+import {
+  areSaveBasesValid,
+  type ClassLevelFormData,
+  featKey,
+  type LevelFeat,
+  levelFeatLabel,
+  saveBaseError,
+} from "./classLevelForm.ts";
 
 interface ClassLevelFieldsProps {
   /** Labels for feats the options may not list (e.g. from a parent ruleset), by `featId-aptitudeId`. */
   featLabels?: Map<string, string>;
-  feats: LevelFeat[];
-  onFeatsChange: (feats: LevelFeat[]) => void;
-  onSavesChange: (saves: LevelSave[]) => void;
+  form: UseFormReturn<ClassLevelFormData>;
   rulesetId: string;
   /** The ruleset's saves, each a base field; its owner reads them, for what it sends. */
   rulesetSaves: RulesetSave[] | undefined;
-  saves: LevelSave[];
   /** Why they didn't load. */
   savesError: unknown;
-  /** Whether the form refused the saves: each base out of bounds says why. */
-  savesInvalid?: boolean;
 }
 
 interface FeatOption extends LevelFeat {
   label: string;
 }
 
-/** Base saves and granted feats of a class level, shared by its create dialog and its customization page. */
-export function ClassLevelFields({
-  rulesetId,
-  rulesetSaves,
-  savesError,
-  saves,
-  onSavesChange,
-  feats,
-  onFeatsChange,
-  savesInvalid,
-  featLabels,
-}: ClassLevelFieldsProps) {
+/** A class level's base saves and granted feats, bound to its form: its create dialog's and its page's. */
+export function ClassLevelFields({ form, rulesetId, rulesetSaves, savesError, featLabels }: ClassLevelFieldsProps) {
+  // Each base out of bounds says why, under its own input
+  const { field: savesField, fieldState: savesState } = useController({
+    control: form.control,
+    name: "saves",
+    rules: { validate: areSaveBasesValid },
+  });
+  const { field: featsField } = useController({ control: form.control, name: "feats" });
+  const saves = savesField.value ?? [];
+  const feats = featsField.value ?? [];
+  const savesInvalid = !!savesState.error;
   const saveList = rulesetSaves ?? [];
   // The server searches the ruleset's feats and pages them in as the list scrolls.
   const [featSearch, setFeatSearch] = useState("");
@@ -82,7 +85,7 @@ export function ClassLevelFields({
 
   // Update in place, so changing a value back leaves the form clean.
   const setBase = (saveId: string, base: number) =>
-    onSavesChange(
+    savesField.onChange(
       saves.some((s) => s.saveId === saveId)
         ? saves.map((s) => (s.saveId === saveId ? { saveId, base } : s))
         : [...saves, { saveId, base }],
@@ -91,7 +94,7 @@ export function ClassLevelFields({
   // Kept sorted by label, so the order doesn't depend on picking order.
   const setFeats = (next: FeatOption[]) => {
     setPickedLabels((labels) => new Map([...labels, ...next.map((o) => [featKey(o), o.label] as const)]));
-    onFeatsChange(
+    featsField.onChange(
       [...next]
         .sort((a, b) => a.label.localeCompare(b.label))
         .map(({ featId, aptitudeId }) => ({ featId, aptitudeId })),

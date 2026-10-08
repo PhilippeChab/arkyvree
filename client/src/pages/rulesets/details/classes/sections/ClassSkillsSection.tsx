@@ -33,7 +33,6 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
     removeDialog,
     addSkillMutation,
     removeSkillMutation,
-    handleAddSkill,
     handleRemoveSkill,
     confirmRemoveSkill,
   } = useClassSkills(rulesetId, classId);
@@ -73,7 +72,7 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
               }}
               onChange={(_, skill) => {
                 if (skill) {
-                  handleAddSkill(skill.id);
+                  addSkillMutation.mutate(skill.id);
                   setSkillSearch("");
                 }
               }}

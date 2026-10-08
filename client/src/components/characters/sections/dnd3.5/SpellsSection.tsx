@@ -25,11 +25,11 @@ import {
   ValueChip,
 } from "@/client/src/components/common/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
+import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { type AptitudeSpells, buildSpellGroups, type SpellGroup, type SpellRow } from "@/shared/dnd3.5/spellGroups.ts";
-
-import { spellLevelName } from "./spellLevels.ts";
+import { formatSpellLevel } from "@/shared/dnd3.5/spells.ts";
 
 interface CollapsibleClassProps {
   apt: AptitudeSpells;
@@ -81,7 +81,7 @@ function CollapsibleClass({ apt, rulesetId }: CollapsibleClassProps) {
 
 function CollapsibleLevel({ group, rulesetId }: CollapsibleLevelProps) {
   const [open, setOpen] = useState(false);
-  const label = spellLevelName(group.level);
+  const label = formatSpellLevel(group.level);
 
   return (
     // The last level, closed, keeps the space its title has to its spells
@@ -132,7 +132,8 @@ function SpellRowItem({ spell, rulesetId }: SpellRowItemProps) {
   const [open, setOpen] = useState(false);
 
   const detailProps = Object.entries(spell.properties).filter(([key]) => key !== SPELL_SCHOOL);
-  const spellLink = rulesetId && spell.id ? `/rulesets/${rulesetId}/powers/${spell.id}/customization` : undefined;
+  const spellLink =
+    rulesetId && spell.id ? `/rulesets/${rulesetId}/${buildCustomizationPath("powers", spell.id)}` : undefined;
 
   return (
     <>

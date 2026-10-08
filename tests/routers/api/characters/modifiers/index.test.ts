@@ -21,7 +21,8 @@ describe("character modifiers", () => {
       sourceId: characterId,
     });
     const listed = await expectOk(modifiers.$get({ param: { characterId } }));
-    expect(listed).toMatchObject([{ id: created.id, targetLabels: expect.any(Object) }]);
+    // Labelled as a ruleset entity's modifiers are, for the same table cells: its value's name none here
+    expect(listed).toMatchObject([{ id: created.id, targetLabels: { strength: "Strength" }, valueLabel: null }]);
 
     const param = { characterId, modifierId: created.id };
     expect(await expectOk(modifier.$put({ param, json: { ...strengthBonus, value: "4" } }))).toMatchObject({

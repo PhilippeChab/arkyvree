@@ -1,7 +1,7 @@
 import { Stack, Typography } from "@mui/material";
-import { type QueryKey, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { type QueryKey, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
-import { type ReactNode, useState } from "react";
+import { type ReactNode } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import {
@@ -18,18 +18,12 @@ import {
   TargetPathBreadcrumbs,
 } from "@/client/src/components/customization/index.ts";
 import { ModifiersIcon, PropertiesIcon, RequirementsIcon } from "@/client/src/components/icons/index.ts";
-import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
-import {
-  EntityDeleteDialog,
-  EntityDetailLayout,
-  EntityPageError,
-} from "@/client/src/pages/rulesets/components/index.ts";
-import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
+import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
 import { entityPageState } from "@/client/src/pages/rulesets/entityPageState.ts";
 import {
   useCopyOnWrite,
@@ -48,14 +42,7 @@ import {
 import { formatOperator } from "@/shared/customization/operators.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 
-import {
-  ClassLevelEditor,
-  type EditorProps,
-  FeatEditor,
-  ItemEditor,
-  RaceEditor,
-  SpellEditor,
-} from "./editors/index.ts";
+import { type EditableEntity, isEditable, renderEditor } from "./editors/index.ts";
 import { type CustomizationEntity, customizationEntityQuery } from "./entityQueries.ts";
 import { ModifiersSection, PropertiesSection, RequirementsSection } from "./sections/index.ts";
 
@@ -71,12 +58,7 @@ interface CustomizationViewProps {
   tabs: SectionTab<TabSection>[];
 }
 
-type EditableEntity = Extract<CustomizationEntity, { type: (typeof EDITABLE_TYPES)[number] }>;
-
 type TabSection = "properties" | "modifiers" | "requirements";
-
-/** Entities with an editor on this page, which can also be deleted from it. */
-const EDITABLE_TYPES = ["feats", "races", "items", "powers", "klass_levels"] as const;
 
 const TABS: SectionTab<TabSection>[] = [
   {
@@ -109,8 +91,6 @@ function CustomizationView({
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
-  const snackbar = useSnackbar();
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const type = data.type;
   const label = entityTypeLabel(type, ruleset.baseRules);
@@ -129,31 +109,9 @@ function CustomizationView({
   // What this page deletes, the entity or what it holds, comes back with the entity when it's inherited
   const { restorable, error: changesError } = useRestorableDelete(ruleset, deletedHolder(data));
 
-  const handleSaved = (sourceId: string, saved: { id: string }, listKey: QueryKey, message: string) => {
-    copy.followCopy(saved.id, sourceId);
-    invalidateRulesetEdit(queryClient, rulesetId, [listKey]);
-    snackbar.success(message);
-    // Save responses lack relations (aptitudes, level feats): refetch the entity.
-    return queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.entity(rulesetId, type, saved.id) });
-  };
-
-  const deleteMutation = useMutation({
-    mutationFn: () => {
-      if (!isEditable(data)) throw new Error(`${label} can't be deleted here`);
-      return deleteEntityFn(data, rulesetId, entityId);
-    },
-    onSuccess: () => {
-      invalidateRulesetEdit(queryClient, rulesetId, [
-        QUERY_KEYS.rulesets.section(rulesetId, type),
-        ...(klassLevelsKey ? [klassLevelsKey] : []),
-      ]);
-      snackbar.success(`${label} deleted`);
-      navigate(backPath ?? listPath);
-      // Gone: don't let Back render it from the cache.
-      queryClient.removeQueries({ queryKey: entityKey });
-    },
-    onError: (error) => snackbar.error(error, `Failed to delete ${label.toLowerCase()}`),
-  });
+  // Save responses lack relations (aptitudes, level feats): refetch the entity
+  const refetchSaved = (saved: { id: string }) =>
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.entity(rulesetId, type, saved.id) });
 
   const sectionProps = {
     ruleset,
@@ -169,9 +127,19 @@ function CustomizationView({
       subtitle={subtitle ?? `${label} in ${ruleset.name}`}
       backTo={backPath ?? listPath}
       backDisabled={locked}
-      canDelete={canEdit && isEditable(data) && !locked}
-      onDelete={() => setDeleteDialogOpen(true)}
-      restorable={restorable}
+      deletion={
+        canEdit && isEditable(data) && !locked
+          ? {
+              what: label,
+              rulesetId,
+              deleteFn: () => deleteEntityFn(data, rulesetId, entityId),
+              listKeys: [QUERY_KEYS.rulesets.section(rulesetId, type), ...(klassLevelsKey ? [klassLevelsKey] : [])],
+              entityKey,
+              restorable,
+              changesError,
+            }
+          : undefined
+      }
     >
       {forgetSource && <Navigate to={forgetSource.to} replace state={forgetSource.state} />}
       {isEditable(data) &&
@@ -182,7 +150,8 @@ function CustomizationView({
           adoptKey: copy.adoptKey,
           canEdit,
           locked,
-          onSaved: handleSaved,
+          followCopy: copy.followCopy,
+          refetchSaved,
         })}
       <Stack spacing={4}>
         <SectionTabs
@@ -217,16 +186,6 @@ function CustomizationView({
           )}
         </SectionTabPanel>
       </Stack>
-
-      <EntityDeleteDialog
-        open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
-        what={label}
-        restorable={restorable}
-        changesError={changesError}
-        onConfirm={() => deleteMutation.mutate()}
-        isLoading={deleteMutation.isPending}
-      />
     </EntityDetailLayout>
   );
 }
@@ -275,34 +234,11 @@ function describe(
   }
 }
 
-function isEditable(data: CustomizationEntity): data is EditableEntity {
-  return EDITABLE_TYPES.some((type) => type === data.type);
-}
-
-/** Where a modifier's page goes back to: its class's Modifiers tab, or its entity's customization page. */
+/** Where a modifier's page goes back to: its class's Modifiers tab, its entity's customization page, or nowhere. */
 function modifierSourcePath(rulesetId: string, sourceType: string, sourceId: string) {
   if (sourceType === "klasses") return `/rulesets/${rulesetId}/classes/${sourceId}/modifiers`;
-  const path = isOneOf(sourceType, CUSTOMIZATION_PAGE_TYPES)
-    ? buildCustomizationPath(sourceType, sourceId)
-    : `${sourceType}/${sourceId}/customization`;
-  return `/rulesets/${rulesetId}/${path}`;
-}
-
-function renderEditor(data: EditableEntity, props: Omit<EditorProps<unknown>, "entity">) {
-  switch (data.type) {
-    case "feats":
-      return <FeatEditor {...props} entity={data.entity} />;
-    case "races":
-      return <RaceEditor {...props} entity={data.entity} />;
-    case "items":
-      return <ItemEditor {...props} entity={data.entity} />;
-    case "powers":
-      return <SpellEditor {...props} entity={data.entity} />;
-    case "klass_levels":
-      return <ClassLevelEditor {...props} entity={data.entity} />;
-    default:
-      return data satisfies never;
-  }
+  if (!isOneOf(sourceType, CUSTOMIZATION_PAGE_TYPES)) return undefined;
+  return `/rulesets/${rulesetId}/${buildCustomizationPath(sourceType, sourceId)}`;
 }
 
 /** A modifier can only carry requirements. */
@@ -424,7 +360,7 @@ export default function CustomizationPage() {
 
   if (!ruleset || !data || !currentTab) {
     return (
-      <EntityDetailLayout backTo={`/rulesets/${rulesetId}`} canDelete={false} isLoading>
+      <EntityDetailLayout backTo={`/rulesets/${rulesetId}`} isLoading>
         {null}
       </EntityDetailLayout>
     );
