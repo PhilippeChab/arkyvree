@@ -4,14 +4,15 @@ import { useNavigate } from "react-router-dom";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { saveBlob } from "@/client/src/lib/download.ts";
-import { ANSWER_INVITE_KEY } from "@/client/src/lib/invites.ts";
+import { acceptedPath, ANSWER_INVITE_KEY } from "@/client/src/lib/invites.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { ApiError } from "@/client/src/services/ApiError.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
+import { isNavigableTarget } from "@/shared/activity.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
 import { useAnswerInvite } from "./useAnswerInvite.ts";
-import { isNavigableTarget, useOpenActivityTarget } from "./useOpenActivityTarget.ts";
+import { useOpenActivityTarget } from "./useOpenActivityTarget.ts";
 
 type InviteType = keyof typeof NOTIFICATION_INVITES;
 
@@ -24,21 +25,12 @@ type NotificationLike = Pick<NotificationItem, "id" | "type" | "targetTable" | "
 
 /**
  * Notification types that are invitations, answered in place with Accept / Reject (`useAnswerInvite`): `targetId` is
- * the invite, of `kind`; `path` is where accepting takes the user.
+ * the invite, of `kind`; its payload's `entityKey` names the entity accepting takes the user to (`acceptedPath`).
  */
 const NOTIFICATION_INVITES = {
-  createCampaignInvite: {
-    kind: "campaign",
-    path: (d: NotificationData) => (d.campaignId ? `/campaigns/${d.campaignId}` : "/campaigns"),
-  },
-  inviteContributor: {
-    kind: "rulesetContributor",
-    path: (d: NotificationData) => (d.rulesetId ? `/rulesets/${d.rulesetId}` : "/rulesets"),
-  },
-  inviteCharacterContributor: {
-    kind: "characterContributor",
-    path: (d: NotificationData) => (d.characterId ? `/characters/${d.characterId}` : "/characters"),
-  },
+  createCampaignInvite: { kind: "campaign", entityKey: "campaignId" },
+  inviteContributor: { kind: "rulesetContributor", entityKey: "rulesetId" },
+  inviteCharacterContributor: { kind: "characterContributor", entityKey: "characterId" },
 } as const;
 
 function isInviteType(type: string): type is InviteType {
@@ -150,10 +142,10 @@ export function useNotificationActions() {
 
   const accept = (n: NotificationLike, onAccepted: (path: string) => void = navigate) => {
     if (!isInviteType(n.type)) return;
-    const { kind, path } = NOTIFICATION_INVITES[n.type];
+    const { kind, entityKey } = NOTIFICATION_INVITES[n.type];
     answers.accept.mutate(
       { kind, inviteId: n.targetId, notificationId: n.id },
-      { onSuccess: () => onAccepted(path(notificationData(n))) },
+      { onSuccess: () => onAccepted(acceptedPath(kind, notificationData(n)[entityKey])) },
     );
   };
 

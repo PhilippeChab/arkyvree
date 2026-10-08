@@ -16,7 +16,7 @@ import { Link } from "react-router-dom";
 
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
 import {
-  CLICKABLE_SX,
+  CLICKABLE_ROW_SX,
   EmptyValue,
   ExpandArrow,
   SubsectionTitle,
@@ -137,9 +137,8 @@ function SpellRowItem({ spell, rulesetId }: SpellRowItemProps) {
   return (
     <>
       <TableRow
-        hover
         {...toggleProps(open, () => setOpen((prev) => !prev), "row")}
-        sx={{ ...CLICKABLE_SX, "& > td": { borderBottom: open ? "none" : undefined } }}
+        sx={[CLICKABLE_ROW_SX, { "& > td": { borderBottom: open ? "none" : undefined } }]}
       >
         <TableCell>
           <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>

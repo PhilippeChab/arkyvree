@@ -131,7 +131,7 @@ export function LevelWizardDialog({
         title="Discard Progress"
         message="Are you sure you want to discard all level-up progress? The choices made in this wizard are lost."
         confirmLabel="Discard"
-        confirmColor="error"
+        intent="destructive"
       />
     </>
   );

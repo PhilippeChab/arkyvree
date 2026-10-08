@@ -7,7 +7,8 @@
  *   "Please"; an error's fallback names what failed ("Failed to remove item").
  * - `confirm-wording`: a confirmation asks "Are you sure you want to …?", then says what follows; a deletion ends
  *   "This action cannot be undone.", or "You can restore it from Local Changes." for what a fork inherits, each branch
- *   of a message that says either.
+ *   of a message that says either; an archive ends "You can unarchive it at any time from the Archived filter.", the
+ *   one way a ruleset, a campaign or a character comes back.
  * - `typography-marks`: an ellipsis is "…" and a dash between words "—", never "..." or " - ", a template's
  *   interpolations reading as words (`${pool} - ${level}`); a text cut short is `truncate(text, length)`.
  *
@@ -16,6 +17,9 @@
 
 import { calleeName, elementName, inClient } from "./jsx.mjs";
 import { repoPath } from "./paths.mjs";
+
+/** How an archive's confirmation ends: where the record waits, and that it comes back */
+const ARCHIVE_ENDING = "You can unarchive it at any time from the Archived filter.";
 
 /** How a deletion's confirmation ends: for good, or restorable, what a fork inherits (`isRestorableDelete`) */
 const DELETE_ENDINGS = ["This action cannot be undone.", "You can restore it from Local Changes."];
@@ -80,13 +84,15 @@ function createConfirmWording(context) {
       const texts = branches.map(writtenText).filter((text) => text !== null);
       const said = (text) =>
         /^Are you sure you want to [^?]+\?/.test(text) &&
-        (element !== "DeleteDialog" || DELETE_ENDINGS.some((ending) => text.endsWith(ending)));
+        (element !== "DeleteDialog" || DELETE_ENDINGS.some((ending) => text.endsWith(ending))) &&
+        (!text.startsWith("Are you sure you want to archive ") || text.endsWith(ARCHIVE_ENDING));
       if (texts.every(said)) return;
       context.report({
         node,
         message:
           'A confirmation asks "Are you sure you want to …?", then says what follows; a deletion ends "This action ' +
-          'cannot be undone.", or "You can restore it from Local Changes." for what a fork inherits.',
+          'cannot be undone.", or "You can restore it from Local Changes." for what a fork inherits; an archive ends ' +
+          `"${ARCHIVE_ENDING}"`,
       });
     },
   };

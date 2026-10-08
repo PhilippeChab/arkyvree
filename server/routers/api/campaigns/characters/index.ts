@@ -4,6 +4,7 @@ import { z } from "zod";
 import { denyDemoUser, exportRateLimit, type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { idParam, limit, page } from "@/server/routers/api/validation.ts";
 import { CampaignCharactersService } from "@/server/services/campaigns/characters/index.ts";
+import { CHARACTER_VISIBILITY_OPTIONS } from "@/shared/campaigns.ts";
 
 const characterParams = idParam.extend({ characterId: z.string().uuid() });
 
@@ -46,7 +47,7 @@ export default new Hono<SessionContext>()
       "json",
       z.object({
         characterId: z.string().uuid(),
-        visibility: z.enum(["Private", "Public", "Partial"]).default("Private"),
+        visibility: z.enum(CHARACTER_VISIBILITY_OPTIONS).default("Private"),
       }),
     ),
     async (c) => {
@@ -76,7 +77,7 @@ export default new Hono<SessionContext>()
     validate(
       "json",
       z.object({
-        visibility: z.enum(["Private", "Public", "Partial"]),
+        visibility: z.enum(CHARACTER_VISIBILITY_OPTIONS),
       }),
     ),
     async (c) => {

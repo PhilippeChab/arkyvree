@@ -1,4 +1,4 @@
-import { Button, Stack, type SxProps, type Theme } from "@mui/material";
+import { Button, Stack } from "@mui/material";
 
 import { DiceSpinner } from "@/client/src/components/common/index.ts";
 import { CheckIcon, CloseIcon } from "@/client/src/components/icons/index.ts";
@@ -10,7 +10,6 @@ interface InviteActionButtonsProps {
   pending?: "accept" | "reject" | null;
   /** Full-width buttons for an invite page, instead of small inline ones. */
   prominent?: boolean;
-  sx?: SxProps<Theme>;
 }
 
 /** Accept / Reject pair for an invitation (see docs/ui-buttons.md → pair patterns). */
@@ -19,12 +18,11 @@ export function InviteActionButtons({
   onReject,
   pending = null,
   prominent = false,
-  sx,
 }: InviteActionButtonsProps) {
   const size = prominent ? "medium" : "small";
   const disabled = pending !== null;
   return (
-    <Stack direction="row" spacing={prominent ? 2 : 1} sx={sx}>
+    <Stack direction="row" spacing={prominent ? 2 : 1}>
       <Button
         size={size}
         fullWidth={prominent}

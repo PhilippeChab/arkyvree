@@ -28,7 +28,12 @@ import {
   usePageTitle,
 } from "@/client/src/hooks/index.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
-import { characterDetailQuery, type CharacterListFilters, characterListQuery } from "@/client/src/lib/queries.ts";
+import {
+  CHARACTER_LIST_DEFAULTS,
+  characterDetailQuery,
+  type CharacterListFilters,
+  characterListQuery,
+} from "@/client/src/lib/queries.ts";
 
 import { CreateCharacterDialog } from "./components/index.ts";
 
@@ -51,10 +56,10 @@ export default function CharactersPage() {
   const createDialog = useDialogState();
   const { searchParams, updateSearchParams, search, orderBy, orderDir, searchBarProps } = useListParams(
     ["name", "createdAt", "updatedAt"],
-    { orderBy: "createdAt", orderDir: "desc" },
+    CHARACTER_LIST_DEFAULTS,
   );
 
-  const view = oneOf(searchParams.get("view"), ["active", "shared", "archived"], "active");
+  const view = oneOf(searchParams.get("view"), ["active", "shared", "archived"], CHARACTER_LIST_DEFAULTS.view);
 
   const characters = useListPageQuery(characterListQuery({ view, search, orderBy, orderDir }));
   const portraitsByCharacterId = useCharacterPortraits(characters.items);
@@ -101,7 +106,7 @@ export default function CharactersPage() {
                   <BlankState
                     icon={ArchiveIcon}
                     title="No archived characters"
-                    description="Characters you archive will appear here. You can restore them at any time."
+                    description="Characters you archive will appear here. You can unarchive them at any time."
                     action={viewActiveButton}
                   />
                 ) : view === "shared" ? (
@@ -134,7 +139,7 @@ export default function CharactersPage() {
                     avatarSrc={portraitsByCharacterId.get(character.id) ?? undefined}
                     title={character.name}
                     description={character.description}
-                    pills={
+                    chips={
                       <>
                         {character.accessRole === "contributor" && <StatusChip label="Shared" color="info" />}
                         <CharacterBuildChips race={character.race} levels={character.levels} />

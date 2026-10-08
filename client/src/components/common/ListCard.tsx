@@ -23,13 +23,14 @@ interface ListCardProps extends Omit<CardProps, "children" | "title"> {
   avatarSrc?: string;
   /** Brand colour of the avatar's gradient. */
   avatarTone?: "primary" | "secondary";
+  /** Its facts, under its title: chips of the family, as its page's header shows them. */
+  chips?: ReactNode;
   /** Corner control, e.g. a star toggle. */
   corner?: ReactNode;
   description: string | null | undefined;
   /** Marks the card with the warning stripe and border: a private one says so in its chip */
   isArchived?: boolean;
   onClick?: () => void;
-  pills?: ReactNode;
   title: string;
 }
 
@@ -41,7 +42,7 @@ export function ListCard({
   avatarSrc,
   title,
   corner,
-  pills,
+  chips,
   description,
   isArchived = false,
   animationIndex,
@@ -98,12 +99,12 @@ export function ListCard({
     >
       {/* The card's content is a column, its description filling what's left */}
       <Stack sx={{ height: "100%" }}>
-        {/* The header's inner space, down to the description: deeper under the pills */}
+        {/* The header's inner space, down to the description: deeper under the chips */}
         <Stack
           spacing={1.5}
           sx={{
             p: { xs: 2, sm: 3 },
-            pb: pills ? { xs: 3.5, sm: 4 } : { xs: 3, sm: 3.5 },
+            pb: chips ? { xs: 3.5, sm: 4 } : { xs: 3, sm: 3.5 },
             position: "relative",
           }}
         >
@@ -135,9 +136,9 @@ export function ListCard({
             </Typography>
             {action}
           </Stack>
-          {pills && (
+          {chips && (
             <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
-              {pills}
+              {chips}
             </Stack>
           )}
         </Stack>

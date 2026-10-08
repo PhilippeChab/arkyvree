@@ -14,9 +14,9 @@ import { useStaggerAnimation } from "./useStaggerAnimation.ts";
 
 /**
  * A list page's infinite query (the rulesets, characters, campaigns, notifications, activities, and a campaign's
- * characters tab, a grid of cards too): the items loaded so far (the same array until a page comes in), kept while
- * another search, filter or sort loads, its state, the offset its cards stagger in from, and `loadMore`, which marks
- * where the next page starts before fetching it. `ListPageResults` shows a page's.
+ * characters and players tabs): the items loaded so far (the same array until a page comes in), kept while another
+ * search, filter or sort loads, its state, the offset its cards stagger in from, and `loadMore`, which marks where the
+ * next page starts before fetching it. `ListPageResults` shows a page's, and a tab's (`variant="section"`).
  */
 export function useListPageQuery<
   TPage extends ListPage,

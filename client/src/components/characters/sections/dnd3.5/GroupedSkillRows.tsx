@@ -1,7 +1,7 @@
 import { Box, Stack, TableCell, TableRow } from "@mui/material";
 import { type ReactNode, useMemo } from "react";
 
-import { CLICKABLE_SX, ExpandArrow, toggleProps } from "@/client/src/components/common/index.ts";
+import { CLICKABLE_ROW_SX, ExpandArrow, toggleProps } from "@/client/src/components/common/index.ts";
 import { useToggleSet } from "@/client/src/hooks/index.ts";
 import { DURATION, EASING, fadeIn, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
 
@@ -58,7 +58,7 @@ export function GroupedSkillRows<S extends { name: string }>({
           <TableRow
             key={`group-${row.prefix}`}
             {...toggleProps(isExpanded, () => toggle(row.prefix), "row")}
-            sx={{ ...CLICKABLE_SX, bgcolor: "action.hover" }}
+            sx={[CLICKABLE_ROW_SX, { bgcolor: "action.hover" }]}
           >
             <TableCell sx={{ fontWeight: 600 }}>
               <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>

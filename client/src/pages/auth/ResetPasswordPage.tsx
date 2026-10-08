@@ -5,7 +5,9 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import {
   AuthPage,
   AuthSubmitButton,
+  CodeSentMessage,
   EMPTY_VERIFICATION_CODE,
+  isCodeComplete,
   ResendCodeLink,
   useResendCode,
   VerificationCodeInput,
@@ -57,18 +59,12 @@ export default function ResetPasswordPage() {
     );
   };
 
-  const isComplete = digits.every((d) => d !== "");
-
   return (
     <AuthPage
       error={error}
       notice={notice}
       title="Reset Password"
-      subtitle={
-        <>
-          We sent an 8-digit code to <strong>{pendingPasswordResetEmail}</strong>
-        </>
-      }
+      subtitle={<CodeSentMessage email={pendingPasswordResetEmail} />}
     >
       <Stack spacing={2}>
         <Stack component="form" onSubmit={form.handleSubmit(handleReset)} noValidate spacing={5}>
@@ -95,7 +91,7 @@ export default function ResetPasswordPage() {
               autoComplete="new-password"
             />
 
-            <AuthSubmitButton loading={auth.pending} disabled={!isComplete}>
+            <AuthSubmitButton loading={auth.pending} disabled={!isCodeComplete(digits)}>
               Reset Password
             </AuthSubmitButton>
           </Stack>

@@ -1,6 +1,6 @@
 import { ArchiveIcon, DraftIcon, PublishedIcon } from "@/client/src/components/icons/index.ts";
 
-/** A ruleset status's icon, color and explanation, for the list's pills and the page's chip. */
+/** A ruleset status's icon, color and explanation, for its chip on a card and in a page's header. */
 export const RULESET_STATUS = {
   Draft: {
     icon: DraftIcon,

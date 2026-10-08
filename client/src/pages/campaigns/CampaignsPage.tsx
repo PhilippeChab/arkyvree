@@ -4,9 +4,9 @@ import { useNavigate } from "react-router-dom";
 
 import {
   BlankState,
+  CountChip,
   CREATED_SORTS,
   type FilterOption,
-  InfoPill,
   ListCard,
   ListCardGrid,
   ListPageResults,
@@ -17,12 +17,18 @@ import {
   SearchBar,
   type SortOption,
   UPDATED_SORTS,
+  ValueChip,
 } from "@/client/src/components/common/index.ts";
-import { ArchiveIcon, CampaignIcon, PlayersIcon, RulesetIcon } from "@/client/src/components/icons/index.ts";
+import { ArchiveIcon, CampaignIcon } from "@/client/src/components/icons/index.ts";
 import { useIsDemo, useListPageQuery, useListParams, usePageTitle } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
-import { campaignDetailQuery, type CampaignListFilters, campaignListQuery } from "@/client/src/lib/queries.ts";
+import {
+  CAMPAIGN_LIST_DEFAULTS,
+  campaignDetailQuery,
+  type CampaignListFilters,
+  campaignListQuery,
+} from "@/client/src/lib/queries.ts";
 
 import { CreateCampaignDialog } from "./components/index.ts";
 import { prefetchCampaignSections } from "./details/sectionQueries.ts";
@@ -43,11 +49,11 @@ export default function CampaignsPage() {
   const queryClient = useQueryClient();
   const { searchParams, updateSearchParams, search, orderBy, orderDir, searchBarProps } = useListParams(
     ["name", "createdAt", "updatedAt"],
-    { orderBy: "createdAt", orderDir: "desc" },
+    CAMPAIGN_LIST_DEFAULTS,
   );
   const isDemo = useIsDemo();
 
-  const view = oneOf(searchParams.get("view"), ["active", "archived"], "active");
+  const view = oneOf(searchParams.get("view"), ["active", "archived"], CAMPAIGN_LIST_DEFAULTS.view);
 
   const { createDialog, createForm, createMutation, handleCreate, confirmCreate } = useCampaignOperations();
 
@@ -91,7 +97,7 @@ export default function CampaignsPage() {
                   <BlankState
                     icon={ArchiveIcon}
                     title="No archived campaigns"
-                    description="Campaigns you archive will appear here. You can restore them at any time."
+                    description="Campaigns you archive will appear here. You can unarchive them at any time."
                     action={
                       <Button variant="outlined" onClick={() => updateSearchParams({ view: null })}>
                         View Active Campaigns
@@ -113,39 +119,26 @@ export default function CampaignsPage() {
               }
             >
               <ListCardGrid>
-                {campaigns.items.map((campaign, index) => {
-                  const players = formatCount(campaign.currentPlayers, "player");
-                  return (
-                    <ListCard
-                      key={campaign.id}
-                      isArchived={view === "archived"}
-                      animationIndex={index}
-                      animationOffset={campaigns.offset}
-                      onClick={() => navigate(`/campaigns/${campaign.id}`)}
-                      onMouseEnter={() => prefetchCampaign(campaign.id)}
-                      onFocus={() => prefetchCampaign(campaign.id)}
-                      avatarTone="secondary"
-                      title={campaign.name}
-                      description={campaign.description}
-                      pills={
-                        <>
-                          <InfoPill
-                            icon={PlayersIcon}
-                            label={players}
-                            color="info"
-                            tooltip={`${players} in this campaign`}
-                          />
-                          <InfoPill
-                            icon={RulesetIcon}
-                            label={campaign.rulesetName}
-                            color="secondary"
-                            tooltip={campaign.rulesetName}
-                          />
-                        </>
-                      }
-                    />
-                  );
-                })}
+                {campaigns.items.map((campaign, index) => (
+                  <ListCard
+                    key={campaign.id}
+                    isArchived={view === "archived"}
+                    animationIndex={index}
+                    animationOffset={campaigns.offset}
+                    onClick={() => navigate(`/campaigns/${campaign.id}`)}
+                    onMouseEnter={() => prefetchCampaign(campaign.id)}
+                    onFocus={() => prefetchCampaign(campaign.id)}
+                    avatarTone="secondary"
+                    title={campaign.name}
+                    description={campaign.description}
+                    chips={
+                      <>
+                        <CountChip label={formatCount(campaign.currentPlayers, "player")} />
+                        <ValueChip label={campaign.rulesetName} />
+                      </>
+                    }
+                  />
+                ))}
               </ListCardGrid>
             </ListPageResults>
           </Stack>

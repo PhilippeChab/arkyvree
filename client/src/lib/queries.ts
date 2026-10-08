@@ -9,6 +9,7 @@ import { infiniteQueryOptions, type QueryClient, queryOptions, skipToken } from 
 import { type InferRequestType, type InferResponseType, parseResponse } from "hono/client";
 
 import { rpc } from "@/client/src/services/rpc.ts";
+import { ATTACHMENT_SLOTS, type AttachmentSlotName } from "@/shared/attachments.ts";
 
 import { FOREVER } from "./durations.ts";
 import { nextPage } from "./pageItems.ts";
@@ -19,11 +20,15 @@ type CharacterListParams = InferRequestType<typeof rpc.api.characters.$get>["que
 
 type RulesetListParams = InferRequestType<typeof rpc.api.rulesets.$get>["query"];
 
-/** A record's attachment slot: its record (none until it has an id) and its name ("portrait", "avatar"). */
+/** Each list of a ruleset its pickers, columns and lookups read whole, by its name: the request for its first 100. */
+type RulesetOptionRequests = {
+  [List in keyof RulesetOptions]: (id: string) => Promise<{ items: RulesetOptions[List] }>;
+};
+
+/** A record's attachment slot: its record (none until it has an id) and its slot (`ATTACHMENT_SLOTS`). */
 export interface AttachmentSlot {
-  name: string;
+  name: AttachmentSlotName;
   recordId: string | undefined;
-  recordType: string;
 }
 
 export type CampaignDetail = InferResponseType<(typeof rpc.api.campaigns)[":id"]["$get"], 200>;
@@ -54,8 +59,48 @@ export interface RulesetListFilters {
 
 export type RulesetListItem = InferResponseType<typeof rpc.api.rulesets.$get, 200>["items"][number];
 
+/** The lists of a ruleset its pickers, columns and lookups read whole (`rulesetOptionsQuery`): their rows, by name. */
+export interface RulesetOptions {
+  abilities: InferResponseType<(typeof rpc.api.rulesets)[":id"]["abilities"]["$get"], 200>["items"];
+  languages: InferResponseType<(typeof rpc.api.rulesets)[":id"]["languages"]["$get"], 200>["items"];
+  saves: InferResponseType<(typeof rpc.api.rulesets)[":id"]["saves"]["$get"], 200>["items"];
+}
+
+/** A list read whole: its first page of 100, the most one request returns (a ruleset has far fewer of each). */
+const FIRST_HUNDRED = { page: "1", limit: "100" };
+
+const RULESET_OPTION_REQUESTS: RulesetOptionRequests = {
+  abilities: (id) => parseResponse(rpc.api.rulesets[":id"].abilities.$get({ param: { id }, query: FIRST_HUNDRED })),
+  languages: (id) => parseResponse(rpc.api.rulesets[":id"].languages.$get({ param: { id }, query: FIRST_HUNDRED })),
+  saves: (id) => parseResponse(rpc.api.rulesets[":id"].saves.$get({ param: { id }, query: FIRST_HUNDRED })),
+};
+
+/** How the campaigns list opens: its page reads them as its URL's defaults, and the sidebar warms its first page. */
+export const CAMPAIGN_LIST_DEFAULTS = {
+  orderBy: "createdAt",
+  orderDir: "desc",
+  search: "",
+  view: "active",
+} as const satisfies CampaignListFilters;
+
+/** How the characters list opens: its page reads them as its URL's defaults, and the sidebar warms its first page. */
+export const CHARACTER_LIST_DEFAULTS = {
+  orderBy: "createdAt",
+  orderDir: "desc",
+  search: "",
+  view: "active",
+} as const satisfies CharacterListFilters;
+
 /** A list page's page: what a page asks for, and what its prefetch warms. */
 export const LIST_PAGE_SIZE = 10;
+
+/** How the rulesets list opens: its page reads them as its URL's defaults, and the sidebar warms its first page. */
+export const RULESET_LIST_DEFAULTS = {
+  orderBy: "createdAt",
+  orderDir: "desc",
+  scope: undefined,
+  search: "",
+} as const satisfies RulesetListFilters;
 
 /** Where an activity's or a notification's target is now: the server resolves its page as it's opened. */
 export function activityTargetQuery(targetTable: string, targetId: string) {
@@ -67,7 +112,8 @@ export function activityTargetQuery(targetTable: string, targetId: string) {
 }
 
 /** A record's attachment slot: its key and its request, which waits for the record's id. */
-export function attachmentSlotQuery({ recordType, recordId, name }: AttachmentSlot) {
+export function attachmentSlotQuery({ name, recordId }: AttachmentSlot) {
+  const { recordType } = ATTACHMENT_SLOTS[name];
   return queryOptions({
     queryKey: QUERY_KEYS.attachments.slot(recordType, recordId ?? "", name),
     queryFn: recordId
@@ -181,24 +227,6 @@ export function oglLicenseQuery() {
   });
 }
 
-/** Every ability of a ruleset, for pickers and lookups: the first 100, the most one request returns. */
-export function rulesetAbilitiesQuery(rulesetId: string | undefined) {
-  return queryOptions({
-    queryKey: QUERY_KEYS.rulesets.abilities(rulesetId ?? ""),
-    queryFn: rulesetId
-      ? async () => {
-          const page = await parseResponse(
-            rpc.api.rulesets[":id"].abilities.$get({
-              param: { id: rulesetId },
-              query: { page: "1", limit: "100" },
-            }),
-          );
-          return page.items;
-        }
-      : skipToken,
-  });
-}
-
 export function rulesetDetailQuery(id: string) {
   return queryOptions({
     queryKey: QUERY_KEYS.rulesets.detail(id),
@@ -224,6 +252,18 @@ export function rulesetListQuery(filters: RulesetListFilters) {
       ),
     initialPageParam: 1,
     getNextPageParam: nextPage,
+  });
+}
+
+/**
+ * Every ability, language or save of a ruleset, for pickers, columns and lookups: the first 100, the most one request
+ * returns, waiting for the ruleset's id.
+ */
+export function rulesetOptionsQuery<List extends keyof RulesetOptions>(list: List, rulesetId: string | undefined) {
+  const request = RULESET_OPTION_REQUESTS[list];
+  return queryOptions({
+    queryKey: QUERY_KEYS.rulesets[list](rulesetId ?? ""),
+    queryFn: rulesetId ? async () => (await request(rulesetId)).items : skipToken,
   });
 }
 

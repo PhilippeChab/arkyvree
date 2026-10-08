@@ -44,9 +44,12 @@ import { Onboarding } from "@/client/src/components/onboarding/index.ts";
 import { useAnchorMenu, useAttachment, useAuthRequests, useIsDemo, useIsMobile } from "@/client/src/hooks/index.ts";
 import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 import {
+  CAMPAIGN_LIST_DEFAULTS,
   campaignListQuery,
+  CHARACTER_LIST_DEFAULTS,
   characterListQuery,
   dashboardStatsQuery,
+  RULESET_LIST_DEFAULTS,
   rulesetListQuery,
 } from "@/client/src/lib/queries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
@@ -59,24 +62,19 @@ import { DemoBanner } from "./DemoBanner.tsx";
 import { FeedbackButton } from "./FeedbackButton.tsx";
 import { NotificationBell } from "./NotificationBell.tsx";
 
-/** How a list page opens by default, which a prefetch asks for. */
-const DEFAULT_LIST = { search: "", orderBy: "createdAt", orderDir: "desc" } as const;
 const DRAWER_WIDTH = 72;
 
 const EXPANDED_DRAWER_WIDTH = 240;
 
 /**
  * Warm the first page of a section when its sidebar item is hovered. The options are the ones the pages use, filtered
- * the way a page opens by default.
+ * the way a page opens by default (its list's defaults, `…_LIST_DEFAULTS`).
  */
 const PREFETCHERS: Partial<Record<string, (queryClient: QueryClient) => void>> = {
   dashboard: (queryClient) => void queryClient.prefetchQuery(dashboardStatsQuery()),
-  rulesets: (queryClient) =>
-    void queryClient.prefetchInfiniteQuery(rulesetListQuery({ scope: undefined, ...DEFAULT_LIST })),
-  characters: (queryClient) =>
-    void queryClient.prefetchInfiniteQuery(characterListQuery({ view: "active", ...DEFAULT_LIST })),
-  campaigns: (queryClient) =>
-    void queryClient.prefetchInfiniteQuery(campaignListQuery({ view: "active", ...DEFAULT_LIST })),
+  rulesets: (queryClient) => void queryClient.prefetchInfiniteQuery(rulesetListQuery(RULESET_LIST_DEFAULTS)),
+  characters: (queryClient) => void queryClient.prefetchInfiniteQuery(characterListQuery(CHARACTER_LIST_DEFAULTS)),
+  campaigns: (queryClient) => void queryClient.prefetchInfiniteQuery(campaignListQuery(CAMPAIGN_LIST_DEFAULTS)),
 };
 
 const SIDEBAR_ITEMS = [
@@ -150,11 +148,7 @@ export function Layout() {
 
   const user = useAuthStore((s) => s.user);
   const updateUser = useAuthStore((s) => s.updateUser);
-  const { data: avatarAttachment } = useAttachment({
-    recordType: "User",
-    recordId: user?.id,
-    name: "avatar",
-  });
+  const { data: avatarAttachment } = useAttachment({ name: "avatar", recordId: user?.id });
   const isDemo = useIsDemo();
   // Suppress the onboarding popovers for demo users — they already see a
   // dedicated demo banner and the popover would just stack on top.
@@ -212,14 +206,7 @@ export function Layout() {
   return (
     <Stack direction="row">
       {/* App Bar */}
-      <AppBar
-        position="fixed"
-        sx={{
-          zIndex: (theme) => theme.zIndex.drawer + 1,
-          background: (theme) =>
-            `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-        }}
-      >
+      <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
         <Toolbar sx={{ justifyContent: "space-between" }}>
           {isMobile ? (
             <IconButton

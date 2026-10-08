@@ -26,7 +26,7 @@ export function useResendCode(resend: (callbacks: ResendCallbacks) => void) {
     setResent(false);
     resend({
       onSuccess: () => setResent(true),
-      onError: (error) => setError(errorMessage(error, "Failed to resend code")),
+      onError: (error) => setError(errorMessage(error, "Failed to resend the code")),
     });
   };
 

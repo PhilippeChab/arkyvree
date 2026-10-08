@@ -156,7 +156,7 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
         title="Revoke Link"
         message="Are you sure you want to revoke this link? Anyone who has it loses access to the sheet."
         confirmLabel="Revoke Link"
-        confirmColor="error"
+        intent="destructive"
       />
     </>
   );

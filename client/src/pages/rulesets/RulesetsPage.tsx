@@ -6,7 +6,6 @@ import {
   BlankState,
   CREATED_SORTS,
   type FilterOption,
-  InfoPill,
   ListCard,
   ListCardGrid,
   ListPageResults,
@@ -16,20 +15,17 @@ import {
   type SortOption,
   UPDATED_SORTS,
 } from "@/client/src/components/common/index.ts";
-import {
-  ExtensionIcon,
-  ForkIcon,
-  PrivateIcon,
-  PublicIcon,
-  RulesetIcon,
-  StarBorderIcon,
-  StarIcon,
-} from "@/client/src/components/icons/index.ts";
+import { RulesetIcon, StarBorderIcon, StarIcon } from "@/client/src/components/icons/index.ts";
 import { useListPageQuery, useListParams, usePageTitle } from "@/client/src/hooks/index.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
-import { rulesetDetailQuery, type RulesetListFilters, rulesetListQuery } from "@/client/src/lib/queries.ts";
+import {
+  RULESET_LIST_DEFAULTS,
+  rulesetDetailQuery,
+  type RulesetListFilters,
+  rulesetListQuery,
+} from "@/client/src/lib/queries.ts";
 
-import { RULESET_STATUS } from "./components/index.ts";
+import { RulesetFactChips } from "./components/index.ts";
 import { prefetchSection } from "./details/sectionQueries.ts";
 import { useToggleRulesetStar } from "./hooks/index.ts";
 
@@ -69,7 +65,7 @@ export default function RulesetsPage() {
   const toggleStar = useToggleRulesetStar();
   const { searchParams, updateSearchParams, search, orderBy, orderDir, searchBarProps } = useListParams(
     ["createdAt", "updatedAt"],
-    { orderBy: "createdAt", orderDir: "desc" },
+    RULESET_LIST_DEFAULTS,
   );
 
   const scope = oneOf(searchParams.get("scope"), SCOPES);
@@ -109,11 +105,14 @@ export default function RulesetsPage() {
             >
               <ListCardGrid>
                 {rulesets.items.map((ruleset, index) => {
-                  const status = RULESET_STATUS[ruleset.status];
                   // The page opens on the Races tab, with "Local changes" on for extensions.
                   const prefetch = () => {
                     void queryClient.prefetchQuery(rulesetDetailQuery(ruleset.id));
                     void prefetchSection(queryClient, ruleset.id, "races", ruleset.kind === "extension");
+                  };
+                  // Its fork's chip opens the ruleset it was forked from
+                  const prefetchParent = () => {
+                    if (ruleset.rulesetId) void queryClient.prefetchQuery(rulesetDetailQuery(ruleset.rulesetId));
                   };
                   return (
                     <ListCard
@@ -153,38 +152,7 @@ export default function RulesetsPage() {
                           </Stack>
                         )
                       }
-                      pills={
-                        <>
-                          <InfoPill
-                            icon={status.icon}
-                            label={ruleset.status}
-                            color={status.color}
-                            tooltip={status.tooltip}
-                          />
-                          {ruleset.private ? (
-                            <InfoPill icon={PrivateIcon} label="Private" color="warning" tooltip="Private ruleset" />
-                          ) : (
-                            <InfoPill icon={PublicIcon} label="Public" color="success" tooltip="Public ruleset" />
-                          )}
-                          {ruleset.kind === "extension" ? (
-                            <InfoPill
-                              icon={ExtensionIcon}
-                              label="Extension"
-                              color="secondary"
-                              tooltip={ruleset.userId ? "Extension" : "Official Extension"}
-                            />
-                          ) : (
-                            ruleset.rulesetId && (
-                              <InfoPill
-                                icon={ForkIcon}
-                                label="Fork"
-                                color="info"
-                                tooltip={`Forked from ${ruleset.rulesetName}`}
-                              />
-                            )
-                          )}
-                        </>
-                      }
+                      chips={<RulesetFactChips ruleset={ruleset} onPrefetchParent={prefetchParent} />}
                     />
                   );
                 })}

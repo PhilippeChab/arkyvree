@@ -4,9 +4,10 @@ import { type FieldValues, type UseFormReturn } from "react-hook-form";
 
 import { DialogFooter } from "./DialogFooter.tsx";
 import { FormDialog } from "./FormDialog.tsx";
+import { type Intent } from "./intent.ts";
 import { Modal } from "./Modal.tsx";
 
-type DeleteDialogProps = Omit<ConfirmDialogProps, "confirmColor">;
+type DeleteDialogProps = Omit<ConfirmDialogProps, "intent">;
 
 interface FormActionDialogProps<T extends FieldValues = FieldValues> {
   children: ReactNode;
@@ -31,10 +32,10 @@ type StandardFormDialogProps<T extends FieldValues> = Omit<FormActionDialogProps
 export interface ConfirmDialogProps {
   /** Extra content below the message, e.g. an option the confirm depends on. */
   children?: ReactNode;
-  /** Intent of the confirm button — see docs/ui-buttons.md. */
-  confirmColor?: "primary" | "error" | "warning" | "success";
   confirmIcon?: ReactNode;
   confirmLabel?: string;
+  /** What its confirm does, its button's color (`intent.ts`, docs/ui-buttons.md). */
+  intent?: Intent;
   isLoading: boolean;
   maxWidth?: DialogProps["maxWidth"];
   message: ReactNode;
@@ -100,7 +101,7 @@ export function ConfirmDialog({
   message,
   children,
   confirmLabel = "Confirm",
-  confirmColor = "primary",
+  intent,
   confirmIcon,
   maxWidth,
 }: ConfirmDialogProps) {
@@ -114,7 +115,7 @@ export function ConfirmDialog({
       <DialogFooter
         onCancel={onClose}
         pending={isLoading}
-        action={{ label: confirmLabel, onClick: onConfirm, color: confirmColor, icon: confirmIcon }}
+        action={{ label: confirmLabel, onClick: onConfirm, intent, icon: confirmIcon }}
       />
     </Modal>
   );
@@ -125,7 +126,7 @@ export function CreateDialog<T extends FieldValues = FieldValues>({ ...props }: 
 }
 
 export function DeleteDialog({ ...props }: DeleteDialogProps) {
-  return <ConfirmDialog confirmLabel="Delete" {...props} confirmColor="error" />;
+  return <ConfirmDialog confirmLabel="Delete" {...props} intent="destructive" />;
 }
 
 export function EditDialog<T extends FieldValues = FieldValues>({ ...props }: StandardFormDialogProps<T>) {

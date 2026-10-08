@@ -693,7 +693,7 @@ describe("frontend rules", () => {
     ).toEqual(["date-formats client/src/intl.ts", "date-formats client/src/local.ts"]);
   });
 
-  test("a control that only navigates is a link, an external one an anchor, the URL read through the shared hooks", async () => {
+  test("a control that only navigates is a link, an external one an anchor, the URL and router state read through their guards", async () => {
     expect(
       await lintRepo(
         {
@@ -701,6 +701,7 @@ describe("frontend rules", () => {
           "client/src/clicked.tsx": 'export const c = <Button onClick={() => navigate("/x")}>Go</Button>;\n',
           "client/src/back.tsx": "export const b = <Button onClick={() => navigate(-1)}>Back</Button>;\n",
           "client/src/card.tsx": 'export const d = <ListCard onClick={() => navigate("/x")} />;\n',
+          "client/src/stat.tsx": 'export const s = <StatCard onClick={() => navigate("/x")} />;\n',
           "client/src/menu.tsx":
             'export const m = <ActionMenuItem label="Edit" onClick={menu.closeMenuAnd(() => navigate("/x"))} />;\n',
           "client/src/handler.tsx":
@@ -718,6 +719,13 @@ describe("frontend rules", () => {
             'import { useSearchParams } from "react-router-dom";\nexport const h = useSearchParams;\n',
           "client/src/alias.tsx":
             'import { Link as RouterLink } from "react-router-dom";\nexport const a = RouterLink;\n',
+          "client/src/state.tsx": "export const s = location.state?.openLevelUp === true;\n",
+          "client/src/guarded.tsx": "export const g = entityPageState(location.state).from;\n",
+          "client/src/redirectLink.tsx": "export const r = `/sign-in?redirect=${encodeURIComponent(to)}`;\n",
+          "client/src/redirectParam.tsx": 'export const p = useSearchParam("redirect");\n',
+          "client/src/components/auth/authRedirect.ts":
+            "export const b = (to: string) => `/sign-in?redirect=${encodeURIComponent(to)}`;\n",
+          "client/src/components/auth/useAuthRedirect.ts": 'export const u = () => useSearchParam("redirect");\n',
         },
         ["navigation"],
       ),
@@ -727,21 +735,38 @@ describe("frontend rules", () => {
       "navigation client/src/handler.tsx",
       "navigation client/src/menu.tsx",
       "navigation client/src/params.tsx",
+      "navigation client/src/redirectLink.tsx",
+      "navigation client/src/redirectParam.tsx",
+      "navigation client/src/stat.tsx",
+      "navigation client/src/state.tsx",
       "navigation client/src/window.tsx",
     ]);
   });
 
-  test("an element that opens on click spreads clickableProps", async () => {
+  test("an element that opens on click spreads clickableProps, and a row takes CLICKABLE_ROW_SX's tint", async () => {
     expect(
       await lintRepo(
         {
-          "client/src/row.tsx": "export const r = <TableRow {...clickableProps(open)} sx={CLICKABLE_SX} />;\n",
+          "client/src/row.tsx":
+            "export const r = <TableRow {...(open && clickableProps(open))} sx={[open && CLICKABLE_ROW_SX, ROW_SX]} />;\n",
+          "client/src/toggle.tsx":
+            'export const g = <TableRow {...toggleProps(open, toggle, "row")} sx={[CLICKABLE_ROW_SX, { bgcolor: "action.hover" }]} />;\n',
+          "client/src/card.tsx": "export const c = <Card {...clickableProps(open)} sx={CLICKABLE_SX} />;\n",
+          "client/src/untinted.tsx": "export const u = <TableRow {...clickableProps(open)} sx={CLICKABLE_SX} />;\n",
+          "client/src/hover.tsx": "export const h = <TableRow hover sx={ROW_ACTIONS_HOVER_SX} />;\n",
+          "client/src/tinted.tsx":
+            'export const t = <Stack {...clickableProps(open)} sx={[CLICKABLE_SX, { "&:hover": { bgcolor: "action.hover" } }]} />;\n',
           "client/src/bare.tsx": "export const b = <Box onClick={open} />;\n",
           "client/src/button.tsx": "export const t = <Button onClick={open}>Open</Button>;\n",
         },
         ["clickable-elements"],
       ),
-    ).toEqual(["clickable-elements client/src/bare.tsx"]);
+    ).toEqual([
+      "clickable-elements client/src/bare.tsx",
+      "clickable-elements client/src/hover.tsx",
+      "clickable-elements client/src/tinted.tsx",
+      "clickable-elements client/src/untinted.tsx",
+    ]);
   });
 
   test("a Tooltip wraps a control that can be disabled in a span, and describes one its text names", async () => {

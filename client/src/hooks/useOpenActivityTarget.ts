@@ -7,14 +7,6 @@ import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 import { activityTargetQuery } from "@/client/src/lib/queries.ts";
 import { ApiError } from "@/client/src/services/ApiError.ts";
 
-/** Activities about accounts and sessions have no page to open. */
-const NON_NAVIGABLE_TABLES = new Set(["users", "sessions"]);
-
-/** Whether an activity or notification target has a page to open. */
-export function isNavigableTarget(targetTable: string): boolean {
-  return !NON_NAVIGABLE_TABLES.has(targetTable);
-}
-
 /**
  * Open the page of an activity or notification target. The link is resolved
  * server-side at click time, since the entity may have moved (COW copies),

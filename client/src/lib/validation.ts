@@ -1,4 +1,4 @@
-import { PASSWORD_MIN_LENGTH } from "@/shared/auth.ts";
+import { PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from "@/shared/auth.ts";
 import { sanitizeText } from "@/shared/text.ts";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -29,13 +29,16 @@ export const NEW_PASSWORD_RULES = {
 /** React Hook Form rules for an email address that may be left empty (an invite's, sent only when given). */
 export const OPTIONAL_EMAIL_RULES = { pattern: EMAIL_RULES.pattern } as const;
 
-/** React Hook Form rules for an optional username, measured as it's stored (`sanitizeText`): 3 to 50 characters. */
+/**
+ * React Hook Form rules for an optional username, measured as it's stored (`sanitizeText`): `USERNAME_MIN_LENGTH` to
+ * `USERNAME_MAX_LENGTH` characters.
+ */
 export const USERNAME_RULES = {
   validate: (value: unknown) => {
     if (value === "" || value == null) return true;
     const length = sanitizeText(String(value)).length;
-    if (length < 3) return "Username must be at least 3 characters";
-    return length <= 50 || "Username must be at most 50 characters";
+    if (length < USERNAME_MIN_LENGTH) return `Username must be at least ${USERNAME_MIN_LENGTH} characters`;
+    return length <= USERNAME_MAX_LENGTH || `Username must be at most ${USERNAME_MAX_LENGTH} characters`;
   },
 } as const;
 

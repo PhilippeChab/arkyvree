@@ -1,14 +1,13 @@
 import { IconButton, Stack, Tooltip } from "@mui/material";
 import type { ElementType, MouseEventHandler, ReactNode } from "react";
 
+import { type Intent, INTENT_COLORS } from "./intent.ts";
 import { ROW_ACTIONS_SX } from "./rowActionStyles.ts";
-
-type Intent = "caution" | "default" | "destructive";
 
 interface RowActionProps {
   disabled?: boolean;
   icon: ElementType;
-  /** What it does, shown by its color (docs/ui-buttons.md): grey, red for what destroys, orange for leaving */
+  /** What it does, shown by its color (`intent.ts`): grey, red for what destroys, orange for leaving */
   intent?: Intent;
   /** Its name, which its tooltip shows: "Edit", "Delete Requirement" */
   label: string;
@@ -20,10 +19,9 @@ interface RowActionsProps {
   children: ReactNode;
 }
 
-const INTENT_COLORS = { caution: "warning.main", default: undefined, destructive: "error.main" } as const;
-
 /** One of a row's actions: its icon, named by its label, which its tooltip shows. */
 export function RowAction({ icon: Icon, label, intent = "default", onClick, disabled }: RowActionProps) {
+  const palette = INTENT_COLORS[intent];
   return (
     <Tooltip title={label}>
       {/* A disabled button takes no pointer: its tooltip shows over the span */}
@@ -33,7 +31,7 @@ export function RowAction({ icon: Icon, label, intent = "default", onClick, disa
           size="small"
           onClick={onClick}
           disabled={disabled}
-          sx={{ color: INTENT_COLORS[intent] }}
+          sx={{ color: palette && `${palette}.main` }}
         >
           <Icon fontSize="small" />
         </IconButton>

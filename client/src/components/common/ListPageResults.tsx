@@ -4,6 +4,7 @@ import { type ReactNode } from "react";
 import type { useListPageQuery } from "@/client/src/hooks/index.ts";
 
 import { NoMatchesState } from "./BlankState.tsx";
+import { DiceSpinner } from "./DiceSpinner.tsx";
 import { LoadError } from "./LoadError.tsx";
 import { LoadMoreButton } from "./LoadMoreButton.tsx";
 import { PageLoader } from "./PageLoader.tsx";
@@ -22,16 +23,32 @@ interface ListPageResultsProps {
   list: ListPageQuery;
   /** The search that runs, if any: when it found nothing, a `NoMatchesState`. */
   search: string;
+  /** A section's table's first load, its `TableSkeleton`, in place of the section's spinner. */
+  skeleton?: ReactNode;
+  /**
+   * Where the list shows: a page's main list (`page`: the page's loader, a large Load More), or a tab's (`section`: a
+   * section's spinner, or its table's `skeleton`, and a medium Load More).
+   */
+  variant?: "page" | "section";
   /** What it lists, as its load failure names it: "Characters". */
   what: string;
 }
 
 /**
- * A list page's results, below its search bar: its first load, its failure while nothing has loaded, what a search
- * found nothing for or its own empty state, else the list and the foot that loads its next page.
+ * A list's results, below its search bar, a page's or a tab's: its first load, its failure while nothing has loaded,
+ * what a search found nothing for or its own empty state, else the list and the foot that loads its next page.
  */
-export function ListPageResults({ children, empty, emptySx, list, search, what }: ListPageResultsProps) {
-  if (list.isLoading) return <PageLoader />;
+export function ListPageResults({
+  children,
+  empty,
+  emptySx,
+  list,
+  search,
+  skeleton,
+  variant = "page",
+  what,
+}: ListPageResultsProps) {
+  if (list.isLoading) return variant === "page" ? <PageLoader /> : (skeleton ?? <DiceSpinner sx={{ py: 4 }} />);
   if (list.error && list.items.length === 0) return <LoadError what={what} error={list.error} />;
   if (list.items.length === 0) return <Box sx={emptySx}>{search ? <NoMatchesState search={search} /> : empty}</Box>;
   return (
@@ -39,7 +56,7 @@ export function ListPageResults({ children, empty, emptySx, list, search, what }
     <Stack spacing={2} sx={{ pb: list.hasNextPage ? 0 : 3 }}>
       {children}
       <LoadMoreButton
-        size="large"
+        size={variant === "page" ? "large" : "medium"}
         hasNextPage={list.hasNextPage}
         isFetchingNextPage={list.isFetchingNextPage}
         onClick={list.loadMore}

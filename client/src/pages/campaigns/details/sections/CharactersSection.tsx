@@ -1,16 +1,6 @@
-import {
-  Autocomplete,
-  Box,
-  DialogContent,
-  DialogTitle,
-  Menu,
-  MenuItem,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Autocomplete, Box, DialogContent, DialogTitle, MenuItem, Stack, TextField, Typography } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { type InferRequestType, type InferResponseType, parseResponse } from "hono/client";
+import { type InferResponseType, parseResponse } from "hono/client";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -19,23 +9,19 @@ import {
   AddButton,
   BlankState,
   DialogFooter,
-  DiceSpinner,
   HelpLabel,
   ListCard,
   ListCardGrid,
-  LoadError,
-  LoadMoreButton,
+  ListPageResults,
   Modal,
-  NoMatchesState,
   ScrollSafeListbox,
   SearchBar,
   SectionContent,
-  ValueChip,
+  StatusChip,
 } from "@/client/src/components/common/index.ts";
 import { CharacterIcon, VisibilityIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import {
-  useAnchorMenu,
   useCharacterPortraits,
   useDebouncedValue,
   useDialogState,
@@ -53,6 +39,7 @@ import {
   unlinkedCharactersQuery,
 } from "@/client/src/pages/campaigns/details/sectionQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
+import { CHARACTER_VISIBILITY_OPTIONS, type CharacterVisibility } from "@/shared/campaigns.ts";
 
 type CampaignCharacter = CampaignCharactersPaginated["items"][number];
 
@@ -82,16 +69,11 @@ type UnlinkedCharacter = InferResponseType<
   200
 >["items"][number];
 
-type Visibility = NonNullable<
-  InferRequestType<(typeof rpc.api.campaigns)[":id"]["characters"]["$post"]>["json"]["visibility"]
->;
-const VISIBILITY_DESCRIPTIONS: Record<Visibility, string> = {
+const VISIBILITY_DESCRIPTIONS: Record<CharacterVisibility, string> = {
   Private: "Only visible to you",
   Public: "Visible to all campaign members",
   Partial: "Limited information visible to others",
 };
-
-const VISIBILITY_OPTIONS = ["Private", "Public", "Partial"] as const satisfies readonly Visibility[];
 
 function CharacterCard({
   character,
@@ -104,13 +86,12 @@ function CharacterCard({
   const navigate = useNavigate();
   const snackbar = useSnackbar();
   const queryClient = useQueryClient();
-  const menu = useAnchorMenu();
 
   // Warm the sheet while the pointer is on the card.
   const prefetchSheet = () => void queryClient.prefetchQuery(campaignCharacterQuery(campaignId, character.id));
 
   const visibilityMutation = useMutation({
-    mutationFn: async (visibility: Visibility) =>
+    mutationFn: async (visibility: CharacterVisibility) =>
       parseResponse(
         rpc.api.campaigns[":id"].characters[":characterId"].$put({
           param: { id: campaignId, characterId: character.id },
@@ -145,36 +126,30 @@ function CharacterCard({
       // A Partial character's description is hidden, not missing
       description={character.isPartial ? PARTIAL_IDENTITY_NOTE : character.description}
       action={
-        <>
-          <ValueChip
-            color="default"
-            label={
-              <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
-                <span>{character.visibility}</span>
-                <VisibilityIcon sx={{ fontSize: 14 }} />
-              </Stack>
+        // Its owner picks it in a select, a chip being a value and never an action; the others read it
+        canEditVisibility ? (
+          <TextField
+            select
+            size="small"
+            label="Visibility"
+            value={character.visibility}
+            onChange={(event) =>
+              visibilityMutation.mutate(oneOf(event.target.value, CHARACTER_VISIBILITY_OPTIONS, "Private"))
             }
-            onClick={canEditVisibility ? menu.openMenu : undefined}
-          />
-          {canEditVisibility && (
-            <Menu anchorEl={menu.anchorEl} open={menu.open} onClose={menu.closeMenu}>
-              {VISIBILITY_OPTIONS.map((option) => (
-                <MenuItem
-                  key={option}
-                  selected={option === character.visibility}
-                  onClick={() => {
-                    menu.closeMenu();
-                    if (option !== character.visibility) visibilityMutation.mutate(option);
-                  }}
-                >
-                  {option}
-                </MenuItem>
-              ))}
-            </Menu>
-          )}
-        </>
+            disabled={visibilityMutation.isPending}
+            sx={{ minWidth: 120 }}
+          >
+            {CHARACTER_VISIBILITY_OPTIONS.map((option) => (
+              <MenuItem key={option} value={option}>
+                {option}
+              </MenuItem>
+            ))}
+          </TextField>
+        ) : (
+          <StatusChip icon={<VisibilityIcon />} label={character.visibility} />
+        )
       }
-      pills={<CharacterBuildChips race={character.race} levels={character.levels} />}
+      chips={<CharacterBuildChips race={character.race} levels={character.levels} />}
     />
   );
 }
@@ -185,7 +160,7 @@ function LinkCharacterDialog({ open, onClose, onExited, campaignId }: LinkCharac
   const [selectedCharacter, setSelectedCharacter] = useState<UnlinkedCharacter | null>(null);
   const [characterSearch, setCharacterSearch] = useState("");
   const debouncedCharacterSearch = useDebouncedValue(characterSearch);
-  const [visibility, setVisibility] = useState<Visibility>("Private");
+  const [visibility, setVisibility] = useState<CharacterVisibility>("Private");
 
   const {
     items: unlinkedCharacters,
@@ -196,7 +171,7 @@ function LinkCharacterDialog({ open, onClose, onExited, campaignId }: LinkCharac
 
   const snackbar = useSnackbar();
   const linkMutation = useMutation({
-    mutationFn: async ({ characterId, visibility }: { characterId: string; visibility: Visibility }) =>
+    mutationFn: async ({ characterId, visibility }: { characterId: string; visibility: CharacterVisibility }) =>
       parseResponse(
         rpc.api.campaigns[":id"].characters.$post({
           param: { id: campaignId },
@@ -266,9 +241,9 @@ function LinkCharacterDialog({ open, onClose, onExited, campaignId }: LinkCharac
                 />
               }
               value={visibility}
-              onChange={(e) => setVisibility(oneOf(e.target.value, VISIBILITY_OPTIONS, visibility))}
+              onChange={(e) => setVisibility(oneOf(e.target.value, CHARACTER_VISIBILITY_OPTIONS, visibility))}
             >
-              {VISIBILITY_OPTIONS.map((option) => (
+              {CHARACTER_VISIBILITY_OPTIONS.map((option) => (
                 <MenuItem key={option} value={option}>
                   <Box>
                     <Typography variant="body1">{option}</Typography>
@@ -298,7 +273,6 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
   const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("characterSearch");
 
   const characters = useListPageQuery(campaignCharactersQuery(campaign.id, searchQuery));
-  const charactersLoadFailed = !!characters.error && characters.items.length === 0;
   const portraitsByCharacterId = useCharacterPortraits(characters.items);
 
   return (
@@ -312,52 +286,33 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
           }
         />
 
-        {/* Loading State */}
-        {characters.isLoading && <DiceSpinner sx={{ py: 4 }} />}
-
-        {/* Error State: only while nothing has loaded, a failed refetch keeping the grid */}
-        {charactersLoadFailed && (
-          // The room below the error, at the end of the tab
-          <Box sx={{ pb: 3 }}>
-            <LoadError what="Characters" error={characters.error} />
-          </Box>
-        )}
-
-        {/* Characters Grid */}
-        {!characters.isLoading &&
-          !charactersLoadFailed &&
-          (characters.items.length > 0 ? (
-            // With nothing more to load, the tab ends three units below the grid, as the grid's margin left it
-            <Stack spacing={2} sx={{ pb: characters.hasNextPage ? 0 : 3 }}>
-              <ListCardGrid>
-                {characters.items.map((character, index) => (
-                  <CharacterCard
-                    key={character.id}
-                    character={character}
-                    campaignId={campaign.id}
-                    isArchived={!!campaign.deletedAt}
-                    animationIndex={index}
-                    animationOffset={characters.offset}
-                    portraitUrl={portraitsByCharacterId.get(character.id) ?? null}
-                  />
-                ))}
-              </ListCardGrid>
-              <LoadMoreButton
-                size="large"
-                hasNextPage={characters.hasNextPage}
-                isFetchingNextPage={characters.isFetchingNextPage}
-                onClick={characters.loadMore}
-              />
-            </Stack>
-          ) : searchQuery ? (
-            <NoMatchesState search={searchQuery} />
-          ) : (
+        <ListPageResults
+          variant="section"
+          list={characters}
+          search={searchQuery}
+          what="Characters"
+          empty={
             <BlankState
               icon={CharacterIcon}
               title="No characters in this campaign"
               description="Link your existing characters to this campaign to get started"
             />
-          ))}
+          }
+        >
+          <ListCardGrid>
+            {characters.items.map((character, index) => (
+              <CharacterCard
+                key={character.id}
+                character={character}
+                campaignId={campaign.id}
+                isArchived={!!campaign.deletedAt}
+                animationIndex={index}
+                animationOffset={characters.offset}
+                portraitUrl={portraitsByCharacterId.get(character.id) ?? null}
+              />
+            ))}
+          </ListCardGrid>
+        </ListPageResults>
       </Stack>
 
       {linkDialog.target && (

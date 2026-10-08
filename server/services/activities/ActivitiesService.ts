@@ -24,6 +24,7 @@ import {
   Skills,
   Visibility,
 } from "@/server/repositories/index.ts";
+import { isNavigableTarget } from "@/shared/activity.ts";
 import { buildCustomizationPath, CUSTOMIZATION_PAGE_TYPES } from "@/shared/customization/entities.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -134,6 +135,7 @@ class ActivitiesService {
   }
 
   async getActivityUrl(session: Session, targetTable: string, targetId: string): Promise<ActivityUrl> {
+    if (!isNavigableTarget(targetTable)) return null;
     switch (targetTable) {
       // Top-level records link to their page, archived or not, until they're deleted
       case "rulesets":
@@ -145,9 +147,6 @@ class ActivitiesService {
         return (await Characters.findOne(db, { id: targetId }, Visibility.All)) ? `/characters/${targetId}` : null;
       case "campaigns":
         return (await Campaigns.findOne(db, { id: targetId }, Visibility.All)) ? `/campaigns/${targetId}` : null;
-      case "users":
-      case "sessions":
-        return null;
 
       // Class sub-entities
       case "klass_levels": {

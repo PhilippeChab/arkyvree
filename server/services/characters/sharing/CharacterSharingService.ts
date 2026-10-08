@@ -17,7 +17,7 @@ class CharacterSharingService {
 
     if (!characterRecord) throw new NotFoundError("Character not found");
 
-    const portraitUrl = await getSlotUrl("Character", characterRecord.id, "portrait");
+    const portraitUrl = await getSlotUrl("portrait", characterRecord.id);
     return await withRulesetScope(db, characterRecord.rulesetId, async (scope) =>
       describeCharacterSheet(scope, await readCharacterInput(db, characterRecord), {
         diagnostics: !isProduction(),
@@ -54,7 +54,7 @@ class CharacterSharingService {
 
     if (!characterRecord) throw new NotFoundError("Character not found");
 
-    const portraitUrl = await getSlotUrl("Character", characterRecord.id, "portrait");
+    const portraitUrl = await getSlotUrl("portrait", characterRecord.id);
     return await withRulesetScope(db, characterRecord.rulesetId, async (scope) => {
       const character = await readCharacterInput(db, characterRecord);
       const bonded = await readBondedInputs(db, character, Visibility.All);

@@ -1,31 +1,21 @@
 import { CssBaseline } from "@mui/material";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { lazy, useEffect, useState } from "react";
-import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
+import { lazy } from "react";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
-import { AuthLayoutRoute } from "./components/auth/index.ts";
+import { AuthLayoutRoute, PrivateRoute } from "./components/auth/index.ts";
 import { ErrorBoundary } from "./components/common/index.ts";
 import { Layout, PublicLayout } from "./components/layout/index.ts";
 import { CustomThemeProvider } from "./contexts/CustomThemeProvider.tsx";
 import { SnackbarProvider } from "./contexts/SnackbarProvider.tsx";
 import { WebSocketProvider } from "./contexts/WebSocketProvider.tsx";
-import { checkSession } from "./hooks/index.ts";
 import { createQueryClient } from "./lib/queryClient.ts";
 import SignInPage from "./pages/auth/SignInPage.tsx";
 import DashboardPage from "./pages/dashboard/DashboardPage.tsx";
-import { useAuthStore } from "./stores/authStore.ts";
-import { isDemoExpired } from "./stores/demoExpiredFlag.ts";
 
 const AbilityDetailsPage = lazy(() => import("./pages/rulesets/details/entities/AbilityDetailsPage.tsx"));
 const ActivitiesPage = lazy(() => import("./pages/activities/ActivitiesPage.tsx"));
 const AptitudeDetailsPage = lazy(() => import("./pages/rulesets/details/entities/AptitudeDetailsPage.tsx"));
-/**
- * One-shot per browser-tab: probe /auth/me at most once even if the visitor bounces between auth-only routes while
- * unauth. Memoizing a Promise (rather than a boolean "started" flag) keeps strict-mode's double-effect honest — each
- * mount awaits the same probe and attaches its own .finally, so the surviving mount's callback fires after the first
- * cleanup cancels its peer.
- */
-let authProbe: Promise<void> | null = null;
 const CampaignCharacterPage = lazy(() => import("./pages/campaigns/CampaignCharacterPage.tsx"));
 const CampaignDetailsPage = lazy(() => import("./pages/campaigns/details/CampaignDetailsPage.tsx"));
 const CampaignInvitePage = lazy(() => import("./pages/campaign-invite/CampaignInvitePage.tsx"));
@@ -118,37 +108,6 @@ function AppRoutes() {
       </Route>
     </Routes>
   );
-}
-
-function PrivateRoute() {
-  const location = useLocation();
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const signedOutByUser = useAuthStore((s) => s.signedOutByUser);
-  const [checked, setChecked] = useState(false);
-
-  useEffect(() => {
-    authProbe ??= checkSession(queryClient);
-    let cancelled = false;
-    void authProbe.finally(() => {
-      if (!cancelled) setChecked(true);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  if (!checked && !isAuthenticated) return null;
-  if (isAuthenticated) return <Outlet />;
-
-  // Read-only here; DemoExpiredPage clears the flag on mount. Mutating during
-  // render is unsafe under StrictMode's double-invoke (the second pass would
-  // see an already-cleared flag and fall through to /sign-in).
-  if (isDemoExpired()) return <Navigate to="/demo-expired" replace />;
-
-  // Back to the page once signed in, unless the user signed out of it
-  const target = location.pathname + location.search;
-  const redirectParam = target !== "/" && !signedOutByUser ? `?redirect=${encodeURIComponent(target)}` : "";
-  return <Navigate to={`/sign-in${redirectParam}`} replace />;
 }
 
 export default function App() {

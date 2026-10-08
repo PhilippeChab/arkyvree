@@ -1,4 +1,5 @@
 export { LocalChangesDialog } from "./LocalChangesDialog.tsx";
+export { RulesetContributorsDialog } from "./RulesetContributorsDialog.tsx";
 export {
   ArchiveRulesetDialog,
   EditRulesetDialog,

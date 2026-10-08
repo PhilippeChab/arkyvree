@@ -5,12 +5,14 @@ import { Link, useNavigate } from "react-router-dom";
 
 import {
   AuthPage,
+  authPagePath,
+  type AuthPageState,
   AuthSubmitButton,
   GoogleSignInSection,
-  safeRedirectPath,
+  useAuthRedirect,
 } from "@/client/src/components/auth/index.ts";
 import { EmailField, PasswordField } from "@/client/src/components/common/index.ts";
-import { useAuthRequests, useFormWith, usePageTitle, useSearchParam } from "@/client/src/hooks/index.ts";
+import { useAuthRequests, useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { emailNotVerified, errorMessage } from "@/client/src/lib/errorMessage.ts";
 import { EMAIL_RULES, requiredRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
@@ -20,9 +22,8 @@ type SignInFormData = InferRequestType<(typeof rpc.auth)["sign-in"]["$post"]>["j
 export default function SignInPage() {
   usePageTitle("Sign In");
   const [error, setError] = useState<string | null>(null);
-  const { value: redirectParam } = useSearchParam("redirect");
   const navigate = useNavigate();
-  const redirect = safeRedirectPath(redirectParam || null);
+  const redirect = useAuthRedirect();
   const auth = useAuthRequests();
 
   const { control, handleSubmit } = useFormWith<SignInFormData>({
@@ -34,7 +35,8 @@ export default function SignInPage() {
     setError(null);
     auth.signIn.mutate(data, {
       onError: (error) => {
-        if (emailNotVerified(error)) navigate("/verify-email", { state: { from: "sign-in", redirect } });
+        if (emailNotVerified(error))
+          navigate("/verify-email", { state: { from: "sign-in", redirect } satisfies AuthPageState });
         else setError(errorMessage(error, "Failed to sign in"));
       },
     });
@@ -73,11 +75,7 @@ export default function SignInPage() {
           <Box sx={{ textAlign: "center" }}>
             <Typography variant="body2">
               Don't have an account?{" "}
-              <MuiLink
-                component={Link}
-                to={redirect ? `/sign-up?redirect=${encodeURIComponent(redirect)}` : "/sign-up"}
-                underline="hover"
-              >
+              <MuiLink component={Link} to={authPagePath("/sign-up", redirect)} underline="hover">
                 Sign up
               </MuiLink>
             </Typography>

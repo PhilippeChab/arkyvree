@@ -3,6 +3,7 @@ import type { ElementType } from "react";
 import { Link } from "react-router-dom";
 
 import { DiceSpinner } from "./DiceSpinner.tsx";
+import { type Intent, INTENT_COLORS } from "./intent.ts";
 
 interface ActionMenuItemProps {
   /** An outside page it opens, in a new tab (the help center). */
@@ -18,15 +19,6 @@ interface ActionMenuItemProps {
   to?: string;
 }
 
-/** What an action does, shown by its color (see docs/ui-buttons.md). */
-type Intent = "default" | "destructive" | "caution" | "positive";
-
-const INTENT_COLORS = {
-  destructive: "error.main",
-  caution: "warning.main",
-  positive: "success.main",
-} as const;
-
 /** An item of a page's action menu: its icon, its label on one line, and its intent's color. */
 export function ActionMenuItem({
   icon: Icon,
@@ -37,7 +29,8 @@ export function ActionMenuItem({
   pending = false,
   to,
 }: ActionMenuItemProps) {
-  const color = intent === "default" ? undefined : INTENT_COLORS[intent];
+  const palette = INTENT_COLORS[intent];
+  const color = palette && `${palette}.main`;
   const link = href
     ? { component: "a" as const, href, target: "_blank", rel: "noopener noreferrer" }
     : to

@@ -1,11 +1,17 @@
-import { Box, DialogContent, DialogContentText, DialogTitle, Stack, Typography } from "@mui/material";
+import { Box, DialogContent, DialogContentText, DialogTitle, Stack } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
-import { useState } from "react";
 import { Controller } from "react-hook-form";
 
-import { EMPTY_VERIFICATION_CODE, VerificationCodeInput } from "@/client/src/components/auth/index.ts";
-import { AnimatedAlert, DialogFooter, FormDialog, LinkButton } from "@/client/src/components/common/index.ts";
+import {
+  CodeSentMessage,
+  EMPTY_VERIFICATION_CODE,
+  isCodeComplete,
+  ResendCodeLink,
+  useResendCode,
+  VerificationCodeInput,
+} from "@/client/src/components/auth/index.ts";
+import { AnimatedAlert, DialogFooter, FormDialog } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
@@ -35,11 +41,16 @@ export function EmailChangeVerificationDialog({
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
   const updateUser = useAuthStore((s) => s.updateUser);
-  const [error, setError] = useState<string | null>(null);
-  const [resendSuccess, setResendSuccess] = useState(false);
 
   const form = useFormWith<EmailVerificationFormData>({ digits: EMPTY_VERIFICATION_CODE });
   const digits = form.watch("digits");
+
+  const resendMutation = useMutation({
+    mutationFn: () => parseResponse(rpc.auth["resend-email-change"].$post()),
+  });
+  const { error, setError, handleResend, notice } = useResendCode((callbacks) =>
+    resendMutation.mutate(undefined, callbacks),
+  );
 
   const verifyMutation = useMutation({
     mutationFn: (code: string) => parseResponse(rpc.auth["verify-email-change"].$post({ json: { code } })),
@@ -52,22 +63,10 @@ export function EmailChangeVerificationDialog({
     onError: (error) => setError(errorMessage(error, "Failed to verify the code")),
   });
 
-  const resendMutation = useMutation({
-    mutationFn: () => parseResponse(rpc.auth["resend-email-change"].$post()),
-    onSuccess: () => {
-      setResendSuccess(true);
-      setError(null);
-    },
-    onError: (error) => setError(errorMessage(error, "Failed to resend the code")),
-  });
-
   const handleVerify = (data: EmailVerificationFormData) => {
     setError(null);
-    setResendSuccess(false);
     verifyMutation.mutate(data.digits.join(""));
   };
-
-  const isComplete = digits.every((d) => d !== "");
 
   return (
     <FormDialog
@@ -82,7 +81,7 @@ export function EmailChangeVerificationDialog({
         <DialogContent>
           <Stack spacing={3} sx={{ pt: 1 }}>
             <DialogContentText>
-              We sent an 8-digit code to <strong>{pendingEmail}</strong>
+              <CodeSentMessage email={pendingEmail} />
             </DialogContentText>
 
             <Box>
@@ -90,8 +89,8 @@ export function EmailChangeVerificationDialog({
                 {error}
               </AnimatedAlert>
 
-              <AnimatedAlert in={resendSuccess} severity="success" gutter={2}>
-                A new code has been sent to your email.
+              <AnimatedAlert in={!!notice} severity="success" gutter={2}>
+                {notice}
               </AnimatedAlert>
 
               <Stack spacing={3}>
@@ -102,12 +101,7 @@ export function EmailChangeVerificationDialog({
                 />
 
                 <Box sx={{ textAlign: "center" }}>
-                  <Typography variant="body2">
-                    Didn't receive the code?{" "}
-                    <LinkButton onClick={() => resendMutation.mutate()} disabled={resendMutation.isPending}>
-                      Resend
-                    </LinkButton>
-                  </Typography>
+                  <ResendCodeLink onResend={handleResend} disabled={resendMutation.isPending} />
                 </Box>
               </Stack>
             </Box>
@@ -116,7 +110,7 @@ export function EmailChangeVerificationDialog({
         <DialogFooter
           onCancel={onClose}
           pending={verifyMutation.isPending}
-          action={{ label: "Verify", disabled: !isComplete }}
+          action={{ label: "Verify", disabled: !isCodeComplete(digits) }}
         />
       </form>
     </FormDialog>

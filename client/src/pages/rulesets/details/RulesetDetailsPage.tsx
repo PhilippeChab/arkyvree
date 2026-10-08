@@ -1,35 +1,21 @@
-import {
-  Alert,
-  Container,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  IconButton,
-  Menu,
-  Popover,
-  Stack,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Container, Divider, IconButton, Menu, Popover, Stack } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type MouseEvent, type ReactNode, useMemo, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 
 import {
   ActionMenuItem,
+  ArchivedNotice,
   CountChip,
   DetailPageHeader,
-  DialogFooter,
   HelpLabel,
   LoadError,
-  Modal,
   PageError,
   PageLoader,
   PageTransition,
   type SectionTab,
   SectionTabPanel,
   SectionTabs,
-  StatusChip,
   ValueChip,
 } from "@/client/src/components/common/index.ts";
 import {
@@ -48,8 +34,6 @@ import {
   LanguagesIcon,
   MechanicsIcon,
   PowersIcon,
-  PrivateIcon,
-  PublicIcon,
   PublishIcon,
   RacesIcon,
   SavesIcon,
@@ -63,9 +47,9 @@ import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
-import { type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
+import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
-import { RULESET_STATUS } from "@/client/src/pages/rulesets/components/index.ts";
+import { RulesetFactChips } from "@/client/src/pages/rulesets/components/index.ts";
 import { useRulesetOperations, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
 
@@ -75,6 +59,7 @@ import {
   ForkRulesetDialog,
   LocalChangesDialog,
   PublishRulesetDialog,
+  RulesetContributorsDialog,
   RulesetLicenseNotice,
   SubscribeExtensionDialog,
   UnsubscribeExtensionDialog,
@@ -85,22 +70,12 @@ import { prefetchSection, type RulesetSection } from "./sectionQueries.ts";
 import {
   AbilitiesSection,
   AptitudesSection,
-  ContributorsSection,
   FeatsSection,
   LanguagesSection,
   MechanicsSection,
   RacesSection,
   SavesSection,
 } from "./sections/index.ts";
-
-function getStatusChip(status: RulesetDetail["status"]) {
-  const { icon: StatusIcon, color, tooltip } = RULESET_STATUS[status];
-  return (
-    <Tooltip describeChild title={tooltip}>
-      <StatusChip icon={<StatusIcon />} label={status} color={color} />
-    </Tooltip>
-  );
-}
 
 export default function RulesetDetailsPage() {
   const { id = "", section } = useParams<{ id: string; section?: string }>();
@@ -340,22 +315,7 @@ export default function RulesetDetailsPage() {
             onMenuOpen={menuItems.length > 0 ? menu.openMenu : undefined}
             chips={
               <>
-                {getStatusChip(ruleset.status)}
-                <StatusChip
-                  icon={ruleset.private ? <PrivateIcon /> : <PublicIcon />}
-                  label={ruleset.private ? "Private" : "Public"}
-                  color={ruleset.private ? "warning" : "success"}
-                />
-                {isExtension && <ValueChip icon={<ExtensionIcon />} label="Extension" color="secondary" />}
-                {ruleset.rulesetId && ruleset.rulesetName && (
-                  <ValueChip
-                    icon={<ForkIcon />}
-                    label={`Forked from ${ruleset.rulesetName}`}
-                    color="info"
-                    to={`/rulesets/${ruleset.rulesetId}`}
-                    onPrefetch={prefetchParent}
-                  />
-                )}
+                <RulesetFactChips ruleset={ruleset} onPrefetchParent={prefetchParent} />
                 {subscribedExtensions && subscribedExtensions.length > 0 && (
                   <>
                     <CountChip
@@ -406,17 +366,8 @@ export default function RulesetDetailsPage() {
 
           {/* An archived ruleset's notice, and extensions that failed to load, above its tabs */}
           <Stack spacing={3}>
-            {/* Read-Only Banner for Archived Rulesets */}
             {!!extensionsError && !subscribedExtensions && <LoadError what="Extensions" error={extensionsError} />}
-            {ruleset.status === "Archived" && (
-              <Alert severity="info">
-                <Typography variant="body2">
-                  <strong>This ruleset is archived and read-only.</strong> You can view all content but cannot make
-                  changes.
-                  {isOwner && " Unarchive it to edit it again."}
-                </Typography>
-              </Alert>
-            )}
+            {!isActive && <ArchivedNotice what="ruleset" canUnarchive={isOwner} />}
 
             <SectionTabs
               tabs={tabConfig}
@@ -525,13 +476,11 @@ export default function RulesetDetailsPage() {
           </>
         )}
 
-        <Modal open={contributorsDialogOpen} onClose={() => setContributorsDialogOpen(false)}>
-          <DialogTitle>Contributors</DialogTitle>
-          <DialogContent>
-            <ContributorsSection ruleset={ruleset} onLeave={() => navigate("/rulesets")} />
-          </DialogContent>
-          <DialogFooter onCancel={() => setContributorsDialogOpen(false)} cancelLabel="Close" />
-        </Modal>
+        <RulesetContributorsDialog
+          ruleset={ruleset}
+          open={contributorsDialogOpen}
+          onClose={() => setContributorsDialogOpen(false)}
+        />
       </Container>
     </PageTransition>
   );

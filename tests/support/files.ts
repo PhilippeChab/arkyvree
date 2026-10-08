@@ -1,5 +1,6 @@
 import { db } from "@/server/database/index.ts";
 import { Attachments, Blobs, Exports } from "@/server/repositories/index.ts";
+import { ATTACHMENT_SLOTS, type AttachmentSlotName } from "@/shared/attachments.ts";
 
 import { uniqueId } from "./seed.ts";
 
@@ -16,8 +17,8 @@ export async function createExport(userId: string, expiresAt = new Date(Date.now
   return record;
 }
 
-/** An image attached to a user (its avatar) or a character (its portrait), written straight to the database. */
-export async function createTestAttachment(recordType: "User" | "Character", recordId: string) {
+/** An image in a record's slot (a user's avatar, a character's portrait), written straight to the database. */
+export async function createTestAttachment(slot: AttachmentSlotName, recordId: string) {
   const [blob] = await Blobs.create(db, {
     key: `blobs/${uniqueId()}/image.png`,
     filename: "image.png",
@@ -25,7 +26,7 @@ export async function createTestAttachment(recordType: "User" | "Character", rec
     byteSize: 100,
     attachedAt: new Date().toISOString(),
   });
-  const name = recordType === "User" ? "avatar" : "portrait";
+  const { name, recordType } = ATTACHMENT_SLOTS[slot];
   const [attachment] = await Attachments.create(db, { recordType, recordId, name, blobId: blob.id });
   return attachment;
 }
