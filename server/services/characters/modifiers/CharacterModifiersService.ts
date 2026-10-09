@@ -85,7 +85,10 @@ class CharacterModifiersService {
     const character = await getEditableCharacter(db, session, characterId);
 
     const modifiers = await Modifiers.findMany(db, { sourceIds: [characterId], sourceType: "characters" });
-    return Engine.describeModifierList(await readTargetPaths(character.rulesetId, "modifier"), modifiers);
+    const catalog = await readTargetPaths(character.rulesetId, "modifier");
+    return await withRulesetScope(db, character.rulesetId, async (scope) =>
+      Engine.for(scope).targetPaths().describeModifiers(catalog, modifiers),
+    );
   }
 
   async updateModifier(

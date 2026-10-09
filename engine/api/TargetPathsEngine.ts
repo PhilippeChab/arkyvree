@@ -1,3 +1,4 @@
+import { ModifierEdits } from "@/engine/core/customizations/index.ts";
 import type { PathQuery, RulesetView, TargetCheck } from "@/engine/core/types.ts";
 import type { TargetPathCatalog, TargetPathKind } from "@/shared/customization/target.ts";
 
@@ -17,6 +18,14 @@ export default class TargetPathsEngine {
    */
   checkValue(catalogs: { paths: TargetPathCatalog; templatePaths: TargetPathCatalog }, check: TargetCheck) {
     return this.module.createTargetPaths().checkTargetValue(catalogs, check);
+  }
+
+  /**
+   * Modifiers as a list shows them, an entity's or a character's: their target's segments' labels, and their value's
+   * name when their path names its values, among the catalog of a modifier's paths.
+   */
+  describeModifiers<T extends { target: string; value: string }>(catalog: TargetPathCatalog, modifiers: T[]) {
+    return ModifierEdits.describe(catalog, modifiers);
   }
 
   /** The completions of a partial path among a catalog's paths of `kind` (those an entity type takes), unpaged. */

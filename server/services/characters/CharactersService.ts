@@ -22,6 +22,7 @@ import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { Alignment, Gender } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
+import { describeCharacterCards } from "./characterCards.ts";
 import { readBondedInputs, readCharacterInput } from "./characterInputs.ts";
 import { Archives } from "./concerns/Archives.ts";
 import { findEditableCharacterOrBonded, getEditableCharacter } from "./editableCharacter.ts";
@@ -192,7 +193,7 @@ class CharactersService extends include(Object, Archives) {
       db,
       charactersList.map((c) => c.rulesetId),
       async (views) => {
-        const cards = Engine.describeCharacterCards(views, charactersList, levels);
+        const cards = describeCharacterCards(views, charactersList, levels);
         const enrichedCharacters = charactersList.map((char) => {
           const { levels: classLevels, race, totalLevel } = cards.get(char.id)!;
           return {

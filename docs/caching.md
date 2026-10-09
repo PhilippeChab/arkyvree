@@ -102,7 +102,7 @@ The request-dedup key for these calls includes a per-cowData identity tag, so tw
 
 Every downstream read inside `fn` — including the character's rows an operation of the engine takes (`readCharacterInput`), a level save's writes (`finalizeLevelUp`), anything — sees the same context.
 
-`withRulesetScopes(tx, rulesetIds, fn)` is the multi-ruleset variant for list endpoints that span characters from several rulesets at once. It pre-loads each ruleset's view (its row and its `rulesetData`) for every unique id and hands the map to `fn`, without activating a cowContext (a single context can only represent one ruleset). Inside `fn`, the engine reads each character's ruleset's view from the map (`Engine.describeCharacterCards`), whose `rulesetData.*` Maps each resolve stored ids through their own ruleset's `CowData` and therefore still auto-resolve.
+`withRulesetScopes(tx, rulesetIds, fn)` is the multi-ruleset variant for list endpoints that span characters from several rulesets at once. It pre-loads each ruleset's view (its row and its `rulesetData`) for every unique id and hands the map to `fn`, without activating a cowContext (a single context can only represent one ruleset). Inside `fn`, each character's card is the engine's, in its ruleset's view from the map (`describeCharacterCards`, `server/services/characters/characterCards.ts`: `Engine.for(view).characters().describeCard`), whose `rulesetData.*` Maps each resolve stored ids through their own ruleset's `CowData` and therefore still auto-resolve.
 
 `withCowContext` / `getCowContext` are infrastructure primitives (`server/database/cowContext.ts`, marked `@internal`) — application code never calls them directly.
 
@@ -114,7 +114,7 @@ Rare but real:
 
 - **Lineage checks that touch `rulesetId` fields.** `rulesetData.cow.sourceChain` is the ancestor chain. For validating that a submitted entity belongs to the character's ruleset or one of its ancestors, build `new Set([characterRecord.rulesetId, ...rulesetData.cow.sourceChain])` and check `.has(entity.rulesetId)` (or use `sourceChain.includes(entity.rulesetId)` when the self id isn't relevant). Examples: the engine's `character(input).planInventoryEntry` (an added item) and `characters().checkLanguages` (`InventoryEntries`, `CharacterEdits`), which the inventory's and the character's services ask with the rows they read.
 
-- **Multi-ruleset list enrichment.** Can't fit under a single `withRulesetScope`. Use `withRulesetScopes` — see `CharactersService.getCharacters` and `CampaignCharactersService.getCharacters`, which hand the views it gives them to `Engine.describeCharacterCards`.
+- **Multi-ruleset list enrichment.** Can't fit under a single `withRulesetScope`. Use `withRulesetScopes` — see `CharactersService.getCharacters` and `CampaignCharactersService.getCharacters`, which hand the views it gives them to `describeCharacterCards` (`characters/characterCards.ts`).
 
 Manual resolution (`cow.resolve(id)` before a lookup, `cow.resolveRows(rows)`, `canonicalize(id)`) is handled by the repo Proxy and the `rulesetData.*` Map wrappers. If you find yourself tempted to write one, step back and check — you probably just need to be inside a scope.
 
