@@ -73,7 +73,7 @@ export const EmailVerifications = withRequestCache(
   "EmailVerifications",
   new AccountCodesRepository(emailVerificationsInAccount),
 );
-export const EntitySnapshots = withRequestCache("EntitySnapshots", new EntitySnapshotsRepository(), { skipCow: true });
+export const EntitySnapshots = withRequestCache("EntitySnapshots", new EntitySnapshotsRepository());
 export const Exports = withRequestCache("Exports", new ExportsRepository());
 export const Feats = withRequestCache("Feats", new FeatsRepository());
 export const FeatsAptitudes = withRequestCache("FeatsAptitudes", new FeatsAptitudesRepository());
@@ -98,7 +98,7 @@ export const PowersAptitudes = withRequestCache("PowersAptitudes", new PowersApt
 export const Properties = withRequestCache("Properties", new PropertiesRepository());
 export const Races = withRequestCache("Races", new RacesRepository());
 export const Requirements = withRequestCache("Requirements", new RequirementsRepository());
-export const RulesetEntities = withRequestCache("RulesetEntities", new RulesetEntitiesRepository(), { skipCow: true });
+export const RulesetEntities = withRequestCache("RulesetEntities", new RulesetEntitiesRepository());
 export const RulesetExtensions = withRequestCache("RulesetExtensions", new RulesetExtensionsRepository());
 export const Rulesets = withRequestCache("Rulesets", new RulesetsRepository());
 export const Saves = withRequestCache("Saves", new SavesRepository());

@@ -173,7 +173,7 @@ export default class ClassPicker extends include(LevelUpState, Projects) {
   describe(klasses: Klass[]) {
     const { maxLevels } = this;
     const candidates: ClassCandidate[] = [];
-    for (const klass of klasses) {
+    for (const klass of this.rulesetData.cow.resolveRows(klasses)) {
       const nextKlassLevel = this.rulesetData.klassLevelByKlassAndLevel.get(
         `${klass.id}:${(maxLevels.get(klass.id) || 0) + 1}`,
       );

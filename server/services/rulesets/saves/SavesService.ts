@@ -103,9 +103,12 @@ class SavesService {
     pagination: { limit: number; page: number },
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
-      const { rulesetData } = scope;
-      const { sourceChain } = rulesetData.cow;
-      return await Saves.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
+      const result = await Saves.findPage(
+        db,
+        { rulesetId, ...scope.rulesetData.cow.listFilters, ...where },
+        pagination,
+      );
+      return { ...result, items: Engine.for(scope).describeRows(result.items) };
     });
   }
 

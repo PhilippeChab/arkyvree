@@ -57,7 +57,12 @@ class AptitudesService {
         await withRulesetScope(tx, rulesetId, async (scope) => {
           const { ruleset, rulesetData } = scope;
 
-          const inUse = await hasCharacterPicks(tx, "aptitudes", aptitudeId, rulesetId);
+          const inUse = await hasCharacterPicks(
+            tx,
+            "aptitudes",
+            scope.rulesetData.cow.getEquivalentIds(aptitudeId),
+            rulesetId,
+          );
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
           const { aptitude } = Engine.for(scope).aptitudes().planDelete(aptitudeId);
@@ -106,8 +111,7 @@ class AptitudesService {
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
       const { rulesetData } = scope;
-      const { sourceChain } = rulesetData.cow;
-      return await Aptitudes.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
+      return await Aptitudes.findPage(db, { rulesetId, ...rulesetData.cow.listFilters, ...where }, pagination);
     });
   }
 

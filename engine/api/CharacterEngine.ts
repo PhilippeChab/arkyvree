@@ -1,4 +1,4 @@
-import type { CharacterInput } from "@/engine/core/module/index.ts";
+import { type CharacterInput, CharacterInputs } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/types.ts";
 
 import LevelUpEngine from "./LevelUpEngine.ts";
@@ -7,28 +7,40 @@ import type { Module, Rest } from "./Modules.ts";
 /** What its module answers of a character, past the view and the character the handle binds. */
 type Args<K extends keyof Module["characters"]> = Rest<Module["characters"][K], [RulesetView, CharacterInput]>;
 
-/** The engine bound to a character, from its rows (`input`): its sheets, its inventory and its level flows. */
+/**
+ * The engine bound to a character, from its rows (`input`): its sheets, its inventory and its level flows. Its rows,
+ * and its bonded creatures', are read as the view reads them (`CharacterInputs`): the server hands them as stored.
+ */
 export default class CharacterEngine {
   constructor(
     private readonly view: RulesetView,
     private readonly module: Module,
-    private readonly input: CharacterInput,
-  ) {}
+    input: CharacterInput,
+  ) {
+    this.input = CharacterInputs.resolve(input, view.rulesetData.cow);
+  }
+
+  private readonly input: CharacterInput;
+
+  /** Bonded creatures' inputs, read as the view reads them. */
+  private resolveBonded(bonded: CharacterInput[]) {
+    return CharacterInputs.resolveAll(bonded, this.view.rulesetData.cow);
+  }
 
   /**
    * The character's sheet, as the API answers it: a player character's with its bonded creatures', their private notes
    * as the viewer reads them (all of them, blank, or no field); or a bonded creature's, from its master's.
    */
-  describe(...args: Args<"describeCharacter">) {
-    return this.module.characters.describeCharacter(this.view, this.input, ...args);
+  describe(...[bonded, ...rest]: Args<"describeCharacter">) {
+    return this.module.characters.describeCharacter(this.view, this.input, this.resolveBonded(bonded), ...rest);
   }
 
   /**
    * The character as a campaign member reads it (`reading`): partly, who it is and what it looks like (`partial`), or
    * its sheet with its bonded creatures', their private notes shown or blank.
    */
-  describeForMember(...args: Args<"describeCampaignCharacter">) {
-    return this.module.characters.describeCampaignCharacter(this.view, this.input, ...args);
+  describeForMember(...[bonded, ...rest]: Args<"describeCampaignCharacter">) {
+    return this.module.characters.describeCampaignCharacter(this.view, this.input, this.resolveBonded(bonded), ...rest);
   }
 
   /** The character's printed sheet: the PDF document the server renders. */

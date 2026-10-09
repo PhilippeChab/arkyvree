@@ -17,9 +17,9 @@ export default class SkillsEngine {
     return this.module.entities.describeSkill(this.view, ...args);
   }
 
-  /** The skills with the fields their properties keep: those given (a save's), or the view's. */
+  /** The skills (rows as stored) with the fields their properties keep: those given (a save's), or the view's. */
   describeAll<T extends { id: string }>(skills: T[], properties?: { entityId: string; type: string; value: string }[]) {
-    return this.module.entities.describeSkills(this.view, skills, properties);
+    return this.module.entities.describeSkills(this.view, this.view.rulesetData.cow.resolveRows(skills), properties);
   }
 
   /** A new skill's row, what its save writes beside it, and the skill it answers once saved. */

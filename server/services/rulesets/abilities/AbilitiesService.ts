@@ -16,10 +16,7 @@ class AbilitiesService {
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
       const { rulesetData } = scope;
-      const { sourceChain } = rulesetData.cow;
-      // Proxy auto-resolves FK fields on every returned row (and on paginated
-      // results' `items`) so inherited ancestor rows land with post-COW ids.
-      return await Abilities.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
+      return await Abilities.findPage(db, { rulesetId, ...rulesetData.cow.listFilters, ...where }, pagination);
     });
   }
 

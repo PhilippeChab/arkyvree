@@ -162,8 +162,8 @@ export default class RulesetData {
   readonly aptitudes: Aptitude[];
 
   /**
-   * COW context. Most consumers can ignore this and let the id Maps auto-resolve, but lineage/sibling-aware code can
-   * reach it through here without taking `cowData` as a separate parameter.
+   * The ruleset's copy-on-write state: the id Maps resolve through it on their own; rows as stored (a character's, a
+   * page's) are resolved with it (`resolveRows`), and lineage- or sibling-aware code reads it.
    */
   readonly cow: CowData;
 

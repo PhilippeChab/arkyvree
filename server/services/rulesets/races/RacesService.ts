@@ -57,7 +57,7 @@ class RacesService {
         await withRulesetScope(tx, rulesetId, async (scope) => {
           const { ruleset, rulesetData } = scope;
 
-          const inUse = await hasCharacterPicks(tx, "races", raceId, rulesetId);
+          const inUse = await hasCharacterPicks(tx, "races", scope.rulesetData.cow.getEquivalentIds(raceId), rulesetId);
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
           const race = Engine.for(scope).entity("races", raceId).get();
@@ -99,9 +99,12 @@ class RacesService {
     pagination: { limit: number; page: number },
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
-      const { rulesetData } = scope;
-      const { sourceChain } = rulesetData.cow;
-      return await Races.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
+      const result = await Races.findPage(
+        db,
+        { rulesetId, ...scope.rulesetData.cow.listFilters, ...where },
+        pagination,
+      );
+      return { ...result, items: Engine.for(scope).describeRows(result.items) };
     });
   }
 

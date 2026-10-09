@@ -22,25 +22,25 @@ class CharacterLevelsRepository extends include(
     super(levelsInCharacter);
   }
 
-  private async existsKlassLevelPick(db: Db, where: { klassLevelId: string; rulesetId: string }) {
+  private async existsKlassLevelPick(db: Db, where: { klassLevelIds: string[]; rulesetId: string }) {
     const rows = await db
       .select({ id: this.table.id })
       .from(this.table)
       .innerJoin(charactersInCharacter, eq(charactersInCharacter.id, this.table.characterId))
       .innerJoin(rulesetsInRules, this.rulesetOrDescendant(charactersInCharacter.rulesetId, where.rulesetId))
-      .where(and(this.idMatches(this.table.klassLevelId, where.klassLevelId), isNull(this.table.deletedAt)))
+      .where(and(this.idMatches(this.table.klassLevelId, where.klassLevelIds), isNull(this.table.deletedAt)))
       .limit(1);
     return rows.length > 0;
   }
 
-  private async existsKlassPick(db: Db, where: { klassId: string; rulesetId: string }) {
+  private async existsKlassPick(db: Db, where: { klassIds: string[]; rulesetId: string }) {
     const result = await db
       .select({ id: this.table.id })
       .from(this.table)
       .innerJoin(klassLevelsInRules, eq(this.table.klassLevelId, klassLevelsInRules.id))
       .innerJoin(charactersInCharacter, eq(charactersInCharacter.id, this.table.characterId))
       .innerJoin(rulesetsInRules, this.rulesetOrDescendant(charactersInCharacter.rulesetId, where.rulesetId))
-      .where(and(this.idMatches(klassLevelsInRules.klassId, where.klassId), isNull(this.table.deletedAt)))
+      .where(and(this.idMatches(klassLevelsInRules.klassId, where.klassIds), isNull(this.table.deletedAt)))
       .limit(1);
     return result.length > 0;
   }
@@ -99,12 +99,12 @@ class CharacterLevelsRepository extends include(
   async exists(
     db: Db,
     where:
-      | { klassId: string; rulesetId: string }
-      | { klassLevelId: string; rulesetId: string }
+      | { klassIds: string[]; rulesetId: string }
+      | { klassLevelIds: string[]; rulesetId: string }
       | { extensionRulesetId: string; hostRulesetId: string; shadowKlassIds: string[] },
   ): Promise<boolean> {
-    if ("klassId" in where) return await this.existsKlassPick(db, where);
-    if ("klassLevelId" in where) return await this.existsKlassLevelPick(db, where);
+    if ("klassIds" in where) return await this.existsKlassPick(db, where);
+    if ("klassLevelIds" in where) return await this.existsKlassLevelPick(db, where);
     return await this.existsKlassPickFromExtension(db, where);
   }
 

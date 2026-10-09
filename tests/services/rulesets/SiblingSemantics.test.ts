@@ -5,7 +5,7 @@ import { type RulesetData } from "@/engine/core/view/index.ts";
 import AbilitiesComponent from "@/engine/rulesets/dnd3.5/abilities/AbilitiesComponent.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
-import { type Db, db, withCowContext, withTransaction } from "@/server/database/index.ts";
+import { type Db, db, withTransaction } from "@/server/database/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import {
   Abilities,
@@ -105,17 +105,20 @@ async function compareCopies(ruleset: Parameters<typeof RulesetViews.getData>[0]
  * their stored ids: a feat's or a power's lists, a class's levels' granted feats' and powers'. None, for a right copy.
  */
 async function findStaleAptitudeIds(tx: Db, view: RulesetData, type: RulesetEntityType, copyId: string) {
-  const links = await withCowContext(undefined, async () => {
-    if (type === "feats") return await FeatsAptitudes.findMany(tx, { featId: copyId });
-    if (type === "powers") return await PowersAptitudes.findMany(tx, { powerId: copyId });
-    if (type !== "klasses") return [];
-    const klassLevelIds = (await KlassLevels.findMany(tx, { klassId: copyId })).map((level) => level.id);
-    return [
-      ...(await KlassLevelFeats.findMany(tx, { klassLevelIds })),
-      ...(await KlassLevelPowers.findMany(tx, { klassLevelIds })),
-    ];
-  });
+  const links = await readAptitudeLinks(tx, type, copyId);
   return links.map((link) => link.aptitudeId).filter((id) => view.canonicalize(id) !== id);
+}
+
+/** A copy's links to lists as stored: a feat's or a power's lists, a class's levels' granted feats' and powers'. */
+async function readAptitudeLinks(tx: Db, type: RulesetEntityType, copyId: string) {
+  if (type === "feats") return await FeatsAptitudes.findMany(tx, { featId: copyId });
+  if (type === "powers") return await PowersAptitudes.findMany(tx, { powerId: copyId });
+  if (type !== "klasses") return [];
+  const klassLevelIds = (await KlassLevels.findMany(tx, { klassId: copyId })).map((level) => level.id);
+  return [
+    ...(await KlassLevelFeats.findMany(tx, { klassLevelIds })),
+    ...(await KlassLevelPowers.findMany(tx, { klassLevelIds })),
+  ];
 }
 
 /** Every page of a list, by its size and its ids. */

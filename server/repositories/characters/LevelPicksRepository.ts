@@ -32,8 +32,8 @@ abstract class LevelPicksRepository<T extends LevelPickTable> extends LevelPicks
   // Through the concerns, `table` reads as `Table & T`: its own type is T.
   declare protected readonly table: T;
 
-  /** Whether a character on the ruleset (or a descendant) picked `id` in `column`: an in-use check. */
-  protected async existsPick(db: Db, column: PgColumn, where: { id: string; rulesetId: string }) {
+  /** Whether a character on the ruleset (or a descendant) picked one of `ids` in `column`: an in-use check. */
+  protected async existsPick(db: Db, column: PgColumn, where: { ids: string[]; rulesetId: string }) {
     const table: LevelPickTable = this.table;
     const rows = await db
       .select({ id: column })
@@ -41,7 +41,7 @@ abstract class LevelPicksRepository<T extends LevelPickTable> extends LevelPicks
       .innerJoin(levelsInCharacter, eq(levelsInCharacter.id, table.characterLevelId))
       .innerJoin(charactersInCharacter, eq(charactersInCharacter.id, levelsInCharacter.characterId))
       .innerJoin(rulesetsInRules, this.rulesetOrDescendant(charactersInCharacter.rulesetId, where.rulesetId))
-      .where(and(this.idMatches(column, where.id), isNull(table.deletedAt)))
+      .where(and(this.idMatches(column, where.ids), isNull(table.deletedAt)))
       .limit(1);
     return rows.length > 0;
   }

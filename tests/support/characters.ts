@@ -2,10 +2,10 @@ import type { InferInsertModel } from "drizzle-orm";
 import type { InferRequestType } from "hono/client";
 
 import type { charactersInCharacter } from "@/drizzle/schema.ts";
-import type { DetailedCharacterInterface } from "@/engine/core/module/index.ts";
+import { CharacterInputs, type DetailedCharacterInterface } from "@/engine/core/module/index.ts";
 import CharacterBuilder from "@/engine/rulesets/dnd3.5/character/CharacterBuilder.ts";
 import { type RulesetScope, withRulesetScope } from "@/server/cow/index.ts";
-import { type Db, db, withCowContext } from "@/server/database/index.ts";
+import { type Db, db } from "@/server/database/index.ts";
 import { Characters } from "@/server/repositories/index.ts";
 import { CharactersService, readCharacterInput } from "@/server/services/characters/index.ts";
 import type { Character, Session } from "@/shared/relations.ts";
@@ -28,13 +28,14 @@ export async function buildAs<C extends DetailedCharacterInterface>(
   }: { database?: Db; projected?: Parameters<C["build"]>[2]; scope?: RulesetScope } = {},
 ) {
   const build = async (view: RulesetScope) => {
-    const input = await readCharacterInput(database, record);
-    const character = new Kind(record);
+    // As the engine's character handle reads them: its rows' references resolved through the view
+    const input = CharacterInputs.resolve(await readCharacterInput(database, record), view.rulesetData.cow);
+    const character = new Kind(input.record);
     character.build(input.rows, view, projected, input.master && CharacterBuilder.build(view, input.master));
     return character;
   };
   if (scope?.ruleset.id !== record.rulesetId) return await withRulesetScope(database, record.rulesetId, build);
-  return await withCowContext(scope.rulesetData.cow, () => build(scope));
+  return await build(scope);
 }
 
 /**

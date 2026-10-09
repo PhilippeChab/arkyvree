@@ -70,7 +70,12 @@ class ClassLevelsService extends include(Object, ListsSpells) {
         await withRulesetScope(tx, rulesetId, async (scope) => {
           const { ruleset, rulesetData } = scope;
 
-          const inUse = await hasCharacterPicks(tx, "klass_levels", levelId, rulesetId);
+          const inUse = await hasCharacterPicks(
+            tx,
+            "klass_levels",
+            scope.rulesetData.cow.getEquivalentIds(levelId),
+            rulesetId,
+          );
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
           const { klass, level } = Engine.for(scope).class(classId).planLevelDelete(levelId);
 

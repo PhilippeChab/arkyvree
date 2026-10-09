@@ -58,7 +58,12 @@ class PowersService {
         await withRulesetScope(tx, rulesetId, async (scope) => {
           const { ruleset, rulesetData } = scope;
 
-          const inUse = await hasCharacterPicks(tx, "powers", powerId, rulesetId);
+          const inUse = await hasCharacterPicks(
+            tx,
+            "powers",
+            scope.rulesetData.cow.getEquivalentIds(powerId),
+            rulesetId,
+          );
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
           const power = Engine.for(scope).entity("powers", powerId).get();
@@ -111,7 +116,7 @@ class PowersService {
       const list = Engine.for(scope).powers().openList({ aptitudeId, childOnly: where.childOnly, level });
       const result = await Powers.findPage(
         db,
-        { rulesetId, ancestorRulesetIds: scope.rulesetData.cow.sourceChain, ...filters, ...list.filters },
+        { rulesetId, ...scope.rulesetData.cow.listFilters, ...filters, ...list.filters },
         pagination,
       );
       return { ...result, items: list.describe(result.items) };

@@ -16,13 +16,13 @@ class CharacterLanguagesRepository extends include(
     super(languagesInCharacter);
   }
 
-  private async existsLanguagePick(db: Db, where: { languageId: string; rulesetId: string }) {
+  private async existsLanguagePick(db: Db, where: { languageIds: string[]; rulesetId: string }) {
     const rows = await db
       .select({ id: this.table.languageId })
       .from(this.table)
       .innerJoin(charactersInCharacter, eq(charactersInCharacter.id, this.table.characterId))
       .innerJoin(rulesetsInRules, this.rulesetOrDescendant(charactersInCharacter.rulesetId, where.rulesetId))
-      .where(and(this.idMatches(this.table.languageId, where.languageId), isNull(this.table.deletedAt)))
+      .where(and(this.idMatches(this.table.languageId, where.languageIds), isNull(this.table.deletedAt)))
       .limit(1);
     return rows.length > 0;
   }
@@ -63,9 +63,7 @@ class CharacterLanguagesRepository extends include(
   async delete(db: Db, where: { characterId: string; languageId: string }) {
     return await db
       .delete(this.table)
-      .where(
-        and(eq(this.table.characterId, where.characterId), this.idMatches(this.table.languageId, where.languageId)),
-      );
+      .where(and(eq(this.table.characterId, where.characterId), eq(this.table.languageId, where.languageId)));
   }
 
   /**
@@ -75,10 +73,10 @@ class CharacterLanguagesRepository extends include(
   async exists(
     db: Db,
     where:
-      | { languageId: string; rulesetId: string }
+      | { languageIds: string[]; rulesetId: string }
       | { extensionRulesetId: string; hostRulesetId: string; shadowLanguageIds: string[] },
   ): Promise<boolean> {
-    if ("languageId" in where) return await this.existsLanguagePick(db, where);
+    if ("languageIds" in where) return await this.existsLanguagePick(db, where);
     return await this.existsLanguagePickFromExtension(db, where);
   }
 

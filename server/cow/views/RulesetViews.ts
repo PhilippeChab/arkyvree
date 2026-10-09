@@ -1,6 +1,6 @@
 import { type CowData, Engine, type RulesetData, type RulesetRawData, type RulesetSources } from "@/engine/index.ts";
 import { DependentCache } from "@/server/cache/index.ts";
-import { db, withCowContext } from "@/server/database/index.ts";
+import { db } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 import type { TargetPathCatalog, TargetPathKind } from "@/shared/customization/target.ts";
 import type { BaseRules } from "@/shared/enums.ts";
@@ -77,7 +77,7 @@ class RulesetViews {
   /** A ruleset's own rows (a campaign's, with one), none of its ancestors': pinned when it's a system ruleset. */
   async getRawData(rulesetId: string, campaignId?: string): Promise<RulesetRawData> {
     return this.rawData.getOrFetch(getRawDataKey(rulesetId, campaignId), [rulesetId], () =>
-      withCowContext(undefined, () => fetchRulesetRawData(rulesetId, campaignId)),
+      fetchRulesetRawData(rulesetId, campaignId),
     );
   }
 

@@ -17,9 +17,9 @@ export default class ItemsEngine {
     return this.module.entities.describeItem(this.view, ...args);
   }
 
-  /** A page of items, each with its template's name. */
+  /** A page of items (rows as stored), each with its template's name. */
   describeAll<T extends { sourceItemId: string | null }>(rows: T[]) {
-    return this.module.entities.describeItems(this.view, rows);
+    return this.module.entities.describeItems(this.view, this.view.rulesetData.cow.resolveRows(rows));
   }
 
   /** A new item's row, or a duplicate's, and whose customizations it copies: refused when a template has a source. */

@@ -27,7 +27,7 @@ export default class RacePicker {
     return {
       filters: { kind: "pc" },
       annotate<T extends { id: string }>(races: T[]): (T & { eligible: boolean })[] {
-        return races.map((race) => {
+        return view.rulesetData.cow.resolveRows(races).map((race) => {
           const requirements = view.rulesetData.requirementsByEntity.get(race.id);
           if (!requirements || requirements.length === 0) return { ...race, eligible: true };
           const evaluator = new RequirementEvaluator(targetPaths);

@@ -86,7 +86,7 @@ class ItemsService extends include(Object, Variants) {
         await withRulesetScope(tx, rulesetId, async (scope) => {
           const { ruleset, rulesetData } = scope;
 
-          const inUse = await hasCharacterPicks(tx, "items", itemId, rulesetId);
+          const inUse = await hasCharacterPicks(tx, "items", scope.rulesetData.cow.getEquivalentIds(itemId), rulesetId);
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
           const plan = Engine.for(scope).items().planDelete(itemId);
@@ -136,8 +136,11 @@ class ItemsService extends include(Object, Variants) {
     pagination: { limit: number; page: number },
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
-      const { sourceChain } = scope.rulesetData.cow;
-      const result = await Items.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
+      const result = await Items.findPage(
+        db,
+        { rulesetId, ...scope.rulesetData.cow.listFilters, ...where },
+        pagination,
+      );
       return { ...result, items: Engine.for(scope).items().describeAll(result.items) };
     });
   }

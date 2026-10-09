@@ -3,7 +3,7 @@ import { getTableName } from "drizzle-orm";
 import { featsInRules } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
 import { hasCharacterPicks, RulesetEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
-import { type Db, db, withCowContext, withTransaction } from "@/server/database/index.ts";
+import { type Db, db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Feats, FeatsAptitudes } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
@@ -16,7 +16,7 @@ class FeatsService {
    * for it (`RulesetEdit.repointTombstone`), and takes its mark.
    */
   private async wasGenerated(tx: Db, ancestorFeatId: string): Promise<boolean> {
-    const feat = await withCowContext(undefined, () => Feats.findOne(tx, { id: ancestorFeatId }));
+    const feat = await Feats.findOne(tx, { id: ancestorFeatId });
     return feat?.generated ?? false;
   }
 
@@ -77,7 +77,7 @@ class FeatsService {
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
           const { ruleset, rulesetData } = scope;
-          const inUse = await hasCharacterPicks(tx, "feats", featId, rulesetId);
+          const inUse = await hasCharacterPicks(tx, "feats", scope.rulesetData.cow.getEquivalentIds(featId), rulesetId);
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
           const feat = Engine.for(scope).entity("feats", featId).get();
@@ -119,7 +119,7 @@ class FeatsService {
       const list = Engine.for(scope).feats().openList({ aptitudeId });
       return await Feats.findGroupPage(
         db,
-        { rulesetId, ancestorRulesetIds: scope.rulesetData.cow.sourceChain, ...list.groupFilters, ...filters },
+        { rulesetId, ...scope.rulesetData.cow.listFilters, ...list.groupFilters, ...filters },
         pagination,
       );
     });
@@ -142,7 +142,7 @@ class FeatsService {
       const list = Engine.for(scope).feats().openList({ aptitudeId, childOnly: where.childOnly, family });
       const result = await Feats.findPage(
         db,
-        { rulesetId, ancestorRulesetIds: scope.rulesetData.cow.sourceChain, ...filters, ...list.filters },
+        { rulesetId, ...scope.rulesetData.cow.listFilters, ...filters, ...list.filters },
         pagination,
       );
       return { ...result, items: list.describe(result.items) };

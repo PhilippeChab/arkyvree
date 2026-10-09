@@ -18,13 +18,13 @@ class CharacterInventoryRepository extends include(
     super(inventoryInCharacter);
   }
 
-  private async existsItemPick(db: Db, where: { itemId: string; rulesetId: string }) {
+  private async existsItemPick(db: Db, where: { itemIds: string[]; rulesetId: string }) {
     const rows = await db
       .select({ id: this.table.itemId })
       .from(this.table)
       .innerJoin(charactersInCharacter, eq(charactersInCharacter.id, this.table.characterId))
       .innerJoin(rulesetsInRules, this.rulesetOrDescendant(charactersInCharacter.rulesetId, where.rulesetId))
-      .where(and(this.idMatches(this.table.itemId, where.itemId), isNull(this.table.deletedAt)))
+      .where(and(this.idMatches(this.table.itemId, where.itemIds), isNull(this.table.deletedAt)))
       .limit(1);
     return rows.length > 0;
   }
@@ -72,10 +72,10 @@ class CharacterInventoryRepository extends include(
   async exists(
     db: Db,
     where:
-      | { itemId: string; rulesetId: string }
+      | { itemIds: string[]; rulesetId: string }
       | { extensionRulesetId: string; hostRulesetId: string; shadowItemIds: string[] },
   ): Promise<boolean> {
-    if ("itemId" in where) return await this.existsItemPick(db, where);
+    if ("itemIds" in where) return await this.existsItemPick(db, where);
     return await this.existsItemPickFromExtension(db, where);
   }
 

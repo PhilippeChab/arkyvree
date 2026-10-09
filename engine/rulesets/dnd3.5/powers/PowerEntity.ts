@@ -62,7 +62,8 @@ export default class PowerEntity {
     const ids = aptitudeId !== undefined || level != null ? rulesetData.listPowerIds({ aptitudeId, level }) : undefined;
     const composesLinks = rulesetData.cow.sourceChain.length > 0 && !where.childOnly;
     return {
-      describe<T extends { id: string; powersAptitudesInRules: unknown }>(rows: T[]) {
+      describe<T extends { id: string; powersAptitudesInRules: unknown }>(stored: T[]) {
+        const rows = rulesetData.cow.resolveRows(stored);
         if (!composesLinks) return rows;
         return rows.map((power) => {
           const merged = rulesetData.powersById.get(power.id);

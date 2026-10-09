@@ -32,7 +32,7 @@ export async function getAvailableKlasses(
       db,
       {
         rulesetId: character.record.rulesetId,
-        ancestorRulesetIds: scope.rulesetData.cow.sourceChain,
+        ...scope.rulesetData.cow.listFilters,
         characterId,
         ...picker.filters,
         search: where.search,

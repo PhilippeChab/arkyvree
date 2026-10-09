@@ -58,7 +58,12 @@ class LanguagesService {
         await withRulesetScope(tx, rulesetId, async (scope) => {
           const { ruleset, rulesetData } = scope;
 
-          const inUse = await hasCharacterPicks(tx, "languages", languageId, rulesetId);
+          const inUse = await hasCharacterPicks(
+            tx,
+            "languages",
+            scope.rulesetData.cow.getEquivalentIds(languageId),
+            rulesetId,
+          );
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
           const language = Engine.for(scope).entity("languages", languageId).get();
@@ -104,8 +109,7 @@ class LanguagesService {
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
       const { rulesetData } = scope;
-      const { sourceChain } = rulesetData.cow;
-      return await Languages.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
+      return await Languages.findPage(db, { rulesetId, ...rulesetData.cow.listFilters, ...where }, pagination);
     });
   }
 

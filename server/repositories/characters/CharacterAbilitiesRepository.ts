@@ -28,7 +28,7 @@ class CharacterAbilitiesRepository extends include(
   async update(
     db: Db,
     values: Partial<InferInsertModel<typeof characterAbilitiesInCharacter>>,
-    where: { abilityId: string; characterId: string },
+    where: { abilityIds: string[]; characterId: string },
   ) {
     return await db
       .update(this.table)
@@ -36,7 +36,7 @@ class CharacterAbilitiesRepository extends include(
       .where(
         and(
           eq(this.table.characterId, where.characterId),
-          this.idMatches(this.table.abilityId, where.abilityId),
+          this.idMatches(this.table.abilityId, where.abilityIds),
           isNull(this.table.deletedAt),
         ),
       )

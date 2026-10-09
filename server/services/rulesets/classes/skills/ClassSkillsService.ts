@@ -55,7 +55,12 @@ class ClassSkillsService {
         await withRulesetScope(tx, rulesetId, async (scope) => {
           const { ruleset, rulesetData } = scope;
 
-          const inUse = await hasCharacterPicks(tx, "klasses", classId, rulesetId);
+          const inUse = await hasCharacterPicks(
+            tx,
+            "klasses",
+            scope.rulesetData.cow.getEquivalentIds(classId),
+            rulesetId,
+          );
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
           const { klass, klassSkill, skill } = Engine.for(scope).class(classId).planSkillRemove(skillId);

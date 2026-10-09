@@ -2,30 +2,28 @@
 
 ## Overview
 
-The server runs three cooperating layers, each solving a different problem:
+The server runs two cooperating caches, each solving a different problem:
 
 | Layer                    | Scope                        | Lifetime                               | Shared by                           | Purpose                                                                                                      |
 | ------------------------ | ---------------------------- | -------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | **Ruleset cache**        | Per ruleset                  | Cross-request; pinned for system-owned | All requests for that ruleset       | Avoid re-reading the same ~thousand entity rows on every character read                                      |
 | **Request-scoped dedup** | Per HTTP request             | One request                            | Any code in that request            | Collapse accidental duplicate queries (same SELECT, same args) fired by different layers in a single request |
-| **COW context**          | Per ruleset-scoped operation | One async scope                        | The repos + cache inside that scope | Auto-remap stored pre-COW ids to post-COW so callers don't need to canonicalize manually                     |
 
-The first two are in-memory data stores; the third is an AsyncLocalStorage-backed context that activates resolution behavior on the other two. Nothing is persisted. On process restart, everything is cold.
+Both are in-memory; nothing is persisted. On process restart, everything is cold. Copy-on-write ids are neither: nothing ambient rewrites them. A repository reads rows as stored, and the engine reads them as the ruleset's view does ([below](#cow-transparency)).
 
 ## How services interact with this
 
-Services never call the cache or COW plumbing directly. The single entry point is one of two helpers of copy-on-write's views (`server/cow/views/`, exported by `server/cow/index.ts`):
+Services never call the cache's plumbing directly. The single entry point is one of two helpers of copy-on-write's views (`server/cow/views/`, exported by `server/cow/index.ts`):
 
 ```ts
 // Single-ruleset operation (every CRUD, character-scoped action):
 return await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-  // ... read / write anything. Auto-COW is on.
+  // ... read rows as stored; the engine reads them in the view (Engine.for(scope)).
 });
 
 // Multi-ruleset list enrichment (CharactersService.getCharacters / CampaignCharactersService.getCharacters):
 return await withRulesetScopes(db, rulesetIds, async (views) => {
-  // ... stitch results from several rulesets. No ambient context
-  // since only one can be active at a time; the engine reads each view from the map.
+  // ... stitch results from several rulesets: the engine reads each character in its own ruleset's view from the map.
 });
 ```
 
@@ -33,28 +31,20 @@ Inside the scope:
 
 - `ruleset` — the ruleset row (non-null; throws `NotFoundError` if missing).
 - `rulesetData` — the composed cache: `*ById` Maps, `klassLevelByKlassAndLevel`, `propertiesByEntity`, etc. Also `rulesetData.cow` exposes the underlying `CowData` (its `sourceChain`, `siblingIds`, and what an id resolves to: `resolve`, `isOverridden`, `isHidden`, `getWinner`) for lineage checks.
-- A `cowContext` is activated, which turns on three automatic behaviours in the repository Proxy:
-  1. **Input canonicalization** — `Items.findOne({ id: preCowId })` rewrites `id` to post-COW before hitting Postgres.
-  2. **Output FK resolution** — returned rows have every `*Id` field remapped to post-COW.
-  3. **Composite-key expansion** — `CharacterAbilities.update(tx, values, { characterId, abilityId })` matches both the pre-COW stored row and post-COW client input through `idMatches` (the `ResolvesCopies` concern).
 
-COW ownership resolution needs stored IDs. Inside `cow/`, use `withCowContext(undefined, () => Modifiers.findOne(db, { id }))` for that lookup. This existing infrastructure scope disables remapping for the read and restores the caller's context afterward. SQL stays in the shared repository; ordinary service reads continue to use `withRulesetScope`.
-
-**Callers don't think about COW for lookups.** `rulesetData.featsById.get(id)` works whether `id` is pre-COW or post-COW. Character-scoped repo reads (`CharacterLevels.findMany`, etc.) return rows whose `*Id` fields are already post-COW when they happen inside a scope. The only place you reach past the scope is ruleset management (extensions and reverts: `RulesetExtensionsService`, `RulesetChangesService`) and framework internals (the character loader, which reads its levels' picks as links and takes their entities from the view; `TargetPathsService` for path generation) — both use the primitives described below.
+Nothing else: a repository read inside the scope returns rows as stored, and a query takes the ids it's given. What a read needs of copy-on-write it asks `rulesetData.cow` for, explicitly ([below](#cow-transparency)): a list's filters (`listFilters`), an entity's equivalent ids for a query on stored rows (`getEquivalentIds`), the id a stored one stands for (`resolve`). Rows that reach the engine are read as the view does there.
 
 ```mermaid
 flowchart LR
     Req[HTTP Request] -->|middleware installs store| Store[Request dedup store<br/>AsyncLocalStorage]
     Req --> Svc[Service layer]
-    Svc -->|Repo.findOne/findMany db| Proxy[Repository Proxy]
+    Svc -->|Repo.findOne/findMany db| Proxy[Request cache<br/>withRequestCache]
     Proxy -->|key = method + args| Store
     Proxy -->|cache miss| PG[(Postgres / Neon)]
     Svc -->|RulesetViews.getData| Compose[compose step]
     Compose -->|per ruleset in source chain| Raw[Tier-1 Raw Cache<br/>MemoryCache RulesetRawData]
     Raw -->|pinned if system-owned| Raw
     Raw -->|cold miss| PG
-    Svc -.->|withCowContext / build| CowCtx[COW context<br/>AsyncLocalStorage]
-    CowCtx -.->|gates auto-resolve| Proxy
 ```
 
 ## COW Transparency
@@ -63,7 +53,7 @@ flowchart LR
 
 Ruleset entities can be [Copy-On-Write'd](./rulesets.md) in a fork. A COW creates a new entity with a new id; the ruleset's `CowData` (`engine/core/cow/CowData.ts`) records `preCowId → postCowId`. Characters saved **before** a COW store pre-COW ids in their rows (`level_feats.feat_id`, `character_abilities.ability_id`, ...). The composed ruleset cache is keyed by **post-COW ids**.
 
-Without intervention, every lookup site had to remember to do `rulesetData.featsById.get(cow.resolve(storedId))`. Missing a call produced a silent cache miss. Three layers close the gap automatically.
+Without intervention, every lookup site had to remember to do `rulesetData.featsById.get(cow.resolve(storedId))`. Missing a call produced a silent cache miss. The view's maps close the gap for lookups, and the engine for the rows it's handed; a query on stored rows asks for an entity's equivalent ids.
 
 ### Layer 1 — cache id Maps auto-resolve on get/has
 
@@ -78,45 +68,31 @@ This covers ~30 lookup sites. Zero caller changes after the rollout. When the ru
 
 Also at compose time: the inline join rows on feats/powers (`powersAptitudesInRules[].aptitudeId`, `featsAptitudesInRules[].aptitudeId`, and their nested `aptitudesInRule` objects) are remapped and deduped. Earlier versions missed this because `CowData.resolveRows` only touches top-level string fields — nested arrays kept pre-COW ids and broke multi-extension sibling-dedup scenarios.
 
-### Layer 2 — Character\* repo reads auto-resolve when a COW context is active
+### Layer 2 — the engine reads the rows it's handed as the view does
 
-Every repository's reads (`find*`, `exists*`, `count*`) but `EntitySnapshots`' and `RulesetEntities`' (`skipCow`) have their results post-processed. The ones carrying stored ids are the Character\* repos' (`CharacterLevels`, `CharacterLevelFeats`, `CharacterLevelPowers`, `CharacterLevelSkills`, `CharacterAbilities`, `CharacterInventory`, `CharacterLanguages`). When a `cowContext` is active, every `*Id` field on every returned row is remapped to its post-COW form by `CowData.resolve` (`mapResultIds`, `server/repositories/copyOnWriteIds.ts`). A row's own `id` stays the stored one (a row stays the row it is), so a read that joins an entity row in hands it out under its stored id: a character's picks are read as links, whose `featId` / `powerId` / `skillId` are remapped, and their entities taken from the view.
+The server hands the engine rows as stored: a character's (`readCharacterInput`, its bonded creatures' too), a page of a ruleset's entities, a picker's options, a saved level and its picks, inventory entries. The engine resolves them where they enter, with the view's `CowData` (`resolveRows`, which maps every top-level string field naming a stale id; a row's own `id` is never stale): the character handle resolves a character's input once (`CharacterInputs`, `engine/core/module/`), and every handle or picker that describes rows resolves them first (`describeAll`, `describeInventory`, `describeLevel`, a list's or a picker's `describe` / `annotate`). A page the server answers with no rule of its own (saves, races, classes) goes through `Engine.for(scope).describeRows(rows)`. So an inherited save names the ability its fork copied by the copy's id (`tests/cache/idReads.test.ts`).
 
 ```ts
-// Inside a cowContext: row.klassLevelId / row.abilityId / row.featId /
-// row.aptitudeId are all post-COW when they come back. Downstream code can
-// compare them directly against rulesetData.*ById or client-submitted ids.
-const rows = await CharacterLevels.findMany(tx, { characterId });
+// The rows as stored; the character handle resolves them.
+const character = await readCharacterInput(db, record);
+return Engine.for(scope).character(character).describe(await readBondedInputs(db, character));
 ```
 
-The request-dedup key for these calls includes a per-cowData identity tag, so two different cowContexts within the same request never share a resolved promise.
+### Layer 3 — a query on stored rows asks for equivalent ids
 
-### Layer 3 — the context itself, set by `withRulesetScope`
-
-`withRulesetScope(tx, rulesetId, fn)` is the single entry point. It:
-
-1. Loads the ruleset (throws `NotFoundError("Ruleset not found")` if missing).
-2. Gets `rulesetData` (`RulesetViews.getData`): its `CowData` from the COW cache (`RulesetViews.getCowData`), composed with the raw tier — both cached; warm cost is sub-millisecond.
-3. Activates a cowContext via `withCowContext(rulesetData.cow, fn)` — AsyncLocalStorage-backed. The activation is a no-op if the `CowData` resolves no id (`isEmpty()`), so bases / extensions pay nothing.
-4. Calls `fn({ ruleset, rulesetData })` — non-null invariants let callbacks skip defensive branches.
-
-Every downstream read inside `fn` — including the character's rows an operation of the engine takes (`readCharacterInput`), a level save's writes (`finalizeLevelUp`), anything — sees the same context.
-
-`withRulesetScopes(tx, rulesetIds, fn)` is the multi-ruleset variant for list endpoints that span characters from several rulesets at once. It pre-loads each ruleset's view (its row and its `rulesetData`) for every unique id and hands the map to `fn`, without activating a cowContext (a single context can only represent one ruleset). Inside `fn`, each character's card is the engine's, in its ruleset's view from the map (`describeCharacterCards`, `server/services/characters/characterCards.ts`: `Engine.for(view).characters().describeCard`), whose `rulesetData.*` Maps each resolve stored ids through their own ruleset's `CowData` and therefore still auto-resolve.
-
-`withCowContext` / `getCowContext` are infrastructure primitives (`server/database/cowContext.ts`, marked `@internal`) — application code never calls them directly.
+A row stored before its entity was copied names the source, so a query that finds stored rows by an entity's id matches every id that stands for it: `rulesetData.cow.getEquivalentIds(id)` (the id it resolves to and every stale id resolving there), which a repository matches with `idMatches` (the `ResolvesCopies` concern: `CharacterAbilities.update(tx, values, { abilityIds, characterId })`, an entity's in-use check, `hasCharacterPicks`). A query for the entity itself takes the id it resolves to (`rulesetData.cow.resolve(id)`: `RulesetEdit`'s owner lookups, the languages a character picks). A ruleset entity's list leaves out its scope's sibling losers in SQL (`ScopesToRuleset`, from `rulesetData.cow.listFilters`).
 
 ### When you DO need to think about COW
 
 Rare but real:
 
-- **Character-scoped composite-key stored rows.** `idMatches` (the `ResolvesCopies` concern, `server/repositories/concerns/`) already handles this for `CharacterAbilities` / `CharacterLanguages` / `CharacterLevel{Feats,Powers,Skills}`, and `CharacterInventory`'s in-use checks (an entry itself is found by its own id): inside cowContext, a composite WHERE on an entity-id column automatically expands to `IN (target, ...preCowIds)` to match legacy pre-COW rows. If you're adding a new character-scoped repo with a composite key on a forkable id field, use `this.idMatches(this.table.fooId, where.fooId)` in its `findOne` / `update` / `delete` predicates (see `CharacterLanguagesRepository` for the pattern).
+- **Character-scoped composite-key stored rows.** A repository whose `where` names an entity on stored rows takes the entity's equivalent ids (`{ abilityIds }`, from `rulesetData.cow.getEquivalentIds(abilityId)`) and matches them with `this.idMatches(this.table.abilityId, where.abilityIds)` (`ResolvesCopies`; see `CharacterAbilitiesRepository`).
 
 - **Lineage checks that touch `rulesetId` fields.** `rulesetData.cow.sourceChain` is the ancestor chain. For validating that a submitted entity belongs to the character's ruleset or one of its ancestors, build `new Set([characterRecord.rulesetId, ...rulesetData.cow.sourceChain])` and check `.has(entity.rulesetId)` (or use `sourceChain.includes(entity.rulesetId)` when the self id isn't relevant). Examples: the engine's `character(input).planInventoryEntry` (an added item) and `characters().checkLanguages` (`InventoryEntries`, `CharacterEdits`), which the inventory's and the character's services ask with the rows they read.
 
 - **Multi-ruleset list enrichment.** Can't fit under a single `withRulesetScope`. Use `withRulesetScopes` — see `CharactersService.getCharacters` and `CampaignCharactersService.getCharacters`, which hand the views it gives them to `describeCharacterCards` (`characters/characterCards.ts`).
 
-Manual resolution (`cow.resolve(id)` before a lookup, `cow.resolveRows(rows)`, `canonicalize(id)`) is handled by the repo Proxy and the `rulesetData.*` Map wrappers. If you find yourself tempted to write one, step back and check — you probably just need to be inside a scope.
+A lookup in the view needs no resolution (the `rulesetData.*` Maps resolve), and rows handed to the engine need none either (it resolves them). What the server resolves itself is what a query takes: an entity's equivalent ids, or the id it resolves to.
 
 ## API surface
 
@@ -150,7 +126,7 @@ From `server/cow/index.ts`: `RulesetViews`, the class that holds the cache (`Rul
 | `RulesetViews.warm`               | Boot-time warm-up for pinned system rulesets. Called once from `server/main.ts`.                      |
 | `RulesetData` (type)              | Parameter / return type for scope callbacks and framework extension points.                           |
 
-`CowData`, the class `rulesetData.cow` is (`engine/core/cow/CowData.ts`), comes from `engine/index.ts` too: the cowContext holds it.
+`CowData`, the class `rulesetData.cow` is (`engine/core/cow/CowData.ts`), comes from `engine/index.ts` too.
 
 ### Framework / copy primitives
 
@@ -158,12 +134,11 @@ Used by the copy flows, `RulesetExtensionsService`, `RulesetChangesService` (rev
 
 - **Copying customizations**: `fetchEntityCustomizations`, `copyEntityCustomizations`, `copyEntityCustomizationsToMany`. `EntityCopy` copies an inherited entity's customizations with them, and so do `ItemsService.duplicateItem` / `createVariants` and `ModifiersService.duplicateModifier`. `EntityCopy` also copies the entity's relationships and class levels and merges its siblings (its private methods).
 - **Extensions** (`RulesetExtensionsService`): `subscribeExtension`'s name-clash check is the engine's (`Engine.copyOnWrite().checkExtensionNames`), which lets the types of `NAME_FALLBACK_ENTITY_TYPES` merge same-name entities from two extensions instead of rejecting them. Forking uses neither: a fork copies no entity rows (see [rulesets.md](./rulesets.md#forking)), and `EntityCopy` copies an entity on its first edit.
-- **Copy-on-write data**: the engine builds a `CowData` (`Engine.copyOnWrite().buildData`, by its `CowDataBuilder`, `engine/core/cow/CowDataBuilder.ts`) from the rows its passes take, which the server reads as the engine's `copyOnWrite().getReads` says (`readCowData(database, ruleset)`, `cow/views/cowData.ts`), one way, through the handle it's given: the shared `db` for its read side, which `RulesetViews.getCowData` caches, and a copy's transaction for its write side, which `EntityCopy` remaps a copy's references and merges its siblings by, seeing the transaction's own copies. It reads stored ids, copy-on-write resolution off.
+- **Copy-on-write data**: the engine builds a `CowData` (`Engine.copyOnWrite().buildData`, by its `CowDataBuilder`, `engine/core/cow/CowDataBuilder.ts`) from the rows its passes take, which the server reads as the engine's `copyOnWrite().getReads` says (`readCowData(database, ruleset)`, `cow/views/cowData.ts`), one way, through the handle it's given: the shared `db` for its read side, which `RulesetViews.getCowData` caches, and a copy's transaction for its write side, which `EntityCopy` remaps a copy's references and merges its siblings by, seeing the transaction's own copies. It reads stored ids.
 - **Source-chain construction**: `Engine.copyOnWrite().buildSourceChain` (the engine's: `CowSources`, `engine/core/cow/CowSources.ts`), shared by the COW data's cache key (`RulesetViews.getCowData`), the target paths' (`RulesetViews.getTargetPaths`, which takes the ruleset's row and derives its chain) and the chain an unsubscribe leaves, whose lists the departing references repoint to (`extensions/departingReferences.ts`).
 - **Scope internals** (`withRulesetScope` wiring): `RulesetViews.getData`, which gets its `CowData` (`RulesetViews.getCowData`); `RulesetViews.invalidate*` drop it with the rest.
-- **Row-level remaps** (`DetailedCharacterDataLoader` on character-scoped rows, read in or out of a scope): `CowData.resolveRows`. The entities they name are the view's (`rulesetData.featsById`…), never a joined row's.
+- **Row-level remaps** (the engine, on the rows it's handed: `CharacterInputs`, the describing handles and pickers): `CowData.resolveRows`. The entities they name are the view's (`rulesetData.featsById`…), never a joined row's.
 - **Raw-tier test probes** (`tests/cow/views/RulesetViews.test.ts`): `RulesetViews.getRawData`, `RulesetViews.isRawDataPinned`.
-- **AsyncLocalStorage wiring**: `withCowContext`, `getCowContext` (`server/database/cowContext.ts`) — activated by `withRulesetScope`, read by the repo Proxy, `idMatches` (`ResolvesCopies`) and a ruleset entity list's sibling losers (`ScopesToRuleset`).
 
 ## Ruleset Cache
 
@@ -485,7 +460,7 @@ sequenceDiagram
 
 ## A repository method's verb
 
-The Proxy classifies a method by its verb, its first camelCase word (`find` in `findOneWithBlob`, `mark` in `markRead`), against `server/repositories/methodVerbs.json`: a `read` (`find`, `exists`, `count`) is memoized and sees copy-on-write ids, a `write` (`create`, `update`, `upsert`, `delete`, `archive`, `unarchive`, `mark`, `backfill`, `orphan`, `publish`) clears the cache before and after, and a `lock` does neither. Lint (`arkyvree/method-names`) holds every public repository method to one of these verbs, so a new method is classified by its name, with nothing to update here.
+The Proxy classifies a method by its verb, its first camelCase word (`find` in `findOneWithBlob`, `mark` in `markRead`), against `server/repositories/methodVerbs.json`: a `read` (`find`, `exists`, `count`) is memoized, a `write` (`create`, `update`, `upsert`, `delete`, `archive`, `unarchive`, `mark`, `backfill`, `orphan`, `publish`) clears the cache before and after, and a `lock` does neither. Lint (`arkyvree/method-names`) holds every public repository method to one of these verbs, so a new method is classified by its name, with nothing to update here.
 
 A new kind of write takes an existing verb (`updateStatus`, not `setStatus`). A verb added to `methodVerbs.json` joins its class for every repository at once: a read verb would memoize, a write verb would clear.
 
@@ -497,25 +472,21 @@ A new kind of write takes an existing verb (`updateStatus`, not `setStatus`). A 
 - `engine/core/view/` — the compose step with its sibling merging and FK remap (`RulesetComposition.ts`, with `RulesetRawData`, the rows it takes; `buildView`, `engine/api/CopyOnWriteEngine.ts`, runs it), the view it builds, whose lookup indices and resolving maps are built on first read (`RulesetData.ts`), the sibling merge's rules, which the compose step and a copy share (`SiblingMerge.ts`), and the list the compose step gathers a merge's rows in (`SiblingRows.ts`)
 - `server/cow/` (copy-on-write's write side) — `RulesetEdit` (the rows a change writes, names a create takes), `EntityCopy` (a copy of an inherited entity), the copy primitives (`copyCustomizations.ts`)
 - `engine/core/cow/` — a ruleset's copy-on-write state (`CowData.ts`: what an id resolves to, and whether it's overridden or a sibling loser), its build from rows (`CowDataBuilder.ts`: the snapshot, sibling, name, class-level and aptitude passes), and what it's read from (`CowSources.ts`: `buildSourceChain`, `getReads`, `getPairedKlassIds`, `NAME_FALLBACK_ENTITY_TYPES`)
-- `server/database/cowContext.ts` — AsyncLocalStorage cowContext, `withCowContext` / `getCowContext` (infrastructure)
 - `server/database/requestCache.ts` — AsyncLocalStorage-backed dedup
-- `server/repositories/withRequestCache.ts` — Proxy wrapping every repo (its shared instance in `server/repositories/index.ts`) with dedup + write invalidation + cowContext-driven input canonicalization + output FK auto-resolve
-- `server/repositories/concerns/ResolvesCopies.ts` — `idMatches()` predicate for cowContext-aware composite-key WHERE clauses
-- `server/services/characters/characterInputs.ts` — `readCharacterInput` reads a character's rows in its ruleset's scope (the caller's), and a bonded creature's master's with them: what the engine builds the character from (`CharacterBuilder.build`, `engine/rulesets/dnd3.5/character/CharacterBuilder.ts`), its master first
+- `server/repositories/withRequestCache.ts` — Proxy wrapping every repo (its shared instance in `server/repositories/index.ts`) with dedup + write invalidation
+- `server/repositories/concerns/ResolvesCopies.ts` — `idMatches()`: an entity id column matching the equivalent ids a query is given (`CowData.getEquivalentIds`)
+- `server/services/characters/characterInputs.ts` — `readCharacterInput` reads a character's rows as stored, and a bonded creature's master's with them, which the engine's character handle resolves (`CharacterInputs`): what the engine builds the character from (`CharacterBuilder.build`, `engine/rulesets/dnd3.5/character/CharacterBuilder.ts`), its master first
 - `engine/rulesets/dnd3.5/character/concerns/Builds.ts` — `build(rows, view, projected, master)` reads nothing: the data loader assembles the character's data from the rows and the view
 - `server/timing.ts` — hit/miss counters surfaced in request logs
-- `tests/cow/views/RulesetViews.test.ts` — compose + invalidation + pinning semantics + COW-fork auto-resolve
+- `tests/cow/views/RulesetViews.test.ts` — compose + invalidation + pinning semantics + COW-fork resolving maps
 - `tests/cache/joinMaps.test.ts` — accessor-map parity with replaced repo queries
 - `tests/cache/requestCache.test.ts` — dedup semantics + tx bypass + post-mutation invalidation
 - `tests/services/characters/levels/CharacterLevelsService.test.ts` — COW fork regression (wizard prohibited-school feat COW'd)
 
 The PDF worker disables process-wide MemoryCache reuse so each job reads current rules after web edits. Web requests keep their raw cache. Each in-flight read uses its promise identity as a token for its cache key. Invalidation removes only reads depending on the edited ruleset; a late completion may finish for its caller but cannot repopulate the cache or remove a newer pending read. This replaces global generation counters without an unbounded per-ruleset counter registry.
 
-Raw-tier and COW-map reads explicitly clear the ambient COW context. A nested
-character build (for example, a familiar loading its master) must load stored
-IDs before composing them for its own ruleset. Even a scope with an empty map
-replaces the outer scope. With process caching disabled, raw reads also bypass
-the process-wide in-flight map so separate worker jobs do not share old reads.
+With process caching disabled, raw reads also bypass the process-wide in-flight
+map so separate worker jobs do not share old reads.
 
 Shared cache fills run in their own request-dedup scope. An older HTTP request
 must not refill an invalidated process cache from promises it cached before a

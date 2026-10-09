@@ -1,6 +1,6 @@
 import { type CowData, Engine, type EntityCustomizations, type RulesetSources } from "@/engine/index.ts";
 import { readCowData } from "@/server/cow/views/cowData.ts";
-import { type Db, withCowContext } from "@/server/database/index.ts";
+import type { Db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import {
   EntitySnapshots,
@@ -102,9 +102,15 @@ export default class EntityCopy {
     const parentEntity = await repo.findOne(tx, { id: this.entityId });
     if (!parentEntity) throw new Error(`Parent entity not found: ${this.entityType}/${this.entityId}`);
 
-    // 2. Copy entity to child ruleset
+    // The ruleset's copy-on-write data, as the transaction sees it, its own copies included: what the copy's references
+    // (its row's, its relationships') are remapped by
+    const cow = await readCowData(tx, this.ruleset);
+
+    // 2. Copy entity to child ruleset, its references to the entities the ruleset shows in their place (a race's
+    // parent, an item's template, a power's save)
     const { id: _id, createdAt: _ca, updatedAt: _ua, deletedAt: _da, rulesetId: _rid, ...entityData } = parentEntity;
-    const newRows = await repo.create(tx, { ...entityData, rulesetId: childRulesetId });
+    const [resolvedData] = cow.resolveRows([entityData]);
+    const newRows = await repo.create(tx, { ...resolvedData, rulesetId: childRulesetId });
     const newEntity = newRows[0];
 
     // 3. Copy customizations
@@ -117,9 +123,7 @@ export default class EntityCopy {
     };
     await copyEntityCustomizations(tx, newEntity.id, this.entityType, cust, this.copiedIds);
 
-    // 4. Copy relationships (aptitudes, klass levels, etc.), remapped by the ruleset's copy-on-write data as the
-    // transaction sees it: its own copies included
-    const cow = await readCowData(tx, this.ruleset);
+    // 4. Copy relationships (aptitudes, klass levels, etc.), remapped as the row was
     await this.copyRelationships(tx, newEntity.id, cow);
 
     // 4b. Merge sibling data when multiple extensions COW the same base entity
@@ -248,7 +252,7 @@ export default class EntityCopy {
     if (this.entityType === "feats") {
       const own = await FeatsAptitudes.findMany(tx, { featId: targetEntityId });
       const siblingLinks = Map.groupBy(
-        await withCowContext(undefined, () => FeatsAptitudes.findMany(tx, { featIds: siblingIds })),
+        await FeatsAptitudes.findMany(tx, { featIds: siblingIds }),
         (link) => link.featId,
       );
       const siblings = siblingIds.map((id) => siblingLinks.get(id) ?? []);
@@ -262,7 +266,7 @@ export default class EntityCopy {
     } else if (this.entityType === "powers") {
       const own = await PowersAptitudes.findMany(tx, { powerId: targetEntityId });
       const siblingLinks = Map.groupBy(
-        await withCowContext(undefined, () => PowersAptitudes.findMany(tx, { powerIds: siblingIds })),
+        await PowersAptitudes.findMany(tx, { powerIds: siblingIds }),
         (link) => link.powerId,
       );
       const siblings = siblingIds.map((id) => siblingLinks.get(id) ?? []);
@@ -289,12 +293,7 @@ export default class EntityCopy {
     siblingIds: string[],
     cow: CowData,
   ) {
-    // Sibling-loser ids resolve to their winners in a scope's CowData, so the
-    // repo proxy would rewrite `Modifiers.findMany({ sourceIds: siblingIds })` to fetch the
-    // winner's rows. This merge explicitly wants the literal stored
-    // loser rows, so it reads them with copy-on-write resolution off (the proxy
-    // wraps repos for application-code convenience; this is infrastructure
-    // copying raw rows by id).
+    // The losers' own rows, by their stored ids
     const siblingCusts = await fetchSiblingCustomizations(tx, siblingIds, this.entityType, this.sourceType);
     const siblings = siblingIds.flatMap((id) => siblingCusts.get(id) ?? []);
     const merged = Engine.copyOnWrite().mergeCustomizations(own, siblings, targetEntityId);

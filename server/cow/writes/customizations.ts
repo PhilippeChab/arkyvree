@@ -1,5 +1,5 @@
 import type { EntityCustomizations } from "@/engine/index.ts";
-import { type Db, withCowContext } from "@/server/database/index.ts";
+import type { Db } from "@/server/database/index.ts";
 import { Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
 
 /** Each entity's customizations, by its id: the rows grouped by the entity they belong to, a modifier's by its source. */
@@ -59,5 +59,5 @@ export async function fetchSiblingCustomizations(
   entityType: string,
   sourceType?: string,
 ): Promise<Map<string, EntityCustomizations>> {
-  return await withCowContext(undefined, () => fetchEntityCustomizations(tx, entityIds, entityType, sourceType));
+  return await fetchEntityCustomizations(tx, entityIds, entityType, sourceType);
 }

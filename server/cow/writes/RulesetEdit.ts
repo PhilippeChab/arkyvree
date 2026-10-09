@@ -1,5 +1,5 @@
 import type { CowData, RulesetSources } from "@/engine/index.ts";
-import { type Db, withCowContext } from "@/server/database/index.ts";
+import type { Db } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import {
   EntitySnapshots,
@@ -74,8 +74,9 @@ export default class RulesetEdit {
     const cowType = OWNER_TYPES[entityType];
     if (!cowType) throw new NotFoundError("Customization source not found in this ruleset");
 
+    // The entity the view shows for the id: the ruleset's copy of it, or the winner of its siblings
     const repo = ENTITY_REPOS[cowType];
-    const entity = await repo.findOne(tx, { id: entityId });
+    const entity = await repo.findOne(tx, { id: this.cow.resolve(entityId) });
     if (!entity) throw new NotFoundError("Customization source not found in this ruleset");
 
     if (entity.rulesetId === this.ruleset.id) {
@@ -91,11 +92,11 @@ export default class RulesetEdit {
 
   /** A class level as the owner of customizations: its class's own, locked, or the class copied and the level mapped. */
   private async cowKlassLevelOwner(tx: Db, levelId: string): Promise<Owner> {
-    // Find which klass owns this level
-    const level = await KlassLevels.findOne(tx, { id: levelId });
+    // The level the view shows for the id, and its class
+    const level = await KlassLevels.findOne(tx, { id: this.cow.resolve(levelId) });
     if (!level) throw new NotFoundError("Customization source not found in this ruleset");
 
-    const klass = await Klasses.findOne(tx, { id: level.klassId });
+    const klass = await Klasses.findOne(tx, { id: this.cow.resolve(level.klassId) });
     if (!klass) throw new NotFoundError("Customization source not found in this ruleset");
 
     if (klass.rulesetId === this.ruleset.id) {
@@ -119,9 +120,8 @@ export default class RulesetEdit {
 
   /** Resolve a modifier as the owner of requirements: COW its owning entity and map the modifier to its copy. */
   private async cowModifierOwner(tx: Db, modifierId: string): Promise<Owner> {
-    // Keep the stored source ID: the repository proxy remaps it after COW,
-    // which would make an ancestor modifier appear locally owned on repeat edits.
-    const modifier = await withCowContext(undefined, () => Modifiers.findOne(tx, { id: modifierId }));
+    // The stored row, its source as stored: an ancestor's modifier names the ancestor's entity
+    const modifier = await Modifiers.findOne(tx, { id: modifierId });
     if (!modifier || modifier.sourceType === "modifiers")
       throw new NotFoundError("Customization source not found in this ruleset");
 
@@ -155,7 +155,7 @@ export default class RulesetEdit {
     }
     if (
       resolvedCustomizationId === customizationId &&
-      !(await withCowContext(undefined, () => CUSTOMIZATION_REPOS[kind].exists(tx, { id: customizationId })))
+      !(await CUSTOMIZATION_REPOS[kind].exists(tx, { id: customizationId }))
     )
       throw new NotFoundError("Customization source no longer exists; refresh the entity");
 
@@ -177,9 +177,8 @@ export default class RulesetEdit {
     const snapshots = await EntitySnapshots.findMany(tx, { sourceEntityIds: ancestorIds, rulesetId: this.ruleset.id });
     const tombstoned = new Set<string>();
     for (const snapshot of snapshots) {
-      // Stored id of the local copy — check it as written, without COW remapping.
-      if (!(await withCowContext(undefined, () => repo.exists(tx, { id: snapshot.forkedEntityId }))))
-        tombstoned.add(snapshot.sourceEntityId);
+      // The local copy, as stored: deleted, it leaves the snapshot a tombstone
+      if (!(await repo.exists(tx, { id: snapshot.forkedEntityId }))) tombstoned.add(snapshot.sourceEntityId);
     }
     return tombstoned;
   }

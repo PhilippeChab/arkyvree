@@ -62,7 +62,6 @@ export function Variants<B extends Constructor>(Base: B) {
         async (tx) =>
           await withRulesetScope(tx, rulesetId, async (scope) => {
             const { ruleset, rulesetData } = scope;
-            const { sourceChain } = rulesetData.cow;
 
             (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
             const plan = Engine.for(scope).items().planVariants(sourceItemId, variants);
@@ -75,7 +74,7 @@ export function Variants<B extends Constructor>(Base: B) {
             if (ownConflicts.length > 0)
               throw new ConflictError(`Name already exists in this ruleset: ${ownConflicts[0].name}`);
 
-            const ancestorConflicts = await Items.findMany(tx, { rulesetIds: sourceChain, names });
+            const ancestorConflicts = await Items.findMany(tx, { rulesetIds: rulesetData.cow.sourceChain, names });
             const edit = new RulesetEdit(ruleset, rulesetData.cow);
             const tombstoned = await edit.assertAncestorNamesHidden(
               tx,
@@ -83,7 +82,12 @@ export function Variants<B extends Constructor>(Base: B) {
               ancestorConflicts.map((c) => c.id),
             );
 
-            const tombstones = this.variantTombstones(variants, ancestorConflicts, tombstoned, sourceChain);
+            const tombstones = this.variantTombstones(
+              variants,
+              ancestorConflicts,
+              tombstoned,
+              rulesetData.cow.sourceChain,
+            );
 
             const sourceId = plan.copyCustomizationsFrom;
             const sourceCust = sourceId
@@ -128,8 +132,7 @@ export function Variants<B extends Constructor>(Base: B) {
     async getTemplates(rulesetId: string, type?: TemplateItemType) {
       return await withRulesetScope(db, rulesetId, async (scope) => {
         const { rulesetData } = scope;
-        const { sourceChain } = rulesetData.cow;
-        return await Items.findMany(db, { rulesetId, ancestorRulesetIds: sourceChain, type, isTemplate: true });
+        return await Items.findMany(db, { rulesetId, ...rulesetData.cow.listFilters, type, isTemplate: true });
       });
     }
   }

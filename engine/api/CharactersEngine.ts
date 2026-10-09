@@ -1,3 +1,4 @@
+import { CharacterInputs } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/types.ts";
 import type { CharacterLevel, Item } from "@/shared/relations.ts";
 
@@ -23,17 +24,19 @@ export default class CharactersEngine {
     return this.module.characters.describeCharacterCard(this.view, ...args);
   }
 
-  /** A character's inventory entries (each with the item row it names), as its sheet lists them. */
+  /** A character's inventory entries (each with the item row it names), as stored, as its sheet lists them. */
   describeInventory<T extends { itemId: string; itemsInRule: Item }>(entries: T[]) {
-    return this.module.characters.describeInventory(this.view, entries);
+    return this.module.characters.describeInventory(this.view, this.view.rulesetData.cow.resolveRows(entries));
   }
 
-  /** A saved level's selections, as its edit opens them. */
+  /** A saved level's selections, as its edit opens them: the level and its picks as stored, read as the view reads them. */
   describeLevel(
     level: CharacterLevel,
-    ...picks: Rest<Module["levelUp"]["describeLevel"], [RulesetView, CharacterLevel]>
+    picks: Rest<Module["levelUp"]["describeLevel"], [RulesetView, CharacterLevel]>[0],
   ) {
-    return this.module.levelUp.describeLevel(this.view, level, ...picks);
+    const { cow } = this.view.rulesetData;
+    const [resolved] = cow.resolveRows([level]);
+    return this.module.levelUp.describeLevel(this.view, resolved, CharacterInputs.resolvePicks(picks, cow));
   }
 
   /** The race picker for a new character of what its form says: each race of a page, with whether it can pick it. */

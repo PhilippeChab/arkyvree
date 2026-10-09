@@ -17,16 +17,16 @@ class CharacterLevelFeatsRepository extends LevelPicksRepository<typeof levelFea
   async exists(
     db: Db,
     where:
-      | { featId: string; rulesetId: string }
-      | { aptitudeId: string; rulesetId: string }
+      | { featIds: string[]; rulesetId: string }
+      | { aptitudeIds: string[]; rulesetId: string }
       | { extensionRulesetId: string; hostRulesetId: string; shadowFeatIds: string[] }
       | { extensionRulesetId: string; hostRulesetId: string; shadowAptitudeIds: string[] },
   ): Promise<boolean> {
     const { table } = this;
-    if ("featId" in where)
-      return await this.existsPick(db, table.featId, { id: where.featId, rulesetId: where.rulesetId });
-    if ("aptitudeId" in where)
-      return await this.existsPick(db, table.aptitudeId, { id: where.aptitudeId, rulesetId: where.rulesetId });
+    if ("featIds" in where)
+      return await this.existsPick(db, table.featId, { ids: where.featIds, rulesetId: where.rulesetId });
+    if ("aptitudeIds" in where)
+      return await this.existsPick(db, table.aptitudeId, { ids: where.aptitudeIds, rulesetId: where.rulesetId });
 
     if ("shadowFeatIds" in where) {
       return await this.existsPickFromExtension(db, table.featId, featsInRules, {

@@ -1,7 +1,7 @@
 import { afterEach, expect, test } from "bun:test";
 
 import MemoryCache from "@/server/cache/MemoryCache.ts";
-import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Rulesets } from "@/server/repositories/index.ts";
 import { copyEntity, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
@@ -52,21 +52,6 @@ test("disabled caches do not coalesce raw reads across worker jobs", async () =>
   const fork = await createSeededTestRuleset(session.userId);
   const [first, second] = await Promise.all([RulesetViews.getRawData(fork.id), RulesetViews.getRawData(fork.id)]);
   expect(first).not.toBe(second);
-});
-
-test("a nested base scope clears the fork mapping and restores it afterward", async () => {
-  const session = makeSession();
-  const fork = await createSeededTestRuleset(session.userId);
-  const source = (await Feats.findOne(db, { rulesetId: fork.ancestorRulesetIds[0], name: "Skill Focus: Climb" }))!;
-  const copy = await copyEntity(db, "feats", source.id, fork);
-  RulesetViews.invalidateAll();
-  await withRulesetScope(db, fork.id, async () => {
-    expect((await Feats.findOne(db, { id: source.id }))?.id).toBe(copy.id);
-    await withRulesetScope(db, source.rulesetId, async () => {
-      expect((await Feats.findOne(db, { id: source.id }))?.id).toBe(source.id);
-    });
-    expect((await Feats.findOne(db, { id: source.id }))?.id).toBe(copy.id);
-  });
 });
 
 for (const invalidation of ["ruleset", "all"] as const) {
