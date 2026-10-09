@@ -1,0 +1,89 @@
+/** What a creature carries: its capacity by Strength and size, its load categories and what each costs it. */
+
+export type LoadCategory = (typeof LOAD_CATEGORIES)[number];
+
+/**
+ * D&D 3.5 PHB Table 9-1: Carrying Capacity by Strength score (index = Str score, value = heavy load in lbs)
+ * Index 0 is unused (no Str 0), indices 1–29 map to Str 1–29
+ */
+export const CARRYING_CAPACITY: number[] = [
+  0, // 0 (unused)
+  10, // 1
+  20, // 2
+  30, // 3
+  40, // 4
+  50, // 5
+  60, // 6
+  70, // 7
+  80, // 8
+  90, // 9
+  100, // 10
+  115, // 11
+  130, // 12
+  150, // 13
+  175, // 14
+  200, // 15
+  230, // 16
+  260, // 17
+  300, // 18
+  350, // 19
+  400, // 20
+  460, // 21
+  520, // 22
+  600, // 23
+  700, // 24
+  800, // 25
+  920, // 26
+  1040, // 27
+  1200, // 28
+  1400, // 29
+];
+
+/** D&D 3.5 reduced speed for medium/heavy encumbrance (base → reduced) */
+export const ENCUMBERED_SPEED: Record<number, number> = {
+  20: 15,
+  30: 20,
+  40: 30,
+  50: 35,
+  60: 40,
+  70: 50,
+  80: 55,
+  90: 60,
+  100: 70,
+};
+
+/** Max Dex bonus and check penalty by load category */
+export const ENCUMBRANCE_PENALTIES = {
+  light: { maxdex: Infinity, checkpenalty: 0 },
+  medium: { maxdex: 3, checkpenalty: -3 },
+  heavy: { maxdex: 1, checkpenalty: -6 },
+  overloaded: { maxdex: 0, checkpenalty: -6 },
+} as const;
+
+export const LOAD_CATEGORIES = ["light", "medium", "heavy", "overloaded"] as const;
+
+/** A quadruped's carrying capacity by size: it carries more than a biped (SRD, "Bigger and Smaller Creatures"). */
+export const QUADRUPED_SIZE_CARRY_MULTIPLIERS: Record<string, number> = {
+  Fine: 1 / 4,
+  Diminutive: 1 / 2,
+  Tiny: 3 / 4,
+  Small: 1,
+  Medium: 3 / 2,
+  Large: 3,
+  Huge: 6,
+  Gargantuan: 12,
+  Colossal: 24,
+};
+
+/** Multiplier applied to a biped's carrying capacity based on its size */
+export const SIZE_CARRY_MULTIPLIERS: Record<string, number> = {
+  Fine: 1 / 8,
+  Diminutive: 1 / 4,
+  Tiny: 1 / 2,
+  Small: 3 / 4,
+  Medium: 1,
+  Large: 2,
+  Huge: 4,
+  Gargantuan: 8,
+  Colossal: 16,
+};

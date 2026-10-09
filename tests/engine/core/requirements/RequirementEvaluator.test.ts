@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
+import type { TraversePathResult } from "@/engine/core/paths/PathTraverser.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
-import type { TraversePathResult } from "@/engine/core/types.ts";
 import type { Requirement } from "@/shared/relations.ts";
 
 const met = { fulfilled: 1, unmet: 0 };

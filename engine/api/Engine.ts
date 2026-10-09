@@ -1,4 +1,4 @@
-import type { RulesetView } from "@/engine/core/types.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
 import ContentEngine from "./ContentEngine.ts";

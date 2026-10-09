@@ -1,4 +1,3 @@
-import type { PropertyTypesProvider } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
 import type { PropertyTypeCompletion, PropertyValueCompletion } from "@/shared/customization/properties.ts";
@@ -10,6 +9,11 @@ interface PropertyType {
   isStatic: boolean;
   usageCount?: number;
   value: string;
+}
+
+export interface PropertyTypesProvider {
+  getStaticPropertyTypes(entityType?: PropertyEntityType): Record<string, string>;
+  getStaticPropertyValues(type: string): string[] | null;
 }
 
 /**

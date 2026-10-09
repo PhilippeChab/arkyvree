@@ -16,6 +16,7 @@ import type {
   Property,
   Race,
   Requirement,
+  Ruleset,
   RulesetAbility,
   RulesetSave,
   Skill,
@@ -87,6 +88,12 @@ export interface RulesetLists {
   requirements: Requirement[];
   saves: RulesetSave[];
   skills: Skill[];
+}
+
+/** A ruleset as a character's build reads it: its row, and its view, composed by copy-on-write. */
+export interface RulesetView {
+  ruleset: Ruleset;
+  rulesetData: RulesetData;
 }
 
 /** A ruleset's entities as its view has them, by their table: what `RulesetData.find` finds one of. */

@@ -1,8 +1,10 @@
 import type { PropertyValue } from "@/engine/core/module/index.ts";
-import ClassFields, { type ClassFieldValues } from "@/engine/rulesets/dnd3.5/classes/ClassFields.ts";
-import ClassLevelFields, { type ClassLevelFieldValues } from "@/engine/rulesets/dnd3.5/classes/ClassLevelFields.ts";
-import RulesetFields, { type RulesetFieldValues } from "@/engine/rulesets/dnd3.5/ruleset/RulesetFields.ts";
-import SkillFields, { type SkillFieldValues } from "@/engine/rulesets/dnd3.5/skills/SkillFields.ts";
+import ClassFields, { type ClassFieldValues } from "@/engine/rulesets/dnd3.5/entities/classes/ClassFields.ts";
+import ClassLevelFields, {
+  type ClassLevelFieldValues,
+} from "@/engine/rulesets/dnd3.5/entities/classes/ClassLevelFields.ts";
+import RulesetFields, { type RulesetFieldValues } from "@/engine/rulesets/dnd3.5/entities/ruleset/RulesetFields.ts";
+import SkillFields, { type SkillFieldValues } from "@/engine/rulesets/dnd3.5/entities/skills/SkillFields.ts";
 
 /** The fields of the entities the seeders write as their properties, by entity. */
 export type SeededFields = {

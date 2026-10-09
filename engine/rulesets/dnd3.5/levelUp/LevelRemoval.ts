@@ -1,8 +1,8 @@
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { RulesetView } from "@/engine/core/types.ts";
-import BondedPlans from "@/engine/rulesets/dnd3.5/bonded/BondedPlans.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
 
+import BondedPlans from "./BondedPlans.ts";
 import LevelUpState from "./LevelUpState.ts";
 
 /** A character's last level removed, from its rows: the level that goes, and what its bonded creatures become. */

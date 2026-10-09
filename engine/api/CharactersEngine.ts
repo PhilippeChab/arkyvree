@@ -1,5 +1,5 @@
 import { CharacterInputs } from "@/engine/core/module/index.ts";
-import type { RulesetView } from "@/engine/core/types.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { CharacterLevel, Item } from "@/shared/relations.ts";
 
 import type { Module, Rest } from "./Modules.ts";

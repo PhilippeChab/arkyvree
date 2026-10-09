@@ -1,7 +1,6 @@
 /** What the paths a modifier or a requirement targets take: a path among a ruleset's, and the operator and value set on it. */
 
 import RulesError from "@/engine/core/RulesError.ts";
-import type { TargetCheck } from "@/engine/core/types.ts";
 import type {
   PathCompletion,
   PathError,
@@ -16,6 +15,15 @@ import {
 } from "@/shared/customization/templateExpression.ts";
 
 import LiteralValue from "./LiteralValue.ts";
+
+/** A modifier's or a requirement's target, operator and value, which its path's check reads. */
+export type TargetCheck = {
+  kind: "modifier" | "requirement";
+  operator?: string;
+  sourceType?: string;
+  target: string;
+  value?: string;
+};
 
 /**
  * The checks of the paths of a catalog (`catalog`, of the ruleset's `categories`): a path validated like a language

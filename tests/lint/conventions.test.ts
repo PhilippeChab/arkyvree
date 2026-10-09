@@ -593,7 +593,7 @@ describe("conventions", () => {
           "client/src/Button.tsx": "export class Button {}\n",
           "server/otel.ts": "class Telemetry {}\nexport default new Telemetry();\n",
           "server/apiError.ts": "export class ApiError extends Error {}\n",
-          "server/rulesets/hooks/LevelsHooks.ts": "export class Dnd35LevelsRules {}\n",
+          "server/rulesets/hooks/LevelsHooks.ts": "export default class LevelRules {}\n",
           "server/errors/index.ts":
             "export class NotFoundError extends Error {}\nexport class ConflictError extends Error {}\n",
           "server/routers/health.ts": "import { Hono } from 'hono';\nexport default new Hono();\n",

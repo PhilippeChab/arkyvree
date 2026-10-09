@@ -1,6 +1,7 @@
+import type { TargetPathsTraverser } from "@/engine/core/paths/CategoryPaths.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
+import type { Components, TraversePathResult } from "@/engine/core/paths/PathTraverser.ts";
 import TemplateExpression from "@/engine/core/paths/TemplateExpression.ts";
-import type { Components, TargetPathsTraverser, TraversePathResult } from "@/engine/core/types.ts";
 import RequirementTree, { getParentLevel, type RequirementNode } from "@/shared/customization/RequirementTree.ts";
 import { extractTemplateExpression, isTemplateValue } from "@/shared/customization/templateExpression.ts";
 import type { Requirement } from "@/shared/relations.ts";

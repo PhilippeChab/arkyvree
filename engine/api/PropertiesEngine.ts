@@ -1,5 +1,5 @@
 import { PropertyEdits } from "@/engine/core/customizations/index.ts";
-import type { RulesetView } from "@/engine/core/types.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
 
 /** The engine bound to an entity's properties (`entityType`, `entityId`): described, and what their saves store. */
 export default class PropertiesEngine {

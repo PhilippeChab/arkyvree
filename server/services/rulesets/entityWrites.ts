@@ -1,6 +1,6 @@
 /** What saving a ruleset entity writes beside its row, as the engine plans it (`EntityWrites`): the server writes it. */
 
-import type { EntityWrites, GeneratedFeatRemoval, GeneratedFeatsWrite } from "@/engine/index.ts";
+import type { EntityWrites, GeneratedFeat, GeneratedFeatRemoval } from "@/engine/index.ts";
 import { CustomizationEdit, type RulesetScope } from "@/server/cow/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
@@ -27,8 +27,8 @@ async function removeGeneratedFeat(tx: Db, scope: RulesetScope, removal: Generat
  * The feats a save makes, in the scope's ruleset: each in its pool, with its modifiers, its properties and its
  * requirements.
  */
-async function writeGeneratedFeats(tx: Db, scope: RulesetScope, write: GeneratedFeatsWrite) {
-  for (const generated of write.feats) {
+async function writeGeneratedFeats(tx: Db, scope: RulesetScope, feats: GeneratedFeat[]) {
+  for (const generated of feats) {
     const [feat] = await Feats.create(tx, {
       name: generated.name,
       description: generated.description,
@@ -71,6 +71,6 @@ export async function writeEntityWrites(
     await Properties.createMany(tx, properties);
   }
   if (writes.requirement) await Requirements.create(tx, { ...entity, ...writes.requirement });
-  for (const generated of writes.generatedFeats) await writeGeneratedFeats(tx, scope, generated);
+  await writeGeneratedFeats(tx, scope, writes.generatedFeats);
   return properties;
 }

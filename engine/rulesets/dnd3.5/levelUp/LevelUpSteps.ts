@@ -1,9 +1,9 @@
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { RulesetView } from "@/engine/core/types.ts";
-import type Dnd35DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
-import { Dnd35LevelsRules } from "@/engine/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
-import type { Dnd35ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/types.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
+import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import type { ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/model/projection.ts";
+import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import { include } from "@/lib/mixins.ts";
 
 import { Projects } from "./concerns/Projects.ts";
@@ -38,7 +38,7 @@ export default class LevelUpSteps extends include(LevelUpState, Projects) {
   }
 
   /** The feats step: the feat pools of the character built with the step, and the feats its class level grants. */
-  private buildFeatSlots(character: Dnd35DetailedCharacter, klassLevelId: string) {
+  private buildFeatSlots(character: DetailedCharacter, klassLevelId: string) {
     const { featPools: aptitudePools, featsToSelect } = character.components.aptitudes.getLevelUpPools(
       this.rulesetData,
     );
@@ -52,7 +52,7 @@ export default class LevelUpSteps extends include(LevelUpState, Projects) {
   }
 
   /** The powers step: the power pools of the character built with the step, and the powers its class level grants. */
-  private buildPowerSlots(character: Dnd35DetailedCharacter, klassLevelId: string) {
+  private buildPowerSlots(character: DetailedCharacter, klassLevelId: string) {
     const { powerPools: aptitudePools, powersToSelect } = character.components.aptitudes.getLevelUpPools(
       this.rulesetData,
     );
@@ -67,7 +67,7 @@ export default class LevelUpSteps extends include(LevelUpState, Projects) {
    * character's classes' (its max rank, `isClassSkill`) and the leveled class's (its cost, `isCurrentClassSkill`). The
    * client caps a rank by the character's total level after the step (`totalCharacterLevel`).
    */
-  private buildSkillSlots(character: Dnd35DetailedCharacter, klassId: string, totalCharacterLevel: number) {
+  private buildSkillSlots(character: DetailedCharacter, klassId: string, totalCharacterLevel: number) {
     const { skills } = character.components;
     const currentClassSkillIds = this.getClassSkillIds(
       this.rulesetData.klassSkillsWithSkillsByKlass.get(klassId) ?? [],
@@ -86,17 +86,17 @@ export default class LevelUpSteps extends include(LevelUpState, Projects) {
   private projectAttributeStep(
     excludeCharacterLevelId?: string,
     pendingLevelCount?: number,
-  ): { projected?: Dnd35ProjectedCharacterData } | undefined {
+  ): { projected?: ProjectedCharacterData } | undefined {
     const { levels } = this.character.rows;
     const excludeIds = excludeCharacterLevelId ? this.getLevelIdsFromOnward(levels, excludeCharacterLevelId) : [];
     // The levels before this one: the level added or edited is the next
     const totalLevel = levels.length - excludeIds.length + (pendingLevelCount ?? 0);
-    if (!Dnd35LevelsRules.isAbilityIncreaseLevel(totalLevel)) return undefined;
+    if (!LevelRules.isAbilityIncreaseLevel(totalLevel)) return undefined;
     return excludeIds.length > 0 ? { projected: { excludeCharacterLevelIds: excludeIds } } : {};
   }
 
   /** The feats step's projection: the step's, with the feats its class level grants. */
-  private projectFeatStep(klassLevelId: string, projection: StepProjection): Dnd35ProjectedCharacterData {
+  private projectFeatStep(klassLevelId: string, projection: StepProjection): ProjectedCharacterData {
     const grantedRecords = this.rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(klassLevelId) ?? [];
     const customizations = this.loadFeatCustomizations(grantedRecords.map((rec) => rec.featsInRule.id));
     const { level, data } = this.projectStep(klassLevelId, projection);
@@ -115,7 +115,7 @@ export default class LevelUpSteps extends include(LevelUpState, Projects) {
       : [];
     const projected = this.buildProjectedCharacterLevel(characterId, klassLevelId, abilityId);
     const level = editedLevel ? { ...projected, position: editedLevel.position } : projected;
-    const data: Dnd35ProjectedCharacterData = {
+    const data: ProjectedCharacterData = {
       ...(editedLevel && { excludeCharacterLevelIds: [editedLevel.id] }),
       characterLevels: [...pendingLevels, level],
     };

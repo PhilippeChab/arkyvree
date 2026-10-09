@@ -1,8 +1,8 @@
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
-import AptitudeTargets from "@/engine/rulesets/dnd3.5/aptitudes/AptitudeTargets.ts";
-import { Dnd35LevelsRules } from "@/engine/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
+import { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
+import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
+import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
@@ -90,10 +90,9 @@ export default class AptitudeSlotsPlan {
     add(modifiersBySource.get(klassLevelId) ?? []);
     for (const rec of autoFeatRecords) add(modifiersBySource.get(rec.featsInRule.id) ?? []);
 
-    const generalAptId = aptitudeIdBySlug.get(Dnd35LevelsRules.GENERAL_FEATS_APTITUDE_SLUG);
+    const generalAptId = aptitudeIdBySlug.get(LevelRules.GENERAL_FEATS_APTITUDE_SLUG);
     if (generalAptId && featSlots[generalAptId]) {
-      const generalDelta =
-        Dnd35LevelsRules.countGeneralFeats(charLevel) - Dnd35LevelsRules.countGeneralFeats(charLevel - 1);
+      const generalDelta = LevelRules.countGeneralFeats(charLevel) - LevelRules.countGeneralFeats(charLevel - 1);
       if (generalDelta > 0) deltas.feats[generalAptId] = (deltas.feats[generalAptId] ?? 0) + generalDelta;
     }
     return deltas;

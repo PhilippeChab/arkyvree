@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Components } from "@/engine/core/types.ts";
+import type { Components } from "@/engine/core/paths/PathTraverser.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 

@@ -1,13 +1,17 @@
 /** The completions of a partial target path, as a language server offers them. */
 
-import type { PathQuery, TargetPathsInterface } from "@/engine/core/types.ts";
 import type { PathCompletion, TargetPath, TargetPathCatalog, TargetPathKind } from "@/shared/customization/target.ts";
 import { capitalize } from "@/shared/text.ts";
+
+import type { TargetPaths } from "./CategoryPaths.ts";
 
 /** How a segment is described: by its full prefix, its own name and a fallback. */
 type SegmentDescriber = (fullPrefix: string, segment: string, fallback?: string) => string;
 
 type SegmentInfo = { examplePath: TargetPath | null; groupDesc: string | undefined; isGroup: boolean };
+
+/** What a path's completions are asked for: the partial path up to `position`, or every leaf matching `search` (`flat`). */
+export type PathQuery = { flat?: boolean; partialPath: string; position: number; search?: string };
 
 /**
  * The completions of partial paths among a catalog's paths of a kind (`catalog`, `kind`), as the ruleset's target paths
@@ -15,7 +19,7 @@ type SegmentInfo = { examplePath: TargetPath | null; groupDesc: string | undefin
  */
 export default class PathCompletions {
   constructor(
-    private readonly generator: TargetPathsInterface,
+    private readonly generator: TargetPaths,
     private readonly catalog: TargetPathCatalog,
     private readonly kind: TargetPathKind,
   ) {}
@@ -25,7 +29,7 @@ export default class PathCompletions {
    * structural description, by its group's template, or else by `fallback`.
    */
   private static buildSegmentDescriber(
-    generator: TargetPathsInterface,
+    generator: TargetPaths,
     segmentLabels: Record<string, string>,
     kind: TargetPathKind,
   ) {
@@ -78,7 +82,7 @@ export default class PathCompletions {
 
   /** The categories that have paths and start with what's typed of the first segment. */
   private static getCategoryCompletions(
-    generator: TargetPathsInterface,
+    generator: TargetPaths,
     allPaths: readonly TargetPath[],
     lastSegment: string,
   ): PathCompletion[] {

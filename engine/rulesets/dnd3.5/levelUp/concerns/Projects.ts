@@ -1,10 +1,6 @@
 import type LevelUpState from "@/engine/rulesets/dnd3.5/levelUp/LevelUpState.ts";
 import type { FeatCustomizations, FeatPick } from "@/engine/rulesets/dnd3.5/levelUp/LevelUpState.ts";
-import {
-  type Dnd35ProjectedCharacterData,
-  type ProjectedCharacterData,
-  type ProjectedCharacterLevel,
-} from "@/engine/rulesets/dnd3.5/types.ts";
+import type { ProjectedCharacterData, ProjectedCharacterLevel } from "@/engine/rulesets/dnd3.5/model/projection.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
@@ -212,7 +208,7 @@ export function Projects<B extends Constructor<LevelUpState>>(Base: B) {
       const autoGrantedFeatCustomizations = this.loadFeatCustomizations(
         allAutoGrantedFeatRecords.flat().map((rec) => rec.featsInRule.id),
       );
-      const projectedData: Dnd35ProjectedCharacterData = {
+      const projectedData: ProjectedCharacterData = {
         characterLevels: projectedCharacterLevels,
         givenFeats: allAutoGrantedFeatRecords.flatMap((records, i) =>
           this.buildProjectedGivenFeats(records, projectedCharacterLevels[i].id, autoGrantedFeatCustomizations),

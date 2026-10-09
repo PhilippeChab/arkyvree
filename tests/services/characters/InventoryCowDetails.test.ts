@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
-import CharacterResponse from "@/engine/rulesets/dnd3.5/response/CharacterResponse.ts";
+import CharacterResponse from "@/engine/rulesets/dnd3.5/characters/description/CharacterResponse.ts";
+import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterInventory, Items, Sessions, Users } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";

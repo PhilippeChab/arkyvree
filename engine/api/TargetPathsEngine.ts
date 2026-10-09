@@ -1,5 +1,7 @@
 import { ModifierEdits } from "@/engine/core/customizations/index.ts";
-import type { PathQuery, RulesetView, TargetCheck } from "@/engine/core/types.ts";
+import type { TargetCheck } from "@/engine/core/paths/PathChecks.ts";
+import type { PathQuery } from "@/engine/core/paths/PathCompletions.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { TargetPathCatalog, TargetPathKind } from "@/shared/customization/target.ts";
 
 import type { Module } from "./Modules.ts";

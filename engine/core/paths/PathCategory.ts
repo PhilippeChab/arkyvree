@@ -1,7 +1,7 @@
-import type { Components, TraversePathResult } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 
+import type { Components, TraversePathResult } from "./PathTraverser.ts";
 import type PathTraverser from "./PathTraverser.ts";
 
 /** A component of `C`, by its key, and the getter that hands its data to a path: both checked against `C`. */

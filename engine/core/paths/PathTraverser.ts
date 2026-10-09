@@ -1,5 +1,21 @@
-import type { Component, TraversePathResult } from "@/engine/core/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
+
+/**
+ * A character component (abilities, skills, combat, etc.): a class instance whose getters the target paths call
+ * by name (`PathTraverser.readComponent`).
+ */
+export type Component = object;
+
+export type Components = Record<string, Component>;
+
+export type TraversePathResult = {
+  component: Component | null;
+  data: unknown;
+  error: string | null;
+  key: string;
+  object: unknown;
+  resolvedPath: string | null;
+};
 
 /** The key of `value` whose slug is `slug`: one written its own way, as a spell's property types are (`SPELL_COMPONENT`). */
 function keyBySlug(value: Record<string, unknown>, slug: string) {

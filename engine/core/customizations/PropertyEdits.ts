@@ -1,5 +1,5 @@
 import RulesError from "@/engine/core/RulesError.ts";
-import type { RulesetView } from "@/engine/core/types.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { Property } from "@/shared/relations.ts";
 
 import CustomizedEntity from "./CustomizedEntity.ts";

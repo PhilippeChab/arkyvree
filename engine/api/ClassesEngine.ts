@@ -1,4 +1,4 @@
-import type { RulesetView } from "@/engine/core/types.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
 
 import type { Module, Rest } from "./Modules.ts";
 
