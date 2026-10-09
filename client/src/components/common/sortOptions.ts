@@ -1,3 +1,5 @@
+/** The list sorts pages share, so the same sort reads the same everywhere. */
+
 import type { SortOption } from "./SearchBar.tsx";
 
 export const CREATED_SORTS: SortOption<"createdAt">[] = [
@@ -5,7 +7,6 @@ export const CREATED_SORTS: SortOption<"createdAt">[] = [
   { field: "createdAt", direction: "asc", label: "Oldest First" },
 ];
 
-/** The list sorts pages share, so the same sort reads the same everywhere. */
 export const NAME_SORTS: SortOption<"name">[] = [
   { field: "name", direction: "asc", label: "Name (A-Z)" },
   { field: "name", direction: "desc", label: "Name (Z-A)" },

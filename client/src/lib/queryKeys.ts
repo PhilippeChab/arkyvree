@@ -115,6 +115,11 @@ export const QUERY_KEYS = {
   },
   invites: {
     all: ["invites"] as const,
+    /**
+     * An answer's mutation, accept or reject: shared, so every surface can tell which invites are being answered,
+     * whichever surface the click came from.
+     */
+    answer: ["invites", "answer"] as const,
     detail: (kind: InviteKind, id: string) => ["invites", kind, id] as const,
   },
   dashboard: {
@@ -128,7 +133,8 @@ export const QUERY_KEYS = {
   },
   notifications: {
     all: ["notifications"] as const,
-    unreadCount: ["notifications", "unreadCount"] as const,
+    /** The unread notifications, which the bell counts and lists. */
+    unread: ["notifications", "unread"] as const,
     list: (filters?: Record<string, unknown>) => ["notifications", "list", filters] as const,
   },
   attachments: {

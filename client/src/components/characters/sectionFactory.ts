@@ -5,9 +5,9 @@ import type { BaseRules } from "@/shared/enums.ts";
 import {
   AbilityScoresSection,
   type AbilityScoresSectionProps,
+  BondedCreature,
+  type BondedCreatureProps,
   bondedFeats,
-  BondedSection,
-  type BondedSectionProps,
   CombatAndSavesSection,
   type CombatAndSavesSectionProps,
   SkillsSection,
@@ -25,8 +25,8 @@ import {
  */
 interface SectionMap {
   AbilityScoresSection: ComponentType<AbilityScoresSectionProps>;
+  BondedCreature: ComponentType<BondedCreatureProps>;
   bondedFeats: typeof bondedFeats;
-  BondedSection: ComponentType<BondedSectionProps>;
   CombatAndSavesSection: ComponentType<CombatAndSavesSectionProps>;
   PowersSection: ComponentType<SpellsSectionProps>;
   SkillsSection: ComponentType<SkillsSectionProps>;
@@ -37,7 +37,7 @@ const RULESET_SECTIONS: Record<BaseRules, SectionMap> = {
   "Dungeons & Dragons: 3.5": {
     AbilityScoresSection,
     bondedFeats,
-    BondedSection,
+    BondedCreature,
     CombatAndSavesSection,
     PowersSection: SpellsSection,
     SkillsSection,

@@ -4,23 +4,18 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 import { DURATION, transitionOf } from "@/client/src/theme/animations.ts";
 
 interface CrossfadeProps {
-  duration?: number;
   first: ReactNode;
   second: ReactNode;
   showFirst: boolean;
 }
 
-export function Crossfade({ showFirst, first, second, duration = DURATION.brisk }: CrossfadeProps) {
+export function Crossfade({ showFirst, first, second }: CrossfadeProps) {
   const firstRef = useRef<HTMLDivElement>(null);
   const secondRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState<number | undefined>(undefined);
 
-  useEffect(() => {
-    const active = showFirst ? firstRef.current : secondRef.current;
-    if (active) setHeight(active.scrollHeight);
-  }, [showFirst]);
-
-  // Also observe resize of the active child (e.g., path browser list loading)
+  // The shown child's height, as it's shown and as it resizes (a path browser's list loading): an observer reports its
+  // size as it starts observing too
   useEffect(() => {
     const active = showFirst ? firstRef.current : secondRef.current;
     if (!active) return;
@@ -36,7 +31,7 @@ export function Crossfade({ showFirst, first, second, duration = DURATION.brisk 
       sx={{
         position: "relative",
         height: height ?? "auto",
-        transition: transitionOf(["height"], duration),
+        transition: transitionOf(["height"], DURATION.brisk),
         overflow: "hidden",
       }}
     >
@@ -48,7 +43,7 @@ export function Crossfade({ showFirst, first, second, duration = DURATION.brisk 
           left: 0,
           right: 0,
           opacity: showFirst ? 1 : 0,
-          transition: transitionOf(["opacity"], duration),
+          transition: transitionOf(["opacity"], DURATION.brisk),
           pointerEvents: showFirst ? "auto" : "none",
         }}
       >
@@ -62,7 +57,7 @@ export function Crossfade({ showFirst, first, second, duration = DURATION.brisk 
           left: 0,
           right: 0,
           opacity: showFirst ? 0 : 1,
-          transition: transitionOf(["opacity"], duration),
+          transition: transitionOf(["opacity"], DURATION.brisk),
           pointerEvents: showFirst ? "none" : "auto",
         }}
       >

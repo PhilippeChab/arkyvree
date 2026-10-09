@@ -7,7 +7,7 @@ import { rpc } from "@/client/src/services/rpc.ts";
 /** The unread notifications the bell counts and lists. */
 export function unreadNotificationsQuery() {
   return queryOptions({
-    queryKey: QUERY_KEYS.notifications.unreadCount,
+    queryKey: QUERY_KEYS.notifications.unread,
     queryFn: () => parseResponse(rpc.api.notifications.unread.$get()),
   });
 }

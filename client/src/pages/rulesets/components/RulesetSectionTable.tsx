@@ -30,9 +30,9 @@ interface RulesetSectionTableProps<T extends { id: string }> {
   canEdit?: boolean;
   columns: Column[];
   data?: T[];
-  emptyDescription?: string;
+  emptyDescription: string;
   emptyIcon: ElementType;
-  emptyTitle?: string;
+  emptyTitle: string;
   /** Its query's failure, shown while there are no rows to keep (a failed refetch keeps them). */
   error?: unknown;
   isLoading: boolean;
@@ -71,8 +71,8 @@ export function RulesetSectionTable<T extends { id: string }>({
   renderCell,
   restorable = false,
   emptyIcon,
-  emptyTitle = "No data available",
-  emptyDescription = "No data available for this ruleset.",
+  emptyTitle,
+  emptyDescription,
   search,
 }: RulesetSectionTableProps<T>) {
   const hoverTimer = useRef<ReturnType<typeof setTimeout>>(undefined);

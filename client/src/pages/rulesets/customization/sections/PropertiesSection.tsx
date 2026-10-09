@@ -78,9 +78,6 @@ function PropertyFields({ form, rulesetId, entityType }: PropertyFieldsProps) {
             inputRef={field.ref}
             rulesetId={rulesetId}
             entityType={entityType}
-            label="Type"
-            placeholder="e.g., tag, category, note"
-            fullWidth
           />
         )}
       />
@@ -95,10 +92,6 @@ function PropertyFields({ form, rulesetId, entityType }: PropertyFieldsProps) {
             inputRef={field.ref}
             rulesetId={rulesetId}
             propertyType={form.watch("type") || ""}
-            label="Value"
-            required
-            fullWidth
-            placeholder="Enter the property value…"
             error={!!fieldState.error}
             helperText={fieldState.error?.message}
           />

@@ -6,13 +6,13 @@ import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/se
 import { useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 
 type SectionActionsProps = RulesetSectionProps & {
-  /** The section's own toggles, shown before "Local changes". */
+  /** The section's own toggles, shown before "Local Changes". */
   children?: ReactNode;
 } &
   /** The add button ("Add Race"), shown to users who can edit the ruleset's entities. */
   ({ addLabel: string; onAdd: () => void } | { addLabel?: never; onAdd?: never });
 
-/** The actions of a ruleset section's toolbar: "Local changes" on forks, and the add button. */
+/** The actions of a ruleset section's toolbar: "Local Changes" on forks, and the add button. */
 export function SectionActions({
   ruleset,
   childOnly,

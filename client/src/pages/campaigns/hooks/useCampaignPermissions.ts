@@ -7,13 +7,12 @@ export function useCampaignPermissions(campaign: Pick<CampaignDetail, "currentUs
   // Demo users can run their own campaigns but can't pull other users in.
   const isDemo = useIsDemo();
   const canEdit = isDM;
-  const canManageInvites = isDM && !isDemo;
+  // Its players and its invites alike
   const canManagePlayers = isDM && !isDemo;
 
   return {
     isDM,
     canEdit,
-    canManageInvites,
     canManagePlayers,
   };
 }

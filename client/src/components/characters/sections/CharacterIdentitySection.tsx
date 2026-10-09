@@ -179,15 +179,14 @@ export function CharacterIdentitySection({
         >
           <AttachmentField
             name="portrait"
+            label="Portrait"
             recordId={characterId}
-            size={140}
             readOnly={portraitReadOnly}
             url={portraitUrl}
           />
 
           {/* Its fields' lines, 24px apart as the fields in a line are */}
           <Stack spacing={3} sx={{ flex: 1, width: "100%", minWidth: 0 }}>
-            {/* Line 1: Race, Alignment, Experience, Deity */}
             <Box
               sx={{
                 display: "grid",
@@ -236,7 +235,6 @@ export function CharacterIdentitySection({
               )}
             </Box>
 
-            {/* Line 2: Age, Gender, Height, Weight */}
             <Box
               sx={{
                 display: "grid",
@@ -280,7 +278,6 @@ export function CharacterIdentitySection({
               />
             </Box>
 
-            {/* Languages */}
             {!partial && (
               <Box>
                 {readOnly ? (
@@ -317,7 +314,6 @@ export function CharacterIdentitySection({
               </Box>
             )}
 
-            {/* Line 3: Description, Notes and Private Notes */}
             {partial ? (
               <BlankNote>{PARTIAL_IDENTITY_NOTE}</BlankNote>
             ) : (

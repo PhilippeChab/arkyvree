@@ -39,7 +39,6 @@ type ModifiersArray = InferResponseType<
 >;
 
 interface ModifiersSectionProps {
-  data?: Modifier[];
   entityId: string;
   entityType: CustomizableEntityType;
   onEntityIdChange?: (copyId: string, sourceId: string) => void;
@@ -65,7 +64,6 @@ export function ModifiersSection({
   ruleset,
   entityType,
   entityId,
-  data: externalData,
   queryKeysToInvalidate,
   onEntityIdChange,
   restorable,
@@ -92,7 +90,6 @@ export function ModifiersSection({
     createDefaults: EMPTY_MODIFIER,
     rulesetId: ruleset.id,
     label: "Modifier",
-    data: externalData,
     query: modifiersQuery(ruleset.id, entityType, entityId),
     queryKeysToInvalidate,
     createFn: async (data: ModifierFormData) =>

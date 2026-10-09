@@ -52,8 +52,8 @@ import { shownWeaponSet } from "./weaponSets.ts";
 interface EquipmentSectionProps {
   characterId: string;
   encumbrance?: EncumbranceData;
-  isArchived: boolean;
   isCustomRuleset?: boolean;
+  readOnly: boolean;
   rulesetId: string;
 }
 type InventoryEntry = InventoryItems[number];
@@ -73,7 +73,7 @@ function placementOf(detail: {
 export function EquipmentSection({
   characterId,
   rulesetId,
-  isArchived,
+  readOnly,
   isCustomRuleset,
   encumbrance,
 }: EquipmentSectionProps) {
@@ -84,7 +84,7 @@ export function EquipmentSection({
   const { data: inventoryItems = [], error: inventoryError } = useQuery(characterInventoryQuery(characterId));
 
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const { validationErrors, setValidationErrors, handleSaveError } = useValidationIssues("Failed to save item");
+  const { issues, setIssues, handleSaveError } = useValidationIssues("Failed to save item");
   // An entry's edit and remove dialogs keep it while they fade out
   const editDialog = useDialogState<InventoryEntry>();
   const deleteDialog = useDialogState<string>();
@@ -173,7 +173,7 @@ export function EquipmentSection({
       snackbar.success("Item added to inventory");
       invalidateCharacter(queryClient, characterId);
       setAddDialogOpen(false);
-      setValidationErrors([]);
+      setIssues([]);
     },
     onError: handleSaveError,
   });
@@ -198,7 +198,7 @@ export function EquipmentSection({
       snackbar.success("Item updated");
       invalidateCharacter(queryClient, characterId);
       editDialog.close();
-      setValidationErrors([]);
+      setIssues([]);
     },
     onError: handleSaveError,
   });
@@ -246,12 +246,12 @@ export function EquipmentSection({
   };
 
   // A dialog's warnings: in its spaced fields, so mounted only while they show
-  const requirementAlert = (visible: boolean, onForce?: () => void) =>
+  const requirementAlert = (visible: boolean, onForce: () => void) =>
     visible && (
       <ValidationIssuesAlert
-        issues={validationErrors}
+        issues={issues}
         title="Equipment warnings"
-        onClose={() => setValidationErrors([])}
+        onClose={() => setIssues([])}
         onProceed={onForce}
         pending={addMutation.isPending || updateMutation.isPending}
       />
@@ -263,7 +263,7 @@ export function EquipmentSection({
     <SheetSection
       title="Equipment & Inventory"
       action={
-        !isArchived &&
+        !readOnly &&
         hasItems && (
           <Stack direction="row" spacing={1}>
             {isCustomRuleset && (
@@ -294,7 +294,7 @@ export function EquipmentSection({
           encumbrance={encumbrance}
           rulesetId={rulesetId}
           renderActions={
-            isArchived
+            readOnly
               ? undefined
               : (entry) => (
                   <>
@@ -312,15 +312,14 @@ export function EquipmentSection({
       ) : (
         <Stack spacing={2} sx={{ alignItems: "flex-start" }}>
           <BlankNote>No equipment</BlankNote>
-          {!isArchived && <AddButton label="Add Item" onClick={handleAddItem} />}
+          {!readOnly && <AddButton label="Add Item" onClick={handleAddItem} />}
         </Stack>
       )}
-      {/* Add Item Dialog */}
       <CreateDialog
         open={addDialogOpen}
         onClose={() => {
           setAddDialogOpen(false);
-          setValidationErrors([]);
+          setIssues([]);
         }}
         title="Add Item to Inventory"
         form={addForm}
@@ -329,11 +328,11 @@ export function EquipmentSection({
         maxWidth="md"
       >
         {requirementAlert(
-          validationErrors.length > 0 && addDialogOpen,
+          issues.length > 0 && addDialogOpen,
           // Through the form, so its own rules still hold on a forced save; the warnings clear once it passes.
           () =>
             void addForm.handleSubmit((data) => {
-              setValidationErrors([]);
+              setIssues([]);
               handleAddSubmit(data, true);
             })(),
         )}
@@ -410,12 +409,11 @@ export function EquipmentSection({
         {!!selectedItem && !!itemDetailError && <LoadError what="Item" error={itemDetailError} />}
         <InventoryPlacementFields form={addForm} profile={selectedItem ? addProfile : null} />
       </CreateDialog>
-      {/* Edit Item Dialog */}
       <EditDialog
         open={editDialog.open}
         onClose={() => {
           editDialog.close();
-          setValidationErrors([]);
+          setIssues([]);
         }}
         title="Edit Inventory Item"
         form={editForm}
@@ -424,14 +422,12 @@ export function EquipmentSection({
         maxWidth="md"
       >
         {requirementAlert(
-          validationErrors.length > 0 && editDialog.open,
-          editingEntry
-            ? () =>
-                void editForm.handleSubmit((data) => {
-                  setValidationErrors([]);
-                  updateMutation.mutate({ entryId: editingEntry.id, data, force: true });
-                })()
-            : undefined,
+          issues.length > 0 && editDialog.open,
+          () =>
+            void editForm.handleSubmit((data) => {
+              setIssues([]);
+              if (editingEntry) updateMutation.mutate({ entryId: editingEntry.id, data, force: true });
+            })(),
         )}
         {!!inventoryError && <LoadError what="Inventory" error={inventoryError} />}
         {editSlotWarning && (
@@ -442,7 +438,6 @@ export function EquipmentSection({
         <TextField label="Item" value={editingEntry?.item.name ?? ""} fullWidth disabled />
         <InventoryPlacementFields form={editForm} profile={editProfile} />
       </EditDialog>
-      {/* Remove Confirmation */}
       <DeleteDialog
         open={deleteDialog.open}
         onClose={deleteDialog.close}

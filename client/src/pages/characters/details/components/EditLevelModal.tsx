@@ -1,4 +1,3 @@
-import { Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 
@@ -61,8 +60,9 @@ export function EditLevelModal({ open, onClose, onExited, characterId, baseRules
   );
   useFormSync(wizard.form, savedPicks, { key: editingLevelId });
 
-  // The saved level fills the picks in as it loads, and its class's feat and power slots, which load after it, fit them:
-  // Next waits for both, and a load that failed stops the wizard at the step that shows its error.
+  // The saved level fills the picks in as it loads, and its class's feat slots, which load after it, fit its feats:
+  // Next waits for its feat and power slots both, and a load that failed stops the wizard at the step that shows its
+  // error.
   const loading =
     isLoadingLevel || (!!editLevelData && !wizard.selectedClass) || wizard.isLoadingFeats || wizard.isLoadingPowers;
   const step = EDIT_STEP_CONTENT[wizard.activeStep];
@@ -86,8 +86,6 @@ export function EditLevelModal({ open, onClose, onExited, characterId, baseRules
         return <Sections.PowersStep wizard={wizard} />;
       case "review":
         return <Sections.EditReviewStep wizard={wizard} />;
-      default:
-        return <Typography>Unknown step</Typography>;
     }
   };
 

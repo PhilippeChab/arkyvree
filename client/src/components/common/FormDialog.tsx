@@ -24,9 +24,9 @@ export interface FormDialogProps<TFormValues extends FieldValues = FieldValues> 
 
 /**
  * Generic primitive for form-bearing dialogs that don't fit the
- * `CreateDialog`/`EditDialog` shape (custom title bar, multi-step,
- * non-standard action buttons, etc.). Adds dirty-state close-block to
- * `Modal` so users don't lose work via backdrop click / Escape.
+ * `CreateDialog`/`EditDialog` shape (an action of its own: a contributor's invite, an email change's code, an
+ * account's deletion, an item's variants).
+ * Adds dirty-state close-block to `Modal` so users don't lose work via backdrop click / Escape.
  *
  * For standard create/edit flows, use `CreateDialog`/`EditDialog` from
  * `StandardDialogs.tsx` instead.

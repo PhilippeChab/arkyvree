@@ -91,7 +91,7 @@ export function classSpellsPerDayQuery(rulesetId: string, classId: string) {
   });
 }
 
-/** Warm a tab as it opens (the spell list starts at level 0 with no search). */
+/** Warm a tab's rows as it's pointed at: the spell list tab's, the lists it picks among. */
 export function prefetchClassSection(
   queryClient: QueryClient,
   rulesetId: string,

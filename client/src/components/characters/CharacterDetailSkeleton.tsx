@@ -34,7 +34,7 @@ export function CharacterDetailSkeleton() {
       }}
     >
       <Stack spacing={2}>
-        {/* Themed header with pulsing icon */}
+        {/* The rolling die, over its pulsing line */}
         <Stack sx={{ alignItems: "center", py: 4 }}>
           <DiceSpinner size="large" />
           <Typography
@@ -48,8 +48,8 @@ export function CharacterDetailSkeleton() {
             Loading character sheet…
           </Typography>
         </Stack>
+        {/* The sheet's sections, in their order */}
         <Stack spacing={3}>
-          {/* Header bar */}
           <Section index={0}>
             <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
               <Skeleton variant="circular" width={40} height={40} />
@@ -57,7 +57,6 @@ export function CharacterDetailSkeleton() {
             </Stack>
           </Section>
 
-          {/* Identity section */}
           <Section index={1}>
             <Skeleton variant="text" width="30%" height={32} />
             <Stack direction="row" sx={{ flexWrap: "wrap", columnGap: 4, rowGap: 2 }}>
@@ -67,7 +66,6 @@ export function CharacterDetailSkeleton() {
             </Stack>
           </Section>
 
-          {/* Ability scores — 6 blocks */}
           <Section index={2}>
             <Skeleton variant="text" width="20%" height={28} />
             <Stack direction="row" sx={{ flexWrap: "wrap", columnGap: 4, rowGap: 2 }}>
@@ -77,7 +75,6 @@ export function CharacterDetailSkeleton() {
             </Stack>
           </Section>
 
-          {/* Combat & saves */}
           <Section index={3}>
             <Skeleton variant="text" width="25%" height={28} />
             <Stack spacing={1.5}>
@@ -87,7 +84,6 @@ export function CharacterDetailSkeleton() {
             </Stack>
           </Section>
 
-          {/* Skills grid */}
           <Section index={4}>
             <Skeleton variant="text" width="15%" height={28} />
             <Box
@@ -107,7 +103,6 @@ export function CharacterDetailSkeleton() {
             </Box>
           </Section>
 
-          {/* Feats */}
           <Section index={5}>
             <Skeleton variant="text" width="15%" height={28} />
             <Stack spacing={1}>

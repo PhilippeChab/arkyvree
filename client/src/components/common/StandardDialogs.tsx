@@ -37,7 +37,6 @@ export interface ConfirmDialogProps {
   /** What its confirm does, its button's color (`intent.ts`, docs/ui-buttons.md). */
   intent?: Intent;
   isLoading: boolean;
-  maxWidth?: DialogProps["maxWidth"];
   message: ReactNode;
   onClose: () => void;
   onConfirm: () => void;
@@ -103,10 +102,9 @@ export function ConfirmDialog({
   confirmLabel = "Confirm",
   intent,
   confirmIcon,
-  maxWidth,
 }: ConfirmDialogProps) {
   return (
-    <Modal open={open} onClose={() => !isLoading && onClose()} maxWidth={maxWidth}>
+    <Modal open={open} onClose={() => !isLoading && onClose()}>
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
         <DialogContentText>{message}</DialogContentText>

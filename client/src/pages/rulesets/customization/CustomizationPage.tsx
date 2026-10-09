@@ -116,7 +116,6 @@ function CustomizationView({
   const sectionProps = {
     ruleset,
     entityId,
-    data: undefined,
     onEntityIdChange: copy.followCopy,
     restorable,
   };
@@ -169,12 +168,12 @@ function CustomizationView({
         />
 
         <SectionTabPanel>
-          {/* The source's customizations don't belong to the copy: wait for it. */}
+          {/* The source's customizations don't belong to the copy: wait for it. A modifier has its requirements alone */}
           {locked ? (
             <DiceSpinner sx={{ py: 4 }} />
-          ) : section === "requirements" ? (
+          ) : section === "requirements" || data.type === "modifiers" ? (
             <RequirementsSection {...sectionProps} entityType={type} queryKeysToInvalidate={[entityKey]} />
-          ) : data.type === "modifiers" ? null : section === "modifiers" ? (
+          ) : section === "modifiers" ? (
             <ModifiersSection {...sectionProps} entityType={data.type} queryKeysToInvalidate={[entityKey]} />
           ) : (
             <PropertiesSection

@@ -18,12 +18,12 @@ interface ClassLevelCountsTableProps<L extends { id: string; level: number }> {
   labelOf?: (key: string) => string;
   levels: L[] | undefined;
   /** What it counts, as a failure names it ("Feat Pools"); its tab names it on the page. */
-  title: string;
+  what: string;
 }
 
 /** A class's counts per level, one column per key any of its levels has. */
 export function ClassLevelCountsTable<L extends { id: string; level: number }>({
-  title,
+  what,
   levels,
   isLoading,
   error,
@@ -65,7 +65,7 @@ export function ClassLevelCountsTable<L extends { id: string; level: number }>({
 
   return (
     <RulesetSectionTable
-      what={title}
+      what={what}
       error={error}
       data={keys.length > 0 ? sortedLevels : undefined}
       isLoading={isLoading}

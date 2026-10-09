@@ -10,7 +10,7 @@ export function ClassFeatPoolsSection({ rulesetId, classId }: ClassSectionProps)
   const { data, isLoading, error } = useQuery(classFeatPoolsQuery(rulesetId, classId));
   return (
     <ClassLevelCountsTable
-      title="Feat Pools"
+      what="Feat Pools"
       levels={data}
       isLoading={isLoading}
       error={error}

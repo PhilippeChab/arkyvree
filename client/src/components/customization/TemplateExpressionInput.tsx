@@ -12,7 +12,7 @@ interface TemplateExpressionInputProps {
   helperText?: string;
   /** Called with the new inner expression whenever the user edits. */
   onChange: (expression: string) => void;
-  /** The insertion API the parent's operator toolbar calls */
+  /** Its handle: the insertion the operator toolbar calls, and the focus its form's failed submit gives it */
   ref?: Ref<TemplateExpressionInputRef>;
   rulesetId: string;
   /** Inner expression (without the surrounding `{{ }}`). */
@@ -20,9 +20,8 @@ interface TemplateExpressionInputProps {
 }
 
 /**
- * Imperative API exposed via ref for the parent's operator toolbar.
- * The parent owns the toolbar so it can live inline next to the
- * literal/template toggle; we just expose the insertion primitives.
+ * What its `ref` holds: the insertion the operator toolbar calls (the parent owns the toolbar, so it can live inline
+ * next to the literal/template toggle), and the focus its form's field binding gives it on a failed submit.
  */
 export interface TemplateExpressionInputRef {
   /** Focus the expression's input (a failed submit's). */

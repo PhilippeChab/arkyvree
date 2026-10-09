@@ -10,8 +10,8 @@ type RPC = typeof _rpc;
 const _rpc = hc<Application>("");
 
 /**
- * Same-origin in all environments — vite's dev proxy forwards /api/* and /auth/* to API_PORT, and the SSR server serves
- * them directly in production. Hardcoding `localhost:8000` in dev meant e2e tests on CI (where nothing is listening on
+ * Same-origin in all environments — vite's dev proxy forwards /api/* and /auth/* to API_PORT, and in production the
+ * server that serves the built client serves them too. Hardcoding `localhost:8000` in dev meant e2e tests on CI (where nothing is listening on
  * 8000) silently failed sign-in because requests bypassed the configured proxy.
  */
 const host = document.location.origin;

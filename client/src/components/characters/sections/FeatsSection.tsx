@@ -34,7 +34,7 @@ interface FeatsSectionProps {
   virtualFeats?: CharacterDetail["virtualFeats"];
 }
 
-interface GrantedFeatsSectionProps {
+interface GrantedFeatsProps {
   feats: NonNullable<FeatsSectionProps["virtualFeats"]>;
   rulesetId?: string;
 }
@@ -86,7 +86,7 @@ function FeatRow({ feat, suffix, rulesetId, extra, component }: FeatRowProps) {
   );
 }
 
-function GrantedFeatsSection({ feats, rulesetId }: GrantedFeatsSectionProps) {
+function GrantedFeats({ feats, rulesetId }: GrantedFeatsProps) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -155,7 +155,7 @@ export function FeatsSection({ classes, virtualFeats, rulesetId, renderFeatExtra
       {featElements.length > 0 || hasVirtual ? (
         <Stack spacing={3}>
           {featElements}
-          {hasVirtual && <GrantedFeatsSection feats={grantedFeats} rulesetId={rulesetId} />}
+          {hasVirtual && <GrantedFeats feats={grantedFeats} rulesetId={rulesetId} />}
         </Stack>
       ) : (
         <BlankNote>No feats or special abilities available</BlankNote>

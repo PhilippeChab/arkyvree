@@ -4,7 +4,7 @@ let initialized = false;
 
 /**
  * Initializes the browser Sentry SDK from the server-injected APP_CONFIG. The DSN is read at runtime (not via
- * build-time VITE_*) so the same bundle works across environments — see server/routers/static.ts.
+ * build-time VITE_*) so the same bundle works across environments — see server/routers/PageTemplates.ts.
  */
 export function initSentry() {
   if (initialized) return;

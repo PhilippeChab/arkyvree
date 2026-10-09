@@ -46,7 +46,7 @@ export default function CharacterDetailsPage() {
   const location = useLocation();
   const { id = "" } = useParams<{ id: string }>();
   const menu = useAnchorMenu();
-  const [isConfirmOpen, setConfirmOpen] = useState(false);
+  const [isRemoveLevelOpen, setRemoveLevelOpen] = useState(false);
   const [isArchiveConfirmOpen, setArchiveConfirmOpen] = useState(false);
   const [isHardDeleteConfirmOpen, setHardDeleteConfirmOpen] = useState(false);
   // A new character arrives with the Add Level wizard open (`openLevelUp`)
@@ -81,7 +81,7 @@ export default function CharacterDetailsPage() {
       snackbar.success("Level removed");
       void invalidateCharacterListings(queryClient);
       await invalidateCharacter(queryClient, id);
-      setConfirmOpen(false);
+      setRemoveLevelOpen(false);
     },
     onError: (error) => snackbar.error(error, "Failed to remove level"),
   });
@@ -196,7 +196,7 @@ export default function CharacterDetailsPage() {
                   key="remove-level"
                   icon={DeleteIcon}
                   label="Remove Level"
-                  onClick={menu.closeMenuAnd(() => setConfirmOpen(true))}
+                  onClick={menu.closeMenuAnd(() => setRemoveLevelOpen(true))}
                 />,
                 <ActionMenuItem
                   key="manage-modifiers"
@@ -240,8 +240,8 @@ export default function CharacterDetailsPage() {
           </Menu>
 
           <DeleteDialog
-            open={isConfirmOpen}
-            onClose={() => setConfirmOpen(false)}
+            open={isRemoveLevelOpen}
+            onClose={() => setRemoveLevelOpen(false)}
             onConfirm={() => removeLevelMutation.mutate()}
             title="Remove Level"
             message="Are you sure you want to remove the last level? This action cannot be undone."
@@ -335,7 +335,7 @@ export default function CharacterDetailsPage() {
               portraitReadOnly={!canEditPortrait}
               onEditLevel={canEdit ? editLevel.openWith : undefined}
               onAddLevel={() => addLevel.openWith(true)}
-              onRemoveLevel={() => setConfirmOpen(true)}
+              onRemoveLevel={() => setRemoveLevelOpen(true)}
               bondedLinkable
               equipmentMode="editable"
               rulesetId={character.rulesetId}

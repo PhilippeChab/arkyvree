@@ -14,7 +14,6 @@ import { type PathInfo, toPathInfo } from "./pathValues.ts";
 import { TargetPathBreadcrumbs } from "./TargetPathBreadcrumbs.tsx";
 
 interface TargetPathBrowserProps {
-  disabled?: boolean;
   entityType?: string;
   /** Its search field's: the target's form field `ref`, so a failed submit focuses it. */
   inputRef?: Ref<HTMLInputElement>;
@@ -39,7 +38,6 @@ export function TargetPathBrowser({
   entityType,
   segments,
   isComplete,
-  disabled,
   onChange,
   inputRef,
 }: TargetPathBrowserProps) {
@@ -68,7 +66,6 @@ export function TargetPathBrowser({
     isFetchingNextPage,
   } = useInfiniteQuery({
     ...targetCompletionsQuery(rulesetId, kind, entityType, browsePrefix, debouncedSearch, flatMode),
-    enabled: !disabled,
     placeholderData: keepPreviousData,
   });
 
@@ -131,107 +128,100 @@ export function TargetPathBrowser({
         target={segments.join(".")}
         targetLabels={segmentLabels}
         color={isComplete ? "success" : "info"}
-        onSegmentClick={disabled ? undefined : handleBreadcrumbClick}
+        onSegmentClick={handleBreadcrumbClick}
         wrap
       >
         {segments.length === 0 ? (
           <BlankNote>No path picked yet</BlankNote>
-        ) : !disabled ? (
+        ) : (
           // A unit from the last chip
           <Stack direction="row" sx={{ pl: 0.25 }}>
             <IconButton size="small" aria-label="Clear Path" onClick={handleClear}>
               <ClearIcon fontSize="small" />
             </IconButton>
           </Stack>
-        ) : null}
+        )}
       </TargetPathBreadcrumbs>
-      {/* Search + List */}
-      {!disabled && (
-        <>
-          <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
-            <TextField
-              size="small"
-              placeholder="Search…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              inputRef={inputRef}
-              fullWidth
-            />
-            <Tooltip
-              describeChild
-              title={
-                searchEverywhere
-                  ? "Searching everywhere — click to limit to this level"
-                  : "Searching this level only — click to search everywhere"
-              }
-            >
-              <IconButton
-                size="small"
-                onClick={() => setSearchEverywhere((prev) => !prev)}
-                color={searchEverywhere ? "primary" : "default"}
-                aria-label="Search Everywhere"
-                aria-pressed={searchEverywhere}
-              >
-                {searchEverywhere ? <PublicIcon fontSize="small" /> : <FilterIcon fontSize="small" />}
-              </IconButton>
-            </Tooltip>
-          </Stack>
-          <List
-            dense
-            sx={{
-              height: 250,
-              overflowY: "auto",
-              border: 1,
-              borderColor: "divider",
-              borderRadius: 1,
-              overscrollBehavior: "contain",
-            }}
-            onScroll={handleScroll}
+      <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+        <TextField
+          size="small"
+          placeholder="Search…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          inputRef={inputRef}
+          fullWidth
+        />
+        <Tooltip
+          describeChild
+          title={
+            searchEverywhere
+              ? "Searching everywhere — click to limit to this level"
+              : "Searching this level only — click to search everywhere"
+          }
+        >
+          <IconButton
+            size="small"
+            onClick={() => setSearchEverywhere((prev) => !prev)}
+            color={searchEverywhere ? "primary" : "default"}
+            aria-label="Search Everywhere"
+            aria-pressed={searchEverywhere}
           >
-            {completions.map((option) => {
-              const isGroup = option.kind === "group" || option.kind === "category";
-              const isSelected = flatMode
-                ? selectedLeaf?.path === option.path
-                : selectedLeaf?.insertText === option.insertText;
-              const flatBreadcrumb =
-                flatMode && option.path
-                  ? option.path
-                      .split(".")
-                      .map((seg) => segmentLabels[seg] || formatSegment(seg))
-                      .join(" › ")
-                  : null;
-              return (
-                <Tooltip describeChild title={option.detail} placement="right" enterDelay={400} key={option.insertText}>
-                  <ListItemButton selected={isSelected} onClick={() => handleNavigate(option)}>
-                    <ListItemText
-                      primary={
-                        flatBreadcrumb ? (
-                          <Typography variant="body2" sx={{ fontWeight: isSelected ? 600 : 400 }}>
-                            {flatBreadcrumb}
-                          </Typography>
-                        ) : (
-                          <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
-                            <Typography variant="body2" sx={{ fontWeight: isGroup || isSelected ? 600 : 400 }}>
-                              {segmentLabels[option.label] || formatSegment(option.label)}
-                            </Typography>
-                            {isGroup && <ChevronRightIcon sx={{ fontSize: 16, color: "text.secondary" }} />}
-                          </Stack>
-                        )
-                      }
-                    />
-                  </ListItemButton>
-                </Tooltip>
-              );
-            })}
-            {isLoading && completions.length === 0 && <BlankNote sx={{ px: 2, py: 1 }}>Loading…</BlankNote>}
-            {!!error && completions.length === 0 && <LoadError what="Paths" error={error} />}
-            {!error && completions.length === 0 && !isLoading && (
-              <BlankNote sx={{ px: 2, py: 1 }}>No results</BlankNote>
-            )}
-            <NextPageSpinner loading={isFetchingNextPage} />
-          </List>
-        </>
-      )}
+            {searchEverywhere ? <PublicIcon fontSize="small" /> : <FilterIcon fontSize="small" />}
+          </IconButton>
+        </Tooltip>
+      </Stack>
+      <List
+        dense
+        sx={{
+          height: 250,
+          overflowY: "auto",
+          border: 1,
+          borderColor: "divider",
+          borderRadius: 1,
+          overscrollBehavior: "contain",
+        }}
+        onScroll={handleScroll}
+      >
+        {completions.map((option) => {
+          const isGroup = option.kind === "group" || option.kind === "category";
+          const isSelected = flatMode
+            ? selectedLeaf?.path === option.path
+            : selectedLeaf?.insertText === option.insertText;
+          const flatBreadcrumb =
+            flatMode && option.path
+              ? option.path
+                  .split(".")
+                  .map((seg) => segmentLabels[seg] || formatSegment(seg))
+                  .join(" › ")
+              : null;
+          return (
+            <Tooltip describeChild title={option.detail} placement="right" enterDelay={400} key={option.insertText}>
+              <ListItemButton selected={isSelected} onClick={() => handleNavigate(option)}>
+                <ListItemText
+                  primary={
+                    flatBreadcrumb ? (
+                      <Typography variant="body2" sx={{ fontWeight: isSelected ? 600 : 400 }}>
+                        {flatBreadcrumb}
+                      </Typography>
+                    ) : (
+                      <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+                        <Typography variant="body2" sx={{ fontWeight: isGroup || isSelected ? 600 : 400 }}>
+                          {segmentLabels[option.label] || formatSegment(option.label)}
+                        </Typography>
+                        {isGroup && <ChevronRightIcon sx={{ fontSize: 16, color: "text.secondary" }} />}
+                      </Stack>
+                    )
+                  }
+                />
+              </ListItemButton>
+            </Tooltip>
+          );
+        })}
+        {isLoading && completions.length === 0 && <BlankNote sx={{ px: 2, py: 1 }}>Loading…</BlankNote>}
+        {!!error && completions.length === 0 && <LoadError what="Paths" error={error} />}
+        {!error && completions.length === 0 && !isLoading && <BlankNote sx={{ px: 2, py: 1 }}>No results</BlankNote>}
+        <NextPageSpinner loading={isFetchingNextPage} />
+      </List>
     </Stack>
   );
 }

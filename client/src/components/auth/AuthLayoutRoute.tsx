@@ -122,7 +122,6 @@ function DesktopBranding() {
         }}
       />
 
-      {/* Icon */}
       <Box
         component="img"
         src="/pwa-512x512.png"
@@ -137,7 +136,6 @@ function DesktopBranding() {
       />
 
       <Stack spacing={2} sx={{ alignItems: "center" }}>
-        {/* Title */}
         <Typography
           variant="h3"
           component="p"
@@ -156,7 +154,6 @@ function DesktopBranding() {
 
         <GoldDivider sx={{ width: 120, height: 2, borderRadius: 1, position: "relative", ...stagger(2) }} />
 
-        {/* Tagline */}
         <Typography
           variant="subtitle1"
           component="p"

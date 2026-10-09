@@ -9,15 +9,15 @@ import { ApiError, type ApiValidationIssue } from "@/client/src/services/ApiErro
  */
 export function useValidationIssues(fallback: string) {
   const snackbar = useSnackbar();
-  const [validationErrors, setValidationErrors] = useState<ApiValidationIssue[]>([]);
+  const [issues, setIssues] = useState<ApiValidationIssue[]>([]);
 
   const handleSaveError = useCallback(
     (error: Error) => {
-      if (error instanceof ApiError && error.issues && error.issues.length > 0) setValidationErrors(error.issues);
+      if (error instanceof ApiError && error.issues && error.issues.length > 0) setIssues(error.issues);
       else snackbar.error(error, fallback);
     },
     [snackbar, fallback],
   );
 
-  return { validationErrors, setValidationErrors, handleSaveError };
+  return { issues, setIssues, handleSaveError };
 }

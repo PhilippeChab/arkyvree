@@ -60,7 +60,7 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevelId 
     resetPicks,
     refreshAfterSave,
     handleSaveError,
-    setValidationErrors,
+    setIssues,
     setShowCancelConfirm,
   } = base;
 
@@ -152,7 +152,7 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevelId 
   const finalizeMutation = useMutation({
     mutationFn: async ({ data, force = false }: { data: LevelUpFormData; force?: boolean }) => {
       if (!data.selectedHP) throw new Error("HP not selected");
-      // The picks are saved as the level's slots fit them, which must have loaded
+      // The feats are saved as the level's feat slots fit them: its slots, the feats' and the powers', must have loaded
       if (!featData || !powerData) throw new Error("The level hasn't finished loading");
       return parseResponse(
         rpc.api.characters.levels[":characterId"][":characterLevelId"].$put({
@@ -185,9 +185,9 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevelId 
 
   // Through the form, so its own rules still hold on a forced save, as on any other
   const handleForceSubmit = useCallback(() => {
-    setValidationErrors([]);
+    setIssues([]);
     handleSubmit((data) => finalizeMutation.mutate({ data, force: true }))();
-  }, [finalizeMutation, handleSubmit, setValidationErrors]);
+  }, [finalizeMutation, handleSubmit, setIssues]);
 
   const handleCancel = useCallback(() => {
     setShowCancelConfirm(true);

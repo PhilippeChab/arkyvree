@@ -1,6 +1,6 @@
 /** The app's theme, light and dark: its palette, type, shapes and the shadows it names, and how MUI's components look in it. */
 
-import { alpha, createTheme, Grow, responsiveFontSizes, type Theme } from "@mui/material";
+import { alpha, type ButtonProps, createTheme, Grow, responsiveFontSizes, type Theme } from "@mui/material";
 
 import { DURATION, PREFERS_REDUCED_MOTION, transitionOf } from "./animations.ts";
 
@@ -43,8 +43,6 @@ interface BoxShadows {
   action: string;
   /** An archived card that opens, hovered */
   archivedCardHover: string;
-  /** An attachment ringed in the page's color (a portrait in a header) */
-  attachmentRing: string;
   /** The demo banner, floating over the page */
   banner: string;
   /** A card that opens, hovered */
@@ -61,16 +59,8 @@ interface BoxShadows {
   selectedItem: string;
 }
 
-type ContainedColor =
-  | "primary"
-  | "secondary"
-  | "error"
-  | "warning"
-  | "success"
-  | "info"
-  | "inherit"
-  | string
-  | undefined;
+/** A contained button's color, which its border and gradient follow. */
+type ContainedColor = ButtonProps["color"];
 
 /** The shadows an image or an icon casts by its own shape (`filter: drop-shadow(…)`), by what casts them. */
 interface DropShadows {
@@ -192,7 +182,6 @@ export function createAppTheme(darkMode: boolean): Theme {
       boxShadows: {
         action: `0 4px 14px 0 ${palette.primary.main}40`,
         archivedCardHover: `0 8px 24px ${palette.warning.main}20`,
-        attachmentRing: "0 6px 24px rgba(0,0,0,0.18)",
         banner: darkMode ? "0 2px 12px rgba(0,0,0,0.3)" : "0 2px 12px rgba(0,0,0,0.08)",
         cardHover: `0 4px 16px ${palette.secondary.main}25, 0 8px 32px ${palette.secondary.main}15`,
         drawer: darkMode ? "2px 0 8px rgba(0,0,0,0.3)" : "2px 0 8px rgba(0,0,0,0.08)",

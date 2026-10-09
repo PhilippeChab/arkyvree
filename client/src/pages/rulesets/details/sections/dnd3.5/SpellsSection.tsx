@@ -112,7 +112,6 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
                   value={aptitude}
                   loadError={aptitudeError}
                   onChange={setAptitude}
-                  size="small"
                   scope="spells"
                 />
               </Box>

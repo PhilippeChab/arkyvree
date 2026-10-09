@@ -40,7 +40,7 @@ import {
   SettingsIcon,
   SupportIcon,
 } from "@/client/src/components/icons/index.ts";
-import { Onboarding } from "@/client/src/components/onboarding/index.ts";
+import { Onboarding, ONBOARDING_STEPS } from "@/client/src/components/onboarding/index.ts";
 import { useAnchorMenu, useAttachment, useAuthRequests, useIsDemo, useIsMobile } from "@/client/src/hooks/index.ts";
 import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 import {
@@ -138,7 +138,6 @@ const SIDEBAR_ITEMS = [
     external: true,
   },
 ];
-const STEP_TO_SIDEBAR_ID: Record<number, string> = { 1: "rulesets", 2: "characters", 3: "campaigns" };
 
 export function Layout() {
   const menu = useAnchorMenu();
@@ -172,9 +171,10 @@ export function Layout() {
     [],
   );
 
-  const isPopoverStep = onboardingOpen && !isMobile && STEP_TO_SIDEBAR_ID[onboardingStep];
-  const onboardingHighlightId = isPopoverStep ? STEP_TO_SIDEBAR_ID[onboardingStep] : null;
-  const effectiveExpanded = sidebarExpanded || !!isPopoverStep;
+  // The sidebar's item the tour's step points at, beside it on a wide screen; it expands the sidebar meanwhile
+  const onboardingHighlightId = onboardingOpen && !isMobile ? ONBOARDING_STEPS[onboardingStep].sidebarId : undefined;
+  const isPopoverStep = !!onboardingHighlightId;
+  const effectiveExpanded = sidebarExpanded || isPopoverStep;
 
   const onboardingMutation = useMutation({
     mutationFn: () => parseResponse(rpc.auth["complete-onboarding"].$post()),
@@ -205,7 +205,6 @@ export function Layout() {
 
   return (
     <Stack direction="row">
-      {/* App Bar */}
       <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
         <Toolbar sx={{ justifyContent: "space-between" }}>
           {isMobile ? (
@@ -266,7 +265,6 @@ export function Layout() {
           </Menu>
         </Toolbar>
       </AppBar>
-      {/* Sidebar */}
       <Drawer
         sx={{
           width: isMobile ? EXPANDED_DRAWER_WIDTH : effectiveExpanded ? EXPANDED_DRAWER_WIDTH : DRAWER_WIDTH,
@@ -412,7 +410,7 @@ export function Layout() {
             ))}
           </Stack>
 
-          {/* Toggle button at the bottom — hidden on mobile and during popover steps */}
+          {/* The sidebar's toggle, at its foot: none on a phone, nor while the tour points at the sidebar */}
           {!isMobile && !isPopoverStep && (
             <Stack
               direction="row"
@@ -464,7 +462,6 @@ export function Layout() {
         activeStep={onboardingStep}
         onStepChange={setOnboardingStep}
         anchorEl={onboardingHighlightId ? (sidebarItemEls[onboardingHighlightId] ?? null) : null}
-        isMobile={isMobile}
       />
     </Stack>
   );

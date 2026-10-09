@@ -56,7 +56,7 @@ export default function ActivitiesPage() {
               list={activities}
               what="Activity logs"
               search={search}
-              // An empty page's state sits a unit lower than its table, as its margin placed it
+              // An empty page's state sits a unit lower than its table would
               emptySx={{ pt: 1 }}
               empty={
                 <BlankState

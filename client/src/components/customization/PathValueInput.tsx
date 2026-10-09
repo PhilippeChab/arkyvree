@@ -8,11 +8,9 @@ import { type PathChoice, pathChoices } from "./pathValues.ts";
 interface PathValueInputProps {
   disabled?: boolean;
   error?: boolean;
-  fullWidth?: boolean;
   helperText?: string;
   /** Its form field's `ref`, so a failed submit focuses it. */
   inputRef?: Ref<HTMLInputElement>;
-  label?: string;
   onChange: (value: string) => void;
   placeholder?: string;
   possibleValues?: PathChoice[];
@@ -26,12 +24,10 @@ export function PathValueInput({
   onChange,
   valueType,
   possibleValues,
-  label = "Value",
   placeholder,
   required = false,
   error = false,
   helperText,
-  fullWidth = true,
   disabled = false,
   inputRef,
 }: PathValueInputProps) {
@@ -43,12 +39,12 @@ export function PathValueInput({
       type={options || valueType !== "number" ? "text" : "number"}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      label={label}
+      label="Value"
       placeholder={placeholder}
       required={required}
       error={error}
       helperText={helperText}
-      fullWidth={fullWidth}
+      fullWidth
       disabled={disabled}
       inputRef={inputRef}
     >

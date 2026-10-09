@@ -16,13 +16,11 @@ interface BlankStateProps {
   description: string;
   /** Icon component, sized and tinted here so every empty state looks alike. */
   icon: ElementType;
-  sx?: SxProps<Theme>;
   title: string;
 }
 
 interface NoMatchesStateProps {
   search: string;
-  sx?: SxProps<Theme>;
 }
 
 /**
@@ -37,26 +35,23 @@ export function BlankNote({ children, sx }: BlankNoteProps) {
   );
 }
 
-export function BlankState({ icon: Icon, title, description, action, sx }: BlankStateProps) {
+export function BlankState({ icon: Icon, title, description, action }: BlankStateProps) {
   return (
     <Stack
       spacing={2}
-      sx={[
-        {
-          textAlign: "center",
-          py: { xs: 4, sm: 8 },
-          px: { xs: 2, sm: 4 },
-          border: 2,
-          borderStyle: "dashed",
-          borderColor: "secondary.main",
-          borderRadius: 2,
-          background: (theme) =>
-            `linear-gradient(135deg, ${theme.palette.background.paper}, ${theme.palette.background.default})`,
-          animation: `${fadeIn} ${DURATION.slow}ms ${EASING.decelerate} both`,
-          [PREFERS_REDUCED_MOTION]: { animation: "none" },
-        },
-        ...(Array.isArray(sx) ? sx : [sx]),
-      ]}
+      sx={{
+        textAlign: "center",
+        py: { xs: 4, sm: 8 },
+        px: { xs: 2, sm: 4 },
+        border: 2,
+        borderStyle: "dashed",
+        borderColor: "secondary.main",
+        borderRadius: 2,
+        background: (theme) =>
+          `linear-gradient(135deg, ${theme.palette.background.paper}, ${theme.palette.background.default})`,
+        animation: `${fadeIn} ${DURATION.slow}ms ${EASING.decelerate} both`,
+        [PREFERS_REDUCED_MOTION]: { animation: "none" },
+      }}
     >
       <Box sx={{ filter: (theme) => theme.dropShadows.blankStateIcon }}>
         <Icon sx={{ fontSize: { xs: 56, sm: 80 }, color: "text.secondary", opacity: 0.5 }} />
@@ -77,13 +72,12 @@ export function BlankState({ icon: Icon, title, description, action, sx }: Blank
 }
 
 /** A search that found nothing, told apart from a list that has nothing yet. */
-export function NoMatchesState({ search, sx }: NoMatchesStateProps) {
+export function NoMatchesState({ search }: NoMatchesStateProps) {
   return (
     <BlankState
       icon={SearchOffIcon}
       title="No matches"
       description={`Nothing matches "${search}". Try another search.`}
-      sx={sx}
     />
   );
 }

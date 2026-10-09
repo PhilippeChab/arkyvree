@@ -19,13 +19,10 @@ import { useDetachAttachment } from "./useDetachAttachment.ts";
 import { useDirectUpload } from "./useDirectUpload.ts";
 
 interface AttachmentFieldProps extends AttachmentSlot {
-  label?: string;
+  /** What the image is, a Title Case noun its controls name ("Upload Portrait") */
+  label: string;
   /** Hide upload/delete controls — useful when viewing other users' content. */
   readOnly?: boolean;
-  /** Show a white ring + drop shadow around the image — for hero/profile placements. */
-  ring?: boolean;
-  /** Pixel size of the displayed image. Defaults: 128 (avatar), 220 (portrait). */
-  size?: number;
   /** Pre-resolved URL for unauthenticated views (e.g. shared character page). Skips the GET and forces readOnly. */
   url?: string | null;
 }
@@ -33,18 +30,12 @@ interface AttachmentFieldProps extends AttachmentSlot {
 const ACCEPT = ALLOWED_IMAGE_TYPES.join(",");
 const ACCEPTED_TYPES: readonly string[] = ALLOWED_IMAGE_TYPES;
 
-export function AttachmentField({
-  recordId,
-  name,
-  label,
-  size,
-  readOnly = false,
-  ring = false,
-  url: urlOverride,
-}: AttachmentFieldProps) {
+/** The image's side, in pixels, a portrait's and an avatar's alike */
+const DIMENSION = 140;
+
+export function AttachmentField({ recordId, name, label, readOnly = false, url: urlOverride }: AttachmentFieldProps) {
   // A user's avatar is round, a character's portrait a framed picture
   const isAvatar = name === "avatar";
-  const dimension = size ?? (isAvatar ? 128 : 220);
   const radius = isAvatar ? "50%" : 2;
   // The hidden file input, in state: the clickable box hands its click on to it
   const [fileInput, setFileInput] = useState<HTMLInputElement | null>(null);
@@ -64,7 +55,6 @@ export function AttachmentField({
   // Whether this viewer may upload at all; `interactive` also waits out a running upload.
   const canUpload = !sharedMode && !readOnly && !!recordId && !isDemo;
   const interactive = canUpload && !busy;
-  const showRing = ring && !!url;
 
   function pick() {
     if (!interactive) return;
@@ -94,12 +84,6 @@ export function AttachmentField({
 
   return (
     <Stack spacing={1} sx={{ alignItems: "flex-start", width: "fit-content" }}>
-      {label && (
-        <Typography variant="overline" sx={{ color: "text.secondary", fontWeight: 600, letterSpacing: 0.8 }}>
-          {label}
-        </Typography>
-      )}
-
       <Box sx={{ position: "relative" }}>
         <Box
           {...(interactive ? clickableProps(pick) : { tabIndex: -1 })}
@@ -107,22 +91,21 @@ export function AttachmentField({
           onDragOver={handleDragOver}
           onDragLeave={() => setDragOver(false)}
           role={interactive ? "button" : undefined}
-          aria-label={canUpload ? (url ? `Change ${label ?? name}` : `Upload ${label ?? name}`) : undefined}
+          aria-label={canUpload ? (url ? `Change ${label}` : `Upload ${label}`) : undefined}
           sx={[
             {
               ...CLICKABLE_SX,
               position: "relative",
-              width: dimension,
-              height: dimension,
+              width: DIMENSION,
+              height: DIMENSION,
               borderRadius: radius,
               overflow: "hidden",
               cursor: interactive && !url ? "pointer" : "default",
               bgcolor: url ? "transparent" : "action.hover",
-              border: showRing ? 4 : 2,
-              borderStyle: !showRing && canUpload ? "dashed" : "solid",
-              borderColor: showRing ? "background.paper" : dragOver ? "primary.main" : url ? "transparent" : "divider",
-              boxShadow: (theme) => (showRing ? theme.boxShadows.attachmentRing : "none"),
-              transition: transitionOf(["border-color", "transform", "box-shadow"], DURATION.quick),
+              border: 2,
+              borderStyle: canUpload ? "dashed" : "solid",
+              borderColor: dragOver ? "primary.main" : url ? "transparent" : "divider",
+              transition: transitionOf(["border-color", "transform"], DURATION.quick),
               transform: dragOver ? "scale(1.02)" : "none",
               outline: "none",
               "&:focus-visible": {
@@ -147,13 +130,13 @@ export function AttachmentField({
         >
           {url ? (
             isAvatar ? (
-              <Avatar src={url} sx={{ width: dimension, height: dimension }} />
+              <Avatar src={url} sx={{ width: DIMENSION, height: DIMENSION }} />
             ) : (
               <Box
                 component="img"
                 src={url}
-                alt={label ?? name}
-                sx={{ width: dimension, height: dimension, objectFit: "cover", display: "block" }}
+                alt={label}
+                sx={{ width: DIMENSION, height: DIMENSION, objectFit: "cover", display: "block" }}
               />
             )
           ) : (
@@ -171,16 +154,16 @@ export function AttachmentField({
             >
               {canUpload ? (
                 <>
-                  <CloudUploadOutlinedIcon sx={{ fontSize: dimension * 0.32 }} />
+                  <CloudUploadOutlinedIcon sx={{ fontSize: DIMENSION * 0.32 }} />
                   <Typography variant="caption" sx={{ fontWeight: 500, lineHeight: 1.2 }}>
                     {dragOver ? "Drop to upload" : isAvatar ? "Add photo" : "Drop or click to upload"}
                   </Typography>
                 </>
               ) : (
                 <>
-                  <ImageOutlinedIcon sx={{ fontSize: dimension * 0.32 }} />
+                  <ImageOutlinedIcon sx={{ fontSize: DIMENSION * 0.32 }} />
                   <Typography variant="caption" sx={{ fontWeight: 500, lineHeight: 1.2 }}>
-                    No {label ?? name}
+                    No {label.toLowerCase()}
                   </Typography>
                 </>
               )}
@@ -203,7 +186,7 @@ export function AttachmentField({
                 cursor: "pointer",
               }}
             >
-              <PhotoCameraOutlinedIcon sx={{ fontSize: dimension * 0.22 }} />
+              <PhotoCameraOutlinedIcon sx={{ fontSize: DIMENSION * 0.22 }} />
               <Typography variant="caption" sx={{ fontWeight: 600, letterSpacing: 0.5 }}>
                 Change
               </Typography>
@@ -222,7 +205,7 @@ export function AttachmentField({
                 bgcolor: (theme) => alpha(theme.palette.common.black, 0.5),
               }}
             >
-              <DiceSpinner size={dimension < 80 ? "small" : dimension < 160 ? "medium" : "large"} />
+              <DiceSpinner />
             </Stack>
           )}
         </Box>
@@ -230,9 +213,9 @@ export function AttachmentField({
         {/* Always-visible camera button at bottom-right (touch-friendly). The tile above is the same
             control for keyboards and screen readers, so this one stays out of their way. */}
         {interactive && (
-          <Tooltip title={url ? `Change ${label ?? name}` : `Upload ${label ?? name}`}>
+          <Tooltip title={url ? `Change ${label}` : `Upload ${label}`}>
             <IconButton
-              aria-label={url ? `Change ${label ?? name}` : `Upload ${label ?? name}`}
+              aria-label={url ? `Change ${label}` : `Upload ${label}`}
               onClick={pick}
               tabIndex={-1}
               aria-hidden
@@ -257,10 +240,10 @@ export function AttachmentField({
 
         {/* Quiet delete action — bottom-left corner of the image, only when there's an attachment */}
         {url && interactive && (
-          <Tooltip title={`Remove ${label ?? name}`}>
+          <Tooltip title={`Remove ${label}`}>
             <IconButton
               onClick={() => attachment && detach.mutate(attachment.id)}
-              aria-label={`Remove ${label ?? name}`}
+              aria-label={`Remove ${label}`}
               sx={{
                 position: "absolute",
                 bottom: 0,

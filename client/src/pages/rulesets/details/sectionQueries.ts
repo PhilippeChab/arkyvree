@@ -57,9 +57,14 @@ export type RulesetSection =
   | "abilities"
   | "mechanics";
 
-/** A list's query where an entity's kind and its sort narrow and order it too (the races, the classes). */
-function entityListQuery(pageParam: number, filters: EntityFilters) {
-  return { ...listQuery(pageParam, filters), kind: filters.kind, orderBy: filters.orderBy, orderDir: filters.orderDir };
+/** A tab's search params where an entity's kind and its sort narrow and order its list too (the races, the classes). */
+function entityPageSearchParams(pageParam: number, filters: EntityFilters) {
+  return {
+    ...pageSearchParams(pageParam, filters),
+    kind: filters.kind,
+    orderBy: filters.orderBy,
+    orderDir: filters.orderDir,
+  };
 }
 
 /** The key of a list an entity's kind and its sort narrow and order. */
@@ -67,7 +72,8 @@ function entitySectionKey(rulesetId: string, section: RulesetSection, filters: E
   return [...sectionKey(rulesetId, section, filters), filters.kind, filters.orderBy, filters.orderDir] as const;
 }
 
-function listQuery(pageParam: number, { search, childOnly }: ListFilters) {
+/** A tab's search params: its page, ten rows at a time, its search, and whether it lists the ruleset's own only. */
+function pageSearchParams(pageParam: number, { search, childOnly }: ListFilters) {
   return {
     page: pageParam.toString(),
     limit: "10",
@@ -87,7 +93,7 @@ export function abilitiesQuery(rulesetId: string, filters: ListFilters) {
       parseResponse(
         rpc.api.rulesets[":id"].abilities.$get({
           param: { id: rulesetId },
-          query: listQuery(pageParam, filters),
+          query: pageSearchParams(pageParam, filters),
         }),
       ),
     initialPageParam: 1,
@@ -123,7 +129,7 @@ export function aptitudesQuery(rulesetId: string, filters: ListFilters) {
       parseResponse(
         rpc.api.rulesets[":id"].aptitudes.$get({
           param: { id: rulesetId },
-          query: listQuery(pageParam, filters),
+          query: pageSearchParams(pageParam, filters),
         }),
       ),
     initialPageParam: 1,
@@ -138,7 +144,7 @@ export function classesQuery(rulesetId: string, filters: EntityFilters) {
       parseResponse(
         rpc.api.rulesets[":id"].classes.$get({
           param: { id: rulesetId },
-          query: entityListQuery(pageParam, filters),
+          query: entityPageSearchParams(pageParam, filters),
         }),
       ),
     initialPageParam: 1,
@@ -177,7 +183,7 @@ export function featsGroupedQuery(rulesetId: string, filters: AptitudeFilters) {
       parseResponse(
         rpc.api.rulesets[":id"].feats.grouped.$get({
           param: { id: rulesetId },
-          query: { ...listQuery(pageParam, filters), aptitudeId: filters.aptitudeId },
+          query: { ...pageSearchParams(pageParam, filters), aptitudeId: filters.aptitudeId },
         }),
       ),
     initialPageParam: 1,
@@ -192,7 +198,7 @@ export function featsQuery(rulesetId: string, filters: AptitudeFilters) {
       parseResponse(
         rpc.api.rulesets[":id"].feats.$get({
           param: { id: rulesetId },
-          query: { ...listQuery(pageParam, filters), aptitudeId: filters.aptitudeId },
+          query: { ...pageSearchParams(pageParam, filters), aptitudeId: filters.aptitudeId },
         }),
       ),
     initialPageParam: 1,
@@ -216,7 +222,7 @@ export function itemsQuery(rulesetId: string, filters: ListFilters) {
       parseResponse(
         rpc.api.rulesets[":id"].items.$get({
           param: { id: rulesetId },
-          query: listQuery(pageParam, filters),
+          query: pageSearchParams(pageParam, filters),
         }),
       ),
     initialPageParam: 1,
@@ -231,7 +237,7 @@ export function languagesQuery(rulesetId: string, filters: ListFilters) {
       parseResponse(
         rpc.api.rulesets[":id"].languages.$get({
           param: { id: rulesetId },
-          query: listQuery(pageParam, filters),
+          query: pageSearchParams(pageParam, filters),
         }),
       ),
     initialPageParam: 1,
@@ -246,7 +252,7 @@ export function mechanicsQuery(rulesetId: string, filters: ListFilters) {
       parseResponse(
         rpc.api.rulesets[":id"].mechanics.$get({
           param: { id: rulesetId },
-          query: listQuery(pageParam, filters),
+          query: pageSearchParams(pageParam, filters),
         }),
       ),
     initialPageParam: 1,
@@ -262,7 +268,7 @@ export function powersQuery(rulesetId: string, filters: PowerFilters) {
         rpc.api.rulesets[":id"].powers.$get({
           param: { id: rulesetId },
           query: {
-            ...listQuery(pageParam, filters),
+            ...pageSearchParams(pageParam, filters),
             aptitudeId: filters.aptitudeId,
             level: filters.level?.toString(),
           },
@@ -276,7 +282,7 @@ export function powersQuery(rulesetId: string, filters: PowerFilters) {
 /**
  * Warm the first page of a tab the way it opens: switching tabs clears the
  * URL's filters, so that's no search, the default kind and sort, and the
- * ruleset's default "Local changes" setting.
+ * ruleset's default "Local Changes" setting.
  */
 export function prefetchSection(
   queryClient: QueryClient,
@@ -318,7 +324,7 @@ export function racesQuery(rulesetId: string, filters: EntityFilters) {
       parseResponse(
         rpc.api.rulesets[":id"].races.$get({
           param: { id: rulesetId },
-          query: entityListQuery(pageParam, filters),
+          query: entityPageSearchParams(pageParam, filters),
         }),
       ),
     initialPageParam: 1,
@@ -349,7 +355,7 @@ export function savesQuery(rulesetId: string, filters: ListFilters) {
       parseResponse(
         rpc.api.rulesets[":id"].saves.$get({
           param: { id: rulesetId },
-          query: listQuery(pageParam, filters),
+          query: pageSearchParams(pageParam, filters),
         }),
       ),
     initialPageParam: 1,
@@ -364,7 +370,7 @@ export function skillsQuery(rulesetId: string, filters: ListFilters) {
       parseResponse(
         rpc.api.rulesets[":id"].skills.$get({
           param: { id: rulesetId },
-          query: listQuery(pageParam, filters),
+          query: pageSearchParams(pageParam, filters),
         }),
       ),
     initialPageParam: 1,

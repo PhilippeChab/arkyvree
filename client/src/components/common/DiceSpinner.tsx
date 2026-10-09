@@ -1,17 +1,14 @@
 import { Stack, type SxProps, type Theme, Typography } from "@mui/material";
-import { type ReactNode, useLayoutEffect, useRef, useState } from "react";
+import { type ReactNode } from "react";
 
 import { ANIMATIONS, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
 
 interface DiceSpinnerProps {
   children?: ReactNode;
   /**
-   * Wrapper mode: when `children` is provided, DiceSpinner wraps them in a
-   * `position: relative` span so callers (typically Buttons) don't shrink
-   * when `loading` flips. Children stay in the layout via `visibility: hidden`
-   * during loading; the rolling die overlays on top.
-   *
-   * Without children, DiceSpinner renders standalone (existing behavior).
+   * Wrapper mode, with `children`: while it's true the rolling die stands over them, which keep their room hidden
+   * (`visibility: hidden`), so a button doesn't shrink as it flips. Without children the die always rolls: small, an
+   * inline icon; medium or large, a centered block.
    */
   loading?: boolean;
   size?: "small" | "medium" | "large";
@@ -26,18 +23,8 @@ const SIZES = {
 } as const;
 
 export function DiceSpinner({ size = "medium", loading, children, sx }: DiceSpinnerProps) {
-  const ref = useRef<HTMLSpanElement>(null);
-  const [overlay, setOverlay] = useState(false);
-
-  useLayoutEffect(() => {
-    if (size !== "small" || !ref.current?.parentElement) return;
-    const pos = getComputedStyle(ref.current.parentElement).position;
-    if (pos === "relative" || pos === "sticky") setOverlay(true);
-  }, [size]);
-
   const dice = (
     <Typography
-      ref={size === "small" ? ref : undefined}
       component="span"
       sx={{
         fontSize: SIZES[size],
@@ -78,14 +65,6 @@ export function DiceSpinner({ size = "medium", loading, children, sx }: DiceSpin
         >
           {children}
         </Stack>
-      </Stack>
-    );
-  }
-
-  if (size === "small" && overlay) {
-    return (
-      <Stack direction="row" sx={{ position: "absolute", inset: 0, alignItems: "center", justifyContent: "center" }}>
-        {dice}
       </Stack>
     );
   }

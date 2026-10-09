@@ -9,7 +9,7 @@ import { parseResponse } from "hono/client";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-/** What a fork changed from the rulesets it inherits: the Local changes dialog's list. */
+/** What a fork changed from the rulesets it inherits: the Local Changes dialog's list. */
 export function rulesetChangesQuery(rulesetId: string) {
   return queryOptions({
     queryKey: QUERY_KEYS.rulesets.changes(rulesetId),

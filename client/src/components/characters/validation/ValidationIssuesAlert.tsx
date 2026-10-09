@@ -14,8 +14,8 @@ interface ValidationIssuesAlertProps {
   /** What the server's rules refused; none hides it. */
   issues: ApiValidationIssue[];
   onClose: () => void;
-  /** Saves anyway (`force`); without it, the warnings only say why. */
-  onProceed?: () => void;
+  /** Saves anyway (`force`). */
+  onProceed: () => void;
   /** A save is running: Proceed Anyway waits. */
   pending?: boolean;
   /** Its heading: "Validation warnings", "Equipment warnings" */
@@ -37,18 +37,16 @@ export function ValidationIssuesAlert({
       severity="warning"
       onClose={onClose}
       action={
-        onProceed && (
-          <Button
-            size="small"
-            variant="contained"
-            color="warning"
-            onClick={onProceed}
-            disabled={pending}
-            sx={{ whiteSpace: "nowrap" }}
-          >
-            Proceed Anyway
-          </Button>
-        )
+        <Button
+          size="small"
+          variant="contained"
+          color="warning"
+          onClick={onProceed}
+          disabled={pending}
+          sx={{ whiteSpace: "nowrap" }}
+        >
+          Proceed Anyway
+        </Button>
       }
       gutter={gutter}
       sx={{ "& .MuiAlert-action": { alignItems: "flex-start", pt: 0.5 } }}

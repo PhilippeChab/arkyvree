@@ -101,11 +101,11 @@ export function CharacterSheetBody({
             rulesetId={rulesetId}
             renderFeatExtra={(feat) => {
               const bonded = bondedByFeat?.get(feat.name);
-              return bonded && <sections.BondedSection bonded={bonded} linkable={bondedLinkable} />;
+              return bonded && <sections.BondedCreature bonded={bonded} linkable={bondedLinkable} />;
             }}
           />
 
-          {/* The campaign endpoint returns powers as [] for partial visibility — guard against that since PowersSection expects a record */}
+          {/* A Partial character's powers are [] (`partial` already leaves them out): this narrows them to the record PowersSection takes */}
           {!Array.isArray(character.powers) && (
             <sections.PowersSection
               classes={character.classes || {}}
@@ -122,7 +122,7 @@ export function CharacterSheetBody({
             <EquipmentSection
               characterId={characterId}
               rulesetId={rulesetId}
-              isArchived={readOnly}
+              readOnly={readOnly}
               isCustomRuleset={"isCustomRuleset" in character && !!character.isCustomRuleset}
               encumbrance={encumbrance}
             />

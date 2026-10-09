@@ -23,7 +23,7 @@ interface DetailPageHeaderProps {
   titleEditor?: ReactNode;
 }
 
-/** Centered title block of a ruleset, campaign or character page, with back and menu buttons. */
+/** Centered title block of a record's page (a ruleset's, a campaign's, a character's, a ruleset entity's), with back and menu buttons. */
 export function DetailPageHeader({
   title,
   titleEditor,
