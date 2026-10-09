@@ -23,7 +23,7 @@ type RulesetSectionConfig<
 > = SectionRows<TData, TKey> & {
   /** Every field's value in an empty form: the create form's, and the edit form's until a row's values replace them */
   createDefaults: TFormData & DefaultValues<TFormData>;
-  /** Resolves to the created entity; its id is handed to `onCreateSuccess`. */
+  /** Resolves to the created entity, which is handed to `onCreateSuccess`. */
   createFn: (data: TFormData) => Promise<TCreated>;
   /** Its rows, handed over: its query stays idle */
   data?: TData[];
@@ -182,7 +182,7 @@ export function useRulesetSection<
 
     /**
      * The dialogs' wiring: `<CreateDialog {...createDialogProps} title="…">`, `<EditDialog {...editDialogProps} …>`,
-     * `<DeleteDialog {...deleteDialogProps} …>`. A section that sends something else than its form's values (a
+     * `<EntityDeleteDialog {...deleteDialogProps} …>`. A section that sends something else than its form's values (a
      * requirement's level) overrides `onSubmit` after the spread.
      */
     createDialogProps: {

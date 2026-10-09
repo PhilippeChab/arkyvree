@@ -1,7 +1,7 @@
-import { Box, DialogContent, DialogContentText, DialogTitle, IconButton, Stack, Tooltip } from "@mui/material";
+import { DialogContent, DialogContentText, DialogTitle, Stack } from "@mui/material";
 import { useFieldArray, type UseFormReturn } from "react-hook-form";
 
-import { AddButton, DialogFooter, FormDialog, FormTextField } from "@/client/src/components/common/index.ts";
+import { AddButton, DialogFooter, FormDialog, FormTextField, RowAction } from "@/client/src/components/common/index.ts";
 import { DeleteIcon } from "@/client/src/components/icons/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { NAME_RULES } from "@/client/src/lib/validation.ts";
@@ -82,18 +82,16 @@ export function BulkVariantsDialog({
                       minRows={1}
                     />
                   </Stack>
-                  <Tooltip title="Remove Variant">
-                    <Box component="span" sx={{ pt: 0.5 }}>
-                      <IconButton
-                        size="small"
-                        aria-label="Remove Variant"
-                        onClick={() => remove(index)}
-                        disabled={fields.length === 1 || isLoading}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Box>
-                  </Tooltip>
+                  {/* Level with its name field */}
+                  <Stack sx={{ pt: 0.5 }}>
+                    <RowAction
+                      icon={DeleteIcon}
+                      label="Remove Variant"
+                      intent="destructive"
+                      onClick={() => remove(index)}
+                      disabled={fields.length === 1 || isLoading}
+                    />
+                  </Stack>
                 </Stack>
               ))}
             </Stack>

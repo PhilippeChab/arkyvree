@@ -1,5 +1,5 @@
 import { Table, TableBody, TableCell, TableRow } from "@mui/material";
-import { type ElementType, type ReactNode, useMemo, useRef } from "react";
+import { type ElementType, type ReactNode } from "react";
 
 import {
   BlankState,
@@ -16,19 +16,15 @@ import {
   TableSkeleton,
 } from "@/client/src/components/common/index.ts";
 import { CopyIcon, DeleteIcon, EditIcon, LibraryAddIcon } from "@/client/src/components/icons/index.ts";
-import { useIsMobile } from "@/client/src/hooks/index.ts";
+import { useRowPrefetch } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { fadeInUpSx } from "@/client/src/theme/animations.ts";
 
 import { TABLE_CONTAINER_LOADING_SX, TABLE_CONTAINER_SX, TABLE_SX } from "./tableStyles.ts";
 
-interface Column extends TableColumn {
-  hideOnMobile?: boolean;
-}
-
 interface RulesetSectionTableProps<T extends { id: string }> {
-  canDelete?: boolean;
+  /** Its rows' actions, for who may edit the ruleset's entities: each shows when its handler is given */
   canEdit?: boolean;
-  columns: Column[];
+  columns: TableColumn[];
   data?: T[];
   emptyDescription: string;
   emptyIcon: ElementType;
@@ -41,6 +37,7 @@ interface RulesetSectionTableProps<T extends { id: string }> {
   onDuplicate?: (item: T) => void;
   onEdit?: (item: T) => void;
   onRowClick?: (item: T) => void;
+  /** Warms the page a row opens (`useRowPrefetch`): 150ms into a hover, at once on focus */
   onRowMouseEnter?: (item: T) => void;
   renderCell: (item: T, columnKey: string) => ReactNode;
   /** A row's delete can be undone from Local Changes (`useRestorableDelete`): "Delete", not "Delete Permanently". */
@@ -52,7 +49,7 @@ interface RulesetSectionTableProps<T extends { id: string }> {
 }
 
 /** The column a row's actions take, at its end */
-const ACTIONS_COLUMN: Column = { align: "right", key: "actions", label: "Actions" };
+const ACTIONS_COLUMN: TableColumn = { align: "right", key: "actions", label: "Actions" };
 
 export function RulesetSectionTable<T extends { id: string }>({
   data,
@@ -61,7 +58,6 @@ export function RulesetSectionTable<T extends { id: string }>({
   what,
   columns,
   canEdit = false,
-  canDelete = false,
   onEdit,
   onDelete,
   onDuplicate,
@@ -75,17 +71,11 @@ export function RulesetSectionTable<T extends { id: string }>({
   emptyDescription,
   search,
 }: RulesetSectionTableProps<T>) {
-  const hoverTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const isMobile = useIsMobile();
-  const visibleColumns = useMemo(
-    () => (isMobile ? columns.filter((c) => !c.hideOnMobile) : columns),
-    [columns, isMobile],
-  );
+  const prefetchProps = useRowPrefetch(onRowMouseEnter);
 
-  const showInlineActions =
-    (canEdit && onEdit) || (canDelete && onDelete) || (canEdit && onDuplicate) || (canEdit && onCreateVariants);
+  const showInlineActions = canEdit && !!(onEdit || onDelete || onDuplicate || onCreateVariants);
 
-  const headerColumns = showInlineActions ? [...visibleColumns, ACTIONS_COLUMN] : visibleColumns;
+  const headerColumns = showInlineActions ? [...columns, ACTIONS_COLUMN] : columns;
 
   if (isLoading) return <TableSkeleton columns={headerColumns} sx={TABLE_CONTAINER_LOADING_SX} tableSx={TABLE_SX} />;
 
@@ -108,19 +98,10 @@ export function RulesetSectionTable<T extends { id: string }>({
             <TableRow
               key={item.id}
               {...(onRowClick && clickableProps(() => onRowClick(item)))}
-              onMouseEnter={
-                onRowMouseEnter
-                  ? () => {
-                      clearTimeout(hoverTimer.current);
-                      hoverTimer.current = setTimeout(() => onRowMouseEnter(item), 150);
-                    }
-                  : undefined
-              }
-              onMouseLeave={onRowMouseEnter ? () => clearTimeout(hoverTimer.current) : undefined}
-              onFocus={onRowMouseEnter ? () => onRowMouseEnter(item) : undefined}
+              {...prefetchProps(item)}
               sx={[!!onRowClick && CLICKABLE_ROW_SX, ROW_ACTIONS_HOVER_SX, fadeInUpSx(index)]}
             >
-              {visibleColumns.map((column) => (
+              {columns.map((column) => (
                 <TableCell key={column.key}>{renderCell(item, column.key)}</TableCell>
               ))}
               {showInlineActions && (
@@ -133,7 +114,7 @@ export function RulesetSectionTable<T extends { id: string }>({
                     {canEdit && onCreateVariants && (
                       <RowAction icon={LibraryAddIcon} label="Create Variants" onClick={() => onCreateVariants(item)} />
                     )}
-                    {canDelete && onDelete && (
+                    {canEdit && onDelete && (
                       <RowAction
                         icon={DeleteIcon}
                         label={restorable ? "Delete" : "Delete Permanently"}

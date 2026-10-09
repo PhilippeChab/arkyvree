@@ -6,8 +6,8 @@
 import { infiniteQueryOptions, type QueryClient, queryOptions, skipToken } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 
-import { nextPage } from "@/client/src/lib/pageItems.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
+import type { CustomizationSection } from "@/client/src/pages/rulesets/customization/sections/index.ts";
 import { powersQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
@@ -19,6 +19,7 @@ export type ClassLevelRow = InferResponseType<
   200
 >[number];
 
+/** A class page's tab: its own, then those that customize it (`CUSTOMIZATION_TABS`) */
 export type ClassSection =
   | "levels"
   | "skills"
@@ -26,9 +27,7 @@ export type ClassSection =
   | "spells-known"
   | "spell-list"
   | "spells-per-day"
-  | "properties"
-  | "modifiers"
-  | "requirements";
+  | CustomizationSection;
 
 function classParam(rulesetId: string, classId: string) {
   return { param: { id: rulesetId, classId } };
@@ -117,22 +116,6 @@ export function prefetchClassSection(
     case "requirements":
       return;
   }
-}
-
-/** The ruleset's skills the Skills tab adds to a class, searched on the server and paged in as its listbox scrolls. */
-export function skillOptionsQuery(rulesetId: string, search: string) {
-  return infiniteQueryOptions({
-    queryKey: QUERY_KEYS.rulesets.sectionSearch(rulesetId, "skills", search),
-    queryFn: ({ pageParam }) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].skills.$get({
-          param: { id: rulesetId },
-          query: { limit: "20", page: pageParam.toString(), search: search || undefined },
-        }),
-      ),
-    initialPageParam: 1,
-    getNextPageParam: nextPage,
-  });
 }
 
 /**

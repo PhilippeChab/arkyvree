@@ -117,6 +117,41 @@ describe("frontend rules", () => {
     ]);
   });
 
+  test("a dialog with a DialogTitle is named by it: aria-labelledby only names one without", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/titled.tsx": lines(
+            "export const t = (",
+            '  <Modal open={open} aria-labelledby="license-title">',
+            '    <DialogTitle id="license-title">License</DialogTitle>',
+            "  </Modal>",
+            ");",
+          ),
+          "client/src/nested.tsx": lines(
+            "export const n = (",
+            '  <FormDialog open={open} aria-labelledby="delete-title">',
+            "    <form noValidate>",
+            '      <DialogTitle id="delete-title">Delete</DialogTitle>',
+            "    </form>",
+            "  </FormDialog>",
+            ");",
+          ),
+          "client/src/heading.tsx": lines(
+            "export const h = (",
+            '  <Modal open={open} aria-labelledby="step-title">',
+            '    <Typography id="step-title" component="h2">Welcome</Typography>',
+            "  </Modal>",
+            ");",
+          ),
+          "client/src/plain.tsx":
+            "export const p = (\n  <Modal open={open}>\n    <DialogTitle>License</DialogTitle>\n  </Modal>\n);\n",
+        },
+        ["dialog-conventions"],
+      ),
+    ).toEqual(["dialog-conventions client/src/nested.tsx", "dialog-conventions client/src/titled.tsx"]);
+  });
+
   test("a query key starts from lib/queryKeys.ts", async () => {
     expect(
       await lintRepo(
@@ -371,6 +406,55 @@ describe("frontend rules", () => {
         ["load-errors"],
       ),
     ).toEqual(["load-errors client/src/chips.tsx", "load-errors client/src/render.tsx"]);
+  });
+
+  test("a select whose options failed to load says so under its field, its loadError", async () => {
+    const select = '<SelectField control={control} name="sourceItemId" label="Template" options={options} />';
+    expect(
+      await lintRepo(
+        {
+          "client/src/beside.tsx": lines(
+            "export const b = (",
+            "  <>",
+            `    ${select}`,
+            '    {!!error && <LoadError what="Templates" error={error} />}',
+            "  </>",
+            ");",
+          ),
+          "client/src/own.tsx": `export const o = <SelectField label="Template" options={options} loadError={error} />;\n`,
+          "client/src/list.tsx": lines(
+            "export const l = (",
+            "  <Stack>",
+            '    <LoadError what="Feats" error={error} />',
+            "    <Table />",
+            "  </Stack>",
+            ");",
+          ),
+        },
+        ["load-errors"],
+      ),
+    ).toEqual(["load-errors client/src/beside.tsx"]);
+  });
+
+  test("a table's row warms its page through useRowPrefetch, never a handler of its own", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/hover.tsx": "export const h = <TableRow onMouseEnter={() => prefetch(row)} />;\n",
+          "client/src/focus.tsx": "export const f = <TableRow onFocus={() => prefetch(row)} />;\n",
+          "client/src/hook.tsx": "export const k = <TableRow {...prefetchProps(row)} />;\n",
+          "client/src/card.tsx": "export const c = <ListCard onMouseEnter={prefetch} onFocus={prefetch} />;\n",
+          "client/src/cold.tsx": "export const o = <RulesetSectionTable what={what} onRowClick={open} />;\n",
+          "client/src/warm.tsx":
+            "export const w = <RulesetSectionTable what={what} onRowClick={open} onRowMouseEnter={prefetch} />;\n",
+        },
+        ["row-prefetch"],
+      ),
+    ).toEqual([
+      "row-prefetch client/src/cold.tsx",
+      "row-prefetch client/src/focus.tsx",
+      "row-prefetch client/src/hover.tsx",
+    ]);
   });
 
   test("a component destructures its props in its signature, typed by one named type", async () => {

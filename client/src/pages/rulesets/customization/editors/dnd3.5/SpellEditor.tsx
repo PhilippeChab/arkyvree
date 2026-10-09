@@ -10,11 +10,10 @@ import {
   SpellFormFields,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { byName, EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
+import type { EditorProps } from "@/client/src/pages/rulesets/customization/editors/renderEditor.tsx";
 import type { Power } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { useEntitySave, useRulesetSaves } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-
-import type { EditorProps } from "./renderEditor.tsx";
 
 /** The spell's aptitudes with their levels, in the form's (name) order. */
 function linkedAptitudes(power: Power) {

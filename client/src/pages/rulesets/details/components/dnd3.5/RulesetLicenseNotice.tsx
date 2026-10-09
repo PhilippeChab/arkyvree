@@ -9,10 +9,11 @@ import {
   SubsectionTitle,
 } from "@/client/src/components/common/index.ts";
 
-interface RulesetLicenseNoticeProps {
+export interface RulesetLicenseNoticeProps {
   name: string;
 }
 
+/** A 3.5 system ruleset's License & Attribution, under its header: the Open Game License its SRD content is under. */
 export function RulesetLicenseNotice({ name }: RulesetLicenseNoticeProps) {
   const [open, setOpen] = useState(false);
 
@@ -23,8 +24,8 @@ export function RulesetLicenseNotice({ name }: RulesetLicenseNoticeProps) {
           License & Attribution
         </LinkButton>
       </Stack>
-      <Modal open={open} onClose={() => setOpen(false)} aria-labelledby="ruleset-license-title">
-        <DialogTitle id="ruleset-license-title">License & Attribution</DialogTitle>
+      <Modal open={open} onClose={() => setOpen(false)}>
+        <DialogTitle>License & Attribution</DialogTitle>
         <DialogContent dividers>
           <Stack spacing={3}>
             <Stack spacing={1}>

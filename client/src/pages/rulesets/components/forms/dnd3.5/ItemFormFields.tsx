@@ -1,22 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { type UseFormReturn } from "react-hook-form";
 
-import {
-  DescriptionField,
-  FormTextField,
-  LoadError,
-  NameField,
-  SelectField,
-} from "@/client/src/components/common/index.ts";
+import { DescriptionField, FormTextField, NameField, SelectField } from "@/client/src/components/common/index.ts";
 import { DECIMAL_RULES, NAME_RULES } from "@/client/src/lib/validation.ts";
+import { itemTemplatesQuery } from "@/client/src/pages/rulesets/optionQueries.ts";
 import { LOCATION_OPTIONS } from "@/shared/enums.ts";
 import { isTemplateItemType, type TemplateItemType } from "@/shared/itemTemplates.ts";
 
-import { ITEM_TYPE_OPTIONS, type ItemFormInternal } from "./itemForm.ts";
-import { itemTemplatesQuery } from "./itemFormQueries.ts";
+import { ITEM_TYPE_OPTIONS, type ItemFormData } from "./itemForm.ts";
 
 interface ItemFormFieldsProps {
-  form: UseFormReturn<ItemFormInternal>;
+  form: UseFormReturn<ItemFormData>;
   /** Keeps the type, slot and template as they are (a duplicate copies them from its source). */
   lockType?: boolean;
   rulesetId: string;
@@ -24,7 +18,7 @@ interface ItemFormFieldsProps {
 
 interface TemplateSelectorProps {
   disabled?: boolean;
-  form: UseFormReturn<ItemFormInternal>;
+  form: UseFormReturn<ItemFormData>;
   rulesetId: string;
   type: TemplateItemType;
 }
@@ -34,17 +28,15 @@ function TemplateSelector({ form, rulesetId, type, disabled }: TemplateSelectorP
 
   // Empty until the templates load (a value with no option is out of range); one this ruleset no longer has shows as "None".
   return (
-    <>
-      <SelectField
-        control={form.control}
-        name="sourceItemId"
-        label={`${type} Template`}
-        options={templates?.map((t) => ({ value: t.id, label: t.name })) ?? []}
-        emptyLabel="None"
-        disabled={isLoading || disabled}
-      />
-      {!!error && <LoadError what="Templates" error={error} />}
-    </>
+    <SelectField
+      control={form.control}
+      name="sourceItemId"
+      label={`${type} Template`}
+      options={templates?.map((t) => ({ value: t.id, label: t.name })) ?? []}
+      emptyLabel="None"
+      disabled={isLoading || disabled}
+      loadError={error}
+    />
   );
 }
 

@@ -2,7 +2,7 @@
 
 import type { ClassFormData } from "./ClassFormFields.tsx";
 import type { ClassLevelFormData } from "./classLevelForm.ts";
-import type { ItemFormInternal } from "./itemForm.ts";
+import type { ItemFormData } from "./itemForm.ts";
 import type { SkillFormData } from "./SkillFormFields.tsx";
 import type { SpellFormData } from "./spellForm.ts";
 
@@ -10,7 +10,7 @@ export const EMPTY_CLASS: ClassFormData = { name: "", description: "", hd: 8 };
 
 export const EMPTY_CLASS_LEVEL: ClassLevelFormData = { level: 1, bab: 0, skills: 1, saves: [], feats: [] };
 
-export const EMPTY_ITEM: ItemFormInternal = {
+export const EMPTY_ITEM: ItemFormData = {
   name: "",
   description: "",
   costGp: "",

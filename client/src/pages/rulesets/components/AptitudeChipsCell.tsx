@@ -2,6 +2,8 @@ import { Stack } from "@mui/material";
 
 import { EmptyValue, ValueChip } from "@/client/src/components/common/index.ts";
 
+import { byName } from "./useAptitudeLookup.ts";
+
 interface AptitudeChipsCellProps {
   links: AptitudeLink[] | null | undefined;
 }
@@ -12,19 +14,15 @@ interface AptitudeLink {
   aptitudesInRule?: { name: string } | null;
 }
 
-/** Two links by their lists' names, as the books list a spell's classes. */
-function byListName(a: AptitudeLink, b: AptitudeLink) {
-  return (a.aptitudesInRule?.name ?? "").localeCompare(b.aptitudesInRule?.name ?? "");
-}
-
-/** A section table's aptitudes column: a chip per aptitude, by name, or a dash. */
+/** A section table's aptitudes column: a chip per aptitude, by name, as the books list a spell's classes, or a dash. */
 export function AptitudeChipsCell({ links }: AptitudeChipsCellProps) {
   if (!links?.length) return <EmptyValue />;
 
+  const aptitudes = links.map((link) => ({ id: link.aptitudeId, name: link.aptitudesInRule?.name || "Unknown" }));
   return (
     <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
-      {links.toSorted(byListName).map((link) => (
-        <ValueChip key={link.aptitudeId} label={link.aptitudesInRule?.name || "Unknown"} />
+      {aptitudes.toSorted(byName).map((aptitude) => (
+        <ValueChip key={aptitude.id} label={aptitude.name} />
       ))}
     </Stack>
   );

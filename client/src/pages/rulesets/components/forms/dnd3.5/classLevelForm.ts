@@ -12,6 +12,8 @@ type LevelJson = InferRequestType<
   (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"][":levelId"]["$put"]
 >["json"];
 
+type LevelSave = NonNullable<LevelJson["saves"]>[number];
+
 /**
  * A class level's form, its create's body: its number, base attack bonus and skill points, which its create dialog
  * sets, and its saves and granted feats (`ClassLevelFields`), which its page edits too.
@@ -20,8 +22,6 @@ export type ClassLevelFormData = InferRequestType<
   (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"]["$post"]
 >["json"];
 export type LevelFeat = Pick<NonNullable<LevelJson["feats"]>[number], "featId" | "aptitudeId">;
-
-export type LevelSave = NonNullable<LevelJson["saves"]>[number];
 
 /**
  * Every ruleset save with its base at this level, 0 when unset: the shape the

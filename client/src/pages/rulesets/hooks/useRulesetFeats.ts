@@ -1,7 +1,7 @@
 import { keepPreviousData } from "@tanstack/react-query";
 
 import { useListboxQuery } from "@/client/src/hooks/index.ts";
-import { rulesetFeatsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
+import { featOptionsQuery } from "@/client/src/pages/rulesets/optionQueries.ts";
 
 /**
  * Feats of a ruleset with their aptitudes, for pickers: a ruleset has hundreds, so they are
@@ -9,5 +9,5 @@ import { rulesetFeatsQuery } from "@/client/src/pages/rulesets/details/sectionQu
  * The previous results stay listed while the next search loads.
  */
 export function useRulesetFeats(rulesetId: string, search = "", enabled = true) {
-  return useListboxQuery({ ...rulesetFeatsQuery(rulesetId, search), placeholderData: keepPreviousData, enabled });
+  return useListboxQuery({ ...featOptionsQuery(rulesetId, search), placeholderData: keepPreviousData, enabled });
 }

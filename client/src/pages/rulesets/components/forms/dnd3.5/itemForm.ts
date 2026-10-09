@@ -4,9 +4,11 @@ import { formatDecimal } from "@/client/src/lib/formatNumeric.ts";
 import type { Item } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
-export type ItemFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["items"]["$post"]>["json"];
+/** An item's request's body, which `toItemPayload` makes of its form. */
+type ItemBody = InferRequestType<(typeof rpc.api.rulesets)[":id"]["items"]["$post"]>["json"];
 
-export type ItemFormInternal = Omit<ItemFormData, "weight" | "costGp"> & {
+/** An item's form: its body, its cost and its weight as their fields hold them, text (`toItemPayload` reads them). */
+export type ItemFormData = Omit<ItemBody, "weight" | "costGp"> & {
   costGp?: string;
   weight?: string;
 };
@@ -32,7 +34,7 @@ function parseNumericField(value: string | undefined): number | undefined {
 /** The form values of an existing item: the editor's, or a duplicate's starting point. */
 export function toItemForm(
   item: Pick<Item, "name" | "description" | "costGp" | "weight" | "type" | "slot" | "isTemplate" | "sourceItemId">,
-): ItemFormInternal {
+): ItemFormData {
   return {
     name: item.name,
     description: item.description ?? "",
@@ -45,7 +47,7 @@ export function toItemForm(
   };
 }
 
-export function toItemPayload(data: ItemFormInternal): ItemFormData {
+export function toItemPayload(data: ItemFormData): ItemBody {
   const { sourceItemId, ...rest } = data;
   return {
     ...rest,

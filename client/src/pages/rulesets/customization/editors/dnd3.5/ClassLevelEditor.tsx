@@ -15,11 +15,10 @@ import {
   levelFeatLabel,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
+import type { EditorProps } from "@/client/src/pages/rulesets/customization/editors/renderEditor.tsx";
 import type { ClassLevel } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { useEntitySave, useRulesetSaves } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-
-import type { EditorProps } from "./renderEditor.tsx";
 
 type LevelFeatRow = ClassLevel["feats"][number];
 
@@ -74,7 +73,7 @@ export function ClassLevelEditor({
           param: { id: rulesetId, classId: level.klassId, levelId: entityId },
           json: {
             saves: allLevelSaves(rulesetSaves, data.saves ?? []),
-            feats: (data.feats ?? []).map((feat) => ({ ...feat, free: true })),
+            feats: data.feats ?? [],
           },
         }),
       ),

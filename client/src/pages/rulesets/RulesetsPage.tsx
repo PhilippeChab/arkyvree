@@ -1,4 +1,4 @@
-import { Container, IconButton, Stack, Typography } from "@mui/material";
+import { Container, Stack } from "@mui/material";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
@@ -15,7 +15,7 @@ import {
   type SortOption,
   UPDATED_SORTS,
 } from "@/client/src/components/common/index.ts";
-import { RulesetIcon, StarBorderIcon, StarIcon } from "@/client/src/components/icons/index.ts";
+import { RulesetIcon } from "@/client/src/components/icons/index.ts";
 import { useListPageQuery, useListParams, usePageTitle } from "@/client/src/hooks/index.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import {
@@ -25,9 +25,8 @@ import {
   rulesetListQuery,
 } from "@/client/src/lib/queries.ts";
 
-import { RulesetFactChips } from "./components/index.ts";
+import { RulesetFactChips, RulesetStarButton } from "./components/index.ts";
 import { prefetchSection } from "./details/sectionQueries.ts";
-import { useToggleRulesetStar } from "./hooks/index.ts";
 
 type FilterScope = (typeof SCOPES)[number];
 
@@ -62,7 +61,6 @@ export default function RulesetsPage() {
   usePageTitle("Rulesets");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const toggleStar = useToggleRulesetStar();
   const { searchParams, updateSearchParams, search, orderBy, orderDir, searchBarProps } = useListParams(
     ["createdAt", "updatedAt"],
     RULESET_LIST_DEFAULTS,
@@ -110,10 +108,6 @@ export default function RulesetsPage() {
                     void queryClient.prefetchQuery(rulesetDetailQuery(ruleset.id));
                     void prefetchSection(queryClient, ruleset.id, "races", ruleset.kind === "extension");
                   };
-                  // Its fork's chip opens the ruleset it was forked from
-                  const prefetchParent = () => {
-                    if (ruleset.rulesetId) void queryClient.prefetchQuery(rulesetDetailQuery(ruleset.rulesetId));
-                  };
                   return (
                     <ListCard
                       key={ruleset.id}
@@ -126,33 +120,8 @@ export default function RulesetsPage() {
                       avatar={<RulesetIcon sx={{ fontSize: 18 }} />}
                       title={ruleset.name}
                       description={ruleset.description}
-                      corner={
-                        ruleset.isStarrable && (
-                          <Stack direction="row" spacing={0.25} sx={{ alignItems: "center" }}>
-                            {ruleset.starCount > 0 && (
-                              <Typography
-                                variant="caption"
-                                sx={{ color: "warning.main", fontWeight: 600, lineHeight: 1 }}
-                              >
-                                {ruleset.starCount}
-                              </Typography>
-                            )}
-                            <IconButton
-                              size="small"
-                              aria-label="Star Ruleset"
-                              aria-pressed={ruleset.isStarred}
-                              onClick={() => toggleStar(ruleset.id, ruleset.isStarred)}
-                              sx={{
-                                color: ruleset.isStarred ? "warning.main" : "action.disabled",
-                                "&:hover": { color: "warning.main" },
-                              }}
-                            >
-                              {ruleset.isStarred ? <StarIcon /> : <StarBorderIcon />}
-                            </IconButton>
-                          </Stack>
-                        )
-                      }
-                      chips={<RulesetFactChips ruleset={ruleset} onPrefetchParent={prefetchParent} />}
+                      corner={ruleset.isStarrable && <RulesetStarButton ruleset={ruleset} placement="card" />}
+                      chips={<RulesetFactChips ruleset={ruleset} />}
                     />
                   );
                 })}

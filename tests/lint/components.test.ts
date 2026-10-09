@@ -678,6 +678,25 @@ describe("component rules", () => {
     ]);
   });
 
+  test("a ruleset entity page's error goes back where the page was opened from: entityPageBack's", async () => {
+    const error = (label: string) =>
+      `export const e = <EntityPageError message={message} backLabel=${label} backTo={back.to} />;\n`;
+    expect(
+      await lintRepo(
+        {
+          "client/src/pages/rulesets/Back.tsx": error("{back.label}"),
+          "client/src/pages/rulesets/Written.tsx": error('"Back to Ruleset"'),
+          "client/src/pages/rulesets/Template.tsx": error("{`Back to ${what}`}"),
+          "client/src/pages/campaigns/Page.tsx": 'export const p = <PageError backLabel="Back to Campaigns" />;\n',
+        },
+        ["entity-pages"],
+      ),
+    ).toEqual([
+      "entity-pages client/src/pages/rulesets/Template.tsx",
+      "entity-pages client/src/pages/rulesets/Written.tsx",
+    ]);
+  });
+
   test("a target path's breadcrumbs and a modifier's cells are drawn by their one module each", async () => {
     const crumbs = lines(
       "export const c = segments.map((segment, index) => (",

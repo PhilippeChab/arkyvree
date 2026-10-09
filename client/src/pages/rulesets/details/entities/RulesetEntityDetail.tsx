@@ -170,11 +170,11 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
     <EntityDetailLayout
       entityName={entity?.name}
       rulesetName={ruleset?.name}
+      what={label}
       backTo={back.to}
       deletion={
         editing && canEdit
           ? {
-              what: label,
               rulesetId,
               deleteFn: editing.removeFn,
               listKeys: [QUERY_KEYS.rulesets.section(rulesetId, section)],

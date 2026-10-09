@@ -1,7 +1,6 @@
 import { Stack, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
-import { useCallback } from "react";
 
 import {
   CreateDialog,
@@ -72,12 +71,9 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
     openEntity(`skills/${skill.id}`);
   };
 
-  const handleRowMouseEnter = useCallback(
-    (skill: Skill) => {
-      void queryClient.prefetchQuery(skillQuery(ruleset.id, skill.id));
-    },
-    [queryClient, ruleset.id],
-  );
+  const handleRowMouseEnter = (skill: Skill) => {
+    void queryClient.prefetchQuery(skillQuery(ruleset.id, skill.id));
+  };
 
   const renderCell = (skill: Skill, columnKey: string) => {
     switch (columnKey) {

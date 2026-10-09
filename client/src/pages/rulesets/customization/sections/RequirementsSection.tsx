@@ -2,7 +2,7 @@ import { Alert, Card, CardContent, Stack, Typography } from "@mui/material";
 import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
 import { TreeItem } from "@mui/x-tree-view/TreeItem";
 import { type InferResponseType, parseResponse } from "hono/client";
-import { type ReactNode, useCallback, useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 
 import {
   AddButton,
@@ -32,14 +32,17 @@ import { formatDate } from "@/client/src/lib/formatDate.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import { EntityDeleteDialog } from "@/client/src/pages/rulesets/components/index.ts";
 import { requirementsQuery } from "@/client/src/pages/rulesets/customization/customizationSectionQueries.ts";
+import { followCopiesOf } from "@/client/src/pages/rulesets/followCopies.ts";
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import type { CustomizationOwnerType } from "@/shared/customization/entities.ts";
 import { formatOperator } from "@/shared/customization/operators.ts";
-import RequirementTree, { type RequirementNode } from "@/shared/customization/RequirementTree.ts";
+import RequirementTree, {
+  getNextLevel,
+  isChaining,
+  type RequirementNode,
+} from "@/shared/customization/RequirementTree.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
-
-import { useCopyFollow } from "./useCopyFollow.ts";
 
 type Requirement = RequirementsArray[number];
 type RequirementsArray = InferResponseType<
@@ -83,7 +86,7 @@ export function RequirementsSection({
   onEntityIdChange,
   restorable,
 }: RequirementsSectionProps) {
-  const { tag, followCopies } = useCopyFollow(entityId, onEntityIdChange);
+  const { tag, followCopies } = followCopiesOf(entityId, onEntityIdChange);
   const entityParam = { id: ruleset.id, entityType: getUrlSegment(entityType), entityId };
 
   // Parent level for contextual "Add Child" (null = root)
@@ -91,10 +94,6 @@ export function RequirementsSection({
 
   const [createRequirementType, setCreateRequirementType] = useState<RequirementType>("condition");
   const [editRequirementType, setEditRequirementType] = useState<RequirementType>("condition");
-
-  // Helper function to determine if a requirement is a chaining node
-  const isChaining = (requirement: Requirement) =>
-    requirement.chainingOperator && (!requirement.target || !requirement.operator || !requirement.value);
 
   const {
     data: requirements,
@@ -147,7 +146,6 @@ export function RequirementsSection({
   });
 
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
-  const canDelete = canEdit;
   const isPublished = ruleset.status === "Published";
 
   /**
@@ -159,29 +157,6 @@ export function RequirementsSection({
     setCreateRequirementType("condition");
     handleCreate();
   };
-
-  const computeNextLevel = useCallback(
-    (parentLevel: string | null): string => {
-      if (!requirements) return "1";
-
-      if (parentLevel === null) {
-        const rootNumbers = requirements.map((r) => parseInt(r.level.split(".")[0])).filter((n) => !isNaN(n));
-        return String((rootNumbers.length > 0 ? Math.max(...rootNumbers) : 0) + 1);
-      }
-
-      const prefix = parentLevel + ".";
-      const childNumbers = requirements
-        .filter((r) => r.level.startsWith(prefix))
-        .map((r) => {
-          const rest = r.level.slice(prefix.length);
-          if (rest.includes(".")) return NaN;
-          return parseInt(rest);
-        })
-        .filter((n) => !isNaN(n));
-      return `${parentLevel}.${(childNumbers.length > 0 ? Math.max(...childNumbers) : 0) + 1}`;
-    },
-    [requirements],
-  );
 
   // The requirements' tree, and after it a requirement under a condition (which groups nothing), so it can be fixed
   const loadFailed = !!error && !requirements;
@@ -240,8 +215,7 @@ export function RequirementsSection({
   };
 
   const handleEditRequirement = (requirement: Requirement) => {
-    const requirementIsChaining = isChaining(requirement);
-    if (requirementIsChaining) handleEditChaining(requirement);
+    if (isChaining(requirement)) handleEditChaining(requirement);
     else handleEditCondition(requirement);
   };
 
@@ -330,7 +304,7 @@ export function RequirementsSection({
                         }}
                       />
                     )}
-                    {canDelete && (
+                    {canEdit && (
                       <RowAction
                         icon={DeleteIcon}
                         label={restorable ? "Delete" : "Delete Permanently"}
@@ -387,7 +361,14 @@ export function RequirementsSection({
         title="Create Requirement"
         onSubmit={(data) =>
           createMutation.mutate({
-            data: requirementPayload(createRequirementType, computeNextLevel(createParentLevel), data),
+            data: requirementPayload(
+              createRequirementType,
+              getNextLevel(
+                (requirements ?? []).map((requirement) => requirement.level),
+                createParentLevel,
+              ),
+              data,
+            ),
           })
         }
         maxWidth="md"

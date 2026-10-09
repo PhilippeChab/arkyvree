@@ -6,17 +6,16 @@ import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
   EMPTY_ITEM,
+  type ItemFormData,
   ItemFormFields,
-  type ItemFormInternal,
   toItemForm,
   toItemPayload,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
+import type { EditorProps } from "@/client/src/pages/rulesets/customization/editors/renderEditor.tsx";
 import type { Item } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { useEntitySave } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-
-import type { EditorProps } from "./renderEditor.tsx";
 
 export function ItemEditor({
   rulesetId,
@@ -29,7 +28,7 @@ export function ItemEditor({
   followCopy,
   refetchSaved,
 }: EditorProps<Item>) {
-  const form = useFormWith<ItemFormInternal>(EMPTY_ITEM);
+  const form = useFormWith<ItemFormData>(EMPTY_ITEM);
   const sync = useFormSync(form, toItemForm(item), { key: recordKey, adoptKey, updatedAt: item.updatedAt });
   const saveMutation = useEntitySave({
     rulesetId,
@@ -39,7 +38,7 @@ export function ItemEditor({
     storeSaved: refetchSaved,
     listKey: QUERY_KEYS.rulesets.section(rulesetId, "items"),
     label: "Item",
-    saveFn: (data: ItemFormInternal, updatedAt: string | undefined) =>
+    saveFn: (data: ItemFormData, updatedAt: string | undefined) =>
       parseResponse(
         rpc.api.rulesets[":id"].items[":itemId"].$put({
           param: { id: rulesetId, itemId: entityId },

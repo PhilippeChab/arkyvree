@@ -3,14 +3,12 @@ import {
   Collapse,
   DialogContent,
   DialogTitle,
-  IconButton,
   List,
   ListItem,
   ListItemButton,
   ListItemText,
   Paper,
   Stack,
-  Tooltip,
 } from "@mui/material";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
@@ -23,6 +21,7 @@ import {
   DiceSpinner,
   LoadError,
   Modal,
+  RowAction,
   StatusChip,
   SubsectionTitle,
 } from "@/client/src/components/common/index.ts";
@@ -142,32 +141,21 @@ export function LocalChangesDialog({ open, onClose, rulesetId, baseRules, canEdi
                           <Box sx={{ px: 2, py: 1, flex: 1 }}>{rowContent}</Box>
                         )}
                         {showRevert && (
-                          <Tooltip title="Revert to Parent Version">
-                            <span>
-                              <IconButton
-                                aria-label="Revert to Parent Version"
-                                size="small"
-                                onClick={() =>
-                                  revertMutation.mutate({
-                                    entityType: change.entityType,
-                                    sourceEntityId: change.sourceEntityId,
-                                  })
-                                }
-                                disabled={revertMutation.isPending}
-                                sx={{ flexShrink: 0 }}
-                              >
-                                <DiceSpinner
-                                  size="small"
-                                  loading={
-                                    revertMutation.isPending &&
-                                    revertMutation.variables.sourceEntityId === change.sourceEntityId
-                                  }
-                                >
-                                  <RestoreIcon fontSize="small" />
-                                </DiceSpinner>
-                              </IconButton>
-                            </span>
-                          </Tooltip>
+                          <RowAction
+                            icon={RestoreIcon}
+                            label="Revert to Parent Version"
+                            onClick={() =>
+                              revertMutation.mutate({
+                                entityType: change.entityType,
+                                sourceEntityId: change.sourceEntityId,
+                              })
+                            }
+                            disabled={revertMutation.isPending}
+                            pending={
+                              revertMutation.isPending &&
+                              revertMutation.variables.sourceEntityId === change.sourceEntityId
+                            }
+                          />
                         )}
                       </ListItem>
                     );

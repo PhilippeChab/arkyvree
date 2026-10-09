@@ -9,5 +9,4 @@ export {
   PublishRulesetDialog,
   UnsubscribeExtensionDialog,
 } from "./RulesetDialogs.tsx";
-export { RulesetLicenseNotice } from "./RulesetLicenseNotice.tsx";
 export { SubscribeExtensionDialog } from "./SubscribeExtensionDialog.tsx";

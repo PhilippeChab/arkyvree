@@ -4,7 +4,8 @@ import type { FieldError } from "react-hook-form";
 
 import { ValueChip } from "@/client/src/components/common/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
-import type { Aptitude, AptitudeScope } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
+import type { Aptitude } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
+import type { AptitudeScope } from "@/client/src/pages/rulesets/optionQueries.ts";
 
 import { useAptitudeOptions } from "./useAptitudeOptions.ts";
 

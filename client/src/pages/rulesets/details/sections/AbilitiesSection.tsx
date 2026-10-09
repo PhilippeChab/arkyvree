@@ -1,6 +1,5 @@
 import { Stack } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback } from "react";
 
 import { ListToolbar, LoadMoreButton, SectionContent } from "@/client/src/components/common/index.ts";
 import { AbilitiesIcon } from "@/client/src/components/icons/index.ts";
@@ -43,12 +42,9 @@ export function AbilitiesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
     openEntity(`abilities/${ability.id}`);
   };
 
-  const handleRowMouseEnter = useCallback(
-    (ability: RulesetAbility) => {
-      void queryClient.prefetchQuery(abilityQuery(ruleset.id, ability.id));
-    },
-    [queryClient, ruleset.id],
-  );
+  const handleRowMouseEnter = (ability: RulesetAbility) => {
+    void queryClient.prefetchQuery(abilityQuery(ruleset.id, ability.id));
+  };
 
   return (
     <SectionContent>

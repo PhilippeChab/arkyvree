@@ -1,4 +1,4 @@
-import { Button, Container, Divider, IconButton, Menu, Popover, Stack } from "@mui/material";
+import { Button, Container, Divider, Menu, Popover, Stack } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type MouseEvent, type ReactNode, useMemo, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
@@ -37,8 +37,6 @@ import {
   RacesIcon,
   SavesIcon,
   SkillsIcon,
-  StarBorderIcon,
-  StarIcon,
   UnarchiveIcon,
 } from "@/client/src/components/icons/index.ts";
 import { useAnchorMenu, usePageTitle, useSearchParam } from "@/client/src/hooks/index.ts";
@@ -47,7 +45,7 @@ import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
-import { RulesetFactChips } from "@/client/src/pages/rulesets/components/index.ts";
+import { RulesetFactChips, RulesetStarButton } from "@/client/src/pages/rulesets/components/index.ts";
 import { useRulesetOperations, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
 
@@ -58,7 +56,6 @@ import {
   LocalChangesDialog,
   PublishRulesetDialog,
   RulesetContributorsDialog,
-  RulesetLicenseNotice,
   SubscribeExtensionDialog,
   UnsubscribeExtensionDialog,
 } from "./components/index.ts";
@@ -90,10 +87,6 @@ export default function RulesetDetailsPage() {
   );
 
   const queryClient = useQueryClient();
-  // Warm the parent ruleset while the pointer is on the "Forked from" chip.
-  const prefetchParent = () => {
-    if (ruleset?.rulesetId) void queryClient.prefetchQuery(rulesetDetailQuery(ruleset.rulesetId));
-  };
 
   const {
     editDialog,
@@ -122,7 +115,6 @@ export default function RulesetDetailsPage() {
     confirmFork,
     confirmSubscribe,
     confirmUnsubscribe,
-    toggleStar,
   } = useRulesetOperations();
 
   const isExtension = !!ruleset && ruleset.kind === "extension";
@@ -207,6 +199,7 @@ export default function RulesetDetailsPage() {
   }
 
   const isActive = ruleset.status !== "Archived";
+  const { LicenseNotice } = getSections(ruleset.baseRules);
   // A user's fork that subscribes to none can be an extension: what its edit and its publish offer
   const canBeExtension = !!ruleset.rulesetId && ruleset.userId !== null && ruleset.extensionRulesetIds.length === 0;
   // What the session may do here: the header's menu, whose button shows only when it holds something
@@ -293,29 +286,12 @@ export default function RulesetDetailsPage() {
         <Stack spacing={4}>
           <DetailPageHeader
             title={ruleset.name}
-            titleAdornment={
-              ruleset.isStarrable && (
-                <IconButton
-                  onClick={() => toggleStar(ruleset.id, ruleset.isStarred)}
-                  size="small"
-                  aria-label="Star Ruleset"
-                  aria-pressed={ruleset.isStarred}
-                  sx={{
-                    flexShrink: 0,
-                    p: 0,
-                    color: ruleset.isStarred ? "warning.main" : "action.disabled",
-                    "&:hover": { color: "warning.main", bgcolor: "transparent" },
-                  }}
-                >
-                  {ruleset.isStarred ? <StarIcon fontSize="medium" /> : <StarBorderIcon fontSize="medium" />}
-                </IconButton>
-              )
-            }
+            titleAdornment={ruleset.isStarrable && <RulesetStarButton ruleset={ruleset} placement="title" />}
             backTo={"/rulesets"}
             onMenuOpen={menuItems.length > 0 ? menu.openMenu : undefined}
             chips={
               <>
-                <RulesetFactChips ruleset={ruleset} onPrefetchParent={prefetchParent} />
+                <RulesetFactChips ruleset={ruleset} />
                 {subscribedExtensions && subscribedExtensions.length > 0 && (
                   <>
                     {/* Opens the list of its extensions; orange while one of them has an update */}
@@ -364,9 +340,7 @@ export default function RulesetDetailsPage() {
             }
             description={ruleset.description}
           >
-            {ruleset.system && ruleset.baseRules === "Dungeons & Dragons: 3.5" && (
-              <RulesetLicenseNotice key={ruleset.id} name={ruleset.name} />
-            )}
+            {ruleset.system && LicenseNotice && <LicenseNotice key={ruleset.id} name={ruleset.name} />}
           </DetailPageHeader>
 
           {/* An archived ruleset's notice, and extensions that failed to load, above its tabs */}

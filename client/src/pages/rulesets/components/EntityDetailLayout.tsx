@@ -28,8 +28,6 @@ interface EntityDeletion {
    */
   restorable: boolean;
   rulesetId: string;
-  /** What it is, as its confirmation's title names it: "Language", "Class Level" */
-  what: string;
 }
 
 interface EntityDetailLayoutProps {
@@ -43,8 +41,10 @@ interface EntityDetailLayoutProps {
   entityName?: string;
   isLoading?: boolean;
   rulesetName?: string;
-  /** Replaces "<ruleset> Ruleset" under the title. */
+  /** Replaces "<what> in <ruleset>" under the title. */
   subtitle?: ReactNode;
+  /** What it is, as the header says it ("Language in Core SRD 3.5") and its delete names it: "Language", "Class Level" */
+  what: string;
 }
 
 type EntityPageErrorProps = ComponentProps<typeof PageError>;
@@ -57,6 +57,7 @@ export function EntityDetailLayout({
   entityName,
   rulesetName,
   subtitle,
+  what,
   backTo,
   backDisabled,
   deletion,
@@ -72,14 +73,14 @@ export function EntityDetailLayout({
 
   const deleteMutation = useMutation({
     mutationFn: (confirmed: EntityDeletion) => confirmed.deleteFn(),
-    onSuccess: (_, { rulesetId, listKeys, what, entityKey }) => {
+    onSuccess: (_, { rulesetId, listKeys, entityKey }) => {
       invalidateRulesetEdit(queryClient, rulesetId, listKeys);
       snackbar.success(`${capitalize(what.toLowerCase())} deleted`);
       navigate(backTo);
       // Gone: don't let Back render it from the cache
       queryClient.removeQueries({ queryKey: entityKey });
     },
-    onError: (error, { what }) => snackbar.error(error, `Failed to delete ${what.toLowerCase()}`),
+    onError: (error) => snackbar.error(error, `Failed to delete ${what.toLowerCase()}`),
   });
   // What it confirms follows the page's delete while there's one: its Local Changes may load meanwhile
   const confirming = deletion ?? confirm.target;
@@ -112,7 +113,7 @@ export function EntityDetailLayout({
         <Stack spacing={4}>
           <DetailPageHeader
             title={entityName}
-            description={subtitle || `${rulesetName} Ruleset`}
+            description={subtitle ?? `${what} in ${rulesetName}`}
             backTo={backDisabled ? undefined : backTo}
             onMenuOpen={deletion ? menu.openMenu : undefined}
           />
@@ -134,7 +135,7 @@ export function EntityDetailLayout({
         <EntityDeleteDialog
           open={confirm.open}
           onClose={confirm.close}
-          what={confirming.what}
+          what={what}
           restorable={confirming.restorable}
           changesError={confirming.changesError}
           onConfirm={() => deleteMutation.mutate(confirming)}

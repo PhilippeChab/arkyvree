@@ -1,7 +1,6 @@
 import { Box, Skeleton, Stack, Table, TableBody, TableCell, TableRow, ToggleButton, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
-import { useCallback } from "react";
 
 import {
   BlankState,
@@ -40,7 +39,12 @@ import {
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { featFamilyQuery, featsGroupedQuery, featsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
-import { useAptitudeFilter, useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import {
+  useAptitudeFilter,
+  useOpenEntity,
+  useRowPrefetch,
+  useRulesetSection,
+} from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { fadeInUpSx } from "@/client/src/theme/animations.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
@@ -61,7 +65,7 @@ interface GroupedRowProps {
   isExpanded: boolean;
   /** Opens a feat's page: the row's own, or one of its variants'. */
   onRowClick: (feat: Pick<Feat, "id">) => void;
-  /** Warms a feat's page, as it's pointed at. */
+  /** Warms a feat's page, as it's about to be opened (`useRowPrefetch`). */
   onRowMouseEnter: (feat: Pick<Feat, "id">) => void;
   onToggleFamily: (family: string) => void;
   row: GroupedFeatRow;
@@ -95,6 +99,7 @@ function GroupedRow({
   onRowMouseEnter,
 }: GroupedRowProps) {
   const variantQuery = useInfiniteQuery({ ...featFamilyQuery(rulesetId, family, childOnly), enabled: isExpanded });
+  const prefetchProps = useRowPrefetch(onRowMouseEnter);
 
   const variants = pageItems(variantQuery.data);
 
@@ -139,8 +144,7 @@ function GroupedRow({
               <TableRow
                 key={feat.id}
                 {...clickableProps(() => onRowClick(feat))}
-                onMouseEnter={() => onRowMouseEnter(feat)}
-                onFocus={() => onRowMouseEnter(feat)}
+                {...prefetchProps(feat)}
                 sx={[CLICKABLE_ROW_SX, isNew && fadeInUpSx(i - previousItemCount)]}
               >
                 <TableCell sx={{ pl: 6 }}>
@@ -171,8 +175,7 @@ function GroupedRow({
   return (
     <TableRow
       {...clickableProps(() => onRowClick({ id: row.representativeId }))}
-      onMouseEnter={() => onRowMouseEnter({ id: row.representativeId })}
-      onFocus={() => onRowMouseEnter({ id: row.representativeId })}
+      {...prefetchProps({ id: row.representativeId })}
       sx={[CLICKABLE_ROW_SX, fadeInUpSx(animationIndex, animationOffset)]}
     >
       <TableCell>
@@ -224,12 +227,9 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     openEntity(buildCustomizationPath("feats", feat.id));
   };
 
-  const handleRowMouseEnter = useCallback(
-    (feat: Pick<Feat, "id">) => {
-      void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, "feats", feat.id));
-    },
-    [queryClient, ruleset.id],
-  );
+  const handleRowMouseEnter = (feat: Pick<Feat, "id">) => {
+    void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, "feats", feat.id));
+  };
 
   const handleGroupedToggle = () => {
     setGroupedParam(grouped ? "false" : "true");

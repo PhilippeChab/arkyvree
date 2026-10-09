@@ -55,6 +55,7 @@
  *   there says `NO_DESCRIPTION`, never a sentence of its own.
  * - `entity-pages`: a ruleset entity page saves its details through `useEntitySave` (no `sync.saved` of its own under
  *   `pages/rulesets/`), and deletes through its `EntityDetailLayout`'s `deletion` (no `EntityDeleteDialog` beside it).
+ *   It goes back where it was opened from: its error's way back is `entityPageBack`'s, never a label written in place.
  * - `notification-messages`: a notification shows through `NotificationMessage` (`components/notifications`), its
  *   message, its details and its unread dot, wherever it shows; what an activity or a notification changed shows
  *   inline under it, in an `ActivityDetails`, never in a tooltip.
@@ -403,6 +404,16 @@ function createEntityPages(context) {
       const name = elementName(node);
       if (name === "EntityDetailLayout") layout = true;
       if (name === "EntityDeleteDialog") deleteDialogs.push(node);
+      const backLabel = node.openingElement.attributes.find(
+        (a) => a.type === "JSXAttribute" && a.name.name === "backLabel",
+      );
+      const label = backLabel?.value?.type === "JSXExpressionContainer" ? backLabel.value.expression : backLabel?.value;
+      if (name !== "EntityPageError" || !["Literal", "TemplateLiteral"].includes(label?.type)) return;
+      report(
+        backLabel,
+        "An entity page goes back where it was opened from: its error's way back is `entityPageBack(location.state, " +
+          "fallback)`'s, its `label` and its `to`.",
+      );
     },
     "Program:exit"() {
       if (!layout || file === ENTITY_PAGE_MODULES.layout) return;

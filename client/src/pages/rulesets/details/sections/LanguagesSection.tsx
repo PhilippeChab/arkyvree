@@ -1,7 +1,6 @@
 import { Stack } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
-import { useCallback } from "react";
 
 import {
   CreateDialog,
@@ -66,12 +65,9 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
     openEntity(`languages/${language.id}`);
   };
 
-  const handleRowMouseEnter = useCallback(
-    (language: Language) => {
-      void queryClient.prefetchQuery(languageQuery(ruleset.id, language.id));
-    },
-    [queryClient, ruleset.id],
-  );
+  const handleRowMouseEnter = (language: Language) => {
+    void queryClient.prefetchQuery(languageQuery(ruleset.id, language.id));
+  };
 
   const renderCell = (language: Language, columnKey: string) => {
     switch (columnKey) {
