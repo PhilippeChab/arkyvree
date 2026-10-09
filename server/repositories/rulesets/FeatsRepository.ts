@@ -112,10 +112,10 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
    */
   async findOptionGroupPage(
     db: Db,
-    where: { excludeFeatIds?: string[]; familyType: string; ids: string[]; search?: string },
+    where: { excludeIds?: string[]; familyType: string; ids: string[]; search?: string },
     pagination: { limit: number; page: number },
   ) {
-    const { ids, excludeFeatIds, familyType, search } = where;
+    const { ids, excludeIds, familyType, search } = where;
     const searchCondition = this.search(search, [featsInRules.name]);
     const { limit, offset } = this.paginate(pagination);
 
@@ -149,7 +149,7 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
           isNull(featsInRules.deletedAt),
           eq(featsInRules.selectable, true),
           searchCondition,
-          this.excludeIds(excludeFeatIds),
+          this.excludeIds(excludeIds),
         ]),
       )
       .groupBy(sql`coalesce(${prop.value}, ${featsInRules.id}::text)`)
@@ -172,10 +172,10 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
    */
   async findOptionPage(
     db: Db,
-    where: { excludeFeatIds?: string[]; family?: { type: string; value: string }; ids: string[]; search?: string },
+    where: { excludeIds?: string[]; family?: { type: string; value: string }; ids: string[]; search?: string },
     pagination: { limit: number; page: number },
   ) {
-    const { ids, excludeFeatIds, family, search } = where;
+    const { ids, excludeIds, family, search } = where;
     const searchCondition = this.search(search, [featsInRules.name]);
     const { limit, offset } = this.paginate(pagination);
 
@@ -210,7 +210,7 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
           eq(featsInRules.selectable, true),
           searchCondition,
           familyCondition,
-          this.excludeIds(excludeFeatIds),
+          this.excludeIds(excludeIds),
         ]),
       )
       .orderBy(...this.pageOrder(this.orderBy(featsInRules.name)))

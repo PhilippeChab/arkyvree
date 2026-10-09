@@ -46,10 +46,10 @@ class PowersRepository extends include(RulesetEntityRepository<typeof powersInRu
   /** A picker's page of these spells (a list's, as the ruleset composes it), by name. */
   async findOptionPage(
     db: Db,
-    where: { excludePowerIds?: string[]; ids: string[]; search?: string },
+    where: { excludeIds?: string[]; ids: string[]; search?: string },
     pagination: { limit: number; page: number },
   ) {
-    const { ids, excludePowerIds, search } = where;
+    const { ids, excludeIds, search } = where;
     const { limit, offset } = this.paginate(pagination);
     const rows = await db
       .select({
@@ -63,7 +63,7 @@ class PowersRepository extends include(RulesetEntityRepository<typeof powersInRu
           inArray(powersInRules.id, ids),
           isNull(powersInRules.deletedAt),
           this.search(search, [powersInRules.name]),
-          this.excludeIds(excludePowerIds),
+          this.excludeIds(excludeIds),
         ]),
       )
       .orderBy(...this.pageOrder(this.orderBy(powersInRules.name)))
