@@ -91,7 +91,7 @@ The character-creation wizard combines `published + campaignAccessible` (and his
 
 If none match → `ForbiddenError "You do not have access to this ruleset"`.
 
-Campaign character responses redact private notes (to `""`, a bonded creature's too) for viewers without character edit rights or GM status; the client shows the field to `canEdit` or the Game Master (`useCampaignPermissions`' `isDM`) only, read-only there. The character's own sheet (`GET /characters/:id`) goes to its editors alone, private notes included, and a share link's response leaves them out. Share tokens are returned only to character editors. A Partial response is an explicit allowlist: the character's ids and ruleset, its name and physical traits (`identity.physiology`'s race, age, gender, height and weight). Its description and languages, its beliefs (alignment, deity), its background (notes, private notes) and its meta (level, XP) are `null`, and its build fields, equipment, skill budget, virtual abilities, spell tags, validation details and bonded sheets are cleared.
+Campaign character responses redact private notes (to `""`, a bonded creature's too) for viewers without character edit rights or GM status; the client shows the field to `canEdit` or the Game Master (`useCampaignPermissions`' `isDM`) only, read-only there. The character's own sheet (`GET /characters/:id`) goes to its editors alone, private notes included, and a share link's response leaves them out. Share tokens are returned only to character editors. A Partial response (the engine's `describeCampaignCharacter`, its `partial` reading) is an explicit allowlist: the character's ids and ruleset, its name and physical traits (`identity.physiology`'s race, age, gender, height and weight). Its description and languages, its beliefs (alignment, deity), its background (notes, private notes) and its meta (level, XP) are `null`, and its build fields, equipment, skill budget, virtual abilities, spell tags, validation details and bonded sheets are cleared.
 
 ## Campaigns — `CampaignsPolicy`
 
@@ -140,12 +140,12 @@ The invite services' `acceptInvite` and `rejectInvite` (campaigns, rulesets and 
 
 ## Customizations
 
-Modifiers, properties, and requirements live on a parent entity (a feat, item, klass, race, power, klass-level, modifier, or character). They have no policy of their own: the gating is whichever policy owns the parent's, and `customizableEntities.ts` (`server/services/rulesets/customization/`) checks that the parent exists:
+Modifiers, properties, and requirements live on a parent entity (a feat, item, klass, race, power, klass-level, modifier, or character). They have no policy of their own: the gating is whichever policy owns the parent's, and the engine's customization operations check that the parent exists in the ruleset's view (`CustomizedEntity`, `engine/core/customizations/`):
 
 - Customizations on a **ruleset entity** are gated by `RulesetsPolicy.canUpdateEntity` (owner / Admin / Editor).
 - Customizations on a **character** (e.g. character modifiers) go through `CharactersService` and are gated by `getEditableCharacter` (owner / contributor).
 
-`getCustomizableEntityName` is a 404 when the parent doesn't exist (within the composed ruleset when given one), and returns its display name for activity logging; `checkCustomizedEntity` checks an existing customization's parent the same way before an update or a delete.
+A ruleset entity's customization plans (`planModifierCreate`, `planPropertyEdit`, `planRequirementDelete`…) refuse as not found (a 404) a parent the composed ruleset doesn't have (`CustomizedEntity.find`), and answer its display name for activity logging; before an update or a delete, `checkCustomizedEntity` (`server/services/rulesets/customization/customizableEntities.ts`) checks that the customization's own parent is still stored, read from the database itself.
 
 ## Identity vs. policy
 

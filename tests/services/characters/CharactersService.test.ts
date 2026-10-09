@@ -145,8 +145,10 @@ describe("CharactersService", () => {
         rulesetId: grandparent.id,
         ancestorRulesetIds: [grandparent.id],
       });
-      await expect(createCharacterAs(session, { rulesetId: fork.id, raceId: unrelated.race.id })).rejects.toThrow(
-        NotFoundError,
+      await expect(createCharacterAs(session, { rulesetId: fork.id, raceId: unrelated.race.id })).rejects.toMatchObject(
+        {
+          refusal: "not-found",
+        },
       );
     });
   });

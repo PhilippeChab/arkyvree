@@ -1,8 +1,8 @@
 import { getTableName } from "drizzle-orm";
 
 import { skillsInRules } from "@/drizzle/schema.ts";
-import { describeSkills, planSkillDelete, planSkillSave } from "@/engine/index.ts";
-import { findScopedEntity, RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { describeSkill, describeSkills, planSkillCreate, planSkillDelete, planSkillEdit } from "@/engine/index.ts";
+import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
@@ -12,12 +12,8 @@ import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { writeEntityWrites } from "@/server/services/rulesets/entityWrites.ts";
 import type { Session } from "@/shared/relations.ts";
 
-/** A skill's body: its row's columns, and the fields its ruleset's rules keep (`planSkillSave`). */
-type SkillBody = Parameters<typeof planSkillSave>[1] & {
-  description?: string | null;
-  name: string;
-  primaryAbilityId: string;
-};
+/** A skill's body: its row's columns, and the fields its ruleset's rules keep (`planSkillCreate`). */
+type SkillBody = Parameters<typeof planSkillCreate>[1];
 
 class SkillsService {
   async createSkill(session: Session, rulesetId: string, body: SkillBody) {
@@ -27,18 +23,17 @@ class SkillsService {
           const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const writes = planSkillSave(scope, body);
+          const plan = planSkillCreate(scope, body);
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "skills", body.name);
 
-          const { name, description, primaryAbilityId } = body;
-          const rows = await Skills.create(tx, { name, description, primaryAbilityId, rulesetId });
+          const rows = await Skills.create(tx, { ...plan.columns, rulesetId });
           const skill = rows[0];
 
           if (tombstoneAncestorId) await edit.repointTombstone(tx, "skills", tombstoneAncestorId, skill.id);
 
-          const properties = await writeEntityWrites(tx, scope, { entityId: skill.id, entityType: "skills" }, writes);
+          await writeEntityWrites(tx, scope, { entityId: skill.id, entityType: "skills" }, plan.writes);
 
           await createActivityWithNotifications(tx, {
             userId: session.userId,
@@ -48,7 +43,7 @@ class SkillsService {
             data: { entityName: skill.name },
           });
 
-          return describeSkills(scope, [skill], properties)[0];
+          return plan.describe(skill);
         }),
     );
     RulesetCache.invalidate(rulesetId);
@@ -60,22 +55,16 @@ class SkillsService {
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
           const { ruleset, rulesetData } = scope;
-          const { sourceChain } = rulesetData.cow;
 
           const inUse = await hasCharacterPicks(tx, "skills", skillId, rulesetId);
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-          const skill = findScopedEntity(rulesetData.skillsById, skillId, rulesetId, sourceChain, "Skill");
+          const { skill, writes } = planSkillDelete(scope, skillId);
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const targetId = await edit.cowToDelete(tx, "skills", skill);
 
-          await writeEntityWrites(
-            tx,
-            scope,
-            { entityId: targetId, entityType: "skills" },
-            planSkillDelete(scope, skill),
-          );
+          await writeEntityWrites(tx, scope, { entityId: targetId, entityType: "skills" }, writes);
 
           // FK CASCADE on klass_skills.skill_id wipes those join rows.
           // The database deletes its customizations with it.
@@ -98,11 +87,7 @@ class SkillsService {
   }
 
   async getSkill(rulesetId: string, skillId: string) {
-    return await withRulesetScope(db, rulesetId, async (scope) => {
-      const { sourceChain } = scope.rulesetData.cow;
-      const skill = findScopedEntity(scope.rulesetData.skillsById, skillId, rulesetId, sourceChain, "Skill");
-      return describeSkills(scope, [skill])[0];
-    });
+    return await withRulesetScope(db, rulesetId, async (scope) => describeSkill(scope, skillId));
   }
 
   async getSkills(
@@ -127,28 +112,21 @@ class SkillsService {
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
           const { ruleset, rulesetData } = scope;
-          const { sourceChain } = rulesetData.cow;
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const skill = findScopedEntity(rulesetData.skillsById, skillId, rulesetId, sourceChain, "Skill");
-          const writes = planSkillSave(scope, body, skill);
+          const { columns, describe, skill, writes } = planSkillEdit(scope, skillId, body);
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "skills", skill);
           const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
-          const { name, description, primaryAbilityId } = body;
-          const rows = await Skills.update(
-            tx,
-            { name, description, primaryAbilityId },
-            { id: targetId, expectedUpdatedAt },
-          );
+          const rows = await Skills.update(tx, columns, { id: targetId, expectedUpdatedAt });
           if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
           const updatedSkill = rows[0];
 
-          const properties = await writeEntityWrites(tx, scope, { entityId: targetId, entityType: "skills" }, writes);
+          await writeEntityWrites(tx, scope, { entityId: targetId, entityType: "skills" }, writes);
 
           await createActivityWithNotifications(tx, {
             userId: session.userId,
@@ -161,7 +139,7 @@ class SkillsService {
             },
           });
 
-          return describeSkills(scope, [updatedSkill], properties)[0];
+          return describe(updatedSkill);
         }),
     );
     RulesetCache.invalidate(rulesetId);

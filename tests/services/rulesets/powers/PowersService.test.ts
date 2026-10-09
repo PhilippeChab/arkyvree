@@ -4,11 +4,11 @@ import { eq } from "drizzle-orm";
 
 import { klassLevelPowersInRules, powersAptitudesInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
-import { BadRequestError, ConflictError } from "@/server/errors/index.ts";
 import { Properties } from "@/server/repositories/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
+import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { insertRows } from "@/tests/support/database.ts";
 import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/levels.ts";
@@ -98,9 +98,10 @@ describe("PowersService", () => {
 
     test("refuses a new power without an aptitude", async () => {
       const { session, ruleset } = await createTestUserAndRuleset(APTITUDES);
-      await expect(
+      await expectRefusedWith(
         PowersService.createPower(session, ruleset.id, { name: "Orphan Spell", aptitudes: [] }),
-      ).rejects.toThrow(BadRequestError);
+        400,
+      );
     });
 
     test("refuses an aptitude that feats already use", async () => {
@@ -110,20 +111,22 @@ describe("PowersService", () => {
         aptitudeIds: [wizard, feats],
       } = await createTestUserAndRuleset(APTITUDES);
       await FeatsService.createFeat(session, ruleset.id, { name: "Power Attack", aptitudeIds: [feats] });
-      await expect(
+      await expectRefusedWith(
         PowersService.createPower(session, ruleset.id, { name: "Feat Spell", aptitudes: [{ id: feats }] }),
-      ).rejects.toThrow(ConflictError);
+        409,
+      );
 
       const power = await PowersService.createPower(session, ruleset.id, {
         name: "Wizard Spell",
         aptitudes: [{ id: wizard }],
       });
-      await expect(
+      await expectRefusedWith(
         PowersService.updatePower(session, ruleset.id, power.id, {
           name: "Wizard Spell",
           aptitudes: [{ id: feats }],
         }),
-      ).rejects.toThrow(ConflictError);
+        409,
+      );
     });
 
     test("copies an inherited power's aptitudes into the fork's copy, leaving the parent's", async () => {
@@ -215,6 +218,6 @@ describe("PowersService", () => {
     const { klassLevel } = await createTestKlassLevel(host.id);
     await addCharacterLevel(character.id, klassLevel.id, { powers: [{ powerId: power.id, aptitudeId: wizard }] });
 
-    await expect(PowersService.deletePower(session, extension.id, power.id)).rejects.toThrow(ConflictError);
+    await expectRefusedWith(PowersService.deletePower(session, extension.id, power.id), 409);
   });
 });

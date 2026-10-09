@@ -1,184 +1,38 @@
-import { getPropertyTypes, getPropertyValues, type RulesetView } from "@/engine/index.ts";
+import { getPropertyTypeCompletions, getPropertyValueCompletions, listPropertyTypes } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { type Paginated, paginateItems } from "@/server/repositories/index.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
 import type { PropertyTypeCompletion, PropertyValueCompletion } from "@/shared/customization/properties.ts";
 
-/** A property type a ruleset lists: the engine's (static), or one its properties use, with how many. */
-interface PropertyType {
-  description?: string;
-  entityType?: string;
-  isStatic: boolean;
-  usageCount?: number;
-  value: string;
-}
-
 class PropertyTypesService {
-  /**
-   * The ruleset's custom property types (of one entity type, and containing `query`, when given): each with how many
-   * properties use it, the most used first.
-   */
-  private countPropertyTypes(rulesetData: RulesetView["rulesetData"], entityType?: PropertyEntityType, query = "") {
-    const counts = new Map<string, { count: number; entityType: string; type: string }>();
-    const groups = entityType
-      ? [rulesetData.propertiesByEntityType.get(entityType) ?? []]
-      : [...rulesetData.propertiesByEntityType.values()];
-    for (const prop of groups.flat()) {
-      if (!prop.type.toLowerCase().includes(query)) continue;
-      const key = `${prop.entityType}:${prop.type}`;
-      const existing = counts.get(key);
-      if (existing) existing.count += 1;
-      else counts.set(key, { type: prop.type, entityType: prop.entityType, count: 1 });
-    }
-    return [...counts.values()].sort((a, b) => b.count - a.count || a.type.localeCompare(b.type));
-  }
-
-  /**
-   * Get property type completions for autocomplete. The ruleset's own types
-   * come from the engine (`getPropertyTypes`); custom types come from
-   * `rulesetData` (composed across the ruleset chain with COW resolution).
-   * Pagination is in-memory.
-   */
+  /** Property type completions for autocomplete, as the engine offers them, a page at a time (in memory). */
   async getCompletions(
     rulesetId: string,
     query: string,
     pagination: { limit: number; page: number },
     entityType?: PropertyEntityType,
   ): Promise<Paginated<PropertyTypeCompletion>> {
-    return await withRulesetScope(db, rulesetId, async (scope) => {
-      const { rulesetData } = scope;
-      const lowercaseQuery = query.toLowerCase();
-      const staticTypes = Object.entries(getPropertyTypes(scope, entityType));
-      const engineCompletions: PropertyTypeCompletion[] = staticTypes
-        .filter(
-          ([value, description]) =>
-            value.toLowerCase().includes(lowercaseQuery) ||
-            (description && description.toLowerCase().includes(lowercaseQuery)),
-        )
-        .map(([value, description]): PropertyTypeCompletion => ({
-          label: value,
-          value,
-          detail: description,
-          kind: "engine",
-          entityType,
-        }));
-
-      const customCompletions = this.countPropertyTypes(rulesetData, entityType, lowercaseQuery).map(
-        (c): PropertyTypeCompletion => ({
-          label: c.type,
-          value: c.type,
-          detail: `Used ${c.count} time${c.count !== 1 ? "s" : ""} in ${c.entityType}`,
-          kind: "custom",
-          entityType: c.entityType,
-        }),
-      );
-
-      return paginateItems([...engineCompletions, ...customCompletions], pagination);
-    });
-  }
-
-  /**
-   * Get custom property types composed from the ruleset (chain + COW).
-   * Aggregated by (type, entityType) with usage count = number of rows
-   * that share that pair across the resolved properties.
-   */
-  async getCustomPropertyTypes(rulesetId: string, entityType?: PropertyEntityType): Promise<PropertyType[]> {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) =>
-      this.countPropertyTypes(rulesetData, entityType).map((c): PropertyType => ({
-        value: c.type,
-        isStatic: false,
-        entityType: c.entityType,
-        usageCount: c.count,
-      })),
-    );
-  }
-
-  /**
-   * Search property types by query
-   */
-  async getMatchingPropertyTypes(
-    rulesetId: string,
-    query: string,
-    entityType?: PropertyEntityType,
-  ): Promise<PropertyType[]> {
-    const lowercaseQuery = query.toLowerCase();
-
-    const staticTypes = (await this.getStaticPropertyTypes(rulesetId, entityType)).filter(
-      (type) =>
-        type.value.toLowerCase().includes(lowercaseQuery) ||
-        (type.description && type.description.toLowerCase().includes(lowercaseQuery)),
-    );
-
-    const customTypes = (await this.getCustomPropertyTypes(rulesetId, entityType)).filter((type) =>
-      type.value.toLowerCase().includes(lowercaseQuery),
-    );
-
-    return [...staticTypes, ...customTypes];
-  }
-
-  /**
-   * Get all available property types (static + custom)
-   */
-  async getPropertyTypes(rulesetId: string, entityType?: PropertyEntityType): Promise<PropertyType[]> {
-    const staticTypes = await this.getStaticPropertyTypes(rulesetId, entityType);
-    const customTypes = await this.getCustomPropertyTypes(rulesetId, entityType);
-
-    return [...staticTypes, ...customTypes];
-  }
-
-  /**
-   * Get static property types via ruleset-specific provider
-   */
-  async getStaticPropertyTypes(rulesetId: string, entityType?: PropertyEntityType): Promise<PropertyType[]> {
     return await withRulesetScope(db, rulesetId, async (scope) =>
-      Object.entries(getPropertyTypes(scope, entityType)).map(([value, description]) => ({
-        value,
-        isStatic: true,
-        description,
-      })),
+      paginateItems(getPropertyTypeCompletions(scope, query, entityType), pagination),
     );
   }
 
-  /**
-   * Get value completions for a given property type. The ruleset's own values
-   * come from the engine (`getPropertyValues`); custom values come from
-   * `rulesetData` (composed across the ruleset chain). Pagination is in-memory.
-   */
+  /** The property types containing `query` (every one for an empty one): the rules' types, then the ruleset's own. */
+  async getPropertyTypes(rulesetId: string, query: string, entityType?: PropertyEntityType) {
+    return await withRulesetScope(db, rulesetId, async (scope) => listPropertyTypes(scope, query, entityType));
+  }
+
+  /** A property type's value completions for autocomplete, as the engine offers them, a page at a time (in memory). */
   async getValueCompletions(
     rulesetId: string,
     type: string,
     query: string,
     pagination: { limit: number; page: number },
   ): Promise<Paginated<PropertyValueCompletion>> {
-    return await withRulesetScope(db, rulesetId, async (scope) => {
-      const { rulesetData } = scope;
-      const lowercaseQuery = query.toLowerCase();
-      const staticValues = getPropertyValues(scope, type);
-      const engineCompletions: PropertyValueCompletion[] = staticValues
-        .filter((v) => v.toLowerCase().includes(lowercaseQuery))
-        .map((v): PropertyValueCompletion => ({ label: v, value: v, kind: "engine" }));
-
-      const engineValueSet = new Set(staticValues);
-      const seen = new Set<string>();
-      const customValues: string[] = [];
-      for (const group of rulesetData.propertiesByEntityType.values()) {
-        for (const prop of group) {
-          if (prop.type !== type) continue;
-          if (engineValueSet.has(prop.value)) continue;
-          if (query && !prop.value.toLowerCase().includes(lowercaseQuery)) continue;
-          if (seen.has(prop.value)) continue;
-          seen.add(prop.value);
-          customValues.push(prop.value);
-        }
-      }
-
-      const customCompletions: PropertyValueCompletion[] = customValues
-        .sort((a, b) => a.localeCompare(b))
-        .map((v): PropertyValueCompletion => ({ label: v, value: v, kind: "custom" }));
-
-      return paginateItems([...engineCompletions, ...customCompletions], pagination);
-    });
+    return await withRulesetScope(db, rulesetId, async (scope) =>
+      paginateItems(getPropertyValueCompletions(scope, type, query), pagination),
+    );
   }
 }
 

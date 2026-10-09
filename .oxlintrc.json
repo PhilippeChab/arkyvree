@@ -64,6 +64,8 @@
     // folder indexes.
     "arkyvree/layers": "error",
     "arkyvree/engine-front-door": "error",
+    "arkyvree/one-engine-op": "error",
+    "arkyvree/opaque-view": "error",
     "arkyvree/queries-in-repositories": "error",
     "arkyvree/folder-index": "error",
     "arkyvree/re-exports": "error",

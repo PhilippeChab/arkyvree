@@ -4,6 +4,7 @@ import { itemsInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Properties } from "@/server/repositories/index.ts";
 import { PropertyTypesService } from "@/server/services/rulesets/customization/properties/types/index.ts";
+import type { PropertyEntityType } from "@/shared/customization/entities.ts";
 import {
   KLASS_LEVEL_BAB,
   KLASS_LEVEL_SKILL_POINTS,
@@ -16,6 +17,13 @@ import { insertRows } from "@/tests/support/database.ts";
 import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 
 const firstPage = { limit: 50, page: 1 };
+
+/** The ruleset's property types of the rules (`isStatic`) or its own, of one entity type when given. */
+async function listTypes(rulesetId: string, isStatic: boolean, entityType?: PropertyEntityType) {
+  return (await PropertyTypesService.getPropertyTypes(rulesetId, "", entityType)).filter(
+    (type) => type.isStatic === isStatic,
+  );
+}
 
 /**
  * A new user's empty ruleset whose items use custom property types three,
@@ -55,8 +63,8 @@ async function setup() {
 describe("PropertyTypesService", () => {
   test("lists the engine's types for an entity type", async () => {
     const { ruleset } = await createTestUserAndRuleset();
-    const values = async (entityType: Parameters<typeof PropertyTypesService.getStaticPropertyTypes>[1]) =>
-      (await PropertyTypesService.getStaticPropertyTypes(ruleset.id, entityType)).map((t) => t.value);
+    const values = async (entityType: PropertyEntityType) =>
+      (await listTypes(ruleset.id, true, entityType)).map((t) => t.value);
 
     expect(await values("items")).toContain(WEAPON_PROFICIENCY);
     expect(await values("items")).not.toContain(SPELL_SCHOOL);
@@ -75,25 +83,23 @@ describe("PropertyTypesService", () => {
       { value: "custom_tier", entityType: "feats", usageCount: 1 },
       { value: WEAPON_PROFICIENCY, entityType: "items", usageCount: 1 },
     ];
-    expect(await PropertyTypesService.getCustomPropertyTypes(rulesetId)).toMatchObject(custom);
-    expect(await PropertyTypesService.getCustomPropertyTypes(rulesetId, "feats")).toMatchObject([
-      { value: "custom_tier" },
-    ]);
+    expect(await listTypes(rulesetId, false)).toMatchObject(custom);
+    expect(await listTypes(rulesetId, false, "feats")).toMatchObject([{ value: "custom_tier" }]);
 
-    const all = await PropertyTypesService.getPropertyTypes(rulesetId, "items");
-    const staticCount = (await PropertyTypesService.getStaticPropertyTypes(rulesetId, "items")).length;
+    const all = await PropertyTypesService.getPropertyTypes(rulesetId, "", "items");
+    const staticCount = (await listTypes(rulesetId, true, "items")).length;
     expect(all.slice(staticCount)).toMatchObject(custom.filter((type) => type.entityType === "items"));
   });
 
   test("searches engine types by name or description and custom types by name, ignoring case", async () => {
     const { rulesetId } = await setup();
     const search = async (query: string) =>
-      (await PropertyTypesService.getMatchingPropertyTypes(rulesetId, query, "items")).map(
+      (await PropertyTypesService.getPropertyTypes(rulesetId, query, "items")).map(
         (t) => `${t.value}${t.isStatic ? "" : " (custom)"}`,
       );
     expect(await search("CUSTOM_MAT")).toEqual(["custom_material (custom)"]);
     expect(await search("weapon_prof")).toEqual([WEAPON_PROFICIENCY, `${WEAPON_PROFICIENCY} (custom)`]);
-    expect(await search("")).toHaveLength((await PropertyTypesService.getPropertyTypes(rulesetId, "items")).length);
+    expect(await search("")).toHaveLength((await PropertyTypesService.getPropertyTypes(rulesetId, "", "items")).length);
   });
 
   test("completes types, custom ones described by their use, a page at a time", async () => {

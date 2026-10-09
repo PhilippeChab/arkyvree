@@ -80,7 +80,7 @@ for (const invalidation of ["ruleset", "all"] as const) {
     });
     const started = Promise.withResolvers<void>();
     const release = Promise.withResolvers<void>();
-    const old = RulesetCache.getTargetPaths(fork.id, "modifier", async () => {
+    const old = RulesetCache.getTargetPaths(fork, "modifier", async () => {
       const data = await read();
       started.resolve();
       await release.promise;
@@ -91,12 +91,12 @@ for (const invalidation of ["ruleset", "all"] as const) {
       await Feats.update(db, { description: "After" }, { id: feat.id });
       if (invalidation === "ruleset") RulesetCache.invalidate(fork.id);
       else RulesetCache.invalidateAll();
-      const fresh = await RulesetCache.getTargetPaths(fork.id, "modifier", read);
+      const fresh = await RulesetCache.getTargetPaths(fork, "modifier", read);
       expect(fresh.segmentLabels.feat).toBe("After");
     } finally {
       release.resolve();
       await old;
     }
-    expect((await RulesetCache.getTargetPaths(fork.id, "modifier", read)).segmentLabels.feat).toBe("After");
+    expect((await RulesetCache.getTargetPaths(fork, "modifier", read)).segmentLabels.feat).toBe("After");
   });
 }

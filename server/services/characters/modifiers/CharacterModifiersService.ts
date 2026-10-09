@@ -1,14 +1,24 @@
 import { getTableName } from "drizzle-orm";
 
 import { modifiersInCustomization } from "@/drizzle/schema.ts";
+import { checkTargetValue, describeModifierList } from "@/engine/index.ts";
+import { readTargetPathCatalogs, readTargetPaths, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Activities, Modifiers } from "@/server/repositories/index.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
-import { annotateModifiers, resolvePathValueType } from "@/server/services/rulesets/customization/targetPaths/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class CharacterModifiersService {
+  /** A character's modifier's value type, its operator and value checked against its path by the engine. */
+  private async checkModifier(rulesetId: string, body: { operator: string; target: string; value: string }) {
+    const catalogs = await readTargetPathCatalogs(rulesetId, "modifier");
+    const { operator, target, value } = body;
+    return await withRulesetScope(db, rulesetId, async (scope) =>
+      checkTargetValue(scope, catalogs, { kind: "modifier", operator, sourceType: "characters", target, value }),
+    );
+  }
+
   async createModifier(
     session: Session,
     characterId: string,
@@ -17,14 +27,7 @@ class CharacterModifiersService {
     return withTransaction(async (tx) => {
       const character = await getEditableCharacter(tx, session, characterId);
 
-      const valueType = await resolvePathValueType(
-        character.rulesetId,
-        body.target,
-        "modifier",
-        body.operator,
-        body.value,
-        "characters",
-      );
+      const valueType = await this.checkModifier(character.rulesetId, body);
 
       const rows = await Modifiers.create(tx, {
         sourceId: characterId,
@@ -80,7 +83,7 @@ class CharacterModifiersService {
     const character = await getEditableCharacter(db, session, characterId);
 
     const modifiers = await Modifiers.findMany(db, { sourceIds: [characterId], sourceType: "characters" });
-    return annotateModifiers(character.rulesetId, modifiers);
+    return describeModifierList(await readTargetPaths(character.rulesetId, "modifier"), modifiers);
   }
 
   async updateModifier(
@@ -96,14 +99,7 @@ class CharacterModifiersService {
       if (!existing || existing.sourceId !== characterId || existing.sourceType !== "characters")
         throw new NotFoundError("Modifier not found");
 
-      const valueType = await resolvePathValueType(
-        character.rulesetId,
-        body.target,
-        "modifier",
-        body.operator,
-        body.value,
-        "characters",
-      );
+      const valueType = await this.checkModifier(character.rulesetId, body);
 
       const rows = await Modifiers.update(
         tx,

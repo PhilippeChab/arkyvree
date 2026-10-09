@@ -3,6 +3,7 @@ import { testClient } from "hono/testing";
 
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
+import { toJson } from "@/server/errors/index.ts";
 import { SESSION_COOKIE_NAME } from "@/server/middlewares/session.ts";
 import { Sessions } from "@/server/repositories/index.ts";
 import { application, type Application } from "@/server/routers/application.ts";
@@ -43,6 +44,20 @@ export async function expectOk<T extends ClientResponse<unknown>>(response: T | 
     if (!(error instanceof DetailedError)) throw error;
     throw new Error(`${error.message}: ${JSON.stringify(error.detail?.data)}`, { cause: error });
   }
+}
+
+/**
+ * The status the API answers a service call's refusal with: its error's own, or a ruleset's refusal as the error of
+ * its kind (`toJson`), so a test holds what a request gets whichever layer refused it.
+ */
+export async function expectRefusedWith(call: Promise<unknown>, status: number) {
+  const error = await call.then(
+    () => undefined,
+    (error: unknown) => error,
+  );
+  if (!(error instanceof Error)) throw new Error(`Expected a refusal with status ${status}, but the call answered`);
+  const [, code] = toJson(error);
+  if (code !== status) throw new Error(`Expected status ${status}, got ${code}: ${error.message}`);
 }
 
 /**

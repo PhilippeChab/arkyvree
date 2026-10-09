@@ -9,6 +9,9 @@ import CharacterResponse from "./CharacterResponse.ts";
 /** A bonded creature's sheet, as the API answers it. */
 type BondedDescription = ReturnType<typeof CharacterResponse.buildBonded>;
 
+/** How a campaign member reads a character: partly (`partial`), or its sheet with its private notes shown or blank. */
+type MemberReading = "blank" | "partial" | "show";
+
 /** What a viewer reads of a character's private notes: all of it, a blank, or no field at all. */
 type PrivateNotes = "blank" | "omit" | "show";
 
@@ -46,28 +49,11 @@ function redactNotes<T extends { identity: { background: { privateNotes?: string
 /** A character described from the rows the server read: its sheet, a creature's, or its public part. */
 export default class CharacterDescription {
   /**
-   * A character's sheet, as the API answers it: a player character's with its bonded creatures' (`bonded`), each built
-   * with it, their private notes as the viewer reads them (`notes`); or a bonded creature's, from its master's, which
-   * has no creatures of its own.
-   */
-  static describe(
-    view: RulesetView,
-    character: CharacterInput,
-    bonded: CharacterInput[],
-    notes: PrivateNotes = "show",
-  ) {
-    const built = CharacterBuilder.build(view, character);
-    if (character.master) return { ...CharacterResponse.buildBonded(character.record, built), bonded: noBonded() };
-    const response = CharacterResponse.buildFull(character.record, built);
-    return { ...redactNotes(response, notes), bonded: describeBonded(view, built, bonded, notes) };
-  }
-
-  /**
    * What a campaign member who only sees a character partly reads of it: who it is, its name and physical traits (race,
    * age, gender, height, weight), and nothing else. An allowlist: a new field of the full sheet, or of its identity, must
    * be considered here.
    */
-  static describePartial(view: RulesetView, character: CharacterInput) {
+  private static describePartial(view: RulesetView, character: CharacterInput) {
     const response = CharacterResponse.buildFull(character.record, CharacterBuilder.build(view, character));
     const { physiology } = response.identity;
     return {
@@ -118,5 +104,36 @@ export default class CharacterDescription {
       validation: { valid: true, issues: [] },
       bonded: noBonded(),
     } satisfies Record<keyof typeof response | "bonded", unknown>;
+  }
+
+  /**
+   * A character's sheet, as the API answers it: a player character's with its bonded creatures' (`bonded`), each built
+   * with it, their private notes as the viewer reads them (`notes`); or a bonded creature's, from its master's, which
+   * has no creatures of its own.
+   */
+  static describe(
+    view: RulesetView,
+    character: CharacterInput,
+    bonded: CharacterInput[],
+    notes: PrivateNotes = "show",
+  ) {
+    const built = CharacterBuilder.build(view, character);
+    if (character.master) return { ...CharacterResponse.buildBonded(character.record, built), bonded: noBonded() };
+    const response = CharacterResponse.buildFull(character.record, built);
+    return { ...redactNotes(response, notes), bonded: describeBonded(view, built, bonded, notes) };
+  }
+
+  /**
+   * A character as a campaign member reads it (`reading`): partly, who it is and what it looks like (`describePartial`),
+   * or its sheet, with its bonded creatures', their private notes shown or blank.
+   */
+  static describeForMember(
+    view: RulesetView,
+    character: CharacterInput,
+    bonded: CharacterInput[],
+    reading: MemberReading,
+  ) {
+    if (reading === "partial") return CharacterDescription.describePartial(view, character);
+    return CharacterDescription.describe(view, character, bonded, reading);
   }
 }

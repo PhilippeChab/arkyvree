@@ -21,14 +21,15 @@ export function checkTargetValue(
   return targetPathsOf(view).checkTargetValue(catalogs, check);
 }
 
-/** The completions of a partial path among a catalog's paths of `kind`, unpaged. */
+/** The completions of a partial path among a catalog's paths of `kind` (those an entity type takes), unpaged. */
 export function getTargetPathCompletions(
   view: RulesetView,
   catalog: TargetPathCatalog,
   kind: TargetPathKind,
   query: PathQuery,
+  entityType?: string,
 ) {
-  return targetPathsOf(view).completeTargetPath(catalog, kind, query);
+  return targetPathsOf(view).completeTargetPath(catalog, kind, query, entityType);
 }
 
 /** The ruleset's target paths of a kind, with their segments' labels: what a server caches and the other ops take. */
@@ -36,7 +37,7 @@ export function listTargetPaths(view: RulesetView, kind: TargetPathKind): Target
   return targetPathsOf(view).getTargetPathsAndLabels(view.rulesetData, kind);
 }
 
-/** A target path validated like a language server, among a catalog's paths: a valid one carries its definition. */
-export function validateTargetPath(view: RulesetView, catalog: TargetPathCatalog, path: string) {
-  return targetPathsOf(view).validateTargetPath(catalog, path);
+/** A target path validated like a language server, among a catalog's paths (those an entity type takes). */
+export function validateTargetPath(view: RulesetView, catalog: TargetPathCatalog, path: string, entityType?: string) {
+  return targetPathsOf(view).validateTargetPath(catalog, path, entityType);
 }

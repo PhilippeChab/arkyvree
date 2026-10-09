@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
+import { RULESET_LIMITS } from "@/engine/index.ts";
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { isUuid, limitDefaultingTo } from "@/server/routers/api/schemaBuilders.ts";
 import { characterIdParam, page } from "@/server/routers/api/validation.ts";
@@ -11,6 +12,9 @@ const abilityIdList = z
   .string()
   .optional()
   .transform((value) => value?.split(",").map((id) => (isUuid(id) ? id : undefined)));
+
+/** A class's level, as a level-up plans it. */
+const classLevel = z.number().int().min(1).max(RULESET_LIMITS.classLevel);
 
 /** Comma-separated `featId:aptitudeId` picks: what isn't one is dropped. */
 const featPicks = z
@@ -31,6 +35,9 @@ const idList = z
   .string()
   .optional()
   .transform((value) => value?.split(",").filter(isUuid));
+
+/** The hit points a character's level gives. */
+const levelHp = z.number().int().min(1);
 
 const levelParams = characterIdParam.extend({ characterLevelId: z.string().uuid() });
 
@@ -381,13 +388,13 @@ export default new Hono<SessionContext>()
           .array(
             z.object({
               klassId: z.string().uuid(),
-              level: z.number().int().min(1),
-              hp: z.number().int().min(1),
+              level: classLevel,
+              hp: levelHp,
               abilityId: z.string().uuid().nullable(),
             }),
           )
           .min(1)
-          .max(20),
+          .max(RULESET_LIMITS.characterLevel),
         skills: z.record(z.string().uuid(), z.number().int().min(0)),
         feats: z.record(z.string().uuid(), z.array(z.string().uuid())),
         powers: z.record(z.string().uuid(), z.array(z.string().uuid())),
@@ -421,11 +428,11 @@ export default new Hono<SessionContext>()
           .array(
             z.object({
               klassId: z.string().uuid(),
-              level: z.number().int().min(1),
+              level: classLevel,
             }),
           )
           .min(1)
-          .max(20),
+          .max(RULESET_LIMITS.characterLevel),
         abilityIds: z.array(z.string().uuid().nullable()),
       }),
     ),
@@ -444,7 +451,7 @@ export default new Hono<SessionContext>()
     validate(
       "json",
       z.object({
-        hp: z.number().int().min(1),
+        hp: levelHp,
         abilityId: z.string().uuid().nullable(),
         skills: z.record(z.string().uuid(), z.number().int().min(0)),
         feats: z.record(z.string().uuid(), z.array(z.string().uuid())),

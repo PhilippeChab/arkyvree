@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 
 import * as RULESET_NAMES from "@/content/dnd3.5/names.ts";
 import PathChecks from "@/engine/core/paths/PathChecks.ts";
-import { getTargetPathsWithLabels } from "@/server/services/rulesets/customization/targetPaths/index.ts";
+import { readTargetPaths } from "@/server/cache/rulesetCache/index.ts";
 import { isTemplateValue } from "@/shared/customization/templateExpression.ts";
 
 import { seededRows } from "./seededRows.ts";
@@ -17,7 +17,7 @@ test.each(["modifier", "requirement"] as const)(
     for (const name of Object.values(RULESET_NAMES)) {
       const rows = await seededRows(name);
       const offered = new Map(
-        (await getTargetPathsWithLabels(rows.rulesetId, kind)).paths.map((path) => [path.path, path.operators]),
+        (await readTargetPaths(rows.rulesetId, kind)).paths.map((path) => [path.path, path.operators]),
       );
       for (const { target, operator } of kind === "modifier" ? rows.modifiers : rows.requirements) {
         if (!target) continue;
@@ -34,7 +34,7 @@ test("Every seeded template reads what a template of its ruleset can, as its val
   let templates = 0;
   for (const name of Object.values(RULESET_NAMES)) {
     const rows = await seededRows(name);
-    const templatePaths = await getTargetPathsWithLabels(rows.rulesetId, "template");
+    const templatePaths = await readTargetPaths(rows.rulesetId, "template");
     for (const { target, value, valueType } of [...rows.modifiers, ...rows.requirements]) {
       if (!value || !valueType || !isTemplateValue(value)) continue;
       templates++;

@@ -34,16 +34,19 @@ export function Projects<B extends Constructor<LevelUpState>>(Base: B) {
       });
     }
 
-    /** The feats a class level grants, as a projection gives them, but those the level picks too. */
+    /**
+     * The feats a class level grants, free or not, as a projection gives them (as the saved character's build does),
+     * but those the level picks too.
+     */
     protected buildProjectedAutoGrantedFeats<T extends { id: string }>(
-      autoGrantedRecords: { aptitudeId: string; featsInRule: T; free: boolean; id: string }[],
+      autoGrantedRecords: { aptitudeId: string; featsInRule: T; id: string }[],
       klassLevelId: string,
       characterLevelId: string,
       pickedFeatIds: Set<string>,
       featCustomizations: { modifiers: Map<string, Modifier[]> },
     ) {
       return autoGrantedRecords
-        .filter((rec) => rec.free && !pickedFeatIds.has(rec.featsInRule.id))
+        .filter((rec) => !pickedFeatIds.has(rec.featsInRule.id))
         .map((rec) => ({
           ...rec.featsInRule,
           klassLevelId,

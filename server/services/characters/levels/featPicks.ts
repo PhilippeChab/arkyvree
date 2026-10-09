@@ -33,9 +33,7 @@ export async function getAvailableFeats(
       pendingLevelAbilityIds,
       pendingLevelKlassLevelIds,
     });
-    const { familyType, ...filters } = picker.filters;
-    const family = where.family ? { type: familyType, value: where.family } : undefined;
-    const result = await Feats.findOptionPage(db, { ...filters, family, search: where.search }, pagination);
+    const result = await Feats.findOptionPage(db, { ...picker.filters, search: where.search }, pagination);
     return { items: picker.annotate(result.items), page: result.page, nextPage: result.nextPage };
   });
 }
@@ -62,7 +60,7 @@ export async function getAvailableFeatsGrouped(
       pendingLevelAbilityIds,
       pendingLevelKlassLevelIds,
     });
-    const result = await Feats.findOptionGroupPage(db, { ...picker.filters, search: where.search }, pagination);
+    const result = await Feats.findOptionGroupPage(db, { ...picker.groupFilters, search: where.search }, pagination);
     return { items: picker.annotateGroups(result.items), page: result.page, nextPage: result.nextPage };
   });
 }

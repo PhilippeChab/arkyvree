@@ -35,6 +35,15 @@ export default abstract class CategoryPaths<C = Components> implements TargetPat
     );
   }
 
+  /** A catalog's paths an entity type takes (a path's `allowedEntityTypes`), all of them without one. */
+  private static pathsFor(catalog: TargetPathCatalog, entityType?: string): TargetPathCatalog {
+    if (!entityType) return catalog;
+    return {
+      paths: catalog.paths.filter((p) => !p.allowedEntityTypes || p.allowedEntityTypes.includes(entityType)),
+      segmentLabels: catalog.segmentLabels,
+    };
+  }
+
   /** The distinct slugs of the properties' values of `type`. */
   static collectPropertySlugs(properties: { type: string; value: string }[], type: string) {
     return [...new Set(properties.filter((p) => p.type === type).map((p) => stripSeparators(p.value)))];
@@ -82,9 +91,17 @@ export default abstract class CategoryPaths<C = Components> implements TargetPat
     return new PathChecks(this.getCategories(), catalogs.paths).checkValue(catalogs.templatePaths, check);
   }
 
-  /** The completions of a partial path among a catalog's paths of `kind`, unpaged. */
-  completeTargetPath(catalog: TargetPathCatalog, kind: TargetPathKind, query: PathQuery): PathCompletion[] {
-    return new PathCompletions(this, catalog, kind).complete(query);
+  /**
+   * The completions of a partial path among a catalog's paths of `kind` (those an entity type takes, `entityType`),
+   * unpaged.
+   */
+  completeTargetPath(
+    catalog: TargetPathCatalog,
+    kind: TargetPathKind,
+    query: PathQuery,
+    entityType?: string,
+  ): PathCompletion[] {
+    return new PathCompletions(this, CategoryPaths.pathsFor(catalog, entityType), kind).complete(query);
   }
 
   getCategories(): string[] {
@@ -149,8 +166,11 @@ export default abstract class CategoryPaths<C = Components> implements TargetPat
     }
   }
 
-  /** A target path validated like a language server, among a catalog's paths: a valid one carries its definition. */
-  validateTargetPath(catalog: TargetPathCatalog, path: string): PathValidationResult {
-    return new PathChecks(this.getCategories(), catalog).validate(path);
+  /**
+   * A target path validated like a language server, among a catalog's paths (those an entity type takes, `entityType`):
+   * a valid one carries its definition.
+   */
+  validateTargetPath(catalog: TargetPathCatalog, path: string, entityType?: string): PathValidationResult {
+    return new PathChecks(this.getCategories(), CategoryPaths.pathsFor(catalog, entityType)).validate(path);
   }
 }

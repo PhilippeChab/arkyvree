@@ -1,7 +1,8 @@
 import { getTableName } from "drizzle-orm";
 
 import { languagesInRules } from "@/drizzle/schema.ts";
-import { findScopedEntity, RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { getEntity } from "@/engine/index.ts";
+import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
@@ -22,7 +23,8 @@ class LanguagesService {
   ) {
     const result = await withTransaction(
       async (tx) =>
-        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        await withRulesetScope(tx, rulesetId, async (scope) => {
+          const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
@@ -54,13 +56,13 @@ class LanguagesService {
   async deleteLanguage(session: Session, rulesetId: string, languageId: string) {
     const result = await withTransaction(
       async (tx) =>
-        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-          const { sourceChain } = rulesetData.cow;
+        await withRulesetScope(tx, rulesetId, async (scope) => {
+          const { ruleset, rulesetData } = scope;
 
           const inUse = await hasCharacterPicks(tx, "languages", languageId, rulesetId);
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-          const language = findScopedEntity(rulesetData.languagesById, languageId, rulesetId, sourceChain, "Language");
+          const language = getEntity(scope, "languages", languageId);
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const targetId = await edit.cowToDelete(tx, "languages", language);
@@ -85,9 +87,8 @@ class LanguagesService {
   }
 
   async getLanguage(rulesetId: string, languageId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const language = findScopedEntity(rulesetData.languagesById, languageId, rulesetId, sourceChain, "Language");
+    return await withRulesetScope(db, rulesetId, async (scope) => {
+      const language = getEntity(scope, "languages", languageId);
       return language;
     });
   }
@@ -102,7 +103,8 @@ class LanguagesService {
     },
     pagination: { limit: number; page: number },
   ) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+    return await withRulesetScope(db, rulesetId, async (scope) => {
+      const { rulesetData } = scope;
       const { sourceChain } = rulesetData.cow;
       return await Languages.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
     });
@@ -121,12 +123,12 @@ class LanguagesService {
   ) {
     const result = await withTransaction(
       async (tx) =>
-        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-          const { sourceChain } = rulesetData.cow;
+        await withRulesetScope(tx, rulesetId, async (scope) => {
+          const { ruleset, rulesetData } = scope;
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const language = findScopedEntity(rulesetData.languagesById, languageId, rulesetId, sourceChain, "Language");
+          const language = getEntity(scope, "languages", languageId);
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "languages", language);

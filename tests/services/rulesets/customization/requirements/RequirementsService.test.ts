@@ -2,10 +2,11 @@ import { describe, expect, test } from "bun:test";
 
 import { requirementsInCustomization } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
-import { ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
+import { ForbiddenError } from "@/server/errors/index.ts";
 import { Feats, Races, Requirements } from "@/server/repositories/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { activityTypes } from "@/tests/support/activities.ts";
+import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 
@@ -56,8 +57,8 @@ describe("RequirementsService", () => {
 
     test("throws NotFoundError for a missing ruleset or entity", async () => {
       const { rulesetId, feat } = await setup();
-      await expect(RequirementsService.getRequirements(NIL_UUID, "feats", feat.id)).rejects.toThrow(NotFoundError);
-      await expect(RequirementsService.getRequirements(rulesetId, "feats", NIL_UUID)).rejects.toThrow(NotFoundError);
+      await expectRefusedWith(RequirementsService.getRequirements(NIL_UUID, "feats", feat.id), 404);
+      await expectRefusedWith(RequirementsService.getRequirements(rulesetId, "feats", NIL_UUID), 404);
     });
   });
 
@@ -95,12 +96,8 @@ describe("RequirementsService", () => {
     test("refuses a missing ruleset or entity, and another user", async () => {
       const { session, rulesetId, feat } = await setup();
       const { session: other } = await createTestUserAndRuleset();
-      await expect(RequirementsService.createRequirement(session, NIL_UUID, "feats", feat.id, chain)).rejects.toThrow(
-        NotFoundError,
-      );
-      await expect(RequirementsService.createRequirement(session, rulesetId, "feats", NIL_UUID, chain)).rejects.toThrow(
-        NotFoundError,
-      );
+      await expectRefusedWith(RequirementsService.createRequirement(session, NIL_UUID, "feats", feat.id, chain), 404);
+      await expectRefusedWith(RequirementsService.createRequirement(session, rulesetId, "feats", NIL_UUID, chain), 404);
       await expect(RequirementsService.createRequirement(other, rulesetId, "feats", feat.id, chain)).rejects.toThrow(
         ForbiddenError,
       );
@@ -155,15 +152,18 @@ describe("RequirementsService", () => {
       const created = await RequirementsService.createRequirement(session, rulesetId, "feats", feat.id, chain);
       const update = { level: "2", chainingOperator: "or" };
 
-      await expect(
+      await expectRefusedWith(
         RequirementsService.updateRequirement(session, NIL_UUID, "feats", feat.id, created.id, update),
-      ).rejects.toThrow(NotFoundError);
-      await expect(
+        404,
+      );
+      await expectRefusedWith(
         RequirementsService.updateRequirement(session, rulesetId, "feats", feat.id, NIL_UUID, update),
-      ).rejects.toThrow(NotFoundError);
-      await expect(
+        404,
+      );
+      await expectRefusedWith(
         RequirementsService.updateRequirement(session, rulesetId, "feats", otherFeat.id, created.id, update),
-      ).rejects.toThrow(NotFoundError);
+        404,
+      );
       await expect(
         RequirementsService.updateRequirement(other, rulesetId, "feats", feat.id, created.id, update),
       ).rejects.toThrow(ForbiddenError);
@@ -195,15 +195,18 @@ describe("RequirementsService", () => {
       const { session: other } = await createTestUserAndRuleset();
       const created = await RequirementsService.createRequirement(session, rulesetId, "feats", feat.id, chain);
 
-      await expect(
+      await expectRefusedWith(
         RequirementsService.deleteRequirement(session, NIL_UUID, "feats", feat.id, created.id),
-      ).rejects.toThrow(NotFoundError);
-      await expect(
+        404,
+      );
+      await expectRefusedWith(
         RequirementsService.deleteRequirement(session, rulesetId, "feats", feat.id, NIL_UUID),
-      ).rejects.toThrow(NotFoundError);
-      await expect(
+        404,
+      );
+      await expectRefusedWith(
         RequirementsService.deleteRequirement(session, rulesetId, "feats", otherFeat.id, created.id),
-      ).rejects.toThrow(NotFoundError);
+        404,
+      );
       await expect(
         RequirementsService.deleteRequirement(other, rulesetId, "feats", feat.id, created.id),
       ).rejects.toThrow(ForbiddenError);

@@ -2,7 +2,6 @@ import { expect, test } from "bun:test";
 
 import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
-import { NotFoundError } from "@/server/errors/index.ts";
 import {
   Aptitudes,
   EntitySnapshots,
@@ -22,6 +21,7 @@ import { RequirementsService } from "@/server/services/rulesets/customization/re
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
+import { expectRefusedWith } from "@/tests/support/api.ts";
 import { STRENGTH_BONUS } from "@/tests/support/customizations.ts";
 import { measure } from "@/tests/support/database.ts";
 import { copyEntity, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
@@ -103,12 +103,13 @@ for (const entityType of ["feats", "powers"] as const) {
             action === "update" ? [expect.objectContaining({ id: result.id, value: "after" })] : [],
           );
         }
-        await expect(
+        await expectRefusedWith(
           PropertiesService.updateProperty(session, host.id, entityType, result.resolvedEntityId, property.id, {
             type: property.type,
             value: "stale",
           }),
-        ).rejects.toThrow(NotFoundError);
+          404,
+        );
         const snapshots = await EntitySnapshots.findMany(db, { rulesetId: host.id });
         expect(snapshots).toHaveLength(1);
         expect(snapshots[0].sourceEntityId).toBe(winnerId);
@@ -241,12 +242,13 @@ for (const entityType of ["feats", "powers"] as const) {
         expect(requirements.map((r) => r.chainingOperator).sort()).toEqual(
           action === "create" ? ["and", "or"] : action === "update" ? ["or"] : [],
         );
-        await expect(
+        await expectRefusedWith(
           RequirementsService.createRequirement(session, host.id, "modifiers", modifier.id, {
             level: "3",
             chainingOperator: "and",
           }),
-        ).rejects.toThrow(NotFoundError);
+          404,
+        );
         // A subsequent edit using the returned local ID must continue to work.
         await RequirementsService.createRequirement(session, host.id, "modifiers", result.resolvedEntityId, {
           level: "3",
@@ -306,18 +308,20 @@ test("deduplicated sibling property and modifier IDs are not writable", async ()
   const visible = await PropertiesService.getProperties(host.id, "feats", winnerId);
   expect(visible.some((p) => p.id === ownProperty.id)).toBe(true);
   expect(visible.some((p) => p.id === hiddenProperty.id)).toBe(false);
-  await expect(
+  await expectRefusedWith(
     PropertiesService.updateProperty(session, host.id, "feats", winnerId, hiddenProperty.id, {
       type: "SAME",
       value: "2",
     }),
-  ).rejects.toThrow(NotFoundError);
-  await expect(
+    404,
+  );
+  await expectRefusedWith(
     RequirementsService.createRequirement(session, host.id, "modifiers", hiddenModifier.id, {
       level: "1",
       chainingOperator: "and",
     }),
-  ).rejects.toThrow(NotFoundError);
+    404,
+  );
   expect(await EntitySnapshots.findMany(db, { rulesetId: host.id })).toHaveLength(0);
 });
 

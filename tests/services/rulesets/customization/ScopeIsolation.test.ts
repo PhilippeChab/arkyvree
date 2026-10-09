@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
 import { db } from "@/server/database/index.ts";
-import { NotFoundError } from "@/server/errors/index.ts";
 import { Feats, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
+import { expectRefusedWith } from "@/tests/support/api.ts";
 import { STRENGTH_BONUS } from "@/tests/support/customizations.ts";
 import { createSeededTestRuleset, editRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
@@ -30,22 +30,25 @@ async function setup() {
 describe("ruleset customization isolation", () => {
   test("rejects foreign properties, modifiers, and requirements before writing", async () => {
     const { session, own, feat } = await setup();
-    await expect(
+    await expectRefusedWith(
       PropertiesService.createProperty(session, own.id, "feats", feat.id, { type: "test", value: "changed" }),
-    ).rejects.toThrow(NotFoundError);
-    await expect(
+      404,
+    );
+    await expectRefusedWith(
       ModifiersService.createModifier(session, own.id, "feats", feat.id, {
         target: "combat.ac.misc",
         operator: "add",
         value: "1",
       }),
-    ).rejects.toThrow(NotFoundError);
-    await expect(
+      404,
+    );
+    await expectRefusedWith(
       RequirementsService.createRequirement(session, own.id, "feats", feat.id, {
         level: "1",
         chainingOperator: "and",
       }),
-    ).rejects.toThrow(NotFoundError);
+      404,
+    );
     expect(await Properties.findMany(db, { entityIds: [feat.id], entityType: "feats" })).toHaveLength(0);
     expect(await Modifiers.findMany(db, { sourceIds: [feat.id], sourceType: "feats" })).toHaveLength(0);
     expect(await Requirements.findMany(db, { entityIds: [feat.id], entityType: "feats" })).toHaveLength(0);
@@ -65,25 +68,25 @@ describe("ruleset customization isolation", () => {
       level: "1",
       chainingOperator: "and",
     });
-    await expect(
+    await expectRefusedWith(
       PropertiesService.updateProperty(session, own.id, "feats", feat.id, property.id, {
         type: "test",
         value: "changed",
       }),
-    ).rejects.toThrow(NotFoundError);
-    await expect(PropertiesService.deleteProperty(session, own.id, "feats", feat.id, property.id)).rejects.toThrow(
-      NotFoundError,
+      404,
     );
-    await expect(
+    await expectRefusedWith(PropertiesService.deleteProperty(session, own.id, "feats", feat.id, property.id), 404);
+    await expectRefusedWith(
       RequirementsService.deleteRequirement(session, own.id, "feats", feat.id, requirement.id),
-    ).rejects.toThrow(NotFoundError);
+      404,
+    );
     expect((await Properties.findOne(db, { id: property.id }))?.value).toBe("original");
     expect(await Requirements.findOne(db, { id: requirement.id })).toBeDefined();
   });
 
   test("COW itself refuses unrelated entities", async () => {
     const { own, feat } = await setup();
-    await expect((await editRuleset(own)).cowOwner(db, "feats", feat.id)).rejects.toThrow(NotFoundError);
+    await expectRefusedWith((await editRuleset(own)).cowOwner(db, "feats", feat.id), 404);
   });
 
   test("inherited customizations still copy their source", async () => {
@@ -143,12 +146,13 @@ describe("modifier requirement ownership", () => {
     expect(copies).toHaveLength(2);
     expect(copies.some((r) => r.level === "1" && r.chainingOperator === "and")).toBe(true);
     expect(await Modifiers.findOne(db, { id: modifier.id })).toEqual(modifier);
-    await expect(
+    await expectRefusedWith(
       RequirementsService.createRequirement(session, own.id, "modifiers", modifier.id, {
         level: "3",
         chainingOperator: "and",
       }),
-    ).rejects.toThrow(NotFoundError);
+      404,
+    );
     const second = await RequirementsService.createRequirement(session, own.id, "modifiers", copied.id, {
       level: "3",
       chainingOperator: "and",
@@ -160,13 +164,14 @@ describe("modifier requirement ownership", () => {
   test("rejects a modifier owned by an unrelated ruleset", async () => {
     const { session, own, feat } = await setup();
     const modifier = await createModifier(feat.id);
-    await expect(
+    await expectRefusedWith(
       RequirementsService.createRequirement(session, own.id, "modifiers", modifier.id, {
         level: "1",
         chainingOperator: "and",
       }),
-    ).rejects.toThrow(NotFoundError);
-    await expect((await editRuleset(own)).cowOwner(db, "modifiers", modifier.id)).rejects.toThrow(NotFoundError);
+      404,
+    );
+    await expectRefusedWith((await editRuleset(own)).cowOwner(db, "modifiers", modifier.id), 404);
     expect(await Requirements.findMany(db, { entityIds: [modifier.id], entityType: "modifiers" })).toHaveLength(0);
   });
 
@@ -174,9 +179,9 @@ describe("modifier requirement ownership", () => {
     const { own, feat } = await setup();
     const modifier = await createModifier(feat.id);
     await Modifiers.update(db, { sourceType: "modifiers", sourceId: modifier.id }, { id: modifier.id });
-    await expect((await editRuleset(own)).cowOwner(db, "modifiers", modifier.id)).rejects.toThrow(NotFoundError);
+    await expectRefusedWith((await editRuleset(own)).cowOwner(db, "modifiers", modifier.id), 404);
     await Modifiers.update(db, { sourceType: "feats", sourceId: crypto.randomUUID() }, { id: modifier.id });
-    await expect((await editRuleset(own)).cowOwner(db, "modifiers", modifier.id)).rejects.toThrow(NotFoundError);
+    await expectRefusedWith((await editRuleset(own)).cowOwner(db, "modifiers", modifier.id), 404);
   });
 });
 
@@ -203,7 +208,7 @@ describe("stale ancestor customization IDs", () => {
               value: "changed",
             })
           : PropertiesService.deleteProperty(session, own.id, "feats", local.resolvedEntityId, original.id);
-      await expect(operation).rejects.toThrow(NotFoundError);
+      await expectRefusedWith(operation, 404);
       expect(await Properties.findOne(db, { id: original.id })).toEqual(original);
     });
     test(`rejects ${action} through an ancestor requirement ID after the entity was copied`, async () => {
@@ -227,7 +232,7 @@ describe("stale ancestor customization IDs", () => {
               chainingOperator: "or",
             })
           : RequirementsService.deleteRequirement(session, own.id, "feats", local.resolvedEntityId, original.id);
-      await expect(operation).rejects.toThrow(NotFoundError);
+      await expectRefusedWith(operation, 404);
       expect(await Requirements.findOne(db, { id: original.id })).toEqual(original);
     });
   }

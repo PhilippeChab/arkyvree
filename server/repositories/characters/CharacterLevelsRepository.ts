@@ -108,13 +108,6 @@ class CharacterLevelsRepository extends include(
     return await this.existsKlassPickFromExtension(db, where);
   }
 
-  async findLatest(db: Db, where: { characterId: string }) {
-    return await db.query.levelsInCharacter.findFirst({
-      where: and(eq(this.table.characterId, where.characterId), isNull(this.table.deletedAt)),
-      orderBy: this.orderBy(this.table.position, "desc"),
-    });
-  }
-
   /** The levels in the order the character took them (`position`), a character's after another's by its id. */
   async findMany(db: Db, where: { characterId: string } | { characterIds: string[] }) {
     if ("characterIds" in where && where.characterIds.length === 0) return [];
@@ -128,20 +121,6 @@ class CharacterLevelsRepository extends include(
       ),
       orderBy: [this.orderBy(this.table.characterId), this.orderBy(this.table.position)],
     });
-  }
-
-  async findMaxKlassLevels(db: Db, where: { characterId: string }) {
-    const result = await db
-      .select({
-        klassId: klassLevelsInRules.klassId,
-        maxLevel: sql<number>`max(${klassLevelsInRules.level})`.mapWith(Number),
-      })
-      .from(this.table)
-      .innerJoin(klassLevelsInRules, eq(this.table.klassLevelId, klassLevelsInRules.id))
-      .where(and(eq(this.table.characterId, where.characterId), isNull(this.table.deletedAt)))
-      .groupBy(klassLevelsInRules.klassId);
-
-    return result;
   }
 
   async findOne(db: Db, where: { id: string } | { characterId: string; klassLevelId: string }) {

@@ -2,6 +2,7 @@ import { Box, IconButton, Paper, Stack, Typography } from "@mui/material";
 
 import { AddIcon, RemoveIcon } from "@/client/src/components/icons/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
+import { MAX_ABILITY_SCORE } from "@/shared/dnd3.5/abilities.ts";
 import { formatSigned } from "@/shared/text.ts";
 
 interface AbilityScoreBoxProps {
@@ -102,7 +103,7 @@ export function AbilityScoreBox({
                   size="small"
                   aria-label={`Raise Base ${ability}`}
                   onClick={() => edit.onBaseChange(edit.abilityId, baseValue + 1)}
-                  disabled={baseValue >= 100}
+                  disabled={baseValue >= MAX_ABILITY_SCORE}
                   sx={{ p: 0 }}
                 >
                   <AddIcon sx={{ fontSize: 14 }} />

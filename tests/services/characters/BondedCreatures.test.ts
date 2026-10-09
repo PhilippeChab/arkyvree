@@ -10,7 +10,7 @@ import DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharac
 import { CARRYING_CAPACITY } from "@/engine/rulesets/dnd3.5/constants.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
 import { db } from "@/server/database/index.ts";
-import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
+import { NotFoundError } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { CharacterLevels, Characters, Modifiers, Players } from "@/server/repositories/index.ts";
 import { CampaignCharactersService } from "@/server/services/campaigns/characters/index.ts";
@@ -243,7 +243,7 @@ describe("CharactersService with bonded creatures", () => {
         height: "0.3 m",
         weight: "5 kg",
       }),
-    ).rejects.toThrow(BadRequestError);
+    ).rejects.toMatchObject({ refusal: "invalid" });
     const wizardId = await createSeedCharacter(ctx, "wizard");
     await expect(addOneLevel(owner, wizardId, ctx.klassMap.familiar["Familiar"], 1, 4, null)).rejects.toThrow(
       "Level 1: Class is not valid for a player character",

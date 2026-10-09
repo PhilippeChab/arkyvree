@@ -10,11 +10,6 @@ function levelUpOf(view: RulesetView): LevelUp {
   return getRulesetModule(view.ruleset.baseRules).levelUp;
 }
 
-/** Refuses a character that fails its rules, from its rows: what it fails, as the refusal's issues. */
-export function checkCharacter(view: RulesetView, ...args: After<LevelUp["checkCharacter"]>) {
-  levelUpOf(view).checkCharacter(view, ...args);
-}
-
 /** A saved level's selections, as its edit opens them. */
 export function describeLevel(view: RulesetView, ...args: After<LevelUp["describeLevel"]>) {
   return levelUpOf(view).describeLevel(view, ...args);
@@ -60,7 +55,7 @@ export function openPowerPicker(view: RulesetView, ...args: After<LevelUp["openP
   return levelUpOf(view).openPowerPicker(view, ...args);
 }
 
-/** What a master's bonded creatures become as its levels make them, from its rows and theirs. */
+/** What a master's bonded creatures become as its stored levels make them, from its rows and theirs. */
 export function planBondedCreatures(view: RulesetView, ...args: After<LevelUp["planBondedCreatures"]>) {
   return levelUpOf(view).planBondedCreatures(view, ...args);
 }
@@ -70,7 +65,15 @@ export function planLevelEdit(view: RulesetView, ...args: After<LevelUp["planLev
   return levelUpOf(view).planLevelEdit(view, ...args);
 }
 
-/** The levels a level-up saves, checked, with the picks spread over them: the rows the save writes. */
+/** The character's last level removed: the level that goes, and what its bonded creatures become without it. */
+export function planLevelRemoval(view: RulesetView, ...args: After<LevelUp["planLevelRemoval"]>) {
+  return levelUpOf(view).planLevelRemoval(view, ...args);
+}
+
+/**
+ * The levels a level-up saves, checked, with the picks spread over them: the rows the save writes, and what the
+ * master's bonded creatures become with them. The character with them is refused with what it fails, unless forced.
+ */
 export function planLevelUp(view: RulesetView, ...args: After<LevelUp["planLevelUp"]>) {
   return levelUpOf(view).planLevelUp(view, ...args);
 }

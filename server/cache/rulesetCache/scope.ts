@@ -34,7 +34,7 @@ export async function withRulesetScope<T>(
 }
 
 /**
- * Multi-ruleset variant: preload `rulesetData` for every unique id and hand
+ * Multi-ruleset variant: preload each ruleset's view (its row and `rulesetData`) for every unique id and hand
  * the map to `fn`. Used for list operations that enrich rows from many
  * rulesets at once (the characters and campaign characters lists) where a single
  * `cowContext` would have to pick one ruleset, excluding the others.
@@ -51,15 +51,14 @@ export async function withRulesetScope<T>(
 export async function withRulesetScopes<T>(
   tx: Db,
   rulesetIds: Iterable<string>,
-  fn: (rulesetDataByRulesetId: Map<string, RulesetData>) => Promise<T>,
+  fn: (viewsByRulesetId: Map<string, RulesetScope>) => Promise<T>,
 ): Promise<T> {
   const unique = [...new Set(rulesetIds)];
-  const map = new Map<string, RulesetData>();
+  const map = new Map<string, RulesetScope>();
   for (const rulesetId of unique) {
     const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
     if (!ruleset) continue;
-    const rulesetData = await RulesetCache.getData(ruleset);
-    map.set(rulesetId, rulesetData);
+    map.set(rulesetId, { ruleset, rulesetData: await RulesetCache.getData(ruleset) });
   }
   return fn(map);
 }

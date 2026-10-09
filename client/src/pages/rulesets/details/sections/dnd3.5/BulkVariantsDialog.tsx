@@ -5,6 +5,7 @@ import { AddButton, DialogFooter, FormDialog, FormTextField, RowAction } from "@
 import { DeleteIcon } from "@/client/src/components/icons/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { NAME_RULES } from "@/client/src/lib/validation.ts";
+import { MAX_ITEM_VARIANTS } from "@/shared/itemTemplates.ts";
 
 import { type BulkVariantsFormValues, type VariantRow, variantRow } from "./bulkVariants.ts";
 
@@ -18,8 +19,6 @@ interface BulkVariantsDialogProps {
   open: boolean;
   pending: boolean;
 }
-
-const MAX_VARIANTS = 50;
 
 export function BulkVariantsDialog({
   open,
@@ -101,7 +100,7 @@ export function BulkVariantsDialog({
               onClick={() =>
                 append(variantRow({ name: baseItemName, description: baseItemDescription }, fields.length + 1))
               }
-              disabled={fields.length >= MAX_VARIANTS || pending}
+              disabled={fields.length >= MAX_ITEM_VARIANTS || pending}
               sx={{ alignSelf: "flex-start" }}
             />
           </Stack>

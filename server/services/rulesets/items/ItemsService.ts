@@ -1,9 +1,9 @@
 import { getTableName } from "drizzle-orm";
 
 import { itemsInRules } from "@/drizzle/schema.ts";
-import { planItemSave } from "@/engine/index.ts";
+import { describeItem, describeItems, planItemCreate, planItemDelete, planItemEdit } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
-import { findScopedEntity, RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import {
   copyEntityCustomizations,
   fetchEntityCustomizations,
@@ -40,41 +40,23 @@ class ItemsService extends include(Object, Variants) {
   private async addRulesetItem(session: Session, rulesetId: string, body: ItemBody, duplicatedItemId?: string) {
     const result = await withTransaction(
       async (tx) =>
-        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        await withRulesetScope(tx, rulesetId, async (scope) => {
+          const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const source = duplicatedItemId
-            ? findScopedEntity(
-                rulesetData.itemsById,
-                duplicatedItemId,
-                rulesetId,
-                rulesetData.cow.sourceChain,
-                "Source item",
-              )
-            : undefined;
-          if (!source) this.validateTemplateSource(body.isTemplate ?? false, body.sourceItemId);
+          const plan = planItemCreate(scope, body, duplicatedItemId);
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "items", body.name);
 
-          const { columns } = planItemSave({ ruleset, rulesetData }, body);
-          const rows = await Items.create(tx, {
-            name: body.name,
-            description: body.description,
-            type: body.type,
-            slot: columns.slot,
-            rulesetId,
-            weight: body.weight?.toString(),
-            costGp: body.costGp?.toString(),
-            sourceItemId: source ? this.templateOf(source) : body.sourceItemId,
-            isTemplate: source ? false : (body.isTemplate ?? false),
-          });
+          const rows = await Items.create(tx, { ...plan.columns, rulesetId });
           const item = rows[0];
 
           if (tombstoneAncestorId) await edit.repointTombstone(tx, "items", tombstoneAncestorId, item.id);
 
-          if (source && !source.isTemplate) {
-            const cust = (await fetchEntityCustomizations(tx, [source.id], "items", "items")).get(source.id);
+          const sourceId = plan.copyCustomizationsFrom;
+          if (sourceId) {
+            const cust = (await fetchEntityCustomizations(tx, [sourceId], "items", "items")).get(sourceId);
             if (cust) await copyEntityCustomizations(tx, item.id, "items", cust);
           }
 
@@ -100,20 +82,16 @@ class ItemsService extends include(Object, Variants) {
   async deleteItem(session: Session, rulesetId: string, itemId: string) {
     const result = await withTransaction(
       async (tx) =>
-        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-          const { sourceChain } = rulesetData.cow;
+        await withRulesetScope(tx, rulesetId, async (scope) => {
+          const { ruleset, rulesetData } = scope;
 
           const inUse = await hasCharacterPicks(tx, "items", itemId, rulesetId);
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-          const item = findScopedEntity(rulesetData.itemsById, itemId, rulesetId, sourceChain, "Item");
-
-          // If template, check for copies using the resolved ID
-          if (item.isTemplate) {
-            const copies = await Items.findMany(tx, { sourceItemId: item.id });
-            if (copies.length > 0)
-              throw new ConflictError("Cannot delete a template item that has copies referencing it");
-          }
+          const plan = planItemDelete(scope, itemId);
+          const { item } = plan;
+          // A template's copies, in any ruleset: its delete is refused while it has any
+          if (plan.copiesOf) plan.checkCopies(await Items.findMany(tx, { sourceItemId: plan.copiesOf }));
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const targetId = await edit.cowToDelete(tx, "items", item);
@@ -142,24 +120,7 @@ class ItemsService extends include(Object, Variants) {
   }
 
   async getItem(rulesetId: string, itemId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const item = findScopedEntity(rulesetData.itemsById, itemId, rulesetId, sourceChain, "Item");
-
-      // Template inheritance: if item has a sourceItemId, inherit properties and
-      // requirements from the template. Own properties override template ones of
-      // the same type; requirements are additive.
-      const modifiers = rulesetData.modifiersBySource.get(item.id) ?? [];
-      const ownRequirements = rulesetData.requirementsByEntity.get(item.id) ?? [];
-      const templateRequirements = item.sourceItemId
-        ? (rulesetData.requirementsByEntity.get(item.sourceItemId) ?? [])
-        : [];
-
-      const properties = rulesetData.itemProperties(item);
-      const requirements = [...templateRequirements, ...ownRequirements];
-
-      return { ...item, modifiers, properties, requirements };
-    });
+    return await withRulesetScope(db, rulesetId, async (scope) => describeItem(scope, itemId));
   }
 
   async getItems(
@@ -173,50 +134,28 @@ class ItemsService extends include(Object, Variants) {
     },
     pagination: { limit: number; page: number },
   ) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
+    return await withRulesetScope(db, rulesetId, async (scope) => {
+      const { sourceChain } = scope.rulesetData.cow;
       const result = await Items.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
-
-      return {
-        ...result,
-        items: result.items.map((item) => ({
-          ...item,
-          templateName: item.sourceItemId ? (rulesetData.itemsById.get(item.sourceItemId)?.name ?? null) : null,
-        })),
-      };
+      return { ...result, items: describeItems(scope, result.items) };
     });
   }
 
   async updateItem(session: Session, rulesetId: string, itemId: string, body: ItemBody) {
     const result = await withTransaction(
       async (tx) =>
-        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-          const { sourceChain } = rulesetData.cow;
+        await withRulesetScope(tx, rulesetId, async (scope) => {
+          const { ruleset, rulesetData } = scope;
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const item = findScopedEntity(rulesetData.itemsById, itemId, rulesetId, sourceChain, "Item");
-
-          this.validateTemplateSource(item.isTemplate, body.sourceItemId);
+          const { columns, item } = planItemEdit(scope, itemId, body);
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "items", item);
           const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
-          const { columns } = planItemSave({ ruleset, rulesetData }, body);
-          const rows = await Items.update(
-            tx,
-            {
-              name: body.name,
-              description: body.description,
-              type: body.type,
-              slot: columns.slot,
-              weight: body.weight?.toString(),
-              costGp: body.costGp?.toString(),
-              sourceItemId: item.isTemplate ? null : body.sourceItemId,
-            },
-            { id: targetId, expectedUpdatedAt },
-          );
+          const rows = await Items.update(tx, columns, { id: targetId, expectedUpdatedAt });
           if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
           const updatedItem = rows[0];

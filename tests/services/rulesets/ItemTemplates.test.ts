@@ -1,7 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
 import { db } from "@/server/database/index.ts";
-import { ConflictError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { EntitySnapshots, Items, Properties } from "@/server/repositories/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import {
@@ -21,6 +20,7 @@ import {
   WEAPON_SIZE,
   WEAPON_TYPE,
 } from "@/shared/dnd3.5/properties/index.ts";
+import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createSeededTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
@@ -153,14 +153,15 @@ describe("Item templates", () => {
     test("when created", async () => {
       const { session, ruleset, template } = await setup();
       const mace = await template("Heavy Mace");
-      await expect(
+      await expectRefusedWith(
         ItemsService.createItem(session, ruleset.id, {
           name: "Invalid template",
           type: "Weapon",
           isTemplate: true,
           sourceItemId: mace.id,
         }),
-      ).rejects.toThrow(UnprocessableEntityError);
+        422,
+      );
       expect(await Items.findOne(db, { rulesetId: ruleset.id, name: "Invalid template" })).toBeUndefined();
 
       expect(
@@ -189,13 +190,14 @@ describe("Item templates", () => {
         description: "Local template",
       });
       const sword = await template("Longsword");
-      await expect(
+      await expectRefusedWith(
         ItemsService.updateItem(session, ruleset.id, local.id, {
           name: local.name,
           isTemplate: false,
           sourceItemId: sword.id,
         }),
-      ).rejects.toThrow(UnprocessableEntityError);
+        422,
+      );
       expect(await Items.findOne(db, { id: local.id })).toMatchObject({ isTemplate: true, sourceItemId: null });
     });
 
@@ -237,9 +239,7 @@ describe("Item templates", () => {
   test("can't be deleted while an item is made from them", async () => {
     const { session, ruleset, template, instance } = await setup();
     await instance("Chain Mail");
-    await expect(ItemsService.deleteItem(session, ruleset.id, (await template("Chain Mail")).id)).rejects.toThrow(
-      ConflictError,
-    );
+    await expectRefusedWith(ItemsService.deleteItem(session, ruleset.id, (await template("Chain Mail")).id), 409);
 
     const unused = await ItemsService.createItem(session, ruleset.id, {
       name: "Custom Template",

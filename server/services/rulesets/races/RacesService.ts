@@ -1,7 +1,8 @@
 import { getTableName } from "drizzle-orm";
 
 import { racesInRules } from "@/drizzle/schema.ts";
-import { findScopedEntity, RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { describeEntity, getEntity } from "@/engine/index.ts";
+import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
@@ -24,18 +25,14 @@ class RacesService {
   ) {
     const result = await withTransaction(
       async (tx) =>
-        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        await withRulesetScope(tx, rulesetId, async (scope) => {
+          const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "races", body.name);
 
-          const rows = await Races.create(tx, {
-            ...body,
-            rulesetId,
-            size: body.size || "Medium",
-            baseSpeed: body.baseSpeed || 30,
-          });
+          const rows = await Races.create(tx, { ...body, rulesetId });
           const race = rows[0];
 
           if (tombstoneAncestorId) await edit.repointTombstone(tx, "races", tombstoneAncestorId, race.id);
@@ -58,13 +55,13 @@ class RacesService {
   async deleteRace(session: Session, rulesetId: string, raceId: string) {
     const result = await withTransaction(
       async (tx) =>
-        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-          const { sourceChain } = rulesetData.cow;
+        await withRulesetScope(tx, rulesetId, async (scope) => {
+          const { ruleset, rulesetData } = scope;
 
           const inUse = await hasCharacterPicks(tx, "races", raceId, rulesetId);
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-          const race = findScopedEntity(rulesetData.racesById, raceId, rulesetId, sourceChain, "Race");
+          const race = getEntity(scope, "races", raceId);
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const targetId = await edit.cowToDelete(tx, "races", race);
@@ -88,16 +85,7 @@ class RacesService {
   }
 
   async getRace(rulesetId: string, raceId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const race = findScopedEntity(rulesetData.racesById, raceId, rulesetId, sourceChain, "Race");
-      return {
-        ...race,
-        modifiers: rulesetData.modifiersBySource.get(race.id) ?? [],
-        properties: rulesetData.propertiesByEntity.get(race.id) ?? [],
-        requirements: rulesetData.requirementsByEntity.get(race.id) ?? [],
-      };
-    });
+    return await withRulesetScope(db, rulesetId, async (scope) => describeEntity(scope, "races", raceId));
   }
 
   async getRaces(
@@ -111,7 +99,8 @@ class RacesService {
     },
     pagination: { limit: number; page: number },
   ) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+    return await withRulesetScope(db, rulesetId, async (scope) => {
+      const { rulesetData } = scope;
       const { sourceChain } = rulesetData.cow;
       return await Races.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
     });
@@ -131,12 +120,12 @@ class RacesService {
   ) {
     const result = await withTransaction(
       async (tx) =>
-        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-          const { sourceChain } = rulesetData.cow;
+        await withRulesetScope(tx, rulesetId, async (scope) => {
+          const { ruleset, rulesetData } = scope;
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const race = findScopedEntity(rulesetData.racesById, raceId, rulesetId, sourceChain, "Race");
+          const race = getEntity(scope, "races", raceId);
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "races", race);

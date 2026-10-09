@@ -5,7 +5,7 @@ import type { InferInsertModel } from "drizzle-orm";
 import type { itemsInRules } from "@/drizzle/schema.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
-import { BadRequestError, ConflictError, NotFoundError } from "@/server/errors/index.ts";
+import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { CharacterInventory, Modifiers, Properties, Races, Requirements } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
@@ -212,10 +212,12 @@ describe("InventoryService", () => {
         [10, null],
         [null, 5],
       ] as [number | null, number | null][])
-        await expect(add(session, character.id, item.id, { charges })).rejects.toThrow(BadRequestError);
+        await expect(add(session, character.id, item.id, { charges })).rejects.toMatchObject({ refusal: "invalid" });
 
       await add(session, character.id, item.id, { charges: [10, 10] });
-      await expect(update(session, character.id, item.id, { charges: [10, 20] })).rejects.toThrow(BadRequestError);
+      await expect(update(session, character.id, item.id, { charges: [10, 20] })).rejects.toMatchObject({
+        refusal: "invalid",
+      });
     });
 
     test("refuses a missing item and changes to an entry the character doesn't have", async () => {
@@ -280,7 +282,7 @@ describe("InventoryService", () => {
 
       // A character of the seeded ruleset: the item's ruleset is unrelated to it.
       const onSeed = await createCharacterAs(session);
-      await expect(add(session, onSeed.id, inherited.id)).rejects.toThrow(BadRequestError);
+      await expect(add(session, onSeed.id, inherited.id)).rejects.toMatchObject({ refusal: "invalid" });
     });
   });
 

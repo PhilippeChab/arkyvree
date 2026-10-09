@@ -2,9 +2,10 @@ import { describe, expect, test } from "bun:test";
 
 import { inventoryInCharacter } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
-import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
+import { ForbiddenError } from "@/server/errors/index.ts";
 import { EntitySnapshots } from "@/server/repositories/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
+import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { customize, findCustomizations } from "@/tests/support/customizations.ts";
 import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
@@ -119,11 +120,9 @@ describe("ItemsService", () => {
       await expectTemplateInstance(ruleset.id, copy.id, template.id);
     });
 
-    test("throws NotFoundError for a source outside the ruleset", async () => {
+    test("doesn't find a source outside the ruleset", async () => {
       const { session, ruleset } = await createTestUserAndRuleset();
-      await expect(ItemsService.duplicateItem(session, ruleset.id, NIL_UUID, { name: "No Source" })).rejects.toThrow(
-        NotFoundError,
-      );
+      await expectRefusedWith(ItemsService.duplicateItem(session, ruleset.id, NIL_UUID, { name: "No Source" }), 404);
     });
   });
 
@@ -199,7 +198,7 @@ describe("ItemsService", () => {
       ).rejects.toThrow(ForbiddenError);
     });
 
-    test("are refused all together when there are none, more than 50, a repeated name or a taken one", async () => {
+    test("are refused all together when a name repeats or is taken", async () => {
       const { session, ruleset } = await createTestUserAndRuleset();
       const source = await ItemsService.createItem(session, ruleset.id, { name: "Scroll" });
       await ItemsService.createItem(session, ruleset.id, { name: "Taken Name" });
@@ -211,15 +210,9 @@ describe("ItemsService", () => {
           names.map((name) => ({ name })),
         );
 
-      await expect(create([])).rejects.toThrow(UnprocessableEntityError);
-      await expect(create(Array.from({ length: 51 }, (_, i) => `Variant ${i}`))).rejects.toThrow(
-        UnprocessableEntityError,
-      );
-      await expect(create(["Probe", "Probe"])).rejects.toThrow(ConflictError);
-      await expect(create(["Probe Alpha", "Taken Name", "Probe Beta"])).rejects.toThrow(ConflictError);
-      await expect(ItemsService.createVariants(session, ruleset.id, NIL_UUID, [{ name: "Orphan" }])).rejects.toThrow(
-        NotFoundError,
-      );
+      await expectRefusedWith(create(["Probe", "Probe"]), 409);
+      await expectRefusedWith(create(["Probe Alpha", "Taken Name", "Probe Beta"]), 409);
+      await expectRefusedWith(ItemsService.createVariants(session, ruleset.id, NIL_UUID, [{ name: "Orphan" }]), 404);
 
       const { items } = await ItemsService.getItems(ruleset.id, { search: "Probe" }, { limit: 10, page: 1 });
       expect(items).toEqual([]);
@@ -250,6 +243,6 @@ describe("ItemsService", () => {
     const character = await createTestCharacter(user.id, { rulesetId: host.id });
     await db.insert(inventoryInCharacter).values({ characterId: character.id, itemId: item.id, quantity: 1 });
 
-    await expect(ItemsService.deleteItem(session, extension.id, item.id)).rejects.toThrow(ConflictError);
+    await expectRefusedWith(ItemsService.deleteItem(session, extension.id, item.id), 409);
   });
 });

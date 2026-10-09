@@ -8,28 +8,33 @@ import type { AptitudeModifier } from "./concerns/AnnotatesOptions.ts";
 import PickerState, { type PickQuery } from "./PickerState.ts";
 
 /**
- * A feat picker for the character, from its rows: what it offers and leaves out (`filters`), which the server reads a
- * page of options with, and the page annotated for the character built with the level's picks so far.
+ * A feat picker for the character, from its rows: what it offers and leaves out, which the server reads a page of
+ * options with (`filters`, a family's feats when the query names one; `groupFilters`, the feats grouped by family),
+ * and the page annotated for the character built with the level's picks so far.
  */
 export default class FeatPicker extends PickerState {
-  constructor(view: RulesetView, character: CharacterInput, query: PickQuery) {
+  constructor(view: RulesetView, character: CharacterInput, query: PickQuery & { family?: string }) {
     super(view, character, query);
     this.built = this.build(character, this.projectFeatPick());
-    this.filters = {
+    const offered = {
       ids: this.rulesetData.listFeatIds(query.aptitudeId),
       excludeFeatIds: this.built.getHeldNonStackableFeatIds(),
-      familyType: FEAT_FAMILY,
     };
+    this.filters = { ...offered, ...(query.family && { family: { type: FEAT_FAMILY, value: query.family } }) };
+    this.groupFilters = { ...offered, familyType: FEAT_FAMILY };
   }
 
   /** The character the pick is made for. */
   private readonly built: Dnd35DetailedCharacter;
 
   /**
-   * What the picker offers and leaves out: the pool's feats as the ruleset composes the list, but those the character
-   * can't take again (a feat that doesn't stack, held already).
+   * What the picker offers and leaves out: the pool's feats as the ruleset composes the list (a family's, when the query
+   * names one), but those the character can't take again (a feat that doesn't stack, held already).
    */
-  readonly filters: { excludeFeatIds: string[]; familyType: string; ids: string[] };
+  readonly filters: { excludeFeatIds: string[]; family?: { type: string; value: string }; ids: string[] };
+
+  /** What the picker offers grouped by family: its feats, and the property their family is kept in. */
+  readonly groupFilters: { excludeFeatIds: string[]; familyType: string; ids: string[] };
 
   /** A row of a feat's variants, which the picker opens into them: each variant says whether it's eligible. */
   private asFamilyRow<T extends object>(row: T) {

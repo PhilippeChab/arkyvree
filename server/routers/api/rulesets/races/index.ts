@@ -6,6 +6,9 @@ import { type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { RacesService } from "@/server/services/rulesets/races/index.ts";
 
+/** A race's base speed, in feet: a whole number above 0, as its column holds it. */
+const baseSpeed = z.number().int().min(1);
+
 const raceParams = idParam.extend({ raceId: z.string().uuid() });
 
 export default new Hono<SessionContext>()
@@ -49,7 +52,7 @@ export default new Hono<SessionContext>()
           .optional()
           .transform((v) => v || null),
         size: z.enum(sizeType.enumValues),
-        baseSpeed: z.number(),
+        baseSpeed: baseSpeed,
       }),
     ),
     async (c) => {
@@ -70,7 +73,7 @@ export default new Hono<SessionContext>()
           .optional()
           .transform((v) => v || null),
         size: z.enum(sizeType.enumValues),
-        baseSpeed: z.number(),
+        baseSpeed: baseSpeed,
         updatedAt: z.string().optional(),
       }),
     ),

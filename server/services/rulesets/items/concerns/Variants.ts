@@ -1,12 +1,12 @@
 import { getTableName } from "drizzle-orm";
 
 import { itemsInRules } from "@/drizzle/schema.ts";
-import { planItemSave } from "@/engine/index.ts";
+import { planItemVariants } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { findScopedEntity, RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { copyEntityCustomizationsToMany, fetchEntityCustomizations, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import { ConflictError, UnprocessableEntityError } from "@/server/errors/index.ts";
+import { ConflictError } from "@/server/errors/index.ts";
 import { Items } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
@@ -16,15 +16,6 @@ import type { Session } from "@/shared/relations.ts";
 /** An item's templates and their variants: what a variant may copy, and the variants made in bulk. */
 export function Variants<B extends Constructor>(Base: B) {
   abstract class WithVariants extends Base {
-    /** The template an item made from `item` points at: `item` itself when it's a template, or its own template. */
-    protected templateOf(item: { id: string; isTemplate: boolean; sourceItemId: string | null }) {
-      return item.isTemplate ? item.id : (item.sourceItemId ?? undefined);
-    }
-
-    protected validateTemplateSource(isTemplate: boolean, sourceItemId?: string) {
-      if (isTemplate && sourceItemId) throw new UnprocessableEntityError("Template items cannot have a source item");
-    }
-
     /**
      * The tombstoned ancestor each variant takes over, by the variant's index. When two tombstoned ancestors share a name
      * (an extension and a parent), the closer one (lower sourceChain index) follows the new item, matching the
@@ -61,23 +52,15 @@ export function Variants<B extends Constructor>(Base: B) {
       sourceItemId: string,
       variants: Array<{ description?: string | null; name: string }>,
     ) {
-      if (variants.length === 0) throw new UnprocessableEntityError("At least one variant is required");
-
-      if (variants.length > 50) throw new UnprocessableEntityError("Cannot create more than 50 variants at once");
-
       const names = variants.map((v) => v.name);
-      if (new Set(names).size !== names.length) throw new ConflictError("Duplicate names within the variants list");
-
       const result = await withTransaction(
         async (tx) =>
-          await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+          await withRulesetScope(tx, rulesetId, async (scope) => {
+            const { ruleset, rulesetData } = scope;
             const { sourceChain } = rulesetData.cow;
 
             (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
-
-            const source = findScopedEntity(rulesetData.itemsById, sourceItemId, rulesetId, sourceChain, "Source item");
-
-            const { slot } = planItemSave({ ruleset, rulesetData }, source).columns;
+            const plan = planItemVariants(scope, sourceItemId, variants);
 
             // Batched pre-validation: one query for local conflicts, one for
             // ancestor conflicts, then the shared visibility / tombstone check
@@ -97,24 +80,14 @@ export function Variants<B extends Constructor>(Base: B) {
 
             const tombstones = this.variantTombstones(variants, ancestorConflicts, tombstoned, sourceChain);
 
-            const sourceCust = source.isTemplate
-              ? undefined
-              : (await fetchEntityCustomizations(tx, [source.id], "items", "items")).get(source.id);
+            const sourceId = plan.copyCustomizationsFrom;
+            const sourceCust = sourceId
+              ? (await fetchEntityCustomizations(tx, [sourceId], "items", "items")).get(sourceId)
+              : undefined;
 
             const created = [];
-            for (let i = 0; i < variants.length; i++) {
-              const variant = variants[i];
-              const rows = await Items.create(tx, {
-                name: variant.name,
-                description: variant.description,
-                type: source.type,
-                slot,
-                rulesetId,
-                weight: source.weight,
-                costGp: source.costGp,
-                sourceItemId: this.templateOf(source),
-                isTemplate: false,
-              });
+            for (const [i, row] of plan.rows.entries()) {
+              const rows = await Items.create(tx, { ...row, rulesetId });
               const item = rows[0];
 
               const tombstoneAncestorId = tombstones.get(i);
@@ -148,7 +121,8 @@ export function Variants<B extends Constructor>(Base: B) {
     }
 
     async getTemplates(rulesetId: string, type?: TemplateItemType) {
-      return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+      return await withRulesetScope(db, rulesetId, async (scope) => {
+        const { rulesetData } = scope;
         const { sourceChain } = rulesetData.cow;
         return await Items.findMany(db, { rulesetId, ancestorRulesetIds: sourceChain, type, isTemplate: true });
       });

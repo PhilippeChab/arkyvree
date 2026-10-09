@@ -2,9 +2,10 @@ import { describe, expect, test } from "bun:test";
 
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
-import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
+import { ConflictError, ForbiddenError } from "@/server/errors/index.ts";
 import { Abilities, EntitySnapshots, Klasses, KlassLevels, KlassSkills, Skills } from "@/server/repositories/index.ts";
 import { ClassSkillsService } from "@/server/services/rulesets/classes/skills/index.ts";
+import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { addCharacterLevel } from "@/tests/support/levels.ts";
 import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
@@ -59,19 +60,11 @@ describe("ClassSkillsService", () => {
   test("doesn't find a class or skill of another ruleset, nor a skill the class doesn't have", async () => {
     const { session, ruleset, fighter, climb } = await setup();
     const other = await setup();
-    await expect(ClassSkillsService.getClassSkills(ruleset.id, other.fighter.id)).rejects.toThrow(NotFoundError);
-    await expect(ClassSkillsService.addClassSkill(session, ruleset.id, other.fighter.id, climb.id)).rejects.toThrow(
-      NotFoundError,
-    );
-    await expect(ClassSkillsService.addClassSkill(session, ruleset.id, fighter.id, other.climb.id)).rejects.toThrow(
-      NotFoundError,
-    );
-    await expect(ClassSkillsService.removeClassSkill(session, ruleset.id, fighter.id, climb.id)).rejects.toThrow(
-      NotFoundError,
-    );
-    await expect(ClassSkillsService.removeClassSkill(session, ruleset.id, other.fighter.id, climb.id)).rejects.toThrow(
-      NotFoundError,
-    );
+    await expectRefusedWith(ClassSkillsService.getClassSkills(ruleset.id, other.fighter.id), 404);
+    await expectRefusedWith(ClassSkillsService.addClassSkill(session, ruleset.id, other.fighter.id, climb.id), 404);
+    await expectRefusedWith(ClassSkillsService.addClassSkill(session, ruleset.id, fighter.id, other.climb.id), 404);
+    await expectRefusedWith(ClassSkillsService.removeClassSkill(session, ruleset.id, fighter.id, climb.id), 404);
+    await expectRefusedWith(ClassSkillsService.removeClassSkill(session, ruleset.id, other.fighter.id, climb.id), 404);
   });
 
   test("refuses to remove a class skill while a character has a level in the class", async () => {

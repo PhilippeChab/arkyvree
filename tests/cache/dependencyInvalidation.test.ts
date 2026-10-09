@@ -1,10 +1,9 @@
 import { afterEach, expect, test } from "bun:test";
 
 import DependentCache from "@/server/cache/DependentCache.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { readTargetPaths, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Rulesets } from "@/server/repositories/index.ts";
-import { getTargetPathsWithLabels } from "@/server/services/rulesets/customization/targetPaths/index.ts";
 import { measure } from "@/tests/support/database.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
@@ -31,7 +30,7 @@ for (const phase of ["pending", "cached"] as const) {
       Promise.all([
         RulesetCache.getRawData(unrelated.id),
         RulesetCache.getCowData(unrelated),
-        RulesetCache.getTargetPaths(unrelated.id, "modifier", paths, unrelated.ancestorRulesetIds),
+        RulesetCache.getTargetPaths(unrelated, "modifier", paths),
       ]);
     const pending = read();
     if (phase === "cached") await pending;
@@ -51,15 +50,15 @@ test("target-path service invalidates extension subscribers but retains an unrel
   await Rulesets.update(db, { extensionRulesetIds: [edited.id] }, { id: host.id });
   const [feat] = await Feats.create(db, { rulesetId: edited.id, name: "Performance Marker", description: "Before" });
   RulesetCache.invalidateAll();
-  const before = await getTargetPathsWithLabels(host.id, "requirement");
-  const untouched = await getTargetPathsWithLabels(unrelated.id, "requirement");
+  const before = await readTargetPaths(host.id, "requirement");
+  const untouched = await readTargetPaths(unrelated.id, "requirement");
   expect(before.paths.some((path) => path.path === "feats.performancemarker.possessed")).toBe(true);
   await Feats.update(db, { name: "Updated Marker" }, { id: feat.id });
   RulesetCache.invalidate(edited.id);
-  const next = await getTargetPathsWithLabels(host.id, "requirement");
+  const next = await readTargetPaths(host.id, "requirement");
   expect(next.paths.some((path) => path.path === "feats.performancemarker.possessed")).toBe(false);
   expect(next.paths.some((path) => path.path === "feats.updatedmarker.possessed")).toBe(true);
-  expect(await getTargetPathsWithLabels(unrelated.id, "requirement")).toBe(untouched);
+  expect(await readTargetPaths(unrelated.id, "requirement")).toBe(untouched);
 });
 
 for (const invalidate of ["dependency", "all"] as const) {

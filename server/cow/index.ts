@@ -3,7 +3,7 @@
  * copy of an inherited one, made on its first edit), a copy itself (`EntityCopy`), what a copy copies
  * (`copyEntityCustomizations*`, `fetchEntityCustomizations`), each entity type's repository (`ENTITY_REPOS`), and the
  * checks a change makes (`hasCharacterPicks`, `lockEntityForMutation`). Its read side, the view a ruleset's reads see
- * (`withRulesetScope`, `findScopedEntity`), is the cache's (`cache/rulesetCache/`).
+ * (`withRulesetScope`), is the cache's (`cache/rulesetCache/`).
  */
 export { hasCharacterPicks } from "./characterPicks.ts";
 export { copyEntityCustomizations, copyEntityCustomizationsToMany } from "./copyCustomizations.ts";

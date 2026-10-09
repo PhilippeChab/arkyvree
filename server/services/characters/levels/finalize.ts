@@ -7,10 +7,9 @@
 import { getTableName } from "drizzle-orm";
 
 import { levelsInCharacter } from "@/drizzle/schema.ts";
-import { checkCharacter, planBondedCreatures, planLevelEdit, planLevelUp } from "@/engine/index.ts";
+import { planLevelEdit, planLevelRemoval, planLevelUp } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { type Db, withTransaction } from "@/server/database/index.ts";
-import { NotFoundError } from "@/server/errors/index.ts";
 import {
   Activities,
   CharacterLevelFeats,
@@ -62,8 +61,9 @@ async function lockEditableCharacter(tx: Db, session: Session, characterId: stri
 }
 
 /**
- * Saves a level-up's levels, the character's pooled picks (skills, feats, powers) spread over them: the engine checks
- * each, the save writes them, and the saved character is refused when it fails its rules, unless `force`d.
+ * Saves a level-up's levels, the character's pooled picks (skills, feats, powers) spread over them, and what its bonded
+ * creatures become: the engine checks each level, and the character with them unless `force`d, and the save writes
+ * what it plans.
  */
 export async function finalizeLevelUp(
   session: Session,
@@ -84,22 +84,15 @@ export async function finalizeLevelUp(
 
     return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
       const character = await readCharacterInput(tx, characterRecord);
+      const bonded = await readBondedInputs(tx, character);
+      const plan = planLevelUp(scope, character, bonded, levels, { skills, feats, powers }, force);
       const createdLevels = [];
-      for (const { feats: levelFeats, powers: levelPowers, skills: levelSkills, ...level } of planLevelUp(
-        scope,
-        character,
-        levels,
-        { skills, feats, powers },
-      )) {
+      for (const { feats: levelFeats, powers: levelPowers, skills: levelSkills, ...level } of plan.levels) {
         const [created] = await CharacterLevels.create(tx, { characterId, ...level });
         createdLevels.push(created);
         await insertLevelPicks(tx, created.id, { feats: levelFeats, powers: levelPowers, skills: levelSkills });
       }
-
-      const saved = await readCharacterInput(tx, characterRecord);
-      if (!force) checkCharacter(scope, saved);
-      const bonded = await readBondedInputs(tx, saved);
-      await writeBondedCreatures(tx, characterRecord, planBondedCreatures(scope, saved, bonded));
+      await writeBondedCreatures(tx, characterRecord, plan.bonded);
 
       await Activities.create(tx, {
         userId: session.userId,
@@ -119,18 +112,13 @@ export async function removeLevel(session: Session, characterId: string) {
   return await withTransaction(async (tx) => {
     const characterRecord = await lockEditableCharacter(tx, session, characterId);
 
-    const lastLevel = await CharacterLevels.findLatest(tx, {
-      characterId,
-    });
-    if (!lastLevel) throw new NotFoundError("No level to remove");
-
-    await deleteLevelPicks(tx, lastLevel.id);
-    await CharacterLevels.delete(tx, { id: lastLevel.id });
-
     await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
       const character = await readCharacterInput(tx, characterRecord);
       const bonded = await readBondedInputs(tx, character);
-      await writeBondedCreatures(tx, characterRecord, planBondedCreatures(scope, character, bonded));
+      const removal = planLevelRemoval(scope, character, bonded);
+      await deleteLevelPicks(tx, removal.level.id);
+      await CharacterLevels.delete(tx, { id: removal.level.id });
+      await writeBondedCreatures(tx, characterRecord, removal.bonded);
     });
 
     await Activities.create(tx, {

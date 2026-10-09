@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { addClassLevels } from "@/database/seeds/seedCharacter.ts";
-import { planSkillDelete } from "@/engine/index.ts";
+import GeneratedFeats from "@/engine/rulesets/dnd3.5/feats/GeneratedFeats.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
@@ -19,13 +19,11 @@ import {
 } from "@/server/repositories/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
-import { writeEntityWrites } from "@/server/services/rulesets/entityWrites.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { SkillsService } from "@/server/services/rulesets/skills/index.ts";
 import { WEAPON_TYPE } from "@/shared/dnd3.5/properties/index.ts";
-import { measure } from "@/tests/support/database.ts";
 import { createSeedCharacter } from "@/tests/support/levelFixtures.ts";
 import {
   copyEntity,
@@ -34,7 +32,7 @@ import {
   createTestRuleset,
   createTestUserAndRuleset,
 } from "@/tests/support/rulesets.ts";
-import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+import { getSeedCtx } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
 function skill(abilityId: string, name: string, fields: Record<string, unknown> = {}) {
@@ -364,13 +362,13 @@ describe("an inherited skill's Skill Focus", () => {
     },
   );
 
-  test("is cleaned up from the rules the caller loaded, without another lookup", async () => {
-    const { fork } = await seededForkWithClimb();
+  test("is removed by the id the rules the caller loaded have, and left out when they have none", async () => {
+    const { fork, feat } = await seededForkWithClimb();
     await withRulesetScope(db, fork.id, async (scope) => {
-      const entity = { entityId: NIL_UUID, entityType: "skills" } as const;
-      const writes = planSkillDelete(scope, { name: "No generated feat" });
-      const { timing } = await measure(() => writeEntityWrites(db, scope, entity, writes));
-      expect(timing).toMatchObject({ queryCount: 0, cacheHits: 0, cacheMisses: 0 });
+      expect(GeneratedFeats.remove(scope, "Skill Focus: Climb", "In use")).toEqual([
+        { featId: feat.id, inUse: "In use" },
+      ]);
+      expect(GeneratedFeats.remove(scope, "Skill Focus: No generated feat", "In use")).toEqual([]);
     });
   });
 });

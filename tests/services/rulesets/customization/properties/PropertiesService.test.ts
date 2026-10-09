@@ -2,10 +2,11 @@ import { describe, expect, test } from "bun:test";
 
 import { propertiesInCustomization } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
-import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
+import { ForbiddenError } from "@/server/errors/index.ts";
 import { Feats, Items, Properties } from "@/server/repositories/index.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { activityTypes } from "@/tests/support/activities.ts";
+import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 
@@ -52,11 +53,9 @@ describe("PropertiesService", () => {
     const { session: other } = await createTestUserAndRuleset();
     const created = await PropertiesService.createProperty(session, rulesetId, "feats", feat.id, acBonus);
 
-    await expect(PropertiesService.getProperties(NIL_UUID, "feats", feat.id)).rejects.toThrow(NotFoundError);
-    await expect(PropertiesService.getProperties(rulesetId, "feats", NIL_UUID)).rejects.toThrow(NotFoundError);
-    await expect(PropertiesService.createProperty(session, rulesetId, "feats", NIL_UUID, acBonus)).rejects.toThrow(
-      NotFoundError,
-    );
+    await expectRefusedWith(PropertiesService.getProperties(NIL_UUID, "feats", feat.id), 404);
+    await expectRefusedWith(PropertiesService.getProperties(rulesetId, "feats", NIL_UUID), 404);
+    await expectRefusedWith(PropertiesService.createProperty(session, rulesetId, "feats", NIL_UUID, acBonus), 404);
     await expect(PropertiesService.createProperty(other, rulesetId, "feats", feat.id, acBonus)).rejects.toThrow(
       ForbiddenError,
     );
@@ -66,9 +65,9 @@ describe("PropertiesService", () => {
       (s = session, entityId = feat.id, id = created.id) =>
         PropertiesService.deleteProperty(s, rulesetId, "feats", entityId, id),
     ]) {
-      await expect(change(session, feat.id, NIL_UUID)).rejects.toThrow(NotFoundError);
+      await expectRefusedWith(change(session, feat.id, NIL_UUID), 404);
       // Only an item made from a template reaches the template's properties.
-      await expect(change(session, feat.id, templateProperty.id)).rejects.toThrow(NotFoundError);
+      await expectRefusedWith(change(session, feat.id, templateProperty.id), 404);
       await expect(change(other)).rejects.toThrow(ForbiddenError);
     }
   });
@@ -83,7 +82,7 @@ describe("PropertiesService", () => {
         updatedAt: created.updatedAt,
       });
     await edit("6");
-    await expect(edit("7")).rejects.toThrow(ConflictError);
+    await expectRefusedWith(edit("7"), 409);
   });
 
   describe("on an item made from a template", () => {
@@ -118,9 +117,10 @@ describe("PropertiesService", () => {
 
     test("refuses to delete a template property", async () => {
       const { session, rulesetId, derived, templateProperty } = await setup();
-      await expect(
+      await expectRefusedWith(
         PropertiesService.deleteProperty(session, rulesetId, "items", derived.id, templateProperty.id),
-      ).rejects.toThrow(BadRequestError);
+        400,
+      );
       expect(await Properties.findOne(db, { id: templateProperty.id })).toBeDefined();
     });
   });
