@@ -1,4 +1,4 @@
-import { parseLiteralValue } from "@/engine/core/paths/literalValue.ts";
+import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import { parseAptitudePool } from "@/engine/rulesets/dnd3.5/aptitudes/aptitudeTargets.ts";
 import type Dnd35DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import type LevelUpState from "@/engine/rulesets/dnd3.5/levelUp/LevelUpState.ts";
@@ -36,7 +36,7 @@ export function AnnotatesOptions<B extends Constructor<LevelUpState>>(Base: B) {
           const pool = parseAptitudePool(mod.target);
           if (pool === undefined) continue;
           const resolvedAptitudeId = this.rulesetData.aptitudeIdBySlug.get(pool);
-          const value = parseLiteralValue(mod.value, "number");
+          const value = LiteralValue.parse(mod.value, "number");
           if (!resolvedAptitudeId || typeof value !== "number") continue;
           let group = result.get(mod.sourceId);
           if (!group) {

@@ -1,5 +1,5 @@
+import CategoryPaths from "@/engine/core/paths/CategoryPaths.ts";
 import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
-import { collectPropertySlugs } from "@/engine/core/paths/propertySlugs.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import type { Dnd35Components } from "@/engine/rulesets/dnd3.5/character/components.ts";
 import { collectFeatListIds } from "@/engine/rulesets/dnd3.5/spellcasting/spellLists.ts";
@@ -150,9 +150,14 @@ export default class PowersPaths implements PathCategory<Dnd35Components> {
     }));
     return [
       ...PowersPaths.generatePowerPaths(powersWithProperties, aptitudes, collectFeatListIds(rulesetData), kind),
-      ...PowersPaths.generateGroupingPaths(collectPropertySlugs(powerProperties, SPELL_SCHOOL), kind, true, "school"),
       ...PowersPaths.generateGroupingPaths(
-        collectPropertySlugs(powerProperties, SPELL_DESCRIPTOR),
+        CategoryPaths.collectPropertySlugs(powerProperties, SPELL_SCHOOL),
+        kind,
+        true,
+        "school",
+      ),
+      ...PowersPaths.generateGroupingPaths(
+        CategoryPaths.collectPropertySlugs(powerProperties, SPELL_DESCRIPTOR),
         kind,
         true,
         "descriptor",

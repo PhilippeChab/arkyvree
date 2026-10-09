@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
-import { hasValueType, parseLiteralValue } from "@/engine/core/paths/literalValue.ts";
+import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 
-describe("parseLiteralValue", () => {
+describe("LiteralValue.parse", () => {
   test.each([
     ["true", "boolean", true],
     ["false", "boolean", false],
@@ -18,11 +18,11 @@ describe("parseLiteralValue", () => {
     ["1", "date", undefined],
     ["1", null, undefined],
   ] as const)("reads %p as a %s: %p", (value, valueType, expected) => {
-    expect(parseLiteralValue(value, valueType)).toBe(expected);
+    expect(LiteralValue.parse(value, valueType)).toBe(expected);
   });
 });
 
-describe("hasValueType", () => {
+describe("LiteralValue.hasType", () => {
   test.each([
     ["Fire", "string", true],
     [3, "string", false],
@@ -31,6 +31,6 @@ describe("hasValueType", () => {
     [[], "string", true],
     [{ misc: 1 }, "string", false],
   ] as const)("%p has the type %s, or each of its values does: %p", (data, valueType, expected) => {
-    expect(hasValueType(data, valueType)).toBe(expected);
+    expect(LiteralValue.hasType(data, valueType)).toBe(expected);
   });
 });

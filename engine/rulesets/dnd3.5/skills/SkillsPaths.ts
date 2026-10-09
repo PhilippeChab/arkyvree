@@ -1,6 +1,5 @@
 import type { GetterOf, PathCategory } from "@/engine/core/paths/PathCategory.ts";
 import PathTraverser from "@/engine/core/paths/PathTraverser.ts";
-import { readComponent } from "@/engine/core/paths/readComponent.ts";
 import type { Components, TraversePathResult } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import type { Dnd35Components } from "@/engine/rulesets/dnd3.5/character/components.ts";
@@ -146,7 +145,7 @@ export default class SkillsPaths implements PathCategory<Dnd35Components> {
     if (rest[0] !== "budget") return null;
     const component = components["skills"];
     if (!component) return PathTraverser.failed(null, target, "Skills holder not found");
-    const budgetData = readComponent(component, "getSkillBudget" satisfies GetterOf<SkillsComponent>);
+    const budgetData = PathTraverser.readComponent(component, "getSkillBudget" satisfies GetterOf<SkillsComponent>);
     return traverser.traverse(component, rest.slice(1), budgetData, "budget", 0, ["skills", "budget"]);
   }
 }

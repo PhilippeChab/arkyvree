@@ -22,12 +22,7 @@ import type {
 } from "@/shared/relations.ts";
 
 import RulesetData, { type RulesetLists } from "./RulesetData.ts";
-import {
-  mergeSiblingAptitudeLinks,
-  mergeSiblingModifiers,
-  mergeSiblingProperties,
-  mergeSiblingRequirements,
-} from "./siblingMerge.ts";
+import SiblingMerge from "./SiblingMerge.ts";
 import SiblingRows from "./SiblingRows.ts";
 
 /** A ruleset's own rows, none of its sources': what the server fetches for each ruleset of a chain to compose. */
@@ -194,7 +189,7 @@ export default class RulesetComposition {
       }
     }
     const groups = siblingRows.getGroups();
-    const taken = new Set(groups.flatMap(({ own, siblings }) => mergeSiblingModifiers(own, siblings)));
+    const taken = new Set(groups.flatMap(({ own, siblings }) => SiblingMerge.mergeModifiers(own, siblings)));
     for (const m of groups.flatMap(({ siblings }) => siblings.flat())) if (!taken.has(m)) excludedModifierIds.add(m.id);
 
     return { modifiers: siblingRows.moveTaken(taken, (m, sourceId) => ({ ...m, sourceId })), excludedModifierIds };
@@ -215,7 +210,7 @@ export default class RulesetComposition {
       }
     }
     const taken = new Set(
-      siblingRows.getGroups().flatMap(({ own, siblings }) => mergeSiblingProperties(own, siblings)),
+      siblingRows.getGroups().flatMap(({ own, siblings }) => SiblingMerge.mergeProperties(own, siblings)),
     );
     return siblingRows.moveTaken(taken, (p, entityId) => ({ ...p, entityId }));
   }
@@ -240,7 +235,7 @@ export default class RulesetComposition {
     return siblingRows.withMerged(
       siblingRows
         .getGroups()
-        .flatMap(({ winnerId, own, siblings }) => mergeSiblingRequirements(own, siblings, winnerId)),
+        .flatMap(({ winnerId, own, siblings }) => SiblingMerge.mergeRequirements(own, siblings, winnerId)),
     );
   }
 
@@ -263,7 +258,7 @@ export default class RulesetComposition {
     const links = this.cow.hasSiblings(entityId)
       ? [
           ...own,
-          ...mergeSiblingAptitudeLinks(
+          ...SiblingMerge.mergeAptitudeLinks(
             own,
             this.cow.getSiblings(entityId).map((loserId) => siblingLinks.get(loserId) ?? []),
             (id) => this.cow.resolve(id),

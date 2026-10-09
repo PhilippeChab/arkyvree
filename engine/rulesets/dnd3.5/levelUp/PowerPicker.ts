@@ -1,6 +1,5 @@
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/types.ts";
-import { getListPowerIds } from "@/engine/core/view/index.ts";
 import type Dnd35DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import type { Dnd35ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/types.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
@@ -38,7 +37,7 @@ export default class PowerPicker extends PickerState {
       excludePowerIds.push(rec.powersInRule.id);
     excludePowerIds.push(...this.built.getVirtuallyPossessedPowerIds());
     excludePowerIds.push(...this.getProhibitedPowerIds(aptitudeId, excludeSchools ?? []));
-    return { ids: getListPowerIds(this.rulesetData, { aptitudeId, level: powerLevel }), excludePowerIds };
+    return { ids: this.rulesetData.listPowerIds({ aptitudeId, level: powerLevel }), excludePowerIds };
   }
 
   /**

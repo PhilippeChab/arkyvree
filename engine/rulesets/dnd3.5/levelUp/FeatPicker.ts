@@ -1,6 +1,5 @@
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/types.ts";
-import { getListFeatIds } from "@/engine/core/view/index.ts";
 import type Dnd35DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import type { Dnd35ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/types.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
@@ -17,7 +16,7 @@ export default class FeatPicker extends PickerState {
     super(view, character, query);
     this.built = this.build(character, this.projectFeatPick());
     this.filters = {
-      ids: getListFeatIds(this.rulesetData, query.aptitudeId),
+      ids: this.rulesetData.listFeatIds(query.aptitudeId),
       excludeFeatIds: this.built.getHeldNonStackableFeatIds(),
       familyType: FEAT_FAMILY,
     };

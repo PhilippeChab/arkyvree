@@ -1,6 +1,6 @@
 /** A class's table, as its page shows it: each level's feat pools, spells per day and spells known, and its spell lists. */
 
-import { parseLiteralValue } from "@/engine/core/paths/literalValue.ts";
+import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import type { RulesetView } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { parseAptitudePool, parseAptitudeSpellLevel } from "@/engine/rulesets/dnd3.5/aptitudes/aptitudeTargets.ts";
@@ -24,7 +24,7 @@ function addFeatPools<T extends { id: string; level: number }>(
     const slug = parseAptitudePool(mod.target);
     if (slug === undefined) continue;
     const name = slugToName.get(slug);
-    const value = parseLiteralValue(mod.value, "number");
+    const value = LiteralValue.parse(mod.value, "number");
     if (!name || typeof value !== "number") continue;
     let entry = deltasByLevelId.get(mod.sourceId);
     if (!entry) {
@@ -62,7 +62,7 @@ function addSpellsKnown<T extends { id: string; level: number }>(
   const deltasByLevelId = new Map<string, { delta: number; operator: string; spellLevel: number }[]>();
   for (const mod of modifiers) {
     const target = parseAptitudeSpellLevel(mod.target);
-    const value = parseLiteralValue(mod.value, "number");
+    const value = LiteralValue.parse(mod.value, "number");
     if (target?.field !== "allowed" || typeof value !== "number") continue;
     const spellLevel = target.level;
     let entry = deltasByLevelId.get(mod.sourceId);
@@ -106,7 +106,7 @@ function addSpellsPerDay<T extends { id: string; level: number }>(
   const deltasByLevelId = new Map<string, Record<number, number>>();
   for (const mod of modifiers) {
     const target = parseAptitudeSpellLevel(mod.target);
-    const value = parseLiteralValue(mod.value, "number");
+    const value = LiteralValue.parse(mod.value, "number");
     if (target?.field !== "uses" || typeof value !== "number") continue;
     const spellLevel = target.level;
     let entry = deltasByLevelId.get(mod.sourceId);

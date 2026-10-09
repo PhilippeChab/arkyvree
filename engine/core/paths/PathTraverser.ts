@@ -1,8 +1,6 @@
 import type { Component, TraversePathResult } from "@/engine/core/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-import { isTraversable } from "./isTraversable.ts";
-
 /** The key of `value` whose slug is `slug`: one written its own way, as a spell's property types are (`SPELL_COMPONENT`). */
 function keyBySlug(value: Record<string, unknown>, slug: string) {
   return Object.keys(value).find((key) => stripSeparators(key) === slug);
@@ -30,6 +28,25 @@ export default class PathTraverser {
   /** A path that reaches no value, with why. */
   static failed(component: Component | null, key: string, error: string): TraversePathResult[] {
     return [{ component, object: null, data: null, key, resolvedPath: null, error }];
+  }
+
+  /**
+   * Whether a target path can step into `value`: an object (an array too) or a function, whose keys `in` can test. A
+   * path that reaches a primitive, `null` or `undefined` can't go further.
+   */
+  static isTraversable(value: unknown): value is Record<string, unknown> {
+    return (typeof value === "object" && value !== null) || typeof value === "function";
+  }
+
+  /**
+   * What a component's method `name` returns, called on it: the getter a path category names for its data (checked
+   * against the ruleset's components, `ComponentSpec`), or a component's `updateAvailables` after a modifier writes to
+   * it. Undefined when it has no such method: a partial set of components (a race's eligibility, a test's) passes plain
+   * objects.
+   */
+  static readComponent(component: Component, name: string): unknown {
+    const method: unknown = Reflect.get(component, name);
+    return typeof method === "function" ? method.call(component) : undefined;
   }
 
   /** Each of `entries` traversed with the rest of the path, under its own slug: a skill and its subtypes. */
@@ -62,7 +79,7 @@ export default class PathTraverser {
   ): TraversePathResult[] {
     // A wildcard past nothing fails the path whole (as above); past a value, it matches nothing.
     if (currentValue === null || currentValue === undefined) throw new Error(`Element not found: ${next}`);
-    if (!isTraversable(currentValue)) return [];
+    if (!PathTraverser.isTraversable(currentValue)) return [];
     const prefix = next === "*" ? "" : stripSeparators(next.slice(0, -1));
     const results: TraversePathResult[] = [];
     for (const [key, value] of Object.entries(currentValue)) {
@@ -102,7 +119,7 @@ export default class PathTraverser {
     if (!formattedKey) return PathTraverser.failed(component, formattedKey, `Element not found: ${next}`);
     // A path that steps past a value (`abilities.strength.total.x`) fails whole, wildcard branches and all:
     // traversePathInit answers the throw with the path's one error.
-    if (!isTraversable(currentValue)) throw new Error(`Element not found: ${next}`);
+    if (!PathTraverser.isTraversable(currentValue)) throw new Error(`Element not found: ${next}`);
     // The entry whose slug the element is: its key, or one written its own way
     const key = formattedKey in currentValue ? formattedKey : keyBySlug(currentValue, formattedKey);
     if (key === undefined) {

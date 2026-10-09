@@ -425,6 +425,31 @@ export default class RulesetData {
     return (this.built.languagesById ??= this.resolvingIds(buildById(this.languages)));
   }
 
+  /**
+   * The ids of the ruleset's feats on a list, as the ruleset composes it: a ruleset taking several books merges each
+   * feat's copies and each list's, and the winning copy takes every copy's links, so a query of a list's feats takes
+   * these ids, never the stored links.
+   */
+  listFeatIds(aptitudeId: string): string[] {
+    const listId = this.canonicalize(aptitudeId);
+    return this.feats
+      .filter((feat) => feat.featsAptitudesInRules.some((link) => link.aptitudeId === listId))
+      .map((feat) => feat.id);
+  }
+
+  /** The ids of the ruleset's spells on a list, at a level when one is given (on any list when none is). */
+  listPowerIds(where: { aptitudeId?: string; level?: number }): string[] {
+    const listId = where.aptitudeId === undefined ? undefined : this.canonicalize(where.aptitudeId);
+    return this.powers
+      .filter((power) =>
+        power.powersAptitudesInRules.some(
+          (link) =>
+            (listId === undefined || link.aptitudeId === listId) && (where.level == null || link.level === where.level),
+        ),
+      )
+      .map((power) => power.id);
+  }
+
   get mechanicsById(): Map<string, Mechanic> {
     return (this.built.mechanicsById ??= this.resolvingIds(buildById(this.mechanics)));
   }

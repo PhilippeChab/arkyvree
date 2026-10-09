@@ -24,7 +24,7 @@ import {
   powersInRules,
   requirementsInCustomization,
 } from "@/drizzle/schema.ts";
-import { hasValueType } from "@/engine/core/paths/literalValue.ts";
+import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
@@ -572,7 +572,7 @@ describe("DetailedCharacter", () => {
         paths.flatMap(({ path, valueType }) =>
           targetPaths
             .traversePathInit(path, detailed.components)
-            .filter((result) => result.error === null && !hasValueType(result.data, valueType))
+            .filter((result) => result.error === null && !LiteralValue.hasType(result.data, valueType))
             .map((result) => `${path}: ${typeof result.data}, declared ${valueType}`),
         ),
       );

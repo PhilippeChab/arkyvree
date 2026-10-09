@@ -1,4 +1,4 @@
-import { parseLiteralValue } from "@/engine/core/paths/literalValue.ts";
+import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import type { Components } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
@@ -133,7 +133,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
       let allowed = 0;
       let allKnown = false;
       for (const modifier of modifiers) {
-        const value = parseLiteralValue(modifier.value, "number");
+        const value = LiteralValue.parse(modifier.value, "number");
         if (typeof value !== "number") continue;
         if (modifier.target.endsWith(".uses")) uses += value;
         else if (modifier.operator === "set" && value === ALLOWED_ALL) allKnown = true;

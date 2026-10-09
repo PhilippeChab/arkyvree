@@ -10,7 +10,6 @@ import {
   powersInRules,
   skillsInRules,
 } from "@/drizzle/schema.ts";
-import { getListPowerIds } from "@/engine/core/view/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -1156,7 +1155,7 @@ describe("LevelsService", () => {
       const fork = await createSeededTestRulesetWithExtensions(SEED_USER_ID);
       const wizardSpells = ctx.aptMap["Wizard Spells"];
       const merged = await withRulesetScope(db, fork.id, async ({ rulesetData }) => {
-        const listed = new Set(getListPowerIds(rulesetData, { aptitudeId: wizardSpells, level: 1 }));
+        const listed = new Set(rulesetData.listPowerIds({ aptitudeId: wizardSpells, level: 1 }));
         const loserId = [...rulesetData.cow.siblingIds].find(
           (id) => rulesetData.cow.resolve(id) !== id && listed.has(rulesetData.cow.resolve(id)),
         )!;

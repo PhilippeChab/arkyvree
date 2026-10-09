@@ -1,6 +1,5 @@
 import type { GetterOf, PathCategory } from "@/engine/core/paths/PathCategory.ts";
-import type PathTraverser from "@/engine/core/paths/PathTraverser.ts";
-import { readComponent } from "@/engine/core/paths/readComponent.ts";
+import PathTraverser from "@/engine/core/paths/PathTraverser.ts";
 import type { Components, TraversePathResult } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import type { Dnd35Components } from "@/engine/rulesets/dnd3.5/character/components.ts";
@@ -125,7 +124,7 @@ export default class WeaponPaths implements PathCategory<Dnd35Components> {
     const weaponsComponent = components["weapons"];
     if (!weaponsComponent) return [];
 
-    const combat = readComponent(combatComponent, "getCombat" satisfies GetterOf<CombatComponent>);
+    const combat = PathTraverser.readComponent(combatComponent, "getCombat" satisfies GetterOf<CombatComponent>);
     if (!isRecord(combat) || !isRecord(combat.weaponsets)) return [];
     const results: TraversePathResult[] = [];
     for (const weaponSet of Object.values(combat.weaponsets)) {

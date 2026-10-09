@@ -1,4 +1,4 @@
-import { parseLiteralValue } from "@/engine/core/paths/literalValue.ts";
+import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
 import { parseAptitudePool, parseAptitudeSpellLevel } from "@/engine/rulesets/dnd3.5/aptitudes/aptitudeTargets.ts";
@@ -38,7 +38,7 @@ export default class AptitudeSlotsPlan {
     const aptitudeSlugToId = this.rulesetData.aptitudeIdBySlug;
     for (const mod of modifiers) {
       // A pool's slots take a literal: an add, or a spell level's set to -1 (the paths allow nothing else)
-      const value = parseLiteralValue(mod.value, "number");
+      const value = LiteralValue.parse(mod.value, "number");
       if (typeof value !== "number") continue;
       const pool = parseAptitudePool(mod.target);
       if (pool !== undefined) {
