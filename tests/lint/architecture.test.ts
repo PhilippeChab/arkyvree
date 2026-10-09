@@ -21,10 +21,17 @@ describe("architecture rules", () => {
           "codegen/d.ts": 'import type { T } from "@/engine/rulesets/dnd3.5/index.ts";\nexport type D = T;\n',
           "engine/core/e.ts": 'import { x } from "@/engine/core/view/index.ts";\nexport const e = x;\n',
           "tests/f.test.ts": 'import { x } from "@/engine/core/view/index.ts";\nexport const f = x;\n',
+          // The folder, which resolves to its index: by its name only
+          "server/g.ts": 'import { x } from "@/engine";\nexport const g = x;\n',
         },
         ["engine-front-door"],
       ),
-    ).toEqual(["engine-front-door codegen/d.ts", "engine-front-door database/c.ts", "engine-front-door server/b.ts"]);
+    ).toEqual([
+      "engine-front-door codegen/d.ts",
+      "engine-front-door database/c.ts",
+      "engine-front-door server/b.ts",
+      "engine-front-door server/g.ts",
+    ]);
   });
 
   test("a service's or a job's action asks the engine one operation, however often, through whatever it calls", async () => {
@@ -61,6 +68,22 @@ describe("architecture rules", () => {
             "export function g(x: T) {\n  return [flow(x), describeA(x)];\n}\n",
           // The routers and the cache aren't actions
           "server/cache/h.ts": engine + "export function h(x: T) {\n  planA(x);\n  return describeA(x);\n}\n",
+          // Handed on as a value, under an alias, or through another service; the engine's data isn't an operation
+          "server/services/i.ts":
+            engine +
+            'import { LIMITS } from "@/engine/index.ts";\n' +
+            "const plan = planA;\n" +
+            "export function i(x: T) {\n  return [[x].map(describeA), LIMITS];\n}\n" +
+            "export function j(x: T) {\n  return [plan(x), describeA(x)];\n}\n" +
+            "export function k(x: T) {\n  return [planA(x), LIMITS];\n}\n",
+          "server/services/l/LService.ts":
+            engine + "class LService {\n  m(x: T) {\n    return planA(x);\n  }\n}\nexport default new LService();\n",
+          "server/services/m.ts":
+            engine +
+            'import LService from "./l/LService.ts";\n' +
+            "export class M {\n  private readonly described = (x: T) => describeA(x);\n" +
+            "  one(x: T) {\n    return [LService.m(x), describeA(x)];\n  }\n" +
+            "  two(x: T) {\n    return [planA(x), this.described(x)];\n  }\n}\n",
         },
         ["one-engine-op"],
       ),
@@ -70,6 +93,9 @@ describe("architecture rules", () => {
       "one-engine-op server/services/a.ts",
       "one-engine-op server/services/d.ts",
       "one-engine-op server/services/g.ts",
+      "one-engine-op server/services/i.ts",
+      "one-engine-op server/services/m.ts",
+      "one-engine-op server/services/m.ts",
     ]);
   });
 
@@ -98,6 +124,12 @@ describe("architecture rules", () => {
           "server/services/h.ts":
             'import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";\n' +
             "export async function h(ruleset: never) {\n  return await RulesetCache.getData(ruleset);\n}\n",
+          // Under the name the file imports the cache by, or by a computed key
+          "server/services/i.ts":
+            'import { RulesetCache as Cache } from "@/server/cache/rulesetCache/index.ts";\n' +
+            "export async function i(ruleset: never) {\n  return await Cache.getData(ruleset);\n}\n",
+          "server/services/j.ts":
+            'export function j(scope: { rulesetData: { feats: object } }) {\n  return scope["rulesetData"].feats;\n}\n',
         },
         ["opaque-view"],
       ),
@@ -107,6 +139,8 @@ describe("architecture rules", () => {
       "opaque-view server/services/f.ts",
       "opaque-view server/services/g.ts",
       "opaque-view server/services/h.ts",
+      "opaque-view server/services/i.ts",
+      "opaque-view server/services/j.ts",
     ]);
   });
 

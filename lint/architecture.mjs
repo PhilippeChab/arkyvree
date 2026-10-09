@@ -173,7 +173,8 @@ function createEngineFrontDoor(context) {
     "the server through its API.";
   return onImports((node, spec) => {
     const target = targetOf(file, spec);
-    if (!target?.startsWith("engine/") || target === "engine/index.ts") return;
+    // `@/engine` resolves to its index too, which the rules that read the front door's imports name it by
+    if (!(target === "engine" || target?.startsWith("engine/")) || target === "engine/index.ts") return;
     context.report({ node, message });
   });
 }
@@ -251,7 +252,8 @@ function createLayers(context) {
 function createOneEngineOp(context) {
   const file = repoPath(context.filename);
   if (!ACTION_LAYERS.some((layer) => file.startsWith(layer))) return {};
-  // What a call asks the engine: an operation it imports, through a namespace, or another action's function
+  // What an action asks the engine: an operation it imports (called, or handed on), through a namespace or an alias,
+  // or another action's function or service
   const ops = new Set();
   const namespaces = new Set();
   const functions = new Map();
@@ -266,15 +268,29 @@ function createOneEngineOp(context) {
       const target = targetOf(file, node.source.value);
       const values = node.specifiers.filter((specifier) => specifier.importKind !== "type");
       if (target === "engine/index.ts") {
-        for (const specifier of values)
-          (specifier.type === "ImportNamespaceSpecifier" ? namespaces : ops).add(specifier.local.name);
+        // Its operations, named as functions are: not its data (`RULESET_LIMITS`) or its classes (`RulesError`)
+        for (const specifier of values) {
+          if (specifier.type === "ImportNamespaceSpecifier") namespaces.add(specifier.local.name);
+          else if (/^[a-z]/.test(specifier.imported.name)) ops.add(specifier.local.name);
+        }
         return;
       }
       if (!target || !ACTION_LAYERS.some((layer) => target.startsWith(layer))) return;
       for (const specifier of values) {
-        if (specifier.type === "ImportSpecifier" && asksEngine(target, specifier.imported.name))
-          ops.add(specifier.local.name);
+        const name = specifier.type === "ImportSpecifier" ? specifier.imported.name : "default";
+        if (specifier.type !== "ImportNamespaceSpecifier" && asksEngine(target, name)) ops.add(specifier.local.name);
       }
+    },
+    Identifier(node) {
+      // An operation's every use: a call, or a value handed on (`ids.map(getEntity)`, `.bind`, a service's method)
+      const { parent } = node;
+      if (!ops.has(node.name) || parent.type.startsWith("Import")) return;
+      if (parent.type === "MemberExpression" && parent.property === node && !parent.computed) return;
+      if (parent.type === "VariableDeclarator" && parent.id === node) return;
+      const action = actionOf(node);
+      if (action) record(action, { op: node.name });
+      // An alias of an operation is one
+      if (parent.type === "VariableDeclarator" && parent.id.type === "Identifier") ops.add(parent.id.name);
     },
     FunctionDeclaration(node) {
       const top = node.parent.type === "Program" || node.parent.parent?.type === "Program";
@@ -284,13 +300,16 @@ function createOneEngineOp(context) {
       const action = actionOf(node);
       const { callee } = node;
       if (!action) return;
-      if (callee.type === "Identifier")
-        record(action, ops.has(callee.name) ? { op: callee.name } : { fn: callee.name });
+      if (callee.type === "Identifier" && !ops.has(callee.name)) record(action, { fn: callee.name });
       if (callee.type !== "MemberExpression" || callee.computed) return;
-      if (callee.object.type === "Identifier" && namespaces.has(callee.object.name))
-        record(action, { op: callee.property.name });
-      if (callee.object.type === "ThisExpression" && action.type === "MethodDefinition")
+      if (callee.object.type === "ThisExpression" && action.type !== "FunctionDeclaration")
         record(action, { method: callee.property.name, of: action.parent });
+    },
+    MemberExpression(node) {
+      if (node.object.type !== "Identifier" || !namespaces.has(node.object.name)) return;
+      const action = actionOf(node);
+      const name = node.computed ? "(computed)" : node.property.name;
+      if (action && !/^[A-Z]/.test(name)) record(action, { op: name });
     },
     "Program:exit"() {
       const reached = new Map();
@@ -338,20 +357,24 @@ function createOpaqueView(context) {
       parent.property.name === "cow";
     if (!readsCow) context.report({ node, message });
   };
+  // The cache's class, under whatever name the file imports it by
+  const caches = new Set(["RulesetCache"]);
   return {
     CallExpression(node) {
       // The view itself, which the scope gives the server
       const { callee } = node;
-      if (callee.type === "MemberExpression" && !callee.computed && callee.property.name === "getData") {
-        if (callee.object.type === "Identifier" && callee.object.name === "RulesetCache")
-          context.report({ node, message });
-      }
+      if (callee.type === "MemberExpression" && !callee.computed && callee.property.name === "getData")
+        if (callee.object.type === "Identifier" && caches.has(callee.object.name)) context.report({ node, message });
+    },
+    ImportSpecifier(node) {
+      if (node.imported.name === "RulesetCache") caches.add(node.local.name);
     },
     Identifier(node) {
       if (node.name === "rulesetData" && isRead(node)) check(node);
     },
     MemberExpression(node) {
-      if (!node.computed && node.property.name === "rulesetData") check(node);
+      const named = node.computed ? node.property.value : node.property.name;
+      if (named === "rulesetData") check(node);
     },
     Property(node) {
       // `{ rulesetData: view } = scope`, `{ rulesetData: { feats } } = scope`: the view under another name, or read
@@ -459,10 +482,13 @@ function isRead(node) {
   return !parent.type.startsWith("TS") && !FUNCTION_TYPES.has(parent.type);
 }
 
-/** A class's method `name`, among the members of its body. */
+/** A class's method `name`, among the members of its body: a method, or a field holding a function. */
 function methodOf(classBody, name) {
   return classBody.body.find(
-    (member) => member.type === "MethodDefinition" && !member.computed && member.key.name === name,
+    (member) =>
+      (member.type === "MethodDefinition" || member.type === "PropertyDefinition") &&
+      !member.computed &&
+      member.key.name === name,
   );
 }
 
