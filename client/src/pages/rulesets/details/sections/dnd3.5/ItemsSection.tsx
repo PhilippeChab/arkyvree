@@ -217,7 +217,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
           if (!bulkDialog.target) return;
           bulkMutation.mutate({ itemId: bulkDialog.target.id, variants });
         }}
-        isLoading={bulkMutation.isPending}
+        pending={bulkMutation.isPending}
       />
     </SectionContent>
   );

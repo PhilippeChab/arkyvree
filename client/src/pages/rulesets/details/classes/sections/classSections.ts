@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
 
-import type { RulesetDetail } from "@/client/src/lib/queries.ts";
+import { type RulesetDetail } from "@/client/src/lib/queries.ts";
 import type { ClassSection } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 
 import {

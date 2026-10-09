@@ -28,9 +28,9 @@ export interface SectionTab<K extends string> {
   label: ReactNode;
 }
 
-/** A detail page tab's content: the page's centered column, up to 1200px. */
+/** A detail page tab's content: the page's column, as wide as it (the app's page width). */
 export function SectionContent({ children }: SectionContentProps) {
-  return <Box sx={{ width: "100%", maxWidth: 1200, mx: "auto" }}>{children}</Box>;
+  return <Box sx={{ width: "100%" }}>{children}</Box>;
 }
 
 /** A record page's tab panel: its tab's content, 56px under the tabs (the page's 32px, then its own 24px) and above its end. */

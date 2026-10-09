@@ -69,7 +69,7 @@ export function EmailChangeVerificationDialog({
       open={open}
       onClose={onClose}
       form={form}
-      isLoading={verifyMutation.isPending}
+      pending={verifyMutation.isPending}
       slotProps={{ transition: { onExited } }}
     >
       <form onSubmit={form.handleSubmit(handleVerify)} noValidate>

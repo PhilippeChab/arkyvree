@@ -1,8 +1,9 @@
 /**
- * The queries several areas share, or a page and the places that prefetch it (sidebar hover, card hover), and the
- * refreshes a write to a character asks for. Defining them once keeps the key and the request in step: a prefetch whose
- * key or page size drifts from the page's query is wasted, or worse, seeds the cache with pages of the wrong size. A
- * query one area reads alone is that area's (its `…Queries.ts`).
+ * The queries several areas share (the sidebar's prefetches among them: the lists, the dashboard's statistics; a
+ * ruleset, which its pages and a sheet's equipment read), and the refreshes a write to a character asks for. Defining
+ * them once keeps the key and the request in step: a prefetch whose key or page size drifts from the page's query is
+ * wasted, or worse, seeds the cache with pages of the wrong size. A query one area reads alone, its page's and its
+ * prefetch's alike (a card's hover), is that area's, in its `…Queries.ts`.
  */
 
 import { infiniteQueryOptions, type QueryClient, queryOptions, skipToken } from "@tanstack/react-query";
@@ -31,7 +32,6 @@ export interface AttachmentSlot {
   recordId: string | undefined;
 }
 
-export type CampaignDetail = InferResponseType<(typeof rpc.api.campaigns)[":id"]["$get"], 200>;
 export interface CampaignListFilters {
   orderBy: NonNullable<CampaignListParams["orderBy"]>;
   orderDir: Direction;
@@ -119,13 +119,6 @@ export function attachmentSlotQuery({ name, recordId }: AttachmentSlot) {
     queryFn: recordId
       ? () => parseResponse(rpc.api.attachments.$get({ query: { recordType, recordId, name } }))
       : skipToken,
-  });
-}
-
-export function campaignDetailQuery(id: string) {
-  return queryOptions({
-    queryKey: QUERY_KEYS.campaigns.detail(id),
-    queryFn: () => parseResponse(rpc.api.campaigns[":id"].$get({ param: { id } })),
   });
 }
 

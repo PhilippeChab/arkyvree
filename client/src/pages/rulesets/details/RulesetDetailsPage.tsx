@@ -183,7 +183,7 @@ export default function RulesetDetailsPage() {
 
   if (isLoading) {
     return (
-      <Container maxWidth="xl">
+      <Container>
         <PageLoader />
       </Container>
     );
@@ -192,7 +192,7 @@ export default function RulesetDetailsPage() {
   // A failed background refetch keeps the loaded page (and any edits in progress) on screen.
   if (!ruleset) {
     return (
-      <Container maxWidth="xl">
+      <Container>
         <PageError message={loadFailureMessage("Ruleset", error)} backLabel="Back to Rulesets" backTo={"/rulesets"} />
       </Container>
     );
@@ -283,7 +283,7 @@ export default function RulesetDetailsPage() {
 
   return (
     <PageTransition>
-      <Container maxWidth="xl">
+      <Container>
         <Stack spacing={4}>
           <DetailPageHeader
             title={ruleset.name}
@@ -382,7 +382,7 @@ export default function RulesetDetailsPage() {
             const edited = editDialog.target;
             if (edited) updateMutation.mutate({ id: edited.id, data, updatedAt: edited.updatedAt });
           }}
-          isLoading={updateMutation.isPending}
+          pending={updateMutation.isPending}
           isPublic={editDialog.target ? !editDialog.target.private : false}
           canBeExtension={canBeExtension}
         />
@@ -397,7 +397,7 @@ export default function RulesetDetailsPage() {
               });
             }
           }}
-          isLoading={archiveMutation.isPending}
+          pending={archiveMutation.isPending}
           canUnarchive={isOwner}
         />
 
@@ -407,7 +407,7 @@ export default function RulesetDetailsPage() {
           onConfirm={(kind) => {
             if (publishDialog.target) publishMutation.mutate({ id: publishDialog.target.id, kind });
           }}
-          isLoading={publishMutation.isPending}
+          pending={publishMutation.isPending}
           canBeExtension={canBeExtension}
           kind={publishKind}
           onKindChange={setPublishKind}
@@ -418,7 +418,7 @@ export default function RulesetDetailsPage() {
           onClose={forkDialog.close}
           form={forkForm}
           onSubmit={confirmFork}
-          isLoading={forkMutation.isPending}
+          pending={forkMutation.isPending}
         />
 
         {ruleset.rulesetId && (
@@ -435,7 +435,7 @@ export default function RulesetDetailsPage() {
               open={subscribeDialog.open}
               onClose={subscribeDialog.close}
               onConfirm={confirmSubscribe}
-              isLoading={subscribeMutation.isPending}
+              pending={subscribeMutation.isPending}
               subscribedExtensionIds={subscribedExtensions?.map((ext) => ext.extensionId) ?? []}
             />
 
@@ -443,7 +443,7 @@ export default function RulesetDetailsPage() {
               open={unsubscribeDialog.open}
               onClose={unsubscribeDialog.close}
               onConfirm={confirmUnsubscribe}
-              isLoading={unsubscribeMutation.isPending}
+              pending={unsubscribeMutation.isPending}
               extensionName={unsubscribeDialog.target?.extensionName ?? ""}
             />
           </>

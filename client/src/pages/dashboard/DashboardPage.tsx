@@ -99,7 +99,7 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <Container maxWidth="xl">
+      <Container>
         <PageLoader />
       </Container>
     );
@@ -107,7 +107,7 @@ export default function DashboardPage() {
 
   return (
     <PageTransition>
-      <Container maxWidth="xl">
+      <Container>
         <Stack spacing={4}>
           <Paper
             sx={{

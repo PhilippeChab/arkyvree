@@ -8,12 +8,12 @@ import {
   SelectField,
   SwitchField,
 } from "@/client/src/components/common/index.ts";
-import type { RulesetAbility } from "@/client/src/hooks/index.ts";
-import { NAME_RULES, requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
+import type { Ability } from "@/client/src/hooks/index.ts";
+import { requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
 interface SkillFormFieldsProps {
-  abilities: RulesetAbility[];
+  abilities: Ability[];
   /** Why the abilities didn't load. */
   abilitiesError: unknown;
   form: UseFormReturn<SkillFormData>;
@@ -26,7 +26,7 @@ export function SkillFormFields({ form, abilities, abilitiesError }: SkillFormFi
 
   return (
     <>
-      <NameField control={form.control} name="name" rules={NAME_RULES} />
+      <NameField control={form.control} name="name" />
       <DescriptionField control={form.control} name="description" />
       <SelectField
         control={form.control}

@@ -196,6 +196,29 @@ describe("frontend rules", () => {
     ).toEqual(["form-fields client/src/label.tsx", "form-fields client/src/restyled.tsx"]);
   });
 
+  test("a request in flight is pending, never isLoading nor loading", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/dialog.tsx": "export const d = <ConfirmDialog isLoading={removeMutation.isPending} />;\n",
+          "client/src/button.tsx": "export const b = <AuthSubmitButton loading={auth.signIn.isPending} />;\n",
+          "client/src/props.ts": "export const p = { createDialogProps: { isLoading: createMutation.isPending } };\n",
+          "client/src/pending.tsx": "export const p = <ConfirmDialog pending={removeMutation.isPending} />;\n",
+          // A spinner and MUI's picker say they load; a table's first load is its query's
+          "client/src/spinner.tsx":
+            "export const s = <DiceSpinner loading={saveMutation.isPending}>Save</DiceSpinner>;\n",
+          "client/src/picker.tsx": "export const p = <Autocomplete loading={isLoading} />;\n",
+          "client/src/table.tsx": "export const t = <RulesetSectionTable isLoading={isLoading} />;\n",
+        },
+        ["pending-props"],
+      ),
+    ).toEqual([
+      "pending-props client/src/button.tsx",
+      "pending-props client/src/dialog.tsx",
+      "pending-props client/src/props.ts",
+    ]);
+  });
+
   test("a key its domain's helper invalidates is invalidated through it", async () => {
     const invalidate = "queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.detail(id) })";
     expect(

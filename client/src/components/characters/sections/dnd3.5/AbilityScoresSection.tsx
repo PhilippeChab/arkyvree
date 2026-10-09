@@ -114,7 +114,7 @@ export function AbilityScoresSection({ abilities, baseRules, characterId, readOn
             },
           });
         }}
-        isLoading={updateMutation.isPending}
+        pending={updateMutation.isPending}
       />
     </SheetSection>
   );

@@ -13,8 +13,8 @@ import { useMemo } from "react";
 
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
 import { BlankNote, EmptyValue } from "@/client/src/components/common/index.ts";
-import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
+import { formatSigned } from "@/shared/text.ts";
 
 import { GroupedSkillRows, SkillRow } from "./GroupedSkillRows.tsx";
 

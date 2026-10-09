@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { type UseFormReturn } from "react-hook-form";
 
 import { DescriptionField, FormTextField, NameField, SelectField } from "@/client/src/components/common/index.ts";
-import { DECIMAL_RULES, NAME_RULES } from "@/client/src/lib/validation.ts";
+import { DECIMAL_RULES } from "@/client/src/lib/validation.ts";
 import { itemTemplatesQuery } from "@/client/src/pages/rulesets/optionQueries.ts";
 import { LOCATION_OPTIONS } from "@/shared/enums.ts";
 import { isTemplateItemType, type TemplateItemType } from "@/shared/itemTemplates.ts";
@@ -53,7 +53,7 @@ export function ItemFormFields({ form, rulesetId, lockType }: ItemFormFieldsProp
 
   return (
     <>
-      <NameField control={form.control} name="name" rules={NAME_RULES} />
+      <NameField control={form.control} name="name" />
       <DescriptionField control={form.control} name="description" />
       <FormTextField
         control={form.control}

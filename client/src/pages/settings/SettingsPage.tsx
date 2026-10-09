@@ -18,7 +18,7 @@ export default function SettingsPage() {
 
   return (
     <PageTransition>
-      <Container maxWidth="lg">
+      <Container>
         <Stack spacing={4}>
           <PageHeader title="Settings" subtitle="Customize your experience" />
 

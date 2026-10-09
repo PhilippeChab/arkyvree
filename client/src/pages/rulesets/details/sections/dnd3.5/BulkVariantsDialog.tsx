@@ -13,10 +13,10 @@ interface BulkVariantsDialogProps {
   baseItemName: string;
   /** Reset by the caller before opening, with `variantRow(item, 1)`. */
   form: UseFormReturn<BulkVariantsFormValues>;
-  isLoading: boolean;
   onClose: () => void;
   onSubmit: (variants: VariantRow[]) => void;
   open: boolean;
+  pending: boolean;
 }
 
 const MAX_VARIANTS = 50;
@@ -28,7 +28,7 @@ export function BulkVariantsDialog({
   baseItemDescription,
   form,
   onSubmit,
-  isLoading,
+  pending,
 }: BulkVariantsDialogProps) {
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -49,7 +49,7 @@ export function BulkVariantsDialog({
       open={open}
       onClose={onClose}
       form={form}
-      isLoading={isLoading}
+      pending={pending}
       slotProps={{ paper: { sx: { maxHeight: "85vh" } } }}
     >
       <form onSubmit={form.handleSubmit(submit)} noValidate>
@@ -89,7 +89,7 @@ export function BulkVariantsDialog({
                       label="Remove Variant"
                       intent="destructive"
                       onClick={() => remove(index)}
-                      disabled={fields.length === 1 || isLoading}
+                      disabled={fields.length === 1 || pending}
                     />
                   </Stack>
                 </Stack>
@@ -101,14 +101,14 @@ export function BulkVariantsDialog({
               onClick={() =>
                 append(variantRow({ name: baseItemName, description: baseItemDescription }, fields.length + 1))
               }
-              disabled={fields.length >= MAX_VARIANTS || isLoading}
+              disabled={fields.length >= MAX_VARIANTS || pending}
               sx={{ alignSelf: "flex-start" }}
             />
           </Stack>
         </DialogContent>
         <DialogFooter
           onCancel={onClose}
-          pending={isLoading}
+          pending={pending}
           action={{ label: `Create ${formatCount(fields.length, "variant")}` }}
         />
       </form>

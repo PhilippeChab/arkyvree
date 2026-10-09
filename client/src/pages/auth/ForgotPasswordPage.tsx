@@ -7,7 +7,6 @@ import { AuthPage, AuthSubmitButton } from "@/client/src/components/auth/index.t
 import { EmailField } from "@/client/src/components/common/index.ts";
 import { useAuthRequests, useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
-import { EMAIL_RULES } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
 type ForgotPasswordFormData = InferRequestType<(typeof rpc.auth)["forgot-password"]["$post"]>["json"];
@@ -39,9 +38,9 @@ export default function ForgotPasswordPage() {
       <Stack spacing={4}>
         {/* The first field's own top, which adds to the gap above the form */}
         <Stack component="form" onSubmit={handleSubmit(handleSendCode)} noValidate spacing={3} sx={{ pt: 2 }}>
-          <EmailField control={control} name="emailAddress" rules={EMAIL_RULES} />
+          <EmailField control={control} name="emailAddress" />
 
-          <AuthSubmitButton loading={auth.pending}>Send Reset Code</AuthSubmitButton>
+          <AuthSubmitButton pending={auth.pending}>Send Reset Code</AuthSubmitButton>
         </Stack>
         <Box sx={{ textAlign: "center" }}>
           <Typography variant="body2">

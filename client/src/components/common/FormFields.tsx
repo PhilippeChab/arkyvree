@@ -1,7 +1,8 @@
 /**
  * The form fields many forms share, each bound to its form's field through `useController` (controlled: the form holds
- * the value, the field shows it and reports its changes): `<NameField control={form.control} name="name"
- * rules={NAME_RULES} />`. `FormTextField` binds any text field; the others are its presets, and `SelectField` a select.
+ * the value, the field shows it and reports its changes): `<NameField control={form.control} name="name" />`.
+ * `FormTextField` binds any text field; the others are its presets, which apply their own rules, `SelectField` a select
+ * and `SwitchField` a switch.
  */
 
 import { FormControlLabel, MenuItem, Switch, TextField, type TextFieldProps } from "@mui/material";
@@ -16,6 +17,7 @@ import {
 } from "react-hook-form";
 
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
+import { EMAIL_RULES, NAME_RULES, OPTIONAL_EMAIL_RULES } from "@/client/src/lib/validation.ts";
 
 /** A field of a form: its control, its name, and the rules its value is validated by. */
 interface BoundFieldProps<T extends FieldValues> {
@@ -29,8 +31,10 @@ interface DescriptionFieldProps<T extends FieldValues> extends PresetFieldProps<
   rows?: number;
 }
 
-interface EmailFieldProps<T extends FieldValues> extends PresetFieldProps<T> {
-  label?: string;
+interface EmailFieldProps<T extends FieldValues> extends Omit<PresetFieldProps<T>, "rules"> {
+  /** It may be left empty (an invite's, sent only when given): checked only once it's written. */
+  optional?: boolean;
+  placeholder?: string;
 }
 
 /** A text field's own props: the form gives its value, change, error and ref. */
@@ -40,7 +44,7 @@ type FormTextFieldProps<T extends FieldValues> = BoundFieldProps<T> &
     number?: boolean;
   };
 
-interface NameFieldProps<T extends FieldValues> extends PresetFieldProps<T> {
+interface NameFieldProps<T extends FieldValues> extends Omit<PresetFieldProps<T>, "rules"> {
   helperText?: string;
   label?: string;
 }
@@ -117,12 +121,13 @@ export function DescriptionField<T extends FieldValues>({ rows = 3, placeholder,
   );
 }
 
-/** An email address, validated by `EMAIL_RULES`. */
-export function EmailField<T extends FieldValues>({ label = "Email", ...field }: EmailFieldProps<T>) {
+/** An email address, "Email Address" wherever it's asked, validated by `EMAIL_RULES` (`OPTIONAL_EMAIL_RULES`). */
+export function EmailField<T extends FieldValues>({ optional = false, ...field }: EmailFieldProps<T>) {
   return (
     <FormTextField
       {...field}
-      label={label}
+      rules={optional ? OPTIONAL_EMAIL_RULES : EMAIL_RULES}
+      label="Email Address"
       type="email"
       variant="outlined"
       fullWidth
@@ -165,7 +170,7 @@ export function FormTextField<T extends FieldValues>({
 
 /** An entity's name, validated by `NAME_RULES`. */
 export function NameField<T extends FieldValues>({ label = "Name", helperText, ...field }: NameFieldProps<T>) {
-  return <FormTextField {...field} label={label} helperText={helperText} fullWidth />;
+  return <FormTextField {...field} rules={NAME_RULES} label={label} helperText={helperText} fullWidth />;
 }
 
 /** A password: `autoComplete` tells password managers whether to fill the saved one or suggest a new one. */

@@ -2,9 +2,9 @@ import { Box, Stack, Typography } from "@mui/material";
 
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
 import { BlankNote, SubsectionTitle } from "@/client/src/components/common/index.ts";
-import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import { formatIterativeAttacks, formatSpeed } from "@/shared/dnd3.5/weaponAttacks.ts";
+import { formatSigned } from "@/shared/text.ts";
 
 import { StatField } from "./StatField.tsx";
 

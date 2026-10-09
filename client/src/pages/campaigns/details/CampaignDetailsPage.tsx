@@ -31,8 +31,8 @@ import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useAnchorMenu, useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { accessLost, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
-import { campaignDetailQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
+import { campaignDetailQuery } from "@/client/src/pages/campaigns/campaignQueries.ts";
 import { EditCampaignDialog, type EditCampaignFormData } from "@/client/src/pages/campaigns/components/index.ts";
 import { useCampaignPermissions } from "@/client/src/pages/campaigns/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
@@ -127,7 +127,7 @@ export default function CampaignDetailsPage() {
 
   if (isLoading) {
     return (
-      <Container maxWidth="xl">
+      <Container>
         <PageLoader />
       </Container>
     );
@@ -136,7 +136,7 @@ export default function CampaignDetailsPage() {
   // A passing refetch failure keeps the loaded page; a deleted campaign or a removed member leaves it.
   if (!campaign || accessLost(error)) {
     return (
-      <Container maxWidth="xl">
+      <Container>
         <PageError
           message={loadFailureMessage("Campaign", error)}
           backLabel="Back to Campaigns"
@@ -148,7 +148,7 @@ export default function CampaignDetailsPage() {
 
   return (
     <PageTransition>
-      <Container maxWidth="xl">
+      <Container>
         <Stack spacing={4}>
           <DetailPageHeader
             title={campaign.name}
@@ -233,14 +233,14 @@ export default function CampaignDetailsPage() {
           onClose={() => setEditDialogOpen(false)}
           form={editForm}
           onSubmit={(data) => updateMutation.mutate(data)}
-          isLoading={updateMutation.isPending}
+          pending={updateMutation.isPending}
         />
 
         <ConfirmDialog
           open={archiveDialogOpen}
           onClose={() => setArchiveDialogOpen(false)}
           onConfirm={() => archiveMutation.mutate()}
-          isLoading={archiveMutation.isPending}
+          pending={archiveMutation.isPending}
           title="Archive Campaign"
           message="Are you sure you want to archive this campaign? You can unarchive it at any time from the Archived filter."
           confirmLabel="Archive Campaign"
@@ -254,7 +254,7 @@ export default function CampaignDetailsPage() {
           onConfirm={() => hardDeleteMutation.mutate()}
           title="Delete Permanently"
           message="Are you sure you want to permanently delete this campaign? Its players, invites and campaign-specific ruleset extensions go with it. This action cannot be undone."
-          isLoading={hardDeleteMutation.isPending}
+          pending={hardDeleteMutation.isPending}
           confirmLabel="Delete Permanently"
         />
       </Container>

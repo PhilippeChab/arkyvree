@@ -6,7 +6,7 @@ import { type Contributor, ContributorsDialog, contributorsQuery } from "@/clien
 import { EditIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDialogState, useFormWith, useRulesetPermissions } from "@/client/src/hooks/index.ts";
-import type { RulesetDetail } from "@/client/src/lib/queries.ts";
+import { type RulesetDetail } from "@/client/src/lib/queries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
 
@@ -92,7 +92,7 @@ export function RulesetContributorsDialog({ ruleset, open, onClose }: RulesetCon
         onSubmit={({ role }) =>
           roleDialog.target && updateRoleMutation.mutate({ contributorId: roleDialog.target, role })
         }
-        isLoading={updateRoleMutation.isPending}
+        pending={updateRoleMutation.isPending}
       >
         <SelectField control={roleForm.control} name="role" label="Role" options={assignableRoles} />
       </EditDialog>

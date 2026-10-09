@@ -27,7 +27,6 @@ import { currentUserQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
   confirmPasswordRules,
-  EMAIL_RULES,
   NEW_PASSWORD_RULES,
   requiredRules,
   USERNAME_RULES,
@@ -172,7 +171,7 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <Container maxWidth="lg">
+      <Container>
         <PageLoader />
       </Container>
     );
@@ -181,7 +180,7 @@ export default function ProfilePage() {
   // A failed background refetch keeps the loaded profile (and any edits in progress) on screen.
   if (!userData) {
     return (
-      <Container maxWidth="lg">
+      <Container>
         <PageError message={loadFailureMessage("Profile", userError)} />
       </Container>
     );
@@ -192,7 +191,7 @@ export default function ProfilePage() {
   return (
     <PageTransition>
       {/* Deeper at the bottom, under the last card */}
-      <Container maxWidth="lg" sx={{ pb: { xs: 5, sm: 7 } }}>
+      <Container sx={{ pb: { xs: 5, sm: 7 } }}>
         <Stack spacing={4}>
           <PageHeader title="Profile" subtitle="Manage your account information and security settings" />
 
@@ -223,12 +222,7 @@ export default function ProfilePage() {
                       helperText="Optional: Choose a display name"
                     />
 
-                    <EmailField
-                      control={profileForm.control}
-                      name="emailAddress"
-                      rules={EMAIL_RULES}
-                      label="Email Address"
-                    />
+                    <EmailField control={profileForm.control} name="emailAddress" />
 
                     {/* A new email waits for its code: verified in its dialog, or the change cancelled */}
                     {pendingEmailAddress && (

@@ -1,4 +1,4 @@
-import type { CampaignDetail } from "@/client/src/lib/queries.ts";
+import type { CampaignDetail } from "@/client/src/pages/campaigns/campaignQueries.ts";
 
 /** What the session may do in a campaign; nothing until the campaign has loaded. */
 export function useCampaignPermissions(campaign: Pick<CampaignDetail, "currentUserRole"> | undefined) {

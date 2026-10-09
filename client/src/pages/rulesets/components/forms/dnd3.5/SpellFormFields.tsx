@@ -9,11 +9,11 @@ import {
   SubsectionTitle,
   ValueChip,
 } from "@/client/src/components/common/index.ts";
-import { APTITUDES_RULES, NAME_RULES, readNumberInput } from "@/client/src/lib/validation.ts";
+import { APTITUDES_RULES, readNumberInput } from "@/client/src/lib/validation.ts";
 import { AptitudesAutocomplete } from "@/client/src/pages/rulesets/components/AptitudesAutocomplete.tsx";
 import { byName, useAptitudeLookup } from "@/client/src/pages/rulesets/components/useAptitudeLookup.ts";
 import type { Aptitude } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
-import type { RulesetSave } from "@/client/src/pages/rulesets/hooks/index.ts";
+import type { Save } from "@/client/src/pages/rulesets/hooks/index.ts";
 import {
   MAX_SPELL_LEVEL,
   SPELL_COMPONENTS,
@@ -40,7 +40,7 @@ interface SpellFormFieldsProps {
   /** Aptitudes the form may already hold (the spell's own), so they show by name. */
   knownAptitudes?: Aptitude[];
   rulesetId: string;
-  saves: RulesetSave[];
+  saves: Save[];
   /** Why the saves didn't load. */
   savesError: unknown;
 }
@@ -174,7 +174,7 @@ export function SpellFormFields({
 
   return (
     <>
-      <NameField control={form.control} name="name" rules={NAME_RULES} />
+      <NameField control={form.control} name="name" />
       <DescriptionField control={form.control} name="description" />
       <SelectField
         control={form.control}

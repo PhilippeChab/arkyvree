@@ -6,14 +6,15 @@ import { DiceSpinner } from "@/client/src/components/common/index.ts";
 interface AuthSubmitButtonProps {
   children: ReactNode;
   disabled?: boolean;
-  loading: boolean;
+  /** Its request is in flight: it spins, and waits. */
+  pending: boolean;
 }
 
 /** An auth form's full-width submit button, spinning while the request runs. */
-export function AuthSubmitButton({ loading, disabled = false, children }: AuthSubmitButtonProps) {
+export function AuthSubmitButton({ pending, disabled = false, children }: AuthSubmitButtonProps) {
   return (
-    <Button type="submit" variant="contained" color="primary" fullWidth disabled={loading || disabled}>
-      <DiceSpinner size="small" loading={loading}>
+    <Button type="submit" variant="contained" color="primary" fullWidth disabled={pending || disabled}>
+      <DiceSpinner size="small" loading={pending}>
         {children}
       </DiceSpinner>
     </Button>

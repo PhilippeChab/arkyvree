@@ -14,7 +14,7 @@ import {
 import { EmailField, PasswordField } from "@/client/src/components/common/index.ts";
 import { useAuthRequests, useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
-import { confirmPasswordRules, EMAIL_RULES, NEW_PASSWORD_RULES } from "@/client/src/lib/validation.ts";
+import { confirmPasswordRules, NEW_PASSWORD_RULES } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
 type SignUpFormData = InferRequestType<(typeof rpc.auth)["sign-up"]["$post"]>["json"];
@@ -45,7 +45,7 @@ export default function SignUpPage() {
       <Stack spacing={4}>
         {/* The first field's own top, which adds to the gap above the form */}
         <Stack component="form" onSubmit={handleSubmit(handleSignUp)} noValidate spacing={3} sx={{ pt: 2 }}>
-          <EmailField control={control} name="emailAddress" rules={EMAIL_RULES} />
+          <EmailField control={control} name="emailAddress" />
 
           <PasswordField
             control={control}
@@ -63,7 +63,7 @@ export default function SignUpPage() {
             autoComplete="new-password"
           />
 
-          <AuthSubmitButton loading={auth.pending}>Sign Up</AuthSubmitButton>
+          <AuthSubmitButton pending={auth.pending}>Sign Up</AuthSubmitButton>
         </Stack>
         <Stack spacing={2}>
           <GoogleSignInSection

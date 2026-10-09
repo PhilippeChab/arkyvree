@@ -17,7 +17,7 @@ import {
 } from "@/client/src/components/customization/index.ts";
 import { PropertiesIcon } from "@/client/src/components/icons/index.ts";
 import { useRulesetPermissions } from "@/client/src/hooks/index.ts";
-import type { RulesetDetail } from "@/client/src/lib/queries.ts";
+import { type RulesetDetail } from "@/client/src/lib/queries.ts";
 import {
   DescriptionCell,
   EntityDeleteDialog,

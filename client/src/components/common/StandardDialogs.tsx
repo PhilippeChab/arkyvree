@@ -13,13 +13,13 @@ interface FormActionDialogProps<T extends FieldValues = FieldValues> {
   children: ReactNode;
   fixedHeight?: boolean | string;
   form: UseFormReturn<T>;
-  isLoading: boolean;
   maxWidth?: DialogProps["maxWidth"];
   onClose: () => void;
   /** It has faded out: a dialog mounted with its opening is let go (`useDialogState`'s `onExited`). */
   onExited?: () => void;
   onSubmit: (data: T) => void;
   open: boolean;
+  pending: boolean;
   submitIcon?: ReactNode;
   submitLabel: string;
   title: ReactNode;
@@ -36,11 +36,11 @@ export interface ConfirmDialogProps {
   confirmLabel?: string;
   /** What its confirm does, its button's color (`intent.ts`, docs/ui-buttons.md). */
   intent?: Intent;
-  isLoading: boolean;
   message: ReactNode;
   onClose: () => void;
   onConfirm: () => void;
   open: boolean;
+  pending: boolean;
   title: string;
 }
 
@@ -50,7 +50,7 @@ function FormActionDialog<T extends FieldValues = FieldValues>({
   title,
   form,
   onSubmit,
-  isLoading,
+  pending,
   children,
   maxWidth = "sm",
   fixedHeight = false,
@@ -63,7 +63,7 @@ function FormActionDialog<T extends FieldValues = FieldValues>({
       open={open}
       onClose={onClose}
       form={form}
-      isLoading={isLoading}
+      pending={pending}
       maxWidth={maxWidth}
       slotProps={{
         paper: fixedHeight
@@ -85,7 +85,7 @@ function FormActionDialog<T extends FieldValues = FieldValues>({
             {children}
           </Stack>
         </DialogContent>
-        <DialogFooter onCancel={onClose} pending={isLoading} action={{ label: submitLabel, icon: submitIcon }} />
+        <DialogFooter onCancel={onClose} pending={pending} action={{ label: submitLabel, icon: submitIcon }} />
       </Stack>
     </FormDialog>
   );
@@ -95,7 +95,7 @@ export function ConfirmDialog({
   open,
   onClose,
   onConfirm,
-  isLoading,
+  pending,
   title,
   message,
   children,
@@ -104,7 +104,7 @@ export function ConfirmDialog({
   confirmIcon,
 }: ConfirmDialogProps) {
   return (
-    <Modal open={open} onClose={() => !isLoading && onClose()}>
+    <Modal open={open} onClose={() => !pending && onClose()}>
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
         <DialogContentText>{message}</DialogContentText>
@@ -112,7 +112,7 @@ export function ConfirmDialog({
       </DialogContent>
       <DialogFooter
         onCancel={onClose}
-        pending={isLoading}
+        pending={pending}
         action={{ label: confirmLabel, onClick: onConfirm, intent, icon: confirmIcon }}
       />
     </Modal>

@@ -125,6 +125,7 @@
     "arkyvree/tooltips": "error",
     "arkyvree/form-fields": "error",
     "arkyvree/row-prefetch": "error",
+    "arkyvree/pending-props": "error",
     "arkyvree/sx-styles": "error",
     "arkyvree/theme-colors": "error",
     "arkyvree/shadows": "error",

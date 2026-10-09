@@ -31,10 +31,9 @@ import {
   useRulesetPickerOptions,
 } from "@/client/src/components/rulesets/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { type RulesetAbility, useFormWith, useListboxQuery, useRulesetAbilities } from "@/client/src/hooks/index.ts";
-import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
+import { type Ability, useFormWith, useListboxQuery, useRulesetAbilities } from "@/client/src/hooks/index.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
-import { NAME_RULES, requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
+import { requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
 import type { CharacterPageState } from "@/client/src/pages/characters/characterPageState.ts";
 import { availableRacesQuery } from "@/client/src/pages/characters/characterQueries.ts";
 import {
@@ -52,6 +51,7 @@ import { type DiceRoll, useDiceRoll } from "@/client/src/pages/characters/useDic
 import { rpc } from "@/client/src/services/rpc.ts";
 import { PREFERS_REDUCED_MOTION, settleAnimation } from "@/client/src/theme/animations.ts";
 import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/shared/enums.ts";
+import { formatSigned } from "@/shared/text.ts";
 
 interface AbilityCardProps {
   bottomInfo: string;
@@ -64,7 +64,7 @@ interface AbilityCardProps {
   score: number;
 }
 
-type AbilityOption = Pick<RulesetAbility, "id" | "name">;
+type AbilityOption = Pick<Ability, "id" | "name">;
 
 interface AbilityScoresFieldProps {
   abilities: AbilityOption[];
@@ -398,7 +398,7 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
       title="Create New Character"
       form={form}
       onSubmit={handleCreate}
-      isLoading={createCharacterMutation.isPending}
+      pending={createCharacterMutation.isPending}
       maxWidth="md"
       onExited={onExited}
     >
@@ -407,7 +407,7 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
         <SubsectionTitle>Basic Information</SubsectionTitle>
         <Stack spacing={3}>
           <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-            <NameField control={control} name="name" rules={NAME_RULES} label="Character Name" />
+            <NameField control={control} name="name" label="Character Name" />
             <FormTextField
               control={control}
               name="xp"

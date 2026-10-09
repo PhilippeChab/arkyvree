@@ -64,7 +64,7 @@ export function DeleteAccountDialog({ open, onClose, onExited, hasPassword }: De
       open={open}
       onClose={onClose}
       form={form}
-      isLoading={deleteMutation.isPending}
+      pending={deleteMutation.isPending}
       slotProps={{ transition: { onExited } }}
     >
       <form onSubmit={handleSubmit(handleDelete)} noValidate>

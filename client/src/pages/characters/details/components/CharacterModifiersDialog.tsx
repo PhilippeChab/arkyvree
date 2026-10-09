@@ -234,7 +234,7 @@ export function CharacterModifiersDialog({ open, onClose, characterId, rulesetId
         title="Add Modifier"
         form={createForm}
         onSubmit={(data) => createMutation.mutate(data)}
-        isLoading={createMutation.isPending}
+        pending={createMutation.isPending}
         submitLabel="Add Modifier"
         maxWidth="md"
       >
@@ -249,7 +249,7 @@ export function CharacterModifiersDialog({ open, onClose, characterId, rulesetId
           editDialog.target &&
           updateMutation.mutate({ id: editDialog.target.id, data, updatedAt: editDialog.target.updatedAt })
         }
-        isLoading={updateMutation.isPending}
+        pending={updateMutation.isPending}
         maxWidth="md"
       >
         <ModifierFormFields form={editForm} rulesetId={rulesetId} entityType="characters" mode="edit" />
@@ -260,7 +260,7 @@ export function CharacterModifiersDialog({ open, onClose, characterId, rulesetId
         onConfirm={() => deleteDialog.target && deleteMutation.mutate(deleteDialog.target.id)}
         title="Delete Modifier"
         message="Are you sure you want to delete this modifier? This action cannot be undone."
-        isLoading={deleteMutation.isPending}
+        pending={deleteMutation.isPending}
       />
     </>
   );

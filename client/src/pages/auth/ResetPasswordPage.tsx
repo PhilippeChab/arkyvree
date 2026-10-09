@@ -87,7 +87,7 @@ export default function ResetPasswordPage() {
               autoComplete="new-password"
             />
 
-            <AuthSubmitButton loading={auth.pending} disabled={!isCodeComplete(digits)}>
+            <AuthSubmitButton pending={auth.pending} disabled={!isCodeComplete(digits)}>
               Reset Password
             </AuthSubmitButton>
           </Stack>

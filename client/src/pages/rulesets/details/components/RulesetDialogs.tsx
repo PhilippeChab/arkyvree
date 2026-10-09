@@ -18,54 +18,53 @@ import {
   PublishIcon,
   RulesetIcon,
 } from "@/client/src/components/icons/index.ts";
-import { NAME_RULES } from "@/client/src/lib/validation.ts";
 import type { PublishKind } from "@/client/src/pages/rulesets/hooks/index.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
 interface ArchiveRulesetDialogProps {
   /** Who archives it can unarchive it too: its owner. An Admin archives it, but only its owner brings it back. */
   canUnarchive: boolean;
-  isLoading: boolean;
   onClose: () => void;
   onConfirm: () => void;
   open: boolean;
+  pending: boolean;
 }
 
 interface EditRulesetDialogProps {
   canBeExtension: boolean;
   form: UseFormReturn<EditRulesetFormData>;
-  isLoading: boolean;
   isPublic: boolean;
   onClose: () => void;
   onSubmit: (data: EditRulesetFormData) => void;
   open: boolean;
+  pending: boolean;
 }
 
 interface ForkRulesetDialogProps {
   form: UseFormReturn<ForkRulesetFormData>;
-  isLoading: boolean;
   onClose: () => void;
   onSubmit: (data: ForkRulesetFormData) => void;
   open: boolean;
+  pending: boolean;
 }
 
 interface PublishRulesetDialogProps {
   canBeExtension: boolean;
-  isLoading: boolean;
   /** What it's published as, which its opener sets to the ruleset's kind */
   kind: PublishKind;
   onClose: () => void;
   onConfirm: (kind: PublishKind) => void;
   onKindChange: (kind: PublishKind) => void;
   open: boolean;
+  pending: boolean;
 }
 
 interface UnsubscribeExtensionDialogProps {
   extensionName: string;
-  isLoading: boolean;
   onClose: () => void;
   onConfirm: () => void;
   open: boolean;
+  pending: boolean;
 }
 
 export type EditRulesetFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["$put"]>["json"];
@@ -87,13 +86,13 @@ const PRIVACY_OPTIONS = [
   { value: true, label: "Private", icon: PrivateIcon },
 ] as const;
 
-export function ArchiveRulesetDialog({ open, onClose, onConfirm, isLoading, canUnarchive }: ArchiveRulesetDialogProps) {
+export function ArchiveRulesetDialog({ open, onClose, onConfirm, pending, canUnarchive }: ArchiveRulesetDialogProps) {
   return (
     <ConfirmDialog
       open={open}
       onClose={onClose}
       onConfirm={onConfirm}
-      isLoading={isLoading}
+      pending={pending}
       title="Archive Ruleset"
       message={
         canUnarchive
@@ -112,21 +111,14 @@ export function EditRulesetDialog({
   onClose,
   form,
   onSubmit,
-  isLoading,
+  pending,
   isPublic,
   canBeExtension,
 }: EditRulesetDialogProps) {
   return (
-    <EditDialog
-      open={open}
-      onClose={onClose}
-      title="Edit Ruleset"
-      form={form}
-      onSubmit={onSubmit}
-      isLoading={isLoading}
-    >
-      <NameField control={form.control} name="name" rules={NAME_RULES} autoFocus disabled={isLoading} />
-      <DescriptionField control={form.control} name="description" disabled={isLoading} rows={4} />
+    <EditDialog open={open} onClose={onClose} title="Edit Ruleset" form={form} onSubmit={onSubmit} pending={pending}>
+      <NameField control={form.control} name="name" autoFocus disabled={pending} />
+      <DescriptionField control={form.control} name="description" disabled={pending} rows={4} />
       {!isPublic && (
         <Controller
           control={form.control}
@@ -137,7 +129,7 @@ export function EditRulesetDialog({
               options={PRIVACY_OPTIONS}
               value={field.value ?? false}
               onChange={field.onChange}
-              disabled={isLoading}
+              disabled={pending}
             />
           )}
         />
@@ -153,7 +145,7 @@ export function EditRulesetDialog({
               caption={KIND_CAPTION}
               value={field.value ?? "ruleset"}
               onChange={field.onChange}
-              disabled={isLoading}
+              disabled={pending}
             />
           )}
         />
@@ -162,7 +154,7 @@ export function EditRulesetDialog({
   );
 }
 
-export function ForkRulesetDialog({ open, onClose, form, onSubmit, isLoading }: ForkRulesetDialogProps) {
+export function ForkRulesetDialog({ open, onClose, form, onSubmit, pending }: ForkRulesetDialogProps) {
   return (
     <CreateDialog
       open={open}
@@ -170,18 +162,11 @@ export function ForkRulesetDialog({ open, onClose, form, onSubmit, isLoading }: 
       title="Fork Ruleset"
       form={form}
       onSubmit={onSubmit}
-      isLoading={isLoading}
+      pending={pending}
       submitLabel="Fork Ruleset"
     >
-      <NameField
-        control={form.control}
-        name="name"
-        rules={NAME_RULES}
-        label="New Name"
-        autoFocus
-        disabled={isLoading}
-      />
-      <DescriptionField control={form.control} name="description" disabled={isLoading} rows={4} />
+      <NameField control={form.control} name="name" label="New Name" autoFocus disabled={pending} />
+      <DescriptionField control={form.control} name="description" disabled={pending} rows={4} />
       <Controller
         control={form.control}
         name="private"
@@ -191,7 +176,7 @@ export function ForkRulesetDialog({ open, onClose, form, onSubmit, isLoading }: 
             options={PRIVACY_OPTIONS}
             value={field.value ?? false}
             onChange={field.onChange}
-            disabled={isLoading}
+            disabled={pending}
           />
         )}
       />
@@ -203,7 +188,7 @@ export function PublishRulesetDialog({
   open,
   onClose,
   onConfirm,
-  isLoading,
+  pending,
   canBeExtension,
   kind,
   onKindChange,
@@ -213,7 +198,7 @@ export function PublishRulesetDialog({
       open={open}
       onClose={onClose}
       onConfirm={() => onConfirm(kind)}
-      isLoading={isLoading}
+      pending={pending}
       title="Publish Ruleset"
       message="Are you sure you want to publish this ruleset? Once published, other users can find it and use it, unless it's private."
       confirmLabel="Publish Ruleset"
@@ -229,7 +214,7 @@ export function PublishRulesetDialog({
             caption={KIND_CAPTION}
             value={kind}
             onChange={onKindChange}
-            disabled={isLoading}
+            disabled={pending}
           />
         </Box>
       )}
@@ -241,7 +226,7 @@ export function UnsubscribeExtensionDialog({
   open,
   onClose,
   onConfirm,
-  isLoading,
+  pending,
   extensionName,
 }: UnsubscribeExtensionDialogProps) {
   return (
@@ -249,7 +234,7 @@ export function UnsubscribeExtensionDialog({
       open={open}
       onClose={onClose}
       onConfirm={onConfirm}
-      isLoading={isLoading}
+      pending={pending}
       title="Unsubscribe from Extension"
       message={
         <>

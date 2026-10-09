@@ -151,7 +151,7 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
         open={confirmRevoke}
         onClose={() => setConfirmRevoke(false)}
         onConfirm={() => revokeMutation.mutate()}
-        isLoading={revokeMutation.isPending}
+        pending={revokeMutation.isPending}
         title="Revoke Link"
         message="Are you sure you want to revoke this link? Anyone who has it loses access to the sheet."
         confirmLabel="Revoke Link"

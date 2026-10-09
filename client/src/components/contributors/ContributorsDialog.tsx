@@ -144,7 +144,7 @@ export function ContributorsDialog({
         onClose={contributors.inviteDialog.close}
         form={contributors.inviteForm}
         onSubmit={(invite) => contributors.inviteMutation.mutate(invite)}
-        isLoading={contributors.inviteMutation.isPending}
+        pending={contributors.inviteMutation.isPending}
         roles={roles}
       />
 
@@ -153,14 +153,14 @@ export function ContributorsDialog({
         open={removeDialog.open}
         onClose={removeDialog.close}
         onConfirm={() => removeDialog.target && contributors.removeMutation.mutate(removeDialog.target.id)}
-        isLoading={contributors.removeMutation.isPending}
+        pending={contributors.removeMutation.isPending}
       />
 
       <ConfirmDialog
         open={leaveDialog.open}
         onClose={leaveDialog.close}
         onConfirm={() => contributors.leaveMutation.mutate()}
-        isLoading={contributors.leaveMutation.isPending}
+        pending={contributors.leaveMutation.isPending}
         title={`Leave ${label}`}
         message={`Are you sure you want to leave this ${noun}? You will lose a contributor's access unless you're invited again.`}
         confirmLabel={`Leave ${label}`}

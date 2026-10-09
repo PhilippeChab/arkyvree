@@ -38,7 +38,7 @@ export default function CampaignCharacterPage() {
   // ids loads nothing, and says so here too.
   if (!data || accessLost(error)) {
     return (
-      <Container maxWidth="xl">
+      <Container>
         <PageError message={loadFailureMessage("Character", error)} backLabel="Back to Campaign" backTo={backTo} />
       </Container>
     );
@@ -46,7 +46,7 @@ export default function CampaignCharacterPage() {
 
   return (
     <PageTransition>
-      <Container maxWidth="xl">
+      <Container>
         <Stack spacing={4}>
           <CharacterHeader
             name={data.identity?.physiology?.name ?? ""}

@@ -2,12 +2,12 @@ import type { InferRequestType } from "hono/client";
 import type { UseFormReturn } from "react-hook-form";
 
 import { DescriptionField, NameField, SelectField } from "@/client/src/components/common/index.ts";
-import type { RulesetAbility } from "@/client/src/hooks/index.ts";
-import { NAME_RULES, requiredRules } from "@/client/src/lib/validation.ts";
+import type { Ability } from "@/client/src/hooks/index.ts";
+import { requiredRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
 interface SaveFormFieldsProps {
-  abilities: RulesetAbility[];
+  abilities: Ability[];
   /** Why the abilities didn't load. */
   abilitiesError: unknown;
   form: UseFormReturn<SaveFormData>;
@@ -18,7 +18,7 @@ export type SaveFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["sa
 export function SaveFormFields({ form, abilities, abilitiesError }: SaveFormFieldsProps) {
   return (
     <>
-      <NameField control={form.control} name="name" rules={NAME_RULES} />
+      <NameField control={form.control} name="name" />
       <DescriptionField control={form.control} name="description" />
       <SelectField
         control={form.control}

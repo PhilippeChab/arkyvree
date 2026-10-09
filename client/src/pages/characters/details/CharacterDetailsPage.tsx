@@ -134,7 +134,7 @@ export default function CharacterDetailsPage() {
   // A failed background refetch keeps the loaded page (and any edits in progress) on screen.
   if (!character) {
     return (
-      <Container maxWidth="xl">
+      <Container>
         <PageError
           message={loadFailureMessage("Character", error)}
           backLabel="Back to Characters"
@@ -148,7 +148,7 @@ export default function CharacterDetailsPage() {
 
   return (
     <PageTransition>
-      <Container maxWidth="xl">
+      <Container>
         <Stack spacing={4}>
           <CharacterHeader
             name={character.identity?.physiology?.name ?? ""}
@@ -258,7 +258,7 @@ export default function CharacterDetailsPage() {
             onConfirm={() => removeLevelMutation.mutate()}
             title="Remove Level"
             message="Are you sure you want to remove the last level? This action cannot be undone."
-            isLoading={removeLevelMutation.isPending}
+            pending={removeLevelMutation.isPending}
             confirmLabel="Remove Level"
           />
 
@@ -268,7 +268,7 @@ export default function CharacterDetailsPage() {
             onConfirm={() => archiveMutation.mutate()}
             title="Archive Character"
             message="Are you sure you want to archive this character? You can unarchive it at any time from the Archived filter."
-            isLoading={archiveMutation.isPending}
+            pending={archiveMutation.isPending}
             confirmLabel="Archive Character"
             intent="caution"
             confirmIcon={<ArchiveIcon />}
@@ -280,7 +280,7 @@ export default function CharacterDetailsPage() {
             onConfirm={() => hardDeleteMutation.mutate()}
             title="Delete Permanently"
             message="Are you sure you want to permanently delete this character? Its levels, abilities, inventory, attachments and customizations go with it. This action cannot be undone."
-            isLoading={hardDeleteMutation.isPending}
+            pending={hardDeleteMutation.isPending}
             confirmLabel="Delete Permanently"
           />
 
