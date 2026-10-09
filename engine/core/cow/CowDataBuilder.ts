@@ -39,10 +39,10 @@ function rankNamesakes<T extends { id: string; rulesetId: string }>(
  *   5. A copied class's levels, paired by number.
  *   6. The aptitudes' namesakes.
  *
- * One build (`build`), from the rows the server reads for it (`getCowReads`) through the handle its caller holds: the
- * shared `db` for a ruleset's scope, a copy's transaction for the copy, so that what the copy stores (its links, its
- * levels' grants, its siblings' merged rows) names what the scope's view shows. Every override is also an alias
- * (`override` writes both maps): an id compose skips always resolves.
+ * One build (`build`), from the rows the server reads for it (`CowSources.getReads`) through the handle its caller
+ * holds: the shared `db` for a ruleset's scope, a copy's transaction for the copy, so that what the copy stores (its
+ * links, its levels' grants, its siblings' merged rows) names what the scope's view shows. Every override is also an
+ * alias (`override` writes both maps): an id compose skips always resolves.
  */
 export default class CowDataBuilder {
   constructor(ruleset: RulesetSources) {

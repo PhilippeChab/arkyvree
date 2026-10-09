@@ -12,7 +12,7 @@ import { and, eq, isNull } from "drizzle-orm";
 import { type SeedContext } from "@/database/seeds/seedContext.ts";
 import { klassLevelFeatsInRules, klassLevelPowersInRules, klassSkillsInRules } from "@/drizzle/schema.ts";
 import { type RulesetData } from "@/engine/core/view/index.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
@@ -30,7 +30,7 @@ describe("cache join-maps — parity with repository queries", () => {
     ctx = await getSeedCtx();
     const ruleset = await Rulesets.findOne(db, { id: ctx.rulesetId });
     if (!ruleset) throw new Error("seed ruleset missing");
-    rulesetData = await RulesetCache.getData(ruleset);
+    rulesetData = await RulesetViews.getData(ruleset);
   });
 
   test("klassLevelFeatsWithFeatsByKlassLevel matches the class level's feats with their feat", async () => {

@@ -1,9 +1,9 @@
 /**
- * A ruleset's copy-on-write state: what its scope's reads resolve ids through (`withCowContext`), built by the cache
- * (`CowDataBuilder`). An entity a later ruleset copied is overridden: its copy stands for it, and its customizations
- * are the copy's. A book's copy of an entity another book copied too is a sibling loser: the winner stands for it, and
- * its customizations merge into the winner's. Every stale id (an overridden one, a sibling loser) resolves to the id
- * that stands for it.
+ * A ruleset's copy-on-write state: what its scope's reads resolve ids through (`withCowContext`), built by the engine
+ * (`CowDataBuilder`) from the rows copy-on-write's views read. An entity a later ruleset copied is overridden: its copy
+ * stands for it, and its customizations are the copy's. A book's copy of an entity another book copied too is a sibling
+ * loser: the winner stands for it, and its customizations merge into the winner's. Every stale id (an overridden one, a
+ * sibling loser) resolves to the id that stands for it.
  */
 export default class CowData {
   /**

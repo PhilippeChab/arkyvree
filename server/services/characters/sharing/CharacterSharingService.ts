@@ -2,7 +2,7 @@ import { getTableName } from "drizzle-orm";
 
 import { charactersInCharacter } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { isProduction } from "@/server/environment.ts";
 import { NotFoundError } from "@/server/errors/index.ts";

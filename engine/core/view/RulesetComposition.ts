@@ -245,8 +245,8 @@ export default class RulesetComposition {
   }
 
   /**
-   * An entity's aptitude links, its siblings' merged in (`mergeSiblingAptitudeLinks`, which `EntityCopy` writes the
-   * same way), each to the aptitude that stands for it. Its own links that resolve to one aptitude collapse too, the
+   * An entity's aptitude links, its siblings' merged in (`SiblingMerge.mergeAptitudeLinks`, which `EntityCopy` writes
+   * the same way), each to the aptitude that stands for it. Its own links that resolve to one aptitude collapse too, the
    * first one kept.
    */
   private linkAptitudes<L extends { aptitudeId: string; aptitudesInRule: Aptitude }>(

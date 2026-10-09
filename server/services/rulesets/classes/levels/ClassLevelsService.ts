@@ -3,8 +3,7 @@ import { getTableName } from "drizzle-orm";
 import { klassLevelsInRules } from "@/drizzle/schema.ts";
 import { type ClassEngine, Engine } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
-import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
+import { hasCharacterPicks, RulesetEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { KlassLevelFeats, KlassLevels, KlassLevelSaves } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
@@ -61,7 +60,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
           return plan.describe(klassLevel);
         }),
     );
-    RulesetCache.invalidate(rulesetId);
+    RulesetViews.invalidate(rulesetId);
     return result;
   }
 
@@ -99,7 +98,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
           return deletedLevel;
         }),
     );
-    RulesetCache.invalidate(rulesetId);
+    RulesetViews.invalidate(rulesetId);
     return result;
   }
 
@@ -167,7 +166,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
           return plan.describe(resolvedLevelId);
         }),
     );
-    RulesetCache.invalidate(rulesetId);
+    RulesetViews.invalidate(rulesetId);
     return result;
   }
 }

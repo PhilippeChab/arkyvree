@@ -1,7 +1,7 @@
 /**
  * The rows a ruleset's `CowData` is built from (`CowDataBuilder.build`), as stored, which the server reads as
- * `getCowReads` says: its snapshots, and its source chain's, the levels of the classes it copied, the chain's native
- * namesakes of the types that pair by name, and the chain's aptitudes.
+ * `CowSources.getReads` says: its snapshots, and its source chain's, the levels of the classes it copied, the chain's
+ * native namesakes of the types that pair by name, and the chain's aptitudes.
  */
 export interface CowRows {
   aptitudes: { id: string; name: string; rulesetId: string }[];
@@ -21,8 +21,8 @@ export type RulesetSources = { ancestorRulesetIds: string[]; extensionRulesetIds
  * content. Aptitudes are also excluded; they have their own name-grouping pass since name = identity universally for
  * them.
  *
- * `NAME_FALLBACK_ENTITY_TYPES` is the canonical list: `RulesetExtensionsService.assertExtensionsNameCompatible` reads
- * it too, so the runtime pairing and the subscribe-time block agree on which types pair.
+ * `NAME_FALLBACK_ENTITY_TYPES` is the canonical list: `ExtensionNames` reads it too, so the runtime pairing and the
+ * subscribe-time block agree on which types pair.
  */
 export const NAME_FALLBACK_ENTITY_TYPES = ["feats", "powers"] as const;
 

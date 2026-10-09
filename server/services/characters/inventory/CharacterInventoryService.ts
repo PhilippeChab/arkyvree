@@ -2,7 +2,7 @@ import { getTableName } from "drizzle-orm";
 
 import { inventoryInCharacter } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Activities, CharacterInventory, Items, Visibility } from "@/server/repositories/index.ts";

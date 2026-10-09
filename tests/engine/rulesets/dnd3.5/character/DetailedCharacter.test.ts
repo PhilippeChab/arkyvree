@@ -31,7 +31,7 @@ import DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharac
 import type { WeaponSlot } from "@/engine/rulesets/dnd3.5/combat/CombatState.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
 import CharacterResponse from "@/engine/rulesets/dnd3.5/response/CharacterResponse.ts";
-import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
   Aptitudes,
@@ -261,7 +261,7 @@ async function forkWith(...extensionNames: string[]) {
     ancestorRulesetIds: [rulesetId],
     extensionRulesetIds: extensions,
   });
-  RulesetCache.invalidate(fork.id);
+  RulesetViews.invalidate(fork.id);
   return fork;
 }
 
@@ -2091,7 +2091,7 @@ describe("DetailedCharacter", () => {
       ]);
 
       await Aptitudes.create(db, { name: "General", rulesetId: ruleset.id });
-      RulesetCache.invalidate(ruleset.id);
+      RulesetViews.invalidate(ruleset.id);
       const withGeneral = await build(character);
       expect(withGeneral.components.aptitudes.getAptitudes().general.allowed).toBe(1);
       expect(integrityIssues(withGeneral)).toEqual([]);
@@ -2230,7 +2230,7 @@ describe("DetailedCharacter", () => {
         name: "Archmage",
         description: "Ours",
       });
-      RulesetCache.invalidate(fork.id);
+      RulesetViews.invalidate(fork.id);
       expect(await Klasses.findOne(db, { name: "Archmage", rulesetId: fork.id })).toBeDefined();
       expect(await highArcanaPicks()).toEqual({ allowed: 2, spent: 2, granted: 2 });
     });
@@ -2578,7 +2578,7 @@ describe("DetailedCharacter", () => {
           ...gate(sixthUses.id, 11, false),
           ...gate(sixthAllowed.id, 11, false),
         ]);
-        RulesetCache.invalidate(fork.id);
+        RulesetViews.invalidate(fork.id);
 
         const characterId = await seedHuman(
           "Order Cleric",
@@ -2863,7 +2863,7 @@ describe("DetailedCharacter", () => {
             operator: "add",
           },
         ]);
-        RulesetCache.invalidate(fork.id);
+        RulesetViews.invalidate(fork.id);
 
         const characterId = await seedHuman("Reserve Wizard", WIZARD_SCORES, { rulesetId: fork.id });
         const wizard = (await Klasses.findOne(db, { name: "Wizard", rulesetId: ctx.rulesetId }))!;
@@ -2966,7 +2966,7 @@ describe("DetailedCharacter", () => {
           },
           ...slot(moonDomain.id, "moondomainspells"),
         ]);
-        RulesetCache.invalidate(fork.id);
+        RulesetViews.invalidate(fork.id);
 
         const characterId = await seedHuman("Sun Cleric", WIZARD_SCORES, { rulesetId: fork.id });
         const clericClass = (await Klasses.findOne(db, { name: "Cleric", rulesetId: ctx.rulesetId }))!;

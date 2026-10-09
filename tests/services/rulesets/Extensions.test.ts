@@ -11,7 +11,7 @@ import {
 } from "@/content/dnd3.5/names.ts";
 import { characterAbilitiesInCharacter, type rulesetsInRules } from "@/drizzle/schema.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
@@ -420,8 +420,8 @@ describe("subscribing to an extension", () => {
         await Powers.create(db, { name: "Reprint", rulesetId: a.id }),
       ];
       await RulesetExtensionsService.subscribeExtension(session, draft.id, [a.id, b.id]);
-      RulesetCache.invalidate(draft.id);
-      const cow = await RulesetCache.getCowData((await Rulesets.findOne(db, { id: draft.id }))!);
+      RulesetViews.invalidate(draft.id);
+      const cow = await RulesetViews.getCowData((await Rulesets.findOne(db, { id: draft.id }))!);
 
       const [winner, loser] = cow.hasSiblings(spellA.id) ? [spellA, spellB] : [spellB, spellA];
       expect(cow.getSiblings(winner.id)).toContain(loser.id);
@@ -509,7 +509,7 @@ describe("unsubscribing from an extension", () => {
     const { session, extension: warrior, draft } = await setupFork();
     const dmg = await findSeededRuleset(DND35_DMG_NAME);
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [warrior.id, dmg.id]);
-    const subscribed = await RulesetCache.getData((await Rulesets.findOne(db, { id: draft.id }))!);
+    const subscribed = await RulesetViews.getData((await Rulesets.findOne(db, { id: draft.id }))!);
     const lists = [...subscribed.aptitudesById.values()];
     const warriorAssassin = lists.find((list) => list.name === "Assassin Spells")!;
     expect(warriorAssassin.rulesetId).toBe(warrior.id);
@@ -521,10 +521,10 @@ describe("unsubscribing from an extension", () => {
     await KlassLevelPowers.createMany(db, [
       { klassLevelId: klassLevel.id, powerId: spell.id, aptitudeId: warriorAssassin.id, free: false },
     ]);
-    RulesetCache.invalidate(draft.id);
+    RulesetViews.invalidate(draft.id);
 
     await RulesetExtensionsService.unsubscribeExtension(session, draft.id, warrior.id);
-    const after = await RulesetCache.getData((await Rulesets.findOne(db, { id: draft.id }))!);
+    const after = await RulesetViews.getData((await Rulesets.findOne(db, { id: draft.id }))!);
     const dmgAssassin = [...after.aptitudesById.values()].find((list) => list.name === "Assassin Spells")!;
     expect(dmgAssassin.rulesetId).toBe(dmg.id);
     expect(
@@ -548,7 +548,7 @@ describe("unsubscribing from an extension", () => {
     const { user, session } = await createTestUser();
     const fork = await createSeededTestRulesetWithExtensions(user.id);
     const warrior = await findSeededRuleset(DND35_COMPLETE_WARRIOR_NAME);
-    const view = await RulesetCache.getData(fork);
+    const view = await RulesetViews.getData(fork);
     // Alter Self's copies merge in Complete Warrior's lists, its Assassin Spells the winner of the books' namesakes
     const alterSelf = [...view.powersById.values()].find((power) => power.name === "Alter Self")!;
     const { id: copyId } = await withTransaction(async (tx) =>
@@ -556,7 +556,7 @@ describe("unsubscribing from an extension", () => {
     );
 
     await RulesetExtensionsService.unsubscribeExtension(session, fork.id, warrior.id);
-    const after = await RulesetCache.getData((await Rulesets.findOne(db, { id: fork.id }))!);
+    const after = await RulesetViews.getData((await Rulesets.findOne(db, { id: fork.id }))!);
     const links = await PowersAptitudes.findMany(db, { powerId: copyId });
     expect(links.filter((link) => !after.aptitudesById.has(link.aptitudeId))).toEqual([]);
     const assassin = [...after.aptitudesById.values()].find((list) => list.name === "Assassin Spells")!;
@@ -567,7 +567,7 @@ describe("unsubscribing from an extension", () => {
   test("refuses to leave a link to a list no other book has, naming it, and changes nothing", async () => {
     const { session, extension: warrior, draft } = await setupFork();
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [warrior.id]);
-    const subscribed = await RulesetCache.getData((await Rulesets.findOne(db, { id: draft.id }))!);
+    const subscribed = await RulesetViews.getData((await Rulesets.findOne(db, { id: draft.id }))!);
     const lists = [...subscribed.aptitudesById.values()];
     const warriorOnly = lists.find(
       (list) => list.rulesetId === warrior.id && !lists.some((other) => other !== list && other.name === list.name),
@@ -895,7 +895,7 @@ describe("an extension's content in a fork", () => {
           : {};
       await addCharacterLevel(character.id, level.id, picks);
     }
-    RulesetCache.invalidate(draft.id);
+    RulesetViews.invalidate(draft.id);
 
     const detailed = await buildAs(DetailedCharacter, character);
     expect(detailed.validate().issues.filter((issue) => issue.entityName === "Damage Reduction (Barbarian)")).toEqual(
@@ -1001,8 +1001,8 @@ describe("two extensions overriding the same base entity", () => {
 
   test("pairs the two copies once, by the snapshot, not again by name", async () => {
     const { draft, baseId, contributions } = await setupSiblings("feats");
-    RulesetCache.invalidate(draft.id);
-    const cow = await RulesetCache.getCowData((await Rulesets.findOne(db, { id: draft.id }))!);
+    RulesetViews.invalidate(draft.id);
+    const cow = await RulesetViews.getCowData((await Rulesets.findOne(db, { id: draft.id }))!);
     const winner = cow.resolve(baseId);
     const loser = contributions.map((c) => c.copyId).find((id) => id !== winner)!;
     expect(cow.getSiblings(winner).filter((id) => id === loser)).toHaveLength(1);

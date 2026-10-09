@@ -1,5 +1,5 @@
 import type { CharacterInput } from "@/engine/index.ts";
-import { type RulesetScope, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { type RulesetScope, withRulesetScope } from "@/server/cow/index.ts";
 import { type Db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Characters, Visibility } from "@/server/repositories/index.ts";

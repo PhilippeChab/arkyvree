@@ -3,12 +3,14 @@ import { getTableName } from "drizzle-orm";
 import { modifiersInCustomization } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
 import {
+  copyEntityCustomizations,
+  fetchEntityCustomizations,
   readTargetPathCatalogs,
   readTargetPaths,
-  RulesetCache,
+  RulesetEdit,
+  RulesetViews,
   withRulesetScope,
-} from "@/server/cache/rulesetCache/index.ts";
-import { copyEntityCustomizations, fetchEntityCustomizations, RulesetEdit } from "@/server/cow/index.ts";
+} from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Modifiers } from "@/server/repositories/index.ts";
@@ -76,7 +78,7 @@ class ModifiersService {
         }),
     );
     // Modifiers decide target paths too: the slots and joins of a list decide its spell levels and known paths
-    RulesetCache.invalidate(rulesetId);
+    RulesetViews.invalidate(rulesetId);
     return result;
   }
 
@@ -131,7 +133,7 @@ class ModifiersService {
           return { ...deletedModifier, resolvedEntityId };
         }),
     );
-    RulesetCache.invalidate(rulesetId);
+    RulesetViews.invalidate(rulesetId);
     return result;
   }
 
@@ -222,7 +224,7 @@ class ModifiersService {
           return { ...updatedModifier, resolvedEntityId };
         }),
     );
-    RulesetCache.invalidate(rulesetId);
+    RulesetViews.invalidate(rulesetId);
     return result;
   }
 }

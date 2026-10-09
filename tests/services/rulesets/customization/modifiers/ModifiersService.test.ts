@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { modifiersInCustomization, powersAptitudesInRules, requirementsInCustomization } from "@/drizzle/schema.ts";
-import { readTargetPaths } from "@/server/cache/rulesetCache/index.ts";
+import { readTargetPaths } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
 import { Abilities, Aptitudes, Feats, Items, Powers, Races, Requirements } from "@/server/repositories/index.ts";

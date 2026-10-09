@@ -3,7 +3,7 @@ import { type Db, withCowContext } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 
-import RulesetCache from "./RulesetCache.ts";
+import RulesetViews from "./RulesetViews.ts";
 
 /** A ruleset and its view: what `withRulesetScope` hands its callback, and what an effect of the ruleset runs in. */
 export type RulesetScope = {
@@ -12,7 +12,7 @@ export type RulesetScope = {
 };
 
 /**
- * Scope helper: loads the ruleset and its view (`RulesetCache.getData`), and runs `fn` inside a
+ * Scope helper: loads the ruleset and its view (`RulesetViews.getData`), and runs `fn` inside a
  * cowContext so every repository read inside auto-resolves pre-COW ids to
  * post-COW (output Proxy) AND every entity-id WHERE-clause input is
  * auto-canonicalized (input Proxy). Services call this once at the top of
@@ -29,7 +29,7 @@ export async function withRulesetScope<T>(
 ): Promise<T> {
   const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
   if (!ruleset) throw new NotFoundError("Ruleset not found");
-  const rulesetData = await RulesetCache.getData(ruleset);
+  const rulesetData = await RulesetViews.getData(ruleset);
   return await withCowContext(rulesetData.cow, () => fn({ ruleset, rulesetData }));
 }
 
@@ -58,7 +58,7 @@ export async function withRulesetScopes<T>(
   for (const rulesetId of unique) {
     const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
     if (!ruleset) continue;
-    map.set(rulesetId, { ruleset, rulesetData: await RulesetCache.getData(ruleset) });
+    map.set(rulesetId, { ruleset, rulesetData: await RulesetViews.getData(ruleset) });
   }
   return fn(map);
 }

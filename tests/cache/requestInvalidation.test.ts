@@ -1,6 +1,6 @@
 import { afterEach, expect, test } from "bun:test";
 
-import { readTargetPaths, RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { readTargetPaths, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { runWithRequestCache } from "@/server/database/requestCache.ts";
 import { Feats, Rulesets } from "@/server/repositories/index.ts";
@@ -38,7 +38,7 @@ async function overlap(read: () => Promise<unknown>, mutate: () => Promise<unkno
   }
 }
 
-afterEach(() => RulesetCache.invalidateAll());
+afterEach(() => RulesetViews.invalidateAll());
 
 for (const action of ["subscribe", "unsubscribe"] as const) {
   test(`old request metadata cannot undo ${action} in shared COW data or paths`, async () => {
@@ -48,7 +48,7 @@ for (const action of ["subscribe", "unsubscribe"] as const) {
     await Rulesets.update(db, { kind: "extension", status: "Published", private: false }, { id: extension.id });
     const [feat] = await Feats.create(db, { rulesetId: extension.id, name: "Extension Marker" });
     if (action === "unsubscribe") await RulesetExtensionsService.subscribeExtension(session, host.id, [extension.id]);
-    RulesetCache.invalidateAll();
+    RulesetViews.invalidateAll();
     await overlap(
       () => readTargetPaths(host.id, "requirement"),
       () =>
@@ -72,7 +72,7 @@ for (const scenario of ["entity", "cow", "paths"] as const) {
     const fork = await createSeededTestRuleset(session.userId);
     const seed = await getSeedCtx();
     const [local] = await Feats.create(db, { rulesetId: fork.id, name: "Before Marker", description: "before" });
-    RulesetCache.invalidateAll();
+    RulesetViews.invalidateAll();
     const read = () =>
       scenario === "paths"
         ? readTargetPaths(fork.id, "requirement")

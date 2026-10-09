@@ -4,8 +4,7 @@ import { RulesetSeeder } from "@/database/packages/dnd35/seed/RulesetSeeder.ts";
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { aptitudesInRules, rulesetExtensionsInRules, type rulesetsInRules } from "@/drizzle/schema.ts";
 import type { RulesetSources } from "@/engine/core/cow/index.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
-import { EntityCopy, RulesetEdit } from "@/server/cow/index.ts";
+import { EntityCopy, RulesetEdit, RulesetViews } from "@/server/cow/index.ts";
 import { type Db, db } from "@/server/database/index.ts";
 import { Properties, type RulesetEntityType, Rulesets } from "@/server/repositories/index.ts";
 
@@ -18,18 +17,18 @@ const writtenSeededRulesets = new Set<string>();
 
 /** Drops the rules of the seeded rulesets the test wrote to, now that the rollback undid its rows. */
 export function forgetSeededRulesetWrites() {
-  for (const rulesetId of writtenSeededRulesets) RulesetCache.invalidate(rulesetId);
+  for (const rulesetId of writtenSeededRulesets) RulesetViews.invalidate(rulesetId);
   writtenSeededRulesets.clear();
 }
 
 /**
  * Drops a seeded ruleset's cached rules after the test wrote rows straight into it, so what it reads next
  * sees them. The cache outlives the test's rollback, so the setup drops them again once the test ends.
- * A fork goes away with the rollback: after writing into one, `RulesetCache.invalidate` is enough.
+ * A fork goes away with the rollback: after writing into one, `RulesetViews.invalidate` is enough.
  */
 export function invalidateSeededRuleset(rulesetId: string) {
   writtenSeededRulesets.add(rulesetId);
-  RulesetCache.invalidate(rulesetId);
+  RulesetViews.invalidate(rulesetId);
 }
 
 /**
@@ -100,7 +99,7 @@ export async function createSeededTestRulesetWithExtensions(userId: string) {
     .from(rulesetExtensionsInRules)
     .where(eq(rulesetExtensionsInRules.rulesetId, fork.rulesetId!));
   const [ruleset] = await Rulesets.update(db, { extensionRulesetIds: links.map((link) => link.id) }, { id: fork.id });
-  RulesetCache.invalidate(fork.id);
+  RulesetViews.invalidate(fork.id);
   return ruleset;
 }
 
@@ -141,7 +140,7 @@ export async function editRuleset(ruleset: {
   extensionRulesetIds: string[];
   id: string;
 }) {
-  return new RulesetEdit(ruleset, await RulesetCache.getCowData(ruleset));
+  return new RulesetEdit(ruleset, await RulesetViews.getCowData(ruleset));
 }
 
 /** A new aptitude of the ruleset, created through the API as the seed user. */

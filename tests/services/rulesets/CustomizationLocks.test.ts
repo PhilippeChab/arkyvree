@@ -1,8 +1,7 @@
 import { afterAll, afterEach, expect, test } from "bun:test";
 
 import { featsInRules } from "@/drizzle/schema.ts";
-import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import { lockEntityForMutation } from "@/server/cow/index.ts";
+import { lockEntityForMutation, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { createTestDbFromClient, createTestPool } from "@/server/database/test.ts";
 import { Feats, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
@@ -46,7 +45,7 @@ async function setupRemovedCustomizations() {
   return { session, rulesetId: ruleset.id, featId: feat.id, modifier, property, requirement };
 }
 afterAll(() => pool.end());
-afterEach(() => RulesetCache.invalidateAll());
+afterEach(() => RulesetViews.invalidateAll());
 test("owner mutation waits for a competing transaction and acquires the row after rollback", async () => {
   const seed = await getSeedCtx();
   await runWhileLocked(

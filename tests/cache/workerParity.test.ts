@@ -4,7 +4,7 @@ import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import DetailedCharacterFamiliar from "@/engine/rulesets/dnd3.5/bonded/DetailedCharacterFamiliar.ts";
 import CharacterResponse from "@/engine/rulesets/dnd3.5/response/CharacterResponse.ts";
 import MemoryCache from "@/server/cache/MemoryCache.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Characters, Feats, Modifiers } from "@/server/repositories/index.ts";
 import { buildAs } from "@/tests/support/characters.ts";
@@ -12,7 +12,7 @@ import { createWizardWithFamiliar, picking, WIZARD_1 } from "@/tests/support/lev
 import { copyEntity, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 
 afterEach(() => {
-  RulesetCache.invalidateAll();
+  RulesetViews.invalidateAll();
   MemoryCache.setEnabled(true);
 });
 
@@ -28,11 +28,11 @@ test("worker familiar HP matches web after customizing an inherited master feat"
   const copy = await copyEntity(db, "feats", source.id, fork);
   const [modifier] = await Modifiers.findMany(db, { sourceIds: [copy.id], sourceType: "feats" });
   await Modifiers.update(db, { value: "7" }, { id: modifier.id });
-  RulesetCache.invalidate(fork.id);
+  RulesetViews.invalidate(fork.id);
   const familiar = (await Characters.findOne(db, { id: familiarId }))!;
   MemoryCache.setEnabled(true);
   const webResponse = CharacterResponse.buildFull(familiar, await buildAs(DetailedCharacterFamiliar, familiar));
-  RulesetCache.invalidateAll();
+  RulesetViews.invalidateAll();
   MemoryCache.setEnabled(false);
   const workerResponse = CharacterResponse.buildFull(familiar, await buildAs(DetailedCharacterFamiliar, familiar));
   // Master: 4 hit die + 7 Toughness (an elf's Constitution 12 is 10); familiar gets half, rounded down.

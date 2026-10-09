@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Items, Klasses, KlassLevels, Modifiers, Properties, Races, Rulesets } from "@/server/repositories/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
@@ -74,7 +74,7 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
   const originals = await Properties.findMany(db, { entityIds: sourceIds });
   const assertCopied = async () => {
     for (const cold of [false, true]) {
-      if (cold) RulesetCache.invalidateAll();
+      if (cold) RulesetViews.invalidateAll();
       expect(await read()).toEqual(before);
     }
     const id = await withRulesetScope(db, host.id, async ({ rulesetData }) => rulesetData.canonicalize(source.id));

@@ -2,8 +2,7 @@ import { getTableName } from "drizzle-orm";
 
 import { klassSkillsInRules } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
-import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
+import { hasCharacterPicks, RulesetEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { KlassSkills } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
@@ -42,7 +41,7 @@ class ClassSkillsService {
           return klassSkill;
         }),
     );
-    RulesetCache.invalidate(rulesetId);
+    RulesetViews.invalidate(rulesetId);
     return result;
   }
 
@@ -79,7 +78,7 @@ class ClassSkillsService {
           return removedKlassSkill;
         }),
     );
-    RulesetCache.invalidate(rulesetId);
+    RulesetViews.invalidate(rulesetId);
     return result;
   }
 }

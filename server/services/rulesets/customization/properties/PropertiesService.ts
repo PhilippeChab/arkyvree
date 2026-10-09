@@ -2,8 +2,7 @@ import { getTableName } from "drizzle-orm";
 
 import { propertiesInCustomization } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
-import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import { RulesetEdit } from "@/server/cow/index.ts";
+import { RulesetEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { type Db, db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Properties } from "@/server/repositories/index.ts";
@@ -62,7 +61,7 @@ class PropertiesService {
           return await this.writeProperty(tx, session, { name: entity.name, type: entityType }, resolvedEntityId, body);
         }),
     );
-    RulesetCache.invalidate(rulesetId);
+    RulesetViews.invalidate(rulesetId);
     return result;
   }
 
@@ -105,7 +104,7 @@ class PropertiesService {
           return { ...deletedProperty, resolvedEntityId };
         }),
     );
-    RulesetCache.invalidate(rulesetId);
+    RulesetViews.invalidate(rulesetId);
     return result;
   }
 
@@ -174,7 +173,7 @@ class PropertiesService {
           return { ...updatedProperty, resolvedEntityId };
         }),
     );
-    RulesetCache.invalidate(rulesetId);
+    RulesetViews.invalidate(rulesetId);
     return result;
   }
 }

@@ -5,7 +5,7 @@ import { isValidElement } from "react";
 
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { charactersInCharacter, playerCharactersInCampaign } from "@/drizzle/schema.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
@@ -191,7 +191,7 @@ describe("CharactersService", () => {
       });
       const character = await createCharacterAs(session, { rulesetId: fork.id });
       const copy = (await copyEntity(db, "abilities", ctx.abilityMap["Strength"], fork)).id as string;
-      RulesetCache.invalidate(fork.id);
+      RulesetViews.invalidate(fork.id);
 
       await CharactersService.updateAbilities(session, character.id, { [copy]: 17 });
       const scores = await CharacterAbilities.findMany(db, { characterId: character.id });

@@ -73,8 +73,8 @@ describe("architecture rules", () => {
             engine +
             'import { flow } from "@/server/services/f/index.ts";\n' +
             `export function g(x: T) {\n  return [flow(x), ${describe}];\n}\n`,
-          // The routers and the cache aren't actions
-          "server/cache/h.ts": engine + `export function h(x: T) {\n  ${plan};\n  return ${describe};\n}\n`,
+          // The routers and copy-on-write's views aren't actions
+          "server/cow/views/h.ts": engine + `export function h(x: T) {\n  ${plan};\n  return ${describe};\n}\n`,
           // Another service, and a plan's own answer (`plan.describe(row)`), which isn't another operation
           "server/services/l/LService.ts":
             engine + `class LService {\n  m(x: T) {\n    return ${plan};\n  }\n}\nexport default new LService();\n`,
@@ -97,7 +97,7 @@ describe("architecture rules", () => {
     ]);
   });
 
-  test("the server reads a ruleset's view only for its copy-on-write data; its cache builds it", async () => {
+  test("the server reads a ruleset's view only for its copy-on-write data; copy-on-write's views build it", async () => {
     expect(
       await lintRepo(
         {
@@ -109,7 +109,7 @@ describe("architecture rules", () => {
           "server/services/c.ts":
             "export function c(scope: { rulesetData: object }) {\n  const { rulesetData } = scope;\n" +
             "  const view = rulesetData;\n  return view;\n}\n",
-          "server/cache/d.ts":
+          "server/cow/views/d.ts":
             "export function d(scope: { rulesetData: { feats: object } }) {\n  return scope.rulesetData.feats;\n}\n",
           // Past a retyping, its copy-on-write data alone; the view under another name, through `!`, or the cache's
           "server/services/e.ts":
@@ -120,11 +120,11 @@ describe("architecture rules", () => {
           "server/services/g.ts":
             "export function g(scope: { rulesetData?: { feats: object } }) {\n  return scope.rulesetData!.feats;\n}\n",
           "server/services/h.ts":
-            'import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";\n' +
-            "export async function h(ruleset: never) {\n  return await RulesetCache.getData(ruleset);\n}\n",
+            'import { RulesetViews } from "@/server/cow/index.ts";\n' +
+            "export async function h(ruleset: never) {\n  return await RulesetViews.getData(ruleset);\n}\n",
           // Under the name the file imports the cache by, or by a computed key
           "server/services/i.ts":
-            'import { RulesetCache as Cache } from "@/server/cache/rulesetCache/index.ts";\n' +
+            'import { RulesetViews as Cache } from "@/server/cow/index.ts";\n' +
             "export async function i(ruleset: never) {\n  return await Cache.getData(ruleset);\n}\n",
           "server/services/j.ts":
             'export function j(scope: { rulesetData: { feats: object } }) {\n  return scope["rulesetData"].feats;\n}\n',
@@ -176,8 +176,14 @@ describe("architecture rules", () => {
         "server/repositories/A.ts": 'import { x } from "@/server/services/s.ts";\nexport const a = x;\n',
         "server/database/d.ts": 'import type { R } from "@/server/repositories/r.ts";\nexport type D = R;\n',
         "server/services/s.ts": 'import r from "@/server/routers/r.ts";\nexport const x = r;\n',
+        // The cache is memoization only: none of the repositories, copy-on-write or the engine
         "server/cache/c.ts": 'import { w } from "@/server/cow/index.ts";\nexport const c = w;\n',
+        "server/cache/r.ts": 'import { R } from "@/server/repositories/index.ts";\nexport const r = R;\n',
+        "server/cache/e.ts": 'import { Engine } from "@/engine/index.ts";\nexport const e = Engine;\n',
         "server/cow/w.ts": 'import { s } from "@/server/services/s.ts";\nexport const w = s;\n',
+        // Copy-on-write's views sit below its writes
+        "server/cow/views/v.ts": 'import { E } from "@/server/cow/writes/EntityCopy.ts";\nexport const v = E;\n',
+        "server/cow/writes/w.ts": 'import { V } from "@/server/cow/views/RulesetViews.ts";\nexport const w = V;\n',
         // The engine's machinery names no ruleset, not even for a type; a ruleset builds on the machinery and lib/
         "engine/core/module/m.ts": 'import type { C } from "@/engine/rulesets/dnd3.5/index.ts";\nexport type M = C;\n',
         "engine/rulesets/dnd3.5/r.ts": 'import type { M } from "@/engine/core/module/m.ts";\nexport type R = M;\n',
@@ -212,6 +218,9 @@ describe("architecture rules", () => {
       "layers engine/core/view/v.ts",
       "layers lib/l.ts",
       "layers server/cache/c.ts",
+      "layers server/cache/e.ts",
+      "layers server/cache/r.ts",
+      "layers server/cow/views/v.ts",
       "layers server/cow/w.ts",
       "layers server/database/d.ts",
       "layers server/repositories/A.ts",

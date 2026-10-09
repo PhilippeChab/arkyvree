@@ -1,6 +1,6 @@
 import { afterEach, expect, test } from "bun:test";
 
-import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Items, Properties, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
@@ -54,7 +54,7 @@ async function setup(
   return { session, host, source, copies };
 }
 
-afterEach(() => RulesetCache.invalidateAll());
+afterEach(() => RulesetViews.invalidateAll());
 
 for (const index of [0, 1]) {
   test(`derived item can override template property from extension ${index}`, async () => {
@@ -157,7 +157,7 @@ for (const action of ["update leaf", "delete leaf", "update chain"] as const) {
         r.id !== target.id ? r : action === "update chain" ? { ...r, chainingOperator: "and" } : { ...r, value: "17" },
       );
     for (const cold of [false, true]) {
-      if (cold) RulesetCache.invalidateAll();
+      if (cold) RulesetViews.invalidateAll();
       const after = await RequirementsService.getRequirements(host.id, "feats", copies[0]);
       expect(shape(after)).toEqual(shape(expected));
       expect(after.some((r) => originals.some((source) => source.id === r.id))).toBe(false);
@@ -182,7 +182,7 @@ test("hidden and unrelated template properties cannot be overridden", async () =
     type: "OTHER",
     value: "2",
   });
-  RulesetCache.invalidateAll();
+  RulesetViews.invalidateAll();
   const before = await ItemsService.getItem(host.id, item.id);
   expect(before.properties).toHaveLength(1);
   expect(before.properties[0].id).not.toBe(hidden.id);

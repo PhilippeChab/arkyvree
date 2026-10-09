@@ -2,7 +2,7 @@ import { websocket } from "hono/bun";
 
 import "./instrument-web.ts";
 import "./log.ts";
-import { RulesetCache } from "./cache/rulesetCache/index.ts";
+import { RulesetViews } from "./cow/index.ts";
 import { waitForDatabase } from "./database/index.ts";
 import { isProduction, readEnv, REQUIRED_IN_PRODUCTION } from "./environment.ts";
 import { application } from "./routers/application.ts";
@@ -24,7 +24,7 @@ function checkProductionEnvironment() {
  * pin on miss — this just frontloads the work for the first user.
  */
 function warmRulesetCache() {
-  RulesetCache.warm().then(
+  RulesetViews.warm().then(
     () => console.log("[cache] System ruleset cache warmed"),
     (err) => {
       const msg = err instanceof Error ? err.message : String(err);

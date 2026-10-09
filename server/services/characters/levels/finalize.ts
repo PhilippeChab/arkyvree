@@ -8,7 +8,7 @@ import { getTableName } from "drizzle-orm";
 
 import { levelsInCharacter } from "@/drizzle/schema.ts";
 import { Engine, type LevelUpEngine } from "@/engine/index.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { withRulesetScope } from "@/server/cow/index.ts";
 import { type Db, withTransaction } from "@/server/database/index.ts";
 import {
   Activities,
