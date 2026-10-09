@@ -66,14 +66,6 @@ export function ContributorsDialog({
     if (contributors.isLoading) return <DiceSpinner sx={{ py: 4 }} />;
     if (contributors.error && !contributors.hasData)
       return <LoadError what="Contributors" error={contributors.error} />;
-    if (contributors.contributors.length === 0 && !contributors.owner) {
-      return (
-        <Stack spacing={2} sx={{ alignItems: "flex-start" }}>
-          <BlankNote>No contributors yet</BlankNote>
-          {canInvite && <AddButton variant="outlined" label="Invite a Contributor" onClick={contributors.openInvite} />}
-        </Stack>
-      );
-    }
     return (
       <Stack spacing={2}>
         <ContributorsTable
@@ -96,6 +88,15 @@ export function ContributorsDialog({
             ))
           }
         />
+        {/* None but its owner yet: said under the owner's row */}
+        {contributors.contributors.length === 0 && (
+          <Stack spacing={2} sx={{ alignItems: "flex-start" }}>
+            <BlankNote>No contributors yet</BlankNote>
+            {canInvite && (
+              <AddButton variant="outlined" label="Invite a Contributor" onClick={contributors.openInvite} />
+            )}
+          </Stack>
+        )}
         <LoadMoreButton
           hasNextPage={contributors.hasNextPage}
           isFetchingNextPage={contributors.isFetchingNextPage}

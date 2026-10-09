@@ -1,18 +1,14 @@
-import { useIsDemo } from "@/client/src/hooks/index.ts";
 import type { CampaignDetail } from "@/client/src/lib/queries.ts";
 
 /** What the session may do in a campaign; nothing until the campaign has loaded. */
 export function useCampaignPermissions(campaign: Pick<CampaignDetail, "currentUserRole"> | undefined) {
+  // Its Game Master runs it: its details, its players and its invites. A demo user, whom the server lets create no
+  // campaign, is never one.
   const isDM = campaign?.currentUserRole === "Game Master";
-  // Demo users can run their own campaigns but can't pull other users in.
-  const isDemo = useIsDemo();
-  const canEdit = isDM;
-  // Its players and its invites alike
-  const canManagePlayers = isDM && !isDemo;
 
   return {
     isDM,
-    canEdit,
-    canManagePlayers,
+    canEdit: isDM,
+    canManagePlayers: isDM,
   };
 }

@@ -5,7 +5,7 @@ import { type InferResponseType, parseResponse } from "hono/client";
 import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
 import { MechanicsIcon } from "@/client/src/components/icons/index.ts";
 import { useSearchText } from "@/client/src/hooks/index.ts";
-import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import {
   EMPTY_MECHANIC,
   type MechanicFormData,
@@ -94,6 +94,7 @@ export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: Rule
             what="Mechanics"
             error={error}
             data={mechanics}
+            animationOffset={itemsBeforeLastPage(data)}
             search={searchQuery}
             isLoading={isLoading}
             columns={MECHANICS_COLUMNS}

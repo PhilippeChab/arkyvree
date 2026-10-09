@@ -526,6 +526,21 @@ describe("component rules", () => {
     ).toEqual(["list-results client/src/pages/rulesets/details/sections/FeatsSection.tsx"]);
   });
 
+  test("a ruleset table that loads its pages staggers in the page that came in", async () => {
+    const table = (offset: string) =>
+      `export const t = (\n  <Stack spacing={2}>\n    <RulesetSectionTable what="Feats" data={feats}${offset} />\n    <LoadMoreButton hasNextPage={next} />\n  </Stack>\n);\n`;
+    expect(
+      await lintRepo(
+        {
+          "client/src/paged.tsx": table(" animationOffset={itemsBeforeLastPage(data)}"),
+          "client/src/unpaged.tsx": 'export const u = <RulesetSectionTable what="Levels" data={levels} />;\n',
+          "client/src/from-zero.tsx": table(""),
+        },
+        ["list-results"],
+      ),
+    ).toEqual(["list-results client/src/from-zero.tsx"]);
+  });
+
   test("a skeleton means loading: a table's is a TableSkeleton, anything else's a spinner", async () => {
     const own = "export const o = <Skeleton />;\n";
     expect(

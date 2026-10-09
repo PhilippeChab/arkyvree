@@ -1,6 +1,7 @@
-import { useIsDemo } from "@/client/src/hooks/index.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
+
+import { useIsDemo } from "./useIsDemo.ts";
 
 /** The fields permissions depend on; ruleset details and list items both carry them. */
 type RulesetData = Pick<RulesetDetail, "userId" | "status" | "contributorRole">;

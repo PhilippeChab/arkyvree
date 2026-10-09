@@ -5,9 +5,8 @@ import { EditDialog, RowAction, SelectField } from "@/client/src/components/comm
 import { type Contributor, ContributorsDialog, contributorsQuery } from "@/client/src/components/contributors/index.ts";
 import { EditIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useDialogState, useFormWith } from "@/client/src/hooks/index.ts";
+import { useDialogState, useFormWith, useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
-import { useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
 
@@ -30,7 +29,8 @@ export function RulesetContributorsDialog({ ruleset, open, onClose }: RulesetCon
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
   const { isOwner, canManageContributors } = useRulesetPermissions(ruleset);
-  // An archived ruleset refuses invites and role changes, but its owner can still clean up stale rows
+  // An archived ruleset refuses invites and role changes, as the server does, but who manages its contributors still
+  // removes one, and a contributor still leaves
   const isArchived = ruleset.status === "Archived";
   const canEditRoles = canManageContributors && !isArchived;
   // Only the owner may grant Admin

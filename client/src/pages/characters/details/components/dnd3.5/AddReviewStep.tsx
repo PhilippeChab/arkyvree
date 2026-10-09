@@ -5,7 +5,7 @@ import { LevelReview, type LevelReviewState, ReviewGroup } from "./LevelReview.t
 import type { AttributesData, SelectedKlass } from "./levelUp/index.ts";
 
 interface AddReviewState extends LevelReviewState {
-  abilityIncreases: Record<number, string | null>;
+  abilityIncreases: (string | null)[];
   attributeData: AttributesData | undefined;
   classPlan: (SelectedKlass | null)[];
   hpValues: (number | null)[];

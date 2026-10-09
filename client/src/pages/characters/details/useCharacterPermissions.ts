@@ -8,7 +8,8 @@ import { useAuthStore } from "@/client/src/stores/authStore.ts";
  */
 export function useCharacterPermissions(character: Pick<CharacterDetail, "deletedAt" | "userId"> | undefined) {
   const currentUserId = useAuthStore((s) => s.user?.id);
-  // Demo users keep their characters to themselves: they can't pull other users in, nor share a link.
+  // Demo users keep their characters in the app, as the server holds them: they can't pull other users in, share a
+  // link, nor export a PDF.
   const isDemo = useIsDemo();
   const isArchived = !!character?.deletedAt;
   const isOwner = !!currentUserId && character?.userId === currentUserId;
@@ -18,6 +19,7 @@ export function useCharacterPermissions(character: Pick<CharacterDetail, "delete
     isOwner,
     /** Archive it, unarchive it, delete it for good: its owner's alone. */
     canArchive: isOwner,
+    canDownloadPdf: !isDemo,
     /** Its sheet: anyone who opened it, while it isn't archived. */
     canEdit: !isArchived,
     /** Its portrait: contributors edit the sheet, but only the owner changes it. */

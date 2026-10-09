@@ -5,7 +5,7 @@ import { type InferResponseType, parseResponse } from "hono/client";
 import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
 import { PowersIcon } from "@/client/src/components/icons/index.ts";
 import { useSearchText } from "@/client/src/hooks/index.ts";
-import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import {
   EMPTY_SPELL,
   type SpellFormData,
@@ -129,6 +129,7 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
             what="Spells"
             error={error}
             data={spells}
+            animationOffset={itemsBeforeLastPage(data)}
             search={searchQuery}
             isLoading={isLoading}
             columns={SPELLS_COLUMNS}

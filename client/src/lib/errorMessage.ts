@@ -27,3 +27,8 @@ export function loadFailureMessage(what: string, error: unknown): string {
   if (error instanceof ApiError && error.status === 403) return `You don't have access to this ${what.toLowerCase()}`;
   return `Failed to load ${what.toLowerCase()}`;
 }
+
+/** A request refused for coming too often (a 429, the server's rate limits): the user waits a moment, then retries. */
+export function rateLimited(error: unknown): boolean {
+  return error instanceof ApiError && error.status === 429;
+}

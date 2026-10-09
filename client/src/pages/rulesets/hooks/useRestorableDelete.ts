@@ -1,10 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 
+import { useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import { rulesetChangesQuery } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import { isRestorableDelete } from "@/client/src/pages/rulesets/restorableDelete.ts";
-
-import { useRulesetPermissions } from "./useRulesetPermissions.ts";
 
 /**
  * Whether deleting an entity of a ruleset, or what it holds, can be undone from Local Changes: one the ruleset inherits

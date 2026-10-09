@@ -3,10 +3,11 @@ import { parseResponse } from "hono/client";
 import { useCallback, useMemo } from "react";
 import { useController } from "react-hook-form";
 
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useListboxQuery } from "@/client/src/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-import { fitFeats, openPoolOf } from "./fitPicks.ts";
+import { fitFeats, fitPowers, fitSkillPoints, openPoolOf } from "./fitPicks.ts";
 import { type HpLevel, hpSet } from "./hitPoints.ts";
 import {
   attributeSlotsQuery,
@@ -45,6 +46,7 @@ export const EDIT_STEP_LABELS = [
 ];
 
 export function useEditLevelWizard({ open, onClose, characterId, editingLevelId }: UseEditLevelWizardParams) {
+  const snackbar = useSnackbar();
   const base = useLevelWizardBase(characterId);
   const {
     handleSubmit,
@@ -103,6 +105,11 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevelId 
 
   // The edited level's class skills and points, which the skills step and the review spend the points over
   const skillLevels = useMemo(() => skillData && editedLevelSkills(skillData), [skillData]);
+  // The skill points, fitted to the level's: its ability increase changes how many it has
+  const skillPointAllocations = useMemo(
+    () => fitSkillPoints(picked.skillPoints, skillData, skillLevels),
+    [picked.skillPoints, skillData, skillLevels],
+  );
 
   const {
     data: featData,
@@ -138,6 +145,9 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevelId 
     error: powersError,
   } = useQuery({ ...powerSlotsQuery(characterId, step), enabled: open });
 
+  // The spells, fitted to the level's slots
+  const selectedPowers = useMemo(() => fitPowers(picked.powers, powerData?.aptitudePools), [picked.powers, powerData]);
+
   const {
     items: availablePowers,
     isLoading: isLoadingAvailablePowers,
@@ -152,17 +162,17 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevelId 
   const finalizeMutation = useMutation({
     mutationFn: async ({ data, force = false }: { data: LevelUpFormData; force?: boolean }) => {
       if (!data.selectedHP) throw new Error("HP not selected");
-      // The feats are saved as the level's feat slots fit them: its slots, the feats' and the powers', must have loaded
-      if (!featData || !powerData) throw new Error("The level hasn't finished loading");
+      // The picks are saved as the level's slots fit them, which must have loaded: the feats', the spells', the skills'
+      if (!featData || !powerData || !skillData) throw new Error("The level hasn't finished loading");
       return parseResponse(
         rpc.api.characters.levels[":characterId"][":characterLevelId"].$put({
           param: { characterId, characterLevelId: editingLevelId },
           json: {
             hp: data.selectedHP,
             abilityId: data.selectedAttribute,
-            skills: data.skillPointAllocations,
-            feats: pickIds(fitFeats(data.selectedFeats, featData.aptitudePools).feats),
-            powers: pickIds(data.selectedPowers),
+            skills: skillPointAllocations,
+            feats: pickIds(selectedFeats),
+            powers: pickIds(selectedPowers),
             force,
           },
         }),
@@ -170,6 +180,7 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevelId 
     },
     onSuccess: async () => {
       await refreshAfterSave();
+      snackbar.success("Level updated");
       resetPicks();
       onClose();
     },
@@ -204,8 +215,8 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevelId 
   return {
     ...base,
     selectedFeats,
-    selectedPowers: picked.powers,
-    skillPointAllocations: picked.skillPoints,
+    selectedPowers,
+    skillPointAllocations,
     selectedAptitude,
     featPicker: picker,
     selectedClass,

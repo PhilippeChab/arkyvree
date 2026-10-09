@@ -23,6 +23,8 @@ import type { PublishKind } from "@/client/src/pages/rulesets/hooks/index.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
 interface ArchiveRulesetDialogProps {
+  /** Who archives it can unarchive it too: its owner. An Admin archives it, but only its owner brings it back. */
+  canUnarchive: boolean;
   isLoading: boolean;
   onClose: () => void;
   onConfirm: () => void;
@@ -85,7 +87,7 @@ const PRIVACY_OPTIONS = [
   { value: true, label: "Private", icon: PrivateIcon },
 ] as const;
 
-export function ArchiveRulesetDialog({ open, onClose, onConfirm, isLoading }: ArchiveRulesetDialogProps) {
+export function ArchiveRulesetDialog({ open, onClose, onConfirm, isLoading, canUnarchive }: ArchiveRulesetDialogProps) {
   return (
     <ConfirmDialog
       open={open}
@@ -93,7 +95,11 @@ export function ArchiveRulesetDialog({ open, onClose, onConfirm, isLoading }: Ar
       onConfirm={onConfirm}
       isLoading={isLoading}
       title="Archive Ruleset"
-      message="Are you sure you want to archive this ruleset? You can unarchive it at any time from the Archived filter."
+      message={
+        canUnarchive
+          ? "Are you sure you want to archive this ruleset? You can unarchive it at any time from the Archived filter."
+          : "Are you sure you want to archive this ruleset? Only its owner can unarchive it."
+      }
       confirmLabel="Archive Ruleset"
       intent="caution"
       confirmIcon={<ArchiveIcon />}

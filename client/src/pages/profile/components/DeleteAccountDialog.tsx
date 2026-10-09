@@ -72,8 +72,9 @@ export function DeleteAccountDialog({ open, onClose, onExited, hasPassword }: De
         <DialogContent>
           <Stack spacing={3} sx={{ pt: 1 }}>
             <DialogContentText>
-              This action is <strong>permanent</strong> and cannot be undone. All your characters, campaign memberships,
-              and account data will be removed.
+              This action is <strong>permanent</strong> and cannot be undone. Your characters, your campaign memberships
+              and your account data are removed. Your rulesets stay, without an owner, for the characters, campaigns and
+              contributors that use them.
             </DialogContentText>
 
             {hasPassword ? (

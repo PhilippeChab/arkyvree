@@ -5,7 +5,7 @@ import { parseResponse } from "hono/client";
 import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
 import { AptitudesIcon } from "@/client/src/components/icons/index.ts";
 import { useSearchText } from "@/client/src/hooks/index.ts";
-import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import {
   type AptitudeFormData,
   AptitudeFormFields,
@@ -91,6 +91,7 @@ export function AptitudesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
             what="Aptitudes"
             error={error}
             data={aptitudes}
+            animationOffset={itemsBeforeLastPage(data)}
             search={searchQuery}
             isLoading={isLoading}
             columns={APTITUDES_COLUMNS}

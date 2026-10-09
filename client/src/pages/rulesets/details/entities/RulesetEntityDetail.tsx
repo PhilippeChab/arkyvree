@@ -3,7 +3,7 @@ import { type ReactNode } from "react";
 import type { DefaultValues, FieldValues, UseFormReturn } from "react-hook-form";
 import { Navigate, useLocation } from "react-router-dom";
 
-import { useFormSync, useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
+import { useFormSync, useFormWith, usePageTitle, useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -13,12 +13,7 @@ import {
   EntityPageError,
 } from "@/client/src/pages/rulesets/components/index.ts";
 import { entityPageBack } from "@/client/src/pages/rulesets/entityPageState.ts";
-import {
-  useCopyOnWrite,
-  useEntitySave,
-  useRestorableDelete,
-  useRulesetPermissions,
-} from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useCopyOnWrite, useEntitySave, useRestorableDelete } from "@/client/src/pages/rulesets/hooks/index.ts";
 
 type EditableDetailsProps<TEntity extends EntityBase, TForm extends FieldValues, TKey extends QueryKey> = Pick<
   RulesetEntityDetailProps<TEntity, TForm, TKey>,

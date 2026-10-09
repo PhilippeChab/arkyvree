@@ -10,13 +10,6 @@ import {
 import { useRulesetSaves } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { MAX_CLASS_LEVEL } from "@/shared/dnd3.5/classes.ts";
 
-interface ConfirmActionProps {
-  isLoading: boolean;
-  onClose: () => void;
-  onConfirm: () => void;
-  open: boolean;
-}
-
 interface CreateLevelDialogProps {
   form: UseFormReturn<ClassLevelFormData>;
   isLoading: boolean;
@@ -24,6 +17,15 @@ interface CreateLevelDialogProps {
   onSubmit: (data: ClassLevelFormData) => void;
   open: boolean;
   rulesetId: string;
+}
+
+interface RemoveSkillDialogProps {
+  isLoading: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  open: boolean;
+  /** The removal can be undone from Local Changes: the class is inherited, or a copy of one (`useRestorableDelete`). */
+  restorable: boolean;
 }
 
 export function CreateLevelDialog({ open, onClose, form, onSubmit, isLoading, rulesetId }: CreateLevelDialogProps) {
@@ -80,12 +82,16 @@ export function CreateLevelDialog({ open, onClose, form, onSubmit, isLoading, ru
   );
 }
 
-export function RemoveSkillDialog({ ...props }: ConfirmActionProps) {
+export function RemoveSkillDialog({ restorable, ...props }: RemoveSkillDialogProps) {
   return (
     <DeleteDialog
       {...props}
       title="Remove Skill"
-      message="Are you sure you want to remove this skill from the class? This action cannot be undone."
+      message={
+        restorable
+          ? "Are you sure you want to remove this skill from the class? You can restore it from Local Changes."
+          : "Are you sure you want to remove this skill from the class? This action cannot be undone."
+      }
       confirmLabel="Remove Skill"
     />
   );

@@ -291,123 +291,126 @@ export function Layout() {
           <Stack component={List} spacing={1} sx={{ flex: 1, pt: 2, pb: 2, px: 1.5 }}>
             {SIDEBAR_ITEMS.map((item) => (
               <ListItem key={item.id} disablePadding>
-                <ListItemButton
-                  ref={sidebarItemRefs[item.id]}
-                  {...("external" in item && item.external
-                    ? { component: "a", href: item.path, target: "_blank", rel: "noopener noreferrer" }
-                    : { component: Link, to: item.path })}
-                  selected={!("external" in item) && activeSection === item.id}
-                  onClick={() => {
-                    if (isMobile) setMobileDrawerOpen(false);
-                  }}
-                  onMouseEnter={() => PREFETCHERS[item.id]?.(queryClient)}
-                  sx={{
-                    height: 48,
-                    minHeight: "unset",
-                    boxShadow: (theme) => (onboardingHighlightId === item.id ? theme.boxShadows.highlight : undefined),
-                    alignItems: "center",
-                    justifyContent: isMobile || effectiveExpanded ? "flex-start" : "center",
-                    px: isMobile || effectiveExpanded ? 2 : 1.5,
-                    py: 1,
-                    borderRadius: 3,
-                    position: "relative",
-                    overflow: "hidden",
-                    transition: transitionOf(["all"], DURATION.normal, EASING.emphasized),
-                    "&::before": {
-                      content: '""',
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      background: (theme) =>
-                        `linear-gradient(135deg, transparent, ${alpha(theme.palette.common.white, 0.1)})`,
-                      opacity: 0,
-                      transition: transitionOf(["opacity"], DURATION.normal),
-                    },
-                    "&.Mui-selected": {
-                      bgcolor: "primary.main",
-                      color: "common.white",
-                      boxShadow: (theme) => theme.boxShadows.selectedItem,
+                {/* A collapsed sidebar shows its items' icons alone, each named in its tooltip */}
+                <Tooltip title={isMobile || effectiveExpanded ? "" : item.label} placement="right" describeChild>
+                  <ListItemButton
+                    ref={sidebarItemRefs[item.id]}
+                    {...("external" in item && item.external
+                      ? { component: "a", href: item.path, target: "_blank", rel: "noopener noreferrer" }
+                      : { component: Link, to: item.path })}
+                    selected={!("external" in item) && activeSection === item.id}
+                    onClick={() => {
+                      if (isMobile) setMobileDrawerOpen(false);
+                    }}
+                    onMouseEnter={() => PREFETCHERS[item.id]?.(queryClient)}
+                    sx={{
+                      height: 48,
+                      minHeight: "unset",
+                      boxShadow: (theme) =>
+                        onboardingHighlightId === item.id ? theme.boxShadows.highlight : undefined,
+                      alignItems: "center",
+                      justifyContent: isMobile || effectiveExpanded ? "flex-start" : "center",
+                      px: isMobile || effectiveExpanded ? 2 : 1.5,
+                      py: 1,
+                      borderRadius: 3,
+                      position: "relative",
+                      overflow: "hidden",
+                      transition: transitionOf(["all"], DURATION.normal, EASING.emphasized),
                       "&::before": {
-                        opacity: 1,
-                      },
-                      "&::after": {
                         content: '""',
                         position: "absolute",
+                        top: 0,
                         left: 0,
-                        top: 4,
-                        bottom: 4,
-                        width: 3,
-                        borderRadius: 2,
-                        bgcolor: "secondary.main",
+                        right: 0,
+                        bottom: 0,
+                        background: (theme) =>
+                          `linear-gradient(135deg, transparent, ${alpha(theme.palette.common.white, 0.1)})`,
+                        opacity: 0,
+                        transition: transitionOf(["opacity"], DURATION.normal),
+                      },
+                      "&.Mui-selected": {
+                        bgcolor: "primary.main",
+                        color: "common.white",
+                        boxShadow: (theme) => theme.boxShadows.selectedItem,
+                        "&::before": {
+                          opacity: 1,
+                        },
+                        "&::after": {
+                          content: '""',
+                          position: "absolute",
+                          left: 0,
+                          top: 4,
+                          bottom: 4,
+                          width: 3,
+                          borderRadius: 2,
+                          bgcolor: "secondary.main",
+                        },
+                        "&:hover": {
+                          bgcolor: "primary.dark",
+                        },
+                        "& .MuiListItemIcon-root": {
+                          color: "common.white",
+                        },
+                        "& .MuiListItemText-primary": {
+                          fontWeight: 600,
+                          color: "common.white",
+                        },
+                        "& .MuiListItemText-secondary": {
+                          color: (theme) => alpha(theme.palette.common.white, 0.8),
+                        },
                       },
                       "&:hover": {
-                        bgcolor: "primary.dark",
+                        bgcolor: "action.hover",
+                        transform: "translateX(2px)",
+                      },
+                      [PREFERS_REDUCED_MOTION]: {
+                        "&:hover": { transform: "none" },
                       },
                       "& .MuiListItemIcon-root": {
-                        color: "common.white",
+                        color: (theme) => (theme.palette.mode === "dark" ? "grey.400" : "grey.700"),
                       },
                       "& .MuiListItemText-primary": {
-                        fontWeight: 600,
-                        color: "common.white",
+                        color: (theme) => (theme.palette.mode === "dark" ? "grey.100" : "grey.900"),
                       },
                       "& .MuiListItemText-secondary": {
-                        color: (theme) => alpha(theme.palette.common.white, 0.8),
-                      },
-                    },
-                    "&:hover": {
-                      bgcolor: "action.hover",
-                      transform: "translateX(2px)",
-                    },
-                    [PREFERS_REDUCED_MOTION]: {
-                      "&:hover": { transform: "none" },
-                    },
-                    "& .MuiListItemIcon-root": {
-                      color: (theme) => (theme.palette.mode === "dark" ? "grey.400" : "grey.700"),
-                    },
-                    "& .MuiListItemText-primary": {
-                      color: (theme) => (theme.palette.mode === "dark" ? "grey.100" : "grey.900"),
-                    },
-                    "& .MuiListItemText-secondary": {
-                      color: (theme) => (theme.palette.mode === "dark" ? "grey.500" : "grey.600"),
-                    },
-                  }}
-                  title={!(isMobile || effectiveExpanded) ? item.label : undefined}
-                >
-                  <ListItemIcon
-                    sx={{
-                      minWidth: 0,
-                      justifyContent: "center",
-                      pr: isMobile || effectiveExpanded ? 2 : 0,
-                      transition: transitionOf(["all"], DURATION.deliberate, EASING.emphasized),
-                      "& .MuiSvgIcon-root": {
-                        fontSize: "1.4rem",
-                        transition: transitionOf(["transform"], DURATION.normal),
+                        color: (theme) => (theme.palette.mode === "dark" ? "grey.500" : "grey.600"),
                       },
                     }}
                   >
-                    {item.icon}
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={item.label}
-                    secondary={isMobile || effectiveExpanded ? item.description : null}
-                    sx={{
-                      opacity: isMobile || effectiveExpanded ? 1 : 0,
-                      transform: isMobile || effectiveExpanded ? "translateX(0)" : "translateX(-10px)",
-                      transition: transitionOf(["all"], DURATION.deliberate, EASING.emphasized),
-                      transitionDelay: `${isMobile || effectiveExpanded ? DURATION.beat : 0}ms`,
-                    }}
-                    slotProps={{
-                      primary: {
-                        sx: { fontSize: "0.95rem", whiteSpace: "nowrap" },
-                      },
-                      secondary: {
-                        sx: { fontSize: "0.75rem", whiteSpace: "nowrap" },
-                      },
-                    }}
-                  />
-                </ListItemButton>
+                    <ListItemIcon
+                      sx={{
+                        minWidth: 0,
+                        justifyContent: "center",
+                        pr: isMobile || effectiveExpanded ? 2 : 0,
+                        transition: transitionOf(["all"], DURATION.deliberate, EASING.emphasized),
+                        "& .MuiSvgIcon-root": {
+                          fontSize: "1.4rem",
+                          transition: transitionOf(["transform"], DURATION.normal),
+                        },
+                      }}
+                    >
+                      {item.icon}
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={item.label}
+                      secondary={isMobile || effectiveExpanded ? item.description : null}
+                      sx={{
+                        opacity: isMobile || effectiveExpanded ? 1 : 0,
+                        transform: isMobile || effectiveExpanded ? "translateX(0)" : "translateX(-10px)",
+                        transition: transitionOf(["all"], DURATION.deliberate, EASING.emphasized),
+                        transitionDelay: `${isMobile || effectiveExpanded ? DURATION.beat : 0}ms`,
+                      }}
+                      slotProps={{
+                        primary: {
+                          sx: { fontSize: "0.95rem", whiteSpace: "nowrap" },
+                        },
+                        secondary: {
+                          sx: { fontSize: "0.75rem", whiteSpace: "nowrap" },
+                        },
+                      }}
+                    />
+                  </ListItemButton>
+                </Tooltip>
               </ListItem>
             ))}
           </Stack>

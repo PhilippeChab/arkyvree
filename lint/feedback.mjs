@@ -11,7 +11,7 @@
  *   or "Delete" for what a fork inherits, which its Local Changes restore (`restorable ? "Delete" : "Delete
  *   Permanently"`).
  * - `pending-buttons`: a button that starts a request shows it running: its label in a `DiceSpinner`, disabled the
- *   while.
+ *   while; so does a contained one disabled while a request it's handed runs (a `pending` prop: Proceed Anyway's).
  * - `page-errors`: a page that couldn't load shows a `PageError`, never an alert of its own: it says why in
  *   `loadFailureMessage`'s words, and its way back is named for where it goes ("Back to Ruleset").
  * - `pickers`: a picker whose options load says so in its open list (`loading`: "Loading…"), never with a spinner in
@@ -55,6 +55,21 @@ function attribute(element, name) {
 /** What a JSX attribute holds: its expression, or its string. */
 function attributeValue(found) {
   return found?.value?.type === "JSXExpressionContainer" ? found.value.expression : found?.value;
+}
+
+/** The props a JSX element's component destructures (`function X({ onProceed, pending })`): none outside one. */
+function componentProps(node) {
+  for (let p = node.parent; p; p = p.parent) {
+    if (!["FunctionDeclaration", "FunctionExpression", "ArrowFunctionExpression"].includes(p.type)) continue;
+    const [first] = p.params;
+    if (first?.type !== "ObjectPattern") return new Set();
+    return new Set(
+      first.properties.flatMap((property) =>
+        property.type === "Property" && property.key.type === "Identifier" ? [property.key.name] : [],
+      ),
+    );
+  }
+  return new Set();
 }
 
 /** The condition a JSX element shows on, when it sits on one: `cond && <X />`, `cond ? <X /> : …`. */
@@ -229,7 +244,16 @@ function createPendingButtons(context) {
       const onClick = attribute(node, "onClick");
       const disabled = attribute(node, "disabled");
       if (!onClick || !disabled) return;
-      const mutates = context.sourceCode.getText(onClick).includes(".mutate(");
+      // It sends the request (`.mutate(`), or it's the action its component's owner hands a request to: a contained
+      // button whose click and whose pending flag are its component's props (Proceed Anyway's `onProceed`, `pending`)
+      const variant = attributeValue(attribute(node, "variant"));
+      const contained = variant?.type === "Literal" && variant.value === "contained";
+      const props = componentProps(node);
+      const handedOn =
+        contained &&
+        props.has(attributeValue(onClick)?.name) &&
+        [...identifiersIn(attributeValue(disabled))].some((name) => props.has(name));
+      const mutates = context.sourceCode.getText(onClick).includes(".mutate(") || handedOn;
       const waits = /isPending|isLoading|pending/.test(context.sourceCode.getText(disabled));
       if (!mutates || !waits || holdsSpinner(node)) return;
       context.report({
@@ -317,6 +341,15 @@ function holdsSpinner(element) {
   return element.children.some(
     (child) => child.type === "JSXElement" && (elementName(child) === "DiceSpinner" || holdsSpinner(child)),
   );
+}
+
+/** The names an expression reads: `pending`, `!canSave || pending`. */
+function identifiersIn(node) {
+  if (!node) return new Set();
+  if (node.type === "Identifier") return new Set([node.name]);
+  if (node.type === "LogicalExpression") return new Set([...identifiersIn(node.left), ...identifiersIn(node.right)]);
+  if (node.type === "UnaryExpression") return identifiersIn(node.argument);
+  return new Set();
 }
 
 /** Whether a node sits in a picker's field: an `Autocomplete`'s `renderInput`, or an input's adornment. */

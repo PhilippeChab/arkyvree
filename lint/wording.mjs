@@ -3,15 +3,16 @@
  *
  * - `label-case`: a label is in Title Case ("Mark All as Read"): a button's, a menu item's, a field's, a dialog's
  *   title and its actions, a tooltip that names an icon button, any element's `aria-label`, any component's
- *   `label` and `title` (but what says a sentence: a chip's value, an alert's or an empty state's line), and a page's
- *   title (`usePageTitle`).
+ *   `label` and `title` (but what says a sentence: a chip's value, an empty state's line; an alert's title is a
+ *   label), and a page's title (`usePageTitle`).
  * - `toast-wording`: a toast is a phrase ("Ruleset archived"), no final period or "!", no "successfully", no
  *   "Please", never opening on "You have"; an invite is an "invite", never an "invitation"; an error's fallback names
  *   what failed ("Failed to remove item").
  * - `confirm-wording`: a confirmation asks "Are you sure you want to …?", then says what follows; a deletion ends
  *   "This action cannot be undone.", or "You can restore it from Local Changes." for what a fork inherits, each branch
  *   of a message that says either; an archive ends "You can unarchive it at any time from the Archived filter.", the
- *   one way a ruleset, a campaign or a character comes back.
+ *   one way a ruleset, a campaign or a character comes back, or "Only its owner can unarchive it." for who archives
+ *   what they don't own (a ruleset's Admin).
  * - `typography-marks`: an ellipsis is "…" and a dash between words "—", never "..." or " - ", a template's
  *   interpolations reading as words (`${pool} - ${level}`); a text cut short is `truncate(text, length)`.
  *
@@ -21,8 +22,11 @@
 import { attributeExpression, calleeName, elementName, inClient, texts, writtenText } from "./jsx.mjs";
 import { repoPath } from "./paths.mjs";
 
-/** How an archive's confirmation ends: where the record waits, and that it comes back */
-const ARCHIVE_ENDING = "You can unarchive it at any time from the Archived filter.";
+/** How an archive's confirmation ends: where the record waits, and that it comes back; or who brings it back */
+const ARCHIVE_ENDINGS = [
+  "You can unarchive it at any time from the Archived filter.",
+  "Only its owner can unarchive it.",
+];
 
 /** How a deletion's confirmation ends: for good, or restorable, what a fork inherits (`isRestorableDelete`) */
 const DELETE_ENDINGS = ["This action cannot be undone.", "You can restore it from Local Changes."];
@@ -49,8 +53,8 @@ const LABELLED = new Set([
 const LABELLED_BY_PROP =
   /^(ActionMenuItem|AddButton|Button|ChoiceChip|Tab|ToggleButton|DescriptionField|EmailField|FormControlLabel|FormTextField|LinkButton|NameField|OptionToggle|PageActionButton|PasswordField|SelectField|SwitchField|TextField|.*Dialog|Modal)$/;
 
-/** The components whose `label` or `title` is a sentence, not a label: a chip's value, an alert's or an empty state's */
-const SENTENCE_TITLED = /(Chip|Alert|^BlankState|^Tooltip)$/;
+/** The components whose `label` or `title` is a sentence, not a label: a chip's value, an empty state's */
+const SENTENCE_TITLED = /(Chip|^BlankState|^Tooltip)$/;
 
 /** The words a Title Case label leaves lowercase, but first */
 const SMALL_WORDS = new Set([
@@ -87,14 +91,15 @@ function createConfirmWording(context) {
       const said = (text) =>
         /^Are you sure you want to [^?]+\?/.test(text) &&
         (element !== "DeleteDialog" || DELETE_ENDINGS.some((ending) => text.endsWith(ending))) &&
-        (!text.startsWith("Are you sure you want to archive ") || text.endsWith(ARCHIVE_ENDING));
+        (!text.startsWith("Are you sure you want to archive ") ||
+          ARCHIVE_ENDINGS.some((ending) => text.endsWith(ending)));
       if (texts.every(said)) return;
       context.report({
         node,
         message:
           'A confirmation asks "Are you sure you want to …?", then says what follows; a deletion ends "This action ' +
           'cannot be undone.", or "You can restore it from Local Changes." for what a fork inherits; an archive ends ' +
-          `"${ARCHIVE_ENDING}"`,
+          `"${ARCHIVE_ENDINGS[0]}", or "${ARCHIVE_ENDINGS[1]}" for who doesn't own it`,
       });
     },
   };
@@ -105,7 +110,7 @@ function createLabelCase(context) {
   const report = (node, text) =>
     context.report({
       node,
-      message: `A label is in Title Case ("Mark All as Read"): a button's, a menu item's, a field's, a dialog's, a component's \`label\` and \`title\` (not a chip's, an alert's or an empty state's), an icon button's tooltip, an \`aria-label\`, a page's title: "${text.trim()}".`,
+      message: `A label is in Title Case ("Mark All as Read"): a button's, a menu item's, a field's, a dialog's, a component's \`label\` and \`title\` (not a chip's or an empty state's), an icon button's tooltip, an \`aria-label\`, a page's title: "${text.trim()}".`,
     });
   return {
     CallExpression(node) {

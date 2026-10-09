@@ -8,7 +8,7 @@ import type { AttributesData, PreviewLevelDetail } from "./levelUp/index.ts";
 
 interface AddAttributeState {
   abilityIncreaseLevels: number[];
-  abilityIncreases: Record<number, string | null>;
+  abilityIncreases: (string | null)[];
   attributeData: AttributesData | undefined;
   attributesError: Error | null;
   handleAbilityIncreaseChange: (index: number, abilityId: string) => void;
