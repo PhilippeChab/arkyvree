@@ -1,19 +1,31 @@
 /** A class as a ruleset's entity: its fields, and what its save stores. */
 
-import RulesError from "@/engine/core/RulesError.ts";
-import type { RulesetView } from "@/engine/core/view/index.ts";
+import { PlainEntity } from "@/engine/core/entities/index.ts";
 
+import ClassLevelEntity from "./ClassLevelEntity.ts";
 import { CLASS_FIELDS } from "./fields.ts";
 
+/** A class's form: its name, description and hit die. */
+type ClassBody = { description?: string | null; hd?: number; name: string };
+
 /** A class as the ruleset describes it, and what its save stores. */
-export default class ClassEntity {
+export default class ClassEntity extends PlainEntity<"klasses", ClassBody> {
+  protected readonly label = "Class";
+
+  readonly type = "klasses";
+
+  /** A form's columns. */
+  protected columnsOf({ description, hd, name }: ClassBody) {
+    return { description, hd, name };
+  }
+
   /**
    * A class with its fields, and the ids of the properties that keep them, which its page edits them through: the
    * ability its bonus spells use, and the spells it casts.
    */
-  static describe(view: RulesetView, klassId: string) {
-    const klass = ClassEntity.find(view, klassId);
-    const properties = view.rulesetData.propertiesByEntity.get(klass.id) ?? [];
+  override describe(klassId: string) {
+    const klass = this.find(klassId);
+    const properties = this.view.rulesetData.propertiesByEntity.get(klass.id) ?? [];
     const { bonusSpellAbilityId, casterType } = CLASS_FIELDS.read(properties);
     const propertyIds = CLASS_FIELDS.readIds(properties);
     return {
@@ -25,15 +37,14 @@ export default class ClassEntity {
     };
   }
 
-  /** A class as the view has it: refused when there's none of its id. */
-  static find(view: RulesetView, klassId: string) {
-    const klass = view.rulesetData.find("klasses", klassId);
-    if (!klass) throw new RulesError("not-found", "Class not found in this ruleset");
-    return klass;
+  /** A class level by its id alone, with its details, its class's name and the ruleset that holds it. */
+  describeLevel(levelId: string) {
+    return new ClassLevelEntity(this.view).describeWithClass(levelId);
   }
 
   /** A new class's row, from its form: its hit die 8 when the form gives none. */
-  static planCreate(_view: RulesetView, body: { description?: string | null; hd?: number; name: string }) {
-    return { columns: { ...body, hd: body.hd || 8 } };
+  override planCreate(body: ClassBody) {
+    const plan = super.planCreate(body);
+    return { ...plan, columns: { ...plan.columns, hd: body.hd || 8 } };
   }
 }

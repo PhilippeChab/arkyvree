@@ -26,13 +26,11 @@ class AptitudesService {
           const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
+          const plan = Engine.for(scope).entities("aptitudes").planCreate(body);
           const names = new EntityNames(ruleset, rulesetData.cow);
-          const { tombstoneAncestorId } = await names.assertNameAvailable(tx, "aptitudes", body.name);
+          const { tombstoneAncestorId } = await names.assertNameAvailable(tx, "aptitudes", plan.name);
 
-          const rows = await Aptitudes.create(tx, {
-            ...body,
-            rulesetId,
-          });
+          const rows = await Aptitudes.create(tx, { ...plan.columns, rulesetId });
           const aptitude = rows[0];
 
           if (tombstoneAncestorId) await names.repointTombstone(tx, "aptitudes", tombstoneAncestorId, aptitude.id);
@@ -66,7 +64,7 @@ class AptitudesService {
           );
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-          const { aptitude } = Engine.for(scope).aptitudes().planDelete(aptitudeId);
+          const { entity: aptitude } = Engine.for(scope).entities("aptitudes").planDelete(aptitudeId);
 
           const edit = new EntityEdit(ruleset);
           const targetId = await edit.cowToDelete(tx, "aptitudes", aptitude);
@@ -94,7 +92,7 @@ class AptitudesService {
 
   async getAptitude(rulesetId: string, aptitudeId: string) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
-      const aptitude = Engine.for(scope).entity("aptitudes", aptitudeId).get();
+      const aptitude = Engine.for(scope).entities("aptitudes").describe(aptitudeId);
       return aptitude;
     });
   }
@@ -133,14 +131,13 @@ class AptitudesService {
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const { aptitude } = Engine.for(scope).aptitudes().planEdit(aptitudeId, body.name);
+          const { columns, entity: aptitude } = Engine.for(scope).entities("aptitudes").planEdit(aptitudeId, body);
 
           const edit = new EntityEdit(ruleset);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "aptitudes", aptitude);
           const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
-          const { updatedAt: _u, ...aptitudeData } = body;
-          const rows = await Aptitudes.update(tx, aptitudeData, { id: targetId, expectedUpdatedAt });
+          const rows = await Aptitudes.update(tx, columns, { id: targetId, expectedUpdatedAt });
           if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
           const updatedAptitude = rows[0];

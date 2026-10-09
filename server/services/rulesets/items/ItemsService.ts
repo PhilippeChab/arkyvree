@@ -39,7 +39,7 @@ class ItemsService extends include(Object, Variants) {
           const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const plan = Engine.for(scope).items().planCreate(body, duplicatedItemId);
+          const plan = Engine.for(scope).entities("items").planCreate(body, duplicatedItemId);
 
           const names = new EntityNames(ruleset, rulesetData.cow);
           const { tombstoneAncestorId } = await names.assertNameAvailable(tx, "items", body.name);
@@ -83,8 +83,8 @@ class ItemsService extends include(Object, Variants) {
           const inUse = await hasCharacterPicks(tx, "items", scope.rulesetData.cow.getEquivalentIds(itemId), rulesetId);
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-          const plan = Engine.for(scope).items().planDelete(itemId);
-          const { item } = plan;
+          const plan = Engine.for(scope).entities("items").planDelete(itemId);
+          const { entity: item } = plan;
           // A template's copies, in any ruleset: its delete is refused while it has any
           if (plan.copiesOf) plan.checkCopies(await Items.findMany(tx, { sourceItemId: plan.copiesOf }));
 
@@ -115,7 +115,7 @@ class ItemsService extends include(Object, Variants) {
   }
 
   async getItem(rulesetId: string, itemId: string) {
-    return await withRulesetScope(db, rulesetId, async (scope) => Engine.for(scope).items().describe(itemId));
+    return await withRulesetScope(db, rulesetId, async (scope) => Engine.for(scope).entities("items").describe(itemId));
   }
 
   async getItems(
@@ -135,7 +135,7 @@ class ItemsService extends include(Object, Variants) {
         { rulesetId, ...scope.rulesetData.cow.listFilters, ...where },
         pagination,
       );
-      return { ...result, items: Engine.for(scope).items().describeAll(result.items) };
+      return { ...result, items: Engine.for(scope).entities("items").describePage(result.items) };
     });
   }
 
@@ -147,7 +147,7 @@ class ItemsService extends include(Object, Variants) {
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const { columns, item } = Engine.for(scope).items().planEdit(itemId, body);
+          const { columns, entity: item } = Engine.for(scope).entities("items").planEdit(itemId, body);
 
           const edit = new EntityEdit(ruleset);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "items", item);

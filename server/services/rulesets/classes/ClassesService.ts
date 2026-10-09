@@ -30,7 +30,10 @@ class ClassesService {
           const names = new EntityNames(ruleset, rulesetData.cow);
           const { tombstoneAncestorId } = await names.assertNameAvailable(tx, "klasses", body.name);
 
-          const rows = await Klasses.create(tx, { ...Engine.for(scope).classes().planCreate(body).columns, rulesetId });
+          const rows = await Klasses.create(tx, {
+            ...Engine.for(scope).entities("klasses").planCreate(body).columns,
+            rulesetId,
+          });
           const klass = rows[0];
 
           if (tombstoneAncestorId) await names.repointTombstone(tx, "klasses", tombstoneAncestorId, klass.id);
@@ -64,7 +67,7 @@ class ClassesService {
           );
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-          const klass = Engine.for(scope).entity("klasses", klassId).get();
+          const { entity: klass } = Engine.for(scope).entities("klasses").planDelete(klassId);
 
           const edit = new EntityEdit(ruleset);
           const targetId = await edit.cowToDelete(tx, "klasses", klass);
@@ -112,7 +115,7 @@ class ClassesService {
         { rulesetId, ...scope.rulesetData.cow.listFilters, ...where },
         pagination,
       );
-      return { ...result, items: Engine.for(scope).describeRows(result.items) };
+      return { ...result, items: Engine.for(scope).entities("klasses").describePage(result.items) };
     });
   }
 
@@ -134,14 +137,13 @@ class ClassesService {
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const klass = Engine.for(scope).entity("klasses", klassId).get();
+          const { columns, entity: klass } = Engine.for(scope).entities("klasses").planEdit(klassId, body);
 
           const edit = new EntityEdit(ruleset);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "klasses", klass);
           const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
-          const { updatedAt: _u, ...klassData } = body;
-          const rows = await Klasses.update(tx, klassData, { id: targetId, expectedUpdatedAt });
+          const rows = await Klasses.update(tx, columns, { id: targetId, expectedUpdatedAt });
           if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
           const updatedKlass = rows[0];

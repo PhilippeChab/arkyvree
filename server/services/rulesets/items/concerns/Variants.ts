@@ -58,7 +58,7 @@ export function Variants<B extends Constructor>(Base: B) {
             const { ruleset, rulesetData } = scope;
 
             (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
-            const plan = Engine.for(scope).items().planVariants(sourceItemId, variants);
+            const plan = Engine.for(scope).entities("items").planVariants(sourceItemId, variants);
 
             // Batched pre-validation: one query for local conflicts, one for
             // ancestor conflicts, then the shared visibility / tombstone check

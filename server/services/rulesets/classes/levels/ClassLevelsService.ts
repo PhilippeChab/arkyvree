@@ -124,7 +124,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
 
   async getClassLevelWithClassName(rulesetId: string, classLevelId: string) {
     return await withRulesetScope(db, rulesetId, async (scope) =>
-      Engine.for(scope).classes().describeLevel(classLevelId),
+      Engine.for(scope).entities("klasses").describeLevel(classLevelId),
     );
   }
 

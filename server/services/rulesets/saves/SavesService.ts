@@ -26,10 +26,11 @@ class SavesService {
           const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
+          const plan = Engine.for(scope).entities("saves").planCreate(body);
           const names = new EntityNames(ruleset, rulesetData.cow);
-          const { tombstoneAncestorId } = await names.assertNameAvailable(tx, "saves", body.name);
+          const { tombstoneAncestorId } = await names.assertNameAvailable(tx, "saves", plan.name);
 
-          const rows = await Saves.create(tx, { ...body, rulesetId });
+          const rows = await Saves.create(tx, { ...plan.columns, rulesetId });
           const save = rows[0];
 
           if (tombstoneAncestorId) await names.repointTombstone(tx, "saves", tombstoneAncestorId, save.id);
@@ -55,7 +56,7 @@ class SavesService {
         await withRulesetScope(tx, rulesetId, async (scope) => {
           const { ruleset } = scope;
 
-          const save = Engine.for(scope).entity("saves", saveId).get();
+          const { entity: save } = Engine.for(scope).entities("saves").planDelete(saveId);
 
           // Saves don't have a character-pick path — class-side check instead.
           // klass_level_saves.save_id is ON DELETE RESTRICT, so this is just for
@@ -87,7 +88,7 @@ class SavesService {
 
   async getSave(rulesetId: string, saveId: string) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
-      const save = Engine.for(scope).entity("saves", saveId).get();
+      const save = Engine.for(scope).entities("saves").describe(saveId);
       return save;
     });
   }
@@ -108,7 +109,7 @@ class SavesService {
         { rulesetId, ...scope.rulesetData.cow.listFilters, ...where },
         pagination,
       );
-      return { ...result, items: Engine.for(scope).describeRows(result.items) };
+      return { ...result, items: Engine.for(scope).entities("saves").describePage(result.items) };
     });
   }
 
@@ -130,14 +131,13 @@ class SavesService {
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const save = Engine.for(scope).entity("saves", saveId).get();
+          const { columns, entity: save } = Engine.for(scope).entities("saves").planEdit(saveId, body);
 
           const edit = new EntityEdit(ruleset);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "saves", save);
           const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
-          const { updatedAt: _u, ...saveData } = body;
-          const rows = await Saves.update(tx, saveData, { id: targetId, expectedUpdatedAt });
+          const rows = await Saves.update(tx, columns, { id: targetId, expectedUpdatedAt });
           if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
           const updatedSave = rows[0];

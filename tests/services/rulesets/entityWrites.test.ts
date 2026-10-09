@@ -12,7 +12,7 @@ import { makeSession } from "@/tests/support/users.ts";
 
 /** Writes that write nothing but what's given. */
 function writesOf(writes: Partial<EntityWrites>): EntityWrites {
-  return { columns: {}, generatedFeats: [], removedFeats: [], ...writes };
+  return { ...writes };
 }
 
 /** A power of a fork of its own, with a property its writes don't keep a field in. */

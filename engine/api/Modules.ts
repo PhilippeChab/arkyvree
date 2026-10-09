@@ -1,6 +1,12 @@
 import type { RulesetModule } from "@/engine/core/module/index.ts";
-import { Dnd35Module } from "@/engine/rulesets/dnd3.5/index.ts";
+import { type Dnd35EntityKinds, Dnd35Module } from "@/engine/rulesets/dnd3.5/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
+
+/** Each entity kind's rules, by its table: what `Engine.for(scope).entities(type)` hands out. */
+export type EntityKinds = Dnd35EntityKinds;
+
+/** An entity kind, by its table: what `Engine.for(scope).entities(type)` takes. */
+export type EntityType = keyof EntityKinds;
 
 /** A base rules' module: the parts the engine's handles ask what its rules answer. */
 export type Module = ReturnType<typeof Modules.of>;

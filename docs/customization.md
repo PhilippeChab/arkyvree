@@ -155,12 +155,12 @@ Example: `"Martial Weapon Proficiency: Battleaxe"` → `"martialweaponproficienc
 
 ## Auto-Generated Customization
 
-Some entities get properties, requirements, or feats generated. Spells, skills and class levels get theirs when they're saved, from the engine's plan of the save, its `writes` (`powers().planCreate` and `planEdit`, `skills().planCreate` and `planEdit`, `class(klassId).planLevelCreate` and `planLevelEdit`: `engine/rulesets/dnd3.5/entities/powers/PowerEntity.ts` with `powers/fields.ts` and `feats/SpellFocusFeats.ts`, `skills/SkillEntity.ts`, `classes/ClassLevelEntity.ts`). Weapons, armors and shields get theirs from their type's definition when the content packages write them (`content/dnd3.5/builders/items/weapons.ts`, `armor.ts`). They're an item's fields: `ITEM_FIELDS.read` reads them (`engine/rulesets/dnd3.5/entities/items/fields.ts`, which the inventory and the equipping check read with), and `ITEM_FIELDS.toProperties` gives them back as rows, which a test holds every seeded item's to. Saving an item plans its slot only (`items().planCreate`, `planEdit`, `planVariants`: an armor's the torso, a shield's the off hand). An item made from a template stores only the types it overrides, and `RulesetData.itemProperties` merges its rows with the template's before they're read.
+Some entities get properties, requirements, or feats generated. Spells, skills and class levels get theirs when they're saved, from the engine's plan of the save, its `writes` (`entities("powers").planCreate` and `planEdit`, `entities("skills").planCreate` and `planEdit`, `class(klassId).planLevelCreate` and `planLevelEdit`: `engine/rulesets/dnd3.5/entities/powers/PowerEntity.ts` with `powers/fields.ts` and `feats/SpellFocusFeats.ts`, `skills/SkillEntity.ts`, `classes/ClassLevelEntity.ts`). Weapons, armors and shields get theirs from their type's definition when the content packages write them (`content/dnd3.5/builders/items/weapons.ts`, `armor.ts`). They're an item's fields: `ITEM_FIELDS.read` reads them (`engine/rulesets/dnd3.5/entities/items/fields.ts`, which the inventory and the equipping check read with), and `ITEM_FIELDS.toProperties` gives them back as rows, which a test holds every seeded item's to. Saving an item plans its slot only (`entities("items").planCreate`, `planEdit`, `planVariants`: an armor's the torso, a shield's the off hand). An item made from a template stores only the types it overrides, and `RulesetData.itemProperties` merges its rows with the template's before they're read.
 
 Every save's plan takes one shape, `EntityWrites` (`engine/core/module/writes.ts`): it says what to write beside the entity's row, without ids, and the service writes it in its transaction (`writeEntityWrites`, `server/services/rulesets/entityWrites.ts`).
 - `properties` gives the fields of the entity's form as its properties, in place of those of the same types it stored before. Its other properties stay.
-- `generatedFeats` gives the feats the entity brings, each in its pool (`aptitudeId`: the general feats', which the engine finds, `feats/GeneratedFeats.ts`), and `removedFeats` the one that goes with it, by its id (`featId`), where it's the entity's own, refused while a character picked it. The service writes both as they're given, reading of the view only its copy-on-write data.
-- `requirement` is what the entity requires (a class level's previous level), and `columns` what its rules set on its row (an item's slot).
+- `made` gives the entities the save makes with it, each by its table (`type`), its row's columns, the lists it's linked to (`aptitudeIds`) and its customizations, and `removed` the ones that go with it, each by its table and id, refused while a character picked one. The core names no kind: the 3.5 module's are feats, generated in the general feats' pool (`feats/GeneratedFeats.ts`: a skill's Skill Focus, a school's Spell Focus). The service writes each by its table (`EntityRepositories.of(type)`), reading of the view only its copy-on-write data.
+- `requirement` is what the entity requires (a class level's previous level).
 - A feat that's one entity's own (a skill's Skill Focus) is made, renamed and deleted with it: a new skill brings its own, even in a fork that deleted the one it inherited.
 - A feat that a grouping's entities share (a school's Spell Focus) is made when the first of them is saved, unless the ruleset or one of its sources has it, even in a fork that deleted the copy it inherited, and none goes with an entity.
 
@@ -263,20 +263,20 @@ On update: changing BAB progression or skill points re-syncs the properties (del
 
 ### Skills
 
-Properties auto-generated from the skill form's fields by `skills().planCreate` and `planEdit`. They're a skill's fields: `SKILL_FIELDS.read` reads them (`engine/rulesets/dnd3.5/entities/skills/fields.ts`, which the skill API's descriptions, `skills().describe` and `describeAll`, a save's answer and the character read with too), and the core rules' seeder writes them with `SKILL_FIELDS.toProperties` (`Engine.forRules(baseRules).toEntityProperties`), as a save does:
+Properties auto-generated from the skill form's fields by `entities("skills").planCreate` and `planEdit`. They're a skill's fields: `SKILL_FIELDS.read` reads them (`engine/rulesets/dnd3.5/entities/skills/fields.ts`, which the skill API's descriptions, `entities("skills").describe` and `describePage`, a save's answer and the character read with too), and the core rules' seeder writes them with `SKILL_FIELDS.toProperties` (`Engine.forRules(baseRules).toEntityProperties`), as a save does:
 - `SKILL_IMPACTED_BY_WEIGHT` — whether armor check penalty applies
 - `SKILL_CHECK_PENALTY_MULTIPLIER` — how many times over a skill armor weighs on takes the penalty (2 on Swim; absent means 1)
 - `SKILL_USABLE_WITHOUT_TRAINING` — whether untrained use is allowed
 
-Feat auto-generated per skill by `skills().planCreate` and `planEdit` (their `generatedFeats`):
+Feat auto-generated per skill by `entities("skills").planCreate` and `planEdit` (their `made`):
 - `Skill Focus: <name>` — +3 `skills.<stripped>.misc`, linked to General aptitude
-- Deleted on skill delete (`skills().planDelete`'s `removedFeats`, refused while a character picked it), regenerated on skill rename
+- Deleted on skill delete (`entities("skills").planDelete`'s `removed`, refused while a character picked it), regenerated on skill rename
 
 Generated feat names cannot be edited directly. A feat is generated (`feats.generated`) when a family's feat is made
 for each of its options, its name naming the option (`Weapon Focus: Longsword`): by the seeds (the parser's template
 families, the per-weapon proficiencies, Favored Enemy per creature type, Deity's Weapon, War Domain Weapon) and by the
 app (a skill's Skill Focus, a school's Spell Focus). A fork's copy keeps it. The engine refuses a new name for one
-(`feats().planEdit`, `feats/FeatEntity.ts`) before any COW copy or write; descriptions and customizations remain editable.
+(`entities("feats").planEdit`, `feats/FeatEntity.ts`) before any COW copy or write; descriptions and customizations remain editable.
 A feat merely named like one (a class feature's `Terrain Mastery: …` option, a user's own) can be renamed. Renaming a
 skill deletes its old generated feat and its customizations, then creates the replacement in the same transaction.
 
@@ -292,7 +292,7 @@ A ruleset's own property, `RULESET_SKILL_POINT_ABILITY_ID`: the ability its char
 
 ### Spells / Powers
 
-Properties auto-generated from spell form fields by `powers().planCreate` and `planEdit`. They're a power's fields: `POWER_FIELDS.read` reads them (`entities/powers/fields.ts`, which the power groupings read a spell's school and descriptors with too), and `POWER_FIELDS.toProperties` builds their rows:
+Properties auto-generated from spell form fields by `entities("powers").planCreate` and `planEdit`. They're a power's fields: `POWER_FIELDS.read` reads them (`entities/powers/fields.ts`, which the power groupings read a spell's school and descriptors with too), and `POWER_FIELDS.toProperties` builds their rows:
 
 | Property Type | Description |
 |---|---|
@@ -307,11 +307,11 @@ Properties auto-generated from spell form fields by `powers().planCreate` and `p
 | `SPELL_RESISTANCE` | Whether spell resistance applies (optional) |
 | `SPELL_COMPONENT` | Required components — one property row per value (optional, multi) |
 
-On create: with a school, generates the properties from the form's fields, and the school's Spell Focus feats unless they're there (`powers().planCreate`'s `generatedFeats`).
+On create: with a school, generates the properties from the form's fields, and the school's Spell Focus feats unless they're there (`entities("powers").planCreate`'s `made`).
 On update: replaces the generated property types (the spell's fields) with the form's, none without a school, and creates the feats of a school that's new. The spell's other properties remain, and so do existing school feats.
 On delete: cleans up the spell's customizations. School feats remain even if the school has no spells left.
 
-Feats auto-generated per unique school by `powers().planCreate` and `planEdit` (`SpellFocusFeats.buildSpellFocusFeats`, `powers/SpellFocusFeats.ts`):
+Feats auto-generated per unique school by `entities("powers").planCreate` and `planEdit` (`SpellFocusFeats.buildSpellFocusFeats`, `powers/SpellFocusFeats.ts`):
 - `Spell Focus: <school>` — +1 `powers.groups.<stripped_school>.*.dc.misc`, linked to General aptitude
 - `Greater Spell Focus: <school>` — +1 `powers.groups.<stripped_school>.*.dc.misc`, requires `feats.spellfocus<stripped_school>.possessed == true`, linked to General aptitude
 - Created idempotently (skipped if already exist for the school)

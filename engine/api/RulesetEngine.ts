@@ -1,22 +1,15 @@
 import type { CharacterInput } from "@/engine/core/module/index.ts";
-import { type RulesetView, type ViewEntities } from "@/engine/core/view/index.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { RulesetKind } from "@/shared/enums.ts";
 
-import AptitudesEngine from "./AptitudesEngine.ts";
 import CharacterEngine from "./CharacterEngine.ts";
 import CharactersEngine from "./CharactersEngine.ts";
 import ClassEngine from "./ClassEngine.ts";
-import ClassesEngine from "./ClassesEngine.ts";
-import EntityEngine from "./EntityEngine.ts";
-import FeatsEngine from "./FeatsEngine.ts";
-import ItemsEngine from "./ItemsEngine.ts";
 import ModifiersEngine from "./ModifiersEngine.ts";
-import Modules, { type Module } from "./Modules.ts";
-import PowersEngine from "./PowersEngine.ts";
+import Modules, { type EntityType, type Module } from "./Modules.ts";
 import PropertiesEngine from "./PropertiesEngine.ts";
 import PropertyTypesEngine from "./PropertyTypesEngine.ts";
 import RequirementsEngine from "./RequirementsEngine.ts";
-import SkillsEngine from "./SkillsEngine.ts";
 import TargetPathsEngine from "./TargetPathsEngine.ts";
 
 /**
@@ -30,11 +23,6 @@ export default class RulesetEngine {
   }
 
   private readonly module: Module;
-
-  /** The ruleset's aptitudes. */
-  aptitudes() {
-    return new AptitudesEngine(this.view, this.module);
-  }
 
   /** A character of the ruleset, from its rows (`input`): its sheets, its inventory and its level flows. */
   character(input: CharacterInput) {
@@ -59,42 +47,17 @@ export default class RulesetEngine {
     return new ClassEngine(this.view, this.module, klassId);
   }
 
-  /** The ruleset's classes. */
-  classes() {
-    return new ClassesEngine(this.view, this.module);
-  }
-
   /**
-   * Rows of the ruleset's tables, as stored (a page the server read), as its view reads them: each reference to an
-   * entity resolved to the one the view shows in its place, a copy's or a sibling winner's.
+   * An entity kind of the ruleset (`type`, its table): one found by its id, described, a page of its rows described, and
+   * what saving or deleting one writes, by its kind's rules.
    */
-  describeRows<T extends Record<string, unknown>>(rows: T[]) {
-    return this.view.rulesetData.cow.resolveRows(rows);
-  }
-
-  /** An entity of the ruleset's view, of its table (`type`) and its id. */
-  entity<K extends keyof ViewEntities>(type: K, id: string) {
-    return new EntityEngine(this.view, type, id);
-  }
-
-  /** The ruleset's feats. */
-  feats() {
-    return new FeatsEngine(this.view, this.module);
-  }
-
-  /** The ruleset's items. */
-  items() {
-    return new ItemsEngine(this.view, this.module);
+  entities<K extends EntityType>(type: K) {
+    return this.module.entities.of(this.view, type);
   }
 
   /** An entity's modifiers (`entityType`, `entityId`). */
   modifiers(entityType: string, entityId: string) {
     return new ModifiersEngine(this.view, this.module, entityType, entityId);
-  }
-
-  /** The ruleset's powers. */
-  powers() {
-    return new PowersEngine(this.view, this.module);
   }
 
   /** An entity's properties (`entityType`, `entityId`). */
@@ -110,11 +73,6 @@ export default class RulesetEngine {
   /** An entity's requirements (`entityType`, `entityId`). */
   requirements(entityType: string, entityId: string) {
     return new RequirementsEngine(this.view, this.module, entityType, entityId);
-  }
-
-  /** The ruleset's skills. */
-  skills() {
-    return new SkillsEngine(this.view, this.module);
   }
 
   /** The ruleset's target paths. */
