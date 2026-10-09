@@ -8,7 +8,7 @@
  */
 
 import { Engine, type RulesetSources } from "@/engine/index.ts";
-import { readCowData } from "@/server/cache/rulesetCache/index.ts";
+import { readCowData } from "@/server/cow/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import {

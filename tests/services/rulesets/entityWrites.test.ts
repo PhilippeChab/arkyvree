@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { powersInRules } from "@/drizzle/schema.ts";
 import type { EntityWrites } from "@/engine/index.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Properties, Requirements } from "@/server/repositories/index.ts";
 import { writeEntityWrites } from "@/server/services/rulesets/entityWrites.ts";

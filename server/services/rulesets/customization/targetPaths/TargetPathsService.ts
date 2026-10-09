@@ -1,5 +1,5 @@
 import { Engine } from "@/engine/index.ts";
-import { readTargetPaths, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { readTargetPaths, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { paginateItems } from "@/server/repositories/index.ts";
 import type { TargetPathKind } from "@/shared/customization/target.ts";

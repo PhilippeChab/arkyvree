@@ -3,8 +3,8 @@ import { type Db, withCowContext } from "@/server/database/index.ts";
 import { Aptitudes, EntitySnapshots, KlassLevels, RulesetEntities } from "@/server/repositories/index.ts";
 
 /**
- * A ruleset's `CowData`, from the rows it's built from (`getCowReads`), read through `database`: the shared `db` for its
- * scope's, which the cache shares with every reader (`RulesetCache.getCowData`), or a copy's transaction for the
+ * A ruleset's `CowData`, from the rows it's built from (`copyOnWrite().getReads`), read through `database`: the shared
+ * `db` for its scope's, which `RulesetViews.getCowData` keeps for every reader, or a copy's transaction for the
  * copy's, which sees the transaction's own copies (`EntityCopy`). It reads stored ids, copy-on-write resolution off.
  */
 export async function readCowData(database: Db, ruleset: RulesetSources): Promise<CowData> {

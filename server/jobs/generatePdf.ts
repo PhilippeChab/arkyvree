@@ -2,7 +2,7 @@ import { pdf } from "@react-pdf/renderer";
 import type { JobHelpers } from "graphile-worker";
 
 import { Engine } from "@/engine/index.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { isProduction } from "@/server/environment.ts";
 import { Exports, Notifications } from "@/server/repositories/index.ts";

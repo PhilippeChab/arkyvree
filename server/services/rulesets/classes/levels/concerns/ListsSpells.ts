@@ -1,6 +1,6 @@
 import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 
 /** A class's spells: the lists it casts from, and what a class level casts and knows. */

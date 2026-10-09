@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { withRulesetScope } from "@/server/cow/index.ts";
 import { withCowContext } from "@/server/database/cowContext.ts";
 import { db } from "@/server/database/index.ts";
 import { runWithRequestCache } from "@/server/database/requestCache.ts";

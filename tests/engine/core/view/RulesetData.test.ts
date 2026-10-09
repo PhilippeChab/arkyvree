@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { itemsInRules } from "@/drizzle/schema.ts";
-import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Properties } from "@/server/repositories/index.ts";
 import { insertRows } from "@/tests/support/database.ts";
@@ -23,7 +23,7 @@ describe("An item's properties", () => {
       { entityId: variant.id, entityType: "items", type: "WEAPON_BASE_DAMAGE", value: "1d10" },
     ]);
     // The cache read the ruleset before the variant was made
-    RulesetCache.invalidate(ruleset.id);
+    RulesetViews.invalidate(ruleset.id);
 
     const properties = await withRulesetScope(db, ruleset.id, async ({ rulesetData }) => ({
       plain: rulesetData.itemProperties(longsword!),

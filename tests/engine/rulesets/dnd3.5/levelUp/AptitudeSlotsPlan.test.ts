@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import AptitudeSlotsPlan from "@/engine/rulesets/dnd3.5/levelUp/AptitudeSlotsPlan.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Modifiers, Rulesets } from "@/server/repositories/index.ts";
 import { findKlassLevel } from "@/tests/support/levels.ts";
@@ -23,7 +23,7 @@ async function clericWithLaterAdd() {
   });
   invalidateSeededRuleset(ctx.rulesetId);
   const ruleset = (await Rulesets.findOne(db, { id: ctx.rulesetId }))!;
-  const rulesetData = await RulesetCache.getData(ruleset);
+  const rulesetData = await RulesetViews.getData(ruleset);
   return { rulesetData, levels, clericSpells: rulesetData.aptitudeIdBySlug.get("clericspells")! };
 }
 

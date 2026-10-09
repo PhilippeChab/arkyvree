@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import type { InferInsertModel } from "drizzle-orm";
 
 import type { itemsInRules } from "@/drizzle/schema.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { CharacterInventory, Modifiers, Properties, Races, Requirements } from "@/server/repositories/index.ts";
@@ -83,7 +83,7 @@ async function setup(race?: { size: SizeType }) {
   const raceId =
     race &&
     (await Races.create(db, { name: `Test Race ${uniqueId()}`, rulesetId: ruleset.id, baseSpeed: 30, ...race }))[0].id;
-  RulesetCache.invalidate(ruleset.id);
+  RulesetViews.invalidate(ruleset.id);
   const character = await createCharacterAs(
     session,
     raceId ? { rulesetId: ruleset.id, raceId } : { rulesetId: ruleset.id },
@@ -149,7 +149,7 @@ describe("InventoryService", () => {
       valueType: "number",
       operator: "greater_than_or_equal",
     });
-    RulesetCache.invalidate(character.rulesetId);
+    RulesetViews.invalidate(character.rulesetId);
     const removed = await newItem();
     await add(session, character.id, item.id, { quantity: 3 });
     await add(session, character.id, removed.id);
@@ -490,7 +490,7 @@ describe("InventoryService", () => {
       // The template's met, the variant's own unmet: the variant can't be worn
       await strengthAtLeast(template.id, "0");
       await strengthAtLeast(variant.id, "30");
-      RulesetCache.invalidate(character.rulesetId);
+      RulesetViews.invalidate(character.rulesetId);
 
       await expect(add(session, character.id, variant.id, equipped("Torso"))).rejects.toMatchObject({
         refusal: "invalid",
@@ -509,7 +509,7 @@ describe("InventoryService", () => {
         valueType: "number",
         operator: "greater_than_or_equal",
       });
-      RulesetCache.invalidate(character.rulesetId);
+      RulesetViews.invalidate(character.rulesetId);
 
       await expect(add(session, character.id, armor.id, equipped("Torso"))).rejects.toMatchObject({
         refusal: "invalid",

@@ -3,12 +3,13 @@ import { getTableName } from "drizzle-orm";
 import { itemsInRules } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
-import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import {
   copyEntityCustomizations,
   fetchEntityCustomizations,
   hasCharacterPicks,
   RulesetEdit,
+  RulesetViews,
+  withRulesetScope,
 } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
@@ -71,7 +72,7 @@ class ItemsService extends include(Object, Variants) {
           return item;
         }),
     );
-    RulesetCache.invalidate(rulesetId);
+    RulesetViews.invalidate(rulesetId);
     return result;
   }
 
@@ -111,7 +112,7 @@ class ItemsService extends include(Object, Variants) {
           return deletedItem;
         }),
     );
-    RulesetCache.invalidate(rulesetId);
+    RulesetViews.invalidate(rulesetId);
     return result;
   }
 
@@ -174,7 +175,7 @@ class ItemsService extends include(Object, Variants) {
           return updatedItem;
         }),
     );
-    RulesetCache.invalidate(rulesetId);
+    RulesetViews.invalidate(rulesetId);
     return result;
   }
 }

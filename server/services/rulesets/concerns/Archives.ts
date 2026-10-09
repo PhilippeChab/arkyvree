@@ -2,7 +2,7 @@ import { getTableName } from "drizzle-orm";
 
 import { rulesetsInRules } from "@/drizzle/schema.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
 import { withTransaction } from "@/server/database/index.ts";
 import { InternalError, NotFoundError } from "@/server/errors/index.ts";
 import { Activities, Rulesets } from "@/server/repositories/index.ts";
@@ -58,7 +58,7 @@ export function Archives<B extends Constructor>(Base: B) {
 
         return unarchivedRuleset;
       });
-      RulesetCache.invalidate(id);
+      RulesetViews.invalidate(id);
       return result;
     }
   }

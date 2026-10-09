@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import CustomizedEntity from "@/engine/core/customizations/CustomizedEntity.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Items, Klasses, KlassLevels, Modifiers, Powers, Races } from "@/server/repositories/index.ts";
 import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";

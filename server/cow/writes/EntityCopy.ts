@@ -1,5 +1,5 @@
 import { type CowData, Engine, type EntityCustomizations, type RulesetSources } from "@/engine/index.ts";
-import { readCowData } from "@/server/cache/rulesetCache/index.ts";
+import { readCowData } from "@/server/cow/views/cowData.ts";
 import { type Db, withCowContext } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import {
@@ -238,10 +238,10 @@ export default class EntityCopy {
   }
 
   /**
-   * Merges sibling aptitude links of a feat or a power (`mergeSiblingAptitudeLinks`), each to the aptitude that stands
-   * for it, as the copy's own (`copyRelationships`). Sibling reads turn copy-on-write resolution off (loser ids would
-   * otherwise be canonicalized to the winner). Existing reads on targetEntityId go through the repo since the new id
-   * isn't a stale id.
+   * Merges sibling aptitude links of a feat or a power (`copyOnWrite().mergeAptitudeLinks`), each to the aptitude that
+   * stands for it, as the copy's own (`copyRelationships`). Sibling reads turn copy-on-write resolution off (loser ids
+   * would otherwise be canonicalized to the winner). Existing reads on targetEntityId go through the repo since the new
+   * id isn't a stale id.
    */
   private async mergeAptitudeLinks(tx: Db, targetEntityId: string, siblingIds: string[], cow: CowData) {
     const resolve = (id: string) => cow.resolve(id);

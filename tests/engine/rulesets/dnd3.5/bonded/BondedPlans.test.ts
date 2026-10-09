@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import RulesError from "@/engine/core/RulesError.ts";
 import BondedPlans from "@/engine/rulesets/dnd3.5/bonded/BondedPlans.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels, Characters, Rulesets } from "@/server/repositories/index.ts";
 import { buildAs } from "@/tests/support/characters.ts";
@@ -31,7 +31,7 @@ function withoutCompanions<T extends { kind: string }>(rows: T[]) {
 async function masterOf(create: () => ReturnType<typeof createDruidWithCompanion>) {
   const { ctx, masterId, bonded } = await create();
   const master = await buildAs(DetailedCharacter, (await Characters.findOne(db, { id: masterId }))!);
-  const rulesetData = await RulesetCache.getData((await Rulesets.findOne(db, { id: ctx.rulesetId }))!);
+  const rulesetData = await RulesetViews.getData((await Rulesets.findOne(db, { id: ctx.rulesetId }))!);
   return { bonded, ctx, master, rulesetData };
 }
 

@@ -3,7 +3,7 @@ import { getTableName } from "drizzle-orm";
 import { rulesetsInRules } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { withTransaction } from "@/server/database/index.ts";
 import { UnprocessableEntityError } from "@/server/errors/index.ts";
 import { Activities, Rulesets } from "@/server/repositories/index.ts";
@@ -48,7 +48,7 @@ export function Publishes<B extends Constructor>(Base: B) {
           }),
       );
 
-      RulesetCache.invalidate(id);
+      RulesetViews.invalidate(id);
       return result;
     }
   }

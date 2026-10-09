@@ -77,7 +77,7 @@ async function fetchCustomizations(rulesetId: string, entities: RawEntities, kla
 
 /**
  * A ruleset's own rows (a campaign's, with one), none of its ancestors', and whether to pin them: a system ruleset's,
- * which every fork reads. For the cache (`RulesetCache.getRawData`), which reads them once.
+ * which every fork reads. For the cache (`RulesetViews.getRawData`), which reads them once.
  */
 export async function fetchRulesetRawData(
   rulesetId: string,

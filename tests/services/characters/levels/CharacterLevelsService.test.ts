@@ -11,7 +11,7 @@ import {
   skillsInRules,
 } from "@/drizzle/schema.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { createTestPool } from "@/server/database/test.ts";
 import { toJson } from "@/server/errors/index.ts";

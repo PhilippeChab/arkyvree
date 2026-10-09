@@ -5,10 +5,10 @@ import { Engine } from "@/engine/index.ts";
 import {
   readTargetPathCatalogs,
   readTargetPaths,
-  RulesetCache,
+  RulesetEdit,
+  RulesetViews,
   withRulesetScope,
-} from "@/server/cache/rulesetCache/index.ts";
-import { RulesetEdit } from "@/server/cow/index.ts";
+} from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, InternalError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Requirements } from "@/server/repositories/index.ts";
@@ -69,7 +69,7 @@ class RequirementsService {
           return { ...requirement, resolvedEntityId };
         }),
     );
-    RulesetCache.invalidateEntities(rulesetId);
+    RulesetViews.invalidateEntities(rulesetId);
     return result;
   }
 
@@ -115,7 +115,7 @@ class RequirementsService {
           return { ...deletedRequirement, resolvedEntityId };
         }),
     );
-    RulesetCache.invalidateEntities(rulesetId);
+    RulesetViews.invalidateEntities(rulesetId);
     return result;
   }
 
@@ -174,7 +174,7 @@ class RequirementsService {
           return { ...updatedRequirement, resolvedEntityId };
         }),
     );
-    RulesetCache.invalidateEntities(rulesetId);
+    RulesetViews.invalidateEntities(rulesetId);
     return result;
   }
 }

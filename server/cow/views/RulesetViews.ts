@@ -1,5 +1,5 @@
 import { type CowData, Engine, type RulesetData, type RulesetRawData, type RulesetSources } from "@/engine/index.ts";
-import DependentCache from "@/server/cache/DependentCache.ts";
+import { DependentCache } from "@/server/cache/index.ts";
 import { db, withCowContext } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 import type { TargetPathCatalog, TargetPathKind } from "@/shared/customization/target.ts";
@@ -20,7 +20,7 @@ function getRawDataKey(rulesetId: string, campaignId?: string): string {
  * transaction's: a change's uncommitted rows would reach every reader. A change to a ruleset invalidates what it
  * touched (`invalidate`).
  */
-class RulesetCache {
+class RulesetViews {
   private readonly cowData = new DependentCache<CowData>();
 
   private readonly rawData = new DependentCache<RulesetRawData>();
@@ -103,4 +103,4 @@ class RulesetCache {
   }
 }
 
-export default new RulesetCache();
+export default new RulesetViews();

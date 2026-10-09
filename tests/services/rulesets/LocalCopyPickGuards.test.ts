@@ -3,7 +3,7 @@ import { afterEach, expect, test } from "bun:test";
 import { and, eq } from "drizzle-orm";
 
 import { languagesInRules, racesInRules } from "@/drizzle/schema.ts";
-import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterInventory, CharacterLanguages, Characters } from "@/server/repositories/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
@@ -40,7 +40,7 @@ async function setup() {
   return { session, fork, baseId, human, character };
 }
 
-afterEach(() => RulesetCache.invalidateAll());
+afterEach(() => RulesetViews.invalidateAll());
 
 test("a race picked before the fork copied it blocks deleting the copy, but not restoring the source", async () => {
   const { session, fork, human, character } = await setup();

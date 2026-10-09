@@ -4,7 +4,7 @@ import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluato
 import { type RulesetData } from "@/engine/core/view/index.ts";
 import AbilitiesComponent from "@/engine/rulesets/dnd3.5/abilities/AbilitiesComponent.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
-import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { type Db, db, withCowContext, withTransaction } from "@/server/database/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import {
@@ -70,8 +70,8 @@ function typeOf(data: RulesetData, id: string): RulesetEntityType | undefined {
  * Copies each winner into the ruleset, in a transaction rolled back, and compares the copy's customizations in the view
  * with the winner's before it was copied: the winners compared, and the mismatches, by winner and kind.
  */
-async function compareCopies(ruleset: Parameters<typeof RulesetCache.getData>[0], winnerIds: string[]) {
-  const before = await RulesetCache.getData(ruleset);
+async function compareCopies(ruleset: Parameters<typeof RulesetViews.getData>[0], winnerIds: string[]) {
+  const before = await RulesetViews.getData(ruleset);
   const mismatches: string[] = [];
   let compared = 0;
   for (const winnerId of winnerIds) {
@@ -82,8 +82,8 @@ async function compareCopies(ruleset: Parameters<typeof RulesetCache.getData>[0]
     await withTransaction(async (tx) => {
       const edit = await editRuleset(ruleset);
       const { id: copyId } = await edit.cowToEdit(tx, type, { id: winnerId, rulesetId: "inherited" });
-      RulesetCache.invalidate(ruleset.id);
-      const after = await RulesetCache.getData(ruleset);
+      RulesetViews.invalidate(ruleset.id);
+      const after = await RulesetViews.getData(ruleset);
       const actual = customizationsOf(after, copyId);
       for (const kind of ["modifiers", "properties", "requirements", "links"] as const) {
         if (JSON.stringify(actual[kind]) === JSON.stringify(expected[kind])) continue;
@@ -95,7 +95,7 @@ async function compareCopies(ruleset: Parameters<typeof RulesetCache.getData>[0]
     }).catch((error) => {
       if (!(error instanceof Rollback)) throw error;
     });
-    RulesetCache.invalidate(ruleset.id);
+    RulesetViews.invalidate(ruleset.id);
   }
   return { compared, mismatches };
 }
@@ -158,7 +158,7 @@ async function setup(
 
 class Rollback extends Error {}
 
-afterEach(() => RulesetCache.invalidateAll());
+afterEach(() => RulesetViews.invalidateAll());
 
 test("a list leaves out a book's copy that lost to another book's in its query: its pages are full", async () => {
   const fork = await createSeededTestRulesetWithExtensions(makeSession().userId);
@@ -199,7 +199,7 @@ test("editing a shared aptitude preserves references from both extensions", asyn
     name: "Audit Local Pool",
   });
   const warm = await read();
-  RulesetCache.invalidateAll();
+  RulesetViews.invalidateAll();
   const cold = await read();
   expect({ warm, cold }).toEqual({
     warm: { resolved: [local.id, local.id], links: [local.id, local.id] },
@@ -269,7 +269,7 @@ for (const [chainingOperator, reverseOrder] of [
     const before = evaluate([await read()]);
     await PropertiesService.createProperty(session, host.id, "feats", copies[0], { type: "AUDIT", value: "1" });
     const after = evaluate([await read()]);
-    RulesetCache.invalidateAll();
+    RulesetViews.invalidateAll();
     const cold = evaluate([await read()]);
     expect({ before, after, cold }).toEqual({ before: expected, after: expected, cold: expected });
     expect(
@@ -282,7 +282,7 @@ for (const [chainingOperator, reverseOrder] of [
 
 test("a sibling winner's copy holds what the view showed of it, for every winner of a fork of every extension", async () => {
   const fork = await createSeededTestRulesetWithExtensions(makeSession().userId);
-  const { cow } = await RulesetCache.getData(fork);
+  const { cow } = await RulesetViews.getData(fork);
   const winnerIds = [...new Set([...cow.siblingIds].flatMap((loserId) => cow.getWinner(loserId) ?? []))].sort();
   const { compared, mismatches } = await compareCopies(fork, winnerIds);
   expect(compared).toBeGreaterThan(100);
@@ -291,21 +291,21 @@ test("a sibling winner's copy holds what the view showed of it, for every winner
 
 test("a copied class's levels store the lists that stand for their granted feats' and powers' lists", async () => {
   const fork = await createSeededTestRulesetWithExtensions(makeSession().userId);
-  const view = await RulesetCache.getData(fork);
+  const view = await RulesetViews.getData(fork);
   const klassIds = [...new Set([...view.klassesById.values()].map((klass) => klass.id))].sort();
   const stale: string[] = [];
   for (const klassId of klassIds) {
     await withTransaction(async (tx) => {
       const edit = await editRuleset(fork);
       const { id: copyId } = await edit.cowToEdit(tx, "klasses", { id: klassId, rulesetId: "inherited" });
-      RulesetCache.invalidate(fork.id);
-      const ids = await findStaleAptitudeIds(tx, await RulesetCache.getData(fork), "klasses", copyId);
+      RulesetViews.invalidate(fork.id);
+      const ids = await findStaleAptitudeIds(tx, await RulesetViews.getData(fork), "klasses", copyId);
       if (ids.length > 0) stale.push(`${view.klassesById.get(klassId)?.name}: ${ids}`);
       throw new Rollback();
     }).catch((error) => {
       if (!(error instanceof Rollback)) throw error;
     });
-    RulesetCache.invalidate(fork.id);
+    RulesetViews.invalidate(fork.id);
   }
   expect(klassIds.length).toBeGreaterThan(50);
   expect(stale).toEqual([]);
@@ -359,7 +359,7 @@ test("a sibling winner takes, of equal rows, the first sibling's, and so does it
   );
   const baseId = host.ancestorRulesetIds[0];
   const fork = (await Rulesets.findOne(db, { id: host.id }))!;
-  const view = await RulesetCache.getData(fork);
+  const view = await RulesetViews.getData(fork);
   const featId = view.cow.resolve((await Feats.findOne(db, { rulesetId: baseId, name: "Toughness" }))!.id);
   const powerId = view.cow.resolve((await Powers.findOne(db, { rulesetId: baseId, name: "Fireball" }))!.id);
   const clericSpells = (await Aptitudes.findOne(db, { rulesetId: baseId, name: "Cleric Spells" }))!;

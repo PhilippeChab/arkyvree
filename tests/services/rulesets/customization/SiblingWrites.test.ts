@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
   Aptitudes,
@@ -83,7 +83,7 @@ for (const entityType of ["feats", "powers"] as const) {
           type: "SIBLING_MARKER",
           value: "before",
         });
-        RulesetCache.invalidateAll();
+        RulesetViews.invalidateAll();
         expect(
           (await PropertiesService.getProperties(host.id, entityType, winnerId)).some((p) => p.id === property.id),
         ).toBe(true);
@@ -97,7 +97,7 @@ for (const entityType of ["feats", "powers"] as const) {
         expect(result.resolvedEntityId).not.toBe(winnerId);
         expect(await Properties.findOne(db, { id: property.id })).toEqual(property);
         for (const cold of [false, true]) {
-          if (cold) RulesetCache.invalidateAll();
+          if (cold) RulesetViews.invalidateAll();
           const visible = await PropertiesService.getProperties(host.id, entityType, result.resolvedEntityId);
           expect(visible.filter((p) => p.type === property.type)).toEqual(
             action === "update" ? [expect.objectContaining({ id: result.id, value: "after" })] : [],
@@ -137,7 +137,7 @@ for (const entityType of ["feats", "powers"] as const) {
       if (entityType === "feats") await FeatsAptitudes.create(db, { featId: loser.id, aptitudeId: aptitude.id });
       else await PowersAptitudes.create(db, { powerId: loser.id, aptitudeId: aptitude.id });
 
-      RulesetCache.invalidateAll();
+      RulesetViews.invalidateAll();
       const local = await PropertiesService.createProperty(session, host.id, entityType, winnerId, {
         type: "LOCAL",
         value: "1",
@@ -162,7 +162,7 @@ for (const entityType of ["feats", "powers"] as const) {
         await PowersService.updatePower(session, host.id, power.id, { name: power.name, aptitudes: [] });
       }
       for (const cold of [false, true]) {
-        if (cold) RulesetCache.invalidateAll();
+        if (cold) RulesetViews.invalidateAll();
         const requirements = await RequirementsService.getRequirements(host.id, entityType, local.resolvedEntityId);
         expect(requirements.some((r) => r.target === requirement.target)).toBe(false);
         if (entityType === "feats")
@@ -173,7 +173,7 @@ for (const entityType of ["feats", "powers"] as const) {
       if (entityType === "feats") await FeatsService.deleteFeat(session, host.id, local.resolvedEntityId);
       else await PowersService.deletePower(session, host.id, local.resolvedEntityId);
 
-      RulesetCache.invalidateAll();
+      RulesetViews.invalidateAll();
       await withRulesetScope(db, host.id, async ({ rulesetData }) => {
         const entities = entityType === "feats" ? rulesetData.featsById : rulesetData.powersById;
         for (const id of [winnerId, loser.id, local.resolvedEntityId]) expect(entities.get(id)).toBeUndefined();
@@ -213,7 +213,7 @@ for (const entityType of ["feats", "powers"] as const) {
           level: "1",
           chainingOperator: "and",
         });
-        RulesetCache.invalidateAll();
+        RulesetViews.invalidateAll();
         expect(
           (await ModifiersService.getModifiers(host.id, entityType, winnerId)).some((m) => m.id === modifier.id),
         ).toBe(true);
@@ -271,7 +271,7 @@ for (const entityType of ["feats", "powers"] as const) {
           level: "1",
           chainingOperator: "and",
         });
-        RulesetCache.invalidateAll();
+        RulesetViews.invalidateAll();
         const result =
           action === "update"
             ? await ModifiersService.updateModifier(session, host.id, entityType, winnerId, modifier.id, {
@@ -279,7 +279,7 @@ for (const entityType of ["feats", "powers"] as const) {
                 value: "5",
               })
             : await ModifiersService.deleteModifier(session, host.id, entityType, winnerId, modifier.id);
-        RulesetCache.invalidateAll();
+        RulesetViews.invalidateAll();
         const visible = await ModifiersService.getModifiers(host.id, entityType, result.resolvedEntityId);
         expect(visible.filter((m) => m.target === modifier.target)).toEqual(
           action === "update" ? [expect.objectContaining({ id: result.id, value: "5" })] : [],
@@ -304,7 +304,7 @@ test("deduplicated sibling property and modifier IDs are not writable", async ()
     db,
     [winnerId, loser.id].map((sourceId) => ({ ...STRENGTH_BONUS, sourceId, sourceType: "feats" })),
   );
-  RulesetCache.invalidateAll();
+  RulesetViews.invalidateAll();
   const visible = await PropertiesService.getProperties(host.id, "feats", winnerId);
   expect(visible.some((p) => p.id === ownProperty.id)).toBe(true);
   expect(visible.some((p) => p.id === hiddenProperty.id)).toBe(false);
@@ -342,7 +342,7 @@ test("copying sibling modifiers and their requirements stays batched", async () 
       db,
       modifiers.map((m) => ({ entityId: m.id, entityType: "modifiers", level: "1", chainingOperator: "and" })),
     );
-    RulesetCache.invalidateAll();
+    RulesetViews.invalidateAll();
     await withRulesetScope(db, host.id, async () => {});
     const { timing } = await measure(() =>
       RequirementsService.createRequirement(session, host.id, "modifiers", modifiers[0].id, {
@@ -363,7 +363,7 @@ test("installing another extension preserves the local override and exposes unre
     type: "NEW_EXTENSION",
     value: "1",
   });
-  RulesetCache.invalidateAll();
+  RulesetViews.invalidateAll();
   await RulesetExtensionsService.unsubscribeExtension(session, host.id, loserRulesetId);
   const local = await PropertiesService.createProperty(session, host.id, "feats", winnerId, {
     type: "LOCAL",
@@ -419,7 +419,7 @@ for (const entityType of ["feats", "powers"] as const) {
             fork.id,
             order.map((i) => extensions[i].extension.id),
           );
-          RulesetCache.invalidateAll();
+          RulesetViews.invalidateAll();
           const winnerId = extensions[0].copy.id;
           const visible = await withRulesetScope(db, fork.id, async ({ rulesetData }) => ({
             property: rulesetData.propertiesByEntity.get(winnerId)!.find((p) => p.type === "PRECEDENCE")!,

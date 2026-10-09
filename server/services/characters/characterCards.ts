@@ -1,7 +1,7 @@
 /** A list's cards of characters from several rulesets, each described in its own ruleset's view. */
 
 import { Engine } from "@/engine/index.ts";
-import type { RulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import type { RulesetScope } from "@/server/cow/index.ts";
 
 /** What a list shows of a character whose ruleset it didn't read (an archived one's): no race, no classes. */
 const UNREAD_CARD = { levels: [], race: "Unknown", totalLevel: 0 };

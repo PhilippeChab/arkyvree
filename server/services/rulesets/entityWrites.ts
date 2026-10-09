@@ -1,8 +1,7 @@
 /** What saving a ruleset entity writes beside its row, as the engine plans it (`EntityWrites`): the server writes it. */
 
 import type { EntityWrites, GeneratedFeatRemoval, GeneratedFeatsWrite } from "@/engine/index.ts";
-import type { RulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
+import { hasCharacterPicks, RulesetEdit, type RulesetScope } from "@/server/cow/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { Feats, FeatsAptitudes, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";

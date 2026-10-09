@@ -19,8 +19,8 @@ import type { BaseRules } from "@/shared/enums.ts";
 import Modules from "./Modules.ts";
 
 /**
- * The engine's copy-on-write: what a ruleset's view is built from and of, which the cache and the copy-on-write writes
- * ask before there's a view to bind.
+ * The engine's copy-on-write: what a ruleset's view is built from and of, which copy-on-write's views and writes ask
+ * before there's a view to bind.
  */
 export default class CopyOnWriteEngine {
   /** The types whose entities pair by name in a view, whoever holds them: a subscribe reads none of their names. */

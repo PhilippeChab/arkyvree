@@ -2,7 +2,7 @@ import { getTableName } from "drizzle-orm";
 
 import { modifiersInCustomization } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
-import { readTargetPathCatalogs, readTargetPaths, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { readTargetPathCatalogs, readTargetPaths, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Activities, Modifiers } from "@/server/repositories/index.ts";

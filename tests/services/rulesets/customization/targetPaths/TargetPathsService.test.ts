@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { Engine } from "@/engine/index.ts";
-import { readTargetPathCatalogs, readTargetPaths, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { readTargetPathCatalogs, readTargetPaths, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { TargetPathsService } from "@/server/services/rulesets/customization/targetPaths/index.ts";

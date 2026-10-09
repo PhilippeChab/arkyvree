@@ -1,5 +1,5 @@
 import { Engine } from "@/engine/index.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { type Paginated, paginateItems } from "@/server/repositories/index.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";

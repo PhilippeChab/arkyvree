@@ -9,7 +9,7 @@ import {
   klassLevelPowersInRules,
   klassLevelSavesInRules,
 } from "@/drizzle/schema.ts";
-import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, toJson } from "@/server/errors/index.ts";
 import {
@@ -368,9 +368,9 @@ describe("ClassLevelsService", () => {
     test("adds a level to the fork's copy of the class, not to the parent's", async () => {
       const { session, parent, fork, klass } = await setupFork();
       // The fork's change is its copy's: the parent's cached rows, which every fork of it reads, stay
-      const parentRows = await RulesetCache.getRawData(parent.id);
+      const parentRows = await RulesetViews.getRawData(parent.id);
       const created = await createLevel(session, fork.id, klass.id, 2);
-      expect(await RulesetCache.getRawData(parent.id)).toBe(parentRows);
+      expect(await RulesetViews.getRawData(parent.id)).toBe(parentRows);
 
       const snapshot = await EntitySnapshots.findOne(db, {
         sourceEntityId: klass.id,
@@ -382,14 +382,14 @@ describe("ClassLevelsService", () => {
 
     test("edits and deletes the fork's copy of an inherited level, leaving the parent's", async () => {
       const { session, parent, fork, klass, inheritedLevel } = await setupFork();
-      const parentRows = await RulesetCache.getRawData(parent.id);
+      const parentRows = await RulesetViews.getRawData(parent.id);
       // Regression: the first edit copies the level mid-save, and a stat the edit leaves out was read as 0.
       expect(
         await ClassLevelsService.updateClassLevel(session, fork.id, klass.id, inheritedLevel.id, { bab: 5 }),
       ).toMatchObject({ bab: 5, skills: 4 });
 
       await ClassLevelsService.deleteClassLevel(session, fork.id, klass.id, inheritedLevel.id);
-      expect(await RulesetCache.getRawData(parent.id)).toBe(parentRows);
+      expect(await RulesetViews.getRawData(parent.id)).toBe(parentRows);
       expect(await ClassLevelsService.getClassLevels(fork.id, klass.id)).toEqual([]);
       expect(await ClassLevelsService.getClassLevels(parent.id, klass.id)).toMatchObject([
         { id: inheritedLevel.id, bab: 1, skills: 4 },

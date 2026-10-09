@@ -1,7 +1,7 @@
 import { afterEach, expect, test } from "bun:test";
 
 import DependentCache from "@/server/cache/DependentCache.ts";
-import { readTargetPaths, RulesetCache } from "@/server/cache/rulesetCache/index.ts";
+import { readTargetPaths, RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Rulesets } from "@/server/repositories/index.ts";
 import { measure } from "@/tests/support/database.ts";
@@ -16,25 +16,25 @@ async function setup() {
   };
 }
 
-afterEach(() => RulesetCache.invalidateAll());
+afterEach(() => RulesetViews.invalidateAll());
 
 for (const phase of ["pending", "cached"] as const) {
   test(`editing A preserves ${phase} raw/COW/path reads for B with zero extra SQL`, async () => {
     const { edited, unrelated } = await setup();
-    RulesetCache.invalidateAll();
+    RulesetViews.invalidateAll();
     const paths = async () => ({
       paths: [],
       segmentLabels: { name: (await Rulesets.findOne(db, { id: unrelated.id }))!.name },
     });
     const read = () =>
       Promise.all([
-        RulesetCache.getRawData(unrelated.id),
-        RulesetCache.getCowData(unrelated),
-        RulesetCache.getTargetPaths(unrelated, "modifier", paths),
+        RulesetViews.getRawData(unrelated.id),
+        RulesetViews.getCowData(unrelated),
+        RulesetViews.getTargetPaths(unrelated, "modifier", paths),
       ]);
     const pending = read();
     if (phase === "cached") await pending;
-    RulesetCache.invalidate(edited.id);
+    RulesetViews.invalidate(edited.id);
     const first = await pending;
     const { result: next, timing } = await measure(read);
     for (let i = 0; i < first.length; i++) expect(next[i]).toBe(first[i]);
@@ -49,12 +49,12 @@ test("target-path service invalidates extension subscribers but retains an unrel
   await Rulesets.update(db, { kind: "extension", status: "Published" }, { id: edited.id });
   await Rulesets.update(db, { extensionRulesetIds: [edited.id] }, { id: host.id });
   const [feat] = await Feats.create(db, { rulesetId: edited.id, name: "Performance Marker", description: "Before" });
-  RulesetCache.invalidateAll();
+  RulesetViews.invalidateAll();
   const before = await readTargetPaths(host.id, "requirement");
   const untouched = await readTargetPaths(unrelated.id, "requirement");
   expect(before.paths.some((path) => path.path === "feats.performancemarker.possessed")).toBe(true);
   await Feats.update(db, { name: "Updated Marker" }, { id: feat.id });
-  RulesetCache.invalidate(edited.id);
+  RulesetViews.invalidate(edited.id);
   const next = await readTargetPaths(host.id, "requirement");
   expect(next.paths.some((path) => path.path === "feats.performancemarker.possessed")).toBe(false);
   expect(next.paths.some((path) => path.path === "feats.updatedmarker.possessed")).toBe(true);

@@ -1,7 +1,7 @@
 /**
  * How sibling copies' customizations merge into their winner's: one rule per kind, which a ruleset's view composes
- * (`RulesetComposition`) and a copy of the winner writes (`EntityCopy`), the same both ways, so it sits at the lower of
- * the two layers, the cache. Each rule takes the winner's own rows and each sibling's, in the order its `CowData` pairs
+ * (`RulesetComposition`) and a copy of the winner writes (`EntityCopy`), the same both ways: the engine's, which both
+ * ask. Each rule takes the winner's own rows and each sibling's, in the order its `CowData` pairs
  * them (`getSiblings`), and returns the siblings' rows the winner takes, in that order. A modifier, a property or an
  * aptitude link whose key the winner or an earlier sibling has is left out. Requirements merge as trees
  * (`RequirementTree`), whose top-level rows are AND'd: merging the winner with N siblings is `AND(winner, sibling 1, …)`,

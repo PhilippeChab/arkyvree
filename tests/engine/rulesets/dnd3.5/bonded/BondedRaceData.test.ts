@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import BondedRaceData, { STAT_BLOCK_FEAT_SKILL_BONUSES } from "@/engine/rulesets/dnd3.5/bonded/BondedRaceData.ts";
 import SkillsPaths from "@/engine/rulesets/dnd3.5/skills/SkillsPaths.ts";
-import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { BONDED_KIND_SLUGS } from "@/shared/dnd3.5/bondedKinds.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";

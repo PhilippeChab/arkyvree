@@ -1,12 +1,13 @@
 /**
  * The architecture, as rules: what each layer may import, where queries are built, and how a folder is entered.
  *
- * - `layers`: a layer imports only what's below it (database < repositories < cache < copy-on-write's writes <
- *   services < jobs < routers; the middlewares sit on the repositories, beside the services). The engine, the root
- *   `engine/`, imports nothing of the server, the database, the content, the codegen or the client: its machinery
- *   (`engine/core/`) sits below the rulesets that run on it (`engine/rulesets/`), and `lib/`, what it shares with the
- *   server, imports nothing of the app. The cache holds copy-on-write's read side (the view a ruleset's reads see),
- *   `cow/` its write side. A ruleset's content (`content/<ruleset>/`: its builders, its data and what the codegen
+ * - `layers`: a layer imports only what's below it (database < repositories < copy-on-write's views < its writes <
+ *   services < jobs < routers; the middlewares sit on the repositories, beside the services). The cache, memoization
+ *   only, imports none of the repositories, copy-on-write or the engine. The engine, the root `engine/`, imports
+ *   nothing of the server, the database, the content, the codegen or the client: its machinery (`engine/core/`) sits
+ *   below the rulesets that run on it (`engine/rulesets/`), and `lib/`, what it shares with the server, imports
+ *   nothing of the app. Copy-on-write's server part is `cow/`: its read side (`cow/views/`: a ruleset's view, read and
+ *   memoized) below its write side (`cow/writes/`). A ruleset's content (`content/<ruleset>/`: its builders, its data and what the codegen
  *   generates) is data, which imports none of what reads or writes it; its builders (the types and builders its data is
  *   written with) import nothing of its data. The codegen (`codegen/`) isn't the server's, and stores nothing; the
  *   server reads none of `database/`, `content/` and `codegen/`. `shared/` imports nothing app-specific (the schema's
@@ -18,8 +19,8 @@
  *   An operation is a verb-named method reached through `Engine`'s handles (`Engine.for(scope).skills().planCreate`);
  *   a noun-named one hands out a handle (`character(input)`, `skills()`).
  * - `opaque-view`: the server holds a ruleset's view only as the scope it hands the engine's operations: of its
- *   `rulesetData`, it reads the copy-on-write data alone (`rulesetData.cow`), which its writes go by. Its cache builds
- *   the view.
+ *   `rulesetData`, it reads the copy-on-write data alone (`rulesetData.cow`), which its writes go by. Copy-on-write's
+ *   views build the view (`server/cow/views/`).
  * - `queries-in-repositories`: a query is built in `server/repositories/` or `server/database/` (what talks to Postgres
  *   itself: the job queue, a channel's notifications, its health), nowhere else in the server. A transaction's handle
  *   is named `tx`, the name it knows a query by.
@@ -74,10 +75,21 @@ const INDEXED_TREES = ["server/", "engine/", CLIENT_COMPONENTS];
 const LAYERS = [
   { layer: "server/database/", deny: ["server/repositories/", ...ABOVE_REPOSITORIES] },
   { layer: "server/repositories/", deny: ABOVE_REPOSITORIES },
+  // The cache is memoization only: it knows nothing of what it keeps
   {
     layer: "server/cache/",
-    deny: ["server/cow/", "server/services/", "server/jobs/", "server/middlewares/", "server/routers/"],
+    deny: [
+      "server/repositories/",
+      "server/cow/",
+      "server/services/",
+      "server/jobs/",
+      "server/middlewares/",
+      "server/routers/",
+      "engine/",
+    ],
   },
+  // Copy-on-write's read side (a ruleset's view, read and memoized) sits below its write side
+  { layer: "server/cow/views/", deny: ["server/cow/writes/"] },
   {
     layer: "server/cow/",
     deny: ["server/services/", "server/jobs/", "server/middlewares/", "server/routers/"],
@@ -353,7 +365,7 @@ function createOneEngineOp(context) {
 
 function createOpaqueView(context) {
   const file = repoPath(context.filename);
-  if (!file.startsWith("server/") || file.startsWith("server/cache/")) return {};
+  if (!file.startsWith("server/") || file.startsWith("server/cow/views/")) return {};
   const message =
     "The server hands a ruleset's view to the engine's operations as its scope, and reads none of it but its " +
     "copy-on-write data (`rulesetData.cow`): what the view answers, an operation of the engine answers.";
@@ -368,17 +380,17 @@ function createOpaqueView(context) {
       parent.property.name === "cow";
     if (!readsCow) context.report({ node, message });
   };
-  // The cache's class, under whatever name the file imports it by
-  const caches = new Set(["RulesetCache"]);
+  // Copy-on-write's views' class, under whatever name the file imports it by
+  const views = new Set(["RulesetViews"]);
   return {
     CallExpression(node) {
       // The view itself, which the scope gives the server
       const { callee } = node;
       if (callee.type === "MemberExpression" && !callee.computed && callee.property.name === "getData")
-        if (callee.object.type === "Identifier" && caches.has(callee.object.name)) context.report({ node, message });
+        if (callee.object.type === "Identifier" && views.has(callee.object.name)) context.report({ node, message });
     },
     ImportSpecifier(node) {
-      if (node.imported.name === "RulesetCache") caches.add(node.local.name);
+      if (node.imported.name === "RulesetViews") views.add(node.local.name);
     },
     Identifier(node) {
       if (node.name === "rulesetData" && isRead(node)) check(node);

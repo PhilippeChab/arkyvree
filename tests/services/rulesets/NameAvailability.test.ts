@@ -3,7 +3,7 @@ import { afterEach, expect, test } from "bun:test";
 import { and, eq } from "drizzle-orm";
 
 import { aptitudesInRules, featsInRules } from "@/drizzle/schema.ts";
-import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { EntitySnapshots, Rulesets } from "@/server/repositories/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
@@ -27,7 +27,7 @@ async function setup() {
   return { session, fork, baseId, general, baseFeat };
 }
 
-afterEach(() => RulesetCache.invalidateAll());
+afterEach(() => RulesetViews.invalidateAll());
 
 // A renamed local copy is still the override: inherited picks of the source
 // must keep resolving to it, and its snapshot must not move to a new entity

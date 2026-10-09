@@ -2,8 +2,7 @@ import { getTableName } from "drizzle-orm";
 
 import { klassesInRules } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
-import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
-import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
+import { hasCharacterPicks, RulesetEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Klasses } from "@/server/repositories/index.ts";
@@ -46,7 +45,7 @@ class ClassesService {
           return klass;
         }),
     );
-    RulesetCache.invalidate(rulesetId);
+    RulesetViews.invalidate(rulesetId);
     return result;
   }
 
@@ -82,7 +81,7 @@ class ClassesService {
           return deletedKlass;
         }),
     );
-    RulesetCache.invalidate(rulesetId);
+    RulesetViews.invalidate(rulesetId);
     return result;
   }
 
@@ -152,7 +151,7 @@ class ClassesService {
           return updatedKlass;
         }),
     );
-    RulesetCache.invalidate(rulesetId);
+    RulesetViews.invalidate(rulesetId);
     return result;
   }
 }
