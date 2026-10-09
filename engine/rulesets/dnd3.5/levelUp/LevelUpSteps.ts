@@ -101,7 +101,7 @@ export default class LevelUpSteps extends LevelUpState {
    * levels but the edited one and those after it, and the `pendingLevelCount` levels planned before it), built without
    * the edited level and those after it.
    */
-  getAttributeSlots(excludeCharacterLevelId?: string, pendingLevelCount?: number) {
+  describeAbilityStep(excludeCharacterLevelId?: string, pendingLevelCount?: number) {
     const projection = new CharacterProjection(this.character);
     const dropped = excludeCharacterLevelId ? projection.dropLevelsFrom(excludeCharacterLevelId) : [];
     // The levels before this one: the level added or edited is the next
@@ -111,14 +111,14 @@ export default class LevelUpSteps extends LevelUpState {
   }
 
   /** The feats step of class `klassId`'s `level`: the pools the character picks feats in with it, and its grants. */
-  getFeatSlots(klassId: string, level: number, step: Step) {
+  describeFeatStep(klassId: string, level: number, step: Step) {
     const klassLevel = this.getKlassLevel(klassId, level);
     const character = this.build(this.projectStep(klassLevel.id, this.readStep(step)));
     return this.buildFeatSlots(character, klassLevel.id);
   }
 
   /** The powers step of class `klassId`'s `level`: the pools the character picks powers in with it, and its grants. */
-  getPowerSlots(klassId: string, level: number, step: Step) {
+  describePowerStep(klassId: string, level: number, step: Step) {
     const klassLevel = this.getKlassLevel(klassId, level);
     const character = this.build(this.projectStep(klassLevel.id, this.readStep(step)));
     return this.buildPowerSlots(character, klassLevel.id);
@@ -128,7 +128,7 @@ export default class LevelUpSteps extends LevelUpState {
    * The skills step of class `klassId`'s `level`: the points to spend and each skill's class status. An edit replaces
    * the edited level, so the character's level count stays its total.
    */
-  getSkillSlots(klassId: string, level: number, step: Step) {
+  describeSkillStep(klassId: string, level: number, step: Step) {
     const klassLevel = this.getKlassLevel(klassId, level);
     const character = this.build(this.projectStep(klassLevel.id, this.readStep(step)));
     const totalCharacterLevel = this.character.rows.levels.length + (step.editedLevelId ? 0 : 1);

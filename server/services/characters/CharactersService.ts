@@ -30,7 +30,7 @@ import { enqueueCharacterPdf, findExportableCharacter } from "./pdf.ts";
 
 class CharactersService extends include(Object, Archives) {
   /**
-   * Replace a character's language set in-place, the engine refusing those it can't speak (`checkCharacterLanguages`):
+   * Replace a character's language set in-place, the engine refusing those it can't speak (`characters().checkLanguages`):
    * deletes the existing rows and inserts the new set. Caller is responsible for the surrounding transaction and its
    * ruleset's scope.
    */

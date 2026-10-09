@@ -14,33 +14,33 @@ import CharacterSheet from "./sheet/CharacterSheet.tsx";
  */
 export default class Dnd35Characters {
   /** Refuses languages a character can't speak: not found, or not of its ruleset nor its source chain. */
-  checkCharacterLanguages(...args: Parameters<typeof CharacterEdits.checkLanguages>) {
+  checkLanguages(...args: Parameters<typeof CharacterEdits.checkLanguages>) {
     CharacterEdits.checkLanguages(...args);
   }
 
-  /** A character as a campaign member reads it: partly, or its sheet with its private notes shown or blank. */
-  describeCampaignCharacter(...args: Parameters<typeof CharacterDescription.describeForMember>) {
-    return CharacterDescription.describeForMember(...args);
-  }
-
   /** A character's sheet as the API answers it, with its bonded creatures', or a creature's. */
-  describeCharacter(...args: Parameters<typeof CharacterDescription.describe>) {
+  describe(...args: Parameters<typeof CharacterDescription.describe>) {
     return CharacterDescription.describe(...args);
   }
 
   /** A character's card, as a list of characters shows it: its race, its classes at their highest level, its total. */
-  describeCharacterCard(...args: Parameters<typeof CharacterCards.describe>) {
-    return CharacterCards.describe(...args);
+  describeCard(...args: Parameters<typeof CharacterCards.describeCard>) {
+    return CharacterCards.describeCard(...args);
   }
 
-  /** A character's printed sheet: the PDF document the server renders. */
-  describeCharacterSheet(...args: Parameters<typeof CharacterSheet.describe>) {
-    return CharacterSheet.describe(...args);
+  /** A character as a campaign member reads it: partly, or its sheet with its private notes shown or blank. */
+  describeForMember(...args: Parameters<typeof CharacterDescription.describeForMember>) {
+    return CharacterDescription.describeForMember(...args);
   }
 
   /** A character's inventory entries, as its sheet lists them: each with its item, composed by the view. */
   describeInventory<T extends { itemId: string; itemsInRule: Item }>(view: RulesetView, entries: T[]) {
-    return InventoryEntries.describe(view, entries);
+    return InventoryEntries.describeInventory(view, entries);
+  }
+
+  /** A character's printed sheet: the PDF document the server renders. */
+  describeSheet(...args: Parameters<typeof CharacterSheet.describeSheet>) {
+    return CharacterSheet.describeSheet(...args);
   }
 
   /** The race picker of a new character: the races it offers, and whether each is eligible. */
@@ -49,12 +49,12 @@ export default class Dnd35Characters {
   }
 
   /** What a new character stores beside its row: its ability scores; refused when its race isn't a player's. */
-  planCharacterCreate(...args: Parameters<typeof CharacterEdits.planCreate>) {
+  planCreate(...args: Parameters<typeof CharacterEdits.planCreate>) {
     return CharacterEdits.planCreate(...args);
   }
 
   /** What an inventory entry's add or edit stores, checked: its placement and charges, the item equipped where asked. */
-  planInventoryEntry(...args: Parameters<typeof InventoryEntries.planEntry>) {
-    return InventoryEntries.planEntry(...args);
+  planInventoryEntry(...args: Parameters<typeof InventoryEntries.planInventoryEntry>) {
+    return InventoryEntries.planInventoryEntry(...args);
   }
 }

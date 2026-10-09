@@ -79,7 +79,7 @@ describe("character levels", () => {
     test("reads the feats picked in the query, leaving out what isn't a pick", async () => {
       const { characterId, ctx } = await createCharacter();
       const general = ctx.aptMap["General"];
-      const cleave = async (selectedFeatPicks?: string) =>
+      const cleave = async (featPicks?: string) =>
         (
           await expectOk(
             levels["available-feats"].$get({
@@ -89,7 +89,7 @@ describe("character levels", () => {
                 classId: ctx.klassMap.pc["Fighter"],
                 level: "1",
                 search: "Cleave",
-                selectedFeatPicks,
+                featPicks,
               },
             }),
           )
@@ -104,20 +104,20 @@ describe("character levels", () => {
       const { characterId, ctx } = await createCharacter();
       const query = { classId: ctx.klassMap.pc["Fighter"], level: "1" };
 
-      const skills = await expectOk(levels["skill-slots"].$get({ param: { characterId }, query }));
+      const skills = await expectOk(levels["skill-step"].$get({ param: { characterId }, query }));
       expect(skills).toMatchObject({ skillPointsToSpend: 16, totalCharacterLevel: 1 });
 
-      const feats = await expectOk(levels["feat-slots"].$get({ param: { characterId }, query }));
+      const feats = await expectOk(levels["feat-step"].$get({ param: { characterId }, query }));
       expect(feats.featsToSelect).toBe(3);
       const pools = Object.values(feats.aptitudePools);
       expect(pools.find((p) => p.name === "General")?.available).toBe(2);
       expect(pools.find((p) => p.name === "Fighter Bonus Feat")?.available).toBe(1);
 
-      const powers = await expectOk(levels["power-slots"].$get({ param: { characterId }, query }));
+      const powers = await expectOk(levels["power-step"].$get({ param: { characterId }, query }));
       expect(powers.powersToSelect).toBe(0);
 
       // Ability increases only come every 4 character levels.
-      expect(await expectOk(levels["attribute-slots"].$get({ param: { characterId }, query: {} }))).toMatchObject({
+      expect(await expectOk(levels["ability-step"].$get({ param: { characterId }, query: {} }))).toMatchObject({
         isAvailable: false,
       });
     });
@@ -349,9 +349,9 @@ describe("character levels", () => {
 
       const general = async (characterLevelId?: string) => {
         const slots = await expectOk(
-          levels["feat-slots"].$get({
+          levels["feat-step"].$get({
             param: { characterId },
-            query: { classId: klassId, level: "1", characterLevelId },
+            query: { classId: klassId, level: "1", editedLevelId: characterLevelId },
           }),
         );
         return Object.values(slots.aptitudePools).find((p) => p.name === "General")!;
@@ -389,9 +389,9 @@ describe("character levels", () => {
 
       const combatStyle = async (levelNumber: number, characterLevelId: string) => {
         const slots = await expectOk(
-          levels["feat-slots"].$get({
+          levels["feat-step"].$get({
             param: { characterId },
-            query: { classId: rangerId, level: String(levelNumber), characterLevelId },
+            query: { classId: rangerId, level: String(levelNumber), editedLevelId: characterLevelId },
           }),
         );
         return Object.values(slots.aptitudePools).find((p) => p.name === "Ranger Combat Style (2nd)")?.available ?? 0;
@@ -445,9 +445,9 @@ describe("character levels", () => {
 
       const pools = async (levelNumber: number, characterLevelId: string) => {
         const slots = await expectOk(
-          levels["feat-slots"].$get({
+          levels["feat-step"].$get({
             param: { characterId },
-            query: { classId: klassId, level: String(levelNumber), characterLevelId },
+            query: { classId: klassId, level: String(levelNumber), editedLevelId: characterLevelId },
           }),
         );
         const pool = (name: string) => Object.values(slots.aptitudePools).find((p) => p.name === name);
@@ -518,10 +518,10 @@ describe("character levels", () => {
     const query = { classId: ctx.klassMap.pc["Fighter"], level: "1" };
     const responses = await Promise.all([
       guest["available-classes"].$get({ param: { characterId }, query: {} }),
-      guest["attribute-slots"].$get({ param: { characterId }, query: {} }),
-      guest["skill-slots"].$get({ param: { characterId }, query }),
-      guest["feat-slots"].$get({ param: { characterId }, query }),
-      guest["power-slots"].$get({ param: { characterId }, query }),
+      guest["ability-step"].$get({ param: { characterId }, query: {} }),
+      guest["skill-step"].$get({ param: { characterId }, query }),
+      guest["feat-step"].$get({ param: { characterId }, query }),
+      guest["power-step"].$get({ param: { characterId }, query }),
       guest.finalize.$post({
         param: { characterId },
         json: {
@@ -549,10 +549,10 @@ describe("character levels", () => {
     const noPicks = { skills: {}, feats: {}, powers: {} };
 
     await expectStatus(levels["available-classes"].$get({ param: missing, query: {} }), 404);
-    await expectStatus(levels["attribute-slots"].$get({ param: missing, query: {} }), 404);
-    await expectStatus(levels["skill-slots"].$get({ param: missing, query }), 404);
-    await expectStatus(levels["feat-slots"].$get({ param: missing, query }), 404);
-    await expectStatus(levels["power-slots"].$get({ param: missing, query }), 404);
+    await expectStatus(levels["ability-step"].$get({ param: missing, query: {} }), 404);
+    await expectStatus(levels["skill-step"].$get({ param: missing, query }), 404);
+    await expectStatus(levels["feat-step"].$get({ param: missing, query }), 404);
+    await expectStatus(levels["power-step"].$get({ param: missing, query }), 404);
     await expectStatus(finalize(NIL_UUID, klassId, 1, 8, noPicks), 404);
     await expectStatus(levels.$delete({ param: missing }), 404);
     const characterLevel = { characterId, characterLevelId: NIL_UUID };

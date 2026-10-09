@@ -24,7 +24,7 @@ import {
 import {
   featPickString,
   nextPickLevel,
-  pendingLevelsOf,
+  plannedLevelsOf,
   plannedPicker,
   powerPickString,
   skillPointString,
@@ -273,13 +273,11 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
 
   // The planned levels, not saved yet, which the pickers check their options after
   const previewLevelDetails = previewQuery.data?.levelDetails;
-  const pendingLevels = pendingLevelsOf(previewLevelDetails, abilityIncreases);
-
   // The class picker's: every planned level, and what's picked over them so far
   const classPicker: ClassPicker = {
-    ...pendingLevels,
-    pendingFeatPicks: allSelectedFeatPickString,
-    pendingSkillAllocations: skillPointString(skillPointAllocations),
+    ...plannedLevelsOf(previewLevelDetails, abilityIncreases),
+    featPicks: allSelectedFeatPickString,
+    skillRanks: skillPointString(skillPointAllocations),
   };
 
   const {

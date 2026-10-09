@@ -31,21 +31,21 @@ export default class CharacterEngine {
    * The character's sheet, as the API answers it: a player character's with its bonded creatures', their private notes
    * as the viewer reads them (all of them, blank, or no field); or a bonded creature's, from its master's.
    */
-  describe(...[bonded, ...rest]: Args<"describeCharacter">) {
-    return this.module.characters.describeCharacter(this.view, this.input, this.resolveBonded(bonded), ...rest);
+  describe(...[bonded, ...rest]: Args<"describe">) {
+    return this.module.characters.describe(this.view, this.input, this.resolveBonded(bonded), ...rest);
   }
 
   /**
    * The character as a campaign member reads it (`reading`): partly, who it is and what it looks like (`partial`), or
    * its sheet with its bonded creatures', their private notes shown or blank.
    */
-  describeForMember(...[bonded, ...rest]: Args<"describeCampaignCharacter">) {
-    return this.module.characters.describeCampaignCharacter(this.view, this.input, this.resolveBonded(bonded), ...rest);
+  describeForMember(...[bonded, ...rest]: Args<"describeForMember">) {
+    return this.module.characters.describeForMember(this.view, this.input, this.resolveBonded(bonded), ...rest);
   }
 
   /** The character's printed sheet: the PDF document the server renders. */
-  describeSheet(...args: Args<"describeCharacterSheet">) {
-    return this.module.characters.describeCharacterSheet(this.view, this.input, ...args);
+  describeSheet(...args: Args<"describeSheet">) {
+    return this.module.characters.describeSheet(this.view, this.input, ...args);
   }
 
   /** The character's level flows: its level-up wizard's steps and pickers, and what its level saves write. */

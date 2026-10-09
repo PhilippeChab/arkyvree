@@ -10,7 +10,7 @@ export default class CharacterSheet {
    * A character's printed sheet, from its rows: its pages as the PDF document the server renders, with its portrait
    * (`portraitUrl`), and the diagnostics page with `diagnostics` (a development server's).
    */
-  static describe(
+  static describeSheet(
     view: RulesetView,
     character: CharacterInput,
     options: { diagnostics: boolean; portraitUrl?: string | null },

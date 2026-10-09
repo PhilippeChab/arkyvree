@@ -7,10 +7,10 @@ import type { PickerLevel, PreviewLevelDetail } from "./levelUpQueries.ts";
 import type { LevelUpFormData } from "./useLevelWizardBase.ts";
 
 /** The planned levels before a pick, as a picker's query sends them. */
-export interface PendingLevels {
+export interface PlannedLevels {
   /** Each level's ability increase, "null" for none: one per class level, paired by index. */
-  pendingAbilityIds: string | undefined;
-  pendingKlassLevelIds: string | undefined;
+  plannedAbilityIds: string | undefined;
+  plannedClassLevelIds: string | undefined;
 }
 
 /** The picked feats as the "featId:aptitudeId" list the picker endpoints take. */
@@ -36,16 +36,16 @@ export function nextPickLevel(slotsPerLevel: number[], picked: number) {
  * The first `count` planned levels (all of them when it's left out), as their preview lists them: their class levels
  * and their ability increases, by the level's place in the plan. None before the preview has loaded.
  */
-export function pendingLevelsOf(
+export function plannedLevelsOf(
   levelDetails: { klassLevelId: string }[] | undefined,
   abilityIncreases: (string | null)[],
   count?: number,
-): PendingLevels {
+): PlannedLevels {
   const levels = levelDetails?.slice(0, count) ?? [];
-  if (levels.length === 0) return { pendingAbilityIds: undefined, pendingKlassLevelIds: undefined };
+  if (levels.length === 0) return { plannedAbilityIds: undefined, plannedClassLevelIds: undefined };
   return {
-    pendingAbilityIds: levels.map((_, i) => abilityIncreases[i] ?? "null").join(","),
-    pendingKlassLevelIds: levels.map((level) => level.klassLevelId).join(","),
+    plannedAbilityIds: levels.map((_, i) => abilityIncreases[i] ?? "null").join(","),
+    plannedClassLevelIds: levels.map((level) => level.klassLevelId).join(","),
   };
 }
 
@@ -64,10 +64,8 @@ export function plannedPicker(
   return {
     classId: detail?.klassId,
     level: detail?.level,
-    selectedFeatPicks: featPicks,
-    ...pendingLevelsOf(levelDetails, abilityIncreases, index + 1),
-    // None of the picks is saved yet: they're all pending
-    pendingFeatPicks: featPicks,
+    featPicks,
+    ...plannedLevelsOf(levelDetails, abilityIncreases, index + 1),
   };
 }
 

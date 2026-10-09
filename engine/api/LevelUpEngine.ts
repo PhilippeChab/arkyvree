@@ -22,66 +22,71 @@ export default class LevelUpEngine {
     return CharacterInputs.resolveAll(bonded, this.view.rulesetData.cow);
   }
 
-  /** The wizard's attributes step: the character's abilities, when the level it adds or edits takes an increase. */
-  getAttributeSlots(...args: Args<"getAttributeSlots">) {
-    return this.module.levelUp.getAttributeSlots(this.view, this.input, ...args);
+  /** The wizard's ability step: the character's abilities, when the level it adds or edits takes an increase. */
+  describeAbilityStep(...args: Args<"describeAbilityStep">) {
+    return this.module.levelUp.describeAbilityStep(this.view, this.input, ...args);
   }
 
   /** The wizard's feats step of class `klassId`'s `level`: the pools the character picks feats in, and its grants. */
-  getFeatSlots(...args: Args<"getFeatSlots">) {
-    return this.module.levelUp.getFeatSlots(this.view, this.input, ...args);
+  describeFeatStep(...args: Args<"describeFeatStep">) {
+    return this.module.levelUp.describeFeatStep(this.view, this.input, ...args);
+  }
+
+  /** A saved level's selections, as its edit opens them: refused when the character has no such level. */
+  describeLevel(...args: Args<"describeLevel">) {
+    return this.module.levelUp.describeLevel(this.view, this.input, ...args);
   }
 
   /** The wizard's powers step of class `klassId`'s `level`: the pools the character picks powers in, and its grants. */
-  getPowerSlots(...args: Args<"getPowerSlots">) {
-    return this.module.levelUp.getPowerSlots(this.view, this.input, ...args);
+  describePowerStep(...args: Args<"describePowerStep">) {
+    return this.module.levelUp.describePowerStep(this.view, this.input, ...args);
   }
 
   /** The wizard's preview of the levels the character plans, each with its ability increase. */
-  getPreview(...args: Args<"getLevelUpPreview">) {
-    return this.module.levelUp.getLevelUpPreview(this.view, this.input, ...args);
+  describePreview(...args: Args<"describePreview">) {
+    return this.module.levelUp.describePreview(this.view, this.input, ...args);
   }
 
   /** The wizard's skills step of class `klassId`'s `level`: the points to spend and each skill's class status. */
-  getSkillSlots(...args: Args<"getSkillSlots">) {
-    return this.module.levelUp.getSkillSlots(this.view, this.input, ...args);
+  describeSkillStep(...args: Args<"describeSkillStep">) {
+    return this.module.levelUp.describeSkillStep(this.view, this.input, ...args);
   }
 
-  /** The class picker, with the wizard's pending picks: its filters, and a page of classes described. */
+  /** The class picker, with what the wizard plans so far: its filters, and a page of classes described. */
   openClassPicker(...args: Args<"openClassPicker">) {
     return this.module.levelUp.openClassPicker(this.view, this.input, ...args);
   }
 
-  /** A feat picker: what it offers and leaves out, and a page of options annotated. */
+  /** A feat picker: what it offers and leaves out, and a page of options described. */
   openFeatPicker(...args: Args<"openFeatPicker">) {
     return this.module.levelUp.openFeatPicker(this.view, this.input, ...args);
   }
 
-  /** A power picker: what it offers and leaves out, and a page of options annotated. */
+  /** A power picker: what it offers and leaves out, and a page of options described. */
   openPowerPicker(...args: Args<"openPowerPicker">) {
     return this.module.levelUp.openPowerPicker(this.view, this.input, ...args);
+  }
+
+  /** What the character's bonded creatures become as its stored levels make them, from their rows (`bonded`). */
+  planBonded(...[bonded, ...rest]: Args<"planBonded">) {
+    return this.module.levelUp.planBonded(this.view, this.input, this.resolveBonded(bonded), ...rest);
+  }
+
+  /** A saved level's edit: what it writes, checked, and what the bonded creatures become with it. */
+  planEdit(...[bonded, ...rest]: Args<"planEdit">) {
+    return this.module.levelUp.planEdit(this.view, this.input, this.resolveBonded(bonded), ...rest);
   }
 
   /**
    * The levels a level-up saves, checked, with the picks spread over them: the rows the save writes, and what the
    * master's bonded creatures become with them. The character with them is refused with what it fails, unless forced.
    */
-  plan(...[bonded, ...rest]: Args<"planLevelUp">) {
-    return this.module.levelUp.planLevelUp(this.view, this.input, this.resolveBonded(bonded), ...rest);
-  }
-
-  /** What the character's bonded creatures become as its stored levels make them, from their rows (`bonded`). */
-  planBonded(...[bonded, ...rest]: Args<"planBondedCreatures">) {
-    return this.module.levelUp.planBondedCreatures(this.view, this.input, this.resolveBonded(bonded), ...rest);
-  }
-
-  /** A saved level's edit: what it writes, checked, and what the bonded creatures become with it. */
-  planEdit(...[bonded, ...rest]: Args<"planLevelEdit">) {
-    return this.module.levelUp.planLevelEdit(this.view, this.input, this.resolveBonded(bonded), ...rest);
+  planLevels(...[bonded, ...rest]: Args<"planLevels">) {
+    return this.module.levelUp.planLevels(this.view, this.input, this.resolveBonded(bonded), ...rest);
   }
 
   /** The character's last level removed: the level that goes, and what its bonded creatures become without it. */
-  planRemoval(...[bonded, ...rest]: Args<"planLevelRemoval">) {
-    return this.module.levelUp.planLevelRemoval(this.view, this.input, this.resolveBonded(bonded), ...rest);
+  planRemoval(...[bonded, ...rest]: Args<"planRemoval">) {
+    return this.module.levelUp.planRemoval(this.view, this.input, this.resolveBonded(bonded), ...rest);
   }
 }

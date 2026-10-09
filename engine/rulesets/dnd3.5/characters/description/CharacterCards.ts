@@ -6,7 +6,7 @@ export default class CharacterCards {
    * The card of a character (`character`, with its levels, `levels`), named as its ruleset's view names its race and
    * classes, a copied or renamed one by its own name: each class at the highest level the character has in it.
    */
-  static describe(
+  static describeCard(
     view: RulesetView,
     character: { raceId: string },
     levels: { klassLevelId: string }[],

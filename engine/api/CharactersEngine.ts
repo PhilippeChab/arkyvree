@@ -1,6 +1,5 @@
-import { CharacterInputs } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import type { CharacterLevel, Item } from "@/shared/relations.ts";
+import type { Item } from "@/shared/relations.ts";
 
 import type { Module, Rest } from "./Modules.ts";
 
@@ -15,28 +14,18 @@ export default class CharactersEngine {
   ) {}
 
   /** Refuses languages a character can't speak: not found among the rows read, or not of its ruleset nor its chain. */
-  checkLanguages(...args: Args<"checkCharacterLanguages">) {
-    this.module.characters.checkCharacterLanguages(this.view, ...args);
+  checkLanguages(...args: Args<"checkLanguages">) {
+    this.module.characters.checkLanguages(this.view, ...args);
   }
 
   /** A character's card, as a list shows it: its race, its classes at their highest level, its total level. */
-  describeCard(...args: Args<"describeCharacterCard">) {
-    return this.module.characters.describeCharacterCard(this.view, ...args);
+  describeCard(...args: Args<"describeCard">) {
+    return this.module.characters.describeCard(this.view, ...args);
   }
 
   /** A character's inventory entries (each with the item row it names), as stored, as its sheet lists them. */
   describeInventory<T extends { itemId: string; itemsInRule: Item }>(entries: T[]) {
     return this.module.characters.describeInventory(this.view, this.view.rulesetData.cow.resolveRows(entries));
-  }
-
-  /** A saved level's selections, as its edit opens them: the level and its picks as stored, read as the view reads them. */
-  describeLevel(
-    level: CharacterLevel,
-    picks: Rest<Module["levelUp"]["describeLevel"], [RulesetView, CharacterLevel]>[0],
-  ) {
-    const { cow } = this.view.rulesetData;
-    const [resolved] = cow.resolveRows([level]);
-    return this.module.levelUp.describeLevel(this.view, resolved, CharacterInputs.resolvePicks(picks, cow));
   }
 
   /** The race picker for a new character of what its form says: each race of a page, with whether it can pick it. */
@@ -45,7 +34,7 @@ export default class CharactersEngine {
   }
 
   /** What a new character stores beside its row: its ability scores, refused when its race isn't a player's. */
-  planCreate(...args: Args<"planCharacterCreate">) {
-    return this.module.characters.planCharacterCreate(this.view, ...args);
+  planCreate(...args: Args<"planCreate">) {
+    return this.module.characters.planCreate(this.view, ...args);
   }
 }

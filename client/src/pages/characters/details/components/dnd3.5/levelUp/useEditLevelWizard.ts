@@ -11,14 +11,14 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import { fitFeats, fitPowers, fitSkillPoints, openPoolOf } from "./fitPicks.ts";
 import { type HpLevel, hpSet } from "./hitPoints.ts";
 import {
-  attributeSlotsQuery,
+  abilityStepQuery,
   availableFeatsGroupedQuery,
   availablePowersQuery,
   characterLevelQuery,
-  featSlotsQuery,
+  featStepQuery,
   type PickerLevel,
-  powerSlotsQuery,
-  skillSlotsQuery,
+  powerStepQuery,
+  skillStepQuery,
   type StepLevel,
 } from "./levelUpQueries.ts";
 import { featPickString, powerPickString } from "./pendingPicks.ts";
@@ -117,21 +117,21 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevel }:
   const step: StepLevel = {
     classId: selectedClass?.id,
     level: selectedClass?.nextLevel,
-    characterLevelId: editingLevelId,
+    editedLevelId: editingLevelId,
   };
 
   const {
     data: attributeData,
     isLoading: isLoadingAttributes,
     error: attributesError,
-  } = useQuery({ ...attributeSlotsQuery(characterId, editingLevelId), enabled: open && activeStep === abilityStep });
+  } = useQuery({ ...abilityStepQuery(characterId, editingLevelId), enabled: open && activeStep === abilityStep });
 
   const {
     data: skillData,
     isLoading: isLoadingSkills,
     error: skillsError,
   } = useQuery({
-    ...skillSlotsQuery(characterId, step, selectedAttribute),
+    ...skillStepQuery(characterId, step, selectedAttribute),
     enabled: open && activeStep === skillsStep,
   });
 
@@ -147,7 +147,7 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevel }:
     data: featData,
     isLoading: isLoadingFeats,
     error: featsError,
-  } = useQuery({ ...featSlotsQuery(characterId, step), enabled: open });
+  } = useQuery({ ...featStepQuery(characterId, step), enabled: open });
 
   // The feats, fitted to the level's slots
   const { feats: selectedFeats, pools: adjustedFeatPools } = useMemo(
@@ -156,7 +156,7 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevel }:
   );
   const selectedAptitude = openPoolOf(base.selectedAptitude, adjustedFeatPools);
   const allSelectedFeatPickString = useMemo(() => featPickString(selectedFeats), [selectedFeats]);
-  const picker: PickerLevel = { ...step, selectedFeatPicks: allSelectedFeatPickString };
+  const picker: PickerLevel = { ...step, featPicks: allSelectedFeatPickString };
 
   // Grouped available feats
   const {
@@ -175,7 +175,7 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevel }:
     data: powerData,
     isLoading: isLoadingPowers,
     error: powersError,
-  } = useQuery({ ...powerSlotsQuery(characterId, step), enabled: open });
+  } = useQuery({ ...powerStepQuery(characterId, step), enabled: open });
 
   // The spells, fitted to the level's slots
   const selectedPowers = useMemo(() => fitPowers(picked.powers, powerData?.aptitudePools), [picked.powers, powerData]);
