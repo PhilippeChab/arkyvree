@@ -1,5 +1,7 @@
 /** Shared application definitions, checked against the migrated database by tests. */
 
+import { isOneOf } from "@/shared/isOneOf.ts";
+
 import type { TargetPathKind } from "./target.ts";
 
 type ChainingOperator = (typeof CHAINING_OPERATORS)[number];
@@ -88,5 +90,5 @@ export function getNumericOperators(kind: OperatorKind): string[] {
 
 /** Whether a requirement's operator checks its target alone, with no value to compare it to. */
 export function isValuelessOperator(operator: string | undefined) {
-  return VALUELESS_REQUIREMENT_OPERATORS.some((valueless) => valueless === operator);
+  return isOneOf(operator, VALUELESS_REQUIREMENT_OPERATORS);
 }

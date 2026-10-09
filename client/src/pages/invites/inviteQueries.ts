@@ -1,11 +1,11 @@
 import { queryOptions } from "@tanstack/react-query";
 
+import { INVITE_KINDS, type InviteKind } from "@/client/src/components/invites/index.ts";
 import { NO_TIME } from "@/client/src/lib/durations.ts";
-import { INVITE_KINDS, type InviteKind } from "@/client/src/lib/invites.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { ApiError } from "@/client/src/services/ApiError.ts";
 
-/** An invite a landing page answers, as its kind reads it (`inviteFn`), or null once it's gone (a 404). */
+/** An invite its page answers, as its kind reads it (`inviteFn`), or null once it's gone (a 404). */
 export function inviteQuery(kind: InviteKind, inviteId: string) {
   return queryOptions({
     queryKey: QUERY_KEYS.invites.detail(kind, inviteId),

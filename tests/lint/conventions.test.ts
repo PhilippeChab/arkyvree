@@ -660,6 +660,24 @@ describe("conventions", () => {
     ]);
   });
 
+  test("whether a value is one of a list is isOneOf, never a .some comparing each", async () => {
+    expect(
+      await lintRepo(
+        {
+          "shared/a.ts": "export const a = (x: string) => TYPES.some((type) => type === x);\n",
+          "client/src/b.ts": "export const b = (x: string) => TYPES.some((type) => x === type);\n",
+          // A field compared, a missing value, a comparison that reads its item twice: not a value among a list's
+          "server/c.ts": "export const c = (x: string) => rows.some((row) => row.id === x);\n",
+          "server/d.ts": "export const d = ids.some((id) => id === undefined);\n",
+          "server/e.ts": "export const e = items.some((item) => item === item.parent);\n",
+          "shared/isOneOf.ts": "export const i = (v: unknown, o: string[]) => o.some((option) => option === v);\n",
+          "content/f.ts": "export const f = (x: string) => NAMES.some((name) => name === x);\n",
+        },
+        ["one-of"],
+      ),
+    ).toEqual(["one-of client/src/b.ts", "one-of shared/a.ts"]);
+  });
+
   test("an error is named error: a catch's binding and an onError callback's first parameter", async () => {
     expect(
       await lintRepo(

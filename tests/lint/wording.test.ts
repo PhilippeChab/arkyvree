@@ -135,4 +135,19 @@ describe("wording rules", () => {
       "typography-marks client/src/template.tsx",
     ]);
   });
+
+  test("the app's name is APP_NAME, never written out", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/text.tsx": "export const t = <Typography>Welcome to Arkyvree</Typography>;\n",
+          "client/src/string.tsx": 'export const s = <Box component="img" alt="Arkyvree" />;\n',
+          "client/src/template.ts": "export const t = `${title} | Arkyvree`;\n",
+          "client/src/named.tsx": "export const n = <Typography>Welcome to {APP_NAME}</Typography>;\n",
+          "client/src/lib/brand.ts": 'export const APP_NAME = "Arkyvree";\n',
+        },
+        ["app-name"],
+      ),
+    ).toEqual(["app-name client/src/string.tsx", "app-name client/src/template.ts", "app-name client/src/text.tsx"]);
+  });
 });

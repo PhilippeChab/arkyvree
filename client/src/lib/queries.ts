@@ -3,7 +3,8 @@
  * ruleset, which its pages and a sheet's equipment read), and the refreshes a write to a character asks for. Defining
  * them once keeps the key and the request in step: a prefetch whose key or page size drifts from the page's query is
  * wasted, or worse, seeds the cache with pages of the wrong size. A query one area reads alone, its page's and its
- * prefetch's alike (a card's hover), is that area's, in its `…Queries.ts`.
+ * prefetch's alike (a card's hover), is that area's, in its `…Queries.ts`, and so is one a single module reads
+ * (`OglLicenseText`'s, `useOpenActivityTarget`'s).
  */
 
 import { infiniteQueryOptions, type QueryClient, queryOptions, skipToken } from "@tanstack/react-query";
@@ -12,7 +13,6 @@ import { type InferRequestType, type InferResponseType, parseResponse } from "ho
 import { rpc } from "@/client/src/services/rpc.ts";
 import { ATTACHMENT_SLOTS, type AttachmentSlotName } from "@/shared/attachments.ts";
 
-import { FOREVER } from "./durations.ts";
 import { nextPage } from "./pageItems.ts";
 import { QUERY_KEYS } from "./queryKeys.ts";
 
@@ -101,15 +101,6 @@ export const RULESET_LIST_DEFAULTS = {
   scope: undefined,
   search: "",
 } as const satisfies RulesetListFilters;
-
-/** Where an activity's or a notification's target is now: the server resolves its page as it's opened. */
-export function activityTargetQuery(targetTable: string, targetId: string) {
-  return queryOptions({
-    queryKey: QUERY_KEYS.activities.target(targetTable, targetId),
-    queryFn: () =>
-      parseResponse(rpc.api.activities.resolve[":targetTable"][":targetId"].$get({ param: { targetTable, targetId } })),
-  });
-}
 
 /** A record's attachment slot: its key and its request, which waits for the record's id. */
 export function attachmentSlotQuery({ name, recordId }: AttachmentSlot) {
@@ -205,19 +196,6 @@ export function invalidateCharacterListings(queryClient: QueryClient) {
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.characters.lists }),
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.campaigns.details }),
   ]);
-}
-
-/** The text of the Open Game License, a static file that never changes. */
-export function oglLicenseQuery() {
-  return queryOptions({
-    queryKey: QUERY_KEYS.legal.ogl,
-    queryFn: async ({ signal }) => {
-      const response = await fetch("/legal/ogl-1.0a.md", { signal });
-      if (!response.ok) throw new Error("Failed to load the license text");
-      return response.text();
-    },
-    staleTime: FOREVER,
-  });
 }
 
 export function rulesetDetailQuery(id: string) {

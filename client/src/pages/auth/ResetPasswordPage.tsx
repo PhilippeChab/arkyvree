@@ -4,12 +4,11 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 
 import {
   AuthPage,
-  AuthSubmitButton,
   CodeSentMessage,
   EMPTY_VERIFICATION_CODE,
   isCodeComplete,
   ResendCodeLink,
-  useResendCode,
+  useCodeMessages,
   VerificationCodeField,
   type VerificationCodeFormData,
 } from "@/client/src/components/auth/index.ts";
@@ -19,6 +18,8 @@ import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 import { confirmPasswordRules, NEW_PASSWORD_RULES } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
+
+import { AuthSubmitButton } from "./components/index.ts";
 
 /** A reset's form: the code's digits, and the new password as the reset sends it, which adds the code and the email. */
 type ResetPasswordFormData = VerificationCodeFormData &
@@ -37,7 +38,7 @@ export default function ResetPasswordPage() {
   });
   const digits = form.watch("digits");
 
-  const { error, setError, handleResend, notice } = useResendCode((callbacks) =>
+  const { error, setError, handleResend, notice } = useCodeMessages((callbacks) =>
     auth.forgotPassword.mutate(pendingPasswordResetEmail ?? "", callbacks),
   );
 

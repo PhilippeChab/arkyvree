@@ -108,6 +108,9 @@ interface TextShadows {
   stat: string;
 }
 
+/** The app's typeface, its text's and its headings', which `main.tsx` loads: the error page's title takes it too. */
+export const APP_FONT = '"Lora Variable", "Georgia", serif';
+
 /**
  * The app bar's height, by breakpoint: MUI's default drops to 48px on landscape phones, but the account button keeps
  * the bar at 56px there. The toolbars, the drawer's spacer and the page under the bar (`AppMain`'s `top`) take it.
@@ -207,38 +210,38 @@ export function createAppTheme(darkMode: boolean): Theme {
         stat: "0px 2px 4px rgba(0,0,0,0.3)",
       },
       typography: {
-        fontFamily: '"Lora Variable", "Georgia", serif',
+        fontFamily: APP_FONT,
         h1: {
           fontSize: "2.5rem",
           fontWeight: 600,
-          fontFamily: '"Lora Variable", "Georgia", serif',
+          fontFamily: APP_FONT,
           letterSpacing: "0.02em",
         },
         h2: {
           fontSize: "2rem",
           fontWeight: 600,
-          fontFamily: '"Lora Variable", "Georgia", serif',
+          fontFamily: APP_FONT,
           letterSpacing: "0.01em",
         },
         h3: {
           fontSize: "1.75rem",
           fontWeight: 600,
-          fontFamily: '"Lora Variable", "Georgia", serif',
+          fontFamily: APP_FONT,
         },
         h4: {
           fontSize: "1.5rem",
           fontWeight: 500,
-          fontFamily: '"Lora Variable", "Georgia", serif',
+          fontFamily: APP_FONT,
         },
         h5: {
           fontSize: "1.25rem",
           fontWeight: 500,
-          fontFamily: '"Lora Variable", "Georgia", serif',
+          fontFamily: APP_FONT,
         },
         h6: {
           fontSize: "1rem",
           fontWeight: 500,
-          fontFamily: '"Lora Variable", "Georgia", serif',
+          fontFamily: APP_FONT,
         },
         subtitle1: {
           fontSize: "1rem",

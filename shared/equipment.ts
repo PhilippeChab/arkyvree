@@ -10,6 +10,9 @@ interface EquippedEntry {
   weaponSet: number | null;
 }
 
+/** An item type that sets the locations its items go to (`ITEM_TYPE_LOCATIONS`). */
+type LocatedItemType = keyof typeof ITEM_TYPE_LOCATIONS;
+
 /**
  * Why `location` can't take one more item, given the `equipped` entries (the item itself left out), with the entry in
  * the way:
@@ -24,9 +27,6 @@ type SlotConflict<T extends EquippedEntry> =
   | { reason: "fingers" };
 
 export type HandLocation = (typeof HAND_LOCATIONS)[number];
-
-/** An item type that sets the locations its items go to (`ITEM_TYPE_LOCATIONS`). */
-export type LocatedItemType = keyof typeof ITEM_TYPE_LOCATIONS;
 
 export type SlotConflictReason = "occupied" | "fingers" | "hands" | "twoHanded" | "sameHand";
 

@@ -1,7 +1,9 @@
 import { DialogContent, DialogTitle, Stack } from "@mui/material";
+import type { InferRequestType } from "hono/client";
 import type { UseFormReturn } from "react-hook-form";
 
 import { DialogFooter, EmailField, FormDialog, SelectField } from "@/client/src/components/common/index.ts";
+import type { rpc } from "@/client/src/services/rpc.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
 
 interface InviteContributorDialogProps {
@@ -15,10 +17,10 @@ interface InviteContributorDialogProps {
   roles?: ContributorRole[];
 }
 
-export interface InviteContributorFormData {
-  email: string;
-  role: ContributorRole;
-}
+/** An invite's form: a ruleset's invite's body, its role always held (a character's sends its email alone). */
+export type InviteContributorFormData = Required<
+  InferRequestType<(typeof rpc.api.rulesets)[":id"]["contributors"]["$post"]>["json"]
+>;
 
 export function InviteContributorDialog({
   open,

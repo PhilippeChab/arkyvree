@@ -9,6 +9,7 @@ interface CrossfadeProps {
   showFirst: boolean;
 }
 
+/** One content crossfading into another (a condition's value and its template), its height following the shown one. */
 export function Crossfade({ showFirst, first, second }: CrossfadeProps) {
   const firstRef = useRef<HTMLDivElement>(null);
   const secondRef = useRef<HTMLDivElement>(null);

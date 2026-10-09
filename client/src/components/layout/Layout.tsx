@@ -19,7 +19,7 @@ import {
 } from "@mui/material";
 import { type QueryClient, useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 import { ActionMenuItem } from "@/client/src/components/common/index.ts";
@@ -41,7 +41,9 @@ import {
   SupportIcon,
 } from "@/client/src/components/icons/index.ts";
 import { Onboarding, ONBOARDING_STEPS } from "@/client/src/components/onboarding/index.ts";
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useAnchorMenu, useAttachment, useAuthRequests, useIsDemo, useIsMobile } from "@/client/src/hooks/index.ts";
+import { APP_NAME } from "@/client/src/lib/brand.ts";
 import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 import {
   CAMPAIGN_LIST_DEFAULTS,
@@ -62,6 +64,9 @@ import { DemoBanner } from "./DemoBanner.tsx";
 import { FeedbackButton } from "./FeedbackButton.tsx";
 import { NotificationBell } from "./NotificationBell.tsx";
 
+/** A sidebar item's id: the first segment of its page's path, or an outside page's name. */
+export type SidebarId = (typeof SIDEBAR_ITEMS)[number]["id"];
+
 const DRAWER_WIDTH = 72;
 
 const EXPANDED_DRAWER_WIDTH = 240;
@@ -70,7 +75,7 @@ const EXPANDED_DRAWER_WIDTH = 240;
  * Warm the first page of a section when its sidebar item is hovered. The options are the ones the pages use, filtered
  * the way a page opens by default (its list's defaults, `…_LIST_DEFAULTS`).
  */
-const PREFETCHERS: Partial<Record<string, (queryClient: QueryClient) => void>> = {
+const PREFETCHERS: Partial<Record<SidebarId, (queryClient: QueryClient) => void>> = {
   dashboard: (queryClient) => void queryClient.prefetchQuery(dashboardStatsQuery()),
   rulesets: (queryClient) => void queryClient.prefetchInfiniteQuery(rulesetListQuery(RULESET_LIST_DEFAULTS)),
   characters: (queryClient) => void queryClient.prefetchInfiniteQuery(characterListQuery(CHARACTER_LIST_DEFAULTS)),
@@ -79,42 +84,42 @@ const PREFETCHERS: Partial<Record<string, (queryClient: QueryClient) => void>> =
 
 const SIDEBAR_ITEMS = [
   {
-    id: "dashboard" as const,
+    id: "dashboard",
     label: "Dashboard",
     icon: <DashboardIcon />,
     description: "Overview and statistics",
     path: "/dashboard",
   },
   {
-    id: "rulesets" as const,
+    id: "rulesets",
     label: "Rulesets",
     icon: <RulesetIcon />,
     description: "Browse available rulesets",
     path: "/rulesets",
   },
   {
-    id: "characters" as const,
+    id: "characters",
     label: "Characters",
     icon: <CharacterIcon />,
     description: "View your characters",
     path: "/characters",
   },
   {
-    id: "campaigns" as const,
+    id: "campaigns",
     label: "Campaigns",
     icon: <CampaignIcon />,
     description: "Manage your campaigns",
     path: "/campaigns",
   },
   {
-    id: "notifications" as const,
+    id: "notifications",
     label: "Notifications",
     icon: <NotificationsIcon />,
     description: "Updates from collaborators",
     path: "/notifications",
   },
   {
-    id: "help" as const,
+    id: "help",
     label: "Help",
     icon: <HelpIcon />,
     description: "How everything works",
@@ -122,7 +127,7 @@ const SIDEBAR_ITEMS = [
     external: true,
   },
   {
-    id: "changelog" as const,
+    id: "changelog",
     label: "Changelog",
     icon: <ChangelogIcon />,
     description: "What's new",
@@ -130,20 +135,21 @@ const SIDEBAR_ITEMS = [
     external: true,
   },
   {
-    id: "support" as const,
-    label: "Support Arkyvree",
+    id: "support",
+    label: `Support ${APP_NAME}`,
     icon: <SupportIcon />,
     description: "Buy me a coffee",
     path: EXTERNAL_LINKS.support,
     external: true,
   },
-];
+] as const;
 
 export function Layout() {
   const menu = useAnchorMenu();
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const isMobile = useIsMobile();
+  const snackbar = useSnackbar();
 
   const user = useAuthStore((s) => s.user);
   const updateUser = useAuthStore((s) => s.updateUser);
@@ -155,7 +161,7 @@ export function Layout() {
   const [onboardingStep, setOnboardingStep] = useState(0);
   // Sidebar item elements live in state (not a ref) so the onboarding popover
   // can read its anchor during render, on the same render its step changes.
-  const [sidebarItemEls, setSidebarItemEls] = useState<Record<string, HTMLElement | null>>({});
+  const [sidebarItemEls, setSidebarItemEls] = useState<Partial<Record<SidebarId, HTMLElement>>>({});
   const sidebarItemRefs = useMemo(
     () =>
       Object.fromEntries(
@@ -178,13 +184,14 @@ export function Layout() {
 
   const onboardingMutation = useMutation({
     mutationFn: () => parseResponse(rpc.auth["complete-onboarding"].$post()),
+    onError: (error) => snackbar.error(error, "Failed to complete the tour"),
   });
 
-  const handleOnboardingClose = useCallback(() => {
+  const handleOnboardingClose = () => {
     setOnboardingOpen(false);
     updateUser({ onboardingCompletedAt: new Date().toISOString() });
     onboardingMutation.mutate();
-  }, [onboardingMutation, updateUser]);
+  };
 
   const location = useLocation();
   const queryClient = useQueryClient();

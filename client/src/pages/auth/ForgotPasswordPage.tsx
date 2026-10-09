@@ -3,11 +3,13 @@ import type { InferRequestType } from "hono/client";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { AuthPage, AuthSubmitButton } from "@/client/src/components/auth/index.ts";
+import { AuthPage } from "@/client/src/components/auth/index.ts";
 import { EmailField } from "@/client/src/components/common/index.ts";
 import { useAuthRequests, useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
+
+import { AuthSubmitButton } from "./components/index.ts";
 
 type ForgotPasswordFormData = InferRequestType<(typeof rpc.auth)["forgot-password"]["$post"]>["json"];
 

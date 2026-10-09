@@ -9,6 +9,7 @@ import type {
   Power,
 } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import type { BaseRules } from "@/shared/enums.ts";
+import { isOneOf } from "@/shared/isOneOf.ts";
 
 import { ClassLevelEditor, ItemEditor, SpellEditor } from "./dnd3.5/index.ts";
 import { FeatEditor } from "./FeatEditor.tsx";
@@ -49,7 +50,7 @@ const RULESET_EDITORS: Record<BaseRules, RulesetEditors> = {
 };
 
 export function isEditable(data: CustomizationEntity): data is EditableEntity {
-  return EDITABLE_TYPES.some((type) => type === data.type);
+  return isOneOf(data.type, EDITABLE_TYPES);
 }
 
 /** An entity's editor, by its type, and by its ruleset's base rules for an entity that is theirs */

@@ -1,9 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { INVITE_KINDS, type InviteAnswer } from "@/client/src/lib/invites.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { ApiError } from "@/client/src/services/ApiError.ts";
+
+import { INVITE_KINDS, type InviteAnswer } from "./inviteKinds.ts";
 
 /**
  * Accepting and rejecting an invite, one way wherever it's answered (a notification's buttons, the invite's own page):

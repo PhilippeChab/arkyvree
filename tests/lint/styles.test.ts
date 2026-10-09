@@ -121,6 +121,7 @@ describe("style rules", () => {
           "client/src/timeout.tsx": "export const c = <Collapse in timeout={250} />;\n",
           "client/src/auto.tsx": 'export const a = <Collapse in timeout="auto" />;\n',
           "client/src/token.tsx": "export const t = <Collapse in timeout={DURATION.normal} />;\n",
+          "client/src/untimed.tsx": "export const u = <Collapse in />;\n",
           "client/src/theme/appTheme.ts": "export const D = { transitionDuration: { enter: 250, exit: 150 } };\n",
           "client/src/theme/link.ts": 'export const L = { transition: "text-decoration-color 200ms ease" };\n',
           "client/src/still.tsx": 'export const s = <Box sx={{ "&:hover": { transform: "scale(1.1)" } }} />;\n',
@@ -138,6 +139,7 @@ describe("style rules", () => {
       "motion client/src/theme/appTheme.ts",
       "motion client/src/theme/link.ts",
       "motion client/src/timeout.tsx",
+      "motion client/src/untimed.tsx",
     ]);
   });
 
@@ -154,6 +156,10 @@ describe("style rules", () => {
           "client/src/icon.tsx": "export const i = <AddIcon sx={{ fontSize: 20 }} />;\n",
           "client/src/sized.tsx": "export const s = <AddIcon sx={{ fontSize: 14 }} />;\n",
           "client/src/clamp.tsx": "export const c = <Typography sx={{ WebkitLineClamp: 2 }} />;\n",
+          "client/src/typeface.tsx": 'export const t = <Typography sx={{ fontFamily: "Lora, serif" }} />;\n',
+          "client/src/code.tsx": 'export const c = <Box sx={{ fontFamily: "monospace" }} />;\n',
+          "client/src/kept.tsx": 'export const k = <Box component="pre" sx={{ fontFamily: "inherit" }} />;\n',
+          "client/src/theme/errorTheme.ts": 'export const E = { h4: { fontFamily: "Lora, serif" } };\n',
         },
         ["type-scale"],
       ),
@@ -164,6 +170,7 @@ describe("style rules", () => {
       "type-scale client/src/fixed.tsx",
       "type-scale client/src/icon.tsx",
       "type-scale client/src/pixels.tsx",
+      "type-scale client/src/typeface.tsx",
     ]);
   });
 

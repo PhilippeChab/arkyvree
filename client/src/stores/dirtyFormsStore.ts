@@ -7,9 +7,9 @@ interface DirtyFormsState {
 }
 
 /**
- * Global counter of currently-dirty forms. Components (typically via
- * `useDirtyForm` or FormDialog) increment on mount-while-dirty and
- * decrement on cleanup / when isDirty flips false. The new version's Refresh
+ * Global counter of currently-dirty forms. `useDirtyForm` alone counts them (a dialog's form through `FormDialog`, an
+ * inline one's through `useFormSync`): it increments on mount-while-dirty and
+ * decrements on cleanup / when isDirty flips false. The new version's Refresh
  * action (`WebSocketProvider`) checks `count > 0` to confirm before reloading,
  * and the `beforeunload` handler in main.tsx uses the same to gate
  * the native "leave site?" prompt.

@@ -1,7 +1,7 @@
 /**
  * An entity's requirements as a tree. Each row has a level, its place: `"1"`, `"2"` at the top, `"1.2"` under `"1"`,
  * `"1.2.1"` under `"1.2"`. A row with a chaining operator (`and`, `or`) groups the rows under it; a condition row holds
- * none. The top-level rows are AND'd. The server evaluates, prints and merges the tree; the client edits it.
+ * none. The top-level rows are AND'd. The engine evaluates, prints and merges the tree; the client edits it.
  */
 
 /** A row of the tree, with the rows it groups, in level order. */

@@ -136,7 +136,7 @@ const DATE_FORMATTERS = new Set(["toLocaleDateString", "toLocaleTimeString"]);
 
 /** The modules that read when a demo's session ends: its hooks, and the query client's 401, outside React */
 const DEMO_READERS = new Set([
-  "client/src/hooks/useDemoTimeRemaining.ts",
+  "client/src/components/layout/useDemoTimeRemaining.ts",
   "client/src/hooks/useIsDemo.ts",
   "client/src/lib/queryClient.ts",
 ]);

@@ -1,9 +1,8 @@
 import { db, withTransaction } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Notifications } from "@/server/repositories/index.ts";
+import { INVITE_NOTIFICATION_TYPES } from "@/shared/activity.ts";
 import type { Session } from "@/shared/relations.ts";
-
-const ACTIONABLE_TYPES = ["createCampaignInvite", "inviteContributor", "inviteCharacterContributor"];
 
 class NotificationsService {
   async getNotifications(
@@ -35,7 +34,8 @@ class NotificationsService {
       async (tx) =>
         await Notifications.markRead(tx, {
           recipientId: session.userId,
-          excludeTypes: ACTIONABLE_TYPES,
+          // An invite's notification stays unread until it's answered
+          excludeTypes: [...INVITE_NOTIFICATION_TYPES],
         }),
     );
   }

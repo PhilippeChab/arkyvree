@@ -16,11 +16,13 @@
  *   `borderStyle`.
  * - `motion`: motion is timed by `theme/animations.ts`: an animation it names, a transition of its `DURATION` and
  *   `EASING`, which the rest of the theme reads too (a dialog's transition, a link's); a component's timing prop
- *   takes a token, never a number nor `"auto"`. Keyframes and MUI's transitions are the theme's. What moves (an
- *   animation, a transform on hover) stops for a viewer who asked for less motion (`[PREFERS_REDUCED_MOTION]`).
+ *   takes a token, never a number nor `"auto"`, and a `Collapse` takes one, never MUI's default. Keyframes and MUI's
+ *   transitions are the theme's. What moves (an animation, a transform on hover) stops for a viewer who asked for less
+ *   motion (`[PREFERS_REDUCED_MOTION]`).
  * - `type-scale`: text takes its style from a variant (`variant="body2"`, a responsive one in `sx`), sized in `rem`
- *   when it sizes itself; a font weight is a number; text aligns with `textAlign`; an icon takes MUI's named sizes as
- *   its `fontSize` prop; lines clamp through `lineClampSx`.
+ *   when it sizes itself, in the theme's typeface (a `fontFamily` names none but `inherit` and `monospace`); a font
+ *   weight is a number; text aligns with `textAlign`; an icon takes MUI's named sizes as its `fontSize` prop; lines
+ *   clamp through `lineClampSx`.
  * - `headings`: a `Typography` sized as a heading or a subtitle declares its element (`component="h2"`, `"p"`), so the
  *   page's outline is a hierarchy.
  * - `flex-layout`: a flex container is a `Stack`, its `direction` and `spacing` props (a gap), never another element
@@ -160,6 +162,9 @@ const MOTION_PROPERTIES = new Set([
 /** MUI's transitions, which the theme runs (a dialog grows in): a page fades in with `PageTransition` */
 const MUI_TRANSITIONS = new Set(["Fade", "Grow", "Slide", "Zoom"]);
 
+/** The `fontFamily` a style may set: its parent's typeface, or code's, set apart (a template, an issue's path) */
+const OWN_FONTS = new Set(["inherit", "monospace"]);
+
 /** The widest a box floating over the page (a popover's or a menu's paper) is on a phone: 375px, less its gutters */
 const PHONE_WIDTH = 343;
 
@@ -289,6 +294,10 @@ function createMotion(context) {
       if (tokens || node.name.type !== "JSXIdentifier" || !TIMING_PROPS.has(node.name.name)) return;
       const value = node.value?.type === "JSXExpressionContainer" ? node.value.expression : node.value;
       if (value && writesTiming(value)) report(node);
+    },
+    // Without its timing, a Collapse runs MUI's default, written in MUI, not the theme
+    JSXElement(node) {
+      if (elementName(node) === "Collapse" && !hasAttribute(node, "timeout")) report(node.openingElement);
     },
     Literal(node) {
       if (!tokens && typeof node.value === "string" && node.value.includes("cubic-bezier(")) report(node);
@@ -606,6 +615,18 @@ function createTypeScale(context) {
         return context.report({
           node: node.value,
           message: "A font weight is a number (`fontWeight: 700`), never a word.",
+        });
+      }
+      // A typeface is the theme's (`APP_FONT`): a style keeps its parent's, or sets code's apart
+      if (
+        key === "fontFamily" &&
+        !styleValues(node.value).every((v) => v.type === "Literal" && OWN_FONTS.has(v.value))
+      ) {
+        return context.report({
+          node: node.value,
+          message:
+            "Text is in the theme's typeface (`APP_FONT`, `theme/appTheme.ts`): a style's `fontFamily` is " +
+            '`"inherit"` or `"monospace"`, never a typeface of its own.',
         });
       }
       const owner = node.parent.type === "ObjectExpression" ? sxOwner(node.parent) : null;

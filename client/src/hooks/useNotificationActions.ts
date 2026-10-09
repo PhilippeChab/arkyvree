@@ -2,19 +2,17 @@ import { useMutation, useMutationState, useQueryClient } from "@tanstack/react-q
 import { type InferResponseType, parseResponse } from "hono/client";
 import { useNavigate } from "react-router-dom";
 
+import { acceptedPath, type InviteKind, useAnswerInvite } from "@/client/src/components/invites/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { saveBlob } from "@/client/src/lib/download.ts";
-import { acceptedPath } from "@/client/src/lib/invites.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { ApiError } from "@/client/src/services/ApiError.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { isNavigableTarget } from "@/shared/activity.ts";
+import { INVITE_NOTIFICATION_TYPES, type InviteNotificationType, isNavigableTarget } from "@/shared/activity.ts";
+import { isOneOf } from "@/shared/isOneOf.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
-import { useAnswerInvite } from "./useAnswerInvite.ts";
 import { useOpenActivityTarget } from "./useOpenActivityTarget.ts";
-
-type InviteType = keyof typeof NOTIFICATION_INVITES;
 
 type NotificationData = Record<string, string | undefined>;
 
@@ -24,17 +22,18 @@ type NotificationItem = InferResponseType<typeof rpc.api.notifications.$get, 200
 type NotificationLike = Pick<NotificationItem, "id" | "type" | "targetTable" | "targetId" | "data" | "readAt">;
 
 /**
- * Notification types that are invitations, answered in place with Accept / Reject (`useAnswerInvite`): `targetId` is
- * the invite, of `kind`; its payload's `entityKey` names the entity accepting takes the user to (`acceptedPath`).
+ * Each invite's notification (`INVITE_NOTIFICATION_TYPES`), answered in place with Accept / Reject (`useAnswerInvite`):
+ * `targetId` is the invite, of `kind`; its payload's `entityKey` names the entity accepting takes the user to
+ * (`acceptedPath`).
  */
 const NOTIFICATION_INVITES = {
   createCampaignInvite: { kind: "campaign", entityKey: "campaignId" },
   inviteContributor: { kind: "rulesetContributor", entityKey: "rulesetId" },
   inviteCharacterContributor: { kind: "characterContributor", entityKey: "characterId" },
-} as const;
+} as const satisfies Record<InviteNotificationType, { entityKey: string; kind: InviteKind }>;
 
-function isInviteType(type: string): type is InviteType {
-  return type in NOTIFICATION_INVITES;
+function isInviteType(type: string): type is InviteNotificationType {
+  return isOneOf(type, INVITE_NOTIFICATION_TYPES);
 }
 
 /** A notification's payload: its string fields (ids, names); anything else is left out. */

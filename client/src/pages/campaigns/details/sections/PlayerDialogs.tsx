@@ -190,7 +190,7 @@ export function RemovePlayerDialog({
       title={isSelfRemoval ? "Leave Campaign" : "Remove Player"}
       message={
         isSelfRemoval ? (
-          "Are you sure you want to leave this campaign? You will lose access unless re-invited."
+          "Are you sure you want to leave this campaign? You will lose access unless you're invited again."
         ) : (
           <>
             Are you sure you want to remove <strong>{slot?.name}</strong> from this campaign?

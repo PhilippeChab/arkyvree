@@ -6,7 +6,7 @@ import { DiceSpinner, GoldDivider, LinkButton, PageLoader } from "@/client/src/c
 import { SourceLink } from "@/client/src/components/layout/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useAuthRequests, useIsDemo, useIsMobile } from "@/client/src/hooks/index.ts";
-import { TAGLINE } from "@/client/src/lib/brand.ts";
+import { APP_NAME, TAGLINE } from "@/client/src/lib/brand.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { DURATION, EASING, fadeInUp, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
 
@@ -125,7 +125,7 @@ function DesktopBranding() {
       <Box
         component="img"
         src="/pwa-512x512.png"
-        alt="Arkyvree"
+        alt={APP_NAME}
         sx={{
           width: 120,
           height: 120,
@@ -149,7 +149,7 @@ function DesktopBranding() {
             ...stagger(1),
           }}
         >
-          Arkyvree
+          {APP_NAME}
         </Typography>
 
         <GoldDivider sx={{ width: 120, height: 2, borderRadius: 1, position: "relative", ...stagger(2) }} />
@@ -192,7 +192,7 @@ function MobileBranding() {
       <Box
         component="img"
         src="/pwa-192x192.png"
-        alt="Arkyvree"
+        alt={APP_NAME}
         sx={{ width: 48, height: 48, filter: (theme) => theme.dropShadows.authLogoCompact }}
       />
       <Box>
@@ -207,7 +207,7 @@ function MobileBranding() {
             lineHeight: 1.2,
           }}
         >
-          Arkyvree
+          {APP_NAME}
         </Typography>
         <Typography
           variant="body2"

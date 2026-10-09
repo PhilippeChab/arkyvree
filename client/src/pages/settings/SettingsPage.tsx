@@ -5,6 +5,7 @@ import { DarkModeIcon, LightModeIcon, SettingsBrightnessIcon } from "@/client/sr
 import { type ThemeMode } from "@/client/src/contexts/themeContext.ts";
 import { useThemeMode } from "@/client/src/contexts/useThemeMode.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
+import { APP_NAME } from "@/client/src/lib/brand.ts";
 
 const THEME_MODE_OPTIONS = [
   { value: "light", label: "Light", icon: LightModeIcon },
@@ -27,7 +28,7 @@ export default function SettingsPage() {
               <CardTitle>Theme</CardTitle>
               <Stack spacing={3}>
                 <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                  Choose how Arkyvree looks to you. Select a single theme, or sync with your system settings.
+                  Choose how {APP_NAME} looks to you. Select a single theme, or sync with your system settings.
                 </Typography>
 
                 <OptionToggle<ThemeMode>

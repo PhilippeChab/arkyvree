@@ -17,7 +17,8 @@ interface SearchBarProps<TFilter extends string = string, TSort extends string =
   onSearchChange: (value: string) => void;
 
   onSortChange?: (field: TSort, direction: Direction) => void;
-  searchPlaceholder?: string;
+  /** What it searches, said in its empty field ("Search rulesets…"). */
+  searchPlaceholder: string;
   searchValue: string;
   sortDirection?: Direction;
 
@@ -39,7 +40,7 @@ export interface SortOption<T extends string = string> {
 export function SearchBar<TFilter extends string = string, TSort extends string = string>({
   searchValue,
   onSearchChange,
-  searchPlaceholder = "Search…",
+  searchPlaceholder,
   filterOptions,
   filterValue,
   onFilterChange,

@@ -2,7 +2,8 @@ import { Box, Link as MuiLink, Stack } from "@mui/material";
 import { Link } from "react-router-dom";
 
 import { sortAbilities } from "@/client/src/components/characters/sections/abilityOrder.ts";
-import { EntryTitle, SubsectionTitle, ValueChip } from "@/client/src/components/common/index.ts";
+import { EntryTitle } from "@/client/src/components/characters/sections/EntryTitle.tsx";
+import { SubsectionTitle, ValueChip } from "@/client/src/components/common/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import { formatIterativeAttacks, formatSpeed } from "@/shared/dnd3.5/weaponAttacks.ts";
 import type { BaseRules } from "@/shared/enums.ts";

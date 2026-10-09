@@ -5,16 +5,12 @@ export { ArchivedNotice } from "./ArchivedNotice.tsx";
 export { AttachmentField } from "./AttachmentField.tsx";
 export { BlankNote, BlankState, NoMatchesState } from "./BlankState.tsx";
 export { CardTitle } from "./CardTitle.tsx";
-export { CountChip, RoleChip, StatusChip, ValueChip } from "./Chips.tsx";
-export { ChoiceChip } from "./ChoiceChip.tsx";
+export { ChoiceChip, CountChip, RoleChip, StatusChip, ValueChip } from "./Chips.tsx";
 export { CLICKABLE_ROW_SX, CLICKABLE_SX, clickableProps, toggleProps } from "./clickable.ts";
-export { Crossfade } from "./Crossfade.tsx";
 export { DetailPageHeader } from "./DetailPageHeader.tsx";
 export { DialogFooter } from "./DialogFooter.tsx";
 export { DiceSpinner } from "./DiceSpinner.tsx";
 export { EmptyValue, NO_DESCRIPTION } from "./EmptyValue.tsx";
-export { EntryTitle } from "./EntryTitle.tsx";
-export { ErrorBoundary } from "./ErrorBoundary.tsx";
 export { ExpandArrow } from "./ExpandArrow.tsx";
 export { FormDialog } from "./FormDialog.tsx";
 export {

@@ -1,3 +1,4 @@
+import { isOneOf } from "@/shared/isOneOf.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 export type CustomizableEntityType = (typeof CUSTOMIZABLE_ENTITY_TYPES)[number];
@@ -29,7 +30,7 @@ export function buildCustomizationPath(entityType: CustomizationPageType, entity
 
 /** Whether entities of this type are customizable: they own modifiers (sourced by their own type), not only rows. */
 export function isCustomizableEntityType(entityType: string): entityType is CustomizableEntityType {
-  return CUSTOMIZABLE_ENTITY_TYPES.some((type) => type === entityType);
+  return isOneOf(entityType, CUSTOMIZABLE_ENTITY_TYPES);
 }
 
 /** The entity type a customization page's URL segment names: "class-levels" a class level's, never "klass_levels". */

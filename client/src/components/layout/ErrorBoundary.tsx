@@ -15,6 +15,10 @@ interface ErrorBoundaryState {
   isChunkError: boolean;
 }
 
+/**
+ * The app's render-error page, around the whole app (`App.tsx`), in `ERROR_THEME`: outside its providers, it renders
+ * in its own theme. A chunk a new version replaced reloads the page instead.
+ */
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
@@ -77,11 +81,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             >
               &#x1F480;
             </Typography>
-            <Typography
-              variant="h4"
-              component="h1"
-              sx={{ fontFamily: '"Lora Variable", Georgia, serif', color: "primary.main", fontWeight: 600 }}
-            >
+            <Typography variant="h4" component="h1" sx={{ color: "primary.main" }}>
               A Critical Failure
             </Typography>
             <Stack spacing={4} sx={{ alignItems: "center" }}>

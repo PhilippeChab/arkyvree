@@ -1,9 +1,10 @@
 import { Client as PgClient } from "pg";
 
 import { readEnv } from "@/server/environment.ts";
+import type { WsEvent } from "@/shared/webSocketEvents.ts";
 
 import Connections from "./Connections.ts";
-import { BROADCAST_CHANNEL, type WsEvent } from "./events.ts";
+import { BROADCAST_CHANNEL } from "./events.ts";
 
 const HEARTBEAT_INTERVAL_MS = 30_000;
 const HEARTBEAT_TIMEOUT_MS = 10_000;

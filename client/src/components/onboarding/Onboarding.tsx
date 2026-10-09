@@ -225,9 +225,9 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl }
               : step.description}
           </Typography>
 
-          {step.tooltip && (
+          {step.help && (
             <Typography variant="caption" sx={{ color: "gold.main", fontWeight: 500 }}>
-              <HelpLabel label="Forking & Extensions" help={step.tooltip} />
+              <HelpLabel label={step.help.label} help={step.help.text} />
             </Typography>
           )}
         </Stack>

@@ -27,10 +27,7 @@ export function SnackbarProvider({ children }: SnackbarProviderProps) {
     setQueue((prev) => [...prev, { message, severity, action: options?.action, persistent: options?.persistent }]);
   }, []);
 
-  const success = useCallback(
-    (message: string, options?: ToastOptions) => enqueue(message, "success", options),
-    [enqueue],
-  );
+  const success = useCallback((message: string) => enqueue(message, "success"), [enqueue]);
   const error = useCallback(
     (err: unknown, fallback: string) => enqueue(errorMessage(err, fallback), "error"),
     [enqueue],

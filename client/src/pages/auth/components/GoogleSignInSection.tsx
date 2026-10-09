@@ -1,8 +1,7 @@
 import { Divider } from "@mui/material";
 
+import { GoogleSignInButton } from "@/client/src/components/auth/index.ts";
 import { useAuthRequests, useGoogleSignIn } from "@/client/src/hooks/index.ts";
-
-import { GoogleSignInButton } from "./GoogleSignInButton.tsx";
 
 interface GoogleSignInSectionProps {
   disabled?: boolean;

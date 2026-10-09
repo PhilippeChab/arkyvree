@@ -6,24 +6,10 @@ import { BASE_RULES_OPTIONS } from "@/shared/enums.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
 import { oneOf } from "./oneOf.ts";
-import { entityTypeLabel, getActivityLabelOverrides } from "./rulesetLabels.ts";
+import { entityTypeLabel, entityTypeOfCode, getActivityLabelOverrides } from "./rulesetLabels.ts";
 
 /** A ruleset entity's change, as its notification says it: its verb, by the type's (`createFeat`) */
 const CONTENT_CHANGES: Record<string, string> = { create: "created", delete: "deleted", update: "updated" };
-
-/** The ruleset entities a change's notification names by their word, by their name in its type (`createKlass`) */
-const CONTENT_ENTITY_TYPES: Record<string, string> = {
-  Aptitude: "aptitudes",
-  Feat: "feats",
-  Item: "items",
-  Klass: "klasses",
-  Language: "languages",
-  Mechanic: "mechanics",
-  Power: "powers",
-  Race: "races",
-  Save: "saves",
-  Skill: "skills",
-};
 
 /** The changed fields whose name doesn't read as their label (`formatSegment`'s "Hd") */
 const FIELD_LABELS: Record<string, string> = {
@@ -89,11 +75,15 @@ function baseRulesOf(d: Record<string, unknown>) {
   return oneOf(d.baseRules, BASE_RULES_OPTIONS);
 }
 
-/** A ruleset entity's create, update or delete, named in its ruleset's word ("Ann created spell Fireball"). */
+/**
+ * A ruleset entity's create, update or delete, named in its ruleset's word ("Ann created spell Fireball"): the entity
+ * its type names (`createKlass`), the engine's names (`entityTypeOfCode`).
+ */
 function contentChange(type: string, actor: string, d: Record<string, unknown>) {
   const [, verb = "", name = ""] = /^([a-z]+)([A-Z]\w*)$/.exec(type) ?? [];
-  if (!Object.hasOwn(CONTENT_CHANGES, verb) || !Object.hasOwn(CONTENT_ENTITY_TYPES, name)) return undefined;
-  const word = entityTypeLabel(CONTENT_ENTITY_TYPES[name], baseRulesOf(d)).toLowerCase();
+  const entityType = entityTypeOfCode(name);
+  if (!Object.hasOwn(CONTENT_CHANGES, verb) || !entityType) return undefined;
+  const word = entityTypeLabel(entityType, baseRulesOf(d)).toLowerCase();
   return `${actor} ${CONTENT_CHANGES[verb]} ${word} ${d.entityName || ""}`.trim();
 }
 

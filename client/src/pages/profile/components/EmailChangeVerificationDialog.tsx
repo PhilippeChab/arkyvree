@@ -7,7 +7,7 @@ import {
   EMPTY_VERIFICATION_CODE,
   isCodeComplete,
   ResendCodeLink,
-  useResendCode,
+  useCodeMessages,
   VerificationCodeField,
   type VerificationCodeFormData,
 } from "@/client/src/components/auth/index.ts";
@@ -44,7 +44,7 @@ export function EmailChangeVerificationDialog({
   const resendMutation = useMutation({
     mutationFn: () => parseResponse(rpc.auth["resend-email-change"].$post()),
   });
-  const { error, setError, handleResend, notice } = useResendCode((callbacks) =>
+  const { error, setError, handleResend, notice } = useCodeMessages((callbacks) =>
     resendMutation.mutate(undefined, callbacks),
   );
 

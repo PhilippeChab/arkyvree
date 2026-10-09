@@ -4,18 +4,19 @@ import { Link, Navigate, useLocation } from "react-router-dom";
 import {
   AuthPage,
   authPageState,
-  AuthSubmitButton,
   CodeSentMessage,
   EMPTY_VERIFICATION_CODE,
   isCodeComplete,
   ResendCodeLink,
-  useResendCode,
+  useCodeMessages,
   VerificationCodeField,
   type VerificationCodeFormData,
 } from "@/client/src/components/auth/index.ts";
 import { useAuthRequests, useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
+
+import { AuthSubmitButton } from "./components/index.ts";
 
 export default function VerifyEmailPage() {
   usePageTitle("Verify Email");
@@ -27,7 +28,7 @@ export default function VerifyEmailPage() {
   const form = useFormWith<VerificationCodeFormData>({ digits: EMPTY_VERIFICATION_CODE });
   const digits = form.watch("digits");
 
-  const { error, setError, handleResend, notice } = useResendCode((callbacks) =>
+  const { error, setError, handleResend, notice } = useCodeMessages((callbacks) =>
     auth.resendVerification.mutate(pendingVerificationEmail ?? "", callbacks),
   );
 

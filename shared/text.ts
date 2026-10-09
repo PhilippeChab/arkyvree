@@ -11,16 +11,6 @@ export function formatSigned(value: number | null | undefined): string {
   return n >= 0 ? `+${n}` : `${n}`;
 }
 
-/** A name's first letter, capitalized, for an avatar. */
-export function getInitial(name: string) {
-  return name.charAt(0).toUpperCase();
-}
-
-/** An email address as it's stored: sanitized text, lowercased. */
-export function sanitizeEmail(email: string) {
-  return sanitizeText(email).toLowerCase();
-}
-
 /** Text as it's stored: Unicode-normalized (NFKC) and trimmed. The server stores it so; the client measures it so. */
 export function sanitizeText(text: string) {
   return text.normalize("NFKC").trim();

@@ -9,7 +9,7 @@ import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDialogState } from "@/client/src/hooks/index.ts";
 import { type CharacterDetail, characterDetailQuery, invalidateCharacter } from "@/client/src/lib/queries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { useUserPreferencesStore } from "@/client/src/stores/userPreferencesStore.ts";
+import { useSuppressedWarningsStore } from "@/client/src/stores/suppressedWarningsStore.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
 import { computeAbilityModifier } from "./abilities.ts";
@@ -68,8 +68,8 @@ export function AbilityScoresSection({ abilities, baseRules, characterId, readOn
   });
 
   const decreaseDialog = useDialogState<{ abilityId: string; score: number }>();
-  const shouldWarn = useUserPreferencesStore((s) => s.shouldWarn);
-  const suppressWarningForSession = useUserPreferencesStore((s) => s.suppressWarningForSession);
+  const shouldWarn = useSuppressedWarningsStore((s) => s.shouldWarn);
+  const suppressWarningForSession = useSuppressedWarningsStore((s) => s.suppressWarningForSession);
 
   const handleBaseChange = (abilityId: string, score: number) => {
     const current = Object.values(abilities).find((a) => a.abilityId === abilityId);

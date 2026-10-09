@@ -16,6 +16,8 @@
  * - `typography-marks`: an ellipsis is "…" and a dash between words "—", never "..." or " - ", a template's
  *   interpolations reading as words (`${pool} - ${level}`); a text cut short is `truncate(text, length)`. A text says
  *   itself in words, never an emoji (the spinner's die is `DiceSpinner`'s own).
+ * - `app-name`: the app's name is `APP_NAME` (`lib/brand.ts`), wherever it shows (a tab's title, the brand, a welcome,
+ *   the footer): never written out.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
@@ -28,6 +30,9 @@ const ARCHIVE_ENDINGS = [
   "You can unarchive it at any time from the Archived filter.",
   "Only its owner can unarchive it.",
 ];
+
+/** The module that writes the app's name, once */
+const BRAND_MODULE = "client/src/lib/brand.ts";
 
 /** How a deletion's confirmation ends: for good, or restorable, what a fork inherits (`isRestorableDelete`) */
 const DELETE_ENDINGS = ["This action cannot be undone.", "You can restore it from Local Changes."];
@@ -77,6 +82,25 @@ const SMALL_WORDS = new Set([
   "vs",
   "with",
 ]);
+
+function createAppName(context) {
+  if (!inClient(context) || repoPath(context.filename) === BRAND_MODULE) return {};
+  const check = (node, text) => {
+    if (!/\bArkyvree\b/.test(text)) return;
+    context.report({ node, message: "The app's name is `APP_NAME` (`lib/brand.ts`): never written out." });
+  };
+  return {
+    JSXText(node) {
+      check(node, node.value);
+    },
+    Literal(node) {
+      if (typeof node.value === "string" && node.parent.type !== "ImportDeclaration") check(node, node.value);
+    },
+    TemplateElement(node) {
+      check(node, node.value.cooked ?? "");
+    },
+  };
+}
 
 function createConfirmWording(context) {
   if (!inClient(context)) return {};
@@ -241,6 +265,7 @@ function wrapsIconButton(tooltip) {
 }
 
 export default {
+  "app-name": { meta: { type: "suggestion" }, create: createAppName },
   "confirm-wording": { meta: { type: "suggestion" }, create: createConfirmWording },
   "label-case": { meta: { type: "suggestion" }, create: createLabelCase },
   "toast-wording": { meta: { type: "suggestion" }, create: createToastWording },

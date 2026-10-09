@@ -14,8 +14,7 @@
  * - `chips`: a chip is one of the family (`components/common`), its role setting its look at the theme's small size,
  *   in a list, a card or a page's header alike: a `RoleChip` (outlined), a `StatusChip` (filled), a `CountChip`
  *   (outlined), a `ValueChip` (outlined red, a link through its `to` when it names a record, never a link in its
- *   label) or a `ChoiceChip`; MUI's `Chip` is the
- *   family's alone. A chip is a value or a choice, never an action: a click with a fixed label, or one that opens
+ *   label) or a `ChoiceChip`; MUI's `Chip` is the family's alone (`Chips.tsx`). A chip is a value or a choice, never an action: a click with a fixed label, or one that opens
  *   something (a menu, a popover), is a `Button`'s.
  * - `help-labels`: help is a `HelpLabel` wherever it's given (its question-mark icon, at 16px): never a help icon in a
  *   tooltip of its own, nor a "What's this?".
@@ -26,8 +25,8 @@
 import { elementName, hasAttribute, inClient, parentElement } from "./jsx.mjs";
 import { repoPath } from "./paths.mjs";
 
-/** The modules that draw MUI's chip: the family, each of its roles setting its look. */
-const CHIP_OWNERS = new Set(["client/src/components/common/ChoiceChip.tsx", "client/src/components/common/Chips.tsx"]);
+/** The module that draws MUI's chip: the family, each of its roles setting its look. */
+const CHIP_OWNER = "client/src/components/common/Chips.tsx";
 
 /** The chips of a role (a choice's is `ChoiceChip`, which a click picks). */
 const CHIP_ROLES = new Set(["Chip", "CountChip", "RoleChip", "StatusChip", "ValueChip"]);
@@ -43,8 +42,8 @@ const INTENT_COLORS = new Set(["error", "success", "warning"]);
 
 /** The modules that write a submit of their own: the inline forms' and the auth pages'. */
 const SUBMIT_OWNERS = new Set([
-  "client/src/components/auth/AuthSubmitButton.tsx",
   "client/src/components/common/SaveButton.tsx",
+  "client/src/pages/auth/components/AuthSubmitButton.tsx",
 ]);
 
 /** The attribute `name` of a JSX element, when it has one. */
@@ -88,7 +87,7 @@ function createButtonIntents(context) {
 
 function createChips(context) {
   if (!inClient(context)) return {};
-  const owner = CHIP_OWNERS.has(repoPath(context.filename));
+  const owner = repoPath(context.filename) === CHIP_OWNER;
   return {
     JSXAttribute(node) {
       if (node.name.name !== "label" || !CHIP_ROLES.has(elementName(node.parent.parent))) return;

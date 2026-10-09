@@ -1,7 +1,8 @@
 /** A page of a paginated list endpoint. */
 export interface ListPage {
   items: unknown[];
-  nextPage?: number | null;
+  /** The page after it, when there is one: the server leaves it out after the last. */
+  nextPage?: number;
 }
 
 /** The first page an infinite query loaded, for what every page repeats (a list's labels, its total). */

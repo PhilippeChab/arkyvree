@@ -2,6 +2,7 @@ import { Box, Collapse, List, ListItemText } from "@mui/material";
 import { useState } from "react";
 
 import { SubsectionTitle, ToggleLabel } from "@/client/src/components/common/index.ts";
+import { DURATION } from "@/client/src/theme/animations.ts";
 
 interface AutoGrantedPicksProps {
   /** Closed at first while there's something to pick below it. */
@@ -31,7 +32,7 @@ export function AutoGrantedPicks({ what, picks, defaultCollapsed }: AutoGrantedP
           Auto-Granted {what} ({picks.length})
         </ToggleLabel>
       </SubsectionTitle>
-      <Collapse in={open}>
+      <Collapse in={open} timeout={DURATION.moderate}>
         <List dense>
           {picks.map((pick, i) => (
             // A stackable pick can be granted at several levels

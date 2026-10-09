@@ -16,9 +16,9 @@ import {
 import {
   annotateModifiers,
   getTargetPathsWithLabels,
+  pickTargetLabels,
   resolvePathValueType,
 } from "@/server/services/rulesets/customization/targetPaths/index.ts";
-import { pickTargetLabels } from "@/shared/customization/target.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class ModifiersService {

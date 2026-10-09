@@ -12,7 +12,7 @@ interface DiceSpinnerProps {
    */
   loading?: boolean;
   size?: "small" | "medium" | "large";
-  /** Standalone medium / large only: the centered block's spacing (`py`, `minHeight`). */
+  /** Standalone medium / large only: the centered block's spacing, a section's (`py`), never a height. */
   sx?: SxProps<Theme>;
 }
 

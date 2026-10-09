@@ -174,7 +174,6 @@ const SHIELD_TYPE_NAMES = [
   "Tower Shield",
 ];
 
-/** Static autocomplete hints for property value dropdowns */
 const WEAPON_TYPE_NAMES = [
   "Bastard Sword",
   "Battleaxe",
@@ -245,6 +244,7 @@ const WEAPON_TYPE_NAMES = [
   "Whip",
 ];
 
+/** The values the engine knows for each property type, in their order: a value picker's options. */
 const PROPERTY_VALUES: Record<string, string[]> = {
   [WEAPON_PROFICIENCY]: ["Simple", "Martial", "Exotic"],
   [WEAPON_FAMILY]: [

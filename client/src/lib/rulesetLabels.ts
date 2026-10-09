@@ -39,6 +39,14 @@ export function entityTypeLabel(entityType: string, baseRules: BaseRules | undef
 }
 
 /**
+ * The entity type the engine's names spell `code` (`Klass` in `createKlass`, `KlassLevel` in `createKlassLevel`), if
+ * one does.
+ */
+export function entityTypeOfCode(code: string): string | undefined {
+  return Object.entries(ENTITY_WORDS).find(([, words]) => (words.code ?? words.one).replaceAll(" ", "") === code)?.[0];
+}
+
+/**
  * The ruleset's words that replace the engine's names in an activity's type: the app's own ("Create Klass" → "Create
  * Class"), and its base rules' ("Create Power" → "Create Spell").
  */

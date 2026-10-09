@@ -1,3 +1,6 @@
+/** The app's name, written once: the browser tab's title, the brand, the welcomes, the footer, the Refresh prompt. */
+export const APP_NAME = "Arkyvree";
+
 /** The app's tagline, under its name or opening its welcome: the auth pages' branding, the onboarding, the dashboard. */
 export const TAGLINE = "A programmable engine for tabletop rulesets";
 

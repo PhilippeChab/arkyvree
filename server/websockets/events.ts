@@ -1,9 +1,5 @@
 import { db, notifyChannel } from "@/server/database/index.ts";
-
-export type WsEvent =
-  | { type: "activities:updated" }
-  | { type: "notifications:updated" }
-  | { type: "app:version"; version: string };
+import type { WsEvent } from "@/shared/webSocketEvents.ts";
 
 /**
  * The Postgres channel that relays an event to every process (each web instance, and the worker), which pushes it to

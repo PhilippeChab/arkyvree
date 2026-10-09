@@ -1,11 +1,12 @@
-import type { ThemeMode } from "@/client/src/contexts/themeContext.ts";
+import { THEME_MODES, type ThemeMode } from "@/client/src/contexts/themeContext.ts";
+import { isOneOf } from "@/shared/isOneOf.ts";
 
 import { readStored, removeStored, writeStored } from "./browserStorage.ts";
 
 /** The theme mode the browser kept, or "system"; a legacy `darkMode` flag is read once and dropped. */
 export function readThemeMode(): ThemeMode {
   const saved = readStored("local", "themeMode");
-  if (saved === "light" || saved === "dark" || saved === "system") return saved;
+  if (isOneOf(saved, THEME_MODES)) return saved;
 
   // Migrate legacy darkMode preference
   const legacyDarkMode = readStored("local", "darkMode");

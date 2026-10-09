@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 
 import { DURATION, EASING, fadeInUpSx, PREFERS_REDUCED_MOTION, transitionOf } from "@/client/src/theme/animations.ts";
 import { lineClampSx } from "@/client/src/theme/text.ts";
-import { getInitial } from "@/shared/text.ts";
 
 import { CLICKABLE_SX, clickableProps } from "./clickable.ts";
 import { NO_DESCRIPTION } from "./EmptyValue.tsx";
@@ -13,7 +12,7 @@ interface ListCardGridProps {
 }
 
 interface ListCardProps extends Omit<CardProps, "children" | "title"> {
-  /** A control at the end of the title's row, as wide as it needs: the campaign card's visibility. */
+  /** A control at the end of the title's row, as wide as it needs: a campaign character's card's visibility. */
   action?: ReactNode;
   /** Its place in the list, which staggers its entry (`fadeInUpSx`), from the page that came in (`animationOffset`). */
   animationIndex?: number;
@@ -30,7 +29,8 @@ interface ListCardProps extends Omit<CardProps, "children" | "title"> {
   description: string | null | undefined;
   /** Marks the card with the warning stripe and border: a private one says so in its chip */
   isArchived?: boolean;
-  onClick?: () => void;
+  /** Opens its record, from a click or the keyboard (`clickableProps`). */
+  onClick: () => void;
   title: string;
 }
 
@@ -54,7 +54,7 @@ export function ListCard({
   return (
     <Card
       elevation={0}
-      {...(onClick && clickableProps(onClick))}
+      {...clickableProps(onClick)}
       sx={[
         {
           height: "100%",
@@ -64,7 +64,6 @@ export function ListCard({
           overflow: "hidden",
           transition: transitionOf(["all"], DURATION.moderate, EASING.standard),
           position: "relative",
-          cursor: "default",
           bgcolor: "background.paper",
           opacity: isArchived ? 0.9 : 1,
           "&:before": {
@@ -80,8 +79,8 @@ export function ListCard({
                 : `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
           },
         },
-        !!onClick && CLICKABLE_SX,
-        !!onClick && {
+        CLICKABLE_SX,
+        {
           "&:hover": {
             borderColor: isArchived ? "warning.main" : "secondary.main",
             boxShadow: (theme) => (isArchived ? theme.boxShadows.archivedCardHover : theme.boxShadows.cardHover),
@@ -124,7 +123,7 @@ export function ListCard({
                 flexShrink: 0,
               }}
             >
-              {avatar ?? getInitial(title)}
+              {avatar ?? title.charAt(0).toUpperCase()}
             </Avatar>
             <Typography
               variant="h6"

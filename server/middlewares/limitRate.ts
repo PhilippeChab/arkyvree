@@ -1,9 +1,9 @@
 import { rateLimiter } from "hono-rate-limiter";
 import { createMiddleware } from "hono/factory";
 
+import { sanitizeEmail } from "@/server/emailAddress.ts";
 import { isTest } from "@/server/environment.ts";
 import { TooManyRequestsError } from "@/server/errors/index.ts";
-import { sanitizeEmail } from "@/shared/text.ts";
 
 type KeyGenerator = NonNullable<Parameters<typeof rateLimiter>[0]["keyGenerator"]>;
 

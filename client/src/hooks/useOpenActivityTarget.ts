@@ -4,8 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { NO_TIME } from "@/client/src/lib/durations.ts";
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
-import { activityTargetQuery } from "@/client/src/lib/queries.ts";
 import { ApiError } from "@/client/src/services/ApiError.ts";
+
+import { activityTargetQuery } from "./activityTargetQueries.ts";
 
 /**
  * Open the page of an activity or notification target. The link is resolved
