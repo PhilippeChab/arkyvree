@@ -154,7 +154,7 @@ There are still a few inline `entity.userId === session.userId` checks in servic
 - The invite services' `acceptInvite`: "is this invite addressed to me?"
 - OAuth-link checks: "did I just link this account to myself?"
 - Self-removal predicates: `isSelfRemoval = player.userId === session.userId` branches behavior, doesn't gate it.
-- Boolean predicates returned by attachment registration: `Attachable.isOwner = (s, id) => character?.userId === s.userId`.
+- Boolean predicates an attachable record registers: the `isOwner(session, recordId)` of `ATTACHABLE_TYPES`' entries (`AttachmentsService.ts`), an avatar's `session.userId === recordId`, a portrait's `character.userId === session.userId`.
 
 Anything that *throws* on the basis of ownership is a permission gate and belongs in a policy. The "Permission Checks (Policy vs. Identity)" section of [AGENTS.md](../AGENTS.md) is the canonical guidance.
 

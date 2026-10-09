@@ -87,43 +87,56 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md#verification) for focused checks.
 ```
 client/
   src/
-    components/         # Shared UI components (auth, characters, common, contributors, customization, invites, layout, onboarding)
-    contexts/           # React contexts (theme, toast, websocket)
+    components/         # Shared UI by domain (auth, characters, common, contributors, customization, icons, invites, layout, notifications, onboarding, rulesets)
+    contexts/           # React contexts (theme, snackbar, websocket)
     hooks/              # Shared hooks (useIsMobile, useListParams, useListboxQuery, useFormSync, …)
-    lib/                # Query factories and keys, formatters, type guards, helpers
-    pages/              # Page components organized by domain
-    services/           # RPC client
-    stores/             # Zustand stores (auth, user preferences, dirty forms)
-    types/              # Client-only types
+    lib/                # The query client, shared queries and keys, formatters, validation rules
+    pages/              # Pages by domain, each with its own components, hooks and queries
+    services/           # RPC client and its ApiError
+    stores/             # What the browser keeps: Zustand stores (auth, user preferences, dirty forms), storage guards
+    theme/              # The theme: palette, components' looks, animations, global styles
 
 server/
+  main.ts               # The web server; worker.ts, the background worker
+  environment.ts        # Every environment variable the server reads
   routers/
+    application.ts      # The app: middleware, the error envelope, the routes
     api/                # API routes organized by domain
-      validation.ts     # Shared Zod schemas (pagination, sorting)
-    authentication/     # Auth routes
-    static.ts           # Static file serving + SEO
+      validation.ts     # Shared Zod schemas (params, pagination, sanitized text)
+    authentication/     # Auth routes: signedOut/, then signedIn/ behind the session
+    static.ts           # Static file serving + SEO (the shell: PageTemplates.ts)
+    ws.ts               # The websocket; health.ts, the health probe
   services/             # One folder per service, laid out like routers/api
-    campaigns/          # Campaign, player, invite services
-    characters/         # Character, inventory, levels, modifiers services
+    activities/         # Activity log and the notifications it sends
+    attachments/        # Uploaded images (avatars, portraits)
+    authentication/     # Sign in / up, demo, account, linked accounts
+    campaigns/          # Campaign, player, invite, campaign character services
+    characters/         # Character, inventory, levels, modifiers, contributors, sharing services
       levels/           # Level-up wizard (slot queries, pick queries, finalize): reads, asks the engine, writes
-    rulesets/           # Ruleset entity services (feats, powers, classes, etc.)
-      customization/    # Modifiers, requirements, properties, target paths
+    dashboard/          # Dashboard statistics
+    exports/            # PDF exports
+    notifications/      # Notifications
     policies/           # Authorization policies
-  repositories/         # Database access layer (Drizzle ORM), in folders by domain
-  cow/                  # Copy-on-write's writes: the copy of an inherited entity, the rows a change writes
-  middlewares/          # Session, rate limiting, request logging
-  errors/               # Error classes
+    rulesets/           # Ruleset and ruleset entity services (feats, powers, classes, etc.)
+      customization/    # Modifiers, requirements, properties, target paths
+  repositories/         # Database access layer (Drizzle ORM), in folders by domain; concerns/, the mixins they include
   cache/                # In-memory cache (a ruleset's rows, its COW data, its target paths)
-  database/             # Database connection and request-scoped query cache
+  cow/                  # Copy-on-write's writes: the copy of an inherited entity, the rows a change writes
+  database/             # Database connection, transactions, request-scoped query cache, job queue
+  middlewares/          # Session, validation, rate limiting, request logging, demo gate
+  errors/               # Error classes
   jobs/                 # Background jobs run by the worker (PDF export, emails, cleanup)
-  emails/               # Email templates and sending
+  emails/               # Email sending (templates in emails/)
   storage/              # S3 attachment storage
+  websockets/           # Server events pushed to the client
 
 engine/                 # The ruleset engine: computes a ruleset's rules over the rows it's given, reads and writes nothing
   index.ts              # Its one entry: the operations the server, the seeders and the codegen call
   api/                  # The operations, each dispatched to the ruleset's module by its base rules
   core/                 # Machinery: modifiers, requirements, the path language, the ruleset view, COW data, the module's contract
   rulesets/dnd3.5/      # D&D 3.5e: the character, its components by domain, its entities, level-ups and printed sheet
+
+lib/                    # What the engine and the server share: the mixins (include)
 
 content/
   dnd3.5/               # The 3.5 content: its builders, its hand-written data, the generated books
@@ -132,23 +145,36 @@ codegen/
   dnd3.5/               # The SRD scraper and generator: reference files, and the tools that write content/dnd3.5/generated
 
 database/
-  packages/             # Content packages (dnd35, extensions), their runner and seeders
+  packages/             # Content packages (dnd35, its extensions), their runner and seeders
   seeds/                # Development seed data (users, characters)
 
 drizzle/
   schema.ts             # Database schema (and relations.ts), pulled from the database
   NNNN_*.sql, meta/     # Migrations, generated by drizzle-kit
 
-shared/                 # Types and utilities shared between client and server
+shared/                 # Types, vocabulary and pure helpers shared by the client, the server and the database packages
+emails/                 # Email templates (React Email)
+scripts/                # Database scripts (reset, migrate, seed) and ops scripts (prod diff, impersonate, validation)
+docs/                   # Developer docs
+help/                   # The user-facing help, linked from the app
 
 tests/
-  routers/              # API route tests
+  routers/              # API route tests, through the typed client
   services/             # Service-level tests
-  engine/               # The engine: character computation, target paths, requirements, level-ups, sheets
-  seeds/                # Seed data integrity tests
+  engine/               # The engine: its machinery, its operations, the 3.5 module's characters, level-ups and sheets
   cache/                # Cache tests
+  seeds/                # The seeders, the seeded content, the package runner, the test data
+  parser/               # The codegen's parser tools
+  jobs/                 # Background jobs
+  emails/               # The email service and its templates
+  middlewares/          # Rate limits, error wrapping
+  shared/               # Shared code, and its enums against the schema
+  scripts/              # The database scripts' guards, the prod diff
+  lint/                 # The repo's own lint rules, and the docs that name them
   client/               # Client logic that needs no browser
   e2e/                  # Playwright E2E tests
+  fixtures/             # Playwright's setup and auth fixture, the PDF bundle check's document
+  support/              # Shared test helpers, one module per topic
 ```
 
 ## Architecture

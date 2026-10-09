@@ -5,9 +5,10 @@
  *   spread doesn't count), whether or not a `Tooltip` shows its name.
  * - `dialog-conventions`: a `Dialog` goes full screen on a phone (`fullScreen={isMobile}`), and a form is never in a
  *   `Modal`, which skips the guard that keeps a dirty form open (`FormDialog`, `CreateDialog` and `EditDialog` have it).
- *   A dialog is `sm`, its wrappers' default (`md` for a form of many fields), never `xs`; its title is its words, no
- *   icon; its lead line is a `DialogContentText`, as a confirmation's; its content keeps the theme's padding, and its
- *   first block sits 8px under the title (`pt: 1`), as a create dialog's fields, the title right above it (in its form).
+ *   A dialog is `sm`, its wrappers' default (`md` for a form of many fields, a target path or a requirement tree),
+ *   never `xs`; its title is its words, no icon; its lead line is a `DialogContentText`, as a confirmation's; its
+ *   content keeps the theme's padding, and its first block sits 8px under the title (`pt: 1`), as a create dialog's
+ *   fields, the title right above it (in its form).
  * - `query-keys`: every query key comes from `lib/queryKeys.ts`: a key written as an array starts by spreading one
  *   (`[...QUERY_KEYS.rulesets.section(id, "feats"), search]`). A key its domain's helper invalidates (a character's
  *   sheet: `invalidateCharacter`) is invalidated through it, which refreshes what goes with it.
@@ -674,8 +675,12 @@ function createDialogConventions(context) {
       if (name === "Dialog" && !hasAttribute(node, "fullScreen"))
         report(node.openingElement, "A `Dialog` goes full screen on a phone: `fullScreen={isMobile}`.");
       const width = jsxAttribute(node, "maxWidth");
-      if (/Dialog$|^Modal$/.test(name ?? "") && width?.value?.type === "Literal" && width.value.value === "xs")
-        report(width, "A dialog is `sm`, its wrappers' default (`md` for a form of many fields): never `xs`.");
+      if (/Dialog$|^Modal$/.test(name ?? "") && width?.value?.type === "Literal" && width.value.value === "xs") {
+        report(
+          width,
+          "A dialog is `sm`, its wrappers' default (`md` for a form of many fields, a target path or a requirement tree): never `xs`.",
+        );
+      }
       if (icons.has(name) && inDialogTitle(node))
         report(node.openingElement, "A dialog's title is its words: no icon in a `DialogTitle`.");
       if (name === "DialogContent") checkDialogContent(node, context);

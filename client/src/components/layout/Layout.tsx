@@ -208,14 +208,16 @@ export function Layout() {
       <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
         <Toolbar sx={{ justifyContent: "space-between" }}>
           {isMobile ? (
-            <IconButton
-              color="inherit"
-              onClick={() => setMobileDrawerOpen(true)}
-              edge="start"
-              aria-label="Open Navigation"
-            >
-              <MenuIcon />
-            </IconButton>
+            <Tooltip title="Open Navigation">
+              <IconButton
+                color="inherit"
+                onClick={() => setMobileDrawerOpen(true)}
+                edge="start"
+                aria-label="Open Navigation"
+              >
+                <MenuIcon />
+              </IconButton>
+            </Tooltip>
           ) : (
             <Box sx={{ width: DRAWER_WIDTH }} />
           )}

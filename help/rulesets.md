@@ -38,7 +38,7 @@ The starting state of a fork. Your rulesets all start as a fork of a base rulese
 
 ### Published
 
-Click **Publish** when ready to share. Owner-only.
+When it's ready to share, choose **Publish** in the ruleset's **⋮** menu and confirm with **Publish Ruleset**. Owner only.
 
 - Other users can find it and build characters on it (subject to its public/private setting). Published as an extension, it can be subscribed to from their own forks. Only base rulesets can be forked, so nobody can fork it.
 - Editing rules don't change. You can still add, edit, and delete entities, and subscribe to or unsubscribe from extensions — gated by the same in-use check as Draft.
@@ -47,11 +47,11 @@ Click **Publish** when ready to share. Owner-only.
 
 ### Archived
 
-Click **Archive** to retire the ruleset. Allowed any time, from Draft or Published.
+Choose **Archive** in the ruleset's **⋮** menu to retire it. Allowed any time, from Draft or Published, to its owner and its Admin contributors.
 
 - Fully read-only. No edits, subscriptions, or entity changes.
 - Existing characters and campaigns linked to it keep working — the entity data stays live, so they keep resolving and can still be played and leveled up.
-- Click **Unarchive** to return to Draft. Owner-only.
+- Choose **Unarchive** in its **⋮** menu to return it to Draft: it waits under the Archived filter of your rulesets. Owner only.
 
 ### Transitions
 
@@ -62,7 +62,7 @@ Click **Archive** to retire the ruleset. Allowed any time, from Draft or Publish
 
 There's no direct Published → Draft path. To take a published ruleset back to Draft, archive it then unarchive.
 
-Deletions are permanent — there's no undo. Use Archive when you want to step away from a ruleset without losing it.
+A ruleset can't be deleted: Archive it when you want to step away from it without losing it. Deleting an entity you added is permanent; deleting one your fork inherits can be undone from **Local Changes** (see [What is forking?](forking-and-syncing.md#what-is-forking)).
 
 ## What are Aptitudes?
 
@@ -74,7 +74,7 @@ Examples on the SRD ruleset:
 - **Cleric Domain** — two picks at Cleric level 1, from the Player's Handbook's 22 domains and those of the extensions the ruleset subscribes to (Complete Divine's 20, Complete Warrior's 5).
 - **Divine Crusader Domain** — one pick at Divine Crusader level 1 (Complete Divine): her spell list is that domain's spells.
 - **Wizard Spells** — spells added to the spellbook at every level.
-- **Sorcerer Spells Known** — the spontaneous spell list.
+- **Sorcerer Spells** — the spontaneous spell list, picked as spells known.
 - **General** — the standard "any feat" pool, available at character levels 1, 3, 6, 9, … Every character's general feats count toward the aptitude named General, so it keeps that name and can't be deleted.
 
 An aptitude defines:
