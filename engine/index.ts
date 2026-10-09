@@ -8,8 +8,7 @@
 export type { default as ClassEngine } from "./api/ClassEngine.ts";
 export { default as Engine } from "./api/Engine.ts";
 export type { default as LevelUpEngine } from "./api/LevelUpEngine.ts";
-export type { default as PowersEngine } from "./api/PowersEngine.ts";
-export type { default as SkillsEngine } from "./api/SkillsEngine.ts";
+export type { EntityKinds } from "./api/Modules.ts";
 export type { CowData, RulesetSources } from "./core/cow/index.ts";
 export type {
   CharacterInput,

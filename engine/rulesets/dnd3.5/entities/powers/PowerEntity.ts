@@ -1,8 +1,8 @@
 /** A power as a ruleset's entity: what the ruleset lists it by, and what its save writes, checked. */
 
+import { RulesetEntity } from "@/engine/core/entities/index.ts";
 import type { EntityWrites } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { RulesetView } from "@/engine/core/view/index.ts";
 import SpellFocusFeats from "@/engine/rulesets/dnd3.5/entities/feats/SpellFocusFeats.ts";
 
 import { POWER_FIELDS, type PowerFieldValues } from "./fields.ts";
@@ -22,19 +22,28 @@ function getGrouping(fields: Partial<PowerFieldValues>) {
 }
 
 /** A power as the ruleset has it: listed by pool and spell level, saved by its rules with its fields and its feats. */
-export default class PowerEntity {
+export default class PowerEntity extends RulesetEntity<"powers"> {
+  protected readonly label = "Power";
+
+  readonly type = "powers";
+
   /** Refuses a power linked to a pool the view's feats use: the ruleset's own and its chain's, no other ruleset's. */
-  private static checkPools(view: RulesetView, aptitudes: { id: string }[]) {
-    if (aptitudes.some((aptitude) => view.rulesetData.listFeatIds(aptitude.id).length > 0))
+  private checkPools(aptitudes: { id: string }[]) {
+    if (aptitudes.some((aptitude) => this.view.rulesetData.listFeatIds(aptitude.id).length > 0))
       throw new RulesError("conflict", "Cannot link spell to aptitude(s) already used for feats");
   }
 
   /** A power's row and pool links, from its form: a save names no spell's save but the one it gives. */
-  private static toRows({ aptitudes, description, name, saveEffect, saveId }: PowerBody) {
+  private toRows({ aptitudes, description, name, saveEffect, saveId }: PowerBody) {
     return {
       aptitudes: aptitudes?.map((aptitude) => ({ aptitudeId: aptitude.id, level: aptitude.level ?? null })),
       columns: { description, name, saveEffect: saveEffect ?? null, saveId: saveId ?? null },
     };
+  }
+
+  /** A power with its modifiers, properties and requirements. */
+  override describe(id: string) {
+    return this.describeCustomized(id);
   }
 
   /**
@@ -42,8 +51,8 @@ export default class PowerEntity {
    * when one is given), and its rows described (`describe`), each inherited power with its lists as the ruleset composes
    * them, its siblings' links merged in, unless the page lists the ruleset's own powers only.
    */
-  static openList(view: RulesetView, where: { aptitudeId?: string; childOnly?: boolean; level?: number }) {
-    const { rulesetData } = view;
+  openList(where: { aptitudeId?: string; childOnly?: boolean; level?: number }) {
+    const { rulesetData } = this.view;
     const { aptitudeId, level } = where;
     const ids = aptitudeId !== undefined || level != null ? rulesetData.listPowerIds({ aptitudeId, level }) : undefined;
     const composesLinks = rulesetData.cow.sourceChain.length > 0 && !where.childOnly;
@@ -64,12 +73,12 @@ export default class PowerEntity {
    * A new power's row, its pool links and what its save writes beside them (`planSave`): refused without a pool, or
    * with a pool a feat uses.
    */
-  static planCreate(view: RulesetView, body: PowerBody) {
+  planCreate(body: PowerBody) {
     if (!body.aptitudes || body.aptitudes.length === 0)
       throw new RulesError("invalid", "At least one aptitude must be selected for the power");
-    PowerEntity.checkPools(view, body.aptitudes);
-    const { aptitudes = [], columns } = PowerEntity.toRows(body);
-    return { aptitudes, columns, writes: PowerEntity.planSave(view, body) };
+    this.checkPools(body.aptitudes);
+    const { aptitudes = [], columns } = this.toRows(body);
+    return { aptitudes, columns, writes: this.planSave(body) };
   }
 
   /**
@@ -77,12 +86,11 @@ export default class PowerEntity {
    * and what its save writes beside them, against the properties the view composes for it (those a copy of it holds).
    * Refused when a pool a feat uses is linked.
    */
-  static planEdit(view: RulesetView, powerId: string, body: PowerBody) {
-    const power = view.rulesetData.find("powers", powerId);
-    if (!power) throw new RulesError("not-found", "Power not found in this ruleset");
-    if (body.aptitudes?.length) PowerEntity.checkPools(view, body.aptitudes);
-    const properties = view.rulesetData.propertiesByEntity.get(power.id) ?? [];
-    return { ...PowerEntity.toRows(body), power, writes: PowerEntity.planSave(view, body, { properties }) };
+  planEdit(powerId: string, body: PowerBody) {
+    const power = this.find(powerId);
+    if (body.aptitudes?.length) this.checkPools(body.aptitudes);
+    const properties = this.view.rulesetData.propertiesByEntity.get(power.id) ?? [];
+    return { ...this.toRows(body), entity: power, writes: this.planSave(body, { properties }) };
   }
 
   /**
@@ -90,11 +98,7 @@ export default class PowerEntity {
    * of its grouping (a spell's school: its Spell Focus) when it comes to one. An edit that gives none of its fields keeps
    * those it has.
    */
-  static planSave(
-    view: RulesetView,
-    power: Partial<PowerFieldValues>,
-    before?: { properties: { type: string; value: string }[] },
-  ): EntityWrites {
+  planSave(power: Partial<PowerFieldValues>, before?: { properties: { type: string; value: string }[] }): EntityWrites {
     if (before && POWER_FIELDS.keys.every((key) => power[key] === undefined))
       return { columns: {}, generatedFeats: [], removedFeats: [] };
     const grouping = getGrouping(power);
@@ -102,7 +106,7 @@ export default class PowerEntity {
       grouping !== null && grouping !== (before && getGrouping(POWER_FIELDS.read(before.properties)));
     return {
       columns: {},
-      generatedFeats: isNewGrouping ? SpellFocusFeats.buildSpellFocusFeats(view, grouping) : [],
+      generatedFeats: isNewGrouping ? SpellFocusFeats.buildSpellFocusFeats(this.view, grouping) : [],
       properties: POWER_FIELDS.write(power),
       removedFeats: [],
     };

@@ -22,7 +22,7 @@ class AbilitiesService {
 
   async getAbility(rulesetId: string, abilityId: string) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
-      const ability = Engine.for(scope).entity("abilities", abilityId).get();
+      const ability = Engine.for(scope).entities("abilities").describe(abilityId);
       return ability;
     });
   }

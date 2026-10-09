@@ -27,13 +27,11 @@ class LanguagesService {
           const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
+          const plan = Engine.for(scope).entities("languages").planCreate(body);
           const names = new EntityNames(ruleset, rulesetData.cow);
-          const { tombstoneAncestorId } = await names.assertNameAvailable(tx, "languages", body.name);
+          const { tombstoneAncestorId } = await names.assertNameAvailable(tx, "languages", plan.name);
 
-          const rows = await Languages.create(tx, {
-            ...body,
-            rulesetId,
-          });
+          const rows = await Languages.create(tx, { ...plan.columns, rulesetId });
           const language = rows[0];
 
           if (tombstoneAncestorId) await names.repointTombstone(tx, "languages", tombstoneAncestorId, language.id);
@@ -67,7 +65,7 @@ class LanguagesService {
           );
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-          const language = Engine.for(scope).entity("languages", languageId).get();
+          const { entity: language } = Engine.for(scope).entities("languages").planDelete(languageId);
 
           const edit = new EntityEdit(ruleset);
           const targetId = await edit.cowToDelete(tx, "languages", language);
@@ -93,7 +91,7 @@ class LanguagesService {
 
   async getLanguage(rulesetId: string, languageId: string) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
-      const language = Engine.for(scope).entity("languages", languageId).get();
+      const language = Engine.for(scope).entities("languages").describe(languageId);
       return language;
     });
   }
@@ -132,14 +130,13 @@ class LanguagesService {
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const language = Engine.for(scope).entity("languages", languageId).get();
+          const { columns, entity: language } = Engine.for(scope).entities("languages").planEdit(languageId, body);
 
           const edit = new EntityEdit(ruleset);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "languages", language);
           const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
-          const { updatedAt: _u, ...languageData } = body;
-          const rows = await Languages.update(tx, languageData, { id: targetId, expectedUpdatedAt });
+          const rows = await Languages.update(tx, columns, { id: targetId, expectedUpdatedAt });
           if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
           const updatedLanguage = rows[0];

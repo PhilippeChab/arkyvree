@@ -17,31 +17,33 @@ type ClassLevelBody = Partial<ClassLevelFieldValues> & {
 
 /** A class level as the ruleset describes it, and what its save writes beside its row. */
 export default class ClassLevelEntity {
+  constructor(private readonly view: RulesetView) {}
+
   /**
    * A class level with its details: its fields, the feats it grants (each with its pool's name and whether it's free),
    * its saves' base bonuses, and its customizations.
    */
-  private static detail<L extends KlassLevel>(view: RulesetView, level: L) {
-    const { rulesetData } = view;
+  private detail<L extends KlassLevel>(level: L) {
+    const { rulesetData } = this.view;
     const levelSaves = rulesetData.klassLevelSavesByKlassLevelId.get(level.id) ?? [];
     return {
-      ...ClassLevelEntity.withFields(view, [level])[0],
-      feats: ClassLevelEntity.grantedFeats(view, level.id),
+      ...this.withFields([level])[0],
+      feats: this.grantedFeats(level.id),
       saves: levelSaves.map((ls) => ({ saveId: ls.saveId, base: ls.base })),
       ...rulesetData.customizationsOf(level.id),
     };
   }
 
   /** A class's level as the view has it: refused (`message`) when there's none, or it isn't the class's. */
-  private static findLevel(view: RulesetView, klass: { id: string }, levelId: string, message: string) {
-    const level = view.rulesetData.klassLevelsById.get(levelId);
+  private findLevel(klass: { id: string }, levelId: string, message: string) {
+    const level = this.view.rulesetData.klassLevelsById.get(levelId);
     if (!level || level.klassId !== klass.id) throw new RulesError("not-found", message);
     return level;
   }
 
   /** The feats a class level grants, each with its pool's name and whether it's free. */
-  private static grantedFeats(view: RulesetView, levelId: string) {
-    const { rulesetData } = view;
+  private grantedFeats(levelId: string) {
+    const { rulesetData } = this.view;
     return (rulesetData.klassLevelFeatsByKlassLevel.get(levelId) ?? []).map((lf) => {
       const feat = rulesetData.featsById.get(lf.featId);
       const aptitudeEntry = feat?.featsAptitudesInRules?.find((fa) => fa.aptitudeId === lf.aptitudeId);
@@ -55,7 +57,7 @@ export default class ClassLevelEntity {
   }
 
   /** A save's join rows, from its form: the feats it grants (free unless it says), and its saves' base bonuses. */
-  private static joinRows({ feats, saves }: ClassLevelBody) {
+  private joinRows({ feats, saves }: ClassLevelBody) {
     return {
       feats: feats?.map((feat) => ({ aptitudeId: feat.aptitudeId, featId: feat.featId, free: feat.free ?? true })),
       saves: saves?.map((save) => ({ base: save.base, saveId: save.saveId })),
@@ -67,7 +69,7 @@ export default class ClassLevelEntity {
    * points, those an edit doesn't give kept, and, made with a level past the class's first, its requirement of the
    * class's previous level (`classes.<slug>.level` above it). An edit that gives neither keeps them.
    */
-  private static planSave(
+  private planSave(
     klass: { name: string },
     level: Partial<ClassLevelFieldValues> & { level?: number },
     before?: { properties: { type: string; value: string }[] },
@@ -89,11 +91,10 @@ export default class ClassLevelEntity {
   }
 
   /** Class levels with the fields their properties keep: those given (`properties`, a save's), or the view's. */
-  private static withFields<T extends { id: string }>(
-    view: RulesetView,
+  private withFields<T extends { id: string }>(
     levels: T[],
     properties: { entityId: string; type: string; value: string }[] = levels.flatMap(
-      (level) => view.rulesetData.propertiesByEntity.get(level.id) ?? [],
+      (level) => this.view.rulesetData.propertiesByEntity.get(level.id) ?? [],
     ),
   ): (T & ClassLevelFieldValues)[] {
     const propertiesByLevelId = Map.groupBy(properties, (property) => property.entityId);
@@ -101,47 +102,47 @@ export default class ClassLevelEntity {
   }
 
   /** A class's level with its details: refused when the class isn't the ruleset's, or the level isn't the class's. */
-  static describe(view: RulesetView, klassId: string, levelId: string) {
-    const level = ClassLevelEntity.findLevel(view, ClassEntity.find(view, klassId), levelId, "Class level not found");
-    return ClassLevelEntity.detail(view, level);
+  describe(klassId: string, levelId: string) {
+    const level = this.findLevel(new ClassEntity(this.view).find(klassId), levelId, "Class level not found");
+    return this.detail(level);
   }
 
   /** A class's levels, each with its fields, the feats it grants and its saves' base bonuses. */
-  static describeAll(view: RulesetView, klassId: string) {
-    const { rulesetData } = view;
-    const klass = ClassEntity.find(view, klassId);
+  describeAll(klassId: string) {
+    const { rulesetData } = this.view;
+    const klass = new ClassEntity(this.view).find(klassId);
     const levels = (rulesetData.klassLevelsByKlassId.get(klass.id) ?? []).map((level) => ({
       ...level,
-      feats: ClassLevelEntity.grantedFeats(view, level.id),
+      feats: this.grantedFeats(level.id),
       saves: (rulesetData.klassLevelSavesByKlassLevelId.get(level.id) ?? []).map((ls) => ({
         saveId: ls.saveId,
         base: ls.base,
       })),
     }));
-    return ClassLevelEntity.withFields(view, levels);
+    return this.withFields(levels);
   }
 
   /**
    * A class level by its id alone, with its details, its class's name, which its page shows, and the ruleset that holds
    * its class: an inherited one's level is inherited too. Refused when the view has no such level.
    */
-  static describeWithClass(view: RulesetView, levelId: string) {
-    const level = view.rulesetData.klassLevelsById.get(levelId);
+  describeWithClass(levelId: string) {
+    const level = this.view.rulesetData.klassLevelsById.get(levelId);
     if (!level) throw new RulesError("not-found", "Class level not found");
-    const klass = ClassEntity.find(view, level.klassId);
-    return ClassLevelEntity.detail(view, { ...level, name: klass.name, rulesetId: klass.rulesetId });
+    const klass = new ClassEntity(this.view).find(level.klassId);
+    return this.detail({ ...level, name: klass.name, rulesetId: klass.rulesetId });
   }
 
   /**
    * A new level of a class (`klassId`): the class as the view has it, the level's row, its join rows, what its save
    * writes beside them, and the level it answers once saved (`describe`), with the fields the save keeps.
    */
-  static planCreate(view: RulesetView, klassId: string, body: ClassLevelBody & { level: number }) {
-    const klass = ClassEntity.find(view, klassId);
-    const writes = ClassLevelEntity.planSave(klass, body);
+  planCreate(klassId: string, body: ClassLevelBody & { level: number }) {
+    const klass = new ClassEntity(this.view).find(klassId);
+    const writes = this.planSave(klass, body);
     const fields = CLASS_LEVEL_FIELDS.read(writes.properties?.values ?? []);
     return {
-      ...ClassLevelEntity.joinRows(body),
+      ...this.joinRows(body),
       columns: { level: body.level },
       describe: <T extends { id: string }>(row: T): T & ClassLevelFieldValues => ({ ...row, ...fields }),
       klass,
@@ -150,9 +151,9 @@ export default class ClassLevelEntity {
   }
 
   /** Deleting a class's level: the class and the level, as the view has them. */
-  static planDelete(view: RulesetView, klassId: string, levelId: string) {
-    const klass = ClassEntity.find(view, klassId);
-    return { klass, level: ClassLevelEntity.findLevel(view, klass, levelId, "Level not found for this class") };
+  planDelete(klassId: string, levelId: string) {
+    const klass = new ClassEntity(this.view).find(klassId);
+    return { klass, level: this.findLevel(klass, levelId, "Level not found for this class") };
   }
 
   /**
@@ -160,14 +161,14 @@ export default class ClassLevelEntity {
    * what its save writes against the properties the view composes for it (those a copy of it holds), and the level it
    * answers once saved under its stored id (`describe`), with the fields it keeps.
    */
-  static planEdit(view: RulesetView, klassId: string, levelId: string, body: ClassLevelBody) {
-    const klass = ClassEntity.find(view, klassId);
-    const level = ClassLevelEntity.findLevel(view, klass, levelId, "Level not found for this class");
-    const kept = view.rulesetData.propertiesByEntity.get(level.id) ?? [];
-    const writes = ClassLevelEntity.planSave(klass, body, { properties: kept });
+  planEdit(klassId: string, levelId: string, body: ClassLevelBody) {
+    const klass = new ClassEntity(this.view).find(klassId);
+    const level = this.findLevel(klass, levelId, "Level not found for this class");
+    const kept = this.view.rulesetData.propertiesByEntity.get(level.id) ?? [];
+    const writes = this.planSave(klass, body, { properties: kept });
     const fields = CLASS_LEVEL_FIELDS.read(writes.properties?.values ?? kept);
     return {
-      ...ClassLevelEntity.joinRows(body),
+      ...this.joinRows(body),
       describe: (id: string) => ({ ...level, id, ...fields }),
       klass,
       level,

@@ -29,10 +29,11 @@ class RacesService {
           const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
+          const plan = Engine.for(scope).entities("races").planCreate(body);
           const names = new EntityNames(ruleset, rulesetData.cow);
-          const { tombstoneAncestorId } = await names.assertNameAvailable(tx, "races", body.name);
+          const { tombstoneAncestorId } = await names.assertNameAvailable(tx, "races", plan.name);
 
-          const rows = await Races.create(tx, { ...body, rulesetId });
+          const rows = await Races.create(tx, { ...plan.columns, rulesetId });
           const race = rows[0];
 
           if (tombstoneAncestorId) await names.repointTombstone(tx, "races", tombstoneAncestorId, race.id);
@@ -61,7 +62,7 @@ class RacesService {
           const inUse = await hasCharacterPicks(tx, "races", scope.rulesetData.cow.getEquivalentIds(raceId), rulesetId);
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-          const race = Engine.for(scope).entity("races", raceId).get();
+          const { entity: race } = Engine.for(scope).entities("races").planDelete(raceId);
 
           const edit = new EntityEdit(ruleset);
           const targetId = await edit.cowToDelete(tx, "races", race);
@@ -85,7 +86,7 @@ class RacesService {
   }
 
   async getRace(rulesetId: string, raceId: string) {
-    return await withRulesetScope(db, rulesetId, async (scope) => Engine.for(scope).entity("races", raceId).describe());
+    return await withRulesetScope(db, rulesetId, async (scope) => Engine.for(scope).entities("races").describe(raceId));
   }
 
   async getRaces(
@@ -105,7 +106,7 @@ class RacesService {
         { rulesetId, ...scope.rulesetData.cow.listFilters, ...where },
         pagination,
       );
-      return { ...result, items: Engine.for(scope).describeRows(result.items) };
+      return { ...result, items: Engine.for(scope).entities("races").describePage(result.items) };
     });
   }
 
@@ -128,14 +129,13 @@ class RacesService {
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const race = Engine.for(scope).entity("races", raceId).get();
+          const { columns, entity: race } = Engine.for(scope).entities("races").planEdit(raceId, body);
 
           const edit = new EntityEdit(ruleset);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "races", race);
           const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
-          const { updatedAt: _u, ...raceData } = body;
-          const rows = await Races.update(tx, raceData, { id: targetId, expectedUpdatedAt });
+          const rows = await Races.update(tx, columns, { id: targetId, expectedUpdatedAt });
           if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
           const updatedRace = rows[0];

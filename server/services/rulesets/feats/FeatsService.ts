@@ -42,7 +42,7 @@ class FeatsService {
           // Named as an ancestor the fork deleted, the feat stands in for it (`EntityNames.repointTombstone`), checks
           // finding it by that name
           const plan = Engine.for(scope)
-            .feats()
+            .entities("feats")
             .planCreate(body, {
               tombstoneGenerated: tombstoneAncestorId ? await this.wasGenerated(tx, tombstoneAncestorId) : false,
             });
@@ -81,7 +81,7 @@ class FeatsService {
           const inUse = await hasCharacterPicks(tx, "feats", scope.rulesetData.cow.getEquivalentIds(featId), rulesetId);
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-          const feat = Engine.for(scope).entity("feats", featId).get();
+          const { entity: feat } = Engine.for(scope).entities("feats").planDelete(featId);
 
           const edit = new EntityEdit(ruleset);
           const targetId = await edit.cowToDelete(tx, "feats", feat);
@@ -107,7 +107,7 @@ class FeatsService {
   }
 
   async getFeat(rulesetId: string, featId: string) {
-    return await withRulesetScope(db, rulesetId, async (scope) => Engine.for(scope).entity("feats", featId).describe());
+    return await withRulesetScope(db, rulesetId, async (scope) => Engine.for(scope).entities("feats").describe(featId));
   }
 
   async getFeatGroups(
@@ -117,7 +117,7 @@ class FeatsService {
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
       const { aptitudeId, ...filters } = where;
-      const list = Engine.for(scope).feats().openList({ aptitudeId });
+      const list = Engine.for(scope).entities("feats").openList({ aptitudeId });
       return await Feats.findGroupPage(
         db,
         { rulesetId, ...scope.rulesetData.cow.listFilters, ...list.groupFilters, ...filters },
@@ -140,7 +140,7 @@ class FeatsService {
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
       const { aptitudeId, family, ...filters } = where;
-      const list = Engine.for(scope).feats().openList({ aptitudeId, childOnly: where.childOnly, family });
+      const list = Engine.for(scope).entities("feats").openList({ aptitudeId, childOnly: where.childOnly, family });
       const result = await Feats.findPage(
         db,
         { rulesetId, ...scope.rulesetData.cow.listFilters, ...filters, ...list.filters },
@@ -167,7 +167,7 @@ class FeatsService {
           const { ruleset } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const { aptitudeIds, columns, feat } = Engine.for(scope).feats().planEdit(featId, body);
+          const { aptitudeIds, columns, entity: feat } = Engine.for(scope).entities("feats").planEdit(featId, body);
 
           const edit = new EntityEdit(ruleset);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "feats", feat);
