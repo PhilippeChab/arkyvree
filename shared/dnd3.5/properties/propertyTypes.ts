@@ -1,7 +1,7 @@
 /**
  * The D&D 3.5 property types: each entity type's, in the order a stat block shows them, with what each means, and the
- * values each takes. The 3.5 module's view orders every entity's properties by them (`sortProperties`, its
- * `orderProperties`).
+ * values each takes. A ruleset's view orders every entity's properties by them (the engine's `PropertyOrder`, through
+ * the 3.5 module's property types).
  */
 
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
@@ -327,31 +327,4 @@ export const ENTITY_PROPERTY_TYPES: Partial<Record<PropertyEntityType, Record<st
 /** A property type's options: the values the engine knows for it, in their order. None for a free-text type. */
 export function getStaticPropertyValues(type: string): string[] | null {
   return PROPERTY_VALUES[type] ?? null;
-}
-
-/**
- * Properties as a stat block shows them: by type, in the ruleset's order of types (a spell's school, then its
- * descriptors, components, range…; a type it doesn't know after those, by name), each type's values in its options'
- * order, then by value. Never in the order their rows come in, which seeded rows, made together, can't give.
- */
-export function sortProperties<T extends { type: string; value: string }>(properties: readonly T[]): T[] {
-  // Each type's place: its entity type's types in their order, as a stat block shows them
-  const typeRanks = new Map(
-    Object.values(ENTITY_PROPERTY_TYPES)
-      .flatMap((types) => Object.keys(types))
-      .map((type, rank) => [type, rank]),
-  );
-  const typeRank = (type: string) => typeRanks.get(type) ?? typeRanks.size;
-  const valueRank = ({ type, value }: T) => {
-    const options = getStaticPropertyValues(type) ?? [];
-    const rank = options.indexOf(value);
-    return rank === -1 ? options.length : rank;
-  };
-  return properties.toSorted(
-    (a, b) =>
-      typeRank(a.type) - typeRank(b.type) ||
-      a.type.localeCompare(b.type) ||
-      valueRank(a) - valueRank(b) ||
-      a.value.localeCompare(b.value),
-  );
 }

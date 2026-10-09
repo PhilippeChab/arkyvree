@@ -1,6 +1,4 @@
 import type { RulesetModule } from "@/engine/core/module/index.ts";
-import { sortProperties } from "@/shared/dnd3.5/properties/index.ts";
-import type { Property } from "@/shared/relations.ts";
 
 import Dnd35Characters from "./characters/Dnd35Characters.ts";
 import Dnd35Content from "./content/Dnd35Content.ts";
@@ -36,10 +34,6 @@ export default class Dnd35Module {
 
       createPropertyTypes() {
         return new Dnd35PropertyTypes();
-      },
-
-      orderProperties(properties: Property[]) {
-        return sortProperties(properties);
       },
     };
   }
