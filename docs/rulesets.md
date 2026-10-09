@@ -46,7 +46,7 @@ Creates a child copy of a published ruleset. No entities are duplicated — the 
 Transitions a Draft ruleset to Published. One-way (no Published → Draft path).
 
 - **Kind choice**: at publish time the author picks whether the ruleset is published as a playable `ruleset` (default) or as an `extension` (subscribable add-on for other rulesets of the same base). Stored in `kind`. Editable later via the edit dialog
-- **Validation (kind = 'ruleset')**: must have at least one of each entity type — race, class, skill, feat (including inherited from source chain)
+- **Validation (kind = 'ruleset')**: its view (its own entities and those inherited from its source chain) must give what its rules make a character of, which the engine checks (`checkPublishable`; 3.5's `PlayableContent`: a player race, a player class, a skill and a feat)
 - **Validation (kind = 'extension')**: ruleset must be a fork and must not subscribe to other extensions. The minimum-content check is skipped — extensions are layered onto rulesets that already have the basics
 - Only the owner can publish; only Draft rulesets can be published
 
@@ -200,12 +200,12 @@ User's Fork (subscribed to A, then B)
 
 2. **Entity list filtering**: Sibling entities are left out of every ruleset entity's list in its query (only the winner is returned), so the user never sees duplicate feats and a page keeps its size: `ScopesToRuleset.buildRulesetCondition` reads the scope's `siblingIds` (`withRulesetScope`'s copy-on-write context) and excludes them from the inherited rows. A list read outside a scope, or inside `withCowContext(undefined, …)`, sees them.
 
-3. **Read-time merging** (built into the compose step, the engine's `buildRulesetView`: `RulesetComposition` in `engine/core/view/RulesetComposition.ts`): `RulesetCache.getData` folds sibling contributions into the winner's buckets before services see them. Consumers read `rulesetData.featsById` / `rulesetData.powersById` / `rulesetData.modifiersBySource` / `rulesetData.requirementsByEntity` / `rulesetData.propertiesByEntity` and get pre-merged rows — no sibling helpers needed at call sites. The rules are one class, `SiblingMerge` (`engine/core/view/SiblingMerge.ts`), which `EntityCopy` writes by too, through the engine (`mergeSiblingCustomizations`, `mergeSiblingAptitudeLinks`): each takes the winner's own rows and each sibling's, in `getSiblings` order, and returns the siblings' rows the winner takes. Of two equal rows (by the kind's key), the winner's, then the earlier sibling's, is kept: its requirements, its description, its level.
+3. **Read-time merging** (built into the compose step, the engine's `buildRulesetView`: `RulesetComposition` in `engine/core/view/RulesetComposition.ts`): `RulesetCache.getData` folds sibling contributions into the winner's buckets before the engine's operations read them. Consumers read `rulesetData.featsById` / `rulesetData.powersById` / `rulesetData.modifiersBySource` / `rulesetData.requirementsByEntity` / `rulesetData.propertiesByEntity` and get pre-merged rows — no sibling helpers needed at call sites. The rules are one class, `SiblingMerge` (`engine/core/view/SiblingMerge.ts`), which `EntityCopy` writes by too, through the engine (`mergeSiblingCustomizations`, `mergeSiblingAptitudeLinks`): each takes the winner's own rows and each sibling's, in `getSiblings` order, and returns the siblings' rows the winner takes. Of two equal rows (by the kind's key), the winner's, then the earlier sibling's, is kept: its requirements, its description, its level.
    - **Aptitudes** (`mergeAptitudeLinks`): sibling `feats_aptitudes` / `powers_aptitudes` are merged into the winner's inline array, deduped by resolved `aptitudeId` after FK remap.
    - **Requirements** (`mergeRequirements`): sibling requirement trees are appended at the top level (so they are ANDed with the winner's) with `entityId` remapped: a chain gets the next free integer level and a standalone keeps its level, suffixed on collision. Duplicate top-level standalone conditions are deduplicated on `target|operator|value`; conditions inside AND/OR chains are preserved to keep their boolean meaning, so two identical chains both remain. Display preserves each source row's UUID, and COW records its new copied UUID so edits target the exact requirement.
    - **Modifiers** (`mergeModifiers`): sibling modifiers are appended with `sourceId` remapped to the winner, deduped on `target|value|operator|valueType`. Dropped modifiers have their requirements dropped too.
    - **Properties** (`mergeProperties`): sibling properties are appended with `entityId` remapped to the winner, deduped on `type|value`.
-   - Consumers: `FeatsService`, `PowersService`, `ModifiersService`, `RequirementsService`, and `DetailedCharacter` all just read from `rulesetData.*` without any sibling-specific code.
+   - Consumers: the engine's operations, which the services hand the view (the feats' and powers' lists, `openFeatList`, `openPowerList`; the customizations', `ModifierEdits`, `RequirementEdits`, `PropertyEdits`; `DetailedCharacter`), all just read from `rulesetData.*` without any sibling-specific code.
 
 4. **COW merging** (`EntityCopy`): When a user COWs the winner entity, its sibling merge copies unique requirements, modifiers, properties, and aptitude links from all siblings into the new local copy. The child's copy contains the full merged result. See below.
 
@@ -225,7 +225,7 @@ until the override is restored.
 Aptitudes are named pools — they have `name` but no per-ruleset content — so the seed only creates a row in the ruleset that *introduces* the name (see `docs/packages.md`: COW-ing core entities into extensions → Aptitude ownership rules). Two cases matter here:
 
 - **Base-inherited names** (`General`, `Cleric Domain`, `Fighter Bonus Feat`, etc.): exactly one row exists, in base. Extensions and forks adding new feats/spells just link to base's id via `aptMap`. No sibling rows, no dedup needed.
-- **Sibling-shared names** (e.g. `Assassin Spells`, `Blackguard Spells`, `Hexblade Spells`): multiple extensions each create their own copy because siblings can't FK to each other. A book copies another book's spell list that its spells are on: one its spells' level line names (a Complete Adventurer spell's "Assassin 1"), or one that draws on other classes' lists (`spells.inheritsFrom`: Complete Arcane's `Sublime Chord Spells` takes Complete Adventurer's bard and sorcerer spells), so a list holds the spells of every book a ruleset takes, as the copies of a core spell merge. The sibling mechanism (`CowDataBuilder`'s aptitude pass, `engine/core/cow/CowDataBuilder.ts`) picks a winner per name across the source chain, closest first. Losers become the winner's siblings (`CowData.siblingIds`), so the compose step drops them, and its aliases, so references to a loser resolve to the visible winner (its local copy, if the fork has one). They are intentionally not overrides, which are for true copies only. The user never sees duplicates. A list's feats and spells, on the ruleset's pages and in the level-up's pickers, are the composed view's (`RulesetData.listFeatIds` / `listPowerIds`, which the server asks through the engine's `getListFeatIds` / `getListPowerIds`), never the stored links: the winning copy of a feat or a spell takes every copy's links, so a link stored on a losing copy of either, or of the list, still counts.
+- **Sibling-shared names** (e.g. `Assassin Spells`, `Blackguard Spells`, `Hexblade Spells`): multiple extensions each create their own copy because siblings can't FK to each other. A book copies another book's spell list that its spells are on: one its spells' level line names (a Complete Adventurer spell's "Assassin 1"), or one that draws on other classes' lists (`spells.inheritsFrom`: Complete Arcane's `Sublime Chord Spells` takes Complete Adventurer's bard and sorcerer spells), so a list holds the spells of every book a ruleset takes, as the copies of a core spell merge. The sibling mechanism (`CowDataBuilder`'s aptitude pass, `engine/core/cow/CowDataBuilder.ts`) picks a winner per name across the source chain, closest first. Losers become the winner's siblings (`CowData.siblingIds`), so the compose step drops them, and its aliases, so references to a loser resolve to the visible winner (its local copy, if the fork has one). They are intentionally not overrides, which are for true copies only. The user never sees duplicates. A list's feats and spells, on the ruleset's pages and in the level-up's pickers, are the composed view's (`RulesetData.listFeatIds` / `listPowerIds`, which the engine's lists and pickers filter by: `openFeatList`, `openPowerList`, `openFeatPicker`, `openPowerPicker`), never the stored links: the winning copy of a feat or a spell takes every copy's links, so a link stored on a losing copy of either, or of the list, still counts.
 
 ### COW-ing a Merged Entity (Sibling Bake-in)
 
@@ -340,7 +340,7 @@ entityId, rulesetId)` and is reused by every entity-delete service and
 
 ## Entity Services Pattern
 
-Every entity service works in the ruleset's scope (`withRulesetScope`): reads come from its composed view, and writes to an inherited entity go to the fork's copy, made on its first edit (`RulesetEdit`, `EntityCopy`: `server/cow/`):
+Every entity service works in the ruleset's scope (`withRulesetScope`): reads come from its composed view, which the service hands the engine's operations whole (`scope`), and writes to an inherited entity go to the fork's copy, made on its first edit (`RulesetEdit`, `EntityCopy`: `server/cow/`):
 
 ```ts
 // Read (list): the repository reads the ruleset and its source chain
@@ -348,8 +348,8 @@ return await withRulesetScope(db, rulesetId, async ({ rulesetData }) =>
   Saves.findPage(db, { rulesetId, ancestorRulesetIds: rulesetData.cow.sourceChain, ...where }, pagination),
 );
 
-// Read (one), and the start of every write: the entity in the composed view, or a 404
-const save = findScopedEntity(rulesetData.savesById, saveId, rulesetId, sourceChain, "Save");
+// Read (one), and the start of every write: the entity in the composed view, or the engine's not-found refusal (a 404)
+const save = getEntity(scope, "saves", saveId);
 
 // Update: the fork's own entity, or the copy of an inherited one (whose updatedAt isn't the client's)
 const edit = new RulesetEdit(ruleset, rulesetData.cow);
@@ -362,6 +362,8 @@ await Saves.delete(tx, { id: targetId });
 ```
 
 A create checks the name against the composed view first (`edit.assertNameAvailable`), and points a tombstone it hides at the new entity (`edit.repointTombstone`).
+
+An entity whose rules say more than its row takes an operation of its own in place of `getEntity`, one per action: its read describes it (`describeSkill`, `describeItem`, `describeClassLevel`; a feat, a power or a race, `describeEntity`: the entity with its customizations), and its write's plan finds it and says what the write takes, checked (`planSkillEdit`, `planItemCreate`, `planClassLevelDelete`).
 
 ## Legal
 
@@ -402,8 +404,8 @@ The engine is the root `engine/`, which computes over the data it's given and re
 engine/
 ├── index.ts                               ← the entry: the operations, their types, a body's ruleset fields and bounds
 ├── api/                                   (the operations, a file per part: characters, entities, levelUp, content,
-│                                          paths, properties, rulesets; modules.ts: getRulesetModule, each base
-│                                          rules' module, built once)
+│                                          customizations, paths, properties, rulesets; modules.ts: getRulesetModule,
+│                                          each base rules' module, built once)
 ├── core/                                  ← machinery, no game vocabulary
 │   ├── types.ts                           ← universal types (RulesetView, Components, TargetPathsInterface, …)
 │   ├── RulesError.ts                      (a rule's refusal, by kind)
@@ -414,6 +416,10 @@ engine/
 │   │                                      merge: SiblingMerge, SiblingRows)
 │   ├── cow/                               (CowData, CowDataBuilder; CowSources: the source chain and the rows CowData
 │   │                                      is read from; ExtensionNames: the extensions' name check)
+│   ├── customizations/                    (ModifierEdits, PropertyEdits, RequirementEdits: an entity's customizations
+│   │                                      described, and what their saves store, checked; CustomizedEntity: the
+│   │                                      entity they're on, as the view has it; PropertyTypeCatalog: the property
+│   │                                      types and values, the rules' then the ruleset's own)
 │   ├── modifiers/ModifierEvaluator.ts
 │   ├── requirements/RequirementEvaluator.ts
 │   └── paths/                             (PathTraverser, CategoryPaths, PathCategory, LiteralValue, TemplateExpression;
@@ -431,14 +437,17 @@ engine/rulesets/
     ├── types.ts                           (Dnd35RulesetModule, CharacterKind, ProjectedCharacterData,
     │                                      Dnd35ProjectedCharacterData, LoadedCharacterData)
     ├── Dnd35Entities.ts                   (the module's entities: each entity's operations, from its domain folder)
+    ├── PlayableContent.ts                 (what a ruleset published to be played needs: a player race and class,
+    │                                      a skill, a feat)
     ├── entityFields.ts                    (ENTITY_FIELDS, RULESET_LIMITS: a body's fields the rules take, and their bounds)
     ├── Dnd35TargetPaths.ts                (the categories' order and the ruleset's names' labels)
     ├── Dnd35PropertyTypes.ts              (the property types and values it serves: shared/dnd3.5/properties/)
     ├── constants.ts                       (the 3.5 tables the components read: sizes, carrying capacity, encumbrance)
     ├── character/                         (CharacterState, its concerns: Builds, Validates, PossessesVirtually;
     │                                      DetailedCharacter, which wires them; CharacterComponents; CharacterBuilder:
-    │                                      a character of its row's kind, built from its input; Dnd35Characters: the
-    │                                      module's characters)
+    │                                      a character of its row's kind, built from its input; CharacterCards: a
+    │                                      list's card of one; CharacterEdits: what its creation stores, the languages
+    │                                      it can speak; Dnd35Characters: the module's characters)
     ├── loading/                           (DetailedCharacterDataLoader, and its steps: Customizations, Picks,
     │                                      Possessions, RulesetReadings)
     ├── response/                          (CharacterDescription: the 3.5 API response shape, whole or partial, its
@@ -449,18 +458,23 @@ engine/rulesets/
     ├── abilities/ aptitudes/ feats/ identity/ saves/
     │                                      (each domain's component and its paths' category: AbilitiesComponent,
     │                                      AbilitiesPaths, …; aptitudes/ also holds AptitudeEntity: what the rules
-    │                                      refuse of an aptitude's edit, and AptitudeTargets: the aptitudes' target
-    │                                      grammar; feats/ FeatGroupingsComponent, FeatFields, FeatEntity)
+    │                                      refuse of an aptitude's edit or delete, and AptitudeTargets: the aptitudes'
+    │                                      target grammar; feats/ FeatGroupingsComponent, FeatFields, FeatEntity: a
+    │                                      page of feats, what a feat's save takes, and GeneratedFeats: the feats a
+    │                                      save makes or removes, in the general feats' pool)
     ├── classes/                           (ClassesComponent, ClassesPaths; ClassFields and ClassLevelFields: a class's
     │                                      and a level's fields off their properties; ClassEntity: a class described,
-    │                                      what saving a level writes; ClassTable: a class's table, as its page shows it)
+    │                                      a new one's row; ClassLevelEntity: a level described, what saving or
+    │                                      deleting one takes; ClassSkillEntity: a class's class skills; ClassTable: a
+    │                                      class's table, as its page shows it)
     ├── powers/                            (PowersComponent, PowerGroupingsComponent, PowersPaths, PowerFields: a
-    │                                      power's fields off its properties; PowerEntity: what saving one writes,
-    │                                      with SpellGenerator)
+    │                                      power's fields off its properties; PowerEntity: a page of powers, what
+    │                                      saving one writes, with SpellGenerator)
     ├── races/                             (RaceFields: a race's fields off its properties; RacePicker)
     ├── ruleset/                           (RulesetFields: the ruleset's own fields off its properties)
     ├── skills/                            (SkillsComponent: the 3.5 rank system, SkillsPaths, SkillFields: a skill's
-    │                                      fields off its properties; SkillEntity: what saving or deleting one writes)
+    │                                      fields off its properties; SkillEntity: a skill described, what saving or
+    │                                      deleting one writes)
     ├── combat/                            (CombatComponent on CombatState, which includes concerns/: ArmorClass,
     │                                      HitPoints, Attacks, InitiativeAndSpeed; ArmorsComponent, ShieldsComponent,
     │                                      WeaponsComponent, EncumbranceComponent; the combat, items.* and weapon.*
@@ -468,16 +482,19 @@ engine/rulesets/
     ├── spellcasting/                      (SpellcastingComponent on SpellcastingState, which includes concerns/:
     │                                      BonusCasterLevels, KnownPowers; SpellcastingPaths; SpellLists)
     ├── items/                             (InventoryComponent, InventorySlots, ItemFields: an item's fields off its
-    │                                      properties; ItemEntity: what saving one writes; Equipping: what equipping
-    │                                      an item checks)
+    │                                      properties; ItemEntity: an item described, what saving one, its duplicate
+    │                                      or its variants writes; InventoryEntries: a character's entries described,
+    │                                      what an entry's add or edit stores; Equipping: what equipping an item
+    │                                      checks)
     ├── levelUp/                           (the level-up's rules, a class per operation on a base, LevelUpState: the
     │                                      view, the characters it builds, class level lookups; its concerns:
     │                                      Projects, ChecksSelections, AnnotatesOptions; LevelUpPlan: the preview,
     │                                      and a save's levels checked, its picks spread over them (AptitudeSlotsPlan,
     │                                      PicksDistribution); LevelEdit: a saved level's edit, and the issues it
-    │                                      answers for; LevelUpSteps: the wizard's steps; ClassPicker, and FeatPicker
-    │                                      and PowerPicker on PickerState: its pickers; LevelSelections: a saved
-    │                                      level's selections; Dnd35LevelUp: the module's levelUp, which opens them)
+    │                                      answers for; LevelRemoval: the last level removed; LevelUpSteps: the
+    │                                      wizard's steps; ClassPicker, and FeatPicker and PowerPicker on
+    │                                      PickerState: its pickers; LevelSelections: a saved level's selections;
+    │                                      Dnd35LevelUp: the module's levelUp, which opens them)
     ├── levels/                            (Dnd35LevelsRules: the levels' constants and predicates, which the
     │                                      components and the level-up read)
     └── bonded/                            (the bonded creatures' characters, BondsComponent, BondedPaths; BondedPlans:
@@ -485,7 +502,7 @@ engine/rulesets/
                                            BondedRaceData: their stat blocks; BondedScaling)
 ```
 
-In the server: what reads the rows an operation takes (`server/services/characters/characterInputs.ts`: `readCharacterInput`, `readBondedInputs`), and what writes what an operation plans (`server/services/rulesets/entityWrites.ts`: `writeEntityWrites`; `levels/bondedWrites.ts`: `writeBondedCreatures`). The PDF job (`server/jobs/generatePdf.ts`) and the shared PDF route render the document `describeCharacterSheet` answers. The server names no ruleset and builds no character: it reads, asks the engine and writes.
+In the server: what reads the rows an operation takes (`server/services/characters/characterInputs.ts`: `readCharacterInput`, `readBondedInputs`), and what writes what an operation plans (`server/services/rulesets/entityWrites.ts`: `writeEntityWrites`; `levels/bondedWrites.ts`: `writeBondedCreatures`). The PDF job (`server/jobs/generatePdf.ts`) and the shared PDF route render the document `describeCharacterSheet` answers. The server names no ruleset and builds no character: it reads, asks the engine and writes. Each of its actions asks the engine one operation, which answers it whole (`arkyvree/one-engine-op`): a plan carries what it answers once written, a picker or a list its filters, a description all its page shows. It hands an operation the view as its scope gives it, reading of it only the copy-on-write data (`rulesetData.cow`: the source chain its reads filter by, what `RulesetEdit` writes by; `arkyvree/opaque-view`).
 
 ```
 server/
@@ -501,8 +518,8 @@ server/
 │   │       ├── classPicks.ts, featPicks.ts, powerPicks.ts, levelSelections.ts
 │   │       ├── slotQueries.ts
 │   │       ├── preview.ts
-│   │       ├── finalize.ts                (a save, an edit, a removal: planLevelUp, planLevelEdit, checkCharacter,
-│   │       │                              planBondedCreatures)
+│   │       ├── finalize.ts                (a save, an edit, a removal: planLevelUp, planLevelEdit, planLevelRemoval,
+│   │       │                              each with what the bonded creatures become)
 │   │       └── bondedWrites.ts            (the bonded creatures the engine plans, written)
 │   └── rulesets/                          ← entity CRUD for feats/powers/aptitudes/…
 │       └── entityWrites.ts                (what the engine plans a save writes beside its row, written)
@@ -589,28 +606,39 @@ What a ruleset answers is its module's: four parts, each a class whose operation
 
 | Member | What it answers | 3.5's |
 |---|---|---|
-| `characters` | a character's sheets (the API's, a partial one, the printed one), what equipping an item checks, the races a new character can pick | `Dnd35Characters`: `describeCharacter`, `describePartialCharacter`, `describeCharacterSheet`, `checkEquipping`, `openRacePicker` |
-| `entities` | an entity's fields and a class's table, what saving or deleting one writes, what the rules refuse of an edit | `Dnd35Entities`: `describeClass`, `describeClassLevels`, `describeClassFeatPools`, `describeClassSpells`, `describeClassSpellsKnown`, `describeClassSpellLists`, `describeSkills`, `getFeatFamilyType`, `planSkillSave`, `planSkillDelete`, `planPowerSave`, `planClassLevelSave`, `planItemSave`, `checkAptitudeEdit` |
-| `levelUp` | the level flows: the preview, a save's levels and its check, a saved level's edit, the bonded creatures the levels make, the wizard's steps and pickers, a saved level's selections | `Dnd35LevelUp`: `getLevelUpPreview`, `planLevelUp`, `planLevelEdit`, `checkCharacter`, `planBondedCreatures`, `getSkillSlots`…, `openFeatPicker`…, `describeLevel` |
+| `characters` | a character's sheets (the API's, a campaign member's reading, partial or whole, the printed one), a list's card of one, its inventory, what a new one and an inventory entry store (what equipping an item checks), the languages it can speak, the races a new character can pick | `Dnd35Characters`: `describeCharacter`, `describeCampaignCharacter`, `describeCharacterSheet`, `describeCharacterCard`, `describeInventory`, `planCharacterCreate`, `planInventoryEntry`, `checkCharacterLanguages`, `openRacePicker` |
+| `entities` | an entity's fields and a class's table, a page of feats or powers, what saving or deleting one writes, what the rules refuse of an edit, what a ruleset needs to be played | `Dnd35Entities`: `describeClass`, `describeClassLevel`, `describeClassLevels`, `describeClassLevelWithClass`, `describeClassSkills`, `describeClassFeatPools`, `describeClassSpells`, `describeClassSpellsKnown`, `describeClassSpellLists`, `describeItem`, `describeItems`, `describeSkill`, `describeSkills`, `openFeatList`, `openPowerList`, `planClassCreate`, `planClassLevelCreate`, `planClassLevelEdit`, `planClassLevelDelete`, `planClassSkillAdd`, `planClassSkillRemove`, `planFeatCreate`, `planFeatEdit`, `planItemCreate`, `planItemEdit`, `planItemDelete`, `planItemVariants`, `planPowerCreate`, `planPowerEdit`, `planSkillCreate`, `planSkillEdit`, `planSkillDelete`, `planAptitudeEdit`, `planAptitudeDelete`, `checkPlayable` |
+| `levelUp` | the level flows: the preview, a save's levels and its check (the character with them, unless forced), a saved level's edit, the last level's removal, the bonded creatures the levels make, the wizard's steps and pickers, a saved level's selections | `Dnd35LevelUp`: `getLevelUpPreview`, `planLevelUp`, `planLevelEdit`, `planLevelRemoval`, `planBondedCreatures`, `getSkillSlots`…, `openFeatPicker`…, `describeLevel` |
 | `content` | what the seeders and the codegen ask: the paths a book can target, an entity's fields as its properties | `Dnd35Content`: `listBookTargetPaths`, `toEntityProperties` |
 | `createTargetPaths`, `createPropertyTypes` | the ruleset's path categories, its property types | `Dnd35TargetPaths`, `Dnd35PropertyTypes` |
 | `orderProperties` | an entity's properties in its rules' order, which its view keeps them in (`buildRulesetView`) | `sortProperties` |
 
-A part's operation is a function of `engine/api/<part>.ts`, which `engine/index.ts` exports, dispatched by the view's base rules (`view.ruleset.baseRules`; a content operation by the base rules its caller names). The paths' and the properties' operations ask the factories (`listTargetPaths`, `validateTargetPath`, `checkTargetValue`, `getTargetPathCompletions`, which the target paths answer: `CategoryPaths`, over `PathChecks` and `PathCompletions`; `getPropertyTypes`, `getPropertyValues`), and the view's asks the order (`buildRulesetView`); copy-on-write's, which no ruleset changes, ask the core's classes (`CowSources`: `buildSourceChain`, `getCowReads`; `ExtensionNames`: `checkExtensionNames`; `SiblingMerge`: `mergeSiblingCustomizations`), and a list's members ask the view (`RulesetData`: `getListFeatIds`, `getListPowerIds`). An operation takes the data its caller read: the view (`RulesetView`: the ruleset and its `rulesetData`), a character's rows (`CharacterInput`: its record, its rows, a bonded creature's master's), a request's body. It answers data:
+A part's operation is a function of `engine/api/<part>.ts`, which `engine/index.ts` exports, dispatched by the view's base rules (`view.ruleset.baseRules`; a content operation by the base rules its caller names). The paths' operations ask the target paths (`listTargetPaths`, `validateTargetPath`, `checkTargetValue`, `getTargetPathCompletions`, which `CategoryPaths` answers, over `PathChecks` and `PathCompletions`), and the view's asks the order (`buildRulesetView`). The properties' and the customizations', which no ruleset changes but by its factories, ask the core's classes (`engine/core/customizations/`): `PropertyTypeCatalog` adds the types and values the ruleset's own properties use to its rules' (`createPropertyTypes`: `listPropertyTypes`, `getPropertyTypeCompletions`, `getPropertyValueCompletions`); `ModifierEdits`, `PropertyEdits` and `RequirementEdits` describe an entity's customizations and plan their saves, a modifier's or a requirement's value checked against its target paths (`describeModifier`, `describeModifierList`, `describeModifiers`, `describeProperties`, `describeRequirements`; `planModifierCreate`, `planModifierEdit`, `planModifierDelete`, and `planProperty…` and `planRequirement…` alike), on the entity the view has (`CustomizedEntity.find`, refused as not found otherwise). Copy-on-write's ask the core's classes too (`CowSources`: `buildSourceChain`, `getCowReads`; `ExtensionNames`: `checkExtensionNames`; `SiblingMerge`: `mergeSiblingCustomizations`). A few ask the view itself or a part over several: `getEntity` and `describeEntity` an entity of a type in the view (`RulesetData.find`; `describeEntity` with its customizations), `describeCharacterCards` each character's card by its ruleset's view, and `checkPublishable` the entities' `checkPlayable`, which an extension skips. An operation takes the data its caller read: the view (`RulesetView`: the ruleset and its `rulesetData`), a character's rows (`CharacterInput`: its record, its rows, a bonded creature's master's), a request's body. It answers data:
 
-- **A description**: what the API answers (`describeCharacter`, `describeClassLevels`), a picker's filters and how it annotates a page (`openFeatPicker`), the printed sheet's document (`describeCharacterSheet`).
-- **A plan**: what to write, without ids. `EntityWrites` (`engine/core/module/writes.ts`) is what saving an entity writes beside its row: the columns its rules set (an item's slot), the properties its fields are kept in, a requirement on it, the feats it makes and those it removes. A level-up's is its levels and their picks (`planLevelUp`), and a master's, what its bonded creatures become (`planBondedCreatures`). The server writes a plan in its transaction (`writeEntityWrites`, `writeBondedCreatures`), which reads what a write depends on: whether a grouping's feats are there already, whether a character picked a feat it removes.
-- **A refusal**: a `RulesError` naming its kind (`invalid`, `unprocessable`, `conflict`, `not-found`), which the server answers as its error of that kind (`checkCharacter`, `checkEquipping`, `checkAptitudeEdit`). What a character fails is refused with its issues (`RulesError.refuseIssues`).
+- **A description**: what the API answers (`describeCharacter`, `describeClassLevels`), a picker's or a list's filters, which the server reads a page with, and what describes the page it read (`openFeatPicker`'s `annotate`, `openFeatList`'s `describe`), the printed sheet's document (`describeCharacterSheet`).
+- **A plan**: what to write, without ids. `EntityWrites` (`engine/core/module/writes.ts`) is what saving an entity writes beside its row: the columns its rules set (an item's slot), the properties its fields are kept in, a requirement on it, the feats it makes, each in its pool (`aptitudeId`: the general feats', `feats/GeneratedFeats.ts`), and those it removes, by id (`featId`). A level-up's is its levels and their picks, and what the master's bonded creatures become with them (`planLevelUp`, `planLevelEdit`, `planLevelRemoval`; the seeders', `planBondedCreatures`). A plan whose save answers the entity carries what it answers once written (`describe(row)`: the saved row with the fields the save keeps, `planSkillCreate`). The server writes a plan in its transaction (`writeEntityWrites`, `writeBondedCreatures`), which reads of the view only its copy-on-write data, and of the database what a write depends on: whether a grouping's feats are there already, whether a character picked a feat it removes.
+- **A refusal**: a `RulesError` naming its kind (`invalid`, `unprocessable`, `conflict`, `not-found`), which the server answers as its error of that kind (`checkCharacterLanguages`, `checkPublishable`, and a plan's own: `planInventoryEntry` an item the character can't equip where asked, `planAptitudeEdit` renaming a pool the characters count on by name). What a character fails is refused with its issues (`RulesError.refuseIssues`): `planLevelUp` refuses the character with its new levels, unless forced.
 
-Its verb says which: `describe…`, `get…` and `list…` answer what something is, `open…` a picker, `plan…` a plan, `check…` refuses or answers what it checked, `validate…` a path's validation, `build…` the view, its copy-on-write data and its source chain (`buildRulesetView`, `buildCowData`, `buildSourceChain`), `merge…` the rows a copy takes of its siblings, and `to…` a conversion (`toEntityProperties`).
+Its verb says which: `describe…`, `get…` and `list…` answer what something is, `open…` a picker or a list, `plan…` a plan, `check…` refuses or answers what it checked, `validate…` a path's validation, `build…` the view, its copy-on-write data and its source chain (`buildRulesetView`, `buildCowData`, `buildSourceChain`), `merge…` the rows a copy takes of its siblings, and `to…` a conversion (`toEntityProperties`).
 
-An entity's fields are its fields class's: their type, and the codec that reads them off its properties and gives them back as id-less `PropertyValue`s (`skills/SkillFields.ts`: `SkillFieldValues`, `SkillFields.read`, `SkillFields.toProperties`). Its entity class describes it and plans its saves with them (`skills/SkillEntity.ts`), the character's loader reads with them, and the seeders write with them (`toEntityProperties`):
+An entity's fields are its fields class's: their type, and the codec that reads them off its properties and gives them back as id-less `PropertyValue`s (`skills/SkillFields.ts`: `SkillFieldValues`, `SkillFields.read`, `SkillFields.toProperties`). Its entity class describes it and plans its saves with them (`skills/SkillEntity.ts`: a save's row, what it writes beside it, and the skill it answers once saved), the character's loader reads with them, and the seeders write with them (`toEntityProperties`):
 
 ```ts
 // engine/rulesets/dnd3.5/skills/SkillEntity.ts
 export default class SkillEntity {
-  static planSave(
-    _view: RulesetView,
+  private static planRow(view: RulesetView, body: SkillBody, before?: { name: string }) {
+    const writes = SkillEntity.planSave(view, body, before);
+    const fields = SkillFields.read(writes.properties?.values ?? []);
+    const { description, name, primaryAbilityId } = body;
+    return {
+      columns: { description, name, primaryAbilityId },
+      describe: <T extends { id: string }>(row: T): T & SkillFieldValues => ({ ...row, ...fields }),
+      writes,
+    };
+  }
+
+  private static planSave(
+    view: RulesetView,
     skill: SkillFieldValues & { name: string },
     before?: { name: string },
   ): EntityWrites {
@@ -619,9 +647,9 @@ export default class SkillEntity {
     const renamed = before?.name !== skill.name;
     return {
       columns: {},
-      generatedFeats: renamed ? [writeSkillFocus(skill.name)] : [],
+      generatedFeats: renamed ? writeSkillFocus(view, skill.name) : [],
       properties: { types: SKILL_FIELD_PROPERTY_TYPES, values: SkillFields.toProperties(fields) },
-      removedFeats: before && renamed ? [removeSkillFocus(before.name)] : [],
+      removedFeats: before && renamed ? removeSkillFocus(view, before.name) : [],
     };
   }
 }
@@ -629,21 +657,21 @@ export default class SkillEntity {
 
 A small rule several of a ruleset's modules share, a constant or a predicate, is the ruleset's own (`levels/Dnd35LevelsRules.ts`: `isAbilityIncreaseLevel`, `countGeneralFeats`, `GENERAL_FEATS_APTITUDE`), which they import: it's no part of the contract.
 
-A bound the client and the API check too is a constant of the ruleset's shared vocabulary, which every side reads instead of writing the number: `MAX_SPELL_LEVEL` (`shared/dnd3.5/spells.ts`) for the aptitudes' spell levels, the spellcasting and the spell forms, and `MAX_CLASS_LEVEL` (`shared/dnd3.5/classes.ts`) for the class-level forms and the bonus caster levels. The routes read them through the engine (`RULESET_LIMITS`).
+A bound the client and the API check too is a constant of the ruleset's shared vocabulary, which every side reads instead of writing the number: `MAX_SPELL_LEVEL` (`shared/dnd3.5/spells.ts`) for the aptitudes' spell levels, the spellcasting and the spell forms, `MAX_CLASS_LEVEL` (`shared/dnd3.5/classes.ts`) for the class-level forms and the bonus caster levels, `MAX_ABILITY_SCORE` (`shared/dnd3.5/abilities.ts`) for a new character's ability scores and the sheet's, and `MAX_ITEM_VARIANTS` (`shared/itemTemplates.ts`) for the variants form. The routes read them through the engine (`RULESET_LIMITS`), and a character's last level with them (`MAX_CHARACTER_LEVEL`, `shared/dnd3.5/classes.ts`: the most levels a level-up saves).
 
 More complex operations (bound to the detailed character, returning rich data) belong on the ruleset's level-up classes (`LevelUpState` and its concerns, `Projects`, `ChecksSelections`, `AnnotatesOptions`) or on its character (a concern of `DetailedCharacter`), which an operation builds from the input it's given (`CharacterBuilder.build`).
 
 ### The level flows ask the module
 
-The level flows (`server/services/characters/levels/`: the preview, a save, an edit, a removal, the wizard's steps and pickers, a level's selections, the bonded creatures' writes) are the server's: they read the character's rows (`readCharacterInput`, `readBondedInputs`; a save's in its transaction, the character locked), ask the engine, and write what it plans. What a level-up is, its rules, is the module's `levelUp` (the 3.5 module's `Dnd35LevelUp`, which opens a class per operation: the planned levels' class levels and projections, the preview and a save's distribution, the checks a save makes, the steps' slots, the pickers' filters and options, a level's selections, the bonded creatures' plans), which build the characters a step needs from the rows they're given. A second ruleset gives its module a level-up of its own; no line of the server changes.
+The level flows (`server/services/characters/levels/`: the preview, a save, an edit, a removal, the wizard's steps and pickers, a level's selections, the bonded creatures' writes) are the server's: they read the character's rows (`readCharacterInput`, `readBondedInputs`; a save's in its transaction, the character locked), ask the engine, and write what it plans. What a level-up is, its rules, is the module's `levelUp` (the 3.5 module's `Dnd35LevelUp`, which opens a class per operation: the planned levels' class levels and projections, the preview and a save's distribution, the checks a save makes, the last level's removal, the steps' slots, the pickers' filters and options, a level's selections, the bonded creatures' plans), which build the characters a step needs from the rows they're given. A second ruleset gives its module a level-up of its own; no line of the server changes.
 
-Entity CRUD services (`FeatsService`, `PowersService`, `SkillsService`, `ClassLevelsService`, `AptitudesService`, …) operate on rows of the generic schema, and ask the module's `entities` what's ruleset-specific about them: an entity's fields, what saving it writes, what its rules refuse.
+Entity CRUD services (`FeatsService`, `PowersService`, `SkillsService`, `ClassLevelsService`, `AptitudesService`, …) operate on rows of the generic schema, and ask the module's `entities` what's ruleset-specific about them, one operation per action: an entity's fields, what saving it writes, what its rules refuse. Their customizations' services (`ModifiersService`, `PropertiesService`, `RequirementsService`, `PropertyTypesService`) ask the engine's customizations and property types the same way.
 
 ### Routes
 
 The level routes (`server/routers/api/characters/levels/index.ts`) take the generic schema's level-up: class levels, skill ranks, and feats and powers by their pool; the module reads what its own pickers take (a spell level, a specialist's excluded schools).
 
-A body's fields that a ruleset's rules take, and the bounds they set on its columns, are the engine's (`ENTITY_FIELDS`, `RULESET_LIMITS`, the 3.5 module's today: a second module's join them), which a route spreads into its schema (`...ENTITY_FIELDS.skills`, `.max(RULESET_LIMITS.spellLevel)`). The server imports nothing of `shared/dnd3.5/`.
+A body's fields that a ruleset's rules take, and the bounds they set on its columns, are the engine's (`ENTITY_FIELDS`, `RULESET_LIMITS`, the 3.5 module's today: a second module's join them), which a route spreads into its schema (`...ENTITY_FIELDS.skills`, `.max(RULESET_LIMITS.spellLevel)`). A character's alignment and gender are the database's enums, whose options `shared/enums.ts` writes out (`ALIGNMENT_OPTIONS`, `GENDER_OPTIONS`). The server imports nothing of `shared/dnd3.5/`.
 
 ### What's intentionally generic schema, not ruleset-specific
 
@@ -659,11 +687,11 @@ The 3.5-ness in these tables lives in the **seeded values**, not the schema shap
 
 A ruleset is a module under `engine/rulesets/<ruleset>/`, which the engine's entry dispatches to by its base rules: the server, the seeders and the codegen call the same operations, and no line of theirs changes.
 
-1. **Define the module**: a class of `engine/rulesets/<ruleset>/` (3.5's `Dnd35Module.ts`), whose factory (`Dnd35Module.create`) returns a `RulesetModule` of its own (`Dnd35RulesetModule`): its parts, `characters`, `entities`, `levelUp` and `content`, each a class whose methods are the operations of `engine/api/` of the same names and arguments; its factories, `createTargetPaths` and `createPropertyTypes`; and `orderProperties`, the order its view keeps an entity's properties in. A new ruleset's template items come with its base, which its content package seeds: a fork reads them through its chain.
+1. **Define the module**: a class of `engine/rulesets/<ruleset>/` (3.5's `Dnd35Module.ts`), whose factory (`Dnd35Module.create`) returns a `RulesetModule` of its own (`Dnd35RulesetModule`): its parts, `characters`, `entities`, `levelUp` and `content`, each a class whose methods are the operations of `engine/api/` of the same names and arguments, and what an operation asks of them (`describeCharacterCard`, which `describeCharacterCards` asks for each character; `checkPlayable`, which `checkPublishable` asks of a ruleset); its factories, `createTargetPaths` and `createPropertyTypes`; and `orderProperties`, the order its view keeps an entity's properties in. A new ruleset's template items come with its base, which its content package seeds: a fork reads them through its chain.
 2. **Write its character** in `engine/rulesets/<ruleset>/character/`: its state (`CharacterState`), the concerns that build and validate it, its components and how they're wired (`CharacterComponents.build`), `DetailedCharacter`, which includes the concerns, and what builds one of its row's kind from its input (`CharacterBuilder.build`). 3.5's are typed against its own components and rows: a second ruleset writes its own, taking the engine's machinery (the evaluators, the paths, the module contract).
-3. **Write its target paths**: a `CategoryPaths` subclass (`Dnd35TargetPaths`) over its categories, one `PathCategory` per domain (`AbilitiesPaths`, `CombatPaths`, …), which `createTargetPaths` returns and the evaluators walk; and its property types (`Dnd35PropertyTypes`), which `createPropertyTypes` returns. See [target-paths.md](./target-paths.md).
-4. **Write its entities**: a fields class for each entity whose fields its rules keep in properties (`skills/SkillFields.ts`), the entity class that describes it and plans its saves (`skills/SkillEntity.ts`), and the body's fields and bounds a route validates with (`entityFields.ts`: `ENTITY_FIELDS`, `RULESET_LIMITS`), which join 3.5's in what `engine/index.ts` exports.
-5. **Write its level-up**: its projection (3.5's `Dnd35ProjectedCharacterData`), a class per operation on a base of what they share (3.5's `LevelUpState`, its concerns, and `LevelUpPlan`, `LevelEdit`, `LevelUpSteps`, the pickers…), and the class its `levelUp` part is, which opens them (`Dnd35LevelUp`).
+3. **Write its target paths**: a `CategoryPaths` subclass (`Dnd35TargetPaths`) over its categories, one `PathCategory` per domain (`AbilitiesPaths`, `CombatPaths`, …), which `createTargetPaths` returns and the evaluators walk; and its property types (`Dnd35PropertyTypes`), which `createPropertyTypes` returns: the types and values its rules read, which the core's `PropertyTypeCatalog` lists with those the ruleset's own properties use. See [target-paths.md](./target-paths.md).
+4. **Write its entities**: a fields class for each entity whose fields its rules keep in properties (`skills/SkillFields.ts`), the entity class that describes it and plans its saves (`skills/SkillEntity.ts`), what a ruleset needs to be played (3.5's `PlayableContent`), and the body's fields and bounds a route validates with (`entityFields.ts`: `ENTITY_FIELDS`, `RULESET_LIMITS`), which join 3.5's in what `engine/index.ts` exports.
+5. **Write its level-up**: its projection (3.5's `Dnd35ProjectedCharacterData`), a class per operation on a base of what they share (3.5's `LevelUpState`, its concerns, and `LevelUpPlan`, `LevelEdit`, `LevelRemoval`, `LevelUpSteps`, the pickers…), and the class its `levelUp` part is, which opens them (`Dnd35LevelUp`).
 6. **Register the module**: add it to `MODULES` in `engine/api/modules.ts` (`getRulesetModule`), keyed by its base rules (`BaseRules`, `shared/enums.ts`): until it is, the engine doesn't compile.
 7. **Write its content**: `content/<ruleset>/` (its builders and its data), the package that seeds it (`database/packages/`), and, for books it scrapes, its codegen (`codegen/<ruleset>/`). See [packages.md](./packages.md).
 
@@ -707,12 +735,12 @@ An audit on 2026-04-16 identified real leaks and some false alarms. It predates 
 | `server/services/characters/characterInputs.ts` | `readCharacterInput`, `readBondedInputs`: a character's rows, read in its ruleset's scope, which the engine builds it from |
 | `server/repositories/*Repository.ts` | COW-aware SQL queries with snapshot exclusion |
 | `engine/index.ts` | The engine's one entry: its operations and their types, and a body's ruleset fields and bounds (`ENTITY_FIELDS`, `RULESET_LIMITS`) |
-| `engine/api/` | The operations, a file per part, each dispatched to the ruleset's module by its base rules (`modules.ts`: `getRulesetModule`) |
+| `engine/api/` | The operations, a file per part, each dispatched to the ruleset's module by its base rules (`modules.ts`: `getRulesetModule`), or to the core's classes with the module's factories (`customizations.ts`, `properties.ts`) |
 | `engine/core/types.ts` | The universal types (`RulesetView`, `Components`, the paths' `TargetPathsInterface`, …) |
 | `engine/core/module/` | The module's contract (`contract.ts`: `RulesetModule`, `DetailedCharacterInterface`, `CharacterInput`, `CharacterRows`), and what saving an entity writes (`writes.ts`: `EntityWrites`) |
 | `engine/rulesets/dnd3.5/types.ts` | 3.5's types (`Dnd35RulesetModule`, `CharacterKind`, `Dnd35ProjectedCharacterData`, `LoadedCharacterData`) |
 | `engine/rulesets/dnd3.5/character/` | The 3.5 character: its state (`CharacterState`), its concerns (`Builds`, `Validates`, `PossessesVirtually`), its components (`CharacterComponents`), `DetailedCharacter`, which wires them, and `CharacterBuilder`, which builds one from its input |
-| `engine/core/` | The machinery: `ModifierEvaluator`, `RequirementEvaluator`, the path walk and the path language (`paths/`), the ruleset view (`view/`), copy-on-write's state (`cow/`) |
+| `engine/core/` | The machinery: `ModifierEvaluator`, `RequirementEvaluator`, the path walk and the path language (`paths/`), the ruleset view (`view/`), copy-on-write's state (`cow/`), an entity's customizations and the property types (`customizations/`) |
 | `engine/rulesets/dnd3.5/` | 3.5 implementation: its module's parts (`Dnd35Characters`, `Dnd35Entities`, `Dnd35LevelUp`, `Dnd35Content`), the character (`character/`), its loader (`loading/`), its components and path categories by domain (`abilities/`, `skills/`, `combat/`…), with each entity's fields and what saving it writes (`skills/SkillFields.ts`, `skills/SkillEntity.ts`, …), `Dnd35TargetPaths`, the API's sheet (`response/`) and the printed one (`sheet/`) |
 | `engine/rulesets/dnd3.5/character/concerns/Builds.ts` | The build: the loader (`loading/`) gives each entity the modifiers and requirements the compose step merged into `rulesetData`, then the components, the possession pre-pass and the modifier rounds run |
 | `database/packages/dnd35/seed/concerns/CopiesOnWrite.ts` | Seed-time COW: copies the core feats and spells an extension changes |

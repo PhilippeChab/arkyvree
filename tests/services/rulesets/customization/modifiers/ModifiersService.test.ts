@@ -1,13 +1,14 @@
 import { describe, expect, test } from "bun:test";
 
 import { modifiersInCustomization, powersAptitudesInRules, requirementsInCustomization } from "@/drizzle/schema.ts";
+import { readTargetPaths } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
-import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
+import { ForbiddenError } from "@/server/errors/index.ts";
 import { Abilities, Aptitudes, Feats, Items, Powers, Races, Requirements } from "@/server/repositories/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
-import { getTargetPathsWithLabels } from "@/server/services/rulesets/customization/targetPaths/index.ts";
 import { activityTypes } from "@/tests/support/activities.ts";
+import { expectRefusedWith } from "@/tests/support/api.ts";
 import { insertRows } from "@/tests/support/database.ts";
 import { createTestKlassLevel } from "@/tests/support/levels.ts";
 import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
@@ -68,7 +69,7 @@ describe("ModifiersService", () => {
     const [spell] = await Powers.create(db, { name: "Test Glow", rulesetId });
     await insertRows(powersAptitudesInRules, [{ powerId: spell.id, aptitudeId: list.id, level: 1 }]);
     const knownPath = async () =>
-      (await getTargetPathsWithLabels(rulesetId, "requirement")).paths.some(
+      (await readTargetPaths(rulesetId, "requirement")).paths.some(
         (path) => path.path === "powers.testglow.testlight.known",
       );
     expect(await knownPath()).toBe(true);
@@ -107,12 +108,10 @@ describe("ModifiersService", () => {
     const { session: other } = await createTestUserAndRuleset();
     const created = await ModifiersService.createModifier(session, rulesetId, "feats", feat.id, strengthBonus);
 
-    await expect(ModifiersService.getModifiers(NIL_UUID, "feats", feat.id)).rejects.toThrow(NotFoundError);
-    await expect(ModifiersService.getModifiers(rulesetId, "feats", NIL_UUID)).rejects.toThrow(NotFoundError);
-    await expect(ModifiersService.getModifier(rulesetId, "feats", feat.id, NIL_UUID)).rejects.toThrow(NotFoundError);
-    await expect(ModifiersService.createModifier(session, rulesetId, "feats", NIL_UUID, strengthBonus)).rejects.toThrow(
-      NotFoundError,
-    );
+    await expectRefusedWith(ModifiersService.getModifiers(NIL_UUID, "feats", feat.id), 404);
+    await expectRefusedWith(ModifiersService.getModifiers(rulesetId, "feats", NIL_UUID), 404);
+    await expectRefusedWith(ModifiersService.getModifier(rulesetId, "feats", feat.id, NIL_UUID), 404);
+    await expectRefusedWith(ModifiersService.createModifier(session, rulesetId, "feats", NIL_UUID, strengthBonus), 404);
     await expect(ModifiersService.createModifier(other, rulesetId, "feats", feat.id, strengthBonus)).rejects.toThrow(
       ForbiddenError,
     );
@@ -124,8 +123,8 @@ describe("ModifiersService", () => {
       (s = session, entityId = feat.id, id = created.id) =>
         ModifiersService.duplicateModifier(s, rulesetId, "feats", entityId, id, strengthBonus),
     ]) {
-      await expect(change(session, feat.id, NIL_UUID)).rejects.toThrow(NotFoundError);
-      await expect(change(session, item.id)).rejects.toThrow(NotFoundError);
+      await expectRefusedWith(change(session, feat.id, NIL_UUID), 404);
+      await expectRefusedWith(change(session, item.id), 404);
       await expect(change(other)).rejects.toThrow(ForbiddenError);
     }
   });
@@ -140,7 +139,7 @@ describe("ModifiersService", () => {
         updatedAt: created.updatedAt,
       });
     await edit("3");
-    await expect(edit("4")).rejects.toThrow(ConflictError);
+    await expectRefusedWith(edit("4"), 409);
   });
 
   test("duplicates a modifier with a copy of its requirement tree", async () => {

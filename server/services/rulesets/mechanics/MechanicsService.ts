@@ -1,7 +1,8 @@
 import { getTableName } from "drizzle-orm";
 
 import { mechanicsInRules } from "@/drizzle/schema.ts";
-import { findScopedEntity, RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { getEntity } from "@/engine/index.ts";
+import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
@@ -21,7 +22,8 @@ class MechanicsService {
   ) {
     const result = await withTransaction(
       async (tx) =>
-        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        await withRulesetScope(tx, rulesetId, async (scope) => {
+          const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
@@ -50,13 +52,13 @@ class MechanicsService {
   async deleteMechanic(session: Session, rulesetId: string, mechanicId: string) {
     const result = await withTransaction(
       async (tx) =>
-        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-          const { sourceChain } = rulesetData.cow;
+        await withRulesetScope(tx, rulesetId, async (scope) => {
+          const { ruleset, rulesetData } = scope;
 
           // Mechanics have no character-level pick table, so no in-use check.
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity();
 
-          const mechanic = findScopedEntity(rulesetData.mechanicsById, mechanicId, rulesetId, sourceChain, "Mechanic");
+          const mechanic = getEntity(scope, "mechanics", mechanicId);
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const targetId = await edit.cowToDelete(tx, "mechanics", mechanic);
@@ -80,9 +82,8 @@ class MechanicsService {
   }
 
   async getMechanic(rulesetId: string, mechanicId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const mechanic = findScopedEntity(rulesetData.mechanicsById, mechanicId, rulesetId, sourceChain, "Mechanic");
+    return await withRulesetScope(db, rulesetId, async (scope) => {
+      const mechanic = getEntity(scope, "mechanics", mechanicId);
       return mechanic;
     });
   }
@@ -97,7 +98,8 @@ class MechanicsService {
     },
     pagination: { limit: number; page: number },
   ) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+    return await withRulesetScope(db, rulesetId, async (scope) => {
+      const { rulesetData } = scope;
       const { sourceChain } = rulesetData.cow;
       return await Mechanics.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
     });
@@ -115,12 +117,12 @@ class MechanicsService {
   ) {
     const result = await withTransaction(
       async (tx) =>
-        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-          const { sourceChain } = rulesetData.cow;
+        await withRulesetScope(tx, rulesetId, async (scope) => {
+          const { ruleset, rulesetData } = scope;
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const mechanic = findScopedEntity(rulesetData.mechanicsById, mechanicId, rulesetId, sourceChain, "Mechanic");
+          const mechanic = getEntity(scope, "mechanics", mechanicId);
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "mechanics", mechanic);

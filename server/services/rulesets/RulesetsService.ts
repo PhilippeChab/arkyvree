@@ -187,8 +187,8 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
 
       if (body.kind === "extension" && ruleset.kind !== "extension") this.assertCanBeExtension(ruleset);
 
-      const { updatedAt, ...rulesetData } = body;
-      const rows = await Rulesets.update(tx, rulesetData, { id, expectedUpdatedAt: updatedAt });
+      const { updatedAt, ...columns } = body;
+      const rows = await Rulesets.update(tx, columns, { id, expectedUpdatedAt: updatedAt });
       if (updatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
       const updatedRuleset = rows[0];

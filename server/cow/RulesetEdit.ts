@@ -253,7 +253,7 @@ export default class RulesetEdit {
   }
 
   /**
-   * The row an edit of `entity` (from `findScopedEntity`) writes: the ruleset's own entity, or the copy of an inherited
+   * The row an edit of `entity` (as the engine found it in the view) writes: the ruleset's own entity, or the copy of an inherited
    * one, made on its first edit. A copy takes no stale-edit check: the client's `updatedAt` is the source's.
    */
   async cowToEdit(

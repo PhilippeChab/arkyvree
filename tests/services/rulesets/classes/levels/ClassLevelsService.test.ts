@@ -11,7 +11,7 @@ import {
 } from "@/drizzle/schema.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
-import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
+import { ConflictError, ForbiddenError, toJson } from "@/server/errors/index.ts";
 import {
   Abilities,
   Aptitudes,
@@ -32,6 +32,7 @@ import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/shared/dnd3.5/properties/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { insertRows } from "@/tests/support/database.ts";
 import { addCharacterLevel } from "@/tests/support/levels.ts";
@@ -300,11 +301,11 @@ describe("ClassLevelsService", () => {
     for (const [what, call] of cases) {
       expect({
         what,
-        error: await call().then(
+        status: await call().then(
           () => null,
-          (error: Error) => error.constructor,
+          (error: Error) => toJson(error)[1],
         ),
-      }).toEqual({ what, error: NotFoundError });
+      }).toEqual({ what, status: 404 });
     }
   });
 
@@ -400,11 +401,12 @@ describe("ClassLevelsService", () => {
       const other = await setup();
       const otherLevel = await createLevel(other.session, other.ruleset.id, other.klass.id, 1);
 
-      await expect(createLevel(session, fork.id, other.klass.id, 1)).rejects.toThrow(NotFoundError);
-      await expect(
+      await expectRefusedWith(createLevel(session, fork.id, other.klass.id, 1), 404);
+      await expectRefusedWith(
         ClassLevelsService.updateClassLevel(session, fork.id, other.klass.id, otherLevel.id, { bab: 2 }),
-      ).rejects.toThrow(NotFoundError);
-      await expect(ClassLevelsService.getClassLevelSpells(fork.id, other.klass.id)).rejects.toThrow(NotFoundError);
+        404,
+      );
+      await expectRefusedWith(ClassLevelsService.getClassLevelSpells(fork.id, other.klass.id), 404);
     });
   });
 });

@@ -1,11 +1,17 @@
 import { getTableName } from "drizzle-orm";
 
 import { charactersInCharacter } from "@/drizzle/schema.ts";
-import { describeCharacter, openRacePicker } from "@/engine/index.ts";
+import {
+  checkCharacterLanguages,
+  describeCharacter,
+  describeCharacterCards,
+  openRacePicker,
+  planCharacterCreate,
+} from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
-import { findScopedEntity, withRulesetScope, withRulesetScopes } from "@/server/cache/rulesetCache/index.ts";
+import { type RulesetScope, withRulesetScope, withRulesetScopes } from "@/server/cache/rulesetCache/index.ts";
 import { db, type Db, withTransaction } from "@/server/database/index.ts";
-import { BadRequestError, ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
+import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import {
   Activities,
   Campaigns,
@@ -23,33 +29,27 @@ import type { Alignment, Gender } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
 import { readBondedInputs, readCharacterInput } from "./characterInputs.ts";
-import { getClassLevelsByCharacter } from "./classLevels.ts";
 import { Archives } from "./concerns/Archives.ts";
 import { findEditableCharacterOrBonded, getEditableCharacter } from "./editableCharacter.ts";
 import { enqueueCharacterPdf, findExportableCharacter } from "./pdf.ts";
 
 class CharactersService extends include(Object, Archives) {
   /**
-   * Replace a character's language set in-place. Validates each id resolves
-   * to a language in the character's ruleset (or its COW ancestor chain),
-   * then deletes existing rows and inserts the new set. Caller is responsible
-   * for the surrounding transaction + withRulesetScope.
+   * Replace a character's language set in-place, the engine refusing those it can't speak (`checkCharacterLanguages`):
+   * deletes the existing rows and inserts the new set. Caller is responsible for the surrounding transaction and its
+   * ruleset's scope.
    */
   private async replaceCharacterLanguages(
     tx: Db,
+    scope: RulesetScope,
     characterRecord: { id: string; rulesetId: string },
-    rulesetData: { cow: { sourceChain: string[] } },
     languageIds: string[],
   ): Promise<void> {
     // Proxy auto-canonicalizes the `ids` input through cowContext, so
     // Languages.findMany returns the post-COW rows regardless of which
     // form the client sent.
     const languages = await Languages.findMany(tx, { ids: languageIds });
-    if (languages.length !== languageIds.length) throw new BadRequestError("Some languages were not found");
-
-    const validRulesetIds = new Set([characterRecord.rulesetId, ...rulesetData.cow.sourceChain]);
-    if (languages.some((l) => !validRulesetIds.has(l.rulesetId)))
-      throw new BadRequestError("Some languages do not belong to the character's ruleset");
+    checkCharacterLanguages(scope, characterRecord.rulesetId, languageIds, languages);
 
     const existing = await CharacterLanguages.findMany(tx, { characterId: characterRecord.id });
     for (const lang of existing)
@@ -80,17 +80,9 @@ class CharactersService extends include(Object, Archives) {
   ) {
     return await withTransaction(
       async (tx) =>
-        await withRulesetScope(tx, characterData.rulesetId, async ({ ruleset, rulesetData }) => {
-          (await RulesetsPolicy.for(tx, session, ruleset)).canCreateCharacter();
-
-          const race = findScopedEntity(
-            rulesetData.racesById,
-            characterData.raceId,
-            characterData.rulesetId,
-            rulesetData.cow.sourceChain,
-            "Race",
-          );
-          if (race.kind !== "pc") throw new BadRequestError("Race is not valid for a player character");
+        await withRulesetScope(tx, characterData.rulesetId, async (scope) => {
+          (await RulesetsPolicy.for(tx, session, scope.ruleset)).canCreateCharacter();
+          const plan = planCharacterCreate(scope, characterData);
 
           const [newCharacter] = await Characters.create(tx, {
             userId: session.userId,
@@ -109,17 +101,10 @@ class CharactersService extends include(Object, Archives) {
             privateNotes: characterData.privateNotes,
           });
 
-          // Create character ability scores from ruleset abilities
-          if (rulesetData.abilities.length > 0) {
-            await CharacterAbilities.createMany(
-              tx,
-              rulesetData.abilities.map((ability) => ({
-                characterId: newCharacter.id,
-                abilityId: ability.id,
-                score: characterData.abilities[ability.id] ?? 10,
-              })),
-            );
-          }
+          await CharacterAbilities.createMany(
+            tx,
+            plan.abilities.map((ability) => ({ characterId: newCharacter.id, ...ability })),
+          );
 
           // Log the activity
           await Activities.create(tx, {
@@ -153,16 +138,17 @@ class CharactersService extends include(Object, Archives) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
       const { sourceChain } = scope.rulesetData.cow;
 
+      const picker = openRacePicker(scope, formData);
       // Races.findPage's output has its FK fields auto-resolved by
       // the Proxy since cowContext is active. No manual `CowData.resolveRows` pass.
       const result = await Races.findPage(
         db,
-        { rulesetId, ancestorRulesetIds: sourceChain, kind: "pc", search: where.search },
+        { rulesetId, ancestorRulesetIds: sourceChain, ...picker.filters, search: where.search },
         pagination,
       );
 
       // The requirements come from the composed view, which merges siblings' into the winner's
-      const items = openRacePicker(scope, formData).annotate(result.items);
+      const items = picker.annotate(result.items);
       return { items, page: result.page, nextPage: result.nextPage };
     });
   }
@@ -205,29 +191,21 @@ class CharactersService extends include(Object, Archives) {
 
     const levels = await CharacterLevels.findMany(db, { characterIds });
 
-    // Resolve race / klass names via each character's composed ruleset cache
-    // so COW'd or renamed entities render their post-COW names (the detail
-    // page already does this via rulesetData; the list used to hit Races/
-    // Klasses.findMany directly and returned stale pre-COW names).
+    // Each card from its character's ruleset's view: a copied or renamed race or class shows its name there
     return await withRulesetScopes(
       db,
       charactersList.map((c) => c.rulesetId),
-      async (rulesetDataByRulesetId) => {
-        const classLevelsByCharacter = getClassLevelsByCharacter(charactersList, levels, rulesetDataByRulesetId);
-
-        // Map to final format
+      async (views) => {
+        const cards = describeCharacterCards(views, charactersList, levels);
         const enrichedCharacters = charactersList.map((char) => {
-          const classLevels = classLevelsByCharacter.get(char.id) ?? [];
-          const rulesetData = rulesetDataByRulesetId.get(char.rulesetId);
-          const race = rulesetData?.racesById.get(char.raceId);
-
+          const { levels: classLevels, race, totalLevel } = cards.get(char.id)!;
           return {
             id: char.id,
             name: char.name,
             description: char.description,
-            race: race?.name ?? "Unknown",
+            race,
             levels: classLevels,
-            totalLevel: classLevels.reduce((sum, lvl) => sum + lvl.level, 0),
+            totalLevel,
             accessRole: char.accessRole,
           };
         });
@@ -313,8 +291,8 @@ class CharactersService extends include(Object, Archives) {
       // `[]` = clear all. Wrapped in withRulesetScope because language ids
       // need COW canonicalization against the character's ruleset.
       if (languageIds !== undefined) {
-        await withRulesetScope(tx, characterRecord.rulesetId, async ({ rulesetData }) => {
-          await this.replaceCharacterLanguages(tx, characterRecord, rulesetData, languageIds);
+        await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
+          await this.replaceCharacterLanguages(tx, scope, characterRecord, languageIds);
         });
       }
 
@@ -333,8 +311,8 @@ class CharactersService extends include(Object, Archives) {
     return await withTransaction(async (tx) => {
       const characterRecord = await getEditableCharacter(tx, session, characterId);
 
-      return await withRulesetScope(tx, characterRecord.rulesetId, async ({ rulesetData }) => {
-        await this.replaceCharacterLanguages(tx, characterRecord, rulesetData, languageIds);
+      return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
+        await this.replaceCharacterLanguages(tx, scope, characterRecord, languageIds);
 
         await Activities.create(tx, {
           userId: session.userId,

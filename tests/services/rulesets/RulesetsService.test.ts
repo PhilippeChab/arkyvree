@@ -341,17 +341,19 @@ describe("RulesetsService", () => {
     test("names the kinds of content still missing, not counting deleted rows", async () => {
       const { user, session } = await createTestUser();
       const empty = await createTestRuleset(user.id);
-      await expect(RulesetsService.publishRuleset(session, empty.id)).rejects.toEqual(
-        new UnprocessableEntityError("Ruleset requires at least one of each: race, class, skill, feat"),
-      );
+      await expect(RulesetsService.publishRuleset(session, empty.id)).rejects.toMatchObject({
+        refusal: "unprocessable",
+        message: "Ruleset requires at least one of each: race, class, skill, feat",
+      });
 
       const partial = await createTestRuleset(user.id);
       const { race, klass } = await addPlayableContent(partial.id);
       await Races.delete(db, { id: race.id });
       await Klasses.delete(db, { id: klass.id });
-      await expect(RulesetsService.publishRuleset(session, partial.id)).rejects.toEqual(
-        new UnprocessableEntityError("Ruleset requires at least one of each: race, class"),
-      );
+      await expect(RulesetsService.publishRuleset(session, partial.id)).rejects.toMatchObject({
+        refusal: "unprocessable",
+        message: "Ruleset requires at least one of each: race, class",
+      });
     });
 
     test("publishes a fork as an extension without playable content, unless it isn't a fork or uses extensions itself", async () => {

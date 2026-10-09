@@ -48,6 +48,7 @@ import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import type { Session } from "@/shared/relations.ts";
+import { expectRefusedWith } from "@/tests/support/api.ts";
 import { buildAs, createTestCharacter } from "@/tests/support/characters.ts";
 import { addCharacterLevel, createTestKlassLevel, pickFeat } from "@/tests/support/levels.ts";
 import {
@@ -336,7 +337,7 @@ describe("subscribing to an extension", () => {
     await expect(subscribe(extension.id, session, archived.id)).rejects.toThrow(UnprocessableEntityError);
     await expect(subscribe(extension.id, other)).rejects.toThrow(ForbiddenError);
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
-    await expect(subscribe(extension.id)).rejects.toThrow(ConflictError);
+    await expectRefusedWith(subscribe(extension.id), 409);
   });
 
   test("refuses extensions to a fork others use as one", async () => {
@@ -493,7 +494,7 @@ describe("unsubscribing from an extension", () => {
     });
     expect((await Rulesets.findOne(db, { id: draft.id }))!.extensionRulesetIds).toEqual([]);
     expect(await featsNamed(draft.id, "Monkey Grip")).toEqual([]);
-    await expect(FeatsService.getFeat(draft.id, monkeyGrip.id)).rejects.toThrow(NotFoundError);
+    await expectRefusedWith(FeatsService.getFeat(draft.id, monkeyGrip.id), 404);
     expect(await EntitySnapshots.findMany(db, { rulesetId: draft.id })).toEqual([]);
     expect(await RulesetExtensions.findMany(db, { rulesetId: draft.id })).toEqual([]);
 
@@ -838,7 +839,7 @@ describe("an extension's content in a fork", () => {
     const create = (name: string) =>
       FeatsService.createFeat(session, draft.id, { name, aptitudeIds: [aptMap["General"]] });
 
-    await expect(create("Monkey Grip")).rejects.toThrow(ConflictError);
+    await expectRefusedWith(create("Monkey Grip"), 409);
     await FeatsService.updateFeat(session, draft.id, (await warriorFeat("Monkey Grip")).id, {
       name: "Monkey Grip",
       description: "Mine",

@@ -1,20 +1,19 @@
-/** A class and its levels as a ruleset's entities: their fields, and what saving a level writes. */
+/** A class as a ruleset's entity: its fields, and what its save stores. */
 
-import type { EntityWrites } from "@/engine/core/module/index.ts";
+import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/types.ts";
 import { KLASS_BONUS_SPELL_ABILITY_ID, KLASS_CASTER_TYPE } from "@/shared/dnd3.5/properties/index.ts";
 
-import ClassesPaths from "./ClassesPaths.ts";
 import ClassFields from "./ClassFields.ts";
-import ClassLevelFields, { CLASS_LEVEL_FIELD_PROPERTY_TYPES, type ClassLevelFieldValues } from "./ClassLevelFields.ts";
 
-/** A class and its levels as the ruleset describes them, and what a class level's save writes. */
+/** A class as the ruleset describes it, and what its save stores. */
 export default class ClassEntity {
   /**
    * A class with its fields, and the ids of the properties that keep them, which its page edits them through: the
    * ability its bonus spells use, and the spells it casts.
    */
-  static describe<T extends { id: string }>(view: RulesetView, klass: T) {
+  static describe(view: RulesetView, klassId: string) {
+    const klass = ClassEntity.find(view, klassId);
     const properties = view.rulesetData.propertiesByEntity.get(klass.id) ?? [];
     const { bonusSpellAbilityId, casterType } = ClassFields.read(properties);
     const idOf = (type: string) => properties.find((property) => property.type === type)?.id ?? null;
@@ -27,45 +26,15 @@ export default class ClassEntity {
     };
   }
 
-  /** A class's levels with the fields their properties keep: those given (`properties`, a save's), or the view's. */
-  static describeLevels<T extends { id: string }>(
-    view: RulesetView,
-    levels: T[],
-    properties: { entityId: string; type: string; value: string }[] = levels.flatMap(
-      (level) => view.rulesetData.propertiesByEntity.get(level.id) ?? [],
-    ),
-  ): (T & ClassLevelFieldValues)[] {
-    const propertiesByLevelId = Map.groupBy(properties, (property) => property.entityId);
-    return levels.map((level) => ({ ...level, ...ClassLevelFields.read(propertiesByLevelId.get(level.id) ?? []) }));
+  /** A class as the view has it: refused when there's none of its id. */
+  static find(view: RulesetView, klassId: string) {
+    const klass = view.rulesetData.find("klasses", klassId);
+    if (!klass) throw new RulesError("not-found", "Class not found in this ruleset");
+    return klass;
   }
 
-  /**
-   * What saving a level of `klass` writes (`before`: the properties it kept, for an edit): its base attack and skill
-   * points, those an edit doesn't give kept, and, made with a level past the class's first, its requirement of the
-   * class's previous level (`classes.<slug>.level` above it). An edit that gives neither keeps them.
-   */
-  static planLevelSave(
-    _view: RulesetView,
-    klass: { name: string },
-    level: Partial<ClassLevelFieldValues> & { level?: number },
-    before?: { properties: { type: string; value: string }[] },
-  ): EntityWrites {
-    const writes: EntityWrites = { columns: {}, generatedFeats: [], removedFeats: [] };
-    if (!before && level.level !== undefined && level.level > 1) {
-      writes.requirement = {
-        level: "1",
-        target: ClassesPaths.level(klass.name),
-        value: (level.level - 1).toString(),
-        valueType: "number",
-        operator: "greater_than",
-      };
-    }
-    if (level.bab === undefined && level.skills === undefined) return writes;
-    const kept = ClassLevelFields.read(before?.properties ?? []);
-    const fields = { bab: level.bab ?? kept.bab, skills: level.skills ?? kept.skills };
-    return {
-      ...writes,
-      properties: { types: CLASS_LEVEL_FIELD_PROPERTY_TYPES, values: ClassLevelFields.toProperties(fields) },
-    };
+  /** A new class's row, from its form: its hit die 8 when the form gives none. */
+  static planCreate(_view: RulesetView, body: { description?: string | null; hd?: number; name: string }) {
+    return { columns: { ...body, hd: body.hd || 8 } };
   }
 }

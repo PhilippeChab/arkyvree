@@ -4,12 +4,12 @@ import { eq } from "drizzle-orm";
 
 import { featsAptitudesInRules, klassLevelFeatsInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
-import { BadRequestError, ConflictError } from "@/server/errors/index.ts";
 import { Characters, EntitySnapshots, Klasses, Properties } from "@/server/repositories/index.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
+import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { pickFeat } from "@/tests/support/levels.ts";
 import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
@@ -55,9 +55,10 @@ describe("FeatsService", () => {
 
     test("refuses a new feat without an aptitude", async () => {
       const { session, ruleset } = await createTestUserAndRuleset(APTITUDES);
-      await expect(
+      await expectRefusedWith(
         FeatsService.createFeat(session, ruleset.id, { name: "Orphan Feat", aptitudeIds: [] }),
-      ).rejects.toThrow(BadRequestError);
+        400,
+      );
     });
 
     test("refuses an aptitude that spells already use", async () => {
@@ -70,17 +71,19 @@ describe("FeatsService", () => {
         name: "Magic Missile",
         aptitudes: [{ id: spells }],
       });
-      await expect(
+      await expectRefusedWith(
         FeatsService.createFeat(session, ruleset.id, { name: "Spell Feat", aptitudeIds: [spells] }),
-      ).rejects.toThrow(ConflictError);
+        409,
+      );
 
       const feat = await FeatsService.createFeat(session, ruleset.id, {
         name: "Combat Feat",
         aptitudeIds: [combat],
       });
-      await expect(
+      await expectRefusedWith(
         FeatsService.updateFeat(session, ruleset.id, feat.id, { name: "Combat Feat", aptitudeIds: [spells] }),
-      ).rejects.toThrow(ConflictError);
+        409,
+      );
     });
   });
 
@@ -143,11 +146,11 @@ describe("FeatsService", () => {
         aptitudeIds: [combat],
       });
       const character = await pickFeat(user.id, ruleset.id, feat.id, combat);
-      await expect(FeatsService.deleteFeat(session, ruleset.id, feat.id)).rejects.toThrow(ConflictError);
+      await expectRefusedWith(FeatsService.deleteFeat(session, ruleset.id, feat.id), 409);
 
       // An archived character keeps its picks so unarchiving restores them.
       await Characters.archive(db, { id: character.id });
-      await expect(FeatsService.deleteFeat(session, ruleset.id, feat.id)).rejects.toThrow(ConflictError);
+      await expectRefusedWith(FeatsService.deleteFeat(session, ruleset.id, feat.id), 409);
     });
 
     test("is refused when a character of a fork picked it", async () => {
@@ -163,7 +166,7 @@ describe("FeatsService", () => {
       });
       const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
       await pickFeat(user.id, fork.id, feat.id, combat);
-      await expect(FeatsService.deleteFeat(session, parent.id, feat.id)).rejects.toThrow(ConflictError);
+      await expectRefusedWith(FeatsService.deleteFeat(session, parent.id, feat.id), 409);
     });
 
     test("is refused when a character of a ruleset using it as an extension picked it", async () => {
@@ -179,7 +182,7 @@ describe("FeatsService", () => {
       });
       const host = await createTestRuleset(user.id, { extensionRulesetIds: [extension.id] });
       await pickFeat(user.id, host.id, feat.id, combat);
-      await expect(FeatsService.deleteFeat(session, extension.id, feat.id)).rejects.toThrow(ConflictError);
+      await expectRefusedWith(FeatsService.deleteFeat(session, extension.id, feat.id), 409);
     });
 
     test("is allowed when the ruleset's characters didn't pick it", async () => {

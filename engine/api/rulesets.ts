@@ -7,6 +7,7 @@ import {
   NAME_PAIRED_ENTITY_TYPES as PAIRED_TYPES,
   type RulesetSources,
 } from "@/engine/core/cow/index.ts";
+import type { RulesetView } from "@/engine/core/types.ts";
 import {
   type EntityCustomizations,
   RulesetComposition,
@@ -14,7 +15,7 @@ import {
   type RulesetRawData,
   SiblingMerge,
 } from "@/engine/core/view/index.ts";
-import type { BaseRules } from "@/shared/enums.ts";
+import type { BaseRules, RulesetKind } from "@/shared/enums.ts";
 
 import { getRulesetModule } from "./modules.ts";
 
@@ -49,19 +50,17 @@ export function checkExtensionNames(...args: Parameters<typeof ExtensionNames.ch
   ExtensionNames.check(...args);
 }
 
+/**
+ * Refuses publishing a ruleset as `kind` while it lacks what its rules make a character of: an extension, an add-on to
+ * rulesets that have it, needs none.
+ */
+export function checkPublishable(view: RulesetView, kind: RulesetKind) {
+  if (kind !== "extension") getRulesetModule(view.ruleset.baseRules).entities.checkPlayable(view);
+}
+
 /** What a ruleset's copy-on-write data is read from, each read none when it needs none. */
 export function getCowReads(ruleset: RulesetSources) {
   return CowSources.getReads(ruleset);
-}
-
-/** The ids of the ruleset's feats on a list, as the ruleset composes it. */
-export function getListFeatIds(rulesetData: RulesetData, aptitudeId: string): string[] {
-  return rulesetData.listFeatIds(aptitudeId);
-}
-
-/** The ids of the ruleset's spells on a list, at a level when one is given (on any list when none is). */
-export function getListPowerIds(rulesetData: RulesetData, where: { aptitudeId?: string; level?: number }): string[] {
-  return rulesetData.listPowerIds(where);
 }
 
 /** The classes whose levels pair by number: those the ruleset copied (its snapshots say), and their sources. */

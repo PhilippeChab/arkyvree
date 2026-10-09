@@ -314,6 +314,11 @@ describe("character levels", () => {
       await expectStatus(response, 400);
     });
 
+    test("refuses a class level beyond the rules' last", async () => {
+      const { characterId, ctx } = await createCharacter();
+      await expectStatus(finalize(characterId, ctx.klassMap.pc["Fighter"], 21, 8, fighter1(ctx)), 400);
+    });
+
     test("edits an earlier level without touching the later ones", async () => {
       const { characterId, ctx } = await createCharacter();
       const first = await finalizeOk(characterId, ctx.klassMap.pc["Fighter"], 1, 8, fighter1(ctx));
@@ -536,7 +541,7 @@ describe("character levels", () => {
     for (const response of responses) await expectStatus(response, 401);
   });
 
-  test("returns 404 for a missing character, class level or character level", async () => {
+  test("returns 404 for a missing character or character level", async () => {
     const { characterId, ctx } = await createCharacter();
     const klassId = ctx.klassMap.pc["Fighter"];
     const missing = { characterId: NIL_UUID };
@@ -550,7 +555,6 @@ describe("character levels", () => {
     await expectStatus(levels["power-slots"].$get({ param: missing, query }), 404);
     await expectStatus(finalize(NIL_UUID, klassId, 1, 8, noPicks), 404);
     await expectStatus(levels.$delete({ param: missing }), 404);
-    await expectStatus(finalize(characterId, klassId, 999, 8, noPicks), 404);
     const characterLevel = { characterId, characterLevelId: NIL_UUID };
     await expectStatus(level.$get({ param: characterLevel }), 404);
     await expectStatus(level.$put({ param: characterLevel, json: { hp: 5, abilityId: null, ...noPicks } }), 404);

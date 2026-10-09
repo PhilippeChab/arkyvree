@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { playerCharactersInCampaign } from "@/drizzle/schema.ts";
-import { describeCharacter, describePartialCharacter } from "@/engine/index.ts";
+import { describeCampaignCharacter, describeCharacterCards } from "@/engine/index.ts";
 import { withRulesetScope, withRulesetScopes } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
@@ -18,7 +18,6 @@ import {
 import {
   enqueueCharacterPdf,
   findExportableCharacter,
-  getClassLevelsByCharacter,
   readBondedInputs,
   readCharacterInput,
 } from "@/server/services/characters/index.ts";
@@ -88,13 +87,10 @@ class CampaignCharactersService {
     };
     return await withRulesetScope(db, character.rulesetId, async (scope) => {
       const input = await readCharacterInput(db, character);
-      if (isPartial) return { ...viewer, ...describePartialCharacter(scope, input) };
-      const described = describeCharacter(
-        scope,
-        input,
-        await readBondedInputs(db, input, Visibility.All),
-        viewer.showPrivateNotes ? "show" : "blank",
-      );
+      // A partial reading shows none of the character's bonded creatures
+      const bonded = isPartial ? [] : await readBondedInputs(db, input, Visibility.All);
+      const reading = isPartial ? "partial" : viewer.showPrivateNotes ? "show" : "blank";
+      const described = describeCampaignCharacter(scope, input, bonded, reading);
       return { ...viewer, ...described, shareToken: canEdit ? described.shareToken : null };
     });
   }
@@ -150,8 +146,8 @@ class CampaignCharactersService {
     return await withRulesetScopes(
       db,
       characters.map((c) => c.rulesetId),
-      async (rulesetDataByRulesetId) => {
-        const classLevelsByCharacter = getClassLevelsByCharacter(characters, levels, rulesetDataByRulesetId);
+      async (views) => {
+        const cards = describeCharacterCards(views, characters, levels);
 
         // Maintain order from linkedCharacters (which is already sorted by createdAt desc)
         const characterMap = new Map(characters.map((c) => [c.id, c]));
@@ -166,17 +162,15 @@ class CampaignCharactersService {
           const canEdit = char.userId === session.userId || contributedIds.has(char.id);
           const isPartial = this.isPartial(meta?.visibility ?? "Private", { canEdit, isGM, isOwner: isOwn });
 
-          const classLevels = classLevelsByCharacter.get(char.id) ?? [];
-          const rulesetData = rulesetDataByRulesetId.get(char.rulesetId);
-          const race = rulesetData?.racesById.get(char.raceId);
+          const card = cards.get(char.id)!;
 
           return {
             id: char.id,
             name: char.name,
             description: isPartial ? null : char.description,
-            race: race?.name ?? "Unknown",
-            levels: isPartial ? [] : classLevels,
-            totalLevel: isPartial ? null : classLevels.reduce((sum, lvl) => sum + lvl.level, 0),
+            race: card.race,
+            levels: isPartial ? [] : card.levels,
+            totalLevel: isPartial ? null : card.totalLevel,
             visibility: meta?.visibility ?? "Private",
             isOwn,
             isPartial,

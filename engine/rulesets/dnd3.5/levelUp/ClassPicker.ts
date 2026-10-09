@@ -21,48 +21,42 @@ interface PendingPicks {
 }
 
 /**
- * The class picker for a page of classes (`klasses`, with the character's highest level in each, `maxLevels`): each the
- * character can take another level of, with that level. Only a class with requirements (its class's and its next
- * level's) needs the character (`needsCharacter`), built with the wizard's pending picks when the server describes the
- * options with its rows.
+ * The class picker for the character, from its rows and the level-up wizard's pending picks: what it offers (`filters`,
+ * which the server reads a page of classes with), and each class of a page the character can take another level of,
+ * with that level and its eligibility. Only a class with requirements (its class's and its next level's) needs the
+ * character built, with the pending picks.
  */
 export default class ClassPicker extends include(LevelUpState, Projects) {
-  constructor(view: RulesetView, klasses: Klass[], maxLevels: Map<string, number>) {
+  constructor(
+    view: RulesetView,
+    private readonly character: CharacterInput,
+    private readonly pending: PendingPicks,
+  ) {
     super(view);
-    for (const klass of klasses) {
-      const nextKlassLevel = this.rulesetData.klassLevelByKlassAndLevel.get(
-        `${klass.id}:${(maxLevels.get(klass.id) || 0) + 1}`,
-      );
-      if (nextKlassLevel) this.candidates.push({ klass, nextKlassLevel });
-    }
-    for (const k of this.candidates) {
-      const groups = [k.klass.id, k.nextKlassLevel.id]
-        .map((id) => this.rulesetData.requirementsByEntity.get(id) ?? [])
-        .filter((reqs) => reqs.length > 0);
-      if (groups.length > 0) this.requirementsByKlassLevel.set(k.nextKlassLevel.id, groups);
-    }
-    this.needsCharacter = this.requirementsByKlassLevel.size > 0;
   }
 
-  /** The classes the character can take another level of. */
-  private readonly candidates: ClassCandidate[] = [];
-
-  /** The requirement groups of the candidates that have any, by their next level. */
-  private readonly requirementsByKlassLevel = new Map<string, Requirement[][]>();
-
-  /** Whether describing the options needs the character: a candidate has requirements. */
-  readonly needsCharacter: boolean;
+  /** What the picker offers: a player character's classes. */
+  readonly filters = { kind: "pc" };
 
   /**
    * The classes the character can take, each with its eligibility and, when it isn't, the requirements it fails: from
    * the character built with the pending picks, which only a class with requirements needs. Highest next level first,
    * then by name.
    */
-  private buildClassOptions(character: Dnd35DetailedCharacter | undefined, characterId: string) {
-    const withoutRequirements = this.candidates.filter((k) => !this.requirementsByKlassLevel.has(k.nextKlassLevel.id));
-    const withRequirements = this.candidates.filter((k) => this.requirementsByKlassLevel.has(k.nextKlassLevel.id));
+  private buildClassOptions(
+    candidates: ClassCandidate[],
+    requirementsByKlassLevel: Map<string, Requirement[][]>,
+    character: Dnd35DetailedCharacter | undefined,
+  ) {
+    const withoutRequirements = candidates.filter((k) => !requirementsByKlassLevel.has(k.nextKlassLevel.id));
+    const withRequirements = candidates.filter((k) => requirementsByKlassLevel.has(k.nextKlassLevel.id));
     const eligibility = character
-      ? this.evaluateClassAvailability(character, withRequirements, this.buildProjectedCharacterLevel(characterId, ""))
+      ? this.evaluateClassAvailability(
+          character,
+          withRequirements,
+          requirementsByKlassLevel,
+          this.buildProjectedCharacterLevel(this.character.record.id, ""),
+        )
       : new Map<string, boolean>();
 
     const option = (k: ClassCandidate, eligible: boolean, requirementTree?: string) => ({
@@ -77,7 +71,7 @@ export default class ClassPicker extends include(LevelUpState, Projects) {
       ...withoutRequirements.map((k) => option(k, true)),
       ...withRequirements.map((k) => {
         const eligible = eligibility.get(k.nextKlassLevel.id) ?? false;
-        const groups = this.requirementsByKlassLevel.get(k.nextKlassLevel.id);
+        const groups = requirementsByKlassLevel.get(k.nextKlassLevel.id);
         return option(
           k,
           eligible,
@@ -93,6 +87,7 @@ export default class ClassPicker extends include(LevelUpState, Projects) {
   private evaluateClassAvailability(
     character: Dnd35DetailedCharacter,
     candidates: ClassCandidate[],
+    requirementsByKlassLevel: Map<string, Requirement[][]>,
     projectedCharacterLevel: ProjectedCharacterLevel,
   ): Map<string, boolean> {
     const results = new Map<string, boolean>();
@@ -108,7 +103,7 @@ export default class ClassPicker extends include(LevelUpState, Projects) {
           stripSeparators(candidate.klass.name),
           candidate.nextKlassLevel,
           projectedCharacterLevel,
-          this.requirementsByKlassLevel.get(candidate.nextKlassLevel.id)!,
+          requirementsByKlassLevel.get(candidate.nextKlassLevel.id)!,
         ),
       );
     }
@@ -117,16 +112,28 @@ export default class ClassPicker extends include(LevelUpState, Projects) {
     return results;
   }
 
+  /** The character's highest level in each class it has levels of, by the class's id. */
+  private get maxLevels(): Map<string, number> {
+    const maxLevels = new Map<string, number>();
+    for (const level of this.character.rows.levels) {
+      const klassLevel = this.rulesetData.klassLevelsById.get(level.klassLevelId);
+      if (klassLevel)
+        maxLevels.set(klassLevel.klassId, Math.max(maxLevels.get(klassLevel.klassId) ?? 0, klassLevel.level));
+    }
+    return maxLevels;
+  }
+
   /**
    * What the level-up wizard's pending picks add to the character, for the class picker: its pending levels with the
    * feats their class levels grant, its picked feats and its skill ranks. Undefined when there are none.
    */
-  private projectPendingPicks(characterId: string, pending: PendingPicks): Dnd35ProjectedCharacterData | undefined {
-    const { featPicks, levelAbilityIds, levelKlassLevelIds, skillAllocations } = pending;
+  private projectPendingPicks(): Dnd35ProjectedCharacterData | undefined {
+    const characterId = this.character.record.id;
+    const { featPicks, levelAbilityIds, levelKlassLevelIds, skillAllocations } = this.pending;
     const pendingLevels = levelKlassLevelIds?.length
       ? this.buildPendingCharacterLevels(characterId, levelKlassLevelIds, levelAbilityIds)
       : [];
-    const skillAnchorLevel = pendingLevels[0] ?? this.buildProjectedCharacterLevel(characterId, "");
+    const skillAnchorLevel = pendingLevels[0] ?? this.buildProjectedCharacterLevel(this.character.record.id, "");
     const autoGrantedRecords = (levelKlassLevelIds ?? []).flatMap(
       (klid) => this.rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(klid) ?? [],
     );
@@ -159,9 +166,29 @@ export default class ClassPicker extends include(LevelUpState, Projects) {
       : undefined;
   }
 
-  /** The options, described for the character built from its rows with the wizard's pending picks, when it's read. */
-  describe(characterId: string, character: CharacterInput | undefined, pending: PendingPicks) {
-    const built = character && this.build(character, this.projectPendingPicks(characterId, pending));
-    return this.buildClassOptions(built, characterId);
+  /**
+   * A page of classes (`klasses`), each the character can take another level of: with that level, and whether the
+   * character meets its requirements, built with the pending picks when one has any.
+   */
+  describe(klasses: Klass[]) {
+    const { maxLevels } = this;
+    const candidates: ClassCandidate[] = [];
+    for (const klass of klasses) {
+      const nextKlassLevel = this.rulesetData.klassLevelByKlassAndLevel.get(
+        `${klass.id}:${(maxLevels.get(klass.id) || 0) + 1}`,
+      );
+      if (nextKlassLevel) candidates.push({ klass, nextKlassLevel });
+    }
+    const requirementsByKlassLevel = new Map<string, Requirement[][]>();
+    for (const k of candidates) {
+      const groups = [k.klass.id, k.nextKlassLevel.id]
+        .map((id) => this.rulesetData.requirementsByEntity.get(id) ?? [])
+        .filter((reqs) => reqs.length > 0);
+      if (groups.length > 0) requirementsByKlassLevel.set(k.nextKlassLevel.id, groups);
+    }
+    // Only a class with requirements needs the character, built with the wizard's pending picks
+    const built =
+      requirementsByKlassLevel.size > 0 ? this.build(this.character, this.projectPendingPicks()) : undefined;
+    return this.buildClassOptions(candidates, requirementsByKlassLevel, built);
   }
 }

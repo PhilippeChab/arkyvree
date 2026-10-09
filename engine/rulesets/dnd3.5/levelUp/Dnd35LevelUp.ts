@@ -1,13 +1,12 @@
 import type { CharacterInput } from "@/engine/core/module/index.ts";
-import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/types.ts";
 import BondedPlans from "@/engine/rulesets/dnd3.5/bonded/BondedPlans.ts";
 import CharacterBuilder from "@/engine/rulesets/dnd3.5/character/CharacterBuilder.ts";
-import type { Klass } from "@/shared/relations.ts";
 
 import ClassPicker from "./ClassPicker.ts";
 import FeatPicker from "./FeatPicker.ts";
 import LevelEdit from "./LevelEdit.ts";
+import LevelRemoval from "./LevelRemoval.ts";
 import LevelSelections from "./LevelSelections.ts";
 import LevelUpPlan from "./LevelUpPlan.ts";
 import LevelUpSteps, { type Step } from "./LevelUpSteps.ts";
@@ -20,11 +19,6 @@ import PowerPicker from "./PowerPicker.ts";
  * pickers, and a saved level's selections.
  */
 export class Dnd35LevelUp {
-  /** Refuses a character that fails its rules, built from its rows: what it fails, as the refusal's issues. */
-  checkCharacter(view: RulesetView, character: CharacterInput) {
-    RulesError.refuseIssues(CharacterBuilder.build(view, character).validate().issues);
-  }
-
   /** A saved level's selections, as its edit opens them. */
   describeLevel(view: RulesetView, ...args: Parameters<LevelSelections["describe"]>) {
     return new LevelSelections(view).describe(...args);
@@ -65,13 +59,13 @@ export class Dnd35LevelUp {
     return new LevelUpSteps(view, character).getSkillSlots(klassId, level, step);
   }
 
-  /** The class picker for a page of classes, with the character's highest level in each. */
-  openClassPicker(view: RulesetView, klasses: Klass[], maxLevels: Map<string, number>) {
-    return new ClassPicker(view, klasses, maxLevels);
+  /** The class picker for the character, with the level-up wizard's pending picks. */
+  openClassPicker(view: RulesetView, character: CharacterInput, pending: ConstructorParameters<typeof ClassPicker>[2]) {
+    return new ClassPicker(view, character, pending);
   }
 
   /** A feat picker for the character: what it offers and leaves out, and a page of options annotated. */
-  openFeatPicker(view: RulesetView, character: CharacterInput, query: PickQuery) {
+  openFeatPicker(view: RulesetView, character: CharacterInput, query: PickQuery & { family?: string }) {
     return new FeatPicker(view, character, query);
   }
 
@@ -85,8 +79,8 @@ export class Dnd35LevelUp {
   }
 
   /**
-   * What a master's bonded creatures become as its levels make them, from its rows and theirs (`bonded`): each kind's
-   * creature removed, kept or made, and the levels it takes or loses.
+   * What a master's bonded creatures become as its stored levels make them, from its rows and theirs (`bonded`): each
+   * kind's creature removed, kept or made, and the levels it takes or loses.
    */
   planBondedCreatures(view: RulesetView, master: CharacterInput, bonded: CharacterInput[]) {
     return BondedPlans.planMasterCreatures(CharacterBuilder.build(view, master), bonded, view.rulesetData);
@@ -97,7 +91,15 @@ export class Dnd35LevelUp {
     return new LevelEdit(view, character).plan(...args);
   }
 
-  /** The levels a level-up saves, checked, with the picks spread over them: the rows the save writes. */
+  /** The character's last level removed: the level that goes, and what its bonded creatures become without it. */
+  planLevelRemoval(view: RulesetView, character: CharacterInput, bonded: CharacterInput[]) {
+    return new LevelRemoval(view, character).plan(bonded);
+  }
+
+  /**
+   * The levels a level-up saves, checked, with the picks spread over them: the rows the save writes, and what the
+   * master's bonded creatures become with them. The character with them is refused with what it fails, unless forced.
+   */
   planLevelUp(view: RulesetView, character: CharacterInput, ...args: Parameters<LevelUpPlan["planLevels"]>) {
     return new LevelUpPlan(view, character).planLevels(...args);
   }

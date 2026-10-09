@@ -50,6 +50,7 @@ import { RollAllButton } from "@/client/src/pages/characters/RollAllButton.tsx";
 import { type DiceRoll, useDiceRoll } from "@/client/src/pages/characters/useDiceRoll.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { PREFERS_REDUCED_MOTION, settleAnimation } from "@/client/src/theme/animations.ts";
+import { MAX_ABILITY_SCORE } from "@/shared/dnd3.5/abilities.ts";
 import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/shared/enums.ts";
 import { formatSigned } from "@/shared/text.ts";
 
@@ -166,9 +167,9 @@ function AbilityScoresField({ abilities, control, diceRoll, method }: AbilitySco
             key={ability.id}
             name={ability.name}
             score={score}
-            onIncrease={() => onChange({ ...abilityValues, [ability.id]: Math.min(100, score + 1) })}
+            onIncrease={() => onChange({ ...abilityValues, [ability.id]: Math.min(MAX_ABILITY_SCORE, score + 1) })}
             onDecrease={() => onChange({ ...abilityValues, [ability.id]: Math.max(1, score - 1) })}
-            canIncrease={!diceRoll.rolling && score < 100}
+            canIncrease={!diceRoll.rolling && score < MAX_ABILITY_SCORE}
             canDecrease={!diceRoll.rolling && score > 1}
             bottomInfo={`Mod: ${formatSigned(computeAbilityModifier(score))}`}
             isSettled={diceRoll.hasLanded(ability.id)}

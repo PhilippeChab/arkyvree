@@ -1,7 +1,8 @@
 import { getTableName } from "drizzle-orm";
 
 import { savesInRules } from "@/drizzle/schema.ts";
-import { findScopedEntity, RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { getEntity } from "@/engine/index.ts";
+import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
@@ -22,7 +23,8 @@ class SavesService {
   ) {
     const result = await withTransaction(
       async (tx) =>
-        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        await withRulesetScope(tx, rulesetId, async (scope) => {
+          const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
@@ -51,10 +53,10 @@ class SavesService {
   async deleteSave(session: Session, rulesetId: string, saveId: string) {
     const result = await withTransaction(
       async (tx) =>
-        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-          const { sourceChain } = rulesetData.cow;
+        await withRulesetScope(tx, rulesetId, async (scope) => {
+          const { ruleset, rulesetData } = scope;
 
-          const save = findScopedEntity(rulesetData.savesById, saveId, rulesetId, sourceChain, "Save");
+          const save = getEntity(scope, "saves", saveId);
 
           // Saves don't have a character-pick path — class-side check instead.
           // klass_level_saves.save_id is ON DELETE RESTRICT, so this is just for
@@ -85,9 +87,8 @@ class SavesService {
   }
 
   async getSave(rulesetId: string, saveId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const save = findScopedEntity(rulesetData.savesById, saveId, rulesetId, sourceChain, "Save");
+    return await withRulesetScope(db, rulesetId, async (scope) => {
+      const save = getEntity(scope, "saves", saveId);
       return save;
     });
   }
@@ -102,7 +103,8 @@ class SavesService {
     },
     pagination: { limit: number; page: number },
   ) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+    return await withRulesetScope(db, rulesetId, async (scope) => {
+      const { rulesetData } = scope;
       const { sourceChain } = rulesetData.cow;
       return await Saves.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
     });
@@ -121,12 +123,12 @@ class SavesService {
   ) {
     const result = await withTransaction(
       async (tx) =>
-        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-          const { sourceChain } = rulesetData.cow;
+        await withRulesetScope(tx, rulesetId, async (scope) => {
+          const { ruleset, rulesetData } = scope;
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const save = findScopedEntity(rulesetData.savesById, saveId, rulesetId, sourceChain, "Save");
+          const save = getEntity(scope, "saves", saveId);
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "saves", save);

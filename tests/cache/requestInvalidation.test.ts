@@ -1,11 +1,10 @@
 import { afterEach, expect, test } from "bun:test";
 
-import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { readTargetPaths, RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { runWithRequestCache } from "@/server/database/requestCache.ts";
 import { Feats, Rulesets } from "@/server/repositories/index.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
-import { getTargetPathsWithLabels } from "@/server/services/rulesets/customization/targetPaths/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
@@ -51,7 +50,7 @@ for (const action of ["subscribe", "unsubscribe"] as const) {
     if (action === "unsubscribe") await RulesetExtensionsService.subscribeExtension(session, host.id, [extension.id]);
     RulesetCache.invalidateAll();
     await overlap(
-      () => getTargetPathsWithLabels(host.id, "requirement"),
+      () => readTargetPaths(host.id, "requirement"),
       () =>
         action === "subscribe"
           ? RulesetExtensionsService.subscribeExtension(session, host.id, [extension.id])
@@ -61,7 +60,7 @@ for (const action of ["subscribe", "unsubscribe"] as const) {
       await withRulesetScope(db, host.id, async ({ rulesetData }) => {
         expect(rulesetData.featsById.has(feat.id)).toBe(action === "subscribe");
       });
-      const paths = await getTargetPathsWithLabels(host.id, "requirement");
+      const paths = await readTargetPaths(host.id, "requirement");
       expect(paths.paths.some((path) => path.path === "feats.extensionmarker.possessed")).toBe(action === "subscribe");
     });
   });
@@ -76,7 +75,7 @@ for (const scenario of ["entity", "cow", "paths"] as const) {
     RulesetCache.invalidateAll();
     const read = () =>
       scenario === "paths"
-        ? getTargetPathsWithLabels(fork.id, "requirement")
+        ? readTargetPaths(fork.id, "requirement")
         : withRulesetScope(db, fork.id, async ({ rulesetData }) => rulesetData);
     let copyId: string | undefined;
     await overlap(read, async () => {
@@ -95,7 +94,7 @@ for (const scenario of ["entity", "cow", "paths"] as const) {
     });
     await runWithRequestCache(async () => {
       if (scenario === "paths") {
-        const result = await getTargetPathsWithLabels(fork.id, "requirement");
+        const result = await readTargetPaths(fork.id, "requirement");
         expect(result.paths.some((path) => path.path === "feats.aftermarker.possessed")).toBe(true);
         expect(result.paths.some((path) => path.path === "feats.beforemarker.possessed")).toBe(false);
       } else {

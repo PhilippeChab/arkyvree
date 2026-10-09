@@ -6,7 +6,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { db } from "@/server/database/index.ts";
-import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
+import { ForbiddenError } from "@/server/errors/index.ts";
 import { Abilities, Requirements } from "@/server/repositories/index.ts";
 import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
@@ -20,6 +20,7 @@ import { SavesService } from "@/server/services/rulesets/saves/index.ts";
 import { SkillsService } from "@/server/services/rulesets/skills/index.ts";
 import { isCustomizableEntityType } from "@/shared/customization/entities.ts";
 import type { Session } from "@/shared/relations.ts";
+import { expectRefusedWith } from "@/tests/support/api.ts";
 import { customize, findCustomizations } from "@/tests/support/customizations.ts";
 import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
@@ -199,16 +200,16 @@ describe.each(ENTITY_TYPES)("%s service", (entityType) => {
       name: "Renamed Entity",
     });
     await service.remove(session, ruleset.id, created.id);
-    await expect(service.get(ruleset.id, created.id)).rejects.toThrow(NotFoundError);
+    await expectRefusedWith(service.get(ruleset.id, created.id), 404);
   });
 
-  test("throws NotFoundError for a missing ruleset or entity", async () => {
+  test("doesn't find a missing ruleset or entity", async () => {
     const { session, ruleset, refs } = await setup();
-    await expect(service.list(NIL_UUID)).rejects.toThrow(NotFoundError);
-    await expect(service.get(ruleset.id, NIL_UUID)).rejects.toThrow(NotFoundError);
-    await expect(service.create(session, NIL_UUID, "Missing", refs)).rejects.toThrow(NotFoundError);
-    await expect(service.update(session, ruleset.id, NIL_UUID, "Missing", refs)).rejects.toThrow(NotFoundError);
-    await expect(service.remove(session, ruleset.id, NIL_UUID)).rejects.toThrow(NotFoundError);
+    await expectRefusedWith(service.list(NIL_UUID), 404);
+    await expectRefusedWith(service.get(ruleset.id, NIL_UUID), 404);
+    await expectRefusedWith(service.create(session, NIL_UUID, "Missing", refs), 404);
+    await expectRefusedWith(service.update(session, ruleset.id, NIL_UUID, "Missing", refs), 404);
+    await expectRefusedWith(service.remove(session, ruleset.id, NIL_UUID), 404);
   });
 
   test("refuses writes from anyone but the owner, and through another ruleset", async () => {
@@ -220,16 +221,17 @@ describe.each(ENTITY_TYPES)("%s service", (entityType) => {
     await expect(service.update(other, ruleset.id, entity.id, "Hijacked", refs)).rejects.toThrow(ForbiddenError);
     await expect(service.remove(other, ruleset.id, entity.id)).rejects.toThrow(ForbiddenError);
     // Reading it through a ruleset it isn't part of doesn't find it either.
-    await expect(service.get(otherRuleset.id, entity.id)).rejects.toThrow(NotFoundError);
+    await expectRefusedWith(service.get(otherRuleset.id, entity.id), 404);
   });
 
   test("refuses an edit started from a stale copy, unless it sends no token", async () => {
     const { session, ruleset, refs } = await setup();
     const created = await service.create(session, ruleset.id, "Contested Entity", refs);
     await service.update(session, ruleset.id, created.id, "First Edit", refs, created.updatedAt);
-    await expect(
+    await expectRefusedWith(
       service.update(session, ruleset.id, created.id, "Second Edit", refs, created.updatedAt),
-    ).rejects.toThrow(ConflictError);
+      409,
+    );
     expect(await service.update(session, ruleset.id, created.id, "Tokenless Edit", refs)).toMatchObject({
       name: "Tokenless Edit",
     });
@@ -238,7 +240,7 @@ describe.each(ENTITY_TYPES)("%s service", (entityType) => {
   test("refuses a name the ruleset already uses", async () => {
     const { session, ruleset, refs } = await setup();
     await service.create(session, ruleset.id, "Taken Name", refs);
-    await expect(service.create(session, ruleset.id, "Taken Name", refs)).rejects.toThrow(ConflictError);
+    await expectRefusedWith(service.create(session, ruleset.id, "Taken Name", refs), 409);
   });
 
   test("copies an inherited entity into the fork on edit, and refuses a name the parent uses", async () => {
@@ -247,7 +249,7 @@ describe.each(ENTITY_TYPES)("%s service", (entityType) => {
     const { user, session } = await createTestUserAndRuleset();
     const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
 
-    await expect(service.create(session, fork.id, "Inherited Entity", refs)).rejects.toThrow(ConflictError);
+    await expectRefusedWith(service.create(session, fork.id, "Inherited Entity", refs), 409);
 
     const copy = await service.update(session, fork.id, inherited.id, "Forked Entity", refs);
     expect(copy).toMatchObject({ name: "Forked Entity", rulesetId: fork.id });

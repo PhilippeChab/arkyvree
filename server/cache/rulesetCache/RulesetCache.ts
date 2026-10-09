@@ -88,16 +88,19 @@ class RulesetCache {
     );
   }
 
-  /** A ruleset's target paths for a modifier, a requirement or a template, and their segments' labels. */
+  /**
+   * A ruleset's target paths for a modifier, a requirement or a template, and their segments' labels: kept for the
+   * ruleset and its source chain, a change to any of which drops them.
+   */
   async getTargetPaths(
-    rulesetId: string,
+    ruleset: RulesetSources,
     kind: TargetPathKind,
     fetcher: () => Promise<TargetPathCatalog>,
-    sourceChain: readonly string[] = [],
   ): Promise<TargetPathCatalog> {
+    const sourceChain = buildSourceChain(ruleset);
     // Old subscription metadata must not populate the key for the new chain.
-    const key = JSON.stringify([rulesetId, kind, ...sourceChain]);
-    return this.targetPaths.getOrFetch(key, [rulesetId, ...sourceChain], async () => ({ data: await fetcher() }));
+    const key = JSON.stringify([ruleset.id, kind, ...sourceChain]);
+    return this.targetPaths.getOrFetch(key, [ruleset.id, ...sourceChain], async () => ({ data: await fetcher() }));
   }
 
   /** Loads the system rulesets' rows (the bases and the extensions), at boot: the first user doesn't wait for them. */

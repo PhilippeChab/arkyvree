@@ -24,7 +24,7 @@ export default new Hono()
     async (c) => {
       const { id: rulesetId } = c.req.valid("param");
       const { entityType } = c.req.valid("query");
-      return c.json(await PropertyTypesService.getPropertyTypes(rulesetId, entityType), 200);
+      return c.json(await PropertyTypesService.getPropertyTypes(rulesetId, "", entityType), 200);
     },
   )
   /**
@@ -69,7 +69,7 @@ export default new Hono()
     async (c) => {
       const { id: rulesetId } = c.req.valid("param");
       const { query, entityType } = c.req.valid("query");
-      return c.json(await PropertyTypesService.getMatchingPropertyTypes(rulesetId, query, entityType), 200);
+      return c.json(await PropertyTypesService.getPropertyTypes(rulesetId, query, entityType), 200);
     },
   )
   /**

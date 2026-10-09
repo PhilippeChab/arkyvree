@@ -199,7 +199,7 @@ async function setupRuleset({ fork = false } = {}) {
     ]);
     klassLevels.push(klassLevel);
   }
-  await Aptitudes.create(db, { name: "general", rulesetId });
+  const [generalAptitude] = await Aptitudes.create(db, { name: "general", rulesetId });
   const [[featAptitude], [powerAptitude]] = [
     await Aptitudes.create(db, { name: "Feat Aptitude", rulesetId }),
     await Aptitudes.create(db, { name: "Power Aptitude", rulesetId }),
@@ -250,6 +250,7 @@ async function setupRuleset({ fork = false } = {}) {
     klass,
     klassLevels,
     featAptitude,
+    generalAptitude,
     powerAptitude,
     abilities,
     skills: byName(skillList),
@@ -553,6 +554,32 @@ describe("LevelsService", () => {
           {},
         ),
       ).rejects.toThrow('Non-stackable feat "Power Attack" is already on this character');
+    });
+
+    test("count the feats a level grants, free or not, toward the prerequisites of the feats it picks", async () => {
+      const { session, character, klass, klassLevels, featAptitude, generalAptitude, feats, skills } =
+        await setupRuleset();
+      await KlassLevelFeats.create(db, {
+        klassLevelId: klassLevels[0].id,
+        featId: feats["Power Attack"].id,
+        aptitudeId: featAptitude.id,
+        free: false,
+      });
+      await FeatsAptitudes.create(db, { featId: feats["Dodge"].id, aptitudeId: generalAptitude.id });
+      await Requirements.create(db, {
+        entityId: feats["Dodge"].id,
+        entityType: "feats",
+        level: "1",
+        target: "feats.powerattack.possessed",
+        operator: "equal",
+        value: "true",
+        valueType: "boolean",
+      });
+
+      // Its 8 skill points on two cross-class skills, its general feat on Dodge, which takes Power Attack
+      const points = { [skills["Diplomacy"].id]: 4, [skills["Stealth"].id]: 4 };
+      const pick = { [generalAptitude.id]: [feats["Dodge"].id] };
+      expect(await addOneLevel(session, character.id, klass.id, 1, 8, null, points, pick, {})).toBeDefined();
     });
 
     test("refuse a feat an earlier level grants once the fork copies the class, and leave it out of the picks", async () => {

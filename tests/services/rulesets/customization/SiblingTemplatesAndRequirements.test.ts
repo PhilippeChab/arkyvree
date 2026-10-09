@@ -2,13 +2,12 @@ import { afterEach, expect, test } from "bun:test";
 
 import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
-import { NotFoundError } from "@/server/errors/index.ts";
 import { Feats, Items, Properties, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
-import { api, expectStatus } from "@/tests/support/api.ts";
+import { api, expectRefusedWith, expectStatus } from "@/tests/support/api.ts";
 import { copyEntity, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
@@ -188,12 +187,13 @@ test("hidden and unrelated template properties cannot be overridden", async () =
   expect(before.properties).toHaveLength(1);
   expect(before.properties[0].id).not.toBe(hidden.id);
   for (const property of [hidden, unrelated]) {
-    await expect(
+    await expectRefusedWith(
       PropertiesService.updateProperty(session, host.id, "items", item.id, property.id, {
         type: property.type,
         value: "99",
       }),
-    ).rejects.toBeInstanceOf(NotFoundError);
+      404,
+    );
     expect(await Properties.findOne(db, { id: property.id })).toEqual(property);
   }
 });
@@ -224,9 +224,7 @@ test("three-extension requirement merge preserves chains and rejects a duplicate
   const [hidden] = await Requirements.findMany(db, { entityIds: [copies[1]], entityType: "feats" });
   const before = await RequirementsService.getRequirements(host.id, "feats", source.id);
   expect(before.map((r) => r.level).sort()).toEqual(["1", "2", "2.1", "2.2"]);
-  await expect(
-    RequirementsService.deleteRequirement(session, host.id, "feats", source.id, hidden.id),
-  ).rejects.toBeInstanceOf(NotFoundError);
+  await expectRefusedWith(RequirementsService.deleteRequirement(session, host.id, "feats", source.id, hidden.id), 404);
   const siblingLeaf = before.find((r) => r.level === "2.2")!;
   await RequirementsService.updateRequirement(session, host.id, "feats", source.id, siblingLeaf.id, {
     level: siblingLeaf.level,

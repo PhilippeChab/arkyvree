@@ -54,7 +54,12 @@ export interface TargetPathsInterface extends TargetPathsTraverser {
     check: TargetCheck,
   ): string;
   /** The completions of a partial path among a catalog's paths of `kind`, unpaged. */
-  completeTargetPath(catalog: TargetPathCatalog, kind: TargetPathKind, query: PathQuery): PathCompletion[];
+  completeTargetPath(
+    catalog: TargetPathCatalog,
+    kind: TargetPathKind,
+    query: PathQuery,
+    entityType?: string,
+  ): PathCompletion[];
   getCategories(): string[];
   getCategoryDescriptions(): Record<string, string>;
   /** The categories whose paths name an entity under their group, whose segment a description skips */
@@ -63,7 +68,7 @@ export interface TargetPathsInterface extends TargetPathsTraverser {
   getPathDescriptions(): Record<string, string>;
   getTargetPathsAndLabels(rulesetData: RulesetData, kind: TargetPathKind): TargetPathCatalog;
   /** A target path validated like a language server, among a catalog's paths. */
-  validateTargetPath(catalog: TargetPathCatalog, path: string): PathValidationResult;
+  validateTargetPath(catalog: TargetPathCatalog, path: string, entityType?: string): PathValidationResult;
 }
 
 export interface TargetPathsTraverser {

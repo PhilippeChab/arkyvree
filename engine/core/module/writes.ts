@@ -1,19 +1,5 @@
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
-/**
- * A feat a ruleset makes with an entity, or for a value its entities share (one of their properties'): generated, in
- * the pool `aptitudeSlug` names, with the properties its fields are kept in, its modifiers and its requirements. None
- * is made when the ruleset has no such pool.
- */
-interface GeneratedFeat {
-  aptitudeSlug: string;
-  description: string;
-  modifiers: Pick<Modifier, "operator" | "target" | "value" | "valueType">[];
-  name: string;
-  properties: PropertyValue[];
-  requirements: RequirementWrite[];
-}
-
 /** The properties an entity's fields are kept in: those of `types` it has give way to `values`. */
 interface PropertiesWrite {
   types: readonly string[];
@@ -36,10 +22,23 @@ export interface EntityWrites<Columns extends object = object> {
   requirement?: RequirementWrite;
 }
 
-/** A generated feat a save removes from the ruleset, refused (`inUse`) while a character in it picked the feat. */
-export interface GeneratedFeatRemoval {
-  inUse: string;
+/**
+ * A feat a ruleset makes with an entity, or for a value its entities share (one of their properties'): generated, in
+ * the pool `aptitudeId`, with the properties its fields are kept in, its modifiers and its requirements.
+ */
+export interface GeneratedFeat {
+  aptitudeId: string;
+  description: string;
+  modifiers: Pick<Modifier, "operator" | "target" | "value" | "valueType">[];
   name: string;
+  properties: PropertyValue[];
+  requirements: RequirementWrite[];
+}
+
+/** A generated feat a save removes from the ruleset (`featId`), refused (`inUse`) while a character in it picked it. */
+export interface GeneratedFeatRemoval {
+  featId: string;
+  inUse: string;
 }
 
 /** The feats a save makes, unless the ruleset or its chain has a feat named `unlessPresent` already. */

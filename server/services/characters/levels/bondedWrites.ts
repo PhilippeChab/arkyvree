@@ -1,14 +1,17 @@
-import type { planBondedCreatures } from "@/engine/index.ts";
+import type { planLevelRemoval } from "@/engine/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { CharacterAbilities, CharacterLevels, Characters } from "@/server/repositories/index.ts";
 import type { Character } from "@/shared/relations.ts";
+
+/** What a master's bonded creatures become, as the engine plans them with its levels. */
+type BondedPlans = ReturnType<typeof planLevelRemoval>["bonded"];
 
 /** The master's new creature of `kind`, with its ability scores: the master's, of its alignment and gender. */
 async function createCreature(
   tx: Db,
   master: Character,
   kind: string,
-  creature: Extract<ReturnType<typeof planBondedCreatures>[number], { created: unknown }>["created"],
+  creature: Extract<BondedPlans[number], { created: unknown }>["created"],
 ) {
   const [bonded] = await Characters.create(tx, {
     userId: master.userId,
@@ -35,11 +38,7 @@ async function createCreature(
  * saves can't both see no creature and both make one (the partial unique index on its kind is the backstop). An
  * archived master's creatures are left as they are: an archive that ran before the lock archived them with it.
  */
-export async function writeBondedCreatures(
-  tx: Db,
-  master: Character,
-  plans: ReturnType<typeof planBondedCreatures>,
-): Promise<void> {
+export async function writeBondedCreatures(tx: Db, master: Character, plans: BondedPlans): Promise<void> {
   if (!(await Characters.lock(tx, { id: master.id }))) return;
   for (const plan of plans) {
     if (plan.removedId) await Characters.delete(tx, { id: plan.removedId });

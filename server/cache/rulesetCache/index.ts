@@ -5,6 +5,6 @@
  * ruleset makes; and the warm-up the server makes at boot.
  */
 export { readCowData } from "./cowData.ts";
-export { findScopedEntity } from "./findScopedEntity.ts";
 export { default as RulesetCache } from "./RulesetCache.ts";
 export { type RulesetScope, withRulesetScope, withRulesetScopes } from "./scope.ts";
+export { readTargetPathCatalogs, readTargetPaths } from "./targetPaths.ts";

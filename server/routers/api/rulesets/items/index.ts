@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { location } from "@/drizzle/schema.ts";
+import { RULESET_LIMITS } from "@/engine/index.ts";
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
@@ -115,7 +116,7 @@ export default new Hono<SessionContext>()
             }),
           )
           .min(1)
-          .max(50),
+          .max(RULESET_LIMITS.itemVariants),
       }),
     ),
     async (c) => {

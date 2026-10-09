@@ -1,20 +1,17 @@
 import { describe, expect, test } from "bun:test";
 
+import { checkTargetValue } from "@/engine/index.ts";
+import { readTargetPathCatalogs, readTargetPaths, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import {
-  getTargetPathsWithLabels,
-  resolvePathValueType,
-  TargetPathsService,
-} from "@/server/services/rulesets/customization/targetPaths/index.ts";
+import { TargetPathsService } from "@/server/services/rulesets/customization/targetPaths/index.ts";
 import type { TargetPathKind } from "@/shared/customization/target.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
-type EntityType = Parameters<typeof getTargetPathsWithLabels>[2];
-
-function isAptitudeGrant(p: { category: string; path: string }) {
-  return p.category === "aptitudes" && /\.(uses|allowed)$/.test(p.path);
+function isAptitudeGrant(p: { path?: string }) {
+  return /^aptitudes\..*\.(uses|allowed)$/.test(p.path ?? "");
 }
 
 function pathsOf(result: Awaited<ReturnType<typeof complete>>) {
@@ -45,13 +42,30 @@ async function complete(
   );
 }
 
-/** The seeded D&D 3.5 ruleset's target paths and segment labels. */
-async function seedPaths(kind: TargetPathKind, entityType?: EntityType) {
+/** Every leaf path of a kind an entity type takes (`entityType`, every path without one), as the completions list them. */
+async function pathsTaken(kind: TargetPathKind, entityType?: string) {
   const { rulesetId } = await getSeedCtx();
-  return await getTargetPathsWithLabels(rulesetId, kind, entityType);
+  const { items } = await TargetPathsService.getCompletions(
+    rulesetId,
+    "",
+    0,
+    kind,
+    entityType,
+    undefined,
+    10_000,
+    1,
+    true,
+  );
+  return items;
 }
 
-async function validate(path: string, kind: TargetPathKind = "modifier", entityType?: EntityType) {
+/** The seeded D&D 3.5 ruleset's target paths and segment labels. */
+async function seedPaths(kind: TargetPathKind) {
+  const { rulesetId } = await getSeedCtx();
+  return await readTargetPaths(rulesetId, kind);
+}
+
+async function validate(path: string, kind: TargetPathKind = "modifier", entityType?: string) {
   return TargetPathsService.validatePath((await getSeedCtx()).rulesetId, path, kind, entityType);
 }
 
@@ -150,8 +164,11 @@ describe("TargetPathsService", () => {
 
   test("refuses a template value the sheet couldn't evaluate, saying why, and takes one it can", async () => {
     const { rulesetId } = await getSeedCtx();
+    const catalogs = await readTargetPathCatalogs(rulesetId, "modifier");
     const check = (value: string, target = "combat.ac.misc") =>
-      resolvePathValueType(rulesetId, target, "modifier", "add", value);
+      withRulesetScope(db, rulesetId, async (scope) =>
+        checkTargetValue(scope, catalogs, { kind: "modifier", operator: "add", target, value }),
+      );
     expect(await check("{{ floor([classes.ranger.level] / 2) }}")).toBe("number");
     expect(await check("{{ [abilities.charisma.modifier] }}")).toBe("number");
     await expect(check("{{ [classes.rangr.level] }}")).rejects.toThrow(
@@ -297,13 +314,13 @@ describe("TargetPathsService", () => {
   });
 
   test("offers aptitude uses and picks only to the entities that grant them", async () => {
-    for (const entityType of ["klass_levels", "feats", "races", undefined] as const)
-      expect((await seedPaths("modifier", entityType)).paths.some(isAptitudeGrant)).toBe(true);
+    for (const entityType of ["klass_levels", "feats", "races", undefined])
+      expect((await pathsTaken("modifier", entityType)).some(isAptitudeGrant)).toBe(true);
 
-    for (const entityType of ["items", "powers"] as const) {
-      const { paths } = await seedPaths("modifier", entityType);
+    for (const entityType of ["items", "powers"]) {
+      const paths = await pathsTaken("modifier", entityType);
       expect(paths.filter(isAptitudeGrant)).toEqual([]);
-      expect(paths.some((p) => p.category === "combat")).toBe(true);
+      expect(paths.some((p) => p.path?.startsWith("combat."))).toBe(true);
     }
   });
 
@@ -320,13 +337,13 @@ describe("TargetPathsService", () => {
     const { rulesetId } = await getSeedCtx();
     const { user } = await createTestUser();
     const fork = await createTestRuleset(user.id, { rulesetId, ancestorRulesetIds: [rulesetId] });
-    const { paths, segmentLabels } = await getTargetPathsWithLabels(fork.id, "modifier");
+    const { paths, segmentLabels } = await readTargetPaths(fork.id, "modifier");
     expect(paths.some((p) => p.path.startsWith("aptitudes.wizardspells.0."))).toBe(true);
     expect(segmentLabels.strength).toBe("Strength");
   });
 
   test("throws NotFoundError for a missing ruleset", async () => {
-    await expect(getTargetPathsWithLabels(NIL_UUID, "modifier")).rejects.toThrow(NotFoundError);
+    await expect(readTargetPaths(NIL_UUID, "modifier")).rejects.toThrow(NotFoundError);
   });
 
   describe("completing a path", () => {
@@ -408,7 +425,7 @@ describe("TargetPathsService", () => {
     });
 
     test("accepts a path among those its entity type takes", async () => {
-      const grant = (await seedPaths("modifier", "feats")).paths.find(isAptitudeGrant);
+      const grant = (await seedPaths("modifier")).paths.find(isAptitudeGrant);
       expect(grant).toBeDefined();
       const path = grant?.path ?? "";
       expect((await validate(path, "modifier", "feats")).target).toEqual(grant);

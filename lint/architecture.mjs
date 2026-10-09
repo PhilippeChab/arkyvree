@@ -13,6 +13,11 @@
  *   types only), and the client takes only types from the server.
  * - `engine-front-door`: code outside `engine/` enters it through `engine/index.ts`, its operations and their types, as
  *   the client enters the server through its API; a test may reach any of its modules.
+ * - `one-engine-op`: a service's or a job's action (a method, a function) asks the engine one operation, which answers
+ *   it whole: what it plans, it describes, and what it checks, it refuses. A second one is a rule the server composes.
+ * - `opaque-view`: the server holds a ruleset's view only as the scope it hands the engine's operations: of its
+ *   `rulesetData`, it reads the copy-on-write data alone (`rulesetData.cow`), which its writes go by. Its cache builds
+ *   the view.
  * - `queries-in-repositories`: a query is built in `server/repositories/` or `server/database/` (what talks to Postgres
  *   itself: the job queue, a channel's notifications, its health), nowhere else in the server. A transaction's handle
  *   is named `tx`, the name it knows a query by.
@@ -43,19 +48,23 @@ const ABOVE_REPOSITORIES = [
   "server/middlewares/",
   "server/routers/",
 ];
+/** The server's layers whose functions are actions: each asks the engine one operation (`one-engine-op`). */
+const ACTION_LAYERS = ["server/services/", "server/jobs/"];
 /** The client's component folders, which code outside enters at their outermost index */
 const CLIENT_COMPONENTS = "client/src/components/";
 /** What a folder's entry with code of its own is told. */
 const ENTRY_ONLY_RE_EXPORTS =
   'A folder\'s index.ts only re-exports what the folder offers (`export { x } from "./x.ts"`): its own code goes in a ' +
   "module named for it.";
+const FUNCTION_TYPES = new Set(["ArrowFunctionExpression", "FunctionDeclaration", "FunctionExpression"]);
+
 const indexCache = new Map();
+
 /**
  * The trees whose folders are entered through their `index.ts`: the server's, but its routers (a route folder's
  * `index.ts` is its routes, not its folder's entry), the engine's, and the client's components.
  */
 const INDEXED_TREES = ["server/", "engine/", CLIENT_COMPONENTS];
-
 const LAYERS = [
   { layer: "server/database/", deny: ["server/repositories/", ...ABOVE_REPOSITORIES] },
   { layer: "server/repositories/", deny: ABOVE_REPOSITORIES },
@@ -99,13 +108,61 @@ const LAYERS = [
 /** What a module that exports another module's is told. */
 const MODULE_EXPORTS_ITS_OWN =
   "A module exports what it declares, never another module's: code that needs that imports it from where it's defined.";
+
 /** Where a query may be built: the repositories, and the database layer (what talks to Postgres itself). */
 const QUERY_HOMES = ["server/repositories/", "server/database/"];
 
 const QUERY_METHODS = new Set(["select", "selectDistinct", "insert", "update", "delete", "execute"]);
+
 const SET_OPERATORS = new Set(["union", "unionAll", "intersect", "intersectAll", "except", "exceptAll"]);
+/** The modules `one-engine-op` read, by path. */
+const sourceCache = new Map();
 
 const UNINDEXED_TREES = ["server/routers/"];
+
+/** What only retypes an expression: `x!`, `x as T`, `x satisfies T`, `(x)`. */
+const VIEW_WRAPPERS = new Set([
+  "ParenthesizedExpression",
+  "TSAsExpression",
+  "TSNonNullExpression",
+  "TSSatisfiesExpression",
+]);
+
+/**
+ * The action a call is made in: the method of a class it's in (a concern's too), or the outermost function around it,
+ * its callbacks included. None at a module's top.
+ */
+function actionOf(node) {
+  let action = null;
+  for (let current = node.parent; current; current = current.parent) {
+    if (current.type === "MethodDefinition" || current.type === "PropertyDefinition") return current;
+    if (FUNCTION_TYPES.has(current.type)) action = current;
+  }
+  return action;
+}
+
+/**
+ * Whether a module of the server's actions asks the engine when its function `name` runs: the module that declares it
+ * (an index's re-export followed) imports an operation from `engine/index.ts`.
+ */
+function asksEngine(target, name) {
+  const source = readSource(target);
+  if (source === undefined) return false;
+  const reExport = [...source.matchAll(/export \{([^}]*)\} from "([^"]+)"/g)].find((match) =>
+    match[1].split(",").some(
+      (part) =>
+        part
+          .trim()
+          .split(/\s+as\s+/)
+          .pop() === name,
+    ),
+  );
+  if (reExport) return asksEngine(targetOf(target, reExport[2]), name);
+  return [...source.matchAll(/import (?!type )(\{[^}]*\}|\* as \w+) from "@\/engine\/index\.ts"/g)].some(
+    (match) =>
+      match[1].startsWith("*") || match[1].split(",").some((part) => part.trim() && !part.trim().startsWith("type ")),
+  );
+}
 
 function createEngineFrontDoor(context) {
   const file = repoPath(context.filename);
@@ -191,6 +248,124 @@ function createLayers(context) {
   });
 }
 
+function createOneEngineOp(context) {
+  const file = repoPath(context.filename);
+  if (!ACTION_LAYERS.some((layer) => file.startsWith(layer))) return {};
+  // What a call asks the engine: an operation it imports, through a namespace, or another action's function
+  const ops = new Set();
+  const namespaces = new Set();
+  const functions = new Map();
+  const callsByAction = new Map();
+  const record = (action, call) => {
+    if (!callsByAction.has(action)) callsByAction.set(action, []);
+    callsByAction.get(action).push(call);
+  };
+  return {
+    ImportDeclaration(node) {
+      if (node.importKind === "type") return;
+      const target = targetOf(file, node.source.value);
+      const values = node.specifiers.filter((specifier) => specifier.importKind !== "type");
+      if (target === "engine/index.ts") {
+        for (const specifier of values)
+          (specifier.type === "ImportNamespaceSpecifier" ? namespaces : ops).add(specifier.local.name);
+        return;
+      }
+      if (!target || !ACTION_LAYERS.some((layer) => target.startsWith(layer))) return;
+      for (const specifier of values) {
+        if (specifier.type === "ImportSpecifier" && asksEngine(target, specifier.imported.name))
+          ops.add(specifier.local.name);
+      }
+    },
+    FunctionDeclaration(node) {
+      const top = node.parent.type === "Program" || node.parent.parent?.type === "Program";
+      if (top && node.id) functions.set(node.id.name, node);
+    },
+    CallExpression(node) {
+      const action = actionOf(node);
+      const { callee } = node;
+      if (!action) return;
+      if (callee.type === "Identifier")
+        record(action, ops.has(callee.name) ? { op: callee.name } : { fn: callee.name });
+      if (callee.type !== "MemberExpression" || callee.computed) return;
+      if (callee.object.type === "Identifier" && namespaces.has(callee.object.name))
+        record(action, { op: callee.property.name });
+      if (callee.object.type === "ThisExpression" && action.type === "MethodDefinition")
+        record(action, { method: callee.property.name, of: action.parent });
+    },
+    "Program:exit"() {
+      const reached = new Map();
+      const reach = (action, seen = new Set()) => {
+        if (reached.has(action)) return reached.get(action);
+        const asked = new Set();
+        if (seen.has(action)) return asked;
+        seen.add(action);
+        for (const call of callsByAction.get(action) ?? []) {
+          if (call.op) asked.add(call.op);
+          const callee = call.fn ? functions.get(call.fn) : call.method && methodOf(call.of, call.method);
+          if (callee) for (const op of reach(callee, seen)) asked.add(op);
+        }
+        reached.set(action, asked);
+        return asked;
+      };
+      for (const action of new Set([...callsByAction.keys(), ...functions.values()])) {
+        const asked = reach(action);
+        if (asked.size < 2) continue;
+        context.report({
+          node: action,
+          message:
+            `An action asks the engine one operation, which answers it whole; this one asks ${[...asked].join(", ")}: ` +
+            "give the engine an operation for the action.",
+        });
+      }
+    },
+  };
+}
+
+function createOpaqueView(context) {
+  const file = repoPath(context.filename);
+  if (!file.startsWith("server/") || file.startsWith("server/cache/")) return {};
+  const message =
+    "The server hands a ruleset's view to the engine's operations as its scope, and reads none of it but its " +
+    "copy-on-write data (`rulesetData.cow`): what the view answers, an operation of the engine answers.";
+  // A read of the view: its copy-on-write data, or a pattern that takes that alone (`{ rulesetData: { cow } }`)
+  const check = (node) => {
+    const outer = unwrapped(node);
+    const { parent } = outer;
+    const readsCow =
+      parent.type === "MemberExpression" &&
+      parent.object === outer &&
+      !parent.computed &&
+      parent.property.name === "cow";
+    if (!readsCow) context.report({ node, message });
+  };
+  return {
+    CallExpression(node) {
+      // The view itself, which the scope gives the server
+      const { callee } = node;
+      if (callee.type === "MemberExpression" && !callee.computed && callee.property.name === "getData") {
+        if (callee.object.type === "Identifier" && callee.object.name === "RulesetCache")
+          context.report({ node, message });
+      }
+    },
+    Identifier(node) {
+      if (node.name === "rulesetData" && isRead(node)) check(node);
+    },
+    MemberExpression(node) {
+      if (!node.computed && node.property.name === "rulesetData") check(node);
+    },
+    Property(node) {
+      // `{ rulesetData: view } = scope`, `{ rulesetData: { feats } } = scope`: the view under another name, or read
+      if (node.parent.type !== "ObjectPattern" || node.computed || node.key.name !== "rulesetData") return;
+      const { value } = node;
+      if (value.type === "Identifier" && value.name === "rulesetData") return;
+      const takesCow =
+        value.type === "ObjectPattern" &&
+        value.properties.every((p) => p.type === "Property" && !p.computed && p.key.name === "cow");
+      if (!takesCow) context.report({ node, message });
+    },
+  };
+}
+
 function createQueriesInRepositories(context) {
   const file = repoPath(context.filename);
   if (!file.startsWith("server/") || QUERY_HOMES.some((h) => file.startsWith(h))) return {};
@@ -271,6 +446,33 @@ function hasIndex(dir) {
   return indexCache.get(dir);
 }
 
+/**
+ * Whether an identifier named `rulesetData` is read: not a binding a declaration or a pattern makes under its own name
+ * (`const { rulesetData } = scope`), nor a key, nor a type's.
+ */
+function isRead(node) {
+  const { parent } = node;
+  if (parent.type === "MemberExpression") return parent.object === node;
+  if (parent.type === "Property") return parent.parent.type === "ObjectExpression" && parent.value === node;
+  if (parent.type === "VariableDeclarator") return parent.init === node;
+  if (VIEW_WRAPPERS.has(parent.type)) return true;
+  return !parent.type.startsWith("TS") && !FUNCTION_TYPES.has(parent.type);
+}
+
+/** A class's method `name`, among the members of its body. */
+function methodOf(classBody, name) {
+  return classBody.body.find(
+    (member) => member.type === "MethodDefinition" && !member.computed && member.key.name === name,
+  );
+}
+
+/** A module's source, as the repo has it: none for one it doesn't. */
+function readSource(target) {
+  if (!sourceCache.has(target))
+    sourceCache.set(target, fs.existsSync(target) ? fs.readFileSync(target, "utf8") : undefined);
+  return sourceCache.get(target);
+}
+
 /** Whether a statement exports another module's: from it (`export … from`), or through what the file imports. */
 function reExports(statement, imported) {
   if (statement.type === "ExportAllDeclaration") return true;
@@ -287,8 +489,17 @@ function reExportsFrom(statement) {
   );
 }
 
+/** What an expression of the view is, past what only retypes it (`rulesetData!`, `rulesetData as X`, parentheses). */
+function unwrapped(node) {
+  let outer = node;
+  while (VIEW_WRAPPERS.has(outer.parent.type)) outer = outer.parent;
+  return outer;
+}
+
 export default {
   "engine-front-door": { meta: { type: "problem" }, create: createEngineFrontDoor },
+  "one-engine-op": { meta: { type: "problem" }, create: createOneEngineOp },
+  "opaque-view": { meta: { type: "problem" }, create: createOpaqueView },
   layers: { meta: { type: "problem" }, create: createLayers },
   "queries-in-repositories": { meta: { type: "problem" }, create: createQueriesInRepositories },
   "folder-index": { meta: { type: "problem" }, create: createFolderIndex },

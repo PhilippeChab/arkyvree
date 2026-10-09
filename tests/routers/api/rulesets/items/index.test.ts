@@ -71,11 +71,12 @@ describe("rulesets items", () => {
     expect(created.every((i) => i.costGp === "25.00" && i.weight === "0.10")).toBe(true);
   });
 
-  test("rejects more than 50 variants in one request", async () => {
+  test("rejects no variant, or more than 50, in one request", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     const source = await expectOk(items.$post({ param: { id }, json: { name: "Bulk Cap Source" } }));
     const variants = Array.from({ length: 51 }, (_, i) => ({ name: `Cap Variant ${i}` }));
     await expectStatus(item.variants.$post({ param: { id, itemId: source.id }, json: { variants } }), 400);
+    await expectStatus(item.variants.$post({ param: { id, itemId: source.id }, json: { variants: [] } }), 400);
   });
 
   test("accepts the updatedAt it returned and refuses it once stale", async () => {

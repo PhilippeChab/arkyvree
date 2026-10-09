@@ -1,11 +1,11 @@
 import { getTableName } from "drizzle-orm";
 
 import { featsInRules } from "@/drizzle/schema.ts";
-import { getFeatFamilyType, getListFeatIds } from "@/engine/index.ts";
-import { findScopedEntity, RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
+import { describeEntity, getEntity, openFeatList, planFeatCreate, planFeatEdit } from "@/engine/index.ts";
+import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { type Db, db, withCowContext, withTransaction } from "@/server/database/index.ts";
-import { BadRequestError, ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
+import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Feats, FeatsAptitudes, PowersAptitudes } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
@@ -32,32 +32,25 @@ class FeatsService {
   ) {
     const result = await withTransaction(
       async (tx) =>
-        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
+        await withRulesetScope(tx, rulesetId, async (scope) => {
+          const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "feats", body.name);
 
-          if (!body.aptitudeIds || body.aptitudeIds.length === 0)
-            throw new BadRequestError("At least one aptitude must be selected for the feat");
-
-          const spellAptitudes = await PowersAptitudes.findAptitudeIds(tx, { aptitudeIds: body.aptitudeIds });
-          if (spellAptitudes.length > 0)
-            throw new ConflictError("Cannot link feat to aptitude(s) already used for spells");
-
           // Named as an ancestor the fork deleted, the feat stands in for it (`RulesetEdit.repointTombstone`), checks
-          // finding it by that name: generated if the ancestor was
-          const rows = await Feats.create(tx, {
-            name: body.name,
-            description: body.description,
-            generated: tombstoneAncestorId ? await this.wasGenerated(tx, tombstoneAncestorId) : false,
-            rulesetId,
+          // finding it by that name
+          const plan = planFeatCreate(scope, body, {
+            spellAptitudeIds: await PowersAptitudes.findAptitudeIds(tx, { aptitudeIds: body.aptitudeIds ?? [] }),
+            tombstoneGenerated: tombstoneAncestorId ? await this.wasGenerated(tx, tombstoneAncestorId) : false,
           });
+          const rows = await Feats.create(tx, { ...plan.columns, rulesetId });
           const feat = rows[0];
 
           if (tombstoneAncestorId) await edit.repointTombstone(tx, "feats", tombstoneAncestorId, feat.id);
 
-          for (const aptitudeId of body.aptitudeIds) {
+          for (const aptitudeId of plan.aptitudeIds) {
             await FeatsAptitudes.create(tx, {
               featId: feat.id,
               aptitudeId,
@@ -82,13 +75,12 @@ class FeatsService {
   async deleteFeat(session: Session, rulesetId: string, featId: string) {
     const result = await withTransaction(
       async (tx) =>
-        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-          const { sourceChain } = rulesetData.cow;
-
+        await withRulesetScope(tx, rulesetId, async (scope) => {
+          const { ruleset, rulesetData } = scope;
           const inUse = await hasCharacterPicks(tx, "feats", featId, rulesetId);
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-          const feat = findScopedEntity(rulesetData.featsById, featId, rulesetId, sourceChain, "Feat");
+          const feat = getEntity(scope, "feats", featId);
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const targetId = await edit.cowToDelete(tx, "feats", feat);
@@ -114,16 +106,7 @@ class FeatsService {
   }
 
   async getFeat(rulesetId: string, featId: string) {
-    return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
-      const { sourceChain } = rulesetData.cow;
-      const feat = findScopedEntity(rulesetData.featsById, featId, rulesetId, sourceChain, "Feat");
-      return {
-        ...feat,
-        modifiers: rulesetData.modifiersBySource.get(feat.id) ?? [],
-        properties: rulesetData.propertiesByEntity.get(feat.id) ?? [],
-        requirements: rulesetData.requirementsByEntity.get(feat.id) ?? [],
-      };
-    });
+    return await withRulesetScope(db, rulesetId, async (scope) => describeEntity(scope, "feats", featId));
   }
 
   async getFeatGroups(
@@ -132,14 +115,11 @@ class FeatsService {
     pagination: { limit: number; page: number },
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
-      const { rulesetData } = scope;
-      const { sourceChain } = rulesetData.cow;
       const { aptitudeId, ...filters } = where;
-      const ids = aptitudeId === undefined ? undefined : getListFeatIds(rulesetData, aptitudeId);
-      const familyType = getFeatFamilyType(scope);
+      const list = openFeatList(scope, { aptitudeId });
       return await Feats.findGroupPage(
         db,
-        { rulesetId, ancestorRulesetIds: sourceChain, ids, familyType, ...filters },
+        { rulesetId, ancestorRulesetIds: scope.rulesetData.cow.sourceChain, ...list.groupFilters, ...filters },
         pagination,
       );
     });
@@ -158,24 +138,14 @@ class FeatsService {
     pagination: { limit: number; page: number },
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
-      const { rulesetData } = scope;
-      const { sourceChain } = rulesetData.cow;
       const { aptitudeId, family, ...filters } = where;
-      const ids = aptitudeId === undefined ? undefined : getListFeatIds(rulesetData, aptitudeId);
-      const familyOf = family ? { type: getFeatFamilyType(scope), value: family } : undefined;
+      const list = openFeatList(scope, { aptitudeId, childOnly: where.childOnly, family });
       const result = await Feats.findPage(
         db,
-        { rulesetId, ancestorRulesetIds: sourceChain, ...filters, family: familyOf, ids },
+        { rulesetId, ancestorRulesetIds: scope.rulesetData.cow.sourceChain, ...filters, ...list.filters },
         pagination,
       );
-      // Each inherited feat's lists as the ruleset composes them: its siblings' links merged in, their ids remapped
-      if (sourceChain.length > 0 && !where.childOnly) {
-        result.items = result.items.map((feat) => {
-          const merged = rulesetData.featsById.get(feat.id);
-          return merged ? { ...feat, featsAptitudesInRules: merged.featsAptitudesInRules } : feat;
-        });
-      }
-      return result;
+      return { ...result, items: list.describe(result.items) };
     });
   }
 
@@ -192,48 +162,28 @@ class FeatsService {
   ) {
     const result = await withTransaction(
       async (tx) =>
-        await withRulesetScope(tx, rulesetId, async ({ ruleset, rulesetData }) => {
-          const { sourceChain } = rulesetData.cow;
-
+        await withRulesetScope(tx, rulesetId, async (scope) => {
+          const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const feat = findScopedEntity(rulesetData.featsById, featId, rulesetId, sourceChain, "Feat");
-
-          // A generated feat's name names its option (`Weapon Focus: Longsword`), which checks and generators find it by
-          if (body.name !== feat.name && feat.generated) throw new BadRequestError("Generated feats cannot be renamed");
+          const spellAptitudeIds = await PowersAptitudes.findAptitudeIds(tx, { aptitudeIds: body.aptitudeIds ?? [] });
+          const { aptitudeIds, columns, feat } = planFeatEdit(scope, featId, body, { spellAptitudeIds });
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "feats", feat);
           const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 
-          const rows = await Feats.update(
-            tx,
-            {
-              name: body.name,
-              description: body.description,
-            },
-            { id: targetId, expectedUpdatedAt },
-          );
+          const rows = await Feats.update(tx, columns, { id: targetId, expectedUpdatedAt });
           if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
           const updatedFeat = rows[0];
 
-          if (body.aptitudeIds !== undefined) {
+          if (aptitudeIds !== undefined) {
             await FeatsAptitudes.delete(tx, { featId: targetId });
-
-            if (body.aptitudeIds.length > 0) {
-              const spellAptitudes = await PowersAptitudes.findAptitudeIds(tx, { aptitudeIds: body.aptitudeIds });
-              if (spellAptitudes.length > 0)
-                throw new ConflictError("Cannot link feat to aptitude(s) already used for spells");
-
-              await FeatsAptitudes.createMany(
-                tx,
-                body.aptitudeIds.map((aptitudeId) => ({
-                  featId: targetId,
-                  aptitudeId,
-                })),
-              );
-            }
+            await FeatsAptitudes.createMany(
+              tx,
+              aptitudeIds.map((aptitudeId) => ({ featId: targetId, aptitudeId })),
+            );
           }
 
           await createActivityWithNotifications(tx, {

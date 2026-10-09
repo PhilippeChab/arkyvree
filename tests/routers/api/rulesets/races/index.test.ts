@@ -33,13 +33,15 @@ describe("rulesets races", () => {
     await expectStatus(guestApi.api.rulesets[":id"].races.$get({ param: { id }, query: {} }), 401);
   });
 
-  test("rejects a race without a name, with an unknown size or a non-numeric speed", async () => {
+  test("rejects a race without a name, with an unknown size, or a speed that isn't a whole number above 0", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     const valid = { name: "Race", size: "Medium", baseSpeed: 30 };
     for (const json of [
       { ...valid, name: "" },
       { ...valid, size: "Colossal-ish" },
       { ...valid, baseSpeed: "fast" },
+      { ...valid, baseSpeed: 0 },
+      { ...valid, baseSpeed: 7.5 },
     ])
       await expectStatus(races.$post({ param: { id }, json: json as never }), 400);
   });

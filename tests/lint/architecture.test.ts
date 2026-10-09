@@ -27,6 +27,89 @@ describe("architecture rules", () => {
     ).toEqual(["engine-front-door codegen/d.ts", "engine-front-door database/c.ts", "engine-front-door server/b.ts"]);
   });
 
+  test("a service's or a job's action asks the engine one operation, however often, through whatever it calls", async () => {
+    const engine = 'import { describeA, planA, type T } from "@/engine/index.ts";\n';
+    expect(
+      await lintRepo(
+        {
+          // One operation per method, called twice; a type and a callback's call count for their action
+          "server/services/a.ts":
+            engine +
+            "export class A {\n  one(x: T) {\n    planA(x);\n    return [x].map(() => planA(x));\n  }\n" +
+            "  two(x: T) {\n    planA(x);\n    return [x].map(() => describeA(x));\n  }\n}\n",
+          // A function of the module, and a concern's method
+          "server/jobs/b.ts": engine + "export function b(x: T) {\n  planA(x);\n  return describeA(x);\n}\n",
+          "server/services/c.ts":
+            engine +
+            "export function C<B extends new () => object>(Base: B) {\n  return class extends Base {\n" +
+            "    one(x: T) {\n      return planA(x);\n    }\n    other(x: T) {\n      return describeA(x);\n    }\n  };\n}\n",
+          // Through its own method, its module's function, or a namespace
+          "server/services/d.ts":
+            engine +
+            "function described(x: T) {\n  return describeA(x);\n}\n" +
+            "export class D {\n  private planned(x: T) {\n    return planA(x);\n  }\n" +
+            "  one(x: T) {\n    return [this.planned(x), described(x)];\n  }\n}\n",
+          "server/jobs/e.ts":
+            'import * as engine from "@/engine/index.ts";\n' +
+            "export function e(x: unknown) {\n  return [engine.planA(x), engine.describeA(x)];\n}\n",
+          // Through another action's function, re-exported by its folder's index, beside an operation of its own
+          "server/services/f/flow.ts": engine + "export function flow(x: T) {\n  return planA(x);\n}\n",
+          "server/services/f/index.ts": 'export { flow } from "./flow.ts";\n',
+          "server/services/g.ts":
+            engine +
+            'import { flow } from "@/server/services/f/index.ts";\n' +
+            "export function g(x: T) {\n  return [flow(x), describeA(x)];\n}\n",
+          // The routers and the cache aren't actions
+          "server/cache/h.ts": engine + "export function h(x: T) {\n  planA(x);\n  return describeA(x);\n}\n",
+        },
+        ["one-engine-op"],
+      ),
+    ).toEqual([
+      "one-engine-op server/jobs/b.ts",
+      "one-engine-op server/jobs/e.ts",
+      "one-engine-op server/services/a.ts",
+      "one-engine-op server/services/d.ts",
+      "one-engine-op server/services/g.ts",
+    ]);
+  });
+
+  test("the server reads a ruleset's view only for its copy-on-write data; its cache builds it", async () => {
+    expect(
+      await lintRepo(
+        {
+          "server/services/a.ts":
+            "export function a(scope: { rulesetData: { cow: object } }) {\n" +
+            "  const { rulesetData } = scope;\n  return [rulesetData.cow, scope.rulesetData.cow];\n}\n",
+          "server/services/b.ts":
+            "export function b(scope: { rulesetData: { feats: object } }) {\n  return scope.rulesetData.feats;\n}\n",
+          "server/services/c.ts":
+            "export function c(scope: { rulesetData: object }) {\n  const { rulesetData } = scope;\n" +
+            "  const view = rulesetData;\n  return view;\n}\n",
+          "server/cache/d.ts":
+            "export function d(scope: { rulesetData: { feats: object } }) {\n  return scope.rulesetData.feats;\n}\n",
+          // Past a retyping, its copy-on-write data alone; the view under another name, through `!`, or the cache's
+          "server/services/e.ts":
+            "export function e(scope: { rulesetData: { cow: object } }) {\n" +
+            "  const { rulesetData: { cow } } = scope;\n  return [cow, (scope.rulesetData as { cow: object }).cow];\n}\n",
+          "server/services/f.ts":
+            "export function f(scope: { rulesetData: object }) {\n  const { rulesetData: view } = scope;\n  return view;\n}\n",
+          "server/services/g.ts":
+            "export function g(scope: { rulesetData?: { feats: object } }) {\n  return scope.rulesetData!.feats;\n}\n",
+          "server/services/h.ts":
+            'import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";\n' +
+            "export async function h(ruleset: never) {\n  return await RulesetCache.getData(ruleset);\n}\n",
+        },
+        ["opaque-view"],
+      ),
+    ).toEqual([
+      "opaque-view server/services/b.ts",
+      "opaque-view server/services/c.ts",
+      "opaque-view server/services/f.ts",
+      "opaque-view server/services/g.ts",
+      "opaque-view server/services/h.ts",
+    ]);
+  });
+
   test("an index that re-exports only re-exports; any other module exports what it declares", async () => {
     expect(
       await lintRepo(

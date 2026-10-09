@@ -1,15 +1,20 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
+import { RULESET_LIMITS } from "@/engine/index.ts";
 import { denyDemoUser, exportRateLimit, sessionMiddleware, validate } from "@/server/middlewares/index.ts";
 import { characterIdParam, idParam, limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
+import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/shared/enums.ts";
 
 import contributors from "./contributors/index.ts";
 import inventory from "./inventory/index.ts";
 import levels from "./levels/index.ts";
 import modifiers from "./modifiers/index.ts";
 import sharing from "./sharing/index.ts";
+
+/** A character's ability score. */
+const abilityScore = z.number().int().min(1).max(RULESET_LIMITS.abilityScore);
 
 const campaignIdParam = z.object({ campaignId: z.string().uuid() });
 
@@ -108,21 +113,11 @@ export default new Hono()
         rulesetId: z.string().uuid(),
         raceId: z.string().uuid(),
         name: z.string().min(1).max(255),
-        xp: z.number().min(0),
-        alignment: z.enum([
-          "Lawful Good",
-          "Neutral Good",
-          "Chaotic Good",
-          "Lawful Neutral",
-          "True Neutral",
-          "Chaotic Neutral",
-          "Lawful Evil",
-          "Neutral Evil",
-          "Chaotic Evil",
-        ]),
-        abilities: z.record(z.string().uuid(), z.number().min(1).max(100)),
-        age: z.number().min(1).optional(),
-        gender: z.enum(["Male", "Female", "Other"]),
+        xp: z.number().int().min(0),
+        alignment: z.enum(ALIGNMENT_OPTIONS),
+        abilities: z.record(z.string().uuid(), abilityScore),
+        age: z.number().int().min(1).optional(),
+        gender: z.enum(GENDER_OPTIONS),
         height: z
           .string()
           .optional()
@@ -167,24 +162,12 @@ export default new Hono()
         name: z.string().min(1).max(255).optional(),
         // An age, a height or a weight is cleared with null
         age: z.number().int().min(1).nullable().optional(),
-        gender: z.enum(["Male", "Female", "Other"]).optional(),
+        gender: z.enum(GENDER_OPTIONS).optional(),
         height: z.string().nullable().optional(),
         weight: z.string().nullable().optional(),
         deity: z.string().optional(),
-        xp: z.number().optional(),
-        alignment: z
-          .enum([
-            "Lawful Good",
-            "Neutral Good",
-            "Chaotic Good",
-            "Lawful Neutral",
-            "True Neutral",
-            "Chaotic Neutral",
-            "Lawful Evil",
-            "Neutral Evil",
-            "Chaotic Evil",
-          ])
-          .optional(),
+        xp: z.number().int().min(0).optional(),
+        alignment: z.enum(ALIGNMENT_OPTIONS).optional(),
         description: z.string().optional(),
         notes: z.string().optional(),
         // Read by the character's editors and its campaign's Game Master only
@@ -204,7 +187,7 @@ export default new Hono()
   .put(
     "/:id/abilities",
     validate("param", idParam),
-    validate("json", z.record(z.string().uuid(), z.number().int().min(1).max(100))),
+    validate("json", z.record(z.string().uuid(), abilityScore)),
     async (c) => {
       const { id } = c.req.valid("param");
       const body = c.req.valid("json");

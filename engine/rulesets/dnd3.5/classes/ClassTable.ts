@@ -8,6 +8,8 @@ import SpellLists from "@/engine/rulesets/dnd3.5/spellcasting/SpellLists.ts";
 import type { Modifier } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
+import ClassEntity from "./ClassEntity.ts";
+
 /** Each level, with what its pools hold by then: the modifiers' pool counts, summed over it and the levels below. */
 function addFeatPools<T extends { id: string; level: number }>(
   levels: T[],
@@ -168,7 +170,8 @@ export default class ClassTable {
    * A class's levels, each with the feats its pools hold by then: what its own modifiers add, and what the feats it
    * grants add (a stackable one, "Bonus Feat (Fighter)", is a feat each level it's granted at counts once).
    */
-  static describeFeatPools(view: RulesetView, klassId: string) {
+  static describeFeatPools(view: RulesetView, classId: string) {
+    const klassId = ClassEntity.find(view, classId).id;
     const { rulesetData } = view;
     const levels = rulesetData.klassLevelsByKlassId.get(klassId) ?? [];
     const featModifiers: Modifier[] = levels.flatMap((level) =>
@@ -182,7 +185,8 @@ export default class ClassTable {
   }
 
   /** The spell lists a class's levels give slots in, its own first: what its spell list page offers. */
-  static describeSpellLists(view: RulesetView, klassId: string) {
+  static describeSpellLists(view: RulesetView, classId: string) {
+    const klassId = ClassEntity.find(view, classId).id;
     const { rulesetData } = view;
     return getSpellListIds(rulesetData, klassId).flatMap((listId) => {
       const list = rulesetData.aptitudesById.get(listId);
@@ -191,13 +195,15 @@ export default class ClassTable {
   }
 
   /** A class's levels, each with the spells per day it gives by spell level by then. */
-  static describeSpells(view: RulesetView, klassId: string) {
+  static describeSpells(view: RulesetView, classId: string) {
+    const klassId = ClassEntity.find(view, classId).id;
     const levels = view.rulesetData.klassLevelsByKlassId.get(klassId) ?? [];
     return addSpellsPerDay(levels, getLevelModifiers(view.rulesetData, levels));
   }
 
   /** A class's levels, each with the spells it knows by spell level by then ("All": every spell of its list). */
-  static describeSpellsKnown(view: RulesetView, klassId: string) {
+  static describeSpellsKnown(view: RulesetView, classId: string) {
+    const klassId = ClassEntity.find(view, classId).id;
     const levels = view.rulesetData.klassLevelsByKlassId.get(klassId) ?? [];
     return addSpellsKnown(levels, getLevelModifiers(view.rulesetData, levels));
   }

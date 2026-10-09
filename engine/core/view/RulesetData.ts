@@ -89,6 +89,22 @@ export interface RulesetLists {
   skills: Skill[];
 }
 
+/** A ruleset's entities as its view has them, by their table: what `RulesetData.find` finds one of. */
+export interface ViewEntities {
+  abilities: RulesetAbility;
+  aptitudes: Aptitude;
+  feats: FeatWithAptitudes;
+  items: Item;
+  klass_levels: KlassLevel;
+  klasses: Klass;
+  languages: Language;
+  mechanics: Mechanic;
+  powers: PowerWithAptitudes;
+  races: Race;
+  saves: RulesetSave;
+  skills: Skill;
+}
+
 /** Rows by id. */
 function buildById<T extends { id: string }>(list: T[]): Map<string, T> {
   return new Map(list.map((item) => [item.id, item]));
@@ -288,6 +304,15 @@ export default class RulesetData {
     return this.cow.resolve(id);
   }
 
+  /** An entity's customizations, as the view composes them: its modifiers, its properties and its requirements. */
+  customizationsOf(entityId: string) {
+    return {
+      modifiers: this.modifiersBySource.get(entityId) ?? [],
+      properties: this.propertiesByEntity.get(entityId) ?? [],
+      requirements: this.requirementsByEntity.get(entityId) ?? [],
+    };
+  }
+
   /**
    * Reverse property index: `${entityType}:${type}:${value}` → the ids of the entities with that property. Replaces
    * O(N) scans like `powers.filter(p => p.properties.some(x => x.type === TYPE && x.value === V))`.
@@ -317,6 +342,28 @@ export default class RulesetData {
 
   get featsById(): Map<string, FeatWithAptitudes> {
     return (this.built.featsById ??= this.resolvingIds(this.storedFeatsById));
+  }
+
+  /**
+   * The entity of `type` an id names in the view (a stored id its copy or winner): the ruleset's own, or inherited. It
+   * builds the index of `type` alone.
+   */
+  find<K extends keyof ViewEntities>(type: K, id: string): ViewEntities[K] | undefined {
+    const byId: { [T in keyof ViewEntities]: () => ReadonlyMap<string, ViewEntities[T]> } = {
+      abilities: () => this.abilitiesById,
+      aptitudes: () => this.aptitudesById,
+      feats: () => this.featsById,
+      items: () => this.itemsById,
+      klass_levels: () => this.klassLevelsById,
+      klasses: () => this.klassesById,
+      languages: () => this.languagesById,
+      mechanics: () => this.mechanicsById,
+      powers: () => this.powersById,
+      races: () => this.racesById,
+      saves: () => this.savesById,
+      skills: () => this.skillsById,
+    };
+    return byId[type]().get(id);
   }
 
   /**
