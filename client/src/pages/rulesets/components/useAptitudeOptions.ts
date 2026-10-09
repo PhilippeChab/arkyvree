@@ -4,11 +4,8 @@ import { useState } from "react";
 import { ScrollSafeListbox } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
-import {
-  type Aptitude,
-  aptitudeOptionsQuery,
-  type AptitudeScope,
-} from "@/client/src/pages/rulesets/details/sectionQueries.ts";
+import type { Aptitude } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
+import { aptitudeOptionsQuery, type AptitudeScope } from "@/client/src/pages/rulesets/optionQueries.ts";
 
 export function useAptitudeOptions(rulesetId: string, scope?: AptitudeScope) {
   const [search, setSearch] = useState("");

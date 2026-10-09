@@ -4,27 +4,15 @@ import { parseResponse } from "hono/client";
 import { type ReactNode } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 
-import {
-  DiceSpinner,
-  HelpLabel,
-  type SectionTab,
-  SectionTabPanel,
-  SectionTabs,
-} from "@/client/src/components/common/index.ts";
-import {
-  MODIFIERS_HELP,
-  PROPERTIES_HELP,
-  REQUIREMENTS_HELP,
-  TargetPathBreadcrumbs,
-} from "@/client/src/components/customization/index.ts";
-import { ModifiersIcon, PropertiesIcon, RequirementsIcon } from "@/client/src/components/icons/index.ts";
+import { DiceSpinner, type SectionTab, SectionTabPanel, SectionTabs } from "@/client/src/components/common/index.ts";
+import { TargetPathBreadcrumbs } from "@/client/src/components/customization/index.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
-import { entityPageState } from "@/client/src/pages/rulesets/entityPageState.ts";
+import { entityPageBack, entityPageState } from "@/client/src/pages/rulesets/entityPageState.ts";
 import {
   useCopyOnWrite,
   useRestorableDelete,
@@ -44,7 +32,13 @@ import { isOneOf } from "@/shared/isOneOf.ts";
 
 import { type EditableEntity, isEditable, renderEditor } from "./editors/index.ts";
 import { type CustomizationEntity, customizationEntityQuery } from "./entityQueries.ts";
-import { ModifiersSection, PropertiesSection, RequirementsSection } from "./sections/index.ts";
+import {
+  CUSTOMIZATION_TABS,
+  type CustomizationSection,
+  ModifiersSection,
+  PropertiesSection,
+  RequirementsSection,
+} from "./sections/index.ts";
 
 interface CustomizationViewProps {
   canEdit: boolean;
@@ -54,29 +48,9 @@ interface CustomizationViewProps {
   locked: boolean;
   ruleset: RulesetDetail;
   rulesetId: string;
-  section: TabSection;
-  tabs: SectionTab<TabSection>[];
+  section: CustomizationSection;
+  tabs: SectionTab<CustomizationSection>[];
 }
-
-type TabSection = "properties" | "modifiers" | "requirements";
-
-const TABS: SectionTab<TabSection>[] = [
-  {
-    key: "properties",
-    icon: PropertiesIcon,
-    label: <HelpLabel label="Properties" help={PROPERTIES_HELP} />,
-  },
-  {
-    key: "modifiers",
-    icon: ModifiersIcon,
-    label: <HelpLabel label="Modifiers" help={MODIFIERS_HELP} />,
-  },
-  {
-    key: "requirements",
-    icon: RequirementsIcon,
-    label: <HelpLabel label="Requirements" help={REQUIREMENTS_HELP} />,
-  },
-];
 
 function CustomizationView({
   rulesetId,
@@ -95,8 +69,8 @@ function CustomizationView({
   const type = data.type;
   const label = entityTypeLabel(type, ruleset.baseRules);
   const { title, pageTitle, subtitle, backPath } = describe(data, rulesetId);
-  const state = entityPageState(location.state);
-  const listPath = state.from ?? `/rulesets/${rulesetId}/${type}`;
+  // Where it was opened from, else what holds it (a class's level, an entity's modifier), else its list
+  const back = entityPageBack(location.state, backPath ?? `/rulesets/${rulesetId}/${type}`);
   usePageTitle(pageTitle);
 
   const entityKey = QUERY_KEYS.rulesets.entity(rulesetId, type, entityId);
@@ -123,13 +97,14 @@ function CustomizationView({
   return (
     <EntityDetailLayout
       entityName={`Customize ${title}`}
-      subtitle={subtitle ?? `${label} in ${ruleset.name}`}
-      backTo={backPath ?? listPath}
+      rulesetName={ruleset.name}
+      what={label}
+      subtitle={subtitle}
+      backTo={back.to}
       backDisabled={locked}
       deletion={
         canEdit && isEditable(data) && !locked
           ? {
-              what: label,
               rulesetId,
               deleteFn: () => deleteEntityFn(data, rulesetId, entityId),
               listKeys: [QUERY_KEYS.rulesets.section(rulesetId, type), ...(klassLevelsKey ? [klassLevelsKey] : [])],
@@ -142,7 +117,7 @@ function CustomizationView({
     >
       {forgetSource && <Navigate to={forgetSource.to} replace state={forgetSource.state} />}
       {isEditable(data) &&
-        renderEditor(data, {
+        renderEditor(data, ruleset.baseRules, {
           rulesetId,
           entityId,
           recordKey: copy.key,
@@ -242,7 +217,7 @@ function modifierSourcePath(rulesetId: string, sourceType: string, sourceId: str
 
 /** A modifier can only carry requirements. */
 function tabsFor(type: CustomizationPageType) {
-  return type === "modifiers" ? TABS.filter((tab) => tab.key === "requirements") : TABS;
+  return type === "modifiers" ? CUSTOMIZATION_TABS.filter((tab) => tab.key === "requirements") : CUSTOMIZATION_TABS;
 }
 
 async function deleteEntityFn(data: EditableEntity, id: string, entityId: string) {
@@ -288,6 +263,8 @@ export default function CustomizationPage() {
   const validType = parseCustomizationSegment(entityType);
 
   const { copiedFrom } = entityPageState(location.state);
+  // Until the entity says what holds it, Back goes where the page was opened from, else to the ruleset
+  const back = entityPageBack(location.state, `/rulesets/${rulesetId}`);
 
   // Right after a copy-on-write, keep showing the entity the copy was made
   // from until the copy loads, so the page and any unsaved edits stay; the
@@ -351,15 +328,15 @@ export default function CustomizationPage() {
               ? loadFailureMessage("Ruleset", rulesetError)
               : loadFailureMessage(entityTypeLabel(validType, ruleset?.baseRules), entityError)
         }
-        backLabel="Back to Ruleset"
-        backTo={`/rulesets/${rulesetId}`}
+        backLabel={back.label}
+        backTo={back.to}
       />
     );
   }
 
   if (!ruleset || !data || !currentTab) {
     return (
-      <EntityDetailLayout backTo={`/rulesets/${rulesetId}`} isLoading>
+      <EntityDetailLayout backTo={back.to} what={entityTypeLabel(validType, ruleset?.baseRules)} isLoading>
         {null}
       </EntityDetailLayout>
     );

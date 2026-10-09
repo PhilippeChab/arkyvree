@@ -1,6 +1,7 @@
 import { IconButton, Stack, Tooltip } from "@mui/material";
 import type { ElementType, MouseEventHandler, ReactNode } from "react";
 
+import { DiceSpinner } from "./DiceSpinner.tsx";
 import { type Intent, INTENT_COLORS } from "./intent.ts";
 import { ROW_ACTIONS_SX } from "./rowActionStyles.ts";
 
@@ -12,6 +13,8 @@ interface RowActionProps {
   /** Its name, which its tooltip shows: "Edit", "Revoke Invite" */
   label: string;
   onClick: MouseEventHandler<HTMLButtonElement>;
+  /** The request it started is running: its icon rolls, and it waits */
+  pending?: boolean;
 }
 
 interface RowActionsProps {
@@ -20,7 +23,14 @@ interface RowActionsProps {
 }
 
 /** One of a row's actions: its icon, named by its label, which its tooltip shows. */
-export function RowAction({ icon: Icon, label, intent = "default", onClick, disabled }: RowActionProps) {
+export function RowAction({
+  icon: Icon,
+  label,
+  intent = "default",
+  onClick,
+  disabled,
+  pending = false,
+}: RowActionProps) {
   const palette = INTENT_COLORS[intent];
   return (
     <Tooltip title={label}>
@@ -30,10 +40,12 @@ export function RowAction({ icon: Icon, label, intent = "default", onClick, disa
           aria-label={label}
           size="small"
           onClick={onClick}
-          disabled={disabled}
+          disabled={disabled || pending}
           sx={{ color: palette && `${palette}.main` }}
         >
-          <Icon fontSize="small" />
+          <DiceSpinner size="small" loading={pending}>
+            <Icon fontSize="small" />
+          </DiceSpinner>
         </IconButton>
       </Stack>
     </Tooltip>

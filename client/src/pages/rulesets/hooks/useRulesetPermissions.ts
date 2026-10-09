@@ -14,7 +14,6 @@ interface RulesetPermissions {
   canManageContributors: boolean;
   /** Owner only. Demo users blocked. */
   canPublish: boolean;
-  contributorRole: string | null;
   isContributor: boolean;
   isOwner: boolean;
 }
@@ -34,12 +33,11 @@ export function useRulesetPermissions(ruleset: RulesetData | undefined): Ruleset
       canManageContributors: false,
       canPublish: false,
       isContributor: false,
-      contributorRole: null,
     };
   }
 
   const isOwner = ruleset.userId === currentUserId;
-  const contributorRole = ruleset.contributorRole ?? null;
+  const { contributorRole } = ruleset;
   const isAdmin = contributorRole === "Admin";
   const isEditor = contributorRole === "Editor";
   const isContributor = !!contributorRole;
@@ -48,7 +46,6 @@ export function useRulesetPermissions(ruleset: RulesetData | undefined): Ruleset
   return {
     isOwner,
     isContributor,
-    contributorRole,
     canEditEntities: (isOwner || isAdmin || isEditor) && isNotArchived,
     canEditRuleset: (isOwner || isAdmin) && isNotArchived,
     canManageContributors: (isOwner || isAdmin) && !isDemo,

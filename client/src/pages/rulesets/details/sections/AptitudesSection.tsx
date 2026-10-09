@@ -1,7 +1,6 @@
 import { Stack } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
-import { useCallback } from "react";
 
 import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
 import { AptitudesIcon } from "@/client/src/components/icons/index.ts";
@@ -56,12 +55,9 @@ export function AptitudesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
     openEntity(`aptitudes/${aptitude.id}`);
   };
 
-  const handleRowMouseEnter = useCallback(
-    (aptitude: Aptitude) => {
-      void queryClient.prefetchQuery(aptitudeQuery(ruleset.id, aptitude.id));
-    },
-    [queryClient, ruleset.id],
-  );
+  const handleRowMouseEnter = (aptitude: Aptitude) => {
+    void queryClient.prefetchQuery(aptitudeQuery(ruleset.id, aptitude.id));
+  };
 
   const renderCell = (aptitude: Aptitude, columnKey: string) => {
     switch (columnKey) {

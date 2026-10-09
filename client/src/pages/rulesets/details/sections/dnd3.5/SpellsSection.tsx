@@ -1,7 +1,6 @@
 import { Box, Stack } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
-import { useCallback } from "react";
 
 import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
 import { PowersIcon } from "@/client/src/components/icons/index.ts";
@@ -78,12 +77,9 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
     openEntity(buildCustomizationPath("powers", spell.id));
   };
 
-  const handleRowMouseEnter = useCallback(
-    (spell: Spell) => {
-      void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, "powers", spell.id));
-    },
-    [queryClient, ruleset.id],
-  );
+  const handleRowMouseEnter = (spell: Spell) => {
+    void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, "powers", spell.id));
+  };
 
   const renderCell = (spell: Spell, columnKey: string) => {
     switch (columnKey) {

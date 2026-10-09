@@ -1,7 +1,6 @@
 import { Stack, Tooltip, Typography } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
-import { useCallback, useMemo } from "react";
 
 import { AddButton, EmptyValue, ListToolbar, LoadError, ValueChip } from "@/client/src/components/common/index.ts";
 import { LevelsIcon } from "@/client/src/components/icons/index.ts";
@@ -30,23 +29,19 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
   const queryClient = useQueryClient();
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
 
-  // One column per ruleset save.
+  // One column per ruleset save, sharing the room the saves take
   const { data: rulesetSaves, error: savesError } = useRulesetSaves(rulesetId);
-  // Build dynamic columns based on ruleset saves
-  const levelsColumns = useMemo(() => {
-    const saveColumns = (rulesetSaves ?? []).map((save) => ({
+  const levelsColumns = [
+    { key: "level", label: "Level", width: "8%" },
+    { key: "bab", label: "Base Attack Bonus", width: "15%" },
+    ...(rulesetSaves ?? []).map((save) => ({
       key: `save_${save.id}`,
       label: save.name,
       width: `${Math.floor(36 / Math.max(rulesetSaves?.length ?? 0, 1))}%`,
-    }));
-    return [
-      { key: "level", label: "Level", width: "8%" },
-      { key: "bab", label: "Base Attack Bonus", width: "15%" },
-      ...saveColumns,
-      { key: "skills", label: "Skill Points", width: "13%" },
-      { key: "feats", label: "Feats", width: "28%" },
-    ];
-  }, [rulesetSaves]);
+    })),
+    { key: "skills", label: "Skill Points", width: "13%" },
+    { key: "feats", label: "Feats", width: "28%" },
+  ];
 
   const query = classLevelsQuery(rulesetId, classId);
   const { data: levels, isLoading, error } = useQuery(query);
@@ -67,12 +62,9 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
     openEntity(buildCustomizationPath("klass_levels", level.id));
   };
 
-  const handleRowMouseEnter = useCallback(
-    (level: ClassLevelRow) => {
-      void queryClient.prefetchQuery(customizationEntityQuery(rulesetId, "klass_levels", level.id));
-    },
-    [queryClient, rulesetId],
-  );
+  const handleRowMouseEnter = (level: ClassLevelRow) => {
+    void queryClient.prefetchQuery(customizationEntityQuery(rulesetId, "klass_levels", level.id));
+  };
 
   const renderCell = (level: ClassLevelRow, columnKey: string) => {
     if (columnKey.startsWith("save_")) {

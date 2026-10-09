@@ -11,8 +11,6 @@ import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import type { EditRulesetFormData, ForkRulesetFormData } from "@/client/src/pages/rulesets/details/components/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-import { useToggleRulesetStar } from "./useToggleRulesetStar.ts";
-
 /** An extension a ruleset unsubscribes from, and the ruleset. */
 interface UnsubscribeTarget {
   extensionId: string;
@@ -123,8 +121,6 @@ export function useRulesetOperations() {
       snackbar.error(error, "Failed to unarchive ruleset");
     },
   });
-
-  const toggleStar = useToggleRulesetStar();
 
   const publishMutation = useMutation({
     mutationFn: async ({ id, kind }: { id: string; kind?: PublishKind }) =>
@@ -257,6 +253,5 @@ export function useRulesetOperations() {
     confirmFork,
     confirmSubscribe,
     confirmUnsubscribe,
-    toggleStar,
   };
 }

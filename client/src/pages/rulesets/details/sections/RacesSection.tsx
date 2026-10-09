@@ -1,7 +1,6 @@
 import { Stack, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
-import { useCallback } from "react";
 
 import {
   CreateDialog,
@@ -35,7 +34,7 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
   const openEntity = useOpenEntity(ruleset.id);
   const queryClient = useQueryClient();
 
-  const { search, kind, orderBy, orderDir, searchBarProps } = useEntityFilters();
+  const { search, kind, orderBy, orderDir, searchBarProps } = useEntityFilters(ruleset.baseRules);
 
   const { createForm, handleCreate, createDialogProps } = useRulesetSection<Race, RaceFormData>({
     rulesetId: ruleset.id,
@@ -63,12 +62,9 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     openEntity(buildCustomizationPath("races", race.id));
   };
 
-  const handleRowMouseEnter = useCallback(
-    (race: Race) => {
-      void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, "races", race.id));
-    },
-    [queryClient, ruleset.id],
-  );
+  const handleRowMouseEnter = (race: Race) => {
+    void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, "races", race.id));
+  };
 
   const renderCell = (race: Race, columnKey: string) => {
     switch (columnKey) {

@@ -1,7 +1,6 @@
 import { Stack, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
-import { useCallback } from "react";
 
 import {
   CreateDialog,
@@ -19,8 +18,8 @@ import { pageItems } from "@/client/src/lib/pageItems.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
   EMPTY_ITEM,
+  type ItemFormData,
   ItemFormFields,
-  type ItemFormInternal,
   toItemForm,
   toItemPayload,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
@@ -48,7 +47,7 @@ const ITEMS_COLUMNS = [
 ];
 
 /** An item's copy, as its duplicate's dialog opens on it: based on the item, or on the item's own template */
-function duplicateForm(item: Item): ItemFormInternal {
+function duplicateForm(item: Item): ItemFormData {
   return {
     ...toItemForm(item),
     name: `${item.name} (Copy)`,
@@ -65,7 +64,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
 
   const { createForm, createDialogProps, duplicateSource, handleCreate, handleDuplicate } = useRulesetSection<
     Item,
-    ItemFormInternal
+    ItemFormData
   >({
     createDefaults: EMPTY_ITEM,
     rulesetId: ruleset.id,
@@ -124,12 +123,9 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     },
   });
 
-  const handleRowMouseEnter = useCallback(
-    (item: Item) => {
-      void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, "items", item.id));
-    },
-    [queryClient, ruleset.id],
-  );
+  const handleRowMouseEnter = (item: Item) => {
+    void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, "items", item.id));
+  };
 
   const renderCell = (item: Item, columnKey: string) => {
     switch (columnKey) {

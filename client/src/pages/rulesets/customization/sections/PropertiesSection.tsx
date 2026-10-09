@@ -1,29 +1,33 @@
 import { Stack, Typography } from "@mui/material";
-import { type InferRequestType, type InferResponseType, parseResponse } from "hono/client";
-import { Controller, type UseFormReturn } from "react-hook-form";
+import { type InferResponseType, parseResponse } from "hono/client";
 
 import {
   AddButton,
   CreateDialog,
-  DescriptionField,
   EditDialog,
   EmptyValue,
   ListToolbar,
   SectionContent,
   ValueChip,
 } from "@/client/src/components/common/index.ts";
-import { PropertyTypeInput, PropertyValueInput } from "@/client/src/components/customization/index.ts";
-import { ListAltIcon } from "@/client/src/components/icons/index.ts";
+import {
+  EMPTY_PROPERTY,
+  type PropertyFormData,
+  PropertyFormFields,
+} from "@/client/src/components/customization/index.ts";
+import { PropertiesIcon } from "@/client/src/components/icons/index.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
-import { requiredRules } from "@/client/src/lib/validation.ts";
-import { EntityDeleteDialog, RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
+import {
+  DescriptionCell,
+  EntityDeleteDialog,
+  RulesetSectionTable,
+} from "@/client/src/pages/rulesets/components/index.ts";
 import { propertiesQuery } from "@/client/src/pages/rulesets/customization/customizationSectionQueries.ts";
+import { followCopiesOf } from "@/client/src/pages/rulesets/followCopies.ts";
 import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import type { CustomizableEntityType } from "@/shared/customization/entities.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
-
-import { useCopyFollow } from "./useCopyFollow.ts";
 
 type PropertiesArray = InferResponseType<
   (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["properties"]["$get"],
@@ -42,19 +46,6 @@ interface PropertiesSectionProps {
 
 type Property = PropertiesArray[number];
 
-interface PropertyFieldsProps {
-  entityType: CustomizableEntityType;
-  form: UseFormReturn<PropertyFormData>;
-  rulesetId: string;
-}
-
-type PropertyFormData = InferRequestType<
-  (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["properties"]["$post"]
->["json"];
-
-/** A property's form, empty: what the create dialog opens on. */
-const EMPTY_PROPERTY: PropertyFormData = { type: "", value: "", description: "" };
-
 const PROPERTIES_COLUMNS = [
   { key: "type", label: "Type", width: "20%" },
   { key: "value", label: "Value", width: "40%" },
@@ -63,44 +54,6 @@ const PROPERTIES_COLUMNS = [
 
 /** Its create and edit dialogs' height: room for a completion list under the type and the value. */
 const PROPERTY_DIALOG_HEIGHT = "60vh";
-
-/** A property's fields, its create dialog's and its edit dialog's alike. */
-function PropertyFields({ form, rulesetId, entityType }: PropertyFieldsProps) {
-  return (
-    <>
-      <Controller
-        control={form.control}
-        name="type"
-        render={({ field }) => (
-          <PropertyTypeInput
-            value={field.value || ""}
-            onChange={field.onChange}
-            inputRef={field.ref}
-            rulesetId={rulesetId}
-            entityType={entityType}
-          />
-        )}
-      />
-      <Controller
-        control={form.control}
-        name="value"
-        rules={requiredRules("Value is required")}
-        render={({ field, fieldState }) => (
-          <PropertyValueInput
-            value={field.value || ""}
-            onChange={field.onChange}
-            inputRef={field.ref}
-            rulesetId={rulesetId}
-            propertyType={form.watch("type") || ""}
-            error={!!fieldState.error}
-            helperText={fieldState.error?.message}
-          />
-        )}
-      />
-      <DescriptionField control={form.control} name="description" placeholder="Enter the property description…" />
-    </>
-  );
-}
 
 export function PropertiesSection({
   ruleset,
@@ -111,7 +64,7 @@ export function PropertiesSection({
   onEntityIdChange,
   restorable,
 }: PropertiesSectionProps) {
-  const { tag, followCopies } = useCopyFollow(entityId, onEntityIdChange);
+  const { tag, followCopies } = followCopiesOf(entityId, onEntityIdChange);
   const entityParam = { id: ruleset.id, entityType: getUrlSegment(entityType), entityId };
 
   const {
@@ -163,7 +116,6 @@ export function PropertiesSection({
   });
 
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
-  const canDelete = canEdit;
 
   const handleEditProperty = (property: Property) => {
     handleEdit(property, {
@@ -184,11 +136,7 @@ export function PropertiesSection({
       case "type":
         return property.type ? <ValueChip label={property.type} /> : <EmptyValue />;
       case "description":
-        return (
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            {property.description}
-          </Typography>
-        );
+        return <DescriptionCell text={property.description} />;
       default:
         return null;
     }
@@ -206,23 +154,22 @@ export function PropertiesSection({
           isLoading={isLoading}
           columns={PROPERTIES_COLUMNS}
           canEdit={canEdit}
-          canDelete={canDelete}
           onEdit={handleEditProperty}
           onDelete={handleDelete}
           restorable={restorable}
           renderCell={renderCell}
-          emptyIcon={ListAltIcon}
+          emptyIcon={PropertiesIcon}
           emptyTitle="No properties"
           emptyDescription="No properties defined for this entity."
         />
       </Stack>
 
       <CreateDialog {...createDialogProps} title="Create New Property" fixedHeight={PROPERTY_DIALOG_HEIGHT}>
-        <PropertyFields form={createForm} rulesetId={ruleset.id} entityType={entityType} />
+        <PropertyFormFields form={createForm} rulesetId={ruleset.id} entityType={entityType} />
       </CreateDialog>
 
       <EditDialog {...editDialogProps} title="Edit Property" fixedHeight={PROPERTY_DIALOG_HEIGHT}>
-        <PropertyFields form={editForm} rulesetId={ruleset.id} entityType={entityType} />
+        <PropertyFormFields form={editForm} rulesetId={ruleset.id} entityType={entityType} />
       </EditDialog>
 
       <EntityDeleteDialog {...deleteDialogProps} what="Property" restorable={restorable} />

@@ -124,6 +124,7 @@
     "arkyvree/clickable-elements": "error",
     "arkyvree/tooltips": "error",
     "arkyvree/form-fields": "error",
+    "arkyvree/row-prefetch": "error",
     "arkyvree/sx-styles": "error",
     "arkyvree/theme-colors": "error",
     "arkyvree/shadows": "error",

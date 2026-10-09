@@ -34,10 +34,29 @@ export function compareLevels(a: string, b: string): number {
   return left.length - right.length;
 }
 
+/**
+ * The level a row added under `parentLevel` takes (at the top for none): one past the highest number its siblings take,
+ * a row under a missing one counting for it, so the new row never adopts it.
+ */
+export function getNextLevel(levels: readonly string[], parentLevel: string | null): string {
+  const prefix = parentLevel === null ? "" : `${parentLevel}.`;
+  const taken = levels
+    .filter((level) => level.startsWith(prefix))
+    .map((level) => level.slice(prefix.length).split(".")[0])
+    .filter((segment) => NUMERIC.test(segment))
+    .map(Number);
+  return `${prefix}${Math.max(0, ...taken) + 1}`;
+}
+
 /** The level of the row a level sits under: none at the top. */
 export function getParentLevel(level: string): string | null {
   const index = level.lastIndexOf(".");
   return index === -1 ? null : level.slice(0, index);
+}
+
+/** Whether a row groups the rows under it (`and`, `or`): a condition groups none. */
+export function isChaining(row: Pick<RequirementRow, "chainingOperator">): boolean {
+  return !!row.chainingOperator;
 }
 
 /**
@@ -65,7 +84,7 @@ export default class RequirementTree<R extends RequirementRow> {
       const parentLevel = getParentLevel(node.requirement.level);
       const parent = parentLevel === null ? undefined : byLevel.get(parentLevel);
       if (!parent) roots.push(node);
-      else if (parent.requirement.chainingOperator) parent.children.push(node);
+      else if (isChaining(parent.requirement)) parent.children.push(node);
       else detached.push(node.requirement);
     }
     return new RequirementTree(roots, detached);

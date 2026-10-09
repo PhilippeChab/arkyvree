@@ -1,7 +1,6 @@
 import { Stack, Typography } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
-import { useCallback } from "react";
 
 import {
   CreateDialog,
@@ -26,6 +25,7 @@ import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/se
 import { classesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { useEntityFilters, useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
+import { formatHitDie } from "@/shared/dnd3.5/classes.ts";
 
 type Class = ClassesPaginated["items"][number];
 type ClassesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"]["$get"], 200>;
@@ -40,7 +40,7 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
   const openEntity = useOpenEntity(ruleset.id);
   const queryClient = useQueryClient();
 
-  const { search, kind, orderBy, orderDir, searchBarProps } = useEntityFilters();
+  const { search, kind, orderBy, orderDir, searchBarProps } = useEntityFilters(ruleset.baseRules);
 
   const { createForm, handleCreate, createDialogProps } = useRulesetSection<Class, ClassFormData>({
     rulesetId: ruleset.id,
@@ -64,19 +64,14 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
 
   const classes = pageItems(data);
 
-  const handleRowClick = (class_: Class) => {
-    openEntity(`classes/${class_.id}/levels`);
+  const handleRowClick = (klass: Class) => {
+    openEntity(`classes/${klass.id}/levels`);
   };
 
-  const handleRowMouseEnter = useCallback(
-    (class_: Class) => {
-      void queryClient.prefetchQuery(classDetailQuery(ruleset.id, class_.id));
-      void prefetchClassSection(queryClient, ruleset.id, class_.id, "levels");
-    },
-    [queryClient, ruleset.id],
-  );
-
-  const formatHitDie = (hitDie: number) => `d${hitDie}`;
+  const handleRowMouseEnter = (klass: Class) => {
+    void queryClient.prefetchQuery(classDetailQuery(ruleset.id, klass.id));
+    void prefetchClassSection(queryClient, ruleset.id, klass.id, "levels");
+  };
 
   const renderCell = (klass: Class, columnKey: string) => {
     switch (columnKey) {

@@ -1,12 +1,25 @@
 /** The entities the customization page edits, which it can delete too: their editor of their details, and its props. */
 
-import type { CustomizationEntity } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
+import type { ComponentType } from "react";
 
-import { ClassLevelEditor } from "./ClassLevelEditor.tsx";
+import type {
+  ClassLevel,
+  CustomizationEntity,
+  Item,
+  Power,
+} from "@/client/src/pages/rulesets/customization/entityQueries.ts";
+import type { BaseRules } from "@/shared/enums.ts";
+
+import { ClassLevelEditor, ItemEditor, SpellEditor } from "./dnd3.5/index.ts";
 import { FeatEditor } from "./FeatEditor.tsx";
-import { ItemEditor } from "./ItemEditor.tsx";
 import { RaceEditor } from "./RaceEditor.tsx";
-import { SpellEditor } from "./SpellEditor.tsx";
+
+/** The editors of the entities that are a base rules' own: its class levels, its items and its powers (3.5's spells). */
+interface RulesetEditors {
+  ClassLevelEditor: ComponentType<EditorProps<ClassLevel>>;
+  ItemEditor: ComponentType<EditorProps<Item>>;
+  PowersEditor: ComponentType<EditorProps<Power>>;
+}
 
 export type EditableEntity = Extract<CustomizationEntity, { type: (typeof EDITABLE_TYPES)[number] }>;
 
@@ -31,23 +44,28 @@ export interface EditorProps<T> {
 /** The entity types with an editor on the customization page */
 const EDITABLE_TYPES = ["feats", "races", "items", "powers", "klass_levels"] as const;
 
+const RULESET_EDITORS: Record<BaseRules, RulesetEditors> = {
+  "Dungeons & Dragons: 3.5": { ClassLevelEditor, ItemEditor, PowersEditor: SpellEditor },
+};
+
 export function isEditable(data: CustomizationEntity): data is EditableEntity {
   return EDITABLE_TYPES.some((type) => type === data.type);
 }
 
-/** An entity's editor, by its type */
-export function renderEditor(data: EditableEntity, props: Omit<EditorProps<unknown>, "entity">) {
+/** An entity's editor, by its type, and by its ruleset's base rules for an entity that is theirs */
+export function renderEditor(data: EditableEntity, baseRules: BaseRules, props: Omit<EditorProps<unknown>, "entity">) {
+  const editors = RULESET_EDITORS[baseRules];
   switch (data.type) {
     case "feats":
       return <FeatEditor {...props} entity={data.entity} />;
     case "races":
       return <RaceEditor {...props} entity={data.entity} />;
     case "items":
-      return <ItemEditor {...props} entity={data.entity} />;
+      return <editors.ItemEditor {...props} entity={data.entity} />;
     case "powers":
-      return <SpellEditor {...props} entity={data.entity} />;
+      return <editors.PowersEditor {...props} entity={data.entity} />;
     case "klass_levels":
-      return <ClassLevelEditor {...props} entity={data.entity} />;
+      return <editors.ClassLevelEditor {...props} entity={data.entity} />;
     default:
       return data satisfies never;
   }

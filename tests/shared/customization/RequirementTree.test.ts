@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
-import RequirementTree, { compareLevels, getParentLevel } from "@/shared/customization/RequirementTree.ts";
+import RequirementTree, {
+  compareLevels,
+  getNextLevel,
+  getParentLevel,
+  isChaining,
+} from "@/shared/customization/RequirementTree.ts";
 
 /** A row at `level`: a group when it has an operator, a condition otherwise. */
 function row(level: string, chainingOperator: string | null = null) {
@@ -21,10 +26,41 @@ describe("compareLevels", () => {
   });
 });
 
+describe("getNextLevel", () => {
+  test("is one past the highest number its siblings take, at the top or under a row", () => {
+    const levels = ["1", "2", "2.1", "2.3", "2.3.1", "10"];
+    expect(getNextLevel(levels, null)).toBe("11");
+    expect(getNextLevel(levels, "2")).toBe("2.4");
+    expect(getNextLevel(levels, "2.3")).toBe("2.3.2");
+  });
+
+  test("starts at 1 where nothing is", () => {
+    expect(getNextLevel([], null)).toBe("1");
+    expect(getNextLevel(["1"], "1")).toBe("1.1");
+  });
+
+  test("counts a row under a missing one, so the new row never adopts it", () => {
+    expect(getNextLevel(["1", "3.1"], null)).toBe("4");
+    expect(getNextLevel(["1", "1.2.1"], "1")).toBe("1.3");
+  });
+
+  test("passes over a level that isn't a number (one the sibling merge renames)", () => {
+    expect(getNextLevel(["1", "1-2"], null)).toBe("2");
+  });
+});
+
 describe("getParentLevel", () => {
   test("is the level without its last segment, none at the top", () => {
     expect(getParentLevel("1.2.3")).toBe("1.2");
     expect(getParentLevel("1")).toBeNull();
+  });
+});
+
+describe("isChaining", () => {
+  test("is a row with a chaining operator, whatever else it holds", () => {
+    expect(isChaining(row("1", "and"))).toBe(true);
+    expect(isChaining(row("1"))).toBe(false);
+    expect(isChaining({ chainingOperator: "" })).toBe(false);
   });
 });
 

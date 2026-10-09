@@ -8,7 +8,8 @@
  *   A dialog is `sm`, its wrappers' default (`md` for a form of many fields, a target path or a requirement tree),
  *   never `xs`; its title is its words, no icon; its lead line is a `DialogContentText`, as a confirmation's; its
  *   content keeps the theme's padding, and its first block sits 8px under the title (`pt: 1`), as a create dialog's
- *   fields, the title right above it (in its form).
+ *   fields, the title right above it (in its form). A dialog with a `DialogTitle` is named by it, which MUI wires:
+ *   only one without points its `aria-labelledby` at its heading.
  * - `query-keys`: every query key comes from `lib/queryKeys.ts`: a key written as an array starts by spreading one
  *   (`[...QUERY_KEYS.rulesets.section(id, "feats"), search]`). A key its domain's helper invalidates (a character's
  *   sheet: `invalidateCharacter`) is invalidated through it, which refreshes what goes with it.
@@ -35,7 +36,8 @@
  *   `function deleteEntityFn`); a queries module's (`…Queries.ts`) helpers are its queries'.
  * - `load-errors`: a list, a section or a step that failed to load says so with `LoadError` (`components/common`), in
  *   `loadFailureMessage`'s words: an error `Alert` never writes its own "Failed to load…". A card's chips row holds
- *   chips alone: what failed to load is its `notice`, above its body.
+ *   chips alone: what failed to load is its `notice`, above its body. A select says it under its field, its
+ *   `loadError`: no `LoadError` beside a `SelectField`.
  * - `component-props`: a component destructures its props in its signature, typed by one named type: its own
  *   (`interface CardProps`, `type CardProps = Omit<…>`) or one its family shares (`RulesetSectionProps`), never written
  *   in place (an object type, an intersection, `Omit<…>`, `Pick<…>`, `ComponentProps<…>`).
@@ -89,13 +91,25 @@
  * - `react-imports`: React's types and functions are named imports (`import { type ReactNode, StrictMode } from
  *   "react"`), never read through a `React.` namespace or a default `React` import; a component takes its `ref` as a
  *   prop, never through `forwardRef`.
+ * - `row-prefetch`: a table's row warms the page it opens through `useRowPrefetch` (`pages/rulesets/hooks`), 150ms
+ *   into a hover and at once on focus: never an `onMouseEnter` or an `onFocus` of its own. A ruleset table whose rows
+ *   open a page (`onRowClick`) warms it (`onRowMouseEnter`).
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
 
 import path from "node:path";
 
-import { attributeExpression, calleeName, elementName, hasAttribute, inClient, parentElement, texts } from "./jsx.mjs";
+import {
+  attributeExpression,
+  calleeName,
+  childElements,
+  elementName,
+  hasAttribute,
+  inClient,
+  parentElement,
+  texts,
+} from "./jsx.mjs";
 import { repoPath } from "./paths.mjs";
 
 /** The hook that reads an auth page's `?redirect=` back (`useAuthRedirect`). */
@@ -185,6 +199,9 @@ const REQUEST_METHODS = new Set(["$get", "$post", "$put", "$patch", "$delete"]);
 /** A style's selector that restyles a disabled field's input or label (`& .MuiInputBase-input.Mui-disabled`) */
 const RESTYLED_DISABLED_FIELD =
   /\.Mui(FilledInput|FormLabel|Input|InputBase|InputLabel|OutlinedInput|Select)\b[^,]*\.Mui-disabled/;
+
+/** What warms a row's page as it's about to be opened: `useRowPrefetch`'s handlers */
+const ROW_WARMERS = new Set(["onFocus", "onMouseEnter"]);
 
 /** The elements whose text names them, which a `Tooltip` describes rather than names (`describeChild`) */
 const TEXT_CONTROLS = new Set([
@@ -683,6 +700,14 @@ function createDialogConventions(context) {
       }
       if (icons.has(name) && inDialogTitle(node))
         report(node.openingElement, "A dialog's title is its words: no icon in a `DialogTitle`.");
+      const labelledBy = jsxAttribute(node, "aria-labelledby");
+      if (/Dialog$|^Modal$/.test(name ?? "") && labelledBy && holdsElement(node, "DialogTitle")) {
+        report(
+          labelledBy,
+          "A dialog with a `DialogTitle` is named by it, which MUI wires: `aria-labelledby` only points a dialog " +
+            "without one at its heading.",
+        );
+      }
       if (name === "DialogContent") checkDialogContent(node, context);
       if (name === "DialogTitle" && isForm(nextElement(node))) {
         report(
@@ -1012,6 +1037,15 @@ function createLoadErrors(context) {
         });
         return;
       }
+      if (elementName(node) === "LoadError" && siblingElements(node).some((e) => elementName(e) === "SelectField")) {
+        context.report({
+          node: node.openingElement,
+          message:
+            "A select whose options failed to load says so under its field: `SelectField`'s `loadError`, never a " +
+            "`LoadError` beside it.",
+        });
+        return;
+      }
       if (elementName(node) !== "Alert") return;
       const severity = node.openingElement.attributes.find(
         (a) => a.type === "JSXAttribute" && a.name.name === "severity",
@@ -1299,6 +1333,37 @@ function createReactImports(context) {
   };
 }
 
+function createRowPrefetch(context) {
+  if (!inClient(context)) return {};
+  return {
+    JSXElement(node) {
+      const name = elementName(node);
+      if (
+        name === "RulesetSectionTable" &&
+        hasAttribute(node, "onRowClick") &&
+        !hasAttribute(node, "onRowMouseEnter")
+      ) {
+        context.report({
+          node: node.openingElement,
+          message:
+            "A row that opens a page warms it as it's about to be opened: a table given `onRowClick` takes its " +
+            "`onRowMouseEnter` too.",
+        });
+      }
+      if (name !== "TableRow") return;
+      for (const attribute of node.openingElement.attributes) {
+        if (attribute.type !== "JSXAttribute" || !ROW_WARMERS.has(attribute.name.name)) continue;
+        context.report({
+          node: attribute,
+          message:
+            "A table's row warms the page it opens through `useRowPrefetch` (`pages/rulesets/hooks`): 150ms into a " +
+            "hover, at once on focus, never a handler of its own.",
+        });
+      }
+    },
+  };
+}
+
 function createTooltips(context) {
   if (!inClient(context)) return {};
   return {
@@ -1359,6 +1424,15 @@ function gatesOnValue(node) {
   if (node.type === "LogicalExpression" && node.operator === "&&")
     return gatesOnValue(node.left) || gatesOnValue(node.right);
   return false;
+}
+
+/** Whether a JSX element holds an element named `name`, however deep. */
+function holdsElement(node, name) {
+  return node.children.some(
+    (child) =>
+      (child.type === "JSXElement" && (elementName(child) === name || holdsElement(child, name))) ||
+      (child.type === "JSXFragment" && holdsElement(child, name)),
+  );
 }
 
 /** Whether an `sx` tints its element on hover itself: an `"&:hover"` that sets its background. */
@@ -1605,6 +1679,13 @@ function shownIcon(control) {
   return iconIn(control);
 }
 
+/** The elements beside a JSX element: those its nearest element or fragment holds, it among them. */
+function siblingElements(node) {
+  for (let p = node.parent; p; p = p.parent)
+    if (p.type === "JSXElement" || p.type === "JSXFragment") return childElements(p);
+  return [];
+}
+
 /** The properties an element's `sx` sets at its top, written as an object or an array of them. */
 function sxProperties(element) {
   const sx = jsxAttribute(element, "sx");
@@ -1650,4 +1731,5 @@ export default {
   "clickable-elements": { meta: { type: "suggestion" }, create: createClickableElements },
   tooltips: { meta: { type: "suggestion" }, create: createTooltips },
   "form-fields": { meta: { type: "suggestion" }, create: createFormFields },
+  "row-prefetch": { meta: { type: "suggestion" }, create: createRowPrefetch },
 };

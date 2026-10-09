@@ -1,7 +1,6 @@
 import { Stack } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
-import { useCallback } from "react";
 
 import {
   CreateDialog,
@@ -64,12 +63,9 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
     openEntity(`saves/${save.id}`);
   };
 
-  const handleRowMouseEnter = useCallback(
-    (save: RulesetSave) => {
-      void queryClient.prefetchQuery(saveQuery(ruleset.id, save.id));
-    },
-    [queryClient, ruleset.id],
-  );
+  const handleRowMouseEnter = (save: RulesetSave) => {
+    void queryClient.prefetchQuery(saveQuery(ruleset.id, save.id));
+  };
 
   const renderCell = (save: RulesetSave, columnKey: string) => {
     switch (columnKey) {

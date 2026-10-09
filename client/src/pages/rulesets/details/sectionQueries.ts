@@ -1,11 +1,11 @@
 /**
  * List queries of the ruleset tabs. Each section renders with these, and the tab bar prefetches with the same
- * factories, so a hovered tab's first page is already cached under the exact key the section asks for. The pickers the
- * ruleset's forms offer read its lists here too: its aptitudes and its feats.
+ * factories, so a hovered tab's first page is already cached under the exact key the section asks for. What its
+ * pickers offer is `optionQueries.ts`'.
  */
 
 import { infiniteQueryOptions, type QueryClient, type QueryKey, skipToken } from "@tanstack/react-query";
-import { type InferRequestType, type InferResponseType, parseResponse } from "hono/client";
+import { type InferResponseType, parseResponse } from "hono/client";
 
 import { nextPage } from "@/client/src/lib/pageItems.ts";
 import type { Direction } from "@/client/src/lib/queries.ts";
@@ -14,7 +14,7 @@ import {
   DEFAULT_ENTITY_FILTERS,
   type EntityKind,
   type EntitySortField,
-} from "@/client/src/pages/rulesets/hooks/dnd3.5/useEntityFilters.ts";
+} from "@/client/src/pages/rulesets/hooks/useEntityFilters.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 interface AptitudeFilters extends ListFilters {
@@ -40,9 +40,6 @@ interface PowerFilters extends AptitudeFilters {
 
 /** A ruleset's aptitude, as its list and its pickers give it. */
 export type Aptitude = InferResponseType<AptitudesApi["$get"], 200>["items"][number];
-
-/** The aptitudes a picker offers: those of the ruleset's feats, or of its spells (all of them without one). */
-export type AptitudeScope = NonNullable<InferRequestType<AptitudesApi["$get"]>["query"]["scope"]>;
 
 export type RulesetSection =
   | "races"
@@ -94,27 +91,6 @@ export function abilitiesQuery(rulesetId: string, filters: ListFilters) {
         rpc.api.rulesets[":id"].abilities.$get({
           param: { id: rulesetId },
           query: pageSearchParams(pageParam, filters),
-        }),
-      ),
-    initialPageParam: 1,
-    getNextPageParam: nextPage,
-  });
-}
-
-/** A picker's aptitudes, searched on the server: a ruleset's, or those of its feats or its spells. */
-export function aptitudeOptionsQuery(rulesetId: string, search: string, scope?: AptitudeScope) {
-  return infiniteQueryOptions({
-    queryKey: QUERY_KEYS.rulesets.sectionSearch(rulesetId, "aptitudes", search, scope),
-    queryFn: async ({ pageParam }) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].aptitudes.$get({
-          param: { id: rulesetId },
-          query: {
-            limit: "10",
-            page: pageParam.toString(),
-            search: search || undefined,
-            scope,
-          },
         }),
       ),
     initialPageParam: 1,
@@ -325,22 +301,6 @@ export function racesQuery(rulesetId: string, filters: EntityFilters) {
         rpc.api.rulesets[":id"].races.$get({
           param: { id: rulesetId },
           query: entityPageSearchParams(pageParam, filters),
-        }),
-      ),
-    initialPageParam: 1,
-    getNextPageParam: nextPage,
-  });
-}
-
-/** A feat picker's options: a ruleset's feats with their aptitudes, searched on the server, 50 a page. */
-export function rulesetFeatsQuery(rulesetId: string, search: string) {
-  return infiniteQueryOptions({
-    queryKey: QUERY_KEYS.rulesets.sectionSearch(rulesetId, "feats", search),
-    queryFn: async ({ pageParam }) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].feats.$get({
-          param: { id: rulesetId },
-          query: { page: pageParam.toString(), limit: "50", search: search || undefined },
         }),
       ),
     initialPageParam: 1,

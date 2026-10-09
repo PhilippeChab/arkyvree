@@ -1,7 +1,6 @@
 import { Stack } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
-import { useCallback } from "react";
 
 import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
 import { MechanicsIcon } from "@/client/src/components/icons/index.ts";
@@ -59,12 +58,9 @@ export function MechanicsSection({ ruleset, childOnly, onChildOnlyChange }: Rule
     openEntity(`mechanics/${mechanic.id}`);
   };
 
-  const handleRowMouseEnter = useCallback(
-    (mechanic: Mechanic) => {
-      void queryClient.prefetchQuery(mechanicQuery(ruleset.id, mechanic.id));
-    },
-    [queryClient, ruleset.id],
-  );
+  const handleRowMouseEnter = (mechanic: Mechanic) => {
+    void queryClient.prefetchQuery(mechanicQuery(ruleset.id, mechanic.id));
+  };
 
   const renderCell = (mechanic: Mechanic, columnKey: string) => {
     switch (columnKey) {

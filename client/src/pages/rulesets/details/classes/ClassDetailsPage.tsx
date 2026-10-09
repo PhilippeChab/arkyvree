@@ -3,24 +3,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 
-import {
-  HelpLabel,
-  type SectionTab,
-  SectionTabPanel,
-  SectionTabs,
-  ValueChip,
-} from "@/client/src/components/common/index.ts";
-import { MODIFIERS_HELP, PROPERTIES_HELP, REQUIREMENTS_HELP } from "@/client/src/components/customization/index.ts";
+import { type SectionTab, SectionTabPanel, SectionTabs, ValueChip } from "@/client/src/components/common/index.ts";
 import {
   FeatPoolsIcon,
-  ModifiersIcon,
+  LevelsIcon,
   PowersIcon,
-  PropertiesIcon,
-  RequirementsIcon,
   SkillsIcon,
   SpellsIcon,
   SpellUsesIcon,
-  TrendingUpIcon,
 } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormSync, useFormWith, usePageTitle, useRulesetAbilities } from "@/client/src/hooks/index.ts";
@@ -39,9 +29,10 @@ import {
   EntityPageError,
 } from "@/client/src/pages/rulesets/components/index.ts";
 import { propertiesQuery } from "@/client/src/pages/rulesets/customization/customizationSectionQueries.ts";
-import { useCopyFollow } from "@/client/src/pages/rulesets/customization/sections/index.ts";
+import { CUSTOMIZATION_TABS } from "@/client/src/pages/rulesets/customization/sections/index.ts";
 import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { entityPageBack } from "@/client/src/pages/rulesets/entityPageState.ts";
+import { followCopiesOf } from "@/client/src/pages/rulesets/followCopies.ts";
 import {
   useCopyOnWrite,
   useEntitySave,
@@ -50,7 +41,7 @@ import {
 } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { isStillOpen } from "@/client/src/pages/rulesets/stillOpen.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { HIT_DIE_VALUES } from "@/shared/dnd3.5/classes.ts";
+import { formatHitDie, HIT_DIE_VALUES } from "@/shared/dnd3.5/classes.ts";
 import {
   ENTITY_PROPERTY_TYPES,
   getStaticPropertyValues,
@@ -69,15 +60,13 @@ const CASTER_TYPES = getStaticPropertyValues(KLASS_CASTER_TYPE) ?? [];
 const KLASS_PROPERTY_HELP = ENTITY_PROPERTY_TYPES.klasses ?? {};
 
 const TABS: SectionTab<ClassSection>[] = [
-  { key: "levels", label: "Levels", icon: TrendingUpIcon },
+  { key: "levels", label: "Levels", icon: LevelsIcon },
   { key: "skills", label: "Skills", icon: SkillsIcon },
   { key: "feat-pools", label: "Feat Pools", icon: FeatPoolsIcon },
   { key: "spells-known", label: "Spells Known", icon: SpellsIcon },
   { key: "spells-per-day", label: "Spells per Day", icon: SpellUsesIcon },
   { key: "spell-list", label: "Spell List", icon: PowersIcon },
-  { key: "properties", label: <HelpLabel label="Properties" help={PROPERTIES_HELP} />, icon: PropertiesIcon },
-  { key: "modifiers", label: <HelpLabel label="Modifiers" help={MODIFIERS_HELP} />, icon: ModifiersIcon },
-  { key: "requirements", label: <HelpLabel label="Requirements" help={REQUIREMENTS_HELP} />, icon: RequirementsIcon },
+  ...CUSTOMIZATION_TABS,
 ];
 
 function isClassSection(section: string | undefined): section is ClassSection {
@@ -116,7 +105,7 @@ export default function ClassDetailsPage() {
   // A save of an inherited class copies it: the page follows the copy, as its customization tabs' saves do, and so do
   // the bonus spell and caster type selects, which write the class's properties
   const copy = useCopyOnWrite(rulesetId, classId, (id) => `classes/${id}`);
-  const { tag, follow } = useCopyFollow(classId, copy.followCopy);
+  const { tag, follow } = followCopiesOf(classId, copy.followCopy);
 
   const { data: ruleset, isLoading: isRulesetLoading, error: rulesetError } = useQuery(rulesetDetailQuery(rulesetId));
 
@@ -231,11 +220,11 @@ export default function ClassDetailsPage() {
       <EntityDetailLayout
         entityName={classData?.name}
         rulesetName={ruleset?.name}
+        what="Class"
         backTo={back.to}
         deletion={
           canEdit
             ? {
-                what: "Class",
                 rulesetId,
                 deleteFn: () =>
                   parseResponse(
@@ -258,7 +247,7 @@ export default function ClassDetailsPage() {
               description={classData.description}
               chips={
                 <>
-                  <ValueChip label={`Hit Die: d${classData.hd}`} />
+                  <ValueChip label={formatHitDie(classData.hd)} />
                   {bonusSpellAbility && (
                     <ValueChip label={`Bonus Spell Ability: ${bonusSpellAbility.name}`} color="info" />
                   )}

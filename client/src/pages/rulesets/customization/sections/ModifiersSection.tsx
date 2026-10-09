@@ -1,8 +1,6 @@
 import { Stack, Typography } from "@mui/material";
 import { useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
-import { useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 
 import {
   AddButton,
@@ -25,12 +23,11 @@ import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import { EntityDeleteDialog, RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { modifiersQuery } from "@/client/src/pages/rulesets/customization/customizationSectionQueries.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
-import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { followCopiesOf } from "@/client/src/pages/rulesets/followCopies.ts";
+import { useOpenEntity, useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { buildCustomizationPath, type CustomizableEntityType } from "@/shared/customization/entities.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
-
-import { useCopyFollow } from "./useCopyFollow.ts";
 
 type Modifier = ModifiersArray[number];
 type ModifiersArray = InferResponseType<
@@ -68,9 +65,9 @@ export function ModifiersSection({
   onEntityIdChange,
   restorable,
 }: ModifiersSectionProps) {
-  const navigate = useNavigate();
+  const openEntity = useOpenEntity(ruleset.id);
 
-  const { tag, followCopies } = useCopyFollow(entityId, onEntityIdChange);
+  const { tag, followCopies } = followCopiesOf(entityId, onEntityIdChange);
   const entityParam = { id: ruleset.id, entityType: getUrlSegment(entityType), entityId };
 
   const {
@@ -131,20 +128,16 @@ export function ModifiersSection({
   });
 
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
-  const canDelete = canEdit;
 
   const queryClient = useQueryClient();
 
   const handleRowClick = (modifier: Modifier) => {
-    navigate(`/rulesets/${ruleset.id}/${buildCustomizationPath("modifiers", modifier.id)}/requirements`);
+    openEntity(`${buildCustomizationPath("modifiers", modifier.id)}/requirements`);
   };
 
-  const handleRowMouseEnter = useCallback(
-    (modifier: Modifier) => {
-      void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, "modifiers", modifier.id));
-    },
-    [queryClient, ruleset.id],
-  );
+  const handleRowMouseEnter = (modifier: Modifier) => {
+    void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, "modifiers", modifier.id));
+  };
 
   const renderCell = (modifier: Modifier, columnKey: string) => {
     switch (columnKey) {
@@ -177,7 +170,6 @@ export function ModifiersSection({
           isLoading={isLoading}
           columns={MODIFIERS_COLUMNS}
           canEdit={canEdit}
-          canDelete={canDelete}
           onEdit={(modifier) => handleEdit(modifier, modifierForm(modifier))}
           onDelete={handleDelete}
           restorable={restorable}

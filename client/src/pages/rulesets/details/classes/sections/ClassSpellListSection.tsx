@@ -1,5 +1,5 @@
 import { Box, MenuItem, Stack, TextField } from "@mui/material";
-import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { LoadMoreButton, SearchBar } from "@/client/src/components/common/index.ts";
 import { PowersIcon } from "@/client/src/components/icons/index.ts";
@@ -10,6 +10,7 @@ import {
   RulesetSectionTable,
   SpellLevelFilter,
 } from "@/client/src/pages/rulesets/components/index.ts";
+import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import {
   classSpellListsQuery,
   spellListSpellsQuery,
@@ -27,8 +28,8 @@ const COLUMNS = [
 
 export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSectionProps) {
   const openEntity = useOpenEntity(ruleset.id);
+  const queryClient = useQueryClient();
   const { level, setLevel } = useSpellLevelFilter(false);
-  const selectedLevel = level === "" ? 0 : level;
   const { value: chosenListId, setValue: setChosenListId } = useSearchParam("list");
   const { search, searchBarProps } = useSearchText();
 
@@ -46,7 +47,7 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
   }
 
   const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
-    ...spellListSpellsQuery(rulesetId, listId, selectedLevel, search),
+    ...spellListSpellsQuery(rulesetId, listId, level, search),
     placeholderData: keepListSpells,
   });
 
@@ -55,6 +56,10 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
 
   const handleRowClick = (spell: Spell) => {
     openEntity(buildCustomizationPath("powers", spell.id));
+  };
+
+  const handleRowMouseEnter = (spell: Spell) => {
+    void queryClient.prefetchQuery(customizationEntityQuery(rulesetId, "powers", spell.id));
   };
 
   const renderCell = (spell: Spell, columnKey: string) => {
@@ -93,7 +98,7 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
                 </TextField>
               </Box>
             )}
-            <SpellLevelFilter value={selectedLevel} onChange={setLevel} />
+            <SpellLevelFilter value={level} onChange={setLevel} />
           </>
         }
       />
@@ -107,6 +112,7 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
           isLoading={isLoadingLists || isLoading}
           columns={COLUMNS}
           onRowClick={handleRowClick}
+          onRowMouseEnter={handleRowMouseEnter}
           renderCell={renderCell}
           emptyIcon={PowersIcon}
           emptyTitle="No spells"
