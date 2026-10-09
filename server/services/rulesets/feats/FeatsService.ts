@@ -6,7 +6,7 @@ import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/inde
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { type Db, db, withCowContext, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
-import { Feats, FeatsAptitudes, PowersAptitudes } from "@/server/repositories/index.ts";
+import { Feats, FeatsAptitudes } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -44,7 +44,6 @@ class FeatsService {
           const plan = Engine.for(scope)
             .feats()
             .planCreate(body, {
-              spellAptitudeIds: await PowersAptitudes.findAptitudeIds(tx, { aptitudeIds: body.aptitudeIds ?? [] }),
               tombstoneGenerated: tombstoneAncestorId ? await this.wasGenerated(tx, tombstoneAncestorId) : false,
             });
           const rows = await Feats.create(tx, { ...plan.columns, rulesetId });
@@ -168,8 +167,7 @@ class FeatsService {
           const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const spellAptitudeIds = await PowersAptitudes.findAptitudeIds(tx, { aptitudeIds: body.aptitudeIds ?? [] });
-          const { aptitudeIds, columns, feat } = Engine.for(scope).feats().planEdit(featId, body, { spellAptitudeIds });
+          const { aptitudeIds, columns, feat } = Engine.for(scope).feats().planEdit(featId, body);
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "feats", feat);
