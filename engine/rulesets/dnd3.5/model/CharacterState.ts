@@ -219,14 +219,14 @@ export default abstract class CharacterState {
     return this.campaign;
   }
 
-  /** The feats the character holds that don't stack: picked, granted, planned or from its modifiers. */
-  getHeldNonStackableFeatIds() {
-    return this.feats.filter((feat) => !feat.stackable).map((feat) => feat.id);
+  /** The feats the character holds, with their customizations: picked, granted, planned or from its modifiers. */
+  getHeldFeats() {
+    return this.feats;
   }
 
-  /** The powers the character knows in a pool: picked, granted, planned or from its modifiers. */
-  getKnownPowerIds(aptitudeId: string) {
-    return this.powers.filter((power) => power.aptitudeId === aptitudeId).map((power) => power.id);
+  /** The powers the character knows, each in its pool: picked, granted, planned or from its modifiers (`virtual`). */
+  getHeldPowers() {
+    return this.powers;
   }
 
   getPlayer() {

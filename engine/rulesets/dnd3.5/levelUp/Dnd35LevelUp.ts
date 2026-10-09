@@ -3,7 +3,6 @@ import type { RulesetView } from "@/engine/core/view/index.ts";
 import CharacterBuilder from "@/engine/rulesets/dnd3.5/model/CharacterBuilder.ts";
 import ClassPicker from "@/engine/rulesets/dnd3.5/pickers/ClassPicker.ts";
 import FeatPicker from "@/engine/rulesets/dnd3.5/pickers/FeatPicker.ts";
-import type { PickQuery } from "@/engine/rulesets/dnd3.5/pickers/PickerState.ts";
 import PowerPicker from "@/engine/rulesets/dnd3.5/pickers/PowerPicker.ts";
 
 import BondedPlans from "./BondedPlans.ts";
@@ -11,6 +10,7 @@ import LevelEdit from "./LevelEdit.ts";
 import LevelRemoval from "./LevelRemoval.ts";
 import LevelSelections from "./LevelSelections.ts";
 import LevelUpPlan from "./LevelUpPlan.ts";
+import type { PlannedSoFar } from "./LevelUpState.ts";
 import LevelUpSteps, { type Step } from "./LevelUpSteps.ts";
 
 /**
@@ -59,22 +59,18 @@ export default class Dnd35LevelUp {
     return new LevelUpSteps(view, character).getSkillSlots(klassId, level, step);
   }
 
-  /** The class picker for the character, with the level-up wizard's pending picks. */
-  openClassPicker(view: RulesetView, character: CharacterInput, pending: ConstructorParameters<typeof ClassPicker>[2]) {
-    return new ClassPicker(view, character, pending);
+  /** The class picker for the character, with what the level-up wizard plans so far: its filters, a page described. */
+  openClassPicker(view: RulesetView, character: CharacterInput, planned: PlannedSoFar) {
+    return new ClassPicker(view, character, planned);
   }
 
-  /** A feat picker for the character: what it offers and leaves out, and a page of options annotated. */
-  openFeatPicker(view: RulesetView, character: CharacterInput, query: PickQuery & { family?: string }) {
+  /** A feat picker for the character: what it offers and leaves out, and a page of options described. */
+  openFeatPicker(view: RulesetView, character: CharacterInput, query: ConstructorParameters<typeof FeatPicker>[2]) {
     return new FeatPicker(view, character, query);
   }
 
-  /** A power picker for the character: what it offers and leaves out, and a page of options annotated. */
-  openPowerPicker(
-    view: RulesetView,
-    character: CharacterInput,
-    query: PickQuery & { excludeSchools?: string[]; powerLevel?: number },
-  ) {
+  /** A power picker for the character: what it offers and leaves out, and a page of options described. */
+  openPowerPicker(view: RulesetView, character: CharacterInput, query: ConstructorParameters<typeof PowerPicker>[2]) {
     return new PowerPicker(view, character, query);
   }
 

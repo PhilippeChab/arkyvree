@@ -1,4 +1,4 @@
-import type { CharacterProjection } from "@/engine/core/module/index.ts";
+import type { CharacterProjection, FeatPick } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { type RulesetData, type RulesetView } from "@/engine/core/view/index.ts";
 import CharacterBuilder from "@/engine/rulesets/dnd3.5/model/CharacterBuilder.ts";
@@ -9,6 +9,17 @@ export interface LevelPicks {
   feats: Record<string, string[]>;
   powers: Record<string, string[]>;
   skills: Record<string, number>;
+}
+
+/**
+ * What the level-up wizard plans before the level a step or a picker is for, not saved yet: its levels (their class
+ * levels, and their ability increases by place), and the feats and skill ranks picked over them so far.
+ */
+export interface PlannedSoFar {
+  abilityIds?: (string | undefined)[];
+  featPicks?: FeatPick[];
+  klassLevelIds?: string[];
+  skillRanks?: { rank: number; skillId: string }[];
 }
 
 /**

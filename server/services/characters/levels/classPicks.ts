@@ -23,10 +23,10 @@ export async function getAvailableKlasses(
 ) {
   return await withEditableCharacter(db, session, characterId, async (scope, character) => {
     const picker = Engine.for(scope).character(character).levelUp().openClassPicker({
+      abilityIds: pendingLevelAbilityIds,
       featPicks: pendingFeatPicks,
-      levelAbilityIds: pendingLevelAbilityIds,
-      levelKlassLevelIds: pendingLevelKlassLevelIds,
-      skillAllocations: pendingSkillAllocations,
+      klassLevelIds: pendingLevelKlassLevelIds,
+      skillRanks: pendingSkillAllocations,
     });
     const klassPage = await Klasses.findPage(
       db,

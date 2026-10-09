@@ -243,10 +243,6 @@ export default new Hono<SessionContext>()
         limit: limitDefaultingTo(20),
         page,
         search: z.string().optional(),
-        excludeSchools: z
-          .string()
-          .optional()
-          .transform((value) => (value ? value.split(",") : undefined)),
         selectedFeatPicks: featPicks,
         pendingLevelFeatPicks: featPicks,
         selectedPowerIds: idList,
@@ -260,7 +256,6 @@ export default new Hono<SessionContext>()
         level,
         powerLevel,
         search,
-        excludeSchools,
         selectedFeatPicks,
         pendingLevelFeatPicks,
         selectedPowerIds,
@@ -279,7 +274,6 @@ export default new Hono<SessionContext>()
           {
             powerLevel,
             search,
-            excludeSchools,
             selectedFeatPicks,
             pendingLevelFeatPicks,
             selectedPowerIds,

@@ -139,7 +139,7 @@ class CharactersService extends include(Object, Archives) {
       );
 
       // The requirements come from the composed view, which merges siblings' into the winner's
-      const items = picker.annotate(result.items);
+      const items = picker.describe(result.items);
       return { items, page: result.page, nextPage: result.nextPage };
     });
   }
