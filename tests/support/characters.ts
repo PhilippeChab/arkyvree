@@ -2,7 +2,7 @@ import type { InferInsertModel } from "drizzle-orm";
 import type { InferRequestType } from "hono/client";
 
 import type { charactersInCharacter } from "@/drizzle/schema.ts";
-import { CharacterInputs } from "@/engine/core/module/index.ts";
+import { CharacterInputs, CharacterProjection } from "@/engine/core/module/index.ts";
 import CharacterBuilder from "@/engine/rulesets/dnd3.5/model/CharacterBuilder.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { type RulesetScope, withRulesetScope } from "@/server/cow/index.ts";
@@ -24,15 +24,19 @@ export async function buildAs<C extends DetailedCharacter>(
   record: Character,
   {
     database = db,
-    projected,
+    project,
     scope,
-  }: { database?: Db; projected?: Parameters<C["build"]>[2]; scope?: RulesetScope } = {},
+  }: { database?: Db; project?: (projection: CharacterProjection) => void; scope?: RulesetScope } = {},
 ) {
   const build = async (view: RulesetScope) => {
     // As the engine's character handle reads them: its rows' references resolved through the view
-    const input = CharacterInputs.resolve(await readCharacterInput(database, record), view.rulesetData.cow);
+    const read = CharacterInputs.resolve(await readCharacterInput(database, record), view.rulesetData.cow);
+    // With what a level-up adds, when the test projects some
+    const projection = new CharacterProjection(read);
+    project?.(projection);
+    const { input } = projection;
     const character = new Kind(input.record);
-    character.build(input.rows, view, projected, input.master && CharacterBuilder.build(view, input.master));
+    character.build(input.rows, view, input.master && CharacterBuilder.build(view, input.master));
     return character;
   };
   if (scope?.ruleset.id !== record.rulesetId) return await withRulesetScope(database, record.rulesetId, build);

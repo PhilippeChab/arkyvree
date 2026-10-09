@@ -1,8 +1,8 @@
-import type { CharacterInput } from "@/engine/core/module/index.ts";
+import { type CharacterInput, CharacterProjection, type FeatPick } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import { AnnotatesOptions } from "@/engine/rulesets/dnd3.5/levelUp/concerns/AnnotatesOptions.ts";
 import LevelUpState from "@/engine/rulesets/dnd3.5/levelUp/LevelUpState.ts";
-import CharacterProjection, { type FeatPick } from "@/engine/rulesets/dnd3.5/projection/CharacterProjection.ts";
+import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import { include } from "@/lib/mixins.ts";
 import type { KlassLevel } from "@/shared/relations.ts";
 
@@ -49,11 +49,12 @@ export default abstract class PickerState extends include(LevelUpState, Annotate
    */
   protected projectPick(withAbilities: boolean) {
     const { excludeCharacterLevelId, pendingLevelAbilityIds, pendingLevelKlassLevelIds } = this.query;
-    const projection = new CharacterProjection(this.view, this.character);
+    const projection = new CharacterProjection(this.character);
     if (excludeCharacterLevelId) projection.dropLevelsFrom(excludeCharacterLevelId);
-    projection.addLevels(pendingLevelKlassLevelIds ?? [], withAbilities ? pendingLevelAbilityIds : undefined);
-    const level = projection.addLevel(this.klassLevel.id);
-    projection.pickFeats(level, this.featPicks);
-    return { level, projection };
+    const hp = LevelRules.UNROLLED_LEVEL_HP;
+    const abilityIds = withAbilities ? pendingLevelAbilityIds : undefined;
+    projection.addLevels(pendingLevelKlassLevelIds ?? [], { abilityIds, hp });
+    projection.pick(projection.addLevel(this.klassLevel.id, { hp }), { feats: this.featPicks });
+    return projection;
   }
 }

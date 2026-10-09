@@ -1,8 +1,7 @@
-import type { CharacterInput } from "@/engine/core/module/index.ts";
+import { type CharacterInput, CharacterProjection } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
-import CharacterProjection from "@/engine/rulesets/dnd3.5/projection/CharacterProjection.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 
 import LevelUpState from "./LevelUpState.ts";
@@ -82,10 +81,11 @@ export default class LevelUpSteps extends LevelUpState {
    * level's place, so the first level stays the first (its x4 skill points).
    */
   private projectStep(klassLevelId: string, step: StepProjection) {
-    const projection = new CharacterProjection(this.view, this.character);
-    projection.addLevels(step.pendingLevelKlassLevelIds ?? [], step.pendingLevelAbilityIds);
-    const level = projection.addLevel(klassLevelId, { abilityId: step.abilityId, replacing: step.editedLevel });
-    return { level, projection };
+    const projection = new CharacterProjection(this.character);
+    const hp = LevelRules.UNROLLED_LEVEL_HP;
+    projection.addLevels(step.pendingLevelKlassLevelIds ?? [], { abilityIds: step.pendingLevelAbilityIds, hp });
+    projection.addLevel(klassLevelId, { abilityId: step.abilityId, hp, replacing: step.editedLevel });
+    return projection;
   }
 
   /** The step's projection, the edited level's place read off the character's levels: refused when it has no such level. */
@@ -102,27 +102,26 @@ export default class LevelUpSteps extends LevelUpState {
    * the edited level and those after it.
    */
   getAttributeSlots(excludeCharacterLevelId?: string, pendingLevelCount?: number) {
-    const projection = new CharacterProjection(this.view, this.character);
+    const projection = new CharacterProjection(this.character);
     const dropped = excludeCharacterLevelId ? projection.dropLevelsFrom(excludeCharacterLevelId) : [];
     // The levels before this one: the level added or edited is the next
     const totalLevel = this.character.rows.levels.length - dropped.length + (pendingLevelCount ?? 0);
     if (!LevelRules.isAbilityIncreaseLevel(totalLevel)) return { isAvailable: false, attributes: {} };
-    return { isAvailable: true, attributes: projection.build().components.abilities.getAbilitiesWithIds() };
+    return { isAvailable: true, attributes: this.build(projection).components.abilities.getAbilitiesWithIds() };
   }
 
   /** The feats step of class `klassId`'s `level`: the pools the character picks feats in with it, and its grants. */
   getFeatSlots(klassId: string, level: number, step: Step) {
     const klassLevel = this.getKlassLevel(klassId, level);
-    const projected = this.projectStep(klassLevel.id, this.readStep(step));
-    projected.projection.grantFeats(projected.level);
-    return this.buildFeatSlots(projected.projection.build(), klassLevel.id);
+    const character = this.build(this.projectStep(klassLevel.id, this.readStep(step)));
+    return this.buildFeatSlots(character, klassLevel.id);
   }
 
   /** The powers step of class `klassId`'s `level`: the pools the character picks powers in with it, and its grants. */
   getPowerSlots(klassId: string, level: number, step: Step) {
     const klassLevel = this.getKlassLevel(klassId, level);
-    const { projection } = this.projectStep(klassLevel.id, this.readStep(step));
-    return this.buildPowerSlots(projection.build(), klassLevel.id);
+    const character = this.build(this.projectStep(klassLevel.id, this.readStep(step)));
+    return this.buildPowerSlots(character, klassLevel.id);
   }
 
   /**
@@ -131,8 +130,8 @@ export default class LevelUpSteps extends LevelUpState {
    */
   getSkillSlots(klassId: string, level: number, step: Step) {
     const klassLevel = this.getKlassLevel(klassId, level);
-    const { projection } = this.projectStep(klassLevel.id, this.readStep(step));
+    const character = this.build(this.projectStep(klassLevel.id, this.readStep(step)));
     const totalCharacterLevel = this.character.rows.levels.length + (step.editedLevelId ? 0 : 1);
-    return this.buildSkillSlots(projection.build(), klassId, totalCharacterLevel);
+    return this.buildSkillSlots(character, klassId, totalCharacterLevel);
   }
 }

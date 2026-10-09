@@ -1,6 +1,5 @@
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import type { ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/projection/CharacterProjection.ts";
 import type { BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
 import type { Character as CharacterRecord } from "@/shared/relations.ts";
 
@@ -29,22 +28,17 @@ function createCharacter(record: CharacterRecord, kind: CharacterKind): Detailed
 /** A 3.5 character built from the rows the server read, of its row's kind. */
 export default class CharacterBuilder {
   /**
-   * A character, built from the rows the server read (`input`) in its ruleset's `view`, of its row's kind: with a
-   * level-up's `projected` levels and picks, and a bonded creature's sheet derived from its master's, built from its
-   * input's unless it comes built (`master`: a sheet's, which its creatures share).
+   * A character, built from its rows (`input`: as the server read them, or with what a level-up adds,
+   * `CharacterProjection`) in its ruleset's `view`, of its row's kind: a bonded creature's sheet derived from its
+   * master's, built from its input's unless it comes built (`master`: a sheet's, which its creatures share).
    */
   static build(
     view: RulesetView,
     input: CharacterInput,
-    { master, projected }: { master?: DetailedCharacter; projected?: ProjectedCharacterData } = {},
+    { master }: { master?: DetailedCharacter } = {},
   ): DetailedCharacter {
     const character = createCharacter(input.record, input.record.kind as CharacterKind);
-    character.build(
-      input.rows,
-      view,
-      projected,
-      master ?? (input.master && CharacterBuilder.build(view, input.master)),
-    );
+    character.build(input.rows, view, master ?? (input.master && CharacterBuilder.build(view, input.master)));
     return character;
   }
 }

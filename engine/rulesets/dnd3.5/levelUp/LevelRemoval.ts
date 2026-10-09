@@ -1,7 +1,6 @@
-import type { CharacterInput } from "@/engine/core/module/index.ts";
+import { type CharacterInput, CharacterProjection } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import CharacterProjection from "@/engine/rulesets/dnd3.5/projection/CharacterProjection.ts";
 
 import BondedPlans from "./BondedPlans.ts";
 import LevelUpState from "./LevelUpState.ts";
@@ -22,9 +21,9 @@ export default class LevelRemoval extends LevelUpState {
   plan(bonded: CharacterInput[]) {
     const level = this.character.rows.levels.at(-1);
     if (!level) throw new RulesError("not-found", "No level to remove");
-    const projection = new CharacterProjection(this.view, this.character);
+    const projection = new CharacterProjection(this.character);
     projection.dropLevel(level.id);
-    const without = projection.build();
+    const without = this.build(projection);
     return { bonded: BondedPlans.planMasterCreatures(without, bonded, this.rulesetData), level };
   }
 }

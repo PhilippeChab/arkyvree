@@ -14,7 +14,7 @@ import PickerState, { type PickQuery } from "./PickerState.ts";
 export default class FeatPicker extends PickerState {
   constructor(view: RulesetView, character: CharacterInput, query: PickQuery & { family?: string }) {
     super(view, character, query);
-    this.built = this.projectFeatPick().build();
+    this.built = this.build(this.projectPick(true));
     const offered = {
       ids: this.rulesetData.listFeatIds(query.aptitudeId),
       excludeFeatIds: this.built.getHeldNonStackableFeatIds(),
@@ -43,18 +43,6 @@ export default class FeatPicker extends PickerState {
       aptitudeModifiers: [] as AptitudeModifier[],
       requirementTree: undefined as string | undefined,
     };
-  }
-
-  /**
-   * The character a feat pick is made for: the pick's projection (`projectPick`), with every feat its class level and
-   * the planned ones grant. Granted feats count for requirements (a weapon proficiency for Weapon Focus) and aren't
-   * offered.
-   */
-  private projectFeatPick() {
-    const { level, projection } = this.projectPick(true);
-    const klassLevelIds = [...new Set([this.klassLevel.id, ...(this.query.pendingLevelKlassLevelIds ?? [])])];
-    projection.grantFeats(level, { klassLevelIds });
-    return projection;
   }
 
   /**

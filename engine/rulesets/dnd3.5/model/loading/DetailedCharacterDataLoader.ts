@@ -1,7 +1,6 @@
 import { type CharacterRows } from "@/engine/core/module/index.ts";
 import { type RulesetData, type RulesetView } from "@/engine/core/view/index.ts";
 import { type SkillFieldValues } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
-import type { ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/projection/CharacterProjection.ts";
 import type {
   Aptitude,
   Campaign,
@@ -103,8 +102,8 @@ export default class DetailedCharacterDataLoader {
     return { characterSourcedModifiers: rows.modifiers, baseModifiers, extraRequirements };
   }
 
-  /** The character's data, assembled from its rows (`rows`) and its ruleset's `view`, with a level-up's projection. */
-  load(rows: CharacterRows, view: RulesetView, projectedData?: ProjectedCharacterData): LoadedCharacterData {
+  /** The character's data, assembled from its rows (`rows`) and its ruleset's `view`. */
+  load(rows: CharacterRows, view: RulesetView): LoadedCharacterData {
     const { ruleset, rulesetData } = view;
     const { player, campaign } = rows;
     const cowData = rulesetData.cow;
@@ -114,7 +113,7 @@ export default class DetailedCharacterDataLoader {
 
     const resolve: Resolve = (rows) => cowData.resolveRows(rows);
     const abilityLookup = new Map(rulesetData.abilities.map((a) => [a.id, a.name]));
-    const levels = Picks.resolveLevels(rows.levels, projectedData, resolve);
+    const levels = Picks.resolveLevels(rows.levels, resolve);
 
     // The join uses the stored item ID. Load the effective item so COW changes
     // refresh its name and other fields, not just its ID.
@@ -126,7 +125,7 @@ export default class DetailedCharacterDataLoader {
       RulesetReadings.readCachedRows(rows, rulesetData, levels.klassLevelIds);
 
     const { skills, allFeats, klassLevelFeatCountsByAptitudeId, allPowers, klassLevelPowerCountsByAptitudeId } =
-      Picks.buildPicks(rows.picks, rulesetData, projectedData, levels, resolve);
+      Picks.buildPicks(rows.picks, rulesetData, levels, resolve);
     const featIds = allFeats.map((feat) => feat.id);
     const powerIds = allPowers.map((power) => power.id);
 
@@ -171,7 +170,7 @@ export default class DetailedCharacterDataLoader {
       race: parts.race,
       languages,
       inventory: parts.inventory,
-      characterLevels: levels.allCharacterLevels,
+      characterLevels: levels.characterLevels,
       klassLevels,
       klassSkills,
       klassLevelSaves,
