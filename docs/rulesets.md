@@ -509,9 +509,13 @@ engine/rulesets/
     │                                      wizard's steps; LevelSelections: a saved level's selections; BondedPlans:
     │                                      what a master's creatures become as its levels change; Dnd35LevelUp: the
     │                                      module's levelUp, which opens them)
-    ├── pickers/                           (one shape, `filters` and `describe(rows)`: ClassPicker on Picker, which
-    │                                      describes an option's eligibility; FeatPicker and PowerPicker on
-    │                                      LevelPicker, the level they pick at; RacePicker, a new character's)
+    ├── pickers/                           (Picker: one pipeline, `filters` and `describe(rows)`: the rows as the
+    │                                      view reads them, those it offers, each with whether who it picks for meets
+    │                                      its requirements and the tree of those it fails, and what it adds; a kind
+    │                                      says what differs. CharacterPicker checks against the character as the
+    │                                      level-up plans it, built once; ClassPicker (a class's next level) and
+    │                                      LevelPicker (FeatPicker, PowerPicker: the level they pick at) on it;
+    │                                      RacePicker checks a new character's form)
     ├── content/                           ← the module's `content`: Dnd35Content, what the seeders and the codegen
     │                                      ask: BookPaths, EntityProperties
     └── rules/                             (the tables and rules several sides read: LevelRules, SkillRules, sizes,

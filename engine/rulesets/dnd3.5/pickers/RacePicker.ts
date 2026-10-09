@@ -4,18 +4,18 @@ import type { Components } from "@/engine/core/paths/PathTraverser.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
+import type { Requirement } from "@/shared/relations.ts";
+
+import Picker from "./Picker.ts";
 
 /**
- * The race picker of a new character of what its form says (`identity`: its alignment and gender, when given): what it
- * offers (`filters`, which the server reads a page of races with: a player character's), and each race of a page
- * described (`describe`), with whether the character meets its requirements. A requirement on what the form doesn't say
- * counts as met.
+ * The race picker of a new character of what its form says (`identity`: its alignment and gender, when given): a player
+ * character's races (`filters`), each checked against the form. A requirement on what the form doesn't say counts as
+ * met, and the form says no tree of what a race fails: there's no character yet to word it for.
  */
-export default class RacePicker {
-  constructor(
-    private readonly view: RulesetView,
-    identity: { alignment?: string; gender?: string },
-  ) {
+export default class RacePicker extends Picker<{ id: string }> {
+  constructor(view: RulesetView, identity: { alignment?: string; gender?: string }) {
+    super(view);
     // Only what the form says: a requirement on what it doesn't reads no value, which leaves it invalid, not unmet
     const identityData: Record<string, Record<string, unknown>> = {
       physiology: {},
@@ -37,14 +37,15 @@ export default class RacePicker {
   /** What the picker offers: a player character's races. */
   readonly filters = { kind: "pc" };
 
-  /** The races of a page, each with whether the new character meets its requirements. */
-  describe<T extends { id: string }>(races: T[]): (T & { eligible: boolean })[] {
-    return this.view.rulesetData.cow.resolveRows(races).map((race) => {
-      const requirements = this.view.rulesetData.requirementsByEntity.get(race.id);
-      if (!requirements || requirements.length === 0) return { ...race, eligible: true };
-      const evaluator = new RequirementEvaluator(this.targetPaths);
-      evaluator.evaluateRequirements(this.components, [requirements]);
-      return { ...race, eligible: evaluator.getRequirements().unmetRequirementGroups.length === 0 };
-    });
+  /** No tree: the form has no character to word it for. */
+  protected describeFailed() {
+    return undefined;
+  }
+
+  /** Whether the form meets a race's requirement groups: what it doesn't say counts as met. */
+  protected meets(groups: Requirement[][]) {
+    const evaluator = new RequirementEvaluator(this.targetPaths);
+    evaluator.evaluateRequirements(this.components, groups);
+    return evaluator.getRequirements().unmetRequirementGroups.length === 0;
   }
 }
