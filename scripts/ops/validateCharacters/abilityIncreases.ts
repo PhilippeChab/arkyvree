@@ -1,4 +1,4 @@
-import { getAttributeSlots } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { readCharacterInput } from "@/server/services/characters/index.ts";
@@ -22,7 +22,7 @@ export async function checkAbilityIncreases(characters: Character[]) {
     await withRulesetScope(db, char.rulesetId, async (scope) => {
       const character = await readCharacterInput(db, char);
       for (const [index, level] of character.rows.levels.entries()) {
-        const due = getAttributeSlots(scope, character, level.id).isAvailable;
+        const due = Engine.for(scope).character(character).levelUp().getAttributeSlots(level.id).isAvailable;
         if (due === (level.abilityId !== null)) continue;
         issues++;
         const klassLevel = scope.rulesetData.klassLevelsById.get(level.klassLevelId);

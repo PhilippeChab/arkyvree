@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { rulesetsInRules } from "@/drizzle/schema.ts";
-import { checkExtensionNames, NAME_PAIRED_ENTITY_TYPES } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { ENTITY_REPOS } from "@/server/cow/index.ts";
 import { type Db, db, withCowContext, withTransaction } from "@/server/database/index.ts";
@@ -42,10 +42,12 @@ class RulesetExtensionsService {
 
     const rulesetIds = [hostId, ...newExtensionIds, ...existingExtensionRulesetIds];
 
-    const entityTypes = RULESET_ENTITY_TYPES.filter((type) => !NAME_PAIRED_ENTITY_TYPES.includes(type));
+    const entityTypes = RULESET_ENTITY_TYPES.filter(
+      (type) => !Engine.copyOnWrite().namePairedEntityTypes.includes(type),
+    );
     const names = await RulesetEntities.findNativeNames(tx, { rulesetIds, entityTypes });
 
-    checkExtensionNames(hostId, newExtensionIds, names);
+    Engine.copyOnWrite().checkExtensionNames(hostId, newExtensionIds, names);
   }
 
   // Returns true iff any character on `hostRulesetId` has picked an entity that

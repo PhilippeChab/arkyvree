@@ -3,7 +3,7 @@
  * its skill points (`getSkillSlots`), and its feat and power pools, for a new level or an edited one.
  */
 
-import * as engine from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import { withEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -15,7 +15,7 @@ export async function getAttributeSlots(
   pendingLevelCount?: number,
 ) {
   return await withEditableCharacter(db, session, characterId, (scope, character) =>
-    engine.getAttributeSlots(scope, character, excludeCharacterLevelId, pendingLevelCount),
+    Engine.for(scope).character(character).levelUp().getAttributeSlots(excludeCharacterLevelId, pendingLevelCount),
   );
 }
 
@@ -27,7 +27,7 @@ export async function getEditFeatSlots(
   characterLevelId: string,
 ) {
   return await withEditableCharacter(db, session, characterId, (scope, character) =>
-    engine.getFeatSlots(scope, character, klassId, level, { editedLevelId: characterLevelId }),
+    Engine.for(scope).character(character).levelUp().getFeatSlots(klassId, level, { editedLevelId: characterLevelId }),
   );
 }
 
@@ -39,7 +39,7 @@ export async function getEditPowerSlots(
   characterLevelId: string,
 ) {
   return await withEditableCharacter(db, session, characterId, (scope, character) =>
-    engine.getPowerSlots(scope, character, klassId, level, { editedLevelId: characterLevelId }),
+    Engine.for(scope).character(character).levelUp().getPowerSlots(klassId, level, { editedLevelId: characterLevelId }),
   );
 }
 
@@ -51,7 +51,7 @@ export async function getFeatSlots(
   pendingLevelKlassLevelIds?: string[],
 ) {
   return await withEditableCharacter(db, session, characterId, (scope, character) =>
-    engine.getFeatSlots(scope, character, klassId, level, { pendingLevelKlassLevelIds }),
+    Engine.for(scope).character(character).levelUp().getFeatSlots(klassId, level, { pendingLevelKlassLevelIds }),
   );
 }
 
@@ -63,7 +63,7 @@ export async function getPowerSlots(
   pendingLevelKlassLevelIds?: string[],
 ) {
   return await withEditableCharacter(db, session, characterId, (scope, character) =>
-    engine.getPowerSlots(scope, character, klassId, level, { pendingLevelKlassLevelIds }),
+    Engine.for(scope).character(character).levelUp().getPowerSlots(klassId, level, { pendingLevelKlassLevelIds }),
   );
 }
 
@@ -78,7 +78,7 @@ export async function getSkillSlots(
   pendingLevelAbilityIds?: (string | undefined)[],
 ) {
   return await withEditableCharacter(db, session, characterId, (scope, character) =>
-    engine.getSkillSlots(scope, character, klassId, level, {
+    Engine.for(scope).character(character).levelUp().getSkillSlots(klassId, level, {
       editedLevelId: excludeCharacterLevelId,
       abilityId,
       pendingLevelKlassLevelIds,

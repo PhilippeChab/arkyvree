@@ -5,7 +5,7 @@ import { SAVE_NAMES } from "@/codegen/dnd3.5/tools/vocabulary/saves.ts";
 import { DND35_BASE_RULES } from "@/content/dnd3.5/baseRules.ts";
 import type { RequirementEntry } from "@/content/dnd3.5/builders/customization/types.ts";
 import { SKILL_NAMES } from "@/content/dnd3.5/data/skills.ts";
-import { listBookTargetPaths } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /**
@@ -22,7 +22,11 @@ const SKILL_GROUP_SLUGS = new Set([
 /** The engine's target paths of `kind`, its categories' lists given the books' abilities, saves and skills. */
 function enginePaths(kind: "modifier" | "requirement"): Set<string> {
   const names = { abilities: ABILITY_NAMES, saves: SAVE_NAMES, skills: SKILL_NAMES };
-  return new Set(listBookTargetPaths(DND35_BASE_RULES, names, kind).map((tp) => tp.path));
+  return new Set(
+    Engine.forRules(DND35_BASE_RULES)
+      .listBookTargetPaths(names, kind)
+      .map((tp) => tp.path),
+  );
 }
 
 /** The target paths the engine knows, which a modifier's or a requirement's must be one of. */

@@ -14,7 +14,7 @@ import {
   propertiesInCustomization,
   requirementsInCustomization,
 } from "@/drizzle/schema.ts";
-import { toEntityProperties } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -160,13 +160,19 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
         ...this.propertyRows(
           klassId,
           "klasses",
-          toEntityProperties(DND35_BASE_RULES, "klasses", { bonusSpellAbilityId, casterType: def.casterType ?? null }),
+          Engine.forRules(DND35_BASE_RULES).toEntityProperties("klasses", {
+            bonusSpellAbilityId,
+            casterType: def.casterType ?? null,
+          }),
         ),
         ...levels.flatMap(({ id, level }) =>
           this.propertyRows(
             id,
             "klass_levels",
-            toEntityProperties(DND35_BASE_RULES, "klassLevels", { bab: BAB[def.bab](level), skills: def.skillPoints }),
+            Engine.forRules(DND35_BASE_RULES).toEntityProperties("klassLevels", {
+              bab: BAB[def.bab](level),
+              skills: def.skillPoints,
+            }),
           ),
         ),
       ]);

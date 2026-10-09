@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { languagesInRules } from "@/drizzle/schema.ts";
-import { getEntity } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -62,7 +62,7 @@ class LanguagesService {
           const inUse = await hasCharacterPicks(tx, "languages", languageId, rulesetId);
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-          const language = getEntity(scope, "languages", languageId);
+          const language = Engine.for(scope).entity("languages", languageId).get();
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const targetId = await edit.cowToDelete(tx, "languages", language);
@@ -88,7 +88,7 @@ class LanguagesService {
 
   async getLanguage(rulesetId: string, languageId: string) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
-      const language = getEntity(scope, "languages", languageId);
+      const language = Engine.for(scope).entity("languages", languageId).get();
       return language;
     });
   }
@@ -128,7 +128,7 @@ class LanguagesService {
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const language = getEntity(scope, "languages", languageId);
+          const language = Engine.for(scope).entity("languages", languageId).get();
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "languages", language);

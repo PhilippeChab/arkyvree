@@ -15,7 +15,7 @@ import {
   levelPowersInCharacter,
   levelSkillsInCharacter,
 } from "@/drizzle/schema.ts";
-import { planBondedCreatures } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { type Db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
@@ -78,7 +78,7 @@ async function reconcileBondedForCharacter(tx: Db, characterId: string): Promise
   await withRulesetScope(tx, master.rulesetId, async (scope) => {
     const character = await readCharacterInput(tx, master);
     const bonded = await readBondedInputs(tx, character);
-    await writeBondedCreatures(tx, master, planBondedCreatures(scope, character, bonded));
+    await writeBondedCreatures(tx, master, Engine.for(scope).character(character).levelUp().planBonded(bonded));
   });
 }
 

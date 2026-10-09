@@ -256,11 +256,12 @@ describe("conventions", () => {
     ]);
   });
 
-  test("an engine module outside its API exports no function of its own", async () => {
+  test("an engine module exports no function of its own, its API's neither: its handles are classes", async () => {
     expect(
       await lintRepo(
         {
           "engine/api/ops.ts": "export function describeThing() {\n  return 1;\n}\n",
+          "engine/api/Engine.ts": "export default class Engine {\n  static for() {\n    return 1;\n  }\n}\n",
           "engine/core/Good.ts": [
             "function step() {",
             "  return 1;",
@@ -284,12 +285,13 @@ describe("conventions", () => {
           "engine/core/cast.ts": "export const helper = (() => 1) as () => number;\n",
           "engine/core/underscored.ts": "export function _helper() {\n  return 1;\n}\n",
           "engine/core/defaulted.ts": "export default function helper() {\n  return 1;\n}\n",
-          "engine/index.ts": 'export { describeThing } from "./api/ops.ts";\n',
+          "engine/index.ts": 'export { default as Engine } from "./api/Engine.ts";\n',
           "server/x.ts": "export function helper() {\n  return 1;\n}\n",
         },
         ["engine-classes"],
       ),
     ).toEqual([
+      "engine-classes engine/api/ops.ts",
       "engine-classes engine/core/cast.ts",
       "engine-classes engine/core/declared.ts",
       "engine-classes engine/core/defaulted.ts",

@@ -1,13 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { charactersInCharacter } from "@/drizzle/schema.ts";
-import {
-  checkCharacterLanguages,
-  describeCharacter,
-  describeCharacterCards,
-  openRacePicker,
-  planCharacterCreate,
-} from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import { type RulesetScope, withRulesetScope, withRulesetScopes } from "@/server/cache/rulesetCache/index.ts";
 import { db, type Db, withTransaction } from "@/server/database/index.ts";
@@ -49,7 +43,7 @@ class CharactersService extends include(Object, Archives) {
     // Languages.findMany returns the post-COW rows regardless of which
     // form the client sent.
     const languages = await Languages.findMany(tx, { ids: languageIds });
-    checkCharacterLanguages(scope, characterRecord.rulesetId, languageIds, languages);
+    Engine.for(scope).characters().checkLanguages(characterRecord.rulesetId, languageIds, languages);
 
     const existing = await CharacterLanguages.findMany(tx, { characterId: characterRecord.id });
     for (const lang of existing)
@@ -82,7 +76,7 @@ class CharactersService extends include(Object, Archives) {
       async (tx) =>
         await withRulesetScope(tx, characterData.rulesetId, async (scope) => {
           (await RulesetsPolicy.for(tx, session, scope.ruleset)).canCreateCharacter();
-          const plan = planCharacterCreate(scope, characterData);
+          const plan = Engine.for(scope).characters().planCreate(characterData);
 
           const [newCharacter] = await Characters.create(tx, {
             userId: session.userId,
@@ -138,7 +132,7 @@ class CharactersService extends include(Object, Archives) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
       const { sourceChain } = scope.rulesetData.cow;
 
-      const picker = openRacePicker(scope, formData);
+      const picker = Engine.for(scope).characters().openRacePicker(formData);
       // Races.findPage's output has its FK fields auto-resolved by
       // the Proxy since cowContext is active. No manual `CowData.resolveRows` pass.
       const result = await Races.findPage(
@@ -164,7 +158,9 @@ class CharactersService extends include(Object, Archives) {
 
     return await withRulesetScope(db, record.rulesetId, async (scope) => {
       const character = await readCharacterInput(db, record);
-      return describeCharacter(scope, character, await readBondedInputs(db, character, Visibility.All));
+      return Engine.for(scope)
+        .character(character)
+        .describe(await readBondedInputs(db, character, Visibility.All));
     });
   }
 
@@ -196,7 +192,7 @@ class CharactersService extends include(Object, Archives) {
       db,
       charactersList.map((c) => c.rulesetId),
       async (views) => {
-        const cards = describeCharacterCards(views, charactersList, levels);
+        const cards = Engine.describeCharacterCards(views, charactersList, levels);
         const enrichedCharacters = charactersList.map((char) => {
           const { levels: classLevels, race, totalLevel } = cards.get(char.id)!;
           return {

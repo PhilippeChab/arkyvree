@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { powersInRules } from "@/drizzle/schema.ts";
-import { describeEntity, getEntity, openPowerList, planPowerCreate, planPowerEdit } from "@/engine/index.ts";
+import { Engine, type PowersEngine } from "@/engine/index.ts";
 import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -13,7 +13,7 @@ import { writeEntityWrites } from "@/server/services/rulesets/entityWrites.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /** A power's body: its row's columns, its aptitude links, and its fields (`planPowerCreate`). */
-type PowerBody = Parameters<typeof planPowerCreate>[1] & { updatedAt?: string };
+type PowerBody = Parameters<PowersEngine["planCreate"]>[0] & { updatedAt?: string };
 
 class PowersService {
   async createPower(session: Session, rulesetId: string, body: PowerBody) {
@@ -29,7 +29,7 @@ class PowersService {
           const featAptitudeIds = await FeatsAptitudes.findAptitudeIds(tx, {
             aptitudeIds: body.aptitudes?.map((aptitude) => aptitude.id) ?? [],
           });
-          const plan = planPowerCreate(scope, body, { featAptitudeIds });
+          const plan = Engine.for(scope).powers().planCreate(body, { featAptitudeIds });
           const rows = await Powers.create(tx, { ...plan.columns, rulesetId });
           const power = rows[0];
 
@@ -65,7 +65,7 @@ class PowersService {
           const inUse = await hasCharacterPicks(tx, "powers", powerId, rulesetId);
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-          const power = getEntity(scope, "powers", powerId);
+          const power = Engine.for(scope).entity("powers", powerId).get();
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const targetId = await edit.cowToDelete(tx, "powers", power);
@@ -92,7 +92,9 @@ class PowersService {
   }
 
   async getPower(rulesetId: string, powerId: string) {
-    return await withRulesetScope(db, rulesetId, async (scope) => describeEntity(scope, "powers", powerId));
+    return await withRulesetScope(db, rulesetId, async (scope) =>
+      Engine.for(scope).entity("powers", powerId).describe(),
+    );
   }
 
   /** A page of the ruleset's powers, as its composed view has them: all of them, or a list's (at a level). */
@@ -110,7 +112,7 @@ class PowersService {
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
       const { aptitudeId, level, ...filters } = where;
-      const list = openPowerList(scope, { aptitudeId, childOnly: where.childOnly, level });
+      const list = Engine.for(scope).powers().openList({ aptitudeId, childOnly: where.childOnly, level });
       const result = await Powers.findPage(
         db,
         { rulesetId, ancestorRulesetIds: scope.rulesetData.cow.sourceChain, ...filters, ...list.filters },
@@ -131,7 +133,9 @@ class PowersService {
           const featAptitudeIds = await FeatsAptitudes.findAptitudeIds(tx, {
             aptitudeIds: body.aptitudes?.map((aptitude) => aptitude.id) ?? [],
           });
-          const { aptitudes, columns, power, writes } = planPowerEdit(scope, powerId, body, { featAptitudeIds });
+          const { aptitudes, columns, power, writes } = Engine.for(scope)
+            .powers()
+            .planEdit(powerId, body, { featAptitudeIds });
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "powers", power);

@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { inventoryInCharacter } from "@/drizzle/schema.ts";
-import { describeInventory, planInventoryEntry } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
@@ -34,7 +34,7 @@ class CharacterInventoryService {
 
         const character = await readCharacterInput(tx, characterRecord);
         const request = { equipped, force, location, remainingCharges, totalCharges, weaponSet };
-        const fields = planInventoryEntry(scope, character, { item: itemRecord, request });
+        const fields = Engine.for(scope).character(character).planInventoryEntry({ item: itemRecord, request });
         const rows = await CharacterInventory.create(tx, { characterId, itemId, quantity, ...fields });
 
         await Activities.create(tx, {
@@ -56,7 +56,7 @@ class CharacterInventoryService {
     return await withRulesetScope(db, characterRecord.rulesetId, async (scope) => {
       // Inside withRulesetScope: CharacterInventory.findMany auto-resolves row.itemId to post-COW
       const inventory = await CharacterInventory.findMany(db, { characterId });
-      return describeInventory(scope, inventory);
+      return Engine.for(scope).characters().describeInventory(inventory);
     });
   }
 
@@ -104,7 +104,7 @@ class CharacterInventoryService {
 
         const character = await readCharacterInput(tx, characterRecord);
         const request = { equipped, force, location, remainingCharges, totalCharges, weaponSet };
-        const fields = planInventoryEntry(scope, character, { entry: existing, request });
+        const fields = Engine.for(scope).character(character).planInventoryEntry({ entry: existing, request });
 
         const rows = await CharacterInventory.update(
           tx,

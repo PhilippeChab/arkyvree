@@ -1,4 +1,4 @@
-import { getTargetPathCompletions, validateTargetPath } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { readTargetPaths, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { paginateItems } from "@/server/repositories/index.ts";
@@ -22,7 +22,9 @@ class TargetPathsService {
   ) {
     const catalog = await readTargetPaths(rulesetId, kind);
     const completions = await withRulesetScope(db, rulesetId, async (scope) =>
-      getTargetPathCompletions(scope, catalog, kind, { flat, partialPath, position, search }, entityType),
+      Engine.for(scope)
+        .targetPaths()
+        .getCompletions(catalog, kind, { flat, partialPath, position, search }, entityType),
     );
     return { ...paginateItems(completions, { limit, page }), segmentLabels: catalog.segmentLabels };
   }
@@ -33,7 +35,9 @@ class TargetPathsService {
    */
   async validatePath(rulesetId: string, path: string, kind: TargetPathKind = "modifier", entityType?: string) {
     const catalog = await readTargetPaths(rulesetId, kind);
-    return await withRulesetScope(db, rulesetId, async (scope) => validateTargetPath(scope, catalog, path, entityType));
+    return await withRulesetScope(db, rulesetId, async (scope) =>
+      Engine.for(scope).targetPaths().validate(catalog, path, entityType),
+    );
   }
 }
 

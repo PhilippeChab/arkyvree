@@ -35,66 +35,64 @@ describe("architecture rules", () => {
   });
 
   test("a service's or a job's action asks the engine one operation, however often, through whatever it calls", async () => {
-    const engine = 'import { describeA, planA, type T } from "@/engine/index.ts";\n';
+    const engine = 'import { Engine, type T } from "@/engine/index.ts";\n';
+    const plan = "Engine.for(x).skills().planCreate(x)";
+    const describe = "Engine.for(x).skills().describe(x)";
     expect(
       await lintRepo(
         {
-          // One operation per method, called twice; a type and a callback's call count for their action
+          // One operation per method, called twice, by a callback too; a handle's own methods aren't operations
           "server/services/a.ts":
             engine +
-            "export class A {\n  one(x: T) {\n    planA(x);\n    return [x].map(() => planA(x));\n  }\n" +
-            "  two(x: T) {\n    planA(x);\n    return [x].map(() => describeA(x));\n  }\n}\n",
+            `export class A {\n  one(x: T) {\n    ${plan};\n    return [x].map(() => ${plan});\n  }\n` +
+            `  two(x: T) {\n    ${plan};\n    return [x].map(() => ${describe});\n  }\n}\n`,
           // A function of the module, and a concern's method
-          "server/jobs/b.ts": engine + "export function b(x: T) {\n  planA(x);\n  return describeA(x);\n}\n",
+          "server/jobs/b.ts": engine + `export function b(x: T) {\n  ${plan};\n  return ${describe};\n}\n`,
           "server/services/c.ts":
             engine +
             "export function C<B extends new () => object>(Base: B) {\n  return class extends Base {\n" +
-            "    one(x: T) {\n      return planA(x);\n    }\n    other(x: T) {\n      return describeA(x);\n    }\n  };\n}\n",
-          // Through its own method, its module's function, or a namespace
+            `    one(x: T) {\n      return ${plan};\n    }\n    other(x: T) {\n      return ${describe};\n    }\n  };\n}\n`,
+          // Through its own method or its module's function
           "server/services/d.ts":
             engine +
-            "function described(x: T) {\n  return describeA(x);\n}\n" +
-            "export class D {\n  private planned(x: T) {\n    return planA(x);\n  }\n" +
+            `function described(x: T) {\n  return ${describe};\n}\n` +
+            `export class D {\n  private planned(x: T) {\n    return ${plan};\n  }\n` +
             "  one(x: T) {\n    return [this.planned(x), described(x)];\n  }\n}\n",
+          // Through a handle the action keeps, or the entry under another name
           "server/jobs/e.ts":
-            'import * as engine from "@/engine/index.ts";\n' +
-            "export function e(x: unknown) {\n  return [engine.planA(x), engine.describeA(x)];\n}\n",
+            engine +
+            "export function e(x: T) {\n  const skills = Engine.for(x).skills();\n" +
+            "  return [skills.planCreate(x), skills.describe(x)];\n}\n" +
+            "export function f(x: T) {\n  const engine = Engine;\n  return [engine.for(x).skills().planEdit(x), " +
+            describe +
+            "];\n}\n",
           // Through another action's function, re-exported by its folder's index, beside an operation of its own
-          "server/services/f/flow.ts": engine + "export function flow(x: T) {\n  return planA(x);\n}\n",
+          "server/services/f/flow.ts": engine + `export function flow(x: T) {\n  return ${plan};\n}\n`,
           "server/services/f/index.ts": 'export { flow } from "./flow.ts";\n',
           "server/services/g.ts":
             engine +
             'import { flow } from "@/server/services/f/index.ts";\n' +
-            "export function g(x: T) {\n  return [flow(x), describeA(x)];\n}\n",
+            `export function g(x: T) {\n  return [flow(x), ${describe}];\n}\n`,
           // The routers and the cache aren't actions
-          "server/cache/h.ts": engine + "export function h(x: T) {\n  planA(x);\n  return describeA(x);\n}\n",
-          // Handed on as a value, under an alias, or through another service; the engine's data isn't an operation
-          "server/services/i.ts":
-            engine +
-            'import { LIMITS } from "@/engine/index.ts";\n' +
-            "const plan = planA;\n" +
-            "export function i(x: T) {\n  return [[x].map(describeA), LIMITS];\n}\n" +
-            "export function j(x: T) {\n  return [plan(x), describeA(x)];\n}\n" +
-            "export function k(x: T) {\n  return [planA(x), LIMITS];\n}\n",
+          "server/cache/h.ts": engine + `export function h(x: T) {\n  ${plan};\n  return ${describe};\n}\n`,
+          // Another service, and a plan's own answer (`plan.describe(row)`), which isn't another operation
           "server/services/l/LService.ts":
-            engine + "class LService {\n  m(x: T) {\n    return planA(x);\n  }\n}\nexport default new LService();\n",
+            engine + `class LService {\n  m(x: T) {\n    return ${plan};\n  }\n}\nexport default new LService();\n`,
           "server/services/m.ts":
             engine +
             'import LService from "./l/LService.ts";\n' +
-            "export class M {\n  private readonly described = (x: T) => describeA(x);\n" +
-            "  one(x: T) {\n    return [LService.m(x), describeA(x)];\n  }\n" +
-            "  two(x: T) {\n    return [planA(x), this.described(x)];\n  }\n}\n",
+            `export class M {\n  one(x: T) {\n    return [LService.m(x), ${describe}];\n  }\n` +
+            `  two(x: T) {\n    const planned = ${plan};\n    return planned.describe(x);\n  }\n}\n`,
         },
         ["one-engine-op"],
       ),
     ).toEqual([
       "one-engine-op server/jobs/b.ts",
       "one-engine-op server/jobs/e.ts",
+      "one-engine-op server/jobs/e.ts",
       "one-engine-op server/services/a.ts",
       "one-engine-op server/services/d.ts",
       "one-engine-op server/services/g.ts",
-      "one-engine-op server/services/i.ts",
-      "one-engine-op server/services/m.ts",
       "one-engine-op server/services/m.ts",
     ]);
   });

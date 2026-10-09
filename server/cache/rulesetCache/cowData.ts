@@ -1,4 +1,4 @@
-import { buildCowData, type CowData, getCowReads, getPairedKlassIds, type RulesetSources } from "@/engine/index.ts";
+import { type CowData, Engine, type RulesetSources } from "@/engine/index.ts";
 import { type Db, withCowContext } from "@/server/database/index.ts";
 import { Aptitudes, EntitySnapshots, KlassLevels, RulesetEntities } from "@/server/repositories/index.ts";
 
@@ -9,11 +9,13 @@ import { Aptitudes, EntitySnapshots, KlassLevels, RulesetEntities } from "@/serv
  */
 export async function readCowData(database: Db, ruleset: RulesetSources): Promise<CowData> {
   return await withCowContext(undefined, async () => {
-    const reads = getCowReads(ruleset);
+    const reads = Engine.copyOnWrite().getReads(ruleset);
     const snapshots = await EntitySnapshots.findMany(database, { rulesetIds: reads.snapshotRulesetIds });
     const namesakes = await RulesetEntities.findNativeNames(database, reads.namesakes);
-    const klassLevels = await KlassLevels.findMany(database, { klassIds: getPairedKlassIds(ruleset.id, snapshots) });
+    const klassLevels = await KlassLevels.findMany(database, {
+      klassIds: Engine.copyOnWrite().getPairedKlassIds(ruleset.id, snapshots),
+    });
     const aptitudes = await Aptitudes.findMany(database, { rulesetIds: reads.aptitudeRulesetIds });
-    return buildCowData(ruleset, { aptitudes, klassLevels, namesakes, snapshots });
+    return Engine.copyOnWrite().buildData(ruleset, { aptitudes, klassLevels, namesakes, snapshots });
   });
 }

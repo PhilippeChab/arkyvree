@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { propertiesInCustomization } from "@/drizzle/schema.ts";
-import { describeProperties, planPropertyCreate, planPropertyDelete, planPropertyEdit } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { RulesetEdit } from "@/server/cow/index.ts";
 import { type Db, db, withTransaction } from "@/server/database/index.ts";
@@ -55,7 +55,7 @@ class PropertiesService {
           const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const { entity } = planPropertyCreate(scope, entityType, entityId);
+          const { entity } = Engine.for(scope).properties(entityType, entityId).planCreate();
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const resolvedEntityId = await edit.cowOwner(tx, entityType, entity.id);
@@ -73,7 +73,7 @@ class PropertiesService {
           const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity();
 
-          const { entity, property } = planPropertyDelete(scope, entityType, entityId, propertyId);
+          const { entity, property } = Engine.for(scope).properties(entityType, entityId).planDelete(propertyId);
           await checkCustomizedEntity(property);
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
@@ -110,7 +110,9 @@ class PropertiesService {
   }
 
   async getProperties(rulesetId: string, entityType: string, entityId: string) {
-    return await withRulesetScope(db, rulesetId, async (scope) => describeProperties(scope, entityType, entityId));
+    return await withRulesetScope(db, rulesetId, async (scope) =>
+      Engine.for(scope).properties(entityType, entityId).describeAll(),
+    );
   }
 
   async updateProperty(
@@ -127,7 +129,9 @@ class PropertiesService {
           const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const { entity, override, property } = planPropertyEdit(scope, entityType, entityId, propertyId);
+          const { entity, override, property } = Engine.for(scope)
+            .properties(entityType, entityId)
+            .planEdit(propertyId);
           await checkCustomizedEntity(property);
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);

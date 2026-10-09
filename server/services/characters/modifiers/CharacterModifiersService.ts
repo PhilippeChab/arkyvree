@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { modifiersInCustomization } from "@/drizzle/schema.ts";
-import { checkTargetValue, describeModifierList } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { readTargetPathCatalogs, readTargetPaths, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
@@ -15,7 +15,9 @@ class CharacterModifiersService {
     const catalogs = await readTargetPathCatalogs(rulesetId, "modifier");
     const { operator, target, value } = body;
     return await withRulesetScope(db, rulesetId, async (scope) =>
-      checkTargetValue(scope, catalogs, { kind: "modifier", operator, sourceType: "characters", target, value }),
+      Engine.for(scope)
+        .targetPaths()
+        .checkValue(catalogs, { kind: "modifier", operator, sourceType: "characters", target, value }),
     );
   }
 
@@ -83,7 +85,7 @@ class CharacterModifiersService {
     const character = await getEditableCharacter(db, session, characterId);
 
     const modifiers = await Modifiers.findMany(db, { sourceIds: [characterId], sourceType: "characters" });
-    return describeModifierList(await readTargetPaths(character.rulesetId, "modifier"), modifiers);
+    return Engine.describeModifierList(await readTargetPaths(character.rulesetId, "modifier"), modifiers);
   }
 
   async updateModifier(

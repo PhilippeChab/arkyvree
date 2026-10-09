@@ -1,10 +1,10 @@
-import type { planLevelRemoval } from "@/engine/index.ts";
+import type { LevelUpEngine } from "@/engine/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { CharacterAbilities, CharacterLevels, Characters } from "@/server/repositories/index.ts";
 import type { Character } from "@/shared/relations.ts";
 
 /** What a master's bonded creatures become, as the engine plans them with its levels. */
-type BondedPlans = ReturnType<typeof planLevelRemoval>["bonded"];
+type BondedPlans = ReturnType<LevelUpEngine["planRemoval"]>["bonded"];
 
 /** The master's new creature of `kind`, with its ability scores: the master's, of its alignment and gender. */
 async function createCreature(

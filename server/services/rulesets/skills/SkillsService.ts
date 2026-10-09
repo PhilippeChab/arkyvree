@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { skillsInRules } from "@/drizzle/schema.ts";
-import { describeSkill, describeSkills, planSkillCreate, planSkillDelete, planSkillEdit } from "@/engine/index.ts";
+import { Engine, type SkillsEngine } from "@/engine/index.ts";
 import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -13,7 +13,7 @@ import { writeEntityWrites } from "@/server/services/rulesets/entityWrites.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /** A skill's body: its row's columns, and the fields its ruleset's rules keep (`planSkillCreate`). */
-type SkillBody = Parameters<typeof planSkillCreate>[1];
+type SkillBody = Parameters<SkillsEngine["planCreate"]>[0];
 
 class SkillsService {
   async createSkill(session: Session, rulesetId: string, body: SkillBody) {
@@ -23,7 +23,7 @@ class SkillsService {
           const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const plan = planSkillCreate(scope, body);
+          const plan = Engine.for(scope).skills().planCreate(body);
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "skills", body.name);
@@ -59,7 +59,7 @@ class SkillsService {
           const inUse = await hasCharacterPicks(tx, "skills", skillId, rulesetId);
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-          const { skill, writes } = planSkillDelete(scope, skillId);
+          const { skill, writes } = Engine.for(scope).skills().planDelete(skillId);
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const targetId = await edit.cowToDelete(tx, "skills", skill);
@@ -87,7 +87,7 @@ class SkillsService {
   }
 
   async getSkill(rulesetId: string, skillId: string) {
-    return await withRulesetScope(db, rulesetId, async (scope) => describeSkill(scope, skillId));
+    return await withRulesetScope(db, rulesetId, async (scope) => Engine.for(scope).skills().describe(skillId));
   }
 
   async getSkills(
@@ -103,7 +103,7 @@ class SkillsService {
     return await withRulesetScope(db, rulesetId, async (scope) => {
       const { sourceChain } = scope.rulesetData.cow;
       const result = await Skills.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
-      return { ...result, items: describeSkills(scope, result.items) };
+      return { ...result, items: Engine.for(scope).skills().describeAll(result.items) };
     });
   }
 
@@ -115,7 +115,7 @@ class SkillsService {
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const { columns, describe, skill, writes } = planSkillEdit(scope, skillId, body);
+          const { columns, describe, skill, writes } = Engine.for(scope).skills().planEdit(skillId, body);
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "skills", skill);

@@ -2,14 +2,14 @@
  * Feats a level-up can pick: those available for an aptitude pool, flat or grouped by feat family.
  */
 
-import { openFeatPicker } from "@/engine/index.ts";
+import { Engine, type LevelUpEngine } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats } from "@/server/repositories/index.ts";
 import { withEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /** A feat picked so far: the feat, and the pool it's picked in. */
-type FeatPick = NonNullable<Parameters<typeof openFeatPicker>[2]["selectedFeatPicks"]>[number];
+type FeatPick = NonNullable<Parameters<LevelUpEngine["openFeatPicker"]>[0]["selectedFeatPicks"]>[number];
 
 export async function getAvailableFeats(
   session: Session,
@@ -24,15 +24,18 @@ export async function getAvailableFeats(
   pendingLevelAbilityIds?: (string | undefined)[],
 ) {
   return await withEditableCharacter(db, session, characterId, async (scope, character) => {
-    const picker = openFeatPicker(scope, character, {
-      ...where,
-      aptitudeId,
-      excludeCharacterLevelId,
-      klassId,
-      level,
-      pendingLevelAbilityIds,
-      pendingLevelKlassLevelIds,
-    });
+    const picker = Engine.for(scope)
+      .character(character)
+      .levelUp()
+      .openFeatPicker({
+        ...where,
+        aptitudeId,
+        excludeCharacterLevelId,
+        klassId,
+        level,
+        pendingLevelAbilityIds,
+        pendingLevelKlassLevelIds,
+      });
     const result = await Feats.findOptionPage(db, { ...picker.filters, search: where.search }, pagination);
     return { items: picker.annotate(result.items), page: result.page, nextPage: result.nextPage };
   });
@@ -51,15 +54,18 @@ export async function getAvailableFeatsGrouped(
   pendingLevelAbilityIds?: (string | undefined)[],
 ) {
   return await withEditableCharacter(db, session, characterId, async (scope, character) => {
-    const picker = openFeatPicker(scope, character, {
-      ...where,
-      aptitudeId,
-      excludeCharacterLevelId,
-      klassId,
-      level,
-      pendingLevelAbilityIds,
-      pendingLevelKlassLevelIds,
-    });
+    const picker = Engine.for(scope)
+      .character(character)
+      .levelUp()
+      .openFeatPicker({
+        ...where,
+        aptitudeId,
+        excludeCharacterLevelId,
+        klassId,
+        level,
+        pendingLevelAbilityIds,
+        pendingLevelKlassLevelIds,
+      });
     const result = await Feats.findOptionGroupPage(db, { ...picker.groupFilters, search: where.search }, pagination);
     return { items: picker.annotateGroups(result.items), page: result.page, nextPage: result.nextPage };
   });

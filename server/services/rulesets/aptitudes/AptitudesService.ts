@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { aptitudesInRules } from "@/drizzle/schema.ts";
-import { getEntity, planAptitudeDelete, planAptitudeEdit } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -61,7 +61,7 @@ class AptitudesService {
           const inUse = await hasCharacterPicks(tx, "aptitudes", aptitudeId, rulesetId);
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-          const { aptitude } = planAptitudeDelete(scope, aptitudeId);
+          const { aptitude } = Engine.for(scope).aptitudes().planDelete(aptitudeId);
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const targetId = await edit.cowToDelete(tx, "aptitudes", aptitude);
@@ -89,7 +89,7 @@ class AptitudesService {
 
   async getAptitude(rulesetId: string, aptitudeId: string) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
-      const aptitude = getEntity(scope, "aptitudes", aptitudeId);
+      const aptitude = Engine.for(scope).entity("aptitudes", aptitudeId).get();
       return aptitude;
     });
   }
@@ -129,7 +129,7 @@ class AptitudesService {
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const { aptitude } = planAptitudeEdit(scope, aptitudeId, body.name);
+          const { aptitude } = Engine.for(scope).aptitudes().planEdit(aptitudeId, body.name);
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "aptitudes", aptitude);

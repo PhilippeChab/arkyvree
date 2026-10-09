@@ -1,4 +1,4 @@
-import { getEntity } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Abilities } from "@/server/repositories/index.ts";
@@ -25,7 +25,7 @@ class AbilitiesService {
 
   async getAbility(rulesetId: string, abilityId: string) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
-      const ability = getEntity(scope, "abilities", abilityId);
+      const ability = Engine.for(scope).entity("abilities", abilityId).get();
       return ability;
     });
   }

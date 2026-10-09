@@ -1,7 +1,7 @@
 import { pdf } from "@react-pdf/renderer";
 import type { JobHelpers } from "graphile-worker";
 
-import { describeCharacterSheet } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { isProduction } from "@/server/environment.ts";
@@ -55,10 +55,12 @@ export async function generatePdfTask(payload: unknown, helpers: JobHelpers): Pr
 
     const portraitUrl = await getSlotUrl("portrait", characterRecord.id);
     const sheet = await withRulesetScope(db, characterRecord.rulesetId, async (scope) =>
-      describeCharacterSheet(scope, await readCharacterInput(db, characterRecord), {
-        diagnostics: !isProduction(),
-        portraitUrl,
-      }),
+      Engine.for(scope)
+        .character(await readCharacterInput(db, characterRecord))
+        .describeSheet({
+          diagnostics: !isProduction(),
+          portraitUrl,
+        }),
     );
 
     const pdfBlob = await pdf(sheet).toBlob();
