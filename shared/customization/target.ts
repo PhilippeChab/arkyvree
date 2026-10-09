@@ -64,7 +64,7 @@ export interface TargetPath {
 
 /** A ruleset's target paths of a kind, with the label of each of their segments. */
 export interface TargetPathCatalog {
-  paths: TargetPath[];
+  readonly paths: readonly TargetPath[];
   segmentLabels: Record<string, string>;
 }
 
