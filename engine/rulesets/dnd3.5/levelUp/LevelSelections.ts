@@ -1,17 +1,26 @@
+import type { CharacterInput } from "@/engine/core/module/index.ts";
+import RulesError from "@/engine/core/RulesError.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
 import FeatEntity, { type PoolModifier } from "@/engine/rulesets/dnd3.5/entities/feats/FeatEntity.ts";
-import type { CharacterLevel } from "@/shared/relations.ts";
 
 import LevelUpState from "./LevelUpState.ts";
 
-/** A saved level's picks, as the server read them. */
+/** A saved level's picks, as the character's rows hold them. */
 interface SavedPicks {
   feats: { aptitudeId: string; featId: string }[];
   powers: { aptitudeId: string; powerId: string }[];
   skills: { rank: number; skillId: string }[];
 }
 
-/** A saved level's selections, as the level's edit opens them. */
+/** A character's saved level's selections, from its rows, as the level's edit opens them. */
 export default class LevelSelections extends LevelUpState {
+  constructor(
+    view: RulesetView,
+    private readonly character: CharacterInput,
+  ) {
+    super(view);
+  }
+
   /**
    * A saved level's selections: its skill ranks, its feats by pool (each with the pools its modifiers add slots to) and
    * its powers by pool (each with its spell level in the pool when it has one).
@@ -52,10 +61,15 @@ export default class LevelSelections extends LevelUpState {
   }
 
   /**
-   * A saved level's selections (`level`, with its picks): its class level, hit points and ability increase, its skill
-   * ranks, its feats by pool and its powers by pool.
+   * The character's saved level `characterLevelId`: its class level, hit points and ability increase, its skill ranks,
+   * its feats by pool and its powers by pool. Refused when the character has no such level.
    */
-  describe(level: CharacterLevel, picks: SavedPicks) {
+  describeLevel(characterLevelId: string) {
+    const { levels, picks } = this.character.rows;
+    const level = levels.find((saved) => saved.id === characterLevelId);
+    if (!level) throw new RulesError("not-found", "Character level not found");
+    const atLevel = <P extends { characterLevelId: string }>(rows: P[]) =>
+      rows.filter((pick) => pick.characterLevelId === characterLevelId);
     const { klassLevel, klass } = this.getSavedKlassLevel(level);
     return {
       characterLevelId: level.id,
@@ -65,7 +79,11 @@ export default class LevelSelections extends LevelUpState {
       hd: klass.hd,
       hp: level.hp,
       abilityId: level.abilityId,
-      ...this.buildLevelSelections(picks),
+      ...this.buildLevelSelections({
+        feats: atLevel(picks.feats),
+        powers: atLevel(picks.powers),
+        skills: atLevel(picks.skills),
+      }),
     };
   }
 }

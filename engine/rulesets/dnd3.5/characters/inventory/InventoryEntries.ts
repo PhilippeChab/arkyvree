@@ -51,7 +51,7 @@ export default class InventoryEntries {
    * as the view composes it (the stored row's copy or winner, the row itself without one), its properties, its
    * modifiers, and its requirements, its template's before its own.
    */
-  static describe<T extends { itemId: string; itemsInRule: Item }>(view: RulesetView, entries: T[]) {
+  static describeInventory<T extends { itemId: string; itemsInRule: Item }>(view: RulesetView, entries: T[]) {
     const { rulesetData } = view;
     return entries.map((entry) => {
       // The join still contains the stored parent row after itemId resolves.
@@ -78,7 +78,7 @@ export default class InventoryEntries {
    * equipped where it's asked to be (`Equipping`: an item already carried takes another entry, a second dagger held in
    * the other hand).
    */
-  static planEntry(view: RulesetView, character: CharacterInput, change: EntryChange) {
+  static planInventoryEntry(view: RulesetView, character: CharacterInput, change: EntryChange) {
     const { rulesetData } = view;
     const { request } = change;
     if ("item" in change) {

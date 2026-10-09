@@ -319,11 +319,11 @@ describe("CharactersService with bonded creatures", () => {
     // Its levels follow its master's, never a pick: the level-up builds a player character
     [
       "list the classes for",
-      (id: string) => CharacterLevelsService.getAvailableKlasses(owner, id, {}, { limit: 10, page: 1 }),
+      (id: string) => CharacterLevelsService.getAvailableClasses(owner, id, {}, { limit: 10, page: 1 }),
     ],
     [
       "count the feat slots of",
-      async (id: string) => CharacterLevelsService.getFeatSlots(owner, id, (await getSeedCtx()).klassMap.pc.Wizard, 2),
+      async (id: string) => CharacterLevelsService.getFeatStep(owner, id, (await getSeedCtx()).klassMap.pc.Wizard, 2),
     ],
     ["level up", async (id: string) => addOneLevel(owner, id, (await getSeedCtx()).klassMap.pc.Wizard, 2, 4, null)],
     ["remove a level from", (id: string) => CharacterLevelsService.removeLevel(owner, id)],

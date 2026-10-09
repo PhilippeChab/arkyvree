@@ -123,7 +123,7 @@ async function favoredSoulOnMixedFork() {
   const fork = await forkTaking(DND35_DMG_NAME, DND35_COMPLETE_WARRIOR_NAME, DND35_COMPLETE_DIVINE_NAME);
   const divine = await findSeededRuleset(DND35_COMPLETE_DIVINE_NAME);
   const favoredSoul = (await Klasses.findOne(db, { name: "Favored Soul", rulesetId: divine.id }))!;
-  const { aptitudePools } = await CharacterLevelsService.getPowerSlots(
+  const { aptitudePools } = await CharacterLevelsService.getPowerStep(
     fork.session,
     fork.character.id,
     favoredSoul.id,
@@ -134,10 +134,7 @@ async function favoredSoulOnMixedFork() {
     CharacterLevelsService.getAvailablePowers(
       fork.session,
       fork.character.id,
-      list.id,
-      favoredSoul.id,
-      1,
-      where,
+      { aptitudeId: list.id, classId: favoredSoul.id, level: 1, ...where },
       firstPage,
     );
   return { ...fork, favoredSoul, list, offer };
@@ -779,10 +776,7 @@ describe("an extension's content in a fork", () => {
     const offered = await CharacterLevelsService.getAvailableFeats(
       session,
       character.id,
-      list.id,
-      hexblade.id,
-      1,
-      { search },
+      { aptitudeId: list.id, classId: hexblade.id, level: 1, search },
       firstPage,
     );
     expect(offered.items.map((feat) => feat.name)).toContain(search);

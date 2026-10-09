@@ -72,27 +72,29 @@ async function eligible(
     xp: 6000,
     abilities: { Strength: options.strength ?? 14 },
   });
-  const { levelDetails } = await CharacterLevelsService.getLevelUpPreview(
+  const { levelDetails } = await CharacterLevelsService.getPreview(
     session,
     characterId,
     FIGHTER_LEVELS.slice(0, level).map((_, i) => ({ klassId: ctx.klassMap.pc["Fighter"], level: i + 1 })),
     FIGHTER_LEVELS.slice(0, level).map(() => null),
   );
-  const pendingLevelFeatPicks = (options.pendingPicks ?? []).map((name) => ({
+  const featPicks = (options.pendingPicks ?? []).map((name) => ({
     featId: ctx.featMap[name],
     aptitudeId: ctx.aptMap["General"],
   }));
-  const { items } = await CharacterLevelsService.getAvailableFeatsGrouped(
+  const { items } = await CharacterLevelsService.getAvailableFeatGroups(
     session,
     characterId,
-    ctx.aptMap["General"],
-    ctx.klassMap.pc["Fighter"],
-    level,
-    { search, selectedFeatPicks: [], pendingLevelFeatPicks },
+    {
+      aptitudeId: ctx.aptMap["General"],
+      classId: ctx.klassMap.pc["Fighter"],
+      level: level,
+      plannedClassLevelIds: levelDetails.map((d) => d.klassLevelId),
+      plannedAbilityIds: options.increases,
+      search,
+      featPicks,
+    },
     { limit: 20, page: 1 },
-    undefined,
-    levelDetails.map((d) => d.klassLevelId),
-    options.increases,
   );
   return items.find((row) => row.displayName === search)!.eligible;
 }
@@ -103,7 +105,7 @@ async function preview(
   levels: [string, number][],
   abilities: (string | null)[] = levels.map(() => null),
 ) {
-  return CharacterLevelsService.getLevelUpPreview(
+  return CharacterLevelsService.getPreview(
     session,
     characterId,
     levels.map(([klass, level]) => ({ klassId: ctx.klassMap.pc[klass], level })),

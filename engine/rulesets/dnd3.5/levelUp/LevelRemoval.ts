@@ -18,7 +18,7 @@ export default class LevelRemoval extends LevelUpState {
    * The level the character took last, which the removal deletes with its picks, and what its bonded creatures
    * (`bonded`, their rows) become without it: refused when it has no level.
    */
-  plan(bonded: CharacterInput[]) {
+  planRemoval(bonded: CharacterInput[]) {
     const level = this.character.rows.levels.at(-1);
     if (!level) throw new RulesError("not-found", "No level to remove");
     const projection = new CharacterProjection(this.character);

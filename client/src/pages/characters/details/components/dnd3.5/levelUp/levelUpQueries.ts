@@ -13,7 +13,7 @@ import { nextPage } from "@/client/src/lib/pageItems.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-import type { PendingLevels } from "./pendingPicks.ts";
+import type { PlannedLevels } from "./pendingPicks.ts";
 
 /** A saved level, as Edit Level loads it. */
 type LevelData = InferResponseType<LevelsApi[":characterLevelId"]["$get"], 200>;
@@ -21,29 +21,29 @@ type LevelData = InferResponseType<LevelsApi[":characterLevelId"]["$get"], 200>;
 type LevelsApi = (typeof rpc.api.characters.levels)[":characterId"];
 
 /**
- * What a picker's list is checked against besides its own picks, encoded by `pendingPicks.ts`: the planned levels
- * before it, not saved yet (their class levels and ability increases), and the feats picked over them.
+ * What a picker's list is checked against, encoded by `pendingPicks.ts`: the planned levels before it, not saved yet
+ * (their class levels and ability increases), and the feats picked so far.
  */
-interface PendingPicks extends Partial<PendingLevels> {
-  pendingFeatPicks?: string;
+interface PlannedPicks extends Partial<PlannedLevels> {
+  featPicks: string | undefined;
 }
 
 /** A feat pool of the level's slots. */
 export type AptitudePool = FeatsData["aptitudePools"][string];
 
 /** Whether a saved level takes an ability increase, and the character's abilities at it. */
-export type AttributesData = InferResponseType<LevelsApi["attribute-slots"]["$get"], 200>;
+export type AttributesData = InferResponseType<LevelsApi["ability-step"]["$get"], 200>;
 
 export type AvailableKlass = InferResponseType<LevelsApi["available-classes"]["$get"], 200>["items"][number];
 
 export type AvailablePower = InferResponseType<LevelsApi["available-powers"]["$get"], 200>["items"][number];
 
-/** What the class picker's list is checked against: the pending picks, and the skill points picked over them. */
-export interface ClassPicker extends PendingPicks {
-  pendingSkillAllocations?: string;
+/** What the class picker's list is checked against: the planned picks, and the skill points spent over them. */
+export interface ClassPicker extends PlannedPicks {
+  skillRanks: string | undefined;
 }
 
-export type FeatsData = InferResponseType<LevelsApi["feat-slots"]["$get"], 200>;
+export type FeatsData = InferResponseType<LevelsApi["feat-step"]["$get"], 200>;
 
 /** A row of the feat picker: a feat, or a family of feat variants. */
 export type GroupedFeatRow = InferResponseType<LevelsApi["available-feats"]["grouped"]["$get"], 200>["items"][number];
@@ -51,10 +51,8 @@ export type GroupedFeatRow = InferResponseType<LevelsApi["available-feats"]["gro
 /** The character's abilities at a level, by name: each with its score and modifier. */
 export type LevelAbilities = AttributesData["attributes"];
 
-/** A picker's level (a `StepLevel`), and what its list is checked against: the feats picked so far, and the pending picks. */
-export interface PickerLevel extends StepLevel, PendingPicks {
-  selectedFeatPicks: string | undefined;
-}
+/** A picker's level (a `StepLevel`), and what its list is checked against: the planned levels and the feats so far. */
+export interface PickerLevel extends StepLevel, PlannedPicks {}
 
 /** A spell pool of the level's slots. */
 export type PowerAptitudePool = PowersData["aptitudePools"][string];
@@ -64,7 +62,7 @@ export interface PowerPickerLevel extends PickerLevel {
   selectedPowerIds: string | undefined;
 }
 
-export type PowersData = InferResponseType<LevelsApi["power-slots"]["$get"], 200>;
+export type PowersData = InferResponseType<LevelsApi["power-step"]["$get"], 200>;
 
 /** A planned level, as the Add Level preview lists it. */
 export type PreviewLevelDetail = InferResponseType<LevelsApi["preview"]["$post"], 200>["levelDetails"][number];
@@ -78,42 +76,40 @@ export type SelectedKlass = Pick<AvailableKlass, "id" | "name" | "nextLevel" | "
 /** A spell picked for the level, as a saved level lists it. */
 export type SelectedPower = LevelData["powers"][string][number];
 
-export type SkillsData = InferResponseType<LevelsApi["skill-slots"]["$get"], 200>;
+export type SkillsData = InferResponseType<LevelsApi["skill-step"]["$get"], 200>;
 
 /**
  * The level a step is for, as the slot and picker endpoints take it: its class and level, which the query waits for,
  * and the saved level it edits.
  */
 export interface StepLevel {
-  characterLevelId?: string;
   classId: string | undefined;
+  editedLevelId?: string;
   level: number | undefined;
 }
 
 /** The step's level as the endpoints' query, once its class and level are known. */
-function levelQueryOf({ classId, level, characterLevelId }: StepLevel) {
+function levelQueryOf({ classId, level, editedLevelId }: StepLevel) {
   if (!classId || level === undefined) return undefined;
-  return { classId, level: level.toString(), characterLevelId: characterLevelId || undefined };
+  return { classId, level: level.toString(), editedLevelId: editedLevelId || undefined };
 }
 
-/** The picks a picker's list is checked against, as the endpoints' query. */
-function picksQueryOf(picker: PickerLevel) {
+/** What a picker's list is checked against, as the endpoints' query: the planned levels and the feats picked so far. */
+function plannedQueryOf(picker: PlannedPicks) {
   return {
-    selectedFeatPicks: picker.selectedFeatPicks || undefined,
-    pendingLevelClassLevelIds: picker.pendingKlassLevelIds || undefined,
-    pendingLevelFeatPicks: picker.pendingFeatPicks || undefined,
+    featPicks: picker.featPicks || undefined,
+    plannedAbilityIds: picker.plannedAbilityIds || undefined,
+    plannedClassLevelIds: picker.plannedClassLevelIds || undefined,
   };
 }
 
 /** Whether a saved level takes an ability increase, and the character's abilities at it. */
-export function attributeSlotsQuery(characterId: string, characterLevelId: string) {
-  const query = { characterLevelId };
+export function abilityStepQuery(characterId: string, editedLevelId: string) {
+  const query = { editedLevelId };
   return queryOptions({
     queryKey: QUERY_KEYS.characters.levelUp.attributes(characterId, query),
     queryFn: () =>
-      parseResponse(
-        rpc.api.characters.levels[":characterId"]["attribute-slots"].$get({ param: { characterId }, query }),
-      ),
+      parseResponse(rpc.api.characters.levels[":characterId"]["ability-step"].$get({ param: { characterId }, query })),
   });
 }
 
@@ -122,10 +118,8 @@ export function availableClassesQuery(characterId: string, search: string, picke
   const query = {
     limit: "10",
     search: search || undefined,
-    pendingLevelClassLevelIds: picker.pendingKlassLevelIds || undefined,
-    pendingLevelAbilityIds: picker.pendingAbilityIds || undefined,
-    pendingFeatPicks: picker.pendingFeatPicks || undefined,
-    pendingSkillAllocations: picker.pendingSkillAllocations || undefined,
+    ...plannedQueryOf(picker),
+    skillRanks: picker.skillRanks || undefined,
   };
   return infiniteQueryOptions({
     queryKey: QUERY_KEYS.characters.levelUp.availableClasses(characterId, query),
@@ -149,8 +143,7 @@ export function availableFeatFamilyQuery(characterId: string, aptitudeId: string
     aptitudeId,
     family,
     limit: "50",
-    ...picksQueryOf(picker),
-    pendingLevelAbilityIds: picker.pendingAbilityIds || undefined,
+    ...plannedQueryOf(picker),
   };
   return infiniteQueryOptions({
     queryKey: QUERY_KEYS.characters.levelUp.availableFeatFamily(characterId, query),
@@ -183,8 +176,7 @@ export function availableFeatsGroupedQuery(
           aptitudeId,
           limit: "20",
           search: search || undefined,
-          ...picksQueryOf(picker),
-          pendingLevelAbilityIds: picker.pendingAbilityIds || undefined,
+          ...plannedQueryOf(picker),
         }
       : undefined;
   return infiniteQueryOptions({
@@ -223,7 +215,7 @@ export function availablePowersQuery(
           powerLevel: powerLevel?.toString(),
           limit: "20",
           search: search || undefined,
-          ...picksQueryOf(picker),
+          ...plannedQueryOf(picker),
           selectedPowerIds: picker.selectedPowerIds,
         }
       : undefined;
@@ -259,13 +251,13 @@ export function characterLevelQuery(characterId: string, characterLevelId: strin
 }
 
 /** The feat slots the step's level gives; skipped until its class is known. */
-export function featSlotsQuery(characterId: string, step: StepLevel) {
+export function featStepQuery(characterId: string, step: StepLevel) {
   const query = levelQueryOf(step);
   return queryOptions({
     queryKey: QUERY_KEYS.characters.levelUp.feats(characterId, query),
     queryFn: query
       ? () =>
-          parseResponse(rpc.api.characters.levels[":characterId"]["feat-slots"].$get({ param: { characterId }, query }))
+          parseResponse(rpc.api.characters.levels[":characterId"]["feat-step"].$get({ param: { characterId }, query }))
       : skipToken,
   });
 }
@@ -288,30 +280,26 @@ export function levelPreviewQuery(characterId: string, levels: { klassId: string
 }
 
 /** The spell slots the step's level gives; skipped until its class is known. */
-export function powerSlotsQuery(characterId: string, step: StepLevel) {
+export function powerStepQuery(characterId: string, step: StepLevel) {
   const query = levelQueryOf(step);
   return queryOptions({
     queryKey: QUERY_KEYS.characters.levelUp.powers(characterId, query),
     queryFn: query
       ? () =>
-          parseResponse(
-            rpc.api.characters.levels[":characterId"]["power-slots"].$get({ param: { characterId }, query }),
-          )
+          parseResponse(rpc.api.characters.levels[":characterId"]["power-step"].$get({ param: { characterId }, query }))
       : skipToken,
   });
 }
 
 /** The skill points the step's level gives, with its ability increase; skipped until its class is known. */
-export function skillSlotsQuery(characterId: string, step: StepLevel, abilityId: string | null) {
+export function skillStepQuery(characterId: string, step: StepLevel, abilityId: string | null) {
   const level = levelQueryOf(step);
   const query = level && { ...level, abilityId: abilityId || undefined };
   return queryOptions({
     queryKey: QUERY_KEYS.characters.levelUp.skills(characterId, query),
     queryFn: query
       ? () =>
-          parseResponse(
-            rpc.api.characters.levels[":characterId"]["skill-slots"].$get({ param: { characterId }, query }),
-          )
+          parseResponse(rpc.api.characters.levels[":characterId"]["skill-step"].$get({ param: { characterId }, query }))
       : skipToken,
   });
 }

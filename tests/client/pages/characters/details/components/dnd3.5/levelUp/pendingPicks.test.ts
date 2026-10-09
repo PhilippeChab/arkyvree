@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import {
   featPickString,
   nextPickLevel,
-  pendingLevelsOf,
+  plannedLevelsOf,
   plannedPicker,
   skillPointString,
   spellSlotsPerLevel,
@@ -32,17 +32,17 @@ describe("encoding a level wizard's picks for its pickers", () => {
   test("pairs each planned level's class level with its ability increase, up to the pick's level", () => {
     const levels = [{ klassLevelId: "f1" }, { klassLevelId: "f2" }, { klassLevelId: "w1" }];
     const increases = [null, "str", null];
-    expect(pendingLevelsOf(levels, increases)).toEqual({
-      pendingAbilityIds: "null,str,null",
-      pendingKlassLevelIds: "f1,f2,w1",
+    expect(plannedLevelsOf(levels, increases)).toEqual({
+      plannedAbilityIds: "null,str,null",
+      plannedClassLevelIds: "f1,f2,w1",
     });
-    expect(pendingLevelsOf(levels, increases, 1)).toEqual({ pendingAbilityIds: "null", pendingKlassLevelIds: "f1" });
+    expect(plannedLevelsOf(levels, increases, 1)).toEqual({ plannedAbilityIds: "null", plannedClassLevelIds: "f1" });
   });
 
   test("sends no levels before the plan's preview has loaded", () => {
-    const none = { pendingAbilityIds: undefined, pendingKlassLevelIds: undefined };
-    expect(pendingLevelsOf(undefined, ["str"])).toEqual(none);
-    expect(pendingLevelsOf([], [])).toEqual(none);
+    const none = { plannedAbilityIds: undefined, plannedClassLevelIds: undefined };
+    expect(plannedLevelsOf(undefined, ["str"])).toEqual(none);
+    expect(plannedLevelsOf([], [])).toEqual(none);
   });
 
   test("lists the skill points spent, leaving out a skill with none", () => {
@@ -72,15 +72,14 @@ describe("the planned level a pick lands on", () => {
     expect(plannedPicker(FIGHTER_THEN_WIZARD, [null, "int"], index, "dodge:general")).toEqual({
       classId: "wizard",
       level: 1,
-      selectedFeatPicks: "dodge:general",
-      pendingAbilityIds: "null,int",
-      pendingKlassLevelIds: "f3,w1",
-      pendingFeatPicks: "dodge:general",
+      featPicks: "dodge:general",
+      plannedAbilityIds: "null,int",
+      plannedClassLevelIds: "f3,w1",
     });
     expect(plannedPicker(FIGHTER_THEN_WIZARD, [], 0, undefined)).toMatchObject({
       classId: "fighter",
       level: 3,
-      pendingKlassLevelIds: "f3",
+      plannedClassLevelIds: "f3",
     });
   });
 

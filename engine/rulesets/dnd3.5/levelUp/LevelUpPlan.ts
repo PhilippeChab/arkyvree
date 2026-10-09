@@ -318,7 +318,7 @@ export default class LevelUpPlan extends include(LevelUpState, ChecksSelections)
    * The level-up wizard's preview of the levels the character plans (`levels`, each with its ability increase in
    * `abilityIds`).
    */
-  getPreview(levels: { klassId: string; level: number }[], abilityIds: (string | null)[]) {
+  describePreview(levels: { klassId: string; level: number }[], abilityIds: (string | null)[]) {
     const klassLevelEntries = this.getPlannedKlassLevels(
       levels.map((level, i) => ({ ...level, abilityId: abilityIds[i] ?? null })),
     );

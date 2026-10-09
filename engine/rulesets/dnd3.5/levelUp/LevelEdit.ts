@@ -75,7 +75,7 @@ export default class LevelEdit extends include(LevelUpState, ChecksSelections) {
    * saved, its new hit points, ability and picks, checked, and refused with the issues it answers for unless `force`d;
    * and what its bonded creatures become with it.
    */
-  plan(bonded: CharacterInput[], characterLevelId: string, edit: Edit) {
+  planEdit(bonded: CharacterInput[], characterLevelId: string, edit: Edit) {
     const { rows } = this.character;
     const { abilityId, force, hp } = edit;
     const level = rows.levels.find((saved) => saved.id === characterLevelId);

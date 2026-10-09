@@ -339,10 +339,7 @@ describe("an inherited skill's Skill Focus", () => {
       const available = await CharacterLevelsService.getAvailableFeats(
         session,
         characterId,
-        ctx.aptMap.General,
-        ctx.klassMap.pc.Fighter,
-        1,
-        { search: "Skill Focus: Climb" },
+        { aptitudeId: ctx.aptMap.General, classId: ctx.klassMap.pc.Fighter, level: 1, search: "Skill Focus: Climb" },
         { limit: 100, page: 1 },
       );
       expect(available.items.some((f) => f.name === "Skill Focus: Climb")).toBe(false);
