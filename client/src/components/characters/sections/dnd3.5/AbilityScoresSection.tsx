@@ -10,19 +10,22 @@ import { useDialogState } from "@/client/src/hooks/index.ts";
 import { type CharacterDetail, characterDetailQuery, invalidateCharacter } from "@/client/src/lib/queries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useUserPreferencesStore } from "@/client/src/stores/userPreferencesStore.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 
 import { computeAbilityModifier } from "./abilities.ts";
 import { AbilityScoreBox } from "./AbilityScoreBox.tsx";
 
 export interface AbilityScoresSectionProps {
   abilities: CharacterDetail["abilities"];
+  /** The sheet's base rules, which order its abilities. */
+  baseRules: BaseRules;
   characterId: string;
   readOnly?: boolean;
 }
 
-export function AbilityScoresSection({ abilities, characterId, readOnly }: AbilityScoresSectionProps) {
+export function AbilityScoresSection({ abilities, baseRules, characterId, readOnly }: AbilityScoresSectionProps) {
   const entries = Object.entries(abilities);
-  const sortedEntries = sortAbilities(entries, "Dungeons & Dragons: 3.5", ([name]) => name);
+  const sortedEntries = sortAbilities(entries, baseRules, ([name]) => name);
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
 
@@ -94,14 +97,14 @@ export function AbilityScoresSection({ abilities, characterId, readOnly }: Abili
           ))}
         </Stack>
       ) : (
-        <BlankNote>No ability scores available</BlankNote>
+        <BlankNote>No ability scores</BlankNote>
       )}
       <ConfirmDialog
         open={decreaseDialog.open}
         onClose={decreaseDialog.close}
         title="Decrease Ability Score"
         message="Are you sure you want to decrease this ability score? It may break the prerequisites of what the character took."
-        confirmLabel="Decrease Ability"
+        confirmLabel="Decrease Ability Score"
         onConfirm={() => {
           if (!decreaseDialog.target) return;
           updateMutation.mutate(decreaseDialog.target, {

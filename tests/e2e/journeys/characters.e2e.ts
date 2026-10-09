@@ -98,7 +98,7 @@ test.describe("Characters", () => {
     // Lowering a score may break prerequisites: it asks first, then not again this session
     const confirmed = saved();
     await lower.click();
-    await decrease.getByRole("button", { name: "Decrease Ability" }).click();
+    await decrease.getByRole("button", { name: "Decrease Ability Score" }).click();
     await confirmed;
     await expect(base).toHaveText("Base: 11");
     const again = saved();
@@ -235,12 +235,12 @@ test.describe("Characters", () => {
     const dialog = page.getByRole("dialog", { name: "Add Modifier" });
     await fillStrengthModifier(dialog, 1);
     const added = apiResponse(page, "POST", /\/api\/characters\/modifiers\/[a-f0-9-]+\/modifiers(?:\?|$)/);
-    await dialog.getByRole("button", { name: /^Create$/ }).click();
+    await dialog.getByRole("button", { name: /^Add Modifier$/ }).click();
     await added;
     const row = manager.locator("table tbody tr").filter({ hasText: /Abilities.*Strength.*Misc/ });
     await expect(row.locator('text="1"').first()).toBeVisible({ timeout: 15_000 });
 
-    await row.getByRole("button", { name: "Delete Modifier" }).click();
+    await row.getByRole("button", { name: "Delete" }).click();
     const removed = apiResponse(page, "DELETE", /\/api\/characters\/modifiers\/[a-f0-9-]+\/modifiers\/[a-f0-9-]+/);
     await page
       .getByRole("dialog", { name: "Delete Modifier" })

@@ -21,6 +21,23 @@ describe("control rules", () => {
     ).toEqual(["button-intents client/src/outlined.tsx", "button-intents client/src/text.tsx"]);
   });
 
+  test("a menu's item or a row's action that deletes or removes is destructive", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/menu.tsx": 'export const m = <ActionMenuItem icon={DeleteIcon} label="Remove Level" />;\n',
+          "client/src/row.tsx": 'export const r = <RowAction icon={DeleteIcon} label="Delete" />;\n',
+          "client/src/either.tsx":
+            'export const e = <ActionMenuItem label={restorable ? "Delete" : "Delete Permanently"} intent="destructive" />;\n',
+          "client/src/leave.tsx":
+            'export const l = <RowAction label={self ? "Leave" : "Remove"} intent={self ? "caution" : "destructive"} />;\n',
+          "client/src/edit.tsx": 'export const d = <RowAction icon={EditIcon} label="Edit" />;\n',
+        },
+        ["button-intents"],
+      ),
+    ).toEqual(["button-intents client/src/menu.tsx", "button-intents client/src/row.tsx"]);
+  });
+
   test("an inline form's submit is a SaveButton", async () => {
     expect(
       await lintRepo(

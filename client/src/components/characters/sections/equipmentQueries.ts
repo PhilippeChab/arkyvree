@@ -7,8 +7,17 @@ import { nextPage } from "@/client/src/lib/pageItems.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
+/** An item the character carries, with where it's placed: an entry of its inventory. */
+export type InventoryEntry = InferResponseType<
+  (typeof rpc.api.characters.inventory)[":characterId"]["$get"],
+  200
+>[number];
+
 /** A ruleset's item, as the add dialog lists it. */
 export type RulesetItem = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"]["$get"], 200>["items"][number];
+
+/** A ruleset item's details, which the add dialog places a picked item by. */
+export type RulesetItemDetail = InferResponseType<(typeof rpc.api.rulesets)[":id"]["items"][":itemId"]["$get"], 200>;
 
 /** The items a character carries, with where each is placed. */
 export function characterInventoryQuery(characterId: string) {

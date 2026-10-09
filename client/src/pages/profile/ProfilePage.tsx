@@ -1,4 +1,4 @@
-import { Alert, Box, Button, Container, Stack, Typography } from "@mui/material";
+import { Box, Button, Container, Stack, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferRequestType, parseResponse } from "hono/client";
 import { type ReactNode } from "react";
@@ -187,6 +187,8 @@ export default function ProfilePage() {
     );
   }
 
+  const { pendingEmailAddress } = userData;
+
   return (
     <PageTransition>
       {/* Deeper at the bottom, under the last card */}
@@ -195,42 +197,13 @@ export default function ProfilePage() {
           <PageHeader title="Profile" subtitle="Manage your account information and security settings" />
 
           <Stack spacing={3}>
-            {userData?.pendingEmailAddress && (
-              <Alert
-                severity="info"
-                action={
-                  <Stack direction="row" spacing={1}>
-                    <Button
-                      size="small"
-                      variant="contained"
-                      onClick={() => verifyDialog.openWith(userData.pendingEmailAddress ?? "")}
-                    >
-                      Verify
-                    </Button>
-                    <Button
-                      size="small"
-                      color="inherit"
-                      onClick={() => cancelEmailChangeMutation.mutate()}
-                      disabled={cancelEmailChangeMutation.isPending}
-                    >
-                      <DiceSpinner size="small" loading={cancelEmailChangeMutation.isPending}>
-                        Cancel
-                      </DiceSpinner>
-                    </Button>
-                  </Stack>
-                }
-              >
-                Pending email change to <strong>{userData.pendingEmailAddress}</strong>
-              </Alert>
-            )}
-
             <ProfileCard title="Basic Information">
               <Stack
                 direction={{ xs: "column", sm: "row" }}
                 spacing={{ xs: 2, sm: 4 }}
                 sx={{ alignItems: { xs: "center", sm: "flex-start" } }}
               >
-                <AttachmentField name="avatar" label="Avatar" recordId={userData?.id} />
+                <AttachmentField name="avatar" label="Avatar" recordId={userData.id} />
 
                 <Box sx={{ flex: 1, width: "100%" }}>
                   <Stack
@@ -256,6 +229,28 @@ export default function ProfilePage() {
                       rules={EMAIL_RULES}
                       label="Email Address"
                     />
+
+                    {/* A new email waits for its code: verified in its dialog, or the change cancelled */}
+                    {pendingEmailAddress && (
+                      <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
+                        <Typography variant="body2">
+                          Pending email change to <strong>{pendingEmailAddress}</strong>
+                        </Typography>
+                        <Button size="small" onClick={() => verifyDialog.openWith(pendingEmailAddress)}>
+                          Verify
+                        </Button>
+                        <Button
+                          size="small"
+                          color="inherit"
+                          onClick={() => cancelEmailChangeMutation.mutate()}
+                          disabled={cancelEmailChangeMutation.isPending}
+                        >
+                          <DiceSpinner size="small" loading={cancelEmailChangeMutation.isPending}>
+                            Cancel Change
+                          </DiceSpinner>
+                        </Button>
+                      </Stack>
+                    )}
 
                     <SaveButton canSave={profileSync.isDirty} pending={profileMutation.isPending} />
                   </Stack>

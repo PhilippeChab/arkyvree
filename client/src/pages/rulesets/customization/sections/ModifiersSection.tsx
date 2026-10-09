@@ -11,8 +11,8 @@ import {
 } from "@/client/src/components/common/index.ts";
 import {
   EMPTY_MODIFIER,
-  ModifierForm,
   type ModifierFormData,
+  ModifierFormFields,
   ModifierOperatorCell,
   ModifierTargetCell,
   ModifierValueCell,
@@ -185,11 +185,11 @@ export function ModifiersSection({
       </Stack>
 
       <CreateDialog {...createDialogProps} title="Create New Modifier" maxWidth="md">
-        <ModifierForm form={createForm} rulesetId={ruleset.id} entityType={entityType} mode="create" />
+        <ModifierFormFields form={createForm} rulesetId={ruleset.id} entityType={entityType} mode="create" />
       </CreateDialog>
 
       <EditDialog {...editDialogProps} title="Edit Modifier" maxWidth="md">
-        <ModifierForm form={editForm} rulesetId={ruleset.id} entityType={entityType} mode="edit" />
+        <ModifierFormFields form={editForm} rulesetId={ruleset.id} entityType={entityType} mode="edit" />
       </EditDialog>
 
       <EntityDeleteDialog {...deleteDialogProps} what="Modifier" restorable={restorable} />

@@ -242,6 +242,7 @@ export default new Hono<SessionContext>()
           .transform((value) => (value ? value.split(",") : undefined)),
         selectedFeatPicks: featPicks,
         pendingLevelFeatPicks: featPicks,
+        selectedPowerIds: idList,
       }),
     ),
     async (c) => {
@@ -255,6 +256,7 @@ export default new Hono<SessionContext>()
         excludeSchools,
         selectedFeatPicks,
         pendingLevelFeatPicks,
+        selectedPowerIds,
         limit,
         page,
         characterLevelId,
@@ -273,6 +275,7 @@ export default new Hono<SessionContext>()
             excludeSchools,
             selectedFeatPicks,
             pendingLevelFeatPicks,
+            selectedPowerIds,
           },
           { limit, page },
           characterLevelId,

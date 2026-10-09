@@ -16,7 +16,7 @@ import { accessLost, loadFailureMessage, rateLimited } from "@/client/src/lib/er
 import { rpc } from "@/client/src/services/rpc.ts";
 import { formatSheetFileName } from "@/shared/exports.ts";
 
-import { sharedCharacterQuery } from "./sharedQueries.ts";
+import { sharedCharacterQuery } from "./shareQueries.ts";
 
 export default function SharedCharacterPage() {
   const { shareToken = "" } = useParams<{ shareToken: string }>();

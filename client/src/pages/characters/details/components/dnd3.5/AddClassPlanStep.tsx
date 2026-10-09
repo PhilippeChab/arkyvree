@@ -8,45 +8,43 @@ import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { type AvailableKlass, plannedLevel, type SelectedKlass } from "./levelUp/index.ts";
 import { OptionTooltip } from "./OptionTooltip.tsx";
 
+/** The class plan a level wizard hands the Class Plan step, and the class picker's list. */
 interface AddClassPlanState {
+  /** The classes the search finds, for an empty slot's picker. */
+  availableKlasses: AvailableKlass[];
   classPlan: (SelectedKlass | null)[];
   handleAddLevel: () => void;
   handleClassChange: (index: number, klass: SelectedKlass | null) => void;
+  handleKlassesScroll: (event: UIEvent<HTMLElement>) => void;
   handleQuickAddLevel: (klass: SelectedKlass) => void;
   handleRemoveLevel: (index: number) => void;
+  isLoadingKlasses: boolean;
+  /** Why the classes didn't load, said where they'd show. */
+  klassesError: unknown;
+  /** The classes the search doesn't narrow, for the quick-add buttons: searching keeps the character's own. */
+  quickAddKlasses: AvailableKlass[];
+  setKlassSearch: (search: string) => void;
   slotKeys: number[];
 }
 
 export interface AddClassPlanStepProps {
-  /** Search-filtered list for the Autocomplete dropdown. */
-  availableKlasses: AvailableKlass[];
-  handleKlassListScroll: (event: UIEvent<HTMLElement>) => void;
-  isLoadingKlasses: boolean;
-  /** Why the classes didn't load, said where they'd show. */
-  klassesError: unknown;
-  /** Unfiltered snapshot for the quick-add button row so searching doesn't
-   *  drop the character's existing classes from the "+ X" row. */
-  quickAddKlasses: AvailableKlass[];
-  setKlassSearch: (search: string) => void;
   wizard: AddClassPlanState;
 }
 
-export function AddClassPlanStep({
-  wizard,
-  availableKlasses,
-  quickAddKlasses,
-  isLoadingKlasses,
-  klassesError,
-  handleKlassListScroll,
-  setKlassSearch,
-}: AddClassPlanStepProps) {
+export function AddClassPlanStep({ wizard }: AddClassPlanStepProps) {
   const {
+    availableKlasses,
     classPlan: levels,
-    slotKeys,
-    handleClassChange: onClassChange,
     handleAddLevel: onAddLevel,
+    handleClassChange: onClassChange,
+    handleKlassesScroll,
     handleQuickAddLevel: onQuickAddLevel,
     handleRemoveLevel: onRemoveLevel,
+    isLoadingKlasses,
+    klassesError,
+    quickAddKlasses,
+    setKlassSearch,
+    slotKeys,
   } = wizard;
 
   // A button adds a class at the end of the plan, at the level after those planned: "+ Wizard 3" once Wizard 2 is.
@@ -148,7 +146,7 @@ export function AddClassPlanStep({
               slotProps={{
                 listbox: {
                   component: ScrollSafeListbox,
-                  onScroll: handleKlassListScroll,
+                  onScroll: handleKlassesScroll,
                 },
               }}
             />

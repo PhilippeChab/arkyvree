@@ -31,11 +31,11 @@ interface FeatsSectionProps {
   classes: CharacterDetail["classes"];
   renderFeatExtra?: (feat: Feat) => ReactNode;
   rulesetId?: string;
-  virtualFeats?: CharacterDetail["virtualFeats"];
+  virtualFeats: CharacterDetail["virtualFeats"];
 }
 
 interface GrantedFeatsProps {
-  feats: NonNullable<FeatsSectionProps["virtualFeats"]>;
+  feats: FeatsSectionProps["virtualFeats"];
   rulesetId?: string;
 }
 
@@ -109,9 +109,7 @@ function GrantedFeats({ feats, rulesetId }: GrantedFeatsProps) {
 }
 
 export function FeatsSection({ classes, virtualFeats, rulesetId, renderFeatExtra }: FeatsSectionProps) {
-  const allFeats = classes
-    ? Object.values(classes).flatMap((klass) => (klass.levels || []).flatMap((level) => level.feats || []))
-    : [];
+  const allFeats = Object.values(classes).flatMap((klass) => klass.levels.flatMap((level) => level.feats));
 
   // Group feats by name
   const groupedFeats = allFeats.reduce<Record<string, typeof allFeats>>((acc, feat) => {
@@ -147,18 +145,17 @@ export function FeatsSection({ classes, virtualFeats, rulesetId, renderFeatExtra
     ));
   });
 
-  const grantedFeats = virtualFeats ?? [];
-  const hasVirtual = grantedFeats.length > 0;
+  const hasVirtual = virtualFeats.length > 0;
 
   return (
     <SheetSection title="Feats & Special Abilities">
       {featElements.length > 0 || hasVirtual ? (
         <Stack spacing={3}>
           {featElements}
-          {hasVirtual && <GrantedFeats feats={grantedFeats} rulesetId={rulesetId} />}
+          {hasVirtual && <GrantedFeats feats={virtualFeats} rulesetId={rulesetId} />}
         </Stack>
       ) : (
-        <BlankNote>No feats or special abilities available</BlankNote>
+        <BlankNote>No feats or special abilities</BlankNote>
       )}
     </SheetSection>
   );

@@ -2,12 +2,17 @@
 
 import type { TargetPathKind } from "./target.ts";
 
+type ChainingOperator = (typeof CHAINING_OPERATORS)[number];
+
 type ModifierOperator = (typeof MODIFIER_OPERATORS)[number];
 
 type RequirementOperator = (typeof REQUIREMENT_OPERATORS)[number];
 
 /** What an operator belongs to: a modifier's changes its target, a requirement's compares it. */
 export type OperatorKind = Exclude<TargetPathKind, "template">;
+
+/** A chaining requirement's operator's words: how it joins the requirements it groups. */
+const CHAINING_LABELS: Record<ChainingOperator, string> = { and: "AND", or: "OR" };
 
 /**
  * An operator's words, by its kind: a modifier's sign, a requirement's comparison. Every operator of the lists has
@@ -63,6 +68,12 @@ export const REQUIREMENT_OPERATORS = [
   "is_empty",
   "not_empty",
 ] as const;
+
+/** A chaining operator's words, as the app shows it ("AND"); one it doesn't know, as it is. */
+export function formatChainingOperator(operator: string): string {
+  const labels: Record<string, string> = CHAINING_LABELS;
+  return Object.hasOwn(labels, operator) ? labels[operator] : operator;
+}
 
 /** An operator's words, as the app shows it ("+", "starts with"); one it doesn't know, as it is. */
 export function formatOperator(kind: OperatorKind, operator: string): string {

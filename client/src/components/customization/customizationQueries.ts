@@ -17,21 +17,18 @@ import { type PathInfo, toPathInfo } from "./pathValues.ts";
 export function propertyTypeCompletionsQuery(rulesetId: string, search: string, entityType?: PropertyEntityType) {
   return infiniteQueryOptions({
     queryKey: QUERY_KEYS.rulesets.propertyTypeCompletions(rulesetId, search, entityType),
-    // Skipped without a ruleset
-    queryFn: !rulesetId
-      ? skipToken
-      : ({ pageParam }) =>
-          parseResponse(
-            rpc.api.rulesets[":id"].customization.properties.types.completions.$get({
-              param: { id: rulesetId },
-              query: {
-                query: search,
-                limit: "10",
-                page: pageParam.toString(),
-                entityType: entityType ? getUrlSegment(entityType) : undefined,
-              },
-            }),
-          ),
+    queryFn: ({ pageParam }) =>
+      parseResponse(
+        rpc.api.rulesets[":id"].customization.properties.types.completions.$get({
+          param: { id: rulesetId },
+          query: {
+            query: search,
+            limit: "10",
+            page: pageParam.toString(),
+            entityType: entityType ? getUrlSegment(entityType) : undefined,
+          },
+        }),
+      ),
     initialPageParam: 1,
     getNextPageParam: nextPage,
     staleTime: FIVE_SECONDS,
@@ -42,16 +39,13 @@ export function propertyTypeCompletionsQuery(rulesetId: string, search: string, 
 export function propertyValueCompletionsQuery(rulesetId: string, propertyType: string, search: string) {
   return infiniteQueryOptions({
     queryKey: QUERY_KEYS.rulesets.propertyValueCompletions(rulesetId, propertyType, search),
-    // Skipped without a ruleset
-    queryFn: !rulesetId
-      ? skipToken
-      : ({ pageParam }) =>
-          parseResponse(
-            rpc.api.rulesets[":id"].customization.properties.values.completions.$get({
-              param: { id: rulesetId },
-              query: { type: propertyType, query: search, limit: "10", page: pageParam.toString() },
-            }),
-          ),
+    queryFn: ({ pageParam }) =>
+      parseResponse(
+        rpc.api.rulesets[":id"].customization.properties.values.completions.$get({
+          param: { id: rulesetId },
+          query: { type: propertyType, query: search, limit: "10", page: pageParam.toString() },
+        }),
+      ),
     initialPageParam: 1,
     getNextPageParam: nextPage,
     staleTime: FIVE_SECONDS,
@@ -71,7 +65,7 @@ export function seedTargetPath(
 
 /**
  * The paths a target path's browser lists: the next segments after `prefix`, or, `flat`, every leaf path that matches
- * the search, whatever the prefix. It waits for the ruleset's id.
+ * the search, whatever the prefix.
  */
 export function targetCompletionsQuery(
   rulesetId: string,
@@ -90,24 +84,22 @@ export function targetCompletionsQuery(
       search,
       entityType,
     ),
-    queryFn: rulesetId
-      ? async ({ pageParam }) =>
-          parseResponse(
-            rpc.api.rulesets[":id"].customization.target.paths.completions.$post({
-              param: { id: rulesetId },
-              json: {
-                partialPath,
-                position: partialPath.length,
-                kind,
-                entityType: entityType || undefined,
-                search: search || undefined,
-                flat: flat || undefined,
-                limit: 50,
-                page: pageParam,
-              },
-            }),
-          )
-      : skipToken,
+    queryFn: async ({ pageParam }) =>
+      parseResponse(
+        rpc.api.rulesets[":id"].customization.target.paths.completions.$post({
+          param: { id: rulesetId },
+          json: {
+            partialPath,
+            position: partialPath.length,
+            kind,
+            entityType: entityType || undefined,
+            search: search || undefined,
+            flat: flat || undefined,
+            limit: 50,
+            page: pageParam,
+          },
+        }),
+      ),
     initialPageParam: 1,
     getNextPageParam: nextPage,
     staleTime: FIVE_SECONDS,

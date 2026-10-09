@@ -45,7 +45,7 @@ test.describe("Character inventory", () => {
     // A wondrous item for the neck, which no requirement holds back.
     const dialog = await pickItem(page, "Amulet of Health", "Amulet of Health +2");
     const added = apiResponse(page, "POST", /\/api\/characters\/inventory/);
-    await save(dialog, /^Create$/);
+    await save(dialog, /^Add Item$/);
     await added;
     const row = page.locator("table tbody tr", { hasText: "Amulet of Health +2" }).first();
     await expect(row.getByText("Neck", { exact: false })).toBeVisible({ timeout: 15_000 });
@@ -68,7 +68,7 @@ test.describe("Character inventory", () => {
     const dialog = await pickItem(page, "Longsword", /^Longsword\s/);
     await selectOption(page, "Hand Slot", "Main Hand");
     const added = apiResponse(page, "POST", /\/api\/characters\/inventory/);
-    await save(dialog, /^Create$/);
+    await save(dialog, /^Add Item$/);
     await added;
     // The inventory, not the weapons table, which names the slot without its set.
     const row = () =>
@@ -95,7 +95,7 @@ test.describe("Character inventory", () => {
       const dialog = await pickItem(page, "Dagger", /^Dagger\s/, (d) => d.getByRole("combobox", { name: "Hand Slot" }));
       await selectOption(page, "Hand Slot", hand);
       const added = apiResponse(page, "POST", /\/api\/characters\/inventory/);
-      await save(dialog, /^Create$/);
+      await save(dialog, /^Add Item$/);
       await added;
     }
     const daggers = page

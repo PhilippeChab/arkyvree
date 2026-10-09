@@ -48,9 +48,10 @@ type CampaignCharactersPaginated = InferResponseType<(typeof rpc.api.campaigns)[
 interface CharacterCardProps {
   animationIndex: number;
   animationOffset: number;
+  /** Its campaign is archived: its visibility is set. */
+  campaignArchived: boolean;
   campaignId: string;
   character: CampaignCharacter;
-  isArchived: boolean;
   portraitUrl: string | null;
 }
 interface CharactersSectionProps {
@@ -78,7 +79,7 @@ const VISIBILITY_DESCRIPTIONS: Record<CharacterVisibility, string> = {
 function CharacterCard({
   character,
   campaignId,
-  isArchived,
+  campaignArchived,
   animationIndex,
   animationOffset,
   portraitUrl,
@@ -112,7 +113,7 @@ function CharacterCard({
     navigate(`/campaigns/${campaignId}/characters/${character.id}`);
   };
 
-  const canEditVisibility = character.isOwn && !isArchived;
+  const canEditVisibility = character.isOwn && !campaignArchived;
 
   return (
     <ListCard
@@ -305,7 +306,7 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
                 key={character.id}
                 character={character}
                 campaignId={campaign.id}
-                isArchived={!!campaign.deletedAt}
+                campaignArchived={!!campaign.deletedAt}
                 animationIndex={index}
                 animationOffset={characters.offset}
                 portraitUrl={portraitsByCharacterId.get(character.id) ?? null}

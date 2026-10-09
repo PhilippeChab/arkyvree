@@ -4,7 +4,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 
 import { computeAbilityModifier } from "@/client/src/components/characters/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useListboxQuery } from "@/client/src/hooks/index.ts";
+import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { computeLevelSkillPoints } from "@/shared/dnd3.5/skills.ts";
@@ -13,17 +13,20 @@ import { plannedLevel, plannedSlotKeys } from "./classPlan.ts";
 import { fitFeats, fitPowers, fitSkillPoints, openPoolOf } from "./fitPicks.ts";
 import { type HpLevel, hpSet } from "./hitPoints.ts";
 import {
+  availableClassesQuery,
   availableFeatsGroupedQuery,
+  type AvailableKlass,
   availablePowersQuery,
   type ClassPicker,
   levelPreviewQuery,
+  type SelectedKlass,
 } from "./levelUpQueries.ts";
-import type { SelectedKlass } from "./levelUpTypes.ts";
 import {
   featPickString,
   nextPickLevel,
   pendingLevelsOf,
   plannedPicker,
+  powerPickString,
   skillPointString,
   spellSlotsPerLevel,
 } from "./pendingPicks.ts";
@@ -39,12 +42,12 @@ interface UseAddLevelWizardParams {
 /** The Add Level wizard's state: what its dialog and its steps read. */
 export type AddLevelWizard = ReturnType<typeof useAddLevelWizard>;
 
-export const ADD_STEP_CONTENT = ["class-plan", "hp", "attributes", "skills", "feats", "powers", "review"] as const;
+export const ADD_STEP_CONTENT = ["class-plan", "hp", "abilities", "skills", "feats", "powers", "review"] as const;
 
 export const ADD_STEP_LABELS = [
   "Class Plan",
   "Select HP",
-  "Attribute Increase",
+  "Ability Increase",
   "Select Skills",
   "Select Feats",
   "Select Spells",
@@ -69,9 +72,12 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     handleSaveError,
   } = base;
 
+  const classPlanStep = ADD_STEP_CONTENT.indexOf("class-plan");
   const featsStep = ADD_STEP_CONTENT.indexOf("feats");
   const powersStep = ADD_STEP_CONTENT.indexOf("powers");
 
+  const [klassSearch, setKlassSearch] = useState("");
+  const debouncedKlassSearch = useDebouncedValue(klassSearch);
   const slotCounter = useRef(0);
   const [slotKeys, setSlotKeys] = useState<number[]>([]);
   const [classPlan, setClassPlan] = useState<(SelectedKlass | null)[]>([]);
@@ -276,6 +282,26 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     pendingSkillAllocations: skillPointString(skillPointAllocations),
   };
 
+  const {
+    items: availableKlasses,
+    isLoading: isLoadingKlasses,
+    error: klassesError,
+    onScroll: handleKlassesScroll,
+  } = useListboxQuery({
+    ...availableClassesQuery(characterId, debouncedKlassSearch, classPicker),
+    enabled: open && activeStep === classPlanStep,
+    // Adding a class to the plan re-keys the query, which would drop the data while it refetches: the previous result
+    // stays shown, so the quick-add buttons don't flash
+    placeholderData: keepPreviousData,
+  });
+
+  // The quick-add buttons show the character's classes whatever the search: the unsearched list, kept while a search
+  // shows another, or a refetch none
+  const [quickAddSnapshot, setQuickAddSnapshot] = useState<AvailableKlass[]>([]);
+  const hasUnfilteredKlasses = !debouncedKlassSearch && availableKlasses.length > 0;
+  if (hasUnfilteredKlasses && availableKlasses !== quickAddSnapshot) setQuickAddSnapshot(availableKlasses);
+  const quickAddKlasses = hasUnfilteredKlasses ? availableKlasses : quickAddSnapshot;
+
   // The level the next feat pick lands on, which its options are checked at: the feat list's, and a family's variants'
   const featPicker = plannedPicker(
     previewLevelDetails,
@@ -322,12 +348,16 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     onScroll: handlePowersScroll,
     isFetchingNextPage: isFetchingNextPowersPage,
   } = useListboxQuery({
-    ...availablePowersQuery(characterId, selectedPowerAptitude, selectedPowerLevel, debouncedPowerSearch, powerPicker),
+    ...availablePowersQuery(characterId, selectedPowerAptitude, selectedPowerLevel, debouncedPowerSearch, {
+      ...powerPicker,
+      selectedPowerIds: powerPickString(selectedPowers),
+    }),
     enabled: open && activeStep === powersStep,
   });
 
   const resetWizard = useCallback(() => {
     resetPicks();
+    setKlassSearch("");
     slotCounter.current = 0;
     setSlotKeys([]);
     setClassPlan([]);
@@ -338,14 +368,15 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
   // Pool-level picks; the backend distributes them to the levels.
   const finalizeMutation = useMutation({
     mutationFn: async ({ force }: { force: boolean }) => {
-      // The plan's levels as its preview lists them, which must have loaded, each with its HP set
+      // The plan's levels as its preview lists them, each with its HP: Next waits for both
       const preview = previewQuery.data;
-      if (!preview) throw new Error("The plan hasn't finished loading");
-      const levels = preview.levelDetails.map((detail, i) => {
-        const hp = hpValues[i];
-        if (!hp) throw new Error("HP not selected");
-        return { klassId: detail.klassId, level: detail.level, hp, abilityId: abilityIncreases[i] ?? null };
-      });
+      if (!preview || !hpSet(hpLevels, hpValues)) throw new Error("The plan isn't ready to save");
+      const levels = preview.levelDetails.map((detail, i) => ({
+        klassId: detail.klassId,
+        level: detail.level,
+        hp: hpValues[i],
+        abilityId: abilityIncreases[i] ?? null,
+      }));
       return parseResponse(
         rpc.api.characters.levels[":characterId"].finalize.$post({
           param: { characterId },
@@ -420,14 +451,19 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     handleAddLevel,
     handleQuickAddLevel,
     handleRemoveLevel,
-    classPicker,
+    availableKlasses,
+    quickAddKlasses,
+    isLoadingKlasses,
+    klassesError,
+    handleKlassesScroll,
+    setKlassSearch,
 
     // HP (step 2)
     hpValues,
     handleHpChange,
     hpLevels,
 
-    // Attributes (step 3)
+    // Ability increases (step 3)
     attributeData,
     isLoadingAttributes,
     attributesError,

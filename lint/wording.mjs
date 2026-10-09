@@ -14,7 +14,8 @@
  *   one way a ruleset, a campaign or a character comes back, or "Only its owner can unarchive it." for who archives
  *   what they don't own (a ruleset's Admin).
  * - `typography-marks`: an ellipsis is "…" and a dash between words "—", never "..." or " - ", a template's
- *   interpolations reading as words (`${pool} - ${level}`); a text cut short is `truncate(text, length)`.
+ *   interpolations reading as words (`${pool} - ${level}`); a text cut short is `truncate(text, length)`. A text says
+ *   itself in words, never an emoji (the spinner's die is `DiceSpinner`'s own).
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
@@ -170,8 +171,13 @@ function createToastWording(context) {
 
 function createTypographyMarks(context) {
   if (!inClient(context)) return {};
+  const spinner = repoPath(context.filename) === "client/src/components/common/DiceSpinner.tsx";
   // `words` is the text with what stands for a word in it, a template's interpolations
   const check = (node, text, words = text) => {
+    if (!spinner && /\p{Emoji_Presentation}|\p{Extended_Pictographic}\uFE0F/u.test(text)) {
+      context.report({ node, message: "A text says itself in words, never an emoji (a title, a label, a line)." });
+      return;
+    }
     if (!/\.\.\.(?![\w$({[])/.test(text) && !/(?<=[A-Za-z0-9]) - (?=[A-Za-z])/.test(words)) return;
     context.report({ node, message: 'An ellipsis is "…" and a dash between words "—": never "..." or " - ".' });
   };

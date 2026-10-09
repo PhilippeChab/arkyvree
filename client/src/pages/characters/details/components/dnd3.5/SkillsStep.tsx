@@ -14,7 +14,7 @@ import {
 import { memo, useCallback } from "react";
 import { type Control, useController } from "react-hook-form";
 
-import { GroupedSkillRows, SkillRow } from "@/client/src/components/characters/sections/dnd3.5/index.ts";
+import { GroupedSkillRows, SkillRow } from "@/client/src/components/characters/index.ts";
 import { DiceSpinner, LoadError, SubsectionTitle } from "@/client/src/components/common/index.ts";
 import { CasinoIcon } from "@/client/src/components/icons/index.ts";
 import { useLatest } from "@/client/src/hooks/index.ts";
@@ -116,7 +116,15 @@ const SkillAllocationRow = memo(function SkillAllocationRow({
             }
             onAllocate(skill.id, lo);
           }}
-          slotProps={{ htmlInput: { min: 0, max: maxRanksCanAdd, step: isClassForAnyLevel ? 1 : 0.5 } }}
+          slotProps={{
+            htmlInput: {
+              min: 0,
+              max: maxRanksCanAdd,
+              step: isClassForAnyLevel ? 1 : 0.5,
+              // Named by its row's skill, which its column adds ranks to
+              "aria-label": `${skill.name} Ranks to Add`,
+            },
+          }}
         />
       </TableCell>
       <TableCell>

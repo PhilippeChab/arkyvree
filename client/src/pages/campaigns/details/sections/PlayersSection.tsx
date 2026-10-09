@@ -253,10 +253,10 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                   const isGameMaster = player.role === "Game Master";
                   const isCurrentUser = player.userId === currentUserId;
                   const canRevokeInvite = slot.state === "pending" && canManagePlayers && !campaign.deletedAt;
-                  const canEditPlayer =
-                    (!campaign.deletedAt &&
-                      ((canManagePlayers && (!isGameMaster || slot.state !== "assigned")) || isCurrentUser)) ||
-                    canRevokeInvite;
+                  // A row's actions: the manager's on any slot but an assigned Game Master's, the player's on their own
+                  const hasActions =
+                    !campaign.deletedAt &&
+                    ((canManagePlayers && (!isGameMaster || slot.state !== "assigned")) || isCurrentUser);
 
                   return (
                     <TableRow
@@ -298,7 +298,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                         )}
                       </TableCell>
                       <TableCell align="right">
-                        {canEditPlayer && (
+                        {hasActions && (
                           <RowActions>
                             {canManagePlayers && (
                               <RowAction icon={EditIcon} label="Edit" onClick={() => handleEditPlayer(player)} />

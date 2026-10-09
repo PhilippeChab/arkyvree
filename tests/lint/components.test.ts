@@ -53,7 +53,7 @@ describe("component rules", () => {
     ).toEqual(["link-buttons client/src/raw.tsx"]);
   });
 
-  test("a chip switched by a selection is a ChoiceChip", async () => {
+  test("a chip switched by a selection is a ChoiceChip, and buttons switched one among a few an OptionToggle", async () => {
     expect(
       await lintRepo(
         {
@@ -61,10 +61,14 @@ describe("component rules", () => {
           "client/src/plain.tsx": 'export const p = <Chip variant="outlined" label="A" />;\n',
           "client/src/components/common/ChoiceChip.tsx":
             'export const c = <Chip variant={on ? "filled" : "outlined"} />;\n',
+          "client/src/group.tsx":
+            'import { ToggleButtonGroup } from "@mui/material";\nexport const g = ToggleButtonGroup;\n',
+          "client/src/components/common/OptionToggle.tsx":
+            'import { ToggleButtonGroup } from "@mui/material";\nexport const o = ToggleButtonGroup;\n',
         },
         ["choice-chips"],
       ),
-    ).toEqual(["choice-chips client/src/raw.tsx"]);
+    ).toEqual(["choice-chips client/src/group.tsx", "choice-chips client/src/raw.tsx"]);
   });
 
   test("the spinner at a list's foot is a NextPageSpinner", async () => {
@@ -233,6 +237,9 @@ describe("component rules", () => {
             'export const i = <InlineConfirm open cancelLabel="Keep" confirmLabel="Revoke">Are you sure?</InlineConfirm>;\n',
           "client/src/components/characters/validation/ValidationIssuesAlert.tsx":
             "export const v = <AnimatedAlert in={open} action={<Button>Proceed Anyway</Button>} />;\n",
+          "client/src/pending.tsx": 'export const e = <Alert severity="info" action={<Button>Verify</Button>} />;\n',
+          "client/src/components/common/LoadError.tsx":
+            'export const l = <Alert severity="error" action={<Button>Retry</Button>} />;\n',
         },
         ["confirm-dialogs"],
       ),
@@ -240,6 +247,7 @@ describe("component rules", () => {
       "confirm-dialogs client/src/asked.tsx",
       "confirm-dialogs client/src/bar.tsx",
       "confirm-dialogs client/src/inline.tsx",
+      "confirm-dialogs client/src/pending.tsx",
     ]);
   });
 
@@ -292,6 +300,7 @@ describe("component rules", () => {
     ).toEqual([
       "table-frames client/src/columns.tsx",
       "table-frames client/src/framed.tsx",
+      "table-frames client/src/labels.tsx",
       "table-frames client/src/strong.tsx",
       "table-frames client/src/tinted.tsx",
       "table-frames client/src/weighted.tsx",
@@ -330,11 +339,17 @@ describe("component rules", () => {
             'export const s = <BlankNote>Nothing matches "{search}" — try another search</BlankNote>;\n',
           "client/src/options.tsx": 'export const o = <Autocomplete noOptionsText="No values found." />;\n',
           "client/src/bare.tsx": 'export const b = <Autocomplete noOptionsText="No values found" />;\n',
+          // The sheet says what the character has none of
+          "client/src/components/characters/available.tsx":
+            "export const c = <BlankNote>No classes available</BlankNote>;\n",
+          "client/src/components/characters/none.tsx": "export const d = <BlankNote>No classes</BlankNote>;\n",
+          "client/src/pages/wizard.tsx": "export const w = <BlankNote>No classes available</BlankNote>;\n",
         },
         ["blank-notes"],
       ),
     ).toEqual([
       "blank-notes client/src/alert.tsx",
+      "blank-notes client/src/components/characters/available.tsx",
       "blank-notes client/src/line.tsx",
       "blank-notes client/src/options.tsx",
       "blank-notes client/src/period.tsx",

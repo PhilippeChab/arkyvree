@@ -1,6 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
-import { buildAttackRows, formatAttackBonus, formatCritical } from "@/shared/dnd3.5/weaponAttacks.ts";
+import {
+  buildAttackRows,
+  formatAttackBonus,
+  formatCritical,
+  formatIterativeAttacks,
+  formatSpeed,
+} from "@/shared/dnd3.5/weaponAttacks.ts";
 
 // The sheet and its PDF write a weapon's attack and critical one way, as the SRD's weapon tables do
 describe("a weapon's attack and critical text", () => {
@@ -16,6 +22,14 @@ describe("a weapon's attack and critical text", () => {
     expect([formatAttackBonus([9, 4]), formatAttackBonus([-1]), formatAttackBonus([0]), formatAttackBonus([])]).toEqual(
       ["+9/+4", "-1", "+0", "—"],
     );
+  });
+
+  test("give a base attack bonus its iterative attacks, 5 apart while positive", () => {
+    expect([11, 6, 5, 1, 0, -1].map(formatIterativeAttacks)).toEqual(["+11/+6/+1", "+6/+1", "+5", "+1", "+0", "-1"]);
+  });
+
+  test("write a speed in feet, and leave an unknown one empty", () => {
+    expect([formatSpeed(30), formatSpeed(0), formatSpeed(undefined)]).toEqual(["30 ft.", "0 ft.", undefined]);
   });
 });
 

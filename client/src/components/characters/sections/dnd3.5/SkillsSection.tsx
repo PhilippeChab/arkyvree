@@ -93,7 +93,7 @@ export function SkillsSection({ skills }: SkillsSectionProps) {
           </TableContainer>
         </Stack>
       ) : (
-        <BlankNote>No skills available</BlankNote>
+        <BlankNote>No skills</BlankNote>
       )}
     </SheetSection>
   );

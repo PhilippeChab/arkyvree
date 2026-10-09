@@ -6,6 +6,7 @@ import { Crossfade, HelpLabel } from "@/client/src/components/common/index.ts";
 import { isValuelessOperator, type OperatorKind } from "@/shared/customization/operators.ts";
 import { extractTemplateExpression, isTemplateValue } from "@/shared/customization/templateExpression.ts";
 
+import { TEMPLATE_HELP } from "./customizationHelp.ts";
 import { OperatorSelect } from "./OperatorSelect.tsx";
 import { PathValueInput } from "./PathValueInput.tsx";
 import { defaultValueForPath, fitsPath, type PathInfo } from "./pathValues.ts";
@@ -150,14 +151,9 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, fields }: C
               onChange={(_, checked) => handleToggleTemplate(checked)}
             />
           }
-          label={
-            <HelpLabel
-              label="Template"
-              help="Compute the value from another path or an expression. Wrap paths in [brackets] and use floor/ceil/min/max plus +-*/ for arithmetic. Examples: [abilities.charisma.modifier], floor([classes.ranger.level] / 2), max(0, [classes.beastmaster.level] + 3)."
-            />
-          }
+          label={<HelpLabel label="Template" help={TEMPLATE_HELP} />}
         />
-        {templateMode && <TemplateExpressionToolbar inputRef={expressionInputRef} />}
+        {templateMode && <TemplateExpressionToolbar expressionRef={expressionInputRef} />}
       </Stack>
       <Crossfade
         showFirst={!templateMode}
@@ -176,13 +172,12 @@ export function ConditionFields({ kind, rulesetId, entityType, mode, fields }: C
             inputRef={templateMode ? undefined : fields.value.field.ref}
             error={!!errors.value}
             helperText={errors.value?.message}
+            // A boolean's is a select of True and False, which shows no placeholder
             placeholder={
               pathInfo
-                ? pathInfo.valueType === "boolean"
-                  ? "true or false"
-                  : pathInfo.valueType === "string"
-                    ? "text value"
-                    : "numeric value"
+                ? pathInfo.valueType === "string"
+                  ? "text value"
+                  : "numeric value"
                 : kind === "modifier"
                   ? "e.g., 2, -1, 5"
                   : "e.g., 13, 5, true"

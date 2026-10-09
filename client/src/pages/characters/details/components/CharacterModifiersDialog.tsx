@@ -31,8 +31,8 @@ import {
 } from "@/client/src/components/common/index.ts";
 import {
   EMPTY_MODIFIER,
-  ModifierForm,
   type ModifierFormData,
+  ModifierFormFields,
   ModifierOperatorCell,
   MODIFIERS_HELP,
   ModifierTargetCell,
@@ -45,7 +45,7 @@ import { invalidateCharacter } from "@/client/src/lib/queries.ts";
 import { characterModifiersQuery } from "@/client/src/pages/characters/characterQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-interface CharacterModifiersModalProps {
+interface CharacterModifiersDialogProps {
   characterId: string;
   onClose: () => void;
   open: boolean;
@@ -57,7 +57,8 @@ type Modifier = InferResponseType<
   200
 >[number];
 
-export function CharacterModifiersModal({ open, onClose, characterId, rulesetId }: CharacterModifiersModalProps) {
+/** A character's own modifiers: listed, added, edited and deleted. */
+export function CharacterModifiersDialog({ open, onClose, characterId, rulesetId }: CharacterModifiersDialogProps) {
   const snackbar = useSnackbar();
   const queryClient = useQueryClient();
 
@@ -86,11 +87,11 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
         }),
       ),
     onSuccess: () => {
-      snackbar.success("Modifier created");
+      snackbar.success("Modifier added");
       setCreateOpen(false);
       invalidate();
     },
-    onError: (error) => snackbar.error(error, "Failed to create modifier"),
+    onError: (error) => snackbar.error(error, "Failed to add modifier"),
   });
 
   const updateMutation = useMutation({
@@ -207,15 +208,11 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
                         </TableCell>
                         <TableCell align="right">
                           <RowActions>
-                            <RowAction icon={EditIcon} label="Edit Modifier" onClick={() => handleEdit(mod)} />
-                            <RowAction
-                              icon={CopyIcon}
-                              label="Duplicate Modifier"
-                              onClick={() => handleDuplicate(mod)}
-                            />
+                            <RowAction icon={EditIcon} label="Edit" onClick={() => handleEdit(mod)} />
+                            <RowAction icon={CopyIcon} label="Duplicate" onClick={() => handleDuplicate(mod)} />
                             <RowAction
                               icon={DeleteIcon}
-                              label="Delete Modifier"
+                              label="Delete"
                               intent="destructive"
                               onClick={() => handleDelete(mod)}
                             />
@@ -238,9 +235,10 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
         form={createForm}
         onSubmit={(data) => createMutation.mutate(data)}
         isLoading={createMutation.isPending}
+        submitLabel="Add Modifier"
         maxWidth="md"
       >
-        <ModifierForm form={createForm} rulesetId={rulesetId} entityType="characters" mode="create" />
+        <ModifierFormFields form={createForm} rulesetId={rulesetId} entityType="characters" mode="create" />
       </CreateDialog>
       <EditDialog
         open={editDialog.open}
@@ -254,7 +252,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
         isLoading={updateMutation.isPending}
         maxWidth="md"
       >
-        <ModifierForm form={editForm} rulesetId={rulesetId} entityType="characters" mode="edit" />
+        <ModifierFormFields form={editForm} rulesetId={rulesetId} entityType="characters" mode="edit" />
       </EditDialog>
       <DeleteDialog
         open={deleteDialog.open}

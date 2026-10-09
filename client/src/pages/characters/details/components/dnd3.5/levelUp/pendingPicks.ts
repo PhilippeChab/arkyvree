@@ -3,11 +3,11 @@
  * Add Level plans before the pick, not saved yet. Both wizards' class, feat and spell pickers encode them here, once.
  */
 
-import type { PickerLevel } from "./levelUpQueries.ts";
-import type { LevelUpFormData, PreviewLevelDetail } from "./levelUpTypes.ts";
+import type { PickerLevel, PreviewLevelDetail } from "./levelUpQueries.ts";
+import type { LevelUpFormData } from "./useLevelWizardBase.ts";
 
 /** The planned levels before a pick, as a picker's query sends them. */
-interface PendingLevels {
+export interface PendingLevels {
   /** Each level's ability increase, "null" for none: one per class level, paired by index. */
   pendingAbilityIds: string | undefined;
   pendingKlassLevelIds: string | undefined;
@@ -69,6 +69,12 @@ export function plannedPicker(
     // None of the picks is saved yet: they're all pending
     pendingFeatPicks: featPicks,
   };
+}
+
+/** The picked spells' ids, every pool's, as the spell picker leaves them out ("id,id"). */
+export function powerPickString(powers: LevelUpFormData["selectedPowers"]) {
+  const ids = Object.values(powers).flatMap((picks) => picks.map((power) => power.id));
+  return ids.length > 0 ? ids.sort().join(",") : undefined;
 }
 
 /** The skill points spent so far as the "skillId:points" list the class picker takes. */

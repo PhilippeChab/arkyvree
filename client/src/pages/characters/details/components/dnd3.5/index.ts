@@ -1,7 +1,7 @@
-export { AddAttributeStep, type AddAttributeStepProps } from "./AddAttributeStep.tsx";
+export { AddAbilityStep, type AddAbilityStepProps } from "./AddAbilityStep.tsx";
 export { AddClassPlanStep, type AddClassPlanStepProps } from "./AddClassPlanStep.tsx";
 export { AddReviewStep, type AddReviewStepProps } from "./AddReviewStep.tsx";
-export { EditAttributeStep, type EditAttributeStepProps } from "./EditAttributeStep.tsx";
+export { EditAbilityStep, type EditAbilityStepProps } from "./EditAbilityStep.tsx";
 export { EditReviewStep, type EditReviewStepProps } from "./EditReviewStep.tsx";
 export { FeatsStep, type FeatsStepProps } from "./FeatsStep.tsx";
 export { HpStep, type HpStepProps } from "./HpStep.tsx";

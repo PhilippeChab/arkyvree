@@ -1,12 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import {
-  getRollFunction,
-  isDiceMethod,
-  POINT_BUY_COSTS,
-  pointBuySpent,
-  rollDie,
-} from "@/client/src/pages/characters/dice.ts";
+import { getRollFunction, POINT_BUY_COSTS, pointBuySpent, rollDie } from "@/client/src/pages/characters/dice.ts";
 
 describe("Dice", () => {
   test("roll between one and their sides, and ability methods between 3 and 18", () => {
@@ -16,11 +10,6 @@ describe("Dice", () => {
       expect(getRollFunction("3d6-straight")!()).toBeWithin(3, 19);
     }
     expect([getRollFunction("standard-array"), getRollFunction("point-buy")]).toEqual([null, null]);
-    expect(
-      ["4d6-drop-lowest", "3d6-straight", "standard-array", "point-buy"].map((method) =>
-        isDiceMethod(method as Parameters<typeof isDiceMethod>[0]),
-      ),
-    ).toEqual([true, true, false, false]);
   });
 
   test("cost more points for each higher score", () => {

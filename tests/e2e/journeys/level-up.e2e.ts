@@ -106,7 +106,7 @@ test.describe("Level up", () => {
     test(`edits and removes a ${klass} level`, async ({ page }) => {
       await addLevels(page, [[klass, 1]]);
       await page.getByRole("button", { name: `${klass} Levels` }).click();
-      await expect(page.getByText(`Level 1 — HP: +${maxHp}`)).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByText(`Level 1 — HP Gain: +${maxHp}`)).toBeVisible({ timeout: 10_000 });
 
       await page.getByRole("button", { name: `Edit ${klass} Level 1` }).click();
       const editWizard = page.getByRole("dialog", { name: "Edit Level" });
@@ -115,9 +115,9 @@ test.describe("Level up", () => {
       const edited = apiResponse(page, "PUT", /\/api\/characters\/levels\/[^/]+\/[^/?]+/);
       await finishWithoutWarnings(editWizard, /^Finish$/);
       await edited;
-      await expect(page.getByText(`Level 1 — HP: +${maxHp}`)).toHaveCount(0, { timeout: 10_000 });
+      await expect(page.getByText(`Level 1 — HP Gain: +${maxHp}`)).toHaveCount(0, { timeout: 10_000 });
       // The level may have folded away with the refresh.
-      const edit = page.getByText(`Level 1 — HP: +${hp}`);
+      const edit = page.getByText(`Level 1 — HP Gain: +${hp}`);
       if (!(await edit.isVisible())) await page.getByRole("button", { name: `${klass} Levels` }).click();
       await expect(edit).toBeVisible({ timeout: 10_000 });
 
@@ -128,7 +128,7 @@ test.describe("Level up", () => {
         .getByRole("button", { name: /^Remove Level$/ })
         .click();
       await removed;
-      await expect(page.getByText("No classes available")).toBeVisible({ timeout: 10_000 });
+      await expect(page.getByText("No classes", { exact: true })).toBeVisible({ timeout: 10_000 });
     });
   }
 });

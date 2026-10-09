@@ -15,7 +15,7 @@ describe("feedback rules", () => {
           "client/src/always.tsx": "export const a = <Modal open onClose={close} />;\n",
           "client/src/record.tsx": "export const r = <EditDialog open={target !== null} />;\n",
           "client/src/target.tsx":
-            "export const t = dialog.target && <AddLevelModal open={dialog.open} onExited={dialog.onExited} />;\n",
+            "export const t = dialog.target && <AddLevelDialog open={dialog.open} onExited={dialog.onExited} />;\n",
           "client/src/flag.tsx":
             "export function F() {\n" +
             "  const [editOpen, setEditOpen] = useState(false);\n" +

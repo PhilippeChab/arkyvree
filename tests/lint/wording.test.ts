@@ -108,7 +108,7 @@ describe("wording rules", () => {
     ]);
   });
 
-  test("an ellipsis is one mark, a dash between words an em dash, and a cut text truncate()", async () => {
+  test("an ellipsis is one mark, a dash between words an em dash, a cut text truncate(), and no emoji", async () => {
     expect(
       await lintRepo(
         {
@@ -121,6 +121,9 @@ describe("wording rules", () => {
           "client/src/math.tsx": 'export const c = <Box sx={{ left: "calc(50% - 24px)" }} />;\n',
           "client/src/cut.tsx": "export const t = `${text.slice(0, 60)}…`;\n",
           "client/src/lib/truncate.ts": "export const u = `${text.slice(0, length)}…`;\n",
+          "client/src/emoji.tsx": "export const e = <PageHeader title={`⚔️ ${name}`} />;\n",
+          "client/src/symbols.tsx": 'export const y = <Button>{"×"} − ÷ © 2026</Button>;\n',
+          "client/src/components/common/DiceSpinner.tsx": "export const z = <Typography>🎲</Typography>;\n",
         },
         ["typography-marks"],
       ),
@@ -128,6 +131,7 @@ describe("wording rules", () => {
       "typography-marks client/src/cut.tsx",
       "typography-marks client/src/dash.tsx",
       "typography-marks client/src/dots.tsx",
+      "typography-marks client/src/emoji.tsx",
       "typography-marks client/src/template.tsx",
     ]);
   });

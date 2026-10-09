@@ -157,6 +157,22 @@ describe("architecture rules", () => {
     ).toEqual(["folder-index server/services/direct.ts"]);
   });
 
+  test("code outside a client component folder enters it at its outermost index; its own files at a subfolder's", async () => {
+    expect(
+      await lint({
+        "client/src/components/sheet/index.ts": 'export { Row } from "./rows/index.ts";\n',
+        "client/src/components/sheet/rows/index.ts": 'export { Row } from "./Row.tsx";\n',
+        "client/src/components/sheet/rows/Row.tsx": "export function Row() {\n  return null;\n}\n",
+        "client/src/components/sheet/Body.tsx":
+          'import { Row } from "./rows/index.ts";\nexport function Body() {\n  return Row();\n}\n',
+        "client/src/pages/outer.tsx":
+          'import { Row } from "@/client/src/components/sheet/index.ts";\nexport const o = Row;\n',
+        "client/src/pages/inner.tsx":
+          'import { Row } from "@/client/src/components/sheet/rows/index.ts";\nexport const i = Row;\n',
+      }),
+    ).toEqual(["folder-index client/src/pages/inner.tsx"]);
+  });
+
   test("the middlewares sit above the repositories, and the server reads nothing of database/", async () => {
     expect(
       await lint({

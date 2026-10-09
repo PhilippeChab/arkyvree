@@ -1,4 +1,4 @@
-import { Alert, Stack, TextField, Typography } from "@mui/material";
+import { Alert, DialogContentText, Stack, TextField, Typography } from "@mui/material";
 import { type ElementType } from "react";
 import { type UseFormReturn } from "react-hook-form";
 
@@ -48,7 +48,8 @@ interface PlayerFieldProps {
 
 interface RemovePlayerDialogProps {
   isLoading: boolean;
-  isSelfRemoval?: boolean;
+  /** The player leaves the campaign, rather than its Game Master removing them. */
+  isSelfRemoval: boolean;
   onClose: () => void;
   onConfirm: () => void;
   open: boolean;
@@ -112,14 +113,12 @@ export function AddPlayerDialog({ open, onClose, form, onSubmit, isLoading }: Ad
       form={form}
       onSubmit={onSubmit}
       isLoading={isLoading}
-      submitLabel={inviting ? "Send Invite" : "Create Player"}
+      submitLabel={inviting ? "Send Invite" : "Add Player"}
       submitIcon={inviting ? <SendIcon /> : <PersonAddIcon />}
     >
-      <Alert severity="info">
-        <Typography variant="body2">
-          You can either create an empty player slot or enter an email address to send an invite.
-        </Typography>
-      </Alert>
+      <DialogContentText>
+        You can either create an empty player slot or enter an email address to send an invite.
+      </DialogContentText>
       <PlayerEmailField form={form} isLoading={isLoading} />
       <PlayerRoleSelect form={form} isLoading={isLoading} />
     </CreateDialog>
@@ -142,9 +141,7 @@ export function EditPlayerDialog({ open, onClose, form, onSubmit, isLoading, slo
       submitIcon={inviting ? <SendIcon /> : <EditIcon />}
     >
       {slot?.state === "assigned" ? (
-        <Alert severity="info">
-          <Typography variant="body2">This player slot is assigned to an active user.</Typography>
-        </Alert>
+        <DialogContentText>This player slot is assigned to an active user.</DialogContentText>
       ) : pendingInvite ? (
         <Alert severity="warning">
           <Typography variant="body2">
@@ -164,7 +161,6 @@ export function EditPlayerDialog({ open, onClose, form, onSubmit, isLoading, slo
           label="Invited Email"
           fullWidth
           value={pendingInvite.usersInAccount?.emailAddress ?? pendingInvite.email ?? ""}
-          disabled
           slotProps={{
             input: {
               readOnly: true,
@@ -185,7 +181,7 @@ export function RemovePlayerDialog({
   onClose,
   onConfirm,
   isLoading,
-  isSelfRemoval = false,
+  isSelfRemoval,
   slot,
 }: RemovePlayerDialogProps) {
   return (

@@ -4,13 +4,14 @@ import { useController, type UseFormReturn } from "react-hook-form";
 import { OptionToggle, SelectField } from "@/client/src/components/common/index.ts";
 import { requiredRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
+import { CHAINING_OPERATORS, formatChainingOperator } from "@/shared/customization/operators.ts";
 
 import { ConditionFields, type ConditionMode } from "./ConditionFields.tsx";
 import { CONDITION_OPERATOR_RULES, CONDITION_TARGET_RULES, REQUIREMENT_VALUE_RULES } from "./conditionRules.ts";
 
-type RequirementConditionFieldsProps = Pick<RequirementFormProps, "form" | "rulesetId" | "mode">;
+type RequirementConditionFieldsProps = Pick<RequirementFormFieldsProps, "form" | "rulesetId" | "mode">;
 
-interface RequirementFormProps {
+interface RequirementFormFieldsProps {
   form: UseFormReturn<RequirementFormData>;
   mode: ConditionMode;
   onTypeChange: (type: RequirementType) => void;
@@ -25,10 +26,11 @@ export type RequirementFormData = InferRequestType<
 /** A condition checks a path; a chaining node joins its children with AND / OR. */
 export type RequirementType = "condition" | "chaining";
 
-const CHAINING_OPERATORS = [
-  { value: "and", label: "AND" },
-  { value: "or", label: "OR" },
-];
+/** The chaining operators, in their words */
+const CHAINING_OPTIONS = CHAINING_OPERATORS.map((operator) => ({
+  value: operator,
+  label: formatChainingOperator(operator),
+}));
 
 /** A requirement's types: a condition, or a chaining node */
 const REQUIREMENT_TYPE_OPTIONS = [
@@ -45,7 +47,7 @@ function RequirementConditionFields({ form, rulesetId, mode }: RequirementCondit
 }
 
 /** A requirement's type, then its condition (target, operator, value) or its chaining operator. */
-export function RequirementForm({ form, type, onTypeChange, rulesetId, mode }: RequirementFormProps) {
+export function RequirementFormFields({ form, type, onTypeChange, rulesetId, mode }: RequirementFormFieldsProps) {
   return (
     <>
       <OptionToggle
@@ -71,7 +73,7 @@ export function RequirementForm({ form, type, onTypeChange, rulesetId, mode }: R
           name="chainingOperator"
           label="Chaining Operator"
           rules={requiredRules("Chaining operator is required")}
-          options={CHAINING_OPERATORS}
+          options={CHAINING_OPTIONS}
         />
       ) : (
         <RequirementConditionFields form={form} rulesetId={rulesetId} mode={mode} />

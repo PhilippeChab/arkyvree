@@ -6,10 +6,11 @@
  * - `dialog-conventions`: a `Dialog` goes full screen on a phone (`fullScreen={isMobile}`), and a form is never in a
  *   `Modal`, which skips the guard that keeps a dirty form open (`FormDialog`, `CreateDialog` and `EditDialog` have it).
  *   A dialog is `sm`, its wrappers' default (`md` for a form of many fields, a target path or a requirement tree),
- *   never `xs`; its title is its words, no icon; its lead line is a `DialogContentText`, as a confirmation's; its
- *   content keeps the theme's padding, and its first block sits 8px under the title (`pt: 1`), as a create dialog's
- *   fields, the title right above it (in its form). A dialog with a `DialogTitle` is named by it, which MUI wires:
- *   only one without points its `aria-labelledby` at its heading.
+ *   never `xs`; its title is its words, no icon; its lead line is a `DialogContentText`, as a confirmation's (never a
+ *   `Typography` nor an info `Alert`, in whichever branch shows); its content keeps the theme's padding, and its first
+ *   block sits 8px under the title (`pt: 1`), as a create dialog's fields, the title right above it (in its form). A
+ *   dialog with a `DialogTitle` is named by it, which MUI wires: only one without points its `aria-labelledby` at its
+ *   heading. A dialog titled "Add …" submits in its words (`submitLabel`: "Add Player"), never the default "Create".
  * - `query-keys`: every query key comes from `lib/queryKeys.ts`: a key written as an array starts by spreading one
  *   (`[...QUERY_KEYS.rulesets.section(id, "feats"), search]`). A key its domain's helper invalidates (a character's
  *   sheet: `invalidateCharacter`) is invalidated through it, which refreshes what goes with it.
@@ -37,7 +38,7 @@
  * - `load-errors`: a list, a section or a step that failed to load says so with `LoadError` (`components/common`), in
  *   `loadFailureMessage`'s words: an error `Alert` never writes its own "Failed to load…". A card's chips row holds
  *   chips alone: what failed to load is its `notice`, above its body. A select says it under its field, its
- *   `loadError`: no `LoadError` beside a `SelectField`.
+ *   `loadError`: no `LoadError` beside a `SelectField`, nor `loadFailureMessage` in its `helperText`.
  * - `component-props`: a component destructures its props in its signature, typed by one named type: its own
  *   (`interface CardProps`, `type CardProps = Omit<…>`) or one its family shares (`RulesetSectionProps`), never written
  *   in place (an object type, an intersection, `Omit<…>`, `Pick<…>`, `ComponentProps<…>`).
@@ -47,7 +48,7 @@
  *   formatter keeps (`--fix` removes it).
  * - `component-files`: a PascalCase `.tsx` file exports a component of its name (`Card.tsx`, `Card`), or, named in
  *   the plural, the family its name says (`FormFields.tsx`: `NameField`, `EmailField`); a camelCase file exports no
- *   component. A page is `XPage.tsx`, under `pages/`, whose default export is `function XPage`; a default export is
+ *   component. A dialog is named `…Dialog`, never `…Modal`: `Modal` is the wrapper's name alone. A page is `XPage.tsx`, under `pages/`, whose default export is `function XPage`; a default export is
  *   the declaration itself, never a name exported after it.
  * - `hook-files`: a hook (`useX`) is the one function `useX.ts` exports, and a module declares no other hook; what
  *   it gives is an object (`{ value, setValue }`), never a tuple.
@@ -89,7 +90,8 @@
  *   `@mui/icons-material`; there, a glyph goes by one name, one meaning per glyph. A control that removes or deletes
  *   (named "Remove …", "Delete …") shows the bin, `DeleteIcon`.
  * - `no-types-modules`: a type lives with the code it describes (the component that owns it, the hook or the query that
- *   gives it), never in a `types/` folder nor a `types.ts` grab bag; a `.d.ts` declaring ambient globals stays.
+ *   gives it), never in a `types/` folder nor a `types.ts` grab bag, whatever it's prefixed with (`levelUpTypes.ts`); a
+ *   `.d.ts` declaring ambient globals stays.
  * - `react-imports`: React's types and functions are named imports (`import { type ReactNode, StrictMode } from
  *   "react"`), never read through a `React.` namespace or a default `React` import; a component takes its `ref` as a
  *   prop, never through `forwardRef`.
@@ -240,8 +242,8 @@ const TEXT_CONTROLS = new Set([
   "Typography",
 ]);
 
-/** A types grab bag: a `types/` folder, or a `types.ts` module. */
-const TYPES_GRAB_BAG = /(^|\/)types(\.tsx?$|\/)/;
+/** A types grab bag: a `types/` folder (`levelUpTypes/`), or a `types.ts` module (`levelUpTypes.ts`). */
+const TYPES_GRAB_BAG = /(^|\/)([a-z]\w*T|t)ypes(\.tsx?$|\/)/;
 
 /** The props an input takes its value through. */
 const VALUE_PROPS = new Set(["value", "values", "checked", "digits", "selected"]);
@@ -287,7 +289,7 @@ function checkDialogContent(content, context) {
       message: "A dialog's content keeps the theme's padding: its first block takes `pt: 1`, its foot nothing deeper.",
     });
   }
-  let first = firstElement(content);
+  const first = firstElement(content);
   if (first && LAYOUT_ELEMENTS.has(elementName(first))) {
     const top = sxProperties(first).find((property) => propertyName(property) === "pt");
     if (top && !(top.value.type === "Literal" && top.value.value === 1)) {
@@ -297,10 +299,20 @@ function checkDialogContent(content, context) {
       });
     }
   }
-  while (first && LAYOUT_ELEMENTS.has(elementName(first))) first = firstElement(first);
-  if (first && elementName(first) === "Typography") {
+  checkLeadLine(content, context);
+}
+
+/**
+ * A dialog's lead line, the first thing its content says (`DialogContent`'s, or a create or edit dialog's), whichever
+ * branch shows: a `DialogContentText`, never a `Typography` nor an info `Alert`.
+ */
+function checkLeadLine(content, context) {
+  for (const lead of openingElements(content)) {
+    const severity = attributeExpression(jsxAttribute(lead, "severity") ?? {});
+    const info = elementName(lead) === "Alert" && severity?.type === "Literal" && severity.value === "info";
+    if (elementName(lead) !== "Typography" && !info) continue;
     context.report({
-      node: first.openingElement,
+      node: lead.openingElement,
       message: "A dialog's lead line is a `DialogContentText`, as a confirmation's: body1, grey.",
     });
   }
@@ -482,6 +494,11 @@ function createComponentFiles(context) {
     },
     "Program:exit"(node) {
       const report = (message) => context.report({ node, message });
+      const modal = components.find((name) => name !== "Modal" && name.endsWith("Modal"));
+      if (modal) {
+        report(`A dialog is named \`…Dialog\`, \`Modal\` the wrapper's name alone: not \`${modal}\`.`);
+        return;
+      }
       if (file.startsWith("client/src/pages/") && defaultName && (!base.endsWith("Page") || defaultName !== base)) {
         report(
           `A page is \`XPage.tsx\`, its default export \`function XPage\`: not \`${defaultName}\` in \`${base}.tsx\`.`,
@@ -735,6 +752,14 @@ function createDialogConventions(context) {
         );
       }
       if (name === "DialogContent") checkDialogContent(node, context);
+      if (name === "CreateDialog" || name === "EditDialog") checkLeadLine(node, context);
+      const title = attributeExpression(jsxAttribute(node, "title") ?? {});
+      if (name === "CreateDialog" && String(title?.value).startsWith("Add ") && !hasAttribute(node, "submitLabel")) {
+        report(
+          node.openingElement,
+          'A dialog titled "Add …" submits in its words ("Add Player", "Add Item"), never the default "Create".',
+        );
+      }
       if (name === "DialogTitle" && isForm(nextElement(node))) {
         report(
           node.openingElement,
@@ -1095,6 +1120,15 @@ function createLoadErrors(context) {
         });
         return;
       }
+      const helperText = jsxAttribute(node, "helperText");
+      if (elementName(node) === "SelectField" && helperText && saysLoadFailure(attributeExpression(helperText))) {
+        context.report({
+          node: helperText,
+          message:
+            "A `SelectField` whose options failed to load says so through its `loadError`, not its `helperText`.",
+        });
+        return;
+      }
       if (elementName(node) !== "Alert") return;
       const severity = node.openingElement.attributes.find(
         (a) => a.type === "JSXAttribute" && a.name.name === "severity",
@@ -1227,7 +1261,7 @@ function createNoTypesModules(context) {
         node,
         message:
           "A type lives with the code it describes (the component that owns it, the hook or the query that gives it), " +
-          "never in a `types/` folder nor a `types.ts` grab bag.",
+          "never in a `types/` folder nor a `types.ts` grab bag (`levelUpTypes.ts`).",
       });
     },
   };
@@ -1687,6 +1721,32 @@ function onlyNavigates(handler, from = handler) {
   );
 }
 
+/**
+ * The elements a block opens with: its first child, through its layout's boxes and its fragments, each branch of a
+ * condition that chooses it.
+ */
+function openingElements(node) {
+  const first = node.children.find(
+    (child) =>
+      child.type === "JSXElement" ||
+      child.type === "JSXFragment" ||
+      (child.type === "JSXExpressionContainer" && child.expression.type !== "JSXEmptyExpression") ||
+      (child.type === "JSXText" && child.value.trim()),
+  );
+  return openingOf(first);
+}
+
+/** The elements a child opens with: itself, or what it holds (a layout box, a fragment, a condition's branches). */
+function openingOf(node) {
+  if (!node) return [];
+  if (node.type === "JSXExpressionContainer") return openingOf(node.expression);
+  if (node.type === "ConditionalExpression") return [...openingOf(node.consequent), ...openingOf(node.alternate)];
+  if (node.type === "LogicalExpression" && node.operator === "&&") return openingOf(node.right);
+  if (node.type === "JSXFragment") return openingElements(node);
+  if (node.type !== "JSXElement") return [];
+  return LAYOUT_ELEMENTS.has(elementName(node)) ? openingElements(node) : [node];
+}
+
 /** Whether a style property sets a background (`bgcolor: "action.hover"`). */
 function paintsBackground(property) {
   const key = property.type === "Property" ? (property.key.value ?? property.key.name) : null;
@@ -1719,6 +1779,17 @@ function requestMethod(callee) {
   if (callee.type !== "MemberExpression") return null;
   const name = callee.computed ? callee.property.value : callee.property.name;
   return REQUEST_METHODS.has(name) ? name : null;
+}
+
+/** Whether an expression says a load failed: `loadFailureMessage(…)`, or a condition one of whose branches does. */
+function saysLoadFailure(expression) {
+  if (!expression) return false;
+  if (expression.type === "CallExpression") return calleeName(expression) === "loadFailureMessage";
+  if (expression.type === "ConditionalExpression")
+    return saysLoadFailure(expression.consequent) || saysLoadFailure(expression.alternate);
+  if (expression.type === "LogicalExpression")
+    return saysLoadFailure(expression.left) || saysLoadFailure(expression.right);
+  return false;
 }
 
 /**

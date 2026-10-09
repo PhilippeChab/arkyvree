@@ -1,39 +1,84 @@
 /**
  * The level-up wizards' queries: the classes a character can add, a saved level, the edited level's slots, the plan's
  * preview, and the feat and spell pickers' lists, which Add Level and Edit Level both ask for at the level their picks
- * land on. Each builds the query its request sends once, and its key holds it: no parameter can be left out of it.
+ * land on. Each builds the query its request sends once, and its key holds it: no parameter can be left out of it. Their
+ * responses' types are here too, which the wizards and their steps read.
  */
 
 import { infiniteQueryOptions, queryOptions, skipToken } from "@tanstack/react-query";
-import { parseResponse } from "hono/client";
+import { type InferResponseType, parseResponse } from "hono/client";
 
 import { FOREVER } from "@/client/src/lib/durations.ts";
 import { nextPage } from "@/client/src/lib/pageItems.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
+import type { PendingLevels } from "./pendingPicks.ts";
+
+/** A saved level, as Edit Level loads it. */
+type LevelData = InferResponseType<LevelsApi[":characterLevelId"]["$get"], 200>;
+
+type LevelsApi = (typeof rpc.api.characters.levels)[":characterId"];
+
 /**
- * What the class picker's list is checked against, encoded by `pendingPicks.ts`: the planned levels before it, not
- * saved yet (their class levels and ability increases), and the feats and skill points picked over them.
+ * What a picker's list is checked against besides its own picks, encoded by `pendingPicks.ts`: the planned levels
+ * before it, not saved yet (their class levels and ability increases), and the feats picked over them.
  */
-export interface ClassPicker {
-  pendingAbilityIds?: string;
+interface PendingPicks extends Partial<PendingLevels> {
   pendingFeatPicks?: string;
-  pendingKlassLevelIds?: string;
+}
+
+/** A feat pool of the level's slots. */
+export type AptitudePool = FeatsData["aptitudePools"][string];
+
+/** Whether a saved level takes an ability increase, and the character's abilities at it. */
+export type AttributesData = InferResponseType<LevelsApi["attribute-slots"]["$get"], 200>;
+
+export type AvailableKlass = InferResponseType<LevelsApi["available-classes"]["$get"], 200>["items"][number];
+
+export type AvailablePower = InferResponseType<LevelsApi["available-powers"]["$get"], 200>["items"][number];
+
+/** What the class picker's list is checked against: the pending picks, and the skill points picked over them. */
+export interface ClassPicker extends PendingPicks {
   pendingSkillAllocations?: string;
 }
 
-/**
- * A picker's level (a `StepLevel`), and what its list is checked against, encoded by `pendingPicks.ts`: the feats
- * picked so far (`featPickString`), and the planned levels before it, not saved yet (their class levels, ability
- * increases and feat picks).
- */
-export interface PickerLevel extends StepLevel {
-  pendingAbilityIds?: string;
-  pendingFeatPicks?: string;
-  pendingKlassLevelIds?: string;
+export type FeatsData = InferResponseType<LevelsApi["feat-slots"]["$get"], 200>;
+
+/** A row of the feat picker: a feat, or a family of feat variants. */
+export type GroupedFeatRow = InferResponseType<LevelsApi["available-feats"]["grouped"]["$get"], 200>["items"][number];
+
+/** The character's abilities at a level, by name: each with its score and modifier. */
+export type LevelAbilities = AttributesData["attributes"];
+
+/** A picker's level (a `StepLevel`), and what its list is checked against: the feats picked so far, and the pending picks. */
+export interface PickerLevel extends StepLevel, PendingPicks {
   selectedFeatPicks: string | undefined;
 }
+
+/** A spell pool of the level's slots. */
+export type PowerAptitudePool = PowersData["aptitudePools"][string];
+
+/** The spell picker's level (a `PickerLevel`), and the spells picked already, which it leaves out (`powerPickString`). */
+export interface PowerPickerLevel extends PickerLevel {
+  selectedPowerIds: string | undefined;
+}
+
+export type PowersData = InferResponseType<LevelsApi["power-slots"]["$get"], 200>;
+
+/** A planned level, as the Add Level preview lists it. */
+export type PreviewLevelDetail = InferResponseType<LevelsApi["preview"]["$post"], 200>["levelDetails"][number];
+
+/** A feat picked for the level, as a saved level lists it. */
+export type SelectedFeat = LevelData["feats"][string][number];
+
+/** A class picked for a level. */
+export type SelectedKlass = Pick<AvailableKlass, "id" | "name" | "nextLevel" | "maxLevel" | "hd" | "eligible">;
+
+/** A spell picked for the level, as a saved level lists it. */
+export type SelectedPower = LevelData["powers"][string][number];
+
+export type SkillsData = InferResponseType<LevelsApi["skill-slots"]["$get"], 200>;
 
 /**
  * The level a step is for, as the slot and picker endpoints take it: its class and level, which the query waits for,
@@ -158,13 +203,16 @@ export function availableFeatsGroupedQuery(
   });
 }
 
-/** The spells a pool offers at the picker's level, of one spell level or all; skipped until a pool is picked. */
+/**
+ * The spells a pool offers at the picker's level, of one spell level or all, but those picked already; skipped until a
+ * pool is picked.
+ */
 export function availablePowersQuery(
   characterId: string,
   aptitudeId: string | null,
   powerLevel: number | null,
   search: string,
-  picker: PickerLevel,
+  picker: PowerPickerLevel,
 ) {
   const level = levelQueryOf(picker);
   const query =
@@ -176,6 +224,7 @@ export function availablePowersQuery(
           limit: "20",
           search: search || undefined,
           ...picksQueryOf(picker),
+          selectedPowerIds: picker.selectedPowerIds,
         }
       : undefined;
   return infiniteQueryOptions({

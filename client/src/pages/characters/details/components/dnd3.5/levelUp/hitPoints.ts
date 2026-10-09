@@ -14,8 +14,8 @@ export function hpError(value: number, level: HpLevel) {
   return wholeNumberError(value, 1, level.hd);
 }
 
-/** Whether every level has its hit points, each one right: the step's Next waits for it. */
-export function hpSet(levels: HpLevel[], values: (number | null)[]) {
+/** Whether every level has its hit points, each one right: the step's Next, and the save after it, wait for it. */
+export function hpSet(levels: HpLevel[], values: (number | null)[]): values is number[] {
   return (
     levels.length > 0 &&
     levels.every((level, index) => {

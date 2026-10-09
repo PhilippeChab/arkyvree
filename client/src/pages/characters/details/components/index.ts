@@ -1,4 +1,4 @@
-export { AddLevelModal } from "./AddLevelModal.tsx";
-export { CharacterModifiersModal } from "./CharacterModifiersModal.tsx";
-export { EditLevelModal } from "./EditLevelModal.tsx";
+export { AddLevelDialog } from "./AddLevelDialog.tsx";
+export { CharacterModifiersDialog } from "./CharacterModifiersDialog.tsx";
+export { EditLevelDialog } from "./EditLevelDialog.tsx";
 export { ShareDialog } from "./ShareDialog.tsx";

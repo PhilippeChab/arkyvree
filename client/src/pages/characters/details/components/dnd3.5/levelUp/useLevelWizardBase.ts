@@ -6,7 +6,17 @@ import { useDebouncedValue, useFormWith, useToggleSet } from "@/client/src/hooks
 import { invalidateCharacter, invalidateCharacterListings } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 
-import type { LevelUpFormData } from "./levelUpTypes.ts";
+import type { SelectedFeat, SelectedKlass, SelectedPower } from "./levelUpQueries.ts";
+
+/** The picks a level wizard collects. */
+export interface LevelUpFormData {
+  selectedAttribute: string | null;
+  selectedClass: SelectedKlass | null;
+  selectedFeats: Record<string, SelectedFeat[]>;
+  selectedHP: number | null;
+  selectedPowers: Record<string, SelectedPower[]>;
+  skillPointAllocations: Record<string, number>;
+}
 
 const EMPTY_PICKS: LevelUpFormData = {
   selectedClass: null,
