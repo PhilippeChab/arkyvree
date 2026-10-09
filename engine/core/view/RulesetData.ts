@@ -1,4 +1,5 @@
 import type { CowData } from "@/engine/core/cow/index.ts";
+import type { PropertyOrder } from "@/engine/core/customizations/index.ts";
 import type {
   Aptitude,
   FeatWithAptitudes,
@@ -124,8 +125,8 @@ function buildById<T extends { id: string }>(list: T[]): Map<string, T> {
  * (`CowData.resolve`), so consumers don't thread `cow` through or call `canonicalize` on the common lookup path.
  */
 export default class RulesetData {
-  /** `orderProperties`: the ruleset's order of an entity's properties, as its stat block shows them. */
-  constructor(lists: RulesetLists, cow: CowData, orderProperties: (properties: Property[]) => Property[]) {
+  /** `propertyOrder`: the ruleset's order of an entity's properties, as its stat block shows them. */
+  constructor(lists: RulesetLists, cow: CowData, propertyOrder: PropertyOrder) {
     this.abilities = lists.abilities;
     this.aptitudes = lists.aptitudes;
     this.feats = lists.feats;
@@ -147,7 +148,7 @@ export default class RulesetData {
     this.saves = lists.saves;
     this.skills = lists.skills;
     this.cow = cow;
-    this.orderProperties = orderProperties;
+    this.propertyOrder = propertyOrder;
   }
 
   private readonly built: Partial<Indices> = {};
@@ -158,9 +159,9 @@ export default class RulesetData {
 
   private readonly modifiers: Modifier[];
 
-  private readonly orderProperties: (properties: Property[]) => Property[];
-
   private readonly properties: Property[];
+
+  private readonly propertyOrder: PropertyOrder;
 
   private readonly requirements: Requirement[];
 
@@ -265,7 +266,7 @@ export default class RulesetData {
 
   /** Each entity's properties as its stat block shows them, whoever reads them. */
   private get sortedProperties(): Property[] {
-    return (this.built.sortedProperties ??= this.orderProperties(this.properties));
+    return (this.built.sortedProperties ??= this.propertyOrder.sort(this.properties));
   }
 
   private get storedFeatsById(): Map<string, FeatWithAptitudes> {

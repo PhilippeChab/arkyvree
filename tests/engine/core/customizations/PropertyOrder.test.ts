@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
+import { PropertyOrder } from "@/engine/core/customizations/index.ts";
+import Dnd35PropertyTypes from "@/engine/rulesets/dnd3.5/Dnd35PropertyTypes.ts";
 import {
   DAMAGE_TYPE,
-  sortProperties,
   SPELL_AREA_OF_EFFECT,
   SPELL_CASTING_TIME,
   SPELL_COMPONENT,
@@ -12,6 +13,9 @@ import {
   SPELL_RESISTANCE,
   SPELL_SCHOOL,
 } from "@/shared/dnd3.5/properties/index.ts";
+
+/** Properties in the 3.5 rules' stat-block order. */
+const ORDER = new PropertyOrder(new Dnd35PropertyTypes());
 
 describe("Properties", () => {
   test("come in a stat block's order of types, each type's values in its options' order", () => {
@@ -28,7 +32,7 @@ describe("Properties", () => {
       { type: SPELL_SCHOOL, value: "Evocation" },
       { type: "HOMEBREW_NOTE", value: "Loud" },
     ];
-    expect(sortProperties(fireball).map(({ type, value }) => `${type}:${value}`)).toEqual([
+    expect(ORDER.sort(fireball).map(({ type, value }) => `${type}:${value}`)).toEqual([
       `${SPELL_SCHOOL}:Evocation`,
       `${SPELL_DESCRIPTOR}:Fire`,
       `${SPELL_COMPONENT}:Verbal`,
@@ -48,6 +52,6 @@ describe("Properties", () => {
       { type: DAMAGE_TYPE, value: "Piercing" },
       { type: DAMAGE_TYPE, value: "Slashing" },
     ];
-    expect(sortProperties(urgrosh).map((property) => property.value)).toEqual(["Slashing", "Piercing"]);
+    expect(ORDER.sort(urgrosh).map((property) => property.value)).toEqual(["Slashing", "Piercing"]);
   });
 });
