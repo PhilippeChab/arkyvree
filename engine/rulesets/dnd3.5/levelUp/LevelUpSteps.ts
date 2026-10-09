@@ -4,7 +4,7 @@ import type { RulesetView } from "@/engine/core/view/index.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 
-import LevelUpState from "./LevelUpState.ts";
+import LevelUpState, { type PlannedSoFar } from "./LevelUpState.ts";
 
 /**
  * What a level-up step projects: a new level after the levels planned before it (`pendingLevel…`), or an edit of one
@@ -15,8 +15,8 @@ interface StepProjection {
   abilityId?: string;
   /** The level edited: the projected level takes its place, so the first level stays the first (its x4 skill points). */
   editedLevel?: { id: string; position: number };
-  pendingLevelAbilityIds?: (string | undefined)[];
-  pendingLevelKlassLevelIds?: string[];
+  /** The levels the wizard plans before it. */
+  planned?: Pick<PlannedSoFar, "abilityIds" | "klassLevelIds">;
 }
 
 /** A step as the wizard asks for it: the level it edits by its id, which the step's projection takes with its place. */
@@ -83,7 +83,7 @@ export default class LevelUpSteps extends LevelUpState {
   private projectStep(klassLevelId: string, step: StepProjection) {
     const projection = new CharacterProjection(this.character);
     const hp = LevelRules.UNROLLED_LEVEL_HP;
-    projection.addLevels(step.pendingLevelKlassLevelIds ?? [], { abilityIds: step.pendingLevelAbilityIds, hp });
+    projection.addLevels(step.planned?.klassLevelIds ?? [], { abilityIds: step.planned?.abilityIds, hp });
     projection.addLevel(klassLevelId, { abilityId: step.abilityId, hp, replacing: step.editedLevel });
     return projection;
   }

@@ -1,7 +1,6 @@
-import { include } from "@/lib/mixins.ts";
+import FeatEntity, { type PoolModifier } from "@/engine/rulesets/dnd3.5/entities/feats/FeatEntity.ts";
 import type { CharacterLevel } from "@/shared/relations.ts";
 
-import { AnnotatesOptions, type AptitudeModifier } from "./concerns/AnnotatesOptions.ts";
 import LevelUpState from "./LevelUpState.ts";
 
 /** A saved level's picks, as the server read them. */
@@ -12,7 +11,7 @@ interface SavedPicks {
 }
 
 /** A saved level's selections, as the level's edit opens them. */
-export default class LevelSelections extends include(LevelUpState, AnnotatesOptions) {
+export default class LevelSelections extends LevelUpState {
   /**
    * A saved level's selections: its skill ranks, its feats by pool (each with the pools its modifiers add slots to) and
    * its powers by pool (each with its spell level in the pool when it has one).
@@ -21,10 +20,10 @@ export default class LevelSelections extends include(LevelUpState, AnnotatesOpti
     const skills: Record<string, number> = {};
     for (const s of levelSkills) skills[s.skillId] = s.rank;
 
-    const aptitudeModByFeat = this.resolveAptitudeModifiers(levelFeats.map((f) => f.featId));
+    const aptitudeModByFeat = new FeatEntity(this.view).describePoolModifiers(levelFeats.map((f) => f.featId));
     const feats: Record<
       string,
-      { aptitudeModifiers: AptitudeModifier[]; description?: string; id: string; name: string }[]
+      { aptitudeModifiers: PoolModifier[]; description?: string; id: string; name: string }[]
     > = {};
     for (const f of levelFeats) {
       const feat = this.rulesetData.featsById.get(f.featId);

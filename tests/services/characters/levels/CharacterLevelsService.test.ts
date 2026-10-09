@@ -259,7 +259,11 @@ async function setupRuleset({ fork = false } = {}) {
   };
 }
 
-async function spellNames(characterId: string, level: number, where: object = {}) {
+async function spellNames(
+  characterId: string,
+  level: number,
+  where: Parameters<typeof CharacterLevelsService.getAvailablePowers>[5] = {},
+) {
   const ctx = await getSeedCtx();
   return names(
     (
@@ -677,7 +681,10 @@ describe("LevelsService", () => {
           DetailedCharacter,
           (await Characters.findOne(db, { id: character.id }))!,
         );
-        return detailedCharacter.getHeldNonStackableFeatIds();
+        return detailedCharacter
+          .getHeldFeats()
+          .filter((feat) => !feat.stackable)
+          .map((feat) => feat.id);
       };
       expect(await held()).toEqual([feats["Power Attack"].id]);
 
@@ -1235,7 +1242,7 @@ describe("LevelsService", () => {
       const ILLUSION = "Silent Image";
       const NECROMANCY = ["Disrupt Undead", "Touch of Fatigue", "Ray of Enfeeblement"];
 
-      test("leave out the schools asked for, and those the feats being picked give up", async () => {
+      test("leave out the schools the feats being picked give up", async () => {
         const ctx = await getSeedCtx();
         const characterId = await createSeedCharacter(ctx, "wizard");
         const prohibit = (...schools: string[]) => ({
@@ -1247,10 +1254,9 @@ describe("LevelsService", () => {
 
         const all = await spellNames(characterId, 1);
         expect(all).toEqual(expect.arrayContaining([ILLUSION, "Disrupt Undead", "Touch of Fatigue", "Magic Missile"]));
-        const withoutIllusion = await spellNames(characterId, 1, { excludeSchools: ["Illusion"] });
+        const withoutIllusion = await spellNames(characterId, 1, prohibit("Illusion"));
         expect(withoutIllusion.length).toBeLessThan(all.length);
         expect(withoutIllusion).not.toContain(ILLUSION);
-        expect(await spellNames(characterId, 1, prohibit("Illusion"))).not.toContain(ILLUSION);
 
         const withoutBoth = await spellNames(characterId, 1, prohibit("Illusion", "Necromancy"));
         expect(withoutBoth.filter((name) => [ILLUSION, ...NECROMANCY].includes(name))).toEqual([]);

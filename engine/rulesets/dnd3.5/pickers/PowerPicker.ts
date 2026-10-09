@@ -1,18 +1,19 @@
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
+import { FEAT_FIELDS } from "@/engine/rulesets/dnd3.5/entities/feats/fields.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 
-import PickerState, { type PickQuery } from "./PickerState.ts";
+import LevelPicker, { type PickLevel } from "./LevelPicker.ts";
 
-/** A power picker's query: its level's, of a spell level, and but the schools a wizard's specialization prohibits. */
-type PowerPickQuery = PickQuery & { excludeSchools?: string[]; powerLevel?: number };
+/** A power picker's query: its level's, of a spell level, and the powers picked so far at it. */
+type PowerPickQuery = PickLevel & { powerLevel?: number; selectedPowerIds?: string[] };
 
 /**
- * A power picker for the character, from its rows: what it offers and leaves out (`filters`: of a spell level, and
- * but the schools a specialization prohibits), which the server reads a page of options with, and the page annotated.
+ * A power picker for the character, from its rows: what it offers and leaves out (`filters`: of a spell level, but what
+ * the character knows or can't learn), which the server reads a page of options with, and a page described.
  */
-export default class PowerPicker extends PickerState {
+export default class PowerPicker extends LevelPicker {
   constructor(view: RulesetView, character: CharacterInput, query: PowerPickQuery) {
     super(view, character, query);
     this.built = this.build(this.projectPick(false));
@@ -28,32 +29,28 @@ export default class PowerPicker extends PickerState {
   /**
    * What the picker offers and leaves out: the pool's powers (of `powerLevel`, when given), but those the character
    * knows in the pool (the edited level and those after it aside), those its class level grants, those its modifiers
-   * give it, and those of the schools a wizard's specialization prohibits (`excludeSchools`, the wizard step's).
+   * give it, those of the schools a wizard's specialization prohibits, and those picked so far (`selectedPowerIds`).
    */
-  private buildFilters({ aptitudeId, excludeSchools, powerLevel }: PowerPickQuery) {
-    const excludePowerIds = this.built.getKnownPowerIds(aptitudeId);
+  private buildFilters({ aptitudeId, powerLevel, selectedPowerIds = [] }: PowerPickQuery) {
+    const held = this.built.getHeldPowers();
+    const excludePowerIds = held.filter((power) => power.aptitudeId === aptitudeId).map((power) => power.id);
     for (const rec of this.rulesetData.klassLevelPowersWithPowersByKlassLevel.get(this.klassLevel.id) ?? [])
       excludePowerIds.push(rec.powersInRule.id);
-    excludePowerIds.push(...this.built.getVirtuallyPossessedPowerIds());
-    excludePowerIds.push(...this.getProhibitedPowerIds(aptitudeId, excludeSchools ?? []));
+    excludePowerIds.push(...held.filter((power) => power.virtual).map((power) => power.id));
+    excludePowerIds.push(...this.getProhibitedPowerIds(aptitudeId));
+    excludePowerIds.push(...selectedPowerIds);
     return { ids: this.rulesetData.listPowerIds({ aptitudeId, level: powerLevel }), excludePowerIds };
   }
 
-  /**
-   * The wizard's spells of the schools its specialization prohibits, and of those the wizard step excludes
-   * (`clientExcludeSchools`): none for another pool.
-   */
-  private getProhibitedPowerIds(aptitudeId: string, clientExcludeSchools: string[]): string[] {
+  /** The wizard's spells of the schools its specialization prohibits: none for another pool. */
+  private getProhibitedPowerIds(aptitudeId: string): string[] {
     const aptitude = this.rulesetData.aptitudesById.get(aptitudeId);
     if (aptitude?.name !== "Wizard Spells") return [];
 
-    const prohibitedSchools = new Set<string>(clientExcludeSchools);
-    for (const school of this.built.getProhibitedSchools()) prohibitedSchools.add(school);
-
-    if (prohibitedSchools.size === 0) return [];
-
-    // Look up power IDs by school via the reverse property index — O(k) instead
-    // of O(P) where P is all composed powers.
+    const prohibitedSchools = new Set(
+      this.built.getHeldFeats().flatMap((feat) => FEAT_FIELDS.read(feat.properties).prohibitedSchools),
+    );
+    // The powers of each school, by the view's reverse property index
     const excludedPowerIds = new Set<string>();
     for (const school of prohibitedSchools) {
       const ids = this.rulesetData.entityIdsByPropertyLookup.get(`powers:${SPELL_SCHOOL}:${school}`) ?? [];
@@ -63,7 +60,7 @@ export default class PowerPicker extends PickerState {
   }
 
   /** The power options of a page, each with whether the character meets its requirements, and the tree it fails. */
-  annotate<T extends { id: string }>(items: T[]) {
-    return this.annotateRequirements(this.built, items);
+  describe<T extends { id: string }>(items: T[]) {
+    return this.describeEligibility(this.built, items);
   }
 }

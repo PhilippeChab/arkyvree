@@ -1,21 +1,15 @@
-import { type CharacterInput, CharacterProjection, type FeatPick } from "@/engine/core/module/index.ts";
+import { type CharacterInput, CharacterProjection } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import LevelUpState from "@/engine/rulesets/dnd3.5/levelUp/LevelUpState.ts";
+import type { PlannedSoFar } from "@/engine/rulesets/dnd3.5/levelUp/LevelUpState.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import type { Klass, KlassLevel, Requirement } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
+import Picker from "./Picker.ts";
+
 /** A class the character can take another level of, with that level. */
 type ClassCandidate = { klass: Klass; nextKlassLevel: KlassLevel };
-
-/** What the level-up wizard picked before the class picker opens: the levels planned and their picks. */
-interface PendingPicks {
-  featPicks?: FeatPick[];
-  levelAbilityIds?: (string | undefined)[];
-  levelKlassLevelIds?: string[];
-  skillAllocations?: { rank: number; skillId: string }[];
-}
 
 /**
  * The class picker for the character, from its rows and the level-up wizard's pending picks: what it offers (`filters`,
@@ -23,13 +17,13 @@ interface PendingPicks {
  * with that level and its eligibility. Only a class with requirements (its class's and its next level's) needs the
  * character built, with the pending picks.
  */
-export default class ClassPicker extends LevelUpState {
+export default class ClassPicker extends Picker {
   constructor(
     view: RulesetView,
-    private readonly character: CharacterInput,
-    private readonly pending: PendingPicks,
+    character: CharacterInput,
+    private readonly planned: PlannedSoFar,
   ) {
-    super(view);
+    super(view, character);
   }
 
   /** What the picker offers: a player character's classes. */
@@ -110,12 +104,12 @@ export default class ClassPicker extends LevelUpState {
    * level when it plans none.
    */
   private projectPendingPicks() {
-    const { featPicks = [], levelAbilityIds, levelKlassLevelIds = [], skillAllocations = [] } = this.pending;
+    const { abilityIds, featPicks, klassLevelIds = [], skillRanks } = this.planned;
     const projection = new CharacterProjection(this.character);
     const hp = LevelRules.UNROLLED_LEVEL_HP;
-    const [first] = projection.addLevels(levelKlassLevelIds, { abilityIds: levelAbilityIds, hp });
+    const [first] = projection.addLevels(klassLevelIds, { abilityIds, hp });
     const pickedAt = first ?? this.character.rows.levels.toSorted((a, b) => a.position - b.position).at(-1);
-    if (pickedAt) projection.pick(pickedAt, { feats: featPicks, skills: skillAllocations });
+    if (pickedAt) projection.pick(pickedAt, { feats: featPicks, skills: skillRanks });
     return projection;
   }
 

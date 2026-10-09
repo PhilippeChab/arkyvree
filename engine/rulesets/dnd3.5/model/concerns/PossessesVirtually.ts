@@ -10,10 +10,6 @@ export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: 
       return this.feats.filter((f) => f.virtual);
     }
 
-    getVirtuallyPossessedPowerIds() {
-      return this.powers.filter((p) => p.virtual).map((p) => p.id);
-    }
-
     /**
      * Virtually possessed spells (granted via `set powers.<slug>.<apt>.known`
      * modifiers). Now that virtuals live in `this.powers` they go through

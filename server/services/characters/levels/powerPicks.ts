@@ -10,7 +10,9 @@ import { withEditableCharacter } from "@/server/services/characters/editableChar
 import type { Session } from "@/shared/relations.ts";
 
 /** A feat picked so far: the feat, and the pool it's picked in. */
-type FeatPick = NonNullable<Parameters<LevelUpEngine["openPowerPicker"]>[0]["selectedFeatPicks"]>[number];
+type FeatPick = NonNullable<
+  NonNullable<Parameters<LevelUpEngine["openPowerPicker"]>[0]["planned"]>["featPicks"]
+>[number];
 
 export async function getAvailablePowers(
   session: Session,
@@ -19,7 +21,6 @@ export async function getAvailablePowers(
   klassId: string,
   level: number,
   where: {
-    excludeSchools?: string[];
     pendingLevelFeatPicks?: FeatPick[];
     powerLevel?: number;
     search?: string;
@@ -30,25 +31,24 @@ export async function getAvailablePowers(
   excludeCharacterLevelId?: string,
   pendingLevelKlassLevelIds?: string[],
 ) {
-  const { selectedPowerIds = [], ...pick } = where;
+  const { pendingLevelFeatPicks, powerLevel, search, selectedFeatPicks, selectedPowerIds } = where;
   return await withEditableCharacter(db, session, characterId, async (scope, character) => {
     const picker = Engine.for(scope)
       .character(character)
       .levelUp()
       .openPowerPicker({
-        ...pick,
         aptitudeId,
-        excludeCharacterLevelId,
+        editedLevelId: excludeCharacterLevelId,
         klassId,
         level,
-        pendingLevelKlassLevelIds,
+        planned: {
+          featPicks: [...(pendingLevelFeatPicks ?? []), ...(selectedFeatPicks ?? [])],
+          klassLevelIds: pendingLevelKlassLevelIds,
+        },
+        powerLevel,
+        selectedPowerIds,
       });
-    const excludePowerIds = [...picker.filters.excludePowerIds, ...selectedPowerIds];
-    const result = await Powers.findOptionPage(
-      db,
-      { ...picker.filters, excludePowerIds, search: pick.search },
-      pagination,
-    );
-    return { items: picker.annotate(result.items), page: result.page, nextPage: result.nextPage };
+    const result = await Powers.findOptionPage(db, { ...picker.filters, search }, pagination);
+    return { items: picker.describe(result.items), page: result.page, nextPage: result.nextPage };
   });
 }

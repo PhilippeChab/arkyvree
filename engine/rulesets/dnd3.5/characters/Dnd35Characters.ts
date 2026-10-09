@@ -45,7 +45,7 @@ export default class Dnd35Characters {
 
   /** The race picker of a new character: the races it offers, and whether each is eligible. */
   openRacePicker(view: RulesetView, identity: { alignment?: string; gender?: string }) {
-    return RacePicker.open(view, identity);
+    return new RacePicker(view, identity);
   }
 
   /** What a new character stores beside its row: its ability scores; refused when its race isn't a player's. */
