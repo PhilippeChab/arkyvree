@@ -2,16 +2,16 @@ import type { CharacterRows } from "@/engine/core/module/index.ts";
 import type { RulesetView, ValidationIssue } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import Dnd35DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
-import { toVirtualFeat } from "@/engine/rulesets/dnd3.5/loading/customizations.ts";
+import Customizations from "@/engine/rulesets/dnd3.5/loading/Customizations.ts";
 import type { Dnd35ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/types.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
-import { type BondedRaceStatBlock, getBondedRaceStats, STAT_BLOCK_FEAT_SKILL_BONUSES } from "./bondedRaceData.ts";
+import BondedRaceData, { type BondedRaceStatBlock, STAT_BLOCK_FEAT_SKILL_BONUSES } from "./BondedRaceData.ts";
 
 export default abstract class DetailedCharacterBonded extends Dnd35DetailedCharacter {
   protected cachedTotalHD: number | null = null;
 
-  /** The creature's master, built before it (`buildCharacter`): what its sheet derives from. */
+  /** The creature's master, built before it (`CharacterBuilder.build`): what its sheet derives from. */
   protected master?: Dnd35DetailedCharacter;
 
   /**
@@ -33,7 +33,7 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
       if (!featRow) continue;
       const mods = rulesetData.modifiersBySource.get(featRow.id);
       if (mods) featModifiers.push(...mods);
-      this.feats.push(toVirtualFeat(featRow, rulesetData));
+      this.feats.push(Customizations.toVirtualFeat(featRow, rulesetData));
     }
     if (featModifiers.length > 0 && this.components)
       this.modifierEvaluator.evaluateModifiers(this.components, featModifiers, this.requirementEvaluator);
@@ -84,7 +84,7 @@ export default abstract class DetailedCharacterBonded extends Dnd35DetailedChara
   protected override preRequirementProcessing(rulesetData: RulesetData): void {
     if (this.character.parentCharacterId) this.applyMasterDerivation(this.requireMaster());
 
-    const raceStats = getBondedRaceStats(this.race?.name);
+    const raceStats = BondedRaceData.getStats(this.race?.name);
     if (raceStats) {
       if (raceStats.naturalAttacks.length > 0) {
         this.components.combat.setNaturalAttacks(raceStats.naturalAttacks);

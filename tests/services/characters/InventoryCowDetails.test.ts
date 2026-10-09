@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
-import { buildFullCharacterResponse } from "@/engine/rulesets/dnd3.5/response/buildCharacterResponse.ts";
+import CharacterResponse from "@/engine/rulesets/dnd3.5/response/CharacterResponse.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterInventory, Items, Sessions, Users } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
@@ -88,7 +88,7 @@ describe("COW inventory item details", () => {
     });
     const detailedCharacter = await buildAs(DetailedCharacter, character);
 
-    const response = buildFullCharacterResponse(character, detailedCharacter);
+    const response = CharacterResponse.buildFull(character, detailedCharacter);
     expect(response.equipment[0]).toMatchObject({
       itemId: updated.id,
       name: updated.name,

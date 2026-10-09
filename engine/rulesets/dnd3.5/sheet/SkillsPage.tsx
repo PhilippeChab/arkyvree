@@ -3,7 +3,7 @@ import { Page, Text, View } from "@react-pdf/renderer";
 import type Dnd35DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
 
 import ContinuationHeader from "./ContinuationHeader.tsx";
-import { formatModifier } from "./format.ts";
+import SheetFormat from "./SheetFormat.ts";
 import { FONT_SIZE, styles } from "./styles.ts";
 
 function SkillsPage({ detailedCharacter }: { detailedCharacter: Dnd35DetailedCharacter }) {
@@ -78,16 +78,16 @@ function SkillsPage({ detailedCharacter }: { detailedCharacter: Dnd35DetailedCha
                       </Text>
                       <Text style={skill.trained ? styles.skillRank : styles.skillRankUntrained}>{skill.rank}</Text>
                       <Text style={skill.trained ? styles.skillMod : styles.skillModUntrained}>
-                        {formatModifier(skill.ability)}
+                        {SheetFormat.formatModifier(skill.ability)}
                       </Text>
                       <Text style={skill.trained ? styles.skillOther : styles.skillOtherUntrained}>
-                        {skill.misc !== 0 ? formatModifier(skill.misc) : "—"}
+                        {skill.misc !== 0 ? SheetFormat.formatModifier(skill.misc) : "—"}
                       </Text>
                       <Text style={skill.trained ? styles.skillWeight : styles.skillWeightUntrained}>
                         {skill.weight ? `-${skill.weight}` : "—"}
                       </Text>
                       <Text style={skill.trained ? styles.skillBonus : styles.skillBonusUntrained}>
-                        {formatModifier(skill.total)}
+                        {SheetFormat.formatModifier(skill.total)}
                       </Text>
                     </View>
                   ))}

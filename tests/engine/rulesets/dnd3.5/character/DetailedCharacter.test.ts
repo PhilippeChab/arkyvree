@@ -24,16 +24,13 @@ import {
   powersInRules,
   requirementsInCustomization,
 } from "@/drizzle/schema.ts";
-import { hasValueType } from "@/engine/core/paths/literalValue.ts";
+import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import type { WeaponSlot } from "@/engine/rulesets/dnd3.5/combat/CombatState.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
-import {
-  buildFullCharacterResponse,
-  buildVirtualEntities,
-} from "@/engine/rulesets/dnd3.5/response/buildCharacterResponse.ts";
+import CharacterResponse from "@/engine/rulesets/dnd3.5/response/CharacterResponse.ts";
 import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
@@ -465,7 +462,7 @@ describe("DetailedCharacter", () => {
       await withRulesetScope(db, bjorn.rulesetId, async (scope) => {
         const built = await measure(() => buildAs(DetailedCharacter, bjorn, { scope }));
         expect(built.timing.cacheHits + built.timing.cacheMisses).toBe(0);
-        expect(buildFullCharacterResponse(bjorn, built.result)).toEqual(buildFullCharacterResponse(bjorn, own));
+        expect(CharacterResponse.buildFull(bjorn, built.result)).toEqual(CharacterResponse.buildFull(bjorn, own));
       });
     });
 
@@ -515,7 +512,7 @@ describe("DetailedCharacter", () => {
       expect(read("identity.background.notes")).toEqual(["A wandering smith"]);
       expect(read("identity.background.privateNotes")).toEqual(["Element not found: privateNotes"]);
       expect(detailed.components.identity.getIdentity().background).toEqual({ notes: "A wandering smith" });
-      expect(buildFullCharacterResponse(bjorn, detailed).identity.background).toEqual({
+      expect(CharacterResponse.buildFull(bjorn, detailed).identity.background).toEqual({
         notes: "A wandering smith",
         privateNotes: "Owes the thieves' guild",
       });
@@ -572,7 +569,7 @@ describe("DetailedCharacter", () => {
         paths.flatMap(({ path, valueType }) =>
           targetPaths
             .traversePathInit(path, detailed.components)
-            .filter((result) => result.error === null && !hasValueType(result.data, valueType))
+            .filter((result) => result.error === null && !LiteralValue.hasType(result.data, valueType))
             .map((result) => `${path}: ${typeof result.data}, declared ${valueType}`),
         ),
       );
@@ -3045,7 +3042,7 @@ describe("DetailedCharacter", () => {
         bard: 10 + 2 + 1 + 1,
       });
       // The sheet's spell lists show each class's
-      const lists = buildSpellGroups(buildFullCharacterResponse(record, detailed));
+      const lists = buildSpellGroups(CharacterResponse.buildFull(record, detailed));
       const holdPerson = (list: string, level: number) =>
         lists
           .find((apt) => apt.aptitudeName === list)
@@ -3071,7 +3068,7 @@ describe("DetailedCharacter", () => {
 
       test("list each of their properties' values, in the books' order", async () => {
         // Magic Missile's components: Verbal and Somatic, on a sheet's granted spells as on its others
-        const { virtualPowers } = buildVirtualEntities(await setupGrantedSpell());
+        const { virtualPowers } = CharacterResponse.buildVirtualEntities(await setupGrantedSpell());
         expect(virtualPowers.find((power) => power.name === "Magic Missile")?.properties).toMatchObject({
           SPELL_COMPONENT: "Verbal, Somatic",
           SPELL_SCHOOL: "Evocation",

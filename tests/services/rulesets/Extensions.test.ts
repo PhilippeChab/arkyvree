@@ -10,7 +10,6 @@ import {
   DND35_DMG_NAME,
 } from "@/content/dnd3.5/names.ts";
 import { characterAbilitiesInCharacter, type rulesetsInRules } from "@/drizzle/schema.ts";
-import { getListPowerIds } from "@/engine/core/view/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -538,7 +537,7 @@ describe("unsubscribing from an extension", () => {
         { aptitudeId: wizard.id, level: 3 },
       ]),
     );
-    expect(getListPowerIds(after, { aptitudeId: dmgAssassin.id })).toContain(spell.id);
+    expect(after.listPowerIds({ aptitudeId: dmgAssassin.id })).toContain(spell.id);
     expect(await KlassLevelPowers.findMany(db, { klassLevelIds: [klassLevel.id] })).toMatchObject([
       { powerId: spell.id, aptitudeId: dmgAssassin.id },
     ]);
@@ -561,7 +560,7 @@ describe("unsubscribing from an extension", () => {
     expect(links.filter((link) => !after.aptitudesById.has(link.aptitudeId))).toEqual([]);
     const assassin = [...after.aptitudesById.values()].find((list) => list.name === "Assassin Spells")!;
     expect(assassin.rulesetId).not.toBe(warrior.id);
-    expect(getListPowerIds(after, { aptitudeId: assassin.id })).toContain(copyId);
+    expect(after.listPowerIds({ aptitudeId: assassin.id })).toContain(copyId);
   });
 
   test("refuses to leave a link to a list no other book has, naming it, and changes nothing", async () => {

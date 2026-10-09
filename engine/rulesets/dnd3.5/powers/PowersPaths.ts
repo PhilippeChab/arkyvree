@@ -1,8 +1,8 @@
+import CategoryPaths from "@/engine/core/paths/CategoryPaths.ts";
 import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
-import { collectPropertySlugs } from "@/engine/core/paths/propertySlugs.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import type { Dnd35Components } from "@/engine/rulesets/dnd3.5/character/components.ts";
-import { collectFeatListIds } from "@/engine/rulesets/dnd3.5/spellcasting/spellLists.ts";
+import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/character/CharacterComponents.ts";
+import SpellLists from "@/engine/rulesets/dnd3.5/spellcasting/SpellLists.ts";
 import { getNumericOperators } from "@/shared/customization/operators.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
@@ -149,10 +149,20 @@ export default class PowersPaths implements PathCategory<Dnd35Components> {
       properties: rulesetData.propertiesByEntity.get(power.id) ?? [],
     }));
     return [
-      ...PowersPaths.generatePowerPaths(powersWithProperties, aptitudes, collectFeatListIds(rulesetData), kind),
-      ...PowersPaths.generateGroupingPaths(collectPropertySlugs(powerProperties, SPELL_SCHOOL), kind, true, "school"),
+      ...PowersPaths.generatePowerPaths(
+        powersWithProperties,
+        aptitudes,
+        SpellLists.collectFeatListIds(rulesetData),
+        kind,
+      ),
       ...PowersPaths.generateGroupingPaths(
-        collectPropertySlugs(powerProperties, SPELL_DESCRIPTOR),
+        CategoryPaths.collectPropertySlugs(powerProperties, SPELL_SCHOOL),
+        kind,
+        true,
+        "school",
+      ),
+      ...PowersPaths.generateGroupingPaths(
+        CategoryPaths.collectPropertySlugs(powerProperties, SPELL_DESCRIPTOR),
         kind,
         true,
         "descriptor",

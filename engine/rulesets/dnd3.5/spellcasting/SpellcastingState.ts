@@ -3,14 +3,14 @@ import type { RulesetData } from "@/engine/core/view/index.ts";
 import type AbilitiesComponent from "@/engine/rulesets/dnd3.5/abilities/AbilitiesComponent.ts";
 import type AptitudesComponent from "@/engine/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
-import { parseAptitudeJoin } from "@/engine/rulesets/dnd3.5/aptitudes/aptitudeTargets.ts";
+import AptitudeTargets from "@/engine/rulesets/dnd3.5/aptitudes/AptitudeTargets.ts";
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/classes/ClassesComponent.ts";
 import type PowerGroupingsComponent from "@/engine/rulesets/dnd3.5/powers/PowerGroupingsComponent.ts";
 import type PowersComponent from "@/engine/rulesets/dnd3.5/powers/PowersComponent.ts";
 import type { SpellTagLists } from "@/shared/dnd3.5/spellGroups.ts";
 import type { KlassLevel, Modifier, Power, Property } from "@/shared/relations.ts";
 
-import { collectClassLists } from "./spellLists.ts";
+import SpellLists from "./SpellLists.ts";
 
 /** What a character's spellcasting holds: its bonus caster levels, its aptitudes' powers, its spell tags. */
 export default abstract class SpellcastingState {
@@ -101,7 +101,7 @@ export default abstract class SpellcastingState {
 
     const joining = new Map<string, Set<string>>();
     for (const modifier of this.modifierEvaluator.getModifiers().appliedModifiers) {
-      const list = parseAptitudeJoin(modifier.target);
+      const list = AptitudeTargets.parseJoin(modifier.target);
       if (list === undefined || aptitudes[list]?.joinsclasslist !== true || modifier.value === "false") continue;
       const className = classOf(modifier);
       if (!className) continue;
@@ -124,6 +124,6 @@ export default abstract class SpellcastingState {
 
   /** Reads each class's spell lists off the ruleset, its levels' slots (`collectClassLists`): `spellListsOf`'s. */
   loadClassLists(rulesetData: Pick<RulesetData, "klassLevels" | "modifiersBySource">) {
-    this.classListsByKlassId = collectClassLists(rulesetData);
+    this.classListsByKlassId = SpellLists.collectClassLists(rulesetData);
   }
 }

@@ -1,7 +1,7 @@
 import type { RulesetData } from "@/engine/core/view/index.ts";
 
-import type { BondedRaceStatBlock } from "./bondedRaceData.ts";
-import { scaleFeats, scaleSkillRanks } from "./bondedScaling.ts";
+import { type BondedRaceStatBlock } from "./BondedRaceData.ts";
+import BondedScaling from "./BondedScaling.ts";
 import DetailedCharacterBonded from "./DetailedCharacterBonded.ts";
 
 const HD_PER_LEVEL_AVG = 4.5;
@@ -35,10 +35,10 @@ export default abstract class DetailedCharacterAdvancingBonded extends DetailedC
     super.applyRaceDefaults(raceStats, rulesetData);
     const baseFeats = new Set(raceStats.baseFeats ?? []);
     this.applyGrantedFeats(
-      scaleFeats(raceStats, totalHD).filter((feat) => !baseFeats.has(feat)),
+      BondedScaling.scaleFeats(raceStats, totalHD).filter((feat) => !baseFeats.has(feat)),
       rulesetData,
     );
-    for (const [skillName, ranks] of Object.entries(scaleSkillRanks(raceStats, totalHD)))
+    for (const [skillName, ranks] of Object.entries(BondedScaling.scaleSkillRanks(raceStats, totalHD)))
       this.components.skills.addRanks(skillName, ranks);
   }
 }

@@ -4,7 +4,7 @@ import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluato
 import type { RulesetView } from "@/engine/core/types.ts";
 import { type RulesetData } from "@/engine/core/view/index.ts";
 import type CharacterState from "@/engine/rulesets/dnd3.5/character/CharacterState.ts";
-import { readFeatFields } from "@/engine/rulesets/dnd3.5/feats/featFields.ts";
+import FeatFields from "@/engine/rulesets/dnd3.5/feats/FeatFields.ts";
 import FeatsPaths from "@/engine/rulesets/dnd3.5/feats/FeatsPaths.ts";
 import { type Dnd35LoadedCharacterData } from "@/engine/rulesets/dnd3.5/loading/DetailedCharacterDataLoader.ts";
 import PowersPaths from "@/engine/rulesets/dnd3.5/powers/PowersPaths.ts";
@@ -123,7 +123,7 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
       return rulesetData.feats.some(
         (feat) =>
           (this.components.feats.getFeat(feat.name)?.possessed ?? false) &&
-          readFeatFields(rulesetData.propertiesByEntity.get(feat.id) ?? [])[rule],
+          FeatFields.read(rulesetData.propertiesByEntity.get(feat.id) ?? [])[rule],
       );
     }
 

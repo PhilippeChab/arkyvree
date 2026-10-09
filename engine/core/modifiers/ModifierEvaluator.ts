@@ -1,7 +1,6 @@
-import { isTraversable } from "@/engine/core/paths/isTraversable.ts";
-import { hasValueType, parseLiteralValue } from "@/engine/core/paths/literalValue.ts";
-import { readComponent } from "@/engine/core/paths/readComponent.ts";
-import { evaluateTemplateExpression } from "@/engine/core/paths/templateExpression.ts";
+import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
+import PathTraverser from "@/engine/core/paths/PathTraverser.ts";
+import TemplateExpression from "@/engine/core/paths/TemplateExpression.ts";
 import type RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import type { Component, Components, TargetPathsTraverser, TraversePathResult } from "@/engine/core/types.ts";
 import {
@@ -72,7 +71,7 @@ export default class ModifierEvaluator {
     const typedValue = this.resolveModifierValue(modifier, data, components);
     if (typedValue === null) return;
 
-    if (!hasValueType(data, typeof typedValue)) {
+    if (!LiteralValue.hasType(data, typeof typedValue)) {
       this.skip(modifier, `Value type mismatch: expected ${typeof data}, got ${typeof typedValue}`);
       return;
     }
@@ -87,7 +86,7 @@ export default class ModifierEvaluator {
       appliedTarget !== modifier.target ? { ...modifier, target: appliedTarget } : modifier,
     );
 
-    readComponent(component, "updateAvailables");
+    PathTraverser.readComponent(component, "updateAvailables");
   }
 
   /**
@@ -102,7 +101,8 @@ export default class ModifierEvaluator {
     const { operator, valueType } = modifier;
     const { data, object, key } = result;
     // A traversal's object holds its data at its key.
-    if (!isTraversable(object)) return this.skip(modifier, `Target ${modifier.target} isn't in an object`);
+    if (!PathTraverser.isTraversable(object))
+      return this.skip(modifier, `Target ${modifier.target} isn't in an object`);
     // A part the sheet computes when read (a total, an ability's share) has a getter and no setter
     const descriptor = Object.getOwnPropertyDescriptor(object, key);
     if (descriptor?.get && !descriptor.set)
@@ -170,11 +170,11 @@ export default class ModifierEvaluator {
       }
       return resolved;
     }
-    if (!hasValueType(data, valueType)) {
+    if (!LiteralValue.hasType(data, valueType)) {
       this.skip(modifier, `Value type mismatch: expected ${valueType}, got ${typeof data}`);
       return null;
     }
-    const literal = parseLiteralValue(value, valueType);
+    const literal = LiteralValue.parse(value, valueType);
     if (literal === undefined) {
       this.skip(modifier, `Invalid ${valueType} value: ${JSON.stringify(value)}`);
       return null;
@@ -189,7 +189,7 @@ export default class ModifierEvaluator {
   ): number | string | boolean | null {
     const expression = extractTemplateExpression(template);
     if (!expression) return null;
-    return evaluateTemplateExpression(expression, components, this.targetPaths, (warning) => {
+    return TemplateExpression.evaluate(expression, components, this.targetPaths, (warning) => {
       this.results.skippedModifiers.push({ warning, modifier });
     });
   }

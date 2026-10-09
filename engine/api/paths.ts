@@ -1,6 +1,4 @@
-import { checkPathValue, validatePath } from "@/engine/core/paths/pathChecks.ts";
-import { getPathCompletions } from "@/engine/core/paths/pathCompletions.ts";
-import type { RulesetView } from "@/engine/core/types.ts";
+import type { PathQuery, RulesetView, TargetCheck } from "@/engine/core/types.ts";
 import type { TargetPathCatalog, TargetPathKind } from "@/shared/customization/target.ts";
 
 import { getRulesetModule } from "./modules.ts";
@@ -18,9 +16,9 @@ function targetPathsOf(view: RulesetView) {
 export function checkTargetValue(
   view: RulesetView,
   catalogs: { paths: TargetPathCatalog; templatePaths: TargetPathCatalog },
-  check: Parameters<typeof checkPathValue>[3],
+  check: TargetCheck,
 ) {
-  return checkPathValue(targetPathsOf(view).getCategories(), catalogs.paths, catalogs.templatePaths, check);
+  return targetPathsOf(view).checkTargetValue(catalogs, check);
 }
 
 /** The completions of a partial path among a catalog's paths of `kind`, unpaged. */
@@ -28,9 +26,9 @@ export function getTargetPathCompletions(
   view: RulesetView,
   catalog: TargetPathCatalog,
   kind: TargetPathKind,
-  query: Parameters<typeof getPathCompletions>[3],
+  query: PathQuery,
 ) {
-  return getPathCompletions(targetPathsOf(view), catalog, kind, query);
+  return targetPathsOf(view).completeTargetPath(catalog, kind, query);
 }
 
 /** The ruleset's target paths of a kind, with their segments' labels: what a server caches and the other ops take. */
@@ -40,5 +38,5 @@ export function listTargetPaths(view: RulesetView, kind: TargetPathKind): Target
 
 /** A target path validated like a language server, among a catalog's paths: a valid one carries its definition. */
 export function validateTargetPath(view: RulesetView, catalog: TargetPathCatalog, path: string) {
-  return validatePath(targetPathsOf(view).getCategories(), catalog, path);
+  return targetPathsOf(view).validateTargetPath(catalog, path);
 }

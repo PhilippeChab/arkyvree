@@ -1,5 +1,5 @@
 import CowData from "./CowData.ts";
-import { buildSourceChain, type CowRows, getKlassSnapshots, type RulesetSources } from "./sources.ts";
+import CowSources, { type CowRows, type RulesetSources } from "./CowSources.ts";
 
 type SnapshotsByRuleset = Map<string, CowRows["snapshots"]>;
 
@@ -47,7 +47,7 @@ function rankNamesakes<T extends { id: string; rulesetId: string }>(
 export default class CowDataBuilder {
   constructor(ruleset: RulesetSources) {
     this.rulesetId = ruleset.id;
-    this.sourceChain = buildSourceChain(ruleset);
+    this.sourceChain = CowSources.buildSourceChain(ruleset);
     this.extensionRulesetIds = ruleset.extensionRulesetIds;
   }
 
@@ -148,7 +148,7 @@ export default class CowDataBuilder {
    */
   private pairKlassLevels(rows: CowRows) {
     if (this.overrides.size === 0) return;
-    const klassSnaps = getKlassSnapshots(this.rulesetId, rows.snapshots);
+    const klassSnaps = CowSources.getKlassSnapshots(this.rulesetId, rows.snapshots);
     const levelsByKlass = Map.groupBy(rows.klassLevels, (level) => level.klassId);
     for (const snap of klassSnaps) {
       const childLevels = levelsByKlass.get(snap.forkedEntityId) ?? [];

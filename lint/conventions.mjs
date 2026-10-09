@@ -24,6 +24,10 @@
  * - `shared-runtime`: `shared/` runs in the client too, and `engine/` computes over the data it's given, so neither uses
  *   Bun's APIs (`bun`, the `Bun` global) nor Node's (`node:fs`, `fs`).
  * - `engine-sync`: `engine/` reads nothing, so nothing it does waits: no `async` function, no `await`, no `Promise`.
+ * - `engine-classes`: an operation of `engine/` is its API's (`engine/api/`, which `engine/index.ts` exports), and each
+ *   of its steps a class's method or a module's own function: outside the API, a module exports no function of its
+ *   own (declared, held by a const, or listed), so no file reaches into another's steps. It exports classes (and their
+ *   shared instance), concerns and components (PascalCase), types and data.
  * - `session-param`: a `Session` parameter is named `session` (`_session` when it's unused).
  * - `writes-in-transactions`: a repository write or lock (`methodVerbs.json`'s verbs) outside the repositories takes a
  *   transaction's handle, `tx` (`withTransaction(async (tx) => …)`), never the shared `db`: a write is atomic with the
@@ -404,6 +408,60 @@ function createEmptyListReads(context) {
       }
       // `if (ids.length > 0) { …a read of ids… }`
       if (readsOnly([node.consequent], list)) report(node);
+    },
+  };
+}
+
+function createEngineClasses(context) {
+  const file = repoPath(context.filename);
+  if (!file.startsWith("engine/") || file.startsWith("engine/api/") || file === "engine/index.ts") return {};
+  const message =
+    "Outside `engine/api/`, an engine module exports no function of its own: an operation is the API's, and a step a " +
+    "class's method (or the module's own, unexported, function).";
+  // A function, a cast (`as`, `satisfies`, `!`) or parentheses around one looked through
+  const unwrap = (node) =>
+    ["TSAsExpression", "TSSatisfiesExpression", "TSNonNullExpression", "ParenthesizedExpression"].includes(node?.type)
+      ? unwrap(node.expression)
+      : node;
+  const isFunction = (node) =>
+    ["ArrowFunctionExpression", "FunctionDeclaration", "FunctionExpression"].includes(unwrap(node)?.type);
+  // A function's own name, not a class's, a concern's or a component's (PascalCase): `helper`, `_helper`
+  const isCamelCase = (name) => /^[a-z_]/.test(name);
+  // The module's own functions, by name: what an export list may name
+  const ownFunctions = new Set();
+  return {
+    Program(node) {
+      for (const statement of node.body) {
+        if (statement.type === "FunctionDeclaration" && statement.id) ownFunctions.add(statement.id.name);
+        if (statement.type === "VariableDeclaration") {
+          for (const d of statement.declarations)
+            if (d.id.type === "Identifier" && isFunction(d.init)) ownFunctions.add(d.id.name);
+        }
+      }
+    },
+    ExportDefaultDeclaration(node) {
+      const { declaration } = node;
+      if (isFunction(declaration) && (!declaration.id || isCamelCase(declaration.id.name)))
+        context.report({ node, message });
+      if (declaration.type === "Identifier" && ownFunctions.has(declaration.name) && isCamelCase(declaration.name))
+        context.report({ node, message });
+    },
+    ExportNamedDeclaration(node) {
+      const { declaration, source, specifiers } = node;
+      if (declaration?.type === "FunctionDeclaration" && isCamelCase(declaration.id.name))
+        context.report({ node, message });
+      if (declaration?.type === "VariableDeclaration") {
+        for (const d of declaration.declarations) {
+          if (d.id.type === "Identifier" && isFunction(d.init) && isCamelCase(d.id.name))
+            context.report({ node: d, message });
+        }
+      }
+      if (source) return;
+      for (const specifier of specifiers ?? []) {
+        const local = specifier.local?.name;
+        // A function exported under another name is the same function: its own name says what it is
+        if (local && ownFunctions.has(local) && isCamelCase(local)) context.report({ node: specifier, message });
+      }
     },
   };
 }
@@ -1158,6 +1216,7 @@ export default {
   "no-null-reads": { meta: { type: "suggestion" }, create: createNoNullReads },
   "order-through-repository": { meta: { type: "suggestion" }, create: createOrderThroughRepository },
   "shared-runtime": { meta: { type: "problem" }, create: createSharedRuntime },
+  "engine-classes": { meta: { type: "problem" }, create: createEngineClasses },
   "engine-sync": { meta: { type: "problem" }, create: createEngineSync },
   "session-param": { meta: { type: "suggestion" }, create: createSessionParam },
   "test-placement": { meta: { type: "suggestion" }, create: createTestPlacement },

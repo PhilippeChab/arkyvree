@@ -1,10 +1,9 @@
+import CategoryPaths from "@/engine/core/paths/CategoryPaths.ts";
 import type { GetterOf, PathCategory } from "@/engine/core/paths/PathCategory.ts";
 import PathTraverser from "@/engine/core/paths/PathTraverser.ts";
-import { collectPropertySlugs } from "@/engine/core/paths/propertySlugs.ts";
-import { readComponent } from "@/engine/core/paths/readComponent.ts";
 import type { Components, TraversePathResult } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import type { Dnd35Components } from "@/engine/rulesets/dnd3.5/character/components.ts";
+import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/character/CharacterComponents.ts";
 import { UNARMED_STRIKE } from "@/engine/rulesets/dnd3.5/constants.ts";
 import { getNumericOperators } from "@/shared/customization/operators.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
@@ -14,7 +13,7 @@ import { stripSeparators } from "@/shared/text.ts";
 
 import type ArmorsComponent from "./ArmorsComponent.ts";
 import type ShieldsComponent from "./ShieldsComponent.ts";
-import { buildWeaponPaths } from "./WeaponPaths.ts";
+import WeaponPaths from "./WeaponPaths.ts";
 import type WeaponsComponent from "./WeaponsComponent.ts";
 
 const ARMOR_LABELS: Record<string, string> = {
@@ -88,7 +87,7 @@ export default class ItemsPaths implements PathCategory<Dnd35Components> {
   }
 
   static generateWeaponPaths(weaponGroupings: string[], kind: "modifier" | "requirement"): TargetPath[] {
-    return weaponGroupings.flatMap((grouping) => buildWeaponPaths(`items.weapons.${grouping}`, "items", kind));
+    return weaponGroupings.flatMap((grouping) => WeaponPaths.buildPaths(`items.weapons.${grouping}`, "items", kind));
   }
 
   readonly description = "Equipped weapon, armor, and shield stats";
@@ -123,14 +122,14 @@ export default class ItemsPaths implements PathCategory<Dnd35Components> {
     const weaponGroupings = [
       ...new Set([
         stripSeparators(UNARMED_STRIKE),
-        ...collectPropertySlugs(itemProperties, WEAPON_TYPE),
-        ...collectPropertySlugs(itemProperties, WEAPON_PROFICIENCY),
+        ...CategoryPaths.collectPropertySlugs(itemProperties, WEAPON_TYPE),
+        ...CategoryPaths.collectPropertySlugs(itemProperties, WEAPON_PROFICIENCY),
       ]),
     ];
     return [
       ...ItemsPaths.generateWeaponPaths(weaponGroupings, kind),
-      ...ItemsPaths.generateArmorPaths(collectPropertySlugs(itemProperties, ARMOR_TYPE), kind),
-      ...ItemsPaths.generateShieldPaths(collectPropertySlugs(itemProperties, SHIELD_TYPE), kind),
+      ...ItemsPaths.generateArmorPaths(CategoryPaths.collectPropertySlugs(itemProperties, ARMOR_TYPE), kind),
+      ...ItemsPaths.generateShieldPaths(CategoryPaths.collectPropertySlugs(itemProperties, SHIELD_TYPE), kind),
     ];
   }
 
@@ -156,7 +155,7 @@ export default class ItemsPaths implements PathCategory<Dnd35Components> {
     const pathParts = ["items", subcategory, stripSeparators(grouping)];
 
     if (subcategory === "weapons") {
-      const groups = readComponent(component, "getWeapons" satisfies GetterOf<WeaponsComponent>);
+      const groups = PathTraverser.readComponent(component, "getWeapons" satisfies GetterOf<WeaponsComponent>);
       const group = isRecord(groups) ? groups[stripSeparators(grouping)] : undefined;
       if (!isRecord(group)) return [];
       return Object.entries(group).flatMap(([key, weapon]) =>
@@ -167,7 +166,7 @@ export default class ItemsPaths implements PathCategory<Dnd35Components> {
       armors: GetterOf<ArmorsComponent>;
       shields: GetterOf<ShieldsComponent>;
     };
-    const groups = readComponent(component, getterMap[subcategory]);
+    const groups = PathTraverser.readComponent(component, getterMap[subcategory]);
     const group = isRecord(groups) ? groups[stripSeparators(grouping)] : undefined;
     if (!group) return [];
     return traverser.traverse(component, subPath, group, grouping, 0, pathParts);

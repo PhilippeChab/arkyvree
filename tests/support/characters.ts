@@ -3,7 +3,7 @@ import type { InferRequestType } from "hono/client";
 
 import type { charactersInCharacter } from "@/drizzle/schema.ts";
 import type { DetailedCharacterInterface } from "@/engine/core/module/index.ts";
-import { buildCharacter } from "@/engine/rulesets/dnd3.5/character/buildCharacter.ts";
+import CharacterBuilder from "@/engine/rulesets/dnd3.5/character/CharacterBuilder.ts";
 import { type RulesetScope, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { type Db, db, withCowContext } from "@/server/database/index.ts";
 import { Characters } from "@/server/repositories/index.ts";
@@ -15,7 +15,7 @@ import { getSeedCtx, uniqueId } from "./seed.ts";
 
 /**
  * `record`, built as the class a test picks (`Kind`: a familiar, a mount…) the way the engine builds a character
- * (`buildCharacter`): its rows read through `database`, in `scope` when it's the character's ruleset's, a bonded
+ * (`CharacterBuilder.build`): its rows read through `database`, in `scope` when it's the character's ruleset's, a bonded
  * creature's master built first.
  */
 export async function buildAs<C extends DetailedCharacterInterface>(
@@ -30,7 +30,7 @@ export async function buildAs<C extends DetailedCharacterInterface>(
   const build = async (view: RulesetScope) => {
     const input = await readCharacterInput(database, record);
     const character = new Kind(record);
-    character.build(input.rows, view, projected, input.master && buildCharacter(view, input.master));
+    character.build(input.rows, view, projected, input.master && CharacterBuilder.build(view, input.master));
     return character;
   };
   if (scope?.ruleset.id !== record.rulesetId) return await withRulesetScope(database, record.rulesetId, build);

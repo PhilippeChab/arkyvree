@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 
 import * as RULESET_NAMES from "@/content/dnd3.5/names.ts";
-import { findTemplateValueError } from "@/engine/core/paths/pathChecks.ts";
+import PathChecks from "@/engine/core/paths/PathChecks.ts";
 import { getTargetPathsWithLabels } from "@/server/services/rulesets/customization/targetPaths/index.ts";
 import { isTemplateValue } from "@/shared/customization/templateExpression.ts";
 
@@ -38,7 +38,7 @@ test("Every seeded template reads what a template of its ruleset can, as its val
     for (const { target, value, valueType } of [...rows.modifiers, ...rows.requirements]) {
       if (!value || !valueType || !isTemplateValue(value)) continue;
       templates++;
-      const error = findTemplateValueError(templatePaths, value, valueType);
+      const error = PathChecks.findTemplateValueError(templatePaths, value, valueType);
       if (error) errors.push(`${name}: ${target} = ${value}: ${error}`);
     }
   }

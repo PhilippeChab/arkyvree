@@ -1,7 +1,7 @@
 import { Page, Text, View } from "@react-pdf/renderer";
 
 import type Dnd35DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
-import { buildVirtualEntities } from "@/engine/rulesets/dnd3.5/response/buildCharacterResponse.ts";
+import CharacterResponse from "@/engine/rulesets/dnd3.5/response/CharacterResponse.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import {
   ENTITY_PROPERTY_TYPES,
@@ -55,7 +55,7 @@ function SpellsPage({ detailedCharacter }: { detailedCharacter: Dnd35DetailedCha
   const sorted = buildSpellGroups({
     classes: classes.getCharacterClasses(),
     powers: powers.getFlatPowers(),
-    virtualPowers: buildVirtualEntities(detailedCharacter).virtualPowers,
+    virtualPowers: CharacterResponse.buildVirtualEntities(detailedCharacter).virtualPowers,
     aptitudes: aptitudes.getAptitudes(),
     spellTags: detailedCharacter.getSpellTags(),
     spellTagLists: detailedCharacter.getSpellTagLists(),

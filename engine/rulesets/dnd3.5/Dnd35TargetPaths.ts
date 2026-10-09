@@ -12,7 +12,7 @@ import { stripSeparators } from "@/shared/text.ts";
 import AbilitiesPaths from "./abilities/AbilitiesPaths.ts";
 import AptitudesPaths from "./aptitudes/AptitudesPaths.ts";
 import BondedPaths from "./bonded/BondedPaths.ts";
-import type { Dnd35Components } from "./character/components.ts";
+import type { Dnd35Components } from "./character/CharacterComponents.ts";
 import ClassesPaths from "./classes/ClassesPaths.ts";
 import CombatPaths from "./combat/CombatPaths.ts";
 import ItemsPaths from "./combat/ItemsPaths.ts";

@@ -1,5 +1,5 @@
-import { hasValueType, parseLiteralValue } from "@/engine/core/paths/literalValue.ts";
-import { evaluateTemplateExpression } from "@/engine/core/paths/templateExpression.ts";
+import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
+import TemplateExpression from "@/engine/core/paths/TemplateExpression.ts";
 import type { Components, TargetPathsTraverser, TraversePathResult } from "@/engine/core/types.ts";
 import RequirementTree, { getParentLevel, type RequirementNode } from "@/shared/customization/RequirementTree.ts";
 import { extractTemplateExpression, isTemplateValue } from "@/shared/customization/templateExpression.ts";
@@ -110,7 +110,7 @@ export default class RequirementEvaluator {
     const { valueType } = requirement;
     const { data } = result;
 
-    if (!hasValueType(data, valueType)) {
+    if (!LiteralValue.hasType(data, valueType)) {
       this.warn(requirement, `Value type mismatch: expected ${valueType}, got ${typeof data}`);
       return false;
     }
@@ -119,7 +119,7 @@ export default class RequirementEvaluator {
     const typedValue = this.resolveRequirementValue(requirement, components);
     if (typedValue === null) return false;
 
-    if (!hasValueType(data, typeof typedValue)) {
+    if (!LiteralValue.hasType(data, typeof typedValue)) {
       this.warn(requirement, `Value type mismatch: expected ${typeof data}, got ${typeof typedValue}`);
       return false;
     }
@@ -189,7 +189,7 @@ export default class RequirementEvaluator {
         this.warn(requirement, `Invalid template expression: ${value}`);
         return null;
       }
-      const resolved = evaluateTemplateExpression(expression, components, this.targetPaths, (warning) =>
+      const resolved = TemplateExpression.evaluate(expression, components, this.targetPaths, (warning) =>
         this.warn(requirement, warning),
       );
       if (resolved === null) return null;
@@ -203,7 +203,7 @@ export default class RequirementEvaluator {
       return resolved;
     }
     // A condition saved without a value (an emptiness check needs none) compares with the empty literal
-    const literal = parseLiteralValue(value ?? "", valueType);
+    const literal = LiteralValue.parse(value ?? "", valueType);
     if (literal === undefined) {
       this.warn(requirement, `Invalid ${valueType} value: ${JSON.stringify(value)}`);
       return null;

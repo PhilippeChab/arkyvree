@@ -22,12 +22,7 @@ import type {
 } from "@/shared/relations.ts";
 
 import RulesetData, { type RulesetLists } from "./RulesetData.ts";
-import {
-  mergeSiblingAptitudeLinks,
-  mergeSiblingModifiers,
-  mergeSiblingProperties,
-  mergeSiblingRequirements,
-} from "./siblingMerge.ts";
+import SiblingMerge from "./SiblingMerge.ts";
 import SiblingRows from "./SiblingRows.ts";
 
 /** A ruleset's own rows, none of its sources': what the server fetches for each ruleset of a chain to compose. */
@@ -178,7 +173,7 @@ export default class RulesetComposition {
 
   /**
    * Modifiers, the fork's first: a copied source's and an invisible class level's are left out, and a sibling loser's
-   * the merge leaves out (`mergeSiblingModifiers`); the rest of a loser's move to its winner. Every modifier left out is
+   * the merge leaves out (`SiblingMerge.mergeModifiers`); the rest of a loser's move to its winner. Every modifier left out is
    * excluded, its requirements with it.
    */
   private composeModifiers(visibleKlassLevelIds: Set<string>) {
@@ -194,7 +189,7 @@ export default class RulesetComposition {
       }
     }
     const groups = siblingRows.getGroups();
-    const taken = new Set(groups.flatMap(({ own, siblings }) => mergeSiblingModifiers(own, siblings)));
+    const taken = new Set(groups.flatMap(({ own, siblings }) => SiblingMerge.mergeModifiers(own, siblings)));
     for (const m of groups.flatMap(({ siblings }) => siblings.flat())) if (!taken.has(m)) excludedModifierIds.add(m.id);
 
     return { modifiers: siblingRows.moveTaken(taken, (m, sourceId) => ({ ...m, sourceId })), excludedModifierIds };
@@ -202,7 +197,7 @@ export default class RulesetComposition {
 
   /**
    * Properties, the fork's first: a copied entity's and an invisible class level's are left out (a sibling loser's
-   * class levels aren't in `klassLevels`), and a sibling loser's the merge leaves out (`mergeSiblingProperties`); the
+   * class levels aren't in `klassLevels`), and a sibling loser's the merge leaves out (`SiblingMerge.mergeProperties`); the
    * rest of a loser's move to its winner. A ruleset's own properties always stay: a ruleset is never overridden.
    */
   private composeProperties(visibleKlassLevelIds: Set<string>): Property[] {
@@ -215,7 +210,7 @@ export default class RulesetComposition {
       }
     }
     const taken = new Set(
-      siblingRows.getGroups().flatMap(({ own, siblings }) => mergeSiblingProperties(own, siblings)),
+      siblingRows.getGroups().flatMap(({ own, siblings }) => SiblingMerge.mergeProperties(own, siblings)),
     );
     return siblingRows.moveTaken(taken, (p, entityId) => ({ ...p, entityId }));
   }
@@ -223,7 +218,7 @@ export default class RulesetComposition {
   /**
    * Requirements, the fork's first: a modifier's stay unless the modifier was excluded. An entity's are left out with a
    * copied entity and an invisible class level; a sibling loser's merge into its winner's as trees
-   * (`mergeSiblingRequirements`, which `EntityCopy` writes the same way), after the rest.
+   * (`SiblingMerge.mergeRequirements`, which `EntityCopy` writes the same way), after the rest.
    */
   private composeRequirements(visibleKlassLevelIds: Set<string>, excludedModifierIds: Set<string>): Requirement[] {
     const siblingRows = new SiblingRows<Requirement>(this.cow);
@@ -240,7 +235,7 @@ export default class RulesetComposition {
     return siblingRows.withMerged(
       siblingRows
         .getGroups()
-        .flatMap(({ winnerId, own, siblings }) => mergeSiblingRequirements(own, siblings, winnerId)),
+        .flatMap(({ winnerId, own, siblings }) => SiblingMerge.mergeRequirements(own, siblings, winnerId)),
     );
   }
 
@@ -263,7 +258,7 @@ export default class RulesetComposition {
     const links = this.cow.hasSiblings(entityId)
       ? [
           ...own,
-          ...mergeSiblingAptitudeLinks(
+          ...SiblingMerge.mergeAptitudeLinks(
             own,
             this.cow.getSiblings(entityId).map((loserId) => siblingLinks.get(loserId) ?? []),
             (id) => this.cow.resolve(id),

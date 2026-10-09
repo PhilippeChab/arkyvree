@@ -1,10 +1,23 @@
-import type { Components, TargetPathsInterface, TraversePathResult } from "@/engine/core/types.ts";
+import type {
+  Components,
+  PathQuery,
+  TargetCheck,
+  TargetPathsInterface,
+  TraversePathResult,
+} from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import type { TargetPathCatalog, TargetPathKind } from "@/shared/customization/target.ts";
+import type {
+  PathCompletion,
+  PathValidationResult,
+  TargetPathCatalog,
+  TargetPathKind,
+} from "@/shared/customization/target.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 import type { PathCategory } from "./PathCategory.ts";
+import PathChecks from "./PathChecks.ts";
+import PathCompletions from "./PathCompletions.ts";
 import PathTraverser from "./PathTraverser.ts";
-import { readComponent } from "./readComponent.ts";
 
 /**
  * A ruleset's target paths, by category: the paths each lists, how a target reaches its data, and how the path picker
@@ -20,6 +33,11 @@ export default abstract class CategoryPaths<C = Components> implements TargetPat
     this.traverser = new PathTraverser(
       new Set(categories.filter((category) => category.expandsSubtypes).map((category) => category.name)),
     );
+  }
+
+  /** The distinct slugs of the properties' values of `type`. */
+  static collectPropertySlugs(properties: { type: string; value: string }[], type: string) {
+    return [...new Set(properties.filter((p) => p.type === type).map((p) => stripSeparators(p.value)))];
   }
 
   private readonly byName: ReadonlyMap<string, PathCategory<C>>;
@@ -47,9 +65,26 @@ export default abstract class CategoryPaths<C = Components> implements TargetPat
     if (!mapping) return PathTraverser.failed(null, target, `Unknown category: ${category}`);
     const component = components[mapping.key];
     if (!component) return PathTraverser.failed(null, target, `${this.labelOf[category]} holder not found`);
-    const data = readComponent(component, mapping.getter);
+    const data = PathTraverser.readComponent(component, mapping.getter);
     if (!data) return PathTraverser.failed(component, target, `${this.labelOf[category]} not found`);
     return this.traverser.traverse(component, rest, data, category, 0, [category]);
+  }
+
+  /**
+   * The value type of the path a modifier or requirement targets, among the catalog of its kind (`paths`), its operator
+   * and value checked against it, a template against the paths a template reads (`templatePaths`): refused as invalid
+   * with what's wrong.
+   */
+  checkTargetValue(
+    catalogs: { paths: TargetPathCatalog; templatePaths: TargetPathCatalog },
+    check: TargetCheck,
+  ): string {
+    return new PathChecks(this.getCategories(), catalogs.paths).checkValue(catalogs.templatePaths, check);
+  }
+
+  /** The completions of a partial path among a catalog's paths of `kind`, unpaged. */
+  completeTargetPath(catalog: TargetPathCatalog, kind: TargetPathKind, query: PathQuery): PathCompletion[] {
+    return new PathCompletions(this, catalog, kind).complete(query);
   }
 
   getCategories(): string[] {
@@ -112,5 +147,10 @@ export default abstract class CategoryPaths<C = Components> implements TargetPat
     } catch (error) {
       return PathTraverser.failed(null, target, `Failed to traverse path: ${error}`);
     }
+  }
+
+  /** A target path validated like a language server, among a catalog's paths: a valid one carries its definition. */
+  validateTargetPath(catalog: TargetPathCatalog, path: string): PathValidationResult {
+    return new PathChecks(this.getCategories(), catalog).validate(path);
   }
 }

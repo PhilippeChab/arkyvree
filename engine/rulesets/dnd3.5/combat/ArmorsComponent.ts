@@ -1,4 +1,4 @@
-import type { ItemFields } from "@/engine/rulesets/dnd3.5/items/itemFields.ts";
+import { type ItemFieldValues } from "@/engine/rulesets/dnd3.5/items/ItemFields.ts";
 import type { Item } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -27,7 +27,7 @@ export default class ArmorsComponent {
     return this.armors;
   }
 
-  registerArmor(item: Item, fields: ItemFields): void {
+  registerArmor(item: Item, fields: ItemFieldValues): void {
     if (fields.armor.proficiency === null) return;
 
     const acBonus = fields.armor.acBonus ?? 0;

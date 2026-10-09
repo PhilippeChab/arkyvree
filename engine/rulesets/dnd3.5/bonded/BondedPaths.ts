@@ -1,6 +1,6 @@
 import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import type { Dnd35Components } from "@/engine/rulesets/dnd3.5/character/components.ts";
+import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/character/CharacterComponents.ts";
 import { NUMERIC_REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 import { BONDED_KINDS } from "@/shared/dnd3.5/bondedKinds.ts";

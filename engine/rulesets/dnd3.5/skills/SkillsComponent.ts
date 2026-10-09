@@ -8,7 +8,7 @@ import { computeLevelSkillPoints } from "@/shared/dnd3.5/skills.ts";
 import { type RulesetAbility, type Skill } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-import type { SkillFields } from "./skillFields.ts";
+import { type SkillFieldValues } from "./SkillFields.ts";
 
 type SkillsData = {
   [key: string]: {
@@ -25,22 +25,22 @@ type SkillsData = {
   };
 };
 
-/**
- * Whether the skill `name` is a subtype of one of `names`: a subtype names itself "<base> (<variant>)", and a
- * user-authored ruleset can nest them ("Knowledge (Arcana) (Ancient)"), so every " (" is a possible base's end.
- */
-export function isSkillSubtypeOf(name: string, names: Set<string>): boolean {
-  for (let idx = name.indexOf(" ("); idx > 0; idx = name.indexOf(" (", idx + 1))
-    if (names.has(name.slice(0, idx))) return true;
-
-  return false;
-}
-
 export default class SkillsComponent {
   constructor(
     private readonly abilities: AbilitiesComponent,
     private readonly classes: ClassesComponent,
   ) {}
+
+  /**
+   * Whether the skill `name` is a subtype of one of `names`: a subtype names itself "<base> (<variant>)", and a
+   * user-authored ruleset can nest them ("Knowledge (Arcana) (Ancient)"), so every " (" is a possible base's end.
+   */
+  static isSubtypeOf(name: string, names: Set<string>): boolean {
+    for (let idx = name.indexOf(" ("); idx > 0; idx = name.indexOf(" (", idx + 1))
+      if (names.has(name.slice(0, idx))) return true;
+
+    return false;
+  }
 
   /** Each skill's key ability, by the skill's slug. */
   private readonly abilityNameBySkill = new Map<string, string>();
@@ -192,7 +192,7 @@ export default class SkillsComponent {
     rulesetSkills: Skill[],
     rulesetAbilities: RulesetAbility[],
     raceSize: string,
-    skillFields?: Map<string, SkillFields>,
+    skillFields?: Map<string, SkillFieldValues>,
   ) {
     this.raceSize = raceSize;
     const classes = this.classes.getClasses();
@@ -219,7 +219,7 @@ export default class SkillsComponent {
     // Also mark subtypes of class skills as innate.
     for (const skill of rulesetSkills) {
       if (this.innateSkillIds.has(skill.id)) continue;
-      if (isSkillSubtypeOf(skill.name, allKlassSkillNames)) this.innateSkillIds.add(skill.id);
+      if (SkillsComponent.isSubtypeOf(skill.name, allKlassSkillNames)) this.innateSkillIds.add(skill.id);
     }
 
     // Convert stored points to actual ranks per class-level.
@@ -234,7 +234,7 @@ export default class SkillsComponent {
       for (const level of klass.levels) {
         for (const skill of level.skills) {
           const isClassSkillById = klassSkillIds.has(skill.id);
-          const isClassSkillByName = !isClassSkillById && isSkillSubtypeOf(skill.name, klassSkillNames);
+          const isClassSkillByName = !isClassSkillById && SkillsComponent.isSubtypeOf(skill.name, klassSkillNames);
           const isClassSkillForKlass = isClassSkillById || isClassSkillByName;
           const ranksGained = isClassSkillForKlass ? skill.rank : skill.rank / 2;
           const current = this.rankBySkillId.get(skill.id) ?? 0;

@@ -114,7 +114,7 @@ Available families: `FEAT_FAMILIES` in `shared/dnd3.5/feats.ts`, the `FEAT_FAMIL
 - Feat type families, each named like its type: `metamagic`, `itemcreation`, `luck`, and Complete Arcane's `draconic` feats, by their "Draconic …" name
 - Class feature families: `turnorrebukeundead`, `wildshape`, `favoredenemy`, and the features each class seeds as its own feat, "Sneak Attack (Rogue)" (`CLASS_FEATURE_FAMILIES`, which `CLASS_FEAT_FAMILIES` in `codegen/dnd3.5/tools/vocabulary/classFeatFamilies.ts` matches): `animalcompanion`, `bardicmusic`, `evasion`, `flurryofblows`, `grace`, `inspirecourage`, `kipower`, `layonhands`, `poisonuse`, `rage`, `skirmish`, `smiteevil`, `sneakattack`, `suddenstrike`, `summonfamiliar`, `trapfinding`
 
-Grouping paths are generated from the families (`FeatsPaths`' `generateFamilyPaths`: `FEAT_FAMILIES` plus the ruleset's `FEAT_FAMILY` property values) — no manual path registration needed. `FeatGroupingsComponent` holds each family's feats, which those paths read on the sheet. The parser's generator writes a check of a family by its own name ("Weapon Specialization") as a check of any of its feats (`resolveFamilyChecks`), and a count of it ("Sneak attack +2d6") as the family's count.
+Grouping paths are generated from the families (`FeatsPaths`' `generateFamilyPaths`: `FEAT_FAMILIES` plus the ruleset's `FEAT_FAMILY` property values) — no manual path registration needed. `FeatGroupingsComponent` holds each family's feats, which those paths read on the sheet. The parser's generator writes a check of a family by its own name ("Weapon Specialization") as a check of any of its feats (`FeatSeeds.familyChecks`), and a count of it ("Sneak attack +2d6") as the family's count.
 
 ### Skill sub-type wildcards (`skills.<prefix>*.rank`)
 
@@ -155,7 +155,7 @@ Example: `"Martial Weapon Proficiency: Battleaxe"` → `"martialweaponproficienc
 
 ## Auto-Generated Customization
 
-Some entities get properties, requirements, or feats generated. Spells, skills and class levels get theirs when they're saved, from the engine's plan of the save (`planPowerSave`, `planSkillSave`, `planClassLevelSave`: `engine/rulesets/dnd3.5/powers/powerEntity.ts` with `powers/powerFields.ts` and `powers/spellGenerator.ts`, `skills/skillEntity.ts`, `classes/classEntity.ts`). Weapons, armors and shields get theirs from their type's definition when the content packages write them (`content/dnd3.5/builders/items/weapons.ts`, `armor.ts`). They're an item's fields: `readItemFields` reads them (`engine/rulesets/dnd3.5/items/itemFields.ts`, which the inventory and the equipping check read with), and `toItemProperties` gives them back as rows, which a test holds every seeded item's to. Saving an item plans its slot only (`planItemSave`: an armor's the torso, a shield's the off hand). An item made from a template stores only the types it overrides, and `RulesetData.itemProperties` merges its rows with the template's before they're read.
+Some entities get properties, requirements, or feats generated. Spells, skills and class levels get theirs when they're saved, from the engine's plan of the save (`planPowerSave`, `planSkillSave`, `planClassLevelSave`: `engine/rulesets/dnd3.5/powers/PowerEntity.ts` with `powers/PowerFields.ts` and `powers/SpellGenerator.ts`, `skills/SkillEntity.ts`, `classes/ClassEntity.ts`). Weapons, armors and shields get theirs from their type's definition when the content packages write them (`content/dnd3.5/builders/items/weapons.ts`, `armor.ts`). They're an item's fields: `ItemFields.read` reads them (`engine/rulesets/dnd3.5/items/ItemFields.ts`, which the inventory and the equipping check read with), and `ItemFields.toProperties` gives them back as rows, which a test holds every seeded item's to. Saving an item plans its slot only (`planItemSave`: an armor's the torso, a shield's the off hand). An item made from a template stores only the types it overrides, and `RulesetData.itemProperties` merges its rows with the template's before they're read.
 
 Every save's plan takes one shape, `EntityWrites` (`engine/core/module/writes.ts`): it says what to write beside the entity's row, without ids, and the service writes it in its transaction (`writeEntityWrites`, `server/services/rulesets/entityWrites.ts`).
 - `properties` gives the fields of the entity's form as its properties, in place of those of the same types it stored before. Its other properties stay.
@@ -188,7 +188,7 @@ Properties generated from `WEAPON_TYPE_DEFINITIONS` in `content/dnd3.5/builders/
 | `WEAPON_DOUBLE_DAMAGE`     | _(double weapons: the other end's dice, a quarterstaff's 1d6)_ |
 | `WEAPON_REACH`             | _(only if > 0)_                     |
 
-How the engine reads a weapon's attack (`combat/Attacks.ts`), the SRD's rules:
+How the engine reads a weapon's attack (`combat/concerns/Attacks.ts`), the SRD's rules:
 - A **ranged weapon** (`WEAPON_RANGED`: bows, crossbows, slings, darts, javelins, bolas, nets, shuriken) attacks with Dexterity. Any other attacks with Strength, or with Dexterity when it's `WEAPON_FINESSABLE` and the character has a feat with `FEAT_WEAPON_FINESSE` (Weapon Finesse), if that's better: a carried shield's armor check penalty applies to that Dexterity (a shield the character is proficient with: another's costs every attack already).
 - A **composite bow** (a bow with a `WEAPON_MIGHTY`, 0 for the seeded ones) takes −2 to attack when the character's Strength bonus is below its rating. A plain bow, without one, never does.
 - A **melee weapon with a range increment** (`WEAPON_RANGE`: daggers, throwing axes, spears…) can also be thrown: its weapon slot carries a `thrown` attack with Dexterity, which the sheets list as a second row.
@@ -197,9 +197,9 @@ How the engine reads a weapon's attack (`combat/Attacks.ts`), the SRD's rules:
 - A **crossbow** takes two hands to load: held in one (main or off hand), it fires at its `WEAPON_ONE_HANDED_PENALTY`, −2 for a light crossbow and −4 for a heavy one, a repeating one as the crossbow of its size. A hand crossbow, made for one hand, has none.
 - **The gear** (`tohit.gearpenalty`, on every attack): the armor check penalty of each armor and shield worn without proficiency, and −2 with a tower shield, for its bulk.
 - A weapon with `WEAPON_ONE_HAND_TRAINING` (the bastard sword, the dwarven waraxe) is **too large for one hand without training**: the inventory refuses it there, unless forced, when the character lacks its proficiency in one hand: its proficiency read in no hand (`areRequirementsMet(…, { sourceId: null })`), which a dwarf's familiarity meets and what only two hands give doesn't. Without, it's "as impossible as wielding a greatsword one-handed" (FAQ), not a −4.
-- A weapon whose `WEAPON_SIZE` is Large is **two-handed**: the inventory refuses it in one hand (`checkEquipping`, `items/equipping.ts`), whatever the wielder's size. The bows are Large: "you need at least two hands to use a bow, regardless of its size".
+- A weapon whose `WEAPON_SIZE` is Large is **two-handed**: the inventory refuses it in one hand (`checkEquipping`, `items/Equipping.ts`), whatever the wielder's size. The bows are Large: "you need at least two hands to use a bow, regardless of its size".
 - **Thrown weapons and slings** (a ranged weapon Strength adds to by the hand, so not a bow or a crossbow) take `combat.throwing.tohit` to attack, and so does a melee weapon's thrown attack: a halfling's +1.
-- **Natural attacks** (a bonded creature's, by its stat block in `bondedRaceData.ts`): each sits in a set's main or off hand for the sheets, which label it Primary or Secondary, but the hand doesn't count. A primary attack adds its whole Strength bonus to damage, one and a half when it's the creature's only attack. A secondary one takes `combat.naturalattacks.secondarypenalty` (−5) to attack and adds half. Each attacks once a round, whatever the base attack bonus. The first primary one also makes `combat.naturalattacks.extraattacks` extra attacks, each at −5. An animal companion's Multiattack sets the penalty to −2 with three or more attacks (`combat.naturalattacks.count`), and gives one extra primary attack with fewer.
+- **Natural attacks** (a bonded creature's, by its stat block in `BondedRaceData.ts`): each sits in a set's main or off hand for the sheets, which label it Primary or Secondary, but the hand doesn't count. A primary attack adds its whole Strength bonus to damage, one and a half when it's the creature's only attack. A secondary one takes `combat.naturalattacks.secondarypenalty` (−5) to attack and adds half. Each attacks once a round, whatever the base attack bonus. The first primary one also makes `combat.naturalattacks.extraattacks` extra attacks, each at −5. An animal companion's Multiattack sets the penalty to −2 with three or more attacks (`combat.naturalattacks.count`), and gives one extra primary attack with fewer.
 - **Two weapons**: when a set holds an equipped weapon in each hand (an unarmed strike or a natural attack doesn't count), each weapon slot carries a `twoweapon` attack, which the sheets list as more rows: the main hand's attacks with `combat.twoweapon.mainhandpenalty` (−6), the off hand's first attack and `combat.twoweapon.offhandattacks` − 1 more, each 5 lower, with `combat.twoweapon.offhandpenalty` (−10). A light off-hand weapon lessens both penalties by 2, and so does a one-handed one with a feat with `FEAT_OVERSIZED_TWO_WEAPON_FIGHTING` (Complete Adventurer's Oversized Two-Weapon Fighting). The feats change these fields through modifiers. A **double weapon** (`WEAPON_DOUBLE_DAMAGE`) held in two hands fights as two weapons too, its other end a light off-hand one: its `twoweapon` attacks are the main end's, with its whole Strength bonus (its row's damage), and its `offend` the other end's, with its own dice and half the Strength bonus. A sling counts as a one-handed weapon, not a light one (its size is Medium).
 
 Proficiency requirements (on the item, checked at equip time):
@@ -209,7 +209,7 @@ Proficiency requirements (on the item, checked at equip time):
 
 The engine reads a weapon's proficiency of the inventory entry holding it (`areRequirementsMet(…, { sourceId })`), so `weapon.wielded`, like the rest of an item's own weapon's paths (`weapon.tohit.*`, `weapon.damage.*`), is read of that entry. An item held in two places (a dagger in each hand, a bastard sword in two weapon sets) is a weapon in each, each with its own proficiency, and an item's modifier on its weapon behind a gate reaches each weapon whose gate is met there (`sourcesOf`): a bonus gated on `weapon.wielded == mainhand` goes to the main-hand dagger, not the off-hand one. A race's proficiencies are its modifiers: the elf's martial ones (longsword, rapier, longbow and shortbow, composite ones included).
 
-An item's proficiency is its base item's requirements: its template's, or its own when it's a template. An equipped weapon whose proficiency is unmet isn't proficient: −4 to hit, and nothing else (its modifiers still apply). Its own requirements on top of a template, or a plain item's, are its other requirements: unmet, its own modifiers don't apply, and it keeps its proficiency (the loader's `toCustomizedInventory`, `engine/rulesets/dnd3.5/loading/customizations.ts`).
+An item's proficiency is its base item's requirements: its template's, or its own when it's a template. An equipped weapon whose proficiency is unmet isn't proficient: −4 to hit, and nothing else (its modifiers still apply). Its own requirements on top of a template, or a plain item's, are its other requirements: unmet, its own modifiers don't apply, and it keeps its proficiency (the loader's `Customizations.toCustomizedInventory`, `engine/rulesets/dnd3.5/loading/Customizations.ts`).
 
 ### Armor (type = "Armor")
 
@@ -249,7 +249,7 @@ Proficiency requirements:
 
 ### Class Levels
 
-Properties auto-generated by `planClassLevelSave` (`classes/classLevelFields.ts`: `toClassLevelProperties`):
+Properties auto-generated by `planClassLevelSave` (`classes/ClassLevelFields.ts`: `ClassLevelFields.toProperties`):
 
 | Property Type              | Description                              |
 |----------------------------|------------------------------------------|
@@ -263,7 +263,7 @@ On update: changing BAB progression or skill points re-syncs the properties (del
 
 ### Skills
 
-Properties auto-generated from the skill form's fields by `planSkillSave`. They're a skill's fields: `readSkillFields` reads them (`engine/rulesets/dnd3.5/skills/skillFields.ts`, which the skill API's description, `describeSkills`, and the character read with too), and the core rules' seeder writes them with `toSkillProperties` (`toEntityProperties`), as a save does:
+Properties auto-generated from the skill form's fields by `planSkillSave`. They're a skill's fields: `SkillFields.read` reads them (`engine/rulesets/dnd3.5/skills/SkillFields.ts`, which the skill API's description, `describeSkills`, and the character read with too), and the core rules' seeder writes them with `SkillFields.toProperties` (`toEntityProperties`), as a save does:
 - `SKILL_IMPACTED_BY_WEIGHT` — whether armor check penalty applies
 - `SKILL_CHECK_PENALTY_MULTIPLIER` — how many times over a skill armor weighs on takes the penalty (2 on Swim; absent means 1)
 - `SKILL_USABLE_WITHOUT_TRAINING` — whether untrained use is allowed
@@ -282,17 +282,17 @@ and its customizations, then creates the replacement in the same transaction.
 
 ### Races
 
-Properties the engine reads off a race (`combat/InitiativeAndSpeed.ts`, `combat/EncumbranceComponent.ts`), seeded where the SRD says so. They're a race's fields, which the components read with `readRaceFields` (`races/raceFields.ts`):
+Properties the engine reads off a race (`combat/concerns/InitiativeAndSpeed.ts`, `combat/EncumbranceComponent.ts`), seeded where the SRD says so. They're a race's fields, which the components read with `RaceFields.read` (`races/RaceFields.ts`):
 - `RACE_SPEED_IGNORES_ENCUMBRANCE` — the race keeps its speed in medium or heavy armor and under a medium or heavy load. The dwarf has it, through the parser's override (`reference/srd/races.json`).
 - `RACE_QUADRUPED` — the race walks on four legs, so it carries more for its size: ×¼ Fine to ×24 Colossal (×1½ Medium, ×3 Large) instead of a biped's ×⅛ to ×16. The four-legged familiars, animal companions and special mounts have it (`data/bonds/raceProperties.ts`); birds, bats and snakes don't.
 
 ### Rulesets
 
-A ruleset's own property, `RULESET_SKILL_POINT_ABILITY_ID`: the ability its characters' skill points come from, Intelligence in the seeds. It's the ruleset's field, which the character's loader reads with `readRulesetFields` (`ruleset/rulesetFields.ts`), over the rows of the ruleset's chain, and which the core rules' seeder writes with `toRulesetProperties` (`toEntityProperties`). A fork copies its source's rows as they are.
+A ruleset's own property, `RULESET_SKILL_POINT_ABILITY_ID`: the ability its characters' skill points come from, Intelligence in the seeds. It's the ruleset's field, which the character's loader reads with `RulesetFields.read` (`ruleset/RulesetFields.ts`), over the rows of the ruleset's chain, and which the core rules' seeder writes with `RulesetFields.toProperties` (`toEntityProperties`). A fork copies its source's rows as they are.
 
 ### Spells / Powers
 
-Properties auto-generated from spell form fields by `planPowerSave`. They're a power's fields: `readPowerFields` reads them (`powers/powerFields.ts`, which the power groupings read a spell's school and descriptors with too), and `toPowerProperties` builds their rows:
+Properties auto-generated from spell form fields by `planPowerSave`. They're a power's fields: `PowerFields.read` reads them (`powers/PowerFields.ts`, which the power groupings read a spell's school and descriptors with too), and `PowerFields.toProperties` builds their rows:
 
 | Property Type | Description |
 |---|---|
@@ -311,7 +311,7 @@ On create: with a school, generates the properties from the form's fields, and t
 On update: replaces the generated property types (the spell's fields) with the form's, none without a school, and creates the feats of a school that's new. The spell's other properties remain, and so do existing school feats.
 On delete: cleans up the spell's customizations. School feats remain even if the school has no spells left.
 
-Feats auto-generated per unique school by `planPowerSave` (`buildSpellFocusFeats`, `powers/spellGenerator.ts`):
+Feats auto-generated per unique school by `planPowerSave` (`SpellGenerator.buildSpellFocusFeats`, `powers/SpellGenerator.ts`):
 - `Spell Focus: <school>` — +1 `powers.groups.<stripped_school>.*.dc.misc`, linked to General aptitude
 - `Greater Spell Focus: <school>` — +1 `powers.groups.<stripped_school>.*.dc.misc`, requires `feats.spellfocus<stripped_school>.possessed == true`, linked to General aptitude
 - Created idempotently (skipped if already exist for the school)

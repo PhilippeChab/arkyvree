@@ -1,7 +1,7 @@
 import type { Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-import { readFeatFields } from "./featFields.ts";
+import FeatFields from "./FeatFields.ts";
 import type FeatsComponent from "./FeatsComponent.ts";
 import type { FeatEntry } from "./FeatsComponent.ts";
 import { FAMILY_COUNT } from "./FeatsPaths.ts";
@@ -28,7 +28,7 @@ export default class FeatGroupingsComponent {
 
   /** The feat in each family its properties name. */
   registerFeat(feat: { name: string }, properties: Property[]): void {
-    for (const familyName of readFeatFields(properties).families) {
+    for (const familyName of FeatFields.read(properties).families) {
       const normalizedFamily = stripSeparators(familyName);
 
       // Derive variant key: strip "Family: " prefix from feat name

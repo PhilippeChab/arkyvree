@@ -16,6 +16,11 @@ export default class RulesError extends Error {
     this.issues = issues;
   }
 
+  /** Refuses what a character fails, when it fails anything: its issues, their messages as the refusal's own. */
+  static refuseIssues(issues: ValidationIssue[]) {
+    if (issues.length > 0) throw new RulesError("invalid", issues.map((issue) => issue.message).join("; "), issues);
+  }
+
   readonly issues?: ValidationIssue[];
 
   readonly refusal: Refusal;

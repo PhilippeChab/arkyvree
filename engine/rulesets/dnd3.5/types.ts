@@ -8,7 +8,6 @@
  */
 
 import type { RulesetModule } from "@/engine/core/module/index.ts";
-import type { RulesetData } from "@/engine/core/view/index.ts";
 import type { BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
 import type {
   Aptitude,
@@ -117,36 +116,6 @@ export type CustomizedRace = Race & {
   properties: Property[];
   requirements: Requirement[];
 };
-
-/** 3.5 level-up projector — generic surface + 3.5 skill-points / schools / ranks. */
-export interface Dnd35LevelUpProjector {
-  /** Each planned level's points per level before the minimum, in the batch's order (class + ability modifier). */
-  computeSkillPointBasesPerLevel(klassLevelIds: string[], rulesetData: RulesetData): number[];
-  /** Each klass level's skill points, the skill point ability's modifier included, four times over at the first level. */
-  computeSkillPointsPerLevel(klassLevelIds: string[], existingLevelCount: number, rulesetData: RulesetData): number[];
-  /** Whether each candidate class level's requirements are met by the character with the planned levels too. */
-  evaluateClassAvailability(
-    candidates: { klassLevel: KlassLevel; klassName: string; requirementGroups: Requirement[][] }[],
-    projectedCharacterLevel: ProjectedCharacterLevel,
-  ): Map<string, boolean>;
-  /** Enriches a skill list with class-skill flags and current rank — 3.5 skill ranks. */
-  getCharacterEnrichedSkills<T extends { id: string; name: string }>(
-    allSkills: T[],
-    classSkillIds: Set<string>,
-  ): (T & { currentRank: number; isClassSkill: boolean; isCurrentClassSkill: boolean })[];
-  /** Keyed-by-name 3.5 skill data (rank, innate/class-skill flags). */
-  getCharacterSkills(): Record<string, unknown>;
-  /**
-   * The wizard spells of the schools the character's feats prohibit, and of those the client names; none for another
-   * pool.
-   */
-  getExcludedPowerIds(aptitudeId: string, clientExcludeSchools: string[], rulesetData: RulesetData): string[];
-  /** 3.5 skill-points budget — a 3.5-native concept (skill points per level
-   *  × INT mod, doubled at first level), not universal. */
-  getSkillBudget(): { available: number; perlevel: number; spent: number; total: number };
-  /** Every level's points per level before the minimum, in the budget's order, and the bonus each adds. */
-  getSkillPointBases(): { bonusPerLevel: number; pointsPerLevel: number[] };
-}
 
 /** 3.5 projected character data — extends the generic shape with 3.5 skill/power rows. */
 export interface Dnd35ProjectedCharacterData extends ProjectedCharacterData {

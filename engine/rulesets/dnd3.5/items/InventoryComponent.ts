@@ -11,8 +11,8 @@ import {
   type Requirement,
 } from "@/shared/relations.ts";
 
-import { readItemFields } from "./itemFields.ts";
-import { getInventorySlot } from "./slots.ts";
+import InventorySlots from "./InventorySlots.ts";
+import ItemFields from "./ItemFields.ts";
 
 type InventoryData = Record<string, InventorySlotData> & {
   weaponsets: WeaponSetInventory;
@@ -66,7 +66,7 @@ export default class InventoryComponent {
     for (const entry of inventory) {
       if (!entry.equipped) continue;
 
-      const slot = getInventorySlot(entry.item.type, entry.location);
+      const slot = InventorySlots.getSlot(entry.item.type, entry.location);
       if (!slot) continue;
 
       const propertiesMap: Record<string, string> = {};
@@ -75,7 +75,7 @@ export default class InventoryComponent {
         else propertiesMap[prop.type] = prop.value;
       }
 
-      const fields = readItemFields(entry.item.properties);
+      const fields = ItemFields.read(entry.item.properties);
       const isArmor = entry.item.type === "Armor";
       const isShield = entry.item.type === "Shield";
       const isWeapon = entry.item.type === "Weapon";

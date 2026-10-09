@@ -1,7 +1,7 @@
 import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import type { Dnd35Components } from "@/engine/rulesets/dnd3.5/character/components.ts";
-import { collectClassListIds } from "@/engine/rulesets/dnd3.5/spellcasting/spellLists.ts";
+import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/character/CharacterComponents.ts";
+import SpellLists from "@/engine/rulesets/dnd3.5/spellcasting/SpellLists.ts";
 import { getNumericOperators } from "@/shared/customization/operators.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
@@ -133,7 +133,7 @@ export default class AptitudesPaths implements PathCategory<Dnd35Components> {
 
   /** The leveled aptitudes: those with spells at a level, and those a class gives slots in before they have any. */
   private leveledAptitudeIds(rulesetData: RulesetData) {
-    const leveledAptitudeIds = collectClassListIds(rulesetData);
+    const leveledAptitudeIds = SpellLists.collectClassListIds(rulesetData);
     for (const power of rulesetData.powers)
       for (const pa of power.powersAptitudesInRules) if (pa.level != null) leveledAptitudeIds.add(pa.aptitudeId);
 
