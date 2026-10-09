@@ -500,10 +500,11 @@ engine/rulesets/
     │   │                                  edit stores; Equipping: what equipping an item checks)
     │   └── sheet/                         (the printed sheet, in React PDF: CharacterSheet and its pages, SheetFormat)
     ├── levelUp/                           ← the module's `levelUp`: a class per operation on a base, LevelUpState:
-    │                                      the view, class level lookups; its concern: ChecksSelections;
-    │                                      LevelUpPlan: the preview,
-    │                                      and a save's levels checked, its picks spread over them (AptitudeSlotsPlan,
-    │                                      PicksDistribution); LevelEdit: a saved level's edit, and the issues it
+    │                                      the view, class level lookups, the steps' shapes; its concern:
+    │                                      ChecksSelections; PlannedLevelsState: the planned levels and what they
+    │                                      give (AptitudeSlotsPlan), which LevelUpPreview (the wizard's preview) and
+    │                                      LevelUpPlan (a save's levels checked, its picks spread over them,
+    │                                      PicksDistribution) build on; LevelEdit: a saved level's edit, and the issues it
     │                                      answers for; LevelRemoval: the last level removed; LevelUpSteps: the
     │                                      wizard's steps; LevelSelections: a saved level's selections; BondedPlans:
     │                                      what a master's creatures become as its levels change; Dnd35LevelUp: the
@@ -513,8 +514,8 @@ engine/rulesets/
     │                                      LevelPicker, the level they pick at; RacePicker, a new character's)
     ├── content/                           ← the module's `content`: Dnd35Content, what the seeders and the codegen
     │                                      ask: BookPaths, EntityProperties
-    └── rules/                             (the tables and rules several sides read: LevelRules, sizes, carrying,
-                                           combat)
+    └── rules/                             (the tables and rules several sides read: LevelRules, SkillRules, sizes,
+                                           carrying, combat)
 ```
 
 In the server: what reads the rows an operation takes (`server/services/characters/characterInputs.ts`: `readCharacterInput`, `readBondedInputs`), and what writes what an operation plans (`server/services/rulesets/entityWrites.ts`: `writeEntityWrites`; `levels/bondedWrites.ts`: `writeBondedCreatures`). The PDF job (`server/jobs/generatePdf.ts`) and the shared PDF route render the document `character(input).describeSheet` answers. The server names no ruleset and builds no character: it reads, asks the engine and writes. Each of its actions asks the engine one operation, which answers it whole (`arkyvree/one-engine-op`): a plan carries what it answers once written, a picker or a list its filters, a description all its page shows. It binds the engine to the view as its scope gives it (`Engine.for(scope)`), reading of it only the copy-on-write data (`rulesetData.cow`: the source chain its reads filter by, what `EntityNames` and `CustomizationEdit` check and write by; `arkyvree/opaque-view`).
@@ -557,7 +558,7 @@ server/
 
 - Uses 3.5 concepts in types/signatures: `rank`, `powerLevel` as spell level 0–9, `saveName` as Fortitude/Reflex/Will, class-skill distinctions, wizard prohibited schools, BAB progression.
 - References named classes/spells/feats/mechanics: "Wizard Spells", "Fighter Bonus Feat", "Power Attack", "specialization school".
-- Computes a 3.5-shaped result: `{ total, available, spent, perlevel }` skill budget, a `computeSkillPointsPerLevel` in the level-up (`LevelUpPlan`), etc.
+- Computes a 3.5-shaped result: `{ total, available, spent, perlevel }` skill budget, a `computeSkillPointsPerLevel` in the level-up (`PlannedLevelsState`), etc.
 - Imports from `@/engine/rulesets/dnd3.5/*` or casts to a `Dnd35*` type.
 
 ### The type split pattern
@@ -688,7 +689,7 @@ export default class SkillEntity {
 }
 ```
 
-A small rule several of a ruleset's modules share, a constant or a predicate, is the ruleset's own (`levels/LevelRules.ts`: `isAbilityIncreaseLevel`, `countGeneralFeats`, `GENERAL_FEATS_APTITUDE`), which they import: it's no part of the contract.
+A small rule several of a ruleset's modules share, a constant or a predicate, is the ruleset's own (`rules/LevelRules.ts`: `isAbilityIncreaseLevel`, `countGeneralFeats`, `GENERAL_FEATS_APTITUDE`; `rules/SkillRules.ts`: a level's skill points, a rank's cost, a skill's most ranks), which they import: it's no part of the contract.
 
 A bound the client and the API check too is a constant of the ruleset's shared vocabulary, which every side reads instead of writing the number: `MAX_SPELL_LEVEL` (`shared/dnd3.5/spells.ts`) for the aptitudes' spell levels, the spellcasting and the spell forms, `MAX_CLASS_LEVEL` (`shared/dnd3.5/classes.ts`) for the class-level forms and the bonus caster levels, `MAX_ABILITY_SCORE` (`shared/dnd3.5/abilities.ts`) for a new character's ability scores and the sheet's, and `MAX_ITEM_VARIANTS` (`shared/itemTemplates.ts`) for the variants form. The routes read them through the engine (`RULESET_LIMITS`), and a character's last level with them (`MAX_CHARACTER_LEVEL`, `shared/dnd3.5/classes.ts`: the most levels a level-up saves).
 
@@ -724,7 +725,7 @@ A ruleset is a module under `engine/rulesets/<ruleset>/`, which the engine's han
 2. **Write its character** in `engine/rulesets/<ruleset>/character/`: its state (`CharacterState`), the concerns that build and validate it, its components and how they're wired (`CharacterComponents.build`), `DetailedCharacter`, which includes the concerns, and what builds one of its row's kind from its input (`CharacterBuilder.build`). 3.5's are typed against its own components and rows: a second ruleset writes its own, taking the engine's machinery (the evaluators, the paths, the module contract).
 3. **Write its target paths**: a `CategoryPaths` subclass (`Dnd35TargetPaths`) over its categories, one `PathCategory` per domain (`AbilitiesPaths`, `CombatPaths`, …), which `createTargetPaths` returns and the evaluators walk; and its property types (`Dnd35PropertyTypes`), which `createPropertyTypes` returns: the types and values its rules read, which the core's `PropertyTypeCatalog` lists with those the ruleset's own properties use. See [target-paths.md](./target-paths.md).
 4. **Write its entities**: a fields spec for each entity whose fields its rules keep in properties (`entities/skills/fields.ts`), the entity class that describes it and plans its saves (`skills/SkillEntity.ts`), a class's parts, which its kind hands out (3.5's `ClassEntity`: `levels()`, `skills()`, `table()`), and the body's fields and bounds a route validates with (`entityFields.ts`: `ENTITY_FIELDS`, `RULESET_LIMITS`), which join 3.5's in what `engine/index.ts` exports; and its `ruleset` part, what a ruleset needs to be played (3.5's `Dnd35Ruleset`), with the ruleset's own fields (`ruleset/fields.ts`).
-5. **Write its level-up**: a class per operation on a base of what they share (3.5's `LevelUpState`, its concerns, and `LevelUpPlan`, `LevelEdit`, `LevelRemoval`, `LevelUpSteps`, the pickers…), and the class its `levelUp` part is, which opens them (`Dnd35LevelUp`).
+5. **Write its level-up**: a class per operation on a base of what they share (3.5's `LevelUpState`, its concerns, and `LevelUpPreview`, `LevelUpPlan`, `LevelEdit`, `LevelRemoval`, `LevelUpSteps`, the pickers…), and the class its `levelUp` part is, which opens them (`Dnd35LevelUp`).
 6. **Register the module**: add it to `MODULES` in `engine/api/Modules.ts` (`Modules.of`), keyed by its base rules (`BaseRules`, `shared/enums.ts`): until it is, the engine doesn't compile.
 7. **Write its content**: `content/<ruleset>/` (its builders and its data), the package that seeds it (`database/packages/`), and, for books it scrapes, its codegen (`codegen/<ruleset>/`). See [packages.md](./packages.md).
 

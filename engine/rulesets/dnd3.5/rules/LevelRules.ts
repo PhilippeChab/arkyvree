@@ -20,8 +20,4 @@ export default class LevelRules {
   static isAbilityIncreaseLevel(totalLevel: number): boolean {
     return (totalLevel + 1) % 4 === 0;
   }
-
-  isAbilityIncreaseLevel(totalLevel: number): boolean {
-    return LevelRules.isAbilityIncreaseLevel(totalLevel);
-  }
 }
