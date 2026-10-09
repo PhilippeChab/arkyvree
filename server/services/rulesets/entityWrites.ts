@@ -5,9 +5,7 @@ import { CustomizationEdit, EntityRepositories, type RulesetScope } from "@/serv
 import type { Db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import {
-  FeatsAptitudes,
   Modifiers,
-  PowersAptitudes,
   Properties,
   Requirements,
   RULESET_ENTITY_TYPES,
@@ -16,22 +14,7 @@ import {
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
 
 import { hasCharacterPicks } from "./characterPicks.ts";
-
-/** The tables an entity's list links are kept in, by the entity's: a feat's pools, a power's lists. */
-const LIST_LINKS: Partial<
-  Record<RulesetEntityType, (tx: Db, entityId: string, aptitudeIds: string[]) => Promise<unknown>>
-> = {
-  feats: (tx, featId, aptitudeIds) =>
-    FeatsAptitudes.createMany(
-      tx,
-      aptitudeIds.map((aptitudeId) => ({ aptitudeId, featId })),
-    ),
-  powers: (tx, powerId, aptitudeIds) =>
-    PowersAptitudes.createMany(
-      tx,
-      aptitudeIds.map((aptitudeId) => ({ aptitudeId, level: null, powerId })),
-    ),
-};
+import { createListLinks } from "./listLinks.ts";
 
 /** An entity's table, as a plan names it: refused when it isn't a ruleset entity's. */
 function entityTypeOf(type: string): RulesetEntityType {
@@ -47,11 +30,7 @@ function entityTypeOf(type: string): RulesetEntityType {
 async function makeEntity(tx: Db, scope: RulesetScope, made: MadeEntity) {
   const type = entityTypeOf(made.type);
   const [entity] = await EntityRepositories.of(type).create(tx, { ...made.columns, rulesetId: scope.ruleset.id });
-  if (made.aptitudeIds.length > 0) {
-    const link = LIST_LINKS[type];
-    if (!link) throw new Error(`A ${type} entity has no lists`);
-    await link(tx, entity.id, made.aptitudeIds);
-  }
+  await createListLinks(tx, type, entity.id, made.links);
   const owner = { entityId: entity.id, entityType: type };
   await Modifiers.createMany(
     tx,

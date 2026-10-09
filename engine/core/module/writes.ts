@@ -31,13 +31,19 @@ export interface EntityWrites {
   requirement?: RequirementWrite;
 }
 
+/** A list an entity is linked to (`aptitudeId`), and its level on it (a power's spell level on a class's list). */
+export interface ListLink {
+  aptitudeId: string;
+  level?: number | null;
+}
+
 /**
  * An entity a save makes with the one it saves, in the same ruleset: its table (`type`), its row's columns, the lists it's
- * linked to (`aptitudeIds`), and its modifiers, properties and requirements.
+ * linked to (`links`), and its modifiers, properties and requirements.
  */
 export interface MadeEntity {
-  aptitudeIds: string[];
   columns: Record<string, unknown> & { description: string; name: string };
+  links: ListLink[];
   modifiers: Pick<Modifier, "operator" | "target" | "value" | "valueType">[];
   properties: PropertyValue[];
   requirements: RequirementWrite[];

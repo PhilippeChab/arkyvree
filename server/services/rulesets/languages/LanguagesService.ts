@@ -1,17 +1,15 @@
-import { getTableName } from "drizzle-orm";
-
 import { languagesInRules } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
-import { EntityEdit, EntityNames, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
-import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
+import { withRulesetScope } from "@/server/cow/index.ts";
+import { db } from "@/server/database/index.ts";
 import { Languages } from "@/server/repositories/index.ts";
-import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
-import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import { hasCharacterPicks } from "@/server/services/rulesets/characterPicks.ts";
+import EntitySaves from "@/server/services/rulesets/EntitySaves.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class LanguagesService {
+  /** What its creates, updates and deletes write, in one order around the plans its rules give. */
+  private readonly saves = new EntitySaves("languages", Languages, languagesInRules, "Language");
+
   async createLanguage(
     session: Session,
     rulesetId: string,
@@ -21,72 +19,16 @@ class LanguagesService {
       type: string;
     },
   ) {
-    const result = await withTransaction(
-      async (tx) =>
-        await withRulesetScope(tx, rulesetId, async (scope) => {
-          const { ruleset, rulesetData } = scope;
-          (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
-
-          const plan = Engine.for(scope).entities("languages").planCreate(body);
-          const names = new EntityNames(ruleset, rulesetData.cow);
-          const { tombstoneAncestorId } = await names.assertNameAvailable(tx, "languages", plan.name);
-
-          const rows = await Languages.create(tx, { ...plan.columns, rulesetId });
-          const language = rows[0];
-
-          if (tombstoneAncestorId) await names.repointTombstone(tx, "languages", tombstoneAncestorId, language.id);
-
-          await createActivityWithNotifications(tx, {
-            userId: session.userId,
-            targetId: language.id,
-            targetTable: getTableName(languagesInRules),
-            type: "createLanguage",
-            data: { entityName: language.name },
-          });
-
-          return language;
-        }),
+    const { row } = await this.saves.create(session, rulesetId, body.name, (scope) =>
+      Engine.for(scope).entities("languages").planCreate(body),
     );
-    RulesetViews.invalidate(rulesetId);
-    return result;
+    return row;
   }
 
   async deleteLanguage(session: Session, rulesetId: string, languageId: string) {
-    const result = await withTransaction(
-      async (tx) =>
-        await withRulesetScope(tx, rulesetId, async (scope) => {
-          const { ruleset } = scope;
-
-          const inUse = await hasCharacterPicks(
-            tx,
-            "languages",
-            scope.rulesetData.cow.getEquivalentIds(languageId),
-            rulesetId,
-          );
-          (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
-
-          const { entity: language } = Engine.for(scope).entities("languages").planDelete(languageId);
-
-          const edit = new EntityEdit(ruleset);
-          const targetId = await edit.cowToDelete(tx, "languages", language);
-
-          // The database deletes its customizations with it.
-          const rows = await Languages.delete(tx, { id: targetId });
-          const deletedLanguage = rows[0];
-
-          await createActivityWithNotifications(tx, {
-            userId: session.userId,
-            targetId,
-            targetTable: getTableName(languagesInRules),
-            type: "deleteLanguage",
-            data: { rulesetId, entityName: language.name },
-          });
-
-          return deletedLanguage;
-        }),
+    return await this.saves.delete(session, rulesetId, languageId, (scope) =>
+      Engine.for(scope).entities("languages").planDelete(languageId),
     );
-    RulesetViews.invalidate(rulesetId);
-    return result;
   }
 
   async getLanguage(rulesetId: string, languageId: string) {
@@ -123,40 +65,10 @@ class LanguagesService {
       updatedAt?: string;
     },
   ) {
-    const result = await withTransaction(
-      async (tx) =>
-        await withRulesetScope(tx, rulesetId, async (scope) => {
-          const { ruleset } = scope;
-
-          (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
-
-          const { columns, entity: language } = Engine.for(scope).entities("languages").planEdit(languageId, body);
-
-          const edit = new EntityEdit(ruleset);
-          const { id: targetId, copied } = await edit.cowToEdit(tx, "languages", language);
-          const expectedUpdatedAt = copied ? undefined : body.updatedAt;
-
-          const rows = await Languages.update(tx, columns, { id: targetId, expectedUpdatedAt });
-          if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
-
-          const updatedLanguage = rows[0];
-
-          await createActivityWithNotifications(tx, {
-            userId: session.userId,
-            targetId,
-            targetTable: getTableName(languagesInRules),
-            type: "updateLanguage",
-            data: {
-              entityName: body.name,
-              changedFields: getChangedFields(language, body),
-            },
-          });
-
-          return updatedLanguage;
-        }),
+    const { row } = await this.saves.update(session, rulesetId, body, (scope) =>
+      Engine.for(scope).entities("languages").planEdit(languageId, body),
     );
-    RulesetViews.invalidate(rulesetId);
-    return result;
+    return row;
   }
 }
 

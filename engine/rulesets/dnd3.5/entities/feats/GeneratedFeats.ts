@@ -22,8 +22,8 @@ export default class GeneratedFeats {
     const aptitudeId = rulesetData.aptitudeIdBySlug.get(LevelRules.GENERAL_FEATS_APTITUDE_SLUG);
     if (!aptitudeId || rulesetData.feats.some((feat) => feat.name === unlessPresent)) return [];
     return feats.map(({ description, modifiers, name, properties, requirements }) => ({
-      aptitudeIds: [aptitudeId],
       columns: { description, generated: true, name },
+      links: [{ aptitudeId }],
       modifiers,
       properties,
       requirements,

@@ -1,17 +1,15 @@
-import { getTableName } from "drizzle-orm";
-
 import { aptitudesInRules } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
-import { EntityEdit, EntityNames, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
-import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
+import { withRulesetScope } from "@/server/cow/index.ts";
+import { db } from "@/server/database/index.ts";
 import { Aptitudes } from "@/server/repositories/index.ts";
-import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
-import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import { hasCharacterPicks } from "@/server/services/rulesets/characterPicks.ts";
+import EntitySaves from "@/server/services/rulesets/EntitySaves.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class AptitudesService {
+  /** What its creates, updates and deletes write, in one order around the plans its rules give. */
+  private readonly saves = new EntitySaves("aptitudes", Aptitudes, aptitudesInRules, "Aptitude");
+
   async createAptitude(
     session: Session,
     rulesetId: string,
@@ -20,74 +18,16 @@ class AptitudesService {
       name: string;
     },
   ) {
-    const result = await withTransaction(
-      async (tx) =>
-        await withRulesetScope(tx, rulesetId, async (scope) => {
-          const { ruleset, rulesetData } = scope;
-          (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
-
-          const plan = Engine.for(scope).entities("aptitudes").planCreate(body);
-          const names = new EntityNames(ruleset, rulesetData.cow);
-          const { tombstoneAncestorId } = await names.assertNameAvailable(tx, "aptitudes", plan.name);
-
-          const rows = await Aptitudes.create(tx, { ...plan.columns, rulesetId });
-          const aptitude = rows[0];
-
-          if (tombstoneAncestorId) await names.repointTombstone(tx, "aptitudes", tombstoneAncestorId, aptitude.id);
-
-          await createActivityWithNotifications(tx, {
-            userId: session.userId,
-            targetId: aptitude.id,
-            targetTable: getTableName(aptitudesInRules),
-            type: "createAptitude",
-            data: { entityName: aptitude.name },
-          });
-
-          return aptitude;
-        }),
+    const { row } = await this.saves.create(session, rulesetId, body.name, (scope) =>
+      Engine.for(scope).entities("aptitudes").planCreate(body),
     );
-    RulesetViews.invalidate(rulesetId);
-    return result;
+    return row;
   }
 
   async deleteAptitude(session: Session, rulesetId: string, aptitudeId: string) {
-    const result = await withTransaction(
-      async (tx) =>
-        await withRulesetScope(tx, rulesetId, async (scope) => {
-          const { ruleset } = scope;
-
-          const inUse = await hasCharacterPicks(
-            tx,
-            "aptitudes",
-            scope.rulesetData.cow.getEquivalentIds(aptitudeId),
-            rulesetId,
-          );
-          (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
-
-          const { entity: aptitude } = Engine.for(scope).entities("aptitudes").planDelete(aptitudeId);
-
-          const edit = new EntityEdit(ruleset);
-          const targetId = await edit.cowToDelete(tx, "aptitudes", aptitude);
-
-          // FK CASCADE on feats_aptitudes / powers_aptitudes / klass_level_feats /
-          // klass_level_powers wipes the join rows pointing at this aptitude.
-          // The database deletes its customizations with it.
-          const rows = await Aptitudes.delete(tx, { id: targetId });
-          const deletedAptitude = rows[0];
-
-          await createActivityWithNotifications(tx, {
-            userId: session.userId,
-            targetId,
-            targetTable: getTableName(aptitudesInRules),
-            type: "deleteAptitude",
-            data: { rulesetId, entityName: aptitude.name },
-          });
-
-          return deletedAptitude;
-        }),
+    return await this.saves.delete(session, rulesetId, aptitudeId, (scope) =>
+      Engine.for(scope).entities("aptitudes").planDelete(aptitudeId),
     );
-    RulesetViews.invalidate(rulesetId);
-    return result;
   }
 
   async getAptitude(rulesetId: string, aptitudeId: string) {
@@ -124,40 +64,10 @@ class AptitudesService {
       updatedAt?: string;
     },
   ) {
-    const result = await withTransaction(
-      async (tx) =>
-        await withRulesetScope(tx, rulesetId, async (scope) => {
-          const { ruleset } = scope;
-
-          (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
-
-          const { columns, entity: aptitude } = Engine.for(scope).entities("aptitudes").planEdit(aptitudeId, body);
-
-          const edit = new EntityEdit(ruleset);
-          const { id: targetId, copied } = await edit.cowToEdit(tx, "aptitudes", aptitude);
-          const expectedUpdatedAt = copied ? undefined : body.updatedAt;
-
-          const rows = await Aptitudes.update(tx, columns, { id: targetId, expectedUpdatedAt });
-          if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
-
-          const updatedAptitude = rows[0];
-
-          await createActivityWithNotifications(tx, {
-            userId: session.userId,
-            targetId,
-            targetTable: getTableName(aptitudesInRules),
-            type: "updateAptitude",
-            data: {
-              entityName: body.name,
-              changedFields: getChangedFields(aptitude, body),
-            },
-          });
-
-          return updatedAptitude;
-        }),
+    const { row } = await this.saves.update(session, rulesetId, body, (scope) =>
+      Engine.for(scope).entities("aptitudes").planEdit(aptitudeId, body),
     );
-    RulesetViews.invalidate(rulesetId);
-    return result;
+    return row;
   }
 }
 

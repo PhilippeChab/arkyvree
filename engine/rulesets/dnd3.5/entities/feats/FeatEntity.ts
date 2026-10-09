@@ -60,8 +60,8 @@ export default class FeatEntity extends RulesetEntity<"feats"> {
       throw new RulesError("invalid", "At least one aptitude must be selected for the feat");
     this.checkPools(body.aptitudeIds);
     return {
-      aptitudeIds: body.aptitudeIds,
       columns: { description: body.description, generated: reads.tombstoneGenerated, name: body.name },
+      links: body.aptitudeIds.map((aptitudeId) => ({ aptitudeId })),
     };
   }
 
@@ -75,9 +75,9 @@ export default class FeatEntity extends RulesetEntity<"feats"> {
     if (body.name !== feat.name && feat.generated) throw new RulesError("invalid", "Generated feats cannot be renamed");
     if (body.aptitudeIds?.length) this.checkPools(body.aptitudeIds);
     return {
-      aptitudeIds: body.aptitudeIds,
       columns: { description: body.description, name: body.name },
       entity: feat,
+      links: body.aptitudeIds?.map((aptitudeId) => ({ aptitudeId })),
     };
   }
 }
