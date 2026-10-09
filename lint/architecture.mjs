@@ -11,7 +11,7 @@
  *   written with) import nothing of its data. The codegen (`codegen/`) isn't the server's, and stores nothing; the
  *   server reads none of `database/`, `content/` and `codegen/`. `shared/` imports nothing app-specific (the schema's
  *   types only), and the client takes only types from the server.
- * - `engine-front-door`: code outside `engine/` enters it through `engine/index.ts`, its operations and their types, as
+ * - `engine-front-door`: code outside `engine/` enters it through `engine/index.ts`, `Engine` and its handles' types, as
  *   the client enters the server through its API; a test may reach any of its modules.
  * - `one-engine-op`: a service's or a job's action (a method, a function) asks the engine one operation, which answers
  *   it whole: what it plans, it describes, and what it checks, it refuses. A second one is a rule the server composes.
@@ -170,7 +170,7 @@ function createEngineFrontDoor(context) {
   // The engine's own modules import each other; a test may reach any of them
   if (file.startsWith("engine/") || file.startsWith("tests/")) return {};
   const message =
-    "Code outside engine/ enters it through engine/index.ts, its operations and their types, as the client enters " +
+    "Code outside engine/ enters it through engine/index.ts, `Engine` and its handles' types, as the client enters " +
     "the server through its API.";
   return onImports((node, spec) => {
     const target = targetOf(file, spec);
