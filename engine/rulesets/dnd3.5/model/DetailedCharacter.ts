@@ -1,7 +1,7 @@
 import ModifierEvaluator from "@/engine/core/modifiers/ModifierEvaluator.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
-import FeatFields from "@/engine/rulesets/dnd3.5/entities/feats/FeatFields.ts";
+import { FEAT_FIELDS } from "@/engine/rulesets/dnd3.5/entities/feats/fields.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import { include } from "@/lib/mixins.ts";
 import type { Character, KlassLevel, Requirement } from "@/shared/relations.ts";
@@ -57,7 +57,7 @@ export default class DetailedCharacter extends include(CharacterState, Builds, P
 
   /** The schools the character's feats prohibit its wizard spells from: picked, granted, planned or from its modifiers. */
   getProhibitedSchools(): string[] {
-    return this.feats.flatMap((feat) => FeatFields.read(feat.properties).prohibitedSchools);
+    return this.feats.flatMap((feat) => FEAT_FIELDS.read(feat.properties).prohibitedSchools);
   }
 
   getSpellcasting(): { arcane: number; divine: number } {

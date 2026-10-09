@@ -7,33 +7,22 @@ import { HIT_DIE_VALUES, MAX_CHARACTER_LEVEL, MAX_CLASS_LEVEL, MAX_SAVE_BASE } f
 import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
 import { MAX_ITEM_VARIANTS } from "@/shared/itemTemplates.ts";
 
+import { CLASS_LEVEL_FIELDS } from "./classes/fields.ts";
+import { POWER_FIELDS } from "./powers/fields.ts";
+import { SKILL_FIELDS } from "./skills/fields.ts";
+
 /** A class's hit die. */
 const HIT_DIE = z.literal(HIT_DIE_VALUES, { error: () => `Hit die must be one of: ${HIT_DIE_VALUES.join(", ")}` });
 
 /**
  * The fields of an entity's body the ruleset's rules take, as the shapes a route validates a body with, by entity:
- * a class's hit die, a class level's base attack and skill points, a spell's fields and a skill's.
+ * a class's hit die (a column), and a class level's, a spell's and a skill's fields, as their codecs read them.
  */
 export const ENTITY_FIELDS = {
   klasses: { hd: HIT_DIE.optional() },
-  klassLevels: { bab: z.number().int().min(0), skills: z.number().int().min(1) },
-  powers: {
-    school: z.string().optional(),
-    subschool: z.string().optional(),
-    descriptors: z.array(z.string()).optional(),
-    castingTime: z.string().optional(),
-    rangeType: z.string().optional(),
-    target: z.string().optional(),
-    areaOfEffect: z.string().optional(),
-    duration: z.string().optional(),
-    spellResistance: z.string().optional(),
-    components: z.array(z.string()).optional(),
-  },
-  skills: {
-    impactedByWeight: z.boolean(),
-    checkPenaltyMultiplier: z.number().int().min(1),
-    usableWithoutTraining: z.boolean(),
-  },
+  klassLevels: CLASS_LEVEL_FIELDS.shape(),
+  powers: POWER_FIELDS.shape({ optional: true }),
+  skills: SKILL_FIELDS.shape(),
 };
 
 /**

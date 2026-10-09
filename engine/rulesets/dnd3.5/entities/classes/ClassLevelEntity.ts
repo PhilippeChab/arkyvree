@@ -7,7 +7,7 @@ import ClassesPaths from "@/engine/rulesets/dnd3.5/model/classes/ClassesPaths.ts
 import type { KlassLevel } from "@/shared/relations.ts";
 
 import ClassEntity from "./ClassEntity.ts";
-import ClassLevelFields, { CLASS_LEVEL_FIELD_PROPERTY_TYPES, type ClassLevelFieldValues } from "./ClassLevelFields.ts";
+import { CLASS_LEVEL_FIELDS, type ClassLevelFieldValues } from "./fields.ts";
 
 /** A class level's save, as its form sends it: its fields, the feats it grants and its saves' base bonuses. */
 type ClassLevelBody = Partial<ClassLevelFieldValues> & {
@@ -83,12 +83,9 @@ export default class ClassLevelEntity {
       };
     }
     if (level.bab === undefined && level.skills === undefined) return writes;
-    const kept = ClassLevelFields.read(before?.properties ?? []);
-    const fields = { bab: level.bab ?? kept.bab, skills: level.skills ?? kept.skills };
-    return {
-      ...writes,
-      properties: { types: CLASS_LEVEL_FIELD_PROPERTY_TYPES, values: ClassLevelFields.toProperties(fields) },
-    };
+    const kept = CLASS_LEVEL_FIELDS.read(before?.properties ?? []);
+    const fields = CLASS_LEVEL_FIELDS.merge(kept, { bab: level.bab, skills: level.skills });
+    return { ...writes, properties: CLASS_LEVEL_FIELDS.write(fields) };
   }
 
   /** Class levels with the fields their properties keep: those given (`properties`, a save's), or the view's. */
@@ -100,7 +97,7 @@ export default class ClassLevelEntity {
     ),
   ): (T & ClassLevelFieldValues)[] {
     const propertiesByLevelId = Map.groupBy(properties, (property) => property.entityId);
-    return levels.map((level) => ({ ...level, ...ClassLevelFields.read(propertiesByLevelId.get(level.id) ?? []) }));
+    return levels.map((level) => ({ ...level, ...CLASS_LEVEL_FIELDS.read(propertiesByLevelId.get(level.id) ?? []) }));
   }
 
   /** A class's level with its details: refused when the class isn't the ruleset's, or the level isn't the class's. */
@@ -142,7 +139,7 @@ export default class ClassLevelEntity {
   static planCreate(view: RulesetView, klassId: string, body: ClassLevelBody & { level: number }) {
     const klass = ClassEntity.find(view, klassId);
     const writes = ClassLevelEntity.planSave(klass, body);
-    const fields = ClassLevelFields.read(writes.properties?.values ?? []);
+    const fields = CLASS_LEVEL_FIELDS.read(writes.properties?.values ?? []);
     return {
       ...ClassLevelEntity.joinRows(body),
       columns: { level: body.level },
@@ -168,7 +165,7 @@ export default class ClassLevelEntity {
     const level = ClassLevelEntity.findLevel(view, klass, levelId, "Level not found for this class");
     const kept = view.rulesetData.propertiesByEntity.get(level.id) ?? [];
     const writes = ClassLevelEntity.planSave(klass, body, { properties: kept });
-    const fields = ClassLevelFields.read(writes.properties?.values ?? kept);
+    const fields = CLASS_LEVEL_FIELDS.read(writes.properties?.values ?? kept);
     return {
       ...ClassLevelEntity.joinRows(body),
       describe: (id: string) => ({ ...level, id, ...fields }),

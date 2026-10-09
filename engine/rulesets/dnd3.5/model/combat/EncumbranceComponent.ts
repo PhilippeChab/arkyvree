@@ -1,4 +1,4 @@
-import RaceFields from "@/engine/rulesets/dnd3.5/entities/races/RaceFields.ts";
+import { RACE_FIELDS } from "@/engine/rulesets/dnd3.5/entities/races/fields.ts";
 import type AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
 import type { CustomizedRace } from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
 import {
@@ -108,7 +108,7 @@ export default class EncumbranceComponent {
 
   initialize(inventory: RawInventoryEntry[], race: CustomizedRace): void {
     this.raceSize = race.size;
-    this.quadruped = RaceFields.read(race.properties).quadruped;
+    this.quadruped = RACE_FIELDS.read(race.properties).quadruped;
 
     let totalWeight = 0;
     for (const entry of inventory) {

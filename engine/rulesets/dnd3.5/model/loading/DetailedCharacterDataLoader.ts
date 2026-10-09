@@ -1,6 +1,6 @@
 import { type CharacterRows } from "@/engine/core/module/index.ts";
 import { type RulesetData, type RulesetView } from "@/engine/core/view/index.ts";
-import { type SkillFieldValues } from "@/engine/rulesets/dnd3.5/entities/skills/SkillFields.ts";
+import { type SkillFieldValues } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
 import type { ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/model/projection.ts";
 import type {
   Aptitude,

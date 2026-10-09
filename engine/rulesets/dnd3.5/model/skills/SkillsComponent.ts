@@ -1,4 +1,4 @@
-import { type SkillFieldValues } from "@/engine/rulesets/dnd3.5/entities/skills/SkillFields.ts";
+import { SKILL_FIELDS, type SkillFieldValues } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
 import type AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/ClassesComponent.ts";
 import type { ArmorsData } from "@/engine/rulesets/dnd3.5/model/combat/ArmorsComponent.ts";
@@ -243,10 +243,11 @@ export default class SkillsComponent {
     }
 
     for (const skill of rulesetSkills) {
-      const fields = skillFields?.get(skill.id);
-      const usableWithoutTraining = fields?.usableWithoutTraining ?? true;
+      // A skill without its fields' rows has their defaults: armor doesn't weigh on it, and it needs training
+      const fields = SKILL_FIELDS.normalize(skillFields?.get(skill.id) ?? SKILL_FIELDS.defaults);
+      const { usableWithoutTraining } = fields;
       // How many times over the skill takes the armor check penalty: none when armor doesn't weigh on it
-      const checkPenaltyMultiplier = fields?.impactedByWeight ? (fields.checkPenaltyMultiplier ?? 1) : 0;
+      const checkPenaltyMultiplier = fields.impactedByWeight ? fields.checkPenaltyMultiplier : 0;
       const invested = this.rankBySkillId.get(skill.id) ?? 0;
       const abilityName = abilityNameById.get(skill.primaryAbilityId) ?? "";
       this.abilityNameBySkill.set(stripSeparators(skill.name), abilityName);

@@ -2,7 +2,7 @@ import ModifierEvaluator from "@/engine/core/modifiers/ModifierEvaluator.ts";
 import type { CharacterRows } from "@/engine/core/module/index.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import { type RulesetData, type RulesetView } from "@/engine/core/view/index.ts";
-import FeatFields from "@/engine/rulesets/dnd3.5/entities/feats/FeatFields.ts";
+import { FEAT_FIELDS } from "@/engine/rulesets/dnd3.5/entities/feats/fields.ts";
 import type CharacterState from "@/engine/rulesets/dnd3.5/model/CharacterState.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import FeatsPaths from "@/engine/rulesets/dnd3.5/model/feats/FeatsPaths.ts";
@@ -123,7 +123,7 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
       return rulesetData.feats.some(
         (feat) =>
           (this.components.feats.getFeat(feat.name)?.possessed ?? false) &&
-          FeatFields.read(rulesetData.propertiesByEntity.get(feat.id) ?? [])[rule],
+          FEAT_FIELDS.read(rulesetData.propertiesByEntity.get(feat.id) ?? [])[rule],
       );
     }
 

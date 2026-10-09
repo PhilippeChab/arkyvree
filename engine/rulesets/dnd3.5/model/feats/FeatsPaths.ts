@@ -1,6 +1,6 @@
 import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import FeatFields from "@/engine/rulesets/dnd3.5/entities/feats/FeatFields.ts";
+import { FEAT_FIELDS } from "@/engine/rulesets/dnd3.5/entities/feats/fields.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
 import { NUMERIC_REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
@@ -129,7 +129,7 @@ export default class FeatsPaths implements PathCategory<Dnd35Components> {
       FEAT_FAMILIES.map((family) => [stripSeparators(family), family]),
     );
     // Every family a feat of the ruleset names
-    for (const family of FeatFields.read(rulesetData.propertiesByEntityType.get("feats") ?? []).families)
+    for (const family of FEAT_FIELDS.read(rulesetData.propertiesByEntityType.get("feats") ?? []).families)
       featGroupingLabels[stripSeparators(family)] = family;
 
     return featGroupingLabels;

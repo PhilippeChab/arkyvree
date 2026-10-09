@@ -1,4 +1,4 @@
-import { type WeaponFields } from "@/engine/rulesets/dnd3.5/entities/items/ItemFields.ts";
+import { type WeaponFields } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import { UNARMED_STRIKE } from "@/engine/rulesets/dnd3.5/rules/combat.ts";
 import { stripSeparators } from "@/shared/text.ts";
 

@@ -1,4 +1,4 @@
-import ItemFields from "@/engine/rulesets/dnd3.5/entities/items/ItemFields.ts";
+import { ITEM_FIELDS } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import type ArmorsComponent from "@/engine/rulesets/dnd3.5/model/combat/ArmorsComponent.ts";
 import type CombatComponent from "@/engine/rulesets/dnd3.5/model/combat/CombatComponent.ts";
 import type ShieldsComponent from "@/engine/rulesets/dnd3.5/model/combat/ShieldsComponent.ts";
@@ -75,7 +75,7 @@ export default class InventoryComponent {
         else propertiesMap[prop.type] = prop.value;
       }
 
-      const fields = ItemFields.read(entry.item.properties);
+      const fields = ITEM_FIELDS.read(entry.item.properties);
       const isArmor = entry.item.type === "Armor";
       const isShield = entry.item.type === "Shield";
       const isWeapon = entry.item.type === "Weapon";

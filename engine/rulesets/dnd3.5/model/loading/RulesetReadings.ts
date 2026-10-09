@@ -2,9 +2,9 @@
 
 import type { CharacterRows } from "@/engine/core/module/index.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import ClassFields from "@/engine/rulesets/dnd3.5/entities/classes/ClassFields.ts";
-import RulesetFields from "@/engine/rulesets/dnd3.5/entities/ruleset/RulesetFields.ts";
-import SkillFields from "@/engine/rulesets/dnd3.5/entities/skills/SkillFields.ts";
+import { CLASS_FIELDS } from "@/engine/rulesets/dnd3.5/entities/classes/fields.ts";
+import { RULESET_FIELDS } from "@/engine/rulesets/dnd3.5/entities/ruleset/fields.ts";
+import { SKILL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellLists.ts";
 
 /** What a character's load reads of its ruleset: its lists, its properties and its ability scores. */
@@ -37,7 +37,7 @@ export default class RulesetReadings {
     const klassBonusSpellAbilityMap = new Map<string, string>();
     const klassCasterTypeMap = new Map<string, "Arcane" | "Divine">();
     for (const klassId of klassEntityIds) {
-      const { bonusSpellAbilityId, casterType } = ClassFields.read(rulesetData.propertiesByEntity.get(klassId) ?? []);
+      const { bonusSpellAbilityId, casterType } = CLASS_FIELDS.read(rulesetData.propertiesByEntity.get(klassId) ?? []);
       const abilityName = bonusSpellAbilityId ? abilityLookup.get(bonusSpellAbilityId) : undefined;
       if (abilityName) klassBonusSpellAbilityMap.set(klassId, abilityName);
       if (casterType) klassCasterTypeMap.set(klassId, casterType);
@@ -69,11 +69,11 @@ export default class RulesetReadings {
       rulesetData.propertiesByEntityType.get("skills") ?? [],
       (row) => row.entityId,
     );
-    const skillFields = new Map([...propertiesBySkillId].map(([skillId, rows]) => [skillId, SkillFields.read(rows)]));
+    const skillFields = new Map([...propertiesBySkillId].map(([skillId, rows]) => [skillId, SKILL_FIELDS.read(rows)]));
 
     // The skill-point ability is a field of whichever ruleset in the source chain declares it (usually the base), so read
     // every "rulesets"-scoped row rather than just the fork's own
-    const { skillPointAbilityId: storedId } = RulesetFields.read(
+    const { skillPointAbilityId: storedId } = RULESET_FIELDS.read(
       rulesetData.propertiesByEntityType.get("rulesets") ?? [],
     );
     const skillPointAbilityId = storedId ? resolveId(storedId) : null;

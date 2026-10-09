@@ -1,4 +1,4 @@
-import { NO_WEAPON_FIELDS, type WeaponFields } from "@/engine/rulesets/dnd3.5/entities/items/ItemFields.ts";
+import { ITEM_FIELDS, type WeaponFields } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/ClassesComponent.ts";
 import type CombatState from "@/engine/rulesets/dnd3.5/model/combat/CombatState.ts";
 import {
@@ -467,7 +467,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
         const slot = slots[idx % slots.length];
         const displayName = attack.count && attack.count > 1 ? `${attack.name} (x${attack.count})` : attack.name;
         const fields: WeaponFields = {
-          ...NO_WEAPON_FIELDS,
+          ...ITEM_FIELDS.defaults.weapon,
           proficiency: NATURAL_PROFICIENCY,
           baseDamage: attack.damage,
           damageTypes: [attack.type],

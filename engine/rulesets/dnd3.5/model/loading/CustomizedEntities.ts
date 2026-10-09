@@ -2,7 +2,7 @@
 
 import type { CharacterRows } from "@/engine/core/module/index.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import ClassLevelFields from "@/engine/rulesets/dnd3.5/entities/classes/ClassLevelFields.ts";
+import { CLASS_LEVEL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/classes/fields.ts";
 import type {
   CharacterInventory,
   Feat,
@@ -204,7 +204,7 @@ export default class CustomizedEntities {
       .sort((a, b) => a.level - b.level);
 
     const klassLevelProperties = new Map(
-      klassLevels.map((level) => [level.id, ClassLevelFields.read(level.properties)]),
+      klassLevels.map((level) => [level.id, CLASS_LEVEL_FIELDS.read(level.properties)]),
     );
     return { klassLevels, klassLevelProperties };
   }

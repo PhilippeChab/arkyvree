@@ -1,7 +1,7 @@
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import ClassLevelFields from "@/engine/rulesets/dnd3.5/entities/classes/ClassLevelFields.ts";
+import { CLASS_LEVEL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/classes/fields.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import type { ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/model/projection.ts";
@@ -182,7 +182,7 @@ export default class LevelUpPlan extends include(LevelUpState, ChecksSelections,
     const { skills } = character.components;
     return klassLevelIds.map((klassLevelId) =>
       skills.getLevelPointsPerLevel(
-        ClassLevelFields.read(this.rulesetData.propertiesByEntity.get(klassLevelId) ?? []).skills,
+        CLASS_LEVEL_FIELDS.read(this.rulesetData.propertiesByEntity.get(klassLevelId) ?? []).skills,
       ),
     );
   }

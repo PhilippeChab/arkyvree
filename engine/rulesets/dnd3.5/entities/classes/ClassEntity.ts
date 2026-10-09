@@ -2,9 +2,8 @@
 
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import { KLASS_BONUS_SPELL_ABILITY_ID, KLASS_CASTER_TYPE } from "@/shared/dnd3.5/properties/index.ts";
 
-import ClassFields from "./ClassFields.ts";
+import { CLASS_FIELDS } from "./fields.ts";
 
 /** A class as the ruleset describes it, and what its save stores. */
 export default class ClassEntity {
@@ -15,14 +14,14 @@ export default class ClassEntity {
   static describe(view: RulesetView, klassId: string) {
     const klass = ClassEntity.find(view, klassId);
     const properties = view.rulesetData.propertiesByEntity.get(klass.id) ?? [];
-    const { bonusSpellAbilityId, casterType } = ClassFields.read(properties);
-    const idOf = (type: string) => properties.find((property) => property.type === type)?.id ?? null;
+    const { bonusSpellAbilityId, casterType } = CLASS_FIELDS.read(properties);
+    const propertyIds = CLASS_FIELDS.readIds(properties);
     return {
       ...klass,
       bonusSpellAbilityId,
-      bonusSpellPropertyId: idOf(KLASS_BONUS_SPELL_ABILITY_ID),
+      bonusSpellPropertyId: propertyIds.bonusSpellAbilityId,
       casterTypeValue: casterType,
-      casterTypePropertyId: idOf(KLASS_CASTER_TYPE),
+      casterTypePropertyId: propertyIds.casterType,
     };
   }
 
