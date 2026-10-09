@@ -36,7 +36,7 @@ export default class PowerEntity extends RulesetEntity<"powers"> {
   /** A power's row and pool links, from its form: a save names no spell's save but the one it gives. */
   private toRows({ aptitudes, description, name, saveEffect, saveId }: PowerBody) {
     return {
-      aptitudes: aptitudes?.map((aptitude) => ({ aptitudeId: aptitude.id, level: aptitude.level ?? null })),
+      links: aptitudes?.map((aptitude) => ({ aptitudeId: aptitude.id, level: aptitude.level ?? null })),
       columns: { description, name, saveEffect: saveEffect ?? null, saveId: saveId ?? null },
     };
   }
@@ -77,8 +77,8 @@ export default class PowerEntity extends RulesetEntity<"powers"> {
     if (!body.aptitudes || body.aptitudes.length === 0)
       throw new RulesError("invalid", "At least one aptitude must be selected for the power");
     this.checkPools(body.aptitudes);
-    const { aptitudes = [], columns } = this.toRows(body);
-    return { aptitudes, columns, writes: this.planSave(body) };
+    const { columns, links = [] } = this.toRows(body);
+    return { columns, links, writes: this.planSave(body) };
   }
 
   /**

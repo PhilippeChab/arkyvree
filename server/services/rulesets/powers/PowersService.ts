@@ -1,96 +1,31 @@
-import { getTableName } from "drizzle-orm";
-
 import { powersInRules } from "@/drizzle/schema.ts";
 import { Engine, type EntityKinds } from "@/engine/index.ts";
-import { EntityEdit, EntityNames, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
-import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
-import { Powers, PowersAptitudes } from "@/server/repositories/index.ts";
-import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
-import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import { hasCharacterPicks } from "@/server/services/rulesets/characterPicks.ts";
-import { writeEntityWrites } from "@/server/services/rulesets/entityWrites.ts";
+import { withRulesetScope } from "@/server/cow/index.ts";
+import { db } from "@/server/database/index.ts";
+import { Powers } from "@/server/repositories/index.ts";
+import EntitySaves from "@/server/services/rulesets/EntitySaves.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /** A power's body: its row's columns, its aptitude links, and its fields (`planPowerCreate`). */
 type PowerBody = Parameters<EntityKinds["powers"]["planCreate"]>[0] & { updatedAt?: string };
 
 class PowersService {
+  /** What its creates, updates and deletes write, in one order around the plans its rules give. */
+  private readonly saves = new EntitySaves("powers", Powers, powersInRules, "Power", (scope) => ({
+    baseRules: scope.ruleset.baseRules,
+  }));
+
   async createPower(session: Session, rulesetId: string, body: PowerBody) {
-    const result = await withTransaction(
-      async (tx) =>
-        await withRulesetScope(tx, rulesetId, async (scope) => {
-          const { ruleset, rulesetData } = scope;
-          (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
-
-          const names = new EntityNames(ruleset, rulesetData.cow);
-          const { tombstoneAncestorId } = await names.assertNameAvailable(tx, "powers", body.name);
-
-          const plan = Engine.for(scope).entities("powers").planCreate(body);
-          const rows = await Powers.create(tx, { ...plan.columns, rulesetId });
-          const power = rows[0];
-
-          if (tombstoneAncestorId) await names.repointTombstone(tx, "powers", tombstoneAncestorId, power.id);
-
-          await PowersAptitudes.createMany(
-            tx,
-            plan.aptitudes.map((aptitude) => ({ powerId: power.id, ...aptitude })),
-          );
-          await writeEntityWrites(tx, scope, { entityId: power.id, entityType: "powers" }, plan.writes);
-
-          await createActivityWithNotifications(tx, {
-            userId: session.userId,
-            targetId: power.id,
-            targetTable: getTableName(powersInRules),
-            type: "createPower",
-            data: { baseRules: ruleset.baseRules, entityName: power.name },
-          });
-
-          return power;
-        }),
+    const { row } = await this.saves.create(session, rulesetId, body.name, (scope) =>
+      Engine.for(scope).entities("powers").planCreate(body),
     );
-    RulesetViews.invalidate(rulesetId);
-    return result;
+    return row;
   }
 
   async deletePower(session: Session, rulesetId: string, powerId: string) {
-    const result = await withTransaction(
-      async (tx) =>
-        await withRulesetScope(tx, rulesetId, async (scope) => {
-          const { ruleset } = scope;
-
-          const inUse = await hasCharacterPicks(
-            tx,
-            "powers",
-            scope.rulesetData.cow.getEquivalentIds(powerId),
-            rulesetId,
-          );
-          (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
-
-          const { entity: power } = Engine.for(scope).entities("powers").planDelete(powerId);
-
-          const edit = new EntityEdit(ruleset);
-          const targetId = await edit.cowToDelete(tx, "powers", power);
-
-          // FK CASCADE on powers_aptitudes.power_id and klass_level_powers.power_id
-          // wipes those join rows when the power row is deleted.
-          // The database deletes its customizations with it.
-          const rows = await Powers.delete(tx, { id: targetId });
-          const deletedPower = rows[0];
-
-          await createActivityWithNotifications(tx, {
-            userId: session.userId,
-            targetId,
-            targetTable: getTableName(powersInRules),
-            type: "deletePower",
-            data: { baseRules: ruleset.baseRules, rulesetId, entityName: power.name },
-          });
-
-          return deletedPower;
-        }),
+    return await this.saves.delete(session, rulesetId, powerId, (scope) =>
+      Engine.for(scope).entities("powers").planDelete(powerId),
     );
-    RulesetViews.invalidate(rulesetId);
-    return result;
   }
 
   async getPower(rulesetId: string, powerId: string) {
@@ -125,55 +60,10 @@ class PowersService {
   }
 
   async updatePower(session: Session, rulesetId: string, powerId: string, body: PowerBody) {
-    const result = await withTransaction(
-      async (tx) =>
-        await withRulesetScope(tx, rulesetId, async (scope) => {
-          const { ruleset } = scope;
-
-          (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
-
-          const {
-            aptitudes,
-            columns,
-            entity: power,
-            writes,
-          } = Engine.for(scope).entities("powers").planEdit(powerId, body);
-
-          const edit = new EntityEdit(ruleset);
-          const { id: targetId, copied } = await edit.cowToEdit(tx, "powers", power);
-          const expectedUpdatedAt = copied ? undefined : body.updatedAt;
-
-          const rows = await Powers.update(tx, columns, { id: targetId, expectedUpdatedAt });
-          if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
-
-          const updatedPower = rows[0];
-
-          if (aptitudes !== undefined) {
-            await PowersAptitudes.delete(tx, { powerId: targetId });
-            await PowersAptitudes.createMany(
-              tx,
-              aptitudes.map((aptitude) => ({ powerId: targetId, ...aptitude })),
-            );
-          }
-          await writeEntityWrites(tx, scope, { entityId: targetId, entityType: "powers" }, writes);
-
-          await createActivityWithNotifications(tx, {
-            userId: session.userId,
-            targetId,
-            targetTable: getTableName(powersInRules),
-            type: "updatePower",
-            data: {
-              baseRules: ruleset.baseRules,
-              entityName: body.name,
-              changedFields: getChangedFields(power, body),
-            },
-          });
-
-          return updatedPower;
-        }),
+    const { row } = await this.saves.update(session, rulesetId, body, (scope) =>
+      Engine.for(scope).entities("powers").planEdit(powerId, body),
     );
-    RulesetViews.invalidate(rulesetId);
-    return result;
+    return row;
   }
 }
 

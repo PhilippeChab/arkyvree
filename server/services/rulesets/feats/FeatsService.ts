@@ -1,17 +1,15 @@
-import { getTableName } from "drizzle-orm";
-
 import { featsInRules } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
-import { EntityEdit, EntityNames, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
-import { type Db, db, withTransaction } from "@/server/database/index.ts";
-import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
-import { Feats, FeatsAptitudes } from "@/server/repositories/index.ts";
-import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
-import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import { hasCharacterPicks } from "@/server/services/rulesets/characterPicks.ts";
+import { withRulesetScope } from "@/server/cow/index.ts";
+import { type Db, db } from "@/server/database/index.ts";
+import { Feats } from "@/server/repositories/index.ts";
+import EntitySaves from "@/server/services/rulesets/EntitySaves.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class FeatsService {
+  /** What its creates, updates and deletes write, in one order around the plans its rules give. */
+  private readonly saves = new EntitySaves("feats", Feats, featsInRules, "Feat");
+
   /**
    * Whether the ancestor feat a fork deleted was generated, read by its stored id: a new feat with its name stands in
    * for it (`EntityNames.repointTombstone`), and takes its mark.
@@ -30,80 +28,22 @@ class FeatsService {
       name: string;
     },
   ) {
-    const result = await withTransaction(
-      async (tx) =>
-        await withRulesetScope(tx, rulesetId, async (scope) => {
-          const { ruleset, rulesetData } = scope;
-          (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
-
-          const names = new EntityNames(ruleset, rulesetData.cow);
-          const { tombstoneAncestorId } = await names.assertNameAvailable(tx, "feats", body.name);
-
-          // Named as an ancestor the fork deleted, the feat stands in for it (`EntityNames.repointTombstone`), checks
-          // finding it by that name
-          const plan = Engine.for(scope)
-            .entities("feats")
-            .planCreate(body, {
-              tombstoneGenerated: tombstoneAncestorId ? await this.wasGenerated(tx, tombstoneAncestorId) : false,
-            });
-          const rows = await Feats.create(tx, { ...plan.columns, rulesetId });
-          const feat = rows[0];
-
-          if (tombstoneAncestorId) await names.repointTombstone(tx, "feats", tombstoneAncestorId, feat.id);
-
-          for (const aptitudeId of plan.aptitudeIds) {
-            await FeatsAptitudes.create(tx, {
-              featId: feat.id,
-              aptitudeId,
-            });
-          }
-
-          await createActivityWithNotifications(tx, {
-            userId: session.userId,
-            targetId: feat.id,
-            targetTable: getTableName(featsInRules),
-            type: "createFeat",
-            data: { entityName: feat.name },
-          });
-
-          return feat;
+    const { row } = await this.saves.create(session, rulesetId, body.name, async (scope, { tombstoneAncestorId, tx }) =>
+      // Named as an ancestor the fork deleted, the feat stands in for it (`EntityNames.repointTombstone`), checks
+      // finding it by that name
+      Engine.for(scope)
+        .entities("feats")
+        .planCreate(body, {
+          tombstoneGenerated: tombstoneAncestorId ? await this.wasGenerated(tx, tombstoneAncestorId) : false,
         }),
     );
-    RulesetViews.invalidate(rulesetId);
-    return result;
+    return row;
   }
 
   async deleteFeat(session: Session, rulesetId: string, featId: string) {
-    const result = await withTransaction(
-      async (tx) =>
-        await withRulesetScope(tx, rulesetId, async (scope) => {
-          const { ruleset } = scope;
-          const inUse = await hasCharacterPicks(tx, "feats", scope.rulesetData.cow.getEquivalentIds(featId), rulesetId);
-          (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
-
-          const { entity: feat } = Engine.for(scope).entities("feats").planDelete(featId);
-
-          const edit = new EntityEdit(ruleset);
-          const targetId = await edit.cowToDelete(tx, "feats", feat);
-
-          // FK CASCADE on feats_aptitudes.feat_id and klass_level_feats.feat_id
-          // wipes those join rows when the feat row is deleted.
-          // The database deletes its customizations with it.
-          const rows = await Feats.delete(tx, { id: targetId });
-          const deletedFeat = rows[0];
-          await createActivityWithNotifications(tx, {
-            userId: session.userId,
-            targetId,
-            targetTable: getTableName(featsInRules),
-            type: "deleteFeat",
-            data: { rulesetId, entityName: feat.name },
-          });
-
-          return deletedFeat;
-        }),
+    return await this.saves.delete(session, rulesetId, featId, (scope) =>
+      Engine.for(scope).entities("feats").planDelete(featId),
     );
-    RulesetViews.invalidate(rulesetId);
-    return result;
   }
 
   async getFeat(rulesetId: string, featId: string) {
@@ -161,47 +101,10 @@ class FeatsService {
       updatedAt?: string;
     },
   ) {
-    const result = await withTransaction(
-      async (tx) =>
-        await withRulesetScope(tx, rulesetId, async (scope) => {
-          const { ruleset } = scope;
-          (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
-
-          const { aptitudeIds, columns, entity: feat } = Engine.for(scope).entities("feats").planEdit(featId, body);
-
-          const edit = new EntityEdit(ruleset);
-          const { id: targetId, copied } = await edit.cowToEdit(tx, "feats", feat);
-          const expectedUpdatedAt = copied ? undefined : body.updatedAt;
-
-          const rows = await Feats.update(tx, columns, { id: targetId, expectedUpdatedAt });
-          if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
-
-          const updatedFeat = rows[0];
-
-          if (aptitudeIds !== undefined) {
-            await FeatsAptitudes.delete(tx, { featId: targetId });
-            await FeatsAptitudes.createMany(
-              tx,
-              aptitudeIds.map((aptitudeId) => ({ featId: targetId, aptitudeId })),
-            );
-          }
-
-          await createActivityWithNotifications(tx, {
-            userId: session.userId,
-            targetId,
-            targetTable: getTableName(featsInRules),
-            type: "updateFeat",
-            data: {
-              entityName: body.name,
-              changedFields: getChangedFields(feat, body),
-            },
-          });
-
-          return updatedFeat;
-        }),
+    const { row } = await this.saves.update(session, rulesetId, body, (scope) =>
+      Engine.for(scope).entities("feats").planEdit(featId, body),
     );
-    RulesetViews.invalidate(rulesetId);
-    return result;
+    return row;
   }
 }
 

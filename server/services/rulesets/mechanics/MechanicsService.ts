@@ -1,16 +1,15 @@
-import { getTableName } from "drizzle-orm";
-
 import { mechanicsInRules } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
-import { EntityEdit, EntityNames, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
-import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
+import { withRulesetScope } from "@/server/cow/index.ts";
+import { db } from "@/server/database/index.ts";
 import { Mechanics } from "@/server/repositories/index.ts";
-import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
-import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import EntitySaves from "@/server/services/rulesets/EntitySaves.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class MechanicsService {
+  /** What its creates, updates and deletes write, in one order around the plans its rules give. */
+  private readonly saves = new EntitySaves("mechanics", Mechanics, mechanicsInRules, "Mechanic");
+
   async createMechanic(
     session: Session,
     rulesetId: string,
@@ -19,66 +18,16 @@ class MechanicsService {
       name: string;
     },
   ) {
-    const result = await withTransaction(
-      async (tx) =>
-        await withRulesetScope(tx, rulesetId, async (scope) => {
-          const { ruleset, rulesetData } = scope;
-          (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
-
-          const plan = Engine.for(scope).entities("mechanics").planCreate(body);
-          const names = new EntityNames(ruleset, rulesetData.cow);
-          const { tombstoneAncestorId } = await names.assertNameAvailable(tx, "mechanics", plan.name);
-
-          const rows = await Mechanics.create(tx, { ...plan.columns, rulesetId });
-          const mechanic = rows[0];
-
-          if (tombstoneAncestorId) await names.repointTombstone(tx, "mechanics", tombstoneAncestorId, mechanic.id);
-
-          await createActivityWithNotifications(tx, {
-            userId: session.userId,
-            targetId: mechanic.id,
-            targetTable: getTableName(mechanicsInRules),
-            type: "createMechanic",
-            data: { entityName: mechanic.name },
-          });
-
-          return mechanic;
-        }),
+    const { row } = await this.saves.create(session, rulesetId, body.name, (scope) =>
+      Engine.for(scope).entities("mechanics").planCreate(body),
     );
-    RulesetViews.invalidate(rulesetId);
-    return result;
+    return row;
   }
 
   async deleteMechanic(session: Session, rulesetId: string, mechanicId: string) {
-    const result = await withTransaction(
-      async (tx) =>
-        await withRulesetScope(tx, rulesetId, async (scope) => {
-          const { ruleset } = scope;
-
-          // Mechanics have no character-level pick table, so no in-use check.
-          (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity();
-
-          const { entity: mechanic } = Engine.for(scope).entities("mechanics").planDelete(mechanicId);
-
-          const edit = new EntityEdit(ruleset);
-          const targetId = await edit.cowToDelete(tx, "mechanics", mechanic);
-
-          const rows = await Mechanics.delete(tx, { id: targetId });
-          const deletedMechanic = rows[0];
-
-          await createActivityWithNotifications(tx, {
-            userId: session.userId,
-            targetId,
-            targetTable: getTableName(mechanicsInRules),
-            type: "deleteMechanic",
-            data: { rulesetId, entityName: mechanic.name },
-          });
-
-          return deletedMechanic;
-        }),
+    return await this.saves.delete(session, rulesetId, mechanicId, (scope) =>
+      Engine.for(scope).entities("mechanics").planDelete(mechanicId),
     );
-    RulesetViews.invalidate(rulesetId);
-    return result;
   }
 
   async getMechanic(rulesetId: string, mechanicId: string) {
@@ -114,40 +63,10 @@ class MechanicsService {
       updatedAt?: string;
     },
   ) {
-    const result = await withTransaction(
-      async (tx) =>
-        await withRulesetScope(tx, rulesetId, async (scope) => {
-          const { ruleset } = scope;
-
-          (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
-
-          const { columns, entity: mechanic } = Engine.for(scope).entities("mechanics").planEdit(mechanicId, body);
-
-          const edit = new EntityEdit(ruleset);
-          const { id: targetId, copied } = await edit.cowToEdit(tx, "mechanics", mechanic);
-          const expectedUpdatedAt = copied ? undefined : body.updatedAt;
-
-          const rows = await Mechanics.update(tx, columns, { id: targetId, expectedUpdatedAt });
-          if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
-
-          const updatedMechanic = rows[0];
-
-          await createActivityWithNotifications(tx, {
-            userId: session.userId,
-            targetId,
-            targetTable: getTableName(mechanicsInRules),
-            type: "updateMechanic",
-            data: {
-              entityName: body.name,
-              changedFields: getChangedFields(mechanic, body),
-            },
-          });
-
-          return updatedMechanic;
-        }),
+    const { row } = await this.saves.update(session, rulesetId, body, (scope) =>
+      Engine.for(scope).entities("mechanics").planEdit(mechanicId, body),
     );
-    RulesetViews.invalidate(rulesetId);
-    return result;
+    return row;
   }
 }
 
