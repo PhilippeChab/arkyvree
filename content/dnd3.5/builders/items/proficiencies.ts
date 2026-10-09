@@ -4,6 +4,7 @@
 
 import { and, eq, eqStr, feat, or } from "@/content/dnd3.5/builders/customization/requirements.ts";
 import type { RequirementEntry } from "@/content/dnd3.5/builders/customization/types.ts";
+import { isOneOf } from "@/shared/isOneOf.ts";
 
 import { getWeaponDefinition, MARTIAL_WEAPONS, SIMPLE_WEAPONS } from "./weapons.ts";
 
@@ -42,8 +43,8 @@ export function martial(weapon: string): RequirementEntry[] {
 
 /** Being proficient with `weapon`, by its group. */
 export function proficiencyRequirements(weapon: string): RequirementEntry[] {
-  if (SIMPLE_WEAPONS.some((simpleWeapon) => simpleWeapon === weapon)) return simple(weapon);
-  if (MARTIAL_WEAPONS.some((martialWeapon) => martialWeapon === weapon)) return martial(weapon);
+  if (isOneOf(weapon, SIMPLE_WEAPONS)) return simple(weapon);
+  if (isOneOf(weapon, MARTIAL_WEAPONS)) return martial(weapon);
   return exoticProficiency(weapon, false);
 }
 

@@ -96,12 +96,6 @@ const METHOD_VERBS = JSON.parse(
   fs.readFileSync(new URL("../server/repositories/methodVerbs.json", import.meta.url), "utf8"),
 );
 
-/**
- * The trees `one-of` doesn't hold yet: `content/`'s weapon proficiencies (`builders/items/proficiencies.ts`) test their
- * lists with a `.some` of their own, which its session turns to `isOneOf`, and the tree joins the rule then.
- */
-const ONE_OF_PENDING = ["content/"];
-
 const READ_VERBS = METHOD_VERBS.read;
 
 const ROUTE_METHODS = new Set(["get", "post", "put", "patch", "delete", "route"]);
@@ -661,7 +655,7 @@ function createNoParentImports(context) {
 
 function createOneOf(context) {
   const file = repoPath(context.filename);
-  if (file === "shared/isOneOf.ts" || ONE_OF_PENDING.some((tree) => file.startsWith(tree))) return {};
+  if (file === "shared/isOneOf.ts") return {};
   return {
     CallExpression(node) {
       const callee = node.callee;
