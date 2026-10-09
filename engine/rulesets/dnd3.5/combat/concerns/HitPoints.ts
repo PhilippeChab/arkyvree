@@ -1,7 +1,6 @@
+import type CombatState from "@/engine/rulesets/dnd3.5/combat/CombatState.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { type CharacterLevel } from "@/shared/relations.ts";
-
-import type CombatState from "./CombatState.ts";
 
 /** A character's hit points: its classes' hit dice and its Constitution. */
 export function HitPoints<B extends Constructor<CombatState>>(Base: B) {

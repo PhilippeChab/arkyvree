@@ -5,13 +5,12 @@ import { ALLOWED_ALL, type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/ap
 import AptitudesPaths from "@/engine/rulesets/dnd3.5/aptitudes/AptitudesPaths.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/aptitudes/AptitudeTargets.ts";
 import ClassesPaths from "@/engine/rulesets/dnd3.5/classes/ClassesPaths.ts";
+import type SpellcastingState from "@/engine/rulesets/dnd3.5/spellcasting/SpellcastingState.ts";
 import type { CustomizedFeat, CustomizedKlassLevel } from "@/engine/rulesets/dnd3.5/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { MAX_CLASS_LEVEL } from "@/shared/dnd3.5/classes.ts";
 import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
 import type { CharacterLevel, Klass, KlassLevel, Modifier } from "@/shared/relations.ts";
-
-import type SpellcastingState from "./SpellcastingState.ts";
 
 /** A character level's key in the index of the class levels the character took. */
 function levelKey(characterLevelId: string, klassLevelId: string) {

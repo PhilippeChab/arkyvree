@@ -15,7 +15,7 @@ import { getSeedCtx, uniqueId } from "./seed.ts";
 
 /**
  * `record`, built as the class a test picks (`Kind`: a familiar, a mount…) the way the engine builds a character
- * (`buildCharacter`): its rows read through `database`, in `scope` when it's the character's ruleset's, a bonded
+ * (`CharacterBuilder.build`): its rows read through `database`, in `scope` when it's the character's ruleset's, a bonded
  * creature's master built first.
  */
 export async function buildAs<C extends DetailedCharacterInterface>(

@@ -5,12 +5,12 @@ import type { CustomizedRace } from "@/engine/rulesets/dnd3.5/types.ts";
 import { include } from "@/lib/mixins.ts";
 import { type CharacterLevel } from "@/shared/relations.ts";
 
-import { ArmorClass } from "./ArmorClass.ts";
-import { Attacks } from "./Attacks.ts";
 import CombatState, { type CombatData } from "./CombatState.ts";
+import { ArmorClass } from "./concerns/ArmorClass.ts";
+import { Attacks } from "./concerns/Attacks.ts";
+import { HitPoints } from "./concerns/HitPoints.ts";
+import { InitiativeAndSpeed } from "./concerns/InitiativeAndSpeed.ts";
 import type EncumbranceComponent from "./EncumbranceComponent.ts";
-import { HitPoints } from "./HitPoints.ts";
-import { InitiativeAndSpeed } from "./InitiativeAndSpeed.ts";
 
 class CombatComponent extends include(CombatState, ArmorClass, Attacks, HitPoints, InitiativeAndSpeed) {
   getCombat(): CombatData {

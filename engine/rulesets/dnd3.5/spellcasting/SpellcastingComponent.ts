@@ -4,8 +4,8 @@ import { include } from "@/lib/mixins.ts";
 import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
-import { BonusCasterLevels } from "./BonusCasterLevels.ts";
-import { KnownPowers } from "./KnownPowers.ts";
+import { BonusCasterLevels } from "./concerns/BonusCasterLevels.ts";
+import { KnownPowers } from "./concerns/KnownPowers.ts";
 import SpellcastingState from "./SpellcastingState.ts";
 
 class SpellcastingComponent extends include(SpellcastingState, BonusCasterLevels, KnownPowers) {

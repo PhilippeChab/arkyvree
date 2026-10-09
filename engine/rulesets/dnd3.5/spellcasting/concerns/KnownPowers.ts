@@ -1,14 +1,13 @@
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/aptitudes/AptitudeTargets.ts";
+import type SpellcastingState from "@/engine/rulesets/dnd3.5/spellcasting/SpellcastingState.ts";
+import SpellLists from "@/engine/rulesets/dnd3.5/spellcasting/SpellLists.ts";
 import type { CustomizedFeat, CustomizedKlassLevel, CustomizedPower } from "@/engine/rulesets/dnd3.5/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { MAX_SPELL_LEVEL, toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import type { Aptitude, Power, Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
-
-import type SpellcastingState from "./SpellcastingState.ts";
-import SpellLists from "./SpellLists.ts";
 
 /** The powers a character's aptitudes give it, each with what it knows of them, and the spell tags they carry. */
 export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {

@@ -1,12 +1,16 @@
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/classes/ClassesComponent.ts";
+import type CombatState from "@/engine/rulesets/dnd3.5/combat/CombatState.ts";
+import {
+  type NaturalAttackKind,
+  SLOT_MAP,
+  type WeaponAbilities,
+  type WeaponSlot,
+} from "@/engine/rulesets/dnd3.5/combat/CombatState.ts";
 import { CONSTANTS, SIZE_AC_ATTACK_MOD, SIZE_GRAPPLE_MOD, SIZE_STEPS } from "@/engine/rulesets/dnd3.5/constants.ts";
 import { SIZE_ORDER, WEAPON_SET_SLOTS } from "@/engine/rulesets/dnd3.5/items/InventorySlots.ts";
 import { NO_WEAPON_FIELDS, type WeaponFields } from "@/engine/rulesets/dnd3.5/items/ItemFields.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { type Item } from "@/shared/relations.ts";
-
-import type CombatState from "./CombatState.ts";
-import { type NaturalAttackKind, SLOT_MAP, type WeaponAbilities, type WeaponSlot } from "./CombatState.ts";
 
 /**
  * D&D 3.5 damage die progression for size adjustments. All weapon/unarmed damages are defined for Medium size; shift up

@@ -412,6 +412,56 @@ function createEmptyListReads(context) {
   };
 }
 
+function createEngineClasses(context) {
+  const file = repoPath(context.filename);
+  if (!file.startsWith("engine/") || file.startsWith("engine/api/") || file === "engine/index.ts") return {};
+  const message =
+    "Outside `engine/api/`, an engine module exports no function of its own: an operation is the API's, and a step a " +
+    "class's method (or the module's own, unexported, function).";
+  const isFunction = (node) =>
+    node?.type === "FunctionDeclaration" ||
+    node?.type === "ArrowFunctionExpression" ||
+    node?.type === "FunctionExpression";
+  const isCamelCase = (name) => /^[a-z]/.test(name);
+  // The module's own functions, by name: what an export list may name
+  const ownFunctions = new Set();
+  return {
+    Program(node) {
+      for (const statement of node.body) {
+        if (statement.type === "FunctionDeclaration" && statement.id) ownFunctions.add(statement.id.name);
+        if (statement.type === "VariableDeclaration") {
+          for (const d of statement.declarations)
+            if (d.id.type === "Identifier" && isFunction(d.init)) ownFunctions.add(d.id.name);
+        }
+      }
+    },
+    ExportDefaultDeclaration(node) {
+      const { declaration } = node;
+      if (isFunction(declaration) && (!declaration.id || isCamelCase(declaration.id.name)))
+        context.report({ node, message });
+      if (declaration.type === "Identifier" && ownFunctions.has(declaration.name) && isCamelCase(declaration.name))
+        context.report({ node, message });
+    },
+    ExportNamedDeclaration(node) {
+      const { declaration, source, specifiers } = node;
+      if (declaration?.type === "FunctionDeclaration" && isCamelCase(declaration.id.name))
+        context.report({ node, message });
+      if (declaration?.type === "VariableDeclaration") {
+        for (const d of declaration.declarations) {
+          if (d.id.type === "Identifier" && isFunction(d.init) && isCamelCase(d.id.name))
+            context.report({ node: d, message });
+        }
+      }
+      if (source) return;
+      for (const specifier of specifiers ?? []) {
+        const local = specifier.local?.name;
+        if (local && ownFunctions.has(local) && isCamelCase(specifier.exported?.name ?? local))
+          context.report({ node: specifier, message });
+      }
+    },
+  };
+}
+
 function createEngineSync(context) {
   if (!repoPath(context.filename).startsWith("engine/")) return {};
   const message =
@@ -432,52 +482,6 @@ function createEngineSync(context) {
     // A `Promise` type, or the value: `new Promise(…)`, `Promise.all(…)`
     Identifier(node) {
       if (node.name === "Promise") context.report({ node, message });
-    },
-  };
-}
-
-function createEngineClasses(context) {
-  const file = repoPath(context.filename);
-  if (!file.startsWith("engine/") || file.startsWith("engine/api/") || file === "engine/index.ts") return {};
-  const message =
-    "Outside `engine/api/`, an engine module exports no function of its own: an operation is the API's, and a step a " +
-    "class's method (or the module's own, unexported, function).";
-  const isFunction = (node) =>
-    node?.type === "FunctionDeclaration" ||
-    node?.type === "ArrowFunctionExpression" ||
-    node?.type === "FunctionExpression";
-  const isCamelCase = (name) => /^[a-z]/.test(name);
-  // The module's own functions, by name: what an export list may name
-  const ownFunctions = new Set();
-  return {
-    Program(node) {
-      for (const statement of node.body) {
-        if (statement.type === "FunctionDeclaration" && statement.id) ownFunctions.add(statement.id.name);
-        if (statement.type === "VariableDeclaration")
-          for (const d of statement.declarations) if (d.id.type === "Identifier" && isFunction(d.init)) ownFunctions.add(d.id.name);
-      }
-    },
-    ExportDefaultDeclaration(node) {
-      const { declaration } = node;
-      if (isFunction(declaration) && (!declaration.id || isCamelCase(declaration.id.name)))
-        context.report({ node, message });
-      if (declaration.type === "Identifier" && ownFunctions.has(declaration.name) && isCamelCase(declaration.name))
-        context.report({ node, message });
-    },
-    ExportNamedDeclaration(node) {
-      const { declaration, source, specifiers } = node;
-      if (declaration?.type === "FunctionDeclaration" && isCamelCase(declaration.id.name))
-        context.report({ node, message });
-      if (declaration?.type === "VariableDeclaration") {
-        for (const d of declaration.declarations)
-          if (d.id.type === "Identifier" && isFunction(d.init) && isCamelCase(d.id.name)) context.report({ node: d, message });
-      }
-      if (source) return;
-      for (const specifier of specifiers ?? []) {
-        const local = specifier.local?.name;
-        if (local && ownFunctions.has(local) && isCamelCase(specifier.exported?.name ?? local))
-          context.report({ node: specifier, message });
-      }
     },
   };
 }

@@ -11,7 +11,7 @@ import BondedRaceData, { type BondedRaceStatBlock, STAT_BLOCK_FEAT_SKILL_BONUSES
 export default abstract class DetailedCharacterBonded extends Dnd35DetailedCharacter {
   protected cachedTotalHD: number | null = null;
 
-  /** The creature's master, built before it (`buildCharacter`): what its sheet derives from. */
+  /** The creature's master, built before it (`CharacterBuilder.build`): what its sheet derives from. */
   protected master?: Dnd35DetailedCharacter;
 
   /**

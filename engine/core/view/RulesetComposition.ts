@@ -173,7 +173,7 @@ export default class RulesetComposition {
 
   /**
    * Modifiers, the fork's first: a copied source's and an invisible class level's are left out, and a sibling loser's
-   * the merge leaves out (`mergeSiblingModifiers`); the rest of a loser's move to its winner. Every modifier left out is
+   * the merge leaves out (`SiblingMerge.mergeModifiers`); the rest of a loser's move to its winner. Every modifier left out is
    * excluded, its requirements with it.
    */
   private composeModifiers(visibleKlassLevelIds: Set<string>) {
@@ -197,7 +197,7 @@ export default class RulesetComposition {
 
   /**
    * Properties, the fork's first: a copied entity's and an invisible class level's are left out (a sibling loser's
-   * class levels aren't in `klassLevels`), and a sibling loser's the merge leaves out (`mergeSiblingProperties`); the
+   * class levels aren't in `klassLevels`), and a sibling loser's the merge leaves out (`SiblingMerge.mergeProperties`); the
    * rest of a loser's move to its winner. A ruleset's own properties always stay: a ruleset is never overridden.
    */
   private composeProperties(visibleKlassLevelIds: Set<string>): Property[] {
@@ -218,7 +218,7 @@ export default class RulesetComposition {
   /**
    * Requirements, the fork's first: a modifier's stay unless the modifier was excluded. An entity's are left out with a
    * copied entity and an invisible class level; a sibling loser's merge into its winner's as trees
-   * (`mergeSiblingRequirements`, which `EntityCopy` writes the same way), after the rest.
+   * (`SiblingMerge.mergeRequirements`, which `EntityCopy` writes the same way), after the rest.
    */
   private composeRequirements(visibleKlassLevelIds: Set<string>, excludedModifierIds: Set<string>): Requirement[] {
     const siblingRows = new SiblingRows<Requirement>(this.cow);

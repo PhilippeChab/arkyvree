@@ -1,8 +1,7 @@
+import type CombatState from "@/engine/rulesets/dnd3.5/combat/CombatState.ts";
 import RaceFields from "@/engine/rulesets/dnd3.5/races/RaceFields.ts";
 import type { CustomizedRace } from "@/engine/rulesets/dnd3.5/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-
-import type CombatState from "./CombatState.ts";
 
 /** A character's initiative, and its speed under its armor and load (which a dwarf's ignores). */
 export function InitiativeAndSpeed<B extends Constructor<CombatState>>(Base: B) {

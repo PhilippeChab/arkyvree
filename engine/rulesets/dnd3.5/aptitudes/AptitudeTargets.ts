@@ -1,6 +1,6 @@
 /**
  * The aptitudes' target grammar, as the listing writes it: a list's slug (`[a-z0-9]+`), a whole spell level, an anchored
- * field. A leaf module: the listing (`AptitudesPaths`) reads the spell lists (`spellLists.ts`), which read targets, and
+ * field. A leaf module: the listing (`AptitudesPaths`) reads the spell lists (`SpellLists.ts`), which read targets, and
  * both read this.
  */
 

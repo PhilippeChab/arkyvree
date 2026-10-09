@@ -1,11 +1,10 @@
+import type { ArmorsData } from "@/engine/rulesets/dnd3.5/combat/ArmorsComponent.ts";
+import { ARMOR_CATEGORIES } from "@/engine/rulesets/dnd3.5/combat/CombatState.ts";
+import type CombatState from "@/engine/rulesets/dnd3.5/combat/CombatState.ts";
+import type { ShieldsData } from "@/engine/rulesets/dnd3.5/combat/ShieldsComponent.ts";
 import { CONSTANTS, SIZE_AC_ATTACK_MOD } from "@/engine/rulesets/dnd3.5/constants.ts";
 import { type ItemFieldValues } from "@/engine/rulesets/dnd3.5/items/ItemFields.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-
-import type { ArmorsData } from "./ArmorsComponent.ts";
-import { ARMOR_CATEGORIES } from "./CombatState.ts";
-import type CombatState from "./CombatState.ts";
-import type { ShieldsData } from "./ShieldsComponent.ts";
 
 /** A character's armor class: its armor and shields, and the Dexterity bonus they leave it. */
 export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {

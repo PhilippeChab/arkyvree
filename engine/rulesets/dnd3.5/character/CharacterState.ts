@@ -70,7 +70,7 @@ export default abstract class CharacterState {
       .map((entry) => entry.id);
   };
 
-  /** The character's parts, each wired to the ones it reads (`buildComponents`). */
+  /** The character's parts, each wired to the ones it reads (`CharacterComponents.build`). */
   abstract readonly components: Dnd35Components;
 
   abstract readonly modifierEvaluator: ModifierEvaluator;
