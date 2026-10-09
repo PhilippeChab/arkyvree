@@ -1,11 +1,10 @@
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { RulesetView } from "@/engine/core/types.ts";
-import type { RulesetData } from "@/engine/core/view/index.ts";
-import CharacterBuilder from "@/engine/rulesets/dnd3.5/character/CharacterBuilder.ts";
-import type Dnd35DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
-import SkillsComponent from "@/engine/rulesets/dnd3.5/skills/SkillsComponent.ts";
-import type { Dnd35ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/types.ts";
+import { type RulesetData, type RulesetView } from "@/engine/core/view/index.ts";
+import CharacterBuilder from "@/engine/rulesets/dnd3.5/model/CharacterBuilder.ts";
+import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import type { ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/model/projection.ts";
+import SkillsComponent from "@/engine/rulesets/dnd3.5/model/skills/SkillsComponent.ts";
 import type { Klass, KlassLevel, Modifier, Property, Requirement } from "@/shared/relations.ts";
 
 /** The customizations of feats a projection carries, by feat id. */
@@ -30,7 +29,7 @@ export interface LevelPicks {
 }
 
 /** A planned level's class and class level, and its ability increase. */
-export interface PlannedKlassLevel {
+export interface PlannedClassLevel {
   abilityId: string | null;
   klass: Klass;
   klassLevel: KlassLevel;
@@ -44,7 +43,7 @@ export default abstract class LevelUpState {
   constructor(protected readonly view: RulesetView) {}
 
   /** The character built from its rows, with a level-up's `projected` levels and picks. */
-  protected build(character: CharacterInput, projected?: Dnd35ProjectedCharacterData): Dnd35DetailedCharacter {
+  protected build(character: CharacterInput, projected?: ProjectedCharacterData): DetailedCharacter {
     return CharacterBuilder.build(this.view, character, { projected });
   }
 
@@ -100,7 +99,7 @@ export default abstract class LevelUpState {
   protected getPlannedKlassLevels(
     levels: { abilityId: string | null; klassId: string; level: number }[],
     rulesetIds?: Set<string>,
-  ): PlannedKlassLevel[] {
+  ): PlannedClassLevel[] {
     return levels.map(({ klassId, level, abilityId }, i) => {
       const klass = this.rulesetData.klassesById.get(klassId);
       if (!klass || (rulesetIds && !rulesetIds.has(klass.rulesetId)))

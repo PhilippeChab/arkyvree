@@ -1,24 +1,24 @@
 import type { CharacterInput } from "@/engine/core/module/index.ts";
-import type { RulesetView } from "@/engine/core/types.ts";
-import BondedPlans from "@/engine/rulesets/dnd3.5/bonded/BondedPlans.ts";
-import CharacterBuilder from "@/engine/rulesets/dnd3.5/character/CharacterBuilder.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
+import CharacterBuilder from "@/engine/rulesets/dnd3.5/model/CharacterBuilder.ts";
+import ClassPicker from "@/engine/rulesets/dnd3.5/pickers/ClassPicker.ts";
+import FeatPicker from "@/engine/rulesets/dnd3.5/pickers/FeatPicker.ts";
+import type { PickQuery } from "@/engine/rulesets/dnd3.5/pickers/PickerState.ts";
+import PowerPicker from "@/engine/rulesets/dnd3.5/pickers/PowerPicker.ts";
 
-import ClassPicker from "./ClassPicker.ts";
-import FeatPicker from "./FeatPicker.ts";
+import BondedPlans from "./BondedPlans.ts";
 import LevelEdit from "./LevelEdit.ts";
 import LevelRemoval from "./LevelRemoval.ts";
 import LevelSelections from "./LevelSelections.ts";
 import LevelUpPlan from "./LevelUpPlan.ts";
 import LevelUpSteps, { type Step } from "./LevelUpSteps.ts";
-import type { PickQuery } from "./PickerState.ts";
-import PowerPicker from "./PowerPicker.ts";
 
 /**
  * The 3.5 level-up, as the module answers the server's level flows, each from the rows the server read: the preview,
  * a save's levels and its check, a saved level's edit, the bonded creatures the levels make, the wizard's steps and
  * pickers, and a saved level's selections.
  */
-export class Dnd35LevelUp {
+export default class Dnd35LevelUp {
   /** A saved level's selections, as its edit opens them. */
   describeLevel(view: RulesetView, ...args: Parameters<LevelSelections["describe"]>) {
     return new LevelSelections(view).describe(...args);

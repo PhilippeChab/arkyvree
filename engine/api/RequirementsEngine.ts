@@ -1,5 +1,5 @@
 import { RequirementEdits } from "@/engine/core/customizations/index.ts";
-import type { RulesetView } from "@/engine/core/types.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { TargetPathCatalog } from "@/shared/customization/target.ts";
 
 import type { Module } from "./Modules.ts";

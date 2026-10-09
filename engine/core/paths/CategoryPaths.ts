@@ -1,10 +1,3 @@
-import type {
-  Components,
-  PathQuery,
-  TargetCheck,
-  TargetPathsInterface,
-  TraversePathResult,
-} from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import type {
   PathCompletion,
@@ -15,15 +8,45 @@ import type {
 import { stripSeparators } from "@/shared/text.ts";
 
 import type { PathCategory } from "./PathCategory.ts";
-import PathChecks from "./PathChecks.ts";
-import PathCompletions from "./PathCompletions.ts";
-import PathTraverser from "./PathTraverser.ts";
+import PathChecks, { type TargetCheck } from "./PathChecks.ts";
+import PathCompletions, { type PathQuery } from "./PathCompletions.ts";
+import PathTraverser, { type Components, type TraversePathResult } from "./PathTraverser.ts";
+
+export interface TargetPaths extends TargetPathsTraverser {
+  /** The value type of the path a modifier or requirement targets, its operator and value checked against it. */
+  checkTargetValue(
+    catalogs: { paths: TargetPathCatalog; templatePaths: TargetPathCatalog },
+    check: TargetCheck,
+  ): string;
+  /** The completions of a partial path among a catalog's paths of `kind`, unpaged. */
+  completeTargetPath(
+    catalog: TargetPathCatalog,
+    kind: TargetPathKind,
+    query: PathQuery,
+    entityType?: string,
+  ): PathCompletion[];
+  getCategories(): string[];
+  getCategoryDescriptions(): Record<string, string>;
+  /** The categories whose paths name an entity under their group, whose segment a description skips */
+  getEntityNamingCategories(): string[];
+  getGroupDescriptionTemplates(): Record<string, string>;
+  getPathDescriptions(): Record<string, string>;
+  getTargetPathsAndLabels(rulesetData: RulesetData, kind: TargetPathKind): TargetPathCatalog;
+  /** A target path validated like a language server, among a catalog's paths. */
+  validateTargetPath(catalog: TargetPathCatalog, path: string, entityType?: string): PathValidationResult;
+}
+
+export interface TargetPathsTraverser {
+  /** Whether a target reads its source itself (a weapon's own paths: the place its item is held), not the sheet. */
+  readsSource(target: string): boolean;
+  traversePathInit(target: string, components: Components, context?: { sourceId?: string }): TraversePathResult[];
+}
 
 /**
  * A ruleset's target paths, by category: the paths each lists, how a target reaches its data, and how the path picker
  * labels and describes them.
  */
-export default abstract class CategoryPaths<C = Components> implements TargetPathsInterface {
+export default abstract class CategoryPaths<C = Components> implements TargetPaths {
   constructor(private readonly categories: readonly PathCategory<C>[]) {
     this.byName = new Map(categories.map((category) => [category.name, category]));
     this.componentOf = Object.fromEntries(

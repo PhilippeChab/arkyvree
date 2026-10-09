@@ -1,7 +1,7 @@
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
-import AptitudeTargets from "@/engine/rulesets/dnd3.5/aptitudes/AptitudeTargets.ts";
-import type Dnd35DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import type LevelUpState from "@/engine/rulesets/dnd3.5/levelUp/LevelUpState.ts";
+import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
+import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 /** A slot a feat's modifier adds to (or sets on) a pool. */
@@ -12,7 +12,7 @@ export function AnnotatesOptions<B extends Constructor<LevelUpState>>(Base: B) {
   abstract class AnnotatingOptions extends Base {
     /** The candidates, each with whether the character meets its requirements, and the tree of those it fails. */
     protected annotateRequirements<T extends { id: string }>(
-      character: Dnd35DetailedCharacter,
+      character: DetailedCharacter,
       candidates: T[],
     ): (T & { eligible: boolean; requirementTree?: string })[] {
       if (candidates.length === 0) return [];

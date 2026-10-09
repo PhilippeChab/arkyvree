@@ -1,9 +1,9 @@
-import AbilitiesPaths from "@/engine/rulesets/dnd3.5/abilities/AbilitiesPaths.ts";
-import CombatPaths from "@/engine/rulesets/dnd3.5/combat/CombatPaths.ts";
-import WeaponPaths from "@/engine/rulesets/dnd3.5/combat/WeaponPaths.ts";
-import IdentityPaths from "@/engine/rulesets/dnd3.5/identity/IdentityPaths.ts";
-import SavesPaths from "@/engine/rulesets/dnd3.5/saves/SavesPaths.ts";
-import SkillsPaths from "@/engine/rulesets/dnd3.5/skills/SkillsPaths.ts";
+import AbilitiesPaths from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesPaths.ts";
+import CombatPaths from "@/engine/rulesets/dnd3.5/model/combat/CombatPaths.ts";
+import WeaponPaths from "@/engine/rulesets/dnd3.5/model/combat/WeaponPaths.ts";
+import IdentityPaths from "@/engine/rulesets/dnd3.5/model/identity/IdentityPaths.ts";
+import SavesPaths from "@/engine/rulesets/dnd3.5/model/saves/SavesPaths.ts";
+import SkillsPaths from "@/engine/rulesets/dnd3.5/model/skills/SkillsPaths.ts";
 
 /** The target paths a book's generated content may name. */
 export default class BookPaths {

@@ -17,7 +17,8 @@ describe("architecture rules", () => {
         {
           "server/a.ts": 'import { x } from "@/engine/index.ts";\nexport const a = x;\n',
           "server/b.ts": 'import { x } from "@/engine/core/view/index.ts";\nexport const b = x;\n',
-          "database/c.ts": 'import X from "@/engine/rulesets/dnd3.5/skills/SkillsPaths.ts";\nexport const c = X;\n',
+          "database/c.ts":
+            'import X from "@/engine/rulesets/dnd3.5/model/skills/SkillsPaths.ts";\nexport const c = X;\n',
           "codegen/d.ts": 'import type { T } from "@/engine/rulesets/dnd3.5/index.ts";\nexport type D = T;\n',
           "engine/core/e.ts": 'import { x } from "@/engine/core/view/index.ts";\nexport const e = x;\n',
           "tests/f.test.ts": 'import { x } from "@/engine/core/view/index.ts";\nexport const f = x;\n',

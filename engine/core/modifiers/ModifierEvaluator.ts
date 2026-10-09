@@ -1,8 +1,12 @@
+import type { TargetPathsTraverser } from "@/engine/core/paths/CategoryPaths.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
-import PathTraverser from "@/engine/core/paths/PathTraverser.ts";
+import PathTraverser, {
+  type Component,
+  type Components,
+  type TraversePathResult,
+} from "@/engine/core/paths/PathTraverser.ts";
 import TemplateExpression from "@/engine/core/paths/TemplateExpression.ts";
 import type RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
-import type { Component, Components, TargetPathsTraverser, TraversePathResult } from "@/engine/core/types.ts";
 import {
   extractReferencedPaths,
   extractTemplateExpression,

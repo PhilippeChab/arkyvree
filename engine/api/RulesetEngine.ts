@@ -1,6 +1,5 @@
 import type { CharacterInput } from "@/engine/core/module/index.ts";
-import type { RulesetView } from "@/engine/core/types.ts";
-import type { ViewEntities } from "@/engine/core/view/index.ts";
+import { type RulesetView, type ViewEntities } from "@/engine/core/view/index.ts";
 import type { RulesetKind } from "@/shared/enums.ts";
 
 import AptitudesEngine from "./AptitudesEngine.ts";

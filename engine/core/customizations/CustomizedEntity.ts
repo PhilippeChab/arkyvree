@@ -1,6 +1,5 @@
 import RulesError from "@/engine/core/RulesError.ts";
-import type { RulesetView } from "@/engine/core/types.ts";
-import type { RulesetData } from "@/engine/core/view/index.ts";
+import { type RulesetData, type RulesetView } from "@/engine/core/view/index.ts";
 
 /** An entity customizations are made on, as the ruleset's view has it: its id there, and the name a history shows. */
 export default class CustomizedEntity {

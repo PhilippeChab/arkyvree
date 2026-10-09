@@ -1,9 +1,56 @@
+import type {
+  characterAbilitiesInCharacter,
+  languagesInCharacter,
+  levelFeatsInCharacter,
+  levelPowersInCharacter,
+  levelSkillsInCharacter,
+} from "@/drizzle/schema.ts";
 import type { CowData } from "@/engine/core/cow/index.ts";
-
-import type { CharacterInput } from "./contract.ts";
+import type {
+  Campaign,
+  CharacterInventory,
+  CharacterLevel,
+  Character as CharacterRecord,
+  Item,
+  Modifier,
+  Player,
+  Requirement,
+} from "@/shared/relations.ts";
 
 /** A level's picks, or a character's: its feats', powers' and skills' rows. */
 type PickRows = Record<"feats" | "powers" | "skills", Record<string, unknown>[]>;
+
+/**
+ * A character's row and the rows it's built from, as the server reads them in its ruleset's scope: a bonded creature's
+ * with its master's (`master`), whose sheet the creature's derives from.
+ */
+export interface CharacterInput {
+  master?: CharacterInput;
+  record: CharacterRecord;
+  rows: CharacterRows;
+}
+
+/**
+ * A character's own rows, which the server reads (`readCharacterInput`) and its module builds the character from: its seat
+ * in a campaign, its ability scores, languages, inventory and levels, every saved level's picks (the links, whose
+ * entities are the view's), and the modifiers set on the character itself, with their requirements. Read as stored:
+ * the engine resolves their references as they enter it (`CharacterInputs`).
+ */
+export interface CharacterRows {
+  abilities: (typeof characterAbilitiesInCharacter.$inferSelect)[];
+  campaign: Campaign | undefined;
+  inventory: (CharacterInventory & { itemsInRule: Item })[];
+  languages: (typeof languagesInCharacter.$inferSelect)[];
+  levels: CharacterLevel[];
+  modifiers: Modifier[];
+  picks: {
+    feats: (typeof levelFeatsInCharacter.$inferSelect)[];
+    powers: (typeof levelPowersInCharacter.$inferSelect)[];
+    skills: (typeof levelSkillsInCharacter.$inferSelect)[];
+  };
+  player: Player | undefined;
+  requirements: Requirement[];
+}
 
 /**
  * A character's rows as its ruleset's view reads them: each reference to an entity (a race, a class level, an item, a

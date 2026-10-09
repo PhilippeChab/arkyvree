@@ -1,6 +1,5 @@
 import RulesError from "@/engine/core/RulesError.ts";
-import type { RulesetView } from "@/engine/core/types.ts";
-import type { ViewEntities } from "@/engine/core/view/index.ts";
+import { type RulesetView, type ViewEntities } from "@/engine/core/view/index.ts";
 
 /** What a refusal calls an entity of each table. */
 const ENTITY_LABELS: Record<keyof ViewEntities, string> = {

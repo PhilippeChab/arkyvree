@@ -1,20 +1,20 @@
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { RulesetView } from "@/engine/core/types.ts";
-import AptitudeTargets from "@/engine/rulesets/dnd3.5/aptitudes/AptitudeTargets.ts";
-import BondedPlans from "@/engine/rulesets/dnd3.5/bonded/BondedPlans.ts";
-import type Dnd35DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
-import ClassLevelFields from "@/engine/rulesets/dnd3.5/classes/ClassLevelFields.ts";
-import { Dnd35LevelsRules } from "@/engine/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
-import type { Dnd35ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/types.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
+import ClassLevelFields from "@/engine/rulesets/dnd3.5/entities/classes/ClassLevelFields.ts";
+import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
+import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import type { ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/model/projection.ts";
+import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import { include } from "@/lib/mixins.ts";
 import { computeLevelSkillPoints } from "@/shared/dnd3.5/skills.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import AptitudeSlotsPlan, { type FeatSlots } from "./AptitudeSlotsPlan.ts";
+import BondedPlans from "./BondedPlans.ts";
 import { type CheckedSelections, ChecksSelections } from "./concerns/ChecksSelections.ts";
 import { Projects } from "./concerns/Projects.ts";
-import LevelUpState, { type GrantedFeatRecords, type LevelPicks, type PlannedKlassLevel } from "./LevelUpState.ts";
+import LevelUpState, { type GrantedFeatRecords, type LevelPicks, type PlannedClassLevel } from "./LevelUpState.ts";
 import PicksDistribution, { type PerLevelDistributionData } from "./PicksDistribution.ts";
 
 /** A planned level checked: its class level, hit points, ability and picks, and the selections its check read. */
@@ -32,10 +32,10 @@ interface PlannedLevel {
  */
 interface PlannedLevels {
   autoGrantedRecords: GrantedFeatRecords[];
-  character: Dnd35DetailedCharacter;
+  character: DetailedCharacter;
   existingLevelCount: number;
-  klassLevelEntries: PlannedKlassLevel[];
-  saved: Dnd35DetailedCharacter;
+  klassLevelEntries: PlannedClassLevel[];
+  saved: DetailedCharacter;
 }
 
 /** A level a level-up saves, as the wizard sends it: its class's level, hit points and ability increase. */
@@ -121,7 +121,7 @@ export default class LevelUpPlan extends include(LevelUpState, ChecksSelections,
   }
 
   /** The planned levels (`klassLevelEntries`), built from the character's rows: the character with them, and as saved. */
-  private buildPlannedLevels(klassLevelEntries: PlannedKlassLevel[]): PlannedLevels {
+  private buildPlannedLevels(klassLevelEntries: PlannedClassLevel[]): PlannedLevels {
     const { projectedData, allAutoGrantedFeatRecords } = this.projectPlannedLevels(
       this.character.record.id,
       klassLevelEntries,
@@ -136,7 +136,7 @@ export default class LevelUpPlan extends include(LevelUpState, ChecksSelections,
   }
 
   /** Each skill's current rank, and whether it's a class skill: innate to the character, or a planned class's. */
-  private buildSkillContexts(character: Dnd35DetailedCharacter, classSkillIds: Set<string>) {
+  private buildSkillContexts(character: DetailedCharacter, classSkillIds: Set<string>) {
     const characterSkills = character.components.skills.getSkills();
     const contexts = new Map<string, { currentRank: number; isClassSkill: boolean }>();
     for (const skill of this.rulesetData.skills) {
@@ -178,7 +178,7 @@ export default class LevelUpPlan extends include(LevelUpState, ChecksSelections,
    * Each planned level's points per level before the minimum, in the batch's order: its class's and the skill point
    * ability's modifier.
    */
-  private computeSkillPointBasesPerLevel(character: Dnd35DetailedCharacter, klassLevelIds: string[]): number[] {
+  private computeSkillPointBasesPerLevel(character: DetailedCharacter, klassLevelIds: string[]): number[] {
     const { skills } = character.components;
     return klassLevelIds.map((klassLevelId) =>
       skills.getLevelPointsPerLevel(
@@ -189,7 +189,7 @@ export default class LevelUpPlan extends include(LevelUpState, ChecksSelections,
 
   /** Each planned level's skill points, in the batch's order: the first counts four times over on a new character. */
   private computeSkillPointsPerLevel(
-    character: Dnd35DetailedCharacter,
+    character: DetailedCharacter,
     klassLevelIds: string[],
     existingLevelCount: number,
   ): number[] {
@@ -217,8 +217,7 @@ export default class LevelUpPlan extends include(LevelUpState, ChecksSelections,
   /** The planned levels (by index) that take an ability increase, after the character's `existingCount` levels. */
   private getAbilityIncreaseLevels(existingCount: number, plannedCount: number) {
     const levels: number[] = [];
-    for (let i = 0; i < plannedCount; i++)
-      if (Dnd35LevelsRules.isAbilityIncreaseLevel(existingCount + i)) levels.push(i);
+    for (let i = 0; i < plannedCount; i++) if (LevelRules.isAbilityIncreaseLevel(existingCount + i)) levels.push(i);
     return levels;
   }
 
@@ -261,7 +260,7 @@ export default class LevelUpPlan extends include(LevelUpState, ChecksSelections,
    * and ability, its picks, and the feats its class level grants that it didn't pick, as a level's edit projects
    * it (`LevelEdit`).
    */
-  private projectSavedLevels(planned: PlannedLevel[]): Dnd35ProjectedCharacterData {
+  private projectSavedLevels(planned: PlannedLevel[]): ProjectedCharacterData {
     const characterId = this.character.record.id;
     const projected = planned.map(({ abilityId, hp, klassLevelId, picks, selections }) => {
       const level = { ...this.buildProjectedCharacterLevel(characterId, klassLevelId, abilityId), hp };

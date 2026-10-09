@@ -1,4 +1,4 @@
-import type { PropertyTypesProvider } from "@/engine/core/types.ts";
+import type { PropertyTypesProvider } from "@/engine/core/customizations/index.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
 import { ENTITY_PROPERTY_TYPES, getStaticPropertyValues } from "@/shared/dnd3.5/properties/index.ts";
 

@@ -9,21 +9,21 @@ import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-import AbilitiesPaths from "./abilities/AbilitiesPaths.ts";
-import AptitudesPaths from "./aptitudes/AptitudesPaths.ts";
-import BondedPaths from "./bonded/BondedPaths.ts";
-import type { Dnd35Components } from "./character/CharacterComponents.ts";
-import ClassesPaths from "./classes/ClassesPaths.ts";
-import CombatPaths from "./combat/CombatPaths.ts";
-import ItemsPaths from "./combat/ItemsPaths.ts";
-import WeaponPaths from "./combat/WeaponPaths.ts";
-import { UNARMED_STRIKE } from "./constants.ts";
-import FeatsPaths from "./feats/FeatsPaths.ts";
-import IdentityPaths from "./identity/IdentityPaths.ts";
-import PowersPaths from "./powers/PowersPaths.ts";
-import SavesPaths from "./saves/SavesPaths.ts";
-import SkillsPaths from "./skills/SkillsPaths.ts";
-import SpellcastingPaths from "./spellcasting/SpellcastingPaths.ts";
+import AbilitiesPaths from "./model/abilities/AbilitiesPaths.ts";
+import AptitudesPaths from "./model/aptitudes/AptitudesPaths.ts";
+import BondedPaths from "./model/bonded/BondedPaths.ts";
+import type { Dnd35Components } from "./model/CharacterComponents.ts";
+import ClassesPaths from "./model/classes/ClassesPaths.ts";
+import CombatPaths from "./model/combat/CombatPaths.ts";
+import ItemsPaths from "./model/combat/ItemsPaths.ts";
+import WeaponPaths from "./model/combat/WeaponPaths.ts";
+import FeatsPaths from "./model/feats/FeatsPaths.ts";
+import IdentityPaths from "./model/identity/IdentityPaths.ts";
+import PowersPaths from "./model/powers/PowersPaths.ts";
+import SavesPaths from "./model/saves/SavesPaths.ts";
+import SkillsPaths from "./model/skills/SkillsPaths.ts";
+import SpellcastingPaths from "./model/spellcasting/SpellcastingPaths.ts";
+import { UNARMED_STRIKE } from "./rules/combat.ts";
 
 /** The 3.5 rules' categories of target paths, in the path picker's order (`getCategories`). */
 const DND35_PATH_CATEGORIES: PathCategory<Dnd35Components>[] = [

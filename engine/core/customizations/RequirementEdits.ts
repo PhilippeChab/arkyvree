@@ -1,5 +1,6 @@
+import type { TargetPaths } from "@/engine/core/paths/CategoryPaths.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { RulesetView, TargetPathsInterface } from "@/engine/core/types.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { TargetPathCatalog } from "@/shared/customization/target.ts";
 
 import CustomizedEntity from "./CustomizedEntity.ts";
@@ -36,7 +37,7 @@ export default class RequirementEdits {
    * path), or a group's chaining operator.
    */
   private static toRow(
-    targetPaths: TargetPathsInterface,
+    targetPaths: TargetPaths,
     catalogs: Catalogs,
     body: RequirementBody,
     kept?: { operator: string | null; value: string | null },
@@ -75,7 +76,7 @@ export default class RequirementEdits {
   /** A new requirement on an entity: the entity as the view has it, and the row its save stores. */
   static planCreate(
     view: RulesetView,
-    targetPaths: TargetPathsInterface,
+    targetPaths: TargetPaths,
     catalogs: Catalogs,
     change: { body: RequirementBody; entityId: string; entityType: string },
   ) {
@@ -92,7 +93,7 @@ export default class RequirementEdits {
   /** An edit of one of an entity's requirements: the entity and the requirement, and the row its save stores. */
   static planEdit(
     view: RulesetView,
-    targetPaths: TargetPathsInterface,
+    targetPaths: TargetPaths,
     catalogs: Catalogs,
     change: { body: RequirementBody; entityId: string; entityType: string; requirementId: string },
   ) {

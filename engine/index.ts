@@ -15,10 +15,9 @@ export type {
   CharacterInput,
   CharacterRows,
   EntityWrites,
+  GeneratedFeat,
   GeneratedFeatRemoval,
-  GeneratedFeatsWrite,
 } from "./core/module/index.ts";
 export { default as RulesError } from "./core/RulesError.ts";
-export type { RulesetView } from "./core/types.ts";
 export type { EntityCustomizations, RulesetData, RulesetRawData } from "./core/view/index.ts";
 export { ENTITY_FIELDS, RULESET_LIMITS } from "./rulesets/dnd3.5/index.ts";

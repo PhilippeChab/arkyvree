@@ -181,7 +181,7 @@ What the sections above don't name, so no one writes a second one:
   - `formatHitDie(hd)` (`shared/dnd3.5/classes.ts`): a hit die as the books write it, "d8", the same in the Classes tab, on a class's page and in its form's select.
   - `getNextLevel(levels, parentLevel)` and `isChaining(row)` (`shared/customization/RequirementTree.ts`): where a new requirement goes, and whether a row groups the rows under it, as `RequirementTree` reads them.
   - `isTemplateItemType(type)` (`shared/itemTemplates.ts`): whether an item of a type can be based on a template (a weapon, an armor, a shield: `TEMPLATE_ITEM_TYPES`, which the API's templates list reads).
-  - `getItemTypeLocations(type)` (`shared/equipment.ts`): the locations an item's type sets (a weapon's hands, body armor's torso, a shield's off hand), which the inventory dialogs offer; the engine holds an equip to the same locations (`checkSlot`, `engine/rulesets/dnd3.5/items/equipping.ts`).
+  - `getItemTypeLocations(type)` (`shared/equipment.ts`): the locations an item's type sets (a weapon's hands, body armor's torso, a shield's off hand), which the inventory dialogs offer; the engine holds an equip to the same locations (`checkSlot`, `engine/rulesets/dnd3.5/characters/inventory/Equipping.ts`).
   - `formatSheetFileName(name)` (`shared/exports.ts`): a character sheet's PDF file name, the queued export's and a shared sheet's download alike.
   - `CHARACTER_VISIBILITY_OPTIONS` (`shared/campaigns.ts`): a campaign character's visibilities, which the server's routes take too and `tests/shared/campaigns.test.ts` holds to the database's check.
 - **An area's own** (in its folder, which its users import):

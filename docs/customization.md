@@ -155,7 +155,7 @@ Example: `"Martial Weapon Proficiency: Battleaxe"` → `"martialweaponproficienc
 
 ## Auto-Generated Customization
 
-Some entities get properties, requirements, or feats generated. Spells, skills and class levels get theirs when they're saved, from the engine's plan of the save, its `writes` (`powers().planCreate` and `planEdit`, `skills().planCreate` and `planEdit`, `class(klassId).planLevelCreate` and `planLevelEdit`: `engine/rulesets/dnd3.5/powers/PowerEntity.ts` with `powers/PowerFields.ts` and `powers/SpellGenerator.ts`, `skills/SkillEntity.ts`, `classes/ClassLevelEntity.ts`). Weapons, armors and shields get theirs from their type's definition when the content packages write them (`content/dnd3.5/builders/items/weapons.ts`, `armor.ts`). They're an item's fields: `ItemFields.read` reads them (`engine/rulesets/dnd3.5/items/ItemFields.ts`, which the inventory and the equipping check read with), and `ItemFields.toProperties` gives them back as rows, which a test holds every seeded item's to. Saving an item plans its slot only (`items().planCreate`, `planEdit`, `planVariants`: an armor's the torso, a shield's the off hand). An item made from a template stores only the types it overrides, and `RulesetData.itemProperties` merges its rows with the template's before they're read.
+Some entities get properties, requirements, or feats generated. Spells, skills and class levels get theirs when they're saved, from the engine's plan of the save, its `writes` (`powers().planCreate` and `planEdit`, `skills().planCreate` and `planEdit`, `class(klassId).planLevelCreate` and `planLevelEdit`: `engine/rulesets/dnd3.5/entities/powers/PowerEntity.ts` with `powers/PowerFields.ts` and `powers/SpellFocusFeats.ts`, `skills/SkillEntity.ts`, `classes/ClassLevelEntity.ts`). Weapons, armors and shields get theirs from their type's definition when the content packages write them (`content/dnd3.5/builders/items/weapons.ts`, `armor.ts`). They're an item's fields: `ItemFields.read` reads them (`engine/rulesets/dnd3.5/entities/items/ItemFields.ts`, which the inventory and the equipping check read with), and `ItemFields.toProperties` gives them back as rows, which a test holds every seeded item's to. Saving an item plans its slot only (`items().planCreate`, `planEdit`, `planVariants`: an armor's the torso, a shield's the off hand). An item made from a template stores only the types it overrides, and `RulesetData.itemProperties` merges its rows with the template's before they're read.
 
 Every save's plan takes one shape, `EntityWrites` (`engine/core/module/writes.ts`): it says what to write beside the entity's row, without ids, and the service writes it in its transaction (`writeEntityWrites`, `server/services/rulesets/entityWrites.ts`).
 - `properties` gives the fields of the entity's form as its properties, in place of those of the same types it stored before. Its other properties stay.
@@ -209,7 +209,7 @@ Proficiency requirements (on the item, checked at equip time):
 
 The engine reads a weapon's proficiency of the inventory entry holding it (`areRequirementsMet(…, { sourceId })`), so `weapon.wielded`, like the rest of an item's own weapon's paths (`weapon.tohit.*`, `weapon.damage.*`), is read of that entry. An item held in two places (a dagger in each hand, a bastard sword in two weapon sets) is a weapon in each, each with its own proficiency, and an item's modifier on its weapon behind a gate reaches each weapon whose gate is met there (`sourcesOf`): a bonus gated on `weapon.wielded == mainhand` goes to the main-hand dagger, not the off-hand one. A race's proficiencies are its modifiers: the elf's martial ones (longsword, rapier, longbow and shortbow, composite ones included).
 
-An item's proficiency is its base item's requirements: its template's, or its own when it's a template. An equipped weapon whose proficiency is unmet isn't proficient: −4 to hit, and nothing else (its modifiers still apply). Its own requirements on top of a template, or a plain item's, are its other requirements: unmet, its own modifiers don't apply, and it keeps its proficiency (the loader's `Customizations.toCustomizedInventory`, `engine/rulesets/dnd3.5/loading/Customizations.ts`).
+An item's proficiency is its base item's requirements: its template's, or its own when it's a template. An equipped weapon whose proficiency is unmet isn't proficient: −4 to hit, and nothing else (its modifiers still apply). Its own requirements on top of a template, or a plain item's, are its other requirements: unmet, its own modifiers don't apply, and it keeps its proficiency (the loader's `Customizations.toCustomizedInventory`, `engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts`).
 
 ### Armor (type = "Armor")
 
@@ -263,7 +263,7 @@ On update: changing BAB progression or skill points re-syncs the properties (del
 
 ### Skills
 
-Properties auto-generated from the skill form's fields by `skills().planCreate` and `planEdit`. They're a skill's fields: `SkillFields.read` reads them (`engine/rulesets/dnd3.5/skills/SkillFields.ts`, which the skill API's descriptions, `skills().describe` and `describeAll`, a save's answer and the character read with too), and the core rules' seeder writes them with `SkillFields.toProperties` (`Engine.forRules(baseRules).toEntityProperties`), as a save does:
+Properties auto-generated from the skill form's fields by `skills().planCreate` and `planEdit`. They're a skill's fields: `SkillFields.read` reads them (`engine/rulesets/dnd3.5/entities/skills/SkillFields.ts`, which the skill API's descriptions, `skills().describe` and `describeAll`, a save's answer and the character read with too), and the core rules' seeder writes them with `SkillFields.toProperties` (`Engine.forRules(baseRules).toEntityProperties`), as a save does:
 - `SKILL_IMPACTED_BY_WEIGHT` — whether armor check penalty applies
 - `SKILL_CHECK_PENALTY_MULTIPLIER` — how many times over a skill armor weighs on takes the penalty (2 on Swim; absent means 1)
 - `SKILL_USABLE_WITHOUT_TRAINING` — whether untrained use is allowed
@@ -311,7 +311,7 @@ On create: with a school, generates the properties from the form's fields, and t
 On update: replaces the generated property types (the spell's fields) with the form's, none without a school, and creates the feats of a school that's new. The spell's other properties remain, and so do existing school feats.
 On delete: cleans up the spell's customizations. School feats remain even if the school has no spells left.
 
-Feats auto-generated per unique school by `powers().planCreate` and `planEdit` (`SpellGenerator.buildSpellFocusFeats`, `powers/SpellGenerator.ts`):
+Feats auto-generated per unique school by `powers().planCreate` and `planEdit` (`SpellFocusFeats.buildSpellFocusFeats`, `powers/SpellFocusFeats.ts`):
 - `Spell Focus: <school>` — +1 `powers.groups.<stripped_school>.*.dc.misc`, linked to General aptitude
 - `Greater Spell Focus: <school>` — +1 `powers.groups.<stripped_school>.*.dc.misc`, requires `feats.spellfocus<stripped_school>.possessed == true`, linked to General aptitude
 - Created idempotently (skipped if already exist for the school)

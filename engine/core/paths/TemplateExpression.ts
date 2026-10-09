@@ -1,11 +1,13 @@
 /** The template expression's evaluation: its syntax (`shared/customization/templateExpression.ts`) read on a sheet. */
 
-import type { Components, TargetPathsTraverser } from "@/engine/core/types.ts";
 import {
   parseTemplateExpression,
   TEMPLATE_FUNCTIONS,
   type TemplateNode,
 } from "@/shared/customization/templateExpression.ts";
+
+import type { TargetPathsTraverser } from "./CategoryPaths.ts";
+import type { Components } from "./PathTraverser.ts";
 
 /** A template expression read on a sheet: its value, its paths resolved on the character's components. */
 export default class TemplateExpression {

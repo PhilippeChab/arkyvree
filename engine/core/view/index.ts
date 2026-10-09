@@ -5,4 +5,5 @@
 
 export { default as RulesetComposition, type RulesetRawData } from "./RulesetComposition.ts";
 export { default as RulesetData, type ViewEntities } from "./RulesetData.ts";
+export type { RulesetView } from "./RulesetData.ts";
 export { type EntityCustomizations, default as SiblingMerge } from "./SiblingMerge.ts";

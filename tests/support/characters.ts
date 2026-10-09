@@ -2,8 +2,9 @@ import type { InferInsertModel } from "drizzle-orm";
 import type { InferRequestType } from "hono/client";
 
 import type { charactersInCharacter } from "@/drizzle/schema.ts";
-import { CharacterInputs, type DetailedCharacterInterface } from "@/engine/core/module/index.ts";
-import CharacterBuilder from "@/engine/rulesets/dnd3.5/character/CharacterBuilder.ts";
+import { CharacterInputs } from "@/engine/core/module/index.ts";
+import CharacterBuilder from "@/engine/rulesets/dnd3.5/model/CharacterBuilder.ts";
+import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { type RulesetScope, withRulesetScope } from "@/server/cow/index.ts";
 import { type Db, db } from "@/server/database/index.ts";
 import { Characters } from "@/server/repositories/index.ts";
@@ -18,7 +19,7 @@ import { getSeedCtx, uniqueId } from "./seed.ts";
  * (`CharacterBuilder.build`): its rows read through `database`, in `scope` when it's the character's ruleset's, a bonded
  * creature's master built first.
  */
-export async function buildAs<C extends DetailedCharacterInterface>(
+export async function buildAs<C extends DetailedCharacter>(
   Kind: new (record: Character) => C,
   record: Character,
   {

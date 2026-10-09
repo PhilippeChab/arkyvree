@@ -1,5 +1,6 @@
+import type { TargetPaths } from "@/engine/core/paths/CategoryPaths.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { RulesetView, TargetPathsInterface } from "@/engine/core/types.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { TargetPathCatalog } from "@/shared/customization/target.ts";
 
 import CustomizedEntity from "./CustomizedEntity.ts";
@@ -87,7 +88,7 @@ export default class ModifierEdits {
    */
   static planCreate(
     view: RulesetView,
-    targetPaths: TargetPathsInterface,
+    targetPaths: TargetPaths,
     catalogs: Catalogs,
     change: { body: ModifierBody; entityId: string; entityType: string; sourceModifierId?: string },
   ) {
@@ -118,7 +119,7 @@ export default class ModifierEdits {
    */
   static planEdit(
     view: RulesetView,
-    targetPaths: TargetPathsInterface,
+    targetPaths: TargetPaths,
     catalogs: Catalogs,
     change: { body: ModifierBody; entityId: string; entityType: string; modifierId: string },
   ) {

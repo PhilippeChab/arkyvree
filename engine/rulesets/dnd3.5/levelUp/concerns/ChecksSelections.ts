@@ -1,8 +1,8 @@
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import { Dnd35LevelsRules } from "@/engine/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
 import type LevelUpState from "@/engine/rulesets/dnd3.5/levelUp/LevelUpState.ts";
 import type { GrantedFeatRecords } from "@/engine/rulesets/dnd3.5/levelUp/LevelUpState.ts";
+import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 import type { ProjectedSelections } from "./Projects.ts";
@@ -38,7 +38,7 @@ export function ChecksSelections<B extends Constructor<LevelUpState>>(Base: B) {
      * `label` names the level in the message ("Level 2: ").
      */
     protected checkAbilityIncrease(totalLevel: number, abilityId: string | null, label = "") {
-      const isAbilityIncreaseLevel = Dnd35LevelsRules.isAbilityIncreaseLevel(totalLevel);
+      const isAbilityIncreaseLevel = LevelRules.isAbilityIncreaseLevel(totalLevel);
       if (abilityId && !isAbilityIncreaseLevel)
         throw new RulesError("invalid", `${label}Ability increase is not available at this level`);
 

@@ -1,5 +1,5 @@
 import { PropertyTypeCatalog } from "@/engine/core/customizations/index.ts";
-import type { RulesetView } from "@/engine/core/types.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
 
 import type { Module } from "./Modules.ts";

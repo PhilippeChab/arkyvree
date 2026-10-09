@@ -1,13 +1,21 @@
+import type { RulesetModule } from "@/engine/core/module/index.ts";
 import { sortProperties } from "@/shared/dnd3.5/properties/index.ts";
 import type { Property } from "@/shared/relations.ts";
 
-import { Dnd35Characters } from "./character/Dnd35Characters.ts";
-import { Dnd35Content } from "./content/Dnd35Content.ts";
-import { Dnd35Entities } from "./Dnd35Entities.ts";
+import Dnd35Characters from "./characters/Dnd35Characters.ts";
+import Dnd35Content from "./content/Dnd35Content.ts";
 import Dnd35PropertyTypes from "./Dnd35PropertyTypes.ts";
 import Dnd35TargetPaths from "./Dnd35TargetPaths.ts";
-import { Dnd35LevelUp } from "./levelUp/Dnd35LevelUp.ts";
-import type { Dnd35RulesetModule } from "./types.ts";
+import Dnd35Entities from "./entities/Dnd35Entities.ts";
+import Dnd35LevelUp from "./levelUp/Dnd35LevelUp.ts";
+
+/** The 3.5 rules' module: its parts, by their own types. */
+export interface Dnd35RulesetModule extends RulesetModule {
+  characters: Dnd35Characters;
+  content: Dnd35Content;
+  entities: Dnd35Entities;
+  levelUp: Dnd35LevelUp;
+}
 
 /** The 3.5 ruleset module. */
 export default class Dnd35Module {

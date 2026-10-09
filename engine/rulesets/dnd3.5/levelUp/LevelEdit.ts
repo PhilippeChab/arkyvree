@@ -1,11 +1,12 @@
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { RulesetView, ValidationIssue } from "@/engine/core/types.ts";
-import BondedPlans from "@/engine/rulesets/dnd3.5/bonded/BondedPlans.ts";
-import type Dnd35DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
-import type { Dnd35ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/types.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
+import type { ValidationIssue } from "@/engine/rulesets/dnd3.5/model/concerns/Validates.ts";
+import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import type { ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/model/projection.ts";
 import { include } from "@/lib/mixins.ts";
 
+import BondedPlans from "./BondedPlans.ts";
 import { type CheckedSelections, ChecksSelections } from "./concerns/ChecksSelections.ts";
 import { Projects } from "./concerns/Projects.ts";
 import LevelUpState, { type LevelPicks } from "./LevelUpState.ts";
@@ -31,11 +32,7 @@ export default class LevelEdit extends include(LevelUpState, ChecksSelections, P
    * with it (`withLevel`) than without it (`before`), each built without the levels from it onward
    * (`projectLevelContribution`).
    */
-  private checkEditedLevelIssues(
-    issues: ValidationIssue[],
-    before: Dnd35DetailedCharacter,
-    withLevel: Dnd35DetailedCharacter,
-  ) {
+  private checkEditedLevelIssues(issues: ValidationIssue[], before: DetailedCharacter, withLevel: DetailedCharacter) {
     const allowedBefore = new Map<string, number>();
     for (const apt of Object.values(before.components.aptitudes.getAptitudes()))
       allowedBefore.set(apt.name, apt.allowed);
@@ -61,7 +58,7 @@ export default class LevelEdit extends include(LevelUpState, ChecksSelections, P
     klassLevelId: string,
     edit: Edit,
     selections: CheckedSelections,
-  ): Dnd35ProjectedCharacterData {
+  ): ProjectedCharacterData {
     const { fetchedFeats, featCustomizations, autoGrantedRecords } = selections;
     const projectedLevelId = crypto.randomUUID();
     const autoGrantedFeats = this.buildProjectedAutoGrantedFeats(
@@ -102,7 +99,7 @@ export default class LevelEdit extends include(LevelUpState, ChecksSelections, P
     klassLevelId: string,
     skills: Record<string, number>,
     selections: CheckedSelections,
-  ): { before: Dnd35ProjectedCharacterData; withLevel: Dnd35ProjectedCharacterData } {
+  ): { before: ProjectedCharacterData; withLevel: ProjectedCharacterData } {
     const onwardIds = this.getLevelIdsFromOnward(this.character.rows.levels, characterLevelId);
     const level = this.buildProjectedCharacterLevel(this.character.record.id, klassLevelId);
     return {

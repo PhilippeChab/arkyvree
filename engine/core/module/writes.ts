@@ -16,7 +16,7 @@ type RequirementWrite = Pick<Requirement, "level" | "operator" | "target" | "val
  */
 export interface EntityWrites<Columns extends object = object> {
   columns: Columns;
-  generatedFeats: GeneratedFeatsWrite[];
+  generatedFeats: GeneratedFeat[];
   properties?: PropertiesWrite;
   removedFeats: GeneratedFeatRemoval[];
   requirement?: RequirementWrite;
@@ -39,11 +39,6 @@ export interface GeneratedFeat {
 export interface GeneratedFeatRemoval {
   featId: string;
   inUse: string;
-}
-
-/** The feats a save makes, each in its pool. */
-export interface GeneratedFeatsWrite {
-  feats: GeneratedFeat[];
 }
 
 /** A property a save keeps a field in: its type and value, on the entity it saves. */
