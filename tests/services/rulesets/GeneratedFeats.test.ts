@@ -77,6 +77,20 @@ async function featNames(rulesetId: string, search?: string) {
     .sort();
 }
 
+/** What a feat is made of, ids aside: its description, its properties, its modifiers and its requirements. */
+async function featShape(featId: string) {
+  const feat = (await Feats.findOne(db, { id: featId }))!;
+  const strip = <T extends object>(rows: T[]) =>
+    rows.map((row) => Object.fromEntries(Object.entries(row).filter(([key]) => !/(^id$|Id$|At$)/.test(key))));
+  return {
+    description: feat.description,
+    generated: feat.generated,
+    properties: strip(await Properties.findMany(db, { entityIds: [featId], entityType: "feats" })),
+    modifiers: strip(await Modifiers.findMany(db, { sourceIds: [featId], sourceType: "feats" })),
+    requirements: strip(await Requirements.findMany(db, { entityIds: [featId], entityType: "feats" })),
+  };
+}
+
 async function findFeat(rulesetId: string, name: string) {
   return (await Feats.findOne(db, { rulesetId, name }))!;
 }
@@ -169,6 +183,16 @@ describe("Spell Focus", () => {
     ]);
   });
 
+  test("makes its school's feats as the seeded ones are", async () => {
+    const { session, ruleset, spells } = await bareRuleset();
+    await PowersService.createPower(session, ruleset.id, spell(spells.id, "Fireball", "Evocation"));
+    const { rulesetId: seededId } = await getSeedCtx();
+    for (const name of ["Spell Focus: Evocation", "Greater Spell Focus: Evocation"]) {
+      const [made, seeded] = [await findFeat(ruleset.id, name), await findFeat(seededId, name)];
+      expect(await featShape(made.id)).toEqual(await featShape(seeded.id));
+    }
+  });
+
   test("regenerates a spell's fields when it changes, a new school getting its feats next to the old one's", async () => {
     const { session, ruleset, spells } = await bareRuleset();
     const power = await PowersService.createPower(
@@ -217,6 +241,25 @@ describe("Skill Focus", () => {
     expect(await Modifiers.findMany(db, { sourceIds: [feat.id], sourceType: "feats" })).toMatchObject([
       { target: "skills.knowledgearcana.misc", operator: "add", value: "3", valueType: "number" },
     ]);
+  });
+
+  test("is the seeded one's twin: its family, its description, its modifier", async () => {
+    const { session, ruleset, strength } = await bareRuleset();
+    await SkillsService.createSkill(session, ruleset.id, skill(strength.id, "Climb"));
+    const { rulesetId: seededId } = await getSeedCtx();
+    const [made, seeded] = [
+      await findFeat(ruleset.id, "Skill Focus: Climb"),
+      await findFeat(seededId, "Skill Focus: Climb"),
+    ];
+    expect(await featShape(made.id)).toEqual(await featShape(seeded.id));
+  });
+
+  test("isn't made again when the ruleset has a feat of its name", async () => {
+    const { session, ruleset, strength } = await bareRuleset();
+    await Feats.create(db, { name: "Skill Focus: Climb", description: "Mine", rulesetId: ruleset.id });
+    await SkillsService.createSkill(session, ruleset.id, skill(strength.id, "Climb"));
+    expect(await featNames(ruleset.id)).toEqual(["Skill Focus: Climb"]);
+    expect((await findFeat(ruleset.id, "Skill Focus: Climb")).description).toBe("Mine");
   });
 
   test("a ruleset without a General aptitude gets none", async () => {

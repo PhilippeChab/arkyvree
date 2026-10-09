@@ -41,10 +41,9 @@ export interface GeneratedFeatRemoval {
   inUse: string;
 }
 
-/** The feats a save makes, unless the ruleset or its chain has a feat named `unlessPresent` already. */
+/** The feats a save makes, each in its pool. */
 export interface GeneratedFeatsWrite {
   feats: GeneratedFeat[];
-  unlessPresent?: string;
 }
 
 /** A property a save keeps a field in: its type and value, on the entity it saves. */

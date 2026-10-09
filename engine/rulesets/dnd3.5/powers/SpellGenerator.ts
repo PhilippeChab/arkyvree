@@ -30,7 +30,7 @@ export default class SpellGenerator {
         },
         {
           name: `Greater Spell Focus: ${schoolName}`,
-          description: `Add +1 to the Difficulty Class for all saving throws against spells from the school of ${schoolName}. This bonus stacks with Spell Focus.`,
+          description: `Add +1 to the Difficulty Class for all saving throws against spells from the school of ${schoolName}. This bonus stacks with the bonus granted by Spell Focus.`,
           properties: FeatFields.toProperties({ ...NO_FEAT_FIELDS, families: ["Greater Spell Focus"] }),
           modifiers: [dcBonus],
           requirements: [
