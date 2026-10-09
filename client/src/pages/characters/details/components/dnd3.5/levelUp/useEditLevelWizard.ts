@@ -156,7 +156,11 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevel }:
   );
   const selectedAptitude = openPoolOf(base.selectedAptitude, adjustedFeatPools);
   const allSelectedFeatPickString = useMemo(() => featPickString(selectedFeats), [selectedFeats]);
-  const picker: PickerLevel = { ...step, featPicks: allSelectedFeatPickString };
+  const picker: PickerLevel = {
+    ...step,
+    abilityId: selectedAttribute ?? undefined,
+    featPicks: allSelectedFeatPickString,
+  };
 
   // Grouped available feats
   const {

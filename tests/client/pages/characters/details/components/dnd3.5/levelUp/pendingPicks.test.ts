@@ -66,20 +66,21 @@ describe("the planned level a pick lands on", () => {
     expect(spellSlotsPerLevel(WIZARD_SPELL_SLOTS, null)).toEqual([0, 9]);
   });
 
-  test("asks the picker for that level's class and level, after the planned levels up to it", () => {
+  test("asks the picker for that level's class, level and ability increase, after the planned levels before it", () => {
     // A Fighter 3 then Wizard 1 plan: its wizard spells are picked at Wizard 1, never at the plan's first class
     const index = nextPickLevel(spellSlotsPerLevel(WIZARD_SPELL_SLOTS, 1), 0);
     expect(plannedPicker(FIGHTER_THEN_WIZARD, [null, "int"], index, "dodge:general")).toEqual({
+      abilityId: "int",
       classId: "wizard",
       level: 1,
       featPicks: "dodge:general",
-      plannedAbilityIds: "null,int",
-      plannedClassLevelIds: "f3,w1",
+      plannedAbilityIds: "null",
+      plannedClassLevelIds: "f3",
     });
     expect(plannedPicker(FIGHTER_THEN_WIZARD, [], 0, undefined)).toMatchObject({
       classId: "fighter",
       level: 3,
-      plannedClassLevelIds: "f3",
+      plannedClassLevelIds: undefined,
     });
   });
 

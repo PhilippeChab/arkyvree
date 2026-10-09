@@ -7,10 +7,12 @@ import type { KlassLevel } from "@/shared/relations.ts";
 import Picker from "./Picker.ts";
 
 /**
- * The level a feat or a power is picked at: class `klassId`'s `level`, in the pool `aptitudeId`, after what the wizard
- * plans before it (`planned`), or a saved level's (`editedLevelId`), which a pick sees the character as it was before.
+ * The level a feat or a power is picked at: class `klassId`'s `level` with its ability increase (`abilityId`), in the
+ * pool `aptitudeId`, after the levels the wizard plans before it (`planned`), or a saved level's (`editedLevelId`),
+ * which a pick sees the character as it was before.
  */
 export interface PickLevel {
+  abilityId?: string;
   aptitudeId: string;
   editedLevelId?: string;
   klassId: string;
@@ -34,16 +36,15 @@ export default abstract class LevelPicker extends Picker {
 
   /**
    * The character a pick is made for: as it was before the edited level (an edit), with the levels planned before this
-   * one (their ability increases with them when `withAbilities`), then this class level with the feats picked so far.
+   * one and their ability increases, then this class level with its own and the feats picked so far.
    */
-  protected projectPick(withAbilities: boolean) {
-    const { editedLevelId, planned = {} } = this.query;
+  protected projectPick() {
+    const { abilityId, editedLevelId, planned = {} } = this.query;
     const projection = new CharacterProjection(this.character);
     if (editedLevelId) projection.dropLevelsFrom(editedLevelId);
     const hp = LevelRules.UNROLLED_LEVEL_HP;
-    const abilityIds = withAbilities ? planned.abilityIds : undefined;
-    projection.addLevels(planned.klassLevelIds ?? [], { abilityIds, hp });
-    projection.pick(projection.addLevel(this.klassLevel.id, { hp }), { feats: planned.featPicks });
+    projection.addLevels(planned.klassLevelIds ?? [], { abilityIds: planned.abilityIds, hp });
+    projection.pick(projection.addLevel(this.klassLevel.id, { abilityId, hp }), { feats: planned.featPicks });
     return projection;
   }
 }

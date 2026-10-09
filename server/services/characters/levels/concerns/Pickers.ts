@@ -7,6 +7,7 @@ import type { Session } from "@/shared/relations.ts";
 
 /** A feat or power picker's level, as its list's filters send it, and what the wizard plans before it. */
 interface PickLevelWhere extends PlannedWhere {
+  abilityId?: string;
   aptitudeId: string;
   classId: string;
   editedLevelId?: string;
@@ -29,8 +30,8 @@ interface PlannedWhere {
 }
 
 /** A picker's level as the engine takes it. */
-function pickLevelOf({ aptitudeId, classId, editedLevelId, level, ...planned }: PickLevelWhere) {
-  return { aptitudeId, editedLevelId, klassId: classId, level, planned: plannedOf(planned) };
+function pickLevelOf({ abilityId, aptitudeId, classId, editedLevelId, level, ...planned }: PickLevelWhere) {
+  return { abilityId, aptitudeId, editedLevelId, klassId: classId, level, planned: plannedOf(planned) };
 }
 
 /** What the wizard plans so far, as the engine takes it. */
