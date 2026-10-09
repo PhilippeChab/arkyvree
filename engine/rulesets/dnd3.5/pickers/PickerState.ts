@@ -1,8 +1,8 @@
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import { AnnotatesOptions } from "@/engine/rulesets/dnd3.5/levelUp/concerns/AnnotatesOptions.ts";
-import { Projects } from "@/engine/rulesets/dnd3.5/levelUp/concerns/Projects.ts";
-import LevelUpState, { type FeatPick } from "@/engine/rulesets/dnd3.5/levelUp/LevelUpState.ts";
+import LevelUpState from "@/engine/rulesets/dnd3.5/levelUp/LevelUpState.ts";
+import CharacterProjection, { type FeatPick } from "@/engine/rulesets/dnd3.5/projection/CharacterProjection.ts";
 import { include } from "@/lib/mixins.ts";
 import type { KlassLevel } from "@/shared/relations.ts";
 
@@ -25,7 +25,7 @@ export interface PickQuery {
  * A feat or power picker for a character, from its rows: the level picked at (class `klassId`'s `level`), and the
  * character built with the level and the picks so far, which its options are offered and annotated for.
  */
-export default abstract class PickerState extends include(LevelUpState, AnnotatesOptions, Projects) {
+export default abstract class PickerState extends include(LevelUpState, AnnotatesOptions) {
   constructor(
     view: RulesetView,
     protected readonly character: CharacterInput,
@@ -44,23 +44,16 @@ export default abstract class PickerState extends include(LevelUpState, Annotate
   }
 
   /**
-   * The projection's levels: the pending ones and the picker's own, without the edited level and those after it; the
-   * pending ones with their ability increases when `withAbilities`.
+   * The character a pick is made for: as it was before the edited level (an edit), with the levels planned before this
+   * one (their ability increases with them when `withAbilities`), then this class level with the feats picked so far.
    */
-  protected projectPickLevels(withAbilities: boolean) {
+  protected projectPick(withAbilities: boolean) {
     const { excludeCharacterLevelId, pendingLevelAbilityIds, pendingLevelKlassLevelIds } = this.query;
-    const characterId = this.character.record.id;
-    const excludeIds = excludeCharacterLevelId
-      ? this.getLevelIdsFromOnward(this.character.rows.levels, excludeCharacterLevelId)
-      : [];
-    const pendingLevels = pendingLevelKlassLevelIds?.length
-      ? this.buildPendingCharacterLevels(
-          characterId,
-          pendingLevelKlassLevelIds,
-          withAbilities ? pendingLevelAbilityIds : undefined,
-        )
-      : [];
-    const level = this.buildProjectedCharacterLevel(characterId, this.klassLevel.id);
-    return { excludeIds, level, pendingLevels };
+    const projection = new CharacterProjection(this.view, this.character);
+    if (excludeCharacterLevelId) projection.dropLevelsFrom(excludeCharacterLevelId);
+    projection.addLevels(pendingLevelKlassLevelIds ?? [], withAbilities ? pendingLevelAbilityIds : undefined);
+    const level = projection.addLevel(this.klassLevel.id);
+    projection.pickFeats(level, this.featPicks);
+    return { level, projection };
   }
 }

@@ -1,10 +1,8 @@
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import { Projects } from "@/engine/rulesets/dnd3.5/levelUp/concerns/Projects.ts";
-import LevelUpState, { type FeatPick } from "@/engine/rulesets/dnd3.5/levelUp/LevelUpState.ts";
+import LevelUpState from "@/engine/rulesets/dnd3.5/levelUp/LevelUpState.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
-import type { ProjectedCharacterData, ProjectedCharacterLevel } from "@/engine/rulesets/dnd3.5/model/projection.ts";
-import { include } from "@/lib/mixins.ts";
+import CharacterProjection, { type FeatPick } from "@/engine/rulesets/dnd3.5/projection/CharacterProjection.ts";
 import type { Klass, KlassLevel, Requirement } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -25,7 +23,7 @@ interface PendingPicks {
  * with that level and its eligibility. Only a class with requirements (its class's and its next level's) needs the
  * character built, with the pending picks.
  */
-export default class ClassPicker extends include(LevelUpState, Projects) {
+export default class ClassPicker extends LevelUpState {
   constructor(
     view: RulesetView,
     private readonly character: CharacterInput,
@@ -50,12 +48,7 @@ export default class ClassPicker extends include(LevelUpState, Projects) {
     const withoutRequirements = candidates.filter((k) => !requirementsByKlassLevel.has(k.nextKlassLevel.id));
     const withRequirements = candidates.filter((k) => requirementsByKlassLevel.has(k.nextKlassLevel.id));
     const eligibility = character
-      ? this.evaluateClassAvailability(
-          character,
-          withRequirements,
-          requirementsByKlassLevel,
-          this.buildProjectedCharacterLevel(this.character.record.id, ""),
-        )
+      ? this.evaluateClassAvailability(character, withRequirements, requirementsByKlassLevel)
       : new Map<string, boolean>();
 
     const option = (k: ClassCandidate, eligible: boolean, requirementTree?: string) => ({
@@ -82,33 +75,22 @@ export default class ClassPicker extends include(LevelUpState, Projects) {
     ].sort((a, b) => b.nextLevel - a.nextLevel || a.name.localeCompare(b.name));
   }
 
-  /** Whether the character, a level higher, meets each candidate's requirement groups, by its next level's id. */
+  /** Whether the character, with the candidate's next level, meets its requirement groups, by that level's id. */
   private evaluateClassAvailability(
     character: DetailedCharacter,
     candidates: ClassCandidate[],
     requirementsByKlassLevel: Map<string, Requirement[][]>,
-    projectedCharacterLevel: ProjectedCharacterLevel,
   ): Map<string, boolean> {
-    const results = new Map<string, boolean>();
-    if (candidates.length === 0) return results;
-
-    const identity = character.components.identity.getIdentity();
-    identity.meta.level++;
-
-    for (const candidate of candidates) {
-      results.set(
-        candidate.nextKlassLevel.id,
-        character.evaluateWithProjectedLevel(
-          stripSeparators(candidate.klass.name),
-          candidate.nextKlassLevel,
-          projectedCharacterLevel,
-          requirementsByKlassLevel.get(candidate.nextKlassLevel.id)!,
+    return new Map(
+      candidates.map(({ klass, nextKlassLevel }) => [
+        nextKlassLevel.id,
+        character.meetsWithNextLevel(
+          stripSeparators(klass.name),
+          nextKlassLevel,
+          requirementsByKlassLevel.get(nextKlassLevel.id)!,
         ),
-      );
-    }
-
-    identity.meta.level--;
-    return results;
+      ]),
+    );
   }
 
   /** The character's highest level in each class it has levels of, by the class's id. */
@@ -124,45 +106,20 @@ export default class ClassPicker extends include(LevelUpState, Projects) {
 
   /**
    * What the level-up wizard's pending picks add to the character, for the class picker: its pending levels with the
-   * feats their class levels grant, its picked feats and its skill ranks. Undefined when there are none.
+   * feats their class levels grant (a monk's Improved Unarmed Strike), and its feats and skill ranks picked so far, which
+   * requirements read: at the first pending level, or at the character's last level when it plans none.
    */
-  private projectPendingPicks(): ProjectedCharacterData | undefined {
-    const characterId = this.character.record.id;
-    const { featPicks, levelAbilityIds, levelKlassLevelIds, skillAllocations } = this.pending;
-    const pendingLevels = levelKlassLevelIds?.length
-      ? this.buildPendingCharacterLevels(characterId, levelKlassLevelIds, levelAbilityIds)
-      : [];
-    const skillAnchorLevel = pendingLevels[0] ?? this.buildProjectedCharacterLevel(this.character.record.id, "");
-    const autoGrantedRecords = (levelKlassLevelIds ?? []).flatMap(
-      (klid) => this.rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(klid) ?? [],
-    );
-    const projectedFeats = this.buildProjectedFeatsFromPicks(featPicks ?? [], "", "");
-    const projectedSkills = skillAllocations?.length
-      ? this.buildProjectedSkillsFromAllocations(skillAllocations, skillAnchorLevel.klassLevelId, skillAnchorLevel.id)
-      : [];
-    // The feats the pending class levels grant (a monk's Improved Unarmed Strike), which requirements read
-    const projectedGivenFeats =
-      autoGrantedRecords.length > 0
-        ? this.buildProjectedGivenFeats(
-            autoGrantedRecords,
-            pendingLevels[0].id,
-            this.loadFeatCustomizations(autoGrantedRecords.map((rec) => rec.featsInRule.id)),
-          )
-        : [];
-
-    const hasProjections =
-      pendingLevels.length > 0 ||
-      projectedFeats.length > 0 ||
-      projectedGivenFeats.length > 0 ||
-      projectedSkills.length > 0;
-    return hasProjections
-      ? {
-          ...(pendingLevels.length > 0 && { characterLevels: pendingLevels }),
-          ...(projectedFeats.length > 0 && { feats: projectedFeats }),
-          ...(projectedGivenFeats.length > 0 && { givenFeats: projectedGivenFeats }),
-          ...(projectedSkills.length > 0 && { skills: projectedSkills }),
-        }
-      : undefined;
+  private projectPendingPicks() {
+    const { featPicks = [], levelAbilityIds, levelKlassLevelIds = [], skillAllocations = [] } = this.pending;
+    const projection = new CharacterProjection(this.view, this.character);
+    const [first] = projection.addLevels(levelKlassLevelIds, levelAbilityIds);
+    if (first) projection.grantFeats(first, { klassLevelIds: levelKlassLevelIds });
+    const pickedAt = first ?? this.character.rows.levels.toSorted((a, b) => a.position - b.position).at(-1);
+    if (pickedAt) {
+      projection.pickFeats(pickedAt, featPicks);
+      projection.rankSkills(pickedAt, skillAllocations);
+    }
+    return projection;
   }
 
   /**
@@ -186,8 +143,7 @@ export default class ClassPicker extends include(LevelUpState, Projects) {
       if (groups.length > 0) requirementsByKlassLevel.set(k.nextKlassLevel.id, groups);
     }
     // Only a class with requirements needs the character, built with the wizard's pending picks
-    const built =
-      requirementsByKlassLevel.size > 0 ? this.build(this.character, this.projectPendingPicks()) : undefined;
+    const built = requirementsByKlassLevel.size > 0 ? this.projectPendingPicks().build() : undefined;
     return this.buildClassOptions(candidates, requirementsByKlassLevel, built);
   }
 }

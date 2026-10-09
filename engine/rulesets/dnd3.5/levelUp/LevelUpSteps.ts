@@ -2,11 +2,9 @@ import type { CharacterInput } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
-import type { ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/model/projection.ts";
+import CharacterProjection from "@/engine/rulesets/dnd3.5/projection/CharacterProjection.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
-import { include } from "@/lib/mixins.ts";
 
-import { Projects } from "./concerns/Projects.ts";
 import LevelUpState from "./LevelUpState.ts";
 
 /**
@@ -29,7 +27,7 @@ export type Step = Omit<StepProjection, "editedLevel"> & { editedLevelId?: strin
  * The level-up wizard's steps for a character, from its rows: its ability increase, its feat and power pools, and its
  * skill points, each for the character built with the step's level.
  */
-export default class LevelUpSteps extends include(LevelUpState, Projects) {
+export default class LevelUpSteps extends LevelUpState {
   constructor(
     view: RulesetView,
     private readonly character: CharacterInput,
@@ -80,46 +78,14 @@ export default class LevelUpSteps extends include(LevelUpState, Projects) {
   }
 
   /**
-   * The attributes step's character, built without the edited level and those after it: `undefined` when the level
-   * takes no ability increase, after the character's `levels` but those, and the pending ones.
+   * The step's projection: a level of class level `klassLevelId` after the levels planned before it, or in the edited
+   * level's place, so the first level stays the first (its x4 skill points).
    */
-  private projectAttributeStep(
-    excludeCharacterLevelId?: string,
-    pendingLevelCount?: number,
-  ): { projected?: ProjectedCharacterData } | undefined {
-    const { levels } = this.character.rows;
-    const excludeIds = excludeCharacterLevelId ? this.getLevelIdsFromOnward(levels, excludeCharacterLevelId) : [];
-    // The levels before this one: the level added or edited is the next
-    const totalLevel = levels.length - excludeIds.length + (pendingLevelCount ?? 0);
-    if (!LevelRules.isAbilityIncreaseLevel(totalLevel)) return undefined;
-    return excludeIds.length > 0 ? { projected: { excludeCharacterLevelIds: excludeIds } } : {};
-  }
-
-  /** The feats step's projection: the step's, with the feats its class level grants. */
-  private projectFeatStep(klassLevelId: string, projection: StepProjection): ProjectedCharacterData {
-    const grantedRecords = this.rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(klassLevelId) ?? [];
-    const customizations = this.loadFeatCustomizations(grantedRecords.map((rec) => rec.featsInRule.id));
-    const { level, data } = this.projectStep(klassLevelId, projection);
-    return { ...data, givenFeats: this.buildProjectedGivenFeats(grantedRecords, level.id, customizations) };
-  }
-
-  /**
-   * The step's projected level of class level `klassLevelId`, and the projection it goes in: after the pending levels,
-   * or in place of the edited one. Its id is fresh, so the loader doesn't count the stored level's granted feats twice.
-   */
-  private projectStep(klassLevelId: string, projection: StepProjection) {
-    const characterId = this.character.record.id;
-    const { editedLevel, abilityId, pendingLevelKlassLevelIds, pendingLevelAbilityIds } = projection;
-    const pendingLevels = pendingLevelKlassLevelIds?.length
-      ? this.buildPendingCharacterLevels(characterId, pendingLevelKlassLevelIds, pendingLevelAbilityIds)
-      : [];
-    const projected = this.buildProjectedCharacterLevel(characterId, klassLevelId, abilityId);
-    const level = editedLevel ? { ...projected, position: editedLevel.position } : projected;
-    const data: ProjectedCharacterData = {
-      ...(editedLevel && { excludeCharacterLevelIds: [editedLevel.id] }),
-      characterLevels: [...pendingLevels, level],
-    };
-    return { level, data };
+  private projectStep(klassLevelId: string, step: StepProjection) {
+    const projection = new CharacterProjection(this.view, this.character);
+    projection.addLevels(step.pendingLevelKlassLevelIds ?? [], step.pendingLevelAbilityIds);
+    const level = projection.addLevel(klassLevelId, { abilityId: step.abilityId, replacing: step.editedLevel });
+    return { level, projection };
   }
 
   /** The step's projection, the edited level's place read off the character's levels: refused when it has no such level. */
@@ -132,27 +98,31 @@ export default class LevelUpSteps extends include(LevelUpState, Projects) {
 
   /**
    * The attributes step: the character's abilities, when the level it adds or edits takes an ability increase (after its
-   * levels but the edited one and those after it, and the `pendingLevelCount` levels planned before it).
+   * levels but the edited one and those after it, and the `pendingLevelCount` levels planned before it), built without
+   * the edited level and those after it.
    */
   getAttributeSlots(excludeCharacterLevelId?: string, pendingLevelCount?: number) {
-    const step = this.projectAttributeStep(excludeCharacterLevelId, pendingLevelCount);
-    if (!step) return { isAvailable: false, attributes: {} };
-    const built = this.build(this.character, step.projected);
-    return { isAvailable: true, attributes: built.components.abilities.getAbilitiesWithIds() };
+    const projection = new CharacterProjection(this.view, this.character);
+    const dropped = excludeCharacterLevelId ? projection.dropLevelsFrom(excludeCharacterLevelId) : [];
+    // The levels before this one: the level added or edited is the next
+    const totalLevel = this.character.rows.levels.length - dropped.length + (pendingLevelCount ?? 0);
+    if (!LevelRules.isAbilityIncreaseLevel(totalLevel)) return { isAvailable: false, attributes: {} };
+    return { isAvailable: true, attributes: projection.build().components.abilities.getAbilitiesWithIds() };
   }
 
   /** The feats step of class `klassId`'s `level`: the pools the character picks feats in with it, and its grants. */
   getFeatSlots(klassId: string, level: number, step: Step) {
     const klassLevel = this.getKlassLevel(klassId, level);
-    const projected = this.projectFeatStep(klassLevel.id, this.readStep(step));
-    return this.buildFeatSlots(this.build(this.character, projected), klassLevel.id);
+    const projected = this.projectStep(klassLevel.id, this.readStep(step));
+    projected.projection.grantFeats(projected.level);
+    return this.buildFeatSlots(projected.projection.build(), klassLevel.id);
   }
 
   /** The powers step of class `klassId`'s `level`: the pools the character picks powers in with it, and its grants. */
   getPowerSlots(klassId: string, level: number, step: Step) {
     const klassLevel = this.getKlassLevel(klassId, level);
-    const projected = this.projectStep(klassLevel.id, this.readStep(step)).data;
-    return this.buildPowerSlots(this.build(this.character, projected), klassLevel.id);
+    const { projection } = this.projectStep(klassLevel.id, this.readStep(step));
+    return this.buildPowerSlots(projection.build(), klassLevel.id);
   }
 
   /**
@@ -161,8 +131,8 @@ export default class LevelUpSteps extends include(LevelUpState, Projects) {
    */
   getSkillSlots(klassId: string, level: number, step: Step) {
     const klassLevel = this.getKlassLevel(klassId, level);
-    const projected = this.projectStep(klassLevel.id, this.readStep(step)).data;
+    const { projection } = this.projectStep(klassLevel.id, this.readStep(step));
     const totalCharacterLevel = this.character.rows.levels.length + (step.editedLevelId ? 0 : 1);
-    return this.buildSkillSlots(this.build(this.character, projected), klassId, totalCharacterLevel);
+    return this.buildSkillSlots(projection.build(), klassId, totalCharacterLevel);
   }
 }

@@ -3,12 +3,11 @@ import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { ValidationIssue } from "@/engine/rulesets/dnd3.5/model/concerns/Validates.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
-import type { ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/model/projection.ts";
+import CharacterProjection from "@/engine/rulesets/dnd3.5/projection/CharacterProjection.ts";
 import { include } from "@/lib/mixins.ts";
 
 import BondedPlans from "./BondedPlans.ts";
 import { type CheckedSelections, ChecksSelections } from "./concerns/ChecksSelections.ts";
-import { Projects } from "./concerns/Projects.ts";
 import LevelUpState, { type LevelPicks } from "./LevelUpState.ts";
 
 /** A saved level's edit: its new hit points, ability and picks, and whether it's saved whatever the character fails. */
@@ -18,7 +17,7 @@ type Edit = LevelPicks & { abilityId: string | null; force: boolean; hp: number 
  * A saved level's edit, from the character's rows: the level as saved, its new hit points, ability and picks, checked,
  * and refused with the issues it answers for unless forced; and what the character's bonded creatures become with it.
  */
-export default class LevelEdit extends include(LevelUpState, ChecksSelections, Projects) {
+export default class LevelEdit extends include(LevelUpState, ChecksSelections) {
   constructor(
     view: RulesetView,
     private readonly character: CharacterInput,
@@ -49,72 +48,42 @@ export default class LevelEdit extends include(LevelUpState, ChecksSelections, P
 
   /**
    * An edited level's projection: the level with its new hit points, ability and selections, in place of its saved
-   * row. A fresh id keeps the projected level apart from the row it replaces: the loader drops that row
-   * (`excludeCharacterLevelIds`) and reads granted feats for the saved levels only, so the projected level's come from
-   * `givenFeats` alone.
+   * row, and the feats its class level grants that it doesn't pick.
    */
   private projectEditedLevel(
-    characterLevel: { createdAt: string; id: string; position: number },
+    characterLevel: { id: string; position: number },
     klassLevelId: string,
     edit: Edit,
     selections: CheckedSelections,
-  ): ProjectedCharacterData {
-    const { fetchedFeats, featCustomizations, autoGrantedRecords } = selections;
-    const projectedLevelId = crypto.randomUUID();
-    const autoGrantedFeats = this.buildProjectedAutoGrantedFeats(
-      autoGrantedRecords,
-      klassLevelId,
-      projectedLevelId,
-      new Set(fetchedFeats.map((f) => f.id)),
-      featCustomizations,
-    );
-    return {
-      excludeCharacterLevelIds: [characterLevel.id],
-      characterLevels: [
-        {
-          id: projectedLevelId,
-          characterId: this.character.record.id,
-          klassLevelId,
-          hp: edit.hp,
-          abilityId: edit.abilityId || null,
-          createdAt: characterLevel.createdAt,
-          updatedAt: new Date().toISOString(),
-          deletedAt: null,
-          position: characterLevel.position,
-        },
-      ],
-      ...this.buildProjectedSelections(klassLevelId, projectedLevelId, edit.skills, selections),
-      givenFeats: autoGrantedFeats,
-    };
+  ) {
+    const projection = new CharacterProjection(this.view, this.character);
+    const { abilityId, hp, skills } = edit;
+    const level = projection.addLevel(klassLevelId, { abilityId, hp, replacing: characterLevel });
+    projection.grantFeats(level, { except: new Set(selections.fetchedFeats.map((feat) => feat.id)) });
+    projection.addSelections(level, skills, selections);
+    return projection;
   }
 
   /**
-   * The two projections that say which pools an edited level adds to (`checkEditedLevelIssues`): the character without
-   * the level and every later one (`before`), and with the level alone after them (`withLevel`). Any entity the level
-   * brings can raise a pool (Bonus Feat (Fighter)'s grant, a wizard's specialization, a domain), so `withLevel` takes
-   * all of them, granted and picked, as the edit's projection does.
+   * The two projections that say which pools an edited level adds to (`checkEditedLevelIssues`): the character as it
+   * was before the level (`before`), and with the level alone after that (`withLevel`). Any entity the level brings can
+   * raise a pool (Bonus Feat (Fighter)'s grant, a wizard's specialization, a domain), so `withLevel` takes all of them,
+   * granted and picked.
    */
   private projectLevelContribution(
     characterLevelId: string,
     klassLevelId: string,
     skills: Record<string, number>,
     selections: CheckedSelections,
-  ): { before: ProjectedCharacterData; withLevel: ProjectedCharacterData } {
-    const onwardIds = this.getLevelIdsFromOnward(this.character.rows.levels, characterLevelId);
-    const level = this.buildProjectedCharacterLevel(this.character.record.id, klassLevelId);
-    return {
-      before: { excludeCharacterLevelIds: onwardIds },
-      withLevel: {
-        excludeCharacterLevelIds: onwardIds,
-        characterLevels: [level],
-        givenFeats: this.buildProjectedGivenFeats(
-          selections.autoGrantedRecords,
-          level.id,
-          selections.featCustomizations,
-        ),
-        ...this.buildProjectedSelections(klassLevelId, level.id, skills, selections),
-      },
-    };
+  ) {
+    const before = new CharacterProjection(this.view, this.character);
+    before.dropLevelsFrom(characterLevelId);
+    const withLevel = new CharacterProjection(this.view, this.character);
+    withLevel.dropLevelsFrom(characterLevelId);
+    const level = withLevel.addLevel(klassLevelId);
+    withLevel.grantFeats(level);
+    withLevel.addSelections(level, skills, selections);
+    return { before, withLevel };
   }
 
   /**
@@ -139,16 +108,12 @@ export default class LevelEdit extends include(LevelUpState, ChecksSelections, P
       pickedFeatIds.map((pick) => pick.featId),
     );
 
-    const edited = this.build(this.character, this.projectEditedLevel(level, klassLevel.id, edit, selections));
+    const edited = this.projectEditedLevel(level, klassLevel.id, edit, selections).build();
     const { valid, issues } = edited.validate();
     if (!valid && !force) {
       // The issues of the pools the level adds to: built without the level and every later one, then with it alone
       const contribution = this.projectLevelContribution(characterLevelId, klassLevel.id, edit.skills, selections);
-      this.checkEditedLevelIssues(
-        issues,
-        this.build(this.character, contribution.before),
-        this.build(this.character, contribution.withLevel),
-      );
+      this.checkEditedLevelIssues(issues, contribution.before.build(), contribution.withLevel.build());
     }
     return {
       abilityId: abilityId || null,

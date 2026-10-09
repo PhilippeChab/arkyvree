@@ -463,8 +463,7 @@ engine/rulesets/
     │   │                                  skills/, AbilitiesComponent, AbilitiesPaths…), and the shared base
     │   ├── DetailedCharacter.ts           (which wires CharacterState and its concerns/: Builds, Validates and its
     │   │                                  issues, PossessesVirtually; CharacterComponents; CharacterBuilder: a
-    │   │                                  character of its row's kind, built from its input; projection.ts: what a
-    │   │                                  level-up projects onto it)
+    │   │                                  character of its row's kind, built from its input)
     │   ├── loading/                       (DetailedCharacterDataLoader and LoadedCharacterData, and its steps:
     │   │                                  CustomizedEntities, Picks, Possessions, RulesetReadings)
     │   ├── combat/                        (CombatComponent on CombatState, which includes concerns/: ArmorClass,
@@ -498,9 +497,12 @@ engine/rulesets/
     │   ├── inventory/                     (InventoryEntries: a character's entries described, what an entry's add or
     │   │                                  edit stores; Equipping: what equipping an item checks)
     │   └── sheet/                         (the printed sheet, in React PDF: CharacterSheet and its pages, SheetFormat)
+    ├── projection/                        (CharacterProjection: what a level-up adds to a character before it's
+    │                                      saved, the levels it adds, replaces or leaves out and what's picked or
+    │                                      granted at them, and the character built with it)
     ├── levelUp/                           ← the module's `levelUp`: a class per operation on a base, LevelUpState:
-    │                                      the view, the characters it builds, class level lookups; its concerns:
-    │                                      Projects, ChecksSelections, AnnotatesOptions; LevelUpPlan: the preview,
+    │                                      the view, class level lookups; its concerns: ChecksSelections,
+    │                                      AnnotatesOptions; LevelUpPlan: the preview,
     │                                      and a save's levels checked, its picks spread over them (AptitudeSlotsPlan,
     │                                      PicksDistribution); LevelEdit: a saved level's edit, and the issues it
     │                                      answers for; LevelRemoval: the last level removed; LevelUpSteps: the
@@ -569,6 +571,7 @@ export interface RulesetModule {
   content: object;
   entities: object;
   levelUp: object;
+  ruleset: object;
   createPropertyTypes(): PropertyTypesProvider;
   createTargetPaths(): TargetPaths;
 }
@@ -581,9 +584,11 @@ export interface Dnd35RulesetModule extends RulesetModule {
   content: Dnd35Content;
   entities: Dnd35Entities;
   levelUp: Dnd35LevelUp;
+  ruleset: Dnd35Ruleset;
 }
 
-// engine/rulesets/dnd3.5/model/projection.ts
+// engine/rulesets/dnd3.5/projection/CharacterProjection.ts: what a level-up adds before it's saved, which it builds
+// the character with (`addLevel`, `dropLevelsFrom`, `pickFeats`, `grantFeats`…, then `build()`)
 export interface ProjectedCharacterData {
   characterLevels?: ProjectedCharacterLevel[];
   feats?: ProjectedFeat[];
@@ -689,7 +694,7 @@ A small rule several of a ruleset's modules share, a constant or a predicate, is
 
 A bound the client and the API check too is a constant of the ruleset's shared vocabulary, which every side reads instead of writing the number: `MAX_SPELL_LEVEL` (`shared/dnd3.5/spells.ts`) for the aptitudes' spell levels, the spellcasting and the spell forms, `MAX_CLASS_LEVEL` (`shared/dnd3.5/classes.ts`) for the class-level forms and the bonus caster levels, `MAX_ABILITY_SCORE` (`shared/dnd3.5/abilities.ts`) for a new character's ability scores and the sheet's, and `MAX_ITEM_VARIANTS` (`shared/itemTemplates.ts`) for the variants form. The routes read them through the engine (`RULESET_LIMITS`), and a character's last level with them (`MAX_CHARACTER_LEVEL`, `shared/dnd3.5/classes.ts`: the most levels a level-up saves).
 
-More complex operations (bound to the detailed character, returning rich data) belong on the ruleset's level-up classes (`LevelUpState` and its concerns, `Projects`, `ChecksSelections`, `AnnotatesOptions`) or on its character (a concern of `DetailedCharacter`), which an operation builds from the input it's given (`CharacterBuilder.build`).
+More complex operations (bound to the detailed character, returning rich data) belong on the ruleset's level-up classes (`LevelUpState` and its concerns, `ChecksSelections`, `AnnotatesOptions`, building the character with what a level-up adds through `CharacterProjection`) or on its character (a concern of `DetailedCharacter`), which an operation builds from the input it's given (`CharacterBuilder.build`).
 
 ### The level flows ask the module
 
@@ -721,7 +726,7 @@ A ruleset is a module under `engine/rulesets/<ruleset>/`, which the engine's han
 2. **Write its character** in `engine/rulesets/<ruleset>/character/`: its state (`CharacterState`), the concerns that build and validate it, its components and how they're wired (`CharacterComponents.build`), `DetailedCharacter`, which includes the concerns, and what builds one of its row's kind from its input (`CharacterBuilder.build`). 3.5's are typed against its own components and rows: a second ruleset writes its own, taking the engine's machinery (the evaluators, the paths, the module contract).
 3. **Write its target paths**: a `CategoryPaths` subclass (`Dnd35TargetPaths`) over its categories, one `PathCategory` per domain (`AbilitiesPaths`, `CombatPaths`, …), which `createTargetPaths` returns and the evaluators walk; and its property types (`Dnd35PropertyTypes`), which `createPropertyTypes` returns: the types and values its rules read, which the core's `PropertyTypeCatalog` lists with those the ruleset's own properties use. See [target-paths.md](./target-paths.md).
 4. **Write its entities**: a fields spec for each entity whose fields its rules keep in properties (`entities/skills/fields.ts`), the entity class that describes it and plans its saves (`skills/SkillEntity.ts`), a class's parts, which its kind hands out (3.5's `ClassEntity`: `levels()`, `skills()`, `table()`), and the body's fields and bounds a route validates with (`entityFields.ts`: `ENTITY_FIELDS`, `RULESET_LIMITS`), which join 3.5's in what `engine/index.ts` exports; and its `ruleset` part, what a ruleset needs to be played (3.5's `Dnd35Ruleset`), with the ruleset's own fields (`ruleset/fields.ts`).
-5. **Write its level-up**: its projection (3.5's `Dnd35ProjectedCharacterData`), a class per operation on a base of what they share (3.5's `LevelUpState`, its concerns, and `LevelUpPlan`, `LevelEdit`, `LevelRemoval`, `LevelUpSteps`, the pickers…), and the class its `levelUp` part is, which opens them (`Dnd35LevelUp`).
+5. **Write its level-up**: its projection (3.5's `CharacterProjection`: what a level-up adds to a character before it's saved, and the character built with it), a class per operation on a base of what they share (3.5's `LevelUpState`, its concerns, and `LevelUpPlan`, `LevelEdit`, `LevelRemoval`, `LevelUpSteps`, the pickers…), and the class its `levelUp` part is, which opens them (`Dnd35LevelUp`).
 6. **Register the module**: add it to `MODULES` in `engine/api/Modules.ts` (`Modules.of`), keyed by its base rules (`BaseRules`, `shared/enums.ts`): until it is, the engine doesn't compile.
 7. **Write its content**: `content/<ruleset>/` (its builders and its data), the package that seeds it (`database/packages/`), and, for books it scrapes, its codegen (`codegen/<ruleset>/`). See [packages.md](./packages.md).
 
@@ -733,7 +738,7 @@ If the services need a per-ruleset value or answer:
 - Add an operation: a method of the module's part (`Dnd35Entities`, `Dnd35LevelUp`, …) and the method of the handle it's about that dispatches to it (`LevelUpEngine`, `ClassEngine`, …: `engine/api/`; an entity kind's is a method of its entity class, on `RulesetEntity`, which `entities(type)` hands out), or a handle of its own, which `RulesetEngine` hands out under a noun (`class(klassId)`). `engine/index.ts` exports a handle's type when the server derives a body's or a plan's from it (`Parameters<EntityKinds["skills"]["planCreate"]>[0]`).
 - A value the client and the API need too lives in the ruleset's `shared/<ruleset>/` (`MAX_SPELL_LEVEL`), never in a file another ruleset would read; the server takes it through the engine (`RULESET_LIMITS`).
 
-If you need a per-ruleset behavior too complex for one class (takes the detailed character, returns rich data, reads several components), make it a method of the ruleset's level-up base or one of its concerns (`LevelUpState`, `Projects`…) or a concern of its character, which its operations call. A part is typed by its module (`Dnd35RulesetModule`), so nothing casts.
+If you need a per-ruleset behavior too complex for one class (takes the detailed character, returns rich data, reads several components), make it a method of the ruleset's level-up base or one of its concerns (`LevelUpState`, `ChecksSelections`…) or a concern of its character, which its operations call. A part is typed by its module (`Dnd35RulesetModule`), so nothing casts.
 
 ### Grey areas and audit findings
 

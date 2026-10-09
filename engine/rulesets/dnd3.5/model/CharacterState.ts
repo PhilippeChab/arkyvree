@@ -4,6 +4,7 @@ import type { TargetPathsTraverser } from "@/engine/core/paths/CategoryPaths.ts"
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import { type SkillFieldValues } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
+import type { ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/projection/CharacterProjection.ts";
 import type {
   Aptitude,
   Campaign,
@@ -34,7 +35,6 @@ import type {
   InventoryEntry,
 } from "./loading/CustomizedEntities.ts";
 import type { LoadedCharacterData, SkillWithRank } from "./loading/DetailedCharacterDataLoader.ts";
-import type { ProjectedCharacterData } from "./projection.ts";
 
 /** What assembles a character's data from its rows and its ruleset's view: reading nothing. */
 export interface DataLoader {

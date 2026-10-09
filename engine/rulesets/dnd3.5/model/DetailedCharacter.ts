@@ -12,7 +12,6 @@ import { Builds } from "./concerns/Builds.ts";
 import { PossessesVirtually } from "./concerns/PossessesVirtually.ts";
 import { Validates } from "./concerns/Validates.ts";
 import DetailedCharacterDataLoader from "./loading/DetailedCharacterDataLoader.ts";
-import type { ProjectedCharacterLevel } from "./projection.ts";
 
 /** A 3.5 character: its components wired, built and validated by its concerns. */
 export default class DetailedCharacter extends include(CharacterState, Builds, PossessesVirtually, Validates) {
@@ -41,20 +40,6 @@ export default class DetailedCharacter extends include(CharacterState, Builds, P
     return new DetailedCharacterDataLoader(this.character);
   }
 
-  evaluateWithProjectedLevel(
-    klassName: string,
-    klassLevel: KlassLevel,
-    characterLevel: ProjectedCharacterLevel,
-    requirementGroups: Requirement[][],
-  ): boolean {
-    // A level a class would add goes after the character's last
-    const position = characterLevel.position ?? (this.characterLevels.at(-1)?.position ?? 0) + 1;
-    this.components.classes.addProjectedLevel(klassName, klassLevel, { ...characterLevel, position });
-    const result = this.areRequirementsMet(requirementGroups);
-    this.components.classes.removeProjectedLevel(klassName);
-    return result;
-  }
-
   /** The schools the character's feats prohibit its wizard spells from: picked, granted, planned or from its modifiers. */
   getProhibitedSchools(): string[] {
     return this.feats.flatMap((feat) => FEAT_FIELDS.read(feat.properties).prohibitedSchools);
@@ -70,5 +55,31 @@ export default class DetailedCharacter extends include(CharacterState, Builds, P
 
   getSpellTags() {
     return this.components.spellcasting.getSpellTags();
+  }
+
+  /**
+   * Whether the character meets requirement groups with one more level of class `klassName` (`klassLevel`, after its
+   * last level), in that class and in its total level: what a class's next level asks of it, without building it again.
+   */
+  meetsWithNextLevel(klassName: string, klassLevel: KlassLevel, requirementGroups: Requirement[][]): boolean {
+    const now = new Date().toISOString();
+    const characterLevel = {
+      id: crypto.randomUUID(),
+      characterId: this.character.id,
+      klassLevelId: klassLevel.id,
+      hp: 10,
+      abilityId: null,
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
+      position: (this.characterLevels.at(-1)?.position ?? 0) + 1,
+    };
+    const { meta } = this.components.identity.getIdentity();
+    meta.level++;
+    this.components.classes.addProjectedLevel(klassName, klassLevel, characterLevel);
+    const met = this.areRequirementsMet(requirementGroups);
+    this.components.classes.removeProjectedLevel(klassName);
+    meta.level--;
+    return met;
   }
 }
