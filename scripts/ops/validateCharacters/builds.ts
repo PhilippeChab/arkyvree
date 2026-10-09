@@ -1,5 +1,5 @@
 import { rulesetsInRules } from "@/drizzle/schema.ts";
-import { describeCharacter } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { readCharacterInput } from "@/server/services/characters/index.ts";
@@ -23,7 +23,9 @@ export async function checkBuilds(characters: Character[]) {
     try {
       const ruleset = rulesetNames.get(char.rulesetId);
       const { validation } = await withRulesetScope(db, char.rulesetId, async (scope) =>
-        describeCharacter(scope, await readCharacterInput(db, char), []),
+        Engine.for(scope)
+          .character(await readCharacterInput(db, char))
+          .describe([]),
       );
 
       if (!validation.valid) {

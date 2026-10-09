@@ -183,6 +183,11 @@ function isPublic(member) {
   return (!member.accessibility || member.accessibility === "public") && member.key?.type !== "PrivateIdentifier";
 }
 
+/** Whether a name starts with a verb a function's name may start with (`FUNCTION_VERBS`): an operation's, not a noun's. */
+export function isVerbName(name) {
+  return FUNCTION_VERBS.some((verb) => startsWithVerb(name, verb));
+}
+
 /** Whether `name` starts with the word `verb`: `find` starts `findOne`, not `finder`. */
 export function startsWithVerb(name, verb) {
   return new RegExp(`^${verb}(?=[A-Z0-9]|$)`).test(name);

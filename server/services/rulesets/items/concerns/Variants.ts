@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { itemsInRules } from "@/drizzle/schema.ts";
-import { planItemVariants } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { copyEntityCustomizationsToMany, fetchEntityCustomizations, RulesetEdit } from "@/server/cow/index.ts";
@@ -60,7 +60,7 @@ export function Variants<B extends Constructor>(Base: B) {
             const { sourceChain } = rulesetData.cow;
 
             (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
-            const plan = planItemVariants(scope, sourceItemId, variants);
+            const plan = Engine.for(scope).items().planVariants(sourceItemId, variants);
 
             // Batched pre-validation: one query for local conflicts, one for
             // ancestor conflicts, then the shared visibility / tombstone check

@@ -11,10 +11,12 @@
  *   written with) import nothing of its data. The codegen (`codegen/`) isn't the server's, and stores nothing; the
  *   server reads none of `database/`, `content/` and `codegen/`. `shared/` imports nothing app-specific (the schema's
  *   types only), and the client takes only types from the server.
- * - `engine-front-door`: code outside `engine/` enters it through `engine/index.ts`, its operations and their types, as
- *   the client enters the server through its API; a test may reach any of its modules.
+ * - `engine-front-door`: code outside `engine/` enters it through `engine/index.ts`, `Engine` and its handles' types,
+ *   as the client enters the server through its API; a test may reach any of its modules.
  * - `one-engine-op`: a service's or a job's action (a method, a function) asks the engine one operation, which answers
  *   it whole: what it plans, it describes, and what it checks, it refuses. A second one is a rule the server composes.
+ *   An operation is a verb-named method reached through `Engine`'s handles (`Engine.for(scope).skills().planCreate`);
+ *   a noun-named one hands out a handle (`character(input)`, `skills()`).
  * - `opaque-view`: the server holds a ruleset's view only as the scope it hands the engine's operations: of its
  *   `rulesetData`, it reads the copy-on-write data alone (`rulesetData.cow`), which its writes go by. Its cache builds
  *   the view.
@@ -37,6 +39,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { onImports, targetOf } from "./imports.mjs";
+import { isVerbName } from "./methodNames.mjs";
 import { repoPath, rootOf } from "./paths.mjs";
 
 /** Each layer and what it must not import. `types`: imported for its types only, it's allowed. */
@@ -52,10 +55,13 @@ const ABOVE_REPOSITORIES = [
 const ACTION_LAYERS = ["server/services/", "server/jobs/"];
 /** The client's component folders, which code outside enters at their outermost index */
 const CLIENT_COMPONENTS = "client/src/components/";
+/** The engine's entry's own methods, which hand out its handles. */
+const ENGINE_ENTRIES = new Set(["copyOnWrite", "for", "forRules"]);
 /** What a folder's entry with code of its own is told. */
 const ENTRY_ONLY_RE_EXPORTS =
   'A folder\'s index.ts only re-exports what the folder offers (`export { x } from "./x.ts"`): its own code goes in a ' +
   "module named for it.";
+
 const FUNCTION_TYPES = new Set(["ArrowFunctionExpression", "FunctionDeclaration", "FunctionExpression"]);
 
 const indexCache = new Map();
@@ -158,10 +164,7 @@ function asksEngine(target, name) {
     ),
   );
   if (reExport) return asksEngine(targetOf(target, reExport[2]), name);
-  return [...source.matchAll(/import (?!type )(\{[^}]*\}|\* as \w+) from "@\/engine\/index\.ts"/g)].some(
-    (match) =>
-      match[1].startsWith("*") || match[1].split(",").some((part) => part.trim() && !part.trim().startsWith("type ")),
-  );
+  return /import \{[^}]*(?<!type )\bEngine\b[^}]*\} from "@\/engine\/index\.ts"/.test(source);
 }
 
 function createEngineFrontDoor(context) {
@@ -169,7 +172,7 @@ function createEngineFrontDoor(context) {
   // The engine's own modules import each other; a test may reach any of them
   if (file.startsWith("engine/") || file.startsWith("tests/")) return {};
   const message =
-    "Code outside engine/ enters it through engine/index.ts, its operations and their types, as the client enters " +
+    "Code outside engine/ enters it through engine/index.ts, `Engine` and its handles' types, as the client enters " +
     "the server through its API.";
   return onImports((node, spec) => {
     const target = targetOf(file, spec);
@@ -252,15 +255,25 @@ function createLayers(context) {
 function createOneEngineOp(context) {
   const file = repoPath(context.filename);
   if (!ACTION_LAYERS.some((layer) => file.startsWith(layer))) return {};
-  // What an action asks the engine: an operation it imports (called, or handed on), through a namespace or an alias,
-  // or another action's function or service
-  const ops = new Set();
-  const namespaces = new Set();
+  // The engine's entry under the names the file imports it by, the handles it keeps (by the path they were reached
+  // by), what else asks the engine (another action's function or service), and what each action calls
+  const engines = new Set();
+  const handles = new Map();
+  const askers = new Set();
   const functions = new Map();
   const callsByAction = new Map();
   const record = (action, call) => {
     if (!callsByAction.has(action)) callsByAction.set(action, []);
     callsByAction.get(action).push(call);
+  };
+  // The path an expression reaches the engine by (`for.character.checkLanguages`), or none off the engine
+  const pathOf = (node) => {
+    if (node.type === "Identifier") return engines.has(node.name) ? [] : handles.get(node.name);
+    if (node.type === "CallExpression") return pathOf(node.callee);
+    if (VIEW_WRAPPERS.has(node.type)) return pathOf(node.expression);
+    if (node.type !== "MemberExpression" || node.computed) return undefined;
+    const base = pathOf(node.object);
+    return base && [...base, node.property.name];
   };
   return {
     ImportDeclaration(node) {
@@ -268,29 +281,31 @@ function createOneEngineOp(context) {
       const target = targetOf(file, node.source.value);
       const values = node.specifiers.filter((specifier) => specifier.importKind !== "type");
       if (target === "engine/index.ts") {
-        // Its operations, named as functions are: not its data (`RULESET_LIMITS`) or its classes (`RulesError`)
         for (const specifier of values) {
-          if (specifier.type === "ImportNamespaceSpecifier") namespaces.add(specifier.local.name);
-          else if (/^[a-z]/.test(specifier.imported.name)) ops.add(specifier.local.name);
+          if (specifier.type === "ImportSpecifier" && specifier.imported.name === "Engine")
+            engines.add(specifier.local.name);
         }
         return;
       }
       if (!target || !ACTION_LAYERS.some((layer) => target.startsWith(layer))) return;
       for (const specifier of values) {
         const name = specifier.type === "ImportSpecifier" ? specifier.imported.name : "default";
-        if (specifier.type !== "ImportNamespaceSpecifier" && asksEngine(target, name)) ops.add(specifier.local.name);
+        if (specifier.type !== "ImportNamespaceSpecifier" && asksEngine(target, name)) askers.add(specifier.local.name);
       }
     },
+    VariableDeclarator(node) {
+      // A handle the file keeps (`const levelUp = Engine.for(scope).character(input).levelUp()`), or the entry itself
+      if (node.id.type !== "Identifier" || !node.init) return;
+      const path = pathOf(node.init);
+      if (path && !isOperation(path)) handles.set(node.id.name, path);
+    },
     Identifier(node) {
-      // An operation's every use: a call, or a value handed on (`ids.map(getEntity)`, `.bind`, a service's method)
+      // Another action's function or service, called or handed on
       const { parent } = node;
-      if (!ops.has(node.name) || parent.type.startsWith("Import")) return;
+      if (!askers.has(node.name) || parent.type.startsWith("Import")) return;
       if (parent.type === "MemberExpression" && parent.property === node && !parent.computed) return;
-      if (parent.type === "VariableDeclarator" && parent.id === node) return;
       const action = actionOf(node);
       if (action) record(action, { op: node.name });
-      // An alias of an operation is one
-      if (parent.type === "VariableDeclarator" && parent.id.type === "Identifier") ops.add(parent.id.name);
     },
     FunctionDeclaration(node) {
       const top = node.parent.type === "Program" || node.parent.parent?.type === "Program";
@@ -300,16 +315,12 @@ function createOneEngineOp(context) {
       const action = actionOf(node);
       const { callee } = node;
       if (!action) return;
-      if (callee.type === "Identifier" && !ops.has(callee.name)) record(action, { fn: callee.name });
+      const path = pathOf(callee);
+      if (path && isOperation(path)) record(action, { op: path.join(".") });
+      if (callee.type === "Identifier" && !askers.has(callee.name)) record(action, { fn: callee.name });
       if (callee.type !== "MemberExpression" || callee.computed) return;
       if (callee.object.type === "ThisExpression" && action.type !== "FunctionDeclaration")
         record(action, { method: callee.property.name, of: action.parent });
-    },
-    MemberExpression(node) {
-      if (node.object.type !== "Identifier" || !namespaces.has(node.object.name)) return;
-      const action = actionOf(node);
-      const name = node.computed ? "(computed)" : node.property.name;
-      if (action && !/^[A-Z]/.test(name)) record(action, { op: name });
     },
     "Program:exit"() {
       const reached = new Map();
@@ -467,6 +478,15 @@ function hasIndex(dir) {
   if (!indexCache.has(dir)) indexCache.set(dir, fs.existsSync(`${dir}/index.ts`) || fs.existsSync(`${dir}/index.tsx`));
 
   return indexCache.get(dir);
+}
+
+/**
+ * Whether a call on the engine reached by `path` is an operation: its method named for a verb (`checkLanguages`,
+ * `planCreate`), past the entry's own (`Engine.copyOnWrite()`); a noun's hands out a handle (`character`, `skills`).
+ */
+function isOperation(path) {
+  const method = path.at(-1);
+  return method !== undefined && !ENGINE_ENTRIES.has(method) && isVerbName(method);
 }
 
 /**

@@ -3,14 +3,14 @@
  * pool), as the feat picker leaves out a feat held.
  */
 
-import { openPowerPicker } from "@/engine/index.ts";
+import { Engine, type LevelUpEngine } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Powers } from "@/server/repositories/index.ts";
 import { withEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /** A feat picked so far: the feat, and the pool it's picked in. */
-type FeatPick = NonNullable<Parameters<typeof openPowerPicker>[2]["selectedFeatPicks"]>[number];
+type FeatPick = NonNullable<Parameters<LevelUpEngine["openPowerPicker"]>[0]["selectedFeatPicks"]>[number];
 
 export async function getAvailablePowers(
   session: Session,
@@ -32,14 +32,17 @@ export async function getAvailablePowers(
 ) {
   const { selectedPowerIds = [], ...pick } = where;
   return await withEditableCharacter(db, session, characterId, async (scope, character) => {
-    const picker = openPowerPicker(scope, character, {
-      ...pick,
-      aptitudeId,
-      excludeCharacterLevelId,
-      klassId,
-      level,
-      pendingLevelKlassLevelIds,
-    });
+    const picker = Engine.for(scope)
+      .character(character)
+      .levelUp()
+      .openPowerPicker({
+        ...pick,
+        aptitudeId,
+        excludeCharacterLevelId,
+        klassId,
+        level,
+        pendingLevelKlassLevelIds,
+      });
     const excludePowerIds = [...picker.filters.excludePowerIds, ...selectedPowerIds];
     const result = await Powers.findOptionPage(
       db,

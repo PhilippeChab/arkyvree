@@ -3,7 +3,7 @@
  * spread over them.
  */
 
-import * as engine from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import { withEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -15,6 +15,6 @@ export async function getLevelUpPreview(
   abilityIds: (string | null)[],
 ) {
   return await withEditableCharacter(db, session, characterId, (scope, character) =>
-    engine.getLevelUpPreview(scope, character, levels, abilityIds),
+    Engine.for(scope).character(character).levelUp().getPreview(levels, abilityIds),
   );
 }

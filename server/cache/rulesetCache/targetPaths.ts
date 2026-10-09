@@ -1,6 +1,6 @@
 /** A ruleset's target paths, as the engine lists them from its view: kept in the cache with the view they come from. */
 
-import { listTargetPaths } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
@@ -27,6 +27,6 @@ export async function readTargetPaths(rulesetId: string, kind: TargetPathKind): 
   // Compose inside the registered cache fill: composing beforehand can carry
   // a stale view across invalidation and later cache paths derived from it.
   return await RulesetCache.getTargetPaths(ruleset, kind, () =>
-    withRulesetScope(db, rulesetId, async (scope) => listTargetPaths(scope, kind)),
+    withRulesetScope(db, rulesetId, async (scope) => Engine.for(scope).targetPaths().list(kind)),
   );
 }

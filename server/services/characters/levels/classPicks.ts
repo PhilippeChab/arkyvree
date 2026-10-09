@@ -2,14 +2,14 @@
  * Classes the character can take next, with their eligibility.
  */
 
-import { openClassPicker } from "@/engine/index.ts";
+import { Engine, type LevelUpEngine } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Klasses } from "@/server/repositories/index.ts";
 import { withEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /** A feat the wizard's pending levels picked: the feat, and the pool it's picked in. */
-type FeatPick = NonNullable<Parameters<typeof openClassPicker>[2]["featPicks"]>[number];
+type FeatPick = NonNullable<Parameters<LevelUpEngine["openClassPicker"]>[0]["featPicks"]>[number];
 
 export async function getAvailableKlasses(
   session: Session,
@@ -22,7 +22,7 @@ export async function getAvailableKlasses(
   pendingSkillAllocations?: { rank: number; skillId: string }[],
 ) {
   return await withEditableCharacter(db, session, characterId, async (scope, character) => {
-    const picker = openClassPicker(scope, character, {
+    const picker = Engine.for(scope).character(character).levelUp().openClassPicker({
       featPicks: pendingFeatPicks,
       levelAbilityIds: pendingLevelAbilityIds,
       levelKlassLevelIds: pendingLevelKlassLevelIds,

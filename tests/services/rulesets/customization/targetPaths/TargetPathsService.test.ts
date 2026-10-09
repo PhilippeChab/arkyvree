@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { checkTargetValue } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { readTargetPathCatalogs, readTargetPaths, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
@@ -167,7 +167,7 @@ describe("TargetPathsService", () => {
     const catalogs = await readTargetPathCatalogs(rulesetId, "modifier");
     const check = (value: string, target = "combat.ac.misc") =>
       withRulesetScope(db, rulesetId, async (scope) =>
-        checkTargetValue(scope, catalogs, { kind: "modifier", operator: "add", target, value }),
+        Engine.for(scope).targetPaths().checkValue(catalogs, { kind: "modifier", operator: "add", target, value }),
       );
     expect(await check("{{ floor([classes.ranger.level] / 2) }}")).toBe("number");
     expect(await check("{{ [abilities.charisma.modifier] }}")).toBe("number");

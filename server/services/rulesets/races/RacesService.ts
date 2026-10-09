@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { racesInRules } from "@/drizzle/schema.ts";
-import { describeEntity, getEntity } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -61,7 +61,7 @@ class RacesService {
           const inUse = await hasCharacterPicks(tx, "races", raceId, rulesetId);
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-          const race = getEntity(scope, "races", raceId);
+          const race = Engine.for(scope).entity("races", raceId).get();
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const targetId = await edit.cowToDelete(tx, "races", race);
@@ -85,7 +85,7 @@ class RacesService {
   }
 
   async getRace(rulesetId: string, raceId: string) {
-    return await withRulesetScope(db, rulesetId, async (scope) => describeEntity(scope, "races", raceId));
+    return await withRulesetScope(db, rulesetId, async (scope) => Engine.for(scope).entity("races", raceId).describe());
   }
 
   async getRaces(
@@ -125,7 +125,7 @@ class RacesService {
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const race = getEntity(scope, "races", raceId);
+          const race = Engine.for(scope).entity("races", raceId).get();
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "races", race);

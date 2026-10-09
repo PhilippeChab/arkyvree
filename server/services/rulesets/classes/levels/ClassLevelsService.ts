@@ -1,15 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { klassLevelsInRules } from "@/drizzle/schema.ts";
-import {
-  describeClassFeatPools,
-  describeClassLevel,
-  describeClassLevels,
-  describeClassLevelWithClass,
-  planClassLevelCreate,
-  planClassLevelDelete,
-  planClassLevelEdit,
-} from "@/engine/index.ts";
+import { type ClassEngine, Engine } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
@@ -23,7 +15,7 @@ import type { Session } from "@/shared/relations.ts";
 import { ListsSpells } from "./concerns/ListsSpells.ts";
 
 /** A class level's body: the feats it grants, its saves' base bonuses, and its fields (`planClassLevelCreate`). */
-type ClassLevelBody = Omit<Parameters<typeof planClassLevelCreate>[2], "level">;
+type ClassLevelBody = Omit<Parameters<ClassEngine["planLevelCreate"]>[0], "level">;
 
 class ClassLevelsService extends include(Object, ListsSpells) {
   async createClassLevel(
@@ -38,7 +30,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
           const { ruleset, rulesetData } = scope;
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
-          const plan = planClassLevelCreate(scope, classId, body);
+          const plan = Engine.for(scope).class(classId).planLevelCreate(body);
           const { klass } = plan;
 
           // Copy an inherited class: the new level row would otherwise belong to the parent ruleset's class.
@@ -81,7 +73,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
 
           const inUse = await hasCharacterPicks(tx, "klass_levels", levelId, rulesetId);
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
-          const { klass, level } = planClassLevelDelete(scope, classId, levelId);
+          const { klass, level } = Engine.for(scope).class(classId).planLevelDelete(levelId);
 
           // COW the parent klass if the level is inherited — without this, hard-delete
           // would wipe the parent ruleset's row. RulesetEdit.cowOwner on
@@ -112,19 +104,23 @@ class ClassLevelsService extends include(Object, ListsSpells) {
   }
 
   async getClassLevel(rulesetId: string, classId: string, levelId: string) {
-    return await withRulesetScope(db, rulesetId, async (scope) => describeClassLevel(scope, classId, levelId));
+    return await withRulesetScope(db, rulesetId, async (scope) =>
+      Engine.for(scope).class(classId).describeLevel(levelId),
+    );
   }
 
   async getClassLevelFeatPools(rulesetId: string, classId: string) {
-    return await withRulesetScope(db, rulesetId, async (scope) => describeClassFeatPools(scope, classId));
+    return await withRulesetScope(db, rulesetId, async (scope) => Engine.for(scope).class(classId).describeFeatPools());
   }
 
   async getClassLevels(rulesetId: string, classId: string) {
-    return await withRulesetScope(db, rulesetId, async (scope) => describeClassLevels(scope, classId));
+    return await withRulesetScope(db, rulesetId, async (scope) => Engine.for(scope).class(classId).describeLevels());
   }
 
   async getClassLevelWithClassName(rulesetId: string, classLevelId: string) {
-    return await withRulesetScope(db, rulesetId, async (scope) => describeClassLevelWithClass(scope, classLevelId));
+    return await withRulesetScope(db, rulesetId, async (scope) =>
+      Engine.for(scope).classes().describeLevel(classLevelId),
+    );
   }
 
   async updateClassLevel(session: Session, rulesetId: string, classId: string, levelId: string, body: ClassLevelBody) {
@@ -134,7 +130,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
           const { ruleset, rulesetData } = scope;
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
-          const plan = planClassLevelEdit(scope, classId, levelId, body);
+          const plan = Engine.for(scope).class(classId).planLevelEdit(levelId, body);
           const { klass, level } = plan;
 
           // COW the parent klass if inherited so writes don't corrupt the parent.

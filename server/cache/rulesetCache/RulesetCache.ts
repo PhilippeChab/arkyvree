@@ -1,11 +1,4 @@
-import {
-  buildRulesetView,
-  buildSourceChain,
-  type CowData,
-  type RulesetData,
-  type RulesetRawData,
-  type RulesetSources,
-} from "@/engine/index.ts";
+import { type CowData, Engine, type RulesetData, type RulesetRawData, type RulesetSources } from "@/engine/index.ts";
 import DependentCache from "@/server/cache/DependentCache.ts";
 import { db, withCowContext } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
@@ -65,7 +58,7 @@ class RulesetCache {
    * copy-on-write context of a scope it's read in, or a transaction.
    */
   async getCowData(ruleset: RulesetSources): Promise<CowData> {
-    const dependencies = [ruleset.id, ...buildSourceChain(ruleset)];
+    const dependencies = [ruleset.id, ...Engine.copyOnWrite().buildSourceChain(ruleset)];
     return this.cowData.getOrFetch(JSON.stringify(dependencies), dependencies, async () => ({
       data: await readCowData(db, ruleset),
     }));
@@ -78,7 +71,7 @@ class RulesetCache {
       this.getRawData(ruleset.id, campaignId),
       ...cowData.sourceChain.map((id) => this.getRawData(id)),
     ]);
-    return buildRulesetView(ruleset, chain, cowData);
+    return Engine.copyOnWrite().buildView(ruleset, chain, cowData);
   }
 
   /** A ruleset's own rows (a campaign's, with one), none of its ancestors': pinned when it's a system ruleset. */
@@ -97,7 +90,7 @@ class RulesetCache {
     kind: TargetPathKind,
     fetcher: () => Promise<TargetPathCatalog>,
   ): Promise<TargetPathCatalog> {
-    const sourceChain = buildSourceChain(ruleset);
+    const sourceChain = Engine.copyOnWrite().buildSourceChain(ruleset);
     // Old subscription metadata must not populate the key for the new chain.
     const key = JSON.stringify([ruleset.id, kind, ...sourceChain]);
     return this.targetPaths.getOrFetch(key, [ruleset.id, ...sourceChain], async () => ({ data: await fetcher() }));

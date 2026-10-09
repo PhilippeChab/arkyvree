@@ -1,10 +1,4 @@
-import {
-  type CowData,
-  type EntityCustomizations,
-  mergeSiblingAptitudeLinks,
-  mergeSiblingCustomizations,
-  type RulesetSources,
-} from "@/engine/index.ts";
+import { type CowData, Engine, type EntityCustomizations, type RulesetSources } from "@/engine/index.ts";
 import { readCowData } from "@/server/cache/rulesetCache/index.ts";
 import { type Db, withCowContext } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
@@ -258,7 +252,7 @@ export default class EntityCopy {
         (link) => link.featId,
       );
       const siblings = siblingIds.map((id) => siblingLinks.get(id) ?? []);
-      const links = mergeSiblingAptitudeLinks(own, siblings, resolve);
+      const links = Engine.copyOnWrite().mergeAptitudeLinks(own, siblings, resolve);
       if (links.length > 0) {
         await FeatsAptitudes.createMany(
           tx,
@@ -272,7 +266,7 @@ export default class EntityCopy {
         (link) => link.powerId,
       );
       const siblings = siblingIds.map((id) => siblingLinks.get(id) ?? []);
-      const links = mergeSiblingAptitudeLinks(own, siblings, resolve);
+      const links = Engine.copyOnWrite().mergeAptitudeLinks(own, siblings, resolve);
       if (links.length > 0) {
         await PowersAptitudes.createMany(
           tx,
@@ -303,7 +297,7 @@ export default class EntityCopy {
     // copying raw rows by id).
     const siblingCusts = await fetchSiblingCustomizations(tx, siblingIds, this.entityType, this.sourceType);
     const siblings = siblingIds.flatMap((id) => siblingCusts.get(id) ?? []);
-    const merged = mergeSiblingCustomizations(own, siblings, targetEntityId);
+    const merged = Engine.copyOnWrite().mergeCustomizations(own, siblings, targetEntityId);
     await copyEntityCustomizations(tx, targetEntityId, this.entityType, merged, this.copiedIds);
     await this.mergeAptitudeLinks(tx, targetEntityId, siblingIds, cow);
   }

@@ -1,13 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { modifiersInCustomization } from "@/drizzle/schema.ts";
-import {
-  describeModifier,
-  describeModifiers,
-  planModifierCreate,
-  planModifierDelete,
-  planModifierEdit,
-} from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import {
   readTargetPathCatalogs,
   readTargetPaths,
@@ -43,8 +37,8 @@ class ModifiersService {
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
           const catalogs = await readTargetPathCatalogs(rulesetId, "modifier");
-          const change = { body, entityId, entityType, sourceModifierId };
-          const { entity, valueType } = planModifierCreate(scope, catalogs, change);
+          const modifiers = Engine.for(scope).modifiers(entityType, entityId);
+          const { entity, valueType } = modifiers.planCreate(catalogs, body, sourceModifierId);
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const resolvedEntityId = await edit.cowOwner(tx, entityType, entity.id);
@@ -103,7 +97,7 @@ class ModifiersService {
           const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity();
 
-          const { entity, modifier } = planModifierDelete(scope, entityType, entityId, modifierId);
+          const { entity, modifier } = Engine.for(scope).modifiers(entityType, entityId).planDelete(modifierId);
           await checkCustomizedEntity(modifier);
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
@@ -155,14 +149,14 @@ class ModifiersService {
   async getModifier(rulesetId: string, entityType: string, entityId: string, modifierId: string) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
       const catalog = await readTargetPaths(rulesetId, "modifier");
-      return describeModifier(scope, catalog, entityType, entityId, modifierId);
+      return Engine.for(scope).modifiers(entityType, entityId).describe(catalog, modifierId);
     });
   }
 
   async getModifiers(rulesetId: string, entityType: string, entityId: string) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
       const catalog = await readTargetPaths(rulesetId, "modifier");
-      return describeModifiers(scope, catalog, entityType, entityId);
+      return Engine.for(scope).modifiers(entityType, entityId).describeAll(catalog);
     });
   }
 
@@ -187,8 +181,8 @@ class ModifiersService {
 
           const catalogs = await readTargetPathCatalogs(rulesetId, "modifier");
           const { updatedAt, ...fields } = body;
-          const change = { body: fields, entityId, entityType, modifierId };
-          const { entity, modifier, valueType } = planModifierEdit(scope, catalogs, change);
+          const modifiers = Engine.for(scope).modifiers(entityType, entityId);
+          const { entity, modifier, valueType } = modifiers.planEdit(catalogs, modifierId, fields);
           await checkCustomizedEntity(modifier);
 
           // COW the owning entity if this modifier is inherited

@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { klassesInRules } from "@/drizzle/schema.ts";
-import { describeClass, getEntity, planClassCreate } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -30,7 +30,7 @@ class ClassesService {
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "klasses", body.name);
 
-          const rows = await Klasses.create(tx, { ...planClassCreate(scope, body).columns, rulesetId });
+          const rows = await Klasses.create(tx, { ...Engine.for(scope).classes().planCreate(body).columns, rulesetId });
           const klass = rows[0];
 
           if (tombstoneAncestorId) await edit.repointTombstone(tx, "klasses", tombstoneAncestorId, klass.id);
@@ -59,7 +59,7 @@ class ClassesService {
           const inUse = await hasCharacterPicks(tx, "klasses", klassId, rulesetId);
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-          const klass = getEntity(scope, "klasses", klassId);
+          const klass = Engine.for(scope).entity("klasses", klassId).get();
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const targetId = await edit.cowToDelete(tx, "klasses", klass);
@@ -87,7 +87,7 @@ class ClassesService {
   }
 
   async getClass(rulesetId: string, klassId: string) {
-    return await withRulesetScope(db, rulesetId, async (scope) => describeClass(scope, klassId));
+    return await withRulesetScope(db, rulesetId, async (scope) => Engine.for(scope).class(klassId).describe());
   }
 
   async getClasses(
@@ -126,7 +126,7 @@ class ClassesService {
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const klass = getEntity(scope, "klasses", klassId);
+          const klass = Engine.for(scope).entity("klasses", klassId).get();
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "klasses", klass);

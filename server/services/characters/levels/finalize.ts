@@ -7,7 +7,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { levelsInCharacter } from "@/drizzle/schema.ts";
-import { planLevelEdit, planLevelRemoval, planLevelUp } from "@/engine/index.ts";
+import { Engine, type LevelUpEngine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { type Db, withTransaction } from "@/server/database/index.ts";
 import {
@@ -25,7 +25,7 @@ import type { Session } from "@/shared/relations.ts";
 import { writeBondedCreatures } from "./bondedWrites.ts";
 
 /** A level's picks as the engine plans them: its skill ranks, and its feats and powers by pool. */
-type LevelPicks = Pick<ReturnType<typeof planLevelEdit>, "feats" | "powers" | "skills">;
+type LevelPicks = Pick<ReturnType<LevelUpEngine["planEdit"]>, "feats" | "powers" | "skills">;
 
 /** Deletes a character level's skills, feats and powers. */
 async function deleteLevelPicks(tx: Db, characterLevelId: string) {
@@ -85,7 +85,10 @@ export async function finalizeLevelUp(
     return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
       const character = await readCharacterInput(tx, characterRecord);
       const bonded = await readBondedInputs(tx, character);
-      const plan = planLevelUp(scope, character, bonded, levels, { skills, feats, powers }, force);
+      const plan = Engine.for(scope)
+        .character(character)
+        .levelUp()
+        .plan(bonded, levels, { skills, feats, powers }, force);
       const createdLevels = [];
       for (const { feats: levelFeats, powers: levelPowers, skills: levelSkills, ...level } of plan.levels) {
         const [created] = await CharacterLevels.create(tx, { characterId, ...level });
@@ -115,7 +118,7 @@ export async function removeLevel(session: Session, characterId: string) {
     await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
       const character = await readCharacterInput(tx, characterRecord);
       const bonded = await readBondedInputs(tx, character);
-      const removal = planLevelRemoval(scope, character, bonded);
+      const removal = Engine.for(scope).character(character).levelUp().planRemoval(bonded);
       await deleteLevelPicks(tx, removal.level.id);
       await CharacterLevels.delete(tx, { id: removal.level.id });
       await writeBondedCreatures(tx, characterRecord, removal.bonded);
@@ -153,7 +156,7 @@ export async function updateLevel(
     return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
       const character = await readCharacterInput(tx, characterRecord);
       const bonded = await readBondedInputs(tx, character);
-      const edit = planLevelEdit(scope, character, bonded, characterLevelId, {
+      const edit = Engine.for(scope).character(character).levelUp().planEdit(bonded, characterLevelId, {
         abilityId,
         feats,
         force,

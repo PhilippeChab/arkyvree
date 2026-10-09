@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { rulesetsInRules } from "@/drizzle/schema.ts";
-import { checkPublishable } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { withTransaction } from "@/server/database/index.ts";
@@ -30,7 +30,7 @@ export function Publishes<B extends Constructor>(Base: B) {
 
             const targetKind = body.kind ?? ruleset.kind;
             if (targetKind === "extension") this.assertCanBeExtension(ruleset);
-            checkPublishable(scope, targetKind);
+            Engine.for(scope).checkPublishable(targetKind);
 
             if (body.kind && body.kind !== ruleset.kind) await Rulesets.update(tx, { kind: body.kind }, { id });
 

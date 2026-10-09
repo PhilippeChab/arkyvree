@@ -11,7 +11,7 @@ import {
   savesInRules,
   skillsInRules,
 } from "@/drizzle/schema.ts";
-import { toEntityProperties } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 /** Seeding a base ruleset's own rules: its abilities, saves, skills and languages. */
@@ -32,7 +32,7 @@ export function SeedsCoreRules<B extends Constructor<BaseSeeder>>(Base: B) {
         this.propertyRows(
           this.ctx.rulesetId,
           "rulesets",
-          toEntityProperties(DND35_BASE_RULES, "rulesets", {
+          Engine.forRules(DND35_BASE_RULES).toEntityProperties("rulesets", {
             skillPointAbilityId: this.ctx.abilityMap["Intelligence"],
           }),
         ),
@@ -90,7 +90,7 @@ export function SeedsCoreRules<B extends Constructor<BaseSeeder>>(Base: B) {
           this.propertyRows(
             this.ctx.skillMap[name],
             "skills",
-            toEntityProperties(DND35_BASE_RULES, "skills", {
+            Engine.forRules(DND35_BASE_RULES).toEntityProperties("skills", {
               impactedByWeight: impactedByWeight ?? false,
               checkPenaltyMultiplier: checkPenaltyMultiplier ?? 1,
               usableWithoutTraining: usableWithoutTraining ?? false,

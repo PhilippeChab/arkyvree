@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { playerCharactersInCampaign } from "@/drizzle/schema.ts";
-import { describeCampaignCharacter, describeCharacterCards } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { withRulesetScope, withRulesetScopes } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
@@ -90,7 +90,7 @@ class CampaignCharactersService {
       // A partial reading shows none of the character's bonded creatures
       const bonded = isPartial ? [] : await readBondedInputs(db, input, Visibility.All);
       const reading = isPartial ? "partial" : viewer.showPrivateNotes ? "show" : "blank";
-      const described = describeCampaignCharacter(scope, input, bonded, reading);
+      const described = Engine.for(scope).character(input).describeForMember(bonded, reading);
       return { ...viewer, ...described, shareToken: canEdit ? described.shareToken : null };
     });
   }
@@ -147,7 +147,7 @@ class CampaignCharactersService {
       db,
       characters.map((c) => c.rulesetId),
       async (views) => {
-        const cards = describeCharacterCards(views, characters, levels);
+        const cards = Engine.describeCharacterCards(views, characters, levels);
 
         // Maintain order from linkedCharacters (which is already sorted by createdAt desc)
         const characterMap = new Map(characters.map((c) => [c.id, c]));

@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { featsInRules } from "@/drizzle/schema.ts";
-import { describeEntity, getEntity, openFeatList, planFeatCreate, planFeatEdit } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { type Db, db, withCowContext, withTransaction } from "@/server/database/index.ts";
@@ -41,10 +41,12 @@ class FeatsService {
 
           // Named as an ancestor the fork deleted, the feat stands in for it (`RulesetEdit.repointTombstone`), checks
           // finding it by that name
-          const plan = planFeatCreate(scope, body, {
-            spellAptitudeIds: await PowersAptitudes.findAptitudeIds(tx, { aptitudeIds: body.aptitudeIds ?? [] }),
-            tombstoneGenerated: tombstoneAncestorId ? await this.wasGenerated(tx, tombstoneAncestorId) : false,
-          });
+          const plan = Engine.for(scope)
+            .feats()
+            .planCreate(body, {
+              spellAptitudeIds: await PowersAptitudes.findAptitudeIds(tx, { aptitudeIds: body.aptitudeIds ?? [] }),
+              tombstoneGenerated: tombstoneAncestorId ? await this.wasGenerated(tx, tombstoneAncestorId) : false,
+            });
           const rows = await Feats.create(tx, { ...plan.columns, rulesetId });
           const feat = rows[0];
 
@@ -80,7 +82,7 @@ class FeatsService {
           const inUse = await hasCharacterPicks(tx, "feats", featId, rulesetId);
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-          const feat = getEntity(scope, "feats", featId);
+          const feat = Engine.for(scope).entity("feats", featId).get();
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const targetId = await edit.cowToDelete(tx, "feats", feat);
@@ -106,7 +108,7 @@ class FeatsService {
   }
 
   async getFeat(rulesetId: string, featId: string) {
-    return await withRulesetScope(db, rulesetId, async (scope) => describeEntity(scope, "feats", featId));
+    return await withRulesetScope(db, rulesetId, async (scope) => Engine.for(scope).entity("feats", featId).describe());
   }
 
   async getFeatGroups(
@@ -116,7 +118,7 @@ class FeatsService {
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
       const { aptitudeId, ...filters } = where;
-      const list = openFeatList(scope, { aptitudeId });
+      const list = Engine.for(scope).feats().openList({ aptitudeId });
       return await Feats.findGroupPage(
         db,
         { rulesetId, ancestorRulesetIds: scope.rulesetData.cow.sourceChain, ...list.groupFilters, ...filters },
@@ -139,7 +141,7 @@ class FeatsService {
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
       const { aptitudeId, family, ...filters } = where;
-      const list = openFeatList(scope, { aptitudeId, childOnly: where.childOnly, family });
+      const list = Engine.for(scope).feats().openList({ aptitudeId, childOnly: where.childOnly, family });
       const result = await Feats.findPage(
         db,
         { rulesetId, ancestorRulesetIds: scope.rulesetData.cow.sourceChain, ...filters, ...list.filters },
@@ -167,7 +169,7 @@ class FeatsService {
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
           const spellAptitudeIds = await PowersAptitudes.findAptitudeIds(tx, { aptitudeIds: body.aptitudeIds ?? [] });
-          const { aptitudeIds, columns, feat } = planFeatEdit(scope, featId, body, { spellAptitudeIds });
+          const { aptitudeIds, columns, feat } = Engine.for(scope).feats().planEdit(featId, body, { spellAptitudeIds });
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "feats", feat);

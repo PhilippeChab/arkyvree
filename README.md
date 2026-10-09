@@ -131,8 +131,8 @@ server/
   websockets/           # Server events pushed to the client
 
 engine/                 # The ruleset engine: computes a ruleset's rules over the rows it's given, reads and writes nothing
-  index.ts              # Its one entry: the operations the server, the seeders and the codegen call
-  api/                  # The operations, each dispatched to the ruleset's module by its base rules
+  index.ts              # Its one entry, Engine: the handles the server, the seeders and the codegen ask
+  api/                  # Engine and its handles, each bound to a view and what it's about, asking the ruleset's module
   core/                 # Machinery: modifiers, requirements, the path language, the ruleset view, COW data, the module's contract
   rulesets/dnd3.5/      # D&D 3.5e: the character, its components by domain, its entities, level-ups and printed sheet
 
@@ -187,7 +187,7 @@ tests/
 
 **Ruleset system:** Rulesets support COW forking (edit inherited content without modifying the parent), extensions, publishing, and multi-contributor collaboration. See [docs/rulesets.md](./docs/rulesets.md).
 
-**Ruleset engine:** `engine/` computes every ruleset rule over the data the server reads, through one entry (`engine/index.ts`): its operations take a ruleset's view, a character's rows or a request's body, and answer descriptions, plans of the writes the server makes, or refusals. A ruleset's module (`engine/rulesets/dnd3.5/`) builds a complete character state from its rows, evaluating modifiers, requirements, and properties, and projects level-ups before they're saved.
+**Ruleset engine:** `engine/` computes every ruleset rule over the data the server reads, through one entry, `Engine` (`engine/index.ts`): a handle bound to a ruleset's view and to what its rules are about (`Engine.for(scope).character(input).describe(…)`), whose operations take a character's rows or a request's body, and answer descriptions, plans of the writes the server makes, or refusals. A ruleset's module (`engine/rulesets/dnd3.5/`) builds a complete character state from its rows, evaluating modifiers, requirements, and properties, and projects level-ups before they're saved.
 
 ## Community
 

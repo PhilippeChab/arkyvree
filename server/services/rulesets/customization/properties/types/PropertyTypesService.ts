@@ -1,4 +1,4 @@
-import { getPropertyTypeCompletions, getPropertyValueCompletions, listPropertyTypes } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { type Paginated, paginateItems } from "@/server/repositories/index.ts";
@@ -14,13 +14,15 @@ class PropertyTypesService {
     entityType?: PropertyEntityType,
   ): Promise<Paginated<PropertyTypeCompletion>> {
     return await withRulesetScope(db, rulesetId, async (scope) =>
-      paginateItems(getPropertyTypeCompletions(scope, query, entityType), pagination),
+      paginateItems(Engine.for(scope).propertyTypes().getTypeCompletions(query, entityType), pagination),
     );
   }
 
   /** The property types containing `query` (every one for an empty one): the rules' types, then the ruleset's own. */
   async getPropertyTypes(rulesetId: string, query: string, entityType?: PropertyEntityType) {
-    return await withRulesetScope(db, rulesetId, async (scope) => listPropertyTypes(scope, query, entityType));
+    return await withRulesetScope(db, rulesetId, async (scope) =>
+      Engine.for(scope).propertyTypes().list(query, entityType),
+    );
   }
 
   /** A property type's value completions for autocomplete, as the engine offers them, a page at a time (in memory). */
@@ -31,7 +33,7 @@ class PropertyTypesService {
     pagination: { limit: number; page: number },
   ): Promise<Paginated<PropertyValueCompletion>> {
     return await withRulesetScope(db, rulesetId, async (scope) =>
-      paginateItems(getPropertyValueCompletions(scope, type, query), pagination),
+      paginateItems(Engine.for(scope).propertyTypes().getValueCompletions(type, query), pagination),
     );
   }
 }

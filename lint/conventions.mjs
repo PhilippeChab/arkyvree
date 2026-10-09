@@ -25,10 +25,10 @@
  * - `shared-runtime`: `shared/` runs in the client too, and `engine/` computes over the data it's given, so neither uses
  *   Bun's APIs (`bun`, the `Bun` global) nor Node's (`node:fs`, `fs`).
  * - `engine-sync`: `engine/` reads nothing, so nothing it does waits: no `async` function, no `await`, no `Promise`.
- * - `engine-classes`: an operation of `engine/` is its API's (`engine/api/`, which `engine/index.ts` exports), and each
- *   of its steps a class's method or a module's own function: outside the API, a module exports no function of its
- *   own (declared, held by a const, or listed), so no file reaches into another's steps. It exports classes (and their
- *   shared instance), concerns and components (PascalCase), types and data.
+ * - `engine-classes`: an operation of `engine/` is a method of its entry's handles (`engine/api/`: `Engine`, and what
+ *   `Engine.for(scope)` hands out), and each of its steps a class's method or a module's own function: a module exports
+ *   no function of its own (declared, held by a const, or listed), so no file reaches into another's steps. It exports
+ *   classes (and their shared instance), concerns and components (PascalCase), types and data.
  * - `session-param`: a `Session` parameter is named `session` (`_session` when it's unused).
  * - `writes-in-transactions`: a repository write or lock (`methodVerbs.json`'s verbs) outside the repositories takes a
  *   transaction's handle, `tx` (`withTransaction(async (tx) => …)`), never the shared `db`: a write is atomic with the
@@ -417,10 +417,10 @@ function createEmptyListReads(context) {
 
 function createEngineClasses(context) {
   const file = repoPath(context.filename);
-  if (!file.startsWith("engine/") || file.startsWith("engine/api/") || file === "engine/index.ts") return {};
+  if (!file.startsWith("engine/") || file === "engine/index.ts") return {};
   const message =
-    "Outside `engine/api/`, an engine module exports no function of its own: an operation is the API's, and a step a " +
-    "class's method (or the module's own, unexported, function).";
+    "An engine module exports no function of its own: an operation is a method of the entry's handles " +
+    "(`Engine.for(scope)…`), and a step a class's method (or the module's own, unexported, function).";
   // A function, a cast (`as`, `satisfies`, `!`) or parentheses around one looked through
   const unwrap = (node) =>
     ["TSAsExpression", "TSSatisfiesExpression", "TSNonNullExpression", "ParenthesizedExpression"].includes(node?.type)

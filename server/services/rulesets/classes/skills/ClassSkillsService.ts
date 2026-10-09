@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { klassSkillsInRules } from "@/drizzle/schema.ts";
-import { describeClassSkills, planClassSkillAdd, planClassSkillRemove } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -19,7 +19,7 @@ class ClassSkillsService {
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const { klass, skill } = planClassSkillAdd(scope, classId, skillId);
+          const { klass, skill } = Engine.for(scope).class(classId).planSkillAdd(skillId);
 
           // Copy an inherited class: the new klass_skills row would otherwise point at the parent ruleset's class.
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
@@ -47,7 +47,7 @@ class ClassSkillsService {
   }
 
   async getClassSkills(rulesetId: string, classId: string) {
-    return await withRulesetScope(db, rulesetId, async (scope) => describeClassSkills(scope, classId));
+    return await withRulesetScope(db, rulesetId, async (scope) => Engine.for(scope).class(classId).describeSkills());
   }
 
   async removeClassSkill(session: Session, rulesetId: string, classId: string, skillId: string) {
@@ -59,7 +59,7 @@ class ClassSkillsService {
           const inUse = await hasCharacterPicks(tx, "klasses", classId, rulesetId);
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
-          const { klass, klassSkill, skill } = planClassSkillRemove(scope, classId, skillId);
+          const { klass, klassSkill, skill } = Engine.for(scope).class(classId).planSkillRemove(skillId);
 
           // Copy an inherited class: the delete would otherwise remove the parent ruleset's klass_skills row.
           const edit = new RulesetEdit(ruleset, rulesetData.cow);

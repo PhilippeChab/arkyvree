@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { savesInRules } from "@/drizzle/schema.ts";
-import { getEntity } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -56,7 +56,7 @@ class SavesService {
         await withRulesetScope(tx, rulesetId, async (scope) => {
           const { ruleset, rulesetData } = scope;
 
-          const save = getEntity(scope, "saves", saveId);
+          const save = Engine.for(scope).entity("saves", saveId).get();
 
           // Saves don't have a character-pick path — class-side check instead.
           // klass_level_saves.save_id is ON DELETE RESTRICT, so this is just for
@@ -88,7 +88,7 @@ class SavesService {
 
   async getSave(rulesetId: string, saveId: string) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
-      const save = getEntity(scope, "saves", saveId);
+      const save = Engine.for(scope).entity("saves", saveId).get();
       return save;
     });
   }
@@ -128,7 +128,7 @@ class SavesService {
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const save = getEntity(scope, "saves", saveId);
+          const save = Engine.for(scope).entity("saves", saveId).get();
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "saves", save);

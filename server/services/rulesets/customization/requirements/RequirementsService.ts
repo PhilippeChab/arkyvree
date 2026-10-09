@@ -1,12 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { requirementsInCustomization } from "@/drizzle/schema.ts";
-import {
-  describeRequirements,
-  planRequirementCreate,
-  planRequirementDelete,
-  planRequirementEdit,
-} from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import {
   readTargetPathCatalogs,
   readTargetPaths,
@@ -54,7 +49,7 @@ class RequirementsService {
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
           const catalogs = await readTargetPathCatalogs(rulesetId, "requirement");
-          const { entity, row } = planRequirementCreate(scope, catalogs, { body, entityId, entityType });
+          const { entity, row } = Engine.for(scope).requirements(entityType, entityId).planCreate(catalogs, body);
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const resolvedEntityId = await edit.cowOwner(tx, entityType, entity.id);
@@ -91,7 +86,9 @@ class RequirementsService {
           const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity();
 
-          const { entity, requirement } = planRequirementDelete(scope, entityType, entityId, requirementId);
+          const { entity, requirement } = Engine.for(scope)
+            .requirements(entityType, entityId)
+            .planDelete(requirementId);
           // Before the copy-on-write: the lookup reads the shared db, not tx
           await checkCustomizedEntity(requirement);
 
@@ -125,7 +122,7 @@ class RequirementsService {
   async getRequirements(rulesetId: string, entityType: string, entityId: string) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
       const catalog = await readTargetPaths(rulesetId, "requirement");
-      return describeRequirements(scope, catalog, entityType, entityId);
+      return Engine.for(scope).requirements(entityType, entityId).describeAll(catalog);
     });
   }
 
@@ -144,12 +141,8 @@ class RequirementsService {
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
           const catalogs = await readTargetPathCatalogs(rulesetId, "requirement");
-          const { entity, requirement, row } = planRequirementEdit(scope, catalogs, {
-            body,
-            entityId,
-            entityType,
-            requirementId,
-          });
+          const requirements = Engine.for(scope).requirements(entityType, entityId);
+          const { entity, requirement, row } = requirements.planEdit(catalogs, requirementId, body);
           // Before the copy-on-write: the lookup reads the shared db, not tx
           await checkCustomizedEntity(requirement);
 

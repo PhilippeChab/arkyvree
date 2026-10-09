@@ -99,7 +99,7 @@ seeds: [
 
 The dev seeds (`database/seeds`) and the tests load the same context for the seeded ruleset (`RulesetSeeder.loadContext`).
 
-The fields the rules keep in an entity's properties (a class's, a level's, a skill's, the ruleset's own) are seeded as the engine keeps them (`toEntityProperties`, by `DND35_BASE_RULES`), from the fields the content gives.
+The fields the rules keep in an entity's properties (a class's, a level's, a skill's, the ruleset's own) are seeded as the engine keeps them (`Engine.forRules(DND35_BASE_RULES).toEntityProperties`), from the fields the content gives.
 
 An extension is a package file that seeds its book:
 

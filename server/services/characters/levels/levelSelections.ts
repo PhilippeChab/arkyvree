@@ -2,7 +2,7 @@
  * An existing character level's saved selections.
  */
 
-import { describeLevel } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
@@ -23,10 +23,12 @@ export async function getLevel(session: Session, characterId: string, characterL
     const level = await CharacterLevels.findOne(db, { id: characterLevelId });
     if (!level || level.characterId !== characterId) throw new NotFoundError("Character level not found");
     const characterLevelIds = [characterLevelId];
-    return describeLevel(scope, level, {
-      skills: await CharacterLevelSkills.findMany(db, { characterLevelIds }),
-      feats: await CharacterLevelFeats.findMany(db, { characterLevelIds }),
-      powers: await CharacterLevelPowers.findMany(db, { characterLevelIds }),
-    });
+    return Engine.for(scope)
+      .characters()
+      .describeLevel(level, {
+        skills: await CharacterLevelSkills.findMany(db, { characterLevelIds }),
+        feats: await CharacterLevelFeats.findMany(db, { characterLevelIds }),
+        powers: await CharacterLevelPowers.findMany(db, { characterLevelIds }),
+      });
   });
 }

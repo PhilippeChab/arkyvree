@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { charactersInCharacter } from "@/drizzle/schema.ts";
-import { describeCharacter, describeCharacterSheet } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { isProduction } from "@/server/environment.ts";
@@ -19,10 +19,12 @@ class CharacterSharingService {
 
     const portraitUrl = await getSlotUrl("portrait", characterRecord.id);
     return await withRulesetScope(db, characterRecord.rulesetId, async (scope) =>
-      describeCharacterSheet(scope, await readCharacterInput(db, characterRecord), {
-        diagnostics: !isProduction(),
-        portraitUrl,
-      }),
+      Engine.for(scope)
+        .character(await readCharacterInput(db, characterRecord))
+        .describeSheet({
+          diagnostics: !isProduction(),
+          portraitUrl,
+        }),
     );
   }
 
@@ -58,7 +60,7 @@ class CharacterSharingService {
     return await withRulesetScope(db, characterRecord.rulesetId, async (scope) => {
       const character = await readCharacterInput(db, characterRecord);
       const bonded = await readBondedInputs(db, character, Visibility.All);
-      return { ...describeCharacter(scope, character, bonded, "omit"), portraitUrl };
+      return { ...Engine.for(scope).character(character).describe(bonded, "omit"), portraitUrl };
     });
   }
 
