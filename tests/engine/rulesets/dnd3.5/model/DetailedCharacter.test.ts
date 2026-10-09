@@ -655,19 +655,19 @@ describe("DetailedCharacter", () => {
   describe("saving throws", () => {
     test("add the class's base, the ability and misc bonuses", async () => {
       // Fighter 5: good Fortitude 4, poor Reflex and Will 1. Great Fortitude adds 2.
-      const bjorn = (await buildSeeded("Bjorn Ironhand")).components.savingThrows;
-      expect(bjorn.getSavingThrows()).toMatchObject({
+      const bjorn = (await buildSeeded("Bjorn Ironhand")).components.saves;
+      expect(bjorn.getSaves()).toMatchObject({
         fortitude: { base: 4, ability: 3, misc: 2, total: 9 },
         reflex: { base: 1, ability: 2, misc: 0, total: 3 },
         will: { base: 1, ability: 0, misc: 0, total: 1 },
       });
-      expect(["Fortitude", "Reflex", "Will"].map((name) => bjorn.getSavingThrow(name).total)).toEqual([9, 3, 1]);
+      expect(["Fortitude", "Reflex", "Will"].map((name) => bjorn.getSave(name).total)).toEqual([9, 3, 1]);
     });
 
     test("add a paladin's charisma through Divine Grace, a template modifier", async () => {
       // Paladin 5, CHA 15 (+2): good Fortitude 4, poor Reflex and Will 1.
       const aldric = await buildSeeded("Aldric Dawnbringer");
-      expect(aldric.components.savingThrows.getSavingThrows()).toMatchObject({
+      expect(aldric.components.saves.getSaves()).toMatchObject({
         fortitude: { base: 4, misc: 2, total: 8 },
         reflex: { base: 1, misc: 2, total: 3 },
         will: { base: 1, misc: 2, total: 4 },
@@ -1418,7 +1418,7 @@ describe("DetailedCharacter", () => {
           { item: "Luck Blade, 0 Wishes", location: "Main Hand", weaponSet: 0 },
         ]);
         expect(weaponSet(elara).mainhand).toMatchObject({ proficient: false, tohit: { misc: -4 } });
-        const will = (character: DetailedCharacter) => character.components.savingThrows.getSavingThrows().will;
+        const will = (character: DetailedCharacter) => character.components.saves.getSaves().will;
         expect(will(elara).misc).toBe(will(await buildCarrying("Elara Starweaver")).misc + 1);
       });
 

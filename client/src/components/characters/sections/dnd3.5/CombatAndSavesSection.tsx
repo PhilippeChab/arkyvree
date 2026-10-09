@@ -10,7 +10,7 @@ import { StatField } from "./StatField.tsx";
 
 export interface CombatAndSavesSectionProps {
   combat: SheetCombat;
-  saves: CharacterDetail["savingThrows"];
+  saves: CharacterDetail["saves"];
 }
 
 /** The sheet's combat stats; empty on a sheet that carries none. */

@@ -49,7 +49,7 @@ function familiarOf(masterId: string) {
 /** A bonded creature's numbers, as its sheet shows them. */
 function statBlock(detailed: DetailedCharacterMount | DetailedCharacterAnimalCompanion) {
   const { hp, bab, ac, weaponsets } = detailed.components.combat.getCombat();
-  const saves = detailed.components.savingThrows.getSavingThrows();
+  const saves = detailed.components.saves.getSaves();
   const abilities = detailed.components.abilities.getAbilities();
   const bite = weaponsets["0"]?.mainhand;
   return {
@@ -144,7 +144,7 @@ describe("Bonded creatures", () => {
     const familiar = await buildAs(DetailedCharacterFamiliar, bonded);
     const numbers = (detailed: DetailedCharacter) => {
       const { hp, bab } = detailed.components.combat.getCombat();
-      const saves = detailed.components.savingThrows.getSavingThrows();
+      const saves = detailed.components.saves.getSaves();
       return { hp: hp.total, bab, saves: [saves.fortitude.base, saves.reflex.base, saves.will.base] };
     };
     const ofMaster = numbers(master);
@@ -365,7 +365,7 @@ describe("A familiar's benefit", () => {
     expect(catMaster.components.skills.getSkills()["movesilently"].misc).toBe(3);
     const weasel = await createWizardWithFamiliar("Weasel Familiar");
     const weaselMaster = await masterOf(weasel.masterId);
-    expect(weaselMaster.components.savingThrows.getSavingThrows()["reflex"].misc).toBe(2);
+    expect(weaselMaster.components.saves.getSaves()["reflex"].misc).toBe(2);
 
     // The familiar keeps its SRD stat block: neither its master's bonus nor the Alertness its master gains
     const familiar = await buildAs(DetailedCharacterFamiliar, cat.bonded);

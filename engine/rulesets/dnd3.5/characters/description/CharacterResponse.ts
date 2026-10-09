@@ -102,7 +102,7 @@ export default class CharacterResponse {
       skillBudget: detailedCharacter.components.skills.getSkillBudget(),
       abilities: detailedCharacter.components.abilities.getAbilitiesWithIds(),
       combat: detailedCharacter.components.combat.getCombat(),
-      savingThrows: detailedCharacter.components.savingThrows.getSavingThrows(),
+      saves: detailedCharacter.components.saves.getSaves(),
       classes: detailedCharacter.components.classes.getCharacterClasses(),
       inventory: detailedCharacter.components.inventory.getInventory(),
       equipment: equipmentOf(detailedCharacter),

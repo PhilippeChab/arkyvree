@@ -52,8 +52,8 @@ export default class DetailedCharacterMount extends DetailedCharacterAdvancingBo
     // max(master, mount). Only applies once the mount exists, which by
     // construction means paladin >= 5.
     if (row) {
-      const saves = this.components.savingThrows.getSavingThrows();
-      const masterSaves = master.components.savingThrows.getSavingThrows();
+      const saves = this.components.saves.getSaves();
+      const masterSaves = master.components.saves.getSaves();
       for (const saveName of Object.keys(saves))
         if (masterSaves[saveName]) saves[saveName].base = Math.max(saves[saveName].base, masterSaves[saveName].base);
     }

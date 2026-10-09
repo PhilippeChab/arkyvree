@@ -34,12 +34,12 @@ function InfoPage({
   const identity = detailedCharacter.components.identity;
   const abilities = detailedCharacter.components.abilities;
   const combat = detailedCharacter.components.combat;
-  const savingThrows = detailedCharacter.components.savingThrows;
+  const saves = detailedCharacter.components.saves;
   const classes = detailedCharacter.components.classes;
   const identityData = identity.getIdentity();
   const abilityData = abilities.getAbilities();
   const combatData = combat.getCombat();
-  const savingThrowData = savingThrows.getSavingThrows();
+  const saveData = saves.getSaves();
   const classData = classes.getCharacterClasses();
   return (
     <Page size="A4" style={styles.page}>
@@ -185,8 +185,8 @@ function InfoPage({
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Saving Throws</Text>
               <View style={[styles.row, { justifyContent: "space-between" }]}>
-                {Object.values(savingThrowData).map((save) => (
-                  <View key={save.name} style={styles.savingThrowBox}>
+                {Object.values(saveData).map((save) => (
+                  <View key={save.name} style={styles.saveBox}>
                     <Text style={styles.abilityName}>{save.name}</Text>
                     <Text style={styles.abilityMod}>{SheetFormat.formatModifier(save.total)}</Text>
                     <Text style={{ fontSize: FONT_SIZE.xs, color: "#666", marginTop: 2, textAlign: "center" }}>

@@ -31,7 +31,7 @@ export function BondedCreature({ bonded, baseRules, linkable = false }: BondedCr
   const abilityEntries = sortAbilities(Object.entries(bonded.abilities), baseRules, ([name]) => name);
 
   const combat = bonded.combat;
-  const saves = bonded.savingThrows;
+  const saves = bonded.saves;
 
   const featNames = Object.values(bonded.feats)
     .filter(isFeat)

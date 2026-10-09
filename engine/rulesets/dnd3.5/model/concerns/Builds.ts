@@ -161,7 +161,7 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
       this.components.featGroupings.seedEmptyFamilies(FEAT_FAMILIES);
       this.components.feats.injectGroupings(this.components.featGroupings.getFeatGroupings());
       this.components.skills.initialize(this.rulesetSkills, this.rulesetAbilities, this.race.size, this.skillFields);
-      this.components.savingThrows.initialize(this.rulesetSaves, this.rulesetAbilities, this.klassLevelSaves);
+      this.components.saves.initialize(this.rulesetSaves, this.rulesetAbilities, this.klassLevelSaves);
       this.components.combat.initialize(this.race, this.klassLevelProperties);
       this.components.inventory.initialize(this.inventory);
       this.components.encumbrance.initialize(this.inventory, this.race);

@@ -41,8 +41,8 @@ export default class DetailedCharacterFamiliar extends DetailedCharacterBonded {
       intelligence.level = 0;
     }
 
-    const masterSaves = master.components.savingThrows.getSavingThrows();
-    const familiarSaves = this.components.savingThrows.getSavingThrows();
+    const masterSaves = master.components.saves.getSaves();
+    const familiarSaves = this.components.saves.getSaves();
     for (const saveName of Object.keys(familiarSaves))
       if (masterSaves[saveName]) familiarSaves[saveName].base = masterSaves[saveName].base;
 

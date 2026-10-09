@@ -5,8 +5,8 @@ import {
   type ClassFieldValues,
   type ClassLevelFieldValues,
 } from "@/engine/rulesets/dnd3.5/entities/classes/fields.ts";
-import { RULESET_FIELDS, type RulesetFieldValues } from "@/engine/rulesets/dnd3.5/entities/ruleset/fields.ts";
 import { SKILL_FIELDS, type SkillFieldValues } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
+import { RULESET_FIELDS, type RulesetFieldValues } from "@/engine/rulesets/dnd3.5/ruleset/fields.ts";
 
 /** The fields of the entities the seeders write as their properties, by entity. */
 export type SeededFields = {
