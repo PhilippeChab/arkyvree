@@ -1,14 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { SpellUsesIcon } from "@/client/src/components/icons/index.ts";
-import { classSpellsQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
+import { classSpellsPerDayQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 
 import { ClassLevelCountsTable } from "./ClassLevelCountsTable.tsx";
 import type { ClassSectionProps } from "./classSections.ts";
 import { bySpellLevel, spellLevelLabel } from "./spellLevels.ts";
 
-export function ClassSpellsSection({ rulesetId, classId }: ClassSectionProps) {
-  const { data, isLoading, error } = useQuery(classSpellsQuery(rulesetId, classId));
+export function ClassSpellsPerDaySection({ rulesetId, classId }: ClassSectionProps) {
+  const { data, isLoading, error } = useQuery(classSpellsPerDayQuery(rulesetId, classId));
   return (
     <ClassLevelCountsTable
       title="Spells per Day"
@@ -20,7 +20,7 @@ export function ClassSpellsSection({ rulesetId, classId }: ClassSectionProps) {
       compareKeys={bySpellLevel}
       labelOf={spellLevelLabel}
       emptyIcon={SpellUsesIcon}
-      emptyTitle="No spells"
+      emptyTitle="No spells per day"
       emptyDescription="This class doesn't have any spells per day data."
     />
   );

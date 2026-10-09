@@ -29,6 +29,7 @@ import {
 import { ExpandMoreIcon } from "@/client/src/components/icons/index.ts";
 import { useToggleSet } from "@/client/src/hooks/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
+import { DURATION } from "@/client/src/theme/animations.ts";
 
 interface DiagnosticsGroupProps {
   children: ReactNode;
@@ -154,7 +155,7 @@ function GroupedRuleTable({ label, count, lastColumn, groups }: GroupedRuleTable
               </TableRow>
               <TableRow>
                 <TableCell colSpan={6} sx={{ py: 0, borderBottom: isOpen ? undefined : "none" }}>
-                  <Collapse in={isOpen} timeout="auto" unmountOnExit>
+                  <Collapse in={isOpen} timeout={DURATION.normal} unmountOnExit>
                     <Table size="small">
                       <TableBody>
                         {rules.map((cells, i) => (
@@ -307,10 +308,10 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
               <Stack direction="row" spacing={2} sx={{ alignItems: "center", pb: 1 }}>
                 <SubsectionTitle>Requirements</SubsectionTitle>
                 <Stack direction="row" spacing={1}>
-                  <CountChip label={`Fulfilled: ${requirements.fulfilledRequirementGroups.length}`} color="success" />
-                  <CountChip label={`Unmet: ${requirements.unmetRequirementGroups.length}`} color="error" />
+                  <CountChip label={`Fulfilled (${requirements.fulfilledRequirementGroups.length})`} color="success" />
+                  <CountChip label={`Unmet (${requirements.unmetRequirementGroups.length})`} color="error" />
                   {requirements.invalidRequirements.length > 0 && (
-                    <CountChip label={`Invalid: ${requirements.invalidRequirements.length}`} color="warning" />
+                    <CountChip label={`Invalid (${requirements.invalidRequirements.length})`} color="warning" />
                   )}
                 </Stack>
               </Stack>
@@ -325,15 +326,15 @@ export function DiagnosticsSection({ validation, requirements, modifiers }: Diag
               <Stack direction="row" spacing={2} sx={{ alignItems: "center", pb: 1 }}>
                 <SubsectionTitle>Modifiers</SubsectionTitle>
                 <Stack direction="row" sx={{ flexWrap: "wrap", columnGap: 1.5, rowGap: 0.5 }}>
-                  <CountChip label={`Applied: ${modifiers.appliedModifiers.length}`} color="success" />
+                  <CountChip label={`Applied (${modifiers.appliedModifiers.length})`} color="success" />
                   {modifiers.unappliedModifiers.length > 0 && (
-                    <CountChip label={`Unapplied: ${modifiers.unappliedModifiers.length}`} color="error" />
+                    <CountChip label={`Unapplied (${modifiers.unappliedModifiers.length})`} color="error" />
                   )}
                   {modifiers.inactiveModifiers.length > 0 && (
-                    <CountChip label={`Inactive: ${modifiers.inactiveModifiers.length}`} />
+                    <CountChip label={`Inactive (${modifiers.inactiveModifiers.length})`} />
                   )}
                   {modifiers.skippedModifiers.length > 0 && (
-                    <CountChip label={`Skipped: ${modifiers.skippedModifiers.length}`} color="warning" />
+                    <CountChip label={`Skipped (${modifiers.skippedModifiers.length})`} color="warning" />
                   )}
                 </Stack>
               </Stack>

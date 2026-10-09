@@ -98,7 +98,7 @@ test.describe("Characters", () => {
     // Lowering a score may break prerequisites: it asks first, then not again this session
     const confirmed = saved();
     await lower.click();
-    await decrease.getByRole("button", { name: "Decrease" }).click();
+    await decrease.getByRole("button", { name: "Decrease Ability" }).click();
     await confirmed;
     await expect(base).toHaveText("Base: 11");
     const again = saved();
@@ -231,7 +231,7 @@ test.describe("Characters", () => {
     const manager = page.getByRole("dialog", { name: "Manage Modifiers" });
     await expect(manager.getByText("No modifiers")).toBeVisible();
 
-    await manager.getByRole("button", { name: /^Add$/ }).click();
+    await manager.getByRole("button", { name: "Add Modifier" }).click();
     const dialog = page.getByRole("dialog", { name: "Add Modifier" });
     await fillStrengthModifier(dialog, 1);
     const added = apiResponse(page, "POST", /\/api\/characters\/modifiers\/[a-f0-9-]+\/modifiers(?:\?|$)/);

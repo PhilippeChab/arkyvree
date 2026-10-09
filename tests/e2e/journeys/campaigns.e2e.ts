@@ -15,7 +15,7 @@ test.describe("Campaigns", () => {
 
   test("creating one needs a ruleset", async ({ page }) => {
     await page.goto("/campaigns");
-    await page.getByRole("button", { name: "Create New Campaign" }).click();
+    await page.getByRole("button", { name: "Create Campaign" }).click();
     const dialog = page.locator('[role="dialog"][aria-modal="true"]');
     await dialog.locator('input[name="name"]').fill(`Invalid Campaign ${Date.now()}`);
     await dialog.getByRole("button", { name: /^Create$/ }).click();

@@ -130,7 +130,7 @@ export function LevelWizardDialog({
         isLoading={isSaving}
         title="Discard Progress"
         message="Are you sure you want to discard all level-up progress? The choices made in this wizard are lost."
-        confirmLabel="Discard"
+        confirmLabel="Discard Progress"
         intent="destructive"
       />
     </>

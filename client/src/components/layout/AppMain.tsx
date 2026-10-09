@@ -3,6 +3,7 @@ import { type ReactNode, Suspense, useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 
 import { PageLoader } from "@/client/src/components/common/index.ts";
+import { DURATION } from "@/client/src/theme/animations.ts";
 import { TOOLBAR_HEIGHT } from "@/client/src/theme/appTheme.ts";
 
 import { Footer } from "./Footer.tsx";
@@ -27,11 +28,10 @@ export function AppMain({ banner, railWidth = 0 }: AppMainProps) {
 
     const start = el.scrollTop;
     const startTime = performance.now();
-    const duration = 250;
     let frame: number;
 
     const step = (now: number) => {
-      const progress = Math.min((now - startTime) / duration, 1);
+      const progress = Math.min((now - startTime) / DURATION.normal, 1);
       el.scrollTop = start * Math.pow(1 - progress, 3);
       if (progress < 1) frame = requestAnimationFrame(step);
     };

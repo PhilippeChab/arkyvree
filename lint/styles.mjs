@@ -15,8 +15,9 @@
  * - `borders`: a border is the theme's shorthand (`border: 1`, `borderLeft: 3`), its color `borderColor`, its style
  *   `borderStyle`.
  * - `motion`: motion is timed by `theme/animations.ts`: an animation it names, a transition of its `DURATION` and
- *   `EASING`; keyframes and MUI's transitions are the theme's. What moves (an animation, a transform on hover) stops
- *   for a viewer who asked for less motion (`[PREFERS_REDUCED_MOTION]`).
+ *   `EASING`, which the rest of the theme reads too (a dialog's transition, a link's); a component's timing prop
+ *   takes a token, never a number nor `"auto"`. Keyframes and MUI's transitions are the theme's. What moves (an
+ *   animation, a transform on hover) stops for a viewer who asked for less motion (`[PREFERS_REDUCED_MOTION]`).
  * - `type-scale`: text takes its style from a variant (`variant="body2"`, a responsive one in `sx`), sized in `rem`
  *   when it sizes itself; a font weight is a number; text aligns with `textAlign`; an icon takes MUI's named sizes as
  *   its `fontSize` prop; lines clamp through `lineClampSx`.
@@ -258,6 +259,8 @@ function createHeadings(context) {
 function createMotion(context) {
   if (!inClient(context)) return {};
   const theme = inTheme(context);
+  // The tokens' own module writes the timings out; the rest of the theme reads them
+  const tokens = repoPath(context.filename) === "client/src/theme/animations.ts";
   const report = (node) =>
     context.report({
       node,
@@ -279,20 +282,21 @@ function createMotion(context) {
       if (node.imported.name === "keyframes" || transition) report(node);
     },
     JSXAttribute(node) {
-      if (theme || node.name.type !== "JSXIdentifier" || !TIMING_PROPS.has(node.name.name)) return;
+      if (tokens || node.name.type !== "JSXIdentifier" || !TIMING_PROPS.has(node.name.name)) return;
       const value = node.value?.type === "JSXExpressionContainer" ? node.value.expression : node.value;
       if (value && writesTiming(value)) report(node);
     },
     Literal(node) {
-      if (!theme && typeof node.value === "string" && node.value.includes("cubic-bezier(")) report(node);
+      if (!tokens && typeof node.value === "string" && node.value.includes("cubic-bezier(")) report(node);
     },
     Property(node) {
       const key = keyName(node);
       if (typeof key === "string" && key.startsWith("@keyframes") && !theme) return report(node);
-      if (MOTION_PROPERTIES.has(key) && !theme) {
+      if (MOTION_PROPERTIES.has(key) && !tokens) {
         const value = node.value;
         if (value.type === "Literal" && typeof value.value === "string" && value.value !== "none") report(value);
         if (value.type === "TemplateLiteral" && timesItself(value, context.sourceCode)) report(value);
+        if (value.type === "ObjectExpression" && writesTiming(value)) report(value);
       }
       if (!movesOnItsOwn(node) || node.parent.type !== "ObjectExpression") return;
       const root = sxRoot(node.parent);
@@ -818,7 +822,8 @@ function writesText(value) {
 
 /** Whether a transition's timing prop writes its time out: `250`, `{ enter: 250, exit: 150 }` (not `DURATION.normal`). */
 function writesTiming(value) {
-  if (value.type === "Literal") return typeof value.value === "number";
+  // A number of its own, or `"auto"`, MUI's measure of a collapse's height
+  if (value.type === "Literal") return typeof value.value === "number" || value.value === "auto";
   if (value.type === "ObjectExpression")
     return value.properties.some((p) => p.type === "Property" && writesTiming(p.value));
   return false;

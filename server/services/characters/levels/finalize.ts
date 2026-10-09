@@ -122,7 +122,7 @@ export async function removeLevel(session: Session, characterId: string) {
     const lastLevel = await CharacterLevels.findLatest(tx, {
       characterId,
     });
-    if (!lastLevel) throw new NotFoundError("No level to remove.");
+    if (!lastLevel) throw new NotFoundError("No level to remove");
 
     await deleteLevelPicks(tx, lastLevel.id);
     await CharacterLevels.delete(tx, { id: lastLevel.id });

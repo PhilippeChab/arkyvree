@@ -510,6 +510,22 @@ describe("component rules", () => {
     ]);
   });
 
+  test("a searched list's results show through ListPageResults or RulesetSectionTable", async () => {
+    const own = "export const o = <NoMatchesState search={search} />;\n";
+    expect(
+      await lintRepo(
+        {
+          "client/src/pages/rulesets/details/sections/FeatsSection.tsx": own,
+          "client/src/components/common/ListPageResults.tsx": own,
+          "client/src/pages/rulesets/components/RulesetSectionTable.tsx": own,
+          "client/src/results.tsx":
+            'export const r = <ListPageResults variant="section" list={list} search={search} what="Feats" empty={empty} />;\n',
+        },
+        ["list-results"],
+      ),
+    ).toEqual(["list-results client/src/pages/rulesets/details/sections/FeatsSection.tsx"]);
+  });
+
   test("a skeleton means loading: a table's is a TableSkeleton, anything else's a spinner", async () => {
     const own = "export const o = <Skeleton />;\n";
     expect(

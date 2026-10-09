@@ -197,4 +197,4 @@ Shared test code lives in `tests/support/` (and `tests/e2e/support/`), one modul
 - See [docs/access.md](./docs/access.md) for the policy matrix (rulesets / characters / campaigns / customizations), actor definitions (owner / contributor / campaign member), and the ruleset listing-scope reference
 - See [docs/frontend.md](./docs/frontend.md) for the client's conventions: read it before any client change
 - See [docs/ui-buttons.md](./docs/ui-buttons.md) for action button color / variant conventions across Buttons and MenuItems (destructive / caution / positive / cancel)
-- [help/](./help/README.md) is the user-facing help center and [CHANGELOG.md](./CHANGELOG.md) the user-facing changelog, both linked from the app. Update them when a change alters user-visible behavior
+- [help/](./help/README.md) is the user-facing help, Help in the app, and [CHANGELOG.md](./CHANGELOG.md) the user-facing changelog, both linked from the app. Update them when a change alters user-visible behavior

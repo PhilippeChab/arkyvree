@@ -29,7 +29,7 @@ test.describe("Profile editing", () => {
   });
 
   for (const [what, email, error] of [
-    ["an invalid email", "not-an-email", /Please enter a valid email address/i],
+    ["an invalid email", "not-an-email", /Enter a valid email address/i],
     ["an email already in use", TEST_USERS.user1.email, /Email address already in use/i],
   ] as const) {
     test(`refuses ${what}`, async ({ page }) => {

@@ -166,7 +166,7 @@ export function CharacterModifiersModal({ open, onClose, characterId, rulesetId 
           <Stack spacing={2}>
             <Stack direction="row" spacing={1} sx={{ justifyContent: "space-between", alignItems: "center" }}>
               <DialogContentText>Custom bonuses and overrides of this character's own.</DialogContentText>
-              <AddButton label="Add" onClick={handleAdd} />
+              <AddButton label="Add Modifier" onClick={handleAdd} />
             </Stack>
             {isLoading ? (
               <DiceSpinner sx={{ py: 4 }} />

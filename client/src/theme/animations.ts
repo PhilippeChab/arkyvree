@@ -25,6 +25,24 @@ const pulse = keyframes`
   50% { opacity: 1; }
 `;
 
+/**
+ * How long motion takes, in milliseconds: a delay behind another step, a stagger between items, a transition's, then
+ * an animation's (the bell's ring)
+ */
+export const DURATION = {
+  beat: 50,
+  stagger: 60,
+  slowStagger: 80,
+  quick: 120,
+  fast: 150,
+  brisk: 200,
+  normal: 250,
+  moderate: 300,
+  deliberate: 350,
+  slow: 400,
+  ring: 600,
+} as const;
+
 /** How motion eases: CSS's own curves, and Material's */
 export const EASING = {
   ease: "ease",
@@ -38,23 +56,9 @@ export const EASING = {
 
 /** The animations the app runs, by what they show: the bell's ring, the dice of a spinner, a loading pulse */
 export const ANIMATIONS = {
-  bellShake: `${bellShake} 0.6s ease-in-out`,
+  bellShake: `${bellShake} ${DURATION.ring}ms ${EASING.easeInOut}`,
   diceRoll: `${diceRoll} 1.6s ${EASING.decelerate} infinite`,
   pulse: `${pulse} 2s ${EASING.standard} infinite`,
-} as const;
-
-/** How long motion takes, in milliseconds: a delay behind another step, a stagger between items, then a transition's */
-export const DURATION = {
-  beat: 50,
-  stagger: 60,
-  slowStagger: 80,
-  quick: 120,
-  fast: 150,
-  brisk: 200,
-  normal: 250,
-  moderate: 300,
-  deliberate: 350,
-  slow: 400,
 } as const;
 
 /**

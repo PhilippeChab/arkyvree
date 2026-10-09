@@ -101,7 +101,7 @@ export function AbilityScoresSection({ abilities, characterId, readOnly }: Abili
         onClose={decreaseDialog.close}
         title="Decrease Ability Score"
         message="Are you sure you want to decrease this ability score? It may break the prerequisites of what the character took."
-        confirmLabel="Decrease"
+        confirmLabel="Decrease Ability"
         onConfirm={() => {
           if (!decreaseDialog.target) return;
           updateMutation.mutate(decreaseDialog.target, {

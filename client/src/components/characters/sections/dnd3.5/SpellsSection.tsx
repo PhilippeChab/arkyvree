@@ -25,6 +25,7 @@ import {
   ValueChip,
 } from "@/client/src/components/common/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
+import { DURATION } from "@/client/src/theme/animations.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
@@ -68,7 +69,7 @@ function CollapsibleClass({ apt, rulesetId }: CollapsibleClassProps) {
           {apt.aptitudeName} ({totalSpells})
         </ToggleLabel>
       </SubsectionTitle>
-      <Collapse in={open} timeout="auto" unmountOnExit>
+      <Collapse in={open} timeout={DURATION.normal} unmountOnExit>
         <Stack spacing={1} sx={{ pl: 1 }}>
           {apt.levels.map((group) => (
             <CollapsibleLevel key={group.level} group={group} rulesetId={rulesetId} />
@@ -99,7 +100,7 @@ function CollapsibleLevel({ group, rulesetId }: CollapsibleLevelProps) {
           </Typography>
         )}
       </Stack>
-      <Collapse in={open} timeout="auto" unmountOnExit>
+      <Collapse in={open} timeout={DURATION.normal} unmountOnExit>
         <TableContainer sx={{ overflowX: "auto" }}>
           <Table size="small">
             <colgroup>
@@ -165,7 +166,7 @@ function SpellRowItem({ spell, rulesetId }: SpellRowItemProps) {
       </TableRow>
       <TableRow>
         <TableCell colSpan={4} sx={{ py: 0, borderBottom: open ? undefined : "none" }}>
-          <Collapse in={open} timeout="auto" unmountOnExit>
+          <Collapse in={open} timeout={DURATION.normal} unmountOnExit>
             <Stack spacing={1.5} sx={{ py: 1.5, px: 1 }}>
               {detailProps.length > 0 && (
                 <Box

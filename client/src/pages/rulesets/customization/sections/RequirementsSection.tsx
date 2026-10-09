@@ -326,7 +326,7 @@ export function RequirementsSection({
                     {canEdit && (
                       <RowAction
                         icon={EditIcon}
-                        label="Edit Requirement"
+                        label="Edit"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleEditRequirement(requirement);
@@ -336,7 +336,7 @@ export function RequirementsSection({
                     {canDelete && (
                       <RowAction
                         icon={DeleteIcon}
-                        label="Delete Requirement"
+                        label={restorable ? "Delete" : "Delete Permanently"}
                         intent="destructive"
                         onClick={(e) => {
                           e.stopPropagation();

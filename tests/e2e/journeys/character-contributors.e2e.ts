@@ -65,7 +65,7 @@ test.describe("Character contributors", () => {
     const removed = apiResponse(owner, "DELETE", /\/api\/characters\/[a-f0-9-]+\/contributors\/[a-f0-9-]+/);
     await owner
       .getByRole("dialog", { name: "Remove Contributor" })
-      .getByRole("button", { name: /^Remove$/ })
+      .getByRole("button", { name: /^Remove Contributor$/ })
       .click();
     await removed;
 

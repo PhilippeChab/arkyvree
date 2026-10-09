@@ -106,7 +106,7 @@ describe("control rules", () => {
     ]);
   });
 
-  test("a chip is one of the family, and never an action", async () => {
+  test("a chip is one of the family, and never an action: a fixed label's click, nor one that opens something", async () => {
     expect(
       await lintRepo(
         {
@@ -118,6 +118,8 @@ describe("control rules", () => {
           "client/src/family.tsx": "export const f = <RoleChip label={player.role} />;\n",
           "client/src/action.tsx": 'export const a = <ValueChip label="MAX" onClick={max} />;\n',
           "client/src/opens.tsx": "export const o = <ValueChip label={visibility} onClick={openMenu} />;\n",
+          "client/src/popover.tsx": "export const p = <CountChip label={count} onClick={() => setListOpen(true)} />;\n",
+          "client/src/step.tsx": "export const s = <ValueChip label={segment} onClick={() => goTo(index)} />;\n",
           "client/src/choice.tsx": 'export const c = <ChoiceChip label="All" selected onClick={pick} />;\n',
           "client/src/components/common/Chips.tsx":
             'import { Chip } from "@mui/material";\nexport const o = <Chip label={label} size="small" />;\n',
@@ -126,7 +128,13 @@ describe("control rules", () => {
         },
         ["chips"],
       ),
-    ).toEqual(["chips client/src/action.tsx", "chips client/src/raw.tsx", "chips client/src/renamed.tsx"]);
+    ).toEqual([
+      "chips client/src/action.tsx",
+      "chips client/src/opens.tsx",
+      "chips client/src/popover.tsx",
+      "chips client/src/raw.tsx",
+      "chips client/src/renamed.tsx",
+    ]);
   });
 
   test("a chip that names a record links through its to, never a link in its label", async () => {

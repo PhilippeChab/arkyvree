@@ -122,7 +122,7 @@ test.describe("Every page", () => {
     );
     const wizard = items.find((klass) => klass.name === "Wizard")!;
     const errors = watchErrors(page);
-    for (const section of ["levels", "skills", "feat-pools", "spells-known", "spells", "spell-list"])
+    for (const section of ["levels", "skills", "feat-pools", "spells-known", "spells-per-day", "spell-list"])
       await visit(page, errors, `/rulesets/${rulesetId}/classes/${wizard.id}/${section}`, "Wizard");
   });
 

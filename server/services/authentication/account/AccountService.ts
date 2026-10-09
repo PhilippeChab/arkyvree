@@ -130,7 +130,7 @@ class AccountService {
       const user = await Users.findOne(tx, { id: session.userId });
       if (!user) throw new InternalError("User not found");
 
-      if (user.passwordDigest) throw new BadRequestError("Password already set. Use change password instead.");
+      if (user.passwordDigest) throw new BadRequestError("Password already set: change it instead");
 
       const newHash = await hashPassword(newPassword);
       await Users.update(tx, { passwordDigest: newHash }, { id: session.userId });

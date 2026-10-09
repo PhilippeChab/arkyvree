@@ -170,7 +170,7 @@ export function TemplateExpressionInput({
             if (picked) insertBracketed(path);
             else setPickerPath(path);
           }}
-          label="Pick a path to insert"
+          label="Pick a Path to Insert"
         />
       </Popover>
     </>

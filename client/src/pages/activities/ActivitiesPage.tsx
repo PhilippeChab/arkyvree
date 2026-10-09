@@ -31,7 +31,7 @@ const ACTIVITY_SORT_OPTIONS: SortOption<SortField>[] = [
 ];
 
 export default function ActivitiesPage() {
-  usePageTitle("Activities");
+  usePageTitle("Activity");
   const openTarget = useOpenActivityTarget();
   const { search, orderBy, orderDir, searchBarProps } = useListParams(["createdAt", "type"], {
     orderBy: "createdAt",

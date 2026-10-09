@@ -12,7 +12,7 @@ export const DECIMAL_RULES = { pattern: { value: /^(\d+\.?\d*|\.\d+)?$/, message
 /** React Hook Form rules for a required email address field. */
 export const EMAIL_RULES = {
   required: "Email is required",
-  pattern: { value: EMAIL_PATTERN, message: "Please enter a valid email address" },
+  pattern: { value: EMAIL_PATTERN, message: "Enter a valid email address" },
 } as const;
 
 /** React Hook Form rules for an entity's required name. */
@@ -45,7 +45,7 @@ export const USERNAME_RULES = {
 /** React Hook Form rules for a field that must repeat `passwordField`. */
 export function confirmPasswordRules<T extends object>(passwordField: keyof T) {
   return {
-    required: "Please confirm your password",
+    required: "Password confirmation is required",
     validate: (value: unknown, formValues: T) => value === formValues[passwordField] || "Passwords do not match",
   };
 }

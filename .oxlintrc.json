@@ -155,6 +155,7 @@
     "arkyvree/page-titles": "error",
     "arkyvree/panels": "error",
     "arkyvree/list-toolbars": "error",
+    "arkyvree/list-results": "error",
     "arkyvree/skeletons": "error",
     "arkyvree/empty-values": "error",
     "arkyvree/notification-messages": "error",

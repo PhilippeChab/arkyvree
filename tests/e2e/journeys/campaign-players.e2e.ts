@@ -64,10 +64,7 @@ test.describe("A campaign's Game Master", () => {
     // The pending invite
     await expect(pendingRow).toBeVisible();
     await act(pendingRow, "Revoke Invite");
-    await page
-      .getByRole("dialog", { name: "Confirm Revoke" })
-      .getByRole("button", { name: "Revoke Invitation" })
-      .click();
+    await page.getByRole("dialog", { name: "Revoke Invite" }).getByRole("button", { name: "Revoke Invite" }).click();
     await expect(pendingRow).toHaveCount(0);
     await players();
     await expect(pendingRow).toHaveCount(0);

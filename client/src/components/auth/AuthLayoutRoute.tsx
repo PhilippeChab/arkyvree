@@ -1,11 +1,12 @@
-import { alpha, Box, Link as MuiLink, Paper, Stack, Typography } from "@mui/material";
+import { alpha, Box, Paper, Stack, Typography } from "@mui/material";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 
 import { DiceSpinner, GoldDivider, LinkButton, PageLoader } from "@/client/src/components/common/index.ts";
+import { SourceLink } from "@/client/src/components/layout/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useAuthRequests, useIsDemo, useIsMobile } from "@/client/src/hooks/index.ts";
-import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
+import { TAGLINE } from "@/client/src/lib/brand.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { DURATION, EASING, fadeInUp, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
 
@@ -37,7 +38,6 @@ function AuthFooterLinks() {
             }
             disabled={pending}
             variant="body2"
-            sx={{ color: "text.secondary", background: "none", border: 0, cursor: "pointer", p: 0 }}
           >
             <DiceSpinner size="small" loading={startDemo.isPending}>
               Try the Demo
@@ -48,18 +48,7 @@ function AuthFooterLinks() {
           </Typography>
         </>
       )}
-      <Stack
-        component={MuiLink}
-        direction="row"
-        href={EXTERNAL_LINKS.source}
-        target="_blank"
-        rel="noopener noreferrer"
-        variant="body2"
-        underline="hover"
-        sx={{ color: "text.secondary", display: "inline-flex", alignItems: "center", minHeight: 44 }}
-      >
-        Source
-      </Stack>
+      <SourceLink variant="body2" />
     </Stack>
   );
 }
@@ -179,7 +168,7 @@ function DesktopBranding() {
             ...stagger(3),
           }}
         >
-          A programmable engine for tabletop rulesets
+          {TAGLINE}
         </Typography>
       </Stack>
     </Stack>
@@ -227,7 +216,7 @@ function MobileBranding() {
           variant="body2"
           sx={{ color: (theme) => alpha(theme.palette.common.white, 0.6), fontStyle: "italic" }}
         >
-          A programmable engine for tabletop rulesets
+          {TAGLINE}
         </Typography>
       </Box>
     </Stack>

@@ -32,7 +32,7 @@ export function RemoveContributorDialog({
           contributor?
         </>
       }
-      confirmLabel="Remove"
+      confirmLabel="Remove Contributor"
       intent="destructive"
     />
   );

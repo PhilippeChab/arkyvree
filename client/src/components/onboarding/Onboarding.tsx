@@ -21,6 +21,7 @@ import {
   RulesetIcon,
   type SvgIconComponent,
 } from "@/client/src/components/icons/index.ts";
+import { TAGLINE, TAGLINE_DETAIL } from "@/client/src/lib/brand.ts";
 import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 import { DURATION, EASING, fadeInUp, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
 
@@ -48,14 +49,15 @@ interface OnboardingStep {
   tooltip?: string;
 }
 
-const SIDEBAR_TRANSITION_MS = 380;
+/** How long the sidebar takes to expand: its width's transition, and its labels' fade a beat behind it (`Layout`) */
+const SIDEBAR_EXPANSION_MS = DURATION.deliberate + DURATION.beat;
 
 const STEPS: OnboardingStep[] = [
   {
     icon: null,
     logo: true,
     title: "Welcome to Arkyvree",
-    description: "A programmable ruleset engine for tabletop RPGs. Build characters and run campaigns on top.",
+    description: `${TAGLINE}. ${TAGLINE_DETAIL}`,
     mode: "dialog",
   },
   {
@@ -82,7 +84,7 @@ const STEPS: OnboardingStep[] = [
   {
     icon: HelpIcon,
     title: "Learn More",
-    description: "Want to dive deeper? The {faq} covers rulesets, forking, the customization system, and more.",
+    description: "Want to dive deeper? {help} covers rulesets, forking, the customization system, and more.",
     mode: "dialog",
   },
 ];
@@ -100,7 +102,7 @@ function OnboardingPopper({ anchorEl, onClose, children }: OnboardingPopperProps
       popperRef.current?.update();
       return;
     }
-    const timer = setTimeout(() => setEntered(true), SIDEBAR_TRANSITION_MS);
+    const timer = setTimeout(() => setEntered(true), SIDEBAR_EXPANSION_MS);
     return () => clearTimeout(timer);
   }, [anchorEl, entered]);
 
@@ -255,8 +257,8 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
               fontSize: effectiveMode === "popper" ? "0.9rem" : undefined,
             }}
           >
-            {step.description.includes("{faq}")
-              ? step.description.split("{faq}").map((part, i) => (
+            {step.description.includes("{help}")
+              ? step.description.split("{help}").map((part, i) => (
                   <span key={i}>
                     {part}
                     {i === 0 && (
@@ -267,7 +269,7 @@ export function Onboarding({ open, onClose, activeStep, onStepChange, anchorEl, 
                         onClick={onClose}
                         sx={{ fontSize: "inherit", verticalAlign: "baseline" }}
                       >
-                        FAQ
+                        Help
                       </MuiLink>
                     )}
                   </span>

@@ -110,7 +110,7 @@ describe("style rules", () => {
     ).toEqual(["borders client/src/template.tsx", "borders client/src/written.tsx"]);
   });
 
-  test("motion is timed by the theme's tokens, and what moves stops for less motion", async () => {
+  test("motion is timed by the theme's tokens, the rest of the theme's too, and what moves stops for less motion", async () => {
     expect(
       await lintRepo(
         {
@@ -119,6 +119,10 @@ describe("style rules", () => {
           "client/src/literal.tsx": 'export const l = <Box sx={{ transition: "opacity 0.2s ease" }} />;\n',
           "client/src/keyframes.ts": 'import { keyframes } from "@mui/material";\nexport const K = keyframes``;\n',
           "client/src/timeout.tsx": "export const c = <Collapse in timeout={250} />;\n",
+          "client/src/auto.tsx": 'export const a = <Collapse in timeout="auto" />;\n',
+          "client/src/token.tsx": "export const t = <Collapse in timeout={DURATION.normal} />;\n",
+          "client/src/theme/appTheme.ts": "export const D = { transitionDuration: { enter: 250, exit: 150 } };\n",
+          "client/src/theme/link.ts": 'export const L = { transition: "text-decoration-color 200ms ease" };\n',
           "client/src/still.tsx": 'export const s = <Box sx={{ "&:hover": { transform: "scale(1.1)" } }} />;\n',
           "client/src/stilled.tsx":
             'export const d = <Box sx={{ "&:hover": { transform: "scale(1.1)" }, [PREFERS_REDUCED_MOTION]: { "&:hover": { transform: "none" } } }} />;\n',
@@ -127,9 +131,12 @@ describe("style rules", () => {
         ["motion"],
       ),
     ).toEqual([
+      "motion client/src/auto.tsx",
       "motion client/src/keyframes.ts",
       "motion client/src/literal.tsx",
       "motion client/src/still.tsx",
+      "motion client/src/theme/appTheme.ts",
+      "motion client/src/theme/link.ts",
       "motion client/src/timeout.tsx",
     ]);
   });

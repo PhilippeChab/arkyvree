@@ -448,7 +448,7 @@ export function EquipmentSection({
         onClose={deleteDialog.close}
         title="Remove Item"
         message="Are you sure you want to remove this item from the inventory? This action cannot be undone."
-        confirmLabel="Remove"
+        confirmLabel="Remove Item"
         onConfirm={() => deleteDialog.target && removeMutation.mutate(deleteDialog.target)}
         isLoading={removeMutation.isPending}
       />

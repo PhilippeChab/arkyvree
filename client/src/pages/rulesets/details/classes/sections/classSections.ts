@@ -13,7 +13,7 @@ import { ClassLevelsSection } from "./ClassLevelsSection.tsx";
 import { ClassSkillsSection } from "./ClassSkillsSection.tsx";
 import { ClassSpellListSection } from "./ClassSpellListSection.tsx";
 import { ClassSpellsKnownSection } from "./ClassSpellsKnownSection.tsx";
-import { ClassSpellsSection } from "./ClassSpellsSection.tsx";
+import { ClassSpellsPerDaySection } from "./ClassSpellsPerDaySection.tsx";
 
 /** What the class page passes each of its tabs. */
 export interface ClassSectionProps {
@@ -31,7 +31,7 @@ export const CLASS_SECTIONS: Record<ClassSection, ComponentType<ClassSectionProp
   skills: ClassSkillsSection,
   "feat-pools": ClassFeatPoolsSection,
   "spells-known": ClassSpellsKnownSection,
-  spells: ClassSpellsSection,
+  "spells-per-day": ClassSpellsPerDaySection,
   "spell-list": ClassSpellListSection,
   properties: ClassPropertiesSection,
   modifiers: ClassModifiersSection,

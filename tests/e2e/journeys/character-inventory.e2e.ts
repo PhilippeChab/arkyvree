@@ -58,7 +58,7 @@ test.describe("Character inventory", () => {
 
     await row.getByRole("button", { name: /^Remove / }).click();
     const remove = page.getByRole("dialog", { name: "Remove Item" });
-    await remove.getByRole("button", { name: /^Remove$/ }).click();
+    await remove.getByRole("button", { name: /^Remove Item$/ }).click();
     await expect(remove).toBeHidden({ timeout: 10_000 });
     await expect(page.getByText("No equipment")).toBeVisible({ timeout: 10_000 });
   });

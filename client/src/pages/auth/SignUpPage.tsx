@@ -67,7 +67,7 @@ export default function SignUpPage() {
         </Stack>
         <Stack spacing={2}>
           <GoogleSignInSection
-            label="Sign up with Google"
+            label="Sign Up with Google"
             disabled={auth.pending}
             onError={(error) => setError(errorMessage(error, "Failed to sign up with Google"))}
           />
