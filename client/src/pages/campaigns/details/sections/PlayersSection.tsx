@@ -35,8 +35,8 @@ import {
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDialogState, useFormWith, useListPageQuery, useSearchText } from "@/client/src/hooks/index.ts";
 import { formatDate } from "@/client/src/lib/formatDate.ts";
-import type { CampaignDetail } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
+import { type CampaignDetail } from "@/client/src/pages/campaigns/campaignQueries.ts";
 import {
   campaignPlayersQuery,
   invalidateCampaignPlayers,
@@ -334,21 +334,21 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
         onClose={() => setAddDialogOpen(false)}
         form={addForm}
         onSubmit={confirmAddPlayer}
-        isLoading={addMutation.isPending}
+        pending={addMutation.isPending}
       />
       <EditPlayerDialog
         open={editDialog.open}
         onClose={editDialog.close}
         form={editForm}
         onSubmit={confirmEditPlayer}
-        isLoading={editMutation.isPending}
+        pending={editMutation.isPending}
         slot={editDialog.target && getPlayerSlot(editDialog.target)}
       />
       <RemovePlayerDialog
         open={removeDialog.open}
         onClose={removeDialog.close}
         onConfirm={confirmRemovePlayer}
-        isLoading={removeMutation.isPending}
+        pending={removeMutation.isPending}
         isSelfRemoval={removeDialog.target?.userId === currentUserId}
         slot={removeDialog.target && getPlayerSlot(removeDialog.target)}
       />
@@ -360,7 +360,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
         onConfirm={confirmRevokeInvite}
         confirmLabel="Revoke Invite"
         intent="caution"
-        isLoading={revokeInviteMutation.isPending}
+        pending={revokeInviteMutation.isPending}
       />
     </SectionContent>
   );

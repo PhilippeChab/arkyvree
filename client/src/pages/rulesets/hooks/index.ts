@@ -7,6 +7,6 @@ export { useRestorableDelete } from "./useRestorableDelete.ts";
 export { useRowPrefetch } from "./useRowPrefetch.ts";
 export { useRulesetFeats } from "./useRulesetFeats.ts";
 export { type PublishKind, useRulesetOperations } from "./useRulesetOperations.ts";
-export { type RulesetSave, useRulesetSaves } from "./useRulesetSaves.ts";
+export { type Save, useRulesetSaves } from "./useRulesetSaves.ts";
 export { useRulesetSection } from "./useRulesetSection.ts";
 export { useSpellLevelFilter } from "./useSpellLevelFilter.ts";

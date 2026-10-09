@@ -78,7 +78,7 @@ export default function CharactersPage() {
 
   return (
     <PageTransition>
-      <Container maxWidth="xl">
+      <Container>
         <Stack spacing={4}>
           <PageHeader
             variant="tinted"

@@ -1,6 +1,6 @@
 import type { ComponentType, ReactNode } from "react";
 
-import type { RulesetDetail } from "@/client/src/lib/queries.ts";
+import { type RulesetDetail } from "@/client/src/lib/queries.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
 import { RulesetLicenseNotice, type RulesetLicenseNoticeProps } from "./components/dnd3.5/index.ts";

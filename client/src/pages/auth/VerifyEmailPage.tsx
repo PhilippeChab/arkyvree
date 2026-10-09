@@ -52,7 +52,7 @@ export default function VerifyEmailPage() {
         <Stack component="form" onSubmit={form.handleSubmit(handleVerify)} noValidate spacing={5}>
           <VerificationCodeField control={form.control} name="digits" />
 
-          <AuthSubmitButton loading={auth.pending} disabled={!isCodeComplete(digits)}>
+          <AuthSubmitButton pending={auth.pending} disabled={!isCodeComplete(digits)}>
             Verify
           </AuthSubmitButton>
         </Stack>

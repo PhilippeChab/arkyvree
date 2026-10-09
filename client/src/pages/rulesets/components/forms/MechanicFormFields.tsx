@@ -2,7 +2,6 @@ import type { InferRequestType } from "hono/client";
 import type { UseFormReturn } from "react-hook-form";
 
 import { DescriptionField, NameField } from "@/client/src/components/common/index.ts";
-import { NAME_RULES } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
 interface MechanicFormFieldsProps {
@@ -14,7 +13,7 @@ export type MechanicFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]
 export function MechanicFormFields({ form }: MechanicFormFieldsProps) {
   return (
     <>
-      <NameField control={form.control} name="name" rules={NAME_RULES} />
+      <NameField control={form.control} name="name" />
       <DescriptionField control={form.control} name="description" rows={10} />
     </>
   );

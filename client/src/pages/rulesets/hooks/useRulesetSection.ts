@@ -190,7 +190,7 @@ export function useRulesetSection<
       onClose: createDialog.close,
       form: createForm,
       onSubmit: (data: TFormData) => createMutation.mutate({ data, sourceId: duplicateSource?.id }),
-      isLoading: createMutation.isPending,
+      pending: createMutation.isPending,
     },
     editDialogProps: {
       open: editDialog.open,
@@ -201,7 +201,7 @@ export function useRulesetSection<
         if (editDialog.target)
           updateMutation.mutate({ id: editDialog.target.id, data, updatedAt: editDialog.target.updatedAt });
       },
-      isLoading: updateMutation.isPending,
+      pending: updateMutation.isPending,
     },
     deleteDialogProps: {
       open: deleteDialog.open,
@@ -209,7 +209,7 @@ export function useRulesetSection<
       onConfirm: () => {
         if (deleteDialog.target) deleteMutation.mutate(deleteDialog.target);
       },
-      isLoading: deleteMutation.isPending,
+      pending: deleteMutation.isPending,
     },
   };
 }

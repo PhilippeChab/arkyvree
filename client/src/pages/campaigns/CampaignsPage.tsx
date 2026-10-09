@@ -23,13 +23,9 @@ import { ArchiveIcon, CampaignIcon } from "@/client/src/components/icons/index.t
 import { useIsDemo, useListPageQuery, useListParams, usePageTitle } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
-import {
-  CAMPAIGN_LIST_DEFAULTS,
-  campaignDetailQuery,
-  type CampaignListFilters,
-  campaignListQuery,
-} from "@/client/src/lib/queries.ts";
+import { CAMPAIGN_LIST_DEFAULTS, type CampaignListFilters, campaignListQuery } from "@/client/src/lib/queries.ts";
 
+import { campaignDetailQuery } from "./campaignQueries.ts";
 import { CreateCampaignDialog } from "./components/index.ts";
 import { prefetchCampaignSections } from "./details/sectionQueries.ts";
 import { useCampaignOperations } from "./hooks/index.ts";
@@ -70,7 +66,7 @@ export default function CampaignsPage() {
 
   return (
     <PageTransition>
-      <Container maxWidth="xl">
+      <Container>
         <Stack spacing={4}>
           <PageHeader
             variant="tinted"
@@ -152,7 +148,7 @@ export default function CampaignsPage() {
             onExited={createDialog.onExited}
             form={createForm}
             onSubmit={confirmCreate}
-            isLoading={createMutation.isPending}
+            pending={createMutation.isPending}
           />
         )}
       </Container>

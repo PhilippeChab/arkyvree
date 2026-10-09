@@ -27,7 +27,6 @@ function Section({ index, children }: SectionProps) {
 export function CharacterDetailSkeleton() {
   return (
     <Container
-      maxWidth="xl"
       sx={{
         animation: `${fadeIn} ${DURATION.slow}ms ${EASING.standard}`,
         [PREFERS_REDUCED_MOTION]: { animation: "none" },

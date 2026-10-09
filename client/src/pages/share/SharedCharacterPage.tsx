@@ -44,7 +44,7 @@ export default function SharedCharacterPage() {
   // A passing refetch failure keeps the loaded sheet; a revoked link hides it.
   if (!character || accessLost(error)) {
     return (
-      <Container maxWidth="xl">
+      <Container>
         <PageError message={loadFailureMessage("Character sheet", error)} />
       </Container>
     );
@@ -52,7 +52,7 @@ export default function SharedCharacterPage() {
 
   return (
     <PageTransition>
-      <Container maxWidth="xl">
+      <Container>
         <Stack spacing={4}>
           <CharacterHeader
             name={character.identity?.physiology?.name ?? ""}

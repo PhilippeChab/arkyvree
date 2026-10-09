@@ -2,9 +2,8 @@ import { FormControl, FormControlLabel, FormLabel, Radio, RadioGroup } from "@mu
 import { useId } from "react";
 
 import { computeAbilityModifier, sortAbilities } from "@/client/src/components/characters/index.ts";
-import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import type { BaseRules } from "@/shared/enums.ts";
-import { capitalize } from "@/shared/text.ts";
+import { capitalize, formatSigned } from "@/shared/text.ts";
 
 import type { LevelAbilities } from "./levelUp/index.ts";
 

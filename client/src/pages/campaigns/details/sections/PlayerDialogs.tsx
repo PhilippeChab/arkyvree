@@ -6,7 +6,7 @@ import {
   ConfirmDialog,
   CreateDialog,
   EditDialog,
-  FormTextField,
+  EmailField,
   SelectField,
 } from "@/client/src/components/common/index.ts";
 import {
@@ -19,40 +19,40 @@ import {
   SendIcon,
 } from "@/client/src/components/icons/index.ts";
 import { formatDate } from "@/client/src/lib/formatDate.ts";
-import { OPTIONAL_EMAIL_RULES, requiredRules } from "@/client/src/lib/validation.ts";
+import { requiredRules } from "@/client/src/lib/validation.ts";
 
 import type { PlayerFormData, PlayerSlot } from "./players.ts";
 
 interface AddPlayerDialogProps {
   form: UseFormReturn<PlayerFormData>;
-  isLoading: boolean;
   onClose: () => void;
   onSubmit: (data: PlayerFormData) => void;
   open: boolean;
+  pending: boolean;
 }
 
 interface EditPlayerDialogProps {
   form: UseFormReturn<PlayerFormData>;
-  isLoading: boolean;
   onClose: () => void;
   onSubmit: (data: PlayerFormData) => void;
   open: boolean;
+  pending: boolean;
   /** The slot being edited, from `getPlayerSlot`. */
   slot: PlayerSlot | null;
 }
 
 interface PlayerFieldProps {
   form: UseFormReturn<PlayerFormData>;
-  isLoading: boolean;
+  pending: boolean;
 }
 
 interface RemovePlayerDialogProps {
-  isLoading: boolean;
   /** The player leaves the campaign, rather than its Game Master removing them. */
   isSelfRemoval: boolean;
   onClose: () => void;
   onConfirm: () => void;
   open: boolean;
+  pending: boolean;
   /** The slot being removed, from `getPlayerSlot`. */
   slot: PlayerSlot | null;
 }
@@ -62,29 +62,26 @@ interface RoleLabelProps {
   label: string;
 }
 
-function PlayerEmailField({ form, isLoading }: PlayerFieldProps) {
+function PlayerEmailField({ form, pending }: PlayerFieldProps) {
   return (
-    <FormTextField
+    <EmailField
       control={form.control}
       name="email"
-      rules={OPTIONAL_EMAIL_RULES}
-      label="Email Address"
+      optional
       placeholder="Enter an email to send an invite…"
-      type="email"
-      fullWidth
-      disabled={isLoading}
+      disabled={pending}
     />
   );
 }
 
-function PlayerRoleSelect({ form, isLoading }: PlayerFieldProps) {
+function PlayerRoleSelect({ form, pending }: PlayerFieldProps) {
   return (
     <SelectField
       control={form.control}
       name="role"
       label="Role"
       rules={requiredRules("Role is required")}
-      disabled={isLoading}
+      disabled={pending}
       options={[
         { value: "Player Character", label: <RoleLabel icon={CharacterIcon} label="Player Character" /> },
         { value: "Game Master", label: <RoleLabel icon={GMIcon} label="Game Master" /> },
@@ -102,7 +99,7 @@ function RoleLabel({ icon: Icon, label }: RoleLabelProps) {
   );
 }
 
-export function AddPlayerDialog({ open, onClose, form, onSubmit, isLoading }: AddPlayerDialogProps) {
+export function AddPlayerDialog({ open, onClose, form, onSubmit, pending }: AddPlayerDialogProps) {
   const inviting = !!form.watch("email");
 
   return (
@@ -112,20 +109,20 @@ export function AddPlayerDialog({ open, onClose, form, onSubmit, isLoading }: Ad
       title="Add Player"
       form={form}
       onSubmit={onSubmit}
-      isLoading={isLoading}
+      pending={pending}
       submitLabel={inviting ? "Send Invite" : "Add Player"}
       submitIcon={inviting ? <SendIcon /> : <PersonAddIcon />}
     >
       <DialogContentText>
         You can either create an empty player slot or enter an email address to send an invite.
       </DialogContentText>
-      <PlayerEmailField form={form} isLoading={isLoading} />
-      <PlayerRoleSelect form={form} isLoading={isLoading} />
+      <PlayerEmailField form={form} pending={pending} />
+      <PlayerRoleSelect form={form} pending={pending} />
     </CreateDialog>
   );
 }
 
-export function EditPlayerDialog({ open, onClose, form, onSubmit, isLoading, slot }: EditPlayerDialogProps) {
+export function EditPlayerDialog({ open, onClose, form, onSubmit, pending, slot }: EditPlayerDialogProps) {
   const pendingInvite = slot?.pendingInvite;
   const inviting = !!form.watch("email");
 
@@ -136,7 +133,7 @@ export function EditPlayerDialog({ open, onClose, form, onSubmit, isLoading, slo
       title="Edit Player"
       form={form}
       onSubmit={onSubmit}
-      isLoading={isLoading}
+      pending={pending}
       submitLabel={pendingInvite ? "Update Role" : inviting ? "Send Invite" : "Update Player"}
       submitIcon={inviting ? <SendIcon /> : <EditIcon />}
     >
@@ -168,10 +165,10 @@ export function EditPlayerDialog({ open, onClose, form, onSubmit, isLoading, slo
           }}
         />
       ) : (
-        slot?.state === "unassigned" && <PlayerEmailField form={form} isLoading={isLoading} />
+        slot?.state === "unassigned" && <PlayerEmailField form={form} pending={pending} />
       )}
 
-      <PlayerRoleSelect form={form} isLoading={isLoading} />
+      <PlayerRoleSelect form={form} pending={pending} />
     </EditDialog>
   );
 }
@@ -180,7 +177,7 @@ export function RemovePlayerDialog({
   open,
   onClose,
   onConfirm,
-  isLoading,
+  pending,
   isSelfRemoval,
   slot,
 }: RemovePlayerDialogProps) {
@@ -189,7 +186,7 @@ export function RemovePlayerDialog({
       open={open}
       onClose={onClose}
       onConfirm={onConfirm}
-      isLoading={isLoading}
+      pending={pending}
       title={isSelfRemoval ? "Leave Campaign" : "Remove Player"}
       message={
         isSelfRemoval ? (

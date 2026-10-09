@@ -3,10 +3,10 @@ import { DeleteDialog, LoadError } from "@/client/src/components/common/index.ts
 interface EntityDeleteDialogProps {
   /** Why the ruleset's Local Changes didn't load, which tell a copy of an inherited entity (`useRestorableDelete`) */
   changesError?: unknown;
-  isLoading: boolean;
   onClose: () => void;
   onConfirm: () => void;
   open: boolean;
+  pending: boolean;
   /** Its delete can be undone from Local Changes (`useRestorableDelete`): a fork's inherited entity, or what it holds. */
   restorable: boolean;
   /** What it deletes, as its title names it: "Language", "Modifier". */

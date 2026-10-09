@@ -20,7 +20,7 @@ import {
 import { ModifiersIcon } from "@/client/src/components/icons/index.ts";
 import { useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import { formatDate } from "@/client/src/lib/formatDate.ts";
-import type { RulesetDetail } from "@/client/src/lib/queries.ts";
+import { type RulesetDetail } from "@/client/src/lib/queries.ts";
 import { EntityDeleteDialog, RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { modifiersQuery } from "@/client/src/pages/rulesets/customization/customizationSectionQueries.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";

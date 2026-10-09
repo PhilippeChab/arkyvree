@@ -45,8 +45,9 @@
  * - `section-headings`: a heading under a card's title is a `SubsectionTitle` (8px above its content: the column it
  *   leads takes `spacing={1}`), and an entry's name in a panel's list an `EntryTitle`: never a Typography of its own.
  * - `page-gaps`: a page starts 32px under the app bar, the theme padding its `Container` (an invite's `sm` card keeps
- *   its own); its content sits 32px under its header (the column holding the header takes `spacing={4}`), and a tab's
- *   56px under its tabs, in a `SectionTabPanel`.
+ *   its own), a column of the app's page width, its default (the legal page's `md` and an invite's `sm` narrower); its
+ *   content sits 32px under its header (the column holding the header takes `spacing={4}`), and a tab's 56px under its
+ *   tabs, in a `SectionTabPanel`.
  * - `page-titles`: a page's title (its `h1`) is its header's: `PageHeader`, `DetailPageHeader`, or the header of a page
  *   that opens on its own (the dashboard, the auth pages, an invite).
  * - `list-toolbars`: a list's actions sit in its `ListToolbar` (`SearchBar` is one), never a bare row; the list sits
@@ -688,6 +689,16 @@ function createPageGaps(context) {
         // An invite's card stands alone in its `sm` column, centred, deeper than a page's content
         const maxWidth = attributeValue(attribute(node, "maxWidth"));
         if (maxWidth?.type === "Literal" && maxWidth.value === "sm") return;
+        // The app's page width is a Container's own (`lg`, which `AppMain` caps every page at): narrower for reading
+        if (maxWidth && !(maxWidth.type === "Literal" && maxWidth.value === "md")) {
+          context.report({
+            node: node.openingElement,
+            message:
+              "A page's column is a `Container` of the app's page width, its default (`AppMain` caps every page " +
+              'there): no `maxWidth` but the legal page\'s `"md"` and an invite\'s `"sm"`.',
+          });
+          return;
+        }
         const properties = styleProperties(attributeValue(attribute(node, "sx")), node);
         if (!properties.some((property) => TOP_PADDINGS.has(propertyKey(property)))) return;
         context.report({

@@ -123,7 +123,7 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset, restorable }: 
         open={removeDialog.open}
         onClose={removeDialog.close}
         onConfirm={confirmRemoveSkill}
-        isLoading={removeSkillMutation.isPending}
+        pending={removeSkillMutation.isPending}
         restorable={restorable}
       />
     </Stack>

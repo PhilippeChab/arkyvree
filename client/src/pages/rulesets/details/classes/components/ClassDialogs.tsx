@@ -12,23 +12,23 @@ import { MAX_CLASS_LEVEL } from "@/shared/dnd3.5/classes.ts";
 
 interface CreateLevelDialogProps {
   form: UseFormReturn<ClassLevelFormData>;
-  isLoading: boolean;
   onClose: () => void;
   onSubmit: (data: ClassLevelFormData) => void;
   open: boolean;
+  pending: boolean;
   rulesetId: string;
 }
 
 interface RemoveSkillDialogProps {
-  isLoading: boolean;
   onClose: () => void;
   onConfirm: () => void;
   open: boolean;
+  pending: boolean;
   /** The removal can be undone from Local Changes: the class is inherited, or a copy of one (`useRestorableDelete`). */
   restorable: boolean;
 }
 
-export function CreateLevelDialog({ open, onClose, form, onSubmit, isLoading, rulesetId }: CreateLevelDialogProps) {
+export function CreateLevelDialog({ open, onClose, form, onSubmit, pending, rulesetId }: CreateLevelDialogProps) {
   const { data: rulesetSaves, error: savesError } = useRulesetSaves(rulesetId, open);
 
   // The endpoint takes every ruleset save, 0 when unset.
@@ -42,7 +42,7 @@ export function CreateLevelDialog({ open, onClose, form, onSubmit, isLoading, ru
       title="Create New Level"
       form={form}
       onSubmit={handleSubmit}
-      isLoading={isLoading}
+      pending={pending}
     >
       <FormTextField
         control={form.control}

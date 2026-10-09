@@ -5,10 +5,10 @@ import type { Contributor } from "./contributorKinds.ts";
 interface RemoveContributorDialogProps {
   /** The contributor it asks about, kept while it fades out (`useDialogState`'s `target`). */
   contributor: Contributor | null;
-  isLoading: boolean;
   onClose: () => void;
   onConfirm: () => void;
   open: boolean;
+  pending: boolean;
 }
 
 /** Asks before a ruleset's or a character's contributor is removed, naming them as the contributors' table does. */
@@ -17,14 +17,14 @@ export function RemoveContributorDialog({
   open,
   onClose,
   onConfirm,
-  isLoading,
+  pending,
 }: RemoveContributorDialogProps) {
   return (
     <ConfirmDialog
       open={open}
       onClose={onClose}
       onConfirm={onConfirm}
-      isLoading={isLoading}
+      pending={pending}
       title="Remove Contributor"
       message={
         <>

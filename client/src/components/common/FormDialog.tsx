@@ -17,9 +17,9 @@ export interface FormDialogProps<TFormValues extends FieldValues = FieldValues> 
    * Explicit Cancel / submit / close buttons should still call `onClose`.
    */
   form: UseFormReturn<TFormValues>;
-  /** Optional: also block close while a mutation is in flight. */
-  isLoading?: boolean;
   onClose: () => void;
+  /** Optional: also block close while a mutation is in flight. */
+  pending?: boolean;
 }
 
 /**
@@ -34,7 +34,7 @@ export interface FormDialogProps<TFormValues extends FieldValues = FieldValues> 
 export function FormDialog<TFormValues extends FieldValues = FieldValues>({
   form,
   onClose,
-  isLoading,
+  pending,
   children,
   ...rest
 }: FormDialogProps<TFormValues>) {
@@ -62,7 +62,7 @@ export function FormDialog<TFormValues extends FieldValues = FieldValues>({
     <Modal
       {...rest}
       onClose={(_, reason) => {
-        if (isLoading) return;
+        if (pending) return;
         if ((reason === "backdropClick" || reason === "escapeKeyDown") && isDirty) return;
         onClose();
       }}

@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDialogState, useFormWith } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
-import type { RulesetDetail } from "@/client/src/lib/queries.ts";
+import { type RulesetDetail } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import type { EditRulesetFormData, ForkRulesetFormData } from "@/client/src/pages/rulesets/details/components/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";

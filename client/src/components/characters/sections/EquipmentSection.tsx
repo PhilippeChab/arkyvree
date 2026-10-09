@@ -318,7 +318,7 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, encumbrance
         title="Add Item to Inventory"
         form={addForm}
         onSubmit={(data) => handleAddSubmit(data)}
-        isLoading={addMutation.isPending}
+        pending={addMutation.isPending}
         submitLabel="Add Item"
         maxWidth="md"
       >
@@ -413,7 +413,7 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, encumbrance
         title="Edit Inventory Item"
         form={editForm}
         onSubmit={(data) => editingEntry && updateMutation.mutate({ entryId: editingEntry.id, data })}
-        isLoading={updateMutation.isPending}
+        pending={updateMutation.isPending}
         maxWidth="md"
       >
         {issuesAlert(
@@ -445,7 +445,7 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, encumbrance
         message="Are you sure you want to remove this item from the inventory? This action cannot be undone."
         confirmLabel="Remove Item"
         onConfirm={() => deleteDialog.target && removeMutation.mutate(deleteDialog.target)}
-        isLoading={removeMutation.isPending}
+        pending={removeMutation.isPending}
       />
     </SheetSection>
   );

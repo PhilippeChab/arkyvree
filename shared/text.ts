@@ -1,8 +1,14 @@
-/** Text: as it's stored, a name or a label written for display, or reduced to a slug. */
+/** Text: as it's stored, a name, a label or a bonus written for display, or reduced to a slug. */
 
 /** `s` with its first letter capitalized. */
 export function capitalize(s: string) {
   return String(s).charAt(0).toUpperCase() + String(s).slice(1);
+}
+
+/** A bonus with its sign ("+2", "-1"), wherever one shows (a sheet, an attack's to-hit); a missing one reads "+0". */
+export function formatSigned(value: number | null | undefined): string {
+  const n = value ?? 0;
+  return n >= 0 ? `+${n}` : `${n}`;
 }
 
 /** A name's first letter, capitalized, for an avatar. */

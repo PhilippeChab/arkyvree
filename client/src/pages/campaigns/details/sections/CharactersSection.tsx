@@ -31,9 +31,8 @@ import {
 } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
-import type { CampaignDetail } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
-import { campaignCharacterQuery } from "@/client/src/pages/campaigns/campaignQueries.ts";
+import { campaignCharacterQuery, type CampaignDetail } from "@/client/src/pages/campaigns/campaignQueries.ts";
 import {
   campaignCharactersQuery,
   unlinkedCharactersQuery,

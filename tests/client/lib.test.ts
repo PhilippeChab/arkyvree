@@ -9,7 +9,7 @@ import {
 } from "@/client/src/lib/activityFormatters.ts";
 import { accessLost, errorMessage, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { formatRelativeTime } from "@/client/src/lib/formatDate.ts";
-import { formatCost, formatCount, formatDecimal, formatSigned, formatWeight } from "@/client/src/lib/formatNumeric.ts";
+import { formatCost, formatCount, formatDecimal, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
@@ -42,8 +42,7 @@ describe("Numbers shown to the user", () => {
     ]);
   });
 
-  test("carry their sign when they're bonuses, and their noun when they're counts", () => {
-    expect([formatSigned(2), formatSigned(-1), formatSigned(0), formatSigned(null)]).toEqual(["+2", "-1", "+0", "+0"]);
+  test("carry their noun when they're counts", () => {
     expect([formatCount(1, "player"), formatCount(3, "player"), formatCount(0, "player")]).toEqual([
       "1 player",
       "3 players",

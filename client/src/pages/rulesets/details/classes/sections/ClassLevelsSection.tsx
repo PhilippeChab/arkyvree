@@ -5,7 +5,6 @@ import { parseResponse } from "hono/client";
 import { AddButton, EmptyValue, ListToolbar, LoadError, ValueChip } from "@/client/src/components/common/index.ts";
 import { LevelsIcon } from "@/client/src/components/icons/index.ts";
 import { useRulesetPermissions } from "@/client/src/hooks/index.ts";
-import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import { type ClassLevelFormData, nextClassLevel } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
@@ -17,6 +16,7 @@ import { CreateLevelDialog } from "@/client/src/pages/rulesets/details/classes/c
 import { useOpenEntity, useRulesetSaves, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
+import { formatSigned } from "@/shared/text.ts";
 
 import type { ClassSectionProps } from "./classSections.ts";
 import { useClassCopy } from "./useClassCopy.ts";

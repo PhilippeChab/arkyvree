@@ -42,7 +42,7 @@ export default function ActivitiesPage() {
 
   return (
     <PageTransition>
-      <Container maxWidth="lg">
+      <Container>
         <Stack spacing={4}>
           <PageHeader title="Activity" subtitle="View your activity history and track actions" />
           <Stack spacing={3}>

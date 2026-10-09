@@ -2,7 +2,7 @@ import type { InferRequestType } from "hono/client";
 
 import { wholeNumberError } from "@/client/src/lib/validation.ts";
 import type { ClassLevelRow } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
-import type { RulesetSave } from "@/client/src/pages/rulesets/hooks/index.ts";
+import type { Save } from "@/client/src/pages/rulesets/hooks/index.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 import { MAX_SAVE_BASE } from "@/shared/dnd3.5/classes.ts";
 
@@ -29,7 +29,7 @@ export type LevelFeat = Pick<NonNullable<LevelJson["feats"]>[number], "featId" |
  * go out unchanged: the endpoints replace the list, so an empty one would
  * clear them.
  */
-export function allLevelSaves(rulesetSaves: Pick<RulesetSave, "id">[] | undefined, saves: LevelSave[]): LevelSave[] {
+export function allLevelSaves(rulesetSaves: Pick<Save, "id">[] | undefined, saves: LevelSave[]): LevelSave[] {
   if (!rulesetSaves) return saves;
   return rulesetSaves.map((save) => ({ saveId: save.id, base: saves.find((s) => s.saveId === save.id)?.base ?? 0 }));
 }

@@ -87,7 +87,7 @@ export function EntityDetailLayout({
 
   if (isLoading) {
     return (
-      <Container maxWidth="lg">
+      <Container>
         {/* The header's skeleton, as tall as `DetailPageHeader`, then the details panel's */}
         <Stack spacing={4}>
           <Stack
@@ -108,7 +108,7 @@ export function EntityDetailLayout({
 
   return (
     <PageTransition>
-      <Container maxWidth="lg">
+      <Container>
         {/* The page's blocks: its header, then what the page holds (a details card, its tabs, a tab's panel) */}
         <Stack spacing={4}>
           <DetailPageHeader
@@ -139,7 +139,7 @@ export function EntityDetailLayout({
           restorable={confirming.restorable}
           changesError={confirming.changesError}
           onConfirm={() => deleteMutation.mutate(confirming)}
-          isLoading={deleteMutation.isPending}
+          pending={deleteMutation.isPending}
         />
       )}
     </PageTransition>
@@ -149,7 +149,7 @@ export function EntityDetailLayout({
 /** An entity page that couldn't load its entity, in the page's column. */
 export function EntityPageError({ ...props }: EntityPageErrorProps) {
   return (
-    <Container maxWidth="lg">
+    <Container>
       <PageError {...props} />
     </Container>
   );

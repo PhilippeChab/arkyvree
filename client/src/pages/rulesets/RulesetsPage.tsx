@@ -71,7 +71,7 @@ export default function RulesetsPage() {
 
   return (
     <PageTransition>
-      <Container maxWidth="xl">
+      <Container>
         <Stack spacing={4}>
           <PageHeader
             variant="tinted"

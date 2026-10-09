@@ -59,7 +59,7 @@ export function AppMain({ banner, railWidth = 0 }: AppMainProps) {
     >
       {banner}
       <Stack spacing={2} sx={{ flex: 1, width: "100%", alignItems: "center" }}>
-        {/* Every page brings its own gutter (its Container, or a padded Box) */}
+        {/* The app's page width, every page's: each brings its own gutter (its Container, whose own width is this) */}
         <Box sx={{ width: "100%", maxWidth: "1200px", flex: 1 }}>
           <Suspense fallback={<PageLoader />}>
             <Outlet />

@@ -437,14 +437,16 @@ describe("component rules", () => {
     ).toEqual(["page-gaps client/src/list.tsx", "page-gaps client/src/sheet.tsx"]);
   });
 
-  test("a page starts 32px under the app bar, a tab's content 56px under its tabs", async () => {
+  test("a page starts 32px under the app bar, a tab's content 56px under its tabs, a page's column at one width", async () => {
     const own = 'export const o = <Box role="tabpanel" sx={{ py: 3 }} />;\n';
     expect(
       await lintRepo(
         {
-          "client/src/top.tsx": 'export const t = <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 } }} />;\n',
-          "client/src/column.tsx": 'export const c = <Container maxWidth="xl" />;\n',
-          "client/src/end.tsx": 'export const e = <Container maxWidth="lg" sx={{ pb: { xs: 5, sm: 7 } }} />;\n',
+          "client/src/top.tsx": "export const t = <Container sx={{ py: { xs: 2, sm: 4 } }} />;\n",
+          "client/src/column.tsx": "export const c = <Container />;\n",
+          "client/src/end.tsx": "export const e = <Container sx={{ pb: { xs: 5, sm: 7 } }} />;\n",
+          "client/src/wide.tsx": 'export const w = <Container maxWidth="xl" />;\n',
+          "client/src/legal.tsx": 'export const l = <Container maxWidth="md" />;\n',
           "client/src/invite.tsx": 'export const i = <Container maxWidth="sm" sx={{ py: { xs: 4, sm: 8 } }} />;\n',
           "client/src/panel.tsx": own,
           "client/src/tab.tsx": "export const p = <SectionTabPanel hidden={hidden} />;\n",
@@ -452,7 +454,7 @@ describe("component rules", () => {
         },
         ["page-gaps"],
       ),
-    ).toEqual(["page-gaps client/src/panel.tsx", "page-gaps client/src/top.tsx"]);
+    ).toEqual(["page-gaps client/src/panel.tsx", "page-gaps client/src/top.tsx", "page-gaps client/src/wide.tsx"]);
   });
 
   test("a page's title is its header's", async () => {

@@ -98,6 +98,9 @@
  * - `row-prefetch`: a table's row warms the page it opens through `useRowPrefetch` (`pages/rulesets/hooks`), 150ms
  *   into a hover and at once on focus: never an `onMouseEnter` or an `onFocus` of its own. A ruleset table whose rows
  *   open a page (`onRowClick`) warms it (`onRowMouseEnter`).
+ * - `pending-props`: a request in flight is `pending`, a dialog's and a button's alike (`pending={mutation.isPending}`):
+ *   never `isLoading`, a query's first load (a table's, a page's skeleton), nor `loading`, which a spinner and MUI's
+ *   picker say of themselves.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
@@ -176,6 +179,9 @@ const INTL_DATE_FORMATS = new Set(["DateTimeFormat", "RelativeTimeFormat"]);
 
 /** The boxes a dialog's content lays its blocks in, its lead line or its first field first */
 const LAYOUT_ELEMENTS = new Set(["Box", "Stack"]);
+
+/** The elements whose `loading` is their own word: MUI's picker ("Loading…" in its list), the spinners it shows */
+const LOADING_OWNERS = new Set(["Autocomplete", "DiceSpinner", "NextPageSpinner"]);
 
 /** A mutation's callbacks, where its writes to the cache go, and an entity save's `storeSaved`, its `onSuccess`'s step */
 const MUTATION_CALLBACKS = new Set(["onError", "onMutate", "onSettled", "onSuccess", "storeSaved"]);
@@ -1293,6 +1299,31 @@ function createParsedResponses(context) {
   };
 }
 
+function createPendingProps(context) {
+  if (!inClient(context)) return {};
+  const inFlight = (value) => !!value && /\bisPending\b/.test(context.sourceCode.getText(value));
+  const report = (node) =>
+    context.report({
+      node,
+      message:
+        "A request in flight is `pending`, a dialog's and a button's alike (`pending={mutation.isPending}`): never " +
+        "`isLoading`, a query's first load, nor `loading`, a spinner's.",
+    });
+  return {
+    JSXAttribute(node) {
+      const name = node.name.name;
+      if (name !== "isLoading" && name !== "loading") return;
+      if (name === "loading" && LOADING_OWNERS.has(elementName(node.parent.parent))) return;
+      if (inFlight(node.value)) report(node);
+    },
+    // A dialog's props a hook builds (`createDialogProps: { pending: createMutation.isPending }`)
+    Property(node) {
+      const key = node.key.type === "Identifier" ? node.key.name : null;
+      if ((key === "isLoading" || key === "loading") && inFlight(node.value)) report(node);
+    },
+  };
+}
+
 function createQueries(context) {
   const file = repoPath(context.filename);
   if (!file.startsWith("client/src/")) return {};
@@ -1871,4 +1902,5 @@ export default {
   tooltips: { meta: { type: "suggestion" }, create: createTooltips },
   "form-fields": { meta: { type: "suggestion" }, create: createFormFields },
   "row-prefetch": { meta: { type: "suggestion" }, create: createRowPrefetch },
+  "pending-props": { meta: { type: "suggestion" }, create: createPendingProps },
 };

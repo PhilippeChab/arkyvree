@@ -14,7 +14,7 @@ import {
 import { EmailField, PasswordField } from "@/client/src/components/common/index.ts";
 import { useAuthRequests, useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { emailNotVerified, errorMessage } from "@/client/src/lib/errorMessage.ts";
-import { EMAIL_RULES, requiredRules } from "@/client/src/lib/validation.ts";
+import { requiredRules } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
 type SignInFormData = InferRequestType<(typeof rpc.auth)["sign-in"]["$post"]>["json"];
@@ -48,7 +48,7 @@ export default function SignInPage() {
         {/* The first field's own top, which adds to the gap above the form */}
         <Stack component="form" onSubmit={handleSubmit(handleSignIn)} noValidate spacing={2} sx={{ pt: 2 }}>
           <Stack spacing={3}>
-            <EmailField control={control} name="emailAddress" rules={EMAIL_RULES} />
+            <EmailField control={control} name="emailAddress" />
 
             <PasswordField
               control={control}
@@ -65,7 +65,7 @@ export default function SignInPage() {
             </MuiLink>
           </Box>
 
-          <AuthSubmitButton loading={auth.pending}>Sign In</AuthSubmitButton>
+          <AuthSubmitButton pending={auth.pending}>Sign In</AuthSubmitButton>
         </Stack>
         <Stack spacing={2}>
           <GoogleSignInSection

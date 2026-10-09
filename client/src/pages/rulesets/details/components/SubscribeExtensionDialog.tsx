@@ -8,22 +8,17 @@ import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { type RulesetListItem, rulesetPickerQuery } from "@/client/src/lib/queries.ts";
 
 interface SubscribeExtensionDialogProps {
-  isLoading: boolean;
   onClose: () => void;
   onConfirm: (extensionIds: string[]) => void;
   open: boolean;
+  pending: boolean;
   subscribedExtensionIds: string[];
 }
 
 type SubscribeExtensionFormProps = Omit<SubscribeExtensionDialogProps, "open">;
 
 /** The dialog's content: its selection and search are its own, so each opening starts with none (MUI unmounts it). */
-function SubscribeExtensionForm({
-  onClose,
-  onConfirm,
-  isLoading,
-  subscribedExtensionIds,
-}: SubscribeExtensionFormProps) {
+function SubscribeExtensionForm({ onClose, onConfirm, pending, subscribedExtensionIds }: SubscribeExtensionFormProps) {
   const [selected, setSelected] = useState<RulesetListItem[]>([]);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
@@ -64,7 +59,7 @@ function SubscribeExtensionForm({
             filterOptions={(x) => x}
             loading={isLoadingExtensions}
             noOptionsText={emptyOptionsText("Extensions", extensionsError)}
-            disabled={isLoading}
+            disabled={pending}
             renderValue={(value, getItemProps) =>
               value.map((option, index) => {
                 const { key, ...tagProps } = getItemProps({ index });
@@ -84,7 +79,7 @@ function SubscribeExtensionForm({
       </DialogContent>
       <DialogFooter
         onCancel={onClose}
-        pending={isLoading}
+        pending={pending}
         action={{
           label: `Subscribe${selected.length > 1 ? ` (${selected.length})` : ""}`,
           onClick: () => selected.length > 0 && onConfirm(selected.map((s) => s.id)),
@@ -96,14 +91,14 @@ function SubscribeExtensionForm({
   );
 }
 
-export function SubscribeExtensionDialog({ open, onClose, isLoading, ...form }: SubscribeExtensionDialogProps) {
+export function SubscribeExtensionDialog({ open, onClose, pending, ...form }: SubscribeExtensionDialogProps) {
   const handleClose = () => {
-    if (!isLoading) onClose();
+    if (!pending) onClose();
   };
 
   return (
     <Modal open={open} onClose={handleClose} slotProps={{ paper: { sx: { minHeight: { xs: undefined, sm: 600 } } } }}>
-      <SubscribeExtensionForm onClose={handleClose} isLoading={isLoading} {...form} />
+      <SubscribeExtensionForm onClose={handleClose} pending={pending} {...form} />
     </Modal>
   );
 }

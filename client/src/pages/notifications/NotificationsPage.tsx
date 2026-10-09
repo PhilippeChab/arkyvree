@@ -41,7 +41,7 @@ export default function NotificationsPage() {
 
   return (
     <PageTransition>
-      <Container maxWidth="lg">
+      <Container>
         <Stack spacing={4}>
           <PageHeader
             title="Notifications"

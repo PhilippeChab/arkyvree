@@ -1,4 +1,4 @@
-import { capitalize } from "@/shared/text.ts";
+import { capitalize, formatSigned } from "@/shared/text.ts";
 
 /** What a sheet's weapon row reads of a weapon: its to-hit, its thrown and two-weapon attacks, and its range. */
 interface WeaponAttacks {
@@ -59,7 +59,7 @@ export function describeWeaponSlot(
 /** An attack row's to-hit, its iterative attacks signed and joined ("+9/+4"); "—" for none. */
 export function formatAttackBonus(attack: number[]): string {
   if (attack.length === 0) return "—";
-  return attack.map((bonus) => (bonus >= 0 ? `+${bonus}` : `${bonus}`)).join("/");
+  return attack.map((bonus) => formatSigned(bonus)).join("/");
 }
 
 /**

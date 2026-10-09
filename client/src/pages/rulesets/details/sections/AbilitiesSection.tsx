@@ -3,7 +3,7 @@ import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/re
 
 import { ListToolbar, LoadMoreButton, SectionContent } from "@/client/src/components/common/index.ts";
 import { AbilitiesIcon } from "@/client/src/components/icons/index.ts";
-import type { RulesetAbility } from "@/client/src/hooks/index.ts";
+import type { Ability } from "@/client/src/hooks/index.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import { abilityQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
@@ -27,7 +27,7 @@ export function AbilitiesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
 
   const abilities = pageItems(data);
 
-  const renderCell = (ability: RulesetAbility, columnKey: string) => {
+  const renderCell = (ability: Ability, columnKey: string) => {
     switch (columnKey) {
       case "name":
         return ability.name;
@@ -38,11 +38,11 @@ export function AbilitiesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
     }
   };
 
-  const handleRowClick = (ability: RulesetAbility) => {
+  const handleRowClick = (ability: Ability) => {
     openEntity(`abilities/${ability.id}`);
   };
 
-  const handleRowMouseEnter = (ability: RulesetAbility) => {
+  const handleRowMouseEnter = (ability: Ability) => {
     void queryClient.prefetchQuery(abilityQuery(ruleset.id, ability.id));
   };
 
