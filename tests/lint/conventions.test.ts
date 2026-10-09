@@ -675,7 +675,7 @@ describe("conventions", () => {
         },
         ["one-of"],
       ),
-    ).toEqual(["one-of client/src/b.ts", "one-of shared/a.ts"]);
+    ).toEqual(["one-of client/src/b.ts", "one-of content/f.ts", "one-of shared/a.ts"]);
   });
 
   test("an error is named error: a catch's binding and an onError callback's first parameter", async () => {
