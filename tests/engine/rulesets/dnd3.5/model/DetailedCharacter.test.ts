@@ -77,6 +77,7 @@ import { buildSpellGroups } from "@/shared/dnd3.5/spellGroups.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import type { Character, Requirement } from "@/shared/relations.ts";
+import { stripSeparators } from "@/shared/text.ts";
 import { seededRows } from "@/tests/seeds/seededRows.ts";
 import { buildAs, createTestCharacter } from "@/tests/support/characters.ts";
 import { insertRows, measure } from "@/tests/support/database.ts";
@@ -715,6 +716,21 @@ describe("DetailedCharacter", () => {
       ).components.skills.getSkillBudget();
       // A human fighter with INT 3: 2 - 4 = -2 a level, at least 1, and the human's 1 beside: 2 (8 at the first level) + 2.
       expect(budget.total).toBe(10);
+    });
+  });
+
+  describe("skills", () => {
+    test("a trained-only skill is unusable without ranks, its fields' rows or none", async () => {
+      // Knowledge (Arcana) and Spellcraft are trained-only, and keep no rows: their fields are their defaults
+      const skills = (await buildSeeded("Bjorn Ironhand")).components.skills.getSkills();
+      const trained = (name: string) => skills[stripSeparators(name)];
+      expect(
+        [trained("Knowledge (Arcana)"), trained("Spellcraft")].map((skill) => [skill.rank, skill.trained]),
+      ).toEqual([
+        [0, false],
+        [0, false],
+      ]);
+      expect(trained("Climb").trained).toBe(true);
     });
   });
 
