@@ -1,8 +1,8 @@
 import { TextField } from "@mui/material";
 import { type Ref } from "react";
 
-import { CompletionAutocomplete } from "./CompletionAutocomplete.tsx";
 import { propertyValueCompletionsQuery } from "./customizationQueries.ts";
+import { PropertyCompletionAutocomplete } from "./PropertyCompletionAutocomplete.tsx";
 
 interface PropertyValueInputProps {
   error?: boolean;
@@ -37,7 +37,7 @@ export function PropertyValueInput({ rulesetId, propertyType, ...props }: Proper
   }
 
   return (
-    <CompletionAutocomplete
+    <PropertyCompletionAutocomplete
       {...props}
       label="Value"
       placeholder={PLACEHOLDER}

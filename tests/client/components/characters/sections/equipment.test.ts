@@ -78,8 +78,7 @@ describe("A picked item's slot", () => {
     expect(detectSlotFromItem({ type: "Armor", slot: "Other" })).toBe("Torso");
     expect(detectSlotFromItem({ type: "Shield", slot: "Other" })).toBe("Off Hand");
     expect(detectSlotFromItem({ type: "Weapon", slot: "Main Hand" })).toBeNull();
-    expect(detectSlotFromItem({ type: null, slot: "neck" })).toBe("Neck");
-    expect(detectSlotFromItem({ type: null, slot: "Saddle" })).toBeNull();
+    expect(detectSlotFromItem({ type: null, slot: "Neck" })).toBe("Neck");
   });
 
   test("is offered among the locations its type sets, else its own slot's or every one", () => {

@@ -70,3 +70,15 @@ export function formatCritical(critical: { multiplier: number; range: number }):
   const multiplier = `×${critical.multiplier}`;
   return critical.range > 1 ? `${21 - critical.range}–20/${multiplier}` : multiplier;
 }
+
+/** The attacks a base attack bonus gives a round, each 5 less than the last while positive: "+11/+6/+1", or "+0". */
+export function formatIterativeAttacks(bab: number): string {
+  const attacks: number[] = [];
+  for (let bonus = bab; bonus > 0; bonus -= 5) attacks.push(bonus);
+  return formatAttackBonus(attacks.length > 0 ? attacks : [bab]);
+}
+
+/** A speed in feet ("30 ft."), or undefined when the character's isn't known: its field shows an empty value. */
+export function formatSpeed(speed: number | undefined): string | undefined {
+  return speed === undefined ? undefined : `${speed} ft.`;
+}

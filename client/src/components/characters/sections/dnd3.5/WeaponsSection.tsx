@@ -92,12 +92,12 @@ export function WeaponsSection({ combat }: WeaponsSectionProps) {
                             </TableCell>
                             <TableCell align="center">{formatAttackBonus(row.attack)}</TableCell>
                             <TableCell align="center">
-                              {row.damage ?? (weapon.damage?.total || <EmptyValue />)}
+                              {row.damage ?? (weapon.damage.total || <EmptyValue />)}
                             </TableCell>
                             <TableCell align="center">{formatCritical(weapon.damage.critical)}</TableCell>
                             <TableCell align="center">{row.range}</TableCell>
                             <TableCell align="center">
-                              {weapon.damage?.types ? weapon.damage.types.join(", ") : <EmptyValue />}
+                              {weapon.damage.types.length > 0 ? weapon.damage.types.join(", ") : <EmptyValue />}
                             </TableCell>
                           </TableRow>
                         )),

@@ -3,14 +3,14 @@ import type { ComponentType } from "react";
 import type { BaseRules } from "@/shared/enums.ts";
 
 import {
-  AddAttributeStep,
-  type AddAttributeStepProps,
+  AddAbilityStep,
+  type AddAbilityStepProps,
   AddClassPlanStep,
   type AddClassPlanStepProps,
   AddReviewStep,
   type AddReviewStepProps,
-  EditAttributeStep,
-  type EditAttributeStepProps,
+  EditAbilityStep,
+  type EditAbilityStepProps,
   EditReviewStep,
   type EditReviewStepProps,
   FeatsStep,
@@ -29,10 +29,10 @@ import {
  * sheet's `PowersSection` does. Each step takes the wizard state it reads as `wizard`, which both wizards hand over.
  */
 interface SectionMap {
-  AddAttributeStep: ComponentType<AddAttributeStepProps>;
+  AddAbilityStep: ComponentType<AddAbilityStepProps>;
   AddClassPlanStep: ComponentType<AddClassPlanStepProps>;
   AddReviewStep: ComponentType<AddReviewStepProps>;
-  EditAttributeStep: ComponentType<EditAttributeStepProps>;
+  EditAbilityStep: ComponentType<EditAbilityStepProps>;
   EditReviewStep: ComponentType<EditReviewStepProps>;
   FeatsStep: ComponentType<FeatsStepProps>;
   HpStep: ComponentType<HpStepProps>;
@@ -42,10 +42,10 @@ interface SectionMap {
 
 const RULESET_SECTIONS: Record<BaseRules, SectionMap> = {
   "Dungeons & Dragons: 3.5": {
-    AddAttributeStep,
+    AddAbilityStep,
     AddClassPlanStep,
     AddReviewStep,
-    EditAttributeStep,
+    EditAbilityStep,
     EditReviewStep,
     FeatsStep,
     HpStep,

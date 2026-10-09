@@ -38,7 +38,7 @@ import { characterPageState } from "@/client/src/pages/characters/characterPageS
 import { rpc } from "@/client/src/services/rpc.ts";
 import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
 
-import { AddLevelModal, CharacterModifiersModal, EditLevelModal, ShareDialog } from "./components/index.ts";
+import { AddLevelDialog, CharacterModifiersDialog, EditLevelDialog, ShareDialog } from "./components/index.ts";
 import { useCharacterPermissions } from "./useCharacterPermissions.ts";
 
 export default function CharacterDetailsPage() {
@@ -63,8 +63,19 @@ export default function CharacterDetailsPage() {
 
   // The route always gives an id
   const { data: character, isLoading, error } = useQuery(characterDetailQuery(id));
-  const { isArchived, isOwner, canArchive, canDownloadPdf, canEdit, canEditPortrait, canManageContributors, canShare } =
-    useCharacterPermissions(character);
+  const {
+    isArchived,
+    isBonded,
+    canArchive,
+    canDownloadPdf,
+    canEdit,
+    canEditPortrait,
+    canInviteContributors,
+    canLeave,
+    canManageContributors,
+    canRemoveContributors,
+    canShare,
+  } = useCharacterPermissions(character);
 
   usePageTitle(character?.identity?.physiology?.name);
 
@@ -133,8 +144,7 @@ export default function CharacterDetailsPage() {
     );
   }
 
-  const isBonded = "kind" in character && character.kind !== "pc";
-  const parentCharacterId = "parentCharacterId" in character ? character.parentCharacterId : null;
+  const { parentCharacterId } = character;
 
   return (
     <PageTransition>
@@ -197,6 +207,7 @@ export default function CharacterDetailsPage() {
                       key="remove-level"
                       icon={DeleteIcon}
                       label="Remove Level"
+                      intent="destructive"
                       onClick={menu.closeMenuAnd(() => setRemoveLevelOpen(true))}
                     />,
                     <ActionMenuItem
@@ -285,22 +296,22 @@ export default function CharacterDetailsPage() {
             id={id}
             open={isContributorsOpen}
             onClose={() => setContributorsOpen(false)}
-            canInvite={isOwner && !isArchived}
-            canLeave={!isOwner}
-            canRemove={isOwner ? () => true : undefined}
+            canInvite={canInviteContributors}
+            canLeave={canLeave}
+            canRemove={canRemoveContributors ? () => true : undefined}
           />
 
-          <CharacterModifiersModal
+          <CharacterModifiersDialog
             open={isModifiersOpen}
             onClose={() => setModifiersOpen(false)}
             characterId={id}
             rulesetId={character.rulesetId}
           />
 
-          {isArchived && <ArchivedNotice what="character" canUnarchive={isOwner && !isBonded} />}
+          {isArchived && <ArchivedNotice what="character" canUnarchive={canArchive} />}
 
           {addLevel.target && (
-            <AddLevelModal
+            <AddLevelDialog
               open={addLevel.open}
               onClose={closeAddLevel}
               onExited={addLevel.onExited}
@@ -309,7 +320,7 @@ export default function CharacterDetailsPage() {
             />
           )}
           {editLevel.target && (
-            <EditLevelModal
+            <EditLevelDialog
               open={editLevel.open}
               onClose={editLevel.close}
               onExited={editLevel.onExited}
@@ -335,7 +346,7 @@ export default function CharacterDetailsPage() {
               characterId={id}
               readOnly={!canEdit}
               portraitReadOnly={!canEditPortrait}
-              onEditLevel={canEdit ? editLevel.openWith : undefined}
+              onEditLevel={editLevel.openWith}
               onAddLevel={() => addLevel.openWith(true)}
               onRemoveLevel={() => setRemoveLevelOpen(true)}
               bondedLinkable

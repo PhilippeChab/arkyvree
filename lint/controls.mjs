@@ -2,7 +2,8 @@
  * The client's controls, each weighing what it does one way (docs/frontend.md, docs/ui-buttons.md):
  *
  * - `button-intents`: a button in an intent's color (`error`, `warning`, `success`: a destructive, a caution or a
- *   positive action) is contained, as heavy as the action is.
+ *   positive action) is contained, as heavy as the action is; a menu's item or a row's action that deletes or removes
+ *   ("Delete …", "Remove …") is destructive.
  * - `save-buttons`: an inline form's submit is a `SaveButton`, at the form's end on the right, enabled once something
  *   changes; an auth page's is its `AuthSubmitButton`, and a dialog's its `DialogFooter`'s action.
  * - `roll-buttons`: a roll of every die a step asks for is a labelled `RollAllButton`, never a bare dice icon.
@@ -34,6 +35,9 @@ const CHIP_ROLES = new Set(["Chip", "CountChip", "RoleChip", "StatusChip", "Valu
 /** The module that shows a roll as it tumbles, its timers its own. */
 const DICE_ROLL_OWNER = "client/src/pages/characters/useDiceRoll.ts";
 
+/** The actions that take an intent (`components/common/intent.ts`): a menu's item, a row's action */
+const INTENT_ACTIONS = new Set(["ActionMenuItem", "RowAction"]);
+
 /** The colors that carry an action's intent (docs/ui-buttons.md): destructive, caution, positive. */
 const INTENT_COLORS = new Set(["error", "success", "warning"]);
 
@@ -57,6 +61,16 @@ function createButtonIntents(context) {
   if (!inClient(context)) return {};
   return {
     JSXElement(node) {
+      if (INTENT_ACTIONS.has(elementName(node))) {
+        if (!removes(attributeValue(attribute(node, "label")))) return;
+        const intent = attributeValue(attribute(node, "intent"));
+        if (intent?.type === "Literal" && intent.value === "destructive") return;
+        context.report({
+          node: node.openingElement,
+          message: 'An action that deletes or removes ("Delete …", "Remove …") is destructive: `intent="destructive"`.',
+        });
+        return;
+      }
       if (elementName(node) !== "Button") return;
       const color = attributeValue(attribute(node, "color"));
       if (color?.type !== "Literal" || !INTENT_COLORS.has(color.value)) return;
@@ -181,7 +195,7 @@ function createRollButtons(context) {
       if (label?.type !== "Literal" || !/^Roll All\b/.test(String(label.value))) return;
       context.report({
         node: node.openingElement,
-        message: "A roll of every die a step asks for is a labelled `RollAllButton` (`components/characters`).",
+        message: "A roll of every die a step asks for is a labelled `RollAllButton` (`pages/characters`).",
       });
     },
   };
@@ -245,6 +259,12 @@ function isRollCall(node) {
   const name = callee.type === "MemberExpression" && !callee.computed ? callee.property.name : callee.name;
   if (callee.type === "MemberExpression" && callee.object.name === "Math") return name === "random";
   return /^roll(?:[A-Z]|$)/.test(name ?? "");
+}
+
+/** Whether a label says the action deletes or removes: every way it's written does ("Delete", "Remove Level"). */
+function removes(label) {
+  if (label?.type === "ConditionalExpression") return removes(label.consequent) && removes(label.alternate);
+  return label?.type === "Literal" && /^(Delete|Remove)\b/.test(String(label.value));
 }
 
 export default {

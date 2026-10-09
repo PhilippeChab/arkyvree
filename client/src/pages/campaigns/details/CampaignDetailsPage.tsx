@@ -151,7 +151,7 @@ export default function CampaignDetailsPage() {
       <Container maxWidth="xl">
         <Stack spacing={4}>
           <DetailPageHeader
-            title={`⚔️ ${campaign.name}`}
+            title={campaign.name}
             backTo={"/campaigns"}
             onMenuOpen={canEdit ? menu.openMenu : undefined}
             chips={

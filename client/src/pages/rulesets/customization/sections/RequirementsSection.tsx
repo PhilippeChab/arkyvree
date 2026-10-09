@@ -22,8 +22,8 @@ import {
 } from "@/client/src/components/common/index.ts";
 import {
   EMPTY_REQUIREMENT,
-  RequirementForm,
   type RequirementFormData,
+  RequirementFormFields,
   type RequirementType,
   TargetPathBreadcrumbs,
 } from "@/client/src/components/customization/index.ts";
@@ -37,7 +37,7 @@ import { followCopiesOf } from "@/client/src/pages/rulesets/followCopies.ts";
 import { useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import type { CustomizationOwnerType } from "@/shared/customization/entities.ts";
-import { formatOperator } from "@/shared/customization/operators.ts";
+import { formatChainingOperator, formatOperator } from "@/shared/customization/operators.ts";
 import RequirementTree, {
   getNextLevel,
   isChaining,
@@ -253,7 +253,7 @@ export function RequirementsSection({
                     <Typography variant="body2" sx={{ color: "text.secondary" }}>
                       Chaining:
                     </Typography>
-                    <ValueChip label={requirement.chainingOperator} color="warning" />
+                    <ValueChip label={formatChainingOperator(requirement.chainingOperator)} color="warning" />
                   </Stack>
                 ) : (
                   <>
@@ -375,7 +375,7 @@ export function RequirementsSection({
         maxWidth="md"
       >
         {isPublished && <PublishedWarning />}
-        <RequirementForm
+        <RequirementFormFields
           form={createForm}
           type={createRequirementType}
           onTypeChange={setCreateRequirementType}
@@ -397,7 +397,7 @@ export function RequirementsSection({
         maxWidth="md"
       >
         {isPublished && <PublishedWarning />}
-        <RequirementForm
+        <RequirementFormFields
           form={editForm}
           type={editRequirementType}
           onTypeChange={setEditRequirementType}

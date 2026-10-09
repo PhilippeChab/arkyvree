@@ -17,8 +17,9 @@
  *   itself: the job queue, a channel's notifications, its health), nowhere else in the server. A transaction's handle
  *   is named `tx`, the name it knows a query by.
  * - `folder-index`: code outside a folder that has an `index.ts` imports it through that index (the service folders,
- *   `cow/`, `policies/`, the client's component folders). Files within the folder import each other directly, and a
- *   test may reach a folder's own modules (a pure module's unit test).
+ *   `cow/`, `policies/`, the client's component folders; code outside a client component folder enters it at its
+ *   outermost index, never a subfolder's). Files within the folder import each other directly, and a test may reach a
+ *   folder's own modules (a pure module's unit test).
  * - `re-exports`: an `index.ts` that re-exports is a folder's entry, which only re-exports what the folder offers,
  *   from the modules themselves (`export { x } from "./x.ts"`): its own code goes in a module named for it. Any other
  *   module (an `index.ts` that re-exports nothing too: a route folder's routes) exports what it declares, never another
@@ -42,6 +43,8 @@ const ABOVE_REPOSITORIES = [
   "server/middlewares/",
   "server/routers/",
 ];
+/** The client's component folders, which code outside enters at their outermost index */
+const CLIENT_COMPONENTS = "client/src/components/";
 /** What a folder's entry with code of its own is told. */
 const ENTRY_ONLY_RE_EXPORTS =
   'A folder\'s index.ts only re-exports what the folder offers (`export { x } from "./x.ts"`): its own code goes in a ' +
@@ -51,7 +54,7 @@ const indexCache = new Map();
  * The trees whose folders are entered through their `index.ts`: the server's, but its routers (a route folder's
  * `index.ts` is its routes, not its folder's entry), the engine's, and the client's components.
  */
-const INDEXED_TREES = ["server/", "engine/", "client/src/components/"];
+const INDEXED_TREES = ["server/", "engine/", CLIENT_COMPONENTS];
 
 const LAYERS = [
   { layer: "server/database/", deny: ["server/repositories/", ...ABOVE_REPOSITORIES] },
@@ -145,6 +148,15 @@ function createFolderIndex(context) {
       }
     }
     if (!folder || file.startsWith(folder + "/")) return;
+    // Code outside a client component folder (`components/characters/`) enters it at its outermost index: a
+    // subfolder's index is an entry for the folder's own files, never for the code outside it
+    const area = tree + target.slice(tree.length).split("/")[0];
+    for (
+      let dir = path.posix.dirname(folder);
+      tree === CLIENT_COMPONENTS && !file.startsWith(area + "/") && dir.startsWith(area);
+      dir = path.posix.dirname(dir)
+    )
+      if (hasIndex(path.join(root, dir))) folder = dir;
     const index = isDirectory
       ? target === folder
       : path.posix.basename(target).replace(/\.tsx?$/, "") === "index" && path.posix.dirname(target) === folder;

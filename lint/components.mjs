@@ -8,7 +8,8 @@
  *   save's rules warnings are a `ValidationIssuesAlert`. No other alert carries actions, and no "Are you sure" is
  *   written by hand. One that sends a request closes in its mutation's `onSuccess`, never as it sends it.
  * - `link-buttons`: an action written as a link is a `LinkButton`, never a `MuiLink component="button"`.
- * - `choice-chips`: a chip that is one of several to choose (its look switched by a selection) is a `ChoiceChip`.
+ * - `choice-chips`: a chip that is one of several to choose (its look switched by a selection) is a `ChoiceChip`, and a
+ *   choice of one among a few as buttons is an `OptionToggle`, MUI's `ToggleButtonGroup` its alone.
  * - `next-page-spinners`: the spinner at the foot of a list that loads its next page as it scrolls is a
  *   `NextPageSpinner`.
  * - `option-tooltips`: the level-up wizard's option tooltip (a description, or the tree of what it asks) is an
@@ -26,11 +27,13 @@
  *   state it's in: `aria-pressed`, or `aria-expanded` when it shows or hides something.
  * - `table-frames`: a table on a page or in a dialog is framed by a `TableFrame` (a table in a panel stands bare), and
  *   the theme draws its header: no cell of it sets its tint, weight or color, nor bolds its label. A header drawn from
- *   its columns (`{ key, label, width }`) is a `TableColumnsHead`, never their cells mapped by hand.
+ *   its columns (`{ key, label, width }`, or a list of labels) is a `TableColumnsHead`, never their cells mapped by
+ *   hand.
  * - `card-titles`: a card's or a panel's title (an `h2` sized from `h6` up) is a `CardTitle`.
  * - `blank-notes`: an empty list's line ("No local changes") is a `BlankNote` in a panel, a dialog, a menu or the level
  *   wizard, and a page's or a tab's is a `BlankState`, its icon and its line required: never a `Typography` or an
- *   `Alert` of its own. A note (a `BlankNote`, a picker's `noOptionsText`) never ends with a period.
+ *   `Alert` of its own. A note (a `BlankNote`, a picker's `noOptionsText`) never ends with a period, and a sheet's says
+ *   what the character has none of ("No classes"), never "available".
  * - `page-loaders`: a page's first load is a `PageLoader` (a character sheet's page draws the sheet's skeleton,
  *   `CharacterDetailSkeleton`); a section's or a dialog's spinner takes a section's spacing (`py: 4`) and nothing
  *   else, never the large size.
@@ -73,6 +76,15 @@
 import { calleeName, childElements, elementName, hasAttribute, inClient, parentElement } from "./jsx.mjs";
 import { repoPath } from "./paths.mjs";
 
+/**
+ * The alerts that carry an action: a save's rules warnings (Proceed Anyway), a load's failure (Retry) and a toast (the
+ * new version's Refresh)
+ */
+const ACTION_ALERTS = [
+  "client/src/components/characters/validation/ValidationIssuesAlert.tsx",
+  "client/src/components/common/LoadError.tsx",
+  "client/src/contexts/SnackbarProvider.tsx",
+];
 /** The confirmations, whose `onConfirm` sends what they ask */
 const CONFIRMATIONS = new Set(["ConfirmDialog", "DeleteDialog", "EntityDeleteDialog"]);
 /** The modules of a ruleset entity page's save and delete: its inline save's hook, its layout's delete */
@@ -244,6 +256,14 @@ function createBlankNotes(context) {
       const last = node.children.findLast((child) => child.type !== "JSXText" || child.value.trim());
       const text = last?.type === "JSXExpressionContainer" ? last.expression : last;
       if (endsWithPeriod(text)) period(node.openingElement);
+      // A sheet says what the character has none of ("No classes"): nothing on it is to pick from
+      const sheet = repoPath(context.filename).startsWith("client/src/components/characters/");
+      if (sheet && last?.type === "JSXText" && /\bavailable\s*$/.test(last.value)) {
+        context.report({
+          node: node.openingElement,
+          message: 'A sheet says what the character has none of ("No classes", "No equipment"), never "available".',
+        });
+      }
     },
     JSXText(node) {
       if (!/^\s*No\s+\w/.test(node.value) || !["Alert", "Typography"].includes(elementName(parentElement(node))))
@@ -275,7 +295,16 @@ function createCardTitles(context) {
 
 function createChoiceChips(context) {
   if (!inClient(context) || inFile(context, "client/src/components/common/ChoiceChip.tsx")) return {};
+  const toggle = inFile(context, "client/src/components/common/OptionToggle.tsx");
   return {
+    ImportSpecifier(node) {
+      if (toggle || node.imported.name !== "ToggleButtonGroup" || node.parent.source.value !== "@mui/material") return;
+      context.report({
+        node,
+        message:
+          "A choice of one among a few, as buttons under its label, is an `OptionToggle`: MUI's group is its own.",
+      });
+    },
     JSXElement(node) {
       if (elementName(node) !== "Chip" || attributeValue(attribute(node, "variant"))?.type !== "ConditionalExpression")
         return;
@@ -288,11 +317,10 @@ function createChoiceChips(context) {
 }
 
 function createConfirmDialogs(context) {
-  if (!inClient(context) || inFile(context, "client/src/components/characters/validation/ValidationIssuesAlert.tsx"))
-    return {};
+  if (!inClient(context) || ACTION_ALERTS.some((file) => inFile(context, file))) return {};
   return {
     JSXElement(node) {
-      if (elementName(node) !== "AnimatedAlert" || !hasAttribute(node, "action")) return;
+      if (!["Alert", "AnimatedAlert"].includes(elementName(node)) || !hasAttribute(node, "action")) return;
       context.report({
         node: node.openingElement,
         message:
@@ -903,7 +931,9 @@ function createTableFrames(context) {
       if (name === "TableCell" && !ownHead && mapsColumns(node)) {
         context.report({
           node: node.openingElement,
-          message: "A table's header drawn from its columns (`{ key, label, width }`) is a `TableColumnsHead`.",
+          message:
+            "A table's header drawn from its columns (`{ key, label, width }`, or a list of labels) is a " +
+            "`TableColumnsHead`.",
         });
       }
       const bold = name === "strong" || name === "b";
@@ -1096,12 +1126,14 @@ function leadsWith(element, name) {
 
 /** Whether a header's cell is drawn for each of its columns: a `.map` callback's, its text a column's `label`. */
 function mapsColumns(cell) {
+  // A column's label (`{column.label}`), or the label a list of them holds (`{label}`)
   const readsLabel = cell.children.some(
     (child) =>
       child.type === "JSXExpressionContainer" &&
-      child.expression.type === "MemberExpression" &&
-      !child.expression.computed &&
-      child.expression.property.name === "label",
+      (child.expression.type === "Identifier" ||
+        (child.expression.type === "MemberExpression" &&
+          !child.expression.computed &&
+          child.expression.property.name === "label")),
   );
   if (!readsLabel) return false;
   for (let p = cell.parent; p && !(p.type === "JSXElement" && elementName(p) === "TableHead"); p = p.parent)

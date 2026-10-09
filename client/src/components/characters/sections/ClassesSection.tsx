@@ -10,13 +10,11 @@ import {
   RowActions,
   SubsectionTitle,
   ToggleLabel,
-  ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { DeleteIcon, EditIcon } from "@/client/src/components/icons/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import { DURATION } from "@/client/src/theme/animations.ts";
 
-import type { CharacterData } from "./characterData.ts";
 import { SheetSection } from "./SheetSection.tsx";
 
 interface ClassesSectionProps {
@@ -32,7 +30,7 @@ interface ClassGroupProps {
   /** Its class's page, which its name links to */
   classLink?: string;
   klass: SheetKlass;
-  /** Its levels, which the sheet carries in full */
+  /** Its levels, one at least: a class the character has no level in isn't listed */
   levels: SheetLevel[];
   /** Edits a level; a read-only viewer sees the levels without it. */
   onEditLevel?: (editingLevel: EditingLevel) => void;
@@ -40,11 +38,12 @@ interface ClassGroupProps {
 
 type SheetClass = CharacterDetail["classes"][string];
 
-type SheetClasses = NonNullable<CharacterData["classes"]>;
+/** The sheet's classes, by name: those the character has levels in, every sheet's alike (a Partial one's none) */
+type SheetClasses = CharacterDetail["classes"];
 
-type SheetKlass = NonNullable<SheetClass["klass"]>;
+type SheetKlass = SheetClass["klass"];
 
-type SheetLevel = NonNullable<SheetClass["levels"]>[number];
+type SheetLevel = SheetClass["levels"][number];
 
 /** A level the sheet opens in Edit Level: its own row's id and level, and its class's. */
 export interface EditingLevel {
@@ -91,7 +90,7 @@ function ClassGroup({ klass, levels, classLink, onEditLevel }: ClassGroupProps) 
               }}
             >
               <Typography variant="body2">
-                Level {lvl.klassLevel.level} — HP: +{lvl.characterLevel.hp}
+                Level {lvl.klassLevel.level} — HP Gain: +{lvl.characterLevel.hp}
               </Typography>
               {onEditLevel && (
                 <RowActions>
@@ -144,33 +143,21 @@ export function ClassesSection({
         )
       }
     >
-      {classes && Object.keys(classes).length > 0 ? (
+      {Object.keys(classes).length > 0 ? (
         <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", justifyContent: "center" }}>
-          {Object.values(classes).map((cls) => {
-            const { klass } = cls;
-            const levels = cls.levels ?? [];
-            const className = klass?.name || "Unknown";
-            const currentLevel = levels.length || cls.level || 1;
-
-            const classLink = rulesetId && klass?.id ? `/rulesets/${rulesetId}/classes/${klass.id}` : undefined;
-
-            // A class the sheet carries in full lists its levels, which an editor can edit; another is its chip.
-            if (!klass || levels.length === 0)
-              return <ValueChip key={className} label={`${className} ${currentLevel}`} to={classLink} />;
-
-            return (
-              <ClassGroup
-                key={className}
-                klass={klass}
-                levels={levels}
-                classLink={classLink}
-                onEditLevel={readOnly ? undefined : onEditLevel}
-              />
-            );
-          })}
+          {/* Each class lists its levels, which an editor can edit */}
+          {Object.values(classes).map(({ klass, levels }) => (
+            <ClassGroup
+              key={klass.id}
+              klass={klass}
+              levels={levels}
+              classLink={rulesetId && `/rulesets/${rulesetId}/classes/${klass.id}`}
+              onEditLevel={readOnly ? undefined : onEditLevel}
+            />
+          ))}
         </Stack>
       ) : (
-        <BlankNote>No classes available</BlankNote>
+        <BlankNote>No classes</BlankNote>
       )}
     </SheetSection>
   );

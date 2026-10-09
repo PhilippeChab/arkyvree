@@ -195,6 +195,28 @@ describe("character levels", () => {
       expect(await detectMagic("2")).not.toContain("Detect Magic");
     });
 
+    test("leaves out the spells the wizard picked already, as the feat picker leaves out a feat held", async () => {
+      const { characterId, ctx } = await createCharacter();
+      const cantrips = async (selectedPowerIds?: string) => {
+        const query = {
+          aptitudeId: ctx.aptMap["Wizard Spells"],
+          classId: ctx.klassMap.pc["Wizard"],
+          level: "1",
+          powerLevel: "0",
+          limit: "100",
+          selectedPowerIds,
+        };
+        return (await expectOk(levels["available-powers"].$get({ param: { characterId }, query }))).items;
+      };
+
+      const offered = await cantrips();
+      const [picked, other] = offered;
+      const left = await cantrips(picked.id);
+      expect(left.map((power) => power.id)).not.toContain(picked.id);
+      expect(left.map((power) => power.id)).toContain(other.id);
+      expect(left).toHaveLength(offered.length - 1);
+    });
+
     test("lists each spell once when sibling extensions both carry it", async () => {
       const ctx = await getSeedCtx();
       const fork = await createSeededTestRulesetWithExtensions(SEED_USER_ID);

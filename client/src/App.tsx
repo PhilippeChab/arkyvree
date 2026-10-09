@@ -43,11 +43,9 @@ const RulesetDetailsPage = lazy(() => import("./pages/rulesets/details/RulesetDe
 const RulesetsPage = lazy(() => import("./pages/rulesets/RulesetsPage.tsx"));
 const SaveDetailsPage = lazy(() => import("./pages/rulesets/details/entities/SaveDetailsPage.tsx"));
 const SettingsPage = lazy(() => import("./pages/settings/SettingsPage.tsx"));
-const SharedCharacterPage = lazy(() => import("./pages/shared/SharedCharacterPage.tsx"));
+const SharedCharacterPage = lazy(() => import("./pages/share/SharedCharacterPage.tsx"));
 const SignUpPage = lazy(() => import("./pages/auth/SignUpPage.tsx"));
-
 const SkillDetailsPage = lazy(() => import("./pages/rulesets/details/entities/SkillDetailsPage.tsx"));
-
 const VerifyEmailPage = lazy(() => import("./pages/auth/VerifyEmailPage.tsx"));
 
 function AppRoutes() {

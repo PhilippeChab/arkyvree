@@ -37,6 +37,7 @@ function roll4d6DropLowest(): number {
   return rolls[1] + rolls[2] + rolls[3];
 }
 
+/** A score's roll by a method that rolls dice; null for one that sets the scores (the standard array, a point-buy). */
 export function getRollFunction(method: RollMethodId): (() => number) | null {
   switch (method) {
     case "4d6-drop-lowest":
@@ -46,10 +47,6 @@ export function getRollFunction(method: RollMethodId): (() => number) | null {
     default:
       return null;
   }
-}
-
-export function isDiceMethod(method: RollMethodId): boolean {
-  return method === "4d6-drop-lowest" || method === "3d6-straight";
 }
 
 /** The points a point-buy's scores cost (`POINT_BUY_COSTS`), out of `POINT_BUY_TOTAL`. */

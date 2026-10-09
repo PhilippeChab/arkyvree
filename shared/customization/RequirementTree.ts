@@ -54,8 +54,10 @@ export function getParentLevel(level: string): string | null {
   return index === -1 ? null : level.slice(0, index);
 }
 
-/** Whether a row groups the rows under it (`and`, `or`): a condition groups none. */
-export function isChaining(row: Pick<RequirementRow, "chainingOperator">): boolean {
+/** Whether a row groups the rows under it (`and`, `or`), its operator then known: a condition groups none. */
+export function isChaining<R extends Pick<RequirementRow, "chainingOperator">>(
+  row: R,
+): row is R & { chainingOperator: string } {
   return !!row.chainingOperator;
 }
 

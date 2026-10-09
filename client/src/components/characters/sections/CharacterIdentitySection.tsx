@@ -1,6 +1,6 @@
 import { Autocomplete, Box, Stack, TextField, Typography } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { parseResponse } from "hono/client";
+import { type InferResponseType, parseResponse } from "hono/client";
 import { useMemo } from "react";
 import { useController } from "react-hook-form";
 
@@ -18,13 +18,18 @@ import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormSync, useFormWith } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
-import { invalidateCharacter, invalidateCharacterListings } from "@/client/src/lib/queries.ts";
+import { type CharacterDetail, invalidateCharacter, invalidateCharacterListings } from "@/client/src/lib/queries.ts";
 import { wholeNumberRules } from "@/client/src/lib/validation.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { type Alignment, ALIGNMENT_OPTIONS, type Gender, GENDER_OPTIONS } from "@/shared/enums.ts";
 
-import type { CharacterData } from "./characterData.ts";
+import { NotesField, PrivateNotesField } from "./NotesFields.tsx";
 import { type RulesetLanguage, useRulesetLanguages } from "./useRulesetLanguages.ts";
+
+type CampaignCharacterData = InferResponseType<
+  (typeof rpc.api.campaigns)[":id"]["characters"][":characterId"]["$get"],
+  200
+>;
 
 interface CharacterIdentityFormData {
   /** NaN while it is empty: a number field's value. */
@@ -58,6 +63,11 @@ interface CharacterIdentitySectionProps {
 
 /** A language as the picker shows it: the character's, or one the ruleset offers. */
 type LanguageOption = Pick<RulesetLanguage, "id" | "name">;
+
+type SharedCharacterData = InferResponseType<(typeof rpc.api.shared.characters)[":shareToken"]["$get"], 200>;
+
+/** A character sheet's data, whose identity the section shows: the owner's view, a campaign member's, or a share link's. */
+export type CharacterData = CharacterDetail | CampaignCharacterData | SharedCharacterData;
 
 /** No saved languages: one list, so the selection's memo keeps its value. */
 const NO_LANGUAGES: LanguageOption[] = [];
@@ -218,7 +228,7 @@ export function CharacterIdentitySection({
                     name="experience"
                     rules={wholeNumberRules(0)}
                     number
-                    label="Experience"
+                    label="Experience Points"
                     size="small"
                     variant="outlined"
                     slotProps={{ ...fieldSlots, htmlInput: { min: 0 } }}
@@ -334,31 +344,9 @@ export function CharacterIdentitySection({
                 </Box>
 
                 <Box sx={{ display: "grid", gridTemplateColumns: "1fr", gap: 3 }}>
-                  <FormTextField
-                    control={form.control}
-                    name="notes"
-                    label="Notes"
-                    size="small"
-                    variant="outlined"
-                    multiline
-                    minRows={4}
-                    placeholder="Campaign notes, character development, reminders…"
-                    slotProps={fieldSlots}
-                    sx={{ "& textarea": { resize: "vertical" } }}
-                  />
+                  <NotesField control={form.control} name="notes" size="small" readOnly={readOnly} />
                   {showPrivateNotes && (
-                    <FormTextField
-                      control={form.control}
-                      name="privateNotes"
-                      label="Private Notes"
-                      size="small"
-                      variant="outlined"
-                      multiline
-                      minRows={4}
-                      placeholder="Secrets and plans only the character's editors and the Game Master see…"
-                      slotProps={fieldSlots}
-                      sx={{ "& textarea": { resize: "vertical" } }}
-                    />
+                    <PrivateNotesField control={form.control} name="privateNotes" size="small" readOnly={readOnly} />
                   )}
                 </Box>
               </>

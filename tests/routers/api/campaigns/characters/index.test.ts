@@ -258,12 +258,15 @@ describe("campaigns characters", () => {
     );
     const { campaignId, gm, contributor, player } = await linkWithMembers(characterId, "Public");
 
-    const privateNotesOf = async (client: Client) =>
-      (await sheetOf(client, campaignId, characterId)).identity.background?.privateNotes;
-    expect(await privateNotesOf(api)).toBe(SECRETS.privateNotes);
-    expect(await privateNotesOf(contributor.api)).toBe(SECRETS.privateNotes);
-    expect(await privateNotesOf(gm.api)).toBe(SECRETS.privateNotes);
-    expect(await privateNotesOf(player.api)).toBe("");
+    // The notes, and whether the sheet shows their field
+    const privateNotesOf = async (client: Client) => {
+      const sheet = await sheetOf(client, campaignId, characterId);
+      return [sheet.identity.background?.privateNotes, sheet.showPrivateNotes];
+    };
+    expect(await privateNotesOf(api)).toEqual([SECRETS.privateNotes, true]);
+    expect(await privateNotesOf(contributor.api)).toEqual([SECRETS.privateNotes, true]);
+    expect(await privateNotesOf(gm.api)).toEqual([SECRETS.privateNotes, true]);
+    expect(await privateNotesOf(player.api)).toEqual(["", false]);
   });
 
   test("shows a bonded creature's private notes to whoever reads its master's", async () => {

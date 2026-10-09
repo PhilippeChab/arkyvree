@@ -5,19 +5,16 @@
  * grows back (the class planned again) shows them again.
  */
 
-import type { AptitudePool, LevelUpFormData, PowerAptitudePool } from "./levelUpTypes.ts";
-import { maxSkillPoints, type SkillLevels } from "./skillLevels.ts";
+import type { AptitudePool, PowerAptitudePool, SkillsData } from "./levelUpQueries.ts";
+import { maxSkillPoints, type SkillLevels, type SkillLimit } from "./skillLevels.ts";
+import type { LevelUpFormData } from "./useLevelWizardBase.ts";
 
 type Feats = LevelUpFormData["selectedFeats"];
 
 type Powers = LevelUpFormData["selectedPowers"];
 
-/** What the skill slots say a level's points may go to. */
-interface SkillLimits {
-  skillPointsToSpend: number;
-  skills: { currentRank: number; id: string; isClassSkill: boolean }[];
-  totalCharacterLevel: number;
-}
+/** What the skill slots say a level's points may go to: their total, and each skill's limit. */
+type SkillLimits = Pick<SkillsData, "skillPointsToSpend" | "totalCharacterLevel"> & { skills: SkillLimit[] };
 
 /** The feat pools grown by the picked feats' "add" aptitude modifiers. */
 function growFeatPools(aptitudePools: Record<string, AptitudePool>, feats: Feats) {

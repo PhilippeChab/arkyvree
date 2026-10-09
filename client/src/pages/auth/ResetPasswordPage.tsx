@@ -1,5 +1,5 @@
 import { Link as MuiLink, Stack, Typography } from "@mui/material";
-import { Controller } from "react-hook-form";
+import type { InferRequestType } from "hono/client";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 
 import {
@@ -10,19 +10,19 @@ import {
   isCodeComplete,
   ResendCodeLink,
   useResendCode,
-  VerificationCodeInput,
+  VerificationCodeField,
+  type VerificationCodeFormData,
 } from "@/client/src/components/auth/index.ts";
 import { PasswordField } from "@/client/src/components/common/index.ts";
 import { useAuthRequests, useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 import { confirmPasswordRules, NEW_PASSWORD_RULES } from "@/client/src/lib/validation.ts";
+import type { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
-interface ResetPasswordFormData {
-  digits: string[];
-  newPassword: string;
-  newPasswordConfirmation: string;
-}
+/** A reset's form: the code's digits, and the new password as the reset sends it, which adds the code and the email. */
+type ResetPasswordFormData = VerificationCodeFormData &
+  Omit<InferRequestType<(typeof rpc.auth)["reset-password"]["$post"]>["json"], "code" | "emailAddress">;
 
 export default function ResetPasswordPage() {
   usePageTitle("Reset Password");
@@ -68,11 +68,7 @@ export default function ResetPasswordPage() {
     >
       <Stack spacing={2}>
         <Stack component="form" onSubmit={form.handleSubmit(handleReset)} noValidate spacing={5}>
-          <Controller
-            control={form.control}
-            name="digits"
-            render={({ field }) => <VerificationCodeInput digits={field.value} onChange={field.onChange} />}
-          />
+          <VerificationCodeField control={form.control} name="digits" />
 
           <Stack spacing={3}>
             <PasswordField

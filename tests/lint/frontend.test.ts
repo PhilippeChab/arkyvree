@@ -103,14 +103,28 @@ describe("frontend rules", () => {
             "  </FormDialog>",
             ");",
           ),
+          // A lead line in a branch, and a create dialog's opening on an info alert
+          "client/src/branch.tsx":
+            "export const r = <DialogContent><Stack>{url ? <DialogContentText>Shared</DialogContentText> : <Typography>None</Typography>}</Stack></DialogContent>;\n",
+          "client/src/informed.tsx":
+            'export const n = <CreateDialog title="Add Player" submitLabel="Add Player"><Alert severity="info">Either</Alert></CreateDialog>;\n',
+          "client/src/warned.tsx":
+            'export const w = <EditDialog title="Edit Player"><Alert severity="warning">Pending</Alert></EditDialog>;\n',
+          // An "Add …" dialog submits its words
+          "client/src/created.tsx": 'export const c = <CreateDialog title="Add Item to Inventory" />;\n',
+          "client/src/added.tsx":
+            'export const d = <CreateDialog title="Add Modifier" submitLabel="Add Modifier" />;\n',
         },
         ["dialog-conventions"],
       ),
     ).toEqual([
       "dialog-conventions client/src/apart.tsx",
+      "dialog-conventions client/src/branch.tsx",
+      "dialog-conventions client/src/created.tsx",
       "dialog-conventions client/src/foot.tsx",
       "dialog-conventions client/src/gap.tsx",
       "dialog-conventions client/src/icon.tsx",
+      "dialog-conventions client/src/informed.tsx",
       "dialog-conventions client/src/lead.tsx",
       "dialog-conventions client/src/modal.tsx",
       "dialog-conventions client/src/narrow.tsx",
@@ -388,10 +402,17 @@ describe("frontend rules", () => {
           "client/src/info.tsx": 'export const i = <Alert severity="info">Loading feats</Alert>;\n',
           "client/src/components/common/LoadError.tsx":
             'export const l = <Alert severity="error">{loadFailureMessage(what, error)}</Alert>;\n',
+          "client/src/helper.tsx":
+            'export const h = <SelectField helperText={error ? loadFailureMessage("Races", error) : issue} />;\n',
+          "client/src/select.tsx": "export const s = <SelectField helperText={issue} loadError={error} />;\n",
         },
         ["load-errors"],
       ),
-    ).toEqual(["load-errors client/src/worded.tsx", "load-errors client/src/written.tsx"]);
+    ).toEqual([
+      "load-errors client/src/helper.tsx",
+      "load-errors client/src/worded.tsx",
+      "load-errors client/src/written.tsx",
+    ]);
   });
 
   test("a card's chips row holds chips alone: what failed to load is its notice", async () => {
@@ -594,7 +615,7 @@ describe("frontend rules", () => {
     );
   });
 
-  test("a component file is named for what it exports, and a page is XPage.tsx", async () => {
+  test("a component file is named for what it exports, a dialog …Dialog, and a page XPage.tsx", async () => {
     expect(
       await lintRepo(
         {
@@ -608,11 +629,14 @@ describe("frontend rules", () => {
           "client/src/pages/a/SignIn.tsx": "export default function SignIn() {\n  return null;\n}\n",
           "client/src/pages/a/LegalPage.tsx": "export default function LegalPage() {\n  return null;\n}\n",
           "client/src/App.tsx": "function App() {\n  return null;\n}\nexport default App;\n",
+          "client/src/components/AddLevelModal.tsx": "export function AddLevelModal() {\n  return null;\n}\n",
+          "client/src/components/common/Modal.tsx": "export function Modal() {\n  return null;\n}\n",
         },
         ["component-files"],
       ),
     ).toEqual([
       "component-files client/src/App.tsx",
+      "component-files client/src/components/AddLevelModal.tsx",
       "component-files client/src/components/Panel.tsx",
       "component-files client/src/components/statHelpers.tsx",
       "component-files client/src/pages/a/SignIn.tsx",
@@ -646,13 +670,18 @@ describe("frontend rules", () => {
           "client/src/types/character.ts": "export interface A {\n  a: string;\n}\n",
           "client/src/pages/x/types.ts": "export interface A {\n  a: string;\n}\n",
           "client/src/pages/x/levelUpTypes.ts": "export interface A {\n  a: string;\n}\n",
+          "client/src/pages/x/prototypes.ts": "export interface A {\n  a: string;\n}\n",
           "client/src/hooks/google.d.ts": "interface Window {\n  a: string;\n}\n",
           "client/src/types/globals.d.ts": "interface Window {\n  b: string;\n}\n",
           "server/types.ts": "export interface A {\n  a: string;\n}\n",
         },
         ["no-types-modules"],
       ),
-    ).toEqual(["no-types-modules client/src/pages/x/types.ts", "no-types-modules client/src/types/character.ts"]);
+    ).toEqual([
+      "no-types-modules client/src/pages/x/levelUpTypes.ts",
+      "no-types-modules client/src/pages/x/types.ts",
+      "no-types-modules client/src/types/character.ts",
+    ]);
   });
 
   test("a component's own handler is handleX; onX names a prop", async () => {

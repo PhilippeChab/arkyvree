@@ -7,7 +7,6 @@ import {
   InputAdornment,
   Stack,
   TextField,
-  Typography,
 } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
@@ -133,10 +132,10 @@ export function ShareDialog({ open, onClose, characterId, shareToken }: ShareDia
               </>
             ) : (
               <>
-                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                <DialogContentText>
                   Generate a public link to share this character sheet. Anyone with the link will be able to view the
                   sheet and download the PDF. Private notes will not be visible.
-                </Typography>
+                </DialogContentText>
                 <Button variant="contained" onClick={() => generateMutation.mutate()} disabled={isLoading}>
                   <DiceSpinner size="small" loading={generateMutation.isPending}>
                     Generate Link

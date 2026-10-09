@@ -3,10 +3,10 @@ import { Box, Stack } from "@mui/material";
 import { BlankNote, DiceSpinner, LoadError, SubsectionTitle } from "@/client/src/components/common/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
-import { AttributeIncreaseField } from "./AttributeIncreaseField.tsx";
+import { AbilityIncreaseField } from "./AbilityIncreaseField.tsx";
 import type { AttributesData, PreviewLevelDetail } from "./levelUp/index.ts";
 
-interface AddAttributeState {
+interface AddAbilityState {
   abilityIncreaseLevels: number[];
   abilityIncreases: (string | null)[];
   attributeData: AttributesData | undefined;
@@ -16,12 +16,12 @@ interface AddAttributeState {
   levelDetails: Pick<PreviewLevelDetail, "klassName" | "level">[];
 }
 
-export interface AddAttributeStepProps {
+export interface AddAbilityStepProps {
   baseRules: BaseRules;
-  wizard: AddAttributeState;
+  wizard: AddAbilityState;
 }
 
-export function AddAttributeStep({ wizard, baseRules }: AddAttributeStepProps) {
+export function AddAbilityStep({ wizard, baseRules }: AddAbilityStepProps) {
   const {
     attributeData,
     isLoadingAttributes,
@@ -32,9 +32,9 @@ export function AddAttributeStep({ wizard, baseRules }: AddAttributeStepProps) {
     levelDetails,
   } = wizard;
   if (isLoadingAttributes) return <DiceSpinner />;
-  if (attributesError && !attributeData) return <LoadError what="Attributes" error={attributesError} />;
+  if (attributesError && !attributeData) return <LoadError what="Abilities" error={attributesError} />;
   if (!attributeData?.isAvailable || abilityIncreaseLevels.length === 0)
-    return <BlankNote>No attribute increase at these levels</BlankNote>;
+    return <BlankNote>No ability increase at these levels</BlankNote>;
 
   return (
     <Stack spacing={1.5}>
@@ -49,10 +49,10 @@ export function AddAttributeStep({ wizard, baseRules }: AddAttributeStepProps) {
             </SubsectionTitle>
             {/* The field on a line of its own, under the level's title */}
             <Box>
-              <AttributeIncreaseField
-                attributes={attributeData.attributes}
+              <AbilityIncreaseField
+                abilities={attributeData.attributes}
                 baseRules={baseRules}
-                name={`attribute-increase-${index}`}
+                name={`ability-increase-${index}`}
                 value={selected}
                 onChange={(abilityId) => onAbilityIncreaseChange(index, abilityId)}
               />

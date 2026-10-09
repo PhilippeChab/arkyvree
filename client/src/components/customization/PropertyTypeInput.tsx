@@ -2,8 +2,8 @@ import { type Ref } from "react";
 
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
 
-import { CompletionAutocomplete } from "./CompletionAutocomplete.tsx";
 import { propertyTypeCompletionsQuery } from "./customizationQueries.ts";
+import { PropertyCompletionAutocomplete } from "./PropertyCompletionAutocomplete.tsx";
 
 interface PropertyTypeInputProps {
   entityType?: PropertyEntityType;
@@ -17,7 +17,7 @@ interface PropertyTypeInputProps {
 /** A property's type: free text, suggesting the types the engine and the ruleset use for its entity's type. */
 export function PropertyTypeInput({ rulesetId, entityType, ...props }: PropertyTypeInputProps) {
   return (
-    <CompletionAutocomplete
+    <PropertyCompletionAutocomplete
       {...props}
       label="Type"
       placeholder="e.g., tag, category, note"

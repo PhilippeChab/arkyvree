@@ -5,21 +5,21 @@
 
 import { computeMaxPointsForSkill, computeMaxSkillRank, distributeSkillPoints } from "@/shared/dnd3.5/skills.ts";
 
-import type { SkillsData } from "./levelUpTypes.ts";
+import type { SkillsData } from "./levelUpQueries.ts";
 
 /** The edited level's skill slots: its points, and whether its class has each skill. */
 type LevelSlots = Pick<SkillsData, "skillPointsToSpend"> & {
   skills: Pick<SkillsData["skills"][number], "id" | "isCurrentClassSkill">[];
 };
 
-/** A skill as its slots list it: its rank so far, and whether it's a class skill of any of the character's classes. */
-type SkillLimit = Pick<SkillsData["skills"][number], "currentRank" | "id" | "isClassSkill">;
-
 /** Each level's class skills and the points it gives, in level order. */
 export interface SkillLevels {
   classSkillIds: string[][];
   points: number[];
 }
+
+/** A skill as its slots list it: its rank so far, and whether it's a class skill of any of the character's classes. */
+export type SkillLimit = Pick<SkillsData["skills"][number], "currentRank" | "id" | "isClassSkill">;
 
 /** The one level an edit spends its points on: the edited level's class skills and points. */
 export function editedLevelSkills(skillData: LevelSlots): SkillLevels {

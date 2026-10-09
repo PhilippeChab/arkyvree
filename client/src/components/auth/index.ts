@@ -9,5 +9,5 @@ export { PrivateRoute } from "./PrivateRoute.tsx";
 export { ResendCodeLink } from "./ResendCodeLink.tsx";
 export { useAuthRedirect } from "./useAuthRedirect.ts";
 export { useResendCode } from "./useResendCode.ts";
-export { EMPTY_VERIFICATION_CODE, isCodeComplete } from "./verificationCode.ts";
-export { VerificationCodeInput } from "./VerificationCodeInput.tsx";
+export { EMPTY_VERIFICATION_CODE, isCodeComplete, type VerificationCodeFormData } from "./verificationCode.ts";
+export { VerificationCodeField } from "./VerificationCodeField.tsx";

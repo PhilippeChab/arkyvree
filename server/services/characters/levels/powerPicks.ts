@@ -1,5 +1,6 @@
 /**
- * Powers and spells a level-up can pick for an aptitude pool.
+ * Powers and spells a level-up can pick for an aptitude pool: those its picker offers, but those picked already (in any
+ * pool), as the feat picker leaves out a feat held.
  */
 
 import { openPowerPicker } from "@/engine/index.ts";
@@ -23,21 +24,28 @@ export async function getAvailablePowers(
     powerLevel?: number;
     search?: string;
     selectedFeatPicks?: FeatPick[];
+    selectedPowerIds?: string[];
   },
   pagination: { limit: number; page: number },
   excludeCharacterLevelId?: string,
   pendingLevelKlassLevelIds?: string[],
 ) {
+  const { selectedPowerIds = [], ...pick } = where;
   return await withEditableCharacter(db, session, characterId, async (scope, character) => {
     const picker = openPowerPicker(scope, character, {
-      ...where,
+      ...pick,
       aptitudeId,
       excludeCharacterLevelId,
       klassId,
       level,
       pendingLevelKlassLevelIds,
     });
-    const result = await Powers.findOptionPage(db, { ...picker.filters, search: where.search }, pagination);
+    const excludePowerIds = [...picker.filters.excludePowerIds, ...selectedPowerIds];
+    const result = await Powers.findOptionPage(
+      db,
+      { ...picker.filters, excludePowerIds, search: pick.search },
+      pagination,
+    );
     return { items: picker.annotate(result.items), page: result.page, nextPage: result.nextPage };
   });
 }

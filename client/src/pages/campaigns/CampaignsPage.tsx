@@ -34,9 +34,10 @@ import { CreateCampaignDialog } from "./components/index.ts";
 import { prefetchCampaignSections } from "./details/sectionQueries.ts";
 import { useCampaignOperations } from "./hooks/index.ts";
 
+type CampaignView = CampaignListFilters["view"];
 type SortField = CampaignListFilters["orderBy"];
 
-const CAMPAIGN_FILTER_OPTIONS: FilterOption<"active" | "archived">[] = [
+const CAMPAIGN_FILTER_OPTIONS: FilterOption<CampaignView>[] = [
   { value: "active", label: "Active" },
   { value: "archived", label: "Archived" },
 ];

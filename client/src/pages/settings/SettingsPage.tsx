@@ -1,17 +1,16 @@
-import { Container, Stack, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
-import { type ReactNode } from "react";
+import { Container, Stack, Typography } from "@mui/material";
 
-import { CardTitle, PageHeader, PageTransition, Panel } from "@/client/src/components/common/index.ts";
+import { CardTitle, OptionToggle, PageHeader, PageTransition, Panel } from "@/client/src/components/common/index.ts";
 import { DarkModeIcon, LightModeIcon, SettingsBrightnessIcon } from "@/client/src/components/icons/index.ts";
 import { type ThemeMode } from "@/client/src/contexts/themeContext.ts";
 import { useThemeMode } from "@/client/src/contexts/useThemeMode.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
 
-const THEME_MODE_OPTIONS: { icon: ReactNode; label: string; value: ThemeMode }[] = [
-  { value: "light", label: "Light", icon: <LightModeIcon /> },
-  { value: "dark", label: "Dark", icon: <DarkModeIcon /> },
-  { value: "system", label: "System", icon: <SettingsBrightnessIcon /> },
-];
+const THEME_MODE_OPTIONS = [
+  { value: "light", label: "Light", icon: LightModeIcon },
+  { value: "dark", label: "Dark", icon: DarkModeIcon },
+  { value: "system", label: "System", icon: SettingsBrightnessIcon },
+] as const;
 
 export default function SettingsPage() {
   usePageTitle("Settings");
@@ -26,34 +25,17 @@ export default function SettingsPage() {
           <Panel>
             <Stack spacing={1}>
               <CardTitle>Theme</CardTitle>
-              <Stack spacing={3} sx={{ alignItems: "flex-start" }}>
+              <Stack spacing={3}>
                 <Typography variant="body2" sx={{ color: "text.secondary" }}>
                   Choose how Arkyvree looks to you. Select a single theme, or sync with your system settings.
                 </Typography>
 
-                <ToggleButtonGroup
+                <OptionToggle<ThemeMode>
+                  label="Mode"
+                  options={THEME_MODE_OPTIONS}
                   value={themeMode}
-                  exclusive
-                  onChange={(_, value: ThemeMode | null) => {
-                    if (value) setThemeMode(value);
-                  }}
-                  sx={{
-                    "& .MuiToggleButton-root": {
-                      px: { xs: 1.5, sm: 3 },
-                      py: { xs: 1, sm: 1.5 },
-                      gap: 1,
-                      textTransform: "none",
-                      fontWeight: 500,
-                    },
-                  }}
-                >
-                  {THEME_MODE_OPTIONS.map((option) => (
-                    <ToggleButton key={option.value} value={option.value}>
-                      {option.icon}
-                      {option.label}
-                    </ToggleButton>
-                  ))}
-                </ToggleButtonGroup>
+                  onChange={setThemeMode}
+                />
               </Stack>
             </Stack>
           </Panel>

@@ -3,8 +3,9 @@ import { parseResponse } from "hono/client";
 import { useCallback, useMemo } from "react";
 import { useController } from "react-hook-form";
 
+import type { EditingLevel } from "@/client/src/components/characters/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useListboxQuery } from "@/client/src/hooks/index.ts";
+import { useFormSync, useListboxQuery } from "@/client/src/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import { fitFeats, fitPowers, fitSkillPoints, openPoolOf } from "./fitPicks.ts";
@@ -13,20 +14,21 @@ import {
   attributeSlotsQuery,
   availableFeatsGroupedQuery,
   availablePowersQuery,
+  characterLevelQuery,
   featSlotsQuery,
   type PickerLevel,
   powerSlotsQuery,
   skillSlotsQuery,
   type StepLevel,
 } from "./levelUpQueries.ts";
-import type { LevelUpFormData } from "./levelUpTypes.ts";
-import { featPickString } from "./pendingPicks.ts";
+import { featPickString, powerPickString } from "./pendingPicks.ts";
 import { editedLevelSkills } from "./skillLevels.ts";
-import { pickIds, useLevelWizardBase } from "./useLevelWizardBase.ts";
+import { type LevelUpFormData, pickIds, useLevelWizardBase } from "./useLevelWizardBase.ts";
 
 interface UseEditLevelWizardParams {
   characterId: string;
-  editingLevelId: string;
+  /** The level it edits, as the sheet lists it: its class, which the saved picks take. */
+  editingLevel: EditingLevel;
   onClose: () => void;
   open: boolean;
 }
@@ -34,21 +36,23 @@ interface UseEditLevelWizardParams {
 /** The Edit Level wizard's state: what its dialog and its steps read. */
 export type EditLevelWizard = ReturnType<typeof useEditLevelWizard>;
 
-export const EDIT_STEP_CONTENT = ["hp", "attributes", "skills", "feats", "powers", "review"] as const;
+export const EDIT_STEP_CONTENT = ["hp", "abilities", "skills", "feats", "powers", "review"] as const;
 
 export const EDIT_STEP_LABELS = [
   "Select HP",
-  "Attribute Increase",
+  "Ability Increase",
   "Select Skills",
   "Select Feats",
   "Select Spells",
   "Review Changes",
 ];
 
-export function useEditLevelWizard({ open, onClose, characterId, editingLevelId }: UseEditLevelWizardParams) {
+export function useEditLevelWizard({ open, onClose, characterId, editingLevel }: UseEditLevelWizardParams) {
+  const editingLevelId = editingLevel.characterLevelId;
   const snackbar = useSnackbar();
   const base = useLevelWizardBase(characterId);
   const {
+    form,
     handleSubmit,
     control,
     watch,
@@ -66,10 +70,38 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevelId 
     setShowCancelConfirm,
   } = base;
 
-  const attributeStep = EDIT_STEP_CONTENT.indexOf("attributes");
+  const abilityStep = EDIT_STEP_CONTENT.indexOf("abilities");
   const skillsStep = EDIT_STEP_CONTENT.indexOf("skills");
   const featsStep = EDIT_STEP_CONTENT.indexOf("feats");
   const powersStep = EDIT_STEP_CONTENT.indexOf("powers");
+
+  const {
+    data: levelData,
+    isLoading: isLoadingLevel,
+    error: levelError,
+  } = useQuery({ ...characterLevelQuery(characterId, editingLevelId), enabled: open });
+
+  // The saved level, as the wizard's picks: the form takes them once it loads
+  const savedPicks = useMemo<LevelUpFormData | undefined>(
+    () =>
+      levelData && {
+        selectedClass: {
+          id: editingLevel.klassId,
+          name: editingLevel.klassName,
+          nextLevel: editingLevel.level,
+          maxLevel: editingLevel.level,
+          hd: editingLevel.hd,
+          eligible: true,
+        },
+        selectedHP: levelData.hp,
+        selectedAttribute: levelData.abilityId,
+        selectedFeats: levelData.feats,
+        selectedPowers: levelData.powers,
+        skillPointAllocations: levelData.skills,
+      },
+    [levelData, editingLevel],
+  );
+  const sync = useFormSync(form, savedPicks, { key: editingLevelId });
 
   const selectedClass = watch("selectedClass");
   const selectedHP = watch("selectedHP");
@@ -92,7 +124,7 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevelId 
     data: attributeData,
     isLoading: isLoadingAttributes,
     error: attributesError,
-  } = useQuery({ ...attributeSlotsQuery(characterId, editingLevelId), enabled: open && activeStep === attributeStep });
+  } = useQuery({ ...attributeSlotsQuery(characterId, editingLevelId), enabled: open && activeStep === abilityStep });
 
   const {
     data: skillData,
@@ -155,15 +187,19 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevelId 
     onScroll: handlePowersScroll,
     isFetchingNextPage: isFetchingNextPowersPage,
   } = useListboxQuery({
-    ...availablePowersQuery(characterId, selectedPowerAptitude, selectedPowerLevel, debouncedPowerSearch, picker),
+    ...availablePowersQuery(characterId, selectedPowerAptitude, selectedPowerLevel, debouncedPowerSearch, {
+      ...picker,
+      selectedPowerIds: powerPickString(selectedPowers),
+    }),
     enabled: open && activeStep === powersStep,
   });
 
   const finalizeMutation = useMutation({
     mutationFn: async ({ data, force = false }: { data: LevelUpFormData; force?: boolean }) => {
-      if (!data.selectedHP) throw new Error("HP not selected");
-      // The picks are saved as the level's slots fit them, which must have loaded: the feats', the spells', the skills'
-      if (!featData || !powerData || !skillData) throw new Error("The level hasn't finished loading");
+      // Next waits for the level's HP and its slots (the feats', the spells', the skills'), which the picks are saved as
+      // they fit
+      if (data.selectedHP === null || !featData || !powerData || !skillData)
+        throw new Error("The level isn't ready to save");
       return parseResponse(
         rpc.api.characters.levels[":characterId"][":characterLevelId"].$put({
           param: { characterId, characterLevelId: editingLevelId },
@@ -200,17 +236,28 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevelId 
     handleSubmit((data) => finalizeMutation.mutate({ data, force: true }))();
   }, [finalizeMutation, handleSubmit, setIssues]);
 
+  // Changed picks ask before they're discarded, as Add Level's plan does
   const handleCancel = useCallback(() => {
-    setShowCancelConfirm(true);
-  }, [setShowCancelConfirm]);
+    if (sync.isDirty) setShowCancelConfirm(true);
+    else onClose();
+  }, [sync.isDirty, onClose, setShowCancelConfirm]);
 
   const handleConfirmCancel = useCallback(() => {
     resetPicks();
     onClose();
   }, [resetPicks, onClose]);
 
-  // The dialog also disables Next while the save runs.
-  const isNextDisabled = EDIT_STEP_CONTENT[activeStep] === "hp" && !hpSet(hpLevels, [selectedHP]);
+  // The saved level fills the picks in as it loads, and its class's slots, which load after it, fit its picks: Next
+  // waits for its feat and power slots both, the Skills step for its skill slots, and a load that failed stops the
+  // wizard at the step that shows its error. The dialog also disables it while the save runs.
+  const content = EDIT_STEP_CONTENT[activeStep];
+  const loading = isLoadingLevel || (!!levelData && !selectedClass) || isLoadingFeats || isLoadingPowers;
+  const failed =
+    !levelData ||
+    (content === "skills" && !skillData) ||
+    (content === "feats" && !featData) ||
+    (content === "powers" && !powerData);
+  const isNextDisabled = loading || failed || (content === "hp" && !hpSet(hpLevels, [selectedHP]));
 
   return {
     ...base,
@@ -223,6 +270,8 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevelId 
     selectedHP,
     selectedAttribute,
     isLastStep,
+    levelData,
+    levelError,
 
     hpLevels,
     hpValues: [selectedHP],

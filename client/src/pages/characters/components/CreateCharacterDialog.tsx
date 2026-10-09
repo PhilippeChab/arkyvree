@@ -5,7 +5,12 @@ import { useMemo, useState } from "react";
 import { type Control, Controller, useController } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
-import { computeAbilityModifier, RollAllButton, sortAbilities } from "@/client/src/components/characters/index.ts";
+import {
+  computeAbilityModifier,
+  NotesField,
+  PrivateNotesField,
+  sortAbilities,
+} from "@/client/src/components/characters/index.ts";
 import {
   BlankNote,
   CountChip,
@@ -27,7 +32,6 @@ import {
 } from "@/client/src/components/rulesets/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { type RulesetAbility, useFormWith, useListboxQuery, useRulesetAbilities } from "@/client/src/hooks/index.ts";
-import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { NAME_RULES, requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
@@ -35,7 +39,6 @@ import type { CharacterPageState } from "@/client/src/pages/characters/character
 import { availableRacesQuery } from "@/client/src/pages/characters/characterQueries.ts";
 import {
   getRollFunction,
-  isDiceMethod,
   POINT_BUY_COSTS,
   POINT_BUY_TOTAL,
   pointBuySpent,
@@ -44,6 +47,7 @@ import {
   STANDARD_ARRAY,
 } from "@/client/src/pages/characters/dice.ts";
 import { formatPointsSpent } from "@/client/src/pages/characters/pointsSpent.ts";
+import { RollAllButton } from "@/client/src/pages/characters/RollAllButton.tsx";
 import { type DiceRoll, useDiceRoll } from "@/client/src/pages/characters/useDiceRoll.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { PREFERS_REDUCED_MOTION, settleAnimation } from "@/client/src/theme/animations.ts";
@@ -85,13 +89,8 @@ type CreateCharacterFormData = Omit<CreateCharacterRequest, "alignment" | "gende
 
 type CreateCharacterRequest = InferRequestType<typeof rpc.api.characters.$post>["json"];
 
-interface PointBuyScoresProps {
-  abilities: AbilityOption[];
-  abilityValues: Record<string, number> | undefined;
-  onChange: (scores: Record<string, number>) => void;
-}
-
-interface StandardArrayScoresProps {
+/** The scores a method that sets them shows (a point-buy, the standard array), and their change. */
+interface SetScoresProps {
   abilities: AbilityOption[];
   abilityValues: Record<string, number> | undefined;
   onChange: (scores: Record<string, number>) => void;
@@ -187,7 +186,7 @@ function defaultScore(method: RollMethodId, index: number) {
   return 10;
 }
 
-function PointBuyScores({ abilities, abilityValues, onChange }: PointBuyScoresProps) {
+function PointBuyScores({ abilities, abilityValues, onChange }: SetScoresProps) {
   const pointsRemaining = POINT_BUY_TOTAL - pointBuySpent(abilities.map((a) => abilityValues?.[a.id] ?? 8));
 
   return (
@@ -223,7 +222,7 @@ function scoresOf(abilities: AbilityOption[], values: Record<string, number> | u
   );
 }
 
-function StandardArrayScores({ abilities, abilityValues, onChange }: StandardArrayScoresProps) {
+function StandardArrayScores({ abilities, abilityValues, onChange }: SetScoresProps) {
   // A score already given to another ability swaps with this one's
   const handleChange = (abilityId: string, newValue: number) => {
     if (!abilityValues) return;
@@ -334,13 +333,12 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
   // What a point-buy's scores cost, its chip says
   const pointBuyPoints = pointBuySpent(Object.values(scoresOf(rulesetAbilities, watch("abilities"), rollMethod)));
 
-  // Each score lands on its own: the roll keeps the scores so far, written as each lands
-  const handleRollAll = () => {
-    const rollScore = getRollFunction(rollMethod);
-    if (!rollScore) return;
+  // A method that rolls dice rolls each score: they land one by one, the roll keeping the scores so far
+  const rollScore = getRollFunction(rollMethod);
+  const handleRollAll = (roll: () => number) => {
     const rolled = scoresOf(rulesetAbilities, getValues("abilities"), rollMethod);
     diceRoll.roll(
-      rulesetAbilities.map((ability) => ({ key: ability.id, roll: rollScore })),
+      rulesetAbilities.map((ability) => ({ key: ability.id, roll })),
       (abilityId, score) => {
         rolled[abilityId] = score;
         setValue("abilities", { ...rolled }, { shouldDirty: true });
@@ -447,7 +445,8 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
               name="raceId"
               label="Race"
               rules={raceRules}
-              helperText={racesError ? loadFailureMessage("Races", racesError) : raceIssue(selectedRaceId)}
+              helperText={raceIssue(selectedRaceId)}
+              loadError={racesError}
               options={races.map((race) => ({ value: race.id, label: race.name, disabled: !race.eligible }))}
               disabled={!selectedRulesetId}
               onMenuScroll={handleRacesScroll}
@@ -497,8 +496,11 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
                 </MenuItem>
               ))}
             </TextField>
-            {isDiceMethod(rollMethod) && (
-              <RollAllButton onClick={handleRollAll} disabled={!rulesetAbilities.length || diceRoll.rolling} />
+            {rollScore && (
+              <RollAllButton
+                onClick={() => handleRollAll(rollScore)}
+                disabled={!rulesetAbilities.length || diceRoll.rolling}
+              />
             )}
             {rollMethod === "point-buy" && (
               <CountChip
@@ -566,26 +568,8 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
             name="description"
             placeholder="Character appearance, personality, or background…"
           />
-          <FormTextField
-            control={control}
-            name="notes"
-            label="Notes"
-            multiline
-            minRows={3}
-            placeholder="Campaign notes, character development, reminders…"
-            fullWidth
-            sx={{ "& textarea": { resize: "vertical" } }}
-          />
-          <FormTextField
-            control={control}
-            name="privateNotes"
-            label="Private Notes"
-            multiline
-            minRows={3}
-            placeholder="Secrets and plans only the character's editors and the Game Master see…"
-            fullWidth
-            sx={{ "& textarea": { resize: "vertical" } }}
-          />
+          <NotesField control={control} name="notes" />
+          <PrivateNotesField control={control} name="privateNotes" />
         </Stack>
       </Stack>
     </CreateDialog>

@@ -1,10 +1,12 @@
 import { Stack, TextField } from "@mui/material";
-import { type KeyboardEvent, useRef } from "react";
+import { type KeyboardEvent, type RefCallback, useRef } from "react";
 
 import { VERIFICATION_CODE_LENGTH } from "@/shared/auth.ts";
 
 interface VerificationCodeInputProps {
   digits: string[];
+  /** Its form field's `ref`, which its first box takes: a failed submit focuses it. */
+  inputRef?: RefCallback<HTMLInputElement>;
   onChange: (digits: string[]) => void;
 }
 
@@ -12,7 +14,7 @@ interface VerificationCodeInputProps {
  * One box per digit of an emailed code. Typing advances focus, Backspace on an
  * empty box moves back, and pasting a whole code fills the following boxes.
  */
-export function VerificationCodeInput({ digits, onChange }: VerificationCodeInputProps) {
+export function VerificationCodeInput({ digits, onChange, inputRef }: VerificationCodeInputProps) {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const lastIndex = VERIFICATION_CODE_LENGTH - 1;
 
@@ -46,6 +48,7 @@ export function VerificationCodeInput({ digits, onChange }: VerificationCodeInpu
           key={index}
           inputRef={(el) => {
             inputRefs.current[index] = el;
+            if (index === 0) inputRef?.(el);
           }}
           value={digit}
           onChange={(e) => handleChange(index, e.target.value)}

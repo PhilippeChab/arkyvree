@@ -4,9 +4,8 @@ import { SheetSection } from "@/client/src/components/characters/sections/SheetS
 import { BlankNote, SubsectionTitle } from "@/client/src/components/common/index.ts";
 import { formatSigned } from "@/client/src/lib/formatNumeric.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
-import { capitalize } from "@/shared/text.ts";
+import { formatIterativeAttacks, formatSpeed } from "@/shared/dnd3.5/weaponAttacks.ts";
 
-import { formatSpeed, iterativeAttacks } from "./combatValues.ts";
 import { StatField } from "./StatField.tsx";
 
 export interface CombatAndSavesSectionProps {
@@ -44,7 +43,7 @@ export function CombatAndSavesSection({ combat, saves }: CombatAndSavesSectionPr
               <StatField label="Initiative" value={formatSigned(combat?.initiative?.total)} />
               <StatField label="Speed" value={formatSpeed(combat?.speed?.total)} />
 
-              <StatField label="BAB" value={iterativeAttacks(bab)} />
+              <StatField label="BAB" value={formatIterativeAttacks(bab)} />
               <StatField label="Grapple" value={formatSigned(combat?.grapple?.total)} />
               <Box />
 
@@ -67,31 +66,27 @@ export function CombatAndSavesSection({ combat, saves }: CombatAndSavesSectionPr
           <SubsectionTitle>Saving Throws</SubsectionTitle>
           {Object.keys(saves).length > 0 ? (
             <Stack spacing={3}>
-              {Object.entries(saves).map(([save, saveData]) => {
-                const total = saveData?.total ?? 0;
-                const displayName = saveData?.name || capitalize(save);
-                return (
-                  <Stack key={save} spacing={1}>
-                    <Typography variant="body2" sx={{ fontWeight: 500, color: "text.secondary" }}>
-                      {displayName}: {formatSigned(total)}
+              {Object.entries(saves).map(([save, saveData]) => (
+                <Stack key={save} spacing={1}>
+                  <Typography variant="body2" sx={{ fontWeight: 500, color: "text.secondary" }}>
+                    {saveData.name}: {formatSigned(saveData.total)}
+                  </Typography>
+                  <Stack direction="row" spacing={3} sx={{ pl: 2 }}>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                      Base: {formatSigned(saveData.base)}
                     </Typography>
-                    <Stack direction="row" spacing={3} sx={{ pl: 2 }}>
-                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                        Base: {formatSigned(saveData?.base)}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                        Ability: {formatSigned(saveData?.ability)}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                        Misc: {formatSigned(saveData?.misc)}
-                      </Typography>
-                    </Stack>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                      Ability: {formatSigned(saveData.ability)}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                      Misc: {formatSigned(saveData.misc)}
+                    </Typography>
                   </Stack>
-                );
-              })}
+                </Stack>
+              ))}
             </Stack>
           ) : (
-            <BlankNote>No saving throws available</BlankNote>
+            <BlankNote>No saving throws</BlankNote>
           )}
         </Stack>
       </Stack>

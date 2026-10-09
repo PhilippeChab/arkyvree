@@ -172,7 +172,7 @@ Adding a brand-new directory? Update the regex in `playwright.config.ts` (the `t
 - Scope dialog selectors to the open MUI dialog with `[role="dialog"][aria-modal="true"]` or by accessible name: `page.getByRole('dialog', { name: 'Fork Ruleset' })`.
 - A page's action menu item (`ActionMenuItem`) is one line, its accessible name its label: `menuitem` named `/^Fork$/`, `/^Delete Permanently$/`. A list option with a second line (`<ListItemText primary secondary />`, a picker's) is named by both lines: match its first with `/^Name\b/`.
 - Filter and sort options live inside popup `<Menu>` components; click the "Filter"/"Sort" tooltip IconButton first, then the `MenuItem`.
-- Submit-button labels go by dialog wrapper: `CreateDialog` → "Create", `EditDialog` → "Update", `DeleteDialog` → "Delete"; a dialog whose action is its own names it (Fork Ruleset, Archive Campaign, Send Invite). A create dialog's title is "Create New …" (but "Add Player", "Add Modifier", "Add Item to Inventory", "Create Requirement", "Fork Ruleset"), an edit dialog's "Edit …". Check the actual component before writing the assertion.
+- Submit-button labels go by dialog wrapper: `CreateDialog` → "Create", `EditDialog` → "Update", `DeleteDialog` → "Delete"; a dialog whose action is its own names it (Fork Ruleset, Archive Campaign, Send Invite), and an "Add …" one submits its words (Add Player, Add Modifier, Add Item). A create dialog's title is "Create New …" (but "Add Player", "Add Modifier", "Add Item to Inventory", "Create Requirement", "Fork Ruleset"), an edit dialog's "Edit …". Check the actual component before writing the assertion.
 
 **Shared helpers** — reuse them instead of inlining:
 

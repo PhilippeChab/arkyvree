@@ -83,6 +83,8 @@ class CampaignCharactersService {
       canEdit,
       canDownloadPdf: canEdit || isGM,
       isPartial,
+      // Its editors and the Game Master read its private notes, which the others' sheet blanks
+      showPrivateNotes: canEdit || isGM,
     };
     return await withRulesetScope(db, character.rulesetId, async (scope) => {
       const input = await readCharacterInput(db, character);
@@ -91,7 +93,7 @@ class CampaignCharactersService {
         scope,
         input,
         await readBondedInputs(db, input, Visibility.All),
-        isGM || canEdit ? "show" : "blank",
+        viewer.showPrivateNotes ? "show" : "blank",
       );
       return { ...viewer, ...described, shareToken: canEdit ? described.shareToken : null };
     });

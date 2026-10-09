@@ -17,7 +17,12 @@ import type { PropertyTypeCompletion, PropertyValueCompletion } from "@/shared/c
 /** A suggestion of the property completion endpoints: a type's, which has its detail, or a value's. */
 type Completion = PropertyTypeCompletion | PropertyValueCompletion;
 
-interface CompletionAutocompleteProps<
+/** A page of the property completion endpoints. */
+interface CompletionPage extends ListPage {
+  items: Completion[];
+}
+
+interface PropertyCompletionAutocompleteProps<
   TPage extends CompletionPage,
   TKey extends QueryKey,
   TData extends InfiniteData<TPage, unknown>,
@@ -37,13 +42,8 @@ interface CompletionAutocompleteProps<
   value: string;
 }
 
-/** A page of the property completion endpoints. */
-interface CompletionPage extends ListPage {
-  items: Completion[];
-}
-
-/** A free-text field that suggests the values the ruleset already uses. */
-export function CompletionAutocomplete<
+/** A property's type or value, typed freely: it suggests those the ruleset already uses. */
+export function PropertyCompletionAutocomplete<
   TPage extends CompletionPage,
   TKey extends QueryKey,
   TData extends InfiniteData<TPage, unknown>,
@@ -59,7 +59,7 @@ export function CompletionAutocomplete<
   required = false,
   error = false,
   helperText,
-}: CompletionAutocompleteProps<TPage, TKey, TData>) {
+}: PropertyCompletionAutocompleteProps<TPage, TKey, TData>) {
   // Controlled: what's typed is the value, which every keystroke and pick reports
   const debouncedInputValue = useDebouncedValue(value);
 
@@ -96,19 +96,15 @@ export function CompletionAutocomplete<
       getOptionLabel={(option) => (typeof option === "string" ? option : option.label)}
       renderOption={({ key, ...props }, option) => (
         <ListItem key={key} {...props}>
-          {typeof option === "string" ? (
-            option
-          ) : (
-            <ListItemText
-              primary={
-                <Stack component="span" direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                  {option.label}
-                  <ValueChip label={option.kind} color={option.kind === "engine" ? "primary" : "default"} />
-                </Stack>
-              }
-              secondary={"detail" in option && option.detail}
-            />
-          )}
+          <ListItemText
+            primary={
+              <Stack component="span" direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                {option.label}
+                <ValueChip label={option.kind} color={option.kind === "engine" ? "primary" : "default"} />
+              </Stack>
+            }
+            secondary={"detail" in option && option.detail}
+          />
         </ListItem>
       )}
       freeSolo

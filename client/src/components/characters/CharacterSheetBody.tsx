@@ -56,12 +56,11 @@ export function CharacterSheetBody({
   portraitUrl,
   showPrivateNotes,
 }: CharacterSheetBodyProps) {
-  const abilities = character.abilities || {};
-  const saves = character.savingThrows || {};
-  const combat: SheetCombat = character.combat || {};
+  const combat: SheetCombat = character.combat;
   const encumbrance = combat.encumbrance;
-  const sections = getSections(character.baseRules ?? DEFAULT_BASE_RULES);
-  const bondedByFeat = "bonded" in character ? sections.bondedFeats(character.bonded) : undefined;
+  const baseRules = character.baseRules ?? DEFAULT_BASE_RULES;
+  const sections = getSections(baseRules);
+  const bondedByFeat = sections.bondedFeats(character.bonded);
 
   return (
     <Stack spacing={3}>
@@ -78,10 +77,15 @@ export function CharacterSheetBody({
 
       {!partial && (
         <>
-          <sections.AbilityScoresSection abilities={abilities} characterId={characterId} readOnly={readOnly} />
+          <sections.AbilityScoresSection
+            abilities={character.abilities}
+            baseRules={baseRules}
+            characterId={characterId}
+            readOnly={readOnly}
+          />
 
           <ClassesSection
-            classes={character.classes || {}}
+            classes={character.classes}
             rulesetId={rulesetId}
             onEditLevel={onEditLevel}
             onAddLevel={onAddLevel}
@@ -89,26 +93,28 @@ export function CharacterSheetBody({
             readOnly={readOnly}
           />
 
-          <sections.CombatAndSavesSection combat={combat} saves={saves} />
+          <sections.CombatAndSavesSection combat={combat} saves={character.savingThrows} />
 
           <sections.WeaponsSection combat={combat} />
 
-          <sections.SkillsSection skills={character.skills || {}} />
+          <sections.SkillsSection skills={character.skills} />
 
           <FeatsSection
-            classes={character.classes || {}}
+            classes={character.classes}
             virtualFeats={character.virtualFeats}
             rulesetId={rulesetId}
             renderFeatExtra={(feat) => {
-              const bonded = bondedByFeat?.get(feat.name);
-              return bonded && <sections.BondedCreature bonded={bonded} linkable={bondedLinkable} />;
+              const bonded = bondedByFeat.get(feat.name);
+              return (
+                bonded && <sections.BondedCreature bonded={bonded} baseRules={baseRules} linkable={bondedLinkable} />
+              );
             }}
           />
 
           {/* A Partial character's powers are [] (`partial` already leaves them out): this narrows them to the record PowersSection takes */}
           {!Array.isArray(character.powers) && (
             <sections.PowersSection
-              classes={character.classes || {}}
+              classes={character.classes}
               powers={character.powers}
               virtualPowers={character.virtualPowers}
               aptitudes={character.aptitudes}
@@ -126,10 +132,10 @@ export function CharacterSheetBody({
               encumbrance={encumbrance}
             />
           ) : (
-            <ReadOnlyEquipmentSection equipment={character.equipment || []} encumbrance={encumbrance} />
+            <ReadOnlyEquipmentSection equipment={character.equipment} encumbrance={encumbrance} />
           )}
 
-          {diagnostics && Object.values(character.classes || {}).some((cls) => cls.levels.length > 0) && (
+          {diagnostics && Object.values(character.classes).some((cls) => cls.levels.length > 0) && (
             <DiagnosticsSection
               validation={diagnostics.validation}
               requirements={diagnostics.requirements}

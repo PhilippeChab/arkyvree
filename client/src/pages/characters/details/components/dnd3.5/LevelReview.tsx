@@ -8,6 +8,7 @@ import { formatPointsSpent, pointsSpent } from "@/client/src/pages/characters/po
 import { CLASS_ABILITY_NOTE } from "./AutoGrantedPicks.tsx";
 import {
   type FeatsData,
+  type HpLevel,
   type LevelUpFormData,
   type PowersData,
   type SkillLevels,
@@ -16,7 +17,7 @@ import {
 } from "./levelUp/index.ts";
 
 interface LevelReviewProps {
-  /** The wizard's own groups (classes, HP, attributes), listed first. */
+  /** The wizard's own groups (its ability increases), listed after its levels. */
   children: ReactNode;
   wizard: LevelReviewState;
 }
@@ -31,9 +32,12 @@ interface ReviewItemProps {
   note?: string;
 }
 
-/** The skills, feats and spells picked, as every level review lists them. */
+/** The levels and their hit points, the skills, feats and spells picked, as every level review lists them. */
 export interface LevelReviewState {
   featData: FeatsData | null | undefined;
+  /** The levels the wizard adds or edits, as its HP step sets them. */
+  hpLevels: HpLevel[];
+  hpValues: (number | null)[];
   powerData: PowersData | null | undefined;
   selectedFeats: LevelUpFormData["selectedFeats"];
   selectedPowers: LevelUpFormData["selectedPowers"];
@@ -53,9 +57,22 @@ function ReviewItem({ name, note }: ReviewItemProps) {
   );
 }
 
-/** The last step of the Add Level and Edit Level wizards: the wizard's groups, then the skills, feats and spells picked. */
+/**
+ * The last step of the Add Level and Edit Level wizards: the levels and their hit points, the wizard's own groups, then
+ * the skills, feats and spells picked.
+ */
 export function LevelReview({ wizard, children }: LevelReviewProps) {
-  const { skillPointAllocations, skillData, skillLevels, selectedFeats, featData, selectedPowers, powerData } = wizard;
+  const {
+    hpLevels,
+    hpValues,
+    skillPointAllocations,
+    skillData,
+    skillLevels,
+    selectedFeats,
+    featData,
+    selectedPowers,
+    powerData,
+  } = wizard;
   const selectedSkills = Object.entries(skillPointAllocations).filter(([, points]) => points > 0);
   const spent = pointsSpent(skillPointAllocations);
   const selectedFeatsData = Object.values(selectedFeats).flat();
@@ -68,6 +85,14 @@ export function LevelReview({ wizard, children }: LevelReviewProps) {
     <Stack spacing={1} sx={{ pb: 3 }}>
       <SubsectionTitle>Review Changes</SubsectionTitle>
       <Stack spacing={3}>
+        <ReviewGroup title="Class Advancement">
+          {hpLevels.map((level, i) => (
+            <Typography key={i} variant="body1">
+              <strong>{level.className}</strong> Level {level.nextLevel}
+              {hpValues[i] != null && <> — HP Gain: +{hpValues[i]}</>}
+            </Typography>
+          ))}
+        </ReviewGroup>
         {children}
         {selectedSkills.length > 0 && (
           <ReviewGroup title="Skill Improvements">

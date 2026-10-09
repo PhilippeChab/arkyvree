@@ -91,8 +91,6 @@ export function SpellsStep({ wizard }: SpellsStepProps) {
 
   const currentPool = openPools.find((pool) => pool.id === selectedPowerAptitude);
   const currentLevel = currentPool?.leveled ? selectedPowerLevel : null;
-  const pickedIds = new Set(Object.values(selectedPowers).flatMap((picks) => picks.map((power) => power.id)));
-  const pickable = availablePowers.filter((power) => !pickedIds.has(power.id));
 
   return (
     <PoolPicker
@@ -123,7 +121,7 @@ export function SpellsStep({ wizard }: SpellsStepProps) {
       search={powerSearch}
       onSearch={setPowerSearch}
       options={{
-        count: pickable.length,
+        count: availablePowers.length,
         error: availablePowersError,
         fetchingNextPage: isFetchingNextPowersPage,
         loading: isLoadingAvailablePowers,
@@ -131,7 +129,8 @@ export function SpellsStep({ wizard }: SpellsStepProps) {
       }}
     >
       {currentPool &&
-        pickable.map((power) => (
+        // The server leaves out what's picked already, in any pool, as it leaves out a feat held
+        availablePowers.map((power) => (
           <PickOption
             key={power.id}
             name={power.name}

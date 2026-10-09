@@ -1,7 +1,6 @@
 import { Box, DialogContent, DialogContentText, DialogTitle, Stack } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
-import { Controller } from "react-hook-form";
 
 import {
   CodeSentMessage,
@@ -9,7 +8,8 @@ import {
   isCodeComplete,
   ResendCodeLink,
   useResendCode,
-  VerificationCodeInput,
+  VerificationCodeField,
+  type VerificationCodeFormData,
 } from "@/client/src/components/auth/index.ts";
 import { AnimatedAlert, DialogFooter, FormDialog } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
@@ -27,10 +27,6 @@ interface EmailChangeVerificationDialogProps {
   pendingEmail: string;
 }
 
-interface EmailVerificationFormData {
-  digits: string[];
-}
-
 /** Takes the code sent to the new email address; mounted while it's open. */
 export function EmailChangeVerificationDialog({
   open,
@@ -42,7 +38,7 @@ export function EmailChangeVerificationDialog({
   const snackbar = useSnackbar();
   const updateUser = useAuthStore((s) => s.updateUser);
 
-  const form = useFormWith<EmailVerificationFormData>({ digits: EMPTY_VERIFICATION_CODE });
+  const form = useFormWith<VerificationCodeFormData>({ digits: EMPTY_VERIFICATION_CODE });
   const digits = form.watch("digits");
 
   const resendMutation = useMutation({
@@ -63,7 +59,7 @@ export function EmailChangeVerificationDialog({
     onError: (error) => setError(errorMessage(error, "Failed to verify the code")),
   });
 
-  const handleVerify = (data: EmailVerificationFormData) => {
+  const handleVerify = (data: VerificationCodeFormData) => {
     setError(null);
     verifyMutation.mutate(data.digits.join(""));
   };
@@ -94,11 +90,7 @@ export function EmailChangeVerificationDialog({
               </AnimatedAlert>
 
               <Stack spacing={3}>
-                <Controller
-                  control={form.control}
-                  name="digits"
-                  render={({ field }) => <VerificationCodeInput digits={field.value} onChange={field.onChange} />}
-                />
+                <VerificationCodeField control={form.control} name="digits" />
 
                 <Box sx={{ textAlign: "center" }}>
                   <ResendCodeLink onResend={handleResend} disabled={resendMutation.isPending} />

@@ -17,8 +17,8 @@ window.addEventListener("vite:preloadError", () => {
 });
 
 // Warn before tab close / browser refresh / navigation when any form
-// has unsaved changes. The Refresh banner action has its own confirm
-// for the in-app reload path; this is the catch-all.
+// has unsaved changes. The new version's toast asks on its own before
+// its Refresh reloads (WebSocketProvider); this is the catch-all.
 window.addEventListener("beforeunload", (e) => {
   if (useDirtyFormsStore.getState().count > 0) {
     e.preventDefault();

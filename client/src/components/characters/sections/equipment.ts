@@ -1,17 +1,16 @@
-import type { InferResponseType } from "hono/client";
-
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
-import type { rpc } from "@/client/src/services/rpc.ts";
 import { ITEM_HAS_CHARGES } from "@/shared/dnd3.5/properties/index.ts";
 import { type ItemLocation, LOCATION_OPTIONS } from "@/shared/enums.ts";
 import { findSlotConflict, getItemTypeLocations, isHandLocation, type SlotConflictReason } from "@/shared/equipment.ts";
 
-import type { RulesetItem } from "./equipmentQueries.ts";
+import type { InventoryEntry, RulesetItem, RulesetItemDetail } from "./equipmentQueries.ts";
 import { shownWeaponSet } from "./weaponSets.ts";
 
-type InventoryEntry = InferResponseType<(typeof rpc.api.characters.inventory)[":characterId"]["$get"], 200>[number];
+/** The item fields placement depends on: its type, and the slot it's worn in (`"Other"` for none). */
+type ItemColumns = Pick<RulesetItemDetail, "slot" | "type">;
 
-type ItemProperties = { type: string; value: string }[];
+/** The properties of an item placement reads: whether it has charges. */
+type ItemProperties = RulesetItemDetail["properties"];
 
 /** An inventory entry as the slot warnings read it. */
 type PlacedEntry = Pick<InventoryEntry, "id" | "equipped" | "location" | "weaponSet"> & {
@@ -19,10 +18,7 @@ type PlacedEntry = Pick<InventoryEntry, "id" | "equipped" | "location" | "weapon
 };
 
 /** The sheet's carried weight and load thresholds (the combat section's `encumbrance`). */
-export type EncumbranceData = Omit<CharacterDetail["combat"]["encumbrance"], "maxdex"> & {
-  /** No cap (the server's Infinity, sent as null) under a light load. */
-  maxdex: number | null;
-};
+export type EncumbranceData = CharacterDetail["combat"]["encumbrance"];
 
 /** A sheet's equipment row: the inventory entry with its item's fields. */
 export type EquipmentRow = CharacterDetail["equipment"][number];
@@ -36,12 +32,6 @@ export interface InventoryFormData {
   totalCharges: number;
   /** As shown, from 1 (see `shownWeaponSet`). */
   weaponSet: number;
-}
-
-/** The item fields placement depends on. */
-export interface ItemColumns {
-  slot: string;
-  type: string | null;
 }
 
 export type PlacementProfile = ReturnType<typeof placementProfile>;
@@ -74,7 +64,7 @@ export const LOCATION_CHOICES = [...LOCATION_OPTIONS, "none"] as const;
 export function detectSlotFromItem(item: ItemColumns): ItemLocation | null {
   const typeLocations = getItemTypeLocations(item.type);
   if (typeLocations) return typeLocations.length === 1 ? typeLocations[0] : null;
-  return LOCATION_OPTIONS.find((v) => v.toLowerCase() === item.slot.toLowerCase()) ?? null;
+  return item.slot;
 }
 
 /** Where an entry is worn ("Main Hand (Set 1)"), or undefined when it's carried. */

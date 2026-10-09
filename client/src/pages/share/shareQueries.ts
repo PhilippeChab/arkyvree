@@ -1,4 +1,4 @@
-/** The shared sheet's query: a character as its share link shows it to anyone who has the link. */
+/** The share link's query: a character as its share link shows it to anyone who has the link. */
 
 import { queryOptions, skipToken } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";

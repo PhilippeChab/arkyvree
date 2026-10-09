@@ -1,6 +1,6 @@
 import { Autocomplete, Box, Button, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { type InferResponseType, parseResponse } from "hono/client";
+import { parseResponse } from "hono/client";
 import { useMemo, useState } from "react";
 import { Controller } from "react-hook-form";
 import { Link } from "react-router-dom";
@@ -39,13 +39,13 @@ import {
   type EncumbranceData,
   getSlotConflictWarning,
   type InventoryFormData,
-  type ItemColumns,
   LOCATION_CHOICES,
   placementPayload,
   placementProfile,
 } from "./equipment.ts";
 import {
   characterInventoryQuery,
+  type InventoryEntry,
   type RulesetItem,
   rulesetItemQuery,
   rulesetItemSearchQuery,
@@ -60,19 +60,6 @@ interface EquipmentSectionProps {
   encumbrance?: EncumbranceData;
   readOnly: boolean;
   rulesetId: string;
-}
-type InventoryEntry = InventoryItems[number];
-
-type InventoryItems = InferResponseType<(typeof rpc.api.characters.inventory)[":characterId"]["$get"], 200>;
-
-/** An item's placement, from its details: its columns and properties' profile (slot, weapon, charges). */
-function placementOf(detail: {
-  properties?: Parameters<typeof placementProfile>[1];
-  slot?: string | null;
-  type?: string | null;
-}) {
-  const columns: ItemColumns = { type: detail.type ?? null, slot: detail.slot ?? "Other" };
-  return { columns, profile: placementProfile(columns, detail.properties ?? []) };
 }
 
 export function EquipmentSection({ characterId, rulesetId, readOnly, encumbrance }: EquipmentSectionProps) {
@@ -106,15 +93,18 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, encumbrance
 
   // The picked item's details (add dialog): its placement profile
   const { data: itemDetail, error: itemDetailError } = useQuery(rulesetItemQuery(rulesetId, selectedItem?.id));
-  const addProfile = useMemo(() => (itemDetail ? placementOf(itemDetail).profile : null), [itemDetail]);
+  const addProfile = useMemo(
+    () => (itemDetail ? placementProfile(itemDetail, itemDetail.properties) : null),
+    [itemDetail],
+  );
 
   // An item picked in the add dialog fills its slot and charges once its details arrive, unless another was picked since
   const fillPlacement = (itemId: string) => {
     queryClient.fetchQuery(rulesetItemQuery(rulesetId, itemId)).then(
       (detail) => {
         if (addForm.getValues("selectedItem")?.id !== itemId) return;
-        const { columns, profile } = placementOf(detail);
-        const detected = detectSlotFromItem(columns);
+        const profile = placementProfile(detail, detail.properties);
+        const detected = detectSlotFromItem(detail);
         if (detected) addForm.setValue("location", detected, { shouldDirty: true });
         else if (!profile.isWeapon) addForm.setValue("location", "none", { shouldDirty: true });
         if (profile.charges.has) {
@@ -127,15 +117,10 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, encumbrance
     );
   };
 
-  // Edit dialog properties from the inventory entry
-  const editItemProperties = useMemo(() => editingEntry?.item.properties ?? [], [editingEntry]);
-  const editItemColumns: ItemColumns = useMemo(
-    () => ({ type: editingEntry?.item.type ?? null, slot: editingEntry?.item.slot ?? "Other" }),
-    [editingEntry],
-  );
+  // The edited entry's item's placement profile (edit dialog)
   const editProfile = useMemo(
-    () => placementProfile(editItemColumns, editItemProperties),
-    [editItemColumns, editItemProperties],
+    () => (editingEntry ? placementProfile(editingEntry.item, editingEntry.item.properties) : null),
+    [editingEntry],
   );
 
   const addSlotWarning = useMemo(
@@ -194,7 +179,7 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, encumbrance
       parseResponse(
         rpc.api.characters.inventory[":characterId"][":entryId"].$put({
           param: { characterId, entryId },
-          json: { ...placementPayload(data, editProfile.charges.has), force, updatedAt: editingEntry?.updatedAt },
+          json: { ...placementPayload(data, !!editProfile?.charges.has), force, updatedAt: editingEntry?.updatedAt },
         }),
       ),
     onSuccess: () => {
@@ -249,7 +234,7 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, encumbrance
   };
 
   // A dialog's warnings: in its spaced fields, so mounted only while they show
-  const requirementAlert = (visible: boolean, onForce: () => void) =>
+  const issuesAlert = (visible: boolean, onForce: () => void) =>
     visible && (
       <ValidationIssuesAlert
         issues={issues}
@@ -334,9 +319,10 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, encumbrance
         form={addForm}
         onSubmit={(data) => handleAddSubmit(data)}
         isLoading={addMutation.isPending}
+        submitLabel="Add Item"
         maxWidth="md"
       >
-        {requirementAlert(
+        {issuesAlert(
           issues.length > 0 && addDialogOpen,
           // Through the form, so its own rules still hold on a forced save; the warnings clear once it passes.
           () =>
@@ -430,7 +416,7 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, encumbrance
         isLoading={updateMutation.isPending}
         maxWidth="md"
       >
-        {requirementAlert(
+        {issuesAlert(
           issues.length > 0 && editDialog.open,
           () =>
             void editForm.handleSubmit((data) => {
@@ -444,7 +430,12 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, encumbrance
             {editSlotWarning}
           </AnimatedAlert>
         )}
-        <TextField label="Item" value={editingEntry?.item.name ?? ""} fullWidth disabled />
+        <TextField
+          label="Item"
+          value={editingEntry?.item.name ?? ""}
+          fullWidth
+          slotProps={{ input: { readOnly: true } }}
+        />
         <InventoryPlacementFields form={editForm} profile={editProfile} />
       </EditDialog>
       <DeleteDialog
