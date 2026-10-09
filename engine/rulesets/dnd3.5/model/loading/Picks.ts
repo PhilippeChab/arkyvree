@@ -2,7 +2,7 @@
 
 import type { CharacterRows } from "@/engine/core/module/index.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import type { ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/model/projection.ts";
+import type { ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/projection/CharacterProjection.ts";
 import type {
   CharacterLevel,
   FeatWithAptitudes,

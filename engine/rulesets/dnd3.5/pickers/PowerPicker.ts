@@ -1,7 +1,6 @@
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
-import type { ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/model/projection.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 
 import PickerState, { type PickQuery } from "./PickerState.ts";
@@ -16,7 +15,7 @@ type PowerPickQuery = PickQuery & { excludeSchools?: string[]; powerLevel?: numb
 export default class PowerPicker extends PickerState {
   constructor(view: RulesetView, character: CharacterInput, query: PowerPickQuery) {
     super(view, character, query);
-    this.built = this.build(character, this.projectPowerPick());
+    this.built = this.projectPowerPick().build();
     this.filters = this.buildFilters(query);
   }
 
@@ -64,27 +63,13 @@ export default class PowerPicker extends PickerState {
   }
 
   /**
-   * The character a power pick is made for: the levels planned before this one, then this class level with the feats
-   * picked so far and the powers it grants, which count for requirements and aren't offered. Editing a level leaves out
-   * it and the levels after it.
+   * The character a power pick is made for: the pick's projection (`projectPick`, the planned levels without their
+   * ability increases), with the powers its class level grants, which count for requirements and aren't offered.
    */
-  private projectPowerPick(): ProjectedCharacterData {
-    const klassLevelId = this.klassLevel.id;
-    const { excludeIds, level, pendingLevels } = this.projectPickLevels(false);
-    const projectedFeats = this.buildProjectedFeatsFromPicks(this.featPicks, klassLevelId, level.id);
-    return {
-      ...(excludeIds.length > 0 && { excludeCharacterLevelIds: excludeIds }),
-      characterLevels: [...pendingLevels, level],
-      ...(projectedFeats.length > 0 && { feats: projectedFeats }),
-      powers: (this.rulesetData.klassLevelPowersWithPowersByKlassLevel.get(klassLevelId) ?? []).map((rec) => ({
-        ...rec.powersInRule,
-        klassLevelId,
-        characterLevelId: level.id,
-        aptitudeId: rec.aptitudeId,
-        powerLevel: null,
-        saveName: null,
-      })),
-    };
+  private projectPowerPick() {
+    const { level, projection } = this.projectPick(false);
+    projection.grantPowers(level);
+    return projection;
   }
 
   /** The power options of a page, each with whether the character meets its requirements, and the tree it fails. */

@@ -2,7 +2,6 @@ import type { CharacterInput } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { AptitudeModifier } from "@/engine/rulesets/dnd3.5/levelUp/concerns/AnnotatesOptions.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
-import type { ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/model/projection.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 
 import PickerState, { type PickQuery } from "./PickerState.ts";
@@ -15,7 +14,7 @@ import PickerState, { type PickQuery } from "./PickerState.ts";
 export default class FeatPicker extends PickerState {
   constructor(view: RulesetView, character: CharacterInput, query: PickQuery & { family?: string }) {
     super(view, character, query);
-    this.built = this.build(character, this.projectFeatPick());
+    this.built = this.projectFeatPick().build();
     const offered = {
       ids: this.rulesetData.listFeatIds(query.aptitudeId),
       excludeFeatIds: this.built.getHeldNonStackableFeatIds(),
@@ -47,25 +46,15 @@ export default class FeatPicker extends PickerState {
   }
 
   /**
-   * The character a feat pick is made for: the levels planned before this one, then this class level, the feats picked
-   * so far and every feat those class levels grant. Granted feats count for requirements (a weapon proficiency for
-   * Weapon Focus) and aren't offered. Editing a level leaves out it and the levels after it.
+   * The character a feat pick is made for: the pick's projection (`projectPick`), with every feat its class level and
+   * the planned ones grant. Granted feats count for requirements (a weapon proficiency for Weapon Focus) and aren't
+   * offered.
    */
-  private projectFeatPick(): ProjectedCharacterData {
-    const klassLevelId = this.klassLevel.id;
-    const grantingKlassLevelIds = [...new Set([klassLevelId, ...(this.query.pendingLevelKlassLevelIds ?? [])])];
-    const grantedRecords = grantingKlassLevelIds.flatMap(
-      (id) => this.rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(id) ?? [],
-    );
-    const grantedCustomizations = this.loadFeatCustomizations(grantedRecords.map((rec) => rec.featsInRule.id));
-    const { excludeIds, level, pendingLevels } = this.projectPickLevels(true);
-    const projectedFeats = this.buildProjectedFeatsFromPicks(this.featPicks, klassLevelId, level.id);
-    return {
-      ...(excludeIds.length > 0 && { excludeCharacterLevelIds: excludeIds }),
-      characterLevels: [...pendingLevels, level],
-      ...(projectedFeats.length > 0 && { feats: projectedFeats }),
-      givenFeats: this.buildProjectedGivenFeats(grantedRecords, level.id, grantedCustomizations),
-    };
+  private projectFeatPick() {
+    const { level, projection } = this.projectPick(true);
+    const klassLevelIds = [...new Set([this.klassLevel.id, ...(this.query.pendingLevelKlassLevelIds ?? [])])];
+    projection.grantFeats(level, { klassLevelIds });
+    return projection;
   }
 
   /**

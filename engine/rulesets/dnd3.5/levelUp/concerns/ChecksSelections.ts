@@ -1,11 +1,8 @@
 import RulesError from "@/engine/core/RulesError.ts";
-import type { RulesetData } from "@/engine/core/view/index.ts";
 import type LevelUpState from "@/engine/rulesets/dnd3.5/levelUp/LevelUpState.ts";
-import type { GrantedFeatRecords } from "@/engine/rulesets/dnd3.5/levelUp/LevelUpState.ts";
+import type { GrantedFeatRecords, PickedRows } from "@/engine/rulesets/dnd3.5/projection/CharacterProjection.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-
-import type { ProjectedSelections } from "./Projects.ts";
 
 type FeatRecord = { id: string; name: string; stackable: boolean };
 
@@ -20,15 +17,8 @@ interface LevelChecked {
   skills: Record<string, number>;
 }
 
-/** A view map's rows. */
-type RowOf<M> = M extends Map<string, infer T> ? T : never;
-
 /** A level's selections, checked: the rows picked, the pools they're picked in, and what its class level grants. */
-export type CheckedSelections = ProjectedSelections<
-  RowOf<RulesetData["skillsById"]>,
-  RowOf<RulesetData["featsById"]>,
-  RowOf<RulesetData["powersById"]>
-> & { autoGrantedRecords: GrantedFeatRecords };
+export type CheckedSelections = PickedRows & { autoGrantedRecords: GrantedFeatRecords };
 
 /** A level's selections checked against the ruleset: theirs, linked to their pools, and not taken twice. */
 export function ChecksSelections<B extends Constructor<LevelUpState>>(Base: B) {
@@ -59,8 +49,8 @@ export function ChecksSelections<B extends Constructor<LevelUpState>>(Base: B) {
 
     /**
      * A level's hit points, ability and selections checked, for both the level save and the level-up's: each selection
-     * the ruleset's and linked to its pool, no non-stackable feat picked twice; and what the level is granted, with the
-     * feats' customizations. Whether a feat is already on the character is `checkNotTaken`'s.
+     * the ruleset's and linked to its pool, no non-stackable feat picked twice; and what the level is granted. Whether a
+     * feat is already on the character is `checkNotTaken`'s.
      */
     protected checkLevelSelections(level: LevelChecked): CheckedSelections {
       const { klass, klassLevel, hp, abilityId, skills, feats, powers } = level;
@@ -78,12 +68,8 @@ export function ChecksSelections<B extends Constructor<LevelUpState>>(Base: B) {
       this.checkRepeatedPicks(featIds, fetchedFeats);
       const powerLevelMap = this.linkedPowerLevels(feats, powers);
 
-      // Fetch auto-granted feats for the current klass level (reused by caller for projected data)
+      // What the class level grants, which a non-stackable pick can't be
       const autoGrantedRecords = this.rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(klassLevel.id) ?? [];
-
-      // Include auto-granted feat IDs so their modifiers are loaded in the same batch
-      const autoGrantedFeatIds = autoGrantedRecords.map((rec) => rec.featsInRule.id);
-      const featCustomizations = this.loadFeatCustomizations([...featIds, ...autoGrantedFeatIds]);
 
       return {
         fetchedSkills,
@@ -92,7 +78,6 @@ export function ChecksSelections<B extends Constructor<LevelUpState>>(Base: B) {
         featToAptitude: this.poolsOf(feats),
         powerToAptitude: this.poolsOf(powers),
         powerLevelMap,
-        featCustomizations,
         autoGrantedRecords,
       };
     }

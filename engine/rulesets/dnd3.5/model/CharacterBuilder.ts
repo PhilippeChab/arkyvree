@@ -1,5 +1,6 @@
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
+import type { ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/projection/CharacterProjection.ts";
 import type { BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
 import type { Character as CharacterRecord } from "@/shared/relations.ts";
 
@@ -7,7 +8,6 @@ import DetailedCharacterAnimalCompanion from "./bonded/DetailedCharacterAnimalCo
 import DetailedCharacterFamiliar from "./bonded/DetailedCharacterFamiliar.ts";
 import DetailedCharacterMount from "./bonded/DetailedCharacterMount.ts";
 import DetailedCharacter from "./DetailedCharacter.ts";
-import type { ProjectedCharacterData } from "./projection.ts";
 
 /** What a 3.5 character is: a player character, or a creature bonded to one. */
 export type CharacterKind = "pc" | BondedKind;

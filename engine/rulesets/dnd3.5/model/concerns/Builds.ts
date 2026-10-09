@@ -8,7 +8,7 @@ import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedChara
 import FeatsPaths from "@/engine/rulesets/dnd3.5/model/feats/FeatsPaths.ts";
 import { type LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import PowersPaths from "@/engine/rulesets/dnd3.5/model/powers/PowersPaths.ts";
-import type { ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/model/projection.ts";
+import type { ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/projection/CharacterProjection.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { isTemplateValue } from "@/shared/customization/templateExpression.ts";
 import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";

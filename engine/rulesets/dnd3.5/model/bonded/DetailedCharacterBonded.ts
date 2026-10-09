@@ -3,7 +3,7 @@ import { type RulesetData, type RulesetView } from "@/engine/core/view/index.ts"
 import type { ValidationIssue } from "@/engine/rulesets/dnd3.5/model/concerns/Validates.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import CustomizedEntities from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
-import type { ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/model/projection.ts";
+import type { ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/projection/CharacterProjection.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
 import BondedRaceData, { type BondedRaceStatBlock, STAT_BLOCK_FEAT_SKILL_BONUSES } from "./BondedRaceData.ts";
