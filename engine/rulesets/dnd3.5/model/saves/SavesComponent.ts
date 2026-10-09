@@ -3,7 +3,7 @@ import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/Classe
 import type { KlassLevelSave, RulesetAbility, RulesetSave } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-type SavingThrowsData = {
+type SavesData = {
   [key: string]: {
     readonly ability: number;
     base: number;
@@ -13,23 +13,23 @@ type SavingThrowsData = {
   };
 };
 
-export default class SavingThrowsComponent {
+export default class SavesComponent {
   constructor(
     private readonly abilities: AbilitiesComponent,
     private readonly classes: ClassesComponent,
   ) {}
 
-  private readonly savingThrows: SavingThrowsData = {} as SavingThrowsData;
+  private readonly saves: SavesData = {} as SavesData;
 
-  getSavingThrow(savingThrowName: string): SavingThrowsData[string] {
-    return this.savingThrows[stripSeparators(savingThrowName)];
+  getSave(saveName: string): SavesData[string] {
+    return this.saves[stripSeparators(saveName)];
   }
 
-  getSavingThrows(): SavingThrowsData {
-    return this.savingThrows;
+  getSaves(): SavesData {
+    return this.saves;
   }
 
-  initialize(saves: RulesetSave[], rulesetAbilities: RulesetAbility[], klassLevelSaves: KlassLevelSave[]) {
+  initialize(rulesetSaves: RulesetSave[], rulesetAbilities: RulesetAbility[], klassLevelSaves: KlassLevelSave[]) {
     const abilityNames = new Map(rulesetAbilities.map((a) => [a.id, a.name]));
     const saveBaseValues = new Map<string, number>();
     const classes = this.classes.getClasses();
@@ -41,14 +41,14 @@ export default class SavingThrowsComponent {
       }
     }
 
-    for (const save of saves) {
+    for (const save of rulesetSaves) {
       const normalizedName = stripSeparators(save.name);
       const abilityName = abilityNames.get(save.abilityId) ?? "Unknown";
       const base = saveBaseValues.get(save.id) ?? 0;
       const abilities = this.abilities;
 
       // The ability's modifier and the total are computed when read, so they follow the abilities and the parts
-      this.savingThrows[normalizedName] = {
+      this.saves[normalizedName] = {
         name: save.name,
         base,
         get ability() {

@@ -3,9 +3,9 @@
 import type { CharacterRows } from "@/engine/core/module/index.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { CLASS_FIELDS } from "@/engine/rulesets/dnd3.5/entities/classes/fields.ts";
-import { RULESET_FIELDS } from "@/engine/rulesets/dnd3.5/entities/ruleset/fields.ts";
 import { SKILL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellLists.ts";
+import { RULESET_FIELDS } from "@/engine/rulesets/dnd3.5/ruleset/fields.ts";
 
 /** What a character's load reads of its ruleset: its lists, its properties and its ability scores. */
 export default class RulesetReadings {

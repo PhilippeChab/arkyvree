@@ -153,7 +153,7 @@ export const styles = StyleSheet.create({
     fontSize: FONT_SIZE.xxl,
     fontWeight: "bold",
   },
-  savingThrowBox: {
+  saveBox: {
     width: "32%",
     borderWidth: 1,
     borderColor: "#ccc",

@@ -288,7 +288,7 @@ Properties the engine reads off a race (`combat/concerns/InitiativeAndSpeed.ts`,
 
 ### Rulesets
 
-A ruleset's own property, `RULESET_SKILL_POINT_ABILITY_ID`: the ability its characters' skill points come from, Intelligence in the seeds. It's the ruleset's field, which the character's loader reads with `RULESET_FIELDS.read` (`entities/ruleset/fields.ts`), over the rows of the ruleset's chain, and which the core rules' seeder writes with `RULESET_FIELDS.toProperties` (`Engine.forRules(baseRules).toEntityProperties`). A fork copies its source's rows as they are.
+A ruleset's own property, `RULESET_SKILL_POINT_ABILITY_ID`: the ability its characters' skill points come from, Intelligence in the seeds. It's the ruleset's field, which the character's loader reads with `RULESET_FIELDS.read` (`ruleset/fields.ts`), over the rows of the ruleset's chain, and which the core rules' seeder writes with `RULESET_FIELDS.toProperties` (`Engine.forRules(baseRules).toEntityProperties`). A fork copies its source's rows as they are.
 
 ### Spells / Powers
 

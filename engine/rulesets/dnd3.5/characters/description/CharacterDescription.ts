@@ -88,7 +88,7 @@ export default class CharacterDescription {
       skillBudget: { available: 0, spent: 0, total: 0 },
       abilities: {},
       combat: {},
-      savingThrows: {},
+      saves: {},
       classes: {},
       skills: {},
       inventory: {},

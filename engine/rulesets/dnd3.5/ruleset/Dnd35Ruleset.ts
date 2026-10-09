@@ -1,13 +1,13 @@
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 
-/** What a 3.5 ruleset published to be played needs: what a character is made of. */
-export default class PlayableContent {
+/** What the 3.5 rules answer of a ruleset as a whole, past its entities: what it needs to be played. */
+export default class Dnd35Ruleset {
   /**
    * Refuses a ruleset whose view gives no player race, player class, skill or feat, naming those missing: no character
-   * could be made in it.
+   * could be made in it, so it can't be published to be played.
    */
-  static check(view: RulesetView) {
+  checkPlayable(view: RulesetView) {
     const { feats, klasses, races, skills } = view.rulesetData;
     const missing = [
       { kind: "race", present: races.some((race) => race.kind === "pc") },

@@ -93,7 +93,7 @@ export function CharacterSheetBody({
             readOnly={readOnly}
           />
 
-          <sections.CombatAndSavesSection combat={combat} saves={character.savingThrows} />
+          <sections.CombatAndSavesSection combat={combat} saves={character.saves} />
 
           <sections.WeaponsSection combat={combat} />
 

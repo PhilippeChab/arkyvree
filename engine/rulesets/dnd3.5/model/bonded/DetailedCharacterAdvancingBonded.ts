@@ -20,7 +20,7 @@ export default abstract class DetailedCharacterAdvancingBonded extends DetailedC
     combat.bab = Math.floor((totalHD * 3) / 4);
     combat.hp.base = Math.ceil(totalHD * HD_PER_LEVEL_AVG);
 
-    const saves = this.components.savingThrows.getSavingThrows();
+    const saves = this.components.saves.getSaves();
     if (saves["fortitude"]) saves["fortitude"].base = 2 + Math.floor(totalHD / 2);
     if (saves["reflex"]) saves["reflex"].base = 2 + Math.floor(totalHD / 2);
     if (saves["will"]) saves["will"].base = Math.floor(totalHD / 3);

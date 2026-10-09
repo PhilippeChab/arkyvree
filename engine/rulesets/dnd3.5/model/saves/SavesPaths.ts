@@ -45,7 +45,7 @@ export default class SavesPaths implements PathCategory<Dnd35Components> {
     return paths;
   }
 
-  readonly component = { key: "savingThrows", getter: "getSavingThrows" } as const;
+  readonly component = { key: "saves", getter: "getSaves" } as const;
 
   readonly description = "Fortitude, Reflex, and Will saving throws";
 

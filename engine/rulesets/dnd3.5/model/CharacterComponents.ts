@@ -16,7 +16,7 @@ import IdentityComponent from "./identity/IdentityComponent.ts";
 import InventoryComponent from "./inventory/InventoryComponent.ts";
 import PowerGroupingsComponent from "./powers/PowerGroupingsComponent.ts";
 import PowersComponent from "./powers/PowersComponent.ts";
-import SavingThrowsComponent from "./saves/SavingThrowsComponent.ts";
+import SavesComponent from "./saves/SavesComponent.ts";
 import SkillsComponent from "./skills/SkillsComponent.ts";
 import SpellcastingComponent from "./spellcasting/SpellcastingComponent.ts";
 
@@ -35,7 +35,7 @@ export type Dnd35Components = {
   readonly inventory: InventoryComponent;
   readonly powerGroupings: PowerGroupingsComponent;
   readonly powers: PowersComponent;
-  readonly savingThrows: SavingThrowsComponent;
+  readonly saves: SavesComponent;
   readonly shields: ShieldsComponent;
   readonly skills: SkillsComponent;
   readonly spellcasting: SpellcastingComponent;
@@ -58,7 +58,7 @@ export default class CharacterComponents {
     const featGroupings = new FeatGroupingsComponent(feats);
     const powers = new PowersComponent(getStaticPropertyValues);
     const powerGroupings = new PowerGroupingsComponent(powers, abilities);
-    const savingThrows = new SavingThrowsComponent(abilities, classes);
+    const saves = new SavesComponent(abilities, classes);
     const identity = new IdentityComponent(abilities, classes);
     const aptitudes = new AptitudesComponent(identity, classes, countGeneralFeats);
     const skills = new SkillsComponent(abilities, classes);
@@ -101,7 +101,7 @@ export default class CharacterComponents {
       inventory,
       powerGroupings,
       powers,
-      savingThrows,
+      saves,
       shields,
       skills,
       spellcasting,
