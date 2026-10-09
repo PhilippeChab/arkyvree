@@ -11,10 +11,12 @@
  *   written with) import nothing of its data. The codegen (`codegen/`) isn't the server's, and stores nothing; the
  *   server reads none of `database/`, `content/` and `codegen/`. `shared/` imports nothing app-specific (the schema's
  *   types only), and the client takes only types from the server.
- * - `engine-front-door`: code outside `engine/` enters it through `engine/index.ts`, `Engine` and its handles' types, as
- *   the client enters the server through its API; a test may reach any of its modules.
+ * - `engine-front-door`: code outside `engine/` enters it through `engine/index.ts`, `Engine` and its handles' types,
+ *   as the client enters the server through its API; a test may reach any of its modules.
  * - `one-engine-op`: a service's or a job's action (a method, a function) asks the engine one operation, which answers
  *   it whole: what it plans, it describes, and what it checks, it refuses. A second one is a rule the server composes.
+ *   An operation is a verb-named method reached through `Engine`'s handles (`Engine.for(scope).skills().planCreate`);
+ *   a noun-named one hands out a handle (`character(input)`, `skills()`).
  * - `opaque-view`: the server holds a ruleset's view only as the scope it hands the engine's operations: of its
  *   `rulesetData`, it reads the copy-on-write data alone (`rulesetData.cow`), which its writes go by. Its cache builds
  *   the view.
