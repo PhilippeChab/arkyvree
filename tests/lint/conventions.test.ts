@@ -266,6 +266,9 @@ describe("conventions", () => {
           "engine/core/declared.ts": "export function helper() {\n  return 1;\n}\n",
           "engine/core/held.ts": "export const helper = () => 1;\n",
           "engine/core/listed.ts": "function helper() {\n  return 1;\n}\nexport { helper };\n",
+          "engine/core/renamed.ts": "function helper() {\n  return 1;\n}\nexport { helper as Helper };\n",
+          "engine/core/cast.ts": "export const helper = (() => 1) as () => number;\n",
+          "engine/core/underscored.ts": "export function _helper() {\n  return 1;\n}\n",
           "engine/core/defaulted.ts": "export default function helper() {\n  return 1;\n}\n",
           "engine/index.ts": 'export { describeThing } from "./api/ops.ts";\n',
           "server/x.ts": "export function helper() {\n  return 1;\n}\n",
@@ -273,10 +276,13 @@ describe("conventions", () => {
         ["engine-classes"],
       ),
     ).toEqual([
+      "engine-classes engine/core/cast.ts",
       "engine-classes engine/core/declared.ts",
       "engine-classes engine/core/defaulted.ts",
       "engine-classes engine/core/held.ts",
       "engine-classes engine/core/listed.ts",
+      "engine-classes engine/core/renamed.ts",
+      "engine-classes engine/core/underscored.ts",
     ]);
   });
 

@@ -418,11 +418,15 @@ function createEngineClasses(context) {
   const message =
     "Outside `engine/api/`, an engine module exports no function of its own: an operation is the API's, and a step a " +
     "class's method (or the module's own, unexported, function).";
+  // A function, a cast (`as`, `satisfies`, `!`) or parentheses around one looked through
+  const unwrap = (node) =>
+    ["TSAsExpression", "TSSatisfiesExpression", "TSNonNullExpression", "ParenthesizedExpression"].includes(node?.type)
+      ? unwrap(node.expression)
+      : node;
   const isFunction = (node) =>
-    node?.type === "FunctionDeclaration" ||
-    node?.type === "ArrowFunctionExpression" ||
-    node?.type === "FunctionExpression";
-  const isCamelCase = (name) => /^[a-z]/.test(name);
+    ["ArrowFunctionExpression", "FunctionDeclaration", "FunctionExpression"].includes(unwrap(node)?.type);
+  // A function's own name, not a class's, a concern's or a component's (PascalCase): `helper`, `_helper`
+  const isCamelCase = (name) => /^[a-z_]/.test(name);
   // The module's own functions, by name: what an export list may name
   const ownFunctions = new Set();
   return {
@@ -455,8 +459,8 @@ function createEngineClasses(context) {
       if (source) return;
       for (const specifier of specifiers ?? []) {
         const local = specifier.local?.name;
-        if (local && ownFunctions.has(local) && isCamelCase(specifier.exported?.name ?? local))
-          context.report({ node: specifier, message });
+        // A function exported under another name is the same function: its own name says what it is
+        if (local && ownFunctions.has(local) && isCamelCase(local)) context.report({ node: specifier, message });
       }
     },
   };
