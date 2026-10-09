@@ -2,7 +2,7 @@ import type { RulesetView } from "@/engine/core/view/index.ts";
 import FeatsPaths from "@/engine/rulesets/dnd3.5/model/feats/FeatsPaths.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-import FeatFields, { NO_FEAT_FIELDS } from "./FeatFields.ts";
+import { FEAT_FIELDS } from "./fields.ts";
 import GeneratedFeats from "./GeneratedFeats.ts";
 
 /** The feats a spell's grouping makes: a school's Spell Focus. */
@@ -25,14 +25,14 @@ export default class SpellFocusFeats {
         {
           name: `Spell Focus: ${schoolName}`,
           description: `Add +1 to the Difficulty Class for all saving throws against spells from the school of ${schoolName}.`,
-          properties: FeatFields.toProperties({ ...NO_FEAT_FIELDS, families: ["Spell Focus"] }),
+          properties: FEAT_FIELDS.toProperties({ ...FEAT_FIELDS.defaults, families: ["Spell Focus"] }),
           modifiers: [dcBonus],
           requirements: [],
         },
         {
           name: `Greater Spell Focus: ${schoolName}`,
           description: `Add +1 to the Difficulty Class for all saving throws against spells from the school of ${schoolName}. This bonus stacks with the bonus granted by Spell Focus.`,
-          properties: FeatFields.toProperties({ ...NO_FEAT_FIELDS, families: ["Greater Spell Focus"] }),
+          properties: FEAT_FIELDS.toProperties({ ...FEAT_FIELDS.defaults, families: ["Greater Spell Focus"] }),
           modifiers: [dcBonus],
           requirements: [
             {

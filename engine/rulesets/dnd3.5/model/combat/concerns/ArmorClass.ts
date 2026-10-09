@@ -1,4 +1,4 @@
-import { type ItemFieldValues } from "@/engine/rulesets/dnd3.5/entities/items/ItemFields.ts";
+import { type ItemFieldValues } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import type { ArmorsData } from "@/engine/rulesets/dnd3.5/model/combat/ArmorsComponent.ts";
 import { ARMOR_CATEGORIES } from "@/engine/rulesets/dnd3.5/model/combat/CombatState.ts";
 import type CombatState from "@/engine/rulesets/dnd3.5/model/combat/CombatState.ts";

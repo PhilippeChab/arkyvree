@@ -1,4 +1,4 @@
-import PowerFields from "@/engine/rulesets/dnd3.5/entities/powers/PowerFields.ts";
+import { POWER_FIELDS } from "@/engine/rulesets/dnd3.5/entities/powers/fields.ts";
 import type AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
 import type { Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -61,8 +61,8 @@ export default class PowerGroupingsComponent {
 
     const normalizedPowerName = stripSeparators(power.name);
     // A spell is grouped under its school and each of its descriptors
-    const { descriptors = [], school } = PowerFields.read(properties);
-    for (const value of school === undefined ? descriptors : [school, ...descriptors]) {
+    const { descriptors, school } = POWER_FIELDS.read(properties);
+    for (const value of school === null ? descriptors : [school, ...descriptors]) {
       const grouping = stripSeparators(value);
       if (!grouping) continue;
       const group = (this.powerGroupings[grouping] ??= {});

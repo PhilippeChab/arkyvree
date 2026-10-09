@@ -1,4 +1,4 @@
-import { type SkillFieldValues } from "@/engine/rulesets/dnd3.5/entities/skills/SkillFields.ts";
+import { type SkillFieldValues } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
 import type AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/ClassesComponent.ts";
 import type { ArmorsData } from "@/engine/rulesets/dnd3.5/model/combat/ArmorsComponent.ts";

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import FeatFields, { NO_FEAT_FIELDS } from "@/engine/rulesets/dnd3.5/entities/feats/FeatFields.ts";
+import { FEAT_FIELDS } from "@/engine/rulesets/dnd3.5/entities/feats/fields.ts";
 import {
   FEAT_FAMILY,
   FEAT_OVERSIZED_TWO_WEAPON_FIGHTING,
@@ -10,9 +10,9 @@ import {
 
 describe("A feat's fields", () => {
   test("are none without their properties, and each family, school and rule with them", () => {
-    expect(FeatFields.read([])).toEqual(NO_FEAT_FIELDS);
+    expect(FEAT_FIELDS.read([])).toEqual(FEAT_FIELDS.defaults);
     expect(
-      FeatFields.read([
+      FEAT_FIELDS.read([
         { type: FEAT_FAMILY, value: "Weapon Focus" },
         { type: FEAT_FAMILY, value: "Fighter Bonus" },
         { type: FEAT_WEAPON_FINESSE, value: "true" },
@@ -35,14 +35,14 @@ describe("A feat's fields", () => {
       prohibitedSchools: ["Evocation", "Necromancy"],
       weaponFinesse: false,
     };
-    const rows = FeatFields.toProperties(fields);
+    const rows = FEAT_FIELDS.toProperties(fields);
     expect(rows.map((row) => [row.type, row.value])).toEqual([
       [FEAT_FAMILY, "Spell Focus"],
       [FEAT_OVERSIZED_TWO_WEAPON_FIGHTING, "true"],
       [WIZARD_PROHIBITED_SCHOOL, "Evocation"],
       [WIZARD_PROHIBITED_SCHOOL, "Necromancy"],
     ]);
-    expect(FeatFields.read(rows)).toEqual(fields);
-    expect(FeatFields.toProperties(NO_FEAT_FIELDS)).toEqual([]);
+    expect(FEAT_FIELDS.read(rows)).toEqual(fields);
+    expect(FEAT_FIELDS.toProperties(FEAT_FIELDS.defaults)).toEqual([]);
   });
 });

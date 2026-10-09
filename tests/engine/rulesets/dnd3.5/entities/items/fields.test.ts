@@ -3,10 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { and, eq, isNull } from "drizzle-orm";
 
 import { itemsInRules, propertiesInCustomization } from "@/drizzle/schema.ts";
-import ItemFields, {
-  ITEM_FIELD_PROPERTY_TYPES,
-  NO_ITEM_FIELDS,
-} from "@/engine/rulesets/dnd3.5/entities/items/ItemFields.ts";
+import { ITEM_FIELDS } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import { db } from "@/server/database/index.ts";
 import { DAMAGE_TYPE, ITEM_HAS_CHARGES, WEAPON_FINESSABLE, WEAPON_RANGE } from "@/shared/dnd3.5/properties/index.ts";
 
@@ -17,8 +14,8 @@ function multiset(rows: { type: string; value: string }[]) {
 
 describe("An item's fields", () => {
   test("are none without their properties, and as stored with them: a flag false, a list in its rows' order", () => {
-    expect(ItemFields.read([])).toEqual(NO_ITEM_FIELDS);
-    const fields = ItemFields.read([
+    expect(ITEM_FIELDS.read([])).toEqual(ITEM_FIELDS.defaults);
+    const fields = ITEM_FIELDS.read([
       { type: ITEM_HAS_CHARGES, value: "40" },
       { type: WEAPON_FINESSABLE, value: "false" },
       { type: WEAPON_RANGE, value: "10" },
@@ -43,7 +40,7 @@ describe("An item's fields", () => {
       .innerJoin(itemsInRules, eq(itemsInRules.id, propertiesInCustomization.entityId))
       .where(and(eq(propertiesInCustomization.entityType, "items"), isNull(itemsInRules.deletedAt)));
     const rowsByItem = Map.groupBy(rows, (row) => row.itemId);
-    expect(rows.every((row) => ITEM_FIELD_PROPERTY_TYPES.includes(row.type))).toBe(true);
+    expect(rows.every((row) => ITEM_FIELDS.types.includes(row.type))).toBe(true);
     expect(rowsByItem.size).toBeGreaterThan(400);
 
     const mismatches: string[] = [];
@@ -52,7 +49,7 @@ describe("An item's fields", () => {
       const sourceItemId = own[0].sourceItemId;
       const template = sourceItemId ? (rowsByItem.get(sourceItemId) ?? []).filter((r) => !ownTypes.has(r.type)) : [];
       for (const stored of [own, [...template, ...own]]) {
-        const rebuilt = ItemFields.toProperties(ItemFields.read(stored));
+        const rebuilt = ITEM_FIELDS.toProperties(ITEM_FIELDS.read(stored));
         if (multiset(rebuilt).join("|") !== multiset(stored).join("|")) mismatches.push(itemId);
       }
     }

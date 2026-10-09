@@ -5,10 +5,10 @@ import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import SpellFocusFeats from "@/engine/rulesets/dnd3.5/entities/feats/SpellFocusFeats.ts";
 
-import PowerFields, { POWER_FIELD_PROPERTY_TYPES, type PowerFieldValues } from "./PowerFields.ts";
+import { POWER_FIELDS, type PowerFieldValues } from "./fields.ts";
 
 /** A power's save, as its form sends it: its row's columns, its pools (each at its spell level), and its fields. */
-type PowerBody = PowerFieldValues & {
+type PowerBody = Partial<PowerFieldValues> & {
   aptitudes?: { id: string; level?: number }[];
   description?: string | null;
   name: string;
@@ -16,22 +16,8 @@ type PowerBody = PowerFieldValues & {
   saveId?: string | null;
 };
 
-/** A power's fields a save is given. */
-const POWER_FIELD_KEYS = [
-  "areaOfEffect",
-  "castingTime",
-  "components",
-  "descriptors",
-  "duration",
-  "rangeType",
-  "school",
-  "spellResistance",
-  "subschool",
-  "target",
-] as const satisfies (keyof PowerFieldValues)[];
-
 /** A spell's grouping, which its feats go by: its school, none without one. */
-function getGrouping(fields: PowerFieldValues) {
+function getGrouping(fields: Partial<PowerFieldValues>) {
   return typeof fields.school === "string" && fields.school.length > 0 ? fields.school : null;
 }
 
@@ -106,18 +92,18 @@ export default class PowerEntity {
    */
   static planSave(
     view: RulesetView,
-    power: PowerFieldValues,
+    power: Partial<PowerFieldValues>,
     before?: { properties: { type: string; value: string }[] },
   ): EntityWrites {
-    if (before && POWER_FIELD_KEYS.every((key) => power[key] === undefined))
+    if (before && POWER_FIELDS.keys.every((key) => power[key] === undefined))
       return { columns: {}, generatedFeats: [], removedFeats: [] };
     const grouping = getGrouping(power);
     const isNewGrouping =
-      grouping !== null && grouping !== (before && getGrouping(PowerFields.read(before.properties)));
+      grouping !== null && grouping !== (before && getGrouping(POWER_FIELDS.read(before.properties)));
     return {
       columns: {},
       generatedFeats: isNewGrouping ? SpellFocusFeats.buildSpellFocusFeats(view, grouping) : [],
-      properties: { types: POWER_FIELD_PROPERTY_TYPES, values: PowerFields.toProperties(power) },
+      properties: POWER_FIELDS.write(power),
       removedFeats: [],
     };
   }

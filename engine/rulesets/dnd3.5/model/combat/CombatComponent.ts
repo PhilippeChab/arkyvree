@@ -1,4 +1,4 @@
-import { NO_WEAPON_FIELDS } from "@/engine/rulesets/dnd3.5/entities/items/ItemFields.ts";
+import { ITEM_FIELDS } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import type { CustomizedRace } from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
 import type SkillsComponent from "@/engine/rulesets/dnd3.5/model/skills/SkillsComponent.ts";
 import { UNARMED_STRIKE } from "@/engine/rulesets/dnd3.5/rules/combat.ts";
@@ -39,7 +39,7 @@ class CombatComponent extends include(CombatState, ArmorClass, Attacks, HitPoint
       "Main Hand",
       { name: UNARMED_STRIKE },
       {
-        ...NO_WEAPON_FIELDS,
+        ...ITEM_FIELDS.defaults.weapon,
         proficiency: "Unarmed",
         baseDamage: "1d3",
         damageTypes: ["Bludgeoning"],

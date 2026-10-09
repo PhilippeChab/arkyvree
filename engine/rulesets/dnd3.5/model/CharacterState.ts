@@ -3,7 +3,7 @@ import { type CharacterRows } from "@/engine/core/module/index.ts";
 import type { TargetPathsTraverser } from "@/engine/core/paths/CategoryPaths.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import { type SkillFieldValues } from "@/engine/rulesets/dnd3.5/entities/skills/SkillFields.ts";
+import { type SkillFieldValues } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
 import type {
   Aptitude,
   Campaign,

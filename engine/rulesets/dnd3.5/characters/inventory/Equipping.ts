@@ -3,7 +3,7 @@
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { type RulesetData, type RulesetView } from "@/engine/core/view/index.ts";
-import ItemFields from "@/engine/rulesets/dnd3.5/entities/items/ItemFields.ts";
+import { ITEM_FIELDS } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import CharacterBuilder from "@/engine/rulesets/dnd3.5/model/CharacterBuilder.ts";
 import { SIZE_ORDER } from "@/engine/rulesets/dnd3.5/model/inventory/InventorySlots.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
@@ -114,7 +114,7 @@ function checkWeaponInOneHand(
 /** The weapon fields of an item, its own merged with its template's. */
 function weaponFields(rulesetData: RulesetData, itemId: string) {
   const item = rulesetData.itemsById.get(itemId) ?? { id: itemId, sourceItemId: null };
-  return ItemFields.read(rulesetData.itemProperties(item)).weapon;
+  return ITEM_FIELDS.read(rulesetData.itemProperties(item)).weapon;
 }
 
 /** Equipping an item: where a character holds it, refused when a slot, a hand or a requirement says no. */

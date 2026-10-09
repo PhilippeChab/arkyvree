@@ -3,12 +3,12 @@
 import type { EntityWrites } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import FeatFields, { NO_FEAT_FIELDS } from "@/engine/rulesets/dnd3.5/entities/feats/FeatFields.ts";
+import { FEAT_FIELDS } from "@/engine/rulesets/dnd3.5/entities/feats/fields.ts";
 import GeneratedFeats from "@/engine/rulesets/dnd3.5/entities/feats/GeneratedFeats.ts";
 import SkillsPaths from "@/engine/rulesets/dnd3.5/model/skills/SkillsPaths.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-import SkillFields, { SKILL_FIELD_PROPERTY_TYPES, type SkillFieldValues } from "./SkillFields.ts";
+import { SKILL_FIELDS, type SkillFieldValues } from "./fields.ts";
 
 /** A skill's save, as its form sends it: its row's columns, and the fields its properties keep. */
 type SkillBody = SkillFieldValues & { description?: string | null; name: string; primaryAbilityId: string };
@@ -31,7 +31,7 @@ function writeSkillFocus(view: RulesetView, skillName: string) {
       {
         name,
         description: `You get a +3 bonus on all ${skillName} checks.`,
-        properties: FeatFields.toProperties({ ...NO_FEAT_FIELDS, families: ["Skill Focus"] }),
+        properties: FEAT_FIELDS.toProperties({ ...FEAT_FIELDS.defaults, families: ["Skill Focus"] }),
         modifiers: [{ target: SkillsPaths.misc(skillName), operator: "add", value: "3", valueType: "number" }],
         requirements: [],
       },
@@ -55,7 +55,7 @@ export default class SkillEntity {
    */
   private static planRow(view: RulesetView, body: SkillBody, before?: { name: string }) {
     const writes = SkillEntity.planSave(view, body, before);
-    const fields = SkillFields.read(writes.properties?.values ?? []);
+    const fields = SKILL_FIELDS.read(writes.properties?.values ?? []);
     const { description, name, primaryAbilityId } = body;
     return {
       columns: { description, name, primaryAbilityId },
@@ -75,12 +75,12 @@ export default class SkillEntity {
   ): EntityWrites {
     if (stripSeparators(skill.name) === "budget") throw new RulesError("invalid", '"Budget" is a reserved skill name');
     const { checkPenaltyMultiplier, impactedByWeight, usableWithoutTraining } = skill;
-    const fields = SkillFields.normalize({ checkPenaltyMultiplier, impactedByWeight, usableWithoutTraining });
+    const fields = SKILL_FIELDS.normalize({ checkPenaltyMultiplier, impactedByWeight, usableWithoutTraining });
     const renamed = before?.name !== skill.name;
     return {
       columns: {},
       generatedFeats: renamed ? writeSkillFocus(view, skill.name) : [],
-      properties: { types: SKILL_FIELD_PROPERTY_TYPES, values: SkillFields.toProperties(fields) },
+      properties: SKILL_FIELDS.write(fields),
       removedFeats: before && renamed ? removeSkillFocus(view, before.name) : [],
     };
   }
@@ -96,7 +96,7 @@ export default class SkillEntity {
     ),
   ): (T & SkillFieldValues)[] {
     const propertiesBySkillId = Map.groupBy(properties, (property) => property.entityId);
-    return skills.map((skill) => ({ ...skill, ...SkillFields.read(propertiesBySkillId.get(skill.id) ?? []) }));
+    return skills.map((skill) => ({ ...skill, ...SKILL_FIELDS.read(propertiesBySkillId.get(skill.id) ?? []) }));
   }
 
   /** A skill of the ruleset, with the fields its properties keep: refused when the view has none of its id. */

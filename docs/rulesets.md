@@ -628,14 +628,26 @@ A part's operation is a method of a handle of `engine/api/`, which `Engine` hand
 
 Its verb says which: `describe…`, `get…` and `list…` answer what something is, `open…` a picker or a list, `plan…` a plan, `check…` refuses or answers what it checked, `validate…` a path's validation, `build…` the view, its copy-on-write data and its source chain (`buildView`, `buildData`, `buildSourceChain`), `merge…` the rows a copy takes of its siblings, and `to…` a conversion (`toEntityProperties`). A method named for a noun hands out a handle (`character(input)`, `class(klassId)`, `skills()`, `levelUp()`), and isn't an operation (`arkyvree/one-engine-op`).
 
-An entity's fields are its fields class's: their type, and the codec that reads them off its properties and gives them back as id-less `PropertyValue`s (`skills/SkillFields.ts`: `SkillFieldValues`, `SkillFields.read`, `SkillFields.toProperties`). Its entity class describes it and plans its saves with them (`skills/SkillEntity.ts`: a save's row, what it writes beside it, and the skill it answers once saved), the character's loader reads with them, and the seeders write with them (`Engine.forRules(baseRules).toEntityProperties`):
+An entity's fields are declared once, in its kind's folder, as a spec a codec reads and writes (`engine/core/fields/`: `Field`'s kinds, `FieldCodec`): `entities/skills/fields.ts` declares `SKILL_FIELDS`, from which come the fields' values (`SkillFieldValues`), their defaults, the property types that store them, their reading off an entity's properties (`read`, in one pass) and their writing back as id-less `PropertyValue`s (`toProperties`, `write`), an edit's merge, the rule between them (`normalize`), and the shape a route validates a body's fields with (`ENTITY_FIELDS`, built from the specs). Its entity class describes it and plans its saves with them (`skills/SkillEntity.ts`: a save's row, what it writes beside it, and the skill it answers once saved), the character's loader reads with them, and the seeders write with them (`Engine.forRules(baseRules).toEntityProperties`):
+
+```ts
+// engine/rulesets/dnd3.5/entities/skills/fields.ts
+export const SKILL_FIELDS = new FieldCodec(
+  {
+    checkPenaltyMultiplier: Field.number(SKILL_CHECK_PENALTY_MULTIPLIER, { default: 1, min: 1 }),
+    impactedByWeight: Field.flag(SKILL_IMPACTED_BY_WEIGHT),
+    usableWithoutTraining: Field.flag(SKILL_USABLE_WITHOUT_TRAINING),
+  },
+  { normalize: (fields) => ({ ...fields, checkPenaltyMultiplier: fields.impactedByWeight ? fields.checkPenaltyMultiplier : 1 }) },
+);
+```
 
 ```ts
 // engine/rulesets/dnd3.5/entities/skills/SkillEntity.ts
 export default class SkillEntity {
   private static planRow(view: RulesetView, body: SkillBody, before?: { name: string }) {
     const writes = SkillEntity.planSave(view, body, before);
-    const fields = SkillFields.read(writes.properties?.values ?? []);
+    const fields = SKILL_FIELDS.read(writes.properties?.values ?? []);
     const { description, name, primaryAbilityId } = body;
     return {
       columns: { description, name, primaryAbilityId },
@@ -650,12 +662,12 @@ export default class SkillEntity {
     before?: { name: string },
   ): EntityWrites {
     …
-    const fields = SkillFields.normalize({ checkPenaltyMultiplier, impactedByWeight, usableWithoutTraining });
+    const fields = SKILL_FIELDS.normalize({ checkPenaltyMultiplier, impactedByWeight, usableWithoutTraining });
     const renamed = before?.name !== skill.name;
     return {
       columns: {},
       generatedFeats: renamed ? writeSkillFocus(view, skill.name) : [],
-      properties: { types: SKILL_FIELD_PROPERTY_TYPES, values: SkillFields.toProperties(fields) },
+      properties: SKILL_FIELDS.write(fields),
       removedFeats: before && renamed ? removeSkillFocus(view, before.name) : [],
     };
   }
@@ -697,7 +709,7 @@ A ruleset is a module under `engine/rulesets/<ruleset>/`, which the engine's han
 1. **Define the module**: a class of `engine/rulesets/<ruleset>/` (3.5's `Dnd35Module.ts`), whose factory (`Dnd35Module.create`) returns a `RulesetModule` of its own (`Dnd35RulesetModule`): its parts, `characters`, `entities`, `levelUp` and `content`, each a class with the methods the handles of `engine/api/` ask, by 3.5's names and arguments (`levelUp().getPreview` asks `getLevelUpPreview` with the view and the character it binds, then its caller's), and what an operation asks of them (`describeCharacterCard`, which `characters().describeCard` asks for a list's character; `checkPlayable`, which `checkPublishable` asks of a ruleset); its factories, `createTargetPaths` and `createPropertyTypes`; and `orderProperties`, the order its view keeps an entity's properties in. A new ruleset's template items come with its base, which its content package seeds: a fork reads them through its chain.
 2. **Write its character** in `engine/rulesets/<ruleset>/character/`: its state (`CharacterState`), the concerns that build and validate it, its components and how they're wired (`CharacterComponents.build`), `DetailedCharacter`, which includes the concerns, and what builds one of its row's kind from its input (`CharacterBuilder.build`). 3.5's are typed against its own components and rows: a second ruleset writes its own, taking the engine's machinery (the evaluators, the paths, the module contract).
 3. **Write its target paths**: a `CategoryPaths` subclass (`Dnd35TargetPaths`) over its categories, one `PathCategory` per domain (`AbilitiesPaths`, `CombatPaths`, …), which `createTargetPaths` returns and the evaluators walk; and its property types (`Dnd35PropertyTypes`), which `createPropertyTypes` returns: the types and values its rules read, which the core's `PropertyTypeCatalog` lists with those the ruleset's own properties use. See [target-paths.md](./target-paths.md).
-4. **Write its entities**: a fields class for each entity whose fields its rules keep in properties (`skills/SkillFields.ts`), the entity class that describes it and plans its saves (`skills/SkillEntity.ts`), what a ruleset needs to be played (3.5's `PlayableContent`), and the body's fields and bounds a route validates with (`entityFields.ts`: `ENTITY_FIELDS`, `RULESET_LIMITS`), which join 3.5's in what `engine/index.ts` exports.
+4. **Write its entities**: a fields spec for each entity whose fields its rules keep in properties (`entities/skills/fields.ts`), the entity class that describes it and plans its saves (`skills/SkillEntity.ts`), what a ruleset needs to be played (3.5's `PlayableContent`), and the body's fields and bounds a route validates with (`entityFields.ts`: `ENTITY_FIELDS`, `RULESET_LIMITS`), which join 3.5's in what `engine/index.ts` exports.
 5. **Write its level-up**: its projection (3.5's `Dnd35ProjectedCharacterData`), a class per operation on a base of what they share (3.5's `LevelUpState`, its concerns, and `LevelUpPlan`, `LevelEdit`, `LevelRemoval`, `LevelUpSteps`, the pickers…), and the class its `levelUp` part is, which opens them (`Dnd35LevelUp`).
 6. **Register the module**: add it to `MODULES` in `engine/api/Modules.ts` (`Modules.of`), keyed by its base rules (`BaseRules`, `shared/enums.ts`): until it is, the engine doesn't compile.
 7. **Write its content**: `content/<ruleset>/` (its builders and its data), the package that seeds it (`database/packages/`), and, for books it scrapes, its codegen (`codegen/<ruleset>/`). See [packages.md](./packages.md).

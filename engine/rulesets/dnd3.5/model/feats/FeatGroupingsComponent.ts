@@ -1,4 +1,4 @@
-import FeatFields from "@/engine/rulesets/dnd3.5/entities/feats/FeatFields.ts";
+import { FEAT_FIELDS } from "@/engine/rulesets/dnd3.5/entities/feats/fields.ts";
 import type { Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -28,7 +28,7 @@ export default class FeatGroupingsComponent {
 
   /** The feat in each family its properties name. */
   registerFeat(feat: { name: string }, properties: Property[]): void {
-    for (const familyName of FeatFields.read(properties).families) {
+    for (const familyName of FEAT_FIELDS.read(properties).families) {
       const normalizedFamily = stripSeparators(familyName);
 
       // Derive variant key: strip "Family: " prefix from feat name

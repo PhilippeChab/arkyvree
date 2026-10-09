@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 
 import { powersInRules, propertiesInCustomization } from "@/drizzle/schema.ts";
-import PowerFields, { POWER_FIELD_PROPERTY_TYPES } from "@/engine/rulesets/dnd3.5/entities/powers/PowerFields.ts";
+import { POWER_FIELDS } from "@/engine/rulesets/dnd3.5/entities/powers/fields.ts";
 import { db } from "@/server/database/index.ts";
 import { SPELL_COMPONENT, SPELL_DESCRIPTOR, SPELL_SCHOOL, SPELL_TARGET } from "@/shared/dnd3.5/properties/index.ts";
 
@@ -39,9 +39,9 @@ function multiset(rows: { type: string; value: string }[]) {
 
 describe("A power's fields", () => {
   test("are none without their properties, and as stored with them: each from its first row, the lists in order", () => {
-    expect(PowerFields.read([])).toEqual({ components: [], descriptors: [] });
+    expect(POWER_FIELDS.read([])).toEqual(POWER_FIELDS.defaults);
     expect(
-      PowerFields.read([
+      POWER_FIELDS.read([
         { type: SPELL_SCHOOL, value: "Evocation" },
         { type: SPELL_DESCRIPTOR, value: "Fire" },
         { type: SPELL_TARGET, value: "One creature" },
@@ -50,13 +50,19 @@ describe("A power's fields", () => {
         { type: SPELL_DESCRIPTOR, value: "Light" },
         { type: "SOMETHING_ELSE", value: "1" },
       ]),
-    ).toEqual({ components: ["V"], descriptors: ["Fire", "Light"], school: "Evocation", target: "One creature" });
+    ).toEqual({
+      ...POWER_FIELDS.defaults,
+      components: ["V"],
+      descriptors: ["Fire", "Light"],
+      school: "Evocation",
+      target: "One creature",
+    });
   });
 
   test("are kept in a property per field with a value, none for an empty one, and none at all without a school", () => {
-    expect(PowerFields.toProperties({ duration: "1 round", target: "You" })).toEqual([]);
+    expect(POWER_FIELDS.toProperties({ duration: "1 round", target: "You" })).toEqual([]);
     expect(
-      multiset(PowerFields.toProperties({ components: ["V"], duration: "", school: "Evocation", target: "You" })),
+      multiset(POWER_FIELDS.toProperties({ components: ["V"], duration: "", school: "Evocation", target: "You" })),
     ).toEqual([`${SPELL_COMPONENT}=V`, `${SPELL_SCHOOL}=Evocation`, `${SPELL_TARGET}=You`]);
   });
 
@@ -72,12 +78,12 @@ describe("A power's fields", () => {
       .innerJoin(powersInRules, eq(powersInRules.id, propertiesInCustomization.entityId))
       .where(eq(propertiesInCustomization.entityType, "powers"));
     const rowsByPower = Map.groupBy(rows, (row) => row.powerId);
-    expect(rows.every((row) => POWER_FIELD_PROPERTY_TYPES.includes(row.type))).toBe(true);
+    expect(rows.every((row) => POWER_FIELDS.types.includes(row.type))).toBe(true);
     expect(rowsByPower.size).toBeGreaterThan(2000);
 
     const mismatches = [...rowsByPower].filter(
       ([, stored]) =>
-        multiset(PowerFields.toProperties(PowerFields.read(stored))).join("|") !== multiset(stored).join("|"),
+        multiset(POWER_FIELDS.toProperties(POWER_FIELDS.read(stored))).join("|") !== multiset(stored).join("|"),
     );
     expect([...new Set(mismatches.map(([, stored]) => stored[0].name))].toSorted()).toEqual(
       SPELLS_THE_FIELDS_CANNOT_HOLD,
