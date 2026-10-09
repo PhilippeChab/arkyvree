@@ -3,7 +3,6 @@ import type { JobHelpers } from "graphile-worker";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { Attachments, Blobs } from "@/server/repositories/index.ts";
 import ObjectStorage, { isStorageConfigured } from "@/server/storage/ObjectStorage.ts";
-import { UNATTACHED_BLOB_TTL_MS } from "@/shared/attachments.ts";
 
 interface Logger {
   info(message: string): void;
@@ -15,6 +14,13 @@ type SweepResult = "swept" | "failed" | "skipped";
 const BATCH_SIZE = 500;
 
 const noopLogger: Logger = { info() {}, warn() {} };
+
+/**
+ * How long an unattached blob (uploaded but never confirmed) lives before the sweep reclaims it. Bounds the cost of the
+ * declared-byteSize-vs-actual-PUT abuse window. Long enough to give clients room to retry attach() if the network
+ * glitches.
+ */
+const UNATTACHED_BLOB_TTL_MS = 60 * 60 * 1000;
 
 async function sweepOne(blobId: string, key: string, logger: Logger): Promise<SweepResult> {
   return await withTransaction(async (tx) => {

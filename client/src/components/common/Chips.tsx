@@ -1,6 +1,12 @@
 import { Chip, type ChipProps } from "@mui/material";
 import { Link } from "react-router-dom";
 
+interface ChoiceChipProps {
+  label: string;
+  onClick: () => void;
+  selected: boolean;
+}
+
 /**
  * A chip of the family: MUI's, its size and its fill set by its role. What it's handed beyond its label and color (a
  * click that opens its choices, a delete, an input's tag props, a tooltip's handlers) goes on to MUI's chip.
@@ -16,6 +22,19 @@ interface ValueChipProps extends FamilyChipProps {
 
 /** A chip keeps its whole label beside text that wraps (a change's name in Local Changes). */
 const CHIP_SX = { flexShrink: 0 } as const;
+
+/** One of several to choose from (a level's feat or spell pools): filled while it's the one chosen. */
+export function ChoiceChip({ label, selected, onClick }: ChoiceChipProps) {
+  return (
+    <Chip
+      label={label}
+      variant={selected ? "filled" : "outlined"}
+      color={selected ? "primary" : "default"}
+      onClick={onClick}
+      aria-pressed={selected}
+    />
+  );
+}
 
 /** A count ("3 variants", "1 player", a point-buy's points): outlined, at the theme's small size. */
 export function CountChip({ ...props }: FamilyChipProps) {

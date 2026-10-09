@@ -2,18 +2,21 @@ import { useQueryClient } from "@tanstack/react-query";
 import { type ReactNode, useCallback, useRef, useState } from "react";
 
 import { ConfirmDialog } from "@/client/src/components/common/index.ts";
+import { APP_NAME } from "@/client/src/lib/brand.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { useDirtyFormsStore } from "@/client/src/stores/dirtyFormsStore.ts";
+import type { WsEvent } from "@/shared/webSocketEvents.ts";
 
 import { useSnackbar } from "./useSnackbar.ts";
-import { useWebSocket, type WsMessage } from "./useWebSocket.ts";
+import { useWebSocket } from "./useWebSocket.ts";
 
 interface WebSocketProviderProps {
   children: ReactNode;
 }
 
-const EVENT_INVALIDATION_MAP: Record<string, readonly (readonly string[])[]> = {
+/** The queries each of the server's events changes, which it refreshes; a new event's keys go here. */
+const EVENT_INVALIDATION_MAP: Record<Exclude<WsEvent["type"], "app:version">, readonly (readonly string[])[]> = {
   "activities:updated": [QUERY_KEYS.activities.all, QUERY_KEYS.dashboard.stats],
   "notifications:updated": [QUERY_KEYS.notifications.all, QUERY_KEYS.activities.all, QUERY_KEYS.dashboard.stats],
 };
@@ -28,10 +31,9 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
   const [confirmRefresh, setConfirmRefresh] = useState(false);
 
   const handleMessage = useCallback(
-    (data: WsMessage) => {
-      if (data.type === "app:version") {
-        if (typeof data.version !== "string") return;
-        const { version } = data;
+    (event: WsEvent) => {
+      if (event.type === "app:version") {
+        const { version } = event;
         if (buildVersionRef.current && buildVersionRef.current !== version) {
           snackbar.info("A new version is available", {
             action: {
@@ -48,9 +50,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
         return;
       }
 
-      const keys = EVENT_INVALIDATION_MAP[data.type];
-      if (!keys) return;
-      for (const key of keys) queryClient.invalidateQueries({ queryKey: key });
+      for (const key of EVENT_INVALIDATION_MAP[event.type]) queryClient.invalidateQueries({ queryKey: key });
     },
     [queryClient, snackbar],
   );
@@ -65,7 +65,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
         onClose={() => setConfirmRefresh(false)}
         onConfirm={() => window.location.reload()}
         pending={false}
-        title="Refresh Arkyvree"
+        title={`Refresh ${APP_NAME}`}
         message="Are you sure you want to refresh? Your unsaved changes will be lost."
         confirmLabel="Refresh"
         intent="caution"

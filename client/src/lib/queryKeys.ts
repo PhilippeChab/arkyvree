@@ -1,4 +1,4 @@
-import type { InviteKind } from "./invites.ts";
+import type { InviteKind } from "@/client/src/components/invites/index.ts";
 
 export const QUERY_KEYS = {
   auth: {
@@ -33,7 +33,7 @@ export const QUERY_KEYS = {
     classLevels: (id: string, classId: string) => ["rulesets", "detail", id, "class", classId, "levels"] as const,
     classSkills: (id: string, classId: string) => ["rulesets", "detail", id, "class", classId, "skills"] as const,
     classSpellsPerDay: (id: string, classId: string) =>
-      ["rulesets", "detail", id, "class", classId, "spells-per-day"] as const,
+      ["rulesets", "detail", id, "class", classId, "spellsPerDay"] as const,
     classSpellsKnown: (id: string, classId: string) =>
       ["rulesets", "detail", id, "class", classId, "spellsKnown"] as const,
     classSpellLists: (id: string, classId: string) =>

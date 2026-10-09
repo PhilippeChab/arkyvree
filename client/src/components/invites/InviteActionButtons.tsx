@@ -12,7 +12,7 @@ interface InviteActionButtonsProps {
   prominent?: boolean;
 }
 
-/** Accept / Reject pair for an invitation (see docs/ui-buttons.md → pair patterns). */
+/** Accept / Reject pair for an invite (see docs/ui-buttons.md → pair patterns). */
 export function InviteActionButtons({
   onAccept,
   onReject,

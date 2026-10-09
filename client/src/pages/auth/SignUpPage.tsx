@@ -3,19 +3,14 @@ import type { InferRequestType } from "hono/client";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import {
-  AuthPage,
-  authPagePath,
-  type AuthPageState,
-  AuthSubmitButton,
-  GoogleSignInSection,
-  useAuthRedirect,
-} from "@/client/src/components/auth/index.ts";
+import { AuthPage, authPagePath, type AuthPageState, useAuthRedirect } from "@/client/src/components/auth/index.ts";
 import { EmailField, PasswordField } from "@/client/src/components/common/index.ts";
 import { useAuthRequests, useFormWith, usePageTitle } from "@/client/src/hooks/index.ts";
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 import { confirmPasswordRules, NEW_PASSWORD_RULES } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
+
+import { AuthSubmitButton, GoogleSignInSection } from "./components/index.ts";
 
 type SignUpFormData = InferRequestType<(typeof rpc.auth)["sign-up"]["$post"]>["json"];
 

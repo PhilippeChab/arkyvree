@@ -1,29 +1,27 @@
 import { Avatar, Box, Button, Container, Stack, Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
-import {
-  PageError,
-  PageLoader,
-  PageTransition,
-  Panel,
-  RoleChip,
-  StatusChip,
-} from "@/client/src/components/common/index.ts";
+import { PageError, PageLoader, PageTransition, Panel } from "@/client/src/components/common/index.ts";
+import { ContributorRoleChip } from "@/client/src/components/contributors/index.ts";
 import { CheckIcon } from "@/client/src/components/icons/index.ts";
-import { useAnswerInvite, usePageTitle } from "@/client/src/hooks/index.ts";
+import {
+  acceptedPath,
+  INVITE_KINDS,
+  InviteActionButtons,
+  type InviteKind,
+  InviteStatusChip,
+  useAnswerInvite,
+} from "@/client/src/components/invites/index.ts";
+import { usePageTitle } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { formatDate } from "@/client/src/lib/formatDate.ts";
-import { acceptedPath, INVITE_KINDS, type InviteKind } from "@/client/src/lib/invites.ts";
 
-import { InviteActionButtons } from "./InviteActionButtons.tsx";
 import { inviteQuery } from "./inviteQueries.ts";
 
-interface InviteLandingPageProps {
-  /** The invite's id, from its page's URL. */
-  inviteId: string;
-  /** What the invite is to: its page's facts and its answers (`INVITE_KINDS`). */
+interface InvitePageProps {
+  /** What the invite is to, which its route says: its page's facts and its answers (`INVITE_KINDS`). */
   kind: InviteKind;
 }
 
@@ -34,39 +32,49 @@ interface InviteStateCardProps {
   title: string;
 }
 
+/** Where an invite that can't be answered sends the user back to: the dashboard. */
+const BACK_TO_DASHBOARD = (
+  <Button variant="contained" component={Link} to="/dashboard">
+    Back to Dashboard
+  </Button>
+);
+
 /** An invite's column: its card stands alone, centred, deeper under the app bar than a page's content */
 const COLUMN_SX = { py: { xs: 4, sm: 8 } } as const;
 
 function InviteStateCard({ icon, title, children, action }: InviteStateCardProps) {
   return (
-    <Container maxWidth="sm" sx={COLUMN_SX}>
-      <Panel sx={{ textAlign: "center" }}>
-        <Stack spacing={2}>
-          <Box>{icon}</Box>
-          <Stack spacing={3}>
-            <Box>
-              <Typography variant="h5" component="h1" gutterBottom>
-                {title}
-              </Typography>
-              <Typography variant="body1" sx={{ color: "text.secondary" }}>
-                {children}
-              </Typography>
-            </Box>
-            {action && <Box>{action}</Box>}
+    <PageTransition>
+      <Container maxWidth="sm" sx={COLUMN_SX}>
+        <Panel sx={{ textAlign: "center" }}>
+          <Stack spacing={2}>
+            <Box>{icon}</Box>
+            <Stack spacing={3}>
+              <Box>
+                <Typography variant="h5" component="h1" gutterBottom>
+                  {title}
+                </Typography>
+                <Typography variant="body1" sx={{ color: "text.secondary" }}>
+                  {children}
+                </Typography>
+              </Box>
+              {action && <Box>{action}</Box>}
+            </Stack>
           </Stack>
-        </Stack>
-      </Panel>
-    </Container>
+        </Panel>
+      </Container>
+    </PageTransition>
   );
 }
 
 /**
- * Page reached from an invitation email: shows the invite and lets the user
+ * The page an invite email links to, whatever the invite's kind (its route's `kind`): shows the invite and lets the user
  * accept or reject it, or explains why it can no longer be answered.
  */
-export function InviteLandingPage({ kind, inviteId }: InviteLandingPageProps) {
+export default function InvitePage({ kind }: InvitePageProps) {
   const { pageTitle, icon: Icon, entityLabel, entityPath, verb, acceptedStatus } = INVITE_KINDS[kind];
   usePageTitle(pageTitle);
+  const { inviteId = "" } = useParams<{ inviteId: string }>();
   const navigate = useNavigate();
   // An invite answered or revoked elsewhere refreshes, and the page shows why it can't be answered anymore
   const { accept: acceptMutation, reject: rejectMutation } = useAnswerInvite();
@@ -79,11 +87,6 @@ export function InviteLandingPage({ kind, inviteId }: InviteLandingPageProps) {
 
   const { data: invite, isLoading, error } = useQuery({ ...inviteQuery(kind, inviteId), enabled: !isAnswering });
 
-  const goToDashboard = (
-    <Button variant="contained" component={Link} to="/dashboard">
-      Go to Dashboard
-    </Button>
-  );
   const stateIcon = <Icon sx={{ fontSize: { xs: 48, sm: 64 }, color: "text.secondary" }} />;
 
   if (isLoading) {
@@ -104,7 +107,7 @@ export function InviteLandingPage({ kind, inviteId }: InviteLandingPageProps) {
 
   if (!invite) {
     return (
-      <InviteStateCard icon={stateIcon} title="Invite Not Found" action={goToDashboard}>
+      <InviteStateCard icon={stateIcon} title="Invite Not Found" action={BACK_TO_DASHBOARD}>
         This invite may have been revoked or doesn't belong to your account.
       </InviteStateCard>
     );
@@ -133,7 +136,7 @@ export function InviteLandingPage({ kind, inviteId }: InviteLandingPageProps) {
 
   if (!isAnswering && invite.status === "Pending" && invite.isArchived) {
     return (
-      <InviteStateCard icon={stateIcon} title={`${entityLabel} Archived`} action={goToDashboard}>
+      <InviteStateCard icon={stateIcon} title={`${entityLabel} Archived`} action={BACK_TO_DASHBOARD}>
         <strong>{name}</strong> has been archived. This invite can no longer be accepted.
       </InviteStateCard>
     );
@@ -142,9 +145,9 @@ export function InviteLandingPage({ kind, inviteId }: InviteLandingPageProps) {
   if (!isAnswering && invite.status !== "Pending") {
     return (
       <InviteStateCard
-        icon={<StatusChip label={invite.status} color={invite.status === "Rejected" ? "error" : "default"} />}
+        icon={<InviteStatusChip status={invite.status} />}
         title={`Invite ${invite.status}`}
-        action={goToDashboard}
+        action={BACK_TO_DASHBOARD}
       >
         This invite to {verb} <strong>{name}</strong> is no longer pending.
       </InviteStateCard>
@@ -170,7 +173,7 @@ export function InviteLandingPage({ kind, inviteId }: InviteLandingPageProps) {
                       <Typography variant="body2" sx={{ color: "text.secondary" }}>
                         Invited as
                       </Typography>
-                      <RoleChip label={invite.role} />
+                      <ContributorRoleChip role={invite.role} />
                     </Stack>
                   )}
                 </Stack>

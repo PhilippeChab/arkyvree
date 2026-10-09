@@ -1,4 +1,4 @@
-/** Spending skill points over planned levels: the level-up wizard previews it, the server applies it. */
+/** Spending skill points over planned levels: the level-up wizard previews it, the engine applies it. */
 
 /**
  * The levels in the order points go to `skillId`: those where it's a class skill first, at a point a rank, then the

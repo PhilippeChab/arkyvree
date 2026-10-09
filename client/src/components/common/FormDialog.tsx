@@ -6,7 +6,7 @@ import { useDirtyForm } from "@/client/src/hooks/index.ts";
 import { Modal, type ModalProps } from "./Modal.tsx";
 import { valuesEqual } from "./valuesEqual.ts";
 
-export interface FormDialogProps<TFormValues extends FieldValues = FieldValues> extends Omit<
+interface FormDialogProps<TFormValues extends FieldValues = FieldValues> extends Omit<
   ModalProps,
   "onClose" | "children"
 > {
@@ -18,7 +18,7 @@ export interface FormDialogProps<TFormValues extends FieldValues = FieldValues> 
    */
   form: UseFormReturn<TFormValues>;
   onClose: () => void;
-  /** Optional: also block close while a mutation is in flight. */
+  /** Its request is in flight: no close of any kind until it's answered. */
   pending?: boolean;
 }
 

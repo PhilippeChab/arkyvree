@@ -18,7 +18,7 @@ import { Link } from "react-router-dom";
 import { GoldDivider, LoadError, PageLoader, PageTransition } from "@/client/src/components/common/index.ts";
 import { CampaignIcon, CharacterIcon, HelpIcon, RulesetIcon } from "@/client/src/components/icons/index.ts";
 import { usePageTitle } from "@/client/src/hooks/index.ts";
-import { TAGLINE, TAGLINE_DETAIL } from "@/client/src/lib/brand.ts";
+import { APP_NAME, TAGLINE, TAGLINE_DETAIL } from "@/client/src/lib/brand.ts";
 import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 import { dashboardStatsQuery } from "@/client/src/lib/queries.ts";
 import { DURATION, EASING, fadeInUpSx, PREFERS_REDUCED_MOTION, transitionOf } from "@/client/src/theme/animations.ts";
@@ -176,7 +176,7 @@ export default function DashboardPage() {
                     textShadow: (theme) => theme.textShadows.hero,
                   }}
                 >
-                  Welcome to Arkyvree
+                  Welcome to {APP_NAME}
                 </Typography>
               </Stack>
               <Stack spacing={3}>

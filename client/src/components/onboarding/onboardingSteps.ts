@@ -5,17 +5,19 @@ import {
   RulesetIcon,
   type SvgIconComponent,
 } from "@/client/src/components/icons/index.ts";
-import { TAGLINE, TAGLINE_DETAIL } from "@/client/src/lib/brand.ts";
+import type { SidebarId } from "@/client/src/components/layout/index.ts";
+import { APP_NAME, TAGLINE, TAGLINE_DETAIL } from "@/client/src/lib/brand.ts";
 
 /** A step of the tour: a dialog's, or one shown beside the sidebar's item it names (`sidebarId`). */
-export interface OnboardingStep {
+interface OnboardingStep {
   description: string;
+  /** What it says more of, under its description: a `HelpLabel`'s label and its tooltip's text. */
+  help?: { label: string; text: string };
   icon: SvgIconComponent | null;
   logo?: boolean;
   /** The sidebar's item the step points at, beside it, on a wide screen: a dialog's step has none. */
-  sidebarId?: "campaigns" | "characters" | "rulesets";
+  sidebarId?: SidebarId;
   title: string;
-  tooltip?: string;
 }
 
 /** The tour's steps, in order; `{help}` in a description is the link to Help. */
@@ -23,7 +25,7 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     icon: null,
     logo: true,
-    title: "Welcome to Arkyvree",
+    title: `Welcome to ${APP_NAME}`,
     description: `${TAGLINE}. ${TAGLINE_DETAIL}`,
   },
   {
@@ -31,8 +33,10 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
     title: "Rulesets",
     description:
       "The foundation — browse base and community rulesets, fork a base ruleset to create your own, and customize rules to fit your table.",
-    tooltip:
-      "Forking creates your own editable copy of a base ruleset — it inherits all entities and only copies what you change. Extensions let you subscribe to sourcebook content packages that add new feats, items, classes, and more.",
+    help: {
+      label: "Forking & Extensions",
+      text: "Forking creates your own editable copy of a base ruleset — it inherits all entities and only copies what you change. Extensions let you subscribe to sourcebook content packages that add new feats, items, classes, and more.",
+    },
     sidebarId: "rulesets",
   },
   {

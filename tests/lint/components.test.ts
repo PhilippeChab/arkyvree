@@ -59,8 +59,7 @@ describe("component rules", () => {
         {
           "client/src/raw.tsx": 'export const r = <Chip variant={on ? "filled" : "outlined"} label="A" />;\n',
           "client/src/plain.tsx": 'export const p = <Chip variant="outlined" label="A" />;\n',
-          "client/src/components/common/ChoiceChip.tsx":
-            'export const c = <Chip variant={on ? "filled" : "outlined"} />;\n',
+          "client/src/components/common/Chips.tsx": 'export const c = <Chip variant={on ? "filled" : "outlined"} />;\n',
           "client/src/group.tsx":
             'import { ToggleButtonGroup } from "@mui/material";\nexport const g = ToggleButtonGroup;\n',
           "client/src/components/common/OptionToggle.tsx":
@@ -411,7 +410,7 @@ describe("component rules", () => {
           "client/src/row.tsx":
             'export const r = <Stack direction="row" spacing={2}><SubsectionTitle>Stats</SubsectionTitle><Chip /></Stack>;\n',
           "client/src/components/common/SubsectionTitle.tsx": own,
-          "client/src/components/common/EntryTitle.tsx": own,
+          "client/src/components/characters/sections/EntryTitle.tsx": own,
         },
         ["section-headings"],
       ),

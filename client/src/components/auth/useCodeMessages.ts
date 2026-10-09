@@ -9,10 +9,11 @@ interface ResendCallbacks {
 }
 
 /**
- * A verification-code page's error, and resending its code (`resend` runs its mutation with the callbacks it's
- * given): `notice` confirms a code went out until a later request fails.
+ * A verification code form's messages, an auth page's or a dialog's: its `error`, its submit's (`setError`) or its
+ * resend's, and the `notice` a resend gives (`handleResend` runs `resend`'s mutation with the callbacks it's given),
+ * which stands until a later request fails.
  */
-export function useResendCode(resend: (callbacks: ResendCallbacks) => void) {
+export function useCodeMessages(resend: (callbacks: ResendCallbacks) => void) {
   const [error, setPageError] = useState<string | null>(null);
   const [resent, setResent] = useState(false);
 

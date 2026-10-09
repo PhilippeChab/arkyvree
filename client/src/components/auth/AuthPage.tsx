@@ -3,7 +3,6 @@ import { type ReactNode } from "react";
 
 import { PageTransition, Panel } from "@/client/src/components/common/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
-import { DURATION, EASING, fadeInUp, PREFERS_REDUCED_MOTION } from "@/client/src/theme/animations.ts";
 
 interface AuthPageProps {
   children: ReactNode;
@@ -19,12 +18,7 @@ interface AuthPageProps {
 export function AuthPage({ children, title, subtitle, error, notice }: AuthPageProps) {
   const isMobile = useIsMobile();
   const page = (
-    <Stack
-      sx={{
-        animation: `${fadeInUp} ${DURATION.slow}ms ${EASING.decelerate} both`,
-        [PREFERS_REDUCED_MOTION]: { animation: "none" },
-      }}
-    >
+    <Stack>
       <Typography sx={{ typography: { xs: "h5", sm: "h4" }, textAlign: "center" }} component="h1" gutterBottom>
         {title}
       </Typography>

@@ -1,48 +1,18 @@
 import { Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 
-import {
-  EmptyValue,
-  RoleChip,
-  ROW_ACTIONS_HOVER_SX,
-  RowActions,
-  StatusChip,
-  TableFrame,
-} from "@/client/src/components/common/index.ts";
+import { EmptyValue, ROW_ACTIONS_HOVER_SX, RowActions, TableFrame } from "@/client/src/components/common/index.ts";
+import { InviteStatusChip } from "@/client/src/components/invites/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
-import type { ContributorRole } from "@/shared/enums.ts";
 
 import type { Contributor, ContributorsPage } from "./contributorKinds.ts";
+import { ContributorRoleChip } from "./ContributorRoleChip.tsx";
 
 interface ContributorsTableProps {
   contributors: Contributor[];
   owner: ContributorsPage["owner"];
   /** A row's `RowAction`s; when omitted there is no Actions column. */
   renderActions?: (contributor: Contributor) => ReactNode;
-}
-
-function contributorStatusColor(status: string): "warning" | "success" | "error" | "default" {
-  switch (status) {
-    case "Pending":
-      return "warning";
-    case "Active":
-      return "success";
-    case "Rejected":
-      return "error";
-    default:
-      return "default";
-  }
-}
-
-function roleColor(role: ContributorRole): "error" | "primary" | "default" {
-  switch (role) {
-    case "Admin":
-      return "error";
-    case "Editor":
-      return "primary";
-    default:
-      return "default";
-  }
 }
 
 /** Owner row followed by the invited contributors, with their role and their status. */
@@ -80,10 +50,10 @@ export function ContributorsTable({ owner, contributors, renderActions }: Contri
               {userCell(owner.username, owner.emailAddress)}
               {!isMobile && <TableCell>{owner.emailAddress}</TableCell>}
               <TableCell>
-                <RoleChip label="Owner" color="primary" />
+                <ContributorRoleChip role="Owner" />
               </TableCell>
               <TableCell>
-                <StatusChip label="Active" color="success" />
+                <InviteStatusChip status="Active" />
               </TableCell>
               {renderActions && <TableCell align="right" />}
             </TableRow>
@@ -93,10 +63,10 @@ export function ContributorsTable({ owner, contributors, renderActions }: Contri
               {userCell(contributor.user?.username, contributor.email)}
               {!isMobile && <TableCell>{contributor.email}</TableCell>}
               <TableCell>
-                <RoleChip label={contributor.role} color={roleColor(contributor.role)} />
+                <ContributorRoleChip role={contributor.role} />
               </TableCell>
               <TableCell>
-                <StatusChip label={contributor.status} color={contributorStatusColor(contributor.status)} />
+                <InviteStatusChip status={contributor.status} />
               </TableCell>
               {renderActions && (
                 <TableCell align="right">

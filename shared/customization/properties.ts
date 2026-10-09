@@ -1,11 +1,3 @@
-export interface PropertyType {
-  description?: string;
-  entityType?: string;
-  isStatic: boolean;
-  usageCount?: number;
-  value: string;
-}
-
 export interface PropertyTypeCompletion {
   detail?: string;
   entityType?: string;

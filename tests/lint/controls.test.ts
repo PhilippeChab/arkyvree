@@ -46,7 +46,8 @@ describe("control rules", () => {
           "client/src/save.tsx": "export const s = <SaveButton canSave={dirty} pending={busy} />;\n",
           "client/src/footer.tsx": 'export const f = <Button type={submit ? "submit" : "button"}>Go</Button>;\n',
           "client/src/components/common/SaveButton.tsx": 'export const b = <Button type="submit">Save</Button>;\n',
-          "client/src/components/auth/AuthSubmitButton.tsx": 'export const a = <Button type="submit">Go</Button>;\n',
+          "client/src/pages/auth/components/AuthSubmitButton.tsx":
+            'export const a = <Button type="submit">Go</Button>;\n',
         },
         ["save-buttons"],
       ),
@@ -140,8 +141,6 @@ describe("control rules", () => {
           "client/src/choice.tsx": 'export const c = <ChoiceChip label="All" selected onClick={pick} />;\n',
           "client/src/components/common/Chips.tsx":
             'import { Chip } from "@mui/material";\nexport const o = <Chip label={label} size="small" />;\n',
-          "client/src/components/common/ChoiceChip.tsx":
-            'import { Chip } from "@mui/material";\nexport const c = <Chip label={label} />;\n',
         },
         ["chips"],
       ),

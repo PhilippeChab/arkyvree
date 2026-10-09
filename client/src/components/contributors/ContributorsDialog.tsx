@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 import {
   AddButton,
   BlankNote,
-  ConfirmDialog,
   DialogFooter,
   DiceSpinner,
   ListToolbar,
@@ -58,7 +57,7 @@ export function ContributorsDialog({
   roles,
   rowActions,
 }: ContributorsDialogProps) {
-  const { label, noun, lead } = CONTRIBUTOR_KINDS[kind];
+  const { lead } = CONTRIBUTOR_KINDS[kind];
   const contributors = useContributors(kind, id, open);
   const { removeDialog, leaveDialog } = contributors;
 
@@ -149,6 +148,7 @@ export function ContributorsDialog({
       />
 
       <RemoveContributorDialog
+        kind={kind}
         contributor={removeDialog.target}
         open={removeDialog.open}
         onClose={removeDialog.close}
@@ -156,15 +156,13 @@ export function ContributorsDialog({
         pending={contributors.removeMutation.isPending}
       />
 
-      <ConfirmDialog
+      <RemoveContributorDialog
+        kind={kind}
+        isSelfRemoval
         open={leaveDialog.open}
         onClose={leaveDialog.close}
         onConfirm={() => contributors.leaveMutation.mutate()}
         pending={contributors.leaveMutation.isPending}
-        title={`Leave ${label}`}
-        message={`Are you sure you want to leave this ${noun}? You will lose a contributor's access unless you're invited again.`}
-        confirmLabel={`Leave ${label}`}
-        intent="caution"
       />
     </>
   );

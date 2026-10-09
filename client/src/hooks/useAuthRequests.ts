@@ -1,5 +1,5 @@
 import { type QueryClient, useIsMutating, useMutation } from "@tanstack/react-query";
-import { parseResponse } from "hono/client";
+import { type InferRequestType, parseResponse } from "hono/client";
 
 import { NO_TIME } from "@/client/src/lib/durations.ts";
 import { emailNotVerified } from "@/client/src/lib/errorMessage.ts";
@@ -8,6 +8,15 @@ import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { type AuthUser, toAuthUser } from "@/client/src/stores/authUser.ts";
+
+/** What a password reset sends: the code, the email it went to, and the new password twice. */
+type ResetPasswordBody = InferRequestType<(typeof rpc.auth)["reset-password"]["$post"]>["json"];
+
+type SignInBody = InferRequestType<(typeof rpc.auth)["sign-in"]["$post"]>["json"];
+
+type SignUpBody = InferRequestType<(typeof rpc.auth)["sign-up"]["$post"]>["json"];
+
+type VerifyEmailBody = InferRequestType<(typeof rpc.auth)["verify-email"]["$post"]>["json"];
 
 /** The server signed the user in: the store keeps them, and no email waits for its code any more. */
 function signedIn(user: AuthUser) {
@@ -49,8 +58,7 @@ export function useAuthRequests() {
 
   const signIn = useMutation({
     mutationKey,
-    mutationFn: (json: { emailAddress: string; password: string }) =>
-      parseResponse(rpc.auth["sign-in"].$post({ json })),
+    mutationFn: (json: SignInBody) => parseResponse(rpc.auth["sign-in"].$post({ json })),
     onSuccess: signedIn,
     // An unverified email waits for its code
     onError: (error, { emailAddress }) => {
@@ -77,15 +85,13 @@ export function useAuthRequests() {
 
   const signUp = useMutation({
     mutationKey,
-    mutationFn: (json: { emailAddress: string; password: string; passwordConfirmation: string }) =>
-      parseResponse(rpc.auth["sign-up"].$post({ json })),
+    mutationFn: (json: SignUpBody) => parseResponse(rpc.auth["sign-up"].$post({ json })),
     onSuccess: (_, { emailAddress }) => useAuthStore.setState({ pendingVerificationEmail: emailAddress }),
   });
 
   const verifyEmail = useMutation({
     mutationKey,
-    mutationFn: (json: { code: string; emailAddress: string }) =>
-      parseResponse(rpc.auth["verify-email"].$post({ json })),
+    mutationFn: (json: VerifyEmailBody) => parseResponse(rpc.auth["verify-email"].$post({ json })),
     onSuccess: signedIn,
   });
 
@@ -103,8 +109,7 @@ export function useAuthRequests() {
 
   const resetPassword = useMutation({
     mutationKey,
-    mutationFn: (json: { code: string; emailAddress: string; newPassword: string; newPasswordConfirmation: string }) =>
-      parseResponse(rpc.auth["reset-password"].$post({ json })),
+    mutationFn: (json: ResetPasswordBody) => parseResponse(rpc.auth["reset-password"].$post({ json })),
     // Its email waits until the user signs in: the reset page stays to send them there
   });
 

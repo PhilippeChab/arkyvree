@@ -1,10 +1,9 @@
 import { Typography } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 
-import { oglLicenseQuery } from "@/client/src/lib/queries.ts";
-
 import { DiceSpinner } from "./DiceSpinner.tsx";
 import { LoadError } from "./LoadError.tsx";
+import { oglLicenseQuery } from "./oglLicenseQueries.ts";
 
 /**
  * The Open Game License's text, wherever it shows (the legal page, a system ruleset's notice): loaded as it first

@@ -1,6 +1,7 @@
 export const WEAPON_BASE_DAMAGE = "WEAPON_BASE_DAMAGE";
 export const WEAPON_CRITICAL_MULTIPLIER = "WEAPON_CRITICAL_MULTIPLIER";
-export const WEAPON_CRITICAL_RANGE = "WEAPON_CRITICAL_RANGE"; // 0 = 20, 1 = 19, etc.
+/** How many rolls threaten a critical, the 20 and those under it: 1 = 20, 2 = 19–20. */
+export const WEAPON_CRITICAL_RANGE = "WEAPON_CRITICAL_RANGE";
 /** A double weapon's other end's damage dice (a quarterstaff's 1d6): in two hands, it fights as two weapons. */
 export const WEAPON_DOUBLE_DAMAGE = "WEAPON_DOUBLE_DAMAGE";
 export const WEAPON_FAMILY = "WEAPON_FAMILY";

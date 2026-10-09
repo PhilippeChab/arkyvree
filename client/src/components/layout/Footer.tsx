@@ -1,5 +1,7 @@
 import { Stack, Typography } from "@mui/material";
 
+import { APP_NAME } from "@/client/src/lib/brand.ts";
+
 import { SourceLink } from "./SourceLink.tsx";
 
 export function Footer() {
@@ -18,7 +20,9 @@ export function Footer() {
         color: "text.secondary",
       }}
     >
-      <Typography variant="caption">© {new Date().getFullYear()} Arkyvree</Typography>
+      <Typography variant="caption">
+        © {new Date().getFullYear()} {APP_NAME}
+      </Typography>
       <SourceLink variant="caption" />
     </Stack>
   );

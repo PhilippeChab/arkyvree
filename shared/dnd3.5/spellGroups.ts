@@ -39,6 +39,24 @@ interface SpellRowTag {
   name: string;
 }
 
+/** What the groups read of a character: its classes' levels, its computed powers, its aptitudes and spell tags. */
+interface SpellSheet {
+  aptitudes?: Record<string, { id: string; name: string }>;
+  classes: Record<string, { levels?: { klassLevel?: { level: number } | null; powers?: LevelSpell[] }[] }>;
+  powers?: Record<
+    string,
+    {
+      // Its DC as each class casts it, by the class's aptitude slug
+      dc?: Record<string, { total: number }> | null;
+      power?: { description?: string | null };
+      properties?: Record<string, string>;
+    }
+  >;
+  spellTagLists?: Record<string, SpellTagLists>;
+  spellTags?: Record<string, string[]>;
+  virtualPowers?: GivenSpell[];
+}
+
 export interface AptitudeSpells {
   aptitudeName: string;
   levels: SpellGroup[];
@@ -60,24 +78,6 @@ export interface SpellRow {
   save: string;
   school: string;
   tags?: SpellRowTag[];
-}
-
-/** What the groups read of a character: its classes' levels, its computed powers, its aptitudes and spell tags. */
-export interface SpellSheet {
-  aptitudes?: Record<string, { id: string; name: string }>;
-  classes: Record<string, { levels?: { klassLevel?: { level: number } | null; powers?: LevelSpell[] }[] }>;
-  powers?: Record<
-    string,
-    {
-      // Its DC as each class casts it, by the class's aptitude slug
-      dc?: Record<string, { total: number }> | null;
-      power?: { description?: string | null };
-      properties?: Record<string, string>;
-    }
-  >;
-  spellTagLists?: Record<string, SpellTagLists>;
-  spellTags?: Record<string, string[]>;
-  virtualPowers?: GivenSpell[];
 }
 
 /**

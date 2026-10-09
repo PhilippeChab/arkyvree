@@ -2,7 +2,7 @@ import { getTargetPathCompletions } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { paginateItems } from "@/server/repositories/index.ts";
-import type { PaginatedCompletions, TargetPathKind } from "@/shared/customization/target.ts";
+import type { TargetPathKind } from "@/shared/customization/target.ts";
 
 import { getTargetPathsWithLabels, validatePath } from "./targetPaths.ts";
 
@@ -23,7 +23,7 @@ class TargetPathsService {
     limit: number = 20,
     page: number = 1,
     flat: boolean = false,
-  ): Promise<PaginatedCompletions> {
+  ) {
     const catalog = await getTargetPathsWithLabels(rulesetId, kind, entityType);
     const completions = await withRulesetScope(db, rulesetId, async (scope) =>
       getTargetPathCompletions(scope, catalog, kind, { flat, partialPath, position, search }),

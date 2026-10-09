@@ -7,7 +7,25 @@ import { FormDialog } from "./FormDialog.tsx";
 import { type Intent } from "./intent.ts";
 import { Modal } from "./Modal.tsx";
 
-type DeleteDialogProps = Omit<ConfirmDialogProps, "intent">;
+interface ConfirmDialogProps {
+  /** Extra content below the message, e.g. an option the confirm depends on. */
+  children?: ReactNode;
+  confirmIcon?: ReactNode;
+  /** Its action, named ("Archive Character", never "Confirm"). */
+  confirmLabel: string;
+  /** What its confirm does, its button's color (`intent.ts`, docs/ui-buttons.md). */
+  intent?: Intent;
+  message: ReactNode;
+  onClose: () => void;
+  onConfirm: () => void;
+  open: boolean;
+  /** Its request is in flight: its action spins, and the dialog waits. */
+  pending: boolean;
+  title: string;
+}
+
+/** A deletion's confirmation: `ConfirmDialog`'s destructive preset, its action "Delete" unless it names another. */
+type DeleteDialogProps = Omit<ConfirmDialogProps, "confirmLabel" | "intent"> & { confirmLabel?: string };
 
 interface FormActionDialogProps<T extends FieldValues = FieldValues> {
   children: ReactNode;
@@ -19,6 +37,7 @@ interface FormActionDialogProps<T extends FieldValues = FieldValues> {
   onExited?: () => void;
   onSubmit: (data: T) => void;
   open: boolean;
+  /** Its request is in flight: its submit spins, and the dialog waits. */
   pending: boolean;
   submitIcon?: ReactNode;
   submitLabel: string;
@@ -28,21 +47,6 @@ interface FormActionDialogProps<T extends FieldValues = FieldValues> {
 type StandardFormDialogProps<T extends FieldValues> = Omit<FormActionDialogProps<T>, "submitLabel"> & {
   submitLabel?: string;
 };
-
-export interface ConfirmDialogProps {
-  /** Extra content below the message, e.g. an option the confirm depends on. */
-  children?: ReactNode;
-  confirmIcon?: ReactNode;
-  confirmLabel?: string;
-  /** What its confirm does, its button's color (`intent.ts`, docs/ui-buttons.md). */
-  intent?: Intent;
-  message: ReactNode;
-  onClose: () => void;
-  onConfirm: () => void;
-  open: boolean;
-  pending: boolean;
-  title: string;
-}
 
 function FormActionDialog<T extends FieldValues = FieldValues>({
   open,
@@ -99,7 +103,7 @@ export function ConfirmDialog({
   title,
   message,
   children,
-  confirmLabel = "Confirm",
+  confirmLabel,
   intent,
   confirmIcon,
 }: ConfirmDialogProps) {
@@ -123,8 +127,8 @@ export function CreateDialog<T extends FieldValues = FieldValues>({ ...props }: 
   return <FormActionDialog submitLabel="Create" {...props} />;
 }
 
-export function DeleteDialog({ ...props }: DeleteDialogProps) {
-  return <ConfirmDialog confirmLabel="Delete" {...props} intent="destructive" />;
+export function DeleteDialog({ confirmLabel = "Delete", ...props }: DeleteDialogProps) {
+  return <ConfirmDialog {...props} confirmLabel={confirmLabel} intent="destructive" />;
 }
 
 export function EditDialog<T extends FieldValues = FieldValues>({ ...props }: StandardFormDialogProps<T>) {

@@ -2,10 +2,11 @@ import { FormControlLabel, Stack, Switch } from "@mui/material";
 import { useRef, useState } from "react";
 import type { FieldError, RefCallBack } from "react-hook-form";
 
-import { Crossfade, HelpLabel } from "@/client/src/components/common/index.ts";
+import { HelpLabel } from "@/client/src/components/common/index.ts";
 import { isValuelessOperator, type OperatorKind } from "@/shared/customization/operators.ts";
 import { extractTemplateExpression, isTemplateValue } from "@/shared/customization/templateExpression.ts";
 
+import { Crossfade } from "./Crossfade.tsx";
 import { TEMPLATE_HELP } from "./customizationHelp.ts";
 import { OperatorSelect } from "./OperatorSelect.tsx";
 import { PathValueInput } from "./PathValueInput.tsx";

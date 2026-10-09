@@ -7,6 +7,9 @@ interface ThemeContextType {
   themeMode: ThemeMode;
 }
 
-export type ThemeMode = "light" | "dark" | "system";
+/** How the app picks its theme: light, dark, or the system's. */
+export type ThemeMode = (typeof THEME_MODES)[number];
+
+export const THEME_MODES = ["light", "dark", "system"] as const;
 
 export const ThemeContext = createContext<ThemeContextType | undefined>(undefined);

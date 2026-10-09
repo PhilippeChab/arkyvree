@@ -2,7 +2,8 @@ import { alpha, Button, Stack, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
 
 import { ScienceIcon } from "@/client/src/components/icons/index.ts";
-import { useDemoTimeRemaining } from "@/client/src/hooks/index.ts";
+
+import { useDemoTimeRemaining } from "./useDemoTimeRemaining.ts";
 
 /** A demo session's banner, with the time it has left: its layout shows it for a demo's user alone (`useIsDemo`). */
 export function DemoBanner() {

@@ -1,10 +1,3 @@
-export interface PaginatedCompletions {
-  items: PathCompletion[];
-  nextPage: number | undefined;
-  page: number;
-  segmentLabels: Record<string, string>;
-}
-
 export interface PathCompletion {
   detail: string;
   documentation: string;
@@ -93,20 +86,4 @@ export function deriveSegmentLabels(
 /** A path segment as a label ("privateNotes" → "Private Notes"). */
 export function formatSegment(segment: string) {
   return segment.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (c) => c.toUpperCase());
-}
-
-/**
- * The labels of the segments `targets` name, picked from `segmentLabels`. A target is a path
- * (`saves.fortitude.misc`) or a template value: a bare path (`{{ abilities.charisma.modifier }}`), or an expression
- * whose paths are bracketed (`{{ floor([classes.ranger.level] / 2) }}`).
- */
-export function pickTargetLabels(targets: string[], segmentLabels: Record<string, string>): Record<string, string> {
-  const labels: Record<string, string> = {};
-  for (const target of targets) {
-    const inner = target.replace(/^\{\{?\s*|\s*\}?\}$/g, "").trim();
-    const bracketed = [...inner.matchAll(/\[([^\]]+)\]/g)].map((match) => match[1].trim());
-    for (const path of bracketed.length > 0 ? bracketed : [inner])
-      for (const segment of path.split(".")) if (segment in segmentLabels) labels[segment] = segmentLabels[segment];
-  }
-  return labels;
 }

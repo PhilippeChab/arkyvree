@@ -2,14 +2,15 @@
 
 import { createContext } from "react";
 
-export interface SnackbarContextType {
+interface SnackbarContextType {
   /**
    * Show an error toast: the caught error's message, or `fallback`, which names what failed ("Failed to archive
    * campaign"), when it carries none.
    */
   error: (err: unknown, fallback: string) => void;
+  /** A notice, its `action` a button on it (the new version's Refresh), `persistent` until it's dismissed. */
   info: (message: string, options?: ToastOptions) => void;
-  success: (message: string, options?: ToastOptions) => void;
+  success: (message: string) => void;
   warning: (message: string) => void;
 }
 

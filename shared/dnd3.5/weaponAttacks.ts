@@ -1,5 +1,17 @@
 import { capitalize, formatSigned } from "@/shared/text.ts";
 
+/**
+ * One attack a sheet lists for a weapon: its label (the slot, "thrown" and "two weapons" added), to-hit and range, and
+ * its damage when it isn't the weapon's (a double weapon's other end).
+ */
+interface AttackRow {
+  attack: number[];
+  damage?: string;
+  key: string;
+  label: string;
+  range: string;
+}
+
 /** What a sheet's weapon row reads of a weapon: its to-hit, its thrown and two-weapon attacks, and its range. */
 interface WeaponAttacks {
   offend: { damage: string; total: number[] } | null;
@@ -8,18 +20,6 @@ interface WeaponAttacks {
   thrown: { total: number[] } | null;
   tohit: { total: number[] };
   twoweapon: { damage?: string; thrown: number[] | null; total: number[] } | null;
-}
-
-/**
- * One attack a sheet lists for a weapon: its label (the slot, "thrown" and "two weapons" added), to-hit and range, and
- * its damage when it isn't the weapon's (a double weapon's other end).
- */
-export interface AttackRow {
-  attack: number[];
-  damage?: string;
-  key: string;
-  label: string;
-  range: string;
 }
 
 /** A weapon slot's label, as an item's location names it. */

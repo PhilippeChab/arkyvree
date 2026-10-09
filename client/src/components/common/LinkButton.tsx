@@ -5,12 +5,15 @@ interface LinkButtonProps {
   children: ReactNode;
   disabled?: boolean;
   onClick: () => void;
-  sx?: LinkProps["sx"];
+  /** Its type, when it stands on its own (Try the Demo); without one it takes its line's (a sentence's "Resend"). */
   variant?: LinkProps["variant"];
 }
 
+/** A link in a line of text: its font, and its baseline, a button's own being neither. */
+const IN_LINE_SX = { font: "inherit", verticalAlign: "baseline" } as const;
+
 /** An action written as a link (Resend, Try the Demo): a button, underlined on hover, in its own look. */
-export function LinkButton({ children, onClick, disabled, variant, sx }: LinkButtonProps) {
+export function LinkButton({ children, onClick, disabled, variant }: LinkButtonProps) {
   return (
     <MuiLink
       component="button"
@@ -19,7 +22,7 @@ export function LinkButton({ children, onClick, disabled, variant, sx }: LinkBut
       variant={variant}
       onClick={onClick}
       disabled={disabled}
-      sx={sx}
+      sx={[!variant && IN_LINE_SX]}
     >
       {children}
     </MuiLink>

@@ -1,18 +1,13 @@
 import { useEffect } from "react";
 
 import { useLatest } from "@/client/src/hooks/index.ts";
-import { isRecord } from "@/shared/isRecord.ts";
+import { isWsEvent, type WsEvent } from "@/shared/webSocketEvents.ts";
 
 interface UseWebSocketOptions {
   enabled: boolean;
   identity: string | null;
-  onMessage: (data: WsMessage) => void;
-}
-
-/** A message the server pushes: its type, and what it carries. */
-export interface WsMessage {
-  [key: string]: unknown;
-  type: string;
+  /** An event the server pushed (`WsEvent`). */
+  onMessage: (event: WsEvent) => void;
 }
 
 const PING_INTERVAL_MS = 30000;
@@ -81,9 +76,9 @@ export function useWebSocket({ enabled, identity, onMessage }: UseWebSocketOptio
           return;
         }
         try {
-          // A message is an object with its type; anything else is ignored
+          // One of the server's events; anything else is ignored
           const data: unknown = JSON.parse(event.data);
-          if (isRecord(data) && typeof data.type === "string") onMessageRef.current({ ...data, type: data.type });
+          if (isWsEvent(data)) onMessageRef.current(data);
         } catch {
           // Ignore malformed messages
         }

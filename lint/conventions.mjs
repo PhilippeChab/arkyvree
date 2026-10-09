@@ -64,6 +64,8 @@
  * - `concern-shape`: a concern (`function X<B extends Constructor>(Base: B)`) sits in `X.ts`, its class is named for
  *   what it adds (a verb's `-ing`, `Archives` → `Archiving`, or `With` a noun, `ArmorClass` → `WithArmorClass`), and
  *   it adds methods, never state.
+ * - `one-of`: whether a value is one of a list (an enum's values, a list of names) is `isOneOf(value, list)`
+ *   (`shared/isOneOf.ts`), which narrows it, never a `.some((x) => x === value)` of its own.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
@@ -651,6 +653,32 @@ function createNoParentImports(context) {
   });
 }
 
+function createOneOf(context) {
+  const file = repoPath(context.filename);
+  if (file === "shared/isOneOf.ts") return {};
+  return {
+    CallExpression(node) {
+      const callee = node.callee;
+      if (callee.type !== "MemberExpression" || callee.computed || callee.property.name !== "some") return;
+      const [callback] = node.arguments;
+      if (callback?.type !== "ArrowFunctionExpression" || callback.params.length !== 1) return;
+      const [param] = callback.params;
+      const body = callback.body;
+      if (param.type !== "Identifier" || body.type !== "BinaryExpression" || body.operator !== "===") return;
+      const isParam = (side) => side.type === "Identifier" && side.name === param.name;
+      const other = isParam(body.left) ? body.right : isParam(body.right) ? body.left : undefined;
+      // A value that isn't one of a list's kind (`undefined`) is a list's own `includes`
+      if (!other || isParam(other) || mentions(other, param.name) || isNothing(other)) return;
+      context.report({
+        node,
+        message:
+          "Whether a value is one of a list is `isOneOf(value, list)` (`shared/isOneOf.ts`), which narrows it: never a " +
+          "`.some` comparing each.",
+      });
+    },
+  };
+}
+
 function createOrderThroughRepository(context) {
   const file = repoPath(context.filename);
   if (!file.startsWith("server/") || file === "server/repositories/BaseRepository.ts") return {};
@@ -1081,6 +1109,11 @@ function isHonoChain(node) {
   return current?.type === "NewExpression" && current.callee.type === "Identifier" && current.callee.name === "Hono";
 }
 
+/** Whether `node` is `undefined` or `null`: a value no list of texts or numbers holds. */
+function isNothing(node) {
+  return (node.type === "Identifier" && node.name === "undefined") || (node.type === "Literal" && node.value === null);
+}
+
 /** Whether `node` is `null`, or gives `null` for nothing: `x ?? null`, `x || null`, `x ? y : null`. */
 function isNullFallback(node) {
   if (!node) return false;
@@ -1121,6 +1154,18 @@ function isUnderCall(node, root, names) {
 function lengthOf(node) {
   const isLength = node?.type === "MemberExpression" && !node.computed && node.property.name === "length";
   return isLength ? node.object : undefined;
+}
+
+/** Whether `node`'s subtree names the variable `name` anywhere. */
+function mentions(node, name) {
+  if (node.type === "Identifier") return node.name === name;
+  return Object.entries(node).some(
+    ([key, value]) =>
+      key !== "parent" &&
+      (Array.isArray(value) ? value : [value]).some(
+        (child) => typeof child?.type === "string" && mentions(child, name),
+      ),
+  );
 }
 
 /**
@@ -1238,4 +1283,5 @@ export default {
   "include-order": { meta: { type: "suggestion", fixable: "code" }, create: createIncludeOrder },
   "error-names": { meta: { type: "suggestion" }, create: createErrorNames },
   "function-declarations": { meta: { type: "suggestion", fixable: "code" }, create: createFunctionDeclarations },
+  "one-of": { meta: { type: "suggestion" }, create: createOneOf },
 };

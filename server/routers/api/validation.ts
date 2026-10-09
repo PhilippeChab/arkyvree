@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-import { sanitizeEmail, sanitizeText } from "@/shared/text.ts";
+import { sanitizeEmail } from "@/server/emailAddress.ts";
+import { sanitizeText } from "@/shared/text.ts";
 
 import { limitDefaultingTo } from "./schemaBuilders.ts";
 

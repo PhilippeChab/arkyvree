@@ -1,6 +1,6 @@
 import type { WSContext } from "hono/ws";
 
-import type { WsEvent } from "./events.ts";
+import type { WsEvent } from "@/shared/webSocketEvents.ts";
 
 /** The sockets this process holds, by user. */
 class Connections {

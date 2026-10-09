@@ -2,17 +2,12 @@ import { Box, Collapse, Link as MuiLink, Stack, Typography } from "@mui/material
 import { type ReactNode, useState } from "react";
 import { Link } from "react-router-dom";
 
-import {
-  BlankNote,
-  EmptyValue,
-  EntryTitle,
-  SubsectionTitle,
-  ToggleLabel,
-} from "@/client/src/components/common/index.ts";
+import { BlankNote, EmptyValue, SubsectionTitle, ToggleLabel } from "@/client/src/components/common/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import { DURATION } from "@/client/src/theme/animations.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 
+import { EntryTitle } from "./EntryTitle.tsx";
 import { SheetSection } from "./SheetSection.tsx";
 
 type Feat = CharacterDetail["classes"][string]["levels"][number]["feats"][number];

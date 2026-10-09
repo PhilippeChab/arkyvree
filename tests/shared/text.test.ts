@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { isRecord } from "@/shared/isRecord.ts";
-import { capitalize, formatSigned, getInitial, sanitizeEmail, sanitizeText, stripSeparators } from "@/shared/text.ts";
+import { capitalize, formatSigned, sanitizeText, stripSeparators } from "@/shared/text.ts";
 
 describe("Text", () => {
   test("is capitalized by its first letter only", () => {
@@ -15,14 +15,8 @@ describe("Text", () => {
     expect([formatSigned(2), formatSigned(-1), formatSigned(0), formatSigned(null)]).toEqual(["+2", "-1", "+0", "+0"]);
   });
 
-  test("is stored trimmed and Unicode-normalized, an email address lowercased too", () => {
+  test("is stored trimmed and Unicode-normalized", () => {
     expect(sanitizeText("  ﬁre\u00A0ball  ")).toBe("fire ball");
-    expect(sanitizeEmail(" Elara@Example.COM ")).toBe("elara@example.com");
-  });
-
-  test("gives a name's initial for an avatar", () => {
-    expect(getInitial("elara")).toBe("E");
-    expect(getInitial("")).toBe("");
   });
 
   test("is a slug of its letters and digits, lowercased", () => {

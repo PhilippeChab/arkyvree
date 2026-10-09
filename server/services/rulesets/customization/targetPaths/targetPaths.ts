@@ -3,7 +3,23 @@ import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/inde
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
-import { pickTargetLabels, type TargetPathCatalog, type TargetPathKind } from "@/shared/customization/target.ts";
+import type { TargetPathCatalog, TargetPathKind } from "@/shared/customization/target.ts";
+import { extractReferencedPaths, isTemplateValue } from "@/shared/customization/templateExpression.ts";
+
+/**
+ * The labels of the segments `targets` name, picked from `segmentLabels`. A target is a path (`saves.fortitude.misc`)
+ * or a template value, whose paths it reads (`extractReferencedPaths`): a bare one (`{{ abilities.charisma.modifier }}`),
+ * or those an expression brackets (`{{ floor([classes.ranger.level] / 2) }}`).
+ */
+export function pickTargetLabels(targets: string[], segmentLabels: Record<string, string>): Record<string, string> {
+  const labels: Record<string, string> = {};
+  for (const target of targets) {
+    const paths = isTemplateValue(target) ? extractReferencedPaths(target) : [target];
+    for (const path of paths)
+      for (const segment of path.split(".")) if (segment in segmentLabels) labels[segment] = segmentLabels[segment];
+  }
+  return labels;
+}
 
 /**
  * Modifiers as a list shows them, an entity's or a character's: the labels of their target's and their template value's

@@ -3,11 +3,16 @@ import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { type Paginated, paginateItems } from "@/server/repositories/index.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
-import type {
-  PropertyType,
-  PropertyTypeCompletion,
-  PropertyValueCompletion,
-} from "@/shared/customization/properties.ts";
+import type { PropertyTypeCompletion, PropertyValueCompletion } from "@/shared/customization/properties.ts";
+
+/** A property type a ruleset lists: the engine's (static), or one its properties use, with how many. */
+interface PropertyType {
+  description?: string;
+  entityType?: string;
+  isStatic: boolean;
+  usageCount?: number;
+  value: string;
+}
 
 class PropertyTypesService {
   /**

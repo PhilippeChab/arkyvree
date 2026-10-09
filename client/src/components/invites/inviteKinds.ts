@@ -1,31 +1,31 @@
 /**
  * The kinds of invite, answered one way wherever they're answered (a notification's buttons, an invite's own page):
- * `useAnswerInvite` runs their requests, and `InviteLandingPage` shows one.
+ * `useAnswerInvite` runs their requests, and the invite's page (`pages/invites`) shows one.
  */
 
 import { parseResponse } from "hono/client";
 
 import { ContributorsIcon, PlayersIcon } from "@/client/src/components/icons/index.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
+import type { ContributorRole } from "@/shared/enums.ts";
 
-import { QUERY_KEYS } from "./queryKeys.ts";
+/** What an invite's page shows of it, whatever its kind. */
+interface InviteDetails {
+  entityId: string | null | undefined;
+  entityName: string | undefined;
+  invitedAt: string;
+  isArchived: boolean;
+  /** The contributor role it offers. */
+  role?: ContributorRole;
+  status: string;
+}
 
 /** An answer to an invite: its kind and id, and the notification it came from when it's answered from one. */
 export interface InviteAnswer {
   inviteId: string;
   kind: InviteKind;
   notificationId?: string;
-}
-
-/** What an invite's page shows of it, whatever its kind. */
-export interface InviteDetails {
-  entityId: string | null | undefined;
-  entityName: string | undefined;
-  invitedAt: string;
-  isArchived: boolean;
-  /** The contributor role it offers. */
-  role?: string;
-  status: string;
 }
 
 /** An invite's kind: who it invites to what. */

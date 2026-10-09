@@ -10,7 +10,7 @@ interface AnimatedAlertProps extends AlertProps {
 
 export function AnimatedAlert({ in: show, gutter = 0, sx, ...alertProps }: AnimatedAlertProps) {
   return (
-    <Collapse in={show}>
+    <Collapse in={show} timeout={DURATION.moderate}>
       <Box sx={{ pb: gutter }}>
         <Alert
           {...alertProps}

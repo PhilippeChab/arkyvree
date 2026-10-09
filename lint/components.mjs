@@ -161,10 +161,10 @@ const PAGE_HEADERS = new Set(["CharacterHeader", "DetailPageHeader", "PageHeader
 const PAGE_TITLE_MODULES = new Set([
   "client/src/components/auth/AuthPage.tsx",
   "client/src/components/common/DetailPageHeader.tsx",
-  "client/src/components/common/ErrorBoundary.tsx",
   "client/src/components/common/PageHeader.tsx",
-  "client/src/components/invites/InviteLandingPage.tsx",
+  "client/src/components/layout/ErrorBoundary.tsx",
   "client/src/pages/dashboard/DashboardPage.tsx",
+  "client/src/pages/invites/InvitePage.tsx",
 ]);
 
 /** The modules that draw a skeleton of what loads: a table's, the character sheet's, an entity page's */
@@ -295,7 +295,7 @@ function createCardTitles(context) {
 }
 
 function createChoiceChips(context) {
-  if (!inClient(context) || inFile(context, "client/src/components/common/ChoiceChip.tsx")) return {};
+  if (!inClient(context) || inFile(context, "client/src/components/common/Chips.tsx")) return {};
   const toggle = inFile(context, "client/src/components/common/OptionToggle.tsx");
   return {
     ImportSpecifier(node) {
@@ -853,7 +853,7 @@ function createSectionHeadings(context) {
   if (!inClient(context)) return {};
   const owner =
     inFile(context, "client/src/components/common/SubsectionTitle.tsx") ||
-    inFile(context, "client/src/components/common/EntryTitle.tsx");
+    inFile(context, "client/src/components/characters/sections/EntryTitle.tsx");
   return {
     JSXElement(node) {
       const name = elementName(node);

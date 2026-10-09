@@ -12,7 +12,7 @@ export function ResendCodeLink({ onResend, disabled }: ResendCodeLinkProps) {
   return (
     <Typography variant="body2">
       Didn't receive the code?{" "}
-      <LinkButton onClick={onResend} disabled={disabled} sx={{ verticalAlign: "baseline", font: "inherit" }}>
+      <LinkButton onClick={onResend} disabled={disabled}>
         Resend
       </LinkButton>
     </Typography>

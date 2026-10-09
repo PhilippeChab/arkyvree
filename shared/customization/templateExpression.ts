@@ -1,5 +1,6 @@
 /**
- * The template expression syntax of modifier and requirement values, which the server evaluates and both sides read:
+ * The template expression syntax of modifier and requirement values, which the engine evaluates and the client and the
+ * server read:
  *   [path.to.value]            — a value of the sheet, resolved by the engine
  *   123, -4, 0.5               — number literals
  *   name(arg1, arg2, ...)      — function call (min, max, floor, ceil, abs)
@@ -129,7 +130,7 @@ class Parser {
     return left;
   }
 
-  // Pratt-style precedence: + - lowest, * / next, unary - tightest before primary
+  // Recursive descent, a level per precedence: + - lowest, * / next, unary - tightest before primary
   private parseExpr(): TemplateNode {
     return this.parseAddSub();
   }
