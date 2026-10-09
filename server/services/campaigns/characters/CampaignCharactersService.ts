@@ -16,6 +16,7 @@ import {
   Visibility,
 } from "@/server/repositories/index.ts";
 import {
+  describeCharacterCards,
   enqueueCharacterPdf,
   findExportableCharacter,
   readBondedInputs,
@@ -147,7 +148,7 @@ class CampaignCharactersService {
       db,
       characters.map((c) => c.rulesetId),
       async (views) => {
-        const cards = Engine.describeCharacterCards(views, characters, levels);
+        const cards = describeCharacterCards(views, characters, levels);
 
         // Maintain order from linkedCharacters (which is already sorted by createdAt desc)
         const characterMap = new Map(characters.map((c) => [c.id, c]));
