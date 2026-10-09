@@ -53,35 +53,3 @@ test("disabled caches do not coalesce raw reads across worker jobs", async () =>
   const [first, second] = await Promise.all([RulesetViews.getRawData(fork.id), RulesetViews.getRawData(fork.id)]);
   expect(first).not.toBe(second);
 });
-
-for (const invalidation of ["ruleset", "all"] as const) {
-  test(`${invalidation} invalidation prevents a late target-path read from replacing fresh data`, async () => {
-    const session = makeSession();
-    const fork = await createSeededTestRuleset(session.userId);
-    const [feat] = await Feats.create(db, { name: "Path race", description: "Before", rulesetId: fork.id });
-    const read = async () => ({
-      paths: [],
-      segmentLabels: { feat: (await Feats.findOne(db, { id: feat.id }))!.description! },
-    });
-    const started = Promise.withResolvers<void>();
-    const release = Promise.withResolvers<void>();
-    const old = RulesetViews.getTargetPaths(fork, "modifier", async () => {
-      const data = await read();
-      started.resolve();
-      await release.promise;
-      return data;
-    });
-    await started.promise;
-    try {
-      await Feats.update(db, { description: "After" }, { id: feat.id });
-      if (invalidation === "ruleset") RulesetViews.invalidate(fork.id);
-      else RulesetViews.invalidateAll();
-      const fresh = await RulesetViews.getTargetPaths(fork, "modifier", read);
-      expect(fresh.segmentLabels.feat).toBe("After");
-    } finally {
-      release.resolve();
-      await old;
-    }
-    expect((await RulesetViews.getTargetPaths(fork, "modifier", read)).segmentLabels.feat).toBe("After");
-  });
-}

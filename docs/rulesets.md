@@ -146,12 +146,12 @@ The child's own entities are always included. Ancestor entities are included onl
 
 - **Standard entities** (feats, powers, items, races, skills, etc.): COW copies the entity and all customizations
 - **Classes**: COW copies the entire class including all levels and their customizations/relationships
-- **Customizations on inherited entities**: `RulesetEdit.cowOwner` / `cowCustomization` trace the modifier/property/requirement back to its owning entity, COWs that entity, then resolves the customization through IDs recorded at copy time, including sibling contributions
+- **Customizations on inherited entities**: `CustomizationEdit.cowOwner` / `cowCustomization` trace the modifier/property/requirement back to its owning entity, COWs that entity, then resolves the customization through IDs recorded at copy time, including sibling contributions
 
 ### Override Map
 
-The engine builds a ruleset's `CowData` (`Engine.copyOnWrite().buildData`, by its `CowDataBuilder`) from the rows the server reads as it says (`copyOnWrite().getReads`, `readCowData`): a mapping of `sourceEntityId → forkedEntityId` across the full snapshot chain, and of each sibling loser to its winner. Used for:
-- **FK remapping**: When copying entities, foreign keys pointing to inherited entities are remapped to their COW copies (`readCowData` through the copy's transaction, `CowData.resolve`): the same passes as the ruleset's view, so a copy stores what the view shows (a losing copy of a list resolves to the winning one)
+The engine builds a ruleset's `CowData` (`Engine.copyOnWrite().buildData`, by its `CowDataBuilder`) from the rows the server reads as it says (`copyOnWrite().getReads`, `CowDataReader`): a mapping of `sourceEntityId → forkedEntityId` across the full snapshot chain, and of each sibling loser to its winner. Used for:
+- **FK remapping**: When copying entities, foreign keys pointing to inherited entities are remapped to their COW copies (`CowDataReader.read` through the copy's transaction, `CowData.resolve`): the same passes as the ruleset's view, so a copy stores what the view shows (a losing copy of a list resolves to the winning one)
 - **Detail views**: `CowData.resolveRows()` remaps ID references in query results
 
 ### Snapshots
@@ -164,11 +164,11 @@ The engine builds a ruleset's `CowData` (`Engine.copyOnWrite().buildData`, by it
 ### Names of new entities
 
 Every entity create (and bulk item variants) checks the name with
-`RulesetEdit.assertNameAvailable` / `assertAncestorNamesHidden` against the fork's
+`EntityNames.assertNameAvailable` / `assertAncestorNamesHidden` against the fork's
 composed view. A local entity, or an inherited one that is still visible, with
 the same name blocks it. Inherited entities hidden by an override
 (`cow.isHidden`: overridden, or a sibling loser) do not. If a hidden ancestor's local
-copy was deleted, its snapshot is a tombstone, and `RulesetEdit.repointTombstone`
+copy was deleted, its snapshot is a tombstone, and `EntityNames.repointTombstone`
 moves it to the new entity. A live local copy keeps its snapshot even after a
 rename, so picks of the source keep resolving to that copy.
 
@@ -218,7 +218,7 @@ normal merged view of the currently subscribed extensions. Hidden sibling IDs
 still resolve to the local copy; deleting that copy leaves the whole entity hidden
 until the override is restored.
 
-`EntityCopy` requires both the source chain and `extensionRulesetIds` (`RulesetEdit` passes the ruleset's). Every edit path passes the current ruleset’s extensions, including entity edits, class-skill changes, and class-level changes, so the local copy contains all visible sibling customizations before read-time merging stops.
+`EntityCopy` requires both the source chain and `extensionRulesetIds` (`EntityEdit` and `CustomizationEdit` pass the ruleset's). Every edit path passes the current ruleset’s extensions, including entity edits, class-skill changes, and class-level changes, so the local copy contains all visible sibling customizations before read-time merging stops.
 
 ### Aptitudes and the Sibling Map
 
@@ -255,7 +255,7 @@ The sibling merge (`EntityCopy`'s `mergeSiblings`) merges four types of customiz
 | **Properties** | `mergeProperties`: inserts sibling properties | `type + value` |
 | **Aptitude links** | `mergeAptitudeLinks`: inserts sibling `feats_aptitudes` / `powers_aptitudes` rows, on the aptitude the copy's `CowData` resolves each to, as the copy's own links | resolved `aptitudeId` |
 
-The customizations are copied whole, as the winner's own (`copyEntityCustomizations`), and each copied row's new ID is recorded, so the mutation that triggered the copy changes the exact copied row. This ensures the user's local copy is self-contained. If they later unsubscribe from one of the extensions, their fork retains the full merged data since it's baked into their own copy, its links to the extension's lists moved to the lists of the same names its other books have (see Unsubscribe below).
+The customizations are copied whole, as the winner's own (`CustomizationCopies.copy`), and each copied row's new ID is recorded, so the mutation that triggered the copy changes the exact copied row. This ensures the user's local copy is self-contained. If they later unsubscribe from one of the extensions, their fork retains the full merged data since it's baked into their own copy, its links to the extension's lists moved to the lists of the same names its other books have (see Unsubscribe below).
 
 ## Extensions
 
@@ -334,25 +334,27 @@ See [docs/access.md](./access.md) for the full policy matrix across rulesets, ch
 The principle: only protect what the user *invested* in (their character
 picks). Author-owned data that breaks via cascade is recoverable by the author.
 
-The shared check lives in `cow/characterPicks.ts` as `hasCharacterPicks(tx, entityType,
-entityId, rulesetId)` and is reused by every entity-delete service and
+The shared check lives in `services/rulesets/characterPicks.ts` as `hasCharacterPicks(tx, entityType,
+ids, rulesetId)` and is reused by every entity-delete service and
 `revertOverride`. One helper, one scoping rule, one source of truth.
 
 ## Entity Services Pattern
 
-Every entity service works in the ruleset's scope (`withRulesetScope`): reads come from its composed view, which the service binds the engine to whole (`Engine.for(scope)`), and writes to an inherited entity go to the fork's copy, made on its first edit (`RulesetEdit`, `EntityCopy`: `server/cow/`):
+Every entity service works in the ruleset's scope (`withRulesetScope`): reads come from its composed view, which the service binds the engine to whole (`Engine.for(scope)`), and writes to an inherited entity go to the fork's copy, made on its first edit (`EntityEdit`, `EntityCopy`: `server/cow/writes/`):
 
 ```ts
-// Read (list): the repository reads the ruleset and its source chain
-return await withRulesetScope(db, rulesetId, async ({ rulesetData }) =>
-  Saves.findPage(db, { rulesetId, ancestorRulesetIds: rulesetData.cow.sourceChain, ...where }, pagination),
-);
+// Read (list): the repository reads the ruleset and its source chain, less the sibling losers; the engine reads the
+// rows as the view does
+return await withRulesetScope(db, rulesetId, async (scope) => {
+  const result = await Saves.findPage(db, { rulesetId, ...scope.rulesetData.cow.listFilters, ...where }, pagination);
+  return { ...result, items: Engine.for(scope).describeRows(result.items) };
+});
 
 // Read (one), and the start of every write: the entity in the composed view, or the engine's not-found refusal (a 404)
 const save = Engine.for(scope).entity("saves", saveId).get();
 
 // Update: the fork's own entity, or the copy of an inherited one (whose updatedAt isn't the client's)
-const edit = new RulesetEdit(ruleset, rulesetData.cow);
+const edit = new EntityEdit(ruleset);
 const { id: targetId, copied } = await edit.cowToEdit(tx, "saves", save);
 await Saves.update(tx, data, { id: targetId, expectedUpdatedAt: copied ? undefined : body.updatedAt });
 
@@ -508,7 +510,7 @@ engine/rulesets/
                                            BondedRaceData: their stat blocks; BondedScaling)
 ```
 
-In the server: what reads the rows an operation takes (`server/services/characters/characterInputs.ts`: `readCharacterInput`, `readBondedInputs`), and what writes what an operation plans (`server/services/rulesets/entityWrites.ts`: `writeEntityWrites`; `levels/bondedWrites.ts`: `writeBondedCreatures`). The PDF job (`server/jobs/generatePdf.ts`) and the shared PDF route render the document `character(input).describeSheet` answers. The server names no ruleset and builds no character: it reads, asks the engine and writes. Each of its actions asks the engine one operation, which answers it whole (`arkyvree/one-engine-op`): a plan carries what it answers once written, a picker or a list its filters, a description all its page shows. It binds the engine to the view as its scope gives it (`Engine.for(scope)`), reading of it only the copy-on-write data (`rulesetData.cow`: the source chain its reads filter by, what `RulesetEdit` writes by; `arkyvree/opaque-view`).
+In the server: what reads the rows an operation takes (`server/services/characters/characterInputs.ts`: `readCharacterInput`, `readBondedInputs`), and what writes what an operation plans (`server/services/rulesets/entityWrites.ts`: `writeEntityWrites`; `levels/bondedWrites.ts`: `writeBondedCreatures`). The PDF job (`server/jobs/generatePdf.ts`) and the shared PDF route render the document `character(input).describeSheet` answers. The server names no ruleset and builds no character: it reads, asks the engine and writes. Each of its actions asks the engine one operation, which answers it whole (`arkyvree/one-engine-op`): a plan carries what it answers once written, a picker or a list its filters, a description all its page shows. It binds the engine to the view as its scope gives it (`Engine.for(scope)`), reading of it only the copy-on-write data (`rulesetData.cow`: the source chain its reads filter by, what `EntityNames` and `CustomizationEdit` check and write by; `arkyvree/opaque-view`).
 
 ```
 server/
@@ -740,8 +742,8 @@ An audit on 2026-04-16 identified real leaks and some false alarms. It predates 
 
 | File | Purpose |
 |---|---|
-| `server/cow/views/` | `withRulesetScope` / `withRulesetScopes` (consumer entry points), the rows a ruleset's `CowData` is built from (`readCowData`), `RulesetViews.getCowData`: copy-on-write's read side. `CowData` itself (`engine/core/cow/CowData.ts`, built by the engine's `Engine.copyOnWrite().buildData`) is what a scope resolves ids through. |
-| `server/cow/` | `RulesetEdit` (the rows a change writes) and `EntityCopy` (a copy of an inherited entity): copy-on-write's write side. `EntityCopy` merges sibling data into newly COW'd local copies by the engine's rules (`Engine.copyOnWrite().mergeCustomizations`, `mergeAptitudeLinks`). Sibling read-time merging lives in the compose step (`engine/core/view/RulesetComposition.ts`). |
+| `server/cow/views/` | `withRulesetScope` / `withRulesetScopes` (consumer entry points), `RulesetViews` (the cache), and what it reads with: a ruleset's own rows (`RawDataReader`) and the rows its `CowData` is built from (`CowDataReader`): copy-on-write's read side. `CowData` itself (`engine/core/cow/CowData.ts`, built by the engine's `Engine.copyOnWrite().buildData`) is what a scope resolves ids through. |
+| `server/cow/writes/` | `EntityEdit` (the row an entity's change writes), `CustomizationEdit` (a customization's), `EntityNames` (the names a create takes), `EntityCopy` (a copy of an inherited entity), `CustomizationCopies` and `EntityRepositories`: copy-on-write's write side. `EntityCopy` merges sibling data into newly COW'd local copies by the engine's rules (`Engine.copyOnWrite().mergeCustomizations`, `mergeAptitudeLinks`). Sibling read-time merging lives in the compose step (`engine/core/view/RulesetComposition.ts`). |
 | `server/services/rulesets/RulesetsService.ts` | `forkRuleset`, `publishRuleset`, `archiveRuleset` |
 | `server/services/rulesets/extensions/RulesetExtensionsService.ts` | `subscribeExtension`, `unsubscribeExtension`, `getExtensions` |
 | `server/services/rulesets/changes/RulesetChangesService.ts` | `getChanges`, `revertOverride` |

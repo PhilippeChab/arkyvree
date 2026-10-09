@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 
 import { featsInRules } from "@/drizzle/schema.ts";
-import { copyEntityCustomizationsToMany, fetchEntityCustomizations } from "@/server/cow/index.ts";
+import { CustomizationCopies } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Modifiers, Requirements } from "@/server/repositories/index.ts";
 import { insertRows } from "@/tests/support/database.ts";
@@ -36,13 +36,13 @@ async function setup() {
       valueType: "number",
     },
   ]);
-  const customizations = (await fetchEntityCustomizations(db, [source.id], "feats", "feats")).get(source.id)!;
+  const customizations = (await CustomizationCopies.read(db, [source.id], "feats", "feats")).get(source.id)!;
   return { source, targets, modifier, customizations };
 }
 
 test("each target's copied modifier requirement belongs to that target's modifier", async () => {
   const { targets, customizations } = await setup();
-  await copyEntityCustomizationsToMany(
+  await CustomizationCopies.copyToMany(
     db,
     targets.map((t) => t.id),
     "feats",
@@ -57,7 +57,7 @@ test("each target's copied modifier requirement belongs to that target's modifie
 test("copied-id recording is limited to a single target", async () => {
   const { targets, customizations } = await setup();
   await expect(
-    copyEntityCustomizationsToMany(
+    CustomizationCopies.copyToMany(
       db,
       targets.map((t) => t.id),
       "feats",
@@ -70,14 +70,14 @@ test("copied-id recording is limited to a single target", async () => {
 test("a modifier requirement is never copied onto the source's own modifier", async () => {
   const { targets, modifier, customizations } = await setup();
   await expect(
-    copyEntityCustomizationsToMany(db, [targets[0].id], "feats", { ...customizations, modifiers: [] }),
+    CustomizationCopies.copyToMany(db, [targets[0].id], "feats", { ...customizations, modifiers: [] }),
   ).rejects.toThrow("outside the copied set");
   expect(await Requirements.findMany(db, { entityIds: [modifier.id], entityType: "modifiers" })).toHaveLength(1);
 });
 
 test("modifiers are not silently dropped for entity types that cannot own them", async () => {
   const { targets, customizations } = await setup();
-  await expect(copyEntityCustomizationsToMany(db, [targets[0].id], "skills", customizations)).rejects.toThrow(
+  await expect(CustomizationCopies.copyToMany(db, [targets[0].id], "skills", customizations)).rejects.toThrow(
     "Cannot copy modifiers onto skills",
   );
 });

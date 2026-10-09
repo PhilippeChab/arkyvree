@@ -4,9 +4,10 @@ import { db } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 import type { TargetPathCatalog, TargetPathKind } from "@/shared/customization/target.ts";
 import type { BaseRules } from "@/shared/enums.ts";
+import type { Ruleset } from "@/shared/relations.ts";
 
-import { readCowData } from "./cowData.ts";
-import { fetchRulesetRawData } from "./rawData.ts";
+import CowDataReader from "./CowDataReader.ts";
+import RawDataReader from "./RawDataReader.ts";
 
 /** A ruleset's own rows' key: a campaign's are its own. */
 function getRawDataKey(rulesetId: string, campaignId?: string): string {
@@ -14,11 +15,12 @@ function getRawDataKey(rulesetId: string, campaignId?: string): string {
 }
 
 /**
- * The rulesets' cache, read through `withRulesetScope` (`scope.ts`). It holds each ruleset's copy-on-write data, each
- * ruleset's own rows, a system ruleset's pinned (every fork reads them), which compose into a ruleset's view on each
- * read, and each ruleset's target paths. It reads committed rows only, through the shared `db`, never a
- * transaction's: a change's uncommitted rows would reach every reader. A change to a ruleset invalidates what it
- * touched (`invalidate`).
+ * The rulesets' cache: what a ruleset's view is built from, read once and kept for every reader, and what the engine
+ * lists of a view. Per ruleset, it keeps its copy-on-write data (`CowDataReader`), its own rows (`RawDataReader`, a
+ * system ruleset's pinned: every fork reads them) and its target paths, and composes a view from them on each read
+ * (`getData`). It reads committed rows only, through the shared `db`, never a transaction's: a change's uncommitted rows
+ * would reach every reader. A change to a ruleset drops what depends on it (`invalidate`). A service reads a view
+ * through `withRulesetScope` (`scope.ts`).
  */
 class RulesetViews {
   private readonly cowData = new DependentCache<CowData>();
@@ -26,6 +28,13 @@ class RulesetViews {
   private readonly rawData = new DependentCache<RulesetRawData>();
 
   private readonly targetPaths = new DependentCache<TargetPathCatalog>();
+
+  /** The engine's list of a ruleset's target paths of a kind, from its view. */
+  private async listTargetPaths(ruleset: Ruleset, kind: TargetPathKind): Promise<TargetPathCatalog> {
+    return Engine.for({ ruleset, rulesetData: await this.getData(ruleset) })
+      .targetPaths()
+      .list(kind);
+  }
 
   /** Drops what a change to a ruleset can touch: its copy-on-write data, its rows and its target paths. */
   invalidate(rulesetId: string): void {
@@ -54,13 +63,12 @@ class RulesetViews {
   /**
    * A ruleset's copy-on-write data: its source chain, its overrides and sibling pairs. Keyed by the ruleset and its
    * ordered source chain: a request holding old ruleset metadata must not cache its old subscription chain under the
-   * key readers of the newly committed chain use. Built from stored ids through the shared `db`, never through the
-   * copy-on-write context of a scope it's read in, or a transaction.
+   * key readers of the newly committed chain use. Read through the shared `db`, never a transaction.
    */
   async getCowData(ruleset: RulesetSources): Promise<CowData> {
     const dependencies = [ruleset.id, ...Engine.copyOnWrite().buildSourceChain(ruleset)];
     return this.cowData.getOrFetch(JSON.stringify(dependencies), dependencies, async () => ({
-      data: await readCowData(db, ruleset),
+      data: await CowDataReader.read(db, ruleset),
     }));
   }
 
@@ -77,23 +85,30 @@ class RulesetViews {
   /** A ruleset's own rows (a campaign's, with one), none of its ancestors': pinned when it's a system ruleset. */
   async getRawData(rulesetId: string, campaignId?: string): Promise<RulesetRawData> {
     return this.rawData.getOrFetch(getRawDataKey(rulesetId, campaignId), [rulesetId], () =>
-      fetchRulesetRawData(rulesetId, campaignId),
+      RawDataReader.read(rulesetId, campaignId),
     );
   }
 
+  /** A ruleset's target paths of a kind, and its template paths: what a modifier's or a requirement's check reads. */
+  async getTargetPathCatalogs(ruleset: Ruleset, kind: "modifier" | "requirement") {
+    return {
+      paths: await this.getTargetPaths(ruleset, kind),
+      templatePaths: await this.getTargetPaths(ruleset, "template"),
+    };
+  }
+
   /**
-   * A ruleset's target paths for a modifier, a requirement or a template, and their segments' labels: kept for the
-   * ruleset and its source chain, a change to any of which drops them.
+   * A ruleset's target paths for a modifier, a requirement or a template, and their segments' labels, as the engine
+   * lists them from its view: kept for the ruleset and its source chain, a change to any of which drops them. Listed
+   * inside the cache's fill, so a change during the listing keeps its late result out.
    */
-  async getTargetPaths(
-    ruleset: RulesetSources,
-    kind: TargetPathKind,
-    fetcher: () => Promise<TargetPathCatalog>,
-  ): Promise<TargetPathCatalog> {
+  async getTargetPaths(ruleset: Ruleset, kind: TargetPathKind): Promise<TargetPathCatalog> {
     const sourceChain = Engine.copyOnWrite().buildSourceChain(ruleset);
     // Old subscription metadata must not populate the key for the new chain.
     const key = JSON.stringify([ruleset.id, kind, ...sourceChain]);
-    return this.targetPaths.getOrFetch(key, [ruleset.id, ...sourceChain], async () => ({ data: await fetcher() }));
+    return this.targetPaths.getOrFetch(key, [ruleset.id, ...sourceChain], async () => ({
+      data: await this.listTargetPaths(ruleset, kind),
+    }));
   }
 
   /** Loads the system rulesets' rows (the bases and the extensions), at boot: the first user doesn't wait for them. */

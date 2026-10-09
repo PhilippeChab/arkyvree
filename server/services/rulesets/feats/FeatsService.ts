@@ -2,18 +2,19 @@ import { getTableName } from "drizzle-orm";
 
 import { featsInRules } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
-import { hasCharacterPicks, RulesetEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
+import { EntityEdit, EntityNames, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { type Db, db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Feats, FeatsAptitudes } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { hasCharacterPicks } from "@/server/services/rulesets/characterPicks.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class FeatsService {
   /**
    * Whether the ancestor feat a fork deleted was generated, read by its stored id: a new feat with its name stands in
-   * for it (`RulesetEdit.repointTombstone`), and takes its mark.
+   * for it (`EntityNames.repointTombstone`), and takes its mark.
    */
   private async wasGenerated(tx: Db, ancestorFeatId: string): Promise<boolean> {
     const feat = await Feats.findOne(tx, { id: ancestorFeatId });
@@ -35,10 +36,10 @@ class FeatsService {
           const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const edit = new RulesetEdit(ruleset, rulesetData.cow);
-          const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "feats", body.name);
+          const names = new EntityNames(ruleset, rulesetData.cow);
+          const { tombstoneAncestorId } = await names.assertNameAvailable(tx, "feats", body.name);
 
-          // Named as an ancestor the fork deleted, the feat stands in for it (`RulesetEdit.repointTombstone`), checks
+          // Named as an ancestor the fork deleted, the feat stands in for it (`EntityNames.repointTombstone`), checks
           // finding it by that name
           const plan = Engine.for(scope)
             .feats()
@@ -48,7 +49,7 @@ class FeatsService {
           const rows = await Feats.create(tx, { ...plan.columns, rulesetId });
           const feat = rows[0];
 
-          if (tombstoneAncestorId) await edit.repointTombstone(tx, "feats", tombstoneAncestorId, feat.id);
+          if (tombstoneAncestorId) await names.repointTombstone(tx, "feats", tombstoneAncestorId, feat.id);
 
           for (const aptitudeId of plan.aptitudeIds) {
             await FeatsAptitudes.create(tx, {
@@ -76,13 +77,13 @@ class FeatsService {
     const result = await withTransaction(
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
-          const { ruleset, rulesetData } = scope;
+          const { ruleset } = scope;
           const inUse = await hasCharacterPicks(tx, "feats", scope.rulesetData.cow.getEquivalentIds(featId), rulesetId);
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
           const feat = Engine.for(scope).entity("feats", featId).get();
 
-          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const edit = new EntityEdit(ruleset);
           const targetId = await edit.cowToDelete(tx, "feats", feat);
 
           // FK CASCADE on feats_aptitudes.feat_id and klass_level_feats.feat_id
@@ -163,12 +164,12 @@ class FeatsService {
     const result = await withTransaction(
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
-          const { ruleset, rulesetData } = scope;
+          const { ruleset } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
           const { aptitudeIds, columns, feat } = Engine.for(scope).feats().planEdit(featId, body);
 
-          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const edit = new EntityEdit(ruleset);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "feats", feat);
           const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 

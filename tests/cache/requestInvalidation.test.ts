@@ -1,13 +1,13 @@
 import { afterEach, expect, test } from "bun:test";
 
-import { readTargetPaths, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
+import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { runWithRequestCache } from "@/server/database/requestCache.ts";
 import { Feats, Rulesets } from "@/server/repositories/index.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
-import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { createSeededTestRuleset, readTargetPaths } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 

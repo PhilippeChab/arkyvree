@@ -3,13 +3,7 @@ import { getTableName } from "drizzle-orm";
 import { itemsInRules } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import {
-  copyEntityCustomizationsToMany,
-  fetchEntityCustomizations,
-  RulesetEdit,
-  RulesetViews,
-  withRulesetScope,
-} from "@/server/cow/index.ts";
+import { CustomizationCopies, EntityNames, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { Items } from "@/server/repositories/index.ts";
@@ -24,7 +18,7 @@ export function Variants<B extends Constructor>(Base: B) {
     /**
      * The tombstoned ancestor each variant takes over, by the variant's index. When two tombstoned ancestors share a name
      * (an extension and a parent), the closer one (lower sourceChain index) follows the new item, matching the
-     * sequential `RulesetEdit.assertNameAvailable` semantics.
+     * sequential `EntityNames.assertNameAvailable` semantics.
      */
     protected variantTombstones(
       variants: Array<{ name: string }>,
@@ -68,15 +62,15 @@ export function Variants<B extends Constructor>(Base: B) {
 
             // Batched pre-validation: one query for local conflicts, one for
             // ancestor conflicts, then the shared visibility / tombstone check
-            // used by `RulesetEdit.assertNameAvailable`. Avoids N × sourceChain serial
+            // used by `EntityNames.assertNameAvailable`. Avoids N × sourceChain serial
             // round-trips when N can be up to 50.
             const ownConflicts = await Items.findMany(tx, { rulesetIds: [rulesetId], names });
             if (ownConflicts.length > 0)
               throw new ConflictError(`Name already exists in this ruleset: ${ownConflicts[0].name}`);
 
             const ancestorConflicts = await Items.findMany(tx, { rulesetIds: rulesetData.cow.sourceChain, names });
-            const edit = new RulesetEdit(ruleset, rulesetData.cow);
-            const tombstoned = await edit.assertAncestorNamesHidden(
+            const entityNames = new EntityNames(ruleset, rulesetData.cow);
+            const tombstoned = await entityNames.assertAncestorNamesHidden(
               tx,
               "items",
               ancestorConflicts.map((c) => c.id),
@@ -91,7 +85,7 @@ export function Variants<B extends Constructor>(Base: B) {
 
             const sourceId = plan.copyCustomizationsFrom;
             const sourceCust = sourceId
-              ? (await fetchEntityCustomizations(tx, [sourceId], "items", "items")).get(sourceId)
+              ? (await CustomizationCopies.read(tx, [sourceId], "items", "items")).get(sourceId)
               : undefined;
 
             const created = [];
@@ -100,7 +94,7 @@ export function Variants<B extends Constructor>(Base: B) {
               const item = rows[0];
 
               const tombstoneAncestorId = tombstones.get(i);
-              if (tombstoneAncestorId) await edit.repointTombstone(tx, "items", tombstoneAncestorId, item.id);
+              if (tombstoneAncestorId) await entityNames.repointTombstone(tx, "items", tombstoneAncestorId, item.id);
 
               await createActivityWithNotifications(tx, {
                 userId: session.userId,
@@ -114,7 +108,7 @@ export function Variants<B extends Constructor>(Base: B) {
             }
 
             if (sourceCust) {
-              await copyEntityCustomizationsToMany(
+              await CustomizationCopies.copyToMany(
                 tx,
                 created.map((c) => c.id),
                 "items",

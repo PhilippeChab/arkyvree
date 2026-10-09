@@ -2,12 +2,13 @@ import { getTableName } from "drizzle-orm";
 
 import { klassesInRules } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
-import { hasCharacterPicks, RulesetEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
+import { EntityEdit, EntityNames, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Klasses } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { hasCharacterPicks } from "@/server/services/rulesets/characterPicks.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class ClassesService {
@@ -26,13 +27,13 @@ class ClassesService {
           const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const edit = new RulesetEdit(ruleset, rulesetData.cow);
-          const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "klasses", body.name);
+          const names = new EntityNames(ruleset, rulesetData.cow);
+          const { tombstoneAncestorId } = await names.assertNameAvailable(tx, "klasses", body.name);
 
           const rows = await Klasses.create(tx, { ...Engine.for(scope).classes().planCreate(body).columns, rulesetId });
           const klass = rows[0];
 
-          if (tombstoneAncestorId) await edit.repointTombstone(tx, "klasses", tombstoneAncestorId, klass.id);
+          if (tombstoneAncestorId) await names.repointTombstone(tx, "klasses", tombstoneAncestorId, klass.id);
 
           await createActivityWithNotifications(tx, {
             userId: session.userId,
@@ -53,7 +54,7 @@ class ClassesService {
     const result = await withTransaction(
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
-          const { ruleset, rulesetData } = scope;
+          const { ruleset } = scope;
 
           const inUse = await hasCharacterPicks(
             tx,
@@ -65,7 +66,7 @@ class ClassesService {
 
           const klass = Engine.for(scope).entity("klasses", klassId).get();
 
-          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const edit = new EntityEdit(ruleset);
           const targetId = await edit.cowToDelete(tx, "klasses", klass);
 
           // FK CASCADE wipes klass_levels (and their klass_level_feats /
@@ -129,13 +130,13 @@ class ClassesService {
     const result = await withTransaction(
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
-          const { ruleset, rulesetData } = scope;
+          const { ruleset } = scope;
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
           const klass = Engine.for(scope).entity("klasses", klassId).get();
 
-          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const edit = new EntityEdit(ruleset);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "klasses", klass);
           const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 

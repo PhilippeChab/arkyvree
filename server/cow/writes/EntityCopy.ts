@@ -1,5 +1,5 @@
 import { type CowData, Engine, type EntityCustomizations, type RulesetSources } from "@/engine/index.ts";
-import { readCowData } from "@/server/cow/views/cowData.ts";
+import CowDataReader from "@/server/cow/views/CowDataReader.ts";
 import type { Db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import {
@@ -15,9 +15,8 @@ import {
 } from "@/server/repositories/index.ts";
 import { isCustomizableEntityType } from "@/shared/customization/entities.ts";
 
-import { copyEntityCustomizations } from "./copyCustomizations.ts";
-import { fetchEntityCustomizations, fetchSiblingCustomizations } from "./customizations.ts";
-import { ENTITY_REPOS, type EntityWithId } from "./entityRepositories.ts";
+import CustomizationCopies from "./CustomizationCopies.ts";
+import EntityRepositories, { type EntityWithId } from "./EntityRepositories.ts";
 
 /**
  * A copy made: the copied entity, and each customization it copied, by its source's id (equal values don't make the
@@ -69,7 +68,7 @@ export default class EntityCopy {
 
   /** Copies the entity into the target ruleset, or returns the copy it already has: the newly created child entity. */
   private async copy(tx: Db): Promise<EntityWithId> {
-    const repo = ENTITY_REPOS[this.entityType];
+    const repo = EntityRepositories.of(this.entityType);
     const { id: childRulesetId } = this.ruleset;
 
     // A second first edit must wait for the copying transaction, then see its
@@ -104,7 +103,7 @@ export default class EntityCopy {
 
     // The ruleset's copy-on-write data, as the transaction sees it, its own copies included: what the copy's references
     // (its row's, its relationships') are remapped by
-    const cow = await readCowData(tx, this.ruleset);
+    const cow = await CowDataReader.read(tx, this.ruleset);
 
     // 2. Copy entity to child ruleset, its references to the entities the ruleset shows in their place (a race's
     // parent, an item's template, a power's save)
@@ -114,14 +113,14 @@ export default class EntityCopy {
     const newEntity = newRows[0];
 
     // 3. Copy customizations
-    const customizations = await fetchEntityCustomizations(tx, [this.entityId], this.entityType, this.sourceType);
+    const customizations = await CustomizationCopies.read(tx, [this.entityId], this.entityType, this.sourceType);
     const cust = customizations.get(this.entityId) ?? {
       modifiers: [],
       properties: [],
       requirements: [],
       modifierRequirements: [],
     };
-    await copyEntityCustomizations(tx, newEntity.id, this.entityType, cust, this.copiedIds);
+    await CustomizationCopies.copy(tx, newEntity.id, this.entityType, cust, this.copiedIds);
 
     // 4. Copy relationships (aptitudes, klass levels, etc.), remapped as the row was
     await this.copyRelationships(tx, newEntity.id, cow);
@@ -161,11 +160,11 @@ export default class EntityCopy {
     const levelPowers = await KlassLevelPowers.findMany(tx, { klassLevelIds: oldLevelIds });
 
     // Copy level customizations (modifiers, properties, requirements)
-    const levelCusts = await fetchEntityCustomizations(tx, oldLevelIds, "klass_levels", "klass_levels");
+    const levelCusts = await CustomizationCopies.read(tx, oldLevelIds, "klass_levels", "klass_levels");
     for (const oldLevelId of oldLevelIds) {
       const newLevelId = levelIdMapLocal[oldLevelId];
       const cust = levelCusts.get(oldLevelId);
-      if (cust && newLevelId) await copyEntityCustomizations(tx, newLevelId, "klass_levels", cust, this.copiedIds);
+      if (cust && newLevelId) await CustomizationCopies.copy(tx, newLevelId, "klass_levels", cust, this.copiedIds);
     }
 
     await KlassLevelSaves.createMany(
@@ -243,9 +242,7 @@ export default class EntityCopy {
 
   /**
    * Merges sibling aptitude links of a feat or a power (`copyOnWrite().mergeAptitudeLinks`), each to the aptitude that
-   * stands for it, as the copy's own (`copyRelationships`). Sibling reads turn copy-on-write resolution off (loser ids
-   * would otherwise be canonicalized to the winner). Existing reads on targetEntityId go through the repo since the new
-   * id isn't a stale id.
+   * stands for it, as the copy's own (`copyRelationships`): the losers' links, read by their stored ids.
    */
   private async mergeAptitudeLinks(tx: Db, targetEntityId: string, siblingIds: string[], cow: CowData) {
     const resolve = (id: string) => cow.resolve(id);
@@ -294,10 +291,10 @@ export default class EntityCopy {
     cow: CowData,
   ) {
     // The losers' own rows, by their stored ids
-    const siblingCusts = await fetchSiblingCustomizations(tx, siblingIds, this.entityType, this.sourceType);
+    const siblingCusts = await CustomizationCopies.read(tx, siblingIds, this.entityType, this.sourceType);
     const siblings = siblingIds.flatMap((id) => siblingCusts.get(id) ?? []);
     const merged = Engine.copyOnWrite().mergeCustomizations(own, siblings, targetEntityId);
-    await copyEntityCustomizations(tx, targetEntityId, this.entityType, merged, this.copiedIds);
+    await CustomizationCopies.copy(tx, targetEntityId, this.entityType, merged, this.copiedIds);
     await this.mergeAptitudeLinks(tx, targetEntityId, siblingIds, cow);
   }
 }

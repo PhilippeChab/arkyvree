@@ -1,20 +1,20 @@
 /**
  * Copy-on-write, the server's part: storage and concurrency, around the model the engine computes.
  *
- * - Its read side (`views/`): a ruleset's view, read and memoized (`RulesetViews`: its rows, its copy-on-write data,
- *   their composition, its target paths), and the scope a ruleset's reads run in (`withRulesetScope`).
- * - Its write side (`writes/`): the rows a change to a ruleset's entities writes (`RulesetEdit`: the ruleset's own, or
- *   the copy of an inherited one, made on its first edit), a copy itself (`EntityCopy`), what a copy copies
- *   (`copyEntityCustomizations*`, `fetchEntityCustomizations`), each entity type's repository (`ENTITY_REPOS`), and the
- *   checks a change makes (`hasCharacterPicks`, `lockEntityForMutation`).
+ * - Its read side (`views/`): the rulesets' cache (`RulesetViews`: each ruleset's copy-on-write data, its own rows and
+ *   its target paths, and the view composed from them), what it reads them with (`CowDataReader`, `RawDataReader`), and
+ *   the scope a service reads a view in (`withRulesetScope`).
+ * - Its write side (`writes/`): the row a change to an entity writes (`EntityEdit`), the row a change to a
+ *   customization writes (`CustomizationEdit`), the names a new entity may take (`EntityNames`), the copy of an
+ *   inherited entity (`EntityCopy`), an entity's customizations read and copied (`CustomizationCopies`), and each
+ *   entity type's repository (`EntityRepositories`).
  */
-export { readCowData } from "./views/cowData.ts";
+export { default as CowDataReader } from "./views/CowDataReader.ts";
 export { default as RulesetViews } from "./views/RulesetViews.ts";
 export { type RulesetScope, withRulesetScope, withRulesetScopes } from "./views/scope.ts";
-export { readTargetPathCatalogs, readTargetPaths } from "./views/targetPaths.ts";
-export { hasCharacterPicks } from "./writes/characterPicks.ts";
-export { copyEntityCustomizations, copyEntityCustomizationsToMany } from "./writes/copyCustomizations.ts";
-export { fetchEntityCustomizations } from "./writes/customizations.ts";
+export { default as CustomizationCopies } from "./writes/CustomizationCopies.ts";
+export { default as CustomizationEdit } from "./writes/CustomizationEdit.ts";
 export { default as EntityCopy } from "./writes/EntityCopy.ts";
-export { ENTITY_REPOS, lockEntityForMutation } from "./writes/entityRepositories.ts";
-export { default as RulesetEdit } from "./writes/RulesetEdit.ts";
+export { default as EntityEdit } from "./writes/EntityEdit.ts";
+export { default as EntityNames } from "./writes/EntityNames.ts";
+export { default as EntityRepositories } from "./writes/EntityRepositories.ts";

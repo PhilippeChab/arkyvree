@@ -4,7 +4,7 @@ import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluato
 import { type RulesetData } from "@/engine/core/view/index.ts";
 import AbilitiesComponent from "@/engine/rulesets/dnd3.5/abilities/AbilitiesComponent.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
-import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
+import { EntityEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { type Db, db, withTransaction } from "@/server/database/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import {
@@ -80,7 +80,7 @@ async function compareCopies(ruleset: Parameters<typeof RulesetViews.getData>[0]
     compared++;
     const expected = customizationsOf(before, winnerId);
     await withTransaction(async (tx) => {
-      const edit = await editRuleset(ruleset);
+      const edit = await editRuleset(EntityEdit, ruleset);
       const { id: copyId } = await edit.cowToEdit(tx, type, { id: winnerId, rulesetId: "inherited" });
       RulesetViews.invalidate(ruleset.id);
       const after = await RulesetViews.getData(ruleset);
@@ -299,7 +299,7 @@ test("a copied class's levels store the lists that stand for their granted feats
   const stale: string[] = [];
   for (const klassId of klassIds) {
     await withTransaction(async (tx) => {
-      const edit = await editRuleset(fork);
+      const edit = await editRuleset(EntityEdit, fork);
       const { id: copyId } = await edit.cowToEdit(tx, "klasses", { id: klassId, rulesetId: "inherited" });
       RulesetViews.invalidate(fork.id);
       const ids = await findStaleAptitudeIds(tx, await RulesetViews.getData(fork), "klasses", copyId);

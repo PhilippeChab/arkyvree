@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
+import { CustomizationEdit } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
@@ -86,7 +87,7 @@ describe("ruleset customization isolation", () => {
 
   test("COW itself refuses unrelated entities", async () => {
     const { own, feat } = await setup();
-    await expectRefusedWith((await editRuleset(own)).cowOwner(db, "feats", feat.id), 404);
+    await expectRefusedWith((await editRuleset(CustomizationEdit, own)).cowOwner(db, "feats", feat.id), 404);
   });
 
   test("inherited customizations still copy their source", async () => {
@@ -171,7 +172,7 @@ describe("modifier requirement ownership", () => {
       }),
       404,
     );
-    await expectRefusedWith((await editRuleset(own)).cowOwner(db, "modifiers", modifier.id), 404);
+    await expectRefusedWith((await editRuleset(CustomizationEdit, own)).cowOwner(db, "modifiers", modifier.id), 404);
     expect(await Requirements.findMany(db, { entityIds: [modifier.id], entityType: "modifiers" })).toHaveLength(0);
   });
 
@@ -179,9 +180,9 @@ describe("modifier requirement ownership", () => {
     const { own, feat } = await setup();
     const modifier = await createModifier(feat.id);
     await Modifiers.update(db, { sourceType: "modifiers", sourceId: modifier.id }, { id: modifier.id });
-    await expectRefusedWith((await editRuleset(own)).cowOwner(db, "modifiers", modifier.id), 404);
+    await expectRefusedWith((await editRuleset(CustomizationEdit, own)).cowOwner(db, "modifiers", modifier.id), 404);
     await Modifiers.update(db, { sourceType: "feats", sourceId: crypto.randomUUID() }, { id: modifier.id });
-    await expectRefusedWith((await editRuleset(own)).cowOwner(db, "modifiers", modifier.id), 404);
+    await expectRefusedWith((await editRuleset(CustomizationEdit, own)).cowOwner(db, "modifiers", modifier.id), 404);
   });
 });
 

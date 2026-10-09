@@ -2,12 +2,13 @@ import { getTableName } from "drizzle-orm";
 
 import { aptitudesInRules } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
-import { hasCharacterPicks, RulesetEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
+import { EntityEdit, EntityNames, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Aptitudes } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { hasCharacterPicks } from "@/server/services/rulesets/characterPicks.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class AptitudesService {
@@ -25,8 +26,8 @@ class AptitudesService {
           const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const edit = new RulesetEdit(ruleset, rulesetData.cow);
-          const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "aptitudes", body.name);
+          const names = new EntityNames(ruleset, rulesetData.cow);
+          const { tombstoneAncestorId } = await names.assertNameAvailable(tx, "aptitudes", body.name);
 
           const rows = await Aptitudes.create(tx, {
             ...body,
@@ -34,7 +35,7 @@ class AptitudesService {
           });
           const aptitude = rows[0];
 
-          if (tombstoneAncestorId) await edit.repointTombstone(tx, "aptitudes", tombstoneAncestorId, aptitude.id);
+          if (tombstoneAncestorId) await names.repointTombstone(tx, "aptitudes", tombstoneAncestorId, aptitude.id);
 
           await createActivityWithNotifications(tx, {
             userId: session.userId,
@@ -55,7 +56,7 @@ class AptitudesService {
     const result = await withTransaction(
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
-          const { ruleset, rulesetData } = scope;
+          const { ruleset } = scope;
 
           const inUse = await hasCharacterPicks(
             tx,
@@ -67,7 +68,7 @@ class AptitudesService {
 
           const { aptitude } = Engine.for(scope).aptitudes().planDelete(aptitudeId);
 
-          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const edit = new EntityEdit(ruleset);
           const targetId = await edit.cowToDelete(tx, "aptitudes", aptitude);
 
           // FK CASCADE on feats_aptitudes / powers_aptitudes / klass_level_feats /
@@ -128,13 +129,13 @@ class AptitudesService {
     const result = await withTransaction(
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
-          const { ruleset, rulesetData } = scope;
+          const { ruleset } = scope;
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
           const { aptitude } = Engine.for(scope).aptitudes().planEdit(aptitudeId, body.name);
 
-          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const edit = new EntityEdit(ruleset);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "aptitudes", aptitude);
           const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 

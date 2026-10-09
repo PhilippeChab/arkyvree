@@ -3,10 +3,11 @@ import { eq, type InferInsertModel } from "drizzle-orm";
 import { RulesetSeeder } from "@/database/packages/dnd35/seed/RulesetSeeder.ts";
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { aptitudesInRules, rulesetExtensionsInRules, type rulesetsInRules } from "@/drizzle/schema.ts";
-import type { RulesetSources } from "@/engine/core/cow/index.ts";
-import { EntityCopy, RulesetEdit, RulesetViews } from "@/server/cow/index.ts";
+import type { CowData, RulesetSources } from "@/engine/core/cow/index.ts";
+import { EntityCopy, RulesetViews } from "@/server/cow/index.ts";
 import { type Db, db } from "@/server/database/index.ts";
 import { Properties, type RulesetEntityType, Rulesets } from "@/server/repositories/index.ts";
+import type { TargetPathKind } from "@/shared/customization/target.ts";
 
 import { api, expectOk } from "./api.ts";
 import { insertRows } from "./database.ts";
@@ -134,13 +135,12 @@ export async function createTestUserAndRuleset(aptitudeNames: string[] = []) {
   return { user, session, ruleset, aptitudeIds: aptitudes.map((a) => a.id) };
 }
 
-/** A change to `ruleset`'s entities, as a service makes in its scope, outside one. */
-export async function editRuleset(ruleset: {
-  ancestorRulesetIds: string[];
-  extensionRulesetIds: string[];
-  id: string;
-}) {
-  return new RulesetEdit(ruleset, await RulesetViews.getCowData(ruleset));
+/**
+ * A change to `ruleset`'s entities or customizations (`Edit`: `EntityEdit`, `CustomizationEdit`, `EntityNames`), as a
+ * service makes it in its scope, outside one.
+ */
+export async function editRuleset<E>(Edit: new (ruleset: RulesetSources, cow: CowData) => E, ruleset: RulesetSources) {
+  return new Edit(ruleset, await RulesetViews.getCowData(ruleset));
 }
 
 /** A new aptitude of the ruleset, created through the API as the seed user. */
@@ -148,4 +148,9 @@ export async function postAptitude(rulesetId: string) {
   return await expectOk(
     api.api.rulesets[":id"].aptitudes.$post({ param: { id: rulesetId }, json: { name: `Aptitude ${uniqueId()}` } }),
   );
+}
+
+/** A ruleset's target paths of a kind, by its id, as the cache keeps them (`RulesetViews.getTargetPaths`). */
+export async function readTargetPaths(rulesetId: string, kind: TargetPathKind) {
+  return await RulesetViews.getTargetPaths((await Rulesets.findOne(db, { id: rulesetId }))!, kind);
 }

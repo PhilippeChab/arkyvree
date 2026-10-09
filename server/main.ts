@@ -23,7 +23,7 @@ function checkProductionEnvironment() {
  * Warms the ruleset cache in the background so the server becomes healthy immediately. Cold reads still populate and
  * pin on miss — this just frontloads the work for the first user.
  */
-function warmRulesetCache() {
+function warmRulesetViews() {
   RulesetViews.warm().then(
     () => console.log("[cache] System ruleset cache warmed"),
     (err) => {
@@ -37,7 +37,7 @@ async function main() {
   checkProductionEnvironment();
   await waitForDatabase();
   await BroadcastListener.start();
-  warmRulesetCache();
+  warmRulesetViews();
 
   const port = Number(readEnv("PORT")) || 8000;
   const hostname = readEnv("HOST") || "localhost";

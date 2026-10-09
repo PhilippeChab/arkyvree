@@ -2,7 +2,7 @@ import { getTableName } from "drizzle-orm";
 
 import { rulesetsInRules } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
-import { ENTITY_REPOS, RulesetViews } from "@/server/cow/index.ts";
+import { EntityRepositories, RulesetViews } from "@/server/cow/index.ts";
 import { type Db, db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import {
@@ -62,13 +62,13 @@ class RulesetExtensionsService {
     const sourceIdsByType: Partial<Record<RulesetEntityType, string[]>> = {};
     for (const snap of snapshots) {
       const type = snap.entityType as RulesetEntityType;
-      if (!ENTITY_REPOS[type]) continue;
+      if (!EntityRepositories.of(type)) continue;
       (sourceIdsByType[type] ??= []).push(snap.sourceEntityId);
     }
 
     const shadowIdsByType: Partial<Record<RulesetEntityType, string[]>> = {};
     for (const [type, ids] of Object.entries(sourceIdsByType) as [RulesetEntityType, string[]][]) {
-      const sources = await ENTITY_REPOS[type].findMany(tx, { ids });
+      const sources = await EntityRepositories.of(type).findMany(tx, { ids });
       const fromExt = new Set(sources.filter((s) => s.rulesetId === extensionId).map((s) => s.id));
       const forked = snapshots
         .filter((s) => s.entityType === type && fromExt.has(s.sourceEntityId))
@@ -238,7 +238,7 @@ class RulesetExtensionsService {
       const extensionSnapshots = [];
       for (const snap of snapshots) {
         const entityType = snap.entityType as RulesetEntityType;
-        const repo = ENTITY_REPOS[entityType];
+        const repo = EntityRepositories.of(entityType);
         if (!repo) continue;
         const sourceEntity = await repo.findOne(tx, { id: snap.sourceEntityId });
         if (sourceEntity?.rulesetId === extensionId) extensionSnapshots.push(snap);

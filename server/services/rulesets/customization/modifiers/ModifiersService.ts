@@ -2,15 +2,7 @@ import { getTableName } from "drizzle-orm";
 
 import { modifiersInCustomization } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
-import {
-  copyEntityCustomizations,
-  fetchEntityCustomizations,
-  readTargetPathCatalogs,
-  readTargetPaths,
-  RulesetEdit,
-  RulesetViews,
-  withRulesetScope,
-} from "@/server/cow/index.ts";
+import { CustomizationCopies, CustomizationEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Modifiers } from "@/server/repositories/index.ts";
@@ -38,11 +30,11 @@ class ModifiersService {
           const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const catalogs = await readTargetPathCatalogs(rulesetId, "modifier");
+          const catalogs = await RulesetViews.getTargetPathCatalogs(scope.ruleset, "modifier");
           const modifiers = Engine.for(scope).modifiers(entityType, entityId);
           const { entity, valueType } = modifiers.planCreate(catalogs, body, sourceModifierId);
 
-          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const edit = new CustomizationEdit(ruleset, rulesetData.cow);
           const resolvedEntityId = await edit.cowOwner(tx, entityType, entity.id);
 
           const rows = await Modifiers.create(tx, {
@@ -56,8 +48,8 @@ class ModifiersService {
           const modifier = rows[0];
 
           if (sourceModifierId) {
-            const cust = (await fetchEntityCustomizations(tx, [sourceModifierId], "modifiers")).get(sourceModifierId);
-            if (cust) await copyEntityCustomizations(tx, modifier.id, "modifiers", cust);
+            const cust = (await CustomizationCopies.read(tx, [sourceModifierId], "modifiers")).get(sourceModifierId);
+            if (cust) await CustomizationCopies.copy(tx, modifier.id, "modifiers", cust);
           }
 
           await createActivityWithNotifications(tx, {
@@ -102,7 +94,7 @@ class ModifiersService {
           const { entity, modifier } = Engine.for(scope).modifiers(entityType, entityId).planDelete(modifierId);
           await checkCustomizedEntity(modifier);
 
-          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const edit = new CustomizationEdit(ruleset, rulesetData.cow);
           const { resolvedEntityId, resolvedCustomizationId: resolvedModifierId } = await edit.cowCustomization(
             tx,
             entityType,
@@ -150,14 +142,14 @@ class ModifiersService {
 
   async getModifier(rulesetId: string, entityType: string, entityId: string, modifierId: string) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
-      const catalog = await readTargetPaths(rulesetId, "modifier");
+      const catalog = await RulesetViews.getTargetPaths(scope.ruleset, "modifier");
       return Engine.for(scope).modifiers(entityType, entityId).describe(catalog, modifierId);
     });
   }
 
   async getModifiers(rulesetId: string, entityType: string, entityId: string) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
-      const catalog = await readTargetPaths(rulesetId, "modifier");
+      const catalog = await RulesetViews.getTargetPaths(scope.ruleset, "modifier");
       return Engine.for(scope).modifiers(entityType, entityId).describeAll(catalog);
     });
   }
@@ -181,14 +173,14 @@ class ModifiersService {
           const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const catalogs = await readTargetPathCatalogs(rulesetId, "modifier");
+          const catalogs = await RulesetViews.getTargetPathCatalogs(scope.ruleset, "modifier");
           const { updatedAt, ...fields } = body;
           const modifiers = Engine.for(scope).modifiers(entityType, entityId);
           const { entity, modifier, valueType } = modifiers.planEdit(catalogs, modifierId, fields);
           await checkCustomizedEntity(modifier);
 
           // COW the owning entity if this modifier is inherited
-          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const edit = new CustomizationEdit(ruleset, rulesetData.cow);
           const { resolvedEntityId, resolvedCustomizationId: resolvedModifierId } = await edit.cowCustomization(
             tx,
             entityType,

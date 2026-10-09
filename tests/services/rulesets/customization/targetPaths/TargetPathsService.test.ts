@@ -1,12 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
 import { Engine } from "@/engine/index.ts";
-import { readTargetPathCatalogs, readTargetPaths, withRulesetScope } from "@/server/cow/index.ts";
+import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { TargetPathsService } from "@/server/services/rulesets/customization/targetPaths/index.ts";
 import type { TargetPathKind } from "@/shared/customization/target.ts";
-import { createTestRuleset } from "@/tests/support/rulesets.ts";
+import { createTestRuleset, readTargetPaths } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
@@ -164,10 +164,16 @@ describe("TargetPathsService", () => {
 
   test("refuses a template value the sheet couldn't evaluate, saying why, and takes one it can", async () => {
     const { rulesetId } = await getSeedCtx();
-    const catalogs = await readTargetPathCatalogs(rulesetId, "modifier");
     const check = (value: string, target = "combat.ac.misc") =>
       withRulesetScope(db, rulesetId, async (scope) =>
-        Engine.for(scope).targetPaths().checkValue(catalogs, { kind: "modifier", operator: "add", target, value }),
+        Engine.for(scope)
+          .targetPaths()
+          .checkValue(await RulesetViews.getTargetPathCatalogs(scope.ruleset, "modifier"), {
+            kind: "modifier",
+            operator: "add",
+            target,
+            value,
+          }),
       );
     expect(await check("{{ floor([classes.ranger.level] / 2) }}")).toBe("number");
     expect(await check("{{ [abilities.charisma.modifier] }}")).toBe("number");
@@ -343,7 +349,7 @@ describe("TargetPathsService", () => {
   });
 
   test("throws NotFoundError for a missing ruleset", async () => {
-    await expect(readTargetPaths(NIL_UUID, "modifier")).rejects.toThrow(NotFoundError);
+    await expect(TargetPathsService.validatePath(NIL_UUID, "combat.ac.misc")).rejects.toThrow(NotFoundError);
   });
 
   describe("completing a path", () => {

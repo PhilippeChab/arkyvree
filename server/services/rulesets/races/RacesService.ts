@@ -2,12 +2,13 @@ import { getTableName } from "drizzle-orm";
 
 import { racesInRules } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
-import { hasCharacterPicks, RulesetEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
+import { EntityEdit, EntityNames, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Races } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { hasCharacterPicks } from "@/server/services/rulesets/characterPicks.ts";
 import type { SizeType } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -28,13 +29,13 @@ class RacesService {
           const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const edit = new RulesetEdit(ruleset, rulesetData.cow);
-          const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "races", body.name);
+          const names = new EntityNames(ruleset, rulesetData.cow);
+          const { tombstoneAncestorId } = await names.assertNameAvailable(tx, "races", body.name);
 
           const rows = await Races.create(tx, { ...body, rulesetId });
           const race = rows[0];
 
-          if (tombstoneAncestorId) await edit.repointTombstone(tx, "races", tombstoneAncestorId, race.id);
+          if (tombstoneAncestorId) await names.repointTombstone(tx, "races", tombstoneAncestorId, race.id);
 
           await createActivityWithNotifications(tx, {
             userId: session.userId,
@@ -55,14 +56,14 @@ class RacesService {
     const result = await withTransaction(
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
-          const { ruleset, rulesetData } = scope;
+          const { ruleset } = scope;
 
           const inUse = await hasCharacterPicks(tx, "races", scope.rulesetData.cow.getEquivalentIds(raceId), rulesetId);
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
           const race = Engine.for(scope).entity("races", raceId).get();
 
-          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const edit = new EntityEdit(ruleset);
           const targetId = await edit.cowToDelete(tx, "races", race);
 
           // The database deletes its customizations with it.
@@ -123,13 +124,13 @@ class RacesService {
     const result = await withTransaction(
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
-          const { ruleset, rulesetData } = scope;
+          const { ruleset } = scope;
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
           const race = Engine.for(scope).entity("races", raceId).get();
 
-          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const edit = new EntityEdit(ruleset);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "races", race);
           const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 

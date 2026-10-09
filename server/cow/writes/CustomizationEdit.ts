@@ -1,8 +1,7 @@
 import type { CowData, RulesetSources } from "@/engine/index.ts";
 import type { Db } from "@/server/database/index.ts";
-import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
+import { NotFoundError } from "@/server/errors/index.ts";
 import {
-  EntitySnapshots,
   Klasses,
   KlassLevels,
   Modifiers,
@@ -11,8 +10,8 @@ import {
   type RulesetEntityType,
 } from "@/server/repositories/index.ts";
 
-import EntityCopy, { type CopiedEntity } from "./EntityCopy.ts";
-import { ENTITY_REPOS, lockEntityForMutation } from "./entityRepositories.ts";
+import EntityCopy from "./EntityCopy.ts";
+import EntityRepositories from "./EntityRepositories.ts";
 
 type CustomizationKind = keyof typeof CUSTOMIZATION_REPOS;
 
@@ -42,26 +41,17 @@ const OWNER_TYPES: Record<string, RulesetEntityType> = {
 };
 
 /**
- * One change to a ruleset's entities, made in its scope (`new RulesetEdit(ruleset, rulesetData.cow)`): the rows it
- * writes, the ruleset's own or the copy of an inherited one, made on its first edit (`EntityCopy`), and the names a new
- * entity may take in the ruleset's composed view. Its copy-on-write data gives it the source chain and what the view
- * hides; a copy builds its own, through the transaction (`readCowData(tx, ruleset)`). Every method that queries
- * takes the transaction; a copy and the ids it copied live for the call that made it.
+ * The row a customization (a modifier, a property, a requirement) of a ruleset's entity changes, made in its scope
+ * (`new CustomizationEdit(ruleset, rulesetData.cow)`): on the ruleset's own owner, locked, or on the copy of an
+ * inherited one, made on its first edit (`EntityCopy`), the customization mapped to its copy. Its copy-on-write data
+ * gives it the entity the view shows for an id and the source chain. Every method takes the transaction; a copy and the
+ * ids it copied live for the call that made it.
  */
-export default class RulesetEdit {
-  constructor(ruleset: RulesetSources, cow: CowData) {
-    this.ruleset = ruleset;
-    this.cow = cow;
-  }
-
-  private readonly cow: CowData;
-
-  private readonly ruleset: RulesetSources;
-
-  /** Copies an inherited entity into the ruleset (or returns the copy it has), on the ruleset's source chain. */
-  private async copyEntity(tx: Db, entityType: RulesetEntityType, entityId: string): Promise<CopiedEntity> {
-    return EntityCopy.create(tx, entityType, entityId, this.ruleset);
-  }
+export default class CustomizationEdit {
+  constructor(
+    private readonly ruleset: RulesetSources,
+    private readonly cow: CowData,
+  ) {}
 
   /**
    * The row a customization of a feat, power, item, race, class or class level changes: the ruleset's own entity,
@@ -75,18 +65,18 @@ export default class RulesetEdit {
     if (!cowType) throw new NotFoundError("Customization source not found in this ruleset");
 
     // The entity the view shows for the id: the ruleset's copy of it, or the winner of its siblings
-    const repo = ENTITY_REPOS[cowType];
+    const repo = EntityRepositories.of(cowType);
     const entity = await repo.findOne(tx, { id: this.cow.resolve(entityId) });
     if (!entity) throw new NotFoundError("Customization source not found in this ruleset");
 
     if (entity.rulesetId === this.ruleset.id) {
-      await lockEntityForMutation(tx, cowType, entity.id);
+      await EntityRepositories.lock(tx, cowType, entity.id);
       return { id: entity.id };
     }
     if (!this.cow.sourceChain.includes(entity.rulesetId))
       throw new NotFoundError("Customization source not found in this ruleset"); // Not from source chain
 
-    const copy = await this.copyEntity(tx, cowType, entity.id);
+    const copy = await EntityCopy.create(tx, cowType, entity.id, this.ruleset);
     return { id: copy.entity.id, copiedIds: copy.copiedIds };
   }
 
@@ -100,7 +90,7 @@ export default class RulesetEdit {
     if (!klass) throw new NotFoundError("Customization source not found in this ruleset");
 
     if (klass.rulesetId === this.ruleset.id) {
-      await lockEntityForMutation(tx, "klasses", klass.id);
+      await EntityRepositories.lock(tx, "klasses", klass.id);
       if (!(await KlassLevels.findOne(tx, { id: level.id })))
         throw new NotFoundError("Customization source no longer exists; refresh the entity");
 
@@ -110,7 +100,7 @@ export default class RulesetEdit {
       throw new NotFoundError("Customization source not found in this ruleset"); // Not from source chain
 
     // COW the klass (copies all levels)
-    const copy = await this.copyEntity(tx, "klasses", klass.id);
+    const copy = await EntityCopy.create(tx, "klasses", klass.id, this.ruleset);
     // Find the new level by matching level number (levels aren't individually snapshotted)
     const newLevels = await KlassLevels.findMany(tx, { klassId: copy.entity.id });
     const newLevel = newLevels.find((l) => l.level === level.level);
@@ -163,54 +153,6 @@ export default class RulesetEdit {
   }
 
   /**
-   * Shared by the single and batched pre-create name checks. Throws a
-   * ConflictError if any same-name ancestor is visible in the composed view.
-   * Returns the hidden ones whose local copy was deleted, leaving a tombstone
-   * snapshot for a new entity to take over. A live local copy keeps its snapshot
-   * even after a rename, so inherited references keep resolving to it.
-   */
-  async assertAncestorNamesHidden(tx: Db, entityType: RulesetEntityType, ancestorIds: string[]): Promise<Set<string>> {
-    if (ancestorIds.some((id) => !this.cow.isHidden(id)))
-      throw new ConflictError("Name already exists in the source chain (an ancestor or subscribed extension)");
-
-    const repo = ENTITY_REPOS[entityType];
-    const snapshots = await EntitySnapshots.findMany(tx, { sourceEntityIds: ancestorIds, rulesetId: this.ruleset.id });
-    const tombstoned = new Set<string>();
-    for (const snapshot of snapshots) {
-      // The local copy, as stored: deleted, it leaves the snapshot a tombstone
-      if (!(await repo.exists(tx, { id: snapshot.forkedEntityId }))) tombstoned.add(snapshot.sourceEntityId);
-    }
-    return tombstoned;
-  }
-
-  /**
-   * Pre-create check for entity name uniqueness in the ruleset's composed view.
-   * Throws a ConflictError if the name is taken in the fork or by a visible
-   * inherited entity. Inherited entities hidden by an override (for example a
-   * local copy renamed since) don't block the name. Returns the closest hidden
-   * ancestor whose local copy was deleted (a tombstone) — the caller should pass
-   * this to `repointTombstone` after `Repo.create` so the snapshot
-   * follows the new entity.
-   */
-  async assertNameAvailable(
-    tx: Db,
-    entityType: RulesetEntityType,
-    name: string,
-  ): Promise<{ tombstoneAncestorId: string | null }> {
-    const repo = ENTITY_REPOS[entityType];
-    const own = await repo.findOne(tx, { name, rulesetId: this.ruleset.id });
-    if (own) throw new ConflictError("Name already exists in this ruleset");
-
-    const ancestorIds: string[] = [];
-    for (const ancestorId of this.cow.sourceChain) {
-      const conflict = await repo.findOne(tx, { name, rulesetId: ancestorId });
-      if (conflict) ancestorIds.push(conflict.id);
-    }
-    const tombstoned = await this.assertAncestorNamesHidden(tx, entityType, ancestorIds);
-    return { tombstoneAncestorId: ancestorIds.find((id) => tombstoned.has(id)) ?? null };
-  }
-
-  /**
    * Resolve the stored row a customization update or delete should change.
    * `entityId` is the owner the row is shown on, so visible sibling contributions
    * resolve like the entity's own rows. COWs that owner when inherited and returns
@@ -230,67 +172,11 @@ export default class RulesetEdit {
   }
 
   /**
-   * COW helper for customization mutations. Given an entityType and entityId,
-   * checks if the entity belongs to the parent ruleset and COWs it if needed.
-   * Returns the resolved entityId (original if owned, COW'd copy if inherited).
-   *
-   * For klass_levels: COWs the entire parent klass, then maps the old level ID
-   * to the new one by its level number.
+   * The row a new customization of `entityId` goes on: the ruleset's own entity, locked, or the copy of an inherited
+   * one. A class level's class is copied with its levels, and the level mapped to its copy by number; a modifier's
+   * requirement goes on the copy of the modifier.
    */
   async cowOwner(tx: Db, entityType: string, entityId: string): Promise<string> {
     return (await this.cowOwnerOf(tx, entityType, entityId)).id;
-  }
-
-  /**
-   * The row a delete of `entity` removes: as `cowToEdit`, and the ruleset's own entity is locked first, so its
-   * customizations' writes wait for the delete.
-   */
-  async cowToDelete(tx: Db, entityType: RulesetEntityType, entity: { id: string; rulesetId: string }): Promise<string> {
-    const target = await this.cowToEdit(tx, entityType, entity);
-    if (!target.copied) await lockEntityForMutation(tx, entityType, target.id);
-    return target.id;
-  }
-
-  /**
-   * The row an edit of `entity` (as the engine found it in the view) writes: the ruleset's own entity, or the copy of an
-   * inherited one, made on its first edit. A copy takes no stale-edit check: the client's `updatedAt` is the source's.
-   */
-  async cowToEdit(
-    tx: Db,
-    entityType: RulesetEntityType,
-    entity: { id: string; rulesetId: string },
-  ): Promise<{ copied: boolean; id: string }> {
-    if (entity.rulesetId === this.ruleset.id) return { id: entity.id, copied: false };
-    const copy = await this.copyEntity(tx, entityType, entity.id);
-    return { id: copy.entity.id, copied: true };
-  }
-
-  /**
-   * After creating a new locally-owned entity, check for a tombstone snapshot
-   * left behind by a previous override-delete on the conflicting ancestor entity.
-   * If found, repoint the snapshot's `forkedEntityId` to the new entity so the
-   * inherited version stays hidden from the source-chain.
-   */
-  async repointTombstone(
-    tx: Db,
-    entityType: RulesetEntityType,
-    ancestorEntityId: string,
-    newEntityId: string,
-  ): Promise<void> {
-    const tombstone = await EntitySnapshots.findOne(tx, {
-      sourceEntityId: ancestorEntityId,
-      rulesetId: this.ruleset.id,
-    });
-    if (!tombstone) return;
-    await EntitySnapshots.delete(tx, {
-      sourceEntityId: ancestorEntityId,
-      rulesetId: this.ruleset.id,
-    });
-    await EntitySnapshots.create(tx, {
-      rulesetId: this.ruleset.id,
-      entityType,
-      sourceEntityId: ancestorEntityId,
-      forkedEntityId: newEntityId,
-    });
   }
 }

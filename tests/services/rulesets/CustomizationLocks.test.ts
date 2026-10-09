@@ -1,7 +1,7 @@
 import { afterAll, afterEach, expect, test } from "bun:test";
 
 import { featsInRules } from "@/drizzle/schema.ts";
-import { lockEntityForMutation, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
+import { EntityRepositories, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { createTestDbFromClient, createTestPool } from "@/server/database/test.ts";
 import { Feats, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
@@ -51,14 +51,14 @@ test("owner mutation waits for a competing transaction and acquires the row afte
   await runWhileLocked(
     pool,
     async (blockerDb) => expect(await Feats.lock(blockerDb, { id: seed.featMap.Toughness })).toBe(true),
-    () => lockEntityForMutation(db, "feats", seed.featMap.Toughness),
+    () => EntityRepositories.lock(db, "feats", seed.featMap.Toughness),
   );
 });
 
 test("owner locks leave other entities independent and shared copy reads compatible", async () => {
   const seed = await getSeedCtx();
   const otherId = Object.values(seed.featMap).find((id) => id !== seed.featMap.Toughness)!;
-  await lockEntityForMutation(db, "feats", seed.featMap.Toughness);
+  await EntityRepositories.lock(db, "feats", seed.featMap.Toughness);
   expect(await Feats.lock(db, { id: otherId }, "share")).toBe(true);
   const client = await pool.connect();
   try {
@@ -73,7 +73,7 @@ test("owner locks leave other entities independent and shared copy reads compati
 });
 
 test("a missing owner is rejected before customization writes", async () => {
-  await expect(lockEntityForMutation(db, "feats", crypto.randomUUID())).rejects.toThrow("no longer exists");
+  await expect(EntityRepositories.lock(db, "feats", crypto.randomUUID())).rejects.toThrow("no longer exists");
 });
 
 test("every customization kind reports a row removed before the owner lock as missing", async () => {
