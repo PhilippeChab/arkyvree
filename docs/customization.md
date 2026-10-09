@@ -114,7 +114,7 @@ Available families: `FEAT_FAMILIES` in `shared/dnd3.5/feats.ts`, the `FEAT_FAMIL
 - Feat type families, each named like its type: `metamagic`, `itemcreation`, `luck`, and Complete Arcane's `draconic` feats, by their "Draconic …" name
 - Class feature families: `turnorrebukeundead`, `wildshape`, `favoredenemy`, and the features each class seeds as its own feat, "Sneak Attack (Rogue)" (`CLASS_FEATURE_FAMILIES`, which `CLASS_FEAT_FAMILIES` in `codegen/dnd3.5/tools/vocabulary/classFeatFamilies.ts` matches): `animalcompanion`, `bardicmusic`, `evasion`, `flurryofblows`, `grace`, `inspirecourage`, `kipower`, `layonhands`, `poisonuse`, `rage`, `skirmish`, `smiteevil`, `sneakattack`, `suddenstrike`, `summonfamiliar`, `trapfinding`
 
-Grouping paths are generated from the families (`FeatsPaths`' `generateFamilyPaths`: `FEAT_FAMILIES` plus the ruleset's `FEAT_FAMILY` property values) — no manual path registration needed. `FeatGroupingsComponent` holds each family's feats, which those paths read on the sheet. The parser's generator writes a check of a family by its own name ("Weapon Specialization") as a check of any of its feats (`resolveFamilyChecks`), and a count of it ("Sneak attack +2d6") as the family's count.
+Grouping paths are generated from the families (`FeatsPaths`' `generateFamilyPaths`: `FEAT_FAMILIES` plus the ruleset's `FEAT_FAMILY` property values) — no manual path registration needed. `FeatGroupingsComponent` holds each family's feats, which those paths read on the sheet. The parser's generator writes a check of a family by its own name ("Weapon Specialization") as a check of any of its feats (`FeatSeeds.familyChecks`), and a count of it ("Sneak attack +2d6") as the family's count.
 
 ### Skill sub-type wildcards (`skills.<prefix>*.rank`)
 

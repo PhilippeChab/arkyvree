@@ -23,7 +23,7 @@ export function RulesetLicenseNotice({ name }: RulesetLicenseNoticeProps) {
           License & Attribution
         </LinkButton>
       </Stack>
-      <Modal open={open} onClose={() => setOpen(false)} maxWidth="md" aria-labelledby="ruleset-license-title">
+      <Modal open={open} onClose={() => setOpen(false)} aria-labelledby="ruleset-license-title">
         <DialogTitle id="ruleset-license-title">License & Attribution</DialogTitle>
         <DialogContent dividers>
           <Stack spacing={3}>
