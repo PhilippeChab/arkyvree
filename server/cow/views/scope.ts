@@ -1,5 +1,5 @@
 import type { RulesetData } from "@/engine/index.ts";
-import { type Db, withCowContext } from "@/server/database/index.ts";
+import type { Db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 
@@ -12,15 +12,10 @@ export type RulesetScope = {
 };
 
 /**
- * Scope helper: loads the ruleset and its view (`RulesetViews.getData`), and runs `fn` inside a
- * cowContext so every repository read inside auto-resolves pre-COW ids to
- * post-COW (output Proxy) AND every entity-id WHERE-clause input is
- * auto-canonicalized (input Proxy). Services call this once at the top of
- * a character-scoped operation; downstream code stops caring about COW.
- *
- * Throws `NotFoundError("Ruleset not found")` if `rulesetId` doesn't exist,
- * so the callback always receives non-null `{ ruleset, rulesetData }` and
- * doesn't have to branch or add defensive sourceChain fallbacks.
+ * Runs `fn` with a ruleset and its view (`RulesetViews.getData`): what the engine answers in (`Engine.for(scope)`), and
+ * what reads its stored rows need of copy-on-write (`rulesetData.cow`: a list's filters, an id's equivalents). Nothing
+ * is ambient: a repository reads rows as stored, and the engine reads them as the view does. Refuses a missing ruleset
+ * (`NotFoundError`), so `fn` always has one.
  */
 export async function withRulesetScope<T>(
   tx: Db,
@@ -30,23 +25,13 @@ export async function withRulesetScope<T>(
   const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
   if (!ruleset) throw new NotFoundError("Ruleset not found");
   const rulesetData = await RulesetViews.getData(ruleset);
-  return await withCowContext(rulesetData.cow, () => fn({ ruleset, rulesetData }));
+  return await fn({ ruleset, rulesetData });
 }
 
 /**
- * Multi-ruleset variant: preload each ruleset's view (its row and `rulesetData`) for every unique id and hand
- * the map to `fn`. Used for list operations that enrich rows from many
- * rulesets at once (the characters and campaign characters lists) where a single
- * `cowContext` would have to pick one ruleset, excluding the others.
- *
- * No `cowContext` is activated — the composed `rulesetData.*` Maps already
- * resolve stored ids through their own ruleset's CowData, so lookups
- * work without ambient context. Services that need character-scoped repo
- * auto-resolution for a specific character should use `withRulesetScope`
- * inside their per-character enrichment path.
- *
- * Missing rulesets are silently skipped (rare: a character row referencing
- * a deleted ruleset); the map just won't have that key.
+ * Runs `fn` with the views of several rulesets (each id once), by id: a list of rows from many rulesets (the characters
+ * and campaign characters lists), each described in its own ruleset's view. A missing ruleset (a character's deleted
+ * one) is left out of the map.
  */
 export async function withRulesetScopes<T>(
   tx: Db,

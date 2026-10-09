@@ -1,5 +1,5 @@
 import { Engine } from "@/engine/index.ts";
-import { readTargetPaths, withRulesetScope } from "@/server/cow/index.ts";
+import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { paginateItems } from "@/server/repositories/index.ts";
 import type { TargetPathKind } from "@/shared/customization/target.ts";
@@ -20,13 +20,13 @@ class TargetPathsService {
     page: number = 1,
     flat: boolean = false,
   ) {
-    const catalog = await readTargetPaths(rulesetId, kind);
-    const completions = await withRulesetScope(db, rulesetId, async (scope) =>
-      Engine.for(scope)
+    return await withRulesetScope(db, rulesetId, async (scope) => {
+      const catalog = await RulesetViews.getTargetPaths(scope.ruleset, kind);
+      const completions = Engine.for(scope)
         .targetPaths()
-        .getCompletions(catalog, kind, { flat, partialPath, position, search }, entityType),
-    );
-    return { ...paginateItems(completions, { limit, page }), segmentLabels: catalog.segmentLabels };
+        .getCompletions(catalog, kind, { flat, partialPath, position, search }, entityType);
+      return { ...paginateItems(completions, { limit, page }), segmentLabels: catalog.segmentLabels };
+    });
   }
 
   /**
@@ -34,9 +34,10 @@ class TargetPathsService {
    * without one). A valid path's result carries its definition: what it takes.
    */
   async validatePath(rulesetId: string, path: string, kind: TargetPathKind = "modifier", entityType?: string) {
-    const catalog = await readTargetPaths(rulesetId, kind);
     return await withRulesetScope(db, rulesetId, async (scope) =>
-      Engine.for(scope).targetPaths().validate(catalog, path, entityType),
+      Engine.for(scope)
+        .targetPaths()
+        .validate(await RulesetViews.getTargetPaths(scope.ruleset, kind), path, entityType),
     );
   }
 }

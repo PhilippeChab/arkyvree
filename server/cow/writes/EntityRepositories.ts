@@ -1,5 +1,3 @@
-/** Each ruleset entity type's repository, as copy-on-write uses it, and the lock a change takes on one. */
-
 import type { Db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import {
@@ -36,7 +34,8 @@ export interface EntityWithId {
   rulesetId: string;
 }
 
-export const ENTITY_REPOS: Record<RulesetEntityType, EntityRepository> = {
+/** Each ruleset entity type's repository. */
+const REPOSITORIES: Record<RulesetEntityType, EntityRepository> = {
   abilities: Abilities,
   saves: Saves,
   skills: Skills,
@@ -50,8 +49,16 @@ export const ENTITY_REPOS: Record<RulesetEntityType, EntityRepository> = {
   mechanics: Mechanics,
 };
 
-/** Locks an entity a change writes under (its customizations, its delete), by its stored id: a not found when gone. */
-export async function lockEntityForMutation(tx: Db, entityType: RulesetEntityType, entityId: string): Promise<void> {
-  if (!(await ENTITY_REPOS[entityType].lock(tx, { id: entityId })))
-    throw new NotFoundError("Customization source no longer exists; refresh the entity");
+/** A ruleset entity type's repository, as copy-on-write uses it, and the lock a change to one of its entities takes. */
+export default class EntityRepositories {
+  /** The repository of an entity type's table. */
+  static of(entityType: RulesetEntityType): EntityRepository {
+    return REPOSITORIES[entityType];
+  }
+
+  /** Locks an entity a change writes under (its customizations, its delete), by its stored id: a not found when gone. */
+  static async lock(tx: Db, entityType: RulesetEntityType, entityId: string): Promise<void> {
+    if (!(await REPOSITORIES[entityType].lock(tx, { id: entityId })))
+      throw new NotFoundError("Customization source no longer exists; refresh the entity");
+  }
 }

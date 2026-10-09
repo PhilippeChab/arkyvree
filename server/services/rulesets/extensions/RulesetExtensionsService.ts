@@ -2,8 +2,8 @@ import { getTableName } from "drizzle-orm";
 
 import { rulesetsInRules } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
-import { ENTITY_REPOS, RulesetViews } from "@/server/cow/index.ts";
-import { type Db, db, withCowContext, withTransaction } from "@/server/database/index.ts";
+import { EntityRepositories, RulesetViews } from "@/server/cow/index.ts";
+import { type Db, db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import {
   Activities,
@@ -62,13 +62,13 @@ class RulesetExtensionsService {
     const sourceIdsByType: Partial<Record<RulesetEntityType, string[]>> = {};
     for (const snap of snapshots) {
       const type = snap.entityType as RulesetEntityType;
-      if (!ENTITY_REPOS[type]) continue;
+      if (!EntityRepositories.of(type)) continue;
       (sourceIdsByType[type] ??= []).push(snap.sourceEntityId);
     }
 
     const shadowIdsByType: Partial<Record<RulesetEntityType, string[]>> = {};
     for (const [type, ids] of Object.entries(sourceIdsByType) as [RulesetEntityType, string[]][]) {
-      const sources = await ENTITY_REPOS[type].findMany(tx, { ids });
+      const sources = await EntityRepositories.of(type).findMany(tx, { ids });
       const fromExt = new Set(sources.filter((s) => s.rulesetId === extensionId).map((s) => s.id));
       const forked = snapshots
         .filter((s) => s.entityType === type && fromExt.has(s.sourceEntityId))
@@ -77,55 +77,53 @@ class RulesetExtensionsService {
     }
     const shadow = (type: RulesetEntityType) => shadowIdsByType[type] ?? [];
 
-    // Shadow ids as stored: a shadow can be a sibling loser, whose id copy-on-write would read as its winner's.
-    return await withCowContext(
-      undefined,
-      async () =>
-        (await CharacterLevelFeats.exists(tx, {
-          hostRulesetId,
-          extensionRulesetId: extensionId,
-          shadowFeatIds: shadow("feats"),
-        })) ||
-        (await CharacterLevelFeats.exists(tx, {
-          hostRulesetId,
-          extensionRulesetId: extensionId,
-          shadowAptitudeIds: shadow("aptitudes"),
-        })) ||
-        (await CharacterLevelSkills.exists(tx, {
-          hostRulesetId,
-          extensionRulesetId: extensionId,
-          shadowSkillIds: shadow("skills"),
-        })) ||
-        (await CharacterLevelPowers.exists(tx, {
-          hostRulesetId,
-          extensionRulesetId: extensionId,
-          shadowPowerIds: shadow("powers"),
-        })) ||
-        (await CharacterLevelPowers.exists(tx, {
-          hostRulesetId,
-          extensionRulesetId: extensionId,
-          shadowAptitudeIds: shadow("aptitudes"),
-        })) ||
-        (await CharacterLevels.exists(tx, {
-          hostRulesetId,
-          extensionRulesetId: extensionId,
-          shadowKlassIds: shadow("klasses"),
-        })) ||
-        (await Characters.exists(tx, {
-          hostRulesetId,
-          extensionRulesetId: extensionId,
-          shadowRaceIds: shadow("races"),
-        })) ||
-        (await CharacterLanguages.exists(tx, {
-          hostRulesetId,
-          extensionRulesetId: extensionId,
-          shadowLanguageIds: shadow("languages"),
-        })) ||
-        (await CharacterInventory.exists(tx, {
-          hostRulesetId,
-          extensionRulesetId: extensionId,
-          shadowItemIds: shadow("items"),
-        })),
+    // Shadow ids as stored: a shadow can be a sibling loser, whose id the view would read as its winner's
+    return (
+      (await CharacterLevelFeats.exists(tx, {
+        hostRulesetId,
+        extensionRulesetId: extensionId,
+        shadowFeatIds: shadow("feats"),
+      })) ||
+      (await CharacterLevelFeats.exists(tx, {
+        hostRulesetId,
+        extensionRulesetId: extensionId,
+        shadowAptitudeIds: shadow("aptitudes"),
+      })) ||
+      (await CharacterLevelSkills.exists(tx, {
+        hostRulesetId,
+        extensionRulesetId: extensionId,
+        shadowSkillIds: shadow("skills"),
+      })) ||
+      (await CharacterLevelPowers.exists(tx, {
+        hostRulesetId,
+        extensionRulesetId: extensionId,
+        shadowPowerIds: shadow("powers"),
+      })) ||
+      (await CharacterLevelPowers.exists(tx, {
+        hostRulesetId,
+        extensionRulesetId: extensionId,
+        shadowAptitudeIds: shadow("aptitudes"),
+      })) ||
+      (await CharacterLevels.exists(tx, {
+        hostRulesetId,
+        extensionRulesetId: extensionId,
+        shadowKlassIds: shadow("klasses"),
+      })) ||
+      (await Characters.exists(tx, {
+        hostRulesetId,
+        extensionRulesetId: extensionId,
+        shadowRaceIds: shadow("races"),
+      })) ||
+      (await CharacterLanguages.exists(tx, {
+        hostRulesetId,
+        extensionRulesetId: extensionId,
+        shadowLanguageIds: shadow("languages"),
+      })) ||
+      (await CharacterInventory.exists(tx, {
+        hostRulesetId,
+        extensionRulesetId: extensionId,
+        shadowItemIds: shadow("items"),
+      }))
     );
   }
 
@@ -240,7 +238,7 @@ class RulesetExtensionsService {
       const extensionSnapshots = [];
       for (const snap of snapshots) {
         const entityType = snap.entityType as RulesetEntityType;
-        const repo = ENTITY_REPOS[entityType];
+        const repo = EntityRepositories.of(entityType);
         if (!repo) continue;
         const sourceEntity = await repo.findOne(tx, { id: snap.sourceEntityId });
         if (sourceEntity?.rulesetId === extensionId) extensionSnapshots.push(snap);

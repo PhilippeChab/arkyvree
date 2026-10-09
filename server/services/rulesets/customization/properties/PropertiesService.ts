@@ -2,7 +2,7 @@ import { getTableName } from "drizzle-orm";
 
 import { propertiesInCustomization } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
-import { RulesetEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
+import { CustomizationEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { type Db, db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Properties } from "@/server/repositories/index.ts";
@@ -56,7 +56,7 @@ class PropertiesService {
 
           const { entity } = Engine.for(scope).properties(entityType, entityId).planCreate();
 
-          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const edit = new CustomizationEdit(ruleset, rulesetData.cow);
           const resolvedEntityId = await edit.cowOwner(tx, entityType, entity.id);
           return await this.writeProperty(tx, session, { name: entity.name, type: entityType }, resolvedEntityId, body);
         }),
@@ -75,7 +75,7 @@ class PropertiesService {
           const { entity, property } = Engine.for(scope).properties(entityType, entityId).planDelete(propertyId);
           await checkCustomizedEntity(property);
 
-          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const edit = new CustomizationEdit(ruleset, rulesetData.cow);
           const { resolvedEntityId, resolvedCustomizationId: resolvedPropertyId } = await edit.cowCustomization(
             tx,
             entityType,
@@ -133,7 +133,7 @@ class PropertiesService {
             .planEdit(propertyId);
           await checkCustomizedEntity(property);
 
-          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const edit = new CustomizationEdit(ruleset, rulesetData.cow);
           const { updatedAt, ...propertyData } = body;
           if (override) {
             // Its template's property: the edit overrides it with one of the item's own

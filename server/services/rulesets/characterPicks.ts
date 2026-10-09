@@ -12,7 +12,9 @@ import {
 
 /**
  * Returns true if any character on a ruleset that depends on `rulesetId` has
- * a pick that references this entity. The character-side in-use `exists`
+ * a pick that references this entity by any of `ids`: its equivalents in the ruleset's view
+ * (`CowData.getEquivalentIds`, since a pick stored before the entity was copied names its source), or the one row a
+ * revert deletes. The character-side in-use `exists`
  * joins `rulesets` and match three cases in one query: the same ruleset,
  * any descendant fork (`ancestor_ruleset_ids @> [rulesetId]`), or any host
  * that subscribes to it as an extension (`extension_ruleset_ids @> [rulesetId]`).
@@ -28,30 +30,30 @@ type CharacterPickTarget = RulesetEntityType | "klass_levels";
 export async function hasCharacterPicks(
   tx: Db,
   entityType: CharacterPickTarget,
-  entityId: string,
+  ids: string[],
   rulesetId: string,
 ): Promise<boolean> {
   switch (entityType) {
     case "feats":
-      return CharacterLevelFeats.exists(tx, { featId: entityId, rulesetId });
+      return CharacterLevelFeats.exists(tx, { featIds: ids, rulesetId });
     case "powers":
-      return CharacterLevelPowers.exists(tx, { powerId: entityId, rulesetId });
+      return CharacterLevelPowers.exists(tx, { powerIds: ids, rulesetId });
     case "skills":
-      return CharacterLevelSkills.exists(tx, { skillId: entityId, rulesetId });
+      return CharacterLevelSkills.exists(tx, { skillIds: ids, rulesetId });
     case "races":
-      return Characters.exists(tx, { raceId: entityId, rulesetId });
+      return Characters.exists(tx, { raceIds: ids, rulesetId });
     case "items":
-      return CharacterInventory.exists(tx, { itemId: entityId, rulesetId });
+      return CharacterInventory.exists(tx, { itemIds: ids, rulesetId });
     case "languages":
-      return CharacterLanguages.exists(tx, { languageId: entityId, rulesetId });
+      return CharacterLanguages.exists(tx, { languageIds: ids, rulesetId });
     case "klasses":
-      return CharacterLevels.exists(tx, { klassId: entityId, rulesetId });
+      return CharacterLevels.exists(tx, { klassIds: ids, rulesetId });
     case "klass_levels":
-      return CharacterLevels.exists(tx, { klassLevelId: entityId, rulesetId });
+      return CharacterLevels.exists(tx, { klassLevelIds: ids, rulesetId });
     case "aptitudes":
       return (
-        (await CharacterLevelFeats.exists(tx, { aptitudeId: entityId, rulesetId })) ||
-        (await CharacterLevelPowers.exists(tx, { aptitudeId: entityId, rulesetId }))
+        (await CharacterLevelFeats.exists(tx, { aptitudeIds: ids, rulesetId })) ||
+        (await CharacterLevelPowers.exists(tx, { aptitudeIds: ids, rulesetId }))
       );
     case "saves":
     case "mechanics":

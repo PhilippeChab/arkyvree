@@ -2,13 +2,7 @@ import { getTableName } from "drizzle-orm";
 
 import { requirementsInCustomization } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
-import {
-  readTargetPathCatalogs,
-  readTargetPaths,
-  RulesetEdit,
-  RulesetViews,
-  withRulesetScope,
-} from "@/server/cow/index.ts";
+import { CustomizationEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, InternalError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Requirements } from "@/server/repositories/index.ts";
@@ -48,10 +42,10 @@ class RequirementsService {
           const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const catalogs = await readTargetPathCatalogs(rulesetId, "requirement");
+          const catalogs = await RulesetViews.getTargetPathCatalogs(scope.ruleset, "requirement");
           const { entity, row } = Engine.for(scope).requirements(entityType, entityId).planCreate(catalogs, body);
 
-          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const edit = new CustomizationEdit(ruleset, rulesetData.cow);
           const resolvedEntityId = await edit.cowOwner(tx, entityType, entity.id);
 
           const rows = await Requirements.create(tx, { entityId: resolvedEntityId, entityType, ...row });
@@ -92,7 +86,7 @@ class RequirementsService {
           // Before the copy-on-write: the lookup reads the shared db, not tx
           await checkCustomizedEntity(requirement);
 
-          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const edit = new CustomizationEdit(ruleset, rulesetData.cow);
           const { resolvedEntityId, resolvedCustomizationId: resolvedRequirementId } = await edit.cowCustomization(
             tx,
             entityType,
@@ -121,7 +115,7 @@ class RequirementsService {
 
   async getRequirements(rulesetId: string, entityType: string, entityId: string) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
-      const catalog = await readTargetPaths(rulesetId, "requirement");
+      const catalog = await RulesetViews.getTargetPaths(scope.ruleset, "requirement");
       return Engine.for(scope).requirements(entityType, entityId).describeAll(catalog);
     });
   }
@@ -140,14 +134,14 @@ class RequirementsService {
           const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const catalogs = await readTargetPathCatalogs(rulesetId, "requirement");
+          const catalogs = await RulesetViews.getTargetPathCatalogs(scope.ruleset, "requirement");
           const requirements = Engine.for(scope).requirements(entityType, entityId);
           const { entity, requirement, row } = requirements.planEdit(catalogs, requirementId, body);
           // Before the copy-on-write: the lookup reads the shared db, not tx
           await checkCustomizedEntity(requirement);
 
           // COW the owning entity if this requirement is inherited
-          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const edit = new CustomizationEdit(ruleset, rulesetData.cow);
           const { resolvedEntityId, resolvedCustomizationId: resolvedRequirementId } = await edit.cowCustomization(
             tx,
             entityType,

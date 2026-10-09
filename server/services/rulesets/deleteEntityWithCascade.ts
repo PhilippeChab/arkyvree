@@ -1,4 +1,4 @@
-import { ENTITY_REPOS } from "@/server/cow/index.ts";
+import { EntityRepositories } from "@/server/cow/index.ts";
 import { type Db } from "@/server/database/index.ts";
 import {
   FeatsAptitudes,
@@ -18,7 +18,7 @@ import {
 export async function deleteEntityWithCascade(tx: Db, entityType: RulesetEntityType, entityId: string) {
   // A tombstone may already have no row. Still clean up any remaining children
   // when restoring it; creation cannot succeed against an absent owner.
-  await ENTITY_REPOS[entityType].lock(tx, { id: entityId });
+  await EntityRepositories.of(entityType).lock(tx, { id: entityId });
 
   // 1. Delete join tables
   if (entityType === "feats") {
@@ -52,5 +52,5 @@ export async function deleteEntityWithCascade(tx: Db, entityType: RulesetEntityT
   // items.source_item_id is RESTRICT — callers that may hit references (revertOverride)
   // must repoint copies before invoking this.
   // 2. Delete the entity itself: the database deletes its customizations
-  await ENTITY_REPOS[entityType].delete(tx, { id: entityId });
+  await EntityRepositories.of(entityType).delete(tx, { id: entityId });
 }

@@ -1,7 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
 import { modifiersInCustomization, powersAptitudesInRules, requirementsInCustomization } from "@/drizzle/schema.ts";
-import { readTargetPaths } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
 import { Abilities, Aptitudes, Feats, Items, Powers, Races, Requirements } from "@/server/repositories/index.ts";
@@ -11,7 +10,7 @@ import { activityTypes } from "@/tests/support/activities.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { insertRows } from "@/tests/support/database.ts";
 import { createTestKlassLevel } from "@/tests/support/levels.ts";
-import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
+import { createTestUserAndRuleset, readTargetPaths } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 
 const strengthBonus = { target: "abilities.strength.misc", value: "2", operator: "add" };

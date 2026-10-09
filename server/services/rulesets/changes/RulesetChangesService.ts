@@ -1,5 +1,5 @@
-import { hasCharacterPicks, RulesetViews } from "@/server/cow/index.ts";
-import { db, withCowContext, withTransaction } from "@/server/database/index.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
+import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import {
   EntitySnapshots,
@@ -10,6 +10,7 @@ import {
   Rulesets,
 } from "@/server/repositories/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { hasCharacterPicks } from "@/server/services/rulesets/characterPicks.ts";
 import { deleteEntityWithCascade } from "@/server/services/rulesets/deleteEntityWithCascade.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -115,19 +116,15 @@ class RulesetChangesService {
       // Reverting hard-deletes the COW row, and FK CASCADE then wipes any
       // character picks pointing at it. Mirror the inUse guard each delete
       // service runs (current ruleset + descendants).
-      if (await hasCharacterPicks(tx, entityType, snapshot.forkedEntityId, rulesetId))
+      if (await hasCharacterPicks(tx, entityType, [snapshot.forkedEntityId], rulesetId))
         throw new ConflictError("Cannot revert override while characters in this ruleset depend on it");
 
       // For items, repoint copies from the COW back to the original parent template
       // before the cascade hard-deletes (RESTRICT FK). Klass_levels and dependent
       // character_levels are wiped via FK CASCADE on the parent klass row.
-      if (entityType === "items") {
-        // Stored ids, with copy-on-write resolution off: a scope would resolve the source to its copy,
-        // repointing nothing.
-        await withCowContext(undefined, () =>
-          Items.update(tx, { sourceItemId: entityId }, { sourceItemId: snapshot.forkedEntityId }),
-        );
-      }
+      if (entityType === "items")
+        await Items.update(tx, { sourceItemId: entityId }, { sourceItemId: snapshot.forkedEntityId });
+
       await deleteEntityWithCascade(tx, entityType, snapshot.forkedEntityId);
       await EntitySnapshots.delete(tx, {
         sourceEntityId: entityId,

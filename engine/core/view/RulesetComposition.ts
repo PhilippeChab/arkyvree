@@ -55,7 +55,7 @@ export interface RulesetRawData {
 /**
  * A ruleset's view: its own rows and its source chain's (`chain`, the ruleset's first), composed by its copy-on-write
  * data. The copies' and siblings' exclusions apply, a sibling loser's customizations merge into its winner's, references
- * resolve to the winners, and every id-keyed map takes a stored id. Built on every read (`RulesetCache.getData`).
+ * resolve to the winners, and every id-keyed map takes a stored id. Built on every read (`RulesetViews.getData`).
  */
 export default class RulesetComposition {
   /** `orderProperties`: the ruleset's order of an entity's properties, which its view keeps. */

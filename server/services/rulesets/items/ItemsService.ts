@@ -3,19 +3,13 @@ import { getTableName } from "drizzle-orm";
 import { itemsInRules } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
-import {
-  copyEntityCustomizations,
-  fetchEntityCustomizations,
-  hasCharacterPicks,
-  RulesetEdit,
-  RulesetViews,
-  withRulesetScope,
-} from "@/server/cow/index.ts";
+import { CustomizationCopies, EntityEdit, EntityNames, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Items } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { hasCharacterPicks } from "@/server/services/rulesets/characterPicks.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -47,18 +41,18 @@ class ItemsService extends include(Object, Variants) {
 
           const plan = Engine.for(scope).items().planCreate(body, duplicatedItemId);
 
-          const edit = new RulesetEdit(ruleset, rulesetData.cow);
-          const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "items", body.name);
+          const names = new EntityNames(ruleset, rulesetData.cow);
+          const { tombstoneAncestorId } = await names.assertNameAvailable(tx, "items", body.name);
 
           const rows = await Items.create(tx, { ...plan.columns, rulesetId });
           const item = rows[0];
 
-          if (tombstoneAncestorId) await edit.repointTombstone(tx, "items", tombstoneAncestorId, item.id);
+          if (tombstoneAncestorId) await names.repointTombstone(tx, "items", tombstoneAncestorId, item.id);
 
           const sourceId = plan.copyCustomizationsFrom;
           if (sourceId) {
-            const cust = (await fetchEntityCustomizations(tx, [sourceId], "items", "items")).get(sourceId);
-            if (cust) await copyEntityCustomizations(tx, item.id, "items", cust);
+            const cust = (await CustomizationCopies.read(tx, [sourceId], "items", "items")).get(sourceId);
+            if (cust) await CustomizationCopies.copy(tx, item.id, "items", cust);
           }
 
           await createActivityWithNotifications(tx, {
@@ -84,9 +78,9 @@ class ItemsService extends include(Object, Variants) {
     const result = await withTransaction(
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
-          const { ruleset, rulesetData } = scope;
+          const { ruleset } = scope;
 
-          const inUse = await hasCharacterPicks(tx, "items", itemId, rulesetId);
+          const inUse = await hasCharacterPicks(tx, "items", scope.rulesetData.cow.getEquivalentIds(itemId), rulesetId);
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
           const plan = Engine.for(scope).items().planDelete(itemId);
@@ -94,7 +88,7 @@ class ItemsService extends include(Object, Variants) {
           // A template's copies, in any ruleset: its delete is refused while it has any
           if (plan.copiesOf) plan.checkCopies(await Items.findMany(tx, { sourceItemId: plan.copiesOf }));
 
-          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const edit = new EntityEdit(ruleset);
           const targetId = await edit.cowToDelete(tx, "items", item);
 
           // The database deletes its customizations with it.
@@ -136,8 +130,11 @@ class ItemsService extends include(Object, Variants) {
     pagination: { limit: number; page: number },
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
-      const { sourceChain } = scope.rulesetData.cow;
-      const result = await Items.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
+      const result = await Items.findPage(
+        db,
+        { rulesetId, ...scope.rulesetData.cow.listFilters, ...where },
+        pagination,
+      );
       return { ...result, items: Engine.for(scope).items().describeAll(result.items) };
     });
   }
@@ -146,13 +143,13 @@ class ItemsService extends include(Object, Variants) {
     const result = await withTransaction(
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
-          const { ruleset, rulesetData } = scope;
+          const { ruleset } = scope;
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
           const { columns, item } = Engine.for(scope).items().planEdit(itemId, body);
 
-          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const edit = new EntityEdit(ruleset);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "items", item);
           const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 

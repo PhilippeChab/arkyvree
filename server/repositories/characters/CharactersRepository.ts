@@ -29,12 +29,12 @@ class CharactersRepository extends include(
   }
 
   // Archived characters count: one can be restored, and its picks must still resolve.
-  private async existsRacePick(db: Db, where: { raceId: string; rulesetId: string }) {
+  private async existsRacePick(db: Db, where: { raceIds: string[]; rulesetId: string }) {
     const rows = await db
       .select({ id: this.table.id })
       .from(this.table)
       .innerJoin(rulesetsInRules, this.rulesetOrDescendant(this.table.rulesetId, where.rulesetId))
-      .where(this.idMatches(this.table.raceId, where.raceId))
+      .where(this.idMatches(this.table.raceId, where.raceIds))
       .limit(1);
     return rows.length > 0;
   }
@@ -144,10 +144,10 @@ class CharactersRepository extends include(
   async exists(
     db: Db,
     where:
-      | { raceId: string; rulesetId: string }
+      | { raceIds: string[]; rulesetId: string }
       | { extensionRulesetId: string; hostRulesetId: string; shadowRaceIds: string[] },
   ): Promise<boolean> {
-    if ("raceId" in where) return await this.existsRacePick(db, where);
+    if ("raceIds" in where) return await this.existsRacePick(db, where);
     return await this.existsRacePickFromExtension(db, where);
   }
 

@@ -1,7 +1,7 @@
 import { afterEach, expect, test } from "bun:test";
 
 import MemoryCache from "@/server/cache/MemoryCache.ts";
-import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Rulesets } from "@/server/repositories/index.ts";
 import { copyEntity, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
@@ -53,50 +53,3 @@ test("disabled caches do not coalesce raw reads across worker jobs", async () =>
   const [first, second] = await Promise.all([RulesetViews.getRawData(fork.id), RulesetViews.getRawData(fork.id)]);
   expect(first).not.toBe(second);
 });
-
-test("a nested base scope clears the fork mapping and restores it afterward", async () => {
-  const session = makeSession();
-  const fork = await createSeededTestRuleset(session.userId);
-  const source = (await Feats.findOne(db, { rulesetId: fork.ancestorRulesetIds[0], name: "Skill Focus: Climb" }))!;
-  const copy = await copyEntity(db, "feats", source.id, fork);
-  RulesetViews.invalidateAll();
-  await withRulesetScope(db, fork.id, async () => {
-    expect((await Feats.findOne(db, { id: source.id }))?.id).toBe(copy.id);
-    await withRulesetScope(db, source.rulesetId, async () => {
-      expect((await Feats.findOne(db, { id: source.id }))?.id).toBe(source.id);
-    });
-    expect((await Feats.findOne(db, { id: source.id }))?.id).toBe(copy.id);
-  });
-});
-
-for (const invalidation of ["ruleset", "all"] as const) {
-  test(`${invalidation} invalidation prevents a late target-path read from replacing fresh data`, async () => {
-    const session = makeSession();
-    const fork = await createSeededTestRuleset(session.userId);
-    const [feat] = await Feats.create(db, { name: "Path race", description: "Before", rulesetId: fork.id });
-    const read = async () => ({
-      paths: [],
-      segmentLabels: { feat: (await Feats.findOne(db, { id: feat.id }))!.description! },
-    });
-    const started = Promise.withResolvers<void>();
-    const release = Promise.withResolvers<void>();
-    const old = RulesetViews.getTargetPaths(fork, "modifier", async () => {
-      const data = await read();
-      started.resolve();
-      await release.promise;
-      return data;
-    });
-    await started.promise;
-    try {
-      await Feats.update(db, { description: "After" }, { id: feat.id });
-      if (invalidation === "ruleset") RulesetViews.invalidate(fork.id);
-      else RulesetViews.invalidateAll();
-      const fresh = await RulesetViews.getTargetPaths(fork, "modifier", read);
-      expect(fresh.segmentLabels.feat).toBe("After");
-    } finally {
-      release.resolve();
-      await old;
-    }
-    expect((await RulesetViews.getTargetPaths(fork, "modifier", read)).segmentLabels.feat).toBe("After");
-  });
-}

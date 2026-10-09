@@ -2,11 +2,12 @@ import { getTableName } from "drizzle-orm";
 
 import { klassSkillsInRules } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
-import { hasCharacterPicks, RulesetEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
+import { EntityEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { KlassSkills } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { hasCharacterPicks } from "@/server/services/rulesets/characterPicks.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class ClassSkillsService {
@@ -14,14 +15,14 @@ class ClassSkillsService {
     const result = await withTransaction(
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
-          const { ruleset, rulesetData } = scope;
+          const { ruleset } = scope;
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
           const { klass, skill } = Engine.for(scope).class(classId).planSkillAdd(skillId);
 
           // Copy an inherited class: the new klass_skills row would otherwise point at the parent ruleset's class.
-          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const edit = new EntityEdit(ruleset);
           const { id: targetKlassId } = await edit.cowToEdit(tx, "klasses", klass);
 
           const rows = await KlassSkills.create(tx, {
@@ -53,15 +54,20 @@ class ClassSkillsService {
     const result = await withTransaction(
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
-          const { ruleset, rulesetData } = scope;
+          const { ruleset } = scope;
 
-          const inUse = await hasCharacterPicks(tx, "klasses", classId, rulesetId);
+          const inUse = await hasCharacterPicks(
+            tx,
+            "klasses",
+            scope.rulesetData.cow.getEquivalentIds(classId),
+            rulesetId,
+          );
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
           const { klass, klassSkill, skill } = Engine.for(scope).class(classId).planSkillRemove(skillId);
 
           // Copy an inherited class: the delete would otherwise remove the parent ruleset's klass_skills row.
-          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const edit = new EntityEdit(ruleset);
           const { id: targetKlassId } = await edit.cowToEdit(tx, "klasses", klass);
 
           const rows = await KlassSkills.delete(tx, { klassId: targetKlassId, skillId: klassSkill.skillId });

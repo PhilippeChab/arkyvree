@@ -1,5 +1,5 @@
 /**
- * A ruleset's copy-on-write state: what its scope's reads resolve ids through (`withCowContext`), built by the engine
+ * A ruleset's copy-on-write state: what reading its stored rows as its view does resolves ids through, built by the engine
  * (`CowDataBuilder`) from the rows copy-on-write's views read. An entity a later ruleset copied is overridden: its copy
  * stands for it, and its customizations are the copy's. A book's copy of an entity another book copied too is a sibling
  * loser: the winner stands for it, and its customizations merge into the winner's. Every stale id (an overridden one, a
@@ -29,10 +29,7 @@ export default class CowData {
     }
     this.siblings = losersOf;
     this.siblingIds = new Set(this.winners.keys());
-    this.stateId = String(++CowData.lastStateId);
   }
-
-  private static lastStateId = 0;
 
   private readonly aliases: ReadonlyMap<string, string>;
 
@@ -47,12 +44,6 @@ export default class CowData {
 
   /** The ruleset's extensions, then its ancestors: where its inherited entities come from. */
   readonly sourceChain: string[];
-
-  /**
-   * A short id of its own, one per built CowData, so that a request's reads in two copy-on-write states (a
-   * character's ruleset and another's) never share a cached result.
-   */
-  readonly stateId: string;
 
   /** Every id that resolves to the entity `id` resolves to, that entity's own first: a stored row may hold any. */
   getEquivalentIds(id: string): string[] {
@@ -96,6 +87,14 @@ export default class CowData {
   /** Whether a later ruleset copied the entity: its copy stands for it, its customizations with it. */
   isOverridden(id: string): boolean {
     return this.overrides.has(id);
+  }
+
+  /**
+   * What a list of the ruleset's entities reads besides its own rows: its source chain's (`ancestorRulesetIds`), less
+   * the sibling losers it leaves out (`siblingLoserIds`), in the query, so a page keeps its size.
+   */
+  get listFilters() {
+    return { ancestorRulesetIds: this.sourceChain, siblingLoserIds: [...this.siblingIds] };
   }
 
   /** The id that stands for `id`: its copy or its winner when it's stale, itself otherwise. */

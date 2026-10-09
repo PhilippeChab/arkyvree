@@ -8,7 +8,7 @@
  */
 
 import { Engine, type RulesetSources } from "@/engine/index.ts";
-import { readCowData } from "@/server/cow/index.ts";
+import { CowDataReader } from "@/server/cow/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import {
@@ -42,7 +42,7 @@ async function findDepartingLists(tx: Db, extensionId: string, copies: Copies) {
 /** The lists the fork keeps once the book is gone, by name: the ones its view will show. */
 async function findKeptLists(tx: Db, ruleset: RulesetSources, extensionId: string, departing: Map<string, string>) {
   const remaining = { ...ruleset, extensionRulesetIds: ruleset.extensionRulesetIds.filter((id) => id !== extensionId) };
-  const cow = await readCowData(tx, remaining);
+  const cow = await CowDataReader.read(tx, remaining);
   const lists = await Aptitudes.findMany(tx, {
     rulesetIds: [ruleset.id, ...Engine.copyOnWrite().buildSourceChain(remaining)],
   });

@@ -65,6 +65,14 @@ export default class RulesetEngine {
     return new ClassesEngine(this.view, this.module);
   }
 
+  /**
+   * Rows of the ruleset's tables, as stored (a page the server read), as its view reads them: each reference to an
+   * entity resolved to the one the view shows in its place, a copy's or a sibling winner's.
+   */
+  describeRows<T extends Record<string, unknown>>(rows: T[]) {
+    return this.view.rulesetData.cow.resolveRows(rows);
+  }
+
   /** An entity of the ruleset's view, of its table (`type`) and its id. */
   entity<K extends keyof ViewEntities>(type: K, id: string) {
     return new EntityEngine(this.view, type, id);

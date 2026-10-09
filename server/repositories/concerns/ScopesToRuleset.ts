@@ -2,7 +2,7 @@ import { and, eq, inArray, isNull, notInArray, or, type SQL, type Table } from "
 
 import { entitySnapshotsInRules } from "@/drizzle/schema.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { type Db, getCowContext } from "@/server/database/index.ts";
+import type { Db } from "@/server/database/index.ts";
 import type BaseRepository from "@/server/repositories/BaseRepository.ts";
 
 /** A ruleset entity list's filters: the ruleset's own entities and its source chain's, and a campaign's on it. */
@@ -14,11 +14,13 @@ export type RulesetEntityFilters<Extra extends object = object> = Extra & {
   orderDir?: "asc" | "desc";
   rulesetId: string;
   search?: string;
+  siblingLoserIds?: string[];
 };
 
 /**
  * A ruleset entity's list: the ruleset's own rows, its source chain's (less what a later ruleset copied, and a book's
- * copy that lost to another book's, its scope's sibling losers), and a campaign's. A repository that includes it names
+ * copy that lost to another book's, the sibling losers it's given), and a campaign's. Its source chain and sibling
+ * losers are the ruleset's copy-on-write data's (`CowData.listFilters`). A repository that includes it names
  * its `entityType`, the type its copies' snapshots record.
  */
 export function ScopesToRuleset<B extends Constructor<BaseRepository<Table>>>(Base: B) {
@@ -49,9 +51,9 @@ export function ScopesToRuleset<B extends Constructor<BaseRepository<Table>>>(Ba
       });
       // A book's copy of an entity another book copied too, which lost to that copy: left out in the query, so a page
       // keeps its size
-      const siblingIds = getCowContext()?.siblingIds;
+      const { siblingLoserIds } = where;
       const siblingLosers =
-        siblingIds && siblingIds.size > 0 ? notInArray(this.column("id"), [...siblingIds]) : undefined;
+        siblingLoserIds && siblingLoserIds.length > 0 ? notInArray(this.column("id"), siblingLoserIds) : undefined;
       const inherited = inheritedClauses.length > 0 ? and(or(...inheritedClauses), siblingLosers) : undefined;
 
       if (where.campaignId) {

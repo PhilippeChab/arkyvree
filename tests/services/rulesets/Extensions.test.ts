@@ -11,7 +11,7 @@ import {
 } from "@/content/dnd3.5/names.ts";
 import { characterAbilitiesInCharacter, type rulesetsInRules } from "@/drizzle/schema.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
-import { RulesetViews } from "@/server/cow/index.ts";
+import { EntityEdit, RulesetViews } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
@@ -552,7 +552,7 @@ describe("unsubscribing from an extension", () => {
     // Alter Self's copies merge in Complete Warrior's lists, its Assassin Spells the winner of the books' namesakes
     const alterSelf = [...view.powersById.values()].find((power) => power.name === "Alter Self")!;
     const { id: copyId } = await withTransaction(async (tx) =>
-      (await editRuleset(fork)).cowToEdit(tx, "powers", alterSelf),
+      (await editRuleset(EntityEdit, fork)).cowToEdit(tx, "powers", alterSelf),
     );
 
     await RulesetExtensionsService.unsubscribeExtension(session, fork.id, warrior.id);

@@ -40,10 +40,10 @@ class CharactersService extends include(Object, Archives) {
     characterRecord: { id: string; rulesetId: string },
     languageIds: string[],
   ): Promise<void> {
-    // Proxy auto-canonicalizes the `ids` input through cowContext, so
-    // Languages.findMany returns the post-COW rows regardless of which
-    // form the client sent.
-    const languages = await Languages.findMany(tx, { ids: languageIds });
+    // The languages the view shows for the ids sent: a copy's, when the ruleset copied one
+    const languages = await Languages.findMany(tx, {
+      ids: languageIds.map((languageId) => scope.rulesetData.cow.resolve(languageId)),
+    });
     Engine.for(scope).characters().checkLanguages(characterRecord.rulesetId, languageIds, languages);
 
     const existing = await CharacterLanguages.findMany(tx, { characterId: characterRecord.id });
@@ -131,14 +131,10 @@ class CharactersService extends include(Object, Archives) {
     pagination: { limit: number; page: number },
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
-      const { sourceChain } = scope.rulesetData.cow;
-
       const picker = Engine.for(scope).characters().openRacePicker(formData);
-      // Races.findPage's output has its FK fields auto-resolved by
-      // the Proxy since cowContext is active. No manual `CowData.resolveRows` pass.
       const result = await Races.findPage(
         db,
-        { rulesetId, ancestorRulesetIds: sourceChain, ...picker.filters, search: where.search },
+        { rulesetId, ...scope.rulesetData.cow.listFilters, ...picker.filters, search: where.search },
         pagination,
       );
 
@@ -236,11 +232,11 @@ class CharactersService extends include(Object, Archives) {
     return await withTransaction(async (tx) => {
       const characterRecord = await getEditableCharacter(tx, session, characterId);
 
-      return await withRulesetScope(tx, characterRecord.rulesetId, async () => {
-        // Repo composite WHERE auto-expands abilityId through cowContext so
-        // stored pre-COW rows still match when the client sends post-COW ids.
+      return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
+        // A score stored before its ability was copied names the source: the copy's id the client sends matches it
         for (const [abilityId, score] of Object.entries(abilities)) {
-          const rows = await CharacterAbilities.update(tx, { score }, { characterId, abilityId });
+          const abilityIds = scope.rulesetData.cow.getEquivalentIds(abilityId);
+          const rows = await CharacterAbilities.update(tx, { score }, { abilityIds, characterId });
           if (rows.length === 0) throw new NotFoundError("Ability not found");
         }
 

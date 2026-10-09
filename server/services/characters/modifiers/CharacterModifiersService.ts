@@ -2,7 +2,7 @@ import { getTableName } from "drizzle-orm";
 
 import { modifiersInCustomization } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
-import { readTargetPathCatalogs, readTargetPaths, withRulesetScope } from "@/server/cow/index.ts";
+import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Activities, Modifiers } from "@/server/repositories/index.ts";
@@ -12,12 +12,17 @@ import type { Session } from "@/shared/relations.ts";
 class CharacterModifiersService {
   /** A character's modifier's value type, its operator and value checked against its path by the engine. */
   private async checkModifier(rulesetId: string, body: { operator: string; target: string; value: string }) {
-    const catalogs = await readTargetPathCatalogs(rulesetId, "modifier");
     const { operator, target, value } = body;
     return await withRulesetScope(db, rulesetId, async (scope) =>
       Engine.for(scope)
         .targetPaths()
-        .checkValue(catalogs, { kind: "modifier", operator, sourceType: "characters", target, value }),
+        .checkValue(await RulesetViews.getTargetPathCatalogs(scope.ruleset, "modifier"), {
+          kind: "modifier",
+          operator,
+          sourceType: "characters",
+          target,
+          value,
+        }),
     );
   }
 
@@ -85,9 +90,10 @@ class CharacterModifiersService {
     const character = await getEditableCharacter(db, session, characterId);
 
     const modifiers = await Modifiers.findMany(db, { sourceIds: [characterId], sourceType: "characters" });
-    const catalog = await readTargetPaths(character.rulesetId, "modifier");
     return await withRulesetScope(db, character.rulesetId, async (scope) =>
-      Engine.for(scope).targetPaths().describeModifiers(catalog, modifiers),
+      Engine.for(scope)
+        .targetPaths()
+        .describeModifiers(await RulesetViews.getTargetPaths(scope.ruleset, "modifier"), modifiers),
     );
   }
 

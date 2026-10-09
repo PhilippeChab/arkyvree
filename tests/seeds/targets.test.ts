@@ -2,8 +2,8 @@ import { expect, test } from "bun:test";
 
 import * as RULESET_NAMES from "@/content/dnd3.5/names.ts";
 import PathChecks from "@/engine/core/paths/PathChecks.ts";
-import { readTargetPaths } from "@/server/cow/index.ts";
 import { isTemplateValue } from "@/shared/customization/templateExpression.ts";
+import { readTargetPaths } from "@/tests/support/rulesets.ts";
 
 import { seededRows } from "./seededRows.ts";
 

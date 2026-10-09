@@ -1,22 +1,25 @@
 /** What saving a ruleset entity writes beside its row, as the engine plans it (`EntityWrites`): the server writes it. */
 
 import type { EntityWrites, GeneratedFeatRemoval, GeneratedFeatsWrite } from "@/engine/index.ts";
-import { hasCharacterPicks, RulesetEdit, type RulesetScope } from "@/server/cow/index.ts";
+import { CustomizationEdit, type RulesetScope } from "@/server/cow/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { Feats, FeatsAptitudes, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
 
+import { hasCharacterPicks } from "./characterPicks.ts";
+
 /** A generated feat a save removes, refused while a character picked it. */
 async function removeGeneratedFeat(tx: Db, scope: RulesetScope, removal: GeneratedFeatRemoval) {
   const { ruleset, rulesetData } = scope;
-  if (await hasCharacterPicks(tx, "feats", removal.featId, ruleset.id)) throw new ConflictError(removal.inUse);
+  if (await hasCharacterPicks(tx, "feats", scope.rulesetData.cow.getEquivalentIds(removal.featId), ruleset.id))
+    throw new ConflictError(removal.inUse);
 
   // Deleting the local COW copy leaves a tombstone snapshot: the obsolete inherited feat disappears from this fork
   // while its ancestor stays intact. Hard-delete: FK CASCADE on feats_aptitudes wipes the aptitude link, and the
   // database deletes the feat's customizations. Soft-archive would block a feat of the same name made later (the
   // unique index on feats doesn't filter deleted_at).
-  const targetId = await new RulesetEdit(ruleset, rulesetData.cow).cowOwner(tx, "feats", removal.featId);
+  const targetId = await new CustomizationEdit(ruleset, rulesetData.cow).cowOwner(tx, "feats", removal.featId);
   await Feats.delete(tx, { id: targetId });
 }
 

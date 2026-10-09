@@ -54,7 +54,6 @@ class CharacterInventoryService {
     const characterRecord = await getEditableCharacter(db, session, characterId, Visibility.All);
 
     return await withRulesetScope(db, characterRecord.rulesetId, async (scope) => {
-      // Inside withRulesetScope: CharacterInventory.findMany auto-resolves row.itemId to post-COW
       const inventory = await CharacterInventory.findMany(db, { characterId });
       return Engine.for(scope).characters().describeInventory(inventory);
     });

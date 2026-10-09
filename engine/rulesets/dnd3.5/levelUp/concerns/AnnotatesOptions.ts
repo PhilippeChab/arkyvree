@@ -16,7 +16,7 @@ export function AnnotatesOptions<B extends Constructor<LevelUpState>>(Base: B) {
       candidates: T[],
     ): (T & { eligible: boolean; requirementTree?: string })[] {
       if (candidates.length === 0) return [];
-      return candidates.map((candidate) => {
+      return this.rulesetData.cow.resolveRows(candidates).map((candidate) => {
         const reqs = this.rulesetData.requirementsByEntity.get(candidate.id);
         const eligible = !reqs || reqs.length === 0 || character.areRequirementsMet([reqs]);
         return {

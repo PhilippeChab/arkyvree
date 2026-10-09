@@ -2,12 +2,13 @@ import { getTableName } from "drizzle-orm";
 
 import { languagesInRules } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
-import { hasCharacterPicks, RulesetEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
+import { EntityEdit, EntityNames, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Languages } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { hasCharacterPicks } from "@/server/services/rulesets/characterPicks.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class LanguagesService {
@@ -26,8 +27,8 @@ class LanguagesService {
           const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const edit = new RulesetEdit(ruleset, rulesetData.cow);
-          const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "languages", body.name);
+          const names = new EntityNames(ruleset, rulesetData.cow);
+          const { tombstoneAncestorId } = await names.assertNameAvailable(tx, "languages", body.name);
 
           const rows = await Languages.create(tx, {
             ...body,
@@ -35,7 +36,7 @@ class LanguagesService {
           });
           const language = rows[0];
 
-          if (tombstoneAncestorId) await edit.repointTombstone(tx, "languages", tombstoneAncestorId, language.id);
+          if (tombstoneAncestorId) await names.repointTombstone(tx, "languages", tombstoneAncestorId, language.id);
 
           await createActivityWithNotifications(tx, {
             userId: session.userId,
@@ -56,14 +57,19 @@ class LanguagesService {
     const result = await withTransaction(
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
-          const { ruleset, rulesetData } = scope;
+          const { ruleset } = scope;
 
-          const inUse = await hasCharacterPicks(tx, "languages", languageId, rulesetId);
+          const inUse = await hasCharacterPicks(
+            tx,
+            "languages",
+            scope.rulesetData.cow.getEquivalentIds(languageId),
+            rulesetId,
+          );
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
           const language = Engine.for(scope).entity("languages", languageId).get();
 
-          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const edit = new EntityEdit(ruleset);
           const targetId = await edit.cowToDelete(tx, "languages", language);
 
           // The database deletes its customizations with it.
@@ -104,8 +110,7 @@ class LanguagesService {
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
       const { rulesetData } = scope;
-      const { sourceChain } = rulesetData.cow;
-      return await Languages.findPage(db, { rulesetId, ancestorRulesetIds: sourceChain, ...where }, pagination);
+      return await Languages.findPage(db, { rulesetId, ...rulesetData.cow.listFilters, ...where }, pagination);
     });
   }
 
@@ -123,13 +128,13 @@ class LanguagesService {
     const result = await withTransaction(
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
-          const { ruleset, rulesetData } = scope;
+          const { ruleset } = scope;
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
           const language = Engine.for(scope).entity("languages", languageId).get();
 
-          const edit = new RulesetEdit(ruleset, rulesetData.cow);
+          const edit = new EntityEdit(ruleset);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "languages", language);
           const expectedUpdatedAt = copied ? undefined : body.updatedAt;
 

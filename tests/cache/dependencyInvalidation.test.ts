@@ -1,11 +1,11 @@
 import { afterEach, expect, test } from "bun:test";
 
 import DependentCache from "@/server/cache/DependentCache.ts";
-import { readTargetPaths, RulesetViews } from "@/server/cow/index.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Rulesets } from "@/server/repositories/index.ts";
 import { measure } from "@/tests/support/database.ts";
-import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { createSeededTestRuleset, readTargetPaths } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
 async function setup() {
@@ -22,15 +22,11 @@ for (const phase of ["pending", "cached"] as const) {
   test(`editing A preserves ${phase} raw/COW/path reads for B with zero extra SQL`, async () => {
     const { edited, unrelated } = await setup();
     RulesetViews.invalidateAll();
-    const paths = async () => ({
-      paths: [],
-      segmentLabels: { name: (await Rulesets.findOne(db, { id: unrelated.id }))!.name },
-    });
     const read = () =>
       Promise.all([
         RulesetViews.getRawData(unrelated.id),
         RulesetViews.getCowData(unrelated),
-        RulesetViews.getTargetPaths(unrelated, "modifier", paths),
+        RulesetViews.getTargetPaths(unrelated, "modifier"),
       ]);
     const pending = read();
     if (phase === "cached") await pending;

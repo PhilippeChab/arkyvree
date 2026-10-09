@@ -1,10 +1,9 @@
 import { type Column, eq, inArray, notInArray, type SQL, type Table } from "drizzle-orm";
 
 import type { Constructor } from "@/lib/mixins.ts";
-import { getCowContext } from "@/server/database/index.ts";
 import type BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-/** Copy-on-write in a query: an entity id matching its copies and originals, and sibling losers left out. */
+/** Copy-on-write in a query: an entity id matching its copies and originals, the ids a query leaves out left out. */
 export function ResolvesCopies<B extends Constructor<BaseRepository<Table>>>(Base: B) {
   abstract class ResolvingCopies extends Base {
     /**
@@ -19,18 +18,11 @@ export function ResolvesCopies<B extends Constructor<BaseRepository<Table>>>(Bas
     }
 
     /**
-     * Predicate for composite-key WHERE clauses on an entity-id column. When
-     * a cowContext is active, expands to `WHERE col IN (target, ...preCowIds)`
-     * so a stored pre-COW row still matches a submitted post-COW id (and vice
-     * versa). Outside a cowContext this is a plain equality — same behaviour
-     * as before. Use for any repo column that stores a forkable entity id
-     * (e.g. itemId, abilityId, languageId, featId, powerId, skillId).
+     * An entity id column matching any of `ids`: an entity's copies and originals, as its ruleset's copy-on-write data
+     * gives them (`CowData.getEquivalentIds`), since a stored row may hold any of them.
      */
-    protected idMatches(column: Column, id: string): SQL {
-      const cow = getCowContext();
-      if (!cow || cow.isEmpty()) return eq(column, id);
-      const candidates = cow.getEquivalentIds(id);
-      return candidates.length === 1 ? eq(column, candidates[0]) : inArray(column, candidates);
+    protected idMatches(column: Column, ids: string[]): SQL {
+      return ids.length === 1 ? eq(column, ids[0]) : inArray(column, ids);
     }
   }
   return ResolvingCopies;
