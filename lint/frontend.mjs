@@ -675,11 +675,12 @@ function createDialogConventions(context) {
       if (name === "Dialog" && !hasAttribute(node, "fullScreen"))
         report(node.openingElement, "A `Dialog` goes full screen on a phone: `fullScreen={isMobile}`.");
       const width = jsxAttribute(node, "maxWidth");
-      if (/Dialog$|^Modal$/.test(name ?? "") && width?.value?.type === "Literal" && width.value.value === "xs")
+      if (/Dialog$|^Modal$/.test(name ?? "") && width?.value?.type === "Literal" && width.value.value === "xs") {
         report(
           width,
           "A dialog is `sm`, its wrappers' default (`md` for a form of many fields, a target path or a requirement tree): never `xs`.",
         );
+      }
       if (icons.has(name) && inDialogTitle(node))
         report(node.openingElement, "A dialog's title is its words: no icon in a `DialogTitle`.");
       if (name === "DialogContent") checkDialogContent(node, context);
