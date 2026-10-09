@@ -665,10 +665,9 @@ export default class SkillEntity {
     const fields = SKILL_FIELDS.normalize({ checkPenaltyMultiplier, impactedByWeight, usableWithoutTraining });
     const renamed = before?.name !== skill.name;
     return {
-      columns: {},
-      generatedFeats: renamed ? writeSkillFocus(view, skill.name) : [],
+      made: renamed ? writeSkillFocus(view, skill.name) : [],
       properties: SKILL_FIELDS.write(fields),
-      removedFeats: before && renamed ? removeSkillFocus(view, before.name) : [],
+      removed: before && renamed ? removeSkillFocus(view, before.name) : [],
     };
   }
 }

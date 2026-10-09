@@ -99,16 +99,13 @@ export default class PowerEntity extends RulesetEntity<"powers"> {
    * those it has.
    */
   planSave(power: Partial<PowerFieldValues>, before?: { properties: { type: string; value: string }[] }): EntityWrites {
-    if (before && POWER_FIELDS.keys.every((key) => power[key] === undefined))
-      return { columns: {}, generatedFeats: [], removedFeats: [] };
+    if (before && POWER_FIELDS.keys.every((key) => power[key] === undefined)) return {};
     const grouping = getGrouping(power);
     const isNewGrouping =
       grouping !== null && grouping !== (before && getGrouping(POWER_FIELDS.read(before.properties)));
     return {
-      columns: {},
-      generatedFeats: isNewGrouping ? SpellFocusFeats.buildSpellFocusFeats(this.view, grouping) : [],
+      made: isNewGrouping ? SpellFocusFeats.buildSpellFocusFeats(this.view, grouping) : [],
       properties: POWER_FIELDS.write(power),
-      removedFeats: [],
     };
   }
 }

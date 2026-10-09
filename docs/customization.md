@@ -159,8 +159,8 @@ Some entities get properties, requirements, or feats generated. Spells, skills a
 
 Every save's plan takes one shape, `EntityWrites` (`engine/core/module/writes.ts`): it says what to write beside the entity's row, without ids, and the service writes it in its transaction (`writeEntityWrites`, `server/services/rulesets/entityWrites.ts`).
 - `properties` gives the fields of the entity's form as its properties, in place of those of the same types it stored before. Its other properties stay.
-- `generatedFeats` gives the feats the entity brings, each in its pool (`aptitudeId`: the general feats', which the engine finds, `feats/GeneratedFeats.ts`), and `removedFeats` the one that goes with it, by its id (`featId`), where it's the entity's own, refused while a character picked it. The service writes both as they're given, reading of the view only its copy-on-write data.
-- `requirement` is what the entity requires (a class level's previous level), and `columns` what its rules set on its row (an item's slot).
+- `made` gives the entities the save makes with it, each by its table (`type`), its row's columns, the lists it's linked to (`aptitudeIds`) and its customizations, and `removed` the ones that go with it, each by its table and id, refused while a character picked one. The core names no kind: the 3.5 module's are feats, generated in the general feats' pool (`feats/GeneratedFeats.ts`: a skill's Skill Focus, a school's Spell Focus). The service writes each by its table (`EntityRepositories.of(type)`), reading of the view only its copy-on-write data.
+- `requirement` is what the entity requires (a class level's previous level).
 - A feat that's one entity's own (a skill's Skill Focus) is made, renamed and deleted with it: a new skill brings its own, even in a fork that deleted the one it inherited.
 - A feat that a grouping's entities share (a school's Spell Focus) is made when the first of them is saved, unless the ruleset or one of its sources has it, even in a fork that deleted the copy it inherited, and none goes with an entity.
 
@@ -268,9 +268,9 @@ Properties auto-generated from the skill form's fields by `entities("skills").pl
 - `SKILL_CHECK_PENALTY_MULTIPLIER` — how many times over a skill armor weighs on takes the penalty (2 on Swim; absent means 1)
 - `SKILL_USABLE_WITHOUT_TRAINING` — whether untrained use is allowed
 
-Feat auto-generated per skill by `entities("skills").planCreate` and `planEdit` (their `generatedFeats`):
+Feat auto-generated per skill by `entities("skills").planCreate` and `planEdit` (their `made`):
 - `Skill Focus: <name>` — +3 `skills.<stripped>.misc`, linked to General aptitude
-- Deleted on skill delete (`entities("skills").planDelete`'s `removedFeats`, refused while a character picked it), regenerated on skill rename
+- Deleted on skill delete (`entities("skills").planDelete`'s `removed`, refused while a character picked it), regenerated on skill rename
 
 Generated feat names cannot be edited directly. A feat is generated (`feats.generated`) when a family's feat is made
 for each of its options, its name naming the option (`Weapon Focus: Longsword`): by the seeds (the parser's template
@@ -307,7 +307,7 @@ Properties auto-generated from spell form fields by `entities("powers").planCrea
 | `SPELL_RESISTANCE` | Whether spell resistance applies (optional) |
 | `SPELL_COMPONENT` | Required components — one property row per value (optional, multi) |
 
-On create: with a school, generates the properties from the form's fields, and the school's Spell Focus feats unless they're there (`entities("powers").planCreate`'s `generatedFeats`).
+On create: with a school, generates the properties from the form's fields, and the school's Spell Focus feats unless they're there (`entities("powers").planCreate`'s `made`).
 On update: replaces the generated property types (the spell's fields) with the form's, none without a school, and creates the feats of a school that's new. The spell's other properties remain, and so do existing school feats.
 On delete: cleans up the spell's customizations. School feats remain even if the school has no spells left.
 

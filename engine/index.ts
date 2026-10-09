@@ -10,13 +10,7 @@ export { default as Engine } from "./api/Engine.ts";
 export type { default as LevelUpEngine } from "./api/LevelUpEngine.ts";
 export type { EntityKinds } from "./api/Modules.ts";
 export type { CowData, RulesetSources } from "./core/cow/index.ts";
-export type {
-  CharacterInput,
-  CharacterRows,
-  EntityWrites,
-  GeneratedFeat,
-  GeneratedFeatRemoval,
-} from "./core/module/index.ts";
+export type { CharacterInput, CharacterRows, EntityRemoval, EntityWrites, MadeEntity } from "./core/module/index.ts";
 export { default as RulesError } from "./core/RulesError.ts";
 export type { EntityCustomizations, RulesetData, RulesetRawData } from "./core/view/index.ts";
 export { ENTITY_FIELDS, RULESET_LIMITS } from "./rulesets/dnd3.5/index.ts";

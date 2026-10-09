@@ -1,7 +1,6 @@
 /** An item as a ruleset's entity: what the ruleset describes of it, and what its saves store, checked. */
 
 import { RulesetEntity } from "@/engine/core/entities/index.ts";
-import type { EntityWrites } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 import type { Item } from "@/shared/relations.ts";
@@ -42,13 +41,9 @@ export default class ItemEntity extends RulesetEntity<"items"> {
     return item;
   }
 
-  /** What saving an item writes: its slot, its type's (an armor's the torso, a shield's the off hand) or the one given. */
-  private planSave(item: {
-    slot?: ItemLocation;
-    type?: string | null;
-  }): EntityWrites<{ slot: ItemLocation | undefined }> {
-    const slot = item.type === "Armor" ? "Torso" : item.type === "Shield" ? "Off Hand" : item.slot;
-    return { columns: { slot }, generatedFeats: [], removedFeats: [] };
+  /** An item's slot: its type's (an armor's the torso, a shield's the off hand), or the one its form gives. */
+  private slotOf(item: { slot?: ItemLocation; type?: string | null }): ItemLocation | undefined {
+    return item.type === "Armor" ? "Torso" : item.type === "Shield" ? "Off Hand" : item.slot;
   }
 
   /** The template an item made from `item` points at: `item` itself when it's a template, or its own template. */
@@ -96,7 +91,7 @@ export default class ItemEntity extends RulesetEntity<"items"> {
         name: body.name,
         description: body.description,
         type: body.type,
-        slot: this.planSave(body).columns.slot,
+        slot: this.slotOf(body),
         weight: body.weight?.toString(),
         costGp: body.costGp?.toString(),
         sourceItemId: source ? this.templateOf(source) : body.sourceItemId,
@@ -131,7 +126,7 @@ export default class ItemEntity extends RulesetEntity<"items"> {
         name: body.name,
         description: body.description,
         type: body.type,
-        slot: this.planSave(body).columns.slot,
+        slot: this.slotOf(body),
         weight: body.weight?.toString(),
         costGp: body.costGp?.toString(),
         sourceItemId: item.isTemplate ? null : body.sourceItemId,
@@ -151,7 +146,7 @@ export default class ItemEntity extends RulesetEntity<"items"> {
       throw new RulesError("conflict", "Duplicate names within the variants list");
 
     const source: Item = this.findSource(sourceItemId);
-    const { slot } = this.planSave(source).columns;
+    const { slot } = { slot: this.slotOf(source) };
     return {
       copyCustomizationsFrom: source.isTemplate ? undefined : source.id,
       rows: variants.map((variant) => ({

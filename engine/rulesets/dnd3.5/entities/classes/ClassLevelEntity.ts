@@ -74,7 +74,7 @@ export default class ClassLevelEntity {
     level: Partial<ClassLevelFieldValues> & { level?: number },
     before?: { properties: { type: string; value: string }[] },
   ): EntityWrites {
-    const writes: EntityWrites = { columns: {}, generatedFeats: [], removedFeats: [] };
+    const writes: EntityWrites = {};
     if (!before && level.level !== undefined && level.level > 1) {
       writes.requirement = {
         level: "1",

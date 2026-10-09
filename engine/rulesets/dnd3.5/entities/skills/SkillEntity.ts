@@ -72,10 +72,9 @@ export default class SkillEntity extends RulesetEntity<"skills"> {
     const fields = SKILL_FIELDS.normalize({ checkPenaltyMultiplier, impactedByWeight, usableWithoutTraining });
     const renamed = before?.name !== skill.name;
     return {
-      columns: {},
-      generatedFeats: renamed ? writeSkillFocus(this.view, skill.name) : [],
+      made: renamed ? writeSkillFocus(this.view, skill.name) : [],
       properties: SKILL_FIELDS.write(fields),
-      removedFeats: before && renamed ? removeSkillFocus(this.view, before.name) : [],
+      removed: before && renamed ? removeSkillFocus(this.view, before.name) : [],
     };
   }
 
@@ -112,9 +111,7 @@ export default class SkillEntity extends RulesetEntity<"skills"> {
   override planDelete(skillId: string) {
     const skill = this.find(skillId);
     const writes: EntityWrites = {
-      columns: {},
-      generatedFeats: [],
-      removedFeats: removeSkillFocus(this.view, skill.name),
+      removed: removeSkillFocus(this.view, skill.name),
     };
     return { entity: skill, writes };
   }

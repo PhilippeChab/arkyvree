@@ -409,7 +409,7 @@ describe("an inherited skill's Skill Focus", () => {
     const { fork, feat } = await seededForkWithClimb();
     await withRulesetScope(db, fork.id, async (scope) => {
       expect(GeneratedFeats.remove(scope, "Skill Focus: Climb", "In use")).toEqual([
-        { featId: feat.id, inUse: "In use" },
+        { id: feat.id, inUse: "In use", type: "feats" },
       ]);
       expect(GeneratedFeats.remove(scope, "Skill Focus: No generated feat", "In use")).toEqual([]);
     });
