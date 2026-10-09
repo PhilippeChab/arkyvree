@@ -31,15 +31,6 @@ class PowersAptitudesRepository extends BaseRepository<typeof powersAptitudesInR
       .returning();
   }
 
-  async findAptitudeIds(db: Db, where: { aptitudeIds: string[] }) {
-    if (where.aptitudeIds.length === 0) return [];
-    const rows = await db
-      .selectDistinct({ aptitudeId: this.table.aptitudeId })
-      .from(this.table)
-      .where(and(inArray(this.table.aptitudeId, where.aptitudeIds), isNull(this.table.deletedAt)));
-    return rows.map((r) => r.aptitudeId);
-  }
-
   /** Links of powers, or a ruleset's powers' links to lists (`aptitudeIds`). */
   async findMany(
     db: Db,

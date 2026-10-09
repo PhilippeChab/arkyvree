@@ -19,17 +19,25 @@ function removeSkillFocus(view: RulesetView, skillName: string) {
   return GeneratedFeats.remove(view, `Skill Focus: ${skillName}`, inUse);
 }
 
-/** The skill's own feat, made with it: its Skill Focus, +3 to its checks. */
+/**
+ * The skill's own feat, made with it unless the ruleset has a feat of its name: its Skill Focus, of the Skill Focus
+ * family, +3 to its checks, as the seeded ones are.
+ */
 function writeSkillFocus(view: RulesetView, skillName: string) {
-  return GeneratedFeats.make(view, [
-    {
-      name: `Skill Focus: ${skillName}`,
-      description: `You get a +3 bonus on all ${skillName} checks.`,
-      properties: FeatFields.toProperties(NO_FEAT_FIELDS),
-      modifiers: [{ target: SkillsPaths.misc(skillName), operator: "add", value: "3", valueType: "number" }],
-      requirements: [],
-    },
-  ]);
+  const name = `Skill Focus: ${skillName}`;
+  return GeneratedFeats.make(
+    view,
+    [
+      {
+        name,
+        description: `You get a +3 bonus on all ${skillName} checks.`,
+        properties: FeatFields.toProperties({ ...NO_FEAT_FIELDS, families: ["Skill Focus"] }),
+        modifiers: [{ target: SkillsPaths.misc(skillName), operator: "add", value: "3", valueType: "number" }],
+        requirements: [],
+      },
+    ],
+    name,
+  );
 }
 
 /** A skill as the ruleset describes it, and what its save or delete writes beside its row. */

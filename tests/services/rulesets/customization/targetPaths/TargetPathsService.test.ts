@@ -347,6 +347,18 @@ describe("TargetPathsService", () => {
   });
 
   describe("completing a path", () => {
+    test("lists every leaf for an empty search, leaving the cached catalog in its order", async () => {
+      const { rulesetId } = await getSeedCtx();
+      const order = async () => (await readTargetPaths(rulesetId, "modifier")).paths.map((path) => path.path);
+      const before = await order();
+      // The catalog keeps its categories' order, which isn't the paths' alphabetical one
+      expect(before).not.toEqual([...before].sort((a, b) => a.localeCompare(b)));
+
+      const all = pathsOf(await complete("", "modifier", { flat: true, limit: 10_000 }));
+      expect(all).toEqual([...before].sort((a, b) => a.localeCompare(b)));
+      expect(await order()).toEqual(before);
+    });
+
     // The path browser's search box: any leaf, whatever the drilled prefix.
     test("finds leaves anywhere by their path or a segment's label, in order, a page at a time", async () => {
       // "Knowledge (Arcana)" is only the label of the knowledgearcana segment.

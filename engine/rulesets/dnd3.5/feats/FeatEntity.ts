@@ -13,9 +13,10 @@ interface FeatBody {
 
 /** A feat as the ruleset has it: described with its customizations, listed by pool or family, saved by its rules. */
 export default class FeatEntity {
-  /** Refuses a feat linked to pools a spell uses (`spellAptitudeIds`, those of its pools that spells are linked to). */
-  private static checkPools(spellAptitudeIds: string[]) {
-    if (spellAptitudeIds.length > 0)
+  /** Refuses a feat linked to a pool the view's spells use: the ruleset's own and its chain's, no other ruleset's. */
+  private static checkPools(view: RulesetView, aptitudeIds: string[]) {
+    const { rulesetData } = view;
+    if (aptitudeIds.some((id) => rulesetData.aptitudeIdsByHavingPowers.has(rulesetData.canonicalize(id))))
       throw new RulesError("conflict", "Cannot link feat to aptitude(s) already used for spells");
   }
 
@@ -42,18 +43,13 @@ export default class FeatEntity {
   }
 
   /**
-   * A new feat's row, from its form: refused without a pool, or with a pool a spell uses (`spellAptitudeIds`). One
-   * named as an ancestor its ruleset deleted stands in for it, and is generated when the ancestor was
-   * (`tombstoneGenerated`).
+   * A new feat's row, from its form: refused without a pool, or with a pool a spell uses. One named as an ancestor its
+   * ruleset deleted stands in for it, and is generated when the ancestor was (`tombstoneGenerated`).
    */
-  static planCreate(
-    _view: RulesetView,
-    body: FeatBody,
-    reads: { spellAptitudeIds: string[]; tombstoneGenerated: boolean },
-  ) {
+  static planCreate(view: RulesetView, body: FeatBody, reads: { tombstoneGenerated: boolean }) {
     if (!body.aptitudeIds || body.aptitudeIds.length === 0)
       throw new RulesError("invalid", "At least one aptitude must be selected for the feat");
-    FeatEntity.checkPools(reads.spellAptitudeIds);
+    FeatEntity.checkPools(view, body.aptitudeIds);
     return {
       aptitudeIds: body.aptitudeIds,
       columns: { description: body.description, generated: reads.tombstoneGenerated, name: body.name },
@@ -63,13 +59,13 @@ export default class FeatEntity {
   /**
    * A feat's edit (`featId`), from its form: the feat as the view has it, its new row, and its new pools when the form
    * sends them. Refused when a generated feat is renamed (its name names its option, `Weapon Focus: Longsword`, which
-   * checks and generators find it by), or a pool a spell uses is linked (`spellAptitudeIds`).
+   * checks and generators find it by), or a pool a spell uses is linked.
    */
-  static planEdit(view: RulesetView, featId: string, body: FeatBody, reads: { spellAptitudeIds: string[] }) {
+  static planEdit(view: RulesetView, featId: string, body: FeatBody) {
     const feat = view.rulesetData.find("feats", featId);
     if (!feat) throw new RulesError("not-found", "Feat not found in this ruleset");
     if (body.name !== feat.name && feat.generated) throw new RulesError("invalid", "Generated feats cannot be renamed");
-    if (body.aptitudeIds?.length) FeatEntity.checkPools(reads.spellAptitudeIds);
+    if (body.aptitudeIds?.length) FeatEntity.checkPools(view, body.aptitudeIds);
     return {
       aptitudeIds: body.aptitudeIds,
       columns: { description: body.description, name: body.name },

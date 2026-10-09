@@ -79,7 +79,7 @@ export default class PathCompletions {
   /** The categories that have paths and start with what's typed of the first segment. */
   private static getCategoryCompletions(
     generator: TargetPathsInterface,
-    allPaths: TargetPath[],
+    allPaths: readonly TargetPath[],
     lastSegment: string,
   ): PathCompletion[] {
     const categoriesWithPaths = new Set(allPaths.map((p) => p.category));
@@ -101,7 +101,7 @@ export default class PathCompletions {
    * search-first mode, so users can type words of a path's labels and find it across the whole tree without drilling.
    */
   private static getFlatCompletions(
-    allPaths: TargetPath[],
+    allPaths: readonly TargetPath[],
     segmentLabels: Record<string, string>,
     search: string | undefined,
   ): PathCompletion[] {
@@ -116,21 +116,21 @@ export default class PathCompletions {
         })
       : allPaths;
 
-    matches.sort((a, b) => a.path.localeCompare(b.path));
-
-    return matches.map((p) => ({
-      label: p.path.split(".").pop() ?? p.path,
-      detail: p.description ?? p.path,
-      documentation: p.description ?? p.path,
-      insertText: p.path,
-      kind: "property",
-      path: p.path,
-      valueType: p.valueType,
-      operators: p.operators,
-      possibleValues: p.possibleValues,
-      ...(p.setValues && { setValues: p.setValues }),
-      ...(p.literalOnly && { literalOnly: true }),
-    }));
+    return matches
+      .toSorted((a, b) => a.path.localeCompare(b.path))
+      .map((p) => ({
+        label: p.path.split(".").pop() ?? p.path,
+        detail: p.description ?? p.path,
+        documentation: p.description ?? p.path,
+        insertText: p.path,
+        kind: "property",
+        path: p.path,
+        valueType: p.valueType,
+        operators: p.operators,
+        possibleValues: p.possibleValues,
+        ...(p.setValues && { setValues: p.setValues }),
+        ...(p.literalOnly && { literalOnly: true }),
+      }));
   }
 
   /**
@@ -138,7 +138,7 @@ export default class PathCompletions {
    * empty last segment: every next segment under the prefix completes it.
    */
   private static getSegmentCompletions(
-    allPaths: TargetPath[],
+    allPaths: readonly TargetPath[],
     segments: string[],
     describe: SegmentDescriber,
   ): PathCompletion[] {
@@ -177,7 +177,7 @@ export default class PathCompletions {
    * The segments that come after `baseDot` and start with `segmentPrefix`, each with its first path, whether it's a group
    * (it has a wildcard under it) and its group's description.
    */
-  private static nextSegments(allPaths: TargetPath[], baseDot: string, segmentPrefix: string) {
+  private static nextSegments(allPaths: readonly TargetPath[], baseDot: string, segmentPrefix: string) {
     const segmentInfo = new Map<string, SegmentInfo>();
     for (const p of allPaths) {
       if (!p.path.startsWith(baseDot)) continue;
@@ -206,7 +206,7 @@ export default class PathCompletions {
    * The prefix to complete. A leaf path + "." resolves to its parent level, so the client gets its siblings with the leaf
    * visible (avoids empty results and extra round-trips).
    */
-  private static resolveCompletedPrefix(allPaths: TargetPath[], partialPath: string, position: number) {
+  private static resolveCompletedPrefix(allPaths: readonly TargetPath[], partialPath: string, position: number) {
     const pathPrefix = partialPath.substring(0, position);
     if (pathPrefix.endsWith(".")) {
       const candidatePath = pathPrefix.slice(0, -1);

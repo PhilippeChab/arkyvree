@@ -14,7 +14,7 @@ import { klassLevelFeatsInRules, klassLevelPowersInRules, klassSkillsInRules } f
 import { type RulesetData } from "@/engine/core/view/index.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
-import { PowersAptitudes, Rulesets } from "@/server/repositories/index.ts";
+import { Rulesets } from "@/server/repositories/index.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 
@@ -103,17 +103,6 @@ describe("cache join-maps — parity with repository queries", () => {
       skillsInRuleName: r.skillsInRule.name,
     });
     expect(sortBySkillId(fromCache).map(mapRow)).toEqual(sortBySkillId(fromDb).map(mapRow));
-  });
-
-  test("aptitudeIdsByHavingPowers matches PowersAptitudes.findAptitudeIds", async () => {
-    // Seed ruleset is a base (no ancestors, no siblings), so every composed
-    // aptitude is a DB-visible aptitude — the composed view and the raw DB
-    // answer should be identical sets. For forks with extensions, sibling
-    // aptitude exclusion would matter; that case is exercised by
-    // tests/cache/aptitudeDedup.test.ts.
-    const allAptitudeIds = rulesetData.aptitudes.map((a) => a.id);
-    const fromDb = new Set(await PowersAptitudes.findAptitudeIds(db, { aptitudeIds: allAptitudeIds }));
-    expect(rulesetData.aptitudeIdsByHavingPowers).toEqual(fromDb);
   });
 
   test("entityIdsByPropertyLookup indexes every (entityType, type, value) triple", () => {

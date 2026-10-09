@@ -5,7 +5,7 @@ import { CowData } from "@/engine/core/cow/index.ts";
 import { withRulesetScope } from "@/server/cache/rulesetCache/index.ts";
 import { db, withCowContext } from "@/server/database/index.ts";
 import { mapResultIds } from "@/server/repositories/copyOnWriteIds.ts";
-import { Characters, FeatsAptitudes, PowersAptitudes } from "@/server/repositories/index.ts";
+import { Characters } from "@/server/repositories/index.ts";
 import { copyEntity, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 
@@ -14,12 +14,9 @@ test("a read returning ids gives ids in a ruleset's scope, whose copies map othe
   const fork = await createSeededTestRuleset(SEED_USER_ID);
   // A copy in the fork fills its scope's map
   await copyEntity(db, "feats", seed.featMap.Toughness, fork);
-  const [general, wizardSpells] = [seed.aptMap["General"], seed.aptMap["Wizard Spells"]];
 
   await withRulesetScope(db, fork.id, async ({ rulesetData }) => {
     expect(rulesetData.cow.isEmpty()).toBe(false);
-    expect(await FeatsAptitudes.findAptitudeIds(db, { aptitudeIds: [general] })).toEqual([general]);
-    expect(await PowersAptitudes.findAptitudeIds(db, { aptitudeIds: [wizardSpells] })).toEqual([wizardSpells]);
     const characterIds = await Characters.findIds(db, { userIds: [SEED_USER_ID] });
     expect(characterIds.length).toBeGreaterThan(0);
     for (const id of characterIds) expect(id).toBeTypeOf("string");

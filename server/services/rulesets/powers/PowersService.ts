@@ -6,7 +6,7 @@ import { RulesetCache, withRulesetScope } from "@/server/cache/rulesetCache/inde
 import { hasCharacterPicks, RulesetEdit } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
-import { FeatsAptitudes, Powers, PowersAptitudes } from "@/server/repositories/index.ts";
+import { Powers, PowersAptitudes } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { writeEntityWrites } from "@/server/services/rulesets/entityWrites.ts";
@@ -26,10 +26,7 @@ class PowersService {
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const { tombstoneAncestorId } = await edit.assertNameAvailable(tx, "powers", body.name);
 
-          const featAptitudeIds = await FeatsAptitudes.findAptitudeIds(tx, {
-            aptitudeIds: body.aptitudes?.map((aptitude) => aptitude.id) ?? [],
-          });
-          const plan = Engine.for(scope).powers().planCreate(body, { featAptitudeIds });
+          const plan = Engine.for(scope).powers().planCreate(body);
           const rows = await Powers.create(tx, { ...plan.columns, rulesetId });
           const power = rows[0];
 
@@ -130,12 +127,7 @@ class PowersService {
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const featAptitudeIds = await FeatsAptitudes.findAptitudeIds(tx, {
-            aptitudeIds: body.aptitudes?.map((aptitude) => aptitude.id) ?? [],
-          });
-          const { aptitudes, columns, power, writes } = Engine.for(scope)
-            .powers()
-            .planEdit(powerId, body, { featAptitudeIds });
+          const { aptitudes, columns, power, writes } = Engine.for(scope).powers().planEdit(powerId, body);
 
           const edit = new RulesetEdit(ruleset, rulesetData.cow);
           const { id: targetId, copied } = await edit.cowToEdit(tx, "powers", power);

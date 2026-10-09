@@ -8,14 +8,6 @@ import { ConflictError } from "@/server/errors/index.ts";
 import { Feats, FeatsAptitudes, Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
 
-/** Whether the scope's ruleset or its chain has a feat of this name: one a save makes is made once. */
-async function isFeatPresent(tx: Db, scope: RulesetScope, name: string) {
-  for (const rulesetId of [scope.ruleset.id, ...scope.rulesetData.cow.sourceChain])
-    if (await Feats.findOne(tx, { name, rulesetId })) return true;
-
-  return false;
-}
-
 /** A generated feat a save removes, refused while a character picked it. */
 async function removeGeneratedFeat(tx: Db, scope: RulesetScope, removal: GeneratedFeatRemoval) {
   const { ruleset, rulesetData } = scope;
@@ -31,11 +23,9 @@ async function removeGeneratedFeat(tx: Db, scope: RulesetScope, removal: Generat
 
 /**
  * The feats a save makes, in the scope's ruleset: each in its pool, with its modifiers, its properties and its
- * requirements. None when the write's `unlessPresent` feat is there already.
+ * requirements.
  */
 async function writeGeneratedFeats(tx: Db, scope: RulesetScope, write: GeneratedFeatsWrite) {
-  if (write.unlessPresent && (await isFeatPresent(tx, scope, write.unlessPresent))) return;
-
   for (const generated of write.feats) {
     const [feat] = await Feats.create(tx, {
       name: generated.name,

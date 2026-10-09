@@ -124,6 +124,14 @@ describe("RequirementEvaluator", () => {
     });
   });
 
+  test.each(["starts_with", "ends_with"] as const)("reports %s on a value that isn't text", (operator) => {
+    const score = { target: "abilities.strength.score", operator, value: "1", valueType: "number" } as const;
+    expect(evaluate([requirement(score)], () => [result(12)])).toEqual({
+      ...unmet,
+      invalid: [`Invalid value type number for operator ${operator}`],
+    });
+  });
+
   test("combines a wildcard with the rest of its group", () => {
     const fighterLevel = requirement({
       id: "req-2",

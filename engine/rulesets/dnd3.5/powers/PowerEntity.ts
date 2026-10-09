@@ -37,9 +37,9 @@ function getGrouping(fields: PowerFieldValues) {
 
 /** A power as the ruleset has it: listed by pool and spell level, saved by its rules with its fields and its feats. */
 export default class PowerEntity {
-  /** Refuses a power linked to pools a feat uses (`featAptitudeIds`, those of its pools that feats are linked to). */
-  private static checkPools(featAptitudeIds: string[]) {
-    if (featAptitudeIds.length > 0)
+  /** Refuses a power linked to a pool the view's feats use: the ruleset's own and its chain's, no other ruleset's. */
+  private static checkPools(view: RulesetView, aptitudes: { id: string }[]) {
+    if (aptitudes.some((aptitude) => view.rulesetData.listFeatIds(aptitude.id).length > 0))
       throw new RulesError("conflict", "Cannot link spell to aptitude(s) already used for feats");
   }
 
@@ -75,12 +75,12 @@ export default class PowerEntity {
 
   /**
    * A new power's row, its pool links and what its save writes beside them (`planSave`): refused without a pool, or
-   * with a pool a feat uses (`featAptitudeIds`).
+   * with a pool a feat uses.
    */
-  static planCreate(view: RulesetView, body: PowerBody, reads: { featAptitudeIds: string[] }) {
+  static planCreate(view: RulesetView, body: PowerBody) {
     if (!body.aptitudes || body.aptitudes.length === 0)
       throw new RulesError("invalid", "At least one aptitude must be selected for the power");
-    PowerEntity.checkPools(reads.featAptitudeIds);
+    PowerEntity.checkPools(view, body.aptitudes);
     const { aptitudes = [], columns } = PowerEntity.toRows(body);
     return { aptitudes, columns, writes: PowerEntity.planSave(view, body) };
   }
@@ -88,12 +88,12 @@ export default class PowerEntity {
   /**
    * A power's edit (`powerId`): the power as the view has it, its new row, its new pool links when the form sends them,
    * and what its save writes beside them, against the properties the view composes for it (those a copy of it holds).
-   * Refused when a pool a feat uses is linked (`featAptitudeIds`).
+   * Refused when a pool a feat uses is linked.
    */
-  static planEdit(view: RulesetView, powerId: string, body: PowerBody, reads: { featAptitudeIds: string[] }) {
+  static planEdit(view: RulesetView, powerId: string, body: PowerBody) {
     const power = view.rulesetData.find("powers", powerId);
     if (!power) throw new RulesError("not-found", "Power not found in this ruleset");
-    if (body.aptitudes?.length) PowerEntity.checkPools(reads.featAptitudeIds);
+    if (body.aptitudes?.length) PowerEntity.checkPools(view, body.aptitudes);
     const properties = view.rulesetData.propertiesByEntity.get(power.id) ?? [];
     return { ...PowerEntity.toRows(body), power, writes: PowerEntity.planSave(view, body, { properties }) };
   }

@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 
 import { featsAptitudesInRules, klassLevelFeatsInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
-import { Characters, EntitySnapshots, Klasses, Properties } from "@/server/repositories/index.ts";
+import { Aptitudes, Characters, EntitySnapshots, Klasses, Properties } from "@/server/repositories/index.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
@@ -13,6 +13,7 @@ import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { pickFeat } from "@/tests/support/levels.ts";
 import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
+import { createTestUser } from "@/tests/support/users.ts";
 
 /** The aptitudes of the test's ruleset. */
 const APTITUDES = ["Combat", "Metamagic", "General"];
@@ -84,6 +85,28 @@ describe("FeatsService", () => {
         FeatsService.updateFeat(session, ruleset.id, feat.id, { name: "Combat Feat", aptitudeIds: [spells] }),
         409,
       );
+    });
+
+    test("counts the spells its own ruleset's view links to an aptitude, not a sibling fork's", async () => {
+      const { user: author } = await createTestUser();
+      const base = await createTestRuleset(author.id, { status: "Published" });
+      const [list] = await Aptitudes.create(db, { name: "Shared List", rulesetId: base.id });
+      const forkOf = async () => {
+        const { user, session } = await createTestUser();
+        const fork = await createTestRuleset(user.id, { rulesetId: base.id, ancestorRulesetIds: [base.id] });
+        return { session, fork };
+      };
+      const [spellFork, featFork] = [await forkOf(), await forkOf()];
+      await PowersService.createPower(spellFork.session, spellFork.fork.id, {
+        name: "Spark",
+        aptitudes: [{ id: list.id }],
+      });
+
+      const feat = await FeatsService.createFeat(featFork.session, featFork.fork.id, {
+        name: "Listed Feat",
+        aptitudeIds: [list.id],
+      });
+      expect(feat).toMatchObject({ name: "Listed Feat" });
     });
   });
 

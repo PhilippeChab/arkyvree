@@ -6,6 +6,7 @@ import { postCampaign } from "@/tests/support/campaigns.ts";
 import { postCharacter } from "@/tests/support/characters.ts";
 import { addCharacterContributor } from "@/tests/support/contributors.ts";
 import { createWizardWithFamiliar } from "@/tests/support/levelFixtures.ts";
+import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 
 const characters = api.api.characters;
@@ -149,6 +150,19 @@ describe("characters", () => {
     test("rejects a language the ruleset doesn't have", async () => {
       const { id } = await postCharacter();
       await expectStatus(character.languages.$put({ param: { id }, json: { languageIds: [NIL_UUID] } }), 400);
+    });
+
+    test("rejects a language its fork deleted, or one sent twice", async () => {
+      const { langMap } = await getSeedCtx();
+      const fork = await createSeededTestRuleset(SEED_USER_ID);
+      const language = api.api.rulesets[":id"].languages[":languageId"];
+      await expectOk(language.$delete({ param: { id: fork.id, languageId: langMap["Draconic"] } }));
+      const { id } = await postCharacter({ rulesetId: fork.id });
+
+      const put = (languageIds: string[]) => character.languages.$put({ param: { id }, json: { languageIds } });
+      await expectStatus(put([langMap["Draconic"]]), 400);
+      await expectStatus(put([langMap["Common"], langMap["Common"]]), 400);
+      await expectOk(put([langMap["Common"]]));
     });
   });
 
