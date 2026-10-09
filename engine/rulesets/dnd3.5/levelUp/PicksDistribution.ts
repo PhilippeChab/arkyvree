@@ -1,3 +1,4 @@
+import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
 import { distributeSkillPoints } from "@/shared/dnd3.5/skills.ts";
 
 import type { FeatSlots, PowerSlots } from "./AptitudeSlotsPlan.ts";
@@ -45,10 +46,10 @@ export default class PicksDistribution {
       if (perLevel[i] === 0) continue;
 
       const charLevelAtI = data.baseCharacterLevel + i + 1;
-      const maxRank = isClassSoFar ? charLevelAtI + 3 : (charLevelAtI + 3) / 2;
+      const maxRank = SkillRules.maxRank(charLevelAtI, isClassSoFar);
       const isClassForLevel = data.perLevelClassSkillIds[i].includes(skillId);
       const headroom = maxRank - cumulativeRank;
-      const maxPointsByRank = Math.max(0, Math.floor(isClassForLevel ? headroom : headroom * 2));
+      const maxPointsByRank = Math.max(0, Math.floor(SkillRules.pointsFor(headroom, isClassForLevel)));
       const maxPointsByBudget = remainingPointsPerLevel[i];
       const maxPoints = Math.min(maxPointsByRank, maxPointsByBudget);
 
@@ -56,7 +57,7 @@ export default class PicksDistribution {
         overflow = perLevel[i] - maxPoints;
         perLevel[i] = maxPoints;
       }
-      const actualRank = isClassForLevel ? perLevel[i] : perLevel[i] * 0.5;
+      const actualRank = SkillRules.ranksFor(perLevel[i], isClassForLevel);
       cumulativeRank += actualRank;
     }
   }

@@ -5,7 +5,7 @@ import type { ArmorsData } from "@/engine/rulesets/dnd3.5/model/combat/ArmorsCom
 import type { ShieldsData } from "@/engine/rulesets/dnd3.5/model/combat/ShieldsComponent.ts";
 import type { ValidationIssue } from "@/engine/rulesets/dnd3.5/model/concerns/Validates.ts";
 import { SIZE_HIDE_MOD } from "@/engine/rulesets/dnd3.5/rules/sizes.ts";
-import { computeLevelSkillPoints } from "@/shared/dnd3.5/skills.ts";
+import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
 import { type RulesetAbility, type Skill } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -134,15 +134,6 @@ export default class SkillsComponent {
     return classSkillPoints + this.getSkillPointAbilityModifier();
   }
 
-  /** The skill points a level gives: its class's and the skill point ability's modifier, and any bonus per level. */
-  getLevelSkillPoints(classSkillPoints: number, isFirstCharacterLevel: boolean): number {
-    return computeLevelSkillPoints(
-      this.getLevelPointsPerLevel(classSkillPoints),
-      this.skillBudget.perlevel,
-      isFirstCharacterLevel,
-    );
-  }
-
   getSkillBudget() {
     return this.skillBudget;
   }
@@ -170,12 +161,9 @@ export default class SkillsComponent {
 
   getValidationIssues(characterLevel: number): ValidationIssue[] {
     const issues: ValidationIssue[] = [];
-    const classSkillMaxRank = characterLevel + 3;
-    const crossClassMaxRank = (characterLevel + 3) / 2;
-
     for (const [, skill] of Object.entries(this.skills)) {
       if (skill.rank <= 0) continue;
-      const maxRank = skill.innate ? classSkillMaxRank : crossClassMaxRank;
+      const maxRank = SkillRules.maxRank(characterLevel, skill.innate);
       if (skill.rank > maxRank) {
         issues.push({
           category: "skills",
@@ -235,7 +223,7 @@ export default class SkillsComponent {
           const isClassSkillById = klassSkillIds.has(skill.id);
           const isClassSkillByName = !isClassSkillById && SkillsComponent.isSubtypeOf(skill.name, klassSkillNames);
           const isClassSkillForKlass = isClassSkillById || isClassSkillByName;
-          const ranksGained = isClassSkillForKlass ? skill.rank : skill.rank / 2;
+          const ranksGained = SkillRules.ranksFor(skill.rank, isClassSkillForKlass);
           const current = this.rankBySkillId.get(skill.id) ?? 0;
           this.rankBySkillId.set(skill.id, current + ranksGained);
         }
@@ -329,7 +317,7 @@ export default class SkillsComponent {
 
     const { pointsPerLevel, bonusPerLevel } = this.getSkillPointBases();
     const total = pointsPerLevel.reduce(
-      (acc, points, index) => acc + computeLevelSkillPoints(points, bonusPerLevel, index === 0),
+      (acc, points, index) => acc + SkillRules.levelPoints(points, bonusPerLevel, index === 0),
       0,
     );
 

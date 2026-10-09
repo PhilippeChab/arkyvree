@@ -10,6 +10,7 @@ import LevelEdit from "./LevelEdit.ts";
 import LevelRemoval from "./LevelRemoval.ts";
 import LevelSelections from "./LevelSelections.ts";
 import LevelUpPlan from "./LevelUpPlan.ts";
+import LevelUpPreview from "./LevelUpPreview.ts";
 import type { PlannedSoFar } from "./LevelUpState.ts";
 import LevelUpSteps from "./LevelUpSteps.ts";
 
@@ -52,8 +53,12 @@ export default class Dnd35LevelUp {
   }
 
   /** The level-up wizard's preview of the levels the character plans, each with its ability increase. */
-  describePreview(view: RulesetView, character: CharacterInput, ...args: Parameters<LevelUpPlan["describePreview"]>) {
-    return new LevelUpPlan(view, character).describePreview(...args);
+  describePreview(
+    view: RulesetView,
+    character: CharacterInput,
+    ...args: Parameters<LevelUpPreview["describePreview"]>
+  ) {
+    return new LevelUpPreview(view, character).describePreview(...args);
   }
 
   /** The level-up wizard's skills step of class `klassId`'s `level`. */

@@ -1,7 +1,6 @@
 import { type CharacterInput, CharacterProjection } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 
 import LevelUpState, { type PlannedSoFar } from "./LevelUpState.ts";
@@ -32,48 +31,6 @@ export default class LevelUpSteps extends LevelUpState {
     private readonly character: CharacterInput,
   ) {
     super(view);
-  }
-
-  /** The feats step: the feat pools of the character built with the step, and the feats its class level grants. */
-  private buildFeatSlots(character: DetailedCharacter, klassLevelId: string) {
-    const { featPools: aptitudePools, featsToSelect } = character.components.aptitudes.getLevelUpPools(
-      this.rulesetData,
-    );
-    return {
-      featsToSelect,
-      autoGrantedFeats: (this.rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(klassLevelId) ?? []).map(
-        (rec) => rec.featsInRule,
-      ),
-      aptitudePools,
-    };
-  }
-
-  /** The powers step: the power pools of the character built with the step, and the powers its class level grants. */
-  private buildPowerSlots(character: DetailedCharacter, klassLevelId: string) {
-    const { powerPools: aptitudePools, powersToSelect } = character.components.aptitudes.getLevelUpPools(
-      this.rulesetData,
-    );
-    const autoGrantedPowers = (this.rulesetData.klassLevelPowersWithPowersByKlassLevel.get(klassLevelId) ?? []).map(
-      (rec) => ({ ...rec.powersInRule, free: rec.free }),
-    );
-    return { powersToSelect, autoGrantedPowers, aptitudePools };
-  }
-
-  /**
-   * The skills step: the points to spend, and each skill with its class status. A skill's class status is any of the
-   * character's classes' (its max rank, `isClassSkill`) and the leveled class's (its cost, `isCurrentClassSkill`). The
-   * client caps a rank by the character's total level after the step (`totalCharacterLevel`).
-   */
-  private buildSkillSlots(character: DetailedCharacter, klassId: string, totalCharacterLevel: number) {
-    const { skills } = character.components;
-    const currentClassSkillIds = this.getClassSkillIds(
-      this.rulesetData.klassSkillsWithSkillsByKlass.get(klassId) ?? [],
-    );
-    return {
-      skillPointsToSpend: Math.max(1, skills.getSkillBudget().available),
-      totalCharacterLevel,
-      skills: skills.getEnrichedSkills(this.rulesetData.skills, currentClassSkillIds),
-    };
   }
 
   /**
@@ -114,14 +71,14 @@ export default class LevelUpSteps extends LevelUpState {
   describeFeatStep(klassId: string, level: number, step: Step) {
     const klassLevel = this.getKlassLevel(klassId, level);
     const character = this.build(this.projectStep(klassLevel.id, this.readStep(step)));
-    return this.buildFeatSlots(character, klassLevel.id);
+    return this.featStep(character.components.aptitudes.getLevelUpPools(this.rulesetData), [klassLevel.id]);
   }
 
   /** The powers step of class `klassId`'s `level`: the pools the character picks powers in with it, and its grants. */
   describePowerStep(klassId: string, level: number, step: Step) {
     const klassLevel = this.getKlassLevel(klassId, level);
     const character = this.build(this.projectStep(klassLevel.id, this.readStep(step)));
-    return this.buildPowerSlots(character, klassLevel.id);
+    return this.powerStep(character.components.aptitudes.getLevelUpPools(this.rulesetData), [klassLevel.id]);
   }
 
   /**
@@ -132,6 +89,9 @@ export default class LevelUpSteps extends LevelUpState {
     const klassLevel = this.getKlassLevel(klassId, level);
     const character = this.build(this.projectStep(klassLevel.id, this.readStep(step)));
     const totalCharacterLevel = this.character.rows.levels.length + (step.editedLevelId ? 0 : 1);
-    return this.buildSkillSlots(character, klassId, totalCharacterLevel);
+    // A skill's class status is any of the character's classes' (its max rank, `isClassSkill`) and the leveled class's
+    // (its cost, `isCurrentClassSkill`)
+    const classSkillIds = this.getClassSkillIds(this.rulesetData.klassSkillsWithSkillsByKlass.get(klassId) ?? []);
+    return this.skillStep(character, classSkillIds, totalCharacterLevel);
   }
 }
