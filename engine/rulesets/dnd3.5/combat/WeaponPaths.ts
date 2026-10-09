@@ -2,7 +2,7 @@ import type { GetterOf, PathCategory } from "@/engine/core/paths/PathCategory.ts
 import PathTraverser from "@/engine/core/paths/PathTraverser.ts";
 import type { Components, TraversePathResult } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import type { Dnd35Components } from "@/engine/rulesets/dnd3.5/character/components.ts";
+import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/character/CharacterComponents.ts";
 import { MODIFIER_OPERATORS, NUMERIC_REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import { isRecord } from "@/shared/isRecord.ts";
@@ -46,35 +46,35 @@ const WEAPON_PATHS = [
 /** The first segments of a weapon's paths, which `weapon.*` reads on an item's own weapon. */
 const WEAPON_PATH_ROOTS = [...new Set(WEAPON_PATHS.map(({ path }) => path.split(".")[0]))];
 
-/** A weapon's paths under `prefix`: a weapon group's, or an item's own weapon's. */
-export function buildWeaponPaths(prefix: string, category: string, kind: "modifier" | "requirement"): TargetPath[] {
-  return WEAPON_PATHS.filter(
-    (subPath) => !("requirementOnly" in subPath && subPath.requirementOnly && kind === "modifier"),
-  ).map((subPath) => ({
-    path: `${prefix}.${subPath.path}`,
-    category,
-    description: subPath.description,
-    valueType: subPath.type,
-    operators:
-      kind === "modifier"
-        ? subPath.type === "string"
-          ? ["set"]
-          : [...MODIFIER_OPERATORS]
-        : subPath.type === "string"
-          ? ["equal", "not_equal"]
-          : [...NUMERIC_REQUIREMENT_OPERATORS],
-    ...("possibleValues" in subPath && { possibleValues: subPath.possibleValues }),
-  }));
-}
-
 /**
  * An item's own weapon's target paths (weapon.tohit.* / weapon.damage.* / weapon.wielded): the weapon slots holding
  * its source, the item (its modifiers), or one entry of it (a weapon's proficiency).
  */
 export default class WeaponPaths implements PathCategory<Dnd35Components> {
+  /** A weapon's paths under `prefix`: a weapon group's, or an item's own weapon's. */
+  static buildPaths(prefix: string, category: string, kind: "modifier" | "requirement"): TargetPath[] {
+    return WEAPON_PATHS.filter(
+      (subPath) => !("requirementOnly" in subPath && subPath.requirementOnly && kind === "modifier"),
+    ).map((subPath) => ({
+      path: `${prefix}.${subPath.path}`,
+      category,
+      description: subPath.description,
+      valueType: subPath.type,
+      operators:
+        kind === "modifier"
+          ? subPath.type === "string"
+            ? ["set"]
+            : [...MODIFIER_OPERATORS]
+          : subPath.type === "string"
+            ? ["equal", "not_equal"]
+            : [...NUMERIC_REQUIREMENT_OPERATORS],
+      ...("possibleValues" in subPath && { possibleValues: subPath.possibleValues }),
+    }));
+  }
+
   /** The paths an item's modifiers and requirements read on its own weapon (`weapon.tohit.misc`), wherever it's held. */
   static generateItemWeaponPaths(kind: "modifier" | "requirement"): TargetPath[] {
-    return buildWeaponPaths("weapon", "weapon", kind);
+    return WeaponPaths.buildPaths("weapon", "weapon", kind);
   }
 
   readonly description = "On an item: its own weapon's to-hit, damage, and how it's wielded, wherever it's held";

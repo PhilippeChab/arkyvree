@@ -3,7 +3,7 @@ import { type CharacterRows } from "@/engine/core/module/index.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import type { RulesetView, TargetPathsTraverser } from "@/engine/core/types.ts";
 import type { Dnd35LoadedCharacterData } from "@/engine/rulesets/dnd3.5/loading/DetailedCharacterDataLoader.ts";
-import type { SkillFields } from "@/engine/rulesets/dnd3.5/skills/skillFields.ts";
+import { type SkillFieldValues } from "@/engine/rulesets/dnd3.5/skills/SkillFields.ts";
 import {
   type CustomizedFeat,
   type CustomizedKlassLevel,
@@ -34,7 +34,7 @@ import type {
   Skill,
 } from "@/shared/relations.ts";
 
-import { type Dnd35Components } from "./components.ts";
+import { type Dnd35Components } from "./CharacterComponents.ts";
 
 /** What assembles a character's data from its rows and its ruleset's view: reading nothing. */
 export interface DataLoader {
@@ -181,7 +181,7 @@ export default abstract class CharacterState {
   protected rulesetSkills: Skill[] = [];
 
   // Dnd3.5-specific data
-  protected skillFields: Map<string, SkillFields> = new Map();
+  protected skillFields: Map<string, SkillFieldValues> = new Map();
 
   protected skillPointAbilityId: string | null = null;
 

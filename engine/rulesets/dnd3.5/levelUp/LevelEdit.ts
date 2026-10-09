@@ -1,7 +1,7 @@
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView, ValidationIssue } from "@/engine/core/types.ts";
-import { planMasterCreatures } from "@/engine/rulesets/dnd3.5/bonded/bondedPlans.ts";
+import BondedPlans from "@/engine/rulesets/dnd3.5/bonded/BondedPlans.ts";
 import type Dnd35DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import type { Dnd35ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/types.ts";
 import { include } from "@/lib/mixins.ts";
@@ -155,7 +155,7 @@ export default class LevelEdit extends include(LevelUpState, ChecksSelections, P
     }
     return {
       abilityId: abilityId || null,
-      bonded: planMasterCreatures(edited, bonded, this.rulesetData),
+      bonded: BondedPlans.planMasterCreatures(edited, bonded, this.rulesetData),
       hp,
       level,
       ...this.toPickRows(edit),

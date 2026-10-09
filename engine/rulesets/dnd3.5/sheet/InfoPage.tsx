@@ -8,7 +8,7 @@ import {
   formatCritical,
 } from "@/shared/dnd3.5/weaponAttacks.ts";
 
-import { formatModifier } from "./format.ts";
+import SheetFormat from "./SheetFormat.ts";
 import { FONT_SIZE, styles } from "./styles.ts";
 
 /** The parts of the AC the breakdown lists, by their short label */
@@ -169,9 +169,11 @@ function InfoPage({
                     <View key={key} style={styles.abilityBox}>
                       <Text style={styles.abilityName}>{label}</Text>
                       <Text style={styles.abilityScore}>{ab?.total ?? 10}</Text>
-                      <Text style={styles.abilityMod}>{formatModifier(abilities.getAbilityModifier(name))}</Text>
+                      <Text style={styles.abilityMod}>
+                        {SheetFormat.formatModifier(abilities.getAbilityModifier(name))}
+                      </Text>
                       <Text style={{ fontSize: FONT_SIZE.xs, color: "#666", marginTop: 2, textAlign: "center" }}>
-                        {`${ab?.base ?? 10} / ${ab?.level ? `+${ab.level}` : "+0"} / ${ab?.misc ? formatModifier(ab.misc) : "+0"}`}
+                        {`${ab?.base ?? 10} / ${ab?.level ? `+${ab.level}` : "+0"} / ${ab?.misc ? SheetFormat.formatModifier(ab.misc) : "+0"}`}
                       </Text>
                     </View>
                   );
@@ -186,9 +188,9 @@ function InfoPage({
                 {Object.values(savingThrowData).map((save) => (
                   <View key={save.name} style={styles.savingThrowBox}>
                     <Text style={styles.abilityName}>{save.name}</Text>
-                    <Text style={styles.abilityMod}>{formatModifier(save.total)}</Text>
+                    <Text style={styles.abilityMod}>{SheetFormat.formatModifier(save.total)}</Text>
                     <Text style={{ fontSize: FONT_SIZE.xs, color: "#666", marginTop: 2, textAlign: "center" }}>
-                      {`Base ${formatModifier(save.base)}  |  Abil ${formatModifier(save.ability)}  |  Misc ${formatModifier(save.misc)}`}
+                      {`Base ${SheetFormat.formatModifier(save.base)}  |  Abil ${SheetFormat.formatModifier(save.ability)}  |  Misc ${SheetFormat.formatModifier(save.misc)}`}
                     </Text>
                   </View>
                 ))}
@@ -221,27 +223,29 @@ function InfoPage({
               </View>
               <View style={{ marginBottom: 4 }}>
                 <Text style={{ fontSize: FONT_SIZE.xs, color: "#666", textAlign: "center" }}>
-                  {AC_PARTS.map(([label, part]) => `${label} ${formatModifier(combatData.ac[part] ?? 0)}`).join("  ")}
+                  {AC_PARTS.map(
+                    ([label, part]) => `${label} ${SheetFormat.formatModifier(combatData.ac[part] ?? 0)}`,
+                  ).join("  ")}
                 </Text>
               </View>
               <View style={[styles.row, { flexWrap: "wrap", justifyContent: "space-between" }]}>
                 <View style={styles.statBox}>
                   <Text style={styles.statLabel}>Initiative</Text>
-                  <Text style={styles.statValue}>{formatModifier(combatData.initiative.total)}</Text>
+                  <Text style={styles.statValue}>{SheetFormat.formatModifier(combatData.initiative.total)}</Text>
                 </View>
                 <View style={styles.statBox}>
                   <Text style={styles.statLabel}>BAB</Text>
                   <Text style={styles.statValue}>
                     {(() => {
                       const attacks: string[] = [];
-                      for (let b = combatData.bab; b > 0; b -= 5) attacks.push(formatModifier(b));
-                      return attacks.length > 0 ? attacks.join("/") : formatModifier(combatData.bab);
+                      for (let b = combatData.bab; b > 0; b -= 5) attacks.push(SheetFormat.formatModifier(b));
+                      return attacks.length > 0 ? attacks.join("/") : SheetFormat.formatModifier(combatData.bab);
                     })()}
                   </Text>
                 </View>
                 <View style={styles.statBox}>
                   <Text style={styles.statLabel}>Grapple</Text>
-                  <Text style={styles.statValue}>{formatModifier(combatData.grapple.total)}</Text>
+                  <Text style={styles.statValue}>{SheetFormat.formatModifier(combatData.grapple.total)}</Text>
                 </View>
                 <View style={styles.statBox}>
                   <Text style={styles.statLabel}>Speed</Text>

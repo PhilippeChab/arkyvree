@@ -1,7 +1,7 @@
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/classes/ClassesComponent.ts";
 import { CONSTANTS, SIZE_AC_ATTACK_MOD, SIZE_GRAPPLE_MOD, SIZE_STEPS } from "@/engine/rulesets/dnd3.5/constants.ts";
-import { NO_WEAPON_FIELDS, type WeaponFields } from "@/engine/rulesets/dnd3.5/items/itemFields.ts";
-import { SIZE_ORDER, WEAPON_SET_SLOTS } from "@/engine/rulesets/dnd3.5/items/slots.ts";
+import { SIZE_ORDER, WEAPON_SET_SLOTS } from "@/engine/rulesets/dnd3.5/items/InventorySlots.ts";
+import { NO_WEAPON_FIELDS, type WeaponFields } from "@/engine/rulesets/dnd3.5/items/ItemFields.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { type Item } from "@/shared/relations.ts";
 

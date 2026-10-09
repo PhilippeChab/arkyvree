@@ -1,7 +1,7 @@
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import type Dnd35DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
 
-import { type BondedRaceStatBlock, getBondedRaceStats } from "./bondedRaceData.ts";
+import BondedRaceData, { type BondedRaceStatBlock } from "./BondedRaceData.ts";
 import DetailedCharacterBonded from "./DetailedCharacterBonded.ts";
 
 /**
@@ -32,7 +32,7 @@ export default class DetailedCharacterFamiliar extends DetailedCharacterBonded {
     familiarCombat.hp.base = Math.floor(masterCombat.hp.total / 2);
     familiarCombat.bab = masterCombat.bab;
 
-    const raceStats = getBondedRaceStats(this.race?.name);
+    const raceStats = BondedRaceData.getStats(this.race?.name);
     familiarCombat.ac.natural = (raceStats?.baseNaturalArmor ?? 0) + naBonus;
 
     const intelligence = this.components.abilities.getAbility("Intelligence");

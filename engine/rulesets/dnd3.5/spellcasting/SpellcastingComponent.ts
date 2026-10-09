@@ -1,5 +1,5 @@
 import { type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
-import { parseAptitudeSpellLevel } from "@/engine/rulesets/dnd3.5/aptitudes/aptitudeTargets.ts";
+import AptitudeTargets from "@/engine/rulesets/dnd3.5/aptitudes/AptitudeTargets.ts";
 import { include } from "@/lib/mixins.ts";
 import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
 import type { Modifier } from "@/shared/relations.ts";
@@ -97,7 +97,7 @@ class SpellcastingComponent extends include(SpellcastingState, BonusCasterLevels
     let maxArcane = 0;
     let maxDivine = 0;
     for (const mod of modifiers) {
-      const target = parseAptitudeSpellLevel(mod.target);
+      const target = AptitudeTargets.parseSpellLevel(mod.target);
       if (target?.field !== "allowed") continue;
       const casterType = spellAptitudeToCasterType.get(target.list);
       if (!casterType) continue;

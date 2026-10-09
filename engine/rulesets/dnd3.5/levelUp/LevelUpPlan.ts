@@ -1,9 +1,9 @@
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/types.ts";
-import { parseAptitudeAllowed } from "@/engine/rulesets/dnd3.5/aptitudes/aptitudeTargets.ts";
+import AptitudeTargets from "@/engine/rulesets/dnd3.5/aptitudes/AptitudeTargets.ts";
 import type Dnd35DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
-import { readClassLevelFields } from "@/engine/rulesets/dnd3.5/classes/classLevelFields.ts";
+import ClassLevelFields from "@/engine/rulesets/dnd3.5/classes/ClassLevelFields.ts";
 import { Dnd35LevelsRules } from "@/engine/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
 import { include } from "@/lib/mixins.ts";
 import { computeLevelSkillPoints } from "@/shared/dnd3.5/skills.ts";
@@ -171,7 +171,7 @@ export default class LevelUpPlan extends include(LevelUpState, ChecksSelections,
     const { skills } = character.components;
     return klassLevelIds.map((klassLevelId) =>
       skills.getLevelPointsPerLevel(
-        readClassLevelFields(this.rulesetData.propertiesByEntity.get(klassLevelId) ?? []).skills,
+        ClassLevelFields.read(this.rulesetData.propertiesByEntity.get(klassLevelId) ?? []).skills,
       ),
     );
   }
@@ -236,7 +236,7 @@ export default class LevelUpPlan extends include(LevelUpState, ChecksSelections,
       const mods = this.rulesetData.modifiersBySource.get(featId);
       if (!mods) continue;
       for (const mod of mods) {
-        const list = parseAptitudeAllowed(mod.target);
+        const list = AptitudeTargets.parseAllowed(mod.target);
         if (list === undefined) continue;
         const aptId = this.rulesetData.aptitudeIdBySlug.get(list);
         if (aptId && deferredAptIdSet.has(aptId)) sources.set(aptId, mod.sourceId);

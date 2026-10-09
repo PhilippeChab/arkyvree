@@ -1,6 +1,6 @@
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
-import { parseAptitudeJoin, parseAptitudeList } from "@/engine/rulesets/dnd3.5/aptitudes/aptitudeTargets.ts";
+import AptitudeTargets from "@/engine/rulesets/dnd3.5/aptitudes/AptitudeTargets.ts";
 import type { CustomizedFeat, CustomizedKlassLevel, CustomizedPower } from "@/engine/rulesets/dnd3.5/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { MAX_SPELL_LEVEL, toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
@@ -8,7 +8,7 @@ import type { Aptitude, Power, Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import type SpellcastingState from "./SpellcastingState.ts";
-import { listOpenedBy } from "./spellLists.ts";
+import SpellLists from "./SpellLists.ts";
 
 /** The powers a character's aptitudes give it, each with what it knows of them, and the spell tags they carry. */
 export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
@@ -26,7 +26,7 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
 
       for (const modifier of appliedModifiers) {
         if (modifier.sourceType !== "klass_levels") continue;
-        const list = parseAptitudeList(modifier.target);
+        const list = AptitudeTargets.parseList(modifier.target);
         if (list === undefined) continue;
         const aptitude = aptitudes[list];
         if (!aptitude || !aptitudePowerAptitudeIds.has(aptitude.id) || aptitudeIdToClassName.has(aptitude.id)) continue;
@@ -181,11 +181,11 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
         const classListIds = className
           ? this.spellListsOf(className).flatMap((key) => (aptitudes[key] ? [aptitudes[key].id] : []))
           : [];
-        const lists = new Set(feat.modifiers.flatMap((modifier) => listOpenedBy(modifier.target) ?? []));
+        const lists = new Set(feat.modifiers.flatMap((modifier) => SpellLists.listOpenedBy(modifier.target) ?? []));
         for (const list of lists) {
           const aptitude = aptitudes[list];
           if (!aptitude || !featListIds.has(aptitude.id)) continue;
-          const joinsClassList = feat.modifiers.some((modifier) => parseAptitudeJoin(modifier.target) === list);
+          const joinsClassList = feat.modifiers.some((modifier) => AptitudeTargets.parseJoin(modifier.target) === list);
           // A feat opening several lists shows its tag on each of them
           const tagged = this.spellTagLists[feat.name] ?? { aptitudeIds: classListIds, joinsClassList: false };
           this.spellTagLists[feat.name] = {

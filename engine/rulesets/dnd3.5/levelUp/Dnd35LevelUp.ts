@@ -1,8 +1,8 @@
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/types.ts";
-import { planMasterCreatures } from "@/engine/rulesets/dnd3.5/bonded/bondedPlans.ts";
-import { buildCharacter } from "@/engine/rulesets/dnd3.5/character/buildCharacter.ts";
+import BondedPlans from "@/engine/rulesets/dnd3.5/bonded/BondedPlans.ts";
+import CharacterBuilder from "@/engine/rulesets/dnd3.5/character/CharacterBuilder.ts";
 import type { Klass } from "@/shared/relations.ts";
 
 import ClassPicker from "./ClassPicker.ts";
@@ -22,7 +22,7 @@ import PowerPicker from "./PowerPicker.ts";
 export class Dnd35LevelUp {
   /** Refuses a character that fails its rules, built from its rows: what it fails, as the refusal's issues. */
   checkCharacter(view: RulesetView, character: CharacterInput) {
-    RulesError.refuseIssues(buildCharacter(view, character).validate().issues);
+    RulesError.refuseIssues(CharacterBuilder.build(view, character).validate().issues);
   }
 
   /** A saved level's selections, as its edit opens them. */
@@ -89,7 +89,7 @@ export class Dnd35LevelUp {
    * creature removed, kept or made, and the levels it takes or loses.
    */
   planBondedCreatures(view: RulesetView, master: CharacterInput, bonded: CharacterInput[]) {
-    return planMasterCreatures(buildCharacter(view, master), bonded, view.rulesetData);
+    return BondedPlans.planMasterCreatures(CharacterBuilder.build(view, master), bonded, view.rulesetData);
   }
 
   /** A saved level's edit: what it writes, checked, and what the master's bonded creatures become with it. */

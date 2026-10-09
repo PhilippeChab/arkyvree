@@ -2,7 +2,7 @@ import type { GetterOf, PathCategory } from "@/engine/core/paths/PathCategory.ts
 import PathTraverser from "@/engine/core/paths/PathTraverser.ts";
 import type { Components, TraversePathResult } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import type { Dnd35Components } from "@/engine/rulesets/dnd3.5/character/components.ts";
+import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/character/CharacterComponents.ts";
 import {
   getNumericOperators,
   MODIFIER_OPERATORS,

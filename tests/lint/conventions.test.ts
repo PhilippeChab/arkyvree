@@ -242,6 +242,44 @@ describe("conventions", () => {
     ]);
   });
 
+  test("an engine module outside its API exports no function of its own", async () => {
+    expect(
+      await lintRepo(
+        {
+          "engine/api/ops.ts": "export function describeThing() {\n  return 1;\n}\n",
+          "engine/core/Good.ts": [
+            "function step() {",
+            "  return 1;",
+            "}",
+            "export type Shape = { a: number };",
+            "export const LIMITS = { max: 3 };",
+            "export function Concern<B>(Base: B) {",
+            "  return Base;",
+            "}",
+            "export default class Good {",
+            "  static run() {",
+            "    return step();",
+            "  }",
+            "}",
+            "",
+          ].join("\n"),
+          "engine/core/declared.ts": "export function helper() {\n  return 1;\n}\n",
+          "engine/core/held.ts": "export const helper = () => 1;\n",
+          "engine/core/listed.ts": "function helper() {\n  return 1;\n}\nexport { helper };\n",
+          "engine/core/defaulted.ts": "export default function helper() {\n  return 1;\n}\n",
+          "engine/index.ts": 'export { describeThing } from "./api/ops.ts";\n',
+          "server/x.ts": "export function helper() {\n  return 1;\n}\n",
+        },
+        ["engine-classes"],
+      ),
+    ).toEqual([
+      "engine-classes engine/core/declared.ts",
+      "engine-classes engine/core/defaulted.ts",
+      "engine-classes engine/core/held.ts",
+      "engine-classes engine/core/listed.ts",
+    ]);
+  });
+
   test("engine/ computes without waiting: no async function, no await, no Promise", async () => {
     expect(
       await lintRepo(

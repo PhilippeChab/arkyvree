@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { addClassLevels, addFeats } from "@/database/seeds/seedCharacter.ts";
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
-import { getBondedRaceStats } from "@/engine/rulesets/dnd3.5/bonded/bondedRaceData.ts";
+import BondedRaceData from "@/engine/rulesets/dnd3.5/bonded/BondedRaceData.ts";
 import DetailedCharacterAnimalCompanion from "@/engine/rulesets/dnd3.5/bonded/DetailedCharacterAnimalCompanion.ts";
 import DetailedCharacterFamiliar from "@/engine/rulesets/dnd3.5/bonded/DetailedCharacterFamiliar.ts";
 import DetailedCharacterMount from "@/engine/rulesets/dnd3.5/bonded/DetailedCharacterMount.ts";
@@ -507,7 +507,7 @@ describe("Stat blocks", () => {
   ])("a druid 1's %s companion has its stat block's skills, racial bonuses included", async (race) => {
     const { bonded } = await createDruidWithCompanion(1, `${race} Animal Companion`);
     const skills = (await buildAs(DetailedCharacterAnimalCompanion, bonded)).components.skills.getSkills();
-    const totals = getBondedRaceStats(race)!.baseSkillTotals!;
+    const totals = BondedRaceData.getStats(race)!.baseSkillTotals!;
     expect(
       Object.fromEntries(Object.keys(totals).map((skill) => [skill, skills[stripSeparators(skill)]?.total])),
     ).toEqual(totals);

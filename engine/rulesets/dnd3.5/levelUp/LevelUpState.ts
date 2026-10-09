@@ -2,9 +2,9 @@ import type { CharacterInput } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import { buildCharacter } from "@/engine/rulesets/dnd3.5/character/buildCharacter.ts";
+import CharacterBuilder from "@/engine/rulesets/dnd3.5/character/CharacterBuilder.ts";
 import type Dnd35DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
-import { isSkillSubtypeOf } from "@/engine/rulesets/dnd3.5/skills/SkillsComponent.ts";
+import SkillsComponent from "@/engine/rulesets/dnd3.5/skills/SkillsComponent.ts";
 import type { Dnd35ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/types.ts";
 import type { Klass, KlassLevel, Modifier, Property, Requirement } from "@/shared/relations.ts";
 
@@ -45,7 +45,7 @@ export default abstract class LevelUpState {
 
   /** The character built from its rows, with a level-up's `projected` levels and picks. */
   protected build(character: CharacterInput, projected?: Dnd35ProjectedCharacterData): Dnd35DetailedCharacter {
-    return buildCharacter(this.view, character, { projected });
+    return CharacterBuilder.build(this.view, character, { projected });
   }
 
   /**
@@ -66,7 +66,7 @@ export default abstract class LevelUpState {
   protected getClassSkillIds(records: { skillId: string; skillsInRule: { name: string } }[]): Set<string> {
     const ids = new Set(records.map((record) => record.skillId));
     const names = new Set(records.map((record) => record.skillsInRule.name));
-    for (const skill of this.rulesetData.skills) if (isSkillSubtypeOf(skill.name, names)) ids.add(skill.id);
+    for (const skill of this.rulesetData.skills) if (SkillsComponent.isSubtypeOf(skill.name, names)) ids.add(skill.id);
 
     return ids;
   }

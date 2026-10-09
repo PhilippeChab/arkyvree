@@ -1,6 +1,6 @@
 import type { RulesetModule } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/types.ts";
-import { createRulesetModule as createDnd35Module } from "@/engine/rulesets/dnd3.5/index.ts";
+import { Dnd35Module } from "@/engine/rulesets/dnd3.5/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
 /** An operation's arguments after the view, which picks the ruleset. */
@@ -13,7 +13,7 @@ export type After<F> = F extends (view: RulesetView, ...rest: infer R) => unknow
  * checks it against the contract.
  */
 const MODULES = {
-  "Dungeons & Dragons: 3.5": createDnd35Module(),
+  "Dungeons & Dragons: 3.5": Dnd35Module.create(),
 } satisfies Record<BaseRules, RulesetModule>;
 
 /** A base rules' module: what the entry's operations ask of the ruleset they're handed. */

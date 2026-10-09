@@ -1,4 +1,4 @@
-import { readRaceFields } from "@/engine/rulesets/dnd3.5/races/raceFields.ts";
+import RaceFields from "@/engine/rulesets/dnd3.5/races/RaceFields.ts";
 import type { CustomizedRace } from "@/engine/rulesets/dnd3.5/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
@@ -25,7 +25,7 @@ export function InitiativeAndSpeed<B extends Constructor<CombatState>>(Base: B) 
     protected initializeSpeed(race: CustomizedRace): void {
       const overloaded = () => this.combat.encumbrance.load === "overloaded";
       const loadedSpeed = (base: number) => this.loadedSpeed(base);
-      this.speedIgnoresEncumbrance = readRaceFields(race.properties).speedIgnoresEncumbrance;
+      this.speedIgnoresEncumbrance = RaceFields.read(race.properties).speedIgnoresEncumbrance;
       this.combat.speed = {
         base: race.baseSpeed,
         misc: 0,

@@ -1,5 +1,5 @@
 import { CONSTANTS, SIZE_AC_ATTACK_MOD } from "@/engine/rulesets/dnd3.5/constants.ts";
-import type { ItemFields } from "@/engine/rulesets/dnd3.5/items/itemFields.ts";
+import { type ItemFieldValues } from "@/engine/rulesets/dnd3.5/items/ItemFields.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 import type { ArmorsData } from "./ArmorsComponent.ts";
@@ -86,7 +86,7 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
     }
 
     /** An armor the character wears: the heaviest one worn (medium and heavy armor slow the character down). */
-    addArmor(fields: ItemFields) {
+    addArmor(fields: ItemFieldValues) {
       const category = fields.armor.proficiency?.toLowerCase();
       const worn = ARMOR_CATEGORIES.find((armor) => armor === category);
       const { armor } = this.combat;
@@ -94,7 +94,7 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
     }
 
     /** A shield the character carries: its maximum Dexterity bonus caps the AC's, a tower shield's bulk the attacks. */
-    addShield(fields: ItemFields) {
+    addShield(fields: ItemFieldValues) {
       const category = fields.shield.proficiency;
       if (!category) return;
       this.combat.shield.held = true;

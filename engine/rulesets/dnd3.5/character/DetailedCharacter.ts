@@ -2,15 +2,15 @@ import ModifierEvaluator from "@/engine/core/modifiers/ModifierEvaluator.ts";
 import type { DetailedCharacterInterface } from "@/engine/core/module/index.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
-import { readFeatFields } from "@/engine/rulesets/dnd3.5/feats/featFields.ts";
+import FeatFields from "@/engine/rulesets/dnd3.5/feats/FeatFields.ts";
 import { Dnd35LevelsRules } from "@/engine/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
 import DetailedCharacterDataLoader from "@/engine/rulesets/dnd3.5/loading/DetailedCharacterDataLoader.ts";
 import type { ProjectedCharacterLevel } from "@/engine/rulesets/dnd3.5/types.ts";
 import { include } from "@/lib/mixins.ts";
 import type { Character, KlassLevel, Requirement } from "@/shared/relations.ts";
 
+import CharacterComponents, { type Dnd35Components } from "./CharacterComponents.ts";
 import CharacterState, { type DataLoader } from "./CharacterState.ts";
-import { buildComponents, type Dnd35Components } from "./components.ts";
 import { Builds } from "./concerns/Builds.ts";
 import { PossessesVirtually } from "./concerns/PossessesVirtually.ts";
 import { Validates } from "./concerns/Validates.ts";
@@ -25,7 +25,9 @@ export default class DetailedCharacter
     this.targetPaths = new TargetPaths();
     this.modifierEvaluator = new ModifierEvaluator(this.targetPaths, this.sourcesOf);
     this.requirementEvaluator = new RequirementEvaluator(this.targetPaths);
-    this.components = buildComponents(this.modifierEvaluator, (totalLevel) => this.countGeneralFeats(totalLevel));
+    this.components = CharacterComponents.build(this.modifierEvaluator, (totalLevel) =>
+      this.countGeneralFeats(totalLevel),
+    );
   }
 
   readonly components: Dnd35Components;
@@ -59,7 +61,7 @@ export default class DetailedCharacter
 
   /** The schools the character's feats prohibit its wizard spells from: picked, granted, planned or from its modifiers. */
   getProhibitedSchools(): string[] {
-    return this.feats.flatMap((feat) => readFeatFields(feat.properties).prohibitedSchools);
+    return this.feats.flatMap((feat) => FeatFields.read(feat.properties).prohibitedSchools);
   }
 
   getSpellcasting(): { arcane: number; divine: number } {

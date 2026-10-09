@@ -2,7 +2,7 @@ import { afterEach, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import DetailedCharacterFamiliar from "@/engine/rulesets/dnd3.5/bonded/DetailedCharacterFamiliar.ts";
-import { buildFullCharacterResponse } from "@/engine/rulesets/dnd3.5/response/buildCharacterResponse.ts";
+import CharacterResponse from "@/engine/rulesets/dnd3.5/response/CharacterResponse.ts";
 import MemoryCache from "@/server/cache/MemoryCache.ts";
 import { RulesetCache } from "@/server/cache/rulesetCache/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -31,10 +31,10 @@ test("worker familiar HP matches web after customizing an inherited master feat"
   RulesetCache.invalidate(fork.id);
   const familiar = (await Characters.findOne(db, { id: familiarId }))!;
   MemoryCache.setEnabled(true);
-  const webResponse = buildFullCharacterResponse(familiar, await buildAs(DetailedCharacterFamiliar, familiar));
+  const webResponse = CharacterResponse.buildFull(familiar, await buildAs(DetailedCharacterFamiliar, familiar));
   RulesetCache.invalidateAll();
   MemoryCache.setEnabled(false);
-  const workerResponse = buildFullCharacterResponse(familiar, await buildAs(DetailedCharacterFamiliar, familiar));
+  const workerResponse = CharacterResponse.buildFull(familiar, await buildAs(DetailedCharacterFamiliar, familiar));
   // Master: 4 hit die + 7 Toughness (an elf's Constitution 12 is 10); familiar gets half, rounded down.
   expect(webResponse.combat.hp.total).toBe(5);
   expect(workerResponse.combat.hp).toEqual(webResponse.combat.hp);

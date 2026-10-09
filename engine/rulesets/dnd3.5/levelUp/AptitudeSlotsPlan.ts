@@ -1,7 +1,7 @@
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/aptitudes/AptitudesComponent.ts";
-import { parseAptitudePool, parseAptitudeSpellLevel } from "@/engine/rulesets/dnd3.5/aptitudes/aptitudeTargets.ts";
+import AptitudeTargets from "@/engine/rulesets/dnd3.5/aptitudes/AptitudeTargets.ts";
 import { Dnd35LevelsRules } from "@/engine/rulesets/dnd3.5/levels/Dnd35LevelsRules.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import type { Modifier } from "@/shared/relations.ts";
@@ -40,14 +40,14 @@ export default class AptitudeSlotsPlan {
       // A pool's slots take a literal: an add, or a spell level's set to -1 (the paths allow nothing else)
       const value = LiteralValue.parse(mod.value, "number");
       if (typeof value !== "number") continue;
-      const pool = parseAptitudePool(mod.target);
+      const pool = AptitudeTargets.parsePool(mod.target);
       if (pool !== undefined) {
         const aptId = aptitudeSlugToId.get(pool);
         if (aptId && featSlots[aptId]) deltas.feats[aptId] = (deltas.feats[aptId] ?? 0) + value;
 
         continue;
       }
-      const slot = parseAptitudeSpellLevel(mod.target);
+      const slot = AptitudeTargets.parseSpellLevel(mod.target);
       if (slot?.field === "allowed") {
         const aptId = aptitudeSlugToId.get(slot.list);
         if (aptId && powerSlots[aptId]) {

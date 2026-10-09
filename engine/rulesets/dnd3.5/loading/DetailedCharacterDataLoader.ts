@@ -1,34 +1,21 @@
 import { type CharacterRows } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/types.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import type { SkillFields } from "@/engine/rulesets/dnd3.5/skills/skillFields.ts";
+import { type SkillFieldValues } from "@/engine/rulesets/dnd3.5/skills/SkillFields.ts";
 import { type Dnd35ProjectedCharacterData, type LoadedCharacterData } from "@/engine/rulesets/dnd3.5/types.ts";
 import type { Character, Modifier, Requirement } from "@/shared/relations.ts";
 
-import {
-  collectModifiers,
-  toCustomizedFeats,
-  toCustomizedInventory,
-  toCustomizedKlassLevels,
-  toCustomizedPowers,
-  toCustomizedRace,
-} from "./customizations.ts";
-import { buildPicks, resolveLevels } from "./picks.ts";
-import { resolveVirtualPossessions } from "./possessions.ts";
-import {
-  buildAbilityScore,
-  readCachedRows,
-  readKlassProperties,
-  readRulesetLists,
-  readRulesetProperties,
-} from "./rulesetReadings.ts";
+import Customizations from "./Customizations.ts";
+import Picks from "./Picks.ts";
+import Possessions from "./Possessions.ts";
+import RulesetReadings from "./RulesetReadings.ts";
 
 /** D&D 3.5-specific extension of LoadedCharacterData with spellcasting and skill properties. */
 export interface Dnd35LoadedCharacterData extends LoadedCharacterData {
   klassBonusSpellAbilityMap: Map<string, string>;
   klassCasterTypeMap: Map<string, "Arcane" | "Divine">;
   klassLevelProperties: Map<string, { bab: number; skills: number }>;
-  skillFields: Map<string, SkillFields>;
+  skillFields: Map<string, SkillFieldValues>;
   skillPointAbilityId: string | null;
 }
 
@@ -65,7 +52,7 @@ export default class DetailedCharacterDataLoader {
 
     const resolve: Resolve = (rows) => cowData.resolveRows(rows);
     const abilityLookup = new Map(rulesetData.abilities.map((a) => [a.id, a.name]));
-    const levels = resolveLevels(rows.levels, projectedData, resolve);
+    const levels = Picks.resolveLevels(rows.levels, projectedData, resolve);
 
     // The join uses the stored item ID. Load the effective item so COW changes
     // refresh its name and other fields, not just its ID.
@@ -73,14 +60,11 @@ export default class DetailedCharacterDataLoader {
       ...inv,
       itemsInRule: rulesetData.itemsById.get(inv.itemId) ?? inv.itemsInRule,
     }));
-    const { languages, klassLevelsRaw, klassLevelSaves, klasses, klassSkills, klassEntityIds } = readCachedRows(
-      rows,
-      rulesetData,
-      levels.klassLevelIds,
-    );
+    const { languages, klassLevelsRaw, klassLevelSaves, klasses, klassSkills, klassEntityIds } =
+      RulesetReadings.readCachedRows(rows, rulesetData, levels.klassLevelIds);
 
     const { skills, allFeats, klassLevelFeatCountsByAptitudeId, allPowers, klassLevelPowerCountsByAptitudeId } =
-      buildPicks(rows.picks, rulesetData, projectedData, levels, resolve);
+      Picks.buildPicks(rows.picks, rulesetData, projectedData, levels, resolve);
     const featIds = allFeats.map((feat) => feat.id);
     const powerIds = allPowers.map((power) => power.id);
 
@@ -92,7 +76,7 @@ export default class DetailedCharacterDataLoader {
     );
 
     // Round 5b: the modifiers of virtually possessed feats and powers.
-    const { virtuallyPossessedFeatIds, virtuallyPossessedPowers } = resolveVirtualPossessions(
+    const { virtuallyPossessedFeatIds, virtuallyPossessedPowers } = Possessions.resolveVirtual(
       baseModifiers,
       featIds,
       powerIds,
@@ -100,25 +84,25 @@ export default class DetailedCharacterDataLoader {
     );
 
     // Each entity's customizations: per-entity lookups resolve via the cache's pre-built Maps.
-    const { klassLevels, klassLevelProperties } = toCustomizedKlassLevels(klassLevelsRaw, rulesetData);
+    const { klassLevels, klassLevelProperties } = Customizations.toCustomizedKlassLevels(klassLevelsRaw, rulesetData);
     const parts = {
       characterSourcedModifiers,
-      race: toCustomizedRace(race, rulesetData),
-      inventory: toCustomizedInventory(resolvedInventory, rulesetData),
+      race: Customizations.toCustomizedRace(race, rulesetData),
+      inventory: Customizations.toCustomizedInventory(resolvedInventory, rulesetData),
       klassLevels,
       klassEntityIds,
-      feats: toCustomizedFeats(allFeats, virtuallyPossessedFeatIds, rulesetData),
-      powers: toCustomizedPowers(allPowers, virtuallyPossessedPowers, rulesetData),
+      feats: Customizations.toCustomizedFeats(allFeats, virtuallyPossessedFeatIds, rulesetData),
+      powers: Customizations.toCustomizedPowers(allPowers, virtuallyPossessedPowers, rulesetData),
     };
-    const { modifiers, requirementGroups } = collectModifiers(parts, rulesetData, extraRequirements);
+    const { modifiers, requirementGroups } = Customizations.collectModifiers(parts, rulesetData, extraRequirements);
 
     return {
       ruleset,
       player,
       campaign,
-      ...readRulesetLists(rulesetData),
-      ...readRulesetProperties(rulesetData, (id) => cowData.resolve(id)),
-      characterAbilityScores: resolve(rows.abilities).map((ca) => buildAbilityScore(ca, abilityLookup)),
+      ...RulesetReadings.readRulesetLists(rulesetData),
+      ...RulesetReadings.readRulesetProperties(rulesetData, (id) => cowData.resolve(id)),
+      characterAbilityScores: resolve(rows.abilities).map((ca) => RulesetReadings.buildAbilityScore(ca, abilityLookup)),
       race: parts.race,
       languages,
       inventory: parts.inventory,
@@ -136,7 +120,7 @@ export default class DetailedCharacterDataLoader {
       modifiers,
       requirementGroups,
       validRulesetIds: new Set([this.character.rulesetId, ...cowData.sourceChain]),
-      ...readKlassProperties(klassEntityIds, rulesetData, abilityLookup),
+      ...RulesetReadings.readKlassProperties(klassEntityIds, rulesetData, abilityLookup),
     };
   }
 }

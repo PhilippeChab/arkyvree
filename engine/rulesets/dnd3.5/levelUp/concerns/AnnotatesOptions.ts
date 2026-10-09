@@ -1,5 +1,5 @@
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
-import { parseAptitudePool } from "@/engine/rulesets/dnd3.5/aptitudes/aptitudeTargets.ts";
+import AptitudeTargets from "@/engine/rulesets/dnd3.5/aptitudes/AptitudeTargets.ts";
 import type Dnd35DetailedCharacter from "@/engine/rulesets/dnd3.5/character/DetailedCharacter.ts";
 import type LevelUpState from "@/engine/rulesets/dnd3.5/levelUp/LevelUpState.ts";
 import type { Constructor } from "@/lib/mixins.ts";
@@ -33,7 +33,7 @@ export function AnnotatesOptions<B extends Constructor<LevelUpState>>(Base: B) {
       for (const featId of featIds) {
         for (const mod of this.rulesetData.modifiersBySource.get(featId) ?? []) {
           if (mod.sourceType !== "feats") continue;
-          const pool = parseAptitudePool(mod.target);
+          const pool = AptitudeTargets.parsePool(mod.target);
           if (pool === undefined) continue;
           const resolvedAptitudeId = this.rulesetData.aptitudeIdBySlug.get(pool);
           const value = LiteralValue.parse(mod.value, "number");
