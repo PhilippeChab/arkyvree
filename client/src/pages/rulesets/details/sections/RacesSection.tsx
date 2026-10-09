@@ -10,7 +10,7 @@ import {
   ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { RacesIcon } from "@/client/src/components/icons/index.ts";
-import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import { EMPTY_RACE, type RaceFormData, RaceFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
@@ -102,6 +102,7 @@ export function RacesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
             what="Races"
             error={error}
             data={races}
+            animationOffset={itemsBeforeLastPage(data)}
             search={search}
             isLoading={isLoading}
             columns={RACES_COLUMNS}

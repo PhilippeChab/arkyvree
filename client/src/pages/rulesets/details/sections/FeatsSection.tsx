@@ -326,6 +326,7 @@ export function FeatsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
               what="Feats"
               error={flatQuery.error}
               data={feats}
+              animationOffset={itemsBeforeLastPage(flatQuery.data)}
               search={searchQuery}
               isLoading={flatQuery.isLoading}
               columns={FEATS_COLUMNS}

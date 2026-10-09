@@ -9,7 +9,7 @@ import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { computeLevelSkillPoints } from "@/shared/dnd3.5/skills.ts";
 
-import { plannedLevel } from "./classPlan.ts";
+import { plannedLevel, plannedSlotKeys } from "./classPlan.ts";
 import { fitFeats, fitPowers, fitSkillPoints, openPoolOf } from "./fitPicks.ts";
 import { type HpLevel, hpSet } from "./hitPoints.ts";
 import {
@@ -17,10 +17,16 @@ import {
   availablePowersQuery,
   type ClassPicker,
   levelPreviewQuery,
-  type PickerLevel,
 } from "./levelUpQueries.ts";
 import type { SelectedKlass } from "./levelUpTypes.ts";
-import { featPickString, pendingLevelsOf, skillPointString } from "./pendingPicks.ts";
+import {
+  featPickString,
+  nextPickLevel,
+  pendingLevelsOf,
+  plannedPicker,
+  skillPointString,
+  spellSlotsPerLevel,
+} from "./pendingPicks.ts";
 import type { SkillLevels } from "./skillLevels.ts";
 import { pickIds, useLevelWizardBase } from "./useLevelWizardBase.ts";
 
@@ -69,8 +75,9 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
   const slotCounter = useRef(0);
   const [slotKeys, setSlotKeys] = useState<number[]>([]);
   const [classPlan, setClassPlan] = useState<(SelectedKlass | null)[]>([]);
-  const [hpValues, setHpValues] = useState<(number | null)[]>([]);
-  const [abilityIncreases, setAbilityIncreases] = useState<Record<number, string | null>>({});
+  // Each planned level's hit points and ability increase, by its slot's key
+  const [hpBySlot, setHpBySlot] = useState<Record<number, number | null>>({});
+  const [abilityBySlot, setAbilityBySlot] = useState<Record<number, string>>({});
 
   const handleClassChange = (index: number, klass: SelectedKlass | null) => {
     const next = [...classPlan];
@@ -96,47 +103,22 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     setClassPlan((prev) => [...prev, klass]);
   }, []);
 
-  const handleRemoveLevel = useCallback(
-    (index: number) => {
-      // HP and ability increases are kept per filled level, not per slot.
-      if (classPlan[index] !== null) {
-        const levelIndex = classPlan.slice(0, index).filter((k) => k !== null).length;
-        setHpValues((hp) => hp.filter((_, i) => i !== levelIndex));
-        setAbilityIncreases((ai) => {
-          const next: Record<number, string | null> = {};
-          for (const [k, v] of Object.entries(ai)) {
-            const idx = Number(k);
-            if (idx < levelIndex) next[idx] = v;
-            else if (idx > levelIndex) next[idx - 1] = v;
-          }
-          return next;
-        });
-      }
-      setClassPlan((prev) => prev.filter((_, i) => i !== index));
-      setSlotKeys((prev) => prev.filter((_, i) => i !== index));
-    },
-    [classPlan],
-  );
+  // A removed slot's hit points and ability increase go with its key
+  const handleRemoveLevel = useCallback((index: number) => {
+    setClassPlan((prev) => prev.filter((_, i) => i !== index));
+    setSlotKeys((prev) => prev.filter((_, i) => i !== index));
+  }, []);
 
   // Only non-null entries matter for downstream steps
   const validClassPlan = useMemo(() => classPlan.filter((k): k is SelectedKlass => k !== null), [classPlan]);
+  // The planned levels' slots, by which their hit points and ability increases are kept
+  const levelKeys = useMemo(() => plannedSlotKeys(classPlan, slotKeys), [classPlan, slotKeys]);
+  const hpValues = useMemo(() => levelKeys.map((key) => hpBySlot[key] ?? null), [levelKeys, hpBySlot]);
 
-  // The HP list follows the valid (non-null) class plan's length: a level added gets no HP yet, one removed drops its
-  if (hpValues.length !== validClassPlan.length) {
-    setHpValues(
-      hpValues.length < validClassPlan.length
-        ? [...hpValues, ...Array(validClassPlan.length - hpValues.length).fill(null)]
-        : hpValues.slice(0, validClassPlan.length),
-    );
-  }
-
-  const handleHpChange = useCallback((index: number, value: number | null) => {
-    setHpValues((prev) => {
-      const next = [...prev];
-      next[index] = value;
-      return next;
-    });
-  }, []);
+  const handleHpChange = useCallback(
+    (index: number, value: number | null) => setHpBySlot((prev) => ({ ...prev, [levelKeys[index]]: value })),
+    [levelKeys],
+  );
 
   const hpLevels = useMemo<HpLevel[]>(
     () =>
@@ -146,9 +128,10 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     [adjustedClassPlan],
   );
 
-  const handleAbilityIncreaseChange = useCallback((index: number, abilityId: string) => {
-    setAbilityIncreases((prev) => ({ ...prev, [index]: abilityId }));
-  }, []);
+  const handleAbilityIncreaseChange = useCallback(
+    (index: number, abilityId: string) => setAbilityBySlot((prev) => ({ ...prev, [levelKeys[index]]: abilityId })),
+    [levelKeys],
+  );
 
   // In plan order: the preview's levels pair by index with the plan's HP and ability increases.
   const plannedLevels = useMemo(
@@ -169,6 +152,11 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
   const abilityIncreaseLevels = useMemo(
     () => previewQuery.data?.attributes.abilityIncreaseLevels ?? [],
     [previewQuery.data],
+  );
+  // Each planned level's ability increase: its slot's, while the level is one that takes an increase
+  const abilityIncreases = useMemo(
+    () => levelKeys.map((key, index) => (abilityIncreaseLevels.includes(index) ? (abilityBySlot[key] ?? null) : null)),
+    [levelKeys, abilityBySlot, abilityIncreaseLevels],
   );
 
   const attributeData = useMemo(() => {
@@ -288,45 +276,33 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     pendingSkillAllocations: skillPointString(skillPointAllocations),
   };
 
-  // Current slot level context (for feat/power queries)
-  const firstClass = useMemo(
-    () => adjustedClassPlan.find((k): k is SelectedKlass => k !== null) ?? null,
-    [adjustedClassPlan],
+  // The level the next feat pick lands on, which its options are checked at: the feat list's, and a family's variants'
+  const featPicker = plannedPicker(
+    previewLevelDetails,
+    abilityIncreases,
+    selectedAptitude
+      ? nextPickLevel(
+          previewQuery.data?.perLevelFeatSlots[selectedAptitude] ?? [],
+          (selectedFeats[selectedAptitude] ?? []).length,
+        )
+      : 0,
+    allSelectedFeatPickString,
   );
 
-  const lastLevel = useMemo(() => {
-    const validClasses = adjustedClassPlan.filter((k): k is SelectedKlass => k !== null);
-    return validClasses.length > 0 ? validClasses[validClasses.length - 1].nextLevel : 1;
-  }, [adjustedClassPlan]);
-
-  // For feat queries: determine which level in the plan the next pick lands
-  // on so prerequisites are evaluated at the correct character state.
-  const currentFeatSlotLevelIndex = useMemo(() => {
-    const preview = previewQuery.data;
-    if (!preview || !selectedAptitude) return 0;
-    const slots = preview.perLevelFeatSlots[selectedAptitude] ?? [];
-    const selectedCount = (selectedFeats[selectedAptitude] ?? []).length;
-    let counted = 0;
-    for (let i = 0; i < slots.length; i++) {
-      counted += slots[i];
-      if (counted > selectedCount) return i;
-    }
-    return Math.max(0, slots.length - 1);
-  }, [previewQuery.data, selectedAptitude, selectedFeats]);
-
-  // Use the slot-level context: query available feats at the specific level
-  // where the next pick will land, not the final planned level.
-  const slotLevelDetail = previewLevelDetails?.[currentFeatSlotLevelIndex];
-
-  // The level the next feat pick lands on, and what it's checked against: the feat list's, and a family's variants'
-  const featPicker: PickerLevel = {
-    classId: slotLevelDetail?.klassId ?? firstClass?.id,
-    level: slotLevelDetail?.level,
-    selectedFeatPicks: allSelectedFeatPickString,
-    ...pendingLevelsOf(previewLevelDetails, abilityIncreases, currentFeatSlotLevelIndex + 1),
-    // None of the picks is saved yet: they're all pending
-    pendingFeatPicks: allSelectedFeatPickString,
-  };
+  // The level the next spell pick lands on, in the open pool at its open spell level
+  const powerPicker = plannedPicker(
+    previewLevelDetails,
+    abilityIncreases,
+    selectedPowerAptitude
+      ? nextPickLevel(
+          spellSlotsPerLevel(previewQuery.data?.perLevelPowerSlots[selectedPowerAptitude] ?? [], selectedPowerLevel),
+          (selectedPowers[selectedPowerAptitude] ?? []).filter(
+            (power) => selectedPowerLevel === null || power.powerLevel === selectedPowerLevel,
+          ).length,
+        )
+      : 0,
+    allSelectedFeatPickString,
+  );
 
   const {
     items: groupedFeats,
@@ -346,14 +322,7 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     onScroll: handlePowersScroll,
     isFetchingNextPage: isFetchingNextPowersPage,
   } = useListboxQuery({
-    ...availablePowersQuery(characterId, selectedPowerAptitude, selectedPowerLevel, debouncedPowerSearch, {
-      classId: firstClass?.id,
-      level: lastLevel,
-      selectedFeatPicks: allSelectedFeatPickString,
-      ...pendingLevels,
-      // None of the picks is saved yet: they're all pending
-      pendingFeatPicks: allSelectedFeatPickString,
-    }),
+    ...availablePowersQuery(characterId, selectedPowerAptitude, selectedPowerLevel, debouncedPowerSearch, powerPicker),
     enabled: open && activeStep === powersStep,
   });
 
@@ -362,8 +331,8 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     slotCounter.current = 0;
     setSlotKeys([]);
     setClassPlan([]);
-    setHpValues([]);
-    setAbilityIncreases({});
+    setHpBySlot({});
+    setAbilityBySlot({});
   }, [resetPicks]);
 
   // Pool-level picks; the backend distributes them to the levels.

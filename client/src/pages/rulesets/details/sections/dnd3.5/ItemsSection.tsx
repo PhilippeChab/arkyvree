@@ -12,9 +12,9 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { ItemsIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useDialogState, useFormWith, useSearchText } from "@/client/src/hooks/index.ts";
+import { useDialogState, useFormWith, useRulesetPermissions, useSearchText } from "@/client/src/hooks/index.ts";
 import { formatCost, formatCount, formatWeight } from "@/client/src/lib/formatNumeric.ts";
-import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
   EMPTY_ITEM,
@@ -27,7 +27,7 @@ import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/s
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { invalidateRulesetEdit, itemsQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
-import { useOpenEntity, useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 
@@ -179,6 +179,7 @@ export function ItemsSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
             what="Items"
             error={error}
             data={items}
+            animationOffset={itemsBeforeLastPage(data)}
             search={searchQuery}
             isLoading={isLoading}
             columns={ITEMS_COLUMNS}

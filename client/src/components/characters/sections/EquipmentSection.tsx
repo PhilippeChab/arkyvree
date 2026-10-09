@@ -1,4 +1,4 @@
-import { Autocomplete, Box, Button, Stack, TextField, Typography } from "@mui/material";
+import { Autocomplete, Box, Button, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 import { useMemo, useState } from "react";
@@ -19,11 +19,17 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { DeleteIcon, EditIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useDebouncedValue, useDialogState, useFormWith, useListboxQuery } from "@/client/src/hooks/index.ts";
+import {
+  useDebouncedValue,
+  useDialogState,
+  useFormWith,
+  useListboxQuery,
+  useRulesetPermissions,
+} from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
-import { invalidateCharacter } from "@/client/src/lib/queries.ts";
+import { invalidateCharacter, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { requiredRules } from "@/client/src/lib/validation.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
@@ -52,7 +58,6 @@ import { shownWeaponSet } from "./weaponSets.ts";
 interface EquipmentSectionProps {
   characterId: string;
   encumbrance?: EncumbranceData;
-  isCustomRuleset?: boolean;
   readOnly: boolean;
   rulesetId: string;
 }
@@ -70,15 +75,13 @@ function placementOf(detail: {
   return { columns, profile: placementProfile(columns, detail.properties ?? []) };
 }
 
-export function EquipmentSection({
-  characterId,
-  rulesetId,
-  readOnly,
-  isCustomRuleset,
-  encumbrance,
-}: EquipmentSectionProps) {
+export function EquipmentSection({ characterId, rulesetId, readOnly, encumbrance }: EquipmentSectionProps) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
+
+  // Who may edit the character's ruleset's items creates one from here, in the ruleset's Items tab
+  const { data: ruleset, error: rulesetError } = useQuery({ ...rulesetDetailQuery(rulesetId), enabled: !readOnly });
+  const { canEditEntities: canCreateItems } = useRulesetPermissions(ruleset);
 
   // The inventory the dialogs check a slot against
   const { data: inventoryItems = [], error: inventoryError } = useQuery(characterInventoryQuery(characterId));
@@ -250,7 +253,7 @@ export function EquipmentSection({
     visible && (
       <ValidationIssuesAlert
         issues={issues}
-        title="Equipment warnings"
+        title="Equipment Warnings"
         onClose={() => setIssues([])}
         onProceed={onForce}
         pending={addMutation.isPending || updateMutation.isPending}
@@ -263,58 +266,64 @@ export function EquipmentSection({
     <SheetSection
       title="Equipment & Inventory"
       action={
-        !readOnly &&
-        hasItems && (
+        !readOnly && (
           <Stack direction="row" spacing={1}>
-            {isCustomRuleset && (
-              <Button
-                variant="outlined"
-                size="small"
-                component={Link}
-                to={`/rulesets/${rulesetId}/items`}
-                target="_blank"
-              >
-                Create Item
-              </Button>
+            {canCreateItems && (
+              <Tooltip describeChild title="Opens the ruleset's Items tab in a new browser tab">
+                <Button
+                  variant="outlined"
+                  size="small"
+                  component={Link}
+                  to={`/rulesets/${rulesetId}/items`}
+                  target="_blank"
+                >
+                  Create Item
+                </Button>
+              </Tooltip>
             )}
-            <AddButton label="Add Item" size="small" onClick={handleAddItem} />
+            {/* An empty inventory offers its Add Item under its note */}
+            {hasItems && <AddButton label="Add Item" size="small" onClick={handleAddItem} />}
           </Stack>
         )
       }
     >
-      {hasItems ? (
-        <EquipmentTable
-          rows={inventoryItems.map((entry) => ({
-            ...entry,
-            name: entry.item.name,
-            description: entry.item.description,
-            weight: entry.item.weight,
-            costGp: entry.item.costGp,
-          }))}
-          encumbrance={encumbrance}
-          rulesetId={rulesetId}
-          renderActions={
-            readOnly
-              ? undefined
-              : (entry) => (
-                  <>
-                    <RowAction icon={EditIcon} label={`Edit ${entry.name}`} onClick={() => handleEditItem(entry)} />
-                    <RowAction
-                      icon={DeleteIcon}
-                      label={`Remove ${entry.name}`}
-                      intent="destructive"
-                      onClick={() => handleDeleteItem(entry.id)}
-                    />
-                  </>
-                )
-          }
-        />
-      ) : (
-        <Stack spacing={2} sx={{ alignItems: "flex-start" }}>
-          <BlankNote>No equipment</BlankNote>
-          {!readOnly && <AddButton label="Add Item" onClick={handleAddItem} />}
-        </Stack>
-      )}
+      <Stack spacing={2}>
+        {/* Whether Create Item shows: the ruleset's rights */}
+        {!readOnly && !!rulesetError && !ruleset && <LoadError what="Ruleset" error={rulesetError} />}
+        {hasItems ? (
+          <EquipmentTable
+            rows={inventoryItems.map((entry) => ({
+              ...entry,
+              name: entry.item.name,
+              description: entry.item.description,
+              weight: entry.item.weight,
+              costGp: entry.item.costGp,
+            }))}
+            encumbrance={encumbrance}
+            rulesetId={rulesetId}
+            renderActions={
+              readOnly
+                ? undefined
+                : (entry) => (
+                    <>
+                      <RowAction icon={EditIcon} label={`Edit ${entry.name}`} onClick={() => handleEditItem(entry)} />
+                      <RowAction
+                        icon={DeleteIcon}
+                        label={`Remove ${entry.name}`}
+                        intent="destructive"
+                        onClick={() => handleDeleteItem(entry.id)}
+                      />
+                    </>
+                  )
+            }
+          />
+        ) : (
+          <Stack spacing={2} sx={{ alignItems: "flex-start" }}>
+            <BlankNote>No equipment</BlankNote>
+            {!readOnly && <AddButton label="Add Item" onClick={handleAddItem} />}
+          </Stack>
+        )}
+      </Stack>
       <CreateDialog
         open={addDialogOpen}
         onClose={() => {

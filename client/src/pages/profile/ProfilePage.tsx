@@ -348,7 +348,9 @@ export default function ProfilePage() {
             <ProfileCard title="Delete Account" danger>
               <Stack spacing={2} sx={{ alignItems: "flex-start" }}>
                 <Typography variant="body2">
-                  Permanently delete your account and all associated data. This action cannot be undone.
+                  Permanently delete your account, your characters and your campaign memberships. Your rulesets stay,
+                  without an owner, for the characters, campaigns and contributors that use them. This action cannot be
+                  undone.
                 </Typography>
                 <Button variant="contained" color="error" onClick={() => deleteDialog.openWith(true)}>
                   Delete Account

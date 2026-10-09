@@ -50,7 +50,9 @@
  *   24px under it (`spacing={3}`), and its Load More 16px under the list (`spacing={2}`).
  * - `list-results`: a searched list's results, a page's or a tab's, show one way: `ListPageResults` (a tab's
  *   `variant="section"`), or a ruleset tab's `RulesetSectionTable`, each with its first load, its failure, the search
- *   that found nothing (`NoMatchesState`) and its empty state. No other module draws a `NoMatchesState`.
+ *   that found nothing (`NoMatchesState`) and its empty state. No other module draws a `NoMatchesState`. A ruleset
+ *   table that loads its pages (a `LoadMoreButton` beside it) staggers in the page that came in alone: its
+ *   `animationOffset` is `itemsBeforeLastPage(data)`.
  * - `empty-values`: a value that isn't there is an `EmptyValue`, never a dash of its own, and a description that isn't
  *   there says `NO_DESCRIPTION`, never a sentence of its own.
  * - `entity-pages`: a ruleset entity page saves its details through `useEntitySave` (no `sync.saved` of its own under
@@ -530,6 +532,21 @@ function createListResults(context) {
   if (!inClient(context) || LIST_RESULTS_OWNERS.has(repoPath(context.filename))) return {};
   return {
     JSXElement(node) {
+      // A ruleset table that loads its pages (its Load More beside it) staggers in the page that came in alone
+      const children = childElements(node);
+      const pagedTable = children.find((child) => elementName(child) === "RulesetSectionTable");
+      if (
+        pagedTable &&
+        children.some((child) => elementName(child) === "LoadMoreButton") &&
+        !hasAttribute(pagedTable, "animationOffset")
+      ) {
+        context.report({
+          node: pagedTable.openingElement,
+          message:
+            "A ruleset table that loads its pages staggers in the page that came in: its `animationOffset` is " +
+            "`itemsBeforeLastPage(data)`, or a page loaded with Load More waits for every row before it.",
+        });
+      }
       if (elementName(node) !== "NoMatchesState") return;
       context.report({
         node: node.openingElement,

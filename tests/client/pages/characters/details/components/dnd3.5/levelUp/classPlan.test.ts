@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
-import { plannedLevel } from "@/client/src/pages/characters/details/components/dnd3.5/levelUp/classPlan.ts";
+import {
+  plannedLevel,
+  plannedSlotKeys,
+} from "@/client/src/pages/characters/details/components/dnd3.5/levelUp/classPlan.ts";
 
 const FIGHTER = { id: "fighter", nextLevel: 3 };
 
@@ -17,5 +20,16 @@ describe("Add Level's class plan", () => {
   test("numbers the next one added at the plan's end", () => {
     expect(plannedLevel(FIGHTER, [FIGHTER, WIZARD, FIGHTER])).toBe(5);
     expect(plannedLevel(WIZARD, [])).toBe(1);
+  });
+
+  test("keys each planned level by its slot, so filling an earlier slot or removing one moves no level's values", () => {
+    // The wizard's hit points, set while its slot was the plan's only filled one
+    const hpBySlot: Record<number, number | null> = { 7: 4 };
+    const hpOf = (plan: unknown[], slotKeys: number[]) =>
+      plannedSlotKeys(plan, slotKeys).map((key) => hpBySlot[key] ?? null);
+    expect(hpOf([null, WIZARD], [3, 7])).toEqual([4]);
+    expect(hpOf([FIGHTER, WIZARD], [3, 7])).toEqual([null, 4]);
+    expect(hpOf([WIZARD], [7])).toEqual([4]);
+    expect(plannedSlotKeys([], [])).toEqual([]);
   });
 });

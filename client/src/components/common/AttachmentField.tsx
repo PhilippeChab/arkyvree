@@ -11,7 +11,7 @@ import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useAttachment, useIsDemo } from "@/client/src/hooks/index.ts";
 import type { AttachmentSlot } from "@/client/src/lib/queries.ts";
 import { DURATION, transitionOf } from "@/client/src/theme/animations.ts";
-import { ALLOWED_IMAGE_TYPES } from "@/shared/attachments.ts";
+import { ALLOWED_IMAGE_TYPES, MAX_UPLOAD_BYTES } from "@/shared/attachments.ts";
 
 import { CLICKABLE_SX, clickableProps } from "./clickable.ts";
 import { DiceSpinner } from "./DiceSpinner.tsx";
@@ -61,13 +61,18 @@ export function AttachmentField({ recordId, name, label, readOnly = false, url: 
     fileInput?.click();
   }
 
+  // The file's checked as it's picked, its type and its size, which the server refuses otherwise
   function handleFile(file: File | undefined) {
-    if (!file || !interactive) return;
+    if (!file || !interactive || !recordId) return;
     if (!ACCEPTED_TYPES.includes(file.type)) {
       snackbar.warning(`Unsupported file type: ${file.type || "unknown"}`);
       return;
     }
-    upload.mutate(file);
+    if (file.size > MAX_UPLOAD_BYTES) {
+      snackbar.warning(`File too large: the limit is ${MAX_UPLOAD_BYTES / 1024 / 1024}MB`);
+      return;
+    }
+    upload.mutate({ file, recordId });
   }
 
   function handleDrop(e: DragEvent) {

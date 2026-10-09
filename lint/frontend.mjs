@@ -62,7 +62,8 @@
  * - `dot-notation`: a member named by an identifier is read with a dot (`rpc.api.characters.share.$post`); brackets are
  *   for a name that isn't one (`[":id"]`, `["class-levels"]`).
  * - `error-reads`: an error shows through `errorMessage`, never its raw `message` (its toast names what failed:
- *   `snackbar.error(error, "Failed to …")`, whose fallback TypeScript requires).
+ *   `snackbar.error(error, "Failed to …")`, whose fallback TypeScript requires), and a server error's name, or a status
+ *   a predicate names (a 429: `rateLimited`), is read by its predicate in `lib/errorMessage.ts`, written there once.
  * - `browser-storage`: what the browser keeps is a store's (`client/src/stores/`, zustand's `persist`), read and written
  *   through `stores/browserStorage.ts`, whose guards a blocked storage (a private window, blocked site data) never makes
  *   throw.
@@ -79,7 +80,8 @@
  *   that does takes `CLICKABLE_ROW_SX`, whose hover tint says it opens: a table's row spreading `clickableProps` or
  *   `toggleProps` names it in its `sx`, and no row tints itself (MUI's `hover`, an `"&:hover"` of its own).
  * - `tooltips`: a `Tooltip` has no arrow; one around a control that can be disabled wraps it in a `<span>`; one on a
- *   control its own text names takes `describeChild`.
+ *   control its own text names takes `describeChild`; its child takes focus, so it opens from the keyboard: never an
+ *   icon alone. A tooltip is the `Tooltip`, never the browser's: no `title` on an element that renders it.
  * - `form-fields`: a number field is `FormTextField number`, without a `type`; a field's rules are named
  *   (`lib/validation.ts`), never written in place. A field the viewer can't edit is `readOnly`, never a disabled one
  *   restyled to look editable.
@@ -143,6 +145,9 @@ const DIRTY_FORM_OWNERS = new Set(["client/src/components/common/FormDialog.tsx"
 /** The hooks whose callback is an effect. */
 const EFFECTS = new Set(["useEffect", "useLayoutEffect"]);
 
+/** The module whose predicates read a server error's name or a status they name (`rateLimited`). */
+const ERROR_PREDICATES_MODULE = "client/src/lib/errorMessage.ts";
+
 /** The form writes an effect never makes, but `useFormSync`'s. */
 const FIELD_WRITES = new Set(["setValue", "resetField", "reset"]);
 
@@ -173,6 +178,25 @@ const LAYOUT_ELEMENTS = new Set(["Box", "Stack"]);
 /** A mutation's callbacks, where its writes to the cache go, and an entity save's `storeSaved`, its `onSuccess`'s step */
 const MUTATION_CALLBACKS = new Set(["onError", "onMutate", "onSettled", "onSuccess", "storeSaved"]);
 
+/**
+ * The elements that hand a `title` to the browser, which shows it as a tooltip of its own: the DOM's (but a frame's,
+ * whose title names it), and MUI's that render one element.
+ */
+const NATIVE_TITLED = new Set([
+  "Avatar",
+  "Box",
+  "Button",
+  "IconButton",
+  "ListItem",
+  "ListItemButton",
+  "MenuItem",
+  "Paper",
+  "Stack",
+  "TableCell",
+  "TableRow",
+  "Typography",
+]);
+
 /** The elements a click doesn't reach from the keyboard, unless they spread `clickableProps` */
 const NON_INTERACTIVE = new Set([
   "Avatar",
@@ -202,6 +226,8 @@ const RESTYLED_DISABLED_FIELD =
 
 /** What warms a row's page as it's about to be opened: `useRowPrefetch`'s handlers */
 const ROW_WARMERS = new Set(["onFocus", "onMouseEnter"]);
+/** The statuses a predicate of `lib/errorMessage.ts` names, which code reads through it. */
+const STATUS_PREDICATES = new Map([[429, "rateLimited"]]);
 
 /** The elements whose text names them, which a `Tooltip` describes rather than names (`describeChild`) */
 const TEXT_CONTROLS = new Set([
@@ -819,7 +845,30 @@ function createEffectWrites(context) {
 
 function createErrorReads(context) {
   if (!inClient(context)) return {};
+  const predicates = repoPath(context.filename) === ERROR_PREDICATES_MODULE;
   return {
+    // error.errorName === "…", error.status === 429: read once, by a predicate of `lib/errorMessage.ts`
+    BinaryExpression(node) {
+      if (predicates || !["===", "!==", "==", "!="].includes(node.operator)) return;
+      for (const [side, other] of [
+        [node.left, node.right],
+        [node.right, node.left],
+      ]) {
+        if (side.type !== "MemberExpression" || side.computed) continue;
+        if (side.property.name === "errorName") {
+          context.report({
+            node,
+            message:
+              "A server error's name is read once, by a predicate of `lib/errorMessage.ts` (`emailNotVerified(error)`): add one there.",
+          });
+        } else if (side.property.name === "status" && other.type === "Literal" && STATUS_PREDICATES.has(other.value)) {
+          context.report({
+            node,
+            message: `A ${other.value} is read by \`${STATUS_PREDICATES.get(other.value)}(error)\` (\`lib/errorMessage.ts\`), never its status.`,
+          });
+        }
+      }
+    },
     MemberExpression(node) {
       if (node.computed || node.property.name !== "message") return;
       if (node.object.type === "Identifier" && caughtError(node.object)) {
@@ -1367,12 +1416,31 @@ function createRowPrefetch(context) {
 function createTooltips(context) {
   if (!inClient(context)) return {};
   return {
+    // <ListItemButton title="Dashboard">: the browser's tooltip, not the app's
+    JSXAttribute(node) {
+      if (node.name.name !== "title") return;
+      const element = elementName(node.parent.parent) ?? "";
+      if (!NATIVE_TITLED.has(element) && (!/^[a-z]/.test(element) || element === "iframe")) return;
+      context.report({
+        node,
+        message: "A tooltip is MUI's `Tooltip`, never the browser's: no `title` on an element that hands it on.",
+      });
+    },
     JSXElement(node) {
       if (elementName(node) !== "Tooltip") return;
       if (hasAttribute(node, "arrow"))
         context.report({ node: node.openingElement, message: "A `Tooltip` has no arrow." });
       const child = node.children.find((c) => c.type === "JSXElement");
       if (!child) return;
+      // <Tooltip title={…}><HelpIcon /></Tooltip>: an icon takes no focus, so its tooltip never opens from the keyboard
+      if ((elementName(child) ?? "").endsWith("Icon")) {
+        context.report({
+          node: node.openingElement,
+          message:
+            "A `Tooltip`'s child takes focus, so its tooltip opens from the keyboard too: an icon button, or a focusable " +
+            "box around the icon (`HelpLabel`'s), never the icon alone.",
+        });
+      }
       if (hasAttribute(child, "disabled")) {
         context.report({
           node: node.openingElement,

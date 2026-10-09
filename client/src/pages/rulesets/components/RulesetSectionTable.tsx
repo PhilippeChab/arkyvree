@@ -22,6 +22,11 @@ import { fadeInUpSx } from "@/client/src/theme/animations.ts";
 import { TABLE_CONTAINER_LOADING_SX, TABLE_CONTAINER_SX, TABLE_SX } from "./tableStyles.ts";
 
 interface RulesetSectionTableProps<T extends { id: string }> {
+  /**
+   * The rows before the page that came in, which its rows' stagger starts after (`fadeInUpSx`): a paged list's
+   * `itemsBeforeLastPage(data)`, so a page loaded with Load More fades in at once.
+   */
+  animationOffset?: number;
   /** Its rows' actions, for who may edit the ruleset's entities: each shows when its handler is given */
   canEdit?: boolean;
   columns: TableColumn[];
@@ -52,6 +57,7 @@ interface RulesetSectionTableProps<T extends { id: string }> {
 const ACTIONS_COLUMN: TableColumn = { align: "right", key: "actions", label: "Actions" };
 
 export function RulesetSectionTable<T extends { id: string }>({
+  animationOffset = 0,
   data,
   isLoading,
   error,
@@ -99,7 +105,7 @@ export function RulesetSectionTable<T extends { id: string }>({
               key={item.id}
               {...(onRowClick && clickableProps(() => onRowClick(item)))}
               {...prefetchProps(item)}
-              sx={[!!onRowClick && CLICKABLE_ROW_SX, ROW_ACTIONS_HOVER_SX, fadeInUpSx(index)]}
+              sx={[!!onRowClick && CLICKABLE_ROW_SX, ROW_ACTIONS_HOVER_SX, fadeInUpSx(index, animationOffset)]}
             >
               {columns.map((column) => (
                 <TableCell key={column.key}>{renderCell(item, column.key)}</TableCell>

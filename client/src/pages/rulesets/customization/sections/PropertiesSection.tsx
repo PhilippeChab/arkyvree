@@ -16,6 +16,7 @@ import {
   PropertyFormFields,
 } from "@/client/src/components/customization/index.ts";
 import { PropertiesIcon } from "@/client/src/components/icons/index.ts";
+import { useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import type { RulesetDetail } from "@/client/src/lib/queries.ts";
 import {
   DescriptionCell,
@@ -24,7 +25,7 @@ import {
 } from "@/client/src/pages/rulesets/components/index.ts";
 import { propertiesQuery } from "@/client/src/pages/rulesets/customization/customizationSectionQueries.ts";
 import { followCopiesOf } from "@/client/src/pages/rulesets/followCopies.ts";
-import { useRulesetPermissions, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import type { CustomizableEntityType } from "@/shared/customization/entities.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";

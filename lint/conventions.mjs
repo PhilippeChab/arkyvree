@@ -17,7 +17,8 @@
  *   reads its input into a const and destructures what it reads of it (`body` or `query` when it reads one whole), a
  *   router is its module's export (`export default new Hono()…`) and names a schema for what it validates (never
  *   `…Schema`), and it lets an error reach `onError` instead of catching it (`server/routers/api/`; a `finally` alone
- *   is fine).
+ *   is fine). A route that renders a PDF or queues one (its path ends in `/pdf`) takes `exportRateLimit`, signed in or
+ *   not: each request costs a render.
  * - `order-through-repository`: the server's queries sort with a repository's `this.orderBy(column, direction)`, never
  *   drizzle's `asc` / `desc`, and a repository method that reads a page orders it by `this.pageOrder(keys)`, which ends
  *   on a key no two rows share: OFFSET paging repeats or skips rows that tie.
@@ -791,6 +792,17 @@ function createRouteConventions(context) {
           : null;
       const routePath = pathOf(route);
       if (!routePath?.startsWith("/")) return;
+      // .post("/:id/pdf", exportRateLimit, …): a sheet's PDF costs a render, so its route counts its requests
+      if (
+        callee.property.name !== "route" &&
+        routePath.endsWith("/pdf") &&
+        !node.arguments.some((arg) => arg.type === "Identifier" && arg.name === "exportRateLimit")
+      ) {
+        context.report({
+          node: route,
+          message: "A route that renders a PDF, or queues one, takes `exportRateLimit`: each request costs a render.",
+        });
+      }
       for (const segment of routePath.split("/")) {
         if (segment === "") continue;
         const param = segment.startsWith(":") ? segment.slice(1).replace(/[{?].*$/, "") : null;

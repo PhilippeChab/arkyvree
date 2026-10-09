@@ -126,6 +126,20 @@ describe("conventions", () => {
     ]);
   });
 
+  test("a route that renders or queues a PDF takes exportRateLimit", async () => {
+    expect(
+      await lintRepo(
+        {
+          "server/routers/api/limited.ts":
+            'export const r = app.post("/:id/pdf", denyDemoUser, exportRateLimit, (c) => c).get("/:id/pdfs", (c) => c);\n',
+          "server/routers/api/shared.ts": 'export const r = app.get("/characters/:shareToken/pdf", (c) => c);\n',
+          "server/routers/api/queued.ts": 'export const r = app.post("/:id/pdf", denyDemoUser, (c) => c);\n',
+        },
+        ["route-conventions"],
+      ),
+    ).toEqual(["route-conventions server/routers/api/queued.ts", "route-conventions server/routers/api/shared.ts"]);
+  });
+
   test("a route's body and query are written in it, its handler destructures what it reads, and a router is its module's export", async () => {
     expect(
       await lintRepo(

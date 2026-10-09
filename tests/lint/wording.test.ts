@@ -36,6 +36,7 @@ describe("wording rules", () => {
         ["label-case"],
       ),
     ).toEqual([
+      "label-case client/src/alert.tsx",
       "label-case client/src/aria.tsx",
       "label-case client/src/button.tsx",
       "label-case client/src/component.tsx",
@@ -85,6 +86,8 @@ describe("wording rules", () => {
             'export const a = <ConfirmDialog message="Are you sure you want to archive this campaign? You can unarchive it at any time from the Archived filter." />;\n',
           "client/src/archive.tsx":
             'export const r = <ConfirmDialog message="Are you sure you want to archive this campaign? You can restore it later." />;\n',
+          "client/src/admin.tsx":
+            'export const m = <ConfirmDialog message={canUnarchive ? "Are you sure you want to archive this ruleset? You can unarchive it at any time from the Archived filter." : "Are you sure you want to archive this ruleset? Only its owner can unarchive it."} />;\n',
           "client/src/says.tsx": 'export const s = <ConfirmDialog message="This may break prerequisites." />;\n',
           "client/src/delete.tsx":
             'export const d = <DeleteDialog message="Are you sure you want to delete this modifier? This action cannot be undone." />;\n',

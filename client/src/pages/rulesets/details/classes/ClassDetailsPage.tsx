@@ -13,7 +13,13 @@ import {
   SpellUsesIcon,
 } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useFormSync, useFormWith, usePageTitle, useRulesetAbilities } from "@/client/src/hooks/index.ts";
+import {
+  useFormSync,
+  useFormWith,
+  usePageTitle,
+  useRulesetAbilities,
+  useRulesetPermissions,
+} from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
@@ -33,12 +39,7 @@ import { CUSTOMIZATION_TABS } from "@/client/src/pages/rulesets/customization/se
 import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { entityPageBack } from "@/client/src/pages/rulesets/entityPageState.ts";
 import { followCopiesOf } from "@/client/src/pages/rulesets/followCopies.ts";
-import {
-  useCopyOnWrite,
-  useEntitySave,
-  useRestorableDelete,
-  useRulesetPermissions,
-} from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useCopyOnWrite, useEntitySave, useRestorableDelete } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { isStillOpen } from "@/client/src/pages/rulesets/stillOpen.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { formatHitDie, HIT_DIE_VALUES } from "@/shared/dnd3.5/classes.ts";
@@ -102,8 +103,9 @@ export default function ClassDetailsPage() {
   }>();
   const back = entityPageBack(location.state, `/rulesets/${rulesetId}/classes`);
   const currentTab: ClassSection = isClassSection(section) ? section : "levels";
-  // A save of an inherited class copies it: the page follows the copy, as its customization tabs' saves do, and so do
-  // the bonus spell and caster type selects, which write the class's properties
+  // A save of an inherited class copies it, and the page follows the copy: its details' save, and the bonus spell and
+  // caster type selects, which write the class's properties, here; its Levels, Skills and customization tabs' saves
+  // through theirs (`useClassCopy`)
   const copy = useCopyOnWrite(rulesetId, classId, (id) => `classes/${id}`);
   const { tag, follow } = followCopiesOf(classId, copy.followCopy);
 

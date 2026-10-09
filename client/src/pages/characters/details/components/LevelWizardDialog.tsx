@@ -67,7 +67,7 @@ export function LevelWizardDialog({
         <Stack component={DialogContent} sx={{ height: "100%", overflow: "hidden" }}>
           <ValidationIssuesAlert
             issues={wizard.issues}
-            title="Validation warnings"
+            title="Validation Warnings"
             onClose={() => wizard.setIssues([])}
             onProceed={wizard.handleForceSubmit}
             pending={isSaving}

@@ -10,7 +10,7 @@ import {
   ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { ClassesIcon } from "@/client/src/components/icons/index.ts";
-import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import {
   type ClassFormData,
   ClassFormFields,
@@ -111,6 +111,7 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
             what="Classes"
             error={error}
             data={classes}
+            animationOffset={itemsBeforeLastPage(data)}
             search={search}
             isLoading={isLoading}
             columns={CLASSES_COLUMNS}

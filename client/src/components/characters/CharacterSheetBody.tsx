@@ -123,7 +123,6 @@ export function CharacterSheetBody({
               characterId={characterId}
               rulesetId={rulesetId}
               readOnly={readOnly}
-              isCustomRuleset={"isCustomRuleset" in character && !!character.isCustomRuleset}
               encumbrance={encumbrance}
             />
           ) : (

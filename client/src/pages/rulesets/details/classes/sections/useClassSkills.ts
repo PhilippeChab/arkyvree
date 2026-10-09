@@ -9,12 +9,17 @@ import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/secti
 import { skillOptionsQuery } from "@/client/src/pages/rulesets/optionQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
+import { useClassCopy } from "./useClassCopy.ts";
+
 export function useClassSkills(rulesetId: string, classId: string) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
 
   // The skill a remove confirmation asks about, kept while it fades out
   const removeDialog = useDialogState<string>();
+  // Adding or removing a skill of an inherited class copies it: the page follows the copy (each request tagged with the
+  // class it was sent for), which takes the class's place in the list
+  const { followCopy, queryKeysToInvalidate, tag } = useClassCopy(rulesetId, classId);
 
   const skillsQuery = classSkillsQuery(rulesetId, classId);
   const classSkillsKey = skillsQuery.queryKey;
@@ -33,11 +38,13 @@ export function useClassSkills(rulesetId: string, classId: string) {
 
   const addSkillMutation = useMutation({
     mutationFn: async (skillId: string) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].classes[":classId"].skills.$post({
-          param: { id: rulesetId, classId },
-          json: { skillId },
-        }),
+      tag(
+        parseResponse(
+          rpc.api.rulesets[":id"].classes[":classId"].skills.$post({
+            param: { id: rulesetId, classId },
+            json: { skillId },
+          }),
+        ),
       ),
     onMutate: async (skillId: string) => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
@@ -66,8 +73,9 @@ export function useClassSkills(rulesetId: string, classId: string) {
       // Return a context object with the snapshotted value
       return { previousClassSkills };
     },
-    onSuccess: () => {
+    onSuccess: (added) => {
       snackbar.success("Skill added to class");
+      followCopy(added.klassId, added.sourceEntityId);
     },
     onError: (error, _skillId, context) => {
       snackbar.error(error, "Failed to add skill to class");
@@ -76,16 +84,18 @@ export function useClassSkills(rulesetId: string, classId: string) {
     },
     onSettled: () => {
       // Always refetch after error or success to ensure we have the latest data
-      invalidateRulesetEdit(queryClient, rulesetId, [classSkillsKey]);
+      invalidateRulesetEdit(queryClient, rulesetId, [classSkillsKey, ...queryKeysToInvalidate]);
     },
   });
 
   const removeSkillMutation = useMutation({
     mutationFn: async (skillId: string) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].classes[":classId"].skills[":skillId"].$delete({
-          param: { id: rulesetId, classId, skillId },
-        }),
+      tag(
+        parseResponse(
+          rpc.api.rulesets[":id"].classes[":classId"].skills[":skillId"].$delete({
+            param: { id: rulesetId, classId, skillId },
+          }),
+        ),
       ),
     onMutate: async (skillId: string) => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
@@ -105,9 +115,10 @@ export function useClassSkills(rulesetId: string, classId: string) {
       // Return a context object with the snapshotted value
       return { previousClassSkills };
     },
-    onSuccess: () => {
+    onSuccess: (removed) => {
       snackbar.success("Skill removed from class");
       removeDialog.close();
+      followCopy(removed.klassId, removed.sourceEntityId);
     },
     onError: (error, _skillId, context) => {
       snackbar.error(error, "Failed to remove skill from class");
@@ -116,7 +127,7 @@ export function useClassSkills(rulesetId: string, classId: string) {
     },
     onSettled: () => {
       // Always refetch after error or success to ensure we have the latest data
-      invalidateRulesetEdit(queryClient, rulesetId, [classSkillsKey]);
+      invalidateRulesetEdit(queryClient, rulesetId, [classSkillsKey, ...queryKeysToInvalidate]);
     },
   });
 

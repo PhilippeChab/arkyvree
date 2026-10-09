@@ -33,7 +33,7 @@ The starting state of a fork. Your rulesets all start as a fork of a base rulese
 
 - Add, edit, and delete any entity. An entity that's already been picked by a character on this ruleset, or on a fork that subscribes to it as an extension, can't be deleted — the platform blocks it.
 - Subscribe to and unsubscribe from extensions. The same in-use rule applies: you can't unsubscribe from an extension while a character on the ruleset has picked its content.
-- Not visible in public listings. Only you and invited contributors find it through your own ruleset list.
+- Not visible in public listings. Only you, invited contributors and the players of a campaign on it find it.
 - You can build characters on it while iterating.
 
 ### Published
@@ -50,6 +50,7 @@ When it's ready to share, choose **Publish** in the ruleset's **⋮** menu and c
 Choose **Archive** in the ruleset's **⋮** menu to retire it. Allowed any time, from Draft or Published, to its owner and its Admin contributors.
 
 - Fully read-only. No edits, subscriptions, or entity changes.
+- Its **Contributors** stay listed: the owner or an Admin can still remove one, and a contributor can still leave. Invites and role changes wait until it's unarchived.
 - Existing characters and campaigns linked to it keep working — the entity data stays live, so they keep resolving and can still be played and leveled up.
 - Choose **Unarchive** in its **⋮** menu to return it to Draft: it waits under the Archived filter of your rulesets. Owner only.
 

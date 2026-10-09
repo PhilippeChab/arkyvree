@@ -13,7 +13,7 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { SavesIcon } from "@/client/src/components/icons/index.ts";
 import { useRulesetAbilities, useSearchText } from "@/client/src/hooks/index.ts";
-import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import { EMPTY_SAVE, type SaveFormData, SaveFormFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import { saveQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
@@ -104,6 +104,7 @@ export function SavesSection({ ruleset, childOnly, onChildOnlyChange }: RulesetS
             what="Saves"
             error={error}
             data={saves}
+            animationOffset={itemsBeforeLastPage(data)}
             search={searchQuery}
             isLoading={isLoading}
             columns={SAVES_COLUMNS}

@@ -39,14 +39,14 @@ import {
   SkillsIcon,
   UnarchiveIcon,
 } from "@/client/src/components/icons/index.ts";
-import { useAnchorMenu, usePageTitle, useSearchParam } from "@/client/src/hooks/index.ts";
+import { useAnchorMenu, usePageTitle, useRulesetPermissions, useSearchParam } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { RulesetFactChips, RulesetStarButton } from "@/client/src/pages/rulesets/components/index.ts";
-import { useRulesetOperations, useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useRulesetOperations } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
 
 import {
@@ -127,7 +127,7 @@ export default function RulesetDetailsPage() {
   const extensionsMenu = useAnchorMenu();
   if (!subscribedExtensions?.length && extensionsMenu.open) extensionsMenu.closeMenu();
 
-  const { isOwner, isContributor, canEditRuleset, canPublish } = useRulesetPermissions(ruleset);
+  const { isOwner, isContributor, canEditEntities, canEditRuleset, canPublish } = useRulesetPermissions(ruleset);
   const isFork = !!ruleset?.rulesetId && !isExtension;
 
   const baseRules = ruleset?.baseRules;
@@ -223,7 +223,8 @@ export default function RulesetDetailsPage() {
         onClick={menu.closeMenuAnd(() => handleSubscribe(ruleset))}
       />
     ),
-    (isOwner || isContributor) && isActive && (
+    // An archived ruleset's too: its owner or an Admin removes a contributor, and a contributor leaves
+    (isOwner || isContributor) && (
       <ActionMenuItem
         key="contributors"
         icon={ContributorsIcon}
@@ -397,6 +398,7 @@ export default function RulesetDetailsPage() {
             }
           }}
           isLoading={archiveMutation.isPending}
+          canUnarchive={isOwner}
         />
 
         <PublishRulesetDialog
@@ -426,7 +428,7 @@ export default function RulesetDetailsPage() {
               onClose={() => setLocalChangesOpen(false)}
               rulesetId={ruleset.id}
               baseRules={ruleset.baseRules}
-              canEdit={canEditRuleset}
+              canEdit={canEditEntities}
             />
 
             <SubscribeExtensionDialog

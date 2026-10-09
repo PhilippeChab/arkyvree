@@ -231,6 +231,23 @@ describe("style rules", () => {
     ]);
   });
 
+  test("a floating paper fits a phone", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/wide.tsx":
+            'export const w = <Popover slotProps={{ paper: { sx: { p: 2, minWidth: 560, maxWidth: "90vw" } } }} />;\n',
+          "client/src/fixed.tsx": "export const f = <Menu slotProps={{ paper: { sx: { width: 400 } } }} />;\n",
+          "client/src/fits.tsx": "export const f = <Menu slotProps={{ paper: { sx: { minWidth: 200 } } }} />;\n",
+          "client/src/responsive.tsx":
+            'export const r = <Popover slotProps={{ paper: { sx: { width: { xs: "100%", sm: 560 } } } }} />;\n',
+          "client/src/table.tsx": "export const t = <Table sx={{ minWidth: 600 }} />;\n",
+        },
+        ["spacing"],
+      ),
+    ).toEqual(["spacing client/src/fixed.tsx", "spacing client/src/wide.tsx"]);
+  });
+
   test("sx is written one way", async () => {
     expect(
       await lintRepo(

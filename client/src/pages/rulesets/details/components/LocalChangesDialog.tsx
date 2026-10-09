@@ -44,6 +44,7 @@ type ChangesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["chang
 interface LocalChangesDialogProps {
   /** The ruleset's base rules, whose words name the entity types */
   baseRules: BaseRules;
+  /** Restore a change: an editor of the ruleset's entities (`canEditEntities`), as the restore route allows */
   canEdit?: boolean;
   onClose: () => void;
   open: boolean;
@@ -77,17 +78,17 @@ export function LocalChangesDialog({ open, onClose, rulesetId, baseRules, canEdi
     placeholderData: keepPreviousData,
   });
 
-  const revertMutation = useMutation({
+  const restoreMutation = useMutation({
     mutationFn: async ({ entityType, sourceEntityId }: Pick<RestorableChange, "entityType" | "sourceEntityId">) =>
       parseResponse(
         restoreApi.$post({ param: { id: rulesetId, entityType: getUrlSegment(entityType), entityId: sourceEntityId } }),
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.detail(rulesetId) });
-      snackbar.success("Change reverted");
+      snackbar.success("Change restored");
     },
     onError: (error) => {
-      snackbar.error(error, "Failed to revert change");
+      snackbar.error(error, "Failed to restore change");
     },
   });
 
@@ -124,7 +125,7 @@ export function LocalChangesDialog({ open, onClose, rulesetId, baseRules, canEdi
                     const chipColor =
                       change.status === "modified" ? "info" : change.status === "deleted" ? "error" : "success";
                     const url = getEntityUrl(rulesetId, change);
-                    const showRevert = canEdit && change.status !== "added";
+                    const showRestore = canEdit && change.status !== "added";
                     const rowContent = (
                       <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                         <ListItemText primary={change.name} sx={{ my: 0, flexGrow: 0 }} />
@@ -132,7 +133,7 @@ export function LocalChangesDialog({ open, onClose, rulesetId, baseRules, canEdi
                       </Stack>
                     );
                     return (
-                      <ListItem key={key} disablePadding sx={{ gap: 0.5, pr: showRevert ? 1 : 0 }}>
+                      <ListItem key={key} disablePadding sx={{ gap: 0.5, pr: showRestore ? 1 : 0 }}>
                         {url ? (
                           <ListItemButton component={Link} to={url} target="_blank">
                             {rowContent}
@@ -140,20 +141,20 @@ export function LocalChangesDialog({ open, onClose, rulesetId, baseRules, canEdi
                         ) : (
                           <Box sx={{ px: 2, py: 1, flex: 1 }}>{rowContent}</Box>
                         )}
-                        {showRevert && (
+                        {showRestore && (
                           <RowAction
                             icon={RestoreIcon}
-                            label="Revert to Parent Version"
+                            label="Restore Parent Version"
                             onClick={() =>
-                              revertMutation.mutate({
+                              restoreMutation.mutate({
                                 entityType: change.entityType,
                                 sourceEntityId: change.sourceEntityId,
                               })
                             }
-                            disabled={revertMutation.isPending}
+                            disabled={restoreMutation.isPending}
                             pending={
-                              revertMutation.isPending &&
-                              revertMutation.variables.sourceEntityId === change.sourceEntityId
+                              restoreMutation.isPending &&
+                              restoreMutation.variables.sourceEntityId === change.sourceEntityId
                             }
                           />
                         )}

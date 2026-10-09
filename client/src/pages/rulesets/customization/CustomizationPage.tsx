@@ -6,7 +6,7 @@ import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom"
 
 import { DiceSpinner, type SectionTab, SectionTabPanel, SectionTabs } from "@/client/src/components/common/index.ts";
 import { TargetPathBreadcrumbs } from "@/client/src/components/customization/index.ts";
-import { usePageTitle } from "@/client/src/hooks/index.ts";
+import { usePageTitle, useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -17,7 +17,6 @@ import {
   useCopyOnWrite,
   useRestorableDelete,
   useRulesetFeats,
-  useRulesetPermissions,
   useRulesetSaves,
 } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";

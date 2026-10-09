@@ -14,7 +14,7 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { SkillsIcon } from "@/client/src/components/icons/index.ts";
 import { useRulesetAbilities, useSearchText } from "@/client/src/hooks/index.ts";
-import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import {
   EMPTY_SKILL,
   type SkillFormData,
@@ -120,6 +120,7 @@ export function SkillsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
             what="Skills"
             error={error}
             data={skills}
+            animationOffset={itemsBeforeLastPage(data)}
             search={searchQuery}
             isLoading={isLoading}
             columns={SKILLS_COLUMNS}

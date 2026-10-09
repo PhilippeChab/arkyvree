@@ -1,6 +1,6 @@
 import { Button, Stack } from "@mui/material";
 
-import { AnimatedAlert, SubsectionTitle } from "@/client/src/components/common/index.ts";
+import { AnimatedAlert, DiceSpinner, SubsectionTitle } from "@/client/src/components/common/index.ts";
 import type { ApiValidationIssue } from "@/client/src/services/ApiError.ts";
 
 import { ValidationIssueList } from "./ValidationIssueList.tsx";
@@ -18,7 +18,7 @@ interface ValidationIssuesAlertProps {
   onProceed: () => void;
   /** A save is running: Proceed Anyway waits. */
   pending?: boolean;
-  /** Its heading: "Validation warnings", "Equipment warnings" */
+  /** Its heading, in Title Case: "Validation Warnings", "Equipment Warnings" */
   title: string;
 }
 
@@ -45,7 +45,9 @@ export function ValidationIssuesAlert({
           disabled={pending}
           sx={{ whiteSpace: "nowrap" }}
         >
-          Proceed Anyway
+          <DiceSpinner size="small" loading={pending}>
+            Proceed Anyway
+          </DiceSpinner>
         </Button>
       }
       gutter={gutter}

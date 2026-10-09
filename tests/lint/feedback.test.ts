@@ -89,7 +89,7 @@ describe("feedback rules", () => {
     ]);
   });
 
-  test("a button that starts a request shows it running", async () => {
+  test("a button that starts a request, or is handed its owner's, shows it running", async () => {
     expect(
       await lintRepo(
         {
@@ -98,10 +98,16 @@ describe("feedback rules", () => {
           "client/src/spinner.tsx":
             'export const s = <Button onClick={() => m.mutate()} disabled={m.isPending}><DiceSpinner size="small" loading={m.isPending}>Save</DiceSpinner></Button>;\n',
           "client/src/plain.tsx": "export const p = <Button onClick={close} disabled={busy}>Close</Button>;\n",
+          "client/src/handed.tsx":
+            'export function Handed({ onProceed, pending }: P) {\n  return (\n    <Button variant="contained" onClick={onProceed} disabled={pending}>\n      Proceed Anyway\n    </Button>\n  );\n}\n',
+          "client/src/cancel.tsx":
+            'export function Cancel({ onCancel, pending }: P) {\n  return (\n    <Button variant="outlined" onClick={onCancel} disabled={pending}>\n      Cancel\n    </Button>\n  );\n}\n',
+          "client/src/opens.tsx":
+            'export const o = <Button variant="contained" onClick={() => setOpen(true)} disabled={isLoading}>Revoke Link</Button>;\n',
         },
         ["pending-buttons"],
       ),
-    ).toEqual(["pending-buttons client/src/bare.tsx"]);
+    ).toEqual(["pending-buttons client/src/bare.tsx", "pending-buttons client/src/handed.tsx"]);
   });
 
   test("a page that couldn't load says why in loadFailureMessage's words", async () => {

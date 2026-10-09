@@ -28,7 +28,8 @@
  *   `Typography`, never a raw `div` or `p`; a spacer is `flexGrow: 1`.
  * - `spacing`: the gap between blocks is their `Stack`'s `spacing`, never a block's own margin, on any side; an
  *   indent is padding, a heading's gutter `gutterBottom`. A margin only aligns (`mx: "auto"`) or resets (`0`): nothing
- *   bleeds past its parent's padding (a wide table keeps it, and scrolls sideways).
+ *   bleeds past its parent's padding (a wide table keeps it, and scrolls sideways), nor past a phone's screen: a
+ *   popover's or a menu's paper wider than a phone takes a responsive width.
  * - `sx-conventions`: `sx` is written one way: MUI's shorthand keys (`bgcolor`, `p`, `mt`), an object whose values
  *   may read the theme (`color: (theme) => …`), never a function of its own; a caller's `sx` and a style on a
  *   condition join it as an array (`sx={[{ … }, open && { … }, ...(Array.isArray(sx) ? sx : [sx])]}`); no `!important`. The theme's
@@ -158,6 +159,9 @@ const MOTION_PROPERTIES = new Set([
 
 /** MUI's transitions, which the theme runs (a dialog grows in): a page fades in with `PageTransition` */
 const MUI_TRANSITIONS = new Set(["Fade", "Grow", "Slide", "Zoom"]);
+
+/** The widest a box floating over the page (a popover's or a menu's paper) is on a phone: 375px, less its gutters */
+const PHONE_WIDTH = 343;
 
 /** The style keys that space a box, inside or out */
 const SPACING_KEYS = new Set(["gap", "m", "mb", "ml", "mr", "mt", "mx", "my", "p", "pb", "pl", "pr", "pt", "px", "py"]);
@@ -374,6 +378,16 @@ function createSpacing(context) {
     },
     Property(node) {
       const key = keyName(node);
+      // slotProps={{ paper: { sx: { minWidth: 560 } } }}: wider than a phone, whatever its maxWidth
+      if ((key === "minWidth" || key === "width") && isFixedPastPhone(node.value) && inPaperSx(node)) {
+        context.report({
+          node,
+          message:
+            `A floating paper fits a phone: a width past ${PHONE_WIDTH}px is responsive (\`{ xs: "100%", sm: 560 }\`), ` +
+            "never one that bleeds past the screen.",
+        });
+        return;
+      }
       if (!MARGINS.has(key) && !LONGHANDS.get(key)?.startsWith("m")) return;
       if (node.parent.type !== "ObjectExpression" || (!sxOwner(node.parent) && !isSxConstant(node.parent))) return;
       if (alignsOrResets(node.value)) return;
@@ -642,6 +656,13 @@ function inFrameSelector(node) {
   return false;
 }
 
+/** Whether a style's property sits in a paper's `sx`: a popover's or a menu's (`slotProps={{ paper: { sx } }}`). */
+function inPaperSx(property) {
+  const sx = property.parent?.parent;
+  const paper = sx?.type === "Property" && keyName(sx) === "sx" ? sx.parent?.parent : null;
+  return paper?.type === "Property" && keyName(paper) === "paper";
+}
+
 /** Whether `node` styles something: it's in an `sx` (at any depth: a nested selector's too) or an `…_SX` constant. */
 function inSx(node) {
   for (let p = node.parent; p; p = p.parent) {
@@ -656,6 +677,11 @@ function inSx(node) {
 /** Whether `node` is the theme's own file, where every value a style takes is written out. */
 function inTheme(context) {
   return repoPath(context.filename).startsWith("client/src/theme/");
+}
+
+/** Whether a width is one number for every screen, wider than a phone's. */
+function isFixedPastPhone(value) {
+  return value.type === "Literal" && typeof value.value === "number" && value.value > PHONE_WIDTH;
 }
 
 /** Whether a property is a selector's (`"&:hover": {…}`, `"& .MuiChip-icon": {…}`), whose object styles a state or a part. */

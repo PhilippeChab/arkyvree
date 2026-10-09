@@ -13,6 +13,7 @@ import {
   readCharacterInput,
 } from "@/server/services/characters/index.ts";
 import { publishWsEvent } from "@/server/websockets/index.ts";
+import { formatSheetFileName } from "@/shared/exports.ts";
 
 interface GeneratePdfPayload {
   /** Set when a Game Master exports a character of their campaign. */
@@ -24,10 +25,6 @@ interface GeneratePdfPayload {
 
 const MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
 const ONE_HOUR_MS = 60 * 60 * 1000;
-
-function sanitizeFileName(name: string): string {
-  return name.replace(/[/\\?%*:|"<>]/g, "_").slice(0, 200);
-}
 
 export async function generatePdfTask(payload: unknown, helpers: JobHelpers): Promise<void> {
   const { userId, characterId, characterName, campaignId } = payload as GeneratePdfPayload;
@@ -74,7 +71,7 @@ export async function generatePdfTask(payload: unknown, helpers: JobHelpers): Pr
     }
     const pdfBuffer = Buffer.from(arrayBuffer);
 
-    const fileName = `${sanitizeFileName(characterName)}-sheet.pdf`;
+    const fileName = formatSheetFileName(characterName);
     const expiresAt = new Date(Date.now() + ONE_HOUR_MS).toISOString();
 
     const exportId = await withTransaction(async (tx) => {

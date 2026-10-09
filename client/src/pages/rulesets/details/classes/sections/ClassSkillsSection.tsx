@@ -10,15 +10,15 @@ import {
   ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { SkillsIcon } from "@/client/src/components/icons/index.ts";
+import { useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { truncate } from "@/client/src/lib/truncate.ts";
 import { RemoveSkillDialog } from "@/client/src/pages/rulesets/details/classes/components/index.ts";
-import { useRulesetPermissions } from "@/client/src/pages/rulesets/hooks/index.ts";
 
 import type { ClassSectionProps } from "./classSections.ts";
 import { useClassSkills } from "./useClassSkills.ts";
 
-export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSectionProps) {
+export function ClassSkillsSection({ rulesetId, classId, ruleset, restorable }: ClassSectionProps) {
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
 
   const {
@@ -124,6 +124,7 @@ export function ClassSkillsSection({ rulesetId, classId, ruleset }: ClassSection
         onClose={removeDialog.close}
         onConfirm={confirmRemoveSkill}
         isLoading={removeSkillMutation.isPending}
+        restorable={restorable}
       />
     </Stack>
   );

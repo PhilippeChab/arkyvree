@@ -21,6 +21,7 @@ export { useOpenActivityTarget } from "./useOpenActivityTarget.ts";
 export { usePageTitle } from "./usePageTitle.ts";
 export { usePdfExport } from "./usePdfExport.ts";
 export { type RulesetAbility, useRulesetAbilities } from "./useRulesetAbilities.ts";
+export { useRulesetPermissions } from "./useRulesetPermissions.ts";
 export { useSearchParam } from "./useSearchParam.ts";
 export { useSearchText } from "./useSearchText.ts";
 export { useToggleSet } from "./useToggleSet.ts";

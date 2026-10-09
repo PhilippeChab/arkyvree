@@ -159,7 +159,8 @@ export function TemplateExpressionInput({
         onClose={closePicker}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         transformOrigin={{ vertical: "top", horizontal: "right" }}
-        slotProps={{ paper: { sx: { p: 2, minWidth: 560, maxWidth: "90vw" } } }}
+        // The screen's width on a phone, less the popover's own gutters (its paper's max width)
+        slotProps={{ paper: { sx: { p: 2, width: { xs: "100%", sm: 560 } } } }}
       >
         <TargetPathInput
           rulesetId={rulesetId}

@@ -4,7 +4,7 @@ import { keepPreviousData, useInfiniteQuery, useQuery, useQueryClient } from "@t
 import { LoadMoreButton, SearchBar } from "@/client/src/components/common/index.ts";
 import { PowersIcon } from "@/client/src/components/icons/index.ts";
 import { useSearchParam, useSearchText } from "@/client/src/hooks/index.ts";
-import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import {
   DescriptionCell,
   RulesetSectionTable,
@@ -108,6 +108,7 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
           what="Spells"
           error={listsError ?? error}
           data={spells}
+          animationOffset={itemsBeforeLastPage(data)}
           search={search}
           isLoading={isLoadingLists || isLoading}
           columns={COLUMNS}

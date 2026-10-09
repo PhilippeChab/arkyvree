@@ -11,7 +11,7 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { LanguagesIcon } from "@/client/src/components/icons/index.ts";
 import { useSearchText } from "@/client/src/hooks/index.ts";
-import { pageItems } from "@/client/src/lib/pageItems.ts";
+import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import {
   EMPTY_LANGUAGE,
   type LanguageFormData,
@@ -103,6 +103,7 @@ export function LanguagesSection({ ruleset, childOnly, onChildOnlyChange }: Rule
             what="Languages"
             error={error}
             data={languages}
+            animationOffset={itemsBeforeLastPage(data)}
             search={searchQuery}
             isLoading={isLoading}
             columns={LANGUAGES_COLUMNS}

@@ -63,7 +63,7 @@ export default function CharacterDetailsPage() {
 
   // The route always gives an id
   const { data: character, isLoading, error } = useQuery(characterDetailQuery(id));
-  const { isArchived, isOwner, canArchive, canEdit, canEditPortrait, canManageContributors, canShare } =
+  const { isArchived, isOwner, canArchive, canDownloadPdf, canEdit, canEditPortrait, canManageContributors, canShare } =
     useCharacterPermissions(character);
 
   usePageTitle(character?.identity?.physiology?.name);
@@ -144,99 +144,101 @@ export default function CharacterDetailsPage() {
             name={character.identity?.physiology?.name ?? ""}
             rulesetName={character.rulesetName}
             backTo={isBonded && parentCharacterId ? `/characters/${parentCharacterId}` : "/characters"}
-            onMenuOpen={isBonded && isArchived ? undefined : menu.openMenu}
+            onMenuOpen={isBonded && (isArchived || !canDownloadPdf) ? undefined : menu.openMenu}
             rename={canEdit ? { characterId: id, updatedAt: character.updatedAt, parentCharacterId } : undefined}
           />
           <Menu anchorEl={menu.anchorEl} open={menu.open} onClose={menu.closeMenu}>
-            {isBonded ? (
-              <ActionMenuItem
-                key="download-pdf"
-                icon={DownloadIcon}
-                label="Download PDF"
-                onClick={menu.closeMenuAnd(() => pdfExport.mutate())}
-              />
-            ) : isArchived ? (
-              [
-                canArchive && (
+            {isBonded
+              ? canDownloadPdf && (
                   <ActionMenuItem
-                    key="unarchive"
-                    icon={UnarchiveIcon}
-                    label="Unarchive"
-                    intent="positive"
-                    onClick={menu.closeMenuAnd(() => unarchiveMutation.mutate())}
+                    key="download-pdf"
+                    icon={DownloadIcon}
+                    label="Download PDF"
+                    onClick={menu.closeMenuAnd(() => pdfExport.mutate())}
                   />
-                ),
-                canManageContributors && (
-                  <ActionMenuItem
-                    key="contributors"
-                    icon={ContributorsIcon}
-                    label="Contributors"
-                    onClick={menu.closeMenuAnd(() => setContributorsOpen(true))}
-                  />
-                ),
-                canArchive && (
-                  <ActionMenuItem
-                    key="hard-delete"
-                    icon={DeleteIcon}
-                    label="Delete Permanently"
-                    intent="destructive"
-                    onClick={menu.closeMenuAnd(() => setHardDeleteConfirmOpen(true))}
-                  />
-                ),
-              ]
-            ) : (
-              [
-                <ActionMenuItem
-                  key="add-level"
-                  icon={AddIcon}
-                  label="Add Level"
-                  onClick={menu.closeMenuAnd(() => addLevel.openWith(true))}
-                />,
-                <ActionMenuItem
-                  key="remove-level"
-                  icon={DeleteIcon}
-                  label="Remove Level"
-                  onClick={menu.closeMenuAnd(() => setRemoveLevelOpen(true))}
-                />,
-                <ActionMenuItem
-                  key="manage-modifiers"
-                  icon={ModifiersIcon}
-                  label="Manage Modifiers"
-                  onClick={menu.closeMenuAnd(() => setModifiersOpen(true))}
-                />,
-                <ActionMenuItem
-                  key="download-pdf"
-                  icon={DownloadIcon}
-                  label="Download PDF"
-                  onClick={menu.closeMenuAnd(() => pdfExport.mutate())}
-                />,
-                canManageContributors && (
-                  <ActionMenuItem
-                    key="contributors"
-                    icon={ContributorsIcon}
-                    label="Contributors"
-                    onClick={menu.closeMenuAnd(() => setContributorsOpen(true))}
-                  />
-                ),
-                canShare && (
-                  <ActionMenuItem
-                    key="share"
-                    icon={ShareIcon}
-                    label="Share"
-                    onClick={menu.closeMenuAnd(() => setShareOpen(true))}
-                  />
-                ),
-                canArchive && (
-                  <ActionMenuItem
-                    key="archive"
-                    icon={ArchiveIcon}
-                    label="Archive"
-                    intent="caution"
-                    onClick={menu.closeMenuAnd(() => setArchiveConfirmOpen(true))}
-                  />
-                ),
-              ]
-            )}
+                )
+              : isArchived
+                ? [
+                    canArchive && (
+                      <ActionMenuItem
+                        key="unarchive"
+                        icon={UnarchiveIcon}
+                        label="Unarchive"
+                        intent="positive"
+                        onClick={menu.closeMenuAnd(() => unarchiveMutation.mutate())}
+                      />
+                    ),
+                    canManageContributors && (
+                      <ActionMenuItem
+                        key="contributors"
+                        icon={ContributorsIcon}
+                        label="Contributors"
+                        onClick={menu.closeMenuAnd(() => setContributorsOpen(true))}
+                      />
+                    ),
+                    canArchive && (
+                      <ActionMenuItem
+                        key="hard-delete"
+                        icon={DeleteIcon}
+                        label="Delete Permanently"
+                        intent="destructive"
+                        onClick={menu.closeMenuAnd(() => setHardDeleteConfirmOpen(true))}
+                      />
+                    ),
+                  ]
+                : [
+                    <ActionMenuItem
+                      key="add-level"
+                      icon={AddIcon}
+                      label="Add Level"
+                      onClick={menu.closeMenuAnd(() => addLevel.openWith(true))}
+                    />,
+                    <ActionMenuItem
+                      key="remove-level"
+                      icon={DeleteIcon}
+                      label="Remove Level"
+                      onClick={menu.closeMenuAnd(() => setRemoveLevelOpen(true))}
+                    />,
+                    <ActionMenuItem
+                      key="manage-modifiers"
+                      icon={ModifiersIcon}
+                      label="Manage Modifiers"
+                      onClick={menu.closeMenuAnd(() => setModifiersOpen(true))}
+                    />,
+                    canDownloadPdf && (
+                      <ActionMenuItem
+                        key="download-pdf"
+                        icon={DownloadIcon}
+                        label="Download PDF"
+                        onClick={menu.closeMenuAnd(() => pdfExport.mutate())}
+                      />
+                    ),
+                    canManageContributors && (
+                      <ActionMenuItem
+                        key="contributors"
+                        icon={ContributorsIcon}
+                        label="Contributors"
+                        onClick={menu.closeMenuAnd(() => setContributorsOpen(true))}
+                      />
+                    ),
+                    canShare && (
+                      <ActionMenuItem
+                        key="share"
+                        icon={ShareIcon}
+                        label="Share"
+                        onClick={menu.closeMenuAnd(() => setShareOpen(true))}
+                      />
+                    ),
+                    canArchive && (
+                      <ActionMenuItem
+                        key="archive"
+                        icon={ArchiveIcon}
+                        label="Archive"
+                        intent="caution"
+                        onClick={menu.closeMenuAnd(() => setArchiveConfirmOpen(true))}
+                      />
+                    ),
+                  ]}
           </Menu>
 
           <DeleteDialog

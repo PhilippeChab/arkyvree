@@ -761,7 +761,7 @@ describe("frontend rules", () => {
     ).toEqual(["dot-notation client/src/bracket.ts", "dot-notation client/src/optional.ts"]);
   });
 
-  test("an error shows through errorMessage", async () => {
+  test("an error shows through errorMessage, and its name or a status a predicate names is read through it", async () => {
     expect(
       await lintRepo(
         {
@@ -770,10 +770,20 @@ describe("frontend rules", () => {
           "client/src/caught.ts":
             "export function c() {\n  try {\n    f();\n  } catch (e) {\n    show(e.message);\n  }\n}\n",
           "client/src/field.ts": "export const f = (error: FieldError) => error.message;\n",
+          "client/src/name.ts": 'export const n = (error: ApiError) => error.errorName === "EmailNotVerifiedError";\n',
+          "client/src/limited.ts": "export const l = (error: ApiError) => error.status === 429;\n",
+          "client/src/missing.ts": "export const m = (error: ApiError) => error.status === 404;\n",
+          "client/src/lib/errorMessage.ts":
+            'export const p = (error: ApiError) => error.status === 429 || error.errorName === "EmailNotVerifiedError";\n',
         },
         ["error-reads"],
       ),
-    ).toEqual(["error-reads client/src/caught.ts", "error-reads client/src/raw.ts"]);
+    ).toEqual([
+      "error-reads client/src/caught.ts",
+      "error-reads client/src/limited.ts",
+      "error-reads client/src/name.ts",
+      "error-reads client/src/raw.ts",
+    ]);
   });
 
   test("what the browser keeps is a store's, read and written through its guards", async () => {
@@ -929,6 +939,23 @@ describe("frontend rules", () => {
         ["tooltips"],
       ),
     ).toEqual(["tooltips client/src/bare.tsx", "tooltips client/src/named.tsx"]);
+  });
+
+  test("a Tooltip's child takes focus, and a tooltip is never the browser's", async () => {
+    expect(
+      await lintRepo(
+        {
+          "client/src/icon.tsx": 'export const i = (\n  <Tooltip title="Help">\n    <HelpIcon />\n  </Tooltip>\n);\n',
+          "client/src/focusable.tsx":
+            'export const f = (\n  <Tooltip title="Help">\n    <IconButton aria-label="Help">\n      <HelpIcon />\n    </IconButton>\n  </Tooltip>\n);\n',
+          "client/src/native.tsx": 'export const n = <ListItemButton title="Dashboard" />;\n',
+          "client/src/span.tsx": 'export const s = <span title="Dashboard" />;\n',
+          "client/src/frame.tsx": 'export const f = <iframe title="Feedback" />;\n',
+          "client/src/dialog.tsx": 'export const d = <ConfirmDialog title="Archive Ruleset" />;\n',
+        },
+        ["tooltips"],
+      ),
+    ).toEqual(["tooltips client/src/icon.tsx", "tooltips client/src/native.tsx", "tooltips client/src/span.tsx"]);
   });
 
   test("a Tooltip has no arrow", async () => {
