@@ -56,11 +56,12 @@ const stepQuery = {
 };
 
 /**
- * A feat or power picker's page: its step's level, the pool it picks in, the planned levels' ability increases and the
- * feats picked so far, which its options are checked against.
+ * A feat or power picker's page: its step's level and that level's ability increase, the pool it picks in, the planned
+ * levels' ability increases and the feats picked so far, which its options are checked against.
  */
 const pickerQuery = {
   ...stepQuery,
+  abilityId: z.string().uuid().optional(),
   aptitudeId: z.string().uuid(),
   featPicks,
   limit: limitDefaultingTo(20),

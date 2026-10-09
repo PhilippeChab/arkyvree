@@ -14,7 +14,7 @@ import LevelPicker, { type PickLevel } from "./LevelPicker.ts";
 export default class FeatPicker extends LevelPicker {
   constructor(view: RulesetView, character: CharacterInput, query: PickLevel & { family?: string }) {
     super(view, character, query);
-    this.built = this.build(this.projectPick(true));
+    this.built = this.build(this.projectPick());
     const offered = {
       ids: this.rulesetData.listFeatIds(query.aptitudeId),
       excludeFeatIds: this.built

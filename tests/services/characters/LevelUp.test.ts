@@ -61,7 +61,10 @@ function levelsOf(klass: string, hps: number[]): BatchLevel[] {
   return hps.map((hp, index) => [klass, index + 1, hp]);
 }
 
-/** Whether a feat is eligible at `level` of a batch of fighter levels, with these earlier picks and increases. */
+/**
+ * Whether a feat is eligible at `level` of a batch of fighter levels, as Add Level's picker asks: after the levels
+ * planned before it, with these picks and ability increases (one per level, the picked level's last).
+ */
 async function eligible(
   search: string,
   level: number,
@@ -72,11 +75,12 @@ async function eligible(
     xp: 6000,
     abilities: { Strength: options.strength ?? 14 },
   });
+  const plan = Array.from({ length: level }, (_, i) => ({ klassId: ctx.klassMap.pc["Fighter"], level: i + 1 }));
   const { levelDetails } = await CharacterLevelsService.getPreview(
     session,
     characterId,
-    FIGHTER_LEVELS.slice(0, level).map((_, i) => ({ klassId: ctx.klassMap.pc["Fighter"], level: i + 1 })),
-    FIGHTER_LEVELS.slice(0, level).map(() => null),
+    plan,
+    plan.map(() => null),
   );
   const featPicks = (options.pendingPicks ?? []).map((name) => ({
     featId: ctx.featMap[name],
@@ -89,8 +93,9 @@ async function eligible(
       aptitudeId: ctx.aptMap["General"],
       classId: ctx.klassMap.pc["Fighter"],
       level: level,
-      plannedClassLevelIds: levelDetails.map((d) => d.klassLevelId),
-      plannedAbilityIds: options.increases,
+      plannedClassLevelIds: levelDetails.slice(0, level - 1).map((d) => d.klassLevelId),
+      plannedAbilityIds: options.increases?.slice(0, level - 1),
+      abilityId: options.increases?.[level - 1],
       search,
       featPicks,
     },
@@ -523,6 +528,12 @@ describe("the feats of a level in a batch", () => {
     expect(await eligible("Cleave", 1)).toBe(false);
     expect(await eligible("Cleave", 1, { pendingPicks: ["Power Attack"] })).toBe(true);
     expect(await eligible("Cleave", 4, { pendingPicks: ["Power Attack"] })).toBe(true);
+  });
+
+  test("count the picked level once", async () => {
+    // Leadership needs character level 6: picked at the batch's 5th level, the character has 5
+    expect(await eligible("Leadership", 5)).toBe(false);
+    expect(await eligible("Leadership", 6)).toBe(true);
   });
 
   test("count the batch's ability increases", async () => {

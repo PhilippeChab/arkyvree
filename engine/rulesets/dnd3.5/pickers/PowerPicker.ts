@@ -16,7 +16,7 @@ type PowerPickQuery = PickLevel & { powerLevel?: number; selectedPowerIds?: stri
 export default class PowerPicker extends LevelPicker {
   constructor(view: RulesetView, character: CharacterInput, query: PowerPickQuery) {
     super(view, character, query);
-    this.built = this.build(this.projectPick(false));
+    this.built = this.build(this.projectPick());
     this.filters = this.buildFilters(query);
   }
 

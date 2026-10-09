@@ -51,8 +51,13 @@ export type GroupedFeatRow = InferResponseType<LevelsApi["available-feats"]["gro
 /** The character's abilities at a level, by name: each with its score and modifier. */
 export type LevelAbilities = AttributesData["attributes"];
 
-/** A picker's level (a `StepLevel`), and what its list is checked against: the planned levels and the feats so far. */
-export interface PickerLevel extends StepLevel, PlannedPicks {}
+/**
+ * A picker's level (a `StepLevel`) with its ability increase, and what its list is checked against: the levels planned
+ * before it and the feats picked so far.
+ */
+export interface PickerLevel extends StepLevel, PlannedPicks {
+  abilityId?: string;
+}
 
 /** A spell pool of the level's slots. */
 export type PowerAptitudePool = PowersData["aptitudePools"][string];
@@ -144,6 +149,7 @@ export function availableFeatFamilyQuery(characterId: string, aptitudeId: string
     family,
     limit: "50",
     ...plannedQueryOf(picker),
+    abilityId: picker.abilityId || undefined,
   };
   return infiniteQueryOptions({
     queryKey: QUERY_KEYS.characters.levelUp.availableFeatFamily(characterId, query),
@@ -177,6 +183,7 @@ export function availableFeatsGroupedQuery(
           limit: "20",
           search: search || undefined,
           ...plannedQueryOf(picker),
+          abilityId: picker.abilityId || undefined,
         }
       : undefined;
   return infiniteQueryOptions({
@@ -216,6 +223,7 @@ export function availablePowersQuery(
           limit: "20",
           search: search || undefined,
           ...plannedQueryOf(picker),
+          abilityId: picker.abilityId || undefined,
           selectedPowerIds: picker.selectedPowerIds,
         }
       : undefined;
