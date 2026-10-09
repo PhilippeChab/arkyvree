@@ -5,15 +5,6 @@ import { type Paginated, paginateItems } from "@/server/repositories/index.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
 import type { PropertyTypeCompletion, PropertyValueCompletion } from "@/shared/customization/properties.ts";
 
-/** A property type a ruleset lists: the engine's (static), or one its properties use, with how many. */
-interface PropertyType {
-  description?: string;
-  entityType?: string;
-  isStatic: boolean;
-  usageCount?: number;
-  value: string;
-}
-
 class PropertyTypesService {
   /** Property type completions for autocomplete, as the engine offers them, a page at a time (in memory). */
   async getCompletions(
@@ -28,7 +19,7 @@ class PropertyTypesService {
   }
 
   /** The property types containing `query` (every one for an empty one): the rules' types, then the ruleset's own. */
-  async getPropertyTypes(rulesetId: string, query: string, entityType?: PropertyEntityType): Promise<PropertyType[]> {
+  async getPropertyTypes(rulesetId: string, query: string, entityType?: PropertyEntityType) {
     return await withRulesetScope(db, rulesetId, async (scope) => listPropertyTypes(scope, query, entityType));
   }
 
