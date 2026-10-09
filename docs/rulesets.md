@@ -431,6 +431,8 @@ engine/
 │   │   ├── contract.ts                    (RulesetModule)
 │   │   ├── CharacterInputs.ts             (CharacterInput, CharacterRows: a character's rows as the server reads
 │   │   │                                  them, and their references resolved as the view reads them)
+│   │   ├── CharacterProjection.ts         (the rows a level-up adds before it's saved: levels added, replaced or
+│   │   │                                  left out, and the picks at them)
 │   │   └── writes.ts                      (EntityWrites: what saving an entity writes beside its row, without ids)
 │   ├── view/                              (RulesetView, RulesetData, with a list's members, RulesetComposition, the
 │   │                                      sibling merge: SiblingMerge, SiblingRows)
@@ -497,9 +499,6 @@ engine/rulesets/
     │   ├── inventory/                     (InventoryEntries: a character's entries described, what an entry's add or
     │   │                                  edit stores; Equipping: what equipping an item checks)
     │   └── sheet/                         (the printed sheet, in React PDF: CharacterSheet and its pages, SheetFormat)
-    ├── projection/                        (CharacterProjection: what a level-up adds to a character before it's
-    │                                      saved, the levels it adds, replaces or leaves out and what's picked or
-    │                                      granted at them, and the character built with it)
     ├── levelUp/                           ← the module's `levelUp`: a class per operation on a base, LevelUpState:
     │                                      the view, class level lookups; its concerns: ChecksSelections,
     │                                      AnnotatesOptions; LevelUpPlan: the preview,
@@ -562,7 +561,7 @@ server/
 
 ### The type split pattern
 
-The engine's types keep the narrowest surface any level-based system could implement: the module's contract (`engine/core/module/contract.ts`), the rows it takes (`CharacterInputs.ts`) and what it writes (`writes.ts`), and what its machinery reads, each beside its area (`RulesetView` in `core/view/`, `Components` and `TargetPaths` in `core/paths/`). A ruleset's types are its own, each beside what produces it, and so is what a level-up projects.
+The engine's types keep the narrowest surface any level-based system could implement: the module's contract (`engine/core/module/contract.ts`), the rows it takes (`CharacterInputs.ts`) and what it writes (`writes.ts`), and what its machinery reads, each beside its area (`RulesetView` in `core/view/`, `Components` and `TargetPaths` in `core/paths/`). A ruleset's types are its own, each beside what produces it. What a level-up projects is rows (`CharacterProjection.ts`, beside `CharacterInputs.ts`): a ruleset builds a planned character as it builds a saved one, so what a level grants and what a pick carries are read one way.
 
 ```ts
 // engine/core/module/contract.ts  (universal)
@@ -587,15 +586,13 @@ export interface Dnd35RulesetModule extends RulesetModule {
   ruleset: Dnd35Ruleset;
 }
 
-// engine/rulesets/dnd3.5/projection/CharacterProjection.ts: what a level-up adds before it's saved, which it builds
-// the character with (`addLevel`, `dropLevelsFrom`, `pickFeats`, `grantFeats`…, then `build()`)
-export interface ProjectedCharacterData {
-  characterLevels?: ProjectedCharacterLevel[];
-  feats?: ProjectedFeat[];
-  powers?: ProjectedPower[];   // with `powerLevel`, `saveName`
-  skills?: ProjectedSkill[];   // with `rank: number`
-  …
-}
+// engine/core/module/CharacterProjection.ts  (universal): what a level-up adds before it's saved, as the rows it
+// would save, which a ruleset builds the character from as from saved rows
+const projection = new CharacterProjection(input);
+projection.dropLevelsFrom(editedLevelId); // the character as it was before a level
+const level = projection.addLevel(klassLevelId, { abilityId, hp, replacing }); // or a level replaced where it stands
+projection.pick(level, { feats, powers, skills });
+CharacterBuilder.build(view, projection.input);
 ```
 
 A module is typed by its parts: the contract gives each as an `object`, and a module's type gives them its own. `Modules.of(baseRules)` hands each module out as its type (`Module`), and each handle's operation takes its arguments from its part's own method, past those the handle binds (`Rest<Module["levelUp"][K], [RulesetView, CharacterInput]>`), so the server calls an operation with the module's own types, naming no ruleset:
@@ -694,7 +691,7 @@ A small rule several of a ruleset's modules share, a constant or a predicate, is
 
 A bound the client and the API check too is a constant of the ruleset's shared vocabulary, which every side reads instead of writing the number: `MAX_SPELL_LEVEL` (`shared/dnd3.5/spells.ts`) for the aptitudes' spell levels, the spellcasting and the spell forms, `MAX_CLASS_LEVEL` (`shared/dnd3.5/classes.ts`) for the class-level forms and the bonus caster levels, `MAX_ABILITY_SCORE` (`shared/dnd3.5/abilities.ts`) for a new character's ability scores and the sheet's, and `MAX_ITEM_VARIANTS` (`shared/itemTemplates.ts`) for the variants form. The routes read them through the engine (`RULESET_LIMITS`), and a character's last level with them (`MAX_CHARACTER_LEVEL`, `shared/dnd3.5/classes.ts`: the most levels a level-up saves).
 
-More complex operations (bound to the detailed character, returning rich data) belong on the ruleset's level-up classes (`LevelUpState` and its concerns, `ChecksSelections`, `AnnotatesOptions`, building the character with what a level-up adds through `CharacterProjection`) or on its character (a concern of `DetailedCharacter`), which an operation builds from the input it's given (`CharacterBuilder.build`).
+More complex operations (bound to the detailed character, returning rich data) belong on the ruleset's level-up classes (`LevelUpState` and its concerns, `ChecksSelections`, `AnnotatesOptions`, building the character from the rows a level-up adds, `CharacterProjection`) or on its character (a concern of `DetailedCharacter`), which an operation builds from the input it's given (`CharacterBuilder.build`).
 
 ### The level flows ask the module
 
@@ -726,7 +723,7 @@ A ruleset is a module under `engine/rulesets/<ruleset>/`, which the engine's han
 2. **Write its character** in `engine/rulesets/<ruleset>/character/`: its state (`CharacterState`), the concerns that build and validate it, its components and how they're wired (`CharacterComponents.build`), `DetailedCharacter`, which includes the concerns, and what builds one of its row's kind from its input (`CharacterBuilder.build`). 3.5's are typed against its own components and rows: a second ruleset writes its own, taking the engine's machinery (the evaluators, the paths, the module contract).
 3. **Write its target paths**: a `CategoryPaths` subclass (`Dnd35TargetPaths`) over its categories, one `PathCategory` per domain (`AbilitiesPaths`, `CombatPaths`, …), which `createTargetPaths` returns and the evaluators walk; and its property types (`Dnd35PropertyTypes`), which `createPropertyTypes` returns: the types and values its rules read, which the core's `PropertyTypeCatalog` lists with those the ruleset's own properties use. See [target-paths.md](./target-paths.md).
 4. **Write its entities**: a fields spec for each entity whose fields its rules keep in properties (`entities/skills/fields.ts`), the entity class that describes it and plans its saves (`skills/SkillEntity.ts`), a class's parts, which its kind hands out (3.5's `ClassEntity`: `levels()`, `skills()`, `table()`), and the body's fields and bounds a route validates with (`entityFields.ts`: `ENTITY_FIELDS`, `RULESET_LIMITS`), which join 3.5's in what `engine/index.ts` exports; and its `ruleset` part, what a ruleset needs to be played (3.5's `Dnd35Ruleset`), with the ruleset's own fields (`ruleset/fields.ts`).
-5. **Write its level-up**: its projection (3.5's `CharacterProjection`: what a level-up adds to a character before it's saved, and the character built with it), a class per operation on a base of what they share (3.5's `LevelUpState`, its concerns, and `LevelUpPlan`, `LevelEdit`, `LevelRemoval`, `LevelUpSteps`, the pickers…), and the class its `levelUp` part is, which opens them (`Dnd35LevelUp`).
+5. **Write its level-up**: a class per operation on a base of what they share (3.5's `LevelUpState`, its concerns, and `LevelUpPlan`, `LevelEdit`, `LevelRemoval`, `LevelUpSteps`, the pickers…), and the class its `levelUp` part is, which opens them (`Dnd35LevelUp`).
 6. **Register the module**: add it to `MODULES` in `engine/api/Modules.ts` (`Modules.of`), keyed by its base rules (`BaseRules`, `shared/enums.ts`): until it is, the engine doesn't compile.
 7. **Write its content**: `content/<ruleset>/` (its builders and its data), the package that seeds it (`database/packages/`), and, for books it scrapes, its codegen (`codegen/<ruleset>/`). See [packages.md](./packages.md).
 
@@ -773,7 +770,7 @@ An audit on 2026-04-16 identified real leaks and some false alarms. It predates 
 | `server/repositories/*Repository.ts` | COW-aware SQL queries with snapshot exclusion |
 | `engine/index.ts` | The engine's one entry: `Engine`, its handles' types (`ClassEngine`, `LevelUpEngine`), each entity kind's rules by table (`EntityKinds`), its operations' types, `RulesError`, and a body's ruleset fields and bounds (`ENTITY_FIELDS`, `RULESET_LIMITS`) |
 | `engine/api/` | `Engine` and the handles it hands out, a class each (`RulesetEngine`, which `Engine.for(scope)` binds to a view, and its handles by what the rules are about: `CharacterEngine`, `LevelUpEngine`, `ClassEngine`…, and an entity kind's own class, which `entities(type)` hands out; `ContentEngine`, `Engine.forRules`; `CopyOnWriteEngine`, `Engine.copyOnWrite`), each operation a method dispatched to the ruleset's module by its base rules (`Modules.ts`: `Modules.of`), or to the core's classes with the module's factories (`ModifiersEngine`, `PropertiesEngine`, `RequirementsEngine`, `PropertyTypesEngine`, `TargetPathsEngine`) |
-| `engine/core/module/` | The module's contract (`contract.ts`: `RulesetModule`), the rows a character is built from (`CharacterInputs.ts`: `CharacterInput`, `CharacterRows`, resolved as the view reads them), and what saving an entity writes (`writes.ts`: `EntityWrites`) |
+| `engine/core/module/` | The module's contract (`contract.ts`: `RulesetModule`), the rows a character is built from (`CharacterInputs.ts`: `CharacterInput`, `CharacterRows`, resolved as the view reads them) and those a level-up adds before it's saved (`CharacterProjection.ts`), and what saving an entity writes (`writes.ts`: `EntityWrites`) |
 | `engine/rulesets/dnd3.5/model/` | The 3.5 character: its state (`CharacterState`), its concerns (`Builds`, `Validates`, `PossessesVirtually`), its components (`CharacterComponents`), `DetailedCharacter`, which wires them, `CharacterBuilder`, which builds one from its input, and a folder per concept a character has (its component and its paths' category) |
 | `engine/core/` | The machinery: `ModifierEvaluator`, `RequirementEvaluator`, the path walk and the path language and their types (`paths/`), the ruleset view and `RulesetView` (`view/`), copy-on-write's state (`cow/`), an entity's customizations and the property types (`customizations/`) |
 | `engine/rulesets/dnd3.5/` | 3.5 implementation: what a character has (`model/`), its module's parts in their folders (`characters/`, `entities/`, `levelUp/`, `content/`, each opening with its facade), the pickers (`pickers/`) and the tables and rules several of them read (`rules/`) |

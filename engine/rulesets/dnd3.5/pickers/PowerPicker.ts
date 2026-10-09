@@ -15,7 +15,7 @@ type PowerPickQuery = PickQuery & { excludeSchools?: string[]; powerLevel?: numb
 export default class PowerPicker extends PickerState {
   constructor(view: RulesetView, character: CharacterInput, query: PowerPickQuery) {
     super(view, character, query);
-    this.built = this.projectPowerPick().build();
+    this.built = this.build(this.projectPick(false));
     this.filters = this.buildFilters(query);
   }
 
@@ -60,16 +60,6 @@ export default class PowerPicker extends PickerState {
       for (const id of ids) excludedPowerIds.add(id);
     }
     return [...excludedPowerIds];
-  }
-
-  /**
-   * The character a power pick is made for: the pick's projection (`projectPick`, the planned levels without their
-   * ability increases), with the powers its class level grants, which count for requirements and aren't offered.
-   */
-  private projectPowerPick() {
-    const { level, projection } = this.projectPick(false);
-    projection.grantPowers(level);
-    return projection;
   }
 
   /** The power options of a page, each with whether the character meets its requirements, and the tree it fails. */

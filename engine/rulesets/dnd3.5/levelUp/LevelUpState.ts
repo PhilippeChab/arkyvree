@@ -1,5 +1,7 @@
+import type { CharacterProjection } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { type RulesetData, type RulesetView } from "@/engine/core/view/index.ts";
+import CharacterBuilder from "@/engine/rulesets/dnd3.5/model/CharacterBuilder.ts";
 import SkillsComponent from "@/engine/rulesets/dnd3.5/model/skills/SkillsComponent.ts";
 
 /** A level's picks: its skill ranks, and its feats and powers by the pool they're picked in. */
@@ -15,6 +17,11 @@ export interface LevelPicks {
  */
 export default abstract class LevelUpState {
   constructor(protected readonly view: RulesetView) {}
+
+  /** The character built from a level-up's projection of its rows. */
+  protected build(projection: CharacterProjection) {
+    return CharacterBuilder.build(this.view, projection.input);
+  }
 
   /**
    * The spell level of each of these powers in each pool it's linked to, by `powerId:aptitudeId`: a spell can be at

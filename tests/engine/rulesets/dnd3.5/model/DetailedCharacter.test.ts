@@ -3145,23 +3145,10 @@ describe("DetailedCharacter", () => {
         }))!;
         const firstLevel = (await findKlassLevel(thaumaturgist.id, 1))!;
 
-        const now = new Date().toISOString();
-        const projected = {
-          characterLevels: [
-            {
-              id: "00000000-0000-0000-0000-000000000099",
-              characterId,
-              klassLevelId: firstLevel.id,
-              hp: 4,
-              abilityId: null,
-              createdAt: now,
-              updatedAt: now,
-              deletedAt: null,
-            },
-          ],
-        };
         const record = (await Characters.findOne(db, { id: characterId }))!;
-        const detailed = await buildAs(DetailedCharacter, record, { projected });
+        const detailed = await buildAs(DetailedCharacter, record, {
+          project: (projection) => projection.addLevel(firstLevel.id, { hp: 4 }),
+        });
         expect(requirementIssues(detailed)).toEqual([]);
       });
     });

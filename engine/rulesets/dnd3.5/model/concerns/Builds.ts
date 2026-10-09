@@ -8,7 +8,6 @@ import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedChara
 import FeatsPaths from "@/engine/rulesets/dnd3.5/model/feats/FeatsPaths.ts";
 import { type LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import PowersPaths from "@/engine/rulesets/dnd3.5/model/powers/PowersPaths.ts";
-import type { ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/projection/CharacterProjection.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { isTemplateValue } from "@/shared/customization/templateExpression.ts";
 import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
@@ -283,13 +282,12 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
     }
 
     /**
-     * Builds the character from its rows (`rows`) in its ruleset's `view`, with a level-up's `projectedData`: it reads
-     * nothing. A bonded creature's `master` comes built (`DetailedCharacterBonded`); a character of its own needs none.
+     * Builds the character from its rows (`rows`) in its ruleset's `view`: it reads nothing. A bonded creature's `master` comes built (`DetailedCharacterBonded`); a character of its own needs none.
      */
-    build(rows: CharacterRows, view: RulesetView, projectedData?: ProjectedCharacterData, _master?: DetailedCharacter) {
+    build(rows: CharacterRows, view: RulesetView, _master?: DetailedCharacter) {
       const { rulesetData } = view;
       // 1. Assemble the data from the rows and the view
-      this.applyLoadedData(this.createDataLoader().load(rows, view, projectedData));
+      this.applyLoadedData(this.createDataLoader().load(rows, view));
 
       // 2. Normalize: each component's initialize, from the loaded data
       this.normalizeData();

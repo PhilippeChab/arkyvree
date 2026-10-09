@@ -1,13 +1,10 @@
-import type { CharacterInput } from "@/engine/core/module/index.ts";
+import { type CharacterInput, CharacterProjection } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import { CLASS_LEVEL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/classes/fields.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import CharacterBuilder from "@/engine/rulesets/dnd3.5/model/CharacterBuilder.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
-import CharacterProjection, {
-  type GrantedFeatRecords,
-} from "@/engine/rulesets/dnd3.5/projection/CharacterProjection.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import { include } from "@/lib/mixins.ts";
 import { computeLevelSkillPoints } from "@/shared/dnd3.5/skills.ts";
@@ -16,7 +13,7 @@ import { stripSeparators } from "@/shared/text.ts";
 
 import AptitudeSlotsPlan, { type FeatSlots } from "./AptitudeSlotsPlan.ts";
 import BondedPlans from "./BondedPlans.ts";
-import { type CheckedSelections, ChecksSelections } from "./concerns/ChecksSelections.ts";
+import { ChecksSelections, type GrantedFeatRecords } from "./concerns/ChecksSelections.ts";
 import LevelUpState, { type LevelPicks } from "./LevelUpState.ts";
 import PicksDistribution, { type PerLevelDistributionData } from "./PicksDistribution.ts";
 
@@ -27,13 +24,12 @@ interface PlannedClassLevel {
   klassLevel: KlassLevel;
 }
 
-/** A planned level checked: its class level, hit points, ability and picks, and the selections its check read. */
+/** A planned level checked: its class level, hit points, ability and picks. */
 interface PlannedLevel {
   abilityId: string | null;
   hp: number;
   klassLevelId: string;
   picks: LevelPicks;
-  selections: CheckedSelections;
 }
 
 /**
@@ -132,17 +128,17 @@ export default class LevelUpPlan extends include(LevelUpState, ChecksSelections)
 
   /**
    * The planned levels (`klassLevelEntries`), built from the character's rows: the character with them (each with its
-   * ability increase and the feats its class level grants), and as saved.
+   * ability increase), and as saved.
    */
   private buildPlannedLevels(klassLevelEntries: PlannedClassLevel[]): PlannedLevels {
-    const projection = new CharacterProjection(this.view, this.character);
+    const projection = new CharacterProjection(this.character);
     for (const { abilityId, klassLevel } of klassLevelEntries)
-      projection.grantFeats(projection.addLevel(klassLevel.id, { abilityId }));
+      projection.addLevel(klassLevel.id, { abilityId, hp: LevelRules.UNROLLED_LEVEL_HP });
     return {
       autoGrantedRecords: klassLevelEntries.map(
         ({ klassLevel }) => this.rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(klassLevel.id) ?? [],
       ),
-      character: projection.build(),
+      character: this.build(projection),
       existingLevelCount: this.character.rows.levels.length,
       klassLevelEntries,
       saved: CharacterBuilder.build(this.view, this.character),
@@ -308,17 +304,13 @@ export default class LevelUpPlan extends include(LevelUpState, ChecksSelections)
   }
 
   /**
-   * The character as the save leaves it: each planned level a fresh level after its saved ones, with its hit points
-   * and ability, its picks, and the feats its class level grants that it didn't pick, as a level's edit projects
-   * it (`LevelEdit`).
+   * The character as the save leaves it: each planned level a fresh level after its saved ones, with its hit points,
+   * ability and picks, as a level's edit projects it (`LevelEdit`).
    */
   private projectSavedLevels(planned: PlannedLevel[]) {
-    const projection = new CharacterProjection(this.view, this.character);
-    for (const { abilityId, hp, klassLevelId, picks, selections } of planned) {
-      const level = projection.addLevel(klassLevelId, { abilityId, hp });
-      projection.grantFeats(level, { except: new Set(selections.fetchedFeats.map((feat) => feat.id)) });
-      projection.addSelections(level, picks.skills, selections);
-    }
+    const projection = new CharacterProjection(this.character);
+    for (const { abilityId, hp, klassLevelId, picks } of planned)
+      projection.pick(projection.addLevel(klassLevelId, { abilityId, hp }), this.toPickRows(picks));
     return projection;
   }
 
@@ -358,17 +350,13 @@ export default class LevelUpPlan extends include(LevelUpState, ChecksSelections)
       if (otherLevels.some((other) => other.klassLevelId === klassLevel.id))
         throw new RulesError("invalid", `Level ${i + 1}: This level has already been finalized`);
       this.checkAbilityIncrease(rows.levels.length + i, abilityId, `Level ${i + 1}: `);
-      const selections = this.checkLevel(
-        { klass, klassLevel, hp, abilityId, ...levelPicks },
-        otherLevels,
-        pickedFeatIds,
-      );
-      planned.push({ abilityId: abilityId || null, hp, klassLevelId: klassLevel.id, picks: levelPicks, selections });
+      this.checkLevel({ klass, klassLevel, hp, abilityId, ...levelPicks }, otherLevels, pickedFeatIds);
+      planned.push({ abilityId: abilityId || null, hp, klassLevelId: klassLevel.id, picks: levelPicks });
       otherLevels.push({ klassLevelId: klassLevel.id });
       pickedFeatIds.push(...Object.values(levelPicks.feats).flat());
     }
 
-    const saved = this.projectSavedLevels(planned).build();
+    const saved = this.build(this.projectSavedLevels(planned));
     if (!force) RulesError.refuseIssues(saved.validate().issues);
     return {
       bonded: BondedPlans.planMasterCreatures(saved, bonded, this.rulesetData),

@@ -5,6 +5,8 @@ export default class LevelRules {
   static readonly GENERAL_FEATS_APTITUDE = "General";
   /** Its slug: what the engine, the target paths (`aptitudes.general.*`) and the effects know it by. */
   static readonly GENERAL_FEATS_APTITUDE_SLUG = stripSeparators(LevelRules.GENERAL_FEATS_APTITUDE);
+  /** The hit points a level counts before they're rolled: a level a level-up adds, whose hit points its save sets. */
+  static readonly UNROLLED_LEVEL_HP = 10;
 
   /**
    * The feats a level or hit die count gives: one at the first, and one more every third. A character's general feats

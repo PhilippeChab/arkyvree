@@ -1,8 +1,7 @@
-/** The character's levels and its picks of skills, feats and powers: saved, granted and projected. */
+/** The character's levels and its picks of skills, feats and powers: picked and granted. */
 
 import type { CharacterRows } from "@/engine/core/module/index.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import type { ProjectedCharacterData } from "@/engine/rulesets/dnd3.5/projection/CharacterProjection.ts";
 import type {
   CharacterLevel,
   FeatWithAptitudes,
@@ -14,7 +13,7 @@ import type {
 
 import type { Resolve } from "./DetailedCharacterDataLoader.ts";
 
-/** The character's levels: those it keeps of its saved ones, and every one once the projected join them. */
+/** The character's levels, in the order it took them, and their class levels. */
 type Levels = ReturnType<typeof Picks.resolveLevels>;
 
 /**
@@ -94,12 +93,11 @@ function toPowerRow(
 
 /** A character's picks and grants, from its rows and the view. */
 export default class Picks {
-  /** The feats: picked and given (deduped), then projected, in character-level order; and the given per aptitude. */
+  /** The feats: picked and given (deduped), in character-level order; and the given per aptitude. */
   static buildFeats(
     picks: CharacterRows["picks"],
     rulesetData: RulesetData,
-    projectedData: ProjectedCharacterData | undefined,
-    { allCharacterLevels, characterLevels }: Levels,
+    { characterLevels }: Levels,
     resolve: Resolve,
   ) {
     const pickedFeats = pickedAt(resolve(picks.feats), characterLevels, (link) => {
@@ -107,11 +105,10 @@ export default class Picks {
       return feat && { ...toFeatRow(feat), aptitudeId: link.aptitudeId };
     });
     const givenFeats = grantedAt(characterLevels, rulesetData.klassLevelFeatsWithFeatsByKlassLevel, toGrantedFeat);
-    const allGivenFeats = projectedData?.givenFeats ? [...givenFeats, ...projectedData.givenFeats] : givenFeats;
 
     const pickedFeatIds = new Set(pickedFeats.filter((f) => !f.stackable).map((f) => f.id));
     const seenGivenFeatIds = new Set<string>();
-    const dedupedGivenFeats = allGivenFeats.filter((feat) => {
+    const dedupedGivenFeats = givenFeats.filter((feat) => {
       if (!feat.stackable) {
         if (pickedFeatIds.has(feat.id)) return false;
         if (seenGivenFeatIds.has(feat.id)) return false;
@@ -120,61 +117,47 @@ export default class Picks {
       return true;
     });
 
-    const characterLevelIdSet = new Set(allCharacterLevels.map((l) => l.id));
     const klassLevelFeatCountsByAptitudeId = dedupedGivenFeats.reduce(
       (acc, feat) => {
-        if (characterLevelIdSet.has(feat.characterLevelId)) acc[feat.aptitudeId] = (acc[feat.aptitudeId] || 0) + 1;
-
+        acc[feat.aptitudeId] = (acc[feat.aptitudeId] || 0) + 1;
         return acc;
       },
       {} as Record<string, number>,
     );
 
-    const realFeats = [...pickedFeats, ...dedupedGivenFeats];
-    const allFeats = projectedData?.feats ? [...realFeats, ...projectedData.feats] : realFeats;
+    const allFeats = [...pickedFeats, ...dedupedGivenFeats];
 
-    // Apply feat modifiers in character-level order so later selections win
-    // for `set` targets (e.g. bonded.familiar.race). SQL joins don't preserve
-    // pick order, and an edited earlier level is appended in projectedData.
-    const levelPosition = new Map(allCharacterLevels.map((level) => [level.id, level.position]));
+    // Apply feat modifiers in character-level order so later selections win for `set` targets (e.g.
+    // bonded.familiar.race): SQL joins don't preserve pick order, and a level a level-up replaces keeps its place.
+    const levelPosition = new Map(characterLevels.map((level) => [level.id, level.position]));
     allFeats.sort(
       (a, b) => (levelPosition.get(a.characterLevelId) ?? 0) - (levelPosition.get(b.characterLevelId) ?? 0),
     );
     return { allFeats, klassLevelFeatCountsByAptitudeId };
   }
 
-  /**
-   * The character's skills, feats and powers: what its saved levels pick and their class levels grant, as the view
-   * composes them; then the projected ones.
-   */
-  static buildPicks(
-    picks: CharacterRows["picks"],
-    rulesetData: RulesetData,
-    projectedData: ProjectedCharacterData | undefined,
-    levels: Levels,
-    resolve: Resolve,
-  ) {
+  /** The character's skills, feats and powers: what its levels pick and their class levels grant, as the view composes them. */
+  static buildPicks(picks: CharacterRows["picks"], rulesetData: RulesetData, levels: Levels, resolve: Resolve) {
     const realSkills = pickedAt(resolve(picks.skills), levels.characterLevels, (link) => {
       const skill = rulesetData.skillsById.get(link.skillId);
       return skill && { ...skill, rank: link.rank };
     });
     return {
-      skills: projectedData?.skills ? [...realSkills, ...projectedData.skills] : realSkills,
-      ...Picks.buildFeats(picks, rulesetData, projectedData, levels, resolve),
-      ...Picks.buildPowers(picks, rulesetData, projectedData, levels, resolve),
+      skills: realSkills,
+      ...Picks.buildFeats(picks, rulesetData, levels, resolve),
+      ...Picks.buildPowers(picks, rulesetData, levels, resolve),
     };
   }
 
   /**
-   * The powers: picked, given, then projected; and the given (not free) per aptitude. A pick's or a grant's spell level
+   * The powers: picked, then given; and the given (not free) per aptitude. A pick's or a grant's spell level
    * is its composed link's: the ruleset merges the books' copies of a spell and of a list, so a stored pair (Complete
    * Divine's Bane on Complete Warrior's copy of the favored soul's list) may have no link row of its own.
    */
   static buildPowers(
     picks: CharacterRows["picks"],
     rulesetData: RulesetData,
-    projectedData: ProjectedCharacterData | undefined,
-    { allCharacterLevels, characterLevels }: Levels,
+    { characterLevels }: Levels,
     resolve: Resolve,
   ) {
     const withLevel = <T extends { aptitudeId: string; id: string }>(power: T) => ({
@@ -192,48 +175,21 @@ export default class Picks {
       toGrantedPower(grant, rulesetData),
     ).map(withLevel);
 
-    const characterLevelIdSet = new Set(allCharacterLevels.map((l) => l.id));
     const klassLevelPowerCountsByAptitudeId = givenPowers.reduce(
       (acc, power) => {
-        if (!power.free && characterLevelIdSet.has(power.characterLevelId))
-          acc[power.aptitudeId] = (acc[power.aptitudeId] || 0) + 1;
-
+        if (!power.free) acc[power.aptitudeId] = (acc[power.aptitudeId] || 0) + 1;
         return acc;
       },
       {} as Record<string, number>,
     );
 
-    const allPowers = projectedData?.powers
-      ? [...pickedPowers, ...givenPowers, ...projectedData.powers]
-      : [...pickedPowers, ...givenPowers];
+    const allPowers = [...pickedPowers, ...givenPowers];
     return { allPowers, klassLevelPowerCountsByAptitudeId };
   }
 
-  /** The character's levels: the saved ones (but those a projection leaves out), then the projected ones. */
-  static resolveLevels(
-    rawCharacterLevels: CharacterLevel[],
-    projectedData: ProjectedCharacterData | undefined,
-    resolve: Resolve,
-  ) {
-    const resolvedCharacterLevels = resolve(rawCharacterLevels).toSorted((a, b) => a.position - b.position);
-    const excludeIds = projectedData?.excludeCharacterLevelIds ? new Set(projectedData.excludeCharacterLevelIds) : null;
-    const characterLevels = excludeIds
-      ? resolvedCharacterLevels.filter((l) => !excludeIds.has(l.id))
-      : resolvedCharacterLevels;
-    // A new projected level goes after every saved one, an edited level's stand-in where the edited level was
-    let nextPosition = (resolvedCharacterLevels.at(-1)?.position ?? 0) + 1;
-    const projectedLevels: CharacterLevel[] = (projectedData?.characterLevels ?? []).map((level) => ({
-      ...level,
-      position: level.position ?? nextPosition++,
-    }));
-    const allCharacterLevels =
-      projectedLevels.length > 0
-        ? [...characterLevels, ...projectedLevels].toSorted((a, b) => a.position - b.position)
-        : characterLevels;
-    return {
-      characterLevels,
-      allCharacterLevels,
-      klassLevelIds: allCharacterLevels.map((level) => level.klassLevelId),
-    };
+  /** The character's levels as the view reads them, in the order it took them, and their class levels. */
+  static resolveLevels(rawCharacterLevels: CharacterLevel[], resolve: Resolve) {
+    const characterLevels = resolve(rawCharacterLevels).toSorted((a, b) => a.position - b.position);
+    return { characterLevels, klassLevelIds: characterLevels.map((level) => level.klassLevelId) };
   }
 }

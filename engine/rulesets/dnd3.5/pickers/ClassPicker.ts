@@ -1,8 +1,8 @@
-import type { CharacterInput } from "@/engine/core/module/index.ts";
+import { type CharacterInput, CharacterProjection, type FeatPick } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import LevelUpState from "@/engine/rulesets/dnd3.5/levelUp/LevelUpState.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
-import CharacterProjection, { type FeatPick } from "@/engine/rulesets/dnd3.5/projection/CharacterProjection.ts";
+import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import type { Klass, KlassLevel, Requirement } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -105,20 +105,17 @@ export default class ClassPicker extends LevelUpState {
   }
 
   /**
-   * What the level-up wizard's pending picks add to the character, for the class picker: its pending levels with the
-   * feats their class levels grant (a monk's Improved Unarmed Strike), and its feats and skill ranks picked so far, which
-   * requirements read: at the first pending level, or at the character's last level when it plans none.
+   * What the level-up wizard's pending picks add to the character, for the class picker: its pending levels, and its
+   * feats and skill ranks picked so far, which requirements read: at the first pending level, or at the character's last
+   * level when it plans none.
    */
   private projectPendingPicks() {
     const { featPicks = [], levelAbilityIds, levelKlassLevelIds = [], skillAllocations = [] } = this.pending;
-    const projection = new CharacterProjection(this.view, this.character);
-    const [first] = projection.addLevels(levelKlassLevelIds, levelAbilityIds);
-    if (first) projection.grantFeats(first, { klassLevelIds: levelKlassLevelIds });
+    const projection = new CharacterProjection(this.character);
+    const hp = LevelRules.UNROLLED_LEVEL_HP;
+    const [first] = projection.addLevels(levelKlassLevelIds, { abilityIds: levelAbilityIds, hp });
     const pickedAt = first ?? this.character.rows.levels.toSorted((a, b) => a.position - b.position).at(-1);
-    if (pickedAt) {
-      projection.pickFeats(pickedAt, featPicks);
-      projection.rankSkills(pickedAt, skillAllocations);
-    }
+    if (pickedAt) projection.pick(pickedAt, { feats: featPicks, skills: skillAllocations });
     return projection;
   }
 
@@ -143,7 +140,7 @@ export default class ClassPicker extends LevelUpState {
       if (groups.length > 0) requirementsByKlassLevel.set(k.nextKlassLevel.id, groups);
     }
     // Only a class with requirements needs the character, built with the wizard's pending picks
-    const built = requirementsByKlassLevel.size > 0 ? this.projectPendingPicks().build() : undefined;
+    const built = requirementsByKlassLevel.size > 0 ? this.build(this.projectPendingPicks()) : undefined;
     return this.buildClassOptions(candidates, requirementsByKlassLevel, built);
   }
 }

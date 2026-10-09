@@ -1,6 +1,6 @@
 import RulesError from "@/engine/core/RulesError.ts";
+import type { RulesetData } from "@/engine/core/view/index.ts";
 import type LevelUpState from "@/engine/rulesets/dnd3.5/levelUp/LevelUpState.ts";
-import type { GrantedFeatRecords, PickedRows } from "@/engine/rulesets/dnd3.5/projection/CharacterProjection.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
@@ -17,8 +17,9 @@ interface LevelChecked {
   skills: Record<string, number>;
 }
 
-/** A level's selections, checked: the rows picked, the pools they're picked in, and what its class level grants. */
-export type CheckedSelections = PickedRows & { autoGrantedRecords: GrantedFeatRecords };
+/** A class level's granted feats, as the view joins them to their feats. */
+export type GrantedFeatRecords =
+  RulesetData["klassLevelFeatsWithFeatsByKlassLevel"] extends Map<string, infer R> ? R : never;
 
 /** A level's selections checked against the ruleset: theirs, linked to their pools, and not taken twice. */
 export function ChecksSelections<B extends Constructor<LevelUpState>>(Base: B) {
@@ -41,18 +42,17 @@ export function ChecksSelections<B extends Constructor<LevelUpState>>(Base: B) {
      * already has: picked at its other levels (`pickedFeatIds`) or granted by their class levels (`otherLevels`).
      */
     protected checkLevel(level: LevelChecked, otherLevels: { klassLevelId: string }[], pickedFeatIds: string[]) {
-      const selections = this.checkLevelSelections(level);
-      if (selections.fetchedFeats.some((feat) => !feat.stackable))
-        this.checkNotTaken(selections.fetchedFeats, pickedFeatIds, otherLevels, selections.autoGrantedRecords);
-      return selections;
+      const { autoGrantedRecords, fetchedFeats } = this.checkLevelSelections(level);
+      if (fetchedFeats.some((feat) => !feat.stackable))
+        this.checkNotTaken(fetchedFeats, pickedFeatIds, otherLevels, autoGrantedRecords);
     }
 
     /**
      * A level's hit points, ability and selections checked, for both the level save and the level-up's: each selection
-     * the ruleset's and linked to its pool, no non-stackable feat picked twice; and what the level is granted. Whether a
-     * feat is already on the character is `checkNotTaken`'s.
+     * the ruleset's and linked to its pool, no non-stackable feat picked twice. Answers the feats picked and what the
+     * level is granted, which whether a feat is already on the character reads (`checkNotTaken`).
      */
-    protected checkLevelSelections(level: LevelChecked): CheckedSelections {
+    private checkLevelSelections(level: LevelChecked) {
       const { klass, klassLevel, hp, abilityId, skills, feats, powers } = level;
 
       if (hp < 1 || hp > klass.hd) throw new RulesError("invalid", `HP must be between 1 and ${klass.hd}`);
@@ -64,22 +64,33 @@ export function ChecksSelections<B extends Constructor<LevelUpState>>(Base: B) {
 
       // Submitted ids can repeat, e.g. a non-stackable feat picked under two aptitude pools: caught by checkRepeatedPicks.
       const featIds = Object.values(feats).flat();
-      const { fetchedSkills, fetchedFeats, fetchedPowers } = this.fetchSelections(skills, feats, powers);
+      const { fetchedFeats } = this.fetchSelections(skills, feats, powers);
       this.checkRepeatedPicks(featIds, fetchedFeats);
-      const powerLevelMap = this.linkedPowerLevels(feats, powers);
+      this.checkLinks(feats, powers);
 
       // What the class level grants, which a non-stackable pick can't be
       const autoGrantedRecords = this.rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(klassLevel.id) ?? [];
 
-      return {
-        fetchedSkills,
-        fetchedFeats,
-        fetchedPowers,
-        featToAptitude: this.poolsOf(feats),
-        powerToAptitude: this.poolsOf(powers),
-        powerLevelMap,
-        autoGrantedRecords,
-      };
+      return { autoGrantedRecords, fetchedFeats };
+    }
+
+    /** Throws when a feat or a power isn't linked to the pool it's picked under. */
+    private checkLinks(feats: Record<string, string[]>, powers: Record<string, string[]>) {
+      for (const [aptitudeId, ids] of Object.entries(feats)) {
+        for (const featId of ids) {
+          const links = this.rulesetData.featsById.get(featId)?.featsAptitudesInRules ?? [];
+          if (!links.some((fa) => fa.aptitudeId === aptitudeId))
+            throw new RulesError("invalid", "Feat is not linked to the specified aptitude");
+        }
+      }
+
+      for (const [aptitudeId, ids] of Object.entries(powers)) {
+        for (const powerId of ids) {
+          const links = this.rulesetData.powersById.get(powerId)?.powersAptitudesInRules ?? [];
+          if (!links.some((pa) => pa.aptitudeId === aptitudeId))
+            throw new RulesError("invalid", "Power is not linked to the specified aptitude");
+        }
+      }
     }
 
     /**
@@ -123,7 +134,7 @@ export function ChecksSelections<B extends Constructor<LevelUpState>>(Base: B) {
       powers: Record<string, string[]>,
     ) {
       this.fetchSelections(skills, feats, powers);
-      this.linkedPowerLevels(feats, powers);
+      this.checkLinks(feats, powers);
     }
 
     /** The rows of these ids, deduplicated, from the character's ruleset; throws when one isn't in it. */
@@ -147,40 +158,6 @@ export function ChecksSelections<B extends Constructor<LevelUpState>>(Base: B) {
       const fetchedPowers = this.fetchAll(Object.values(powers).flat(), powersById, "powers");
       this.fetchAll([...Object.keys(feats), ...Object.keys(powers)], aptitudesById, "aptitudes");
       return { fetchedSkills, fetchedFeats, fetchedPowers };
-    }
-
-    /**
-     * Throws when a feat or a power isn't linked to the pool it's picked under. Returns each leveled power's spell level
-     * in its pool, by `powerId:aptitudeId`.
-     */
-    private linkedPowerLevels(feats: Record<string, string[]>, powers: Record<string, string[]>) {
-      for (const [aptitudeId, ids] of Object.entries(feats)) {
-        for (const featId of ids) {
-          const links = this.rulesetData.featsById.get(featId)?.featsAptitudesInRules ?? [];
-          if (!links.some((fa) => fa.aptitudeId === aptitudeId))
-            throw new RulesError("invalid", "Feat is not linked to the specified aptitude");
-        }
-      }
-
-      const powerLevelMap = new Map<string, number>();
-      for (const [aptitudeId, ids] of Object.entries(powers)) {
-        for (const powerId of ids) {
-          const power = this.rulesetData.powersById.get(powerId);
-          const link = power?.powersAptitudesInRules.find((pa) => pa.aptitudeId === aptitudeId);
-          if (!link) throw new RulesError("invalid", "Power is not linked to the specified aptitude");
-
-          if (link.level != null) powerLevelMap.set(`${powerId}:${aptitudeId}`, link.level);
-        }
-      }
-      return powerLevelMap;
-    }
-
-    /** The pool each picked id is picked under. */
-    private poolsOf(selections: Record<string, string[]>) {
-      const pools = new Map<string, string>();
-      for (const [aptitudeId, ids] of Object.entries(selections)) for (const id of ids) pools.set(id, aptitudeId);
-
-      return pools;
     }
   }
   return CheckingSelections;
