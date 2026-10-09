@@ -55,7 +55,7 @@ export default class RequirementEvaluator {
         if (Array.isArray(data)) return !data.includes(typedValue);
         return invalid();
       case "starts_with":
-        return typeof typedValue === "string" && typeof data === "string" ? data.startsWith(typedValue) : false;
+        return typeof typedValue === "string" && typeof data === "string" ? data.startsWith(typedValue) : invalid();
       case "ends_with":
         return typeof typedValue === "string" && typeof data === "string" ? data.endsWith(typedValue) : invalid();
       case "matches_regex":
