@@ -482,6 +482,12 @@ export const GENERAL_FEATS: FeatSeed[] = [
     requirements: [gte("combat.bab", 9), gte("abilities.charisma.total", 13), eq("feats.kiaishout.possessed")],
   },
   {
+    name: "Greater Resiliency",
+    description:
+      "Your existing damage reduction increases by 1 point. If your DR normally improves with level, it continues increasing at its previous rate on top of this bonus. You may select this feat only once. It does not alter what types of damage overcome your DR. If you have multiple forms of DR, choose which one to enhance when you take this feat.",
+    aptitudes: ["General"],
+  },
+  {
     name: "Hamstring",
     description:
       "On a successful melee sneak attack, you may sacrifice 2d6 of your bonus sneak attack damage to halve the target's base land speed. This reduction lasts 24 hours or until the target receives a DC 15 Heal check, a cure spell, or other magical healing. Creatures immune to sneak attacks, legless creatures, and those with more than four legs are unaffected. Quadrupeds require two successful hamstring attacks. Other movement modes (fly, burrow, etc.) are not impacted. Usable once per round.",
@@ -617,14 +623,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     requirements: [gte("combat.bab", 1), gte("abilities.wisdom.total", 13)],
   },
 ];
-
-export const GREATER_RESILIENCY_FEATS: FeatSeed[] = ALL_WEAPONS.map((w) => ({
-  name: `Greater Resiliency: ${w}`,
-  description: `Your existing damage reduction increases by 1 point. If your DR normally improves with level, it continues increasing at its previous rate on top of this bonus. You may select this feat only once. It does not alter what types of damage overcome your DR. If you have multiple forms of DR, choose which one to enhance when you take this feat.`,
-  generated: true,
-  aptitudes: ["General"],
-  properties: [{ type: "FEAT_FAMILY", value: "Greater Resiliency" }],
-}));
 
 export const POWER_CRITICAL_FEATS: FeatSeed[] = ALL_WEAPONS.map((w) => ({
   name: `Power Critical: ${w}`,

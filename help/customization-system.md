@@ -175,7 +175,7 @@ Built-in families on the SRD ruleset and its extensions:
 | `improvedcritical`, `powercritical` | Improved Critical and Power Critical variants |
 | `martialweaponproficiency`, `exoticweaponproficiency` | per-weapon proficiency feats |
 | `rapidreload` | Rapid Reload variants |
-| `disembowelingstrike`, `headshot`, `greaterresiliency` | the extensions' other per-weapon feats |
+| `disembowelingstrike`, `headshot` | the extensions' other per-weapon feats |
 | `spellfocus`, `greaterspellfocus`, `arcanedefense` | Spell Focus, Greater Spell Focus and Arcane Defense per school |
 | `skillfocus` | Skill Focus per skill |
 | `metamagic`, `itemcreation` | every metamagic / item creation feat |

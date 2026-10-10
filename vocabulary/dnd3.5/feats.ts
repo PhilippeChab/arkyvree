@@ -42,7 +42,6 @@ export const FEAT_FAMILIES = [
   "Power Critical",
   "Disemboweling Strike",
   "Head Shot",
-  "Greater Resiliency",
   "Martial Weapon Proficiency",
   "Exotic Weapon Proficiency",
   "Rapid Reload",

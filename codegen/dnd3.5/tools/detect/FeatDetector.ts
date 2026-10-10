@@ -25,8 +25,7 @@ function detectTemplate(entry: FeatReference["raw"][number]): FeatReference["det
   const text = (entry.benefit + " " + (entry.special ?? "")).toLowerCase();
 
   // Weapon templates: "selected weapon", "using the weapon you selected"
-  if (/selected weapon|the weapon you selected|type of weapon/.test(text))
-    return { type: "weapon", familyName: entry.name };
+  if (/selected weapon|the weapon you selected/.test(text)) return { type: "weapon", familyName: entry.name };
 
   // Crossbow-specific: "chosen type of crossbow"
   if (/type of crossbow|chosen.*crossbow/.test(text)) return { type: "crossbow", familyName: entry.name };
@@ -40,7 +39,9 @@ function detectTemplate(entry: FeatReference["raw"][number]): FeatReference["det
   if (/school of magic you select|chosen school|selected school|applies to a new school/.test(text))
     return { type: "school", familyName: entry.name };
 
-  // "Each time you take the feat, it applies to a new type of exotic weapon"
+  // A feat taken again for another weapon ("Each time you take the feat, it applies to a new type of exotic weapon"),
+  // not one naming a type of weapon ("no effect on the type of weapon or damage that overcomes your damage reduction":
+  // Greater Resiliency)
   if (/new type of.*weapon/.test(text)) return { type: "weapon", familyName: entry.name };
 
   return undefined;
