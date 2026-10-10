@@ -8,7 +8,7 @@ import type { SpellFormData } from "./spellForm.ts";
 
 export const EMPTY_CLASS: ClassFormData = { name: "", description: "", hd: 8 };
 
-export const EMPTY_CLASS_LEVEL: ClassLevelFormData = { level: 1, bab: 0, skills: 1, saves: [], feats: [] };
+export const EMPTY_CLASS_LEVEL: ClassLevelFormData = { level: 1, fields: { bab: 0, skills: 1 }, saves: [], feats: [] };
 
 export const EMPTY_ITEM: ItemFormData = {
   name: "",
@@ -25,9 +25,7 @@ export const EMPTY_SKILL: SkillFormData = {
   name: "",
   description: "",
   primaryAbilityId: "",
-  impactedByWeight: false,
-  checkPenaltyMultiplier: 1,
-  usableWithoutTraining: false,
+  fields: { impactedByWeight: false, checkPenaltyMultiplier: 1, usableWithoutTraining: false },
 };
 
 export const EMPTY_SPELL: SpellFormData = {
@@ -35,15 +33,17 @@ export const EMPTY_SPELL: SpellFormData = {
   description: "",
   saveId: "",
   saveEffect: "",
-  school: "",
-  subschool: "",
-  descriptors: [],
-  castingTime: "",
-  rangeType: "",
-  target: "",
-  areaOfEffect: "",
-  duration: "",
-  spellResistance: "",
-  components: [],
+  fields: {
+    school: "",
+    subschool: "",
+    descriptors: [],
+    castingTime: "",
+    rangeType: "",
+    target: "",
+    areaOfEffect: "",
+    duration: "",
+    spellResistance: "",
+    components: [],
+  },
   aptitudes: [],
 };

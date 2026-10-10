@@ -1,3 +1,5 @@
+import type { z } from "zod";
+
 import type { FieldCodec, Fields, FieldValues, NoFields } from "@/engine/core/fields/index.ts";
 import type { EntityWrites, ListLink } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
@@ -10,9 +12,10 @@ import type { Property } from "@/shared/relations.ts";
  * - an entity found by its id (`find`) and described (`describe`): its row as the view resolves it, with the fields its
  *   properties hold (`fields`);
  * - a page of its rows (`openList`): what the server reads it with (`filters`), and its rows described alike;
- * - what saving one writes (`planCreate`, `planEdit`): its form checked (`checkSave`), its row's columns (`columnsOf`),
- *   the lists it's linked to (`linksOf`), what it writes beside them (`writesOf`: its fields, the feats it makes), and
- *   the fields it keeps once saved (`fields`, which a save answers with its row);
+ * - what saving one writes (`planCreate`, `planEdit`): the fields its form gives, read by its codec (`fieldsSchema`),
+ *   its form checked (`checkSave`), its row's columns (`columnsOf`), the lists it's linked to (`linksOf`), what it
+ *   writes beside them (`writesOf`: its fields, the feats it makes), and the fields it keeps once saved (`fields`,
+ *   which a save answers with its row);
  * - what deleting one writes (`planDelete`): checked (`checkDelete`), and what it writes with it (`deleteWritesOf`).
  */
 export default abstract class RulesetEntity<
@@ -33,11 +36,21 @@ export default abstract class RulesetEntity<
   abstract readonly type: K;
 
   /** What saving a form writes, and the fields the saved entity keeps (`fields`, which a save answers with its row). */
-  private planSave(body: Body, entity?: ViewEntities[K]) {
+  private planSave(body: Body, given: Partial<FieldValues<S>>, entity?: ViewEntities[K]) {
     const columns = this.columnsOf(body, entity);
-    const writes = this.writesOf(body, entity);
+    const writes = this.writesOf(body, given, entity);
     const fields = this.fields.read(writes?.properties?.values ?? this.keptProperties(columns, entity));
     return { columns, fields, links: this.linksOf(body), writes };
+  }
+
+  /**
+   * The fields a form gives (its `fields`, which the route carries as it is), read by the kind's codec: none when it
+   * gives none (a kind whose page edits its properties), and refused as invalid, as a route's validation refuses a body,
+   * when one isn't the field's type or in its bounds.
+   */
+  private readFields(body: Body, entity?: ViewEntities[K]): Partial<FieldValues<S>> {
+    const given = "fields" in body ? body.fields : undefined;
+    return given === undefined ? {} : RulesError.parse(this.fieldsSchema(entity), given, ["fields"]);
   }
 
   /** Refuses deleting an entity: nothing does, unless its kind's rules say. */
@@ -59,6 +72,14 @@ export default abstract class RulesetEntity<
     return this.rulesetData.cow
       .resolveRows(rows)
       .map((row) => ({ ...row, ...this.fields.read(this.propertiesOf(row)) }));
+  }
+
+  /**
+   * What a form's fields are read by: every field for a new entity, those it changes for an edit (`entity`), which the
+   * engine merges over those the entity keeps.
+   */
+  protected fieldsSchema(entity?: ViewEntities[K]): z.ZodType<Partial<FieldValues<S>>> {
+    return this.fields.schema({ optional: !!entity });
   }
 
   /**
@@ -93,8 +114,15 @@ export default abstract class RulesetEntity<
     return this.view.rulesetData;
   }
 
-  /** What saving a form writes beside the row (`entity`: the one edited): nothing, unless its kind's rules say. */
-  protected writesOf(_body: Body, _entity?: ViewEntities[K]): EntityWrites | undefined {
+  /**
+   * What saving a form writes beside the row (`given`: the fields it gives, read; `entity`: the one edited): nothing,
+   * unless its kind's rules say.
+   */
+  protected writesOf(
+    _body: Body,
+    _given: Partial<FieldValues<S>>,
+    _entity?: ViewEntities[K],
+  ): EntityWrites | undefined {
     return undefined;
   }
 
@@ -123,8 +151,9 @@ export default abstract class RulesetEntity<
 
   /** A new entity's row off its form, what it writes beside it, and the fields it keeps once saved. */
   planCreate(body: Body) {
+    const given = this.readFields(body);
     this.checkSave(body);
-    return this.planSave(body);
+    return this.planSave(body, given);
   }
 
   /** Deleting an entity (`id`): the entity as the view has it, and what its delete writes with it. */
@@ -140,7 +169,8 @@ export default abstract class RulesetEntity<
    */
   planEdit(id: string, body: Body) {
     const entity = this.find(id);
+    const given = this.readFields(body, entity);
     this.checkSave(body, entity);
-    return { ...this.planSave(body, entity), entity };
+    return { ...this.planSave(body, given, entity), entity };
   }
 }

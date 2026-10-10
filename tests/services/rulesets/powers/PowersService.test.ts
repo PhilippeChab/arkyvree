@@ -75,14 +75,14 @@ describe("PowersService", () => {
       const [wizard, specialist] = [aptMap["Wizard Spells"], aptMap["Evocation Specialist Spells"]];
       const wizardOnly = await PowersService.createPower(session, fork.id, {
         name: "Test Bolt",
-        school: "Evocation",
+        fields: { school: "Evocation" },
         aptitudes: [{ id: wizard, level: 3 }],
       });
       expect(await linkedAptitudes(wizardOnly.id)).toEqual([{ aptitudeId: wizard, level: 3 }]);
 
       const both = await PowersService.createPower(session, fork.id, {
         name: "Test Blast",
-        school: "Evocation",
+        fields: { school: "Evocation" },
         aptitudes: [
           { id: wizard, level: 3 },
           { id: specialist, level: 3 },
@@ -164,12 +164,14 @@ describe("PowersService", () => {
     const power = await PowersService.createPower(session, ruleset.id, {
       name: "Fireball",
       aptitudes: [{ id: wizard }],
-      school: "Evocation",
-      castingTime: "1 round",
+      fields: { school: "Evocation", castingTime: "1 round" },
     });
     await Properties.create(db, { entityId: power.id, entityType: "powers", type: "SIGNATURE_SPELL", value: "true" });
 
-    await PowersService.updatePower(session, ruleset.id, power.id, { name: "Fireball", school: "Conjuration" });
+    await PowersService.updatePower(session, ruleset.id, power.id, {
+      name: "Fireball",
+      fields: { school: "Conjuration" },
+    });
 
     const properties = await Properties.findMany(db, { entityIds: [power.id], entityType: "powers" });
     expect(properties.map(({ type, value }) => ({ type, value })).sort((a, b) => a.type.localeCompare(b.type))).toEqual(

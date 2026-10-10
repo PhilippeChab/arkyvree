@@ -52,7 +52,7 @@ interface SpellPropertyFieldsProps {
 interface TagsFieldProps {
   form: UseFormReturn<SpellFormData>;
   label: string;
-  name: "descriptors" | "components";
+  name: "fields.components" | "fields.descriptors";
   options: readonly string[];
 }
 
@@ -60,27 +60,33 @@ function SpellPropertyFields({ form }: SpellPropertyFieldsProps) {
   return (
     <>
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-        <SelectField control={form.control} name="school" label="School" options={SPELL_SCHOOLS} emptyLabel="None" />
         <SelectField
           control={form.control}
-          name="subschool"
+          name="fields.school"
+          label="School"
+          options={SPELL_SCHOOLS}
+          emptyLabel="None"
+        />
+        <SelectField
+          control={form.control}
+          name="fields.subschool"
           label="Subschool"
           options={SPELL_SUBSCHOOLS}
           emptyLabel="None"
         />
       </Stack>
-      <TagsField form={form} name="descriptors" label="Descriptors" options={SPELL_DESCRIPTORS} />
+      <TagsField form={form} name="fields.descriptors" label="Descriptors" options={SPELL_DESCRIPTORS} />
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
         <FormTextField
           control={form.control}
-          name="castingTime"
+          name="fields.castingTime"
           label="Casting Time"
           fullWidth
           placeholder='e.g., "1 standard action"'
         />
         <SelectField
           control={form.control}
-          name="rangeType"
+          name="fields.rangeType"
           label="Range"
           options={SPELL_RANGE_TYPES}
           emptyLabel="None"
@@ -89,14 +95,14 @@ function SpellPropertyFields({ form }: SpellPropertyFieldsProps) {
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
         <FormTextField
           control={form.control}
-          name="target"
+          name="fields.target"
           label="Target"
           fullWidth
           placeholder='e.g., "One creature"'
         />
         <FormTextField
           control={form.control}
-          name="areaOfEffect"
+          name="fields.areaOfEffect"
           label="Area of Effect"
           fullWidth
           placeholder='e.g., "20-ft. radius"'
@@ -105,20 +111,20 @@ function SpellPropertyFields({ form }: SpellPropertyFieldsProps) {
       <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
         <FormTextField
           control={form.control}
-          name="duration"
+          name="fields.duration"
           label="Duration"
           fullWidth
           placeholder='e.g., "1 round/level"'
         />
         <SelectField
           control={form.control}
-          name="spellResistance"
+          name="fields.spellResistance"
           label="Spell Resistance"
           options={SPELL_RESISTANCE_OPTIONS}
           emptyLabel="None"
         />
       </Stack>
-      <TagsField form={form} name="components" label="Components" options={SPELL_COMPONENTS} />
+      <TagsField form={form} name="fields.components" label="Components" options={SPELL_COMPONENTS} />
     </>
   );
 }

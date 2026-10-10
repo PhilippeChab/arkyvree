@@ -1,7 +1,10 @@
 /** A class as a ruleset's entity: its fields, what its save stores, and its parts: its levels, skills and table. */
 
+import { z } from "zod";
+
 import { RulesetEntity } from "@/engine/core/entities/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
+import { HIT_DIE_VALUES } from "@/shared/dnd3.5/classes.ts";
 import type { Klass } from "@/shared/relations.ts";
 
 import ClassLevelEntity from "./ClassLevelEntity.ts";
@@ -11,6 +14,9 @@ import { CLASS_FIELDS } from "./fields.ts";
 
 /** A class's form: its name, description and hit die. */
 type ClassBody = { description?: string | null; hd?: number; name: string };
+
+/** A class's hit die. */
+const HIT_DIE = z.literal(HIT_DIE_VALUES, { error: () => `Hit die must be one of: ${HIT_DIE_VALUES.join(", ")}` });
 
 /**
  * A class as the ruleset describes it, what its save stores, and its parts, each bound to the class as the view has
@@ -28,6 +34,11 @@ export default class ClassEntity extends RulesetEntity<
   protected readonly label = "Class";
 
   readonly type = "klasses";
+
+  /** Refuses a hit die the rules have no die for (0 is none). */
+  protected override checkSave({ hd }: ClassBody) {
+    RulesError.parse(HIT_DIE.optional(), hd || undefined, ["hd"]);
+  }
 
   /** A form's columns: the hit die it gives, or the edited class's; a new one's 8 when it gives none (0 is none). */
   protected columnsOf({ description, hd, name }: ClassBody, klass?: Klass) {

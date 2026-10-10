@@ -130,6 +130,13 @@ describe("characters", () => {
       const { id } = await postCharacter();
       await expectStatus(character.abilities.$put({ param: { id }, json: { [NIL_UUID]: 15 } }), 404);
     });
+
+    test("refuses a score past the ruleset's bounds", async () => {
+      const { abilityMap } = await getSeedCtx();
+      const { id } = await postCharacter();
+      for (const score of [0, 1000])
+        await expectStatus(character.abilities.$put({ param: { id }, json: { [abilityMap["Strength"]]: score } }), 400);
+    });
   });
 
   describe("languages", () => {

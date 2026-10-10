@@ -18,7 +18,7 @@ type Row = { id?: string; type: string; value: string };
 /**
  * An entity's fields kept in its properties, read and written by one spec (`fields`, written with `Field`): their
  * defaults, the property types that store them, the rows of an entity read into values in one pass, values written
- * back as rows, an edit's values merged over what's kept, and the shape a route validates a body's fields with.
+ * back as rows, an edit's values merged over what's kept, and the schema a save reads a form's fields with.
  */
 export default class FieldCodec<S extends Fields> {
   constructor(
@@ -91,7 +91,7 @@ export default class FieldCodec<S extends Fields> {
     return field.default;
   }
 
-  /** A field's shape in a route's body: a flag a boolean, a number a whole one in its bounds, a list strings. */
+  /** A field's shape in a form: a flag a boolean, a number a whole one in its bounds, a list strings. */
   private static shapeOf(field: FieldSpec): z.ZodType {
     switch (field.kind) {
       case "flag":
@@ -188,19 +188,17 @@ export default class FieldCodec<S extends Fields> {
     ) as Record<keyof S, string | null>;
   }
 
-  /** The shape a route validates a body's fields with: each field's type, as the codec reads it. */
-  shape(): { [K in keyof S]: z.ZodType<FieldValues<S>[K], FieldValues<S>[K]> };
-  /** The same, each field optional: an edit's, which may leave any out. */
-  shape(options: { optional: true }): {
-    [K in keyof S]: z.ZodOptional<z.ZodType<FieldValues<S>[K], FieldValues<S>[K]>>;
-  };
-  shape(options: { optional?: boolean } = {}): Record<string, z.ZodType> {
-    return Object.fromEntries(
-      Object.entries(this.fields).map(([key, field]) => {
-        const shape = FieldCodec.shapeOf(field);
-        return [key, options.optional ? shape.optional() : shape];
-      }),
-    );
+  /**
+   * What a save reads a form's fields with: an object of each field's shape, every one of them, or those an edit
+   * changes (`optional`), the rest of the form's keys left out.
+   */
+  schema(options: { optional?: boolean } = {}): z.ZodType<Partial<FieldValues<S>>> {
+    const shapes = Object.entries(this.fields).map(([key, field]) => {
+      const shape = FieldCodec.shapeOf(field);
+      return [key, options.optional ? shape.optional() : shape];
+    });
+    // Each field's shape reads its value (`shapeOf`), so the object reads the fields' values
+    return z.object(Object.fromEntries(shapes)) as z.ZodType<Partial<FieldValues<S>>>;
   }
 
   /** The values as the rows that keep them, its rule applied: none when the entity keeps no field (`storesWhen`). */

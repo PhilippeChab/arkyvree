@@ -1,8 +1,9 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { ENTITY_FIELDS, RULESET_LIMITS } from "@/engine/index.ts";
+import type { EntityKinds } from "@/engine/index.ts";
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
+import { buildEntityFieldsSchema } from "@/server/routers/api/schemaBuilders.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 
@@ -10,7 +11,7 @@ import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 const aptitudeLinks = z.array(
   z.object({
     id: z.string().uuid(),
-    level: z.number().int().min(0).max(RULESET_LIMITS.spellLevel).optional(),
+    level: z.number().int().optional(),
   }),
 );
 
@@ -33,6 +34,9 @@ const powerColumns = {
     .transform((v) => v || null),
 };
 
+/** A power's fields (a spell's), its create's and its update's: its ruleset's rules read them. */
+const powerFields = buildEntityFieldsSchema<EntityKinds["powers"]["planCreate"]>();
+
 const powerParams = idParam.extend({ powerId: z.string().uuid() });
 
 export default new Hono<SessionContext>()
@@ -47,7 +51,7 @@ export default new Hono<SessionContext>()
         search: z.string().optional(),
         childOnly: z.coerce.boolean().optional(),
         aptitudeId: z.string().uuid().optional(),
-        level: z.coerce.number().min(0).max(RULESET_LIMITS.spellLevel).optional(),
+        level: z.coerce.number().optional(),
         orderBy: entityOrderBy,
         orderDir: orderDirAsc,
       }),
@@ -72,7 +76,7 @@ export default new Hono<SessionContext>()
       "json",
       z.object({
         ...powerColumns,
-        ...ENTITY_FIELDS.powers.create,
+        fields: powerFields.optional(),
         aptitudes: aptitudeLinks.min(1, "At least one aptitude must be selected"),
       }),
     ),
@@ -89,7 +93,7 @@ export default new Hono<SessionContext>()
       "json",
       z.object({
         ...powerColumns,
-        ...ENTITY_FIELDS.powers.edit,
+        fields: powerFields.optional(),
         aptitudes: aptitudeLinks.optional(),
         updatedAt: z.string().optional(),
       }),

@@ -76,8 +76,7 @@ describe("AptitudesService", () => {
     const [klass] = await Klasses.create(db, { name: "Granting Class", rulesetId: ruleset.id, hd: 10 });
     const level = await ClassLevelsService.createClassLevel(session, ruleset.id, klass.id, {
       level: 1,
-      bab: 1,
-      skills: 2,
+      fields: { bab: 1, skills: 2 },
       feats: [{ featId: feat.id, aptitudeId: featAptitude.id }],
     });
     await insertRows(klassLevelPowersInRules, [

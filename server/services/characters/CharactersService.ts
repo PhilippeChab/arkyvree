@@ -233,8 +233,9 @@ class CharactersService extends include(Object, Archives) {
       const characterRecord = await getEditableCharacter(tx, session, characterId);
 
       return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
+        const scores = Engine.for(scope).characters().planAbilities(abilities);
         // A score stored before its ability was copied names the source: the copy's id the client sends matches it
-        for (const [abilityId, score] of Object.entries(abilities)) {
+        for (const { abilityId, score } of scores) {
           const abilityIds = scope.rulesetData.cow.getEquivalentIds(abilityId);
           const rows = await CharacterAbilities.update(tx, { score }, { abilityIds, characterId });
           if (rows.length === 0) throw new NotFoundError("Ability not found");

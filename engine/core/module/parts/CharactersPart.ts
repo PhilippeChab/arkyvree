@@ -1,5 +1,6 @@
 import type { CharacterInput } from "@/engine/core/module/CharacterInputs.ts";
 import type {
+  AbilityScore,
   CharacterCard,
   DescribedInventoryEntry,
   InventoryEntryChange,
@@ -119,7 +120,16 @@ export default abstract class CharactersPart<D extends Descriptions> {
     identity: { alignment?: string; gender?: string },
   ): OpenedPicker<{ kind: string }, { id: string }, D["raceOption"]>;
 
-  /** What a new character stores beside its row: its ability scores. Refused when its race can't be a player's. */
+  /**
+   * The ability scores a character's edit stores (`abilities`, by ability id): refused when one isn't an ability of its
+   * ruleset, or its score is past the rules' bounds.
+   */
+  abstract planAbilities(view: RulesetView, abilities: Record<string, number>): AbilityScore[];
+
+  /**
+   * What a new character stores beside its row: its ability scores. Refused when its race can't be a player's, or a
+   * score is past the rules' bounds.
+   */
   abstract planCreate(view: RulesetView, body: { abilities: Record<string, number>; raceId: string }): NewCharacterPlan;
 
   /** What an inventory entry's add or edit stores, checked: its placement and charges, the item equipped where asked. */

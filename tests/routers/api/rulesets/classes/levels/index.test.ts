@@ -26,7 +26,9 @@ describe("rulesets class levels", () => {
   test("creates, reads, lists, updates and deletes a class level", async () => {
     const { id, classId } = await setup();
 
-    const created = await expectOk(levels.$post({ param: { id, classId }, json: { level: 1, bab: 1, skills: 4 } }));
+    const created = await expectOk(
+      levels.$post({ param: { id, classId }, json: { level: 1, fields: { bab: 1, skills: 4 } } }),
+    );
     expect(created).toMatchObject({ level: 1, bab: 1, skills: 4 });
     const param = { id, classId, levelId: created.id };
 
@@ -38,7 +40,7 @@ describe("rulesets class levels", () => {
     expect((await expectOk(levels.$get({ param: { id, classId } }))).map((l) => l.id)).toEqual([created.id]);
 
     // The level number is fixed once created.
-    expect(await expectOk(level.$put({ param, json: { bab: 3, skills: 6 } }))).toMatchObject({
+    expect(await expectOk(level.$put({ param, json: { fields: { bab: 3, skills: 6 } } }))).toMatchObject({
       level: 1,
       bab: 3,
       skills: 6,
@@ -50,8 +52,12 @@ describe("rulesets class levels", () => {
 
   test("requires the previous class level from level 2 on", async () => {
     const { id, classId } = await setup();
-    const first = await expectOk(levels.$post({ param: { id, classId }, json: { level: 1, bab: 1, skills: 4 } }));
-    const fifth = await expectOk(levels.$post({ param: { id, classId }, json: { level: 5, bab: 5, skills: 4 } }));
+    const first = await expectOk(
+      levels.$post({ param: { id, classId }, json: { level: 1, fields: { bab: 1, skills: 4 } } }),
+    );
+    const fifth = await expectOk(
+      levels.$post({ param: { id, classId }, json: { level: 5, fields: { bab: 5, skills: 4 } } }),
+    );
 
     const param = (entityId: string) => ({ id, entityType: "class-levels" as const, entityId });
     expect(await expectOk(requirements.$get({ param: param(first.id) }))).toEqual([]);
@@ -109,7 +115,7 @@ describe("rulesets class levels", () => {
     await expectStatus(klass.spells.$get({ param: { id, classId: NIL_UUID } }), 404);
     const param = { id, classId, levelId: NIL_UUID };
     await expectStatus(level.$get({ param }), 404);
-    await expectStatus(level.$put({ param, json: { bab: 1 } }), 404);
+    await expectStatus(level.$put({ param, json: { fields: { bab: 1 } } }), 404);
     await expectStatus(level.$delete({ param }), 404);
   });
 });

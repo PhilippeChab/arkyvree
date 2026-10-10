@@ -48,7 +48,11 @@ function createLevel(
   level: number,
   body: Partial<LevelBody> = {},
 ) {
-  return ClassLevelsService.createClassLevel(session, rulesetId, klassId, { level, bab: level, skills: 4, ...body });
+  return ClassLevelsService.createClassLevel(session, rulesetId, klassId, {
+    level,
+    fields: { bab: level, skills: 4 },
+    ...body,
+  });
 }
 
 function modifier(sourceId: string, target: string, value: string) {
@@ -132,7 +136,7 @@ describe("ClassLevelsService", () => {
 
       await update({ feats: [{ featId: dodge.id, aptitudeId: aptitude.id }], saves: [{ saveId: reflex.id, base: 2 }] });
       expect(await links()).toEqual({ feats: [dodge.id], saves: [reflex.id] });
-      await update({ bab: 2 });
+      await update({ fields: { bab: 2 } });
       expect(await links()).toEqual({ feats: [dodge.id], saves: [reflex.id] });
       await update({ feats: [], saves: [] });
       expect(await links()).toEqual({ feats: [], saves: [] });
@@ -172,7 +176,7 @@ describe("ClassLevelsService", () => {
     });
 
     expect(
-      await ClassLevelsService.updateClassLevel(session, ruleset.id, klass.id, level.id, { bab: 3 }),
+      await ClassLevelsService.updateClassLevel(session, ruleset.id, klass.id, level.id, { fields: { bab: 3 } }),
     ).toMatchObject({ bab: 3, skills: 4 });
     const properties = await Properties.findMany(db, { entityIds: [level.id], entityType: "klass_levels" });
     expect(properties.map((p) => p.type).sort()).toEqual(["CLASS_FEATURE", KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS]);
@@ -261,7 +265,7 @@ describe("ClassLevelsService", () => {
     const { session: other } = await createTestUserAndRuleset();
     for (const change of [
       () => createLevel(other, ruleset.id, klass.id, 2),
-      () => ClassLevelsService.updateClassLevel(other, ruleset.id, klass.id, level.id, { bab: 3 }),
+      () => ClassLevelsService.updateClassLevel(other, ruleset.id, klass.id, level.id, { fields: { bab: 3 } }),
       () => ClassLevelsService.deleteClassLevel(other, ruleset.id, klass.id, level.id),
     ])
       await expect(change()).rejects.toThrow(ForbiddenError);
@@ -276,11 +280,11 @@ describe("ClassLevelsService", () => {
       ["create for a missing class", () => createLevel(session, ruleset.id, NIL_UUID, 2)],
       [
         "update in a missing ruleset",
-        () => ClassLevelsService.updateClassLevel(session, NIL_UUID, klass.id, level.id, { bab: 2 }),
+        () => ClassLevelsService.updateClassLevel(session, NIL_UUID, klass.id, level.id, { fields: { bab: 2 } }),
       ],
       [
         "update for a missing class",
-        () => ClassLevelsService.updateClassLevel(session, ruleset.id, NIL_UUID, level.id, { bab: 2 }),
+        () => ClassLevelsService.updateClassLevel(session, ruleset.id, NIL_UUID, level.id, { fields: { bab: 2 } }),
       ],
       ["delete in a missing ruleset", () => ClassLevelsService.deleteClassLevel(session, NIL_UUID, klass.id, level.id)],
       [
@@ -385,7 +389,9 @@ describe("ClassLevelsService", () => {
       const parentRows = await RulesetViews.getRawData(parent.id);
       // Regression: the first edit copies the level mid-save, and a stat the edit leaves out was read as 0.
       expect(
-        await ClassLevelsService.updateClassLevel(session, fork.id, klass.id, inheritedLevel.id, { bab: 5 }),
+        await ClassLevelsService.updateClassLevel(session, fork.id, klass.id, inheritedLevel.id, {
+          fields: { bab: 5 },
+        }),
       ).toMatchObject({ bab: 5, skills: 4 });
 
       await ClassLevelsService.deleteClassLevel(session, fork.id, klass.id, inheritedLevel.id);
@@ -403,7 +409,7 @@ describe("ClassLevelsService", () => {
 
       await expectRefusedWith(createLevel(session, fork.id, other.klass.id, 1), 404);
       await expectRefusedWith(
-        ClassLevelsService.updateClassLevel(session, fork.id, other.klass.id, otherLevel.id, { bab: 2 }),
+        ClassLevelsService.updateClassLevel(session, fork.id, other.klass.id, otherLevel.id, { fields: { bab: 2 } }),
         404,
       );
       await expectRefusedWith(ClassLevelsService.getClassLevelSpells(fork.id, other.klass.id), 404);

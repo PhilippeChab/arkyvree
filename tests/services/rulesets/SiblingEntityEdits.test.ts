@@ -130,14 +130,20 @@ for (const action of ["add skill", "remove skill", "create level", "update level
           .id,
       };
     });
-    if (action === "add skill") await ClassSkillsService.addClassSkill(session, host.id, source.id, otherSkill);
-    else if (action === "remove skill")
+    if (action === "add skill") {
+      await ClassSkillsService.addClassSkill(session, host.id, source.id, otherSkill);
+    } else if (action === "remove skill") {
       await ClassSkillsService.removeClassSkill(session, host.id, source.id, assignedSkill);
-    else if (action === "create level")
-      await ClassLevelsService.createClassLevel(session, host.id, source.id, { level: 20, bab: 20, skills: 2 });
-    else if (action === "update level")
-      await ClassLevelsService.updateClassLevel(session, host.id, source.id, levelId, { skills: 3 });
-    else await ClassLevelsService.deleteClassLevel(session, host.id, source.id, levelId);
+    } else if (action === "create level") {
+      await ClassLevelsService.createClassLevel(session, host.id, source.id, {
+        level: 20,
+        fields: { bab: 20, skills: 2 },
+      });
+    } else if (action === "update level") {
+      await ClassLevelsService.updateClassLevel(session, host.id, source.id, levelId, { fields: { skills: 3 } });
+    } else {
+      await ClassLevelsService.deleteClassLevel(session, host.id, source.id, levelId);
+    }
     await assertCopied();
   });
 }

@@ -60,8 +60,7 @@ export function nextClassLevel(
   const highest = levels.reduce((top, level) => (level.level > top.level ? level : top));
   return {
     level: highest.level + 1,
-    bab: highest.bab,
-    skills: highest.skills,
+    fields: { bab: highest.bab, skills: highest.skills },
     saves: highest.saves.map(({ saveId, base }) => ({ saveId, base })),
     feats: [],
   };
