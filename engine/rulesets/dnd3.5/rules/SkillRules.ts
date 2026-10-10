@@ -1,8 +1,20 @@
 /**
- * The 3.5 skill rules: the points a level gives, what a rank costs, and how many ranks a skill may hold. The client
- * keeps its own copy (`shared/dnd3.5/skills.ts`) until it reads them from the API.
+ * The 3.5 skill rules: the points a level gives, what a rank costs, how many ranks a skill may hold, and how points
+ * spread over levels.
  */
 export default class SkillRules {
+  /**
+   * The levels in the order points go to `skillId`: those where it's a class skill first, at a point a rank, then the
+   * others, at two points a rank.
+   */
+  private static spendingOrder(skillId: string, perLevelClassSkillIds: string[][], perLevelSkillPoints: number[]) {
+    const levels = perLevelSkillPoints.map((_, level) => ({
+      level,
+      pointsPerRank: perLevelClassSkillIds[level].includes(skillId) ? 1 : 2,
+    }));
+    return [...levels.filter((l) => l.pointsPerRank === 1), ...levels.filter((l) => l.pointsPerRank === 2)];
+  }
+
   /**
    * The skill points a level gives: its points per level (its class's and the skill point ability's modifier), at least
    * 1, and a bonus per level (a human's 1) beside the minimum, both four times over at the character's first level.
@@ -24,5 +36,32 @@ export default class SkillRules {
   /** The ranks `points` buy: a rank a point in a class skill, half a rank cross-class. */
   static ranksFor(points: number, isClassSkill: boolean): number {
     return isClassSkill ? points : points / 2;
+  }
+
+  /**
+   * `points` spent on `skillId` over levels (each its class skills and the points it has), class-skill levels first:
+   * the ranks they buy and the points each level spends.
+   */
+  static spend(
+    skillId: string,
+    points: number,
+    perLevelClassSkillIds: string[][],
+    perLevelSkillPoints: number[],
+  ): { perLevel: number[]; ranks: number } {
+    const perLevel = perLevelSkillPoints.map(() => 0);
+    let ranks = 0;
+    let remaining = points;
+    for (const { level, pointsPerRank } of SkillRules.spendingOrder(
+      skillId,
+      perLevelClassSkillIds,
+      perLevelSkillPoints,
+    )) {
+      if (remaining <= 0) break;
+      const spent = Math.min(remaining, perLevelSkillPoints[level]);
+      ranks += spent / pointsPerRank;
+      perLevel[level] = spent;
+      remaining -= spent;
+    }
+    return { ranks, perLevel };
   }
 }

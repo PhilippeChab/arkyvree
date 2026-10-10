@@ -1,4 +1,4 @@
-import type { LevelRequest } from "@/engine/core/module/index.ts";
+import type { LevelPicks, LevelRequest } from "@/engine/core/module/index.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 
 import PlannedLevelsState, { type PlannedLevels } from "./PlannedLevelsState.ts";
@@ -7,18 +7,16 @@ import PlannedLevelsState, { type PlannedLevels } from "./PlannedLevelsState.ts"
 export default class LevelUpPreview extends PlannedLevelsState {
   /**
    * The level-up wizard's preview of the planned levels: its skills, feats, powers and attributes steps, each level's
-   * class, hit die and skill points, and what it recomputes the points and auto-assigns the picks by. The skills step's
-   * points before the minimum are the planned levels' in the batch's order, and every level's in the budget's.
+   * class, hit die and skill points, and what it hands its picks out by. The skills step spends the form's points
+   * (`points`, by skill, in its order) over the planned levels, as their save spreads them.
    */
-  private buildLevelUpPreview(planned: PlannedLevels) {
+  private buildLevelUpPreview(planned: PlannedLevels, points: Record<string, number>) {
     const { character, savedLevelCount, klassLevelEntries } = planned;
     const { classSkills, klassLevelIds, perLevelFeatSlots, perLevelPowerSlots, perLevelSkillPoints, pools } =
       this.computeLevelGains(planned);
+    const levels = { perLevelClassSkillIds: classSkills.perLevel, perLevelSkillPoints, savedLevelCount };
     return {
-      skills: {
-        ...this.skillStep(character, classSkills.merged, savedLevelCount + klassLevelEntries.length),
-        ...character.components.skills.getSkillPointBases(),
-      },
+      skills: this.skillStep(character, classSkills.merged, levels, points),
       feats: this.featStep(pools, klassLevelIds),
       powers: this.powerStep(pools, klassLevelIds),
       attributes: {
@@ -35,8 +33,6 @@ export default class LevelUpPreview extends PlannedLevelsState {
         skillPoints: perLevelSkillPoints[i],
       })),
       perLevelSkillPoints,
-      perLevelSkillPointBases: this.computeSkillPointBasesPerLevel(character, klassLevelIds),
-      perLevelClassSkillIds: classSkills.perLevel,
       perLevelFeatSlots,
       perLevelPowerSlots,
     };
@@ -49,8 +45,16 @@ export default class LevelUpPreview extends PlannedLevelsState {
     return levels;
   }
 
-  /** The level-up wizard's preview of the levels the character plans, each with its ability increases. */
-  describePreview(levels: Omit<LevelRequest, "hp">[]) {
-    return this.buildLevelUpPreview(this.buildPlannedLevels(this.getPlannedKlassLevels(levels)));
+  /**
+   * The level-up wizard's preview of the levels the character plans, each with its ability increases (raising nothing
+   * at a level that takes none: the wizard's pick for a level the plan moved), and of the picks made over them so far
+   * (`picks`: the skill points spent, by skill, in the form's order).
+   */
+  describePreview(levels: Omit<LevelRequest, "hp">[], picks: Partial<LevelPicks> = {}) {
+    const savedLevelCount = this.character.rows.levels.length;
+    const increased = levels.map((level, i) =>
+      LevelRules.isAbilityIncreaseLevel(savedLevelCount + i) ? level : { ...level, abilityIncreases: [] },
+    );
+    return this.buildLevelUpPreview(this.buildPlannedLevels(this.getPlannedKlassLevels(increased)), picks.skills ?? {});
   }
 }

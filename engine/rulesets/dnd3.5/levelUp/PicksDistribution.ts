@@ -1,5 +1,4 @@
 import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
-import { distributeSkillPoints } from "@/shared/dnd3.5/skills.ts";
 
 import type { FeatSlots, PowerSlots } from "./AptitudeSlotsPlan.ts";
 
@@ -17,13 +16,18 @@ export interface PerLevelDistributionData {
   perLevelPowerSlots: PowerSlots;
   perLevelSkillPoints: number[];
   savedLevelCount: number;
-  /** Map of skillId → { isClassSkill, currentRank } for existing character skills */
+  /** Each skill's rank so far and whether it's a class skill, by its id (`contextsOf`). */
   skillContexts: Map<string, { currentRank: number; isClassSkill: boolean }>;
 }
 
 /** A save's pooled picks (skill ranks, and feats and powers by pool) spread over its planned levels, in order. */
 export default class PicksDistribution {
   constructor(private readonly data: PerLevelDistributionData) {}
+
+  /** Each skill's rank so far and whether it's a class skill, which cap its ranks: by its id, of the step's skills. */
+  static contextsOf(skills: { currentRank: number; id: string; isClassSkill: boolean }[]) {
+    return new Map(skills.map(({ currentRank, id, isClassSkill }) => [id, { currentRank, isClassSkill }]));
+  }
 
   /**
    * Caps a skill's points at what each level can take: the ranks its max rank leaves (a cross-class rank costs two
@@ -145,7 +149,7 @@ export default class PicksDistribution {
     for (const [skillId, totalPoints] of Object.entries(skills)) {
       if (totalPoints <= 0) continue;
 
-      const { perLevel } = distributeSkillPoints(
+      const { perLevel } = SkillRules.spend(
         skillId,
         totalPoints,
         this.data.perLevelClassSkillIds,

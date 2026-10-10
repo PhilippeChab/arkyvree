@@ -2,6 +2,8 @@ import { LevelUpBase } from "@/engine/core/levelUp/index.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import SkillsComponent from "@/engine/rulesets/dnd3.5/model/skills/SkillsComponent.ts";
 
+import SkillSpending, { type SpentLevels } from "./SkillSpending.ts";
+
 /** The pools a character picks feats and powers in, and how many, with what a level-up plans. */
 type LevelUpPools = ReturnType<DetailedCharacter["components"]["aptitudes"]["getLevelUpPools"]>;
 
@@ -34,6 +36,11 @@ export default abstract class LevelUpState extends LevelUpBase<DetailedCharacter
     return ids;
   }
 
+  /** The skill points a level-up step spends: what the character has left to spend, at least one. */
+  protected getSkillPointsToSpend(character: DetailedCharacter) {
+    return Math.max(1, character.components.skills.getSkillBudget().available);
+  }
+
   /**
    * A powers step, the wizard's and the preview's alike: how many powers the character picks with what's planned
    * (`pools`), in which pools, and the powers the class levels (`klassLevelIds`) grant, each saying whether it's free.
@@ -50,15 +57,23 @@ export default abstract class LevelUpState extends LevelUpBase<DetailedCharacter
   }
 
   /**
-   * A skills step, the wizard's and the preview's alike: the points the character has to spend (at least one), each
-   * skill with its class status (`classSkillIds`), and the character's total level after the step, which caps a rank.
+   * A skills step, the wizard's and the preview's alike: the points the character has to spend (at least one), the
+   * character's total level after the step's levels (`levels`: each one's class skills and points), and each skill with
+   * its class status (`classSkillIds`: the step's classes') and what the form's points (`points`, by skill, in its
+   * order) come to over the levels, as a save spreads them (`SkillSpending`).
    */
-  protected skillStep(character: DetailedCharacter, classSkillIds: Set<string>, totalCharacterLevel: number) {
-    const { skills } = character.components;
+  protected skillStep(
+    character: DetailedCharacter,
+    classSkillIds: Set<string>,
+    levels: SpentLevels,
+    points: Record<string, number>,
+  ) {
+    const skillPointsToSpend = this.getSkillPointsToSpend(character);
+    const stepSkills = character.components.skills.getEnrichedSkills(this.rulesetData.skills, classSkillIds);
     return {
-      skillPointsToSpend: Math.max(1, skills.getSkillBudget().available),
-      totalCharacterLevel,
-      skills: skills.getEnrichedSkills(this.rulesetData.skills, classSkillIds),
+      skillPointsToSpend,
+      totalCharacterLevel: levels.savedLevelCount + levels.perLevelSkillPoints.length,
+      skills: new SkillSpending(levels, stepSkills).describe(points, skillPointsToSpend),
     };
   }
 }

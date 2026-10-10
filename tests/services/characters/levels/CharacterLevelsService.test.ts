@@ -1711,9 +1711,12 @@ describe("LevelsService", () => {
         [
           "preview",
           () =>
-            CharacterLevelsService.getPreview(session, character.id, [
-              { abilityIncreases: [], klassId: klass.id, level: 1 },
-            ]),
+            CharacterLevelsService.getPreview(
+              session,
+              character.id,
+              [{ abilityIncreases: [], klassId: klass.id, level: 1 }],
+              {},
+            ),
         ],
         ["classes", () => CharacterLevelsService.getAvailableClasses(session, character.id, {}, page)],
         ["feat slots", () => getLevelStep(session, character.id, "feats", { classId: klass.id, level: 1 })],

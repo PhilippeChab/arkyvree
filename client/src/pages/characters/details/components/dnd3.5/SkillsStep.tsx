@@ -19,25 +19,16 @@ import { DiceSpinner, LoadError, SubsectionTitle } from "@/client/src/components
 import { CasinoIcon } from "@/client/src/components/icons/index.ts";
 import { useLatest } from "@/client/src/hooks/index.ts";
 import { formatPointsSpent, pointsSpent } from "@/client/src/pages/characters/pointsSpent.ts";
-import { computeMaxSkillRank } from "@/shared/dnd3.5/skills.ts";
 
-import {
-  type LevelUpFormData,
-  maxSkillPoints,
-  type SkillLevels,
-  skillRanks,
-  type SkillsData,
-} from "./levelUp/index.ts";
+import { type LevelUpFormData, pointsAt, ranksAt, type SkillsData } from "./levelUp/index.ts";
 import { OptionTooltip } from "./OptionTooltip.tsx";
 
 interface SkillAllocationRowProps {
   hidden: boolean;
   indented: boolean;
-  levels: SkillLevels;
   onAllocate: (skillId: string, rawPoints: number) => void;
   pointsAllocated: number;
   skill: SkillsData["skills"][number];
-  totalCharacterLevel: number;
 }
 
 /** The skill points state a level wizard hands the Skills step. */
@@ -45,9 +36,8 @@ interface SkillPickerState {
   /** The picks' form: the skill points field, which the step changes from `skillPointAllocations`. */
   control: Control<LevelUpFormData>;
   isLoadingSkills: boolean;
+  /** The points to spend, and each skill's spending over the levels: the planned ones (Add Level), or the edited one. */
   skillData: SkillsData | null | undefined;
-  /** The levels the points go to: the planned ones (Add Level), or the edited one. */
-  skillLevels: SkillLevels | undefined;
   /** The points as they fit the slots */
   skillPointAllocations: Record<string, number>;
   skillsError: Error | null;
@@ -62,24 +52,14 @@ const COLUMN_HEADER_SX = { whiteSpace: "nowrap", fontSize: { xs: "0.7rem", sm: "
 
 const SkillAllocationRow = memo(function SkillAllocationRow({
   skill,
-  totalCharacterLevel,
   pointsAllocated,
   onAllocate,
   indented,
   hidden,
-  levels,
 }: SkillAllocationRowProps) {
-  // Levels of one class show its class skills (not the character-wide history captured by `skill.isClassSkill`);
-  // only levels of several classes widen to the history.
-  const isMultiClass = levels.classSkillIds.some((ids) => ids.join(",") !== levels.classSkillIds[0].join(","));
-
-  // A class skill at any of the levels takes its first point there (a point a rank), so the step must be 1; 0.5 only
-  // works for a skill cross-class at every level.
-  const isClassForAnyLevel = levels.classSkillIds.some((ids) => ids.includes(skill.id));
-
-  const ranksGained = skillRanks(skill.id, pointsAllocated, levels);
-  const maxRanksCanAdd = computeMaxSkillRank(totalCharacterLevel, skill.isClassSkill) - skill.currentRank;
-  const maxFromLevel = maxSkillPoints(skill, totalCharacterLevel, levels);
+  // As the step answers them: the ranks the points buy, and the most the skill gains
+  const ranksGained = ranksAt(skill, pointsAllocated);
+  const maxRanksCanAdd = ranksAt(skill, skill.ranksByPoints.length - 1);
 
   return (
     <SkillRow
@@ -104,23 +84,12 @@ const SkillAllocationRow = memo(function SkillAllocationRow({
           size="small"
           sx={{ width: { xs: "60px", sm: "70px" } }}
           value={ranksGained || ""}
-          onChange={(e) => {
-            const ranksValue = parseFloat(e.target.value) || 0;
-            // The most points whose ranks don't pass the ranks typed, found by a binary search
-            let lo = 0,
-              hi = maxFromLevel;
-            while (lo < hi) {
-              const mid = Math.ceil((lo + hi) / 2);
-              if (skillRanks(skill.id, mid, levels) <= ranksValue) lo = mid;
-              else hi = mid - 1;
-            }
-            onAllocate(skill.id, lo);
-          }}
+          onChange={(e) => onAllocate(skill.id, pointsAt(skill, parseFloat(e.target.value) || 0))}
           slotProps={{
             htmlInput: {
               min: 0,
               max: maxRanksCanAdd,
-              step: isClassForAnyLevel ? 1 : 0.5,
+              step: skill.rankStep,
               // Named by its row's skill, which its column adds ranks to
               "aria-label": `${skill.name} Ranks to Add`,
             },
@@ -141,25 +110,24 @@ const SkillAllocationRow = memo(function SkillAllocationRow({
           {skill.currentRank + ranksGained}
         </Typography>
       </TableCell>
-      <TableCell>
-        {isMultiClass ? (skill.isClassSkill ? "Yes" : "No") : skill.isCurrentClassSkill ? "Yes" : "No"}
-      </TableCell>
+      <TableCell>{skill.classSkill ? "Yes" : "No"}</TableCell>
     </SkillRow>
   );
 });
 
 export function SkillsStep({ wizard }: SkillsStepProps) {
-  const { skillData, isLoadingSkills, skillsError, control, skillPointAllocations, skillLevels } = wizard;
+  const { skillData, isLoadingSkills, skillsError, control, skillPointAllocations } = wizard;
   // Changed from the points as they fit the slots, which the wizard reads
   const { field: allocationsField } = useController({ control, name: "skillPointAllocations" });
   // Read as a row allocates, so the callback the memoized rows get stays the same
   const latestAllocations = useLatest(skillPointAllocations);
   const setAllocations = allocationsField.onChange;
   const randomAssign = useCallback(() => {
-    if (!skillData || !skillLevels) return;
+    if (!skillData) return;
 
+    // Each skill up to the most it takes spent alone: the step keeps what the points come to once all are spent
     const skillMaxes = skillData.skills
-      .map((skill) => ({ id: skill.id, max: maxSkillPoints(skill, skillData.totalCharacterLevel, skillLevels) }))
+      .map((skill) => ({ id: skill.id, max: skill.maxPoints }))
       .filter((s) => s.max > 0);
 
     const allocations: Record<string, number> = {};
@@ -174,7 +142,7 @@ export function SkillsStep({ wizard }: SkillsStepProps) {
     }
 
     setAllocations(allocations);
-  }, [skillData, skillLevels, setAllocations]);
+  }, [skillData, setAllocations]);
 
   const skillPointsToSpend = skillData?.skillPointsToSpend ?? 0;
 
@@ -193,7 +161,7 @@ export function SkillsStep({ wizard }: SkillsStepProps) {
 
   if (isLoadingSkills) return <DiceSpinner />;
   if (skillsError && !skillData) return <LoadError what="Skills" error={skillsError} />;
-  if (!skillData || !skillLevels) return null;
+  if (!skillData) return null;
 
   const spent = pointsSpent(skillPointAllocations);
   const pointsRemaining = skillData.skillPointsToSpend - spent;
@@ -258,12 +226,10 @@ export function SkillsStep({ wizard }: SkillsStepProps) {
                 <SkillAllocationRow
                   key={skill.id}
                   skill={skill}
-                  totalCharacterLevel={skillData.totalCharacterLevel}
                   pointsAllocated={skillPointAllocations[skill.id] || 0}
                   onAllocate={handleAllocate}
                   indented={indented}
                   hidden={hidden}
-                  levels={skillLevels}
                 />
               )}
             />

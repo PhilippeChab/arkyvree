@@ -80,7 +80,7 @@ async function eligible(
     klassId: ctx.klassMap.pc["Fighter"],
     level: i + 1,
   }));
-  const { levelDetails } = await CharacterLevelsService.getPreview(session, characterId, plan);
+  const { levelDetails } = await CharacterLevelsService.getPreview(session, characterId, plan, {});
   const featPicks = (options.pendingPicks ?? []).map((name) => ({
     featId: ctx.featMap[name],
     aptitudeId: ctx.aptMap["General"],
@@ -108,6 +108,7 @@ async function preview(
   characterId: string,
   levels: [string, number][],
   abilities: (string | null)[] = levels.map(() => null),
+  skills: Record<string, number> = {},
 ) {
   return CharacterLevelsService.getPreview(
     session,
@@ -117,6 +118,7 @@ async function preview(
       klassId: ctx.klassMap.pc[klass],
       level,
     })),
+    Object.fromEntries(Object.entries(skills).map(([name, points]) => [ctx.skillMap[name], points])),
   );
 }
 
@@ -473,9 +475,6 @@ describe("previewing a level-up", () => {
     );
     expect(result.perLevelSkillPoints).toEqual([16, 4, 4, 4]);
     expect(result.skills).toMatchObject({ skillPointsToSpend: 28, totalCharacterLevel: 4 });
-    // What the wizard recomputes them from: each level's 2 + 1 (INT 13) before the minimum, and the human's 1 beside.
-    expect(result.perLevelSkillPointBases).toEqual([3, 3, 3, 3]);
-    expect(result.skills).toMatchObject({ pointsPerLevel: [3, 3, 3, 3], bonusPerLevel: 1 });
     expect(result.skills.skills.length).toBeGreaterThan(0);
     // The fourth level of the batch, by its index.
     expect(result.attributes.abilityIncreaseLevels).toEqual([3]);
@@ -486,15 +485,49 @@ describe("previewing a level-up", () => {
     await expect(preview(ctx, NIL_UUID, fighter(1))).rejects.toThrow(NotFoundError);
   });
 
-  test("shows the base attributes, raised only by the increases chosen", async () => {
-    // The level-up wizard adds a chosen increase itself: counting it twice would show the wrong totals.
+  test("shows the base attributes, raised only by the increases chosen at the levels that take one", async () => {
     const ctx = await getSeedCtx();
     const characterId = await createSeedCharacter(ctx);
-    expect((await preview(ctx, characterId, fighter(4))).attributes.attributes["intelligence"].total).toBe(12);
-    expect(
-      (await preview(ctx, characterId, fighter(4), [null, null, null, ctx.abilityMap["Intelligence"]])).attributes
-        .attributes["intelligence"].total,
-    ).toBe(13);
+    const intelligence = async (abilities: (string | null)[]) =>
+      (await preview(ctx, characterId, fighter(4), abilities)).attributes.attributes["intelligence"];
+    expect((await intelligence([null, null, null, null])).total).toBe(12);
+    expect(await intelligence([null, null, null, ctx.abilityMap["Intelligence"]])).toMatchObject({
+      total: 13,
+      modifier: 1,
+    });
+    // A pick the plan moved off an increase level (the first takes none) raises nothing
+    expect((await intelligence([ctx.abilityMap["Intelligence"], null, null, null])).total).toBe(12);
+  });
+
+  test("raises every level's skill points with an Intelligence increase, as 3.5 grants them retroactively", async () => {
+    const ctx = await getSeedCtx();
+    const characterId = await createSeedCharacter(ctx, "fighter", { abilities: { Intelligence: 13 } });
+    const raised = await preview(ctx, characterId, fighter(4), [null, null, null, ctx.abilityMap["Intelligence"]]);
+    // Each level's 2 + 2 (INT 14), and the human's 1 beside: 20 at the first level, 5 at the others
+    expect(raised.perLevelSkillPoints).toEqual([20, 5, 5, 5]);
+    expect(raised.skills.skillPointsToSpend).toBe(35);
+  });
+
+  test("spends the skill points as the save spreads them, each skill with its ranks by points", async () => {
+    const ctx = await getSeedCtx();
+    const characterId = await createSeedCharacter(ctx);
+    const { skills } = await preview(ctx, characterId, fighter(1), [null], { Climb: 6, Hide: 3 });
+    const skill = (name: string) => skills.skills.find((s) => s.id === ctx.skillMap[name])!;
+    // Climb, a fighter's class skill, caps at 4 ranks at level 1: its 2 points over the cap aren't kept
+    expect(skill("Climb")).toMatchObject({
+      classSkill: true,
+      points: 4,
+      ranks: 4,
+      rankStep: 1,
+      ranksByPoints: [0, 1, 2, 3, 4],
+      maxPoints: 4,
+    });
+    // Hide, cross-class, takes two points a rank, up to 2 ranks
+    expect(skill("Hide")).toMatchObject({ classSkill: false, points: 3, ranks: 1.5, rankStep: 0.5 });
+    expect(skill("Hide").ranksByPoints).toEqual([0, 0.5, 1, 1.5, 2]);
+    // A skill no points went to reads what it would gain, within the points the others leave
+    expect(skill("Swim")).toMatchObject({ points: 0, ranks: 0, maxPoints: 4 });
+    expect(skill("Swim").ranksByPoints).toEqual([0, 1, 2, 3, 4]);
   });
 
   test("counts a human's bonus feat in the first level's General slots", async () => {

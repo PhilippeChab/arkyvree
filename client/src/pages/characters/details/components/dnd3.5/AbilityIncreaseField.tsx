@@ -1,7 +1,7 @@
 import { FormControl, FormControlLabel, FormLabel, Radio, RadioGroup } from "@mui/material";
 import { useId } from "react";
 
-import { computeAbilityModifier, sortAbilities } from "@/client/src/components/characters/index.ts";
+import { sortAbilities } from "@/client/src/components/characters/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 import { capitalize, formatSigned } from "@/shared/text.ts";
 
@@ -31,7 +31,7 @@ export function AbilityIncreaseField({ abilities, baseRules, name, value, onChan
             key={ability.abilityId}
             value={ability.abilityId}
             control={<Radio />}
-            label={`${capitalize(key)}: ${ability.total} (${formatSigned(computeAbilityModifier(ability.total))})`}
+            label={`${capitalize(key)}: ${ability.total} (${formatSigned(ability.modifier)})`}
           />
         ))}
       </RadioGroup>

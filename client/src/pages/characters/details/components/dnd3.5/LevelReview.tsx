@@ -11,8 +11,7 @@ import {
   type HpLevel,
   type LevelUpFormData,
   type PowersData,
-  type SkillLevels,
-  skillRanks,
+  ranksAt,
   type SkillsData,
 } from "./levelUp/index.ts";
 
@@ -41,9 +40,8 @@ export interface LevelReviewState {
   powerData: PowersData | null | undefined;
   selectedFeats: LevelUpFormData["selectedFeats"];
   selectedPowers: LevelUpFormData["selectedPowers"];
+  /** The points to spend, and each skill's spending, which the skills step reads too. */
   skillData: SkillsData | null | undefined;
-  /** The levels the points go to, which the skills step spends them over too. */
-  skillLevels: SkillLevels | undefined;
   skillPointAllocations: Record<string, number>;
 }
 
@@ -62,17 +60,8 @@ function ReviewItem({ name, note }: ReviewItemProps) {
  * the skills, feats and spells picked.
  */
 export function LevelReview({ wizard, children }: LevelReviewProps) {
-  const {
-    hpLevels,
-    hpValues,
-    skillPointAllocations,
-    skillData,
-    skillLevels,
-    selectedFeats,
-    featData,
-    selectedPowers,
-    powerData,
-  } = wizard;
+  const { hpLevels, hpValues, skillPointAllocations, skillData, selectedFeats, featData, selectedPowers, powerData } =
+    wizard;
   const selectedSkills = Object.entries(skillPointAllocations).filter(([, points]) => points > 0);
   const spent = pointsSpent(skillPointAllocations);
   const selectedFeatsData = Object.values(selectedFeats).flat();
@@ -100,9 +89,9 @@ export function LevelReview({ wizard, children }: LevelReviewProps) {
               <Box>
                 {selectedSkills.map(([skillId, points]) => {
                   const skill = skillData?.skills.find((s) => s.id === skillId);
-                  if (!skill || !skillLevels) return null;
-                  // As the skills step and the server count them: by the levels the points go to
-                  const ranksGained = skillRanks(skillId, points, skillLevels);
+                  if (!skill) return null;
+                  // As the skills step shows them: what the server spreads the points to
+                  const ranksGained = ranksAt(skill, points);
                   return (
                     <ReviewItem
                       key={skillId}

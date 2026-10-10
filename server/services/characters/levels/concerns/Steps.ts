@@ -6,7 +6,8 @@ import type { Session } from "@/shared/relations.ts";
 
 /**
  * The level a step is for, as the wizard's query sends it: class `classId`'s `level` with its ability increases, after
- * the levels it plans before it (their class levels and ability increases), or a saved level's edit (`editedLevelId`).
+ * the levels it plans before it (their class levels and ability increases), or a saved level's edit (`editedLevelId`),
+ * and the skill points spent at it so far (`skillPoints`).
  */
 interface StepQuery {
   abilityIncreases?: LevelStep["abilityIncreases"];
@@ -15,12 +16,19 @@ interface StepQuery {
   level?: number;
   plannedAbilityIncreases?: PlannedSoFar["abilityIncreases"];
   plannedClassLevelIds?: string[];
+  skillPoints?: Record<string, number>;
 }
 
 /** The step's level as the engine takes it. */
-function stepOf({ classId, plannedAbilityIncreases, plannedClassLevelIds, ...step }: StepQuery): LevelStep {
+function stepOf({
+  classId,
+  plannedAbilityIncreases,
+  plannedClassLevelIds,
+  skillPoints,
+  ...step
+}: StepQuery): LevelStep {
   const planned = { abilityIncreases: plannedAbilityIncreases, klassLevelIds: plannedClassLevelIds };
-  return { ...step, klassId: classId, planned };
+  return { ...step, klassId: classId, picks: { skills: skillPoints }, planned };
 }
 
 /**

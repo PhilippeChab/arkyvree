@@ -246,15 +246,15 @@ describe("architecture rules", () => {
           "content/core/builders/h.ts": imports("@/content/dnd3.5/builders/feats/possession.ts"),
           "codegen/core/i.ts": imports("@/codegen/dnd3.5/tools/text/sanitize.ts"),
           "database/packages/seed/j.ts": imports("@/database/packages/dnd3.5/seed/BaseSeeder.ts"),
-          "server/k.ts": imports("@/shared/dnd3.5/skills.ts"),
-          "shared/l.ts": imports("@/shared/dnd3.5/skills.ts"),
+          "server/k.ts": imports("@/shared/dnd3.5/spells.ts"),
+          "shared/l.ts": imports("@/shared/dnd3.5/spells.ts"),
           // A ruleset's builders are what its data is written with: they read none of it
           "content/dnd3.5/builders/m.ts": imports("@/content/dnd3.5/data/core.ts"),
           "content/dnd3.5/builders/n.ts": imports("@/content/dnd3.5/generated/srd/index.ts"),
           // A ruleset reads its own folders and the core's; a registry and a test read any ruleset's
           "content/dnd3.5/builders/o.ts": imports("@/content/dnd3.5/builders/items/types.ts"),
           "content/dnd3.5/data/p.ts": imports("@/content/core/builders/customization/requirements.ts"),
-          "engine/rulesets/dnd3.5/q.ts": imports("@/shared/dnd3.5/skills.ts"),
+          "engine/rulesets/dnd3.5/q.ts": imports("@/shared/dnd3.5/spells.ts"),
           "engine/api/r.ts": imports("@/engine/rulesets/pf1/index.ts"),
           "tests/s.test.ts": imports("@/engine/rulesets/pf1/index.ts"),
         },
