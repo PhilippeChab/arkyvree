@@ -116,7 +116,7 @@ export const CLERIC_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Advance Cleric Spellcasting",
     description:
-      "Your effective cleric caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in cleric.",
+      "Your effective Cleric caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in Cleric.",
     stackable: true,
     aptitudes: ["Bonus Divine Caster Level", "Bonus Caster Level"],
     requirements: [gte("classes.cleric.level", 1)],

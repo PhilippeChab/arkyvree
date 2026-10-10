@@ -132,7 +132,7 @@ export const BARD_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Advance Bard Spellcasting",
     description:
-      "Your effective bard caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in bard.",
+      "Your effective Bard caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in Bard.",
     stackable: true,
     aptitudes: ["Bonus Arcane Caster Level", "Bonus Caster Level"],
     requirements: [gte("classes.bard.level", 1)],

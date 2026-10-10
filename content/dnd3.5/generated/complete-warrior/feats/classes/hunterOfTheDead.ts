@@ -63,7 +63,7 @@ export const HUNTER_OF_THE_DEAD_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Advance Hunter of the Dead Spellcasting",
     description:
-      "Your effective hunterofthedead caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in hunterofthedead.",
+      "Your effective Hunter of the Dead caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in Hunter of the Dead.",
     stackable: true,
     aptitudes: ["Bonus Divine Caster Level", "Bonus Caster Level"],
     requirements: [gte("classes.hunterofthedead.level", 1)],

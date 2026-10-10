@@ -98,7 +98,7 @@ export const BLACKGUARD_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Advance Blackguard Spellcasting",
     description:
-      "Your effective blackguard caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in blackguard.",
+      "Your effective Blackguard caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in Blackguard.",
     stackable: true,
     aptitudes: ["Bonus Divine Caster Level", "Bonus Caster Level"],
     requirements: [gte("classes.blackguard.level", 1)],

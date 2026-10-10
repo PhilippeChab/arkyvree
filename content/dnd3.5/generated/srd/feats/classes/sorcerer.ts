@@ -40,7 +40,7 @@ export const SORCERER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Advance Sorcerer Spellcasting",
     description:
-      "Your effective sorcerer caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in sorcerer.",
+      "Your effective Sorcerer caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in Sorcerer.",
     stackable: true,
     aptitudes: ["Bonus Arcane Caster Level", "Bonus Caster Level"],
     requirements: [gte("classes.sorcerer.level", 1)],

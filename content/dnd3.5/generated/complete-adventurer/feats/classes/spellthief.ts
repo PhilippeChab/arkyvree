@@ -133,7 +133,7 @@ export const SPELLTHIEF_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Advance Spellthief Spellcasting",
     description:
-      "Your effective spellthief caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in spellthief.",
+      "Your effective Spellthief caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in Spellthief.",
     stackable: true,
     aptitudes: ["Bonus Arcane Caster Level", "Bonus Caster Level"],
     requirements: [gte("classes.spellthief.level", 1)],

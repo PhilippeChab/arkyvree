@@ -59,7 +59,7 @@ export const WU_JEN_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Advance Wu Jen Spellcasting",
     description:
-      "Your effective wujen caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in wujen.",
+      "Your effective Wu Jen caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in Wu Jen.",
     stackable: true,
     aptitudes: ["Bonus Arcane Caster Level", "Bonus Caster Level"],
     requirements: [gte("classes.wujen.level", 1)],

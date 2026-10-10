@@ -52,7 +52,7 @@ export function Spellcasting<B extends Constructor<BaseClassSeeds>>(Base: B) {
       return [
         {
           name: `Advance ${raw.name} Spellcasting`,
-          description: `Your effective ${this.classSlug} caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in ${this.classSlug}.`,
+          description: `Your effective ${raw.name} caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in ${raw.name}.`,
           stackable: true,
           aptitudes: [
             casterType === "Divine" ? "Bonus Divine Caster Level" : "Bonus Arcane Caster Level",

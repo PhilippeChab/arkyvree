@@ -87,7 +87,7 @@ export const VIGILANTE_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Advance Vigilante Spellcasting",
     description:
-      "Your effective vigilante caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in vigilante.",
+      "Your effective Vigilante caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in Vigilante.",
     stackable: true,
     aptitudes: ["Bonus Arcane Caster Level", "Bonus Caster Level"],
     requirements: [gte("classes.vigilante.level", 1)],

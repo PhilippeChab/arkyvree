@@ -77,7 +77,7 @@ export const CONSECRATED_HARRIER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Advance Consecrated Harrier Spellcasting",
     description:
-      "Your effective consecratedharrier caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in consecratedharrier.",
+      "Your effective Consecrated Harrier caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in Consecrated Harrier.",
     stackable: true,
     aptitudes: ["Bonus Divine Caster Level", "Bonus Caster Level"],
     requirements: [gte("classes.consecratedharrier.level", 1)],

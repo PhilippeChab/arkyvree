@@ -68,7 +68,7 @@ export const FAVORED_SOUL_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Advance Favored Soul Spellcasting",
     description:
-      "Your effective favoredsoul caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in favoredsoul.",
+      "Your effective Favored Soul caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in Favored Soul.",
     stackable: true,
     aptitudes: ["Bonus Divine Caster Level", "Bonus Caster Level"],
     requirements: [gte("classes.favoredsoul.level", 1)],

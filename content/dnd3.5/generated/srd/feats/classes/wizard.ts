@@ -70,7 +70,7 @@ export const WIZARD_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Advance Wizard Spellcasting",
     description:
-      "Your effective wizard caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in wizard.",
+      "Your effective Wizard caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in Wizard.",
     stackable: true,
     aptitudes: ["Bonus Arcane Caster Level", "Bonus Caster Level"],
     requirements: [gte("classes.wizard.level", 1)],
