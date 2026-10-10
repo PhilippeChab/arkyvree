@@ -10,6 +10,11 @@ function featDetectedOf(name: string, prerequisiteText: string) {
   return featsDetected([{ name, featType: "general", prerequisiteText, benefit: "", special: "" }])[name];
 }
 
+/** A general feat's page, with no prerequisite. */
+function featEntry(name: string, benefit: string, special = "") {
+  return { name, featType: "general", prerequisiteText: "", benefit, special };
+}
+
 /** What a feat reference's detector detects in `raw`, in a book with no classes. */
 function featsDetected(raw: FeatReference["raw"]) {
   return new FeatDetector({ _meta: { book: "srd", scrapedAt: "", sourceUrl: "", type: "feat" }, raw }, []).resolve()
@@ -18,17 +23,10 @@ function featsDetected(raw: FeatReference["raw"]) {
 
 describe("A feat's detected aptitudes", () => {
   test("make a general feat a fighter bonus feat when its Special says a fighter may or can select it", () => {
-    const feat = (name: string, special: string) => ({
-      name,
-      featType: "general",
-      prerequisiteText: "",
-      benefit: "",
-      special,
-    });
     const detected = featsDetected([
-      feat("Mounted Combat", "A fighter may select Mounted Combat as one of his fighter bonus feats."),
-      feat("Deadly Defense", "A fighter can select Deadly Defense as one of his fighter bonus feats (PH 38)."),
-      feat("Shield Proficiency", "Fighters automatically have Shield Proficiency as a bonus feat."),
+      featEntry("Mounted Combat", "", "A fighter may select Mounted Combat as one of his fighter bonus feats."),
+      featEntry("Deadly Defense", "", "A fighter can select Deadly Defense as one of his fighter bonus feats (PH 38)."),
+      featEntry("Shield Proficiency", "", "Fighters automatically have Shield Proficiency as a bonus feat."),
     ]);
     expect(Object.fromEntries(Object.entries(detected).map(([name, d]) => [name, d.aptitudes]))).toEqual({
       "Mounted Combat": ["General", "Fighter Bonus Feat"],
@@ -119,26 +117,19 @@ describe("A feat's detected prerequisites", () => {
 
 describe("A feat's detected template", () => {
   test("is one feat per skill or school for a feat taken again for each, not one naming skills or schools", () => {
-    const feat = (name: string, benefit: string, special = "") => ({
-      name,
-      featType: "general",
-      prerequisiteText: "",
-      benefit,
-      special,
-    });
     const detected = featsDetected([
-      feat(
+      featEntry(
         "Skill Focus",
         "You get a +3 bonus on all checks involving that skill.",
         "Each time you take the feat, it applies to a new skill.",
       ),
-      feat("Jack of All Trades", "You can use any skill as if you had 1/2 rank in that skill."),
-      feat(
+      featEntry("Jack of All Trades", "You can use any skill as if you had 1/2 rank in that skill."),
+      featEntry(
         "Spell Focus",
         "Add +1 to the Difficulty Class for all saving throws against spells from the school of magic you select.",
       ),
-      feat("Precocious Apprentice", "Choose one 2nd-level spell from a school of magic you have access to."),
-      feat(
+      featEntry("Precocious Apprentice", "Choose one 2nd-level spell from a school of magic you have access to."),
+      featEntry(
         "Magical Appraisal",
         "When you succeed on a Spellcraft check to determine the school of magic of the aura surrounding a magic item…",
       ),
@@ -149,6 +140,30 @@ describe("A feat's detected template", () => {
       "Spell Focus": "school",
       "Precocious Apprentice": null,
       "Magical Appraisal": null,
+    });
+  });
+
+  test("is one feat per weapon for a feat taken again for each, not one naming a type of weapon", () => {
+    const detected = featsDetected([
+      featEntry(
+        "Weapon Focus",
+        "You gain a +1 bonus on all attack rolls you make using the selected weapon.",
+        "You can gain this feat multiple times. Its effects do not stack. Each time you take the feat, it applies to a new type of weapon.",
+      ),
+      featEntry(
+        "Power Critical",
+        "When using the weapon you selected, you gain a +4 bonus on the roll to confirm a threat.",
+      ),
+      featEntry(
+        "Greater Resiliency",
+        "Your damage reduction increases by 1.",
+        "This feat has no effect on the type of weapon or damage that overcomes your damage reduction.",
+      ),
+    ]);
+    expect(Object.fromEntries(Object.entries(detected).map(([name, d]) => [name, d.template?.type ?? null]))).toEqual({
+      "Weapon Focus": "weapon",
+      "Power Critical": "weapon",
+      "Greater Resiliency": null,
     });
   });
 });

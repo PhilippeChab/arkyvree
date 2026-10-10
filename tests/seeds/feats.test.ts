@@ -37,7 +37,6 @@ test("The seeded generated feats are a family's feats for each of its options, i
     "Exotic Weapon Proficiency",
     "Favored Enemy",
     "Favored Enemy Specialization",
-    "Greater Resiliency",
     "Greater Spell Focus",
     "Greater Weapon Focus",
     "Greater Weapon Specialization",
