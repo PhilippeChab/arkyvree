@@ -85,6 +85,7 @@ Scrapes class pages into `ClassReference` JSON with full progression tables.
 - Progression table (BAB, saves, special features, spells per day)
 - BAB type (good/medium/poor), save types (good/poor)
 - Prerequisites: BAB, skills, feats, caster level, alignment, race, weapon proficiency
+- Special prerequisites: an entry is read as one requirement (a race, a proficiency, a special ability: its first). The prerequisites it lists that none reads are reported, to be reviewed: one read as a requirement the class lacks ("Flurry of blows ability; evasion ability" leaves out the evasion), or a class feature's name ("Evasion class feature")
 - Compound feat requirements (e.g. "Weapon Focus (longbow or shortbow)" → `or()`), lists included ("Weapon Focus (dagger, kukri, or punch dagger)", which the scraper splits): each option by its weapon's or school's name ("punch dagger" → Punching Dagger, "Necro." → Necromancy), "composite version of either" as the composite of each. "Negotiator (or), Persuasive" is either feat, "Improved Unarmed Strike (or monk's unarmed strike ability)" the feat, and an exotic proficiency with a martial weapon ("Exotic Weapon Proficiency (kukri)") the martial one. A feat with a choice ("Energy Substitution (cold)") is the feat. Languages read into the feats ("Spell Focus (conjuration) Languages: Celestial") are left out
 - Caster level advancement from "+1 level of existing" text
 - Spell tables (per day + known), with footnote stripping
@@ -106,7 +107,7 @@ Scrapes feat listing and detail pages into `FeatReference` JSON.
 
 **Auto-detected:**
 - Feat name, type (General, Fighter, Metamagic, etc.), description, benefit
-- Prerequisite text parsing into structured requirements (ability scores, BAB, feats, skills, caster level), with the same option lists as classes. A class feature named as a prerequisite ("Ability to acquire a new familiar", "Sneak attack +2d6") is a check of its family; "Ki strike (lawful)" is monk level 10, and "Relevant alignment" the alignment the feat's name holds (Spell Focus (Chaos): any chaotic). What no path can read ("Ability to fly") is reported, to be reviewed
+- Prerequisite text parsing into structured requirements (ability scores, BAB, feats, skills, caster level), with the same option lists as classes. A class feature named as a prerequisite ("Ability to acquire a new familiar", "Sneak attack +2d6") is a check of its family; "Ki strike (lawful)" is monk level 10, and "Relevant alignment" the alignment the feat's name holds (Spell Focus (Chaos): any chaotic). What no path can read ("Ability to fly"), and what it reads no requirement for (an alignment, but the relevant one: "Any good alignment"; a class feature no class ability prerequisite reads: "Smite evil class feature"; a proficiency, but a shield's: "Proficiency with all martial weapons"), is reported, to be reviewed
 - Template feat detection (e.g. "Weapon Focus" expands into per-weapon variants)
 - Stackable feat detection
 - Modifier detection from benefit text

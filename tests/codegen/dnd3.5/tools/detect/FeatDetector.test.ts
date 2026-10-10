@@ -66,6 +66,23 @@ describe("A feat's detected prerequisites", () => {
     expect(flight.requirements).toEqual([]);
     expect(flight.unresolvedPrereqs).toEqual(["Ability to fly"]);
   });
+
+  test("report an alignment, a class feature none reads and a proficiency they give no requirement, but a shield's", () => {
+    const holyStrike = featDetectedOf("Holy Strike", "any good alignment, Smite evil class feature,");
+    expect(holyStrike.requirements).toEqual([]);
+    expect(holyStrike.unresolvedPrereqs).toEqual(["any good alignment", "Smite evil class feature"]);
+    const stalker = featDetectedOf("Martial Stalker", "ki power, Proficiency with all martial weapons,");
+    expect(stalker.requirements).toEqual([]);
+    expect(stalker.unresolvedPrereqs).toEqual(["Proficiency with all martial weapons"]);
+    const shield = featDetectedOf("Phalanx Fighting", "base attack bonus +1, Proficiency with a heavy shield,");
+    expect(shield.requirements).toEqual([gte("combat.bab", 1), eq(feat("Shield Proficiency"))]);
+    expect(shield.unresolvedPrereqs).toBeUndefined();
+    const turning = featDetectedOf("Divine Might", "Turn or rebuke undead class feature,");
+    expect(turning.requirements).toEqual([
+      or(eq(feat("Turn or Rebuke Undead (Cleric)")), eq(feat("Turn Undead (Paladin)"))),
+    ]);
+    expect(turning.unresolvedPrereqs).toBeUndefined();
+  });
 });
 
 describe("A feat's detected template", () => {

@@ -9,6 +9,7 @@
     "reviewed": [
       "Ability to fly",
       "Ascetic Mage",
+      "Bardic knowledge or lore class feature",
       "Combat Intuition",
       "Deft Opportunist",
       "Epic Skill Focus",
@@ -16,7 +17,8 @@
       "Hawk's Vision",
       "Hear The Unseen",
       "Unresolved bonus: \"You gain a +4 bonus on Bluff checks made for this purpose\"",
-      "Versatile Performer"
+      "Versatile Performer",
+      "Wild shape class feature"
     ],
     "Cougar's Vision": {
       "modifiers": []

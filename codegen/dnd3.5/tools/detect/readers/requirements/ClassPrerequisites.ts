@@ -40,6 +40,14 @@ function isMechanicalPrereq(text: string): boolean {
   return /animal companion|spell-like|psionic/i.test(text);
 }
 
+/**
+ * Whether a special prerequisite is a class feature's name, a few words: "Evasion class feature", "Bardic knowledge and
+ * evasion abilities"; not a sentence ending on one ("…before she can gain the class abilities").
+ */
+function namesClassFeature(text: string): boolean {
+  return /^[A-Z][\w'-]*(?: [\w'-]+){0,4} (?:class feature|abilit(?:y|ies))$/.test(text);
+}
+
 /** Normalize abbreviated Craft subtypes from prerequisite text to proper D&D skill names */
 function normalizeCraftSubtype(subtype: string): string {
   const lower = subtype.toLowerCase().trim();
@@ -172,6 +180,37 @@ function specialAbilityRequirement(text: string): RequirementEntry | undefined {
   }
 
   return undefined;
+}
+
+/**
+ * The prerequisites a special entry lists, each on its own: "Flurry of blows ability; evasion ability; must be
+ * chosen…", "Evasion class feature.Special: The character must…" (the scraper joins a Special line to the line before).
+ */
+function specialParts(entry: string): string[] {
+  return entry
+    .split(/[;.]\s*|,\s+/)
+    .map((part) => part.trim().replace(/^Special:\s*/i, ""))
+    .filter(Boolean);
+}
+
+/** A special prerequisite's requirement: a race, a proficiency or a special ability, the first that reads it. */
+function specialRequirement(text: string): RequirementEntry | undefined {
+  return raceRequirement(text) ?? proficiencyRequirement(text) ?? specialAbilityRequirement(text);
+}
+
+/**
+ * The prerequisites special entries list that no requirement reads, of a class that requires `requirements`: one read
+ * as a requirement the class lacks (an entry is read as one requirement, "Flurry of blows ability; evasion ability"
+ * the flurry), or a class feature's name nothing reads ("Evasion class feature").
+ */
+function unreadSpecialParts(entries: string[], requirements: RequirementEntry[]): string[] {
+  const read = new Set(requirements.map((requirement) => JSON.stringify(requirement)));
+  return entries.flatMap((entry) =>
+    specialParts(entry).filter((part) => {
+      const requirement = specialRequirement(part);
+      return requirement ? !read.has(JSON.stringify(requirement)) : namesClassFeature(part);
+    }),
+  );
 }
 
 /**
@@ -379,34 +418,21 @@ export class ClassPrerequisites extends RequirementReading {
   }
 
   /**
-   * The race, proficiency and special ability requirements of a class's special prerequisites. One it can't read is
-   * unresolved when it's mechanical (sneak attack, rage…), and dropped when it's narrative (a deity, an organization).
+   * The race, proficiency and special ability requirements of a class's special prerequisites, an entry read as one
+   * requirement (`specialRequirement`). An entry it can't read is unresolved when it's mechanical (sneak attack, rage…);
+   * else the prerequisites the entry lists that no requirement reads are (`unreadSpecialParts`), and the narrative ones
+   * (a deity, an organization) are dropped.
    */
   private specialRequirements(special: string[]): RequirementEntry[] {
     const reqs: RequirementEntry[] = [];
+    const listing: string[] = [];
     for (const s of special) {
-      const raceReq = raceRequirement(s);
-      if (raceReq) {
-        reqs.push(raceReq);
-        continue;
-      }
-
-      const profReq = proficiencyRequirement(s);
-      if (profReq) {
-        reqs.push(profReq);
-        continue;
-      }
-
-      const abilityReq = specialAbilityRequirement(s);
-      if (abilityReq) {
-        reqs.push(abilityReq);
-        continue;
-      }
-
-      // Track mechanical prerequisites that we couldn't parse (sneak attack, rage, etc.)
-      // Discard narrative/RP-only ones (deity worship, organization membership, rituals)
-      if (isMechanicalPrereq(s)) this.unresolved.push(s);
+      const requirement = specialRequirement(s);
+      if (requirement) reqs.push(requirement);
+      if (!requirement && isMechanicalPrereq(s)) this.unresolved.push(s);
+      else listing.push(s);
     }
+    this.unresolved.push(...unreadSpecialParts(listing, [...this.requirements, ...reqs]));
     return reqs;
   }
 }

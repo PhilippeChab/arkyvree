@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { ClassPrerequisites } from "@/codegen/dnd3.5/tools/detect/readers/requirements/ClassPrerequisites.ts";
-import { gte, or } from "@/content/core/builders/customization/requirements.ts";
+import { eq, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { SKILL_NAMES } from "@/vocabulary/dnd3.5/skills.ts";
 
@@ -24,5 +24,36 @@ describe("A class's skill prerequisite", () => {
     const basketweaving = new ClassPrerequisites({ skills: [{ name: "Basketweaving (any)", ranks: 8 }] });
     expect(basketweaving.requirements).toEqual([]);
     expect(basketweaving.errors).toEqual(['Invalid requirement path: "skills.basketweaving.rank"']);
+  });
+});
+
+describe("A class's special prerequisite", () => {
+  test("is read as one requirement, the prerequisites it lists that none reads unresolved", () => {
+    const drunkenMaster = new ClassPrerequisites({
+      special: ["Flurry of blows ability; evasion ability; must be chosen by existing drunken masters."],
+    });
+    expect(drunkenMaster.requirements).toEqual([eq("feats.flurryofblows.possessed")]);
+    expect(drunkenMaster.unresolved).toEqual(["evasion ability"]);
+  });
+
+  test("naming a class feature nothing reads is unresolved, and a narrative one is dropped", () => {
+    const enforcer = new ClassPrerequisites({
+      special: [
+        "Evasion class feature.Special: The character must undergo intensive training before she can gain the class abilities.",
+      ],
+    });
+    expect(enforcer.requirements).toEqual([]);
+    expect(enforcer.unresolved).toEqual(["Evasion class feature"]);
+  });
+
+  test("leaves out of the unresolved what the class requires otherwise", () => {
+    const zealot = new ClassPrerequisites({
+      casterLevel: [{ type: "divine", level: 2 }],
+      special: [
+        "Able to cast 2nd-level divine spells, Sneak attack damage +1d6, The character must worship the deity.",
+      ],
+    });
+    expect(zealot.requirements).toEqual([gte("spellcasting.divine", 2), gte("feats.sneakattack.count", 1)]);
+    expect(zealot.unresolved).toEqual([]);
   });
 });
