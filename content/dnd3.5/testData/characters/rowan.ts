@@ -1,4 +1,4 @@
-import type { CharacterSeed } from "@/content/dnd3.5/builders/characters/types.ts";
+import type { CharacterSeed } from "@/content/core/builders/characters/types.ts";
 
 /** Human Druid 3 — Skills: (4+0+1)*4 + (4+0+1)*2 = 30 */
 export default {

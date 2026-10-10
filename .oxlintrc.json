@@ -71,8 +71,9 @@
     "arkyvree/opaque-view": "error",
     "arkyvree/queries-in-repositories": "error",
     "arkyvree/folder-index": "error",
-    // Each ruleset's folders are its own, and what every ruleset runs on (the core's folders, the server, shared/)
-    // names none of them; the client's generic modules read a ruleset's vocabulary through its registry
+    // Each ruleset's folders are its own, and what every ruleset runs on (the core's folders, the content's runner and
+    // seeds, the scripts, the server, shared/) names none of them; the runner and the seeds read a ruleset's content
+    // through the content's registry, and the client's generic modules its vocabulary through theirs
     // (lint/architecture.mjs).
     "arkyvree/ruleset-folders": "error",
     "arkyvree/re-exports": "error",

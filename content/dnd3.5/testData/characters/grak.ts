@@ -1,4 +1,4 @@
-import type { CharacterSeed } from "@/content/dnd3.5/builders/characters/types.ts";
+import type { CharacterSeed } from "@/content/core/builders/characters/types.ts";
 
 /** Half-Orc Barbarian 3 — Skills: (4-1)*4 + (4-1)*2 = 18 */
 export default {

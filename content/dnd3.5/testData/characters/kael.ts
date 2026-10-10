@@ -1,4 +1,4 @@
-import type { CharacterSeed } from "@/content/dnd3.5/builders/characters/types.ts";
+import type { CharacterSeed } from "@/content/core/builders/characters/types.ts";
 
 /** Dwarf Fighter 3/Barbarian 1 — Skills: Fighter (2*4+2+2)=12, Barbarian (4)=4 → 16 */
 export default {

@@ -1,4 +1,4 @@
-import type { CharacterSeed } from "@/content/dnd3.5/builders/characters/types.ts";
+import type { CharacterSeed } from "@/content/core/builders/characters/types.ts";
 
 /** Human Fighter 5 — Skills, INT 12 (+1 mod, +1 human): (2+1+1)*4 + (2+1+1)*4 = 32 */
 export default {

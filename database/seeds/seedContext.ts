@@ -1,11 +1,12 @@
-/** What a seeder reads from the core ruleset: its entities' ids by name, its races' and classes' by kind too. */
+/** What a seeder reads from a base rules' core ruleset: its entities' ids by name, its races' and classes' by kind too. */
 
 import { eq } from "drizzle-orm";
 
-import { BaseSeeder, type SeedContext as RulesetSeedContext } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
-import { RulesetSeeder } from "@/database/seeders/dnd3.5/RulesetSeeder.ts";
+import { RULESET_CONTENT } from "@/database/packages/registry.ts";
+import { ContentSeeder, type SeedContext as RulesetSeedContext } from "@/database/seeders/core/ContentSeeder.ts";
 import { itemsInRules, klassesInRules, languagesInRules, racesInRules } from "@/drizzle/schema.ts";
 import { type Db } from "@/server/database/index.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 
 /** The seeded core rules' ids by name: its seed context, and the languages, races, classes and items characters name. */
 export type SeedContext = RulesetSeedContext & {
@@ -30,10 +31,11 @@ function buildKindMap(rows: { id: string; kind: string; name: string }[]): Recor
   return out;
 }
 
-export async function getSeedContext(db: Db): Promise<SeedContext> {
-  const rulesetId = await RulesetSeeder.findCoreRulesetId(db, "The test data");
+/** The seed context of the core ruleset `baseRules`' core package seeds (its row of the registry). */
+export async function getSeedContext(db: Db, baseRules: BaseRules): Promise<SeedContext> {
+  const rulesetId = await ContentSeeder.findCoreRulesetId(db, RULESET_CONTENT[baseRules].core, "The test data");
   // One after the other: a transaction runs one query at a time.
-  const names = await RulesetSeeder.loadContext(db, rulesetId);
+  const names = await ContentSeeder.loadContext(db, rulesetId);
   const langs = await db
     .select({ id: languagesInRules.id, name: languagesInRules.name })
     .from(languagesInRules)
@@ -52,9 +54,9 @@ export async function getSeedContext(db: Db): Promise<SeedContext> {
     .where(eq(itemsInRules.rulesetId, rulesetId));
   return {
     ...names,
-    langMap: BaseSeeder.idsByName(langs),
+    langMap: ContentSeeder.idsByName(langs),
     raceMap: buildKindMap(races),
     klassMap: buildKindMap(klasses),
-    itemMap: BaseSeeder.idsByName(items),
+    itemMap: ContentSeeder.idsByName(items),
   };
 }

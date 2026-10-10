@@ -1,4 +1,4 @@
-import type { CharacterSeed } from "@/content/dnd3.5/builders/characters/types.ts";
+import type { CharacterSeed } from "@/content/core/builders/characters/types.ts";
 
 /** Elf Wizard 3 — Skills: (2+4)*4 + (2+4)*2 = 36 */
 export default {

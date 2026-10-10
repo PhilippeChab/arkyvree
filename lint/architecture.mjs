@@ -35,10 +35,12 @@
  * - `ruleset-folders`: a ruleset is a folder of `engine/rulesets/`, and a folder of its name, in any tree, is its own
  *   (`content/<ruleset>/`, `codegen/<ruleset>/`, `database/seeders/<ruleset>/`, `vocabulary/<ruleset>/`, the
  *   client's and the tests'): a ruleset's code imports none of another's, and what every ruleset runs on
- *   (`engine/core/`, `content/core/`, `codegen/core/`, `database/seeders/core/`, the server, `shared/`, `lib/`) names
- *   none of them. A client module outside a ruleset's folder reaches a ruleset's code and vocabulary only through the
- *   client's registries, keyed by base rules (`CLIENT_REGISTRIES`: `getSections`, `getVocabulary`, `getClassForms`…),
- *   never from its folders.
+ *   (`engine/core/`, `content/core/`, `codegen/core/`, `database/seeders/core/`, the content's runner and the dev and
+ *   test seeds, `database/packages/` and `database/seeds/`, the scripts, the server, `shared/`, `lib/`) names none of
+ *   them: the runner and the seeds reach a ruleset's packages, seeder and test characters through the content's
+ *   registry alone (`CONTENT_REGISTRY`: `RULESET_CONTENT`, keyed by base rules). A client module outside a ruleset's
+ *   folder reaches a ruleset's code and vocabulary only through the client's registries, keyed by base rules
+ *   (`CLIENT_REGISTRIES`: `getSections`, `getVocabulary`, `getClassForms`…), never from its folders.
  * - `vocabulary-data`: a ruleset's vocabulary (`vocabulary/<ruleset>/`) is data: its lists, labels, tables and bounds,
  *   never a rule. It declares no function or class, and holds none in a constant (a callback in a constant's value,
  *   `SPELL_LEVELS.map((level) => …)`, builds the data): a rule is the engine's, which the client reads from a response.
@@ -86,6 +88,11 @@ const CLIENT_REGISTRIES = [
   "client/src/pages/rulesets/hooks/useEntityFilters.ts",
   "client/src/pages/rulesets/vocabularyFactory.ts",
 ];
+/**
+ * The content's registry: each base rules' packages, seeder and test characters (`RULESET_CONTENT`), the one way the
+ * runner and the dev and test seeds reach a ruleset's content and seeder.
+ */
+const CONTENT_REGISTRY = "database/packages/registry.ts";
 /** The engine's entry's own methods, which hand out its handles. */
 const ENGINE_ENTRIES = new Set(["copyOnWrite", "for", "forRules"]);
 
@@ -183,16 +190,22 @@ const QUERY_HOMES = ["server/repositories/", "server/database/"];
 
 const QUERY_METHODS = new Set(["select", "selectDistinct", "insert", "update", "delete", "execute"]);
 
+/**
+ * What reaches a ruleset's content and seeder through the content's registry alone (`CONTENT_REGISTRY`, which is its
+ * own): the content's runner, the dev and test seeds, and the scripts.
+ */
+const REGISTRY_READERS = ["database/packages/", "database/seeds/", "scripts/"];
+
 /** The rulesets of each repo root, once read. */
 const rulesetsCache = new Map();
-
 const SET_OPERATORS = new Set(["union", "unionAll", "intersect", "intersectAll", "except", "exceptAll"]);
-/** What every ruleset runs on, which names none of them: the core's folders, the server and what it shares. */
+/** What every ruleset runs on, which names none of them: the core's folders, the registry's readers, the server and what it shares. */
 const SHARED_HOMES = [
   "engine/core/",
   "content/core/",
   "codegen/core/",
   "database/seeders/core/",
+  ...REGISTRY_READERS,
   "server/",
   "shared/",
   "lib/",
@@ -558,7 +571,8 @@ function createRulesetFolders(context) {
   const file = repoPath(context.filename);
   const rulesets = rulesetsOf(rootOf(context.filename));
   const ruleset = rulesetOf(file, rulesets);
-  const home = ruleset ? undefined : SHARED_HOMES.find((prefix) => file.startsWith(prefix));
+  const home =
+    ruleset || file === CONTENT_REGISTRY ? undefined : SHARED_HOMES.find((prefix) => file.startsWith(prefix));
   const genericClient = !ruleset && file.startsWith("client/") && !CLIENT_REGISTRIES.includes(file);
   if (!ruleset && !home && !genericClient) return {};
   return onImports((node, spec) => {
@@ -575,7 +589,12 @@ function createRulesetFolders(context) {
     } else if (home && other) {
       context.report({
         node,
-        message: `${home} is what every ruleset runs on: it imports none of ${other}'s folders.`,
+        message:
+          `${home} is what every ruleset runs on: it imports none of ${other}'s folders` +
+          (REGISTRY_READERS.includes(home)
+            ? `, and reaches a ruleset's packages, seeder and test characters through ${CONTENT_REGISTRY} ` +
+              "(`RULESET_CONTENT`, keyed by base rules)."
+            : "."),
       });
     } else if (ruleset && other && other !== ruleset) {
       context.report({

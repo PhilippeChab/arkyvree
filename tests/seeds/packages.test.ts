@@ -21,7 +21,7 @@ import { ALL_RACES } from "@/content/dnd3.5/generated/srd/races.ts";
 import { ALL_SPELLS } from "@/content/dnd3.5/generated/srd/spells/index.ts";
 import { CORE, TEMPLATE_ITEMS } from "@/content/dnd3.5/packages/core.ts";
 import { DND35_RULESET_NAME } from "@/content/dnd3.5/rulesetNames.ts";
-import { registry } from "@/database/packages/registry.ts";
+import { CONTENT_PACKAGES } from "@/database/packages/registry.ts";
 import {
   entitySnapshotsInRules,
   featsInRules,
@@ -39,7 +39,7 @@ function sortedNames(rows: { name: string }[]) {
   return rows.map((row) => row.name).sort();
 }
 
-/** Renames the seeded system rulesets (the seeds find the core rules by name, and a system ruleset's name is its own). Returns their ids. */
+/** Renames the seeded system rulesets (the seeds find the core rules by the name their package gives them, and a system ruleset's name is its own). Returns their ids. */
 async function renameSeeded() {
   const ids = (
     await db
@@ -54,13 +54,13 @@ async function renameSeeded() {
 
 test("An extension doesn't seed without the core rules", async () => {
   await renameSeeded();
-  const extension = registry.find((pkg) => pkg.type === "extension")!;
+  const extension = CONTENT_PACKAGES.find((pkg) => pkg.type === "extension")!;
   expect(extension.seeds[0](db)).rejects.toThrow(`needs ${DND35_RULESET_NAME}, which isn't seeded`);
 });
 
 test("Every content package seeds into a database without them, its extensions extending the core rules it seeds", async () => {
   const seeded = await renameSeeded();
-  for (const pkg of registry) for (const seed of pkg.seeds) await seed(db);
+  for (const pkg of CONTENT_PACKAGES) for (const seed of pkg.seeds) await seed(db);
 
   const rulesets = await db
     .select()
@@ -68,7 +68,7 @@ test("Every content package seeds into a database without them, its extensions e
     .where(and(eq(rulesetsInRules.system, true), notInArray(rulesetsInRules.id, seeded)));
   const core = rulesets.find((ruleset) => ruleset.name === DND35_RULESET_NAME)!;
   const extensions = rulesets.filter((ruleset) => ruleset !== core);
-  expect(extensions.length).toBe(registry.length - 1);
+  expect(extensions.length).toBe(CONTENT_PACKAGES.length - 1);
   for (const extension of extensions)
     expect({ name: extension.name, base: extension.rulesetId }).toEqual({ name: extension.name, base: core.id });
 

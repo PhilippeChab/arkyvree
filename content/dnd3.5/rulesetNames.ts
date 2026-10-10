@@ -1,4 +1,4 @@
-/** The 3.5 system rulesets' display names, which their packages create them with and the seeders and tests find them by. */
+/** The 3.5 system rulesets' display names, which their packages create them with and the tests find them by. */
 
 export const DND35_COMPLETE_ADVENTURER_NAME = "Complete Adventurer SRD 3.5";
 export const DND35_COMPLETE_ARCANE_NAME = "Complete Arcane SRD 3.5";

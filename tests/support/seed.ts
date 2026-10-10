@@ -1,5 +1,6 @@
 import { and, eq, isNull } from "drizzle-orm";
 
+import { DND35_BASE_RULES } from "@/content/dnd3.5/baseRules.ts";
 import { getSeedContext, type SeedContext } from "@/database/seeds/seedContext.ts";
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { itemsInRules } from "@/drizzle/schema.ts";
@@ -14,7 +15,7 @@ export const NIL_UUID = "00000000-0000-0000-0000-000000000000";
 
 /** Ids of the seeded D&D 3.5 content, by name. Loaded once per test process. */
 export function getSeedCtx() {
-  seedContext ??= getSeedContext(db);
+  seedContext ??= getSeedContext(db, DND35_BASE_RULES);
   return seedContext;
 }
 

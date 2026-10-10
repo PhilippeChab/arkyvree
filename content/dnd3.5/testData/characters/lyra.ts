@@ -1,4 +1,4 @@
-import type { CharacterSeed } from "@/content/dnd3.5/builders/characters/types.ts";
+import type { CharacterSeed } from "@/content/core/builders/characters/types.ts";
 
 /** Elf Rogue 3 — Skills: (8+2)*4 + (8+2)*2 = 60 */
 export default {

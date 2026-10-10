@@ -1,6 +1,6 @@
 # Content Packages
 
-Content packages deliver seed data (base rulesets, extensions) with version tracking. A package is data, in its ruleset's content (`content/<ruleset>/packages/`): its name, its type, the version its seeds install, the ruleset it creates and the content it seeds. The runner (`database/packages/runner.ts`) installs the packages a database lacks and brings the others up to date, each written by its ruleset's seeder. `rules.content_packages` records each database's version of each package.
+Content packages deliver seed data (base rulesets, extensions) with version tracking. A package is data, in its ruleset's content (`content/<ruleset>/packages/`): its name, its type, the version its seeds install, the ruleset it creates and the content it seeds. The registry (`database/packages/registry.ts`) gives each base rules' packages, the seeder that writes them and its test characters, and the runner (`database/packages/runner.ts`) installs the packages a database lacks and brings the others up to date. `rules.content_packages` records each database's version of each package.
 
 ## Pipeline overview
 
@@ -23,26 +23,26 @@ Most content is generated from scraped SRD pages. A reference file stores what t
 
 ```
 database/
-├── packages/             # The runner and the registry: which packages a database gets, and the seeds that write them
-│   ├── types.ts          # ContentPackage: a package as the runner applies it (its seeds, its updates)
+├── packages/             # The runner and the registry: which packages a database gets, each base rules' with its seeder
+│   ├── types.ts          # ContentPackage: a package as the runner applies it (its seeds, its updates); RulesetContent: a base rules' row of the registry
 │   ├── runner.ts         # applyPackages: installs and updates the registered packages
-│   ├── registry.ts       # The packages, in the order they're applied: each its definition (content/), with its seeder's seed
-│   └── contentPackages.ts  # toContentPackage: a definition and the seed that writes it, as the runner applies them
+│   ├── registry.ts       # RULESET_CONTENT: each base rules' core package, extensions, seeder and test characters; CONTENT_PACKAGES, what the runner applies
+│   └── contentPackages.ts  # listContentPackages: the registry's packages in the order they're applied, each seeded by its base rules' seeder
 ├── seeders/              # What writes content to the database
 │   ├── core/
-│   │   └── ContentSeeder.ts  # What every ruleset's seeder runs on: its database and context, the customizations' rows and inserts, an extension's copies, a system ruleset
+│   │   └── ContentSeeder.ts  # The seeder's contract (seedCore, seedExtension) and what every ruleset's seeder runs on: its database and context (SeedContext, loadContext), the system rulesets its packages create (createCore, createExtension; the core one found by its package, findCoreRulesetId), the customizations' rows and inserts, an extension's copies
 │   └── dnd3.5/
-│       ├── BaseSeeder.ts     # The 3.5 seeder's core, on ContentSeeder: its context (SeedContext), what its spell lists write
-│       ├── RulesetSeeder.ts  # createCore, createExtension; seedCore, seedBook: the steps made of steps
+│       ├── BaseSeeder.ts     # The 3.5 seeder's core, a ContentSeeder of the 3.5 content (CoreContent, BookContent): what its spell lists write
+│       ├── RulesetSeeder.ts  # seedCore, seedExtension (the contract), seedBond, seedDomains: the steps made of steps
 │       ├── concerns/         # A step per kind of row: SeedsFeats, SeedsClasses, CopiesOnWrite…
-│       ├── packages.ts       # seedDnd35Package: a 3.5 package's ruleset created, and its content seeded in it
 │       └── spellTable.ts     # A spellcaster's table: the class level each of its spell levels opens at
-└── seeds/                # The dev and test databases' seed scripts: the users, the characters (seedCharacter, seedContext)
+└── seeds/                # The dev and test databases' seed scripts: the users, each base rules' test characters (seedCharacter, seedContext), read through the registry
 
 content/core/
 └── builders/
     ├── customization/    # What every ruleset's content writes its customizations with: eq(), gte(), or(), bonus(), setFlag()…, their types
-    └── packages/         # PackageDefinition: a package as data (its name, type, seedsVersion, ruleset and content)
+    ├── characters/       # CharacterSeed: a seeded character, as a base rules' test characters are written
+    └── packages/         # PackageDefinition: a package as data (its name, type, seedsVersion, ruleset and content); CorePackageDefinition, ExtensionPackageDefinition
 
 content/dnd3.5/
 ├── baseRules.ts          # DND35_BASE_RULES: the base rules the content is written for, which the seeders ask the engine by
@@ -56,7 +56,6 @@ content/dnd3.5/
 │   ├── wizardSchools/    # WizardSchoolSeed
 │   ├── bonds/            # BondContent; "a Cat", "an Owl" for the bonds' descriptions
 │   ├── abilities/, saves/, skills/, languages/   # The core rules' own: AbilitySeed, SaveSeed…
-│   ├── characters/       # CharacterSeed: a seeded character
 │   └── rulesets/         # CoreContent, BookContent: what a ruleset is seeded with; CorePackage, ExtensionPackage
 ├── data/                 # The hand-written rows, which no book's page gives
 │   ├── coreRules.ts      # The core rules' abilities, saves, skills and languages
@@ -65,7 +64,7 @@ content/dnd3.5/
 ├── packages/             # Each package as data: its name, type, seedsVersion, ruleset and content
 │   ├── core.ts           # DND35_CORE_PACKAGE, and CORE: the SRD's book joined to the hand-written core content
 │   └── extensions/       # One file per extension package (DND35_DMG_PACKAGE…): its book, and its hand-written additions
-├── testData/             # The dev and test databases' own data: the seed user's characters (CHARACTERS, a module each in characters/)
+├── testData/             # The dev and test databases' own data: the seed user's characters (CHARACTERS, a module each in characters/), its registry row's testCharacters
 └── generated/            # Written by the generator only, one folder per book
     ├── srd/              #   The core rules
     └── dmg/, complete-warrior/, …   # Each extension book; every book has an index.ts exporting BOOK
@@ -101,7 +100,7 @@ codegen/dnd3.5/
         └── code/             # A file's code, written from its seeds: CodeFile (BaseCodeFile, on core's GeneratedCode: where the 3.5 content types and names come from), a concern per kind of seed (WritesClasses, WritesFeats…) and WritesIndexes
 ```
 
-`content/dnd3.5/` is data: it never touches the database, and imports none of what reads or writes it (`arkyvree/layers`). Each ruleset's folders are its own, and what every ruleset's content, codegen and seeders share is the core's (`content/core/`, `codegen/core/`, `database/seeders/core/`), which names no ruleset (`arkyvree/ruleset-folders`). The seeders and the codegen import it; the engine and the server read none of it, and the content reaches the server through the database, which the packages seed.
+`content/dnd3.5/` is data: it never touches the database, and imports none of what reads or writes it (`arkyvree/layers`). Each ruleset's folders are its own, and what every ruleset's content, codegen and seeders share is the core's (`content/core/`, `codegen/core/`, `database/seeders/core/`), which names no ruleset (`arkyvree/ruleset-folders`). Neither do the runner, the dev and test seeds and the scripts (`database/packages/`, `database/seeds/`, `scripts/`): they reach a ruleset's packages, seeder and test characters through the registry alone (`database/packages/registry.ts`). The seeders and the codegen import it; the engine and the server read none of it, and the content reaches the server through the database, which the packages seed.
 
 Each of its folders has one role, which `arkyvree/layers` holds:
 
@@ -127,9 +126,14 @@ export const DND35_CORE_PACKAGE: CorePackage = {
 };
 ```
 
-The registry (`database/packages/registry.ts`) gives the runner each package's definition with the seed that writes it, its ruleset's seeder's (`toContentPackage(DND35_CORE_PACKAGE, seedDnd35Package)`). A ruleset's seeder extends `ContentSeeder` (`database/seeders/core/`), what every ruleset's seeding writes with: the customizations' rows and their inserts, the copies an extension makes of the entities it changes, and the system rulesets a package creates, of the base rules it names. 3.5's `seedDnd35Package` (`database/seeders/dnd3.5/packages.ts`) creates a package's ruleset and seeds its content with `RulesetSeeder`, which seeds a ruleset step by step: a step that writes one kind of row is a concern (`concerns/`), and the steps made of others (`seedCore`, `seedBook`, `seedBond`, `seedDomains`) are the class's own. It holds a `SeedContext`: the ruleset it writes to and the ids, by name, of the rows its content names (abilities, saves, skills, aptitudes, feats, powers). Seeding aptitudes, feats or powers adds them to it, so the steps after can name them. It holds no content: a package gives it.
+The registry (`database/packages/registry.ts`) has a row for each base rules (`RULESET_CONTENT`, which `satisfies Record<BaseRules, RulesetContent>`: a base rules the database's enum gains doesn't compile until it has its row): its core rules' package, its extensions', in the order they're applied, the seeder that writes them, and its test characters. The runner applies the packages in that order (`CONTENT_PACKAGES`, by `listContentPackages`), each base rules' core rules first:
 
-The dev seeds (`database/seeds`, which seed the characters of `content/dnd3.5/testData/`) and the tests load the same context for the seeded ruleset (`RulesetSeeder.loadContext`).
+- A core package creates the core ruleset of its base rules (`createCore`), and the seeder seeds the core rules' content there (`seedCore`).
+- An extension's finds that core ruleset by its package (`findCoreRulesetId`, by the name the core package gives it), creates an extension of it with its context (`loadContext`, `createExtension`), and the seeder seeds the extension's book there, beside the core rules' content (`seedExtension`).
+
+A ruleset's seeder extends `ContentSeeder` (`database/seeders/core/`), the contract: its abstract members (`seedCore`, `seedExtension`, over the content its packages give, `ContentSeeder<Core, Book>`) are what a ruleset's seeding implements, and the rest is what every ruleset's seeding writes with: the context it names rows by, the system rulesets its packages create, the customizations' rows and their inserts, and the copies an extension makes of the entities it changes. 3.5's `RulesetSeeder` seeds a ruleset step by step: a step that writes one kind of row is a concern (`concerns/`), and the steps made of others (`seedCore`, `seedExtension`, `seedBond`, `seedDomains`) are the class's own. It holds a `SeedContext`: the ruleset it writes to and the ids, by name, of the rows its content names (abilities, saves, skills, aptitudes, feats, powers). Seeding aptitudes, feats or powers adds them to it, so the steps after can name them. It holds no content: a package gives it.
+
+The dev seeds (`database/seeds`, which seed each base rules' test characters on its core rules: its registry row's `testCharacters`, `content/dnd3.5/testData/` for 3.5) and the tests load the same context for the seeded ruleset (`ContentSeeder.loadContext`).
 
 The fields the rules keep in an entity's properties (a class's, a level's, a skill's, the ruleset's own) are seeded as the engine keeps them (`Engine.forRules(DND35_BASE_RULES).toEntityProperties`), from the fields the content gives.
 
@@ -145,27 +149,29 @@ export const DND35_DMG_PACKAGE: ExtensionPackage = {
 };
 ```
 
-`BOOK` (`content/dnd3.5/generated/<book>/index.ts`) is the book's content as the generator wrote it. `RulesetSeeder.createExtension` creates the extension ruleset with the core's context; `seedBook` adds the aptitudes the core lacks, seeds the feats, spells, domains (whose spell levels open at the core cleric's, of `CORE`) and classes, and copies the core feats and spells the book changes (see [COW](#cow-ing-core-entities-into-extensions)). A book's hand-written additions are joined to its `BOOK` in its package file (Complete Divine's `content` adds `DEITYS_WEAPON_FEATS`), as the core rules' are to the SRD's `BOOK` in `packages/core.ts` (its hand-written feats, `buildCoreFeats`, its rules and its bonded creatures): no generated file wraps hand-written content.
+`BOOK` (`content/dnd3.5/generated/<book>/index.ts`) is the book's content as the generator wrote it. The runner creates the extension ruleset with the core's context (`createExtension`); `seedExtension` adds the aptitudes the core lacks, seeds the feats, spells, domains (whose spell levels open at the core cleric's, of the core rules' content it's given) and classes, and copies the core feats and spells the book changes (see [COW](#cow-ing-core-entities-into-extensions)). A book's hand-written additions are joined to its `BOOK` in its package file (Complete Divine's `content` adds `DEITYS_WEAPON_FEATS`), as the core rules' are to the SRD's `BOOK` in `packages/core.ts` (its hand-written feats, `buildCoreFeats`, its rules and its bonded creatures): no generated file wraps hand-written content.
 
 ### Adding an extension
 
 1. Add the book to the scraper (its slug in `codegen/dnd3.5/tools/scraper/BaseScraper.ts`), scrape it, and generate it (`bun run parser:generate <book>`).
 2. Add its display name to `content/dnd3.5/rulesetNames.ts` and a package file under `content/dnd3.5/packages/extensions/` with `seedsVersion: 1`.
-3. Register it in `database/packages/registry.ts`, after the core rules (`toContentPackage(DND35_X_PACKAGE, seedDnd35Package)`).
+3. Register it in `database/packages/registry.ts`: last of its base rules' `extensions` (`RULESET_CONTENT`).
 
 ## Versioning & updates
 
-A package's seeds install it at its definition's `seedsVersion` (`content/<ruleset>/packages/`). A change after that goes in `updates`, keyed by the version it brings the package to (`seedsVersion + 1`, `+ 2`…), and the package's version becomes its last update's. An update writes, so it's the database's: its registry entry gives it, beside the definition's seed:
+A package's seeds install it at its definition's `seedsVersion` (`content/<ruleset>/packages/`). A change after that goes in `updates`, keyed by the version it brings the package to (`seedsVersion + 1`, `+ 2`…), and the package's version becomes its last update's. An update writes, so it's the database's: its base rules' row of the registry gives it, by package name (`updates`):
 
 - A new database runs the seeds, then every update.
 - An existing database runs the updates past its version.
 - A database older than `seedsVersion` is refused: the updates it lacks are now part of the seeds, so none can bring it up to date. The runner checks every package first and applies none if one is refused. Reset a development database; any other needs those updates back (from git history) until it has them. `bun run prod:diff` (`scripts/ops/diff/diff-prod.ts`) shows whether production's versions would be refused before a deploy. With `REFERENCE_DATABASE_URL` set to a freshly seeded database, it also compares every row the seeds write (`scripts/ops/diff/content.ts`); `tests/scripts/ops/diff/content.test.ts` fails when a table or a column isn't compared.
 
 ```ts
-export const registry: ContentPackage[] = [
-  // …
-  { ...toContentPackage(DND35_DMG_PACKAGE, seedDnd35Package), updates: { 17: addTheMissingFeat } },
-];
+export const RULESET_CONTENT = {
+  "Dungeons & Dragons: 3.5": {
+    // …
+    updates: { "dnd35-dmg": { 17: addTheMissingFeat } },
+  },
+} satisfies Record<BaseRules, RulesetContent>;
 ```
 
 Once every database has an update (production, staging and any other shared database: the runner refuses one below the new `seedsVersion`), fold it: change the content so a new database gets the same rows, drop the update, and raise the definition's `seedsVersion` to its version. The seeds alone then describe the package. Check a fold by seeding a new database both ways and comparing their content.
@@ -193,7 +199,7 @@ When an extension changes a core entity (a feat its classes take in more aptitud
 
 ### Aptitude ownership rules
 
-Aptitudes are named pools with no per-ruleset content of their own — just a `name`. So the seed only creates an aptitude row in the ruleset that *introduces* the name. `seedBook` splits the book's aptitudes into:
+Aptitudes are named pools with no per-ruleset content of their own — just a `name`. So the seed only creates an aptitude row in the ruleset that *introduces* the name. `seedExtension` splits the book's aptitudes into:
 
 - **Already in the core** (e.g. `General`, `Fighter Bonus Feat`, `Cleric Domain`) — skipped; the extension references the core's row. Same pattern a user fork uses when adding a new feat tagged `General`.
 - **Not in the core** — inserted as a new row in the extension. Covers both extension-private names (e.g. `Ronin Bonus Feat`) and sibling-shared class spell lists (e.g. `Assassin Spells`, which multiple extensions independently create because siblings can't FK to each other: a book copies each list of another book its spells are on, a class's by their level line or one drawing on others' lists, `Sublime Chord Spells`).
@@ -208,7 +214,7 @@ A copy keeps the original's aptitude links, with the core's `aptitude_id`.
 
 ## Registry
 
-All packages are registered in `database/packages/registry.ts`, each its definition (`content/<ruleset>/packages/`) with the seed that writes it. The runner applies them in order: the core rules first, then its extensions.
+All packages are registered in `database/packages/registry.ts`, in their base rules' row (`RULESET_CONTENT`): its core package and its extensions (`content/<ruleset>/packages/`), the seeder that writes them, and its test characters. The runner applies them in order: each base rules' core rules first, then its extensions.
 
 ```bash
 bun db:packages    # Apply all registered packages

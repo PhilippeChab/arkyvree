@@ -1,4 +1,4 @@
-import type { CharacterSeed } from "@/content/dnd3.5/builders/characters/types.ts";
+import type { CharacterSeed } from "@/content/core/builders/characters/types.ts";
 
 /** Human Sorcerer 3 — Skills: (2+0+1)*4 + (2+0+1)*2 = 18 */
 export default {

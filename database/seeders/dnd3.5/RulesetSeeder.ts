@@ -1,27 +1,12 @@
-import { and, eq, isNull } from "drizzle-orm";
-
-import { DND35_BASE_RULES } from "@/content/dnd3.5/baseRules.ts";
 import { CLERIC_DOMAIN, domainFeat, domainSpells } from "@/content/dnd3.5/builders/aptitudes/names.ts";
 import type { BondContent } from "@/content/dnd3.5/builders/bonds/types.ts";
-import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
 import type { DomainSeed } from "@/content/dnd3.5/builders/domains/types.ts";
 import type { BookContent, CoreContent } from "@/content/dnd3.5/builders/rulesets/types.ts";
-import { DND35_RULESET_NAME } from "@/content/dnd3.5/rulesetNames.ts";
-import {
-  abilitiesInRules,
-  aptitudesInRules,
-  featsInRules,
-  powersAptitudesInRules,
-  powersInRules,
-  rulesetsInRules,
-  savesInRules,
-  skillsInRules,
-} from "@/drizzle/schema.ts";
+import { powersAptitudesInRules } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
-import type { Db } from "@/server/database/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-import { BaseSeeder, type SeedContext } from "./BaseSeeder.ts";
+import { BaseSeeder } from "./BaseSeeder.ts";
 import { CopiesOnWrite } from "./concerns/CopiesOnWrite.ts";
 import { SeedsAptitudes } from "./concerns/SeedsAptitudes.ts";
 import { SeedsClasses } from "./concerns/SeedsClasses.ts";
@@ -34,9 +19,9 @@ import { SeedsWizardSchools } from "./concerns/SeedsWizardSchools.ts";
 import { findSpellcastingClass, type SpellcastingClass } from "./spellTable.ts";
 
 /**
- * Seeds a ruleset, step by step: a step that writes one kind of row is a concern (`concerns/`), and the steps made of
- * others are its own. Each names the rows the steps before it seeded by their ids in its context. It holds no content:
- * the core rules' package gives `seedCore` theirs, an extension's package gives `seedBook` its book.
+ * Seeds a 3.5 ruleset, step by step: a step that writes one kind of row is a concern (`concerns/`), and the steps made
+ * of others are its own. Each names the rows the steps before it seeded by their ids in its context. It holds no
+ * content: the core rules' package gives `seedCore` theirs, an extension's package gives `seedExtension` its book.
  */
 export class RulesetSeeder extends include(
   BaseSeeder,
@@ -50,107 +35,8 @@ export class RulesetSeeder extends include(
   SeedsRaces,
   SeedsWizardSchools,
 ) {
-  /** A seeder of the ruleset, naming none of its rows: what a step needs no names for (items) or names as it goes. */
-  static forRuleset(db: Db, rulesetId: string) {
-    return new RulesetSeeder(db, {
-      rulesetId,
-      abilityMap: {},
-      saveMap: {},
-      skillMap: {},
-      aptMap: {},
-      featMap: {},
-      powerMap: {},
-      inheritedPowerMap: {},
-    });
-  }
-
-  /** A seeder of a new core ruleset, published and of the system, whose rows it names as it seeds them. */
-  static async createCore(db: Db, ruleset: { description: string; name: string }) {
-    return RulesetSeeder.forRuleset(db, await RulesetSeeder.createSystemRuleset(db, DND35_BASE_RULES, ruleset));
-  }
-
-  /**
-   * A seeder of a new extension of the core rules (or of `base`'s ruleset): it names the base's rows, in maps of its own
-   * that leave the base's as they are, and has no powers of its own yet, its base's (and those its base inherits) being
-   * the ones it copies before changing them (`inheritedPowerMap`).
-   */
-  static async createExtension(db: Db, ruleset: { description: string; name: string }, base?: SeedContext) {
-    const from = base ?? (await RulesetSeeder.loadContext(db, await RulesetSeeder.findCoreRulesetId(db, ruleset.name)));
-    const { powerMap, inheritedPowerMap, ...names } = structuredClone(from);
-    return new RulesetSeeder(db, {
-      ...names,
-      rulesetId: await RulesetSeeder.createSystemRuleset(db, DND35_BASE_RULES, ruleset, from.rulesetId),
-      powerMap: {},
-      inheritedPowerMap: { ...inheritedPowerMap, ...powerMap },
-    });
-  }
-
-  /** The seeded core rules' id, which `neededBy` (the step that needs them) can't do without. */
-  static async findCoreRulesetId(db: Db, neededBy: string): Promise<string> {
-    const [core] = await db
-      .select({ id: rulesetsInRules.id })
-      .from(rulesetsInRules)
-      .where(eq(rulesetsInRules.name, DND35_RULESET_NAME));
-    if (!core) throw new Error(`${neededBy} needs ${DND35_RULESET_NAME}, which isn't seeded`);
-    return core.id;
-  }
-
-  /** The context of a seeded ruleset: the ids of its unarchived rows. */
-  static async loadContext(db: Db, rulesetId: string): Promise<SeedContext> {
-    // One after the other: a transaction runs one query at a time.
-    const names = async (
-      table:
-        | typeof abilitiesInRules
-        | typeof savesInRules
-        | typeof skillsInRules
-        | typeof aptitudesInRules
-        | typeof featsInRules
-        | typeof powersInRules,
-    ) =>
-      BaseSeeder.idsByName(
-        await db
-          .select({ id: table.id, name: table.name })
-          .from(table)
-          .where(and(eq(table.rulesetId, rulesetId), isNull(table.deletedAt))),
-      );
-    return {
-      rulesetId,
-      abilityMap: await names(abilitiesInRules),
-      saveMap: await names(savesInRules),
-      skillMap: await names(skillsInRules),
-      aptMap: await names(aptitudesInRules),
-      featMap: await names(featsInRules),
-      powerMap: await names(powersInRules),
-      inheritedPowerMap: {},
-    };
-  }
-
-  /** Seeds a kind of bonded creature: its aptitudes, feats, races and class. */
-  async seedBond(bond: BondContent) {
-    await this.seedAptitudes(bond.aptitudes);
-    await this.seedFeats(bond.feats);
-    await this.seedRaces(bond.races, bond.kind);
-    await this.seedClass(bond.klass);
-  }
-
-  /**
-   * Seeds an extension's book. Its content names the core's rows as a fork does: it adds only the aptitudes the core
-   * lacks, and copies the core feats and spells it changes. Its domains open their spell levels at the core cleric's
-   * (of `coreClasses`).
-   */
-  async seedBook(book: BookContent, coreClasses: ClassSeed[]) {
-    await this.seedAptitudes(book.aptitudes.filter((name) => !this.ctx.aptMap[name]));
-    await this.seedFeats(book.standaloneFeats);
-    await this.seedFeats(book.classFeats);
-    await this.cowFeatsIntoExtension(book.cowFeats);
-    await this.seedPowers(book.spells);
-    await this.cowSpellsIntoExtension(book.cowSpells);
-    await this.seedDomains(book.domains, findSpellcastingClass(coreClasses, "Cleric"));
-    for (const klass of book.classes) await this.seedClass(klass);
-  }
-
   /** Seeds the core rules: the SRD's content, and the hand-written core content and bonded creatures. */
-  async seedCore(core: CoreContent) {
+  override async seedCore(core: CoreContent) {
     await this.seedAptitudes(core.aptitudes);
     await this.seedLanguages(core.languages);
     await this.seedRaces(core.races);
@@ -173,6 +59,30 @@ export class RulesetSeeder extends include(
     await this.seedWizardSchools(core.wizardSchools, findSpellcastingClass(core.classes, "Wizard"));
     await this.seedDomains(core.domains, findSpellcastingClass(core.classes, "Cleric"));
     for (const bond of core.bonds) await this.seedBond(bond);
+  }
+
+  /**
+   * Seeds an extension's book. Its content names the core's rows as a fork does: it adds only the aptitudes the core
+   * lacks, and copies the core feats and spells it changes. Its domains open their spell levels at the core cleric's
+   * (of `core`'s classes).
+   */
+  override async seedExtension(book: BookContent, core: CoreContent) {
+    await this.seedAptitudes(book.aptitudes.filter((name) => !this.ctx.aptMap[name]));
+    await this.seedFeats(book.standaloneFeats);
+    await this.seedFeats(book.classFeats);
+    await this.cowFeatsIntoExtension(book.cowFeats);
+    await this.seedPowers(book.spells);
+    await this.cowSpellsIntoExtension(book.cowSpells);
+    await this.seedDomains(book.domains, findSpellcastingClass(core.classes, "Cleric"));
+    for (const klass of book.classes) await this.seedClass(klass);
+  }
+
+  /** Seeds a kind of bonded creature: its aptitudes, feats, races and class. */
+  async seedBond(bond: BondContent) {
+    await this.seedAptitudes(bond.aptitudes);
+    await this.seedFeats(bond.feats);
+    await this.seedRaces(bond.races, bond.kind);
+    await this.seedClass(bond.klass);
   }
 
   /**
