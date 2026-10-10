@@ -21,10 +21,14 @@ import { hasCharacterPicks } from "./characterPicks.ts";
 import { writeEntityWrites } from "./entityWrites.ts";
 import { createListLinks, setListLinks } from "./listLinks.ts";
 
-/** What a create's plan gives: the row's columns, its list links, what it writes beside it, whose customizations it copies. */
+/**
+ * What a create's plan gives: the row's columns, its list links, what it writes beside it, whose customizations it
+ * copies, and the fields the entity keeps once saved, which the action answers with its row.
+ */
 interface CreatePlan<Columns> {
   columns: Columns;
   copyCustomizationsFrom?: string;
+  fields: object;
   links?: ListLink[];
   writes?: EntityWrites;
 }
@@ -53,10 +57,14 @@ interface KindRepository<Row, Insert> {
 /** An entity a plan names, as the view has it. */
 type PlannedEntity = { id: string; name: string; rulesetId: string };
 
-/** What an update's plan gives: the entity as the view has it, its new columns, its new list links (none: kept), its writes. */
+/**
+ * What an update's plan gives: the entity as the view has it, its new columns, its new list links (none: kept), its
+ * writes, and the fields the entity keeps once saved.
+ */
 interface UpdatePlan<Columns> {
   columns: Columns;
   entity: PlannedEntity;
+  fields: object;
   links?: ListLink[];
   writes?: EntityWrites;
 }
@@ -116,14 +124,14 @@ export default class EntitySaves<Row extends { id: string; name: string }, Inser
   /**
    * A new entity in the ruleset (`name`, which must be free in its view), as its rules plan it (`plan`, given the
    * ancestor whose deleted copy's tombstone the new entity takes over, and the transaction to read what the plan needs):
-   * the row written and the plan, for what the action answers.
+   * the row written, with the fields the plan keeps.
    */
   async create<P extends CreatePlan<Omit<Insert, "rulesetId">>>(
     session: Session,
     rulesetId: string,
     name: string,
     plan: (scope: RulesetScope, reads: { tombstoneAncestorId: string | null; tx: Db }) => P | Promise<P>,
-  ): Promise<{ plan: P; row: Row }> {
+  ): Promise<Row & P["fields"]> {
     const result = await withTransaction(
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
@@ -142,7 +150,7 @@ export default class EntitySaves<Row extends { id: string; name: string }, Inser
           if (planned.copyCustomizationsFrom) await this.copyCustomizations(tx, row.id, planned.copyCustomizationsFrom);
 
           await this.recordActivity(tx, scope, session, "create", row.id, { entityName: row.name });
-          return { plan: planned, row };
+          return { ...row, ...planned.fields };
         }),
     );
     RulesetViews.invalidate(rulesetId);
@@ -191,8 +199,7 @@ export default class EntitySaves<Row extends { id: string; name: string }, Inser
   /**
    * An entity's update, as its rules plan it (`plan`) from its form (`body`): the row the view's entity resolves to (the
    * ruleset's own, or its copy, made on its first edit) updated, refused when stale (`body.updatedAt`, a copy's never
-   * is), its list links replaced, and what the plan writes beside it. The row written and the plan, for what the action
-   * answers.
+   * is), its list links replaced, and what the plan writes beside it. The row written, with the fields the plan keeps.
    */
   async update<P extends UpdatePlan<Partial<Insert>>>(
     session: Session,
@@ -201,7 +208,7 @@ export default class EntitySaves<Row extends { id: string; name: string }, Inser
     plan: (scope: RulesetScope) => P,
     /** What its activity compares with the entity it was, for its changed fields: the body, unless the row says better. */
     compare: (row: Row) => object = () => body,
-  ): Promise<{ plan: P; row: Row }> {
+  ): Promise<Row & P["fields"]> {
     const result = await withTransaction(
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
@@ -221,7 +228,7 @@ export default class EntitySaves<Row extends { id: string; name: string }, Inser
             entityName: body.name,
             changedFields: getChangedFields(planned.entity, compare(row)),
           });
-          return { plan: planned, row };
+          return { ...row, ...planned.fields };
         }),
     );
     RulesetViews.invalidate(rulesetId);

@@ -186,13 +186,13 @@ export default function ClassDetailsPage() {
 
   const bonusSpellMutation = useMutation({
     mutationFn: (abilityId: string) =>
-      setPropertyFn(KLASS_BONUS_SPELL_ABILITY_ID, classData?.bonusSpellPropertyId, abilityId),
+      setPropertyFn(KLASS_BONUS_SPELL_ABILITY_ID, classData?.propertyIds.bonusSpellAbilityId, abilityId),
     onSuccess: handleClassPropertySaved("Bonus spell ability updated"),
     onError: (error) => snackbar.error(error, "Failed to update bonus spell ability"),
   });
 
   const casterTypeMutation = useMutation({
-    mutationFn: (casterType: string) => setPropertyFn(KLASS_CASTER_TYPE, classData?.casterTypePropertyId, casterType),
+    mutationFn: (casterType: string) => setPropertyFn(KLASS_CASTER_TYPE, classData?.propertyIds.casterType, casterType),
     onSuccess: handleClassPropertySaved("Caster type updated"),
     onError: (error) => snackbar.error(error, "Failed to update caster type"),
   });
@@ -253,9 +253,7 @@ export default function ClassDetailsPage() {
                   {bonusSpellAbility && (
                     <ValueChip label={`Bonus Spell Ability: ${bonusSpellAbility.name}`} color="info" />
                   )}
-                  {classData.casterTypeValue && (
-                    <ValueChip label={`Caster Type: ${classData.casterTypeValue}`} color="info" />
-                  )}
+                  {classData.casterType && <ValueChip label={`Caster Type: ${classData.casterType}`} color="info" />}
                 </>
               }
               edit={
@@ -290,7 +288,7 @@ export default function ClassDetailsPage() {
                             label="Caster Type"
                             fullWidth
                             select
-                            value={classData.casterTypeValue ?? ""}
+                            value={classData.casterType ?? ""}
                             onChange={(e) => casterTypeMutation.mutate(e.target.value)}
                             disabled={casterTypeMutation.isPending || isClassFetching}
                             helperText={propertyHelp(KLASS_CASTER_TYPE)}

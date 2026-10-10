@@ -48,8 +48,8 @@ export default class RulesetEngine {
   }
 
   /**
-   * An entity kind of the ruleset (`type`, its table): one found by its id, described, a page of its rows described, and
-   * what saving or deleting one writes, by its kind's rules.
+   * An entity kind of the ruleset (`type`, its table): one found by its id and described, a page of its rows opened
+   * (`openList`), and what saving or deleting one writes, by its kind's rules.
    */
   entities<K extends EntityType>(type: K) {
     return this.module.entities.of(this.view, type);

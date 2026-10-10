@@ -224,7 +224,7 @@ export default class AptitudesComponent {
    * feat pool, `shared` when its aptitude has powers too, which makes it a power pool as well: its picks count as
    * powers. A leveled aptitude is a power pool, with what each spell level it has left gives.
    */
-  getLevelUpPools(rulesetData: Pick<RulesetData, "aptitudeIdsByHavingPowers">) {
+  getLevelUpPools(rulesetData: Pick<RulesetData, "aptitudeIdsWithPowers">) {
     const featPools: Record<string, FeatPool> = {};
     const powerPools: Record<string, PowerPool> = {};
     for (const [key, aptitude] of Object.entries(this.aptitudes)) {
@@ -233,7 +233,7 @@ export default class AptitudesComponent {
         powerPools[id] = this.toLeveledPool(aptitude);
         continue;
       }
-      const shared = rulesetData.aptitudeIdsByHavingPowers.has(id);
+      const shared = rulesetData.aptitudeIdsWithPowers.has(id);
       featPools[id] = { id, name, allowed, spent, available, shared };
       if (shared) powerPools[id] = { id, name, allowed, spent, available };
     }

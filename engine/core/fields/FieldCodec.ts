@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import type { PropertyValue } from "@/engine/core/module/index.ts";
 
-import type { Fields, FieldSpec, FieldValues } from "./Field.ts";
+import type { Fields, FieldSpec, FieldValues, NoFields } from "./Field.ts";
 
 /** What a codec's rules add to its fields': a rule between fields, and when the entity keeps none of them. */
 interface FieldRules<V> {
@@ -30,6 +30,9 @@ export default class FieldCodec<S extends Fields> {
     this.types = FieldCodec.typesOf(fields);
     this.typeSet = new Set(this.types);
   }
+
+  /** No fields: a kind's whose properties hold none of its own, read as nothing. */
+  static readonly NONE: FieldCodec<NoFields> = new FieldCodec({});
 
   /** A field's value without a row. */
   private static defaultOf(field: FieldSpec): unknown {

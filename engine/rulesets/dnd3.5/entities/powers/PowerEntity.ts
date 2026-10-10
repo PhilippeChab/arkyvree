@@ -1,9 +1,10 @@
 /** A power as a ruleset's entity: what the ruleset lists it by, and what its save writes, checked. */
 
-import { RulesetEntity } from "@/engine/core/entities/index.ts";
 import type { EntityWrites } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import SpellFocusFeats from "@/engine/rulesets/dnd3.5/entities/feats/SpellFocusFeats.ts";
+import ListedEntity from "@/engine/rulesets/dnd3.5/entities/ListedEntity.ts";
+import type { PowerWithAptitudes } from "@/shared/relations.ts";
 
 import { POWER_FIELDS, type PowerFieldValues } from "./fields.ts";
 
@@ -22,90 +23,71 @@ function getGrouping(fields: Partial<PowerFieldValues>) {
 }
 
 /** A power as the ruleset has it: listed by pool and spell level, saved by its rules with its fields and its feats. */
-export default class PowerEntity extends RulesetEntity<"powers"> {
+export default class PowerEntity extends ListedEntity<
+  "powers",
+  PowerBody,
+  { description?: string | null; name: string; saveEffect: string | null; saveId: string | null },
+  typeof POWER_FIELDS.fields
+> {
+  /** A spell's school, components, range… */
+  protected readonly fields = POWER_FIELDS;
+
   protected readonly label = "Power";
 
   readonly type = "powers";
 
-  /** Refuses a power linked to a pool the view's feats use: the ruleset's own and its chain's, no other ruleset's. */
-  private checkPools(aptitudes: { id: string }[]) {
-    if (aptitudes.some((aptitude) => this.view.rulesetData.listFeatIds(aptitude.id).length > 0))
-      throw new RulesError("conflict", "Cannot link spell to aptitude(s) already used for feats");
+  /**
+   * Refuses a new power without a pool, and a power linked to a pool the view's feats use: a save names no spell's save
+   * but the one it gives.
+   */
+  protected override checkSave(body: PowerBody, power?: PowerWithAptitudes) {
+    if (!power && !body.aptitudes?.length)
+      throw new RulesError("invalid", "At least one aptitude must be selected for the power");
+    const listIds = (body.aptitudes ?? []).map((aptitude) => aptitude.id);
+    const message = "Cannot link spell to aptitude(s) already used for feats";
+    this.refuseLists(listIds, this.rulesetData.aptitudeIdsWithFeats, message);
   }
 
-  /** A power's row and pool links, from its form: a save names no spell's save but the one it gives. */
-  private toRows({ aptitudes, description, name, saveEffect, saveId }: PowerBody) {
+  /** A form's columns: a save names no spell's save but the one it gives. */
+  protected columnsOf({ description, name, saveEffect, saveId }: PowerBody) {
+    return { description, name, saveEffect: saveEffect ?? null, saveId: saveId ?? null };
+  }
+
+  /** A power's pool links, as the view composes them. */
+  protected linksIn({ powersAptitudesInRules }: PowerWithAptitudes) {
+    return { powersAptitudesInRules };
+  }
+
+  /** The pools a form links the power to, each at its spell level (none: an edit's kept). */
+  protected override linksOf({ aptitudes }: PowerBody) {
+    return aptitudes?.map((aptitude) => ({ aptitudeId: aptitude.id, level: aptitude.level ?? null }));
+  }
+
+  /**
+   * What saving a power writes (`power`: the one edited): its fields as properties, and the feats of its grouping (a
+   * spell's school: its Spell Focus) when it comes to one. An edit that gives none of its fields keeps those it has.
+   */
+  protected override writesOf(body: PowerBody, power?: PowerWithAptitudes): EntityWrites {
+    if (power && this.fields.keys.every((key) => body[key] === undefined)) return {};
+    const grouping = getGrouping(body);
+    const before = power && getGrouping(this.fields.read(this.propertiesOf(power)));
+    const isNewGrouping = grouping !== null && grouping !== before;
     return {
-      links: aptitudes?.map((aptitude) => ({ aptitudeId: aptitude.id, level: aptitude.level ?? null })),
-      columns: { description, name, saveEffect: saveEffect ?? null, saveId: saveId ?? null },
+      made: isNewGrouping ? SpellFocusFeats.make(this.view, grouping) : [],
+      properties: this.fields.write(body),
     };
-  }
-
-  /** A power with its modifiers, properties and requirements. */
-  override describe(id: string) {
-    return this.describeCustomized(id);
   }
 
   /**
    * A page of the ruleset's powers, as its form asks for it: what it's read with (`filters`: a list's powers, at a level
-   * when one is given), and its rows described (`describe`), each inherited power with its lists as the ruleset composes
-   * them, its siblings' links merged in, unless the page lists the ruleset's own powers only.
+   * when one is given), and its rows described, with their lists as the ruleset composes them.
    */
-  openList(where: { aptitudeId?: string; childOnly?: boolean; level?: number }) {
-    const { rulesetData } = this.view;
+  override openList(where: { aptitudeId?: string; childOnly?: boolean; level?: number }) {
     const { aptitudeId, level } = where;
-    const ids = aptitudeId !== undefined || level != null ? rulesetData.listPowerIds({ aptitudeId, level }) : undefined;
-    const composesLinks = rulesetData.cow.sourceChain.length > 0 && !where.childOnly;
+    const listed = aptitudeId !== undefined || level != null;
     return {
-      describe<T extends { id: string; powersAptitudesInRules: unknown }>(stored: T[]) {
-        const rows = rulesetData.cow.resolveRows(stored);
-        if (!composesLinks) return rows;
-        return rows.map((power) => {
-          const merged = rulesetData.powersById.get(power.id);
-          return merged ? { ...power, powersAptitudesInRules: merged.powersAptitudesInRules } : power;
-        });
-      },
-      filters: { ids },
-    };
-  }
-
-  /**
-   * A new power's row, its pool links and what its save writes beside them (`planSave`): refused without a pool, or
-   * with a pool a feat uses.
-   */
-  planCreate(body: PowerBody) {
-    if (!body.aptitudes || body.aptitudes.length === 0)
-      throw new RulesError("invalid", "At least one aptitude must be selected for the power");
-    this.checkPools(body.aptitudes);
-    const { columns, links = [] } = this.toRows(body);
-    return { columns, links, writes: this.planSave(body) };
-  }
-
-  /**
-   * A power's edit (`powerId`): the power as the view has it, its new row, its new pool links when the form sends them,
-   * and what its save writes beside them, against the properties the view composes for it (those a copy of it holds).
-   * Refused when a pool a feat uses is linked.
-   */
-  planEdit(powerId: string, body: PowerBody) {
-    const power = this.find(powerId);
-    if (body.aptitudes?.length) this.checkPools(body.aptitudes);
-    const properties = this.view.rulesetData.propertiesByEntity.get(power.id) ?? [];
-    return { ...this.toRows(body), entity: power, writes: this.planSave(body, { properties }) };
-  }
-
-  /**
-   * What saving a power writes (`before`: the properties it kept, for an edit): its fields as properties, and the feats
-   * of its grouping (a spell's school: its Spell Focus) when it comes to one. An edit that gives none of its fields keeps
-   * those it has.
-   */
-  planSave(power: Partial<PowerFieldValues>, before?: { properties: { type: string; value: string }[] }): EntityWrites {
-    if (before && POWER_FIELDS.keys.every((key) => power[key] === undefined)) return {};
-    const grouping = getGrouping(power);
-    const isNewGrouping =
-      grouping !== null && grouping !== (before && getGrouping(POWER_FIELDS.read(before.properties)));
-    return {
-      made: isNewGrouping ? SpellFocusFeats.buildSpellFocusFeats(this.view, grouping) : [],
-      properties: POWER_FIELDS.write(power),
+      describe: <T extends Record<string, unknown> & { id: string }>(rows: T[]) => this.describeListed(rows, where),
+      filters: { ids: listed ? this.rulesetData.listPowerIds({ aptitudeId, level }) : undefined },
     };
   }
 }

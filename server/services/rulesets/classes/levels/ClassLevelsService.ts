@@ -48,7 +48,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
             (plan.saves ?? []).map((save) => ({ klassLevelId: klassLevel.id, ...save })),
           );
 
-          await writeEntityWrites(tx, scope, entity, plan.writes);
+          if (plan.writes) await writeEntityWrites(tx, scope, entity, plan.writes);
 
           await createActivityWithNotifications(tx, {
             userId: session.userId,
@@ -58,7 +58,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
             data: { entityName: klass.name, level: klassLevel.level },
           });
 
-          return plan.describe(klassLevel);
+          return { ...klassLevel, ...plan.fields };
         }),
     );
     RulesetViews.invalidate(rulesetId);
@@ -78,7 +78,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
             rulesetId,
           );
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
-          const { klass, level } = Engine.for(scope).class(classId).planLevelDelete(levelId);
+          const { entity: level, klass } = Engine.for(scope).class(classId).planLevelDelete(levelId);
 
           // COW the parent klass if the level is inherited — without this, hard-delete
           // would wipe the parent ruleset's row. CustomizationEdit.cowOwner on
@@ -136,14 +136,14 @@ class ClassLevelsService extends include(Object, ListsSpells) {
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
           const plan = Engine.for(scope).class(classId).planLevelEdit(levelId, body);
-          const { klass, level } = plan;
+          const { entity: level, klass } = plan;
 
           // COW the parent klass if inherited so writes don't corrupt the parent.
           const edit = new CustomizationEdit(ruleset, rulesetData.cow);
           const resolvedLevelId = await edit.cowOwner(tx, "klass_levels", level.id);
 
           const entity = { entityId: resolvedLevelId, entityType: "klass_levels" } as const;
-          await writeEntityWrites(tx, scope, entity, plan.writes);
+          if (plan.writes) await writeEntityWrites(tx, scope, entity, plan.writes);
 
           if (plan.feats !== undefined) {
             await KlassLevelFeats.delete(tx, { klassLevelId: resolvedLevelId });
@@ -169,7 +169,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
             data: { entityName: klass.name, level: level.level },
           });
 
-          return plan.describe(resolvedLevelId);
+          return { ...level, id: resolvedLevelId, ...plan.fields };
         }),
     );
     RulesetViews.invalidate(rulesetId);

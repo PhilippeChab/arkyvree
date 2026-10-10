@@ -18,10 +18,9 @@ class AptitudesService {
       name: string;
     },
   ) {
-    const { row } = await this.saves.create(session, rulesetId, body.name, (scope) =>
+    return await this.saves.create(session, rulesetId, body.name, (scope) =>
       Engine.for(scope).entities("aptitudes").planCreate(body),
     );
-    return row;
   }
 
   async deleteAptitude(session: Session, rulesetId: string, aptitudeId: string) {
@@ -31,10 +30,9 @@ class AptitudesService {
   }
 
   async getAptitude(rulesetId: string, aptitudeId: string) {
-    return await withRulesetScope(db, rulesetId, async (scope) => {
-      const aptitude = Engine.for(scope).entities("aptitudes").describe(aptitudeId);
-      return aptitude;
-    });
+    return await withRulesetScope(db, rulesetId, async (scope) =>
+      Engine.for(scope).entities("aptitudes").describe(aptitudeId),
+    );
   }
 
   async getAptitudes(
@@ -49,8 +47,13 @@ class AptitudesService {
     pagination: { limit: number; page: number },
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
-      const { rulesetData } = scope;
-      return await Aptitudes.findPage(db, { rulesetId, ...rulesetData.cow.listFilters, ...where }, pagination);
+      const list = Engine.for(scope).entities("aptitudes").openList(where);
+      const result = await Aptitudes.findPage(
+        db,
+        { rulesetId, ...scope.rulesetData.cow.listFilters, ...where, ...list.filters },
+        pagination,
+      );
+      return { ...result, items: list.describe(result.items) };
     });
   }
 
@@ -64,10 +67,9 @@ class AptitudesService {
       updatedAt?: string;
     },
   ) {
-    const { row } = await this.saves.update(session, rulesetId, body, (scope) =>
+    return await this.saves.update(session, rulesetId, body, (scope) =>
       Engine.for(scope).entities("aptitudes").planEdit(aptitudeId, body),
     );
-    return row;
   }
 }
 

@@ -107,6 +107,11 @@ export default class PowersPaths implements PathCategory<Dnd35Components> {
     return paths;
   }
 
+  /** A grouping's spells' DC bonus (`powers.groups.<slug>.*.dc.misc`, each of its spells), by the grouping's name. */
+  static groupDcMisc(groupingName: string): string {
+    return `powers.groups.${stripSeparators(groupingName)}.*.dc.misc`;
+  }
+
   /** Whether a target is a spell's (`powers.…`): a spell's modifiers apply after the others. */
   static isPowerTarget(target: string): boolean {
     return target.startsWith("powers.");

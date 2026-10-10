@@ -28,16 +28,16 @@ class FeatsService {
       name: string;
     },
   ) {
-    const { row } = await this.saves.create(session, rulesetId, body.name, async (scope, { tombstoneAncestorId, tx }) =>
+    return await this.saves.create(session, rulesetId, body.name, async (scope, { tombstoneAncestorId, tx }) =>
       // Named as an ancestor the fork deleted, the feat stands in for it (`EntityNames.repointTombstone`), checks
       // finding it by that name
       Engine.for(scope)
         .entities("feats")
-        .planCreate(body, {
+        .planCreate({
+          ...body,
           tombstoneGenerated: tombstoneAncestorId ? await this.wasGenerated(tx, tombstoneAncestorId) : false,
         }),
     );
-    return row;
   }
 
   async deleteFeat(session: Session, rulesetId: string, featId: string) {
@@ -101,10 +101,9 @@ class FeatsService {
       updatedAt?: string;
     },
   ) {
-    const { row } = await this.saves.update(session, rulesetId, body, (scope) =>
+    return await this.saves.update(session, rulesetId, body, (scope) =>
       Engine.for(scope).entities("feats").planEdit(featId, body),
     );
-    return row;
   }
 }
 

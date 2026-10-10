@@ -16,10 +16,9 @@ class PowersService {
   }));
 
   async createPower(session: Session, rulesetId: string, body: PowerBody) {
-    const { row } = await this.saves.create(session, rulesetId, body.name, (scope) =>
+    return await this.saves.create(session, rulesetId, body.name, (scope) =>
       Engine.for(scope).entities("powers").planCreate(body),
     );
-    return row;
   }
 
   async deletePower(session: Session, rulesetId: string, powerId: string) {
@@ -60,10 +59,9 @@ class PowersService {
   }
 
   async updatePower(session: Session, rulesetId: string, powerId: string, body: PowerBody) {
-    const { row } = await this.saves.update(session, rulesetId, body, (scope) =>
+    return await this.saves.update(session, rulesetId, body, (scope) =>
       Engine.for(scope).entities("powers").planEdit(powerId, body),
     );
-    return row;
   }
 }
 

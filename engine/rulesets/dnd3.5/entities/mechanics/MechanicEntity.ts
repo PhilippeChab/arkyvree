@@ -1,10 +1,14 @@
-import { PlainEntity } from "@/engine/core/entities/index.ts";
+import { RulesetEntity } from "@/engine/core/entities/index.ts";
+import { FieldCodec } from "@/engine/core/fields/index.ts";
 
 /** A mechanic's form: its name and description. */
 type MechanicBody = { description?: string | null; name: string };
 
 /** A mechanic as the ruleset has it: its name and its description, which its customizations act through. */
-export default class MechanicEntity extends PlainEntity<"mechanics", MechanicBody> {
+export default class MechanicEntity extends RulesetEntity<"mechanics", MechanicBody> {
+  /** None of its own. */
+  protected readonly fields = FieldCodec.NONE;
+
   protected readonly label = "Mechanic";
 
   readonly type = "mechanics";

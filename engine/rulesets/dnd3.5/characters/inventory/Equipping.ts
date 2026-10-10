@@ -8,11 +8,12 @@ import CharacterBuilder from "@/engine/rulesets/dnd3.5/model/CharacterBuilder.ts
 import { SIZE_ORDER } from "@/engine/rulesets/dnd3.5/model/inventory/InventorySlots.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 import { findSlotConflict, isHandLocation, MAX_FINGER_ITEMS, type SlotConflictReason } from "@/shared/equipment.ts";
+import type { Item } from "@/shared/relations.ts";
 
 /** An inventory entry an item is equipped from: the entry (null for a new one), and its item. */
 interface EquippedEntry {
   id: string | null;
-  item: { id: string; sourceItemId: string | null; type: string | null };
+  item: Pick<Item, "id" | "isTemplate" | "sourceItemId" | "type">;
 }
 
 /** Why an item can't be equipped at a location, by the slot conflict's reason. */
@@ -31,15 +32,11 @@ const SLOT_CONFLICT_MESSAGES: Record<SlotConflictReason, (location: ItemLocation
 function checkItemRequirements(view: RulesetView, character: CharacterInput, item: EquippedEntry["item"]) {
   const { rulesetData } = view;
   if (item.type === "Weapon") return;
-  const ownRequirements = rulesetData.requirementsByEntity.get(item.id) ?? [];
-  const templateRequirements = item.sourceItemId ? (rulesetData.requirementsByEntity.get(item.sourceItemId) ?? []) : [];
-  if (ownRequirements.length === 0 && templateRequirements.length === 0) return;
+  const { proficiency, requirements } = rulesetData.itemRequirements(item);
+  if (proficiency.length === 0 && requirements.length === 0) return;
 
   // Two entities' requirements, each its own group: their levels each start at "1"
-  const issues = CharacterBuilder.build(view, character).getUnmetRequirementIssues([
-    templateRequirements,
-    ownRequirements,
-  ]);
+  const issues = CharacterBuilder.build(view, character).getUnmetRequirementIssues([proficiency, requirements]);
   if (issues.length > 0)
     throw new RulesError("invalid", "Character does not meet the requirements to equip this item", issues);
 }
@@ -97,10 +94,7 @@ function checkWeaponInOneHand(
   if (item.type !== "Weapon" || !isHandLocation(location) || location === "Two Handed") return;
   if (weaponFields(rulesetData, item.id).oneHandTraining !== true) return;
 
-  // Its proficiency: its template's requirements, or its own when it's a template (`toCustomizedInventory`)
-  const isTemplate = rulesetData.itemsById.get(item.id)?.isTemplate ?? false;
-  const proficiencyOf = isTemplate ? item.id : item.sourceItemId;
-  const proficiency = proficiencyOf ? (rulesetData.requirementsByEntity.get(proficiencyOf) ?? []) : [];
+  const { proficiency } = rulesetData.itemRequirements(item);
   if (proficiency.length === 0) return;
 
   if (!CharacterBuilder.build(view, character).areRequirementsMet([proficiency], { sourceId: null })) {
