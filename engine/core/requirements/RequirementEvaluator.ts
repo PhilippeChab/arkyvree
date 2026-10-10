@@ -142,15 +142,15 @@ export default class RequirementEvaluator {
           else validResults.push(result);
         }
 
-        // A path that names nothing gave errors: the requirement is invalid, not unmet. One that resolves is met
+        // A path that names nothing gave errors: the requirement is invalid, not unmet, so it counts as met in its group
+        // wherever it sits (an `or` of it is met), which only what's read can leave unmet. One that resolves is met
         // when any of what it reaches satisfies it (a wildcard reaches several), so unmet when it reaches nothing
-        if (validResults.length > 0 || results.length === 0) {
-          evaluated.push(requirement);
-          fulfilled.set(
-            requirement,
-            validResults.some((result) => this.evaluateRequirement(requirement, result, components)),
-          );
-        }
+        const read = validResults.length > 0 || results.length === 0;
+        evaluated.push(requirement);
+        fulfilled.set(
+          requirement,
+          !read || validResults.some((result) => this.evaluateRequirement(requirement, result, components)),
+        );
       }
     }
 

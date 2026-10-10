@@ -37,7 +37,7 @@ Each component extends core's `CharacterComponent` and is built after the ones i
 
 ### Paths that reach nothing
 
-A requirement is met when what its path reaches satisfies it: any of it, for a wildcard. A path that resolves to nothing, a wildcard over an empty group (`powers.groups.evocation.*.dc.total` for a character without evocation spells), isn't met. A path that names nothing (`feats.weaponfocus.possessed`, a family by its own name) is invalid: the requirement is reported, and never met.
+A requirement is met when what its path reaches satisfies it: any of it, for a wildcard. A path that resolves to nothing, a wildcard over an empty group (`powers.groups.evocation.*.dc.total` for a character without evocation spells), isn't met. A path that names nothing (`feats.weaponfocus.possessed`, a family by its own name) is invalid: the requirement is reported, and a character never meets it (what it gates never applies). Its group counts it as met wherever it sits, in an `or` too, so only what's read leaves a group unmet: the new character form's race picker reads only what the form says (an alignment, a gender), and a race's condition on what it doesn't say counts as met.
 
 ### Hierarchical Levels
 
