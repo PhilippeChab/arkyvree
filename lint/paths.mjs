@@ -5,6 +5,11 @@ import path from "node:path";
 
 const rootCache = new Map();
 
+/** Whether a linted file sits in a repo, under the folder that holds the lint config: a copy outside it doesn't. */
+export function isInRepo(file) {
+  return fs.existsSync(path.join(rootOf(file), ".oxlintrc.json"));
+}
+
 /** The file's path from the repo's root, with forward slashes: `server/services/…`. */
 export function repoPath(file) {
   return path.relative(rootOf(file), file).split(path.sep).join("/");

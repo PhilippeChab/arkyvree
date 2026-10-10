@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { SEED_USER_ID } from "@/database/seeds/users.ts";
+import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { CUSTOMIZABLE_ENTITY_TYPES } from "@/shared/customization/entities.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 import { createCustomizableFeat, createEntity } from "@/tests/routers/api/rulesets/customization/entities.ts";

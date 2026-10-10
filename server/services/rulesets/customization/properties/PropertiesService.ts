@@ -1,9 +1,10 @@
 import { getTableName } from "drizzle-orm";
 
+import type { Db } from "@/drizzle/database.ts";
 import { propertiesInCustomization } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
 import { CustomizationEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
-import { type Db, db, withTransaction } from "@/server/database/index.ts";
+import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Properties } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";

@@ -1,9 +1,9 @@
+import { ABILITY_ABBREVIATIONS } from "@/codegen/dnd3.5/tools/terms/abilities.ts";
+import { RACE_SIZE_PATH } from "@/codegen/dnd3.5/tools/terms/races.ts";
+import { SAVE_SLUGS } from "@/codegen/dnd3.5/tools/terms/saves.ts";
+import { toSkillSlug } from "@/codegen/dnd3.5/tools/terms/skills.ts";
 import { BOOK_ABBREV_PATTERN } from "@/codegen/dnd3.5/tools/text/sanitize.ts";
 import type { FeatReference } from "@/codegen/dnd3.5/tools/types/feats.ts";
-import { ABILITY_ABBREVIATIONS } from "@/codegen/dnd3.5/tools/vocabulary/abilities.ts";
-import { RACE_SIZE_PATH } from "@/codegen/dnd3.5/tools/vocabulary/races.ts";
-import { SAVE_SLUGS } from "@/codegen/dnd3.5/tools/vocabulary/saves.ts";
-import { toSkillSlug } from "@/codegen/dnd3.5/tools/vocabulary/skills.ts";
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import { feat } from "@/content/dnd3.5/builders/feats/possession.ts";

@@ -1,7 +1,8 @@
-import { ABILITY_NAMES, ABILITY_SLUGS } from "@/codegen/dnd3.5/tools/vocabulary/abilities.ts";
-import { SAVE_SLUGS } from "@/codegen/dnd3.5/tools/vocabulary/saves.ts";
+import { ABILITY_SLUGS } from "@/codegen/dnd3.5/tools/terms/abilities.ts";
+import { SAVE_SLUGS } from "@/codegen/dnd3.5/tools/terms/saves.ts";
 import { bonus } from "@/content/core/builders/customization/modifiers.ts";
 import type { Modifier } from "@/content/core/builders/customization/types.ts";
+import { ABILITY_NAMES } from "@/vocabulary/dnd3.5/abilities.ts";
 
 import { BonusText } from "./BonusText.ts";
 import { ModifierReading } from "./ModifierReading.ts";

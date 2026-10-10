@@ -1,7 +1,7 @@
 import { eq, inArray, isNull } from "drizzle-orm";
 
+import type { Db } from "@/drizzle/database.ts";
 import { requirementsInCustomization } from "@/drizzle/schema.ts";
-import type { Db } from "@/server/database/index.ts";
 import CustomizationRepository from "@/server/repositories/CustomizationRepository.ts";
 
 class RequirementsRepository extends CustomizationRepository<typeof requirementsInCustomization> {

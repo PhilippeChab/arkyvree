@@ -1,6 +1,6 @@
 import { and, asc, type Column, desc, eq, getTableColumns, isNull, not, sql, type SQL, type Table } from "drizzle-orm";
 
-import type { Db } from "@/server/database/index.ts";
+import type { Db } from "@/drizzle/database.ts";
 
 export enum Visibility {
   All,

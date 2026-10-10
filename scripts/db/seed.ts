@@ -1,6 +1,7 @@
 import { applyPackages } from "@/database/packages/runner.ts";
-import testSeeds from "@/database/seeds/index.ts";
-import type { Db } from "@/server/database/index.ts";
+import type { Db } from "@/drizzle/database.ts";
+
+import testSeeds from "./seeds/index.ts";
 
 /** Applies the content packages to `db`, then, when `includeTestSeeds`, the test data's seeds (reset.ts). */
 export default async function seedDatabase(db: Db, includeTestSeeds: boolean) {

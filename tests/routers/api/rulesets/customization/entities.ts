@@ -1,4 +1,4 @@
-import { SEED_USER_ID } from "@/database/seeds/users.ts";
+import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import type { CustomizableEntityType } from "@/shared/customization/entities.ts";
 import { api, expectOk } from "@/tests/support/api.ts";
 import { createSeededTestRuleset, postAptitude } from "@/tests/support/rulesets.ts";

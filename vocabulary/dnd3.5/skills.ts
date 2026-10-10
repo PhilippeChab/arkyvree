@@ -1,6 +1,6 @@
 /**
- * The skills' names, and the skill rules' numbers: what a rank costs, the most ranks a skill holds, and the points a
- * level gives.
+ * The skills' names, the Knowledge skills among them, and the skill rules' numbers: what a rank costs, the most ranks a
+ * skill holds, and the points a level gives.
  */
 
 /** What a rank costs in a class skill, in skill points. */
@@ -11,11 +11,6 @@ export const CROSS_CLASS_POINTS_PER_RANK = 2;
 export const CROSS_CLASS_RANK_CAP_DIVISOR = 2;
 /** How many times over a character's first level gives its skill points. */
 export const FIRST_LEVEL_SKILL_POINTS_MULTIPLIER = 4;
-/** The most ranks a class skill holds past the character's level: its level + 3. */
-export const MAX_RANKS_OVER_LEVEL = 3;
-/** The fewest skill points a level gives, whatever the ability's modifier. */
-export const MIN_SKILL_POINTS_PER_LEVEL = 1;
-
 /** The skills a feat's or a class's text names, as the books name them, and the skills Skill Focus is taken for. */
 export const SKILL_NAMES = [
   "Appraise",
@@ -64,3 +59,11 @@ export const SKILL_NAMES = [
   "Use Magic Device",
   "Use Rope",
 ];
+/** The Knowledge skills, as the books name them ("Knowledge (Arcana)"…), in the skill list's order. */
+export const KNOWLEDGE_SKILLS = SKILL_NAMES.filter((name) => name.startsWith("Knowledge"));
+
+/** The most ranks a class skill holds past the character's level: its level + 3. */
+export const MAX_RANKS_OVER_LEVEL = 3;
+
+/** The fewest skill points a level gives, whatever the ability's modifier. */
+export const MIN_SKILL_POINTS_PER_LEVEL = 1;

@@ -1,5 +1,5 @@
 import { RULESET_CONTENT } from "@/database/packages/registry.ts";
-import type { Db } from "@/server/database/index.ts";
+import type { Db } from "@/drizzle/database.ts";
 import { BASE_RULES_OPTIONS } from "@/shared/enums.ts";
 
 import { seedCharacter } from "./seedCharacter.ts";

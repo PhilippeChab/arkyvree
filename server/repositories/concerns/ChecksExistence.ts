@@ -1,7 +1,7 @@
 import type { Table } from "drizzle-orm";
 
+import type { Db } from "@/drizzle/database.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import type { Db } from "@/server/database/index.ts";
 import type BaseRepository from "@/server/repositories/BaseRepository.ts";
 
 /** `exists` for a repository whose rows `findOne` looks up: whether it finds one. */

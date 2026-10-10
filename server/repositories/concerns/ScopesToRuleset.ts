@@ -1,8 +1,8 @@
 import { and, eq, inArray, isNull, notInArray, or, type SQL, type Table } from "drizzle-orm";
 
+import type { Db } from "@/drizzle/database.ts";
 import { entitySnapshotsInRules } from "@/drizzle/schema.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import type { Db } from "@/server/database/index.ts";
 import type BaseRepository from "@/server/repositories/BaseRepository.ts";
 
 /** A ruleset entity list's filters: the ruleset's own entities and its source chain's, and a campaign's on it. */

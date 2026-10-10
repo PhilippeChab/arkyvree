@@ -1,8 +1,8 @@
+import { findOptionName } from "@/codegen/dnd3.5/tools/terms/featOptions.ts";
+import { RACE_NAME_PATH, RACE_SIZE_PATH, RACE_SPELLINGS } from "@/codegen/dnd3.5/tools/terms/races.ts";
+import { SKILL_SLUGS, toSkillSlug } from "@/codegen/dnd3.5/tools/terms/skills.ts";
 import { BOOK_ABBREV_PATTERN } from "@/codegen/dnd3.5/tools/text/sanitize.ts";
 import { type ClassReference } from "@/codegen/dnd3.5/tools/types/classes.ts";
-import { findOptionName } from "@/codegen/dnd3.5/tools/vocabulary/featOptions.ts";
-import { RACE_NAME_PATH, RACE_NAMES, RACE_SIZE_PATH } from "@/codegen/dnd3.5/tools/vocabulary/races.ts";
-import { SKILL_SLUGS, toSkillSlug } from "@/codegen/dnd3.5/tools/vocabulary/skills.ts";
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import { domainFeat } from "@/content/dnd3.5/builders/aptitudes/names.ts";
@@ -78,7 +78,7 @@ function raceRequirement(text: string): RequirementEntry | undefined {
   if (raceText.toLowerCase().startsWith("any")) return undefined;
 
   const races = raceText.split(/\s+or\s+/i).map((r) => r.trim().toLowerCase());
-  const resolved = races.map((r) => RACE_NAMES[r]).filter(Boolean);
+  const resolved = races.map((r) => RACE_SPELLINGS[r]).filter(Boolean);
   if (resolved.length === 0) return undefined;
 
   if (resolved.length === 1) return eqStr(RACE_NAME_PATH, resolved[0]);

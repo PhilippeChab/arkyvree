@@ -1,4 +1,4 @@
-import type { Db } from "@/server/database/index.ts";
+import type { Db } from "@/drizzle/database.ts";
 import {
   CharacterInventory,
   CharacterLanguages,

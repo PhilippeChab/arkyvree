@@ -4,8 +4,6 @@ import { eq, inArray } from "drizzle-orm";
 
 import type { CharacterSeed } from "@/content/core/builders/characters/types.ts";
 import { CHARACTERS } from "@/content/dnd3.5/testData/characters.ts";
-import seedCharacters from "@/database/seeds/characters.ts";
-import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import {
   characterAbilitiesInCharacter,
   charactersInCharacter,
@@ -18,6 +16,8 @@ import {
   levelSkillsInCharacter,
 } from "@/drizzle/schema.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import seedCharacters from "@/scripts/db/seeds/characters.ts";
+import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";

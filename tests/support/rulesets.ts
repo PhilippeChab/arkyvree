@@ -1,15 +1,16 @@
 import { eq, type InferInsertModel } from "drizzle-orm";
 
-import { DND35_BASE_RULES } from "@/content/dnd3.5/baseRules.ts";
 import { DND35_CORE_PACKAGE } from "@/content/dnd3.5/packages/core.ts";
 import { RulesetSeeder } from "@/database/seeders/dnd3.5/RulesetSeeder.ts";
-import { SEED_USER_ID } from "@/database/seeds/users.ts";
+import type { Db } from "@/drizzle/database.ts";
 import { aptitudesInRules, rulesetExtensionsInRules, type rulesetsInRules } from "@/drizzle/schema.ts";
 import type { CowData, RulesetSources } from "@/engine/core/cow/index.ts";
+import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { EntityCopy, RulesetViews } from "@/server/cow/index.ts";
-import { type Db, db } from "@/server/database/index.ts";
+import { db } from "@/server/database/index.ts";
 import { Properties, type RulesetEntityType, Rulesets } from "@/server/repositories/index.ts";
 import type { TargetPathKind } from "@/shared/customization/target.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 import { api, expectOk } from "./api.ts";
 import { insertRows } from "./database.ts";

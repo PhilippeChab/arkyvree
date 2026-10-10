@@ -1,5 +1,6 @@
 import { and, eq, inArray, type InferInsertModel, isNull, or, sql } from "drizzle-orm";
 
+import type { Db } from "@/drizzle/database.ts";
 import {
   charactersInCharacter,
   klassesInRules,
@@ -8,7 +9,6 @@ import {
   rulesetsInRules,
 } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
-import type { Db } from "@/server/database/index.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
 import { ChecksRulesetUse } from "@/server/repositories/concerns/ChecksRulesetUse.ts";
 import { ResolvesCopies } from "@/server/repositories/concerns/ResolvesCopies.ts";

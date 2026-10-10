@@ -1,11 +1,11 @@
 /** The target paths a modifier or a requirement read from a text can name: the engine's own, so they stay in step. */
 
-import { ABILITY_NAMES } from "@/codegen/dnd3.5/tools/vocabulary/abilities.ts";
-import { SAVE_NAMES } from "@/codegen/dnd3.5/tools/vocabulary/saves.ts";
 import type { RequirementEntry } from "@/content/core/builders/customization/types.ts";
-import { DND35_BASE_RULES } from "@/content/dnd3.5/baseRules.ts";
 import { Engine } from "@/engine/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { ABILITY_NAMES } from "@/vocabulary/dnd3.5/abilities.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
+import { SAVE_NAMES } from "@/vocabulary/dnd3.5/saves.ts";
 import { SKILL_NAMES } from "@/vocabulary/dnd3.5/skills.ts";
 
 /**

@@ -1,4 +1,4 @@
-import type { Db } from "@/server/database/index.ts";
+import type { Db } from "@/drizzle/database.ts";
 import { ConflictError, ForbiddenError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { CharacterContributors } from "@/server/repositories/index.ts";
 import type { Character, Session } from "@/shared/relations.ts";

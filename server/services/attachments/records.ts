@@ -1,4 +1,5 @@
-import { type Db, db } from "@/server/database/index.ts";
+import type { Db } from "@/drizzle/database.ts";
+import { db } from "@/server/database/index.ts";
 import { Attachments } from "@/server/repositories/index.ts";
 import ObjectStorage from "@/server/storage/ObjectStorage.ts";
 import { ATTACHMENT_SLOTS, type AttachmentSlotName } from "@/shared/attachments.ts";

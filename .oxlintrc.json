@@ -66,8 +66,10 @@
     "arkyvree/method-names": "error",
     // An exported function of the server or shared/ starts with a verb (lint/methodNames.mjs).
     "arkyvree/function-names": "error",
-    // The architecture (lint/architecture.mjs): what each layer imports, the engine's one entry, where queries are built,
+    // The architecture (lint/architecture.mjs): what each root folder imports (a box with one role, which reaches
+    // another only by a declared edge) and each layer inside it, the engine's one entry, where queries are built,
     // folder indexes.
+    "arkyvree/root-folders": "error",
     "arkyvree/layers": "error",
     "arkyvree/engine-front-door": "error",
     "arkyvree/one-engine-op": "error",

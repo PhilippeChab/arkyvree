@@ -1,7 +1,7 @@
 import { and, eq, isNull } from "drizzle-orm";
 
+import type { Db } from "@/drizzle/database.ts";
 import { rulesetExtensionsInRules, rulesetsInRules } from "@/drizzle/schema.ts";
-import type { Db } from "@/server/database/index.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
 class RulesetExtensionsRepository extends BaseRepository<typeof rulesetExtensionsInRules> {

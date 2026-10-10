@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { DND35_COMPLETE_DIVINE_NAME } from "@/content/dnd3.5/rulesetNames.ts";
-import { SEED_USER_ID } from "@/database/seeds/users.ts";
+import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { Klasses } from "@/server/repositories/index.ts";
 import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";

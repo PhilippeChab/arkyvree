@@ -1,8 +1,8 @@
 import { and, eq, type InferInsertModel, isNull } from "drizzle-orm";
 
+import type { Db } from "@/drizzle/database.ts";
 import { characterAbilitiesInCharacter } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
-import type { Db } from "@/server/database/index.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
 import { ResolvesCopies } from "@/server/repositories/concerns/ResolvesCopies.ts";
 

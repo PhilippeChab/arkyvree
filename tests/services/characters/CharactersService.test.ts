@@ -3,8 +3,8 @@ import { describe, expect, test } from "bun:test";
 import { and, eq } from "drizzle-orm";
 import { isValidElement } from "react";
 
-import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { charactersInCharacter, playerCharactersInCampaign } from "@/drizzle/schema.ts";
+import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";

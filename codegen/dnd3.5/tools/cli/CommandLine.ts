@@ -1,5 +1,5 @@
 import type { ReferenceFilters } from "@/codegen/dnd3.5/tools/types/reference.ts";
-import { CORE_BOOK } from "@/codegen/dnd3.5/tools/vocabulary/books.ts";
+import { CORE_BOOK } from "@/vocabulary/dnd3.5/books.ts";
 
 /** What `parser:dnd3.5:scrape` is asked: the type of reference to scrape, its book, one page, how it fetches pages. */
 interface ScrapeRequest {

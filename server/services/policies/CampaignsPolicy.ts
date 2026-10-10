@@ -1,4 +1,4 @@
-import type { Db } from "@/server/database/index.ts";
+import type { Db } from "@/drizzle/database.ts";
 import { ForbiddenError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { Players, Visibility } from "@/server/repositories/index.ts";
 import type { Campaign, Player, Session } from "@/shared/relations.ts";

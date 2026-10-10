@@ -1,9 +1,10 @@
 import { getTableName } from "drizzle-orm";
 
+import type { Db } from "@/drizzle/database.ts";
 import { rulesetsInRules } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
 import { EntityRepositories, RulesetViews } from "@/server/cow/index.ts";
-import { type Db, db, withTransaction } from "@/server/database/index.ts";
+import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import {
   Activities,

@@ -1,8 +1,8 @@
 /** What saving a ruleset entity writes beside its row, as the engine plans it (`EntityWrites`): the server writes it. */
 
+import type { Db } from "@/drizzle/database.ts";
 import type { EntityRemoval, EntityWrites, MadeEntity } from "@/engine/index.ts";
 import { CustomizationEdit, EntityRepositories, type RulesetScope } from "@/server/cow/index.ts";
-import type { Db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import {
   Modifiers,

@@ -7,13 +7,13 @@ import type {
   Property,
   RequirementEntry,
 } from "@/content/core/builders/customization/types.ts";
+import type { Db } from "@/drizzle/database.ts";
 import {
   entitySnapshotsInRules,
   modifiersInCustomization,
   propertiesInCustomization,
   requirementsInCustomization,
 } from "@/drizzle/schema.ts";
-import type { Db } from "@/server/database/index.ts";
 
 type Ids = Record<string, string>;
 

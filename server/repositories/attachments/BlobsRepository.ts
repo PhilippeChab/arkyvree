@@ -1,7 +1,7 @@
 import { eq, type InferInsertModel, isNotNull, lt, notExists, notInArray, or, sql } from "drizzle-orm";
 
+import type { Db } from "@/drizzle/database.ts";
 import { attachmentsInStorage, blobsInStorage } from "@/drizzle/schema.ts";
-import type { Db } from "@/server/database/index.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
 class BlobsRepository extends BaseRepository<typeof blobsInStorage> {

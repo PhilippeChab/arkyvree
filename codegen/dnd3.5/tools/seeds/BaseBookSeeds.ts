@@ -1,4 +1,6 @@
 import References from "@/codegen/dnd3.5/tools/references/References.ts";
+import { CLASS_FEAT_FAMILY_NAMES } from "@/codegen/dnd3.5/tools/terms/classFeatFamilies.ts";
+import { findFamilyFeat } from "@/codegen/dnd3.5/tools/terms/featOptions.ts";
 import type { ClassReference, ClassReferenceFile, InheritedSpellList } from "@/codegen/dnd3.5/tools/types/classes.ts";
 import type { DomainReference } from "@/codegen/dnd3.5/tools/types/domains.ts";
 import type { FeatReference } from "@/codegen/dnd3.5/tools/types/feats.ts";
@@ -8,13 +10,11 @@ import type { RaceReference } from "@/codegen/dnd3.5/tools/types/races.ts";
 import type { ReferenceByType, ReferenceType } from "@/codegen/dnd3.5/tools/types/reference.ts";
 import type { SpellReference } from "@/codegen/dnd3.5/tools/types/spells.ts";
 import type { WizardSchoolReference } from "@/codegen/dnd3.5/tools/types/wizardSchools.ts";
-import { CORE_BOOK } from "@/codegen/dnd3.5/tools/vocabulary/books.ts";
-import { CLASS_FEAT_FAMILY_NAMES } from "@/codegen/dnd3.5/tools/vocabulary/classFeatFamilies.ts";
-import { findFamilyFeat } from "@/codegen/dnd3.5/tools/vocabulary/featOptions.ts";
 import type { RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import { classSpells } from "@/content/dnd3.5/builders/aptitudes/names.ts";
 import type { DomainSeed } from "@/content/dnd3.5/builders/domains/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { CORE_BOOK } from "@/vocabulary/dnd3.5/books.ts";
 
 import type { BookSeeds } from "./BookSeeds.ts";
 import { ClassSeeds } from "./classes/ClassSeeds.ts";

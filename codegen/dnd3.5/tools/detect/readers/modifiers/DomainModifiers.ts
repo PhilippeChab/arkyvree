@@ -1,8 +1,8 @@
-import { KNOWLEDGE_SKILLS, SKILL_SLUGS } from "@/codegen/dnd3.5/tools/vocabulary/skills.ts";
+import { SKILL_SLUGS } from "@/codegen/dnd3.5/tools/terms/skills.ts";
 import { setFlag } from "@/content/core/builders/customization/modifiers.ts";
 import type { Modifier } from "@/content/core/builders/customization/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
-import { SKILL_NAMES } from "@/vocabulary/dnd3.5/skills.ts";
+import { KNOWLEDGE_SKILLS, SKILL_NAMES } from "@/vocabulary/dnd3.5/skills.ts";
 
 import { ModifierReading } from "./ModifierReading.ts";
 

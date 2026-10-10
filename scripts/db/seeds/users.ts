@@ -1,5 +1,5 @@
+import type { Db } from "@/drizzle/database.ts";
 import { sessionsInAccount, usersInAccount } from "@/drizzle/schema.ts";
-import type { Db } from "@/server/database/index.ts";
 
 /** The seeded users' password digest ("LocalTest123!"), which the e2e run's users share. */
 export const PASSWORD_DIGEST = "6fc914e8107f52a500ae8d6f5fd9b7ca677440c2fea38b2a9ec6b3143eb91c2b";

@@ -1,7 +1,7 @@
 import { and, eq, isNotNull, isNull, lt, ne, or } from "drizzle-orm";
 
+import type { Db } from "@/drizzle/database.ts";
 import { sessionsInAccount } from "@/drizzle/schema.ts";
-import type { Db } from "@/server/database/index.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
 import { SESSION_TTL_MS } from "./sessionTtl.ts";

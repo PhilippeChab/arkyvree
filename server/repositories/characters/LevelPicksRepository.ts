@@ -1,6 +1,7 @@
 import { and, eq, inArray, type InferInsertModel, isNull, or } from "drizzle-orm";
 import type { PgColumn } from "drizzle-orm/pg-core";
 
+import type { Db } from "@/drizzle/database.ts";
 import {
   type aptitudesInRules,
   charactersInCharacter,
@@ -15,7 +16,6 @@ import {
   type skillsInRules,
 } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
-import type { Db } from "@/server/database/index.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
 import { ChecksRulesetUse } from "@/server/repositories/concerns/ChecksRulesetUse.ts";
 import { ResolvesCopies } from "@/server/repositories/concerns/ResolvesCopies.ts";

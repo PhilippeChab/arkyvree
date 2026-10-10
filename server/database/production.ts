@@ -1,23 +1,12 @@
-/** The database outside the tests (index.ts picks it): a pool on DATABASE_URL, and the Db and transactions on it. */
+/** The database outside the tests (index.ts picks it): a pool on DATABASE_URL, and the transactions on it. */
 
-import type { ExtractTablesWithRelations } from "drizzle-orm";
 import { drizzle, type NodePgClient } from "drizzle-orm/node-postgres";
-import { type PgQueryResultHKT, type PgTransaction } from "drizzle-orm/pg-core";
 
-import * as relations from "@/drizzle/relations.ts";
-import * as schema from "@/drizzle/schema.ts";
+import { SCHEMA_WITH_RELATIONS, type Transaction } from "@/drizzle/database.ts";
 import { readEnv, readRequiredEnv } from "@/server/environment.ts";
 
 import { createPool } from "./pool.ts";
 import { clearRequestCache } from "./requestCache.ts";
-
-export type Db = typeof db | Transaction;
-
-export type Transaction = PgTransaction<
-  PgQueryResultHKT,
-  typeof schemaWithRelations,
-  ExtractTablesWithRelations<typeof schemaWithRelations>
->;
 
 const pool = createPool({
   connectionString: readRequiredEnv("DATABASE_URL"),
@@ -36,9 +25,8 @@ const pool = createPool({
   statement_timeout: 10000,
   query_timeout: 10000,
 });
-const schemaWithRelations = { ...schema, ...relations };
 
-export const db = drizzle(pool as NodePgClient, { schema: schemaWithRelations });
+export const db = drizzle(pool as NodePgClient, { schema: SCHEMA_WITH_RELATIONS });
 
 export async function withTransaction<T>(callback: (tx: Transaction) => Promise<T>): Promise<T> {
   const result = await db.transaction(callback);

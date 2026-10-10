@@ -1,6 +1,6 @@
 /** What a feat or a class feature grants by itself: a bonded creature and its level, uncanny dodge's AC, the feats its text names. */
 
-import { NUMBER_WORDS } from "@/codegen/dnd3.5/tools/vocabulary/numbers.ts";
+import { NUMBER_WORDS } from "@/codegen/dnd3.5/tools/terms/numbers.ts";
 import { bonus, setFlag } from "@/content/core/builders/customization/modifiers.ts";
 import type { ModifierSeed } from "@/content/core/builders/customization/types.ts";
 

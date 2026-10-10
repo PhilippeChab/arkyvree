@@ -6,10 +6,10 @@
 import References from "@/codegen/dnd3.5/tools/references/References.ts";
 import { type BaseBookSeeds } from "@/codegen/dnd3.5/tools/seeds/BaseBookSeeds.ts";
 import type { InheritedSpellList } from "@/codegen/dnd3.5/tools/types/classes.ts";
-import { CORE_BOOK } from "@/codegen/dnd3.5/tools/vocabulary/books.ts";
 import { classSpells } from "@/content/dnd3.5/builders/aptitudes/names.ts";
 import type { CowFeatEntry, CowSpellEntry } from "@/content/dnd3.5/builders/rulesets/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
+import { CORE_BOOK } from "@/vocabulary/dnd3.5/books.ts";
 
 /** The spells a book's inherited lists add (`additions`), each at its level there, into `entries`. */
 function addListAdditions(

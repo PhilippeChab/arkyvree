@@ -1,12 +1,12 @@
 import { asc, eq } from "drizzle-orm";
 
-import { DND35_BASE_RULES } from "@/content/dnd3.5/baseRules.ts";
 import { DND35_CORE_PACKAGE } from "@/content/dnd3.5/packages/core.ts";
 import type { SeedContext } from "@/database/seeders/core/SeederState.ts";
 import { RulesetSeeder } from "@/database/seeders/dnd3.5/RulesetSeeder.ts";
 import { modifiersInCustomization, propertiesInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { uniqueId } from "@/tests/support/seed.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 import { describeRequirement } from "./seededRows.ts";
 

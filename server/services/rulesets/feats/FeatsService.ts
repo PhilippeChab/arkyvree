@@ -1,7 +1,8 @@
+import type { Db } from "@/drizzle/database.ts";
 import { featsInRules } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
-import { type Db, db } from "@/server/database/index.ts";
+import { db } from "@/server/database/index.ts";
 import { Feats } from "@/server/repositories/index.ts";
 import EntityWriter from "@/server/services/rulesets/EntityWriter.ts";
 import type { Session } from "@/shared/relations.ts";

@@ -1,7 +1,7 @@
 import { and, eq, inArray, type InferInsertModel, isNull } from "drizzle-orm";
 
+import type { Db } from "@/drizzle/database.ts";
 import { itemsInRules } from "@/drizzle/schema.ts";
-import type { Db } from "@/server/database/index.ts";
 import { type RulesetEntityFilters } from "@/server/repositories/concerns/ScopesToRuleset.ts";
 import RulesetEntityRepository from "@/server/repositories/RulesetEntityRepository.ts";
 

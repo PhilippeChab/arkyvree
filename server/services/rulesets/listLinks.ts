@@ -1,7 +1,7 @@
 /** An entity's list links, as a plan gives them (`ListLink`): a feat's pools, a power's lists at its spell levels. */
 
+import type { Db } from "@/drizzle/database.ts";
 import type { ListLink } from "@/engine/index.ts";
-import type { Db } from "@/server/database/index.ts";
 import { FeatsAptitudes, PowersAptitudes, type RulesetEntityType } from "@/server/repositories/index.ts";
 
 /** A kind's list links' table: its links written, and its entity's removed. */

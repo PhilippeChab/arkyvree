@@ -1,5 +1,5 @@
 import type { BaseRequirementReading } from "@/codegen/dnd3.5/tools/detect/readers/requirements/BaseRequirementReading.ts";
-import { findOptionName, getFeatOptions } from "@/codegen/dnd3.5/tools/vocabulary/featOptions.ts";
+import { findOptionName, getFeatOptions } from "@/codegen/dnd3.5/tools/terms/featOptions.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
 

@@ -1,7 +1,7 @@
 import { type ClientResponse, DetailedError, parseResponse } from "hono/client";
 import { testClient } from "hono/testing";
 
-import { SEED_USER_ID } from "@/database/seeds/users.ts";
+import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { toJson } from "@/server/errors/index.ts";
 import { SESSION_COOKIE_NAME } from "@/server/middlewares/session.ts";

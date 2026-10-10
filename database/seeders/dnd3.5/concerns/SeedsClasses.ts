@@ -1,7 +1,6 @@
 import { bonus } from "@/content/core/builders/customization/modifiers.ts";
 import { gt } from "@/content/core/builders/customization/requirements.ts";
 import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
-import { DND35_BASE_RULES } from "@/content/dnd3.5/baseRules.ts";
 import type { BabType, ClassSeed, SaveType } from "@/content/dnd3.5/builders/classes/types.ts";
 import type { BaseSeeder } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
 import { getSpellLevelOpenings } from "@/database/seeders/dnd3.5/spellTable.ts";
@@ -17,6 +16,7 @@ import {
 import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 /** A class's levels, as seeded: each level's id and number. */
 type Levels = { id: string; level: number }[];

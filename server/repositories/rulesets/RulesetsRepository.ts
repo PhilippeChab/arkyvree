@@ -13,6 +13,7 @@ import {
   type SQL,
 } from "drizzle-orm";
 
+import type { Db } from "@/drizzle/database.ts";
 import {
   campaignsInCampaign,
   contributorsInRules,
@@ -21,7 +22,6 @@ import {
   starredRulesetsInAccount,
 } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
-import type { Db } from "@/server/database/index.ts";
 import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
 import { Paginates } from "@/server/repositories/concerns/Paginates.ts";

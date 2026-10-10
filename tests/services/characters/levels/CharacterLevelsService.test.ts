@@ -1,8 +1,6 @@
 import { afterAll, describe, expect, test } from "bun:test";
 
 import { DND35_DMG_NAME } from "@/content/dnd3.5/rulesetNames.ts";
-import { addClassLevels, addFeats, addPowers, addSkills } from "@/database/seeds/seedCharacter.ts";
-import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import {
   abilitiesInRules,
   featsInRules,
@@ -11,6 +9,8 @@ import {
   skillsInRules,
 } from "@/drizzle/schema.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import { addClassLevels, addFeats, addPowers, addSkills } from "@/scripts/db/seeds/seedCharacter.ts";
+import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { createTestPool } from "@/server/database/test.ts";

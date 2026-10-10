@@ -1,4 +1,4 @@
-import { SAVE_SLUGS } from "@/codegen/dnd3.5/tools/vocabulary/saves.ts";
+import { SAVE_SLUGS } from "@/codegen/dnd3.5/tools/terms/saves.ts";
 import { bonus } from "@/content/core/builders/customization/modifiers.ts";
 
 import { BonusText } from "./BonusText.ts";

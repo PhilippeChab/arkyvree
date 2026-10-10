@@ -2,7 +2,8 @@ import { type InferInsertModel, type InferSelectModel, sql } from "drizzle-orm";
 import type { PgTable } from "drizzle-orm/pg-core";
 import type { Pool, PoolClient } from "pg";
 
-import { db, type Db } from "@/server/database/index.ts";
+import type { Db } from "@/drizzle/database.ts";
+import { db } from "@/server/database/index.ts";
 import { createTestDbFromClient } from "@/server/database/test.ts";
 import { newTimingStore, timingStorage } from "@/server/timing.ts";
 

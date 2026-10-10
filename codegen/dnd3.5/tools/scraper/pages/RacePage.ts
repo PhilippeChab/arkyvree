@@ -12,8 +12,8 @@ import { normalizeWs } from "@/codegen/core/text/whitespace.ts";
 import { PART_SEPARATOR } from "@/codegen/dnd3.5/tools/text/scrapedText.ts";
 import type { RaceReference } from "@/codegen/dnd3.5/tools/types/races.ts";
 import type { NamedText } from "@/codegen/dnd3.5/tools/types/reference.ts";
-import { ABILITY_NAMES } from "@/codegen/dnd3.5/tools/vocabulary/abilities.ts";
 import { SIZE_OPTIONS, type SizeType } from "@/shared/enums.ts";
+import { ABILITY_NAMES } from "@/vocabulary/dnd3.5/abilities.ts";
 
 import { DndToolsPage } from "./DndToolsPage.ts";
 

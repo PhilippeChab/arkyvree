@@ -1,5 +1,5 @@
+import type { Db } from "@/drizzle/database.ts";
 import type { RulesetSources } from "@/engine/index.ts";
-import type { Db } from "@/server/database/index.ts";
 import type { RulesetEntityType } from "@/server/repositories/index.ts";
 
 import EntityCopy from "./EntityCopy.ts";

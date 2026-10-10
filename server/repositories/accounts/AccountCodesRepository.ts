@@ -1,7 +1,7 @@
 import { eq, isNull, lt } from "drizzle-orm";
 
+import type { Db } from "@/drizzle/database.ts";
 import type { emailVerificationsInAccount, passwordResetsInAccount } from "@/drizzle/schema.ts";
-import type { Db } from "@/server/database/index.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
 /** The codes a user is emailed, one table per use: verifying an email, resetting a password. */

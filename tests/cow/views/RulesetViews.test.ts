@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 
-import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { featsInRules, itemsInRules, modifiersInCustomization, propertiesInCustomization } from "@/drizzle/schema.ts";
+import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
