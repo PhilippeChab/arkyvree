@@ -3,11 +3,11 @@
  * What leaves (`findDepartures`) is the book's entities, the fork's copies of them, and their classes' levels, each with
  * what the fork's view shows in its place once the book is gone, when anything does: the entity a book's copy stands for
  * (a core feat it overrides), or another book's copy of it, which wins once this one is gone; a reprint's namesake; the
- * list of the same name another book has, a list's name being its identity (`CowDataBuilder` pairs namesakes); a class's
- * level the level of its number in the class its class falls back to. What the fork and its characters keep that names
- * one names what stands in its place instead (`repointDepartingReferences`). What names one with nothing in its place
- * refuses the unsubscribe: a character's pick (its in-use check), or one of the fork's rows (a link to a list no other
- * book has, an item's template, a class's skill or granted feat…).
+ * list of the same name the fork or another book has, a list's name being its identity (`CowDataBuilder` pairs
+ * namesakes); a class's level the level of its number in the class its class falls back to. What the fork and its
+ * characters keep that names one names what stands in its place instead (`repointDepartingReferences`). What names one
+ * with nothing in its place refuses the unsubscribe: a character's pick (its in-use check), or one of the fork's rows
+ * (a link to a list no other book has, an item's template, a class's skill or granted feat…).
  */
 
 import type { Db } from "@/drizzle/database.ts";

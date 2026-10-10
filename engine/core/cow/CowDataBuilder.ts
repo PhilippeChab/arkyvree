@@ -124,14 +124,16 @@ export default class CowDataBuilder {
   }
 
   /**
-   * Deduplicate aptitudes with the same name across the source chain. Each extension independently creates aptitudes
-   * it needs (self-contained), so duplicates arise when multiple extensions reference the same spell list, or when an
-   * extension recreates a base aptitude (e.g., "General"). Pick one winner per name; losers become its siblings
-   * (compose filters them) and aliases (so FK refs to a loser remap to the winner). Intentionally not overrides —
-   * compose-skip is for true overrides only.
+   * Deduplicate aptitudes with the same name across the ruleset and its source chain. Each extension independently
+   * creates aptitudes it needs (self-contained), so duplicates arise when multiple extensions reference the same spell
+   * list, when an extension recreates a base aptitude (e.g., "General"), or when the ruleset has a list (its own, or its
+   * copy of an inherited one) of a name one of its books has. Pick one winner per name, the ruleset's own first, then
+   * the chain's closest; losers become its siblings (compose filters them) and aliases (so FK refs to a loser remap to
+   * the winner). Intentionally not overrides — compose-skip is for true overrides only.
    */
   private pairAptitudes(rows: CowRows) {
-    for (const { winner, losers } of rankNamesakes(rows.aptitudes, (apt) => apt.name, this.sourceChain)) {
+    const rulesetIds = [this.rulesetId, ...this.sourceChain];
+    for (const { winner, losers } of rankNamesakes(rows.aptitudes, (apt) => apt.name, rulesetIds)) {
       // Aliases must point directly to the visible copy, including a local COW.
       const resolvedWinnerId = this.aliases.get(winner.id) ?? winner.id;
       for (const loser of losers) this.alias(loser.id, resolvedWinnerId);
