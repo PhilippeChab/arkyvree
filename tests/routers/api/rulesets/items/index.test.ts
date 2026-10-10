@@ -32,6 +32,32 @@ describe("rulesets items", () => {
     await expectStatus(item.$get({ param }), 404);
   });
 
+  test("clears an item's slot, template, weight and cost with null", async () => {
+    const { id } = await createSeededTestRuleset(SEED_USER_ID);
+    const template = await expectOk(
+      items.$post({ param: { id }, json: { name: "Test Blade Template", type: "Weapon", isTemplate: true } }),
+    );
+    const blade = await expectOk(
+      items.$post({
+        param: { id },
+        json: { name: "Test Blade", type: "Weapon", sourceItemId: template.id, weight: 4, costGp: 15 },
+      }),
+    );
+    const cleared = await expectOk(
+      item.$put({
+        param: { id, itemId: blade.id },
+        json: { name: "Test Blade", type: "Weapon", sourceItemId: null, weight: null, costGp: null },
+      }),
+    );
+    expect(cleared).toMatchObject({ sourceItemId: null, weight: null, costGp: null });
+
+    // A slot's none is "Other": worn nowhere in particular
+    const hat = await expectOk(items.$post({ param: { id }, json: { name: "Test Hat", slot: "Head" } }));
+    expect(
+      await expectOk(item.$put({ param: { id, itemId: hat.id }, json: { name: "Test Hat", slot: null } })),
+    ).toMatchObject({ slot: "Other" });
+  });
+
   test("lists the templates of one type", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     const templates = await expectOk(

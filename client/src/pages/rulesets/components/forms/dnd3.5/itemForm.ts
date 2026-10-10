@@ -7,9 +7,14 @@ import type { rpc } from "@/client/src/services/rpc.ts";
 /** An item's request's body, which `toItemPayload` makes of its form. */
 type ItemBody = InferRequestType<(typeof rpc.api.rulesets)[":id"]["items"]["$post"]>["json"];
 
-/** An item's form: its body, its cost and its weight as their fields hold them, text (`toItemPayload` reads them). */
-export type ItemFormData = Omit<ItemBody, "weight" | "costGp"> & {
+/**
+ * An item's form: its body, its cost and its weight as their fields hold them, text, and its slot and template `""` for
+ * none (`toItemPayload` reads them).
+ */
+export type ItemFormData = Omit<ItemBody, "costGp" | "slot" | "sourceItemId" | "weight"> & {
   costGp?: string;
+  slot?: NonNullable<ItemBody["slot"]> | "";
+  sourceItemId?: string;
   weight?: string;
 };
 
@@ -25,10 +30,11 @@ export const ITEM_TYPE_OPTIONS = [
   "Other",
 ] as const;
 
-function parseNumericField(value: string | undefined): number | undefined {
-  if (value === undefined || value.trim() === "") return undefined;
+/** A decimal field's number: null for none, which clears it. */
+function parseNumericField(value: string | undefined): number | null {
+  if (value === undefined || value.trim() === "") return null;
   const n = Number(value);
-  return Number.isFinite(n) ? n : undefined;
+  return Number.isFinite(n) ? n : null;
 }
 
 /** The form values of an existing item: the editor's, or a duplicate's starting point. */
@@ -47,12 +53,13 @@ export function toItemForm(
   };
 }
 
+/** An item's request's body: what its form leaves empty is null, which clears it (a template has no template). */
 export function toItemPayload(data: ItemFormData): ItemBody {
-  const { sourceItemId, ...rest } = data;
   return {
-    ...rest,
+    ...data,
     weight: parseNumericField(data.weight),
     costGp: parseNumericField(data.costGp),
-    ...(!data.isTemplate && sourceItemId ? { sourceItemId } : {}),
+    slot: data.slot || null,
+    sourceItemId: (!data.isTemplate && data.sourceItemId) || null,
   };
 }

@@ -11,15 +11,15 @@ import type { Session } from "@/shared/relations.ts";
 import { Variants } from "./concerns/Variants.ts";
 
 interface ItemBody {
-  costGp?: number;
+  costGp?: number | null;
   description?: string | null;
   isTemplate?: boolean;
   name: string;
-  slot?: ItemLocation;
-  sourceItemId?: string;
+  slot?: ItemLocation | null;
+  sourceItemId?: string | null;
   type?: string | null;
   updatedAt?: string;
-  weight?: number;
+  weight?: number | null;
 }
 
 class ItemsService extends include(Object, Variants) {

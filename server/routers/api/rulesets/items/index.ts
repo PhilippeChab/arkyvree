@@ -12,28 +12,16 @@ const itemBody = z.object({
     .string()
     .optional()
     .transform((v) => v || null),
-  costGp: z
-    .number()
-    .min(0)
-    .nullable()
-    .optional()
-    .transform((v) => v ?? undefined),
-  weight: z
-    .number()
-    .min(0)
-    .nullable()
-    .optional()
-    .transform((v) => v ?? undefined),
+  // A cost, a weight, a slot or a template is cleared with null, and kept when left out
+  costGp: z.number().min(0).nullable().optional(),
+  weight: z.number().min(0).nullable().optional(),
   type: z
     .string()
     .nullable()
     .optional()
     .transform((v) => v || null),
-  slot: z
-    .union([z.enum(location.enumValues), z.literal("")])
-    .optional()
-    .transform((v) => v || undefined),
-  sourceItemId: z.string().uuid().optional(),
+  slot: z.enum(location.enumValues).nullable().optional(),
+  sourceItemId: z.string().uuid().nullable().optional(),
   isTemplate: z.boolean().optional(),
   updatedAt: z.string().optional(),
 });
