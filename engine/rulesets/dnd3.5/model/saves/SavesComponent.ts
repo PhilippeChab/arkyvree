@@ -1,6 +1,6 @@
 import type AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/ClassesComponent.ts";
-import type { KlassLevelSave, RulesetAbility, RulesetSave } from "@/shared/relations.ts";
+import type { KlassLevelSave, RulesetSave } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 type SavesData = {
@@ -29,8 +29,7 @@ export default class SavesComponent {
     return this.saves;
   }
 
-  initialize(rulesetSaves: RulesetSave[], rulesetAbilities: RulesetAbility[], klassLevelSaves: KlassLevelSave[]) {
-    const abilityNames = new Map(rulesetAbilities.map((a) => [a.id, a.name]));
+  initialize(rulesetSaves: RulesetSave[], klassLevelSaves: KlassLevelSave[]) {
     const saveBaseValues = new Map<string, number>();
     const classes = this.classes.getClasses();
     for (const klass of Object.values(classes)) {
@@ -43,7 +42,7 @@ export default class SavesComponent {
 
     for (const save of rulesetSaves) {
       const normalizedName = stripSeparators(save.name);
-      const abilityName = abilityNames.get(save.abilityId) ?? "Unknown";
+      const abilityName = this.abilities.getAbilityName(save.abilityId) ?? "";
       const base = saveBaseValues.get(save.id) ?? 0;
       const abilities = this.abilities;
 

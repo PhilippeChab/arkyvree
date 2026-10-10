@@ -8,7 +8,7 @@ import { formatPropertyType } from "@/shared/customization/properties.ts";
 import { deriveNameLabels, deriveSegmentLabels, isLeafOfKind, type TargetPath } from "@/shared/customization/target.ts";
 import { SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
-import type { Aptitude, PowerWithAptitudes, Property } from "@/shared/relations.ts";
+import type { PowerWithAptitudes, Property } from "@/shared/relations.ts";
 import { capitalize, stripSeparators } from "@/shared/text.ts";
 
 const NAVIGATABLE_POWER_DC_PATHS = [
@@ -51,7 +51,7 @@ export default class PowersPaths implements PathCategory<Dnd35Components> {
 
   static generatePowerPaths(
     powers: (PowerWithAptitudes & { properties: Property[] })[],
-    aptitudes: Aptitude[],
+    spellSlugByAptitudeId: Map<string, string>,
     featListIds: Set<string>,
     kind: "modifier" | "requirement",
   ): TargetPath[] {
@@ -76,11 +76,7 @@ export default class PowersPaths implements PathCategory<Dnd35Components> {
     }
 
     // Spell known paths, but on the lists a feat brings (a domain's, a specialist's school): their spells come with it
-    const aptitudeIdToSlug = new Map<string, string>();
-    for (const apt of aptitudes) {
-      if (featListIds.has(apt.id)) continue;
-      aptitudeIdToSlug.set(apt.id, toSpellPossessionSlug(apt.name));
-    }
+    const aptitudeIdToSlug = new Map([...spellSlugByAptitudeId].filter(([aptitudeId]) => !featListIds.has(aptitudeId)));
 
     const seen = new Set<string>();
     for (const power of powers) {
@@ -147,7 +143,8 @@ export default class PowersPaths implements PathCategory<Dnd35Components> {
   }
 
   generate(rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
-    const { powers, aptitudes, propertiesByEntityType } = rulesetData;
+    const { powers, propertiesByEntityType } = rulesetData;
+    const spellLists = SpellLists.of(rulesetData);
     const powerProperties = propertiesByEntityType.get("powers") ?? [];
     const powersWithProperties = powers.map((power) => ({
       ...power,
@@ -156,8 +153,8 @@ export default class PowersPaths implements PathCategory<Dnd35Components> {
     return [
       ...PowersPaths.generatePowerPaths(
         powersWithProperties,
-        aptitudes,
-        SpellLists.collectFeatListIds(rulesetData),
+        spellLists.spellSlugByAptitudeId,
+        spellLists.featListIds,
         kind,
       ),
       ...PowersPaths.generateGroupingPaths(

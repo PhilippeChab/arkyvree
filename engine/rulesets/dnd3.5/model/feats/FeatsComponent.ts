@@ -31,6 +31,18 @@ export default class FeatsComponent {
     return this.feats;
   }
 
+  /**
+   * Grants the feat of that name (or slug) to a character that doesn't hold it: possessed, and counted once. False when
+   * it holds it already (a pick, a grant or a modifier gave it), or the ruleset has no such feat.
+   */
+  grant(featName: string): boolean {
+    const feat = this.getFeat(featName);
+    if (!feat || feat.possessed) return false;
+    feat.possessed = true;
+    feat.count += 1;
+    return true;
+  }
+
   initialize(rulesetFeats: Feat[], possessedFeats: Feat[]) {
     const possessedCounts = new Map<string, number>();
     for (const feat of possessedFeats) {

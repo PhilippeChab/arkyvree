@@ -488,7 +488,8 @@ engine/rulesets/
     │   │                                  WeaponsComponent, EncumbranceComponent; the combat, items.* and weapon.*
     │   │                                  path categories: CombatPaths, ItemsPaths, WeaponPaths)
     │   ├── spellcasting/                  (SpellcastingComponent on SpellcastingState, which includes concerns/:
-    │   │                                  BonusCasterLevels, KnownPowers; SpellcastingPaths; SpellLists)
+    │   │                                  BonusCasterLevels, KnownPowers; SpellcastingPaths; SpellLists: the view's
+    │   │                                  spell lists, derived once with it, `RulesetData.derive`)
     │   ├── inventory/                     (InventoryComponent, InventorySlots)
     │   └── bonded/                        (the bonded creatures' characters, BondedComponent, BondedPaths,
     │                                      BondedRaceData: their stat blocks; BondedScaling)

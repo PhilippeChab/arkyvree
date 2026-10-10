@@ -34,16 +34,18 @@ export default class DetailedCharacterMount extends DetailedCharacterAdvancingBo
   protected applyMasterDerivation(master: DetailedCharacter): void {
     const effective = master.components.bonded.getBondedLevel("mount");
     const row = bracketAt(effective);
-    const raceStats = BondedRaceData.getStats(this.race?.name);
+    const raceStats = BondedRaceData.getStats(this.data.race.name);
     const baseHD = raceStats?.baseHD ?? 1;
     const totalHD = baseHD + (row?.bonusHD ?? 0);
 
-    const abilities = this.components.abilities.getAbilities();
-    if (row && row.str !== 0 && abilities["strength"]) abilities["strength"].misc += row.str;
+    const { abilities } = this.components;
+    const strength = abilities.getAbility("Strength");
+    const intelligence = abilities.getAbility("Intelligence");
+    if (row && row.str !== 0 && strength) strength.misc += row.str;
 
-    if (row && abilities["intelligence"]) {
-      abilities["intelligence"].base = row.int;
-      abilities["intelligence"].level = 0;
+    if (row && intelligence) {
+      intelligence.base = row.int;
+      intelligence.level = 0;
     }
 
     this.applyHitDice(totalHD, (raceStats?.baseNaturalArmor ?? 0) + (row?.natural ?? 0));

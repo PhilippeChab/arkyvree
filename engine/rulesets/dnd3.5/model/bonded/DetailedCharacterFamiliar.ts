@@ -1,4 +1,3 @@
-import type { RulesetData } from "@/engine/core/view/index.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 
 import BondedRaceData, { type BondedRaceStatBlock } from "./BondedRaceData.ts";
@@ -32,7 +31,7 @@ export default class DetailedCharacterFamiliar extends DetailedCharacterBonded {
     familiarCombat.hp.base = Math.floor(masterCombat.hp.total / 2);
     familiarCombat.bab = masterCombat.bab;
 
-    const raceStats = BondedRaceData.getStats(this.race?.name);
+    const raceStats = BondedRaceData.getStats(this.data.race.name);
     familiarCombat.ac.natural = (raceStats?.baseNaturalArmor ?? 0) + naBonus;
 
     const intelligence = this.components.abilities.getAbility("Intelligence");
@@ -50,13 +49,13 @@ export default class DetailedCharacterFamiliar extends DetailedCharacterBonded {
       Object.entries(master.components.skills.getSkills()).map(([slug, skill]) => [slug, skill.rank]),
     );
 
-    // Familiar HP = ½ master HP only — no per-HD Con component.
-    this.cachedTotalHD = 0;
+    // Familiar HP = ½ master HP only: no hit dice, so no Constitution per hit die
+    this.components.combat.setHitDiceOverride(0);
   }
 
   /** The stat block's skills, then its master's ranks where they're better. */
-  protected override applyRaceDefaults(raceStats: BondedRaceStatBlock, rulesetData: RulesetData): void {
-    super.applyRaceDefaults(raceStats, rulesetData);
+  protected override applyRaceDefaults(raceStats: BondedRaceStatBlock): void {
+    super.applyRaceDefaults(raceStats);
     this.components.skills.applyBetterRanks(this.masterSkillRanks);
   }
 }

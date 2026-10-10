@@ -50,6 +50,8 @@ export type CustomizedFeat = Feat & {
  * relies on `virtual` (or `free`, for klass-granted powers).
  */
 export type CustomizedPower = Power & {
+  /** The ability its DC comes from: its class's bonus spell ability, a granted spell's its list's (`withDcAbilities`). */
+  abilityDcName: string | null;
   aptitudeId: string;
   characterLevelId: string;
   free?: boolean;
@@ -83,6 +85,33 @@ export type InventoryEntry = CharacterInventory & {
 
 /** The customizations a character's entities carry, from the view: their modifiers, properties and requirements. */
 export default class CustomizedEntities {
+  /**
+   * Each power with the ability its DC comes from: its class level's class's bonus spell ability; a spell granted
+   * without a class level, its list's, as a spell of the same list its class casts gives it.
+   */
+  private static withDcAbilities(
+    powers: Omit<CustomizedPower, "abilityDcName">[],
+    {
+      klassBonusSpellAbilityMap,
+      klassLevels,
+    }: { klassBonusSpellAbilityMap: Map<string, string>; klassLevels: KlassLevel[] },
+  ): CustomizedPower[] {
+    const klassIdByLevelId = new Map(klassLevels.map((level) => [level.id, level.klassId]));
+    const classAbilityOf = (power: { klassLevelId: string }) => {
+      const klassId = klassIdByLevelId.get(power.klassLevelId);
+      return klassId === undefined ? undefined : klassBonusSpellAbilityMap.get(klassId);
+    };
+    const abilityByAptitudeId = new Map<string, string>();
+    for (const power of powers) {
+      const abilityName = power.virtual ? undefined : classAbilityOf(power);
+      if (abilityName) abilityByAptitudeId.set(power.aptitudeId, abilityName);
+    }
+    return powers.map((power) => ({
+      ...power,
+      abilityDcName: (power.virtual ? abilityByAptitudeId.get(power.aptitudeId) : classAbilityOf(power)) ?? null,
+    }));
+  }
+
   /**
    * The character's modifiers and requirement groups, in order: its own modifiers, its race's, its equipped items',
    * its class levels', its classes' (once per class), its feats' and its powers'. An auto-granted feat or power
@@ -142,6 +171,11 @@ export default class CustomizedEntities {
       else requirementGroups.push([...fromRuleset, ...fromExtra]);
     }
     return { modifiers, requirementGroups };
+  }
+
+  /** The name of the save a power's targets make, none without one. */
+  static saveNameOf(power: { saveId: string | null }, rulesetData: RulesetData): string | null {
+    return power.saveId ? (rulesetData.savesById.get(power.saveId)?.name ?? null) : null;
   }
 
   /**
@@ -212,14 +246,15 @@ export default class CustomizedEntities {
     allPowers: ReturnType<typeof Picks.buildPowers>["allPowers"],
     virtuallyPossessedPowers: { aptitudeId: string; powerId: string }[],
     rulesetData: RulesetData,
+    dcAbilities: { klassBonusSpellAbilityMap: Map<string, string>; klassLevels: KlassLevel[] },
   ): CustomizedPower[] {
-    const realPowers: CustomizedPower[] = allPowers.map((power) => ({
+    const realPowers: Omit<CustomizedPower, "abilityDcName">[] = allPowers.map((power) => ({
       ...power,
       properties: rulesetData.propertiesByEntity.get(power.id) ?? [],
       modifiers: rulesetData.modifiersBySource.get(power.id) ?? [],
       requirements: rulesetData.requirementsByEntity.get(power.id) ?? [],
     }));
-    const virtualPowers: CustomizedPower[] = [];
+    const virtualPowers: Omit<CustomizedPower, "abilityDcName">[] = [];
     for (const { powerId, aptitudeId } of virtuallyPossessedPowers) {
       const powerRow = rulesetData.powersById.get(powerId);
       if (!powerRow) continue;
@@ -232,14 +267,14 @@ export default class CustomizedEntities {
         aptitudeId,
         virtual: true,
         free: true,
-        saveName: null,
+        saveName: CustomizedEntities.saveNameOf(powerRow, rulesetData),
         powerLevel: link.level,
         properties: rulesetData.propertiesByEntity.get(powerId) ?? [],
         modifiers: rulesetData.modifiersBySource.get(powerId) ?? [],
         requirements: rulesetData.requirementsByEntity.get(powerId) ?? [],
       });
     }
-    return [...realPowers, ...virtualPowers];
+    return CustomizedEntities.withDcAbilities([...realPowers, ...virtualPowers], dcAbilities);
   }
 
   /** The race with the fields its properties hold (read once, here), its properties, modifiers and requirements. */

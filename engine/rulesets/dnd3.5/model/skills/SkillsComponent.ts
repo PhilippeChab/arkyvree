@@ -8,7 +8,7 @@ import type { ValidationIssue } from "@/engine/rulesets/dnd3.5/model/concerns/Va
 import type IdentityComponent from "@/engine/rulesets/dnd3.5/model/identity/IdentityComponent.ts";
 import { SIZE_HIDE_MOD } from "@/engine/rulesets/dnd3.5/rules/sizes.ts";
 import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
-import { type RulesetAbility, type Skill } from "@/shared/relations.ts";
+import { type Skill } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /** The skill points' budget: a level's bonus points, an input, and the points counted from the character's levels. */
@@ -89,8 +89,6 @@ export default class SkillsComponent {
 
   private skillPointKlassLevelProperties: Map<string, { bab: number; skills: number }> = new Map();
 
-  private skillPointRulesetAbilities: RulesetAbility[] = [];
-
   /** The armor check penalty a skill armor weighs on takes: the worse of the armor and shield's and the load's. */
   private armorCheckPenalty(): number {
     let armorPenalty = 0;
@@ -123,9 +121,7 @@ export default class SkillsComponent {
 
   /** The modifier of the ruleset's skill point ability, its misc bonuses aside: 0 when the ruleset names none. */
   private getSkillPointAbilityModifier(): number {
-    const abilityName = this.skillPointAbilityId
-      ? (this.skillPointRulesetAbilities.find((a) => a.id === this.skillPointAbilityId)?.name ?? null)
-      : null;
+    const abilityName = this.skillPointAbilityId ? this.abilities.getAbilityName(this.skillPointAbilityId) : undefined;
     return abilityName ? this.abilities.getAbilityModifierExcludingMisc(abilityName) : 0;
   }
 
@@ -255,19 +251,13 @@ export default class SkillsComponent {
    */
   initialize(
     rulesetSkills: Skill[],
-    rulesetAbilities: RulesetAbility[],
     skillPointAbilityId: string | null,
     klassLevelProperties: Map<string, { bab: number; skills: number }>,
     skillFields: Map<string, SkillFieldValues>,
   ) {
-    this.skillPointRulesetAbilities = rulesetAbilities;
     this.skillPointAbilityId = skillPointAbilityId;
     this.skillPointKlassLevelProperties = klassLevelProperties;
     const classes = this.classes.getClasses();
-
-    // Build ability ID -> name lookup
-    const abilityNameById = new Map<string, string>();
-    for (const a of rulesetAbilities) abilityNameById.set(a.id, a.name);
 
     // Build skill ID → name lookup from ruleset skills
     const skillNameById = new Map<string, string>();
@@ -312,7 +302,7 @@ export default class SkillsComponent {
     }
 
     for (const skill of rulesetSkills) {
-      const abilityName = abilityNameById.get(skill.primaryAbilityId) ?? "";
+      const abilityName = this.abilities.getAbilityName(skill.primaryAbilityId) ?? "";
       this.abilityNameBySkill.set(stripSeparators(skill.name), abilityName);
       // A skill without its fields' rows has their defaults: armor doesn't weigh on it, and it needs training
       const fields = skillFields.get(skill.id) ?? SKILL_FIELDS.defaults;

@@ -14,7 +14,7 @@ describe("PowersPaths.generatePowerPaths", () => {
     const operatorsOf = (kind: "modifier" | "requirement") =>
       PowersPaths.generatePowerPaths(
         [{ ...enthrall, powersAptitudesInRules: [], properties }],
-        [],
+        new Map(),
         new Set(),
         kind,
       ).find((path) => path.path === `powers.enthrall.properties.${SPELL_COMPONENT}`)?.operators;

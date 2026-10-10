@@ -1,50 +1,44 @@
 import type { CharacterRows } from "@/engine/core/module/index.ts";
-import { type RulesetData, type RulesetView } from "@/engine/core/view/index.ts";
+import { type RulesetView } from "@/engine/core/view/index.ts";
 import type { ValidationIssue } from "@/engine/rulesets/dnd3.5/model/concerns/Validates.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import CustomizedEntities from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
-import type { Modifier } from "@/shared/relations.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 import BondedRaceData, { type BondedRaceStatBlock, STAT_BLOCK_FEAT_SKILL_BONUSES } from "./BondedRaceData.ts";
 
 export default abstract class DetailedCharacterBonded extends DetailedCharacter {
-  protected cachedTotalHD: number | null = null;
-
   /** The creature's master, built before it (`CharacterBuilder.build`): what its sheet derives from. */
   protected master?: DetailedCharacter;
 
   /**
-   * The stat block's feats, as any granted feat is: possessed and counted, and listed with the feats the creature has
-   * without a pick (`getVirtualFeats`: its sheet and PDF), their modifiers applied. A feat the creature
-   * already has, from a modifier that grants it, stays as it is, as a granted feat the character has does.
+   * The stat block's feats, as any granted feat is: possessed and counted (`grant`), listed with the feats the creature
+   * has without a pick (`getVirtualFeats`: its sheet and PDF), and their modifiers applied with the character's, in the
+   * build's rounds, each behind its own requirements. A feat the creature already has, from a modifier that grants it,
+   * stays as it is, as a granted feat the character has does.
    */
-  protected applyGrantedFeats(featNames: string[], rulesetData: RulesetData): void {
-    if (featNames.length === 0) return;
-    const featModifiers: Modifier[] = [];
+  protected applyGrantedFeats(featNames: string[]): void {
+    const { rulesetData } = this;
     for (const featName of featNames) {
-      const entry = this.components.feats.getFeat(featName);
-      if (entry?.possessed) continue;
-      if (entry) {
-        entry.possessed = true;
-        entry.count += 1;
-      }
-      const featRow = rulesetData.feats.find((f) => f.name === featName);
+      if (!this.components.feats.grant(featName)) continue;
+      const featRow = rulesetData.featsById.get(rulesetData.featIdBySlug.get(stripSeparators(featName)) ?? "");
       if (!featRow) continue;
-      const mods = rulesetData.modifiersBySource.get(featRow.id);
-      if (mods) featModifiers.push(...mods);
-      this.feats.push(CustomizedEntities.toVirtualFeat(featRow, rulesetData));
+      const feat = CustomizedEntities.toVirtualFeat(featRow, rulesetData);
+      this.data.feats.push(feat);
+      this.data.modifiers.push(...feat.modifiers);
+      // A granted feat's own prerequisites don't gate it: its modifiers' own requirements do
+      for (const modifier of feat.modifiers)
+        this.data.requirementGroups.push(rulesetData.requirementsByEntity.get(modifier.id) ?? []);
     }
-    if (featModifiers.length > 0 && this.components)
-      this.modifierEvaluator.evaluateModifiers(this.components, featModifiers, this.requirementEvaluator);
   }
 
   protected abstract applyMasterDerivation(master: DetailedCharacter): void;
 
   /** The stat block's skills, then its feats, which add their bonuses to the totals set without them. */
-  protected applyRaceDefaults(raceStats: BondedRaceStatBlock, rulesetData: RulesetData): void {
+  protected applyRaceDefaults(raceStats: BondedRaceStatBlock): void {
     const featNames = [...(raceStats.bonusFeats ?? []), ...(raceStats.baseFeats ?? [])];
     this.applySkillTotals(raceStats.baseSkillTotals ?? {}, raceStats.baseSkillRanks ?? {}, featNames);
-    this.applyGrantedFeats(featNames, rulesetData);
+    this.applyGrantedFeats(featNames);
   }
 
   /**
@@ -80,22 +74,20 @@ export default abstract class DetailedCharacterBonded extends DetailedCharacter 
    * block's feats and skill totals) before requirements read the sheet and modifiers change it: an item's or a feat's
    * modifier adds on top. Then the character's own setup, Weapon Finesse on the natural attacks included.
    */
-  protected override preRequirementProcessing(rulesetData: RulesetData): void {
+  protected override preRequirementProcessing(): void {
     if (this.character.parentCharacterId) this.applyMasterDerivation(this.requireMaster());
 
-    const raceStats = BondedRaceData.getStats(this.race?.name);
+    const raceStats = BondedRaceData.getStats(this.data.race.name);
     if (raceStats) {
       if (raceStats.naturalAttacks.length > 0) {
         this.components.combat.setNaturalAttacks(raceStats.naturalAttacks);
         this.components.weapons.clearGroups();
       }
 
-      this.applyRaceDefaults(raceStats, rulesetData);
+      this.applyRaceDefaults(raceStats);
     }
 
-    if (this.cachedTotalHD !== null) this.components.combat.setHitDiceOverride(this.cachedTotalHD);
-
-    super.preRequirementProcessing(rulesetData);
+    super.preRequirementProcessing();
   }
 
   /** The creature's master, which its build is given: one it was saved with and its build lacks is an error. */
