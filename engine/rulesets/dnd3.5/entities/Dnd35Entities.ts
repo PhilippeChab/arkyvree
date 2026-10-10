@@ -32,8 +32,8 @@ const ENTITY_KINDS = {
 
 /**
  * The 3.5 ruleset's entities, as the module answers the server of them: each kind's rules bound to a ruleset's view
- * (`of`: an entity found, described, a page described, and what saving or deleting one writes; a class's levels, class
- * skills and table, through the classes' kind).
+ * (`of`: an entity found and described, a page opened, and what saving or deleting one writes; a class's levels, class
+ * skills and table, through the classes' kind, bound to the class).
  */
 export default class Dnd35Entities {
   /** An entity kind's rules (`type`, its table), bound to a ruleset's view. */

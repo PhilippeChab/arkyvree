@@ -14,10 +14,9 @@ class SkillsService {
   private readonly saves = new EntitySaves("skills", Skills, skillsInRules, "Skill");
 
   async createSkill(session: Session, rulesetId: string, body: SkillBody) {
-    const { plan, row } = await this.saves.create(session, rulesetId, body.name, (scope) =>
+    return await this.saves.create(session, rulesetId, body.name, (scope) =>
       Engine.for(scope).entities("skills").planCreate(body),
     );
-    return plan.describe(row);
   }
 
   async deleteSkill(session: Session, rulesetId: string, skillId: string) {
@@ -43,20 +42,20 @@ class SkillsService {
     pagination: { limit: number; page: number },
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
+      const list = Engine.for(scope).entities("skills").openList(where);
       const result = await Skills.findPage(
         db,
-        { rulesetId, ...scope.rulesetData.cow.listFilters, ...where },
+        { rulesetId, ...scope.rulesetData.cow.listFilters, ...where, ...list.filters },
         pagination,
       );
-      return { ...result, items: Engine.for(scope).entities("skills").describePage(result.items) };
+      return { ...result, items: list.describe(result.items) };
     });
   }
 
   async updateSkill(session: Session, rulesetId: string, skillId: string, body: SkillBody & { updatedAt?: string }) {
-    const { plan, row } = await this.saves.update(session, rulesetId, body, (scope) =>
+    return await this.saves.update(session, rulesetId, body, (scope) =>
       Engine.for(scope).entities("skills").planEdit(skillId, body),
     );
-    return plan.describe(row);
   }
 }
 

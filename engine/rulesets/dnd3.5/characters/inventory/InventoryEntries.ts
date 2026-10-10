@@ -56,17 +56,14 @@ export default class InventoryEntries {
     return entries.map((entry) => {
       // The join still contains the stored parent row after itemId resolves.
       const item = rulesetData.itemsById.get(entry.itemId) ?? entry.itemsInRule;
-      const ownRequirements = rulesetData.requirementsByEntity.get(item.id) ?? [];
-      const templateRequirements = item.sourceItemId
-        ? (rulesetData.requirementsByEntity.get(item.sourceItemId) ?? [])
-        : [];
+      const { proficiency, requirements } = rulesetData.itemRequirements(item);
       return {
         ...entry,
         item: {
           ...item,
           properties: rulesetData.itemProperties(item),
           modifiers: rulesetData.modifiersBySource.get(item.id) ?? [],
-          requirements: [...templateRequirements, ...ownRequirements],
+          requirements: [...proficiency, ...requirements],
         },
       };
     });

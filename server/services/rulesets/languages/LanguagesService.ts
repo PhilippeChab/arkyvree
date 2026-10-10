@@ -19,10 +19,9 @@ class LanguagesService {
       type: string;
     },
   ) {
-    const { row } = await this.saves.create(session, rulesetId, body.name, (scope) =>
+    return await this.saves.create(session, rulesetId, body.name, (scope) =>
       Engine.for(scope).entities("languages").planCreate(body),
     );
-    return row;
   }
 
   async deleteLanguage(session: Session, rulesetId: string, languageId: string) {
@@ -32,10 +31,9 @@ class LanguagesService {
   }
 
   async getLanguage(rulesetId: string, languageId: string) {
-    return await withRulesetScope(db, rulesetId, async (scope) => {
-      const language = Engine.for(scope).entities("languages").describe(languageId);
-      return language;
-    });
+    return await withRulesetScope(db, rulesetId, async (scope) =>
+      Engine.for(scope).entities("languages").describe(languageId),
+    );
   }
 
   async getLanguages(
@@ -49,8 +47,13 @@ class LanguagesService {
     pagination: { limit: number; page: number },
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
-      const { rulesetData } = scope;
-      return await Languages.findPage(db, { rulesetId, ...rulesetData.cow.listFilters, ...where }, pagination);
+      const list = Engine.for(scope).entities("languages").openList(where);
+      const result = await Languages.findPage(
+        db,
+        { rulesetId, ...scope.rulesetData.cow.listFilters, ...where, ...list.filters },
+        pagination,
+      );
+      return { ...result, items: list.describe(result.items) };
     });
   }
 
@@ -65,10 +68,9 @@ class LanguagesService {
       updatedAt?: string;
     },
   ) {
-    const { row } = await this.saves.update(session, rulesetId, body, (scope) =>
+    return await this.saves.update(session, rulesetId, body, (scope) =>
       Engine.for(scope).entities("languages").planEdit(languageId, body),
     );
-    return row;
   }
 }
 

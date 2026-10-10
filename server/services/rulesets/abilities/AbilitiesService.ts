@@ -15,16 +15,20 @@ class AbilitiesService {
     pagination: { limit: number; page: number },
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
-      const { rulesetData } = scope;
-      return await Abilities.findPage(db, { rulesetId, ...rulesetData.cow.listFilters, ...where }, pagination);
+      const list = Engine.for(scope).entities("abilities").openList(where);
+      const result = await Abilities.findPage(
+        db,
+        { rulesetId, ...scope.rulesetData.cow.listFilters, ...where, ...list.filters },
+        pagination,
+      );
+      return { ...result, items: list.describe(result.items) };
     });
   }
 
   async getAbility(rulesetId: string, abilityId: string) {
-    return await withRulesetScope(db, rulesetId, async (scope) => {
-      const ability = Engine.for(scope).entities("abilities").describe(abilityId);
-      return ability;
-    });
+    return await withRulesetScope(db, rulesetId, async (scope) =>
+      Engine.for(scope).entities("abilities").describe(abilityId),
+    );
   }
 }
 

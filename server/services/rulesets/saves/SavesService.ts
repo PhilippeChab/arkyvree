@@ -19,10 +19,9 @@ class SavesService {
       name: string;
     },
   ) {
-    const { row } = await this.saves.create(session, rulesetId, body.name, (scope) =>
+    return await this.saves.create(session, rulesetId, body.name, (scope) =>
       Engine.for(scope).entities("saves").planCreate(body),
     );
-    return row;
   }
 
   async deleteSave(session: Session, rulesetId: string, saveId: string) {
@@ -39,10 +38,7 @@ class SavesService {
   }
 
   async getSave(rulesetId: string, saveId: string) {
-    return await withRulesetScope(db, rulesetId, async (scope) => {
-      const save = Engine.for(scope).entities("saves").describe(saveId);
-      return save;
-    });
+    return await withRulesetScope(db, rulesetId, async (scope) => Engine.for(scope).entities("saves").describe(saveId));
   }
 
   async getSaves(
@@ -56,12 +52,13 @@ class SavesService {
     pagination: { limit: number; page: number },
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
+      const list = Engine.for(scope).entities("saves").openList(where);
       const result = await Saves.findPage(
         db,
-        { rulesetId, ...scope.rulesetData.cow.listFilters, ...where },
+        { rulesetId, ...scope.rulesetData.cow.listFilters, ...where, ...list.filters },
         pagination,
       );
-      return { ...result, items: Engine.for(scope).entities("saves").describePage(result.items) };
+      return { ...result, items: list.describe(result.items) };
     });
   }
 
@@ -76,10 +73,9 @@ class SavesService {
       updatedAt?: string;
     },
   ) {
-    const { row } = await this.saves.update(session, rulesetId, body, (scope) =>
+    return await this.saves.update(session, rulesetId, body, (scope) =>
       Engine.for(scope).entities("saves").planEdit(saveId, body),
     );
-    return row;
   }
 }
 

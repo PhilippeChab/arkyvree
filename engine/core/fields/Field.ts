@@ -29,6 +29,9 @@ export type FieldSpec =
 /** The values an entity's fields read, by name. */
 export type FieldValues<S extends Fields> = { [K in keyof S]: S[K] extends PropertyField<infer T> ? T : never };
 
+/** No fields: a kind whose properties hold none of its own (`FieldCodec.NONE`). */
+export type NoFields = Record<never, never>;
+
 /**
  * A field an entity keeps in its properties, as data a codec reads and writes (`FieldCodec`): its kind, the property type
  * that stores it, and how its rows read, written with `Field`'s kinds. Typed by the value it reads (`T`), which only the

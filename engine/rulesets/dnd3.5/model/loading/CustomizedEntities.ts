@@ -3,6 +3,7 @@
 import type { CharacterRows } from "@/engine/core/module/index.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { CLASS_LEVEL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/classes/fields.ts";
+import { RACE_FIELDS, type RaceFieldValues } from "@/engine/rulesets/dnd3.5/entities/races/fields.ts";
 import type {
   CharacterInventory,
   Feat,
@@ -61,11 +62,13 @@ export type CustomizedPower = Power & {
   virtual?: boolean;
 };
 
-export type CustomizedRace = Race & {
-  modifiers: Modifier[];
-  properties: Property[];
-  requirements: Requirement[];
-};
+/** A race as the character reads it: its row, the fields its properties hold, and its customizations. */
+export type CustomizedRace = Race &
+  RaceFieldValues & {
+    modifiers: Modifier[];
+    properties: Property[];
+    requirements: Requirement[];
+  };
 
 export type InventoryEntry = CharacterInventory & {
   item: Item & {
@@ -175,18 +178,13 @@ export default class CustomizedEntities {
   static toCustomizedInventory(inventory: CharacterRows["inventory"], rulesetData: RulesetData): InventoryEntry[] {
     return inventory.map((inv) => {
       const item = inv.itemsInRule;
-      const ownRequirements = rulesetData.requirementsByEntity.get(item.id) ?? [];
-      const templateRequirements = item.sourceItemId
-        ? (rulesetData.requirementsByEntity.get(item.sourceItemId) ?? [])
-        : [];
       return {
         ...inv,
         item: {
           ...item,
           properties: rulesetData.itemProperties(item),
           modifiers: inv.equipped ? (rulesetData.modifiersBySource.get(item.id) ?? []) : [],
-          proficiency: item.isTemplate ? ownRequirements : templateRequirements,
-          requirements: item.isTemplate ? [] : ownRequirements,
+          ...rulesetData.itemRequirements(item),
         },
       };
     });
@@ -244,11 +242,13 @@ export default class CustomizedEntities {
     return [...realPowers, ...virtualPowers];
   }
 
-  /** The race with its properties, modifiers and requirements. */
+  /** The race with the fields its properties hold (read once, here), its properties, modifiers and requirements. */
   static toCustomizedRace(race: Race, rulesetData: RulesetData): CustomizedRace {
+    const properties = rulesetData.propertiesByEntity.get(race.id) ?? [];
     return {
       ...race,
-      properties: rulesetData.propertiesByEntity.get(race.id) ?? [],
+      ...RACE_FIELDS.read(properties),
+      properties,
       modifiers: rulesetData.modifiersBySource.get(race.id) ?? [],
       requirements: rulesetData.requirementsByEntity.get(race.id) ?? [],
     };

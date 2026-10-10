@@ -28,7 +28,8 @@ import { stripSeparators } from "@/shared/text.ts";
 interface Indices {
   abilitiesById: Map<string, RulesetAbility>;
   aptitudeIdBySlug: Map<string, string>;
-  aptitudeIdsByHavingPowers: Set<string>;
+  aptitudeIdsWithFeats: Set<string>;
+  aptitudeIdsWithPowers: Set<string>;
   aptitudesById: Map<string, Aptitude>;
   entityIdsByPropertyLookup: Map<string, string[]>;
   featIdBySlug: Map<string, string>;
@@ -293,9 +294,16 @@ export default class RulesetData {
     return (this.built.aptitudeIdBySlug ??= new Map(this.aptitudes.map((apt) => [stripSeparators(apt.name), apt.id])));
   }
 
+  /** The aptitudes that have at least one feat linked, from the feats' inline `featsAptitudesInRules` rows. */
+  get aptitudeIdsWithFeats(): Set<string> {
+    return (this.built.aptitudeIdsWithFeats ??= new Set(
+      this.feats.flatMap((feat) => feat.featsAptitudesInRules.map((l) => l.aptitudeId)),
+    ));
+  }
+
   /** The aptitudes that have at least one power linked, from the powers' inline `powersAptitudesInRules` rows. */
-  get aptitudeIdsByHavingPowers(): Set<string> {
-    return (this.built.aptitudeIdsByHavingPowers ??= new Set(
+  get aptitudeIdsWithPowers(): Set<string> {
+    return (this.built.aptitudeIdsWithPowers ??= new Set(
       this.powers.flatMap((power) => power.powersAptitudesInRules.map((l) => l.aptitudeId)),
     ));
   }
@@ -385,6 +393,17 @@ export default class RulesetData {
     const ownTypes = new Set(own.map((property) => property.type));
     const template = this.propertiesByEntity.get(item.sourceItemId) ?? [];
     return [...template.filter((property) => !ownTypes.has(property.type)), ...own];
+  }
+
+  /**
+   * An item's requirements, as its template splits them: its proficiency (its template's requirements, or its own when
+   * it's a template), and its other requirements (its own, on top of a template or on a plain item).
+   */
+  itemRequirements(item: Pick<Item, "id" | "isTemplate" | "sourceItemId">) {
+    const own = this.requirementsByEntity.get(item.id) ?? [];
+    if (item.isTemplate) return { proficiency: own, requirements: [] };
+    const proficiency = item.sourceItemId ? (this.requirementsByEntity.get(item.sourceItemId) ?? []) : [];
+    return { proficiency, requirements: own };
   }
 
   get itemsById(): Map<string, Item> {

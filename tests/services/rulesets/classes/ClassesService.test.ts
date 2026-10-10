@@ -55,7 +55,7 @@ describe("ClassesService", () => {
     const fighter = await ClassesService.createClass(session, ruleset.id, { name: "Fighter" });
     expect(await ClassesService.getClass(ruleset.id, fighter.id)).toMatchObject({
       bonusSpellAbilityId: null,
-      bonusSpellPropertyId: null,
+      propertyIds: { bonusSpellAbilityId: null },
     });
 
     const wizard = await ClassesService.createClass(session, ruleset.id, { name: "Wizard", hd: 4 });
@@ -70,7 +70,7 @@ describe("ClassesService", () => {
     });
     expect(await ClassesService.getClass(ruleset.id, wizard.id)).toMatchObject({
       bonusSpellAbilityId: intelligence.id,
-      bonusSpellPropertyId: property.id,
+      propertyIds: { bonusSpellAbilityId: property.id },
     });
   });
 

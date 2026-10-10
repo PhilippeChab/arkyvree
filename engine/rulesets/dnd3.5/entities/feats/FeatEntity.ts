@@ -1,42 +1,69 @@
 /** A feat as a ruleset's entity: what the ruleset describes of it, lists it by, and checks of its save. */
 
-import { RulesetEntity } from "@/engine/core/entities/index.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import RulesError from "@/engine/core/RulesError.ts";
+import ListedEntity from "@/engine/rulesets/dnd3.5/entities/ListedEntity.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
+import type { FeatWithAptitudes } from "@/shared/relations.ts";
 
-/** A feat's save, as its form sends it: its name and description, and the pools it's picked in. */
-interface FeatBody {
-  aptitudeIds?: string[];
-  description?: string | null;
-  name: string;
-}
+import { FEAT_FIELDS } from "./fields.ts";
+
+/**
+ * A feat's save, as its form sends it: its name and description, and the pools it's picked in. A new one named as an
+ * ancestor its ruleset deleted stands in for it, and is generated when the ancestor was (`tombstoneGenerated`, what the
+ * server reads of the ancestor, which the view hides).
+ */
+type FeatBody = { aptitudeIds?: string[]; description?: string | null; name: string; tombstoneGenerated?: boolean };
 
 /** A slot a feat's modifier adds to (or sets on) a pool. */
 export type PoolModifier = { aptitudeId: string; operator: string; value: number };
 
 /** A feat as the ruleset has it: described with its customizations, listed by pool or family, saved by its rules. */
-export default class FeatEntity extends RulesetEntity<"feats"> {
+export default class FeatEntity extends ListedEntity<
+  "feats",
+  FeatBody,
+  { description?: string | null; generated?: boolean; name: string },
+  typeof FEAT_FIELDS.fields
+> {
+  /** Its families, the weapon rules it changes, the schools it forbids. */
+  protected readonly fields = FEAT_FIELDS;
+
   protected readonly label = "Feat";
 
   readonly type = "feats";
 
-  /** Refuses a feat linked to a pool the view's spells use: the ruleset's own and its chain's, no other ruleset's. */
-  private checkPools(aptitudeIds: string[]) {
-    const { rulesetData } = this.view;
-    if (aptitudeIds.some((id) => rulesetData.aptitudeIdsByHavingPowers.has(rulesetData.canonicalize(id))))
-      throw new RulesError("conflict", "Cannot link feat to aptitude(s) already used for spells");
+  /**
+   * Refuses a new feat without a pool, renaming a generated feat (its name names its option, `Weapon Focus: Longsword`,
+   * which checks and generators find it by), and a feat linked to a pool the view's spells use.
+   */
+  protected override checkSave(body: FeatBody, feat?: FeatWithAptitudes) {
+    if (!feat && !body.aptitudeIds?.length)
+      throw new RulesError("invalid", "At least one aptitude must be selected for the feat");
+    if (feat && body.name !== feat.name && feat.generated)
+      throw new RulesError("invalid", "Generated feats cannot be renamed");
+    const message = "Cannot link feat to aptitude(s) already used for spells";
+    this.refuseLists(body.aptitudeIds ?? [], this.rulesetData.aptitudeIdsWithPowers, message);
   }
 
-  /** A feat with its modifiers, properties and requirements. */
-  override describe(id: string) {
-    return this.describeCustomized(id);
+  /** A form's columns: a new feat's mark of a generated one it stands in for. */
+  protected columnsOf({ description, name, tombstoneGenerated }: FeatBody, feat?: FeatWithAptitudes) {
+    return { description, name, ...(!feat && { generated: tombstoneGenerated ?? false }) };
+  }
+
+  /** A feat's pool links, as the view composes them. */
+  protected linksIn({ featsAptitudesInRules }: FeatWithAptitudes) {
+    return { featsAptitudesInRules };
+  }
+
+  /** The pools a form links the feat to (none: an edit's kept). */
+  protected override linksOf({ aptitudeIds }: FeatBody) {
+    return aptitudeIds?.map((aptitudeId) => ({ aptitudeId }));
   }
 
   /** The pools these feats' modifiers add slots to (`aptitudes.<slug>.allowed`), by feat id. */
   describePoolModifiers(featIds: string[]) {
-    const { aptitudeIdBySlug, modifiersBySource } = this.view.rulesetData;
+    const { aptitudeIdBySlug, modifiersBySource } = this.rulesetData;
     const byFeat = new Map<string, PoolModifier[]>();
     for (const featId of featIds) {
       for (const modifier of modifiersBySource.get(featId) ?? []) {
@@ -55,53 +82,14 @@ export default class FeatEntity extends RulesetEntity<"feats"> {
 
   /**
    * A page of the ruleset's feats, as its form asks for it: what it's read with (`filters`: a pool's feats, a family's;
-   * `groupFilters`: grouped by family), and its rows described (`describe`), each inherited feat with its pools as the
-   * ruleset composes them, its siblings' links merged in, unless the page lists the ruleset's own feats only.
+   * `groupFilters`: grouped by family), and its rows described, with their pools as the ruleset composes them.
    */
-  openList(where: { aptitudeId?: string; childOnly?: boolean; family?: string }) {
-    const { rulesetData } = this.view;
-    const ids = where.aptitudeId === undefined ? undefined : rulesetData.listFeatIds(where.aptitudeId);
-    const composesLinks = rulesetData.cow.sourceChain.length > 0 && !where.childOnly;
+  override openList(where: { aptitudeId?: string; childOnly?: boolean; family?: string }) {
+    const ids = where.aptitudeId === undefined ? undefined : this.rulesetData.listFeatIds(where.aptitudeId);
     return {
-      describe<T extends { featsAptitudesInRules: unknown; id: string }>(rows: T[]) {
-        if (!composesLinks) return rows;
-        return rows.map((feat) => {
-          const merged = rulesetData.featsById.get(feat.id);
-          return merged ? { ...feat, featsAptitudesInRules: merged.featsAptitudesInRules } : feat;
-        });
-      },
+      describe: <T extends Record<string, unknown> & { id: string }>(rows: T[]) => this.describeListed(rows, where),
       filters: { ids, ...(where.family && { family: { type: FEAT_FAMILY, value: where.family } }) },
       groupFilters: { familyType: FEAT_FAMILY, ids },
-    };
-  }
-
-  /**
-   * A new feat's row, from its form: refused without a pool, or with a pool a spell uses. One named as an ancestor its
-   * ruleset deleted stands in for it, and is generated when the ancestor was (`tombstoneGenerated`).
-   */
-  planCreate(body: FeatBody, reads: { tombstoneGenerated: boolean }) {
-    if (!body.aptitudeIds || body.aptitudeIds.length === 0)
-      throw new RulesError("invalid", "At least one aptitude must be selected for the feat");
-    this.checkPools(body.aptitudeIds);
-    return {
-      columns: { description: body.description, generated: reads.tombstoneGenerated, name: body.name },
-      links: body.aptitudeIds.map((aptitudeId) => ({ aptitudeId })),
-    };
-  }
-
-  /**
-   * A feat's edit (`featId`), from its form: the feat as the view has it, its new row, and its new pools when the form
-   * sends them. Refused when a generated feat is renamed (its name names its option, `Weapon Focus: Longsword`, which
-   * checks and generators find it by), or a pool a spell uses is linked.
-   */
-  planEdit(featId: string, body: FeatBody) {
-    const feat = this.find(featId);
-    if (body.name !== feat.name && feat.generated) throw new RulesError("invalid", "Generated feats cannot be renamed");
-    if (body.aptitudeIds?.length) this.checkPools(body.aptitudeIds);
-    return {
-      columns: { description: body.description, name: body.name },
-      entity: feat,
-      links: body.aptitudeIds?.map((aptitudeId) => ({ aptitudeId })),
     };
   }
 }

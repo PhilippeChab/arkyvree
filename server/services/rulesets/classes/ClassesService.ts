@@ -19,10 +19,9 @@ class ClassesService {
       name: string;
     },
   ) {
-    const { row } = await this.saves.create(session, rulesetId, body.name, (scope) =>
+    return await this.saves.create(session, rulesetId, body.name, (scope) =>
       Engine.for(scope).entities("klasses").planCreate(body),
     );
-    return row;
   }
 
   async deleteClass(session: Session, rulesetId: string, klassId: string) {
@@ -47,12 +46,13 @@ class ClassesService {
     pagination: { limit: number; page: number },
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
+      const list = Engine.for(scope).entities("klasses").openList(where);
       const result = await Klasses.findPage(
         db,
-        { rulesetId, ...scope.rulesetData.cow.listFilters, ...where },
+        { rulesetId, ...scope.rulesetData.cow.listFilters, ...where, ...list.filters },
         pagination,
       );
-      return { ...result, items: Engine.for(scope).entities("klasses").describePage(result.items) };
+      return { ...result, items: list.describe(result.items) };
     });
   }
 
@@ -67,10 +67,9 @@ class ClassesService {
       updatedAt?: string;
     },
   ) {
-    const { row } = await this.saves.update(session, rulesetId, body, (scope) =>
+    return await this.saves.update(session, rulesetId, body, (scope) =>
       Engine.for(scope).entities("klasses").planEdit(klassId, body),
     );
-    return row;
   }
 }
 
