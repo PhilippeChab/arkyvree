@@ -3,6 +3,7 @@ import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
 /** An aptitude's spells, by spell level. */
 interface AptitudeSpells {
@@ -60,10 +61,15 @@ interface SpellRowTag {
   name: string;
 }
 
-/** What the groups read of a character: its classes' levels, its computed powers, its aptitudes and spell tags. */
+/**
+ * What the groups read of a character: its classes' levels, its computed powers, its aptitudes, the spells of the lists
+ * a feat brings, and its spell tags.
+ */
 interface SpellSheet {
   aptitudes: Record<string, { id: string; name: string }>;
   classes: Record<string, { levels?: { klassLevel?: { level: number } | null; powers?: LevelSpell[] }[] }>;
+  /** Each list a feat brings, by its id: its spells' ids by the spell level it has each at (none on a domain slot). */
+  featListSpells: Map<string, Map<number, Set<string>>>;
   powers: Record<
     string,
     {
@@ -85,6 +91,7 @@ interface SpellSource {
     classes: { getCharacterClasses(): SpellSheet["classes"] };
     powers: { getFlatPowers(): SpellSheet["powers"] };
   };
+  getFeatListSpells(): SpellSheet["featListSpells"];
   getSpellTagLists(): SpellSheet["spellTagLists"];
   getSpellTags(): SpellSheet["spellTags"];
   getVirtualPowers(): SpellSheet["virtualPowers"];
@@ -92,10 +99,69 @@ interface SpellSource {
 
 /**
  * A character's spells as its sheets list them, the web sheet's and the PDF's alike: by aptitude (its spell list), then
- * by spell level, with the uses per day the aptitude allows there.
+ * by spell level, with the uses per day the aptitude allows there; a list a feat brings (a specialist's school, a
+ * cleric's domain slot) at each level it has uses at.
  */
 export default class SpellGroups {
-  /** The levels' spells, a spell once per group with all its tags, then the spells modifiers give. */
+  /**
+   * The tags whose spells fill a list a feat brings (`listId`), each with the list its spells are on: the list's own
+   * feat's (a specialist's school); or, for a list of no spells of its own (a cleric's domain slot), the tags of the
+   * lists joining its class's lists (his domains').
+   */
+  private static fillersOf(sheet: SpellSheet, listId: string) {
+    const tagLists = Object.entries(sheet.spellTagLists);
+    const bringing = tagLists.filter(([, lists]) => lists.aptitudeIds.includes(listId));
+    if (sheet.featListSpells.get(listId)?.size) return bringing.map(([tag]) => ({ tag, listId }));
+
+    const classListIds = new Set(bringing.flatMap(([, lists]) => lists.aptitudeIds.filter((id) => id !== listId)));
+    return tagLists.flatMap(([tag, lists]) => {
+      const ownListId = lists.aptitudeIds.find((id) => sheet.featListSpells.get(id)?.size);
+      const joins = lists.joinsClassList && lists.aptitudeIds.some((id) => classListIds.has(id));
+      return joins && ownListId ? [{ tag, listId: ownListId }] : [];
+    });
+  }
+
+  /**
+   * The slots of each list a feat brings (a specialist's school, a cleric's domain slot), at each spell level it has
+   * uses at, each with the character's spells that fill them there (`fillersOf`): those the lists of the feat's class
+   * list with their tag (the school's spells in the wizard's spellbook, his domains' spells on the cleric's).
+   */
+  private static groupFeatListSlots(
+    sheet: SpellSheet,
+    groups: Map<string, SpellGroup>,
+    groupOf: (aptitudeId: string, level: number) => SpellGroup,
+  ) {
+    // The rows each tag marks, by its name: the spells of the lists a feat brings, on its class's lists
+    const taggedRows = new Map<string, SpellRow[]>();
+    for (const group of groups.values()) {
+      for (const row of group.spells)
+        for (const tag of row.tags ?? []) taggedRows.set(tag.name, [...(taggedRows.get(tag.name) ?? []), row]);
+    }
+
+    for (const { id, name } of Object.values(sheet.aptitudes)) {
+      if (!sheet.featListSpells.has(id)) continue;
+      const fillers = SpellGroups.fillersOf(sheet, id);
+      for (let level = 0; level <= MAX_SPELL_LEVEL; level++) {
+        if (!SpellGroups.usesPerDay(sheet.aptitudes, name, level)) continue;
+        const group = groupOf(id, level);
+        for (const { tag, listId } of fillers) {
+          for (const row of taggedRows.get(tag) ?? []) {
+            if (!sheet.featListSpells.get(listId)?.get(level)?.has(row.id)) continue;
+            if (group.spells.some((had) => had.name === row.name)) continue;
+            group.spells.push({
+              ...row,
+              tags: row.tags?.filter((had) => fillers.some((filler) => filler.tag === had.name)),
+            });
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * The levels' spells, a spell once per group with all its tags, the spells modifiers give, then the slots of the
+   * lists a feat brings.
+   */
   private static groupSpells(sheet: SpellSheet, aptitudeNameById: Map<string, string>) {
     const groupMap = new Map<string, SpellGroup>();
     const groupOf = (aptitudeId: string, level: number) => {
@@ -103,7 +169,10 @@ export default class SpellGroups {
       let group = groupMap.get(key);
       if (!group) {
         const aptitudeName = aptitudeNameById.get(aptitudeId) || "Spells";
-        group = { aptitudeName, level, uses: SpellGroups.usesPerDay(sheet.aptitudes, aptitudeName, level), spells: [] };
+        const uses = SpellGroups.usesPerDay(sheet.aptitudes, aptitudeName, level);
+        // A list a feat brings counts no slot where it gives none: a domain's spells known on its own list
+        const slotless = uses === 0 && sheet.featListSpells.has(aptitudeId);
+        group = { aptitudeName, level, uses: slotless ? null : uses, spells: [] };
         groupMap.set(key, group);
       }
       return group;
@@ -148,6 +217,7 @@ export default class SpellGroups {
         properties,
       });
     }
+    SpellGroups.groupFeatListSlots(sheet, groupMap, groupOf);
     return groupMap;
   }
 
@@ -161,6 +231,7 @@ export default class SpellGroups {
     return {
       aptitudes: aptitudes.getAptitudes(),
       classes: classes.getCharacterClasses(),
+      featListSpells: character.getFeatListSpells(),
       powers: powers.getFlatPowers(),
       spellTagLists: character.getSpellTagLists(),
       spellTags: character.getSpellTags(),

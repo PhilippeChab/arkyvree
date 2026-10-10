@@ -1,6 +1,7 @@
 import { Validates } from "@/engine/core/character/index.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
+import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import { include } from "@/lib/mixins.ts";
 import type { Character, KlassLevel, Requirement } from "@/shared/relations.ts";
 
@@ -33,6 +34,14 @@ export default class DetailedCharacter extends include(
   /** The general feats the character has at its total level (`LevelRules.countGeneralFeats`). */
   protected countGeneralFeats(totalLevel: number): number {
     return LevelRules.countGeneralFeats(totalLevel);
+  }
+
+  /**
+   * The spells of each list a feat brings (a domain's, a specialist's school), by its id, then by spell level, as the
+   * ruleset has them (`SpellLists.featListSpells`): a sheet lists the character's own in the list's slots.
+   */
+  getFeatListSpells() {
+    return SpellLists.of(this.rulesetData).featListSpells;
   }
 
   getSpellcasting(): { arcane: number; divine: number } {
