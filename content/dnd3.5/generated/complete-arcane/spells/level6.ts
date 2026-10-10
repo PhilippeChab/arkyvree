@@ -12,8 +12,13 @@ export const LEVEL_6_SPELLS: PowerSeed[] = [
     properties: [
       { type: "SPELL_SCHOOL", value: "Abjuration" },
       { type: "SPELL_CASTING_TIME", value: "10 minutes" },
+      { type: "SPELL_RANGE_TYPE", value: "One willing creature touched" },
+      { type: "SPELL_AREA_OF_EFFECT", value: "5-ft./level radius emanation from touched creature" },
       { type: "SPELL_DURATION", value: "24 hours" },
       { type: "SPELL_RESISTANCE", value: "No" },
+      { type: "SPELL_COMPONENT", value: "Verbal" },
+      { type: "SPELL_COMPONENT", value: "Somatic" },
+      { type: "SPELL_COMPONENT", value: "Focus" },
     ],
   },
   {
@@ -189,16 +194,20 @@ export const LEVEL_6_SPELLS: PowerSeed[] = [
     description:
       "As lesser spirit binding, except you can attempt to call and trap one or more spirit creatures of the same type whose Hit Dice total no more than 16.If you call multiple spirits, each gets its own saving throw, makes independent attempts to escape, and must be individually persuaded to aid you.",
     aptitudes: ["Wu Jen Spells"],
-    savingThrow: "None",
+    savingThrow: "Will negates",
     properties: [
       { type: "SPELL_SCHOOL", value: "Conjuration" },
       { type: "SPELL_SUBSCHOOL", value: "Calling" },
-      { type: "SPELL_CASTING_TIME", value: "1 standard action" },
+      { type: "SPELL_CASTING_TIME", value: "10 minutes" },
+      { type: "SPELL_RANGE_TYPE", value: "Close" },
       {
         type: "SPELL_TARGET",
         value: "Up to 16 HD worth of spirits, no two of which can be more than 30 ft. apart when they appear",
       },
-      { type: "SPELL_RESISTANCE", value: "No" },
+      { type: "SPELL_DURATION", value: "Instantaneous" },
+      { type: "SPELL_RESISTANCE", value: "Yes" },
+      { type: "SPELL_COMPONENT", value: "Verbal" },
+      { type: "SPELL_COMPONENT", value: "Somatic" },
     ],
   },
   {

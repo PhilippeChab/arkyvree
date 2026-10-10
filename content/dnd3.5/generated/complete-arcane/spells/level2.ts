@@ -12,10 +12,14 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
       { type: "SPELL_DESCRIPTOR", value: "Fire" },
-      { type: "SPELL_CASTING_TIME", value: "1 standard action" },
+      { type: "SPELL_CASTING_TIME", value: "1 round" },
       { type: "SPELL_RANGE_TYPE", value: "Close" },
       { type: "SPELL_TARGET", value: "Up to a 5-ft. cube of fire" },
+      { type: "SPELL_DURATION", value: "Concentration, up to 1 round/level (D)" },
       { type: "SPELL_RESISTANCE", value: "No" },
+      { type: "SPELL_COMPONENT", value: "Verbal" },
+      { type: "SPELL_COMPONENT", value: "Somatic" },
+      { type: "SPELL_COMPONENT", value: "Material" },
     ],
   },
   {
@@ -273,7 +277,12 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
+      { type: "SPELL_RANGE_TYPE", value: "Touch" },
+      { type: "SPELL_TARGET", value: "Construct touched" },
+      { type: "SPELL_DURATION", value: "Instantaneous" },
       { type: "SPELL_RESISTANCE", value: "No" },
+      { type: "SPELL_COMPONENT", value: "Verbal" },
+      { type: "SPELL_COMPONENT", value: "Somatic" },
     ],
   },
   {

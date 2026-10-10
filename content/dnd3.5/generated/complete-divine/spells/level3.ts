@@ -162,7 +162,12 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
+      { type: "SPELL_RANGE_TYPE", value: "Personal" },
+      { type: "SPELL_TARGET", value: "You" },
+      { type: "SPELL_DURATION", value: "10 min./level" },
       { type: "SPELL_RESISTANCE", value: "No" },
+      { type: "SPELL_COMPONENT", value: "Verbal" },
+      { type: "SPELL_COMPONENT", value: "Somatic" },
     ],
   },
   {
@@ -304,13 +309,17 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
     name: "Vigor",
     description: "Identical to lesser vigor, but grants fast healing at the rate of 2 hit points per round.",
     aptitudes: ["Cleric Spells", "Druid Spells"],
-    savingThrow: "None",
+    savingThrow: "Will negates (harmless)",
     properties: [
       { type: "SPELL_SCHOOL", value: "Conjuration" },
       { type: "SPELL_SUBSCHOOL", value: "Healing" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
+      { type: "SPELL_RANGE_TYPE", value: "Touch" },
+      { type: "SPELL_TARGET", value: "Living creature touched" },
       { type: "SPELL_DURATION", value: "10 rounds + 1 round/level (max 25 rounds)" },
-      { type: "SPELL_RESISTANCE", value: "No" },
+      { type: "SPELL_RESISTANCE", value: "Yes (harmless)" },
+      { type: "SPELL_COMPONENT", value: "Verbal" },
+      { type: "SPELL_COMPONENT", value: "Somatic" },
     ],
   },
   {

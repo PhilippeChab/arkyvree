@@ -27,14 +27,21 @@ import type {
   StoredReference,
 } from "@/codegen/dnd3.5/tools/types/reference.ts";
 import { isRecord } from "@/shared/isRecord.ts";
+import { CORE_BOOK } from "@/vocabulary/dnd3.5/books.ts";
 
 /** What a reference file's `_meta` says of it (an item reference names its pages, not one). */
 interface FileMeta {
   _meta: { book: string; sourceUrl?: string; type: ReferenceType };
 }
 
-/** A book's class references, which a feat reference's mapping reads. */
-type ClassesOf = (book: string) => ClassReferenceFile[];
+/**
+ * What a reference's detector reads of the books' other references: a book's classes, which a feat reference's mapping
+ * reads, and the core rules' spells as stored, which an extension's spell may be written as ("As darkvision, except…").
+ */
+interface OtherReferences {
+  classesOf(book: string): ClassReferenceFile[];
+  coreSpells(): StoredReference<"spell">;
+}
 
 /** The file a book's reference of each type is stored in, in the book's folder (a class's is its own, in `classes/`). */
 const REFERENCE_FILE_NAMES: { [T in Exclude<ReferenceType, "class">]: string } = {
@@ -49,15 +56,15 @@ const REFERENCE_FILE_NAMES: { [T in Exclude<ReferenceType, "class">]: string } =
 
 /** Each type's detector, which derives what the generator reads from a stored reference. */
 const RESOLVERS: {
-  [T in ReferenceType]: (stored: StoredReference<T>, classesOf: ClassesOf) => ReferenceByType[T];
+  [T in ReferenceType]: (stored: StoredReference<T>, others: OtherReferences) => ReferenceByType[T];
 } = {
   class: (stored) => new ClassDetector(stored).resolve(),
   domain: (stored) => new DomainDetector(stored).resolve(),
-  feat: (stored, classesOf) => new FeatDetector(stored, classesOf(stored._meta.book)).resolve(),
+  feat: (stored, others) => new FeatDetector(stored, others.classesOf(stored._meta.book)).resolve(),
   item: (stored) => new ItemDetector(stored).resolve(),
   magicItem: (stored) => new MagicItemDetector(stored).resolve(),
   race: (stored) => new RaceDetector(stored).resolve(),
-  spell: (stored) => new SpellDetector(stored).resolve(),
+  spell: (stored, others) => new SpellDetector(stored, others.coreSpells()).resolve(),
   wizardSchool: (stored) => new WizardSchoolDetector(stored).resolve(),
 };
 
@@ -183,11 +190,16 @@ class References {
 
   /**
    * A reference with what the generator reads derived from it, uncached, in the shape a reference file has (keys
-   * sorted, no undefined values): a feat reference's is derived with its book's classes, which this loads.
+   * sorted, no undefined values): a feat reference's is derived with its book's classes, which this loads, and a spell
+   * reference's with the core rules' spells, as stored.
    */
   resolve<T extends ReferenceType>(type: T, stored: StoredReference<T>): ReferenceByType[T] {
-    const resolveStored: (stored: StoredReference<T>, classesOf: ClassesOf) => ReferenceByType[T] = RESOLVERS[type];
-    return JSON.parse(stringifyStably(resolveStored(stored, (book) => this.loadClasses(book))));
+    const resolveStored: (stored: StoredReference<T>, others: OtherReferences) => ReferenceByType[T] = RESOLVERS[type];
+    const others: OtherReferences = {
+      classesOf: (book) => this.loadClasses(book),
+      coreSpells: () => this.stored(this.path(CORE_BOOK, "spell"), "spell"),
+    };
+    return JSON.parse(stringifyStably(resolveStored(stored, others)));
   }
 
   /**

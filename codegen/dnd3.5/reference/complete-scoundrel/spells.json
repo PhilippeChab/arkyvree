@@ -5,6 +5,14 @@
     "sourceUrl": "https://dndtools.net/spells/complete-scoundrel--60/",
     "type": "spell"
   },
+  "overrides": {
+    "Grasping Wall": {
+      "description": "Hundreds of disembodied hands burst from the wall, forming a sea of clutching, probing appendages.You cause hands to sprout from a wall within range.This spell simply adds grasping hands to an existing wall rather than creating a wall of a substance.All opponents adjacent to the wall are entangled unless they succeed on Reflex saves.An opponent must repeat this save each round it remains adjacent to the wall.Allied creatures are not entangled, and in fact can use the hands to gain a +10 competence bonus on Climb checks to scale the wall.If the spell ends while you are climbing, you immediately fall but can make a normal Climb check to catch yourself (PH 69).Any objects on a wall affected by the spell are unharmed; doors, windows, and other apertures in the wall can be opened or closed as normal.Material Component: A handful of fingernails.",
+      "duration": "Concentration (max. 1 round/level) + 3 rounds",
+      "savingThrow": "Reflex negates",
+      "spellResistance": "No"
+    }
+  },
   "raw": [
     {
       "castingTime": "1 standard action",

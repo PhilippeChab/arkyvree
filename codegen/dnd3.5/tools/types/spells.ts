@@ -2,11 +2,35 @@ import type { Property } from "@/content/core/builders/customization/types.ts";
 
 import type { Overrides, ScrapedMeta } from "./reference.ts";
 
+/**
+ * A spell's overrides: its description, the class/level entries its page leaves out, and the stat block's fields its
+ * page leaves out or garbles (Tortoise Shell's, leaked into its description), as its book gives them.
+ */
+interface SpellOverride extends Partial<
+  Pick<
+    SpellReference["raw"][number],
+    | "area"
+    | "castingTime"
+    | "components"
+    | "duration"
+    | "effect"
+    | "range"
+    | "savingThrow"
+    | "spellResistance"
+    | "target"
+  >
+> {
+  description?: string;
+  /** Extra class/level entries missing from scraped data */
+  levelEntries?: { className: string; level: number }[];
+}
+
 export interface SpellReference {
   _meta: ScrapedMeta<"spell">;
 
   /**
-   * What each spell's text gives: its properties and its saving throw, normalized, its base spell's where it lacks some
+   * What each spell's text gives: its properties and its saving throw, normalized, from its stat block's fields as its
+   * overrides correct them, its base spell's where it lacks some
    */
   detected: Record<string, { properties: Property[]; savingThrow: string }>;
 
@@ -16,11 +40,7 @@ export interface SpellReference {
    */
   mapping: Record<string, { description: string; levelEntries: { className: string; level: number }[] }>;
 
-  overrides?: Overrides<{
-    description?: string;
-    /** Extra class/level entries missing from scraped data */
-    levelEntries?: { className: string; level: number }[];
-  }>;
+  overrides?: Overrides<SpellOverride>;
 
   /** All spells scraped from the detail page */
   raw: {
