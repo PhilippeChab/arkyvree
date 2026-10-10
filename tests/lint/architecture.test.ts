@@ -4,7 +4,7 @@ import { lintRepo } from "./lintRepo.ts";
 
 /** A repo of `files` (path → source), linted by the architecture rules: each finding as `rule path`. */
 function lint(files: Record<string, string>, from = ".") {
-  return lintRepo(files, ["layers", "queries-in-repositories", "folder-index"], from);
+  return lintRepo(files, ["root-folders", "layers", "queries-in-repositories", "folder-index"], from);
 }
 
 // Each test runs oxlint, which a busy suite can slow past the default 5s.
@@ -171,7 +171,111 @@ describe("architecture rules", () => {
     ]);
   });
 
-  test("a layer imports only what's below it, types where a layer names them", async () => {
+  test("each root folder is a box: it imports the shared surfaces and infrastructure its role reads, and its declared edges", async () => {
+    const imports = (from: string) => `import { x } from "${from}";\nexport const y = x;\n`;
+    const types = (from: string) => `import type { X } from "${from}";\nexport type Y = X;\n`;
+    expect(
+      await lint({
+        // A domain box reaches no other: the server none of the database, the content, the codegen or the client
+        "server/a.ts": imports("@/database/packages/runner.ts"),
+        "server/b.ts": imports("@/content/dnd3.5/packages/core.ts"),
+        "server/c.ts": imports("@/codegen/core/GeneratedFolder.ts"),
+        "server/d.ts": types("@/client/src/App.tsx"),
+        // The database none of the server, not even for its types
+        "database/seeders/core/e.ts": imports("@/server/repositories/index.ts"),
+        "database/packages/f.ts": types("@/server/database/index.ts"),
+        // The codegen none of the database or the server, and of the content only its declared edges
+        "codegen/core/g.ts": imports("@/database/seeders/core/ContentSeeder.ts"),
+        "codegen/dnd3.5/tools/h.ts": imports("@/server/services/index.ts"),
+        "codegen/dnd3.5/tools/i.ts": imports("@/content/dnd3.5/data/coreRules.ts"),
+        "codegen/dnd3.5/tools/j.ts": imports("@/content/dnd3.5/generated/srd/index.ts"),
+        "codegen/dnd3.5/tools/k.ts": imports("@/content/dnd3.5/packages/core.ts"),
+        // A seeder writes what a package gathers, never the data or the generated books themselves
+        "database/seeders/dnd3.5/l.ts": imports("@/content/dnd3.5/data/coreRules.ts"),
+        "database/seeders/dnd3.5/m.ts": imports("@/content/dnd3.5/generated/dmg/index.ts"),
+        // The content is data: no engine, mixins or schema
+        "content/dnd3.5/data/n.ts": imports("@/engine/index.ts"),
+        "content/dnd3.5/builders/o.ts": imports("@/lib/mixins.ts"),
+        "content/core/builders/p.ts": types("@/drizzle/schema.ts"),
+        // The client takes the server's and the engine's types, never their code, and nothing of the database
+        "client/src/q.ts": imports("@/server/routers/application.ts"),
+        "client/src/r.ts": imports("@/engine/index.ts"),
+        "client/src/s.ts": imports("@/database/packages/registry.ts"),
+        // The engine reads nothing itself: the schema for its types alone, none of the server or the content
+        "engine/core/t.ts": imports("@/drizzle/schema.ts"),
+        "engine/core/u.ts": imports("@/server/database/index.ts"),
+        "engine/rulesets/dnd3.5/v.ts": imports("@/content/dnd3.5/data/coreRules.ts"),
+        // The infrastructure and what the boxes share import nothing of the app but their own
+        "lib/w.ts": imports("@/shared/text.ts"),
+        "shared/x.ts": imports("@/engine/index.ts"),
+        "shared/y.ts": imports("@/drizzle/schema.ts"),
+        "vocabulary/dnd3.5/z.ts": imports("@/lib/mixins.ts"),
+        "drizzle/aa.ts": imports("@/server/environment.ts"),
+        "emails/ab.tsx": imports("@/shared/text.ts"),
+        // A root folder the table doesn't declare, whatever it imports
+        "widgets/ac.ts": "export const y = 1;\n",
+
+        // Allowed: a box's own modules, the shared surfaces and the infrastructure its role reads
+        "server/ba.ts": imports("@/server/b.ts"),
+        "server/bb.ts": imports("@/engine/index.ts"),
+        "server/bc.ts": imports("@/engine"),
+        "server/bd.ts": imports("@/emails/welcome.tsx"),
+        "server/be.ts": imports("@/drizzle/schema.ts"),
+        "database/seeders/core/bf.ts": imports("@/engine/index.ts"),
+        "codegen/core/bg.ts": imports("@/lib/mixins.ts"),
+        "content/dnd3.5/data/bh.ts": imports("@/vocabulary/dnd3.5/weapons.ts"),
+        "client/src/bi.ts": imports("@/shared/text.ts"),
+        "engine/core/bj.ts": types("@/drizzle/schema.ts"),
+        "shared/bk.ts": types("@/drizzle/schema.ts"),
+        "vocabulary/dnd3.5/bl.ts": types("@/shared/enums.ts"),
+        // Each declared edge: the client to the server's types, the codegen to the content's builders and the core
+        // rules' feats, the database to the content's builders, packages and test data
+        "client/src/ca.ts": types("@/server/routers/application.ts"),
+        "codegen/core/cb.ts": imports("@/content/core/builders/customization/requirements.ts"),
+        "codegen/dnd3.5/tools/cc.ts": types("@/content/dnd3.5/builders/feats/types.ts"),
+        "codegen/dnd3.5/tools/cd.ts": imports("@/content/dnd3.5/data/feats/coreFeats.ts"),
+        "database/seeders/dnd3.5/ce.ts": imports("@/content/dnd3.5/builders/feats/possession.ts"),
+        "database/packages/registry.ts": imports("@/content/dnd3.5/packages/core.ts"),
+        "database/packages/cf.ts": imports("@/content/dnd3.5/testData/characters.ts"),
+        // The tests, the scripts and the tools' configs run the boxes: they import anything
+        "tests/da.test.ts": imports("@/server/database/index.ts"),
+        "scripts/db/db.ts": imports("@/server/services/index.ts"),
+        "dc.config.ts": imports("@/scripts/vite/quietLogger.ts"),
+      }),
+    ).toEqual([
+      "root-folders client/src/q.ts",
+      "root-folders client/src/r.ts",
+      "root-folders client/src/s.ts",
+      "root-folders codegen/core/g.ts",
+      "root-folders codegen/dnd3.5/tools/h.ts",
+      "root-folders codegen/dnd3.5/tools/i.ts",
+      "root-folders codegen/dnd3.5/tools/j.ts",
+      "root-folders codegen/dnd3.5/tools/k.ts",
+      "root-folders content/core/builders/p.ts",
+      "root-folders content/dnd3.5/builders/o.ts",
+      "root-folders content/dnd3.5/data/n.ts",
+      "root-folders database/packages/f.ts",
+      "root-folders database/seeders/core/e.ts",
+      "root-folders database/seeders/dnd3.5/l.ts",
+      "root-folders database/seeders/dnd3.5/m.ts",
+      "root-folders drizzle/aa.ts",
+      "root-folders emails/ab.tsx",
+      "root-folders engine/core/t.ts",
+      "root-folders engine/core/u.ts",
+      "root-folders engine/rulesets/dnd3.5/v.ts",
+      "root-folders lib/w.ts",
+      "root-folders server/a.ts",
+      "root-folders server/b.ts",
+      "root-folders server/c.ts",
+      "root-folders server/d.ts",
+      "root-folders shared/x.ts",
+      "root-folders shared/y.ts",
+      "root-folders vocabulary/dnd3.5/z.ts",
+      "root-folders widgets/ac.ts",
+    ]);
+  });
+
+  test("a layer inside a box imports only what's below it", async () => {
     expect(
       await lint({
         "server/repositories/A.ts": 'import { x } from "@/server/services/s.ts";\nexport const a = x;\n',
@@ -189,33 +293,14 @@ describe("architecture rules", () => {
         "engine/core/module/m.ts": 'import type { C } from "@/engine/rulesets/dnd3.5/index.ts";\nexport type M = C;\n',
         "engine/rulesets/dnd3.5/r.ts": 'import type { M } from "@/engine/core/module/m.ts";\nexport type R = M;\n',
         "engine/rulesets/dnd3.5/i.ts": 'import { include } from "@/lib/mixins.ts";\nexport const i = include;\n',
-        // lib/ imports nothing of the app
-        "lib/l.ts": 'import { x } from "@/server/services/s.ts";\nexport const l = x;\n',
-        "shared/s.ts": 'import type { T } from "@/drizzle/schema.ts";\nexport type S = T;\n',
-        // The engine reads nothing itself: neither the server nor the database, and the schema for its types alone
-        "engine/core/view/v.ts": 'import { db } from "@/server/database/index.ts";\nexport const v = db;\n',
-        "engine/core/view/t.ts": 'import type { T } from "@/drizzle/schema.ts";\nexport type V = T;\n',
         // Its core names no ruleset
         "engine/core/view/r.ts": 'import type { R } from "@/engine/rulesets/dnd3.5/r.ts";\nexport type V = R;\n',
-        // The client takes the engine's types, never its code
-        "client/src/e.ts":
-          'import type { RulesetData } from "@/engine/core/view/index.ts";\nexport type E = RulesetData;\n',
-        "client/src/w.ts":
-          'import { RulesetData } from "@/engine/core/view/index.ts";\nexport const w = RulesetData;\n',
-        "client/src/c.ts": 'import type { App } from "@/server/routers/application.ts";\nexport type C = App;\n',
-        "client/src/v.ts": 'import { app } from "@/server/routers/application.ts";\nexport const v = app;\n',
-        // A content package's vocabulary reads neither its data nor the server
+        // A content package's builders read one another
         "content/dnd3.5/builders/a.ts": 'import { b } from "@/content/dnd3.5/builders/b.ts";\nexport const a = b;\n',
-        "content/dnd3.5/builders/s.ts": 'import { x } from "@/server/services/s.ts";\nexport const s = x;\n',
       }),
     ).toEqual([
-      "layers client/src/v.ts",
-      "layers client/src/w.ts",
-      "layers content/dnd3.5/builders/s.ts",
       "layers engine/core/module/m.ts",
       "layers engine/core/view/r.ts",
-      "layers engine/core/view/v.ts",
-      "layers lib/l.ts",
       "layers server/cache/c.ts",
       "layers server/cache/e.ts",
       "layers server/cache/r.ts",
@@ -246,21 +331,8 @@ describe("architecture rules", () => {
         // A package gathers the books and the data
         "content/dnd3.5/packages/k.ts": imports("@/content/dnd3.5/generated/srd/index.ts"),
         "content/dnd3.5/packages/l.ts": imports("@/content/dnd3.5/data/coreRules.ts"),
-        // The codegen reads the builders and the data, never what it writes
-        "codegen/dnd3.5/tools/m.ts": imports("@/content/dnd3.5/generated/srd/index.ts"),
-        "codegen/dnd3.5/tools/n.ts": imports("@/content/dnd3.5/packages/core.ts"),
-        "codegen/dnd3.5/tools/o.ts": imports("@/content/dnd3.5/data/feats/coreFeats.ts"),
-        "codegen/dnd3.5/tools/p.ts": imports("@/content/dnd3.5/builders/feats/types.ts"),
-        // A seeder reads a package's content from its definition
-        "database/seeders/dnd3.5/q.ts": imports("@/content/dnd3.5/data/coreRules.ts"),
-        "database/seeders/dnd3.5/r.ts": imports("@/content/dnd3.5/generated/dmg/index.ts"),
-        "database/packages/s.ts": imports("@/content/dnd3.5/packages/core.ts"),
-        "database/seeds/t.ts": imports("@/content/dnd3.5/testData/characters.ts"),
-        "tests/u.test.ts": imports("@/content/dnd3.5/generated/srd/index.ts"),
       }),
     ).toEqual([
-      "layers codegen/dnd3.5/tools/m.ts",
-      "layers codegen/dnd3.5/tools/n.ts",
       "layers content/dnd3.5/builders/a.ts",
       "layers content/dnd3.5/builders/b.ts",
       "layers content/dnd3.5/builders/c.ts",
@@ -268,8 +340,6 @@ describe("architecture rules", () => {
       "layers content/dnd3.5/data/f.ts",
       "layers content/dnd3.5/data/g.ts",
       "layers content/dnd3.5/generated/srd/i.ts",
-      "layers database/seeders/dnd3.5/q.ts",
-      "layers database/seeders/dnd3.5/r.ts",
     ]);
   });
 
@@ -294,12 +364,13 @@ describe("architecture rules", () => {
           "database/seeders/core/j.ts": imports("@/database/seeders/dnd3.5/BaseSeeder.ts"),
           "server/k.ts": imports("@/vocabulary/dnd3.5/spells.ts"),
           "shared/l.ts": imports("@/vocabulary/dnd3.5/spells.ts"),
-          // The content's runner, the dev and test seeds and the scripts reach a ruleset's content through its registry
+          // The content's runner and the scripts, the dev and test seeds among them, reach a ruleset's content through its
+          // registry
           "database/packages/m.ts": imports("@/content/dnd3.5/packages/core.ts"),
-          "database/seeds/n.ts": imports("@/content/dnd3.5/testData/characters.ts"),
+          "scripts/db/seeds/n.ts": imports("@/content/dnd3.5/testData/characters.ts"),
           "scripts/db/x.ts": imports("@/database/seeders/dnd3.5/RulesetSeeder.ts"),
           "database/packages/registry.ts": imports("@/database/seeders/dnd3.5/RulesetSeeder.ts"),
-          "database/seeds/y.ts": imports("@/database/packages/registry.ts"),
+          "scripts/db/seeds/y.ts": imports("@/database/packages/registry.ts"),
           // A ruleset reads its own folders and the core's; a registry and a test read any ruleset's
           "content/dnd3.5/builders/o.ts": imports("@/content/dnd3.5/builders/items/types.ts"),
           "content/dnd3.5/data/p.ts": imports("@/content/core/builders/customization/requirements.ts"),
@@ -329,9 +400,9 @@ describe("architecture rules", () => {
       "ruleset-folders database/packages/m.ts",
       "ruleset-folders database/seeders/core/j.ts",
       "ruleset-folders database/seeders/pf1/d.ts",
-      "ruleset-folders database/seeds/n.ts",
       "ruleset-folders engine/core/g.ts",
       "ruleset-folders engine/rulesets/pf1/a.ts",
+      "ruleset-folders scripts/db/seeds/n.ts",
       "ruleset-folders scripts/db/x.ts",
       "ruleset-folders server/k.ts",
       "ruleset-folders shared/l.ts",
@@ -347,7 +418,7 @@ describe("architecture rules", () => {
           'import type { ItemLocation } from "@/shared/enums.ts";\nexport const b: ItemLocation[] = [];\n',
         "vocabulary/dnd3.5/c.ts": 'import { y } from "@/client/src/lib/z.ts";\nexport const c = y;\n',
       }),
-    ).toEqual(["layers vocabulary/dnd3.5/a.ts", "layers vocabulary/dnd3.5/c.ts"]);
+    ).toEqual(["root-folders vocabulary/dnd3.5/a.ts", "root-folders vocabulary/dnd3.5/c.ts"]);
   });
 
   test("a ruleset's vocabulary declares no function or class, and a constant holds none", async () => {
@@ -418,7 +489,7 @@ describe("architecture rules", () => {
         "server/routers/api/validation.ts": "export const idParam = 1;\n",
         "server/routers/authentication/validation.ts":
           'import { idParam } from "@/server/routers/api/validation.ts";\nexport const v = idParam;\n',
-        "database/seeds/seed.ts":
+        "scripts/db/seed.ts":
           'import { Visibility } from "@/server/repositories/BaseRepository.ts";\nexport const s = Visibility;\n',
       }),
     ).toEqual(["folder-index server/services/direct.ts"]);
@@ -461,7 +532,7 @@ describe("architecture rules", () => {
     ).toEqual(["folder-index client/src/pages/dnd3.5/deep.tsx", "folder-index client/src/pages/generic.tsx"]);
   });
 
-  test("the middlewares sit above the repositories, and the server reads nothing of database/", async () => {
+  test("the middlewares sit above the repositories, and the server reads nothing of database/, content/ or scripts/", async () => {
     expect(
       await lint({
         "server/repositories/R.ts": 'import { m } from "@/server/middlewares/m.ts";\nexport const r = m;\n',
@@ -470,13 +541,13 @@ describe("architecture rules", () => {
           'import { items } from "@/database/seeders/dnd3.5/items.ts";\nexport const s = items;\n',
         "server/rulesets/data.ts":
           'import { CORE } from "@/content/dnd3.5/packages/core.ts";\nexport const d = CORE;\n',
-        "server/services/s.ts": 'import { SEED } from "@/database/seeds/users.ts";\nexport const s = SEED;\n',
+        "server/services/s.ts": 'import { SEED } from "@/scripts/db/seeds/users.ts";\nexport const s = SEED;\n',
       }),
     ).toEqual([
       "layers server/repositories/R.ts",
-      "layers server/rulesets/data.ts",
-      "layers server/rulesets/seed.ts",
-      "layers server/services/s.ts",
+      "root-folders server/rulesets/data.ts",
+      "root-folders server/rulesets/seed.ts",
+      "root-folders server/services/s.ts",
     ]);
   });
 

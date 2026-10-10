@@ -1,4 +1,4 @@
-import { PASSWORD_DIGEST } from "@/database/seeds/users.ts";
+import { PASSWORD_DIGEST } from "@/scripts/db/seeds/users.ts";
 
 import { queryDatabase } from "./database.ts";
 

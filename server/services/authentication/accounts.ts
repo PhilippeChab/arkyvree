@@ -1,7 +1,8 @@
 import { getTableName, type InferSelectModel } from "drizzle-orm";
 
+import type { Db } from "@/drizzle/database.ts";
 import { sessionsInAccount, type usersInAccount } from "@/drizzle/schema.ts";
-import { type Db, withTransaction } from "@/server/database/index.ts";
+import { withTransaction } from "@/server/database/index.ts";
 import { ConflictError, InternalError } from "@/server/errors/index.ts";
 import {
   Activities,

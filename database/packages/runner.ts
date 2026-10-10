@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 
+import type { Db } from "@/drizzle/database.ts";
 import { contentPackagesInRules } from "@/drizzle/schema.ts";
-import type { Db } from "@/server/database/index.ts";
 
 import { CONTENT_PACKAGES } from "./registry.ts";
 import type { ContentPackage } from "./types.ts";

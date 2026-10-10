@@ -7,7 +7,6 @@ import {
   DND35_COMPLETE_WARRIOR_NAME,
   DND35_RULESET_NAME,
 } from "@/content/dnd3.5/rulesetNames.ts";
-import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import {
   aptitudesInRules,
   featsAptitudesInRules,
@@ -15,6 +14,7 @@ import {
   powersInRules,
   rulesetsInRules,
 } from "@/drizzle/schema.ts";
+import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";

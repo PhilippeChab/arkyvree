@@ -1,20 +1,20 @@
 /**
- * The architecture, as rules: what each layer may import, where queries are built, and how a folder is entered.
+ * The architecture, as rules: what each root folder and each layer inside it may import, where queries are built, and
+ * how a folder is entered.
  *
- * - `layers`: a layer imports only what's below it (database < repositories < copy-on-write's views < its writes <
- *   services < jobs < routers; the middlewares sit on the repositories, beside the services). The cache, memoization
- *   only, imports none of the repositories, copy-on-write or the engine. The engine, the root `engine/`, imports
- *   nothing of the server, the database, the content, the codegen or the client: its machinery (`engine/core/`) sits
- *   below the rulesets that run on it (`engine/rulesets/`), and `lib/`, what it shares with the server, imports
- *   nothing of the app. Copy-on-write's server part is `cow/`: its read side (`cow/views/`: a ruleset's view, read and
- *   memoized) below its write side (`cow/writes/`). A ruleset's content (`content/<ruleset>/`) is data, which imports
- *   none of what reads or writes it: its builders (what it's written with) below its hand-written data and its
- *   generated books, which its packages gather. The codegen (`codegen/`) isn't the server's, and stores nothing: it
- *   reads the builders and the data, never the generated books it writes nor the packages that gather them, and a
- *   seeder (`database/`) reads a package's content from its definition, never from the data or the books themselves.
- *   The server reads none of `database/`, `content/` and `codegen/`. `shared/` imports nothing app-specific (the schema's
- *   types only), and neither does a ruleset's vocabulary (`vocabulary/<ruleset>/`: its data, which the engine and the
- *   client read), but `shared/`'s types; the client takes only types from the server.
+ * - `root-folders`: each root folder is a box with one role, which imports its own modules, the shared surfaces (the
+ *   engine through its front door, `shared/`, `vocabulary/`) and the infrastructure (`lib/`, `emails/`, `drizzle/`) its
+ *   role reads, and reaches another domain box (the client, the server, the content, the codegen, the database) only
+ *   by an edge its table declares, with its reason: the client takes the server's types (its API's), the codegen
+ *   writes in the content's builders and reads the core rules' hand-written feats, the database's seeders and runner
+ *   read the content's builders, packages and test data. The tests and the scripts, which run the boxes, import
+ *   anything; a root folder the table doesn't declare imports nothing (`ROOT_FOLDERS`).
+ * - `layers`: inside a box, a layer imports only what's below it (database < repositories < copy-on-write's views < its
+ *   writes < services < jobs < routers; the middlewares sit on the repositories, beside the services). The cache,
+ *   memoization only, imports none of the repositories, copy-on-write or the engine. The engine's machinery
+ *   (`engine/core/`) sits below the rulesets that run on it (`engine/rulesets/`). A ruleset's content
+ *   (`content/<ruleset>/`): its builders (what it's written with) below its hand-written data and its generated books,
+ *   which its packages gather.
  * - `engine-front-door`: code outside `engine/` enters it through `engine/index.ts`, `Engine` and its handles' types,
  *   as the client enters the server through its API; a test may reach any of its modules.
  * - `one-engine-op`: a service's or a job's action (a method, a function) asks the engine one operation, which answers
@@ -35,9 +35,9 @@
  * - `ruleset-folders`: a ruleset is a folder of `engine/rulesets/`, and a folder of its name, in any tree, is its own
  *   (`content/<ruleset>/`, `codegen/<ruleset>/`, `database/seeders/<ruleset>/`, `vocabulary/<ruleset>/`, the
  *   client's and the tests'): a ruleset's code imports none of another's, and what every ruleset runs on
- *   (`engine/core/`, `content/core/`, `codegen/core/`, `database/seeders/core/`, the content's runner and the dev and
- *   test seeds, `database/packages/` and `database/seeds/`, the scripts, the server, `shared/`, `lib/`) names none of
- *   them: the runner and the seeds reach a ruleset's packages, seeder and test characters through the content's
+ *   (`engine/core/`, `content/core/`, `codegen/core/`, `database/seeders/core/`, the content's runner,
+ *   `database/packages/`, the scripts, the dev and test seeds among them, the server, `shared/`, `lib/`) names none of
+ *   them: the runner and the scripts reach a ruleset's packages, seeder and test characters through the content's
  *   registry alone (`CONTENT_REGISTRY`: `RULESET_CONTENT`, keyed by base rules). A client module outside a ruleset's
  *   folder reaches a ruleset's code and vocabulary only through the client's registries, keyed by base rules
  *   (`CLIENT_REGISTRIES`: `getSections`, `getVocabulary`, `getClassForms`…), never from its folders.
@@ -57,9 +57,9 @@ import path from "node:path";
 
 import { onImports, targetOf } from "./imports.mjs";
 import { isVerbName } from "./methodNames.mjs";
-import { repoPath, rootOf } from "./paths.mjs";
+import { isInRepo, repoPath, rootOf } from "./paths.mjs";
 
-/** Each layer and what it must not import. `types`: imported for its types only, it's allowed. */
+/** The server's layers above its repositories. */
 const ABOVE_REPOSITORIES = [
   "server/cache/",
   "server/cow/",
@@ -70,6 +70,8 @@ const ABOVE_REPOSITORIES = [
 ];
 /** The server's layers whose functions are actions: each asks the engine one operation (`one-engine-op`). */
 const ACTION_LAYERS = ["server/services/", "server/jobs/"];
+/** What a box that runs the others imports: anything. */
+const ANYTHING = "anything";
 /** The client's component folders, which code outside enters at their outermost index */
 const CLIENT_COMPONENTS = "client/src/components/";
 /**
@@ -95,6 +97,7 @@ const CLIENT_REGISTRIES = [
  * runner and the dev and test seeds reach a ruleset's content and seeder.
  */
 const CONTENT_REGISTRY = "database/packages/registry.ts";
+
 /** The engine's entry's own methods, which hand out its handles. */
 const ENGINE_ENTRIES = new Set(["copyOnWrite", "for", "forRules"]);
 
@@ -109,12 +112,12 @@ const FUNCTION_TYPES = new Set(["ArrowFunctionExpression", "FunctionDeclaration"
 const FUNCTION_VALUES = new Set(["ArrowFunctionExpression", "ClassExpression", "FunctionExpression"]);
 
 const indexCache = new Map();
-
 /**
  * The trees whose folders are entered through their `index.ts`: the server's, but its routers (a route folder's
  * `index.ts` is its routes, not its folder's entry), the engine's, and the client's components.
  */
 const INDEXED_TREES = ["server/", "engine/", CLIENT_COMPONENTS];
+/** Each layer inside a box, and what it must not import: the server's, the content's and the engine's. */
 const LAYERS = [
   { layer: "server/database/", deny: ["server/repositories/", ...ABOVE_REPOSITORIES] },
   { layer: "server/repositories/", deny: ABOVE_REPOSITORIES },
@@ -140,12 +143,7 @@ const LAYERS = [
   { layer: "server/services/", deny: ["server/jobs/", "server/middlewares/", "server/routers/"] },
   { layer: "server/jobs/", deny: ["server/middlewares/", "server/routers/"] },
   { layer: "server/middlewares/", deny: ["server/services/", "server/jobs/", "server/routers/"] },
-  // The server reads nothing of database/, content/ or codegen/: the content reaches it through the database, which
-  // the packages seed
-  { layer: "server/", deny: ["database/", "content/", "codegen/"] },
-  // A ruleset's content is data, which the seeders write and the codegen generates: it imports none of them
-  { layer: "content/", deny: ["server/", "database/", "codegen/", "engine/", "client/", "lib/", "drizzle/"] },
-  // Its builders, what it's written with, import nothing written in them
+  // A ruleset's builders, what its content is written with, import nothing written in them
   {
     layer: "content/*/builders/",
     deny: ["content/*/data/", "content/*/generated/", "content/*/packages/", "content/*/testData/"],
@@ -154,35 +152,10 @@ const LAYERS = [
   { layer: "content/*/data/", deny: ["content/*/generated/", "content/*/packages/"] },
   // No generated file wraps hand-written content: a package gathers both
   { layer: "content/*/generated/", deny: ["content/*/data/", "content/*/packages/"] },
-  // The codegen reads the books and writes content: it stores nothing, it isn't the server's, and it reads none of the
-  // generated books it writes, nor the packages that gather them
-  { layer: "codegen/", deny: ["server/", "database/", "client/", "content/*/generated/", "content/*/packages/"] },
-  // A seeder writes what a package seeds, which the package's definition gathers: it reads no module of the data or
-  // the generated books directly
-  { layer: "database/", deny: ["content/*/data/", "content/*/generated/"] },
-  // The engine computes over the data it's given: it reads nothing itself, so it imports none of what stores data
-  {
-    layer: "engine/",
-    deny: ["server/", "database/", "content/", "codegen/", "client/", "drizzle/"],
-    types: ["drizzle/"],
-  },
-  // Its core is what every ruleset runs on: it names none of them
+  // The engine's core is what every ruleset runs on: it names none of them
   { layer: "engine/core/", deny: ["engine/rulesets/"] },
-  // What the server and the engine share (the mixins): it imports nothing of the app
-  { layer: "lib/", deny: ["server/", "engine/", "database/", "client/", "shared/", "drizzle/"] },
-  { layer: "shared/", deny: ["server/", "engine/", "client/", "database/", "drizzle/"], types: ["drizzle/"] },
-  // A ruleset's vocabulary is data, which the engine and the client read: it imports nothing of the app but shared/
-  {
-    layer: "vocabulary/",
-    deny: ["server/", "engine/", "client/", "database/", "content/", "codegen/", "lib/", "drizzle/"],
-    types: ["drizzle/"],
-  },
-  {
-    layer: "client/",
-    deny: ["server/", "engine/", "database/", "drizzle/"],
-    types: ["server/", "engine/", "drizzle/"],
-  },
 ];
+
 /** What a module that exports another module's is told. */
 const MODULE_EXPORTS_ITS_OWN =
   "A module exports what it declares, never another module's: code that needs that imports it from where it's defined.";
@@ -194,9 +167,93 @@ const QUERY_METHODS = new Set(["select", "selectDistinct", "insert", "update", "
 
 /**
  * What reaches a ruleset's content and seeder through the content's registry alone (`CONTENT_REGISTRY`, which is its
- * own): the content's runner, the dev and test seeds, and the scripts.
+ * own): the content's runner, and the scripts, the dev and test data's seeds among them (`scripts/db/seeds/`).
  */
-const REGISTRY_READERS = ["database/packages/", "database/seeds/", "scripts/"];
+const REGISTRY_READERS = ["database/packages/", "scripts/"];
+
+/**
+ * The repo's root folders, each a box with one role (`root-folders`), and what each imports beside its own modules:
+ * the shared surfaces its role reads (the engine, through its front door, `engine-front-door`; `shared/`;
+ * `vocabulary/`), the infrastructure (`lib/`, `emails/`, `drizzle/`; the schema's types alone for what writes nothing),
+ * and its declared edges into another domain box, each with its reason (`why`). The tests and the scripts, which run
+ * the boxes, import anything, and so do the root's own files, the tools' configs (`""`). A root folder the table doesn't
+ * declare imports nothing: a new box is declared here first.
+ */
+const ROOT_FOLDERS = {
+  "": { role: "the tools' configs", imports: ANYTHING },
+  client: {
+    role: "the app's pages, which call the server's API",
+    imports: [
+      { to: "shared/" },
+      { to: "vocabulary/" },
+      { to: "engine/", types: true },
+      { to: "drizzle/", types: true },
+      {
+        to: "server/",
+        types: true,
+        why: "the API's types: the client calls the server through Hono's typed client, and bundles none of its code",
+      },
+    ],
+  },
+  codegen: {
+    role: "the parser, which reads the books and writes the content's generated code",
+    imports: [
+      { to: "engine/" },
+      { to: "shared/" },
+      { to: "vocabulary/" },
+      { to: "lib/" },
+      {
+        to: "content/*/builders/",
+        why: "the code it writes is the content's: written in its builders, typed by their seed types",
+      },
+      {
+        to: "content/*/data/feats/coreFeats.ts",
+        why: "a book's aptitudes gather its hand-written feats' too: the core rules' feats no reference lists",
+      },
+    ],
+  },
+  content: { role: "each ruleset's content, data", imports: [{ to: "shared/" }, { to: "vocabulary/" }] },
+  database: {
+    role: "the content's packages' runner and seeders, which write the content into the database",
+    imports: [
+      { to: "engine/" },
+      { to: "shared/" },
+      { to: "vocabulary/" },
+      { to: "lib/" },
+      { to: "drizzle/" },
+      { to: "content/*/builders/", why: "a seeder writes the content's seed types, with its builders" },
+      { to: "content/*/packages/", why: "the runner applies the packages, and a seeder writes what one gathers" },
+      { to: "content/*/testData/", why: "the registry names each base rules' test characters" },
+    ],
+  },
+  drizzle: { role: "the database's schema", imports: [] },
+  emails: { role: "the emails' templates", imports: [] },
+  engine: {
+    role: "the rules, which compute over the data they're given",
+    imports: [{ to: "shared/" }, { to: "vocabulary/" }, { to: "lib/" }, { to: "drizzle/", types: true }],
+  },
+  lib: { role: "the mixins", imports: [] },
+  lint: { role: "the repo's lint rules", imports: [] },
+  public: { role: "the static files the app serves", imports: [] },
+  scripts: { role: "the scripts, which run the boxes", imports: ANYTHING },
+  server: {
+    role: "the API, which stores and transports",
+    imports: [
+      { to: "engine/" },
+      { to: "shared/" },
+      { to: "vocabulary/" },
+      { to: "lib/" },
+      { to: "emails/" },
+      { to: "drizzle/" },
+    ],
+  },
+  shared: { role: "what the client, the server and the database share", imports: [{ to: "drizzle/", types: true }] },
+  tests: { role: "the tests, which run the boxes", imports: ANYTHING },
+  vocabulary: {
+    role: "each ruleset's vocabulary, data",
+    imports: [{ to: "shared/" }, { to: "drizzle/", types: true }],
+  },
+};
 
 /** The rulesets of each repo root, once read. */
 const rulesetsCache = new Map();
@@ -329,18 +386,15 @@ function createLayers(context) {
   const file = repoPath(context.filename);
   const rules = LAYERS.map((rule) => ({ rule, layer: layerPrefixOf(file, rule.layer) })).filter(({ layer }) => layer);
   if (!rules.length) return {};
-  return onImports((node, spec, types) => {
+  return onImports((node, spec) => {
     const target = targetOf(file, spec);
     if (!target) return;
     for (const { rule, layer } of rules) {
       const pattern = rule.deny.find((d) => layerPrefixOf(target, d));
       if (!pattern) continue;
-      if (rule.allow?.some((a) => target.startsWith(a))) continue;
-      if (types && rule.types?.some((t) => target.startsWith(t))) continue;
-      const typesOnly = rule.types?.some((t) => pattern.startsWith(t)) ? " (types only)" : "";
       context.report({
         node,
-        message: `${layer} doesn't import from ${layerPrefixOf(target, pattern)}${typesOnly}: a layer imports what's below it.`,
+        message: `${layer} doesn't import from ${layerPrefixOf(target, pattern)}: a layer imports what's below it.`,
       });
       return;
     }
@@ -569,6 +623,42 @@ function createReExports(context) {
   };
 }
 
+function createRootFolders(context) {
+  // A file outside the repo (a generation's copy in a test's own folder) is in none of its boxes
+  if (!isInRepo(context.filename)) return {};
+  const file = repoPath(context.filename);
+  const root = file.includes("/") ? file.split("/")[0] : "";
+  const box = Object.hasOwn(ROOT_FOLDERS, root) ? ROOT_FOLDERS[root] : undefined;
+  if (!box) {
+    const message =
+      `${root}/ is a root folder lint/architecture.mjs's ROOT_FOLDERS doesn't declare: a new box is declared there, ` +
+      "with its role and what it imports.";
+    return { Program: (node) => context.report({ node, message }) };
+  }
+  if (box.imports === ANYTHING) return {};
+  return onImports((node, spec, types) => {
+    const target = targetOf(file, spec);
+    if (!target || target.split("/")[0] === root) return;
+    const named = box.imports.filter(({ to }) => isNamedBy(target, to));
+    if (named.some((entry) => !entry.types || types)) return;
+    if (named.length > 0) {
+      context.report({
+        node,
+        message: `${root}/ imports ${named[0].to} for its types alone (lint/architecture.mjs \`ROOT_FOLDERS\`).`,
+      });
+      return;
+    }
+    const imports = box.imports.map(({ to }) => to).join(", ") || "nothing of the repo";
+    context.report({
+      node,
+      message:
+        `${root}/ is ${box.role}: it imports ${imports} beside its own modules, never ${target}. A box reaches ` +
+        "another only by an edge lint/architecture.mjs's ROOT_FOLDERS declares, with its reason; what several " +
+        "share belongs on a shared surface (the engine, shared/, vocabulary/).",
+    });
+  });
+}
+
 function createRulesetFolders(context) {
   const file = repoPath(context.filename);
   const rulesets = rulesetsOf(rootOf(context.filename));
@@ -629,6 +719,18 @@ function hasIndex(dir) {
   if (!indexCache.has(dir)) indexCache.set(dir, fs.existsSync(`${dir}/index.ts`) || fs.existsSync(`${dir}/index.tsx`));
 
   return indexCache.get(dir);
+}
+
+/**
+ * Whether an import's target is what an entry of `ROOT_FOLDERS` names: a folder's module (a `*` segment standing for
+ * any folder, a ruleset's: `content/<ruleset>/builders/`), or a module.
+ */
+function isNamedBy(target, pattern) {
+  const source = pattern
+    .split("*")
+    .map((part) => part.replaceAll(/[.+?^${}()|[\]\\]/g, "\\$&"))
+    .join("[^/]+");
+  return pattern.endsWith("/") ? new RegExp(`^${source}`).test(`${target}/`) : new RegExp(`^${source}$`).test(target);
 }
 
 /**
@@ -742,6 +844,7 @@ export default {
   "queries-in-repositories": { meta: { type: "problem" }, create: createQueriesInRepositories },
   "folder-index": { meta: { type: "problem" }, create: createFolderIndex },
   "re-exports": { meta: { type: "problem" }, create: createReExports },
+  "root-folders": { meta: { type: "problem" }, create: createRootFolders },
   "ruleset-folders": { meta: { type: "problem" }, create: createRulesetFolders },
   "vocabulary-data": { meta: { type: "problem" }, create: createVocabularyData },
 };

@@ -12,7 +12,7 @@
  *
  * Private and protected methods are the class's own business: any name.
  *
- * `function-names`: an exported function of the server, the engine, `shared/`, `database/`, `content/` or `codegen/`
+ * `function-names`: an exported function of the server, the engine, `shared/`, `database/`, `content/`, `codegen/` or the dev and test seeds (`scripts/db/seeds/`)
  * (declared, held by a const, or listed
  * in an `export { f }`) starts with a verb too (`FUNCTION_VERBS`), or is one of the shapes the code writes: a context
  * it runs a callback in (`withTransaction`), an event's handler (`onCacheHit`), a conversion (`toSafeUser`) or a
@@ -98,7 +98,8 @@ const VOCABULARIES = [
 
 function createFunctionNames(context) {
   const file = repoPath(context.filename);
-  if (!/^(server|engine|shared|database|content|codegen)\//.test(file) || !/\.tsx?$/.test(file)) return {};
+  if (!/^(server|engine|shared|database|content|codegen|scripts\/db\/seeds)\//.test(file) || !/\.tsx?$/.test(file))
+    return {};
   // A ruleset's content builders, and the core's, are its data's vocabulary: `eq(feat("Dodge"))`, `simple("Club")`
   if (/^content\/[^/]+\/builders\//.test(file)) return {};
   const report = (id) => {

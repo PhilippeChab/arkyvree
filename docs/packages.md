@@ -38,7 +38,10 @@ database/
 │       ├── RulesetSeeder.ts  # seedCore, seedExtension (the contract), seedBond, seedDomains: the steps made of steps
 │       ├── concerns/         # Its own steps: SeedsClasses, SeedsSkills, SeedsPowers, SeedsWizardSchools, CopiesIntoExtensions (a book's changes to the core feats and spells; its copies' spell lists, copyPowerLinks)
 │       └── spellTable.ts     # A spellcaster's table: the class level each of its spell levels opens at
-└── seeds/                # The dev and test databases' seed scripts: the users, each base rules' test characters (seedCharacter, seedContext), read through the registry
+
+scripts/db/
+├── seed.ts               # Applies the packages (the runner), then the dev and test data's seeds
+└── seeds/                # The dev and test databases' seeds: the users, each base rules' test characters (seedCharacter, seedContext), read through the registry, a character's levels and bonded creatures written as the server writes them
 
 content/core/
 └── builders/
@@ -49,7 +52,6 @@ content/core/
     └── packages/         # PackageDefinition: a package as data (its name, type, seedsVersion, ruleset and content); CorePackageDefinition, ExtensionPackageDefinition
 
 content/dnd3.5/
-├── baseRules.ts          # DND35_BASE_RULES: the base rules the content is written for, which the seeders ask the engine by
 ├── rulesetNames.ts       # The system rulesets' display names
 ├── builders/             # What the content is written with: a type per kind of seed, and the functions that write a seed's parts
 │   ├── items/            # An item's properties (weaponProperties()…) and proficiencies (simple(), martial()…)
@@ -92,7 +94,7 @@ codegen/dnd3.5/
     ├── detect/           # A reference's raw → its detected and mapping: a detector per kind on a BaseDetector (ClassDetector in classes/, with its concerns, its ClassTable and FeatureText readers, its ClassMapping and ClassPools; FeatDetector, SpellDetector…)
     │   └── readers/          # What a text says, a reader class each: requirements/ (RequirementReading and its concerns; FeatPrerequisites, ClassPrerequisites), modifiers/ (BonusText, a reading per kind of text), items/ (MagicItemText, MagicItemMetadata); the target paths a reading's must be (TargetPaths)
     ├── text/             # The scraped text: sanitized (the site's HTML and the books' references), normalized, entry names, amounts (cost, weight)
-    ├── vocabulary/       # The names the books give abilities, saves, skills, races and numbers, their slugs and paths, a feat family's options, and the core rules' book: a module per subject
+    ├── terms/            # How the parser reads the books' words: numbers, the abilities', saves', skills' and races' slugs and spellings, a race prerequisite's paths, a feat family's options, a class feature's family: a module per subject
     ├── seeds/            # A book's seeds (BookSeeds, one per book on the Library), a class per kind built once per reference (FeatSeeds, SpellSeeds…; a class's: classes/ClassSeeds.ts); what a book copies and the aptitudes it uses, its concerns
     ├── validate/         # What parser:dnd3.5:validate reports: a reference's issues (ReferenceIssues, its ReviewList), what a class's overrides change (ClassOverridesCheck)
     └── generator/        # The seeds → content/dnd3.5/generated/
@@ -104,7 +106,7 @@ codegen/dnd3.5/
         └── code/             # A file's code, written from its seeds: CodeFile (BaseCodeFile, on core's GeneratedCode: where the 3.5 content types and names come from), a concern per kind of seed (WritesClasses, WritesFeats…) and WritesIndexes
 ```
 
-`content/dnd3.5/` is data: it never touches the database, and imports none of what reads or writes it (`arkyvree/layers`). Each ruleset's folders are its own, and what every ruleset's content, codegen and seeders share is the core's (`content/core/`, `codegen/core/`, `database/seeders/core/`), which names no ruleset (`arkyvree/ruleset-folders`). Neither do the runner, the dev and test seeds and the scripts (`database/packages/`, `database/seeds/`, `scripts/`): they reach a ruleset's packages, seeder and test characters through the registry alone (`database/packages/registry.ts`). The seeders and the codegen import it; the engine and the server read none of it, and the content reaches the server through the database, which the packages seed.
+`content/dnd3.5/` is data: it never touches the database, and imports none of what reads or writes it (`arkyvree/root-folders`). Each ruleset's folders are its own, and what every ruleset's content, codegen and seeders share is the core's (`content/core/`, `codegen/core/`, `database/seeders/core/`), which names no ruleset (`arkyvree/ruleset-folders`). Neither do the runner and the scripts, the dev and test seeds among them (`database/packages/`, `scripts/`, `scripts/db/seeds/`): they reach a ruleset's packages, seeder and test characters through the registry alone (`database/packages/registry.ts`). The seeders and the codegen import it; the engine and the server read none of it, and the content reaches the server through the database, which the packages seed.
 
 Each of its folders has one role, which `arkyvree/layers` holds:
 
@@ -112,9 +114,9 @@ Each of its folders has one role, which `arkyvree/layers` holds:
 - `data/` holds the hand-written rows. It reads nothing the codegen writes (`generated/`, `packages/`), so the codegen can read it: the SRD's generated aptitudes cover the core's hand-written feats' (`buildCoreFeats`).
 - `generated/` holds only what the generator writes, and wraps no hand-written content (it imports nothing of `data/` or `packages/`).
 - `packages/` gathers them: a package's content is its book (`BOOK`, `generated/<book>/index.ts`) and the hand-written rows it adds (the core rules' `CORE`, Complete Divine's deity's weapon feats).
-- The books' facts the builders and the data read (the weapon, armor and shield tables, the skills' and the creature types' names, a feat family's name) are the ruleset's vocabulary (`vocabulary/dnd3.5/`), as the engine's are.
+- The books' facts the builders, the data and the codegen read (the weapon, armor and shield tables, the abilities', saves', skills', races' and creature types' names, a feat family's name, the core rules' book) are the ruleset's vocabulary (`vocabulary/dnd3.5/`), as the engine's are, and so are its base rules (`DND35_BASE_RULES`, `vocabulary/dnd3.5/baseRules.ts`), which the seeders and the codegen ask the engine by.
 
-The codegen reads `builders/`, `data/` and the vocabulary, never the generated books it writes nor the packages that gather them. Its commands are `package.json` scripts named for its ruleset (`parser:dnd3.5:generate`, `parser:dnd3.5:validate`…), and each file it generates names the one that generates it, as its ruleset's generator hands it to core's `GeneratedFolder` (`Generator.COMMAND`). A seeder (`database/`) reads what a package seeds from its definition (`packages/`), never a module of `data/` or `generated/`.
+The codegen reads `builders/` (the code it writes is the content's), the vocabulary, and of `data/` the core rules' hand-written feats alone (`data/feats/coreFeats.ts`: the SRD's aptitudes gather theirs too), never the generated books it writes nor the packages that gather them: `arkyvree/root-folders` declares those edges. Its commands are `package.json` scripts named for its ruleset (`parser:dnd3.5:generate`, `parser:dnd3.5:validate`…), and each file it generates names the one that generates it, as its ruleset's generator hands it to core's `GeneratedFolder` (`Generator.COMMAND`). A seeder (`database/`) reads what a package seeds from its definition (`packages/`), never a module of `data/` or `generated/`.
 
 ## How seeds work
 
@@ -137,7 +139,7 @@ The registry (`database/packages/registry.ts`) has a row for each base rules (`R
 
 A ruleset's seeder extends `ContentSeeder` (`database/seeders/core/`), the contract: its abstract members (`seedCore`, `seedExtension`, over the content its packages give, `ContentSeeder<Core, Book>`) are what a ruleset's seeding implements, and the rest is what every ruleset's seeding writes with: the context it names rows by, the system rulesets its packages create, the customizations' rows and their inserts, and the copies an extension makes of the entities it changes. The steps that write the rows every ruleset's content seeds alike, from the seed types of `content/core/builders/` (aptitudes, abilities, saves, languages, feats, races, items, and the copies an extension makes of the feats and powers it changes), are `ContentSeeder`'s concerns (`database/seeders/core/concerns/`), so a ruleset's seeder has them; a copied power keeps the links its ruleset says (`copyPowerLinks`, abstract). 3.5's `RulesetSeeder` seeds a ruleset step by step: a step that writes one kind of row is a concern, the core's or its own (`concerns/`: classes, skills, spells, wizard schools, a book's changes to the core), and the steps made of others (`seedCore`, `seedExtension`, `seedBond`, `seedDomains`) are the class's own. It holds a `SeedContext`: the ruleset it writes to and the ids, by name, of the rows its content names (abilities, saves, skills, aptitudes, feats, powers). Seeding aptitudes, feats or powers adds them to it, so the steps after can name them. It holds no content: a package gives it.
 
-The dev seeds (`database/seeds`, which seed each base rules' test characters on its core rules: its registry row's `testCharacters`, `content/dnd3.5/testData/` for 3.5) and the tests load the same context for the seeded ruleset (`ContentSeeder.loadContext`).
+The dev seeds (`scripts/db/seeds/`, which seed each base rules' test characters on its core rules: its registry row's `testCharacters`, `content/dnd3.5/testData/` for 3.5) and the tests load the same context for the seeded ruleset (`ContentSeeder.loadContext`).
 
 The fields the rules keep in an entity's properties (a class's, a level's, a skill's, the ruleset's own) are seeded as the engine keeps them (`Engine.forRules(DND35_BASE_RULES).toEntityProperties`), from the fields the content gives.
 

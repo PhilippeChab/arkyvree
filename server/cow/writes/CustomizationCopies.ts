@@ -1,5 +1,5 @@
+import type { Db } from "@/drizzle/database.ts";
 import type { EntityCustomizations } from "@/engine/index.ts";
-import type { Db } from "@/server/database/index.ts";
 import { Modifiers, Properties, Requirements } from "@/server/repositories/index.ts";
 import { isCustomizableEntityType } from "@/shared/customization/entities.ts";
 

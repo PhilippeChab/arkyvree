@@ -4,10 +4,10 @@ import {
   type PerLevelExpansion,
 } from "@/codegen/dnd3.5/tools/seeds/classes/BaseClassSeeds.ts";
 import { GrantText } from "@/codegen/dnd3.5/tools/seeds/GrantText.ts";
+import { findClassFeatFamily } from "@/codegen/dnd3.5/tools/terms/classFeatFamilies.ts";
 import { insertOrdinalInName } from "@/codegen/dnd3.5/tools/text/names.ts";
 import { normalizeDescription } from "@/codegen/dnd3.5/tools/text/scrapedText.ts";
 import { type ClassReference } from "@/codegen/dnd3.5/tools/types/classes.ts";
-import { findClassFeatFamily } from "@/codegen/dnd3.5/tools/vocabulary/classFeatFamilies.ts";
 import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import type { FeatSeed } from "@/content/core/builders/feats/types.ts";
 import { grantFeat } from "@/content/dnd3.5/builders/feats/possession.ts";

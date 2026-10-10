@@ -3,8 +3,8 @@
  * spends its points on, and the masters whose picks bond them a familiar, a companion or a mount.
  */
 
-import { createCharacter } from "@/database/seeds/seedCharacter.ts";
-import { type SeedContext } from "@/database/seeds/seedContext.ts";
+import { createCharacter } from "@/scripts/db/seeds/seedCharacter.ts";
+import { type SeedContext } from "@/scripts/db/seeds/seedContext.ts";
 import { db } from "@/server/database/index.ts";
 import { Characters } from "@/server/repositories/index.ts";
 import type { Session } from "@/shared/relations.ts";

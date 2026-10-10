@@ -1,6 +1,6 @@
+import { ABILITY_SLUGS } from "@/codegen/dnd3.5/tools/terms/abilities.ts";
+import { SAVE_SLUGS } from "@/codegen/dnd3.5/tools/terms/saves.ts";
 import type { RaceReference } from "@/codegen/dnd3.5/tools/types/races.ts";
-import { ABILITY_SLUGS } from "@/codegen/dnd3.5/tools/vocabulary/abilities.ts";
-import { SAVE_SLUGS } from "@/codegen/dnd3.5/tools/vocabulary/saves.ts";
 import { bonus } from "@/content/core/builders/customization/modifiers.ts";
 import type { Modifier } from "@/content/core/builders/customization/types.ts";
 

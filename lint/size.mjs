@@ -1,5 +1,5 @@
 /**
- * `function-length`: a function in the server, the engine, `shared/`, `database/`, `content/` or `codegen/` holds at most 80 of its own lines (blank and
+ * `function-length`: a function in the server, the engine, `shared/`, `database/`, `content/`, `codegen/` or the dev and test seeds (`scripts/db/seeds/`) holds at most 80 of its own lines (blank and
  * comment lines aside, its nested functions' lines counted where they're written), so a long one splits into named
  * steps. A concern's wrapper (`function X<B extends Constructor>(Base)`) counts nothing: its class's methods count
  * each.
@@ -15,7 +15,8 @@ export const MAX_OWN_LINES = 80;
 
 function createFunctionLength(context) {
   const file = repoPath(context.filename);
-  if (!/^(server|engine|shared|database|content|codegen)\//.test(file) || !file.endsWith(".ts")) return {};
+  if (!/^(server|engine|shared|database|content|codegen|scripts\/db\/seeds)\//.test(file) || !file.endsWith(".ts"))
+    return {};
   const text = context.sourceCode.text;
   const lines = text.split("\n");
   const lineStarts = [0];

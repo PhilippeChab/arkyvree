@@ -1,7 +1,7 @@
 import { and, eq, type InferInsertModel, isNotNull, isNull, like, lt } from "drizzle-orm";
 
+import type { Db } from "@/drizzle/database.ts";
 import { usersInAccount } from "@/drizzle/schema.ts";
-import type { Db } from "@/server/database/index.ts";
 import { hashPassword } from "@/server/password.ts";
 import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository.ts";
 

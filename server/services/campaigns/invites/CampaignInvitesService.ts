@@ -1,7 +1,8 @@
 import { getTableName } from "drizzle-orm";
 
+import type { Db } from "@/drizzle/database.ts";
 import { invitesInCampaign } from "@/drizzle/schema.ts";
-import { type Db, db, withTransaction } from "@/server/database/index.ts";
+import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Campaigns, Invites, Notifications, Players, Visibility } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";

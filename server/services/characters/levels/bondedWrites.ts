@@ -1,5 +1,5 @@
+import type { Db } from "@/drizzle/database.ts";
 import type { BondedPlan, NewBondedCreature } from "@/engine/index.ts";
-import type { Db } from "@/server/database/index.ts";
 import { CharacterAbilities, CharacterLevels, Characters } from "@/server/repositories/index.ts";
 import type { Character } from "@/shared/relations.ts";
 

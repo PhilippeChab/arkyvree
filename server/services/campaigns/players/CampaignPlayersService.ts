@@ -1,7 +1,8 @@
 import { getTableName } from "drizzle-orm";
 
+import type { Db } from "@/drizzle/database.ts";
 import { invitesInCampaign, playersInCampaign } from "@/drizzle/schema.ts";
-import { type Db, db, withTransaction } from "@/server/database/index.ts";
+import { db, withTransaction } from "@/server/database/index.ts";
 import { emailService, EmailTemplate } from "@/server/emails/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import {

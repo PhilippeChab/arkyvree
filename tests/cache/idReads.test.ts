@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { SEED_USER_ID } from "@/database/seeds/users.ts";
+import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Saves } from "@/server/repositories/index.ts";

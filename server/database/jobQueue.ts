@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 
-import type { Db } from "./production.ts";
+import type { Db } from "@/drizzle/database.ts";
 
 /** Queues a job for the worker (graphile-worker), in `db`'s transaction when it's one. Ping the worker once it commits. */
 export async function addJob(

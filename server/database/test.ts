@@ -3,12 +3,9 @@
  * once the setup sets it (`setTestDb`), the run's pool otherwise.
  */
 
-import type { ExtractTablesWithRelations } from "drizzle-orm";
 import { drizzle as drizzlePg, type NodePgClient } from "drizzle-orm/node-postgres";
-import { type PgQueryResultHKT, type PgTransaction } from "drizzle-orm/pg-core";
 
-import * as relations from "@/drizzle/relations.ts";
-import * as schema from "@/drizzle/schema.ts";
+import { type Db, SCHEMA_WITH_RELATIONS, type Transaction } from "@/drizzle/database.ts";
 
 import { createPool } from "./pool.ts";
 import { clearRequestCache } from "./requestCache.ts";
@@ -19,22 +16,12 @@ declare global {
   var __testDb: Db | null | undefined;
 }
 
-type Db = typeof db | Transaction;
-
-type Transaction = PgTransaction<
-  PgQueryResultHKT,
-  typeof schemaWithRelations,
-  ExtractTablesWithRelations<typeof schemaWithRelations>
->;
-
 /** Read first: anything but a test database stops the run before the pool below is built. */
 const connectionString = readTestDatabaseUrl();
 
 const pool = createPool({ connectionString });
 
-const schemaWithRelations = { ...schema, ...relations };
-
-const poolDb = drizzlePg(pool as NodePgClient, { schema: schemaWithRelations });
+const poolDb = drizzlePg(pool as NodePgClient, { schema: SCHEMA_WITH_RELATIONS });
 
 /** The database the code reads: the test's transaction once one is set, the run's pool otherwise. */
 export const db = new Proxy(poolDb, {
@@ -45,7 +32,7 @@ export const db = new Proxy(poolDb, {
 
 /** A database on `client`, a connection of the test's own (a competing transaction). */
 export function createTestDbFromClient(client: NodePgClient) {
-  return drizzlePg(client, { schema: schemaWithRelations });
+  return drizzlePg(client, { schema: SCHEMA_WITH_RELATIONS });
 }
 
 /** A pool of connections to the test database, apart from the run's. */

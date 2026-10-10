@@ -1,5 +1,5 @@
+import type { Db } from "@/drizzle/database.ts";
 import { EntityRepositories } from "@/server/cow/index.ts";
-import { type Db } from "@/server/database/index.ts";
 import {
   FeatsAptitudes,
   KlassLevelFeats,

@@ -1,7 +1,7 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
 
+import type { Db } from "@/drizzle/database.ts";
 import { modifiersInCustomization } from "@/drizzle/schema.ts";
-import type { Db } from "@/server/database/index.ts";
 import CustomizationRepository from "@/server/repositories/CustomizationRepository.ts";
 
 class ModifiersRepository extends CustomizationRepository<typeof modifiersInCustomization> {

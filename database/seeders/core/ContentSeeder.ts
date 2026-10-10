@@ -1,6 +1,7 @@
 import { and, eq, isNull } from "drizzle-orm";
 
 import type { CorePackageDefinition } from "@/content/core/builders/packages/types.ts";
+import type { Db } from "@/drizzle/database.ts";
 import {
   abilitiesInRules,
   aptitudesInRules,
@@ -12,7 +13,6 @@ import {
   skillsInRules,
 } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
-import type { Db } from "@/server/database/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
 import { CopiesOnWrite } from "./concerns/CopiesOnWrite.ts";

@@ -6,7 +6,7 @@ import type {
 } from "@/content/core/builders/packages/types.ts";
 import type { ContentSeeder } from "@/database/seeders/core/ContentSeeder.ts";
 import type { SeedContext } from "@/database/seeders/core/SeederState.ts";
-import type { Db } from "@/server/database/index.ts";
+import type { Db } from "@/drizzle/database.ts";
 
 /** A step that seeds or changes a package's content. */
 type Seed = (db: Db) => Promise<void>;

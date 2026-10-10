@@ -1,7 +1,7 @@
 import { and, eq, isNull } from "drizzle-orm";
 
+import type { Db } from "@/drizzle/database.ts";
 import { oauthAccountsInAccount } from "@/drizzle/schema.ts";
-import type { Db } from "@/server/database/index.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
 class OauthAccountsRepository extends BaseRepository<typeof oauthAccountsInAccount> {

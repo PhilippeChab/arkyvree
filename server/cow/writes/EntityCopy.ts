@@ -1,6 +1,6 @@
+import type { Db } from "@/drizzle/database.ts";
 import { type CowData, Engine, type EntityCustomizations, type RulesetSources } from "@/engine/index.ts";
 import CowDataReader from "@/server/cow/views/CowDataReader.ts";
-import type { Db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import {
   EntitySnapshots,

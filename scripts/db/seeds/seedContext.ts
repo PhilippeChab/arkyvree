@@ -5,8 +5,8 @@ import { eq } from "drizzle-orm";
 import { RULESET_CONTENT } from "@/database/packages/registry.ts";
 import { ContentSeeder } from "@/database/seeders/core/ContentSeeder.ts";
 import type { SeedContext as RulesetSeedContext } from "@/database/seeders/core/SeederState.ts";
+import type { Db } from "@/drizzle/database.ts";
 import { itemsInRules, klassesInRules, languagesInRules, racesInRules } from "@/drizzle/schema.ts";
-import { type Db } from "@/server/database/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
 /** The seeded core rules' ids by name: its seed context, and the languages, races, classes and items characters name. */

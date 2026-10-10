@@ -7,9 +7,9 @@
  * class's skill or granted feat…).
  */
 
+import type { Db } from "@/drizzle/database.ts";
 import { Engine, type RulesetSources } from "@/engine/index.ts";
 import { CowDataReader } from "@/server/cow/index.ts";
-import type { Db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import {
   Aptitudes,

@@ -1,7 +1,7 @@
 import { and, eq, getTableColumns, inArray, isNull } from "drizzle-orm";
 
+import type { Db } from "@/drizzle/database.ts";
 import { abilitiesInRules, levelAbilityIncreasesInCharacter } from "@/drizzle/schema.ts";
-import type { Db } from "@/server/database/index.ts";
 
 import LevelPicksRepository from "./LevelPicksRepository.ts";
 

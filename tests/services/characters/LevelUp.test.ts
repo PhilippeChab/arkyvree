@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
-import { type SeedContext } from "@/database/seeds/seedContext.ts";
 import { levelAbilityIncreasesInCharacter } from "@/drizzle/schema.ts";
 import type { AbilityIncrease } from "@/engine/index.ts";
+import { type SeedContext } from "@/scripts/db/seeds/seedContext.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import {

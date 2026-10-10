@@ -1,7 +1,7 @@
 import { and, eq, inArray, type InferInsertModel, sql } from "drizzle-orm";
 
+import type { Db } from "@/drizzle/database.ts";
 import { entitySnapshotsInRules } from "@/drizzle/schema.ts";
-import type { Db } from "@/server/database/index.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
 class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInRules> {

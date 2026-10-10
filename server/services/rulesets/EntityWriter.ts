@@ -1,5 +1,6 @@
 import { getTableName, type Table } from "drizzle-orm";
 
+import type { Db } from "@/drizzle/database.ts";
 import type { EntityCreatePlan, EntityDeletePlan, EntityEditPlan, EntityWrites } from "@/engine/index.ts";
 import {
   CustomizationCopies,
@@ -9,7 +10,7 @@ import {
   RulesetViews,
   withRulesetScope,
 } from "@/server/cow/index.ts";
-import { type Db, withTransaction } from "@/server/database/index.ts";
+import { withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import type { RulesetEntityType } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";

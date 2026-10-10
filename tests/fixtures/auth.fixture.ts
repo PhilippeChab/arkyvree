@@ -1,4 +1,4 @@
-/** Users the test data seeds (database/seeds/users.ts), whose password is 'LocalTest123!'. */
+/** Users the test data seeds (scripts/db/seeds/users.ts), whose password is 'LocalTest123!'. */
 export const TEST_USERS = {
   /** For the signed-out tests. */
   user1: { email: "testuser1@example.com", password: "LocalTest123!" },

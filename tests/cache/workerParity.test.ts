@@ -1,8 +1,8 @@
 import { afterEach, expect, test } from "bun:test";
 
-import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import CharacterResponse from "@/engine/rulesets/dnd3.5/characters/description/CharacterResponse.ts";
 import DetailedCharacterFamiliar from "@/engine/rulesets/dnd3.5/model/bonded/DetailedCharacterFamiliar.ts";
+import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import MemoryCache from "@/server/cache/MemoryCache.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";

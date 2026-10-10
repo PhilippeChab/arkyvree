@@ -1,8 +1,8 @@
 import type { InferInsertModel } from "drizzle-orm";
 
+import type { Db } from "@/drizzle/database.ts";
 import type { activitiesInAccount } from "@/drizzle/schema.ts";
 import { EntityRepositories } from "@/server/cow/index.ts";
-import type { Db } from "@/server/database/index.ts";
 import {
   Activities,
   CharacterContributors,

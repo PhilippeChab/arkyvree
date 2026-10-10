@@ -1,5 +1,6 @@
 import { eq, type InferInsertModel, isNull } from "drizzle-orm";
 
+import type { Db } from "@/drizzle/database.ts";
 import type {
   abilitiesInRules,
   aptitudesInRules,
@@ -14,7 +15,6 @@ import type {
   skillsInRules,
 } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
-import type { Db } from "@/server/database/index.ts";
 
 import BaseRepository from "./BaseRepository.ts";
 import { ChecksExistence } from "./concerns/ChecksExistence.ts";

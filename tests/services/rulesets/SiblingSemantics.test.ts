@@ -1,11 +1,12 @@
 import { afterEach, expect, test } from "bun:test";
 
+import type { Db } from "@/drizzle/database.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import { type RulesetData } from "@/engine/core/view/index.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
 import AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
 import { EntityEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
-import { type Db, db, withTransaction } from "@/server/database/index.ts";
+import { db, withTransaction } from "@/server/database/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import {
   Abilities,

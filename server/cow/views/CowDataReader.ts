@@ -1,5 +1,5 @@
+import type { Db } from "@/drizzle/database.ts";
 import { type CowData, Engine, type RulesetSources } from "@/engine/index.ts";
-import type { Db } from "@/server/database/index.ts";
 import { Aptitudes, EntitySnapshots, KlassLevels, RulesetEntities } from "@/server/repositories/index.ts";
 
 /**

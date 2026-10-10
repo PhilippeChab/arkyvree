@@ -1,5 +1,5 @@
+import { SKILL_SLUGS } from "@/codegen/dnd3.5/tools/terms/skills.ts";
 import { PART_SEPARATOR } from "@/codegen/dnd3.5/tools/text/scrapedText.ts";
-import { SKILL_SLUGS } from "@/codegen/dnd3.5/tools/vocabulary/skills.ts";
 
 /** A skill bonus a text gives: its skill's slug, or none when the name isn't a skill (`name`), and where it was read. */
 export interface SkillBonus {

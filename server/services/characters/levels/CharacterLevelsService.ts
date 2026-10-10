@@ -6,6 +6,7 @@
 
 import { getTableName } from "drizzle-orm";
 
+import type { Db } from "@/drizzle/database.ts";
 import { levelsInCharacter } from "@/drizzle/schema.ts";
 import {
   type AbilityIncrease,
@@ -16,7 +17,7 @@ import {
 } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
-import { type Db, db, withTransaction } from "@/server/database/index.ts";
+import { db, withTransaction } from "@/server/database/index.ts";
 import {
   Activities,
   CharacterLevelAbilityIncreases,

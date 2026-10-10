@@ -1,5 +1,5 @@
+import type { Db } from "@/drizzle/database.ts";
 import type { CharacterInput, CharacterRows } from "@/engine/index.ts";
-import type { Db } from "@/server/database/index.ts";
 import {
   Campaigns,
   CharacterAbilities,

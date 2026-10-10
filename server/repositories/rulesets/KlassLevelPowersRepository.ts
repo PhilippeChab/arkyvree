@@ -1,7 +1,7 @@
 import { and, eq, inArray, type InferInsertModel, isNull } from "drizzle-orm";
 
+import type { Db } from "@/drizzle/database.ts";
 import { klassesInRules, klassLevelPowersInRules, klassLevelsInRules } from "@/drizzle/schema.ts";
-import type { Db } from "@/server/database/index.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
 
 class KlassLevelPowersRepository extends BaseRepository<typeof klassLevelPowersInRules> {

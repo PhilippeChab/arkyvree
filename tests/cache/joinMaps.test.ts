@@ -9,9 +9,9 @@ import { beforeAll, describe, expect, test } from "bun:test";
 
 import { and, eq, isNull } from "drizzle-orm";
 
-import { type SeedContext } from "@/database/seeds/seedContext.ts";
 import { klassLevelFeatsInRules, klassLevelPowersInRules, klassSkillsInRules } from "@/drizzle/schema.ts";
 import { type RulesetData } from "@/engine/core/view/index.ts";
+import { type SeedContext } from "@/scripts/db/seeds/seedContext.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";

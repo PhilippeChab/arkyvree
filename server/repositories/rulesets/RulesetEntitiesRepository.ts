@@ -1,6 +1,7 @@
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { type AnyPgColumn, unionAll } from "drizzle-orm/pg-core";
 
+import type { Db } from "@/drizzle/database.ts";
 import {
   entitySnapshotsInRules,
   itemsInRules,
@@ -15,7 +16,6 @@ import {
   savesInRules,
   skillsInRules,
 } from "@/drizzle/schema.ts";
-import type { Db } from "@/server/database/index.ts";
 
 import { ENTITY_TABLES, type RulesetEntityType } from "./entityTables.ts";
 

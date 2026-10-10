@@ -1,12 +1,12 @@
 import { and, eq, isNull } from "drizzle-orm";
 
-import { DND35_BASE_RULES } from "@/content/dnd3.5/baseRules.ts";
-import { getSeedContext, type SeedContext } from "@/database/seeds/seedContext.ts";
-import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { itemsInRules } from "@/drizzle/schema.ts";
+import { getSeedContext, type SeedContext } from "@/scripts/db/seeds/seedContext.ts";
+import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Characters, Rulesets } from "@/server/repositories/index.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 let seedContext: Promise<SeedContext> | undefined;
 
