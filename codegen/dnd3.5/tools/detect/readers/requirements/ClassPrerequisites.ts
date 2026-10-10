@@ -73,8 +73,9 @@ function specialParts(entry: string): string[] {
 }
 
 /**
- * A class's prerequisites, as the scraper split them: the requirements they give, its BAB, skills, feats, spellcasting,
- * alignment, saves, class levels and special prerequisites in turn.
+ * A class's prerequisites, as the scraper split them: the requirements they give, its BAB, skills, feats, spellcasting
+ * (the spell levels, then the caster level its Spells lines ask), alignment, saves, class levels and special
+ * prerequisites in turn.
  */
 export class ClassPrerequisites extends RequirementReading {
   constructor(parsed: ClassReference["raw"]["prerequisites"]["parsed"]) {
@@ -93,6 +94,8 @@ export class ClassPrerequisites extends RequirementReading {
         else reqs.push(gte(`spellcasting.${cl.type}`, cl.level));
       }
     }
+    // A Spells line's caster level ("Arcane caster level 5th"): its spell levels are `casterLevel`'s
+    for (const line of parsed.spells ?? []) reqs.push(...this.casterLevelRequirements(line));
 
     if (parsed.alignment) {
       const alignReqs = this.alignmentRequirement(parsed.alignment);

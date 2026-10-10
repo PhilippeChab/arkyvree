@@ -52,6 +52,20 @@ describe("A prerequisite a feat and a class share", () => {
     expect(specialRequirements("Caster level 5th.")).toEqual([gte("spellcasting.casterlevel", 5)]);
   });
 
+  test("a class's Spells line asks its caster level after its spell levels, which it doesn't read again", () => {
+    expect(
+      classPrerequisites({ spells: ["Able to cast charm person, or use the charm invocation.", "Caster level 5th."] })
+        .requirements,
+    ).toEqual([gte("spellcasting.casterlevel", 5)]);
+    expect(
+      classPrerequisites({
+        alignment: "Any nongood",
+        casterLevel: [{ level: 2, type: "arcane" }],
+        spells: ["Able to cast 2nd-level arcane spells.", "Arcane caster level 5th."],
+      }).requirements.slice(0, 2),
+    ).toEqual([gte("spellcasting.arcane", 2), gte("spellcasting.arcanecasterlevel", 5)]);
+  });
+
   test("asking to cast a spell it names is any spellcasting, but not an ability to use, nor casting it rules out", () => {
     const anyCasting = or(gte("spellcasting.arcane", 1), gte("spellcasting.divine", 1));
     expect(featRequirements("able to cast any cure wounds spell,")).toEqual([anyCasting]);

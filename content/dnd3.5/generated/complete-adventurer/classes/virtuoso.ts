@@ -32,7 +32,12 @@ export const VIRTUOSO: ClassSeed = {
     "Spellcraft",
     "Tumble",
   ],
-  requirements: [gte("skills.diplomacy.rank", 4), gte("skills.intimidate.rank", 4), gte("skills.perform.rank", 10)],
+  requirements: [
+    gte("skills.diplomacy.rank", 4),
+    gte("skills.intimidate.rank", 4),
+    gte("skills.perform.rank", 10),
+    gte("spellcasting.arcanecasterlevel", 1),
+  ],
   casterLevelAdvancement: { type: "arcane", levels: [2, 3, 4, 5, 6, 7, 8, 9, 10] },
   classFeatureAptitude: "Virtuoso Class Feature",
   classFeatures: [

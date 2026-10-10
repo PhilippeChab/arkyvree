@@ -42,6 +42,7 @@ export const MAESTER: ClassSeed = {
     gte("skills.craft.rank", 8),
     gte("skills.usemagicdevice.rank", 4),
     gte("feats.itemcreation.count", 2),
+    gte("spellcasting.arcanecasterlevel", 5),
     eqStr("identity.physiology.race.name", "Gnome"),
   ],
   casterLevelAdvancement: { type: "any", levels: [2, 3, 4, 5] },
