@@ -23,7 +23,7 @@ import LevelUpSteps from "./LevelUpSteps.ts";
 export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, DetailedCharacter> {
   /** The 3.5 character built from its rows. */
   buildCharacter(view: RulesetView, input: CharacterInput) {
-    return new Dnd35CharacterBuilder().build(view, input);
+    return Dnd35CharacterBuilder.build(view, input);
   }
 
   /** The level-up wizard's ability step: the character's abilities, when the level it adds or edits takes an increase. */

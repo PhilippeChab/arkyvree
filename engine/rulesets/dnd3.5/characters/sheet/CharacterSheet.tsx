@@ -17,7 +17,7 @@ export default class CharacterSheet {
   ) {
     return (
       <DetailedCharacterSheet
-        detailedCharacter={new Dnd35CharacterBuilder().build(view, character)}
+        detailedCharacter={Dnd35CharacterBuilder.build(view, character)}
         kind={character.record.kind as CharacterKind}
         {...options}
       />

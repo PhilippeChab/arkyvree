@@ -18,7 +18,7 @@ export default abstract class LevelPicker<Details extends object = object> exten
     input: CharacterInput,
     protected readonly query: PickLevel,
   ) {
-    super(view, input);
+    super(view, input, Dnd35CharacterBuilder);
     const klassLevel = this.rulesetData.klassLevelByKlassAndLevel.get(`${query.klassId}:${query.level}`);
     if (!klassLevel) throw new RulesError("not-found", "Class level not found");
     this.klassLevel = klassLevel;
@@ -26,11 +26,6 @@ export default abstract class LevelPicker<Details extends object = object> exten
 
   /** The class level picked at. */
   protected readonly klassLevel: KlassLevel;
-
-  /** The 3.5 character built from rows. */
-  protected build(input: CharacterInput) {
-    return new Dnd35CharacterBuilder().build(this.view, input);
-  }
 
   /**
    * The character a pick is made for: as it was before the edited level (an edit), with the levels planned before this

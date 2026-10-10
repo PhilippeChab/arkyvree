@@ -41,7 +41,7 @@ export default class Equipping {
 
   /** The character, built from its rows the first time a requirement reads it. */
   private get character() {
-    return (this.built ??= new Dnd35CharacterBuilder().build(this.view, this.input));
+    return (this.built ??= Dnd35CharacterBuilder.build(this.view, this.input));
   }
 
   /**

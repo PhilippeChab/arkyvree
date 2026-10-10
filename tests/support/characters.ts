@@ -36,7 +36,7 @@ export async function buildAs<C extends DetailedCharacter>(
     project?.(projection);
     const { input } = projection;
     const character = new Kind(input.record);
-    character.build(input.rows, view, input.master && new Dnd35CharacterBuilder().build(view, input.master));
+    character.build(input.rows, view, input.master && Dnd35CharacterBuilder.build(view, input.master));
     return character;
   };
   if (scope?.ruleset.id !== record.rulesetId) return await withRulesetScope(database, record.rulesetId, build);

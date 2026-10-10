@@ -22,6 +22,53 @@ type AptitudeSlots = { allowed: number; available: number; spent: number };
  */
 export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
   abstract class Diagnosing extends Base {
+    private getDiagnosticsIndex() {
+      if (this.diagnosticsIndex) return this.diagnosticsIndex;
+      const featsById = new Map<string, CustomizedFeat>();
+      for (const f of this.data.feats) featsById.set(f.id, f);
+      const powersById = new Map<string, CustomizedPower>();
+      for (const p of this.data.powers) powersById.set(p.id, p);
+      const klassLevelsById = new Map<string, CustomizedClassLevel>();
+      for (const kl of this.data.klassLevels) klassLevelsById.set(kl.id, kl);
+      const rulesetKlassesById = new Map<string, Klass>();
+      for (const k of this.rulesetData.klasses) rulesetKlassesById.set(k.id, k);
+      const inventoryByItemId = new Map<string, InventoryEntry>();
+      for (const inv of this.data.inventory) {
+        inventoryByItemId.set(inv.item.id, inv);
+        if (inv.item.sourceItemId) inventoryByItemId.set(inv.item.sourceItemId, inv);
+      }
+
+      // Flat modifier.id → owning entity index. Built once by iterating every
+      // entity that owns modifiers so resolveModifierSourceName becomes O(1).
+      const modifierOwner = new Map<string, { name: string; type: string }>();
+      for (const feat of this.data.feats)
+        for (const m of feat.modifiers) modifierOwner.set(m.id, { name: feat.name, type: "feats" });
+
+      for (const inv of this.data.inventory)
+        for (const m of inv.item.modifiers) modifierOwner.set(m.id, { name: inv.item.name, type: "items" });
+
+      if (this.data.race.modifiers)
+        for (const m of this.data.race.modifiers) modifierOwner.set(m.id, { name: this.data.race.name, type: "races" });
+
+      for (const kl of this.data.klassLevels) {
+        const klass = rulesetKlassesById.get(kl.klassId);
+        const label = klass ? `${klass.name} Level ${kl.level}` : `Level ${kl.level}`;
+        for (const m of kl.modifiers) modifierOwner.set(m.id, { name: label, type: "klass_levels" });
+      }
+      for (const power of this.data.powers)
+        for (const m of power.modifiers) modifierOwner.set(m.id, { name: power.name, type: "powers" });
+
+      this.diagnosticsIndex = {
+        featsById,
+        powersById,
+        klassLevelsById,
+        rulesetKlassesById,
+        inventoryByItemId,
+        modifierOwner,
+      };
+      return this.diagnosticsIndex;
+    }
+
     /** The pools' slots unspent or overspent, then the skill points and ranks: what the 3.5 rules flag first. */
     protected findRulesetIssues(): RulesIssue[] {
       const issues: RulesIssue[] = [];
@@ -83,53 +130,6 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
       for (const inv of this.data.inventory) sourceChain(inv.item.rulesetId, inv.item.name, "items");
 
       return issues;
-    }
-
-    private getDiagnosticsIndex() {
-      if (this.diagnosticsIndex) return this.diagnosticsIndex;
-      const featsById = new Map<string, CustomizedFeat>();
-      for (const f of this.data.feats) featsById.set(f.id, f);
-      const powersById = new Map<string, CustomizedPower>();
-      for (const p of this.data.powers) powersById.set(p.id, p);
-      const klassLevelsById = new Map<string, CustomizedClassLevel>();
-      for (const kl of this.data.klassLevels) klassLevelsById.set(kl.id, kl);
-      const rulesetKlassesById = new Map<string, Klass>();
-      for (const k of this.rulesetData.klasses) rulesetKlassesById.set(k.id, k);
-      const inventoryByItemId = new Map<string, InventoryEntry>();
-      for (const inv of this.data.inventory) {
-        inventoryByItemId.set(inv.item.id, inv);
-        if (inv.item.sourceItemId) inventoryByItemId.set(inv.item.sourceItemId, inv);
-      }
-
-      // Flat modifier.id → owning entity index. Built once by iterating every
-      // entity that owns modifiers so resolveModifierSourceName becomes O(1).
-      const modifierOwner = new Map<string, { name: string; type: string }>();
-      for (const feat of this.data.feats)
-        for (const m of feat.modifiers) modifierOwner.set(m.id, { name: feat.name, type: "feats" });
-
-      for (const inv of this.data.inventory)
-        for (const m of inv.item.modifiers) modifierOwner.set(m.id, { name: inv.item.name, type: "items" });
-
-      if (this.data.race.modifiers)
-        for (const m of this.data.race.modifiers) modifierOwner.set(m.id, { name: this.data.race.name, type: "races" });
-
-      for (const kl of this.data.klassLevels) {
-        const klass = rulesetKlassesById.get(kl.klassId);
-        const label = klass ? `${klass.name} Level ${kl.level}` : `Level ${kl.level}`;
-        for (const m of kl.modifiers) modifierOwner.set(m.id, { name: label, type: "klass_levels" });
-      }
-      for (const power of this.data.powers)
-        for (const m of power.modifiers) modifierOwner.set(m.id, { name: power.name, type: "powers" });
-
-      this.diagnosticsIndex = {
-        featsById,
-        powersById,
-        klassLevelsById,
-        rulesetKlassesById,
-        inventoryByItemId,
-        modifierOwner,
-      };
-      return this.diagnosticsIndex;
     }
 
     protected getSkillValidationIssues(): { budget: RulesIssue[]; ranks: RulesIssue[] } {

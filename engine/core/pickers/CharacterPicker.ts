@@ -1,3 +1,4 @@
+import type { BuildsCharacters } from "@/engine/core/character/index.ts";
 import type { CharacterInput, CharacterProjection } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { Requirement } from "@/shared/relations.ts";
@@ -14,7 +15,7 @@ export interface PickingCharacter {
 
 /**
  * A level-up's picker for a character, from its rows (`input`): it checks an option's requirements against the character
- * as the level-up plans it (`project`), built by its ruleset (`build`) once, when an option first asks.
+ * as the level-up plans it (`project`), built by its ruleset's builder (`builder`) once, when an option first asks.
  */
 export default abstract class CharacterPicker<
   C extends PickingCharacter,
@@ -24,6 +25,7 @@ export default abstract class CharacterPicker<
   constructor(
     view: RulesetView,
     protected readonly input: CharacterInput,
+    private readonly builder: BuildsCharacters<C>,
   ) {
     super(view);
   }
@@ -31,12 +33,9 @@ export default abstract class CharacterPicker<
   /** The character the picker checks against, once built. */
   private built?: C;
 
-  /** The character built from rows, as its ruleset builds it. */
-  protected abstract build(input: CharacterInput): C;
-
   /** The character the picker checks options against: built from its projection when first asked. */
   protected get character(): C {
-    return (this.built ??= this.build(this.project().input));
+    return (this.built ??= this.builder.build(this.view, this.project().input));
   }
 
   /** The tree of the requirement groups the character fails, one line a group. */

@@ -24,7 +24,7 @@ export default class CharacterDescription {
       const input = byKind.get(kind);
       if (input) {
         described[kind] = CharacterDescription.redactNotes(
-          CharacterResponse.buildBonded(input.record, new Dnd35CharacterBuilder().build(view, input, { master })),
+          CharacterResponse.buildBonded(input.record, Dnd35CharacterBuilder.build(view, input, { master })),
           notes,
         );
       }
@@ -38,7 +38,7 @@ export default class CharacterDescription {
    * be considered here.
    */
   private static describePartial(view: RulesetView, character: CharacterInput) {
-    const response = CharacterResponse.buildFull(character.record, new Dnd35CharacterBuilder().build(view, character));
+    const response = CharacterResponse.buildFull(character.record, Dnd35CharacterBuilder.build(view, character));
     const { physiology } = response.identity;
     return {
       id: response.id,
@@ -119,7 +119,7 @@ export default class CharacterDescription {
     bonded: CharacterInput[],
     notes: PrivateNotes = "show",
   ) {
-    const built = new Dnd35CharacterBuilder().build(view, character);
+    const built = Dnd35CharacterBuilder.build(view, character);
     if (character.master)
       return { ...CharacterResponse.buildBonded(character.record, built), bonded: CharacterDescription.noBonded() };
     const response = CharacterResponse.buildFull(character.record, built);
