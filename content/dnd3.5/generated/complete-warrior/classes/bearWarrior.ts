@@ -5,7 +5,7 @@
  * - No modifiers defined — review if this class needs any
  */
 
-import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
+import { eq, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
 
 export const BEAR_WARRIOR: ClassSeed = {
@@ -18,7 +18,11 @@ export const BEAR_WARRIOR: ClassSeed = {
   bab: "good",
   saves: { fortitude: "good", reflex: "poor", will: "poor" },
   classSkills: ["Climb", "Handle Animal", "Intimidate", "Ride", "Survival", "Swim"],
-  requirements: [gte("combat.bab", 7), eq("feats.powerattack.possessed"), eq("feats.rage.*.possessed")],
+  requirements: [
+    gte("combat.bab", 7),
+    eq("feats.powerattack.possessed"),
+    or(eq("feats.rage.*.possessed"), eq("feats.frenzyfrenziedberserker.possessed")),
+  ],
   classFeatureAptitude: "Bear Warrior Class Feature",
   classFeatures: [
     [1, "Bear Form (Bear Warrior)"],

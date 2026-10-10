@@ -32,7 +32,7 @@ describe("A class's special prerequisite", () => {
     const drunkenMaster = new ClassPrerequisites({
       special: ["Flurry of blows ability; evasion ability; must be chosen by existing drunken masters."],
     });
-    expect(drunkenMaster.requirements).toEqual([eq("feats.flurryofblows.possessed")]);
+    expect(drunkenMaster.requirements).toEqual([eq("feats.flurryofblows.*.possessed")]);
     expect(drunkenMaster.unresolved).toEqual(["evasion ability"]);
   });
 

@@ -11,7 +11,7 @@ export const DIVINE_FEATS: FeatSeed[] = [
     description:
       "By spending a standard action and expending one turn or rebuke undead attempt, you grant all allies within a 60-foot burst (yourself included) a +2 sacred bonus to Fortitude saves. This effect persists for a number of rounds equal to your Charisma modifier.",
     aptitudes: ["General"],
-    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
+    requirements: [eq("feats.turnorrebukeundead.*.possessed")],
   },
   {
     name: "Divine Might",
@@ -21,7 +21,7 @@ export const DIVINE_FEATS: FeatSeed[] = [
     requirements: [
       gte("abilities.strength.total", 13),
       eq("feats.powerattack.possessed"),
-      or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed")),
+      eq("feats.turnorrebukeundead.*.possessed"),
     ],
   },
   {
@@ -29,34 +29,28 @@ export const DIVINE_FEATS: FeatSeed[] = [
     description:
       "By spending a standard action and one turn or rebuke undead attempt, you grant all allies within a 60-foot burst (yourself included) resistance 5 against cold, electricity, and fire. This resistance does not stack with similar resistances from spells or special abilities. The protection lasts a number of rounds equal to your Charisma modifier.",
     aptitudes: ["General"],
-    requirements: [
-      eq("feats.divinecleansing.possessed"),
-      or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed")),
-    ],
+    requirements: [eq("feats.divinecleansing.possessed"), eq("feats.turnorrebukeundead.*.possessed")],
   },
   {
     name: "Divine Shield",
     description:
       "As a standard action, you expend one turn or rebuke undead attempt to channel energy into your shield. The shield receives a bonus to its AC contribution equal to your Charisma modifier, lasting a number of rounds equal to half your character level.",
     aptitudes: ["General"],
-    requirements: [
-      or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed")),
-      eq("feats.shieldproficiency.possessed"),
-    ],
+    requirements: [eq("feats.turnorrebukeundead.*.possessed"), eq("feats.shieldproficiency.possessed")],
   },
   {
     name: "Divine Vigor",
     description:
       "By spending a standard action and one turn or rebuke undead attempt, you increase your base speed by 10 feet and gain temporary hit points equal to +2 per character level. These benefits persist for a number of minutes equal to your Charisma modifier.",
     aptitudes: ["General"],
-    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
+    requirements: [eq("feats.turnorrebukeundead.*.possessed")],
   },
   {
     name: "Sacred Vengeance",
     description:
       "As a free action, expend one turn undead attempt to add 2d6 damage to all successful melee attacks against undead for the remainder of the current round.",
     aptitudes: ["General"],
-    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
+    requirements: [eq("feats.turnorrebukeundead.*.possessed")],
   },
 ];
 
@@ -365,7 +359,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description:
       "While raging or in a frenzy, you gain a +8 bonus on Strength checks to break down doors or smash immobile, inanimate objects.",
     aptitudes: ["General"],
-    requirements: [eq("feats.ragebarbarian.possessed")],
+    requirements: [or(eq("feats.rage.*.possessed"), eq("feats.frenzyfrenziedberserker.possessed"))],
   },
   {
     name: "Eagle Claw Attack",
@@ -394,14 +388,14 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description: "Every use of your rage or frenzy ability lasts 5 additional rounds beyond its normal duration.",
     stackable: true,
     aptitudes: ["General"],
-    requirements: [eq("feats.ragebarbarian.possessed")],
+    requirements: [or(eq("feats.rage.*.possessed"), eq("feats.frenzyfrenziedberserker.possessed"))],
   },
   {
     name: "Extra Rage",
     description: "You can rage or enter a frenzy two additional times per day.",
     stackable: true,
     aptitudes: ["General"],
-    requirements: [eq("feats.ragebarbarian.possessed")],
+    requirements: [or(eq("feats.rage.*.possessed"), eq("feats.frenzyfrenziedberserker.possessed"))],
   },
   {
     name: "Extra Smiting",
@@ -409,7 +403,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
       "You gain two additional smite attempts per day, applicable to whichever smite ability you possess (such as a paladin's smite evil or similar class features).",
     stackable: true,
     aptitudes: ["General"],
-    requirements: [gte("combat.bab", 4), eq("feats.smiteevilpaladin.possessed")],
+    requirements: [gte("combat.bab", 4), eq("feats.smiteevil.*.possessed")],
   },
   {
     name: "Extra Stunning",
@@ -520,14 +514,14 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description:
       "You may enter a rage at any time, including outside your turn or when surprised. Activating rage is a free action that can be used in response to another creature's action. This allows you to gain rage benefits (such as increased Constitution or Will save bonuses) before the outcome of a triggering attack or spell is determined. You must be aware of the triggering event but may be flat-footed.",
     aptitudes: ["General"],
-    requirements: [eq("feats.ragebarbarian.possessed")],
+    requirements: [or(eq("feats.rage.*.possessed"), eq("feats.frenzyfrenziedberserker.possessed"))],
   },
   {
     name: "Intimidating Rage",
     description:
       "While raging, you may designate a single foe within 30 feet and attempt to demoralize it as a free action. A successfully demoralized target remains shaken for the duration of your rage. You may only target one foe with this ability per encounter.",
     aptitudes: ["General"],
-    requirements: [eq("feats.ragebarbarian.possessed")],
+    requirements: [or(eq("feats.rage.*.possessed"), eq("feats.frenzyfrenziedberserker.possessed"))],
   },
   {
     name: "Karmic Strike",
@@ -818,6 +812,6 @@ export const TACTICAL_FEATS: FeatSeed[] = [
     description:
       "This feat provides three tactical maneuvers. Inexorable Progress of Dawn: If your first two unarmed attacks from a flurry of blows both hit the same foe, that foe is pushed back 5 feet and you may advance 5 feet. Neither movement provokes attacks of opportunity. Blinding Sun of Noon: If you stun the same foe with unarmed attacks on two consecutive rounds, that foe is additionally confused for 1d4 rounds after the stun ends. Flash of Sunset: When you move adjacent to a foe through instantaneous movement (such as dimension door or abundant step), you may immediately make a single attack at your highest attack bonus.",
     aptitudes: ["General"],
-    requirements: [gte("combat.bab", 4), eq("feats.flurryofblowsmonk.possessed")],
+    requirements: [gte("combat.bab", 4), eq("feats.flurryofblows.*.possessed")],
   },
 ];

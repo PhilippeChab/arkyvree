@@ -9,24 +9,21 @@ export const DIVINE_FEATS: FeatSeed[] = [
     description:
       "When you use your turn undead ability, you may expend two turn attempts instead of one. Doing so destroys the affected undead outright rather than merely turning them.",
     aptitudes: ["General"],
-    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
+    requirements: [eq("feats.turnorrebukeundead.*.possessed")],
   },
   {
     name: "Divine Metamagic",
     description:
       "Upon selecting this feat, pick one metamagic feat you already possess. As a free action, you can channel the energy from your turn or rebuke undead ability to fuel that metamagic feat when applied to divine spells you know. The cost is one turn or rebuke attempt plus one additional attempt per spell level increase imposed by the metamagic feat. Since you power the metamagic through channeled energy, the spell does not require a higher-level spell slot.",
     aptitudes: ["General"],
-    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
+    requirements: [eq("feats.turnorrebukeundead.*.possessed")],
   },
   {
     name: "Divine Spell Power",
     description:
       "As a free action, you may expend a turn or rebuke undead attempt and make a turning check (gaining a special +3 bonus along with any other modifiers that normally apply to your turning checks). The turning check result serves as a modifier to your caster level for the next divine spell you cast that round. For example, a turning check result of 16 grants a +2 caster level bonus, while a result of 8 imposes a -1 caster level penalty. If no divine spell is cast before your next turn, the bonus is wasted. This feat does not influence arcane spellcasting.",
     aptitudes: ["General"],
-    requirements: [
-      gte("spellcasting.divine", 1),
-      or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed")),
-    ],
+    requirements: [gte("spellcasting.divine", 1), eq("feats.turnorrebukeundead.*.possessed")],
   },
   {
     name: "Domain Spontaneity",
@@ -34,52 +31,49 @@ export const DIVINE_FEATS: FeatSeed[] = [
       "Choose one domain you have access to each time you take this feat. You can sacrifice a prepared divine spell of equal or higher level, along with one daily turn undead attempt, to spontaneously cast any spell from that domain. This functions like the way good clerics spontaneously convert spells into cure spells.",
     stackable: true,
     aptitudes: ["General"],
-    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
+    requirements: [eq("feats.turnorrebukeundead.*.possessed")],
   },
   {
     name: "Elemental Healing",
     description:
       "As a standard action, you can expend a rebuke attempt to release a 60-foot burst of restorative energy. All creatures with an elemental subtype within range that you could normally rebuke are healed for 1d8 hit points per two cleric levels.",
     aptitudes: ["General"],
-    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
+    requirements: [eq("feats.turnorrebukeundead.*.possessed")],
   },
   {
     name: "Elemental Smiting",
     description:
       "Once per round as a free action when making a melee attack, you may spend a turn attempt. If your attack hits a creature that you could normally turn due to its elemental subtype, you add your cleric level as bonus damage. A missed attack wastes the turn attempt with no effect.",
     aptitudes: ["General"],
-    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
+    requirements: [eq("feats.turnorrebukeundead.*.possessed")],
   },
   {
     name: "Glorious Weapons",
     description:
       "As a standard action, you may expend a turn or rebuke attempt to imbue the melee weapons (including natural weapons) of every ally within a 60-foot burst with an alignment. Weapons become good-aligned if you channel positive energy, or evil-aligned if you channel negative energy, allowing them to overcome the corresponding damage reduction. This lasts until the end of your next turn.",
     aptitudes: ["General"],
-    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
+    requirements: [eq("feats.turnorrebukeundead.*.possessed")],
   },
   {
     name: "Profane Boost",
     description:
       "As a standard action, you can expend a rebuke undead attempt to envelop every creature in a 60-foot burst with an aura of negative energy. Any inflict spell cast on an affected creature before the end of your next turn is automatically maximized, without increasing the spell's level or casting time.",
     aptitudes: ["General"],
-    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
+    requirements: [eq("feats.turnorrebukeundead.*.possessed")],
   },
   {
     name: "Sacred Boost",
     description:
       "As a standard action, you may spend a turn undead attempt to surround every creature within a 60-foot burst with an aura of positive energy. Any cure spell cast on an affected creature before the end of your next turn is automatically maximized, with no change to the spell's level or casting time.",
     aptitudes: ["General"],
-    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
+    requirements: [eq("feats.turnorrebukeundead.*.possessed")],
   },
   {
     name: "Sacred Healing",
     description:
       "By spending a turn undead attempt as a full-round action, you grant fast healing 3 to every living creature within a 60-foot burst. This fast healing persists for a number of rounds equal to 1 + your Charisma modifier (minimum 1 round).",
     aptitudes: ["General"],
-    requirements: [
-      gte("skills.heal.rank", 8),
-      or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed")),
-    ],
+    requirements: [gte("skills.heal.rank", 8), eq("feats.turnorrebukeundead.*.possessed")],
   },
   {
     name: "True Believer",
@@ -154,7 +148,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description:
       "Your turn or rebuke undead attempts affect more undead than normal. After calculating your turning damage (cleric level + Charisma modifier + roll), multiply the total by 1.5.",
     aptitudes: ["General"],
-    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
+    requirements: [eq("feats.turnorrebukeundead.*.possessed")],
   },
   {
     name: "Extra Wild Shape",
@@ -162,14 +156,14 @@ export const GENERAL_FEATS: FeatSeed[] = [
       "You gain two additional daily uses of wild shape. If you can assume elemental form through wild shape, you also receive one extra elemental wild shape use per day.",
     stackable: true,
     aptitudes: ["General"],
-    requirements: [eq("feats.wildshapedruid.possessed")],
+    requirements: [eq("feats.wildshape.*.possessed")],
   },
   {
     name: "Improved Smiting",
     description:
       "Your smite attacks bypass damage reduction as though they were aligned, and they inflict an additional +1d6 damage to creatures of a specific opposing alignment. If your smite already has an inherent alignment (such as a paladin's smite evil being good-aligned), it deals the extra damage to foes of that alignment and overcomes DR as the opposite alignment. If your smite lacks an inherent alignment, you select one alignment component (chaotic, evil, good, or lawful) when taking this feat; your smites then overcome DR as that alignment and deal +1d6 extra damage to foes of the opposing alignment. The chosen component must match part of your own alignment, and this selection is permanent. Changing your alignment so the chosen component no longer applies causes you to lose this feat's benefits.",
     aptitudes: ["General"],
-    requirements: [gte("abilities.charisma.total", 13), eq("feats.smiteevilpaladin.possessed")],
+    requirements: [gte("abilities.charisma.total", 13), eq("feats.smiteevil.*.possessed")],
   },
   {
     name: "Practiced Spellcaster",
@@ -184,7 +178,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description:
       "You may perform a turn or rebuke undead attempt as a free action. The limitation of one turning attempt per round still applies.",
     aptitudes: ["General"],
-    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
+    requirements: [eq("feats.turnorrebukeundead.*.possessed")],
   },
   {
     name: "Spell Focus (Chaos)",
@@ -315,69 +309,69 @@ export const WILD_FEATS: FeatSeed[] = [
     description:
       "When your hit points drop to 0 or below without being killed outright, you may expend one use of wild shape as a free action (usable even outside your turn) to keep fighting as though you were neither disabled nor dying. This benefit persists for 1 minute.",
     aptitudes: ["General"],
-    requirements: [eq("feats.wildshapedruid.possessed")],
+    requirements: [eq("feats.wildshape.*.possessed")],
   },
   {
     name: "Cheetah's Speed",
     description:
       "By expending one use of wild shape, you increase your base land speed to 50 feet. Additionally, once per hour you can sprint at 10 times your normal speed as part of a charge action. This enhancement lasts for 1 hour.",
     aptitudes: ["General"],
-    requirements: [eq("feats.wildshapedruid.possessed")],
+    requirements: [eq("feats.wildshape.*.possessed")],
   },
   {
     name: "Eagle's Wings",
     description:
       "By expending one wild shape use, you sprout feathered wings that grant a fly speed of 60 feet with average maneuverability. The wings persist for 1 hour.",
     aptitudes: ["General"],
-    requirements: [eq("feats.wildshapedruid.possessed")],
+    requirements: [eq("feats.wildshape.*.possessed")],
   },
   {
     name: "Elephant's Hide",
     description:
       "By expending one wild shape use, you gain a natural armor bonus of +7 that does not stack with any existing natural armor. This benefit lasts for 10 minutes.",
     aptitudes: ["General"],
-    requirements: [eq("feats.wildshapedruid.possessed")],
+    requirements: [eq("feats.wildshape.*.possessed")],
   },
   {
     name: "Fast Wild Shape",
     description: "You can activate wild shape as a move action instead of a standard action.",
     aptitudes: ["General"],
-    requirements: [gte("abilities.dexterity.total", 13), eq("feats.wildshapedruid.possessed")],
+    requirements: [gte("abilities.dexterity.total", 13), eq("feats.wildshape.*.possessed")],
   },
   {
     name: "Grizzly's Claws",
     description:
       "By expending one wild shape use, you manifest two primary claw attacks, each made at your full base attack bonus and adding your Strength modifier to damage. The claws inflict piercing and slashing damage equivalent to a short sword of your size (1d6 for Medium, 1d4 for Small). The claws last for 1 hour.",
     aptitudes: ["General"],
-    requirements: [eq("feats.wildshapedruid.possessed")],
+    requirements: [eq("feats.wildshape.*.possessed")],
   },
   {
     name: "Lion's Pounce",
     description:
       "When making a charge, you may expend one wild shape use as a free action to deliver a full attack at the end of the charge instead of a single attack.",
     aptitudes: ["General"],
-    requirements: [eq("feats.wildshapedruid.possessed")],
+    requirements: [eq("feats.wildshape.*.possessed")],
   },
   {
     name: "Oaken Resilience",
     description:
       "Expending one wild shape use grants you immunity to critical hits, poison, sleep effects, paralysis, polymorph, and stunning. You also gain exceptional stability, providing a +8 bonus on checks to resist bull rush and trip attempts. These benefits last for 10 minutes.",
     aptitudes: ["General"],
-    requirements: [eq("feats.wildshapedruid.possessed")],
+    requirements: [eq("feats.wildshape.*.possessed")],
   },
   {
     name: "Serpent's Venom",
     description:
       "By expending one wild shape use, you gain a secondary bite attack (made at your base attack bonus -5, adding half your Strength modifier to damage) that deals bludgeoning, piercing, and slashing damage equal to a dagger of your size (1d4 for Medium, 1d3 for Small). The bite also delivers poison (Fortitude DC 10 + half your HD + your Constitution modifier; initial and secondary damage 1d6 Constitution).",
     aptitudes: ["General"],
-    requirements: [eq("feats.wildshapedruid.possessed")],
+    requirements: [eq("feats.wildshape.*.possessed")],
   },
   {
     name: "Swim like a Fish",
     description:
       "Expending one wild shape use causes you to develop gills for underwater breathing (you retain the ability to breathe air as well). Webbing forms between your fingers and toes, granting a swim speed of 40 feet and a +8 bonus on Swim checks. These effects last for 1 hour.",
     aptitudes: ["General"],
-    requirements: [eq("feats.wildshapedruid.possessed")],
+    requirements: [eq("feats.wildshape.*.possessed")],
   },
   {
     name: "Wolverine's Rage",

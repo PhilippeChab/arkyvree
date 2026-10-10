@@ -95,94 +95,6 @@ function raceRequirement(text: string): RequirementEntry | undefined {
   return or(...resolved.map((r) => eqStr(RACE_NAME_PATH, r)));
 }
 
-/** A special ability requirement: turning or rebuking undead, a domain's access, wild shape. */
-function specialAbilityRequirement(text: string): RequirementEntry | undefined {
-  const lower = text.toLowerCase();
-
-  // "Ability to turn or rebuke undead" / "must be able to turn or rebuke undead" / "Able to turn undead"
-  if (/\bturn (?:or rebuke )?undead\b/i.test(lower))
-    return eq(`feats.${stripSeparators("Turn or Rebuke Undead")}.*.possessed`);
-
-  // "access to the X domain"
-  const domainMatch = text.match(/access to the (\w+) domain/i);
-  if (domainMatch) {
-    const domainName = domainMatch[1].charAt(0).toUpperCase() + domainMatch[1].slice(1).toLowerCase();
-    return eq(feat(domainFeat(domainName)));
-  }
-
-  // "ability to wild shape" / "wild shape ability"
-  if (/\bwild ?shape\b/i.test(lower)) return eq(`feats.${stripSeparators("Wild Shape")}.*.possessed`);
-
-  // "Sneak attack +Nd6" / "Sneak attack or sudden strike +Nd6"
-  if (/\bsneak attack\b/i.test(lower)) {
-    const diceMatch = text.match(/\+(\d+)d\d+/);
-    const count = diceMatch ? parseInt(diceMatch[1], 10) : 0;
-    if (/\bsudden strike\b/i.test(lower)) {
-      return count > 0
-        ? or(gte("feats.sneakattack.count", count), gte("feats.suddenstrike.count", count))
-        : or(eq("feats.sneakattack.possessed"), eq("feats.suddenstrike.possessed"));
-    }
-    return count > 0 ? gte("feats.sneakattack.count", count) : eq("feats.sneakattack.possessed");
-  }
-
-  // "Rage or frenzy ability"
-  if (/\brage\b.*\bfrenzy\b|\bfrenzy\b.*\brage\b|\brage ability\b/i.test(lower)) return eq("feats.rage.possessed");
-
-  // "Flurry of blows ability"
-  if (/\bflurry of blows\b/i.test(lower)) return eq("feats.flurryofblows.possessed");
-
-  // "Evasion ability"
-  if (/\bevasion ability\b/i.test(lower)) return eq("feats.evasion.possessed");
-
-  // "Trapfinding"
-  if (/\btrapfinding\b/i.test(lower)) return eq("feats.trapfinding.possessed");
-
-  // "Lay on hands class feature"
-  if (/\blay on hands\b/i.test(lower)) return eq("feats.layonhands.possessed");
-
-  // "Inspire courage bardic music ability"
-  if (/\binspire courage\b/i.test(lower)) return eq("feats.inspirecourage.possessed");
-
-  // "Large size or larger"
-  if (/\blarge size or larger\b/i.test(lower)) {
-    return or(
-      eqStr(RACE_SIZE_PATH, "Large"),
-      eqStr(RACE_SIZE_PATH, "Huge"),
-      eqStr(RACE_SIZE_PATH, "Gargantuan"),
-      eqStr(RACE_SIZE_PATH, "Colossal"),
-    );
-  }
-
-  // Skip negated casting prereqs ("no ability to cast", "must have no ability to cast")
-  if (/\bno\s+ability to cast\b/i.test(lower) || /\bmust not have\b.*\bability to cast\b/i.test(lower))
-    return undefined;
-
-  // "Ability to cast N-level [arcane/divine] spells"
-  const castAbilityMatch = text.match(
-    /[Aa](?:bility|ble) to cast (?:the )?(?:(\d+)(?:st|nd|rd|th)[- ]level )?(arcane|divine)?\s*spells?/i,
-  );
-  if (castAbilityMatch) {
-    const level = castAbilityMatch[1] ? parseInt(castAbilityMatch[1], 10) : 1;
-    const type = castAbilityMatch[2]?.toLowerCase();
-    if (type === "arcane") return gte("spellcasting.arcane", level);
-    if (type === "divine") return gte("spellcasting.divine", level);
-    return or(gte("spellcasting.arcane", level), gte("spellcasting.divine", level));
-  }
-
-  // "Ability to cast summon monster III" / "Ability to cast detect thoughts"
-  if (/[Aa](?:bility|ble) to (?:cast|use)\b/i.test(lower))
-    return or(gte("spellcasting.arcane", 1), gte("spellcasting.divine", 1));
-
-  // "Any luck feat" / "Any divine feat"
-  const anyFeatMatch = text.match(/\bany (\w+) feat\b/i);
-  if (anyFeatMatch) {
-    const family = stripSeparators(anyFeatMatch[1]);
-    return eq(`feats.${family}.possessed`);
-  }
-
-  return undefined;
-}
-
 /**
  * The prerequisites a special entry lists, each on its own: "Flurry of blows ability; evasion ability; must be
  * chosen…", "Evasion class feature.Special: The character must…" (the scraper joins a Special line to the line before).
@@ -192,26 +104,6 @@ function specialParts(entry: string): string[] {
     .split(/[;.]\s*|,\s+/)
     .map((part) => part.trim().replace(/^Special:\s*/i, ""))
     .filter(Boolean);
-}
-
-/** A special prerequisite's requirement: a race, a proficiency or a special ability, the first that reads it. */
-function specialRequirement(text: string): RequirementEntry | undefined {
-  return raceRequirement(text) ?? proficiencyRequirement(text) ?? specialAbilityRequirement(text);
-}
-
-/**
- * The prerequisites special entries list that no requirement reads, of a class that requires `requirements`: one read
- * as a requirement the class lacks (an entry is read as one requirement, "Flurry of blows ability; evasion ability"
- * the flurry), or a class feature's name nothing reads ("Evasion class feature").
- */
-function unreadSpecialParts(entries: string[], requirements: RequirementEntry[]): string[] {
-  const read = new Set(requirements.map((requirement) => JSON.stringify(requirement)));
-  return entries.flatMap((entry) =>
-    specialParts(entry).filter((part) => {
-      const requirement = specialRequirement(part);
-      return requirement ? !read.has(JSON.stringify(requirement)) : namesClassFeature(part);
-    }),
-  );
 }
 
 /**
@@ -419,6 +311,69 @@ export class ClassPrerequisites extends RequirementReading {
   }
 
   /**
+   * A special ability requirement: a class feature any class's of its family meets (`classFeatureRequirement`), a
+   * domain's access, a size, spellcasting, any feat of a family.
+   */
+  private specialAbilityRequirement(text: string): RequirementEntry | undefined {
+    const lower = text.toLowerCase();
+
+    // "Ability to turn or rebuke undead", "Wild shape ability", "Sneak attack +1d6", "Rage or frenzy ability"…
+    const classFeature = this.classFeatureRequirement(text);
+    if (classFeature) return classFeature;
+
+    // "access to the X domain"
+    const domainMatch = text.match(/access to the (\w+) domain/i);
+    if (domainMatch) {
+      const domainName = domainMatch[1].charAt(0).toUpperCase() + domainMatch[1].slice(1).toLowerCase();
+      return eq(feat(domainFeat(domainName)));
+    }
+
+    // "Large size or larger"
+    if (/\blarge size or larger\b/i.test(lower)) {
+      return or(
+        eqStr(RACE_SIZE_PATH, "Large"),
+        eqStr(RACE_SIZE_PATH, "Huge"),
+        eqStr(RACE_SIZE_PATH, "Gargantuan"),
+        eqStr(RACE_SIZE_PATH, "Colossal"),
+      );
+    }
+
+    // Skip negated casting prereqs ("no ability to cast", "must have no ability to cast")
+    if (/\bno\s+ability to cast\b/i.test(lower) || /\bmust not have\b.*\bability to cast\b/i.test(lower))
+      return undefined;
+
+    // "Ability to cast N-level [arcane/divine] spells"
+    const castAbilityMatch = text.match(
+      /[Aa](?:bility|ble) to cast (?:the )?(?:(\d+)(?:st|nd|rd|th)[- ]level )?(arcane|divine)?\s*spells?/i,
+    );
+    if (castAbilityMatch) {
+      const level = castAbilityMatch[1] ? parseInt(castAbilityMatch[1], 10) : 1;
+      const type = castAbilityMatch[2]?.toLowerCase();
+      if (type === "arcane") return gte("spellcasting.arcane", level);
+      if (type === "divine") return gte("spellcasting.divine", level);
+      return or(gte("spellcasting.arcane", level), gte("spellcasting.divine", level));
+    }
+
+    // "Ability to cast summon monster III" / "Ability to cast detect thoughts"
+    if (/[Aa](?:bility|ble) to (?:cast|use)\b/i.test(lower))
+      return or(gte("spellcasting.arcane", 1), gte("spellcasting.divine", 1));
+
+    // "Any luck feat" / "Any divine feat"
+    const anyFeatMatch = text.match(/\bany (\w+) feat\b/i);
+    if (anyFeatMatch) {
+      const family = stripSeparators(anyFeatMatch[1]);
+      return eq(`feats.${family}.possessed`);
+    }
+
+    return undefined;
+  }
+
+  /** A special prerequisite's requirement: a race, a proficiency or a special ability, the first that reads it. */
+  private specialRequirement(text: string): RequirementEntry | undefined {
+    return raceRequirement(text) ?? proficiencyRequirement(text) ?? this.specialAbilityRequirement(text);
+  }
+
+  /**
    * The race, proficiency and special ability requirements of a class's special prerequisites, an entry read as one
    * requirement (`specialRequirement`). An entry it can't read is unresolved when it's mechanical (sneak attack, rage…);
    * else the prerequisites the entry lists that no requirement reads are (`unreadSpecialParts`), and the narrative ones
@@ -428,12 +383,27 @@ export class ClassPrerequisites extends RequirementReading {
     const reqs: RequirementEntry[] = [];
     const listing: string[] = [];
     for (const s of special) {
-      const requirement = specialRequirement(s);
+      const requirement = this.specialRequirement(s);
       if (requirement) reqs.push(requirement);
       if (!requirement && isMechanicalPrereq(s)) this.unresolved.push(s);
       else listing.push(s);
     }
-    this.unresolved.push(...unreadSpecialParts(listing, [...this.requirements, ...reqs]));
+    this.unresolved.push(...this.unreadSpecialParts(listing, [...this.requirements, ...reqs]));
     return reqs;
+  }
+
+  /**
+   * The prerequisites special entries list that no requirement reads, of a class that requires `requirements`: one read
+   * as a requirement the class lacks (an entry is read as one requirement, "Flurry of blows ability; evasion ability"
+   * the flurry), or a class feature's name nothing reads ("Evasion class feature").
+   */
+  private unreadSpecialParts(entries: string[], requirements: RequirementEntry[]): string[] {
+    const read = new Set(requirements.map((requirement) => JSON.stringify(requirement)));
+    return entries.flatMap((entry) =>
+      specialParts(entry).filter((part) => {
+        const requirement = this.specialRequirement(part);
+        return requirement ? !read.has(JSON.stringify(requirement)) : namesClassFeature(part);
+      }),
+    );
   }
 }
