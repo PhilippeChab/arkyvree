@@ -82,10 +82,12 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
     }
 
     /**
-     * The aptitude powers the character doesn't have yet, each given at the first level of its class and free: on the
-     * list a class level gives slots in, and on the list of each class a list joins that knows the power's level (a
-     * cleric's domain spells on the cleric's). A joining list's power no such list knows stays on its own list, where it
-     * knows the level itself (a domain a fighter picks through a prestige class, its slots its own).
+     * The aptitude powers the character doesn't know yet on the list each goes on, each given at the first level of its
+     * class and free: on the list a class level gives slots in, and on the list of each class a list joins that knows the
+     * power's level (a cleric's domain spells on the cleric's). A joining list's power no such list knows stays on its
+     * own list, where it knows the level itself (a domain a fighter picks through a prestige class, its slots its own). A
+     * spell is known once per list, and another class's list may know it too: a cleric/wizard's cleric list knows the
+     * cleric spells in his spellbook, at the cleric's DC.
      */
     private newKnownPowers(
       powers: CustomizedPower[],
@@ -98,12 +100,12 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
       const aptitudeKeyById = new Map(Object.entries(aptitudes).map(([key, aptitude]) => [aptitude.id, key]));
       const joining = this.joiningClassNames(appliedModifiers);
 
-      // Deduplicate: exclude powers already present on the character
-      const existingPowerIds = new Set(powers.map((p) => p.id));
+      // Each power the character knows already on its list (picked, granted, or made known by a modifier), by both
+      const knownOn = new Set(powers.map((p) => `${p.id}:${p.aptitudeId}`));
       const newPowers: CustomizedPower[] = [];
       const give = (power: (typeof this.allAptitudePowers)[number], className: string, aptitudeId: string) => {
         const klassData = classes[className];
-        if (!klassData || klassData.levels.length === 0) return;
+        if (!klassData || klassData.levels.length === 0 || knownOn.has(`${power.id}:${aptitudeId}`)) return;
         const firstLevel = klassData.levels[0];
         const enrichedPower: CustomizedPower = {
           ...power,
@@ -122,7 +124,6 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
       };
 
       for (const power of this.allAptitudePowers) {
-        if (existingPowerIds.has(power.id)) continue;
         const className = aptitudeIdToClassName.get(power.aptitudeId);
         if (className) give(power, className, power.aptitudeId);
 
