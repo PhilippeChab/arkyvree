@@ -98,11 +98,11 @@ test.describe("Customization of a fork", () => {
     const strength = requirementDialog.getByText("Abilities › Strength › Base").first();
     await expect(strength).toBeVisible({ timeout: 10_000 });
     await strength.click();
-    // Type through the keyboard once the path's 0 lands, so the form sees an ordinary change.
+    // The path's number value starts empty: type it through the keyboard once its field shows, so the form sees an
+    // ordinary change.
     const minimum = requirementDialog.locator('input[type="number"]');
-    await expect(minimum).toHaveValue("0", { timeout: 10_000 });
+    await expect(minimum).toHaveValue("", { timeout: 10_000 });
     await minimum.click();
-    await page.keyboard.press("ControlOrMeta+a");
     await page.keyboard.type("13");
     await expect(minimum).toHaveValue("13");
     const requirementCreated = apiResponse(page, "POST", customizationApi("requirements"));

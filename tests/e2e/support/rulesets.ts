@@ -20,10 +20,9 @@ export async function fillStrengthModifier(dialog: Locator, value: number) {
   const strength = dialog.getByText("Abilities › Strength › Misc").first();
   await expect(strength).toBeVisible({ timeout: 10_000 });
   await strength.click();
-  // Picking the path seeds the value with 0: select it before typing.
+  // Picking the path shows its number field, empty: what's typed is the value.
   const input = dialog.locator('input[type="number"]');
-  await input.click();
-  await input.press("Control+a");
+  await expect(input).toHaveValue("", { timeout: 10_000 });
   await input.fill(String(value));
 }
 
