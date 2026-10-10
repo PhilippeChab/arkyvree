@@ -8,6 +8,7 @@
 - D&D 3.5 sheets and PDFs open their spells on a Spells per Day table, a cleric's domain slot and a specialist wizard's school slot shown as "+1" in their class's row
 - The characters list opens on the most recently updated character first; the other orders stay in its Sort menu
 - D&D 3.5: a feat's "Caster level" prerequisite checks your caster level, not the highest spell level you cast: Craft Wand opens at caster level 5
+- Renaming a ruleset's entry (a feat, a spell, a list, an item…) to a name the ruleset already shows is refused, as creating one is, and so are restoring a parent's version and subscribing to an extension that would show a name twice
 
 ## 0.5.0 — 2026-05-21
 

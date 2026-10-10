@@ -24,7 +24,7 @@ interface EntityRepository {
   delete: (db: Db, where: { id: string }) => Promise<unknown>;
   exists: (db: Db, where: { id: string }) => Promise<boolean>;
   findMany: (db: Db, where: { ids: string[] }) => Promise<EntityWithId[]>;
-  findOne: (db: Db, where: { id: string } | { name: string; rulesetId: string }) => Promise<EntityWithId | undefined>;
+  findOne: (db: Db, where: { id: string }) => Promise<EntityWithId | undefined>;
   lock: (db: Db, where: { id: string }, mode?: "update" | "share") => Promise<boolean>;
 }
 

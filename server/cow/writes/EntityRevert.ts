@@ -2,6 +2,7 @@ import type { Db } from "@/drizzle/database.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { EntityReferences, EntitySnapshots, KlassLevels, type RulesetEntityType } from "@/server/repositories/index.ts";
 
+import type EntityNames from "./EntityNames.ts";
 import EntityRepositories from "./EntityRepositories.ts";
 
 /**
@@ -41,8 +42,16 @@ export default class EntityRevert {
   /**
    * Reverts the ruleset's copy of `sourceEntityId` (of `entityType`) to the source: a not found when the ruleset has
    * none. A copy deleted since (a tombstone) has nothing left naming it: its snapshot goes, and the source shows again.
+   * A restore, whose source shows again in the ruleset's view, keeps its name free there (`names`), as a rename does; an
+   * unsubscribe's revert gives none, its source leaving the view.
    */
-  static async revert(tx: Db, entityType: RulesetEntityType, sourceEntityId: string, rulesetId: string): Promise<void> {
+  static async revert(
+    tx: Db,
+    entityType: RulesetEntityType,
+    sourceEntityId: string,
+    rulesetId: string,
+    names?: EntityNames,
+  ): Promise<void> {
     // A first edit of the entity copying it meanwhile waits, then copies it anew (`EntityCopy`)
     await EntitySnapshots.lock(tx, { rulesetId, sourceEntityId });
     const snapshot = await EntitySnapshots.findOne(tx, { rulesetId, sourceEntityId });
@@ -51,6 +60,7 @@ export default class EntityRevert {
     const copyId = snapshot.forkedEntityId;
     const repository = EntityRepositories.of(entityType);
     await repository.lock(tx, { id: copyId });
+    await names?.assertRestoreAvailable(tx, entityType, sourceEntityId, copyId);
     if (entityType === "klasses") await EntityRevert.repointKlassLevels(tx, copyId, sourceEntityId, rulesetId);
     await EntityReferences.update(tx, { entityId: sourceEntityId }, { entityType, entityId: copyId });
     await EntitySnapshots.update(tx, { sourceEntityId }, { sourceEntityId: copyId });

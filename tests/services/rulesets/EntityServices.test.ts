@@ -301,29 +301,39 @@ describe.each(ENTITY_TYPES)("%s service", (entityType) => {
     });
   });
 
-  test("refuses a name the ruleset already uses", async () => {
+  test("refuses a name the ruleset already uses, to a create and a rename, and keeps an entity's own", async () => {
     const { session, ruleset, refs } = await setup();
     await service.create(session, ruleset.id, "Taken Name", refs);
     await expectRefusedWith(service.create(session, ruleset.id, "Taken Name", refs), 409);
+
+    const other = await service.create(session, ruleset.id, "Other Name", refs);
+    await expectRefusedWith(service.update(session, ruleset.id, other.id, "Taken Name", refs), 409);
+    expect(await service.update(session, ruleset.id, other.id, "Other Name", refs)).toMatchObject({
+      id: other.id,
+      name: "Other Name",
+    });
   });
 
-  test("copies an inherited entity into the fork on edit, and refuses a name the parent uses", async () => {
+  test("copies an inherited entity into the fork on edit, under its name, and refuses the parent's names", async () => {
     const { session: parentSession, ruleset: parent, refs } = await setup();
     const inherited = await service.create(parentSession, parent.id, "Inherited Entity", refs);
     const { user, session } = await createTestUserAndRuleset();
     const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
 
     await expectRefusedWith(service.create(session, fork.id, "Inherited Entity", refs), 409);
+    const own = await service.create(session, fork.id, "Own Entity", refs);
+    await expectRefusedWith(service.update(session, fork.id, own.id, "Inherited Entity", refs), 409);
 
-    const copy = await service.update(session, fork.id, inherited.id, "Forked Entity", refs);
-    expect(copy).toMatchObject({ name: "Forked Entity", rulesetId: fork.id });
+    // Its first edit copies it under its name, which its source, hidden behind the copy, no longer shows
+    const copy = await service.update(session, fork.id, inherited.id, "Inherited Entity", refs);
+    expect(copy).toMatchObject({ name: "Inherited Entity", rulesetId: fork.id });
     expect(copy.id).not.toBe(inherited.id);
-    expect(await service.get(fork.id, inherited.id)).toMatchObject({ id: copy.id, name: "Forked Entity" });
     // Later edits through the source's id go to the same copy.
-    expect(await service.update(session, fork.id, inherited.id, "Edited Again", refs)).toMatchObject({
+    expect(await service.update(session, fork.id, inherited.id, "Forked Entity", refs)).toMatchObject({
       id: copy.id,
-      name: "Edited Again",
+      name: "Forked Entity",
     });
+    expect(await service.get(fork.id, inherited.id)).toMatchObject({ id: copy.id, name: "Forked Entity" });
     expect(await service.get(parent.id, inherited.id)).toMatchObject({ name: "Inherited Entity" });
   });
 

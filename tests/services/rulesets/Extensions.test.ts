@@ -493,17 +493,18 @@ describe("subscribing to an extension", () => {
       const extension = await createExtension(user.id);
       await Feats.create(db, { name: "Clash", rulesetId: extension.id });
       await Feats.create(db, { name: "Clash", rulesetId: draft.id });
-      expect(RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id])).rejects.toMatchObject({
-        refusal: "conflict",
-      });
+      expect(RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id])).rejects.toThrow(
+        'Cannot subscribe: feats "Clash" already exists in this ruleset or another subscribed extension',
+      );
 
       // Only feats and powers merge; two races of one name would show twice.
       const [raceA, raceB] = [await createExtension(), await createExtension()];
       for (const { id } of [raceA, raceB])
         await Races.create(db, { name: "Tiefling", rulesetId: id, size: "Medium", baseSpeed: 30 });
-      expect(
+      await expectRefusedWith(
         RulesetExtensionsService.subscribeExtension(session, draft.id, [raceA.id, raceB.id]),
-      ).rejects.toMatchObject({ refusal: "conflict" });
+        409,
+      );
     });
 
     test("accepts same-named feats and aptitudes across extensions, an extension's copy of a base feat, and an old clash not involving the new extension", async () => {

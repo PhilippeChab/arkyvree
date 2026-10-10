@@ -1,4 +1,4 @@
-import { EntityRevert, RulesetViews } from "@/server/cow/index.ts";
+import { CowDataReader, EntityNames, EntityRevert, RulesetViews } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
 import {
@@ -98,7 +98,8 @@ class RulesetChangesService {
 
   /**
    * Reverts the fork's copy of an inherited entity to its parent's (`EntityRevert`): what names the copy, the fork's
-   * rows, its subscribers' and their characters', names the parent's entity again.
+   * rows, its subscribers' and their characters', names the parent's entity again. Refused while the fork's view shows
+   * another entity of the parent's entity's name (`EntityNames`), which it would show twice.
    */
   async revertOverride(session: Session, rulesetId: string, entityType: RestorableEntityType, entityId: string) {
     const subscribers = await withTransaction(async (tx) => {
@@ -107,7 +108,9 @@ class RulesetChangesService {
 
       (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-      await EntityRevert.revert(tx, entityType, entityId, rulesetId);
+      // The parent's entity shows again: under a name its view shows no other entity of
+      const names = new EntityNames(ruleset, await CowDataReader.read(tx, ruleset));
+      await EntityRevert.revert(tx, entityType, entityId, rulesetId, names);
       // The rulesets built on it, whose rows may have named the copy: its subscribers, when it's an extension
       return await Rulesets.findMany(tx, { extensionRulesetId: rulesetId });
     });

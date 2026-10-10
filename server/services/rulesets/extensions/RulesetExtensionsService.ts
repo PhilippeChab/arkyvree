@@ -2,16 +2,13 @@ import { getTableName } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { rulesetsInRules } from "@/drizzle/schema.ts";
-import { Engine } from "@/engine/index.ts";
-import { EntityRepositories, EntityRevert, RulesetViews } from "@/server/cow/index.ts";
+import { CowDataReader, EntityNames, EntityRepositories, EntityRevert, RulesetViews } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import {
   Activities,
   EntityReferences,
   EntitySnapshots,
-  RULESET_ENTITY_TYPES,
-  RulesetEntities,
   type RulesetEntityType,
   RulesetExtensions,
   Rulesets,
@@ -22,27 +19,6 @@ import type { Session } from "@/shared/relations.ts";
 import { type Departures, findDepartures, repointDepartingReferences } from "./departingReferences.ts";
 
 class RulesetExtensionsService {
-  // Rejects a subscribe action that would surface two entities of the same name in
-  // the host's source chain, as the engine pairs them: locally-owned (non-shadow)
-  // rows in the host, already-subscribed extensions, and the new extensions.
-  private async assertExtensionsNameCompatible(
-    tx: Db,
-    hostId: string,
-    newExtensionIds: string[],
-    existingExtensionRulesetIds: string[],
-  ): Promise<void> {
-    if (newExtensionIds.length === 0) return;
-
-    const rulesetIds = [hostId, ...newExtensionIds, ...existingExtensionRulesetIds];
-
-    const entityTypes = RULESET_ENTITY_TYPES.filter(
-      (type) => !Engine.copyOnWrite().namePairedEntityTypes.includes(type),
-    );
-    const names = await RulesetEntities.findNativeNames(tx, { rulesetIds, entityTypes });
-
-    Engine.copyOnWrite().checkExtensionNames(hostId, newExtensionIds, names);
-  }
-
   /**
    * Whether a character on the host picked what leaves its view with the extension (`departures`): one of its entities,
    * or one of the host's copies of them, with nothing in its place once it's gone (an entity only the extension has), or
@@ -121,7 +97,9 @@ class RulesetExtensionsService {
         newExtensionIds.push(extensionId);
       }
 
-      await this.assertExtensionsNameCompatible(tx, id, newExtensionIds, childRuleset.extensionRulesetIds);
+      // Its view would show no two entities of a name it shows one of, nor two the extensions bring
+      const names = new EntityNames(childRuleset, await CowDataReader.read(tx, childRuleset));
+      await names.assertExtensionNamesAvailable(tx, newExtensionIds);
 
       // 3. Append all to extensionRulesetIds
       await Rulesets.update(
