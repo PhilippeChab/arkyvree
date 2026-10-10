@@ -57,7 +57,7 @@ class RequirementsService {
             targetId: requirement.id,
             targetTable: getTableName(requirementsInCustomization),
             type: "createRequirement",
-            data: { entityName: entity.name, entityType, ...conditionOf(body) },
+            data: { entityName: entity.name, entityType, ...conditionOf(row) },
           });
 
           return { ...requirement, resolvedEntityId };
@@ -162,7 +162,7 @@ class RequirementsService {
             targetId: updatedRequirement.id,
             targetTable: getTableName(requirementsInCustomization),
             type: "updateRequirement",
-            data: { entityName: entity.name, entityType, ...conditionOf(body) },
+            data: { entityName: entity.name, entityType, ...conditionOf(row) },
           });
 
           return { ...updatedRequirement, resolvedEntityId };

@@ -165,16 +165,11 @@ describe("TargetPathsService", () => {
   test("refuses a template value the sheet couldn't evaluate, saying why, and takes one it can", async () => {
     const { rulesetId } = await getSeedCtx();
     const check = (value: string, target = "combat.ac.misc") =>
-      withRulesetScope(db, rulesetId, async (scope) =>
-        Engine.for(scope)
-          .targetPaths()
-          .checkValue(await RulesetViews.getTargetPathCatalogs(scope.ruleset, "modifier"), {
-            kind: "modifier",
-            operator: "add",
-            target,
-            value,
-          }),
-      );
+      withRulesetScope(db, rulesetId, async (scope) => {
+        const catalogs = await RulesetViews.getTargetPathCatalogs(scope.ruleset, "modifier");
+        return Engine.for(scope).targetPaths().planModifier(catalogs, "characters", { operator: "add", target, value })
+          .valueType;
+      });
     expect(await check("{{ floor([classes.ranger.level] / 2) }}")).toBe("number");
     expect(await check("{{ [abilities.charisma.modifier] }}")).toBe("number");
     expect(check("{{ [classes.rangr.level] }}")).rejects.toThrow(

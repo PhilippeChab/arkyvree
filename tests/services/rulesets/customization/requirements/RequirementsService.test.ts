@@ -85,6 +85,17 @@ describe("RequirementsService", () => {
       expect(created).toMatchObject({ ...babAtLeast5, valueType: "number", chainingOperator: null });
     });
 
+    test("stores a number as the sheet reads it", async () => {
+      const { session, rulesetId, feat } = await setup();
+      const body = { ...babAtLeast5, value: "05" };
+      const created = await RequirementsService.createRequirement(session, rulesetId, "feats", feat.id, body);
+      expect(created.value).toBe("5");
+      const update = { ...babAtLeast5, value: "007" };
+      expect(
+        await RequirementsService.updateRequirement(session, rulesetId, "feats", feat.id, created.id, update),
+      ).toMatchObject({ value: "7" });
+    });
+
     test("refuses an unknown target path", async () => {
       const { session, rulesetId, feat } = await setup();
       const body = { ...babAtLeast5, target: "invalid.path.that.does.not.exist" };

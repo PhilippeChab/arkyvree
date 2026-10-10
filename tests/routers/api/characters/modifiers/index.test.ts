@@ -75,6 +75,19 @@ describe("character modifiers", () => {
     });
   });
 
+  test("stores a number as the sheet reads it", async () => {
+    const characterId = (await postCharacter()).id;
+    const created = await expectOk(
+      modifiers.$post({ param: { characterId }, json: { ...strengthBonus, value: "02" } }),
+    );
+    expect(created.value).toBe("2");
+    const param = { characterId, modifierId: created.id };
+    expect(await expectOk(modifier.$put({ param, json: { ...strengthBonus, value: "+3" } }))).toMatchObject({
+      value: "3",
+    });
+    expect(await expectOk(modifiers.$get({ param: { characterId } }))).toMatchObject([{ value: "3" }]);
+  });
+
   test("hides another user's character", async () => {
     const characterId = (await postCharacter()).id;
     const { api: other } = await createSignedInUser("other");

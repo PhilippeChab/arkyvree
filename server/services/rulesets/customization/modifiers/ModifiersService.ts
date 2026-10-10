@@ -50,13 +50,7 @@ class ModifiersService {
             targetId: modifier.id,
             targetTable: getTableName(modifiersInCustomization),
             type: "createModifier",
-            data: {
-              entityName: entity.name,
-              entityType,
-              target: body.target,
-              value: body.value,
-              operator: body.operator,
-            },
+            data: { entityName: entity.name, entityType, target: row.target, value: row.value, operator: row.operator },
           });
 
           return { ...modifier, resolvedEntityId };
@@ -193,13 +187,7 @@ class ModifiersService {
             targetId: updatedModifier.id,
             targetTable: getTableName(modifiersInCustomization),
             type: "updateModifier",
-            data: {
-              entityName: entity.name,
-              entityType,
-              target: body.target,
-              value: body.value,
-              operator: body.operator,
-            },
+            data: { entityName: entity.name, entityType, target: row.target, value: row.value, operator: row.operator },
           });
 
           return { ...updatedModifier, resolvedEntityId };

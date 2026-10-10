@@ -1,4 +1,5 @@
 import type { TargetCatalogs, TargetPaths } from "@/engine/core/paths/CategoryPaths.ts";
+import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import type { TargetPathCatalog } from "@/shared/customization/target.ts";
 import type { Requirement } from "@/shared/relations.ts";
 
@@ -25,8 +26,8 @@ export default class RequirementEdits extends CustomizationEdits<Requirement> {
   }
 
   /**
-   * The row a requirement's save stores: a condition's target, operator, value and value type (checked against its
-   * path), or a group's chaining operator.
+   * The row a requirement's save stores: a condition's target, operator, value (a number as the sheet reads it: "05" is
+   * "5") and value type, checked against its path, or a group's chaining operator.
    */
   private toRow(
     targetPaths: TargetPaths,
@@ -42,7 +43,8 @@ export default class RequirementEdits extends CustomizationEdits<Requirement> {
       target: body.target,
       value: body.value ?? kept?.value ?? undefined,
     });
-    return { level: body.level, operator: body.operator, target: body.target, value: body.value, valueType };
+    const value = body.value === undefined ? undefined : LiteralValue.normalize(body.value, valueType);
+    return { level: body.level, operator: body.operator, target: body.target, value, valueType };
   }
 
   /** The entity's requirements of its type, as the view composes them, labeled as its page shows them. */

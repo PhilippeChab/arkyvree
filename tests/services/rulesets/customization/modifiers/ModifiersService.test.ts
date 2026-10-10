@@ -88,6 +88,23 @@ describe("ModifiersService", () => {
     ]);
   });
 
+  test("stores a number as the sheet reads it, a template as written", async () => {
+    const { session, rulesetId, feat } = await setup();
+    const created = await ModifiersService.createModifier(session, rulesetId, "feats", feat.id, {
+      ...strengthBonus,
+      value: "02",
+    });
+    expect(created.value).toBe("2");
+    const update = { ...strengthBonus, value: " 1.50" };
+    expect(
+      await ModifiersService.updateModifier(session, rulesetId, "feats", feat.id, created.id, update),
+    ).toMatchObject({ value: "1.5" });
+    const template = { ...strengthBonus, value: "{{ [abilities.strength.modifier] }}" };
+    expect(
+      await ModifiersService.updateModifier(session, rulesetId, "feats", feat.id, created.id, template),
+    ).toMatchObject({ value: template.value });
+  });
+
   test("refuses an unknown target", async () => {
     const { session, rulesetId, feat } = await setup();
     const invalid = { ...strengthBonus, target: "invalid.path.that.does.not.exist" };
