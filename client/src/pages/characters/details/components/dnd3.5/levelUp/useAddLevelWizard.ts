@@ -24,15 +24,20 @@ export type AddLevelWizard = ReturnType<typeof useAddLevelWizard>;
 export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWizardParams) {
   const plan = useAddLevelPlan({ open, characterId });
   const { data: preview, isPlaceholderData, isLoading, error } = plan.previewQuery;
-  const answers = useMemo(() => previewAnswers(preview, isPlaceholderData), [preview, isPlaceholderData]);
+  const { stepName } = plan;
+  const answers = useMemo(
+    () => previewAnswers(preview, isPlaceholderData, stepName),
+    [preview, isPlaceholderData, stepName],
+  );
   const wizard = useAddLevelWizardBase({ plan, answers, characterId, open, onClose });
   const pickOptions = usePickOptions({ characterId, open, wizard });
 
-  // The character's abilities with the plan's increases, at the levels that take one
+  // The character's abilities with the plan's increases, at the levels that take one, and whether they're picked
   const attributeData = useMemo(() => {
     if (!preview) return undefined;
-    if (answers.abilityIncreaseLevels.length === 0) return { isAvailable: false as const, attributes: {} };
-    return { isAvailable: true as const, attributes: preview.attributes.attributes };
+    const { attributes, picked } = preview.attributes;
+    if (answers.abilityIncreaseLevels.length === 0) return { isAvailable: false as const, attributes: {}, picked };
+    return { isAvailable: true as const, attributes, picked };
   }, [preview, answers.abilityIncreaseLevels]);
 
   // Each step reads the preview, which loads its answers together

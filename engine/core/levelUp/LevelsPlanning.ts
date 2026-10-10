@@ -147,9 +147,11 @@ export default class LevelsPlanning<C extends ValidatedCharacter> extends LevelU
     for (const [i, { klass, klassLevel }] of klassLevelEntries.entries()) {
       const { hp, abilityIncreases } = levels[i];
       const levelPicks = distributed[i];
+      // A refusal names the character's level it's about, after its saved levels and those planned before it
+      const label = `Level ${rows.levels.length + i + 1}: `;
       if (otherLevels.some((other) => other.klassLevelId === klassLevel.id))
-        throw new RulesError("invalid", `Level ${i + 1}: This level has already been finalized`);
-      this.checks.checkAbilityIncreases(rows.levels.length + i, abilityIncreases, `Level ${i + 1}: `);
+        throw new RulesError("invalid", `${label}This level has already been finalized`);
+      this.checks.checkAbilityIncreases(rows.levels.length + i, abilityIncreases, label);
       this.checks.checkLevel({ klass, klassLevel, hp, abilityIncreases, ...levelPicks }, otherLevels, pickedFeatIds);
       planned.push({ abilityIncreases, hp, klassLevelId: klassLevel.id, picks: levelPicks });
       otherLevels.push({ klassLevelId: klassLevel.id });

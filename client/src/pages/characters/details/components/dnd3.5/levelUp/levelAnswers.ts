@@ -11,6 +11,7 @@ import type { EditAnswers, PreviewAnswers } from "@/client/src/pages/characters/
 
 /** Edit Level's steps whose answers its picks are fitted by and its Next waits for, each asked at the edited level. */
 interface EditedSteps {
+  abilities: StepQuery<AttributesData>;
   feats: StepQuery<FeatsData>;
   powers: StepQuery<PowersData>;
   skills: StepQuery<SkillsData>;
@@ -43,9 +44,14 @@ export type SkillsData = StepAnswer<"skills">;
 /**
  * Add Level's answers, its preview's of the plan: the planned levels and those that take an ability increase, where
  * each pool's next pick lands, the feat pools' room, what the skill points come to, and what of the feats and spells
- * picked fits, while the preview answers for these picks (for earlier ones, they stand).
+ * picked fits, while the preview answers for these picks (for earlier ones, they stand). On the Ability Increase step
+ * (`stepName`), Next waits for the preview of the plan's increases to say they're picked.
  */
-export function previewAnswers(preview: LevelPreview | undefined, isPlaceholderData: boolean): PreviewAnswers {
+export function previewAnswers(
+  preview: LevelPreview | undefined,
+  isPlaceholderData: boolean,
+  stepName: string,
+): PreviewAnswers {
   const fittedFor = isPlaceholderData ? undefined : preview;
   return {
     abilityIncreaseLevels: preview?.attributes.abilityIncreaseLevels ?? [],
@@ -55,16 +61,18 @@ export function previewAnswers(preview: LevelPreview | undefined, isPlaceholderD
     levelDetails: preview?.levelDetails,
     nextPickLevels: preview?.nextPickLevels,
     skills: preview?.skills.skills,
+    waiting: stepName === "abilities" && !fittedFor?.attributes.picked,
   };
 }
 
 /**
  * Edit Level's answers, its steps' at the edited level: the feat pools' room, what the skill points come to, what of
  * the feats and spells picked fits, while each step answers for these picks (for earlier ones, they stand), and what
- * Next and the save wait for: its feat and spell steps' slots both, the Skills step its skill slots, and the step
- * shown its answer, whose failure stops the wizard there.
+ * Next and the save wait for: its feat and spell steps' slots both, the Skills step its skill slots, the Ability
+ * Increase step its answer for the increase picked saying it's picked, and the step shown its answer, whose failure
+ * stops the wizard there.
  */
-export function stepAnswers({ feats, powers, skills }: EditedSteps, stepName: string): EditAnswers {
+export function stepAnswers({ abilities, feats, powers, skills }: EditedSteps, stepName: string): EditAnswers {
   return {
     complete: !!feats.data && !!powers.data && !!skills.data,
     featPools: feats.data?.aptitudePools ?? {},
@@ -74,6 +82,7 @@ export function stepAnswers({ feats, powers, skills }: EditedSteps, stepName: st
     waiting:
       feats.isLoading ||
       powers.isLoading ||
+      (stepName === "abilities" && (abilities.isPlaceholderData || !abilities.data?.picked)) ||
       (stepName === "skills" && !skills.data) ||
       (stepName === "feats" && !feats.data) ||
       (stepName === "powers" && !powers.data),
