@@ -51,7 +51,7 @@ function buildCreature(race: { id: string; name: string }, abilities: RulesetDat
 /** What a master's bonded creatures become as its levels make them. */
 export default class BondedPlans {
   constructor(
-    private readonly rulesetData: Pick<RulesetData, "abilities" | "klasses" | "klassLevelsByKlassId" | "races">,
+    private readonly rulesetData: Pick<RulesetData, "abilities" | "klasses" | "klassLevelsByKlass" | "races">,
   ) {}
 
   /**
@@ -85,7 +85,7 @@ export default class BondedPlans {
    */
   planBondedLevels(levels: { id: string }[], { hitDice, klassId }: BondedLevels): BondedLevelsPlan {
     const klassLevelByLevel = new Map(
-      (this.rulesetData.klassLevelsByKlassId.get(klassId) ?? []).map((klassLevel) => [klassLevel.level, klassLevel]),
+      (this.rulesetData.klassLevelsByKlass.get(klassId) ?? []).map((klassLevel) => [klassLevel.level, klassLevel]),
     );
     const added: BondedLevelsPlan["added"] = [];
     for (let level = levels.length + 1; level <= hitDice; level++) {

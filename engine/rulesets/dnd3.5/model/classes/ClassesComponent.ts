@@ -114,11 +114,11 @@ export default class ClassesComponent {
     for (const kl of klassLevels) klassLevelsById.set(kl.id, kl);
     const klassesById = new Map<string, Klass>();
     for (const k of klasses) klassesById.set(k.id, k);
-    const klassSkillsByKlassId = new Map<string, KlassSkill[]>();
+    const klassSkillsByKlass = new Map<string, KlassSkill[]>();
     for (const ks of klassSkills) {
-      const group = klassSkillsByKlassId.get(ks.klassId);
+      const group = klassSkillsByKlass.get(ks.klassId);
       if (group) group.push(ks);
-      else klassSkillsByKlassId.set(ks.klassId, [ks]);
+      else klassSkillsByKlass.set(ks.klassId, [ks]);
     }
     const featsByCharacterLevelId = new Map<string, typeof feats>();
     for (const f of feats) {
@@ -150,7 +150,7 @@ export default class ClassesComponent {
       if (!this.classes[klassName]) {
         this.classes[klassName] = {
           klass,
-          klassSkills: klassSkillsByKlassId.get(klass.id) ?? [],
+          klassSkills: klassSkillsByKlass.get(klass.id) ?? [],
           levels: [],
           level: 0,
           bonuscasterlevel: 0,

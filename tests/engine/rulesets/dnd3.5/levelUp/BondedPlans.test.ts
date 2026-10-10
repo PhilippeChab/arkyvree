@@ -82,7 +82,7 @@ describe("planBondedCreature", () => {
       refusalOf(() =>
         new BondedPlans({
           ...rulesetData,
-          klassLevelsByKlassId: rulesetData.klassLevelsByKlassId,
+          klassLevelsByKlass: rulesetData.klassLevelsByKlass,
           races: withoutCompanions(rulesetData.races),
         }).planBondedCreature(master, "animalcompanion", undefined),
       ),
@@ -92,7 +92,7 @@ describe("planBondedCreature", () => {
         new BondedPlans({
           ...rulesetData,
           klasses: withoutCompanions(rulesetData.klasses),
-          klassLevelsByKlassId: rulesetData.klassLevelsByKlassId,
+          klassLevelsByKlass: rulesetData.klassLevelsByKlass,
         }).planBondedCreature(master, "animalcompanion", undefined),
       ),
     ).toEqual({ message: "Animal Companion class not found in ruleset — content seed missing", refusal: "invalid" });

@@ -1,6 +1,7 @@
 /** The template expression's evaluation: its syntax (`shared/customization/templateExpression.ts`) read on a sheet. */
 
 import {
+  extractTemplateExpression,
   parseTemplateExpression,
   TEMPLATE_FUNCTIONS,
   type TemplateNode,
@@ -109,5 +110,29 @@ export default class TemplateExpression {
     // Pure single-path expression — pass through whatever type the path resolves to.
     if (ast.type === "path") return resolvePath(ast.value);
     return evNumeric(ast);
+  }
+
+  /**
+   * A customization's template value (`{{ … }}`) resolved on the sheet: its expression evaluated, and a number finite
+   * (NaN and ±Infinity, which an edge of `min`, `floor` or a division gives, would corrupt the sheet). Null when it
+   * can't be, each reason sent to `onWarning`.
+   */
+  static resolve(
+    template: string,
+    components: Components,
+    targetPaths: TargetPathsTraverser,
+    onWarning: (warning: string) => void,
+  ): number | string | boolean | null {
+    const expression = extractTemplateExpression(template);
+    if (!expression) {
+      onWarning(`Invalid template expression: ${template}`);
+      return null;
+    }
+    const resolved = TemplateExpression.evaluate(expression, components, targetPaths, onWarning);
+    if (typeof resolved === "number" && !Number.isFinite(resolved)) {
+      onWarning(`Template resolved to a non-finite number (${resolved})`);
+      return null;
+    }
+    return resolved;
   }
 }

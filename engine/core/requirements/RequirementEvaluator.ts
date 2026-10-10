@@ -3,13 +3,12 @@ import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import type { Components, TraversePathResult } from "@/engine/core/paths/PathTraverser.ts";
 import TemplateExpression from "@/engine/core/paths/TemplateExpression.ts";
 import RequirementTree, { getParentLevel, type RequirementNode } from "@/shared/customization/RequirementTree.ts";
-import { extractTemplateExpression, isTemplateValue } from "@/shared/customization/templateExpression.ts";
+import { isTemplateValue } from "@/shared/customization/templateExpression.ts";
 import type { Requirement } from "@/shared/relations.ts";
 
 type RequirementResults = {
   fulfilledRequirementGroups: Requirement[][];
   invalidRequirements: { requirement: Requirement; warning: string }[];
-  requirements: Requirement[][];
   unmetRequirementGroups: Requirement[][];
 };
 
@@ -17,7 +16,6 @@ export default class RequirementEvaluator {
   constructor(private readonly targetPaths: TargetPathsTraverser) {}
 
   private readonly results: RequirementResults = {
-    requirements: [],
     invalidRequirements: [],
     unmetRequirementGroups: [],
     fulfilledRequirementGroups: [],
@@ -140,14 +138,8 @@ export default class RequirementEvaluator {
         const validResults: TraversePathResult[] = [];
 
         for (const result of results) {
-          if (result.error) {
-            this.results.invalidRequirements.push({
-              warning: result.error,
-              requirement,
-            });
-          } else {
-            validResults.push(result);
-          }
+          if (result.error) this.warn(requirement, result.error);
+          else validResults.push(result);
         }
 
         // A path that names nothing gave errors: the requirement is invalid, not unmet. One that resolves is met
@@ -165,10 +157,10 @@ export default class RequirementEvaluator {
     const tree = RequirementTree.fromRows(evaluated);
     // A row under a condition, which groups nothing, is left out
     for (const requirement of tree.detached) {
-      this.results.invalidRequirements.push({
-        warning: `Condition node at level ${getParentLevel(requirement.level)} cannot have children. Child level ${requirement.level} discarded.`,
+      this.warn(
         requirement,
-      });
+        `Condition node at level ${getParentLevel(requirement.level)} cannot have children. Child level ${requirement.level} discarded.`,
+      );
     }
 
     // The top-level rows are AND'd: the group is met when each of them is
@@ -185,23 +177,9 @@ export default class RequirementEvaluator {
   private resolveRequirementValue(requirement: Requirement, components: Components): number | string | boolean | null {
     const { value, valueType } = requirement;
     if (typeof value === "string" && isTemplateValue(value)) {
-      const expression = extractTemplateExpression(value);
-      if (!expression) {
-        this.warn(requirement, `Invalid template expression: ${value}`);
-        return null;
-      }
-      const resolved = TemplateExpression.evaluate(expression, components, this.targetPaths, (warning) =>
+      return TemplateExpression.resolve(value, components, this.targetPaths, (warning) =>
         this.warn(requirement, warning),
       );
-      if (resolved === null) return null;
-      // NaN / ±Infinity passes `typeof === "number"` and silently makes
-      // every comparison false, marking the requirement unmet with no
-      // diagnostic. Mirror the modifier-side guard.
-      if (typeof resolved === "number" && !Number.isFinite(resolved)) {
-        this.warn(requirement, `Template resolved to a non-finite number (${resolved})`);
-        return null;
-      }
-      return resolved;
     }
     // A condition saved without a value (an emptiness check needs none) compares with the empty literal
     const literal = LiteralValue.parse(value ?? "", valueType);
@@ -224,6 +202,19 @@ export default class RequirementEvaluator {
     itemOf: (group: Requirement[]) => string | undefined = () => undefined,
   ) {
     for (const group of requirements) this.evaluateRequirementsGroup(group, components, itemOf(group));
+  }
+
+  /**
+   * The source keys (`id:type`) the evaluation leaves unmet or invalid: a modifier is gated out when its source entity's
+   * or its own is among them.
+   */
+  getBlockedKeys(): Set<string> {
+    const blockedKeys = new Set<string>();
+    for (const group of this.results.unmetRequirementGroups)
+      for (const requirement of group) blockedKeys.add(`${requirement.entityId}:${requirement.entityType}`);
+    for (const { requirement } of this.results.invalidRequirements)
+      blockedKeys.add(`${requirement.entityId}:${requirement.entityType}`);
+    return blockedKeys;
   }
 
   getRequirements() {

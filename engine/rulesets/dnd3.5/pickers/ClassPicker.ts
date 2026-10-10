@@ -31,7 +31,7 @@ export default class ClassPicker extends CharacterPicker<Klass, { maxLevel: numb
   protected override detailsOf() {
     return (klass: Klass) => {
       const next = this.nextLevelOf(klass)!;
-      const last = this.rulesetData.klassLevelsByKlassId.get(klass.id)?.at(-1)?.level ?? next.level;
+      const last = this.rulesetData.klassLevelsByKlass.get(klass.id)?.at(-1)?.level ?? next.level;
       return { nextLevel: next.level, maxLevel: last };
     };
   }

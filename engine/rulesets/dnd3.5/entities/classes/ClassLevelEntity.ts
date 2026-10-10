@@ -51,7 +51,7 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
 
   /** A level's details: the feats it grants (each with its pool's name and whether it's free), its saves' base bonuses. */
   private detailsOf(level: { id: string }) {
-    const levelSaves = this.rulesetData.klassLevelSavesByKlassLevelId.get(level.id) ?? [];
+    const levelSaves = this.rulesetData.klassLevelSavesByKlassLevel.get(level.id) ?? [];
     return {
       feats: this.grantedFeats(level.id),
       saves: levelSaves.map((ls) => ({ saveId: ls.saveId, base: ls.base })),
@@ -109,7 +109,7 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
 
   /** The class's levels, each with its fields and its details. */
   describeAll() {
-    const levels = this.rulesetData.klassLevelsByKlassId.get(this.klass.id) ?? [];
+    const levels = this.rulesetData.klassLevelsByKlass.get(this.klass.id) ?? [];
     return this.describeRows(levels).map((level) => ({ ...level, ...this.detailsOf(level) }));
   }
 

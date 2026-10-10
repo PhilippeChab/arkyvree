@@ -112,8 +112,12 @@ function DiagnosticsPage({ detailedCharacter }: { detailedCharacter: DetailedCha
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Modifier System Status</Text>
         {(() => {
-          const { modifiers, appliedModifiers, unappliedModifiers, inactiveModifiers, skippedModifiers } =
+          const { appliedModifiers, unappliedModifiers, inactiveModifiers, skippedModifiers } =
             detailedCharacter.modifierEvaluator.getModifiers();
+          // Every modifier the evaluation met, once: an applied one can be skipped for another of its targets
+          const seen = [...appliedModifiers, ...unappliedModifiers, ...inactiveModifiers];
+          const total = new Set([...seen, ...skippedModifiers.map(({ modifier }) => modifier)].map(({ id }) => id))
+            .size;
           const modifierRow = (modifier: Modifier) => [
             modifier.sourceType,
             modifier.target,
@@ -126,7 +130,7 @@ function DiagnosticsPage({ detailedCharacter }: { detailedCharacter: DetailedCha
             <View>
               <DiagnosticCounts
                 counts={[
-                  { label: `Total Modifiers: ${modifiers.length}`, color: "#333" },
+                  { label: `Total Modifiers: ${total}`, color: "#333" },
                   { label: `Applied: ${appliedModifiers.length}`, color: "#008800" },
                   { label: `Unapplied: ${unappliedModifiers.length}`, color: "#cc0000" },
                   { label: `Inactive: ${inactiveModifiers.length}`, color: "#666699" },

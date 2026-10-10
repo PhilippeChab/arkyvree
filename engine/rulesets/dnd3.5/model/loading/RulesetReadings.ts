@@ -25,9 +25,9 @@ export default class RulesetReadings {
     return {
       languages: rows.languages.flatMap((l) => rulesetData.languagesById.get(l.languageId) ?? []),
       klassLevelsRaw,
-      klassLevelSaves: klassLevelIds.flatMap((id) => rulesetData.klassLevelSavesByKlassLevelId.get(id) ?? []),
+      klassLevelSaves: klassLevelIds.flatMap((id) => rulesetData.klassLevelSavesByKlassLevel.get(id) ?? []),
       klasses: klassIds.flatMap((id) => rulesetData.klassesById.get(id) ?? []),
-      klassSkills: klassIds.flatMap((id) => rulesetData.klassSkillsByKlassId.get(id) ?? []),
+      klassSkills: klassIds.flatMap((id) => rulesetData.klassSkillsByKlass.get(id) ?? []),
       klassEntityIds: [...new Set(klassIds)],
     };
   }

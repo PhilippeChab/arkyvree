@@ -21,7 +21,7 @@ export default class ClassSkillEntity {
    */
   planAdd(skillId: string) {
     const skill = new SkillEntity(this.view).find(skillId);
-    if (this.view.rulesetData.klassSkillsByKlassId.get(this.klass.id)?.some((ks) => ks.skillId === skill.id))
+    if (this.view.rulesetData.klassSkillsByKlass.get(this.klass.id)?.some((ks) => ks.skillId === skill.id))
       throw new RulesError("conflict", "Skill is already assigned to this class");
     return { klass: this.klass, skill };
   }
@@ -32,7 +32,7 @@ export default class ClassSkillEntity {
    */
   planRemove(skillId: string) {
     const { rulesetData } = this.view;
-    const klassSkill = rulesetData.klassSkillsByKlassId.get(this.klass.id)?.find((ks) => ks.skillId === skillId);
+    const klassSkill = rulesetData.klassSkillsByKlass.get(this.klass.id)?.find((ks) => ks.skillId === skillId);
     if (!klassSkill) throw new RulesError("not-found", "Skill is not assigned to this class");
     return { klass: this.klass, klassSkill, skill: rulesetData.skillsById.get(skillId) };
   }

@@ -31,7 +31,7 @@ interface Indices {
   aptitudeIdsWithFeats: Set<string>;
   aptitudeIdsWithPowers: Set<string>;
   aptitudesById: Map<string, Aptitude>;
-  entityIdsByPropertyLookup: Map<string, string[]>;
+  entityIdsByProperty: Map<string, string[]>;
   featIdBySlug: Map<string, string>;
   featsById: Map<string, FeatWithAptitudes>;
   itemsById: Map<string, Item>;
@@ -40,10 +40,10 @@ interface Indices {
   klassLevelFeatsByKlassLevel: Map<string, KlassLevelFeat[]>;
   klassLevelFeatsWithFeatsByKlassLevel: Map<string, (KlassLevelFeat & { featsInRule: FeatWithAptitudes })[]>;
   klassLevelPowersWithPowersByKlassLevel: Map<string, (KlassLevelPower & { powersInRule: PowerWithAptitudes })[]>;
-  klassLevelSavesByKlassLevelId: Map<string, KlassLevelSave[]>;
+  klassLevelSavesByKlassLevel: Map<string, KlassLevelSave[]>;
   klassLevelsById: Map<string, KlassLevel>;
-  klassLevelsByKlassId: Map<string, KlassLevel[]>;
-  klassSkillsByKlassId: Map<string, KlassSkill[]>;
+  klassLevelsByKlass: Map<string, KlassLevel[]>;
+  klassSkillsByKlass: Map<string, KlassSkill[]>;
   klassSkillsWithSkillsByKlass: Map<string, (KlassSkill & { skillsInRule: Skill })[]>;
   languagesById: Map<string, Language>;
   mechanicsById: Map<string, Mechanic>;
@@ -117,6 +117,16 @@ export interface ViewEntities {
 /** Rows by id. */
 function buildById<T extends { id: string }>(list: T[]): Map<string, T> {
   return new Map(list.map((item) => [item.id, item]));
+}
+
+/** Rows' ids by their name's slug (`stripSeparators`): the first row of a slug wins, as the view lists them. */
+function buildIdBySlug(rows: { id: string; name: string }[]): Map<string, string> {
+  const idBySlug = new Map<string, string>();
+  for (const row of rows) {
+    const slug = stripSeparators(row.name);
+    if (!idBySlug.has(slug)) idBySlug.set(slug, row.id);
+  }
+  return idBySlug;
 }
 
 /**
@@ -287,11 +297,11 @@ export default class RulesetData {
   }
 
   /**
-   * `stripSeparators(aptitude.name)` → aptitudeId: what modifier targets name an aptitude by (`aptitudes.<slug>.…`),
-   * and what finalize, distribution, the pick queries and the loader map names through.
+   * `stripSeparators(aptitude.name)` → aptitudeId, the first match winning: what modifier targets name an aptitude by
+   * (`aptitudes.<slug>.…`), and what finalize, distribution, the pick queries and the loader map names through.
    */
   get aptitudeIdBySlug(): Map<string, string> {
-    return (this.built.aptitudeIdBySlug ??= new Map(this.aptitudes.map((apt) => [stripSeparators(apt.name), apt.id])));
+    return (this.built.aptitudeIdBySlug ??= buildIdBySlug(this.aptitudes));
   }
 
   /** The aptitudes that have at least one feat linked, from the feats' inline `featsAptitudesInRules` rows. */
@@ -333,27 +343,18 @@ export default class RulesetData {
    * Reverse property index: `${entityType}:${type}:${value}` → the ids of the entities with that property. Replaces
    * O(N) scans like `powers.filter(p => p.properties.some(x => x.type === TYPE && x.value === V))`.
    */
-  get entityIdsByPropertyLookup(): Map<string, string[]> {
-    if (this.built.entityIdsByPropertyLookup) return this.built.entityIdsByPropertyLookup;
-    const entityIdsByPropertyLookup = new Map<string, string[]>();
-    for (const p of this.properties) {
-      const key = `${p.entityType}:${p.type}:${p.value}`;
-      const group = entityIdsByPropertyLookup.get(key);
-      if (group) group.push(p.entityId);
-      else entityIdsByPropertyLookup.set(key, [p.entityId]);
-    }
-    return (this.built.entityIdsByPropertyLookup = entityIdsByPropertyLookup);
+  get entityIdsByProperty(): Map<string, string[]> {
+    return (this.built.entityIdsByProperty ??= new Map(
+      [...Map.groupBy(this.sortedProperties, (p) => `${p.entityType}:${p.type}:${p.value}`)].map(([key, rows]) => [
+        key,
+        rows.map((p) => p.entityId),
+      ]),
+    ));
   }
 
   /** `stripSeparators(feat.name)` → featId, the first match winning: the "set feats.<slug>.possessed" modifier scan. */
   get featIdBySlug(): Map<string, string> {
-    if (this.built.featIdBySlug) return this.built.featIdBySlug;
-    const featIdBySlug = new Map<string, string>();
-    for (const feat of this.feats) {
-      const slug = stripSeparators(feat.name);
-      if (!featIdBySlug.has(slug)) featIdBySlug.set(slug, feat.id);
-    }
-    return (this.built.featIdBySlug = featIdBySlug);
+    return (this.built.featIdBySlug ??= buildIdBySlug(this.feats));
   }
 
   get featsById(): Map<string, FeatWithAptitudes> {
@@ -457,8 +458,8 @@ export default class RulesetData {
     ));
   }
 
-  get klassLevelSavesByKlassLevelId(): Map<string, KlassLevelSave[]> {
-    return (this.built.klassLevelSavesByKlassLevelId ??= this.resolvingIds(
+  get klassLevelSavesByKlassLevel(): Map<string, KlassLevelSave[]> {
+    return (this.built.klassLevelSavesByKlassLevel ??= this.resolvingIds(
       Map.groupBy(this.klassLevelSaves, (kls) => kls.klassLevelId),
     ));
   }
@@ -468,16 +469,18 @@ export default class RulesetData {
   }
 
   /** klassId → its levels, sorted by level: the last is the class's highest. */
-  get klassLevelsByKlassId(): Map<string, KlassLevel[]> {
-    if (this.built.klassLevelsByKlassId) return this.built.klassLevelsByKlassId;
-    const klassLevelsByKlassId = Map.groupBy(this.klassLevels, (kl) => kl.klassId);
-    for (const group of klassLevelsByKlassId.values()) group.sort((a, b) => a.level - b.level);
-    return (this.built.klassLevelsByKlassId = this.resolvingIds(klassLevelsByKlassId));
+  get klassLevelsByKlass(): Map<string, KlassLevel[]> {
+    return (this.built.klassLevelsByKlass ??= this.resolvingIds(
+      Map.groupBy(
+        this.klassLevels.toSorted((a, b) => a.level - b.level),
+        (kl) => kl.klassId,
+      ),
+    ));
   }
 
   /** klassId → its skills, the links themselves (`klassSkillsWithSkillsByKlass` joins the skills). */
-  get klassSkillsByKlassId(): Map<string, KlassSkill[]> {
-    return (this.built.klassSkillsByKlassId ??= this.resolvingIds(
+  get klassSkillsByKlass(): Map<string, KlassSkill[]> {
+    return (this.built.klassSkillsByKlass ??= this.resolvingIds(
       Map.groupBy(this.sortedKlassSkills, (ks) => ks.klassId),
     ));
   }
@@ -528,6 +531,10 @@ export default class RulesetData {
     return (this.built.mechanicsById ??= this.resolvingIds(buildById(this.mechanics)));
   }
 
+  /**
+   * Modifiers by id, unresolved: only an entity's copy gets copy-on-write aliases (`EntityCopy` copies its modifiers
+   * under new ids), so a modifier's own id is never stale.
+   */
   get modifiersById(): Map<string, Modifier> {
     return (this.built.modifiersById ??= buildById(this.modifiers));
   }
