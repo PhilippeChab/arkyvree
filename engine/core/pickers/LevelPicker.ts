@@ -7,10 +7,10 @@ import type { KlassLevel } from "@/shared/relations.ts";
 import CharacterPicker, { type PickingCharacter } from "./CharacterPicker.ts";
 
 /**
- * A feat or power picker: the level it picks at (`query`), the character projected to it with the feats picked so far,
- * whose requirements an option is checked against, and the character holding what it leaves out (`holder`): with every
- * level it has and plans. Both are built by its ruleset's builder (`builder`), each level they project at the hit
- * points its ruleset counts a level before they're rolled (`unrolledLevelHp`).
+ * A feat or power picker: the level it picks at (`query`), the character projected to it with the feats and powers
+ * picked so far, whose requirements an option is checked against, and the character holding what it leaves out
+ * (`holder`): with every level it has and plans. Both are built by its ruleset's builder (`builder`), each level they
+ * project at the hit points its ruleset counts a level before they're rolled (`unrolledLevelHp`).
  */
 export default abstract class LevelPicker<
   C extends PickingCharacter,
@@ -37,7 +37,7 @@ export default abstract class LevelPicker<
 
   /**
    * The character a pick is made for: as it was before the edited level (an edit), with the levels planned before this
-   * one and their ability increases, then this class level with its own and the feats picked so far.
+   * one and their ability increases, then this class level with its own and the feats and powers picked so far.
    */
   protected override project() {
     const { abilityIncreases, editedLevelId, planned = {} } = this.query;
@@ -45,14 +45,20 @@ export default abstract class LevelPicker<
     if (editedLevelId) projection.dropLevelsFrom(editedLevelId);
     const hp = this.unrolledLevelHp;
     projection.addLevels(planned.klassLevelIds ?? [], { abilityIncreases: planned.abilityIncreases, hp });
-    projection.pick(projection.addLevel(this.klassLevel.id, { abilityIncreases, hp }), { feats: planned.featPicks });
+    projection.pick(projection.addLevel(this.klassLevel.id, { abilityIncreases, hp }), this.pickedSoFar);
     return projection;
+  }
+
+  /** The feats and powers the wizard picked so far, each in its pool, which the picker's level holds. */
+  private get pickedSoFar() {
+    const { featPicks: feats, powerPicks: powers } = this.query.planned ?? {};
+    return { feats, powers };
   }
 
   /**
    * The character with every level it has and the wizard plans: this class level with its own ability increases and
-   * the feats picked so far, in the edited level's place (an edit), or after the levels planned before it and before
-   * those planned after it.
+   * the feats and powers picked so far, in the edited level's place (an edit), or after the levels planned before it
+   * and before those planned after it.
    */
   private projectHolder() {
     const { abilityIncreases, editedLevelId, laterKlassLevelIds = [], planned = {} } = this.query;
@@ -60,17 +66,17 @@ export default abstract class LevelPicker<
     const hp = this.unrolledLevelHp;
     const replacing = this.input.rows.levels.find((level) => level.id === editedLevelId);
     projection.addLevels(planned.klassLevelIds ?? [], { abilityIncreases: planned.abilityIncreases, hp });
-    const level = projection.addLevel(this.klassLevel.id, { abilityIncreases, hp, replacing });
-    projection.pick(level, { feats: planned.featPicks });
+    projection.pick(projection.addLevel(this.klassLevel.id, { abilityIncreases, hp, replacing }), this.pickedSoFar);
     projection.addLevels(laterKlassLevelIds, { hp });
     return projection;
   }
 
   /**
-   * The character whose feats and powers the picker leaves out: with every level it has and the wizard plans, built
-   * when first asked. A level can't pick what the character holds, picked or granted at another level, a later one too,
-   * or given by a modifier, as the save checks a level's picks against what the character holds with its every other
-   * level (`SelectionChecks.checkFeatsNotHeld`, `checkPowersNotKnown`).
+   * The character whose feats and powers the picker leaves out: with every level it has and the wizard plans, and the
+   * feats and powers picked so far, built when first asked. A level can't pick what the character holds, picked or
+   * granted at another level, a later one too, or given by a modifier, the picks so far's own too, as the save checks a
+   * level's picks against what the character holds with its every other level and the level's other picks
+   * (`SelectionChecks.checkPicksNotHeld`).
    */
   protected get holder(): C {
     // With no level edited or planned after it, it's the character the pick is made for

@@ -100,24 +100,21 @@ export default abstract class LevelUpState extends include(LevelUpBase<DetailedC
 
   /**
    * The picks that fit their pools (`picks`, each pool's in its order), and the character holding them (`build`): those
-   * a save takes (`keepTakenPicks`) but the feats that don't stack the character has already and the powers it knows in
-   * their pool already, as a save refuses them (`withoutHeldFeats`, held with the powers picked; `withoutKnownPowers`,
-   * known with the feats kept; an edited level's own saved picks, `kept`, stay), then the latest picks of an overfull
-   * pool dropped, and the character built again, until none is (a feat dropped takes the room it gave). What the wizard
-   * keeps of its picks, as a save would take them.
+   * a save takes (`keepTakenPicks`) but those the character holds already, as a save refuses them (`withoutHeldPicks`:
+   * a feat that doesn't stack it has, a power it knows in its pool, the level's other picks' gifts too; an edited
+   * level's own saved picks, `kept`, stay), then the latest picks of an overfull pool dropped, and the character built
+   * again, until none is (a feat dropped takes the room it gave). What the wizard keeps of its picks, as a save would
+   * take them.
    */
   protected fitPicks(
     picks: Partial<PoolPicks>,
     build: (picks: PoolPicks) => DetailedCharacter,
-    kept: Pick<LevelPickRows, "feats" | "powers"> = { feats: [], powers: [] },
+    kept?: Pick<LevelPickRows, "feats" | "powers">,
   ) {
-    const taken = this.keepTakenPicks(picks);
-    const held = () => build({ feats: {}, powers: taken.powers }).getHeldFeats();
-    const feats = this.checks.withoutHeldFeats(taken.feats, held, kept.feats);
-    const known = () => build({ feats, powers: {} }).getHeldPowers();
-    let fitted: PoolPicks = { feats, powers: this.checks.withoutKnownPowers(taken.powers, known, kept.powers) };
+    const holding = this.buildOnce(build);
+    let fitted = this.checks.withoutHeldPicks(this.keepTakenPicks(picks), holding, kept);
     for (;;) {
-      const character = build(fitted);
+      const character = holding(fitted);
       const [overfull] = character.components.aptitudes.getOverfullPools(this.countOwnPicks(fitted));
       if (!overfull) return { character, picks: fitted };
       fitted = this.dropExcess(fitted, overfull);

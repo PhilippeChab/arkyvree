@@ -5,7 +5,6 @@ import {
   CharacterProjection,
   type LevelEditPlan,
   type LevelEditRequest,
-  type LevelPickRows,
   type LevelPicks,
   type LevelsPlan,
   type LevelUpRequest,
@@ -14,7 +13,7 @@ import RulesError from "@/engine/core/RulesError.ts";
 
 import LevelUpBase from "./LevelUpBase.ts";
 import PicksDistribution from "./PicksDistribution.ts";
-import type { HeldFeat, KnownPower } from "./SelectionChecks.ts";
+import type { HoldingCharacter } from "./SelectionChecks.ts";
 
 /** A planned level checked: its class level, hit points, ability increases and picks. */
 interface PlannedLevel {
@@ -25,15 +24,11 @@ interface PlannedLevel {
 }
 
 /**
- * A character a save builds with what it writes: its validation, which refuses the save unless it's forced, the feats
- * it has, which a level can't pick again unless they stack (`SelectionChecks.checkFeatsNotHeld`), and the powers it
- * knows, each in its pool, which a level can't pick there again (`SelectionChecks.checkPowersNotKnown`).
+ * A character a save builds with what it writes: its validation, which refuses the save unless it's forced, and the
+ * feats it has and the powers it knows, each in its pool, which a level can't pick again, but a feat that stacks
+ * (`SelectionChecks.checkPicksNotHeld`).
  */
-export interface CheckedCharacter {
-  /** The feats the character has: picked, granted, or made possessed by its modifiers. */
-  getHeldFeats(): HeldFeat[];
-  /** The powers the character knows, each in its pool: picked, granted, or made known by its modifiers. */
-  getHeldPowers(): KnownPower[];
+export interface CheckedCharacter extends HoldingCharacter {
   validate(): ValidationResult;
 }
 
@@ -45,17 +40,43 @@ export interface CheckedCharacter {
  * - each level isn't saved already (a level-up's), and raises its abilities by what the rules give it;
  * - its hit points, its selections and their pools checked, no non-stackable feat or power picked twice at a level
  *   (`SelectionChecks`);
- * - no non-stackable feat picked the character has already, forced or not (`checkFeatsNotHeld`): held (picked or
- *   granted at another of its levels, saved or planned, a later one too, or made possessed by a modifier), or picked
- *   earlier in the level-up; an edited level's own saved picks stay;
- * - no power picked in a pool the character knows it in already, forced or not (`checkPowersNotKnown`): held there
- *   (picked at another level, granted, made known by a modifier), or picked there earlier in the level-up; an edited
- *   level's own saved picks stay;
+ * - no pick the character holds already, forced or not (`checkPicksNotHeld`): a non-stackable feat it has, or a power
+ *   it knows in its pool, held (picked or granted at another of its levels, saved or planned, a later one too, or made
+ *   possessed or known by a modifier), picked earlier in the level-up, or given by the level's (or the level-up's)
+ *   other picks, which stay; an edited level's own saved picks stay;
  * - the picks overfill no pool, forced or not (`findOverfullPools`);
  * - the character with them is valid, unless forced: wholly for a level-up, in the issues the level answers for for an
  *   edit (`findEditedLevelIssues`).
  */
 export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpBase<C> {
+  /**
+   * The planned levels holding these of the level-up's own feats and powers (`picks`, by pool): each on the level the
+   * save spread it to, as often as `picks` gives it, the others left out.
+   */
+  private keepPlannedPicks(planned: PlannedLevel[], picks: Pick<LevelPicks, "feats" | "powers">): PlannedLevel[] {
+    // What's left of each pool's picks to keep: one kept at a level is taken off its pool's
+    const left = structuredClone(picks);
+    const keep = (byPool: Record<string, string[]>, leftByPool: Record<string, string[]>) =>
+      Object.fromEntries(
+        Object.entries(byPool).map(([aptitudeId, ids]) => [
+          aptitudeId,
+          ids.filter((id) => {
+            const index = leftByPool[aptitudeId]?.indexOf(id) ?? -1;
+            if (index >= 0) leftByPool[aptitudeId].splice(index, 1);
+            return index >= 0;
+          }),
+        ]),
+      );
+    return planned.map((level) => ({
+      ...level,
+      picks: {
+        ...level.picks,
+        feats: keep(level.picks.feats, left.feats),
+        powers: keep(level.picks.powers, left.powers),
+      },
+    }));
+  }
+
   /**
    * An edited level's projection: the level with its new hit points, ability increases and picks, in place of its saved
    * row.
@@ -98,20 +119,6 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
     return projection;
   }
 
-  /**
-   * Refuses picks (`picks`, by pool) the character holds already, forced or not: a feat that doesn't stack it has, and a
-   * power it knows in its pool, each read off the character with the picks but those of its kind (`without`), or picked
-   * earlier in the save; but the edited level's own saved picks (`kept`), so a repeat saved before stays.
-   */
-  private refuseHeld(
-    picks: Pick<LevelPicks, "feats" | "powers">,
-    without: (kind: "feats" | "powers") => CharacterProjection,
-    kept?: Pick<LevelPickRows, "feats" | "powers">,
-  ) {
-    this.checks.checkFeatsNotHeld(picks.feats, () => this.build(without("feats")).getHeldFeats(), kept?.feats);
-    this.checks.checkPowersNotKnown(picks.powers, () => this.build(without("powers")).getHeldPowers(), kept?.powers);
-  }
-
   /** Refuses picks (`picks`, which `holder` holds) that overfill a pool they're in, as the ruleset counts them. */
   private refuseOverfull(holder: C, picks: Pick<LevelPicks, "feats" | "powers">) {
     PicksDistribution.refuseOverfull(this.rules.findOverfullPools(this.view, this.character, holder, picks));
@@ -120,9 +127,9 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
   /**
    * The edit of saved level `characterLevelId`, with the character's bonded creatures' rows (`bonded`): the level as
    * saved, its new hit points, ability increases and picks, checked, its picks refused when they pick a feat that
-   * doesn't stack the character has already or a power it knows in its pool already (but the level's own saved picks)
-   * or overfill a pool (forced or not), and refused with the issues it answers for unless `force`d; and what its bonded
-   * creatures become with it.
+   * doesn't stack the character has already or a power it knows in its pool already, the level's other picks' gifts
+   * too (but the level's own saved picks), or overfill a pool (forced or not), and refused with the issues it answers
+   * for unless `force`d; and what its bonded creatures become with it.
    */
   planEdit(bonded: CharacterInput[], characterLevelId: string, edit: LevelEditRequest, force: boolean): LevelEditPlan {
     const { rows } = this.character;
@@ -133,13 +140,14 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
     // The levels in the order the character took them: the edited level's index is its total level less one
     this.checks.checkAbilityIncreases(rows.levels.indexOf(level), abilityIncreases);
     this.checks.checkLevel({ klass, ...edit });
-    // A new pick the character has already (at another level, granted or by a modifier) is refused, the level's saved
-    // picks stay, a repeat saved before too
-    const without = (kind: "feats" | "powers") =>
-      this.projectEditedLevel(level, klassLevel.id, { ...edit, [kind]: {} });
-    this.refuseHeld(edit, without, this.getSavedPicks(characterLevelId));
+    // A new pick the character holds already (at another level, granted, by a modifier, or given by the level's other
+    // picks) is refused, the level's saved picks stay, a repeat saved before too
+    const holding = this.buildOnce((picks) =>
+      this.build(this.projectEditedLevel(level, klassLevel.id, { ...edit, ...picks })),
+    );
+    this.checks.checkPicksNotHeld(edit, holding, this.getSavedPicks(characterLevelId));
 
-    const edited = this.build(this.projectEditedLevel(level, klassLevel.id, edit));
+    const edited = holding(edit);
     this.refuseOverfull(edited, edit);
     const { valid, issues } = edited.validate();
     if (!valid && !force) {
@@ -161,8 +169,8 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
    * levels before it see it, and refused when it's saved already, raises its abilities by other than its rules give it,
    * or picks what it can't; the picks are refused when they pick a feat that doesn't stack the character has already
    * (at a saved level or a planned one, a later one too, or by a modifier, as an edit of it would refuse it) or a power
-   * it knows in its pool already, or overfill a pool, forced or not, and the character with them with what it fails,
-   * unless `force`d. Each level's writes are its row's columns (its class level and hit points) and its rows under it
+   * it knows in its pool already, the plan's other picks' gifts too, or overfill a pool, forced or not, and the
+   * character with them with what it fails, unless `force`d. Each level's writes are its row's columns (its class level and hit points) and its rows under it
    * (its ability increases and picks).
    */
   planLevels(bonded: CharacterInput[], { levels, picks }: LevelUpRequest, force: boolean): LevelsPlan {
@@ -187,12 +195,14 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
       planned.push({ abilityIncreases, hp, klassLevelId: klassLevel.id, picks: levelPicks });
       otherLevels.push({ klassLevelId: klassLevel.id });
     }
-    // A pick the character has with every planned level, a later one too, or the plan picks before, is refused
-    const without = (kind: "feats" | "powers") =>
-      this.projectLevelRequests(planned.map((level) => ({ ...level, picks: { ...level.picks, [kind]: {} } })));
-    this.refuseHeld(picks, without);
+    // A pick the character holds with every planned level, a later one too, the plan picks before, or the plan's other
+    // picks give, is refused
+    const holding = this.buildOnce((kept) =>
+      this.build(this.projectLevelRequests(this.keepPlannedPicks(planned, kept))),
+    );
+    this.checks.checkPicksNotHeld(picks, holding);
 
-    const saved = this.build(this.projectLevelRequests(planned));
+    const saved = holding(picks);
     this.refuseOverfull(saved, picks);
     if (!force) RulesError.refuseIssues(saved.validate().issues);
     return {

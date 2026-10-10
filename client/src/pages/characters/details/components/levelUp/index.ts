@@ -10,7 +10,6 @@ export {
   type LevelPreview,
   levelStepQuery,
   type PickerLevel,
-  type PowerPickerLevel,
   type StepAnswer,
 } from "./levelUpQueries.ts";
 export { LevelWizardDialog } from "./LevelWizardDialog.tsx";

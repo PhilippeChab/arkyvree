@@ -8,8 +8,9 @@ import Dnd35LevelPicker from "./Dnd35LevelPicker.ts";
 /**
  * A power picker for the character, from its rows: the pool's powers (`filters`: of a spell level, when given), but
  * those it knows in the pool at any of its levels, a later one and a planned one too (`holder`: picked, granted by its
- * class levels, the one it's taking too, or made known by its modifiers: each pool is a list of its own, which knows a
- * power once), those of the schools a wizard's specialization prohibits, and those picked so far.
+ * class levels, the one it's taking too, or made known by its modifiers, the feats' and powers' picked so far too:
+ * each pool is a list of its own, which knows a power once), those of the schools a wizard's specialization prohibits,
+ * and those picked so far, in any pool.
  */
 export default class PowerPicker extends Dnd35LevelPicker {
   constructor(view: RulesetView, input: CharacterInput, query: PowerPickQuery) {
@@ -21,13 +22,13 @@ export default class PowerPicker extends Dnd35LevelPicker {
   override readonly filters: { excludeIds: string[]; ids: string[] };
 
   /** What the picker offers and leaves out (`filters`). */
-  private buildFilters({ aptitudeId, powerLevel, selectedPowerIds = [] }: PowerPickQuery) {
+  private buildFilters({ aptitudeId, planned = {}, powerLevel }: PowerPickQuery) {
     // Every level the character has and plans, the one it's taking too, whose grants it holds in their pools
     const known = this.holder.getHeldPowers().filter((power) => power.aptitudeId === aptitudeId);
     const excludeIds = [
       ...known.map((power) => power.id),
       ...this.getProhibitedPowerIds(aptitudeId),
-      ...selectedPowerIds,
+      ...(planned.powerPicks ?? []).map((pick) => pick.powerId),
     ];
     return { ids: this.rulesetData.listPowerIds({ aptitudeId, level: powerLevel }), excludeIds };
   }

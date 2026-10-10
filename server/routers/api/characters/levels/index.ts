@@ -38,6 +38,9 @@ const levelIncreases = z.array(z.object({ abilityId: z.string().uuid(), amount: 
 
 const levelParams = characterIdParam.extend({ characterLevelId: z.string().uuid() });
 
+/** Comma-separated `powerId:aptitudeId` picks: what isn't one is dropped. */
+const powerPicks = buildPickPairsSchema("powerId");
+
 /** A number in the query string. */
 const queryNumber = z.string().pipe(z.coerce.number());
 
@@ -79,9 +82,9 @@ const stepQuery = {
 };
 
 /**
- * A feat or power picker's page: its step's level, which it requires, the pool it picks in and the feats picked so far,
- * which its options are checked against, and the levels the wizard plans after it (`laterClassLevelIds`), whose grants
- * it leaves out.
+ * A feat or power picker's page: its step's level, which it requires, the pool it picks in and the feats and powers
+ * picked so far, which its options are checked against and what they give it leaves out, and the levels the wizard
+ * plans after it (`laterClassLevelIds`), whose grants it leaves out.
  */
 const pickerQuery = {
   ...stepQuery,
@@ -92,11 +95,9 @@ const pickerQuery = {
   level: queryNumber,
   limit: limitDefaultingTo(20),
   page,
+  powerPicks,
   search: z.string().optional(),
 };
-
-/** Comma-separated `powerId:aptitudeId` picks: what isn't one is dropped. */
-const powerPicks = buildPickPairsSchema("powerId");
 
 /** A step's name, as its ruleset lists it. */
 const stepParams = characterIdParam.extend({ step: z.string().min(1) });
@@ -155,7 +156,7 @@ export default new Hono<SessionContext>()
   .get(
     "/:characterId/available-powers",
     validate("param", characterIdParam),
-    validate("query", z.object({ ...pickerQuery, powerLevel: queryNumber.optional(), selectedPowerIds: idList })),
+    validate("query", z.object({ ...pickerQuery, powerLevel: queryNumber.optional() })),
     async (c) => {
       const { characterId } = c.req.valid("param");
       const { limit, page, ...where } = c.req.valid("query");

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { levelAbilityIncreasesInCharacter } from "@/drizzle/schema.ts";
-import type { AbilityIncrease } from "@/engine/index.ts";
+import type { AbilityIncrease, PlannedSoFar } from "@/engine/index.ts";
 import { type SeedContext } from "@/scripts/db/seeds/seedContext.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
@@ -39,6 +39,17 @@ import { makeSession } from "@/tests/support/users.ts";
 type BatchLevel = [klass: string, level: number, hp: number, ability?: string];
 
 const session = makeSession();
+
+/** A human cleric's first level: the War and Good domains, the longsword as war weapon, and two General feats. */
+const WAR_CLERIC_FIRST = {
+  hp: 8,
+  skills: { Concentration: 4, Diplomacy: 4, Heal: 4, Spellcraft: 4 },
+  feats: {
+    "Cleric Domain": ["War Domain", "Good Domain"],
+    "War Domain Weapon": ["War Domain Weapon: Longsword"],
+    General: ["Toughness", "Great Fortitude"],
+  },
+};
 
 /** The refusal of a pick of a feat that doesn't stack, which the character has already. */
 function alreadyHeld(feat: string) {
@@ -82,12 +93,37 @@ function pastLastLevel(levelsLeft: number) {
   return { refusal: "invalid", issues: [{ category: "levels", message }] };
 }
 
+/**
+ * A human cleric's first level (`WAR_CLERIC_FIRST`) with these General feats, its pools in the order a form would send
+ * them picked: its General feats first, or its war weapon.
+ */
+function warClericFirst(general: string[], first: "General" | "War Domain Weapon" = "General"): LevelPlan {
+  const { General: _general, ...others } = WAR_CLERIC_FIRST.feats;
+  const feats = first === "General" ? { General: general, ...others } : { ...others, General: general };
+  return { ...WAR_CLERIC_FIRST, feats };
+}
+
 /** A new seeded fighter with fighter levels 1 to `count`, written straight to the database. */
 async function createFighterAt(ctx: SeedContext, count: number) {
   const characterId = await createSeedCharacter(ctx);
   for (let level = 1; level <= count; level++)
     await addCharacterLevel(characterId, (await findKlassLevel(ctx.klassMap.pc["Fighter"], level))!.id);
   return characterId;
+}
+
+/**
+ * A fork whose Detect Magic makes Light known on the sorcerer's list (`rulesetId`), and a human sorcerer of it
+ * (`characterId`): the seed's context with the fork's Detect Magic, its copy, which the pickers list (`ctx`).
+ */
+async function createLightGivingSorcerer() {
+  const ctx = await getSeedCtx();
+  const fork = await createSeededTestRuleset(SEED_USER_ID);
+  const detectMagic = await copyEntity(db, "powers", ctx.powerMap["Detect Magic"], fork);
+  await give("powers", detectMagic.id, "powers.light.sorcerer.known");
+  RulesetViews.invalidate(fork.id);
+  const characterId = await createSeedCharacter(ctx, "sorcerer", { rulesetId: fork.id, xp: 1000 });
+  const forkCtx: SeedContext = { ...ctx, powerMap: { ...ctx.powerMap, "Detect Magic": detectMagic.id } };
+  return { characterId, ctx: forkCtx, rulesetId: fork.id };
 }
 
 /**
@@ -132,13 +168,50 @@ async function eligible(
   return items.find((row) => row.displayName === search)!.eligible;
 }
 
-/** The names of the feats Add Level's picker offers at a class's `level`, in pool `aptitude`, searched by `search`. */
-async function offeredFeats(characterId: string, klass: string, level: number, aptitude: string, search: string) {
+/** Gives a row (`sourceType`'s `sourceId`) a modifier that gives what `target` names, a feat or a spell on a list. */
+async function give(sourceType: string, sourceId: string, target: string) {
+  await Modifiers.create(db, { sourceId, sourceType, target, value: "true", valueType: "boolean", operator: "set" });
+}
+
+/**
+ * The names of the feats Add Level's picker offers at a class's `level`, in pool `aptitude`, searched by `search`, with
+ * the feats and spells `picked` so far.
+ */
+async function offeredFeats(
+  characterId: string,
+  klass: string,
+  level: number,
+  aptitude: string,
+  search: string,
+  picked: Pick<PlannedSoFar, "featPicks" | "powerPicks"> = {},
+) {
   const ctx = await getSeedCtx();
   const { items } = await CharacterLevelsService.getAvailableFeats(
     session,
     characterId,
-    { aptitudeId: ctx.aptMap[aptitude], classId: ctx.klassMap.pc[klass], level, search },
+    { aptitudeId: ctx.aptMap[aptitude], classId: ctx.klassMap.pc[klass], level, search, ...picked },
+    { limit: 20, page: 1 },
+  );
+  return items.map(({ name }) => name);
+}
+
+/**
+ * The names of the spells Add Level's picker offers at a class's `level`, in pool `aptitude`, searched by `search`, with
+ * the spells picked so far (`powerPicks`).
+ */
+async function offeredPowers(
+  characterId: string,
+  klass: string,
+  level: number,
+  aptitude: string,
+  search: string,
+  powerPicks: PlannedSoFar["powerPicks"] = [],
+) {
+  const ctx = await getSeedCtx();
+  const { items } = await CharacterLevelsService.getAvailablePowers(
+    session,
+    characterId,
+    { aptitudeId: ctx.aptMap[aptitude], classId: ctx.klassMap.pc[klass], level, search, powerPicks },
     { limit: 20, page: 1 },
   );
   return items.map(({ name }) => name);
@@ -146,16 +219,7 @@ async function offeredFeats(characterId: string, klass: string, level: number, a
 
 /** Gives the character the feats of these `slugs` by modifiers of its own (`set feats.<slug>.possessed`), as a race would. */
 async function possess(characterId: string, slugs: string[]) {
-  for (const slug of slugs) {
-    await Modifiers.create(db, {
-      sourceId: characterId,
-      sourceType: "characters",
-      target: `feats.${slug}.possessed`,
-      value: "true",
-      valueType: "boolean",
-      operator: "set",
-    });
-  }
+  for (const slug of slugs) await give("characters", characterId, `feats.${slug}.possessed`);
 }
 
 async function preview(
@@ -1194,6 +1258,263 @@ describe("a feat that doesn't stack, held once", () => {
     const ranger = { hp: 8, skills: { Spot: 4, Survival: 4 }, feats: { "Favored Enemy": ["Favored Enemy: Undead"] } };
     await levelUp(session, ctx, trackerId, "Ranger", 1, ranger);
     await resaveAsRead(trackerId, tracking.id);
+  });
+});
+
+describe("a pick the level's other picks give", () => {
+  const KNOWN_LIGHT = { message: 'Power "Light" is already known in Sorcerer Spells', refusal: "invalid" };
+  const FOCUS = "Weapon Focus: Longsword";
+  const WAR_WEAPON = "War Domain Weapon: Longsword";
+
+  test("drops a feat another feat picked at the level gives, whatever their order, as the picker leaves it out and the save refuses it, forced or not", async () => {
+    const ctx = await getSeedCtx();
+    const characterId = await createSeedCharacter(ctx, "cleric");
+    const [general, weapon] = [ctx.aptMap["General"], ctx.aptMap["War Domain Weapon"]];
+    // Its General picker leaves Weapon Focus out once the war weapon is picked, which its own picker offers with
+    // Weapon Focus picked
+    expect(await offeredFeats(characterId, "Cleric", 1, "General", FOCUS)).toContain(FOCUS);
+    const weaponPicked = { featPicks: [{ aptitudeId: weapon, featId: ctx.featMap[WAR_WEAPON] }] };
+    expect(await offeredFeats(characterId, "Cleric", 1, "General", FOCUS, weaponPicked)).not.toContain(FOCUS);
+    const focusPicked = { featPicks: [{ aptitudeId: general, featId: ctx.featMap[FOCUS] }] };
+    expect(await offeredFeats(characterId, "Cleric", 1, "War Domain Weapon", WAR_WEAPON, focusPicked)).toEqual([
+      WAR_WEAPON,
+    ]);
+
+    // Picked first or last, Weapon Focus gives way: its slot goes to the next General feat, the war weapon stays
+    const orders: [string[], "General" | "War Domain Weapon"][] = [
+      [[FOCUS, "Toughness", "Great Fortitude"], "General"],
+      [["Toughness", "Great Fortitude", FOCUS], "War Domain Weapon"],
+    ];
+    for (const [generalFeats, first] of orders) {
+      const { feats } = warClericFirst(generalFeats, first);
+      const previewed = await preview(ctx, characterId, [["Cleric", 1]], undefined, { feats });
+      expect(previewed.feats.fitted[general]).toEqual([ctx.featMap["Toughness"], ctx.featMap["Great Fortitude"]]);
+      expect(previewed.feats.fitted[weapon]).toEqual([ctx.featMap[WAR_WEAPON]]);
+      const plan = warClericFirst(
+        generalFeats.slice(0, 2).includes(FOCUS) ? [FOCUS, "Toughness"] : ["Toughness", FOCUS],
+        first,
+      );
+      for (const force of [false, true])
+        expect(levelUp(session, ctx, characterId, "Cleric", 1, plan, force)).rejects.toMatchObject(alreadyHeld(FOCUS));
+    }
+    const level = await levelUp(
+      session,
+      ctx,
+      characterId,
+      "Cleric",
+      1,
+      warClericFirst(["Toughness", "Great Fortitude"]),
+    );
+    expect(await savedFeatNames(ctx, [level.id])).toEqual(
+      ["Good Domain", "Great Fortitude", "Toughness", "War Domain", WAR_WEAPON].sort(),
+    );
+  });
+
+  test("drops a spell another spell picked at the level makes known in its list, whatever their order, as the picker leaves it out and the save refuses it, forced or not", async () => {
+    const { characterId, ctx } = await createLightGivingSorcerer();
+    const sorcererSpells = ctx.aptMap["Sorcerer Spells"];
+    const pickOf = (name: string) => ({ aptitudeId: sorcererSpells, powerId: ctx.powerMap[name] });
+    // Its picker leaves Light out once Detect Magic is picked, and offers Detect Magic with Light picked
+    expect(await offeredPowers(characterId, "Sorcerer", 1, "Sorcerer Spells", "Light")).toContain("Light");
+    const lightOffered = await offeredPowers(characterId, "Sorcerer", 1, "Sorcerer Spells", "Light", [
+      pickOf("Detect Magic"),
+    ]);
+    expect(lightOffered).not.toContain("Light");
+    const detectOffered = await offeredPowers(characterId, "Sorcerer", 1, "Sorcerer Spells", "Detect Magic", [
+      pickOf("Light"),
+    ]);
+    expect(detectOffered).toEqual(["Detect Magic"]);
+
+    // Picked first or last, Light gives way: its slot goes to the next cantrip, Detect Magic stays
+    const kept = ["Detect Magic", "Read Magic", "Mage Hand", "Resistance", "Magic Missile", "Shield"];
+    for (const spells of [
+      ["Light", ...kept],
+      [...kept, "Light"],
+    ]) {
+      const powers = { "Sorcerer Spells": spells };
+      const previewed = await preview(ctx, characterId, [["Sorcerer", 1]], undefined, { powers });
+      expect(previewed.powers.fitted[sorcererSpells]).toEqual(kept.map((name) => ctx.powerMap[name]));
+      const plan = { ...SORCERER_1, powers: { "Sorcerer Spells": spells.filter((name) => name !== "Resistance") } };
+      for (const force of [false, true])
+        expect(levelUp(session, ctx, characterId, "Sorcerer", 1, plan, force)).rejects.toMatchObject(KNOWN_LIGHT);
+    }
+    const level = await levelUp(session, ctx, characterId, "Sorcerer", 1, {
+      ...SORCERER_1,
+      powers: { "Sorcerer Spells": kept },
+    });
+    const saved = await CharacterLevelPowers.findMany(db, { characterLevelIds: [level.id] });
+    expect(saved.map(({ powerId }) => powerId).sort()).toEqual(kept.map((name) => ctx.powerMap[name]).sort());
+  });
+
+  test("drops a feat a spell picked at the level gives, as the feat picker leaves it out and the save refuses it", async () => {
+    const { characterId, ctx } = await createLightGivingSorcerer();
+    await give("powers", ctx.powerMap["Detect Magic"], "feats.ironwill.possessed");
+    const detectMagic = { aptitudeId: ctx.aptMap["Sorcerer Spells"], powerId: ctx.powerMap["Detect Magic"] };
+    expect(await offeredFeats(characterId, "Sorcerer", 1, "General", "Iron Will")).toEqual(["Iron Will"]);
+    const detectPicked = { powerPicks: [detectMagic] };
+    expect(await offeredFeats(characterId, "Sorcerer", 1, "General", "Iron Will", detectPicked)).toEqual([]);
+
+    const plan = { ...SORCERER_1, feats: { ...SORCERER_1.feats, General: ["Toughness", "Iron Will"] } };
+    const previewed = await preview(ctx, characterId, [["Sorcerer", 1]], undefined, plan);
+    expect(previewed.feats.fitted[ctx.aptMap["General"]]).toEqual([ctx.featMap["Toughness"]]);
+    for (const force of [false, true]) {
+      expect(levelUp(session, ctx, characterId, "Sorcerer", 1, plan, force)).rejects.toMatchObject(
+        alreadyHeld("Iron Will"),
+      );
+    }
+  });
+
+  test("drops a feat one planned level picks that another's pick gives, as the save refuses it, forced or not", async () => {
+    const ctx = await getSeedCtx();
+    const characterId = await createSeedCharacter(ctx, "fighter", { xp: 1000 });
+    // A fighter's first level, whose bonus feat is Weapon Focus: Longsword, then a cleric's, whose war weapon gives it
+    const plan = {
+      skills: { ...FIGHTER_LEVELS[0].skills, Concentration: 1, Heal: 1, Spellcraft: 1, Diplomacy: 1 },
+      feats: { ...WAR_CLERIC_1.feats, General: ["Power Attack", "Great Fortitude"], "Fighter Bonus Feat": [FOCUS] },
+    };
+    const levels: [string, number][] = [
+      ["Fighter", 1],
+      ["Cleric", 1],
+    ];
+    const previewed = await preview(ctx, characterId, levels, undefined, { feats: plan.feats });
+    expect(previewed.feats.fitted[ctx.aptMap["Fighter Bonus Feat"]]).toEqual([]);
+    expect(previewed.feats.fitted[ctx.aptMap["War Domain Weapon"]]).toEqual([ctx.featMap[WAR_WEAPON]]);
+    const batch: BatchLevel[] = [
+      ["Fighter", 1, 10],
+      ["Cleric", 1, 8],
+    ];
+    for (const force of [false, true])
+      expect(finalizeBatch(ctx, characterId, batch, plan, force)).rejects.toMatchObject(alreadyHeld(FOCUS));
+  });
+
+  test("keeps the pick whose name comes first of two that each give the other, whatever their order", async () => {
+    const ctx = await getSeedCtx();
+    // A fork whose Great Fortitude gives Iron Will, and Iron Will Great Fortitude
+    const fork = await createSeededTestRuleset(SEED_USER_ID);
+    const fortitude = await copyEntity(db, "feats", ctx.featMap["Great Fortitude"], fork);
+    const will = await copyEntity(db, "feats", ctx.featMap["Iron Will"], fork);
+    await give("feats", fortitude.id, "feats.ironwill.possessed");
+    await give("feats", will.id, "feats.greatfortitude.possessed");
+    RulesetViews.invalidate(fork.id);
+    const forkCtx = { ...ctx, featMap: { ...ctx.featMap, "Great Fortitude": fortitude.id, "Iron Will": will.id } };
+    const characterId = await createSeedCharacter(ctx, "fighter", { rulesetId: fork.id });
+    const general = ctx.aptMap["General"];
+    // Each picked leaves the other out of the picker
+    const picked = (feat: { id: string }) => ({ featPicks: [{ aptitudeId: general, featId: feat.id }] });
+    expect(await offeredFeats(characterId, "Fighter", 1, "General", "Iron Will", picked(fortitude))).toEqual([]);
+    expect(await offeredFeats(characterId, "Fighter", 1, "General", "Great Fortitude", picked(will))).toEqual([]);
+
+    // Picked together, in either order: Great Fortitude stays, Iron Will gives way
+    for (const both of [
+      ["Great Fortitude", "Iron Will"],
+      ["Iron Will", "Great Fortitude"],
+    ]) {
+      const plan = { ...FIGHTER_LEVELS[0], feats: { ...FIGHTER_LEVELS[0].feats, General: both } };
+      const previewed = await preview(forkCtx, characterId, [["Fighter", 1]], undefined, { feats: plan.feats });
+      expect(previewed.feats.fitted[general]).toEqual([fortitude.id]);
+      for (const force of [false, true]) {
+        expect(levelUp(session, forkCtx, characterId, "Fighter", 1, plan, force)).rejects.toMatchObject(
+          alreadyHeld("Iron Will"),
+        );
+      }
+    }
+  });
+
+  test("keeps a feat a level saved before the rule beside the pick that gives it: it edits as it reads, a new gift refused", async () => {
+    const ctx = await getSeedCtx();
+    const [general, weapon] = [ctx.aptMap["General"], ctx.aptMap["War Domain Weapon"]];
+    const proficiency = "Martial Weapon Proficiency: Longsword";
+    // A cleric level that picks the longsword's proficiency, which its war weapon gives: written straight to the database
+    const characterId = await createSeedCharacter(ctx, "cleric");
+    const { feats, skills } = picks(ctx, warClericFirst(["Toughness", proficiency]));
+    const level = await addCharacterLevel(characterId, (await findKlassLevel(ctx.klassMap.pc["Cleric"], 1))!.id, {
+      feats: Object.entries(feats).flatMap(([aptitudeId, ids]) => ids.map((featId) => ({ aptitudeId, featId }))),
+      skills: Object.entries(skills).map(([skillId, rank]) => ({ skillId, rank })),
+    });
+    await resaveAsRead(characterId, level.id);
+
+    // Its step keeps its own proficiency, and drops Weapon Focus, which the war weapon gives too, as its save refuses it
+    const focused = picks(ctx, warClericFirst([proficiency, FOCUS]));
+    const step = await getLevelStep(session, characterId, "feats", {
+      classId: ctx.klassMap.pc["Cleric"],
+      level: 1,
+      editedLevelId: level.id,
+      featPicks: Object.entries(focused.feats).flatMap(([aptitudeId, ids]) =>
+        ids.map((featId) => ({ aptitudeId, featId })),
+      ),
+    });
+    expect(step.fitted[general]).toEqual([ctx.featMap[proficiency]]);
+    expect(step.fitted[weapon]).toEqual([ctx.featMap[WAR_WEAPON]]);
+    for (const force of [false, true]) {
+      const edit = CharacterLevelsService.updateLevel(
+        session,
+        characterId,
+        level.id,
+        8,
+        [],
+        skills,
+        focused.feats,
+        {},
+        force,
+      );
+      expect(edit).rejects.toMatchObject(alreadyHeld(FOCUS));
+    }
+  });
+
+  test("keeps a spell a level saved before the rule beside the pick that makes it known: it edits as it reads, a new gift refused", async () => {
+    const { characterId, ctx, rulesetId } = await createLightGivingSorcerer();
+    const sorcererSpells = ctx.aptMap["Sorcerer Spells"];
+    const spellRows = (names: string[]) =>
+      names.map((name) => ({ aptitudeId: sorcererSpells, powerId: ctx.powerMap[name] }));
+    // A sorcerer level that picks Light, which its Detect Magic makes known: written straight to the database
+    const { feats, powers, skills } = picks(ctx, SORCERER_1);
+    const level = await addCharacterLevel(characterId, (await findKlassLevel(ctx.klassMap.pc["Sorcerer"], 1))!.id, {
+      feats: Object.entries(feats).flatMap(([aptitudeId, ids]) => ids.map((featId) => ({ aptitudeId, featId }))),
+      powers: powers[sorcererSpells].map((powerId) => ({ aptitudeId: sorcererSpells, powerId })),
+      skills: Object.entries(skills).map(([skillId, rank]) => ({ skillId, rank })),
+    });
+    await resaveAsRead(characterId, level.id);
+    const lightKept = await getLevelStep(session, characterId, "powers", {
+      classId: ctx.klassMap.pc["Sorcerer"],
+      level: 1,
+      editedLevelId: level.id,
+      powerPicks: spellRows(SORCERER_1.powers!["Sorcerer Spells"]),
+    });
+    expect(lightKept.fitted[sorcererSpells]).toEqual(powers[sorcererSpells]);
+
+    // A level saved without Light: its edit that picks it is refused, and its step drops it
+    const otherId = await createSeedCharacter(ctx, "sorcerer", { rulesetId, xp: 1000 });
+    const kept = ["Detect Magic", "Read Magic", "Mage Hand", "Resistance", "Magic Missile", "Shield"];
+    const saved = await levelUp(session, ctx, otherId, "Sorcerer", 1, {
+      ...SORCERER_1,
+      powers: { "Sorcerer Spells": kept },
+    });
+    const withLight = kept.map((name) => (name === "Resistance" ? "Light" : name));
+    const step = await getLevelStep(session, otherId, "powers", {
+      classId: ctx.klassMap.pc["Sorcerer"],
+      level: 1,
+      editedLevelId: saved.id,
+      powerPicks: spellRows(withLight),
+    });
+    expect(step.fitted[sorcererSpells]).toEqual(
+      withLight.filter((name) => name !== "Light").map((name) => ctx.powerMap[name]),
+    );
+    const lightPicks = picks(ctx, { ...SORCERER_1, powers: { "Sorcerer Spells": withLight } });
+    for (const force of [false, true]) {
+      const { feats: levelFeats, powers: levelPowers, skills: levelSkills } = lightPicks;
+      const edit = CharacterLevelsService.updateLevel(
+        session,
+        otherId,
+        saved.id,
+        4,
+        [],
+        levelSkills,
+        levelFeats,
+        levelPowers,
+        force,
+      );
+      expect(edit).rejects.toMatchObject(KNOWN_LIGHT);
+    }
   });
 });
 

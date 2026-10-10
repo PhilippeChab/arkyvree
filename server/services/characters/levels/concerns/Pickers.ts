@@ -21,13 +21,14 @@ interface PickLevelWhere extends PlannedWhere {
 
 /**
  * What the level-up wizard plans before the level a picker is for, not saved yet, as a list's filters send it: its
- * levels (their class levels, and their ability increases by place), and the feats picked and skill points spent so
- * far.
+ * levels (their class levels, and their ability increases by place), and the feats and powers picked and skill points
+ * spent so far.
  */
 interface PlannedWhere {
   featPicks?: PlannedSoFar["featPicks"];
   plannedAbilityIncreases?: PlannedSoFar["abilityIncreases"];
   plannedClassLevelIds?: PlannedSoFar["klassLevelIds"];
+  powerPicks?: PlannedSoFar["powerPicks"];
   skillPoints?: PlannedSoFar["skillPoints"];
 }
 
@@ -57,9 +58,16 @@ function plannedOf({
   featPicks,
   plannedAbilityIncreases,
   plannedClassLevelIds,
+  powerPicks,
   skillPoints,
 }: PlannedWhere): PlannedSoFar {
-  return { abilityIncreases: plannedAbilityIncreases, featPicks, klassLevelIds: plannedClassLevelIds, skillPoints };
+  return {
+    abilityIncreases: plannedAbilityIncreases,
+    featPicks,
+    klassLevelIds: plannedClassLevelIds,
+    powerPicks,
+    skillPoints,
+  };
 }
 
 /**
@@ -132,15 +140,15 @@ export function Pickers<B extends Constructor>(Base: B) {
     async getAvailablePowers(
       session: Session,
       characterId: string,
-      where: PickLevelWhere & { powerLevel?: number; selectedPowerIds?: string[] },
+      where: PickLevelWhere & { powerLevel?: number },
       pagination: { limit: number; page: number },
     ) {
-      const { powerLevel, selectedPowerIds, ...pick } = where;
+      const { powerLevel, ...pick } = where;
       return await withEditableCharacter(db, session, characterId, async (scope, character) => {
         const picker = Engine.for(scope)
           .character(character)
           .levelUp()
-          .openPowerPicker({ ...pickQueryOf(pick), powerLevel, selectedPowerIds });
+          .openPowerPicker({ ...pickQueryOf(pick), powerLevel });
         const result = await Powers.findOptionPage(db, { ...picker.filters, search: where.search }, pagination);
         return { items: picker.describe(result.items), page: result.page, nextPage: result.nextPage };
       });

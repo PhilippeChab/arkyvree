@@ -29,11 +29,13 @@ export type CustomizedClassLevel = KlassLevel & {
  * level, or virtually possessed via a `set feats.<slug>.possessed = true`
  * modifier. Virtual entries carry `virtual: true` and use empty-string keys
  * for klass/character/aptitude IDs so existing per-level lookups (which key
- * by characterLevelId) skip them naturally without a flag check.
+ * by characterLevelId) skip them naturally without a flag check. A feat such a
+ * modifier gives carries `given: true`, a pick or a grant holding it too or not.
  */
 export type CustomizedFeat = Feat & {
   aptitudeId: string;
   characterLevelId: string;
+  given?: boolean;
   klassLevelFeatId?: string;
   klassLevelId: string;
   modifiers: Modifier[];
@@ -46,7 +48,9 @@ export type CustomizedFeat = Feat & {
  * Same shape rule as CustomizedFeat. `virtual: true` powers are spells granted
  * by `set powers.<slug>.<apt>.known = true` modifiers; their klass/character
  * level IDs are empty strings so per-level scans skip them. Pool accounting
- * relies on `virtual` (or `free`, for klass-granted powers).
+ * relies on `virtual` (or `free`, for klass-granted powers). A spell such a
+ * modifier makes known on its list carries `given: true` there, a pick or a
+ * grant holding it too or not.
  */
 export type CustomizedPower = Power & {
   /** The ability its DC comes from: its class's bonus spell ability, a granted spell's its list's (`withDcAbilities`). */
@@ -54,6 +58,7 @@ export type CustomizedPower = Power & {
   aptitudeId: string;
   characterLevelId: string;
   free?: boolean;
+  given?: boolean;
   klassLevelId: string;
   modifiers: Modifier[];
   powerLevel: number | null;
