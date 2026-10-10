@@ -40,21 +40,12 @@ function skill(abilityId: string, name: string, fields: Record<string, unknown> 
     name,
     description: "",
     primaryAbilityId: abilityId,
-    impactedByWeight: true,
-    checkPenaltyMultiplier: 1,
-    usableWithoutTraining: true,
-    ...fields,
+    fields: { impactedByWeight: true, checkPenaltyMultiplier: 1, usableWithoutTraining: true, ...fields },
   };
 }
 
 function spell(aptitudeId: string, name: string, school?: string, fields: Record<string, unknown> = {}) {
-  return {
-    name,
-    description: "",
-    aptitudes: [{ id: aptitudeId }],
-    school,
-    ...fields,
-  };
+  return { name, description: "", aptitudes: [{ id: aptitudeId }], fields: { school, ...fields } };
 }
 
 /** A ruleset of its own with Strength, a spell list and, unless left out, the General aptitude generated feats go in. */
@@ -113,9 +104,7 @@ async function seededForkWithClimb() {
   const climbBody = {
     name: "Climb",
     primaryAbilityId: climb.primaryAbilityId,
-    impactedByWeight: true,
-    checkPenaltyMultiplier: 1,
-    usableWithoutTraining: true,
+    fields: { impactedByWeight: true, checkPenaltyMultiplier: 1, usableWithoutTraining: true },
   };
   return { session, fork, climb, climbBody, feat: await findFeat(climb.rulesetId, "Skill Focus: Climb") };
 }
@@ -272,12 +261,10 @@ describe("Skill Focus", () => {
     const { session, ruleset, strength } = await bareRuleset();
     const climb = await SkillsService.createSkill(session, ruleset.id, skill(strength.id, "Climb"));
     const feat = await findFeat(ruleset.id, "Skill Focus: Climb");
-    await SkillsService.updateSkill(
-      session,
-      ruleset.id,
-      climb.id,
-      skill(strength.id, "Climb", { description: "Updated description" }),
-    );
+    await SkillsService.updateSkill(session, ruleset.id, climb.id, {
+      ...skill(strength.id, "Climb"),
+      description: "Updated description",
+    });
     expect((await findFeat(ruleset.id, "Skill Focus: Climb")).id).toBe(feat.id);
 
     await SkillsService.updateSkill(session, ruleset.id, climb.id, skill(strength.id, "Athletics"));
