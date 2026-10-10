@@ -5,7 +5,11 @@
     "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/fatespinner/",
     "type": "class"
   },
-  "overrides": {},
+  "overrides": {
+    "reviewed": [
+      "Unresolved bonus: \"The creature receives either a -10 penalty or a +10 bonus on its next saving throw, as decided by the fatespinner\""
+    ]
+  },
   "raw": {
     "classFeatures": [
       {

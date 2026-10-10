@@ -9,8 +9,13 @@ function anyOf(family: string, options: string[]) {
   return or(...options.map((o) => eq(feat(`${family}: ${o}`))));
 }
 
+/** A committed class reference, loaded: what it detects and maps. */
+function classOf(book: string, slug: string) {
+  return References.load(join(References.dir, book, "classes", `${slug}.json`), "class");
+}
+
 function classRequirementsOf(book: string, slug: string) {
-  return References.load(join(References.dir, book, "classes", `${slug}.json`), "class").detected.requirements;
+  return classOf(book, slug).detected.requirements;
 }
 
 describe("A class's detected prerequisites", () => {
@@ -43,5 +48,47 @@ describe("A class's detected prerequisites", () => {
     const malconvoker = classRequirementsOf("complete-scoundrel", "malconvoker");
     expect(malconvoker).toContainEqual(eq(feat("Spell Focus: Conjuration")));
     expect(JSON.stringify(malconvoker)).not.toMatch(/celestial|infernal|languages/);
+  });
+});
+
+describe("A class's detected features", () => {
+  test("give the modifiers their text reads and the bonuses it leaves unread, by feature", () => {
+    const { featureModifiers } = classOf("srd", "barbarian").detected;
+    expect(featureModifiers["Fast Movement"]).toEqual({
+      modifiers: [{ target: "combat.speed.misc", operator: "add", value: "10", valueType: "number" }],
+    });
+    expect(featureModifiers.Rage).toEqual({
+      modifiers: [],
+      unresolvedModifiers: [expect.stringContaining("+4 bonus to Strength")],
+    });
+  });
+
+  test("give a proficiency feature the proficiencies its text grants", () => {
+    const proficiencies = classOf("srd", "barbarian").detected.featureModifiers["Weapon and Armor Proficiency"];
+    expect(proficiencies.modifiers.map(({ target }) => target)).toEqual([
+      "feats.simpleweaponproficiency.possessed",
+      "feats.martialweaponproficiency.possessed",
+      "feats.armorproficiencylight.possessed",
+      "feats.armorproficiencymedium.possessed",
+      "feats.shieldproficiency.possessed",
+    ]);
+  });
+
+  test("leave out a pool, whose options are features without modifiers", () => {
+    const { featureModifiers } = classOf("srd", "rogue").detected;
+    expect(Object.keys(featureModifiers)).toContain("Trap Sense");
+    expect(Object.keys(featureModifiers)).not.toContain("Special Ability");
+  });
+
+  test("are the modifiers the mapping's features start from, their aptitude picks' added", () => {
+    const barbarian = classOf("srd", "barbarian");
+    expect(barbarian.mapping.features["Weapon and Armor Proficiency"].modifiers).toEqual(
+      barbarian.detected.featureModifiers["Weapon and Armor Proficiency"].modifiers,
+    );
+    const ranger = classOf("srd", "ranger");
+    expect(ranger.detected.featureModifiers["Favored Enemy"].modifiers).toEqual([]);
+    expect(ranger.mapping.features["Favored Enemy"].modifiers).toEqual([
+      { target: "aptitudes.favoredenemy.allowed", operator: "add", value: "1", valueType: "number" },
+    ]);
   });
 });

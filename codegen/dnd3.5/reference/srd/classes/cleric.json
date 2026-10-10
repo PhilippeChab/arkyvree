@@ -40,6 +40,9 @@
         "value": "2",
         "valueType": "number"
       }
+    ],
+    "reviewed": [
+      "Unresolved bonus: \"A cleric with 5 or more ranks in Knowledge (religion) gets a +2 bonus on turning checks against undead\""
     ]
   },
   "raw": {

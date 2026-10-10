@@ -77,12 +77,14 @@ export class ReferenceIssues {
   readonly file: ReferenceFile;
 
   /**
-   * A class's: its detections and the columns of its table no modifier reads (what only a column gives, a monk's AC
-   * bonus, reaches the class through a modifier reading it), and what its overrides' check finds (`ClassOverridesCheck`).
+   * A class's: its detections, its features' (each by its feature) and the columns of its table no modifier reads (what
+   * only a column gives, a monk's AC bonus, reaches the class through a modifier reading it), but those of a class or a
+   * feature its mapping skips; and what its overrides' check finds (`ClassOverridesCheck`).
    */
   private classIssues(): Issue[] {
     const data = References.load(this.file.path, "class");
     const review = new ReviewList(data.overrides?.reviewed);
+    const { features, skip = false } = data.mapping;
     const where = { label: "class", entityName: data.raw.name };
     const read = new Set(Object.keys(data.overrides?.columns ?? {}));
     const unread = new Set(data.raw.progression.flatMap((row) => Object.keys(row.columns ?? {})));
@@ -94,11 +96,20 @@ export class ReferenceIssues {
       ...check.ignored().map((text) => ({ kind: "ignored override" as const, text })),
     ];
     return [
-      ...this.unreviewed(review, detectedIssues(data.detected), where),
+      ...this.unreviewed(review, detectedIssues(data.detected), where, skip),
+      ...Object.entries(data.detected.featureModifiers).flatMap(([name, detected]) =>
+        this.unreviewed(
+          review,
+          detectedIssues(detected),
+          { label: name, entityName: data.raw.name },
+          skip || Boolean(features[name]?.skip),
+        ),
+      ),
       ...this.unreviewed(
         review,
         [...unread].filter((column) => !read.has(column)).map((text) => ({ kind: "unread column" as const, text })),
         where,
+        skip,
       ),
       ...found.map(({ kind, text }) => this.issue(where, kind, text)),
       ...this.stale(review),
@@ -209,10 +220,13 @@ export class ReferenceIssues {
     return review.stale().map((entry) => this.issue({ label: "reviewed" }, "stale review", entry));
   }
 
-  /** The issues of `found` the review list doesn't cover: the entries that cover the others are used. */
-  private unreviewed(review: ReviewList, found: Found[], where: Where): Issue[] {
+  /**
+   * The issues of `found` the review list doesn't cover: the entries that cover the others are used. None when what
+   * they're about is skipped (`skip`): it isn't seeded.
+   */
+  private unreviewed(review: ReviewList, found: Found[], where: Where, skip = false): Issue[] {
     return found.flatMap(({ kind, text }) => {
-      if (!review.has(text)) return [this.issue(where, kind, text)];
+      if (!review.has(text)) return skip ? [] : [this.issue(where, kind, text)];
       review.use(text);
       return [];
     });

@@ -52,6 +52,8 @@ detected                            # Parsed from raw
 ├── bab, saves                      #   Derived from progression table
 ├── requirements[]                  #   Parsed from prerequisites
 ├── featNameMap                     #   Slug → display name for prereq feats
+├── featureModifiers{}              #   Feature name → modifiers its text gives, and what it leaves unread
+│                                   #     (unresolvedModifiers[], errors[]): a pool's aren't read
 ├── featureOccurrences[]            #   Features from progression table (name → levels[])
 ├── spellsPerDay[][]                #   Parsed numeric spell table
 ├── spellsKnown[][]                 #   Parsed numeric spells known
@@ -75,7 +77,7 @@ mapping                             # Built from detected, with overrides.featur
 │       ├── selectable              #     Player picks vs auto-granted
 │       ├── skip                    #     Exclude from generation
 │       ├── aptitude                #     Custom aptitude (pool sub-options)
-│       ├── modifiers[]             #     Auto-detected from description
+│       ├── modifiers[]             #     Its detected featureModifiers, with its aptitude pick's
 │       ├── requirements[]          #     What it takes to pick it (an override's: a list by alignment)
 │       └── aliases[]               #     Alt occurrence names
 ├── occurrenceMap{}                 #   Occurrence name → features{} key

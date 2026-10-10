@@ -37,7 +37,10 @@
       "Weapon and Armor Proficiency": {
         "description": "Sacred exorcists have proficiency with all simple weapons. This class does not grant proficiency with any armor or shields, though members typically retain such proficiencies from their prior class."
       }
-    }
+    },
+    "reviewed": [
+      "Unresolved bonus: \"Extensive study and special training in the proper techniques for combating this foe gives the sacred exorcist a +1 competence bonus on Bluff, Intimidate, Listen, Sense Motive, and Spot checks against the chosen foe, as well as a +1 bonus on caster level checks to overcome any spell resistance of the chosen foe\""
+    ]
   },
   "raw": {
     "classFeatures": [

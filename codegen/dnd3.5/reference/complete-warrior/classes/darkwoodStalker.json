@@ -32,7 +32,10 @@
       "Weapon and Armor Proficiency": {
         "description": "A darkwood stalker does not gain proficiency with any additional weapons or armor."
       }
-    }
+    },
+    "reviewed": [
+      "Unresolved bonus: \"Due to his extensive study of orcs and training in the proper techniques for combating them, a darkwood stalker gains a +2 bonus on Bluff, Listen, Sense Motive, Spot, and Survival checks when using these skills against orcs\""
+    ]
   },
   "raw": {
     "classFeatures": [

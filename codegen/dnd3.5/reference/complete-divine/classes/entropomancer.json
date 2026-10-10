@@ -23,7 +23,10 @@
       "Weapon and Armor Proficiency": {
         "description": "This prestige class provides no additional proficiency with any weapons, armor, or shields."
       }
-    }
+    },
+    "reviewed": [
+      "Unresolved bonus: \"This is treated as a bull rush attempt, for which the shard has a +11 bonus\""
+    ]
   },
   "raw": {
     "classFeatures": [

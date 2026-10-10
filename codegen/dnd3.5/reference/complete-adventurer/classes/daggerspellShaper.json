@@ -5,6 +5,11 @@
     "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/daggerspell-shaper/",
     "type": "class"
   },
+  "overrides": {
+    "reviewed": [
+      "Unresolved bonus: \"The daggers affect the claw attacks of her new form as follows: One gains a +1 bonus on attack and damage rolls and also gains the flaming special ability, and the other gains a +2 bonus on attack and damage rolls and also gains the keen special ability\""
+    ]
+  },
   "raw": {
     "classFeatures": [
       {

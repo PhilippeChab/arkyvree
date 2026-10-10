@@ -48,7 +48,10 @@
       "Weapon and Armor Proficiency": {
         "description": "Bards are trained in all simple weapons as well as the longsword, rapier, sap, short sword, shortbow, and whip. They can wear light armor and use shields (but not tower shields). Because bard spells involve only minimal somatic gestures, a bard may cast bard spells in light armor without risking arcane spell failure. When wearing medium or heavy armor or carrying a shield, however, a bard faces the standard arcane spell failure chance for any spell with a somatic component (which most spells have). A bard who multiclasses still suffers the normal arcane spell failure chance when casting arcane spells gained from other classes."
       }
-    }
+    },
+    "reviewed": [
+      "Unresolved bonus: \"He may make a special bardic knowledge check with a bonus equal to his bard level + his Intelligence modifier to see whether he knows some relevant information about local notable people, legendary items, or noteworthy places. (If the bard has 5 or more ranks in Knowledge (history), he gains a +2 bonus on this check.) A bard may not take 10 or take 20 on this check; this sort of knowledge is essentially random\""
+    ]
   },
   "raw": {
     "bonusSpellAbility": "Charisma",

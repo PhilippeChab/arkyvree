@@ -46,7 +46,9 @@
       }
     },
     "reviewed": [
-      "AC"
+      "AC",
+      "Unresolved bonus: \"If she does nothing else while mounted (she cannot attack when riding defensively), she gains a +2 bonus on Refl ex saves and a +4 dodge bonus to Armor Class\"",
+      "Unresolved bonus: \"If an opponent is in a square she threatens (after dismounting), she can make a melee attack against that opponent, taking a +2 bonus on the attack roll and a -2 penalty to Armor Class (just as if the character were making a charge)\""
     ]
   },
   "raw": {

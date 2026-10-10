@@ -63,7 +63,10 @@
       "Weapon and Armor Proficiency": {
         "description": "Members of this prestige class are proficient with all simple and martial weapons, light and medium armor, and shields."
       }
-    }
+    },
+    "reviewed": [
+      "Unresolved bonus: \"A gnome giant-slayer gains a +2 bonus on Bluff, Listen, Sense Motive, Spot, and Survival checks when using these skills against giants\""
+    ]
   },
   "raw": {
     "classFeatures": [

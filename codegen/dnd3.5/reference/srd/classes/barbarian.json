@@ -73,7 +73,12 @@
       "Weapon and Armor Proficiency": {
         "description": "Barbarians are trained in the use of all simple and martial weapons. They are also proficient with light armor, medium armor, and shields (but not tower shields)."
       }
-    }
+    },
+    "reviewed": [
+      "Unresolved bonus: \"While in a rage, a barbarian of 14th level or higher gains a +4 bonus on Will saves to resist enchantment spells\"",
+      "Unresolved bonus: \"He temporarily gains a +4 bonus to Strength, a +4 bonus to Constitution, and a +2 morale bonus on Will saves, but he takes a -2 penalty to Armor Class\"",
+      "Unresolved bonus: \"Starting at 3rd level, a barbarian has an intuitive sense that alerts him to danger from traps, giving him a +1 bonus on Reflex saves made to avoid traps and a +1 dodge bonus to AC against attacks made by traps\""
+    ]
   },
   "raw": {
     "classFeatures": [

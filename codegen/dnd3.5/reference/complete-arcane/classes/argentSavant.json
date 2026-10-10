@@ -5,6 +5,11 @@
     "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/argent-savant/",
     "type": "class"
   },
+  "overrides": {
+    "reviewed": [
+      "Unresolved bonus: \"She also adds a +1 bonus to each die of damage dealt by spells she casts with the force descriptor\""
+    ]
+  },
   "raw": {
     "classFeatures": [
       {

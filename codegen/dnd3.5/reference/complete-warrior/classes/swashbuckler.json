@@ -44,7 +44,10 @@
       "Wounding Critical": {
         "description": "When a swashbuckler of 19th level or higher lands a critical hit on a creature, the target also suffers 2 points of Constitution damage. (This is in addition to the Strength damage from the weakening critical ability.) Creatures that are immune to critical hits are unaffected by this ability."
       }
-    }
+    },
+    "reviewed": [
+      "Unresolved bonus: \"A swashbuckler of 8th level or higher who is flanking an opponent gains a +4 bonus on attacks instead of a +2 bonus on attacks. (Other characters flanking with the swashbuckler don't gain this increased bonus.)\""
+    ]
   },
   "raw": {
     "classFeatures": [

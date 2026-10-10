@@ -39,6 +39,9 @@
         "description": "Holy liberators have proficiency with all simple and martial weapons, every category of armor, and shields."
       }
     },
+    "reviewed": [
+      "Unresolved bonus: \"Blood Bond (Ex): The companion gains a +2 bonus on all attacks, checks, and saves if it witnesses the holy liberator being threatened or harmed\""
+    ],
     "spells": {
       "inheritsFrom": {
         "additions": {

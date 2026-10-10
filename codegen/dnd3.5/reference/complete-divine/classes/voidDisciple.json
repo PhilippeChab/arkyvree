@@ -33,7 +33,10 @@
       "Weapon and Armor Proficiency": {
         "description": "This prestige class does not grant proficiency with any weapons or armor."
       }
-    }
+    },
+    "reviewed": [
+      "Unresolved bonus: \"Once per day, a void disciple of 7th level or higher can add a +20 bonus on any single attack roll, skill check, or ability check she makes\""
+    ]
   },
   "raw": {
     "classFeatures": [

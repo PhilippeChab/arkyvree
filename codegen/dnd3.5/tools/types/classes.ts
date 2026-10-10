@@ -1,7 +1,7 @@
 import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import type { BabType, SaveType } from "@/content/dnd3.5/builders/classes/types.ts";
 
-import type { ScrapedMeta } from "./reference.ts";
+import type { DetectedModifiers, ScrapedMeta } from "./reference.ts";
 
 /** A class feature's fields a mapping derives and an override sets. */
 interface ClassFeatureFields {
@@ -67,6 +67,11 @@ export interface ClassReference {
     casterType?: "Arcane" | "Divine";
     /** Invalid paths that failed validation — bugs to fix */
     errors?: string[];
+    /**
+     * Each feature's modifiers its text gives, by name, with what it couldn't read: not a pool's, nor its options',
+     * which are features without modifiers
+     */
+    featureModifiers: Record<string, DetectedModifiers<ModifierSeed>>;
     /** Each feature the table's Special column names, normalized, and the levels it's at */
     featureOccurrences: { levels: number[]; name: string }[];
     /** Whether class has own spell list (not advancement of existing) */

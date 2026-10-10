@@ -59,7 +59,7 @@ const NAME_MODIFIER_PATTERNS: { pattern: RegExp; toModifiers: (match: RegExpMatc
 
 /**
  * A magic item's modifiers, from its name ("Cloak of Resistance +2") and its description, each target once, but the
- * bonuses that apply only sometimes; and the skills it names that aren't skills.
+ * bonuses that apply only sometimes; and the skills it names that aren't skills, and the paths no character has.
  */
 export class MagicItemModifiers extends ModifierReading<Modifier> {
   constructor(name: string, description: string) {
@@ -74,6 +74,7 @@ export class MagicItemModifiers extends ModifierReading<Modifier> {
     }
 
     if (description) this.readDescription(new BonusText(description));
+    this.keepValidModifiers();
   }
 
   /** `value` added to `target`, unless the item already has a modifier of `target` (its name's, say). */

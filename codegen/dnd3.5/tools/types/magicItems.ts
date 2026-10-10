@@ -28,6 +28,8 @@ export interface MagicItemReference {
       casterLevel?: number;
       category: MagicItemCategory;
       costGp: string;
+      /** Invalid paths that failed validation — bugs to fix */
+      errors?: string[];
       itemType: string;
       modifiers?: Modifier[];
       slot: string;

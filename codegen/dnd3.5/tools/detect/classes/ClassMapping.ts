@@ -1,6 +1,4 @@
 import { normalizeWs } from "@/codegen/core/text/whitespace.ts";
-import { BenefitModifiers } from "@/codegen/dnd3.5/tools/detect/readers/modifiers/BenefitModifiers.ts";
-import { ProficiencyModifiers } from "@/codegen/dnd3.5/tools/detect/readers/modifiers/ProficiencyModifiers.ts";
 import { getFeatureBaseName, isPluralVariantOf, isVariantOf } from "@/codegen/dnd3.5/tools/text/names.ts";
 import { type AptitudePick, type ClassReference } from "@/codegen/dnd3.5/tools/types/classes.ts";
 import { bonus } from "@/content/core/builders/customization/modifiers.ts";
@@ -82,7 +80,8 @@ export class ClassMapping {
 
   /**
    * A feature, at the level its occurrences in the progression first give it (its variants' too: "Bear Form
-   * (Black)", "1st Favored Enemy"), stackable when it occurs more than once, with the modifiers its text gives.
+   * (Black)", "1st Favored Enemy"), stackable when it occurs more than once, with the modifiers its text gives (as
+   * detected: `featureModifiers`).
    */
   private addFeature(cf: ClassFeature, baseName: string) {
     const { raw, detected } = this;
@@ -126,18 +125,15 @@ export class ClassMapping {
       : variantOccs.flatMap((vo) => vo.levels);
     const level = allLevels.length > 0 ? Math.min(...allLevels) : spellFeatureLevel || 1; // Features not in progression table are available from level 1
 
-    const normalizedDesc = normalizeWs(cf.description);
-    const { modifiers } = new BenefitModifiers(normalizedDesc);
-    const wapMods =
-      baseName === "Weapon and Armor Proficiency" ? new ProficiencyModifiers(normalizedDesc).modifiers : [];
-    const allModifiers = [...wapMods, ...modifiers];
+    // A copy: the aptitude picks' modifiers are added to it
+    const modifiers = [...(detected.featureModifiers[baseName]?.modifiers ?? [])];
 
     this.features[baseName] = {
       seedName: `${baseName} (${raw.name})`,
-      description: normalizedDesc,
+      description: normalizeWs(cf.description),
       level,
       stackable,
-      ...(allModifiers.length > 0 ? { modifiers: allModifiers } : {}),
+      ...(modifiers.length > 0 ? { modifiers } : {}),
     };
   }
 

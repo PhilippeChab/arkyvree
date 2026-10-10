@@ -22,7 +22,7 @@ export interface PoolAptitude {
 export class ClassPools {
   constructor(
     private readonly detector: BaseClassDetector,
-    private readonly detected: ClassReference["detected"],
+    private readonly detected: Pick<ClassReference["detected"], "aptitudePicks" | "featureOccurrences">,
   ) {
     this.detectPools();
     this.detectOrphanSubOptions();

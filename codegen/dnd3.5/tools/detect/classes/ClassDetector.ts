@@ -1,18 +1,39 @@
+import { normalizeWs } from "@/codegen/core/text/whitespace.ts";
 import { type Resolved } from "@/codegen/dnd3.5/tools/detect/BaseDetector.ts";
+import { BenefitModifiers } from "@/codegen/dnd3.5/tools/detect/readers/modifiers/BenefitModifiers.ts";
+import { ProficiencyModifiers } from "@/codegen/dnd3.5/tools/detect/readers/modifiers/ProficiencyModifiers.ts";
 import { ClassPrerequisites } from "@/codegen/dnd3.5/tools/detect/readers/requirements/ClassPrerequisites.ts";
+import { getFeatureBaseName } from "@/codegen/dnd3.5/tools/text/names.ts";
 import { type ClassReference } from "@/codegen/dnd3.5/tools/types/classes.ts";
+import type { NamedText } from "@/codegen/dnd3.5/tools/types/reference.ts";
 import { include } from "@/lib/mixins.ts";
 
 import { BaseClassDetector } from "./BaseClassDetector.ts";
 import { ClassMapping } from "./ClassMapping.ts";
+import { ClassPools } from "./ClassPools.ts";
 import { ReadsAptitudePicks } from "./concerns/ReadsAptitudePicks.ts";
 import { ReadsBonusFeatLists } from "./concerns/ReadsBonusFeatLists.ts";
 import { ReadsFavoredEnemies } from "./concerns/ReadsFavoredEnemies.ts";
 
+/** The feature whose text names the proficiencies the class grants (`ProficiencyModifiers`). */
+const PROFICIENCY_FEATURE = "Weapon and Armor Proficiency";
+
+/** A feature's modifiers: its text read as a feat's benefit, and a proficiency feature's the proficiencies it grants. */
+function readFeature({ name, description }: NamedText) {
+  const benefit = new BenefitModifiers(description);
+  const proficiencies = name === PROFICIENCY_FEATURE ? new ProficiencyModifiers(description).modifiers : [];
+  return {
+    errors: benefit.errors,
+    modifiers: [...proficiencies, ...benefit.modifiers],
+    unresolved: benefit.unresolved,
+  };
+}
+
 /**
  * A class reference's detector: what its page gives (`detected`), read by its concerns (`concerns/`: the features
- * where its player picks, the existing feats it lets them pick, the favored enemies it locks) and its table
- * (`ClassTable`), and the entities it makes (`mapping`, a `ClassMapping`), its overrides applied.
+ * where its player picks, the existing feats it lets them pick, the favored enemies it locks), its table
+ * (`ClassTable`) and its features' text, and the entities it makes (`mapping`, a `ClassMapping`), its overrides
+ * applied.
  */
 export class ClassDetector extends include(
   BaseClassDetector,
@@ -27,6 +48,7 @@ export class ClassDetector extends include(
     const spellsPerDay = this.table.spellsPerDay();
     const spellsKnown = this.table.spellsKnown();
     const hasOwnSpells = spellsPerDay !== undefined;
+    const aptitudePicks = this.aptitudePicks();
 
     return {
       hd: this.hitDie(),
@@ -36,8 +58,11 @@ export class ClassDetector extends include(
       saves: this.table.saves(),
       casterLevelAdvancement: this.table.casterAdvancement(),
       requirements,
+      featureModifiers: this.featureModifiers(
+        new ClassPools(this, { ...aptitudePicks, featureOccurrences: this.featureOccurrences }),
+      ),
       featureOccurrences: this.featureOccurrences,
-      ...this.aptitudePicks(),
+      ...aptitudePicks,
       ...this.bonusFeatLists(),
       ...this.lockedFavoredEnemies(),
       ...(spellsPerDay ? { spellsPerDay } : {}),
@@ -69,6 +94,19 @@ export class ClassDetector extends include(
       return { casterType: "Arcane" };
     if (/casts?\b.{0,30}\bdivine spells/i.test(text) || /\bdivine focus\b/i.test(text)) return { casterType: "Divine" };
     return {};
+  }
+
+  /**
+   * Each feature's modifiers, by its base name, with what its text leaves unread (`readFeature`): not a pool's, nor its
+   * options' (`pools`), which are features without modifiers.
+   */
+  private featureModifiers(pools: ClassPools): ClassReference["detected"]["featureModifiers"] {
+    const features = this.raw.classFeatures.flatMap(({ name, description }) => {
+      const baseName = getFeatureBaseName(name);
+      if (pools.isPool(name, baseName) || pools.isOrphan(baseName)) return [];
+      return [{ name: baseName, description: normalizeWs(description) }];
+    });
+    return this.modifiersOf(features, readFeature);
   }
 
   /** The class's hit die ("d10" → 10), d8 when it gives none. */
