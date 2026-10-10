@@ -2,9 +2,11 @@ import { eq, inArray, type InferInsertModel, isNull } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { klassLevelsInRules } from "@/drizzle/schema.ts";
+import { include } from "@/lib/mixins.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
+import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
 
-class KlassLevelsRepository extends BaseRepository<typeof klassLevelsInRules> {
+class KlassLevelsRepository extends include(BaseRepository<typeof klassLevelsInRules>, GuardsStaleEdits) {
   constructor() {
     super(klassLevelsInRules);
   }
@@ -43,6 +45,24 @@ class KlassLevelsRepository extends BaseRepository<typeof klassLevelsInRules> {
         ["klassId" in where && eq(this.table.klassId, where.klassId), isNull(this.table.deletedAt)],
       ),
     });
+  }
+
+  async update(
+    db: Db,
+    values: Partial<InferInsertModel<typeof klassLevelsInRules>>,
+    where: { expectedUpdatedAt?: string; id: string },
+  ) {
+    return await db
+      .update(this.table)
+      .set({ ...values, updatedAt: new Date().toISOString() })
+      .where(
+        this.where([
+          eq(this.table.id, where.id),
+          isNull(this.table.deletedAt),
+          this.casUpdatedAt(where.expectedUpdatedAt),
+        ]),
+      )
+      .returning();
   }
 }
 

@@ -182,6 +182,19 @@ describe("ClassLevelsService", () => {
     expect(properties.map((p) => p.type).sort()).toEqual(["CLASS_FEATURE", KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS]);
   });
 
+  test("refuses an edit started from a stale level, unless it sends no token", async () => {
+    const { session, ruleset, klass } = await setup();
+    const level = await createLevel(session, ruleset.id, klass.id, 1);
+    const update = (bab: number, updatedAt?: string) =>
+      ClassLevelsService.updateClassLevel(session, ruleset.id, klass.id, level.id, { fields: { bab }, updatedAt });
+
+    const edited = await update(2, level.updatedAt);
+    expect(edited.updatedAt).not.toBe(level.updatedAt);
+    await expectRefusedWith(update(3, level.updatedAt), 409);
+    expect(await update(4, edited.updatedAt)).toMatchObject({ bab: 4 });
+    expect(await update(5)).toMatchObject({ bab: 5 });
+  });
+
   describe("feat pools", () => {
     test("add up the picks each level grants, leaving spell slots out", async () => {
       const { session, ruleset, klass, aptitude, poolTarget } = await setup();
@@ -391,6 +404,7 @@ describe("ClassLevelsService", () => {
       expect(
         await ClassLevelsService.updateClassLevel(session, fork.id, klass.id, inheritedLevel.id, {
           fields: { bab: 5 },
+          updatedAt: inheritedLevel.updatedAt,
         }),
       ).toMatchObject({ bab: 5, skills: 4 });
 

@@ -40,11 +40,14 @@ describe("rulesets class levels", () => {
     expect((await expectOk(levels.$get({ param: { id, classId } }))).map((l) => l.id)).toEqual([created.id]);
 
     // The level number is fixed once created.
-    expect(await expectOk(level.$put({ param, json: { fields: { bab: 3, skills: 6 } } }))).toMatchObject({
+    const { updatedAt } = created;
+    expect(await expectOk(level.$put({ param, json: { fields: { bab: 3, skills: 6 }, updatedAt } }))).toMatchObject({
       level: 1,
       bab: 3,
       skills: 6,
     });
+    // An edit started from the level before that one is stale
+    await expectStatus(level.$put({ param, json: { fields: { bab: 4 }, updatedAt } }), 409);
 
     await expectOk(level.$delete({ param }));
     expect(await expectOk(levels.$get({ param: { id, classId } }))).toEqual([]);

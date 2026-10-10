@@ -5,6 +5,7 @@ import { type ClassEngine, Engine } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import { CustomizationEdit, EntityEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
+import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { KlassLevelFeats, KlassLevels, KlassLevelSaves } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
@@ -128,19 +129,31 @@ class ClassLevelsService extends include(Object, ListsSpells) {
     );
   }
 
-  async updateClassLevel(session: Session, rulesetId: string, classId: string, levelId: string, body: ClassLevelBody) {
+  async updateClassLevel(
+    session: Session,
+    rulesetId: string,
+    classId: string,
+    levelId: string,
+    body: ClassLevelBody & { updatedAt?: string },
+  ) {
+    const { updatedAt, ...form } = body;
     const result = await withTransaction(
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
           const { ruleset, rulesetData } = scope;
 
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
-          const plan = Engine.for(scope).class(classId).planLevelEdit(levelId, body);
+          const plan = Engine.for(scope).class(classId).planLevelEdit(levelId, form);
           const { entity: level, klass } = plan;
 
           // COW the parent klass if inherited so writes don't corrupt the parent.
           const edit = new CustomizationEdit(ruleset, rulesetData.cow);
           const resolvedLevelId = await edit.cowOwner(tx, "klass_levels", level.id);
+
+          // The edit moves the level's `updatedAt`, refused when stale (a copy's never is: its token is the source's)
+          const expectedUpdatedAt = resolvedLevelId === level.id ? updatedAt : undefined;
+          const rows = await KlassLevels.update(tx, {}, { id: resolvedLevelId, expectedUpdatedAt });
+          if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
           const entity = { entityId: resolvedLevelId, entityType: "klass_levels" } as const;
           if (plan.writes) await writeEntityWrites(tx, scope, entity, plan.writes);
@@ -169,7 +182,7 @@ class ClassLevelsService extends include(Object, ListsSpells) {
             data: { entityName: klass.name, level: level.level },
           });
 
-          return { ...level, id: resolvedLevelId, ...plan.fields };
+          return { ...rows[0], ...plan.fields };
         }),
     );
     RulesetViews.invalidate(rulesetId);
