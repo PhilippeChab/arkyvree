@@ -1,16 +1,26 @@
 import type { CharacterInput, MemberReading, PrivateNotes } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
+import BondedPaths from "@/engine/rulesets/dnd3.5/model/bonded/BondedPaths.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import Dnd35CharacterBuilder from "@/engine/rulesets/dnd3.5/model/Dnd35CharacterBuilder.ts";
 import { BONDED_KIND_SLUGS } from "@/shared/dnd3.5/bondedKinds.ts";
 
 import CharacterResponse from "./CharacterResponse.ts";
 
-/** A bonded creature's sheet, as the API answers it. */
-type BondedDescription = ReturnType<typeof CharacterResponse.buildBonded>;
+/** A bonded creature's sheet, as the API answers it, with the feat of its master's that bonds it (`bondFeatId`). */
+type BondedDescription = ReturnType<typeof CharacterResponse.buildBonded> & { bondFeatId: string | null };
 
 /** A character described from the rows the server read: its sheet, a creature's, or its public part. */
 export default class CharacterDescription {
+  /** The master's feat that bonds its creature of a kind: the one whose modifier sets the creature's race, if one does. */
+  private static bondFeatOf(master: DetailedCharacter, kind: string) {
+    const race = BondedPaths.raceOf(kind);
+    const bond = master.modifierEvaluator
+      .getModifiers()
+      .appliedModifiers.findLast((modifier) => modifier.target === race && modifier.sourceType === "feats");
+    return bond?.sourceId ?? null;
+  }
+
   /** The master's bonded creatures (`bonded`), each built with its master's sheet, by their kind, in the kinds' order. */
   private static describeBonded(
     view: RulesetView,
@@ -24,7 +34,10 @@ export default class CharacterDescription {
       const input = byKind.get(kind);
       if (input) {
         described[kind] = CharacterDescription.redactNotes(
-          CharacterResponse.buildBonded(input.record, Dnd35CharacterBuilder.build(view, input, { master })),
+          {
+            ...CharacterResponse.buildBonded(input.record, Dnd35CharacterBuilder.build(view, input, { master })),
+            bondFeatId: CharacterDescription.bondFeatOf(master, kind),
+          },
           notes,
         );
       }
@@ -77,12 +90,8 @@ export default class CharacterDescription {
       skills: {},
       inventory: {},
       equipment: [],
-      powers: [],
       virtualFeats: [],
-      virtualPowers: [],
-      aptitudes: {},
-      spellTags: {},
-      spellTagLists: {},
+      spellGroups: [],
       requirements: {},
       modifiers: {},
       validation: { valid: true, issues: [] },

@@ -73,7 +73,6 @@ import {
   WEAPON_STRENGTH_DAMAGE,
   WEAPON_TYPE,
 } from "@/shared/dnd3.5/properties/index.ts";
-import { buildSpellGroups } from "@/shared/dnd3.5/spellGroups.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import type { Character, Requirement } from "@/shared/relations.ts";
@@ -3058,7 +3057,7 @@ describe("DetailedCharacter", () => {
         bard: 10 + 2 + 1 + 1,
       });
       // The sheet's spell lists show each class's
-      const lists = buildSpellGroups(CharacterResponse.buildFull(record, detailed));
+      const lists = CharacterResponse.buildFull(record, detailed).spellGroups;
       const holdPerson = (list: string, level: number) =>
         lists
           .find((apt) => apt.aptitudeName === list)

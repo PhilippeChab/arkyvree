@@ -1,6 +1,5 @@
-import type SpellLists from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellLists.ts";
+import SpellLists from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellLists.ts";
 import { formatPropertyValues, groupPropertyValues } from "@/shared/customization/properties.ts";
-import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import { type Power, type PowerWithAptitudes, type Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -73,7 +72,7 @@ export default class PowersComponent {
   /** A spell's known flag on a list (`listName`), by their names (or their slugs: a target's). */
   getSpellEntry(spellName: string, listName: string): { known: boolean } | undefined {
     const entry = this.powers[stripSeparators(spellName)] as Record<string, { known: boolean }> | undefined;
-    return entry?.[toSpellPossessionSlug(listName)];
+    return entry?.[SpellLists.toSpellPossessionSlug(listName)];
   }
 
   /** The lists a feat brings (`spellLists.featListIds`: a domain's, a specialist's school) give spells, never known. */

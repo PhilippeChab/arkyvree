@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import type { Components } from "@/engine/core/paths/PathTraverser.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
-import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
+import SpellLists from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellLists.ts";
 
 const targetPaths = new Dnd35TargetPaths();
 
@@ -222,7 +222,7 @@ describe("Dnd35TargetPaths.traversePathInit", () => {
   });
 });
 
-describe("toSpellPossessionSlug", () => {
+describe("SpellLists.toSpellPossessionSlug", () => {
   test.each([
     ["Wizard Spells", "wizard"],
     ["Paladin Spells", "paladin"],
@@ -230,9 +230,11 @@ describe("toSpellPossessionSlug", () => {
     ["Sublime Chord Spells", "sublimechord"],
     ["War Domain Spells", "wardomain"],
     ["Evocation Specialist Spells", "evocationspecialist"],
+    ["Knowledge Domain Spells", "knowledgedomain"],
+    ["Spells of the Deep", "spellsofthedeep"],
     ["General", "general"],
     ["Turn Undead", "turnundead"],
   ])("makes %s %s", (aptitude, slug) => {
-    expect(toSpellPossessionSlug(aptitude)).toBe(slug);
+    expect(SpellLists.toSpellPossessionSlug(aptitude)).toBe(slug);
   });
 });

@@ -6,9 +6,18 @@ import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTa
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/ClassesComponent.ts";
 import type PowerGroupingsComponent from "@/engine/rulesets/dnd3.5/model/powers/PowerGroupingsComponent.ts";
 import type PowersComponent from "@/engine/rulesets/dnd3.5/model/powers/PowersComponent.ts";
-import type { SpellTagLists } from "@/shared/dnd3.5/spellGroups.ts";
 import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
 import type { KlassLevel, Modifier, Power, Property } from "@/shared/relations.ts";
+
+/**
+ * Where a feat's tag on the spells of a list it gives slots in or joins to its class's list shows (a cleric's domain,
+ * "Fire Domain"; a specialist wizard's school, "Evocation Specialist"): on that list and on the lists of the class whose
+ * level gave the feat. `joinsClassList`: whether the list's spells join that class's list, as a domain's do.
+ */
+export interface SpellTagLists {
+  aptitudeIds: string[];
+  joinsClassList: boolean;
+}
 
 /** What a character's spellcasting holds: its bonus caster levels, its aptitudes' powers, its spell tags. */
 export default abstract class SpellcastingState {

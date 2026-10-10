@@ -5,6 +5,9 @@ import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedChara
 import ItemPlacement from "@/engine/rulesets/dnd3.5/model/inventory/ItemPlacement.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
+import CombatSheet from "./CombatSheet.ts";
+import SpellGroups from "./SpellGroups.ts";
+
 /** A built character as the API answers it. */
 export default class CharacterResponse {
   /** The modifiers, applied, unapplied and inactive, each with the name of its source. */
@@ -106,18 +109,14 @@ export default class CharacterResponse {
       identity: CharacterResponse.identityWithPrivateNotes(built),
       skillBudget: built.components.skills.getSkillBudget(),
       abilities: built.components.abilities.getAbilitiesWithIds(),
-      combat: built.components.combat.getCombat(),
+      combat: CombatSheet.describe(built.components.combat),
       saves: built.components.saves.getSaves(),
       classes: built.components.classes.getCharacterClasses(),
       inventory: built.components.inventory.getInventory(),
       equipment: CharacterResponse.equipmentOf(built),
       skills: built.components.skills.getSkills(),
-      powers: built.components.powers.getFlatPowers(),
       virtualFeats: built.getVirtualFeats(),
-      virtualPowers: built.getVirtualPowers(),
-      aptitudes: built.components.aptitudes.getAptitudes(),
-      spellTags: built.getSpellTags(),
-      spellTagLists: built.getSpellTagLists(),
+      spellGroups: SpellGroups.describe(built),
       requirements,
       modifiers,
       validation,

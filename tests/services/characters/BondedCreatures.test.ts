@@ -71,12 +71,26 @@ function statBlock(detailed: DetailedCharacterMount | DetailedCharacterAnimalCom
 
 describe("Bonded creatures", () => {
   test.each([
-    ["a wizard's familiar", () => createWizardWithFamiliar(), "familiar", "Cat", 1],
-    ["a druid's animal companion", () => createDruidWithCompanion(3), "animalcompanion", "Wolf", 3],
-    ["a paladin's special mount", () => createPaladinWithMount(5), "mount", "Heavy Warhorse", 5],
+    ["a wizard's familiar", () => createWizardWithFamiliar(), "familiar", "Cat", 1, "Cat Familiar"],
+    [
+      "a druid's animal companion",
+      () => createDruidWithCompanion(3),
+      "animalcompanion",
+      "Wolf",
+      3,
+      "Wolf Animal Companion",
+    ],
+    [
+      "a paladin's special mount",
+      () => createPaladinWithMount(5),
+      "mount",
+      "Heavy Warhorse",
+      5,
+      "Heavy Warhorse Special Mount",
+    ],
   ] as const)(
-    "%s is made from their pick, a level for each of theirs, and shown with them",
-    async (_, create, kind, race, levels) => {
+    "%s is made from their pick, a level for each of theirs, and shown with them, under the feat that bonds it",
+    async (_, create, kind, race, levels, bond) => {
       const { ctx, masterId, bonded } = await create();
       expect(bonded).toMatchObject({
         kind,
@@ -85,10 +99,12 @@ describe("Bonded creatures", () => {
         raceId: ctx.raceMap[kind][race],
       });
       expect(await CharacterLevels.findMany(db, { characterId: bonded.id })).toHaveLength(levels);
-      expect((await CharactersService.getCharacter(owner, masterId)).bonded[kind]).toMatchObject({
-        id: bonded.id,
-        kind,
-      });
+      const sheet = await CharactersService.getCharacter(owner, masterId);
+      const bondFeat = Object.values(sheet.classes)
+        .flatMap((klass) => klass.levels.flatMap((level) => level.feats))
+        .find((feat) => feat.name === bond);
+      expect(bondFeat).toBeDefined();
+      expect(sheet.bonded[kind]).toMatchObject({ id: bonded.id, kind, bondFeatId: bondFeat?.id });
     },
   );
 

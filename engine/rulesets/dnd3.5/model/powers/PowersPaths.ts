@@ -7,7 +7,6 @@ import { getOperators } from "@/shared/customization/operators.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import { deriveNameLabels, deriveSegmentLabels, isLeafOfKind, type TargetPath } from "@/shared/customization/target.ts";
 import { SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
-import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import type { PowerWithAptitudes, Property } from "@/shared/relations.ts";
 import { capitalize, stripSeparators } from "@/shared/text.ts";
 
@@ -189,7 +188,7 @@ export default class PowersPaths implements PathCategory<Dnd35Components> {
   labelNames(rulesetData: RulesetData) {
     const fallbacks: Record<string, string> = {};
     for (const { name } of rulesetData.aptitudes)
-      fallbacks[toSpellPossessionSlug(name)] ??= name.replace(/ Spells$/, "");
+      fallbacks[SpellLists.toSpellPossessionSlug(name)] ??= name.replace(/ Spells$/, "");
     for (const { type, value } of rulesetData.propertiesByEntityType.get("powers") ?? []) {
       fallbacks[type] ??= formatPropertyType(type);
       const slug = stripSeparators(value);

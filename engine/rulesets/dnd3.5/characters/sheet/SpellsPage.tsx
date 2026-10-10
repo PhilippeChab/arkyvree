@@ -1,5 +1,6 @@
 import { Page, Text, View } from "@react-pdf/renderer";
 
+import SpellGroups from "@/engine/rulesets/dnd3.5/characters/description/SpellGroups.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import {
@@ -17,7 +18,7 @@ import {
   SPELL_SUBSCHOOL,
   SPELL_TARGET,
 } from "@/shared/dnd3.5/properties/index.ts";
-import { buildSpellGroups } from "@/shared/dnd3.5/spellGroups.ts";
+import { formatSpellLevel } from "@/shared/dnd3.5/spells.ts";
 
 import ContinuationHeader from "./ContinuationHeader.tsx";
 import { FONT_SIZE, styles } from "./styles.ts";
@@ -46,20 +47,8 @@ const SPELL_PROPERTY_ORDER_INDEX = new Map(SPELL_PROPERTY_ORDER.map((k, i) => [k
 
 /** The sheet's spells page: the spells the character knows and has without a pick, by list and spell level. */
 function SpellsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacter }) {
-  const identity = detailedCharacter.components.identity;
-  const classes = detailedCharacter.components.classes;
-  const powers = detailedCharacter.components.powers;
-  const aptitudes = detailedCharacter.components.aptitudes;
-  const identityData = identity.getIdentity();
-
-  const sorted = buildSpellGroups({
-    classes: classes.getCharacterClasses(),
-    powers: powers.getFlatPowers(),
-    virtualPowers: detailedCharacter.getVirtualPowers(),
-    aptitudes: aptitudes.getAptitudes(),
-    spellTags: detailedCharacter.getSpellTags(),
-    spellTagLists: detailedCharacter.getSpellTagLists(),
-  });
+  const identityData = detailedCharacter.components.identity.getIdentity();
+  const sorted = SpellGroups.describe(detailedCharacter);
 
   if (sorted.length === 0) return null;
 
@@ -115,7 +104,7 @@ function SpellsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacte
                     color: "#555",
                   }}
                 >
-                  {group.level === 0 ? "Cantrips" : `Level ${group.level}`}
+                  {formatSpellLevel(group.level)}
                   {group.uses != null ? ` — ${group.uses}/day` : ""}
                 </Text>
 

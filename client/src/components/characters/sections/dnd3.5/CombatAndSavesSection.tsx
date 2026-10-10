@@ -3,7 +3,6 @@ import { Box, Stack, Typography } from "@mui/material";
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
 import { BlankNote, SubsectionTitle } from "@/client/src/components/common/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
-import { formatIterativeAttacks, formatSpeed } from "@/shared/dnd3.5/weaponAttacks.ts";
 import { formatSigned } from "@/shared/text.ts";
 
 import { StatField } from "./StatField.tsx";
@@ -29,8 +28,6 @@ const AC_PARTS = [
 ] as const;
 
 export function CombatAndSavesSection({ combat, saves }: CombatAndSavesSectionProps) {
-  const bab = combat?.bab ?? 0;
-
   return (
     <SheetSection title="Combat & Saves">
       <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
@@ -41,9 +38,9 @@ export function CombatAndSavesSection({ combat, saves }: CombatAndSavesSectionPr
             <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: { xs: 1, sm: 2 } }}>
               <StatField label="HP" value={combat?.hp?.total ?? 0} />
               <StatField label="Initiative" value={formatSigned(combat?.initiative?.total)} />
-              <StatField label="Speed" value={formatSpeed(combat?.speed?.total)} />
+              <StatField label="Speed" value={combat?.speedLabel} />
 
-              <StatField label="BAB" value={formatIterativeAttacks(bab)} />
+              <StatField label="BAB" value={combat?.babLabel} />
               <StatField label="Grapple" value={formatSigned(combat?.grapple?.total)} />
               <Box />
 

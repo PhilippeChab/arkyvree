@@ -1,6 +1,6 @@
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
-import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 /**
  * The spell lists of a ruleset's view, derived once and kept with it (`SpellLists.of`): those its classes and feats
@@ -17,6 +17,14 @@ export default class SpellLists {
   /** The view's spell lists, derived once with it. */
   static of(rulesetData: RulesetData): SpellLists {
     return rulesetData.derive(SpellLists);
+  }
+
+  /**
+   * The slug of a spell list's possession paths, from its aptitude's name without the " Spells" suffix ("Wizard Spells"
+   * → "wizard", "Knowledge Domain Spells" → "knowledgedomain").
+   */
+  static toSpellPossessionSlug(aptitudeName: string) {
+    return stripSeparators(aptitudeName.replace(/ Spells$/, ""));
   }
 
   /** What it derived, each the first time it's read. */
@@ -99,7 +107,7 @@ export default class SpellLists {
   /** Each list's spell-possession slug (`powers.<spell>.<slug>.known`), by its aptitude id. */
   get spellSlugByAptitudeId(): Map<string, string> {
     return (this.built.spellSlugByAptitudeId ??= new Map(
-      this.rulesetData.aptitudes.map((aptitude) => [aptitude.id, toSpellPossessionSlug(aptitude.name)]),
+      this.rulesetData.aptitudes.map((aptitude) => [aptitude.id, SpellLists.toSpellPossessionSlug(aptitude.name)]),
     ));
   }
 }
