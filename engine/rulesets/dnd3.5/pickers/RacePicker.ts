@@ -1,12 +1,11 @@
 /** The races a new character can pick. */
 
 import type { Components } from "@/engine/core/paths/PathTraverser.ts";
+import { Picker } from "@/engine/core/pickers/index.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
 import type { Requirement } from "@/shared/relations.ts";
-
-import Picker from "./Picker.ts";
 
 /**
  * The race picker of a new character of what its form says (`identity`: its alignment and gender, when given): a player

@@ -1,13 +1,15 @@
 import { type CharacterInput, CharacterProjection, type PickLevel } from "@/engine/core/module/index.ts";
+import { CharacterPicker } from "@/engine/core/pickers/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
+import CharacterBuilder from "@/engine/rulesets/dnd3.5/model/CharacterBuilder.ts";
+import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import type { KlassLevel } from "@/shared/relations.ts";
 
-import CharacterPicker from "./CharacterPicker.ts";
-
 /** A feat or power picker: the level it picks at, the character projected to it with the feats picked so far. */
 export default abstract class LevelPicker<Details extends object = object> extends CharacterPicker<
+  DetailedCharacter,
   { id: string },
   Details
 > {
@@ -24,6 +26,11 @@ export default abstract class LevelPicker<Details extends object = object> exten
 
   /** The class level picked at. */
   protected readonly klassLevel: KlassLevel;
+
+  /** The 3.5 character built from rows. */
+  protected build(input: CharacterInput) {
+    return CharacterBuilder.build(this.view, input);
+  }
 
   /**
    * The character a pick is made for: as it was before the edited level (an edit), with the levels planned before this

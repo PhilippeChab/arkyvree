@@ -1,3 +1,5 @@
+import type { Picker } from "@/engine/core/pickers/index.ts";
+
 import type CharacterDescription from "./characters/description/CharacterDescription.ts";
 import type CharacterSheet from "./characters/sheet/CharacterSheet.tsx";
 import type { PoolModifier } from "./entities/feats/FeatEntity.ts";
@@ -6,7 +8,6 @@ import type LevelUpPreview from "./levelUp/LevelUpPreview.ts";
 import type LevelUpSteps from "./levelUp/LevelUpSteps.ts";
 import type ClassPicker from "./pickers/ClassPicker.ts";
 import type FeatPicker from "./pickers/FeatPicker.ts";
-import type Picker from "./pickers/Picker.ts";
 import type PowerPicker from "./pickers/PowerPicker.ts";
 import type RacePicker from "./pickers/RacePicker.ts";
 

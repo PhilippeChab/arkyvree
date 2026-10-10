@@ -465,6 +465,12 @@ engine/
 │   ├── entities/                          (RulesetEntity: an entity kind's steps, which a ruleset's kinds extend;
 │   │                                      CustomizationPageEntity: a kind whose page shows its customizations)
 │   ├── fields/                            (Field, FieldCodec: an entity's fields kept in its properties)
+│   ├── pickers/                           (Picker: one pipeline, `filters` and `describe(rows)`: the rows as the
+│   │                                      view reads them, those it offers, each with whether who it picks for
+│   │                                      meets its requirements and the tree of those it fails, and what it adds;
+│   │                                      a ruleset's picker says what differs. CharacterPicker checks against the
+│   │                                      character as the level-up plans it (`project`), its ruleset's build
+│   │                                      (`build`), built once)
 │   ├── modifiers/ModifierEvaluator.ts
 │   ├── requirements/RequirementEvaluator.ts
 │   └── paths/                             (the path language: PathTraverser and the components it reads,
@@ -536,13 +542,9 @@ engine/rulesets/
     │                                      BondedCreatures: what a master's creatures become as its saved levels
     │                                      make them, which every save plans with BondedPlans; Dnd35LevelUp: the
     │                                      module's levelUp, which opens them)
-    ├── pickers/                           (Picker: one pipeline, `filters` and `describe(rows)`: the rows as the
-    │                                      view reads them, those it offers, each with whether who it picks for meets
-    │                                      its requirements and the tree of those it fails, and what it adds; a kind
-    │                                      says what differs. CharacterPicker checks against the character as the
-    │                                      level-up plans it, built once; ClassPicker (a class's next level) and
-    │                                      LevelPicker (FeatPicker, PowerPicker: the level they pick at) on it;
-    │                                      RacePicker checks a new character's form)
+    ├── pickers/                           (the 3.5 pickers, on core's: ClassPicker (a class's next level) and
+    │                                      LevelPicker (FeatPicker, PowerPicker: the level they pick at) on
+    │                                      CharacterPicker; RacePicker on Picker, checking a new character's form)
     ├── content/                           ← the module's `content`: Dnd35Content, what the seeders and the codegen
     │                                      ask: BookPaths, EntityProperties
     └── rules/                             (the tables and rules several sides read: LevelRules, SkillRules, sizes,
@@ -713,7 +715,7 @@ A small rule several of a ruleset's modules share, a constant or a predicate, is
 
 A bound the client and the API check too is a constant of the ruleset's shared vocabulary, which every side reads instead of writing the number: `MAX_SPELL_LEVEL` (`shared/dnd3.5/spells.ts`) for the aptitudes' spell levels, the spellcasting and the spell forms, `MAX_CLASS_LEVEL` (`shared/dnd3.5/classes.ts`) for the class-level forms and the bonus caster levels, `MAX_ABILITY_SCORE` (`shared/dnd3.5/abilities.ts`) for a new character's ability scores and the sheet's, and `MAX_ITEM_VARIANTS` (`shared/itemTemplates.ts`) for the variants form. The routes read them through the engine (`RULESET_LIMITS`), and a character's last level with them (`MAX_CHARACTER_LEVEL`, `shared/dnd3.5/classes.ts`: the most levels a level-up saves).
 
-More complex operations (bound to the detailed character, returning rich data) belong on the ruleset's level-up classes (`LevelUpState` and its concern, `ChecksSelections`, and the pickers on `Picker`, building the character from the rows a level-up adds, `CharacterProjection`) or on its character (a concern of `DetailedCharacter`), which an operation builds from the input it's given (`CharacterBuilder.build`).
+More complex operations (bound to the detailed character, returning rich data) belong on the ruleset's level-up classes (`LevelUpState` and its concern, `ChecksSelections`, and the pickers on core's `Picker` and `CharacterPicker`, building the character from the rows a level-up adds, `CharacterProjection`) or on its character (a concern of `DetailedCharacter`), which an operation builds from the input it's given (`CharacterBuilder.build`).
 
 ### The level flows ask the module
 
