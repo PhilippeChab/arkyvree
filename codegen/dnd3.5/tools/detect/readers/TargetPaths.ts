@@ -4,9 +4,9 @@ import { ABILITY_NAMES } from "@/codegen/dnd3.5/tools/vocabulary/abilities.ts";
 import { SAVE_NAMES } from "@/codegen/dnd3.5/tools/vocabulary/saves.ts";
 import type { RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import { DND35_BASE_RULES } from "@/content/dnd3.5/baseRules.ts";
-import { SKILL_NAMES } from "@/content/dnd3.5/data/skills.ts";
 import { Engine } from "@/engine/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { SKILL_NAMES } from "@/vocabulary/dnd3.5/skills.ts";
 
 /**
  * The slugs of the skill groups with subtypes ("knowledge", "craft", "perform", "profession"): a path like

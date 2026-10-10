@@ -21,6 +21,9 @@ export const CLASS_FEATURE_FAMILIES = [
   "Trapfinding",
 ] as const;
 
+/** The family of the favored enemy feats, one per creature type a ranger can favor, and their specializations. */
+export const FAVORED_ENEMY_FAMILY = "Favored Enemy";
+
 /**
  * The families of feats the seeded rules have (a feat's FEAT_FAMILY property): the values the customization offers, and
  * the families an "any X feat" prerequisite names. A feat type's family has its name (a luck feat is of Luck)
@@ -51,7 +54,7 @@ export const FEAT_FAMILIES = [
   // Class features
   "Turn or Rebuke Undead",
   "Wild Shape",
-  "Favored Enemy",
+  FAVORED_ENEMY_FAMILY,
   ...CLASS_FEATURE_FAMILIES,
 ] as const;
 

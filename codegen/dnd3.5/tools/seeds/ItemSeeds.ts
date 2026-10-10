@@ -2,7 +2,6 @@
 
 import { type ItemReference } from "@/codegen/dnd3.5/tools/types/items.ts";
 import type { RequirementEntry } from "@/content/core/builders/customization/types.ts";
-import { getArmorDefinition, getShieldDefinition } from "@/content/dnd3.5/builders/items/armor.ts";
 import {
   exotic,
   HEAVY_ARMOR_PROF,
@@ -15,6 +14,7 @@ import {
 } from "@/content/dnd3.5/builders/items/proficiencies.ts";
 import { armorProperties, shieldProperties, weaponProperties } from "@/content/dnd3.5/builders/items/properties.ts";
 import type { ItemSeed } from "@/content/dnd3.5/builders/items/types.ts";
+import { ARMOR_TYPE_DEFINITIONS, SHIELD_TYPE_DEFINITIONS } from "@/vocabulary/dnd3.5/armor.ts";
 
 import { ReferenceSeeds } from "./ReferenceSeeds.ts";
 
@@ -100,13 +100,13 @@ export class ItemSeeds extends ReferenceSeeds<ItemReference> {
           ...(det.type === "Armor"
             ? {
                 slot: "Torso" as const,
-                requirements: ItemSeeds.armorProficiency(getArmorDefinition(det.generatorName)?.armorType),
+                requirements: ItemSeeds.armorProficiency(ARMOR_TYPE_DEFINITIONS[det.generatorName]?.armorType),
                 properties: armorProperties(det.generatorName),
               }
             : {
                 slot: "Off Hand" as const,
                 requirements:
-                  getShieldDefinition(det.generatorName)?.shieldType === "Tower" ? TOWER_SHIELD_PROF : SHIELD_PROF,
+                  SHIELD_TYPE_DEFINITIONS[det.generatorName]?.shieldType === "Tower" ? TOWER_SHIELD_PROF : SHIELD_PROF,
                 properties: shieldProperties(det.generatorName),
               }),
         };

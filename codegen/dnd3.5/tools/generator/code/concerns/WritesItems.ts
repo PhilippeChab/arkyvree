@@ -2,7 +2,6 @@ import { isDeepStrictEqual } from "node:util";
 
 import type { BaseCodeFile } from "@/codegen/dnd3.5/tools/generator/code/BaseCodeFile.ts";
 import type { Property, RequirementEntry } from "@/content/core/builders/customization/types.ts";
-import { getArmorDefinition, getShieldDefinition } from "@/content/dnd3.5/builders/items/armor.ts";
 import {
   exotic,
   HEAVY_ARMOR_PROF,
@@ -15,8 +14,9 @@ import {
 } from "@/content/dnd3.5/builders/items/proficiencies.ts";
 import { armorProperties, shieldProperties, weaponProperties } from "@/content/dnd3.5/builders/items/properties.ts";
 import type { ItemSeed } from "@/content/dnd3.5/builders/items/types.ts";
-import { getWeaponDefinition } from "@/content/dnd3.5/builders/items/weapons.ts";
 import type { Constructor } from "@/lib/mixins.ts";
+import { ARMOR_TYPE_DEFINITIONS, SHIELD_TYPE_DEFINITIONS } from "@/vocabulary/dnd3.5/armor.ts";
+import { WEAPON_TYPE_DEFINITIONS } from "@/vocabulary/dnd3.5/weapons.ts";
 
 /**
  * A builder an item's field is written with: what it gives an item of a name (`of`, none when it gives it nothing),
@@ -28,17 +28,17 @@ type ItemBuilder<V> = { called: boolean; name: string; of: (item: string) => V[]
 const ITEM_PROPERTIES: ItemBuilder<Property>[] = [
   {
     name: "weaponProperties",
-    of: (item) => (getWeaponDefinition(item) ? weaponProperties(item) : undefined),
+    of: (item) => (WEAPON_TYPE_DEFINITIONS[item] ? weaponProperties(item) : undefined),
     called: true,
   },
   {
     name: "armorProperties",
-    of: (item) => (getArmorDefinition(item) ? armorProperties(item) : undefined),
+    of: (item) => (ARMOR_TYPE_DEFINITIONS[item] ? armorProperties(item) : undefined),
     called: true,
   },
   {
     name: "shieldProperties",
-    of: (item) => (getShieldDefinition(item) ? shieldProperties(item) : undefined),
+    of: (item) => (SHIELD_TYPE_DEFINITIONS[item] ? shieldProperties(item) : undefined),
     called: true,
   },
 ];

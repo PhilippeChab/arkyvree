@@ -11,9 +11,9 @@ import { findClassFeatFamily } from "@/codegen/dnd3.5/tools/vocabulary/classFeat
 import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import { grantFeat } from "@/content/dnd3.5/builders/feats/possession.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
-import { FAVORED_ENEMY_FAMILY } from "@/content/dnd3.5/data/feats/favoredEnemy.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { FAVORED_ENEMY_FAMILY } from "@/vocabulary/dnd3.5/feats.ts";
 import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /**

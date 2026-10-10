@@ -2,8 +2,8 @@
 
 import type { ModifierSeed } from "@/content/core/builders/customization/types.ts";
 import { grantFeat } from "@/content/dnd3.5/builders/feats/possession.ts";
-import { EXOTIC_WEAPONS, MARTIAL_WEAPONS, SIMPLE_WEAPONS } from "@/content/dnd3.5/builders/items/weapons.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { EXOTIC_WEAPONS, MARTIAL_WEAPONS, SIMPLE_WEAPONS } from "@/vocabulary/dnd3.5/weapons.ts";
 
 import { ModifierReading } from "./ModifierReading.ts";
 

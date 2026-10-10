@@ -4,10 +4,10 @@ import { and, eq, gte, or } from "@/content/core/builders/customization/requirem
 import { feat } from "@/content/dnd3.5/builders/feats/possession.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import { proficiencyRequirements } from "@/content/dnd3.5/builders/items/proficiencies.ts";
-import { ALL_WEAPONS, CROSSBOW_WEAPONS, EXOTIC_WEAPONS } from "@/content/dnd3.5/builders/items/weapons.ts";
-import { SKILL_NAMES } from "@/content/dnd3.5/data/skills.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { SKILL_NAMES } from "@/vocabulary/dnd3.5/skills.ts";
 import { MAGIC_SCHOOLS } from "@/vocabulary/dnd3.5/spells.ts";
+import { ALL_WEAPONS, CROSSBOW_WEAPONS, EXOTIC_WEAPONS } from "@/vocabulary/dnd3.5/weapons.ts";
 
 export const EXOTIC_WEAPON_PROFICIENCY_FEATS: FeatSeed[] = EXOTIC_WEAPONS.map((w) => ({
   name: `Exotic Weapon Proficiency: ${w}`,

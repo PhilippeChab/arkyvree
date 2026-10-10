@@ -20,16 +20,12 @@ const DECLARED_TYPES = {
 
 /**
  * Where each name a generated file's code can use comes from, in the order its imports list them: the requirement
- * builders, the weapon lists and the item builders a feat template or an item is written with, the skills and schools
- * a template is made over.
+ * and item builders a feat template or an item is written with, and the weapons, skills and schools a template is made
+ * over (the vocabulary's).
  */
 const IMPORT_TABLE: ImportTable = [
   ["@/content/core/builders/customization/requirements.ts", ["and", "eq", "eqNum", "eqStr", "gte", "or"]],
   ["@/content/dnd3.5/builders/feats/possession.ts", ["feat"]],
-  [
-    "@/content/dnd3.5/builders/items/weapons.ts",
-    ["ALL_WEAPONS", "SIMPLE_WEAPONS", "MARTIAL_WEAPONS", "EXOTIC_WEAPONS", "CROSSBOW_WEAPONS"],
-  ],
   [
     "@/content/dnd3.5/builders/items/proficiencies.ts",
     [
@@ -45,7 +41,11 @@ const IMPORT_TABLE: ImportTable = [
     ],
   ],
   ["@/content/dnd3.5/builders/items/properties.ts", ["weaponProperties", "armorProperties", "shieldProperties"]],
-  ["@/content/dnd3.5/data/skills.ts", ["SKILL_NAMES"]],
+  [
+    "@/vocabulary/dnd3.5/weapons.ts",
+    ["ALL_WEAPONS", "SIMPLE_WEAPONS", "MARTIAL_WEAPONS", "EXOTIC_WEAPONS", "CROSSBOW_WEAPONS"],
+  ],
+  ["@/vocabulary/dnd3.5/skills.ts", ["SKILL_NAMES"]],
   ["@/vocabulary/dnd3.5/spells.ts", ["MAGIC_SCHOOLS"]],
   ["@/shared/text.ts", ["stripSeparators"]],
 ];

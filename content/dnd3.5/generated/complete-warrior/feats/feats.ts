@@ -3,7 +3,7 @@
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import { feat } from "@/content/dnd3.5/builders/feats/possession.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
-import { ALL_WEAPONS } from "@/content/dnd3.5/builders/items/weapons.ts";
+import { ALL_WEAPONS } from "@/vocabulary/dnd3.5/weapons.ts";
 
 export const DIVINE_FEATS: FeatSeed[] = [
   {

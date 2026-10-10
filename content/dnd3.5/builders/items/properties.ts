@@ -1,6 +1,7 @@
 /** Builders the generated items are written with: their weapon, armor or shield properties. */
 
 import type { Property } from "@/content/core/builders/customization/types.ts";
+import { ARMOR_TYPE_DEFINITIONS, SHIELD_TYPE_DEFINITIONS } from "@/vocabulary/dnd3.5/armor.ts";
 import {
   ARMOR_AC_BONUS,
   ARMOR_CHECK_PENALTY,
@@ -29,12 +30,10 @@ import {
   WEAPON_STRENGTH_DAMAGE,
   WEAPON_TYPE,
 } from "@/vocabulary/dnd3.5/properties/index.ts";
-
-import { getArmorDefinition, getShieldDefinition } from "./armor.ts";
-import { getWeaponDefinition } from "./weapons.ts";
+import { WEAPON_TYPE_DEFINITIONS } from "@/vocabulary/dnd3.5/weapons.ts";
 
 export function armorProperties(armorTypeName: string): Property[] {
-  const def = getArmorDefinition(armorTypeName);
+  const def = ARMOR_TYPE_DEFINITIONS[armorTypeName];
   if (!def) throw new Error(`Unknown armor type: ${armorTypeName}`);
 
   return [
@@ -48,7 +47,7 @@ export function armorProperties(armorTypeName: string): Property[] {
 }
 
 export function shieldProperties(shieldTypeName: string): Property[] {
-  const def = getShieldDefinition(shieldTypeName);
+  const def = SHIELD_TYPE_DEFINITIONS[shieldTypeName];
   if (!def) throw new Error(`Unknown shield type: ${shieldTypeName}`);
 
   return [
@@ -61,7 +60,7 @@ export function shieldProperties(shieldTypeName: string): Property[] {
 }
 
 export function weaponProperties(weaponTypeName: string): Property[] {
-  const def = getWeaponDefinition(weaponTypeName);
+  const def = WEAPON_TYPE_DEFINITIONS[weaponTypeName];
   if (!def) throw new Error(`Unknown weapon type: ${weaponTypeName}`);
 
   const props: Property[] = [

@@ -8,13 +8,8 @@ import type { ModifierSeed } from "@/content/core/builders/customization/types.t
 import type { DomainSeed } from "@/content/dnd3.5/builders/domains/types.ts";
 import { grantFeat } from "@/content/dnd3.5/builders/feats/possession.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
-import {
-  ALL_WEAPONS,
-  EXOTIC_WEAPONS,
-  MARTIAL_WEAPONS,
-  SIMPLE_WEAPONS,
-} from "@/content/dnd3.5/builders/items/weapons.ts";
 import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { ALL_WEAPONS, EXOTIC_WEAPONS, MARTIAL_WEAPONS, SIMPLE_WEAPONS } from "@/vocabulary/dnd3.5/weapons.ts";
 
 import { ReferenceSeeds } from "./ReferenceSeeds.ts";
 
