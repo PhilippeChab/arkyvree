@@ -1,14 +1,18 @@
 import type { CharacterInput } from "@/engine/core/module/CharacterInputs.ts";
 import type { Descriptions } from "@/engine/core/module/contract.ts";
+import type { OpenedPicker } from "@/engine/core/module/pickers.ts";
+import RulesError from "@/engine/core/RulesError.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
+import type { Item, Property } from "@/shared/relations.ts";
+
 import type {
   CharacterCard,
   CharacterCreation,
   DescribedInventoryEntry,
   HeldInventoryEntry,
   PlacementDescription,
-} from "@/engine/core/module/descriptions.ts";
-import type { OpenedPicker } from "@/engine/core/module/pickers.ts";
-import type { AbilitiesPlan, InventoryEntryPlan, NewCharacterPlan } from "@/engine/core/module/plans.ts";
+} from "./descriptions.ts";
+import type { AbilitiesPlan, InventoryEntryPlan, NewCharacterPlan } from "./plans.ts";
 import type {
   AbilitiesRequest,
   InventoryEntryChange,
@@ -18,10 +22,7 @@ import type {
   PrivateNotes,
   RacePickQuery,
   SheetRequest,
-} from "@/engine/core/module/requests.ts";
-import RulesError from "@/engine/core/RulesError.ts";
-import type { RulesetView } from "@/engine/core/view/index.ts";
-import type { Item, Property } from "@/shared/relations.ts";
+} from "./requests.ts";
 
 /**
  * What a ruleset answers of its characters, from the rows the server reads: their sheets (as the API answers them, as

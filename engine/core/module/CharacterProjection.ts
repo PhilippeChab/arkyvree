@@ -1,7 +1,7 @@
 import type { CharacterLevel } from "@/shared/relations.ts";
 
 import type { CharacterInput, CharacterRows } from "./CharacterInputs.ts";
-import type { AbilityIncrease, LevelPickRows } from "./plans.ts";
+import type { AbilityIncrease, LevelPickRows } from "./parts/levelUp/index.ts";
 
 /**
  * A character's rows (`character`) with what a level-up adds before it's saved, as the rows it would save: the levels

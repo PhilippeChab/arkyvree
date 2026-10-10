@@ -2,14 +2,11 @@ import type { PropertyTypesProvider } from "@/engine/core/customizations/index.t
 import type { Fields } from "@/engine/core/fields/index.ts";
 import type { TargetPaths } from "@/engine/core/paths/CategoryPaths.ts";
 
-import type {
-  CharactersPart,
-  ContentPart,
-  EntitiesPart,
-  EntityKindsContract,
-  LevelUpPart,
-  RulesetPart,
-} from "./parts/index.ts";
+import type { CharactersPart } from "./parts/characters/index.ts";
+import type { ContentPart } from "./parts/content/index.ts";
+import type { EntitiesPart, EntityKindsContract } from "./parts/entities/index.ts";
+import type { LevelUpPart } from "./parts/levelUp/index.ts";
+import type { RulesetPart } from "./parts/ruleset/index.ts";
 
 /**
  * What a ruleset describes in its own shape, which the server hands to the client as it is: a character's sheet (as the
