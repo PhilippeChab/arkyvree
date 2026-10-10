@@ -1,6 +1,7 @@
 /**
  * What a level wizard's pickers check their options against, as the endpoints take it: the picks so far, and the levels
- * Add Level plans before the pick, not saved yet. Both wizards' class, feat and spell pickers encode them here, once.
+ * Add Level plans before the pick, not saved yet. Both wizards' class, feat and spell pickers encode them here, once,
+ * and a level's ability increase, which the saves send too.
  */
 
 import type { PickerLevel, PreviewLevelDetail } from "./levelUpQueries.ts";
@@ -8,9 +9,21 @@ import type { LevelUpFormData } from "./useLevelWizardBase.ts";
 
 /** The planned levels before a pick, as a picker's query sends them. */
 export interface PlannedLevels {
-  /** Each level's ability increase, "null" for none: one per class level, paired by index. */
-  plannedAbilityIds: string | undefined;
+  /** Each level's ability increases (`abilityIncreaseString`), empty for none: one per class level, paired by index. */
+  plannedAbilityIncreases: string | undefined;
   plannedClassLevelIds: string | undefined;
+}
+
+/** A level's ability increase as the endpoints take it: the ability the wizard picked, raised by 1, or none. */
+export function abilityIncreasesOf(abilityId: string | null | undefined) {
+  return abilityId ? [{ abilityId, amount: 1 }] : [];
+}
+
+/** A level's ability increase as the step and picker endpoints take it ("abilityId:amount" pairs, joined by ";"). */
+export function abilityIncreaseString(abilityId: string | null | undefined) {
+  return abilityIncreasesOf(abilityId)
+    .map((increase) => `${increase.abilityId}:${increase.amount}`)
+    .join(";");
 }
 
 /** The picked feats as the "featId:aptitudeId" list the picker endpoints take. */
@@ -42,9 +55,9 @@ export function plannedLevelsOf(
   count?: number,
 ): PlannedLevels {
   const levels = levelDetails?.slice(0, count) ?? [];
-  if (levels.length === 0) return { plannedAbilityIds: undefined, plannedClassLevelIds: undefined };
+  if (levels.length === 0) return { plannedAbilityIncreases: undefined, plannedClassLevelIds: undefined };
   return {
-    plannedAbilityIds: levels.map((_, i) => abilityIncreases[i] ?? "null").join(","),
+    plannedAbilityIncreases: levels.map((_, i) => abilityIncreaseString(abilityIncreases[i])).join(","),
     plannedClassLevelIds: levels.map((level) => level.klassLevelId).join(","),
   };
 }

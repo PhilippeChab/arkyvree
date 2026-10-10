@@ -42,7 +42,7 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
         this.data.powers,
         this.rulesetData.klasses,
       );
-      this.components.abilities.initialize(this.data.characterAbilityScores, this.data.characterLevels);
+      this.components.abilities.initialize(this.data.characterAbilityScores, this.data.abilityIncreases);
       this.components.identity.initialize(this.character, this.data.race, this.data.languages);
       this.components.aptitudes.initialize(
         this.rulesetData.aptitudes,

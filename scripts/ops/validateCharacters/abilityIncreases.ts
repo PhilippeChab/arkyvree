@@ -27,7 +27,8 @@ export async function checkAbilityIncreases(characters: Character[]) {
           .levelUp()
           .describeStep("abilities", { editedLevelId: level.id });
         const due = step.name === "abilities" && step.isAvailable;
-        if (due === (level.abilityId !== null)) continue;
+        const increased = character.rows.picks.abilityIncreases.some((row) => row.characterLevelId === level.id);
+        if (due === increased) continue;
         issues++;
         const klassLevel = scope.rulesetData.klassLevelsById.get(level.klassLevelId);
         const klass = klassLevel && scope.rulesetData.klassesById.get(klassLevel.klassId);

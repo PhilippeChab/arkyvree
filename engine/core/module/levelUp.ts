@@ -1,5 +1,11 @@
 import type { CharacterRows } from "./CharacterInputs.ts";
 
+/** An ability a level raises, and by how much. */
+export interface AbilityIncrease {
+  abilityId: string;
+  amount: number;
+}
+
 /** What a master's bonded creatures become: one plan per kind of creature its levels give it. */
 export interface BondedCreaturesPlan {
   bonded: BondedPlan[];
@@ -26,9 +32,8 @@ export type BondedPlan = { kind: string; removedId?: string } & (
 /** A feat picked in a pool. */
 export type FeatPick = { aptitudeId: string; featId: string };
 
-/** A level's row, as a save writes it beside its character's: its class level, hit points and ability increase. */
+/** A level's row, as a save writes it beside its character's: its class level and hit points. */
 export interface LevelColumns {
-  abilityId: string | null;
   hp: number;
   klassLevelId: string;
 }
@@ -42,8 +47,8 @@ export type LevelEditPlan = LevelWrites<Omit<LevelColumns, "klassLevelId">> & {
   level: CharacterRows["levels"][number];
 };
 
-/** A saved level's edit, as the form sends it: its new hit points, ability increase and picks. */
-export type LevelEditRequest = LevelPicks & { abilityId: string | null; hp: number };
+/** A saved level's edit, as the form sends it: its new hit points, ability increases and picks. */
+export type LevelEditRequest = LevelPicks & { abilityIncreases: AbilityIncrease[]; hp: number };
 
 /** A level's picks as the rows a save writes. */
 export interface LevelPickRows {
@@ -65,12 +70,17 @@ export interface LevelRemovalPlan {
   level: CharacterRows["levels"][number];
 }
 
-/** A level a level-up saves, as the wizard sends it: its class's level, hit points and ability increase. */
+/** A level a level-up saves, as the wizard sends it: its class's level, hit points and ability increases. */
 export interface LevelRequest {
-  abilityId: string | null;
+  abilityIncreases: AbilityIncrease[];
   hp: number;
   klassId: string;
   level: number;
+}
+
+/** A level's rows in the tables under it, by table, as a save writes them: its ability increases and its picks. */
+export interface LevelRows extends LevelPickRows {
+  abilityIncreases: AbilityIncrease[];
 }
 
 /** What a level-up saves, checked: each level's writes, and what the master's bonded creatures become. */
@@ -81,15 +91,15 @@ export interface LevelsPlan {
 
 /**
  * The level a level-up wizard's step is for, as the wizard asks for it: class `klassId`'s `level` (a step that reads the
- * level's class refuses to answer without them) and its ability increase, after the levels the wizard plans before it
- * (`planned`), or in the place of the saved level it edits (`editedLevelId`).
+ * level's class refuses to answer without them) and its ability increases, after the levels the wizard plans before
+ * it (`planned`), or in the place of the saved level it edits (`editedLevelId`).
  */
 export interface LevelStep {
-  abilityId?: string;
+  abilityIncreases?: AbilityIncrease[];
   editedLevelId?: string;
   klassId?: string;
   level?: number;
-  planned?: Pick<PlannedSoFar, "abilityIds" | "klassLevelIds">;
+  planned?: Pick<PlannedSoFar, "abilityIncreases" | "klassLevelIds">;
 }
 
 /**
@@ -98,7 +108,7 @@ export interface LevelStep {
  */
 export interface LevelWrites<C = LevelColumns> {
   columns: C;
-  rows: LevelPickRows;
+  rows: LevelRows;
 }
 
 /** A bonded creature a plan makes: of a race, named for it, with its ability scores. */
@@ -109,12 +119,12 @@ export interface NewBondedCreature {
 }
 
 /**
- * The level a feat or a power is picked at: class `klassId`'s `level` with its ability increase (`abilityId`), in the
- * pool `aptitudeId`, after the levels the wizard plans before it (`planned`), or a saved level's (`editedLevelId`),
- * which a pick sees the character as it was before.
+ * The level a feat or a power is picked at: class `klassId`'s `level` with its ability increases, in the pool
+ * `aptitudeId`, after the levels the wizard plans before it (`planned`), or a saved level's (`editedLevelId`), which a
+ * pick sees the character as it was before.
  */
 export interface PickLevel {
-  abilityId?: string;
+  abilityIncreases?: AbilityIncrease[];
   aptitudeId: string;
   editedLevelId?: string;
   klassId: string;
@@ -127,7 +137,7 @@ export interface PickLevel {
  * levels, and their ability increases by place), and the feats and skill points picked over them so far.
  */
 export interface PlannedSoFar {
-  abilityIds?: (string | undefined)[];
+  abilityIncreases?: AbilityIncrease[][];
   featPicks?: FeatPick[];
   klassLevelIds?: string[];
   skillPoints?: Record<string, number>;

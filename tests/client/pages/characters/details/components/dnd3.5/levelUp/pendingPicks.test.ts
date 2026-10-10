@@ -33,14 +33,17 @@ describe("encoding a level wizard's picks for its pickers", () => {
     const levels = [{ klassLevelId: "f1" }, { klassLevelId: "f2" }, { klassLevelId: "w1" }];
     const increases = [null, "str", null];
     expect(plannedLevelsOf(levels, increases)).toEqual({
-      plannedAbilityIds: "null,str,null",
+      plannedAbilityIncreases: ",str:1,",
       plannedClassLevelIds: "f1,f2,w1",
     });
-    expect(plannedLevelsOf(levels, increases, 1)).toEqual({ plannedAbilityIds: "null", plannedClassLevelIds: "f1" });
+    expect(plannedLevelsOf(levels, increases, 2)).toEqual({
+      plannedAbilityIncreases: ",str:1",
+      plannedClassLevelIds: "f1,f2",
+    });
   });
 
   test("sends no levels before the plan's preview has loaded", () => {
-    const none = { plannedAbilityIds: undefined, plannedClassLevelIds: undefined };
+    const none = { plannedAbilityIncreases: undefined, plannedClassLevelIds: undefined };
     expect(plannedLevelsOf(undefined, ["str"])).toEqual(none);
     expect(plannedLevelsOf([], [])).toEqual(none);
   });
@@ -74,7 +77,7 @@ describe("the planned level a pick lands on", () => {
       classId: "wizard",
       level: 1,
       featPicks: "dodge:general",
-      plannedAbilityIds: "null",
+      plannedAbilityIncreases: "",
       plannedClassLevelIds: "f3",
     });
     expect(plannedPicker(FIGHTER_THEN_WIZARD, [], 0, undefined)).toMatchObject({

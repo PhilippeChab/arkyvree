@@ -106,7 +106,7 @@ describe("planBondedLevels", () => {
     const levels = await CharacterLevels.findMany(db, { characterId: bonded.id });
     const klassLevelIds = [(await findKlassLevel(klassId, 4))!.id, (await findKlassLevel(klassId, 5))!.id];
     expect(new BondedPlans(rulesetData).planBondedLevels(levels, { hitDice: 5, klassId })).toEqual({
-      added: klassLevelIds.map((klassLevelId) => ({ abilityId: null, hp: 1, klassLevelId })),
+      added: klassLevelIds.map((klassLevelId) => ({ hp: 1, klassLevelId })),
       removedIds: [],
     });
     expect(new BondedPlans(rulesetData).planBondedLevels(levels, { hitDice: 3, klassId })).toEqual({

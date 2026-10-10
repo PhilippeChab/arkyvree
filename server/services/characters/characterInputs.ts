@@ -5,6 +5,7 @@ import {
   CharacterAbilities,
   CharacterInventory,
   CharacterLanguages,
+  CharacterLevelAbilityIncreases,
   CharacterLevelFeats,
   CharacterLevelPowers,
   CharacterLevels,
@@ -20,8 +21,8 @@ import type { Character } from "@/shared/relations.ts";
 
 /**
  * The character's own rows (`CharacterRows`), read through `database` in its ruleset's scope, so their references are
- * the view's: its seat in a campaign, its ability scores, languages, inventory and levels, every saved level's picks,
- * and the modifiers set on the character, then their requirements.
+ * the view's: its seat in a campaign, its ability scores, languages, inventory and levels, every saved level's ability
+ * increases and picks, and the modifiers set on the character, then their requirements.
  */
 async function readCharacterRows(database: Db, character: Character): Promise<CharacterRows> {
   const characterId = character.id;
@@ -34,6 +35,7 @@ async function readCharacterRows(database: Db, character: Character): Promise<Ch
   const levels = await CharacterLevels.findMany(database, { characterId });
   const characterLevelIds = levels.map((level) => level.id);
   const picks = {
+    abilityIncreases: await CharacterLevelAbilityIncreases.findMany(database, { characterLevelIds }),
     skills: await CharacterLevelSkills.findMany(database, { characterLevelIds }),
     feats: await CharacterLevelFeats.findMany(database, { characterLevelIds }),
     powers: await CharacterLevelPowers.findMany(database, { characterLevelIds }),

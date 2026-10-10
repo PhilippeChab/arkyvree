@@ -7,12 +7,13 @@
 import { getTableName } from "drizzle-orm";
 
 import { levelsInCharacter } from "@/drizzle/schema.ts";
-import { Engine, type LevelWrites } from "@/engine/index.ts";
+import { type AbilityIncrease, Engine, type LevelRows } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { type Db, db, withTransaction } from "@/server/database/index.ts";
 import {
   Activities,
+  CharacterLevelAbilityIncreases,
   CharacterLevelFeats,
   CharacterLevelPowers,
   CharacterLevels,
@@ -29,7 +30,12 @@ import { Steps } from "./concerns/Steps.ts";
 
 class CharacterLevelsService extends include(Object, Pickers, Steps) {
   /** Writes a level's rows in the tables under it, each table's as the engine plans them. */
-  private async createLevelRows(tx: Db, characterLevelId: string, { feats, powers, skills }: LevelWrites["rows"]) {
+  private async createLevelRows(tx: Db, characterLevelId: string, rows: LevelRows) {
+    const { abilityIncreases, feats, powers, skills } = rows;
+    await CharacterLevelAbilityIncreases.createMany(
+      tx,
+      abilityIncreases.map((row) => ({ characterLevelId, ...row })),
+    );
     await CharacterLevelFeats.createMany(
       tx,
       feats.map((row) => ({ characterLevelId, ...row })),
@@ -46,6 +52,7 @@ class CharacterLevelsService extends include(Object, Pickers, Steps) {
 
   /** Deletes a level's rows in the tables under it, which an edit writes again. */
   private async deleteLevelRows(tx: Db, characterLevelId: string) {
+    await CharacterLevelAbilityIncreases.delete(tx, { characterLevelId });
     await CharacterLevelFeats.delete(tx, { characterLevelId });
     await CharacterLevelPowers.delete(tx, { characterLevelId });
     await CharacterLevelSkills.delete(tx, { characterLevelId });
@@ -70,7 +77,7 @@ class CharacterLevelsService extends include(Object, Pickers, Steps) {
     session: Session,
     characterId: string,
     levels: Array<{
-      abilityId: string | null;
+      abilityIncreases: AbilityIncrease[];
       hp: number;
       klassId: string;
       level: number;
@@ -111,7 +118,7 @@ class CharacterLevelsService extends include(Object, Pickers, Steps) {
     });
   }
 
-  /** A saved level's selections, as its edit opens them: its class level, hit points, ability and picks. */
+  /** A saved level's selections, as its edit opens them: its class level, hit points, ability increases and picks. */
   async getLevel(session: Session, characterId: string, characterLevelId: string) {
     return await withEditableCharacter(db, session, characterId, (scope, character) =>
       Engine.for(scope).character(character).levelUp().describeLevel(characterLevelId),
@@ -119,17 +126,16 @@ class CharacterLevelsService extends include(Object, Pickers, Steps) {
   }
 
   /**
-   * The level-up wizard's preview of the levels the character plans (`levels`, each with its ability increase in
-   * `abilityIds`): the pools they merge, each level's skill points, and how the picks spread over them.
+   * The level-up wizard's preview of the levels the character plans (`levels`, each with its ability increases): the
+   * pools they merge, each level's skill points, and how the picks spread over them.
    */
   async getPreview(
     session: Session,
     characterId: string,
-    levels: Array<{ klassId: string; level: number }>,
-    abilityIds: (string | null)[],
+    levels: Array<{ abilityIncreases: AbilityIncrease[]; klassId: string; level: number }>,
   ) {
     return await withEditableCharacter(db, session, characterId, (scope, character) =>
-      Engine.for(scope).character(character).levelUp().describePreview(levels, abilityIds),
+      Engine.for(scope).character(character).levelUp().describePreview(levels),
     );
   }
 
@@ -161,15 +167,15 @@ class CharacterLevelsService extends include(Object, Pickers, Steps) {
   }
 
   /**
-   * Re-saves a character level with new hit points, ability and picks: the engine checks them, and refuses the issues
-   * the level answers for unless `force`d. Answers the level as it was saved before.
+   * Re-saves a character level with new hit points, ability increases and picks: the engine checks them, and refuses the
+   * issues the level answers for unless `force`d. Answers the level as it was saved before.
    */
   async updateLevel(
     session: Session,
     characterId: string,
     characterLevelId: string,
     hp: number,
-    abilityId: string | null,
+    abilityIncreases: AbilityIncrease[],
     skills: Record<string, number>,
     feats: Record<string, string[]>,
     powers: Record<string, string[]>,
@@ -184,7 +190,7 @@ class CharacterLevelsService extends include(Object, Pickers, Steps) {
         const edit = Engine.for(scope)
           .character(character)
           .levelUp()
-          .planEdit(bonded, characterLevelId, { abilityId, feats, hp, powers, skills }, force);
+          .planEdit(bonded, characterLevelId, { abilityIncreases, feats, hp, powers, skills }, force);
 
         await CharacterLevels.update(tx, edit.columns, { id: characterLevelId });
         await this.deleteLevelRows(tx, characterLevelId);

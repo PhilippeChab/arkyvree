@@ -13,7 +13,7 @@ import { nextPage } from "@/client/src/lib/pageItems.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-import type { PlannedLevels } from "./pendingPicks.ts";
+import { abilityIncreaseString, type PlannedLevels } from "./pendingPicks.ts";
 
 /** A saved level, as Edit Level loads it. */
 type LevelData = InferResponseType<LevelsApi[":characterLevelId"]["$get"], 200>;
@@ -115,7 +115,7 @@ function levelQueryOf({ abilityId, classId, level, editedLevelId }: StepLevel) {
   return {
     classId,
     level: level.toString(),
-    abilityId: abilityId || undefined,
+    abilityIncreases: abilityIncreaseString(abilityId) || undefined,
     editedLevelId: editedLevelId || undefined,
   };
 }
@@ -124,7 +124,7 @@ function levelQueryOf({ abilityId, classId, level, editedLevelId }: StepLevel) {
 function plannedQueryOf(picker: PlannedPicks) {
   return {
     featPicks: picker.featPicks || undefined,
-    plannedAbilityIds: picker.plannedAbilityIds || undefined,
+    plannedAbilityIncreases: picker.plannedAbilityIncreases || undefined,
     plannedClassLevelIds: picker.plannedClassLevelIds || undefined,
   };
 }
@@ -271,10 +271,10 @@ export function characterLevelQuery(characterId: string, characterLevelId: strin
  * holds for as long as the plan does.
  */
 export function levelPreviewQuery(characterId: string, levels: { klassId: string; level: number }[]) {
-  // Ability increases are applied client-side (the Add Level wizard's attribute and skill point memos). Sending nulls
-  // keeps the response deterministic per plan: otherwise, a refetch for a new plan would send the current increases,
-  // the server would apply the bump, and the client memo would count it twice.
-  const body = { levels, abilityIds: levels.map(() => null) };
+  // The levels go without their ability increases, which the Add Level wizard applies itself (its attribute and skill
+  // point memos): sent, a refetch for a new plan would apply the current increases on the server too, and the memo
+  // would count them twice.
+  const body = { levels };
   return queryOptions({
     queryKey: QUERY_KEYS.characters.levelUp.preview(characterId, body),
     queryFn: () =>

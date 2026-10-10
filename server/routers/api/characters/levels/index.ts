@@ -6,12 +6,6 @@ import { isUuid, limitDefaultingTo } from "@/server/routers/api/schemaBuilders.t
 import { characterIdParam, page } from "@/server/routers/api/validation.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 
-/** Comma-separated, one per planned level: its ability increase's id, or anything else (`null`) for none. */
-const abilityIdList = z
-  .string()
-  .optional()
-  .transform((value) => value?.split(",").map((id) => (isUuid(id) ? id : undefined)));
-
 /** A class's level, as a level-up plans it: its ruleset bounds it. */
 const classLevel = z.number().int().min(1);
 
@@ -35,25 +29,46 @@ const idList = z
   .optional()
   .transform((value) => value?.split(",").filter(isUuid));
 
+/**
+ * A level's ability increases in the query string: `abilityId:amount` pairs joined by `;`, what isn't one dropped (an
+ * empty string is none).
+ */
+const increaseList = z.string().transform((value) =>
+  value
+    .split(";")
+    .map((pair) => pair.split(":"))
+    .filter(([abilityId, amount]) => isUuid(abilityId) && /^[1-9]\d*$/.test(amount ?? ""))
+    .map(([abilityId, amount]) => ({ abilityId, amount: Number(amount) })),
+);
+
 /** The hit points a character's level gives. */
 const levelHp = z.number().int().min(1);
+
+/** A level's ability increases, as a body sends them: each an ability, and the amount it's raised by. */
+const levelIncreases = z.array(z.object({ abilityId: z.string().uuid(), amount: z.number().int().min(1) }));
 
 const levelParams = characterIdParam.extend({ characterLevelId: z.string().uuid() });
 
 /** A number in the query string. */
 const queryNumber = z.string().pipe(z.coerce.number());
 
+/** Comma-separated, one per planned level: its ability increases (`increaseList`). */
+const plannedIncreaseList = z
+  .string()
+  .optional()
+  .transform((value) => value?.split(",").map((level) => increaseList.parse(level)));
+
 /**
  * The level a step is for: class `classId`'s `level` (which a step that reads its class requires) with its ability
- * increase, after the levels the wizard plans before it (`plannedClassLevelIds`, with their ability increases), or a
+ * increases, after the levels the wizard plans before it (`plannedClassLevelIds`, with their ability increases), or a
  * saved level's edit (`editedLevelId`).
  */
 const stepQuery = {
-  abilityId: z.string().uuid().optional(),
+  abilityIncreases: increaseList.optional(),
   classId: z.string().uuid().optional(),
   editedLevelId: z.string().uuid().optional(),
   level: queryNumber.optional(),
-  plannedAbilityIds: abilityIdList,
+  plannedAbilityIncreases: plannedIncreaseList,
   plannedClassLevelIds: idList,
 };
 
@@ -101,7 +116,7 @@ export default new Hono<SessionContext>()
         featPicks,
         limit: limitDefaultingTo(10),
         page,
-        plannedAbilityIds: abilityIdList,
+        plannedAbilityIncreases: plannedIncreaseList,
         plannedClassLevelIds: idList,
         search: z.string().optional(),
         skillPoints,
@@ -191,7 +206,7 @@ export default new Hono<SessionContext>()
               klassId: z.string().uuid(),
               level: classLevel,
               hp: levelHp,
-              abilityId: z.string().uuid().nullable(),
+              abilityIncreases: levelIncreases,
             }),
           )
           .min(1),
@@ -229,19 +244,16 @@ export default new Hono<SessionContext>()
             z.object({
               klassId: z.string().uuid(),
               level: classLevel,
+              abilityIncreases: levelIncreases.default([]),
             }),
           )
           .min(1),
-        abilityIds: z.array(z.string().uuid().nullable()),
       }),
     ),
     async (c) => {
       const { characterId } = c.req.valid("param");
-      const { levels, abilityIds } = c.req.valid("json");
-      return c.json(
-        await CharacterLevelsService.getPreview(c.var.requestSession, characterId, levels, abilityIds),
-        200,
-      );
+      const { levels } = c.req.valid("json");
+      return c.json(await CharacterLevelsService.getPreview(c.var.requestSession, characterId, levels), 200);
     },
   )
   .put(
@@ -251,7 +263,7 @@ export default new Hono<SessionContext>()
       "json",
       z.object({
         hp: levelHp,
-        abilityId: z.string().uuid().nullable(),
+        abilityIncreases: levelIncreases,
         skills: z.record(z.string().uuid(), z.number().int().min(0)),
         feats: z.record(z.string().uuid(), z.array(z.string().uuid())),
         powers: z.record(z.string().uuid(), z.array(z.string().uuid())),
@@ -260,14 +272,14 @@ export default new Hono<SessionContext>()
     ),
     async (c) => {
       const { characterId, characterLevelId } = c.req.valid("param");
-      const { hp, abilityId, skills, feats, powers, force } = c.req.valid("json");
+      const { hp, abilityIncreases, skills, feats, powers, force } = c.req.valid("json");
       return c.json(
         await CharacterLevelsService.updateLevel(
           c.var.requestSession,
           characterId,
           characterLevelId,
           hp,
-          abilityId,
+          abilityIncreases,
           skills,
           feats,
           powers,

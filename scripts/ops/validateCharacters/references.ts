@@ -21,13 +21,14 @@ const refChecks: { label: string; sql: SQL }[] = [
             AND kl.id IS NULL`,
   },
   {
-    label: "level → ability",
-    sql: sql`SELECT c.id, c.name, l.ability_id as "entityId"
-          FROM character.levels l
+    label: "level_ability_increase → ability",
+    sql: sql`SELECT c.id, c.name, li.ability_id as "entityId"
+          FROM character.level_ability_increases li
+          JOIN character.levels l ON l.id = li.character_level_id
           JOIN character.characters c ON c.id = l.character_id
-          LEFT JOIN rules.abilities a ON a.id = l.ability_id AND a.deleted_at IS NULL
-          WHERE c.deleted_at IS NULL AND l.deleted_at IS NULL
-            AND l.ability_id IS NOT NULL AND a.id IS NULL`,
+          LEFT JOIN rules.abilities a ON a.id = li.ability_id AND a.deleted_at IS NULL
+          WHERE c.deleted_at IS NULL AND l.deleted_at IS NULL AND li.deleted_at IS NULL
+            AND a.id IS NULL`,
   },
   {
     label: "level_feat → feat",

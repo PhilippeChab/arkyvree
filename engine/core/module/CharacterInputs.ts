@@ -1,6 +1,7 @@
 import type {
   characterAbilitiesInCharacter,
   languagesInCharacter,
+  levelAbilityIncreasesInCharacter,
   levelFeatsInCharacter,
   levelPowersInCharacter,
   levelSkillsInCharacter,
@@ -17,8 +18,8 @@ import type {
   Requirement,
 } from "@/shared/relations.ts";
 
-/** A level's picks, or a character's: its feats', powers' and skills' rows. */
-type PickRows = Record<"feats" | "powers" | "skills", Record<string, unknown>[]>;
+/** A level's rows under it, or a character's: its ability increases', feats', powers' and skills' rows. */
+type PickRows = Record<"abilityIncreases" | "feats" | "powers" | "skills", Record<string, unknown>[]>;
 
 /**
  * A character's row and the rows it's built from, as the server reads them in its ruleset's scope: a bonded creature's
@@ -32,8 +33,9 @@ export interface CharacterInput {
 
 /**
  * A character's own rows, which the server reads (`readCharacterInput`) and its module builds the character from: its seat
- * in a campaign, its ability scores, languages, inventory and levels, every saved level's picks (the links, whose
- * entities are the view's), and the modifiers set on the character itself, with their requirements. Read as stored:
+ * in a campaign, its ability scores, languages, inventory and levels, every saved level's rows under it (its ability
+ * increases and picks: the links, whose entities are the view's), and the modifiers set on the character itself, with
+ * their requirements. Read as stored:
  * the engine resolves their references as they enter it (`CharacterInputs`).
  */
 export interface CharacterRows {
@@ -44,6 +46,7 @@ export interface CharacterRows {
   levels: CharacterLevel[];
   modifiers: Modifier[];
   picks: {
+    abilityIncreases: (typeof levelAbilityIncreasesInCharacter.$inferSelect)[];
     feats: (typeof levelFeatsInCharacter.$inferSelect)[];
     powers: (typeof levelPowersInCharacter.$inferSelect)[];
     skills: (typeof levelSkillsInCharacter.$inferSelect)[];
@@ -83,10 +86,11 @@ export default class CharacterInputs {
     return inputs.map((input) => CharacterInputs.resolve(input, cow));
   }
 
-  /** A level's picks (or a character's), each pick's feat, power, skill and pool resolved. */
+  /** A level's rows under it (or a character's), each one's ability, feat, power, skill and pool resolved. */
   static resolvePicks<P extends PickRows>(picks: P, cow: CowData): P {
     return {
       ...picks,
+      abilityIncreases: cow.resolveRows(picks.abilityIncreases),
       feats: cow.resolveRows(picks.feats),
       powers: cow.resolveRows(picks.powers),
       skills: cow.resolveRows(picks.skills),

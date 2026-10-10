@@ -79,7 +79,7 @@ export default class BondedPlans {
       const klassLevel = klassLevelByLevel.get(level);
       if (!klassLevel)
         throw new RulesError("invalid", `Bonded class is missing level ${level} — content seed incomplete`);
-      added.push({ abilityId: null, hp: 1, klassLevelId: klassLevel.id });
+      added.push({ hp: 1, klassLevelId: klassLevel.id });
     }
     return { added, removedIds: levels.slice(hitDice).map((level) => level.id) };
   }

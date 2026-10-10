@@ -1420,7 +1420,6 @@ export const levelsInCharacter = character.table(
     characterId: uuid("character_id").notNull(),
     klassLevelId: uuid("klass_level_id").notNull(),
     hp: integer().notNull(),
-    abilityId: uuid("ability_id"),
     position: integer().notNull(),
   },
   (table) => [
@@ -1439,14 +1438,40 @@ export const levelsInCharacter = character.table(
       foreignColumns: [klassLevelsInRules.id],
       name: "levels_klass_level_id_fkey",
     }).onDelete("restrict"),
-    foreignKey({
-      columns: [table.abilityId],
-      foreignColumns: [abilitiesInRules.id],
-      name: "levels_ability_id_fkey",
-    }).onDelete("set null"),
     unique("levels_character_id_klass_level_id_key").on(table.characterId, table.klassLevelId),
     check("levels_hp_check", sql`hp > 0`),
     check("levels_position_check", sql`"position" > 0`),
+  ],
+);
+
+export const levelAbilityIncreasesInCharacter = character.table(
+  "level_ability_increases",
+  {
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
+    characterLevelId: uuid("character_level_id").notNull(),
+    abilityId: uuid("ability_id").notNull(),
+    amount: integer().notNull(),
+  },
+  (table) => [
+    index("character_level_ability_increases_ability_id").using("btree", table.abilityId.asc().nullsLast()),
+    index("character_level_ability_increases_character_level_id").using(
+      "btree",
+      table.characterLevelId.asc().nullsLast(),
+    ),
+    foreignKey({
+      columns: [table.characterLevelId],
+      foreignColumns: [levelsInCharacter.id],
+      name: "level_ability_increases_character_level_id_fkey",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.abilityId],
+      foreignColumns: [abilitiesInRules.id],
+      name: "level_ability_increases_ability_id_fkey",
+    }).onDelete("cascade"),
+    primaryKey({ columns: [table.characterLevelId, table.abilityId], name: "level_ability_increases_pkey" }),
+    check("level_ability_increases_amount_check", sql`amount > 0`),
   ],
 );
 

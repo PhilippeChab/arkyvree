@@ -19,7 +19,7 @@ import {
   type PickerLevel,
   type StepLevel,
 } from "./levelUpQueries.ts";
-import { featPickString, powerPickString } from "./pendingPicks.ts";
+import { abilityIncreasesOf, featPickString, powerPickString } from "./pendingPicks.ts";
 import { editedLevelSkills } from "./skillLevels.ts";
 import { type LevelUpFormData, pickIds, useLevelWizardBase } from "./useLevelWizardBase.ts";
 import { HP_STEP, REVIEW_STEP } from "./wizardSteps.ts";
@@ -82,7 +82,7 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevel }:
           eligible: true,
         },
         selectedHP: levelData.hp,
-        selectedAttribute: levelData.abilityId,
+        selectedAttribute: levelData.abilityIncreases[0]?.abilityId ?? null,
         selectedFeats: levelData.feats,
         selectedPowers: levelData.powers,
         skillPointAllocations: levelData.skills,
@@ -114,12 +114,15 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevel }:
     error: attributesError,
   } = useQuery({ ...levelStepQuery(characterId, "abilities", step), enabled: open && stepName === "abilities" });
 
+  // The edited level with its ability increase, which its skill points, its slots and its pickers' options read
+  const increasedStep: StepLevel = { ...step, abilityId: selectedAttribute ?? undefined };
+
   const {
     data: skillData,
     isLoading: isLoadingSkills,
     error: skillsError,
   } = useQuery({
-    ...levelStepQuery(characterId, "skills", { ...step, abilityId: selectedAttribute ?? undefined }),
+    ...levelStepQuery(characterId, "skills", increasedStep),
     enabled: open && stepName === "skills",
   });
 
@@ -135,7 +138,7 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevel }:
     data: featData,
     isLoading: isLoadingFeats,
     error: featsError,
-  } = useQuery({ ...levelStepQuery(characterId, "feats", step), enabled: open });
+  } = useQuery({ ...levelStepQuery(characterId, "feats", increasedStep), enabled: open });
 
   // The feats, fitted to the level's slots
   const { feats: selectedFeats, pools: adjustedFeatPools } = useMemo(
@@ -144,11 +147,7 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevel }:
   );
   const selectedAptitude = openPoolOf(base.selectedAptitude, adjustedFeatPools);
   const allSelectedFeatPickString = useMemo(() => featPickString(selectedFeats), [selectedFeats]);
-  const picker: PickerLevel = {
-    ...step,
-    abilityId: selectedAttribute ?? undefined,
-    featPicks: allSelectedFeatPickString,
-  };
+  const picker: PickerLevel = { ...increasedStep, featPicks: allSelectedFeatPickString };
 
   // Grouped available feats
   const {
@@ -167,7 +166,7 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevel }:
     data: powerData,
     isLoading: isLoadingPowers,
     error: powersError,
-  } = useQuery({ ...levelStepQuery(characterId, "powers", step), enabled: open });
+  } = useQuery({ ...levelStepQuery(characterId, "powers", increasedStep), enabled: open });
 
   // The spells, fitted to the level's slots
   const selectedPowers = useMemo(() => fitPowers(picked.powers, powerData?.aptitudePools), [picked.powers, powerData]);
@@ -197,7 +196,7 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevel }:
           param: { characterId, characterLevelId: editingLevelId },
           json: {
             hp: data.selectedHP,
-            abilityId: data.selectedAttribute,
+            abilityIncreases: abilityIncreasesOf(data.selectedAttribute),
             skills: skillPointAllocations,
             feats: pickIds(selectedFeats),
             powers: pickIds(selectedPowers),

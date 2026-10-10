@@ -11,11 +11,13 @@ export type { default as LevelUpEngine } from "./api/LevelUpEngine.ts";
 export type { EntityKinds } from "./api/Modules.ts";
 export type { CowData, RulesetSources } from "./core/cow/index.ts";
 export type {
+  AbilityIncrease,
   BondedPlan,
   CharacterInput,
   CharacterRows,
   EntityRemoval,
   EntityWrites,
+  LevelRows,
   LevelStep,
   LevelWrites,
   ListLink,

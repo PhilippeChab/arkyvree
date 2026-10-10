@@ -163,7 +163,7 @@ describe("Bonded creatures", () => {
         masterId,
         level.id,
         WIZARD_1.hp,
-        null,
+        [],
         skills,
         feats,
         powers,
@@ -192,7 +192,7 @@ describe("Bonded creatures", () => {
     expect((await familiarOf(masterId))?.raceId).toBe(ctx.raceMap.familiar["Owl"]);
 
     const { skills, feats, powers } = picks(ctx, WIZARD_1);
-    await CharacterLevelsService.updateLevel(owner, masterId, wizardLevel.id, WIZARD_1.hp, null, skills, feats, powers);
+    await CharacterLevelsService.updateLevel(owner, masterId, wizardLevel.id, WIZARD_1.hp, [], skills, feats, powers);
     expect((await familiarOf(masterId))?.raceId).toBe(ctx.raceMap.familiar["Owl"]);
     expect((await buildAs(DetailedCharacter, master!)).components.bonded.getBondedRace("familiar")).toBe("Owl");
   });

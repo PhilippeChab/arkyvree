@@ -1,4 +1,5 @@
 import {
+  type AbilityIncrease,
   type CharacterInput,
   CharacterProjection,
   type LevelPicks,
@@ -14,9 +15,9 @@ import type { FeatSlots } from "./AptitudeSlotsPlan.ts";
 import PicksDistribution, { type PerLevelDistributionData } from "./PicksDistribution.ts";
 import PlannedLevelsState, { type PlannedLevels } from "./PlannedLevelsState.ts";
 
-/** A planned level checked: its class level, hit points, ability and picks. */
+/** A planned level checked: its class level, hit points, ability increases and picks. */
 interface PlannedLevel {
-  abilityId: string | null;
+  abilityIncreases: AbilityIncrease[];
   hp: number;
   klassLevelId: string;
   picks: LevelPicks;
@@ -98,21 +99,21 @@ export default class LevelUpPlan extends PlannedLevelsState {
 
   /**
    * The character as the save leaves it: each planned level a fresh level after its saved ones, with its hit points,
-   * ability and picks, as a level's edit projects it (`LevelEdit`).
+   * ability increases and picks, as a level's edit projects it (`LevelEdit`).
    */
   private projectLevelRequests(planned: PlannedLevel[]) {
     const projection = new CharacterProjection(this.character);
-    for (const { abilityId, hp, klassLevelId, picks } of planned)
-      projection.pick(projection.addLevel(klassLevelId, { abilityId, hp }), this.toPickRows(picks));
+    for (const { abilityIncreases, hp, klassLevelId, picks } of planned)
+      projection.pick(projection.addLevel(klassLevelId, { abilityIncreases, hp }), this.toPickRows(picks));
     return projection;
   }
 
   /**
    * The levels a level-up saves (`levels`, with the character's pooled picks spread over them), and what the master's
    * bonded creatures (`bonded`, their rows) become with them. Each level is checked as the levels before it see it,
-   * and refused when it's saved already, takes an ability increase it hasn't, or picks what it can't; the character
-   * with them is refused with what it fails, unless `force`d. Each level's writes are its row's columns (its class
-   * level, hit points and ability) and its picks' rows.
+   * and refused when it's saved already, raises its abilities by other than its rules give it, or picks what it can't;
+   * the character with them is refused with what it fails, unless `force`d. Each level's writes are its row's columns
+   * (its class level and hit points) and its rows under it (its ability increases and picks).
    */
   planLevels(bonded: CharacterInput[], levels: LevelRequest[], picks: LevelPicks, force: boolean) {
     const { rows } = this.character;
@@ -126,13 +127,13 @@ export default class LevelUpPlan extends PlannedLevelsState {
     const pickedFeatIds = rows.picks.feats.map((pick) => pick.featId);
     const planned: PlannedLevel[] = [];
     for (const [i, { klass, klassLevel }] of klassLevelEntries.entries()) {
-      const { hp, abilityId } = levels[i];
+      const { hp, abilityIncreases } = levels[i];
       const levelPicks = distributed[i];
       if (otherLevels.some((other) => other.klassLevelId === klassLevel.id))
         throw new RulesError("invalid", `Level ${i + 1}: This level has already been finalized`);
-      this.checks.checkAbilityIncrease(rows.levels.length + i, abilityId, `Level ${i + 1}: `);
-      this.checks.checkLevel({ klass, klassLevel, hp, abilityId, ...levelPicks }, otherLevels, pickedFeatIds);
-      planned.push({ abilityId: abilityId || null, hp, klassLevelId: klassLevel.id, picks: levelPicks });
+      this.checks.checkAbilityIncreases(rows.levels.length + i, abilityIncreases, `Level ${i + 1}: `);
+      this.checks.checkLevel({ klass, klassLevel, hp, abilityIncreases, ...levelPicks }, otherLevels, pickedFeatIds);
+      planned.push({ abilityIncreases, hp, klassLevelId: klassLevel.id, picks: levelPicks });
       otherLevels.push({ klassLevelId: klassLevel.id });
       pickedFeatIds.push(...Object.values(levelPicks.feats).flat());
     }
@@ -141,9 +142,9 @@ export default class LevelUpPlan extends PlannedLevelsState {
     if (!force) RulesError.refuseIssues(saved.validate().issues);
     return {
       bonded: this.planBondedOf(saved, bonded),
-      levels: planned.map(({ abilityId, hp, klassLevelId, picks: levelPicks }) => ({
-        columns: { abilityId, hp, klassLevelId },
-        rows: this.toPickRows(levelPicks),
+      levels: planned.map(({ abilityIncreases, hp, klassLevelId, picks: levelPicks }) => ({
+        columns: { hp, klassLevelId },
+        rows: { abilityIncreases, ...this.toPickRows(levelPicks) },
       })),
     };
   }
@@ -153,11 +154,11 @@ export default class LevelUpPlan extends PlannedLevelsState {
    * save spreads them (within each level's points and max ranks, class skills first): each planned level's skill rows,
    * which the class picker projects. Refused when a planned level isn't one of the view's class levels.
    */
-  spreadSkillPoints({ abilityIds = [], klassLevelIds = [], skillPoints = {} }: PlannedSoFar) {
+  spreadSkillPoints({ abilityIncreases = [], klassLevelIds = [], skillPoints = {} }: PlannedSoFar) {
     if (Object.keys(skillPoints).length === 0) return [];
     const klassLevelEntries = klassLevelIds.map((klassLevelId, i) => ({
       ...this.getSavedKlassLevel({ klassLevelId }),
-      abilityId: abilityIds[i] ?? null,
+      abilityIncreases: abilityIncreases[i] ?? [],
     }));
     const picks = { feats: {}, powers: {}, skills: skillPoints };
     const distributed = this.distributePlannedPicks(this.buildPlannedLevels(klassLevelEntries), picks);

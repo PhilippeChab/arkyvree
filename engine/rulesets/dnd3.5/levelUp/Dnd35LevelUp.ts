@@ -35,7 +35,7 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, Detaile
     return new Dnd35LevelSelections(view, character, this).describeLevel(...args);
   }
 
-  /** The level-up wizard's preview of the levels the character plans, each with its ability increase. */
+  /** The level-up wizard's preview of the levels the character plans, each with its ability increases. */
   describePreview(
     view: RulesetView,
     character: CharacterInput,
@@ -54,9 +54,9 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, Detaile
     return new LevelUpSteps(view, character, this).describeSteps();
   }
 
-  /** Whether the level after `totalLevel` levels takes an ability increase: every fourth. */
-  isAbilityIncreaseLevel(totalLevel: number) {
-    return LevelRules.isAbilityIncreaseLevel(totalLevel);
+  /** What the ability increases of the level after `totalLevel` levels add up to: one, at every fourth level. */
+  getAbilityIncreaseTotal(totalLevel: number) {
+    return LevelRules.isAbilityIncreaseLevel(totalLevel) ? 1 : 0;
   }
 
   /**

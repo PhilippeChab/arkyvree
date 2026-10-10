@@ -17,6 +17,7 @@ import CharacterAbilitiesRepository from "./characters/CharacterAbilitiesReposit
 import CharacterContributorsRepository from "./characters/CharacterContributorsRepository.ts";
 import CharacterInventoryRepository from "./characters/CharacterInventoryRepository.ts";
 import CharacterLanguagesRepository from "./characters/CharacterLanguagesRepository.ts";
+import CharacterLevelAbilityIncreasesRepository from "./characters/CharacterLevelAbilityIncreasesRepository.ts";
 import CharacterLevelFeatsRepository from "./characters/CharacterLevelFeatsRepository.ts";
 import CharacterLevelPowersRepository from "./characters/CharacterLevelPowersRepository.ts";
 import CharacterLevelSkillsRepository from "./characters/CharacterLevelSkillsRepository.ts";
@@ -63,6 +64,10 @@ export const CharacterAbilities = withRequestCache("CharacterAbilities", new Cha
 export const CharacterContributors = withRequestCache("CharacterContributors", new CharacterContributorsRepository());
 export const CharacterInventory = withRequestCache("CharacterInventory", new CharacterInventoryRepository());
 export const CharacterLanguages = withRequestCache("CharacterLanguages", new CharacterLanguagesRepository());
+export const CharacterLevelAbilityIncreases = withRequestCache(
+  "CharacterLevelAbilityIncreases",
+  new CharacterLevelAbilityIncreasesRepository(),
+);
 export const CharacterLevelFeats = withRequestCache("CharacterLevelFeats", new CharacterLevelFeatsRepository());
 export const CharacterLevelPowers = withRequestCache("CharacterLevelPowers", new CharacterLevelPowersRepository());
 export const CharacterLevels = withRequestCache("CharacterLevels", new CharacterLevelsRepository());

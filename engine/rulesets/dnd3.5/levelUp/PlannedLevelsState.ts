@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import type { GrantedFeatRecords } from "@/engine/core/levelUp/index.ts";
-import { CharacterProjection } from "@/engine/core/module/index.ts";
+import { type AbilityIncrease, CharacterProjection, type LevelRequest } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { CLASS_LEVEL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/classes/fields.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
@@ -13,9 +13,9 @@ import type { Klass, KlassLevel } from "@/shared/relations.ts";
 import AptitudeSlotsPlan from "./AptitudeSlotsPlan.ts";
 import LevelUpState from "./LevelUpState.ts";
 
-/** A planned level's class and class level, and its ability increase. */
+/** A planned level's class and class level, and its ability increases. */
 export interface PlannedClassLevel {
-  abilityId: string | null;
+  abilityIncreases: AbilityIncrease[];
   klass: Klass;
   klassLevel: KlassLevel;
 }
@@ -49,8 +49,8 @@ export default abstract class PlannedLevelsState extends LevelUpState {
    */
   protected buildPlannedLevels(klassLevelEntries: PlannedClassLevel[]): PlannedLevels {
     const projection = new CharacterProjection(this.character);
-    for (const { abilityId, klassLevel } of klassLevelEntries)
-      projection.addLevel(klassLevel.id, { abilityId, hp: LevelRules.UNROLLED_LEVEL_HP });
+    for (const { abilityIncreases, klassLevel } of klassLevelEntries)
+      projection.addLevel(klassLevel.id, { abilityIncreases, hp: LevelRules.UNROLLED_LEVEL_HP });
     return {
       grantedFeatRecords: klassLevelEntries.map(
         ({ klassLevel }) => this.rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(klassLevel.id) ?? [],
@@ -132,11 +132,9 @@ export default abstract class PlannedLevelsState extends LevelUpState {
    * ruleset or its source chain. Refused past the rules' bounds (a class's last level, a character's), and when a class
    * isn't the view's or a player character's, or hasn't that level.
    */
-  protected getPlannedKlassLevels(
-    levels: { abilityId: string | null; klassId: string; level: number }[],
-  ): PlannedClassLevel[] {
+  protected getPlannedKlassLevels(levels: Omit<LevelRequest, "hp">[]): PlannedClassLevel[] {
     RulesError.parse(PLANNED_LEVELS, levels, ["levels"]);
-    return levels.map(({ klassId, level, abilityId }, i) => {
+    return levels.map(({ klassId, level, abilityIncreases }, i) => {
       const klass = this.rulesetData.klassesById.get(klassId);
       if (!klass) throw new RulesError("invalid", `Level ${i + 1}: Class does not belong to the character's ruleset`);
 
@@ -146,7 +144,7 @@ export default abstract class PlannedLevelsState extends LevelUpState {
       const klassLevel = this.rulesetData.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);
       if (!klassLevel) throw new RulesError("not-found", `Level ${i + 1}: Class level not found`);
 
-      return { klass, klassLevel, abilityId };
+      return { klass, klassLevel, abilityIncreases };
     });
   }
 }

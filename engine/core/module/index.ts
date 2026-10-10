@@ -16,6 +16,7 @@ export type {
 } from "./characters.ts";
 export type { Descriptions, RulesetModule } from "./contract.ts";
 export type {
+  AbilityIncrease,
   BondedCreaturesPlan,
   BondedLevelsPlan,
   BondedPlan,
@@ -27,6 +28,7 @@ export type {
   LevelPicks,
   LevelRemovalPlan,
   LevelRequest,
+  LevelRows,
   LevelsPlan,
   LevelStep,
   LevelWrites,

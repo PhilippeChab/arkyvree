@@ -1,25 +1,26 @@
-import { Engine, type LevelStep } from "@/engine/index.ts";
+import { Engine, type LevelStep, type PlannedSoFar } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { db } from "@/server/database/index.ts";
 import { withEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /**
- * The level a step is for, as the wizard's query sends it: class `classId`'s `level` with its ability increase, after
+ * The level a step is for, as the wizard's query sends it: class `classId`'s `level` with its ability increases, after
  * the levels it plans before it (their class levels and ability increases), or a saved level's edit (`editedLevelId`).
  */
 interface StepQuery {
-  abilityId?: string;
+  abilityIncreases?: LevelStep["abilityIncreases"];
   classId?: string;
   editedLevelId?: string;
   level?: number;
-  plannedAbilityIds?: (string | undefined)[];
+  plannedAbilityIncreases?: PlannedSoFar["abilityIncreases"];
   plannedClassLevelIds?: string[];
 }
 
 /** The step's level as the engine takes it. */
-function stepOf({ classId, plannedAbilityIds, plannedClassLevelIds, ...step }: StepQuery): LevelStep {
-  return { ...step, klassId: classId, planned: { abilityIds: plannedAbilityIds, klassLevelIds: plannedClassLevelIds } };
+function stepOf({ classId, plannedAbilityIncreases, plannedClassLevelIds, ...step }: StepQuery): LevelStep {
+  const planned = { abilityIncreases: plannedAbilityIncreases, klassLevelIds: plannedClassLevelIds };
+  return { ...step, klassId: classId, planned };
 }
 
 /**
