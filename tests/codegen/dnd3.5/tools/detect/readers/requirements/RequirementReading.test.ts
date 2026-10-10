@@ -124,6 +124,40 @@ describe("A prerequisite a feat and a class share", () => {
     expect(featRequirements("Small size,")).toEqual([eqStr(SIZE, "Small")]);
   });
 
+  test("of an alignment is any of those it names, lists or leaves out, or of each kind it joins", () => {
+    const alignments = (...names: string[]) => or(...names.map((name) => eqStr(ALIGNMENT, name)));
+    expect(classPrerequisites({ alignment: "Lawful neutral or lawful good." }).requirements).toEqual([
+      alignments("Lawful Neutral", "Lawful Good"),
+    ]);
+    expect(classPrerequisites({ alignment: "Neutral good, neutral, or neutral evil" }).requirements).toEqual([
+      alignments("Neutral Good", "True Neutral", "Neutral Evil"),
+    ]);
+    expect(classPrerequisites({ alignment: "Any but lawful good" }).requirements).toEqual([
+      alignments(
+        "Neutral Good",
+        "Chaotic Good",
+        "Lawful Neutral",
+        "True Neutral",
+        "Chaotic Neutral",
+        "Lawful Evil",
+        "Neutral Evil",
+        "Chaotic Evil",
+      ),
+    ]);
+    expect(classPrerequisites({ alignment: "Any nonevil and nonchaotic" }).requirements).toEqual([
+      alignments("Lawful Good", "Neutral Good", "Lawful Neutral", "True Neutral"),
+    ]);
+    expect(classPrerequisites({ alignment: "Any nonlawful" }).requirements).toEqual([
+      alignments("Neutral Good", "True Neutral", "Neutral Evil", "Chaotic Good", "Chaotic Neutral", "Chaotic Evil"),
+    ]);
+    expect(classPrerequisites({ alignment: "Lawful neutral" }).requirements).toEqual([
+      eqStr(ALIGNMENT, "Lawful Neutral"),
+    ]);
+    expect(featRequirements("nonevil alignment,")).toEqual([
+      alignments("Lawful Good", "Neutral Good", "Chaotic Good", "Lawful Neutral", "True Neutral", "Chaotic Neutral"),
+    ]);
+  });
+
   test("asking for any feat of a family is any of the family's feats", () => {
     expect(featRequirements("any metamagic feat,")).toEqual([eq("feats.metamagic.*.possessed")]);
     expect(specialRequirements("Any metamagic feat.")).toEqual([eq("feats.metamagic.*.possessed")]);

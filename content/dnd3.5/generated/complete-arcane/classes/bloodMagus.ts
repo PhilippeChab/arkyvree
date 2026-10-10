@@ -5,7 +5,7 @@
  * - No modifiers defined — review if this class needs any
  */
 
-import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
+import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
 
 export const BLOOD_MAGUS: ClassSeed = {
@@ -23,6 +23,16 @@ export const BLOOD_MAGUS: ClassSeed = {
     eq("feats.greatfortitude.possessed"),
     eq("feats.toughness.possessed"),
     gte("spellcasting.arcanecasterlevel", 5),
+    or(
+      eqStr("identity.beliefs.alignment", "Neutral Good"),
+      eqStr("identity.beliefs.alignment", "Chaotic Good"),
+      eqStr("identity.beliefs.alignment", "Lawful Neutral"),
+      eqStr("identity.beliefs.alignment", "True Neutral"),
+      eqStr("identity.beliefs.alignment", "Chaotic Neutral"),
+      eqStr("identity.beliefs.alignment", "Lawful Evil"),
+      eqStr("identity.beliefs.alignment", "Neutral Evil"),
+      eqStr("identity.beliefs.alignment", "Chaotic Evil"),
+    ),
   ],
   casterLevelAdvancement: { type: "arcane", levels: [1, 2, 3, 4, 6, 7, 8, 9] },
   classFeatureAptitude: "Blood Magus Class Feature",

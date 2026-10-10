@@ -5,7 +5,7 @@
  * - No modifiers defined — review if this class needs any
  */
 
-import { gte } from "@/content/core/builders/customization/requirements.ts";
+import { eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
 
 export const CHURCH_INQUISITOR: ClassSeed = {
@@ -37,6 +37,7 @@ export const CHURCH_INQUISITOR: ClassSeed = {
     gte("skills.knowledgereligion.rank", 4),
     gte("skills.spellcraft.rank", 4),
     gte("spellcasting.divine", 1),
+    or(eqStr("identity.beliefs.alignment", "Lawful Good"), eqStr("identity.beliefs.alignment", "Lawful Neutral")),
     gte("saves.will.base", 3),
   ],
   casterLevelAdvancement: { type: "divine", levels: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
