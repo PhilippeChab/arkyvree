@@ -17,6 +17,7 @@ export {
   type MemberReading,
   type NewCharacterPlan,
   type NewCharacterRequest,
+  type NotedSheet,
   type PlacementDescription,
   type PlacementQuery,
   type PrivateNotes,

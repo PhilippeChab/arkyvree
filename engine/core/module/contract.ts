@@ -2,7 +2,7 @@ import type { PropertyTypesProvider } from "@/engine/core/customizations/index.t
 import type { Fields } from "@/engine/core/fields/index.ts";
 import type { TargetPaths } from "@/engine/core/paths/CategoryPaths.ts";
 
-import type { CharactersPart } from "./parts/characters/index.ts";
+import type { CharactersPart, DescribedSheet } from "./parts/characters/index.ts";
 import type { ContentPart } from "./parts/content/index.ts";
 import type { EntitiesPart, EntityKindsContract } from "./parts/entities/index.ts";
 import type { LevelUpPart } from "./parts/levelUp/index.ts";
@@ -10,9 +10,9 @@ import type { RulesetPart } from "./parts/ruleset/index.ts";
 
 /**
  * What a ruleset describes in its own shape, which the server hands to the client as it is: a character's sheet (as the
- * API answers it, as a member reads it, printed), what an inventory entry shows beside its row, the level-up wizard's
- * steps (any of them, each named for which it is), preview and a saved level's selections, and what each picker adds
- * to an option.
+ * API answers it, its private notes where every ruleset's holds them; as a member who reads it partly reads it;
+ * printed), what an inventory entry shows beside its row, the level-up wizard's steps (any of them, each named for
+ * which it is), preview and a saved level's selections, and what each picker adds to an option.
  */
 export interface Descriptions {
   classOption: object;
@@ -20,11 +20,11 @@ export interface Descriptions {
   featOption: object;
   inventoryEntry: object;
   levelSelections: unknown;
-  memberSheet: unknown;
+  partialSheet: unknown;
   powerOption: object;
   preview: unknown;
   raceOption: object;
-  sheet: unknown;
+  sheet: DescribedSheet;
   sheetDocument: unknown;
   step: { name: string };
 }
