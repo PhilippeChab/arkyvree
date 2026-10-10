@@ -62,8 +62,9 @@ export function plannedLevelsOf(
 
 /**
  * Add Level's picker at the planned level its next pick lands on (`index`, the preview's `nextPickLevels`): that level's class,
- * level and ability increase, the planned levels before it, and the feats picked so far, none of them saved yet.
- * Nothing until the plan's preview has loaded, which skips the picker's query.
+ * level and ability increase, the planned levels before it, the feats picked so far, and the planned levels after it,
+ * whose grants it leaves out, none of them saved yet. Nothing until the plan's preview has loaded, which skips the
+ * picker's query.
  */
 export function plannedPicker(
   levelDetails: { klassId: string; klassLevelId: string; level: number }[] | undefined,
@@ -72,11 +73,13 @@ export function plannedPicker(
   featPicks: string | undefined,
 ): PickerLevel {
   const detail = levelDetails?.[index];
+  const later = levelDetails?.slice(index + 1).map((level) => level.klassLevelId) ?? [];
   return {
     abilityId: abilityIncreases[index] ?? undefined,
     classId: detail?.klassId,
     level: detail?.level,
     featPicks,
+    laterClassLevelIds: later.length > 0 ? later.join(",") : undefined,
     ...plannedLevelsOf(levelDetails, abilityIncreases, index),
   };
 }

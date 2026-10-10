@@ -11,7 +11,7 @@ import {
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { addClassLevels, addFeats, addPowers, addSkills } from "@/scripts/db/seeds/seedCharacter.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
-import { withRulesetScope } from "@/server/cow/index.ts";
+import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { createTestPool } from "@/server/database/test.ts";
 import { toJson } from "@/server/errors/index.ts";
@@ -27,6 +27,7 @@ import {
   FeatsAptitudes,
   Klasses,
   KlassLevelFeats,
+  KlassLevelPowers,
   KlassLevels,
   KlassSkills,
   Modifiers,
@@ -57,6 +58,7 @@ import {
 } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { addCharacterLevel, addOneLevel, findKlassLevel, getLevelStep, increasesOf } from "@/tests/support/levels.ts";
 import {
+  copyEntity,
   createSeededTestRuleset,
   createSeededTestRulesetWithExtensions,
   createTestRuleset,
@@ -940,6 +942,47 @@ describe("LevelsService", () => {
       ).not.toContain("Track");
     });
 
+    test("leave out a feat that a level planned after the picker's grants, as the save refuses it", async () => {
+      const ctx = await getSeedCtx();
+      const characterId = await createSeedCharacter(ctx, "fighter", { xp: 1000 });
+      // A fighter's first level, then a ranger's, which grants Track
+      const ranger = (await findKlassLevel(ctx.klassMap.pc["Ranger"], 1))!.id;
+      const where = {
+        aptitudeId: ctx.aptMap["General"],
+        classId: ctx.klassMap.pc["Fighter"],
+        level: 1,
+        search: "Track",
+      };
+      const planned = { ...where, laterClassLevelIds: [ranger] };
+      expect(
+        names((await CharacterLevelsService.getAvailableFeats(session, characterId, where, page)).items),
+      ).toContain("Track");
+      expect(
+        names((await CharacterLevelsService.getAvailableFeats(session, characterId, planned, page)).items),
+      ).not.toContain("Track");
+      expect(
+        (await CharacterLevelsService.getAvailableFeatGroups(session, characterId, planned, page)).items.map(
+          (r) => r.displayName,
+        ),
+      ).not.toContain("Track");
+
+      const levels = ["Fighter", "Ranger"].map((klass) => ({
+        abilityIncreases: [],
+        hp: 8,
+        klassId: ctx.klassMap.pc[klass],
+        level: 1,
+      }));
+      const { skills, feats } = picks(ctx, {
+        ...FIGHTER_LEVELS[0],
+        feats: { General: ["Power Attack", "Track"], "Fighter Bonus Feat": ["Improved Initiative"] },
+      });
+      for (const force of [false, true]) {
+        expect(
+          CharacterLevelsService.finalizeLevelUp(session, characterId, levels, skills, feats, {}, force),
+        ).rejects.toThrow('Non-stackable feat "Track" is already on this character');
+      }
+    });
+
     test("count the feats picked in the same level-up", async () => {
       const ctx = await getSeedCtx();
       const characterId = await createSeedCharacter(ctx, "fighter");
@@ -1008,6 +1051,45 @@ describe("LevelsService", () => {
       });
       // A first fighter level has +1.
       expect((await featsAtFirstLevel("Fighter", "Weapon Focus: Longsword")).flat).toMatchObject([{ eligible: true }]);
+    });
+
+    test("leave a feat that doesn't stack out of an edited level's pool when a later level takes it, as the edit refuses it", async () => {
+      const ctx = await getSeedCtx();
+      const characterId = await createSeedCharacter(ctx, "fighter", { xp: 3000 });
+      const first = await levelUp(session, ctx, characterId, "Fighter", 1, FIGHTER_LEVELS[0]);
+      // The second level picks Dodge, the third, a ranger's first, is granted Track
+      await levelUp(session, ctx, characterId, "Fighter", 2, FIGHTER_LEVELS[1]);
+      await levelUp(session, ctx, characterId, "Ranger", 1, { hp: 8 }, true);
+      const offered = async (search: string) =>
+        names(
+          (
+            await CharacterLevelsService.getAvailableFeats(
+              session,
+              characterId,
+              {
+                aptitudeId: ctx.aptMap["General"],
+                classId: ctx.klassMap.pc["Fighter"],
+                editedLevelId: first.id,
+                level: 1,
+                search,
+              },
+              page,
+            )
+          ).items,
+        );
+
+      // The edited level's own Power Attack, which it picks again once removed
+      expect(await offered("Power Attack")).toContain("Power Attack");
+      for (const feat of ["Dodge", "Track"]) {
+        expect(await offered(feat)).not.toContain(feat);
+        const { skills, feats, powers } = picks(ctx, {
+          ...FIGHTER_LEVELS[0],
+          feats: { General: ["Power Attack", feat], "Fighter Bonus Feat": ["Improved Initiative"] },
+        });
+        expect(
+          CharacterLevelsService.updateLevel(session, characterId, first.id, 10, [], skills, feats, powers),
+        ).rejects.toThrow(`Non-stackable feat "${feat}" is already on this character`);
+      }
     });
 
     test("list a fork's inherited feats", async () => {
@@ -1241,6 +1323,41 @@ describe("LevelsService", () => {
       expect(await cantrips("Sorcerer Spells")).not.toContain("Resistance");
       expect(await cantrips("Sorcerer Spells")).toContain("Light");
       expect(await cantrips("Wizard Spells")).toContain("Resistance");
+    });
+
+    test("leave a spell a level planned after the picker's grants out of its list, as the preview drops it and the save refuses it", async () => {
+      // No seeded class level grants a spell: a fork's sorcerer, whose second level grants Resistance
+      const ctx = await getSeedCtx();
+      const fork = await createSeededTestRuleset(SEED_USER_ID);
+      const sorcerer = await copyEntity(db, "klasses", ctx.klassMap.pc["Sorcerer"], fork);
+      const second = (await KlassLevels.findMany(db, { klassId: sorcerer.id })).find(({ level }) => level === 2)!;
+      const [sorcererSpells, resistance] = [ctx.aptMap["Sorcerer Spells"], ctx.powerMap["Resistance"]];
+      await KlassLevelPowers.createMany(db, [
+        { klassLevelId: second.id, powerId: resistance, aptitudeId: sorcererSpells },
+      ]);
+      RulesetViews.invalidate(fork.id);
+      const characterId = await createSeedCharacter(ctx, "sorcerer", { xp: 1000, rulesetId: fork.id });
+      const cantrips = async (laterClassLevelIds?: string[]) =>
+        names(
+          (
+            await CharacterLevelsService.getAvailablePowers(
+              session,
+              characterId,
+              { aptitudeId: sorcererSpells, classId: sorcerer.id, laterClassLevelIds, level: 1, powerLevel: 0 },
+              page,
+            )
+          ).items,
+        );
+
+      expect(await cantrips()).toContain("Resistance");
+      expect(await cantrips([second.id])).not.toContain("Resistance");
+      const levels = [1, 2].map((level) => ({ abilityIncreases: [], hp: 4, klassId: sorcerer.id, level }));
+      const picked = { [sorcererSpells]: [ctx.powerMap["Light"], resistance] };
+      const preview = await CharacterLevelsService.getPreview(session, characterId, levels, {}, {}, picked);
+      expect(preview.powers.fitted[sorcererSpells]).toEqual([ctx.powerMap["Light"]]);
+      expect(
+        CharacterLevelsService.finalizeLevelUp(session, characterId, levels, {}, {}, picked, true),
+      ).rejects.toThrow('Power "Resistance" is already known in Sorcerer Spells');
     });
 
     test("list a fork's inherited powers", async () => {

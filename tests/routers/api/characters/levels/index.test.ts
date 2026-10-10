@@ -205,6 +205,27 @@ describe("character levels", () => {
       expect(grouped.items.length).toBeLessThan(flat.items.length);
     });
 
+    test("leaves out of a pool's feats one a level planned after the picker's grants, dropping what isn't an id", async () => {
+      const { characterId, ctx } = await createCharacter();
+      // A fighter's first level, then a ranger's, which grants Track
+      const ranger = (await findKlassLevel(ctx.klassMap.pc["Ranger"], 1))!.id;
+      const track = async (laterClassLevelIds?: string) => {
+        const query = {
+          aptitudeId: ctx.aptMap["General"],
+          classId: ctx.klassMap.pc["Fighter"],
+          laterClassLevelIds,
+          level: "1",
+          search: "Track",
+        };
+        const flat = await expectOk(levels["available-feats"].$get({ param: { characterId }, query }));
+        const grouped = await expectOk(levels["available-feats"].grouped.$get({ param: { characterId }, query }));
+        return [...flat.items.map((f) => f.name), ...grouped.items.map((r) => r.displayName)];
+      };
+
+      expect(await track("not-an-id")).toEqual(["Track", "Track"]);
+      expect(await track(`${ranger},not-an-id`)).toEqual([]);
+    });
+
     test("previews the pools of a planned level-up", async () => {
       const { characterId, ctx } = await createCharacter();
       const preview = await expectOk(

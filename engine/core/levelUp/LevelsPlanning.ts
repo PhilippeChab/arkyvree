@@ -40,7 +40,8 @@ export interface CheckedCharacter {
  *   ruleset's, before its picks are spread over its levels (`distributePicks`);
  * - each level isn't saved already (a level-up's), and raises its abilities by what the rules give it;
  * - its hit points, its selections and their pools checked, no non-stackable feat or power picked twice at a level,
- *   no non-stackable feat held already (`SelectionChecks`);
+ *   no non-stackable feat held already, picked or granted at another of the character's levels, saved or planned, a
+ *   later one too (`SelectionChecks`);
  * - no power picked in a pool the character knows it in already, forced or not (`checkPowersNotKnown`): held there
  *   (picked at another level, granted, made known by a modifier), or picked there earlier in the level-up; an edited
  *   level's own saved picks stay;
@@ -144,10 +145,11 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
    * The levels a level-up writes (its request's `levels`, with its `picks` spread over them as the ruleset spreads
    * them), and what the master's bonded creatures (`bonded`, their rows) become with them. Each level is checked as the
    * levels before it see it, and refused when it's saved already, raises its abilities by other than its rules give it,
-   * or picks what it can't; the picks are refused when they pick a power the character knows in its pool already or
-   * overfill a pool, forced or not, and the character with them with what it fails, unless `force`d. Each level's
-   * writes are its row's columns (its class level and hit points) and its rows under it (its ability increases and
-   * picks).
+   * or picks what it can't (a feat that doesn't stack the character has, at a saved level or a planned one, a later one
+   * too, as an edit of it would refuse it); the picks are refused when they pick a power the character knows in its
+   * pool already or overfill a pool, forced or not, and the character with them with what it fails, unless `force`d.
+   * Each level's writes are its row's columns (its class level and hit points) and its rows under it (its ability
+   * increases and picks).
    */
   planLevels(bonded: CharacterInput[], { levels, picks }: LevelUpRequest, force: boolean): LevelsPlan {
     const { rows } = this.character;
@@ -168,7 +170,10 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
       if (otherLevels.some((other) => other.klassLevelId === klassLevel.id))
         throw new RulesError("invalid", `${label}This level has already been finalized`);
       this.checks.checkAbilityIncreases(rows.levels.length + i, abilityIncreases, label);
-      this.checks.checkLevel({ klass, klassLevel, hp, abilityIncreases, ...levelPicks }, otherLevels, pickedFeatIds);
+      // A feat it picks is the character's already when a later planned level grants it, as an edit of it would see
+      const laterLevels = klassLevelEntries.slice(i + 1).map((later) => ({ klassLevelId: later.klassLevel.id }));
+      const level = { klass, klassLevel, hp, abilityIncreases, ...levelPicks };
+      this.checks.checkLevel(level, [...otherLevels, ...laterLevels], pickedFeatIds);
       planned.push({ abilityIncreases, hp, klassLevelId: klassLevel.id, picks: levelPicks });
       otherLevels.push({ klassLevelId: klassLevel.id });
       pickedFeatIds.push(...Object.values(levelPicks.feats).flat());

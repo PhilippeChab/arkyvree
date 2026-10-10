@@ -5,12 +5,16 @@ import { Feats, Klasses, Powers } from "@/server/repositories/index.ts";
 import { withEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
 
-/** A feat or power picker's level, as its list's filters send it, and what the wizard plans before it. */
+/**
+ * A feat or power picker's level, as its list's filters send it, and what the wizard plans before it and after it
+ * (`laterClassLevelIds`, the planned levels' class levels).
+ */
 interface PickLevelWhere extends PlannedWhere {
   abilityIncreases?: AbilityIncrease[];
   aptitudeId: string;
   classId: string;
   editedLevelId?: string;
+  laterClassLevelIds?: string[];
   level: number;
   search?: string;
 }
@@ -27,16 +31,25 @@ interface PlannedWhere {
   skillPoints?: PlannedSoFar["skillPoints"];
 }
 
-/** A picker's query as the engine takes it: its level, its pool, and what the wizard plans before it. */
+/** A picker's query as the engine takes it: its level, its pool, and what the wizard plans before it and after it. */
 function pickQueryOf({
   abilityIncreases,
   aptitudeId,
   classId,
   editedLevelId,
+  laterClassLevelIds,
   level,
   ...planned
 }: PickLevelWhere): PickQuery {
-  return { abilityIncreases, aptitudeId, editedLevelId, klassId: classId, level, planned: plannedOf(planned) };
+  return {
+    abilityIncreases,
+    aptitudeId,
+    editedLevelId,
+    klassId: classId,
+    laterKlassLevelIds: laterClassLevelIds,
+    level,
+    planned: plannedOf(planned),
+  };
 }
 
 /** What the wizard plans so far, as the engine takes it. */

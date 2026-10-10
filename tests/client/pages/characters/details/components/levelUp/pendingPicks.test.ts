@@ -74,6 +74,11 @@ describe("the picker at the planned level a pick lands on", () => {
     });
   });
 
+  test("sends the planned levels after it, whose grants it leaves out", () => {
+    expect(plannedPicker(FIGHTER_THEN_WIZARD, [], 0, undefined)).toMatchObject({ laterClassLevelIds: "w1" });
+    expect(plannedPicker(FIGHTER_THEN_WIZARD, [], 1, undefined).laterClassLevelIds).toBeUndefined();
+  });
+
   test("leaves the picker's level unknown until the plan's preview has loaded", () => {
     expect(plannedPicker(undefined, [], 0, undefined)).toMatchObject({ classId: undefined, level: undefined });
   });

@@ -65,8 +65,16 @@ export type FeatPickQuery = PickQuery & { family?: string };
 /** A saved level's edit, as the form sends it: its new hit points, ability increases and picks. */
 export type LevelEditRequest = LevelPicks & { abilityIncreases: AbilityIncrease[]; hp: number };
 
-/** A feat's or a power's picker query: a level, its class's, and the pool it picks in (`aptitudeId`). */
-export type PickQuery = LevelQuery & { aptitudeId: string; klassId: string; level: number };
+/**
+ * A feat's or a power's picker query: a level, its class's, the pool it picks in (`aptitudeId`), and the levels the
+ * wizard plans after it (`laterKlassLevelIds`, their class levels), whose grants the level can't pick.
+ */
+export type PickQuery = LevelQuery & {
+  aptitudeId: string;
+  klassId: string;
+  laterKlassLevelIds?: string[];
+  level: number;
+};
 
 /** A power picker's query: a level's pool, of a spell level when given, less the powers picked so far. */
 export type PowerPickQuery = PickQuery & { powerLevel?: number; selectedPowerIds?: string[] };
