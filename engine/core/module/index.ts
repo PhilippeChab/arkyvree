@@ -1,6 +1,7 @@
 export { type CharacterInput, default as CharacterInputs, type CharacterRows } from "./CharacterInputs.ts";
 export { default as CharacterProjection } from "./CharacterProjection.ts";
 export type { Descriptions, RulesetModule } from "./contract.ts";
+export { default as LevelRequests } from "./LevelRequests.ts";
 export {
   type AbilitiesPlan,
   type AbilitiesRequest,

@@ -161,6 +161,7 @@ The child's own entities are always included. Ancestor entities are included onl
 The engine builds a ruleset's `CowData` (`Engine.copyOnWrite().buildData`, by its `CowDataBuilder`) from the rows the server reads as it says (`copyOnWrite().getReads`, `CowDataReader`): a mapping of `sourceEntityId → forkedEntityId` across the full snapshot chain, and of each sibling loser to its winner. Used for:
 - **FK remapping**: When copying entities, foreign keys pointing to inherited entities are remapped to their COW copies (`CowDataReader.read` through the copy's transaction, `CowData.resolve`): the same passes as the ruleset's view, so a copy stores what the view shows (a losing copy of a list resolves to the winning one)
 - **Detail views**: `CowData.resolveRows()` remaps ID references in query results
+- **Level picks**: a level flow's request (a level-up, an edit, the wizard's preview, a step's or a picker's query) may name a copied entity by its source's id, which the API takes as it takes the copy's the client sends. The level-up handle resolves each id a request names as it enters (`LevelUpEngine`, by `LevelRequests`), as the character's rows are (`CharacterInputs`): its checks, its preview and its save read the copy (a spell at its level in the copy's lists, a feat the character holds as the copy), and a save writes the copy's id, the row the client's request writes. A pick the view has none of is refused, naming it. A row saved before the copy keeps its source's id, which reads resolve
 
 ### Snapshots
 

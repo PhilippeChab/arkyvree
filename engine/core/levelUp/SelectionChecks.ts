@@ -4,18 +4,12 @@ import type { RulesetData } from "@/engine/core/view/index.ts";
 
 import type { LevelUpRules } from "./LevelUpBase.ts";
 
-interface FeatRecord extends PickRecord {
-  stackable: boolean;
-}
-
-/** The level's hit points, ability increases and selections a check reads, with its class. */
+/** The level's hit points and selections a check reads, with its class. */
 interface LevelChecked {
-  abilityIncreases: AbilityIncrease[];
   feats: Record<string, string[]>;
   hp: number;
   klass: { hd: number };
   powers: Record<string, string[]>;
-  skills: Record<string, number>;
 }
 
 /** A level's pick of either kind, in its pool: a feat or a power, named for the order picks give way in. */
@@ -23,12 +17,6 @@ interface LevelPick {
   aptitudeId: string;
   id: string;
   kind: "feats" | "powers";
-  name: string;
-}
-
-/** A feat or a power picked, as the check names it. */
-interface PickRecord {
-  id: string;
   name: string;
 }
 
@@ -76,9 +64,11 @@ export type GrantedFeatRecords =
 export type Holding = (picks: PoolPicks) => HoldingCharacter;
 
 /**
- * A level's selections checked against the ruleset (`rulesetData`): theirs, linked to their pools, and not taken twice
- * (a non-stackable feat the character has, a power in a pool it knows it in, the level's other picks' gifts too); and
- * its hit points and ability increases, within what its ruleset's rules give it (`rules`).
+ * A level's selections checked against the ruleset (`rulesetData`): linked to their pools, and not taken twice (a
+ * non-stackable feat the character has, a power in a pool it knows it in, the level's other picks' gifts too); and its
+ * hit points and ability increases, within what its ruleset's rules give it (`rules`). Each selection is the ruleset's,
+ * by the id its view keys it by: the level-up handle resolved the request when it entered, and refused a pick the view
+ * lacks (`LevelRequests`).
  */
 export default class SelectionChecks {
   constructor(
@@ -86,65 +76,22 @@ export default class SelectionChecks {
     private readonly rules: Pick<LevelUpRules<unknown>, "getAbilityIncreaseTotal" | "hitPointsOf">,
   ) {}
 
-  /** Throws when a feat or a power isn't linked to the pool it's picked under. */
-  private checkLinks(feats: Record<string, string[]>, powers: Record<string, string[]>) {
-    for (const [aptitudeId, ids] of Object.entries(feats)) {
-      for (const featId of ids) {
-        const links = this.rulesetData.featsById.get(featId)?.featsAptitudesInRules ?? [];
-        if (!links.some((fa) => fa.aptitudeId === aptitudeId))
-          throw new RulesError("invalid", "Feat is not linked to the specified aptitude");
-      }
-    }
-
-    for (const [aptitudeId, ids] of Object.entries(powers)) {
-      for (const powerId of ids) {
-        const links = this.rulesetData.powersById.get(powerId)?.powersAptitudesInRules ?? [];
-        if (!links.some((pa) => pa.aptitudeId === aptitudeId))
-          throw new RulesError("invalid", "Power is not linked to the specified aptitude");
-      }
-    }
-  }
-
   /**
    * Throws when the level picks a non-stackable feat or a power more than once, in a pool or under two: a character
    * takes a non-stackable feat once, and a level knows a power once (one row a power). A stackable feat may be picked
    * again, at this level as at another: each pick is a row of its own.
    */
-  private checkRepeatedPicks(
-    feats: Record<string, string[]>,
-    fetchedFeats: FeatRecord[],
-    powers: Record<string, string[]>,
-    fetchedPowers: PickRecord[],
-  ) {
-    const nonStackable = this.findRepeated(feats, fetchedFeats).find((feat) => !feat.stackable);
-    if (nonStackable)
-      throw new RulesError("invalid", `Non-stackable feat "${nonStackable.name}" cannot be picked more than once`);
+  private checkRepeatedPicks(feats: Record<string, string[]>, powers: Record<string, string[]>) {
+    const nonStackable = this.findRepeated(feats).find((featId) => !this.isStackable(featId));
+    if (nonStackable) {
+      const name = this.rulesetData.featsById.get(nonStackable)?.name ?? nonStackable;
+      throw new RulesError("invalid", `Non-stackable feat "${name}" cannot be picked more than once`);
+    }
 
-    const [power] = this.findRepeated(powers, fetchedPowers);
-    if (power) throw new RulesError("invalid", `Power "${power.name}" cannot be picked more than once at a level`);
-  }
-
-  /** The rows of these ids, deduplicated, from the character's ruleset; throws when one isn't in it. */
-  private fetchAll<T>(ids: string[], byId: Map<string, T>, what: string): T[] {
-    const uniqueIds = [...new Set(ids)];
-    const fetched = uniqueIds.map((id) => byId.get(id)).filter((row): row is T => row !== undefined);
-    if (fetched.length !== uniqueIds.length) throw new RulesError("invalid", `One or more ${what} not found`);
-    return fetched;
-  }
-
-  /** The submitted skills, feats and powers, from the character's ruleset; throws when one, or a pool, isn't in it. */
-  private fetchSelections(
-    skills: Record<string, number>,
-    feats: Record<string, string[]>,
-    powers: Record<string, string[]>,
-  ) {
-    const { aptitudesById, featsById, powersById, skillsById } = this.rulesetData;
-    const skillIds = Object.keys(skills).filter((id) => skills[id] > 0);
-    const fetchedSkills = this.fetchAll(skillIds, skillsById, "skills");
-    const fetchedFeats = this.fetchAll(Object.values(feats).flat(), featsById, "feats");
-    const fetchedPowers = this.fetchAll(Object.values(powers).flat(), powersById, "powers");
-    this.fetchAll([...Object.keys(feats), ...Object.keys(powers)], aptitudesById, "aptitudes");
-    return { fetchedSkills, fetchedFeats, fetchedPowers };
+    const [power] = this.findRepeated(powers);
+    if (!power) return;
+    const name = this.rulesetData.powersById.get(power)?.name ?? power;
+    throw new RulesError("invalid", `Power "${name}" cannot be picked more than once at a level`);
   }
 
   /**
@@ -190,11 +137,11 @@ export default class SelectionChecks {
     return character.getHeldPowers().filter((power) => power.id === id && power.aptitudeId === aptitudeId);
   }
 
-  /** The picks (`fetched`) a level's selections (`picks`, by pool) give more than once, in a pool or under two. */
-  private findRepeated<R extends PickRecord>(picks: Record<string, string[]>, fetched: R[]): R[] {
+  /** The ids a level's selections (`picks`, by pool) give more than once, in a pool or under two, each once. */
+  private findRepeated(picks: Record<string, string[]>) {
     const ids = Object.values(picks).flat();
     const repeated = new Set(ids.filter((id, index) => ids.indexOf(id) !== index));
-    return fetched.filter(({ id }) => repeated.has(id));
+    return [...new Set(ids)].filter((id) => repeated.has(id));
   }
 
   /** Whether the ruleset's feat stacks: a character may have it more than once. */
@@ -323,23 +270,36 @@ export default class SelectionChecks {
   }
 
   /**
-   * A level's hit points, ability increases and selections checked, for both the level save and the level-up's: each
-   * ability and selection the ruleset's, each selection linked to its pool, no non-stackable feat or power picked twice.
-   * Whether the character holds what it picks already is the save's next check (`checkPicksNotHeld`).
+   * A level's hit points and selections checked, for both the level save and the level-up's: each selection linked to
+   * its pool, no non-stackable feat or power picked twice. Whether the character holds what it picks already is the
+   * save's next check (`checkPicksNotHeld`).
    */
-  checkLevel({ klass, hp, abilityIncreases, skills, feats, powers }: LevelChecked) {
+  checkLevel({ klass, hp, feats, powers }: LevelChecked) {
     const { max, min } = this.rules.hitPointsOf(klass.hd);
     if (hp < min || hp > max) throw new RulesError("invalid", `HP must be between ${min} and ${max}`);
 
-    // A cache hit means the entity is in the composed view of the character's ruleset
-    // (the cache's arrays are already COW-resolved and sibling-filtered).
-    if (abilityIncreases.some(({ abilityId }) => !this.rulesetData.abilitiesById.has(abilityId)))
-      throw new RulesError("invalid", "Ability does not belong to the character's ruleset");
-
     // Submitted ids can repeat, in a pool or under two: a stackable feat's may, checkRepeatedPicks refuses the others.
-    const { fetchedFeats, fetchedPowers } = this.fetchSelections(skills, feats, powers);
-    this.checkRepeatedPicks(feats, fetchedFeats, powers, fetchedPowers);
+    this.checkRepeatedPicks(feats, powers);
     this.checkLinks(feats, powers);
+  }
+
+  /** Throws when a feat or a power isn't linked to the pool it's picked under. */
+  checkLinks(feats: Record<string, string[]>, powers: Record<string, string[]>) {
+    for (const [aptitudeId, ids] of Object.entries(feats)) {
+      for (const featId of ids) {
+        const links = this.rulesetData.featsById.get(featId)?.featsAptitudesInRules ?? [];
+        if (!links.some((fa) => fa.aptitudeId === aptitudeId))
+          throw new RulesError("invalid", "Feat is not linked to the specified aptitude");
+      }
+    }
+
+    for (const [aptitudeId, ids] of Object.entries(powers)) {
+      for (const powerId of ids) {
+        const links = this.rulesetData.powersById.get(powerId)?.powersAptitudesInRules ?? [];
+        if (!links.some((pa) => pa.aptitudeId === aptitudeId))
+          throw new RulesError("invalid", "Power is not linked to the specified aptitude");
+      }
+    }
   }
 
   /**
@@ -362,12 +322,6 @@ export default class SelectionChecks {
     const name = this.rulesetData.powersById.get(power.powerId)?.name ?? power.powerId;
     const pool = this.rulesetData.aptitudesById.get(power.aptitudeId)?.name ?? power.aptitudeId;
     throw new RulesError("invalid", `Power "${name}" is already known in ${pool}`);
-  }
-
-  /** Throws when a submitted selection isn't the character's ruleset's, or isn't linked to the pool it's picked under. */
-  checkSelections(skills: Record<string, number>, feats: Record<string, string[]>, powers: Record<string, string[]>) {
-    this.fetchSelections(skills, feats, powers);
-    this.checkLinks(feats, powers);
   }
 
   /**
