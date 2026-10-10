@@ -54,9 +54,6 @@ class FeatsAptitudesRepository extends BaseRepository<typeof featsAptitudesInRul
           isNull(this.table.deletedAt),
         ],
       ),
-      with: {
-        aptitudesInRule: true,
-      },
     });
   }
 

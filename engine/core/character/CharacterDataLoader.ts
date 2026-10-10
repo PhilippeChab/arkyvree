@@ -102,17 +102,15 @@ export default abstract class CharacterDataLoader<D extends LoadedCharacter, P e
   }
 
   /**
-   * The character's inventory, each entry's item as the view composes it (the join holds the stored row, which a copy
-   * or a sibling winner stands for: its name and fields are the view's), with its properties, its requirements (the
-   * base item's, its proficiency, and its own on top of a template, or a plain item's) and, equipped, its modifiers.
+   * The character's inventory, each entry's item as the view composes it (a copy's, or a sibling winner's, for an entry
+   * stored before), with its properties, its requirements (the base item's, its proficiency, and its own on top of a
+   * template, or a plain item's) and, equipped, its modifiers (`RulesetData.entriesWithItems`).
    */
   private loadInventory(rows: CharacterRows, rulesetData: RulesetData): InventoryEntry[] {
-    return rows.inventory.map((entry) => {
-      const item = rulesetData.itemsById.get(entry.itemId) ?? entry.itemsInRule;
+    return rulesetData.entriesWithItems(rows.inventory).map(({ entry, item }) => {
       const { own, template } = rulesetData.itemRequirements(item);
       return {
         ...entry,
-        itemsInRule: item,
         item: {
           ...item,
           properties: rulesetData.itemProperties(item),

@@ -367,6 +367,19 @@ export default class RulesetData {
     ));
   }
 
+  /**
+   * Inventory entries (`entries`, each naming its item: a stored id is its copy's or its winner's), each with the item
+   * the view shows for it. The view holds every item an entry names, as it does every pick's entity: deleting an item,
+   * reverting it or unsubscribing from its book is refused while an entry holds it. An entry it doesn't is left out, as
+   * a pick is.
+   */
+  entriesWithItems<E extends { itemId: string }>(entries: E[]): { entry: E; item: Item }[] {
+    return entries.flatMap((entry) => {
+      const item = this.itemsById.get(entry.itemId);
+      return item ? [{ entry, item }] : [];
+    });
+  }
+
   /** `stripSeparators(feat.name)` → featId, the first match winning: the "set feats.<slug>.possessed" modifier scan. */
   get featIdBySlug(): Map<string, string> {
     return (this.built.featIdBySlug ??= buildIdBySlug(this.feats));

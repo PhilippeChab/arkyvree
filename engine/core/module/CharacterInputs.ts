@@ -12,7 +12,6 @@ import type {
   CharacterInventory,
   CharacterLevel,
   Character as CharacterRecord,
-  Item,
   Modifier,
   Player,
   Requirement,
@@ -34,14 +33,14 @@ export interface CharacterInput {
 /**
  * A character's own rows, which the server reads (`readCharacterInput`) and its module builds the character from: its seat
  * in a campaign, its ability scores, languages, inventory and levels, every saved level's rows under it (its ability
- * increases and picks: the links, whose entities are the view's), and the modifiers set on the character itself, with
- * their requirements. Read as stored:
- * the engine resolves their references as they enter it (`CharacterInputs`).
+ * increases and picks), and the modifiers set on the character itself, with their requirements. An inventory entry and
+ * a pick are the links they are, whose entities are the view's. Read as stored: the engine resolves their references as
+ * they enter it (`CharacterInputs`).
  */
 export interface CharacterRows {
   abilities: (typeof characterAbilitiesInCharacter.$inferSelect)[];
   campaign: Campaign | undefined;
-  inventory: (CharacterInventory & { itemsInRule: Item })[];
+  inventory: CharacterInventory[];
   languages: (typeof languagesInCharacter.$inferSelect)[];
   levels: CharacterLevel[];
   modifiers: Modifier[];

@@ -19,8 +19,8 @@ interface EquippedEntry {
   item: Pick<Item, "id" | "isTemplate" | "sourceItemId" | "type">;
 }
 
-/** An equipped entry of the character's, as the slot rules read it. */
-type HeldEntry = CharacterInput["rows"]["inventory"][number];
+/** An equipped entry of the character's, as the slot rules read it, with its item's name as the view has it. */
+type HeldEntry = CharacterInput["rows"]["inventory"][number] & { name: string };
 
 /**
  * What keeps a location from taking one more item, with the entry in the way:
@@ -190,17 +190,15 @@ export default class Equipping {
    * refuses it.
    */
   describeConflict(entryId: string | null, location: ItemLocation, weaponSet: number | null): string | null {
-    const equipped = this.input.rows.inventory.filter((other) => other.equipped && other.id !== entryId);
+    const equipped = this.view.rulesetData
+      .entriesWithItems(this.input.rows.inventory)
+      .filter(({ entry }) => entry.equipped && entry.id !== entryId)
+      .map(({ entry, item }) => ({ ...entry, name: item.name }));
     const conflict = this.findConflict(location, weaponSet, equipped);
     if (!conflict) return null;
     if (conflict.reason === "fingers") return FINGERS_TAKEN_MESSAGE;
 
     const { entry } = conflict;
-    const name = this.view.rulesetData.itemsById.get(entry.itemId)?.name ?? entry.itemsInRule.name;
-    return SLOT_CONFLICT_MESSAGES[conflict.reason](
-      location,
-      { location: entry.location, name },
-      (entry.weaponSet ?? 0) + 1,
-    );
+    return SLOT_CONFLICT_MESSAGES[conflict.reason](location, entry, (entry.weaponSet ?? 0) + 1);
   }
 }

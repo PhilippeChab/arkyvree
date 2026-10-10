@@ -217,19 +217,16 @@ export default abstract class CharactersPart<D extends Descriptions> {
   }
 
   /**
-   * The character's entries (`entries`, each with the item row it names), as its sheet lists them: each with what its
-   * ruleset shows of it (`describeInventoryEntry`), and its item as the view composes it (the stored row's copy or
-   * winner, the row itself without one), its properties, its modifiers, and its requirements, its template's before
-   * its own.
+   * The character's entries (`entries`, each naming its item), as its sheet lists them: each with what its ruleset
+   * shows of it (`describeInventoryEntry`), and its item as the view composes it (`RulesetData.entriesWithItems`), its
+   * properties, its modifiers, and its requirements, its template's before its own.
    */
-  describeInventory<T extends HeldInventoryEntry & { itemId: string; itemsInRule: Item }>(
+  describeInventory<T extends HeldInventoryEntry & { itemId: string }>(
     view: RulesetView,
     entries: T[],
   ): DescribedInventoryEntry<T, D["inventoryEntry"]>[] {
     const { rulesetData } = view;
-    return entries.map((entry) => {
-      // The join still contains the stored parent row after itemId resolves.
-      const item = rulesetData.itemsById.get(entry.itemId) ?? entry.itemsInRule;
+    return rulesetData.entriesWithItems(entries).map(({ entry, item }) => {
       const properties = rulesetData.itemProperties(item);
       const { own: requirements, template: proficiency } = rulesetData.itemRequirements(item);
       return {

@@ -11,8 +11,7 @@ type Links<K extends "feats" | "powers"> = K extends "feats"
 
 /**
  * A kind a ruleset lists (a feat in a pool, a power on a spell list: the schema's listed tables). A list holds feats or
- * spells, never both,
- * and a page's rows carry their lists as the ruleset composes them (`describeListed`).
+ * spells, never both, and a page's rows carry their lists as the ruleset composes them (`describeListed`).
  */
 export default abstract class ListedEntity<
   K extends "feats" | "powers",
@@ -24,16 +23,12 @@ export default abstract class ListedEntity<
   protected abstract linksIn(entity: ViewEntities[K]): Links<K>;
 
   /**
-   * Rows of a page, described: each inherited one with its lists as the ruleset composes them (its siblings' links
-   * merged into the winning copy's), unless the page lists the ruleset's own rows only (`childOnly`).
+   * Rows of a page, described: each with its lists as the ruleset composes them (its siblings' links merged into the
+   * winning copy's, each list the one that stands for it), the ruleset's own rows too. A row read as stored carries its
+   * links under their stored ids, which name the source of a list the ruleset copied.
    */
-  protected describeListed<T extends Record<string, unknown> & { id: string }>(
-    rows: T[],
-    where: { childOnly?: boolean },
-  ) {
-    const described = this.describeRows(rows);
-    if (this.rulesetData.cow.sourceChain.length === 0 || where.childOnly) return described;
-    return described.map((row) => {
+  protected describeListed<T extends Record<string, unknown> & { id: string }>(rows: T[]) {
+    return this.describeRows(rows).map((row) => {
       const entity = this.rulesetData.find(this.type, row.id);
       return entity ? { ...row, ...this.linksIn(entity) } : row;
     });
