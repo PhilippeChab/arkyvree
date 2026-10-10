@@ -235,6 +235,14 @@ export class BaseBookSeeds {
     );
   }
 
+  /** The spell lists the book's classes cast from (each class's `spellLists`). */
+  spellLists(): Set<string> {
+    return this.memo(
+      "spellLists",
+      () => new Set(this.classReferences().flatMap(({ ref }) => this.classes(ref).spellLists())),
+    );
+  }
+
   /** The names of the book's own spells. */
   spellNames(): Set<string> {
     return this.memo("spellNames", () => new Set(this.reference("spell")?.raw.map((spell) => spell.name) ?? []));

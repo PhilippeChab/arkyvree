@@ -344,6 +344,28 @@ export const LEVEL_9_SPELLS: PowerSeed[] = [
     ],
   },
   {
+    name: "Shambler",
+    description:
+      "You create 1d4+2 shambling mounds with 11 HD each that serve you for seven days (or seven months for guard duty only). Guard-duty shamblers cannot leave the spell's range. They gain fire resistance only in damp terrain.",
+    aptitudes: ["Blighter Spells", "Druid Spells"],
+    aptitudeLevels: { "Blighter Spells": 8, "Druid Spells": 9 },
+    savingThrow: "None",
+    properties: [
+      { type: "SPELL_SCHOOL", value: "Conjuration" },
+      { type: "SPELL_SUBSCHOOL", value: "Creation" },
+      { type: "SPELL_CASTING_TIME", value: "1 standard action" },
+      { type: "SPELL_RANGE_TYPE", value: "Medium" },
+      {
+        type: "SPELL_TARGET",
+        value: "Three or more shambling mounds, no two of which can be more than 30 ft. apart; see text",
+      },
+      { type: "SPELL_DURATION", value: "Seven days or seven months (D); see text" },
+      { type: "SPELL_RESISTANCE", value: "No" },
+      { type: "SPELL_COMPONENT", value: "Verbal" },
+      { type: "SPELL_COMPONENT", value: "Somatic" },
+    ],
+  },
+  {
     name: "Shapechange",
     description:
       "This functions like polymorph, except you can assume any single nonunique creature form from Fine to Colossal (up to your CL in HD, maximum 25). You gain all extraordinary and supernatural abilities of the new form but lose your supernatural abilities. You can change form once per round as a free action. If used as a disguise, +10 on Disguise checks. Focus: A jade circlet worth at least 1,500 gp.",

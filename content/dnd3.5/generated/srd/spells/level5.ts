@@ -4,25 +4,6 @@ import type { PowerSeed } from "@/content/dnd3.5/builders/spells/types.ts";
 
 export const LEVEL_5_SPELLS: PowerSeed[] = [
   {
-    name: "Antilife Shell",
-    description:
-      "You create a mobile, hemispherical barrier of energy that excludes most living creatures. Animals, aberrations, dragons, fey, giants, humanoids, magical beasts, monstrous humanoids, oozes, plants, and vermin cannot enter, though constructs, elementals, outsiders, and undead are unaffected. This spell can only be used defensively; forcing the barrier against excluded creatures collapses it.",
-    aptitudes: ["Blighter Spells", "Cleric Spells", "Druid Spells"],
-    aptitudeLevels: { "Blighter Spells": 5, "Cleric Spells": 6, "Druid Spells": 6 },
-    savingThrow: "None",
-    properties: [
-      { type: "SPELL_SCHOOL", value: "Abjuration" },
-      { type: "SPELL_CASTING_TIME", value: "1 round" },
-      { type: "SPELL_RANGE_TYPE", value: "10 ft." },
-      { type: "SPELL_AREA_OF_EFFECT", value: "10-ft.-radius emanation, centered on you" },
-      { type: "SPELL_DURATION", value: "10 min./level (D)" },
-      { type: "SPELL_RESISTANCE", value: "Yes" },
-      { type: "SPELL_COMPONENT", value: "Verbal" },
-      { type: "SPELL_COMPONENT", value: "Somatic" },
-      { type: "SPELL_COMPONENT", value: "Divine Focus" },
-    ],
-  },
-  {
     name: "Atonement",
     description:
       "This spell lifts the burden of misdeeds from a truly repentant creature. If the wrongdoing was unwitting or coerced, the spell works at no cost. For deliberate, knowing transgressions, you must intercede with your deity (expending 500 XP). Many casters first assign a quest or similar penance to verify sincerity. The spell has several applications: Reverse Magical Alignment Change restores an alignment altered by magic at no XP cost. Restore Class can return a fallen paladin's class features. Restore Cleric or Druid Spell Powers can be granted by another cleric of the same deity or another druid (costing 500 XP if the transgression was intentional). Redemption or Temptation allows you to offer a creature of opposing alignment the chance to voluntarily change its alignment to match yours; no compulsion can force acceptance, and this does not work on outsiders or creatures incapable of natural alignment change. The spell applies equally to acts against any alignment, not just evil. Material Component: Burning incense. Focus: A set of prayer beads or similar prayer device worth at least 500 gp. XP Cost: 500 XP per casting when the guilt was from deliberate acts.",
@@ -226,26 +207,6 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
     ],
   },
   {
-    name: "Create Undead",
-    description:
-      "More powerful than animate dead, this spell creates intelligent undead: ghouls, ghasts, mummies, and mohrgs. The type depends on your caster level, and you may create weaker types than allowed. Created undead are not automatically under your control; you may attempt to command them as they form if you have that ability. The spell must be cast at night. Material Component: A clay pot of grave dirt, one of brackish water, and a black onyx gem worth at least 50 gp per HD, placed in each corpse. The gems are consumed.",
-    aptitudes: ["Blighter Spells", "Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
-    aptitudeLevels: { "Blighter Spells": 5, "Cleric Spells": 6, "Sorcerer Spells": 6, "Wizard Spells": 6 },
-    savingThrow: "None",
-    properties: [
-      { type: "SPELL_SCHOOL", value: "Necromancy" },
-      { type: "SPELL_DESCRIPTOR", value: "Evil" },
-      { type: "SPELL_CASTING_TIME", value: "1 hour" },
-      { type: "SPELL_RANGE_TYPE", value: "Close" },
-      { type: "SPELL_TARGET", value: "One corpse" },
-      { type: "SPELL_DURATION", value: "Instantaneous" },
-      { type: "SPELL_RESISTANCE", value: "No" },
-      { type: "SPELL_COMPONENT", value: "Verbal" },
-      { type: "SPELL_COMPONENT", value: "Somatic" },
-      { type: "SPELL_COMPONENT", value: "Material" },
-    ],
-  },
-  {
     name: "Cure Light Wounds, Mass",
     description:
       "You channel positive energy to heal 1d8 points of damage + 1 per caster level (maximum +25) to each selected creature. Undead in the area take damage instead and may attempt Will saves for half.",
@@ -345,6 +306,24 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
     ],
   },
   {
+    name: "Disrupting Weapon",
+    description:
+      "A melee weapon becomes deadly to undead. Any undead with HD equal to or less than your caster level struck by the weapon must succeed on a Will save or be utterly destroyed. Spell resistance does not apply to the destruction effect.",
+    aptitudes: ["Cleric Spells", "Hunter of the Dead Spells"],
+    aptitudeLevels: { "Cleric Spells": 5, "Hunter of the Dead Spells": 4 },
+    savingThrow: "Will negates (harmless, object); see text",
+    properties: [
+      { type: "SPELL_SCHOOL", value: "Transmutation" },
+      { type: "SPELL_CASTING_TIME", value: "1 standard action" },
+      { type: "SPELL_RANGE_TYPE", value: "Touch" },
+      { type: "SPELL_TARGET", value: "One melee weapon" },
+      { type: "SPELL_DURATION", value: "1 round/level" },
+      { type: "SPELL_RESISTANCE", value: "Yes (harmless, object)" },
+      { type: "SPELL_COMPONENT", value: "Verbal" },
+      { type: "SPELL_COMPONENT", value: "Somatic" },
+    ],
+  },
+  {
     name: "Dream",
     description:
       "You or a touched messenger sends a phantasmal message to a named recipient through their dreams. The message can be any length and is perfectly remembered. Communication is one-way. The messenger enters a trance and appears in the recipient's dream. If the recipient is awake, the messenger can wait in the trance until the recipient sleeps. A disturbed messenger wakes, ending the spell. Creatures that do not sleep or dream cannot be contacted. The messenger is defenseless during the trance.",
@@ -418,27 +397,6 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },
       { type: "SPELL_COMPONENT", value: "Material" },
-    ],
-  },
-  {
-    name: "Forbiddance",
-    description:
-      "You seal an area against all planar travel (teleportation, plane shifting, astral travel, ethereal travel, and summoning). Additionally, creatures with differing alignments take damage when entering: same alignment is unaffected; one axis different deals 6d6 (Will half, SR applies); both axes different deals 12d6 (Will half, SR applies). A password can exempt creatures. Cannot be overlapped. Can only be dispelled by a caster of equal or higher level. Material Component: Holy water and incenses worth 1,500 gp + 1,500 gp per 60-foot cube (password adds 1,000 gp + 1,000 gp per cube).",
-    aptitudes: ["Blighter Spells", "Cleric Spells"],
-    aptitudeLevels: { "Blighter Spells": 5, "Cleric Spells": 6 },
-    savingThrow: "See text",
-    properties: [
-      { type: "SPELL_SCHOOL", value: "Abjuration" },
-      { type: "SPELL_SUBSCHOOL", value: "Teleportation" },
-      { type: "SPELL_CASTING_TIME", value: "6 rounds" },
-      { type: "SPELL_RANGE_TYPE", value: "Medium" },
-      { type: "SPELL_AREA_OF_EFFECT", value: "60-ft. cube/level (S)" },
-      { type: "SPELL_DURATION", value: "Permanent" },
-      { type: "SPELL_RESISTANCE", value: "Yes" },
-      { type: "SPELL_COMPONENT", value: "Verbal" },
-      { type: "SPELL_COMPONENT", value: "Somatic" },
-      { type: "SPELL_COMPONENT", value: "Material" },
-      { type: "SPELL_COMPONENT", value: "Divine Focus" },
     ],
   },
   {
@@ -861,24 +819,6 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
     ],
   },
   {
-    name: "Repel Wood",
-    description:
-      "Energy waves push wooden objects away at 40 feet per round. Fixed objects larger than 3 inches are unaffected; smaller ones break. Creatures can release dragged items. Set spears splinter. Even magic items with wooden parts are repelled (antimagic fields block). The path is set at casting.",
-    aptitudes: ["Blighter Spells", "Druid Spells"],
-    aptitudeLevels: { "Blighter Spells": 5, "Druid Spells": 6 },
-    savingThrow: "None",
-    properties: [
-      { type: "SPELL_SCHOOL", value: "Transmutation" },
-      { type: "SPELL_CASTING_TIME", value: "1 standard action" },
-      { type: "SPELL_RANGE_TYPE", value: "60 ft." },
-      { type: "SPELL_AREA_OF_EFFECT", value: "60-ft. line-shaped emanation from you" },
-      { type: "SPELL_DURATION", value: "1 min./level (D)" },
-      { type: "SPELL_RESISTANCE", value: "No" },
-      { type: "SPELL_COMPONENT", value: "Verbal" },
-      { type: "SPELL_COMPONENT", value: "Somatic" },
-    ],
-  },
-  {
     name: "Righteous Might",
     description:
       "You double in height and multiply weight by 8, advancing one size category. You gain a +4 size bonus to Strength, +2 size bonus to Constitution, +2 enhancement bonus to natural armor, and DR 3/evil or good (6 at 12th level, 9 at 15th). Size modifier for AC and attacks changes accordingly. Equipment enlarges similarly; enlarged items that leave your possession return to normal size. Multiple size increases do not stack.",
@@ -1138,6 +1078,48 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
     ],
   },
   {
+    name: "Transmute Mud to Rock",
+    description:
+      "Normal mud or quicksand permanently becomes soft stone. Creatures in the mud get a Reflex save to escape. Counters and dispels transmute rock to mud. Arcane Material Component: Sand, lime, and water.",
+    aptitudes: ["Blighter Spells", "Druid Spells", "Sorcerer Spells", "Wizard Spells"],
+    aptitudeLevels: { "Blighter Spells": 4, "Druid Spells": 5, "Sorcerer Spells": 5, "Wizard Spells": 5 },
+    savingThrow: "See text",
+    properties: [
+      { type: "SPELL_SCHOOL", value: "Transmutation" },
+      { type: "SPELL_DESCRIPTOR", value: "Earth" },
+      { type: "SPELL_CASTING_TIME", value: "1 standard action" },
+      { type: "SPELL_RANGE_TYPE", value: "Medium" },
+      { type: "SPELL_AREA_OF_EFFECT", value: "Up to two 10-ft. cubes/level (S)" },
+      { type: "SPELL_DURATION", value: "Permanent" },
+      { type: "SPELL_RESISTANCE", value: "No" },
+      { type: "SPELL_COMPONENT", value: "Verbal" },
+      { type: "SPELL_COMPONENT", value: "Somatic" },
+      { type: "SPELL_COMPONENT", value: "Material" },
+      { type: "SPELL_COMPONENT", value: "Divine Focus" },
+    ],
+  },
+  {
+    name: "Transmute Rock to Mud",
+    description:
+      "Natural rock becomes mud (up to 10 feet deep). Trapped creatures move at 5 feet with -2 on attacks and AC. Ceilings transformed cause mud to fall for 8d6 bludgeoning (Reflex half). Worked stone is unaffected. The mud remains until dispelled or transmuted back; evaporation converts it to normal dirt over days. Arcane Material Component: Clay and water.",
+    aptitudes: ["Blighter Spells", "Druid Spells", "Sorcerer Spells", "Wizard Spells"],
+    aptitudeLevels: { "Blighter Spells": 4, "Druid Spells": 5, "Sorcerer Spells": 5, "Wizard Spells": 5 },
+    savingThrow: "See text",
+    properties: [
+      { type: "SPELL_SCHOOL", value: "Transmutation" },
+      { type: "SPELL_DESCRIPTOR", value: "Earth" },
+      { type: "SPELL_CASTING_TIME", value: "1 standard action" },
+      { type: "SPELL_RANGE_TYPE", value: "Medium" },
+      { type: "SPELL_AREA_OF_EFFECT", value: "Up to two 10-ft. cubes/level (S)" },
+      { type: "SPELL_DURATION", value: "Permanent; see text" },
+      { type: "SPELL_RESISTANCE", value: "No" },
+      { type: "SPELL_COMPONENT", value: "Verbal" },
+      { type: "SPELL_COMPONENT", value: "Somatic" },
+      { type: "SPELL_COMPONENT", value: "Material" },
+      { type: "SPELL_COMPONENT", value: "Divine Focus" },
+    ],
+  },
+  {
     name: "True Seeing",
     description:
       "The subject sees through normal and magical darkness, notices magically hidden secret doors, sees exact locations under blur or displacement, sees invisible creatures normally, sees through illusions, and sees the true form of polymorphed or transmuted things. Can also see into the Ethereal Plane (120-foot range). Does not penetrate solid objects, negate concealment from fog, see through mundane disguises, spot hiding creatures, or find mundane secret doors. Cannot be enhanced by other magic. Material Component: Eye ointment (250 gp) made from mushroom powder, saffron, and fat.",
@@ -1157,6 +1139,26 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
       { type: "SPELL_TARGET", value: "Creature touched" },
       { type: "SPELL_DURATION", value: "1 min./level" },
       { type: "SPELL_RESISTANCE", value: "Yes (harmless)" },
+      { type: "SPELL_COMPONENT", value: "Verbal" },
+      { type: "SPELL_COMPONENT", value: "Somatic" },
+      { type: "SPELL_COMPONENT", value: "Material" },
+    ],
+  },
+  {
+    name: "Unhallow",
+    description:
+      "You desecrate a site with three effects: magic circle against good, -4 on turn checks (+4 profane to rebuke), and a fixed spell effect lasting one year. Spells that can be tied include aid, bane, bless, cause fear, darkness, daylight, death ward, deeper darkness, detect magic, detect good, dimensional anchor, discern lies, dispel magic, endure elements, freedom of movement, invisibility purge, protection from energy, remove fear, resist energy, silence, tongues, and zone of truth. Counters but does not dispel hallow. Material Component: Herbs, oils, and incense (1,000 gp + 1,000 gp per spell level).",
+    aptitudes: ["Blighter Spells", "Cleric Spells", "Druid Spells"],
+    aptitudeLevels: { "Blighter Spells": 4, "Cleric Spells": 5, "Druid Spells": 5 },
+    savingThrow: "See text",
+    properties: [
+      { type: "SPELL_SCHOOL", value: "Evocation" },
+      { type: "SPELL_DESCRIPTOR", value: "Evil" },
+      { type: "SPELL_CASTING_TIME", value: "24 hours" },
+      { type: "SPELL_RANGE_TYPE", value: "Touch" },
+      { type: "SPELL_AREA_OF_EFFECT", value: "40-ft. radius emanating from the touched point" },
+      { type: "SPELL_DURATION", value: "Instantaneous" },
+      { type: "SPELL_RESISTANCE", value: "See text" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },
       { type: "SPELL_COMPONENT", value: "Material" },
