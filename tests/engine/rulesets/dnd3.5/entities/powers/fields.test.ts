@@ -9,28 +9,9 @@ import { SPELL_COMPONENT, SPELL_DESCRIPTOR, SPELL_SCHOOL, SPELL_TARGET } from "@
 
 /**
  * The seeded spells whose rows a spell's fields can't hold, until the parser stops writing them: an Effect line stored
- * as a second target (#422), and an empty duration (#423).
+ * as a second target (#422).
  */
-const SPELLS_THE_FIELDS_CANNOT_HOLD = [
-  "Animate Fire",
-  "Animate Water",
-  "Commune With Greater Spirit",
-  "Continual Flame",
-  "Forestfold",
-  "Lightning Blade",
-  "Otiluke's Greater Dispelling Screen",
-  "Poison Vines",
-  "Repair Critical Damage",
-  "Repair Minor Damage",
-  "Repair Moderate Damage",
-  "Repair Serious Damage",
-  "Spirit Binding",
-  "Spirit Binding, Greater",
-  "Sword of Darkness",
-  "Tortoise Shell",
-  "Visage of the Deity",
-  "Visage of the Deity, Greater",
-];
+const SPELLS_THE_FIELDS_CANNOT_HOLD = ["Continual Flame", "Lightning Blade"];
 
 /** Rows as a sorted list of `type=value`. */
 function multiset(rows: { type: string; value: string }[]) {
