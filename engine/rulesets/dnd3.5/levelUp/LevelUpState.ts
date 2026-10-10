@@ -1,11 +1,11 @@
-import { LevelUpBase } from "@/engine/core/levelUp/index.ts";
+import { LevelUpBase, PicksDistribution } from "@/engine/core/levelUp/index.ts";
 import type { LevelPicks } from "@/engine/core/module/index.ts";
-import RulesError from "@/engine/core/RulesError.ts";
 import type { OwnPicks } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import SkillsComponent from "@/engine/rulesets/dnd3.5/model/skills/SkillsComponent.ts";
+import { include } from "@/lib/mixins.ts";
 
-import SkillSpending, { type SpentLevels } from "./SkillSpending.ts";
+import { SpendsSkillPoints } from "./concerns/SpendsSkillPoints.ts";
 
 /** The pools a character picks feats and powers in, and how many, with what a level-up plans. */
 type LevelUpPools = ReturnType<DetailedCharacter["components"]["aptitudes"]["getLevelUpPools"]>;
@@ -18,9 +18,9 @@ export type PoolPicks = Pick<LevelPicks, "feats" | "powers">;
 
 /**
  * What a 3.5 level-up flow reads past core's (`LevelUpBase`): the steps the wizard and the preview share, a feats step,
- * a powers step and a skills step, and which skills a class makes class skills.
+ * a powers step and a skills step (`SpendsSkillPoints`), and which skills a class makes class skills.
  */
-export default abstract class LevelUpState extends LevelUpBase<DetailedCharacter> {
+export default abstract class LevelUpState extends include(LevelUpBase<DetailedCharacter>, SpendsSkillPoints) {
   /** Each pool's picks once, in the order given: a pick given twice is one, as a save keeps it. */
   private dedupe(picks: Record<string, string[]>) {
     return Object.fromEntries(Object.entries(picks).map(([aptitudeId, ids]) => [aptitudeId, [...new Set(ids)]]));
@@ -104,11 +104,6 @@ export default abstract class LevelUpState extends LevelUpBase<DetailedCharacter
     return ids;
   }
 
-  /** The skill points a level-up step spends: what the character has left to spend, at least one. */
-  protected getSkillPointsToSpend(character: DetailedCharacter) {
-    return Math.max(1, character.components.skills.getSkillBudget().available);
-  }
-
   /**
    * A powers step, the wizard's and the preview's alike: how many powers the character picks with what's planned
    * (`pools`), in which pools, and the powers the class levels (`klassLevelIds`) grant, each saying whether it's free.
@@ -125,35 +120,10 @@ export default abstract class LevelUpState extends LevelUpBase<DetailedCharacter
   }
 
   /**
-   * Refuses picks (`picks`, which `character` holds) that overfill a pool they're in: a save keeps every pick it's
-   * given, whatever it's forced past, or refuses them.
+   * Refuses picks (`picks`, which `character` holds) that overfill a pool they're in, as a save refuses them
+   * (`PicksDistribution.refuseOverfull`).
    */
   protected refuseOverfull(character: DetailedCharacter, picks: Partial<PoolPicks>) {
-    const overfull = character.components.aptitudes.getOverfullPools(this.countOwnPicks(picks));
-    if (overfull.length > 0) {
-      const message = overfull.map(({ name, picked, room }) => `${name}: ${picked} picked, room for ${room}`);
-      throw new RulesError("invalid", message.join("; "));
-    }
-  }
-
-  /**
-   * A skills step, the wizard's and the preview's alike: the points the character has to spend (at least one), the
-   * character's total level after the step's levels (`levels`: each one's class skills and points), and each skill with
-   * its class status (`classSkillIds`: the step's classes') and what the form's points (`points`, by skill, in its
-   * order) come to over the levels, as a save spreads them (`SkillSpending`).
-   */
-  protected skillStep(
-    character: DetailedCharacter,
-    classSkillIds: Set<string>,
-    levels: SpentLevels,
-    points: Record<string, number>,
-  ) {
-    const skillPointsToSpend = this.getSkillPointsToSpend(character);
-    const stepSkills = character.components.skills.getEnrichedSkills(this.rulesetData.skills, classSkillIds);
-    return {
-      skillPointsToSpend,
-      totalCharacterLevel: levels.savedLevelCount + levels.perLevelSkillPoints.length,
-      skills: new SkillSpending(levels, stepSkills).describe(points, skillPointsToSpend),
-    };
+    PicksDistribution.refuseOverfull(character.components.aptitudes.getOverfullPools(this.countOwnPicks(picks)));
   }
 }

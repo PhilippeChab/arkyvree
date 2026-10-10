@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import type { GrantedFeatRecords } from "@/engine/core/levelUp/index.ts";
+import type { FeatSlots, GrantedFeatRecords } from "@/engine/core/levelUp/index.ts";
 import {
   type AbilityIncrease,
   CharacterProjection,
@@ -14,11 +14,12 @@ import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTa
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
+import { include } from "@/lib/mixins.ts";
 import type { Klass, KlassLevel } from "@/shared/relations.ts";
 
-import AptitudeSlotsPlan, { type FeatSlots } from "./AptitudeSlotsPlan.ts";
+import { PlansAptitudeSlots } from "./concerns/PlansAptitudeSlots.ts";
+import Dnd35PicksDistribution, { type PerLevelDistributionData } from "./Dnd35PicksDistribution.ts";
 import LevelUpState, { type PoolPicks } from "./LevelUpState.ts";
-import PicksDistribution, { type PerLevelDistributionData } from "./PicksDistribution.ts";
 
 /** What the planned levels give: the pools the character picks in, and each level's skill points, class skills and slots. */
 export type LevelGains = ReturnType<PlannedLevelsState["computeLevelGains"]>;
@@ -50,9 +51,9 @@ const PLANNED_LEVELS = z
 /**
  * The levels a character plans in a level-up, from its rows: each checked to be the ruleset's, the character built with
  * them, and what they give, the same for the wizard's preview (`LevelUpPreview`) and the save (`LevelUpPlan`): the
- * pools the character picks in, and each level's skill points, class skills and pool slots.
+ * pools the character picks in, and each level's skill points, class skills and pool slots (`PlansAptitudeSlots`).
  */
-export default abstract class PlannedLevelsState extends LevelUpState {
+export default abstract class PlannedLevelsState extends include(LevelUpState, PlansAptitudeSlots) {
   /** What a save distributes its pooled picks over the planned levels by: each level's points, class skills and slots. */
   private buildDistributionData(planned: PlannedLevels, gains: LevelGains): PerLevelDistributionData {
     const { classSkills, perLevelFeatSlots, perLevelPowerSlots, perLevelSkillPoints } = gains;
@@ -62,7 +63,7 @@ export default abstract class PlannedLevelsState extends LevelUpState {
       perLevelFeatSlots,
       perLevelPowerSlots,
       savedLevelCount: planned.savedLevelCount,
-      skillContexts: PicksDistribution.contextsOf(
+      skillContexts: Dnd35PicksDistribution.contextsOf(
         planned.character.components.skills.getEnrichedSkills(this.rulesetData.skills, classSkills.merged),
       ),
     };
@@ -142,7 +143,7 @@ export default abstract class PlannedLevelsState extends LevelUpState {
     const { grantedFeatRecords, character, savedLevelCount, klassLevelEntries, saved } = planned;
     const klassLevelIds = klassLevelEntries.map(({ klassLevel }) => klassLevel.id);
     const pools = character.components.aptitudes.getLevelUpPools(this.rulesetData);
-    const slots = new AptitudeSlotsPlan(this.rulesetData).compute(
+    const slots = this.planAptitudeSlots(
       klassLevelIds,
       grantedFeatRecords,
       Object.keys(pools.featPools),
@@ -174,20 +175,14 @@ export default abstract class PlannedLevelsState extends LevelUpState {
   /**
    * A save's pooled picks (skill ranks, and feats and powers by pool) spread over its planned levels, each level taking
    * what its points and slots allow, in order, and what's past a pool's slots on the level of the feat that gives it
-   * room, or the last (`PicksDistribution`). `gains`: what the levels give, when the caller has them.
+   * room, or the last (`Dnd35PicksDistribution`). `gains`: what the levels give, when the caller has them.
    */
-  protected distributePlannedPicks(
-    planned: PlannedLevels,
-    { feats, powers, skills }: LevelPicks,
-    gains = this.computeLevelGains(planned),
-  ) {
+  protected distributePlannedPicks(planned: PlannedLevels, picks: LevelPicks, gains = this.computeLevelGains(planned)) {
     const data = this.buildDistributionData(planned, gains);
-    return new PicksDistribution(data).distribute(
-      skills,
-      feats,
-      powers,
-      this.buildPowerLevelLookup(Object.values(powers).flat()),
-      this.getAptitudeSources(feats, data.perLevelFeatSlots),
+    return new Dnd35PicksDistribution(data).distribute(
+      picks,
+      this.buildPowerLevelLookup(Object.values(picks.powers).flat()),
+      this.getAptitudeSources(picks.feats, data.perLevelFeatSlots),
     );
   }
 

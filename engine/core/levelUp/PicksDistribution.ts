@@ -1,37 +1,34 @@
-import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
+import type { LevelPicks } from "@/engine/core/module/index.ts";
+import RulesError from "@/engine/core/RulesError.ts";
 
-import type { FeatSlots, PowerSlots } from "./AptitudeSlotsPlan.ts";
-
-/** What a planned level takes of the pooled picks. */
-interface DistributedLevel {
-  feats: Record<string, string[]>;
-  powers: Record<string, string[]>;
-  skills: Record<string, number>;
+/** A pool a level-up's picks overfill, as the character holding them says: its name, its picks and its room for them. */
+interface OverfullPool {
+  name: string;
+  picked: number;
+  room: number;
 }
 
-/** What pooled picks are spread over planned levels by: each level's points, class skills and pool slots. */
-export interface PerLevelDistributionData {
-  perLevelClassSkillIds: string[][];
+/** Each planned level's slots in each feat pool, by pool id. */
+export type FeatSlots = Record<string, number[]>;
+
+/** What a save places its pooled feats and powers by: each planned level's slots in each pool. */
+export interface PoolSlots {
   perLevelFeatSlots: FeatSlots;
   perLevelPowerSlots: PowerSlots;
-  perLevelSkillPoints: number[];
-  savedLevelCount: number;
-  /** Each skill's rank so far and whether it's a class skill, by its id (`contextsOf`). */
-  skillContexts: Map<string, { currentRank: number; isClassSkill: boolean }>;
 }
 
-/**
- * A save's pooled picks (skill ranks, and feats and powers by pool) spread over its planned levels, in order. A pick
- * past its pool's slots isn't dropped: it goes on the level of the feat that gives its pool more room, or the last
- * one, and the save says whether its pool has room for it (`refuseOverfull`).
- */
-export default class PicksDistribution {
-  constructor(private readonly data: PerLevelDistributionData) {}
+/** Each planned level's slots in each power pool, by spell level, by pool id. */
+export type PowerSlots = Record<string, Record<string, number>[]>;
 
-  /** Each skill's rank so far and whether it's a class skill, which cap its ranks: by its id, of the step's skills. */
-  static contextsOf(skills: { currentRank: number; id: string; isClassSkill: boolean }[]) {
-    return new Map(skills.map(({ currentRank, id, isClassSkill }) => [id, { currentRank, isClassSkill }]));
-  }
+/**
+ * A save's pooled picks (`LevelPicks`: skill points, and feats and powers by pool) spread over its planned levels, in
+ * order, by what the ruleset gives each level (`D`: its slots in each pool, and what its skill points spread by). The
+ * feats and powers go in the levels' slots; the skill points as the ruleset spreads them (`distributeSkills`). A pick
+ * past its pool's slots isn't dropped: it goes on the level of the feat that gives its pool more room, or the last one,
+ * and the save refuses picks that overfill their pool (`refuseOverfull`).
+ */
+export default abstract class PicksDistribution<D extends PoolSlots> {
+  constructor(protected readonly data: D) {}
 
   /**
    * The planned level a pool's next pick goes on, as the save hands a pool's picks out over its slots (`slotsPerLevel`,
@@ -47,52 +44,28 @@ export default class PicksDistribution {
   }
 
   /**
-   * Caps a skill's points at what each level can take: the ranks its max rank leaves (a cross-class rank costs two
-   * points) and the points it has left. What goes over moves on to the next level.
+   * Refuses picks that overfill their pools (`overfull`, as the character holding them says): a save keeps every pick
+   * it's given, whatever it's forced past, or refuses them.
    */
-  private capAtMaxRanks(skillId: string, perLevel: number[], remainingPointsPerLevel: number[]) {
-    const { data } = this;
-    const ctx = data.skillContexts.get(skillId);
-    if (!ctx) return;
-
-    let isClassSoFar = ctx.isClassSkill;
-    let cumulativeRank = ctx.currentRank;
-    let overflow = 0;
-    for (let i = 0; i < perLevel.length; i++) {
-      perLevel[i] += overflow;
-      overflow = 0;
-
-      if (data.perLevelClassSkillIds[i].includes(skillId)) isClassSoFar = true;
-
-      if (perLevel[i] === 0) continue;
-
-      const charLevelAtI = data.savedLevelCount + i + 1;
-      const maxRank = SkillRules.maxRank(charLevelAtI, isClassSoFar);
-      const isClassForLevel = data.perLevelClassSkillIds[i].includes(skillId);
-      const headroom = maxRank - cumulativeRank;
-      const maxPointsByRank = Math.max(0, Math.floor(SkillRules.pointsFor(headroom, isClassForLevel)));
-      const maxPointsByBudget = remainingPointsPerLevel[i];
-      const maxPoints = Math.min(maxPointsByRank, maxPointsByBudget);
-
-      if (perLevel[i] > maxPoints) {
-        overflow = perLevel[i] - maxPoints;
-        perLevel[i] = maxPoints;
-      }
-      const actualRank = SkillRules.ranksFor(perLevel[i], isClassForLevel);
-      cumulativeRank += actualRank;
+  static refuseOverfull(overfull: OverfullPool[]) {
+    if (overfull.length > 0) {
+      const message = overfull.map(({ name, picked, room }) => `${name}: ${picked} picked, room for ${room}`);
+      throw new RulesError("invalid", message.join("; "));
     }
   }
+
+  /** Spreads each skill's points (`skills`, in the order given) over the levels (`result`), as the ruleset does. */
+  protected abstract distributeSkills(skills: Record<string, number>, result: LevelPicks[]): void;
+
+  /** How many levels the picks are spread over. */
+  protected abstract get levelCount(): number;
 
   /**
    * Puts each pool's feats into the levels' slots. A pool with no slots, one a feat's modifier created, goes on the
    * level its source feat went to (the first when that's unknown); a pool's feats past its slots go there too (the
    * last when that's unknown).
    */
-  private distributeFeats(
-    feats: Record<string, string[]>,
-    aptitudeSources: Map<string, string>,
-    result: DistributedLevel[],
-  ) {
+  private distributeFeats(feats: Record<string, string[]>, aptitudeSources: Map<string, string>, result: LevelPicks[]) {
     const unplaced: { aptitudeId: string; featIds: string[]; level: number }[] = [];
     const assignedFeatLevels = new Map<string, number>();
 
@@ -129,7 +102,7 @@ export default class PicksDistribution {
   private distributePowers(
     powers: Record<string, string[]>,
     powerLevelLookup: Map<string, number | null>,
-    result: DistributedLevel[],
+    result: LevelPicks[],
   ) {
     for (const [aptitudeId, powerIds] of Object.entries(powers)) {
       const slotsPerLevel = this.data.perLevelPowerSlots[aptitudeId] ?? [];
@@ -159,30 +132,6 @@ export default class PicksDistribution {
     }
   }
 
-  /** Spreads each skill's points over the levels, within each level's points and max ranks. */
-  private distributeSkills(skills: Record<string, number>, result: DistributedLevel[]) {
-    const remainingPointsPerLevel = [...this.data.perLevelSkillPoints];
-
-    for (const [skillId, totalPoints] of Object.entries(skills)) {
-      if (totalPoints <= 0) continue;
-
-      const { perLevel } = SkillRules.spend(
-        skillId,
-        totalPoints,
-        this.data.perLevelClassSkillIds,
-        remainingPointsPerLevel,
-      );
-      this.capAtMaxRanks(skillId, perLevel, remainingPointsPerLevel);
-
-      for (let i = 0; i < result.length; i++) {
-        if (perLevel[i] > 0) {
-          result[i].skills[skillId] = (result[i].skills[skillId] ?? 0) + perLevel[i];
-          remainingPointsPerLevel[i] -= perLevel[i];
-        }
-      }
-    }
-  }
-
   /**
    * Hands `ids` out in order to the levels' slots, as many to a level as `slotsAt` gives it: the ids past them, which
    * it leaves to its caller.
@@ -205,17 +154,16 @@ export default class PicksDistribution {
   }
 
   /**
-   * The pooled picks, spread: each level's skill ranks, and its feats and powers by pool. `powerLevelLookup` is each
-   * power's spell level by `powerId:aptitudeId`; `aptitudeSources` the feat that gives a pool room past its slots.
+   * The pooled picks (`picks`), spread: each level's skill points, and its feats and powers by pool.
+   * `powerLevelLookup` is each power's spell level by `powerId:aptitudeId`; `aptitudeSources` the feat that gives a
+   * pool room past its slots.
    */
   distribute(
-    skills: Record<string, number>,
-    feats: Record<string, string[]>,
-    powers: Record<string, string[]>,
+    { feats, powers, skills }: LevelPicks,
     powerLevelLookup: Map<string, number | null>,
     aptitudeSources: Map<string, string>,
-  ): DistributedLevel[] {
-    const result: DistributedLevel[] = Array.from({ length: this.data.perLevelSkillPoints.length }, () => ({
+  ): LevelPicks[] {
+    const result: LevelPicks[] = Array.from({ length: this.levelCount }, () => ({
       skills: {},
       feats: {},
       powers: {},
