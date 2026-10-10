@@ -33,6 +33,11 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
     return new RacePicker(view, identity);
   }
 
+  /** The ability scores a character's edit stores: refused when one isn't the ruleset's, or past the rules' bounds. */
+  planAbilities(...args: Parameters<typeof CharacterEdits.planAbilities>) {
+    return CharacterEdits.planAbilities(...args);
+  }
+
   /** What a new character stores beside its row: its ability scores; refused when its race isn't a player's. */
   planCreate(...args: Parameters<typeof CharacterEdits.planCreate>) {
     return CharacterEdits.planCreate(...args);

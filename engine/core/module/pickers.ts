@@ -35,9 +35,12 @@ export interface PickFilters {
   ids: string[];
 }
 
-/** What a page of a list's groups is read with: the list's entities, less those left out, by the group property. */
+/**
+ * What a page of a list's groups is read with: the list's entities, less those left out, and the group each one is in
+ * (`families`, as the ruleset groups them): an entity in none stands alone.
+ */
 export interface PickGroupFilters {
   excludeIds: string[];
-  familyType: string;
+  families: { family: string; id: string }[];
   ids: string[];
 }

@@ -13,24 +13,22 @@ describe("rulesets skills", () => {
     const { abilityMap } = await getSeedCtx();
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
 
-    const json = {
-      name: "Test Skill",
-      description: "A test skill",
-      primaryAbilityId: abilityMap["Intelligence"],
-      impactedByWeight: false,
-      checkPenaltyMultiplier: 1,
-      usableWithoutTraining: true,
-    };
-    const created = await expectOk(skills.$post({ param: { id }, json }));
-    expect(created).toMatchObject(json);
+    const columns = { name: "Test Skill", description: "A test skill", primaryAbilityId: abilityMap["Intelligence"] };
+    const fields = { impactedByWeight: false, checkPenaltyMultiplier: 1, usableWithoutTraining: true };
+    const created = await expectOk(skills.$post({ param: { id }, json: { ...columns, fields } }));
+    expect(created).toMatchObject({ ...columns, ...fields });
     const param = { id, skillId: created.id };
 
     expect(await expectOk(skill.$get({ param }))).toMatchObject({ id: created.id, name: "Test Skill" });
     const list = await expectOk(skills.$get({ param: { id }, query: { search: "Test Skill" } }));
     expect(list.items.map((s) => s.id)).toContain(created.id);
 
-    const update = { ...json, name: "Renamed Skill", primaryAbilityId: abilityMap["Wisdom"], impactedByWeight: true };
-    expect(await expectOk(skill.$put({ param, json: update }))).toMatchObject(update);
+    const update = { ...columns, name: "Renamed Skill", primaryAbilityId: abilityMap["Wisdom"] };
+    const updatedFields = { ...fields, impactedByWeight: true };
+    expect(await expectOk(skill.$put({ param, json: { ...update, fields: updatedFields } }))).toMatchObject({
+      ...update,
+      ...updatedFields,
+    });
 
     await expectOk(skill.$delete({ param }));
     await expectStatus(skill.$get({ param }), 404);
@@ -47,9 +45,7 @@ describe("rulesets skills", () => {
     const valid = {
       name: "Skill",
       primaryAbilityId: abilityMap["Wisdom"],
-      impactedByWeight: false,
-      checkPenaltyMultiplier: 1,
-      usableWithoutTraining: true,
+      fields: { impactedByWeight: false, checkPenaltyMultiplier: 1, usableWithoutTraining: true },
     };
     for (const json of [
       { ...valid, name: "" },
@@ -66,9 +62,7 @@ describe("rulesets skills", () => {
     const json = {
       name: "Missing",
       primaryAbilityId: abilityMap["Wisdom"],
-      impactedByWeight: false,
-      checkPenaltyMultiplier: 1,
-      usableWithoutTraining: true,
+      fields: { impactedByWeight: false, checkPenaltyMultiplier: 1, usableWithoutTraining: true },
     };
     await expectStatus(skill.$put({ param, json }), 404);
     await expectStatus(skill.$delete({ param }), 404);

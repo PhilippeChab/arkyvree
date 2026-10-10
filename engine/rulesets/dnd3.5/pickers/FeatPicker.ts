@@ -21,7 +21,7 @@ export default class FeatPicker extends LevelPicker<{ aptitudeModifiers: PoolMod
         .map((feat) => feat.id),
     };
     this.filters = { ...offered, ...(query.family && { family: { type: FEAT_FAMILY, value: query.family } }) };
-    this.groupFilters = { ...offered, familyType: FEAT_FAMILY };
+    this.groupFilters = { ...offered, families: this.feats.groupByFamily(offered.ids) };
   }
 
   /** The feats' rules: the pools a feat's modifiers add slots to. */
@@ -30,8 +30,8 @@ export default class FeatPicker extends LevelPicker<{ aptitudeModifiers: PoolMod
   /** What the picker offers, a family's feats when the query names one, and what it leaves out. */
   readonly filters: { excludeIds: string[]; family?: { type: string; value: string }; ids: string[] };
 
-  /** What the picker offers grouped by family: its feats, and the property their family is kept in. */
-  readonly groupFilters: { excludeIds: string[]; familyType: string; ids: string[] };
+  /** What the picker offers grouped by family: its feats, and the family each of them is grouped in. */
+  readonly groupFilters: { excludeIds: string[]; families: { family: string; id: string }[]; ids: string[] };
 
   /** A row of a feat's variants, which the picker opens into them: each variant says whether it's eligible. */
   private asFamilyRow<T extends object>(row: T) {

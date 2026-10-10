@@ -1,21 +1,31 @@
 /** A power as a ruleset's entity: what the ruleset lists it by, and what its save writes, checked. */
 
+import { z } from "zod";
+
 import { ListedEntity } from "@/engine/core/entities/index.ts";
 import type { EntityWrites } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import SpellFocusFeats from "@/engine/rulesets/dnd3.5/entities/feats/SpellFocusFeats.ts";
+import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import type { PowerWithAptitudes } from "@/shared/relations.ts";
 
 import { POWER_FIELDS, type PowerFieldValues } from "./fields.ts";
 
 /** A power's save, as its form sends it: its row's columns, its pools (each at its spell level), and its fields. */
-type PowerBody = Partial<PowerFieldValues> & {
+type PowerBody = {
   aptitudes?: { id: string; level?: number }[];
   description?: string | null;
+  fields?: Partial<PowerFieldValues>;
   name: string;
   saveEffect?: string | null;
   saveId?: string | null;
 };
+
+/** A spell's level: 0 to the rules' last. */
+const SPELL_LEVEL = z.number().int().min(0).max(RULESET_LIMITS.spellLevel);
+
+/** A power's pools, each at its spell level. */
+const POOL_LEVELS = z.array(z.object({ level: SPELL_LEVEL.optional() })).optional();
 
 /** A spell's grouping, which its feats go by: its school, none without one. */
 function getGrouping(fields: Partial<PowerFieldValues>) {
@@ -37,10 +47,11 @@ export default class PowerEntity extends ListedEntity<
   readonly type = "powers";
 
   /**
-   * Refuses a new power without a pool, and a power linked to a pool the view's feats use: a save names no spell's save
-   * but the one it gives.
+   * Refuses a new power without a pool, a pool's spell level past the rules' bounds, and a power linked to a pool the
+   * view's feats use: a save names no spell's save but the one it gives.
    */
   protected override checkSave(body: PowerBody, power?: PowerWithAptitudes) {
+    RulesError.parse(POOL_LEVELS, body.aptitudes, ["aptitudes"]);
     if (!power && !body.aptitudes?.length)
       throw new RulesError("invalid", "At least one aptitude must be selected for the power");
     const listIds = (body.aptitudes ?? []).map((aptitude) => aptitude.id);
@@ -51,6 +62,11 @@ export default class PowerEntity extends ListedEntity<
   /** A form's columns: a save names no spell's save but the one it gives. */
   protected columnsOf({ description, name, saveEffect, saveId }: PowerBody) {
     return { description, name, saveEffect: saveEffect ?? null, saveId: saveId ?? null };
+  }
+
+  /** What a form's fields are read by: those it gives, a new power's too, since a power that isn't a spell has none. */
+  protected override fieldsSchema() {
+    return this.fields.schema({ optional: true });
   }
 
   /** A power's pool links, as the view composes them. */
@@ -68,8 +84,12 @@ export default class PowerEntity extends ListedEntity<
    * of its grouping (a spell's school: its Spell Focus) when it comes to one. A form that gives none of its fields keeps
    * those it has.
    */
-  protected override writesOf(body: PowerBody, power?: PowerWithAptitudes): EntityWrites {
-    const fields = this.formFields(body, power);
+  protected override writesOf(
+    _body: PowerBody,
+    given: Partial<PowerFieldValues>,
+    power?: PowerWithAptitudes,
+  ): EntityWrites {
+    const fields = this.formFields(given, power);
     if (!fields) return {};
     const grouping = getGrouping(fields);
     const before = power && getGrouping(this.fields.read(this.propertiesOf(power)));
@@ -81,10 +101,12 @@ export default class PowerEntity extends ListedEntity<
 
   /**
    * A page of the ruleset's powers, as its form asks for it: what it's read with (`filters`: a list's powers, at a level
-   * when one is given), and its rows described, with their lists as the ruleset composes them.
+   * when one is given), and its rows described, with their lists as the ruleset composes them. Refused at a level past
+   * the rules' bounds.
    */
   override openList(where: { aptitudeId?: string; childOnly?: boolean; level?: number }) {
     const { aptitudeId, level } = where;
+    RulesError.parse(SPELL_LEVEL.optional(), level, ["level"]);
     const listed = aptitudeId !== undefined || level != null;
     return {
       describe: <T extends Record<string, unknown> & { id: string }>(rows: T[]) => this.describeListed(rows, where),

@@ -1,7 +1,6 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { RULESET_LIMITS } from "@/engine/index.ts";
 import { denyDemoUser, exportRateLimit, sessionMiddleware, validate } from "@/server/middlewares/index.ts";
 import { characterIdParam, idParam, limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
@@ -14,7 +13,7 @@ import modifiers from "./modifiers/index.ts";
 import sharing from "./sharing/index.ts";
 
 /** A character's ability score. */
-const abilityScore = z.number().int().min(1).max(RULESET_LIMITS.abilityScore);
+const abilityScore = z.number().int();
 
 const campaignIdParam = z.object({ campaignId: z.string().uuid() });
 

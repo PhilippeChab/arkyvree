@@ -88,8 +88,7 @@ describe("ClassesService", () => {
     await KlassSkills.create(db, { klassId: klass.id, skillId: skill.id });
     const level = await ClassLevelsService.createClassLevel(session, rulesetId, klass.id, {
       level: 1,
-      bab: 1,
-      skills: 4,
+      fields: { bab: 1, skills: 4 },
       feats: [{ featId: feat.id, aptitudeId: aptitude.id }],
       saves: [{ saveId: save.id, base: 2 }],
     });
@@ -124,8 +123,7 @@ describe("ClassesService", () => {
     const klass = await ClassesService.createClass(session, parent.id, { name: "Cleric" });
     const level = await ClassLevelsService.createClassLevel(session, parent.id, klass.id, {
       level: 1,
-      bab: 0,
-      skills: 2,
+      fields: { bab: 0, skills: 2 },
     });
     const [modifier] = await Modifiers.create(db, {
       sourceId: level.id,
@@ -168,8 +166,7 @@ describe("ClassesService", () => {
     const klass = await ClassesService.createClass(session, ruleset.id, { name: "Taken Class" });
     const level = await ClassLevelsService.createClassLevel(session, ruleset.id, klass.id, {
       level: 1,
-      bab: 1,
-      skills: 2,
+      fields: { bab: 1, skills: 2 },
     });
     const character = await createTestCharacter(user.id, { rulesetId: ruleset.id });
     await addCharacterLevel(character.id, level.id);

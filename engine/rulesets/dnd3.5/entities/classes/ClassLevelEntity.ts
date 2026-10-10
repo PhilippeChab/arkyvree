@@ -1,9 +1,12 @@
 /** A class's levels as a ruleset's entities: their details, their fields, and what their saves write. */
 
+import { z } from "zod";
+
 import { CustomizationPageEntity } from "@/engine/core/entities/index.ts";
 import type { EntityWrites } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
+import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import ClassesPaths from "@/engine/rulesets/dnd3.5/model/classes/ClassesPaths.ts";
 import type { Klass, KlassLevel } from "@/shared/relations.ts";
 
@@ -13,11 +16,18 @@ import { CLASS_LEVEL_FIELDS, type ClassLevelFieldValues } from "./fields.ts";
  * A class level's save, as its form sends it: its number (a new level's), its fields, the feats it grants and its
  * saves' base bonuses.
  */
-type ClassLevelBody = Partial<ClassLevelFieldValues> & {
+type ClassLevelBody = {
   feats?: { aptitudeId: string; featId: string; free?: boolean }[];
+  fields?: Partial<ClassLevelFieldValues>;
   level?: number;
   saves?: { base: number; saveId: string }[];
 };
+
+/** A new level's number: the class's first to its last. */
+const LEVEL = z.number().int().min(1).max(RULESET_LIMITS.classLevel);
+
+/** A level's saves' base bonuses, each within the rules' bounds. */
+const SAVES = z.array(z.object({ base: z.number().int().min(0).max(RULESET_LIMITS.saveBase) })).optional();
 
 /**
  * A class's levels (`klass`, as the view has it) as the ruleset describes them, and what a level's save writes beside
@@ -76,6 +86,12 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
     };
   }
 
+  /** Refuses a new level's number past the class's bounds, and a save's base bonus past the rules'. */
+  protected override checkSave({ level: number, saves }: ClassLevelBody, level?: KlassLevel) {
+    if (!level) RulesError.parse(LEVEL, number, ["level"]);
+    RulesError.parse(SAVES, saves, ["saves"]);
+  }
+
   /** A form's columns: none, a level's number is its own (a new one's, its form's: `planCreate`). */
   protected columnsOf() {
     return {};
@@ -86,7 +102,11 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
    * keeps, and, made with a level past the class's first, its requirement of the class's previous level
    * (`classes.<slug>.level` above it).
    */
-  protected override writesOf(body: ClassLevelBody, level?: KlassLevel): EntityWrites {
+  protected override writesOf(
+    body: ClassLevelBody,
+    given: Partial<ClassLevelFieldValues>,
+    level?: KlassLevel,
+  ): EntityWrites {
     const writes: EntityWrites = {};
     if (!level && body.level !== undefined && body.level > 1) {
       writes.requirement = {
@@ -97,7 +117,7 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
         operator: "greater_than",
       };
     }
-    const fields = this.formFields(body, level);
+    const fields = this.formFields(given, level);
     return fields ? { ...writes, properties: this.fields.write(fields) } : writes;
   }
 

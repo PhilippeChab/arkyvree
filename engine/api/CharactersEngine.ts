@@ -33,6 +33,11 @@ export default class CharactersEngine {
     return this.module.characters.openRacePicker(this.view, ...args);
   }
 
+  /** The ability scores a character's edit stores, refused when one isn't the ruleset's or is past its bounds. */
+  planAbilities(...args: Args<"planAbilities">) {
+    return this.module.characters.planAbilities(this.view, ...args);
+  }
+
   /** What a new character stores beside its row: its ability scores, refused when its race isn't a player's. */
   planCreate(...args: Args<"planCreate">) {
     return this.module.characters.planCreate(this.view, ...args);

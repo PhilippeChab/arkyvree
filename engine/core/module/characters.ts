@@ -1,6 +1,12 @@
 import type { ItemLocation } from "@/shared/enums.ts";
 import type { Item, Modifier, Property, Requirement } from "@/shared/relations.ts";
 
+/** A character's score in one of its ruleset's abilities, as it stores it. */
+export interface AbilityScore {
+  abilityId: string;
+  score: number;
+}
+
 /** A character's card, as a list of characters shows it: its race, its classes at their highest level, its total. */
 export interface CharacterCard {
   levels: { klass: string; level: number }[];
@@ -42,7 +48,7 @@ export type MemberReading = "blank" | "partial" | "show";
 
 /** What a new character stores beside its row: a score for each of the ruleset's abilities. */
 export interface NewCharacterPlan {
-  abilities: { abilityId: string; score: number }[];
+  abilities: AbilityScore[];
 }
 
 /** What a viewer reads of a character's private notes: all of it, a blank, or no field at all. */

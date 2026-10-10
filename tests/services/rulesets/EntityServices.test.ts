@@ -138,17 +138,13 @@ const SERVICES: Record<string, Service> = {
       SkillsService.createSkill(session, rulesetId, {
         name,
         primaryAbilityId: refs.abilityId,
-        impactedByWeight: false,
-        checkPenaltyMultiplier: 1,
-        usableWithoutTraining: true,
+        fields: { impactedByWeight: false, checkPenaltyMultiplier: 1, usableWithoutTraining: true },
       }),
     update: (session, rulesetId, id, name, refs, updatedAt) =>
       SkillsService.updateSkill(session, rulesetId, id, {
         name,
         primaryAbilityId: refs.abilityId,
-        impactedByWeight: false,
-        checkPenaltyMultiplier: 1,
-        usableWithoutTraining: true,
+        fields: { impactedByWeight: false, checkPenaltyMultiplier: 1, usableWithoutTraining: true },
         updatedAt,
       }),
     remove: SkillsService.deleteSkill.bind(SkillsService),

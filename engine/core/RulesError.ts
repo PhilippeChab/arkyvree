@@ -1,3 +1,5 @@
+import type { z } from "zod";
+
 /** What a ruleset's rules refuse a request as: the server answers each as it answers its own errors of that kind. */
 export type Refusal = "conflict" | "invalid" | "not-found" | "unprocessable";
 
@@ -21,6 +23,23 @@ export default class RulesError extends Error {
     this.name = "RulesError";
     this.refusal = refusal;
     this.issues = issues;
+  }
+
+  /**
+   * A request's value read by its ruleset's shape (`schema`: a body's fields, a bound), or refused as invalid as a
+   * request that fails its route's validation is: each issue's category its path under `path` (`fields.bab`, `level`).
+   */
+  static parse<T>(schema: z.ZodType<T>, value: unknown, path: string[] = []): T {
+    const result = schema.safeParse(value);
+    if (result.success) return result.data;
+    throw new RulesError(
+      "invalid",
+      "Request validation failed",
+      result.error.issues.map((issue) => ({
+        category: [...path, ...issue.path.map(String)].join(".") || "json",
+        message: issue.message,
+      })),
+    );
   }
 
   /** Refuses what a character fails, when it fails anything: its issues, their messages as the refusal's own. */

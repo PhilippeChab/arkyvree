@@ -89,12 +89,13 @@ describe("A field codec", () => {
     expect(CODEC.readIds([{ id: "r1", type: "TITLE", value: "A" }])).toMatchObject({ owner: null, title: "r1" });
   });
 
-  test("validates a body's fields with each field's shape, optional for an edit", () => {
-    const shape = CODEC.shape();
-    expect(shape.count.safeParse(0).success).toBe(false);
-    expect(shape.count.safeParse(2.5).success).toBe(false);
-    expect(shape.kind.safeParse("Psionic").success).toBe(false);
-    expect(shape.tags.safeParse(["x"]).success).toBe(true);
-    expect(CODEC.shape({ optional: true }).title.safeParse(undefined).success).toBe(true);
+  test("reads a form's fields with each field's shape, optional for an edit", () => {
+    const schema = CODEC.schema({ optional: true });
+    expect(schema.safeParse({ count: 0 }).success).toBe(false);
+    expect(schema.safeParse({ count: 2.5 }).success).toBe(false);
+    expect(schema.safeParse({ kind: "Psionic" }).success).toBe(false);
+    expect(schema.safeParse({ tags: ["x"] }).success).toBe(true);
+    expect(schema.safeParse({}).success).toBe(true);
+    expect(CODEC.schema().safeParse({}).success).toBe(false);
   });
 });

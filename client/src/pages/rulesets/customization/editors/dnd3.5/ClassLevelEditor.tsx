@@ -37,8 +37,7 @@ function sortedFeats(level: ClassLevel) {
 function toClassLevelForm(level: ClassLevel): ClassLevelFormData {
   return {
     level: level.level,
-    bab: level.bab,
-    skills: level.skills,
+    fields: { bab: level.bab, skills: level.skills },
     saves: level.saves.map(({ saveId, base }) => ({ saveId, base })),
     feats: sortedFeats(level).map(asLevelFeat),
   };

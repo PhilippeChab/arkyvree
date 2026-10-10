@@ -81,6 +81,19 @@ export default class FeatEntity extends ListedEntity<
   }
 
   /**
+   * The families these feats (`featIds`) are grouped in, as a picker's list of variants shows them: each of a feat's
+   * families its name starts with (`Weapon Focus: Longsword`'s Weapon Focus). A feat named for none stands alone.
+   */
+  groupByFamily(featIds: string[]) {
+    return featIds.flatMap((featId) => {
+      const feat = this.rulesetData.featsById.get(featId);
+      if (!feat) return [];
+      const { families } = this.fields.read(this.propertiesOf(feat));
+      return families.filter((family) => feat.name.startsWith(family)).map((family) => ({ family, id: featId }));
+    });
+  }
+
+  /**
    * A page of the ruleset's feats, as its form asks for it: what it's read with (`filters`: a pool's feats, a family's;
    * `groupFilters`: grouped by family), and its rows described, with their pools as the ruleset composes them.
    */

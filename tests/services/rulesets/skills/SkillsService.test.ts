@@ -15,7 +15,22 @@ import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 
 type SkillBody = Parameters<typeof SkillsService.createSkill>[2];
 
-/** A new user's empty ruleset with three abilities, and a skill body using its Strength. */
+/** A skill as it reads: its columns, and its fields beside them. */
+type SkillValues = Omit<SkillBody, "fields"> & Required<NonNullable<SkillBody["fields"]>>;
+
+/** A skill's body (`values`, as it reads): its columns, and its fields under `fields`. */
+function bodyOf({
+  checkPenaltyMultiplier,
+  impactedByWeight,
+  usableWithoutTraining,
+  ...columns
+}: SkillValues): SkillBody {
+  return { ...columns, fields: { checkPenaltyMultiplier, impactedByWeight, usableWithoutTraining } };
+}
+
+/**
+ * A new user's empty ruleset with three abilities, and a skill using its Strength: as it reads (`values`), and its body.
+ */
 async function setup() {
   const { user, session, ruleset } = await createTestUserAndRuleset();
   const abilities = await insertRows(
@@ -23,7 +38,7 @@ async function setup() {
     ["Strength", "Dexterity", "Intelligence"].map((name) => ({ name, description: name, rulesetId: ruleset.id })),
   );
   const abilityMap = Object.fromEntries(abilities.map((a) => [a.name, a.id]));
-  const body = (overrides: Partial<SkillBody> = {}): SkillBody => ({
+  const values = (overrides: Partial<SkillValues> = {}): SkillValues => ({
     name: "Climb",
     description: "Climbing skill",
     primaryAbilityId: abilityMap.Strength,
@@ -32,21 +47,22 @@ async function setup() {
     usableWithoutTraining: true,
     ...overrides,
   });
-  return { user, session, ruleset, abilityMap, body };
+  const body = (overrides: Partial<SkillValues> = {}) => bodyOf(values(overrides));
+  return { user, session, ruleset, abilityMap, body, values };
 }
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
 describe("SkillsService", () => {
   test("stores a skill's ability, weight and training flags, and lists them", async () => {
-    const { session, ruleset, abilityMap, body } = await setup();
-    const spellcraft = body({
+    const { session, ruleset, abilityMap, body, values } = await setup();
+    const spellcraft = values({
       name: "Spellcraft",
       primaryAbilityId: abilityMap.Intelligence,
       impactedByWeight: false,
       usableWithoutTraining: false,
     });
-    expect(await SkillsService.createSkill(session, ruleset.id, body())).toMatchObject(body());
-    expect(await SkillsService.createSkill(session, ruleset.id, spellcraft)).toMatchObject(spellcraft);
+    expect(await SkillsService.createSkill(session, ruleset.id, body())).toMatchObject(values());
+    expect(await SkillsService.createSkill(session, ruleset.id, bodyOf(spellcraft))).toMatchObject(spellcraft);
 
     const { items } = await SkillsService.getSkills(ruleset.id, {}, { limit: 10, page: 1 });
     expect(items).toMatchObject([
@@ -74,19 +90,19 @@ describe("SkillsService", () => {
   });
 
   test("updates every field, and the cached list shows the change", async () => {
-    const { session, ruleset, abilityMap, body } = await setup();
+    const { session, ruleset, abilityMap, body, values } = await setup();
     const created = await SkillsService.createSkill(session, ruleset.id, body({ impactedByWeight: false }));
     // Read the list once so the ruleset's cache holds the old values.
     await SkillsService.getSkills(ruleset.id, {}, { limit: 10, page: 1 });
 
-    const update = body({
+    const update = values({
       name: "Jump",
       description: "Updated",
       primaryAbilityId: abilityMap.Dexterity,
       impactedByWeight: true,
       usableWithoutTraining: false,
     });
-    expect(await SkillsService.updateSkill(session, ruleset.id, created.id, update)).toMatchObject(update);
+    expect(await SkillsService.updateSkill(session, ruleset.id, created.id, bodyOf(update))).toMatchObject(update);
     const after = await SkillsService.getSkills(ruleset.id, {}, { limit: 10, page: 1 });
     expect(after.items).toMatchObject([
       { id: created.id, name: "Jump", impactedByWeight: true, usableWithoutTraining: false },

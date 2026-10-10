@@ -57,7 +57,7 @@ export function CreateLevelDialog({ open, onClose, form, onSubmit, pending, rule
       />
       <FormTextField
         control={form.control}
-        name="bab"
+        name="fields.bab"
         rules={wholeNumberRules(0, "Base Attack Bonus is required")}
         number
         label="Base Attack Bonus"
@@ -68,7 +68,7 @@ export function CreateLevelDialog({ open, onClose, form, onSubmit, pending, rule
       />
       <FormTextField
         control={form.control}
-        name="skills"
+        name="fields.skills"
         rules={wholeNumberRules(1, "Skill points are required")}
         number
         label="Skill Points"

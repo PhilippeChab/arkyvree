@@ -502,7 +502,8 @@ The rulesets that run on it:
 ```
 engine/rulesets/
 └── dnd3.5/                                ← 3.5-specific implementation
-    ├── index.ts                           (what the entry takes of it: Dnd35Module, ENTITY_FIELDS, RULESET_LIMITS)
+    ├── index.ts                           (what the entry takes of it: Dnd35Module, RULESET_LIMITS)
+    ├── limits.ts                          (RULESET_LIMITS: the bounds its operations check on its columns)
     ├── Dnd35Module.ts                     (Dnd35Module.create(): the 3.5 module, by the contract, each part a class
     │                                      extending its abstract part)
     ├── descriptions.ts                    (Dnd35Descriptions: what the 3.5 rules describe in their own shape)
@@ -530,8 +531,6 @@ engine/rulesets/
     │                                      BondedRaceData: their stat blocks; BondedScaling)
     ├── entities/                          ← the module's `entities`: an entity kind's rules, a folder per kind
     │   ├── Dnd35Entities.ts               (each kind's class, by its table: `of`)
-    │   ├── entityFields.ts                (ENTITY_FIELDS, RULESET_LIMITS: a body's fields the rules take, and their
-    │   │                                  bounds)
     │   ├── aptitudes/ classes/ feats/ items/ powers/ races/ skills/
     │   │                                  (XEntity: an entity described, what saving or deleting one writes; fields.ts:
     │   │                                  its fields off its properties; classes/ ClassLevelEntity, ClassSkillEntity,
@@ -698,7 +697,7 @@ A part's operation is a method of a handle of `engine/api/`, which `Engine` hand
 
 Its verb says which: `describe…`, `get…` and `list…` answer what something is, `open…` a picker or a list, `plan…` a plan, `check…` refuses or answers what it checked, `validate…` a path's validation, `build…` the view, its copy-on-write data and its source chain (`buildView`, `buildData`, `buildSourceChain`), `merge…` the rows a copy takes of its siblings, and `to…` a conversion (`toEntityProperties`). A method named for a noun hands out a handle (`character(input)`, `class(klassId)`, `entities("skills")`, `levelUp()`), and isn't an operation (`arkyvree/one-engine-op`).
 
-An entity's fields are declared once, in its kind's folder, as a spec a codec reads and writes (`engine/core/fields/`: `Field`'s kinds, `FieldCodec`): `entities/skills/fields.ts` declares `SKILL_FIELDS`, from which come the fields' values (`SkillFieldValues`), their defaults, the property types that store them, their reading off an entity's properties (`read`, in one pass) and their writing back as id-less `PropertyValue`s (`toProperties`, `write`), an edit's merge, the rule between them (`normalize`, which reading and writing apply), and the shapes a route validates a body's fields with, a create's and an edit's (`ENTITY_FIELDS`, built from the specs). Its entity class describes it and plans its saves with them (`skills/SkillEntity.ts`: its `fields`, and what a save writes beside its row), the character's loader reads with them, and the seeders write with them (`Engine.forRules(baseRules).toEntityProperties`):
+An entity's fields are declared once, in its kind's folder, as a spec a codec reads and writes (`engine/core/fields/`: `Field`'s kinds, `FieldCodec`): `entities/skills/fields.ts` declares `SKILL_FIELDS`, from which come the fields' values (`SkillFieldValues`), their defaults, the property types that store them, their reading off an entity's properties (`read`, in one pass) and their writing back as id-less `PropertyValue`s (`toProperties`, `write`), an edit's merge, the rule between them (`normalize`, which reading and writing apply), and the schema a save reads a form's fields with, a create's (every field) and an edit's (those it changes: `schema({ optional: true })`). Its entity class describes it and plans its saves with them (`skills/SkillEntity.ts`: its `fields`, and what a save writes beside its row), the character's loader reads with them, and the seeders write with them (`Engine.forRules(baseRules).toEntityProperties`):
 
 ```ts
 // engine/rulesets/dnd3.5/entities/skills/fields.ts
@@ -717,8 +716,8 @@ export const SKILL_FIELDS = new FieldCodec(
 export default class SkillEntity extends RulesetEntity<"skills", SkillBody, SkillColumns, typeof SKILL_FIELDS.fields> {
   protected readonly fields = SKILL_FIELDS;
 
-  protected override writesOf(body: SkillBody, skill?: Skill): EntityWrites {
-    const fields = this.formFields(body, skill);
+  protected override writesOf(body: SkillBody, given: Partial<SkillFieldValues>, skill?: Skill): EntityWrites {
+    const fields = this.formFields(given, skill);
     const renamed = skill?.name !== body.name;
     return {
       made: renamed ? SkillFocusFeats.make(this.view, body.name) : [],
@@ -732,7 +731,7 @@ export default class SkillEntity extends RulesetEntity<"skills", SkillBody, Skil
 
 A small rule several of a ruleset's modules share, a constant or a predicate, is the ruleset's own (`rules/LevelRules.ts`: `isAbilityIncreaseLevel`, `countGeneralFeats`, `GENERAL_FEATS_APTITUDE`; `rules/SkillRules.ts`: a level's skill points, a rank's cost, a skill's most ranks), which they import: it's no part of the contract.
 
-A bound the client and the API check too is a constant of the ruleset's shared vocabulary, which every side reads instead of writing the number: `MAX_SPELL_LEVEL` (`shared/dnd3.5/spells.ts`) for the aptitudes' spell levels, the spellcasting and the spell forms, `MAX_CLASS_LEVEL` (`shared/dnd3.5/classes.ts`) for the class-level forms and the bonus caster levels, `MAX_ABILITY_SCORE` (`shared/dnd3.5/abilities.ts`) for a new character's ability scores and the sheet's, and `MAX_ITEM_VARIANTS` (`shared/itemTemplates.ts`) for the variants form. The routes read them through the engine (`RULESET_LIMITS`), and a character's last level with them (`MAX_CHARACTER_LEVEL`, `shared/dnd3.5/classes.ts`: the most levels a level-up saves).
+A bound the client and the API check too is a constant of the ruleset's shared vocabulary, which every side reads instead of writing the number: `MAX_SPELL_LEVEL` (`shared/dnd3.5/spells.ts`) for the aptitudes' spell levels, the spellcasting and the spell forms, `MAX_CLASS_LEVEL` (`shared/dnd3.5/classes.ts`) for the class-level forms and the bonus caster levels, `MAX_ABILITY_SCORE` (`shared/dnd3.5/abilities.ts`) for a new character's ability scores and the sheet's, and `MAX_ITEM_VARIANTS` (`shared/itemTemplates.ts`) for the variants form. The module's operations check them (`RULESET_LIMITS`, `limits.ts`: a new class level's number and its saves' bases, a spell's levels, a character's ability scores, the variants an item's form makes), and so do the level routes, which `engine/index.ts` exports them to until the level-up takes its own: a class level and a character's last level (`MAX_CHARACTER_LEVEL`, `shared/dnd3.5/classes.ts`: the most levels a level-up saves).
 
 More complex operations (bound to the detailed character, returning rich data) belong on the ruleset's level-up classes (on core's `LevelUpBase`, which checks a level's selections, `SelectionChecks`; and the pickers on core's `Picker` and `CharacterPicker`, building the character from the rows a level-up adds, `CharacterProjection`) or on its character (a concern of `DetailedCharacter`), which an operation builds from the input it's given (`CharacterBuilder.build`).
 
@@ -746,7 +745,7 @@ Entity CRUD services (`FeatsService`, `PowersService`, `SkillsService`, `ClassLe
 
 The level routes (`server/routers/api/characters/levels/index.ts`) take the generic schema's level-up: class levels, skill ranks, and feats and powers by their pool; the module reads what its own pickers take (a spell level, a specialist's excluded schools).
 
-A body's fields that a ruleset's rules take, and the bounds they set on its columns, are the engine's (`ENTITY_FIELDS`, `RULESET_LIMITS`, the 3.5 module's, which `engine/index.ts` exports: a second module's need the routes to take the module's own, planned), which a route spreads into its schema, its create's or its edit's (`...ENTITY_FIELDS.skills.create`, `...ENTITY_FIELDS.skills.edit`), and their bounds (`.max(RULESET_LIMITS.spellLevel)`). An edit gives the fields it changes: the entity's base merges them over those it keeps (`formFields`), for a skill, a spell and a class level alike. A character's alignment and gender are the database's enums, whose options `shared/enums.ts` writes out (`ALIGNMENT_OPTIONS`, `GENDER_OPTIONS`). The server imports nothing of `shared/dnd3.5/`.
+A body's fields that a ruleset's rules take, and the bounds they set on its columns, are the engine's. A route carries an entity's fields as one object, `fields` (`buildEntityFieldsSchema`, `server/routers/api/schemaBuilders.ts`: any object, typed as the engine's plan takes it, so the client's forms keep their types), and a column a rule bounds as its type alone (a class's `hitDie`, a class level's number, a pool's spell level, an ability's score). The operation reads the fields by the kind's codec (`RulesetEntity.readFields`: every field for a create, those it changes for an edit, a spell's always optional) and checks the bounds by the module's limits (`checkSave`, `planVariants`, `planAbilities`), refusing with a `RulesError` "invalid" (`RulesError.parse`), which answers 400 with an issue per field as a route's validation does (`fields.bab`, `saves.0.base`, `aptitudes.0.level`). A kind whose page edits its properties (a class, a race, a feat, an item) takes no `fields`. An edit gives the fields it changes: the entity's base merges them over those it keeps (`formFields`), for a skill, a spell and a class level alike. A character's ability edit is the module's too (`characters().planAbilities`: each ability the ruleset's, each score in its bounds), which the service writes. A character's alignment and gender are the database's enums, whose options `shared/enums.ts` writes out (`ALIGNMENT_OPTIONS`, `GENDER_OPTIONS`). The server imports nothing of `shared/dnd3.5/`.
 
 ### What's intentionally generic schema, not ruleset-specific
 
@@ -776,7 +775,7 @@ The engine is the machinery every ruleset runs on: the evaluators, the path walk
 
 If the services need a per-ruleset value or answer:
 - Add an operation: an abstract method of its part (`engine/core/module/parts/`), which every ruleset's part then implements (`Dnd35Entities`, `Dnd35LevelUp`, …), and the method of the handle it's about that dispatches to it (`LevelUpEngine`, `ClassEngine`, …: `engine/api/`; an entity kind's is a method of its entity class, on `RulesetEntity`, which `entities(type)` hands out), or a handle of its own, which `RulesetEngine` hands out under a noun (`class(klassId)`). `engine/index.ts` exports a handle's type when the server derives a body's or a plan's from it (`Parameters<EntityKinds["skills"]["planCreate"]>[0]`).
-- A value the client and the API need too lives in the ruleset's `shared/<ruleset>/` (`MAX_SPELL_LEVEL`), never in a file another ruleset would read; the server takes it through the engine (`RULESET_LIMITS`).
+- A value the client and the API need too lives in the ruleset's `shared/<ruleset>/` (`MAX_SPELL_LEVEL`), never in a file another ruleset would read; the module's operations check it (`RULESET_LIMITS`), and the server reads none of it.
 
 If you need a per-ruleset behavior too complex for one class (takes the detailed character, returns rich data, reads several components), make it a method of the ruleset's level-up base (`LevelUpState`, on core's `LevelUpBase`) or a concern of its character, which its operations call. A part is typed by the contract (its abstract class), so nothing casts.
 
@@ -785,7 +784,7 @@ If you need a per-ruleset behavior too complex for one class (takes the detailed
 An audit on 2026-04-16 identified real leaks and some false alarms. It predates the engine's restructure, which moved every component under `dnd3.5/`: the components it calls generic are 3.5's, and generic in that a second ruleset could take them as they are.
 
 **Fixed:**
-- `MAX_SPELL_LEVEL = 9` was hardcoded in the aptitudes component (`dnd3.5/model/aptitudes/AptitudesComponent.ts`) — now one constant in `shared/dnd3.5/spells.ts`, which the spellcasting, the client and the routes (through `RULESET_LIMITS`) read too.
+- `MAX_SPELL_LEVEL = 9` was hardcoded in the aptitudes component (`dnd3.5/model/aptitudes/AptitudesComponent.ts`) — now one constant in `shared/dnd3.5/spells.ts`, which the spellcasting, the client and the module's operations (through `RULESET_LIMITS`) read too.
 - `buildCharacterResponse.ts` lived in `routers/api/` with a cast to the 3.5 character — moved to the 3.5 module, now `CharacterResponse` (`engine/rulesets/dnd3.5/characters/description/CharacterResponse.ts`).
 - `server/routers/api/characters/levels/` had 3.5-shaped query params (`powerLevel`): moved under `dnd3.5/`, then back once the level flows asked the module (`levelUp`), which reads them.
 
@@ -811,7 +810,7 @@ An audit on 2026-04-16 identified real leaks and some false alarms. It predates 
 | `server/services/rulesets/listLinks.ts` | `createListLinks`, `setListLinks`: an entity's list links (a feat's pools, a power's lists), as a plan gives them (`ListLink`) |
 | `server/services/characters/characterInputs.ts` | `readCharacterInput`, `readBondedInputs`: a character's rows, read in its ruleset's scope, which the engine builds it from |
 | `server/repositories/*Repository.ts` | COW-aware SQL queries with snapshot exclusion |
-| `engine/index.ts` | The engine's one entry: `Engine`, its handles' types (`ClassEngine`, `LevelUpEngine`), each entity kind's rules by table (`EntityKinds`), its operations' types, `RulesError`, and a body's ruleset fields and bounds (`ENTITY_FIELDS`, `RULESET_LIMITS`) |
+| `engine/index.ts` | The engine's one entry: `Engine`, its handles' types (`ClassEngine`, `LevelUpEngine`), each entity kind's rules by table (`EntityKinds`), its operations' types, `RulesError`, and the bounds the level routes still check (`RULESET_LIMITS`) |
 | `engine/api/` | `Engine` and the handles it hands out, a class each (`RulesetEngine`, which `Engine.for(scope)` binds to a view, and its handles by what the rules are about: `CharacterEngine`, `LevelUpEngine`, `ClassEngine`…, and an entity kind's own class, which `entities(type)` hands out; `ContentEngine`, `Engine.forRules`; `CopyOnWriteEngine`, `Engine.copyOnWrite`), each operation a method dispatched to the ruleset's module by its base rules (`Modules.ts`: `Modules.of`), or to the core's classes with the module's factories (`ModifiersEngine`, `PropertiesEngine`, `RequirementsEngine`, `PropertyTypesEngine`, `TargetPathsEngine`) |
 | `engine/core/module/` | The module's contract (`contract.ts`: `RulesetModule`), the rows a character is built from (`CharacterInputs.ts`: `CharacterInput`, `CharacterRows`, resolved as the view reads them) and those a level-up adds before it's saved (`CharacterProjection.ts`), and what saving an entity writes (`writes.ts`: `EntityWrites`) |
 | `engine/rulesets/dnd3.5/model/` | The 3.5 character: its state (`CharacterState`, on core's `CharacterBase`), its concerns (`Builds`, the build's 3.5 steps; `Diagnoses`; `PossessesVirtually`; core's `Validates`), its components (`CharacterComponents`), `DetailedCharacter`, which wires them, `Dnd35CharacterBuilder`, which builds one from its input, and a folder per concept a character has (its component and its paths' category) |

@@ -1,7 +1,10 @@
 /** An item as a ruleset's entity: what the ruleset describes of it, and what its saves store, checked. */
 
+import { z } from "zod";
+
 import { CustomizationPageEntity } from "@/engine/core/entities/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
+import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 import type { Item } from "@/shared/relations.ts";
 
@@ -29,6 +32,9 @@ type ItemColumns = Omit<ItemBody, "costGp" | "isTemplate" | "sourceItemId" | "we
 
 /** A variant of an item, as its form sends it. */
 type VariantBody = { description?: string | null; name: string };
+
+/** The variants an item's form makes at once: as many as the rules allow. */
+const VARIANTS = z.array(z.unknown()).max(RULESET_LIMITS.itemVariants);
 
 /**
  * An item as the ruleset has it: described with its template's properties and requirements, its own over them, and
@@ -154,9 +160,10 @@ export default class ItemEntity extends CustomizationPageEntity<
   /**
    * An item's variants (`variants`, of `sourceItemId`): each a copy of its source's type, slot, weight and cost,
    * pointing at its template, and taking its customizations unless it's a template (`copyCustomizationsFrom`). Refused
-   * with two of a name.
+   * with more than the rules make at once, or two of a name.
    */
   planVariants(sourceItemId: string, variants: VariantBody[]) {
+    RulesError.parse(VARIANTS, variants, ["variants"]);
     const names = variants.map((variant) => variant.name);
     if (new Set(names).size !== names.length)
       throw new RulesError("conflict", "Duplicate names within the variants list");

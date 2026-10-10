@@ -22,7 +22,7 @@ interface SkillFormFieldsProps {
 export type SkillFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["skills"]["$post"]>["json"];
 
 export function SkillFormFields({ form, abilities, abilitiesError }: SkillFormFieldsProps) {
-  const impactedByWeight = !!form.watch("impactedByWeight");
+  const impactedByWeight = !!form.watch("fields.impactedByWeight");
 
   return (
     <>
@@ -38,24 +38,24 @@ export function SkillFormFields({ form, abilities, abilitiesError }: SkillFormFi
       />
       <SwitchField
         control={form.control}
-        name="impactedByWeight"
+        name="fields.impactedByWeight"
         label="Impacted by Weight"
         // The multiplier field hides with the weight, and a hidden field isn't validated: drop its value.
         onChange={(checked) => {
-          if (!checked) form.setValue("checkPenaltyMultiplier", 1, { shouldDirty: true });
+          if (!checked) form.setValue("fields.checkPenaltyMultiplier", 1, { shouldDirty: true });
         }}
       />
       {impactedByWeight && (
         <FormTextField
           control={form.control}
-          name="checkPenaltyMultiplier"
+          name="fields.checkPenaltyMultiplier"
           rules={wholeNumberRules(1, "Multiplier is required")}
           number
           label="Armor Check Penalty Multiplier"
           fullWidth
         />
       )}
-      <SwitchField control={form.control} name="usableWithoutTraining" label="Usable Without Training" />
+      <SwitchField control={form.control} name="fields.usableWithoutTraining" label="Usable Without Training" />
     </>
   );
 }

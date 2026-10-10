@@ -14,8 +14,7 @@ describe("a class level's form", () => {
     ];
     expect(nextClassLevel(levels)).toEqual({
       level: 3,
-      bab: 2,
-      skills: 4,
+      fields: { bab: 2, skills: 4 },
       saves: [{ ...FORTITUDE, base: 3 }],
       feats: [],
     });

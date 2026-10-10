@@ -107,42 +107,35 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
   }
 
   /**
-   * A picker's page of these feats (a list's, as the ruleset composes it), a family's variants as one row: a feat's
-   * family is the value of its property of `familyType`.
+   * A picker's page of these feats (a list's, as the ruleset composes it), a family's variants as one row: the families
+   * a feat is grouped in are its ruleset's (`families`), and a feat in none is a row of its own.
    */
   async findOptionGroupPage(
     db: Db,
-    where: { excludeIds?: string[]; familyType: string; ids: string[]; search?: string },
+    where: { excludeIds?: string[]; families: { family: string; id: string }[]; ids: string[]; search?: string },
     pagination: { limit: number; page: number },
   ) {
-    const { ids, excludeIds, familyType, search } = where;
+    const { ids, excludeIds, families, search } = where;
     const searchCondition = this.search(search, [featsInRules.name]);
     const { limit, offset } = this.paginate(pagination);
 
-    const prop = propertiesInCustomization;
+    // Each feat's family, as one parameter: a row per feat and family
+    const family = sql`jsonb_to_recordset(${JSON.stringify(families)}::jsonb) AS family(id uuid, family text)`;
+    const familyName = sql<string | null>`family.family`;
 
     const rows = await db
       .select({
         displayName:
-          sql<string>`CASE WHEN count(*) = 1 THEN min(${featsInRules.name}) ELSE coalesce(min(${prop.value}), min(${featsInRules.name})) END`.as(
+          sql<string>`CASE WHEN count(*) = 1 THEN min(${featsInRules.name}) ELSE coalesce(min(${familyName}), min(${featsInRules.name})) END`.as(
             "display_name",
           ),
-        family: sql<string | null>`min(${prop.value})`.as("family"),
+        family: sql<string | null>`min(${familyName})`.as("family"),
         variantCount: count().as("variant_count"),
         representativeId: sql<string>`min(${featsInRules.id}::text)`.as("representative_id"),
         description: sql<string>`min(${featsInRules.description})`.as("description"),
       })
       .from(featsInRules)
-      .leftJoin(
-        prop,
-        and(
-          eq(prop.entityId, featsInRules.id),
-          eq(prop.entityType, "feats"),
-          eq(prop.type, familyType),
-          isNull(prop.deletedAt),
-          sql`${featsInRules.name} LIKE ${prop.value} || '%'`,
-        ),
-      )
+      .leftJoin(family, sql`family.id = ${featsInRules.id}`)
       .where(
         this.where([
           inArray(featsInRules.id, ids),
@@ -152,11 +145,11 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
           this.excludeIds(excludeIds),
         ]),
       )
-      .groupBy(sql`coalesce(${prop.value}, ${featsInRules.id}::text)`)
+      .groupBy(sql`coalesce(${familyName}, ${featsInRules.id}::text)`)
       // A group is a family or a feat alone: its smallest id is its own
       .orderBy(
         ...this.pageOrder(
-          sql`coalesce(min(${prop.value}), min(${featsInRules.name}))`,
+          sql`coalesce(min(${familyName}), min(${featsInRules.name}))`,
           sql`min(${featsInRules.id}::text)`,
         ),
       )

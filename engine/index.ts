@@ -24,4 +24,4 @@ export type {
 } from "./core/module/index.ts";
 export { default as RulesError } from "./core/RulesError.ts";
 export type { EntityCustomizations, RulesetData, RulesetRawData } from "./core/view/index.ts";
-export { ENTITY_FIELDS, RULESET_LIMITS } from "./rulesets/dnd3.5/index.ts";
+export { RULESET_LIMITS } from "./rulesets/dnd3.5/index.ts";

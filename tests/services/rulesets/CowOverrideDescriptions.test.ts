@@ -36,9 +36,7 @@ describe("A fork's own description of an inherited", () => {
         name,
         description,
         primaryAbilityId: skill.primaryAbilityId,
-        checkPenaltyMultiplier: 1,
-        impactedByWeight: true,
-        usableWithoutTraining: true,
+        fields: { checkPenaltyMultiplier: 1, impactedByWeight: true, usableWithoutTraining: true },
       });
     }
 
