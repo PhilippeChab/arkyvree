@@ -201,6 +201,7 @@ Shared test code lives in `tests/support/` (and `tests/e2e/support/`), one modul
 - See [docs/packages.md](./docs/packages.md) for adding content packages: structure, versioning, seed helpers, and rules
 - See [docs/caching.md](./docs/caching.md) for the caching system: ruleset raw-tier cache, request-scoped query dedup, compose step, invalidation
 - See [docs/deployment.md](./docs/deployment.md) for the Fly.io deployment: two-app topology, worker wake-up via Flycast, CI/CD, env vars, domain setup, and debugging
+- Each ruleset writes down its rulings in `docs/<ruleset>/rules-decisions.md`: how it reads its rules where the source is ambiguous or where it deliberately differs, each naming the code that holds it; settled, changed only on purpose. 3.5's: [docs/dnd3.5/rules-decisions.md](./docs/dnd3.5/rules-decisions.md) (retroactive skill points, no epic levels, rolled 1st-level hit points, overfull pools refused…)
 - See [docs/persistence.md](./docs/persistence.md) for the soft-archive vs hard-delete policy and decision rule
 - See [docs/auth-routing.md](./docs/auth-routing.md) for the auth/routing architecture: three-bucket layout-route tree, cookie security, demo lifecycle (entry-to-auth vs in-app TTL expiry), stale-cookie defense, cross-tab behavior
 - See [docs/access.md](./docs/access.md) for the policy matrix (rulesets / characters / campaigns / customizations), actor definitions (owner / contributor / campaign member), and the ruleset listing-scope reference
