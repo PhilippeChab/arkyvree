@@ -85,7 +85,7 @@ export const CAMPAIGN_LIST_DEFAULTS = {
 
 /** How the characters list opens: its page reads them as its URL's defaults, and the sidebar warms its first page. */
 export const CHARACTER_LIST_DEFAULTS = {
-  orderBy: "updatedAt",
+  orderBy: "lastChangedAt",
   orderDir: "desc",
   search: "",
   view: "active",

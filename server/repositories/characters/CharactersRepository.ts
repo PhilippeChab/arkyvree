@@ -159,14 +159,17 @@ class CharactersRepository extends include(
     });
   }
 
-  /** The user's characters, owned or contributed to: the last updated first, unless the list says another order. */
+  /**
+   * The user's characters, owned or contributed to: the last changed first (`lastChangedAt`, which every change to a
+   * character or its rows moves), unless the list says another order.
+   */
   async findPage(
     db: Db,
     where: {
       // "owner" → only characters this user owns; "contributor" → only
       // characters they contribute to. Default (undefined) returns both.
       accessRole?: "owner" | "contributor";
-      orderBy?: "name" | "createdAt" | "updatedAt";
+      orderBy?: "name" | "createdAt" | "lastChangedAt";
       orderDir?: "asc" | "desc";
       search?: string;
       userId: string;
@@ -177,7 +180,7 @@ class CharactersRepository extends include(
     const {
       visibility = Visibility.UnarchivedOnly,
       search,
-      orderBy = "updatedAt",
+      orderBy = "lastChangedAt",
       orderDir = "desc",
       accessRole,
     } = where;
@@ -228,6 +231,7 @@ class CharactersRepository extends include(
           createdAt: this.table.createdAt,
           updatedAt: this.table.updatedAt,
           deletedAt: this.table.deletedAt,
+          lastChangedAt: this.table.lastChangedAt,
           accessRole: sql<
             "owner" | "contributor"
           >`CASE WHEN ${this.table.userId} = ${where.userId} THEN 'owner' ELSE 'contributor' END`,
@@ -271,6 +275,7 @@ class CharactersRepository extends include(
           createdAt: charactersInCharacter.createdAt,
           updatedAt: charactersInCharacter.updatedAt,
           deletedAt: charactersInCharacter.deletedAt,
+          lastChangedAt: charactersInCharacter.lastChangedAt,
         })
         .from(charactersInCharacter)
         .leftJoin(

@@ -162,7 +162,7 @@ class CharactersService extends include(Object, Archives) {
     session: Session,
     where: {
       accessRole?: "owner" | "contributor";
-      orderBy?: "name" | "createdAt" | "updatedAt";
+      orderBy?: "name" | "createdAt" | "lastChangedAt";
       orderDir?: "asc" | "desc";
       search?: string;
       visibility?: keyof typeof visibilityMap;

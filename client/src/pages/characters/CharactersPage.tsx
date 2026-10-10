@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { CharacterBuildChips } from "@/client/src/components/characters/index.ts";
 import {
   BlankState,
+  CHANGED_SORTS,
   CREATED_SORTS,
   type FilterOption,
   ListCard,
@@ -17,7 +18,6 @@ import {
   SearchBar,
   type SortOption,
   StatusChip,
-  UPDATED_SORTS,
 } from "@/client/src/components/common/index.ts";
 import { ArchiveIcon, CharacterIcon, ContributorsIcon } from "@/client/src/components/icons/index.ts";
 import {
@@ -46,7 +46,7 @@ const CHARACTER_FILTER_OPTIONS: FilterOption<CharacterView>[] = [
   { value: "archived", label: "Archived" },
 ];
 
-const CHARACTER_SORT_OPTIONS: SortOption<SortField>[] = [...NAME_SORTS, ...CREATED_SORTS, ...UPDATED_SORTS];
+const CHARACTER_SORT_OPTIONS: SortOption<SortField>[] = [...NAME_SORTS, ...CREATED_SORTS, ...CHANGED_SORTS];
 
 export default function CharactersPage() {
   usePageTitle("Characters");
@@ -55,7 +55,7 @@ export default function CharactersPage() {
   // Mounted as it opens: the create dialog keeps its form, its pickers and its roll method
   const createDialog = useDialogState();
   const { searchParams, updateSearchParams, search, orderBy, orderDir, searchBarProps } = useListParams(
-    ["name", "createdAt", "updatedAt"],
+    ["name", "createdAt", "lastChangedAt"],
     CHARACTER_LIST_DEFAULTS,
   );
 
