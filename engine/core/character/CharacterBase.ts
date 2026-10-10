@@ -1,4 +1,4 @@
-import type ModifierEvaluator from "@/engine/core/modifiers/ModifierEvaluator.ts";
+import ModifierEvaluator from "@/engine/core/modifiers/ModifierEvaluator.ts";
 import type { CharacterRows } from "@/engine/core/module/index.ts";
 import type { TargetPathsTraverser } from "@/engine/core/paths/CategoryPaths.ts";
 import type { Components } from "@/engine/core/paths/PathTraverser.ts";
@@ -34,7 +34,14 @@ export interface LoadedCharacter {
  * its issues give. A ruleset's character extends it and implements each step its rules take.
  */
 export default abstract class CharacterBase<C extends Components, D extends LoadedCharacter> {
-  constructor(protected readonly character: Character) {}
+  /** A character of `character`'s row, its paths walked by its ruleset's (`targetPaths`), which its evaluators read. */
+  constructor(
+    protected readonly character: Character,
+    protected readonly targetPaths: TargetPathsTraverser,
+  ) {
+    this.modifierEvaluator = new ModifierEvaluator(targetPaths, this.sourcesOf);
+    this.requirementEvaluator = new RequirementEvaluator(targetPaths);
+  }
 
   /**
    * The sources a modifier applies from: its own, or, for an item's modifier on the item itself (a weapon's own paths)
@@ -60,9 +67,9 @@ export default abstract class CharacterBase<C extends Components, D extends Load
   /** The character's parts, each wired to the ones it reads. */
   abstract readonly components: C;
 
-  abstract readonly modifierEvaluator: ModifierEvaluator;
+  readonly modifierEvaluator: ModifierEvaluator;
 
-  abstract readonly requirementEvaluator: RequirementEvaluator;
+  readonly requirementEvaluator: RequirementEvaluator;
 
   /** The components the evaluators walk, once the build set them up. */
   protected builtComponents: C | null = null;
@@ -82,8 +89,6 @@ export default abstract class CharacterBase<C extends Components, D extends Load
 
   /** The gated modifiers applied while their requirements held, whose requirements don't hold on the final sheet. */
   protected modifiersPastTheirGates: Modifier[] = [];
-
-  protected targetPaths!: TargetPathsTraverser;
 
   /** The ruleset's view the character is built in: the ruleset, and its lists the build reads. */
   protected view!: RulesetView;

@@ -472,10 +472,11 @@ engine/
 │   │                                      the plain kinds, which a module uses as they are; GeneratedFeats: the
 │   │                                      feats a save makes or removes, in the pool a ruleset names)
 │   ├── fields/                            (Field, FieldCodec: an entity's fields kept in its properties)
-│   ├── character/                         (CharacterBase: a character's state and its build, the modifiers in
-│   │                                      rounds behind their requirements, the ruleset's steps its hooks;
-│   │                                      Validates: its issues, the ruleset's own a hook; CharacterBuilder: a
-│   │                                      character of its row's kind, its master built first)
+│   ├── character/                         (CharacterBase: a character's state, its evaluators and its build, the
+│   │                                      modifiers in rounds behind their requirements, the ruleset's steps its
+│   │                                      hooks; Validates: its issues, the ruleset's own a hook;
+│   │                                      CharacterBuilder: a character of its row's kind, its master built
+│   │                                      first)
 │   ├── levelUp/                           (LevelUpBase: what every level flow reads, the view, the character's
 │   │                                      rows and its ruleset's level-up rules, LevelUpRules; SelectionChecks: a
 │   │                                      level's selections checked; the flows any ruleset takes as they are,
@@ -762,7 +763,7 @@ The contract is the code: `engine/core/module/parts/` holds an abstract class pe
 
 1. **Its base rules**: a value of the `base_rules` enum (`drizzle/schema.ts`, a migration, and `shared/enums.ts`), then its module in `MODULES` (`engine/api/Modules.ts`), which doesn't compile until the module is written.
 2. **Its module**: a factory returning a `RulesetModule<D, E, F>` (3.5's `Dnd35Module.create`): `D`, what it describes in its own shape (3.5's `descriptions.ts`); `E`, its entity kinds by table; `F`, the fields its content seeds, by entity. Each part extends its abstract class: `CharactersPart<D>`, `LevelUpPart<D>`, `EntitiesPart<E>`, `ContentPart<F>`, `RulesetPart`. A part's abstract members are what the ruleset answers its own way; what reads the schema alone is the part's (`checkLanguages`, `describeCard`), over a hook where a ruleset differs (`checkPublishable` over `findMissingContent`, `toEntityProperties` over `codecs`).
-3. **Its character** in `engine/rulesets/<ruleset>/model/`, which its parts build, on core's character (`engine/core/character/`): its character extends `CharacterBase` and implements its build's steps and its own issues (3.5's `DetailedCharacter`, with its components), and its builder extends `CharacterBuilder`, a character for each row kind (3.5's `Dnd35CharacterBuilder`).
+3. **Its character** in `engine/rulesets/<ruleset>/model/`, which its parts build, on core's character (`engine/core/character/`): its character extends `CharacterBase`, handing it its target paths, which the base's evaluators walk, and implements its components, its build's steps and its own issues (3.5's `DetailedCharacter`), and its builder extends `CharacterBuilder`, a character for each row kind (3.5's `Dnd35CharacterBuilder`).
 4. **Its level-up and pickers**, on core's (`engine/core/levelUp/`, `engine/core/pickers/`): its `LevelUpPart` gives the rules core's flows read (`buildCharacter`, `isAbilityIncreaseLevel`, `planBondedCreatures`), with which they remove a level and plan the bonded creatures as they are; its own flows extend `LevelUpBase` (3.5's `LevelUpState`), and a saved level's selections `LevelSelections` (`featDetailsOf`). A picker extends `Picker` (`filters`, `meets`, `describeFailed`, and `offer`, `requirementsOf`, `detailsOf` or `order` where it differs), or `CharacterPicker` when it checks a character (`filters`, `build`, `project`).
 5. **Its target paths and property types**: a `CategoryPaths` subclass over one `PathCategory` per domain, and a `PropertyTypesProvider` (see [target-paths.md](./target-paths.md)).
 6. **Its entities**: each kind extends `RulesetEntity` (or `CustomizationPageEntity`); `EntityKindsContract` says which tables it answers of and what more a class, an item, a feat list and a power list answer.
