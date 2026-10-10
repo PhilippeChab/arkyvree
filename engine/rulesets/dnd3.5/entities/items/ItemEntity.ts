@@ -91,7 +91,7 @@ export default class ItemEntity extends CustomizationPageEntity<
 
   /** An item's requirements: its template's, its proficiency, before its own. */
   protected override requirementsOf(item: Pick<Item, "id" | "isTemplate" | "sourceItemId">) {
-    const { proficiency, requirements } = this.rulesetData.itemRequirements(item);
+    const { own: requirements, template: proficiency } = this.rulesetData.itemRequirements(item);
     return [...proficiency, ...requirements];
   }
 

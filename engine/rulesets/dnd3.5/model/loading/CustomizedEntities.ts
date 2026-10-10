@@ -212,13 +212,15 @@ export default class CustomizedEntities {
   static toCustomizedInventory(inventory: CharacterRows["inventory"], rulesetData: RulesetData): InventoryEntry[] {
     return inventory.map((inv) => {
       const item = inv.itemsInRule;
+      const { own, template } = rulesetData.itemRequirements(item);
       return {
         ...inv,
         item: {
           ...item,
           properties: rulesetData.itemProperties(item),
           modifiers: inv.equipped ? (rulesetData.modifiersBySource.get(item.id) ?? []) : [],
-          ...rulesetData.itemRequirements(item),
+          proficiency: template,
+          requirements: own,
         },
       };
     });

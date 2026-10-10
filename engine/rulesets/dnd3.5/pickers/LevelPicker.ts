@@ -1,25 +1,10 @@
-import { type CharacterInput, CharacterProjection } from "@/engine/core/module/index.ts";
+import { type CharacterInput, CharacterProjection, type PickLevel } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import type { PlannedSoFar } from "@/engine/rulesets/dnd3.5/levelUp/LevelUpState.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import type { KlassLevel } from "@/shared/relations.ts";
 
 import CharacterPicker from "./CharacterPicker.ts";
-
-/**
- * The level a feat or a power is picked at: class `klassId`'s `level` with its ability increase (`abilityId`), in the
- * pool `aptitudeId`, after the levels the wizard plans before it (`planned`), or a saved level's (`editedLevelId`),
- * which a pick sees the character as it was before.
- */
-export interface PickLevel {
-  abilityId?: string;
-  aptitudeId: string;
-  editedLevelId?: string;
-  klassId: string;
-  level: number;
-  planned?: PlannedSoFar;
-}
 
 /** A feat or power picker: the level it picks at, the character projected to it with the feats picked so far. */
 export default abstract class LevelPicker<Details extends object = object> extends CharacterPicker<

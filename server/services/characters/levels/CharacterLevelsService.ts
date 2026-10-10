@@ -7,7 +7,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { levelsInCharacter } from "@/drizzle/schema.ts";
-import { Engine, type LevelUpEngine } from "@/engine/index.ts";
+import { Engine, type LevelPickRows } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { type Db, db, withTransaction } from "@/server/database/index.ts";
@@ -27,9 +27,6 @@ import { writeBondedCreatures } from "./bondedWrites.ts";
 import { Pickers } from "./concerns/Pickers.ts";
 import { Steps } from "./concerns/Steps.ts";
 
-/** A level's picks as the engine plans them: its skill ranks, and its feats and powers by pool. */
-type LevelPicks = Pick<ReturnType<LevelUpEngine["planEdit"]>, "feats" | "powers" | "skills">;
-
 class CharacterLevelsService extends include(Object, Pickers, Steps) {
   /** Deletes a character level's skills, feats and powers. */
   private async deleteLevelPicks(tx: Db, characterLevelId: string) {
@@ -39,7 +36,7 @@ class CharacterLevelsService extends include(Object, Pickers, Steps) {
   }
 
   /** Writes a character level's skills, feats and powers. */
-  private async insertLevelPicks(tx: Db, characterLevelId: string, { feats, powers, skills }: LevelPicks) {
+  private async insertLevelPicks(tx: Db, characterLevelId: string, { feats, powers, skills }: LevelPickRows) {
     await CharacterLevelSkills.createMany(
       tx,
       skills.map((pick) => ({ characterLevelId, ...pick })),

@@ -1,4 +1,9 @@
-import { type CharacterInput, CharacterProjection } from "@/engine/core/module/index.ts";
+import {
+  type CharacterInput,
+  CharacterProjection,
+  type LevelPicks,
+  type LevelRequest,
+} from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
@@ -7,7 +12,6 @@ import { stripSeparators } from "@/shared/text.ts";
 
 import type { FeatSlots } from "./AptitudeSlotsPlan.ts";
 import { ChecksSelections } from "./concerns/ChecksSelections.ts";
-import type { LevelPicks } from "./LevelUpState.ts";
 import PicksDistribution, { type PerLevelDistributionData } from "./PicksDistribution.ts";
 import PlannedLevelsState, { type PlannedLevels } from "./PlannedLevelsState.ts";
 
@@ -17,14 +21,6 @@ interface PlannedLevel {
   hp: number;
   klassLevelId: string;
   picks: LevelPicks;
-}
-
-/** A level a level-up saves, as the wizard sends it: its class's level, hit points and ability increase. */
-interface SavedLevel {
-  abilityId: string | null;
-  hp: number;
-  klassId: string;
-  level: number;
 }
 
 /**
@@ -105,7 +101,7 @@ export default class LevelUpPlan extends include(PlannedLevelsState, ChecksSelec
    * The character as the save leaves it: each planned level a fresh level after its saved ones, with its hit points,
    * ability and picks, as a level's edit projects it (`LevelEdit`).
    */
-  private projectSavedLevels(planned: PlannedLevel[]) {
+  private projectLevelRequests(planned: PlannedLevel[]) {
     const projection = new CharacterProjection(this.character);
     for (const { abilityId, hp, klassLevelId, picks } of planned)
       projection.pick(projection.addLevel(klassLevelId, { abilityId, hp }), this.toPickRows(picks));
@@ -119,7 +115,7 @@ export default class LevelUpPlan extends include(PlannedLevelsState, ChecksSelec
    * with them is refused with what it fails, unless `force`d. Each level's hit points, ability and picks are the rows
    * the save writes.
    */
-  planLevels(bonded: CharacterInput[], levels: SavedLevel[], picks: LevelPicks, force: boolean) {
+  planLevels(bonded: CharacterInput[], levels: LevelRequest[], picks: LevelPicks, force: boolean) {
     const { rows } = this.character;
     const klassLevelEntries = this.getPlannedKlassLevels(levels);
     // Every selection is the ruleset's before a character is built with it
@@ -142,7 +138,7 @@ export default class LevelUpPlan extends include(PlannedLevelsState, ChecksSelec
       pickedFeatIds.push(...Object.values(levelPicks.feats).flat());
     }
 
-    const saved = this.build(this.projectSavedLevels(planned));
+    const saved = this.build(this.projectLevelRequests(planned));
     if (!force) RulesError.refuseIssues(saved.validate().issues);
     return {
       bonded: this.planBondedOf(saved, bonded),

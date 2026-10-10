@@ -1,3 +1,4 @@
+import { EntitiesPart } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 
 import AbilityEntity from "./abilities/AbilityEntity.ts";
@@ -35,7 +36,7 @@ const ENTITY_KINDS = {
  * (`of`: an entity found and described, a page opened, and what saving or deleting one writes; a class's levels, class
  * skills and table, through the classes' kind, bound to the class).
  */
-export default class Dnd35Entities {
+export default class Dnd35Entities extends EntitiesPart<Dnd35EntityKinds> {
   /** An entity kind's rules (`type`, its table), bound to a ruleset's view. */
   of<K extends keyof Dnd35EntityKinds>(view: RulesetView, type: K): Dnd35EntityKinds[K] {
     return new ENTITY_KINDS[type](view) as Dnd35EntityKinds[K];

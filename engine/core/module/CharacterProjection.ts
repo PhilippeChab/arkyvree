@@ -1,16 +1,7 @@
 import type { CharacterLevel } from "@/shared/relations.ts";
 
 import type { CharacterInput, CharacterRows } from "./CharacterInputs.ts";
-
-/** A feat picked in a pool. */
-export type FeatPick = { aptitudeId: string; featId: string };
-
-/** A level's picks, as a projection adds them: its feats and powers in their pools, and its skills' ranks. */
-export interface LevelPickRows {
-  feats?: FeatPick[];
-  powers?: { aptitudeId: string; powerId: string }[];
-  skills?: { rank: number; skillId: string }[];
-}
+import type { LevelPickRows } from "./levelUp.ts";
 
 /**
  * A character's rows (`character`) with what a level-up adds before it's saved, as the rows it would save: the levels
@@ -113,7 +104,7 @@ export default class CharacterProjection {
    * Adds picks at a level, as the rows a save keeps: one per feat or power and pool (a pick given twice, as the wizard
    * can send it, counts once), and one per skill (the last rank given wins).
    */
-  pick(level: { id: string }, { feats = [], powers = [], skills = [] }: LevelPickRows) {
+  pick(level: { id: string }, { feats = [], powers = [], skills = [] }: Partial<LevelPickRows>) {
     const at = { characterLevelId: level.id, ...this.stamps() };
     const uniqueFeats = new Map(feats.map((pick) => [`${pick.featId}:${pick.aptitudeId}`, pick]));
     for (const { aptitudeId, featId } of uniqueFeats.values()) this.picks.feats.push({ ...at, aptitudeId, featId });

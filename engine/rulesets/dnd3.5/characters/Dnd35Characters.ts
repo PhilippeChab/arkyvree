@@ -1,4 +1,6 @@
+import { CharactersPart } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
+import type { Dnd35Descriptions } from "@/engine/rulesets/dnd3.5/descriptions.ts";
 import RacePicker from "@/engine/rulesets/dnd3.5/pickers/RacePicker.ts";
 import type { Item } from "@/shared/relations.ts";
 
@@ -12,7 +14,7 @@ import CharacterSheet from "./sheet/CharacterSheet.tsx";
  * The 3.5 characters, as the module answers the server of them: their sheets, as the API answers them and printed,
  * what equipping an item checks, and the races a new one can pick.
  */
-export default class Dnd35Characters {
+export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
   /** Refuses languages a character can't speak: not found, or not of its ruleset nor its source chain. */
   checkLanguages(...args: Parameters<typeof CharacterEdits.checkLanguages>) {
     CharacterEdits.checkLanguages(...args);

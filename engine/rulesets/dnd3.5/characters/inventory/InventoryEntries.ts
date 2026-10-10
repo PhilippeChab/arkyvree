@@ -1,27 +1,17 @@
-import type { CharacterInput } from "@/engine/core/module/index.ts";
+import type {
+  CharacterInput,
+  DescribedInventoryEntry,
+  InventoryEntryChange,
+  InventoryEntryFields,
+  InventoryEntryRequest,
+} from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import CharacterEdits from "@/engine/rulesets/dnd3.5/characters/CharacterEdits.ts";
-import type { ItemLocation } from "@/shared/enums.ts";
 import { isHandLocation } from "@/shared/equipment.ts";
 import type { Item } from "@/shared/relations.ts";
 
 import Equipping from "./Equipping.ts";
-
-/** An entry's add, of the item the server read, or an edit of an entry the character has, of its item. */
-export type EntryChange =
-  | { item: Item; request: EntryRequest }
-  | { entry: { id: string; itemId: string }; request: EntryRequest };
-
-/** What an inventory entry's add or edit asks: where its item is held, its charges, and whether to force the rules. */
-export interface EntryRequest {
-  equipped: boolean;
-  force: boolean;
-  location: ItemLocation | null;
-  remainingCharges: number | null;
-  totalCharges: number | null;
-  weaponSet: number | null;
-}
 
 /** A character's inventory: its entries as its sheet lists them, and what an entry's add or edit stores. */
 export default class InventoryEntries {
@@ -35,7 +25,13 @@ export default class InventoryEntries {
   }
 
   /** An entry's stored placement and charges: only an equipped item has a location, only a held one a set. */
-  private static entryFields({ equipped, location, remainingCharges, totalCharges, weaponSet }: EntryRequest) {
+  private static entryFields({
+    equipped,
+    location,
+    remainingCharges,
+    totalCharges,
+    weaponSet,
+  }: InventoryEntryRequest): InventoryEntryFields {
     const resolvedLocation = equipped ? (location ?? null) : null;
     const resolvedEquipped = !!resolvedLocation;
     return {
@@ -52,12 +48,15 @@ export default class InventoryEntries {
    * as the view composes it (the stored row's copy or winner, the row itself without one), its properties, its
    * modifiers, and its requirements, its template's before its own.
    */
-  static describeInventory<T extends { itemId: string; itemsInRule: Item }>(view: RulesetView, entries: T[]) {
+  static describeInventory<T extends { itemId: string; itemsInRule: Item }>(
+    view: RulesetView,
+    entries: T[],
+  ): DescribedInventoryEntry<T>[] {
     const { rulesetData } = view;
     return entries.map((entry) => {
       // The join still contains the stored parent row after itemId resolves.
       const item = rulesetData.itemsById.get(entry.itemId) ?? entry.itemsInRule;
-      const { proficiency, requirements } = rulesetData.itemRequirements(item);
+      const { own: requirements, template: proficiency } = rulesetData.itemRequirements(item);
       return {
         ...entry,
         item: {
@@ -76,7 +75,7 @@ export default class InventoryEntries {
    * equipped where it's asked to be (`Equipping`: an item already carried takes another entry, a second dagger held in
    * the other hand).
    */
-  static planInventoryEntry(view: RulesetView, character: CharacterInput, change: EntryChange) {
+  static planInventoryEntry(view: RulesetView, character: CharacterInput, change: InventoryEntryChange) {
     const { rulesetData } = view;
     const { request } = change;
     if ("item" in change)

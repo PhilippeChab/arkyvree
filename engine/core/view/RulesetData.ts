@@ -412,14 +412,14 @@ export default class RulesetData {
   }
 
   /**
-   * An item's requirements, as its template splits them: its proficiency (its template's requirements, or its own when
-   * it's a template), and its other requirements (its own, on top of a template or on a plain item).
+   * An item's requirements, as its template splits them: its template's (`template`: its own when it's a template),
+   * and its own on top of them (`own`: none on a template, all of a plain item's).
    */
   itemRequirements(item: Pick<Item, "id" | "isTemplate" | "sourceItemId">) {
     const own = this.requirementsByEntity.get(item.id) ?? [];
-    if (item.isTemplate) return { proficiency: own, requirements: [] };
-    const proficiency = item.sourceItemId ? (this.requirementsByEntity.get(item.sourceItemId) ?? []) : [];
-    return { proficiency, requirements: own };
+    if (item.isTemplate) return { own: [], template: own };
+    const template = item.sourceItemId ? (this.requirementsByEntity.get(item.sourceItemId) ?? []) : [];
+    return { own, template };
   }
 
   get itemsById(): Map<string, Item> {

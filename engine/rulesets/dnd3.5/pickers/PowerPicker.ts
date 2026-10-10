@@ -1,9 +1,9 @@
-import type { CharacterInput } from "@/engine/core/module/index.ts";
+import type { CharacterInput, PickLevel } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import { FEAT_FIELDS } from "@/engine/rulesets/dnd3.5/entities/feats/fields.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 
-import LevelPicker, { type PickLevel } from "./LevelPicker.ts";
+import LevelPicker from "./LevelPicker.ts";
 
 /** A power picker's query: its level's, of a spell level, and the powers picked so far at it. */
 type PowerPickQuery = PickLevel & { powerLevel?: number; selectedPowerIds?: string[] };
