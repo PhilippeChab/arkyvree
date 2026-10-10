@@ -1,5 +1,5 @@
 import type { CowData } from "@/engine/core/cow/index.ts";
-import type { PropertyOrder } from "@/engine/core/customizations/index.ts";
+import { PropertyOrder, type PropertyTypesProvider } from "@/engine/core/customizations/index.ts";
 import type {
   Aptitude,
   FeatWithAptitudes,
@@ -136,8 +136,8 @@ function buildIdBySlug(rows: { id: string; name: string }[]): Map<string, string
  * (`CowData.resolve`), so consumers don't thread `cow` through or call `canonicalize` on the common lookup path.
  */
 export default class RulesetData {
-  /** `propertyOrder`: the ruleset's order of an entity's properties, as its stat block shows them. */
-  constructor(lists: RulesetLists, cow: CowData, propertyOrder: PropertyOrder) {
+  /** `propertyTypes`: the ruleset's property types, as its rules read them, which order its entities' properties. */
+  constructor(lists: RulesetLists, cow: CowData, propertyTypes: PropertyTypesProvider) {
     this.abilities = lists.abilities;
     this.aptitudes = lists.aptitudes;
     this.feats = lists.feats;
@@ -159,7 +159,8 @@ export default class RulesetData {
     this.saves = lists.saves;
     this.skills = lists.skills;
     this.cow = cow;
-    this.propertyOrder = propertyOrder;
+    this.propertyOrder = new PropertyOrder(propertyTypes);
+    this.propertyTypes = propertyTypes;
   }
 
   private readonly built: Partial<Indices> = {};
@@ -208,6 +209,12 @@ export default class RulesetData {
   readonly mechanics: Mechanic[];
 
   readonly powers: PowerWithAptitudes[];
+
+  /**
+   * The ruleset's property types, as its rules read them: the order an entity's properties show in, the values a type
+   * takes, and the entity a type's value names by its id (`PropertyLabels`).
+   */
+  readonly propertyTypes: PropertyTypesProvider;
 
   readonly races: Race[];
 

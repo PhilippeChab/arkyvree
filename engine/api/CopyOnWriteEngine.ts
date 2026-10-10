@@ -7,7 +7,6 @@ import {
   NAME_PAIRED_ENTITY_TYPES,
   type RulesetSources,
 } from "@/engine/core/cow/index.ts";
-import { PropertyOrder } from "@/engine/core/customizations/index.ts";
 import {
   type EntityCustomizations,
   RulesetComposition,
@@ -39,11 +38,11 @@ export default class CopyOnWriteEngine {
 
   /**
    * A ruleset's view: its own rows and its source chain's (`chain`, its own first, then its chain's in order), composed
-   * by its copy-on-write data (`cow`), each entity's properties in its rules' order.
+   * by its copy-on-write data (`cow`), with its rules' property types: each entity's properties in their order, and the
+   * entity a property's value names.
    */
   buildView(ruleset: { baseRules: BaseRules }, chain: RulesetRawData[], cow: CowData): RulesetData {
-    const order = new PropertyOrder(Modules.of(ruleset.baseRules).createPropertyTypes());
-    return new RulesetComposition(chain, cow, order).build();
+    return new RulesetComposition(chain, cow, Modules.of(ruleset.baseRules).createPropertyTypes()).build();
   }
 
   /** Refuses subscribing a ruleset to new extensions that would surface two entities of a name in its view. */

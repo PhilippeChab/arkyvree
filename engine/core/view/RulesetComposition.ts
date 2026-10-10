@@ -1,5 +1,5 @@
 import type { CowData } from "@/engine/core/cow/index.ts";
-import type { PropertyOrder } from "@/engine/core/customizations/index.ts";
+import type { PropertyTypesProvider } from "@/engine/core/customizations/index.ts";
 import type {
   Aptitude,
   FeatWithAptitudes,
@@ -59,18 +59,18 @@ export interface RulesetRawData {
  * resolve to the winners, and every id-keyed map takes a stored id. Built on every read (`RulesetViews.getData`).
  */
 export default class RulesetComposition {
-  /** `propertyOrder`: the ruleset's order of an entity's properties, which its view keeps. */
-  constructor(chain: RulesetRawData[], cow: CowData, propertyOrder: PropertyOrder) {
+  /** `propertyTypes`: the ruleset's property types, as its rules read them, which its view keeps. */
+  constructor(chain: RulesetRawData[], cow: CowData, propertyTypes: PropertyTypesProvider) {
     this.chain = chain;
     this.cow = cow;
-    this.propertyOrder = propertyOrder;
+    this.propertyTypes = propertyTypes;
   }
 
   private readonly chain: RulesetRawData[];
 
   private readonly cow: CowData;
 
-  private readonly propertyOrder: PropertyOrder;
+  private readonly propertyTypes: PropertyTypesProvider;
 
   /**
    * Each sibling loser's aptitude links, by the loser, on its winner (`featId` / `powerId`), for the winner's links to
@@ -306,6 +306,6 @@ export default class RulesetComposition {
   }
 
   build(): RulesetData {
-    return new RulesetData(this.composeLists(), this.cow, this.propertyOrder);
+    return new RulesetData(this.composeLists(), this.cow, this.propertyTypes);
   }
 }

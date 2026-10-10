@@ -10,7 +10,7 @@ export default class PropertiesEngine {
   /** The entity's properties, which its operations ask. */
   private readonly properties: PropertyEdits;
 
-  /** The entity's properties of its type, as the view composes them. */
+  /** The entity's properties of its type, as the view composes them, each named for the entity its value names. */
   describeAll() {
     return this.properties.describeAll();
   }

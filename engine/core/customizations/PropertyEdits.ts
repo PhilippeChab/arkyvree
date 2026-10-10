@@ -2,6 +2,7 @@ import RulesError from "@/engine/core/RulesError.ts";
 import type { Property } from "@/shared/relations.ts";
 
 import CustomizationEdits from "./CustomizationEdits.ts";
+import PropertyLabels from "./PropertyLabels.ts";
 
 /** An entity's properties: as its page lists them, and what their saves store. */
 export default class PropertyEdits extends CustomizationEdits<Property> {
@@ -29,9 +30,12 @@ export default class PropertyEdits extends CustomizationEdits<Property> {
     throw new RulesError("not-found", `${this.label} not found for this entity`);
   }
 
-  /** The entity's properties of its type, as the view composes them. */
+  /**
+   * The entity's properties of its type, as the view composes them, each named for the entity its value names
+   * (`PropertyLabels`).
+   */
   describeAll() {
-    return this.rowsOf(this.entity.id);
+    return PropertyLabels.describe(this.view.rulesetData, this.rowsOf(this.entity.id));
   }
 
   /** A new property on the entity: the entity as the view has it. */

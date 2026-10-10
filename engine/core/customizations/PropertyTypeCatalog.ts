@@ -1,4 +1,4 @@
-import type { RulesetData } from "@/engine/core/view/index.ts";
+import type { RulesetData, ViewEntities } from "@/engine/core/view/index.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
 import type { PropertyTypeCompletion, PropertyValueCompletion } from "@/shared/customization/properties.ts";
 
@@ -12,6 +12,8 @@ interface PropertyType {
 }
 
 export interface PropertyTypesProvider {
+  /** The entity kind a property type's value names by its id (a class's bonus spell ability: an ability), if any. */
+  getReferencedEntityType(type: string): Exclude<keyof ViewEntities, "klass_levels"> | null;
   getStaticPropertyTypes(entityType?: PropertyEntityType): Record<string, string>;
   getStaticPropertyValues(type: string): string[] | null;
 }
