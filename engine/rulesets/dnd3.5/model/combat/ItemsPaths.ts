@@ -37,12 +37,14 @@ const NAVIGATABLE_SHIELD_PATHS = [
   { path: "ac.total", description: "Total AC from this shield", type: "number" as const, requirementOnly: true },
   { path: "checkpenalty", description: "Penalty to Str/Dex skill checks", type: "number" as const },
   { path: "spellfailure", description: "Arcane spell failure chance", type: "number" as const },
+  { path: "maxdex", description: "Maximum Dexterity bonus to AC (a tower shield's)", type: "number" as const },
 ];
 
 const SHIELD_LABELS: Record<string, string> = {
   ac: "Armor Class",
   checkpenalty: "Check Penalty",
   spellfailure: "Spell Failure",
+  maxdex: "Maximum Dexterity",
 };
 
 /** The equipped items' target paths: items.weapons / items.armors / items.shields, a grouping's items. */
@@ -106,7 +108,7 @@ export default class ItemsPaths implements PathCategory<Dnd35Components> {
   readonly pathDescriptions = {
     "items.weapons": "Per-weapon attack, damage, critical, and how it's wielded",
     "items.armors": "Per-armor AC, check penalty, spell failure, and max dexterity",
-    "items.shields": "Per-shield AC, check penalty, and spell failure",
+    "items.shields": "Per-shield AC, check penalty, spell failure, and max dexterity",
     // Item sub-group intermediates (structural keys, dynamic group stripped)
     "items.weapons.tohit": "Attack roll bonuses",
     "items.weapons.damage": "Damage components",

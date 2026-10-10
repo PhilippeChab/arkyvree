@@ -251,8 +251,6 @@ export default abstract class CombatState {
   /** Whether a one-handed off-hand weapon counts as light in two-weapon fighting: Oversized Two-Weapon Fighting. */
   protected oversizedOffHand = false;
 
-  protected shieldMaxDex = Infinity;
-
   /** Whether the race keeps its speed in medium or heavy armor and load (RACE_SPEED_IGNORES_ENCUMBRANCE: the dwarf). */
   protected speedIgnoresEncumbrance = false;
 

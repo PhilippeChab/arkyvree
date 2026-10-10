@@ -157,6 +157,7 @@ Grouped by shield type (`SHIELD_TYPE`), as the picker lists them; an item is nev
 | `items.shields.<group>.ac.total` | number | Total AC from this shield (req only) |
 | `items.shields.<group>.checkpenalty` | number | Penalty to Str/Dex skill checks |
 | `items.shields.<group>.spellfailure` | number | Arcane spell failure chance |
+| `items.shields.<group>.maxdex` | number | Maximum Dexterity bonus to AC (a tower shield's) |
 
 ## classes
 
