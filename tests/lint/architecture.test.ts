@@ -206,13 +206,11 @@ describe("architecture rules", () => {
         "client/src/v.ts": 'import { app } from "@/server/routers/application.ts";\nexport const v = app;\n',
         // A content package's vocabulary reads neither its data nor the server
         "content/dnd3.5/builders/a.ts": 'import { b } from "@/content/dnd3.5/builders/b.ts";\nexport const a = b;\n',
-        "content/dnd3.5/builders/d.ts": 'import { D } from "@/content/dnd3.5/data/core.ts";\nexport const d = D;\n',
         "content/dnd3.5/builders/s.ts": 'import { x } from "@/server/services/s.ts";\nexport const s = x;\n',
       }),
     ).toEqual([
       "layers client/src/v.ts",
       "layers client/src/w.ts",
-      "layers content/dnd3.5/builders/d.ts",
       "layers content/dnd3.5/builders/s.ts",
       "layers engine/core/module/m.ts",
       "layers engine/core/view/r.ts",
@@ -226,6 +224,56 @@ describe("architecture rules", () => {
       "layers server/database/d.ts",
       "layers server/repositories/A.ts",
       "layers server/services/s.ts",
+    ]);
+  });
+
+  test("each ruleset's folders are its own, and what every ruleset runs on names none of them", async () => {
+    const imports = (from: string) => `import { x } from "${from}";\nexport const y = x;\n`;
+    expect(
+      await lintRepo(
+        {
+          // The rulesets: the folders of engine/rulesets/
+          "engine/rulesets/dnd3.5/index.ts": "export const x = 1;\n",
+          "engine/rulesets/pf1/index.ts": "export const x = 1;\n",
+          // One ruleset's code reaches into another's, in any tree
+          "engine/rulesets/pf1/a.ts": imports("@/engine/rulesets/dnd3.5/index.ts"),
+          "content/pf1/data/b.ts": imports("@/content/dnd3.5/data/core.ts"),
+          "codegen/pf1/tools/c.ts": imports("@/codegen/dnd3.5/tools/text/sanitize.ts"),
+          "database/packages/pf1/d.ts": imports("@/database/packages/dnd3.5/seed/BaseSeeder.ts"),
+          "client/src/pages/pf1/e.ts": imports("@/client/src/pages/dnd3.5/f.ts"),
+          // What every ruleset runs on names none of them
+          "engine/core/g.ts": imports("@/shared/dnd3.5/spells.ts"),
+          "content/core/builders/h.ts": imports("@/content/dnd3.5/builders/feats/possession.ts"),
+          "codegen/core/i.ts": imports("@/codegen/dnd3.5/tools/text/sanitize.ts"),
+          "database/packages/seed/j.ts": imports("@/database/packages/dnd3.5/seed/BaseSeeder.ts"),
+          "server/k.ts": imports("@/shared/dnd3.5/skills.ts"),
+          "shared/l.ts": imports("@/shared/dnd3.5/skills.ts"),
+          // A ruleset's builders are what its data is written with: they read none of it
+          "content/dnd3.5/builders/m.ts": imports("@/content/dnd3.5/data/core.ts"),
+          "content/dnd3.5/builders/n.ts": imports("@/content/dnd3.5/generated/srd/index.ts"),
+          // A ruleset reads its own folders and the core's; a registry and a test read any ruleset's
+          "content/dnd3.5/builders/o.ts": imports("@/content/dnd3.5/builders/items/types.ts"),
+          "content/dnd3.5/data/p.ts": imports("@/content/core/builders/customization/requirements.ts"),
+          "engine/rulesets/dnd3.5/q.ts": imports("@/shared/dnd3.5/skills.ts"),
+          "engine/api/r.ts": imports("@/engine/rulesets/pf1/index.ts"),
+          "tests/s.test.ts": imports("@/engine/rulesets/pf1/index.ts"),
+        },
+        ["ruleset-folders"],
+      ),
+    ).toEqual([
+      "ruleset-folders client/src/pages/pf1/e.ts",
+      "ruleset-folders codegen/core/i.ts",
+      "ruleset-folders codegen/pf1/tools/c.ts",
+      "ruleset-folders content/core/builders/h.ts",
+      "ruleset-folders content/dnd3.5/builders/m.ts",
+      "ruleset-folders content/dnd3.5/builders/n.ts",
+      "ruleset-folders content/pf1/data/b.ts",
+      "ruleset-folders database/packages/pf1/d.ts",
+      "ruleset-folders database/packages/seed/j.ts",
+      "ruleset-folders engine/core/g.ts",
+      "ruleset-folders engine/rulesets/pf1/a.ts",
+      "ruleset-folders server/k.ts",
+      "ruleset-folders shared/l.ts",
     ]);
   });
 
@@ -304,7 +352,7 @@ describe("architecture rules", () => {
         "server/repositories/R.ts": 'import { m } from "@/server/middlewares/m.ts";\nexport const r = m;\n',
         "server/middlewares/m.ts": 'import { R } from "@/server/repositories/R.ts";\nexport const m = R;\n',
         "server/rulesets/seed.ts":
-          'import { items } from "@/database/packages/dnd35/seed/items.ts";\nexport const s = items;\n',
+          'import { items } from "@/database/packages/dnd3.5/seed/items.ts";\nexport const s = items;\n',
         "server/rulesets/data.ts": 'import { CORE } from "@/content/dnd3.5/data/core.ts";\nexport const d = CORE;\n',
         "server/services/s.ts": 'import { SEED } from "@/database/seeds/users.ts";\nexport const s = SEED;\n',
       }),

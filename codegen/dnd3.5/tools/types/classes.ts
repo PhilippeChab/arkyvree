@@ -1,5 +1,5 @@
+import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import type { BabType, SaveType } from "@/content/dnd3.5/builders/classes/types.ts";
-import type { ModifierSeed, RequirementEntry } from "@/content/dnd3.5/builders/customization/types.ts";
 
 import type { ScrapedMeta } from "./reference.ts";
 

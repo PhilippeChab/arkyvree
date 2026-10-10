@@ -2,14 +2,15 @@ import { describe, expect, test } from "bun:test";
 
 import { eq, inArray } from "drizzle-orm";
 
+import * as r from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
-import * as r from "@/content/dnd3.5/builders/customization/requirements.ts";
+import { feat } from "@/content/dnd3.5/builders/feats/possession.ts";
 import type { ItemSeed } from "@/content/dnd3.5/builders/items/types.ts";
 import type { RaceSeed } from "@/content/dnd3.5/builders/races/types.ts";
 import type { SpellSeed } from "@/content/dnd3.5/builders/spells/types.ts";
 import { ALL_CLASSES as SRD_CLASSES } from "@/content/dnd3.5/generated/srd/classes/index.ts";
-import type { SeedContext } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
-import { findSpellcastingClass } from "@/database/packages/dnd35/seed/spellTable.ts";
+import type { SeedContext } from "@/database/packages/dnd3.5/seed/BaseSeeder.ts";
+import { findSpellcastingClass } from "@/database/packages/dnd3.5/seed/spellTable.ts";
 import {
   entitySnapshotsInRules,
   featsAptitudesInRules,
@@ -168,8 +169,8 @@ describe("Seeding", () => {
         description: "",
         aptitudes: [],
         requirements: [
-          r.eq(r.feat("Dodge")),
-          r.or(r.gte("combat.bab", 4), r.and(r.eq(r.feat("Mobility")), r.gte("skills.tumble.ranks", 5))),
+          r.eq(feat("Dodge")),
+          r.or(r.gte("combat.bab", 4), r.and(r.eq(feat("Mobility")), r.gte("skills.tumble.ranks", 5))),
         ],
       },
     ]);
@@ -205,7 +206,7 @@ describe("Seeding", () => {
               operator: "add",
               value: "4",
               valueType: "number",
-              requirements: [r.or(r.eq(r.feat("Mobility")), r.gte("combat.bab", 6))],
+              requirements: [r.or(r.eq(feat("Mobility")), r.gte("combat.bab", 6))],
             },
           ],
           properties: [{ type: FEAT_FAMILY, value: "Dodge" }],
@@ -431,7 +432,7 @@ describe("Seeding", () => {
           type: "Weapon",
           slot: "Main Hand",
           properties: [{ type: "WEAPON_DAMAGE", value: "1d8" }],
-          requirements: [r.eq(r.feat("Martial Weapon Proficiency"))],
+          requirements: [r.eq(feat("Martial Weapon Proficiency"))],
         }),
       ],
       { isTemplate: true },
@@ -671,7 +672,7 @@ describe("Seeding", () => {
       const coreSeeder = await freshSeeder();
       const core = coreSeeder.ctx;
       await coreSeeder.seedAptitudes(["General"]);
-      const dodge = r.eq(r.feat("Dodge"));
+      const dodge = r.eq(feat("Dodge"));
       await coreSeeder.seedFeats([
         {
           name: "Test Grouped",

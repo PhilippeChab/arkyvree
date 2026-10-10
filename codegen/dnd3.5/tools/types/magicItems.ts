@@ -1,4 +1,4 @@
-import type { Modifier, Property } from "@/content/dnd3.5/builders/customization/types.ts";
+import type { Modifier, Property } from "@/content/core/builders/customization/types.ts";
 
 import type { ItemFields } from "./items.ts";
 import type { Overrides, ScrapedMeta } from "./reference.ts";

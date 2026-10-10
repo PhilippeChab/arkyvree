@@ -574,10 +574,17 @@ describe("conventions", () => {
           "tests/services/x/BarService.test.ts": "export const t = 1;\n",
           "server/services/x/RequirementTree.ts": "export default 1;\n",
           "tests/services/x/requirementTree.test.ts": "export const t = 1;\n",
+          // The codegen's tests mirror it, its core's and each ruleset's tools alike
+          "codegen/core/text/json.ts": "export default 1;\n",
+          "tests/codegen/core/text/json.test.ts": "export const t = 1;\n",
+          "codegen/dnd3.5/tools/text/sanitize.ts": "export default 1;\n",
+          "tests/codegen/dnd3.5/tools/text/sanitize.test.ts": "export const t = 1;\n",
+          "tests/codegen/dnd3.5/tools/text/json.test.ts": "export const t = 1;\n",
         },
         ["test-placement"],
       ),
     ).toEqual([
+      "test-placement tests/codegen/dnd3.5/tools/text/json.test.ts",
       "test-placement tests/services/FooService.test.ts",
       "test-placement tests/services/x/BarService.test.ts",
       "test-placement tests/services/x/requirementTree.test.ts",

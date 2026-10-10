@@ -12,7 +12,7 @@
  *   choice of one among a few as buttons is an `OptionToggle`, MUI's `ToggleButtonGroup` its alone.
  * - `next-page-spinners`: the spinner at the foot of a list that loads its next page as it scrolls is a
  *   `NextPageSpinner`.
- * - `option-tooltips`: the level-up wizard's option tooltip (a description, or the tree of what it asks) is an
+ * - `option-tooltips`: a level-up wizard's option tooltip (a description, or the tree of what it asks) is its ruleset's
  *   `OptionTooltip`, every tooltip of its steps.
  * - `anchor-menus`: a menu that opens from what was clicked keeps its anchor through `useAnchorMenu`.
  * - `select-fields`: a select bound to a form's field is a `SelectField`; a custom input its owner binds (handed the
@@ -188,6 +188,9 @@ const TARGET_PATH_MODULES = {
 
 /** A box's padding at its top: a page's column takes the theme's */
 const TOP_PADDINGS = new Set(["p", "padding", "paddingTop", "paddingY", "pt", "py"]);
+
+/** A ruleset's level-up wizard: its folder of the character page's components, its steps and its option tooltip. */
+const WIZARD_FOLDER = /^client\/src\/pages\/characters\/details\/components\/[^/]+\//;
 
 /** The attribute `name` of a JSX element, when it has one. */
 function attribute(element, name) {
@@ -651,12 +654,11 @@ function createNotificationMessages(context) {
 }
 
 function createOptionTooltips(context) {
-  const file = "client/src/pages/characters/details/components/dnd3.5/OptionTooltip.tsx";
-  if (!inClient(context) || inFile(context, file)) return {};
-  // Every tooltip a level-up step shows is an option's (a skill's description, a feat's)
-  const step = /^client\/src\/pages\/characters\/details\/components\/dnd3\.5\/\w+Step\.tsx$/.test(
-    repoPath(context.filename),
-  );
+  const file = repoPath(context.filename);
+  const wizard = WIZARD_FOLDER.test(file);
+  if (!inClient(context) || (wizard && file.endsWith("/OptionTooltip.tsx"))) return {};
+  // Every tooltip a ruleset's level-up step shows is an option's (a skill's description, a feat's)
+  const step = wizard && /\/\w+Step\.tsx$/.test(file);
   return {
     JSXElement(node) {
       if (elementName(node) !== "Tooltip") return;

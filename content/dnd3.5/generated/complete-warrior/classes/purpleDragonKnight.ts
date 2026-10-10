@@ -5,8 +5,8 @@
  * - No modifiers defined — review if this class needs any
  */
 
+import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
-import { eq, eqStr, gte, or } from "@/content/dnd3.5/builders/customization/requirements.ts";
 
 export const PURPLE_DRAGON_KNIGHT: ClassSeed = {
   name: "Purple Dragon Knight",

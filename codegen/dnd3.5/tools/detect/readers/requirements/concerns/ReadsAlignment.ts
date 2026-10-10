@@ -1,6 +1,6 @@
 import type { BaseRequirementReading } from "@/codegen/dnd3.5/tools/detect/readers/requirements/BaseRequirementReading.ts";
-import { eqStr, or } from "@/content/dnd3.5/builders/customization/requirements.ts";
-import type { RequirementEntry } from "@/content/dnd3.5/builders/customization/types.ts";
+import { eqStr, or } from "@/content/core/builders/customization/requirements.ts";
+import type { RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 /** The nine alignments, lowercased: what a prerequisite names one by ("neutral" is true neutral). */

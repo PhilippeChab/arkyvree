@@ -17,8 +17,9 @@
  * in an `export { f }`) starts with a verb too (`FUNCTION_VERBS`), or is one of the shapes the code writes: a context
  * it runs a callback in (`withTransaction`), an event's handler (`onCacheHit`), a conversion (`toSafeUser`) or a
  * constructor (`newTimingStore`). A PascalCase one (a concern, a class's factory) is a type's name; a module's own
- * functions name themselves. A ruleset's content builders (`content/<ruleset>/builders/`) are the vocabulary
- * its data is written in (`eq(feat("Dodge"))`, `simple("Club")`), named for what they build.
+ * functions name themselves. A ruleset's content builders (`content/<ruleset>/builders/`, and those every ruleset's
+ * share, `content/core/builders/`) are the vocabulary its data is written in (`eq(feat("Dodge"))`, `simple("Club")`),
+ * named for what they build.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
@@ -98,7 +99,7 @@ const VOCABULARIES = [
 function createFunctionNames(context) {
   const file = repoPath(context.filename);
   if (!/^(server|engine|shared|database|content|codegen)\//.test(file) || !/\.tsx?$/.test(file)) return {};
-  // A content package's builders are its data's vocabulary: `eq(feat("Dodge"))`, `simple("Club")`
+  // A ruleset's content builders, and the core's, are its data's vocabulary: `eq(feat("Dodge"))`, `simple("Club")`
   if (/^content\/[^/]+\/builders\//.test(file)) return {};
   const report = (id) => {
     if (/^[A-Z]/.test(id.name)) return;

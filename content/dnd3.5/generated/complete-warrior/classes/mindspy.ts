@@ -5,8 +5,8 @@
  * - No modifiers defined — review if this class needs any
  */
 
+import { gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
-import { gte, or } from "@/content/dnd3.5/builders/customization/requirements.ts";
 
 export const MINDSPY: ClassSeed = {
   name: "Mindspy",

@@ -1,7 +1,7 @@
 /** An item reference's seeds: its weapons, armor, shields and goods. */
 
 import { type ItemReference } from "@/codegen/dnd3.5/tools/types/items.ts";
-import type { RequirementEntry } from "@/content/dnd3.5/builders/customization/types.ts";
+import type { RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import { getArmorDefinition, getShieldDefinition } from "@/content/dnd3.5/builders/items/armor.ts";
 import {
   exotic,

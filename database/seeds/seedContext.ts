@@ -2,8 +2,8 @@
 
 import { eq } from "drizzle-orm";
 
-import { BaseSeeder, type SeedContext as RulesetSeedContext } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
-import { RulesetSeeder } from "@/database/packages/dnd35/seed/RulesetSeeder.ts";
+import { BaseSeeder, type SeedContext as RulesetSeedContext } from "@/database/packages/dnd3.5/seed/BaseSeeder.ts";
+import { RulesetSeeder } from "@/database/packages/dnd3.5/seed/RulesetSeeder.ts";
 import { itemsInRules, klassesInRules, languagesInRules, racesInRules } from "@/drizzle/schema.ts";
 import { type Db } from "@/server/database/index.ts";
 

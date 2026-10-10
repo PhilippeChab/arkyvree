@@ -1,4 +1,4 @@
-import type { Modifier, Property, RequirementEntry } from "@/content/dnd3.5/builders/customization/types.ts";
+import type { Modifier, Property, RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 
 /** An item: a template others are made from, or one made from a template (`sourceItem`). */

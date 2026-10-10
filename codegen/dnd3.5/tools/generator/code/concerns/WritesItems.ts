@@ -1,7 +1,7 @@
 import { isDeepStrictEqual } from "node:util";
 
 import type { BaseCodeFile } from "@/codegen/dnd3.5/tools/generator/code/BaseCodeFile.ts";
-import type { Property, RequirementEntry } from "@/content/dnd3.5/builders/customization/types.ts";
+import type { Property, RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import { getArmorDefinition, getShieldDefinition } from "@/content/dnd3.5/builders/items/armor.ts";
 import {
   exotic,

@@ -1,6 +1,6 @@
 import { sanitizeJsonValues } from "@/codegen/dnd3.5/tools/text/sanitize.ts";
 import type { DetectedModifiers } from "@/codegen/dnd3.5/tools/types/reference.ts";
-import type { Modifier } from "@/content/dnd3.5/builders/customization/types.ts";
+import type { Modifier } from "@/content/core/builders/customization/types.ts";
 
 import type { ModifierReading } from "./readers/modifiers/ModifierReading.ts";
 

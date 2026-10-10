@@ -6,7 +6,7 @@ import type {
   ModifierSeed,
   RequirementCondition,
   RequirementEntry,
-} from "@/content/dnd3.5/builders/customization/types.ts";
+} from "@/content/core/builders/customization/types.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";

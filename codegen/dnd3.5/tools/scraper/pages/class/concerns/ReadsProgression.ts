@@ -1,8 +1,8 @@
 import type * as cheerio from "cheerio";
 import { type AnyNode } from "domhandler";
 
+import { normalizeWs } from "@/codegen/core/text/whitespace.ts";
 import { type DndToolsPage } from "@/codegen/dnd3.5/tools/scraper/pages/DndToolsPage.ts";
-import { normalizeWs } from "@/codegen/dnd3.5/tools/text/scrapedText.ts";
 import { type ClassReference } from "@/codegen/dnd3.5/tools/types/classes.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 

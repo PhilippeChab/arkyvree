@@ -10,7 +10,7 @@
 
 import { type Element, isText } from "domhandler";
 
-import { normalizeWs } from "@/codegen/dnd3.5/tools/text/scrapedText.ts";
+import { normalizeWs } from "@/codegen/core/text/whitespace.ts";
 import type { SpellReference } from "@/codegen/dnd3.5/tools/types/spells.ts";
 import { SPELL_SCHOOLS } from "@/shared/dnd3.5/spells.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";

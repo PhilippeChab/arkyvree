@@ -3,7 +3,7 @@
 import type * as cheerio from "cheerio";
 import type { AnyNode } from "domhandler";
 
-import { Page } from "./Page.ts";
+import { Page } from "@/codegen/core/scraper/Page.ts";
 
 /** The headings of dndtools.net's frame, which every page carries above its content: they start with one of these. */
 const SITE_FRAME = ["Feats", "D&D", "Welcome", "Home", "About", "Search", "Login"];

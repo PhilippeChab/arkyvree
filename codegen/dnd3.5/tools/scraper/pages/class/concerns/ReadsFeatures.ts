@@ -1,6 +1,6 @@
+import { Page } from "@/codegen/core/scraper/Page.ts";
 import { ClassFeatures } from "@/codegen/dnd3.5/tools/scraper/pages/class/ClassFeatures.ts";
 import { type DndToolsPage } from "@/codegen/dnd3.5/tools/scraper/pages/DndToolsPage.ts";
-import { Page } from "@/codegen/dnd3.5/tools/scraper/pages/Page.ts";
 import { type ClassReference } from "@/codegen/dnd3.5/tools/types/classes.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 

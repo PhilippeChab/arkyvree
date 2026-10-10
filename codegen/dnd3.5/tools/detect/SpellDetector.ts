@@ -1,7 +1,7 @@
+import { normalizeWs } from "@/codegen/core/text/whitespace.ts";
 import { sanitizeText } from "@/codegen/dnd3.5/tools/text/sanitize.ts";
-import { normalizeWs } from "@/codegen/dnd3.5/tools/text/scrapedText.ts";
 import { type SpellReference } from "@/codegen/dnd3.5/tools/types/spells.ts";
-import type { Property } from "@/content/dnd3.5/builders/customization/types.ts";
+import type { Property } from "@/content/core/builders/customization/types.ts";
 import {
   SPELL_AREA_OF_EFFECT,
   SPELL_CASTING_TIME,

@@ -1,7 +1,7 @@
+import { setStr } from "@/content/core/builders/customization/modifiers.ts";
 import { formatWithArticle } from "@/content/dnd3.5/builders/bonds/articles.ts";
 import type { BondContent } from "@/content/dnd3.5/builders/bonds/types.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
-import { setStr } from "@/content/dnd3.5/builders/customization/modifiers.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import type { RaceSeed } from "@/content/dnd3.5/builders/races/types.ts";
 

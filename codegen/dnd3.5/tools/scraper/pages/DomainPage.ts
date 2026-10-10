@@ -4,10 +4,9 @@
  * since merged a domain's versions, without their books or spell levels.
  */
 
-import { normalizeWs } from "@/codegen/dnd3.5/tools/text/scrapedText.ts";
+import { Page } from "@/codegen/core/scraper/Page.ts";
+import { normalizeWs } from "@/codegen/core/text/whitespace.ts";
 import type { DomainVersion, DomainVersionSpell } from "@/codegen/dnd3.5/tools/types/domains.ts";
-
-import { Page } from "./Page.ts";
 
 /** A domain version's page: its heading, the rulebook it links to, its granted power and its spells' table. */
 export class DomainPage extends Page {

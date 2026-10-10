@@ -94,12 +94,18 @@ describe("component rules", () => {
             "export const s = <Tooltip title={skill.description}><span /></Tooltip>;\n",
           "client/src/pages/characters/details/components/dnd3.5/OptionTooltip.tsx":
             'export const w = <Tooltip title="Edit"><span /></Tooltip>;\n',
+          // Every ruleset's wizard alike
+          "client/src/pages/characters/details/components/pf1/FeatsStep.tsx":
+            "export const f = <Tooltip title={feat.description}><span /></Tooltip>;\n",
+          "client/src/pages/characters/details/components/pf1/OptionTooltip.tsx":
+            'export const o = <Tooltip title="Edit"><span /></Tooltip>;\n',
         },
         ["option-tooltips"],
       ),
     ).toEqual([
       "option-tooltips client/src/cut.tsx",
       "option-tooltips client/src/pages/characters/details/components/dnd3.5/SkillsStep.tsx",
+      "option-tooltips client/src/pages/characters/details/components/pf1/FeatsStep.tsx",
       "option-tooltips client/src/tree.tsx",
     ]);
   });

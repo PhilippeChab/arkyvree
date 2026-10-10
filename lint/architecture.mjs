@@ -8,8 +8,7 @@
  *   below the rulesets that run on it (`engine/rulesets/`), and `lib/`, what it shares with the server, imports
  *   nothing of the app. Copy-on-write's server part is `cow/`: its read side (`cow/views/`: a ruleset's view, read and
  *   memoized) below its write side (`cow/writes/`). A ruleset's content (`content/<ruleset>/`: its builders, its data and what the codegen
- *   generates) is data, which imports none of what reads or writes it; its builders (the types and builders its data is
- *   written with) import nothing of its data. The codegen (`codegen/`) isn't the server's, and stores nothing; the
+ *   generates) is data, which imports none of what reads or writes it. The codegen (`codegen/`) isn't the server's, and stores nothing; the
  *   server reads none of `database/`, `content/` and `codegen/`. `shared/` imports nothing app-specific (the schema's
  *   types only), and the client takes only types from the server.
  * - `engine-front-door`: code outside `engine/` enters it through `engine/index.ts`, `Engine` and its handles' types,
@@ -28,6 +27,11 @@
  *   `cow/`, `policies/`, the client's component folders; code outside a client component folder enters it at its
  *   outermost index, never a subfolder's). Files within the folder import each other directly, and a test may reach a
  *   folder's own modules (a pure module's unit test).
+ * - `ruleset-folders`: a ruleset is a folder of `engine/rulesets/`, and a folder of its name, in any tree, is its own
+ *   (`content/<ruleset>/`, `codegen/<ruleset>/`, `database/packages/<ruleset>/`, `shared/<ruleset>/`, the client's
+ *   and the tests'): a ruleset's code imports none of another's, and what every ruleset runs on (`engine/core/`,
+ *   `content/core/`, `codegen/core/`, `database/packages/seed/`, the server, `shared/`, `lib/`) names none of them. A
+ *   ruleset's builders (`content/<ruleset>/builders/`, what its data is written with) import nothing of its data.
  * - `re-exports`: an `index.ts` that re-exports is a folder's entry, which only re-exports what the folder offers,
  *   from the modules themselves (`export { x } from "./x.ts"`): its own code goes in a module named for it. Any other
  *   module (an `index.ts` that re-exports nothing too: a route folder's routes) exports what it declares, never another
@@ -72,6 +76,7 @@ const indexCache = new Map();
  * `index.ts` is its routes, not its folder's entry), the engine's, and the client's components.
  */
 const INDEXED_TREES = ["server/", "engine/", CLIENT_COMPONENTS];
+
 const LAYERS = [
   { layer: "server/database/", deny: ["server/repositories/", ...ABOVE_REPOSITORIES] },
   { layer: "server/repositories/", deny: ABOVE_REPOSITORIES },
@@ -102,8 +107,6 @@ const LAYERS = [
   { layer: "server/", deny: ["database/", "content/", "codegen/"] },
   // A ruleset's content is data, which the seeders write and the codegen generates: it imports none of them
   { layer: "content/", deny: ["server/", "database/", "codegen/", "engine/", "client/", "lib/", "drizzle/"] },
-  // What a ruleset's content is written with: below its data and what the codegen generates of it
-  { layer: "content/dnd3.5/builders/", deny: ["content/dnd3.5/data/", "content/dnd3.5/generated/"] },
   // The codegen reads the books and writes content: it stores nothing, and it isn't the server's
   { layer: "codegen/", deny: ["server/", "database/", "client/"] },
   // The engine computes over the data it's given: it reads nothing itself, so it imports none of what stores data
@@ -123,16 +126,29 @@ const LAYERS = [
     types: ["server/", "engine/", "drizzle/"],
   },
 ];
+
 /** What a module that exports another module's is told. */
 const MODULE_EXPORTS_ITS_OWN =
   "A module exports what it declares, never another module's: code that needs that imports it from where it's defined.";
-
 /** Where a query may be built: the repositories, and the database layer (what talks to Postgres itself). */
 const QUERY_HOMES = ["server/repositories/", "server/database/"];
-
 const QUERY_METHODS = new Set(["select", "selectDistinct", "insert", "update", "delete", "execute"]);
 
+/** The rulesets of each repo root, once read. */
+const rulesetsCache = new Map();
+
 const SET_OPERATORS = new Set(["union", "unionAll", "intersect", "intersectAll", "except", "exceptAll"]);
+
+/** What every ruleset runs on, which names none of them: the core's folders, the server and what it shares. */
+const SHARED_HOMES = [
+  "engine/core/",
+  "content/core/",
+  "codegen/core/",
+  "database/packages/seed/",
+  "server/",
+  "shared/",
+  "lib/",
+];
 /** The modules `one-engine-op` read, by path. */
 const sourceCache = new Map();
 
@@ -486,6 +502,37 @@ function createReExports(context) {
   };
 }
 
+function createRulesetFolders(context) {
+  const file = repoPath(context.filename);
+  const rulesets = rulesetsOf(rootOf(context.filename));
+  const ruleset = rulesetOf(file, rulesets);
+  const home = ruleset ? undefined : SHARED_HOMES.find((prefix) => file.startsWith(prefix));
+  const builders = ruleset && file.startsWith(`content/${ruleset}/builders/`);
+  if (!ruleset && !home) return {};
+  return onImports((node, spec) => {
+    const target = targetOf(file, spec);
+    const other = target && rulesetOf(target, rulesets);
+    if (home && other) {
+      context.report({
+        node,
+        message: `${home} is what every ruleset runs on: it imports none of ${other}'s folders.`,
+      });
+    } else if (ruleset && other && other !== ruleset) {
+      context.report({
+        node,
+        message:
+          `${ruleset}'s code imports none of ${other}'s: a ruleset's folders are its own, and what rulesets share ` +
+          "is core's (engine/core/, content/core/, codegen/core/, database/packages/seed/).",
+      });
+    } else if (builders && /^content\/[^/]+\/(data|generated)\//.test(target ?? "")) {
+      context.report({
+        node,
+        message: `content/${ruleset}/builders/ is what its data is written with: it imports nothing of its data.`,
+      });
+    }
+  });
+}
+
 function hasIndex(dir) {
   if (!indexCache.has(dir)) indexCache.set(dir, fs.existsSync(`${dir}/index.ts`) || fs.existsSync(`${dir}/index.tsx`));
 
@@ -547,6 +594,27 @@ function reExportsFrom(statement) {
   );
 }
 
+/** The ruleset a path's code is: the first of its folders a ruleset is named for, none for code every ruleset shares. */
+function rulesetOf(file, rulesets) {
+  return file
+    .split("/")
+    .slice(0, -1)
+    .find((folder) => rulesets.has(folder));
+}
+
+/**
+ * A repo's rulesets, by the folders they run from (`engine/rulesets/<ruleset>/`): the names a ruleset's folders go by in
+ * every tree (its content, codegen, package, vocabulary, client pages, tests).
+ */
+function rulesetsOf(root) {
+  if (!rulesetsCache.has(root)) {
+    const dir = path.join(root, "engine/rulesets");
+    const folders = fs.existsSync(dir) ? fs.readdirSync(dir, { withFileTypes: true }) : [];
+    rulesetsCache.set(root, new Set(folders.filter((entry) => entry.isDirectory()).map((entry) => entry.name)));
+  }
+  return rulesetsCache.get(root);
+}
+
 /** What an expression of the view is, past what only retypes it (`rulesetData!`, `rulesetData as X`, parentheses). */
 function unwrapped(node) {
   let outer = node;
@@ -562,4 +630,5 @@ export default {
   "queries-in-repositories": { meta: { type: "problem" }, create: createQueriesInRepositories },
   "folder-index": { meta: { type: "problem" }, create: createFolderIndex },
   "re-exports": { meta: { type: "problem" }, create: createReExports },
+  "ruleset-folders": { meta: { type: "problem" }, create: createRulesetFolders },
 };

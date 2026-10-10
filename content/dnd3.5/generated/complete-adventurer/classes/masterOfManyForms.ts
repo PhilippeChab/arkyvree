@@ -5,8 +5,8 @@
  * - No modifiers defined — review if this class needs any
  */
 
+import { eq } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
-import { eq } from "@/content/dnd3.5/builders/customization/requirements.ts";
 
 export const MASTER_OF_MANY_FORMS: ClassSeed = {
   name: "Master of Many Forms",

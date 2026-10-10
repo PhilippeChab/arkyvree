@@ -1,7 +1,13 @@
-import { HttpClient } from "@/codegen/dnd3.5/tools/scraper/HttpClient.ts";
+import { join } from "node:path";
+
+import { HttpClient } from "@/codegen/core/scraper/HttpClient.ts";
 import { Scraper } from "@/codegen/dnd3.5/tools/scraper/Scraper.ts";
+import { sanitizeHtml } from "@/codegen/dnd3.5/tools/text/sanitize.ts";
 
 import { CommandLine } from "./CommandLine.ts";
+
+/** Where the scraper caches the pages it fetches: its own folder's, which git ignores. */
+const SCRAPER_CACHE = join(import.meta.dirname!, "../scraper/.cache");
 
 function printUsage() {
   console.error("Usage: bun scraper/index.ts <type> [options]");
@@ -45,7 +51,13 @@ async function main() {
     process.exit(1);
   }
 
-  const scraper = new Scraper(book, new HttpClient({ noCache, ...(delay !== undefined ? { delay } : {}) }));
+  const client = new HttpClient({
+    cacheDir: SCRAPER_CACHE,
+    noCache,
+    sanitize: sanitizeHtml,
+    ...(delay !== undefined ? { delay } : {}),
+  });
+  const scraper = new Scraper(book, client);
 
   if (type === "class") {
     if (url) await scraper.scrapeClass(url);

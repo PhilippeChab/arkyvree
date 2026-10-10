@@ -1,9 +1,9 @@
+import { normalizeWs } from "@/codegen/core/text/whitespace.ts";
 import { BenefitModifiers } from "@/codegen/dnd3.5/tools/detect/readers/modifiers/BenefitModifiers.ts";
 import { ProficiencyModifiers } from "@/codegen/dnd3.5/tools/detect/readers/modifiers/ProficiencyModifiers.ts";
 import { getFeatureBaseName, isPluralVariantOf, isVariantOf } from "@/codegen/dnd3.5/tools/text/names.ts";
-import { normalizeWs } from "@/codegen/dnd3.5/tools/text/scrapedText.ts";
 import { type AptitudePick, type ClassReference } from "@/codegen/dnd3.5/tools/types/classes.ts";
-import { bonus } from "@/content/dnd3.5/builders/customization/modifiers.ts";
+import { bonus } from "@/content/core/builders/customization/modifiers.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import type { BaseClassDetector, ClassFeature } from "./BaseClassDetector.ts";

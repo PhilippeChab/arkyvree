@@ -1,7 +1,7 @@
 /** A magic item reference's seeds: its ItemSeed[], by category. */
 
 import { type MagicItemCategory, type MagicItemReference } from "@/codegen/dnd3.5/tools/types/magicItems.ts";
-import type { Property } from "@/content/dnd3.5/builders/customization/types.ts";
+import type { Property } from "@/content/core/builders/customization/types.ts";
 import { armorProperties } from "@/content/dnd3.5/builders/items/properties.ts";
 import type { ItemSeed } from "@/content/dnd3.5/builders/items/types.ts";
 import { ARMOR_PROFICIENCY } from "@/shared/dnd3.5/properties/index.ts";

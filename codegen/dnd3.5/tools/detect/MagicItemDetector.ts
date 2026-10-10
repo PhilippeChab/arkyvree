@@ -1,8 +1,8 @@
 import { sanitizeJsonValues } from "@/codegen/dnd3.5/tools/text/sanitize.ts";
 import { normalizeDescription } from "@/codegen/dnd3.5/tools/text/scrapedText.ts";
 import type { MagicItemCategory, MagicItemReference } from "@/codegen/dnd3.5/tools/types/magicItems.ts";
-import { bonus } from "@/content/dnd3.5/builders/customization/modifiers.ts";
-import type { Modifier, Property } from "@/content/dnd3.5/builders/customization/types.ts";
+import { bonus } from "@/content/core/builders/customization/modifiers.ts";
+import type { Modifier, Property } from "@/content/core/builders/customization/types.ts";
 import { MAGIC_AURA, MAGIC_CASTER_LEVEL } from "@/shared/dnd3.5/properties/index.ts";
 
 import { BaseDetector, type Resolved } from "./BaseDetector.ts";

@@ -3,7 +3,7 @@
  * from, or feats it's treated as having.
  */
 
-import { normalizeWs } from "@/codegen/dnd3.5/tools/text/scrapedText.ts";
+import { normalizeWs } from "@/codegen/core/text/whitespace.ts";
 
 /** Patterns indicating the character makes a selection from a pool */
 const CHOICE_PATTERN =

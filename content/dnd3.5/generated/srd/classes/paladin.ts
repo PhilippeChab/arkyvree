@@ -5,8 +5,8 @@
  * - No modifiers defined — review if this class needs any
  */
 
+import { eqStr } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
-import { eqStr } from "@/content/dnd3.5/builders/customization/requirements.ts";
 
 export const PALADIN: ClassSeed = {
   name: "Paladin",

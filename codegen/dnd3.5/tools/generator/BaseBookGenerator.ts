@@ -1,12 +1,12 @@
 import { join } from "node:path";
 
+import { type GeneratedFolder } from "@/codegen/core/GeneratedFolder.ts";
 import type { BookSeeds } from "@/codegen/dnd3.5/tools/seeds/BookSeeds.ts";
 import Library from "@/codegen/dnd3.5/tools/seeds/Library.ts";
 import { CORE_BOOK } from "@/codegen/dnd3.5/tools/vocabulary/books.ts";
 
 import type { DeclaredType } from "./code/BaseCodeFile.ts";
 import { CodeFile } from "./code/CodeFile.ts";
-import { type GeneratedFolder } from "./GeneratedFolder.ts";
 
 /**
  * A book's generator's core, which its concerns (`concerns/`) build on: the book, its seeds, which its files are

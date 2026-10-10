@@ -3,7 +3,7 @@
  * levels her class features give a pick (3rd and 12th), and gets Weapon Focus or Specialization with it.
  */
 
-import { grantFeat } from "@/content/dnd3.5/builders/customization/modifiers.ts";
+import { grantFeat } from "@/content/dnd3.5/builders/feats/possession.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import { ALL_WEAPONS } from "@/content/dnd3.5/builders/items/weapons.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";

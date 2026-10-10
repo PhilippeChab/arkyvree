@@ -1,8 +1,8 @@
+import type { HttpClient } from "@/codegen/core/scraper/HttpClient.ts";
 import References from "@/codegen/dnd3.5/tools/references/References.ts";
 import { sanitizeJsonValues } from "@/codegen/dnd3.5/tools/text/sanitize.ts";
 import type { ReferenceType, StoredReference } from "@/codegen/dnd3.5/tools/types/reference.ts";
 
-import type { HttpClient } from "./HttpClient.ts";
 import { ListingPage } from "./pages/ListingPage.ts";
 
 /** A dndtools.net listing of a book's entries: its classes, feats, races or spells. */

@@ -1,4 +1,4 @@
-import type { Property } from "@/content/dnd3.5/builders/customization/types.ts";
+import type { Property } from "@/content/core/builders/customization/types.ts";
 
 /** A power: the aptitudes it's in (its spell lists), its saving throw and its properties. */
 export type PowerSeed = {

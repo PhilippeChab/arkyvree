@@ -1,4 +1,4 @@
-import type { Property } from "@/content/dnd3.5/builders/customization/types.ts";
+import type { Property } from "@/content/core/builders/customization/types.ts";
 
 import type { Overrides, ScrapedMeta } from "./reference.ts";
 

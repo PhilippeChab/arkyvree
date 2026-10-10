@@ -1,4 +1,4 @@
-import type { ModifierSeed, RequirementEntry } from "@/content/dnd3.5/builders/customization/types.ts";
+import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
 
 /** How fast a class's base attack bonus grows: as fast as its level, three quarters of it, or half. */
 export type BabType = "good" | "medium" | "poor";

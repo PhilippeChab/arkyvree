@@ -1,6 +1,6 @@
 /** Builders the generated items are written with: their weapon, armor or shield properties. */
 
-import type { Property } from "@/content/dnd3.5/builders/customization/types.ts";
+import type { Property } from "@/content/core/builders/customization/types.ts";
 import {
   ARMOR_AC_BONUS,
   ARMOR_CHECK_PENALTY,

@@ -7,14 +7,15 @@
  *   <h3>Racial Traits</h3> <ul><li>...</li></ul>
  */
 
-import { normalizeWs, PART_SEPARATOR } from "@/codegen/dnd3.5/tools/text/scrapedText.ts";
+import { Page } from "@/codegen/core/scraper/Page.ts";
+import { normalizeWs } from "@/codegen/core/text/whitespace.ts";
+import { PART_SEPARATOR } from "@/codegen/dnd3.5/tools/text/scrapedText.ts";
 import type { RaceReference } from "@/codegen/dnd3.5/tools/types/races.ts";
 import type { NamedText } from "@/codegen/dnd3.5/tools/types/reference.ts";
 import { ABILITY_NAMES } from "@/codegen/dnd3.5/tools/vocabulary/abilities.ts";
 import { SIZE_OPTIONS, type SizeType } from "@/shared/enums.ts";
 
 import { DndToolsPage } from "./DndToolsPage.ts";
-import { Page } from "./Page.ts";
 
 /** dndtools' Django ids of the sizes, for its "RaceSize object (N)" rendering: the site's keys, not ours. */
 const DNDTOOLS_SIZE_IDS: Record<string, SizeType> = {
