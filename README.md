@@ -139,14 +139,16 @@ engine/                 # The ruleset engine: computes a ruleset's rules over th
 lib/                    # What the engine and the server share: the mixins (include)
 
 content/
-  dnd3.5/               # The 3.5 content: its builders, its hand-written data, the generated books
+  core/                 # What every ruleset's content is written with: the customization builders, a package's shape
+  dnd3.5/               # The 3.5 content, data: its builders, its hand-written rows, the generated books, its packages, its test characters
 
 codegen/
   dnd3.5/               # The SRD scraper and generator: reference files, and the tools that write content/dnd3.5/generated
 
 database/
-  packages/             # Content packages (dnd35, its extensions), their runner and seeders
-  seeds/                # Development seed data (users, characters)
+  packages/             # The content packages' runner and registry: which packages a database gets, and the seeds that write them
+  seeders/              # What writes content to the database: core/ (ContentSeeder), dnd3.5/ (its seeder)
+  seeds/                # The dev and test seed scripts (users, characters)
 
 drizzle/
   schema.ts             # Database schema (and relations.ts), pulled from the database
@@ -154,7 +156,7 @@ drizzle/
 
 shared/                 # Types and pure helpers shared by the client, the server and the database packages
 vocabulary/
-  dnd3.5/               # The 3.5 vocabulary, data only: its lists, labels, tables and bounds, which the engine and the client read
+  dnd3.5/               # The 3.5 vocabulary, data only: its lists, labels, tables and bounds, which the engine, the client, the content and the codegen read
 emails/                 # Email templates (React Email)
 scripts/                # Database scripts (reset, migrate, seed) and ops scripts (prod diff, impersonate, validation)
 docs/                   # Developer docs

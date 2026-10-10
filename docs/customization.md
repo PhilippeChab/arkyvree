@@ -82,7 +82,7 @@ requirements: [
 ]
 ```
 
-`requirementRows()` in `database/packages/dnd3.5/seed/BaseSeeder.ts` walks the tree and assigns hierarchical levels:
+`requirementRows()` in `database/seeders/dnd3.5/BaseSeeder.ts` walks the tree and assigns hierarchical levels:
 - Root entries: `"1"`, `"2"`, `"3"`
 - Children: `"1.1"`, `"1.2"`, nested: `"1.1.1"`, `"1.1.2"`
 
@@ -158,7 +158,7 @@ Example: `"Martial Weapon Proficiency: Battleaxe"` → `"martialweaponproficienc
 
 ## Auto-Generated Customization
 
-Some entities get properties, requirements, or feats generated. Spells, skills and class levels get theirs when they're created or edited, from the engine's plan of the form, its `writes` (`entities("powers").planCreate` and `planEdit`, `entities("skills").planCreate` and `planEdit`, `class(klassId).planLevelCreate` and `planLevelEdit`: `engine/rulesets/dnd3.5/entities/powers/PowerEntity.ts` with `powers/fields.ts` and `feats/SpellFocusFeats.ts`, `skills/SkillEntity.ts`, `classes/ClassLevelEntity.ts`). Weapons, armors and shields get theirs from their type's definition when the content packages write them (`content/dnd3.5/builders/items/weapons.ts`, `armor.ts`). They're an item's fields: `ITEM_FIELDS.read` reads them (`engine/rulesets/dnd3.5/entities/items/fields.ts`, which the inventory and the equipping check read with), and `ITEM_FIELDS.toProperties` gives them back as rows, which a test holds every seeded item's to. Saving an item plans its slot only (`entities("items").planCreate`, `planDuplicate`, `planEdit`, `planVariants`: an armor's the torso, a shield's the off hand). An item made from a template stores only the types it overrides, and `RulesetData.itemProperties` merges its rows with the template's before they're read; `RulesetData.itemRequirements` splits its requirements into its template's (`template`) and its own (`own`), which the 3.5 rules read as its proficiency and its other requirements.
+Some entities get properties, requirements, or feats generated. Spells, skills and class levels get theirs when they're created or edited, from the engine's plan of the form, its `writes` (`entities("powers").planCreate` and `planEdit`, `entities("skills").planCreate` and `planEdit`, `class(klassId).planLevelCreate` and `planLevelEdit`: `engine/rulesets/dnd3.5/entities/powers/PowerEntity.ts` with `powers/fields.ts` and `feats/SpellFocusFeats.ts`, `skills/SkillEntity.ts`, `classes/ClassLevelEntity.ts`). Weapons, armors and shields get theirs from their type's definition when the content packages write them (the tables of `vocabulary/dnd3.5/weapons.ts` and `armor.ts`, through `content/dnd3.5/builders/items/properties.ts`). They're an item's fields: `ITEM_FIELDS.read` reads them (`engine/rulesets/dnd3.5/entities/items/fields.ts`, which the inventory and the equipping check read with), and `ITEM_FIELDS.toProperties` gives them back as rows, which a test holds every seeded item's to. Saving an item plans its slot only (`entities("items").planCreate`, `planDuplicate`, `planEdit`, `planVariants`: an armor's the torso, a shield's the off hand). An item made from a template stores only the types it overrides, and `RulesetData.itemProperties` merges its rows with the template's before they're read; `RulesetData.itemRequirements` splits its requirements into its template's (`template`) and its own (`own`), which the 3.5 rules read as its proficiency and its other requirements.
 
 Every create's or edit's plan takes one shape, `EntityWrites` (`engine/core/module/parts/entities/plans.ts`): it says what to write beside the entity's row, without ids, and the service writes it in its transaction (`writeEntityWrites`, `server/services/rulesets/entityWrites.ts`).
 - `properties` gives the fields of the entity's form as its properties, in place of those of the same types it stored before. Its other properties stay.
@@ -169,7 +169,7 @@ Every create's or edit's plan takes one shape, `EntityWrites` (`engine/core/modu
 
 ### Weapons (type = "Weapon")
 
-Properties generated from `WEAPON_TYPE_DEFINITIONS` in `content/dnd3.5/builders/items/weapons.ts`:
+Properties generated from `WEAPON_TYPE_DEFINITIONS` in `vocabulary/dnd3.5/weapons.ts` (`weaponProperties`, `content/dnd3.5/builders/items/properties.ts`):
 
 | Property Type              | Example (Longsword)                 |
 |----------------------------|-------------------------------------|
@@ -216,7 +216,7 @@ An item's proficiency is its base item's requirements: its template's, or its ow
 
 ### Armor (type = "Armor")
 
-Properties generated from `ARMOR_TYPE_DEFINITIONS` in `content/dnd3.5/builders/items/armor.ts`:
+Properties generated from `ARMOR_TYPE_DEFINITIONS` in `vocabulary/dnd3.5/armor.ts` (`armorProperties`):
 
 | Property Type        | Example (Chain Mail) |
 |----------------------|----------------------|
@@ -236,7 +236,7 @@ Armor or a shield is equipped only when its proficiency is met, unless forced. W
 
 ### Shields (type = "Shield")
 
-Properties generated from `SHIELD_TYPE_DEFINITIONS` in `content/dnd3.5/builders/items/armor.ts`:
+Properties generated from `SHIELD_TYPE_DEFINITIONS` in `vocabulary/dnd3.5/armor.ts` (`shieldProperties`):
 
 | Property Type        | Example (Heavy Steel Shield) |
 |----------------------|------------------------------|
@@ -376,7 +376,7 @@ Item creation feats use `identity.meta.level` (character level) for their caster
 
 ### Caster level advancement:
 
-Prestige classes that advance spellcasting use a "Bonus Caster Level" aptitude system. Each advancement feat adds +1 to `classes.<name>.bonuscasterlevel` via a stackable modifier. Classes define `casterLevelAdvancement` with a type (`divine`, `arcane`, or general) and which levels grant the advancement feat pick. See `database/packages/dnd3.5/seed/concerns/SeedsClasses.ts` for implementation. The class levels a bonus caster level reaches apply their spell slots each while its own requirements hold.
+Prestige classes that advance spellcasting use a "Bonus Caster Level" aptitude system. Each advancement feat adds +1 to `classes.<name>.bonuscasterlevel` via a stackable modifier. Classes define `casterLevelAdvancement` with a type (`divine`, `arcane`, or general) and which levels grant the advancement feat pick. See `database/seeders/dnd3.5/concerns/SeedsClasses.ts` for implementation. The class levels a bonus caster level reaches apply their spell slots each while its own requirements hold.
 
 ### A class's spell lists:
 

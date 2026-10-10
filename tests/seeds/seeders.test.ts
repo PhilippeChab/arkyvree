@@ -9,8 +9,8 @@ import type { ItemSeed } from "@/content/dnd3.5/builders/items/types.ts";
 import type { RaceSeed } from "@/content/dnd3.5/builders/races/types.ts";
 import type { SpellSeed } from "@/content/dnd3.5/builders/spells/types.ts";
 import { ALL_CLASSES as SRD_CLASSES } from "@/content/dnd3.5/generated/srd/classes/index.ts";
-import type { SeedContext } from "@/database/packages/dnd3.5/seed/BaseSeeder.ts";
-import { findSpellcastingClass } from "@/database/packages/dnd3.5/seed/spellTable.ts";
+import type { SeedContext } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
+import { findSpellcastingClass } from "@/database/seeders/dnd3.5/spellTable.ts";
 import {
   entitySnapshotsInRules,
   featsAptitudesInRules,

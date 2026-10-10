@@ -2,8 +2,9 @@ import { expect, test } from "bun:test";
 
 import { eq, inArray } from "drizzle-orm";
 
-import seedCharacters, { CHARACTERS } from "@/database/seeds/characters.ts";
-import { type CharacterSeed } from "@/database/seeds/seedCharacter.ts";
+import type { CharacterSeed } from "@/content/dnd3.5/builders/characters/types.ts";
+import { CHARACTERS } from "@/content/dnd3.5/testData/characters.ts";
+import seedCharacters from "@/database/seeds/characters.ts";
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import {
   characterAbilitiesInCharacter,

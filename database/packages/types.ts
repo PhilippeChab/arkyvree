@@ -1,11 +1,13 @@
+import type { PackageDefinition } from "@/content/core/builders/packages/types.ts";
 import type { Db } from "@/server/database/index.ts";
 
 /** A step that seeds or changes a package's content. */
 type Seed = (db: Db) => Promise<void>;
 
 /**
- * Seed data (a base ruleset or an extension) with a version, which the runner installs on a new database
- * and brings up to date on an existing one. `rules.content_packages` records the version each database has.
+ * A content package as the runner applies it: its definition's name, type and version (`content/<ruleset>/packages/`),
+ * with the seeds that write its content, and its updates. The runner installs it on a new database and brings it up
+ * to date on an existing one. `rules.content_packages` records the version each database has.
  *
  * `seeds` install the package at `seedsVersion`. A later change goes in `updates`, keyed by the version it
  * brings the package to (`seedsVersion + 1`, `+ 2`…): a new database runs the seeds then every update, an
@@ -15,10 +17,7 @@ type Seed = (db: Db) => Promise<void>;
  * - Never delete a seeded row (a feat, an aptitude, a power…): characters reference them by id.
  * - Keep an update safe to run twice (guard clauses, upserts): a retry after a failure runs it again.
  */
-export interface ContentPackage {
-  name: string;
+export interface ContentPackage extends Pick<PackageDefinition, "name" | "seedsVersion" | "type"> {
   seeds: Seed[];
-  seedsVersion: number;
-  type: "base_ruleset" | "extension";
   updates?: Record<number, Seed>;
 }

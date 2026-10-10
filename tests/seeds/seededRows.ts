@@ -1,4 +1,4 @@
-import { DND35_RULESET_NAME } from "@/content/dnd3.5/names.ts";
+import { DND35_RULESET_NAME } from "@/content/dnd3.5/rulesetNames.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";

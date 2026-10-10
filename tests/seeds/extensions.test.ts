@@ -6,7 +6,7 @@ import {
   DND35_COMPLETE_DIVINE_NAME,
   DND35_COMPLETE_WARRIOR_NAME,
   DND35_DMG_NAME,
-} from "@/content/dnd3.5/names.ts";
+} from "@/content/dnd3.5/rulesetNames.ts";
 import { db } from "@/server/database/index.ts";
 import { EntitySnapshots, Rulesets } from "@/server/repositories/index.ts";
 
