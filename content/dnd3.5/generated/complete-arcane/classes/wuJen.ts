@@ -74,5 +74,4 @@ export const WU_JEN: ClassSeed = {
     ],
     knowAll: true,
   },
-  aptitudePicks: [{ levels: [3], target: "aptitudes.wujenspellsecret3rd.allowed" }],
 };

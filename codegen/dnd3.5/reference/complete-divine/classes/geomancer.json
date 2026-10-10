@@ -6,6 +6,16 @@
     "type": "class"
   },
   "overrides": {
+    "aptitudePicks": [
+      {
+        "levels": [
+          2,
+          6,
+          10
+        ],
+        "target": "aptitudes.geomancerleylines.allowed"
+      }
+    ],
     "classSkills": [
       "Climb",
       "Concentration",
@@ -26,7 +36,57 @@
         "description": "As the geomancer advances, his body gradually transforms to reflect his bond with the natural world. At every geomancer level, select one drift from the stage corresponding to that level."
       },
       "Ley Lines": {
-        "description": "Beginning at 2nd level, the geomancer forges a mystical link to a particular kind of terrain. Select one terrain type from the following: aquatic, desert, forest, hills, marsh, mountains, or plains. While in that terrain, the geomancer's effective caster level for all spells is increased by +1. At 6th level and once more at 10th level, the geomancer may either pick an additional terrain to gain the +1 caster level bonus, or raise his effective caster level in a terrain he has already chosen by a further +1."
+        "description": "Beginning at 2nd level, the geomancer forges a mystical link to a particular kind of terrain. Select one terrain type from the following: aquatic, desert, forest, hills, marsh, mountains, or plains. While in that terrain, the geomancer's effective caster level for all spells is increased by +1. At 6th level and once more at 10th level, the geomancer may either pick an additional terrain to gain the +1 caster level bonus, or raise his effective caster level in a terrain he has already chosen by a further +1.",
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.geomancerleylines.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ]
+      },
+      "Ley Lines: Aquatic": {
+        "aptitude": "Geomancer Ley Lines",
+        "description": "While in aquatic terrain, the geomancer's effective caster level for all spells increases by +1. Choosing aquatic terrain again, at 6th or 10th level, raises it by a further +1.",
+        "level": 2,
+        "stackable": true
+      },
+      "Ley Lines: Desert": {
+        "aptitude": "Geomancer Ley Lines",
+        "description": "While in desert terrain, the geomancer's effective caster level for all spells increases by +1. Choosing desert terrain again, at 6th or 10th level, raises it by a further +1.",
+        "level": 2,
+        "stackable": true
+      },
+      "Ley Lines: Forest": {
+        "aptitude": "Geomancer Ley Lines",
+        "description": "While in forest terrain, the geomancer's effective caster level for all spells increases by +1. Choosing forest terrain again, at 6th or 10th level, raises it by a further +1.",
+        "level": 2,
+        "stackable": true
+      },
+      "Ley Lines: Hills": {
+        "aptitude": "Geomancer Ley Lines",
+        "description": "While in hills terrain, the geomancer's effective caster level for all spells increases by +1. Choosing hills terrain again, at 6th or 10th level, raises it by a further +1.",
+        "level": 2,
+        "stackable": true
+      },
+      "Ley Lines: Marsh": {
+        "aptitude": "Geomancer Ley Lines",
+        "description": "While in marsh terrain, the geomancer's effective caster level for all spells increases by +1. Choosing marsh terrain again, at 6th or 10th level, raises it by a further +1.",
+        "level": 2,
+        "stackable": true
+      },
+      "Ley Lines: Mountains": {
+        "aptitude": "Geomancer Ley Lines",
+        "description": "While in mountains terrain, the geomancer's effective caster level for all spells increases by +1. Choosing mountains terrain again, at 6th or 10th level, raises it by a further +1.",
+        "level": 2,
+        "stackable": true
+      },
+      "Ley Lines: Plains": {
+        "aptitude": "Geomancer Ley Lines",
+        "description": "While in plains terrain, the geomancer's effective caster level for all spells increases by +1. Choosing plains terrain again, at 6th or 10th level, raises it by a further +1.",
+        "level": 2,
+        "stackable": true
       },
       "Spell Versatility 0": {
         "description": "Starting at 1st level, the geomancer gains the ability to merge his arcane and divine magical traditions. He continues to learn and prepare spells normally for each of his spellcasting classes. However, when casting spells, he may freely combine spellcasting parameters from any of his classes to achieve the best possible outcome for any spell whose level does not exceed his current spell versatility score. For instance, a 4th-level geomancer can cast his 3rd-level or lower arcane spells without incurring arcane spell failure from worn armor. (The druid's prohibition on metal armor still applies to druid/geomancers, as this restriction arises from a spiritual commitment rather than a mechanical limitation.) The geomancer may apply his Wisdom modifier to determine the save DC of arcane spells, or use his Charisma or Intelligence modifier (whichever normally governs his arcane casting) for the save DC of divine spells. When a spell calls for either an arcane material component or a divine focus, the geomancer may substitute one for the other. A cleric/geomancer who also possesses levels in wizard, sorcerer, or bard may spontaneously convert any prepared arcane or divine spell (other than a domain spell) of a suitable level into a cure or inflict spell of equal or lower level, provided he is able to cast that cure or inflict spell as a cleric."
@@ -37,11 +97,7 @@
       "Weapon and Armor Proficiency": {
         "description": "Geomancers do not gain any additional weapon or armor proficiencies."
       }
-    },
-    "reviewed": [
-      "a new terrain in which to receive the benefit (at +1)",
-      "increase his effective caster level in a previously chosen terrain by an additional +1"
-    ]
+    }
   },
   "raw": {
     "classFeatures": [

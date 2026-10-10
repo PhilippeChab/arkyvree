@@ -171,19 +171,18 @@ describe("parser:dnd3.5:validate", () => {
 
   test("reports a class's bonus feat list entry that names no feat, but a reviewed one", () => {
     const geomancer = "complete-divine/classes/geomancer.json";
-    expect(issuesOf(geomancer, (overrides) => void (overrides.reviewed = []))).toEqual([
-      {
-        kind: "unknown listed feat",
-        entityName: "Geomancer",
-        text: "a new terrain in which to receive the benefit (at +1)",
-      },
-      {
-        kind: "unknown listed feat",
-        entityName: "Geomancer",
-        text: "increase his effective caster level in a previously chosen terrain by an additional +1",
-      },
+    const fragment = "a new terrain in which to receive the benefit (at +1)";
+    const listing = (overrides: Record<string, unknown>) =>
+      void (overrides.bonusFeatLists = [{ aptitude: "Geomancer Ley Lines", feats: ["Alertness", fragment] }]);
+    expect(issuesOf(geomancer, listing)).toEqual([
+      { kind: "unknown listed feat", entityName: "Geomancer", text: fragment },
     ]);
-    expect(issuesOf(geomancer, () => undefined)).toEqual([]);
+    expect(
+      issuesOf(geomancer, (overrides) => {
+        listing(overrides);
+        overrides.reviewed = [fragment];
+      }),
+    ).toEqual([]);
   });
 
   test("reports a review entry that repeats one, once", () => {

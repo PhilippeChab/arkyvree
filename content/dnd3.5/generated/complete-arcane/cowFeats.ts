@@ -2,8 +2,4 @@
 
 import type { CowFeatEntry } from "@/content/dnd3.5/builders/rulesets/types.ts";
 
-export const COW_FEATS: CowFeatEntry[] = [
-  { feat: "Extend Spell", requirements: [], aptitudes: ["Wu Jen Spell Secret (3rd)"] },
-  { feat: "Still Spell", requirements: [], aptitudes: ["Wu Jen Spell Secret (3rd)"] },
-  { feat: "Silent Spell", requirements: [], aptitudes: ["Wu Jen Spell Secret (3rd)"] },
-];
+export const COW_FEATS: CowFeatEntry[] = [];

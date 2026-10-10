@@ -51,6 +51,22 @@ describe("A class's detected prerequisites", () => {
   });
 });
 
+describe("A class's detected bonus feat lists", () => {
+  test("are a level's feats only when each entry names one, never a sentence's words", () => {
+    expect(classOf("srd", "monk").detected.bonusFeatLists).toContainEqual({
+      aptitude: "Monk Bonus Feat (1st)",
+      feats: ["Improved Grapple", "Stunning Fist"],
+      levels: [1],
+    });
+    // "can choose one spell known to her that then becomes permanently modified as though affected by one of the
+    // following metamagic feats: Enlarge Spell, Extend Spell, Still Spell, or Silent Spell"
+    expect(classOf("complete-arcane", "wuJen").detected.bonusFeatLists).toBeUndefined();
+    // "may either choose a new terrain in which to receive the benefit (at +1), or increase his effective caster level
+    // in a previously chosen terrain by an additional +1"
+    expect(classOf("complete-divine", "geomancer").detected.bonusFeatLists).toBeUndefined();
+  });
+});
+
 describe("A class's detected features", () => {
   test("give the modifiers their text reads and the bonuses it leaves unread, by feature", () => {
     const { featureModifiers } = classOf("srd", "barbarian").detected;

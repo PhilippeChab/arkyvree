@@ -16,14 +16,85 @@ export const WU_JEN_CLASS_FEATS: FeatSeed[] = [
       'Many of the wu jen\'s spells are divided into five elemental groups: earth, fire, metal, water, and wood. At 6th level, instead of receiving a spell secret, a wu jen becomes a master of one of these five elements (her choice). Thereafter, whenever a wu jen casts a spell of that element, her effective caster level (for purposes of deter- mining level-dependent spell variables and for caster level checks) is increased by two. In addition, the wu jen herself gets a +2 competence bonus on saving throws against spells of that element. Certain spells on the wu jen spell list are designated "All"; this means they belong to all elemental groups, and a wu jen who is a master of any element gains the mastery bonuses with respect to those spells.',
     selectable: false,
     aptitudes: ["Wu Jen Class Feature"],
+    modifiers: [
+      { target: "aptitudes.wujenelementalmastery.allowed", operator: "add", value: "1", valueType: "number" },
+    ],
+  },
+  {
+    name: "Elemental Mastery: Earth (Wu Jen Elemental Mastery)",
+    description:
+      "The wu jen masters earth. Whenever she casts a spell of the earth element, or one her list designates All, her effective caster level is 2 higher, for the spell's level-dependent variables and for caster level checks. She also gains a +2 competence bonus on saving throws against spells of the earth element.",
+    aptitudes: ["Wu Jen Elemental Mastery"],
+    requirements: [gte("classes.wujen.level", 6)],
+  },
+  {
+    name: "Elemental Mastery: Fire (Wu Jen Elemental Mastery)",
+    description:
+      "The wu jen masters fire. Whenever she casts a spell of the fire element, or one her list designates All, her effective caster level is 2 higher, for the spell's level-dependent variables and for caster level checks. She also gains a +2 competence bonus on saving throws against spells of the fire element.",
+    aptitudes: ["Wu Jen Elemental Mastery"],
+    requirements: [gte("classes.wujen.level", 6)],
+  },
+  {
+    name: "Elemental Mastery: Metal (Wu Jen Elemental Mastery)",
+    description:
+      "The wu jen masters metal. Whenever she casts a spell of the metal element, or one her list designates All, her effective caster level is 2 higher, for the spell's level-dependent variables and for caster level checks. She also gains a +2 competence bonus on saving throws against spells of the metal element.",
+    aptitudes: ["Wu Jen Elemental Mastery"],
+    requirements: [gte("classes.wujen.level", 6)],
+  },
+  {
+    name: "Elemental Mastery: Water (Wu Jen Elemental Mastery)",
+    description:
+      "The wu jen masters water. Whenever she casts a spell of the water element, or one her list designates All, her effective caster level is 2 higher, for the spell's level-dependent variables and for caster level checks. She also gains a +2 competence bonus on saving throws against spells of the water element.",
+    aptitudes: ["Wu Jen Elemental Mastery"],
+    requirements: [gte("classes.wujen.level", 6)],
+  },
+  {
+    name: "Elemental Mastery: Wood (Wu Jen Elemental Mastery)",
+    description:
+      "The wu jen masters wood. Whenever she casts a spell of the wood element, or one her list designates All, her effective caster level is 2 higher, for the spell's level-dependent variables and for caster level checks. She also gains a +2 competence bonus on saving throws against spells of the wood element.",
+    aptitudes: ["Wu Jen Elemental Mastery"],
+    requirements: [gte("classes.wujen.level", 6)],
   },
   {
     name: "Spell Secret (Wu Jen)",
     description:
       "At 3rd level, and every three levels thereafter, a wu jen can choose one spell known to her that then becomes permanently modified as though affected by one of the following metamagic feats: Enlarge Spell, Extend Spell, Still Spell, or Silent Spell. The spell's level does not change, and once the choice of spell and modification are chosen, they cannot be changed. As the wu jen goes up in level, she can choose the same spell to be modified in different ways with multiple spell secrets. She does not need to know the feat she applies to the spell.",
+    stackable: true,
     selectable: false,
     aptitudes: ["Wu Jen Class Feature"],
     modifiers: [{ target: "aptitudes.wujenspellsecret.allowed", operator: "add", value: "1", valueType: "number" }],
+  },
+  {
+    name: "Spell Secret: Enlarge Spell (Wu Jen Spell Secret)",
+    description:
+      "One spell the wu jen knows is permanently modified as though by the Enlarge Spell feat, its level unchanged. She chooses the spell when she takes this secret, and neither the spell nor its modification can change afterward. She doesn't need to know the feat. She can take this secret again for another spell, and one spell can be modified in different ways by several secrets.",
+    stackable: true,
+    aptitudes: ["Wu Jen Spell Secret"],
+    requirements: [gte("classes.wujen.level", 3)],
+  },
+  {
+    name: "Spell Secret: Extend Spell (Wu Jen Spell Secret)",
+    description:
+      "One spell the wu jen knows is permanently modified as though by the Extend Spell feat, its level unchanged. She chooses the spell when she takes this secret, and neither the spell nor its modification can change afterward. She doesn't need to know the feat. She can take this secret again for another spell, and one spell can be modified in different ways by several secrets.",
+    stackable: true,
+    aptitudes: ["Wu Jen Spell Secret"],
+    requirements: [gte("classes.wujen.level", 3)],
+  },
+  {
+    name: "Spell Secret: Silent Spell (Wu Jen Spell Secret)",
+    description:
+      "One spell the wu jen knows is permanently modified as though by the Silent Spell feat, its level unchanged. She chooses the spell when she takes this secret, and neither the spell nor its modification can change afterward. She doesn't need to know the feat. She can take this secret again for another spell, and one spell can be modified in different ways by several secrets.",
+    stackable: true,
+    aptitudes: ["Wu Jen Spell Secret"],
+    requirements: [gte("classes.wujen.level", 3)],
+  },
+  {
+    name: "Spell Secret: Still Spell (Wu Jen Spell Secret)",
+    description:
+      "One spell the wu jen knows is permanently modified as though by the Still Spell feat, its level unchanged. She chooses the spell when she takes this secret, and neither the spell nor its modification can change afterward. She doesn't need to know the feat. She can take this secret again for another spell, and one spell can be modified in different ways by several secrets.",
+    stackable: true,
+    aptitudes: ["Wu Jen Spell Secret"],
+    requirements: [gte("classes.wujen.level", 3)],
   },
   {
     name: "Spellbooks (Wu Jen)",

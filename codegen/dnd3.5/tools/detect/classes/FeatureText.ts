@@ -75,7 +75,9 @@ export class FeatureText {
 
   /** Parse per-level bonus feat choices from description like:
    *  "At 1st level... select either X or Y. At 2nd level... select either A or B."
-   *  Returns an array of { level, feats } entries, or undefined if no per-level pattern found. */
+   *  Returns an array of { level, feats } entries, or undefined if no per-level pattern found. A level's choice is a
+   *  list of feats only when each of its entries is a feat's name, capitalized ("Improved Grapple"), never a sentence's
+   *  words ("choose one spell known to her that…", "either choose a new terrain…, or increase…"). */
   perLevelBonusFeatLists(): { feats: string[]; level: number }[] | undefined {
     // Match "At Xth level" followed by feat choices, capturing up to the next period
     const pattern = /At (\d+)(?:st|nd|rd|th) level[^.]*?(?:select|choose)\s+(?:either\s+)?(.+?)\./gi;
@@ -91,7 +93,7 @@ export class FeatureText {
         .split(/,\s*(?:or\s+)?|\s+or\s+/i)
         .map((f) => f.replace(/^\s*(?:and|or)\s+/i, "").trim())
         .filter(Boolean);
-      if (feats.length >= 2) results.push({ level, feats });
+      if (feats.length >= 2 && feats.every((feat) => /^[A-Z]/.test(feat))) results.push({ level, feats });
     }
 
     return results.length > 0 ? results : undefined;
