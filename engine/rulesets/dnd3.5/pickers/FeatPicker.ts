@@ -6,6 +6,16 @@ import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 import LevelPicker from "./LevelPicker.ts";
 
 /**
+ * What a row of the grouped feat options tells beside its own columns: the pools its modifiers add slots to, whether
+ * the character can take it, and the requirements it fails when it can't (a family's row: none until it's opened).
+ */
+export interface FeatGroupDetails {
+  aptitudeModifiers: PoolModifier[];
+  eligible: boolean;
+  requirementTree: string | undefined;
+}
+
+/**
  * A feat picker for the character, from its rows: the pool's feats (`filters`, a family's when the query names one;
  * `groupFilters`, grouped by family), but those it holds that don't stack; each described with the pools its modifiers
  * add slots to, and a family's row described when the picker opens it (`describeGroups`).
@@ -40,20 +50,15 @@ export default class FeatPicker extends LevelPicker<{ aptitudeModifiers: PoolMod
   }
 
   /** A row of a feat's variants, which the picker opens into them: each variant says whether it's eligible. */
-  private asFamilyRow<T extends object>(row: T) {
-    return {
-      ...row,
-      eligible: true as boolean,
-      aptitudeModifiers: [] as PoolModifier[],
-      requirementTree: undefined as string | undefined,
-    };
+  private asFamilyRow<T extends object>(row: T): T & FeatGroupDetails {
+    return { ...row, eligible: true, aptitudeModifiers: [], requirementTree: undefined };
   }
 
   /**
    * The grouped feat options of a page: a feat without variants described as a flat option is, a family's row
    * eligible, its variants described when the picker opens it.
    */
-  describeGroups<T extends { representativeId: string; variantCount: number }>(rows: T[]) {
+  describeGroups<T extends { representativeId: string; variantCount: number }>(rows: T[]): (T & FeatGroupDetails)[] {
     const singles = rows.filter((row) => row.variantCount === 1).map((row) => ({ id: row.representativeId }));
     const described = new Map(this.describe(singles).map((option) => [option.id, option]));
     return rows.map((row) => {
