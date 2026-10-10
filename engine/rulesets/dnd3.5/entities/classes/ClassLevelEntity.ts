@@ -66,6 +66,24 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
   }
 
   /**
+   * A form's granted feats and their pools, and its saves, the view's: refused when it names a save twice (by its
+   * source's id and its copy's).
+   */
+  protected override resolveIds({ feats, saves }: ClassLevelBody) {
+    const saveIds = this.ids.resolveAll("saves", saves?.map(({ saveId }) => saveId) ?? []);
+    return {
+      ...(feats && {
+        feats: feats.map((feat) => ({
+          ...feat,
+          aptitudeId: this.ids.resolve("aptitudes", feat.aptitudeId),
+          featId: this.ids.resolve("feats", feat.featId),
+        })),
+      }),
+      ...(saves && { saves: saves.map((save, index) => ({ ...save, saveId: saveIds[index] })) }),
+    };
+  }
+
+  /**
    * What saving a level writes (`level`: the one edited): the base attack and skill points its form gives, over those it
    * keeps, and, made with a level past the class's first, its requirement of the class's previous level
    * (`classes.<slug>.level` above it).
@@ -148,8 +166,12 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
     });
   }
 
-  /** A form's join rows: the feats it grants (free unless it says), and its saves' base bonuses. */
-  private joinRows({ feats, saves }: ClassLevelBody) {
+  /**
+   * A form's join rows: the feats it grants (free unless it says), and its saves' base bonuses, each entity the view's
+   * (`resolveIds`).
+   */
+  private joinRows(body: ClassLevelBody) {
+    const { feats, saves } = { ...body, ...this.resolveIds(body) };
     return {
       feats: feats?.map((feat) => ({ aptitudeId: feat.aptitudeId, featId: feat.featId, free: feat.free ?? true })),
       saves: saves?.map((save) => ({ base: save.base, saveId: save.saveId })),

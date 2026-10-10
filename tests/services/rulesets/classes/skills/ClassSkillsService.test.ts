@@ -56,7 +56,11 @@ describe("ClassSkillsService", () => {
     const other = await setup();
     await expectRefusedWith(ClassSkillsService.getClassSkills(ruleset.id, other.fighter.id), 404);
     await expectRefusedWith(ClassSkillsService.addClassSkill(session, ruleset.id, other.fighter.id, climb.id), 404);
-    await expectRefusedWith(ClassSkillsService.addClassSkill(session, ruleset.id, fighter.id, other.climb.id), 404);
+    // The skill an add sends is its body's: refused as invalid, by name
+    expect(ClassSkillsService.addClassSkill(session, ruleset.id, fighter.id, other.climb.id)).rejects.toMatchObject({
+      message: `Skill ${other.climb.id} does not belong to this ruleset`,
+      refusal: "invalid",
+    });
     await expectRefusedWith(ClassSkillsService.removeClassSkill(session, ruleset.id, fighter.id, climb.id), 404);
     await expectRefusedWith(ClassSkillsService.removeClassSkill(session, ruleset.id, other.fighter.id, climb.id), 404);
   });

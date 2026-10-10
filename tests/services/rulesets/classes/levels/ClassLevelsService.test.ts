@@ -20,6 +20,7 @@ import {
   Klasses,
   KlassLevelFeats,
   KlassLevels,
+  KlassLevelSaves,
   Modifiers,
   Powers,
   Properties,
@@ -35,7 +36,7 @@ import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { insertRows } from "@/tests/support/database.ts";
 import { addCharacterLevel } from "@/tests/support/levels.ts";
-import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
+import { copyEntity, createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, NIL_UUID } from "@/tests/support/seed.ts";
 import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/properties/index.ts";
 
@@ -110,6 +111,50 @@ describe("ClassLevelsService", () => {
         },
         { level: 2, bab: 2, feats: [], saves: [] },
       ]);
+    });
+
+    test("names what its fork copied as the copy, sent by its source's id, and refuses one it lacks by name", async () => {
+      const { user, session, ruleset, klass, aptitude } = await setup();
+      const feat = await FeatsService.createFeat(session, ruleset.id, { name: "Cleave", aptitudeIds: [aptitude.id] });
+      const fortitude = await createSave(ruleset.id, "Fortitude");
+      const fork = await createTestRuleset(user.id, { rulesetId: ruleset.id, ancestorRulesetIds: [ruleset.id] });
+      const copies = {
+        aptitude: (await copyEntity(db, "aptitudes", aptitude.id, fork)).id,
+        feat: (await copyEntity(db, "feats", feat.id, fork)).id,
+        save: (await copyEntity(db, "saves", fortitude.id, fork)).id,
+      };
+      RulesetViews.invalidate(fork.id);
+      const grantsOf = async (levelId: string) => ({
+        feats: await KlassLevelFeats.findMany(db, { klassLevelIds: [levelId] }),
+        saves: await KlassLevelSaves.findMany(db, { klassLevelIds: [levelId] }),
+      });
+      const copied = {
+        feats: [{ aptitudeId: copies.aptitude, featId: copies.feat }],
+        saves: [{ saveId: copies.save, base: 2 }],
+      };
+
+      // The parent's ids are the sources': the API takes them, as it takes the copies' the client sends
+      const grants = {
+        feats: [{ featId: feat.id, aptitudeId: aptitude.id }],
+        saves: [{ saveId: fortitude.id, base: 2 }],
+      };
+      const level = await createLevel(session, fork.id, klass.id, 1, grants);
+      expect(await grantsOf(level.id)).toMatchObject(copied);
+      await ClassLevelsService.updateClassLevel(session, fork.id, klass.id, level.id, { feats: [], saves: [] });
+      await ClassLevelsService.updateClassLevel(session, fork.id, klass.id, level.id, grants);
+      expect(await grantsOf(level.id)).toMatchObject(copied);
+
+      // An id it lacks was a 500; one save named by both its ids, two rows of it
+      const lacking = (label: string) => ({ message: `${label} ${NIL_UUID} does not belong to this ruleset` });
+      const unknownFeat = { feats: [{ featId: NIL_UUID, aptitudeId: aptitude.id }] };
+      expect(createLevel(session, fork.id, klass.id, 2, unknownFeat)).rejects.toMatchObject(lacking("Feat"));
+      const unknownSave = { saves: [{ saveId: NIL_UUID, base: 1 }] };
+      expect(createLevel(session, fork.id, klass.id, 2, unknownSave)).rejects.toMatchObject(lacking("Save"));
+      const twice = { saves: [...grants.saves, { saveId: copies.save, base: 1 }] };
+      expect(createLevel(session, fork.id, klass.id, 2, twice)).rejects.toMatchObject({
+        message: `Save ${copies.save} is given more than once`,
+        refusal: "invalid",
+      });
     });
 
     test("an update replaces them, keeps them when it omits them, and clears them", async () => {

@@ -1,8 +1,15 @@
 import RulesError from "@/engine/core/RulesError.ts";
+import { RequestIds } from "@/engine/core/view/index.ts";
 import type { Property } from "@/shared/relations.ts";
 
 import CustomizationEdits from "./CustomizationEdits.ts";
 import PropertyLabels from "./PropertyLabels.ts";
+
+/** A property's form: its type, and its value. */
+interface PropertyForm {
+  type: string;
+  value: string;
+}
 
 /** An entity's properties: as its page lists them, and what their saves store. */
 export default class PropertyEdits extends CustomizationEdits<Property> {
@@ -31,6 +38,16 @@ export default class PropertyEdits extends CustomizationEdits<Property> {
   }
 
   /**
+   * The value a property's form stores: the id of the entity its type names (a class's bonus spell ability), the one
+   * the view shows (a copy's for its source's id), refused, naming it, when it shows none; any other value as it is.
+   */
+  private storedValueOf({ type, value }: PropertyForm) {
+    const { rulesetData } = this.view;
+    const entityType = rulesetData.propertyTypes.getReferencedEntityType(type);
+    return entityType ? new RequestIds(rulesetData, "this ruleset").resolve(entityType, value) : value;
+  }
+
+  /**
    * The entity's properties of its type, as the view composes them, each named for the entity its value names
    * (`PropertyLabels`).
    */
@@ -38,9 +55,9 @@ export default class PropertyEdits extends CustomizationEdits<Property> {
     return PropertyLabels.describe(this.view.rulesetData, this.rowsOf(this.entity.id));
   }
 
-  /** A new property on the entity: the entity as the view has it. */
-  planCreate() {
-    return { entity: this.entity };
+  /** A new property on the entity (`form`): the entity as the view has it, and the value it stores. */
+  planCreate(form: PropertyForm) {
+    return { entity: this.entity, value: this.storedValueOf(form) };
   }
 
   /**
@@ -55,12 +72,12 @@ export default class PropertyEdits extends CustomizationEdits<Property> {
   }
 
   /**
-   * An edit of a property the entity shows: the entity and the property, and whether the edit overrides its template's
-   * on the item (`override`), which makes a property of the item's own.
+   * An edit of a property the entity shows (`form`): the entity and the property, whether the edit overrides its
+   * template's on the item (`override`), which makes a property of the item's own, and the value it stores.
    */
-  planEdit(propertyId: string) {
+  planEdit(propertyId: string, form: PropertyForm) {
     const { entity } = this;
     const { property, fromTemplate } = this.findShown(entity.id, propertyId);
-    return { entity, override: fromTemplate, property };
+    return { entity, override: fromTemplate, property, value: this.storedValueOf(form) };
   }
 }

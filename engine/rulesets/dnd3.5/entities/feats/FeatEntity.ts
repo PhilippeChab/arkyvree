@@ -70,6 +70,11 @@ export default class FeatEntity extends ListedEntity<
     return aptitudeIds?.map((aptitudeId) => ({ aptitudeId }));
   }
 
+  /** A form's pools, the view's: refused when it names one twice (by its source's id and its copy's). */
+  protected override resolveIds({ aptitudeIds }: FeatBody) {
+    return aptitudeIds ? { aptitudeIds: this.ids.resolveAll("aptitudes", aptitudeIds) } : {};
+  }
+
   /**
    * A page of the ruleset's feats, as its form asks for it: what it's read with (`filters`: a pool's feats, a family's;
    * `groupFilters`: grouped by family), and its rows described, with their pools as the ruleset composes them.

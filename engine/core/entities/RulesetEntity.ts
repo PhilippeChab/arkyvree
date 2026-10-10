@@ -9,7 +9,7 @@ import type {
   ListLink,
 } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { RulesetData, RulesetView, ViewEntities } from "@/engine/core/view/index.ts";
+import { RequestIds, type RulesetData, type RulesetView, type ViewEntities } from "@/engine/core/view/index.ts";
 import type { Property } from "@/shared/relations.ts";
 
 /**
@@ -18,10 +18,11 @@ import type { Property } from "@/shared/relations.ts";
  * - an entity found by its id (`find`) and described (`describe`): its row as the view resolves it, with the fields its
  *   properties hold (`fields`);
  * - a page of its rows (`openList`): what the server reads it with (`filters`), and its rows described alike;
- * - what its form writes (`planCreate`, `planEdit`): the fields the form gives, read by its codec (`fieldsSchema`),
- *   the form checked (`checkForm`), its row's columns (`columnsOf`), the lists it's linked to (`linksOf`), what it
- *   writes beside them (`writesOf`: its fields, the feats it makes), and the fields it keeps once written (`fields`,
- *   which a create or an edit answers with its row);
+ * - what its form writes (`planCreate`, `planEdit`): the entities it names by id, as the view reads them (`resolveIds`:
+ *   a copy's for its source's id, refused, naming it, when the view shows none), the fields the form gives, read by its
+ *   codec (`fieldsSchema`), the form checked (`checkForm`), its row's columns (`columnsOf`), the lists it's linked to
+ *   (`linksOf`), what it writes beside them (`writesOf`: its fields, the feats it makes), and the fields it keeps once
+ *   written (`fields`, which a create or an edit answers with its row);
  * - what deleting one writes (`planDelete`): checked (`checkDelete`), and what it writes with it (`deleteWritesOf`).
  */
 export default abstract class RulesetEntity<
@@ -101,6 +102,11 @@ export default abstract class RulesetEntity<
     return this.fields.merge(entity ? this.fields.read(this.propertiesOf(entity)) : this.fields.defaults, given);
   }
 
+  /** The entities a form names by id, as the view reads them: refused, naming one it shows none of. */
+  protected get ids(): RequestIds {
+    return new RequestIds(this.rulesetData, "this ruleset");
+  }
+
   /**
    * The properties a written entity's fields are read off when its form writes none: the edited one's, none for a new
    * one (an item's, its template's).
@@ -117,6 +123,15 @@ export default abstract class RulesetEntity<
   /** The properties an entity's fields are read off: its own (an item's, merged with its template's). */
   protected propertiesOf(entity: { id: string }): Property[] {
     return this.rulesetData.propertiesByEntity.get(entity.id) ?? [];
+  }
+
+  /**
+   * The entities a form names by id, each the one the view shows (`ids`: a copy's for its source's id), as the fields
+   * that replace the form's as it enters (`planCreate`, `planEdit`): refused, naming one the view shows none of. None,
+   * unless its kind's form names one.
+   */
+  protected resolveIds(_body: Body): object {
+    return {};
   }
 
   /** The ruleset's view, as its rules read it. */
@@ -161,9 +176,10 @@ export default abstract class RulesetEntity<
 
   /** A new entity's row off its form, what it writes beside it, and the fields it keeps once written. */
   planCreate(body: Body): EntityCreatePlan<Columns, FieldValues<S>> {
-    const given = this.readFields(body);
-    this.checkForm(body);
-    return this.planWrite(body, given);
+    const form: Body = { ...body, ...this.resolveIds(body) };
+    const given = this.readFields(form);
+    this.checkForm(form);
+    return this.planWrite(form, given);
   }
 
   /** Deleting an entity (`id`): the entity as the view has it, and what its delete writes with it. */
@@ -179,8 +195,9 @@ export default abstract class RulesetEntity<
    */
   planEdit(id: string, body: Body): EntityEditPlan<Columns, FieldValues<S>, ViewEntities[K]> {
     const entity = this.find(id);
-    const given = this.readFields(body, entity);
-    this.checkForm(body, entity);
-    return { ...this.planWrite(body, given, entity), entity };
+    const form: Body = { ...body, ...this.resolveIds(body) };
+    const given = this.readFields(form, entity);
+    this.checkForm(form, entity);
+    return { ...this.planWrite(form, given, entity), entity };
   }
 }

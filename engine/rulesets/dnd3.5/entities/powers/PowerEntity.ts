@@ -83,6 +83,17 @@ export default class PowerEntity extends ListedEntity<
   }
 
   /**
+   * A form's spell lists and save, the view's: refused when it names a list twice (by its source's id and its copy's).
+   */
+  protected override resolveIds({ aptitudes, saveId }: PowerBody) {
+    const listIds = this.ids.resolveAll("aptitudes", aptitudes?.map(({ id }) => id) ?? []);
+    return {
+      ...(aptitudes && { aptitudes: aptitudes.map((aptitude, index) => ({ ...aptitude, id: listIds[index] })) }),
+      ...(saveId && { saveId: this.ids.resolve("saves", saveId) }),
+    };
+  }
+
+  /**
    * What saving a power writes (`power`: the one edited): the fields its form gives, over those it keeps, and the feats
    * of its grouping (a spell's school: its Spell Focus) when it comes to one. A form that gives none of its fields keeps
    * those it has.

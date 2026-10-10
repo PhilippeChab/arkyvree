@@ -43,11 +43,12 @@ describe("rulesets class skills", () => {
     await expectStatus(classSkills.$post({ param: { id, classId }, json: {} as never }), 400);
   });
 
-  test("returns 404 for a missing ruleset, class or skill", async () => {
+  test("returns 404 for a missing ruleset, class or skill, and 400 for a skill the ruleset lacks", async () => {
     const { id, classId } = await setup();
     await expectStatus(classSkills.$get({ param: { id: NIL_UUID, classId } }), 404);
     await expectStatus(classSkills.$get({ param: { id, classId: NIL_UUID } }), 404);
-    await expectStatus(classSkills.$post({ param: { id, classId }, json: { skillId: NIL_UUID } }), 404);
     await expectStatus(classSkills[":skillId"].$delete({ param: { id, classId, skillId: NIL_UUID } }), 404);
+    // The skill an add sends is its body's, not its path's
+    await expectStatus(classSkills.$post({ param: { id, classId }, json: { skillId: NIL_UUID } }), 400);
   });
 });

@@ -5,9 +5,17 @@
 
 import { describe, expect, test } from "bun:test";
 
+import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
-import { Abilities, Requirements } from "@/server/repositories/index.ts";
+import {
+  Abilities,
+  FeatsAptitudes,
+  PowersAptitudes,
+  Requirements,
+  Saves,
+  Skills,
+} from "@/server/repositories/index.ts";
 import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
@@ -22,7 +30,7 @@ import { isCustomizableEntityType } from "@/shared/customization/entities.ts";
 import type { Session } from "@/shared/relations.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { customize, findCustomizations } from "@/tests/support/customizations.ts";
-import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
+import { copyEntity, createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 
 interface Page {
@@ -164,6 +172,40 @@ const SERVICES: Record<string, Service> = {
 
 const ENTITY_TYPES = Object.keys(SERVICES);
 
+/**
+ * What a kind's form names by id (one of its `Refs`: an ability, or a pool it's listed in), the kind of entity that is
+ * and what a refusal calls it, and the id its row stores for it.
+ */
+const FORM_REFS: Record<
+  string,
+  { kind: "abilities" | "aptitudes"; label: string; ref: keyof Refs; stored: (id: string) => Promise<unknown> }
+> = {
+  feats: {
+    kind: "aptitudes",
+    label: "Aptitude",
+    ref: "featAptitudeId",
+    stored: async (id) => (await FeatsAptitudes.findMany(db, { featIds: [id] })).map(({ aptitudeId }) => aptitudeId),
+  },
+  powers: {
+    kind: "aptitudes",
+    label: "Aptitude",
+    ref: "powerAptitudeId",
+    stored: async (id) => (await PowersAptitudes.findMany(db, { powerIds: [id] })).map(({ aptitudeId }) => aptitudeId),
+  },
+  saves: {
+    kind: "abilities",
+    label: "Ability",
+    ref: "abilityId",
+    stored: async (id) => [(await Saves.findOne(db, { id }))?.abilityId],
+  },
+  skills: {
+    kind: "abilities",
+    label: "Ability",
+    ref: "abilityId",
+    stored: async (id) => [(await Skills.findOne(db, { id }))?.primaryAbilityId],
+  },
+};
+
 /** How many of each an entity has: its notes, of its properties. */
 async function counts(entityType: (typeof ENTITY_TYPES)[number], id: string) {
   const { modifiers, modifierRequirements, requirements, properties } = await findCustomizations(entityType, id);
@@ -284,6 +326,49 @@ describe.each(ENTITY_TYPES)("%s service", (entityType) => {
     await service.remove(session, fork.id, inherited.id);
     expect((await service.list(fork.id)).items.map((e) => e.name)).not.toContain("Inherited Entity");
     expect(await service.get(parent.id, inherited.id)).toMatchObject({ name: "Inherited Entity" });
+  });
+});
+
+describe.each(Object.keys(FORM_REFS))("%s form naming another entity", (entityType) => {
+  const service = SERVICES[entityType];
+  const { kind, label, ref, stored } = FORM_REFS[entityType];
+
+  test("stores what its fork copied as the copy, sent by its source's id, and refuses an id the fork lacks by name", async () => {
+    const { ruleset: parent, refs } = await setup();
+    const { user, session } = await createTestUserAndRuleset();
+    const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
+    const copy = await copyEntity(db, kind, refs[ref], fork);
+    RulesetViews.invalidate(fork.id);
+
+    // The parent's ids are the sources': the API takes them, as it takes the copies' the client sends
+    const created = await service.create(session, fork.id, "Referring Entity", refs);
+    expect(await stored(created.id)).toEqual([copy.id]);
+    await service.update(session, fork.id, created.id, "Edited Entity", { ...refs, [ref]: copy.id });
+    await service.update(session, fork.id, created.id, "Edited Again", refs);
+    expect(await stored(created.id)).toEqual([copy.id]);
+
+    // An id no ruleset has, and one of an unrelated ruleset: a 500 and another ruleset's entity, once
+    const { refs: unrelated } = await setup();
+    for (const id of [NIL_UUID, unrelated[ref]]) {
+      expect(service.create(session, fork.id, "Lacking Entity", { ...refs, [ref]: id })).rejects.toMatchObject({
+        message: `${label} ${id} does not belong to this ruleset`,
+        refusal: "invalid",
+      });
+    }
+  });
+});
+
+test("refuses a form naming one list twice: by its source's id and its copy's", async () => {
+  const { ruleset: parent, refs } = await setup();
+  const { user, session } = await createTestUserAndRuleset();
+  const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
+  const copy = await copyEntity(db, "aptitudes", refs.featAptitudeId, fork);
+  RulesetViews.invalidate(fork.id);
+
+  const aptitudeIds = [refs.featAptitudeId, copy.id];
+  expect(FeatsService.createFeat(session, fork.id, { name: "Listed Twice", aptitudeIds })).rejects.toMatchObject({
+    message: `Aptitude ${copy.id} is given more than once`,
+    refusal: "invalid",
   });
 });
 

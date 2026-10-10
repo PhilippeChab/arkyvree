@@ -22,4 +22,9 @@ export default class SaveEntity extends RulesetEntity<"saves", SaveBody> {
   protected override columnsOf({ abilityId, description, name }: SaveBody) {
     return { abilityId, description, name };
   }
+
+  /** A form's ability, the view's. */
+  protected override resolveIds({ abilityId }: SaveBody) {
+    return { abilityId: this.ids.resolve("abilities", abilityId) };
+  }
 }

@@ -5,6 +5,7 @@ import { EntitySnapshots, Items, Properties } from "@/server/repositories/index.
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createSeededTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import { NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import {
   ARMOR_AC_BONUS,
@@ -147,6 +148,24 @@ describe("Item templates", () => {
       await ItemsService.updateItem(session, ruleset.id, copy.id, { name: copy.name, sourceItemId: sword.id }),
     ).toMatchObject({ isTemplate: false, sourceItemId: sword.id });
     expect(await propertiesOf(ruleset.id, copy.id)).toMatchObject({ [WEAPON_TYPE]: "Longsword" });
+  });
+
+  test("an instance names the template its fork copied as the copy, sent by its source's id, and not one it lacks", async () => {
+    const { session, ruleset, template } = await setup();
+    const sword = await template("Longsword");
+    // The fork copies the template, as a first edit of it does
+    const copy = await ItemsService.updateItem(session, ruleset.id, sword.id, {
+      name: sword.name,
+      description: "Ours",
+    });
+    const instance = { name: "My Longsword", type: "Weapon", sourceItemId: sword.id };
+    expect(await ItemsService.createItem(session, ruleset.id, instance)).toMatchObject({ sourceItemId: copy.id });
+
+    const lacking = { ...instance, name: "No Longsword", sourceItemId: NIL_UUID };
+    expect(ItemsService.createItem(session, ruleset.id, lacking)).rejects.toMatchObject({
+      message: `Item ${NIL_UUID} does not belong to this ruleset`,
+      refusal: "invalid",
+    });
   });
 
   describe("have no template of their own", () => {
