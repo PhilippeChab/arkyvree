@@ -46,6 +46,7 @@ export const VIGILANTE_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Vigilante Class Feature"],
+    properties: [{ type: "FEAT_FAMILY", value: "Smite" }],
   },
   {
     name: "Speak With Dead (Vigilante)",

@@ -53,6 +53,7 @@ export const SHADOWBANE_INQUISITOR_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Shadowbane Inquisitor Class Feature"],
+    properties: [{ type: "FEAT_FAMILY", value: "Smite" }],
   },
   {
     name: "Sneak Attack (Shadowbane Inquisitor)",

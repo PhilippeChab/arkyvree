@@ -49,8 +49,10 @@ const CLASS_FEATURES: ClassFeature[] = [
   { pattern: /\brage\b.*\bfrenzy\b|\bfrenzy\b.*\brage\b/i, families: ["Rage"], feats: ["Frenzy (Frenzied Berserker)"] },
   { pattern: /\brage ability\b/i, families: ["Rage"] },
   { pattern: /\bflurry of blows\b/i, families: ["Flurry of Blows"] },
-  // "Smite ability": the smites a family groups, smite evil's; not a smite of another kind ("Smite good class feature")
-  { pattern: /\bsmite (?:ability|evil)\b/i, families: ["Smite Evil"] },
+  // "Smite ability": any smite (smite evil, the hunter of the dead's smite undead…), or the Destruction domain's power
+  { pattern: /\bsmite ability\b/i, families: ["Smite"], feats: ["Destruction Domain"] },
+  // Not a smite of another kind ("Smite good class feature")
+  { pattern: /\bsmite evil\b/i, families: ["Smite Evil"] },
   { pattern: /\bgrace\b/i, families: ["Grace"] },
   // "Ability to acquire a new familiar"
   { pattern: /\bfamiliar\b/i, families: ["Summon Familiar"] },

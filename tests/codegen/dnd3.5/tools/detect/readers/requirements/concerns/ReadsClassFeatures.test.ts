@@ -39,10 +39,11 @@ describe("A class feature a prerequisite names", () => {
     expect(classRequirements("Rage or frenzy ability.")).toEqual([rageOrFrenzy]);
   });
 
-  test("of a smite is any class's smite evil", () => {
+  test("of a smite is any class's smite of whatever kind, or the Destruction domain's; of smite evil, smite evil", () => {
     expect(featRequirements("CHA 13, smite ability,")).toEqual([
       gte("abilities.charisma.total", 13),
-      eq("feats.smiteevil.*.possessed"),
+      or(eq("feats.smite.*.possessed"), eq(feat("Destruction Domain"))),
     ]);
+    expect(featRequirements("Track, smite evil,")).toEqual([eq(feat("Track")), eq("feats.smiteevil.*.possessed")]);
   });
 });

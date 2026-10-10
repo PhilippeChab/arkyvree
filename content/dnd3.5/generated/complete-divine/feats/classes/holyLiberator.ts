@@ -61,7 +61,10 @@ export const HOLY_LIBERATOR_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Holy Liberator Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Smite Evil" }],
+    properties: [
+      { type: "FEAT_FAMILY", value: "Smite" },
+      { type: "FEAT_FAMILY", value: "Smite Evil" },
+    ],
   },
   {
     name: "Spells per Day (Holy Liberator)",
