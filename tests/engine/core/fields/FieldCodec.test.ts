@@ -44,8 +44,11 @@ describe("A field codec", () => {
   });
 
   test("reads a number off the first row holding one in its bounds, and its default otherwise", () => {
-    expect(CODEC.read(rows(["COUNT", "x"], ["COUNT", "0"], ["COUNT", "3"], ["COUNT", "4"])).count).toBe(3);
-    expect(CODEC.read(rows(["COUNT", "0"])).count).toBe(1);
+    // The flag keeps the count its rule would otherwise set to 1
+    const counted = (...counts: string[]) =>
+      rows(["FLAG", "true"], ...counts.map((count): [string, string] => ["COUNT", count]));
+    expect(CODEC.read(counted("x", "0", "3", "4")).count).toBe(3);
+    expect(CODEC.read(counted("0")).count).toBe(1);
     expect(CODEC.read(rows(["LEVEL", ""], ["LEVEL", "-2"])).group.level).toBe(-2);
   });
 

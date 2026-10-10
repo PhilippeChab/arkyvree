@@ -30,9 +30,12 @@ describe("A skill's fields", () => {
   });
 
   test("take the multiplier from the first row of a positive number", () => {
+    // On a skill armor weighs on: any other keeps 1
     const multiplierOf = (...values: string[]) =>
-      SKILL_FIELDS.read(values.map((value) => ({ type: SKILL_CHECK_PENALTY_MULTIPLIER, value })))
-        .checkPenaltyMultiplier;
+      SKILL_FIELDS.read([
+        { type: SKILL_IMPACTED_BY_WEIGHT, value: "true" },
+        ...values.map((value) => ({ type: SKILL_CHECK_PENALTY_MULTIPLIER, value })),
+      ]).checkPenaltyMultiplier;
     expect(multiplierOf("3", "2")).toBe(3);
     expect(multiplierOf("0", "-1", "2")).toBe(2);
     expect(multiplierOf("none")).toBe(1);
