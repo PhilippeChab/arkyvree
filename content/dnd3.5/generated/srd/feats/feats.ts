@@ -5,7 +5,7 @@ import type { FeatSeed } from "@/content/core/builders/feats/types.ts";
 import { feat } from "@/content/dnd3.5/builders/feats/possession.ts";
 import { proficiencyRequirements } from "@/content/dnd3.5/builders/items/proficiencies.ts";
 import { stripSeparators } from "@/shared/text.ts";
-import { SKILL_NAMES } from "@/vocabulary/dnd3.5/skills.ts";
+import { SKILLS_WITH_CHECKS } from "@/vocabulary/dnd3.5/skills.ts";
 import { MAGIC_SCHOOLS } from "@/vocabulary/dnd3.5/spells.ts";
 import { ALL_WEAPONS, CROSSBOW_WEAPONS, EXOTIC_WEAPONS } from "@/vocabulary/dnd3.5/weapons.ts";
 
@@ -893,7 +893,7 @@ export const RAPID_RELOAD_FEATS: FeatSeed[] = CROSSBOW_WEAPONS.map((w) => ({
   properties: [{ type: "FEAT_FAMILY", value: "Rapid Reload" }],
 }));
 
-export const SKILL_FOCUS_FEATS: FeatSeed[] = SKILL_NAMES.map((s) => ({
+export const SKILL_FOCUS_FEATS: FeatSeed[] = SKILLS_WITH_CHECKS.map((s) => ({
   name: `Skill Focus: ${s}`,
   description: `You get a +3 bonus on all ${s} checks.`,
   generated: true,

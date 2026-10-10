@@ -1,7 +1,7 @@
 /** What a family of feats is taken for: a weapon feat's weapons, a spell school feat's schools, Skill Focus's skills. */
 
 import { stripSeparators } from "@/shared/text.ts";
-import { SKILL_NAMES } from "@/vocabulary/dnd3.5/skills.ts";
+import { SKILLS_WITH_CHECKS } from "@/vocabulary/dnd3.5/skills.ts";
 import { SPELL_SCHOOLS } from "@/vocabulary/dnd3.5/spells.ts";
 import { ALL_WEAPONS } from "@/vocabulary/dnd3.5/weapons.ts";
 
@@ -9,7 +9,7 @@ import { ALL_WEAPONS } from "@/vocabulary/dnd3.5/weapons.ts";
 const FEAT_OPTIONS: { family: RegExp; names: readonly string[] }[] = [
   { family: /^(?:Greater )?Weapon (?:Focus|Specialization)$|^Improved Critical$/i, names: ALL_WEAPONS },
   { family: /^(?:Greater )?Spell Focus$/i, names: SPELL_SCHOOLS },
-  { family: /^Skill Focus$/i, names: SKILL_NAMES },
+  { family: /^Skill Focus$/i, names: SKILLS_WITH_CHECKS },
 ];
 
 /** The feat of a family a name takes with its option ("Skill Focus (Bluff)": Skill Focus: Bluff), if any. */

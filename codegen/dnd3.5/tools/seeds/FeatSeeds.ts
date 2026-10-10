@@ -20,7 +20,7 @@ export interface TemplateFamily {
   familyName: string;
   featNameMap: Record<string, string>;
   modifiers: ModifierSeed[];
-  /** The content's list its feats are made over, as the generated code names it (`ALL_WEAPONS`, `SKILL_NAMES`…). */
+  /** The content's list its feats are made over, as the generated code names it (`ALL_WEAPONS`, `SKILLS_WITH_CHECKS`…). */
   options: string;
   /** Its feats require proficiency with their weapon (`proficiencyRequirements`). */
   proficient: boolean;
@@ -35,7 +35,7 @@ export type TemplateType = NonNullable<FeatReference["mapping"][string]["templat
 const FAMILY_OPTIONS: Record<TemplateType, string> = {
   crossbow: "CROSSBOW_WEAPONS",
   school: "MAGIC_SCHOOLS",
-  skill: "SKILL_NAMES",
+  skill: "SKILLS_WITH_CHECKS",
   weapon: "ALL_WEAPONS",
 };
 

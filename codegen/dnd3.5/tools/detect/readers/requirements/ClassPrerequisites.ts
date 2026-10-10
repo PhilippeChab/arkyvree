@@ -9,12 +9,13 @@ import { domainFeat } from "@/content/dnd3.5/builders/aptitudes/names.ts";
 import { feat } from "@/content/dnd3.5/builders/feats/possession.ts";
 import { proficiencyRequirements } from "@/content/dnd3.5/builders/items/proficiencies.ts";
 import { capitalize, stripSeparators } from "@/shared/text.ts";
+import { CHECKLESS_SKILLS } from "@/vocabulary/dnd3.5/skills.ts";
 import { ALL_WEAPONS } from "@/vocabulary/dnd3.5/weapons.ts";
 
 import { RequirementReading } from "./RequirementReading.ts";
 
-/** Skills that exist in D&D 3.5 but aren't tracked in this system. */
-const NON_TRACKABLE_SKILLS = new Set(["speak language"]);
+/** The skills no check is made with, lowercased: a prerequisite's ranks in one (Speak Language's languages) aren't read. */
+const CHECKLESS_SKILL_NAMES = new Set(CHECKLESS_SKILLS.map((name) => name.toLowerCase()));
 
 /**
  * A class's feat prerequisites as the scraper split them, mended: a list split inside its parentheses ("Weapon Focus
@@ -361,7 +362,7 @@ export class ClassPrerequisites extends RequirementReading {
 
   /**
    * The skills a class's prerequisites list, as requirements: an "X or Y" one either, and an "or Y" entry folded into
-   * the skill before it. A skill the system doesn't track is left out.
+   * the skill before it. A skill no check is made with is left out.
    */
   private skillRequirements(skills: { name: string; ranks: number }[]): RequirementEntry[] {
     const reqs: RequirementEntry[] = [];
@@ -369,12 +370,12 @@ export class ClassPrerequisites extends RequirementReading {
     for (let i = 0; i < skills.length; i++) {
       const s = skills[i];
 
-      // Skip skills not tracked in this system (e.g. "Speak Language")
+      // Skip the skills no check is made with ("Speak Language (Terran)")
       const baseName = s.name
         .replace(/\s*\([^)]*\)\s*$/, "")
         .toLowerCase()
         .trim();
-      if (NON_TRACKABLE_SKILLS.has(baseName)) continue;
+      if (CHECKLESS_SKILL_NAMES.has(baseName)) continue;
 
       // Try to expand special skill patterns first (e.g. "Knowledge (any)", "Knowledge (arcana, local or psionics)")
       const expanded = this.listedSkillRequirement(s.name, s.ranks);

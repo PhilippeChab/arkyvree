@@ -88,6 +88,18 @@ describe("The seeded core rules", () => {
     }
   });
 
+  test("give each skill a check is made with its Skill Focus, Use Psionic Device's too, and Speak Language none", async () => {
+    const rows = await seededRows();
+    const focused = rows.feats.flatMap(({ name }) => (name.startsWith("Skill Focus: ") ? [name.slice(13)] : []));
+    const skills = rows.skills.map(({ name }) => name).filter((name) => name !== "Speak Language");
+    expect(focused.sort()).toEqual(skills.sort());
+    expect(focused).toContain("Use Psionic Device");
+    const psionic = rows.feat("Skill Focus: Use Psionic Device");
+    expect(rows.modifiersOf(psionic.id).map(({ target, value }) => `${target} ${value}`)).toEqual([
+      "skills.usepsionicdevice.misc 3",
+    ]);
+  });
+
   describe("cleric domains", () => {
     test("each have a feat in Cleric Domain without requirements, and a spell list of their spells", async () => {
       const rows = await seededRows();

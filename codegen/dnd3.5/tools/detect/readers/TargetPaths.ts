@@ -21,7 +21,7 @@ const SKILL_GROUP_SLUGS = new Set([
 
 /** The engine's target paths of `kind`, its categories' lists given the books' abilities, saves and skills. */
 function enginePaths(kind: "modifier" | "requirement"): Set<string> {
-  const names = { abilities: ABILITY_NAMES, saves: SAVE_NAMES, skills: SKILL_NAMES };
+  const names = { abilities: ABILITY_NAMES, saves: SAVE_NAMES, skills: [...SKILL_NAMES] };
   return new Set(
     Engine.forRules(DND35_BASE_RULES)
       .listBookTargetPaths(names, kind)

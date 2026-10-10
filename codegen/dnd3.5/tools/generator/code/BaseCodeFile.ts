@@ -45,7 +45,7 @@ const IMPORT_TABLE: ImportTable = [
     "@/vocabulary/dnd3.5/weapons.ts",
     ["ALL_WEAPONS", "SIMPLE_WEAPONS", "MARTIAL_WEAPONS", "EXOTIC_WEAPONS", "CROSSBOW_WEAPONS"],
   ],
-  ["@/vocabulary/dnd3.5/skills.ts", ["SKILL_NAMES"]],
+  ["@/vocabulary/dnd3.5/skills.ts", ["SKILLS_WITH_CHECKS"]],
   ["@/vocabulary/dnd3.5/spells.ts", ["MAGIC_SCHOOLS"]],
   ["@/shared/text.ts", ["stripSeparators"]],
 ];
