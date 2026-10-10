@@ -1,2 +1,3 @@
 export { default as ActivitiesService } from "./ActivitiesService.ts";
-export { createActivityWithNotifications, getChangedFields } from "./activityNotifications.ts";
+export { createActivityWithNotifications } from "./activityNotifications.ts";
+export { getChangedFields } from "./changedFields.ts";
