@@ -2941,6 +2941,13 @@ describe("DetailedCharacter", () => {
         expect(detailed.components.powers.getSpellEntry("magicmissile", "wizard")).toBeDefined();
       });
 
+      test("give a specialist a slot of her school at each spell level she casts, cantrips too", async () => {
+        // Elara, an evoker 3, casts cantrips and first- and second-level spells
+        const elara = await buildSeeded("Elara Starweaver");
+        expect(spellUses(elara, "evocationspecialistspells", [0, 1, 2, 3])).toEqual([1, 1, 1, 0]);
+        expect(spellLevel(elara, "evocationspecialistspells", 0).allowed).toBe(ALLOWED_ALL);
+      });
+
       test("open a specialist's school slot at the spell levels bonus caster levels reach", async () => {
         // An evocation specialist wizard 5 / loremaster 3 casts as a wizard 8: fourth-level spells, a school slot there too
         const ctx = await getSeedCtx();

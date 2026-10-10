@@ -33,13 +33,13 @@ export abstract class BaseSeeder extends ContentSeeder<CoreContent, BookContent>
   }
 
   /**
-   * The slots a spell list gives: one more spell a day at each spell level from the first to the ninth, and any
-   * spell of the list to prepare there (`allowed` set to -1).
+   * The slots a spell list gives: one more spell a day at each spell level from the 0th to the ninth, and any spell of
+   * the list to prepare there (`allowed` set to -1): a specialist wizard's school's, one a spell level, cantrips too.
    */
   protected spellListSlots(sourceId: string, sourceType: string, list: string): ModifierRow[] {
-    return Array.from({ length: 9 }, (_, i) => [
-      { sourceId, sourceType, ...bonus(`aptitudes.${list}.${i + 1}.uses`, 1) },
-      { sourceId, sourceType, ...setNum(`aptitudes.${list}.${i + 1}.allowed`, -1) },
+    return Array.from({ length: 10 }, (_, level) => [
+      { sourceId, sourceType, ...bonus(`aptitudes.${list}.${level}.uses`, 1) },
+      { sourceId, sourceType, ...setNum(`aptitudes.${list}.${level}.allowed`, -1) },
     ]).flat();
   }
 
