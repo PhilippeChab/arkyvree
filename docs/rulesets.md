@@ -46,7 +46,7 @@ Creates a child copy of a published ruleset. No entities are duplicated — the 
 Transitions a Draft ruleset to Published. One-way (no Published → Draft path).
 
 - **Kind choice**: at publish time the author picks whether the ruleset is published as a playable `ruleset` (default) or as an `extension` (subscribable add-on for other rulesets of the same base). Stored in `kind`. Editable later via the edit dialog
-- **Validation (kind = 'ruleset')**: its view (its own entities and those inherited from its source chain) must give what its rules make a character of, which the engine checks (`Engine.for(scope).checkPublishable`; 3.5's `RulesetPublishing.checkPublishable`: a player race, a player class, a skill and a feat)
+- **Validation (kind = 'ruleset')**: its view (its own entities and those inherited from its source chain) must give what its rules make a character of, which the engine checks (`Engine.for(scope).checkPublishable`; `RulesetPart.checkPublishable`, over the ruleset's `findMissingContent`, 3.5's a player race, a player class, a skill and a feat)
 - **Validation (kind = 'extension')**: ruleset must be a fork and must not subscribe to other extensions. The minimum-content check is skipped — extensions are layered onto rulesets that already have the basics
 - Only the owner can publish; only Draft rulesets can be published
 
@@ -444,7 +444,10 @@ engine/
 │   │   ├── contract.ts                    (RulesetModule: a module's parts, typed by what it describes in its own
 │   │   │                                  shape, Descriptions, its entity kinds and its seeded fields)
 │   │   ├── parts/                         (CharactersPart, LevelUpPart, EntitiesPart, ContentPart, RulesetPart: each
-│   │   │                                  part an abstract class whose operations a ruleset implements)
+│   │   │                                  part an abstract class, the operations a ruleset answers its own
+│   │   │                                  abstract, those that read the schema alone concrete, over hooks where
+│   │   │                                  a ruleset differs: checkLanguages, describeCard, checkPublishable over
+│   │   │                                  findMissingContent, toEntityProperties over its codecs)
 │   │   ├── characters.ts, levelUp.ts,     (the requests the server sends and the plans it writes, which a part
 │   │   │   pickers.ts                     takes and answers, and a picker's shape)
 │   │   ├── CharacterInputs.ts             (CharacterInput, CharacterRows: a character's rows as the server reads
@@ -535,14 +538,14 @@ engine/rulesets/
     │   └── feats/                         (SkillFocusFeats, SpellFocusFeats: a skill's Skill Focus, a school's Spell
     │                                      Focus, made with core's GeneratedFeats in the general feats' pool)
     ├── ruleset/                           ← the module's `ruleset`: what it answers of a ruleset as a whole
-    │   ├── Dnd35Ruleset.ts                (checkPublishable: what a ruleset published to be played needs)
+    │   ├── Dnd35Ruleset.ts                (findMissingContent: what a ruleset published to be played needs, which
+    │   │                                  core's checkPublishable refuses it without)
     │   └── fields.ts                      (RULESET_FIELDS: the ruleset's own fields, its skill points' ability)
     ├── characters/                        ← the module's `characters`: what it answers of a character
     │   ├── Dnd35Characters.ts             (the module's characters)
-    │   ├── CharacterEdits.ts              (what its creation stores, the languages it can speak)
+    │   ├── CharacterEdits.ts              (what its creation stores: its ability scores)
     │   ├── description/                   (CharacterDescription: the 3.5 API response shape, whole or partial, its
-    │   │                                  private notes as the viewer reads them; CharacterResponse; CharacterCards:
-    │   │                                  a list's card of one)
+    │   │                                  private notes as the viewer reads them; CharacterResponse)
     │   ├── inventory/                     (InventoryEntries: a character's entries described, what an entry's add or
     │   │                                  edit stores; Equipping: what equipping an item checks)
     │   └── sheet/                         (the printed sheet, in React PDF: CharacterSheet and its pages, SheetFormat)
@@ -560,7 +563,7 @@ engine/rulesets/
     │                                      LevelPicker (FeatPicker, PowerPicker: the level they pick at) on
     │                                      CharacterPicker; RacePicker on Picker, checking a new character's form)
     ├── content/                           ← the module's `content`: Dnd35Content, what the seeders and the codegen
-    │                                      ask: BookPaths, EntityProperties
+    │                                      ask: BookPaths, and the codecs of the fields they seed
     └── rules/                             (the tables and rules several sides read: LevelRules, SkillRules, sizes,
                                            carrying, combat)
 ```
@@ -614,7 +617,7 @@ The engine's types keep the narrowest surface any level-based system could imple
 
 ```ts
 // engine/core/module/contract.ts  (universal): each part an abstract class of `parts/`, which a ruleset extends
-export interface RulesetModule<D extends Descriptions, E extends EntityKindsContract, F extends object> {
+export interface RulesetModule<D extends Descriptions, E extends EntityKindsContract, F extends Record<string, Fields>> {
   characters: CharactersPart<D>;
   content: ContentPart<F>;
   entities: EntitiesPart<E>;
@@ -678,11 +681,11 @@ What a ruleset answers is its module's: five parts, each a class whose operation
 
 | Member | What it answers | 3.5's | The handles that ask it |
 |---|---|---|---|
-| `characters` | a character's sheets (the API's, a campaign member's reading, partial or whole, the printed one), a list's card of one, its inventory, what a new one and an inventory entry store (what equipping an item checks), the languages it can speak, the races a new character can pick | `Dnd35Characters`: `describe`, `describeForMember`, `describeSheet`, `describeCard`, `describeInventory`, `planCreate`, `planInventoryEntry`, `checkLanguages`, `openRacePicker`: each named as its handle's operation is | `character(input)` (`CharacterEngine`), `characters()` (`CharactersEngine`) |
+| `characters` | a character's sheets (the API's, a campaign member's reading, partial or whole, the printed one), a list's card of one, its inventory, what a new one and an inventory entry store (what equipping an item checks), the languages it can speak, the races a new character can pick | `Dnd35Characters`: `describe`, `describeForMember`, `describeSheet`, `describeInventory`, `planCreate`, `planInventoryEntry`, `openRacePicker`: each named as its handle's operation is; `describeCard` and `checkLanguages` are `CharactersPart`'s, which read the schema's rows alone | `character(input)` (`CharacterEngine`), `characters()` (`CharactersEngine`) |
 | `entities` | each entity kind's rules, by its table: an entity found and described, a page opened (`openList`), what saving or deleting one writes, what the rules refuse of an edit; a class's levels, class skills and table, which the classes' kind hands out | `Dnd35Entities`: `of(view, type)`, each kind's class (`SkillEntity`, `FeatEntity`, `ItemEntity`…; `ClassEntity`'s `levels(klassId)`, `skills(klassId)`, `table(klassId)`) | `entities(type)`, `class(klassId)` (`ClassEngine`) |
 | `levelUp` | the level flows: the preview, a save's levels and its check (the character with them, unless forced), a saved level's edit, the last level's removal, the bonded creatures the levels make, the wizard's steps and pickers, a saved level's selections | `Dnd35LevelUp`: `describePreview`, `planLevels`, `planEdit`, `planRemoval`, `planBonded`, `describeAbilityStep`, `describeFeatStep`…, `openFeatPicker`…, `describeLevel`: each named as its handle's operation is, and as the class it opens names it (`LevelUpPlan.describePreview`, `LevelEdit.planEdit`) | `character(input).levelUp()` (`LevelUpEngine`) |
-| `ruleset` | what a ruleset needs as a whole, past its entities: to be published to be played, a player race and class, a skill and a feat | `Dnd35Ruleset`: `checkPublishable` (`RulesetPublishing`) | `checkPublishable` |
-| `content` | what the seeders and the codegen ask: the paths a book can target, an entity's fields as its properties | `Dnd35Content`: `listBookTargetPaths`, `toEntityProperties` | `Engine.forRules(baseRules)` (`ContentEngine`) |
+| `ruleset` | what a ruleset needs as a whole, past its entities: to be published to be played, a player race and class, a skill and a feat | `Dnd35Ruleset`: `findMissingContent`, which `RulesetPart.checkPublishable` reads (an extension needs none) | `checkPublishable` |
+| `content` | what the seeders and the codegen ask: the paths a book can target, an entity's fields as its properties | `Dnd35Content`: `listBookTargetPaths`, and the codecs of its seeded fields, which `ContentPart.toEntityProperties` writes with | `Engine.forRules(baseRules)` (`ContentEngine`) |
 | `createTargetPaths`, `createPropertyTypes` | the ruleset's path categories, its property types (in stat-block order, which the view orders an entity's properties by: `PropertyOrder`) | `Dnd35TargetPaths`, `Dnd35PropertyTypes` | `targetPaths()`, `modifiers(…)`, `requirements(…)`; `propertyTypes()` |
 
 A part's operation is a method of a handle of `engine/api/`, which `Engine` hands out, dispatched by the view's base rules (`Modules.of(view.ruleset.baseRules)`, which `Engine.for(scope)` reads once; a content operation by the base rules its caller names, `Engine.forRules(baseRules)`). The target paths' handle asks the target paths (`targetPaths()`: `list`, `validate`, `checkValue`, `getCompletions`, which `CategoryPaths` answers, over `PathChecks` and `PathCompletions`), and the view's build asks the order (`Engine.copyOnWrite().buildView`). The properties' and the customizations', which no ruleset changes but by its factories, ask the core's classes (`engine/core/customizations/`): `PropertyTypeCatalog` adds the types and values the ruleset's own properties use to its rules' (`createPropertyTypes`: `propertyTypes()`'s `list`, `getTypeCompletions`, `getValueCompletions`); `ModifierEdits`, `PropertyEdits` and `RequirementEdits` (on `CustomizationEdits`, bound to the entity as their handles are) describe an entity's customizations and plan their saves, a modifier's or a requirement's row checked against its target paths (`modifiers(entityType, entityId)`: `describe`, `describeAll`, `planCreate`, `planEdit`, `planDelete`, and `properties(…)` and `requirements(…)` alike; a list's, `targetPaths().describeModifiers`, labeled as the entity's are: `TargetLabels.describe`), on the entity the view has (`CustomizedEntity.find`, refused as not found otherwise). Copy-on-write's (`Engine.copyOnWrite()`) ask the core's classes too (`CowSources`: `buildSourceChain`, `getReads`; `ExtensionNames`: `checkExtensionNames`; `SiblingMerge`: `mergeCustomizations`). `entities(type)` hands out a kind's class, whose `find` and `describe` read the view (`RulesetData.find`; a customizable kind's `describe` with its customizations), and `checkPublishable` asks the ruleset part's `checkPublishable`, which an extension passes. An operation takes the data its caller read: the view (`RulesetView`: the ruleset and its `rulesetData`), which `Engine.for` binds, a character's rows (`CharacterInput`: its record, its rows, a bonded creature's master's), which `character(input)` binds, a request's body. It answers data:
@@ -758,11 +761,12 @@ The 3.5-ness in these tables lives in the **seeded values**, not the schema shap
 The contract is the code: `engine/core/module/parts/` holds an abstract class per part, and the compiler lists what a ruleset's part lacks. A ruleset is a module under `engine/rulesets/<ruleset>/`, which the engine's handles dispatch to by its base rules (`Modules.of`).
 
 1. **Its base rules**: a value of the `base_rules` enum (`drizzle/schema.ts`, a migration, and `shared/enums.ts`), then its module in `MODULES` (`engine/api/Modules.ts`), which doesn't compile until the module is written.
-2. **Its module**: a factory returning a `RulesetModule<D, E, F>` (3.5's `Dnd35Module.create`): `D`, what it describes in its own shape (3.5's `descriptions.ts`); `E`, its entity kinds by table; `F`, the fields its content seeds. Each part extends its abstract class: `CharactersPart<D>`, `LevelUpPart<D>`, `EntitiesPart<E>`, `ContentPart<F>`, `RulesetPart`.
+2. **Its module**: a factory returning a `RulesetModule<D, E, F>` (3.5's `Dnd35Module.create`): `D`, what it describes in its own shape (3.5's `descriptions.ts`); `E`, its entity kinds by table; `F`, the fields its content seeds, by entity. Each part extends its abstract class: `CharactersPart<D>`, `LevelUpPart<D>`, `EntitiesPart<E>`, `ContentPart<F>`, `RulesetPart`. A part's abstract members are what the ruleset answers its own way; what reads the schema alone is the part's (`checkLanguages`, `describeCard`), over a hook where a ruleset differs (`checkPublishable` over `findMissingContent`, `toEntityProperties` over `codecs`).
 3. **Its character** in `engine/rulesets/<ruleset>/model/`, which its parts build, on core's character (`engine/core/character/`): its character extends `CharacterBase` and implements its build's steps and its own issues (3.5's `DetailedCharacter`, with its components), and its builder extends `CharacterBuilder`, a character for each row kind (3.5's `Dnd35CharacterBuilder`).
-4. **Its target paths and property types**: a `CategoryPaths` subclass over one `PathCategory` per domain, and a `PropertyTypesProvider` (see [target-paths.md](./target-paths.md)).
-5. **Its entities**: each kind extends `RulesetEntity` (or `CustomizationPageEntity`); `EntityKindsContract` says which tables it answers of and what more a class, an item, a feat list and a power list answer.
-6. **Its content**: `content/<ruleset>/`, the package that seeds it (`database/packages/`), its codegen (`codegen/<ruleset>/`). See [packages.md](./packages.md).
+4. **Its level-up and pickers**, on core's (`engine/core/levelUp/`, `engine/core/pickers/`): its `LevelUpPart` gives the rules core's flows read (`buildCharacter`, `isAbilityIncreaseLevel`, `planBondedCreatures`), with which they remove a level and plan the bonded creatures as they are; its own flows extend `LevelUpBase` (3.5's `LevelUpState`), and a saved level's selections `LevelSelections` (`featDetailsOf`). A picker extends `Picker` (`filters`, `meets`, `describeFailed`, and `offer`, `requirementsOf`, `detailsOf` or `order` where it differs), or `CharacterPicker` when it checks a character (`filters`, `build`, `project`).
+5. **Its target paths and property types**: a `CategoryPaths` subclass over one `PathCategory` per domain, and a `PropertyTypesProvider` (see [target-paths.md](./target-paths.md)).
+6. **Its entities**: each kind extends `RulesetEntity` (or `CustomizationPageEntity`); `EntityKindsContract` says which tables it answers of and what more a class, an item, a feat list and a power list answer.
+7. **Its content**: `content/<ruleset>/`, the package that seeds it (`database/packages/`), its codegen (`codegen/<ruleset>/`). See [packages.md](./packages.md).
 
 ### How to extend `engine/` without leaking a ruleset
 

@@ -1,8 +1,7 @@
 import type { RulesetModule } from "@/engine/core/module/index.ts";
 
 import Dnd35Characters from "./characters/Dnd35Characters.ts";
-import Dnd35Content from "./content/Dnd35Content.ts";
-import type { SeededFields } from "./content/EntityProperties.ts";
+import Dnd35Content, { type SeededFields } from "./content/Dnd35Content.ts";
 import type { Dnd35Descriptions } from "./descriptions.ts";
 import Dnd35PropertyTypes from "./Dnd35PropertyTypes.ts";
 import Dnd35TargetPaths from "./Dnd35TargetPaths.ts";

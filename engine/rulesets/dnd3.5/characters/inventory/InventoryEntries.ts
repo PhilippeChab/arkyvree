@@ -1,13 +1,13 @@
-import type {
-  CharacterInput,
-  DescribedInventoryEntry,
-  InventoryEntryChange,
-  InventoryEntryFields,
-  InventoryEntryRequest,
+import {
+  type CharacterInput,
+  CharactersPart,
+  type DescribedInventoryEntry,
+  type InventoryEntryChange,
+  type InventoryEntryFields,
+  type InventoryEntryRequest,
 } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import CharacterEdits from "@/engine/rulesets/dnd3.5/characters/CharacterEdits.ts";
 import { isHandLocation } from "@/shared/equipment.ts";
 import type { Item } from "@/shared/relations.ts";
 
@@ -79,7 +79,7 @@ export default class InventoryEntries {
     const { rulesetData } = view;
     const { request } = change;
     if ("item" in change)
-      CharacterEdits.checkFromRuleset(view, [change.item], "Item does not belong to the character's ruleset");
+      CharactersPart.checkFromRuleset(view, [change.item], "Item does not belong to the character's ruleset");
     InventoryEntries.checkCharges(request.totalCharges, request.remainingCharges);
 
     const { equipped, force, location, weaponSet } = request;
