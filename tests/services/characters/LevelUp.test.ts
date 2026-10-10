@@ -18,6 +18,8 @@ import {
 } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
+import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
+import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import {
   addFighterLevels,
   type BUILDS,
@@ -1515,6 +1517,91 @@ describe("a pick the level's other picks give", () => {
       );
       expect(edit).rejects.toMatchObject(KNOWN_LIGHT);
     }
+  });
+});
+
+describe("a pick sent by the id of what the fork copied", () => {
+  // The seed's ids are the sources': the API takes them, as it takes the copies' the client sends
+  test("previews, saves and edits a spell picked by its source's id at its spell level: the copy's row", async () => {
+    const ctx = await getSeedCtx();
+    const fork = await createSeededTestRuleset(SEED_USER_ID);
+    const name = "Magic Missile";
+    const copy = await PowersService.updatePower(session, fork.id, ctx.powerMap[name], { name, description: "Copied" });
+    const forkCtx: SeedContext = { ...ctx, powerMap: { ...ctx.powerMap, [name]: copy.id } };
+    const known = SORCERER_1.powers!["Sorcerer Spells"].map((spell) => forkCtx.powerMap[spell]);
+    const savedSpells = async (levelId: string) =>
+      (await CharacterLevelPowers.findMany(db, { characterLevelIds: [levelId] })).map(({ powerId }) => powerId).sort();
+
+    // Magic Missile is a first-level spell, in the first level's room for two
+    const characterId = await createSeedCharacter(ctx, "sorcerer", { rulesetId: fork.id });
+    const previewed = await preview(ctx, characterId, [["Sorcerer", 1]], undefined, { powers: SORCERER_1.powers });
+    expect(previewed.powers.fitted[ctx.aptMap["Sorcerer Spells"]]).toEqual(known);
+    const level = await levelUp(session, ctx, characterId, "Sorcerer", 1, SORCERER_1);
+    expect(await savedSpells(level.id)).toEqual(known.toSorted());
+
+    // A level saved with the copy's id, edited with the source's
+    const editedId = await createSeedCharacter(ctx, "sorcerer", { rulesetId: fork.id });
+    const saved = await levelUp(session, forkCtx, editedId, "Sorcerer", 1, SORCERER_1);
+    const { feats, powers, skills } = picks(ctx, SORCERER_1);
+    await CharacterLevelsService.updateLevel(session, editedId, saved.id, 4, [], skills, feats, powers);
+    expect(await savedSpells(saved.id)).toEqual(known.toSorted());
+  });
+
+  test("saves a feat picked by its source's id as the copy, and refuses it again by either id, as the preview drops it", async () => {
+    const ctx = await getSeedCtx();
+    const fork = await createSeededTestRuleset(SEED_USER_ID);
+    const name = "Power Attack";
+    const copy = await FeatsService.updateFeat(session, fork.id, ctx.featMap[name], { name, description: "Copied" });
+    const characterId = await createSeedCharacter(ctx, "fighter", { rulesetId: fork.id, xp: 1000 });
+    const first = await levelUp(session, ctx, characterId, "Fighter", 1, FIGHTER_LEVELS[0]);
+    const rows = await CharacterLevelFeats.findMany(db, { characterLevelIds: [first.id] });
+    expect(rows.map(({ featId }) => featId)).toContain(copy.id);
+    expect(rows.map(({ featId }) => featId)).not.toContain(ctx.featMap[name]);
+
+    // The second level picks it again by its source's id: dropped from the preview, and refused, forced or not
+    const again = { ...FIGHTER_LEVELS[1], feats: { "Fighter Bonus Feat": [name] } };
+    const previewed = await preview(ctx, characterId, [["Fighter", 2]], undefined, { feats: again.feats });
+    expect(previewed.feats.fitted[ctx.aptMap["Fighter Bonus Feat"]]).toEqual([]);
+    for (const force of [false, true])
+      expect(levelUp(session, ctx, characterId, "Fighter", 2, again, force)).rejects.toMatchObject(alreadyHeld(name));
+
+    // Its edit, once saved with another feat
+    const second = await levelUp(session, ctx, characterId, "Fighter", 2, FIGHTER_LEVELS[1]);
+    const { feats, skills } = picks(ctx, again);
+    for (const force of [false, true]) {
+      const edit = CharacterLevelsService.updateLevel(session, characterId, second.id, 8, [], skills, feats, {}, force);
+      expect(edit).rejects.toMatchObject(alreadyHeld(name));
+    }
+
+    // A level that picks it by both ids
+    const bothIds = { [ctx.aptMap["General"]]: [ctx.featMap[name], copy.id] };
+    const otherId = await createSeedCharacter(ctx, "fighter", { rulesetId: fork.id });
+    const levels = [{ klassId: ctx.klassMap.pc["Fighter"], level: 1, hp: 10, abilityIncreases: [] }];
+    const twice = { message: `Non-stackable feat "${name}" cannot be picked more than once`, refusal: "invalid" };
+    const levelUpBoth = CharacterLevelsService.finalizeLevelUp(session, otherId, levels, skills, bothIds, {});
+    expect(levelUpBoth).rejects.toMatchObject(twice);
+  });
+
+  test("previews and saves a skill and a spell list picked by their sources' ids as their copies", async () => {
+    const ctx = await getSeedCtx();
+    const fork = await createSeededTestRuleset(SEED_USER_ID);
+    const climb = await copyEntity(db, "skills", ctx.skillMap["Climb"], fork);
+    const sorcererSpells = await copyEntity(db, "aptitudes", ctx.aptMap["Sorcerer Spells"], fork);
+    RulesetViews.invalidate(fork.id);
+
+    // Climb, a fighter's class skill, at 4 ranks of its 6 points, as the seed's Climb is
+    const fighterId = await createSeedCharacter(ctx, "fighter", { rulesetId: fork.id });
+    const { skills } = await preview(ctx, fighterId, fighter(1), [null], { skills: { Climb: 6 } });
+    expect(skills.skills.find(({ id }) => id === climb.id)).toMatchObject({ classSkill: true, points: 4, ranks: 4 });
+    const fighterLevel = await levelUp(session, ctx, fighterId, "Fighter", 1, FIGHTER_LEVELS[0]);
+    const ranks = await CharacterLevelSkills.findMany(db, { characterLevelIds: [fighterLevel.id] });
+    expect(ranks.find(({ skillId }) => skillId === climb.id)).toMatchObject({ rank: 4 });
+
+    // The sorcerer's spells, each known in the copy of the list
+    const sorcererId = await createSeedCharacter(ctx, "sorcerer", { rulesetId: fork.id });
+    const sorcererLevel = await levelUp(session, ctx, sorcererId, "Sorcerer", 1, SORCERER_1);
+    const spells = await CharacterLevelPowers.findMany(db, { characterLevelIds: [sorcererLevel.id] });
+    expect(new Set(spells.map(({ aptitudeId }) => aptitudeId))).toEqual(new Set([sorcererSpells.id]));
   });
 });
 

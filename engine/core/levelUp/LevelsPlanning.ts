@@ -35,8 +35,9 @@ export interface CheckedCharacter extends HoldingCharacter {
 /**
  * A character's levels saved, from its rows: a level-up's levels, or a saved level's edit, checked in the order every
  * ruleset's are, over what its ruleset's rules compute (`LevelUpRules`):
- * - a level-up's planned levels are the ruleset's classes' (`getPlannedKlassLevels`), and its selections the
- *   ruleset's, before its picks are spread over its levels (`distributePicks`);
+ * - a level-up's planned levels are the ruleset's classes' (`getPlannedKlassLevels`), and its selections linked to
+ *   their pools, before its picks are spread over its levels (`distributePicks`): each is the view's, by the id the view
+ *   keys it by, as the request entered (`LevelRequests`);
  * - each level isn't saved already (a level-up's), and raises its abilities by what the rules give it;
  * - its hit points, its selections and their pools checked, no non-stackable feat or power picked twice at a level
  *   (`SelectionChecks`);
@@ -176,8 +177,8 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
   planLevels(bonded: CharacterInput[], { levels, picks }: LevelUpRequest, force: boolean): LevelsPlan {
     const { rows } = this.character;
     const klassLevelEntries = this.rules.getPlannedKlassLevels(this.view, this.character, levels);
-    // Every selection is the ruleset's before a character is built with it
-    this.checks.checkSelections(picks.skills, picks.feats, picks.powers);
+    // Every selection is linked to its pool before a character is built with it
+    this.checks.checkLinks(picks.feats, picks.powers);
     const distributed = this.rules.distributePicks(this.view, this.character, klassLevelEntries, picks);
 
     // Each level sees the saved ones and those planned before it
@@ -191,7 +192,7 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
       if (otherLevels.some((other) => other.klassLevelId === klassLevel.id))
         throw new RulesError("invalid", `${label}This level has already been finalized`);
       this.checks.checkAbilityIncreases(rows.levels.length + i, abilityIncreases, label);
-      this.checks.checkLevel({ klass, hp, abilityIncreases, ...levelPicks });
+      this.checks.checkLevel({ klass, hp, ...levelPicks });
       planned.push({ abilityIncreases, hp, klassLevelId: klassLevel.id, picks: levelPicks });
       otherLevels.push({ klassLevelId: klassLevel.id });
     }

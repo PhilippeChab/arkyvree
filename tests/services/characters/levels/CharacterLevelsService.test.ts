@@ -1641,6 +1641,58 @@ describe("LevelsService", () => {
       }
     });
 
+    test("refuses a feat or a spell its ruleset has none of, naming it: a level-up's, an edit's and a preview's", async () => {
+      const ctx = await getSeedCtx();
+      const unknown = { message: `Power ${NIL_UUID} does not belong to the character's ruleset`, refusal: "invalid" };
+      const { feats, powers, skills } = picks(ctx, SORCERER_1);
+      const withUnknown = { [ctx.aptMap["Sorcerer Spells"]]: [...powers[ctx.aptMap["Sorcerer Spells"]], NIL_UUID] };
+      const characterId = await createSeedCharacter(ctx, "sorcerer");
+      const klassId = ctx.klassMap.pc["Sorcerer"];
+      const levels = [{ klassId, level: 1, hp: 4, abilityIncreases: [] }];
+      for (const force of [false, true]) {
+        const levelUp = CharacterLevelsService.finalizeLevelUp(
+          session,
+          characterId,
+          levels,
+          skills,
+          feats,
+          withUnknown,
+          force,
+        );
+        expect(levelUp).rejects.toMatchObject(unknown);
+      }
+
+      const level = await addOneLevel(session, characterId, klassId, 1, 4, null, skills, feats, powers);
+      const edit = CharacterLevelsService.updateLevel(
+        session,
+        characterId,
+        level.id,
+        4,
+        [],
+        skills,
+        feats,
+        withUnknown,
+      );
+      expect(edit).rejects.toMatchObject(unknown);
+
+      // A feat the preview would count in its pool
+      const otherId = await createSeedCharacter(ctx, "sorcerer");
+      const withUnknownFeat = { ...feats, [ctx.aptMap["General"]]: [NIL_UUID] };
+      expect(
+        CharacterLevelsService.getPreview(
+          session,
+          otherId,
+          [{ klassId, level: 1, abilityIncreases: [] }],
+          skills,
+          withUnknownFeat,
+          powers,
+        ),
+      ).rejects.toMatchObject({
+        message: `Feat ${NIL_UUID} does not belong to the character's ruleset`,
+        refusal: "invalid",
+      });
+    });
+
     test("refuses a class or a feat of an unrelated ruleset", async () => {
       const { user, session, character, klass, featAptitude } = await setupRuleset({ fork: true });
       const unrelated = await setupRuleset();
