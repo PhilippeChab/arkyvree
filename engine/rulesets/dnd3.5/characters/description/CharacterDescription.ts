@@ -1,4 +1,4 @@
-import type { CharacterInput } from "@/engine/core/module/index.ts";
+import type { CharacterInput, MemberReading, PrivateNotes } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import CharacterBuilder from "@/engine/rulesets/dnd3.5/model/CharacterBuilder.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
@@ -8,12 +8,6 @@ import CharacterResponse from "./CharacterResponse.ts";
 
 /** A bonded creature's sheet, as the API answers it. */
 type BondedDescription = ReturnType<typeof CharacterResponse.buildBonded>;
-
-/** How a campaign member reads a character: partly (`partial`), or its sheet with its private notes shown or blank. */
-type MemberReading = "blank" | "partial" | "show";
-
-/** What a viewer reads of a character's private notes: all of it, a blank, or no field at all. */
-type PrivateNotes = "blank" | "omit" | "show";
 
 /** A character described from the rows the server read: its sheet, a creature's, or its public part. */
 export default class CharacterDescription {

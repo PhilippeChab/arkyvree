@@ -1,6 +1,4 @@
-import type { SeededFields } from "@/engine/rulesets/dnd3.5/index.ts";
-
-import type { Module } from "./Modules.ts";
+import type { Module, SeededFields } from "./Modules.ts";
 
 /** The engine bound to a base rules' content, which the seeders and the codegen ask before any ruleset has a view. */
 export default class ContentEngine {

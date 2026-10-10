@@ -1,4 +1,4 @@
-import { Engine, type LevelUpEngine } from "@/engine/index.ts";
+import { Engine, type PlannedSoFar } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Klasses, Powers } from "@/server/repositories/index.ts";
@@ -15,18 +15,15 @@ interface PickLevelWhere extends PlannedWhere {
   search?: string;
 }
 
-/** What the level-up wizard plans so far, as the engine takes it. */
-type Planned = Parameters<LevelUpEngine["openClassPicker"]>[0];
-
 /**
  * What the level-up wizard plans before the level a picker is for, not saved yet, as a list's filters send it: its
  * levels (their class levels, and their ability increases by place), and the feats and skill ranks picked so far.
  */
 interface PlannedWhere {
-  featPicks?: Planned["featPicks"];
-  plannedAbilityIds?: Planned["abilityIds"];
-  plannedClassLevelIds?: Planned["klassLevelIds"];
-  skillRanks?: Planned["skillRanks"];
+  featPicks?: PlannedSoFar["featPicks"];
+  plannedAbilityIds?: PlannedSoFar["abilityIds"];
+  plannedClassLevelIds?: PlannedSoFar["klassLevelIds"];
+  skillRanks?: PlannedSoFar["skillRanks"];
 }
 
 /** A picker's level as the engine takes it. */
@@ -35,7 +32,7 @@ function pickLevelOf({ abilityId, aptitudeId, classId, editedLevelId, level, ...
 }
 
 /** What the wizard plans so far, as the engine takes it. */
-function plannedOf({ featPicks, plannedAbilityIds, plannedClassLevelIds, skillRanks }: PlannedWhere): Planned {
+function plannedOf({ featPicks, plannedAbilityIds, plannedClassLevelIds, skillRanks }: PlannedWhere): PlannedSoFar {
   return { abilityIds: plannedAbilityIds, featPicks, klassLevelIds: plannedClassLevelIds, skillRanks };
 }
 

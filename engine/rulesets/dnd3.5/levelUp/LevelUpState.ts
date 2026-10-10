@@ -1,4 +1,9 @@
-import { type CharacterInput, CharacterProjection, type FeatPick } from "@/engine/core/module/index.ts";
+import {
+  type CharacterInput,
+  CharacterProjection,
+  type LevelPickRows,
+  type LevelPicks,
+} from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { type RulesetData, type RulesetView } from "@/engine/core/view/index.ts";
 import CharacterBuilder from "@/engine/rulesets/dnd3.5/model/CharacterBuilder.ts";
@@ -9,24 +14,6 @@ import BondedPlans from "./BondedPlans.ts";
 
 /** The pools a character picks feats and powers in, and how many, with what a level-up plans. */
 type LevelUpPools = ReturnType<DetailedCharacter["components"]["aptitudes"]["getLevelUpPools"]>;
-
-/** A level's picks: its skill ranks, and its feats and powers by the pool they're picked in. */
-export interface LevelPicks {
-  feats: Record<string, string[]>;
-  powers: Record<string, string[]>;
-  skills: Record<string, number>;
-}
-
-/**
- * What the level-up wizard plans before the level a step or a picker is for, not saved yet: its levels (their class
- * levels, and their ability increases by place), and the feats and skill ranks picked over them so far.
- */
-export interface PlannedSoFar {
-  abilityIds?: (string | undefined)[];
-  featPicks?: FeatPick[];
-  klassLevelIds?: string[];
-  skillRanks?: { rank: number; skillId: string }[];
-}
 
 /**
  * What every level-up operation reads: the ruleset's view and the character's rows (`character`), and the classes, class
@@ -140,7 +127,7 @@ export default abstract class LevelUpState {
   }
 
   /** A level's picks as the rows a save writes: its skill ranks but those at none, and its feats and powers by pool. */
-  protected toPickRows({ feats, powers, skills }: LevelPicks) {
+  protected toPickRows({ feats, powers, skills }: LevelPicks): LevelPickRows {
     return {
       feats: Object.entries(feats).flatMap(([aptitudeId, ids]) => ids.map((featId) => ({ featId, aptitudeId }))),
       powers: Object.entries(powers).flatMap(([aptitudeId, ids]) => ids.map((powerId) => ({ powerId, aptitudeId }))),

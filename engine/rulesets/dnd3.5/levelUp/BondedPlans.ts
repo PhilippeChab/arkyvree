@@ -1,4 +1,4 @@
-import type { CharacterInput } from "@/engine/core/module/index.ts";
+import type { BondedLevelsPlan, BondedPlan, CharacterInput, NewBondedCreature } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import BondedRaceData from "@/engine/rulesets/dnd3.5/model/bonded/BondedRaceData.ts";
@@ -20,19 +20,6 @@ type BondedCreaturePlan = { removedId?: string } & (
 interface BondedLevels {
   hitDice: number;
   klassId: string;
-}
-
-/** The levels a bonded creature takes, and the ids of those it loses. */
-interface BondedLevelsPlan {
-  added: { abilityId: null; hp: number; klassLevelId: string }[];
-  removedIds: string[];
-}
-
-/** A bonded creature a plan makes: of a race, named for it, with the ability scores of the race's stat block. */
-interface NewBondedCreature {
-  abilities: { abilityId: string; score: number }[];
-  name: string;
-  raceId: string;
 }
 
 /** A creature of `race`, with its stat block's scores (a cat's Strength 3, a heavy warhorse's 18), 10 without one. */
@@ -102,7 +89,7 @@ export default class BondedPlans {
    * each with its rows): the creature it had removed (`removedId`), and the one it keeps (`keptId`) or makes (`created`)
    * with the levels it takes or loses (`levels`: a new one has none yet).
    */
-  planMasterCreatures(master: DetailedCharacter, bonded: CharacterInput[]) {
+  planMasterCreatures(master: DetailedCharacter, bonded: CharacterInput[]): BondedPlan[] {
     return BONDED_KIND_SLUGS.map((kind) => {
       const existing = bonded.find((input) => input.record.kind === kind);
       const plan = this.planBondedCreature(master, kind, existing?.record);

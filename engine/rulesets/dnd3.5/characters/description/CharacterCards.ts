@@ -1,3 +1,4 @@
+import type { CharacterCard } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 
 /** A character's card, as a list of characters shows it: its race, its classes at their highest level, its total. */
@@ -10,7 +11,7 @@ export default class CharacterCards {
     view: RulesetView,
     character: { raceId: string },
     levels: { klassLevelId: string }[],
-  ): { levels: { klass: string; level: number }[]; race: string; totalLevel: number } {
+  ): CharacterCard {
     const { rulesetData } = view;
     const levelByKlassName = new Map<string, number>();
     for (const level of levels) {

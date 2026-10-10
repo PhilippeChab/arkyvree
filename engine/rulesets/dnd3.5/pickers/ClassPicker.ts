@@ -1,6 +1,5 @@
-import { type CharacterInput, CharacterProjection } from "@/engine/core/module/index.ts";
+import { type CharacterInput, CharacterProjection, type PlannedSoFar } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import type { PlannedSoFar } from "@/engine/rulesets/dnd3.5/levelUp/LevelUpState.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import type { Klass, KlassLevel, Requirement } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";

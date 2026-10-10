@@ -1,9 +1,9 @@
-import type { CharacterInput } from "@/engine/core/module/index.ts";
+import type { CharacterInput, PickLevel } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import FeatEntity, { type PoolModifier } from "@/engine/rulesets/dnd3.5/entities/feats/FeatEntity.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 
-import LevelPicker, { type PickLevel } from "./LevelPicker.ts";
+import LevelPicker from "./LevelPicker.ts";
 
 /**
  * A feat picker for the character, from its rows: the pool's feats (`filters`, a family's when the query names one;

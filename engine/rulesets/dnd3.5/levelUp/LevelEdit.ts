@@ -1,4 +1,9 @@
-import { type CharacterInput, CharacterProjection } from "@/engine/core/module/index.ts";
+import {
+  type CharacterInput,
+  CharacterProjection,
+  type LevelEditRequest,
+  type LevelPicks,
+} from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { ValidationIssue } from "@/engine/rulesets/dnd3.5/model/concerns/Validates.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
@@ -6,10 +11,7 @@ import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import { include } from "@/lib/mixins.ts";
 
 import { ChecksSelections } from "./concerns/ChecksSelections.ts";
-import LevelUpState, { type LevelPicks } from "./LevelUpState.ts";
-
-/** A saved level's edit: its new hit points, ability and picks. */
-type Edit = LevelPicks & { abilityId: string | null; hp: number };
+import LevelUpState from "./LevelUpState.ts";
 
 /**
  * A saved level's edit, from the character's rows: the level as saved, its new hit points, ability and picks, checked,
@@ -38,7 +40,11 @@ export default class LevelEdit extends include(LevelUpState, ChecksSelections) {
   }
 
   /** An edited level's projection: the level with its new hit points, ability and picks, in place of its saved row. */
-  private projectEditedLevel(characterLevel: { id: string; position: number }, klassLevelId: string, edit: Edit) {
+  private projectEditedLevel(
+    characterLevel: { id: string; position: number },
+    klassLevelId: string,
+    edit: LevelEditRequest,
+  ) {
     const projection = new CharacterProjection(this.character);
     const { abilityId, hp } = edit;
     const level = projection.addLevel(klassLevelId, { abilityId, hp, replacing: characterLevel });
@@ -66,7 +72,7 @@ export default class LevelEdit extends include(LevelUpState, ChecksSelections) {
    * saved, its new hit points, ability and picks, checked, and refused with the issues it answers for unless `force`d;
    * and what its bonded creatures become with it.
    */
-  planEdit(bonded: CharacterInput[], characterLevelId: string, edit: Edit, force: boolean) {
+  planEdit(bonded: CharacterInput[], characterLevelId: string, edit: LevelEditRequest, force: boolean) {
     const { rows } = this.character;
     const { abilityId, hp } = edit;
     const level = rows.levels.find((saved) => saved.id === characterLevelId);

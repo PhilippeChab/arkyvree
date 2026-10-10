@@ -1,5 +1,6 @@
-import type { CharacterInput } from "@/engine/core/module/index.ts";
+import { type CharacterInput, LevelUpPart, type PlannedSoFar } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
+import type { Dnd35Descriptions } from "@/engine/rulesets/dnd3.5/descriptions.ts";
 import ClassPicker from "@/engine/rulesets/dnd3.5/pickers/ClassPicker.ts";
 import FeatPicker from "@/engine/rulesets/dnd3.5/pickers/FeatPicker.ts";
 import PowerPicker from "@/engine/rulesets/dnd3.5/pickers/PowerPicker.ts";
@@ -10,7 +11,6 @@ import LevelRemoval from "./LevelRemoval.ts";
 import LevelSelections from "./LevelSelections.ts";
 import LevelUpPlan from "./LevelUpPlan.ts";
 import LevelUpPreview from "./LevelUpPreview.ts";
-import type { PlannedSoFar } from "./LevelUpState.ts";
 import LevelUpSteps from "./LevelUpSteps.ts";
 
 /**
@@ -18,7 +18,7 @@ import LevelUpSteps from "./LevelUpSteps.ts";
  * a save's levels and its check, a saved level's edit, the bonded creatures the levels make, the wizard's steps and
  * pickers, and a saved level's selections.
  */
-export default class Dnd35LevelUp {
+export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions> {
   /** The level-up wizard's ability step: the character's abilities, when the level it adds or edits takes an increase. */
   describeAbilityStep(
     view: RulesetView,
