@@ -70,6 +70,27 @@ export default abstract class SpellcastingState {
 
   protected spellTags: Record<string, string[]> = {};
 
+  /** The highest spell level any of the classes of a caster type has slots at, in any of its lists. */
+  private highestSpellLevel(casterType: "Arcane" | "Divine"): number {
+    const aptitudes = this.aptitudes.getAptitudes();
+    let highest = 0;
+    for (const [className, klassData] of Object.entries(this.classes.getCharacterClasses())) {
+      if (this.casterTypeByKlassId.get(klassData.klass.id) !== casterType) continue;
+      for (const key of this.spellListsOf(className)) {
+        const aptitude = aptitudes[key] as Record<string, unknown> | undefined;
+        if (!aptitude || !this.aptitudes.isLeveledAptitude(key)) continue;
+        for (let spellLevel = MAX_SPELL_LEVEL; spellLevel > highest; spellLevel--) {
+          const levelData = aptitude[String(spellLevel)] as AptitudeLevelData | undefined;
+          if (levelData && levelData.allowed !== 0) {
+            highest = spellLevel;
+            break;
+          }
+        }
+      }
+    }
+    return highest;
+  }
+
   /**
    * A class's list that knows every spell of a spell level (`allowed` all known), if one does: where the spells of a
    * list joining it go.
@@ -90,27 +111,6 @@ export default abstract class SpellcastingState {
       for (const level of klassData.levels) classNames.set(level.klassLevel.id, className);
 
     return classNames;
-  }
-
-  /** The highest spell level any of the classes of a caster type has slots at, in any of its lists. */
-  private highestSpellLevel(casterType: "Arcane" | "Divine"): number {
-    const aptitudes = this.aptitudes.getAptitudes();
-    let highest = 0;
-    for (const [className, klassData] of Object.entries(this.classes.getCharacterClasses())) {
-      if (this.casterTypeByKlassId.get(klassData.klass.id) !== casterType) continue;
-      for (const key of this.spellListsOf(className)) {
-        const aptitude = aptitudes[key] as Record<string, unknown> | undefined;
-        if (!aptitude || !this.aptitudes.isLeveledAptitude(key)) continue;
-        for (let spellLevel = MAX_SPELL_LEVEL; spellLevel > highest; spellLevel--) {
-          const levelData = aptitude[String(spellLevel)] as AptitudeLevelData | undefined;
-          if (levelData && levelData.allowed !== 0) {
-            highest = spellLevel;
-            break;
-          }
-        }
-      }
-    }
-    return highest;
   }
 
   /**

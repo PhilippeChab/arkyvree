@@ -23,26 +23,6 @@ function levelKey(characterLevelId: string, klassLevelId: string) {
 /** Caster levels another class adds to a spellcasting class (a prestige class's +1 caster level), and the domain and school slots they bring. */
 export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base: B) {
   abstract class WithBonusCasterLevels extends Base {
-    /**
-     * Applies the spell progression (`aptitudes.*`) of the class levels bonus caster levels reach, each modifier while
-     * its own requirements hold (`isGateMet`): a pious templar's slots go to the list she picked only. Then the lists a
-     * feat brings (`featListIds`) follow their class's spell levels. `isGateMet` takes the targets to count as met.
-     */
-    protected applyBonusCasterLevels(
-      components: Components,
-      feats: CustomizedFeat[],
-      featListIds: Set<string>,
-      isGateMet: (modifier: Modifier, metTargets?: string[]) => boolean,
-    ) {
-      const aptitudeModifiers = this.bonusKlassLevelModifiers.filter(
-        (m) => AptitudesPaths.isAptitudeTarget(m.target) && isGateMet(m),
-      );
-
-      for (const modifier of aptitudeModifiers) this.modifierEvaluator.evaluateModifier(modifier, components);
-
-      this.syncFeatListSlots(feats, featListIds, isGateMet);
-    }
-
     /** Attributes each bonus klass level to the class level that granted it ("Mystic Theurge Level 3"). */
     private attributeBonusLevels(
       bonusKlassLevels: KlassLevel[],
@@ -146,6 +126,44 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
       return grantingLevels.sort((a, b) => a.level - b.level);
     }
 
+    /**
+     * The slots a feat's modifiers give a list at one spell level, as the paths allow them: `uses` and `allowed` added,
+     * or `allowed` set to -1, every spell of the level known.
+     */
+    private slotsGiven(modifiers: Modifier[]) {
+      let uses = 0;
+      let allowed = 0;
+      let allKnown = false;
+      for (const modifier of modifiers) {
+        const value = LiteralValue.parse(modifier.value, "number");
+        if (typeof value !== "number") continue;
+        if (modifier.target.endsWith(".uses")) uses += value;
+        else if (modifier.operator === "set" && value === ALLOWED_ALL) allKnown = true;
+        else allowed += value;
+      }
+      return { uses, allowed: allKnown ? ALLOWED_ALL : allowed };
+    }
+
+    /**
+     * Applies the spell progression (`aptitudes.*`) of the class levels bonus caster levels reach, each modifier while
+     * its own requirements hold (`isGateMet`): a pious templar's slots go to the list she picked only. Then the lists a
+     * feat brings (`featListIds`) follow their class's spell levels. `isGateMet` takes the targets to count as met.
+     */
+    protected applyBonusCasterLevels(
+      components: Components,
+      feats: CustomizedFeat[],
+      featListIds: Set<string>,
+      isGateMet: (modifier: Modifier, metTargets?: string[]) => boolean,
+    ) {
+      const aptitudeModifiers = this.bonusKlassLevelModifiers.filter(
+        (m) => AptitudesPaths.isAptitudeTarget(m.target) && isGateMet(m),
+      );
+
+      for (const modifier of aptitudeModifiers) this.modifierEvaluator.evaluateModifier(modifier, components);
+
+      this.syncFeatListSlots(feats, featListIds, isGateMet);
+    }
+
     /** The class levels the character's bonus caster levels reach, read off the view, and whose level gave each. */
     protected readBonusCasterLevels(
       rulesetData: RulesetData,
@@ -170,24 +188,6 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
         if (className) this.bonusKlassLevelClassMap.set(kl.id, className);
       }
       this.attributeBonusLevels(bonusKlassLevels, klassLevels, feats, characterLevels, rulesetKlasses);
-    }
-
-    /**
-     * The slots a feat's modifiers give a list at one spell level, as the paths allow them: `uses` and `allowed` added,
-     * or `allowed` set to -1, every spell of the level known.
-     */
-    private slotsGiven(modifiers: Modifier[]) {
-      let uses = 0;
-      let allowed = 0;
-      let allKnown = false;
-      for (const modifier of modifiers) {
-        const value = LiteralValue.parse(modifier.value, "number");
-        if (typeof value !== "number") continue;
-        if (modifier.target.endsWith(".uses")) uses += value;
-        else if (modifier.operator === "set" && value === ALLOWED_ALL) allKnown = true;
-        else allowed += value;
-      }
-      return { uses, allowed: allKnown ? ALLOWED_ALL : allowed };
     }
 
     /**

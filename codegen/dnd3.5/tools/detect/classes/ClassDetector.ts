@@ -29,6 +29,18 @@ export class ClassDetector extends include(
     return {};
   }
 
+  /** The class's hit die ("d10" → 10), d8 when it gives none. */
+  private hitDie(): number {
+    const match = this.raw.hitDie.match(/d(\d+)/);
+    return match ? parseInt(match[1], 10) : 8;
+  }
+
+  /** The class's skill points per level, 2 when it gives none. */
+  private skillPoints(): number {
+    const match = this.raw.skillPointsPerLevel.match(/(\d+)/);
+    return match ? parseInt(match[1], 10) : 2;
+  }
+
   /** The class's detected section. */
   protected detected(): ClassReference["detected"] {
     const { raw } = this;
@@ -58,21 +70,9 @@ export class ClassDetector extends include(
     };
   }
 
-  /** The class's hit die ("d10" → 10), d8 when it gives none. */
-  private hitDie(): number {
-    const match = this.raw.hitDie.match(/d(\d+)/);
-    return match ? parseInt(match[1], 10) : 8;
-  }
-
   /** The class's entities, a `ClassMapping`'s: what's detected and scraped, its overrides applied. */
   protected mapping(detected: ClassReference["detected"]): ClassReference["mapping"] {
     return new ClassMapping(this, detected).build();
-  }
-
-  /** The class's skill points per level, 2 when it gives none. */
-  private skillPoints(): number {
-    const match = this.raw.skillPointsPerLevel.match(/(\d+)/);
-    return match ? parseInt(match[1], 10) : 2;
   }
 
   /**

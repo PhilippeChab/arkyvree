@@ -19,11 +19,6 @@ export default class AptitudeEntity extends RulesetEntity<"aptitudes", AptitudeB
 
   readonly type = "aptitudes";
 
-  /** Refuses deleting an aptitude the rules count on by name. */
-  protected override checkDelete(aptitude: Aptitude) {
-    this.checkName(aptitude);
-  }
-
   /**
    * Refuses renaming the aptitude to `name`, or deleting it without one, when the ruleset's characters count on it by
    * name: the one the general feats count toward, by its slug. A rename that keeps the slug ("general") changes nothing
@@ -37,6 +32,11 @@ export default class AptitudeEntity extends RulesetEntity<"aptitudes", AptitudeB
       "unprocessable",
       `${aptitude.name} is the aptitude a character's general feats count toward: it can be neither renamed nor deleted`,
     );
+  }
+
+  /** Refuses deleting an aptitude the rules count on by name. */
+  protected override checkDelete(aptitude: Aptitude) {
+    this.checkName(aptitude);
   }
 
   /** Refuses renaming an aptitude the rules count on by name. */

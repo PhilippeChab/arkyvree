@@ -32,6 +32,14 @@ export default abstract class RulesetEntity<
   /** The kind's table. */
   abstract readonly type: K;
 
+  /** What saving a form writes, and the fields the saved entity keeps (`fields`, which a save answers with its row). */
+  private planSave(body: Body, entity?: ViewEntities[K]) {
+    const columns = this.columnsOf(body, entity);
+    const writes = this.writesOf(body, entity);
+    const fields = this.fields.read(writes?.properties?.values ?? this.keptProperties(columns, entity));
+    return { columns, fields, links: this.linksOf(body), writes };
+  }
+
   /** Refuses deleting an entity: nothing does, unless its kind's rules say. */
   protected checkDelete(_entity: ViewEntities[K]) {}
 
@@ -73,14 +81,6 @@ export default abstract class RulesetEntity<
   /** The lists a form links the entity to: none (`undefined`, an edit's kept), unless its kind is listed. */
   protected linksOf(_body: Body): ListLink[] | undefined {
     return undefined;
-  }
-
-  /** What saving a form writes, and the fields the saved entity keeps (`fields`, which a save answers with its row). */
-  private planSave(body: Body, entity?: ViewEntities[K]) {
-    const columns = this.columnsOf(body, entity);
-    const writes = this.writesOf(body, entity);
-    const fields = this.fields.read(writes?.properties?.values ?? this.keptProperties(columns, entity));
-    return { columns, fields, links: this.linksOf(body), writes };
   }
 
   /** The properties an entity's fields are read off: its own (an item's, merged with its template's). */

@@ -47,6 +47,23 @@ export default class ItemEntity extends CustomizationPageEntity<
 
   readonly type = "items";
 
+  /** The item a duplicate or variants are made from, as the view has it: refused when there's none of its id. */
+  private findSource(itemId: string) {
+    const item = this.rulesetData.find("items", itemId);
+    if (!item) throw new RulesError("not-found", "Source item not found in this ruleset");
+    return item;
+  }
+
+  /** An item's slot: its type's (an armor's the torso, a shield's the off hand), or the one its form gives. */
+  private slotOf(item: { slot?: ItemLocation; type?: string | null }): ItemLocation | undefined {
+    return item.type === "Armor" ? "Torso" : item.type === "Shield" ? "Off Hand" : item.slot;
+  }
+
+  /** The template an item made from `item` points at: `item` itself when it's a template, or its own template. */
+  private templateOf(item: Item) {
+    return item.isTemplate ? item.id : (item.sourceItemId ?? undefined);
+  }
+
   /** Refuses a template made from another item: a template is its copies' source, never one's copy. */
   protected override checkSave(body: ItemBody, item?: Item) {
     if ((item ? item.isTemplate : body.isTemplate) && body.sourceItemId)
@@ -65,13 +82,6 @@ export default class ItemEntity extends CustomizationPageEntity<
     };
     if (item) return { ...columns, sourceItemId: item.isTemplate ? null : body.sourceItemId };
     return { ...columns, isTemplate: body.isTemplate ?? false, sourceItemId: body.sourceItemId };
-  }
-
-  /** The item a duplicate or variants are made from, as the view has it: refused when there's none of its id. */
-  private findSource(itemId: string) {
-    const item = this.rulesetData.find("items", itemId);
-    if (!item) throw new RulesError("not-found", "Source item not found in this ruleset");
-    return item;
   }
 
   /**
@@ -93,16 +103,6 @@ export default class ItemEntity extends CustomizationPageEntity<
   protected override requirementsOf(item: Pick<Item, "id" | "isTemplate" | "sourceItemId">) {
     const { own: requirements, template: proficiency } = this.rulesetData.itemRequirements(item);
     return [...proficiency, ...requirements];
-  }
-
-  /** An item's slot: its type's (an armor's the torso, a shield's the off hand), or the one its form gives. */
-  private slotOf(item: { slot?: ItemLocation; type?: string | null }): ItemLocation | undefined {
-    return item.type === "Armor" ? "Torso" : item.type === "Shield" ? "Off Hand" : item.slot;
-  }
-
-  /** The template an item made from `item` points at: `item` itself when it's a template, or its own template. */
-  private templateOf(item: Item) {
-    return item.isTemplate ? item.id : (item.sourceItemId ?? undefined);
   }
 
   /** A page of the ruleset's items, each with its template's name. */

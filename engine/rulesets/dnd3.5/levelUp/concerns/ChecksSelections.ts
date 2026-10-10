@@ -25,29 +25,6 @@ export type GrantedFeatRecords =
 export function ChecksSelections<B extends Constructor<LevelUpState>>(Base: B) {
   abstract class CheckingSelections extends Base {
     /**
-     * Throws when the level after `totalLevel` levels takes an ability increase it doesn't have, or skips the one it has.
-     * `label` names the level in the message ("Level 2: ").
-     */
-    protected checkAbilityIncrease(totalLevel: number, abilityId: string | null, label = "") {
-      const isAbilityIncreaseLevel = LevelRules.isAbilityIncreaseLevel(totalLevel);
-      if (abilityId && !isAbilityIncreaseLevel)
-        throw new RulesError("invalid", `${label}Ability increase is not available at this level`);
-
-      if (!abilityId && isAbilityIncreaseLevel)
-        throw new RulesError("invalid", `${label}Ability increase is required at this level`);
-    }
-
-    /**
-     * A level's selections checked (`checkLevelSelections`), then its non-stackable feats against those the character
-     * already has: picked at its other levels (`pickedFeatIds`) or granted by their class levels (`otherLevels`).
-     */
-    protected checkLevel(level: LevelChecked, otherLevels: { klassLevelId: string }[], pickedFeatIds: string[]) {
-      const { autoGrantedRecords, fetchedFeats } = this.checkLevelSelections(level);
-      if (fetchedFeats.some((feat) => !feat.stackable))
-        this.checkNotTaken(fetchedFeats, pickedFeatIds, otherLevels, autoGrantedRecords);
-    }
-
-    /**
      * A level's hit points, ability and selections checked, for both the level save and the level-up's: each selection
      * the ruleset's and linked to its pool, no non-stackable feat picked twice. Answers the feats picked and what the
      * level is granted, which whether a feat is already on the character reads (`checkNotTaken`).
@@ -127,16 +104,6 @@ export function ChecksSelections<B extends Constructor<LevelUpState>>(Base: B) {
       }
     }
 
-    /** Throws when a submitted selection isn't the character's ruleset's, or isn't linked to the pool it's picked under. */
-    protected checkSelections(
-      skills: Record<string, number>,
-      feats: Record<string, string[]>,
-      powers: Record<string, string[]>,
-    ) {
-      this.fetchSelections(skills, feats, powers);
-      this.checkLinks(feats, powers);
-    }
-
     /** The rows of these ids, deduplicated, from the character's ruleset; throws when one isn't in it. */
     private fetchAll<T>(ids: string[], byId: Map<string, T>, what: string): T[] {
       const uniqueIds = [...new Set(ids)];
@@ -158,6 +125,39 @@ export function ChecksSelections<B extends Constructor<LevelUpState>>(Base: B) {
       const fetchedPowers = this.fetchAll(Object.values(powers).flat(), powersById, "powers");
       this.fetchAll([...Object.keys(feats), ...Object.keys(powers)], aptitudesById, "aptitudes");
       return { fetchedSkills, fetchedFeats, fetchedPowers };
+    }
+
+    /**
+     * Throws when the level after `totalLevel` levels takes an ability increase it doesn't have, or skips the one it has.
+     * `label` names the level in the message ("Level 2: ").
+     */
+    protected checkAbilityIncrease(totalLevel: number, abilityId: string | null, label = "") {
+      const isAbilityIncreaseLevel = LevelRules.isAbilityIncreaseLevel(totalLevel);
+      if (abilityId && !isAbilityIncreaseLevel)
+        throw new RulesError("invalid", `${label}Ability increase is not available at this level`);
+
+      if (!abilityId && isAbilityIncreaseLevel)
+        throw new RulesError("invalid", `${label}Ability increase is required at this level`);
+    }
+
+    /**
+     * A level's selections checked (`checkLevelSelections`), then its non-stackable feats against those the character
+     * already has: picked at its other levels (`pickedFeatIds`) or granted by their class levels (`otherLevels`).
+     */
+    protected checkLevel(level: LevelChecked, otherLevels: { klassLevelId: string }[], pickedFeatIds: string[]) {
+      const { autoGrantedRecords, fetchedFeats } = this.checkLevelSelections(level);
+      if (fetchedFeats.some((feat) => !feat.stackable))
+        this.checkNotTaken(fetchedFeats, pickedFeatIds, otherLevels, autoGrantedRecords);
+    }
+
+    /** Throws when a submitted selection isn't the character's ruleset's, or isn't linked to the pool it's picked under. */
+    protected checkSelections(
+      skills: Record<string, number>,
+      feats: Record<string, string[]>,
+      powers: Record<string, string[]>,
+    ) {
+      this.fetchSelections(skills, feats, powers);
+      this.checkLinks(feats, powers);
     }
   }
   return CheckingSelections;

@@ -204,22 +204,6 @@ export function Validates<B extends Constructor<CharacterState>>(Base: B) {
       return this.diagnosticsIndex;
     }
 
-    protected getSkillValidationIssues(): { budget: ValidationIssue[]; ranks: ValidationIssue[] } {
-      const budget: ValidationIssue[] = [];
-      const { available, spent, total } = this.components.skills.getSkillBudget();
-      if (available > 0) {
-        budget.push({ category: "skills", message: `${available} unspent skill point(s) (${spent}/${total})` });
-      } else if (available < 0) {
-        budget.push({
-          category: "skills",
-          message: `Overspent by ${Math.abs(available)} skill point(s) (${spent}/${total})`,
-        });
-      }
-      const characterLevel = this.components.identity.getIdentity().meta.level;
-      const ranks = this.components.skills.getValidationIssues(characterLevel);
-      return { budget, ranks };
-    }
-
     private invalidRequirementIssue({
       warning,
       requirement,
@@ -251,6 +235,22 @@ export function Validates<B extends Constructor<CharacterState>>(Base: B) {
         entityType: owner.entityType,
         requirementTree: this.formatRequirements(group),
       };
+    }
+
+    protected getSkillValidationIssues(): { budget: ValidationIssue[]; ranks: ValidationIssue[] } {
+      const budget: ValidationIssue[] = [];
+      const { available, spent, total } = this.components.skills.getSkillBudget();
+      if (available > 0) {
+        budget.push({ category: "skills", message: `${available} unspent skill point(s) (${spent}/${total})` });
+      } else if (available < 0) {
+        budget.push({
+          category: "skills",
+          message: `Overspent by ${Math.abs(available)} skill point(s) (${spent}/${total})`,
+        });
+      }
+      const characterLevel = this.components.identity.getIdentity().meta.level;
+      const ranks = this.components.skills.getValidationIssues(characterLevel);
+      return { budget, ranks };
     }
 
     formatRequirements(requirements: Requirement[]): string {
