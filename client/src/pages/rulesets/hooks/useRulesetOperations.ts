@@ -48,7 +48,8 @@ export function useRulesetOperations() {
     ]);
 
   const editForm = useFormWith<EditRulesetFormData>({ name: "", description: "", private: false });
-  const forkForm = useFormWith<ForkRulesetFormData>({ name: "", description: "", private: false });
+  // A fork starts private: once public, a ruleset can't be made private again
+  const forkForm = useFormWith<ForkRulesetFormData>({ name: "", description: "", private: true });
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data, updatedAt }: { data: EditRulesetFormData; id: string; updatedAt?: string }) =>
@@ -192,7 +193,7 @@ export function useRulesetOperations() {
     forkForm.reset({
       name: `${ruleset.name} (Fork)`,
       description: ruleset.description,
-      private: false,
+      private: true,
     });
     forkDialog.openWith(ruleset);
   };

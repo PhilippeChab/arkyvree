@@ -13,12 +13,9 @@ type Combat = ReturnType<Parameters<typeof CombatSheet.describe>[0]["getCombat"]
 /** What the sheet reads of a weapon. */
 type Weapon = NonNullable<Combat["weaponsets"][string]["mainhand"]>;
 
-/** The combat the sheet prints for a character whose base attack bonus gives `babAttacks`, with these weapon sets. */
-function describeCombat(weaponsets: Combat["weaponsets"], babAttacks = [0], speed = 30) {
-  return CombatSheet.describe({
-    getBabAttacks: () => babAttacks,
-    getCombat: () => ({ speed: { total: speed }, weaponsets }),
-  });
+/** The combat the sheet prints for a character of this base attack bonus, with these weapon sets. */
+function describeCombat(weaponsets: Combat["weaponsets"], bab = 0, speed = 30) {
+  return CombatSheet.describe({ getCombat: () => ({ bab, speed: { total: speed }, weaponsets }) });
 }
 
 /** The rows the sheet gives `held`, alone in the first set's `slot`. */
@@ -58,8 +55,9 @@ describe("a weapon's attack and critical text", () => {
   });
 
   test("give a base attack bonus its attacks a round, signed", () => {
-    expect([[11, 6, 1], [5], [0], [-1]].map((attacks) => describeCombat({}, attacks).babLabel)).toEqual([
+    expect([11, 6, 5, 0, -1].map((bab) => describeCombat({}, bab).babLabel)).toEqual([
       "+11/+6/+1",
+      "+6/+1",
       "+5",
       "+0",
       "-1",
@@ -73,10 +71,7 @@ describe("a weapon's attack and critical text", () => {
   });
 
   test("write a speed in feet", () => {
-    expect([describeCombat({}, [0], 30).speedLabel, describeCombat({}, [0], 0).speedLabel]).toEqual([
-      "30 ft.",
-      "0 ft.",
-    ]);
+    expect([describeCombat({}, 0, 30).speedLabel, describeCombat({}, 0, 0).speedLabel]).toEqual(["30 ft.", "0 ft."]);
   });
 
   test("join a weapon's damage types, and leave none empty", () => {

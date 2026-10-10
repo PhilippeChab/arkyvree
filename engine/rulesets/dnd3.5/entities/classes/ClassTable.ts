@@ -112,14 +112,19 @@ export default class ClassTable {
     });
   }
 
-  /** The class's levels, each with the spells per day it gives by spell level by then (`spellsPerDay`). */
+  /**
+   * The class's levels, each with the spells per day it gives by spell level by then (`spellsPerDay`): from the level a
+   * spell level opens at (its `allowed`, some spells or all of them, as the sheet's bonus spells read it), 0 until its
+   * levels give it uses, as the SRD's tables write a spell level its bonus spells alone fill.
+   */
   describeSpells() {
     const { levels } = this;
     const totals = runningTotals<number>(levels, getLevelModifiers(this.view.rulesetData, levels), (modifier) => {
       const target = AptitudeTargets.parseSpellLevel(modifier.target);
       const value = LiteralValue.parse(modifier.value, "number");
-      if (target?.field !== "uses" || typeof value !== "number") return undefined;
-      return { key: target.level, step: (total) => (total ?? 0) + value };
+      if (!target || typeof value !== "number") return undefined;
+      if (target.field === "uses") return { key: target.level, step: (total) => (total ?? 0) + value };
+      return value === 0 ? undefined : { key: target.level, step: (total) => total ?? 0 };
     });
     return levels.map((level) => ({ ...level, spellsPerDay: totals.get(level.id) ?? {} }));
   }

@@ -19,11 +19,12 @@ test.describe("Rulesets", () => {
     await signIn(page, ownerUser.email, ownerUser.password);
   });
 
-  test("a fork needs a name, and is listed under Forked", async ({ page }) => {
+  test("a fork starts private, needs a name, and is listed under Forked", async ({ page }) => {
     const name = uniqueName("My Fork");
     await openCoreRuleset(page);
     await openActionsMenu(page, /^Fork\b/);
     const dialog = page.getByRole("dialog", { name: "Fork Ruleset" });
+    await expect(dialog.getByRole("button", { name: "Private" })).toHaveAttribute("aria-pressed", "true");
     const nameField = dialog.locator('input[name="name"]');
     await nameField.fill("");
     await dialog.getByRole("button", { name: /Fork Ruleset/ }).click();

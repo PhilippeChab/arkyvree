@@ -257,6 +257,16 @@ describe.each(ENTITY_TYPES)("%s service", (entityType) => {
     await expectRefusedWith(service.get(ruleset.id, created.id), 404);
   });
 
+  test("finds a name by a typo of it, and none by letters across its words", async () => {
+    const { session, ruleset, refs } = await setup();
+    const missile = await service.create(session, ruleset.id, "Magic Missile", refs);
+    await service.create(session, ruleset.id, "Guards and Wards", refs);
+
+    expect((await service.list(ruleset.id, "Magic Missle")).items.map((e) => e.id)).toEqual([missile.id]);
+    // "Wand" is in none of them, though "...ds and Wa..." holds its letters
+    expect((await service.list(ruleset.id, "Wand")).items).toEqual([]);
+  });
+
   test("doesn't find a missing ruleset or entity", async () => {
     const { session, ruleset, refs } = await setup();
     await expectRefusedWith(service.list(NIL_UUID), 404);

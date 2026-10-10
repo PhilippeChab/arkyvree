@@ -7,6 +7,7 @@ import {
   type WeaponAbilities,
   type WeaponSlot,
 } from "@/engine/rulesets/dnd3.5/model/combat/CombatState.ts";
+import AttackRules from "@/engine/rulesets/dnd3.5/rules/AttackRules.ts";
 import { SIZE_ORDER, WEAPON_SET_SLOTS } from "@/engine/rulesets/dnd3.5/rules/InventorySlots.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { type Item } from "@/shared/relations.ts";
@@ -56,13 +57,6 @@ function handTraits(
     slot === "Two Handed" && light ? SLOT_STRENGTH_MULTIPLIERS["Main Hand"] : SLOT_STRENGTH_MULTIPLIERS[slot];
   const penalty = slot === "Two Handed" ? 0 : (weapon.oneHandedPenalty ?? 0);
   return { light, share, penalty };
-}
-
-function iterativeAttacks(bab: number): number[] {
-  const attacks: number[] = [];
-  for (let bonus = bab; bonus > 0; bonus -= COMBAT_RULES.ATTACK_STEP) attacks.push(bonus);
-
-  return attacks.length > 0 ? attacks : [bab];
 }
 
 /** A character's attacks: its base attack bonus, grapple, and each weapon's to-hit and damage. */
@@ -177,7 +171,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       const { tohit } = weapon;
       const throwing = this.combat.throwing.tohit;
       const bonuses = dexterity + tohit.magic + tohit.misc + tohit.size + tohit.gearpenalty + throwing;
-      return { dexterity, total: iterativeAttacks(this.combat.bab).map((base) => base + bonuses) };
+      return { dexterity, total: AttackRules.listIterativeAttacks(this.combat.bab).map((base) => base + bonuses) };
     }
 
     /**
@@ -319,7 +313,8 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
         kindBonus: () =>
           (natural?.kind === "secondary" ? this.combat.naturalattacks.secondarypenalty : 0) +
           (ranged && strengthDamage === "Slot" ? this.combat.throwing.tohit : 0),
-        attacks: () => (natural ? this.naturalAttacks(natural.repeats) : iterativeAttacks(this.combat.bab)),
+        attacks: () =>
+          natural ? this.naturalAttacks(natural.repeats) : AttackRules.listIterativeAttacks(this.combat.bab),
         thrown: (weapon: WeaponSlot) => (!ranged && weapon.range > 0 ? this.thrownAttack(weapon) : null),
         twoWeapon: (weapon: WeaponSlot) => this.twoWeaponAttacks(weapon, setKey),
         offEnd: (weapon: WeaponSlot) => this.offEndAttack(weapon, setKey),
@@ -420,11 +415,6 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
           if (abilities?.attack === "Strength") abilities.finesse = true;
         }
       }
-    }
-
-    /** The attacks a round its base attack bonus gives: each 5 less than the last while positive, or the bonus alone. */
-    getBabAttacks(): number[] {
-      return iterativeAttacks(this.combat.bab);
     }
 
     /**

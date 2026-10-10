@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- A fork starts Private, a campaign invite says it was sent, a class's levels show their base attack bonus as the sheet does ("+6/+1") and 0 spells a day where the SRD does, and a ruleset's search finds a name by a typo rather than by letters spread across words
 - Inventory: Add Item and Update wait while the slot's warning stands, and equipping two-handed names everything in the way, a weapon and a shield alike
 
 ## 0.5.0 — 2026-05-21
