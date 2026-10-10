@@ -1,3 +1,4 @@
+import { HttpError } from "@/codegen/core/scraper/HttpError.ts";
 import References from "@/codegen/dnd3.5/tools/references/References.ts";
 import { BaseScraper } from "@/codegen/dnd3.5/tools/scraper/BaseScraper.ts";
 import { ClassPage } from "@/codegen/dnd3.5/tools/scraper/pages/class/ClassPage.ts";
@@ -16,7 +17,7 @@ export function ScrapesClasses<B extends Constructor<BaseScraper>>(Base: B) {
       } catch (error) {
         // If 404 and URL includes a book slug, try without it
         // e.g. /classes/complete-divine--52/spirit-shaman/ → /classes/spirit-shaman/
-        if (error instanceof Error && error.message.includes("404")) {
+        if (error instanceof HttpError && error.status === 404) {
           const slugMatch = url.match(/\/classes\/[^/]+\/([^/]+)\/?$/);
           if (slugMatch) {
             const fallbackUrl = `${BaseScraper.site}/classes/${slugMatch[1]}/`;

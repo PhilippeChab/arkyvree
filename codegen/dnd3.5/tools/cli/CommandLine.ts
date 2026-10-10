@@ -14,8 +14,8 @@ interface ScrapeRequest {
  * A parser command's line, read one way by every command: its options (`--type <type>`, a flag such as `--no-cache`)
  * are taken out wherever they stand, an option given without its value or one the command doesn't take is refused
  * (it would be read as nothing, or as a word), and the words left are what the command names. Each command's grammar
- * is a static method: the reference filters most commands take (`filters`), and what `parser:dnd3.5:scrape` takes
- * (`scrape`).
+ * is a static method: the reference filters most commands take (`filters`), what `parser:dnd3.5:overrides` takes
+ * (`overrides`: those and an override key), and what `parser:dnd3.5:scrape` takes (`scrape`).
  */
 export class CommandLine {
   private constructor(argv: string[]) {
@@ -23,15 +23,21 @@ export class CommandLine {
   }
 
   /**
-   * A command's reference filters (the command line's by default): `<book> [<name>] [--type <type>] [--key <key>]`, a
-   * name matched in lowercase.
+   * A command's reference filters (the command line's by default): `<book> [<name>] [--type <type>]`, a name matched in
+   * lowercase. A command hands them on whole (`References.files(filters)`), so it drops none.
    */
-  static filters(argv = process.argv.slice(2)): ReferenceFilters & { keyFilter?: string } {
+  static filters(argv = process.argv.slice(2)): ReferenceFilters {
+    return new CommandLine(argv).referenceFilters("<book> [<name>] [--type <type>]");
+  }
+
+  /**
+   * What `parser:dnd3.5:overrides` is asked (the command line's by default): the reference filters (`filters`) and the
+   * key of the overrides it lists, `<book> [<name>] [--type <type>] [--key <key>]`.
+   */
+  static overrides(argv = process.argv.slice(2)): { filters: ReferenceFilters; keyFilter?: string } {
     const line = new CommandLine(argv);
-    const typeFilter = line.option("type");
     const keyFilter = line.option("key");
-    const [bookFilter, name] = line.words("a book is named without one (<book> [<name>] [--type <type>])");
-    return { bookFilter, typeFilter, nameFilter: name?.toLowerCase(), keyFilter };
+    return { filters: line.referenceFilters("<book> [<name>] [--type <type>] [--key <key>]"), keyFilter };
   }
 
   /**
@@ -71,6 +77,16 @@ export class CommandLine {
     const [, value] = this.args.splice(index, 2);
     if (value === undefined || value.startsWith("--")) throw new Error(`--${name} takes a value`);
     return value;
+  }
+
+  /**
+   * The reference filters the rest of the line gives: `--type <type>`, then a book and a name, `usage` saying what the
+   * command takes.
+   */
+  private referenceFilters(usage: string): ReferenceFilters {
+    const typeFilter = this.option("type");
+    const [bookFilter, name] = this.words(`a book is named without one (${usage})`);
+    return { bookFilter, typeFilter, nameFilter: name?.toLowerCase() };
   }
 
   /** The words left once the command took its options: another option is refused, `usage` saying what it takes. */

@@ -38,7 +38,8 @@ function buildScrapeArgs(ref: ReferenceFile): string[] | null {
 }
 
 async function main() {
-  const { bookFilter, typeFilter, nameFilter } = CommandLine.filters();
+  const filters = CommandLine.filters();
+  const { bookFilter, typeFilter, nameFilter } = filters;
 
   const allRefs = References.files();
   if (allRefs.length === 0) {
@@ -46,7 +47,7 @@ async function main() {
     return;
   }
 
-  const refs = References.files({ bookFilter, typeFilter, nameFilter });
+  const refs = References.files(filters);
 
   console.log(
     `Found ${refs.length} reference files.${bookFilter || typeFilter || nameFilter ? ` (filtered: book=${bookFilter ?? "*"}, type=${typeFilter ?? "*"}, name=${nameFilter ?? "*"})` : ""}\n`,
