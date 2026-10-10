@@ -77,16 +77,11 @@ export default abstract class LevelUpPart<D extends Descriptions, C = unknown> i
     character: CharacterInput,
     query: PickLevel & { powerLevel?: number; selectedPowerIds?: string[] },
   ): OpenedPicker<PickFilters, { id: string }, D["powerOption"]>;
-  /** What a master's bonded creatures (`bonded`, their rows) become as its saved levels make them. */
-  planBonded(view: RulesetView, character: CharacterInput, bonded: CharacterInput[]): BondedCreaturesPlan {
-    return new BondedCreatures(view, character, this).planBonded(bonded);
-  }
   /**
    * What bonded creatures (`bonded`, their rows) become with their master as `master` builds it, kind by kind, from its
    * row (`record`), which a creature it makes takes after.
    */
   abstract planBondedCreatures(view: RulesetView, master: C, record: Character, bonded: CharacterInput[]): BondedPlan[];
-
   /** A saved level's edit: what it writes, checked unless `force`d, and what the bonded creatures become with it. */
   abstract planEdit(
     view: RulesetView,
@@ -109,6 +104,11 @@ export default abstract class LevelUpPart<D extends Descriptions, C = unknown> i
     picks: LevelPicks,
     force: boolean,
   ): LevelsPlan;
+
+  /** What a master's bonded creatures (`bonded`, their rows) become as its saved levels make them. */
+  planBonded(view: RulesetView, character: CharacterInput, bonded: CharacterInput[]): BondedCreaturesPlan {
+    return new BondedCreatures(view, character, this).planBonded(bonded);
+  }
 
   /** The character's last level removed: the level that goes, and what its bonded creatures become without it. */
   planRemoval(view: RulesetView, character: CharacterInput, bonded: CharacterInput[]): LevelRemovalPlan {

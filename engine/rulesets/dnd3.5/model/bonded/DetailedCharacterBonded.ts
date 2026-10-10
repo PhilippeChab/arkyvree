@@ -11,6 +11,8 @@ export default abstract class DetailedCharacterBonded extends DetailedCharacter 
   /** The creature's master, built before it (`Dnd35CharacterBuilder`): what its sheet derives from. */
   protected master?: DetailedCharacter;
 
+  protected abstract applyMasterDerivation(master: DetailedCharacter): void;
+
   /**
    * The stat block's feats, as any granted feat is: possessed and counted (`grant`), listed with the feats the creature
    * has without a pick (`getVirtualFeats`: its sheet and PDF), and their modifiers applied with the character's, in the
@@ -31,8 +33,6 @@ export default abstract class DetailedCharacterBonded extends DetailedCharacter 
         this.data.requirementGroups.push(rulesetData.requirementsByEntity.get(modifier.id) ?? []);
     }
   }
-
-  protected abstract applyMasterDerivation(master: DetailedCharacter): void;
 
   /** The stat block's skills, then its feats, which add their bonuses to the totals set without them. */
   protected applyRaceDefaults(raceStats: BondedRaceStatBlock): void {

@@ -18,6 +18,9 @@ export default abstract class CustomizationEdits<Row extends { id: string }> {
   /** What a refusal calls one: "Modifier" in "Modifier not found for this entity". */
   protected abstract readonly label: string;
 
+  /** The kind's rows on the entity (its id in the view), as its page lists them. */
+  protected abstract rowsOf(entityId: string): Row[];
+
   /** The entity, as the view has it: its id there, and its name. Refused as not found. */
   protected get entity() {
     return CustomizedEntity.find(this.view, this.entityType, this.entityId);
@@ -29,7 +32,4 @@ export default abstract class CustomizationEdits<Row extends { id: string }> {
     if (!row) throw new RulesError("not-found", message);
     return row;
   }
-
-  /** The kind's rows on the entity (its id in the view), as its page lists them. */
-  protected abstract rowsOf(entityId: string): Row[];
 }

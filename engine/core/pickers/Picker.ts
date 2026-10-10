@@ -22,13 +22,13 @@ export default abstract class Picker<
   /** The tree of an option's requirement groups that who the picker is for fails, as the client shows it. */
   protected abstract describeFailed(groups: Requirement[][]): string | undefined;
 
+  /** Whether who the picker is for meets an option's requirement groups. */
+  protected abstract meets(groups: Requirement[][], row: Row): boolean;
+
   /** What the picker adds of a page's options, by option: nothing, unless its kind adds some. */
   protected detailsOf(_rows: Row[]): (row: Row) => Details {
     return () => ({}) as Details;
   }
-
-  /** Whether who the picker is for meets an option's requirement groups. */
-  protected abstract meets(groups: Requirement[][], row: Row): boolean;
 
   /** The options of a page the picker offers: every row, unless its kind leaves some out. */
   protected offer(rows: Row[]): Row[] {

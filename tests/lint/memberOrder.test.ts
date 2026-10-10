@@ -286,6 +286,48 @@ describe("member order", () => {
     );
   });
 
+  test("puts an abstract class's abstract methods in a group of their own with oxlint --fix, after its fields", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "member-order-"));
+    const config = path.join(dir, ".oxlintrc.json");
+    fs.writeFileSync(
+      config,
+      JSON.stringify({ jsPlugins: [path.resolve("lint/plugin.mjs")], rules: { "arkyvree/member-order": "error" } }),
+    );
+    const part = path.join(dir, "Part.ts");
+    fs.writeFileSync(
+      part,
+      [
+        "abstract class Part {",
+        "  describe() {}",
+        "  abstract plan(): void;",
+        "  private helper() {}",
+        "  protected abstract columnsOf(): void;",
+        "  protected check() {}",
+        "  abstract answer(): void;",
+        "  count = 0;",
+        "}",
+        "",
+      ].join("\n"),
+    );
+    await runOxlint(["-c", config, "--fix", dir]);
+    expect(fs.readFileSync(part, "utf8")).toBe(
+      [
+        "abstract class Part {",
+        "  count = 0;",
+        // What a subclass gives, protected before public, then the class's own methods
+        "  protected abstract columnsOf(): void;",
+        "  abstract answer(): void;",
+        "  abstract plan(): void;",
+        "  private helper() {}",
+        "  protected check() {}",
+        "  describe() {}",
+        "}",
+        "",
+      ].join("\n"),
+    );
+    fs.rmSync(dir, { recursive: true });
+  });
+
   test("suggests, never fixes, moving a field whose initializer calls what reads another field", async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "member-order-"));
     const config = path.join(dir, ".oxlintrc.json");

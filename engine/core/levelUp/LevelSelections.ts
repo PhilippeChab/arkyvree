@@ -14,6 +14,9 @@ interface SavedPicks {
  * feat it picked (`featDetailsOf`: `F`) is its own.
  */
 export default abstract class LevelSelections<C, F extends object> extends LevelUpBase<C> {
+  /** What the ruleset adds of each of these picked feats, by feat. */
+  protected abstract featDetailsOf(featIds: string[]): (featId: string) => F;
+
   /**
    * A saved level's selections: its skill ranks, its feats by pool (each with what the ruleset adds of it) and its powers
    * by pool (each with its spell level in the pool when it has one).
@@ -49,9 +52,6 @@ export default abstract class LevelSelections<C, F extends object> extends Level
     }
     return { skills, feats, powers };
   }
-
-  /** What the ruleset adds of each of these picked feats, by feat. */
-  protected abstract featDetailsOf(featIds: string[]): (featId: string) => F;
 
   /**
    * The character's saved level `characterLevelId`: its class level, hit points and ability increases, its skill ranks,
