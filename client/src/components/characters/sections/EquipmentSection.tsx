@@ -108,7 +108,8 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, load }: Equ
   // How the edited entry's item is placed (edit dialog)
   const editProfile = editingEntry?.placement ?? null;
 
-  // What keeps the picked slot from taking the item, as the server's rules say: shown above each dialog's fields
+  // What keeps the picked slot from taking the item, as the server's rules say: shown above each dialog's fields, its
+  // save held while it stands, which the server would refuse
   const { data: addPlacement, error: addPlacementError } = useQuery({
     ...inventoryPlacementQuery(characterId, addLocation, addWeaponSet),
     enabled: addDialogOpen,
@@ -307,6 +308,7 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, load }: Equ
         onSubmit={(data) => handleAddSubmit(data)}
         pending={addMutation.isPending}
         submitLabel="Add Item"
+        submitDisabled={!!addSlotWarning}
         maxWidth="md"
       >
         {issuesAlert(
@@ -402,6 +404,7 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, load }: Equ
         form={editForm}
         onSubmit={(data) => editingEntry && updateMutation.mutate({ entryId: editingEntry.id, data })}
         pending={updateMutation.isPending}
+        submitDisabled={!!editSlotWarning}
         maxWidth="md"
       >
         {issuesAlert(

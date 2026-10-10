@@ -23,27 +23,33 @@ interface EquippedEntry {
 type HeldEntry = CharacterInput["rows"]["inventory"][number] & { name: string };
 
 /**
- * What keeps a location from taking one more item, with the entry in the way:
+ * What keeps a location from taking one more item, with what's in the way:
  * - `occupied`: a location that holds one item holds `entry`;
  * - `fingers`: both fingers are taken;
- * - `hands`: a two-handed item can't go where `entry` is in a hand of the same weapon set;
+ * - `hands`: a two-handed item can't go where `entries` are in the hands of the same weapon set (each of them: a
+ *   weapon in the main hand and a shield in the off hand);
  * - `twoHanded`: a hand can't take an item while `entry` is two-handed in the same set;
  * - `sameHand`: `entry` is already in that hand in the same set.
  */
-type SlotConflict = { entry: HeldEntry; reason: Exclude<SlotConflictReason, "fingers"> } | { reason: "fingers" };
+type SlotConflict =
+  | { entries: HeldEntry[]; reason: "hands" }
+  | { entry: HeldEntry; reason: Exclude<SlotConflictReason, "fingers" | "hands"> }
+  | { reason: "fingers" };
 
 type SlotConflictReason = "occupied" | "fingers" | "hands" | "twoHanded" | "sameHand";
 
 /** Why every finger is taken. */
 const FINGERS_TAKEN_MESSAGE = "Both finger slots are occupied";
 
+/** The hands a two-handed item needs free, in the order its warning names what they hold. */
+const HELD_HANDS = ["Main Hand", "Off Hand"] as const;
+
 /** Why a location can't take an item, by the conflict's reason: the item in the way (`name`), its weapon set from 1. */
 const SLOT_CONFLICT_MESSAGES: Record<
-  Exclude<SlotConflictReason, "fingers">,
+  Exclude<SlotConflictReason, "fingers" | "hands">,
   (location: ItemLocation, entry: { location: string | null; name: string }, weaponSet: number) => string
 > = {
   occupied: (location, entry) => `${location} slot is occupied by ${entry.name}`,
-  hands: (_, entry, weaponSet) => `Cannot equip two-handed: ${entry.name} is in ${entry.location} (Set ${weaponSet})`,
   twoHanded: (_, entry, weaponSet) => `Cannot equip: ${entry.name} is two-handed in Set ${weaponSet}`,
   sameHand: (location, entry, weaponSet) => `${location} is occupied by ${entry.name} (Set ${weaponSet})`,
 };
@@ -54,6 +60,15 @@ const TYPE_LOCATION_MESSAGES = {
   Shield: "Shields can only be equipped in the Off Hand slot",
   Weapon: "Weapons can only be equipped in hand slots",
 } as const satisfies Record<keyof typeof ITEM_TYPE_LOCATIONS, string>;
+
+/**
+ * Why a two-handed item can't go in a weapon set (from 1): what its hands hold, each item in its hand ("Longsword is in
+ * Main Hand and Heavy Steel Shield is in Off Hand").
+ */
+function describeHeldHands(entries: HeldEntry[], weaponSet: number) {
+  const held = entries.map((entry) => `${entry.name} is in ${entry.location}`).join(" and ");
+  return `Cannot equip two-handed: ${held} (Set ${weaponSet})`;
+}
 
 /**
  * Equipping an item for a character, from its rows (`input`): where it holds it, refused when a slot, a hand or a
@@ -153,8 +168,9 @@ export default class Equipping {
       const find = (...locations: string[]) =>
         sameSet.find((e) => e.location !== null && locations.includes(e.location));
 
-      const handed = location === "Two Handed" ? find("Main Hand", "Off Hand") : undefined;
-      if (handed) return { reason: "hands", entry: handed };
+      // Each hand's item, the main hand's first
+      const handed = location === "Two Handed" ? HELD_HANDS.flatMap((hand) => find(hand) ?? []) : [];
+      if (handed.length > 0) return { reason: "hands", entries: handed };
       const twoHanded = location === "Two Handed" ? undefined : find("Two Handed");
       if (twoHanded) return { reason: "twoHanded", entry: twoHanded };
       const same = find(location);
@@ -197,6 +213,7 @@ export default class Equipping {
     const conflict = this.findConflict(location, weaponSet, equipped);
     if (!conflict) return null;
     if (conflict.reason === "fingers") return FINGERS_TAKEN_MESSAGE;
+    if (conflict.reason === "hands") return describeHeldHands(conflict.entries, (weaponSet ?? 0) + 1);
 
     const { entry } = conflict;
     return SLOT_CONFLICT_MESSAGES[conflict.reason](location, entry, (entry.weaponSet ?? 0) + 1);

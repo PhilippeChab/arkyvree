@@ -222,6 +222,23 @@ describe("InventoryService", () => {
       expect(await warning("Main Hand", 0)).toBe("Main Hand is occupied by Longsword (Set 1)");
     });
 
+    test("names every item in the hands a two-handed one needs, a weapon's and a shield's, as the save refuses it", async () => {
+      const { session, character, newItem } = await setup();
+      const [sword, shield, greatsword] = [
+        await newItem({ name: "Longsword", type: "Weapon" }),
+        await newItem({ name: "Heavy Steel Shield", type: "Shield" }),
+        await newItem({ name: "Greatsword", type: "Weapon" }),
+      ];
+      await add(session, character.id, shield.id, equipped("Off Hand", 0));
+      await add(session, character.id, sword.id, equipped("Main Hand", 0));
+
+      const { warning } = await CharacterInventoryService.getPlacement(session, character.id, null, "Two Handed", 0);
+      expect(warning).toBe(
+        "Cannot equip two-handed: Longsword is in Main Hand and Heavy Steel Shield is in Off Hand (Set 1)",
+      );
+      expect(add(session, character.id, greatsword.id, equipped("Two Handed", 0))).rejects.toThrow(warning!);
+    });
+
     test("is none for a free slot, another weapon set, or the entry being edited", async () => {
       const { character, items, warning } = await placed();
       expect(await warning("Neck", 0)).toBeNull();
