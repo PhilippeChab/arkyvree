@@ -22,10 +22,13 @@ const FEAT_TYPE_APTITUDES: Record<string, string[]> = {
 };
 
 function detectTemplate(entry: FeatReference["raw"][number]): FeatReference["detected"][string]["template"] {
-  const text = (entry.benefit + " " + (entry.special ?? "")).toLowerCase();
+  const written = entry.benefit + " " + (entry.special ?? "");
+  const text = written.toLowerCase();
 
-  // Weapon templates: "selected weapon", "using the weapon you selected"
-  if (/selected weapon|the weapon you selected/.test(text)) return { type: "weapon", familyName: entry.name };
+  // Weapon templates: "the selected weapon", "using the weapon you selected", a weapon in lower case as the template's
+  // description names it (`expandTemplateDescription`): a capital "Weapon" is a feat's name ("a slashing weapon for
+  // which you have selected Weapon Focus": Disemboweling Strike, Head Shot)
+  if (/[Ss]elected weapon|[Tt]he weapon you selected/.test(written)) return { type: "weapon", familyName: entry.name };
 
   // Crossbow-specific: "chosen type of crossbow"
   if (/type of crossbow|chosen.*crossbow/.test(text)) return { type: "crossbow", familyName: entry.name };

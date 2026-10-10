@@ -2,7 +2,6 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { FeatSeed } from "@/content/core/builders/feats/types.ts";
-import { ALL_WEAPONS } from "@/vocabulary/dnd3.5/weapons.ts";
 
 export const AMBUSH_FEATS: FeatSeed[] = [
   {
@@ -19,11 +18,25 @@ export const AMBUSH_FEATS: FeatSeed[] = [
     aptitudes: ["General"],
   },
   {
+    name: "Disemboweling Strike",
+    description:
+      "Your successful sneak attack with a slashing weapon for which you have selected Weapon Focus deals 1d4 points of Constitution damage in addition to its normal damage. You can't use this feat against the same target more than once per day. Using this feat reduces your sneak attack damage by 4d6.",
+    aptitudes: ["General"],
+    requirements: [eq("feats.weaponfocus.*.possessed")],
+  },
+  {
     name: "Eldritch Erosion",
     description:
       "Your successful sneak attack reduces your target's spell resistance and power resistance by 5 (minimum 0) for 10 rounds. If you use this feat a second time on a target before the ten rounds have elapsed, the effect of the first expires. using this reduces your sneak attack damage by 4d6",
     aptitudes: ["General"],
     requirements: [gte("skills.knowledgearcana.rank", 1), gte("feats.sneakattack.count", 4)],
+  },
+  {
+    name: "Head Shot",
+    description:
+      "Your successful sneak attack with a bludgeoning weapon for which you have selected Weapon Focus leaves your foe confused for 1 round. A successful Will save (DC 10 + the number of extra damage dice normally dealt by your sneak attack + your Dex modifier) negates this effect. If you use this feat a second time on a target before 1 round has elapsed, the effect of the first use expires. Using this feat reduces your sneak attack damage by 5d6.",
+    aptitudes: ["General"],
+    requirements: [eq("feats.weaponfocus.*.possessed")],
   },
   {
     name: "Impeding Attack",
@@ -93,14 +106,6 @@ export const BARDIC_FEATS: FeatSeed[] = [
     requirements: [eq("feats.bardicmusic.*.possessed"), eq("feats.evasion.*.possessed"), gte("skills.perform.rank", 9)],
   },
 ];
-
-export const DISEMBOWELING_STRIKE_FEATS: FeatSeed[] = ALL_WEAPONS.map((w) => ({
-  name: `Disemboweling Strike: ${w}`,
-  description: `Your successful sneak attack with a slashing weapon for which you have selected Weapon Focus deals 1d4 points of Constitution damage in addition to its normal damage. You can't use this feat against the same target more than once per day. Using this feat reduces your sneak attack damage by 4d6.`,
-  generated: true,
-  aptitudes: ["General"],
-  properties: [{ type: "FEAT_FAMILY", value: "Disemboweling Strike" }],
-}));
 
 export const FIGHTER_FEATS: FeatSeed[] = [
   {
@@ -248,14 +253,6 @@ export const GENERAL_FEATS: FeatSeed[] = [
     requirements: [eq("feats.favoredenemy.*.possessed"), gte("feats.skirmish.count", 1)],
   },
 ];
-
-export const HEAD_SHOT_FEATS: FeatSeed[] = ALL_WEAPONS.map((w) => ({
-  name: `Head Shot: ${w}`,
-  description: `Your successful sneak attack with a bludgeoning weapon for which you have selected Weapon Focus leaves your foe confused for 1 round. A successful Will save (DC 10 + the number of extra damage dice normally dealt by your sneak attack + your Dex modifier) negates this effect. If you use this feat a second time on a target before 1 round has elapsed, the effect of the first use expires. Using this feat reduces your sneak attack damage by 5d6.`,
-  generated: true,
-  aptitudes: ["General"],
-  properties: [{ type: "FEAT_FAMILY", value: "Head Shot" }],
-}));
 
 export const LUCK_FEATS: FeatSeed[] = [
   {

@@ -2,24 +2,13 @@
 
 import type { FeatSeed } from "@/content/core/builders/feats/types.ts";
 
-import {
-  AMBUSH_FEATS,
-  BARDIC_FEATS,
-  DISEMBOWELING_STRIKE_FEATS,
-  FIGHTER_FEATS,
-  GENERAL_FEATS,
-  HEAD_SHOT_FEATS,
-  LUCK_FEATS,
-  SKILL_TRICK_FEATS,
-} from "./feats.ts";
+import { AMBUSH_FEATS, BARDIC_FEATS, FIGHTER_FEATS, GENERAL_FEATS, LUCK_FEATS, SKILL_TRICK_FEATS } from "./feats.ts";
 
 export const ALL_STANDALONE_FEATS: FeatSeed[] = [
   ...AMBUSH_FEATS,
   ...BARDIC_FEATS,
-  ...DISEMBOWELING_STRIKE_FEATS,
   ...FIGHTER_FEATS,
   ...GENERAL_FEATS,
-  ...HEAD_SHOT_FEATS,
   ...LUCK_FEATS,
   ...SKILL_TRICK_FEATS,
 ];

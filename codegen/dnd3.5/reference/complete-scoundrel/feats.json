@@ -6,6 +6,26 @@
     "type": "feat"
   },
   "overrides": {
+    "Disemboweling Strike": {
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.weaponfocus.*.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
+    "Head Shot": {
+      "requirements": [
+        {
+          "operator": "equal",
+          "target": "feats.weaponfocus.*.possessed",
+          "value": "true",
+          "valueType": "boolean"
+        }
+      ]
+    },
     "reviewed": [
       "Unresolved bonus: \"On her next turn, still braced in the corner, she draws her quarterstaff and attacks an ogre that has moved next to her, gaining a +1 bonus on the attack roll for higher ground\"",
       "Unresolved bonus: \"For example, a 5th-level fighter/1st-level ninja with this feat could use his ki powers a number of times equal to 3 (one-half his ninja and fighter levels) + his Wisdom bonus (if any), and would have a +1 bonus to AC (as if he were a 6th-level ninja)\"",
