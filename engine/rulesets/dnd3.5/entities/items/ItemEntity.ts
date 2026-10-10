@@ -12,16 +12,16 @@ import { TEMPLATE_ITEM_TYPES, type TemplateItemType } from "@/vocabulary/dnd3.5/
 
 import { ITEM_FIELDS } from "./fields.ts";
 
-/** An item's save, as its form sends it. */
+/** An item's save, as its form sends it: a cost, a weight, a slot or a template it leaves out is kept, null clears it. */
 interface ItemBody {
-  costGp?: number;
+  costGp?: number | null;
   description?: string | null;
   isTemplate?: boolean;
   name: string;
-  slot?: ItemLocation;
-  sourceItemId?: string;
+  slot?: ItemLocation | null;
+  sourceItemId?: string | null;
   type?: string | null;
-  weight?: number;
+  weight?: number | null;
 }
 
 /** A variant of an item, as its form sends it. */
@@ -30,12 +30,16 @@ interface VariantBody {
   name: string;
 }
 
-/** An item's row, as its forms write it: a template keeps no source, an edit leaves whether it's one as it is. */
-type ItemColumns = Omit<ItemBody, "costGp" | "isTemplate" | "sourceItemId" | "weight"> & {
-  costGp?: string;
+/**
+ * An item's row, as its forms write it: a template keeps no source, an edit leaves whether it's one as it is, and a slot
+ * is always one (`"Other"` for none).
+ */
+type ItemColumns = Omit<ItemBody, "costGp" | "isTemplate" | "slot" | "sourceItemId" | "weight"> & {
+  costGp?: string | null;
   isTemplate?: boolean;
+  slot?: ItemLocation;
   sourceItemId?: string | null;
-  weight?: string;
+  weight?: string | null;
 };
 
 /** A type an item can be based on a template of: a weapon's, an armor's or a shield's. */
@@ -43,6 +47,11 @@ const TEMPLATE_TYPE = z.enum(TEMPLATE_ITEM_TYPES);
 
 /** The variants an item's form makes at once: as many as the rules allow. */
 const VARIANTS = z.array(z.unknown()).max(RULESET_LIMITS.itemVariants);
+
+/** A cost's or a weight's column: its number, written; null clears it, and one left out stays as it is. */
+function decimalColumn(value: number | null | undefined) {
+  return value === null ? null : value?.toString();
+}
 
 /**
  * An item as the ruleset has it: described with its template's properties and requirements, its own over them, and
@@ -70,12 +79,12 @@ export default class ItemEntity extends CustomizationPageEntity<
   /** A form's columns: a new item's template, and whether it's one; an edited template keeps no source. */
   protected override columnsOf(body: ItemBody, item?: Item): ItemColumns {
     const columns = {
-      costGp: body.costGp?.toString(),
+      costGp: decimalColumn(body.costGp),
       description: body.description,
       name: body.name,
       slot: this.slotOf(body),
       type: body.type,
-      weight: body.weight?.toString(),
+      weight: decimalColumn(body.weight),
     };
     if (item) return { ...columns, sourceItemId: item.isTemplate ? null : body.sourceItemId };
     return { ...columns, isTemplate: body.isTemplate ?? false, sourceItemId: body.sourceItemId };
@@ -147,9 +156,12 @@ export default class ItemEntity extends CustomizationPageEntity<
     return item;
   }
 
-  /** An item's slot: the one its type sets (an armor's the torso, a shield's the off hand), or the one its form gives. */
-  private slotOf(item: { slot?: ItemLocation; type?: string | null }): ItemLocation | undefined {
-    return ItemPlacement.slotOfType(item.type ?? null) ?? item.slot;
+  /**
+   * An item's slot: the one its type sets (an armor's the torso, a shield's the off hand), or the one its form gives,
+   * `"Other"` for none (null: an item worn nowhere in particular).
+   */
+  private slotOf(item: { slot?: ItemLocation | null; type?: string | null }): ItemLocation | undefined {
+    return ItemPlacement.slotOfType(item.type ?? null) ?? (item.slot === null ? "Other" : item.slot);
   }
 
   /** The template an item made from `item` points at: `item` itself when it's a template, or its own template. */

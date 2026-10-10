@@ -81,6 +81,52 @@ describe("ItemsService", () => {
     ).toMatchObject({ weight: "10.00", costGp: "100.00" });
   });
 
+  test("clears its slot, weight and cost when an edit gives none, and keeps them when it leaves them out", async () => {
+    const { session, ruleset } = await createTestUserAndRuleset();
+    const hat = await ItemsService.createItem(session, ruleset.id, {
+      name: "Hat",
+      slot: "Head",
+      weight: 5,
+      costGp: 10,
+    });
+
+    const kept = await ItemsService.updateItem(session, ruleset.id, hat.id, { name: "Hat", description: "Floppy" });
+    expect(kept).toMatchObject({ slot: "Head", weight: "5.00", costGp: "10.00" });
+
+    // A slot's none is "Other", the slot of an item worn nowhere in particular
+    const cleared = await ItemsService.updateItem(session, ruleset.id, hat.id, {
+      name: "Hat",
+      slot: null,
+      weight: null,
+      costGp: null,
+    });
+    expect(cleared).toMatchObject({ slot: "Other", weight: null, costGp: null });
+    expect(await ItemsService.getItem(ruleset.id, hat.id)).toMatchObject({ slot: "Other", weight: null, costGp: null });
+  });
+
+  test("clears its template when an edit gives none, and keeps it when it leaves it out", async () => {
+    const { session, ruleset } = await createTestUserAndRuleset();
+    const template = await createTemplate(session, ruleset.id);
+    const sword = await ItemsService.createItem(session, ruleset.id, {
+      name: "Sword",
+      type: "Weapon",
+      sourceItemId: template.id,
+    });
+
+    expect(
+      await ItemsService.updateItem(session, ruleset.id, sword.id, { name: "Sword", type: "Weapon" }),
+    ).toMatchObject({ sourceItemId: template.id });
+    expect(
+      await ItemsService.updateItem(session, ruleset.id, sword.id, {
+        name: "Sword",
+        type: "Weapon",
+        sourceItemId: null,
+      }),
+    ).toMatchObject({ sourceItemId: null });
+    // Its template's properties went with it
+    expect(await ItemsService.getItem(ruleset.id, sword.id)).toMatchObject({ sourceItemId: null, properties: [] });
+  });
+
   test("describes where a character carrying it can place it", async () => {
     const { session, ruleset } = await createTestUserAndRuleset();
     const sword = await ItemsService.createItem(session, ruleset.id, { name: "Sword", type: "Weapon" });
