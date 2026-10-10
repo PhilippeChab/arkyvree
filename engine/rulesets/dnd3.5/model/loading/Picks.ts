@@ -11,6 +11,7 @@ import type {
   RulesetSave,
 } from "@/shared/relations.ts";
 
+import CustomizedEntities from "./CustomizedEntities.ts";
 import type { Resolve } from "./DetailedCharacterDataLoader.ts";
 
 /** The character's levels, in the order it took them, and their class levels. */
@@ -88,7 +89,7 @@ function toPowerRow(
   }: PowerWithAptitudes & { savesInRule?: RulesetSave | null },
   rulesetData: RulesetData,
 ) {
-  return { ...power, saveName: power.saveId ? (rulesetData.savesById.get(power.saveId)?.name ?? null) : null };
+  return { ...power, saveName: CustomizedEntities.saveNameOf(power, rulesetData) };
 }
 
 /** A character's picks and grants, from its rows and the view. */

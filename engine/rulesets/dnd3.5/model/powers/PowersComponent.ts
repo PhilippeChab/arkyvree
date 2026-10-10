@@ -1,6 +1,7 @@
+import type SpellLists from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellLists.ts";
 import { formatPropertyValues, groupPropertyValues } from "@/shared/customization/properties.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
-import { type Aptitude, type Power, type PowerWithAptitudes, type Property } from "@/shared/relations.ts";
+import { type Power, type PowerWithAptitudes, type Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import type { PowerDc, PowerDcsByClass } from "./PowerGroupingsComponent.ts";
@@ -75,21 +76,17 @@ export default class PowersComponent {
     return entry?.[toSpellPossessionSlug(listName)];
   }
 
-  /** `featListIds`: the lists a feat brings (a domain's, a specialist's school), whose spells it gives, never known. */
+  /** The lists a feat brings (`spellLists.featListIds`: a domain's, a specialist's school) give spells, never known. */
   initialize(
     powers: (Power & { aptitudeId: string; powerLevel: number | null; properties: Property[] })[],
     rulesetPowers: PowerWithAptitudes[],
-    rulesetAptitudes: Aptitude[],
-    featListIds: Set<string>,
+    spellLists: SpellLists,
   ) {
     this.addPowerEntries(powers);
 
     // Build spell known data nested under each spell entry: spell → aptitude → { known }, but on the lists a feat brings
-    const aptitudeIdToSlug = new Map<string, string>();
-    for (const apt of rulesetAptitudes) {
-      if (featListIds.has(apt.id)) continue;
-      aptitudeIdToSlug.set(apt.id, toSpellPossessionSlug(apt.name));
-    }
+    const { featListIds, spellSlugByAptitudeId } = spellLists;
+    const aptitudeIdToSlug = new Map([...spellSlugByAptitudeId].filter(([aptitudeId]) => !featListIds.has(aptitudeId)));
 
     for (const power of rulesetPowers) {
       const spellSlug = stripSeparators(power.name);

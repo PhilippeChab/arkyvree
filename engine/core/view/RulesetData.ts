@@ -164,6 +164,9 @@ export default class RulesetData {
 
   private readonly built: Partial<Indices> = {};
 
+  /** What the ruleset's module derives of the view, by what derives it (`derive`). */
+  private readonly derived = new Map<new (rulesetData: RulesetData) => object, object>();
+
   private readonly klassLevelFeats: KlassLevelFeat[];
 
   private readonly klassLevelPowers: KlassLevelPower[];
@@ -337,6 +340,18 @@ export default class RulesetData {
       properties: this.propertiesByEntity.get(entityId) ?? [],
       requirements: this.requirementsByEntity.get(entityId) ?? [],
     };
+  }
+
+  /**
+   * What a ruleset's module derives of the view (an instance of `kind`, built from the view): built the first time it's
+   * read, then kept with the view, as its indices are. A 3.5 character's spell lists, which every build and listing reads.
+   */
+  derive<T extends object>(kind: new (rulesetData: RulesetData) => T): T {
+    const kept = this.derived.get(kind);
+    if (kept instanceof kind) return kept;
+    const derived = new kind(this);
+    this.derived.set(kind, derived);
+    return derived;
   }
 
   /**

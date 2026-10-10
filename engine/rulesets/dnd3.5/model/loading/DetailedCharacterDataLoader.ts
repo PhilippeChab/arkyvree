@@ -2,23 +2,16 @@ import { type CharacterRows } from "@/engine/core/module/index.ts";
 import { type RulesetData, type RulesetView } from "@/engine/core/view/index.ts";
 import { type SkillFieldValues } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
 import type {
-  Aptitude,
   Campaign,
   Character,
   CharacterLevel,
-  Feat,
   Klass,
   KlassLevelSave,
   KlassSkill,
   Language,
   Modifier,
   Player,
-  PowerWithAptitudes,
-  Property,
   Requirement,
-  Ruleset,
-  RulesetAbility,
-  RulesetSave,
   Skill,
 } from "@/shared/relations.ts";
 
@@ -33,15 +26,18 @@ import Picks from "./Picks.ts";
 import Possessions from "./Possessions.ts";
 import RulesetReadings from "./RulesetReadings.ts";
 
-/** What a character is built from: its rows and its ruleset's view's, as the loader assembles them. */
+/**
+ * What a character is built from: its rows, as its ruleset's view composes them, and what they read of the view (its
+ * classes' fields, its skills' fields). The ruleset's own lists the build reads off the view itself.
+ */
 export interface LoadedCharacterData {
   campaign: Campaign | undefined;
   characterAbilityScores: { abilityId: string; name: string; score: number }[];
   characterLevels: CharacterLevel[];
-  /** The spell lists a feat brings (a domain's, a specialist's school): their spells come with it, never learned. */
-  featListIds: Set<string>;
   feats: CustomizedFeat[];
   inventory: InventoryEntry[];
+  /** The item each modifier an item is the source of belongs to, by the modifier's id. */
+  itemModifiers: Map<string, string>;
   klassBonusSpellAbilityMap: Map<string, string>;
   klassCasterTypeMap: Map<string, "Arcane" | "Divine">;
   klasses: Klass[];
@@ -52,22 +48,11 @@ export interface LoadedCharacterData {
   klassLevelSaves: KlassLevelSave[];
   klassSkills: KlassSkill[];
   languages: Language[];
-  leveledAptitudeIds: Set<string>;
   modifiers: Modifier[];
   player: Player | undefined;
   powers: CustomizedPower[];
   race: CustomizedRace;
   requirementGroups: Requirement[][];
-  ruleset: Ruleset | undefined;
-  rulesetAbilities: RulesetAbility[];
-  rulesetAptitudes: Aptitude[];
-  rulesetFeatProperties: Property[];
-  rulesetFeats: Feat[];
-  rulesetKlasses: Klass[];
-  rulesetPowerProperties: Property[];
-  rulesetPowers: PowerWithAptitudes[];
-  rulesetSaves: RulesetSave[];
-  rulesetSkills: Skill[];
   skillFields: Map<string, SkillFieldValues>;
   skillPointAbilityId: string | null;
   skills: SkillWithRank[];
@@ -104,7 +89,7 @@ export default class DetailedCharacterDataLoader {
 
   /** The character's data, assembled from its rows (`rows`) and its ruleset's `view`. */
   load(rows: CharacterRows, view: RulesetView): LoadedCharacterData {
-    const { ruleset, rulesetData } = view;
+    const { rulesetData } = view;
     const { player, campaign } = rows;
     const cowData = rulesetData.cow;
     // The character's race, from the view: racesById resolves a stored id (RulesetComposition)
@@ -149,6 +134,8 @@ export default class DetailedCharacterDataLoader {
       klassLevelsRaw,
       rulesetData,
     );
+    const klassProperties = RulesetReadings.readKlassProperties(klassEntityIds, rulesetData, abilityLookup);
+    const dcAbilities = { klassBonusSpellAbilityMap: klassProperties.klassBonusSpellAbilityMap, klassLevels };
     const parts = {
       characterSourcedModifiers,
       race: CustomizedEntities.toCustomizedRace(race, rulesetData),
@@ -156,15 +143,13 @@ export default class DetailedCharacterDataLoader {
       klassLevels,
       klassEntityIds,
       feats: CustomizedEntities.toCustomizedFeats(allFeats, virtuallyPossessedFeatIds, rulesetData),
-      powers: CustomizedEntities.toCustomizedPowers(allPowers, virtuallyPossessedPowers, rulesetData),
+      powers: CustomizedEntities.toCustomizedPowers(allPowers, virtuallyPossessedPowers, rulesetData, dcAbilities),
     };
     const { modifiers, requirementGroups } = CustomizedEntities.collectModifiers(parts, rulesetData, extraRequirements);
 
     return {
-      ruleset,
       player,
       campaign,
-      ...RulesetReadings.readRulesetLists(rulesetData),
       ...RulesetReadings.readRulesetProperties(rulesetData, (id) => cowData.resolve(id)),
       characterAbilityScores: resolve(rows.abilities).map((ca) => RulesetReadings.buildAbilityScore(ca, abilityLookup)),
       race: parts.race,
@@ -182,9 +167,10 @@ export default class DetailedCharacterDataLoader {
       klassLevelPowerCountsByAptitudeId,
       klassLevelProperties,
       modifiers,
+      itemModifiers: new Map(modifiers.filter((m) => m.sourceType === "items").map((m) => [m.id, m.sourceId])),
       requirementGroups,
       validRulesetIds: new Set([this.character.rulesetId, ...cowData.sourceChain]),
-      ...RulesetReadings.readKlassProperties(klassEntityIds, rulesetData, abilityLookup),
+      ...klassProperties,
     };
   }
 }

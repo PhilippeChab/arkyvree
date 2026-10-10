@@ -3,7 +3,7 @@
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import FeatsPaths from "@/engine/rulesets/dnd3.5/model/feats/FeatsPaths.ts";
 import PowersPaths from "@/engine/rulesets/dnd3.5/model/powers/PowersPaths.ts";
-import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
+import SpellLists from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellLists.ts";
 import type { Modifier, PowerWithAptitudes } from "@/shared/relations.ts";
 
 /**
@@ -59,17 +59,35 @@ function resolvePossessedPowers(
 
 /** What a character possesses virtually: the feats and powers its modifiers give it. */
 export default class Possessions {
-  /** The feats and powers the character's modifiers make it possess without a pick (`set feats.<slug>.possessed`). */
+  /**
+   * The feats and powers the character's modifiers make it possess without a pick (`set feats.<slug>.possessed`,
+   * `set powers.<spell>.<list>.known`): those its sources' modifiers grant, then those the granted ones' own modifiers
+   * grant, until a pass grants none.
+   */
   static resolveVirtual(baseModifiers: Modifier[], featIds: string[], powerIds: string[], rulesetData: RulesetData) {
-    return {
-      virtuallyPossessedFeatIds: resolvePossessedFeatIds(baseModifiers, new Set(featIds), rulesetData.featIdBySlug),
-      virtuallyPossessedPowers: resolvePossessedPowers(
-        baseModifiers,
-        new Set(powerIds),
+    const virtuallyPossessedFeatIds: string[] = [];
+    const virtuallyPossessedPowers: { aptitudeId: string; powerId: string }[] = [];
+    const heldFeatIds = new Set(featIds);
+    const heldPowerIds = new Set(powerIds);
+    const { aptitudeIdBySpellSlug } = SpellLists.of(rulesetData);
+    let scanned = baseModifiers;
+    while (scanned.length > 0) {
+      const feats = resolvePossessedFeatIds(scanned, heldFeatIds, rulesetData.featIdBySlug);
+      const powers = resolvePossessedPowers(
+        scanned,
+        heldPowerIds,
         rulesetData.powerIdsBySlug,
         rulesetData.powersById,
-        new Map(rulesetData.aptitudes.map((apt) => [toSpellPossessionSlug(apt.name), apt.id])),
-      ),
-    };
+        aptitudeIdBySpellSlug,
+      );
+      for (const featId of feats) heldFeatIds.add(featId);
+      for (const { powerId } of powers) heldPowerIds.add(powerId);
+      virtuallyPossessedFeatIds.push(...feats);
+      virtuallyPossessedPowers.push(...powers);
+      scanned = [...feats, ...powers.map(({ powerId }) => powerId)].flatMap(
+        (id) => rulesetData.modifiersBySource.get(id) ?? [],
+      );
+    }
+    return { virtuallyPossessedFeatIds, virtuallyPossessedPowers };
   }
 }

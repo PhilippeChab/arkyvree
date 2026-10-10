@@ -1,5 +1,5 @@
 import type { CharacterRows } from "@/engine/core/module/index.ts";
-import { type RulesetData, type RulesetView } from "@/engine/core/view/index.ts";
+import { type RulesetView } from "@/engine/core/view/index.ts";
 import type { ValidationIssue } from "@/engine/rulesets/dnd3.5/model/concerns/Validates.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import CustomizedEntities from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
@@ -17,27 +17,28 @@ export default abstract class DetailedCharacterBonded extends DetailedCharacter 
    * build's rounds, each behind its own requirements. A feat the creature already has, from a modifier that grants it,
    * stays as it is, as a granted feat the character has does.
    */
-  protected applyGrantedFeats(featNames: string[], rulesetData: RulesetData): void {
+  protected applyGrantedFeats(featNames: string[]): void {
+    const { rulesetData } = this;
     for (const featName of featNames) {
       if (!this.components.feats.grant(featName)) continue;
       const featRow = rulesetData.featsById.get(rulesetData.featIdBySlug.get(stripSeparators(featName)) ?? "");
       if (!featRow) continue;
       const feat = CustomizedEntities.toVirtualFeat(featRow, rulesetData);
-      this.feats.push(feat);
-      this.modifiers.push(...feat.modifiers);
+      this.data.feats.push(feat);
+      this.data.modifiers.push(...feat.modifiers);
       // A granted feat's own prerequisites don't gate it: its modifiers' own requirements do
       for (const modifier of feat.modifiers)
-        this.requirementGroups.push(rulesetData.requirementsByEntity.get(modifier.id) ?? []);
+        this.data.requirementGroups.push(rulesetData.requirementsByEntity.get(modifier.id) ?? []);
     }
   }
 
   protected abstract applyMasterDerivation(master: DetailedCharacter): void;
 
   /** The stat block's skills, then its feats, which add their bonuses to the totals set without them. */
-  protected applyRaceDefaults(raceStats: BondedRaceStatBlock, rulesetData: RulesetData): void {
+  protected applyRaceDefaults(raceStats: BondedRaceStatBlock): void {
     const featNames = [...(raceStats.bonusFeats ?? []), ...(raceStats.baseFeats ?? [])];
     this.applySkillTotals(raceStats.baseSkillTotals ?? {}, raceStats.baseSkillRanks ?? {}, featNames);
-    this.applyGrantedFeats(featNames, rulesetData);
+    this.applyGrantedFeats(featNames);
   }
 
   /**
@@ -73,20 +74,20 @@ export default abstract class DetailedCharacterBonded extends DetailedCharacter 
    * block's feats and skill totals) before requirements read the sheet and modifiers change it: an item's or a feat's
    * modifier adds on top. Then the character's own setup, Weapon Finesse on the natural attacks included.
    */
-  protected override preRequirementProcessing(rulesetData: RulesetData): void {
+  protected override preRequirementProcessing(): void {
     if (this.character.parentCharacterId) this.applyMasterDerivation(this.requireMaster());
 
-    const raceStats = BondedRaceData.getStats(this.race?.name);
+    const raceStats = BondedRaceData.getStats(this.data.race.name);
     if (raceStats) {
       if (raceStats.naturalAttacks.length > 0) {
         this.components.combat.setNaturalAttacks(raceStats.naturalAttacks);
         this.components.weapons.clearGroups();
       }
 
-      this.applyRaceDefaults(raceStats, rulesetData);
+      this.applyRaceDefaults(raceStats);
     }
 
-    super.preRequirementProcessing(rulesetData);
+    super.preRequirementProcessing();
   }
 
   /** The creature's master, which its build is given: one it was saved with and its build lacks is an error. */

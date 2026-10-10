@@ -1,5 +1,3 @@
-import type { RulesetData } from "@/engine/core/view/index.ts";
-
 import { type BondedRaceStatBlock } from "./BondedRaceData.ts";
 import BondedScaling from "./BondedScaling.ts";
 import DetailedCharacterBonded from "./DetailedCharacterBonded.ts";
@@ -35,14 +33,11 @@ export default abstract class DetailedCharacterAdvancingBonded extends DetailedC
    * The stat block, then what the hit dice past it add: its totals count its own feats' bonuses, so a feat the added
    * hit dice give, and their skill ranks, come on top.
    */
-  protected override applyRaceDefaults(raceStats: BondedRaceStatBlock, rulesetData: RulesetData): void {
+  protected override applyRaceDefaults(raceStats: BondedRaceStatBlock): void {
     const totalHD = this.totalHitDice ?? raceStats.baseHD;
-    super.applyRaceDefaults(raceStats, rulesetData);
+    super.applyRaceDefaults(raceStats);
     const baseFeats = new Set(raceStats.baseFeats ?? []);
-    this.applyGrantedFeats(
-      BondedScaling.scaleFeats(raceStats, totalHD).filter((feat) => !baseFeats.has(feat)),
-      rulesetData,
-    );
+    this.applyGrantedFeats(BondedScaling.scaleFeats(raceStats, totalHD).filter((feat) => !baseFeats.has(feat)));
     for (const [skillName, ranks] of Object.entries(BondedScaling.scaleSkillRanks(raceStats, totalHD)))
       this.components.skills.addRanks(skillName, ranks);
   }

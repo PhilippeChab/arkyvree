@@ -68,7 +68,7 @@ export default class DetailedCharacterAnimalCompanion extends DetailedCharacterA
   protected applyMasterDerivation(master: DetailedCharacter): void {
     const effective = getAnimalCompanionEffectiveLevel(master);
     const row = basicsAt(effective);
-    const raceStats = BondedRaceData.getStats(this.race?.name);
+    const raceStats = BondedRaceData.getStats(this.data.race.name);
     const baseHD = raceStats?.baseHD ?? 1;
     const totalHD = baseHD + row.bonusHD;
 

@@ -1,16 +1,15 @@
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
-import type {
-  CustomizedClassLevel,
-  CustomizedFeat,
-  CustomizedPower,
+import CustomizedEntities, {
+  type CustomizedFeat,
+  type CustomizedPower,
 } from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
 import type SpellcastingState from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellcastingState.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellLists.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { MAX_SPELL_LEVEL, toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
-import type { Aptitude, Power, Property } from "@/shared/relations.ts";
+import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
+import type { Power, Property } from "@/shared/relations.ts";
 
 /** The powers a character's aptitudes give it, each with what it knows of them, and the spell tags they carry. */
 export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
@@ -100,8 +99,7 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
         Power & { aptitudeId: string; powerLevel: number | null; saveName: string | null }
       > = [];
       for (const power of rulesetData.powers) {
-        const save = power.saveId ? rulesetData.savesById.get(power.saveId) : undefined;
-        const saveName = save?.name ?? null;
+        const saveName = CustomizedEntities.saveNameOf(power, rulesetData);
         for (const link of power.powersAptitudesInRules) {
           const leveledSet = perAptitudeLevels.get(link.aptitudeId);
           const isLeveled = leveledSet !== undefined && link.level !== null && leveledSet.has(link.level);
@@ -147,15 +145,13 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
 
     /** The spells the character's lists make it know, added to its powers with their DCs. */
     protected enrichAllKnownPowers(
+      rulesetData: RulesetData,
       powers: CustomizedPower[],
-      klassLevels: CustomizedClassLevel[],
-      rulesetAptitudes: Aptitude[],
       klassBonusSpellAbilityMap: Map<string, string>,
     ) {
       if (this.allAptitudePowers.length === 0) return;
-      const newPowers = this.newKnownPowers(powers, this.aptitudeClassNames());
-      if (newPowers.length > 0)
-        this.registerKnownPowers(newPowers, klassLevels, rulesetAptitudes, klassBonusSpellAbilityMap);
+      const newPowers = this.newKnownPowers(powers, this.aptitudeClassNames(), klassBonusSpellAbilityMap);
+      if (newPowers.length > 0) this.registerKnownPowers(rulesetData, newPowers);
     }
 
     /**
@@ -201,7 +197,11 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
      * cleric's domain spells on the cleric's). A joining list's power no such list knows stays on its own list, where it
      * knows the level itself (a domain a fighter picks through a prestige class, its slots its own).
      */
-    private newKnownPowers(powers: CustomizedPower[], aptitudeIdToClassName: Map<string, string>): CustomizedPower[] {
+    private newKnownPowers(
+      powers: CustomizedPower[],
+      aptitudeIdToClassName: Map<string, string>,
+      klassBonusSpellAbilityMap: Map<string, string>,
+    ): CustomizedPower[] {
       const classes = this.classes.getClasses();
       const aptitudes = this.aptitudes.getAptitudes();
       const aptitudeKeyById = new Map(Object.entries(aptitudes).map(([key, aptitude]) => [aptitude.id, key]));
@@ -216,6 +216,8 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
         const firstLevel = klassData.levels[0];
         const enrichedPower: CustomizedPower = {
           ...power,
+          // Its DC's ability, as a loaded spell's (`CustomizedEntities.withDcAbilities`): its class's bonus spell ability
+          abilityDcName: klassBonusSpellAbilityMap.get(firstLevel.klassLevel.klassId) ?? null,
           aptitudeId,
           klassLevelId: firstLevel.klassLevel.id,
           characterLevelId: firstLevel.characterLevel.id,
@@ -254,27 +256,18 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
     }
 
     /** Adds the new powers to the character: known in its spell map, and grouped with their DC ability. */
-    private registerKnownPowers(
-      newPowers: CustomizedPower[],
-      klassLevels: CustomizedClassLevel[],
-      rulesetAptitudes: Aptitude[],
-      klassBonusSpellAbilityMap: Map<string, string>,
-    ) {
+    private registerKnownPowers(rulesetData: RulesetData, newPowers: CustomizedPower[]) {
+      const { spellSlugByAptitudeId } = SpellLists.of(rulesetData);
       this.powers.addPowerEntries(newPowers);
       for (const power of newPowers) {
+        const list = rulesetData.aptitudesById.get(power.aptitudeId);
         // Mark as known in spell map
-        const apt = rulesetAptitudes.find((a) => a.id === power.aptitudeId);
-        if (apt) {
-          const entry = this.powers.getSpellEntry(power.name, apt.name);
+        if (list) {
+          const entry = this.powers.getSpellEntry(power.name, list.name);
           if (entry) entry.known = true;
         }
-
-        let abilityDcName: string | null = null;
-        const klassLevel = klassLevels.find((kl) => kl.id === power.klassLevelId);
-        if (klassLevel) abilityDcName = klassBonusSpellAbilityMap.get(klassLevel.klassId) ?? null;
-
-        const aptitudeSlug = apt ? toSpellPossessionSlug(apt.name) : power.aptitudeId;
-        this.powerGroupings.registerPower({ ...power, abilityDcName, aptitudeSlug }, power.properties);
+        const aptitudeSlug = spellSlugByAptitudeId.get(power.aptitudeId) ?? power.aptitudeId;
+        this.powerGroupings.registerPower({ ...power, aptitudeSlug }, power.properties);
       }
       this.powers.injectGroupings(this.powerGroupings.getPowerGroupings());
     }

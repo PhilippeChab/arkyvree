@@ -131,7 +131,7 @@ export function Validates<B extends Constructor<CharacterState>>(Base: B) {
 
       // Check referential integrity
       const sourceChain = (rulesetId: string, name: string, entityType: string) => {
-        if (!this.validRulesetIds.has(rulesetId)) {
+        if (!this.data.validRulesetIds.has(rulesetId)) {
           issues.push({
             category: "integrity",
             message: `${entityType} "${name}" belongs to a ruleset not in this character's source chain`,
@@ -147,12 +147,12 @@ export function Validates<B extends Constructor<CharacterState>>(Base: B) {
           message: `The ruleset has no ${LevelRules.GENERAL_FEATS_APTITUDE} aptitude: this character's ${unplacedGeneralFeats} general feat(s) count toward none`,
         });
       }
-      sourceChain(this.race.rulesetId, this.race.name, "races");
-      for (const klass of this.klasses) sourceChain(klass.rulesetId, klass.name, "klasses");
-      for (const skill of this.skills) sourceChain(skill.rulesetId, skill.name, "skills");
-      for (const feat of this.feats) sourceChain(feat.rulesetId, feat.name, "feats");
-      for (const power of this.powers) sourceChain(power.rulesetId, power.name, "powers");
-      for (const inv of this.inventory) sourceChain(inv.item.rulesetId, inv.item.name, "items");
+      sourceChain(this.data.race.rulesetId, this.data.race.name, "races");
+      for (const klass of this.data.klasses) sourceChain(klass.rulesetId, klass.name, "klasses");
+      for (const skill of this.data.skills) sourceChain(skill.rulesetId, skill.name, "skills");
+      for (const feat of this.data.feats) sourceChain(feat.rulesetId, feat.name, "feats");
+      for (const power of this.data.powers) sourceChain(power.rulesetId, power.name, "powers");
+      for (const inv of this.data.inventory) sourceChain(inv.item.rulesetId, inv.item.name, "items");
 
       return issues;
     }
@@ -160,15 +160,15 @@ export function Validates<B extends Constructor<CharacterState>>(Base: B) {
     private getDiagnosticsIndex() {
       if (this.diagnosticsIndex) return this.diagnosticsIndex;
       const featsById = new Map<string, CustomizedFeat>();
-      for (const f of this.feats) featsById.set(f.id, f);
+      for (const f of this.data.feats) featsById.set(f.id, f);
       const powersById = new Map<string, CustomizedPower>();
-      for (const p of this.powers) powersById.set(p.id, p);
+      for (const p of this.data.powers) powersById.set(p.id, p);
       const klassLevelsById = new Map<string, CustomizedClassLevel>();
-      for (const kl of this.klassLevels) klassLevelsById.set(kl.id, kl);
+      for (const kl of this.data.klassLevels) klassLevelsById.set(kl.id, kl);
       const rulesetKlassesById = new Map<string, Klass>();
-      for (const k of this.rulesetKlasses) rulesetKlassesById.set(k.id, k);
+      for (const k of this.rulesetData.klasses) rulesetKlassesById.set(k.id, k);
       const inventoryByItemId = new Map<string, InventoryEntry>();
-      for (const inv of this.inventory) {
+      for (const inv of this.data.inventory) {
         inventoryByItemId.set(inv.item.id, inv);
         if (inv.item.sourceItemId) inventoryByItemId.set(inv.item.sourceItemId, inv);
       }
@@ -176,21 +176,21 @@ export function Validates<B extends Constructor<CharacterState>>(Base: B) {
       // Flat modifier.id → owning entity index. Built once by iterating every
       // entity that owns modifiers so resolveModifierSourceName becomes O(1).
       const modifierOwner = new Map<string, { name: string; type: string }>();
-      for (const feat of this.feats)
+      for (const feat of this.data.feats)
         for (const m of feat.modifiers) modifierOwner.set(m.id, { name: feat.name, type: "feats" });
 
-      for (const inv of this.inventory)
+      for (const inv of this.data.inventory)
         for (const m of inv.item.modifiers) modifierOwner.set(m.id, { name: inv.item.name, type: "items" });
 
-      if (this.race?.modifiers)
-        for (const m of this.race.modifiers) modifierOwner.set(m.id, { name: this.race.name, type: "races" });
+      if (this.data.race.modifiers)
+        for (const m of this.data.race.modifiers) modifierOwner.set(m.id, { name: this.data.race.name, type: "races" });
 
-      for (const kl of this.klassLevels) {
+      for (const kl of this.data.klassLevels) {
         const klass = rulesetKlassesById.get(kl.klassId);
         const label = klass ? `${klass.name} Level ${kl.level}` : `Level ${kl.level}`;
         for (const m of kl.modifiers) modifierOwner.set(m.id, { name: label, type: "klass_levels" });
       }
-      for (const power of this.powers)
+      for (const power of this.data.powers)
         for (const m of power.modifiers) modifierOwner.set(m.id, { name: power.name, type: "powers" });
 
       this.diagnosticsIndex = {
@@ -291,7 +291,7 @@ export function Validates<B extends Constructor<CharacterState>>(Base: B) {
       const idx = this.getDiagnosticsIndex();
       switch (entityType) {
         case "races":
-          if (this.race?.id === entityId) return this.race.name;
+          if (this.data.race.id === entityId) return this.data.race.name;
           break;
         case "feats":
           return idx.featsById.get(entityId)?.name;
@@ -303,7 +303,7 @@ export function Validates<B extends Constructor<CharacterState>>(Base: B) {
           return idx.rulesetKlassesById.get(entityId)?.name;
         case "modifiers": {
           const mod =
-            this.modifiers.find((m) => m.id === entityId) ??
+            this.data.modifiers.find((m) => m.id === entityId) ??
             this.components.spellcasting.getBonusKlassLevelModifiers().find((m) => m.id === entityId);
           if (mod) return this.resolveEntityName(mod.sourceId, mod.sourceType);
 

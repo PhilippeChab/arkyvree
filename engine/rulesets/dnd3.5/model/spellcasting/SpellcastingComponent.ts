@@ -8,7 +8,7 @@ import type {
 } from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
 import { include } from "@/lib/mixins.ts";
 import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
-import type { Aptitude, CharacterLevel, Klass, Modifier } from "@/shared/relations.ts";
+import type { CharacterLevel, Modifier } from "@/shared/relations.ts";
 
 import { BonusCasterLevels } from "./concerns/BonusCasterLevels.ts";
 import { KnownPowers } from "./concerns/KnownPowers.ts";
@@ -18,13 +18,10 @@ import SpellLists from "./SpellLists.ts";
 /** What a character's spellcasting's finish reads of its loaded data: its levels, feats, powers and classes' maps. */
 type SpellcastingCharacter = {
   characterLevels: CharacterLevel[];
-  featListIds: Set<string>;
   feats: CustomizedFeat[];
   klassBonusSpellAbilityMap: Map<string, string>;
   klassLevels: CustomizedClassLevel[];
   powers: CustomizedPower[];
-  rulesetAptitudes: Aptitude[];
-  rulesetKlasses: Klass[];
 };
 
 /**
@@ -74,13 +71,14 @@ class SpellcastingComponent extends include(SpellcastingState, BonusCasterLevels
     character: SpellcastingCharacter,
     isGateMet: (modifier: Modifier, metTargets?: string[]) => boolean,
   ) {
-    const { characterLevels, feats, featListIds, klassBonusSpellAbilityMap, klassLevels, powers } = character;
-    this.readBonusCasterLevels(rulesetData, klassLevels, feats, characterLevels, character.rulesetKlasses);
-    this.applyBonusCasterLevels(components, feats, featListIds, isGateMet);
+    const { characterLevels, feats, klassBonusSpellAbilityMap, klassLevels, powers } = character;
+    const spellLists = SpellLists.of(rulesetData);
+    this.readBonusCasterLevels(rulesetData, klassLevels, feats, characterLevels, rulesetData.klasses);
+    this.applyBonusCasterLevels(components, feats, spellLists.featListIds, isGateMet);
     this.applyBonusSpells(klassBonusSpellAbilityMap);
     this.collectAptitudePowers(rulesetData, powers);
-    this.enrichAllKnownPowers(powers, klassLevels, character.rulesetAptitudes, klassBonusSpellAbilityMap);
-    this.buildSpellTags(feats, featListIds);
+    this.enrichAllKnownPowers(rulesetData, powers, klassBonusSpellAbilityMap);
+    this.buildSpellTags(feats, spellLists.featListIds);
   }
 
   /** The highest arcane and divine spell levels the character casts: the `spellcasting` component's, its target paths'. */
@@ -89,11 +87,8 @@ class SpellcastingComponent extends include(SpellcastingState, BonusCasterLevels
   }
 
   /** Each class's spell lists, off the ruleset's levels' slots, and its caster type (`klassCasterTypeMap`). */
-  initialize(
-    rulesetData: Pick<RulesetData, "klassLevels" | "modifiersBySource">,
-    klassCasterTypeMap: Map<string, "Arcane" | "Divine">,
-  ) {
-    this.classListsByKlassId = SpellLists.collectClassLists(rulesetData);
+  initialize(rulesetData: RulesetData, klassCasterTypeMap: Map<string, "Arcane" | "Divine">) {
+    this.classListsByKlassId = SpellLists.of(rulesetData).classListsByKlass;
     this.casterTypeByKlassId = klassCasterTypeMap;
   }
 }

@@ -20,11 +20,7 @@ function getLevelModifiers(rulesetData: RulesetData, levels: { id: string }[]) {
  * others by level; none when they give none.
  */
 function getSpellListIds(rulesetData: RulesetData, klass: Klass): string[] {
-  const klassLevels = rulesetData.klassLevelsByKlass.get(klass.id) ?? [];
-  const lists = [
-    ...(SpellLists.collectClassLists({ klassLevels, modifiersBySource: rulesetData.modifiersBySource }).get(klass.id) ??
-      []),
-  ];
+  const lists = [...(SpellLists.of(rulesetData).classListsByKlass.get(klass.id) ?? [])];
   // A class casting from one of several lists (a pious templar's own, or its blackguard one) opens on its own
   const own = `${stripSeparators(klass.name)}spells`;
   return [...lists.filter((list) => list === own), ...lists.filter((list) => list !== own)].flatMap(

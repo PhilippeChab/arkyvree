@@ -68,6 +68,11 @@ export default class AbilitiesComponent {
     return this.computeModifier(ability.base + ability.level);
   }
 
+  /** An ability's name by its id (as the sheet keys it): none for one the character has no score in. */
+  getAbilityName(abilityId: string): string | undefined {
+    return this.abilityIdToName.get(abilityId);
+  }
+
   initialize(characterAbilities: { abilityId: string; name: string; score: number }[], levels: CharacterLevel[]) {
     // Initialize abilities from the character's ability scores
     for (const { abilityId, name, score } of characterAbilities) {

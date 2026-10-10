@@ -2,38 +2,17 @@ import type ModifierEvaluator from "@/engine/core/modifiers/ModifierEvaluator.ts
 import { type CharacterRows } from "@/engine/core/module/index.ts";
 import type { TargetPathsTraverser } from "@/engine/core/paths/CategoryPaths.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
-import type { RulesetView } from "@/engine/core/view/index.ts";
-import { type SkillFieldValues } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
-import type {
-  Aptitude,
-  Campaign,
-  Character,
-  CharacterLevel,
-  Feat,
-  Klass,
-  KlassLevelSave,
-  KlassSkill,
-  Language,
-  Modifier,
-  Player,
-  PowerWithAptitudes,
-  Property,
-  Requirement,
-  Ruleset,
-  RulesetAbility,
-  RulesetSave,
-  Skill,
-} from "@/shared/relations.ts";
+import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
+import type { Character, Klass, Modifier, Requirement } from "@/shared/relations.ts";
 
 import { type Dnd35Components } from "./CharacterComponents.ts";
 import type {
   CustomizedClassLevel,
   CustomizedFeat,
   CustomizedPower,
-  CustomizedRace,
   InventoryEntry,
 } from "./loading/CustomizedEntities.ts";
-import type { LoadedCharacterData, SkillWithRank } from "./loading/DetailedCharacterDataLoader.ts";
+import type { LoadedCharacterData } from "./loading/DetailedCharacterDataLoader.ts";
 
 /** What assembles a character's data from its rows and its ruleset's view: reading nothing. */
 export interface DataLoader {
@@ -55,11 +34,11 @@ export default abstract class CharacterState {
    */
   protected readonly sourcesOf = (modifier: Modifier): string[] => {
     if (modifier.sourceType !== "items" || !this.targetPaths.readsSource(modifier.target)) return [modifier.sourceId];
-    const gates = this.requirementGroups.filter(([owner]) =>
+    const gates = this.data.requirementGroups.filter(([owner]) =>
       owner?.entityType === "modifiers" ? owner.entityId === modifier.id : owner?.entityId === modifier.sourceId,
     );
     if (gates.length === 0) return [modifier.sourceId];
-    return this.inventory
+    return this.data.inventory
       .filter(
         (entry) =>
           entry.equipped &&
@@ -79,18 +58,15 @@ export default abstract class CharacterState {
   // Modifier/requirement collections
   protected builtComponents: Dnd35Components | null = null;
 
-  protected campaign: Campaign | undefined = undefined;
-
-  protected characterAbilityScores: { abilityId: string; name: string; score: number }[] = [];
-
-  protected characterLevels: CharacterLevel[] = [];
+  /** What the build loaded of the character's rows and the view (`DataLoader`), and what it adds (a creature's feats). */
+  protected data!: LoadedCharacterData;
 
   // Diagnostic helpers (resolveEntityName / resolveModifierSourceName) run
   // per unmet-requirement when formatting validation errors. Build lookup
   // maps once on first use and reuse across subsequent resolve calls.
   // The index is cached for the lifetime of the DetailedCharacter instance;
-  // it relies on `feats` / `powers` / `inventory` / `klassLevels` / `race`
-  // / `rulesetKlasses` being immutable after `build()` returns. If any
+  // it relies on the loaded feats, powers, inventory, class levels and race
+  // being immutable after `build()` returns. If any
   // future code mutates those post-build, invalidate this field first.
   protected diagnosticsIndex?: {
     featsById: Map<string, CustomizedFeat>;
@@ -101,15 +77,6 @@ export default abstract class CharacterState {
     rulesetKlassesById: Map<string, Klass>;
   };
 
-  protected featListIds: Set<string> = new Set();
-
-  protected feats: CustomizedFeat[] = [];
-
-  protected inventory: InventoryEntry[] = [];
-
-  /** The item each modifier an item is the source of belongs to, by the modifier's id. */
-  protected itemModifiers = new Map<string, string>();
-
   /**
    * The item a requirement group is of, whose weapon its own paths (`weapon.wielded`) read: an item's requirements, or
    * those of a modifier the item is the source of.
@@ -117,78 +84,16 @@ export default abstract class CharacterState {
   protected itemOf = (group: Requirement[]): string | undefined => {
     const [owner] = group;
     if (owner?.entityType === "items") return owner.entityId;
-    return owner?.entityType === "modifiers" ? this.itemModifiers.get(owner.entityId) : undefined;
+    return owner?.entityType === "modifiers" ? this.data.itemModifiers.get(owner.entityId) : undefined;
   };
-
-  protected klassBonusSpellAbilityMap = new Map<string, string>();
-
-  protected klassCasterTypeMap = new Map<string, "Arcane" | "Divine">();
-
-  protected klasses: Klass[] = [];
-
-  // Derived data
-  protected klassLevelFeatCountsByAptitudeId: Record<string, number> = {};
-
-  protected klassLevelPowerCountsByAptitudeId: Record<string, number> = {};
-
-  protected klassLevelProperties: Map<string, { bab: number; skills: number }> = new Map();
-
-  protected klassLevels: CustomizedClassLevel[] = [];
-
-  protected klassLevelSaves: KlassLevelSave[] = [];
-
-  protected klassSkills: KlassSkill[] = [];
-
-  protected languages: Language[] = [];
-
-  protected leveledAptitudeIds: Set<string> = new Set();
-
-  protected modifiers: Modifier[] = [];
 
   /** The gated modifiers applied while their requirements held, whose requirements don't hold on the final sheet. */
   protected modifiersPastTheirGates: Modifier[] = [];
 
-  protected player: Player | undefined = undefined;
-
-  protected powers: CustomizedPower[] = [];
-
-  // Character data
-  protected race: CustomizedRace = {} as CustomizedRace;
-
-  protected requirementGroups: Requirement[][] = [];
-
-  // Context data
-  protected ruleset: Ruleset | undefined = undefined;
-
-  // Ruleset data
-  protected rulesetAbilities: RulesetAbility[] = [];
-
-  protected rulesetAptitudes: Aptitude[] = [];
-
-  protected rulesetFeatProperties: Property[] = [];
-
-  protected rulesetFeats: Feat[] = [];
-
-  protected rulesetKlasses: Klass[] = [];
-
-  protected rulesetPowerProperties: Property[] = [];
-
-  protected rulesetPowers: PowerWithAptitudes[] = [];
-
-  protected rulesetSaves: RulesetSave[] = [];
-
-  protected rulesetSkills: Skill[] = [];
-
-  // Dnd3.5-specific data
-  protected skillFields: Map<string, SkillFieldValues> = new Map();
-
-  protected skillPointAbilityId: string | null = null;
-
-  protected skills: SkillWithRank[] = [];
-
   protected targetPaths!: TargetPathsTraverser;
 
-  protected validRulesetIds = new Set<string>();
+  /** The ruleset's view the character is built in: the ruleset, and its lists the build reads. */
+  protected view!: RulesetView;
 
   /** Create the data loader for this ruleset. */
   protected abstract createDataLoader(): DataLoader;
@@ -207,6 +112,11 @@ export default abstract class CharacterState {
     return evaluator.getRequirements();
   }
 
+  /** The ruleset's lists and indices, as its view composes them. */
+  protected get rulesetData(): RulesetData {
+    return this.view.rulesetData;
+  }
+
   /**
    * Whether the groups are met, each of the item its owner names, or of `context.sourceId` when given: a weapon's
    * proficiency, its base item's requirements, reads its own hand. A `null` source is no item: a weapon's own paths
@@ -219,24 +129,24 @@ export default abstract class CharacterState {
   }
 
   getCampaign() {
-    return this.campaign;
+    return this.data.campaign;
   }
 
   /** The feats the character holds, with their customizations: picked, granted, planned or from its modifiers. */
   getHeldFeats() {
-    return this.feats;
+    return this.data.feats;
   }
 
   /** The powers the character knows, each in its pool: picked, granted, planned or from its modifiers (`virtual`). */
   getHeldPowers() {
-    return this.powers;
+    return this.data.powers;
   }
 
   getPlayer() {
-    return this.player;
+    return this.data.player;
   }
 
   getRuleset() {
-    return this.ruleset;
+    return this.view.ruleset;
   }
 }

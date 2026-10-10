@@ -34,7 +34,7 @@ export default class DetailedCharacterMount extends DetailedCharacterAdvancingBo
   protected applyMasterDerivation(master: DetailedCharacter): void {
     const effective = master.components.bonded.getBondedLevel("mount");
     const row = bracketAt(effective);
-    const raceStats = BondedRaceData.getStats(this.race?.name);
+    const raceStats = BondedRaceData.getStats(this.data.race.name);
     const baseHD = raceStats?.baseHD ?? 1;
     const totalHD = baseHD + (row?.bonusHD ?? 0);
 

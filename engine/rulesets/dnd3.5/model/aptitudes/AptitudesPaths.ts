@@ -130,17 +130,12 @@ export default class AptitudesPaths implements PathCategory<Dnd35Components> {
   readonly label = "Aptitudes";
   readonly name = "aptitudes";
 
-  /** The leveled aptitudes: those with spells at a level, and those a class gives slots in before they have any. */
-  private leveledAptitudeIds(rulesetData: RulesetData) {
-    const leveledAptitudeIds = SpellLists.collectClassListIds(rulesetData);
-    for (const power of rulesetData.powers)
-      for (const pa of power.powersAptitudesInRules) if (pa.level != null) leveledAptitudeIds.add(pa.aptitudeId);
-
-    return leveledAptitudeIds;
-  }
-
   generate(rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
-    return AptitudesPaths.generateAptitudePaths(rulesetData.aptitudes, kind, this.leveledAptitudeIds(rulesetData));
+    return AptitudesPaths.generateAptitudePaths(
+      rulesetData.aptitudes,
+      kind,
+      SpellLists.of(rulesetData).leveledAptitudeIds,
+    );
   }
 
   getSegmentLabels(): Record<string, string> {
