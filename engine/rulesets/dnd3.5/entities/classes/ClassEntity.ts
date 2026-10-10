@@ -29,11 +29,11 @@ export default class ClassEntity extends RulesetEntity<
   typeof CLASS_FIELDS.fields
 > {
   /** The ability its bonus spells use, and the spells it casts. */
-  protected readonly fields = CLASS_FIELDS;
+  protected override readonly fields = CLASS_FIELDS;
 
-  protected readonly label = "Class";
+  protected override readonly label = "Class";
 
-  readonly type = "klasses";
+  override readonly type = "klasses";
 
   /** Refuses a hit die the rules have no die for (0 is none). */
   protected override checkForm({ hd }: ClassBody) {
@@ -41,7 +41,7 @@ export default class ClassEntity extends RulesetEntity<
   }
 
   /** A form's columns: the hit die it gives, or the edited class's; a new one's `DEFAULT_HIT_DIE` when it gives none (0 is none). */
-  protected columnsOf({ description, hd, name }: ClassBody, klass?: Klass) {
+  protected override columnsOf({ description, hd, name }: ClassBody, klass?: Klass) {
     return { description, hd: klass ? (hd ?? klass.hd) : hd || DEFAULT_HIT_DIE, name };
   }
 

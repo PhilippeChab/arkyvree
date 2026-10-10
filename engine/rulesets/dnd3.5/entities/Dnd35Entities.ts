@@ -35,7 +35,7 @@ const ENTITY_KINDS = {
  */
 export default class Dnd35Entities extends EntitiesPart<Dnd35EntityKinds> {
   /** An entity kind's rules (`type`, its table), bound to a ruleset's view. */
-  of<K extends keyof Dnd35EntityKinds>(view: RulesetView, type: K): Dnd35EntityKinds[K] {
+  override of<K extends keyof Dnd35EntityKinds>(view: RulesetView, type: K): Dnd35EntityKinds[K] {
     return new ENTITY_KINDS[type](view) as Dnd35EntityKinds[K];
   }
 }

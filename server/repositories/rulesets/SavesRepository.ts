@@ -10,7 +10,7 @@ class SavesRepository extends RulesetEntityRepository<typeof savesInRules> {
     super(savesInRules);
   }
 
-  protected readonly entityType = "saves";
+  protected override readonly entityType = "saves";
 
   async findMany(db: Db, where: { ids: string[] }) {
     if (where.ids.length === 0) return [];

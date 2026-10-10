@@ -10,7 +10,13 @@ type RequirementBody = { chainingOperator?: string; level: string; operator?: st
 
 /** An entity's requirements: as its page lists them, and what their saves store, checked against their paths. */
 export default class RequirementEdits extends CustomizationEdits<Requirement> {
-  protected readonly label = "Requirement";
+  protected override readonly label = "Requirement";
+
+  /** The entity's requirements of its type: its own, and its siblings' (the view composes them, OR-chain-aware). */
+  protected override rowsOf(entityId: string) {
+    const requirements = this.view.rulesetData.requirementsByEntity.get(entityId) ?? [];
+    return requirements.filter((requirement) => requirement.entityType === this.entityType);
+  }
 
   /**
    * The row a requirement's save stores: a condition's target, operator, value and value type (checked against its
@@ -31,12 +37,6 @@ export default class RequirementEdits extends CustomizationEdits<Requirement> {
       value: body.value ?? kept?.value ?? undefined,
     });
     return { level: body.level, operator: body.operator, target: body.target, value: body.value, valueType };
-  }
-
-  /** The entity's requirements of its type: its own, and its siblings' (the view composes them, OR-chain-aware). */
-  protected rowsOf(entityId: string) {
-    const requirements = this.view.rulesetData.requirementsByEntity.get(entityId) ?? [];
-    return requirements.filter((requirement) => requirement.entityType === this.entityType);
   }
 
   /** The entity's requirements of its type, as the view composes them, labeled as its page shows them. */

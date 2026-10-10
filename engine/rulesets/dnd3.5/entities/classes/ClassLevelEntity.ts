@@ -48,43 +48,11 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
   }
 
   /** Its base attack bonus and its skill points. */
-  protected readonly fields = CLASS_LEVEL_FIELDS;
+  protected override readonly fields = CLASS_LEVEL_FIELDS;
 
-  protected readonly label = "Class level";
+  protected override readonly label = "Class level";
 
-  readonly type = "klass_levels";
-
-  /** A level's details: the feats it grants (each with its pool's name and whether it's free), its saves' base bonuses. */
-  private detailsOf(level: { id: string }) {
-    const levelSaves = this.rulesetData.klassLevelSavesByKlassLevel.get(level.id) ?? [];
-    return {
-      feats: this.grantedFeats(level.id),
-      saves: levelSaves.map((ls) => ({ saveId: ls.saveId, base: ls.base })),
-    };
-  }
-
-  /** The feats a class level grants, each with its pool's name and whether it's free. */
-  private grantedFeats(levelId: string) {
-    const { rulesetData } = this;
-    return (rulesetData.klassLevelFeatsByKlassLevel.get(levelId) ?? []).map((lf) => {
-      const feat = rulesetData.featsById.get(lf.featId);
-      const aptitudeEntry = feat?.featsAptitudesInRules?.find((fa) => fa.aptitudeId === lf.aptitudeId);
-      return {
-        ...feat!,
-        aptitudeId: lf.aptitudeId,
-        aptitudeName: aptitudeEntry?.aptitudesInRule?.name ?? null,
-        free: lf.free,
-      };
-    });
-  }
-
-  /** A form's join rows: the feats it grants (free unless it says), and its saves' base bonuses. */
-  private joinRows({ feats, saves }: ClassLevelBody) {
-    return {
-      feats: feats?.map((feat) => ({ aptitudeId: feat.aptitudeId, featId: feat.featId, free: feat.free ?? true })),
-      saves: saves?.map((save) => ({ base: save.base, saveId: save.saveId })),
-    };
-  }
+  override readonly type = "klass_levels";
 
   /** Refuses a new level's number past the class's bounds, and a save's base bonus past the rules'. */
   protected override checkForm({ level: number, saves }: ClassLevelBody, level?: KlassLevel) {
@@ -93,7 +61,7 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
   }
 
   /** A form's columns: none, a level's number is its own (a new one's, its form's: `planCreate`). */
-  protected columnsOf() {
+  protected override columnsOf() {
     return {};
   }
 
@@ -127,12 +95,6 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
     return { ...level, ...this.detailsOf(level) };
   }
 
-  /** The class's levels, each with its fields and its details. */
-  describeAll() {
-    const levels = this.rulesetData.klassLevelsByKlass.get(this.klass.id) ?? [];
-    return this.describeRows(levels).map((level) => ({ ...level, ...this.detailsOf(level) }));
-  }
-
   /** One of the class's levels, as the view has it: refused when there's none, or it isn't the class's. */
   override find(levelId: string) {
     const level = super.find(levelId);
@@ -160,5 +122,43 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
    */
   override planEdit(levelId: string, body: ClassLevelBody) {
     return { ...super.planEdit(levelId, body), ...this.joinRows(body), klass: this.klass };
+  }
+
+  /** A level's details: the feats it grants (each with its pool's name and whether it's free), its saves' base bonuses. */
+  private detailsOf(level: { id: string }) {
+    const levelSaves = this.rulesetData.klassLevelSavesByKlassLevel.get(level.id) ?? [];
+    return {
+      feats: this.grantedFeats(level.id),
+      saves: levelSaves.map((ls) => ({ saveId: ls.saveId, base: ls.base })),
+    };
+  }
+
+  /** The feats a class level grants, each with its pool's name and whether it's free. */
+  private grantedFeats(levelId: string) {
+    const { rulesetData } = this;
+    return (rulesetData.klassLevelFeatsByKlassLevel.get(levelId) ?? []).map((lf) => {
+      const feat = rulesetData.featsById.get(lf.featId);
+      const aptitudeEntry = feat?.featsAptitudesInRules?.find((fa) => fa.aptitudeId === lf.aptitudeId);
+      return {
+        ...feat!,
+        aptitudeId: lf.aptitudeId,
+        aptitudeName: aptitudeEntry?.aptitudesInRule?.name ?? null,
+        free: lf.free,
+      };
+    });
+  }
+
+  /** A form's join rows: the feats it grants (free unless it says), and its saves' base bonuses. */
+  private joinRows({ feats, saves }: ClassLevelBody) {
+    return {
+      feats: feats?.map((feat) => ({ aptitudeId: feat.aptitudeId, featId: feat.featId, free: feat.free ?? true })),
+      saves: saves?.map((save) => ({ base: save.base, saveId: save.saveId })),
+    };
+  }
+
+  /** The class's levels, each with its fields and its details. */
+  describeAll() {
+    const levels = this.rulesetData.klassLevelsByKlass.get(this.klass.id) ?? [];
+    return this.describeRows(levels).map((level) => ({ ...level, ...this.detailsOf(level) }));
   }
 }

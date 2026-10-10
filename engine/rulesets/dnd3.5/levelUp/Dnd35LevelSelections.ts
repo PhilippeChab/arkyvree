@@ -8,7 +8,7 @@ export default class Dnd35LevelSelections extends LevelSelections<
   { aptitudeModifiers: PoolModifier[] }
 > {
   /** The pools each picked feat's modifiers add slots to. */
-  protected featDetailsOf(featIds: string[]) {
+  protected override featDetailsOf(featIds: string[]) {
     const pools = new FeatEntity(this.view).describePoolModifiers(featIds);
     return (featId: string) => ({ aptitudeModifiers: pools.get(featId) ?? [] });
   }

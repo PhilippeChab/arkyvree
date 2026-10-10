@@ -10,7 +10,7 @@ class LanguagesRepository extends RulesetEntityRepository<typeof languagesInRule
     super(languagesInRules);
   }
 
-  protected readonly entityType = "languages";
+  protected override readonly entityType = "languages";
 
   async findMany(db: Db, where: { ids: string[] }) {
     if (where.ids.length === 0) return [];

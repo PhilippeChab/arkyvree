@@ -23,12 +23,12 @@ import LevelUpSteps from "./LevelUpSteps.ts";
  */
 export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, DetailedCharacter> {
   /** The 3.5 character built from its rows. */
-  buildCharacter(view: RulesetView, input: CharacterInput) {
+  override buildCharacter(view: RulesetView, input: CharacterInput) {
     return Dnd35CharacterBuilder.build(view, input);
   }
 
   /** A saved level's selections, as its edit opens them. */
-  describeLevel(
+  override describeLevel(
     view: RulesetView,
     character: CharacterInput,
     ...args: Parameters<Dnd35LevelSelections["describeLevel"]>
@@ -37,7 +37,7 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, Detaile
   }
 
   /** The level-up wizard's preview of the levels the character plans, each with its ability increases. */
-  describePreview(
+  override describePreview(
     view: RulesetView,
     character: CharacterInput,
     ...args: Parameters<LevelUpPreview["describePreview"]>
@@ -46,17 +46,21 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, Detaile
   }
 
   /** The level-up wizard's step `name` of the level the step is for: its abilities, skills, feats or powers. */
-  describeStep(view: RulesetView, character: CharacterInput, ...args: Parameters<LevelUpSteps["describeStep"]>) {
+  override describeStep(
+    view: RulesetView,
+    character: CharacterInput,
+    ...args: Parameters<LevelUpSteps["describeStep"]>
+  ) {
     return new LevelUpSteps(view, character, this).describeStep(...args);
   }
 
   /** The level-up wizard's steps of a level, in order: the same four for every level. */
-  describeSteps(view: RulesetView, character: CharacterInput) {
+  override describeSteps(view: RulesetView, character: CharacterInput) {
     return new LevelUpSteps(view, character, this).describeSteps();
   }
 
   /** What the ability increases of the level after `totalLevel` levels add up to: one, at every fourth level. */
-  getAbilityIncreaseTotal(totalLevel: number) {
+  override getAbilityIncreaseTotal(totalLevel: number) {
     return LevelRules.isAbilityIncreaseLevel(totalLevel) ? 1 : 0;
   }
 
@@ -64,27 +68,40 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, Detaile
    * The class picker for the character, with what the level-up wizard plans so far, its skill points spread over its
    * planned levels as the save spreads them: its filters, a page described.
    */
-  openClassPicker(view: RulesetView, character: CharacterInput, planned: PlannedSoFar) {
+  override openClassPicker(view: RulesetView, character: CharacterInput, planned: PlannedSoFar) {
     return new ClassPicker(view, character, planned, new LevelUpPlan(view, character, this));
   }
 
   /** A feat picker for the character: what it offers and leaves out, and a page of options described. */
-  openFeatPicker(view: RulesetView, character: CharacterInput, query: ConstructorParameters<typeof FeatPicker>[2]) {
+  override openFeatPicker(
+    view: RulesetView,
+    character: CharacterInput,
+    query: ConstructorParameters<typeof FeatPicker>[2],
+  ) {
     return new FeatPicker(view, character, query);
   }
 
   /** A power picker for the character: what it offers and leaves out, and a page of options described. */
-  openPowerPicker(view: RulesetView, character: CharacterInput, query: ConstructorParameters<typeof PowerPicker>[2]) {
+  override openPowerPicker(
+    view: RulesetView,
+    character: CharacterInput,
+    query: ConstructorParameters<typeof PowerPicker>[2],
+  ) {
     return new PowerPicker(view, character, query);
   }
 
   /** What a master's bonded creatures become with it: each kind's creature removed, kept or made, at its hit dice. */
-  planBondedCreatures(view: RulesetView, master: DetailedCharacter, record: Character, bonded: CharacterInput[]) {
+  override planBondedCreatures(
+    view: RulesetView,
+    master: DetailedCharacter,
+    record: Character,
+    bonded: CharacterInput[],
+  ) {
     return new BondedPlans(view.rulesetData).planMasterCreatures(master, record, bonded);
   }
 
   /** A saved level's edit: what it writes, checked, and what the master's bonded creatures become with it. */
-  planEdit(view: RulesetView, character: CharacterInput, ...args: Parameters<LevelEdit["planEdit"]>) {
+  override planEdit(view: RulesetView, character: CharacterInput, ...args: Parameters<LevelEdit["planEdit"]>) {
     return new LevelEdit(view, character, this).planEdit(...args);
   }
 
@@ -92,7 +109,7 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, Detaile
    * The levels a level-up saves, checked, with the picks spread over them: the rows the save writes, and what the
    * master's bonded creatures become with them. The character with them is refused with what it fails, unless forced.
    */
-  planLevels(view: RulesetView, character: CharacterInput, ...args: Parameters<LevelUpPlan["planLevels"]>) {
+  override planLevels(view: RulesetView, character: CharacterInput, ...args: Parameters<LevelUpPlan["planLevels"]>) {
     return new LevelUpPlan(view, character, this).planLevels(...args);
   }
 }

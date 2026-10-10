@@ -14,24 +14,12 @@ import { SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/i
  */
 export function Builds<B extends Constructor<CharacterState>>(Base: B) {
   abstract class Building extends Base {
-    /**
-     * Whether the character has a feat that changes this weapon rule (Weapon Finesse's): picked, granted or given by a
-     * modifier. Only the feats it has are read.
-     */
-    protected hasFeatWith(rule: "oversizedTwoWeaponFighting" | "weaponFinesse"): boolean {
-      return this.rulesetData.feats.some(
-        (feat) =>
-          (this.components.feats.getFeat(feat.name)?.possessed ?? false) &&
-          FEAT_FIELDS.read(this.rulesetData.propertiesByEntity.get(feat.id) ?? [])[rule],
-      );
-    }
-
     /** Whether a modifier applies after the spellcasting: a spell's DC, which its school's and its list's read. */
-    protected isLateModifier(modifier: Modifier): boolean {
+    protected override isLateModifier(modifier: Modifier): boolean {
       return PowersPaths.isPowerTarget(modifier.target);
     }
 
-    protected normalizeData(): void {
+    protected override normalizeData(): void {
       this.components.classes.initialize(
         this.data.klasses,
         this.data.klassSkills,
@@ -91,7 +79,7 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
       this.components.powers.injectGroupings(this.components.powerGroupings.getPowerGroupings());
     }
 
-    protected postModifierProcessing(): void {
+    protected override postModifierProcessing(): void {
       const { rulesetData } = this;
       const { characterLevels, feats, klassBonusSpellAbilityMap, klassLevels, powers } = this.data;
       const character = { characterLevels, feats, klassBonusSpellAbilityMap, klassLevels, powers };
@@ -107,7 +95,7 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
       this.components.spellcasting.finalize(rulesetData, this.components, character, isGateMet);
     }
 
-    protected postRequirementProcessing(): void {
+    protected override postRequirementProcessing(): void {
       // A weapon's proficiency is its base item's requirements (the loader's `toCustomizedInventory`), apart from its
       // others, read of the entry holding it: a bastard sword's in the hands it's in, each of an item's entries alone
       const unproficient = this.data.inventory
@@ -116,11 +104,23 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
       this.components.combat.applyProficiencyPenalties(unproficient);
     }
 
-    protected preRequirementProcessing(): void {
+    protected override preRequirementProcessing(): void {
       this.components.spellcasting.initialize(this.rulesetData, this.data.klassCasterTypeMap);
       // The loaded feats include those possession modifiers give: a finessed weapon's attack is what requirements read
       this.components.combat.applyWeaponFinesse(this.hasFeatWith("weaponFinesse"));
       this.components.combat.applyOversizedTwoWeaponFighting(this.hasFeatWith("oversizedTwoWeaponFighting"));
+    }
+
+    /**
+     * Whether the character has a feat that changes this weapon rule (Weapon Finesse's): picked, granted or given by a
+     * modifier. Only the feats it has are read.
+     */
+    protected hasFeatWith(rule: "oversizedTwoWeaponFighting" | "weaponFinesse"): boolean {
+      return this.rulesetData.feats.some(
+        (feat) =>
+          (this.components.feats.getFeat(feat.name)?.possessed ?? false) &&
+          FEAT_FIELDS.read(this.rulesetData.propertiesByEntity.get(feat.id) ?? [])[rule],
+      );
     }
   }
 

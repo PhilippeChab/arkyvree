@@ -10,7 +10,20 @@ class ItemsRepository extends RulesetEntityRepository<typeof itemsInRules> {
     super(itemsInRules);
   }
 
-  protected readonly entityType = "items";
+  protected override readonly entityType = "items";
+
+  /**
+   * Updates an item (`{ id }`, see the entity's `update`), or repoints its copies (`{ sourceItemId }`: the items copied
+   * from it), which keep their `updatedAt`: a repoint isn't an edit.
+   */
+  override async update(
+    db: Db,
+    values: Partial<InferInsertModel<typeof itemsInRules>>,
+    where: { expectedUpdatedAt?: string; id: string } | { sourceItemId: string },
+  ) {
+    if ("id" in where) return await super.update(db, values, where);
+    return await this.updateCopies(db, values, where.sourceItemId);
+  }
 
   private async findCopies(db: Db, where: { sourceItemId: string }) {
     return await db.query.itemsInRules.findMany({
@@ -110,19 +123,6 @@ class ItemsRepository extends RulesetEntityRepository<typeof itemsInRules> {
           offset,
         }),
     );
-  }
-
-  /**
-   * Updates an item (`{ id }`, see the entity's `update`), or repoints its copies (`{ sourceItemId }`: the items copied
-   * from it), which keep their `updatedAt`: a repoint isn't an edit.
-   */
-  async update(
-    db: Db,
-    values: Partial<InferInsertModel<typeof itemsInRules>>,
-    where: { expectedUpdatedAt?: string; id: string } | { sourceItemId: string },
-  ) {
-    if ("id" in where) return await super.update(db, values, where);
-    return await this.updateCopies(db, values, where.sourceItemId);
   }
 }
 

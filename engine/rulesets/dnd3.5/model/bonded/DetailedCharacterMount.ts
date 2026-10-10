@@ -31,7 +31,7 @@ function bracketAt(paladinLevel: number): MountRow | null {
  *   the bracket value (overriding the animal's natural Int 2).
  */
 export default class DetailedCharacterMount extends DetailedCharacterAdvancingBonded {
-  protected applyMasterDerivation(master: DetailedCharacter): void {
+  protected override applyMasterDerivation(master: DetailedCharacter): void {
     const effective = master.components.bonded.getBondedLevel("mount");
     const row = bracketAt(effective);
     const raceStats = BondedRaceData.getStats(this.data.race.name);

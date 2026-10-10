@@ -73,6 +73,95 @@ export class FeatDetector extends BaseDetector<FeatReference> {
   /** The feats its page gives, sanitized. */
   private readonly feats: FeatReference["raw"];
 
+  /** Each feat's detected section. */
+  protected override detected(): FeatReference["detected"] {
+    const detected: FeatReference["detected"] = {};
+
+    for (const entry of this.feats) {
+      const prerequisites = new FeatPrerequisites(entry);
+      const aptitudes = [...(FEAT_TYPE_APTITUDES[entry.featType] ?? ["General"])];
+
+      // Detect fighter bonus feat from Special text: "A fighter may select", or "can select" (Complete Scoundrel)
+      if (
+        entry.special &&
+        /fighter (?:may|can) select/i.test(entry.special) &&
+        !aptitudes.includes("Fighter Bonus Feat")
+      )
+        aptitudes.push("Fighter Bonus Feat");
+
+      const benefit = new BenefitModifiers(entry.benefit);
+      const errors = [...benefit.errors, ...prerequisites.errors];
+
+      const template = detectTemplate(entry);
+
+      const family =
+        FEAT_FAMILIES.find((name) => name.toLowerCase() === entry.featType) ??
+        (entry.name.startsWith(`${DRACONIC_FAMILY} `) ? DRACONIC_FAMILY : undefined);
+      const properties = family ? [{ type: FEAT_FAMILY, value: family }] : [];
+
+      detected[entry.name] = {
+        aptitudes,
+        requirements: prerequisites.requirements,
+        modifiers: benefit.modifiers,
+        ...(properties.length > 0 ? { properties } : {}),
+        ...(errors.length > 0 ? { errors } : {}),
+        ...(!template && benefit.unresolved.length > 0 ? { unresolvedModifiers: benefit.unresolved } : {}),
+        ...(!template && prerequisites.unresolved.length > 0 ? { unresolvedPrereqs: prerequisites.unresolved } : {}),
+        featNameMap: prerequisites.featNames,
+        ...(isStackable(entry) ? { stackable: true } : {}),
+        ...(template ? { template } : {}),
+      };
+    }
+
+    return detected;
+  }
+
+  /**
+   * Each feat's mapping: what was detected, its overrides merged in, and what its book's classes give it (the
+   * aptitudes and class levels of the bonus feat lists that name it).
+   */
+  protected override mapping(detected: FeatReference["detected"]): FeatReference["mapping"] {
+    const overrides = this.stored.overrides ?? {};
+    const bonusFeatAptitudes = this.bonusFeatAptitudes();
+    const bonusFeatClassLevels = this.bonusFeatClassLevels();
+    const mapping: FeatReference["mapping"] = {};
+    for (const entry of this.feats) {
+      const det = detected[entry.name];
+      const ovr = overrides[entry.name];
+      if (!det) continue;
+
+      const featNameMap = { ...det.featNameMap, ...ovr?.featNameMap };
+      const baseAptitudes = ovr?.aptitudes ?? det.aptitudes;
+      const extraAptitudes = (bonusFeatAptitudes.get(entry.name) ?? []).filter((a) => !baseAptitudes.includes(a));
+
+      // Wrap detected requirements with class-level alternatives from bonusFeatLists
+      let requirements = ovr?.requirements ?? det.requirements;
+      if (!ovr?.requirements && requirements.length > 0) {
+        const classLevels = bonusFeatClassLevels.get(entry.name);
+        if (classLevels?.length) {
+          const detectedBranch = requirements.length === 1 ? requirements[0] : and(...requirements);
+          const classAlts = classLevels.map((cl) => gte(`classes.${cl.classSlug}.level`, cl.minLevel));
+          requirements = [or(detectedBranch, ...classAlts)];
+        }
+      }
+
+      mapping[entry.name] = {
+        description: ovr?.description ?? entry.benefit,
+        aptitudes: [...baseAptitudes, ...extraAptitudes],
+        requirements,
+        modifiers: ovr?.modifiers ?? det.modifiers ?? [],
+        ...((ovr?.properties ?? det.properties)?.length ? { properties: ovr?.properties ?? det.properties } : {}),
+        ...((ovr?.stackable ?? det.stackable) ? { stackable: true } : {}),
+        ...(ovr?.selectable === false ? { selectable: false } : {}),
+        ...(det.template ? { template: det.template } : {}),
+        ...(Object.keys(featNameMap).length > 0 ? { featNameMap } : {}),
+        // An epic feat is left out unless an override keeps it
+        ...(ovr?.skip || (entry.featType === "epic" && ovr?.skip !== false) ? { skip: true } : {}),
+      };
+    }
+    return mapping;
+  }
+
   /**
    * Each feat's aptitudes from the book's classes: the bonus feat lists that name it, and the class feature aptitude of
    * a class whose feature says it "gains X as a bonus feat".
@@ -131,94 +220,5 @@ export class FeatDetector extends BaseDetector<FeatReference> {
       }
     }
     return map;
-  }
-
-  /** Each feat's detected section. */
-  protected detected(): FeatReference["detected"] {
-    const detected: FeatReference["detected"] = {};
-
-    for (const entry of this.feats) {
-      const prerequisites = new FeatPrerequisites(entry);
-      const aptitudes = [...(FEAT_TYPE_APTITUDES[entry.featType] ?? ["General"])];
-
-      // Detect fighter bonus feat from Special text: "A fighter may select", or "can select" (Complete Scoundrel)
-      if (
-        entry.special &&
-        /fighter (?:may|can) select/i.test(entry.special) &&
-        !aptitudes.includes("Fighter Bonus Feat")
-      )
-        aptitudes.push("Fighter Bonus Feat");
-
-      const benefit = new BenefitModifiers(entry.benefit);
-      const errors = [...benefit.errors, ...prerequisites.errors];
-
-      const template = detectTemplate(entry);
-
-      const family =
-        FEAT_FAMILIES.find((name) => name.toLowerCase() === entry.featType) ??
-        (entry.name.startsWith(`${DRACONIC_FAMILY} `) ? DRACONIC_FAMILY : undefined);
-      const properties = family ? [{ type: FEAT_FAMILY, value: family }] : [];
-
-      detected[entry.name] = {
-        aptitudes,
-        requirements: prerequisites.requirements,
-        modifiers: benefit.modifiers,
-        ...(properties.length > 0 ? { properties } : {}),
-        ...(errors.length > 0 ? { errors } : {}),
-        ...(!template && benefit.unresolved.length > 0 ? { unresolvedModifiers: benefit.unresolved } : {}),
-        ...(!template && prerequisites.unresolved.length > 0 ? { unresolvedPrereqs: prerequisites.unresolved } : {}),
-        featNameMap: prerequisites.featNames,
-        ...(isStackable(entry) ? { stackable: true } : {}),
-        ...(template ? { template } : {}),
-      };
-    }
-
-    return detected;
-  }
-
-  /**
-   * Each feat's mapping: what was detected, its overrides merged in, and what its book's classes give it (the
-   * aptitudes and class levels of the bonus feat lists that name it).
-   */
-  protected mapping(detected: FeatReference["detected"]): FeatReference["mapping"] {
-    const overrides = this.stored.overrides ?? {};
-    const bonusFeatAptitudes = this.bonusFeatAptitudes();
-    const bonusFeatClassLevels = this.bonusFeatClassLevels();
-    const mapping: FeatReference["mapping"] = {};
-    for (const entry of this.feats) {
-      const det = detected[entry.name];
-      const ovr = overrides[entry.name];
-      if (!det) continue;
-
-      const featNameMap = { ...det.featNameMap, ...ovr?.featNameMap };
-      const baseAptitudes = ovr?.aptitudes ?? det.aptitudes;
-      const extraAptitudes = (bonusFeatAptitudes.get(entry.name) ?? []).filter((a) => !baseAptitudes.includes(a));
-
-      // Wrap detected requirements with class-level alternatives from bonusFeatLists
-      let requirements = ovr?.requirements ?? det.requirements;
-      if (!ovr?.requirements && requirements.length > 0) {
-        const classLevels = bonusFeatClassLevels.get(entry.name);
-        if (classLevels?.length) {
-          const detectedBranch = requirements.length === 1 ? requirements[0] : and(...requirements);
-          const classAlts = classLevels.map((cl) => gte(`classes.${cl.classSlug}.level`, cl.minLevel));
-          requirements = [or(detectedBranch, ...classAlts)];
-        }
-      }
-
-      mapping[entry.name] = {
-        description: ovr?.description ?? entry.benefit,
-        aptitudes: [...baseAptitudes, ...extraAptitudes],
-        requirements,
-        modifiers: ovr?.modifiers ?? det.modifiers ?? [],
-        ...((ovr?.properties ?? det.properties)?.length ? { properties: ovr?.properties ?? det.properties } : {}),
-        ...((ovr?.stackable ?? det.stackable) ? { stackable: true } : {}),
-        ...(ovr?.selectable === false ? { selectable: false } : {}),
-        ...(det.template ? { template: det.template } : {}),
-        ...(Object.keys(featNameMap).length > 0 ? { featNameMap } : {}),
-        // An epic feat is left out unless an override keeps it
-        ...(ovr?.skip || (entry.featType === "epic" && ovr?.skip !== false) ? { skip: true } : {}),
-      };
-    }
-    return mapping;
   }
 }

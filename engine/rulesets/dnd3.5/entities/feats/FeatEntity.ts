@@ -27,11 +27,11 @@ export default class FeatEntity extends ListedEntity<
   typeof FEAT_FIELDS.fields
 > {
   /** Its families, the weapon rules it changes, the schools it forbids. */
-  protected readonly fields = FEAT_FIELDS;
+  protected override readonly fields = FEAT_FIELDS;
 
-  protected readonly label = "Feat";
+  protected override readonly label = "Feat";
 
-  readonly type = "feats";
+  override readonly type = "feats";
 
   /**
    * Refuses a new feat without a pool, renaming a generated feat (its name names its option, `Weapon Focus: Longsword`,
@@ -47,18 +47,31 @@ export default class FeatEntity extends ListedEntity<
   }
 
   /** A form's columns: a new feat's mark of a generated one it stands in for. */
-  protected columnsOf({ description, name, tombstoneGenerated }: FeatBody, feat?: FeatWithAptitudes) {
+  protected override columnsOf({ description, name, tombstoneGenerated }: FeatBody, feat?: FeatWithAptitudes) {
     return { description, name, ...(!feat && { generated: tombstoneGenerated ?? false }) };
   }
 
   /** A feat's pool links, as the view composes them. */
-  protected linksIn({ featsAptitudesInRules }: FeatWithAptitudes) {
+  protected override linksIn({ featsAptitudesInRules }: FeatWithAptitudes) {
     return { featsAptitudesInRules };
   }
 
   /** The pools a form links the feat to (none: an edit's kept). */
   protected override linksOf({ aptitudeIds }: FeatBody) {
     return aptitudeIds?.map((aptitudeId) => ({ aptitudeId }));
+  }
+
+  /**
+   * A page of the ruleset's feats, as its form asks for it: what it's read with (`filters`: a pool's feats, a family's;
+   * `groupFilters`: grouped by family), and its rows described, with their pools as the ruleset composes them.
+   */
+  override openList(where: { aptitudeId?: string; childOnly?: boolean; family?: string }) {
+    const ids = where.aptitudeId === undefined ? undefined : this.rulesetData.listFeatIds(where.aptitudeId);
+    return {
+      describe: <T extends Record<string, unknown> & { id: string }>(rows: T[]) => this.describeListed(rows, where),
+      filters: { ids, ...(where.family && { family: { type: FEAT_FAMILY, value: where.family } }) },
+      groupFilters: { familyType: FEAT_FAMILY, ids },
+    };
   }
 
   /** The pools these feats' modifiers add slots to (`aptitudes.<slug>.allowed`), by feat id. */
@@ -91,18 +104,5 @@ export default class FeatEntity extends ListedEntity<
       const { families } = this.fields.read(this.propertiesOf(feat));
       return families.filter((family) => feat.name.startsWith(family)).map((family) => ({ family, id: featId }));
     });
-  }
-
-  /**
-   * A page of the ruleset's feats, as its form asks for it: what it's read with (`filters`: a pool's feats, a family's;
-   * `groupFilters`: grouped by family), and its rows described, with their pools as the ruleset composes them.
-   */
-  override openList(where: { aptitudeId?: string; childOnly?: boolean; family?: string }) {
-    const ids = where.aptitudeId === undefined ? undefined : this.rulesetData.listFeatIds(where.aptitudeId);
-    return {
-      describe: <T extends Record<string, unknown> & { id: string }>(rows: T[]) => this.describeListed(rows, where),
-      filters: { ids, ...(where.family && { family: { type: FEAT_FAMILY, value: where.family } }) },
-      groupFilters: { familyType: FEAT_FAMILY, ids },
-    };
   }
 }

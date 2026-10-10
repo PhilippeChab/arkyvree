@@ -9,7 +9,7 @@ import { DomainModifiers } from "./readers/modifiers/DomainModifiers.ts";
  */
 export class DomainDetector extends BaseDetector<DomainReference> {
   /** Each domain's detected modifiers. */
-  protected detected(): DomainReference["detected"] {
+  protected override detected(): DomainReference["detected"] {
     return this.modifiersOf(this.stored.raw, (entry) => new DomainModifiers(entry.description));
   }
 
@@ -17,7 +17,7 @@ export class DomainDetector extends BaseDetector<DomainReference> {
    * Each domain as the seeds make it: its description, modifiers, name and spells, its override's or else what's
    * scraped and detected, and its override's feat pool.
    */
-  protected mapping(detected: DomainReference["detected"]): DomainReference["mapping"] {
+  protected override mapping(detected: DomainReference["detected"]): DomainReference["mapping"] {
     return this.modifierMapping(
       this.stored.raw,
       detected,

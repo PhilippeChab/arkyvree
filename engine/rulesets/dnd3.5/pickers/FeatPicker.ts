@@ -28,10 +28,16 @@ export default class FeatPicker extends LevelPicker<{ aptitudeModifiers: PoolMod
   private readonly feats = new FeatEntity(this.view);
 
   /** What the picker offers, a family's feats when the query names one, and what it leaves out. */
-  readonly filters: { excludeIds: string[]; family?: { type: string; value: string }; ids: string[] };
+  override readonly filters: { excludeIds: string[]; family?: { type: string; value: string }; ids: string[] };
 
   /** What the picker offers grouped by family: its feats, and the family each of them is grouped in. */
   readonly groupFilters: { excludeIds: string[]; families: { family: string; id: string }[]; ids: string[] };
+
+  /** The pools each feat's modifiers add slots to. */
+  protected override detailsOf(rows: { id: string }[]) {
+    const pools = this.feats.describePoolModifiers(rows.map((row) => row.id));
+    return (row: { id: string }) => ({ aptitudeModifiers: pools.get(row.id) ?? [] });
+  }
 
   /** A row of a feat's variants, which the picker opens into them: each variant says whether it's eligible. */
   private asFamilyRow<T extends object>(row: T) {
@@ -41,12 +47,6 @@ export default class FeatPicker extends LevelPicker<{ aptitudeModifiers: PoolMod
       aptitudeModifiers: [] as PoolModifier[],
       requirementTree: undefined as string | undefined,
     };
-  }
-
-  /** The pools each feat's modifiers add slots to. */
-  protected override detailsOf(rows: { id: string }[]) {
-    const pools = this.feats.describePoolModifiers(rows.map((row) => row.id));
-    return (row: { id: string }) => ({ aptitudeModifiers: pools.get(row.id) ?? [] });
   }
 
   /**

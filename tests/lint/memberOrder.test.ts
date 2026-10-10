@@ -328,6 +328,50 @@ describe("member order", () => {
     fs.rmSync(dir, { recursive: true });
   });
 
+  test("puts a class's overrides in a group of their own with oxlint --fix, after its abstract methods", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "member-order-"));
+    const config = path.join(dir, ".oxlintrc.json");
+    fs.writeFileSync(
+      config,
+      JSON.stringify({ jsPlugins: [path.resolve("lint/plugin.mjs")], rules: { "arkyvree/member-order": "error" } }),
+    );
+    const entity = path.join(dir, "Entity.ts");
+    fs.writeFileSync(
+      entity,
+      [
+        "abstract class Entity extends Base {",
+        "  describe() {}",
+        "  override plan() {}",
+        "  private helper() {}",
+        "  protected override columnsOf() {}",
+        "  abstract answer(): void;",
+        "  override async load() {}",
+        "  protected check() {}",
+        "  override answerOf() {}",
+        "}",
+        "",
+      ].join("\n"),
+    );
+    await runOxlint(["-c", config, "--fix", dir]);
+    expect(fs.readFileSync(entity, "utf8")).toBe(
+      [
+        "abstract class Entity extends Base {",
+        "  abstract answer(): void;",
+        // What it gives its base, protected before public, sync before async, then the class's own methods
+        "  protected override columnsOf() {}",
+        "  override answerOf() {}",
+        "  override plan() {}",
+        "  override async load() {}",
+        "  private helper() {}",
+        "  protected check() {}",
+        "  describe() {}",
+        "}",
+        "",
+      ].join("\n"),
+    );
+    fs.rmSync(dir, { recursive: true });
+  });
+
   test("suggests, never fixes, moving a field whose initializer calls what reads another field", async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "member-order-"));
     const config = path.join(dir, ".oxlintrc.json");

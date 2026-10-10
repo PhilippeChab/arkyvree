@@ -10,7 +10,7 @@ class MechanicsRepository extends RulesetEntityRepository<typeof mechanicsInRule
     super(mechanicsInRules);
   }
 
-  protected readonly entityType = "mechanics";
+  protected override readonly entityType = "mechanics";
 
   async findMany(db: Db, where: { ids: string[] }) {
     if (where.ids.length === 0) return [];

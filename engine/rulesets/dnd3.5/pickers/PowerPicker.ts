@@ -20,7 +20,7 @@ export default class PowerPicker extends LevelPicker {
   }
 
   /** What the picker offers, and what it leaves out. */
-  readonly filters: { excludeIds: string[]; ids: string[] };
+  override readonly filters: { excludeIds: string[]; ids: string[] };
 
   /** What the picker offers and leaves out (`filters`). */
   private buildFilters({ aptitudeId, powerLevel, selectedPowerIds = [] }: PowerPickQuery) {

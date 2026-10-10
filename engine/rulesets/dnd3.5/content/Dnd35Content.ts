@@ -19,7 +19,7 @@ export type SeededFields = {
  */
 export default class Dnd35Content extends ContentPart<SeededFields> {
   /** The codecs of the fields the seeders write as properties, by entity. */
-  protected readonly codecs = {
+  protected override readonly codecs = {
     klasses: CLASS_FIELDS,
     klassLevels: CLASS_LEVEL_FIELDS,
     rulesets: RULESET_FIELDS,
@@ -27,7 +27,7 @@ export default class Dnd35Content extends ContentPart<SeededFields> {
   };
 
   /** The target paths a book's generated content may name. */
-  listBookTargetPaths(...args: Parameters<typeof BookPaths.listBookTargetPaths>) {
+  override listBookTargetPaths(...args: Parameters<typeof BookPaths.listBookTargetPaths>) {
     return BookPaths.listBookTargetPaths(...args);
   }
 }

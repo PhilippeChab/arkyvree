@@ -15,11 +15,6 @@ export default abstract class CustomizationPageEntity<
   Columns extends object = Body,
   S extends Fields = NoFields,
 > extends RulesetEntity<K, Body, Columns, S> {
-  /** The requirements an entity's page shows: its own (an item's, its template's before its own). */
-  protected requirementsOf(entity: { id: string }): Requirement[] {
-    return this.rulesetData.requirementsByEntity.get(entity.id) ?? [];
-  }
-
   /** An entity as its page shows it, with its modifiers, its properties and its requirements. */
   override describe(id: string) {
     const entity = super.describe(id);
@@ -29,5 +24,10 @@ export default abstract class CustomizationPageEntity<
       properties: this.propertiesOf(entity),
       requirements: this.requirementsOf(entity),
     };
+  }
+
+  /** The requirements an entity's page shows: its own (an item's, its template's before its own). */
+  protected requirementsOf(entity: { id: string }): Requirement[] {
+    return this.rulesetData.requirementsByEntity.get(entity.id) ?? [];
   }
 }

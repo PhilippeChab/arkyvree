@@ -34,15 +34,15 @@ export default class RacePicker extends Picker<{ id: string }> {
   private readonly targetPaths = new Dnd35TargetPaths();
 
   /** What the picker offers: a player character's races. */
-  readonly filters = { kind: "pc" };
+  override readonly filters = { kind: "pc" };
 
   /** No tree: the form has no character to word it for. */
-  protected describeFailed() {
+  protected override describeFailed() {
     return undefined;
   }
 
   /** Whether the form meets a race's requirement groups: what it doesn't say counts as met. */
-  protected meets(groups: Requirement[][]) {
+  protected override meets(groups: Requirement[][]) {
     const evaluator = new RequirementEvaluator(this.targetPaths);
     evaluator.evaluateRequirements(this.components, groups);
     return evaluator.getRequirements().unmetRequirementGroups.length === 0;

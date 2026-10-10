@@ -8,6 +8,7 @@
 
     // Strict mode
     "strict": true,
+    "noImplicitOverride": true,
     "noImplicitAny": true,
     "noImplicitThis": true,
     "strictNullChecks": true,

@@ -29,7 +29,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     return { hasError: true, isChunkError: isChunkLoadError(error) };
   }
 
-  componentDidCatch(error: Error, info: ErrorInfo) {
+  override componentDidCatch(error: Error, info: ErrorInfo) {
     if (this.state.isChunkError) {
       reloadForStaleChunks();
       return;
@@ -38,7 +38,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     Sentry.captureException(error, { extra: { componentStack: info.componentStack } });
   }
 
-  render() {
+  override render() {
     if (this.state.isChunkError) {
       return (
         <ThemeProvider theme={ERROR_THEME}>

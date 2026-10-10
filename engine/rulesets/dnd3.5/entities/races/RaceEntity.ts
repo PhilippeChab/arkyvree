@@ -17,14 +17,14 @@ export default class RaceEntity extends CustomizationPageEntity<
   typeof RACE_FIELDS.fields
 > {
   /** Its body's build: four legs, a speed armor leaves. */
-  protected readonly fields = RACE_FIELDS;
+  protected override readonly fields = RACE_FIELDS;
 
-  protected readonly label = "Race";
+  protected override readonly label = "Race";
 
-  readonly type = "races";
+  override readonly type = "races";
 
   /** A form's columns. */
-  protected columnsOf({ baseSpeed, description, name, size }: RaceBody) {
+  protected override columnsOf({ baseSpeed, description, name, size }: RaceBody) {
     return { baseSpeed, description, name, size };
   }
 }

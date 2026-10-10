@@ -14,6 +14,46 @@ export default abstract class DetailedCharacterBonded extends DetailedCharacter 
   protected abstract applyMasterDerivation(master: DetailedCharacter): void;
 
   /**
+   * None: a bonded creature's feats are its stat block's and those its hit dice give it (`scaleFeats`), never picked,
+   * so its levels give no general feat to pick.
+   */
+  protected override countGeneralFeats(): number {
+    return 0;
+  }
+
+  /** None: a stat block's skills are its totals, which no skill points buy. */
+  protected override getSkillValidationIssues(): { budget: RulesIssue[]; ranks: RulesIssue[] } {
+    return { budget: [], ranks: [] };
+  }
+
+  /**
+   * The creature's master and stat block set its inputs (hit dice, base saves, natural armor and attacks, the stat
+   * block's feats and skill totals) before requirements read the sheet and modifiers change it: an item's or a feat's
+   * modifier adds on top. Then the character's own setup, Weapon Finesse on the natural attacks included.
+   */
+  protected override preRequirementProcessing(): void {
+    if (this.character.parentCharacterId) this.applyMasterDerivation(this.requireMaster());
+
+    const raceStats = BondedRaceData.getStats(this.data.race.name);
+    if (raceStats) {
+      if (raceStats.naturalAttacks.length > 0) {
+        this.components.combat.setNaturalAttacks(raceStats.naturalAttacks);
+        this.components.weapons.clearGroups();
+      }
+
+      this.applyRaceDefaults(raceStats);
+    }
+
+    super.preRequirementProcessing();
+  }
+
+  /** Builds the creature from its rows, its sheet derived from its `master`'s, which comes built. */
+  override build(rows: CharacterRows, view: RulesetView, master?: DetailedCharacter) {
+    this.master = master;
+    super.build(rows, view, master);
+  }
+
+  /**
    * The stat block's feats, as any granted feat is: possessed and counted (`grant`), listed with the feats the creature
    * has without a pick (`getVirtualFeats`: its sheet and PDF), and their modifiers applied with the character's, in the
    * build's rounds, each behind its own requirements. A feat the creature already has, from a modifier that grants it,
@@ -56,49 +96,9 @@ export default abstract class DetailedCharacterBonded extends DetailedCharacter 
     }
   }
 
-  /**
-   * None: a bonded creature's feats are its stat block's and those its hit dice give it (`scaleFeats`), never picked,
-   * so its levels give no general feat to pick.
-   */
-  protected override countGeneralFeats(): number {
-    return 0;
-  }
-
-  /** None: a stat block's skills are its totals, which no skill points buy. */
-  protected override getSkillValidationIssues(): { budget: RulesIssue[]; ranks: RulesIssue[] } {
-    return { budget: [], ranks: [] };
-  }
-
-  /**
-   * The creature's master and stat block set its inputs (hit dice, base saves, natural armor and attacks, the stat
-   * block's feats and skill totals) before requirements read the sheet and modifiers change it: an item's or a feat's
-   * modifier adds on top. Then the character's own setup, Weapon Finesse on the natural attacks included.
-   */
-  protected override preRequirementProcessing(): void {
-    if (this.character.parentCharacterId) this.applyMasterDerivation(this.requireMaster());
-
-    const raceStats = BondedRaceData.getStats(this.data.race.name);
-    if (raceStats) {
-      if (raceStats.naturalAttacks.length > 0) {
-        this.components.combat.setNaturalAttacks(raceStats.naturalAttacks);
-        this.components.weapons.clearGroups();
-      }
-
-      this.applyRaceDefaults(raceStats);
-    }
-
-    super.preRequirementProcessing();
-  }
-
   /** The creature's master, which its build is given: one it was saved with and its build lacks is an error. */
   protected requireMaster(): DetailedCharacter {
     if (!this.master) throw new Error(`Bonded's master not built: ${this.character.parentCharacterId}`);
     return this.master;
-  }
-
-  /** Builds the creature from its rows, its sheet derived from its `master`'s, which comes built. */
-  override build(rows: CharacterRows, view: RulesetView, master?: DetailedCharacter) {
-    this.master = master;
-    super.build(rows, view, master);
   }
 }

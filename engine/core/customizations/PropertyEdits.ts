@@ -5,7 +5,13 @@ import CustomizationEdits from "./CustomizationEdits.ts";
 
 /** An entity's properties: as its page lists them, and what their saves store. */
 export default class PropertyEdits extends CustomizationEdits<Property> {
-  protected readonly label = "Property";
+  protected override readonly label = "Property";
+
+  /** The entity's properties of its type: its own, and its siblings' (the view composes them into the winner's). */
+  protected override rowsOf(entityId: string) {
+    const properties = this.view.rulesetData.propertiesByEntity.get(entityId) ?? [];
+    return properties.filter((property) => property.entityType === this.entityType);
+  }
 
   /**
    * A property the entity shows: its own, or a derived item's template's (`fromTemplate`), which an edit overrides on
@@ -21,12 +27,6 @@ export default class PropertyEdits extends CustomizationEdits<Property> {
       : undefined;
     if (inherited) return { property: inherited, fromTemplate: true };
     throw new RulesError("not-found", `${this.label} not found for this entity`);
-  }
-
-  /** The entity's properties of its type: its own, and its siblings' (the view composes them into the winner's). */
-  protected rowsOf(entityId: string) {
-    const properties = this.view.rulesetData.propertiesByEntity.get(entityId) ?? [];
-    return properties.filter((property) => property.entityType === this.entityType);
   }
 
   /** The entity's properties of its type, as the view composes them. */

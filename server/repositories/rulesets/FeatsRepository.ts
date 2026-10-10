@@ -12,7 +12,7 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
     super(featsInRules);
   }
 
-  protected readonly entityType = "feats";
+  protected override readonly entityType = "feats";
 
   async findGroupPage(
     db: Db,

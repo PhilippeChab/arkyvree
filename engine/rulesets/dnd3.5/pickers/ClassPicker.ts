@@ -29,27 +29,10 @@ export default class ClassPicker extends CharacterPicker<
   }
 
   /** What the picker offers: a player character's classes. */
-  readonly filters = { kind: "pc" };
+  override readonly filters = { kind: "pc" };
 
   /** The character's highest level in each class it has levels of, by the class's id, once read. */
   private maxLevels?: Map<string, number>;
-
-  /** The class's next level for the character: after its highest in the class. */
-  private nextLevelOf(klass: Klass): KlassLevel | undefined {
-    this.maxLevels ??= this.readMaxLevels();
-    return this.rulesetData.klassLevelByKlassAndLevel.get(`${klass.id}:${(this.maxLevels.get(klass.id) || 0) + 1}`);
-  }
-
-  /** The character's highest level in each class it has levels of, by the class's id. */
-  private readMaxLevels() {
-    const maxLevels = new Map<string, number>();
-    for (const level of this.input.rows.levels) {
-      const klassLevel = this.rulesetData.klassLevelsById.get(level.klassLevelId);
-      if (klassLevel)
-        maxLevels.set(klassLevel.klassId, Math.max(maxLevels.get(klassLevel.klassId) ?? 0, klassLevel.level));
-    }
-    return maxLevels;
-  }
 
   /** The class's next level, with the class's last. */
   protected override detailsOf() {
@@ -80,7 +63,7 @@ export default class ClassPicker extends CharacterPicker<
    * spent so far, each planned level's as a save spreads them, and the feats picked so far, which requirements read: at
    * the first planned level, or at the character's last level when it plans none.
    */
-  protected project() {
+  protected override project() {
     const { abilityIncreases, featPicks, klassLevelIds = [] } = this.planned;
     const projection = new CharacterProjection(this.input);
     const hp = LevelRules.UNROLLED_LEVEL_HP;
@@ -97,5 +80,22 @@ export default class ClassPicker extends CharacterPicker<
     return [klass.id, this.nextLevelOf(klass)!.id]
       .map((id) => this.rulesetData.requirementsByEntity.get(id) ?? [])
       .filter((requirements) => requirements.length > 0);
+  }
+
+  /** The class's next level for the character: after its highest in the class. */
+  private nextLevelOf(klass: Klass): KlassLevel | undefined {
+    this.maxLevels ??= this.readMaxLevels();
+    return this.rulesetData.klassLevelByKlassAndLevel.get(`${klass.id}:${(this.maxLevels.get(klass.id) || 0) + 1}`);
+  }
+
+  /** The character's highest level in each class it has levels of, by the class's id. */
+  private readMaxLevels() {
+    const maxLevels = new Map<string, number>();
+    for (const level of this.input.rows.levels) {
+      const klassLevel = this.rulesetData.klassLevelsById.get(level.klassLevelId);
+      if (klassLevel)
+        maxLevels.set(klassLevel.klassId, Math.max(maxLevels.get(klassLevel.klassId) ?? 0, klassLevel.level));
+    }
+    return maxLevels;
   }
 }
