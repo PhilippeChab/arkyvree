@@ -10,6 +10,7 @@ import {
   CharacterLevelFeats,
   CharacterLevelPowers,
   CharacterLevelSkills,
+  Modifiers,
 } from "@/server/repositories/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import {
@@ -22,7 +23,8 @@ import {
   picks,
   WIZARD_1,
 } from "@/tests/support/levelFixtures.ts";
-import { increasesOf } from "@/tests/support/levels.ts";
+import { addCharacterLevel, findKlassLevel, increasesOf } from "@/tests/support/levels.ts";
+import { invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
@@ -611,6 +613,57 @@ describe("previewing a level-up", () => {
     expect(skill("Swim").ranksByPoints).toEqual([0, 1, 2, 3, 4]);
   });
 
+  test("spends a multiclass plan's skill points class-skill levels first, in the form's order", async () => {
+    const ctx = await getSeedCtx();
+    const characterId = await createSeedCharacter(ctx);
+    // A human fighter's 16 points at the first level, a fighter's, and 10 at the second, a rogue's: Ride is the
+    // fighter's class skill alone, Climb, Intimidate, Jump and Swim both classes'
+    const plan = [
+      ["Fighter", 1],
+      ["Rogue", 1],
+    ] satisfies [string, number][];
+    const spend = async (skills: Record<string, number>) => {
+      const { skills: step } = await preview(ctx, characterId, plan, undefined, { skills });
+      return (name: string) => step.skills.find((s) => s.id === ctx.skillMap[name])!;
+    };
+    // The other four spend the fighter level's points: Ride is left the rogue level's, cross-class there
+    const last = await spend({ Climb: 4, Intimidate: 4, Jump: 4, Swim: 4, Ride: 4 });
+    expect(last("Ride")).toMatchObject({
+      points: 4,
+      ranks: 2,
+      ranksByPoints: [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5],
+    });
+    // Ride first takes the fighter level's, a rank a point, and Swim, the last, the rogue level's
+    const first = await spend({ Ride: 4, Climb: 4, Intimidate: 4, Jump: 4, Swim: 4 });
+    expect([first("Ride").ranks, first("Swim").ranks]).toEqual([4, 4]);
+    // Alone, Ride takes the fighter level's 4 ranks, then half a rank a point at the rogue level, up to its cap of 5
+    const alone = await spend({});
+    expect(alone("Ride")).toMatchObject({ maxPoints: 6, rankStep: 1, ranksByPoints: [0, 1, 2, 3, 4, 4.5, 5] });
+    expect(alone("Hide")).toMatchObject({ classSkill: true, rankStep: 1 });
+    expect(alone("Concentration")).toMatchObject({ classSkill: false, rankStep: 0.5 });
+  });
+
+  test("marks a multiclass plan's class skills as the character's classes make them, a single class's as its own", async () => {
+    const ctx = await getSeedCtx();
+    const characterId = await createSeedCharacter(ctx);
+    await addCharacterLevel(characterId, (await findKlassLevel(ctx.klassMap.pc["Fighter"], 1))!.id);
+    const ride = async (plan: [string, number][]) =>
+      (await preview(ctx, characterId, plan)).skills.skills.find((s) => s.id === ctx.skillMap["Ride"])!;
+    // Ride is the saved fighter level's class skill, neither planned class's: a rank costs two points at both
+    expect(
+      await ride([
+        ["Rogue", 1],
+        ["Wizard", 1],
+      ]),
+    ).toMatchObject({ classSkill: true, rankStep: 0.5 });
+    expect(
+      await ride([
+        ["Rogue", 1],
+        ["Rogue", 2],
+      ]),
+    ).toMatchObject({ classSkill: false, rankStep: 0.5 });
+  });
+
   test("counts a human's bonus feat in the first level's General slots: its next feat goes there, then on the third", async () => {
     const ctx = await getSeedCtx();
     const nextGeneral = async (characterId: string, count: number, general: string[]) => {
@@ -646,6 +699,28 @@ describe("previewing a level-up", () => {
     const picked = await preview(ctx, sorcerer, levels, undefined, { powers: { "Sorcerer Spells": cantrips } });
     expect(picked.nextPickLevels.powers[spells.id]["0"]).toBe(1);
     expect(picked.powers.fitted[spells.id]).toEqual(cantrips.map((name) => ctx.powerMap[name]));
+  });
+  test("gives a spell level the character knows all of no slot from a later level's add", async () => {
+    const ctx = await getSeedCtx();
+    const cleric = ctx.klassMap.pc["Cleric"];
+    const characterId = await createSeedCharacter(ctx);
+    // A saved cleric level: she knows all her 1st-level spells
+    await addCharacterLevel(characterId, (await findKlassLevel(cleric, 1))!.id);
+    await Modifiers.create(db, {
+      sourceId: (await findKlassLevel(cleric, 2))!.id,
+      sourceType: "klass_levels",
+      target: "aptitudes.clericspells.1.allowed",
+      operator: "add",
+      value: "1",
+      valueType: "number",
+    });
+    invalidateSeededRuleset(ctx.rulesetId);
+    const { nextPickLevels } = await preview(ctx, characterId, [
+      ["Cleric", 2],
+      ["Cleric", 3],
+    ]);
+    // The second level's add gives no 1st-level slot: a 1st-level pick goes on the last planned level
+    expect(nextPickLevels.powers[ctx.aptMap["Cleric Spells"]]["1"]).toBe(1);
   });
 });
 
