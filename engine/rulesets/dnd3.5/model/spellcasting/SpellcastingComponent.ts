@@ -1,13 +1,9 @@
-import type { Components } from "@/engine/core/paths/PathTraverser.ts";
-import type { RulesetData } from "@/engine/core/view/index.ts";
+import type { BuiltCharacter } from "@/engine/core/character/index.ts";
+import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import { type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
-import type {
-  CustomizedClassLevel,
-  CustomizedFeat,
-  CustomizedPower,
-} from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
+import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import { include } from "@/lib/mixins.ts";
-import type { CharacterLevel, Modifier } from "@/shared/relations.ts";
+import type { Modifier } from "@/shared/relations.ts";
 import { BONUS_SPELL_MODIFIER_STEP, MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
 import { BonusCasterLevels } from "./concerns/BonusCasterLevels.ts";
@@ -15,21 +11,50 @@ import { KnownPowers } from "./concerns/KnownPowers.ts";
 import SpellcastingState from "./SpellcastingState.ts";
 import SpellLists from "./SpellLists.ts";
 
-/** What a character's spellcasting's finish reads of its loaded data: its levels, feats, powers and classes' maps. */
-type SpellcastingCharacter = {
-  characterLevels: CharacterLevel[];
-  feats: CustomizedFeat[];
-  klassBonusSpellAbilityMap: Map<string, string>;
-  klassLevels: CustomizedClassLevel[];
-  powers: CustomizedPower[];
-};
-
 /**
  * A character's spellcasting: its classes' spell lists and caster types (`initialize`), and, once its modifiers apply,
  * what they leave it (`finalize`): its bonus caster levels' slots, its bonus spells, its known spells and its tags. The
  * highest spell levels it casts are counted when read (`getSpellcasting`).
  */
 class SpellcastingComponent extends include(SpellcastingState, BonusCasterLevels, KnownPowers) {
+  /**
+   * What the character's modifiers leave its spellcasting, in order: the slots its bonus caster levels give (each while
+   * its gate holds, `isGateMet`), the bonus spells its abilities give, the spells its lists make it know, and its spell
+   * tags.
+   */
+  override finalize(
+    {
+      characterLevels,
+      feats,
+      klassBonusSpellAbilityMap,
+      klassLevels,
+      powers,
+    }: Pick<LoadedCharacterData, "characterLevels" | "feats" | "klassBonusSpellAbilityMap" | "klassLevels" | "powers">,
+    { rulesetData }: RulesetView,
+    character: BuiltCharacter,
+  ) {
+    const spellLists = SpellLists.of(rulesetData);
+    const isGateMet = (modifier: Modifier, metTargets?: string[]) =>
+      this.isGateMet(character, rulesetData, modifier, metTargets);
+    this.readBonusCasterLevels(rulesetData, klassLevels, feats, characterLevels, rulesetData.klasses);
+    this.applyBonusCasterLevels(character, feats, spellLists.featListIds, isGateMet);
+    this.applyBonusSpells(klassBonusSpellAbilityMap);
+    // The modifiers applied once the bonus caster levels' have: what the lists the character knows read
+    const { appliedModifiers } = character.modifierEvaluator.getModifiers();
+    this.collectAptitudePowers(rulesetData, powers, appliedModifiers);
+    this.enrichAllKnownPowers(rulesetData, powers, klassBonusSpellAbilityMap, appliedModifiers);
+    this.buildSpellTags(feats, spellLists.featListIds);
+  }
+
+  /** Each class's spell lists, off the ruleset's levels' slots, and its caster type (`klassCasterTypeMap`). */
+  override initialize(
+    { klassCasterTypeMap }: Pick<LoadedCharacterData, "klassCasterTypeMap">,
+    { rulesetData }: RulesetView,
+  ) {
+    this.classListsByKlassId = SpellLists.of(rulesetData).classListsByKlass;
+    this.casterTypeByKlassId = klassCasterTypeMap;
+  }
+
   /** The bonus spells a class's spellcasting ability gives: each spell level its modifier reaches adds uses. */
   private applyBonusSpells(klassBonusSpellAbilityMap: Map<string, string>) {
     const characterClasses = this.classes.getCharacterClasses();
@@ -61,35 +86,27 @@ class SpellcastingComponent extends include(SpellcastingState, BonusCasterLevels
   }
 
   /**
-   * What the character's modifiers leave its spellcasting, in order: the slots its bonus caster levels give (each while
-   * its gate holds, `isGateMet`: it takes the targets to count as met), the bonus spells its abilities give, the spells
-   * its lists make it know, and its spell tags.
+   * Whether a modifier's own requirements hold on the built character's sheet (`character`), the targets `metTargets`
+   * names counted as met: as one any value meets, a class's level gate, which its spell levels replace.
    */
-  finalize(
+  private isGateMet(
+    character: BuiltCharacter,
     rulesetData: RulesetData,
-    components: Components,
-    character: SpellcastingCharacter,
-    isGateMet: (modifier: Modifier, metTargets?: string[]) => boolean,
+    modifier: Modifier,
+    metTargets: string[] = [],
   ) {
-    const { characterLevels, feats, klassBonusSpellAbilityMap, klassLevels, powers } = character;
-    const spellLists = SpellLists.of(rulesetData);
-    this.readBonusCasterLevels(rulesetData, klassLevels, feats, characterLevels, rulesetData.klasses);
-    this.applyBonusCasterLevels(components, feats, spellLists.featListIds, isGateMet);
-    this.applyBonusSpells(klassBonusSpellAbilityMap);
-    this.collectAptitudePowers(rulesetData, powers);
-    this.enrichAllKnownPowers(rulesetData, powers, klassBonusSpellAbilityMap);
-    this.buildSpellTags(feats, spellLists.featListIds);
+    return character.areRequirementsMet([
+      (rulesetData.requirementsByEntity.get(modifier.id) ?? []).map((requirement) =>
+        requirement.target && metTargets.includes(requirement.target)
+          ? { ...requirement, operator: "greater_than_or_equal", value: "0", valueType: "number" }
+          : requirement,
+      ),
+    ]);
   }
 
   /** The highest arcane and divine spell levels the character casts: the `spellcasting` component's, its target paths'. */
   getSpellcasting(): { readonly arcane: number; readonly divine: number } {
     return this.casterLevels;
-  }
-
-  /** Each class's spell lists, off the ruleset's levels' slots, and its caster type (`klassCasterTypeMap`). */
-  initialize(rulesetData: RulesetData, klassCasterTypeMap: Map<string, "Arcane" | "Divine">) {
-    this.classListsByKlassId = SpellLists.of(rulesetData).classListsByKlass;
-    this.casterTypeByKlassId = klassCasterTypeMap;
   }
 }
 

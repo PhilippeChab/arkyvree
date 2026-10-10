@@ -1,6 +1,3 @@
-import type ModifierEvaluator from "@/engine/core/modifiers/ModifierEvaluator.ts";
-import Dnd35PropertyTypes from "@/engine/rulesets/dnd3.5/Dnd35PropertyTypes.ts";
-
 import AbilitiesComponent from "./abilities/AbilitiesComponent.ts";
 import AptitudesComponent from "./aptitudes/AptitudesComponent.ts";
 import BondedComponent from "./bonded/BondedComponent.ts";
@@ -45,59 +42,48 @@ export type Dnd35Components = {
 /** A 3.5 character's components. */
 export default class CharacterComponents {
   /**
-   * A 3.5 character's components, each handed the ones it reads. `countGeneralFeats` is the character's rule: a bonded
-   * creature has no general feat to pick.
+   * A 3.5 character's components, each built with the ones it reads, after them: the order they're listed in is the
+   * order the build sets them up in (`CharacterBase.build`), so each is set up after what it reads too.
+   * `countGeneralFeats` is the character's rule: a bonded creature has no general feat to pick.
    */
-  static build(
-    modifierEvaluator: ModifierEvaluator,
-    countGeneralFeats: (totalLevel: number) => number,
-  ): Dnd35Components {
-    // Each part after the ones it reads
+  static build(countGeneralFeats: (totalLevel: number) => number): Dnd35Components {
     const classes = new ClassesComponent();
     const abilities = new AbilitiesComponent();
     const identity = new IdentityComponent(classes);
+    const aptitudes = new AptitudesComponent(identity, classes, countGeneralFeats);
     const feats = new FeatsComponent();
     const featGroupings = new FeatGroupingsComponent(feats);
-    const powers = new PowersComponent(Dnd35PropertyTypes.valuesOf);
-    const powerGroupings = new PowerGroupingsComponent(powers, abilities);
-    const saves = new SavesComponent(abilities, classes);
-    const aptitudes = new AptitudesComponent(identity, classes, countGeneralFeats);
-    const armors = new ArmorsComponent();
-    const shields = new ShieldsComponent();
+    const inventory = new InventoryComponent();
+    const armors = new ArmorsComponent(inventory);
+    const shields = new ShieldsComponent(inventory);
     const encumbrance = new EncumbranceComponent(abilities, identity);
     const skills = new SkillsComponent(abilities, classes, identity, armors, shields, encumbrance);
-    const combat = new CombatComponent(abilities, classes, identity, armors, shields, encumbrance);
+    const saves = new SavesComponent(abilities, classes);
+    const combat = new CombatComponent(abilities, classes, identity, armors, shields, encumbrance, inventory);
     const weapons = new WeaponsComponent(combat);
-    const inventory = new InventoryComponent(combat, weapons, armors, shields);
-    const spellcasting = new SpellcastingComponent(
-      classes,
-      abilities,
-      aptitudes,
-      powers,
-      powerGroupings,
-      modifierEvaluator,
-    );
-
+    const powerGroupings = new PowerGroupingsComponent(abilities);
+    const powers = new PowersComponent(powerGroupings);
+    const spellcasting = new SpellcastingComponent(classes, abilities, aptitudes, powers, powerGroupings);
     const bonded = new BondedComponent();
     return {
-      abilities,
-      aptitudes,
-      armors,
-      bonded,
       classes,
-      combat,
-      encumbrance,
-      featGroupings,
-      feats,
+      abilities,
       identity,
+      aptitudes,
+      feats,
+      featGroupings,
       inventory,
+      armors,
+      shields,
+      encumbrance,
+      skills,
+      saves,
+      combat,
+      weapons,
       powerGroupings,
       powers,
-      saves,
-      shields,
-      skills,
       spellcasting,
-      weapons,
+      bonded,
     };
   }
 }

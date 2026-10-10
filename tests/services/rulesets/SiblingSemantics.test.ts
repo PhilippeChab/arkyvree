@@ -251,10 +251,14 @@ for (const [chainingOperator, reverseOrder] of [
     const rows = await fetchEveryPage((pagination) =>
       Abilities.findPage(db, { rulesetId: host.ancestorRulesetIds[0], ancestorRulesetIds: [] }, pagination),
     );
-    abilities.initialize(
-      rows.map((row) => ({ abilityId: row.id, name: row.name, score: row.name === "Strength" ? 13 : 10 })),
-      [],
-    );
+    abilities.initialize({
+      abilityIncreases: [],
+      characterAbilityScores: rows.map((row) => ({
+        abilityId: row.id,
+        name: row.name,
+        score: row.name === "Strength" ? 13 : 10,
+      })),
+    });
     const evaluate = (groups: Requirement[][]) => {
       const engine = new RequirementEvaluator(new Dnd35TargetPaths());
       engine.evaluateRequirements({ abilities }, groups);

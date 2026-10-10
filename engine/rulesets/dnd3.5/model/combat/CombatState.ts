@@ -1,6 +1,10 @@
+import { CharacterComponent } from "@/engine/core/character/index.ts";
+import { type WeaponFields } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import type AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/ClassesComponent.ts";
 import type IdentityComponent from "@/engine/rulesets/dnd3.5/model/identity/IdentityComponent.ts";
+import type InventoryComponent from "@/engine/rulesets/dnd3.5/model/inventory/InventoryComponent.ts";
+import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import { type ARMOR_CATEGORIES, COMBAT_RULES } from "@/vocabulary/dnd3.5/combat.ts";
 
 import type ArmorsComponent from "./ArmorsComponent.ts";
@@ -77,6 +81,12 @@ export type CombatData = {
   };
   weaponsets: Record<string, WeaponSet>;
 };
+
+/**
+ * A weapon of the inventory as the combat placed it: its set, its hand as its entry's location names it, its fields and
+ * the slot it filled, which a later entry may have taken since. What the weapons component groups.
+ */
+export type HeldWeapon = { fields: WeaponFields; location: string; setIndex: number; weapon: WeaponSlot };
 
 /** A natural attack's kind: a primary one at its full attack bonus, a secondary one lower. */
 export type NaturalAttackKind = "primary" | "secondary";
@@ -176,7 +186,7 @@ export const SLOT_MAP: Record<string, keyof WeaponSet> = {
 export const WIELDED_VALUES = Object.entries(SLOT_MAP).map(([label, value]) => ({ value, label }));
 
 /** What a character's combat sheet holds, which its concerns (armor class, hit points, attacks…) compute. */
-export default abstract class CombatState {
+export default abstract class CombatState extends CharacterComponent<LoadedCharacterData> {
   constructor(
     protected readonly abilities: AbilitiesComponent,
     protected readonly classes: ClassesComponent,
@@ -184,7 +194,9 @@ export default abstract class CombatState {
     armors: ArmorsComponent,
     shields: ShieldsComponent,
     protected readonly encumbrance: EncumbranceComponent,
+    protected readonly inventory: InventoryComponent,
   ) {
+    super();
     this.combat = CombatState.newSheet(armors.getArmors(), shields.getShields(), encumbrance.getEncumbrance());
   }
 
@@ -236,6 +248,9 @@ export default abstract class CombatState {
 
   /** Each double weapon's other end's damage dice (its WEAPON_DOUBLE_DAMAGE). */
   protected readonly doubleWeapons = new WeakMap<WeaponSlot, string>();
+
+  /** The inventory's weapons the combat placed, in its order (`CombatComponent.initialize`). */
+  protected readonly heldWeapons: HeldWeapon[] = [];
 
   /** Each weapon's abilities, which its to-hit and damage read: Weapon Finesse sets its finesse. */
   protected readonly weaponAbilities = new WeakMap<WeaponSlot, WeaponAbilities>();

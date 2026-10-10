@@ -34,6 +34,8 @@ export interface LoadedCharacterData {
   /** The ability increases the character's levels take. */
   abilityIncreases: AbilityIncrease[];
   campaign: Campaign | undefined;
+  /** The character's own row: who it is (`IdentityComponent`). */
+  character: Character;
   characterAbilityScores: { abilityId: string; name: string; score: number }[];
   characterLevels: CharacterLevel[];
   feats: CustomizedFeat[];
@@ -152,6 +154,7 @@ export default class DetailedCharacterDataLoader {
     return {
       player,
       campaign,
+      character: this.character,
       ...RulesetReadings.readRulesetProperties(rulesetData, (id) => cowData.resolve(id)),
       characterAbilityScores: resolve(rows.abilities).map((ca) => RulesetReadings.buildAbilityScore(ca, abilityLookup)),
       abilityIncreases: resolve(rows.picks.abilityIncreases).map(({ abilityId, amount }) => ({ abilityId, amount })),

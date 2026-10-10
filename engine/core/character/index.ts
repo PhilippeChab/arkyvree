@@ -2,4 +2,5 @@
 
 export { default as CharacterBase, type DataLoader, type LoadedCharacter } from "./CharacterBase.ts";
 export { type BuildsCharacters, type BuiltFromRows, default as CharacterBuilder } from "./CharacterBuilder.ts";
+export { type BuiltCharacter, default as CharacterComponent } from "./CharacterComponent.ts";
 export { Validates, type ValidationResult } from "./concerns/Validates.ts";

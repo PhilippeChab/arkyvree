@@ -1,6 +1,8 @@
+import { CharacterComponent } from "@/engine/core/character/index.ts";
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/ClassesComponent.ts";
 import type { CustomizedRace } from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
-import { type Character, type Language } from "@/shared/relations.ts";
+import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
+import { type Language } from "@/shared/relations.ts";
 
 type IdentityData = {
   background: {
@@ -27,8 +29,11 @@ type IdentityData = {
   };
 };
 
-export default class IdentityComponent {
-  constructor(private readonly classes: ClassesComponent) {}
+/** Who a character is: its row's description, its race and languages, and its level, counted from its classes. */
+export default class IdentityComponent extends CharacterComponent<LoadedCharacterData> {
+  constructor(private readonly classes: ClassesComponent) {
+    super();
+  }
 
   private readonly identity: IdentityData = {} as IdentityData;
 
@@ -38,20 +43,11 @@ export default class IdentityComponent {
    */
   private privateNotes = "";
 
-  getIdentity(): IdentityData {
-    return this.identity;
-  }
-
-  /** The GM's notes on the character (`privateNotes`), which the sheet's response shows its owner. */
-  getPrivateNotes(): string {
-    return this.privateNotes;
-  }
-
   /**
    * Who the character is, from its row, its race and its languages. Its level (`meta.level`) is the levels its classes
    * hold, counted when read (one a picker projects counts), and what a modifier adds to it.
    */
-  initialize(character: Character, race: CustomizedRace, languages: Language[]) {
+  override initialize({ character, languages, race }: Pick<LoadedCharacterData, "character" | "languages" | "race">) {
     const levelOfClasses = () =>
       Object.values(this.classes.getClasses()).reduce((acc, klass) => acc + klass.levels.length, 0);
     let levelBonus = 0;
@@ -84,5 +80,14 @@ export default class IdentityComponent {
       },
       xp: character.xp,
     };
+  }
+
+  getIdentity(): IdentityData {
+    return this.identity;
+  }
+
+  /** The GM's notes on the character (`privateNotes`), which the sheet's response shows its owner. */
+  getPrivateNotes(): string {
+    return this.privateNotes;
   }
 }

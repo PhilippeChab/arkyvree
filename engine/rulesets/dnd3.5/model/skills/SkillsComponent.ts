@@ -1,4 +1,6 @@
+import { CharacterComponent } from "@/engine/core/character/index.ts";
 import type { RulesIssue } from "@/engine/core/RulesError.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
 import { SKILL_FIELDS, type SkillFieldValues } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
 import type AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/ClassesComponent.ts";
@@ -6,6 +8,7 @@ import type ArmorsComponent from "@/engine/rulesets/dnd3.5/model/combat/ArmorsCo
 import type EncumbranceComponent from "@/engine/rulesets/dnd3.5/model/combat/EncumbranceComponent.ts";
 import type ShieldsComponent from "@/engine/rulesets/dnd3.5/model/combat/ShieldsComponent.ts";
 import type IdentityComponent from "@/engine/rulesets/dnd3.5/model/identity/IdentityComponent.ts";
+import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
 import { type Skill } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -34,7 +37,11 @@ type SkillsData = {
   };
 };
 
-export default class SkillsComponent {
+/**
+ * A character's skills: each one's ranks from its levels and what its ability, its size and its armor add, counted when
+ * read, and the skill points' budget.
+ */
+export default class SkillsComponent extends CharacterComponent<LoadedCharacterData> {
   constructor(
     private readonly abilities: AbilitiesComponent,
     private readonly classes: ClassesComponent,
@@ -42,17 +49,8 @@ export default class SkillsComponent {
     private readonly armors: ArmorsComponent,
     private readonly shields: ShieldsComponent,
     private readonly encumbrance: EncumbranceComponent,
-  ) {}
-
-  /**
-   * Whether the skill `name` is a subtype of one of `names`: a subtype names itself "<base> (<variant>)", and a
-   * user-authored ruleset can nest them ("Knowledge (Arcana) (Ancient)"), so every " (" is a possible base's end.
-   */
-  static isSubtypeOf(name: string, names: Set<string>): boolean {
-    for (let idx = name.indexOf(" ("); idx > 0; idx = name.indexOf(" (", idx + 1))
-      if (names.has(name.slice(0, idx))) return true;
-
-    return false;
+  ) {
+    super();
   }
 
   /** Each skill's key ability, by the skill's slug. */
@@ -88,6 +86,75 @@ export default class SkillsComponent {
   private skillPointAbilityId: string | null = null;
 
   private skillPointKlassLevelProperties: Map<string, { bab: number; skills: number }> = new Map();
+
+  /**
+   * Each of the ruleset's skills, with the fields its properties hold (`skillFields`) and the ranks the character's class
+   * levels put in it; and the skill points' budget, from the ruleset's skill point ability (`skillPointAbilityId`) and
+   * each class level's points (`klassLevelProperties`).
+   */
+  override initialize(
+    {
+      klassLevelProperties,
+      skillFields,
+      skillPointAbilityId,
+    }: Pick<LoadedCharacterData, "klassLevelProperties" | "skillFields" | "skillPointAbilityId">,
+    { rulesetData }: RulesetView,
+  ) {
+    const rulesetSkills = rulesetData.skills;
+    this.skillPointAbilityId = skillPointAbilityId;
+    this.skillPointKlassLevelProperties = klassLevelProperties;
+    const classes = this.classes.getClasses();
+
+    // Build skill ID → name lookup from ruleset skills
+    const skillNameById = new Map<string, string>();
+    for (const s of rulesetSkills) skillNameById.set(s.id, s.name);
+
+    // Collect all class skill IDs + mark subtypes as innate
+    // (e.g., "Craft (Armorsmithing)" is innate if "Craft" is a class skill)
+    const allKlassSkillNames = new Set<string>();
+    const allKlassSkillIds = Object.values(classes).flatMap((klass) =>
+      klass.klassSkills.flatMap((klassSkill) => klassSkill.skillId),
+    );
+    for (const skillId of allKlassSkillIds) {
+      this.innateSkillIds.add(skillId);
+      const name = skillNameById.get(skillId);
+      if (name) allKlassSkillNames.add(name);
+    }
+    // Also mark subtypes of class skills as innate.
+    for (const skill of rulesetSkills) {
+      if (this.innateSkillIds.has(skill.id)) continue;
+      if (SkillRules.isSubtypeOf(skill.name, allKlassSkillNames)) this.innateSkillIds.add(skill.id);
+    }
+
+    // Convert stored points to actual ranks per class-level.
+    // Points spent on a class skill (for that class) convert 1:1.
+    // Points spent on a cross-class skill convert at 0.5 ranks per point.
+    for (const klass of Object.values(classes)) {
+      const klassSkillIds = new Set(klass.klassSkills.map((ks) => ks.skillId));
+      const klassSkillNames = new Set(
+        klass.klassSkills.map((ks) => skillNameById.get(ks.skillId)).filter((n): n is string => !!n),
+      );
+
+      for (const level of klass.levels) {
+        for (const skill of level.skills) {
+          const isClassSkillById = klassSkillIds.has(skill.id);
+          const isClassSkillByName = !isClassSkillById && SkillRules.isSubtypeOf(skill.name, klassSkillNames);
+          const isClassSkillForKlass = isClassSkillById || isClassSkillByName;
+          const ranksGained = SkillRules.ranksFor(skill.rank, isClassSkillForKlass);
+          const current = this.rankBySkillId.get(skill.id) ?? 0;
+          this.rankBySkillId.set(skill.id, current + ranksGained);
+        }
+      }
+    }
+
+    for (const skill of rulesetSkills) {
+      const abilityName = this.abilities.getAbilityName(skill.primaryAbilityId) ?? "";
+      this.abilityNameBySkill.set(stripSeparators(skill.name), abilityName);
+      // A skill without its fields' rows has their defaults: armor doesn't weigh on it, and it needs training
+      const fields = skillFields.get(skill.id) ?? SKILL_FIELDS.defaults;
+      this.skills[stripSeparators(skill.name)] = this.newSkill(skill, abilityName, fields);
+    }
+  }
 
   /** The armor check penalty a skill armor weighs on takes: the worse of the armor and shield's and the load's. */
   private armorCheckPenalty(): number {
@@ -242,72 +309,6 @@ export default class SkillsComponent {
     }
 
     return issues;
-  }
-
-  /**
-   * Each of the ruleset's skills (`rulesetSkills`), with the fields its properties hold (`skillFields`) and the ranks the
-   * character's class levels put in it; and the skill points' budget, from the ruleset's skill point ability
-   * (`skillPointAbilityId`) and each class level's points (`klassLevelProperties`).
-   */
-  initialize(
-    rulesetSkills: Skill[],
-    skillPointAbilityId: string | null,
-    klassLevelProperties: Map<string, { bab: number; skills: number }>,
-    skillFields: Map<string, SkillFieldValues>,
-  ) {
-    this.skillPointAbilityId = skillPointAbilityId;
-    this.skillPointKlassLevelProperties = klassLevelProperties;
-    const classes = this.classes.getClasses();
-
-    // Build skill ID → name lookup from ruleset skills
-    const skillNameById = new Map<string, string>();
-    for (const s of rulesetSkills) skillNameById.set(s.id, s.name);
-
-    // Collect all class skill IDs + mark subtypes as innate
-    // (e.g., "Craft (Armorsmithing)" is innate if "Craft" is a class skill)
-    const allKlassSkillNames = new Set<string>();
-    const allKlassSkillIds = Object.values(classes).flatMap((klass) =>
-      klass.klassSkills.flatMap((klassSkill) => klassSkill.skillId),
-    );
-    for (const skillId of allKlassSkillIds) {
-      this.innateSkillIds.add(skillId);
-      const name = skillNameById.get(skillId);
-      if (name) allKlassSkillNames.add(name);
-    }
-    // Also mark subtypes of class skills as innate.
-    for (const skill of rulesetSkills) {
-      if (this.innateSkillIds.has(skill.id)) continue;
-      if (SkillsComponent.isSubtypeOf(skill.name, allKlassSkillNames)) this.innateSkillIds.add(skill.id);
-    }
-
-    // Convert stored points to actual ranks per class-level.
-    // Points spent on a class skill (for that class) convert 1:1.
-    // Points spent on a cross-class skill convert at 0.5 ranks per point.
-    for (const klass of Object.values(classes)) {
-      const klassSkillIds = new Set(klass.klassSkills.map((ks) => ks.skillId));
-      const klassSkillNames = new Set(
-        klass.klassSkills.map((ks) => skillNameById.get(ks.skillId)).filter((n): n is string => !!n),
-      );
-
-      for (const level of klass.levels) {
-        for (const skill of level.skills) {
-          const isClassSkillById = klassSkillIds.has(skill.id);
-          const isClassSkillByName = !isClassSkillById && SkillsComponent.isSubtypeOf(skill.name, klassSkillNames);
-          const isClassSkillForKlass = isClassSkillById || isClassSkillByName;
-          const ranksGained = SkillRules.ranksFor(skill.rank, isClassSkillForKlass);
-          const current = this.rankBySkillId.get(skill.id) ?? 0;
-          this.rankBySkillId.set(skill.id, current + ranksGained);
-        }
-      }
-    }
-
-    for (const skill of rulesetSkills) {
-      const abilityName = this.abilities.getAbilityName(skill.primaryAbilityId) ?? "";
-      this.abilityNameBySkill.set(stripSeparators(skill.name), abilityName);
-      // A skill without its fields' rows has their defaults: armor doesn't weigh on it, and it needs training
-      const fields = skillFields.get(skill.id) ?? SKILL_FIELDS.defaults;
-      this.skills[stripSeparators(skill.name)] = this.newSkill(skill, abilityName, fields);
-    }
   }
 
   /**

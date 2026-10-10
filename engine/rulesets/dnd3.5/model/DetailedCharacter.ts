@@ -21,9 +21,7 @@ export default class DetailedCharacter extends include(
 ) {
   constructor(character: Character) {
     super(character, new Dnd35TargetPaths());
-    this.components = CharacterComponents.build(this.modifierEvaluator, (totalLevel) =>
-      this.countGeneralFeats(totalLevel),
-    );
+    this.components = CharacterComponents.build((totalLevel) => this.countGeneralFeats(totalLevel));
   }
 
   override readonly components: Dnd35Components;

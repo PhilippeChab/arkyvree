@@ -1,9 +1,14 @@
+import { CharacterComponent } from "@/engine/core/character/index.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
 import type {
   CustomizedClassLevel,
   CustomizedFeat,
   CustomizedPower,
 } from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
-import type { SkillWithRank } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
+import type {
+  LoadedCharacterData,
+  SkillWithRank,
+} from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import type { CharacterLevel, Klass, KlassLevel, KlassSkill } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -23,40 +28,25 @@ type ClassesData = {
   };
 };
 
-export default class ClassesComponent {
+/** A character's classes: each one's levels, with what each level picked, and the ruleset's other classes at level 0. */
+export default class ClassesComponent extends CharacterComponent<LoadedCharacterData> {
   private readonly classes: ClassesData = {};
 
-  addProjectedLevel(klassName: string, klassLevel: KlassLevel, characterLevel: CharacterLevel): void {
-    const entry = this.classes[klassName];
-    if (!entry) return;
-
-    entry.levels.push({
-      klassLevel: { ...klassLevel, modifiers: [], properties: [], requirements: [] },
-      characterLevel,
-      feats: [],
-      skills: [],
-      powers: [],
-    });
-    entry.level++;
-  }
-
-  getCharacterClasses(): ClassesData {
-    return Object.fromEntries(Object.entries(this.classes).filter(([, klass]) => klass.level > 0));
-  }
-
-  getClasses(): ClassesData {
-    return this.classes;
-  }
-
-  initialize(
-    klasses: Klass[],
-    klassSkills: KlassSkill[],
-    klassLevels: CustomizedClassLevel[],
-    characterLevels: CharacterLevel[],
-    feats: CustomizedFeat[],
-    skills: SkillWithRank[],
-    powers: CustomizedPower[],
-    rulesetKlasses: Klass[],
+  /** Each class the character has levels in, its levels sorted with their picks, and the ruleset's others at level 0. */
+  override initialize(
+    {
+      characterLevels,
+      feats,
+      klasses,
+      klassLevels,
+      klassSkills,
+      powers,
+      skills,
+    }: Pick<
+      LoadedCharacterData,
+      "characterLevels" | "feats" | "klasses" | "klassLevels" | "klassSkills" | "powers" | "skills"
+    >,
+    { rulesetData }: RulesetView,
   ) {
     // Build per-level lookup indices once (replaces 4 .filter() scans per character level).
     const klassLevelsById = new Map<string, (typeof klassLevels)[number]>();
@@ -121,7 +111,7 @@ export default class ClassesComponent {
     }
 
     // Add level-0 entries for ruleset classes the character doesn't have
-    for (const klass of rulesetKlasses) {
+    for (const klass of rulesetData.klasses) {
       const klassName = stripSeparators(klass.name);
       if (!this.classes[klassName]) {
         this.classes[klassName] = {
@@ -133,6 +123,28 @@ export default class ClassesComponent {
         };
       }
     }
+  }
+
+  addProjectedLevel(klassName: string, klassLevel: KlassLevel, characterLevel: CharacterLevel): void {
+    const entry = this.classes[klassName];
+    if (!entry) return;
+
+    entry.levels.push({
+      klassLevel: { ...klassLevel, modifiers: [], properties: [], requirements: [] },
+      characterLevel,
+      feats: [],
+      skills: [],
+      powers: [],
+    });
+    entry.level++;
+  }
+
+  getCharacterClasses(): ClassesData {
+    return Object.fromEntries(Object.entries(this.classes).filter(([, klass]) => klass.level > 0));
+  }
+
+  getClasses(): ClassesData {
+    return this.classes;
   }
 
   removeProjectedLevel(klassName: string): void {

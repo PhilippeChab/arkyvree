@@ -1,10 +1,7 @@
-import { ITEM_FIELDS } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
-import type ArmorsComponent from "@/engine/rulesets/dnd3.5/model/combat/ArmorsComponent.ts";
-import type CombatComponent from "@/engine/rulesets/dnd3.5/model/combat/CombatComponent.ts";
-import type ShieldsComponent from "@/engine/rulesets/dnd3.5/model/combat/ShieldsComponent.ts";
-import type WeaponsComponent from "@/engine/rulesets/dnd3.5/model/combat/WeaponsComponent.ts";
+import { CharacterComponent } from "@/engine/core/character/index.ts";
+import { ITEM_FIELDS, type ItemFieldValues } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import type { InventoryEntry } from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
-import { UNARMED_STRIKE } from "@/vocabulary/dnd3.5/combat.ts";
+import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 
 import InventorySlots from "./InventorySlots.ts";
 
@@ -25,13 +22,16 @@ type WeaponSetInventory = Record<
   }
 >;
 
-export default class InventoryComponent {
-  constructor(
-    private readonly combat: CombatComponent,
-    private readonly weapons: WeaponsComponent,
-    private readonly armors: ArmorsComponent,
-    private readonly shields: ShieldsComponent,
-  ) {}
+/** An item the character has equipped in a slot, with its fields: what its combat, armors and shields read. */
+export type EquippedEntry = { entry: InventoryEntry; fields: ItemFieldValues };
+
+/**
+ * A character's inventory: its entries, and the properties of what each slot holds (a weapon set's hands, the other
+ * equipment's slots). The items it has equipped in a slot (`getEquipped`) are what its combat holds and its armors and
+ * shields list.
+ */
+export default class InventoryComponent extends CharacterComponent<LoadedCharacterData> {
+  private readonly equipped: EquippedEntry[] = [];
 
   private readonly inventory: InventoryData = {
     weaponsets: {},
@@ -39,15 +39,8 @@ export default class InventoryComponent {
 
   private rawItems: InventoryEntry[] = [];
 
-  getFlatInventory(): InventoryEntry[] {
-    return this.rawItems;
-  }
-
-  getInventory(): InventoryData {
-    return this.inventory;
-  }
-
-  initialize(inventory: InventoryEntry[]) {
+  /** The entries, and each equipped one in a slot: what the slot holds, its properties, and the item with its fields. */
+  override initialize({ inventory }: Pick<LoadedCharacterData, "inventory">) {
     this.rawItems = inventory;
     for (const entry of inventory) {
       if (!entry.equipped) continue;
@@ -61,15 +54,10 @@ export default class InventoryComponent {
         else propertiesMap[prop.type] = prop.value;
       }
 
-      const fields = ITEM_FIELDS.read(entry.item.properties);
-      const isArmor = entry.item.type === "Armor";
-      const isShield = entry.item.type === "Shield";
-      const isWeapon = entry.item.type === "Weapon";
-
-      if (isWeapon) {
+      this.equipped.push({ entry, fields: ITEM_FIELDS.read(entry.item.properties) });
+      if (entry.item.type === "Weapon") {
         // Weapons go into weaponsets
-        const setIndex = entry.weaponSet ?? 0;
-        const setKey = String(setIndex);
+        const setKey = String(entry.weaponSet ?? 0);
         const slotKey = slot as "mainhand" | "offhand" | "twohanded";
 
         if (!this.inventory.weaponsets[setKey]) {
@@ -83,35 +71,25 @@ export default class InventoryComponent {
         this.inventory.weaponsets[setKey][slotKey] = {
           properties: propertiesMap,
         };
-
-        const weapon = this.combat.addWeapon(
-          setIndex,
-          entry.location as "Main Hand" | "Off Hand" | "Two Handed",
-          entry.item,
-          fields.weapon,
-          { itemId: entry.item.id, entryId: entry.id },
-        );
-
-        // A weapon without a proficiency fills no slot: what the slot holds (an empty hand's unarmed strike) isn't it
-        if (weapon) this.weapons.registerWeapon(setIndex, entry.location as string, fields.weapon);
-      } else if (isArmor) {
-        // The armors list it, and the sheet wears it: the heaviest worn slows the character down
-        this.armors.registerArmor(entry.item, fields);
-        this.combat.addArmor(fields);
-      } else if (isShield) {
-        // The shields list it (with its maximum Dexterity, a tower shield's), and the sheet carries it: a tower shield's bulk
-        this.shields.registerShield(entry.item, fields);
-        this.combat.addShield(fields);
-      } else {
-        // Non-combat equipment goes into flat equipment slots
+      } else if (entry.item.type !== "Armor" && entry.item.type !== "Shield") {
+        // Non-combat equipment goes into flat equipment slots; the armors and the shields list the armor and shields
         this.inventory[slot] = {
           properties: propertiesMap,
         };
       }
     }
+  }
 
-    const set0Mainhand = this.combat.getCombat().weaponsets["0"]?.mainhand;
-    if (set0Mainhand?.name === UNARMED_STRIKE && set0Mainhand.itemId === null)
-      this.weapons.registerUnarmedStrike(0, "Main Hand");
+  /** The items the character has equipped in a slot, in its inventory's order, each with its fields. */
+  getEquipped(): EquippedEntry[] {
+    return this.equipped;
+  }
+
+  getFlatInventory(): InventoryEntry[] {
+    return this.rawItems;
+  }
+
+  getInventory(): InventoryData {
+    return this.inventory;
   }
 }

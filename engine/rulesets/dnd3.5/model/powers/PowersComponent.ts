@@ -1,8 +1,13 @@
+import { CharacterComponent } from "@/engine/core/character/index.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
+import Dnd35PropertyTypes from "@/engine/rulesets/dnd3.5/Dnd35PropertyTypes.ts";
+import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellLists.ts";
 import { formatPropertyValues, groupPropertyValues } from "@/shared/customization/properties.ts";
 import { type Power, type PowerWithAptitudes, type Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
+import type PowerGroupingsComponent from "./PowerGroupingsComponent.ts";
 import type { PowerDc, PowerDcsByClass } from "./PowerGroupingsComponent.ts";
 
 type PowerEntry = {
@@ -33,61 +38,30 @@ type PowersData = {
   [key: string]: PowerEntry | PowerGroupEntry | Record<string, { known: boolean }> | PowerGroupsNamespace;
 };
 
-export default class PowersComponent {
-  /** `propertyValues`: a property type's options in their order (the ruleset's), which a spell lists its values in. */
-  constructor(private readonly propertyValues: (type: string) => readonly string[] | null) {}
+/**
+ * A character's spells: each one's entry, with its properties' values, its known flag on each list it's on and its DC as
+ * each class casts it, and its schools' and descriptors' groupings under `groups`, the power groupings' DCs.
+ */
+export default class PowersComponent extends CharacterComponent<LoadedCharacterData> {
+  constructor(private readonly powerGroupings: PowerGroupingsComponent) {
+    super();
+  }
 
   private readonly powers: PowersData = {};
 
-  addPowerEntries(powers: (Power & { properties: Property[] })[]) {
-    for (const power of powers) {
-      const propertiesMap = groupPropertyValues(power.properties, this.propertyValues);
-
-      // A spell already listed keeps what's on its entry: its known flags and its DCs by class
-      const slug = stripSeparators(power.name);
-      this.powers[slug] = { ...this.powers[slug], power, properties: propertiesMap };
-    }
-  }
-
-  /** The spells as a sheet lists them: each property type's values joined, those modifiers add included. */
-  getFlatPowers(): Record<string, Omit<PowerEntry, "properties"> & { properties: Record<string, string> }> {
-    const result: Record<string, Omit<PowerEntry, "properties"> & { properties: Record<string, string> }> = {};
-    for (const [key, value] of Object.entries(this.powers)) {
-      if ("power" in value) {
-        const entry = value as PowerEntry;
-        result[key] = { ...entry, properties: formatPropertyValues(entry.properties, this.propertyValues) };
-      }
-    }
-    return result;
-  }
-
-  getPower(name: string) {
-    return this.powers[stripSeparators(name)] as PowerEntry | undefined;
-  }
-
-  getPowers(): PowersData {
-    return this.powers;
-  }
-
-  /** A spell's known flag on a list (`listName`), by their names (or their slugs: a target's). */
-  getSpellEntry(spellName: string, listName: string): { known: boolean } | undefined {
-    const entry = this.powers[stripSeparators(spellName)] as Record<string, { known: boolean }> | undefined;
-    return entry?.[SpellLists.toSpellPossessionSlug(listName)];
-  }
-
-  /** The lists a feat brings (`spellLists.featListIds`: a domain's, a specialist's school) give spells, never known. */
-  initialize(
-    powers: (Power & { aptitudeId: string; powerLevel: number | null; properties: Property[] })[],
-    rulesetPowers: PowerWithAptitudes[],
-    spellLists: SpellLists,
-  ) {
+  /**
+   * The character's spells' entries; a known flag on each list the ruleset's spells are on, set for the character's
+   * (the lists a feat brings, `SpellLists.featListIds`: a domain's, a specialist's school, give spells, never known);
+   * then their DCs as the power groupings hold them, an empty DC for each leveled spell without one, and the groupings.
+   */
+  override initialize({ powers }: Pick<LoadedCharacterData, "powers">, { rulesetData }: RulesetView) {
     this.addPowerEntries(powers);
 
     // Build spell known data nested under each spell entry: spell → aptitude → { known }, but on the lists a feat brings
-    const { featListIds, spellSlugByAptitudeId } = spellLists;
+    const { featListIds, spellSlugByAptitudeId } = SpellLists.of(rulesetData);
     const aptitudeIdToSlug = new Map([...spellSlugByAptitudeId].filter(([aptitudeId]) => !featListIds.has(aptitudeId)));
 
-    for (const power of rulesetPowers) {
+    for (const power of rulesetData.powers) {
       const spellSlug = stripSeparators(power.name);
       for (const pa of power.powersAptitudesInRules) {
         if (pa.level == null) continue;
@@ -108,13 +82,27 @@ export default class PowersComponent {
       const spellEntry = this.powers[stripSeparators(power.name)] as Record<string, { known: boolean }> | undefined;
       if (spellEntry?.[aptSlug]) spellEntry[aptSlug].known = true;
     }
+
+    this.holdDcs();
+    this.seedEmptyDcs(rulesetData.powers);
+    this.holdGroupings();
+  }
+
+  /** Each spell's DC as each class casts it, as the power groupings hold them (`getDcs`), on the spell's entry. */
+  private holdDcs(): void {
+    for (const [slug, dcs] of Object.entries(this.powerGroupings.getDcs())) {
+      const entry = this.powers[slug] as PowerEntry | undefined;
+      if (!entry) continue;
+      for (const [aptitudeSlug, dc] of Object.entries(dcs)) (entry.dc ??= {})[aptitudeSlug] = dc;
+    }
   }
 
   /**
-   * The groupings under `groups`: `powers.groups.<grouping>.*.dc.misc` reaches each spell of it, and each class's DC of
-   * the spell through it (a spell is a group of its classes).
+   * The power groupings under `groups`: `powers.groups.<grouping>.*.dc.misc` reaches each spell of it, and each class's
+   * DC of the spell through it (a spell is a group of its classes).
    */
-  injectGroupings(groupings: Record<string, Record<string, PowerDcsByClass>>) {
+  private holdGroupings(): void {
+    const groupings = this.powerGroupings.getPowerGroupings();
     if (Object.keys(groupings).length === 0) return;
     const namespace: PowerGroupsNamespace = {};
     for (const [key, group] of Object.entries(groupings)) {
@@ -132,11 +120,56 @@ export default class PowersComponent {
    * gets an empty DC there once the cast ones have theirs, so a modifier on it reaches nothing and a requirement on it is
    * unmet, as a school's empty group.
    */
-  seedEmptyDcs(rulesetPowers: PowerWithAptitudes[]): void {
+  private seedEmptyDcs(rulesetPowers: PowerWithAptitudes[]): void {
     for (const power of rulesetPowers) {
       if (!power.powersAptitudesInRules.some((pa) => pa.level != null)) continue;
       const entry: { dc?: PowerDcsByClass } = (this.powers[stripSeparators(power.name)] ??= {});
       entry.dc ??= {};
     }
+  }
+
+  addPowerEntries(powers: (Power & { properties: Property[] })[]) {
+    for (const power of powers) {
+      const propertiesMap = groupPropertyValues(power.properties, Dnd35PropertyTypes.valuesOf);
+
+      // A spell already listed keeps what's on its entry: its known flags and its DCs by class
+      const slug = stripSeparators(power.name);
+      this.powers[slug] = { ...this.powers[slug], power, properties: propertiesMap };
+    }
+  }
+
+  /** The spells as a sheet lists them: each property type's values joined, those modifiers add included. */
+  getFlatPowers(): Record<string, Omit<PowerEntry, "properties"> & { properties: Record<string, string> }> {
+    const result: Record<string, Omit<PowerEntry, "properties"> & { properties: Record<string, string> }> = {};
+    for (const [key, value] of Object.entries(this.powers)) {
+      if ("power" in value) {
+        const entry = value as PowerEntry;
+        result[key] = { ...entry, properties: formatPropertyValues(entry.properties, Dnd35PropertyTypes.valuesOf) };
+      }
+    }
+    return result;
+  }
+
+  getPower(name: string) {
+    return this.powers[stripSeparators(name)] as PowerEntry | undefined;
+  }
+
+  getPowers(): PowersData {
+    return this.powers;
+  }
+
+  /** A spell's known flag on a list (`listName`), by their names (or their slugs: a target's). */
+  getSpellEntry(spellName: string, listName: string): { known: boolean } | undefined {
+    const entry = this.powers[stripSeparators(spellName)] as Record<string, { known: boolean }> | undefined;
+    return entry?.[SpellLists.toSpellPossessionSlug(listName)];
+  }
+
+  /**
+   * The spells' DCs and groupings as the power groupings hold them again, once they've registered more: the spells the
+   * spellcasting makes known (`KnownPowers`).
+   */
+  readGroupings(): void {
+    this.holdDcs();
+    this.holdGroupings();
   }
 }

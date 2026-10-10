@@ -8,7 +8,7 @@ import CustomizedEntities, {
 import type SpellcastingState from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellcastingState.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellLists.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import type { Power, Property } from "@/shared/relations.ts";
+import type { Modifier, Power, Property } from "@/shared/relations.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
 /** The powers a character's aptitudes give it, each with what it knows of them, and the spell tags they carry. */
@@ -18,8 +18,7 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
      * The class each power-giving aptitude a class level gives slots in belongs to, traced through the applied modifiers:
      * the class level's class, or the class a bonus caster level advances.
      */
-    private aptitudeClassNames() {
-      const appliedModifiers = this.modifierEvaluator.getModifiers().appliedModifiers;
+    private aptitudeClassNames(appliedModifiers: Modifier[]) {
       const aptitudeIdToClassName = new Map<string, string>();
       const classes = this.classes.getClasses();
       const aptitudes = this.aptitudes.getAptitudes();
@@ -52,7 +51,7 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
      * list joins (a cleric's domain spells, at the levels the cleric knows his list at). An unleveled one all known
      * knows all its powers.
      */
-    private knownAptitudeLevels() {
+    private knownAptitudeLevels(appliedModifiers: Modifier[]) {
       const aptitudes = this.aptitudes.getAptitudes();
       const perAptitudeLevels = new Map<string, Set<number>>();
       const unleveledAptitudeIds = new Set<string>();
@@ -71,7 +70,7 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
         }
       }
 
-      for (const [list, classNames] of this.joiningClassNames()) {
+      for (const [list, classNames] of this.joiningClassNames(appliedModifiers)) {
         const aptitude = aptitudes[list];
         if (!aptitude || !this.aptitudes.isLeveledAptitude(list)) continue;
         const levels = perAptitudeLevels.get(aptitude.id) ?? new Set<number>();
@@ -92,13 +91,14 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
      */
     private newKnownPowers(
       powers: CustomizedPower[],
-      aptitudeIdToClassName: Map<string, string>,
+      appliedModifiers: Modifier[],
       klassBonusSpellAbilityMap: Map<string, string>,
     ): CustomizedPower[] {
+      const aptitudeIdToClassName = this.aptitudeClassNames(appliedModifiers);
       const classes = this.classes.getClasses();
       const aptitudes = this.aptitudes.getAptitudes();
       const aptitudeKeyById = new Map(Object.entries(aptitudes).map(([key, aptitude]) => [aptitude.id, key]));
-      const joining = this.joiningClassNames();
+      const joining = this.joiningClassNames(appliedModifiers);
 
       // Deduplicate: exclude powers already present on the character
       const existingPowerIds = new Set(powers.map((p) => p.id));
@@ -162,7 +162,7 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
         const aptitudeSlug = spellSlugByAptitudeId.get(power.aptitudeId) ?? power.aptitudeId;
         this.powerGroupings.registerPower({ ...power, aptitudeSlug }, power.properties);
       }
-      this.powers.injectGroupings(this.powerGroupings.getPowerGroupings());
+      this.powers.readGroupings();
     }
 
     /**
@@ -207,8 +207,8 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
      * The spells of the lists the character knows every spell of (or a level of), off the view, with their properties
      * and the lists each is on.
      */
-    protected collectAptitudePowers(rulesetData: RulesetData, powers: CustomizedPower[]) {
-      const { perAptitudeLevels, unleveledAptitudeIds } = this.knownAptitudeLevels();
+    protected collectAptitudePowers(rulesetData: RulesetData, powers: CustomizedPower[], appliedModifiers: Modifier[]) {
+      const { perAptitudeLevels, unleveledAptitudeIds } = this.knownAptitudeLevels(appliedModifiers);
       if (perAptitudeLevels.size === 0 && unleveledAptitudeIds.size === 0) return;
 
       // Iterate the composed powers once, emitting one row per matching
@@ -266,9 +266,10 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
       rulesetData: RulesetData,
       powers: CustomizedPower[],
       klassBonusSpellAbilityMap: Map<string, string>,
+      appliedModifiers: Modifier[],
     ) {
       if (this.allAptitudePowers.length === 0) return;
-      const newPowers = this.newKnownPowers(powers, this.aptitudeClassNames(), klassBonusSpellAbilityMap);
+      const newPowers = this.newKnownPowers(powers, appliedModifiers, klassBonusSpellAbilityMap);
       if (newPowers.length > 0) this.registerKnownPowers(rulesetData, newPowers);
     }
 

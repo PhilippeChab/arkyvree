@@ -1,12 +1,13 @@
 import ModifierEvaluator from "@/engine/core/modifiers/ModifierEvaluator.ts";
 import type { CharacterRows } from "@/engine/core/module/index.ts";
 import type { TargetPathsTraverser } from "@/engine/core/paths/CategoryPaths.ts";
-import type { Components } from "@/engine/core/paths/PathTraverser.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import { isTemplateValue } from "@/shared/customization/templateExpression.ts";
 import type { Character, Modifier, Requirement } from "@/shared/relations.ts";
+
+import type { BuiltCharacter, default as CharacterComponent } from "./CharacterComponent.ts";
 
 /** What assembles a character's data from its rows and its ruleset's view: reading nothing. */
 export interface DataLoader<D extends LoadedCharacter> {
@@ -28,12 +29,16 @@ export interface LoadedCharacter {
 }
 
 /**
- * A character, as every ruleset builds it (`build`): its data loaded (`createDataLoader`), its components set up
- * (`normalizeData`, `C`), its modifiers applied in rounds behind their requirements, those the ruleset applies last
- * (`isLateModifier`) after the rest; and what its validation reads (`Validates`): the ruleset's own issues and the names
- * its issues give. A ruleset's character extends it and implements each step its rules take.
+ * A character, as every ruleset builds it (`build`): its data loaded (`createDataLoader`), its components (`C`, each a
+ * `CharacterComponent`) set up in the order its ruleset lists them, its modifiers applied in rounds behind their
+ * requirements, its components finished, then the modifiers the ruleset applies last (`isLateModifier`); and what its
+ * validation reads (`Validates`): the ruleset's own issues and the names its issues give. A ruleset's character extends
+ * it and implements each step its rules take.
  */
-export default abstract class CharacterBase<C extends Components, D extends LoadedCharacter> {
+export default abstract class CharacterBase<
+  C extends Record<string, CharacterComponent<D>>,
+  D extends LoadedCharacter,
+> implements BuiltCharacter {
   /** A character of `character`'s row, its paths walked by its ruleset's (`targetPaths`), which its evaluators read. */
   constructor(
     protected readonly character: Character,
@@ -64,7 +69,10 @@ export default abstract class CharacterBase<C extends Components, D extends Load
       .map((entry) => entry.id);
   };
 
-  /** The character's parts, each wired to the ones it reads. */
+  /**
+   * The character's parts, each built with the ones it reads, by the key its target paths reach it by: the order they're
+   * listed in is the order the build sets them up in.
+   */
   abstract readonly components: C;
 
   readonly modifierEvaluator: ModifierEvaluator;
@@ -102,14 +110,8 @@ export default abstract class CharacterBase<C extends Components, D extends Load
   /** The ruleset's issues about where the character's rows come from, after the rest (`validate`). */
   protected abstract findSourceIssues(): RulesIssue[];
 
-  /** Whether a modifier applies after the ruleset's last step (`postModifierProcessing`), not in the rounds. */
+  /** Whether a modifier applies after the components' finish (`CharacterComponent.finalize`), not in the rounds. */
   protected abstract isLateModifier(modifier: Modifier): boolean;
-
-  /** Each component's setup, from the loaded data. */
-  protected abstract normalizeData(): void;
-
-  /** The ruleset's step after the modifiers' rounds, before the late modifiers. */
-  protected abstract postModifierProcessing(): void;
 
   /** The ruleset's step after its pre-requirement step, before the modifiers apply. */
   protected abstract postRequirementProcessing(): void;
@@ -216,8 +218,8 @@ export default abstract class CharacterBase<C extends Components, D extends Load
     this.view = view;
     this.data = this.createDataLoader().load(rows, view);
 
-    // 2. Normalize: each component's setup, from the loaded data
-    this.normalizeData();
+    // 2. Each component set up from the loaded data, in the order the ruleset lists them
+    for (const component of Object.values(this.components)) component.initialize(this.data, view);
 
     // 3. The components the evaluators walk
     this.builtComponents = this.components;
@@ -230,8 +232,8 @@ export default abstract class CharacterBase<C extends Components, D extends Load
     const lateModifiers = this.data.modifiers.filter((m) => this.isLateModifier(m));
     this.applyModifiersInRounds(this.data.modifiers.filter((m) => !this.isLateModifier(m)));
 
-    // 6. The ruleset's step after the modifiers
-    this.postModifierProcessing();
+    // 6. Each component finished, from what the modifiers left
+    for (const component of Object.values(this.components)) component.finalize(this.data, view, this);
 
     // 7. The late modifiers, gated by the final requirement evaluation
     this.modifierEvaluator.evaluateModifiers(this.builtComponents, lateModifiers, this.requirementEvaluator);
