@@ -111,8 +111,8 @@ export default class LevelUpPlan extends PlannedLevelsState {
    * The levels a level-up saves (`levels`, with the character's pooled picks spread over them), and what the master's
    * bonded creatures (`bonded`, their rows) become with them. Each level is checked as the levels before it see it,
    * and refused when it's saved already, takes an ability increase it hasn't, or picks what it can't; the character
-   * with them is refused with what it fails, unless `force`d. Each level's hit points, ability and picks are the rows
-   * the save writes.
+   * with them is refused with what it fails, unless `force`d. Each level's writes are its row's columns (its class
+   * level, hit points and ability) and its picks' rows.
    */
   planLevels(bonded: CharacterInput[], levels: LevelRequest[], picks: LevelPicks, force: boolean) {
     const { rows } = this.character;
@@ -142,10 +142,8 @@ export default class LevelUpPlan extends PlannedLevelsState {
     return {
       bonded: this.planBondedOf(saved, bonded),
       levels: planned.map(({ abilityId, hp, klassLevelId, picks: levelPicks }) => ({
-        abilityId,
-        hp,
-        klassLevelId,
-        ...this.toPickRows(levelPicks),
+        columns: { abilityId, hp, klassLevelId },
+        rows: this.toPickRows(levelPicks),
       })),
     };
   }

@@ -94,11 +94,10 @@ export default class LevelEdit extends LevelUpState {
       this.checkEditedLevelIssues(issues, this.build(contribution.before), this.build(contribution.withLevel));
     }
     return {
-      abilityId: abilityId || null,
       bonded: this.planBondedOf(edited, bonded),
-      hp,
+      columns: { abilityId: abilityId || null, hp },
       level,
-      ...this.toPickRows(edit),
+      rows: this.toPickRows(edit),
     };
   }
 }

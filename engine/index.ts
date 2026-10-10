@@ -16,8 +16,8 @@ export type {
   CharacterRows,
   EntityRemoval,
   EntityWrites,
-  LevelPickRows,
   LevelStep,
+  LevelWrites,
   ListLink,
   MadeEntity,
   NewBondedCreature,
@@ -25,4 +25,3 @@ export type {
 } from "./core/module/index.ts";
 export { default as RulesError } from "./core/RulesError.ts";
 export type { EntityCustomizations, RulesetData, RulesetRawData } from "./core/view/index.ts";
-export { RULESET_LIMITS } from "./rulesets/dnd3.5/index.ts";

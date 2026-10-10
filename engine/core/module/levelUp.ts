@@ -5,9 +5,9 @@ export interface BondedCreaturesPlan {
   bonded: BondedPlan[];
 }
 
-/** The levels a bonded creature takes, and the ids of those it loses. */
+/** The levels a bonded creature takes (their rows' columns), and the ids of those it loses. */
 export interface BondedLevelsPlan {
-  added: { abilityId: null; hp: number; klassLevelId: string }[];
+  added: LevelColumns[];
   removedIds: string[];
 }
 
@@ -26,11 +26,19 @@ export type BondedPlan = { kind: string; removedId?: string } & (
 /** A feat picked in a pool. */
 export type FeatPick = { aptitudeId: string; featId: string };
 
-/** What a saved level's edit writes, checked: the level, its new hit points, ability and picks, and the bonded creatures. */
-export type LevelEditPlan = LevelPickRows & {
+/** A level's row, as a save writes it beside its character's: its class level, hit points and ability increase. */
+export interface LevelColumns {
   abilityId: string | null;
-  bonded: BondedPlan[];
   hp: number;
+  klassLevelId: string;
+}
+
+/**
+ * What a saved level's edit writes, checked: the level as saved (`level`), its row's new columns and its rows under it
+ * in place of those it had, and what the bonded creatures become.
+ */
+export type LevelEditPlan = LevelWrites<Omit<LevelColumns, "klassLevelId">> & {
+  bonded: BondedPlan[];
   level: CharacterRows["levels"][number];
 };
 
@@ -65,10 +73,10 @@ export interface LevelRequest {
   level: number;
 }
 
-/** What a level-up saves, checked: each level's rows, and what the master's bonded creatures become. */
+/** What a level-up saves, checked: each level's writes, and what the master's bonded creatures become. */
 export interface LevelsPlan {
   bonded: BondedPlan[];
-  levels: (LevelPickRows & { abilityId: string | null; hp: number; klassLevelId: string })[];
+  levels: LevelWrites[];
 }
 
 /**
@@ -82,6 +90,15 @@ export interface LevelStep {
   klassId?: string;
   level?: number;
   planned?: Pick<PlannedSoFar, "abilityIds" | "klassLevelIds">;
+}
+
+/**
+ * What a save writes of a level: its row's columns (`columns`, `C`), and its rows in the tables under it (`rows`), by
+ * table. The server writes each as it is.
+ */
+export interface LevelWrites<C = LevelColumns> {
+  columns: C;
+  rows: LevelPickRows;
 }
 
 /** A bonded creature a plan makes: of a race, named for it, with its ability scores. */

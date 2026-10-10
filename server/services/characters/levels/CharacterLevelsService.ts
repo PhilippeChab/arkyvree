@@ -7,7 +7,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { levelsInCharacter } from "@/drizzle/schema.ts";
-import { Engine, type LevelPickRows } from "@/engine/index.ts";
+import { Engine, type LevelWrites } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { type Db, db, withTransaction } from "@/server/database/index.ts";
@@ -28,27 +28,27 @@ import { Pickers } from "./concerns/Pickers.ts";
 import { Steps } from "./concerns/Steps.ts";
 
 class CharacterLevelsService extends include(Object, Pickers, Steps) {
-  /** Deletes a character level's skills, feats and powers. */
-  private async deleteLevelPicks(tx: Db, characterLevelId: string) {
-    await CharacterLevelSkills.delete(tx, { characterLevelId });
-    await CharacterLevelFeats.delete(tx, { characterLevelId });
-    await CharacterLevelPowers.delete(tx, { characterLevelId });
-  }
-
-  /** Writes a character level's skills, feats and powers. */
-  private async insertLevelPicks(tx: Db, characterLevelId: string, { feats, powers, skills }: LevelPickRows) {
-    await CharacterLevelSkills.createMany(
-      tx,
-      skills.map((pick) => ({ characterLevelId, ...pick })),
-    );
+  /** Writes a level's rows in the tables under it, each table's as the engine plans them. */
+  private async createLevelRows(tx: Db, characterLevelId: string, { feats, powers, skills }: LevelWrites["rows"]) {
     await CharacterLevelFeats.createMany(
       tx,
-      feats.map((pick) => ({ characterLevelId, ...pick })),
+      feats.map((row) => ({ characterLevelId, ...row })),
     );
     await CharacterLevelPowers.createMany(
       tx,
-      powers.map((pick) => ({ characterLevelId, ...pick })),
+      powers.map((row) => ({ characterLevelId, ...row })),
     );
+    await CharacterLevelSkills.createMany(
+      tx,
+      skills.map((row) => ({ characterLevelId, ...row })),
+    );
+  }
+
+  /** Deletes a level's rows in the tables under it, which an edit writes again. */
+  private async deleteLevelRows(tx: Db, characterLevelId: string) {
+    await CharacterLevelFeats.delete(tx, { characterLevelId });
+    await CharacterLevelPowers.delete(tx, { characterLevelId });
+    await CharacterLevelSkills.delete(tx, { characterLevelId });
   }
 
   /**
@@ -91,10 +91,10 @@ class CharacterLevelsService extends include(Object, Pickers, Steps) {
           .levelUp()
           .planLevels(bonded, levels, { skills, feats, powers }, force);
         const createdLevels = [];
-        for (const { feats: levelFeats, powers: levelPowers, skills: levelSkills, ...level } of plan.levels) {
-          const [created] = await CharacterLevels.create(tx, { characterId, ...level });
+        for (const { columns, rows } of plan.levels) {
+          const [created] = await CharacterLevels.create(tx, { characterId, ...columns });
           createdLevels.push(created);
-          await this.insertLevelPicks(tx, created.id, { feats: levelFeats, powers: levelPowers, skills: levelSkills });
+          await this.createLevelRows(tx, created.id, rows);
         }
         await writeBondedCreatures(tx, characterRecord, plan.bonded);
 
@@ -133,7 +133,10 @@ class CharacterLevelsService extends include(Object, Pickers, Steps) {
     );
   }
 
-  /** Removes the character's most recent level, with its picks, and what its bonded creatures become without it. */
+  /**
+   * Removes the character's most recent level, with its rows under it (the database deletes them with it), and what its
+   * bonded creatures become without it.
+   */
   async removeLevel(session: Session, characterId: string) {
     return await withTransaction(async (tx) => {
       const characterRecord = await this.lockEditableCharacter(tx, session, characterId);
@@ -142,7 +145,6 @@ class CharacterLevelsService extends include(Object, Pickers, Steps) {
         const character = await readCharacterInput(tx, characterRecord);
         const bonded = await readBondedInputs(tx, character);
         const removal = Engine.for(scope).character(character).levelUp().planRemoval(bonded);
-        await this.deleteLevelPicks(tx, removal.level.id);
         await CharacterLevels.delete(tx, { id: removal.level.id });
         await writeBondedCreatures(tx, characterRecord, removal.bonded);
       });
@@ -184,9 +186,9 @@ class CharacterLevelsService extends include(Object, Pickers, Steps) {
           .levelUp()
           .planEdit(bonded, characterLevelId, { abilityId, feats, hp, powers, skills }, force);
 
-        await this.deleteLevelPicks(tx, characterLevelId);
-        await CharacterLevels.update(tx, { hp: edit.hp, abilityId: edit.abilityId }, { id: characterLevelId });
-        await this.insertLevelPicks(tx, characterLevelId, edit);
+        await CharacterLevels.update(tx, edit.columns, { id: characterLevelId });
+        await this.deleteLevelRows(tx, characterLevelId);
+        await this.createLevelRows(tx, characterLevelId, edit.rows);
         await writeBondedCreatures(tx, characterRecord, edit.bonded);
 
         await Activities.create(tx, {

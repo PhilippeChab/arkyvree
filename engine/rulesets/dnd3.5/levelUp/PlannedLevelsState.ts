@@ -1,7 +1,10 @@
+import { z } from "zod";
+
 import type { GrantedFeatRecords } from "@/engine/core/levelUp/index.ts";
 import { CharacterProjection } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { CLASS_LEVEL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/classes/fields.ts";
+import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
@@ -28,6 +31,11 @@ export interface PlannedLevels {
   saved: DetailedCharacter;
   savedLevelCount: number;
 }
+
+/** A level-up's planned levels, within the rules' bounds: no class past its last level, no character past its own. */
+const PLANNED_LEVELS = z
+  .array(z.object({ level: z.number().max(RULESET_LIMITS.classLevel) }))
+  .max(RULESET_LIMITS.characterLevel);
 
 /**
  * The levels a character plans in a level-up, from its rows: each checked to be the ruleset's, the character built with
@@ -121,11 +129,13 @@ export default abstract class PlannedLevelsState extends LevelUpState {
 
   /**
    * Each planned level's class and class level, from the composed ruleset: a class the view has is of the character's
-   * ruleset or its source chain. Throws when a class isn't the view's or a player character's, or hasn't that level.
+   * ruleset or its source chain. Refused past the rules' bounds (a class's last level, a character's), and when a class
+   * isn't the view's or a player character's, or hasn't that level.
    */
   protected getPlannedKlassLevels(
     levels: { abilityId: string | null; klassId: string; level: number }[],
   ): PlannedClassLevel[] {
+    RulesError.parse(PLANNED_LEVELS, levels, ["levels"]);
     return levels.map(({ klassId, level, abilityId }, i) => {
       const klass = this.rulesetData.klassesById.get(klassId);
       if (!klass) throw new RulesError("invalid", `Level ${i + 1}: Class does not belong to the character's ruleset`);

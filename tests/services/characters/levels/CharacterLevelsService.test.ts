@@ -303,13 +303,17 @@ describe("LevelsService", () => {
           page,
         ),
       () => addOneLevel(session, NIL_UUID, klass.id, 1, 8, null, {}, {}, {}),
-      () => addOneLevel(session, character.id, klass.id, 999, 8, null, {}, {}, {}),
+      () => addOneLevel(session, character.id, klass.id, 6, 8, null, {}, {}, {}),
       () => CharacterLevelsService.removeLevel(session, NIL_UUID),
       () => CharacterLevelsService.removeLevel(other, character.id),
       () => CharacterLevelsService.removeLevel(session, character.id),
     ];
     // One at a time: the test's transaction has a single connection.
     for (const call of notFound) expect((await answerTo(call)).status).toBe(404);
+    // A level past the rules' last class level is refused before it's looked up
+    expect((await answerTo(() => addOneLevel(session, character.id, klass.id, 999, 8, null, {}, {}, {}))).status).toBe(
+      400,
+    );
   });
 
   describe("classes a character can take", () => {

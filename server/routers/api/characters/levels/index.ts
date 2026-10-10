@@ -1,7 +1,6 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { RULESET_LIMITS } from "@/engine/index.ts";
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { isUuid, limitDefaultingTo } from "@/server/routers/api/schemaBuilders.ts";
 import { characterIdParam, page } from "@/server/routers/api/validation.ts";
@@ -13,8 +12,8 @@ const abilityIdList = z
   .optional()
   .transform((value) => value?.split(",").map((id) => (isUuid(id) ? id : undefined)));
 
-/** A class's level, as a level-up plans it. */
-const classLevel = z.number().int().min(1).max(RULESET_LIMITS.classLevel);
+/** A class's level, as a level-up plans it: its ruleset bounds it. */
+const classLevel = z.number().int().min(1);
 
 /** Comma-separated `featId:aptitudeId` picks: what isn't one is dropped. */
 const featPicks = z
@@ -195,8 +194,7 @@ export default new Hono<SessionContext>()
               abilityId: z.string().uuid().nullable(),
             }),
           )
-          .min(1)
-          .max(RULESET_LIMITS.characterLevel),
+          .min(1),
         skills: z.record(z.string().uuid(), z.number().int().min(0)),
         feats: z.record(z.string().uuid(), z.array(z.string().uuid())),
         powers: z.record(z.string().uuid(), z.array(z.string().uuid())),
@@ -233,8 +231,7 @@ export default new Hono<SessionContext>()
               level: classLevel,
             }),
           )
-          .min(1)
-          .max(RULESET_LIMITS.characterLevel),
+          .min(1),
         abilityIds: z.array(z.string().uuid().nullable()),
       }),
     ),
