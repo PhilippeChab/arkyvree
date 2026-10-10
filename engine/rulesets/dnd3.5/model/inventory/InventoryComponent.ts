@@ -99,7 +99,7 @@ export default class InventoryComponent {
         this.armors.registerArmor(entry.item, fields);
         this.combat.addArmor(fields);
       } else if (isShield) {
-        // The shields list it, and the sheet carries it: its maximum Dexterity, a tower shield's bulk
+        // The shields list it (with its maximum Dexterity, a tower shield's), and the sheet carries it: a tower shield's bulk
         this.shields.registerShield(entry.item, fields);
         this.combat.addShield(fields);
       } else {

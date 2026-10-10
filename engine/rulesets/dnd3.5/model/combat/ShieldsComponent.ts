@@ -9,6 +9,8 @@ type ShieldSlot = {
   ac: { bonus: number; misc: number; readonly total: number };
   checkpenalty: number;
   itemId: string;
+  /** Its maximum Dexterity bonus to AC: a tower shield's, 99 (none) for the others, as an armor's */
+  maxdex: number;
   name: string;
   /** Whether the character is proficient with it: without, its check penalty applies to attack rolls */
   proficient: boolean;
@@ -28,6 +30,7 @@ export default class ShieldsComponent {
     const acBonus = fields.shield.acBonus ?? 0;
     let checkPenalty = fields.checkPenalty ?? 0;
     const spellFailure = fields.spellFailure ?? 0;
+    const maxDex = fields.maxDex ?? 99;
 
     if (fields.masterwork === true) checkPenalty = Math.min(checkPenalty + 1, 0);
 
@@ -45,6 +48,7 @@ export default class ShieldsComponent {
       },
       checkpenalty: checkPenalty,
       spellfailure: spellFailure,
+      maxdex: maxDex,
     };
 
     // Under its type: a heavy wooden shield's `heavywooden`

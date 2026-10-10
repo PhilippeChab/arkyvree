@@ -12,8 +12,8 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
   abstract class WithArmorClass extends Base {
     /** Dexterity's bonus to AC, capped by the lowest maximum of the armor, the shield and the load. */
     private dexterityAc(): number {
-      const armorCaps = [...new Set(Object.values(this.combat.armors))].map((armor) => armor.maxdex);
-      const cap = Math.min(...armorCaps, this.shieldMaxDex, this.combat.encumbrance.maxdex);
+      const slots = new Set([...Object.values(this.combat.armors), ...Object.values(this.combat.shields)]);
+      const cap = Math.min(...[...slots].map((slot) => slot.maxdex), this.combat.encumbrance.maxdex);
       const dexterity = this.abilities.getAbilityModifier("Dexterity");
       return cap === Infinity ? dexterity : Math.min(dexterity, cap);
     }
@@ -93,13 +93,12 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
       if (worn && ARMOR_CATEGORIES.indexOf(worn) > ARMOR_CATEGORIES.indexOf(armor.category)) armor.category = worn;
     }
 
-    /** A shield the character carries: its maximum Dexterity bonus caps the AC's, a tower shield's bulk the attacks. */
+    /** A shield the character carries: a tower shield's bulk weighs on the attacks (its maximum Dexterity, on its slot, caps the AC's). */
     addShield(fields: ItemFieldValues) {
       const category = fields.shield.proficiency;
       if (!category) return;
       this.combat.shield.held = true;
       if (category === "Tower") this.towerShield = true;
-      if (fields.maxDex !== null) this.shieldMaxDex = Math.min(this.shieldMaxDex, fields.maxDex);
     }
   }
   return WithArmorClass;
