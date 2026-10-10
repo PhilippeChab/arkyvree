@@ -31,7 +31,7 @@ export const MAGICAL_TRICKSTER: ClassSeed = {
     "Tumble",
     "Use Rope",
   ],
-  requirements: [or(gte("spellcasting.arcane", 3), gte("spellcasting.divine", 3))],
+  requirements: [gte("feats.metamagic.count", 1), or(gte("spellcasting.arcane", 3), gte("spellcasting.divine", 3))],
   casterLevelAdvancement: { type: "any", levels: [2, 3] },
   classFeatureAptitude: "Magical Trickster Class Feature",
   classFeatures: [

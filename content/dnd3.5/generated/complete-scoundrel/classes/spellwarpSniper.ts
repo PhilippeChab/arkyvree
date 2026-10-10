@@ -5,7 +5,7 @@
  * - No modifiers defined — review if this class needs any
  */
 
-import { gte, or } from "@/content/core/builders/customization/requirements.ts";
+import { eq, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
 
 export const SPELLWARP_SNIPER: ClassSeed = {
@@ -31,6 +31,7 @@ export const SPELLWARP_SNIPER: ClassSeed = {
   requirements: [
     gte("skills.concentration.rank", 8),
     gte("skills.spellcraft.rank", 8),
+    eq("feats.pointblankshot.possessed"),
     or(gte("spellcasting.arcane", 3), gte("spellcasting.divine", 3)),
     or(gte("feats.sneakattack.count", 1), gte("feats.suddenstrike.count", 1)),
   ],

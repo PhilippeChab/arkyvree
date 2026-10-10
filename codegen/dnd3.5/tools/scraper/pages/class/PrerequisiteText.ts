@@ -5,12 +5,26 @@ import { type ClassReference } from "@/codegen/dnd3.5/tools/types/classes.ts";
 /** What a class's prerequisites ask for, read from their text. */
 type Parsed = ClassReference["raw"]["prerequisites"]["parsed"];
 
+/** A Spells line's label: "Spells", "Spell", "Spells or Spell-Like Abilities", "Spellcasting". */
+const SPELLS_LABEL = String.raw`Spell(?:s|casting)?(?: or Spell-Like Abilities)?`;
+
 /**
- * A Spells line: its label ("Spells", "Spell", "Spells or Spell-Like Abilities", "Spellcasting") and its text, up to its
- * line's end or the next label the page joins to it ("Arcane caster level 5th.Special: …").
+ * The Feats line's text: up to the next label ("Spells or Spell-Like Abilities:", "Spellcasting:", "Skills:"…), a blank
+ * line or the text's end.
  */
-const SPELLS_LINE =
-  /\bSpell(?:s|casting)?(?: or Spell-Like Abilities)?:[ \t]*(.+?)[ \t]*(?=\n|$|(?:Special|Alignment|Skills?|Feats?|Race|Base (?:Attack|Save) Bonus|Spell(?:s|casting)?(?: or Spell-Like Abilities)?|Domain|Patron|Languages?|Other|Skill Tricks)\s*:)/g;
+const FEATS_LINE = new RegExp(
+  String.raw`Feats?[:\s]+([\s\S]*?)(?=[\s.]+(?:Skills?|${SPELLS_LABEL}|Special|Alignment|Race|Base (?:Save Bonus|Attack Bonus)|Class|Speak Language|Patron|Domain)\s*:|\n\n|$)`,
+  "i",
+);
+
+/**
+ * A Spells line: its label and its text, up to its line's end or the next label the page joins to it ("Arcane caster
+ * level 5th.Special: …").
+ */
+const SPELLS_LINE = new RegExp(
+  String.raw`\b${SPELLS_LABEL}:[ \t]*(.+?)[ \t]*(?=\n|$|(?:Special|Alignment|Skills?|Feats?|Race|Base (?:Attack|Save) Bonus|${SPELLS_LABEL}|Domain|Patron|Languages?|Other|Skill Tricks)\s*:)`,
+  "g",
+);
 
 /** A prestige class's prerequisites' text, read for what they ask: each kind of requirement its own reading. */
 export class PrerequisiteText {
@@ -69,9 +83,7 @@ export class PrerequisiteText {
   /** The feats the prerequisites' Feats line lists, "Spell Focus (or any other metamagic feat)" as "any metamagic feat". */
   private requiredFeats(): string[] {
     const feats: string[] = [];
-    const featSection = this.text.match(
-      /Feats?[:\s]+([\s\S]*?)(?=[\s.]+(?:Skills?|Spells?|Special|Alignment|Race|Base (?:Save Bonus|Attack Bonus)|Class|Speak Language|Patron|Domain)\s*:|\n\n|$)/i,
-    );
+    const featSection = this.text.match(FEATS_LINE);
     if (featSection) {
       const featText = featSection[1].replace(/\n/g, " ").trim();
       const parts = featText.split(/,\s*(?:and\s+)?|\s+and\s+/);

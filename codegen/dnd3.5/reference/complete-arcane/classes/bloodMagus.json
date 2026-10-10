@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-arcane",
-    "scrapedAt": "2026-10-10T22:51:43.607Z",
+    "scrapedAt": "2026-10-10T23:22:17.643Z",
     "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/blood-magus/",
     "type": "class"
   },
@@ -91,7 +91,8 @@
       "parsed": {
         "alignment": "Any but lawful good",
         "feats": [
-          "Great Fortitude"
+          "Great Fortitude",
+          "Toughness"
         ],
         "skills": [
           {
