@@ -55,11 +55,18 @@ class PropertiesService {
           const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const { entity } = Engine.for(scope).properties(entityType, entityId).planCreate();
+          const { entity, value } = Engine.for(scope).properties(entityType, entityId).planCreate(body);
 
           const edit = new CustomizationEdit(ruleset, rulesetData.cow);
           const resolvedEntityId = await edit.cowOwner(tx, entityType, entity.id);
-          return await this.writeProperty(tx, session, { name: entity.name, type: entityType }, resolvedEntityId, body);
+          const property = { ...body, value };
+          return await this.writeProperty(
+            tx,
+            session,
+            { name: entity.name, type: entityType },
+            resolvedEntityId,
+            property,
+          );
         }),
     );
     RulesetViews.invalidate(rulesetId);
@@ -129,13 +136,14 @@ class PropertiesService {
           const { ruleset, rulesetData } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const { entity, override, property } = Engine.for(scope)
+          const { updatedAt, ...form } = body;
+          const { entity, override, property, value } = Engine.for(scope)
             .properties(entityType, entityId)
-            .planEdit(propertyId);
+            .planEdit(propertyId, form);
           await checkCustomizedEntity(property);
 
           const edit = new CustomizationEdit(ruleset, rulesetData.cow);
-          const { updatedAt, ...propertyData } = body;
+          const propertyData = { ...form, value };
           if (override) {
             // Its template's property: the edit overrides it with one of the item's own
             const resolvedEntityId = await edit.cowOwner(tx, entityType, entity.id);
@@ -168,7 +176,7 @@ class PropertiesService {
             targetId: updatedProperty.id,
             targetTable: getTableName(propertiesInCustomization),
             type: "updateProperty",
-            data: { entityName: entity.name, entityType, propertyType: body.type, value: body.value },
+            data: { entityName: entity.name, entityType, propertyType: body.type, value },
           });
 
           return { ...updatedProperty, resolvedEntityId };

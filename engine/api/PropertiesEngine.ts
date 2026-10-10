@@ -15,9 +15,9 @@ export default class PropertiesEngine {
     return this.properties.describeAll();
   }
 
-  /** A new property on the entity: the entity, as the view has it. */
-  planCreate() {
-    return this.properties.planCreate();
+  /** A new property on the entity: the entity, as the view has it, and the value it stores (an entity's, the view's). */
+  planCreate(...args: Parameters<PropertyEdits["planCreate"]>) {
+    return this.properties.planCreate(...args);
   }
 
   /** Deleting one of the properties the entity shows: refused for one its template gives it. */
@@ -25,8 +25,11 @@ export default class PropertiesEngine {
     return this.properties.planDelete(propertyId);
   }
 
-  /** One of the properties the entity shows' edit: the property, and whether the edit overrides its template's. */
-  planEdit(propertyId: string) {
-    return this.properties.planEdit(propertyId);
+  /**
+   * One of the properties the entity shows' edit: the property, whether the edit overrides its template's, and the value
+   * it stores (an entity's, the view's).
+   */
+  planEdit(...args: Parameters<PropertyEdits["planEdit"]>) {
+    return this.properties.planEdit(...args);
   }
 }

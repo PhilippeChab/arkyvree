@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { abilitiesInRules, propertiesInCustomization } from "@/drizzle/schema.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
 import { Feats, Items, Klasses, Properties } from "@/server/repositories/index.ts";
@@ -9,8 +10,8 @@ import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { activityTypes } from "@/tests/support/activities.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { insertRows } from "@/tests/support/database.ts";
-import { createSeededTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
-import { NIL_UUID } from "@/tests/support/seed.ts";
+import { copyEntity, createSeededTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
+import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import { KLASS_BONUS_SPELL_ABILITY_ID, KLASS_CASTER_TYPE } from "@/vocabulary/dnd3.5/properties/index.ts";
 
@@ -98,15 +99,15 @@ describe("PropertiesService", () => {
       { type: KLASS_CASTER_TYPE, value: "Divine", valueLabel: null },
     ]);
 
-    // A feat's page lists its properties alike, an id its view has none of left unnamed
+    // A feat's page lists its properties alike, an id its view has none of (a row's, a save refuses it) left unnamed
     const { session, rulesetId, feat } = await setup();
     const [wisdom] = await insertRows(abilitiesInRules, [{ name: "Wisdom", description: "Wisdom", rulesetId }]);
-    for (const value of [NIL_UUID, wisdom.id]) {
-      await PropertiesService.createProperty(session, rulesetId, "feats", feat.id, {
-        type: KLASS_BONUS_SPELL_ABILITY_ID,
-        value,
-      });
-    }
+    const unnamed = { entityId: feat.id, entityType: "feats", type: KLASS_BONUS_SPELL_ABILITY_ID, value: NIL_UUID };
+    await insertRows(propertiesInCustomization, [unnamed]);
+    await PropertiesService.createProperty(session, rulesetId, "feats", feat.id, {
+      type: KLASS_BONUS_SPELL_ABILITY_ID,
+      value: wisdom.id,
+    });
     // In their values' order, as a stat block lists a type's
     const named = [
       { value: NIL_UUID, valueLabel: null },
@@ -114,6 +115,35 @@ describe("PropertiesService", () => {
     ];
     expect(await PropertiesService.getProperties(rulesetId, "feats", feat.id)).toMatchObject(named);
     expect((await FeatsService.getFeat(rulesetId, feat.id)).properties).toMatchObject(named);
+  });
+
+  test("stores the entity a value names, its fork's copy for its source's id, and refuses one it lacks by name", async () => {
+    const { session, user } = await createTestUser();
+    const fork = await createSeededTestRuleset(user.id);
+    const { abilityMap } = await getSeedCtx();
+    const wisdom = await copyEntity(db, "abilities", abilityMap["Wisdom"], fork);
+    RulesetViews.invalidate(fork.id);
+    const paladin = await Klasses.findOne(db, { name: "Paladin", rulesetId: fork.rulesetId! });
+    const ability = { type: KLASS_BONUS_SPELL_ABILITY_ID, value: abilityMap["Wisdom"] };
+
+    // The seed's ids are the sources': the API takes them, as it takes the copies' the client sends
+    const created = await PropertiesService.createProperty(session, fork.id, "klasses", paladin!.id, ability);
+    expect(created.value).toBe(wisdom.id);
+    const edited = await PropertiesService.updateProperty(
+      session,
+      fork.id,
+      "klasses",
+      paladin!.id,
+      created.id,
+      ability,
+    );
+    expect(edited.value).toBe(wisdom.id);
+
+    const lacking = { ...ability, value: NIL_UUID };
+    expect(PropertiesService.createProperty(session, fork.id, "klasses", paladin!.id, lacking)).rejects.toMatchObject({
+      message: `Ability ${NIL_UUID} does not belong to this ruleset`,
+      refusal: "invalid",
+    });
   });
 
   describe("on an item made from a template", () => {

@@ -112,6 +112,11 @@ export default class ItemEntity extends CustomizationPageEntity<
     return [...proficiency, ...requirements];
   }
 
+  /** A form's template, the view's. */
+  protected override resolveIds({ sourceItemId }: ItemBody) {
+    return sourceItemId ? { sourceItemId: this.ids.resolve("items", sourceItemId) } : {};
+  }
+
   /**
    * An item as its page shows it, with where a character carrying it can place it (`placement`), and its template's
    * name (`templateName`), which its editor shows while the template isn't one of its type.

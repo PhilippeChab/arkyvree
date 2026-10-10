@@ -49,6 +49,11 @@ export default class SkillEntity extends RulesetEntity<
     return { removed: this.skillFocus.remove(skill.name) };
   }
 
+  /** A form's key ability, the view's. */
+  protected override resolveIds({ primaryAbilityId }: SkillBody) {
+    return { primaryAbilityId: this.ids.resolve("abilities", primaryAbilityId) };
+  }
+
   /**
    * What saving a skill writes (`skill`: the one edited): the fields its form gives, and its Skill Focus, made with it
    * and renamed with it.

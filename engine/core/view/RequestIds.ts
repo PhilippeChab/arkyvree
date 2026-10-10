@@ -23,11 +23,12 @@ const KIND_LABELS: Record<keyof ViewEntities, string> = {
  * its place, a copy's or a sibling winner's, since the API takes a source's id as well as its copy's. One the view has
  * none of (unknown, of an unrelated ruleset, or one the ruleset deleted) is refused as invalid, naming it: "Item <id>
  * does not belong to `owner`". Every request is read by it as it enters the rules (a level flow's by `LevelRequests`, a
- * character's creation, abilities, languages and inventory by the characters part), so its checks and the rows a save
- * writes read the view's ids, whichever the request sent.
+ * character's creation, abilities, languages and inventory by the characters part, an entity's form by its kind's
+ * `resolveIds`, a property's value naming an entity by `PropertyEdits`, a class skill's add by `ClassSkills`), so its
+ * checks and the rows a save writes read the view's ids, whichever the request sent.
  */
 export default class RequestIds {
-  /** `owner`: the ruleset a refusal says the entity doesn't belong to ("the character's ruleset"). */
+  /** `owner`: the ruleset a refusal says the entity doesn't belong to ("the character's ruleset", "this ruleset"). */
   constructor(
     private readonly rulesetData: RulesetData,
     private readonly owner: string,
