@@ -7,9 +7,12 @@
  *   nothing of the server, the database, the content, the codegen or the client: its machinery (`engine/core/`) sits
  *   below the rulesets that run on it (`engine/rulesets/`), and `lib/`, what it shares with the server, imports
  *   nothing of the app. Copy-on-write's server part is `cow/`: its read side (`cow/views/`: a ruleset's view, read and
- *   memoized) below its write side (`cow/writes/`). A ruleset's content (`content/<ruleset>/`: its builders, its data and what the codegen
- *   generates) is data, which imports none of what reads or writes it. The codegen (`codegen/`) isn't the server's, and stores nothing; the
- *   server reads none of `database/`, `content/` and `codegen/`. `shared/` imports nothing app-specific (the schema's
+ *   memoized) below its write side (`cow/writes/`). A ruleset's content (`content/<ruleset>/`) is data, which imports
+ *   none of what reads or writes it: its builders (what it's written with) below its hand-written data and its
+ *   generated books, which its packages gather. The codegen (`codegen/`) isn't the server's, and stores nothing: it
+ *   reads the builders and the data, never the generated books it writes nor the packages that gather them, and a
+ *   seeder (`database/`) reads a package's content from its definition, never from the data or the books themselves.
+ *   The server reads none of `database/`, `content/` and `codegen/`. `shared/` imports nothing app-specific (the schema's
  *   types only), and neither does a ruleset's vocabulary (`vocabulary/<ruleset>/`: its data, which the engine and the
  *   client read), but `shared/`'s types; the client takes only types from the server.
  * - `engine-front-door`: code outside `engine/` enters it through `engine/index.ts`, `Engine` and its handles' types,
@@ -30,11 +33,10 @@
  *   folder's index: `sections/dnd3.5/`, which the generic folder around it re-exports none of). Files within the folder
  *   import each other directly, and a test may reach a folder's own modules (a pure module's unit test).
  * - `ruleset-folders`: a ruleset is a folder of `engine/rulesets/`, and a folder of its name, in any tree, is its own
- *   (`content/<ruleset>/`, `codegen/<ruleset>/`, `database/packages/<ruleset>/`, `vocabulary/<ruleset>/`, the
+ *   (`content/<ruleset>/`, `codegen/<ruleset>/`, `database/seeders/<ruleset>/`, `vocabulary/<ruleset>/`, the
  *   client's and the tests'): a ruleset's code imports none of another's, and what every ruleset runs on
- *   (`engine/core/`, `content/core/`, `codegen/core/`, `database/packages/seed/`, the server, `shared/`, `lib/`) names
- *   none of them. A ruleset's builders (`content/<ruleset>/builders/`, what its data is written with) import nothing of
- *   its data. A client module outside a ruleset's folder reaches a ruleset's code and vocabulary only through the
+ *   (`engine/core/`, `content/core/`, `codegen/core/`, `database/seeders/core/`, the server, `shared/`, `lib/`) names
+ *   none of them. A client module outside a ruleset's folder reaches a ruleset's code and vocabulary only through the
  *   client's registries, keyed by base rules (`CLIENT_REGISTRIES`: `getSections`, `getVocabulary`, `getClassForms`…),
  *   never from its folders.
  * - `vocabulary-data`: a ruleset's vocabulary (`vocabulary/<ruleset>/`) is data: its lists, labels, tables and bounds,
@@ -134,8 +136,21 @@ const LAYERS = [
   { layer: "server/", deny: ["database/", "content/", "codegen/"] },
   // A ruleset's content is data, which the seeders write and the codegen generates: it imports none of them
   { layer: "content/", deny: ["server/", "database/", "codegen/", "engine/", "client/", "lib/", "drizzle/"] },
-  // The codegen reads the books and writes content: it stores nothing, and it isn't the server's
-  { layer: "codegen/", deny: ["server/", "database/", "client/"] },
+  // Its builders, what it's written with, import nothing written in them
+  {
+    layer: "content/*/builders/",
+    deny: ["content/*/data/", "content/*/generated/", "content/*/packages/", "content/*/testData/"],
+  },
+  // Its hand-written data, which the codegen reads, reads nothing the codegen writes
+  { layer: "content/*/data/", deny: ["content/*/generated/", "content/*/packages/"] },
+  // No generated file wraps hand-written content: a package gathers both
+  { layer: "content/*/generated/", deny: ["content/*/data/", "content/*/packages/"] },
+  // The codegen reads the books and writes content: it stores nothing, it isn't the server's, and it reads none of the
+  // generated books it writes, nor the packages that gather them
+  { layer: "codegen/", deny: ["server/", "database/", "client/", "content/*/generated/", "content/*/packages/"] },
+  // A seeder writes what a package seeds, which the package's definition gathers: it reads no module of the data or
+  // the generated books directly
+  { layer: "database/", deny: ["content/*/data/", "content/*/generated/"] },
   // The engine computes over the data it's given: it reads nothing itself, so it imports none of what stores data
   {
     layer: "engine/",
@@ -177,7 +192,7 @@ const SHARED_HOMES = [
   "engine/core/",
   "content/core/",
   "codegen/core/",
-  "database/packages/seed/",
+  "database/seeders/core/",
   "server/",
   "shared/",
   "lib/",
@@ -297,20 +312,20 @@ function createFolderIndex(context) {
 
 function createLayers(context) {
   const file = repoPath(context.filename);
-  const rules = LAYERS.filter((l) => file.startsWith(l.layer));
+  const rules = LAYERS.map((rule) => ({ rule, layer: layerPrefixOf(file, rule.layer) })).filter(({ layer }) => layer);
   if (!rules.length) return {};
   return onImports((node, spec, types) => {
     const target = targetOf(file, spec);
     if (!target) return;
-    for (const rule of rules) {
-      const denied = rule.deny.find((d) => target.startsWith(d));
-      if (!denied) continue;
+    for (const { rule, layer } of rules) {
+      const pattern = rule.deny.find((d) => layerPrefixOf(target, d));
+      if (!pattern) continue;
       if (rule.allow?.some((a) => target.startsWith(a))) continue;
       if (types && rule.types?.some((t) => target.startsWith(t))) continue;
-      const typesOnly = rule.types?.some((t) => denied.startsWith(t)) ? " (types only)" : "";
+      const typesOnly = rule.types?.some((t) => pattern.startsWith(t)) ? " (types only)" : "";
       context.report({
         node,
-        message: `${rule.layer} doesn't import from ${denied}${typesOnly}: a layer imports what's below it.`,
+        message: `${layer} doesn't import from ${layerPrefixOf(target, pattern)}${typesOnly}: a layer imports what's below it.`,
       });
       return;
     }
@@ -544,7 +559,6 @@ function createRulesetFolders(context) {
   const rulesets = rulesetsOf(rootOf(context.filename));
   const ruleset = rulesetOf(file, rulesets);
   const home = ruleset ? undefined : SHARED_HOMES.find((prefix) => file.startsWith(prefix));
-  const builders = ruleset && file.startsWith(`content/${ruleset}/builders/`);
   const genericClient = !ruleset && file.startsWith("client/") && !CLIENT_REGISTRIES.includes(file);
   if (!ruleset && !home && !genericClient) return {};
   return onImports((node, spec) => {
@@ -568,12 +582,7 @@ function createRulesetFolders(context) {
         node,
         message:
           `${ruleset}'s code imports none of ${other}'s: a ruleset's folders are its own, and what rulesets share ` +
-          "is core's (engine/core/, content/core/, codegen/core/, database/packages/seed/).",
-      });
-    } else if (builders && /^content\/[^/]+\/(data|generated)\//.test(target ?? "")) {
-      context.report({
-        node,
-        message: `content/${ruleset}/builders/ is what its data is written with: it imports nothing of its data.`,
+          "is core's (engine/core/, content/core/, codegen/core/, database/seeders/core/).",
       });
     }
   });
@@ -621,6 +630,19 @@ function isRead(node) {
   if (parent.type === "VariableDeclarator") return parent.init === node;
   if (VIEW_WRAPPERS.has(parent.type)) return true;
   return !parent.type.startsWith("TS") && !FUNCTION_TYPES.has(parent.type);
+}
+
+/**
+ * The prefix of `file` a layer's pattern matches, if any: the pattern itself, or, for a pattern with a `*` segment
+ * standing for any ruleset's folder (a ruleset's data), the folder `file` is in (`content/dnd3.5/data/`).
+ */
+function layerPrefixOf(file, pattern) {
+  if (!pattern.includes("*")) return file.startsWith(pattern) ? pattern : undefined;
+  const segments = file.split("/");
+  const parts = pattern.split("/").filter(Boolean);
+  if (segments.length <= parts.length) return undefined;
+  const matched = parts.every((part, i) => part === "*" || part === segments[i]);
+  return matched ? `${segments.slice(0, parts.length).join("/")}/` : undefined;
 }
 
 /** A class's method `name`, among the members of its body: a method, or a field holding a function. */

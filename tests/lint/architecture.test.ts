@@ -227,6 +227,52 @@ describe("architecture rules", () => {
     ]);
   });
 
+  test("a ruleset's content: its builders below its data and its generated books, which its packages gather", async () => {
+    const imports = (from: string) => `import { x } from "${from}";\nexport const y = x;\n`;
+    expect(
+      await lint({
+        // The builders import nothing written in them
+        "content/dnd3.5/builders/a.ts": imports("@/content/dnd3.5/data/coreRules.ts"),
+        "content/dnd3.5/builders/b.ts": imports("@/content/dnd3.5/generated/srd/index.ts"),
+        "content/dnd3.5/builders/c.ts": imports("@/content/dnd3.5/packages/core.ts"),
+        "content/dnd3.5/builders/d.ts": imports("@/content/dnd3.5/testData/characters.ts"),
+        "content/dnd3.5/builders/e.ts": imports("@/content/dnd3.5/builders/feats/types.ts"),
+        // The hand-written data reads nothing the codegen writes; a generated book wraps no hand-written content
+        "content/dnd3.5/data/f.ts": imports("@/content/dnd3.5/generated/srd/index.ts"),
+        "content/dnd3.5/data/g.ts": imports("@/content/dnd3.5/packages/core.ts"),
+        "content/dnd3.5/data/h.ts": imports("@/vocabulary/dnd3.5/weapons.ts"),
+        "content/dnd3.5/generated/srd/i.ts": imports("@/content/dnd3.5/data/feats/coreFeats.ts"),
+        "content/dnd3.5/generated/srd/j.ts": imports("@/content/dnd3.5/builders/feats/possession.ts"),
+        // A package gathers the books and the data
+        "content/dnd3.5/packages/k.ts": imports("@/content/dnd3.5/generated/srd/index.ts"),
+        "content/dnd3.5/packages/l.ts": imports("@/content/dnd3.5/data/coreRules.ts"),
+        // The codegen reads the builders and the data, never what it writes
+        "codegen/dnd3.5/tools/m.ts": imports("@/content/dnd3.5/generated/srd/index.ts"),
+        "codegen/dnd3.5/tools/n.ts": imports("@/content/dnd3.5/packages/core.ts"),
+        "codegen/dnd3.5/tools/o.ts": imports("@/content/dnd3.5/data/feats/coreFeats.ts"),
+        "codegen/dnd3.5/tools/p.ts": imports("@/content/dnd3.5/builders/feats/types.ts"),
+        // A seeder reads a package's content from its definition
+        "database/seeders/dnd3.5/q.ts": imports("@/content/dnd3.5/data/coreRules.ts"),
+        "database/seeders/dnd3.5/r.ts": imports("@/content/dnd3.5/generated/dmg/index.ts"),
+        "database/packages/s.ts": imports("@/content/dnd3.5/packages/core.ts"),
+        "database/seeds/t.ts": imports("@/content/dnd3.5/testData/characters.ts"),
+        "tests/u.test.ts": imports("@/content/dnd3.5/generated/srd/index.ts"),
+      }),
+    ).toEqual([
+      "layers codegen/dnd3.5/tools/m.ts",
+      "layers codegen/dnd3.5/tools/n.ts",
+      "layers content/dnd3.5/builders/a.ts",
+      "layers content/dnd3.5/builders/b.ts",
+      "layers content/dnd3.5/builders/c.ts",
+      "layers content/dnd3.5/builders/d.ts",
+      "layers content/dnd3.5/data/f.ts",
+      "layers content/dnd3.5/data/g.ts",
+      "layers content/dnd3.5/generated/srd/i.ts",
+      "layers database/seeders/dnd3.5/q.ts",
+      "layers database/seeders/dnd3.5/r.ts",
+    ]);
+  });
+
   test("each ruleset's folders are its own, and what every ruleset runs on names none of them", async () => {
     const imports = (from: string) => `import { x } from "${from}";\nexport const y = x;\n`;
     expect(
@@ -237,20 +283,17 @@ describe("architecture rules", () => {
           "engine/rulesets/pf1/index.ts": "export const x = 1;\n",
           // One ruleset's code reaches into another's, in any tree
           "engine/rulesets/pf1/a.ts": imports("@/engine/rulesets/dnd3.5/index.ts"),
-          "content/pf1/data/b.ts": imports("@/content/dnd3.5/data/core.ts"),
+          "content/pf1/data/b.ts": imports("@/content/dnd3.5/data/coreRules.ts"),
           "codegen/pf1/tools/c.ts": imports("@/codegen/dnd3.5/tools/text/sanitize.ts"),
-          "database/packages/pf1/d.ts": imports("@/database/packages/dnd3.5/seed/BaseSeeder.ts"),
+          "database/seeders/pf1/d.ts": imports("@/database/seeders/dnd3.5/BaseSeeder.ts"),
           "client/src/pages/pf1/e.ts": imports("@/client/src/pages/dnd3.5/f.ts"),
           // What every ruleset runs on names none of them
           "engine/core/g.ts": imports("@/vocabulary/dnd3.5/spells.ts"),
           "content/core/builders/h.ts": imports("@/content/dnd3.5/builders/feats/possession.ts"),
           "codegen/core/i.ts": imports("@/codegen/dnd3.5/tools/text/sanitize.ts"),
-          "database/packages/seed/j.ts": imports("@/database/packages/dnd3.5/seed/BaseSeeder.ts"),
+          "database/seeders/core/j.ts": imports("@/database/seeders/dnd3.5/BaseSeeder.ts"),
           "server/k.ts": imports("@/vocabulary/dnd3.5/spells.ts"),
           "shared/l.ts": imports("@/vocabulary/dnd3.5/spells.ts"),
-          // A ruleset's builders are what its data is written with: they read none of it
-          "content/dnd3.5/builders/m.ts": imports("@/content/dnd3.5/data/core.ts"),
-          "content/dnd3.5/builders/n.ts": imports("@/content/dnd3.5/generated/srd/index.ts"),
           // A ruleset reads its own folders and the core's; a registry and a test read any ruleset's
           "content/dnd3.5/builders/o.ts": imports("@/content/dnd3.5/builders/items/types.ts"),
           "content/dnd3.5/data/p.ts": imports("@/content/core/builders/customization/requirements.ts"),
@@ -276,11 +319,9 @@ describe("architecture rules", () => {
       "ruleset-folders codegen/core/i.ts",
       "ruleset-folders codegen/pf1/tools/c.ts",
       "ruleset-folders content/core/builders/h.ts",
-      "ruleset-folders content/dnd3.5/builders/m.ts",
-      "ruleset-folders content/dnd3.5/builders/n.ts",
       "ruleset-folders content/pf1/data/b.ts",
-      "ruleset-folders database/packages/pf1/d.ts",
-      "ruleset-folders database/packages/seed/j.ts",
+      "ruleset-folders database/seeders/core/j.ts",
+      "ruleset-folders database/seeders/pf1/d.ts",
       "ruleset-folders engine/core/g.ts",
       "ruleset-folders engine/rulesets/pf1/a.ts",
       "ruleset-folders server/k.ts",
@@ -417,8 +458,9 @@ describe("architecture rules", () => {
         "server/repositories/R.ts": 'import { m } from "@/server/middlewares/m.ts";\nexport const r = m;\n',
         "server/middlewares/m.ts": 'import { R } from "@/server/repositories/R.ts";\nexport const m = R;\n',
         "server/rulesets/seed.ts":
-          'import { items } from "@/database/packages/dnd3.5/seed/items.ts";\nexport const s = items;\n',
-        "server/rulesets/data.ts": 'import { CORE } from "@/content/dnd3.5/data/core.ts";\nexport const d = CORE;\n',
+          'import { items } from "@/database/seeders/dnd3.5/items.ts";\nexport const s = items;\n',
+        "server/rulesets/data.ts":
+          'import { CORE } from "@/content/dnd3.5/packages/core.ts";\nexport const d = CORE;\n',
         "server/services/s.ts": 'import { SEED } from "@/database/seeds/users.ts";\nexport const s = SEED;\n',
       }),
     ).toEqual([
