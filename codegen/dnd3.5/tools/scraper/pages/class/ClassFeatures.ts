@@ -11,9 +11,9 @@
 import type * as cheerio from "cheerio";
 import { type AnyNode } from "domhandler";
 
-import { Page } from "@/codegen/dnd3.5/tools/scraper/pages/Page.ts";
+import { Page } from "@/codegen/core/scraper/Page.ts";
+import { normalizeWs } from "@/codegen/core/text/whitespace.ts";
 import { capitalizeTitle } from "@/codegen/dnd3.5/tools/text/names.ts";
-import { normalizeWs } from "@/codegen/dnd3.5/tools/text/scrapedText.ts";
 import { type ClassReference } from "@/codegen/dnd3.5/tools/types/classes.ts";
 
 /** A feature's type (Ex, Su, Sp), when its heading gives one, and its description. */

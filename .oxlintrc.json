@@ -68,6 +68,9 @@
     "arkyvree/opaque-view": "error",
     "arkyvree/queries-in-repositories": "error",
     "arkyvree/folder-index": "error",
+    // Each ruleset's folders are its own, and what every ruleset runs on (the core's folders, the server, shared/)
+    // names none of them (lint/architecture.mjs).
+    "arkyvree/ruleset-folders": "error",
     "arkyvree/re-exports": "error",
     // AGENTS.md's conventions (lint/conventions.mjs): imports through @/, no helpers.ts, the shared repository
     // instances, route params / validation / errors, sorting through the repository, shared/'s runtime, `session`,

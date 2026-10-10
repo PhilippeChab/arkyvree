@@ -3,10 +3,9 @@
 import type * as cheerio from "cheerio";
 import type { AnyNode } from "domhandler";
 
-import { normalizeWs } from "@/codegen/dnd3.5/tools/text/scrapedText.ts";
+import { Page } from "@/codegen/core/scraper/Page.ts";
+import { normalizeWs } from "@/codegen/core/text/whitespace.ts";
 import type { ArmorRow, GoodsRow, WeaponRow } from "@/codegen/dnd3.5/tools/types/items.ts";
-
-import { Page } from "./Page.ts";
 
 /** The goods' tables, by id: the spellcasting and services' left out, as services aren't items. */
 const GOODS_TABLE_IDS = [

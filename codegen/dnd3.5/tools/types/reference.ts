@@ -1,6 +1,6 @@
 /** What every reference holds (its scraped `_meta`, its overrides, the texts it names), and the references by type. */
 
-import type { Modifier } from "@/content/dnd3.5/builders/customization/types.ts";
+import type { Modifier } from "@/content/core/builders/customization/types.ts";
 
 import type { ClassReference } from "./classes.ts";
 import type { DomainReference } from "./domains.ts";

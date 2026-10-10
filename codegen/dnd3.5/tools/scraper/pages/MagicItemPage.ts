@@ -3,10 +3,9 @@
 import type * as cheerio from "cheerio";
 import type { AnyNode } from "domhandler";
 
-import { normalizeWs } from "@/codegen/dnd3.5/tools/text/scrapedText.ts";
+import { Page } from "@/codegen/core/scraper/Page.ts";
+import { normalizeWs } from "@/codegen/core/text/whitespace.ts";
 import type { MagicItemCategory, MagicItemReference } from "@/codegen/dnd3.5/tools/types/magicItems.ts";
-
-import { Page } from "./Page.ts";
 
 /** An item's block on the page: its name, description, metadata (its price…), a staff's spells, and where it ends. */
 type ItemBlock = {

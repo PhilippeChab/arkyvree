@@ -1,4 +1,4 @@
-import type { Modifier } from "@/content/dnd3.5/builders/customization/types.ts";
+import type { Modifier } from "@/content/core/builders/customization/types.ts";
 
 /** A cleric's domain: its granted power's modifiers and its spells. */
 export type DomainSeed = {

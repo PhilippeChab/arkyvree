@@ -1,5 +1,7 @@
 /** The scraped text, cleaned as the seeds store it. */
 
+import { normalizeWs } from "@/codegen/core/text/whitespace.ts";
+
 import { sanitizeText } from "./sanitize.ts";
 
 /** The longest a description is kept, in characters. */
@@ -27,9 +29,4 @@ export function expandTemplateDescription(description: string, type: string, ite
 export function normalizeDescription(text: string, maxLen = MAX_DESC): string {
   const clean = normalizeWs(sanitizeText(text));
   return clean.length > maxLen ? clean.substring(0, maxLen - 3).trim() + "..." : clean;
-}
-
-/** Text with its runs of whitespace (newlines included) as single spaces, trimmed. */
-export function normalizeWs(text: string) {
-  return text.replace(/\s+/g, " ").trim();
 }

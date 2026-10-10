@@ -3,8 +3,8 @@ import { GrantText } from "@/codegen/dnd3.5/tools/seeds/GrantText.ts";
 import { ReferenceSeeds } from "@/codegen/dnd3.5/tools/seeds/ReferenceSeeds.ts";
 import { stripClassSuffix } from "@/codegen/dnd3.5/tools/text/names.ts";
 import { type AptitudePick, type BonusFeatList, type ClassReference } from "@/codegen/dnd3.5/tools/types/classes.ts";
-import { gte } from "@/content/dnd3.5/builders/customization/requirements.ts";
-import type { RequirementEntry } from "@/content/dnd3.5/builders/customization/types.ts";
+import { gte } from "@/content/core/builders/customization/requirements.ts";
+import type { RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /**

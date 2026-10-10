@@ -1,6 +1,6 @@
 /** A spell's page of dndtools' database, as its copy at dnd.arkalseif.info keeps it: its level in each domain version. */
 
-import { Page } from "./Page.ts";
+import { Page } from "@/codegen/core/scraper/Page.ts";
 
 /** A spell's page: the domain versions it has a level in. */
 export class SpellDomainsPage extends Page {

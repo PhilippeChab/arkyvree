@@ -1,5 +1,5 @@
-import { bonus } from "@/content/dnd3.5/builders/customization/modifiers.ts";
-import { gte } from "@/content/dnd3.5/builders/customization/requirements.ts";
+import { bonus } from "@/content/core/builders/customization/modifiers.ts";
+import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import type { WizardSchoolSeed } from "@/content/dnd3.5/builders/wizardSchools/types.ts";
 import { WIZARD_PROHIBITED_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";

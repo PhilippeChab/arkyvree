@@ -10,7 +10,7 @@
 
 import { join } from "node:path";
 
-import { GeneratedFolder } from "@/codegen/dnd3.5/tools/generator/GeneratedFolder.ts";
+import { GeneratedFolder } from "@/codegen/core/GeneratedFolder.ts";
 import { Generator } from "@/codegen/dnd3.5/tools/generator/Generator.ts";
 
 import { CommandLine } from "./CommandLine.ts";

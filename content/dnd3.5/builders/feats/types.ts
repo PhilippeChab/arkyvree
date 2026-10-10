@@ -1,4 +1,4 @@
-import type { ModifierSeed, Property, RequirementEntry } from "@/content/dnd3.5/builders/customization/types.ts";
+import type { ModifierSeed, Property, RequirementEntry } from "@/content/core/builders/customization/types.ts";
 
 /** A feat: the aptitudes it's taken in, what it takes, and what it gives. */
 export type FeatSeed = {

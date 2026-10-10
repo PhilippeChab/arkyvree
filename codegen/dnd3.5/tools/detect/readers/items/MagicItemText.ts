@@ -4,7 +4,7 @@
  */
 
 import type { MagicItemCategory } from "@/codegen/dnd3.5/tools/types/magicItems.ts";
-import type { Property } from "@/content/dnd3.5/builders/customization/types.ts";
+import type { Property } from "@/content/core/builders/customization/types.ts";
 import {
   ARMOR_CHECK_PENALTY,
   ARMOR_MAX_DEX,

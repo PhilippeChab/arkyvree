@@ -1,8 +1,8 @@
 import type * as cheerio from "cheerio";
 import type { AnyNode } from "domhandler";
 
+import { Page } from "@/codegen/core/scraper/Page.ts";
 import { type DndToolsPage } from "@/codegen/dnd3.5/tools/scraper/pages/DndToolsPage.ts";
-import { Page } from "@/codegen/dnd3.5/tools/scraper/pages/Page.ts";
 import { capitalizeTitle } from "@/codegen/dnd3.5/tools/text/names.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 

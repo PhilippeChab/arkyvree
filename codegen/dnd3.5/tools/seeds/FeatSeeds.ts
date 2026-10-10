@@ -1,7 +1,7 @@
 import { normalizeName } from "@/codegen/dnd3.5/tools/text/names.ts";
 import { normalizeDescription } from "@/codegen/dnd3.5/tools/text/scrapedText.ts";
 import type { FeatReference } from "@/codegen/dnd3.5/tools/types/feats.ts";
-import type { ModifierSeed, RequirementEntry } from "@/content/dnd3.5/builders/customization/types.ts";
+import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
 

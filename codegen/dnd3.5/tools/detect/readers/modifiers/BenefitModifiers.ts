@@ -1,5 +1,5 @@
 import { SAVE_SLUGS } from "@/codegen/dnd3.5/tools/vocabulary/saves.ts";
-import { bonus } from "@/content/dnd3.5/builders/customization/modifiers.ts";
+import { bonus } from "@/content/core/builders/customization/modifiers.ts";
 
 import { BonusText } from "./BonusText.ts";
 import { ModifierReading } from "./ModifierReading.ts";

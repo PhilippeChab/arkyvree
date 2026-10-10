@@ -3,10 +3,9 @@
  * of a domain its own entry ("Celerity (CD)").
  */
 
-import { normalizeWs } from "@/codegen/dnd3.5/tools/text/scrapedText.ts";
+import { Page } from "@/codegen/core/scraper/Page.ts";
+import { normalizeWs } from "@/codegen/core/text/whitespace.ts";
 import type { DomainIndexEntry } from "@/codegen/dnd3.5/tools/types/domains.ts";
-
-import { Page } from "./Page.ts";
 
 /** A page of the domain index: the domain versions it lists, and how many the index holds in all. */
 export class DomainIndexPage extends Page {

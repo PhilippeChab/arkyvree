@@ -11,11 +11,11 @@
 import type * as cheerio from "cheerio";
 import type { AnyNode } from "domhandler";
 
-import { normalizeWs } from "@/codegen/dnd3.5/tools/text/scrapedText.ts";
+import { Page } from "@/codegen/core/scraper/Page.ts";
+import { normalizeWs } from "@/codegen/core/text/whitespace.ts";
 import type { FeatReference } from "@/codegen/dnd3.5/tools/types/feats.ts";
 
 import { DndToolsPage } from "./DndToolsPage.ts";
-import { Page } from "./Page.ts";
 
 /** The sections of a feat's page, by their heading. */
 const KNOWN_LABELS = new Set(["prerequisite", "prerequisites", "benefit", "benefits", "normal", "special"]);

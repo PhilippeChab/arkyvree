@@ -130,7 +130,8 @@ describe("function-names", () => {
           "server/listed.ts": "function scaled() {}\nconst build = () => 1;\nexport { scaled, build as buildIt };\n",
           "codegen/dnd3.5/tools/slugs.ts":
             "export function skillSlug() {}\nexport function detectBab() {}\nexport function quote() {}\n",
-          "content/dnd3.5/builders/customization/requirements.ts": "export function gte() {}\n",
+          "content/core/builders/customization/requirements.ts": "export function gte() {}\n",
+          "content/dnd3.5/builders/feats/possession.ts": "export function feat() {}\n",
         },
         ["function-names"],
       ),

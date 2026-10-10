@@ -1,4 +1,4 @@
-import type { ModifierSeed, Property, RequirementEntry } from "@/content/dnd3.5/builders/customization/types.ts";
+import type { ModifierSeed, Property, RequirementEntry } from "@/content/core/builders/customization/types.ts";
 
 import type { Overrides, ScrapedMeta } from "./reference.ts";
 

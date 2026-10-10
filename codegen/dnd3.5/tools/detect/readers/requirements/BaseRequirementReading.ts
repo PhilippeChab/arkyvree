@@ -1,5 +1,5 @@
 import TargetPaths from "@/codegen/dnd3.5/tools/detect/readers/TargetPaths.ts";
-import type { RequirementEntry } from "@/content/dnd3.5/builders/customization/types.ts";
+import type { RequirementEntry } from "@/content/core/builders/customization/types.ts";
 
 /**
  * A prerequisite's reading's core, which its concerns (`concerns/`) build on: the requirements it gives, the

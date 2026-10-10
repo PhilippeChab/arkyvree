@@ -1,7 +1,7 @@
 /** The weapon and armor proficiencies a class's "Weapon and Armor Proficiency" feature grants. */
 
-import { grantFeat } from "@/content/dnd3.5/builders/customization/modifiers.ts";
-import type { ModifierSeed } from "@/content/dnd3.5/builders/customization/types.ts";
+import type { ModifierSeed } from "@/content/core/builders/customization/types.ts";
+import { grantFeat } from "@/content/dnd3.5/builders/feats/possession.ts";
 import { EXOTIC_WEAPONS, MARTIAL_WEAPONS, SIMPLE_WEAPONS } from "@/content/dnd3.5/builders/items/weapons.ts";
 import { stripSeparators } from "@/shared/text.ts";
 

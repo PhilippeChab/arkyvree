@@ -1,5 +1,5 @@
 import TargetPaths from "@/codegen/dnd3.5/tools/detect/readers/TargetPaths.ts";
-import type { ModifierEffect, ModifierSeed } from "@/content/dnd3.5/builders/customization/types.ts";
+import type { ModifierEffect, ModifierSeed } from "@/content/core/builders/customization/types.ts";
 
 /**
  * A text read for the modifiers it gives: the modifiers (a feat's `ModifierSeed`, a race's, a domain's or an item's

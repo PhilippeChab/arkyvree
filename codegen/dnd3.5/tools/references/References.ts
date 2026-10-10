@@ -9,6 +9,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 
+import { sortKeysDeep, stringifyStably } from "@/codegen/core/text/json.ts";
 import { ClassDetector } from "@/codegen/dnd3.5/tools/detect/classes/ClassDetector.ts";
 import { DomainDetector } from "@/codegen/dnd3.5/tools/detect/DomainDetector.ts";
 import { FeatDetector } from "@/codegen/dnd3.5/tools/detect/FeatDetector.ts";
@@ -17,7 +18,6 @@ import { MagicItemDetector } from "@/codegen/dnd3.5/tools/detect/MagicItemDetect
 import { RaceDetector } from "@/codegen/dnd3.5/tools/detect/RaceDetector.ts";
 import { SpellDetector } from "@/codegen/dnd3.5/tools/detect/SpellDetector.ts";
 import { WizardSchoolDetector } from "@/codegen/dnd3.5/tools/detect/WizardSchoolDetector.ts";
-import { sortKeysDeep, stringifyStably } from "@/codegen/dnd3.5/tools/text/json.ts";
 import type { ClassReferenceFile } from "@/codegen/dnd3.5/tools/types/classes.ts";
 import type {
   ReferenceByType,

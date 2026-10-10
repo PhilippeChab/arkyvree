@@ -121,7 +121,7 @@ const TEST_MIRRORS = [
   ["tests/client/", "client/src/"],
   ["tests/lint/", "lint/"],
   ["tests/scripts/", "scripts/"],
-  ["tests/parser/", "codegen/dnd3.5/tools/"],
+  ["tests/codegen/", "codegen/"],
 ];
 
 const WRITE_VERBS = [...METHOD_VERBS.write, ...METHOD_VERBS.lock];

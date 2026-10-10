@@ -2,8 +2,9 @@
  * Being proficient with a weapon, an armor or a shield: the requirements an item and a prerequisite are written with.
  */
 
-import { and, eq, eqStr, feat, or } from "@/content/dnd3.5/builders/customization/requirements.ts";
-import type { RequirementEntry } from "@/content/dnd3.5/builders/customization/types.ts";
+import { and, eq, eqStr, or } from "@/content/core/builders/customization/requirements.ts";
+import type { RequirementEntry } from "@/content/core/builders/customization/types.ts";
+import { feat } from "@/content/dnd3.5/builders/feats/possession.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 
 import { getWeaponDefinition, MARTIAL_WEAPONS, SIMPLE_WEAPONS } from "./weapons.ts";

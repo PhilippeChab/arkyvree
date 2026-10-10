@@ -1,5 +1,5 @@
+import { normalizeWs } from "@/codegen/core/text/whitespace.ts";
 import { getFeatureBaseName, normalizeFeatureName } from "@/codegen/dnd3.5/tools/text/names.ts";
-import { normalizeWs } from "@/codegen/dnd3.5/tools/text/scrapedText.ts";
 import { type ClassReference } from "@/codegen/dnd3.5/tools/types/classes.ts";
 import { type NamedText } from "@/codegen/dnd3.5/tools/types/reference.ts";
 import { stripSeparators } from "@/shared/text.ts";

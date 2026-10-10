@@ -1,7 +1,7 @@
 import { asc, eq } from "drizzle-orm";
 
-import type { SeedContext } from "@/database/packages/dnd35/seed/BaseSeeder.ts";
-import { RulesetSeeder } from "@/database/packages/dnd35/seed/RulesetSeeder.ts";
+import type { SeedContext } from "@/database/packages/dnd3.5/seed/BaseSeeder.ts";
+import { RulesetSeeder } from "@/database/packages/dnd3.5/seed/RulesetSeeder.ts";
 import { modifiersInCustomization, propertiesInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { uniqueId } from "@/tests/support/seed.ts";

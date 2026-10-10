@@ -1,5 +1,5 @@
 import type { BaseClassSeeds } from "@/codegen/dnd3.5/tools/seeds/classes/BaseClassSeeds.ts";
-import type { ModifierSeed } from "@/content/dnd3.5/builders/customization/types.ts";
+import type { ModifierSeed } from "@/content/core/builders/customization/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 /** A table cell's number: "+10 ft." is 10, "−2" (a typographic minus) is -2, a dash none. */

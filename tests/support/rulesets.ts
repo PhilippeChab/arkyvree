@@ -1,6 +1,6 @@
 import { eq, type InferInsertModel } from "drizzle-orm";
 
-import { RulesetSeeder } from "@/database/packages/dnd35/seed/RulesetSeeder.ts";
+import { RulesetSeeder } from "@/database/packages/dnd3.5/seed/RulesetSeeder.ts";
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { aptitudesInRules, rulesetExtensionsInRules, type rulesetsInRules } from "@/drizzle/schema.ts";
 import type { CowData, RulesetSources } from "@/engine/core/cow/index.ts";

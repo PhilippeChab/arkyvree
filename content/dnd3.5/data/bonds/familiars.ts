@@ -1,8 +1,9 @@
+import { bonus, setStr } from "@/content/core/builders/customization/modifiers.ts";
+import type { Modifier } from "@/content/core/builders/customization/types.ts";
 import { formatWithArticle } from "@/content/dnd3.5/builders/bonds/articles.ts";
 import type { BondContent } from "@/content/dnd3.5/builders/bonds/types.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
-import { bonus, grantFeat, setStr } from "@/content/dnd3.5/builders/customization/modifiers.ts";
-import type { Modifier } from "@/content/dnd3.5/builders/customization/types.ts";
+import { grantFeat } from "@/content/dnd3.5/builders/feats/possession.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import type { RaceSeed } from "@/content/dnd3.5/builders/races/types.ts";
 

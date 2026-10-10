@@ -4,8 +4,9 @@ import { ABILITY_ABBREVIATIONS } from "@/codegen/dnd3.5/tools/vocabulary/abiliti
 import { RACE_SIZE_PATH } from "@/codegen/dnd3.5/tools/vocabulary/races.ts";
 import { SAVE_SLUGS } from "@/codegen/dnd3.5/tools/vocabulary/saves.ts";
 import { toSkillSlug } from "@/codegen/dnd3.5/tools/vocabulary/skills.ts";
-import { eq, eqStr, feat, gte, or } from "@/content/dnd3.5/builders/customization/requirements.ts";
-import type { RequirementEntry } from "@/content/dnd3.5/builders/customization/types.ts";
+import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
+import type { RequirementEntry } from "@/content/core/builders/customization/types.ts";
+import { feat } from "@/content/dnd3.5/builders/feats/possession.ts";
 import { SIZE_OPTIONS } from "@/shared/enums.ts";
 import { stripSeparators } from "@/shared/text.ts";
 

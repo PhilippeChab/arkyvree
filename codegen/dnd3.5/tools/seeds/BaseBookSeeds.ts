@@ -11,8 +11,8 @@ import type { WizardSchoolReference } from "@/codegen/dnd3.5/tools/types/wizardS
 import { CORE_BOOK } from "@/codegen/dnd3.5/tools/vocabulary/books.ts";
 import { CLASS_FEAT_FAMILY_NAMES } from "@/codegen/dnd3.5/tools/vocabulary/classFeatFamilies.ts";
 import { findFamilyFeat } from "@/codegen/dnd3.5/tools/vocabulary/featOptions.ts";
+import type { RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import { classSpells } from "@/content/dnd3.5/builders/aptitudes/names.ts";
-import type { RequirementEntry } from "@/content/dnd3.5/builders/customization/types.ts";
 import type { DomainSeed } from "@/content/dnd3.5/builders/domains/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
 

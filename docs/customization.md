@@ -49,10 +49,11 @@ Requirements use a dotted level numbering system for hierarchy:
 
 ### Requirement Builder Helpers
 
-Seed data is written with nested `or()` / `and()` builders from `content/dnd3.5/builders/customization/requirements.ts`:
+Seed data is written with nested `or()` / `and()` builders from `content/core/builders/customization/requirements.ts`, any ruleset's, with the paths its own (3.5's `feat`, `content/dnd3.5/builders/feats/possession.ts`):
 
 ```ts
-import { and, eq, feat, gte, or } from "@/content/dnd3.5/builders/customization/requirements.ts";
+import { and, eq, gte, or } from "@/content/core/builders/customization/requirements.ts";
+import { feat } from "@/content/dnd3.5/builders/feats/possession.ts";
 
 // Simple AND (all root-level entries are AND'd together):
 requirements: [
@@ -81,7 +82,7 @@ requirements: [
 ]
 ```
 
-`requirementRows()` in `database/packages/dnd35/seed/BaseSeeder.ts` walks the tree and assigns hierarchical levels:
+`requirementRows()` in `database/packages/dnd3.5/seed/BaseSeeder.ts` walks the tree and assigns hierarchical levels:
 - Root entries: `"1"`, `"2"`, `"3"`
 - Children: `"1.1"`, `"1.2"`, nested: `"1.1.1"`, `"1.1.2"`
 
@@ -375,7 +376,7 @@ Item creation feats use `identity.meta.level` (character level) for their caster
 
 ### Caster level advancement:
 
-Prestige classes that advance spellcasting use a "Bonus Caster Level" aptitude system. Each advancement feat adds +1 to `classes.<name>.bonuscasterlevel` via a stackable modifier. Classes define `casterLevelAdvancement` with a type (`divine`, `arcane`, or general) and which levels grant the advancement feat pick. See `database/packages/dnd35/seed/concerns/SeedsClasses.ts` for implementation. The class levels a bonus caster level reaches apply their spell slots each while its own requirements hold.
+Prestige classes that advance spellcasting use a "Bonus Caster Level" aptitude system. Each advancement feat adds +1 to `classes.<name>.bonuscasterlevel` via a stackable modifier. Classes define `casterLevelAdvancement` with a type (`divine`, `arcane`, or general) and which levels grant the advancement feat pick. See `database/packages/dnd3.5/seed/concerns/SeedsClasses.ts` for implementation. The class levels a bonus caster level reaches apply their spell slots each while its own requirements hold.
 
 ### A class's spell lists:
 

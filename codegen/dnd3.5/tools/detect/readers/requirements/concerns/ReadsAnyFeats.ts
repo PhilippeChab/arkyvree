@@ -1,7 +1,7 @@
 import type { BaseRequirementReading } from "@/codegen/dnd3.5/tools/detect/readers/requirements/BaseRequirementReading.ts";
 import { NUMBER_WORDS } from "@/codegen/dnd3.5/tools/vocabulary/numbers.ts";
-import { eq, gte } from "@/content/dnd3.5/builders/customization/requirements.ts";
-import type { RequirementEntry } from "@/content/dnd3.5/builders/customization/types.ts";
+import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
+import type { RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
 import { stripSeparators } from "@/shared/text.ts";

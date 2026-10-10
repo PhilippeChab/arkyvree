@@ -5,8 +5,8 @@
  * - No modifiers defined — review if this class needs any
  */
 
+import { eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
-import { eqStr, gte, or } from "@/content/dnd3.5/builders/customization/requirements.ts";
 
 export const FOCHLUCAN_LYRIST: ClassSeed = {
   name: "Fochlucan Lyrist",

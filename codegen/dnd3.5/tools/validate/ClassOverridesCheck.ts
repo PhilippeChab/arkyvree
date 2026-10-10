@@ -1,7 +1,7 @@
+import { sortKeysDeep } from "@/codegen/core/text/json.ts";
 import { ClassFiles } from "@/codegen/dnd3.5/tools/generator/ClassFiles.ts";
 import References from "@/codegen/dnd3.5/tools/references/References.ts";
 import Library from "@/codegen/dnd3.5/tools/seeds/Library.ts";
-import { sortKeysDeep } from "@/codegen/dnd3.5/tools/text/json.ts";
 import type { ClassReference } from "@/codegen/dnd3.5/tools/types/classes.ts";
 import type { StoredReference } from "@/codegen/dnd3.5/tools/types/reference.ts";
 

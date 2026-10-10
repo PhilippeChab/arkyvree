@@ -1,7 +1,7 @@
 import { sanitizeJsonValues } from "@/codegen/dnd3.5/tools/text/sanitize.ts";
 import type { ClassReferenceFile } from "@/codegen/dnd3.5/tools/types/classes.ts";
 import type { FeatReference } from "@/codegen/dnd3.5/tools/types/feats.ts";
-import { and, gte, or } from "@/content/dnd3.5/builders/customization/requirements.ts";
+import { and, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 import { stripSeparators } from "@/shared/text.ts";

@@ -1,6 +1,6 @@
+import { normalizeWs } from "@/codegen/core/text/whitespace.ts";
 import type { BaseClassDetector } from "@/codegen/dnd3.5/tools/detect/classes/BaseClassDetector.ts";
 import { FeatureText } from "@/codegen/dnd3.5/tools/detect/classes/FeatureText.ts";
-import { normalizeWs } from "@/codegen/dnd3.5/tools/text/scrapedText.ts";
 import { type BonusFeatList } from "@/codegen/dnd3.5/tools/types/classes.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
