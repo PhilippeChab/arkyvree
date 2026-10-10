@@ -4,7 +4,7 @@ import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTa
 import type { CustomizedFeat, CustomizedPower } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import PowersComponent from "@/engine/rulesets/dnd3.5/model/powers/PowersComponent.ts";
 import type SpellcastingState from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellcastingState.ts";
-import SpellLists from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellLists.ts";
+import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import type { Modifier, Power, Property } from "@/shared/relations.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";

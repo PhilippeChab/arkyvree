@@ -1,7 +1,7 @@
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import BondedRaceData from "@/engine/rulesets/dnd3.5/rules/BondedRaceData.ts";
 import { SPECIAL_MOUNT_BASICS, type SpecialMountBasics } from "@/vocabulary/dnd3.5/bondedCreatures.ts";
 
-import BondedRaceData from "./BondedRaceData.ts";
 import DetailedCharacterAdvancingBonded from "./DetailedCharacterAdvancingBonded.ts";
 
 /**

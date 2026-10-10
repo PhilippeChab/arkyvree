@@ -3,7 +3,7 @@ import type { RulesetView } from "@/engine/core/view/index.ts";
 import { POWER_FIELDS } from "@/engine/rulesets/dnd3.5/entities/powers/fields.ts";
 import type AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
-import SpellLists from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellLists.ts";
+import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import type { Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";

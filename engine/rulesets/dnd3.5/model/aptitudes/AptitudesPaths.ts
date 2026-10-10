@@ -1,7 +1,7 @@
 import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
-import SpellLists from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellLists.ts";
+import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import { getOperators } from "@/shared/customization/operators.ts";
 import { deriveNameLabels, deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import type { Aptitude } from "@/shared/relations.ts";

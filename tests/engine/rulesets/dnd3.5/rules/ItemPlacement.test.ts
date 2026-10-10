@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import ItemPlacement from "@/engine/rulesets/dnd3.5/model/inventory/ItemPlacement.ts";
+import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
 import { LOCATION_OPTIONS } from "@/shared/enums.ts";
 import { HAND_LOCATIONS } from "@/vocabulary/dnd3.5/equipment.ts";
 import { ITEM_HAS_CHARGES } from "@/vocabulary/dnd3.5/properties/index.ts";

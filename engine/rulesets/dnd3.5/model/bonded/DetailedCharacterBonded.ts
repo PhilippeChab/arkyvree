@@ -3,10 +3,9 @@ import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import { type RulesetView } from "@/engine/core/view/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import FeatsComponent from "@/engine/rulesets/dnd3.5/model/feats/FeatsComponent.ts";
+import BondedRaceData from "@/engine/rulesets/dnd3.5/rules/BondedRaceData.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { type BondedRaceStatBlock, STAT_BLOCK_FEAT_SKILL_BONUSES } from "@/vocabulary/dnd3.5/bondedCreatures.ts";
-
-import BondedRaceData from "./BondedRaceData.ts";
 
 export default abstract class DetailedCharacterBonded extends DetailedCharacter {
   /** The creature's master, built before it (`Dnd35CharacterBuilder`): what its sheet derives from. */

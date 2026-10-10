@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import BondedRaceData from "@/engine/rulesets/dnd3.5/model/bonded/BondedRaceData.ts";
 import SkillsPaths from "@/engine/rulesets/dnd3.5/model/skills/SkillsPaths.ts";
+import BondedRaceData from "@/engine/rulesets/dnd3.5/rules/BondedRaceData.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
