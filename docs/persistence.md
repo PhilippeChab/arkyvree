@@ -125,14 +125,16 @@ Both primitives, picked by entry point:
 
 Hard-deleted via `Users.delete` (gated on `expiresAt` / `@demo.invalid`). Demo data is by design ephemeral and only owned by the demo user, so the FK CASCADE on hard-delete is exactly what's wanted to clean everything up at expiry. The database deletes the attachments of the account and its characters, and the customizations of its rulesets and characters (see *Polymorphic rows* above).
 
-### Ruleset entity / class cascade (`deleteEntityWithCascade`)
+### A fork's copies of an extension's entities (`unsubscribeExtension`)
 
-`deleteEntityWithCascade` (`server/services/rulesets/deleteEntityWithCascade.ts`) deletes what `RulesetExtensionsService.unsubscribeExtension` takes of an extension: the fork's copies of its entities, once what the fork keeps of them was repointed or refused (`extensions/departingReferences.ts`). It:
+`RulesetExtensionsService.unsubscribeExtension` hard-deletes the fork's copies of the extension's entities. It does so once what the fork keeps of them was repointed or refused (`extensions/departingReferences.ts`), and once no character picked one. It reverts each copy as a restore does (`EntityRevert`, `server/cow/writes/`):
 
-- Hard-deletes the links naming the entity (`EntityReferences.delete`, by the list of what names each type, `ENTITY_REFERENCES`): another entity's link to it (a feat's to a list, a class's skill) and a class level's grants and saves.
-- Hard-deletes the entity itself. The database deletes its own rows with it (FK CASCADE: its links, a class's levels and skills) and the customizations of every row it deletes (see *Polymorphic rows* above).
+- Every row naming the copy is pointed at the extension's entity (`EntityReferences.update`, by the list of what names each type, `ENTITY_REFERENCES`). By then, those rows are the other copies' only.
+- The copy goes, then its snapshot. The database deletes the copy's own rows with it (FK CASCADE: its links, a class's levels and skills) and the customizations of every row it deletes (see *Polymorphic rows* above).
 
-Restoring an override doesn't delete what names the copy: `EntityRevert` (`server/cow/writes/`) points every row naming it at its source first, characters' picks included, then deletes the copy and its snapshot (see [rulesets.md](./rulesets.md#restoring-an-override)).
+A copy naming another, once pointed at the extension's entity, never blocks the other's delete, whatever order the copies go in. Two foreign keys among ruleset entities restrict: an item's template (`items.source_item_id`) and a class level's save (`klass_level_saves.save_id`). Nor is a subrace's or a subclass's copy cascaded away with its parent's (`races.parent_id`, `klasses.parent_id`) before its own turn.
+
+Restoring an override reverts one copy the same way, characters' picks included (see [rulesets.md](./rulesets.md#restoring-an-override)).
 
 ## Decision rule for new code
 

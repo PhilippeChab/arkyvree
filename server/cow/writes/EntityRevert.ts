@@ -10,7 +10,10 @@ import EntityRepositories from "./EntityRepositories.ts";
  * fork's own rows and its other copies', the rows of the rulesets built on it (an extension's subscribers) and their
  * characters'. A character's level in a copied class moves to the source's level of its number, as the views pair them
  * (`CowDataBuilder`), and a subscriber's copy of the copy becomes a copy of the source. Then the copy goes, with its own
- * rows (its links, a class's levels and skills) and its customizations, and its snapshot.
+ * rows (its links, a class's levels and skills) and its customizations, and its snapshot. A restore reverts one copy;
+ * an unsubscribe reverts each of the fork's copies of the extension's entities, once nothing else of the fork names
+ * them: a copy naming another (an item's copy its template's) names the extension's entity by the time the other goes,
+ * so no foreign key refuses a delete, nor cascades one, whatever their order.
  */
 export default class EntityRevert {
   /**

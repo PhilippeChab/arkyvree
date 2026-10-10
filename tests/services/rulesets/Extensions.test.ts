@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import type { InferInsertModel } from "drizzle-orm";
+import { eq, type InferInsertModel, sql } from "drizzle-orm";
 
 import {
   DND35_COMPLETE_ADVENTURER_NAME,
@@ -9,7 +9,7 @@ import {
   DND35_COMPLETE_WARRIOR_NAME,
   DND35_DMG_NAME,
 } from "@/content/dnd3.5/rulesetNames.ts";
-import { characterAbilitiesInCharacter, type rulesetsInRules } from "@/drizzle/schema.ts";
+import { characterAbilitiesInCharacter, entitySnapshotsInRules, type rulesetsInRules } from "@/drizzle/schema.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { EntityEdit, RulesetViews } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -19,6 +19,7 @@ import {
   Abilities,
   Aptitudes,
   Characters,
+  EntityReferences,
   EntitySnapshots,
   Feats,
   FeatsAptitudes,
@@ -27,6 +28,7 @@ import {
   KlassLevelFeats,
   KlassLevelPowers,
   KlassLevels,
+  KlassLevelSaves,
   KlassSkills,
   Languages,
   Mechanics,
@@ -35,6 +37,8 @@ import {
   PowersAptitudes,
   Races,
   Requirements,
+  RulesetEntities,
+  type RulesetEntityType,
   RulesetExtensions,
   Rulesets,
   Saves,
@@ -99,6 +103,19 @@ const ENTITIES = {
   },
 };
 
+/** What names what among `createNamingEntities`' entities. */
+const NAMINGS = [
+  ["item", "template"],
+  ["subrace", "race"],
+  ["spell", "save"],
+  ["feat", "list"],
+  ["klass", "save"],
+  ["klass", "feat"],
+  ["klass", "list"],
+  ["klass", "skill"],
+  ["subclass", "klass"],
+] as const;
+
 function unique(keys: string[]) {
   return new Set(keys).size === keys.length;
 }
@@ -114,6 +131,59 @@ async function createExtension(userId: string | null = null, values: RulesetValu
     private: false,
     ...values,
   });
+}
+
+/**
+ * An extension's entities that name each other, by what they are, each after those it names: an item and its template,
+ * a race and its parent, a class and its parent, a spell and its save, a class whose first level gives the save and
+ * grants a feat from a list the feat is on, and which has a class skill.
+ */
+async function createNamingEntities(rulesetId: string) {
+  const { abilityMap } = await getSeedCtx();
+  const name = (kind: string) => `${kind} ${uniqueId()}`;
+  const [template] = await Items.create(db, { name: name("Blade"), type: "Weapon", isTemplate: true, rulesetId });
+  const [item] = await Items.create(db, {
+    name: name("Flame Blade"),
+    type: "Weapon",
+    sourceItemId: template.id,
+    rulesetId,
+  });
+  const [race] = await Races.create(db, { name: name("Kin"), size: "Small", baseSpeed: 20, rulesetId });
+  const [subrace] = await Races.create(db, {
+    name: name("Deep Kin"),
+    size: "Small",
+    baseSpeed: 20,
+    parentId: race.id,
+    rulesetId,
+  });
+  const [save] = await Saves.create(db, { name: name("Luck Save"), abilityId: abilityMap["Charisma"], rulesetId });
+  const [spell] = await Powers.create(db, { name: name("Fortune"), saveId: save.id, rulesetId });
+  const [skill] = await Skills.create(db, {
+    name: name("Gambling"),
+    primaryAbilityId: abilityMap["Charisma"],
+    rulesetId,
+  });
+  const [list] = await Aptitudes.create(db, { name: name("Luck Feats"), rulesetId });
+  const [feat] = await Feats.create(db, { name: name("Lucky"), rulesetId });
+  await FeatsAptitudes.create(db, { featId: feat.id, aptitudeId: list.id });
+  const { klass, klassLevel } = await createTestKlassLevel(rulesetId);
+  await KlassLevelSaves.createMany(db, [{ klassLevelId: klassLevel.id, saveId: save.id, base: 2 }]);
+  await KlassLevelFeats.create(db, { klassLevelId: klassLevel.id, featId: feat.id, aptitudeId: list.id });
+  await KlassSkills.createMany(db, [{ klassId: klass.id, skillId: skill.id }]);
+  const [subclass] = await Klasses.create(db, { name: name("Gambler"), hd: 6, parentId: klass.id, rulesetId });
+  return {
+    template: ["items", template.id],
+    item: ["items", item.id],
+    race: ["races", race.id],
+    subrace: ["races", subrace.id],
+    save: ["saves", save.id],
+    spell: ["powers", spell.id],
+    skill: ["skills", skill.id],
+    list: ["aptitudes", list.id],
+    feat: ["feats", feat.id],
+    klass: ["klasses", klass.id],
+    subclass: ["klasses", subclass.id],
+  } satisfies Record<string, [RulesetEntityType, string]>;
 }
 
 /**
@@ -142,6 +212,12 @@ async function favoredSoulOnMixedFork() {
 /** The fork's visible feats of this name. */
 async function featsNamed(rulesetId: string, name: string) {
   return (await FeatsService.getFeats(rulesetId, { search: name }, firstPage)).items.filter((f) => f.name === name);
+}
+
+/** What names what among these entities in a ruleset (`EntityReferences.findMany`), by their ids. */
+async function findNamings(rulesetId: string, entityIds: string[]) {
+  const references = await EntityReferences.findMany(db, { rulesetId, entityIds });
+  return references.map(({ id, targetId }) => `${id} names ${targetId}`).toSorted();
 }
 
 async function forkBase(session: Session, values: { private?: boolean } = {}) {
@@ -678,6 +754,40 @@ describe("unsubscribing from an extension", () => {
     });
     expect(await EntitySnapshots.findMany(db, { rulesetId: draft.id })).toEqual(ofBase);
   });
+
+  test.each(["named", "naming"])(
+    "removes the fork's copies that name each other, the %s ones first: a template, a parent, a save, a class's skill, grant and list",
+    async (first) => {
+      const { user, session, draft } = await setupFork();
+      const extension = await createExtension(user.id);
+      const entities = await createNamingEntities(extension.id);
+      await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
+      // Each copy names the copies made before it (`EntityCopy` remaps them): a named entity is copied first
+      const copies = new Map<string, string>();
+      for (const [type, id] of Object.values(entities))
+        copies.set(id, (await copyEntity(db, type, id, { ...draft, extensionRulesetIds: [extension.id] })).id);
+      const copyOf = (id: string) => copies.get(id)!;
+      const namingsOf = (idOf: (id: string) => string) =>
+        NAMINGS.map(([from, to]) => `${idOf(entities[from][1])} names ${idOf(entities[to][1])}`).toSorted();
+      expect(await findNamings(draft.id, [...copies.values()])).toEqual(namingsOf(copyOf));
+      // The unsubscribe takes the copies in the order of their snapshots
+      const order = first === "named" ? [...copies.keys()] : [...copies.keys()].toReversed();
+      for (const [index, sourceEntityId] of order.entries()) {
+        await db
+          .update(entitySnapshotsInRules)
+          .set({ createdAt: sql`${entitySnapshotsInRules.createdAt} + ${index} * interval '1 second'` })
+          .where(eq(entitySnapshotsInRules.sourceEntityId, sourceEntityId));
+      }
+
+      expect(await RulesetExtensionsService.unsubscribeExtension(session, draft.id, extension.id)).toEqual({
+        unsubscribed: true,
+      });
+      expect(await EntitySnapshots.findMany(db, { rulesetId: draft.id })).toEqual([]);
+      for (const [type, id] of Object.values(entities))
+        expect(await RulesetEntities.findNames(db, type, { ids: [copyOf(id)] })).toEqual([]);
+      expect(await findNamings(extension.id, [...copies.keys()])).toEqual(namingsOf((id) => id));
+    },
+  );
 
   test("is refused while a character picked its content, or the fork's copy of it, even an archived character", async () => {
     const { user, session, extension, draft } = await setupFork();

@@ -25,9 +25,9 @@ function isCharacters(owner: ReferenceOwner): owner is CharacterOwner {
 }
 
 /**
- * Whether a ruleset's row naming an entity is a link, which goes with the entity it names: a link of another entity (a
- * feat's to a list, a class's skill) or of a class's level (its grants, its saves). Not an entity's field (a spell's
- * save), whose entity stays.
+ * Whether a ruleset's row naming an entity is a link: a row of its own, joined to the entity it belongs to (a feat's
+ * link to a list, a class's skill) or to a class's level (its grants, its saves). Not an entity's field (a spell's
+ * save), which is the entity's row itself.
  */
 function isLink(column: PgColumn, owner: RulesetOwner) {
   return "klassLevelId" in owner || column.table !== ENTITY_TABLES[owner.entityType];
@@ -43,7 +43,7 @@ function keyOf(columns: Record<string, Column>, column: Column) {
 /**
  * The rows that name an entity, every table's (`ENTITY_REFERENCES`): those of a ruleset an unsubscribe would leave
  * dangling (`findMany`), the characters an in-use check counts (`exists`), and every row a revert points at another
- * entity (`update`) or a delete takes with the entity (`delete`).
+ * entity (`update`), a restore's or an unsubscribe's (`EntityRevert`).
  */
 class EntityReferencesRepository {
   /**
@@ -155,17 +155,6 @@ class EntityReferencesRepository {
       .update(table)
       .set({ [keyOf(columns, column)]: to })
       .where(eq(column, from));
-  }
-
-  /**
-   * Deletes the links naming an entity (`isLink`), which a delete of it takes: those of other entities and of class
-   * levels. An entity's field naming it, and a character's row, stay: what deletes the entity checks them first.
-   */
-  async delete(db: Db, where: { entityId: string; entityType: ReferencedType }) {
-    for (const { column, owner } of ENTITY_REFERENCES[where.entityType]) {
-      if (!isCharacters(owner) && isLink(column, owner))
-        await db.delete(column.table).where(eq(column, where.entityId));
-    }
   }
 
   /**
