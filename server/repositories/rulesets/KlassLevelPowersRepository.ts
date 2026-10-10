@@ -14,20 +14,6 @@ class KlassLevelPowersRepository extends BaseRepository<typeof klassLevelPowersI
     return await db.insert(this.table).values(values).returning();
   }
 
-  // Exception to soft-delete: disposable configuration data — intentional removal
-  async delete(db: Db, where: { klassLevelId: string } | { powerId: string } | { aptitudeId: string }) {
-    return await db
-      .delete(this.table)
-      .where(
-        this.branchWhere([
-          "klassLevelId" in where && eq(this.table.klassLevelId, where.klassLevelId),
-          "powerId" in where && eq(this.table.powerId, where.powerId),
-          "aptitudeId" in where && eq(this.table.aptitudeId, where.aptitudeId),
-        ]),
-      )
-      .returning();
-  }
-
   /** Levels' grants, or a ruleset's classes' grants from lists (`aptitudeIds`). */
   async findMany(db: Db, where: { klassLevelIds: string[] } | { aptitudeIds: string[]; rulesetId: string }) {
     if ("klassLevelIds" in where && where.klassLevelIds.length === 0) return [];

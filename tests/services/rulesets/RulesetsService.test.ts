@@ -21,6 +21,7 @@ import {
 import {
   Abilities,
   Aptitudes,
+  CharacterLevelFeats,
   EntitySnapshots,
   Feats,
   FeatsAptitudes,
@@ -583,19 +584,19 @@ describe("RulesetsService", () => {
         expect(await Items.findOne(db, { id: made.id })).toMatchObject({ sourceItemId: template.id });
       });
 
-      test("is refused for a copy a character picked, and for an entity the fork didn't change", async () => {
+      test("points a character's pick of the copy at the parent's, and is refused for an entity the fork didn't change", async () => {
         const { user, session, fork, aptitude, modified, untouched } = await setupChanges();
         const copy = await copyEntity(db, "feats", modified.id, fork);
         const character = await createTestCharacter(user.id, { rulesetId: fork.id });
         const { klassLevel } = await createTestKlassLevel(fork.id);
-        await addCharacterLevel(character.id, klassLevel.id, {
-          feats: [{ featId: copy.id as string, aptitudeId: aptitude.id }],
+        const level = await addCharacterLevel(character.id, klassLevel.id, {
+          feats: [{ featId: copy.id, aptitudeId: aptitude.id }],
         });
 
-        // Reverting deletes the copy, and with it the character's pick.
-        expect(RulesetChangesService.revertOverride(session, fork.id, "feats", modified.id)).rejects.toThrow(
-          ConflictError,
-        );
+        await RulesetChangesService.revertOverride(session, fork.id, "feats", modified.id);
+        expect(await CharacterLevelFeats.findMany(db, { characterLevelIds: [level.id] })).toMatchObject([
+          { featId: modified.id },
+        ]);
         expect(RulesetChangesService.revertOverride(session, fork.id, "feats", untouched.id)).rejects.toThrow(
           NotFoundError,
         );

@@ -8,13 +8,6 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import {
   Activities,
-  CharacterInventory,
-  CharacterLanguages,
-  CharacterLevelFeats,
-  CharacterLevelPowers,
-  CharacterLevels,
-  CharacterLevelSkills,
-  Characters,
   EntitySnapshots,
   RULESET_ENTITY_TYPES,
   RulesetEntities,
@@ -23,10 +16,11 @@ import {
   Rulesets,
 } from "@/server/repositories/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { hasCharacterPicks } from "@/server/services/rulesets/characterPicks.ts";
 import { deleteEntityWithCascade } from "@/server/services/rulesets/deleteEntityWithCascade.ts";
 import type { Session } from "@/shared/relations.ts";
 
-import { repointDepartingReferences } from "./departingReferences.ts";
+import { type Copies, repointDepartingReferences } from "./departingReferences.ts";
 
 class RulesetExtensionsService {
   // Rejects a subscribe action that would surface two entities of the same name in
@@ -50,82 +44,17 @@ class RulesetExtensionsService {
     Engine.copyOnWrite().checkExtensionNames(hostId, newExtensionIds, names);
   }
 
-  // Returns true iff any character on `hostRulesetId` has picked an entity that
-  // belongs to `extensionId` — either a direct extension entity or a host-owned
-  // COW shadow whose source entity belongs to the extension. Unsubscribe deletes
-  // those shadows, so a shadow pick would be silently orphaned without this
-  // check.
-  private async isExtensionInUseByHost(tx: Db, hostRulesetId: string, extensionId: string): Promise<boolean> {
-    // Group snapshots by entity type, then resolve each type's source entities
-    // in one batched query (avoids N+1 over snapshot count). Build a per-type
-    // list of host-owned shadow IDs whose source entity belongs to the extension.
-    const snapshots = await EntitySnapshots.findMany(tx, { rulesetId: hostRulesetId });
-    const sourceIdsByType: Partial<Record<RulesetEntityType, string[]>> = {};
-    for (const snap of snapshots) {
-      const type = snap.entityType as RulesetEntityType;
-      if (!EntityRepositories.of(type)) continue;
-      (sourceIdsByType[type] ??= []).push(snap.sourceEntityId);
+  /**
+   * Whether a character on the host picked one of the extension's entities, or one of the host's copies of them
+   * (`copies`), which the unsubscribe deletes: the pick would dangle. Every type's picks (`hasCharacterPicks`).
+   */
+  private async isExtensionInUseByHost(tx: Db, hostRulesetId: string, extensionId: string, copies: Copies) {
+    for (const entityType of RULESET_ENTITY_TYPES) {
+      const own = await RulesetEntities.findNames(tx, entityType, { rulesetId: extensionId });
+      const ids = [...own.map((entity) => entity.id), ...(copies.get(entityType) ?? [])];
+      if (await hasCharacterPicks(tx, entityType, ids, hostRulesetId)) return true;
     }
-
-    const shadowIdsByType: Partial<Record<RulesetEntityType, string[]>> = {};
-    for (const [type, ids] of Object.entries(sourceIdsByType) as [RulesetEntityType, string[]][]) {
-      const sources = await EntityRepositories.of(type).findMany(tx, { ids });
-      const fromExt = new Set(sources.filter((s) => s.rulesetId === extensionId).map((s) => s.id));
-      const forked = snapshots
-        .filter((s) => s.entityType === type && fromExt.has(s.sourceEntityId))
-        .map((s) => s.forkedEntityId);
-      if (forked.length > 0) shadowIdsByType[type] = forked;
-    }
-    const shadow = (type: RulesetEntityType) => shadowIdsByType[type] ?? [];
-
-    // Shadow ids as stored: a shadow can be a sibling loser, whose id the view would read as its winner's
-    return (
-      (await CharacterLevelFeats.exists(tx, {
-        hostRulesetId,
-        extensionRulesetId: extensionId,
-        shadowFeatIds: shadow("feats"),
-      })) ||
-      (await CharacterLevelFeats.exists(tx, {
-        hostRulesetId,
-        extensionRulesetId: extensionId,
-        shadowAptitudeIds: shadow("aptitudes"),
-      })) ||
-      (await CharacterLevelSkills.exists(tx, {
-        hostRulesetId,
-        extensionRulesetId: extensionId,
-        shadowSkillIds: shadow("skills"),
-      })) ||
-      (await CharacterLevelPowers.exists(tx, {
-        hostRulesetId,
-        extensionRulesetId: extensionId,
-        shadowPowerIds: shadow("powers"),
-      })) ||
-      (await CharacterLevelPowers.exists(tx, {
-        hostRulesetId,
-        extensionRulesetId: extensionId,
-        shadowAptitudeIds: shadow("aptitudes"),
-      })) ||
-      (await CharacterLevels.exists(tx, {
-        hostRulesetId,
-        extensionRulesetId: extensionId,
-        shadowKlassIds: shadow("klasses"),
-      })) ||
-      (await Characters.exists(tx, {
-        hostRulesetId,
-        extensionRulesetId: extensionId,
-        shadowRaceIds: shadow("races"),
-      })) ||
-      (await CharacterLanguages.exists(tx, {
-        hostRulesetId,
-        extensionRulesetId: extensionId,
-        shadowLanguageIds: shadow("languages"),
-      })) ||
-      (await CharacterInventory.exists(tx, {
-        hostRulesetId,
-        extensionRulesetId: extensionId,
-        shadowItemIds: shadow("items"),
-      }))
-    );
+    return false;
   }
 
   async getExtensions(_session: Session, id: string) {
@@ -231,10 +160,7 @@ class RulesetExtensionsService {
       if (!ruleset.extensionRulesetIds.includes(extensionId))
         throw new NotFoundError("Not subscribed to this extension");
 
-      const inUse = await this.isExtensionInUseByHost(tx, id, extensionId);
-      policy.canUnsubscribeExtension({ inUse });
-
-      // 2. Clean up COW copies: find snapshots whose sourceEntityId belongs to the extension
+      // 2. The fork's copies of the extension's entities: the snapshots whose sourceEntityId belongs to the extension
       const snapshots = await EntitySnapshots.findMany(tx, { rulesetId: id });
       const extensionSnapshots = [];
       for (const snap of snapshots) {
@@ -245,14 +171,16 @@ class RulesetExtensionsService {
         if (sourceEntity?.rulesetId === extensionId) extensionSnapshots.push(snap);
       }
 
-      // What the fork keeps that names the book's lists moves to its lists of the same name, or the unsubscribe
-      // refuses: before the copies go, links to the fork's copies of the book's lists included
       const copies = new Map(
         [...Map.groupBy(extensionSnapshots, (snap) => snap.entityType)].map(([type, snaps]) => [
           type,
           snaps.map((snap) => snap.forkedEntityId),
         ]),
       );
+      policy.canUnsubscribeExtension({ inUse: await this.isExtensionInUseByHost(tx, id, extensionId, copies) });
+
+      // What the fork keeps that names the book's lists moves to its lists of the same name, or the unsubscribe
+      // refuses: before the copies go, links to the fork's copies of the book's lists included
       await repointDepartingReferences(tx, ruleset, extensionId, copies);
 
       // Delete COW copies and their snapshots

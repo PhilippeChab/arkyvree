@@ -182,6 +182,40 @@ copy was deleted, its snapshot is a tombstone, and `EntityNames.repointTombstone
 moves it to the new entity. A live local copy keeps its snapshot even after a
 rename, so picks of the source keep resolving to that copy.
 
+### Restoring an override
+
+A fork's **Restore Parent Version** (`RulesetChangesService.revertOverride`) reverts
+its copy of an inherited entity to the source: `EntityRevert` (`server/cow/writes/`),
+`EntityCopy`'s inverse. Every row naming the copy names the source instead, which
+the views show in the copy's place once it's gone. The rows that name an entity are
+one list, by the entity's type (`ENTITY_REFERENCES`,
+`server/repositories/rulesets/entityReferences.ts`), which `EntityReferences` reads
+for every use: a restore's repoint (`update`), an unsubscribe's lost references
+(`findMany`) and its delete of a copy's links (`delete`), the in-use checks
+(`exists`). An entity's own rows aren't among them, since they go with it: a feat's
+or a spell's links to its lists, a class's skills and levels. A restore repoints,
+whichever ruleset holds them:
+
+- the fork's own rows and its other copies': a feat's or a spell's link to a copied
+  list, a class level's grants of a copied feat or spell (or from a copied list) and
+  its saves, a class's skills, a spell's save, a race's or a class's parent, an
+  item's template;
+- the rows of the rulesets built on the fork (an extension's subscribers), which
+  name the copy as their views showed it, and a subscriber's copy of the copy, whose
+  snapshot then names the source;
+- the picks of the characters on the fork and its subscribers: a race, a feat, a
+  spell, a skill, an item, a language, the list a pick is made from. A pick names
+  what its view showed, which the source stands for again, as a pick stored before
+  the copy does. A character's level in a copied class moves to the source's level
+  of its number, as `CowDataBuilder` pairs a copy's levels; a level the copy added,
+  which the source doesn't have, refuses the restore (`ConflictError`) while a
+  character took it.
+
+A row that would then repeat another by its table's primary key (a feat linked to
+both the list and the copy) goes, and the one naming the source stays. Then the copy
+goes with its own rows and customizations, and its snapshot, and the cache drops the
+fork's views and its subscribers' (`RulesetViews.invalidate`).
+
 ### Multi-Extension COW (Sibling Map)
 
 When multiple extensions COW the same base entity, each extension creates its own independent copy. At runtime, one copy "wins" (the first extension in subscription order, `extensionRulesetIds`) and the others become **siblings**. Their data is merged transparently so the user sees a single entity with combined customizations.
@@ -290,9 +324,9 @@ No entities are copied. They become visible immediately via the source chain.
 ### Unsubscribe (`unsubscribeExtension`)
 
 1. Validates: user is owner, extension is subscribed, ruleset not archived
-2. **In-use check** (`isExtensionInUseByHost`) — blocks with `ConflictError` if any character on the host has picked an extension-owned entity, either directly or via a host-side COW shadow of one. The shadow case matters because step 5 below hard-deletes those shadows; without this guard the character pick would silently dangle. (Scoped to the host only; fork-of-fork is blocked at policy time so descendant forks aren't a concern. If that ever changes, the character repos' `exists` extension branch (`{ hostRulesetId, extensionRulesetId, shadow…Ids }`) would need to widen the join.)
+2. **In-use check** (`isExtensionInUseByHost`) — blocks with `ConflictError` if any character on the host has picked an extension-owned entity, either directly or via a host-side COW shadow of one (the host's copies of the extension's entities, found by their snapshots). The shadow case matters because step 5 below hard-deletes those shadows; without this guard the character pick would silently dangle. It's the entity deletes' check (`hasCharacterPicks`, every type's picks: `EntityReferences.exists`), given the extension's entities of each type and the host's copies of them; it also counts a ruleset built on the host, which has none: fork-of-fork is blocked at policy time, and a host isn't an extension.
 3. Finds snapshots whose `sourceEntityId` belongs to the extension (COW copies of extension entities)
-4. **Repoints what the host keeps that names the extension's lists** (`repointDepartingReferences`, `extensions/departingReferences.ts`): its feats' and powers' links, and its classes' level grants, to the extension's lists (and to its copies of them) move to the list of the same name the host keeps, as its view will show it (`CowDataBuilder.build` without the extension); a list's name is its identity, as the namesakes pair. A link to a list no other book of the host has, or a host row naming another of the extension's entities (an item's template, a class's or a race's parent, a spell's save, a save's or a skill's ability, a class's skill or its levels' saves, granted feats and powers: `RulesetEntities.findReferences`), refuses the unsubscribe with a `ConflictError` naming them, before anything changes
+4. **Repoints what the host keeps that names the extension's lists** (`repointDepartingReferences`, `extensions/departingReferences.ts`): its feats' and powers' links, and its classes' level grants, to the extension's lists (and to its copies of them) move to the list of the same name the host keeps, as its view will show it (`CowDataBuilder.build` without the extension); a list's name is its identity, as the namesakes pair. A link to a list no other book of the host has, or a host row naming another of the extension's entities (an item's template, a class's or a race's parent, a spell's save, a save's or a skill's ability, a class's skill or its levels' saves, granted feats and powers: `EntityReferences.findMany`), refuses the unsubscribe with a `ConflictError` naming them, before anything changes
 5. Deletes those COW copies and their snapshots
 6. Removes `extensionId` from the array
 7. Soft-deletes the tracking row
@@ -314,10 +348,11 @@ See [docs/access.md](./access.md) for the full policy matrix across rulesets, ch
 `inUse` is about one thing: would deletion orphan a character pick on the
 **current ruleset or any descendant fork**? Nothing else.
 
-- **Scoping is current + descendants.** The Character* repos' in-use
-  `exists` takes `{ <entity>Id, rulesetId }` and internally joins on `rulesetsInRules`
-  with `id = $rulesetId OR $rulesetId = ANY(ancestor_ruleset_ids)` — single
-  SQL roundtrip. With forks of forks blocked, descendants of a base ruleset
+- **Scoping is current + descendants.** The in-use check,
+  `EntityReferences.exists`, reads every character row naming an entity of the
+  type (`ENTITY_REFERENCES`), and joins the character's ruleset on
+  `id = $rulesetId`, or `$rulesetId` among its ancestors or its extensions — one
+  query per such column. With forks of forks blocked, descendants of a base ruleset
   are at most one level deep, but the query shape stays the same so the
   guard is robust if depth ever changes. A parent author deleting a feat
   that a downstream fork's character picked is blocked; a fork deleting an
@@ -327,11 +362,11 @@ See [docs/access.md](./access.md) for the full policy matrix across rulesets, ch
 - **Picks stored under a source id count against its local copy.** A
   character that picked an inherited entity keeps the source id after the fork
   copies it. Deleting that copy leaves a tombstone hiding the source, which
-  would orphan the pick. Every in-use `exists` matches the entity id with
-  `idMatches`, so inside the delete's `withRulesetScope` it also matches the
-  pre-copy ids that resolve to the copy. `revertOverride` runs outside a scope
-  and matches the copy's own id only: restoring the source keeps pre-copy
-  picks valid.
+  would orphan the pick. A delete passes the entity's equivalent ids
+  (`rulesetData.cow.getEquivalentIds`), so the check also matches the pre-copy
+  ids that resolve to the copy. Restoring the source checks no pick: it points
+  the copy's picks at the source, and keeps the pre-copy ones valid (see
+  [Restoring an override](#restoring-an-override)).
 
 - **Don't include class-side references** (`klass_level_feats`,
   `klass_level_powers`, `klass_skills`, etc.). Class definitions are
@@ -345,8 +380,8 @@ The principle: only protect what the user *invested* in (their character
 picks). Author-owned data that breaks via cascade is recoverable by the author.
 
 The shared check lives in `services/rulesets/characterPicks.ts` as `hasCharacterPicks(tx, entityType,
-ids, rulesetId)` and is reused by every entity-delete service and
-`revertOverride`. One helper, one scoping rule, one source of truth.
+ids, rulesetId)` (a class by its levels) and is reused by every entity-delete service and
+a class level's or a class skill's removal. One helper, one scoping rule, one source of truth.
 
 ## Entity Services Pattern
 
@@ -870,7 +905,7 @@ An audit on 2026-04-16 identified real leaks and some false alarms. It predates 
 | File | Purpose |
 |---|---|
 | `server/cow/views/` | `withRulesetScope` / `withRulesetScopes` (consumer entry points), `RulesetViews` (the cache), and what it reads with: a ruleset's own rows (`RawDataReader`) and the rows its `CowData` is built from (`CowDataReader`): copy-on-write's read side. `CowData` itself (`engine/core/cow/CowData.ts`, built by the engine's `Engine.copyOnWrite().buildData`) is what a scope resolves ids through. |
-| `server/cow/writes/` | `EntityEdit` (the row an entity's change writes), `CustomizationEdit` (a customization's), `EntityNames` (the names a create takes), `EntityCopy` (a copy of an inherited entity), `CustomizationCopies` and `EntityRepositories`: copy-on-write's write side. `EntityCopy` merges sibling data into newly COW'd local copies by the engine's rules (`Engine.copyOnWrite().mergeCustomizations`, `mergeAptitudeLinks`). Sibling read-time merging lives in the compose step (`engine/core/view/RulesetComposition.ts`). |
+| `server/cow/writes/` | `EntityEdit` (the row an entity's change writes), `CustomizationEdit` (a customization's), `EntityNames` (the names a create takes), `EntityCopy` (a copy of an inherited entity), `EntityRevert` (a copy reverted to its source, what names it repointed), `CustomizationCopies` and `EntityRepositories`: copy-on-write's write side. `EntityCopy` merges sibling data into newly COW'd local copies by the engine's rules (`Engine.copyOnWrite().mergeCustomizations`, `mergeAptitudeLinks`). Sibling read-time merging lives in the compose step (`engine/core/view/RulesetComposition.ts`). |
 | `server/services/rulesets/RulesetsService.ts` | `forkRuleset`, `publishRuleset`, `archiveRuleset` |
 | `server/services/rulesets/extensions/RulesetExtensionsService.ts` | `subscribeExtension`, `unsubscribeExtension`, `getExtensions` |
 | `server/services/rulesets/changes/RulesetChangesService.ts` | `getChanges`, `revertOverride` |

@@ -1,43 +1,13 @@
 import { and, eq, getTableColumns, inArray, isNull } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
-import { aptitudesInRules, featsInRules, levelFeatsInCharacter } from "@/drizzle/schema.ts";
+import { featsInRules, levelFeatsInCharacter } from "@/drizzle/schema.ts";
 
 import LevelPicksRepository from "./LevelPicksRepository.ts";
 
 class CharacterLevelFeatsRepository extends LevelPicksRepository<typeof levelFeatsInCharacter> {
   constructor() {
     super(levelFeatsInCharacter);
-  }
-
-  /**
-   * Whether a character on the ruleset (or a descendant) picked the entity, or, with an extension, one of its entities:
-   * an in-use check.
-   */
-  async exists(
-    db: Db,
-    where:
-      | { featIds: string[]; rulesetId: string }
-      | { aptitudeIds: string[]; rulesetId: string }
-      | { extensionRulesetId: string; hostRulesetId: string; shadowFeatIds: string[] }
-      | { extensionRulesetId: string; hostRulesetId: string; shadowAptitudeIds: string[] },
-  ): Promise<boolean> {
-    const { table } = this;
-    if ("featIds" in where)
-      return await this.existsPick(db, table.featId, { ids: where.featIds, rulesetId: where.rulesetId });
-    if ("aptitudeIds" in where)
-      return await this.existsPick(db, table.aptitudeId, { ids: where.aptitudeIds, rulesetId: where.rulesetId });
-
-    if ("shadowFeatIds" in where) {
-      return await this.existsPickFromExtension(db, table.featId, featsInRules, {
-        ...where,
-        shadowIds: where.shadowFeatIds,
-      });
-    }
-    return await this.existsPickFromExtension(db, table.aptitudeId, aptitudesInRules, {
-      ...where,
-      shadowIds: where.shadowAptitudeIds,
-    });
   }
 
   /**

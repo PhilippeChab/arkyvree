@@ -69,6 +69,19 @@ class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInR
       where: and(eq(this.table.sourceEntityId, where.sourceEntityId), eq(this.table.rulesetId, where.rulesetId)),
     });
   }
+
+  /**
+   * Points the snapshots of one source entity at another: a revert's, whose fork's copy the rulesets built on the fork
+   * copied in turn, so their copies stand for the source. None of them holds a snapshot of the other already: its view
+   * showed the fork's copy in the other's place.
+   */
+  async update(db: Db, values: { sourceEntityId: string }, where: { sourceEntityId: string }) {
+    return await db
+      .update(this.table)
+      .set(values)
+      .where(eq(this.table.sourceEntityId, where.sourceEntityId))
+      .returning();
+  }
 }
 
 export default EntitySnapshotsRepository;

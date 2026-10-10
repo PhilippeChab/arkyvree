@@ -13,22 +13,24 @@ import { CowDataReader } from "@/server/cow/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import {
   Aptitudes,
+  EntityReferences,
   FeatsAptitudes,
   KlassLevelFeats,
   KlassLevelPowers,
   KlassLevels,
   PowersAptitudes,
+  RULESET_ENTITY_TYPES,
   RulesetEntities,
 } from "@/server/repositories/index.ts";
 
 /** The fork's copies of the book's entities, by entity type: what the unsubscribe deletes, references and all. */
-type Copies = ReadonlyMap<string, string[]>;
+export type Copies = ReadonlyMap<string, string[]>;
 
 /** How many lost references the refusal names. */
 const NAMED_LOSSES = 10;
 
-/** The entity types a fork's rows can name besides lists: what `RulesetEntities.findReferences` looks for. */
-const REFERENCED_TYPES = ["abilities", "feats", "items", "klasses", "powers", "races", "saves", "skills"] as const;
+/** The entity types whose entities the fork's rows name by their ids: every one but the lists, named by their names. */
+const REFERENCED_TYPES = RULESET_ENTITY_TYPES.filter((type) => type !== "aptitudes");
 
 /** The lists leaving the fork, by id, with their names: the book's own, and the fork's copies of them. */
 async function findDepartingLists(tx: Db, extensionId: string, copies: Copies) {
@@ -52,8 +54,8 @@ async function findKeptLists(tx: Db, ruleset: RulesetSources, extensionId: strin
 
 /**
  * What the fork keeps that names the book's entities (or the fork's copies of them) other than its lists, each of
- * which would dangle once they're gone (`RulesetEntities.findReferences`): an item's template, a class's skill or
- * granted feat… The rows the unsubscribe deletes, the copies, are left out.
+ * which would dangle once they're gone (`EntityReferences.findMany`): an item's template, a class's skill or granted
+ * feat… The rows the unsubscribe deletes, the copies, are left out.
  */
 async function findLostReferences(tx: Db, rulesetId: string, extensionId: string, copies: Copies) {
   const names = new Map<string, string>();
@@ -65,7 +67,7 @@ async function findLostReferences(tx: Db, rulesetId: string, extensionId: string
     for (const entity of entities) names.set(entity.id, entity.name);
   }
   const deleted = new Set([...copies.values()].flat());
-  const references = await RulesetEntities.findReferences(tx, { rulesetId, entityIds: [...names.keys()] });
+  const references = await EntityReferences.findMany(tx, { rulesetId, entityIds: [...names.keys()] });
   return references
     .filter((reference) => !deleted.has(reference.id))
     .map((reference) => `${reference.name}, which uses ${names.get(reference.targetId)}`);

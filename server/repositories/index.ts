@@ -21,6 +21,7 @@ export {
   Characters,
   Contributors,
   EmailVerifications,
+  EntityReferences,
   EntitySnapshots,
   Exports,
   Feats,
@@ -55,5 +56,6 @@ export {
   StarredRulesets,
   Users,
 } from "./instances.ts";
+export type { ReferencedType } from "./rulesets/entityReferences.ts";
 export { RULESET_ENTITY_TYPES } from "./rulesets/entityTables.ts";
 export type { RulesetEntityType } from "./rulesets/entityTables.ts";

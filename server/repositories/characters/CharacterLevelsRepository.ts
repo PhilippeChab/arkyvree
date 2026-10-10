@@ -1,74 +1,12 @@
-import { and, eq, inArray, type InferInsertModel, isNull, or, sql } from "drizzle-orm";
+import { and, eq, inArray, type InferInsertModel, isNull, sql } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
-import {
-  charactersInCharacter,
-  klassesInRules,
-  klassLevelsInRules,
-  levelsInCharacter,
-  rulesetsInRules,
-} from "@/drizzle/schema.ts";
-import { include } from "@/lib/mixins.ts";
+import { levelsInCharacter } from "@/drizzle/schema.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
-import { ChecksRulesetUse } from "@/server/repositories/concerns/ChecksRulesetUse.ts";
-import { ResolvesCopies } from "@/server/repositories/concerns/ResolvesCopies.ts";
 
-class CharacterLevelsRepository extends include(
-  BaseRepository<typeof levelsInCharacter>,
-  ChecksRulesetUse,
-  ResolvesCopies,
-) {
+class CharacterLevelsRepository extends BaseRepository<typeof levelsInCharacter> {
   constructor() {
     super(levelsInCharacter);
-  }
-
-  private async existsKlassLevelPick(db: Db, where: { klassLevelIds: string[]; rulesetId: string }) {
-    const rows = await db
-      .select({ id: this.table.id })
-      .from(this.table)
-      .innerJoin(charactersInCharacter, eq(charactersInCharacter.id, this.table.characterId))
-      .innerJoin(rulesetsInRules, this.rulesetOrDescendant(charactersInCharacter.rulesetId, where.rulesetId))
-      .where(and(this.idMatches(this.table.klassLevelId, where.klassLevelIds), isNull(this.table.deletedAt)))
-      .limit(1);
-    return rows.length > 0;
-  }
-
-  private async existsKlassPick(db: Db, where: { klassIds: string[]; rulesetId: string }) {
-    const result = await db
-      .select({ id: this.table.id })
-      .from(this.table)
-      .innerJoin(klassLevelsInRules, eq(this.table.klassLevelId, klassLevelsInRules.id))
-      .innerJoin(charactersInCharacter, eq(charactersInCharacter.id, this.table.characterId))
-      .innerJoin(rulesetsInRules, this.rulesetOrDescendant(charactersInCharacter.rulesetId, where.rulesetId))
-      .where(and(this.idMatches(klassLevelsInRules.klassId, where.klassIds), isNull(this.table.deletedAt)))
-      .limit(1);
-    return result.length > 0;
-  }
-
-  // Archived characters count: one can be restored, and its picks must still resolve.
-  private async existsKlassPickFromExtension(
-    db: Db,
-    where: { extensionRulesetId: string; hostRulesetId: string; shadowKlassIds: string[] },
-  ) {
-    const klassCondition =
-      where.shadowKlassIds.length > 0
-        ? or(eq(klassesInRules.rulesetId, where.extensionRulesetId), inArray(klassesInRules.id, where.shadowKlassIds))
-        : eq(klassesInRules.rulesetId, where.extensionRulesetId);
-    const rows = await db
-      .select({ id: this.table.id })
-      .from(this.table)
-      .innerJoin(
-        charactersInCharacter,
-        and(
-          eq(charactersInCharacter.id, this.table.characterId),
-          eq(charactersInCharacter.rulesetId, where.hostRulesetId),
-        ),
-      )
-      .innerJoin(klassLevelsInRules, eq(klassLevelsInRules.id, this.table.klassLevelId))
-      .innerJoin(klassesInRules, eq(klassesInRules.id, klassLevelsInRules.klassId))
-      .where(and(isNull(this.table.deletedAt), klassCondition))
-      .limit(1);
-    return rows.length > 0;
   }
 
   /**
@@ -90,22 +28,6 @@ class CharacterLevelsRepository extends include(
   // Intentional removal — hard delete
   async delete(db: Db, where: { id: string }) {
     return await db.delete(this.table).where(eq(this.table.id, where.id));
-  }
-
-  /**
-   * Whether a character on the ruleset (or a descendant) picked the entity, or, with an extension, one of its entities:
-   * an in-use check.
-   */
-  async exists(
-    db: Db,
-    where:
-      | { klassIds: string[]; rulesetId: string }
-      | { klassLevelIds: string[]; rulesetId: string }
-      | { extensionRulesetId: string; hostRulesetId: string; shadowKlassIds: string[] },
-  ): Promise<boolean> {
-    if ("klassIds" in where) return await this.existsKlassPick(db, where);
-    if ("klassLevelIds" in where) return await this.existsKlassLevelPick(db, where);
-    return await this.existsKlassPickFromExtension(db, where);
   }
 
   /** The levels in the order the character took them (`position`), a character's after another's by its id. */

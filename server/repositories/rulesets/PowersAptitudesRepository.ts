@@ -19,7 +19,7 @@ class PowersAptitudesRepository extends BaseRepository<typeof powersAptitudesInR
   }
 
   // Exception to soft-delete: disposable configuration data — intentional removal
-  async delete(db: Db, where: { aptitudeId?: string; powerId: string } | { aptitudeId: string }) {
+  async delete(db: Db, where: { aptitudeId?: string; powerId: string }) {
     return await db
       .delete(this.table)
       .where(

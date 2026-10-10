@@ -19,7 +19,7 @@ class KlassSkillsRepository extends BaseRepository<typeof klassSkillsInRules> {
   }
 
   // Exception to soft-delete: disposable configuration data — intentional removal
-  async delete(db: Db, where: { klassId: string; skillId: string } | { klassId: string } | { skillId: string }) {
+  async delete(db: Db, where: { klassId: string; skillId: string }) {
     return await db
       .delete(this.table)
       .where(
