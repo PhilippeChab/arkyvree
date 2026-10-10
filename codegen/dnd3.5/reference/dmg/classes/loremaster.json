@@ -202,7 +202,7 @@
       },
       {
         "operator": "greater_than_or_equal",
-        "target": "skills.spellcraft.rank",
+        "target": "skills.knowledge.rank",
         "value": "10",
         "valueType": "number"
       },
@@ -211,6 +211,77 @@
         "target": "feats.metamagic.count",
         "value": "{{ 3 - [feats.itemcreation.count] }}",
         "valueType": "number"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "feats.skillfocusknowledgearcana.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "equal",
+            "target": "feats.skillfocusknowledgearchitectureandengineering.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "equal",
+            "target": "feats.skillfocusknowledgedungeoneering.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "equal",
+            "target": "feats.skillfocusknowledgegeography.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "equal",
+            "target": "feats.skillfocusknowledgehistory.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "equal",
+            "target": "feats.skillfocusknowledgelocal.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "equal",
+            "target": "feats.skillfocusknowledgenature.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "equal",
+            "target": "feats.skillfocusknowledgenobilityandroyalty.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "equal",
+            "target": "feats.skillfocusknowledgepsionics.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "equal",
+            "target": "feats.skillfocusknowledgereligion.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "equal",
+            "target": "feats.skillfocusknowledgetheplanes.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ]
       }
     ],
     "reviewed": [

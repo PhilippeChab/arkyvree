@@ -5,7 +5,7 @@
  * - No modifiers defined — review if this class needs any
  */
 
-import { gte, or } from "@/content/core/builders/customization/requirements.ts";
+import { eq, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
 
 export const LOREMASTER: ClassSeed = {
@@ -44,13 +44,26 @@ export const LOREMASTER: ClassSeed = {
   ],
   requirements: [
     or(gte("spellcasting.arcane", 3), gte("spellcasting.divine", 3)),
-    gte("skills.spellcraft.rank", 10),
+    gte("skills.knowledge.rank", 10),
     {
       target: "feats.metamagic.count",
       operator: "greater_than_or_equal",
       value: "{{ 3 - [feats.itemcreation.count] }}",
       valueType: "number",
     },
+    or(
+      eq("feats.skillfocusknowledgearcana.possessed"),
+      eq("feats.skillfocusknowledgearchitectureandengineering.possessed"),
+      eq("feats.skillfocusknowledgedungeoneering.possessed"),
+      eq("feats.skillfocusknowledgegeography.possessed"),
+      eq("feats.skillfocusknowledgehistory.possessed"),
+      eq("feats.skillfocusknowledgelocal.possessed"),
+      eq("feats.skillfocusknowledgenature.possessed"),
+      eq("feats.skillfocusknowledgenobilityandroyalty.possessed"),
+      eq("feats.skillfocusknowledgepsionics.possessed"),
+      eq("feats.skillfocusknowledgereligion.possessed"),
+      eq("feats.skillfocusknowledgetheplanes.possessed"),
+    ),
   ],
   casterLevelAdvancement: { type: "any", levels: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
   classFeatureAptitude: "Loremaster Class Feature",
