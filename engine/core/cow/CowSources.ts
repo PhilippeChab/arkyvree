@@ -23,10 +23,8 @@ export interface RulesetSources {
  * saves, skills, items, languages, mechanics) a same-name match across extensions is more likely a genuine collision
  * than a reprint — auto-merging a race or a class of one name between two homebrew packages would silently corrupt
  * content. Aptitudes are also excluded; they have their own name-grouping pass since name = identity universally for
- * them.
- *
- * `NAME_FALLBACK_ENTITY_TYPES` is the canonical list: `ExtensionNames` reads it too, so the runtime pairing and the
- * subscribe-time block agree on which types pair.
+ * them. A subscribe reads the view's pairing as it builds it (`EntityNames`, the server's), so it refuses what the view
+ * would show twice, never what it pairs.
  */
 export const NAME_FALLBACK_ENTITY_TYPES = ["feats", "powers"] as const;
 

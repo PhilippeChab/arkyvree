@@ -26,17 +26,6 @@ class ItemsRepository extends RulesetEntityRepository<typeof itemsInRules> {
     });
   }
 
-  private async findNamed(db: Db, where: { names: string[]; rulesetIds: string[] }) {
-    if (where.rulesetIds.length === 0 || where.names.length === 0) return [];
-    return await db.query.itemsInRules.findMany({
-      where: this.where([
-        inArray(this.table.rulesetId, where.rulesetIds),
-        inArray(this.table.name, where.names),
-        isNull(this.table.deletedAt),
-      ]),
-    });
-  }
-
   private async findTemplates(
     db: Db,
     where: { ancestorRulesetIds?: string[]; isTemplate: true; rulesetId: string; type?: string },
@@ -54,20 +43,15 @@ class ItemsRepository extends RulesetEntityRepository<typeof itemsInRules> {
     });
   }
 
-  /**
-   * Items by id, by name in some rulesets, the copies of an item (`sourceItemIds`: the ids they may hold), or a
-   * ruleset's templates.
-   */
+  /** Items by id, the copies of an item (`sourceItemIds`: the ids they may hold), or a ruleset's templates. */
   async findMany(
     db: Db,
     where:
       | { ids: string[] }
-      | { names: string[]; rulesetIds: string[] }
       | { sourceItemIds: string[] }
       | { ancestorRulesetIds?: string[]; isTemplate: true; rulesetId: string; type?: string },
   ) {
     if ("ids" in where) return await this.findListed(db, where);
-    if ("names" in where) return await this.findNamed(db, where);
     if ("sourceItemIds" in where) return await this.findCopies(db, where);
     return await this.findTemplates(db, where);
   }

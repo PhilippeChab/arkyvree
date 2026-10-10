@@ -3,8 +3,6 @@ import {
   CowDataBuilder,
   type CowRows,
   CowSources,
-  ExtensionNames,
-  NAME_PAIRED_ENTITY_TYPES,
   type RulesetSources,
 } from "@/engine/core/cow/index.ts";
 import {
@@ -23,9 +21,6 @@ import Modules from "./Modules.ts";
  * before there's a view to bind.
  */
 export default class CopyOnWriteEngine {
-  /** The types whose entities pair by name in a view, whoever holds them: a subscribe reads none of their names. */
-  readonly namePairedEntityTypes: readonly string[] = NAME_PAIRED_ENTITY_TYPES;
-
   /** A ruleset's copy-on-write data, from the rows read for it (`getReads`, `getPairedKlassIds`). */
   buildData(ruleset: RulesetSources, rows: CowRows): CowData {
     return CowDataBuilder.build(ruleset, rows);
@@ -43,11 +38,6 @@ export default class CopyOnWriteEngine {
    */
   buildView(ruleset: { baseRules: BaseRules }, chain: RulesetRawData[], cow: CowData): RulesetData {
     return new RulesetComposition(chain, cow, Modules.of(ruleset.baseRules).createPropertyTypes()).build();
-  }
-
-  /** Refuses subscribing a ruleset to new extensions that would surface two entities of a name in its view. */
-  checkExtensionNames(...args: Parameters<typeof ExtensionNames.check>) {
-    ExtensionNames.check(...args);
   }
 
   /** The classes whose levels pair by number: those the ruleset copied (its snapshots say), and their sources. */

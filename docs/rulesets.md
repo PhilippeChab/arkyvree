@@ -171,23 +171,45 @@ The engine builds a ruleset's `CowData` (`Engine.copyOnWrite().buildData`, by it
 | `sourceEntityId` | Original ancestor entity ID |
 | `forkedEntityId` | Child's local COW copy ID |
 
-### Names of new entities
+### Names of entities
 
-Every entity create (and bulk item variants) checks the name with
-`EntityNames.assertNameAvailable` / `assertAncestorNamesHidden` against the fork's
-composed view. A local entity, or an inherited one that is still visible, with
-the same name blocks it. Inherited entities hidden by an override
-(`cow.isHidden`: overridden, or a sibling loser) do not. If a hidden ancestor's local
-copy was deleted, its snapshot is a tombstone, and `EntityNames.repointTombstone`
-moves it to the new entity. A live local copy keeps its snapshot even after a
+No change makes a view show two entities of a kind under one name. Every entity
+create (`EntityNames.assertNameAvailable`), bulk item variants and every rename
+(`assertRenameAvailable`, from `EntityWriter.update`) check the name against the
+fork's composed view, by one read for every name (`assertNamesAvailable`). A
+local entity, or an inherited one that is still visible, with the same name
+blocks it: a conflict (409) naming the name. Inherited entities hidden by an
+override (`cow.isHidden`: overridden, or a sibling loser) do not. Lists too: a
+fork's list takes a name no list of its view has, though its view pairs lists by
+name
+(see [Aptitudes and the Sibling Map](#aptitudes-and-the-sibling-map)).
+An edit that keeps its entity's name checks none: an inherited entity's first edit
+copies it under its name, and a duplicate stored before the rename was checked
+stays editable. Names compare as written: a case-only change is a new name.
+
+A restore (`assertRestoreAvailable`, from `EntityRevert`) shows the source again
+under its name, as a rename back to it would: refused while the view shows another
+entity of it, unless the copy kept the source's name. A subscribe
+(`assertExtensionNamesAvailable`) counts the names the new extensions' entities
+have (a renamed copy's too) in the view as it is and as it would be once
+subscribed (its `CowData` read for the new extensions, so what that view pairs
+counts once), and refuses one it would show more often than once and than now: a
+name the view already shows twice (a familiar's race and an animal companion's of
+one name, which a race's kind tells apart) blocks no subscribe that leaves it so.
+
+If a hidden ancestor's local copy was deleted, its snapshot is a tombstone, and
+`EntityNames.repointTombstone` moves it to the new entity a create makes; a
+renamed entity takes over none. A live local copy keeps its snapshot even after a
 rename, so picks of the source keep resolving to that copy.
 
 ### Restoring an override
 
 A fork's **Restore Parent Version** (`RulesetChangesService.revertOverride`) reverts
 its copy of an inherited entity to the source: `EntityRevert` (`server/cow/writes/`),
-`EntityCopy`'s inverse. Every row naming the copy names the source instead, which
-the views show in the copy's place once it's gone. The rows that name an entity are
+`EntityCopy`'s inverse, refused while the fork's view shows another entity of the
+source's name (`EntityNames.assertRestoreAvailable`, see
+[Names of entities](#names-of-entities)). Every row naming the copy names the source
+instead, which the views show in the copy's place once it's gone. The rows that name an entity are
 one list, by the entity's type (`ENTITY_REFERENCES`,
 `server/repositories/rulesets/entityReferences.ts`), which `EntityReferences` reads
 for every use: a revert's repoint (`update`: a restore's, and an unsubscribe's of
@@ -274,7 +296,7 @@ Aptitudes are named pools — they have `name` but no per-ruleset content — so
 
 - **Base-inherited names** (`General`, `Cleric Domain`, `Fighter Bonus Feat`, etc.): exactly one row exists, in base. Extensions and forks adding new feats/spells just link to base's id via `aptMap`. No sibling rows, no dedup needed.
 - **Sibling-shared names** (e.g. `Assassin Spells`, `Blackguard Spells`, `Hexblade Spells`): multiple extensions each create their own copy because siblings can't FK to each other. A book copies another book's spell list that its spells are on: one its spells' level line names (a Complete Adventurer spell's "Assassin 1"), or one that draws on other classes' lists (`spells.inheritsFrom`: Complete Arcane's `Sublime Chord Spells` takes Complete Adventurer's bard and sorcerer spells), so a list holds the spells of every book a ruleset takes, as the copies of a core spell merge. The sibling mechanism (`CowDataBuilder`'s aptitude pass, `engine/core/cow/CowDataBuilder.ts`) picks a winner per name across the ruleset and its source chain: the ruleset's own list (its own, or its copy of an inherited one) first, then the chain's closest. Losers become the winner's siblings (`CowData.siblingIds`), so the compose step drops them, and its aliases, so references to a loser resolve to the visible winner (its local copy, if the fork has one). They are intentionally not overrides, which are for true copies only. The user never sees duplicates. A list's feats and spells, on the ruleset's pages and in the level-up's pickers, are the composed view's (`RulesetData.listFeatIds` / `listPowerIds`, which the engine's lists and pickers filter by: `entities("feats").openList`, `entities("powers").openList`, `levelUp().openFeatPicker`, `openPowerPicker`), never the stored links: the winning copy of a feat or a spell takes every copy's links, so a link stored on a losing copy of either, or of the list, still counts.
-- **A fork's list of a book's list's name**: a fork's own list, or its copy of one, pairs with the lists of its name its books bring, as theirs pair with each other, so a subscribe never refuses a list's name (`NAME_PAIRED_ENTITY_TYPES`), and a book that later adds a list of a name the fork has shows none twice. The fork's list wins, as its copy of a book's would: the spells and feats on the books' lists of its name join it, and a link, a class's grant or a character's pick naming a book's list reads the fork's, at which an unsubscribe points them. Unlike a feat or a spell, whose clash between a fork and a book a subscribe refuses (a homebrew feat and a book's of one name may be different things, whose rules a merge would mix), a list has nothing of its own to merge: its name is what it is.
+- **A fork's list of a book's list's name**: a fork's own list, or its copy of one, pairs with the lists of its name its books bring, as theirs pair with each other, so a subscribe never refuses a list's name (the view it would have pairs them: `EntityNames.assertExtensionNamesAvailable`), and a book that later adds a list of a name the fork has shows none twice. The fork's list wins, as its copy of a book's would: the spells and feats on the books' lists of its name join it, and a link, a class's grant or a character's pick naming a book's list reads the fork's, at which an unsubscribe points them. Unlike a feat or a spell, whose clash between a fork and a book a subscribe refuses (a homebrew feat and a book's of one name may be different things, whose rules a merge would mix), a list has nothing of its own to merge: its name is what it is.
 
 ### COW-ing a Merged Entity (Sibling Bake-in)
 
@@ -320,7 +342,7 @@ The validators that set `kind = 'extension'` enforce: must be a fork, must not s
 ### Subscribe (`subscribeExtension`)
 
 1. Validates: ruleset is a fork, not archived, user is owner, extension is `kind = 'extension'` + published + shares the same base + (if user-owned) public + the host's own `kind` is `'ruleset'`
-2. Checks not already subscribed (`extensionRulesetIds.includes`), and that its view would show no two entities of a name (the engine's `copyOnWrite().checkExtensionNames`, over the native names of the host's, its extensions' and the new one's entities: two extensions' entities of a type `NAME_FALLBACK_ENTITY_TYPES` lists pair instead, and lists pair by name whoever holds them, the host's own too: `NAME_PAIRED_ENTITY_TYPES`)
+2. Checks not already subscribed (`extensionRulesetIds.includes`), and that its view would show no name more often than once and than it does now (`EntityNames.assertExtensionNamesAvailable`, see [Names of entities](#names-of-entities)): the names of the new extensions' entities, their copies included, counted in the view as it is and as it would be, read with its `CowData` once subscribed, so what that view pairs (an extension's copy of an inherited entity, two books' feats or spells of a type `NAME_FALLBACK_ENTITY_TYPES` lists, lists of a name, whoever holds them, the host's own too) counts once
 3. Appends `extensionId` to `extensionRulesetIds` array
 4. Creates tracking row in `ruleset_extensions` (UI metadata: name, `updateAvailable` flag)
 
@@ -427,7 +449,7 @@ return await this.writer.delete(session, rulesetId, languageId, (scope) =>
 ```
 
 - **A create** checks access, then the name against the composed view (`EntityNames.assertNameAvailable`), plans, writes the row, points a tombstone the name hides at it (`repointTombstone`), and writes its list links (`listLinks.ts`), what its plan writes beside it (`writeEntityWrites`) and the customizations it copies (an item's duplicate's).
-- **An update** writes the row the view's entity resolves to: the fork's own, or the copy of an inherited one (`EntityEdit.cowToEdit`), refused when stale (a copy's `updatedAt` isn't the client's). It replaces its list links when the plan gives them.
+- **An update** checks access, plans, checks a new name as a create does (`EntityNames.assertRenameAvailable`), and writes the row the view's entity resolves to: the fork's own, or the copy of an inherited one (`EntityEdit.cowToEdit`), refused when stale (a copy's `updatedAt` isn't the client's). It replaces its list links when the plan gives them.
 - **A delete** is refused while the entity is in use: picked by a character, unless the kind says otherwise (a saving throw a class level grants, `inUse`). It deletes the row the entity resolves to (`EntityEdit.cowToDelete`), the fork's own locked first, with what its plan removes.
 
 Each records its activity (`createLanguage`, `updateLanguage`, `deleteLanguage`: the writer's activity name), which carries the ruleset's base rules, as every change to a ruleset's content does (`createActivityWithNotifications` reads them off the ruleset it notifies the stakeholders of: the client names the change in the ruleset's words, a 3.5 power a spell), and drops the ruleset's views. A kind adds what's its own: what its plan reads (a feat's tombstone ancestor, whether it was generated, an item template's copies when its edit changes its type), what refuses its delete (`refuse`: an item template's copies) and what it compares to the entity it was (an item's template, from the row).
@@ -516,7 +538,7 @@ engine/
 │   ├── view/                              (RulesetView, RulesetData, with a list's members, RulesetComposition, the
 │   │                                      sibling merge: SiblingMerge, SiblingRows)
 │   ├── cow/                               (CowData, CowDataBuilder; CowSources: the source chain and the rows CowData
-│   │                                      is read from; ExtensionNames: the extensions' name check)
+│   │                                      is read from)
 │   ├── customizations/                    (ModifierEdits, PropertyEdits, RequirementEdits, on CustomizationEdits:
 │   │                                      an entity's customizations, bound to it, read from its bucket in the
 │   │                                      view, described, and what they store, checked; TargetLabels:
@@ -791,7 +813,7 @@ What the characters part guarantees, whatever the ruleset: the operations that g
 - **Inventory**: `planInventoryEntry` reads an added item as the view has it (`RequestIds`: a copy's for its source's id), refusing one the view shows none of (unknown, of neither the character's ruleset nor its source chain, or deleted), as `planLanguages` refuses a language, and charges set one without the other or remaining past total; the ruleset's `planPlacement` answers where the item is held, with what equipping it there checks, and the plan names the item by the view's id.
 - **Ability scores**: `planAbilities` and `planCreate` refuse a score past the bounds its `describeCreation` gives (`scores`), an ability not of the ruleset or given two scores (by its source's id and its copy's), and `planCreate` a race not of the ruleset or not a player's (of kind `pc`); an unset score starts at `scores.start`, and each is planned under the view's id of its ability, the race too.
 
-A part's operation is a method of a handle of `engine/api/`, which `Engine` hands out, dispatched by the view's base rules (`Modules.of(view.ruleset.baseRules)`, which `Engine.for(scope)` reads once; a content operation by the base rules its caller names, `Engine.forRules(baseRules)`, with that module's own types: its seeded fields). The target paths' handle asks the target paths (`targetPaths()`: `list`, `validate`, `getCompletions`, which `CategoryPaths` answers, over `PathChecks` and `PathCompletions`; `planModifier`, a character's modifier's row, as an entity's modifier plans its own: `ModifierEdits.rowOf`, its value checked by `CategoryPaths.checkValue` and a number stored as the sheet reads it, `LiteralValue.normalize`), and the view's build asks the order (`Engine.copyOnWrite().buildView`). The properties' and the customizations', which no ruleset changes but by its factories, ask the core's classes (`engine/core/customizations/`): `PropertyTypeCatalog` adds the types and values the ruleset's own properties use to its rules' (`createPropertyTypes`: `propertyTypes()`'s `list`, `getTypeCompletions`, `getValueCompletions`); `ModifierEdits`, `PropertyEdits` and `RequirementEdits` (on `CustomizationEdits`, bound to the entity as their handles are) describe an entity's customizations and plan their saves, a modifier's or a requirement's row checked against its target paths (`modifiers(entityType, entityId)`: `describe`, `describeAll`, `planCreate`, `planEdit`, `planDelete`, and `properties(…)` and `requirements(…)` alike; a list's, `targetPaths().describeModifiers`, labeled as the entity's are: `TargetLabels.describe`), on the entity the view has (`CustomizedEntity.find`, refused as not found otherwise). Copy-on-write's (`Engine.copyOnWrite()`) ask the core's classes too (`CowSources`: `buildSourceChain`, `getReads`; `ExtensionNames`: `checkExtensionNames`; `SiblingMerge`: `mergeCustomizations`). `entities(type)` hands out a kind's class, whose `find` and `describe` read the view (`RulesetData.find`; a customizable kind's `describe` with its customizations), and `checkPublishable` asks the ruleset part's `checkPublishable`, which an extension passes. An operation takes the data its caller read: the view (`RulesetView`: the ruleset and its `rulesetData`), which `Engine.for` binds, a character's rows (`CharacterInput`: its record, its rows, a bonded creature's master's), which `character(input)` binds, a request's body. It answers data:
+A part's operation is a method of a handle of `engine/api/`, which `Engine` hands out, dispatched by the view's base rules (`Modules.of(view.ruleset.baseRules)`, which `Engine.for(scope)` reads once; a content operation by the base rules its caller names, `Engine.forRules(baseRules)`, with that module's own types: its seeded fields). The target paths' handle asks the target paths (`targetPaths()`: `list`, `validate`, `getCompletions`, which `CategoryPaths` answers, over `PathChecks` and `PathCompletions`; `planModifier`, a character's modifier's row, as an entity's modifier plans its own: `ModifierEdits.rowOf`, its value checked by `CategoryPaths.checkValue` and a number stored as the sheet reads it, `LiteralValue.normalize`), and the view's build asks the order (`Engine.copyOnWrite().buildView`). The properties' and the customizations', which no ruleset changes but by its factories, ask the core's classes (`engine/core/customizations/`): `PropertyTypeCatalog` adds the types and values the ruleset's own properties use to its rules' (`createPropertyTypes`: `propertyTypes()`'s `list`, `getTypeCompletions`, `getValueCompletions`); `ModifierEdits`, `PropertyEdits` and `RequirementEdits` (on `CustomizationEdits`, bound to the entity as their handles are) describe an entity's customizations and plan their saves, a modifier's or a requirement's row checked against its target paths (`modifiers(entityType, entityId)`: `describe`, `describeAll`, `planCreate`, `planEdit`, `planDelete`, and `properties(…)` and `requirements(…)` alike; a list's, `targetPaths().describeModifiers`, labeled as the entity's are: `TargetLabels.describe`), on the entity the view has (`CustomizedEntity.find`, refused as not found otherwise). Copy-on-write's (`Engine.copyOnWrite()`) ask the core's classes too (`CowSources`: `buildSourceChain`, `getReads`; `SiblingMerge`: `mergeCustomizations`). `entities(type)` hands out a kind's class, whose `find` and `describe` read the view (`RulesetData.find`; a customizable kind's `describe` with its customizations), and `checkPublishable` asks the ruleset part's `checkPublishable`, which an extension passes. An operation takes the data its caller read: the view (`RulesetView`: the ruleset and its `rulesetData`), which `Engine.for` binds, a character's rows (`CharacterInput`: its record, its rows, a bonded creature's master's), which `character(input)` binds, a request's body. It answers data:
 
 - **A description**: what the API answers (`character(input).describe`, `class(klassId).describeLevels`), a picker's or a list's filters, which the server reads a page with, and what describes the page it read (`levelUp().openFeatPicker`'s `describe`, `entities("feats").openList`'s `describe`), the printed sheet's document (`character(input).describeSheet`).
 - **A plan**: what to write, without ids, always a named object (its part's `plans.ts`: `LevelsPlan`, `AbilitiesPlan`, `InventoryEntryPlan`, `BondedCreaturesPlan`…), never a bare list. `EntityWrites` is what an entity's form writes beside its row: the properties its fields are kept in, a requirement on it, the entities it makes (`made`: each with its table, its row's columns, its list links and its customizations; 3.5's Skill Focus and Spell Focus, sets of core's `GeneratedFeats`, `engine/core/entities/GeneratedFeats.ts`), and those it removes (`removed`, by table and id). A level-up's is each level's writes (`LevelWrites`: its row's columns, and its rows in the tables under it, by table: its ability increases, each an ability and an amount, and its picks), and what the master's bonded creatures become with them (`levelUp()`'s `planLevels`, `planEdit`, `planRemoval`; the seeders', `planBonded`: a creature it makes as its row whole, after its master's, with its ability scores), which the service writes as they are, table by table. A plan whose save answers the entity carries what it answers once written (`describe(row)`: the saved row with the fields the save keeps, `entities("skills").planCreate`). The server writes a plan in its transaction (`writeEntityWrites`, `writeBondedCreatures`), which reads of the view only its copy-on-write data, and of the database what a write depends on: whether a grouping's feats are there already, whether a character picked a feat it removes.
@@ -912,7 +934,7 @@ An audit on 2026-04-16 identified real leaks and some false alarms. It predates 
 | File | Purpose |
 |---|---|
 | `server/cow/views/` | `withRulesetScope` / `withRulesetScopes` (consumer entry points), `RulesetViews` (the cache), and what it reads with: a ruleset's own rows (`RawDataReader`) and the rows its `CowData` is built from (`CowDataReader`): copy-on-write's read side. `CowData` itself (`engine/core/cow/CowData.ts`, built by the engine's `Engine.copyOnWrite().buildData`) is what a scope resolves ids through. |
-| `server/cow/writes/` | `EntityEdit` (the row an entity's change writes), `CustomizationEdit` (a customization's), `EntityNames` (the names a create takes), `EntityCopy` (a copy of an inherited entity), `EntityRevert` (a copy reverted to its source, what names it repointed), `CustomizationCopies` and `EntityRepositories`: copy-on-write's write side. `EntityCopy` merges sibling data into newly COW'd local copies by the engine's rules (`Engine.copyOnWrite().mergeCustomizations`, `mergeAptitudeLinks`). Sibling read-time merging lives in the compose step (`engine/core/view/RulesetComposition.ts`). |
+| `server/cow/writes/` | `EntityEdit` (the row an entity's change writes), `CustomizationEdit` (a customization's), `EntityNames` (the names a create, a rename, a restore or a subscribe takes), `EntityCopy` (a copy of an inherited entity), `EntityRevert` (a copy reverted to its source, what names it repointed), `CustomizationCopies` and `EntityRepositories`: copy-on-write's write side. `EntityCopy` merges sibling data into newly COW'd local copies by the engine's rules (`Engine.copyOnWrite().mergeCustomizations`, `mergeAptitudeLinks`). Sibling read-time merging lives in the compose step (`engine/core/view/RulesetComposition.ts`). |
 | `server/services/rulesets/RulesetsService.ts` | `forkRuleset`, `publishRuleset`, `archiveRuleset` |
 | `server/services/rulesets/extensions/RulesetExtensionsService.ts` | `subscribeExtension`, `unsubscribeExtension`, `getExtensions` |
 | `server/services/rulesets/changes/RulesetChangesService.ts` | `getChanges`, `revertOverride` |

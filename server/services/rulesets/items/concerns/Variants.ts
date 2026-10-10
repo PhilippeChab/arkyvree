@@ -5,7 +5,6 @@ import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { CustomizationCopies, EntityNames, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import { ConflictError } from "@/server/errors/index.ts";
 import { Items } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
@@ -14,43 +13,12 @@ import type { Session } from "@/shared/relations.ts";
 /** An item's templates and their variants: what a variant may copy, and the variants made in bulk. */
 export function Variants<B extends Constructor>(Base: B) {
   abstract class WithVariants extends Base {
-    /**
-     * The tombstoned ancestor each variant takes over, by the variant's index. When two tombstoned ancestors share a name
-     * (an extension and a parent), the closer one (lower sourceChain index) follows the new item, matching the
-     * sequential `EntityNames.assertNameAvailable` semantics.
-     */
-    protected variantTombstones(
-      variants: Array<{ name: string }>,
-      ancestorConflicts: Array<{ id: string; name: string; rulesetId: string }>,
-      tombstoned: ReadonlySet<string>,
-      sourceChain: string[],
-    ) {
-      const sourceChainOrder = new Map(sourceChain.map((id, i) => [id, i]));
-      const tombstoneByName = new Map<string, (typeof ancestorConflicts)[number]>();
-      for (const c of ancestorConflicts) {
-        if (!tombstoned.has(c.id)) continue;
-        const existing = tombstoneByName.get(c.name);
-        if (
-          !existing ||
-          (sourceChainOrder.get(c.rulesetId) ?? Infinity) < (sourceChainOrder.get(existing.rulesetId) ?? Infinity)
-        )
-          tombstoneByName.set(c.name, c);
-      }
-      const tombstones = new Map<number, string>();
-      for (let i = 0; i < variants.length; i++) {
-        const ancestor = tombstoneByName.get(variants[i].name);
-        if (ancestor) tombstones.set(i, ancestor.id);
-      }
-      return tombstones;
-    }
-
     async createVariants(
       session: Session,
       rulesetId: string,
       sourceItemId: string,
       variants: Array<{ description?: string | null; name: string }>,
     ) {
-      const names = variants.map((v) => v.name);
       const result = await withTransaction(
         async (tx) =>
           await withRulesetScope(tx, rulesetId, async (scope) => {
@@ -58,28 +26,12 @@ export function Variants<B extends Constructor>(Base: B) {
 
             (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
             const plan = Engine.for(scope).entities("items").planVariants(sourceItemId, variants);
-
-            // Batched pre-validation: one query for local conflicts, one for
-            // ancestor conflicts, then the shared visibility / tombstone check
-            // used by `EntityNames.assertNameAvailable`. Avoids N × sourceChain serial
-            // round-trips when N can be up to 50.
-            const ownConflicts = await Items.findMany(tx, { rulesetIds: [rulesetId], names });
-            if (ownConflicts.length > 0)
-              throw new ConflictError(`Name already exists in this ruleset: ${ownConflicts[0].name}`);
-
-            const ancestorConflicts = await Items.findMany(tx, { rulesetIds: rulesetData.cow.sourceChain, names });
-            const entityNames = new EntityNames(ruleset, rulesetData.cow);
-            const tombstoned = await entityNames.assertAncestorNamesHidden(
+            // Every variant's name kept free, as a create's is, in one read: the tombstones they take over, by name
+            const names = new EntityNames(ruleset, rulesetData.cow);
+            const tombstones = await names.assertNamesAvailable(
               tx,
               "items",
-              ancestorConflicts.map((c) => c.id),
-            );
-
-            const tombstones = this.variantTombstones(
-              variants,
-              ancestorConflicts,
-              tombstoned,
-              rulesetData.cow.sourceChain,
+              variants.map((variant) => variant.name),
             );
 
             const sourceId = plan.copyCustomizationsFrom;
@@ -88,12 +40,10 @@ export function Variants<B extends Constructor>(Base: B) {
               : undefined;
 
             const created = [];
-            for (const [i, row] of plan.rows.entries()) {
-              const rows = await Items.create(tx, { ...row, rulesetId });
-              const item = rows[0];
-
-              const tombstoneAncestorId = tombstones.get(i);
-              if (tombstoneAncestorId) await entityNames.repointTombstone(tx, "items", tombstoneAncestorId, item.id);
+            for (const row of plan.rows) {
+              const [item] = await Items.create(tx, { ...row, rulesetId });
+              const tombstoneAncestorId = tombstones.get(item.name);
+              if (tombstoneAncestorId) await names.repointTombstone(tx, "items", tombstoneAncestorId, item.id);
 
               await createActivityWithNotifications(tx, {
                 userId: session.userId,
