@@ -242,11 +242,7 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
 
         const featSlug = FeatsPaths.parsePossessed(mod.target);
         if (featSlug !== undefined) {
-          const feat = this.components.feats.getFeat(featSlug);
-          if (feat && !feat.possessed) {
-            feat.possessed = true;
-            feat.count += 1;
-          }
+          this.components.feats.grant(featSlug);
           continue;
         }
 

@@ -279,14 +279,7 @@ export function Validates<B extends Constructor<CharacterState>>(Base: B) {
     }
 
     getUnmetRequirementIssues(requirementGroups: Requirement[][]): RequirementIssue[] {
-      if (!this.builtComponents) return [];
-
-      const tempRequirements = new RequirementEvaluator(this.targetPaths);
-      const nonEmpty = requirementGroups.filter((group) => group.length > 0);
-      if (nonEmpty.length === 0) return [];
-
-      tempRequirements.evaluateRequirements(this.builtComponents, nonEmpty, this.itemOf);
-      const { unmetRequirementGroups, invalidRequirements } = tempRequirements.getRequirements();
+      const { unmetRequirementGroups, invalidRequirements } = this.evaluateGroups(requirementGroups);
       const issues: RequirementIssue[] = [];
 
       for (const group of unmetRequirementGroups) issues.push(this.unmetRequirementIssue(group, group[0]));

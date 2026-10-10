@@ -72,11 +72,11 @@ export default class DetailedCharacterAnimalCompanion extends DetailedCharacterA
     const baseHD = raceStats?.baseHD ?? 1;
     const totalHD = baseHD + row.bonusHD;
 
-    const abilities = this.components.abilities.getAbilities();
     if (row.strDex !== 0) {
-      if (abilities["strength"]) abilities["strength"].misc += row.strDex;
-
-      if (abilities["dexterity"]) abilities["dexterity"].misc += row.strDex;
+      for (const name of ["Strength", "Dexterity"]) {
+        const ability = this.components.abilities.getAbility(name);
+        if (ability) ability.misc += row.strDex;
+      }
     }
 
     this.applyHitDice(totalHD, (raceStats?.baseNaturalArmor ?? 0) + row.natural);

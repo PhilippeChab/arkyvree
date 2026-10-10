@@ -194,24 +194,27 @@ export default abstract class CharacterState {
   protected abstract createDataLoader(): DataLoader;
 
   /**
+   * The groups (those that require anything) evaluated on the built sheet, apart from the build's own evaluation, each
+   * of the item its owner names, or of `context.sourceId` when given: nothing evaluated before the build.
+   */
+  protected evaluateGroups(requirementGroups: Requirement[][], context?: { sourceId?: string | null }) {
+    const evaluator = new RequirementEvaluator(this.targetPaths);
+    const nonEmpty = requirementGroups.filter((group) => group.length > 0);
+    if (!this.builtComponents || nonEmpty.length === 0) return evaluator.getRequirements();
+    const sourceId = context?.sourceId;
+    const itemOf = sourceId === undefined ? this.itemOf : () => sourceId ?? undefined;
+    evaluator.evaluateRequirements(this.builtComponents, nonEmpty, itemOf);
+    return evaluator.getRequirements();
+  }
+
+  /**
    * Whether the groups are met, each of the item its owner names, or of `context.sourceId` when given: a weapon's
    * proficiency, its base item's requirements, reads its own hand. A `null` source is no item: a weapon's own paths
    * (its hand) reach nothing, as for a weapon not yet held.
    */
   areRequirementsMet(requirementGroups: Requirement[][], context?: { sourceId?: string | null }): boolean {
     if (!this.builtComponents) return false;
-
-    const tempRequirements = new RequirementEvaluator(this.targetPaths);
-    const nonEmpty = requirementGroups.filter((group) => group.length > 0);
-    if (nonEmpty.length === 0) return true;
-
-    const sourceId = context?.sourceId;
-    tempRequirements.evaluateRequirements(
-      this.builtComponents,
-      nonEmpty,
-      sourceId === undefined ? this.itemOf : () => sourceId ?? undefined,
-    );
-    const { unmetRequirementGroups, invalidRequirements } = tempRequirements.getRequirements();
+    const { unmetRequirementGroups, invalidRequirements } = this.evaluateGroups(requirementGroups, context);
     return unmetRequirementGroups.length === 0 && invalidRequirements.length === 0;
   }
 

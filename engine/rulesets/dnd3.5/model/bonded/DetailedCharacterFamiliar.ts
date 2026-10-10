@@ -50,8 +50,8 @@ export default class DetailedCharacterFamiliar extends DetailedCharacterBonded {
       Object.entries(master.components.skills.getSkills()).map(([slug, skill]) => [slug, skill.rank]),
     );
 
-    // Familiar HP = ½ master HP only — no per-HD Con component.
-    this.cachedTotalHD = 0;
+    // Familiar HP = ½ master HP only: no hit dice, so no Constitution per hit die
+    this.components.combat.setHitDiceOverride(0);
   }
 
   /** The stat block's skills, then its master's ranks where they're better. */

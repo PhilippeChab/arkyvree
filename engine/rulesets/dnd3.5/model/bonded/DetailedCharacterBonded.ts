@@ -3,39 +3,32 @@ import { type RulesetData, type RulesetView } from "@/engine/core/view/index.ts"
 import type { ValidationIssue } from "@/engine/rulesets/dnd3.5/model/concerns/Validates.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import CustomizedEntities from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
-import type { Modifier } from "@/shared/relations.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 import BondedRaceData, { type BondedRaceStatBlock, STAT_BLOCK_FEAT_SKILL_BONUSES } from "./BondedRaceData.ts";
 
 export default abstract class DetailedCharacterBonded extends DetailedCharacter {
-  protected cachedTotalHD: number | null = null;
-
   /** The creature's master, built before it (`CharacterBuilder.build`): what its sheet derives from. */
   protected master?: DetailedCharacter;
 
   /**
-   * The stat block's feats, as any granted feat is: possessed and counted, and listed with the feats the creature has
-   * without a pick (`getVirtualFeats`: its sheet and PDF), their modifiers applied. A feat the creature
-   * already has, from a modifier that grants it, stays as it is, as a granted feat the character has does.
+   * The stat block's feats, as any granted feat is: possessed and counted (`grant`), listed with the feats the creature
+   * has without a pick (`getVirtualFeats`: its sheet and PDF), and their modifiers applied with the character's, in the
+   * build's rounds, each behind its own requirements. A feat the creature already has, from a modifier that grants it,
+   * stays as it is, as a granted feat the character has does.
    */
   protected applyGrantedFeats(featNames: string[], rulesetData: RulesetData): void {
-    if (featNames.length === 0) return;
-    const featModifiers: Modifier[] = [];
     for (const featName of featNames) {
-      const entry = this.components.feats.getFeat(featName);
-      if (entry?.possessed) continue;
-      if (entry) {
-        entry.possessed = true;
-        entry.count += 1;
-      }
-      const featRow = rulesetData.feats.find((f) => f.name === featName);
+      if (!this.components.feats.grant(featName)) continue;
+      const featRow = rulesetData.featsById.get(rulesetData.featIdBySlug.get(stripSeparators(featName)) ?? "");
       if (!featRow) continue;
-      const mods = rulesetData.modifiersBySource.get(featRow.id);
-      if (mods) featModifiers.push(...mods);
-      this.feats.push(CustomizedEntities.toVirtualFeat(featRow, rulesetData));
+      const feat = CustomizedEntities.toVirtualFeat(featRow, rulesetData);
+      this.feats.push(feat);
+      this.modifiers.push(...feat.modifiers);
+      // A granted feat's own prerequisites don't gate it: its modifiers' own requirements do
+      for (const modifier of feat.modifiers)
+        this.requirementGroups.push(rulesetData.requirementsByEntity.get(modifier.id) ?? []);
     }
-    if (featModifiers.length > 0 && this.components)
-      this.modifierEvaluator.evaluateModifiers(this.components, featModifiers, this.requirementEvaluator);
   }
 
   protected abstract applyMasterDerivation(master: DetailedCharacter): void;
@@ -92,8 +85,6 @@ export default abstract class DetailedCharacterBonded extends DetailedCharacter 
 
       this.applyRaceDefaults(raceStats, rulesetData);
     }
-
-    if (this.cachedTotalHD !== null) this.components.combat.setHitDiceOverride(this.cachedTotalHD);
 
     super.preRequirementProcessing(rulesetData);
   }
