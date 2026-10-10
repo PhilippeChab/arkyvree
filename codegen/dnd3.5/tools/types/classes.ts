@@ -114,6 +114,8 @@ export interface ClassReference {
         aptitude?: string;
         /** Minimum class level at which this feature is gained */
         level?: number;
+        /** The other pools that offer a pool's option besides its own (`aptitude`): a terrain, the planar pool too */
+        sharedAptitudes?: string[];
       };
     };
     freeFeats?: [number, string, string][];

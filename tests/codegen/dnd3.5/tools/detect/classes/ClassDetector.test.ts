@@ -84,7 +84,7 @@ describe("A class's detected features", () => {
   });
 
   test("make a pool's options the features its table's rows name after it, wherever they stand", () => {
-    // A loremaster's secrets, after her True Lore; a horizon walker's terrains stay the pool they follow's
+    // A loremaster's secrets, after her True Lore
     const { features } = classOf("dmg", "loremaster").mapping;
     expect(features["Secret: Dodge Trick"]).toMatchObject({
       aptitude: "Loremaster Secret",
@@ -92,8 +92,25 @@ describe("A class's detected features", () => {
       level: 1,
     });
     expect(Object.keys(features).filter((name) => features[name].aptitude === "Loremaster Secret")).toHaveLength(10);
+  });
+
+  test("give a pool named for another with a qualifier the other's options, and those its qualifier marks", () => {
+    // A horizon walker's terrains, which his Planar Terrain Mastery offers with the planar ones
     const walker = classOf("dmg", "horizonWalker").mapping.features;
-    expect(walker["Terrain Mastery: Aquatic"].aptitude).toBe("Horizon Walker Planar Terrain Mastery");
+    expect(walker["Terrain Mastery: Aquatic"]).toMatchObject({
+      aptitude: "Horizon Walker Terrain Mastery",
+      sharedAptitudes: ["Horizon Walker Planar Terrain Mastery"],
+      level: 1,
+    });
+    expect(walker["Terrain Mastery: Fiery (Planar)"]).toMatchObject({
+      aptitude: "Horizon Walker Planar Terrain Mastery",
+      level: 6,
+    });
+    expect(walker["Terrain Mastery: Fiery (Planar)"].sharedAptitudes).toBeUndefined();
+    const offers = (aptitude: string) =>
+      Object.values(walker).filter((f) => f.aptitude === aptitude || f.sharedAptitudes?.includes(aptitude)).length;
+    expect(offers("Horizon Walker Terrain Mastery")).toBe(8);
+    expect(offers("Horizon Walker Planar Terrain Mastery")).toBe(15);
   });
 
   test("are the modifiers the mapping's features start from, their aptitude picks' added", () => {

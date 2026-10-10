@@ -82,7 +82,7 @@ export function OwnFeats<B extends Constructor<BaseClassSeeds>>(Base: B) {
         if (!lockedType && this.existingFeatGranted(name, feature.description)) continue;
 
         const description = normalizeDescription(feature.description ?? "");
-        const aptitudes = [feature.aptitude ?? mapping.classFeatureAptitude];
+        const aptitudes = [feature.aptitude ?? mapping.classFeatureAptitude, ...(feature.sharedAptitudes ?? [])];
         const perLevelModifier = feature.modifiers?.find((m) => perLevelExpansion.has(m.target));
         if (perLevelModifier) {
           const expansions = perLevelExpansion.get(perLevelModifier.target) ?? [];

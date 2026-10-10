@@ -39,11 +39,10 @@ export const HORIZON_WALKER_CLASS_FEATS: FeatSeed[] = [
     requirements: [gte("classes.horizonwalker.level", 6)],
   },
   {
-    name: "Terrain Mastery: Aquatic (Horizon Walker Planar Terrain Mastery)",
+    name: "Terrain Mastery: Aquatic (Horizon Walker Terrain Mastery)",
     description:
       "You are thoroughly comfortable in water, gaining a +4 competence bonus on Swim checks. If you already possess a swim speed, it increases by +10 feet instead. You also receive a +1 insight bonus on attack and damage rolls against aquatic creatures.",
-    aptitudes: ["Horizon Walker Planar Terrain Mastery"],
-    requirements: [gte("classes.horizonwalker.level", 6)],
+    aptitudes: ["Horizon Walker Terrain Mastery", "Horizon Walker Planar Terrain Mastery"],
     modifiers: [{ target: "skills.swim.misc", operator: "add", value: "4", valueType: "number" }],
   },
   {
@@ -60,11 +59,10 @@ export const HORIZON_WALKER_CLASS_FEATS: FeatSeed[] = [
     requirements: [gte("classes.horizonwalker.level", 6)],
   },
   {
-    name: "Terrain Mastery: Desert (Horizon Walker Planar Terrain Mastery)",
+    name: "Terrain Mastery: Desert (Horizon Walker Terrain Mastery)",
     description:
       "Your survival in harsh arid conditions has taught you exceptional endurance. You are completely immune to fatigue, and any effect that would normally exhaust you causes fatigue instead. You also receive a +1 insight bonus on attack and damage rolls against desert creatures.",
-    aptitudes: ["Horizon Walker Planar Terrain Mastery"],
-    requirements: [gte("classes.horizonwalker.level", 6)],
+    aptitudes: ["Horizon Walker Terrain Mastery", "Horizon Walker Planar Terrain Mastery"],
   },
   {
     name: "Terrain Mastery: Fiery (Planar) (Horizon Walker Planar Terrain Mastery)",
@@ -74,35 +72,31 @@ export const HORIZON_WALKER_CLASS_FEATS: FeatSeed[] = [
     requirements: [gte("classes.horizonwalker.level", 6)],
   },
   {
-    name: "Terrain Mastery: Forest (Horizon Walker Planar Terrain Mastery)",
+    name: "Terrain Mastery: Forest (Horizon Walker Terrain Mastery)",
     description:
       "Your time spent among dense woodland has given you a natural talent for concealment, providing a +4 competence bonus on Hide checks. You also receive a +1 insight bonus on attack and damage rolls against forest creatures.",
-    aptitudes: ["Horizon Walker Planar Terrain Mastery"],
-    requirements: [gte("classes.horizonwalker.level", 6)],
+    aptitudes: ["Horizon Walker Terrain Mastery", "Horizon Walker Planar Terrain Mastery"],
     modifiers: [{ target: "skills.hide.misc", operator: "add", value: "4", valueType: "number" }],
   },
   {
-    name: "Terrain Mastery: Hills (Horizon Walker Planar Terrain Mastery)",
+    name: "Terrain Mastery: Hills (Horizon Walker Terrain Mastery)",
     description:
       "Your experience in hilly terrain has sharpened your hearing considerably, granting a +4 competence bonus on Listen checks. You also receive a +1 insight bonus on attack and damage rolls against hills creatures.",
-    aptitudes: ["Horizon Walker Planar Terrain Mastery"],
-    requirements: [gte("classes.horizonwalker.level", 6)],
+    aptitudes: ["Horizon Walker Terrain Mastery", "Horizon Walker Planar Terrain Mastery"],
     modifiers: [{ target: "skills.listen.misc", operator: "add", value: "4", valueType: "number" }],
   },
   {
-    name: "Terrain Mastery: Marsh (Horizon Walker Planar Terrain Mastery)",
+    name: "Terrain Mastery: Marsh (Horizon Walker Terrain Mastery)",
     description:
       "Your familiarity with wetlands has taught you to move without a sound, granting a +4 competence bonus on Move Silently checks. You also receive a +1 insight bonus on attack and damage rolls against marsh creatures.",
-    aptitudes: ["Horizon Walker Planar Terrain Mastery"],
-    requirements: [gte("classes.horizonwalker.level", 6)],
+    aptitudes: ["Horizon Walker Terrain Mastery", "Horizon Walker Planar Terrain Mastery"],
     modifiers: [{ target: "skills.movesilently.misc", operator: "add", value: "4", valueType: "number" }],
   },
   {
-    name: "Terrain Mastery: Mountains (Horizon Walker Planar Terrain Mastery)",
+    name: "Terrain Mastery: Mountains (Horizon Walker Terrain Mastery)",
     description:
       "You possess an exceptional ability to scale steep surfaces, gaining a +4 competence bonus on Climb checks. If you already possess a climb speed, it increases by +10 feet instead. You also receive a +1 insight bonus on attack and damage rolls against mountain creatures.",
-    aptitudes: ["Horizon Walker Planar Terrain Mastery"],
-    requirements: [gte("classes.horizonwalker.level", 6)],
+    aptitudes: ["Horizon Walker Terrain Mastery", "Horizon Walker Planar Terrain Mastery"],
     modifiers: [{ target: "skills.climb.misc", operator: "add", value: "4", valueType: "number" }],
   },
   {
@@ -113,11 +107,10 @@ export const HORIZON_WALKER_CLASS_FEATS: FeatSeed[] = [
     requirements: [gte("classes.horizonwalker.level", 6)],
   },
   {
-    name: "Terrain Mastery: Plains (Horizon Walker Planar Terrain Mastery)",
+    name: "Terrain Mastery: Plains (Horizon Walker Terrain Mastery)",
     description:
       "Spending time in vast open terrain has honed your visual acuity, providing a +4 competence bonus on Spot checks. You also receive a +1 insight bonus on attack and damage rolls against plains creatures.",
-    aptitudes: ["Horizon Walker Planar Terrain Mastery"],
-    requirements: [gte("classes.horizonwalker.level", 6)],
+    aptitudes: ["Horizon Walker Terrain Mastery", "Horizon Walker Planar Terrain Mastery"],
     modifiers: [{ target: "skills.spot.misc", operator: "add", value: "4", valueType: "number" }],
   },
   {
@@ -128,11 +121,10 @@ export const HORIZON_WALKER_CLASS_FEATS: FeatSeed[] = [
     requirements: [gte("classes.horizonwalker.level", 6)],
   },
   {
-    name: "Terrain Mastery: Underground (Horizon Walker Planar Terrain Mastery)",
+    name: "Terrain Mastery: Underground (Horizon Walker Terrain Mastery)",
     description:
       "Through magical adaptation to subterranean darkness, you gain darkvision out to 60 feet. If you already possess darkvision from another source, its range extends to 120 feet instead. You also receive a +1 insight bonus on attack and damage rolls against underground creatures.",
-    aptitudes: ["Horizon Walker Planar Terrain Mastery"],
-    requirements: [gte("classes.horizonwalker.level", 6)],
+    aptitudes: ["Horizon Walker Terrain Mastery", "Horizon Walker Planar Terrain Mastery"],
   },
   {
     name: "Terrain Mastery: Weightless (Planar) (Horizon Walker Planar Terrain Mastery)",
