@@ -22,6 +22,7 @@ import {
 import { SPELL_LEVEL_LABELS } from "@/vocabulary/dnd3.5/spells.ts";
 
 import ContinuationHeader from "./ContinuationHeader.tsx";
+import SpellsPerDayTable from "./SpellsPerDayTable.tsx";
 import { FONT_SIZE, styles } from "./styles.ts";
 
 /**
@@ -47,12 +48,16 @@ const SPELL_PROPERTY_ORDER = Object.keys(ENTITY_PROPERTY_TYPES.powers ?? {});
 
 const SPELL_PROPERTY_ORDER_INDEX = new Map(SPELL_PROPERTY_ORDER.map((k, i) => [k, i]));
 
-/** The sheet's spells page: the spells the character knows and has without a pick, by list and spell level. */
+/**
+ * The sheet's spells page: the character's slots per day, then the spells it knows and has without a pick, by list and
+ * spell level.
+ */
 function SpellsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacter }) {
   const identityData = detailedCharacter.components.identity.getIdentity();
   const sorted = SpellGroups.describe(detailedCharacter);
+  const perDay = SpellGroups.describePerDay(detailedCharacter);
 
-  if (sorted.length === 0) return null;
+  if (sorted.length === 0 && perDay.lists.length === 0) return null;
 
   return (
     <Page size="A4" style={styles.page}>
@@ -60,6 +65,8 @@ function SpellsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacte
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Spells</Text>
+
+        <SpellsPerDayTable perDay={perDay} />
 
         {(() => {
           const presentKeys = new Set<string>();

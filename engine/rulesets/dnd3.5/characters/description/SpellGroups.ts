@@ -3,7 +3,7 @@ import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
-import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
+import { SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
 
 /** An aptitude's spells, by spell level. */
 interface AptitudeSpells {
@@ -33,6 +33,24 @@ interface LevelSpell {
   powerLevel?: number | null;
   saveEffect?: string | null;
   saveName?: string | null;
+}
+
+/**
+ * A spell list's slots per day as the sheets print them, a cell per spell level of the summary's (`SpellsPerDay`): "3",
+ * "3+1" where a list its class's feat brings adds a slot (a cleric's domain slot, a specialist's school), or none.
+ */
+interface ListSlots {
+  aptitudeName: string;
+  slots: (string | null)[];
+}
+
+/**
+ * A list's slots at a spell level: its own (`uses`), and those the lists its class's feats bring add to them
+ * (`bonus`).
+ */
+interface SlotCount {
+  bonus: number;
+  uses: number;
 }
 
 /** An aptitude's spells at a spell level, with the uses per day the aptitude allows there. */
@@ -98,11 +116,31 @@ interface SpellSource {
 }
 
 /**
+ * A character's slots per day, as the summary at the start of its sheets' spells prints them: the spell levels it has
+ * slots at, a column each, and a row per spell list giving them, by name.
+ */
+interface SpellsPerDay {
+  levels: number[];
+  lists: ListSlots[];
+}
+
+/**
  * A character's spells as its sheets list them, the web sheet's and the PDF's alike: by aptitude (its spell list), then
  * by spell level, with the uses per day the aptitude allows there; a list a feat brings (a specialist's school, a
- * cleric's domain slot) at each level it has uses at.
+ * cleric's domain slot) at each level it has uses at. And the slots per day the sheets open their spells on
+ * (`describePerDay`), a list a feat brings counted in its class's row.
  */
 export default class SpellGroups {
+  /**
+   * The lists of the class whose level gave the feats bringing a list (`listId`: a cleric's domain slot, a specialist's
+   * school): those the feats' spell tags show on beside it (`spellTagLists`), less the lists feats bring.
+   */
+  private static classListsOf(sheet: SpellSheet, listId: string) {
+    return Object.values(sheet.spellTagLists)
+      .filter((lists) => lists.aptitudeIds.includes(listId))
+      .flatMap((lists) => lists.aptitudeIds.filter((id) => !sheet.featListSpells.has(id)));
+  }
+
   /**
    * The tags whose spells fill a list a feat brings (`listId`), each with the list its spells are on: the list's own
    * feat's (a specialist's school); or, for a list of no spells of its own (a cleric's domain slot), the tags of the
@@ -110,10 +148,12 @@ export default class SpellGroups {
    */
   private static fillersOf(sheet: SpellSheet, listId: string) {
     const tagLists = Object.entries(sheet.spellTagLists);
-    const bringing = tagLists.filter(([, lists]) => lists.aptitudeIds.includes(listId));
-    if (sheet.featListSpells.get(listId)?.size) return bringing.map(([tag]) => ({ tag, listId }));
+    if (sheet.featListSpells.get(listId)?.size) {
+      const bringing = tagLists.filter(([, lists]) => lists.aptitudeIds.includes(listId));
+      return bringing.map(([tag]) => ({ tag, listId }));
+    }
 
-    const classListIds = new Set(bringing.flatMap(([, lists]) => lists.aptitudeIds.filter((id) => id !== listId)));
+    const classListIds = new Set(SpellGroups.classListsOf(sheet, listId));
     return tagLists.flatMap(([tag, lists]) => {
       const ownListId = lists.aptitudeIds.find((id) => sheet.featListSpells.get(id)?.size);
       const joins = lists.joinsClassList && lists.aptitudeIds.some((id) => classListIds.has(id));
@@ -141,7 +181,7 @@ export default class SpellGroups {
     for (const { id, name } of Object.values(sheet.aptitudes)) {
       if (!sheet.featListSpells.has(id)) continue;
       const fillers = SpellGroups.fillersOf(sheet, id);
-      for (let level = 0; level <= MAX_SPELL_LEVEL; level++) {
+      for (const level of SPELL_LEVELS) {
         if (!SpellGroups.usesPerDay(sheet.aptitudes, name, level)) continue;
         const group = groupOf(id, level);
         for (const { tag, listId } of fillers) {
@@ -239,6 +279,49 @@ export default class SpellGroups {
     };
   }
 
+  /**
+   * The rows of the slots per day, by list id: each list's slots at each spell level it has any; a list a feat brings (a
+   * cleric's domain slot, a specialist's school) adds its own to the row of its class's first list with slots at that
+   * level (`classListsOf`), as its `bonus`, and keeps a row of its own where its class's lists have none.
+   */
+  private static slotRows(sheet: SpellSheet) {
+    const slots = SpellGroups.slotsByList(sheet);
+    const rows = new Map<string, { counts: Map<number, SlotCount>; name: string }>();
+    const countAt = ({ id, name }: { id: string; name: string }, level: number) => {
+      const row = rows.get(id) ?? { counts: new Map<number, SlotCount>(), name };
+      rows.set(id, row);
+      const count = row.counts.get(level) ?? { bonus: 0, uses: 0 };
+      row.counts.set(level, count);
+      return count;
+    };
+
+    for (const list of slots.values()) {
+      const classLists = sheet.featListSpells.has(list.id)
+        ? SpellGroups.classListsOf(sheet, list.id).flatMap((id) => slots.get(id) ?? [])
+        : [];
+      for (const [level, count] of list.uses) {
+        const classList = classLists.find((other) => other.uses.has(level));
+        if (classList) countAt(classList, level).bonus += count;
+        else countAt(list, level).uses += count;
+      }
+    }
+    return rows;
+  }
+
+  /** Each spell list with slots per day, by its id: its name, and its slots by spell level where it has any. */
+  private static slotsByList(sheet: SpellSheet) {
+    const slots = new Map<string, { id: string; name: string; uses: Map<number, number> }>();
+    for (const { id, name } of Object.values(sheet.aptitudes)) {
+      const uses = new Map<number, number>();
+      for (const level of SPELL_LEVELS) {
+        const count = SpellGroups.usesPerDay(sheet.aptitudes, name, level);
+        if (count) uses.set(level, count);
+      }
+      if (uses.size > 0) slots.set(id, { id, name, uses });
+    }
+    return slots;
+  }
+
   /** A spell's tags that show on this list: a domain's on the cleric's, a school's on the wizard's. */
   private static tagsFor(
     sheet: SpellSheet,
@@ -264,6 +347,11 @@ export default class SpellGroups {
     return isRecord(levelData) && typeof levelData.uses === "number" ? levelData.uses : null;
   }
 
+  /** A list's slots at a spell level as the sheets print them: "3", or "3+1" with the slot a feat's list adds. */
+  private static writeSlots({ bonus, uses }: SlotCount) {
+    return bonus > 0 ? `${uses}+${bonus}` : String(uses);
+  }
+
   /** The character's spells by aptitude (by name), each aptitude's levels in order and their spells by name. */
   static describe(character: SpellSource): AptitudeSpells[] {
     const sheet = SpellGroups.sheetOf(character);
@@ -281,5 +369,23 @@ export default class SpellGroups {
     const sorted = [...byAptitude.values()].sort((a, b) => a.aptitudeName.localeCompare(b.aptitudeName));
     for (const apt of sorted) apt.levels.sort((a, b) => a.level - b.level);
     return sorted;
+  }
+
+  /**
+   * The character's slots per day, as the summary at the start of its sheets' spells prints them: a column per spell
+   * level it has slots at, and a row per list with slots, by name, a list a feat brings (a cleric's domain slot, a
+   * specialist's school) counted in its class's row ("3+1"), not in a row of its own. None for a character with no slot.
+   */
+  static describePerDay(character: SpellSource): SpellsPerDay {
+    const rows = [...SpellGroups.slotRows(SpellGroups.sheetOf(character)).values()];
+    const levels = SPELL_LEVELS.filter((level) => rows.some((row) => row.counts.has(level)));
+    const lists = rows.map(({ name, counts }) => ({
+      aptitudeName: name,
+      slots: levels.map((level) => {
+        const count = counts.get(level);
+        return count ? SpellGroups.writeSlots(count) : null;
+      }),
+    }));
+    return { levels, lists: lists.sort((a, b) => a.aptitudeName.localeCompare(b.aptitudeName)) };
   }
 }

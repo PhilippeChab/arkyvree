@@ -624,7 +624,8 @@ engine/rulesets/
     │   ├── description/                   (CharacterDescription: the 3.5 API response shape, whole or partial
     │   │                                  (describeFull, describePartial), the feat that bonds each creature;
     │   │                                  CharacterResponse; what both sheets print, CombatSheet: the attacks and the
-    │   │                                  speed, SpellGroups: the spells by list and level)
+    │   │                                  speed, SpellGroups: the spells by list and level, and the
+    │   │                                  slots per day by list, a feat's list's in its class's row)
     │   ├── inventory/                     (InventoryEntries: where an entry's add or edit holds its item,
     │   │                                  planPlacement; Equipping: what equipping an item checks)
     │   └── sheet/                         (the printed sheet, in React PDF: CharacterSheet and its pages, SheetFormat)

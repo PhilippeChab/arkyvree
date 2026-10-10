@@ -125,6 +125,7 @@ export default class CharacterResponse {
       skills: built.components.skills.getSkills(),
       virtualFeats: built.getVirtualFeats(),
       spellGroups: SpellGroups.describe(built),
+      spellsPerDay: SpellGroups.describePerDay(built),
       requirements,
       modifiers,
       validation,

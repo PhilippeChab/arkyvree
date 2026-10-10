@@ -46,9 +46,14 @@ interface SpellRowItemProps {
   spell: SpellGroup["spells"][number];
 }
 
+interface SpellsPerDayTableProps {
+  spellsPerDay: CharacterDetail["spellsPerDay"];
+}
+
 interface SpellsSectionProps {
   rulesetId?: string;
   spellGroups: CharacterDetail["spellGroups"];
+  spellsPerDay: CharacterDetail["spellsPerDay"];
 }
 
 /** An aptitude's spells, by spell level, as the sheet lists them. */
@@ -56,6 +61,15 @@ type AptitudeSpells = CharacterDetail["spellGroups"][number];
 
 /** An aptitude's spells at a spell level. */
 type SpellGroup = AptitudeSpells["levels"][number];
+
+/** A cell that keeps to one line, its table scrolling sideways on a phone instead. */
+const NO_WRAP_SX = { whiteSpace: "nowrap" };
+
+/** A spell level's cell: narrow, so a few levels fit a phone. */
+const LEVEL_CELL_SX = { ...NO_WRAP_SX, px: 1 };
+
+/** A spell level's header, smaller on a phone, as the skills' number columns. */
+const LEVEL_HEADER_SX = { ...LEVEL_CELL_SX, fontSize: { xs: "0.7rem", sm: "0.8125rem" } };
 
 function CollapsibleAptitude({ apt, rulesetId }: CollapsibleAptitudeProps) {
   const [open, setOpen] = useState(false);
@@ -196,12 +210,51 @@ function SpellRowItem({ spell, rulesetId }: SpellRowItemProps) {
   );
 }
 
-export function SpellsSection({ spellGroups, rulesetId }: SpellsSectionProps) {
-  if (spellGroups.length === 0) return null;
+/**
+ * The character's slots per day, at the start of its spells: a row per spell list with slots, a column per spell level
+ * it has slots at, each cell as the rules write it ("3+1" with a domain or a school slot).
+ */
+function SpellsPerDayTable({ spellsPerDay }: SpellsPerDayTableProps) {
+  return (
+    <Stack spacing={1}>
+      <SubsectionTitle>Spells per Day</SubsectionTitle>
+      <TableContainer sx={{ overflowX: "auto" }}>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell sx={NO_WRAP_SX}>Spell List</TableCell>
+              {spellsPerDay.levels.map((level) => (
+                <TableCell key={level} align="center" sx={LEVEL_HEADER_SX}>
+                  {SPELL_LEVEL_LABELS[level]}
+                </TableCell>
+              ))}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {spellsPerDay.lists.map((list) => (
+              <TableRow key={list.aptitudeName}>
+                <TableCell sx={[NO_WRAP_SX, { fontWeight: 500 }]}>{list.aptitudeName}</TableCell>
+                {list.slots.map((slots, index) => (
+                  <TableCell key={spellsPerDay.levels[index]} align="center" sx={LEVEL_CELL_SX}>
+                    {slots ?? <EmptyValue />}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Stack>
+  );
+}
+
+export function SpellsSection({ spellGroups, spellsPerDay, rulesetId }: SpellsSectionProps) {
+  if (spellGroups.length === 0 && spellsPerDay.lists.length === 0) return null;
 
   return (
     <SheetSection title="Spells">
       <Stack spacing={3}>
+        {spellsPerDay.lists.length > 0 && <SpellsPerDayTable spellsPerDay={spellsPerDay} />}
         {spellGroups.map((apt) => (
           <CollapsibleAptitude key={apt.aptitudeName} apt={apt} rulesetId={rulesetId} />
         ))}

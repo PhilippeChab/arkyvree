@@ -106,6 +106,7 @@ export default class CharacterDescription {
       equipment: [],
       virtualFeats: [],
       spellGroups: [],
+      spellsPerDay: { levels: [], lists: [] },
       requirements: {},
       modifiers: {},
       validation: { valid: true, issues: [] },

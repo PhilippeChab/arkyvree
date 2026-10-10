@@ -209,6 +209,7 @@ describe("campaigns characters", () => {
       equipment: [],
       virtualFeats: [],
       spellGroups: [],
+      spellsPerDay: { levels: [], lists: [] },
       bonded: {},
       skillBudget: { available: 0, spent: 0, total: 0 },
       validation: { valid: true, issues: [] },

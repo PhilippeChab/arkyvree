@@ -486,4 +486,16 @@ export const styles = StyleSheet.create({
     color: "#444",
     marginTop: 2,
   },
+  spellsPerDayHeader: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: "bold",
+    color: "#333",
+    paddingHorizontal: 2,
+    textAlign: "center",
+  },
+  spellsPerDayCell: {
+    fontSize: FONT_SIZE.base,
+    paddingHorizontal: 2,
+    textAlign: "center",
+  },
 });
