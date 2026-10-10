@@ -17,7 +17,7 @@ import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 import { capitalize } from "@/shared/text.ts";
 
-import { type EncumbranceData, type EquipmentRow, formatSlotDisplay } from "./equipment.ts";
+import type { EncumbranceData, EquipmentRow } from "./equipment.ts";
 
 interface EquipmentTableProps<T extends EquipmentTableRow> {
   encumbrance?: EncumbranceData;
@@ -81,7 +81,7 @@ export function EquipmentTable<T extends EquipmentTableRow>({
                   )}
                 </TableCell>
                 <TableCell align="center" sx={NO_WRAP_SX}>
-                  <Typography variant="body2">{formatSlotDisplay(entry) ?? <EmptyValue />}</Typography>
+                  <Typography variant="body2">{entry.slotLabel ?? <EmptyValue />}</Typography>
                 </TableCell>
                 <TableCell align="center">{entry.quantity || 1}</TableCell>
                 <TableCell align="center" sx={NO_WRAP_SX}>

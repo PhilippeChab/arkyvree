@@ -7,8 +7,10 @@ import { ITEM_FIELDS } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import Dnd35CharacterBuilder from "@/engine/rulesets/dnd3.5/model/Dnd35CharacterBuilder.ts";
 import { SIZE_ORDER } from "@/engine/rulesets/dnd3.5/model/inventory/InventorySlots.ts";
+import ItemPlacement from "@/engine/rulesets/dnd3.5/model/inventory/ItemPlacement.ts";
+import { ITEM_TYPE_LOCATIONS, MAX_FINGER_ITEMS, SINGLE_OCCUPANCY_LOCATIONS } from "@/shared/dnd3.5/equipment.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
-import { findSlotConflict, isHandLocation, MAX_FINGER_ITEMS, type SlotConflictReason } from "@/shared/equipment.ts";
+import { isOneOf } from "@/shared/isOneOf.ts";
 import type { Item } from "@/shared/relations.ts";
 
 /** An inventory entry an item is equipped from: the entry (null for a new one), and its item. */
@@ -17,14 +19,41 @@ interface EquippedEntry {
   item: Pick<Item, "id" | "isTemplate" | "sourceItemId" | "type">;
 }
 
-/** Why an item can't be equipped at a location, by the slot conflict's reason. */
-const SLOT_CONFLICT_MESSAGES: Record<SlotConflictReason, (location: ItemLocation) => string> = {
-  occupied: (location) => `Equipment slot "${location}" is already occupied`,
-  fingers: () => `Cannot equip more than ${MAX_FINGER_ITEMS} rings`,
-  hands: () => "Cannot equip a two-handed item while holding items in Main Hand or Off Hand in the same weapon set",
-  twoHanded: () => "Cannot equip in hand slot while holding a two-handed item in the same weapon set",
-  sameHand: (location) => `"${location}" is already occupied in this weapon set`,
+/** An equipped entry of the character's, as the slot rules read it. */
+type HeldEntry = CharacterInput["rows"]["inventory"][number];
+
+/**
+ * What keeps a location from taking one more item, with the entry in the way:
+ * - `occupied`: a location that holds one item holds `entry`;
+ * - `fingers`: both fingers are taken;
+ * - `hands`: a two-handed item can't go where `entry` is in a hand of the same weapon set;
+ * - `twoHanded`: a hand can't take an item while `entry` is two-handed in the same set;
+ * - `sameHand`: `entry` is already in that hand in the same set.
+ */
+type SlotConflict = { entry: HeldEntry; reason: Exclude<SlotConflictReason, "fingers"> } | { reason: "fingers" };
+
+type SlotConflictReason = "occupied" | "fingers" | "hands" | "twoHanded" | "sameHand";
+
+/** Why every finger is taken. */
+const FINGERS_TAKEN_MESSAGE = "Both finger slots are occupied";
+
+/** Why a location can't take an item, by the conflict's reason: the item in the way (`name`), its weapon set from 1. */
+const SLOT_CONFLICT_MESSAGES: Record<
+  Exclude<SlotConflictReason, "fingers">,
+  (location: ItemLocation, entry: { location: string | null; name: string }, weaponSet: number) => string
+> = {
+  occupied: (location, entry) => `${location} slot is occupied by ${entry.name}`,
+  hands: (_, entry, weaponSet) => `Cannot equip two-handed: ${entry.name} is in ${entry.location} (Set ${weaponSet})`,
+  twoHanded: (_, entry, weaponSet) => `Cannot equip: ${entry.name} is two-handed in Set ${weaponSet}`,
+  sameHand: (location, entry, weaponSet) => `${location} is occupied by ${entry.name} (Set ${weaponSet})`,
 };
+
+/** Why an item of a type that sets its locations can't go elsewhere. */
+const TYPE_LOCATION_MESSAGES = {
+  Armor: "Body armor can only be equipped in the Torso slot",
+  Shield: "Shields can only be equipped in the Off Hand slot",
+  Weapon: "Weapons can only be equipped in hand slots",
+} as const satisfies Record<keyof typeof ITEM_TYPE_LOCATIONS, string>;
 
 /**
  * Equipping an item for a character, from its rows (`input`): where it holds it, refused when a slot, a hand or a
@@ -64,17 +93,12 @@ export default class Equipping {
    * the entry equipped doesn't), it's a slot of the item's kind, and its hands can wield a weapon.
    */
   private checkSlot({ id, item }: EquippedEntry, location: ItemLocation, weaponSet: number | null) {
-    const equipped = this.input.rows.inventory.filter((other) => other.equipped && other.id !== id);
-    const conflict = findSlotConflict(location, weaponSet, equipped);
-    if (conflict) throw new RulesError("invalid", SLOT_CONFLICT_MESSAGES[conflict.reason](location));
+    const conflict = this.describeConflict(id, location, weaponSet);
+    if (conflict) throw new RulesError("invalid", conflict);
 
-    if (item.type === "Weapon" && !isHandLocation(location))
-      throw new RulesError("invalid", "Weapons can only be equipped in hand slots");
-    if (item.type === "Armor" && location !== "Torso")
-      throw new RulesError("invalid", "Body armor can only be equipped in the Torso slot");
-    if (item.type === "Shield" && location !== "Off Hand")
-      throw new RulesError("invalid", "Shields can only be equipped in the Off Hand slot");
-    if (isHandLocation(location)) this.checkWeaponHands(item.id, location);
+    if (ItemPlacement.isLocatedType(item.type) && !isOneOf(location, ITEM_TYPE_LOCATIONS[item.type]))
+      throw new RulesError("invalid", TYPE_LOCATION_MESSAGES[item.type]);
+    if (ItemPlacement.isHand(location)) this.checkWeaponHands(item.id, location);
   }
 
   /**
@@ -98,7 +122,7 @@ export default class Equipping {
    */
   private checkWeaponInOneHand(item: EquippedEntry["item"], location: ItemLocation) {
     const { rulesetData } = this.view;
-    if (item.type !== "Weapon" || !isHandLocation(location) || location === "Two Handed") return;
+    if (item.type !== "Weapon" || !ItemPlacement.isHand(location) || location === "Two Handed") return;
     if (this.weaponFields(item.id).oneHandTraining !== true) return;
 
     const { template: proficiency } = rulesetData.itemRequirements(item);
@@ -114,6 +138,32 @@ export default class Equipping {
     }
   }
 
+  /** What keeps `location` (in `weaponSet`, stored from 0, for a hand) from taking an item, given the `equipped` entries. */
+  private findConflict(location: ItemLocation, weaponSet: number | null, equipped: HeldEntry[]): SlotConflict | null {
+    if (isOneOf(location, SINGLE_OCCUPANCY_LOCATIONS)) {
+      const entry = equipped.find((e) => e.location === location);
+      if (entry) return { reason: "occupied", entry };
+    }
+
+    if (location === "Finger" && equipped.filter((e) => e.location === "Finger").length >= MAX_FINGER_ITEMS)
+      return { reason: "fingers" };
+
+    if (ItemPlacement.isHand(location)) {
+      const sameSet = equipped.filter((e) => ItemPlacement.isHand(e.location) && e.weaponSet === weaponSet);
+      const find = (...locations: string[]) =>
+        sameSet.find((e) => e.location !== null && locations.includes(e.location));
+
+      const handed = location === "Two Handed" ? find("Main Hand", "Off Hand") : undefined;
+      if (handed) return { reason: "hands", entry: handed };
+      const twoHanded = location === "Two Handed" ? undefined : find("Two Handed");
+      if (twoHanded) return { reason: "twoHanded", entry: twoHanded };
+      const same = find(location);
+      if (same) return { reason: "sameHand", entry: same };
+    }
+
+    return null;
+  }
+
   /** The weapon fields of an item, its own merged with its template's. */
   private weaponFields(itemId: string) {
     const { rulesetData } = this.view;
@@ -126,11 +176,31 @@ export default class Equipping {
    * must take the item, and the character must meet its requirements unless `force`d.
    */
   checkEquip(entry: EquippedEntry, location: ItemLocation, weaponSet: number | null, force: boolean) {
-    if (isHandLocation(location) && weaponSet === null)
+    if (ItemPlacement.isHand(location) && weaponSet === null)
       throw new RulesError("invalid", "A weapon set is required when equipping to a hand slot");
     this.checkSlot(entry, location, weaponSet);
     if (force) return;
     this.checkItemRequirements(entry.item);
     this.checkWeaponInOneHand(entry.item, location);
+  }
+
+  /**
+   * Why `location` (in `weaponSet`, stored from 0, for a hand) can't take one more item, if it can't: an entry in the
+   * way, named, the entry placed (`entryId`, none for a new one) aside. The inventory dialogs warn of it, and the save
+   * refuses it.
+   */
+  describeConflict(entryId: string | null, location: ItemLocation, weaponSet: number | null): string | null {
+    const equipped = this.input.rows.inventory.filter((other) => other.equipped && other.id !== entryId);
+    const conflict = this.findConflict(location, weaponSet, equipped);
+    if (!conflict) return null;
+    if (conflict.reason === "fingers") return FINGERS_TAKEN_MESSAGE;
+
+    const { entry } = conflict;
+    const name = this.view.rulesetData.itemsById.get(entry.itemId)?.name ?? entry.itemsInRule.name;
+    return SLOT_CONFLICT_MESSAGES[conflict.reason](
+      location,
+      { location: entry.location, name },
+      (entry.weaponSet ?? 0) + 1,
+    );
   }
 }

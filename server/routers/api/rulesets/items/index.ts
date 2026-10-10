@@ -5,7 +5,6 @@ import { location } from "@/drizzle/schema.ts";
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { entityOrderBy, idParam, limit, orderDirAsc, page } from "@/server/routers/api/validation.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
-import { TEMPLATE_ITEM_TYPES } from "@/shared/itemTemplates.ts";
 
 const itemBody = z.object({
   name: z.string().min(1),
@@ -79,7 +78,7 @@ export default new Hono<SessionContext>()
     validate(
       "query",
       z.object({
-        type: z.enum(TEMPLATE_ITEM_TYPES).optional(),
+        type: z.string().optional(),
       }),
     ),
     async (c) => {

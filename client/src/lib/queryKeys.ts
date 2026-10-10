@@ -75,6 +75,9 @@ export const QUERY_KEYS = {
     detail: (id: string) => ["characters", "detail", id] as const,
     contributors: (id: string) => ["characters", "detail", id, "contributors"] as const,
     inventory: (id: string) => ["characters", "detail", id, "inventory"] as const,
+    /** What keeps a slot from taking an item, as an inventory dialog asks it: nested in the inventory, which a save refreshes. */
+    inventoryPlacement: (id: string, query: Record<string, unknown>) =>
+      ["characters", "detail", id, "inventory", "placement", query] as const,
     modifiers: (id: string) => ["characters", "detail", id, "modifiers"] as const,
     unlinked: (campaignId: string, filters?: Record<string, unknown>) =>
       filters

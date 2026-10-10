@@ -81,6 +81,18 @@ describe("ItemsService", () => {
     ).toMatchObject({ weight: "10.00", costGp: "100.00" });
   });
 
+  test("describes where a character carrying it can place it", async () => {
+    const { session, ruleset } = await createTestUserAndRuleset();
+    const sword = await ItemsService.createItem(session, ruleset.id, { name: "Sword", type: "Weapon" });
+    const ring = await ItemsService.createItem(session, ruleset.id, { name: "Ring", slot: "Finger" });
+    expect((await ItemsService.getItem(ruleset.id, sword.id)).placement).toMatchObject({ hand: true, slot: null });
+    expect((await ItemsService.getItem(ruleset.id, ring.id)).placement).toMatchObject({
+      charges: null,
+      hand: false,
+      slot: "Finger",
+    });
+  });
+
   test("puts armor on the torso and shields in the off hand, whatever slot is asked for", async () => {
     const { session, ruleset } = await createTestUserAndRuleset();
     expect(

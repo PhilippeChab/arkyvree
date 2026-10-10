@@ -71,6 +71,26 @@ async function entryOf(characterId: string, itemId: string) {
   return entries.find((entry) => entry.itemId === itemId)?.id ?? itemId;
 }
 
+/** A character holding a helm, two rings, a longsword in set 1 and a greatsword in set 2. */
+async function placed() {
+  const { session, character, newItem } = await setup();
+  const items = {
+    helm: await newItem({ name: "Helm" }),
+    protection: await newItem({ name: "Ring of Protection" }),
+    wizardry: await newItem({ name: "Ring of Wizardry" }),
+    longsword: await newItem({ name: "Longsword", type: "Weapon" }),
+    greatsword: await newItem({ name: "Greatsword", type: "Weapon" }),
+  };
+  await add(session, character.id, items.helm.id, equipped("Head"));
+  await add(session, character.id, items.protection.id, equipped("Finger"));
+  await add(session, character.id, items.wizardry.id, equipped("Finger"));
+  await add(session, character.id, items.longsword.id, equipped("Main Hand", 0));
+  await add(session, character.id, items.greatsword.id, equipped("Two Handed", 1));
+  const warning = async (location: ItemLocation, weaponSet: number, entryId: string | null = null) =>
+    (await CharacterInventoryService.getPlacement(session, character.id, entryId, location, weaponSet)).warning;
+  return { character, items, warning };
+}
+
 /** Removes the character's entry of the item. */
 async function remove(session: Session, characterId: string, itemId: string) {
   return CharacterInventoryService.removeItem(session, characterId, await entryOf(characterId, itemId));
@@ -171,6 +191,42 @@ describe("InventoryService", () => {
     expect(await CharacterInventoryService.getInventory(session, character.id)).toMatchObject(expected);
     await CharactersService.archiveCharacter(session, character.id);
     expect(await CharacterInventoryService.getInventory(session, character.id)).toMatchObject(expected);
+  });
+
+  test("lists each entry with where its item can go and where it's worn", async () => {
+    const { session, character, item, newItem } = await setup();
+    const sword = await newItem({ type: "Weapon" });
+    await add(session, character.id, sword.id, equipped("Main Hand", 0));
+    await add(session, character.id, item.id);
+
+    const inventory = await CharacterInventoryService.getInventory(session, character.id);
+    expect(inventory.find((entry) => entry.itemId === sword.id)).toMatchObject({
+      slotLabel: "Main Hand (Set 1)",
+      placement: { charges: null, hand: true, slot: null },
+    });
+    expect(inventory.find((entry) => entry.itemId === item.id)).toMatchObject({
+      slotLabel: null,
+      placement: { hand: false, slot: "Other", locations: [{ location: "Other", weaponSet: false }] },
+    });
+  });
+
+  describe("a slot's warning", () => {
+    test("names what takes the slot, with the weapon set from 1, as the save refuses it", async () => {
+      const { warning } = await placed();
+      expect(await warning("Head", 0)).toBe("Head slot is occupied by Helm");
+      expect(await warning("Finger", 0)).toBe("Both finger slots are occupied");
+      expect(await warning("Two Handed", 0)).toBe("Cannot equip two-handed: Longsword is in Main Hand (Set 1)");
+      expect(await warning("Off Hand", 1)).toBe("Cannot equip: Greatsword is two-handed in Set 2");
+      expect(await warning("Main Hand", 0)).toBe("Main Hand is occupied by Longsword (Set 1)");
+    });
+
+    test("is none for a free slot, another weapon set, or the entry being edited", async () => {
+      const { character, items, warning } = await placed();
+      expect(await warning("Neck", 0)).toBeNull();
+      expect(await warning("Off Hand", 0)).toBeNull();
+      expect(await warning("Main Hand", 2)).toBeNull();
+      expect(await warning("Head", 0, await entryOf(character.id, items.helm.id))).toBeNull();
+    });
   });
 
   describe("adding and changing an item", () => {
@@ -348,7 +404,7 @@ describe("InventoryService", () => {
         weaponSet: 1,
       });
       await expect(equip(otherGreatsword, equipped("Two Handed", 1))).rejects.toThrow(
-        '"Two Handed" is already occupied in this weapon set',
+        /^Two Handed is occupied by Test Item .* \(Set 2\)$/,
       );
       await expect(equip(dagger, equipped("Main Hand", 1))).rejects.toMatchObject({ refusal: "invalid" });
       expect(await equip(otherGreatsword, equipped("Two Handed", 2))).toMatchObject({ weaponSet: 2 });
@@ -429,7 +485,7 @@ describe("InventoryService", () => {
       // The other dagger takes the main hand: the second can't go there, but moving the first within its hand is fine
       await expect(
         CharacterInventoryService.updateItem(session, character.id, second.id, 1, true, "Main Hand", null, null, 0),
-      ).rejects.toThrow('"Main Hand" is already occupied in this weapon set');
+      ).rejects.toThrow("Main Hand is occupied by Dagger (Set 1)");
       expect(
         await CharacterInventoryService.updateItem(
           session,

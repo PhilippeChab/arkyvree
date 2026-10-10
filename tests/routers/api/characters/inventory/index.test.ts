@@ -88,6 +88,22 @@ describe("character inventory", () => {
     );
   });
 
+  test("answers what keeps a slot from taking an item, the edited entry aside", async () => {
+    const { characterId, itemId } = await setup();
+    const placement = inventory.placement;
+    const held = await expectOk(
+      inventory.$post({ param: { characterId }, json: { ...unequipped, itemId, equipped: true, location: "Head" } }),
+    );
+    expect(
+      await expectOk(placement.$get({ param: { characterId }, query: { location: "Head", weaponSet: "0" } })),
+    ).toEqual({ warning: "Head slot is occupied by Inventory Item" });
+    expect(
+      await expectOk(
+        placement.$get({ param: { characterId }, query: { location: "Head", weaponSet: "0", entryId: held.id } }),
+      ),
+    ).toEqual({ warning: null });
+  });
+
   test("returns 404 for an entry the character doesn't have", async () => {
     const { characterId, itemId } = await setup();
     await expectStatus(entry.$put({ param: { characterId, entryId: itemId }, json: unequipped }), 404);
@@ -98,6 +114,10 @@ describe("character inventory", () => {
     const { characterId, itemId } = await setup();
     const guest = guestApi.api.characters.inventory[":characterId"];
     await expectStatus(guest.$get({ param: { characterId } }), 401);
+    await expectStatus(
+      guest.placement.$get({ param: { characterId }, query: { location: "Head", weaponSet: "0" } }),
+      401,
+    );
     await expectStatus(guest.$post({ param: { characterId }, json: { ...unequipped, itemId } }), 401);
     await expectStatus(guest[":entryId"].$put({ param: { characterId, entryId: itemId }, json: unequipped }), 401);
     await expectStatus(guest[":entryId"].$delete({ param: { characterId, entryId: itemId } }), 401);

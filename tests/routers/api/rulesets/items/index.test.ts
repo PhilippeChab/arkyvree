@@ -41,6 +41,11 @@ describe("rulesets items", () => {
     expect(templates.every((t) => t.type === "Shield" && t.isTemplate)).toBe(true);
   });
 
+  test("refuses the templates of a type no item is based on a template of", async () => {
+    const { id } = await createSeededTestRuleset(SEED_USER_ID);
+    await expectStatus(api.api.rulesets[":id"].templates.$get({ param: { id }, query: { type: "Ring" } }), 400);
+  });
+
   test("duplicates an item under a new name", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     const source = await expectOk(

@@ -1,7 +1,7 @@
 import { Autocomplete, Box, Button, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Controller } from "react-hook-form";
 import { Link } from "react-router-dom";
 
@@ -34,18 +34,16 @@ import { requiredRules } from "@/client/src/lib/validation.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import {
-  detectSlotFromItem,
   EMPTY_INVENTORY_FORM,
   type EncumbranceData,
-  getSlotConflictWarning,
   type InventoryFormData,
   LOCATION_CHOICES,
   placementPayload,
-  placementProfile,
 } from "./equipment.ts";
 import {
   characterInventoryQuery,
   type InventoryEntry,
+  inventoryPlacementQuery,
   type RulesetItem,
   rulesetItemQuery,
   rulesetItemSearchQuery,
@@ -91,25 +89,20 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, encumbrance
   const editLocation = editForm.watch("location");
   const editWeaponSet = editForm.watch("weaponSet");
 
-  // The picked item's details (add dialog): its placement profile
+  // The picked item's details (add dialog): how it's placed
   const { data: itemDetail, error: itemDetailError } = useQuery(rulesetItemQuery(rulesetId, selectedItem?.id));
-  const addProfile = useMemo(
-    () => (itemDetail ? placementProfile(itemDetail, itemDetail.properties) : null),
-    [itemDetail],
-  );
+  const addProfile = itemDetail?.placement ?? null;
 
   // An item picked in the add dialog fills its slot and charges once its details arrive, unless another was picked since
   const fillPlacement = (itemId: string) => {
     queryClient.fetchQuery(rulesetItemQuery(rulesetId, itemId)).then(
-      (detail) => {
+      ({ placement }) => {
         if (addForm.getValues("selectedItem")?.id !== itemId) return;
-        const profile = placementProfile(detail, detail.properties);
-        const detected = detectSlotFromItem(detail);
-        if (detected) addForm.setValue("location", detected, { shouldDirty: true });
-        else if (!profile.isWeapon) addForm.setValue("location", "none", { shouldDirty: true });
-        if (profile.charges.has) {
-          addForm.setValue("totalCharges", profile.charges.defaultCount, { shouldDirty: true });
-          addForm.setValue("remainingCharges", profile.charges.defaultCount, { shouldDirty: true });
+        if (placement.slot) addForm.setValue("location", placement.slot, { shouldDirty: true });
+        else if (!placement.hand) addForm.setValue("location", "none", { shouldDirty: true });
+        if (placement.charges !== null) {
+          addForm.setValue("totalCharges", placement.charges, { shouldDirty: true });
+          addForm.setValue("remainingCharges", placement.charges, { shouldDirty: true });
         }
       },
       // The details' query shows its own failure
@@ -117,21 +110,20 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, encumbrance
     );
   };
 
-  // The edited entry's item's placement profile (edit dialog)
-  const editProfile = useMemo(
-    () => (editingEntry ? placementProfile(editingEntry.item, editingEntry.item.properties) : null),
-    [editingEntry],
-  );
+  // How the edited entry's item is placed (edit dialog)
+  const editProfile = editingEntry?.placement ?? null;
 
-  const addSlotWarning = useMemo(
-    () => getSlotConflictWarning(addLocation, addWeaponSet, inventoryItems),
-    [addLocation, addWeaponSet, inventoryItems],
-  );
-
-  const editSlotWarning = useMemo(
-    () => getSlotConflictWarning(editLocation, editWeaponSet, inventoryItems, editingEntry?.id),
-    [editLocation, editWeaponSet, inventoryItems, editingEntry],
-  );
+  // What keeps the picked slot from taking the item, as the server's rules say: shown above each dialog's fields
+  const { data: addPlacement, error: addPlacementError } = useQuery({
+    ...inventoryPlacementQuery(characterId, addLocation, addWeaponSet),
+    enabled: addDialogOpen,
+  });
+  const { data: editPlacement, error: editPlacementError } = useQuery({
+    ...inventoryPlacementQuery(characterId, editLocation, editWeaponSet, editingEntry?.id),
+    enabled: editDialog.open,
+  });
+  const addSlotWarning = addPlacement?.warning;
+  const editSlotWarning = editPlacement?.warning;
 
   // Item search infinite query
   const {
@@ -154,7 +146,7 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, encumbrance
       parseResponse(
         rpc.api.characters.inventory[":characterId"].$post({
           param: { characterId },
-          json: { itemId: item.id, ...placementPayload(data, !!addProfile?.charges.has), force },
+          json: { itemId: item.id, ...placementPayload(data, addProfile), force },
         }),
       ),
     onSuccess: () => {
@@ -179,7 +171,7 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, encumbrance
       parseResponse(
         rpc.api.characters.inventory[":characterId"][":entryId"].$put({
           param: { characterId, entryId },
-          json: { ...placementPayload(data, !!editProfile?.charges.has), force, updatedAt: editingEntry?.updatedAt },
+          json: { ...placementPayload(data, editProfile), force, updatedAt: editingEntry?.updatedAt },
         }),
       ),
     onSuccess: () => {
@@ -332,6 +324,7 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, encumbrance
             })(),
         )}
         {!!inventoryError && <LoadError what="Inventory" error={inventoryError} />}
+        {!!addPlacementError && <LoadError what="Slot warning" error={addPlacementError} />}
         {addSlotWarning && (
           <AnimatedAlert in severity="warning">
             {addSlotWarning}
@@ -425,6 +418,7 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, encumbrance
             })(),
         )}
         {!!inventoryError && <LoadError what="Inventory" error={inventoryError} />}
+        {!!editPlacementError && <LoadError what="Slot warning" error={editPlacementError} />}
         {editSlotWarning && (
           <AnimatedAlert in severity="warning">
             {editSlotWarning}

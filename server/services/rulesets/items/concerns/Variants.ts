@@ -9,7 +9,6 @@ import { ConflictError } from "@/server/errors/index.ts";
 import { Items } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import type { TemplateItemType } from "@/shared/itemTemplates.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /** An item's templates and their variants: what a variant may copy, and the variants made in bulk. */
@@ -123,10 +122,11 @@ export function Variants<B extends Constructor>(Base: B) {
       return result;
     }
 
-    async getTemplates(rulesetId: string, type?: TemplateItemType) {
+    async getTemplates(rulesetId: string, type?: string) {
       return await withRulesetScope(db, rulesetId, async (scope) => {
         const { rulesetData } = scope;
-        return await Items.findMany(db, { rulesetId, ...rulesetData.cow.listFilters, type, isTemplate: true });
+        const { filters } = Engine.for(scope).entities("items").openTemplates(type);
+        return await Items.findMany(db, { rulesetId, ...rulesetData.cow.listFilters, ...filters });
       });
     }
   }

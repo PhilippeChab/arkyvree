@@ -59,6 +59,26 @@ class CharacterInventoryService {
     });
   }
 
+  /**
+   * Why `location` (in `weaponSet`, stored from 0, for a hand) can't take one more of the character's items, if it
+   * can't: what its inventory dialogs warn of before a save refuses it, the entry placed (`entryId`, none for a new one)
+   * aside.
+   */
+  async getPlacement(
+    session: Session,
+    characterId: string,
+    entryId: string | null,
+    location: ItemLocation,
+    weaponSet: number,
+  ) {
+    const characterRecord = await getEditableCharacter(db, session, characterId);
+
+    return await withRulesetScope(db, characterRecord.rulesetId, async (scope) => {
+      const character = await readCharacterInput(db, characterRecord);
+      return Engine.for(scope).character(character).describePlacement(entryId, location, weaponSet);
+    });
+  }
+
   async removeItem(session: Session, characterId: string, entryId: string) {
     return await withTransaction(async (tx) => {
       const characterRecord = await getEditableCharacter(tx, session, characterId);

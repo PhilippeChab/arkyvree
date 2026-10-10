@@ -33,6 +33,14 @@ export default class CharacterEngine extends CharacterHandle {
     return this.module.characters.describeForMember(this.view, this.input, this.resolveBonded(bonded), ...rest);
   }
 
+  /**
+   * Why a location (in a weapon set, for a hand) can't take one more item of the character's, if it can't: what the
+   * inventory dialogs warn of before a save refuses it.
+   */
+  describePlacement(...args: Args<"describePlacement">) {
+    return this.module.characters.describePlacement(this.view, this.input, ...args);
+  }
+
   /** The character's printed sheet: the PDF document the server renders. */
   describeSheet(...args: Args<"describeSheet">) {
     return this.module.characters.describeSheet(this.view, this.input, ...args);

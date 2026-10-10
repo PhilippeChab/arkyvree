@@ -1,6 +1,7 @@
 import type { Picker } from "@/engine/core/pickers/index.ts";
 
 import type CharacterDescription from "./characters/description/CharacterDescription.ts";
+import type InventoryEntries from "./characters/inventory/InventoryEntries.ts";
 import type CharacterSheet from "./characters/sheet/CharacterSheet.tsx";
 import type { PoolModifier } from "./entities/feats/FeatEntity.ts";
 import type Dnd35LevelSelections from "./levelUp/Dnd35LevelSelections.ts";
@@ -14,11 +15,15 @@ import type RacePicker from "./pickers/RacePicker.ts";
 /** What a picker adds to each of its options. */
 type DetailsOf<P> = P extends Picker<infer _Row, infer Details> ? Details : never;
 
-/** What the 3.5 rules describe in their own shape: the sheets, the level-up wizard's pages, the pickers' options. */
+/**
+ * What the 3.5 rules describe in their own shape: the sheets, an inventory entry's placement, the level-up wizard's
+ * pages, the pickers' options.
+ */
 export type Dnd35Descriptions = {
   classOption: DetailsOf<ClassPicker>;
   featGroup: { aptitudeModifiers: PoolModifier[]; eligible: boolean; requirementTree: string | undefined };
   featOption: DetailsOf<FeatPicker>;
+  inventoryEntry: ReturnType<typeof InventoryEntries.describeInventoryEntry>;
   levelSelections: ReturnType<Dnd35LevelSelections["describeLevel"]>;
   memberSheet: ReturnType<typeof CharacterDescription.describeForMember>;
   powerOption: DetailsOf<PowerPicker>;

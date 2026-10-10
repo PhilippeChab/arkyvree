@@ -1,21 +1,8 @@
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
-import { ITEM_HAS_CHARGES } from "@/shared/dnd3.5/properties/index.ts";
 import { type ItemLocation, LOCATION_OPTIONS } from "@/shared/enums.ts";
-import { findSlotConflict, getItemTypeLocations, isHandLocation, type SlotConflictReason } from "@/shared/equipment.ts";
 
-import type { InventoryEntry, RulesetItem, RulesetItemDetail } from "./equipmentQueries.ts";
+import type { RulesetItem, RulesetItemDetail } from "./equipmentQueries.ts";
 import { shownWeaponSet } from "./weaponSets.ts";
-
-/** The item fields placement depends on: its type, and the slot it's worn in (`"Other"` for none). */
-type ItemColumns = Pick<RulesetItemDetail, "slot" | "type">;
-
-/** The properties of an item placement reads: whether it has charges. */
-type ItemProperties = RulesetItemDetail["properties"];
-
-/** An inventory entry as the slot warnings read it. */
-type PlacedEntry = Pick<InventoryEntry, "id" | "equipped" | "location" | "weaponSet"> & {
-  item: Pick<InventoryEntry["item"], "name">;
-};
 
 /** The sheet's carried weight and load thresholds (the combat section's `encumbrance`). */
 export type EncumbranceData = CharacterDetail["combat"]["encumbrance"];
@@ -34,19 +21,11 @@ export interface InventoryFormData {
   weaponSet: number;
 }
 
-export type PlacementProfile = ReturnType<typeof placementProfile>;
-
-/** The warning for a slot taken by `entry`, `weaponSet` as the form shows it. */
-const SLOT_CONFLICT_WARNINGS: Record<
-  Exclude<SlotConflictReason, "fingers">,
-  (location: ItemLocation, entry: PlacedEntry, weaponSet: number) => string
-> = {
-  occupied: (location, entry) => `${location} slot is occupied by ${entry.item.name}`,
-  hands: (_, entry, weaponSet) =>
-    `Cannot equip two-handed: ${entry.item.name} is in ${entry.location} (Set ${weaponSet})`,
-  twoHanded: (_, entry, weaponSet) => `Cannot equip: ${entry.item.name} is two-handed in Set ${weaponSet}`,
-  sameHand: (location, entry, weaponSet) => `${location} is occupied by ${entry.item.name} (Set ${weaponSet})`,
-};
+/**
+ * How an item is placed, as its ruleset says: the location it goes to once picked, the locations it can take (each
+ * saying whether the form asks for a weapon set there), whether its wielder picks its hand, and its charges.
+ */
+export type PlacementProfile = RulesetItemDetail["placement"];
 
 export const EMPTY_INVENTORY_FORM: InventoryFormData = {
   selectedItem: null,
@@ -60,69 +39,19 @@ export const EMPTY_INVENTORY_FORM: InventoryFormData = {
 /** A slot, or not equipped. */
 export const LOCATION_CHOICES = [...LOCATION_OPTIONS, "none"] as const;
 
-/** The slot an item goes to when picked, or null to leave the choice (a weapon's hand) to the user. */
-export function detectSlotFromItem(item: ItemColumns): ItemLocation | null {
-  const typeLocations = getItemTypeLocations(item.type);
-  if (typeLocations) return typeLocations.length === 1 ? typeLocations[0] : null;
-  return item.slot;
-}
-
-/** Where an entry is worn ("Main Hand (Set 1)"), or undefined when it's carried. */
-export function formatSlotDisplay(
-  entry: Pick<EquipmentRow, "equipped" | "location" | "weaponSet">,
-): string | undefined {
-  if (!entry.equipped || !entry.location) return undefined;
-  if (isHandLocation(entry.location) && entry.weaponSet !== null)
-    return `${entry.location} (Set ${shownWeaponSet(entry.weaponSet)})`;
-
-  return entry.location;
-}
-
 /**
- * Why the slot is taken (by another entry, the same item's in another place included, or a two-handed weapon in the
- * same set), if it is: the entry being edited (`excludeEntryId`) aside.
+ * The placement as the inventory endpoints take it: a slot equips the item, charges only for an item that has them (as
+ * its `profile` says), and the weapon set stored from 0, which the server keeps for a hand only.
  */
-export function getSlotConflictWarning(
-  location: ItemLocation | "none",
-  /** As the form shows it, from 1. */
-  weaponSet: number,
-  inventoryItems: PlacedEntry[],
-  excludeEntryId?: string,
-): string | null {
-  if (!location || location === "none") return null;
-
-  const equipped = inventoryItems.filter((e) => e.equipped && e.location && e.id !== excludeEntryId);
-  const conflict = findSlotConflict(location, weaponSet - 1, equipped);
-  if (!conflict) return null;
-  if (conflict.reason === "fingers") return "Both finger slots are occupied";
-  return SLOT_CONFLICT_WARNINGS[conflict.reason](location, conflict.entry, weaponSet);
-}
-
-/** The placement as the inventory endpoints take it: a slot equips the item, charges only for items that have them. */
-export function placementPayload(data: InventoryFormData, hasCharges: boolean) {
+export function placementPayload(data: InventoryFormData, profile: PlacementProfile | null) {
   const location = data.location && data.location !== "none" ? data.location : null;
+  const hasCharges = typeof profile?.charges === "number";
   return {
     quantity: data.quantity,
     equipped: !!location,
     location,
     totalCharges: hasCharges ? data.totalCharges : null,
     remainingCharges: hasCharges ? data.remainingCharges : null,
-    weaponSet: isHandLocation(location) ? data.weaponSet - 1 : null,
-  };
-}
-
-/** How an item is placed: the slots it can take, whether a weapon set applies, and its charges. */
-export function placementProfile(item: ItemColumns, properties: ItemProperties) {
-  const isWeapon = item.type === "Weapon";
-  const isShield = item.type === "Shield";
-  const chargesProperty = properties.find((p) => p.type === ITEM_HAS_CHARGES);
-  const locationOptions: readonly ItemLocation[] =
-    getItemTypeLocations(item.type) ?? (item.slot === "Other" ? ["Other"] : LOCATION_OPTIONS);
-  return {
-    /** A weapon picks a hand rather than a slot. */
-    isWeapon,
-    showWeaponSet: isWeapon || isShield,
-    locationOptions,
-    charges: { has: !!chargesProperty, defaultCount: Number.parseInt(chargesProperty?.value ?? "", 10) || 0 },
+    weaponSet: data.weaponSet - 1,
   };
 }
