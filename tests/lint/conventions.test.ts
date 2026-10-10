@@ -463,7 +463,7 @@ describe("conventions", () => {
     ]);
   });
 
-  test("a transaction's queries run one at a time, never in a Promise.all", async () => {
+  test("a transaction's queries run one at a time, never in a Promise.all: a test's db is its transaction", async () => {
     expect(
       await lintRepo(
         {
@@ -492,6 +492,21 @@ describe("conventions", () => {
             "export const f = (db: Db) => Promise.all([Feats.findOne(db, { id }), Skills.findOne(db, { id })]);",
             "",
           ].join("\n"),
+          // A test's `db` is its transaction, which it writes through
+          "tests/services/reads.test.ts": [
+            'import { Feats } from "@/server/repositories/index.ts";',
+            "const rows = await Promise.all(ids.map((id) => Feats.findOne(db, { id })));",
+            "",
+          ].join("\n"),
+          "tests/services/helpers.test.ts": "await Promise.all([createRace(db), createFeat(db)]);\n",
+          "tests/services/writes.test.ts": [
+            'import { Feats } from "@/server/repositories/index.ts";',
+            "await Feats.create(db, {});",
+            "await Feats.create(db, {});",
+            "",
+          ].join("\n"),
+          "tests/cache/inFlight.test.ts": "const [a, b] = await Promise.all([first, RulesetViews.getRawData(id)]);\n",
+          "tests/e2e/journeys/pages.e2e.ts": "await Promise.all([open(db), open(db)]);\n",
         },
         ["writes-in-transactions"],
       ),
@@ -499,6 +514,8 @@ describe("conventions", () => {
       "writes-in-transactions server/services/concurrent.ts",
       "writes-in-transactions server/services/handle.ts",
       "writes-in-transactions server/services/helper.ts",
+      "writes-in-transactions tests/services/helpers.test.ts",
+      "writes-in-transactions tests/services/reads.test.ts",
     ]);
   });
 

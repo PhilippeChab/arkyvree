@@ -267,9 +267,14 @@ for (const [chainingOperator, reverseOrder] of [
       expect(result.invalidRequirements).toHaveLength(0);
       return result.unmetRequirementGroups.length === 0;
     };
-    const originals = await Promise.all(
-      copies.map((entityId) => Requirements.findMany(db, { entityIds: [entityId], entityType: "feats" })),
-    );
+    // Each copy's own requirements, as stored
+    const stored = async () => {
+      const groups = [];
+      for (const entityId of copies)
+        groups.push(await Requirements.findMany(db, { entityIds: [entityId], entityType: "feats" }));
+      return groups;
+    };
+    const originals = await stored();
     const expected = evaluate(originals);
     expect(expected).toBe(chainingOperator === "or");
     const read = () =>
@@ -280,11 +285,7 @@ for (const [chainingOperator, reverseOrder] of [
     RulesetViews.invalidateAll();
     const cold = evaluate([await read()]);
     expect({ before, after, cold }).toEqual({ before: expected, after: expected, cold: expected });
-    expect(
-      await Promise.all(
-        copies.map((entityId) => Requirements.findMany(db, { entityIds: [entityId], entityType: "feats" })),
-      ),
-    ).toEqual(originals);
+    expect(await stored()).toEqual(originals);
   });
 }
 

@@ -34,10 +34,6 @@ function note(type: string, actor: User) {
   return `${type} from ${actor.user.id}`;
 }
 
-function users(count: number) {
-  return Promise.all(Array.from({ length: count }, () => createTestUser()));
-}
-
 /** What `recipient` was notified of. */
 async function inbox(recipient: User) {
   const { items } = await Notifications.findPage(db, { recipientId: recipient.user.id }, { limit: 50, page: 1 });
@@ -51,6 +47,12 @@ async function setup() {
   const [slot] = await Players.create(db, { campaignId: campaign.id, role: "Player Character" });
   const invite = () => inviteToSlot(gm.session, slot, invitee.user.emailAddress);
   return { invitee, invite };
+}
+
+async function users(count: number) {
+  const created = [];
+  for (let i = 0; i < count; i++) created.push(await createTestUser());
+  return created;
 }
 
 describe("activity notifications", () => {

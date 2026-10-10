@@ -216,7 +216,8 @@ describe("ItemsService", () => {
         // A blank description stays blank rather than falling back to the source's.
         { name: "Scroll of Light", description: null, weight: "0.10", costGp: "25.00" },
       ]);
-      const [first, second] = await Promise.all(variants.map((v) => customizationsOf(v.id)));
+      const first = await customizationsOf(variants[0].id);
+      const second = await customizationsOf(variants[1].id);
       expect(first).toMatchObject(copiedCustomizations);
       expect(second).toMatchObject(copiedCustomizations);
       expect(first.modifiers[0].id).not.toBe(second.modifiers[0].id);

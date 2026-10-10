@@ -256,7 +256,8 @@ async function divineCharacter(
 /** A fork of the seeded ruleset that uses these extensions. */
 async function forkWith(...extensionNames: string[]) {
   const { rulesetId } = await getSeedCtx();
-  const extensions = await Promise.all(extensionNames.map(async (name) => (await findSeededRuleset(name)).id));
+  const extensions = [];
+  for (const name of extensionNames) extensions.push((await findSeededRuleset(name)).id);
   const fork = await createTestRuleset(SEED_USER_ID, {
     rulesetId,
     ancestorRulesetIds: [rulesetId],
