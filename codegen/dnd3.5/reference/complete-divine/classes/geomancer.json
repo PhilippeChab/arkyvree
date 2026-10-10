@@ -14,6 +14,34 @@
           10
         ],
         "target": "aptitudes.geomancerleylines.allowed"
+      },
+      {
+        "levels": [
+          3,
+          4
+        ],
+        "target": "aptitudes.geomancerdrift2.allowed"
+      },
+      {
+        "levels": [
+          5,
+          6
+        ],
+        "target": "aptitudes.geomancerdrift3.allowed"
+      },
+      {
+        "levels": [
+          7,
+          8
+        ],
+        "target": "aptitudes.geomancerdrift4.allowed"
+      },
+      {
+        "levels": [
+          9,
+          10
+        ],
+        "target": "aptitudes.geomancerdrift5.allowed"
       }
     ],
     "classSkills": [
@@ -34,6 +62,364 @@
     "features": {
       "Drift 1": {
         "description": "As the geomancer advances, his body gradually transforms to reflect his bond with the natural world. At every geomancer level, select one drift from the stage corresponding to that level."
+      },
+      "Drift 2": {
+        "description": "At 3rd and 4th level, the geomancer selects a drift from stage 2, open to him once he has two drifts from stage 1. Each drift of stage 2 gives him a permanent extraordinary ability.",
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.geomancerdrift2.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ]
+      },
+      "Drift 3": {
+        "description": "At 5th and 6th level, the geomancer selects a drift from stage 3, open to him once he has two drifts from stage 2. Each drift of stage 3 gives him a permanent extraordinary ability. A natural attack adds the geomancer's Strength bonus on its damage, but for poison or acid. Its damage is a Medium geomancer's: for a Small or Large one, 1d3 becomes 1d2 or 1d4, 1d4 becomes 1d3 or 1d6, 1d6 becomes 1d4 or 1d8, 1d8 becomes 1d6 or 2d6, and 2d4 becomes 1d6 or 2d6.",
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.geomancerdrift3.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ]
+      },
+      "Drift 4": {
+        "description": "At 7th and 8th level, the geomancer selects a drift from stage 4, open to him once he has two drifts from stage 3. Each drift of stage 4 gives him a permanent extraordinary ability. A natural attack adds the geomancer's Strength bonus on its damage, but for poison or acid. Its damage is a Medium geomancer's: for a Small or Large one, 1d3 becomes 1d2 or 1d4, 1d4 becomes 1d3 or 1d6, 1d6 becomes 1d4 or 1d8, 1d8 becomes 1d6 or 2d6, and 2d4 becomes 1d6 or 2d6.",
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.geomancerdrift4.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ]
+      },
+      "Drift 5": {
+        "description": "At 9th and 10th level, the geomancer selects a drift from stage 5, open to him once he has two drifts from stage 4. Each drift of stage 5 gives him a permanent extraordinary ability. A natural attack adds the geomancer's Strength bonus on its damage, but for poison or acid. Its damage is a Medium geomancer's: for a Small or Large one, 1d3 becomes 1d2 or 1d4, 1d4 becomes 1d3 or 1d6, 1d6 becomes 1d4 or 1d8, 1d8 becomes 1d6 or 2d6, and 2d4 becomes 1d6 or 2d6.",
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.geomancerdrift5.allowed",
+            "value": "1",
+            "valueType": "number"
+          }
+        ]
+      },
+      "Drift: Ant's Stinger": {
+        "aptitude": "Geomancer Drift 4",
+        "description": "The geomancer grows a stinger like a giant ant's: he can sting for 1d4 points of piercing damage plus 1d4 points of acid damage.",
+        "level": 7
+      },
+      "Drift: Bark Skin": {
+        "aptitude": "Geomancer Drift 5",
+        "description": "The geomancer's skin turns to tree bark: he gains a +1 natural armor bonus to AC.",
+        "level": 9,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "combat.ac.natural",
+            "value": "1",
+            "valueType": "number"
+          }
+        ]
+      },
+      "Drift: Bat's Senses": {
+        "aptitude": "Geomancer Drift 5",
+        "description": "The geomancer's senses grow as keen as a bat's: he gains blindsense out to 30 feet.",
+        "level": 9
+      },
+      "Drift: Bear's Grab": {
+        "aptitude": "Geomancer Drift 4",
+        "description": "The geomancer grabs like a bear: he gains the improved grab ability.",
+        "level": 7
+      },
+      "Drift: Boar's Ferocity": {
+        "aptitude": "Geomancer Drift 4",
+        "description": "The geomancer gains a boar's ferocity: he keeps fighting without penalty while disabled or dying.",
+        "level": 7
+      },
+      "Drift: Camel's Hump": {
+        "aptitude": "Geomancer Drift 2",
+        "description": "A small hump like a camel's grows on the geomancer's back: he can go without water for up to five days.",
+        "level": 3
+      },
+      "Drift: Cat's Grace": {
+        "aptitude": "Geomancer Drift 2",
+        "description": "The geomancer moves with a cat's grace: he gains a +4 bonus on Balance checks.",
+        "level": 3,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "skills.balance.misc",
+            "value": "4",
+            "valueType": "number"
+          }
+        ]
+      },
+      "Drift: Cat's Tail": {
+        "aptitude": "Geomancer Drift 1",
+        "description": "The geomancer grows a tail like a cat's. A stage 1 drift has no game effect.",
+        "level": 1
+      },
+      "Drift: Cheetah's Sprint": {
+        "aptitude": "Geomancer Drift 5",
+        "description": "The geomancer runs like a cheetah: once an hour, he can charge at ten times his normal speed.",
+        "level": 9
+      },
+      "Drift: Crocodile's Jaws": {
+        "aptitude": "Geomancer Drift 3",
+        "description": "The geomancer's mouth lengthens like a crocodile's: he gains a bite attack that deals 1d6 points of damage.",
+        "level": 5
+      },
+      "Drift: Deer Antlers": {
+        "aptitude": "Geomancer Drift 3",
+        "description": "Antlers like a deer's grow from the geomancer's forehead: he gains a gore attack that deals 1d6 points of damage.",
+        "level": 5
+      },
+      "Drift: Dog's Voice": {
+        "aptitude": "Geomancer Drift 1",
+        "description": "The geomancer's voice sounds like a dog's, though others still understand him. A stage 1 drift has no game effect.",
+        "level": 1
+      },
+      "Drift: Downy Fur": {
+        "aptitude": "Geomancer Drift 1",
+        "description": "A light, downy fur covers the geomancer's skin. A stage 1 drift has no game effect.",
+        "level": 1
+      },
+      "Drift: Dryad's Beauty": {
+        "aptitude": "Geomancer Drift 2",
+        "description": "The geomancer grows as comely as a dryad: he gains a +4 bonus on Diplomacy checks.",
+        "level": 3,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "skills.diplomacy.misc",
+            "value": "4",
+            "valueType": "number"
+          }
+        ]
+      },
+      "Drift: Eagle's Eyes": {
+        "aptitude": "Geomancer Drift 3",
+        "description": "The geomancer's eyes grow as sharp as an eagle's: he gains a +4 bonus on Spot checks in daylight.",
+        "level": 5
+      },
+      "Drift: Earthworm's Tremorsense": {
+        "aptitude": "Geomancer Drift 5",
+        "description": "Like an earthworm, the geomancer senses anything in contact with the ground within 30 feet of him (tremorsense).",
+        "level": 9
+      },
+      "Drift: Elephant's Feet": {
+        "aptitude": "Geomancer Drift 5",
+        "description": "The geomancer's feet grow as wide as an elephant's: he gains the trample ability, which deals 2d4 points of bludgeoning damage, Reflex DC 10 + 1/2 his character level + his Strength modifier.",
+        "level": 9
+      },
+      "Drift: Elk's Swiftness": {
+        "aptitude": "Geomancer Drift 2",
+        "description": "The geomancer grows as swift as an elk: his land speed increases by 5 feet.",
+        "level": 3,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "combat.speed.base",
+            "value": "5",
+            "valueType": "number"
+          }
+        ]
+      },
+      "Drift: Feathers": {
+        "aptitude": "Geomancer Drift 1",
+        "description": "Feathers sprout on the geomancer's body, though no wings. A stage 1 drift has no game effect.",
+        "level": 1
+      },
+      "Drift: Gills": {
+        "aptitude": "Geomancer Drift 3",
+        "description": "The geomancer grows gills like a fish's: he can breathe water as well as air.",
+        "level": 5
+      },
+      "Drift: Gorilla's Hands": {
+        "aptitude": "Geomancer Drift 4",
+        "description": "The geomancer's hands grow as strong as a gorilla's: he gains a +2 bonus on Strength checks to break objects.",
+        "level": 7
+      },
+      "Drift: Green Eyebrows": {
+        "aptitude": "Geomancer Drift 1",
+        "description": "The geomancer's eyebrows turn green, thick and bushy. A stage 1 drift has no game effect.",
+        "level": 1
+      },
+      "Drift: Green Scales": {
+        "aptitude": "Geomancer Drift 1",
+        "description": "The geomancer's skin turns green and scaly. A stage 1 drift has no game effect.",
+        "level": 1
+      },
+      "Drift: Hawk's Talons": {
+        "aptitude": "Geomancer Drift 3",
+        "description": "Talons like a hawk's grow on the geomancer's fingers: he gains the Weapon Finesse feat, and two claw attacks a round that deal 1d3 points of damage each.",
+        "level": 5,
+        "modifiers": [
+          {
+            "operator": "set",
+            "target": "feats.weaponfinesse.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ]
+      },
+      "Drift: Hedgehog's Curl": {
+        "aptitude": "Geomancer Drift 5",
+        "description": "The geomancer can curl into a spiny ball like a hedgehog, and uncurl, as a standard action: while curled, he gains a +4 natural armor bonus to AC but can't move or attack.",
+        "level": 9
+      },
+      "Drift: Hound's Nose": {
+        "aptitude": "Geomancer Drift 4",
+        "description": "The geomancer's nose grows as keen as a hound's: he gains scent, out to 30 feet.",
+        "level": 7
+      },
+      "Drift: Leaves": {
+        "aptitude": "Geomancer Drift 2",
+        "description": "Leaves sprout on the geomancer, who lives on sunlight like a plant: an hour of sunlight a day can replace his food, though he needs as much water as before.",
+        "level": 3
+      },
+      "Drift: Leopard Spots": {
+        "aptitude": "Geomancer Drift 1",
+        "description": "Spots like a leopard's mark the geomancer's body. A stage 1 drift has no game effect.",
+        "level": 1
+      },
+      "Drift: Leopard's Pounce": {
+        "aptitude": "Geomancer Drift 4",
+        "description": "The geomancer pounces like a leopard: when he leaps on a foe in the first round of combat, he can make a full attack even after a move action.",
+        "level": 7
+      },
+      "Drift: Lion's Claws": {
+        "aptitude": "Geomancer Drift 3",
+        "description": "Claws like a lion's grow on the geomancer's toes: once he has a hold on his foe, he can make two rake attacks that deal 1d4 points of damage each.",
+        "level": 5
+      },
+      "Drift: Lizard's Feet": {
+        "aptitude": "Geomancer Drift 2",
+        "description": "The pads of the geomancer's feet grow sticky like a lizard's: he gains a +4 bonus on Climb checks.",
+        "level": 3,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "skills.climb.misc",
+            "value": "4",
+            "valueType": "number"
+          }
+        ]
+      },
+      "Drift: Octopus Skin": {
+        "aptitude": "Geomancer Drift 2",
+        "description": "Like an octopus, the geomancer can change his skin's color to blend with his surroundings: he gains a +4 bonus on Hide checks.",
+        "level": 3,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "skills.hide.misc",
+            "value": "4",
+            "valueType": "number"
+          }
+        ]
+      },
+      "Drift: Owl's Eyes": {
+        "aptitude": "Geomancer Drift 3",
+        "description": "The geomancer's eyes grow as sharp as an owl's: he gains a +4 bonus on Spot checks at dusk and in darkness.",
+        "level": 5
+      },
+      "Drift: Pixie's Grace": {
+        "aptitude": "Geomancer Drift 5",
+        "description": "The geomancer grows as graceful as a pixie: he gains a +2 bonus on Reflex saves.",
+        "level": 9,
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "saves.reflex.misc",
+            "value": "2",
+            "valueType": "number"
+          }
+        ]
+      },
+      "Drift: Poison Fangs": {
+        "aptitude": "Geomancer Drift 5",
+        "description": "The geomancer's canine teeth exude poison: a creature he hits with a bite attack must succeed on a Fortitude save (DC 10 + 1/2 his character level + his Constitution modifier) or take 1d2 points of Dexterity damage, then 1d4 points as secondary damage.",
+        "level": 9
+      },
+      "Drift: Polar Bear's Fur": {
+        "aptitude": "Geomancer Drift 2",
+        "description": "White fur like a polar bear's covers the geomancer: he gains a +8 bonus on Hide checks in snowy areas.",
+        "level": 3
+      },
+      "Drift: Rat's Eyes": {
+        "aptitude": "Geomancer Drift 2",
+        "description": "The geomancer's eyes grow as keen as a rat's: he gains low-light vision.",
+        "level": 3
+      },
+      "Drift: Sap Blood": {
+        "aptitude": "Geomancer Drift 2",
+        "description": "The geomancer's blood flows as slowly as a tree's sap: damage that progresses over time, such as from wounding or decomposition, affects him at half its pace.",
+        "level": 3
+      },
+      "Drift: Snake's Coils": {
+        "aptitude": "Geomancer Drift 3",
+        "description": "The geomancer constricts like a snake: a successful grapple check against a creature of his size or smaller deals it 1d3 points of damage.",
+        "level": 5
+      },
+      "Drift: Spider's Web": {
+        "aptitude": "Geomancer Drift 3",
+        "description": "The geomancer spins webs like a spider: he snares prey with them as a monstrous spider does, but can't attack with them.",
+        "level": 5
+      },
+      "Drift: Squid's Ink": {
+        "aptitude": "Geomancer Drift 4",
+        "description": "Like a squid, the geomancer can emit a cloud of jet-black ink 10 feet on a side in water, once a minute as a free action: it gives total concealment, and those inside it are in total darkness.",
+        "level": 7
+      },
+      "Drift: Thorns": {
+        "aptitude": "Geomancer Drift 3",
+        "description": "Thorns grow on the geomancer's body: his unarmed attacks deal piercing damage, and a creature that hits him with a natural weapon takes 1d3 points of piercing damage per hit.",
+        "level": 5
+      },
+      "Drift: Unicorn Horn": {
+        "aptitude": "Geomancer Drift 5",
+        "description": "A horn like a unicorn's grows from the geomancer's forehead: he gains a +4 bonus on Fortitude saves against poison, and a gore attack that deals 1d8 points of damage.",
+        "level": 9
+      },
+      "Drift: Vine Hair": {
+        "aptitude": "Geomancer Drift 1",
+        "description": "The geomancer's hair becomes a tangle of short vines. A stage 1 drift has no game effect.",
+        "level": 1
+      },
+      "Drift: Weasel's Jaw": {
+        "aptitude": "Geomancer Drift 4",
+        "description": "The geomancer's jaw grows as powerful as a weasel's: after a successful bite, he can stay attached to his foe and deal it 1d3 points of damage each round until he lets go, losing his Dexterity bonus to AC while attached.",
+        "level": 7
+      },
+      "Drift: Wilting Touch": {
+        "aptitude": "Geomancer Drift 1",
+        "description": "Flowers wilt at the geomancer's touch. A stage 1 drift has no game effect.",
+        "level": 1
+      },
+      "Drift: Wings": {
+        "aptitude": "Geomancer Drift 5",
+        "description": "Wings, feathered or like a bat's, grow from the geomancer's back: he gains a fly speed of 60 feet.",
+        "level": 9
+      },
+      "Drift: Wolf's Trip": {
+        "aptitude": "Geomancer Drift 4",
+        "description": "The geomancer trips like a wolf: when he hits with a natural attack, he can try to trip his target as a free action.",
+        "level": 7
+      },
+      "Drift: Wolverine's Rage": {
+        "aptitude": "Geomancer Drift 4",
+        "description": "The geomancer rages like a wolverine when he takes damage, as a 1st-level barbarian. If a class of his grants rage, it instead counts as a level higher, for rage's benefits only.",
+        "level": 7
+      },
+      "Drift: Zebra Stripes": {
+        "aptitude": "Geomancer Drift 1",
+        "description": "Stripes like a zebra's mark the geomancer's body. A stage 1 drift has no game effect.",
+        "level": 1
       },
       "Ley Lines": {
         "description": "Beginning at 2nd level, the geomancer forges a mystical link to a particular kind of terrain. Select one terrain type from the following: aquatic, desert, forest, hills, marsh, mountains, or plains. While in that terrain, the geomancer's effective caster level for all spells is increased by +1. At 6th level and once more at 10th level, the geomancer may either pick an additional terrain to gain the +1 caster level bonus, or raise his effective caster level in a terrain he has already chosen by a further +1.",

@@ -337,6 +337,59 @@ describe("The seeded extensions", () => {
     expect(picksOf(divine, "Ley Lines (Geomancer)")).toEqual([true, "aptitudes.geomancerleylines.allowed"]);
   });
 
+  test("give the geomancer a drift of his level's stage to pick at each level, ten a stage", async () => {
+    const divine = await seededRows(DND35_COMPLETE_DIVINE_NAME);
+    const stages = [1, 2, 3, 4, 5].map((stage) => {
+      const feature = divine.feat(`Drift ${stage} (Geomancer)`);
+      const pool = divine.aptitude(`Geomancer Drift ${stage}`).id;
+      const options = divine.feats.filter((feat) =>
+        feat.featsAptitudesInRules.some((link) => link.aptitudeId === pool),
+      );
+      return {
+        // The pick each of its levels opens
+        pick: [feature.stackable, ...divine.modifiersOf(feature.id).map((m) => `${m.target} ${m.operator} ${m.value}`)],
+        levels: Array.from({ length: 10 }, (_, index) => index + 1).filter((level) =>
+          divine.klassLevelFeats.some(
+            (grant) => grant.klassLevelId === divine.klassLevel("Geomancer", level).id && grant.featId === feature.id,
+          ),
+        ),
+        // Ten drifts, each taken once, open from the stage's first level
+        options: options.length,
+        stackable: options.some((feat) => feat.stackable),
+        requirements: [
+          ...new Set(options.flatMap((feat) => divine.requirementsOf(feat.id).map((q) => `${q.target} ${q.value}`))),
+        ],
+      };
+    });
+    expect(stages).toEqual(
+      [1, 2, 3, 4, 5].map((stage) => ({
+        pick: [true, `aptitudes.geomancerdrift${stage}.allowed add 1`],
+        levels: [stage * 2 - 1, stage * 2],
+        options: 10,
+        stackable: false,
+        requirements: stage === 1 ? [] : [`classes.geomancer.level ${stage * 2 - 1}`],
+      })),
+    );
+    // A drift whose ability is always on gives it; a cosmetic or conditional one gives nothing
+    const drifts = divine.feats.filter((feat) => /^Drift: .* \(Geomancer Drift \d\)$/.test(feat.name));
+    expect(
+      Object.fromEntries(
+        drifts
+          .map((feat) => [feat.name, divine.modifiersOf(feat.id).map((m) => `${m.target} ${m.operator} ${m.value}`)])
+          .filter(([, modifiers]) => modifiers.length > 0),
+      ),
+    ).toEqual({
+      "Drift: Bark Skin (Geomancer Drift 5)": ["combat.ac.natural add 1"],
+      "Drift: Cat's Grace (Geomancer Drift 2)": ["skills.balance.misc add 4"],
+      "Drift: Dryad's Beauty (Geomancer Drift 2)": ["skills.diplomacy.misc add 4"],
+      "Drift: Elk's Swiftness (Geomancer Drift 2)": ["combat.speed.base add 5"],
+      "Drift: Hawk's Talons (Geomancer Drift 3)": ["feats.weaponfinesse.possessed set true"],
+      "Drift: Lizard's Feet (Geomancer Drift 2)": ["skills.climb.misc add 4"],
+      "Drift: Octopus Skin (Geomancer Drift 2)": ["skills.hide.misc add 4"],
+      "Drift: Pixie's Grace (Geomancer Drift 5)": ["saves.reflex.misc add 2"],
+    });
+  });
+
   test("give the horizon walker a terrain to pick from his 1st level, and a terrain or a planar one from his 6th", async () => {
     const dmg = await seededRows(DND35_DMG_NAME);
     const choicesOf = (pool: string) => {
