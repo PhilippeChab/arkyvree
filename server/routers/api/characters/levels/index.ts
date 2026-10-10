@@ -80,13 +80,15 @@ const stepQuery = {
 
 /**
  * A feat or power picker's page: its step's level, which it requires, the pool it picks in and the feats picked so far,
- * which its options are checked against.
+ * which its options are checked against, and the levels the wizard plans after it (`laterClassLevelIds`), whose grants
+ * it leaves out.
  */
 const pickerQuery = {
   ...stepQuery,
   aptitudeId: z.string().uuid(),
   classId: z.string().uuid(),
   featPicks,
+  laterClassLevelIds: idList,
   level: queryNumber,
   limit: limitDefaultingTo(20),
   page,

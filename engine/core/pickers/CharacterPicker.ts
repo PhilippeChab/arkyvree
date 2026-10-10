@@ -46,8 +46,13 @@ export default abstract class CharacterPicker<
     return this.character.areRequirementsMet(groups);
   }
 
+  /** The character built from a projection of its rows, by its ruleset's builder. */
+  protected build(projection: CharacterProjection): C {
+    return this.builder.build(this.view, projection.input);
+  }
+
   /** The character the picker checks options against: built from its projection when first asked. */
   protected get character(): C {
-    return (this.built ??= this.builder.build(this.view, this.project().input));
+    return (this.built ??= this.build(this.project()));
   }
 }

@@ -42,9 +42,12 @@ export interface ClassPicker extends PlannedPicks {
 
 /**
  * A picker's level (a `StepLevel`), and what its list is checked against: the levels planned before it and the feats
- * picked so far.
+ * picked so far, and the levels planned after it (`laterClassLevelIds`, their class levels), whose grants it leaves
+ * out.
  */
-export interface PickerLevel extends StepLevel, PlannedPicks {}
+export interface PickerLevel extends StepLevel, PlannedPicks {
+  laterClassLevelIds?: string;
+}
 
 /** The spell picker's level (a `PickerLevel`), and the spells picked already, which it leaves out (`powerPickString`). */
 export interface PowerPickerLevel extends PickerLevel {
@@ -96,6 +99,14 @@ function levelQueryOf({ abilityId, classId, level, editedLevelId, skillPoints }:
   };
 }
 
+/**
+ * What a feat or spell picker's list is checked against, as the endpoints' query: the planned levels before it, the
+ * feats picked so far, and the planned levels after it.
+ */
+function pickerQueryOf(picker: PickerLevel) {
+  return { ...plannedQueryOf(picker), laterClassLevelIds: picker.laterClassLevelIds || undefined };
+}
+
 /** What a picker's list is checked against, as the endpoints' query: the planned levels and the feats picked so far. */
 function plannedQueryOf(picker: PlannedPicks) {
   return {
@@ -135,7 +146,7 @@ export function availableFeatFamilyQuery(characterId: string, aptitudeId: string
     aptitudeId,
     family,
     limit: "50",
-    ...plannedQueryOf(picker),
+    ...pickerQueryOf(picker),
   };
   return infiniteQueryOptions({
     queryKey: QUERY_KEYS.characters.levelUp.availableFeatFamily(characterId, query),
@@ -168,7 +179,7 @@ export function availableFeatsGroupedQuery(
           aptitudeId,
           limit: "20",
           search: search || undefined,
-          ...plannedQueryOf(picker),
+          ...pickerQueryOf(picker),
         }
       : undefined;
   return infiniteQueryOptions({
@@ -207,7 +218,7 @@ export function availablePowersQuery(
           powerLevel: powerLevel?.toString(),
           limit: "20",
           search: search || undefined,
-          ...plannedQueryOf(picker),
+          ...pickerQueryOf(picker),
           selectedPowerIds: picker.selectedPowerIds,
         }
       : undefined;

@@ -17,15 +17,16 @@ export interface FeatGroupDetails {
 
 /**
  * A feat picker for the character, from its rows: the pool's feats (`filters`, a family's when the query names one;
- * `groupFilters`, grouped by family), but those it holds that don't stack; each described with the pools its modifiers
- * add slots to, and a family's row described when the picker opens it (`describeGroups`).
+ * `groupFilters`, grouped by family), but those that don't stack it holds at any of its levels, a later one and a
+ * planned one too (`holder`), or picked so far; each described with the pools its modifiers add slots to, and a
+ * family's row described when the picker opens it (`describeGroups`).
  */
 export default class FeatPicker extends Dnd35LevelPicker<{ aptitudeModifiers: PoolModifier[] }> {
   constructor(view: RulesetView, input: CharacterInput, query: FeatPickQuery) {
     super(view, input, query);
     const offered = {
       ids: this.rulesetData.listFeatIds(query.aptitudeId),
-      excludeIds: this.character
+      excludeIds: this.holder
         .getHeldFeats()
         .filter((feat) => !feat.stackable)
         .map((feat) => feat.id),
