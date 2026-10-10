@@ -4,19 +4,21 @@ import type { RulesetView } from "@/engine/core/view/index.ts";
 /** What a character's creation or edit stores beside its row, as its ruleset's rules say. */
 export default class CharacterEdits {
   /**
-   * Refuses languages a character can't speak: one of `languageIds` not found (`languages`, the rows the server read
-   * for them), or not of the character's ruleset (`rulesetId`) nor of its source chain.
+   * Refuses rows a character can't take from its ruleset (`rows`, each with the ruleset it's of): rows of neither the
+   * view's ruleset, the character's, nor its source chain.
    */
-  static checkLanguages(
-    view: RulesetView,
-    rulesetId: string,
-    languageIds: string[],
-    languages: { rulesetId: string }[],
-  ) {
+  static checkFromRuleset(view: RulesetView, rows: { rulesetId: string }[], message: string) {
+    const rulesetIds = new Set([view.ruleset.id, ...view.rulesetData.cow.sourceChain]);
+    if (rows.some((row) => !rulesetIds.has(row.rulesetId))) throw new RulesError("invalid", message);
+  }
+
+  /**
+   * Refuses languages a character can't speak: one of `languageIds` not found (`languages`, the rows the server read
+   * for them), or not of the character's ruleset nor of its source chain.
+   */
+  static checkLanguages(view: RulesetView, languageIds: string[], languages: { rulesetId: string }[]) {
     if (languages.length !== languageIds.length) throw new RulesError("invalid", "Some languages were not found");
-    const validRulesetIds = new Set([rulesetId, ...view.rulesetData.cow.sourceChain]);
-    if (languages.some((language) => !validRulesetIds.has(language.rulesetId)))
-      throw new RulesError("invalid", "Some languages do not belong to the character's ruleset");
+    CharacterEdits.checkFromRuleset(view, languages, "Some languages do not belong to the character's ruleset");
   }
 
   /**

@@ -1,6 +1,5 @@
 import { Page, Text, View } from "@react-pdf/renderer";
 
-import CharacterResponse from "@/engine/rulesets/dnd3.5/characters/description/CharacterResponse.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import {
@@ -45,6 +44,7 @@ const SPELL_PROPERTY_ORDER = Object.keys(ENTITY_PROPERTY_TYPES.powers ?? {});
 
 const SPELL_PROPERTY_ORDER_INDEX = new Map(SPELL_PROPERTY_ORDER.map((k, i) => [k, i]));
 
+/** The sheet's spells page: the spells the character knows and has without a pick, by list and spell level. */
 function SpellsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacter }) {
   const identity = detailedCharacter.components.identity;
   const classes = detailedCharacter.components.classes;
@@ -55,7 +55,7 @@ function SpellsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacte
   const sorted = buildSpellGroups({
     classes: classes.getCharacterClasses(),
     powers: powers.getFlatPowers(),
-    virtualPowers: CharacterResponse.buildVirtualEntities(detailedCharacter).virtualPowers,
+    virtualPowers: detailedCharacter.getVirtualPowers(),
     aptitudes: aptitudes.getAptitudes(),
     spellTags: detailedCharacter.getSpellTags(),
     spellTagLists: detailedCharacter.getSpellTagLists(),

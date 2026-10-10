@@ -23,6 +23,7 @@ const AC_PARTS = [
   ["Misc", "misc"],
 ] as const;
 
+/** The sheet's first page: who the character is, its ability scores, saving throws, combat stats and weapons. */
 function InfoPage({
   detailedCharacter,
   portraitUrl,
@@ -173,7 +174,7 @@ function InfoPage({
                         {SheetFormat.formatModifier(abilities.getAbilityModifier(name))}
                       </Text>
                       <Text style={{ fontSize: FONT_SIZE.xs, color: "#666", marginTop: 2, textAlign: "center" }}>
-                        {`${ab?.base ?? 10} / ${ab?.level ? `+${ab.level}` : "+0"} / ${ab?.misc ? SheetFormat.formatModifier(ab.misc) : "+0"}`}
+                        {`${ab?.base ?? 10} / ${SheetFormat.formatModifier(ab?.level)} / ${SheetFormat.formatModifier(ab?.misc)}`}
                       </Text>
                     </View>
                   );

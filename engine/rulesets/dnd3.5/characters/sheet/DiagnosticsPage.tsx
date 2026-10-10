@@ -37,6 +37,7 @@ function DiagnosticCounts({ counts }: { counts: { color: string; label: string }
   );
 }
 
+/** The sheet's diagnostics page: what its modifiers and requirements did, and what its validation found. */
 function DiagnosticsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacter }) {
   const identity = detailedCharacter.components.identity;
   const requirements = detailedCharacter.requirementEvaluator;

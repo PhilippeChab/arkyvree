@@ -6,6 +6,7 @@ import ContinuationHeader from "./ContinuationHeader.tsx";
 import SheetFormat from "./SheetFormat.ts";
 import { FONT_SIZE, styles } from "./styles.ts";
 
+/** The sheet's skills page: each skill's ranks, its ability and the bonuses it totals. */
 function SkillsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacter }) {
   const identity = detailedCharacter.components.identity;
   const skills = detailedCharacter.components.skills;

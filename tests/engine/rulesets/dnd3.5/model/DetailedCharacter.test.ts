@@ -3084,7 +3084,7 @@ describe("DetailedCharacter", () => {
 
       test("list each of their properties' values, in the books' order", async () => {
         // Magic Missile's components: Verbal and Somatic, on a sheet's granted spells as on its others
-        const { virtualPowers } = CharacterResponse.buildVirtualEntities(await setupGrantedSpell());
+        const virtualPowers = (await setupGrantedSpell()).getVirtualPowers();
         expect(virtualPowers.find((power) => power.name === "Magic Missile")?.properties).toMatchObject({
           SPELL_COMPONENT: "Verbal, Somatic",
           SPELL_SCHOOL: "Evocation",
@@ -3093,8 +3093,8 @@ describe("DetailedCharacter", () => {
 
       test("get the school's DC bonuses", async () => {
         // 10 + 1 + INT 16 (+3) + Spell Focus: Evocation.
-        const granted = (await setupGrantedSpell({ spellFocus: true })).getVirtuallyPossessedPowersWithAptitudes();
-        expect(granted.find((vp) => vp.power.name === "Magic Missile")).toMatchObject({ dc: 15 });
+        const granted = (await setupGrantedSpell({ spellFocus: true })).getVirtualPowers();
+        expect(granted.find((power) => power.name === "Magic Missile")).toMatchObject({ dc: 15 });
       });
     });
 

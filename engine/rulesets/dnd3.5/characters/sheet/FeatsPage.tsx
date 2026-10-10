@@ -5,6 +5,7 @@ import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedChara
 import ContinuationHeader from "./ContinuationHeader.tsx";
 import { FONT_SIZE, styles } from "./styles.ts";
 
+/** The sheet's feats page: the feats the character picked, and those it has without a pick, in two columns. */
 function FeatsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacter }) {
   const identity = detailedCharacter.components.identity;
   const classes = detailedCharacter.components.classes;
@@ -50,7 +51,7 @@ function FeatsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacter
             }
           }
 
-          for (const feat of detailedCharacter.getVirtuallyPossessedFeats()) {
+          for (const feat of detailedCharacter.getVirtualFeats()) {
             featEntries.push({
               key: `virtual-${feat.id}`,
               label: feat.name,

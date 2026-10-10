@@ -6,6 +6,7 @@ import { capitalize } from "@/shared/text.ts";
 import ContinuationHeader from "./ContinuationHeader.tsx";
 import { FONT_SIZE, styles } from "./styles.ts";
 
+/** The sheet's inventory page: what the character carries and where, and the load it makes. */
 function InventoryPage({ detailedCharacter }: { detailedCharacter: DetailedCharacter }) {
   const identity = detailedCharacter.components.identity;
   const combat = detailedCharacter.components.combat;
