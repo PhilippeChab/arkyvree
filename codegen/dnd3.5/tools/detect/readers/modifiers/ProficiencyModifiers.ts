@@ -14,6 +14,7 @@ const WEAPON_ALIASES: Record<string, string[]> = {
   "dagger (any type)": ["Dagger", "Punching Dagger"],
   "shortbow (normal and composite)": ["Shortbow", "Composite Shortbow"],
   "hand axe": ["Handaxe"],
+  "short sword": ["Shortsword"],
 };
 
 /** Weapon name → proficiency slug lookup: a later list's name replaces an earlier one's */

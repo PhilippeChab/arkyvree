@@ -119,13 +119,13 @@ export const ROGUE_CLASS_FEATS: FeatSeed[] = [
     modifiers: [
       { target: "feats.simpleweaponproficiency.possessed", operator: "set", value: "true", valueType: "boolean" },
       {
-        target: "feats.exoticweaponproficiencyhandcrossbow.possessed",
+        target: "feats.martialweaponproficiencyshortsword.possessed",
         operator: "set",
         value: "true",
         valueType: "boolean",
       },
       {
-        target: "feats.martialweaponproficiencyshortsword.possessed",
+        target: "feats.exoticweaponproficiencyhandcrossbow.possessed",
         operator: "set",
         value: "true",
         valueType: "boolean",

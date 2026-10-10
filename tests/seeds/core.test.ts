@@ -2,8 +2,10 @@ import { describe, expect, test } from "bun:test";
 
 import { ALL_DOMAINS } from "@/content/dnd3.5/generated/srd/domains.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { UNARMED_STRIKE } from "@/vocabulary/dnd3.5/combat.ts";
 import { CREATURE_TYPES } from "@/vocabulary/dnd3.5/creatureTypes.ts";
 import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { WEAPON_TYPE_DEFINITIONS } from "@/vocabulary/dnd3.5/weapons.ts";
 
 import { describeRequirement, seededRows } from "./seededRows.ts";
 
@@ -73,6 +75,17 @@ describe("The seeded core rules", () => {
     const rows = await seededRows();
     const entity = type === "feats" ? rows.feat(name) : rows.items.find((item) => item.name === name)!;
     expect(rows.requirementsOf(entity.id).map(describeRequirement).sort()).toEqual([...expected]);
+  });
+
+  test("name a weapon's feats as its item, and the unarmed strike's, a simple weapon that's no item", async () => {
+    const rows = await seededRows();
+    const weapons = [...new Set(rows.items.map((item) => item.name))].filter((name) => WEAPON_TYPE_DEFINITIONS[name]);
+    expect(weapons.length).toBe(Object.keys(WEAPON_TYPE_DEFINITIONS).length);
+    for (const weapon of [...weapons, UNARMED_STRIKE]) {
+      const proficiency = WEAPON_TYPE_DEFINITIONS[weapon]?.proficiency ?? "Simple";
+      expect(rows.feat(`${proficiency} Weapon Proficiency: ${weapon}`)).toBeDefined();
+      expect(rows.feat(`Weapon Focus: ${weapon}`)).toBeDefined();
+    }
   });
 
   describe("cleric domains", () => {

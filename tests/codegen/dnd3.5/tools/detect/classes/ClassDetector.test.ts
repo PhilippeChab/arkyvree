@@ -72,6 +72,9 @@ describe("A class's detected features", () => {
       "feats.armorproficiencymedium.possessed",
       "feats.shieldproficiency.possessed",
     ]);
+    // "…plus the hand crossbow, rapier, sap, shortbow, and short sword": the weapon table's Shortsword
+    const rogue = classOf("srd", "rogue").detected.featureModifiers["Weapon and Armor Proficiency"];
+    expect(rogue.modifiers.map(({ target }) => target)).toContain("feats.martialweaponproficiencyshortsword.possessed");
   });
 
   test("leave out a pool, whose options are features without modifiers", () => {
