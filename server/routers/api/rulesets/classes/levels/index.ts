@@ -76,6 +76,7 @@ export default new Hono<SessionContext>()
         fields: classLevelFields.optional(),
         saves: levelSaves,
         feats: levelFeats,
+        updatedAt: z.string().optional(),
       }),
     ),
     async (c) => {

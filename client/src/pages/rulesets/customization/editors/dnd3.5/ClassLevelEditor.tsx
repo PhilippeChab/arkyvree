@@ -55,7 +55,7 @@ export function ClassLevelEditor({
   refetchSaved,
 }: EditorProps<ClassLevel>) {
   const form = useFormWith<ClassLevelFormData>(EMPTY_CLASS_LEVEL);
-  const sync = useFormSync(form, toClassLevelForm(level), { key: recordKey, adoptKey });
+  const sync = useFormSync(form, toClassLevelForm(level), { key: recordKey, adoptKey, updatedAt: level.updatedAt });
   const { data: rulesetSaves, error: savesError } = useRulesetSaves(rulesetId);
   const saveMutation = useEntitySave({
     rulesetId,
@@ -65,14 +65,14 @@ export function ClassLevelEditor({
     storeSaved: refetchSaved,
     listKey: QUERY_KEYS.rulesets.classLevels(rulesetId, level.klassId),
     label: "Class level",
-    // A level's save takes no stale-edit token
-    saveFn: (data: ClassLevelFormData) =>
+    saveFn: (data: ClassLevelFormData, updatedAt: string | undefined) =>
       parseResponse(
         rpc.api.rulesets[":id"].classes[":classId"].levels[":levelId"].$put({
           param: { id: rulesetId, classId: level.klassId, levelId: entityId },
           json: {
             saves: allLevelSaves(rulesetSaves, data.saves ?? []),
             feats: data.feats ?? [],
+            updatedAt,
           },
         }),
       ),
