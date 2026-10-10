@@ -8,32 +8,35 @@ import { LOCATION_OPTIONS } from "@/shared/enums.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { TEMPLATE_ITEM_TYPES, type TemplateItemType } from "@/vocabulary/dnd3.5/itemTemplates.ts";
 
-import { fieldsClearedByType, ITEM_TYPE_OPTIONS, type ItemFormData } from "./itemForm.ts";
+import { fieldsClearedByType, ITEM_TYPE_OPTIONS, type ItemFormData, templateOptions } from "./itemForm.ts";
 
 interface ItemFormFieldsProps {
   form: UseFormReturn<ItemFormData>;
   /** Keeps the type, slot and template as they are (a duplicate copies them from its source). */
   lockType?: boolean;
   rulesetId: string;
+  /** The name of the template the item was saved with, which its select shows while it isn't one of the item's type. */
+  templateName?: string | null;
 }
 
 interface TemplateSelectorProps {
   disabled?: boolean;
   form: UseFormReturn<ItemFormData>;
   rulesetId: string;
+  templateName?: string | null;
   type: TemplateItemType;
 }
 
-function TemplateSelector({ form, rulesetId, type, disabled }: TemplateSelectorProps) {
+function TemplateSelector({ form, rulesetId, templateName, type, disabled }: TemplateSelectorProps) {
   const { data: templates, isLoading, error } = useQuery(itemTemplatesQuery(rulesetId, type));
+  const held = form.watch("sourceItemId");
 
-  // Empty until the templates load (a value with no option is out of range); one this ruleset no longer has shows as "None".
   return (
     <SelectField
       control={form.control}
       name="sourceItemId"
       label={`${type} Template`}
-      options={templates?.map((t) => ({ value: t.id, label: t.name })) ?? []}
+      options={templateOptions(templates, held, templateName)}
       emptyLabel="None"
       disabled={isLoading || disabled}
       loadError={error}
@@ -41,7 +44,7 @@ function TemplateSelector({ form, rulesetId, type, disabled }: TemplateSelectorP
   );
 }
 
-export function ItemFormFields({ form, rulesetId, lockType }: ItemFormFieldsProps) {
+export function ItemFormFields({ form, rulesetId, lockType, templateName }: ItemFormFieldsProps) {
   const itemType = form.watch("type");
   const isTemplate = form.watch("isTemplate");
 
@@ -76,17 +79,26 @@ export function ItemFormFields({ form, rulesetId, lockType }: ItemFormFieldsProp
           htmlInput: { inputMode: "decimal" },
         }}
       />
+      {/* A template is of a type an item can be based on a template of */}
       <SelectField
         control={form.control}
         name="type"
         label="Item Type"
-        options={ITEM_TYPE_OPTIONS}
-        emptyLabel="None"
+        options={isTemplate ? TEMPLATE_ITEM_TYPES : ITEM_TYPE_OPTIONS}
+        emptyLabel={isTemplate ? undefined : "None"}
         onChange={handleTypeChange}
         disabled={lockType}
       />
       {isOneOf(itemType, TEMPLATE_ITEM_TYPES) ? (
-        !isTemplate && <TemplateSelector form={form} rulesetId={rulesetId} type={itemType} disabled={lockType} />
+        !isTemplate && (
+          <TemplateSelector
+            form={form}
+            rulesetId={rulesetId}
+            templateName={templateName}
+            type={itemType}
+            disabled={lockType}
+          />
+        )
       ) : (
         <SelectField
           control={form.control}

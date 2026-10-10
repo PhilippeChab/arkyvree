@@ -97,6 +97,14 @@ selector for templates, and the item service rejects sources on template creatio
 or update using the stored template status. Saving a template without a source
 also clears any legacy source reference.
 
+A template is of a type an item can be based on a template of
+(`TEMPLATE_ITEM_TYPES`: a weapon, an armor, a shield), refused otherwise on
+create and on an edit that changes its type, and an item made from one is of its
+type. A template's edit that changes its type, and its delete, read its copies in
+any ruleset by every id they may hold (its own and those it stands for:
+`cow.getEquivalentIds`), and are refused while it has any (of another type than
+the new one, for an edit): `ItemEntity.planEdit`, `planDelete`.
+
 Regular items can reference templates to inherit their properties and
 requirements. Duplicating a template creates a regular item referencing it.
 This item relationship is separate from ruleset inheritance: a local override of
@@ -379,12 +387,12 @@ return await this.writer.delete(session, rulesetId, languageId, (scope) =>
 - **An update** writes the row the view's entity resolves to: the fork's own, or the copy of an inherited one (`EntityEdit.cowToEdit`), refused when stale (a copy's `updatedAt` isn't the client's). It replaces its list links when the plan gives them.
 - **A delete** is refused while the entity is in use: picked by a character, unless the kind says otherwise (a saving throw a class level grants, `inUse`). It deletes the row the entity resolves to (`EntityEdit.cowToDelete`), the fork's own locked first, with what its plan removes.
 
-Each records its activity (`createLanguage`, `updateLanguage`, `deleteLanguage`: the writer's activity name), which carries the ruleset's base rules, as every change to a ruleset's content does (`createActivityWithNotifications` reads them off the ruleset it notifies the stakeholders of: the client names the change in the ruleset's words, a 3.5 power a spell), and drops the ruleset's views. A kind adds what's its own: what its plan reads (a feat's tombstone ancestor, whether it was generated), what refuses its delete (`refuse`: an item template's copies) and what it compares to the entity it was (an item's template, from the row).
+Each records its activity (`createLanguage`, `updateLanguage`, `deleteLanguage`: the writer's activity name), which carries the ruleset's base rules, as every change to a ruleset's content does (`createActivityWithNotifications` reads them off the ruleset it notifies the stakeholders of: the client names the change in the ruleset's words, a 3.5 power a spell), and drops the ruleset's views. A kind adds what's its own: what its plan reads (a feat's tombstone ancestor, whether it was generated, an item template's copies when its edit changes its type), what refuses its delete (`refuse`: an item template's copies) and what it compares to the entity it was (an item's template, from the row).
 
 A create or an edit answers its row with the fields the entity keeps once written (its plan's `fields`: a skill's, a race's, none of an ability's), as a page describes its rows, and a class's levels, class skills and table keep their handle (`class(klassId).planLevelDelete`, `describeLevel`).
 
 Every kind's rules are a class on one base (`engine/core/entities/RulesetEntity.ts`), whose steps every kind takes, a kind adding its rules to the ones they name:
-- **Described** (`describe(id)`): the entity found (`find`, refused as not found), its row as the view resolves it, with the fields its properties hold (the kind's `fields`, a codec: `FieldCodec.NONE` for a kind without). A kind whose page shows its customizations adds them (`CustomizationPageEntity`: a race, a feat, a power, an item, a class level); an item's are merged with its template's (`propertiesOf`, `requirementsOf`).
+- **Described** (`describe(id)`): the entity found (`find`, refused as not found), its row as the view resolves it, with the fields its properties hold (the kind's `fields`, a codec: `FieldCodec.NONE` for a kind without). A kind whose page shows its customizations adds them (`CustomizationPageEntity`: a race, a feat, a power, an item, a class level); an item's are merged with its template's (`propertiesOf`, `requirementsOf`), and it names its template (`templateName`).
 - **Listed** (`openList(where)`): what the server reads a page with (`filters`) and its rows described alike. A feat's and a power's list narrows them to a list's, and gives its rows their lists as the ruleset composes them (`ListedEntity`, which also refuses a feat in a spell list and a spell in a feat pool); an item's gives its rows their template's name.
 - **Written** (`planCreate(body)`, `planEdit(id, body)`): the form checked (`checkForm`), its row's columns (`columnsOf`), its list links (`linksOf`), what it writes beside them (`writesOf`: a skill's fields and its Skill Focus, a power's fields and its school's Spell Focus, a class level's base attack and skill points), and the fields it keeps once written (`fields`).
 - **Deleted** (`planDelete(id)`): checked (`checkDelete`: the aptitude the general feats count toward), and what it writes with it (`deleteWritesOf`: a skill's Skill Focus).

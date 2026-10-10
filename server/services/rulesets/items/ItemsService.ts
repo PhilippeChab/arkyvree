@@ -41,7 +41,7 @@ class ItemsService extends include(Object, Variants) {
       {
         // A template's copies, in any ruleset: its delete is refused while it has any
         refuse: async (tx, plan) => {
-          if (plan.copiesOf) plan.checkCopies(await Items.findMany(tx, { sourceItemId: plan.copiesOf }));
+          if (plan.copiesOf) plan.checkCopies(await Items.findMany(tx, { sourceItemIds: plan.copiesOf }));
         },
       },
     );
@@ -88,7 +88,12 @@ class ItemsService extends include(Object, Variants) {
       session,
       rulesetId,
       body,
-      (scope) => Engine.for(scope).entities("items").planEdit(itemId, body),
+      async (scope, { tx }) => {
+        const plan = Engine.for(scope).entities("items").planEdit(itemId, body);
+        // A template's copies, in any ruleset: its type change is refused while any is of another type
+        if (plan.copiesOf) plan.checkCopies(await Items.findMany(tx, { sourceItemIds: plan.copiesOf }));
+        return plan;
+      },
       (row) => ({ ...body, sourceItemId: row.sourceItemId }),
     );
   }
