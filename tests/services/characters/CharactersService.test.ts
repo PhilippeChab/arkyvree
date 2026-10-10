@@ -35,7 +35,12 @@ import { addRulesetContributor } from "@/tests/support/contributors.ts";
 import { createTestAttachment } from "@/tests/support/files.ts";
 import { queuedPdfJobs } from "@/tests/support/jobs.ts";
 import { addCharacterLevel, findKlassLevel } from "@/tests/support/levels.ts";
-import { copyEntity, createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import {
+  copyEntity,
+  createSeededTestRuleset,
+  createTestRuleset,
+  invalidateSeededRuleset,
+} from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
@@ -146,8 +151,44 @@ describe("CharactersService", () => {
         ancestorRulesetIds: [grandparent.id],
       });
       expect(createCharacterAs(session, { rulesetId: fork.id, raceId: unrelated.race.id })).rejects.toMatchObject({
-        refusal: "not-found",
+        message: `Race ${unrelated.race.id} does not belong to the character's ruleset`,
+        refusal: "invalid",
       });
+    });
+
+    test("takes its race and scores by the ids of what its fork copied, as the copies, and refuses one it lacks by name", async () => {
+      const ctx = await getSeedCtx();
+      const session = makeSession();
+      const fork = await createSeededTestRuleset(SEED_USER_ID);
+      const elf = await copyEntity(db, "races", ctx.raceMap.pc["Elf"], fork);
+      const strength = await copyEntity(db, "abilities", ctx.abilityMap["Strength"], fork);
+      RulesetViews.invalidate(fork.id);
+
+      // The seed's ids are the sources': the API takes them, as it takes the copies' the client sends
+      const values = {
+        rulesetId: fork.id,
+        raceId: ctx.raceMap.pc["Elf"],
+        abilities: { [ctx.abilityMap["Strength"]]: 17 },
+      };
+      const character = await createCharacterAs(session, values);
+      expect(character.raceId).toBe(elf.id);
+      const scores = await CharacterAbilities.findMany(db, { characterId: character.id });
+      expect(scores.map(({ abilityId }) => abilityId)).not.toContain(ctx.abilityMap["Strength"]);
+      expect(scores.find(({ abilityId }) => abilityId === strength.id)?.score).toBe(17);
+
+      const twice = { [ctx.abilityMap["Strength"]]: 17, [strength.id]: 12 };
+      expect(createCharacterAs(session, { ...values, abilities: twice })).rejects.toMatchObject({
+        message: `Ability ${strength.id} is given more than once`,
+        refusal: "invalid",
+      });
+      const lacking = (kind: string) => ({
+        message: `${kind} ${NIL_UUID} does not belong to the character's ruleset`,
+        refusal: "invalid",
+      });
+      expect(createCharacterAs(session, { ...values, raceId: NIL_UUID })).rejects.toMatchObject(lacking("Race"));
+      expect(createCharacterAs(session, { ...values, abilities: { [NIL_UUID]: 12 } })).rejects.toMatchObject(
+        lacking("Ability"),
+      );
     });
   });
 
@@ -194,6 +235,57 @@ describe("CharactersService", () => {
       await CharactersService.updateAbilities(session, character.id, { [copy]: 17 });
       const scores = await CharacterAbilities.findMany(db, { characterId: character.id });
       expect(scores.find((a) => a.abilityId === ctx.abilityMap["Strength"])?.score).toBe(17);
+    });
+
+    test("sets a score by either id of an ability its fork copied, and refuses one it lacks by name", async () => {
+      const ctx = await getSeedCtx();
+      const session = makeSession();
+      const fork = await createSeededTestRuleset(SEED_USER_ID);
+      const character = await createCharacterAs(session, { rulesetId: fork.id });
+      const strength = await copyEntity(db, "abilities", ctx.abilityMap["Strength"], fork);
+      RulesetViews.invalidate(fork.id);
+
+      await CharactersService.updateAbilities(session, character.id, { [ctx.abilityMap["Strength"]]: 15 });
+      const scores = await CharacterAbilities.findMany(db, { characterId: character.id });
+      expect(scores.find(({ abilityId }) => abilityId === ctx.abilityMap["Strength"])?.score).toBe(15);
+
+      const twice = { [ctx.abilityMap["Strength"]]: 15, [strength.id]: 16 };
+      expect(CharactersService.updateAbilities(session, character.id, twice)).rejects.toMatchObject({
+        message: `Ability ${strength.id} is given more than once`,
+        refusal: "invalid",
+      });
+      expect(CharactersService.updateAbilities(session, character.id, { [NIL_UUID]: 15 })).rejects.toMatchObject({
+        message: `Ability ${NIL_UUID} does not belong to the character's ruleset`,
+        refusal: "invalid",
+      });
+    });
+
+    test("sets a language by the id of what its fork copied, as the copy, and refuses one sent twice or lacking by name", async () => {
+      const ctx = await getSeedCtx();
+      const session = makeSession();
+      const fork = await createSeededTestRuleset(SEED_USER_ID);
+      const draconic = await copyEntity(db, "languages", ctx.langMap["Draconic"], fork);
+      RulesetViews.invalidate(fork.id);
+      const character = await createCharacterAs(session, { rulesetId: fork.id });
+      const spoken = async () =>
+        (await CharacterLanguages.findMany(db, { characterId: character.id })).map(({ languageId }) => languageId);
+
+      await CharactersService.updateLanguages(session, character.id, [ctx.langMap["Draconic"]]);
+      expect(await spoken()).toEqual([draconic.id]);
+      const languageIds = [ctx.langMap["Common"], ctx.langMap["Draconic"]];
+      await CharactersService.updateCharacter(session, character.id, { languageIds });
+      expect((await spoken()).toSorted()).toEqual([ctx.langMap["Common"], draconic.id].toSorted());
+
+      // Its source's id and its copy's name one language
+      const both = [ctx.langMap["Draconic"], draconic.id];
+      expect(CharactersService.updateLanguages(session, character.id, both)).rejects.toMatchObject({
+        message: `Language ${draconic.id} is given more than once`,
+        refusal: "invalid",
+      });
+      expect(CharactersService.updateLanguages(session, character.id, [NIL_UUID])).rejects.toMatchObject({
+        message: `Language ${NIL_UUID} does not belong to the character's ruleset`,
+        refusal: "invalid",
+      });
     });
 
     test("refuses a missing character, and another user's", async () => {

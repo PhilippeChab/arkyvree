@@ -9,13 +9,14 @@ export type {
   NotedSheet,
   PlacementDescription,
 } from "./descriptions.ts";
-export type { AbilitiesPlan, AbilityScore, InventoryEntryPlan, NewCharacterPlan } from "./plans.ts";
+export type { AbilitiesPlan, AbilityScore, InventoryEntryPlan, LanguagesPlan, NewCharacterPlan } from "./plans.ts";
 export type {
   AbilitiesRequest,
   InventoryEntryChange,
   InventoryEntryRequest,
   MemberReading,
   NewCharacterRequest,
+  PlacementChange,
   PlacementQuery,
   PrivateNotes,
   RacePickQuery,

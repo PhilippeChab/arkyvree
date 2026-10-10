@@ -415,7 +415,7 @@ function createOneEngineOp(context) {
     if (!callsByAction.has(action)) callsByAction.set(action, []);
     callsByAction.get(action).push(call);
   };
-  // The path an expression reaches the engine by (`for.character.checkLanguages`), or none off the engine
+  // The path an expression reaches the engine by (`for.characters.planLanguages`), or none off the engine
   const pathOf = (node) => {
     if (node.type === "Identifier") return engines.has(node.name) ? [] : handles.get(node.name);
     if (node.type === "CallExpression") return pathOf(node.callee);
@@ -734,7 +734,7 @@ function isNamedBy(target, pattern) {
 }
 
 /**
- * Whether a call on the engine reached by `path` is an operation: its method named for a verb (`checkLanguages`,
+ * Whether a call on the engine reached by `path` is an operation: its method named for a verb (`planLanguages`,
  * `planCreate`), past the entry's own (`Engine.copyOnWrite()`); a noun's hands out a handle (`character`, `skills`).
  */
 function isOperation(path) {

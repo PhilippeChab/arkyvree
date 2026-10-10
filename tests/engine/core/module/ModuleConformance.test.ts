@@ -10,7 +10,7 @@ import { Characters, Visibility } from "@/server/repositories/index.ts";
 import { readBondedInputs, readCharacterInput } from "@/server/services/characters/characterInputs.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 import { createTestItem } from "@/tests/support/items.ts";
-import { createTestRuleset } from "@/tests/support/rulesets.ts";
+import { createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 
 /** An inventory entry's request to carry its item: unequipped, without charges. */
 const CARRIED = { equipped: false, location: null, remainingCharges: null, totalCharges: null, weaponSet: null };
@@ -64,14 +64,21 @@ describe.each(baseRules.enumValues)("The %s module, as core runs its characters'
     const record = await findSeededCharacter(rules);
     const input = await readCharacterInput(db, record);
     const item = await createTestItem({ rulesetId: (await createTestRuleset(null, { baseRules: rules })).id });
+    const own = await createTestItem({ rulesetId: record.rulesetId });
+    invalidateSeededRuleset(record.rulesetId);
 
     await withRulesetScope(db, record.rulesetId, async (scope) => {
       const character = Engine.for(scope).character(input);
-      expect(() => character.planInventoryEntry({ item, request: CARRIED }, false)).toThrow(
-        expect.objectContaining({ message: "Item does not belong to the character's ruleset", refusal: "invalid" }),
+      expect(() => character.planInventoryEntry({ itemId: item.id, request: CARRIED }, false)).toThrow(
+        expect.objectContaining({
+          message: `Item ${item.id} does not belong to the character's ruleset`,
+          refusal: "invalid",
+        }),
       );
-      const own = { ...item, rulesetId: record.rulesetId };
-      expect(character.planInventoryEntry({ item: own, request: CARRIED }, false)).toEqual(CARRIED);
+      expect(character.planInventoryEntry({ itemId: own.id, request: CARRIED }, false)).toEqual({
+        ...CARRIED,
+        itemId: own.id,
+      });
     });
   });
 

@@ -1,8 +1,8 @@
 import type {
   CharacterInput,
   HeldInventoryEntry,
-  InventoryEntryChange,
   InventoryEntryRequest,
+  PlacementChange,
   PlacementDescription,
   PlacementQuery,
 } from "@/engine/core/module/index.ts";
@@ -54,7 +54,7 @@ export default class InventoryEntries {
   static planPlacement(
     view: RulesetView,
     character: CharacterInput,
-    change: InventoryEntryChange,
+    change: PlacementChange,
     force: boolean,
   ): HeldInventoryEntry {
     const { request } = change;

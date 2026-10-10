@@ -13,11 +13,6 @@ export default class CharactersEngine {
     private readonly module: Module,
   ) {}
 
-  /** Refuses languages a character can't speak: not found among the rows read, or not of its ruleset nor its chain. */
-  checkLanguages(...args: Args<"checkLanguages">) {
-    this.module.characters.checkLanguages(this.view, ...args);
-  }
-
   /** A character's card, as a list shows it: its race, its classes at their highest level, its total level. */
   describeCard(...args: Args<"describeCard">) {
     return this.module.characters.describeCard(this.view, ...args);
@@ -41,13 +36,24 @@ export default class CharactersEngine {
     return this.module.characters.openRacePicker(this.view, ...args);
   }
 
-  /** The ability scores a character's edit stores, refused when one isn't the ruleset's or is past its bounds. */
+  /**
+   * The ability scores a character's edit stores, each by the view's id of its ability: refused when one isn't the
+   * ruleset's or is past its bounds.
+   */
   planAbilities(...args: Args<"planAbilities">) {
     return this.module.characters.planAbilities(this.view, ...args);
   }
 
-  /** What a new character stores beside its row: its ability scores, refused when its race isn't a player's. */
+  /**
+   * What a new character stores: its race and ability scores, by the view's ids, refused when its race isn't a player's
+   * or one isn't the ruleset's.
+   */
   planCreate(...args: Args<"planCreate">) {
     return this.module.characters.planCreate(this.view, ...args);
+  }
+
+  /** The languages a character's edit sets, by the view's ids: refused when one isn't the ruleset's, or is sent twice. */
+  planLanguages(...args: Args<"planLanguages">) {
+    return this.module.characters.planLanguages(this.view, ...args);
   }
 }

@@ -5,7 +5,7 @@ import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
-import { Activities, CharacterInventory, Items, Visibility } from "@/server/repositories/index.ts";
+import { Activities, CharacterInventory, Visibility } from "@/server/repositories/index.ts";
 import { readCharacterInput } from "@/server/services/characters/characterInputs.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
@@ -28,14 +28,11 @@ class CharacterInventoryService {
       const characterRecord = await getEditableCharacter(tx, session, characterId);
 
       return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
-        // Items.findOne rather than the view: an item of an unrelated ruleset is refused as such, not as missing
-        const itemRecord = await Items.findOne(tx, { id: itemId });
-        if (!itemRecord) throw new NotFoundError("Item not found");
-
         const character = await readCharacterInput(tx, characterRecord);
         const request = { equipped, location, remainingCharges, totalCharges, weaponSet };
-        const fields = Engine.for(scope).character(character).planInventoryEntry({ item: itemRecord, request }, force);
-        const rows = await CharacterInventory.create(tx, { characterId, itemId, quantity, ...fields });
+        // The item the view shows for the id sent (a copy's, when the ruleset copied it), refused when it shows none
+        const fields = Engine.for(scope).character(character).planInventoryEntry({ itemId, request }, force);
+        const rows = await CharacterInventory.create(tx, { characterId, quantity, ...fields });
 
         await Activities.create(tx, {
           userId: session.userId,
