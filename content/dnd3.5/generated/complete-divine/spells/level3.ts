@@ -160,7 +160,6 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
-      { type: "SPELL_DURATION", value: "" },
       { type: "SPELL_RESISTANCE", value: "No" },
     ],
   },

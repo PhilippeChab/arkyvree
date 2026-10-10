@@ -198,7 +198,6 @@ export const LEVEL_6_SPELLS: PowerSeed[] = [
         type: "SPELL_TARGET",
         value: "Up to 16 HD worth of spirits, no two of which can be more than 30 ft. apart when they appear",
       },
-      { type: "SPELL_DURATION", value: "" },
       { type: "SPELL_RESISTANCE", value: "No" },
     ],
   },

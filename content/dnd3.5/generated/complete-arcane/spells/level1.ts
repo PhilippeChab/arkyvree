@@ -33,7 +33,6 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
       { type: "SPELL_RANGE_TYPE", value: "Close" },
       { type: "SPELL_TARGET", value: "Up to a 5-ft. cube of water" },
-      { type: "SPELL_DURATION", value: "" },
       { type: "SPELL_RESISTANCE", value: "No" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },

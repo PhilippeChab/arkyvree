@@ -191,7 +191,6 @@ export const LEVEL_9_SPELLS: PowerSeed[] = [
       { type: "SPELL_DESCRIPTOR", value: "Evil" },
       { type: "SPELL_DESCRIPTOR", value: "Good" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
-      { type: "SPELL_DURATION", value: "" },
       { type: "SPELL_RESISTANCE", value: "No" },
     ],
   },
