@@ -117,8 +117,16 @@ const RELEVANT_ALIGNMENTS: Record<string, string> = {
   law: "Any lawful",
 };
 
-/** Prerequisites recognized, which no requirement says: left unresolved. */
-const UNRESOLVED_PREREQUISITES = [/[Pp]roficien(?:t|cy) with (?:selected )?(?:weapon|armor)/, /[Aa]bility to fly\b/];
+/**
+ * Prerequisites recognized that the reading gives no requirement for: left unresolved, to be reviewed. An alignment
+ * ("Any good alignment"; but the relevant one, the feat's), a proficiency (but with a shield: Shield Proficiency),
+ * flight.
+ */
+const UNRESOLVED_PREREQUISITES = [
+  /\b(?:any )?(?:non-?)?(?:lawful|chaotic|good|evil|neutral) alignment\b/i,
+  /[Pp]roficien(?:t|cy) with (?!(?:a )?(?:heavy )?shield)[^,.]+/,
+  /[Aa]bility to fly\b/,
+];
 
 /** A feat's ability score requirements: "Str 13", "Dex 15". */
 function abilityScoreRequirements(text: string): RequirementEntry[] {
@@ -230,7 +238,7 @@ function isCommonPhrase(text: string): boolean {
     )
   )
     return true;
-  // "X class ability" / "X class feature" — these are class features, not feats
+  // "X class ability" / "X class feature" — these are class features, not feats (`unreadClassFeatures`)
   if (/\bclass (?:ability|feature)\b/i.test(lower)) return true;
   // "Spell-like ability at caster level X or higher" — not a feat
   if (/^spell-like ability/i.test(lower)) return true;
@@ -294,6 +302,21 @@ function titleCaseFeat(s: string): string {
   // Most feat names from SRD are already in a reasonable case
   // Just ensure first letter of each word is uppercase
   return s.replace(/\b[a-z]/g, (c) => c.toUpperCase());
+}
+
+/**
+ * The class features a feat's prerequisite text names ("Smite evil class feature", "Spell secret class ability") that
+ * no class ability prerequisite reads (`CLASS_ABILITY_PREREQUISITES`).
+ */
+function unreadClassFeatures(text: string): string[] {
+  return text
+    .split(/,\s*/)
+    .map((part) => part.trim().replace(/\.$/, ""))
+    .filter(
+      (part) =>
+        /\bclass (?:ability|feature)\b/i.test(part) &&
+        !CLASS_ABILITY_PREREQUISITES.some(({ pattern }) => pattern.test(part)),
+    );
 }
 
 /**
@@ -467,6 +490,7 @@ export class FeatPrerequisites extends RequirementReading {
       const match = cleanedText.match(pattern);
       if (match) this.unresolved.push(match[0]);
     }
+    this.unresolved.push(...unreadClassFeatures(cleanedText));
   }
 
   /** A feat's skill rank requirements: "SkillName N ranks", "Knowledge (any)" any Knowledge skill. */

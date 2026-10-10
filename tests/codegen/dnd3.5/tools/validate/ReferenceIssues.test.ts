@@ -106,7 +106,7 @@ describe("parser:dnd3.5:validate", () => {
     expect(ReferenceIssues.of(References.files())).toEqual([]);
   });
 
-  test("reports what a reference's review list covers, once cleared: a class's aptitude picks, prerequisites and features' modifiers, feats' modifiers", () => {
+  test("reports what a reference's review list covers, once cleared: a class's aptitude picks, prerequisites and features' modifiers, feats' modifiers and prerequisites", () => {
     const clear = (overrides: Record<string, unknown>) => void (overrides.reviewed = []);
     expect(issuesOf("complete-adventurer/classes/animalLord.json", clear)).toEqual([
       { kind: "aptitude pick", entityName: "Animal Lord", text: "Animal Bond" },
@@ -119,8 +119,14 @@ describe("parser:dnd3.5:validate", () => {
     ]);
     const feats = issuesOf("complete-divine/feats.json", clear);
     expect(feats.map(({ kind, entityName }) => `${kind} ${entityName}`)).toEqual([
+      "prereq Consecrate Spell",
+      "prereq Corrupt Spell",
+      "prereq Disciple of the Sun",
       "modifier Divine Spell Power",
       "modifier Oaken Resilience",
+      "prereq Spontaneous Healer",
+      "prereq Spontaneous Summoner",
+      "prereq Spontaneous Wounder",
       "modifier Wolverine's Rage",
     ]);
   });

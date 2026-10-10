@@ -5,6 +5,11 @@
     "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/fochlucan-lyrist/",
     "type": "class"
   },
+  "overrides": {
+    "reviewed": [
+      "Bardic knowledge and evasion abilities"
+    ]
+  },
   "raw": {
     "classFeatures": [
       {
