@@ -100,15 +100,15 @@ export default class AptitudeSlotsPlan {
 
   /**
    * Each planned level's slots (`klassLevelIds`, with the feats each grants, after the character's
-   * `baseCharacterLevel` levels) in the character's feat and power pools. `baselineAptitudes` are the character's
+   * `savedLevelCount` levels) in the character's feat and power pools. `baselineAptitudes` are the character's
    * aptitudes as its sheet has them: a pool's counts, and a power pool's spell levels by number.
    */
   compute(
     klassLevelIds: string[],
-    allAutoGrantedFeatRecords: { aptitudeId: string; featsInRule: { id: string } }[][],
+    grantedFeatRecords: { aptitudeId: string; featsInRule: { id: string } }[][],
     featPoolIds: string[],
     powerPoolIds: string[],
-    baseCharacterLevel: number,
+    savedLevelCount: number,
     baselineAptitudes: Record<string, { allowed: number; id: string; spent: number } & Record<string, unknown>>,
   ): { perLevelFeatSlots: FeatSlots; perLevelPowerSlots: PowerSlots } {
     const perLevelFeatSlots: FeatSlots = {};
@@ -122,8 +122,8 @@ export default class AptitudeSlotsPlan {
     for (let i = 0; i < klassLevelIds.length; i++) {
       const deltas = this.levelDeltas(
         klassLevelIds[i],
-        allAutoGrantedFeatRecords[i] ?? [],
-        baseCharacterLevel + i + 1,
+        grantedFeatRecords[i] ?? [],
+        savedLevelCount + i + 1,
         perLevelFeatSlots,
         perLevelPowerSlots,
       );

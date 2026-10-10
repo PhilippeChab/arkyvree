@@ -484,7 +484,7 @@ describe("DetailedCharacter", () => {
       const elara = await build(record);
       const targetPaths = new Dnd35TargetPaths();
       const { paths } = await withRulesetScope(db, record.rulesetId, async ({ rulesetData }) =>
-        targetPaths.getTargetPathsAndLabels(rulesetData, "requirement"),
+        targetPaths.list(rulesetData, "requirement"),
       );
       // The spells it has: their entries carry their properties (a spell it hasn't is #335's)
       const spells = new Set(
@@ -563,7 +563,7 @@ describe("DetailedCharacter", () => {
         await buildSeeded("Elara Starweaver"),
       ];
       const { paths } = await withRulesetScope(db, bjorn.rulesetId, async ({ rulesetData }) =>
-        targetPaths.getTargetPathsAndLabels(rulesetData, "requirement"),
+        targetPaths.list(rulesetData, "requirement"),
       );
       expect(paths.length).toBeGreaterThan(5000);
       const mismatches = characters.flatMap((detailed) =>

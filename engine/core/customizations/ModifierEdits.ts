@@ -1,78 +1,45 @@
-import type { TargetPaths } from "@/engine/core/paths/CategoryPaths.ts";
+import type { TargetCatalogs, TargetPaths } from "@/engine/core/paths/CategoryPaths.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { TargetPathCatalog } from "@/shared/customization/target.ts";
+import type { Modifier } from "@/shared/relations.ts";
 
+import CustomizationEdits from "./CustomizationEdits.ts";
 import CustomizedEntity from "./CustomizedEntity.ts";
 import TargetLabels from "./TargetLabels.ts";
 
-/** The target paths of a modifier's kind and of a template's, which a modifier's value is checked against. */
-interface Catalogs {
-  paths: TargetPathCatalog;
-  templatePaths: TargetPathCatalog;
-}
-
 /** A modifier's save, as its form sends it: its target, its operator and its value. */
-interface ModifierBody {
-  operator: string;
-  target: string;
-  value: string;
-}
+type ModifierBody = { operator: string; target: string; value: string };
 
-/** An entity's modifiers: as a list shows them, and what their saves store, checked against their paths. */
-export default class ModifierEdits {
-  /** One of the entity's modifiers (`entityId`, as the view has it), or refused as not found (`message`). */
-  private static findOwn(view: RulesetView, entityType: string, entityId: string, modifierId: string, message: string) {
-    const modifier = view.rulesetData.modifiersById.get(modifierId);
-    if (!modifier || modifier.sourceId !== entityId || modifier.sourceType !== entityType)
-      throw new RulesError("not-found", message);
-    return modifier;
+/** An entity's modifiers: as its page lists them, and what their saves store, checked against their paths. */
+export default class ModifierEdits extends CustomizationEdits<Modifier> {
+  protected readonly label = "Modifier";
+
+  /** The entity's modifiers of its type: its own, and its siblings' (the view composes them into the winner's). */
+  protected rowsOf(entityId: string) {
+    const modifiers = this.view.rulesetData.modifiersBySource.get(entityId) ?? [];
+    return modifiers.filter((modifier) => modifier.sourceType === this.entityType);
   }
 
-  /**
-   * Modifiers as a list shows them, an entity's or a character's: the labels of their target's and their template
-   * value's segments (`targetLabels`), and their value's name when their path names its values (`valueLabel`).
-   */
-  static describe<T extends { target: string; value: string }>(catalog: TargetPathCatalog, modifiers: T[]) {
-    const pathMap = new Map(catalog.paths.map((path) => [path.path, path]));
-    return modifiers.map((modifier) => ({
-      ...modifier,
-      valueLabel:
-        pathMap.get(modifier.target)?.possibleValues?.find((pv) => pv.value === modifier.value)?.label ?? null,
-      targetLabels: TargetLabels.pick([modifier.target, modifier.value], catalog.segmentLabels),
-    }));
-  }
-
-  /** An entity's modifiers of its type, as its view composes them, labeled as a list shows them. */
-  static describeAll(view: RulesetView, catalog: TargetPathCatalog, entityType: string, entityId: string) {
-    const entity = CustomizedEntity.find(view, entityType, entityId);
-    // Compose step pre-merges sibling modifiers into the winner's bucket with sourceId remapped
-    const modifiers = view.rulesetData.modifiersBySource.get(entity.id) ?? [];
-    return ModifierEdits.describe(
-      catalog,
-      modifiers.filter((modifier) => modifier.sourceType === entityType),
-    );
+  /** The row a modifier's save stores: its target, operator and value, and their value type, checked against its path. */
+  private toRow(targetPaths: TargetPaths, catalogs: TargetCatalogs, body: ModifierBody) {
+    const valueType = targetPaths.checkValue(catalogs, { kind: "modifier", sourceType: this.entityType, ...body });
+    return { operator: body.operator, target: body.target, value: body.value, valueType };
   }
 
   /**
    * A modifier, as its page shows it: the entity it's on (`sourceName`), its own requirements, and its target's
-   * segments' labels. Refused when the view has no such entity or modifier.
+   * segments' labels. Its page names its own source, so a modifier found under another entity names that one. Refused
+   * when the view has no such entity or modifier.
    */
-  static describeOne(
-    view: RulesetView,
-    catalog: TargetPathCatalog,
-    entityType: string,
-    entityId: string,
-    modifierId: string,
-  ) {
-    const entity = CustomizedEntity.find(view, entityType, entityId);
-    const modifier = view.rulesetData.modifiersById.get(modifierId);
+  describe(catalog: TargetPathCatalog, modifierId: string) {
+    const { entity } = this;
+    const modifier = this.view.rulesetData.modifiersById.get(modifierId);
     if (!modifier) throw new RulesError("not-found", "Modifier not found");
     const sourceName =
-      modifier.sourceId === entity.id && modifier.sourceType === entityType
+      modifier.sourceId === entity.id && modifier.sourceType === this.entityType
         ? entity.name
-        : CustomizedEntity.find(view, modifier.sourceType, modifier.sourceId).name;
-    const requirements = view.rulesetData.requirementsByEntity.get(modifierId) ?? [];
+        : CustomizedEntity.find(this.view, modifier.sourceType, modifier.sourceId).name;
+    const requirements = this.view.rulesetData.requirementsByEntity.get(modifierId) ?? [];
     return {
       ...modifier,
       sourceName,
@@ -81,50 +48,30 @@ export default class ModifierEdits {
     };
   }
 
+  /** The entity's modifiers of its type, as the view composes them, labeled as a list shows them. */
+  describeAll(catalog: TargetPathCatalog) {
+    return TargetLabels.describe(catalog, this.rowsOf(this.entity.id));
+  }
+
   /**
-   * A new modifier on an entity: the entity as the view has it, and its value type, its operator and value checked
-   * against its path (`targetPaths`, among `catalogs`). A duplicate (`sourceModifierId`, one of the entity's) takes its
+   * A new modifier on the entity: the entity as the view has it, and the row its save stores, its value checked against
+   * its path (`targetPaths`, among `catalogs`). A duplicate (`sourceModifierId`, one of the entity's) takes its
    * source's requirements: refused when it isn't the entity's.
    */
-  static planCreate(
-    view: RulesetView,
-    targetPaths: TargetPaths,
-    catalogs: Catalogs,
-    change: { body: ModifierBody; entityId: string; entityType: string; sourceModifierId?: string },
-  ) {
-    const { body, entityId, entityType, sourceModifierId } = change;
-    const entity = CustomizedEntity.find(view, entityType, entityId);
-    if (sourceModifierId)
-      ModifierEdits.findOwn(view, entityType, entity.id, sourceModifierId, "Source modifier not found for this entity");
-    const valueType = targetPaths.checkTargetValue(catalogs, { kind: "modifier", sourceType: entityType, ...body });
-    return { entity, valueType };
+  planCreate(targetPaths: TargetPaths, catalogs: TargetCatalogs, body: ModifierBody, sourceModifierId?: string) {
+    const { entity } = this;
+    if (sourceModifierId) this.findOwn(entity.id, sourceModifierId, "Source modifier not found for this entity");
+    return { entity, row: this.toRow(targetPaths, catalogs, body) };
   }
 
-  /** Deleting one of an entity's modifiers: the entity and the modifier, as the view has them. */
-  static planDelete(view: RulesetView, entityType: string, entityId: string, modifierId: string) {
-    const entity = CustomizedEntity.find(view, entityType, entityId);
-    const modifier = ModifierEdits.findOwn(
-      view,
-      entityType,
-      entity.id,
-      modifierId,
-      "Modifier not found for this entity",
-    );
-    return { entity, modifier };
+  /** Deleting one of the entity's modifiers: the entity and the modifier, as the view has them. */
+  planDelete(modifierId: string) {
+    const { entity } = this;
+    return { entity, modifier: this.findOwn(entity.id, modifierId) };
   }
 
-  /**
-   * An edit of one of an entity's modifiers: the entity and the modifier, as the view has them, and its new value
-   * type, its operator and value checked against its path.
-   */
-  static planEdit(
-    view: RulesetView,
-    targetPaths: TargetPaths,
-    catalogs: Catalogs,
-    change: { body: ModifierBody; entityId: string; entityType: string; modifierId: string },
-  ) {
-    const { entity, modifier } = ModifierEdits.planDelete(view, change.entityType, change.entityId, change.modifierId);
-    const check = { kind: "modifier" as const, sourceType: change.entityType, ...change.body };
-    return { entity, modifier, valueType: targetPaths.checkTargetValue(catalogs, check) };
+  /** An edit of one of the entity's modifiers: the entity and the modifier, and the row its save stores, checked. */
+  planEdit(targetPaths: TargetPaths, catalogs: TargetCatalogs, modifierId: string, body: ModifierBody) {
+    return { ...this.planDelete(modifierId), row: this.toRow(targetPaths, catalogs, body) };
   }
 }

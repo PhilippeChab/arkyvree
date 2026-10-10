@@ -1,30 +1,21 @@
 import { type CharacterInput, CharacterProjection } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { ValidationIssue } from "@/engine/rulesets/dnd3.5/model/concerns/Validates.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import { include } from "@/lib/mixins.ts";
 
-import BondedPlans from "./BondedPlans.ts";
 import { ChecksSelections } from "./concerns/ChecksSelections.ts";
 import LevelUpState, { type LevelPicks } from "./LevelUpState.ts";
 
-/** A saved level's edit: its new hit points, ability and picks, and whether it's saved whatever the character fails. */
-type Edit = LevelPicks & { abilityId: string | null; force: boolean; hp: number };
+/** A saved level's edit: its new hit points, ability and picks. */
+type Edit = LevelPicks & { abilityId: string | null; hp: number };
 
 /**
  * A saved level's edit, from the character's rows: the level as saved, its new hit points, ability and picks, checked,
  * and refused with the issues it answers for unless forced; and what the character's bonded creatures become with it.
  */
 export default class LevelEdit extends include(LevelUpState, ChecksSelections) {
-  constructor(
-    view: RulesetView,
-    private readonly character: CharacterInput,
-  ) {
-    super(view);
-  }
-
   /**
    * Refuses an edited level with the issues it answers for: all the character's but those of the pools the level
    * doesn't add to, which the levels before it or after it give. A level adds to a pool the character allows more of
@@ -75,9 +66,9 @@ export default class LevelEdit extends include(LevelUpState, ChecksSelections) {
    * saved, its new hit points, ability and picks, checked, and refused with the issues it answers for unless `force`d;
    * and what its bonded creatures become with it.
    */
-  planEdit(bonded: CharacterInput[], characterLevelId: string, edit: Edit) {
+  planEdit(bonded: CharacterInput[], characterLevelId: string, edit: Edit, force: boolean) {
     const { rows } = this.character;
-    const { abilityId, force, hp } = edit;
+    const { abilityId, hp } = edit;
     const level = rows.levels.find((saved) => saved.id === characterLevelId);
     if (!level) throw new RulesError("not-found", "Character level not found");
     const { klassLevel, klass } = this.getSavedKlassLevel(level);
@@ -101,7 +92,7 @@ export default class LevelEdit extends include(LevelUpState, ChecksSelections) {
     }
     return {
       abilityId: abilityId || null,
-      bonded: BondedPlans.planMasterCreatures(edited, bonded, this.rulesetData),
+      bonded: this.planBondedOf(edited, bonded),
       hp,
       level,
       ...this.toPickRows(edit),

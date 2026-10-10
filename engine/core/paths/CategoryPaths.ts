@@ -12,28 +12,28 @@ import PathChecks, { type TargetCheck } from "./PathChecks.ts";
 import PathCompletions, { type PathQuery } from "./PathCompletions.ts";
 import PathTraverser, { type Components, type TraversePathResult } from "./PathTraverser.ts";
 
+/** The target paths of a customization's kind and of a template's, which a value is checked against. */
+export type TargetCatalogs = { paths: TargetPathCatalog; templatePaths: TargetPathCatalog };
+
 export interface TargetPaths extends TargetPathsTraverser {
   /** The value type of the path a modifier or requirement targets, its operator and value checked against it. */
-  checkTargetValue(
-    catalogs: { paths: TargetPathCatalog; templatePaths: TargetPathCatalog },
-    check: TargetCheck,
-  ): string;
+  checkValue(catalogs: TargetCatalogs, check: TargetCheck): string;
+  getCategories(): string[];
+  getCategoryDescriptions(): Record<string, string>;
   /** The completions of a partial path among a catalog's paths of `kind`, unpaged. */
-  completeTargetPath(
+  getCompletions(
     catalog: TargetPathCatalog,
     kind: TargetPathKind,
     query: PathQuery,
     entityType?: string,
   ): PathCompletion[];
-  getCategories(): string[];
-  getCategoryDescriptions(): Record<string, string>;
   /** The categories whose paths name an entity under their group, whose segment a description skips */
   getEntityNamingCategories(): string[];
   getGroupDescriptionTemplates(): Record<string, string>;
   getPathDescriptions(): Record<string, string>;
-  getTargetPathsAndLabels(rulesetData: RulesetData, kind: TargetPathKind): TargetPathCatalog;
+  list(rulesetData: RulesetData, kind: TargetPathKind): TargetPathCatalog;
   /** A target path validated like a language server, among a catalog's paths. */
-  validateTargetPath(catalog: TargetPathCatalog, path: string, entityType?: string): PathValidationResult;
+  validate(catalog: TargetPathCatalog, path: string, entityType?: string): PathValidationResult;
 }
 
 export interface TargetPathsTraverser {
@@ -107,24 +107,8 @@ export default abstract class CategoryPaths<C = Components> implements TargetPat
    * and value checked against it, a template against the paths a template reads (`templatePaths`): refused as invalid
    * with what's wrong.
    */
-  checkTargetValue(
-    catalogs: { paths: TargetPathCatalog; templatePaths: TargetPathCatalog },
-    check: TargetCheck,
-  ): string {
+  checkValue(catalogs: TargetCatalogs, check: TargetCheck): string {
     return new PathChecks(this.getCategories(), catalogs.paths).checkValue(catalogs.templatePaths, check);
-  }
-
-  /**
-   * The completions of a partial path among a catalog's paths of `kind` (those an entity type takes, `entityType`),
-   * unpaged.
-   */
-  completeTargetPath(
-    catalog: TargetPathCatalog,
-    kind: TargetPathKind,
-    query: PathQuery,
-    entityType?: string,
-  ): PathCompletion[] {
-    return new PathCompletions(this, CategoryPaths.pathsFor(catalog, entityType), kind).complete(query);
   }
 
   getCategories(): string[] {
@@ -133,6 +117,19 @@ export default abstract class CategoryPaths<C = Components> implements TargetPat
 
   getCategoryDescriptions(): Record<string, string> {
     return Object.fromEntries(this.categories.map(({ name, description }) => [name, description]));
+  }
+
+  /**
+   * The completions of a partial path among a catalog's paths of `kind` (those an entity type takes, `entityType`),
+   * unpaged.
+   */
+  getCompletions(
+    catalog: TargetPathCatalog,
+    kind: TargetPathKind,
+    query: PathQuery,
+    entityType?: string,
+  ): PathCompletion[] {
+    return new PathCompletions(this, CategoryPaths.pathsFor(catalog, entityType), kind).complete(query);
   }
 
   getEntityNamingCategories(): string[] {
@@ -152,9 +149,9 @@ export default abstract class CategoryPaths<C = Components> implements TargetPat
    * requirement's that read one value from the sheet: no wildcard, no path that reaches several values or a list
    * (`readsMany`), and none that reads its source (an item's own weapon), which a template has none of.
    */
-  getTargetPathsAndLabels(rulesetData: RulesetData, kind: TargetPathKind): TargetPathCatalog {
+  list(rulesetData: RulesetData, kind: TargetPathKind): TargetPathCatalog {
     if (kind === "template") {
-      const { paths, segmentLabels } = this.getTargetPathsAndLabels(rulesetData, "requirement");
+      const { paths, segmentLabels } = this.list(rulesetData, "requirement");
       return {
         paths: paths.filter(({ path, readsMany }) => !readsMany && !path.includes("*") && !this.readsSource(path)),
         segmentLabels,
@@ -193,7 +190,7 @@ export default abstract class CategoryPaths<C = Components> implements TargetPat
    * A target path validated like a language server, among a catalog's paths (those an entity type takes, `entityType`):
    * a valid one carries its definition.
    */
-  validateTargetPath(catalog: TargetPathCatalog, path: string, entityType?: string): PathValidationResult {
+  validate(catalog: TargetPathCatalog, path: string, entityType?: string): PathValidationResult {
     return new PathChecks(this.getCategories(), CategoryPaths.pathsFor(catalog, entityType)).validate(path);
   }
 }

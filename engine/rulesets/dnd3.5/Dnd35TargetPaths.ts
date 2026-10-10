@@ -1,5 +1,3 @@
-/** The paths an entity's modifiers and requirements name, in the 3.5 rules: each category's, and the ruleset's labels. */
-
 import CategoryPaths from "@/engine/core/paths/CategoryPaths.ts";
 import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
@@ -42,6 +40,7 @@ const DND35_PATH_CATEGORIES: PathCategory<Dnd35Components>[] = [
   new BondedPaths(),
 ];
 
+/** The paths an entity's modifiers and requirements name, in the 3.5 rules: each category's, and the ruleset's labels. */
 export default class Dnd35TargetPaths extends CategoryPaths<Dnd35Components> {
   constructor() {
     super(DND35_PATH_CATEGORIES);

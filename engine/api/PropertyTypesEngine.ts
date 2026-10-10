@@ -18,16 +18,16 @@ export default class PropertyTypesEngine {
 
   /** The property types an autocomplete offers for `query`: the rules' types, then the ruleset's own, by use. */
   getTypeCompletions(query: string, entityType?: PropertyEntityType) {
-    return this.catalog().completeTypes(query, entityType);
+    return this.catalog().getTypeCompletions(query, entityType);
   }
 
   /** The values an autocomplete offers for a property of `type`: the rules' values, then the ruleset's own. */
   getValueCompletions(type: string, query: string) {
-    return this.catalog().completeValues(type, query);
+    return this.catalog().getValueCompletions(type, query);
   }
 
   /** The property types containing `query` (all of them for an empty one): the rules' types, then the ruleset's own. */
   list(query: string, entityType?: PropertyEntityType) {
-    return this.catalog().listTypes(query, entityType);
+    return this.catalog().list(query, entityType);
   }
 }

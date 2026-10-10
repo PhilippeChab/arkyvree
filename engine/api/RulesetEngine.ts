@@ -39,7 +39,7 @@ export default class RulesetEngine {
    * to rulesets that have it, needs none.
    */
   checkPublishable(kind: RulesetKind) {
-    if (kind !== "extension") this.module.ruleset.checkPlayable(this.view);
+    this.module.ruleset.checkPublishable(this.view, kind);
   }
 
   /** A class of the ruleset (`klassId`): its table, its levels and its skills. */

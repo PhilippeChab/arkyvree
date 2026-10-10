@@ -1,6 +1,7 @@
-import { type CharacterInput, CharacterInputs } from "@/engine/core/module/index.ts";
+import type { CharacterInput } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 
+import CharacterHandle from "./CharacterHandle.ts";
 import type { Module, Rest } from "./Modules.ts";
 
 /** What its module answers of a character's level flows, past the view and the character the handle binds. */
@@ -10,18 +11,7 @@ type Args<K extends keyof Module["levelUp"]> = Rest<Module["levelUp"][K], [Rules
  * The engine bound to a character's level flows: its wizard's steps and pickers, and what its level saves write. Its
  * character's input is read as the view reads it (`CharacterEngine` resolved it), and so are its bonded creatures'.
  */
-export default class LevelUpEngine {
-  constructor(
-    private readonly view: RulesetView,
-    private readonly module: Module,
-    private readonly input: CharacterInput,
-  ) {}
-
-  /** Bonded creatures' inputs, read as the view reads them. */
-  private resolveBonded(bonded: CharacterInput[]) {
-    return CharacterInputs.resolveAll(bonded, this.view.rulesetData.cow);
-  }
-
+export default class LevelUpEngine extends CharacterHandle {
   /** The wizard's ability step: the character's abilities, when the level it adds or edits takes an increase. */
   describeAbilityStep(...args: Args<"describeAbilityStep">) {
     return this.module.levelUp.describeAbilityStep(this.view, this.input, ...args);
