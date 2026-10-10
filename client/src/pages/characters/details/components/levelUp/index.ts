@@ -1,4 +1,4 @@
-export { plannedLevel } from "./classPlan.ts";
+export { hasRoomForLevel, plannedLevel } from "./classPlan.ts";
 export { type SpentSkill, withoutPick, withPick } from "./fitPicks.ts";
 export { hpError, type HpLevel } from "./hitPoints.ts";
 export {

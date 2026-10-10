@@ -66,7 +66,7 @@ The **level-up wizard** is the step-by-step dialog that handles every choice for
 
 Steps on Core SRD 3.5:
 
-1. **Class Plan.** Pick the class for this level. Multiclassing is supported. Classes whose prerequisites you don't meet are listed but disabled.
+1. **Class Plan.** Pick the class for this level. Multiclassing is supported. Classes whose prerequisites you don't meet are listed but disabled. A plan stops at character level 20, whatever its classes.
 2. **Select HP.** Roll the class's hit die, take the maximum (**Max**), or type the HP gain (the step shows the average); **Roll All** and **Max All** set every level at once. Constitution modifier applies automatically per level.
 3. **Ability Increase.** A pick at character levels 4, 8, 12, 16 and 20; at other levels the step says there's none.
 4. **Select Skills.** Skill points come from the class formula. The **Class** column says which skills are class skills; the rank cap is enforced (level + 3 for class skills, half for cross-class). **Auto** spends the points at random.

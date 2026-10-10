@@ -5,6 +5,15 @@
  */
 
 /**
+ * Whether the plan has room for another level: fewer slots than the levels the character has left (`levelsLeft`, as its
+ * class options say), a slot not filled yet counted too. Room until the options load: the preview refuses a plan past
+ * the character's last level.
+ */
+export function hasRoomForLevel(plan: unknown[], levelsLeft: number | undefined) {
+  return levelsLeft === undefined || plan.length < levelsLeft;
+}
+
+/**
  * The level a class takes at a place in the plan (its end when `before` is left out): the next one the character has,
  * after the levels of it planned before, as the wizard numbers them and the class plan's buttons and options say.
  */

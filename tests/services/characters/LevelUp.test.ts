@@ -64,6 +64,20 @@ function levelsOf(klass: string, hps: number[]): BatchLevel[] {
   return hps.map((hp, index) => [klass, index + 1, hp]);
 }
 
+/** The refusal of a plan past a character's last level, with the levels it has left. */
+function pastLastLevel(levelsLeft: number) {
+  const message = `A character can't go past level 20: ${levelsLeft} level(s) left`;
+  return { refusal: "invalid", issues: [{ category: "levels", message }] };
+}
+
+/** A new seeded fighter with fighter levels 1 to `count`, written straight to the database. */
+async function createFighterAt(ctx: SeedContext, count: number) {
+  const characterId = await createSeedCharacter(ctx);
+  for (let level = 1; level <= count; level++)
+    await addCharacterLevel(characterId, (await findKlassLevel(ctx.klassMap.pc["Fighter"], level))!.id);
+  return characterId;
+}
+
 /**
  * Whether a feat is eligible at `level` of a batch of fighter levels, as Add Level's picker asks: after the levels
  * planned before it, with these picks and ability increases (one per level, the picked level's last).
@@ -747,6 +761,53 @@ describe("the feats of a level in a batch", () => {
         increases: [undefined, undefined, undefined, (await getSeedCtx()).abilityMap["Strength"]],
       }),
     ).toBe(true);
+  });
+});
+
+describe("a character's last level", () => {
+  test("refuses a plan past it, whatever its classes, forced or not, and previews one up to it", async () => {
+    const ctx = await getSeedCtx();
+    // Two levels left: a plan's third, of another class, goes past 20
+    const characterId = await createFighterAt(ctx, 18);
+    for (const force of [false, true]) {
+      expect(finalizeBatch(ctx, characterId, levelsOf("Rogue", [6, 6, 6]), {}, force)).rejects.toMatchObject(
+        pastLastLevel(2),
+      );
+    }
+    const threeRogueLevels: [string, number][] = [
+      ["Rogue", 1],
+      ["Rogue", 2],
+      ["Rogue", 3],
+    ];
+    expect(preview(ctx, characterId, threeRogueLevels)).rejects.toMatchObject(pastLastLevel(2));
+    expect(
+      (
+        await preview(ctx, characterId, [
+          ["Rogue", 1],
+          ["Fighter", 19],
+        ])
+      ).levelDetails,
+    ).toHaveLength(2);
+  });
+
+  test("leaves a character at it no level to take, as the class picker says", async () => {
+    const ctx = await getSeedCtx();
+    const levelsLeft = async (characterId: string) => {
+      const { items } = await CharacterLevelsService.getAvailableClasses(
+        session,
+        characterId,
+        {},
+        {
+          limit: 20,
+          page: 1,
+        },
+      );
+      return new Set(items.map((klass) => klass.levelsLeft));
+    };
+    const atLast = await createFighterAt(ctx, 20);
+    expect(await levelsLeft(atLast)).toEqual(new Set([0]));
+    expect(finalizeBatch(ctx, atLast, levelsOf("Rogue", [6]), {}, true)).rejects.toMatchObject(pastLastLevel(0));
+    expect(await levelsLeft(await createFighterAt(ctx, 18))).toEqual(new Set([2]));
   });
 });
 

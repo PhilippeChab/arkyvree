@@ -1,6 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
-import { plannedLevel, plannedSlotKeys } from "@/client/src/pages/characters/details/components/levelUp/classPlan.ts";
+import {
+  hasRoomForLevel,
+  plannedLevel,
+  plannedSlotKeys,
+} from "@/client/src/pages/characters/details/components/levelUp/classPlan.ts";
 
 const FIGHTER = { id: "fighter", nextLevel: 3 };
 
@@ -17,6 +21,14 @@ describe("Add Level's class plan", () => {
   test("numbers the next one added at the plan's end", () => {
     expect(plannedLevel(FIGHTER, [FIGHTER, WIZARD, FIGHTER])).toBe(5);
     expect(plannedLevel(WIZARD, [])).toBe(1);
+  });
+
+  test("has room for another level while it holds fewer than the character has left, a slot not filled counted", () => {
+    expect(hasRoomForLevel([FIGHTER], 2)).toBe(true);
+    expect(hasRoomForLevel([FIGHTER, null], 2)).toBe(false);
+    expect(hasRoomForLevel([], 0)).toBe(false);
+    // Until the classes load: the preview refuses a plan past the character's last level
+    expect(hasRoomForLevel([FIGHTER, WIZARD], undefined)).toBe(true);
   });
 
   test("keys each planned level by its slot, so filling an earlier slot or removing one moves no level's values", () => {
