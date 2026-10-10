@@ -105,7 +105,7 @@ describe("cache join-maps — parity with repository queries", () => {
     expect(sortBySkillId(fromCache).map(mapRow)).toEqual(sortBySkillId(fromDb).map(mapRow));
   });
 
-  test("entityIdsByPropertyLookup indexes every (entityType, type, value) triple", () => {
+  test("entityIdsByProperty indexes every (entityType, type, value) triple", () => {
     // The reverse index must contain every composed property row — verify by
     // reconstructing the expected mapping from the per-entity index and
     // comparing to the pre-built reverse Map.
@@ -120,12 +120,12 @@ describe("cache join-maps — parity with repository queries", () => {
     }
 
     for (const [key, expectedIds] of expected.entries()) {
-      const actual = new Set(rulesetData.entityIdsByPropertyLookup.get(key) ?? []);
+      const actual = new Set(rulesetData.entityIdsByProperty.get(key) ?? []);
       expect(actual).toEqual(expectedIds);
     }
 
     // And: looking up a known D&D 3.5 triple returns the expected powers.
-    const evocation = rulesetData.entityIdsByPropertyLookup.get(`powers:${SPELL_SCHOOL}:Evocation`) ?? [];
+    const evocation = rulesetData.entityIdsByProperty.get(`powers:${SPELL_SCHOOL}:Evocation`) ?? [];
     expect(evocation.length).toBeGreaterThan(0);
     for (const id of evocation) expect(rulesetData.powersById.has(id)).toBe(true);
   });

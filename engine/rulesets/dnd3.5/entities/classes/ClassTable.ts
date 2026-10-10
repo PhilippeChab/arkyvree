@@ -20,7 +20,7 @@ function getLevelModifiers(rulesetData: RulesetData, levels: { id: string }[]) {
  * others by level; none when they give none.
  */
 function getSpellListIds(rulesetData: RulesetData, klass: Klass): string[] {
-  const klassLevels = rulesetData.klassLevelsByKlassId.get(klass.id) ?? [];
+  const klassLevels = rulesetData.klassLevelsByKlass.get(klass.id) ?? [];
   const lists = [
     ...(SpellLists.collectClassLists({ klassLevels, modifiersBySource: rulesetData.modifiersBySource }).get(klass.id) ??
       []),
@@ -69,7 +69,7 @@ export default class ClassTable {
 
   /** The class's levels, as the view has them. */
   private get levels() {
-    return this.view.rulesetData.klassLevelsByKlassId.get(this.klass.id) ?? [];
+    return this.view.rulesetData.klassLevelsByKlass.get(this.klass.id) ?? [];
   }
 
   /**

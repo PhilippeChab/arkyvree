@@ -7,17 +7,12 @@ import PathTraverser, {
 } from "@/engine/core/paths/PathTraverser.ts";
 import TemplateExpression from "@/engine/core/paths/TemplateExpression.ts";
 import type RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
-import {
-  extractReferencedPaths,
-  extractTemplateExpression,
-  isTemplateValue,
-} from "@/shared/customization/templateExpression.ts";
+import { extractReferencedPaths, isTemplateValue } from "@/shared/customization/templateExpression.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
 type ModifierResults = {
   appliedModifiers: Modifier[];
   inactiveModifiers: Modifier[];
-  modifiers: Modifier[];
   skippedModifiers: { modifier: Modifier; warning: string }[];
   unappliedModifiers: Modifier[];
 };
@@ -43,25 +38,7 @@ export default class ModifierEvaluator {
     return true;
   }
 
-  /**
-   * The source keys (`id:type`) an evaluation of requirements leaves unmet or invalid: a modifier is gated out when its
-   * source entity's or its own is among them.
-   */
-  static blockedKeys(characterRequirements: RequirementEvaluator): Set<string> {
-    const blockedKeys = new Set<string>();
-    const reqs = characterRequirements.getRequirements();
-    for (const group of reqs.unmetRequirementGroups) {
-      if (group.length === 0) continue;
-      for (const r of group) blockedKeys.add(`${r.entityId}:${r.entityType}`);
-    }
-    for (const inv of reqs.invalidRequirements)
-      blockedKeys.add(`${inv.requirement.entityId}:${inv.requirement.entityType}`);
-
-    return blockedKeys;
-  }
-
   private readonly results: ModifierResults = {
-    modifiers: [],
     appliedModifiers: [],
     unappliedModifiers: [],
     inactiveModifiers: [],
@@ -153,8 +130,8 @@ export default class ModifierEvaluator {
   }
 
   /**
-   * The modifier's value, typed: a template reference resolved against the components, or the literal coerced to its value
-   * type (which the target's must match). Null when it can't be (each reason recorded).
+   * The modifier's value, typed, once its declared type is the target's: a template resolved against the components, or
+   * the literal coerced to its value type. Null when it can't be (each reason recorded).
    */
   private resolveModifierValue(
     modifier: Modifier,
@@ -162,40 +139,18 @@ export default class ModifierEvaluator {
     components: Components,
   ): number | string | boolean | null {
     const { value, valueType } = modifier;
-    if (isTemplateValue(value)) {
-      const resolved = this.resolveTemplateValue(value, components, modifier);
-      if (resolved === null) return null;
-      // NaN passes `typeof === "number"`; ±Infinity too. Both come from
-      // edge cases (zero-arg min/max/floor/ceil/abs, division ambiguities)
-      // and would silently corrupt character state if persisted.
-      if (typeof resolved === "number" && !Number.isFinite(resolved)) {
-        this.skip(modifier, `Template resolved to a non-finite number (${resolved})`);
-        return null;
-      }
-      return resolved;
-    }
     if (!LiteralValue.hasType(data, valueType)) {
       this.skip(modifier, `Value type mismatch: expected ${valueType}, got ${typeof data}`);
       return null;
     }
+    if (isTemplateValue(value))
+      return TemplateExpression.resolve(value, components, this.targetPaths, (warning) => this.skip(modifier, warning));
     const literal = LiteralValue.parse(value, valueType);
     if (literal === undefined) {
       this.skip(modifier, `Invalid ${valueType} value: ${JSON.stringify(value)}`);
       return null;
     }
     return literal;
-  }
-
-  private resolveTemplateValue(
-    template: string,
-    components: Components,
-    modifier: Modifier,
-  ): number | string | boolean | null {
-    const expression = extractTemplateExpression(template);
-    if (!expression) return null;
-    return TemplateExpression.evaluate(expression, components, this.targetPaths, (warning) => {
-      this.results.skippedModifiers.push({ warning, modifier });
-    });
   }
 
   /** Records a modifier the engine skipped, with why: it isn't applied. */
@@ -228,10 +183,10 @@ export default class ModifierEvaluator {
 
         if (conflictIdx >= 0) {
           chained.add(modifier.id);
-          this.results.skippedModifiers.push({
-            warning: `Template modifier references "${refPath}" which is written to by another template modifier targeting "${templateModifiers[conflictIdx].target}" — result is order-dependent`,
+          this.skip(
             modifier,
-          });
+            `Template modifier references "${refPath}" which is written to by another template modifier targeting "${templateModifiers[conflictIdx].target}" — result is order-dependent`,
+          );
         }
       }
     }
@@ -249,20 +204,14 @@ export default class ModifierEvaluator {
       return;
     }
     for (const result of results) {
-      if (result.error) {
-        this.results.skippedModifiers.push({
-          warning: result.error,
-          modifier,
-        });
-      } else if (result.component) {
-        this.applyModifier(modifier, result, result.component, components);
-      }
+      if (result.error) this.skip(modifier, result.error);
+      else if (result.component) this.applyModifier(modifier, result, result.component, components);
     }
   }
 
   evaluateModifiers(components: Components, modifiers: Modifier[], characterRequirements: RequirementEvaluator) {
     // A modifier is dropped if its source entity OR the modifier itself has an unmet or invalid requirement
-    const blockedKeys = ModifierEvaluator.blockedKeys(characterRequirements);
+    const blockedKeys = characterRequirements.getBlockedKeys();
 
     const templateModifiers: Modifier[] = [];
 

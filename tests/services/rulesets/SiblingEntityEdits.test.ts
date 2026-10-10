@@ -122,7 +122,7 @@ for (const action of ["add skill", "remove skill", "create level", "update level
     const { session, host, source, assertCopied } = await setup("klasses", action === "create level");
     const { assignedSkill, otherSkill, levelId } = await withRulesetScope(db, host.id, async ({ rulesetData }) => {
       const id = rulesetData.canonicalize(source.id);
-      const assigned = rulesetData.klassSkillsByKlassId.get(id)!;
+      const assigned = rulesetData.klassSkillsByKlass.get(id)!;
       return {
         assignedSkill: assigned[0].skillId,
         otherSkill: rulesetData.skills.find((skill) => !assigned.some((row) => row.skillId === skill.id))!.id,

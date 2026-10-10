@@ -45,7 +45,7 @@ export default class PowerPicker extends LevelPicker {
     // The powers of each school, by the view's reverse property index
     const excludedPowerIds = new Set<string>();
     for (const school of prohibitedSchools) {
-      const ids = this.rulesetData.entityIdsByPropertyLookup.get(`powers:${SPELL_SCHOOL}:${school}`) ?? [];
+      const ids = this.rulesetData.entityIdsByProperty.get(`powers:${SPELL_SCHOOL}:${school}`) ?? [];
       for (const id of ids) excludedPowerIds.add(id);
     }
     return [...excludedPowerIds];

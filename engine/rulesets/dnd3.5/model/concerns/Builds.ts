@@ -1,4 +1,3 @@
-import ModifierEvaluator from "@/engine/core/modifiers/ModifierEvaluator.ts";
 import type { CharacterRows } from "@/engine/core/module/index.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import { type RulesetData, type RulesetView } from "@/engine/core/view/index.ts";
@@ -89,7 +88,7 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
           groups.filter((group) => group.some((r) => waitingKeys.has(gateKey(r)))),
           this.itemOf,
         );
-        const blocked = ModifierEvaluator.blockedKeys(round);
+        const blocked = round.getBlockedKeys();
         const ready = waiting.filter((m) => !keysOf(m).some((key) => blocked.has(key)));
         if (ready.length === 0) break;
         for (const modifier of ready) this.modifierEvaluator.evaluateModifier(modifier, components);
@@ -101,7 +100,7 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
       // A modifier can break a requirement already met, another's or its own: the modifiers it gated stay applied (undoing
       // them could loop, two modifiers breaking each other's), and validation reports them. A ready one a round skipped,
       // or that reached nothing, didn't apply
-      const blockedAtTheEnd = ModifierEvaluator.blockedKeys(this.requirementEvaluator);
+      const blockedAtTheEnd = this.requirementEvaluator.getBlockedKeys();
       const appliedIds = new Set(this.modifierEvaluator.getModifiers().appliedModifiers.map((m) => m.id));
       this.modifiersPastTheirGates = appliedGated.filter(
         (m) => appliedIds.has(m.id) && keysOf(m).some((key) => blockedAtTheEnd.has(key)),
