@@ -80,6 +80,19 @@ describe("A class's detected features", () => {
     expect(Object.keys(featureModifiers)).not.toContain("Special Ability");
   });
 
+  test("make a pool's options the features its table's rows name after it, wherever they stand", () => {
+    // A loremaster's secrets, after her True Lore; a horizon walker's terrains stay the pool they follow's
+    const { features } = classOf("dmg", "loremaster").mapping;
+    expect(features["Secret: Dodge Trick"]).toMatchObject({
+      aptitude: "Loremaster Secret",
+      selectable: true,
+      level: 1,
+    });
+    expect(Object.keys(features).filter((name) => features[name].aptitude === "Loremaster Secret")).toHaveLength(10);
+    const walker = classOf("dmg", "horizonWalker").mapping.features;
+    expect(walker["Terrain Mastery: Aquatic"].aptitude).toBe("Horizon Walker Planar Terrain Mastery");
+  });
+
   test("are the modifiers the mapping's features start from, their aptitude picks' added", () => {
     const barbarian = classOf("srd", "barbarian");
     expect(barbarian.mapping.features["Weapon and Armor Proficiency"].modifiers).toEqual(

@@ -111,6 +111,8 @@ Grouped by weapon type (`WEAPON_TYPE`) and proficiency (`WEAPON_PROFICIENCY`: si
 | `items.weapons.<group>.damage.critical.multiplier` | number | Critical hit multiplier |
 | `items.weapons.<group>.wielded` | string | How it's held: mainhand, offhand or twohanded (req only) |
 
+A modifier can reach every weapon the character holds with `*` for the group (`items.weapons.*.tohit.misc`, a loremaster's Weapon Trick): each weapon once, though its type's group and its proficiency's both list it, an unarmed strike too. A requirement can't: it reads one value.
+
 A weapon's attacks also take, where they apply, what's written once for the character: a secondary natural attack's `combat.naturalattacks.secondarypenalty`, and a thrown weapon's or a sling's `combat.throwing.tohit`.
 
 ## weapon

@@ -15,6 +15,9 @@ import type ShieldsComponent from "./ShieldsComponent.ts";
 import WeaponPaths from "./WeaponPaths.ts";
 import type WeaponsComponent from "./WeaponsComponent.ts";
 
+/** Every weapon held, a weapons path's grouping: each once (`items.weapons.*.tohit.misc`). */
+const ALL_WEAPONS = "*";
+
 const ARMOR_LABELS: Record<string, string> = {
   ac: "Armor Class",
   checkpenalty: "Check Penalty",
@@ -87,8 +90,13 @@ export default class ItemsPaths implements PathCategory<Dnd35Components> {
     return paths;
   }
 
+  /**
+   * The weapons' paths by grouping, and a modifier's on every weapon held (`items.weapons.*`: each once, though it's
+   * under its type and its proficiency both), which a requirement can't read: it reads one value.
+   */
   static generateWeaponPaths(weaponGroupings: string[], kind: "modifier" | "requirement"): TargetPath[] {
-    return weaponGroupings.flatMap((grouping) => WeaponPaths.buildPaths(`items.weapons.${grouping}`, "items", kind));
+    const groupings = kind === "modifier" ? [...weaponGroupings, ALL_WEAPONS] : weaponGroupings;
+    return groupings.flatMap((grouping) => WeaponPaths.buildPaths(`items.weapons.${grouping}`, "items", kind));
   }
 
   readonly description = "Equipped weapon, armor, and shield stats";
@@ -166,11 +174,16 @@ export default class ItemsPaths implements PathCategory<Dnd35Components> {
     if (subcategory !== "weapons" && subcategory !== "armors" && subcategory !== "shields") return null;
     const component = PathTraverser.findComponent(components, subcategory);
     if (!component) return PathTraverser.failed(null, target, `${subcategory} holder not found`);
-    const pathParts = ["items", subcategory, stripSeparators(grouping)];
+    const pathParts = ["items", subcategory, grouping === ALL_WEAPONS ? grouping : stripSeparators(grouping)];
 
     if (subcategory === "weapons") {
       const groups = PathTraverser.readComponent(component, "getWeapons" satisfies GetterOf<WeaponsComponent>);
-      const group = isRecord(groups) ? groups[stripSeparators(grouping)] : undefined;
+      if (!isRecord(groups)) return [];
+      // Every weapon held, once by its slot's key, whichever groupings list it
+      const group =
+        grouping === ALL_WEAPONS
+          ? Object.assign({}, ...Object.values(groups).filter(isRecord))
+          : groups[stripSeparators(grouping)];
       if (!isRecord(group)) return [];
       return Object.entries(group).flatMap(([key, weapon]) =>
         traverser.traverse(component, subPath, weapon, key, 0, pathParts),
