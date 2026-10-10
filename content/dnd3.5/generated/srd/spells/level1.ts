@@ -327,7 +327,7 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
     name: "Confusion, Lesser",
     description: "You cause a single creature to become confused for 1 round, with effects as the confusion spell.",
     aptitudes: ["Bard Spells"],
-    savingThrow: "None",
+    savingThrow: "Will negates",
     properties: [
       { type: "SPELL_SCHOOL", value: "Enchantment" },
       { type: "SPELL_SUBSCHOOL", value: "Compulsion" },
@@ -336,7 +336,7 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
       { type: "SPELL_RANGE_TYPE", value: "Close" },
       { type: "SPELL_TARGET", value: "One living creature" },
       { type: "SPELL_DURATION", value: "1 round" },
-      { type: "SPELL_RESISTANCE", value: "No" },
+      { type: "SPELL_RESISTANCE", value: "Yes" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },
       { type: "SPELL_COMPONENT", value: "Divine Focus" },

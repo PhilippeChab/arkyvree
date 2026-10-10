@@ -193,4 +193,21 @@ describe("A spell written as another", () => {
     expect(detected.Leaked.properties).toContainEqual({ type: "SPELL_RESISTANCE", value: "No" });
     expect(detected.Leaked.properties).toContainEqual({ type: "SPELL_CASTING_TIME", value: "1 round" });
   });
+
+  test("takes its base spell's fields as an override corrects them", () => {
+    // The site gives Anticipate Teleportation's target as its range
+    const anticipate = spell("Anticipate Teleportation", { range: "One willing creature touched" });
+    const detected = detectedOf(
+      [
+        anticipate,
+        bare("Anticipate Teleportation, Greater", "As anticipate teleportation, except that it warns more."),
+      ],
+      { "Anticipate Teleportation": { range: "Touch", target: "One willing creature touched" } },
+    );
+    for (const name of ["Anticipate Teleportation", "Anticipate Teleportation, Greater"]) {
+      const ranges = detected[name].properties.filter(({ type }) => type === "SPELL_RANGE_TYPE");
+      expect(ranges).toEqual([{ type: "SPELL_RANGE_TYPE", value: "Touch" }]);
+      expect(detected[name].properties).toContainEqual({ type: "SPELL_TARGET", value: "One willing creature touched" });
+    }
+  });
 });

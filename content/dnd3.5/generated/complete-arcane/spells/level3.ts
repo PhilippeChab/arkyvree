@@ -12,7 +12,8 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
     properties: [
       { type: "SPELL_SCHOOL", value: "Abjuration" },
       { type: "SPELL_CASTING_TIME", value: "1 round" },
-      { type: "SPELL_RANGE_TYPE", value: "One willing creature touched" },
+      { type: "SPELL_RANGE_TYPE", value: "Touch" },
+      { type: "SPELL_TARGET", value: "One willing creature touched" },
       { type: "SPELL_AREA_OF_EFFECT", value: "5-ft./level radius emanation from touched creature" },
       { type: "SPELL_DURATION", value: "1 hour/level" },
       { type: "SPELL_RESISTANCE", value: "No" },
