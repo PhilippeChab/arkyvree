@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import type { Components } from "@/engine/core/paths/PathTraverser.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
-import SpellLists from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellLists.ts";
+import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 
 const targetPaths = new Dnd35TargetPaths();
 

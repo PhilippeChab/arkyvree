@@ -1,6 +1,6 @@
 import Dnd35PropertyTypes from "@/engine/rulesets/dnd3.5/Dnd35PropertyTypes.ts";
 import type CharacterState from "@/engine/rulesets/dnd3.5/model/CharacterState.ts";
-import SpellLists from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellLists.ts";
+import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { formatPropertyValues, groupPropertyValues } from "@/shared/customization/properties.ts";
 

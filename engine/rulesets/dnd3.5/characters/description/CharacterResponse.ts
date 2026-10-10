@@ -2,7 +2,7 @@ import type { InferSelectModel } from "drizzle-orm";
 
 import type { charactersInCharacter } from "@/drizzle/schema.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
-import ItemPlacement from "@/engine/rulesets/dnd3.5/model/inventory/ItemPlacement.ts";
+import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 import CombatSheet from "./CombatSheet.ts";

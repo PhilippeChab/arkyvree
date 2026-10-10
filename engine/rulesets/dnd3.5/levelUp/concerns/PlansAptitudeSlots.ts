@@ -1,7 +1,7 @@
 import type { FeatSlots, LevelUpBase, PowerSlots } from "@/engine/core/levelUp/index.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
-import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
+import AptitudesPaths from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesPaths.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import type { Constructor } from "@/lib/mixins.ts";
@@ -35,14 +35,14 @@ export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCha
         // A pool's slots take a literal: an add, or a spell level's set to -1 (the paths allow nothing else)
         const value = LiteralValue.parse(mod.value, "number");
         if (typeof value !== "number") continue;
-        const pool = AptitudeTargets.parsePool(mod.target);
+        const pool = AptitudesPaths.parsePool(mod.target);
         if (pool !== undefined) {
           const aptId = aptitudeSlugToId.get(pool);
           if (aptId && featSlots[aptId]) deltas.feats[aptId] = (deltas.feats[aptId] ?? 0) + value;
 
           continue;
         }
-        const slot = AptitudeTargets.parseSpellLevel(mod.target);
+        const slot = AptitudesPaths.parseSpellLevel(mod.target);
         if (slot?.field === "allowed") {
           const aptId = aptitudeSlugToId.get(slot.list);
           if (aptId && powerSlots[aptId]) {

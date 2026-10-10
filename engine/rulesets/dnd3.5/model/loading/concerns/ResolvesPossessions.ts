@@ -3,7 +3,7 @@ import type { RulesetData } from "@/engine/core/view/index.ts";
 import FeatsPaths from "@/engine/rulesets/dnd3.5/model/feats/FeatsPaths.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import PowersPaths from "@/engine/rulesets/dnd3.5/model/powers/PowersPaths.ts";
-import SpellLists from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellLists.ts";
+import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import type { Modifier, PowerWithAptitudes } from "@/shared/relations.ts";
 

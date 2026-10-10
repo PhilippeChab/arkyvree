@@ -2,6 +2,7 @@ import type { BuiltCharacter } from "@/engine/core/character/index.ts";
 import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import { type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
+import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import { include } from "@/lib/mixins.ts";
 import type { Modifier } from "@/shared/relations.ts";
 import { BONUS_SPELL_MODIFIER_STEP, MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
@@ -9,7 +10,6 @@ import { BONUS_SPELL_MODIFIER_STEP, MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/
 import { BonusCasterLevels } from "./concerns/BonusCasterLevels.ts";
 import { KnownPowers } from "./concerns/KnownPowers.ts";
 import SpellcastingState from "./SpellcastingState.ts";
-import SpellLists from "./SpellLists.ts";
 
 /**
  * A character's spellcasting: its classes' spell lists and caster types (`initialize`), and, once its modifiers apply,

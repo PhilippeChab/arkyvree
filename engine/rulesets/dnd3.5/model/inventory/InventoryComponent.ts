@@ -1,8 +1,7 @@
 import { CharacterComponent, type InventoryEntry } from "@/engine/core/character/index.ts";
 import { ITEM_FIELDS, type ItemFieldValues } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
-
-import InventorySlots from "./InventorySlots.ts";
+import InventorySlots from "@/engine/rulesets/dnd3.5/rules/InventorySlots.ts";
 
 type InventoryData = Record<string, InventorySlotData> & {
   weaponsets: WeaponSetInventory;

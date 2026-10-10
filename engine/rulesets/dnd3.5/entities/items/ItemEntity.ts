@@ -5,7 +5,7 @@ import { z } from "zod";
 import { CustomizationPageEntity } from "@/engine/core/entities/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
-import ItemPlacement from "@/engine/rulesets/dnd3.5/model/inventory/ItemPlacement.ts";
+import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 import type { Item } from "@/shared/relations.ts";
 import { TEMPLATE_ITEM_TYPES, type TemplateItemType } from "@/vocabulary/dnd3.5/itemTemplates.ts";

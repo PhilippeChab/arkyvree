@@ -1,5 +1,5 @@
 import type { WeaponSlot } from "@/engine/rulesets/dnd3.5/model/combat/CombatState.ts";
-import { WEAPON_SET_SLOTS } from "@/engine/rulesets/dnd3.5/model/inventory/InventorySlots.ts";
+import { WEAPON_SET_SLOTS } from "@/engine/rulesets/dnd3.5/rules/InventorySlots.ts";
 import { capitalize, formatSigned } from "@/shared/text.ts";
 
 /**

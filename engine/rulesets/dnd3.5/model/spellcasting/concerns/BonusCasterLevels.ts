@@ -3,7 +3,6 @@ import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import AptitudesPaths from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesPaths.ts";
-import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import ClassesPaths from "@/engine/rulesets/dnd3.5/model/classes/ClassesPaths.ts";
 import type { CustomizedClassLevel, CustomizedFeat } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import type SpellcastingState from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellcastingState.ts";
@@ -81,7 +80,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
         const className = classNameByKlassLevelId.get(feat.klassLevelId);
         if (!className) continue;
         for (const modifier of feat.modifiers) {
-          const list = AptitudeTargets.parseSpellLevel(modifier.target)?.list;
+          const list = AptitudesPaths.parseSpellLevel(modifier.target)?.list;
           const listId = list === undefined ? undefined : aptitudes[list]?.id;
           if (list === undefined || !listId || !featListIds.has(listId)) continue;
           const slots = slotsByList.get(list) ?? { className, featId: feat.id, modifiers: [] };

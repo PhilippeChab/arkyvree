@@ -1,12 +1,13 @@
+import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import {
   ANIMAL_BAB_PER_HIT_DIE,
   ANIMAL_HIT_DIE_AVERAGE,
   ANIMAL_SAVE_PROGRESSIONS,
+  ANIMAL_SKILL_POINTS_PER_HIT_DIE,
   type BondedRaceStatBlock,
 } from "@/vocabulary/dnd3.5/bondedCreatures.ts";
 import { SAVE_PROGRESSIONS } from "@/vocabulary/dnd3.5/classes.ts";
 
-import BondedScaling from "./BondedScaling.ts";
 import DetailedCharacterBonded from "./DetailedCharacterBonded.ts";
 
 /**
@@ -14,6 +15,37 @@ import DetailedCharacterBonded from "./DetailedCharacterBonded.ts";
  * scale to its total HD, and so do its combat statistics, an animal's.
  */
 export default abstract class DetailedCharacterAdvancingBonded extends DetailedCharacterBonded {
+  /**
+   * A creature's feats at its total hit dice: as many as the Monster Manual gives, one at the first hit die and one more
+   * every third (`LevelRules.countGeneralFeats`, a character's general feats' rule). Its stat block's base feats,
+   * then enough of its `featPriority`, in order, to reach that count.
+   */
+  static scaleFeats(stats: BondedRaceStatBlock, totalHD: number): string[] {
+    const count = LevelRules.countGeneralFeats(Math.max(1, totalHD));
+    const base = stats.baseFeats ?? [];
+    const priority = stats.featPriority ?? [];
+    const extras = priority.slice(0, Math.max(0, count - base.length));
+    return [...base, ...extras];
+  }
+
+  /**
+   * The ranks a creature's hit dice past its stat block's give its skills: an animal's skill point per added hit die (2 +
+   * its Intelligence modifier, at least 1, and an animal's Intelligence of 1 or 2 makes it 1), each to the next skill of
+   * its `skillPriority` in turn. A legal stat block has at most its hit dice + 3 ranks in a skill, and a skill gains at
+   * most a rank per added hit die, so none passes the maximum.
+   */
+  static scaleSkillRanks(stats: BondedRaceStatBlock, totalHD: number): Record<string, number> {
+    const ranks: Record<string, number> = {};
+    const priority = stats.skillPriority ?? [];
+    if (priority.length === 0) return ranks;
+    const points = Math.max(0, totalHD - stats.baseHD) * ANIMAL_SKILL_POINTS_PER_HIT_DIE;
+    for (let point = 0; point < points; point++) {
+      const skill = priority[point % priority.length];
+      ranks[skill] = (ranks[skill] ?? 0) + 1;
+    }
+    return ranks;
+  }
+
   /** Its hit dice, its stat block's and those its master's levels add: what its feats and skills scale to. */
   private totalHitDice: number | null = null;
 
@@ -25,8 +57,12 @@ export default abstract class DetailedCharacterAdvancingBonded extends DetailedC
     const totalHD = this.totalHitDice ?? raceStats.baseHD;
     super.applyRaceDefaults(raceStats);
     const baseFeats = new Set(raceStats.baseFeats ?? []);
-    this.applyGrantedFeats(BondedScaling.scaleFeats(raceStats, totalHD).filter((feat) => !baseFeats.has(feat)));
-    for (const [skillName, ranks] of Object.entries(BondedScaling.scaleSkillRanks(raceStats, totalHD)))
+    this.applyGrantedFeats(
+      DetailedCharacterAdvancingBonded.scaleFeats(raceStats, totalHD).filter((feat) => !baseFeats.has(feat)),
+    );
+    for (const [skillName, ranks] of Object.entries(
+      DetailedCharacterAdvancingBonded.scaleSkillRanks(raceStats, totalHD),
+    ))
       this.components.skills.addRanks(skillName, ranks);
   }
 

@@ -4,7 +4,7 @@ import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTa
 import type { CustomizedFeat, CustomizedPower } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import PowersComponent from "@/engine/rulesets/dnd3.5/model/powers/PowersComponent.ts";
 import type SpellcastingState from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellcastingState.ts";
-import SpellLists from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellLists.ts";
+import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import type { Modifier, Power, Property } from "@/shared/relations.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
@@ -24,7 +24,7 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
 
       for (const modifier of appliedModifiers) {
         if (modifier.sourceType !== "klass_levels") continue;
-        const list = AptitudeTargets.parseList(modifier.target);
+        const list = AptitudesPaths.parseList(modifier.target);
         if (list === undefined) continue;
         const aptitude = aptitudes[list];
         if (!aptitude || !aptitudePowerAptitudeIds.has(aptitude.id) || aptitudeIdToClassName.has(aptitude.id)) continue;
@@ -181,7 +181,7 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
         for (const list of lists) {
           const aptitude = aptitudes[list];
           if (!aptitude || !featListIds.has(aptitude.id)) continue;
-          const joinsClassList = feat.modifiers.some((modifier) => AptitudeTargets.parseJoin(modifier.target) === list);
+          const joinsClassList = feat.modifiers.some((modifier) => AptitudesPaths.parseJoin(modifier.target) === list);
           // A feat opening several lists shows its tag on each of them
           const tagged = this.spellTagLists[feat.name] ?? { aptitudeIds: classListIds, joinsClassList: false };
           this.spellTagLists[feat.name] = {

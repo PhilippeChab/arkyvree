@@ -2,8 +2,8 @@
 
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
-import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
-import SpellLists from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellLists.ts";
+import AptitudesPaths from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesPaths.ts";
+import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import type { Klass, Modifier } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -90,7 +90,7 @@ export default class ClassTable {
       levels,
       [...getLevelModifiers(rulesetData, levels), ...featModifiers],
       (modifier) => {
-        const slug = AptitudeTargets.parsePool(modifier.target);
+        const slug = AptitudesPaths.parsePool(modifier.target);
         const name = slug === undefined ? undefined : nameBySlug.get(slug);
         const value = LiteralValue.parse(modifier.value, "number");
         if (!name || typeof value !== "number") return undefined;
@@ -113,7 +113,7 @@ export default class ClassTable {
   describeSpells() {
     const { levels } = this;
     const totals = runningTotals<number>(levels, getLevelModifiers(this.view.rulesetData, levels), (modifier) => {
-      const target = AptitudeTargets.parseSpellLevel(modifier.target);
+      const target = AptitudesPaths.parseSpellLevel(modifier.target);
       const value = LiteralValue.parse(modifier.value, "number");
       if (target?.field !== "uses" || typeof value !== "number") return undefined;
       return { key: target.level, step: (total) => (total ?? 0) + value };
@@ -131,7 +131,7 @@ export default class ClassTable {
       levels,
       getLevelModifiers(this.view.rulesetData, levels),
       (modifier) => {
-        const target = AptitudeTargets.parseSpellLevel(modifier.target);
+        const target = AptitudesPaths.parseSpellLevel(modifier.target);
         const value = LiteralValue.parse(modifier.value, "number");
         if (target?.field !== "allowed" || typeof value !== "number") return undefined;
         const setsAll = modifier.operator === "set" && value === -1;

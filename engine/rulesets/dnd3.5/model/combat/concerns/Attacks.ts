@@ -7,7 +7,7 @@ import {
   type WeaponAbilities,
   type WeaponSlot,
 } from "@/engine/rulesets/dnd3.5/model/combat/CombatState.ts";
-import { SIZE_ORDER, WEAPON_SET_SLOTS } from "@/engine/rulesets/dnd3.5/model/inventory/InventorySlots.ts";
+import { SIZE_ORDER, WEAPON_SET_SLOTS } from "@/engine/rulesets/dnd3.5/rules/InventorySlots.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { type Item } from "@/shared/relations.ts";
 import {
