@@ -1,3 +1,5 @@
+import type { Character } from "@/shared/relations.ts";
+
 import type { CharacterRows } from "./CharacterInputs.ts";
 
 /** An ability a level raises, and by how much. */
@@ -111,11 +113,16 @@ export interface LevelWrites<C = LevelColumns> {
   rows: LevelRows;
 }
 
-/** A bonded creature a plan makes: of a race, named for it, with its ability scores. */
+/**
+ * A bonded creature a plan makes: its character's row, whole (its master's, of its kind, its race and name, and what it
+ * takes of its master), and its ability scores.
+ */
 export interface NewBondedCreature {
   abilities: { abilityId: string; score: number }[];
-  name: string;
-  raceId: string;
+  row: Pick<
+    Character,
+    "alignment" | "gender" | "kind" | "name" | "parentCharacterId" | "raceId" | "rulesetId" | "userId" | "xp"
+  >;
 }
 
 /**

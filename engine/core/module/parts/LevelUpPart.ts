@@ -17,7 +17,7 @@ import type {
 } from "@/engine/core/module/levelUp.ts";
 import type { OpenedGroupedPicker, OpenedPicker, PickFilters, PickGroupFilters } from "@/engine/core/module/pickers.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import type { Klass } from "@/shared/relations.ts";
+import type { Character, Klass } from "@/shared/relations.ts";
 
 /**
  * What a ruleset answers of a character's levels, from the rows the server reads: the level-up wizard's steps (which it
@@ -81,8 +81,11 @@ export default abstract class LevelUpPart<D extends Descriptions, C = unknown> i
   planBonded(view: RulesetView, character: CharacterInput, bonded: CharacterInput[]): BondedCreaturesPlan {
     return new BondedCreatures(view, character, this).planBonded(bonded);
   }
-  /** What bonded creatures (`bonded`, their rows) become with their master as `master` builds it, kind by kind. */
-  abstract planBondedCreatures(view: RulesetView, master: C, bonded: CharacterInput[]): BondedPlan[];
+  /**
+   * What bonded creatures (`bonded`, their rows) become with their master as `master` builds it, kind by kind, from its
+   * row (`record`), which a creature it makes takes after.
+   */
+  abstract planBondedCreatures(view: RulesetView, master: C, record: Character, bonded: CharacterInput[]): BondedPlan[];
 
   /** A saved level's edit: what it writes, checked unless `force`d, and what the bonded creatures become with it. */
   abstract planEdit(

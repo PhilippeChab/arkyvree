@@ -7,6 +7,7 @@ import {
 } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
+import type { Character } from "@/shared/relations.ts";
 
 import SelectionChecks from "./SelectionChecks.ts";
 
@@ -19,8 +20,11 @@ export interface LevelUpRules<C> {
   buildCharacter(view: RulesetView, input: CharacterInput): C;
   /** What the ability increases of the level after `totalLevel` levels add up to: 0 when it takes none. */
   getAbilityIncreaseTotal(totalLevel: number): number;
-  /** What the bonded creatures (`bonded`, their rows) become with their master as `master` builds it. */
-  planBondedCreatures(view: RulesetView, master: C, bonded: CharacterInput[]): BondedPlan[];
+  /**
+   * What the bonded creatures (`bonded`, their rows) become with their master as `master` builds it, from its row
+   * (`record`), which a creature it makes takes after.
+   */
+  planBondedCreatures(view: RulesetView, master: C, record: Character, bonded: CharacterInput[]): BondedPlan[];
 }
 
 /**
@@ -81,7 +85,7 @@ export default abstract class LevelUpBase<C> {
    * creature removed, kept or made, and the levels it takes or loses.
    */
   protected planBondedOf(master: C, bonded: CharacterInput[]) {
-    return this.rules.planBondedCreatures(this.view, master, bonded);
+    return this.rules.planBondedCreatures(this.view, master, this.character.record, bonded);
   }
 
   protected get rulesetData(): RulesetData {
