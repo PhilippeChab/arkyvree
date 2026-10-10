@@ -1,7 +1,10 @@
 import type { InferRequestType } from "hono/client";
 
 import { wholeNumberError } from "@/client/src/lib/validation.ts";
-import type { ClassLevelRow } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
+import type {
+  ClassLevelFormData,
+  ClassLevelRow,
+} from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import type { Save } from "@/client/src/pages/rulesets/hooks/index.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 import { MAX_SAVE_BASE } from "@/vocabulary/dnd3.5/classes.ts";
@@ -14,13 +17,6 @@ type LevelJson = InferRequestType<
 
 type LevelSave = NonNullable<LevelJson["saves"]>[number];
 
-/**
- * A class level's form, its create's body: its number, base attack bonus and skill points, which its create dialog
- * sets, and its saves and granted feats (`ClassLevelFields`), which its page edits too.
- */
-export type ClassLevelFormData = InferRequestType<
-  (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"]["$post"]
->["json"];
 export type LevelFeat = Pick<NonNullable<LevelJson["feats"]>[number], "featId" | "aptitudeId">;
 
 /**

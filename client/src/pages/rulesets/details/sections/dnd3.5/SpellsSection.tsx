@@ -1,6 +1,6 @@
 import { Box, Stack } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
-import { type InferResponseType, parseResponse } from "hono/client";
+import { parseResponse } from "hono/client";
 
 import { CreateDialog, LoadMoreButton, SearchBar, SectionContent } from "@/client/src/components/common/index.ts";
 import { PowersIcon } from "@/client/src/components/icons/index.ts";
@@ -21,7 +21,7 @@ import {
 } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
-import { powersQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
+import { type Power, powersQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import {
   useAptitudeFilter,
   useOpenEntity,
@@ -32,8 +32,8 @@ import {
 import { rpc } from "@/client/src/services/rpc.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 
-/** A ruleset's spell (its power), as its list gives it. */
-export type Spell = InferResponseType<(typeof rpc.api.rulesets)[":id"]["powers"]["$get"], 200>["items"][number];
+/** A ruleset's spell: its power, as its list gives it. */
+type Spell = Power;
 
 const SPELLS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },

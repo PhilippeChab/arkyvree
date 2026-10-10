@@ -1,9 +1,11 @@
 /** Each D&D 3.5 entity's form, empty: what its create dialog opens on, and what its edit form holds until it loads. */
 
+import type {
+  ClassFormData,
+  ClassLevelFormData,
+} from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import { DEFAULT_HIT_DIE } from "@/vocabulary/dnd3.5/classes.ts";
 
-import type { ClassFormData } from "./ClassFormFields.tsx";
-import type { ClassLevelFormData } from "./classLevelForm.ts";
 import type { ItemFormData } from "./itemForm.ts";
 import type { SkillFormData } from "./SkillFormFields.tsx";
 import type { SpellFormData } from "./spellForm.ts";

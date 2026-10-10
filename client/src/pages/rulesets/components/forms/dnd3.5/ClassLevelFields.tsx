@@ -6,19 +6,17 @@ import { LoadError, ScrollSafeListbox, ValueChip } from "@/client/src/components
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { readNumberInput } from "@/client/src/lib/validation.ts";
+import type { ClassLevelFormData } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import { type Save, useRulesetFeats } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { MAX_SAVE_BASE } from "@/vocabulary/dnd3.5/classes.ts";
 
-import {
-  areSaveBasesValid,
-  type ClassLevelFormData,
-  featKey,
-  type LevelFeat,
-  levelFeatLabel,
-  saveBaseError,
-} from "./classLevelForm.ts";
+import { areSaveBasesValid, featKey, type LevelFeat, levelFeatLabel, saveBaseError } from "./classLevelForm.ts";
 
-interface ClassLevelFieldsProps {
+interface FeatOption extends LevelFeat {
+  label: string;
+}
+
+export interface ClassLevelFieldsProps {
   /** Labels for feats the options may not list (e.g. from a parent ruleset), by `featId-aptitudeId`. */
   featLabels?: Map<string, string>;
   form: UseFormReturn<ClassLevelFormData>;
@@ -27,10 +25,6 @@ interface ClassLevelFieldsProps {
   rulesetSaves: Save[] | undefined;
   /** Why they didn't load. */
   savesError: unknown;
-}
-
-interface FeatOption extends LevelFeat {
-  label: string;
 }
 
 /** A class level's base saves and granted feats, bound to its form: its create dialog's and its page's. */

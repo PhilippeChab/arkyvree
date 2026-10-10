@@ -7,7 +7,6 @@ import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
   allLevelSaves,
   ClassLevelFields,
-  type ClassLevelFormData,
   EMPTY_CLASS_LEVEL,
   featKey,
   type LevelFeat,
@@ -16,6 +15,7 @@ import {
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
 import type { EditorProps } from "@/client/src/pages/rulesets/customization/editors/renderEditor.tsx";
 import type { ClassLevel } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
+import type { ClassLevelFormData } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import { useEntitySave, useRulesetSaves } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { formatSigned } from "@/shared/text.ts";

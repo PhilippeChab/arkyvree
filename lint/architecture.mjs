@@ -26,15 +26,17 @@
  *   is named `tx`, the name it knows a query by.
  * - `folder-index`: code outside a folder that has an `index.ts` imports it through that index (the service folders,
  *   `cow/`, `policies/`, the client's component folders; code outside a client component folder enters it at its
- *   outermost index, never a subfolder's). Files within the folder import each other directly, and a test may reach a
- *   folder's own modules (a pure module's unit test).
+ *   outermost index, never a subfolder's, but a ruleset's code enters a folder of its own ruleset at that ruleset
+ *   folder's index: `sections/dnd3.5/`, which the generic folder around it re-exports none of). Files within the folder
+ *   import each other directly, and a test may reach a folder's own modules (a pure module's unit test).
  * - `ruleset-folders`: a ruleset is a folder of `engine/rulesets/`, and a folder of its name, in any tree, is its own
  *   (`content/<ruleset>/`, `codegen/<ruleset>/`, `database/packages/<ruleset>/`, `vocabulary/<ruleset>/`, the
  *   client's and the tests'): a ruleset's code imports none of another's, and what every ruleset runs on
  *   (`engine/core/`, `content/core/`, `codegen/core/`, `database/packages/seed/`, the server, `shared/`, `lib/`) names
  *   none of them. A ruleset's builders (`content/<ruleset>/builders/`, what its data is written with) import nothing of
- *   its data. The client's generic modules read a ruleset's vocabulary through its registry alone
- *   (`CLIENT_VOCABULARY_REGISTRIES`: `getVocabulary(baseRules)`), never from its folder.
+ *   its data. A client module outside a ruleset's folder reaches a ruleset's code and vocabulary only through the
+ *   client's registries, keyed by base rules (`CLIENT_REGISTRIES`: `getSections`, `getVocabulary`, `getClassForms`…),
+ *   never from its folders.
  * - `vocabulary-data`: a ruleset's vocabulary (`vocabulary/<ruleset>/`) is data: its lists, labels, tables and bounds,
  *   never a rule. It declares no function or class, and holds none in a constant (a callback in a constant's value,
  *   `SPELL_LEVELS.map((level) => …)`, builds the data): a rule is the engine's, which the client reads from a response.
@@ -66,8 +68,22 @@ const ABOVE_REPOSITORIES = [
 const ACTION_LAYERS = ["server/services/", "server/jobs/"];
 /** The client's component folders, which code outside enters at their outermost index */
 const CLIENT_COMPONENTS = "client/src/components/";
-/** The client's modules that read a ruleset's vocabulary for its generic pages, by its base rules. */
-const CLIENT_VOCABULARY_REGISTRIES = ["client/src/pages/rulesets/vocabularyFactory.ts"];
+/**
+ * The client's registries: each maps the base rules to a ruleset's part of the client (its sheet sections, its level-up
+ * wizard, its pages' sections and forms, its vocabulary…), the one way a generic module reaches a ruleset's folders.
+ */
+const CLIENT_REGISTRIES = [
+  "client/src/components/characters/sectionFactory.ts",
+  "client/src/components/characters/sections/abilityOrder.ts",
+  "client/src/lib/rulesetLabels.ts",
+  "client/src/pages/characters/details/components/levelUpFactory.ts",
+  "client/src/pages/rulesets/customization/editors/renderEditor.tsx",
+  "client/src/pages/rulesets/details/classes/classFormFactory.ts",
+  "client/src/pages/rulesets/details/entities/entityPageFactory.ts",
+  "client/src/pages/rulesets/details/sectionFactory.ts",
+  "client/src/pages/rulesets/hooks/useEntityFilters.ts",
+  "client/src/pages/rulesets/vocabularyFactory.ts",
+];
 /** The engine's entry's own methods, which hand out its handles. */
 const ENGINE_ENTRIES = new Set(["copyOnWrite", "for", "forRules"]);
 
@@ -258,9 +274,12 @@ function createFolderIndex(context) {
     // Code outside a client component folder (`components/characters/`) enters it at its outermost index: a
     // subfolder's index is an entry for the folder's own files, never for the code outside it
     const area = tree + target.slice(tree.length).split("/")[0];
+    // A ruleset's code enters a folder of its own ruleset at that ruleset folder's outermost index, never above it
+    const own = rulesetOf(file, rulesetsOf(root));
+    const top = (own && rulesetFolderOf(folder, own)) || area;
     for (
       let dir = path.posix.dirname(folder);
-      tree === CLIENT_COMPONENTS && !file.startsWith(area + "/") && dir.startsWith(area);
+      tree === CLIENT_COMPONENTS && !file.startsWith(area + "/") && (dir + "/").startsWith(top + "/");
       dir = path.posix.dirname(dir)
     )
       if (hasIndex(path.join(root, dir))) folder = dir;
@@ -526,17 +545,18 @@ function createRulesetFolders(context) {
   const ruleset = rulesetOf(file, rulesets);
   const home = ruleset ? undefined : SHARED_HOMES.find((prefix) => file.startsWith(prefix));
   const builders = ruleset && file.startsWith(`content/${ruleset}/builders/`);
-  const genericClient = !ruleset && file.startsWith("client/") && !CLIENT_VOCABULARY_REGISTRIES.includes(file);
+  const genericClient = !ruleset && file.startsWith("client/") && !CLIENT_REGISTRIES.includes(file);
   if (!ruleset && !home && !genericClient) return {};
   return onImports((node, spec) => {
     const target = targetOf(file, spec);
     const other = target && rulesetOf(target, rulesets);
-    if (genericClient && other && target.startsWith("vocabulary/")) {
+    if (genericClient && other) {
       context.report({
         node,
         message:
-          "A generic client module reads a ruleset's vocabulary through its registry, `getVocabulary(baseRules)` " +
-          "(client/src/pages/rulesets/vocabularyFactory.ts), never from its folder.",
+          `A generic client module reaches ${other}'s code and vocabulary through a registry keyed by base rules ` +
+          "(`getSections`, `getVocabulary`, `getClassForms`…: lint/architecture.mjs `CLIENT_REGISTRIES`), never from " +
+          "its folders.",
       });
     } else if (home && other) {
       context.report({
@@ -634,6 +654,13 @@ function reExportsFrom(statement) {
   return (
     statement.type === "ExportAllDeclaration" || (statement.type === "ExportNamedDeclaration" && !!statement.source)
   );
+}
+
+/** The folder of `ruleset` a folder is in, or is (`client/src/components/characters/sections/dnd3.5`), if any. */
+function rulesetFolderOf(dir, ruleset) {
+  const folders = dir.split("/");
+  const at = folders.indexOf(ruleset);
+  return at === -1 ? undefined : folders.slice(0, at + 1).join("/");
 }
 
 /** The ruleset a path's code is: the first of its folders a ruleset is named for, none for code every ruleset shares. */

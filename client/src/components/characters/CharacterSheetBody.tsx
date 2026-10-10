@@ -3,7 +3,6 @@ import { Stack } from "@mui/material";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 
 import { getSections } from "./sectionFactory.ts";
-import type { SheetCombat } from "./sections/dnd3.5/index.ts";
 import {
   type CharacterData,
   CharacterIdentitySection,
@@ -55,7 +54,8 @@ export function CharacterSheetBody({
   portraitUrl,
   showPrivateNotes,
 }: CharacterSheetBodyProps) {
-  const combat: SheetCombat = character.combat;
+  // A partial sheet carries no combat
+  const combat: Partial<CharacterDetail["combat"]> = character.combat;
   const encumbrance = combat.encumbrance;
   const { baseRules } = character;
   const sections = getSections(baseRules);

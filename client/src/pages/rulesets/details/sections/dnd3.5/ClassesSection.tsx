@@ -12,14 +12,11 @@ import {
 import { ClassesIcon } from "@/client/src/components/icons/index.ts";
 import { formatDie } from "@/client/src/lib/formatNumeric.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
-import {
-  type ClassFormData,
-  ClassFormFields,
-  EMPTY_CLASS,
-} from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
+import { ClassFormFields, EMPTY_CLASS } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/src/pages/rulesets/components/index.ts";
 import {
   classDetailQuery,
+  type ClassFormData,
   prefetchClassSection,
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
