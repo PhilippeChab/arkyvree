@@ -16,7 +16,7 @@ interface AddAbilityState {
   levelDetails: Pick<PreviewLevelDetail, "klassName" | "level">[];
 }
 
-export interface AddAbilityStepProps {
+interface AddAbilityStepProps {
   baseRules: BaseRules;
   wizard: AddAbilityState;
 }

@@ -52,7 +52,7 @@ interface SpellRowItemProps {
   spell: SpellGroup["spells"][number];
 }
 
-export interface SpellsSectionProps {
+interface SpellsSectionProps {
   rulesetId?: string;
   spellGroups: CharacterDetail["spellGroups"];
 }

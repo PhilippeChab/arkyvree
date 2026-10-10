@@ -12,6 +12,10 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
+import type {
+  LevelUpFormData,
+  SelectedFeat,
+} from "@/client/src/pages/characters/details/components/useLevelWizardBase.ts";
 
 import { AutoGrantedPicks } from "./AutoGrantedPicks.tsx";
 import {
@@ -19,9 +23,7 @@ import {
   availableFeatFamilyQuery,
   type FeatsData,
   type GroupedFeatRow,
-  type LevelUpFormData,
   type PickerLevel,
-  type SelectedFeat,
   withoutPick,
   withPick,
 } from "./levelUp/index.ts";
@@ -66,7 +68,7 @@ interface FeatPickerState {
   toggleFeatFamily: (family: string) => void;
 }
 
-export interface FeatsStepProps {
+interface FeatsStepProps {
   characterId: string;
   wizard: FeatPickerState;
 }

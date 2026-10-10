@@ -3,8 +3,8 @@ import {
   PropertiesSection,
   RequirementsSection,
 } from "@/client/src/pages/rulesets/customization/sections/index.ts";
+import type { ClassSectionProps } from "@/client/src/pages/rulesets/details/classes/classSectionFactory.ts";
 
-import type { ClassSectionProps } from "./classSections.ts";
 import { useClassCustomization } from "./useClassCustomization.ts";
 
 /** The class's own modifiers, which a character with any level of it has, once. */

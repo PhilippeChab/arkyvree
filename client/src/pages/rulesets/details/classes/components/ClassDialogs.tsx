@@ -9,7 +9,7 @@ import { getVocabulary } from "@/client/src/pages/rulesets/vocabularyFactory.ts"
 import type { BaseRules } from "@/shared/enums.ts";
 
 interface CreateLevelDialogProps {
-  /** The ruleset's, whose last class level bounds the level's number. */
+  /** The ruleset's, whose last class level bounds the level's number, and whose fields a level has. */
   baseRules: BaseRules;
   form: UseFormReturn<ClassLevelFormData>;
   onClose: () => void;
@@ -39,7 +39,7 @@ export function CreateLevelDialog({
 }: CreateLevelDialogProps) {
   const { data: rulesetSaves, error: savesError } = useRulesetSaves(rulesetId, open);
   const { lastLevel } = getVocabulary(baseRules).classes;
-  const { allLevelSaves, ClassLevelFields } = getClassForms(baseRules);
+  const { allLevelSaves, NewClassLevelFields } = getClassForms(baseRules);
 
   // The endpoint takes every ruleset save, 0 when unset.
   const handleSubmit = (data: ClassLevelFormData) =>
@@ -65,29 +65,7 @@ export function CreateLevelDialog({
           htmlInput: { min: 1, max: lastLevel },
         }}
       />
-      <FormTextField
-        control={form.control}
-        name="fields.bab"
-        rules={wholeNumberRules(0, "Base Attack Bonus is required")}
-        number
-        label="Base Attack Bonus"
-        fullWidth
-        slotProps={{
-          htmlInput: { min: 0 },
-        }}
-      />
-      <FormTextField
-        control={form.control}
-        name="fields.skills"
-        rules={wholeNumberRules(1, "Skill points are required")}
-        number
-        label="Skill Points"
-        fullWidth
-        slotProps={{
-          htmlInput: { min: 1 },
-        }}
-      />
-      <ClassLevelFields form={form} rulesetId={rulesetId} rulesetSaves={rulesetSaves} savesError={savesError} />
+      <NewClassLevelFields form={form} rulesetId={rulesetId} rulesetSaves={rulesetSaves} savesError={savesError} />
     </CreateDialog>
   );
 }

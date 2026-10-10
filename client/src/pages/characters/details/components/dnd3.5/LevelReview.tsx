@@ -3,17 +3,11 @@ import type { ReactNode } from "react";
 
 import { SubsectionTitle } from "@/client/src/components/common/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
+import type { LevelUpFormData } from "@/client/src/pages/characters/details/components/useLevelWizardBase.ts";
 import { formatPointsSpent, pointsSpent } from "@/client/src/pages/characters/pointsSpent.ts";
 
 import { CLASS_ABILITY_NOTE } from "./AutoGrantedPicks.tsx";
-import {
-  type FeatsData,
-  type HpLevel,
-  type LevelUpFormData,
-  type PowersData,
-  ranksAt,
-  type SkillsData,
-} from "./levelUp/index.ts";
+import { type FeatsData, type HpLevel, type PowersData, ranksAt, type SkillsData } from "./levelUp/index.ts";
 
 interface LevelReviewProps {
   /** The wizard's own groups (its ability increases), listed after its levels. */

@@ -1,10 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { FeatPoolsIcon } from "@/client/src/components/icons/index.ts";
+import type { ClassSectionProps } from "@/client/src/pages/rulesets/details/classes/classSectionFactory.ts";
 import { classFeatPoolsQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
-
-import { ClassLevelCountsTable } from "./ClassLevelCountsTable.tsx";
-import type { ClassSectionProps } from "./classSections.ts";
+import { ClassLevelCountsTable } from "@/client/src/pages/rulesets/details/classes/sections/ClassLevelCountsTable.tsx";
 
 export function ClassFeatPoolsSection({ rulesetId, classId }: ClassSectionProps) {
   const { data, isLoading, error } = useQuery(classFeatPoolsQuery(rulesetId, classId));

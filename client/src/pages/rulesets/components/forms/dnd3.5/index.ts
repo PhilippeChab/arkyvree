@@ -1,10 +1,11 @@
 export { toClassForm } from "./classForm.ts";
-export { ClassFormFields, type ClassFormFieldsProps } from "./ClassFormFields.tsx";
-export { ClassLevelFields, type ClassLevelFieldsProps } from "./ClassLevelFields.tsx";
+export { ClassFormFields } from "./ClassFormFields.tsx";
+export { ClassLevelFields } from "./ClassLevelFields.tsx";
 export { allLevelSaves, featKey, type LevelFeat, levelFeatLabel, nextClassLevel } from "./classLevelForm.ts";
 export { EMPTY_CLASS, EMPTY_CLASS_LEVEL, EMPTY_ITEM, EMPTY_SKILL, EMPTY_SPELL } from "./emptyForms.ts";
 export { type ItemFormData, toItemForm, toItemPayload } from "./itemForm.ts";
 export { ItemFormFields } from "./ItemFormFields.tsx";
+export { NewClassLevelFields } from "./NewClassLevelFields.tsx";
 export { type SkillFormData, SkillFormFields } from "./SkillFormFields.tsx";
 export { spellAptitude, type SpellFormData } from "./spellForm.ts";
 export { SpellFormFields } from "./SpellFormFields.tsx";

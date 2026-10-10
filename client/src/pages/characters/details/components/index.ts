@@ -1,4 +1,3 @@
-export { AddLevelDialog } from "./AddLevelDialog.tsx";
 export { CharacterModifiersDialog } from "./CharacterModifiersDialog.tsx";
-export { EditLevelDialog } from "./EditLevelDialog.tsx";
+export { getLevelWizards } from "./levelUpFactory.ts";
 export { ShareDialog } from "./ShareDialog.tsx";

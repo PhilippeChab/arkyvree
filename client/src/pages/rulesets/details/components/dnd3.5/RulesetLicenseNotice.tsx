@@ -8,13 +8,10 @@ import {
   OglLicenseText,
   SubsectionTitle,
 } from "@/client/src/components/common/index.ts";
-
-export interface RulesetLicenseNoticeProps {
-  name: string;
-}
+import type { LicenseNoticeProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 
 /** A 3.5 system ruleset's License & Attribution, under its header: the Open Game License its SRD content is under. */
-export function RulesetLicenseNotice({ name }: RulesetLicenseNoticeProps) {
+export function RulesetLicenseNotice({ name }: LicenseNoticeProps) {
   const [open, setOpen] = useState(false);
 
   return (

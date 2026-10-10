@@ -12,15 +12,15 @@ import {
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 
-import { EmptyValue, ROW_ACTIONS_HOVER_SX, RowActions, StatusChip } from "@/client/src/components/common/index.ts";
+import { EmptyValue, ROW_ACTIONS_HOVER_SX, RowActions } from "@/client/src/components/common/index.ts";
 import { formatCost, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
-import { capitalize } from "@/shared/text.ts";
 
-import type { EncumbranceData, EquipmentRow } from "./equipment.ts";
+import type { EquipmentRow } from "./equipment.ts";
 
 interface EquipmentTableProps<T extends EquipmentTableRow> {
-  encumbrance?: EncumbranceData;
+  /** What the sheet's base rules say of the load the character carries, under the table (3.5's encumbrance). */
+  load?: ReactNode;
   /** The row's `RowAction`s, when the viewer can change the inventory. */
   renderActions?: (row: T) => ReactNode;
   rows: T[];
@@ -36,7 +36,7 @@ const NO_WRAP_SX = { whiteSpace: "nowrap" };
 /** A character's inventory: slot, quantity, weight, value, and the carried load under it. */
 export function EquipmentTable<T extends EquipmentTableRow>({
   rows,
-  encumbrance,
+  load,
   rulesetId,
   renderActions,
 }: EquipmentTableProps<T>) {
@@ -103,39 +103,7 @@ export function EquipmentTable<T extends EquipmentTableRow>({
           </TableBody>
         </Table>
       </TableContainer>
-      {encumbrance && (
-        // Each figure wraps as a whole on narrow screens.
-        <Stack
-          direction="row"
-          sx={{
-            flexWrap: "wrap",
-            justifyContent: "flex-end",
-            alignItems: "center",
-            columnGap: 2,
-            rowGap: 0.5,
-            whiteSpace: "nowrap",
-          }}
-        >
-          <Typography variant="body2" sx={{ fontWeight: 500, color: "text.secondary" }}>
-            Carried Weight: {encumbrance.carriedweight ?? 0} lbs
-          </Typography>
-          <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            Light: {encumbrance.lightload ?? 0}
-          </Typography>
-          <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            Medium: {encumbrance.mediumload ?? 0}
-          </Typography>
-          <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            Heavy: {encumbrance.heavyload ?? 0}
-          </Typography>
-          {encumbrance.load && encumbrance.load !== "light" && (
-            <StatusChip
-              label={capitalize(encumbrance.load)}
-              color={encumbrance.load === "overloaded" ? "error" : encumbrance.load === "heavy" ? "warning" : "info"}
-            />
-          )}
-        </Stack>
-      )}
+      {load}
     </Stack>
   );
 }

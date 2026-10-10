@@ -73,16 +73,18 @@ const ACTION_LAYERS = ["server/services/", "server/jobs/"];
 /** The client's component folders, which code outside enters at their outermost index */
 const CLIENT_COMPONENTS = "client/src/components/";
 /**
- * The client's registries: each maps the base rules to a ruleset's part of the client (its sheet sections, its level-up
- * wizard, its pages' sections and forms, its vocabulary…), the one way a generic module reaches a ruleset's folders.
+ * The client's registries: each maps the base rules to a ruleset's part of the client (its sheet's sections, its level
+ * wizards, its pages' sections and forms, its vocabulary…), whose contract it declares, the one way a generic module
+ * reaches a ruleset's folders.
  */
 const CLIENT_REGISTRIES = [
-  "client/src/components/characters/sectionFactory.ts",
   "client/src/components/characters/sections/abilityOrder.ts",
+  "client/src/components/characters/sections/sectionFactory.ts",
   "client/src/lib/rulesetLabels.ts",
   "client/src/pages/characters/details/components/levelUpFactory.ts",
   "client/src/pages/rulesets/customization/editors/renderEditor.tsx",
   "client/src/pages/rulesets/details/classes/classFormFactory.ts",
+  "client/src/pages/rulesets/details/classes/classSectionFactory.ts",
   "client/src/pages/rulesets/details/entities/entityPageFactory.ts",
   "client/src/pages/rulesets/details/sectionFactory.ts",
   "client/src/pages/rulesets/hooks/useEntityFilters.ts",

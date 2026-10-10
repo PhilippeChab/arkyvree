@@ -5,6 +5,12 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
+import {
+  type AvailableKlass,
+  pickIds,
+  type SelectedKlass,
+  useLevelWizardBase,
+} from "@/client/src/pages/characters/details/components/useLevelWizardBase.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import { plannedLevel, plannedSlotKeys } from "./classPlan.ts";
@@ -13,12 +19,10 @@ import { type HpLevel, hpSet } from "./hitPoints.ts";
 import {
   availableClassesQuery,
   availableFeatsGroupedQuery,
-  type AvailableKlass,
   availablePowersQuery,
   type ClassPicker,
   levelPreviewQuery,
   levelStepsQuery,
-  type SelectedKlass,
 } from "./levelUpQueries.ts";
 import {
   abilityIncreasesOf,
@@ -28,7 +32,6 @@ import {
   powerPickString,
   skillPointString,
 } from "./pendingPicks.ts";
-import { pickIds, useLevelWizardBase } from "./useLevelWizardBase.ts";
 import { CLASS_PLAN_STEP, HP_STEP, REVIEW_STEP } from "./wizardSteps.ts";
 
 interface UseAddLevelWizardParams {

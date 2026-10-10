@@ -1,10 +1,11 @@
 import { type Control, useController } from "react-hook-form";
 
 import { BlankNote, DiceSpinner, LoadError } from "@/client/src/components/common/index.ts";
+import type { LevelUpFormData } from "@/client/src/pages/characters/details/components/useLevelWizardBase.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
 import { AbilityIncreaseField } from "./AbilityIncreaseField.tsx";
-import type { AttributesData, LevelUpFormData } from "./levelUp/index.ts";
+import type { AttributesData } from "./levelUp/index.ts";
 
 interface EditAbilityState {
   attributeData: AttributesData | undefined;
@@ -14,7 +15,7 @@ interface EditAbilityState {
   isLoadingAttributes: boolean;
 }
 
-export interface EditAbilityStepProps {
+interface EditAbilityStepProps {
   baseRules: BaseRules;
   wizard: EditAbilityState;
 }

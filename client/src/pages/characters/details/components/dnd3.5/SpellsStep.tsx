@@ -2,12 +2,12 @@ import { type UIEvent } from "react";
 import { type Control, useController } from "react-hook-form";
 
 import { BlankNote, DiceSpinner, LoadError } from "@/client/src/components/common/index.ts";
+import type { LevelUpFormData } from "@/client/src/pages/characters/details/components/useLevelWizardBase.ts";
 import { SPELL_LEVEL_LABELS } from "@/vocabulary/dnd3.5/spells.ts";
 
 import { AutoGrantedPicks } from "./AutoGrantedPicks.tsx";
 import {
   type AvailablePower,
-  type LevelUpFormData,
   type PowerAptitudePool,
   type PowersData,
   withoutPick,
@@ -37,7 +37,7 @@ interface SpellPickerState {
   setSelectedPowerLevel: (level: number | null) => void;
 }
 
-export interface SpellsStepProps {
+interface SpellsStepProps {
   wizard: SpellPickerState;
 }
 

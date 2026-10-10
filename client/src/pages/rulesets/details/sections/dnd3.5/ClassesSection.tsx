@@ -17,7 +17,7 @@ import { DescriptionCell, RulesetSectionTable, SectionActions } from "@/client/s
 import {
   classDetailQuery,
   type ClassFormData,
-  prefetchClassSection,
+  classLevelsQuery,
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionFactory.ts";
 import { classesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
@@ -67,7 +67,8 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
 
   const handleRowMouseEnter = (klass: Class) => {
     void queryClient.prefetchQuery(classDetailQuery(ruleset.id, klass.id));
-    void prefetchClassSection(queryClient, ruleset.id, klass.id, "levels");
+    // And the Levels tab its page opens on
+    void queryClient.prefetchQuery(classLevelsQuery(ruleset.id, klass.id));
   };
 
   const renderCell = (klass: Class, columnKey: string) => {

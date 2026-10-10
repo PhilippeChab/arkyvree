@@ -9,6 +9,11 @@ import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/inde
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { getClassForms } from "@/client/src/pages/rulesets/details/classes/classFormFactory.ts";
 import {
+  type ClassLevelColumn,
+  type ClassSectionProps,
+  getClassSections,
+} from "@/client/src/pages/rulesets/details/classes/classSectionFactory.ts";
+import {
   type ClassLevelFormData,
   type ClassLevelRow,
   classLevelsQuery,
@@ -19,26 +24,40 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 import { formatSigned } from "@/shared/text.ts";
 
-import type { ClassSectionProps } from "./classSections.ts";
 import { useClassCopy } from "./useClassCopy.ts";
+
+/** The feats' column's share of the table's width, in percent. */
+const FEATS_SHARE = 28;
+
+/** The level's number's column's share of the table's width, in percent. */
+const LEVEL_SHARE = 8;
+
+/** A base rules' level column as the table lays it out. */
+function tableColumnOf({ key, label, share }: ClassLevelColumn) {
+  return { key, label, width: `${share}%` };
+}
 
 export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: ClassSectionProps) {
   const openEntity = useOpenEntity(rulesetId);
   const queryClient = useQueryClient();
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
 
-  // One column per ruleset save, sharing the room the saves take
+  // Its base rules' columns of a level's own fields, around one column per ruleset save, which share the room left
   const { data: rulesetSaves, error: savesError } = useRulesetSaves(rulesetId);
+  const { beforeSaves, afterSaves } = getClassSections(ruleset.baseRules).levelColumns;
+  const rulesetColumns = [...beforeSaves, ...afterSaves];
+  const savesShare =
+    100 - LEVEL_SHARE - FEATS_SHARE - rulesetColumns.reduce((total, column) => total + column.share, 0);
   const levelsColumns = [
-    { key: "level", label: "Level", width: "8%" },
-    { key: "bab", label: "Base Attack Bonus", width: "15%" },
+    { key: "level", label: "Level", width: `${LEVEL_SHARE}%` },
+    ...beforeSaves.map(tableColumnOf),
     ...(rulesetSaves ?? []).map((save) => ({
       key: `save_${save.id}`,
       label: save.name,
-      width: `${Math.floor(36 / Math.max(rulesetSaves?.length ?? 0, 1))}%`,
+      width: `${Math.floor(savesShare / Math.max(rulesetSaves?.length ?? 0, 1))}%`,
     })),
-    { key: "skills", label: "Skill Points", width: "13%" },
-    { key: "feats", label: "Feats", width: "28%" },
+    ...afterSaves.map(tableColumnOf),
+    { key: "feats", label: "Feats", width: `${FEATS_SHARE}%` },
   ];
 
   // A level added to an inherited class copies it: the page follows the copy, which takes the class's place in the list
@@ -78,13 +97,12 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
       return <Typography variant="body2">{formatSigned(levelSave?.base)}</Typography>;
     }
 
+    const rulesetColumn = rulesetColumns.find((column) => column.key === columnKey);
+    if (rulesetColumn) return <Typography variant="body2">{rulesetColumn.valueOf(level)}</Typography>;
+
     switch (columnKey) {
       case "level":
         return <ValueChip label={level.level} color="primary" />;
-      case "bab":
-        return <Typography variant="body2">{formatSigned(level.bab)}</Typography>;
-      case "skills":
-        return <Typography variant="body2">{level.skills}</Typography>;
       case "feats":
         return (
           <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>

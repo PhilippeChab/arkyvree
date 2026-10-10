@@ -4,8 +4,12 @@ import { type UIEvent, useMemo } from "react";
 import { AddButton, ScrollSafeListbox, ValueChip } from "@/client/src/components/common/index.ts";
 import { DeleteIcon } from "@/client/src/components/icons/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
+import type {
+  AvailableKlass,
+  SelectedKlass,
+} from "@/client/src/pages/characters/details/components/useLevelWizardBase.ts";
 
-import { type AvailableKlass, plannedLevel, type SelectedKlass } from "./levelUp/index.ts";
+import { plannedLevel } from "./levelUp/index.ts";
 import { OptionTooltip } from "./OptionTooltip.tsx";
 
 /** The class plan a level wizard hands the Class Plan step, and the class picker's list. */
@@ -27,7 +31,7 @@ interface AddClassPlanState {
   slotKeys: number[];
 }
 
-export interface AddClassPlanStepProps {
+interface AddClassPlanStepProps {
   wizard: AddClassPlanState;
 }
 

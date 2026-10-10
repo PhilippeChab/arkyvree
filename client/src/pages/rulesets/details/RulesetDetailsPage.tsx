@@ -1,6 +1,6 @@
 import { Button, Container, Divider, Menu, Popover, Stack } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { type MouseEvent, type ReactNode, useMemo, useState } from "react";
+import { type MouseEvent, type ReactNode, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 
 import {
@@ -47,7 +47,7 @@ import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { RulesetFactChips, RulesetStarButton } from "@/client/src/pages/rulesets/components/index.ts";
 import { useRulesetOperations } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 
 import {
   ArchiveRulesetDialog,
@@ -71,6 +71,52 @@ import {
   RacesSection,
   SavesSection,
 } from "./sections/index.ts";
+
+/** What a ruleset page's tab is: its key, label and icon, and the section it shows. */
+type TabConfig = SectionTab<RulesetSection> & { component: (props: RulesetSectionProps) => ReactNode };
+
+/** The ruleset page's tabs, an entity's section each: its base rules' own among them (`getSections`). */
+function rulesetTabs(baseRules: BaseRules): TabConfig[] {
+  const sections = getSections(baseRules);
+  return [
+    { key: "races", label: "Races", icon: RacesIcon, component: RacesSection },
+    { key: "languages", label: "Languages", icon: LanguagesIcon, component: LanguagesSection },
+    { key: "skills", label: "Skills", icon: SkillsIcon, component: sections.SkillsSection },
+    { key: "feats", label: "Feats", icon: FeatsIcon, component: FeatsSection },
+    {
+      key: "powers",
+      label: entityTypeLabel("powers", baseRules, true),
+      icon: PowersIcon,
+      component: sections.PowersSection,
+    },
+    { key: "items", label: "Items", icon: ItemsIcon, component: sections.ItemsSection },
+    {
+      key: "aptitudes",
+      label: (
+        <HelpLabel
+          label="Aptitudes"
+          help="Pools of choosable options at certain class levels (e.g., Fighter Bonus Feats, Rogue Special Abilities)."
+        />
+      ),
+      icon: AptitudesIcon,
+      component: AptitudesSection,
+    },
+    { key: "classes", label: "Classes", icon: ClassesIcon, component: sections.ClassesSection },
+    { key: "saves", label: "Saves", icon: SavesIcon, component: SavesSection },
+    { key: "abilities", label: "Abilities", icon: AbilitiesIcon, component: AbilitiesSection },
+    {
+      key: "mechanics",
+      label: (
+        <HelpLabel
+          label="Mechanics"
+          help="Free-form rule entries for base game mechanics the app doesn't enforce (e.g., trip, disarm, grapple). Use them to document or override situational rules for your table."
+        />
+      ),
+      icon: MechanicsIcon,
+      component: MechanicsSection,
+    },
+  ];
+}
 
 export default function RulesetDetailsPage() {
   const { id = "", section } = useParams<{ id: string; section?: string }>();
@@ -130,56 +176,7 @@ export default function RulesetDetailsPage() {
   const { isOwner, isContributor, canEditEntities, canEditRuleset, canPublish } = useRulesetPermissions(ruleset);
   const isFork = !!ruleset?.rulesetId && !isExtension;
 
-  const baseRules = ruleset?.baseRules;
   const [contributorsDialogOpen, setContributorsDialogOpen] = useState(false);
-  type TabConfig = SectionTab<RulesetSection> & { component: (props: RulesetSectionProps) => ReactNode };
-  const tabConfig = useMemo((): TabConfig[] => {
-    const rules = baseRules ?? DEFAULT_BASE_RULES;
-    const sections = getSections(rules);
-    return [
-      { key: "races", label: "Races", icon: RacesIcon, component: RacesSection },
-      { key: "languages", label: "Languages", icon: LanguagesIcon, component: LanguagesSection },
-      { key: "skills", label: "Skills", icon: SkillsIcon, component: sections.SkillsSection },
-      { key: "feats", label: "Feats", icon: FeatsIcon, component: FeatsSection },
-      {
-        key: "powers",
-        label: entityTypeLabel("powers", rules, true),
-        icon: PowersIcon,
-        component: sections.PowersSection,
-      },
-      { key: "items", label: "Items", icon: ItemsIcon, component: sections.ItemsSection },
-      {
-        key: "aptitudes",
-        label: (
-          <HelpLabel
-            label="Aptitudes"
-            help="Pools of choosable options at certain class levels (e.g., Fighter Bonus Feats, Rogue Special Abilities)."
-          />
-        ),
-        icon: AptitudesIcon,
-        component: AptitudesSection,
-      },
-      { key: "classes", label: "Classes", icon: ClassesIcon, component: sections.ClassesSection },
-      { key: "saves", label: "Saves", icon: SavesIcon, component: SavesSection },
-      { key: "abilities", label: "Abilities", icon: AbilitiesIcon, component: AbilitiesSection },
-      {
-        key: "mechanics",
-        label: (
-          <HelpLabel
-            label="Mechanics"
-            help="Free-form rule entries for base game mechanics the app doesn't enforce (e.g., trip, disarm, grapple). Use them to document or override situational rules for your table."
-          />
-        ),
-        icon: MechanicsIcon,
-        component: MechanicsSection,
-      },
-    ];
-  }, [baseRules]);
-
-  const currentTab = tabConfig.find((tab) => tab.key === section) ?? tabConfig[0];
-
-  // Normalize the URL to a known tab.
-  if (id && !tabConfig.some((tab) => tab.key === section)) return <Navigate to={`/rulesets/${id}/races`} replace />;
 
   if (isLoading) {
     return (
@@ -197,6 +194,13 @@ export default function RulesetDetailsPage() {
       </Container>
     );
   }
+
+  // Its tabs are its base rules' (`getSections`): the page waits for its ruleset to know them
+  const tabConfig = rulesetTabs(ruleset.baseRules);
+  const currentTab = tabConfig.find((tab) => tab.key === section);
+
+  // Normalize the URL to a known tab.
+  if (!currentTab) return <Navigate to={`/rulesets/${id}/races`} replace />;
 
   const isActive = ruleset.status !== "Archived";
   const { LicenseNotice } = getSections(ruleset.baseRules);

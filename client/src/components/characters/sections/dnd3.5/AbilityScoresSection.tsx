@@ -14,7 +14,7 @@ import type { BaseRules } from "@/shared/enums.ts";
 
 import { AbilityScoreBox } from "./AbilityScoreBox.tsx";
 
-export interface AbilityScoresSectionProps {
+interface AbilityScoresSectionProps {
   abilities: CharacterDetail["abilities"];
   /** The sheet's base rules, which order its abilities. */
   baseRules: BaseRules;

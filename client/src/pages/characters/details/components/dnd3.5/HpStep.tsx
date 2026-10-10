@@ -21,7 +21,7 @@ interface HpState {
   hpValues: (number | null)[];
 }
 
-export interface HpStepProps {
+interface HpStepProps {
   wizard: HpState;
 }
 

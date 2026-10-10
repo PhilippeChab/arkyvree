@@ -1,30 +1,25 @@
 import { Autocomplete, Box, TextField } from "@mui/material";
 import { useMemo, useState } from "react";
-import { useController, type UseFormReturn } from "react-hook-form";
+import { useController } from "react-hook-form";
 
 import { LoadError, ScrollSafeListbox, ValueChip } from "@/client/src/components/common/index.ts";
 import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { readNumberInput } from "@/client/src/lib/validation.ts";
-import type { ClassLevelFormData } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
-import { type Save, useRulesetFeats } from "@/client/src/pages/rulesets/hooks/index.ts";
+import type { NewClassLevelFieldsProps } from "@/client/src/pages/rulesets/details/classes/classFormFactory.ts";
+import { useRulesetFeats } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { MAX_SAVE_BASE } from "@/vocabulary/dnd3.5/classes.ts";
 
 import { areSaveBasesValid, featKey, type LevelFeat, levelFeatLabel, saveBaseError } from "./classLevelForm.ts";
 
-interface FeatOption extends LevelFeat {
-  label: string;
-}
-
-export interface ClassLevelFieldsProps {
+/** A level's form, and the ruleset's saves (a new level's fields'), with the labels of the feats it was saved with. */
+interface ClassLevelFieldsProps extends NewClassLevelFieldsProps {
   /** Labels for feats the options may not list (e.g. from a parent ruleset), by `featId-aptitudeId`. */
   featLabels?: Map<string, string>;
-  form: UseFormReturn<ClassLevelFormData>;
-  rulesetId: string;
-  /** The ruleset's saves, each a base field; its owner reads them, for what it sends. */
-  rulesetSaves: Save[] | undefined;
-  /** Why they didn't load. */
-  savesError: unknown;
+}
+
+interface FeatOption extends LevelFeat {
+  label: string;
 }
 
 /** A class level's base saves and granted feats, bound to its form: its create dialog's and its page's. */

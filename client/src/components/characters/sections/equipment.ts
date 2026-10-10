@@ -4,9 +4,6 @@ import { type ItemLocation, LOCATION_OPTIONS } from "@/shared/enums.ts";
 import type { RulesetItem, RulesetItemDetail } from "./equipmentQueries.ts";
 import { shownWeaponSet } from "./weaponSets.ts";
 
-/** The sheet's carried weight and load thresholds (the combat section's `encumbrance`). */
-export type EncumbranceData = CharacterDetail["combat"]["encumbrance"];
-
 /** A sheet's equipment row: the inventory entry with its item's fields. */
 export type EquipmentRow = CharacterDetail["equipment"][number];
 

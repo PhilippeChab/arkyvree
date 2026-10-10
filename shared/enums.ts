@@ -39,9 +39,6 @@ export const ALIGNMENT_OPTIONS = [
 
 export const BASE_RULES_OPTIONS = ["Dungeons & Dragons: 3.5"] as const satisfies readonly BaseRules[];
 
-/** The ruleset family a record without one belongs to. */
-export const DEFAULT_BASE_RULES: BaseRules = "Dungeons & Dragons: 3.5";
-
 export const GENDER_OPTIONS = ["Male", "Female", "Other"] as const satisfies readonly Gender[];
 
 export const LOCATION_OPTIONS = [

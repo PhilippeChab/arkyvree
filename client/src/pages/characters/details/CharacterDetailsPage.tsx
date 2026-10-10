@@ -37,7 +37,7 @@ import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { characterPageState } from "@/client/src/pages/characters/characterPageState.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-import { AddLevelDialog, CharacterModifiersDialog, EditLevelDialog, ShareDialog } from "./components/index.ts";
+import { CharacterModifiersDialog, getLevelWizards, ShareDialog } from "./components/index.ts";
 import { useCharacterPermissions } from "./useCharacterPermissions.ts";
 
 export default function CharacterDetailsPage() {
@@ -144,6 +144,8 @@ export default function CharacterDetailsPage() {
   }
 
   const { parentCharacterId } = character;
+  // Its levels are added and edited by its base rules' wizards
+  const { AddLevelDialog, EditLevelDialog } = getLevelWizards(character.baseRules);
 
   return (
     <PageTransition>

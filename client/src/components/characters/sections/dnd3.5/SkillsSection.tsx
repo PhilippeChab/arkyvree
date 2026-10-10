@@ -18,7 +18,7 @@ import { formatSigned } from "@/shared/text.ts";
 
 import { GroupedSkillRows, SkillRow } from "./GroupedSkillRows.tsx";
 
-export interface SkillsSectionProps {
+interface SkillsSectionProps {
   skills: NonNullable<CharacterDetail["skills"]>;
 }
 

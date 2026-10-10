@@ -2,16 +2,12 @@ import { Stack } from "@mui/material";
 
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 
-import { getSections } from "./sectionFactory.ts";
 import {
   type CharacterData,
   CharacterIdentitySection,
-  ClassesSection,
   DiagnosticsSection,
   type EditingLevel,
-  EquipmentSection,
-  FeatsSection,
-  ReadOnlyEquipmentSection,
+  getSections,
 } from "./sections/index.ts";
 
 interface CharacterSheetBodyProps {
@@ -37,6 +33,7 @@ interface CharacterSheetBodyProps {
   showPrivateNotes?: boolean;
 }
 
+/** A character's sheet: its identity, then its base rules' sections (a partial sheet has none), then its diagnostics. */
 export function CharacterSheetBody({
   character,
   characterId,
@@ -54,13 +51,7 @@ export function CharacterSheetBody({
   portraitUrl,
   showPrivateNotes,
 }: CharacterSheetBodyProps) {
-  // A partial sheet carries no combat
-  const combat: Partial<CharacterDetail["combat"]> = character.combat;
-  const encumbrance = combat.encumbrance;
-  const { baseRules } = character;
-  const sections = getSections(baseRules);
-  // The bonded creatures, by the feat that bonds each
-  const bondedByFeat = new Map(Object.values(character.bonded).map((creature) => [creature.bondFeatId, creature]));
+  const { SheetSections } = getSections(character.baseRules);
 
   return (
     <Stack spacing={3}>
@@ -77,52 +68,17 @@ export function CharacterSheetBody({
 
       {!partial && (
         <>
-          <sections.AbilityScoresSection
-            abilities={character.abilities}
-            baseRules={baseRules}
+          <SheetSections
+            character={character}
             characterId={characterId}
             readOnly={readOnly}
-          />
-
-          <ClassesSection
-            classes={character.classes}
-            rulesetId={rulesetId}
             onEditLevel={onEditLevel}
             onAddLevel={onAddLevel}
             onRemoveLevel={onRemoveLevel}
-            readOnly={readOnly}
-          />
-
-          <sections.CombatAndSavesSection combat={combat} saves={character.saves} />
-
-          <sections.WeaponsSection combat={combat} />
-
-          <sections.SkillsSection skills={character.skills} />
-
-          <FeatsSection
-            classes={character.classes}
-            virtualFeats={character.virtualFeats}
+            bondedLinkable={bondedLinkable}
+            equipmentMode={equipmentMode}
             rulesetId={rulesetId}
-            renderFeatExtra={(feat) => {
-              const bonded = bondedByFeat.get(feat.id);
-              return (
-                bonded && <sections.BondedCreature bonded={bonded} baseRules={baseRules} linkable={bondedLinkable} />
-              );
-            }}
           />
-
-          <sections.PowersSection spellGroups={character.spellGroups} rulesetId={rulesetId} />
-
-          {equipmentMode === "editable" && rulesetId ? (
-            <EquipmentSection
-              characterId={characterId}
-              rulesetId={rulesetId}
-              readOnly={readOnly}
-              encumbrance={encumbrance}
-            />
-          ) : (
-            <ReadOnlyEquipmentSection equipment={character.equipment} encumbrance={encumbrance} />
-          )}
 
           {diagnostics && Object.values(character.classes).some((cls) => cls.levels.length > 0) && (
             <DiagnosticsSection

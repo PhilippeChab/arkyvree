@@ -5,7 +5,7 @@ import { formatDie } from "@/client/src/lib/formatNumeric.ts";
 import type { ClassFormData } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import { HIT_DIE_VALUES } from "@/vocabulary/dnd3.5/classes.ts";
 
-export interface ClassFormFieldsProps {
+interface ClassFormFieldsProps {
   form: UseFormReturn<ClassFormData>;
 }
 
