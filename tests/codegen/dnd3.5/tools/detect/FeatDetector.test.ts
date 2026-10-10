@@ -144,7 +144,7 @@ describe("A feat's detected template", () => {
     });
   });
 
-  test("is one feat per weapon for a feat taken again for each, not one naming a type of weapon", () => {
+  test("is one feat per weapon for a feat taken again for each, not one naming a type of weapon or a weapon feat", () => {
     const detected = featsDetected([
       featEntry(
         "Weapon Focus",
@@ -160,11 +160,16 @@ describe("A feat's detected template", () => {
         "Your damage reduction increases by 1.",
         "This feat has no effect on the type of weapon or damage that overcomes your damage reduction.",
       ),
+      featEntry(
+        "Disemboweling Strike",
+        "Your successful sneak attack with a slashing weapon for which you have selected Weapon Focus deals 1d4 points of Constitution damage.",
+      ),
     ]);
     expect(Object.fromEntries(Object.entries(detected).map(([name, d]) => [name, d.template?.type ?? null]))).toEqual({
       "Weapon Focus": "weapon",
       "Power Critical": "weapon",
       "Greater Resiliency": null,
+      "Disemboweling Strike": null,
     });
   });
 });
