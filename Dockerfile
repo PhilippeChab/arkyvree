@@ -18,7 +18,7 @@ COPY . .
 RUN bun run build \
   && bun build server/main.ts --compile --external pdfkit --compile-autoload-package-json --outfile server-bin \
   && bun build server/worker.ts --compile --external pdfkit --compile-autoload-package-json --outfile worker-bin \
-  && bun build scripts/db/migrate.ts --compile --outfile migrate-bin
+  && bun build scripts/db/migrate.ts --compile --external pdfkit --compile-autoload-package-json --outfile migrate-bin
 
 # Web image — server + migrations + static assets
 FROM debian:bookworm-slim AS web
