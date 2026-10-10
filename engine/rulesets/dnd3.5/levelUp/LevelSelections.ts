@@ -1,6 +1,4 @@
-import type { CharacterInput } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { RulesetView } from "@/engine/core/view/index.ts";
 import FeatEntity, { type PoolModifier } from "@/engine/rulesets/dnd3.5/entities/feats/FeatEntity.ts";
 
 import LevelUpState from "./LevelUpState.ts";
@@ -14,13 +12,6 @@ interface SavedPicks {
 
 /** A character's saved level's selections, from its rows, as the level's edit opens them. */
 export default class LevelSelections extends LevelUpState {
-  constructor(
-    view: RulesetView,
-    private readonly character: CharacterInput,
-  ) {
-    super(view);
-  }
-
   /**
    * A saved level's selections: its skill ranks, its feats by pool (each with the pools its modifiers add slots to) and
    * its powers by pool (each with its spell level in the pool when it has one).

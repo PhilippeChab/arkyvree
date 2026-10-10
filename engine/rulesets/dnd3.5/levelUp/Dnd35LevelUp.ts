@@ -1,11 +1,10 @@
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import CharacterBuilder from "@/engine/rulesets/dnd3.5/model/CharacterBuilder.ts";
 import ClassPicker from "@/engine/rulesets/dnd3.5/pickers/ClassPicker.ts";
 import FeatPicker from "@/engine/rulesets/dnd3.5/pickers/FeatPicker.ts";
 import PowerPicker from "@/engine/rulesets/dnd3.5/pickers/PowerPicker.ts";
 
-import BondedPlans from "./BondedPlans.ts";
+import BondedCreatures from "./BondedCreatures.ts";
 import LevelEdit from "./LevelEdit.ts";
 import LevelRemoval from "./LevelRemoval.ts";
 import LevelSelections from "./LevelSelections.ts";
@@ -39,8 +38,8 @@ export default class Dnd35LevelUp {
   }
 
   /** A saved level's selections, as its edit opens them. */
-  describeLevel(view: RulesetView, character: CharacterInput, characterLevelId: string) {
-    return new LevelSelections(view, character).describeLevel(characterLevelId);
+  describeLevel(view: RulesetView, character: CharacterInput, ...args: Parameters<LevelSelections["describeLevel"]>) {
+    return new LevelSelections(view, character).describeLevel(...args);
   }
 
   /** The level-up wizard's powers step of class `klassId`'s `level`. */
@@ -86,11 +85,11 @@ export default class Dnd35LevelUp {
   }
 
   /**
-   * What a master's bonded creatures become as its stored levels make them, from its rows and theirs (`bonded`): each
+   * What a master's bonded creatures become as its saved levels make them, from its rows and theirs (`bonded`): each
    * kind's creature removed, kept or made, and the levels it takes or loses.
    */
-  planBonded(view: RulesetView, master: CharacterInput, bonded: CharacterInput[]) {
-    return BondedPlans.planMasterCreatures(CharacterBuilder.build(view, master), bonded, view.rulesetData);
+  planBonded(view: RulesetView, character: CharacterInput, ...args: Parameters<BondedCreatures["planBonded"]>) {
+    return new BondedCreatures(view, character).planBonded(...args);
   }
 
   /** A saved level's edit: what it writes, checked, and what the master's bonded creatures become with it. */
@@ -107,7 +106,7 @@ export default class Dnd35LevelUp {
   }
 
   /** The character's last level removed: the level that goes, and what its bonded creatures become without it. */
-  planRemoval(view: RulesetView, character: CharacterInput, bonded: CharacterInput[]) {
-    return new LevelRemoval(view, character).planRemoval(bonded);
+  planRemoval(view: RulesetView, character: CharacterInput, ...args: Parameters<LevelRemoval["planRemoval"]>) {
+    return new LevelRemoval(view, character).planRemoval(...args);
   }
 }

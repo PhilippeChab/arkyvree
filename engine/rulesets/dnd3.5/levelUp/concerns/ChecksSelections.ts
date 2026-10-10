@@ -98,7 +98,7 @@ export function ChecksSelections<B extends Constructor<LevelUpState>>(Base: B) {
      * (`pickedFeatIds`, read in the save's scope: the ids the view stands for them), granted by their class levels, or
      * granted at this one (`autoGrantedRecords`).
      */
-    protected checkNotTaken(
+    private checkNotTaken(
       feats: FeatRecord[],
       pickedFeatIds: string[],
       otherLevels: { klassLevelId: string }[],

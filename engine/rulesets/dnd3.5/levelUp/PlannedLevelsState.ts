@@ -1,8 +1,6 @@
-import { type CharacterInput, CharacterProjection } from "@/engine/core/module/index.ts";
+import { CharacterProjection } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { RulesetView } from "@/engine/core/view/index.ts";
 import { CLASS_LEVEL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/classes/fields.ts";
-import CharacterBuilder from "@/engine/rulesets/dnd3.5/model/CharacterBuilder.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
@@ -24,11 +22,11 @@ export interface PlannedClassLevel {
  * character as saved, without them (`saved`), what their class levels grant, and how many levels it has before them.
  */
 export interface PlannedLevels {
-  autoGrantedRecords: GrantedFeatRecords[];
   character: DetailedCharacter;
-  existingLevelCount: number;
+  grantedFeatRecords: GrantedFeatRecords[];
   klassLevelEntries: PlannedClassLevel[];
   saved: DetailedCharacter;
+  savedLevelCount: number;
 }
 
 /**
@@ -37,13 +35,6 @@ export interface PlannedLevels {
  * pools the character picks in, and each level's skill points, class skills and pool slots.
  */
 export default abstract class PlannedLevelsState extends LevelUpState {
-  constructor(
-    view: RulesetView,
-    protected readonly character: CharacterInput,
-  ) {
-    super(view);
-  }
-
   /**
    * The planned levels (`klassLevelEntries`), built from the character's rows: the character with them (each with its
    * ability increase), and as saved.
@@ -53,13 +44,13 @@ export default abstract class PlannedLevelsState extends LevelUpState {
     for (const { abilityId, klassLevel } of klassLevelEntries)
       projection.addLevel(klassLevel.id, { abilityId, hp: LevelRules.UNROLLED_LEVEL_HP });
     return {
-      autoGrantedRecords: klassLevelEntries.map(
+      grantedFeatRecords: klassLevelEntries.map(
         ({ klassLevel }) => this.rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(klassLevel.id) ?? [],
       ),
       character: this.build(projection),
-      existingLevelCount: this.character.rows.levels.length,
+      savedLevelCount: this.character.rows.levels.length,
       klassLevelEntries,
-      saved: CharacterBuilder.build(this.view, this.character),
+      saved: this.build(),
     };
   }
 
@@ -67,23 +58,23 @@ export default abstract class PlannedLevelsState extends LevelUpState {
    * What the planned levels give, the same for the preview and the save: the pools the character picks in, and each
    * level's skill points, class skills and pool slots.
    */
-  protected computeLevelUpPlan(planned: PlannedLevels) {
-    const { autoGrantedRecords, character, existingLevelCount, klassLevelEntries, saved } = planned;
+  protected computeLevelGains(planned: PlannedLevels) {
+    const { grantedFeatRecords, character, savedLevelCount, klassLevelEntries, saved } = planned;
     const klassLevelIds = klassLevelEntries.map(({ klassLevel }) => klassLevel.id);
     const pools = character.components.aptitudes.getLevelUpPools(this.rulesetData);
     const slots = new AptitudeSlotsPlan(this.rulesetData).compute(
       klassLevelIds,
-      autoGrantedRecords,
+      grantedFeatRecords,
       Object.keys(pools.featPools),
       Object.keys(pools.powerPools),
-      existingLevelCount,
+      savedLevelCount,
       saved.components.aptitudes.getAptitudes(),
     );
     return {
       ...slots,
       classSkills: this.getPlannedClassSkills(klassLevelEntries.map(({ klass }) => klass.id)),
       klassLevelIds,
-      perLevelSkillPoints: this.computeSkillPointsPerLevel(character, klassLevelIds, existingLevelCount),
+      perLevelSkillPoints: this.computeSkillPointsPerLevel(character, klassLevelIds, savedLevelCount),
       pools,
     };
   }
@@ -105,11 +96,11 @@ export default abstract class PlannedLevelsState extends LevelUpState {
   protected computeSkillPointsPerLevel(
     character: DetailedCharacter,
     klassLevelIds: string[],
-    existingLevelCount: number,
+    savedLevelCount: number,
   ): number[] {
     const { bonusPerLevel } = character.components.skills.getSkillPointBases();
     return this.computeSkillPointBasesPerLevel(character, klassLevelIds).map((points, i) =>
-      SkillRules.levelPoints(points, bonusPerLevel, existingLevelCount === 0 && i === 0),
+      SkillRules.levelPoints(points, bonusPerLevel, savedLevelCount === 0 && i === 0),
     );
   }
 
@@ -129,17 +120,15 @@ export default abstract class PlannedLevelsState extends LevelUpState {
   }
 
   /**
-   * Each planned level's class and class level, from the composed ruleset: a cache hit is proof of lineage. Throws when a
-   * class isn't the ruleset's (nor from `rulesetIds`, when given) or a player character's, or hasn't that level.
+   * Each planned level's class and class level, from the composed ruleset: a class the view has is of the character's
+   * ruleset or its source chain. Throws when a class isn't the view's or a player character's, or hasn't that level.
    */
   protected getPlannedKlassLevels(
     levels: { abilityId: string | null; klassId: string; level: number }[],
-    rulesetIds?: Set<string>,
   ): PlannedClassLevel[] {
     return levels.map(({ klassId, level, abilityId }, i) => {
       const klass = this.rulesetData.klassesById.get(klassId);
-      if (!klass || (rulesetIds && !rulesetIds.has(klass.rulesetId)))
-        throw new RulesError("invalid", `Level ${i + 1}: Class does not belong to the character's ruleset`);
+      if (!klass) throw new RulesError("invalid", `Level ${i + 1}: Class does not belong to the character's ruleset`);
 
       if (klass.kind !== "pc")
         throw new RulesError("invalid", `Level ${i + 1}: Class is not valid for a player character`);

@@ -12,11 +12,11 @@ interface DistributedLevel {
 
 /** What pooled picks are spread over planned levels by: each level's points, class skills and pool slots. */
 export interface PerLevelDistributionData {
-  baseCharacterLevel: number;
   perLevelClassSkillIds: string[][];
   perLevelFeatSlots: FeatSlots;
   perLevelPowerSlots: PowerSlots;
   perLevelSkillPoints: number[];
+  savedLevelCount: number;
   /** Map of skillId → { isClassSkill, currentRank } for existing character skills */
   skillContexts: Map<string, { currentRank: number; isClassSkill: boolean }>;
 }
@@ -45,7 +45,7 @@ export default class PicksDistribution {
 
       if (perLevel[i] === 0) continue;
 
-      const charLevelAtI = data.baseCharacterLevel + i + 1;
+      const charLevelAtI = data.savedLevelCount + i + 1;
       const maxRank = SkillRules.maxRank(charLevelAtI, isClassSoFar);
       const isClassForLevel = data.perLevelClassSkillIds[i].includes(skillId);
       const headroom = maxRank - cumulativeRank;

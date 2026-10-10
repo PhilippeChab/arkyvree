@@ -1,6 +1,7 @@
 import { type CharacterInput, CharacterInputs } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 
+import CharacterHandle from "./CharacterHandle.ts";
 import LevelUpEngine from "./LevelUpEngine.ts";
 import type { Module, Rest } from "./Modules.ts";
 
@@ -11,20 +12,9 @@ type Args<K extends keyof Module["characters"]> = Rest<Module["characters"][K], 
  * The engine bound to a character, from its rows (`input`): its sheets, its inventory and its level flows. Its rows,
  * and its bonded creatures', are read as the view reads them (`CharacterInputs`): the server hands them as stored.
  */
-export default class CharacterEngine {
-  constructor(
-    private readonly view: RulesetView,
-    private readonly module: Module,
-    input: CharacterInput,
-  ) {
-    this.input = CharacterInputs.resolve(input, view.rulesetData.cow);
-  }
-
-  private readonly input: CharacterInput;
-
-  /** Bonded creatures' inputs, read as the view reads them. */
-  private resolveBonded(bonded: CharacterInput[]) {
-    return CharacterInputs.resolveAll(bonded, this.view.rulesetData.cow);
+export default class CharacterEngine extends CharacterHandle {
+  constructor(view: RulesetView, module: Module, input: CharacterInput) {
+    super(view, module, CharacterInputs.resolve(input, view.rulesetData.cow));
   }
 
   /**

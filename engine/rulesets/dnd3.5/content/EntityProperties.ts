@@ -27,7 +27,7 @@ const PROPERTIES_OF: { [K in keyof SeededFields]: (fields: SeededFields[K]) => P
 /** An entity's fields as the properties that keep them: what a seeder writes for them. */
 export default class EntityProperties {
   /** An entity's fields as the properties that keep them: what a seeder writes for them. */
-  static of<K extends keyof SeededFields>(entityType: K, fields: SeededFields[K]) {
+  static toEntityProperties<K extends keyof SeededFields>(entityType: K, fields: SeededFields[K]) {
     return PROPERTIES_OF[entityType](fields);
   }
 }

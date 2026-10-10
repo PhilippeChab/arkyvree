@@ -6,7 +6,6 @@ import { include } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import type { FeatSlots } from "./AptitudeSlotsPlan.ts";
-import BondedPlans from "./BondedPlans.ts";
 import { ChecksSelections } from "./concerns/ChecksSelections.ts";
 import type { LevelPicks } from "./LevelUpState.ts";
 import PicksDistribution, { type PerLevelDistributionData } from "./PicksDistribution.ts";
@@ -35,14 +34,13 @@ interface SavedLevel {
 export default class LevelUpPlan extends include(PlannedLevelsState, ChecksSelections) {
   /** What a save distributes its pooled picks over the planned levels by: each level's points, class skills and slots. */
   private buildDistributionData(planned: PlannedLevels): PerLevelDistributionData {
-    const { classSkills, perLevelFeatSlots, perLevelPowerSlots, perLevelSkillPoints } =
-      this.computeLevelUpPlan(planned);
+    const { classSkills, perLevelFeatSlots, perLevelPowerSlots, perLevelSkillPoints } = this.computeLevelGains(planned);
     return {
       perLevelSkillPoints,
       perLevelClassSkillIds: classSkills.perLevel,
       perLevelFeatSlots,
       perLevelPowerSlots,
-      baseCharacterLevel: planned.existingLevelCount,
+      savedLevelCount: planned.savedLevelCount,
       skillContexts: this.buildSkillContexts(planned.character, classSkills.merged),
     };
   }
@@ -122,9 +120,8 @@ export default class LevelUpPlan extends include(PlannedLevelsState, ChecksSelec
    * the save writes.
    */
   planLevels(bonded: CharacterInput[], levels: SavedLevel[], picks: LevelPicks, force: boolean) {
-    const { record, rows } = this.character;
-    const rulesetIds = new Set([record.rulesetId, ...this.rulesetData.cow.sourceChain]);
-    const klassLevelEntries = this.getPlannedKlassLevels(levels, rulesetIds);
+    const { rows } = this.character;
+    const klassLevelEntries = this.getPlannedKlassLevels(levels);
     // Every selection is the ruleset's before a character is built with it
     this.checkSelections(picks.skills, picks.feats, picks.powers);
     const distributed = this.distributePlannedPicks(this.buildPlannedLevels(klassLevelEntries), picks);
@@ -148,7 +145,7 @@ export default class LevelUpPlan extends include(PlannedLevelsState, ChecksSelec
     const saved = this.build(this.projectSavedLevels(planned));
     if (!force) RulesError.refuseIssues(saved.validate().issues);
     return {
-      bonded: BondedPlans.planMasterCreatures(saved, bonded, this.rulesetData),
+      bonded: this.planBondedOf(saved, bonded),
       levels: planned.map(({ abilityId, hp, klassLevelId, picks: levelPicks }) => ({
         abilityId,
         hp,

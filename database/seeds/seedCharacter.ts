@@ -78,7 +78,7 @@ async function reconcileBondedForCharacter(tx: Db, characterId: string): Promise
   await withRulesetScope(tx, master.rulesetId, async (scope) => {
     const character = await readCharacterInput(tx, master);
     const bonded = await readBondedInputs(tx, character);
-    await writeBondedCreatures(tx, master, Engine.for(scope).character(character).levelUp().planBonded(bonded));
+    await writeBondedCreatures(tx, master, Engine.for(scope).character(character).levelUp().planBonded(bonded).bonded);
   });
 }
 

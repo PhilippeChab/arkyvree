@@ -1,9 +1,11 @@
-import type { CharacterProjection, FeatPick } from "@/engine/core/module/index.ts";
+import { type CharacterInput, CharacterProjection, type FeatPick } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { type RulesetData, type RulesetView } from "@/engine/core/view/index.ts";
 import CharacterBuilder from "@/engine/rulesets/dnd3.5/model/CharacterBuilder.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import SkillsComponent from "@/engine/rulesets/dnd3.5/model/skills/SkillsComponent.ts";
+
+import BondedPlans from "./BondedPlans.ts";
 
 /** The pools a character picks feats and powers in, and how many, with what a level-up plans. */
 type LevelUpPools = ReturnType<DetailedCharacter["components"]["aptitudes"]["getLevelUpPools"]>;
@@ -27,14 +29,17 @@ export interface PlannedSoFar {
 }
 
 /**
- * What every level-up operation reads: the ruleset's view, and the classes, class levels and class skills the levels
- * take.
+ * What every level-up operation reads: the ruleset's view and the character's rows (`character`), and the classes, class
+ * levels and class skills the levels take.
  */
 export default abstract class LevelUpState {
-  constructor(protected readonly view: RulesetView) {}
+  constructor(
+    protected readonly view: RulesetView,
+    protected readonly character: CharacterInput,
+  ) {}
 
-  /** The character built from a level-up's projection of its rows. */
-  protected build(projection: CharacterProjection) {
+  /** The character built from a level-up's projection of its rows: as saved, without one. */
+  protected build(projection = new CharacterProjection(this.character)) {
     return CharacterBuilder.build(this.view, projection.input);
   }
 
@@ -92,6 +97,14 @@ export default abstract class LevelUpState {
     if (!klass) throw new RulesError("not-found", "Class not found");
 
     return { klassLevel, klass };
+  }
+
+  /**
+   * What the character's bonded creatures (`bonded`, their rows) become with it as `master` builds it: each kind's
+   * creature removed, kept or made, and the levels it takes or loses.
+   */
+  protected planBondedOf(master: DetailedCharacter, bonded: CharacterInput[]) {
+    return new BondedPlans(this.rulesetData).planMasterCreatures(master, bonded);
   }
 
   /**

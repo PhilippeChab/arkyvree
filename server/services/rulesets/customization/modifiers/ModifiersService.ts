@@ -32,19 +32,12 @@ class ModifiersService {
 
           const catalogs = await RulesetViews.getTargetPathCatalogs(scope.ruleset, "modifier");
           const modifiers = Engine.for(scope).modifiers(entityType, entityId);
-          const { entity, valueType } = modifiers.planCreate(catalogs, body, sourceModifierId);
+          const { entity, row } = modifiers.planCreate(catalogs, body, sourceModifierId);
 
           const edit = new CustomizationEdit(ruleset, rulesetData.cow);
           const resolvedEntityId = await edit.cowOwner(tx, entityType, entity.id);
 
-          const rows = await Modifiers.create(tx, {
-            sourceId: resolvedEntityId,
-            sourceType: entityType,
-            target: body.target,
-            value: body.value,
-            valueType,
-            operator: body.operator,
-          });
+          const rows = await Modifiers.create(tx, { sourceId: resolvedEntityId, sourceType: entityType, ...row });
           const modifier = rows[0];
 
           if (sourceModifierId) {
@@ -176,7 +169,7 @@ class ModifiersService {
           const catalogs = await RulesetViews.getTargetPathCatalogs(scope.ruleset, "modifier");
           const { updatedAt, ...fields } = body;
           const modifiers = Engine.for(scope).modifiers(entityType, entityId);
-          const { entity, modifier, valueType } = modifiers.planEdit(catalogs, modifierId, fields);
+          const { entity, modifier, row } = modifiers.planEdit(catalogs, modifierId, fields);
           await checkCustomizedEntity(modifier);
 
           // COW the owning entity if this modifier is inherited
@@ -190,11 +183,7 @@ class ModifiersService {
           );
 
           const expectedUpdatedAt = resolvedModifierId === modifierId ? updatedAt : undefined;
-          const rows = await Modifiers.update(
-            tx,
-            { target: body.target, value: body.value, valueType, operator: body.operator },
-            { id: resolvedModifierId, expectedUpdatedAt },
-          );
+          const rows = await Modifiers.update(tx, row, { id: resolvedModifierId, expectedUpdatedAt });
           if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
           const updatedModifier = rows[0];

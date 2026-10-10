@@ -1,6 +1,5 @@
-import { type CharacterInput, CharacterProjection } from "@/engine/core/module/index.ts";
+import { CharacterProjection } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { RulesetView } from "@/engine/core/view/index.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 
 import LevelUpState, { type PlannedSoFar } from "./LevelUpState.ts";
@@ -26,13 +25,6 @@ export type Step = Omit<StepProjection, "editedLevel"> & { editedLevelId?: strin
  * skill points, each for the character built with the step's level.
  */
 export default class LevelUpSteps extends LevelUpState {
-  constructor(
-    view: RulesetView,
-    private readonly character: CharacterInput,
-  ) {
-    super(view);
-  }
-
   /**
    * The step's projection: a level of class level `klassLevelId` after the levels planned before it, or in the edited
    * level's place, so the first level stays the first (its x4 skill points).

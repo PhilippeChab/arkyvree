@@ -56,7 +56,7 @@ export default class PropertyTypeCatalog {
    * The types an autocomplete offers for `query` (ignoring case): the rules' types, then the ruleset's own, each
    * described by its use.
    */
-  completeTypes(query: string, entityType?: PropertyEntityType): PropertyTypeCompletion[] {
+  getTypeCompletions(query: string, entityType?: PropertyEntityType): PropertyTypeCompletion[] {
     const lowercaseQuery = query.toLowerCase();
     const staticTypes = this.matchStaticTypes(lowercaseQuery, entityType).map(
       ([value, description]): PropertyTypeCompletion => ({
@@ -81,7 +81,7 @@ export default class PropertyTypeCatalog {
    * The values an autocomplete offers for a property of `type`, containing `query` (ignoring case): the rules' values,
    * then the others the ruleset's properties of that type take, once each, sorted.
    */
-  completeValues(type: string, query: string): PropertyValueCompletion[] {
+  getValueCompletions(type: string, query: string): PropertyValueCompletion[] {
     const lowercaseQuery = query.toLowerCase();
     const staticValues = this.provider.getStaticPropertyValues(type) ?? [];
     const staticCompletions = staticValues
@@ -106,7 +106,7 @@ export default class PropertyTypeCatalog {
    * The property types (of one entity type, when given) containing `query`, ignoring case: the rules' types, matched by
    * name or description, then the ruleset's own, matched by name, each with its use.
    */
-  listTypes(query: string, entityType?: PropertyEntityType): PropertyType[] {
+  list(query: string, entityType?: PropertyEntityType): PropertyType[] {
     const lowercaseQuery = query.toLowerCase();
     const staticTypes = this.matchStaticTypes(lowercaseQuery, entityType).map(([value, description]): PropertyType => ({
       value,

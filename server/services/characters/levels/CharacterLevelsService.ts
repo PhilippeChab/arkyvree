@@ -182,14 +182,10 @@ class CharacterLevelsService extends include(Object, Pickers, Steps) {
       return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
         const character = await readCharacterInput(tx, characterRecord);
         const bonded = await readBondedInputs(tx, character);
-        const edit = Engine.for(scope).character(character).levelUp().planEdit(bonded, characterLevelId, {
-          abilityId,
-          feats,
-          force,
-          hp,
-          powers,
-          skills,
-        });
+        const edit = Engine.for(scope)
+          .character(character)
+          .levelUp()
+          .planEdit(bonded, characterLevelId, { abilityId, feats, hp, powers, skills }, force);
 
         await this.deleteLevelPicks(tx, characterLevelId);
         await CharacterLevels.update(tx, { hp: edit.hp, abilityId: edit.abilityId }, { id: characterLevelId });

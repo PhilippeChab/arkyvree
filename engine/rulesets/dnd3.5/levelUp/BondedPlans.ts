@@ -50,16 +50,20 @@ function buildCreature(race: { id: string; name: string }, abilities: RulesetDat
 
 /** What a master's bonded creatures become as its levels make them. */
 export default class BondedPlans {
+  constructor(
+    private readonly rulesetData: Pick<RulesetData, "abilities" | "klasses" | "klassLevelsByKlassId" | "races">,
+  ) {}
+
   /**
    * What the master's creature of `kind` becomes, from the one it has (`existing`): refused when the ruleset lacks the
    * race the master's levels pick for it, or the class it levels in.
    */
-  static planBondedCreature(
+  planBondedCreature(
     master: DetailedCharacter,
     kind: BondedKind,
     existing: { id: string; raceId: string } | undefined,
-    rulesetData: Pick<RulesetData, "abilities" | "klasses" | "races">,
   ): BondedCreaturePlan {
+    const { rulesetData } = this;
     const raceName = master.components.bonded.getBondedRace(kind);
     if (!raceName) return { removedId: existing?.id };
     const race = rulesetData.races.find((r) => r.name === raceName && r.kind === kind);
@@ -79,13 +83,9 @@ export default class BondedPlans {
    * first `hitDice`: its next ones, refused when the class lacks one, or its last ones. A level stores 1 hit point:
    * the creature's build gives it its hit points, from its master's or its hit dice.
    */
-  static planBondedLevels(
-    levels: { id: string }[],
-    { hitDice, klassId }: BondedLevels,
-    rulesetData: Pick<RulesetData, "klassLevelsByKlassId">,
-  ): BondedLevelsPlan {
+  planBondedLevels(levels: { id: string }[], { hitDice, klassId }: BondedLevels): BondedLevelsPlan {
     const klassLevelByLevel = new Map(
-      (rulesetData.klassLevelsByKlassId.get(klassId) ?? []).map((klassLevel) => [klassLevel.level, klassLevel]),
+      (this.rulesetData.klassLevelsByKlassId.get(klassId) ?? []).map((klassLevel) => [klassLevel.level, klassLevel]),
     );
     const added: BondedLevelsPlan["added"] = [];
     for (let level = levels.length + 1; level <= hitDice; level++) {
@@ -102,16 +102,12 @@ export default class BondedPlans {
    * each with its rows): the creature it had removed (`removedId`), and the one it keeps (`keptId`) or makes (`created`)
    * with the levels it takes or loses (`levels`: a new one has none yet).
    */
-  static planMasterCreatures(master: DetailedCharacter, bonded: CharacterInput[], rulesetData: RulesetData) {
+  planMasterCreatures(master: DetailedCharacter, bonded: CharacterInput[]) {
     return BONDED_KIND_SLUGS.map((kind) => {
       const existing = bonded.find((input) => input.record.kind === kind);
-      const plan = BondedPlans.planBondedCreature(master, kind, existing?.record, rulesetData);
+      const plan = this.planBondedCreature(master, kind, existing?.record);
       if (!plan.levels) return { kind, levels: undefined, removedId: plan.removedId };
-      const levels = BondedPlans.planBondedLevels(
-        "keptId" in plan ? (existing?.rows.levels ?? []) : [],
-        plan.levels,
-        rulesetData,
-      );
+      const levels = this.planBondedLevels("keptId" in plan ? (existing?.rows.levels ?? []) : [], plan.levels);
       return { ...plan, kind, levels };
     });
   }

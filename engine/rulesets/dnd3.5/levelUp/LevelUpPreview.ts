@@ -10,18 +10,18 @@ export default class LevelUpPreview extends PlannedLevelsState {
    * points before the minimum are the planned levels' in the batch's order, and every level's in the budget's.
    */
   private buildLevelUpPreview(planned: PlannedLevels) {
-    const { character, existingLevelCount, klassLevelEntries } = planned;
+    const { character, savedLevelCount, klassLevelEntries } = planned;
     const { classSkills, klassLevelIds, perLevelFeatSlots, perLevelPowerSlots, perLevelSkillPoints, pools } =
-      this.computeLevelUpPlan(planned);
+      this.computeLevelGains(planned);
     return {
       skills: {
-        ...this.skillStep(character, classSkills.merged, existingLevelCount + klassLevelEntries.length),
+        ...this.skillStep(character, classSkills.merged, savedLevelCount + klassLevelEntries.length),
         ...character.components.skills.getSkillPointBases(),
       },
       feats: this.featStep(pools, klassLevelIds),
       powers: this.powerStep(pools, klassLevelIds),
       attributes: {
-        abilityIncreaseLevels: this.getAbilityIncreaseLevels(existingLevelCount, klassLevelEntries.length),
+        abilityIncreaseLevels: this.getAbilityIncreaseLevels(savedLevelCount, klassLevelEntries.length),
         attributes: character.components.abilities.getAbilitiesWithIds(),
       },
       // Per-level data for HP step, review, and auto-assignment
@@ -41,10 +41,10 @@ export default class LevelUpPreview extends PlannedLevelsState {
     };
   }
 
-  /** The planned levels (by index) that take an ability increase, after the character's `existingCount` levels. */
-  private getAbilityIncreaseLevels(existingCount: number, plannedCount: number) {
+  /** The planned levels (by index) that take an ability increase, after the character's `savedLevelCount` levels. */
+  private getAbilityIncreaseLevels(savedLevelCount: number, plannedCount: number) {
     const levels: number[] = [];
-    for (let i = 0; i < plannedCount; i++) if (LevelRules.isAbilityIncreaseLevel(existingCount + i)) levels.push(i);
+    for (let i = 0; i < plannedCount; i++) if (LevelRules.isAbilityIncreaseLevel(savedLevelCount + i)) levels.push(i);
     return levels;
   }
 
