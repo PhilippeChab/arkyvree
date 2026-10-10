@@ -5,10 +5,7 @@ import { ALLOWED_ALL, type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/mo
 import AptitudesPaths from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesPaths.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import ClassesPaths from "@/engine/rulesets/dnd3.5/model/classes/ClassesPaths.ts";
-import type {
-  CustomizedClassLevel,
-  CustomizedFeat,
-} from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
+import type { CustomizedClassLevel, CustomizedFeat } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import type SpellcastingState from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellcastingState.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import type { CharacterLevel, Klass, KlassLevel, Modifier } from "@/shared/relations.ts";

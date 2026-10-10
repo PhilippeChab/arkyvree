@@ -1,5 +1,5 @@
 import type CombatState from "@/engine/rulesets/dnd3.5/model/combat/CombatState.ts";
-import type { CustomizedRace } from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
+import type { CustomizedRace } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { OVERLOADED_SPEED } from "@/vocabulary/dnd3.5/carrying.ts";
 

@@ -1,6 +1,8 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
-import type { RulesetView } from "@/engine/core/view/index.ts";
+import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
+import type { CustomizedFeat } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
+import type { FeatWithAptitudes } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 type FeatGroupEntry = Record<string, FeatEntry>;
@@ -25,6 +27,20 @@ function isFeatEntry(entry: FeatEntry | FeatGroupEntry | undefined): entry is Fe
  * family's feats under its name (`injectGroupings`, by the feat groupings).
  */
 export default class FeatsComponent extends CharacterComponent<LoadedCharacterData> {
+  /** A feat the character has without a pick, from a modifier or a bonded creature's stat block: no level picked it. */
+  static toVirtualFeat(featRow: FeatWithAptitudes, rulesetData: RulesetData): CustomizedFeat {
+    return {
+      ...featRow,
+      klassLevelId: "",
+      characterLevelId: "",
+      aptitudeId: "",
+      virtual: true,
+      properties: rulesetData.propertiesByEntity.get(featRow.id) ?? [],
+      modifiers: rulesetData.modifiersBySource.get(featRow.id) ?? [],
+      requirements: rulesetData.requirementsByEntity.get(featRow.id) ?? [],
+    };
+  }
+
   private readonly feats: FeatsData = {};
 
   /** An entry for each of the ruleset's feats: possessed, and counted, as many times as the character has it. */

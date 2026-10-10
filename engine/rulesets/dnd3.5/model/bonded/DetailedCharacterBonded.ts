@@ -2,7 +2,7 @@ import type { CharacterRows } from "@/engine/core/module/index.ts";
 import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import { type RulesetView } from "@/engine/core/view/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
-import CustomizedEntities from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
+import FeatsComponent from "@/engine/rulesets/dnd3.5/model/feats/FeatsComponent.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { type BondedRaceStatBlock, STAT_BLOCK_FEAT_SKILL_BONUSES } from "@/vocabulary/dnd3.5/bondedCreatures.ts";
 
@@ -66,7 +66,7 @@ export default abstract class DetailedCharacterBonded extends DetailedCharacter 
       if (!this.components.feats.grant(featName)) continue;
       const featRow = rulesetData.featsById.get(rulesetData.featIdBySlug.get(stripSeparators(featName)) ?? "");
       if (!featRow) continue;
-      const feat = CustomizedEntities.toVirtualFeat(featRow, rulesetData);
+      const feat = FeatsComponent.toVirtualFeat(featRow, rulesetData);
       this.data.feats.push(feat);
       this.data.modifiers.push(...feat.modifiers);
       // A granted feat's own prerequisites don't gate it: its modifiers' own requirements do

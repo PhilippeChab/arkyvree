@@ -1,14 +1,9 @@
-import { CharacterBase } from "@/engine/core/character/index.ts";
+import { CharacterBase, type InventoryEntry } from "@/engine/core/character/index.ts";
 import type { Klass } from "@/shared/relations.ts";
 
 import { type Dnd35Components } from "./CharacterComponents.ts";
-import type {
-  CustomizedClassLevel,
-  CustomizedFeat,
-  CustomizedPower,
-  InventoryEntry,
-} from "./loading/CustomizedEntities.ts";
 import type { LoadedCharacterData } from "./loading/DetailedCharacterDataLoader.ts";
+import type { CustomizedClassLevel, CustomizedFeat, CustomizedPower } from "./loading/loadedEntities.ts";
 
 /**
  * A 3.5 character's state, on core's (`CharacterBase`): its components, and what its build loads. Its concerns add the
