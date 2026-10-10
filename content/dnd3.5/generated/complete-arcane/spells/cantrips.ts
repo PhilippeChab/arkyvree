@@ -73,6 +73,7 @@ export const CANTRIPS: PowerSeed[] = [
       { type: "SPELL_RESISTANCE", value: "No" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },
+      { type: "SPELL_COMPONENT", value: "Focus" },
     ],
   },
   {
@@ -143,6 +144,7 @@ export const CANTRIPS: PowerSeed[] = [
       { type: "SPELL_RESISTANCE", value: "No" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },
+      { type: "SPELL_COMPONENT", value: "Focus" },
     ],
   },
   {
@@ -198,6 +200,7 @@ export const CANTRIPS: PowerSeed[] = [
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },
       { type: "SPELL_COMPONENT", value: "Material" },
+      { type: "SPELL_COMPONENT", value: "Focus" },
     ],
   },
   {
@@ -234,6 +237,7 @@ export const CANTRIPS: PowerSeed[] = [
       { type: "SPELL_RESISTANCE", value: "Yes" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },
+      { type: "SPELL_COMPONENT", value: "Focus" },
     ],
   },
   {
@@ -251,6 +255,7 @@ export const CANTRIPS: PowerSeed[] = [
       { type: "SPELL_RESISTANCE", value: "No" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },
+      { type: "SPELL_COMPONENT", value: "Focus" },
     ],
   },
   {
@@ -369,6 +374,7 @@ export const CANTRIPS: PowerSeed[] = [
       { type: "SPELL_RESISTANCE", value: "No" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },
+      { type: "SPELL_COMPONENT", value: "Focus" },
     ],
   },
   {
@@ -386,6 +392,7 @@ export const CANTRIPS: PowerSeed[] = [
       { type: "SPELL_RESISTANCE", value: "Yes" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },
+      { type: "SPELL_COMPONENT", value: "Focus" },
     ],
   },
   {
@@ -423,6 +430,7 @@ export const CANTRIPS: PowerSeed[] = [
       { type: "SPELL_RESISTANCE", value: "No" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },
+      { type: "SPELL_COMPONENT", value: "Focus" },
     ],
   },
   {
@@ -440,6 +448,7 @@ export const CANTRIPS: PowerSeed[] = [
       { type: "SPELL_RESISTANCE", value: "No" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },
+      { type: "SPELL_COMPONENT", value: "Focus" },
     ],
   },
   {

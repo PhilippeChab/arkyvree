@@ -32,6 +32,17 @@ function spell(name: string, fields: Partial<SpellReference["raw"][number]>): Sp
 }
 
 describe("A spell's detected properties", () => {
+  test("hold its components, a focus the site writes AF among them", () => {
+    const components = (properties: { type: string; value: string }[]) =>
+      properties.filter(({ type }) => type === "SPELL_COMPONENT").map(({ value }) => value);
+    const detected = propertiesDetected([
+      spell("Warded", { components: ["V", "S", "AF", "DF"] }),
+      spell("Costly", { components: ["V", "M", "XP"] }),
+    ]);
+    expect(components(detected.Warded)).toEqual(["Verbal", "Somatic", "Focus", "Divine Focus"]);
+    expect(components(detected.Costly)).toEqual(["Verbal", "Material", "XP Cost"]);
+  });
+
   test("hold its duration, but none when its source gives none", () => {
     const detected = propertiesDetected([
       spell("Lasting", { duration: "1 round/level (D)" }),

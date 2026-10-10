@@ -72,6 +72,7 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
       { type: "SPELL_RESISTANCE", value: "Yes (object)" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },
+      { type: "SPELL_COMPONENT", value: "Focus" },
     ],
   },
   {
@@ -281,6 +282,7 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
       { type: "SPELL_RESISTANCE", value: "No" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },
+      { type: "SPELL_COMPONENT", value: "Focus" },
     ],
   },
   {
@@ -297,6 +299,7 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
       { type: "SPELL_TARGET", value: "One intelligent creature" },
       { type: "SPELL_DURATION", value: "1 round" },
       { type: "SPELL_RESISTANCE", value: "Yes (harmless)" },
+      { type: "SPELL_COMPONENT", value: "Focus" },
     ],
   },
 ];
