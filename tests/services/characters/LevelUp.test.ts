@@ -3,6 +3,8 @@ import { describe, expect, test } from "bun:test";
 import { levelAbilityIncreasesInCharacter } from "@/drizzle/schema.ts";
 import type { AbilityIncrease } from "@/engine/index.ts";
 import { type SeedContext } from "@/scripts/db/seeds/seedContext.ts";
+import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import {
@@ -10,8 +12,11 @@ import {
   CharacterLevelFeats,
   CharacterLevelPowers,
   CharacterLevelSkills,
+  Characters,
+  FeatsAptitudes,
   Modifiers,
 } from "@/server/repositories/index.ts";
+import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import {
   addFighterLevels,
@@ -21,10 +26,11 @@ import {
   type LevelPlan,
   levelUp,
   picks,
+  SORCERER_1,
   WIZARD_1,
 } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { addCharacterLevel, findKlassLevel, increasesOf } from "@/tests/support/levels.ts";
-import { invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import { copyEntity, createSeededTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
@@ -140,6 +146,13 @@ async function preview(
     feats,
     powers,
   );
+}
+
+/** The names of the feats a character's levels saved, a row each, sorted. */
+async function savedFeatNames(ctx: SeedContext, levelIds: string[]) {
+  const names = new Map(Object.entries(ctx.featMap).map(([name, id]) => [id, name]));
+  const rows = await CharacterLevelFeats.findMany(db, { characterLevelIds: levelIds });
+  return rows.map(({ featId }) => names.get(featId)).sort();
 }
 
 /** A fighter's first two levels, and the plan the first was saved with. */
@@ -552,6 +565,106 @@ describe("a pool's room", () => {
     if (step.name !== "feats") throw new Error("Expected the feats step");
     expect(step.fitted[general]).toEqual([ctx.featMap["Power Attack"], ctx.featMap["Great Fortitude"]]);
     expect(step.aptitudePools[general]).toMatchObject({ available: 2 });
+  });
+});
+
+describe("a pick a level takes twice", () => {
+  const TOUGHNESS_TWICE = { General: ["Toughness", "Toughness"], "Fighter Bonus Feat": ["Improved Initiative"] };
+  const FIGHTER_1_SKILLS = { Climb: 4, Intimidate: 4, Jump: 4, Swim: 4 };
+
+  test("saves a stacking feat a level picks twice in its pool, forced or not: a row each, read back, both counted", async () => {
+    const ctx = await getSeedCtx();
+    const general = ctx.aptMap["General"];
+    for (const force of [false, true]) {
+      const characterId = await createSeedCharacter(ctx);
+      const plan = { skills: FIGHTER_1_SKILLS, feats: TOUGHNESS_TWICE };
+      const [level] = await finalizeBatch(ctx, characterId, fighterLevels(1), plan, force);
+      expect(await savedFeatNames(ctx, [level.id])).toEqual(["Improved Initiative", "Toughness", "Toughness"]);
+      const saved = await CharacterLevelsService.getLevel(session, characterId, level.id);
+      expect(saved.feats[general].map(({ id }) => id)).toEqual([ctx.featMap["Toughness"], ctx.featMap["Toughness"]]);
+      // 10 rolled, 2 for Constitution 14, and 3 for each Toughness
+      expect((await CharactersService.getCharacter(session, characterId)).combat.hp.total).toBe(18);
+    }
+  });
+
+  test("saves a stacking feat a level picks under two pools", async () => {
+    const ctx = await getSeedCtx();
+    // A fork whose Toughness is a fighter's bonus feat too
+    const fork = await createSeededTestRuleset(SEED_USER_ID);
+    const toughness = await copyEntity(db, "feats", ctx.featMap["Toughness"], fork);
+    await FeatsAptitudes.create(db, { featId: toughness.id, aptitudeId: ctx.aptMap["Fighter Bonus Feat"] });
+    RulesetViews.invalidate(fork.id);
+    const characterId = await createSeedCharacter(ctx);
+    await Characters.update(db, { rulesetId: fork.id }, { id: characterId });
+
+    const { skills } = picks(ctx, { skills: FIGHTER_1_SKILLS });
+    const feats = {
+      [ctx.aptMap["General"]]: [toughness.id, ctx.featMap["Power Attack"]],
+      [ctx.aptMap["Fighter Bonus Feat"]]: [toughness.id],
+    };
+    const levels = [{ klassId: ctx.klassMap.pc["Fighter"], level: 1, hp: 10, abilityIncreases: [] }];
+    const [level] = await CharacterLevelsService.finalizeLevelUp(session, characterId, levels, skills, feats, {});
+    const rows = await CharacterLevelFeats.findMany(db, { characterLevelIds: [level.id] });
+    expect(
+      rows
+        .filter(({ featId }) => featId === toughness.id)
+        .map(({ aptitudeId }) => aptitudeId)
+        .sort(),
+    ).toEqual([ctx.aptMap["General"], ctx.aptMap["Fighter Bonus Feat"]].sort());
+  });
+
+  test("refuses a feat that doesn't stack, or a spell, a level picks twice in its pool, forced or not, naming it", async () => {
+    const ctx = await getSeedCtx();
+    const powerAttackTwice = { General: ["Power Attack", "Power Attack"], "Fighter Bonus Feat": ["Dodge"] };
+    const lightTwice = {
+      ...SORCERER_1,
+      powers: { "Sorcerer Spells": ["Detect Magic", "Light", "Light", "Read Magic"] },
+    };
+    for (const force of [false, true]) {
+      const fighterId = await createSeedCharacter(ctx);
+      const plan = { skills: FIGHTER_1_SKILLS, feats: powerAttackTwice };
+      expect(finalizeBatch(ctx, fighterId, fighterLevels(1), plan, force)).rejects.toMatchObject({
+        message: 'Non-stackable feat "Power Attack" cannot be picked more than once',
+        refusal: "invalid",
+      });
+      const sorcererId = await createSeedCharacter(ctx, "sorcerer");
+      expect(levelUp(session, ctx, sorcererId, "Sorcerer", 1, lightTwice, force)).rejects.toMatchObject({
+        message: 'Power "Light" cannot be picked more than once at a level',
+        refusal: "invalid",
+      });
+    }
+  });
+
+  test("edits a level to pick a stacking feat twice, and refuses one that doesn't stack", async () => {
+    const { ctx, first, resave } = await setupFighter();
+    await resave({ feats: TOUGHNESS_TWICE });
+    expect(await savedFeatNames(ctx, [first.id])).toEqual(["Improved Initiative", "Toughness", "Toughness"]);
+    const powerAttackTwice = {
+      General: ["Power Attack", "Power Attack"],
+      "Fighter Bonus Feat": ["Improved Initiative"],
+    };
+    expect(resave({ feats: powerAttackTwice }, true)).rejects.toThrow(
+      'Non-stackable feat "Power Attack" cannot be picked more than once',
+    );
+  });
+
+  // #588: the preview kept a pool's repeated stacking feat once, while the save kept both or refused them by pick order
+  test("previews and saves a stacking feat picked twice in a pool of a plan alike, in either order", async () => {
+    const ctx = await getSeedCtx();
+    // Fighter 1 to 3: two General feats at the first level and one at the third, a bonus feat at the first two
+    const skills = { Climb: 6, Intimidate: 6, Jump: 6, Swim: 6 };
+    for (const general of [
+      ["Toughness", "Power Attack", "Toughness"],
+      ["Toughness", "Toughness", "Power Attack"],
+    ]) {
+      const plan = { skills, feats: { General: general, "Fighter Bonus Feat": ["Improved Initiative", "Dodge"] } };
+      const previewed = await preview(ctx, await createSeedCharacter(ctx), fighter(3), undefined, plan);
+      expect(previewed.feats.fitted[ctx.aptMap["General"]]).toEqual(general.map((name) => ctx.featMap[name]));
+
+      const characterId = await createSeedCharacter(ctx);
+      const levelIds = (await finalizeBatch(ctx, characterId, fighterLevels(3), plan)).map(({ id }) => id);
+      expect(await savedFeatNames(ctx, levelIds)).toEqual(["Dodge", "Improved Initiative", ...general].sort());
+    }
   });
 });
 

@@ -70,7 +70,7 @@ Steps on Core SRD 3.5:
 2. **Select HP.** Roll the class's hit die, take the maximum (**Max**), or type the HP gain (the step shows the average); **Roll All** and **Max All** set every level at once. Constitution modifier applies automatically per level.
 3. **Ability Increase.** A pick at character levels 4, 8, 12, 16 and 20, which **Next** waits for; at other levels the step says there's none.
 4. **Select Skills.** Skill points come from the class formula. The **Class** column says which skills are class skills; the rank cap is enforced (level + 3 for class skills, half for cross-class). **Auto** spends the points at random.
-5. **Select Feats.** Standard feats at levels 1, 3, 6, 9, 12, 15, 18. Class bonus feats appear at the levels their class grants them. Each slot is tied to its [aptitude pool](rulesets.md#what-are-aptitudes) — only feats tagged for that pool are offered. A Cleric's domains are picked here too, from the Cleric Domain pool.
+5. **Select Feats.** Standard feats at levels 1, 3, 6, 9, 12, 15, 18. Class bonus feats appear at the levels their class grants them. Each slot is tied to its [aptitude pool](rulesets.md#what-are-aptitudes) — only feats tagged for that pool are offered. A Cleric's domains are picked here too, from the Cleric Domain pool. A feat that stacks, such as Toughness, can fill several slots, two at the same level too; one that doesn't is picked once.
 6. **Select Spells.** A Wizard adds spells to the spellbook; a Sorcerer or a Bard picks spells known, pool by pool and spell level by spell level. A Cleric or a Druid knows the whole class list and picks none.
 7. **Review Changes.** Final summary of every change. Nothing is saved until you click **Finish All**.
 

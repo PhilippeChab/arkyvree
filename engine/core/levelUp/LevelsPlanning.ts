@@ -33,8 +33,8 @@ export interface ValidatedCharacter {
  * - a level-up's planned levels are the ruleset's classes' (`getPlannedKlassLevels`), and its selections the
  *   ruleset's, before its picks are spread over its levels (`distributePicks`);
  * - each level isn't saved already (a level-up's), and raises its abilities by what the rules give it;
- * - its hit points, its selections and their pools checked, no non-stackable feat picked twice or held already
- *   (`SelectionChecks`);
+ * - its hit points, its selections and their pools checked, no non-stackable feat or power picked twice at a level,
+ *   no non-stackable feat held already (`SelectionChecks`);
  * - the picks overfill no pool, forced or not (`findOverfullPools`);
  * - the character with them is valid, unless forced: wholly for a level-up, in the issues the level answers for for an
  *   edit (`findEditedLevelIssues`).

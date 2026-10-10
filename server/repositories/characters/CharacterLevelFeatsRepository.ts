@@ -40,7 +40,10 @@ class CharacterLevelFeatsRepository extends LevelPicksRepository<typeof levelFea
     });
   }
 
-  /** The picks of these character levels, by the picked entity's name, ties broken to a fixed order. */
+  /**
+   * The picks of these character levels, by the picked entity's name, ties broken to a fixed order: a stackable feat a
+   * level picked twice, by its rows' own ids.
+   */
   async findMany(db: Db, where: { characterLevelIds: string[] }) {
     if (where.characterLevelIds.length === 0) return [];
     return await db
@@ -53,6 +56,7 @@ class CharacterLevelFeatsRepository extends LevelPicksRepository<typeof levelFea
         this.orderBy(this.table.featId),
         this.orderBy(this.table.aptitudeId),
         this.orderBy(this.table.characterLevelId),
+        this.orderBy(this.table.id),
       );
   }
 }

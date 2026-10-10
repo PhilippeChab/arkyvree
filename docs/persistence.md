@@ -101,6 +101,19 @@ Others name their row the same way, and stay when it's deleted, on purpose:
 - **`Activities` and `Notifications`** are history, kept until the retention sweep. Opening one whose target is gone resolves to no page (`getActivityUrl`), and the client says the item was deleted.
 - **`EntitySnapshots`:** a snapshot whose fork copy is deleted is the tombstone that hides the inherited entity in that fork.
 
+### A level's rows
+
+A level's rows are its character's state, rewritten whole when the level is edited (`delete({ characterLevelId })`, then `createMany`), so none keeps its identity across an edit. Each table is keyed by what a level holds once:
+
+| Table | Key | Why |
+|---|---|---|
+| `CharacterLevelFeats` (`level_feats`) | its own `id` | A pick is a row: a level can take a stackable feat twice, in one pool or two (Toughness in both of a human fighter 1's General slots), two rows of the same level and feat. The engine refuses what can't repeat (`SelectionChecks`) |
+| `CharacterLevelPowers` (`level_powers`) | (level, power) | A level knows a spell once |
+| `CharacterLevelSkills` (`level_skills`) | (level, skill) | A skill's ranks are a quantity, its `rank` |
+| `CharacterLevelAbilityIncreases` (`level_ability_increases`) | (level, ability) | An increase's size is its `amount` |
+
+A stackable feat taken twice is two picks, not a count: the picks may be in two pools, and every reader (the character's build, a level's edit, the in-use checks) reads a row as one pick.
+
 ### Campaign-membership rows (`Players`, `Invites`, `PlayerCharacters`)
 
 Both primitives, picked by entry point:
