@@ -333,10 +333,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description:
       "To activate this feat, you must sacrifice one of your daily allotment of spells (minimum spell level 1st). Doing this is a swift action that doesn't provoke attacks of opportunity. In exchange, you gain an insight bonus on your melee attack rolls and damage rolls for 1 round. The bonus on attack rolls equals the level of the spell sacrificed. The bonus on damage rolls is 1d6 points per level of the spell sacrificed, plus any extra damage based on your sneak attack ability. These bonuses apply against only one type of creature, depending on the type of spell sacrificed. If you sacrifice an arcane spell, they apply against constructs; if the sacrificed spell is divine, the bonuses apply against undead. Example: A 5th-level wizard/1st-level rogue activates this feat, sacrificing a prepared web spell. She gains a +2 insight bonus on her melee attack rolls against constructs for 1 round, and also adds 3d6 points of damage to successful attacks against constructs during that round (2d6 for the 2nd-level spell, plus 1d6 for her sneak attack damage). This feat does not allow you to deliver critical hits or sneak attacks against constructs or undead.",
     aptitudes: ["General"],
-    requirements: [
-      or(gte("spellcasting.arcane", 5), gte("spellcasting.divine", 5)),
-      eq("feats.sneakattack.*.possessed"),
-    ],
+    requirements: [gte("spellcasting.casterlevel", 5), eq("feats.sneakattack.*.possessed")],
   },
   {
     name: "Staggering Strike",

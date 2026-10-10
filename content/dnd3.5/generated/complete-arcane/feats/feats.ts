@@ -53,7 +53,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     aptitudes: ["General"],
     requirements: [
       gte("abilities.intelligence.total", 13),
-      or(gte("spellcasting.arcane", 1), gte("spellcasting.divine", 1)),
+      gte("spellcasting.arcanecasterlevel", 1),
       gte("classes.wizard.level", 1),
     ],
     modifiers: [{ target: "skills.knowledgearcana.misc", operator: "add", value: "2", valueType: "number" }],
@@ -91,7 +91,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
       "You gain one extra spell slot in your daily allotment, at any level up to one lower than the highest level of spell you can currently cast. For example, a 4th-level sorcerer (maximum spell level 2nd) gains either an extra 0-level or 1stlevel slot, and is able to cast any spell he knows of the chosen level one more time each day. Likewise, a 4th-level wizard can prepare any extra 0-level or 1st-level spell he knows. Once selected, the extra spell slot never changes level.",
     stackable: true,
     aptitudes: ["General"],
-    requirements: [or(gte("spellcasting.arcane", 4), gte("spellcasting.divine", 4))],
+    requirements: [gte("spellcasting.casterlevel", 4)],
   },
   {
     name: "Extra Spell",
@@ -99,7 +99,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
       "You learn one additional spell at any level up to one lower than the highest level of spell you can currently cast. Thus, a 4th-level sorcerer (maximum spell level 2nd) gains a new 0-level or 1st-level spell known with which to expand her repertoire. For classes such as wizard that have more options for learning spells, Extra Spell is generally used to learn a specifi c spell that the character lacks access to and would be unable to research.",
     stackable: true,
     aptitudes: ["General"],
-    requirements: [or(gte("spellcasting.arcane", 3), gte("spellcasting.divine", 3))],
+    requirements: [gte("spellcasting.casterlevel", 3)],
   },
   {
     name: "Extra Spell Secret",
@@ -121,7 +121,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description:
       "Choose one of your spell-like abilities (subject to the restrictions below) to use at a heightened level up to three times per day (or the ability's normal use limit, whichever is less). The spell-level equivalent of the heightened spell-like ability is two higher than its normal level (to a maximum of 9th level), with all effects dependent on spell level (including saving throw DCs) calculated at the higher level. The spell-like ability you wish to heighten can be chosen only from those abilities that duplicate a spell of a level less than or equal to 1/2 your caster level (round down), minus 2. For a summary, see the Caster Level to Empower column in the table.",
     aptitudes: ["General"],
-    requirements: [or(gte("spellcasting.arcane", 6), gte("spellcasting.divine", 6))],
+    requirements: [gte("spellcasting.casterlevel", 6)],
   },
   {
     name: "Innate Spell",
@@ -153,7 +153,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description:
       "Choose one of your spell-like abilities (subject to the restrictions below) to use at maximum effectiveness up to three times per day (or the ability's normal use limit, whichever is less). All variable, numeric effects of the spelllike ability are maximized, dealing maximum damage, curing the maximum number of hit points, affecting the maximum number of targets, and so on. For example, a 10th-level warlock's maximized eldritch blast deals 36 points of damage three times per day. Saving throws and opposed checks (such as the one you make when you cast dispel magic) are not affected, nor are spell-like abilities without random variables. An empowered maximized spell-like ability gains the benefit of each feat separately (getting the maximum result plus one-half the normally rolled result). For example, a fire mephit's empowered maximized scorching ray would deal 24 points of damage plus one-half of 4d6 points of damage. The spell-like ability you wish to maximize can be chosen only from those abilities that duplicate a spell of a level less than or equal to 1/2 your caster level (round down), minus 2. For a summary, see the Caster Level to Empower column in the table.",
     aptitudes: ["General"],
-    requirements: [or(gte("spellcasting.arcane", 6), gte("spellcasting.divine", 6))],
+    requirements: [gte("spellcasting.casterlevel", 6)],
   },
   {
     name: "Necropolis Born",
@@ -172,10 +172,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description:
       "You can obtain a familiar in the same manner as a sorcerer or wizard. As with a sorcerer or wizard, obtaining a familiar takes 24 hours and uses up magic materials worth 100 gp. For the purpose of determining familiar abilities that depend on your arcane caster class level, your levels in all classes that allow you to cast arcane spells stack.",
     aptitudes: ["General"],
-    requirements: [
-      or(gte("spellcasting.arcane", 3), gte("spellcasting.divine", 3)),
-      gte("skills.knowledgearcana.rank", 4),
-    ],
+    requirements: [gte("spellcasting.arcanecasterlevel", 3), gte("skills.knowledgearcana.rank", 4)],
   },
   {
     name: "Pierce Magical Concealment",
@@ -209,7 +206,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
       "Choose one 2nd-level spell from a school of magic you have access to. You gain an extra 2nd-level spell slot that must be used initially to cast only the chosen spell. Until your level is high enough to allow you to cast 2nd-level spells, you must succeed on a DC 8 caster level check to successfully cast this spell; if you fail, the spell is miscast to no effect. Your caster level with the chosen spell is your normal caster level, even if this level is insufficient to cast the spell under normal circumstances. When you become able to cast 2nd-level spells, you lose the benefit described above but retain the extra 2nd-level spell slot, which you can use to prepare or spontaneously cast a spell of 2nd level or lower as you normally would. Finally, you gain a +2 bonus on all Spellcraft checks.",
     aptitudes: ["General"],
     requirements: [
-      gte("spellcasting.arcane", 1),
+      gte("spellcasting.arcanecasterlevel", 1),
       or(gte("abilities.intelligence.total", 15), gte("abilities.charisma.total", 15)),
     ],
     modifiers: [{ target: "skills.spellcraft.misc", operator: "add", value: "2", valueType: "number" }],
@@ -219,10 +216,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description:
       "Damage-dealing spells that require a ranged touch attack roll gain a +2 bonus on the damage they deal. This extra damage applies only to the first successful attack of spells that create multiple rays or missiles, or to the first round of damage for spells that deal damage over multiple rounds on a single successful attack (such as Melf's acid arrow). Because you must be able to strike precisely, the extra damage applies only to targets within 30 feet. Only spells that deal hit point damage can be affected by this feat.",
     aptitudes: ["General"],
-    requirements: [
-      eq("feats.weaponfocusrangedspell.possessed"),
-      or(gte("spellcasting.arcane", 4), gte("spellcasting.divine", 4)),
-    ],
+    requirements: [eq("feats.weaponfocusrangedspell.possessed"), gte("spellcasting.casterlevel", 4)],
   },
   {
     name: "Reckless Wand Wielder",
@@ -248,10 +242,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description:
       "Damage-dealing spells that require a melee touch attack roll gain a +2 bonus on the damage they deal. This extra damage applies only to the fi rst successful attack of spells that allow multiple touch attacks (such as chill touch). Only spells that deal hit point damage can be affected by this feat.",
     aptitudes: ["General"],
-    requirements: [
-      eq("feats.weaponfocustouchspell.possessed"),
-      or(gte("spellcasting.arcane", 4), gte("spellcasting.divine", 4)),
-    ],
+    requirements: [eq("feats.weaponfocustouchspell.possessed"), gte("spellcasting.casterlevel", 4)],
   },
   {
     name: "Wandstrike",
@@ -334,7 +325,7 @@ export const ITEM_CREATION_FEATS: FeatSeed[] = [
     description:
       "You can make contingent any spell that you know. Crafting a contingent spell takes one day for each 1,000 gp in its base price (spell level Ã- caster level Ã- 100 gp). To craft a contingent spell, you must spend 1/25 of this base price in XP and use up raw materials costing one-half the base price. Some spells incur extra costs in material components or XP (as noted in their descriptions), which must be paid when the contingent spell is created. See Contingent Spells, for more information.",
     aptitudes: ["General", "Wizard Bonus Feat"],
-    requirements: [or(gte("spellcasting.arcane", 11), gte("spellcasting.divine", 11))],
+    requirements: [gte("spellcasting.casterlevel", 11)],
     properties: [{ type: "FEAT_FAMILY", value: "Item Creation" }],
   },
 ];
@@ -345,10 +336,7 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
     description:
       "Any necromancy spell you cast can be cast instead as a Moilian spell, dealing an extra 1d6 points of negative energy damage +1d6 per two spell levels (+1d6 for 1st-level spells, +2d6 for 2nd- or 3rd-level spells, and so on). If the spell normally allows a saving throw, the target takes half the negative energy damage on a successful save, regardless of the outcome of the save on the spell's normal effect. In addition to its normal spell components, a Moilian spell requires the creation and expenditure of a Moilian runebone-- a small human bone (often a fi nger bone) scribed with carefully prepared arcane markings. Only a character trained in the Black Lore of Moil knows the secrets of creating a runebone, which takes 1 hour to craft and requires special inks and powders costing 25 gp per die of negative energy damage to be generated. For example, a runebone capable of adding 3d6 points of negative energy damage to a spell costs 75 gp to craft. While the maximum negative energy damage dealt by a Moilian spell is based on the spell's level, the actual damage is limited by the runebone. For example, if a sorcerer casts fi nger of death (a 7th-level spell, so normally +4d6) with a 75-gp (3d6) runebone, the spell deals only 3d6 points of additional negative energy damage. A Moilian spell uses a spell slot of the spell's normal level.",
     aptitudes: ["General", "Wizard Bonus Feat"],
-    requirements: [
-      eq("feats.spellfocusnecromancy.possessed"),
-      or(gte("spellcasting.arcane", 7), gte("spellcasting.divine", 7)),
-    ],
+    requirements: [eq("feats.spellfocusnecromancy.possessed"), gte("spellcasting.casterlevel", 7)],
     properties: [{ type: "FEAT_FAMILY", value: "Metamagic" }],
   },
   {

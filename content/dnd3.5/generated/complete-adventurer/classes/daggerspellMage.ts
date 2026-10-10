@@ -50,6 +50,7 @@ export const DAGGERSPELL_MAGE: ClassSeed = {
       eqStr("identity.beliefs.alignment", "True Neutral"),
       eqStr("identity.beliefs.alignment", "Chaotic Neutral"),
     ),
+    gte("spellcasting.arcanecasterlevel", 5),
     gte("feats.sneakattack.count", 1),
   ],
   casterLevelAdvancement: { type: "arcane", levels: [2, 3, 4, 5, 6, 7, 8, 9, 10] },

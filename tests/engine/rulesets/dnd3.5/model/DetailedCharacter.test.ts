@@ -97,6 +97,9 @@ interface Carried {
 
 type Detailed = Awaited<ReturnType<typeof build>>;
 
+/** A caster's scores, 16 in each casting ability. */
+const CASTER_SCORES = { Strength: 10, Dexterity: 10, Constitution: 10, Intelligence: 16, Wisdom: 16, Charisma: 16 };
+
 const WIZARD_SCORES = { Strength: 10, Dexterity: 10, Constitution: 10, Intelligence: 16, Wisdom: 10, Charisma: 10 };
 
 function allPowers(detailed: Detailed) {
@@ -337,6 +340,24 @@ async function requiringWithBonus(
   });
   invalidateSeededRuleset((await getSeedCtx()).rulesetId);
   return item;
+}
+
+/** A new human caster (`CASTER_SCORES`) of the seeded rules, or of `rulesetId`, with these classes' levels in turn. */
+async function seedCaster(name: string, classes: [string, number][], rulesetId?: string) {
+  const ctx = await getSeedCtx();
+  const characterId = await seedHuman(name, CASTER_SCORES, { rulesetId });
+  for (const [className, count] of classes) {
+    const levels = Array.from({ length: count }, (_, index) => index + 1);
+    await addClassLevels(
+      db,
+      ctx,
+      characterId,
+      className,
+      levels,
+      levels.map(() => 4),
+    );
+  }
+  return characterId;
 }
 
 /** A new character of the seed user's: human, neutral good, with these scores. */
@@ -3337,6 +3358,78 @@ describe("DetailedCharacter", () => {
           project: (projection) => projection.addLevel(firstLevel.id, { hp: 4 }),
         });
         expect(requirementIssues(detailed)).toEqual([]);
+      });
+    });
+
+    describe("the highest caster level", () => {
+      test("is a casting class's level: a wizard 5's is 5, his spells' 3rd", async () => {
+        const characterId = await seedCaster("Wizard 5", [["Wizard", 5]]);
+        const wizard = await build((await Characters.findOne(db, { id: characterId }))!);
+        expect(wizard.getSpellcasting()).toEqual({ arcane: 3, arcanecasterlevel: 5, casterlevel: 5, divine: 0 });
+      });
+
+      test("is a multiclass character's highest class's, never their sum: a cleric 3 / wizard 2's is 3", async () => {
+        const characterId = await seedCaster("Cleric 3 / Wizard 2", [
+          ["Cleric", 3],
+          ["Wizard", 2],
+        ]);
+        const multiclass = await build((await Characters.findOne(db, { id: characterId }))!);
+        expect(multiclass.getSpellcasting()).toEqual({ arcane: 1, arcanecasterlevel: 2, casterlevel: 3, divine: 2 });
+      });
+
+      test("counts the caster levels a prestige class adds: a cleric 3 / stormlord 2's is 5", async () => {
+        const { aptMap, featMap } = await getSeedCtx();
+        const extension = await findSeededRuleset(DND35_COMPLETE_DIVINE_NAME);
+        const fork = await forkWith(DND35_COMPLETE_DIVINE_NAME);
+        const characterId = await seedCaster("Cleric 3 / Stormlord 2", [["Cleric", 3]], fork.id);
+        const stormlord = (await Klasses.findOne(db, { name: "Stormlord", rulesetId: extension.id }))!;
+        // Each stormlord level advances his cleric spellcasting
+        const advance = {
+          featId: featMap["Advance Cleric Spellcasting"],
+          aptitudeId: aptMap["Bonus Divine Caster Level"],
+        };
+        for (let level = 1; level <= 2; level++)
+          await addCharacterLevel(characterId, (await findKlassLevel(stormlord.id, level))!.id, { feats: [advance] });
+
+        const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
+        expect(detailed.components.classes.getCharacterClasses()["cleric"]).toMatchObject({
+          level: 3,
+          bonuscasterlevel: 2,
+        });
+        // A cleric 5's spells: third-level ones
+        expect(detailed.getSpellcasting()).toEqual({ arcane: 0, arcanecasterlevel: 0, casterlevel: 5, divine: 3 });
+      });
+
+      test("counts a class once it casts, cantrips included: a bard 1's is 1, a ranger 3's and a fighter's none", async () => {
+        const characterId = await seedCaster("Bard 1", [["Bard", 1]]);
+        const bard = await build((await Characters.findOne(db, { id: characterId }))!);
+        expect(bard.getSpellcasting()).toEqual({ arcane: 0, arcanecasterlevel: 1, casterlevel: 1, divine: 0 });
+        // A ranger and a paladin cast from their fourth level, at their class's level (rules-decisions.md)
+        expect((await buildSeeded("Fenn Ashwalker")).getSpellcasting()).toMatchObject({ casterlevel: 0 });
+        expect((await buildSeeded("Aldric Dawnbringer")).getSpellcasting()).toMatchObject({
+          casterlevel: 5,
+          divine: 1,
+        });
+        expect((await buildSeeded("Bjorn Ironhand")).getSpellcasting()).toEqual({
+          arcane: 0,
+          arcanecasterlevel: 0,
+          casterlevel: 0,
+          divine: 0,
+        });
+      });
+
+      test("can be required, of either kind or arcane", async () => {
+        const atLeast = (target: string, level: number) =>
+          requiring(target, { operator: "greater_than_or_equal", value: String(level), valueType: "number" });
+        const elara = await buildSeeded("Elara Starweaver");
+        const theron = await buildSeeded("Theron Lightbringer");
+        // A wizard 3 and a cleric 3: caster level 3, though their spells are 2nd-level
+        for (const caster of [elara, theron]) {
+          expect(caster.areRequirementsMet(atLeast("spellcasting.casterlevel", 3))).toBe(true);
+          expect(caster.areRequirementsMet(atLeast("spellcasting.casterlevel", 4))).toBe(false);
+        }
+        expect(elara.areRequirementsMet(atLeast("spellcasting.arcanecasterlevel", 3))).toBe(true);
+        expect(theron.areRequirementsMet(atLeast("spellcasting.arcanecasterlevel", 1))).toBe(false);
       });
     });
   });

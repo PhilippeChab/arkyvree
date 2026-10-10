@@ -9,12 +9,12 @@ import { BONUS_SPELL_MODIFIER_STEP, MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/
 
 import { BonusCasterLevels } from "./concerns/BonusCasterLevels.ts";
 import { KnownPowers } from "./concerns/KnownPowers.ts";
-import SpellcastingState from "./SpellcastingState.ts";
+import SpellcastingState, { type CastingLevels } from "./SpellcastingState.ts";
 
 /**
  * A character's spellcasting: its classes' spell lists and caster types (`initialize`), and, once its modifiers apply,
  * what they leave it (`finalize`): its bonus caster levels' slots, its bonus spells, its known spells and its tags. The
- * highest spell levels it casts are counted when read (`getSpellcasting`).
+ * highest spell levels it casts and its highest caster levels are counted when read (`getSpellcasting`).
  */
 class SpellcastingComponent extends include(SpellcastingState, BonusCasterLevels, KnownPowers) {
   /**
@@ -104,9 +104,12 @@ class SpellcastingComponent extends include(SpellcastingState, BonusCasterLevels
     ]);
   }
 
-  /** The highest arcane and divine spell levels the character casts: the `spellcasting` component's, its target paths'. */
-  getSpellcasting(): { readonly arcane: number; readonly divine: number } {
-    return this.casterLevels;
+  /**
+   * The highest arcane and divine spell levels the character casts, and its highest caster level, of either kind and
+   * arcane: the `spellcasting` component's, its target paths'.
+   */
+  getSpellcasting(): CastingLevels {
+    return this.castingLevels;
   }
 }
 

@@ -35,6 +35,23 @@ describe("A prerequisite a feat and a class share", () => {
     ]);
   });
 
+  test("of a caster level is the highest caster level, of either kind or arcane, not a spell level", () => {
+    expect(featRequirements("Caster level 5th,")).toEqual([gte("spellcasting.casterlevel", 5)]);
+    expect(featRequirements("Spell Focus (necromancy), caster level 7th,")).toEqual([
+      eq(feat("Spell Focus: Necromancy")),
+      gte("spellcasting.casterlevel", 7),
+    ]);
+    expect(featRequirements("Knowledge (arcana) 4 ranks, arcane caster level 3rd,")).toEqual([
+      gte("spellcasting.arcanecasterlevel", 3),
+      gte("skills.knowledgearcana.rank", 4),
+    ]);
+    expect(specialRequirements("Arcane caster level 5th.Special: Sneak attack +1d6.")).toEqual([
+      gte("spellcasting.arcanecasterlevel", 5),
+      gte("feats.sneakattack.count", 1),
+    ]);
+    expect(specialRequirements("Caster level 5th.")).toEqual([gte("spellcasting.casterlevel", 5)]);
+  });
+
   test("asking to cast a spell it names is any spellcasting, but not an ability to use, nor casting it rules out", () => {
     const anyCasting = or(gte("spellcasting.arcane", 1), gte("spellcasting.divine", 1));
     expect(featRequirements("able to cast any cure wounds spell,")).toEqual([anyCasting]);

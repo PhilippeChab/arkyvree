@@ -758,7 +758,7 @@ export const ITEM_CREATION_FEATS: FeatSeed[] = [
     description:
       "You can produce a potion from any spell of 3rd level or below that you know, provided it targets one or more creatures. Creating a potion requires one day of work. You determine the caster level when brewing, which must be high enough to cast the spell but cannot exceed your own level. The base cost equals the spell level multiplied by the caster level multiplied by 50 gp. You must invest 1/25 of this base cost in XP and spend raw materials worth half the base cost. All casting decisions are made during brewing, and the drinker becomes the spell's target. If the stored spell has an expensive material component or XP cost, you must pay that cost as well, on top of the base price costs.",
     aptitudes: ["General", "Wizard Bonus Feat"],
-    requirements: [or(gte("spellcasting.arcane", 3), gte("spellcasting.divine", 3))],
+    requirements: [gte("spellcasting.casterlevel", 3)],
     properties: [{ type: "FEAT_FAMILY", value: "Item Creation" }],
   },
   {
@@ -766,7 +766,7 @@ export const ITEM_CREATION_FEATS: FeatSeed[] = [
     description:
       "You can create magical weapons, armor, or shields for which you meet the prerequisites. Enchanting takes one day per 1,000 gp of the magical features' price. You must spend 1/25 of the total magical feature price in XP and consume raw materials costing half that total. You must supply a masterwork item as the base, at your own expense. You may also repair a broken magic weapon, armor, or shield that you could have created, at half the XP, half the materials, and half the time of crafting it new.",
     aptitudes: ["General", "Wizard Bonus Feat"],
-    requirements: [or(gte("spellcasting.arcane", 5), gte("spellcasting.divine", 5))],
+    requirements: [gte("spellcasting.casterlevel", 5)],
     properties: [{ type: "FEAT_FAMILY", value: "Item Creation" }],
   },
   {
@@ -774,7 +774,7 @@ export const ITEM_CREATION_FEATS: FeatSeed[] = [
     description:
       "You can create any rod for which you meet the prerequisites. Crafting requires one day per 1,000 gp of the rod's base price. You must invest 1/25 of the base price in XP and use raw materials costing half the base price. Certain rods have additional material component or XP costs as specified in their individual descriptions, beyond the base price costs.",
     aptitudes: ["General", "Wizard Bonus Feat"],
-    requirements: [or(gte("spellcasting.arcane", 9), gte("spellcasting.divine", 9))],
+    requirements: [gte("spellcasting.casterlevel", 9)],
     properties: [{ type: "FEAT_FAMILY", value: "Item Creation" }],
   },
   {
@@ -782,7 +782,7 @@ export const ITEM_CREATION_FEATS: FeatSeed[] = [
     description:
       "You can create any staff for which you meet the prerequisites. Crafting requires one day per 1,000 gp of the staff's base price. You must invest 1/25 of the base price in XP and use raw materials costing half the base price. A new staff holds 50 charges. Certain staffs have additional material component or XP costs as specified in their individual descriptions, beyond the base price costs.",
     aptitudes: ["General", "Wizard Bonus Feat"],
-    requirements: [or(gte("spellcasting.arcane", 12), gte("spellcasting.divine", 12))],
+    requirements: [gte("spellcasting.casterlevel", 12)],
     properties: [{ type: "FEAT_FAMILY", value: "Item Creation" }],
   },
   {
@@ -790,7 +790,7 @@ export const ITEM_CREATION_FEATS: FeatSeed[] = [
     description:
       "You can create a wand containing any spell of 4th level or lower that you know. Crafting requires one day per 1,000 gp of the wand's base price. The base price is calculated as caster level times spell level times 750 gp. You must invest 1/25 of this base price in XP and use raw materials costing half the base price. A new wand holds 50 charges. If the stored spell has a costly material component or XP cost, you must pay fifty times that component cost or XP cost in addition to the base price costs.",
     aptitudes: ["General", "Wizard Bonus Feat"],
-    requirements: [or(gte("spellcasting.arcane", 5), gte("spellcasting.divine", 5))],
+    requirements: [gte("spellcasting.casterlevel", 5)],
     properties: [{ type: "FEAT_FAMILY", value: "Item Creation" }],
   },
   {
@@ -798,7 +798,7 @@ export const ITEM_CREATION_FEATS: FeatSeed[] = [
     description:
       "You can create any wondrous item for which you meet the prerequisites. Enchanting requires one day per 1,000 gp of the item's price. You must invest 1/25 of the price in XP and use raw materials costing half the price. You may also repair a broken wondrous item you could have created, at half the XP, half the materials, and half the time of crafting it new. Certain wondrous items have additional material component or XP costs noted in their descriptions; these apply both to creation and repair.",
     aptitudes: ["General", "Wizard Bonus Feat"],
-    requirements: [or(gte("spellcasting.arcane", 3), gte("spellcasting.divine", 3))],
+    requirements: [gte("spellcasting.casterlevel", 3)],
     properties: [{ type: "FEAT_FAMILY", value: "Item Creation" }],
   },
   {
@@ -806,7 +806,7 @@ export const ITEM_CREATION_FEATS: FeatSeed[] = [
     description:
       "You can create any ring for which you meet the prerequisites. Crafting requires one day per 1,000 gp of the ring's base price. You must invest 1/25 of the base price in XP and use raw materials costing half the base price. You may also repair a broken ring you could have created, at half the XP, half the materials, and half the time of forging it new. Some magic rings have additional material component or XP costs noted in their descriptions. You must pay such costs both when creating and when repairing the ring.",
     aptitudes: ["General", "Wizard Bonus Feat"],
-    requirements: [or(gte("spellcasting.arcane", 12), gte("spellcasting.divine", 12))],
+    requirements: [gte("spellcasting.casterlevel", 12)],
     properties: [{ type: "FEAT_FAMILY", value: "Item Creation" }],
   },
   {
@@ -814,7 +814,7 @@ export const ITEM_CREATION_FEATS: FeatSeed[] = [
     description:
       "You can create a scroll of any spell you know. Scribing requires one day per 1,000 gp of the scroll's base price. The base price equals the spell level times the caster level times 25 gp. You must invest 1/25 of this base price in XP and use raw materials costing half the base price. If the stored spell has a costly material component or XP cost, you must pay that cost in addition to the base price costs when scribing.",
     aptitudes: ["General", "Wizard Bonus Feat", "Wizard Class Feature"],
-    requirements: [or(gte("spellcasting.arcane", 1), gte("spellcasting.divine", 1))],
+    requirements: [gte("spellcasting.casterlevel", 1)],
     properties: [{ type: "FEAT_FAMILY", value: "Item Creation" }],
   },
 ];

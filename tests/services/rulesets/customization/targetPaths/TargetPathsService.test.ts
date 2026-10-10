@@ -214,18 +214,22 @@ describe("TargetPathsService", () => {
       "skills.climb.ability",
       "skills.climb.weight",
       "saves.fortitude.ability",
+      // From the classes' levels and slots
+      "spellcasting.casterlevel",
+      "spellcasting.arcanecasterlevel",
     ];
     const pathsOf = async (kind: TargetPathKind) => new Set((await seedPaths(kind)).paths.map((p) => p.path));
     const [modifiable, requirable] = [await pathsOf("modifier"), await pathsOf("requirement")];
     expect(computed.filter((path) => modifiable.has(path))).toEqual([]);
     expect(computed.filter((path) => !requirable.has(path))).toEqual([]);
-    // Their inputs stay modifiable: the flat bonuses, the armor's AC, the carried weight
+    // Their inputs stay modifiable: the flat bonuses, the armor's AC, the carried weight, a class's bonus caster levels
     const inputs = [
       "combat.ac.misc",
       "combat.ac.armor",
       "combat.encumbrance.carriedweight",
       "items.weapons.longsword.tohit.misc",
       "skills.climb.misc",
+      "classes.wizard.bonuscasterlevel",
     ];
     expect(inputs.filter((path) => !modifiable.has(path))).toEqual([]);
   });
