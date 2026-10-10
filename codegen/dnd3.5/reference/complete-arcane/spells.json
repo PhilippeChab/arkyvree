@@ -12,6 +12,9 @@
     },
     "Lightning Blade": {
       "range": "Touch"
+    },
+    "Spiritwall": {
+      "savingThrow": "Will negates or Fortitude negates; see text"
     }
   },
   "raw": [

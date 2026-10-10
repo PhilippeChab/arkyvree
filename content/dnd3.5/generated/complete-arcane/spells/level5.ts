@@ -241,7 +241,7 @@ export const LEVEL_5_SPELLS: PowerSeed[] = [
     description:
       "This spell creates an immobile, swirling mass of greenish-white forms resembling tortured spirits.One side of the wall, selected by you, emits a low groaning that causes creatures within 60 feet of that side to make a Will save or flee in panic for 1d4 rounds.Any living creature that merely touches the wall takes 1d10 points of damage as its life force is disrupted.A living creature passing through the wall takes 1d10 points of damage, as above, and must make a successful Fortitude save or gain one negative level.The barrier is semimaterial and opaque, providing cover and total concealment against physical attacks, and it blocks magical effects (including spells, spell-like abilities, and supernatural abilities).Material Component: A clear cut gemstone.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
-    savingThrow: "None",
+    savingThrow: "Will negates or Fortitude negates; see text",
     properties: [
       { type: "SPELL_SCHOOL", value: "Necromancy" },
       { type: "SPELL_DESCRIPTOR", value: "Fear" },
