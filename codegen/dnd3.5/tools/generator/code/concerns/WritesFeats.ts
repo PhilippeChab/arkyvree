@@ -112,7 +112,7 @@ export function WritesFeats<B extends Constructor<BaseCodeFile>>(Base: B) {
       // Use the explicit modifiers from the reference JSON. Re-write any
       // `powers.groups.<placeholder>.` segment to the per-school slug. Other
       // targets (e.g. `skills.spellcraft.misc`) are kept verbatim — schools
-      // don't parameterize skill names the way SKILL_NAMES does.
+      // don't parameterize skill names the way SKILLS_WITH_CHECKS does.
       this.writeTemplateModifiers(modifiers, (target) =>
         target.replace(/powers\.groups\.[^.]+\./, "powers.groups.${stripSeparators(s)}."),
       );
