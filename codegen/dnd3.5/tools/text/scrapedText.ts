@@ -4,7 +4,11 @@ import { normalizeWs } from "@/codegen/core/text/whitespace.ts";
 
 import { sanitizeText } from "./sanitize.ts";
 
-const WEAPON_DESC_PATTERNS = [/the selected weapon/gi, /selected weapon/gi, /the weapon you selected/gi];
+/**
+ * How a weapon template's text names its weapon, in lower case but where a sentence opens: a capital "Weapon" is a
+ * feat's name ("a slashing weapon for which you have selected Weapon Focus": Disemboweling Strike), not the weapon.
+ */
+const WEAPON_DESC_PATTERNS = [/[Tt]he selected weapon/g, /[Ss]elected weapon/g, /[Tt]he weapon you selected/g];
 
 /**
  * The separator a scraped text keeps between its parts (a race's traits): U+2063 INVISIBLE SEPARATOR, which
