@@ -24,7 +24,7 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
 
       for (const modifier of appliedModifiers) {
         if (modifier.sourceType !== "klass_levels") continue;
-        const list = AptitudesPaths.parseList(modifier.target);
+        const list = AptitudeTargets.parseList(modifier.target);
         if (list === undefined) continue;
         const aptitude = aptitudes[list];
         if (!aptitude || !aptitudePowerAptitudeIds.has(aptitude.id) || aptitudeIdToClassName.has(aptitude.id)) continue;
@@ -181,7 +181,7 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
         for (const list of lists) {
           const aptitude = aptitudes[list];
           if (!aptitude || !featListIds.has(aptitude.id)) continue;
-          const joinsClassList = feat.modifiers.some((modifier) => AptitudesPaths.parseJoin(modifier.target) === list);
+          const joinsClassList = feat.modifiers.some((modifier) => AptitudeTargets.parseJoin(modifier.target) === list);
           // A feat opening several lists shows its tag on each of them
           const tagged = this.spellTagLists[feat.name] ?? { aptitudeIds: classListIds, joinsClassList: false };
           this.spellTagLists[feat.name] = {

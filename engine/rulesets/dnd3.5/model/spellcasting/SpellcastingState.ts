@@ -2,7 +2,7 @@ import { CharacterComponent } from "@/engine/core/character/index.ts";
 import type AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
 import type AptitudesComponent from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
-import AptitudesPaths from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesPaths.ts";
+import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/ClassesComponent.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import type PowerGroupingsComponent from "@/engine/rulesets/dnd3.5/model/powers/PowerGroupingsComponent.ts";
@@ -145,7 +145,7 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
 
     const joining = new Map<string, Set<string>>();
     for (const modifier of appliedModifiers) {
-      const list = AptitudesPaths.parseJoin(modifier.target);
+      const list = AptitudeTargets.parseJoin(modifier.target);
       if (list === undefined || aptitudes[list]?.joinsclasslist !== true || modifier.value === "false") continue;
       const className = classOf(modifier);
       if (!className) continue;

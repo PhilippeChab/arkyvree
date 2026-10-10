@@ -1,5 +1,5 @@
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import AptitudesPaths from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesPaths.ts";
+import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /**
@@ -11,7 +11,7 @@ export default class SpellLists {
 
   /** The spell list a modifier gives slots in or joins to its class's list, if it does either. */
   static listOpenedBy(target: string): string | undefined {
-    return AptitudesPaths.parseSpellLevel(target)?.list ?? AptitudesPaths.parseJoin(target);
+    return AptitudeTargets.parseSpellLevel(target)?.list ?? AptitudeTargets.parseJoin(target);
   }
 
   /** The view's spell lists, derived once with it. */
@@ -66,7 +66,7 @@ export default class SpellLists {
     const classListsByKlass = new Map<string, Set<string>>();
     for (const klassLevel of klassLevels.toSorted((a, b) => a.level - b.level)) {
       for (const modifier of modifiersBySource.get(klassLevel.id) ?? []) {
-        const list = AptitudesPaths.parseSpellLevel(modifier.target)?.list;
+        const list = AptitudeTargets.parseSpellLevel(modifier.target)?.list;
         if (list === undefined) continue;
         const lists = classListsByKlass.get(klassLevel.klassId) ?? new Set<string>();
         lists.add(list);

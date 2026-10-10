@@ -10,7 +10,7 @@ import {
 import RulesError from "@/engine/core/RulesError.ts";
 import { CLASS_LEVEL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/classes/fields.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
-import AptitudesPaths from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesPaths.ts";
+import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
@@ -94,7 +94,7 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
       .flatMap(([, ids]) => ids);
     for (const featId of firstPassFeatIds) {
       for (const mod of this.rulesetData.modifiersBySource.get(featId) ?? []) {
-        const list = AptitudesPaths.parseAllowed(mod.target);
+        const list = AptitudeTargets.parseAllowed(mod.target);
         const aptId = list === undefined ? undefined : this.rulesetData.aptitudeIdBySlug.get(list);
         if (aptId && Object.hasOwn(feats, aptId)) sources.set(aptId, mod.sourceId);
       }

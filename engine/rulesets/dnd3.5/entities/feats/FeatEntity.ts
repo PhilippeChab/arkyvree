@@ -3,7 +3,7 @@
 import { ListedEntity } from "@/engine/core/entities/index.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import AptitudesPaths from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesPaths.ts";
+import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import type { FeatWithAptitudes } from "@/shared/relations.ts";
 import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
@@ -81,7 +81,7 @@ export default class FeatEntity extends ListedEntity<
     for (const featId of featIds) {
       for (const modifier of modifiersBySource.get(featId) ?? []) {
         if (modifier.sourceType !== "feats") continue;
-        const pool = AptitudesPaths.parsePool(modifier.target);
+        const pool = AptitudeTargets.parsePool(modifier.target);
         const aptitudeId = pool === undefined ? undefined : aptitudeIdBySlug.get(pool);
         const value = LiteralValue.parse(modifier.value, "number");
         if (!aptitudeId || typeof value !== "number") continue;

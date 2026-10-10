@@ -9,12 +9,6 @@ import { stripSeparators } from "@/shared/text.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
 const ALLOWED_ENTITY_TYPES = ["feats", "klass_levels", "races"];
-/** A list's pool or one of its spell levels' slots, by the list's slug: `aptitudes.<list>(.<level>).allowed`. */
-const ALLOWED_TARGET = /^aptitudes\.([a-z0-9]+)(?:\.\d+)?\.allowed$/;
-/** Its spells joining its class's list: `aptitudes.<list>.joinsclasslist`. */
-const JOIN_TARGET = /^aptitudes\.([a-z0-9]+)\.joinsclasslist$/;
-/** Any path of a list: `aptitudes.<list>` and what follows. */
-const LIST_TARGET = /^aptitudes\.([a-z0-9]+)(?:\.|$)/;
 const NAVIGATABLE_PATHS = [
   {
     path: "uses",
@@ -34,8 +28,6 @@ const POOL_SLOT_MODIFIERS: Pick<TargetPath, "operators" | "literalOnly" | "minVa
   literalOnly: true,
   minValue: 0,
 };
-/** A list's pool: `aptitudes.<list>.allowed`. */
-const POOL_TARGET = /^aptitudes\.([a-z0-9]+)\.allowed$/;
 
 /**
  * What a modifier on a pool's slots may do: grant more (`add` 0 or more: -1 is all known), or make a spell level's all
@@ -56,9 +48,6 @@ const SPELL_LEVEL_SLOT_MODIFIERS: Record<
   uses: { operators: ["add"], literalOnly: true, minValue: 0 },
 };
 
-/** A list's spell level: `aptitudes.<list>.<level>.allowed` or `.uses`. */
-const SPELL_LEVEL_TARGET = /^aptitudes\.([a-z0-9]+)\.(\d+)\.(allowed|uses)$/;
-
 /**
  * A spell list's spells joining the list of the class that gives it (`aptitudes.<list>.joinsclasslist`): a cleric's
  * domain joins the cleric's list. A feat or a class level sets it, and the class is its own, or the one whose level gave
@@ -71,10 +60,7 @@ export const JOINS_CLASS_LIST = {
   allowedEntityTypes: ["feats", "klass_levels"],
 };
 
-/**
- * The aptitudes' target paths: each aptitude's uses and slots; and what a modifier's target says of an aptitude, the
- * pool, list, spell level or join it names.
- */
+/** The aptitudes' target paths: each aptitude's uses and slots. */
 export default class AptitudesPaths implements PathCategory<Dnd35Components> {
   static generateAptitudePaths(
     aptitudes: Aptitude[],
@@ -131,36 +117,6 @@ export default class AptitudesPaths implements PathCategory<Dnd35Components> {
   /** Whether a target is an aptitude's (`aptitudes.…`). */
   static isAptitudeTarget(target: string): boolean {
     return target.startsWith("aptitudes.");
-  }
-
-  /** The list whose pool or spell level's slots a target counts (`aptitudes.<list>(.<level>).allowed`): its slug. */
-  static parseAllowed(target: string): string | undefined {
-    return ALLOWED_TARGET.exec(target)?.[1];
-  }
-
-  /** The list whose spells join its class's list (`aptitudes.<list>.joinsclasslist`): its slug. */
-  static parseJoin(target: string): string | undefined {
-    return JOIN_TARGET.exec(target)?.[1];
-  }
-
-  /** The list any of whose paths a target is (`aptitudes.<list>…`): its slug. */
-  static parseList(target: string): string | undefined {
-    return LIST_TARGET.exec(target)?.[1];
-  }
-
-  /** The list whose pool a target is (`aptitudes.<list>.allowed`): its slug. */
-  static parsePool(target: string): string | undefined {
-    return POOL_TARGET.exec(target)?.[1];
-  }
-
-  /**
-   * A list's spell level a target is (`aptitudes.<list>.<level>.allowed` or `.uses`): the list's slug, the level, the
-   * field.
-   */
-  static parseSpellLevel(target: string): { field: "allowed" | "uses"; level: number; list: string } | undefined {
-    const match = SPELL_LEVEL_TARGET.exec(target);
-    if (!match) return undefined;
-    return { list: match[1], level: Number(match[2]), field: match[3] === "uses" ? "uses" : "allowed" };
   }
 
   /** The start of a list's spell level's paths (`aptitudes.<list>.<level>.`): its uses and slots. */
