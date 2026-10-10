@@ -13,6 +13,7 @@ import RulesError from "@/engine/core/RulesError.ts";
 
 import LevelUpBase from "./LevelUpBase.ts";
 import PicksDistribution from "./PicksDistribution.ts";
+import type { KnownPower } from "./SelectionChecks.ts";
 
 /** A planned level checked: its class level, hit points, ability increases and picks. */
 interface PlannedLevel {
@@ -22,8 +23,13 @@ interface PlannedLevel {
   picks: LevelPicks;
 }
 
-/** A character a save builds with what it writes: its validation, which refuses the save unless it's forced. */
-export interface ValidatedCharacter {
+/**
+ * A character a save builds with what it writes: its validation, which refuses the save unless it's forced, and the
+ * powers it knows, each in its pool, which a level can't pick there again (`SelectionChecks.checkPowersNotKnown`).
+ */
+export interface CheckedCharacter {
+  /** The powers the character knows, each in its pool: picked, granted, or made known by its modifiers. */
+  getHeldPowers(): KnownPower[];
   validate(): ValidationResult;
 }
 
@@ -35,11 +41,14 @@ export interface ValidatedCharacter {
  * - each level isn't saved already (a level-up's), and raises its abilities by what the rules give it;
  * - its hit points, its selections and their pools checked, no non-stackable feat or power picked twice at a level,
  *   no non-stackable feat held already (`SelectionChecks`);
+ * - no power picked in a pool the character knows it in already, forced or not (`checkPowersNotKnown`): held there
+ *   (picked at another level, granted, made known by a modifier), or picked there earlier in the level-up; an edited
+ *   level's own saved picks stay;
  * - the picks overfill no pool, forced or not (`findOverfullPools`);
  * - the character with them is valid, unless forced: wholly for a level-up, in the issues the level answers for for an
  *   edit (`findEditedLevelIssues`).
  */
-export default class LevelsPlanning<C extends ValidatedCharacter> extends LevelUpBase<C> {
+export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpBase<C> {
   /**
    * An edited level's projection: the level with its new hit points, ability increases and picks, in place of its saved
    * row.
@@ -89,8 +98,9 @@ export default class LevelsPlanning<C extends ValidatedCharacter> extends LevelU
 
   /**
    * The edit of saved level `characterLevelId`, with the character's bonded creatures' rows (`bonded`): the level as
-   * saved, its new hit points, ability increases and picks, checked, its picks refused when they overfill a pool (forced
-   * or not), and refused with the issues it answers for unless `force`d; and what its bonded creatures become with it.
+   * saved, its new hit points, ability increases and picks, checked, its picks refused when they pick a power the
+   * character knows in its pool already (but the level's own) or overfill a pool (forced or not), and refused with the
+   * issues it answers for unless `force`d; and what its bonded creatures become with it.
    */
   planEdit(bonded: CharacterInput[], characterLevelId: string, edit: LevelEditRequest, force: boolean): LevelEditPlan {
     const { rows } = this.character;
@@ -108,6 +118,11 @@ export default class LevelsPlanning<C extends ValidatedCharacter> extends LevelU
       otherLevels,
       pickedFeatIds.map((pick) => pick.featId),
     );
+    // The character knows a power once in a pool: a new pick it knows there already (at another level, granted or by a
+    // modifier) is refused, the level's saved picks stay, a repeat saved before too
+    const unpowered = this.projectEditedLevel(level, klassLevel.id, { ...edit, powers: {} });
+    const kept = this.getSavedPowerPicks(characterLevelId);
+    this.checks.checkPowersNotKnown(edit.powers, () => this.build(unpowered).getHeldPowers(), kept);
 
     const edited = this.build(this.projectEditedLevel(level, klassLevel.id, edit));
     this.refuseOverfull(edited, edit);
@@ -129,9 +144,10 @@ export default class LevelsPlanning<C extends ValidatedCharacter> extends LevelU
    * The levels a level-up writes (its request's `levels`, with its `picks` spread over them as the ruleset spreads
    * them), and what the master's bonded creatures (`bonded`, their rows) become with them. Each level is checked as the
    * levels before it see it, and refused when it's saved already, raises its abilities by other than its rules give it,
-   * or picks what it can't; the picks are refused when they overfill a pool, forced or not, and the character with them
-   * with what it fails, unless `force`d. Each level's writes are its row's columns (its class level and hit points) and
-   * its rows under it (its ability increases and picks).
+   * or picks what it can't; the picks are refused when they pick a power the character knows in its pool already or
+   * overfill a pool, forced or not, and the character with them with what it fails, unless `force`d. Each level's
+   * writes are its row's columns (its class level and hit points) and its rows under it (its ability increases and
+   * picks).
    */
   planLevels(bonded: CharacterInput[], { levels, picks }: LevelUpRequest, force: boolean): LevelsPlan {
     const { rows } = this.character;
@@ -157,6 +173,11 @@ export default class LevelsPlanning<C extends ValidatedCharacter> extends LevelU
       otherLevels.push({ klassLevelId: klassLevel.id });
       pickedFeatIds.push(...Object.values(levelPicks.feats).flat());
     }
+    // The character knows a power once in a pool: a pick it holds there with the planned levels and their feats, or
+    // the plan picks there before, is refused
+    const unpowered = planned.map((level) => ({ ...level, picks: { ...level.picks, powers: {} } }));
+    const known = () => this.build(this.projectLevelRequests(unpowered)).getHeldPowers();
+    this.checks.checkPowersNotKnown(picks.powers, known);
 
     const saved = this.build(this.projectLevelRequests(planned));
     this.refuseOverfull(saved, picks);

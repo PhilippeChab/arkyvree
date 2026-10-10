@@ -1,12 +1,12 @@
 import {
   BondedCreatures,
+  type CheckedCharacter,
   type LevelHitPoints,
   LevelRemoval,
   LevelsPlanning,
   type LevelUpRules,
   type OverfullPool,
   type PlannedClassLevel,
-  type ValidatedCharacter,
 } from "@/engine/core/levelUp/index.ts";
 import type { CharacterInput } from "@/engine/core/module/CharacterInputs.ts";
 import type { Descriptions } from "@/engine/core/module/contract.ts";
@@ -41,7 +41,7 @@ import type {
  */
 export default abstract class LevelUpPart<
   D extends Descriptions,
-  C extends ValidatedCharacter = ValidatedCharacter,
+  C extends CheckedCharacter = CheckedCharacter,
 > implements LevelUpRules<C> {
   /** The hit points a level counts before they're rolled: a level a flow projects, whose hit points its save sets. */
   abstract readonly unrolledLevelHp: number;

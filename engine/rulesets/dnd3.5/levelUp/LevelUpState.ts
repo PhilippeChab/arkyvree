@@ -1,5 +1,5 @@
 import { LevelUpBase } from "@/engine/core/levelUp/index.ts";
-import type { LevelPicks } from "@/engine/core/module/index.ts";
+import type { LevelPicks, PowerPick } from "@/engine/core/module/index.ts";
 import type { OwnPicks } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
@@ -100,11 +100,19 @@ export default abstract class LevelUpState extends include(LevelUpBase<DetailedC
 
   /**
    * The picks that fit their pools (`picks`, each pool's in its order), and the character holding them (`build`): those
-   * a save takes (`keepTakenPicks`), then the latest picks of an overfull pool dropped, and the character built again,
-   * until none is (a feat dropped takes the room it gave). What the wizard keeps of its picks, as a save would take them.
+   * a save takes (`keepTakenPicks`) but the powers the character knows in their pool already, as a save refuses them
+   * (`withoutKnownPowers`: known with the feats picked; an edited level's own saved picks, `kept`, stay), then the latest
+   * picks of an overfull pool dropped, and the character built again, until none is (a feat dropped takes the room it
+   * gave). What the wizard keeps of its picks, as a save would take them.
    */
-  protected fitPicks(picks: Partial<PoolPicks>, build: (picks: PoolPicks) => DetailedCharacter) {
-    let fitted = this.keepTakenPicks(picks);
+  protected fitPicks(
+    picks: Partial<PoolPicks>,
+    build: (picks: PoolPicks) => DetailedCharacter,
+    kept: PowerPick[] = [],
+  ) {
+    const taken = this.keepTakenPicks(picks);
+    const known = () => build({ feats: taken.feats, powers: {} }).getHeldPowers();
+    let fitted: PoolPicks = { ...taken, powers: this.checks.withoutKnownPowers(taken.powers, known, kept) };
     for (;;) {
       const character = build(fitted);
       const [overfull] = character.components.aptitudes.getOverfullPools(this.countOwnPicks(fitted));
