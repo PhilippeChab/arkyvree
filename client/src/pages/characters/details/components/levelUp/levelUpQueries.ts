@@ -41,17 +41,14 @@ export interface ClassPicker extends PlannedPicks {
 }
 
 /**
- * A picker's level (a `StepLevel`), and what its list is checked against: the levels planned before it and the feats
- * picked so far, and the levels planned after it (`laterClassLevelIds`, their class levels), whose grants it leaves
- * out.
+ * A picker's level (a `StepLevel`), and what its list is checked against: the levels planned before it, the feats and
+ * spells picked so far (`featPicks`, `powerPicks`, encoded by `pickerPairString`), whose gifts either picker leaves out
+ * and the spell picker the spells, and the levels planned after it (`laterClassLevelIds`, their class levels), whose
+ * grants it leaves out.
  */
 export interface PickerLevel extends StepLevel, PlannedPicks {
   laterClassLevelIds?: string;
-}
-
-/** The spell picker's level (a `PickerLevel`), and the spells picked already, which it leaves out (`powerPickString`). */
-export interface PowerPickerLevel extends PickerLevel {
-  selectedPowerIds: string | undefined;
+  powerPicks: string | undefined;
 }
 
 /**
@@ -101,10 +98,14 @@ function levelQueryOf({ abilityId, classId, level, editedLevelId, skillPoints }:
 
 /**
  * What a feat or spell picker's list is checked against, as the endpoints' query: the planned levels before it, the
- * feats picked so far, and the planned levels after it.
+ * feats and spells picked so far, and the planned levels after it.
  */
 function pickerQueryOf(picker: PickerLevel) {
-  return { ...plannedQueryOf(picker), laterClassLevelIds: picker.laterClassLevelIds || undefined };
+  return {
+    ...plannedQueryOf(picker),
+    laterClassLevelIds: picker.laterClassLevelIds || undefined,
+    powerPicks: picker.powerPicks || undefined,
+  };
 }
 
 /** What a picker's list is checked against, as the endpoints' query: the planned levels and the feats picked so far. */
@@ -207,7 +208,7 @@ export function availablePowersQuery(
   aptitudeId: string | null,
   powerLevel: number | null,
   search: string,
-  picker: PowerPickerLevel,
+  picker: PickerLevel,
 ) {
   const level = levelQueryOf(picker);
   const query =
@@ -219,7 +220,6 @@ export function availablePowersQuery(
           limit: "20",
           search: search || undefined,
           ...pickerQueryOf(picker),
-          selectedPowerIds: picker.selectedPowerIds,
         }
       : undefined;
   return infiniteQueryOptions({

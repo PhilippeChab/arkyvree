@@ -6,8 +6,8 @@ import type { EditAnswers } from "@/client/src/pages/characters/details/componen
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import { hpSet } from "./hitPoints.ts";
-import type { PickerLevel, PowerPickerLevel } from "./levelUpQueries.ts";
-import { abilityIncreasesOf, powerPickString } from "./pendingPicks.ts";
+import type { PickerLevel } from "./levelUpQueries.ts";
+import { abilityIncreasesOf } from "./pendingPicks.ts";
 import type { EditedLevel } from "./useEditedLevel.ts";
 import { useFittedPicks } from "./useFittedPicks.ts";
 import { type LevelUpFormData, pickIds } from "./useLevelWizardBase.ts";
@@ -52,9 +52,9 @@ export function useEditLevelWizardBase({ level, answers, characterId, onClose }:
   // The feats and spells that fit the level's pools, and the skill points its own: its ability increase changes how
   // many it has
   const fitted = useFittedPicks(level, answers);
-  const { featPicks, selectedFeats, selectedPowers, skillPointAllocations } = fitted;
-  const featPicker: PickerLevel = { ...increasedStep, featPicks };
-  const powerPicker: PowerPickerLevel = { ...featPicker, selectedPowerIds: powerPickString(selectedPowers) };
+  const { featPicks, powerPicks, selectedFeats, selectedPowers, skillPointAllocations } = fitted;
+  // Its feat and spell pickers: the level's, with what it picked so far
+  const picker: PickerLevel = { ...increasedStep, featPicks, powerPicks };
 
   const finalizeMutation = useMutation({
     mutationFn: async ({ data, force }: { data: LevelUpFormData; force: boolean }) => {
@@ -102,11 +102,11 @@ export function useEditLevelWizardBase({ level, answers, characterId, onClose }:
       save: (force) => handleSubmit((data) => finalizeMutation.mutate({ data, force }))(),
       wizard: level,
     }),
-    featPicker,
+    featPicker: picker,
     isNextDisabled,
     isSaving: finalizeMutation.isPending,
     // The saved level, or the steps' list, failed to load: the wizard can't go on
     loadError: (!levelData && levelError && { what: "Level", error: levelError }) || stepsError,
-    powerPicker,
+    powerPicker: picker,
   };
 }

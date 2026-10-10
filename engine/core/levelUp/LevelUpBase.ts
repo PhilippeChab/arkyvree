@@ -100,6 +100,20 @@ export default abstract class LevelUpBase<C> {
   }
 
   /**
+   * `build`, which builds the character with a level's (or a level-up's) own feats and powers (`picks`, by pool), each
+   * set of them built once: a save's checks and a preview's fit ask for the character with the same picks again.
+   */
+  protected buildOnce(build: (picks: Pick<LevelPicks, "feats" | "powers">) => C) {
+    const built = new Map<string, C>();
+    return (picks: Pick<LevelPicks, "feats" | "powers">) => {
+      const key = JSON.stringify([picks.feats, picks.powers]);
+      const character = built.get(key) ?? build(picks);
+      built.set(key, character);
+      return character;
+    };
+  }
+
+  /**
    * The spell level of each of these powers in each pool it's linked to, by `powerId:aptitudeId`: a spell can be at
    * different levels in different pools (Wizard 1, Bard 0).
    */

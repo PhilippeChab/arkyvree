@@ -18,8 +18,9 @@ export interface FeatGroupDetails {
 /**
  * A feat picker for the character, from its rows: the pool's feats (`filters`, a family's when the query names one;
  * `groupFilters`, grouped by family), but those that don't stack it holds (`holder`: picked or granted at any of its
- * levels, a later one and a planned one too, or made possessed by its modifiers), or picked so far; each described with
- * the pools its modifiers add slots to, and a family's row described when the picker opens it (`describeGroups`).
+ * levels, a later one and a planned one too, or made possessed by its modifiers, the feats' and powers' picked so far
+ * too), or picked so far; each described with the pools its modifiers add slots to, and a family's row described when
+ * the picker opens it (`describeGroups`).
  */
 export default class FeatPicker extends Dnd35LevelPicker<{ aptitudeModifiers: PoolModifier[] }> {
   constructor(view: RulesetView, input: CharacterInput, query: FeatPickQuery) {

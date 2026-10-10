@@ -26,9 +26,14 @@ export function abilityIncreaseString(abilityId: string | null | undefined) {
     .join(";");
 }
 
-/** The picked feats as the "featId:aptitudeId" list the picker endpoints take. */
-export function featPickString(feats: LevelUpFormData["selectedFeats"]) {
-  const pairs = Object.entries(feats).flatMap(([aptitudeId, picks]) => picks.map((f) => `${f.id}:${aptitudeId}`));
+/**
+ * The picked feats or spells as the "id:aptitudeId" list the picker endpoints take, sorted: a step takes them in the
+ * order they were picked (`pickPairString`).
+ */
+export function pickerPairString(picks: Record<string, { id: string }[]>) {
+  const pairs = Object.entries(picks).flatMap(([aptitudeId, poolPicks]) =>
+    poolPicks.map((pick) => `${pick.id}:${aptitudeId}`),
+  );
   return pairs.length > 0 ? pairs.sort().join(",") : undefined;
 }
 
@@ -62,15 +67,15 @@ export function plannedLevelsOf(
 
 /**
  * Add Level's picker at the planned level its next pick lands on (`index`, the preview's `nextPickLevels`): that level's class,
- * level and ability increase, the planned levels before it, the feats picked so far, and the planned levels after it,
- * whose grants it leaves out, none of them saved yet. Nothing until the plan's preview has loaded, which skips the
- * picker's query.
+ * level and ability increase, the planned levels before it, the feats and spells picked so far (`picked`, encoded by
+ * `pickerPairString`), and the planned levels after it, whose grants it leaves out, none of them saved yet. Nothing
+ * until the plan's preview has loaded, which skips the picker's query.
  */
 export function plannedPicker(
   levelDetails: { klassId: string; klassLevelId: string; level: number }[] | undefined,
   abilityIncreases: (string | null)[],
   index: number,
-  featPicks: string | undefined,
+  { featPicks, powerPicks }: Pick<PickerLevel, "featPicks" | "powerPicks">,
 ): PickerLevel {
   const detail = levelDetails?.[index];
   const later = levelDetails?.slice(index + 1).map((level) => level.klassLevelId) ?? [];
@@ -80,14 +85,9 @@ export function plannedPicker(
     level: detail?.level,
     featPicks,
     laterClassLevelIds: later.length > 0 ? later.join(",") : undefined,
+    powerPicks,
     ...plannedLevelsOf(levelDetails, abilityIncreases, index),
   };
-}
-
-/** The picked spells' ids, every pool's, as the spell picker leaves them out ("id,id"). */
-export function powerPickString(powers: LevelUpFormData["selectedPowers"]) {
-  const ids = Object.values(powers).flatMap((picks) => picks.map((power) => power.id));
-  return ids.length > 0 ? ids.sort().join(",") : undefined;
 }
 
 /** The skill points spent so far as the "skillId:points" list the class picker takes. */

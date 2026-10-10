@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import {
-  featPickString,
+  pickerPairString,
   pickPairString,
   plannedLevelsOf,
   plannedPicker,
@@ -14,15 +14,19 @@ const FIGHTER_THEN_WIZARD = [
   { klassId: "wizard", klassLevelId: "w1", level: 1 },
 ];
 
+/** No feat or spell picked yet, as the pickers send it. */
+const NONE_PICKED = { featPicks: undefined, powerPicks: undefined };
+
 /** A feat picked by its id. */
 function feat(id: string) {
   return { id, name: id, aptitudeModifiers: [] };
 }
 
 describe("encoding a level wizard's picks for its pickers", () => {
-  test("lists the picked feats by pool, in order", () => {
-    expect(featPickString({ general: [feat("b"), feat("a")] })).toBe("a:general,b:general");
-    expect(featPickString({})).toBeUndefined();
+  test("lists the picked feats or spells by pool, in order", () => {
+    expect(pickerPairString({ general: [feat("b"), feat("a")] })).toBe("a:general,b:general");
+    expect(pickerPairString({ wizard: [{ id: "light" }], bard: [{ id: "light" }] })).toBe("light:bard,light:wizard");
+    expect(pickerPairString({})).toBeUndefined();
   });
 
   test("pairs each planned level's class level with its ability increase, up to the pick's level", () => {
@@ -59,15 +63,17 @@ describe("the picker at the planned level a pick lands on", () => {
   test("asks for that level's class, level and ability increase, after the planned levels before it", () => {
     // A Fighter 3 then Wizard 1 plan: its wizard spells land on Wizard 1 (the preview's next pick level), never on the
     // plan's first class
-    expect(plannedPicker(FIGHTER_THEN_WIZARD, [null, "int"], 1, "dodge:general")).toEqual({
+    const picked = { featPicks: "dodge:general", powerPicks: "light:wizard" };
+    expect(plannedPicker(FIGHTER_THEN_WIZARD, [null, "int"], 1, picked)).toEqual({
       abilityId: "int",
       classId: "wizard",
       level: 1,
       featPicks: "dodge:general",
       plannedAbilityIncreases: "",
       plannedClassLevelIds: "f3",
+      powerPicks: "light:wizard",
     });
-    expect(plannedPicker(FIGHTER_THEN_WIZARD, [], 0, undefined)).toMatchObject({
+    expect(plannedPicker(FIGHTER_THEN_WIZARD, [], 0, NONE_PICKED)).toMatchObject({
       classId: "fighter",
       level: 3,
       plannedClassLevelIds: undefined,
@@ -75,11 +81,11 @@ describe("the picker at the planned level a pick lands on", () => {
   });
 
   test("sends the planned levels after it, whose grants it leaves out", () => {
-    expect(plannedPicker(FIGHTER_THEN_WIZARD, [], 0, undefined)).toMatchObject({ laterClassLevelIds: "w1" });
-    expect(plannedPicker(FIGHTER_THEN_WIZARD, [], 1, undefined).laterClassLevelIds).toBeUndefined();
+    expect(plannedPicker(FIGHTER_THEN_WIZARD, [], 0, NONE_PICKED)).toMatchObject({ laterClassLevelIds: "w1" });
+    expect(plannedPicker(FIGHTER_THEN_WIZARD, [], 1, NONE_PICKED).laterClassLevelIds).toBeUndefined();
   });
 
   test("leaves the picker's level unknown until the plan's preview has loaded", () => {
-    expect(plannedPicker(undefined, [], 0, undefined)).toMatchObject({ classId: undefined, level: undefined });
+    expect(plannedPicker(undefined, [], 0, NONE_PICKED)).toMatchObject({ classId: undefined, level: undefined });
   });
 });

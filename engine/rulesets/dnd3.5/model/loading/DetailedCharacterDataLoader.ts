@@ -130,7 +130,7 @@ export default class DetailedCharacterDataLoader extends include(
 
     // The feats and powers the character's sources' modifiers make it possess, and theirs in turn
     const equippedItemIds = inventory.filter((entry) => entry.equipped).map((entry) => entry.item.id);
-    const { virtuallyPossessedFeatIds, virtuallyPossessedPowers } = this.resolveVirtualPossessions(
+    const possessions = this.resolveVirtualPossessions(
       rows.modifiers,
       [race.id, ...equippedItemIds, ...klassEntityIds, ...levels.klassLevelIds, ...featIds, ...powerIds],
       featIds,
@@ -153,9 +153,9 @@ export default class DetailedCharacterDataLoader extends include(
       klassSkills,
       klassLevelSaves,
       klasses,
-      feats: this.toCustomizedFeats(allFeats, virtuallyPossessedFeatIds, rulesetData),
+      feats: this.toCustomizedFeats(allFeats, possessions, rulesetData),
       skills,
-      powers: this.toCustomizedPowers(allPowers, virtuallyPossessedPowers, rulesetData, dcAbilities),
+      powers: this.toCustomizedPowers(allPowers, possessions, rulesetData, dcAbilities),
       klassLevelFeatCountsByAptitudeId,
       klassLevelPowerCountsByAptitudeId,
       klassLevelProperties,

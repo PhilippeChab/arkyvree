@@ -3,7 +3,6 @@ import {
   availableFeatsGroupedQuery,
   availablePowersQuery,
   type PickerLevel,
-  type PowerPickerLevel,
 } from "@/client/src/pages/characters/details/components/levelUp/index.ts";
 
 /** A level wizard's pickers, as the generic wizards give them: the open pool, the search, and the level they're at. */
@@ -13,7 +12,7 @@ interface PickerState {
   /** The level the next feat pick lands on, and what the feats are checked against */
   featPicker: PickerLevel;
   /** The level the next spell pick lands on, what the spells are checked against, and those picked already */
-  powerPicker: PowerPickerLevel;
+  powerPicker: PickerLevel;
   /** The feat pool open, while it has room */
   selectedAptitude: string | null;
   selectedPowerAptitude: string | null;

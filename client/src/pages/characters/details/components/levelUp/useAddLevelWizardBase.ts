@@ -9,14 +9,8 @@ import type { PreviewAnswers } from "@/client/src/pages/characters/details/compo
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import { type HpLevel, hpSet } from "./hitPoints.ts";
-import { availableClassesQuery, type ClassPicker, type PowerPickerLevel } from "./levelUpQueries.ts";
-import {
-  abilityIncreasesOf,
-  plannedLevelsOf,
-  plannedPicker,
-  powerPickString,
-  skillPointString,
-} from "./pendingPicks.ts";
+import { availableClassesQuery, type ClassPicker } from "./levelUpQueries.ts";
+import { abilityIncreasesOf, plannedLevelsOf, plannedPicker, skillPointString } from "./pendingPicks.ts";
 import type { AddLevelPlan } from "./useAddLevelPlan.ts";
 import { useFittedPicks } from "./useFittedPicks.ts";
 import { type AvailableKlass, pickIds } from "./useLevelWizardBase.ts";
@@ -78,7 +72,7 @@ export function useAddLevelWizardBase({ plan, answers, characterId, open, onClos
 
   // The picks the preview fits to the plan's pools: while it answers for earlier picks, they stand
   const fitted = useFittedPicks(plan, answers);
-  const { featPicks, selectedAptitude, selectedFeats, selectedPowers, skillPointAllocations } = fitted;
+  const { featPicks, powerPicks, selectedAptitude, selectedFeats, selectedPowers, skillPointAllocations } = fitted;
 
   // The class picker's: every planned level, and what's picked over them so far
   const classPicker: ClassPicker = {
@@ -112,19 +106,16 @@ export function useAddLevelWizardBase({ plan, answers, characterId, open, onClos
     levelDetails,
     abilityIncreases,
     selectedAptitude ? (nextPickLevels?.feats[selectedAptitude] ?? 0) : 0,
-    featPicks,
+    { featPicks, powerPicks },
   );
 
   // The level the next spell pick lands on, in the open pool at its open spell level, but the spells picked already
-  const powerPicker: PowerPickerLevel = {
-    ...plannedPicker(
-      levelDetails,
-      abilityIncreases,
-      selectedPowerAptitude ? (nextPickLevels?.powers[selectedPowerAptitude]?.[selectedPowerLevel ?? ""] ?? 0) : 0,
-      featPicks,
-    ),
-    selectedPowerIds: powerPickString(selectedPowers),
-  };
+  const powerPicker = plannedPicker(
+    levelDetails,
+    abilityIncreases,
+    selectedPowerAptitude ? (nextPickLevels?.powers[selectedPowerAptitude]?.[selectedPowerLevel ?? ""] ?? 0) : 0,
+    { featPicks, powerPicks },
+  );
 
   // Pool-level picks; the backend distributes them to the levels.
   const finalizeMutation = useMutation({

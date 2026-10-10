@@ -50,15 +50,17 @@ export function CustomizesEntities<B extends Constructor<CharacterDataLoader<Loa
      * Feat properties/modifiers/requirements. Compose step pre-merges siblings into these buckets; consumers only read.
      * Virtually possessed feats are appended with `virtual: true` so the rest of the pipeline sees one unified list —
      * eliminates the parallel "real vs virtual" code paths (registerFeat, possessed counts, modifier loading) that
-     * historically missed cases like grouping DC bonuses on virtually-granted spells.
+     * historically missed cases like grouping DC bonuses on virtually-granted spells. A feat a modifier gives
+     * (`givenFeatIds`) is `given`, picked or granted too or not.
      */
     protected toCustomizedFeats(
       allFeats: HeldFeat[],
-      virtuallyPossessedFeatIds: string[],
+      { givenFeatIds, virtuallyPossessedFeatIds }: { givenFeatIds: Set<string>; virtuallyPossessedFeatIds: string[] },
       rulesetData: RulesetData,
     ): CustomizedFeat[] {
       const realFeats: CustomizedFeat[] = allFeats.map((feat) => ({
         ...feat,
+        given: givenFeatIds.has(feat.id),
         properties: rulesetData.propertiesByEntity.get(feat.id) ?? [],
         modifiers: rulesetData.modifiersBySource.get(feat.id) ?? [],
         requirements: rulesetData.requirementsByEntity.get(feat.id) ?? [],
@@ -67,7 +69,7 @@ export function CustomizesEntities<B extends Constructor<CharacterDataLoader<Loa
       for (const featId of virtuallyPossessedFeatIds) {
         const featRow = rulesetData.featsById.get(featId);
         if (!featRow) continue;
-        virtualFeats.push(FeatsComponent.toVirtualFeat(featRow, rulesetData));
+        virtualFeats.push({ ...FeatsComponent.toVirtualFeat(featRow, rulesetData), given: true });
       }
       return [...realFeats, ...virtualFeats];
     }
@@ -89,15 +91,22 @@ export function CustomizesEntities<B extends Constructor<CharacterDataLoader<Loa
       return { klassLevels, klassLevelProperties };
     }
 
-    /** Power properties/modifiers/requirements. Compose step pre-merges siblings. */
+    /**
+     * Power properties/modifiers/requirements. Compose step pre-merges siblings. A spell a modifier makes known on its
+     * list (`givenPowerKeys`, by `<power id>:<list id>`) is `given` there, picked or granted too or not.
+     */
     protected toCustomizedPowers(
       allPowers: HeldPower[],
-      virtuallyPossessedPowers: { aptitudeId: string; powerId: string }[],
+      {
+        givenPowerKeys,
+        virtuallyPossessedPowers,
+      }: { givenPowerKeys: Set<string>; virtuallyPossessedPowers: { aptitudeId: string; powerId: string }[] },
       rulesetData: RulesetData,
       dcAbilities: { klassBonusSpellAbilityMap: Map<string, string>; klassLevels: KlassLevel[] },
     ): CustomizedPower[] {
       const realPowers: Omit<CustomizedPower, "abilityDcName">[] = allPowers.map((power) => ({
         ...power,
+        given: givenPowerKeys.has(`${power.id}:${power.aptitudeId}`),
         properties: rulesetData.propertiesByEntity.get(power.id) ?? [],
         modifiers: rulesetData.modifiersBySource.get(power.id) ?? [],
         requirements: rulesetData.requirementsByEntity.get(power.id) ?? [],
@@ -115,6 +124,7 @@ export function CustomizesEntities<B extends Constructor<CharacterDataLoader<Loa
           aptitudeId,
           virtual: true,
           free: true,
+          given: true,
           saveName: PowersComponent.saveNameOf(powerRow, rulesetData),
           powerLevel: link.level,
           properties: rulesetData.propertiesByEntity.get(powerId) ?? [],

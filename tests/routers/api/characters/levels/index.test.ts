@@ -285,21 +285,22 @@ describe("character levels", () => {
 
     test("leaves out the spells the wizard picked already, as the feat picker leaves out a feat held", async () => {
       const { characterId, ctx } = await createCharacter();
-      const cantrips = async (selectedPowerIds?: string) => {
+      const wizardSpells = ctx.aptMap["Wizard Spells"];
+      const cantrips = async (powerPicks?: string) => {
         const query = {
-          aptitudeId: ctx.aptMap["Wizard Spells"],
+          aptitudeId: wizardSpells,
           classId: ctx.klassMap.pc["Wizard"],
           level: "1",
           powerLevel: "0",
           limit: "100",
-          selectedPowerIds,
+          powerPicks,
         };
         return (await expectOk(levels["available-powers"].$get({ param: { characterId }, query }))).items;
       };
 
       const offered = await cantrips();
       const [picked, other] = offered;
-      const left = await cantrips(picked.id);
+      const left = await cantrips(`${picked.id}:${wizardSpells}`);
       expect(left.map((power) => power.id)).not.toContain(picked.id);
       expect(left.map((power) => power.id)).toContain(other.id);
       expect(left).toHaveLength(offered.length - 1);

@@ -4,7 +4,7 @@
  * Whether to force the rules is always an operation's last argument.
  */
 
-import type { AbilityIncrease, FeatPick } from "./plans.ts";
+import type { AbilityIncrease, FeatPick, PowerPick } from "./plans.ts";
 
 /** A level's picks, as a form sends them: its skill ranks, and its feats and powers by the pool they're picked in. */
 export interface LevelPicks {
@@ -44,12 +44,13 @@ export interface LevelUpRequest {
 
 /**
  * What the level-up wizard plans before the level a step or a picker is for, not saved yet: its levels (their class
- * levels, and their ability increases by place), and the feats and skill points picked over them so far.
+ * levels, and their ability increases by place), and the feats, powers and skill points picked over them so far.
  */
 export interface PlannedSoFar {
   abilityIncreases?: AbilityIncrease[][];
   featPicks?: FeatPick[];
   klassLevelIds?: string[];
+  powerPicks?: PowerPick[];
   skillPoints?: Record<string, number>;
 }
 
@@ -76,5 +77,5 @@ export type PickQuery = LevelQuery & {
   level: number;
 };
 
-/** A power picker's query: a level's pool, of a spell level when given, less the powers picked so far. */
-export type PowerPickQuery = PickQuery & { powerLevel?: number; selectedPowerIds?: string[] };
+/** A power picker's query: a level's pool, of a spell level when given. */
+export type PowerPickQuery = PickQuery & { powerLevel?: number };
