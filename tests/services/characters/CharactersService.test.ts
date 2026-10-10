@@ -485,5 +485,32 @@ describe("CharactersService", () => {
       // Nothing to judge by yet.
       expect(await eligible({})).toBe(true);
     });
+
+    test("count what the form doesn't say as met inside an or, as alone", async () => {
+      const { rulesetId } = await getSeedCtx();
+      const [race] = await Races.create(db, {
+        name: `Restricted Race ${uniqueId()}`,
+        rulesetId,
+        size: "Medium",
+        baseSpeed: 30,
+      });
+      const owner = { entityId: race.id, entityType: "races", operator: "equal", valueType: "string" } as const;
+      await Requirements.createMany(db, [
+        { entityId: race.id, entityType: "races", level: "1", chainingOperator: "or" },
+        { ...owner, level: "1.1", target: "identity.beliefs.alignment", value: "Lawful Good" },
+        { ...owner, level: "1.2", target: "identity.physiology.gender", value: "Male" },
+      ]);
+      invalidateSeededRuleset(rulesetId);
+      const eligible = async (form: object) =>
+        (await CharactersService.getAvailableRaces(rulesetId, form, {}, page)).items.find((r) => r.id === race.id)!
+          .eligible;
+
+      expect(await eligible({})).toBe(true);
+      // The alignment it doesn't say may meet the group, whatever the gender
+      expect(await eligible({ gender: "Female" })).toBe(true);
+      expect(await eligible({ alignment: "Lawful Good", gender: "Female" })).toBe(true);
+      expect(await eligible({ alignment: "Chaotic Evil", gender: "Male" })).toBe(true);
+      expect(await eligible({ alignment: "Chaotic Evil", gender: "Female" })).toBe(false);
+    });
   });
 });

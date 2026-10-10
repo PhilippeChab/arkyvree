@@ -112,6 +112,42 @@ describe("RequirementEvaluator", () => {
     ).toHaveLength(2);
   });
 
+  // A condition whose path reads nothing (a new character's form that doesn't say it) can't leave its group unmet
+  test.each([
+    ["alone", [{ level: "1", unread: true }], met],
+    ["in an or, beside one unmet", [{ level: "1", or: true }, { level: "1.1", unread: true }, { level: "1.2" }], met],
+    [
+      "in an or of nothing read",
+      [
+        { level: "1", or: true },
+        { level: "1.1", unread: true },
+      ],
+      met,
+    ],
+    [
+      "in an and, beside one unmet",
+      [{ level: "1", and: true }, { level: "1.1", unread: true }, { level: "1.2" }],
+      unmet,
+    ],
+    [
+      "in an and of nothing read",
+      [
+        { level: "1", and: true },
+        { level: "1.1", unread: true },
+      ],
+      met,
+    ],
+  ] as const)("counts a condition it can't read as met %s, and reports it", (_, rows, expected) => {
+    const group = rows.map((row, index) => {
+      const chainingOperator = "or" in row ? "or" : "and" in row ? "and" : null;
+      const target = "unread" in row ? "abilities.luck.total" : "feats.weaponfocus.*.possessed";
+      return requirement({ id: `req-${index}`, level: row.level, chainingOperator, target });
+    });
+    const resolve = (target: string) =>
+      target === "abilities.luck.total" ? [result(null, "Element not found: luck")] : [result(false)];
+    expect(evaluate(group, resolve)).toEqual({ ...expected, invalid: ["Element not found: luck"] });
+  });
+
   test("reports a value that isn't of its type: a boolean is true or false, a number not empty", () => {
     expect(evaluate([requirement({ value: "yes" })], () => [result(true)])).toEqual({
       ...unmet,
