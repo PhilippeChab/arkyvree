@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
-import CharacterEdits from "@/engine/rulesets/dnd3.5/characters/CharacterEdits.ts";
+import NewCharacters from "@/engine/rulesets/dnd3.5/characters/NewCharacters.ts";
 import AbilityRules from "@/engine/rulesets/dnd3.5/rules/AbilityRules.ts";
 
 describe("A new 3.5 character's creation", () => {
   test("offers the SRD's methods, each run by its kind", () => {
-    const { methods } = CharacterEdits.describeCreation();
+    const { methods } = NewCharacters.describeCreation();
     expect(methods.map(({ id, kind }) => [id, kind])).toEqual([
       ["4d6-drop-lowest", "roll"],
       ["3d6-straight", "roll"],
@@ -17,7 +17,7 @@ describe("A new 3.5 character's creation", () => {
   });
 
   test("buys a point buy's scores from 8 to 18 out of 25 points, each higher one costing more", () => {
-    const pointBuy = CharacterEdits.describeCreation().methods.find((method) => method.kind === "pointBuy");
+    const pointBuy = NewCharacters.describeCreation().methods.find((method) => method.kind === "pointBuy");
     expect(pointBuy).toMatchObject({ budget: 25, max: 18, min: 8 });
     if (pointBuy?.kind !== "pointBuy") throw new Error("No point buy");
     const costs = Array.from({ length: 11 }, (_, index) => pointBuy.costs[8 + index]);
@@ -25,7 +25,7 @@ describe("A new 3.5 character's creation", () => {
   });
 
   test("bounds its scores, starts an unset one at 10, and gives each score the abilities' modifier", () => {
-    const { modifiers, scores } = CharacterEdits.describeCreation();
+    const { modifiers, scores } = NewCharacters.describeCreation();
     expect(scores).toEqual({ max: 100, min: 1, start: 10 });
     expect(Object.keys(modifiers)).toHaveLength(100);
     expect([1, 8, 9, 10, 11, 12, 18, 19, 100].map((score) => modifiers[score])).toEqual([

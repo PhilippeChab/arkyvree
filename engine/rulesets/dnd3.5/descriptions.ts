@@ -24,11 +24,11 @@ export type Dnd35Descriptions = {
   featOption: DetailsOf<FeatPicker>;
   inventoryEntry: ReturnType<typeof InventoryEntries.describeInventoryEntry>;
   levelSelections: ReturnType<Dnd35LevelSelections["describeLevel"]>;
-  memberSheet: ReturnType<typeof CharacterDescription.describeForMember>;
+  partialSheet: ReturnType<typeof CharacterDescription.describePartial>;
   powerOption: DetailsOf<PowerPicker>;
   preview: ReturnType<LevelUpPreview["describePreview"]>;
   raceOption: DetailsOf<RacePicker>;
-  sheet: ReturnType<typeof CharacterDescription.describe>;
+  sheet: ReturnType<typeof CharacterDescription.describeFull>;
   sheetDocument: ReturnType<typeof CharacterSheet.describeSheet>;
   step: ReturnType<LevelUpSteps["describeStep"]>;
 };

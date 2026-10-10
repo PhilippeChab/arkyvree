@@ -1,6 +1,7 @@
 import type { InferSelectModel } from "drizzle-orm";
 
 import type { charactersInCharacter } from "@/drizzle/schema.ts";
+import type { NotedSheet } from "@/engine/core/module/index.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
@@ -67,11 +68,18 @@ export default class CharacterResponse {
     }));
   }
 
-  /** The character's identity, with the GM's notes in its background, where the response has always held them. */
+  /**
+   * The character's identity, with the GM's notes in its background, where every ruleset's sheet holds them: which a
+   * reader who doesn't read them reads blank or not at all (`CharactersPart.describe`).
+   */
   private static identityWithPrivateNotes(built: DetailedCharacter) {
     const { identity } = built.components;
     const data = identity.getIdentity();
-    return { ...data, background: { ...data.background, privateNotes: identity.getPrivateNotes() } };
+    const background: typeof data.background & NotedSheet["identity"]["background"] = {
+      ...data.background,
+      privateNotes: identity.getPrivateNotes(),
+    };
+    return { ...data, background };
   }
 
   /** A bonded creature (`record`, built from its rows: `built`) as the API answers it: a sheet, with its feats. */

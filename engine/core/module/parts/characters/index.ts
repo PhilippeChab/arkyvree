@@ -4,7 +4,9 @@ export type {
   CharacterCreation,
   CreationMethod,
   DescribedInventoryEntry,
+  DescribedSheet,
   HeldInventoryEntry,
+  NotedSheet,
   PlacementDescription,
 } from "./descriptions.ts";
 export type { AbilitiesPlan, AbilityScore, InventoryEntryPlan, NewCharacterPlan } from "./plans.ts";
