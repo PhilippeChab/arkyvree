@@ -40,14 +40,25 @@ import { describeCustomizations, freshExtensionSeeder, freshSeeder, namesOf } fr
 /**
  * The class level each spell level opens at, the first at the first: 1, 3, 5…
  *
- * Full casters, whose spell level N opens at class level 2N - 1: a domain's slots open with the cleric's, a school's
- * with the wizard's.
+ * Full casters, whose spell level N opens at class level 2N - 1: a domain's spells open with the cleric's, a school's
+ * slots with the wizard's.
  */
 const CLERIC = findSpellcastingClass(SRD_CLASSES, "Cleric");
 const WIZARD = findSpellcastingClass(SRD_CLASSES, "Wizard");
 
 function feats(...names: string[]) {
   return names.map((name) => ({ name, description: "", aptitudes: [] }));
+}
+
+/**
+ * A spell list's spells known at each spell level, as `describeCustomizations` reads it, gated from the second on by
+ * `classTarget`.
+ */
+function gatedKnown(list: string, classTarget: string) {
+  return Array.from({ length: 9 }, (_, i) => {
+    const gate = i === 0 ? "" : `\n  if 1 ${classTarget} greater_than_or_equal ${2 * i + 1}`;
+    return `aptitudes.${list}.${i + 1}.allowed set -1 number${gate}`;
+  });
 }
 
 /** A spell list's slot at each spell level, as `describeCustomizations` reads it, gated from the second on by `classTarget`. */
@@ -556,7 +567,7 @@ describe("Seeding", () => {
     ]);
   });
 
-  test("seeds a cleric domain: a feat in Cleric Domain whose spell list opens as the cleric casts each level and joins the cleric's, with the domain's spells", async () => {
+  test("seeds a cleric domain: a feat in Cleric Domain whose spell list is known as the cleric casts each level and joins the cleric's, with the domain's spells", async () => {
     const seeder = await freshSeeder();
     const ctx = seeder.ctx;
     await seeder.seedAptitudes(["Cleric Domain"]);
@@ -586,7 +597,7 @@ describe("Seeding", () => {
     expect(await describeCustomizations(featId)).toEqual({
       requirements: [],
       modifiers: [
-        ...gatedSlots("testluckdomainspells", "classes.cleric.level"),
+        ...gatedKnown("testluckdomainspells", "classes.cleric.level"),
         "aptitudes.testluckdomainspells.joinsclasslist set true boolean",
         "skills.spot.innate set true boolean",
       ].sort(),

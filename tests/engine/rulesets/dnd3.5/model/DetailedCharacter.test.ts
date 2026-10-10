@@ -2494,6 +2494,19 @@ describe("DetailedCharacter", () => {
     });
 
     describe("of a cleric's domains", () => {
+      test("fill one domain slot a spell level the cleric casts, whatever his domains", async () => {
+        // Cleric 3 of the Healing and Sun domains: a domain slot at the first and second levels, his feature's
+        const theron = await buildSeeded("Theron Lightbringer");
+        expect(spellUses(theron, "domainspells", [0, 1, 2, 3])).toEqual([0, 1, 1, 0]);
+        for (const list of ["healingdomainspells", "sundomainspells"]) {
+          expect([1, 2, 3].map((level) => spellLevel(theron, list, level))).toMatchObject([
+            { allowed: ALLOWED_ALL, uses: 0 },
+            { allowed: ALLOWED_ALL, uses: 0 },
+            { allowed: 0, uses: 0 },
+          ]);
+        }
+      });
+
       test("join the cleric's list with the domain's tag, up to the levels it casts", async () => {
         // Sun domain: Heat Metal (2nd level, not a cleric spell), Fire Shield (4th).
         const theron = await buildSeeded("Theron Lightbringer");
@@ -2551,10 +2564,12 @@ describe("DetailedCharacter", () => {
           bonuscasterlevel: 5,
         });
         expect([5, 6, 7].map((level) => spellLevel(detailed, "weatherdomainspells", level))).toMatchObject([
-          { allowed: ALLOWED_ALL, uses: 1 },
-          { allowed: ALLOWED_ALL, uses: 1 },
+          { allowed: ALLOWED_ALL, uses: 0 },
+          { allowed: ALLOWED_ALL, uses: 0 },
           { allowed: 0 },
         ]);
+        // One domain slot a spell level, his two domains' alike, its fifth and sixth opened by the bonus caster levels
+        expect(spellUses(detailed, "domainspells", [1, 2, 3, 4, 5, 6, 7])).toEqual([1, 1, 1, 1, 1, 1, 0]);
         const tags = detailed.getSpellTags();
         const weather = allPowers(detailed)
           .filter((p) => tags[p.id]?.includes("Weather Domain"))
@@ -2759,12 +2774,14 @@ describe("DetailedCharacter", () => {
           "Resist Energy",
           "Wall of Fire",
         ]);
-        // The domain's slots are the cleric's, up to the level he casts; each feat's tag shows on its class's list
+        // The domain's spells are known up to the level the cleric casts, his domain slot his; each feat's tag shows on
+        // its class's list
         expect([1, 2, 3].map((level) => spellLevel(detailed, "firedomainspells", level))).toMatchObject([
-          { allowed: ALLOWED_ALL, uses: 1 },
-          { allowed: ALLOWED_ALL, uses: 1 },
+          { allowed: ALLOWED_ALL, uses: 0 },
+          { allowed: ALLOWED_ALL, uses: 0 },
           { allowed: 0, uses: 0 },
         ]);
+        expect(spellUses(detailed, "domainspells", [1, 2, 3])).toEqual([1, 1, 0]);
         const tagLists = detailed.getSpellTagLists();
         expect(tagLists["Fire Domain"].aptitudeIds).toContain(aptitudes["clericspells"].id);
         expect(tagLists["Fire Domain (Divine Crusader)"].aptitudeIds).toContain(aptitudes["divinecrusaderspells"].id);
@@ -2876,7 +2893,8 @@ describe("DetailedCharacter", () => {
       });
 
       test("keep a domain's spells on its own list for a class with no list knowing their level", async () => {
-        // A fighter picking the sun domain, as a prestige class granting a domain pick would: its first-level slot is its own
+        // A fighter picking the sun domain, as a prestige class granting a domain pick would: its first-level spell is
+        // its own, though no domain slot: that's a cleric's
         const ctx = await getSeedCtx();
         const characterId = await seedHuman("Sun Fighter", { ...WIZARD_SCORES, Wisdom: 16 });
         const fighter = (await Klasses.findOne(db, { name: "Fighter", rulesetId: ctx.rulesetId }))!;
@@ -2885,7 +2903,8 @@ describe("DetailedCharacter", () => {
         });
         const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
         const sunDomainSpells = detailed.components.aptitudes.getAptitudes()["sundomainspells"].id;
-        expect(spellLevel(detailed, "sundomainspells", 1)).toMatchObject({ allowed: ALLOWED_ALL, uses: 1 });
+        expect(spellLevel(detailed, "sundomainspells", 1)).toMatchObject({ allowed: ALLOWED_ALL, uses: 0 });
+        expect(spellLevel(detailed, "domainspells", 1)).toMatchObject({ allowed: 0, uses: 0 });
         expect(
           allPowers(detailed)
             .filter((power) => power.aptitudeId === sunDomainSpells)

@@ -21,6 +21,18 @@ export abstract class BaseSeeder extends ContentSeeder<CoreContent, BookContent>
   }
 
   /**
+   * A spell list's spells known at each spell level from the first to the ninth (`allowed` set to -1): a cleric's
+   * domain's, which fill his domain slot (`DOMAIN_SPELLS`, his feature's) and join his list.
+   */
+  protected spellListKnown(sourceId: string, sourceType: string, list: string): ModifierRow[] {
+    return Array.from({ length: 9 }, (_, i) => ({
+      sourceId,
+      sourceType,
+      ...setNum(`aptitudes.${list}.${i + 1}.allowed`, -1),
+    }));
+  }
+
+  /**
    * The slots a spell list gives: one more spell a day at each spell level from the first to the ninth, and any
    * spell of the list to prepare there (`allowed` set to -1).
    */
@@ -32,8 +44,8 @@ export abstract class BaseSeeder extends ContentSeeder<CoreContent, BookContent>
   }
 
   /**
-   * Inserts modifiers and gates the ones that give spell slots by the level of `klass` that opens their spell level (a
-   * cleric's for a domain's slots, a wizard's for a school's). The first class level needs no gate.
+   * Inserts modifiers and gates the ones that give a spell level's slots or spells by the level of `klass` that opens
+   * it (a cleric's for a domain's spells, a wizard's for a school's slots). The first class level needs no gate.
    */
   protected async insertGatedSpellSlots(rows: ModifierRow[], klass: SpellcastingClass) {
     if (rows.length === 0) return;

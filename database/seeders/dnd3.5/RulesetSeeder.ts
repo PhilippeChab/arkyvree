@@ -81,9 +81,10 @@ export class RulesetSeeder extends include(
   }
 
   /**
-   * Seeds cleric domains: each a feat taken in Cleric Domain that gives its spell list ("X Domain Spells") a slot at
-   * each spell level, once the cleric casts that level (`cleric`'s table), and joins it to the cleric's list, plus
-   * the domain's own modifiers.
+   * Seeds cleric domains: each a feat taken in Cleric Domain that makes its spell list ("X Domain Spells") known at
+   * each spell level, once the cleric casts that level (`cleric`'s table), and joins it to the cleric's list, plus the
+   * domain's own modifiers. Its spells fill the cleric's one domain slot a spell level (`DOMAIN_SPELLS`), which his
+   * domains share: his feature gives it, not a domain.
    */
   async seedDomains(domains: DomainSeed[], cleric: SpellcastingClass) {
     if (domains.length === 0) return;
@@ -97,7 +98,7 @@ export class RulesetSeeder extends include(
         const featId = this.ctx.featMap[domainFeat(d.name)];
         const list = stripSeparators(domainSpells(d.name));
         return [
-          ...this.spellListSlots(featId, "feats", list),
+          ...this.spellListKnown(featId, "feats", list),
           this.joinsClassList(featId, "feats", list),
           ...this.modifierRows(featId, "feats", d.modifiers),
         ];

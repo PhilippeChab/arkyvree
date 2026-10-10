@@ -219,7 +219,9 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
           if (!listLevel || classLevels.length < classLists.length) continue;
 
           const casts = classLevels.some((classLevel) => classLevel.allowed !== 0 || classLevel.uses > 0);
-          if (casts && listLevel.allowed === 0) {
+          // A level the feat's own modifiers opened: its spells known, or its slots (a domain slot's, uses alone)
+          const opened = listLevel.allowed !== 0 || listLevel.uses > 0;
+          if (casts && !opened) {
             const given = this.slotsGiven(
               modifiers.filter(
                 (modifier) =>
@@ -229,7 +231,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
             );
             listLevel.uses += given.uses;
             listLevel.allowed = given.allowed;
-          } else if (!casts && listLevel.allowed !== 0) {
+          } else if (!casts && opened) {
             this.aptitudes.clearAllKnown(listLevel);
             listLevel.uses = 0;
           }

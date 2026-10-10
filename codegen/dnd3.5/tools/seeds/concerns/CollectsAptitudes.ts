@@ -1,7 +1,7 @@
 import References from "@/codegen/dnd3.5/tools/references/References.ts";
 import { type BaseBookSeeds } from "@/codegen/dnd3.5/tools/seeds/BaseBookSeeds.ts";
 import type { FeatSeed } from "@/content/core/builders/feats/types.ts";
-import { CLERIC_DOMAIN, specialistSpells } from "@/content/dnd3.5/builders/aptitudes/names.ts";
+import { CLERIC_DOMAIN, DOMAIN_SPELLS, specialistSpells } from "@/content/dnd3.5/builders/aptitudes/names.ts";
 import { buildCoreFeats } from "@/content/dnd3.5/data/feats/coreFeats.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -11,9 +11,10 @@ import { CORE_BOOK } from "@/vocabulary/dnd3.5/books.ts";
 export function CollectsAptitudes<B extends Constructor<BaseBookSeeds>>(Base: B) {
   abstract class CollectingAptitudes extends Base {
     /**
-     * A book's aptitudes: its feats' (its feat reference's, the core rules' hand-written ones, its classes'), its classes'
-     * and spell lists', its domains' and their feat pools', its wizard schools', and for an extension the other
-     * extensions' spell lists its spells are on; but those another book's classes make.
+     * A book's aptitudes: its feats' (its feat reference's, the core rules' hand-written ones, its classes'), its
+     * classes' and spell lists', its domains' (their pick, the slot they fill) and their feat pools', its wizard
+     * schools', and for an extension the other extensions' spell lists its spells are on; but those another book's
+     * classes make.
      */
     aptitudes(): string[] {
       return this.memo("aptitudes", () => {
@@ -56,10 +57,10 @@ export function CollectsAptitudes<B extends Constructor<BaseBookSeeds>>(Base: B)
           }
         }
 
-        // Domain aptitudes: the book's domains, and their feat pools'
+        // Domain aptitudes: the pick of the book's domains and the slot they fill, and their feat pools'
         const domainRef = this.reference("domain");
         const domains = domainRef ? this.domains(domainRef) : undefined;
-        if (domains && domains.seeds().length > 0) names.add(CLERIC_DOMAIN);
+        if (domains && domains.seeds().length > 0) for (const name of [CLERIC_DOMAIN, DOMAIN_SPELLS]) names.add(name);
         for (const feat of domains?.poolFeats() ?? []) for (const apt of feat.aptitudes) names.add(apt);
 
         // Wizard school aptitudes

@@ -17,7 +17,127 @@
         "skip": true
       },
       "Deity, Domains, and Domain Spells": {
-        "description": "Select a deity for your cleric. The chosen deity shapes the cleric's alignment, available magic, personal values, and public perception. Alternatively, a cleric may serve no specific deity at all. When a deity's typical followers belong to a particular race, the cleric must share that race to worship that deity. (Other races may revere the deity casually, but cannot serve as its clerics.) After settling on an alignment and deity, pick two domains from those associated with that deity. Though all clerics of a given faith share devotion to their god, individual clerics focus on different facets of the deity's portfolio. An alignment domain (Chaos, Evil, Good, or Law) may only be chosen if the cleric's alignment corresponds to it. Clerics without a patron deity still choose two domains reflecting their spiritual focus and aptitudes, and the alignment domain restriction still applies. Each domain provides access to one domain spell per spell level the cleric can cast (beginning at 1st level) along with a granted power. The cleric receives the granted powers of both chosen domains. Since a cleric has access to two domain spells at each available spell level, he prepares one of the two each day in his domain spell slot. If a domain spell does not appear on the cleric spell list, the cleric can only prepare it in the domain spell slot. Domain spells and granted powers are detailed under Cleric Domains."
+        "description": "Select a deity for your cleric. The chosen deity shapes the cleric's alignment, available magic, personal values, and public perception. Alternatively, a cleric may serve no specific deity at all. When a deity's typical followers belong to a particular race, the cleric must share that race to worship that deity. (Other races may revere the deity casually, but cannot serve as its clerics.) After settling on an alignment and deity, pick two domains from those associated with that deity. Though all clerics of a given faith share devotion to their god, individual clerics focus on different facets of the deity's portfolio. An alignment domain (Chaos, Evil, Good, or Law) may only be chosen if the cleric's alignment corresponds to it. Clerics without a patron deity still choose two domains reflecting their spiritual focus and aptitudes, and the alignment domain restriction still applies. Each domain provides access to one domain spell per spell level the cleric can cast (beginning at 1st level) along with a granted power. The cleric receives the granted powers of both chosen domains. Since a cleric has access to two domain spells at each available spell level, he prepares one of the two each day in his domain spell slot. If a domain spell does not appear on the cleric spell list, the cleric can only prepare it in the domain spell slot. Domain spells and granted powers are detailed under Cleric Domains.",
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "aptitudes.domainspells.1.uses",
+            "value": "1",
+            "valueType": "number"
+          },
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "greater_than_or_equal",
+                "target": "classes.cleric.level",
+                "value": "3",
+                "valueType": "number"
+              }
+            ],
+            "target": "aptitudes.domainspells.2.uses",
+            "value": "1",
+            "valueType": "number"
+          },
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "greater_than_or_equal",
+                "target": "classes.cleric.level",
+                "value": "5",
+                "valueType": "number"
+              }
+            ],
+            "target": "aptitudes.domainspells.3.uses",
+            "value": "1",
+            "valueType": "number"
+          },
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "greater_than_or_equal",
+                "target": "classes.cleric.level",
+                "value": "7",
+                "valueType": "number"
+              }
+            ],
+            "target": "aptitudes.domainspells.4.uses",
+            "value": "1",
+            "valueType": "number"
+          },
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "greater_than_or_equal",
+                "target": "classes.cleric.level",
+                "value": "9",
+                "valueType": "number"
+              }
+            ],
+            "target": "aptitudes.domainspells.5.uses",
+            "value": "1",
+            "valueType": "number"
+          },
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "greater_than_or_equal",
+                "target": "classes.cleric.level",
+                "value": "11",
+                "valueType": "number"
+              }
+            ],
+            "target": "aptitudes.domainspells.6.uses",
+            "value": "1",
+            "valueType": "number"
+          },
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "greater_than_or_equal",
+                "target": "classes.cleric.level",
+                "value": "13",
+                "valueType": "number"
+              }
+            ],
+            "target": "aptitudes.domainspells.7.uses",
+            "value": "1",
+            "valueType": "number"
+          },
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "greater_than_or_equal",
+                "target": "classes.cleric.level",
+                "value": "15",
+                "valueType": "number"
+              }
+            ],
+            "target": "aptitudes.domainspells.8.uses",
+            "value": "1",
+            "valueType": "number"
+          },
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "greater_than_or_equal",
+                "target": "classes.cleric.level",
+                "value": "17",
+                "valueType": "number"
+              }
+            ],
+            "target": "aptitudes.domainspells.9.uses",
+            "value": "1",
+            "valueType": "number"
+          }
+        ]
       },
       "Spells": {
         "description": "A cleric wields divine magic (the same category of spells used by druids, paladins, and rangers), drawing from the cleric spell list. His alignment may, however, prevent him from casting certain spells that conflict with his moral or ethical principles; see Chaotic, Evil, Good, and Lawful Spells. A cleric must select and prepare spells ahead of time. Preparing or casting a spell requires a Wisdom score of at least 10 + the spell's level (Wisdom 10 for 0-level spells, Wisdom 11 for 1st-level spells, and so on). The saving throw DC against a cleric's spell equals 10 + the spell's level + the cleric's Wisdom modifier. As with other spellcasting classes, a cleric can only cast a limited number of spells of each level per day. His base daily allotment is shown in the class table, and a high Wisdom score grants additional bonus spells per day. The cleric also receives one domain spell of each castable spell level, starting at 1st level. When filling a domain spell slot, the prepared spell must belong to one of the cleric's two domains. Clerics do not learn spells from books or scrolls, nor do they study to prepare them. Rather, they pray or meditate to receive their spells, granted through the strength of their faith or direct divine inspiration. Each cleric must designate a specific time of day to spend 1 hour in quiet prayer or contemplation in order to refresh his daily spell allotment. Good clerics typically perform this devotion at dawn or noon, while evil clerics tend to do so at dusk or midnight. Resting has no bearing on a cleric's ability to prepare spells. A cleric may prepare and cast any spell from the cleric spell list as long as he can cast spells of that level, but he must decide which spells to prepare during his daily meditation."

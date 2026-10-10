@@ -12,6 +12,7 @@ export const ALL_APTITUDES: string[] = [
   "Dark Hunter Class Feature",
   "Darkwood Stalker Class Feature",
   "Dervish Class Feature",
+  "Domain Spells",
   "Drunken Master Class Feature",
   "Exotic Weapon Master Class Feature",
   "Exotic Weapon Master Exotic Weapon Stunt",
