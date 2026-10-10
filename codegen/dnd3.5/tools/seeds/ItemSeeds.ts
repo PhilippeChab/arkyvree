@@ -18,14 +18,14 @@ import { ARMOR_TYPE_DEFINITIONS, SHIELD_TYPE_DEFINITIONS } from "@/vocabulary/dn
 
 import { ReferenceSeeds } from "./ReferenceSeeds.ts";
 
-export type ItemSeedSets = {
+export interface ItemSeedSets {
   armor: ItemSeed[];
   exoticWeapons: ItemSeed[];
   goods: ItemSeed[];
   martialWeapons: ItemSeed[];
   shields: ItemSeed[];
   simpleWeapons: ItemSeed[];
-};
+}
 
 /**
  * An item reference's seeds, by category (`seeds`): each item whole, its requirements (being proficient with it) and

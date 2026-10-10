@@ -21,7 +21,10 @@ type WeaponSetInventory = Record<
 >;
 
 /** An item the character has equipped in a slot, with its fields: what its combat, armors and shields read. */
-export type EquippedEntry = { entry: InventoryEntry; fields: ItemFieldValues };
+export interface EquippedEntry {
+  entry: InventoryEntry;
+  fields: ItemFieldValues;
+}
 
 /**
  * A character's inventory: its entries, and the properties of what each slot holds (a weapon set's hands, the other

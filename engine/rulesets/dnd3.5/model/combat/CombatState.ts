@@ -16,7 +16,7 @@ import type { ShieldsData } from "./ShieldsComponent.ts";
 
 type ArmorCategory = (typeof ARMOR_CATEGORIES)[number];
 
-export type CombatData = {
+export interface CombatData {
   ac: {
     armor: number;
     base: number;
@@ -80,19 +80,21 @@ export type CombatData = {
     offhandpenalty: number;
   };
   weaponsets: Record<string, WeaponSet>;
-};
+}
 
 /**
  * A weapon of the inventory as the combat placed it: its set, its hand as its entry's location names it, its fields and
  * the slot it filled, which a later entry may have taken since. What the weapons component groups.
  */
-export type HeldWeapon = { fields: WeaponFields; location: string; setIndex: number; weapon: WeaponSlot };
-
-/** A natural attack's kind: a primary one at its full attack bonus, a secondary one lower. */
-export type NaturalAttackKind = "primary" | "secondary";
+export interface HeldWeapon {
+  fields: WeaponFields;
+  location: string;
+  setIndex: number;
+  weapon: WeaponSlot;
+}
 
 /** How a weapon's attack and damage follow the character's abilities, which its totals are recomputed from. */
-export type WeaponAbilities = {
+export interface WeaponAbilities {
   /** The ability it attacks with: Dexterity for a ranged weapon, Strength for a melee one (SRD). */
   attack: "Strength" | "Dexterity";
   /** Whether a Weapon Finesse feat lets it attack with Dexterity instead, when that's better. */
@@ -101,14 +103,14 @@ export type WeaponAbilities = {
   ratingRequired: boolean;
   /** Its Mighty rating (0 without), when Strength adds to its damage up to it (a bow's "Rating"); null otherwise. */
   strengthRating: number | null;
-};
-export type WeaponSet = {
+}
+
+export interface WeaponSet {
   mainhand: WeaponSlot | null;
   offhand: WeaponSlot | null;
   twohanded: WeaponSlot | null;
-};
-
-export type WeaponSlot = {
+}
+export interface WeaponSlot {
   damage: {
     base: string;
     critical: {
@@ -173,7 +175,10 @@ export type WeaponSlot = {
   readonly twoweapon: { damage?: string; thrown: number[] | null; total: number[] } | null;
   /** How it's held: `mainhand`, `offhand` or `twohanded`, one value per inventory entry */
   wielded: string;
-};
+}
+
+/** A natural attack's kind: a primary one at its full attack bonus, a secondary one lower. */
+export type NaturalAttackKind = "primary" | "secondary";
 
 /** A weapon slot's label, as an item's location names it, to its place in the weapon set. */
 export const SLOT_MAP: Record<string, keyof WeaponSet> = {

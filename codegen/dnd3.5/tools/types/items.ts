@@ -1,9 +1,14 @@
 import type { Overrides, ScrapedMeta } from "./reference.ts";
 
 /** An item as the seeds make it: its cost and weight, its override's or else as detected, and its override's description. */
-type ItemMapping = { costGp: string; description?: string; skip?: boolean; weight: string };
+interface ItemMapping {
+  costGp: string;
+  description?: string;
+  skip?: boolean;
+  weight: string;
+}
 
-export type ArmorRow = {
+export interface ArmorRow {
   acBonus: string;
   arcaneSpellFailure: string;
   armorCheckPenalty: string;
@@ -14,18 +19,28 @@ export type ArmorRow = {
   speed20: string;
   speed30: string;
   weight: string;
-};
+}
 
 /**
  * An item's fields an override sets.
  *
  * A good of the SRD's goods tables, as scraped: its name, cost and weight, and the table it's in.
  */
-export type GoodsRow = { cost: string; name: string; tableId: string; weight: string };
+export interface GoodsRow {
+  cost: string;
+  name: string;
+  tableId: string;
+  weight: string;
+}
 
-export type ItemFields = { costGp?: string; description?: string; skip?: boolean; weight?: string };
+export interface ItemFields {
+  costGp?: string;
+  description?: string;
+  skip?: boolean;
+  weight?: string;
+}
 
-export type ItemReference = {
+export interface ItemReference {
   _meta: Omit<ScrapedMeta<"item">, "sourceUrl"> & { sourceUrls: { armor: string; goods: string; weapons: string } };
 
   detected: {
@@ -73,9 +88,9 @@ export type ItemReference = {
     goods: GoodsRow[];
     weapons: WeaponRow[];
   };
-};
+}
 
-export type WeaponRow = {
+export interface WeaponRow {
   category: string;
   cost: string;
   critical: string;
@@ -86,4 +101,4 @@ export type WeaponRow = {
   proficiency: string;
   rangeIncrement: string;
   weight: string;
-};
+}

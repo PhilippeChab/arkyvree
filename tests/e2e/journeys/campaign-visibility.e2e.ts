@@ -7,7 +7,10 @@ import { createCampaign, postPlayerInvite } from "@/tests/e2e/support/campaigns.
 import { createCharacter } from "@/tests/e2e/support/characters.ts";
 import { signedInPage, signIn } from "@/tests/e2e/support/signIn.ts";
 
-type Campaign = { characters: Record<(typeof VISIBILITIES)[number], { id: string; name: string }>; id: string };
+interface Campaign {
+  characters: Record<(typeof VISIBILITIES)[number], { id: string; name: string }>;
+  id: string;
+}
 
 /** What a Partial character's card and sheet say of what they hide from the other players. */
 const PARTIAL_IDENTITY_NOTE = "The rest of this character's identity is private";

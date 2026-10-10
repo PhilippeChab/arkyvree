@@ -12,13 +12,13 @@ import { SPELL_SAVE_DC_BASE } from "@/vocabulary/dnd3.5/spells.ts";
 type PowerGroup = Record<string, PowerDcsByClass>;
 type PowerGroupingsData = Record<string, PowerGroup>;
 
-export type PowerDc = {
+export interface PowerDc {
   readonly ability: number;
   base: number;
   level: number;
   misc: number;
   readonly total: number;
-};
+}
 
 /**
  * A spell's DC is its casting class's: grouping key (normalized) → spell → class (its aptitude's slug) → shared PowerDc

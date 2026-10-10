@@ -6,7 +6,11 @@ import type { Modifier, Requirement } from "@/shared/relations.ts";
 import ContinuationHeader from "./ContinuationHeader.tsx";
 import { FONT_SIZE, styles } from "./styles.ts";
 
-type DiagnosticColumn = { centered?: boolean; label: string; width: string };
+interface DiagnosticColumn {
+  centered?: boolean;
+  label: string;
+  width: string;
+}
 
 const MODIFIER_COLUMNS: DiagnosticColumn[] = [
   { label: "SOURCE TYPE", width: "20%" },

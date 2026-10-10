@@ -4,7 +4,11 @@ import BookLayout from "./BookLayout.ts";
 import { CodeFile } from "./code/CodeFile.ts";
 
 /** A generated file: its path in the book's folder, its code, and what's left to review in it, which opens it. */
-type GeneratedFile = { code: string; notes: string[]; path: string };
+interface GeneratedFile {
+  code: string;
+  notes: string[];
+  path: string;
+}
 
 /**
  * A class's generated files, composed once for the generator, which writes them, and `parser:dnd3.5:validate`, which

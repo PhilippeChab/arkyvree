@@ -4,7 +4,12 @@ import type { SizeType } from "@/shared/enums.ts";
 import { RACE_FIELDS } from "./fields.ts";
 
 /** A race's form: its name, description, size and base speed. */
-type RaceBody = { baseSpeed: number; description?: string | null; name: string; size: SizeType };
+interface RaceBody {
+  baseSpeed: number;
+  description?: string | null;
+  name: string;
+  size: SizeType;
+}
 
 /**
  * A race as the ruleset has it: its row, its size and base speed, the fields its properties hold (whether it walks on

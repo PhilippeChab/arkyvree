@@ -3,7 +3,10 @@ import { FieldCodec } from "@/engine/core/fields/index.ts";
 import RulesetEntity from "./RulesetEntity.ts";
 
 /** A mechanic's form: its name and description. */
-type MechanicBody = { description?: string | null; name: string };
+interface MechanicBody {
+  description?: string | null;
+  name: string;
+}
 
 /** A mechanic as the ruleset has it: its name and its description, which its customizations act through. */
 export default class MechanicEntity extends RulesetEntity<"mechanics", MechanicBody> {

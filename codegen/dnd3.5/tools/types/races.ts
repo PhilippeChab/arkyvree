@@ -2,7 +2,7 @@ import type { Modifier, Property } from "@/content/core/builders/customization/t
 
 import type { DetectedModifiers, NamedText, Overrides, ScrapedMeta } from "./reference.ts";
 
-export type RaceReference = {
+export interface RaceReference {
   _meta: ScrapedMeta<"race">;
 
   detected: Record<string, DetectedModifiers>;
@@ -41,4 +41,4 @@ export type RaceReference = {
     name: string;
     size: string;
   }[];
-};
+}

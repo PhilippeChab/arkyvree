@@ -11,6 +11,12 @@ import type { Session } from "@/shared/relations.ts";
 import { canAnySessionRead } from "./readers.ts";
 import { getPublicUrl } from "./records.ts";
 
+interface AttachableConfig {
+  isOwner: OwnershipChecker;
+  isReader: OwnershipChecker;
+  names: readonly string[];
+  policy: UploadPolicy;
+}
 interface SignedTokenPayload {
   blobId: string;
   iat: number;
@@ -18,15 +24,12 @@ interface SignedTokenPayload {
   recordId: string;
   recordType: string;
 }
-type AttachableConfig = {
-  isOwner: OwnershipChecker;
-  isReader: OwnershipChecker;
-  names: readonly string[];
-  policy: UploadPolicy;
-};
-type OwnershipChecker = (session: Session, recordId: string) => Promise<boolean>;
+interface UploadPolicy {
+  contentTypes: string[];
+  maxBytes: number;
+}
 
-type UploadPolicy = { contentTypes: string[]; maxBytes: number };
+type OwnershipChecker = (session: Session, recordId: string) => Promise<boolean>;
 
 const imagePolicy: UploadPolicy = {
   maxBytes: MAX_UPLOAD_BYTES,

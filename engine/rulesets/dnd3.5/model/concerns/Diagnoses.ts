@@ -12,7 +12,11 @@ import { GENERAL_FEATS_APTITUDE } from "@/vocabulary/dnd3.5/feats.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
 /** An aptitude pool's (or one of its spell levels') slots. */
-type AptitudeSlots = { allowed: number; available: number; spent: number };
+interface AptitudeSlots {
+  allowed: number;
+  available: number;
+  spent: number;
+}
 
 /**
  * A 3.5 character's diagnostics, which core's validation reads (`Validates`): the issues its rules flag (its pools'

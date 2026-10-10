@@ -18,14 +18,14 @@ import { findSeededCharacter, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/sup
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
 import { WEAPON_PROFICIENCY, WEAPON_SIZE } from "@/vocabulary/dnd3.5/properties/index.ts";
 
-type Placement = {
+interface Placement {
   charges?: [number | null, number | null];
   equipped?: boolean;
   force?: boolean;
   location?: ItemLocation | null;
   quantity?: number;
   weaponSet?: number | null;
-};
+}
 
 /** What the test's items weigh and cost, unless a test says otherwise. */
 const ITEM_VALUES = { weight: "5", costGp: "10" };

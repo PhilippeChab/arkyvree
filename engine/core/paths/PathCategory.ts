@@ -5,7 +5,10 @@ import type { Components, TraversePathResult } from "./PathTraverser.ts";
 import type PathTraverser from "./PathTraverser.ts";
 
 /** A category's labels of the ruleset's own names: those over any other label, and those that only fill a gap. */
-type CategoryLabelNames = { fallbacks?: Record<string, string>; names?: Record<string, string> };
+interface CategoryLabelNames {
+  fallbacks?: Record<string, string>;
+  names?: Record<string, string>;
+}
 
 /** A component of `C`, by its key, and the getter that hands its data to a path: both checked against `C`. */
 type ComponentSpec<C> = { [K in keyof C & string]: { getter: GetterOf<C[K]>; key: K } }[keyof C & string];

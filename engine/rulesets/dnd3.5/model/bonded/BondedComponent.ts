@@ -24,13 +24,13 @@ import { CharacterComponent } from "@/engine/core/character/index.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import { BONDED_KINDS, type BondedKind } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 
-type BondsData = {
-  [K in BondedKind]: DetailedCharacterBondedSlot;
-};
-
-type DetailedCharacterBondedSlot = {
+interface DetailedCharacterBondedSlot {
   level: number;
   race: string;
+}
+
+type BondsData = {
+  [K in BondedKind]: DetailedCharacterBondedSlot;
 };
 
 /** The creatures a character is bonded to, by kind: each one's race and effective level, which modifiers alone set. */

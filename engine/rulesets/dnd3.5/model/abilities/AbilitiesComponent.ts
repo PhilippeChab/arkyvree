@@ -3,7 +3,7 @@ import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading
 import AbilityRules from "@/engine/rulesets/dnd3.5/rules/AbilityRules.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-type AbilitiesData = {
+interface AbilitiesData {
   [key: string]: {
     base: number;
     level: number; // Bonus from levels
@@ -11,7 +11,7 @@ type AbilitiesData = {
     readonly modifier: number;
     readonly total: number;
   };
-};
+}
 
 /** A character's ability scores: each one's base, what its levels add and misc, its total and modifier counted when read. */
 export default class AbilitiesComponent extends CharacterComponent<LoadedCharacterData> {

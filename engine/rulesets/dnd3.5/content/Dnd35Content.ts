@@ -6,12 +6,12 @@ import { RULESET_FIELDS } from "@/engine/rulesets/dnd3.5/ruleset/fields.ts";
 import BookPaths from "./BookPaths.ts";
 
 /** The fields of the entities the seeders write as their properties, by entity. */
-export type SeededFields = {
+export interface SeededFields {
   klasses: typeof CLASS_FIELDS.fields;
   klassLevels: typeof CLASS_LEVEL_FIELDS.fields;
   rulesets: typeof RULESET_FIELDS.fields;
   skills: typeof SKILL_FIELDS.fields;
-};
+}
 
 /**
  * The 3.5 module's content, as the seeders and the codegen ask of it: what a book's modifiers and requirements can

@@ -13,10 +13,10 @@ import type {
 } from "@/shared/relations.ts";
 
 /** The character's levels, in the order it took them, and their class levels' ids. */
-export type CharacterLevels = {
+export interface CharacterLevels {
   characterLevels: CharacterLevel[];
   klassLevelIds: string[];
-};
+}
 
 export type CustomizedClassLevel = KlassLevel & {
   modifiers: Modifier[];

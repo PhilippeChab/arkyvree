@@ -25,7 +25,7 @@ type RequirementRow = typeof requirementsInCustomization.$inferInsert;
  * The ruleset a seed writes to, and the ids of the rows its content names. Seeding aptitudes, feats or
  * powers adds them, so the steps after can name them.
  */
-export type SeedContext = {
+export interface SeedContext {
   abilityMap: Ids;
   /** Its aptitudes and its base ruleset's. */
   aptMap: Ids;
@@ -38,7 +38,7 @@ export type SeedContext = {
   rulesetId: string;
   saveMap: Ids;
   skillMap: Ids;
-};
+}
 
 /**
  * A seeder's state, which every seeding step builds on (`concerns/`, and a ruleset's): the database it writes to, the

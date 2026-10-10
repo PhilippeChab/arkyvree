@@ -17,6 +17,9 @@
     // TypeScript's errors are fixed, never silenced: no @ts-expect-error, @ts-ignore or @ts-nocheck.
     "typescript/ban-ts-comment": ["error", { "ts-expect-error": true, "ts-ignore": true, "ts-nocheck": true }],
     "typescript/consistent-type-imports": ["error", { "fixStyle": "inline-type-imports" }],
+    // An object's type is an interface; a `type` names a union, a mapped type, an intersection or one derived from
+    // another (`Pick<…>`, `ReturnType<…>`).
+    "typescript/consistent-type-definitions": ["error", "interface"],
     "typescript/no-unused-vars": [
       "error",
       {
@@ -290,13 +293,6 @@
       ],
       "rules": {
         "import/no-default-export": "error"
-      }
-    },
-    // The client's object types are interfaces; a `type` names a union, a mapped or a derived type (`Omit<…>`)
-    {
-      "files": ["client/**/*.{ts,tsx}"],
-      "rules": {
-        "typescript/consistent-type-definitions": ["error", "interface"]
       }
     },
     // Fast Refresh reloads the client's components as they're edited: a module of them exports components only

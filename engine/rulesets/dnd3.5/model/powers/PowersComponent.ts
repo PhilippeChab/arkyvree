@@ -10,7 +10,7 @@ import { stripSeparators } from "@/shared/text.ts";
 import type PowerGroupingsComponent from "./PowerGroupingsComponent.ts";
 import type { PowerDc, PowerDcsByClass } from "./PowerGroupingsComponent.ts";
 
-type PowerEntry = {
+interface PowerEntry {
   /** Its DC as each of the character's classes casts it, by the class's aptitude slug. */
   dc?: PowerDcsByClass;
   power: Power;
@@ -19,11 +19,7 @@ type PowerEntry = {
    * modifier adds a value to or takes one from. A sheet lists them joined (`getFlatPowers`).
    */
   properties: Record<string, string[]>;
-};
-
-/** A grouping's spells, each with its DC as each class casts it */
-type PowerGroupEntry = Record<string, Record<string, { dc: PowerDc }>>;
-type PowerGroupsNamespace = Record<string, PowerGroupEntry>;
+}
 
 /**
  * Spell known entries ({ [aptSlug]: { known } }) are bolted onto PowerEntry objects and onto standalone entries for
@@ -34,9 +30,13 @@ type PowerGroupsNamespace = Record<string, PowerGroupEntry>;
  * avoid collisions with spells whose name matches a school name (e.g. the Cleric spell "Divination" vs the Divination
  * school).
  */
-type PowersData = {
+interface PowersData {
   [key: string]: PowerEntry | PowerGroupEntry | Record<string, { known: boolean }> | PowerGroupsNamespace;
-};
+}
+/** A grouping's spells, each with its DC as each class casts it */
+type PowerGroupEntry = Record<string, Record<string, { dc: PowerDc }>>;
+
+type PowerGroupsNamespace = Record<string, PowerGroupEntry>;
 
 /**
  * A character's spells: each one's entry, with its properties' values, its known flag on each list it's on and its DC as

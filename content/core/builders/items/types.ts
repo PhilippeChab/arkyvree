@@ -2,7 +2,7 @@ import type { Modifier, Property, RequirementEntry } from "@/content/core/builde
 import type { ItemLocation } from "@/shared/enums.ts";
 
 /** An item: a template others are made from, or one made from a template (`sourceItem`). */
-export type ItemSeed = {
+export interface ItemSeed {
   costGp: string;
   description: string;
   /** A template among magic items, which others are made from (elven chain): seeded with the mundane templates. */
@@ -16,4 +16,4 @@ export type ItemSeed = {
   sourceItem?: string;
   type: string;
   weight: string;
-};
+}

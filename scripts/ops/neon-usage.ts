@@ -10,7 +10,7 @@
  * Enterprise plans, so we read the totals off `GET /projects/{id}` instead,
  * which works on every plan (including Launch / Free).
  */
-type Project = {
+interface Project {
   active_time_seconds: number;
   compute_time_seconds: number;
   consumption_period_end: string;
@@ -22,7 +22,7 @@ type Project = {
   owner?: { subscription_type?: string };
   synthetic_storage_size: number;
   written_data_bytes: number;
-};
+}
 
 const API = "https://console.neon.tech/api/v2";
 const apiKey = process.env.NEON_API_KEY;

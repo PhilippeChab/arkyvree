@@ -6,7 +6,13 @@ import CustomizationEdits from "./CustomizationEdits.ts";
 import TargetLabels from "./TargetLabels.ts";
 
 /** A requirement's save, as its form sends it: a condition (`target`) or a group of conditions (`chainingOperator`). */
-type RequirementBody = { chainingOperator?: string; level: string; operator?: string; target?: string; value?: string };
+interface RequirementBody {
+  chainingOperator?: string;
+  level: string;
+  operator?: string;
+  target?: string;
+  value?: string;
+}
 
 /** An entity's requirements: as its page lists them, and what their saves store, checked against their paths. */
 export default class RequirementEdits extends CustomizationEdits<Requirement> {

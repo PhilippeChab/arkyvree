@@ -28,11 +28,13 @@ import type {
 } from "@/codegen/dnd3.5/tools/types/reference.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
+/** What a reference file's `_meta` says of it (an item reference names its pages, not one). */
+interface FileMeta {
+  _meta: { book: string; sourceUrl?: string; type: ReferenceType };
+}
+
 /** A book's class references, which a feat reference's mapping reads. */
 type ClassesOf = (book: string) => ClassReferenceFile[];
-
-/** What a reference file's `_meta` says of it (an item reference names its pages, not one). */
-type FileMeta = { _meta: { book: string; sourceUrl?: string; type: ReferenceType } };
 
 /** The file a book's reference of each type is stored in, in the book's folder (a class's is its own, in `classes/`). */
 const REFERENCE_FILE_NAMES: { [T in Exclude<ReferenceType, "class">]: string } = {

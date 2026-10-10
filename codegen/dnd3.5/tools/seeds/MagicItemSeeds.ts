@@ -10,7 +10,7 @@ import { ARMOR_PROFICIENCY } from "@/vocabulary/dnd3.5/properties/index.ts";
 import { ItemSeeds } from "./ItemSeeds.ts";
 import { ReferenceSeeds } from "./ReferenceSeeds.ts";
 
-export type MagicItemSeedSets = {
+export interface MagicItemSeedSets {
   magicArmor: ItemSeed[];
   magicShields: ItemSeed[];
   magicWeapons: ItemSeed[];
@@ -18,7 +18,7 @@ export type MagicItemSeedSets = {
   rods: ItemSeed[];
   staffs: ItemSeed[];
   wondrousItems: ItemSeed[];
-};
+}
 
 /** The word a ring's, a rod's or a staff's name holds, prefixed when the SRD heading is just the bare name. */
 const CATEGORY_PREFIX: Partial<Record<MagicItemCategory, string>> = { ring: "Ring", rod: "Rod", staff: "Staff" };

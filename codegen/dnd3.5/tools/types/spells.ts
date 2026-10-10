@@ -2,7 +2,7 @@ import type { Property } from "@/content/core/builders/customization/types.ts";
 
 import type { Overrides, ScrapedMeta } from "./reference.ts";
 
-export type SpellReference = {
+export interface SpellReference {
   _meta: ScrapedMeta<"spell">;
 
   /**
@@ -43,4 +43,4 @@ export type SpellReference = {
     subschool?: string;
     target?: string;
   }[];
-};
+}

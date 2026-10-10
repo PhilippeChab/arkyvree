@@ -8,7 +8,11 @@ import CustomizedEntity from "./CustomizedEntity.ts";
 import TargetLabels from "./TargetLabels.ts";
 
 /** A modifier's save, as its form sends it: its target, its operator and its value. */
-type ModifierBody = { operator: string; target: string; value: string };
+interface ModifierBody {
+  operator: string;
+  target: string;
+  value: string;
+}
 
 /** An entity's modifiers: as its page lists them, and what their saves store, checked against their paths. */
 export default class ModifierEdits extends CustomizationEdits<Modifier> {

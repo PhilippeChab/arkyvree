@@ -3,16 +3,16 @@
  * to their skills, the animal companion's basics table, and an animal's average hit points a hit die.
  */
 
-type BondedRaceAbilities = {
+interface BondedRaceAbilities {
   charisma: number;
   constitution: number;
   dexterity: number;
   intelligence: number;
   strength: number;
   wisdom: number;
-};
+}
 
-type NaturalAttack = {
+interface NaturalAttack {
   count?: number;
   damage: string;
   /** What the stat block's feats add to its attack: a wolf's Weapon Focus (bite), which the ruleset has no feat for. */
@@ -21,7 +21,7 @@ type NaturalAttack = {
   /** A secondary attack (the stat block's lower one): −5 to attack (−2 with Multiattack) and half the Strength bonus. */
   secondary?: true;
   type: string;
-};
+}
 
 /**
  * SRD basics-table progression keyed by effective AC level (data-driven sum
@@ -31,13 +31,13 @@ type NaturalAttack = {
  * (or has no druid/ranger levels yet); the AC keeps its base race statistics
  * only, with no bonus HD or adjustments.
  */
-export type AnimalCompanionBasics = {
+export interface AnimalCompanionBasics {
   bonusHD: number;
   natural: number;
   strDex: number;
-};
+}
 
-export type BondedRaceStatBlock = {
+export interface BondedRaceStatBlock {
   /** SRD-listed ability scores — applied as the bonded character's base. */
   abilities: BondedRaceAbilities;
   /**
@@ -61,16 +61,16 @@ export type BondedRaceStatBlock = {
   naturalAttacks: NaturalAttack[];
   /** Order to distribute extra skill total bumps as total HD grows past baseHD. */
   skillPriority?: string[];
-};
+}
 
 /** A bracket of the paladin's special mount's progression (`SPECIAL_MOUNT_BASICS`). */
-export type SpecialMountBasics = {
+export interface SpecialMountBasics {
   bonusHD: number;
   int: number;
   minLevel: number;
   natural: number;
   str: number;
-};
+}
 
 /**
  * Generic feat pool used as the tail of featPriority for animals whose per-race list runs out. These are all valid for

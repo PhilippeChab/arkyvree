@@ -12,7 +12,7 @@ import type {
 import type { CharacterLevel, Klass, KlassLevel, KlassSkill } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-type ClassesData = {
+interface ClassesData {
   [key: string]: {
     bonuscasterlevel: number;
     klass: Klass;
@@ -26,7 +26,7 @@ type ClassesData = {
       skills: SkillWithRank[];
     }[];
   };
-};
+}
 
 /** A character's classes: each one's levels, with what each level picked, and the ruleset's other classes at level 0. */
 export default class ClassesComponent extends CharacterComponent<LoadedCharacterData> {

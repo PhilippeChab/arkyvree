@@ -3,7 +3,11 @@ import { FieldCodec } from "@/engine/core/fields/index.ts";
 import RulesetEntity from "./RulesetEntity.ts";
 
 /** A language's form: its name, description and type. */
-type LanguageBody = { description?: string | null; name: string; type: string };
+interface LanguageBody {
+  description?: string | null;
+  name: string;
+  type: string;
+}
 
 /** A language as the ruleset has it: its row, and its type. */
 export default class LanguageEntity extends RulesetEntity<"languages", LanguageBody> {

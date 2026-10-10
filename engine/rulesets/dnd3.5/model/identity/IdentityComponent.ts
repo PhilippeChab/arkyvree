@@ -4,7 +4,7 @@ import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading
 import type { CustomizedRace } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import { type Language } from "@/shared/relations.ts";
 
-type IdentityData = {
+interface IdentityData {
   background: {
     notes: string;
   };
@@ -27,7 +27,7 @@ type IdentityData = {
     race: CustomizedRace;
     weight: string;
   };
-};
+}
 
 /** Who a character is: its row's description, its race and languages, and its level, counted from its classes. */
 export default class IdentityComponent extends CharacterComponent<LoadedCharacterData> {

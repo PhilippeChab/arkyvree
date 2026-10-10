@@ -12,6 +12,12 @@ import PathChecks, { type TargetCheck } from "./PathChecks.ts";
 import PathCompletions, { type PathQuery } from "./PathCompletions.ts";
 import PathTraverser, { type Components, type TraversePathResult } from "./PathTraverser.ts";
 
+/** The target paths of a customization's kind and of a template's, which a value is checked against. */
+export interface TargetCatalogs {
+  paths: TargetPathCatalog;
+  templatePaths: TargetPathCatalog;
+}
+
 export interface TargetPaths extends TargetPathsTraverser {
   /** The value type of the path a modifier or requirement targets, its operator and value checked against it. */
   checkValue(catalogs: TargetCatalogs, check: TargetCheck): string;
@@ -38,9 +44,6 @@ export interface TargetPathsTraverser {
   readsSource(target: string): boolean;
   traversePathInit(target: string, components: Components, context?: { sourceId?: string }): TraversePathResult[];
 }
-
-/** The target paths of a customization's kind and of a template's, which a value is checked against. */
-export type TargetCatalogs = { paths: TargetPathCatalog; templatePaths: TargetPathCatalog };
 
 /**
  * A ruleset's target paths, by category: the paths each lists, how a target reaches its data, and how the path picker
@@ -106,7 +109,7 @@ export default abstract class CategoryPaths<C = Components> implements TargetPat
   ): TraversePathResult[] {
     const mapping = this.componentOf[category];
     if (!mapping) return PathTraverser.failed(null, target, `Unknown category: ${category}`);
-    const component = components[mapping.key];
+    const component = PathTraverser.findComponent(components, mapping.key);
     if (!component) return PathTraverser.failed(null, target, `${this.labelOf[category]} holder not found`);
     const data = PathTraverser.readComponent(component, mapping.getter);
     if (!data) return PathTraverser.failed(component, target, `${this.labelOf[category]} not found`);

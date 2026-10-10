@@ -15,20 +15,20 @@ import { makeSession } from "@/tests/support/users.ts";
 type CharacterValues = Omit<Parameters<typeof createCharacter>[2], "name" | "xp" | "description">;
 
 /** A level's picks by name, with its hit points and ability increase. */
-export type LevelPlan = {
+export interface LevelPlan {
   ability?: string;
   feats?: Record<string, string[]>;
   hp: number;
   powers?: Record<string, string[]>;
   skills?: Record<string, number>;
-};
+}
 
 /** A level's picks, by id: skill ranks, and feats and powers by the aptitude they're picked through. */
-export type Picks = {
+export interface Picks {
   feats: Record<string, string[]>;
   powers: Record<string, string[]>;
   skills: Record<string, number>;
-};
+}
 
 /** A human druid's first level, with a wolf for animal companion. */
 const DRUID_1: LevelPlan = {

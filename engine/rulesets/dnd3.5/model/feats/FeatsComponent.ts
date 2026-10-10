@@ -5,17 +5,17 @@ import type { CustomizedFeat } from "@/engine/rulesets/dnd3.5/model/loading/load
 import type { FeatWithAptitudes } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
+interface FeatsData {
+  [key: string]: FeatEntry | FeatGroupEntry;
+}
+
 type FeatGroupEntry = Record<string, FeatEntry>;
 
-type FeatsData = {
-  [key: string]: FeatEntry | FeatGroupEntry;
-};
-
-export type FeatEntry = {
+export interface FeatEntry {
   count: number;
   name: string;
   possessed: boolean;
-};
+}
 
 /** A feat's entry, not a family's group: a group's values are its feats. */
 function isFeatEntry(entry: FeatEntry | FeatGroupEntry | undefined): entry is FeatEntry {

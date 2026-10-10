@@ -2,7 +2,11 @@ import { PASSWORD_DIGEST } from "@/database/seeds/users.ts";
 
 import { queryDatabase } from "./database.ts";
 
-export type E2EUser = { email: string; password: string; username: string };
+export interface E2EUser {
+  email: string;
+  password: string;
+  username: string;
+}
 
 /** Creates a verified, onboarded user (if the email isn't taken), with the seeded users' password. */
 export async function createUser(email: string, username: string): Promise<E2EUser> {

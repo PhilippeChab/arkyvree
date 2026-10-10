@@ -7,6 +7,12 @@ import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
+export interface PerLevelExpansion {
+  levels: number[];
+  newTarget: string;
+  ordinal: string;
+}
+
 /**
  * A class's aptitude picks split per level, the first level each aptitude gets one, and how the split retargets them.
  */
@@ -14,8 +20,6 @@ export type ClassAptitudePicks = ReturnType<typeof expandAptitudePicks>;
 
 /** A class feature, as the class's mapping holds it. */
 export type MappedFeature = ClassReference["mapping"]["features"][string];
-
-export type PerLevelExpansion = { levels: number[]; newTarget: string; ordinal: string };
 
 /**
  * Build maps for aptitude target remapping after per-level expansion.

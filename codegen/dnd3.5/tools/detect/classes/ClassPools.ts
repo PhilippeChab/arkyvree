@@ -8,7 +8,11 @@ import type { BaseClassDetector } from "./BaseClassDetector.ts";
 import { FeatureText } from "./FeatureText.ts";
 
 /** A pool's aptitude, the level it opens at, and whether its picks stack. */
-export type PoolAptitude = { aptitude: string; level: number; stackable?: true };
+export interface PoolAptitude {
+  aptitude: string;
+  level: number;
+  stackable?: true;
+}
 
 /**
  * A class's pools: the features of its aptitude picks whose description offers a choice, each with its aptitude

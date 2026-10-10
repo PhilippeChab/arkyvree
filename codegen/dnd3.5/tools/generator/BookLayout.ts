@@ -3,10 +3,16 @@
 import { toCamelCase, toConstName } from "@/codegen/dnd3.5/tools/text/names.ts";
 
 /** A generated file: its path in the book's folder, and the list it exports. */
-export type BookFile = { list: string; path: string };
+export interface BookFile {
+  list: string;
+  path: string;
+}
 
 /** A part of a book's index (`BookContent`): its key there, and the file it's from. */
-export type BookPart = { file: BookFile; key: string };
+export interface BookPart {
+  file: BookFile;
+  key: string;
+}
 
 /**
  * A book's generated tree (`generated/<book>/`): the files every book can have, by what they hold (`files`), the parts

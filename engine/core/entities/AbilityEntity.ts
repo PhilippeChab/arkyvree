@@ -3,7 +3,10 @@ import { FieldCodec } from "@/engine/core/fields/index.ts";
 import RulesetEntity from "./RulesetEntity.ts";
 
 /** An ability's form: its name and description. */
-type AbilityBody = { description?: string | null; name: string };
+interface AbilityBody {
+  description?: string | null;
+  name: string;
+}
 
 /** An ability as the ruleset has it: its rules seed them, and a ruleset's routes read them as they are. */
 export default class AbilityEntity extends RulesetEntity<"abilities", AbilityBody> {

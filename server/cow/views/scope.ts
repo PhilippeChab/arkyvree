@@ -6,10 +6,10 @@ import { Rulesets } from "@/server/repositories/index.ts";
 import RulesetViews from "./RulesetViews.ts";
 
 /** A ruleset and its view: what `withRulesetScope` hands its callback, and what an effect of the ruleset runs in. */
-export type RulesetScope = {
+export interface RulesetScope {
   ruleset: NonNullable<Awaited<ReturnType<typeof Rulesets.findOne>>>;
   rulesetData: RulesetData;
-};
+}
 
 /**
  * Runs `fn` with a ruleset and its view (`RulesetViews.getData`): what the engine answers in (`Engine.for(scope)`), and

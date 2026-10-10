@@ -22,7 +22,11 @@ import { WEAPON_TYPE_DEFINITIONS } from "@/vocabulary/dnd3.5/weapons.ts";
  * A builder an item's field is written with: what it gives an item of a name (`of`, none when it gives it nothing),
  * and whether it's called with the name (`simple("Club")`) or is the value itself (`SHIELD_PROF`).
  */
-type ItemBuilder<V> = { called: boolean; name: string; of: (item: string) => V[] | undefined };
+interface ItemBuilder<V> {
+  called: boolean;
+  name: string;
+  of: (item: string) => V[] | undefined;
+}
 
 /** The builders an item's properties are written with: its weapon's, armor's or shield's type's, when it's one. */
 const ITEM_PROPERTIES: ItemBuilder<Property>[] = [

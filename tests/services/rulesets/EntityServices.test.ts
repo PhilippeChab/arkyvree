@@ -25,13 +25,24 @@ import { customize, findCustomizations } from "@/tests/support/customizations.ts
 import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 
-type Page = { items: { id: string; name: string }[] };
+interface Page {
+  items: { id: string; name: string }[];
+}
 /** Rows an entity's body refers to, created in the ruleset under test. */
-type Refs = { abilityId: string; featAptitudeId: string; powerAptitudeId: string };
+interface Refs {
+  abilityId: string;
+  featAptitudeId: string;
+  powerAptitudeId: string;
+}
 
-type Row = { id: string; name: string; rulesetId: string; updatedAt: string };
+interface Row {
+  id: string;
+  name: string;
+  rulesetId: string;
+  updatedAt: string;
+}
 
-type Service = {
+interface Service {
   create: (session: Session, rulesetId: string, name: string, refs: Refs) => Promise<Row>;
   get: (rulesetId: string, id: string) => Promise<{ id: string; name: string }>;
   list: (rulesetId: string, search?: string) => Promise<Page>;
@@ -45,7 +56,7 @@ type Service = {
     refs: Refs,
     updatedAt?: string,
   ) => Promise<Row>;
-};
+}
 
 const firstPage = { limit: 100, page: 1 };
 

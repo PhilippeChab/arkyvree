@@ -17,16 +17,7 @@ type MagicItemFields = ItemFields & {
   template?: boolean;
 };
 
-export type MagicItemCategory =
-  | "specificArmor"
-  | "specificShield"
-  | "specificWeapon"
-  | "wondrousItem"
-  | "ring"
-  | "rod"
-  | "staff";
-
-export type MagicItemReference = {
+export interface MagicItemReference {
   _meta: Omit<ScrapedMeta<"magicItem">, "sourceUrl"> & { sourceUrls: Record<string, string> };
 
   detected: Record<
@@ -75,4 +66,13 @@ export type MagicItemReference = {
     name: string;
     spellCharges?: { charges: number; spell: string }[];
   }[];
-};
+}
+
+export type MagicItemCategory =
+  | "specificArmor"
+  | "specificShield"
+  | "specificWeapon"
+  | "wondrousItem"
+  | "ring"
+  | "rod"
+  | "staff";

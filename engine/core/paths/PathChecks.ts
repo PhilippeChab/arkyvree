@@ -17,13 +17,13 @@ import {
 import LiteralValue from "./LiteralValue.ts";
 
 /** A modifier's or a requirement's target, operator and value, which its path's check reads. */
-export type TargetCheck = {
+export interface TargetCheck {
   kind: "modifier" | "requirement";
   operator?: string;
   sourceType?: string;
   target: string;
   value?: string;
-};
+}
 
 /**
  * The checks of the paths of a catalog (`catalog`, of the ruleset's `categories`): a path validated like a language

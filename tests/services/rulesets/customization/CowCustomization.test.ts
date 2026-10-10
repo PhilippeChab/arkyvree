@@ -28,15 +28,17 @@ import { insertRows } from "@/tests/support/database.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
-type Kind = {
+interface Kind {
   create: (session: Session, rulesetId: string, ownerType: string, ownerId: string) => Promise<Written>;
   list: (rulesetId: string, ownerType: string, ownerId: string) => Promise<Row[]>;
   remove: (session: Session, rulesetId: string, ownerType: string, ownerId: string, id: string) => Promise<Written>;
   rowsOf: (ownerType: string, ownerId: string) => Promise<Row[]>;
   update: (session: Session, rulesetId: string, ownerType: string, ownerId: string, id: string) => Promise<Written>;
-};
+}
 
-type Row = { id: string };
+interface Row {
+  id: string;
+}
 
 type Written = Row & { resolvedEntityId: string };
 

@@ -5,13 +5,22 @@ import { capitalize } from "@/shared/text.ts";
 
 import type { TargetPaths } from "./CategoryPaths.ts";
 
+interface SegmentInfo {
+  examplePath: TargetPath | null;
+  groupDesc: string | undefined;
+  isGroup: boolean;
+}
+
 /** How a segment is described: by its full prefix, its own name and a fallback. */
 type SegmentDescriber = (fullPrefix: string, segment: string, fallback?: string) => string;
 
-type SegmentInfo = { examplePath: TargetPath | null; groupDesc: string | undefined; isGroup: boolean };
-
 /** What a path's completions are asked for: the partial path up to `position`, or every leaf matching `search` (`flat`). */
-export type PathQuery = { flat?: boolean; partialPath: string; position: number; search?: string };
+export interface PathQuery {
+  flat?: boolean;
+  partialPath: string;
+  position: number;
+  search?: string;
+}
 
 /**
  * The completions of partial paths among a catalog's paths of a kind (`catalog`, `kind`), as the ruleset's target paths

@@ -13,7 +13,7 @@ import type { SpellSeed } from "@/content/dnd3.5/builders/spells/types.ts";
 import type { WizardSchoolSeed } from "@/content/dnd3.5/builders/wizardSchools/types.ts";
 
 /** An extension's book, as the parser generates it (`generated/<book>/index.ts`). */
-export type BookContent = {
+export interface BookContent {
   aptitudes: string[];
   classes: ClassSeed[];
   classFeats: FeatSeed[];
@@ -24,13 +24,13 @@ export type BookContent = {
   domains: DomainSeed[];
   spells: SpellSeed[];
   standaloneFeats: FeatSeed[];
-};
+}
 
 /**
  * The core rules' content: the SRD's, as the generator wrote it, and the hand-written core rules, template items and
  * bonded creatures.
  */
-export type CoreContent = {
+export interface CoreContent {
   abilities: AbilitySeed[];
   aptitudes: string[];
   bonds: BondContent[];
@@ -46,23 +46,23 @@ export type CoreContent = {
   /** The items others are made from, which a new ruleset starts with. */
   templateItems: ItemSeed[];
   wizardSchools: WizardSchoolSeed[];
-};
-
-/** The core rules' package: the base ruleset it creates, and the core rules' content it seeds. */
-export type CorePackage = CorePackageDefinition<CoreContent>;
+}
 
 /** A core feat an extension changes: more aptitudes it's taken in, and the class levels that also qualify for it. */
-export type CowFeatEntry = {
+export interface CowFeatEntry {
   aptitudes: string[];
   feat: string;
   requirements: { className: string; level: number }[];
-};
+}
 
 /** A core spell an extension adds to its spell lists, each at its level there. */
-export type CowSpellEntry = {
+export interface CowSpellEntry {
   aptitudes: { aptitude: string; level: number }[];
   spell: string;
-};
+}
+
+/** The core rules' package: the base ruleset it creates, and the core rules' content it seeds. */
+export type CorePackage = CorePackageDefinition<CoreContent>;
 
 /** An extension's package: the extension of the core rules it creates, and the book it seeds. */
 export type ExtensionPackage = ExtensionPackageDefinition<BookContent>;

@@ -137,7 +137,7 @@ export default class SkillsPaths implements PathCategory<Dnd35Components> {
     traverser: PathTraverser,
   ): TraversePathResult[] | null {
     if (rest[0] !== "budget") return null;
-    const component = components["skills"];
+    const component = PathTraverser.findComponent(components, "skills");
     if (!component) return PathTraverser.failed(null, target, "Skills holder not found");
     const budgetData = PathTraverser.readComponent(component, "getSkillBudget" satisfies GetterOf<SkillsComponent>);
     return traverser.traverse(component, rest.slice(1), budgetData, "budget", 0, ["skills", "budget"]);

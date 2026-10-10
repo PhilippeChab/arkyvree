@@ -15,10 +15,17 @@ import {
 } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** What a specific armor's or shield's text says of itself, over its base's: its stats, weight and enhancement. */
-type ArmorStats = { enhancement?: number; properties: Property[]; weight?: string };
+interface ArmorStats {
+  enhancement?: number;
+  properties: Property[];
+  weight?: string;
+}
 
 /** A specific weapon's enhancement bonus, on its attack rolls and on its damage rolls. */
-type WeaponEnhancement = { attack: number; damage: number };
+interface WeaponEnhancement {
+  attack: number;
+  damage: number;
+}
 
 /** Common alternative spellings in SRD descriptions → canonical template name, scoped by category */
 const ALIASES: Partial<Record<MagicItemCategory, Record<string, string>>> = {

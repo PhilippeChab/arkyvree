@@ -164,7 +164,7 @@ export default class ItemsPaths implements PathCategory<Dnd35Components> {
     if (rest.length === 0) return null;
     const [subcategory, grouping, ...subPath] = rest;
     if (subcategory !== "weapons" && subcategory !== "armors" && subcategory !== "shields") return null;
-    const component = components[subcategory];
+    const component = PathTraverser.findComponent(components, subcategory);
     if (!component) return PathTraverser.failed(null, target, `${subcategory} holder not found`);
     const pathParts = ["items", subcategory, stripSeparators(grouping)];
 
