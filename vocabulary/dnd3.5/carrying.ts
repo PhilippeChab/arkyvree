@@ -48,20 +48,11 @@ export const CARRYING_CAPACITY_STEP_MULTIPLIER = 4;
  */
 export const CARRYING_CAPACITY_STRENGTH_STEP = 10;
 
-/** D&D 3.5 reduced speed for medium/heavy encumbrance (base → reduced) */
-export const ENCUMBERED_SPEED: Record<number, number> = {
-  20: 15,
-  30: 20,
-  40: 30,
-  50: 35,
-  60: 40,
-  70: 50,
-  80: 55,
-  90: 60,
-  100: 70,
-};
-
-/** The thirds of its speed a medium or heavy load leaves a speed the table (`ENCUMBERED_SPEED`) doesn't list. */
+/**
+ * D&D 3.5 reduced speed for medium/heavy encumbrance (base → reduced)
+ *
+ * The thirds of its speed a medium or heavy load leaves: rounded up to the step speeds come in (`SPEED_STEP`).
+ */
 export const ENCUMBERED_SPEED_THIRDS = 2;
 
 /** Max Dex bonus and check penalty by load category */
@@ -108,3 +99,6 @@ export const SIZE_CARRY_MULTIPLIERS: Record<string, number> = {
   Gargantuan: 8,
   Colossal: 16,
 };
+
+/** The step speeds come in, in feet: a reduced speed rounds up to the next one (30 ft. under a load: 20 ft.). */
+export const SPEED_STEP = 5;
