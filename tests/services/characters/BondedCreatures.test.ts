@@ -21,9 +21,8 @@ import { CharacterModifiersService } from "@/server/services/characters/modifier
 import { CharacterSharingService } from "@/server/services/characters/sharing/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
-import { buildAs } from "@/tests/support/characters.ts";
 import { addCharacterContributor } from "@/tests/support/contributors.ts";
-import { queuedPdfJobs } from "@/tests/support/jobs.ts";
+import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
 import {
   createDruidWithCompanion,
   createPaladinWithMount,
@@ -34,7 +33,8 @@ import {
   picks,
   SORCERER_1,
   WIZARD_1,
-} from "@/tests/support/levelFixtures.ts";
+} from "@/tests/support/dnd3.5/levelFixtures.ts";
+import { queuedPdfJobs } from "@/tests/support/jobs.ts";
 import { addOneLevel, findKlassLevel, getLevelStep } from "@/tests/support/levels.ts";
 import { invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";

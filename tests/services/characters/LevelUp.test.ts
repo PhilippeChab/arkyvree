@@ -22,7 +22,7 @@ import {
   levelUp,
   picks,
   WIZARD_1,
-} from "@/tests/support/levelFixtures.ts";
+} from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { addCharacterLevel, findKlassLevel, increasesOf } from "@/tests/support/levels.ts";
 import { invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";

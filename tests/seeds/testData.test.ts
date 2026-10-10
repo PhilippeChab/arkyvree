@@ -19,7 +19,7 @@ import {
 } from "@/drizzle/schema.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { db } from "@/server/database/index.ts";
-import { buildAs } from "@/tests/support/characters.ts";
+import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 
 import { namesOf } from "./freshSeed.ts";

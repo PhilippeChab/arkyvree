@@ -30,13 +30,13 @@ function generated(ref: ClassReference): string | Error {
 }
 
 /**
- * What `parser:validate` checks of a class's overrides:
+ * What `parser:dnd3.5:validate` checks of a class's overrides:
  * - `refusal`: why the generator refuses the class, if it does (then nothing else is checked);
  * - `redundant`: overrides that change nothing. Each (a field of a feature or spells override, or another override)
  *   holds what's derived without it, and the class's generated files come out the same without it. One that differs
  *   from what's derived stays even when nothing uses it today: another change can bring the correction into play.
  *   `bonusFeatLists` and `spells.inheritsFrom` shape the book's copied feats and spells, and `reviewed` what
- *   `parser:validate` reports, so none is checked;
+ *   `parser:dnd3.5:validate` reports, so none is checked;
  * - `ignored`: overrides the generator never applies. Spells, when none were detected (or `noSpells` removed them),
  *   `noSpells` itself then, and an alignment where the page gives one.
  */

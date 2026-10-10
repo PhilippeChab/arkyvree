@@ -4,8 +4,8 @@
  * book, into generated/ as a whole or not at all.
  *
  * Usage:
- *   bun run parser:generate [<book>] [<name>] [--type <type>]
- *   bun run parser:generate <reference>.json
+ *   bun run parser:dnd3.5:generate [<book>] [<name>] [--type <type>]
+ *   bun run parser:dnd3.5:generate <reference>.json
  */
 
 import { join } from "node:path";
@@ -22,7 +22,9 @@ function main() {
   const args = process.argv.slice(2);
   // A reference's book is its own: an option after it (the old `--book`) would be ignored, so it's refused
   if (args[0]?.endsWith(".json") && args.length > 1) {
-    console.error(`parser:generate <reference>.json takes nothing after the reference: ${args.slice(1).join(" ")}`);
+    console.error(
+      `parser:dnd3.5:generate <reference>.json takes nothing after the reference: ${args.slice(1).join(" ")}`,
+    );
     process.exit(1);
   }
   const generate = (dir: string) =>

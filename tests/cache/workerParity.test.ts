@@ -7,8 +7,8 @@ import MemoryCache from "@/server/cache/MemoryCache.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Characters, Feats, Modifiers } from "@/server/repositories/index.ts";
-import { buildAs } from "@/tests/support/characters.ts";
-import { createWizardWithFamiliar, picking, WIZARD_1 } from "@/tests/support/levelFixtures.ts";
+import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
+import { createWizardWithFamiliar, picking, WIZARD_1 } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { copyEntity, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 
 afterEach(() => {

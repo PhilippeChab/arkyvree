@@ -6,8 +6,8 @@ import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLevels, Characters, Rulesets } from "@/server/repositories/index.ts";
-import { buildAs } from "@/tests/support/characters.ts";
-import { createDruidWithCompanion, createWizardWithFamiliar } from "@/tests/support/levelFixtures.ts";
+import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
+import { createDruidWithCompanion, createWizardWithFamiliar } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { findKlassLevel } from "@/tests/support/levels.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 

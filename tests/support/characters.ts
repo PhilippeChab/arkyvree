@@ -2,9 +2,8 @@ import type { InferInsertModel } from "drizzle-orm";
 import type { InferRequestType } from "hono/client";
 
 import type { charactersInCharacter } from "@/drizzle/schema.ts";
+import Modules from "@/engine/api/Modules.ts";
 import { CharacterInputs, CharacterProjection } from "@/engine/core/module/index.ts";
-import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
-import Dnd35CharacterBuilder from "@/engine/rulesets/dnd3.5/model/Dnd35CharacterBuilder.ts";
 import { type RulesetScope, withRulesetScope } from "@/server/cow/index.ts";
 import { type Db, db } from "@/server/database/index.ts";
 import { Characters } from "@/server/repositories/index.ts";
@@ -15,12 +14,11 @@ import { api, expectOk } from "./api.ts";
 import { getSeedCtx, uniqueId } from "./seed.ts";
 
 /**
- * `record`, built as the class a test picks (`Kind`: a familiar, a mount…) the way the engine builds a character
- * (`Dnd35CharacterBuilder`): its rows read through `database`, in `scope` when it's the character's ruleset's, a bonded
- * creature's master built first.
+ * `record`, built the way the engine builds a character (its base rules' module, `Modules.of`: of its row's kind, a
+ * bonded creature's master built first): its rows read through `database`, in `scope` when it's the character's
+ * ruleset's, with what a level-up adds when the test projects some (`project`).
  */
-export async function buildAs<C extends DetailedCharacter>(
-  Kind: new (record: Character) => C,
+export async function buildCharacter(
   record: Character,
   {
     database = db,
@@ -34,10 +32,7 @@ export async function buildAs<C extends DetailedCharacter>(
     // With what a level-up adds, when the test projects some
     const projection = new CharacterProjection(read);
     project?.(projection);
-    const { input } = projection;
-    const character = new Kind(input.record);
-    character.build(input.rows, view, input.master && Dnd35CharacterBuilder.build(view, input.master));
-    return character;
+    return Modules.of(view.ruleset.baseRules).levelUp.buildCharacter(view, projection.input);
   };
   if (scope?.ruleset.id !== record.rulesetId) return await withRulesetScope(database, record.rulesetId, build);
   return await build(scope);

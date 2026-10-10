@@ -5,7 +5,8 @@ import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.
 import { db } from "@/server/database/index.ts";
 import { generatePdfTask } from "@/server/jobs/generatePdf.ts";
 import { Exports, Modifiers, Notifications, Requirements } from "@/server/repositories/index.ts";
-import { buildAs, createTestCharacter } from "@/tests/support/characters.ts";
+import { createTestCharacter } from "@/tests/support/characters.ts";
+import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
 import { silentJobHelpers } from "@/tests/support/jobs.ts";
 import { findSeededCharacter } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";

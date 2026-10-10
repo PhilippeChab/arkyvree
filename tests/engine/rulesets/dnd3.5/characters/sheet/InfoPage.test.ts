@@ -5,7 +5,7 @@ import { isValidElement, type ReactNode } from "react";
 import CombatSheet from "@/engine/rulesets/dnd3.5/characters/description/CombatSheet.ts";
 import InfoPage from "@/engine/rulesets/dnd3.5/characters/sheet/InfoPage.tsx";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
-import { buildAs } from "@/tests/support/characters.ts";
+import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
 import { findSeededCharacter } from "@/tests/support/seed.ts";
 
 /** The text a page's element tree shows, its components called, each piece in order. */

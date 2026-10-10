@@ -11,9 +11,9 @@
  * don't read: these can't be marked reviewed, correct them with an override or skip the entry.
  *
  * Usage:
- *   bun run parser:validate                              # all issues
- *   bun run parser:validate --type class                  # only class references
- *   bun run parser:validate complete-warrior              # only a specific book
+ *   bun run parser:dnd3.5:validate                              # all issues
+ *   bun run parser:dnd3.5:validate --type class                  # only class references
+ *   bun run parser:dnd3.5:validate complete-warrior              # only a specific book
  */
 
 import References from "@/codegen/dnd3.5/tools/references/References.ts";

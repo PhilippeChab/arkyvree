@@ -1,4 +1,4 @@
-import { CharacterBase, type InventoryEntry } from "@/engine/core/character/index.ts";
+import { CharacterBase } from "@/engine/core/character/index.ts";
 import type { Klass } from "@/shared/relations.ts";
 
 import { type Dnd35Components } from "./CharacterComponents.ts";
@@ -11,7 +11,7 @@ import type { CustomizedClassLevel, CustomizedFeat, CustomizedPower } from "./lo
  * without a pick (`PossessesVirtually`) and core's validation (`Validates`); `DetailedCharacter` wires them.
  */
 export default abstract class CharacterState extends CharacterBase<Dnd35Components, LoadedCharacterData> {
-  // Diagnostic helpers (resolveEntityName / resolveModifierSourceName) run
+  // Diagnostic helpers (nameEntity / resolveModifierSourceName) run
   // per unmet-requirement when formatting validation errors. Build lookup
   // maps once on first use and reuse across subsequent resolve calls.
   // The index is cached for the lifetime of the DetailedCharacter instance;
@@ -20,7 +20,6 @@ export default abstract class CharacterState extends CharacterBase<Dnd35Componen
   // future code mutates those post-build, invalidate this field first.
   protected diagnosticsIndex?: {
     featsById: Map<string, CustomizedFeat>;
-    inventoryByItemId: Map<string, InventoryEntry>;
     klassLevelsById: Map<string, CustomizedClassLevel>;
     modifierOwner: Map<string, { name: string; type: string }>;
     powersById: Map<string, CustomizedPower>;

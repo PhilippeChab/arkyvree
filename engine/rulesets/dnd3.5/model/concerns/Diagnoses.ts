@@ -1,4 +1,3 @@
-import type { InventoryEntry } from "@/engine/core/character/index.ts";
 import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import type CharacterState from "@/engine/rulesets/dnd3.5/model/CharacterState.ts";
@@ -17,8 +16,8 @@ type AptitudeSlots = { allowed: number; available: number; spent: number };
 
 /**
  * A 3.5 character's diagnostics, which core's validation reads (`Validates`): the issues its rules flag (its pools'
- * slots, its skill points and ranks, a general feat with no pool, a row from outside its source chain), and the names
- * its issues give.
+ * slots, its skill points and ranks, a general feat with no pool), the rows core checks come from its source chain, and
+ * the names of its entities its issues give, past those core names.
  */
 export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
   abstract class Diagnosing extends Base {
@@ -54,38 +53,24 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
       return [...issues, ...budget, ...ranks];
     }
 
-    /** A general feat with no pool to count toward, and each row from outside the character's source chain. */
+    /** A general feat with no pool to count toward, then the rows from outside its source chain (core's). */
     protected override findSourceIssues(): RulesIssue[] {
-      const issues: RulesIssue[] = [];
-
-      const sourceChain = (rulesetId: string, name: string, entityType: string) => {
-        if (!this.data.validRulesetIds.has(rulesetId)) {
-          issues.push({
-            category: "integrity",
-            message: `${entityType} "${name}" belongs to a ruleset not in this character's source chain`,
-            entityName: name,
-            entityType,
-          });
-        }
-      };
-      const unplacedGeneralFeats = this.components.aptitudes.getUnplacedGeneralFeats();
-      if (unplacedGeneralFeats > 0) {
-        issues.push({
-          category: "integrity",
-          message: `The ruleset has no ${GENERAL_FEATS_APTITUDE} aptitude: this character's ${unplacedGeneralFeats} general feat(s) count toward none`,
-        });
-      }
-      sourceChain(this.data.race.rulesetId, this.data.race.name, "races");
-      for (const klass of this.data.klasses) sourceChain(klass.rulesetId, klass.name, "klasses");
-      for (const skill of this.data.skills) sourceChain(skill.rulesetId, skill.name, "skills");
-      for (const feat of this.data.feats) sourceChain(feat.rulesetId, feat.name, "feats");
-      for (const power of this.data.powers) sourceChain(power.rulesetId, power.name, "powers");
-      for (const inv of this.data.inventory) sourceChain(inv.item.rulesetId, inv.item.name, "items");
-
-      return issues;
+      const unplaced = this.components.aptitudes.getUnplacedGeneralFeats();
+      const message = `The ruleset has no ${GENERAL_FEATS_APTITUDE} aptitude: this character's ${unplaced} general feat(s) count toward none`;
+      return [...(unplaced > 0 ? [{ category: "integrity", message }] : []), ...super.findSourceIssues()];
     }
 
-    override resolveEntityName(entityId: string, entityType: string): string | undefined {
+    /** The character's race, classes, skills, feats and powers, which its source chain must hold. */
+    protected override listEntityRows() {
+      const { race, klasses, skills, feats, powers } = this.data;
+      return { races: [race], klasses, skills, feats, powers };
+    }
+
+    /**
+     * Its race, a feat or a power it has, any class of the ruleset, a class level (its own, or one its bonus caster
+     * levels reach) and a modifier of such a level, by name.
+     */
+    protected override nameEntity(entityId: string, entityType: string): string | undefined {
       const idx = this.getDiagnosticsIndex();
       switch (entityType) {
         case "races":
@@ -95,21 +80,15 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
           return idx.featsById.get(entityId)?.name;
         case "powers":
           return idx.powersById.get(entityId)?.name;
-        case "items":
-          return idx.inventoryByItemId.get(entityId)?.item.name;
         case "klasses":
           return idx.rulesetKlassesById.get(entityId)?.name;
         case "modifiers": {
-          const mod =
-            this.data.modifiers.find((m) => m.id === entityId) ??
-            this.components.spellcasting.getBonusKlassLevelModifiers().find((m) => m.id === entityId);
+          // A modifier of a level the bonus caster levels reach, which the spellcasting applies, not the build
+          const mod = this.components.spellcasting.getBonusKlassLevelModifiers().find((m) => m.id === entityId);
           if (mod) return this.resolveEntityName(mod.sourceId, mod.sourceType);
 
           break;
         }
-        case "characters":
-          if (this.character.id === entityId) return this.character.name;
-          break;
         case "klass_levels": {
           const kl = idx.klassLevelsById.get(entityId);
           if (kl) {
@@ -145,11 +124,6 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
       for (const kl of this.data.klassLevels) klassLevelsById.set(kl.id, kl);
       const rulesetKlassesById = new Map<string, Klass>();
       for (const k of this.rulesetData.klasses) rulesetKlassesById.set(k.id, k);
-      const inventoryByItemId = new Map<string, InventoryEntry>();
-      for (const inv of this.data.inventory) {
-        inventoryByItemId.set(inv.item.id, inv);
-        if (inv.item.sourceItemId) inventoryByItemId.set(inv.item.sourceItemId, inv);
-      }
 
       // Flat modifier.id → owning entity index. Built once by iterating every
       // entity that owns modifiers so resolveModifierSourceName becomes O(1).
@@ -176,7 +150,6 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
         powersById,
         klassLevelsById,
         rulesetKlassesById,
-        inventoryByItemId,
         modifierOwner,
       };
       return this.diagnosticsIndex;

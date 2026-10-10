@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { MagicItemPage } from "@/codegen/dnd3.5/tools/scraper/pages/MagicItemPage.ts";
-import { fixture, named, scraped, stored } from "@/tests/support/scrapedPages.ts";
+import { fixture, named, scraped, stored } from "@/tests/support/dnd3.5/scrapedPages.ts";
 
 describe("A page of the SRD's magic items", () => {
   test("reads its items as their reference stores them, one a price of those with several", () => {

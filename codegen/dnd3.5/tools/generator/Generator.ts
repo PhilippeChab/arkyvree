@@ -12,8 +12,11 @@ import { BookGenerator } from "./BookGenerator.ts";
  */
 export class Generator {
   constructor(dir: string, quiet: boolean) {
-    this.folder = new GeneratedFolder(dir, quiet);
+    this.folder = new GeneratedFolder(dir, quiet, Generator.COMMAND);
   }
+
+  /** The `package.json` script that runs it (`cli/generate.ts`), which each file it generates names. */
+  static readonly COMMAND = "parser:dnd3.5:generate";
 
   /** The folder it writes to, and what it wrote there. */
   private readonly folder: GeneratedFolder;

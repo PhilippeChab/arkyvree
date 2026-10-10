@@ -1,10 +1,14 @@
 import { z } from "zod";
 
+import type { Accepted } from "@/engine/index.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { getEntityTypeOfSegment, getUrlSegments } from "@/shared/urlSegments.ts";
 
-/** The fields an entity's body carries for its ruleset's rules, as the engine's plan of it (`P`) takes them. */
-type PlanFields<P extends (body: never) => unknown> = Parameters<P>[0] extends { fields?: infer F }
+/**
+ * The fields an entity's body carries for its ruleset's rules, as the engine's plan of it (`P`) takes them: as every
+ * registered ruleset's takes them (`Accepted`).
+ */
+type PlanFields<P extends (body: never) => unknown> = Accepted<P>[0] extends { fields?: infer F }
   ? NonNullable<F>
   : never;
 

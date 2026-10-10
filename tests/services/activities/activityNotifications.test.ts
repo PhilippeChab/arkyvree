@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import {
   Abilities,
+  Activities,
   Aptitudes,
   Characters,
   Klasses,
@@ -19,6 +20,7 @@ import { PropertiesService } from "@/server/services/rulesets/customization/prop
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { MechanicsService } from "@/server/services/rulesets/mechanics/index.ts";
 import { collectNotified } from "@/server/websockets/index.ts";
+import { isRecord } from "@/shared/isRecord.ts";
 import { createTestCampaign, inviteToSlot } from "@/tests/support/campaigns.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { addRulesetContributor } from "@/tests/support/contributors.ts";
@@ -214,6 +216,35 @@ describe("activity notifications", () => {
     await ClassSkillsService.removeClassSkill(author.session, rulesetId, fighter.id, climb.id);
 
     expect(await inbox(owner)).toEqual([note("addKlassSkill", author), note("removeKlassSkill", author)]);
+  });
+
+  // The client names a change in its ruleset's words (a 3.5 power is a spell), which its base rules pick: every change to
+  // a ruleset's content records them, an entity's and what belongs to one alike
+  test("of a ruleset's content carry its base rules, as their activities do", async () => {
+    const [owner, author] = await users(2);
+    const ruleset = await createTestRuleset(owner.user.id);
+    await addRulesetContributor(ruleset.id, author.user, owner.user.id);
+    const [aptitude] = await Aptitudes.create(db, { name: "General", description: "", rulesetId: ruleset.id });
+    const feat = await FeatsService.createFeat(author.session, ruleset.id, {
+      name: "Worded Feat",
+      description: "",
+      aptitudeIds: [aptitude.id],
+    });
+    await PropertiesService.createProperty(author.session, ruleset.id, "feats", feat.id, { type: "NOTE", value: "" });
+    const [ability] = await Abilities.create(db, { name: "Strength", description: "", rulesetId: ruleset.id });
+    const [fighter] = await Klasses.create(db, { name: "Fighter", rulesetId: ruleset.id, hd: 10 });
+    const [climb] = await Skills.create(db, { name: "Climb", rulesetId: ruleset.id, primaryAbilityId: ability.id });
+    await ClassSkillsService.addClassSkill(author.session, ruleset.id, fighter.id, climb.id);
+    await FeatsService.deleteFeat(author.session, ruleset.id, feat.id);
+
+    const page = { limit: 50, page: 1 };
+    const activities = (await Activities.findPage(db, { userId: author.user.id }, page)).items;
+    const notifications = (await Notifications.findPage(db, { recipientId: owner.user.id }, page)).items;
+    for (const rows of [activities, notifications]) {
+      expect(rows.map(({ type, data }) => [type, isRecord(data) && data.baseRules]).sort()).toEqual(
+        ["addKlassSkill", "createFeat", "createProperty", "deleteFeat"].map((type) => [type, ruleset.baseRules]),
+      );
+    }
   });
 
   test("of a ruleset's content go to nobody when its owner works alone", async () => {

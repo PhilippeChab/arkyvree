@@ -7,8 +7,9 @@ import { CodeFile } from "./code/CodeFile.ts";
 type GeneratedFile = { code: string; notes: string[]; path: string };
 
 /**
- * A class's generated files, composed once for the generator, which writes them, and `parser:validate`, which checks
- * what an override changes in them: the class's file, its seed opened by what's left to review in it, and its feats'.
+ * A class's generated files, composed once for the generator, which writes them, and `parser:dnd3.5:validate`, which
+ * checks what an override changes in them: the class's file, its seed opened by what's left to review in it, and its
+ * feats'.
  */
 export class ClassFiles {
   constructor(readonly seeds: ClassSeeds) {}

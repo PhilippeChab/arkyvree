@@ -74,7 +74,7 @@ content/dnd3.5/
     └── dmg/, complete-warrior/, …   # Each extension book; every book has an index.ts exporting BOOK
 
 codegen/core/             # What every ruleset's codegen runs on
-├── GeneratedFolder.ts    # The folder a generation writes: a run in a copy that replaces it whole (generateAtomically), the files it wrote
+├── GeneratedFolder.ts    # The folder a generation writes: a run in a copy that replaces it whole (generateAtomically), the files it wrote, each naming the ruleset's command that generates it
 ├── code/GeneratedCode.ts # A generated file's code: its lines, its imports, how a value is written, the customization values (its content types' and names' modules are the ruleset's)
 ├── scraper/              # HttpClient (a site's pages, cached, paced, retried; a site's clean-up its own), Page (a page's document, sections, headings)
 └── text/                 # Stable JSON, whitespace
@@ -82,7 +82,7 @@ codegen/core/             # What every ruleset's codegen runs on
 codegen/dnd3.5/
 ├── reference/            # Scraped JSON (raw + overrides)
 └── tools/                # Scraper, generator, validate, overrides
-    ├── cli/              # The commands (parser:scrape, generate, sync, overrides, validate), each reading its line through CommandLine
+    ├── cli/              # The commands (parser:dnd3.5:scrape, generate, sync, overrides, validate), each reading its line through CommandLine
     ├── types/            # A reference's types, a module per kind of reference
     ├── references/       # The reference files (References): finding, reading, writing and loading them, what's derived resolved by each kind's detector
     ├── scraper/          # Pages → reference/
@@ -94,12 +94,12 @@ codegen/dnd3.5/
     ├── text/             # The scraped text: sanitized (the site's HTML and the books' references), normalized, entry names, amounts (cost, weight)
     ├── vocabulary/       # The names the books give abilities, saves, skills, races and numbers, their slugs and paths, a feat family's options, and the core rules' book: a module per subject
     ├── seeds/            # A book's seeds (BookSeeds, one per book on the Library), a class per kind built once per reference (FeatSeeds, SpellSeeds…; a class's: classes/ClassSeeds.ts); what a book copies and the aptitudes it uses, its concerns
-    ├── validate/         # What parser:validate reports: a reference's issues (ReferenceIssues, its ReviewList), what a class's overrides change (ClassOverridesCheck)
+    ├── validate/         # What parser:dnd3.5:validate reports: a reference's issues (ReferenceIssues, its ReviewList), what a class's overrides change (ClassOverridesCheck)
     └── generator/        # The seeds → content/dnd3.5/generated/
         ├── Generator.ts      # Picks the books (generateAll, generateReference) and generates each whole, a BookGenerator each
         ├── BookGenerator.ts  # A book's files, from its seeds (BaseBookGenerator: the book, its seeds, the writes kinds of files share)
         ├── concerns/         # A kind of file per concern: GeneratesClasses, GeneratesFeats…, GeneratesIndexes
-        ├── ClassFiles.ts     # A class's files, composed once: the generator writes them, parser:validate checks an override against them
+        ├── ClassFiles.ts     # A class's files, composed once: the generator writes them, parser:dnd3.5:validate checks an override against them
         ├── BookLayout.ts     # A book's generated tree: each file's path and the list it exports, which the writers and the indexes name
         └── code/             # A file's code, written from its seeds: CodeFile (BaseCodeFile, on core's GeneratedCode: where the 3.5 content types and names come from), a concern per kind of seed (WritesClasses, WritesFeats…) and WritesIndexes
 ```
@@ -114,7 +114,7 @@ Each of its folders has one role, which `arkyvree/layers` holds:
 - `packages/` gathers them: a package's content is its book (`BOOK`, `generated/<book>/index.ts`) and the hand-written rows it adds (the core rules' `CORE`, Complete Divine's deity's weapon feats).
 - The books' facts the builders and the data read (the weapon, armor and shield tables, the skills' and the creature types' names, a feat family's name) are the ruleset's vocabulary (`vocabulary/dnd3.5/`), as the engine's are.
 
-The codegen reads `builders/`, `data/` and the vocabulary, never the generated books it writes nor the packages that gather them. A seeder (`database/`) reads what a package seeds from its definition (`packages/`), never a module of `data/` or `generated/`.
+The codegen reads `builders/`, `data/` and the vocabulary, never the generated books it writes nor the packages that gather them. Its commands are `package.json` scripts named for its ruleset (`parser:dnd3.5:generate`, `parser:dnd3.5:validate`…), and each file it generates names the one that generates it, as its ruleset's generator hands it to core's `GeneratedFolder` (`Generator.COMMAND`). A seeder (`database/`) reads what a package seeds from its definition (`packages/`), never a module of `data/` or `generated/`.
 
 ## How seeds work
 
@@ -157,7 +157,7 @@ export const DND35_DMG_PACKAGE: ExtensionPackage = {
 
 ### Adding an extension
 
-1. Add the book to the scraper (its slug in `codegen/dnd3.5/tools/scraper/BaseScraper.ts`), scrape it, and generate it (`bun run parser:generate <book>`).
+1. Add the book to the scraper (its slug in `codegen/dnd3.5/tools/scraper/BaseScraper.ts`), scrape it, and generate it (`bun run parser:dnd3.5:generate <book>`).
 2. Add its display name to `content/dnd3.5/rulesetNames.ts` and a package file under `content/dnd3.5/packages/extensions/` with `seedsVersion: 1`.
 3. Register it in `database/packages/registry.ts`: last of its base rules' `extensions` (`RULESET_CONTENT`).
 
@@ -188,9 +188,9 @@ A reference file (`codegen/dnd3.5/reference/<book>/…json`) has three parts:
 - **`raw`** — what the scraper read. Re-scraping replaces it.
 - **`overrides`** — corrections made by hand. Re-scraping keeps them. Nothing else in the file is hand-edited.
 
-What the generator reads is derived from the two each time a reference is loaded (`References`, which derives them with the detectors in `tools/detect/`): `detected` (BAB, saves, requirements, modifiers… parsed from `raw`; wizard schools have none) and `mapping` (each entity as the seeds make it, its overrides applied, which win over both). The seeds read the mapping, never the overrides. So a correction takes effect at the next `parser:generate`, and can't be lost to a re-scrape. See `reference/README.md` for a class reference's shape.
+What the generator reads is derived from the two each time a reference is loaded (`References`, which derives them with the detectors in `tools/detect/`): `detected` (BAB, saves, requirements, modifiers… parsed from `raw`; wizard schools have none) and `mapping` (each entity as the seeds make it, its overrides applied, which win over both). The seeds read the mapping, never the overrides. So a correction takes effect at the next `parser:dnd3.5:generate`, and can't be lost to a re-scrape. See `reference/README.md` for a class reference's shape.
 
-`bun run parser:validate` lists:
+`bun run parser:dnd3.5:validate` lists:
 - unresolved detections, and items without a definition (the generator leaves them out), not yet listed in `overrides.reviewed`; and entries of `overrides.reviewed` that cover none of them, or repeat one;
 - classes the generator refuses;
 - class overrides that change nothing (they hold what's derived without them) or that the generator ignores;

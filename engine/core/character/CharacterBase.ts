@@ -10,12 +10,16 @@ import type { Character, Modifier, Requirement } from "@/shared/relations.ts";
 import type { BuiltCharacter, default as CharacterComponent } from "./CharacterComponent.ts";
 import type { default as CharacterDataLoader, LoadedCharacter } from "./CharacterDataLoader.ts";
 
+/** A row of the ruleset's entities the character has, which its source chain must hold: its name and its ruleset. */
+type EntityRow = { name: string; rulesetId: string };
+
 /**
  * A character, as every ruleset builds it (`build`): its data loaded (`createDataLoader`), its components (`C`, each a
  * `CharacterComponent`) set up in the order its ruleset lists them, its modifiers applied in rounds behind their
  * requirements, its components finished, then the modifiers the ruleset applies last (`isLateModifier`); and what its
- * validation reads (`Validates`): the ruleset's own issues and the names its issues give. A ruleset's character extends
- * it and implements each step its rules take.
+ * validation reads (`Validates`): the ruleset's own issues, the rows it has from outside its source chain
+ * (`findSourceIssues`) and the names its issues give (`resolveEntityName`). A ruleset's character extends it and
+ * implements each step its rules take.
  */
 export default abstract class CharacterBase<
   C extends Record<string, CharacterComponent<D>>,
@@ -61,6 +65,9 @@ export default abstract class CharacterBase<
 
   readonly requirementEvaluator: RequirementEvaluator;
 
+  /** The names of the character's items, by their id and by the id of the item a copy is of: built on first read. */
+  private itemNames?: Map<string, string>;
+
   /** The components the evaluators walk, once the build set them up. */
   protected builtComponents: C | null = null;
 
@@ -89,20 +96,26 @@ export default abstract class CharacterBase<
   /** The ruleset's issues about what the character has, before its requirements' and modifiers' (`validate`). */
   protected abstract findRulesetIssues(): RulesIssue[];
 
-  /** The ruleset's issues about where the character's rows come from, after the rest (`validate`). */
-  protected abstract findSourceIssues(): RulesIssue[];
-
   /** Whether a modifier applies after the components' finish (`CharacterComponent.finalize`), not in the rounds. */
   protected abstract isLateModifier(modifier: Modifier): boolean;
 
-  /** The ruleset's step after its pre-requirement step, before the modifiers apply. */
-  protected abstract postRequirementProcessing(): void;
+  /**
+   * The rows the character has of its ruleset's entities (its race, its classes…), by table, in the order its issues
+   * list them: each from a ruleset of its source chain (`findSourceIssues`), as its items are.
+   */
+  protected abstract listEntityRows(): Record<string, readonly EntityRow[]>;
 
-  /** The ruleset's step once the components are set up, before the requirements read the sheet. */
-  protected abstract preRequirementProcessing(): void;
+  /**
+   * The name of one of its ruleset's entities an issue is about, as the character has it (a feat, a class level), past
+   * what the base names (`resolveEntityName`): none when it has no such entity.
+   */
+  protected abstract nameEntity(entityId: string, entityType: string): string | undefined;
 
-  /** The name of the entity an issue is about, as the character has it: none when it has no such entity. */
-  abstract resolveEntityName(entityId: string, entityType: string): string | undefined;
+  /**
+   * The ruleset's steps once the components are set up, before the modifiers apply and the requirements read the
+   * sheet: what its rules set on the sheet first.
+   */
+  protected abstract prepareSheet(): void;
 
   /** The entity a modifier comes from, by its name and its type: none when the character has no such source. */
   abstract resolveModifierSourceName(modifier: Modifier): { name: string; type: string } | undefined;
@@ -161,6 +174,17 @@ export default abstract class CharacterBase<
     );
   }
 
+  /** The names of the character's items, by their id and by the id of the item a copy is of. */
+  private namesOfItems(): Map<string, string> {
+    if (this.itemNames) return this.itemNames;
+    this.itemNames = new Map();
+    for (const { item } of this.data.inventory) {
+      this.itemNames.set(item.id, item.name);
+      if (item.sourceItemId) this.itemNames.set(item.sourceItemId, item.name);
+    }
+    return this.itemNames;
+  }
+
   /**
    * The groups (those that require anything) evaluated on the built sheet, apart from the build's own evaluation, each
    * of the item its owner names, or of `context.sourceId` when given: nothing evaluated before the build.
@@ -173,6 +197,24 @@ export default abstract class CharacterBase<
     const itemOf = sourceId === undefined ? this.itemOf : () => sourceId ?? undefined;
     evaluator.evaluateRequirements(this.builtComponents, nonEmpty, itemOf);
     return evaluator.getRequirements();
+  }
+
+  /**
+   * The issues of the rows the character has from outside its source chain (`validRulesetIds`): its ruleset's entities'
+   * (`listEntityRows`), then its items'. A ruleset that has issues of its own about them puts them first.
+   */
+  protected findSourceIssues(): RulesIssue[] {
+    const rows = { ...this.listEntityRows(), items: this.data.inventory.map(({ item }) => item) };
+    return Object.entries(rows).flatMap(([entityType, entities]) =>
+      entities
+        .filter(({ rulesetId }) => !this.data.validRulesetIds.has(rulesetId))
+        .map(({ name }) => ({
+          category: "integrity",
+          message: `${entityType} "${name}" belongs to a ruleset not in this character's source chain`,
+          entityName: name,
+          entityType,
+        })),
+    );
   }
 
   /** The ruleset's lists and indices, as its view composes them. */
@@ -207,8 +249,7 @@ export default abstract class CharacterBase<
     this.builtComponents = this.components;
 
     // 4. The ruleset's steps before the requirements read the sheet
-    this.preRequirementProcessing();
-    this.postRequirementProcessing();
+    this.prepareSheet();
 
     // 5. The modifiers but the late ones, and the requirements that gate them
     const lateModifiers = this.data.modifiers.filter((m) => this.isLateModifier(m));
@@ -231,5 +272,17 @@ export default abstract class CharacterBase<
 
   getRuleset() {
     return this.view.ruleset;
+  }
+
+  /**
+   * The name of the entity an issue is about, as the character has it: itself, one of its items (or the item a copy of
+   * one is of), a modifier's source, or one of its ruleset's entities (`nameEntity`); none when it has no such entity.
+   */
+  resolveEntityName(entityId: string, entityType: string): string | undefined {
+    if (entityType === "characters") return this.character.id === entityId ? this.character.name : undefined;
+    if (entityType === "items") return this.namesOfItems().get(entityId);
+    const modifier = entityType === "modifiers" ? this.data.modifiers.find((m) => m.id === entityId) : undefined;
+    if (modifier) return this.resolveEntityName(modifier.sourceId, modifier.sourceType);
+    return this.nameEntity(entityId, entityType);
   }
 }

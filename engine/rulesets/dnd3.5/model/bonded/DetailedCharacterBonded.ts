@@ -29,9 +29,9 @@ export default abstract class DetailedCharacterBonded extends DetailedCharacter 
   /**
    * The creature's master and stat block set its inputs (hit dice, base saves, natural armor and attacks, the stat
    * block's feats and skill totals) before requirements read the sheet and modifiers change it: an item's or a feat's
-   * modifier adds on top. Then the character's own setup, Weapon Finesse on the natural attacks included.
+   * modifier adds on top. Then the character's own steps, Weapon Finesse on the natural attacks included.
    */
-  protected override preRequirementProcessing(): void {
+  protected override prepareSheet(): void {
     if (this.character.parentCharacterId) this.applyMasterDerivation(this.requireMaster());
 
     const raceStats = BondedRaceData.getStats(this.data.race.name);
@@ -44,7 +44,7 @@ export default abstract class DetailedCharacterBonded extends DetailedCharacter 
       this.applyRaceDefaults(raceStats);
     }
 
-    super.preRequirementProcessing();
+    super.prepareSheet();
   }
 
   /** Builds the creature from its rows, its sheet derived from its `master`'s, which comes built. */
