@@ -5,8 +5,8 @@ import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
-import { MIN_ABILITY_SCORE, STARTING_ABILITY_SCORE } from "@/shared/dnd3.5/abilities.ts";
-import { CREATION_METHODS } from "@/shared/dnd3.5/creation.ts";
+import { MIN_ABILITY_SCORE, STARTING_ABILITY_SCORE } from "@/vocabulary/dnd3.5/abilities.ts";
+import { CREATION_METHODS } from "@/vocabulary/dnd3.5/creation.ts";
 
 /** A 3.5 creation method, as its data writes it. */
 type MethodData = (typeof CREATION_METHODS)[number];

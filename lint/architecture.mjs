@@ -10,7 +10,8 @@
  *   memoized) below its write side (`cow/writes/`). A ruleset's content (`content/<ruleset>/`: its builders, its data and what the codegen
  *   generates) is data, which imports none of what reads or writes it. The codegen (`codegen/`) isn't the server's, and stores nothing; the
  *   server reads none of `database/`, `content/` and `codegen/`. `shared/` imports nothing app-specific (the schema's
- *   types only), and the client takes only types from the server.
+ *   types only), and neither does a ruleset's vocabulary (`vocabulary/<ruleset>/`: its data, which the engine and the
+ *   client read), but `shared/`'s types; the client takes only types from the server.
  * - `engine-front-door`: code outside `engine/` enters it through `engine/index.ts`, `Engine` and its handles' types,
  *   as the client enters the server through its API; a test may reach any of its modules.
  * - `one-engine-op`: a service's or a job's action (a method, a function) asks the engine one operation, which answers
@@ -28,10 +29,15 @@
  *   outermost index, never a subfolder's). Files within the folder import each other directly, and a test may reach a
  *   folder's own modules (a pure module's unit test).
  * - `ruleset-folders`: a ruleset is a folder of `engine/rulesets/`, and a folder of its name, in any tree, is its own
- *   (`content/<ruleset>/`, `codegen/<ruleset>/`, `database/packages/<ruleset>/`, `shared/<ruleset>/`, the client's
- *   and the tests'): a ruleset's code imports none of another's, and what every ruleset runs on (`engine/core/`,
- *   `content/core/`, `codegen/core/`, `database/packages/seed/`, the server, `shared/`, `lib/`) names none of them. A
- *   ruleset's builders (`content/<ruleset>/builders/`, what its data is written with) import nothing of its data.
+ *   (`content/<ruleset>/`, `codegen/<ruleset>/`, `database/packages/<ruleset>/`, `vocabulary/<ruleset>/`, the
+ *   client's and the tests'): a ruleset's code imports none of another's, and what every ruleset runs on
+ *   (`engine/core/`, `content/core/`, `codegen/core/`, `database/packages/seed/`, the server, `shared/`, `lib/`) names
+ *   none of them. A ruleset's builders (`content/<ruleset>/builders/`, what its data is written with) import nothing of
+ *   its data. The client's generic modules read a ruleset's vocabulary through its registry alone
+ *   (`CLIENT_VOCABULARY_REGISTRIES`: `getVocabulary(baseRules)`), never from its folder.
+ * - `vocabulary-data`: a ruleset's vocabulary (`vocabulary/<ruleset>/`) is data: its lists, labels, tables and bounds,
+ *   never a rule. It declares no function or class, and holds none in a constant (a callback in a constant's value,
+ *   `SPELL_LEVELS.map((level) => …)`, builds the data): a rule is the engine's, which the client reads from a response.
  * - `re-exports`: an `index.ts` that re-exports is a folder's entry, which only re-exports what the folder offers,
  *   from the modules themselves (`export { x } from "./x.ts"`): its own code goes in a module named for it. Any other
  *   module (an `index.ts` that re-exports nothing too: a route folder's routes) exports what it declares, never another
@@ -60,14 +66,20 @@ const ABOVE_REPOSITORIES = [
 const ACTION_LAYERS = ["server/services/", "server/jobs/"];
 /** The client's component folders, which code outside enters at their outermost index */
 const CLIENT_COMPONENTS = "client/src/components/";
+/** The client's modules that read a ruleset's vocabulary for its generic pages, by its base rules. */
+const CLIENT_VOCABULARY_REGISTRIES = ["client/src/pages/rulesets/vocabularyFactory.ts"];
 /** The engine's entry's own methods, which hand out its handles. */
 const ENGINE_ENTRIES = new Set(["copyOnWrite", "for", "forRules"]);
+
 /** What a folder's entry with code of its own is told. */
 const ENTRY_ONLY_RE_EXPORTS =
   'A folder\'s index.ts only re-exports what the folder offers (`export { x } from "./x.ts"`): its own code goes in a ' +
   "module named for it.";
 
 const FUNCTION_TYPES = new Set(["ArrowFunctionExpression", "FunctionDeclaration", "FunctionExpression"]);
+
+/** The values that are a function or a class, which a vocabulary's constant never holds. */
+const FUNCTION_VALUES = new Set(["ArrowFunctionExpression", "ClassExpression", "FunctionExpression"]);
 
 const indexCache = new Map();
 
@@ -76,7 +88,6 @@ const indexCache = new Map();
  * `index.ts` is its routes, not its folder's entry), the engine's, and the client's components.
  */
 const INDEXED_TREES = ["server/", "engine/", CLIENT_COMPONENTS];
-
 const LAYERS = [
   { layer: "server/database/", deny: ["server/repositories/", ...ABOVE_REPOSITORIES] },
   { layer: "server/repositories/", deny: ABOVE_REPOSITORIES },
@@ -120,25 +131,31 @@ const LAYERS = [
   // What the server and the engine share (the mixins): it imports nothing of the app
   { layer: "lib/", deny: ["server/", "engine/", "database/", "client/", "shared/", "drizzle/"] },
   { layer: "shared/", deny: ["server/", "engine/", "client/", "database/", "drizzle/"], types: ["drizzle/"] },
+  // A ruleset's vocabulary is data, which the engine and the client read: it imports nothing of the app but shared/
+  {
+    layer: "vocabulary/",
+    deny: ["server/", "engine/", "client/", "database/", "content/", "codegen/", "lib/", "drizzle/"],
+    types: ["drizzle/"],
+  },
   {
     layer: "client/",
     deny: ["server/", "engine/", "database/", "drizzle/"],
     types: ["server/", "engine/", "drizzle/"],
   },
 ];
-
 /** What a module that exports another module's is told. */
 const MODULE_EXPORTS_ITS_OWN =
   "A module exports what it declares, never another module's: code that needs that imports it from where it's defined.";
+
 /** Where a query may be built: the repositories, and the database layer (what talks to Postgres itself). */
 const QUERY_HOMES = ["server/repositories/", "server/database/"];
+
 const QUERY_METHODS = new Set(["select", "selectDistinct", "insert", "update", "delete", "execute"]);
 
 /** The rulesets of each repo root, once read. */
 const rulesetsCache = new Map();
 
 const SET_OPERATORS = new Set(["union", "unionAll", "intersect", "intersectAll", "except", "exceptAll"]);
-
 /** What every ruleset runs on, which names none of them: the core's folders, the server and what it shares. */
 const SHARED_HOMES = [
   "engine/core/",
@@ -149,6 +166,7 @@ const SHARED_HOMES = [
   "shared/",
   "lib/",
 ];
+
 /** The modules `one-engine-op` read, by path. */
 const sourceCache = new Map();
 
@@ -508,11 +526,19 @@ function createRulesetFolders(context) {
   const ruleset = rulesetOf(file, rulesets);
   const home = ruleset ? undefined : SHARED_HOMES.find((prefix) => file.startsWith(prefix));
   const builders = ruleset && file.startsWith(`content/${ruleset}/builders/`);
-  if (!ruleset && !home) return {};
+  const genericClient = !ruleset && file.startsWith("client/") && !CLIENT_VOCABULARY_REGISTRIES.includes(file);
+  if (!ruleset && !home && !genericClient) return {};
   return onImports((node, spec) => {
     const target = targetOf(file, spec);
     const other = target && rulesetOf(target, rulesets);
-    if (home && other) {
+    if (genericClient && other && target.startsWith("vocabulary/")) {
+      context.report({
+        node,
+        message:
+          "A generic client module reads a ruleset's vocabulary through its registry, `getVocabulary(baseRules)` " +
+          "(client/src/pages/rulesets/vocabularyFactory.ts), never from its folder.",
+      });
+    } else if (home && other) {
       context.report({
         node,
         message: `${home} is what every ruleset runs on: it imports none of ${other}'s folders.`,
@@ -531,6 +557,22 @@ function createRulesetFolders(context) {
       });
     }
   });
+}
+
+function createVocabularyData(context) {
+  if (!repoPath(context.filename).startsWith("vocabulary/")) return {};
+  const message =
+    "A ruleset's vocabulary is data (its lists, labels, tables and bounds): no function or class, which is a rule, " +
+    "the engine's, whose result the client reads from a response.";
+  const report = (node) => context.report({ node, message });
+  return {
+    ClassDeclaration: report,
+    FunctionDeclaration: report,
+    // A constant holding a function or a class is one; a callback in its value builds the data
+    VariableDeclarator(node) {
+      if (FUNCTION_VALUES.has(node.init?.type)) report(node);
+    },
+  };
 }
 
 function hasIndex(dir) {
@@ -631,4 +673,5 @@ export default {
   "folder-index": { meta: { type: "problem" }, create: createFolderIndex },
   "re-exports": { meta: { type: "problem" }, create: createReExports },
   "ruleset-folders": { meta: { type: "problem" }, create: createRulesetFolders },
+  "vocabulary-data": { meta: { type: "problem" }, create: createVocabularyData },
 };

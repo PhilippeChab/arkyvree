@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { propertiesInCustomization } from "@/drizzle/schema.ts";
 import { RULESET_FIELDS } from "@/engine/rulesets/dnd3.5/ruleset/fields.ts";
 import { db } from "@/server/database/index.ts";
-import { RULESET_SKILL_POINT_ABILITY_ID } from "@/shared/dnd3.5/properties/index.ts";
+import { RULESET_SKILL_POINT_ABILITY_ID } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 describe("A ruleset's own fields", () => {
   test("are none without their properties, and each from the first row of its type with them", () => {

@@ -4,8 +4,8 @@ import { z } from "zod";
 
 import { RulesetEntity } from "@/engine/core/entities/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import { HIT_DIE_VALUES } from "@/shared/dnd3.5/classes.ts";
 import type { Klass } from "@/shared/relations.ts";
+import { DEFAULT_HIT_DIE, HIT_DIE_VALUES } from "@/vocabulary/dnd3.5/classes.ts";
 
 import ClassLevelEntity from "./ClassLevelEntity.ts";
 import ClassSkillEntity from "./ClassSkillEntity.ts";
@@ -40,9 +40,9 @@ export default class ClassEntity extends RulesetEntity<
     RulesError.parse(HIT_DIE.optional(), hd || undefined, ["hd"]);
   }
 
-  /** A form's columns: the hit die it gives, or the edited class's; a new one's 8 when it gives none (0 is none). */
+  /** A form's columns: the hit die it gives, or the edited class's; a new one's `DEFAULT_HIT_DIE` when it gives none (0 is none). */
   protected columnsOf({ description, hd, name }: ClassBody, klass?: Klass) {
-    return { description, hd: klass ? (hd ?? klass.hd) : hd || 8, name };
+    return { description, hd: klass ? (hd ?? klass.hd) : hd || DEFAULT_HIT_DIE, name };
   }
 
   /** A class with its fields, and the ids of the properties that keep them, which its page edits them through. */

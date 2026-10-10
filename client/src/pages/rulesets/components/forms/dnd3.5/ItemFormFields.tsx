@@ -4,9 +4,9 @@ import { type UseFormReturn } from "react-hook-form";
 import { DescriptionField, FormTextField, NameField, SelectField } from "@/client/src/components/common/index.ts";
 import { DECIMAL_RULES } from "@/client/src/lib/validation.ts";
 import { itemTemplatesQuery } from "@/client/src/pages/rulesets/optionQueries.ts";
-import { TEMPLATE_ITEM_TYPES, type TemplateItemType } from "@/shared/dnd3.5/itemTemplates.ts";
 import { LOCATION_OPTIONS } from "@/shared/enums.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
+import { TEMPLATE_ITEM_TYPES, type TemplateItemType } from "@/vocabulary/dnd3.5/itemTemplates.ts";
 
 import { ITEM_TYPE_OPTIONS, type ItemFormData } from "./itemForm.ts";
 

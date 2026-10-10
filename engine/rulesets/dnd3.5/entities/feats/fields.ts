@@ -4,7 +4,7 @@ import {
   FEAT_OVERSIZED_TWO_WEAPON_FIGHTING,
   FEAT_WEAPON_FINESSE,
   WIZARD_PROHIBITED_SCHOOL,
-} from "@/shared/dnd3.5/properties/index.ts";
+} from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** A feat's fields' values. */
 export type FeatFieldValues = FieldValues<typeof FEAT_FIELDS.fields>;

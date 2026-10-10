@@ -90,7 +90,7 @@ requirements: [
 
 Properties are key-value pairs attached to entities via `customization.properties`. They store metadata used by the character engine (e.g., weapon damage dice, armor AC bonus, spell school). See [Auto-Generated Customization](#auto-generated-customization) below for all property types.
 
-A ruleset's property names are constants in `shared/` (`shared/dnd3.5/properties/`), which the engine, the seeds, the parser, the client and the tests import instead of writing the name. Their descriptions and values are there too (`ENTITY_PROPERTY_TYPES`, `getStaticPropertyValues` in `shared/dnd3.5/properties/propertyTypes.ts`), which the ruleset's `Dnd35PropertyTypes` (`engine/rulesets/dnd3.5/Dnd35PropertyTypes.ts`) serves the engine's `PropertyTypeCatalog` (`engine/core/customizations/PropertyTypeCatalog.ts`). The catalog adds the types and values the ruleset's own properties use (a type with how many use it), and the services ask it through the engine (`Engine.for(scope).propertyTypes()`: `list`, `getTypeCompletions`, `getValueCompletions`).
+A ruleset's property names are constants of its vocabulary (`vocabulary/dnd3.5/properties/`), which the engine, the seeds, the parser, the client and the tests import instead of writing the name. Their descriptions and values are there too (`ENTITY_PROPERTY_TYPES`, `PROPERTY_VALUES` in `vocabulary/dnd3.5/properties/propertyTypes.ts`), which the ruleset's `Dnd35PropertyTypes` (`engine/rulesets/dnd3.5/Dnd35PropertyTypes.ts`) serves the engine's `PropertyTypeCatalog` (`engine/core/customizations/PropertyTypeCatalog.ts`). The catalog adds the types and values the ruleset's own properties use (a type with how many use it), and the services ask it through the engine (`Engine.for(scope).propertyTypes()`: `list`, `getTypeCompletions`, `getValueCompletions`).
 
 ## Wildcard Patterns
 
@@ -112,7 +112,7 @@ requirements: [
 requirements: [gte("feats.luck.count", 2)]
 ```
 
-Available families: `FEAT_FAMILIES` in `shared/dnd3.5/feats.ts`, the `FEAT_FAMILY` values the customization offers and the seeded rules use (`tests/seeds/feats.test.ts` keeps the two the same):
+Available families: `FEAT_FAMILIES` in `vocabulary/dnd3.5/feats.ts`, the `FEAT_FAMILY` values the customization offers and the seeded rules use (`tests/seeds/feats.test.ts` keeps the two the same):
 - Template families: `weaponfocus`, `greaterweaponfocus`, `weaponspecialization`, `greaterweaponspecialization`, `improvedcritical`, `powercritical`, `disembowelingstrike`, `headshot`, `greaterresiliency`, `martialweaponproficiency`, `exoticweaponproficiency`, `rapidreload`, `spellfocus`, `greaterspellfocus`, `arcanedefense`, `skillfocus`
 - Feat type families, each named like its type: `metamagic`, `itemcreation`, `luck`, and Complete Arcane's `draconic` feats, by their "Draconic …" name
 - Class feature families: `turnorrebukeundead`, `wildshape`, `favoredenemy`, and the features each class seeds as its own feat, "Sneak Attack (Rogue)" (`CLASS_FEATURE_FAMILIES`, which `CLASS_FEAT_FAMILIES` in `codegen/dnd3.5/tools/vocabulary/classFeatFamilies.ts` matches): `animalcompanion`, `bardicmusic`, `evasion`, `flurryofblows`, `grace`, `inspirecourage`, `kipower`, `layonhands`, `poisonuse`, `rage`, `skirmish`, `smiteevil`, `sneakattack`, `suddenstrike`, `summonfamiliar`, `trapfinding`

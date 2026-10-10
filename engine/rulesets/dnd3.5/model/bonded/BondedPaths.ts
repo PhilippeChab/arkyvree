@@ -3,7 +3,7 @@ import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
 import { getOperators, LEVEL_MODIFIER_OPERATORS } from "@/shared/customization/operators.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
-import { BONDED_KINDS } from "@/shared/dnd3.5/bondedKinds.ts";
+import { BONDED_KINDS } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 
 /** A bonded creature's paths, `{name}` its kind's label: its race, and its effective level. */
 const BONDED_PATHS = [

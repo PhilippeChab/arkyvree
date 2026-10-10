@@ -69,9 +69,12 @@
     "arkyvree/queries-in-repositories": "error",
     "arkyvree/folder-index": "error",
     // Each ruleset's folders are its own, and what every ruleset runs on (the core's folders, the server, shared/)
-    // names none of them (lint/architecture.mjs).
+    // names none of them; the client's generic modules read a ruleset's vocabulary through its registry
+    // (lint/architecture.mjs).
     "arkyvree/ruleset-folders": "error",
     "arkyvree/re-exports": "error",
+    // A ruleset's vocabulary (vocabulary/<ruleset>/) is data: no function or class (lint/architecture.mjs).
+    "arkyvree/vocabulary-data": "error",
     // AGENTS.md's conventions (lint/conventions.mjs): imports through @/, no helpers.ts, the shared repository
     // instances, route params / validation / errors, sorting through the repository, shared/'s runtime, `session`,
     // the environment read in server/environment.ts, repository writes inside a transaction.

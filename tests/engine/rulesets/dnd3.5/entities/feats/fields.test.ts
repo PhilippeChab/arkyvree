@@ -6,7 +6,7 @@ import {
   FEAT_OVERSIZED_TWO_WEAPON_FIGHTING,
   FEAT_WEAPON_FINESSE,
   WIZARD_PROHIBITED_SCHOOL,
-} from "@/shared/dnd3.5/properties/index.ts";
+} from "@/vocabulary/dnd3.5/properties/index.ts";
 
 describe("A feat's fields", () => {
   test("are none without their properties, and each family, school and rule with them", () => {

@@ -3,8 +3,8 @@ import { NUMBER_WORDS } from "@/codegen/dnd3.5/tools/vocabulary/numbers.ts";
 import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { FEAT_FAMILIES } from "@/vocabulary/dnd3.5/feats.ts";
 
 /**
  * Reading what a prerequisite asking for any feat of a family checks: "any metamagic feat" a family the rules name

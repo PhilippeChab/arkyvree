@@ -3,6 +3,9 @@ import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { EntitySnapshots, Items, Properties } from "@/server/repositories/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
+import { expectRefusedWith } from "@/tests/support/api.ts";
+import { createSeededTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import { createTestUser } from "@/tests/support/users.ts";
 import {
   ARMOR_AC_BONUS,
   ARMOR_CHECK_PENALTY,
@@ -19,10 +22,7 @@ import {
   WEAPON_PROFICIENCY,
   WEAPON_SIZE,
   WEAPON_TYPE,
-} from "@/shared/dnd3.5/properties/index.ts";
-import { expectRefusedWith } from "@/tests/support/api.ts";
-import { createSeededTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
-import { createTestUser } from "@/tests/support/users.ts";
+} from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** An item's properties as read through the service, by type. */
 async function propertiesOf(rulesetId: string, itemId: string) {

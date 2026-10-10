@@ -1,7 +1,7 @@
 /** The families of class features (Sneak Attack, Rage…), which a prerequisite checks by the family's name. */
 
 import { FAVORED_ENEMY_FAMILY } from "@/content/dnd3.5/data/feats/favoredEnemy.ts";
-import { CLASS_FEATURE_FAMILIES } from "@/shared/dnd3.5/feats.ts";
+import { CLASS_FEATURE_FAMILIES } from "@/vocabulary/dnd3.5/feats.ts";
 
 const CLASS_FEAT_FAMILIES: { family: string; pattern: RegExp }[] = [
   { pattern: /^(?:Turn or Rebuke Undead|Turn Undead|Rebuke Undead)\b/i, family: "Turn or Rebuke Undead" },

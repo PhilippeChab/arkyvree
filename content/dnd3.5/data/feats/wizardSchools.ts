@@ -2,7 +2,7 @@ import { bonus } from "@/content/core/builders/customization/modifiers.ts";
 import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import type { WizardSchoolSeed } from "@/content/dnd3.5/builders/wizardSchools/types.ts";
-import { WIZARD_PROHIBITED_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
+import { WIZARD_PROHIBITED_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 const PROHIBITED_SCHOOL = "Prohibited School";
 const SPECIALIZATION = "Wizard Specialization";

@@ -4,8 +4,8 @@ import { ListedEntity } from "@/engine/core/entities/index.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
-import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 import type { FeatWithAptitudes } from "@/shared/relations.ts";
+import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 import { FEAT_FIELDS } from "./fields.ts";
 

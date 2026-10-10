@@ -4,7 +4,7 @@ import {
   KLASS_CASTER_TYPE,
   KLASS_LEVEL_BAB,
   KLASS_LEVEL_SKILL_POINTS,
-} from "@/shared/dnd3.5/properties/index.ts";
+} from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** A class's fields' values. */
 export type ClassFieldValues = FieldValues<typeof CLASS_FIELDS.fields>;

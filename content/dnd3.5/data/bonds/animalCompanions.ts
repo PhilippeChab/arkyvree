@@ -6,7 +6,7 @@ import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
 import { grantFeat } from "@/content/dnd3.5/builders/feats/possession.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import type { RaceSeed } from "@/content/dnd3.5/builders/races/types.ts";
-import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
+import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 import { QUADRUPED } from "./raceProperties.ts";
 

@@ -22,8 +22,8 @@
  * - `order-through-repository`: the server's queries sort with a repository's `this.orderBy(column, direction)`, never
  *   drizzle's `asc` / `desc`, and a repository method that reads a page orders it by `this.pageOrder(keys)`, which ends
  *   on a key no two rows share: OFFSET paging repeats or skips rows that tie.
- * - `shared-runtime`: `shared/` runs in the client too, and `engine/` computes over the data it's given, so neither uses
- *   Bun's APIs (`bun`, the `Bun` global) nor Node's (`node:fs`, `fs`).
+ * - `shared-runtime`: `shared/` and `vocabulary/` run in the client too, and `engine/` computes over the data it's
+ *   given, so none uses Bun's APIs (`bun`, the `Bun` global) nor Node's (`node:fs`, `fs`).
  * - `engine-sync`: `engine/` reads nothing, so nothing it does waits: no `async` function, no `await`, no `Promise`.
  * - `engine-classes`: an operation of `engine/` is a method of its entry's handles (`engine/api/`: `Engine`, and what
  *   `Engine.for(scope)` hands out), and each of its steps a class's method or a module's own function: a module exports
@@ -46,7 +46,7 @@
  * - `no-disable-comments`: no comment turns a lint rule off (`oxlint-disable…`, `eslint-disable…`): a case a rule gets
  *   wrong changes the rule, its options or its definition, never one line.
  * - `environment`: the server reads its environment in `server/environment.ts` only (`readEnv`, `isProduction`…),
- *   which lists every variable: never `process.env` or `Bun.env` elsewhere in the server or `shared/`.
+ *   which lists every variable: never `process.env` or `Bun.env` elsewhere in the server, `shared/` or `vocabulary/`.
  * - `test-placement`: a test named after a module sits at that module's mirror (`tests/services/…` ↔
  *   `server/services/…`); a test of a behavior across modules is free in its area.
  * - `error-names`: an error is named `error`: a `catch`'s binding, and an `onError` callback's first parameter.
@@ -106,6 +106,7 @@ const RUNTIME_FREE_TREES = [
   ["engine/", "`engine/` computes over the data it's given"],
   ["lib/", "`lib/` is what the engine shares with the server"],
   ["content/", "`content/` is data"],
+  ["vocabulary/", "`vocabulary/` is data, which the client compiles in"],
 ];
 
 /** Each test area and the source tree it mirrors. */
@@ -118,6 +119,7 @@ const TEST_MIRRORS = [
   ["tests/middlewares/", "server/middlewares/"],
   ["tests/emails/", "server/emails/"],
   ["tests/shared/", "shared/"],
+  ["tests/vocabulary/", "vocabulary/"],
   ["tests/client/", "client/src/"],
   ["tests/lint/", "lint/"],
   ["tests/scripts/", "scripts/"],
@@ -495,7 +497,7 @@ function createEngineSync(context) {
 
 function createEnvironment(context) {
   const file = repoPath(context.filename);
-  if (!/^(server|engine|shared)\//.test(file) || file === "server/environment.ts") return {};
+  if (!/^(server|engine|shared|vocabulary)\//.test(file) || file === "server/environment.ts") return {};
   return {
     MemberExpression(node) {
       const { object, property } = node;

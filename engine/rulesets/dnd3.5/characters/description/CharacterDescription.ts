@@ -3,7 +3,7 @@ import type { RulesetView } from "@/engine/core/view/index.ts";
 import BondedPaths from "@/engine/rulesets/dnd3.5/model/bonded/BondedPaths.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import Dnd35CharacterBuilder from "@/engine/rulesets/dnd3.5/model/Dnd35CharacterBuilder.ts";
-import { BONDED_KIND_SLUGS } from "@/shared/dnd3.5/bondedKinds.ts";
+import { BONDED_KIND_SLUGS } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 
 import CharacterResponse from "./CharacterResponse.ts";
 

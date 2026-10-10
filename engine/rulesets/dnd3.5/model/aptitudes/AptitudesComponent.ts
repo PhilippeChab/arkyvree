@@ -2,9 +2,9 @@ import type { RulesetData } from "@/engine/core/view/index.ts";
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/ClassesComponent.ts";
 import type IdentityComponent from "@/engine/rulesets/dnd3.5/model/identity/IdentityComponent.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
-import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
 import { type Aptitude } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
 import { JOINS_CLASS_LIST } from "./AptitudesPaths.ts";
 

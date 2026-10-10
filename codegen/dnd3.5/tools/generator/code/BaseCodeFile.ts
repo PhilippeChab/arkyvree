@@ -46,7 +46,7 @@ const IMPORT_TABLE: ImportTable = [
   ],
   ["@/content/dnd3.5/builders/items/properties.ts", ["weaponProperties", "armorProperties", "shieldProperties"]],
   ["@/content/dnd3.5/data/skills.ts", ["SKILL_NAMES"]],
-  ["@/shared/dnd3.5/spells.ts", ["MAGIC_SCHOOLS"]],
+  ["@/vocabulary/dnd3.5/spells.ts", ["MAGIC_SCHOOLS"]],
   ["@/shared/text.ts", ["stripSeparators"]],
 ];
 

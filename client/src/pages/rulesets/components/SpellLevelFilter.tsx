@@ -1,17 +1,21 @@
 import { MenuItem, TextField } from "@mui/material";
 
-import { formatSpellLevel, SPELL_LEVELS } from "@/shared/dnd3.5/spells.ts";
+import { getVocabulary } from "@/client/src/pages/rulesets/vocabularyFactory.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 
 interface SpellLevelFilterProps {
   /** Adds an "All" choice. */
   allowAll?: boolean;
+  /** The ruleset's, whose spell levels it offers. */
+  baseRules: BaseRules;
   onChange: (level: number | "") => void;
   /** The level, or "" for all of them. */
   value: number | "";
 }
 
 /** The spell level select in a spell list's search bar. */
-export function SpellLevelFilter({ value, onChange, allowAll }: SpellLevelFilterProps) {
+export function SpellLevelFilter({ value, onChange, allowAll, baseRules }: SpellLevelFilterProps) {
+  const { labels, levels } = getVocabulary(baseRules).spellLevels;
   return (
     <TextField
       select
@@ -22,9 +26,9 @@ export function SpellLevelFilter({ value, onChange, allowAll }: SpellLevelFilter
       sx={{ minWidth: 100 }}
     >
       {allowAll && <MenuItem value="">All</MenuItem>}
-      {SPELL_LEVELS.map((level) => (
+      {levels.map((level) => (
         <MenuItem key={level} value={level}>
-          {formatSpellLevel(level)}
+          {labels[level]}
         </MenuItem>
       ))}
     </TextField>

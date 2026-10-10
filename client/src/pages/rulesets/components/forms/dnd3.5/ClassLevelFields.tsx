@@ -7,7 +7,7 @@ import { useDebouncedValue } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { readNumberInput } from "@/client/src/lib/validation.ts";
 import { type Save, useRulesetFeats } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { MAX_SAVE_BASE } from "@/shared/dnd3.5/classes.ts";
+import { MAX_SAVE_BASE } from "@/vocabulary/dnd3.5/classes.ts";
 
 import {
   areSaveBasesValid,

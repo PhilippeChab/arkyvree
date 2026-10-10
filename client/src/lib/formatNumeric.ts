@@ -16,6 +16,11 @@ export function formatDecimal(value: string | number | null | undefined): string
   return n.toFixed(2);
 }
 
+/** A die as dice notation writes it ("d8"): a class's hit die. */
+export function formatDie(sides: number): string {
+  return `d${sides}`;
+}
+
 /** An item's weight ("5.00 lbs"), or null when it has none. */
 export function formatWeight(weight: string | number | null | undefined): string | null {
   const formatted = formatDecimal(weight);

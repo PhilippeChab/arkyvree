@@ -1,3 +1,4 @@
+export { toClassForm } from "./classForm.ts";
 export { type ClassFormData, ClassFormFields } from "./ClassFormFields.tsx";
 export { ClassLevelFields } from "./ClassLevelFields.tsx";
 export {

@@ -137,7 +137,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
         }
       />
 
-      <CreateLevelDialog {...createDialogProps} rulesetId={rulesetId} />
+      <CreateLevelDialog {...createDialogProps} rulesetId={rulesetId} baseRules={ruleset.baseRules} />
     </Stack>
   );
 }

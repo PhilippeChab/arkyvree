@@ -9,7 +9,7 @@ import {
   SKILL_CHECK_PENALTY_MULTIPLIER,
   SKILL_IMPACTED_BY_WEIGHT,
   SKILL_USABLE_WITHOUT_TRAINING,
-} from "@/shared/dnd3.5/properties/index.ts";
+} from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** Rows as a sorted list of `type=value`. */
 function multiset(rows: { type: string; value: string }[]) {

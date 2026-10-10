@@ -2,8 +2,8 @@
 
 import { ALL_WEAPONS } from "@/content/dnd3.5/builders/items/weapons.ts";
 import { SKILL_NAMES } from "@/content/dnd3.5/data/skills.ts";
-import { SPELL_SCHOOLS } from "@/shared/dnd3.5/spells.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { SPELL_SCHOOLS } from "@/vocabulary/dnd3.5/spells.ts";
 
 /** Each family of feats taken for an option, and the names its options take. */
 const FEAT_OPTIONS: { family: RegExp; names: readonly string[] }[] = [

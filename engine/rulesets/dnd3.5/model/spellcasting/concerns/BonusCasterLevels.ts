@@ -11,9 +11,9 @@ import type {
 } from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
 import type SpellcastingState from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellcastingState.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { MAX_CLASS_LEVEL } from "@/shared/dnd3.5/classes.ts";
-import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
 import type { CharacterLevel, Klass, KlassLevel, Modifier } from "@/shared/relations.ts";
+import { MAX_CLASS_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
+import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
 /** A character level's key in the index of the class levels the character took. */
 function levelKey(characterLevelId: string, klassLevelId: string) {

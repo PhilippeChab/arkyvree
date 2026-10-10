@@ -9,7 +9,7 @@ import type {
 } from "@/content/core/builders/customization/types.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
+import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /**
  * Writing a feat, and a template family's feats made per item (weapon, skill, school…). What a template's code uses

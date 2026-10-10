@@ -2,7 +2,7 @@ import type { InferRequestType } from "hono/client";
 
 import { wholeNumberError } from "@/client/src/lib/validation.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
-import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
+import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
 export type SpellAptitude = SpellFormData["aptitudes"][number];
 

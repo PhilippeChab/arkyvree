@@ -46,6 +46,11 @@ export const SPELL_DURATION_TYPES = [
 ] as const;
 /** Every spell level, 0 to `MAX_SPELL_LEVEL`. */
 export const SPELL_LEVELS = Array.from({ length: MAX_SPELL_LEVEL + 1 }, (_, level) => level);
+/**
+ * Each spell level's name, by level, wherever one shows (a sheet's or the level wizard's spell list, a class's spells
+ * per day, a level filter): "Cantrips" for level 0, else "Level 3".
+ */
+export const SPELL_LEVEL_LABELS = SPELL_LEVELS.map((level) => (level === 0 ? "Cantrips" : `Level ${level}`));
 export const SPELL_RANGE_TYPES = ["Personal", "Touch", "Close", "Medium", "Long", "Unlimited"] as const;
 export const SPELL_RESISTANCE_OPTIONS = ["Yes", "No"] as const;
 export const SPELL_SAVING_THROWS = [
@@ -78,11 +83,3 @@ export const SPELL_SUBSCHOOLS = [
   "Summoning",
   "Teleportation",
 ] as const;
-
-/**
- * A spell level's name, wherever one shows (a sheet's or the level wizard's spell list, a class's spells per day, a
- * level filter): "Cantrips" for level 0, else "Level 3".
- */
-export function formatSpellLevel(level: number) {
-  return level === 0 ? "Cantrips" : `Level ${level}`;
-}

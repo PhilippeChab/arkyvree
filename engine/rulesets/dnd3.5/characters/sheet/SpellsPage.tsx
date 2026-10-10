@@ -17,8 +17,8 @@ import {
   SPELL_SCHOOL,
   SPELL_SUBSCHOOL,
   SPELL_TARGET,
-} from "@/shared/dnd3.5/properties/index.ts";
-import { formatSpellLevel } from "@/shared/dnd3.5/spells.ts";
+} from "@/vocabulary/dnd3.5/properties/index.ts";
+import { SPELL_LEVEL_LABELS } from "@/vocabulary/dnd3.5/spells.ts";
 
 import ContinuationHeader from "./ContinuationHeader.tsx";
 import { FONT_SIZE, styles } from "./styles.ts";
@@ -104,7 +104,7 @@ function SpellsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacte
                     color: "#555",
                   }}
                 >
-                  {formatSpellLevel(group.level)}
+                  {SPELL_LEVEL_LABELS[group.level]}
                   {group.uses != null ? ` — ${group.uses}/day` : ""}
                 </Text>
 

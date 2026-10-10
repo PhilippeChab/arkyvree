@@ -14,7 +14,7 @@ import {
   MARTIAL_WEAPONS,
   SIMPLE_WEAPONS,
 } from "@/content/dnd3.5/builders/items/weapons.ts";
-import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
+import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 import { ReferenceSeeds } from "./ReferenceSeeds.ts";
 

@@ -4,9 +4,9 @@ import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterCo
 import SpellLists from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellLists.ts";
 import { getOperators } from "@/shared/customization/operators.ts";
 import { deriveNameLabels, deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
-import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
 import type { Aptitude } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
 const ALLOWED_ENTITY_TYPES = ["feats", "klass_levels", "races"];
 const NAVIGATABLE_PATHS = [

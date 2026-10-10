@@ -3,7 +3,7 @@
 import { eq, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import { feat } from "@/content/dnd3.5/builders/feats/possession.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
-import { MAGIC_SCHOOLS } from "@/shared/dnd3.5/spells.ts";
+import { MAGIC_SCHOOLS } from "@/vocabulary/dnd3.5/spells.ts";
 
 export const ARCANE_DEFENSE_FEATS: FeatSeed[] = MAGIC_SCHOOLS.map((s) => ({
   name: `Arcane Defense: ${s}`,

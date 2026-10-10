@@ -7,7 +7,6 @@ import { db } from "@/server/database/index.ts";
 import { Properties } from "@/server/repositories/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
-import { SPELL_CASTING_TIME, SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { insertRows } from "@/tests/support/database.ts";
@@ -15,6 +14,7 @@ import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/levels.
 import { createSeededTestRuleset, createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { SPELL_CASTING_TIME, SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** The aptitudes of the test's ruleset. */
 const APTITUDES = ["Wizard", "Cleric", "Druid"];

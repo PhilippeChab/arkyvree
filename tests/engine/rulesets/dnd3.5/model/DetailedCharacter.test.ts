@@ -46,6 +46,18 @@ import {
   Requirements,
 } from "@/server/repositories/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
+import type { ItemLocation } from "@/shared/enums.ts";
+import { isRecord } from "@/shared/isRecord.ts";
+import type { Character, Requirement } from "@/shared/relations.ts";
+import { stripSeparators } from "@/shared/text.ts";
+import { seededRows } from "@/tests/seeds/seededRows.ts";
+import { buildAs, createTestCharacter } from "@/tests/support/characters.ts";
+import { insertRows, measure } from "@/tests/support/database.ts";
+import { createTestItem } from "@/tests/support/items.ts";
+import { addCharacterLevel, createTestKlassLevel, findKlassLevel } from "@/tests/support/levels.ts";
+import { createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import { findSeededCharacter, findSeededRuleset, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+import { makeSession } from "@/tests/support/users.ts";
 import {
   ARMOR_AC_BONUS,
   ARMOR_CHECK_PENALTY,
@@ -72,19 +84,7 @@ import {
   WEAPON_SIZE,
   WEAPON_STRENGTH_DAMAGE,
   WEAPON_TYPE,
-} from "@/shared/dnd3.5/properties/index.ts";
-import type { ItemLocation } from "@/shared/enums.ts";
-import { isRecord } from "@/shared/isRecord.ts";
-import type { Character, Requirement } from "@/shared/relations.ts";
-import { stripSeparators } from "@/shared/text.ts";
-import { seededRows } from "@/tests/seeds/seededRows.ts";
-import { buildAs, createTestCharacter } from "@/tests/support/characters.ts";
-import { insertRows, measure } from "@/tests/support/database.ts";
-import { createTestItem } from "@/tests/support/items.ts";
-import { addCharacterLevel, createTestKlassLevel, findKlassLevel } from "@/tests/support/levels.ts";
-import { createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
-import { findSeededCharacter, findSeededRuleset, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
-import { makeSession } from "@/tests/support/users.ts";
+} from "@/vocabulary/dnd3.5/properties/index.ts";
 
 type Carried = {
   equipped?: boolean;

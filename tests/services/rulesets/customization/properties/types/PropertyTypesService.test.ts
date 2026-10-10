@@ -5,6 +5,8 @@ import { db } from "@/server/database/index.ts";
 import { Feats, Properties } from "@/server/repositories/index.ts";
 import { PropertyTypesService } from "@/server/services/rulesets/customization/properties/types/index.ts";
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
+import { insertRows } from "@/tests/support/database.ts";
+import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 import {
   KLASS_LEVEL_BAB,
   KLASS_LEVEL_SKILL_POINTS,
@@ -12,9 +14,7 @@ import {
   RACE_SPEED_IGNORES_ENCUMBRANCE,
   SPELL_SCHOOL,
   WEAPON_PROFICIENCY,
-} from "@/shared/dnd3.5/properties/index.ts";
-import { insertRows } from "@/tests/support/database.ts";
-import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
+} from "@/vocabulary/dnd3.5/properties/index.ts";
 
 const firstPage = { limit: 50, page: 1 };
 

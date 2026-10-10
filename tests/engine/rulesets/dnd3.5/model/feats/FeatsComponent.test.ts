@@ -4,8 +4,8 @@ import FeatGroupingsComponent from "@/engine/rulesets/dnd3.5/model/feats/FeatGro
 import FeatsComponent from "@/engine/rulesets/dnd3.5/model/feats/FeatsComponent.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Properties } from "@/server/repositories/index.ts";
-import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
+import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 describe("FeatsComponent.injectGroupings", () => {
   test("puts a family named like a feat in that feat's entry, and never the feat in itself", async () => {

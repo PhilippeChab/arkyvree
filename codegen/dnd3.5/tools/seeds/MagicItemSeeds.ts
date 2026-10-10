@@ -4,8 +4,8 @@ import { type MagicItemCategory, type MagicItemReference } from "@/codegen/dnd3.
 import type { Property } from "@/content/core/builders/customization/types.ts";
 import { armorProperties } from "@/content/dnd3.5/builders/items/properties.ts";
 import type { ItemSeed } from "@/content/dnd3.5/builders/items/types.ts";
-import { ARMOR_PROFICIENCY } from "@/shared/dnd3.5/properties/index.ts";
 import { LOCATION_OPTIONS } from "@/shared/enums.ts";
+import { ARMOR_PROFICIENCY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 import { ItemSeeds } from "./ItemSeeds.ts";
 import { ReferenceSeeds } from "./ReferenceSeeds.ts";

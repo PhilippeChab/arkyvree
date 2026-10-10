@@ -3,7 +3,7 @@
 import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import { MARTIAL_WEAPONS, SIMPLE_WEAPONS } from "@/content/dnd3.5/builders/items/weapons.ts";
-import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
+import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /**
  * Weapon Focus for a kind of spell, a choice the Player's Handbook allows (a ray) and Complete Arcane's Ranged Spell

@@ -1,8 +1,8 @@
 import type { SpellTagLists } from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellcastingState.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellLists.ts";
-import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** An aptitude's spells, by spell level. */
 interface AptitudeSpells {

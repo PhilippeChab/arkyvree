@@ -23,7 +23,6 @@ import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { SkillsService } from "@/server/services/rulesets/skills/index.ts";
-import { WEAPON_TYPE } from "@/shared/dnd3.5/properties/index.ts";
 import { createSeedCharacter } from "@/tests/support/levelFixtures.ts";
 import {
   copyEntity,
@@ -34,6 +33,7 @@ import {
 } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
+import { WEAPON_TYPE } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 function skill(abilityId: string, name: string, fields: Record<string, unknown> = {}) {
   return {

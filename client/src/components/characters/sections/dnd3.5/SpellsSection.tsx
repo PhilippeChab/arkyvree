@@ -28,8 +28,8 @@ import type { CharacterDetail } from "@/client/src/lib/queries.ts";
 import { DURATION } from "@/client/src/theme/animations.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
-import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
-import { formatSpellLevel } from "@/shared/dnd3.5/spells.ts";
+import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { SPELL_LEVEL_LABELS } from "@/vocabulary/dnd3.5/spells.ts";
 
 /** An aptitude's spells, by spell level, as the sheet lists them. */
 type AptitudeSpells = CharacterDetail["spellGroups"][number];
@@ -82,7 +82,7 @@ function CollapsibleAptitude({ apt, rulesetId }: CollapsibleAptitudeProps) {
 
 function CollapsibleLevel({ group, rulesetId }: CollapsibleLevelProps) {
   const [open, setOpen] = useState(false);
-  const label = formatSpellLevel(group.level);
+  const label = SPELL_LEVEL_LABELS[group.level];
 
   return (
     // The last level, closed, keeps the space its title has to its spells

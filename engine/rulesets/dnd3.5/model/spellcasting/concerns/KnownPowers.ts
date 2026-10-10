@@ -8,8 +8,8 @@ import CustomizedEntities, {
 import type SpellcastingState from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellcastingState.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellLists.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
 import type { Power, Property } from "@/shared/relations.ts";
+import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
 /** The powers a character's aptitudes give it, each with what it knows of them, and the spell tags they carry. */
 export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {

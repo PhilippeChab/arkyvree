@@ -6,8 +6,8 @@ import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTa
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/ClassesComponent.ts";
 import type PowerGroupingsComponent from "@/engine/rulesets/dnd3.5/model/powers/PowerGroupingsComponent.ts";
 import type PowersComponent from "@/engine/rulesets/dnd3.5/model/powers/PowersComponent.ts";
-import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
 import type { KlassLevel, Modifier, Power, Property } from "@/shared/relations.ts";
+import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
 /**
  * Where a feat's tag on the spells of a list it gives slots in or joins to its class's list shows (a cleric's domain,

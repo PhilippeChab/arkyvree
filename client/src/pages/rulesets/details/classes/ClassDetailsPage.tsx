@@ -21,13 +21,14 @@ import {
   useRulesetPermissions,
 } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
-import { oneOf } from "@/client/src/lib/oneOf.ts";
+import { formatDie } from "@/client/src/lib/formatNumeric.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
   type ClassFormData,
   ClassFormFields,
   EMPTY_CLASS,
+  toClassForm,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import {
   EntityDetailLayout,
@@ -41,24 +42,18 @@ import { entityPageBack } from "@/client/src/pages/rulesets/entityPageState.ts";
 import { followCopiesOf } from "@/client/src/pages/rulesets/followCopies.ts";
 import { useCopyOnWrite, useEntitySave, useRestorableDelete } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { isStillOpen } from "@/client/src/pages/rulesets/stillOpen.ts";
+import { getVocabulary, type RulesetVocabulary } from "@/client/src/pages/rulesets/vocabularyFactory.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { formatHitDie, HIT_DIE_VALUES } from "@/shared/dnd3.5/classes.ts";
-import {
-  ENTITY_PROPERTY_TYPES,
-  getStaticPropertyValues,
-  KLASS_BONUS_SPELL_ABILITY_ID,
-  KLASS_CASTER_TYPE,
-} from "@/shared/dnd3.5/properties/index.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
-import { type ClassDetail, classDetailQuery, type ClassSection, prefetchClassSection } from "./classSectionQueries.ts";
+import { classDetailQuery, type ClassSection, prefetchClassSection } from "./classSectionQueries.ts";
 import { CLASS_SECTIONS } from "./sections/index.ts";
 
-/** The caster types a class takes, the property's own options */
-const CASTER_TYPES = getStaticPropertyValues(KLASS_CASTER_TYPE) ?? [];
-
-/** What a class's properties are for, as their selects' help says it */
-const KLASS_PROPERTY_HELP = ENTITY_PROPERTY_TYPES.klasses ?? {};
+/** A class property a select sets: its type, as the ruleset's vocabulary names it, and its value ("" clears it). */
+interface PropertyChoice {
+  type: string;
+  value: string;
+}
 
 const TABS: SectionTab<ClassSection>[] = [
   { key: "levels", label: "Levels", icon: LevelsIcon },
@@ -74,17 +69,12 @@ function isClassSection(section: string | undefined): section is ClassSection {
   return TABS.some((tab) => tab.key === section);
 }
 
-/** A property select's help: what the property is for, and that it saves as it's picked, apart from the card's Save. */
-function propertyHelp(type: string) {
-  return `${KLASS_PROPERTY_HELP[type]}. Saves as it's picked.`;
-}
-
-function toClassForm(klass: Pick<ClassDetail, "name" | "description" | "hd">): ClassFormData {
-  return {
-    name: klass.name,
-    description: klass.description ?? "",
-    hd: oneOf(klass.hd, HIT_DIE_VALUES, 8),
-  };
+/**
+ * A property select's help: what the property is for (`help`, its ruleset's words by type), and that it saves as it's
+ * picked, apart from the card's Save.
+ */
+function propertyHelp(help: RulesetVocabulary["classes"]["propertyHelp"], type: string) {
+  return `${help[type]}. Saves as it's picked.`;
 }
 
 export default function ClassDetailsPage() {
@@ -184,15 +174,16 @@ export default function ClassDetailsPage() {
       snackbar.success(message);
     };
 
+  // Each select names the property it sets, as the ruleset's vocabulary names it
   const bonusSpellMutation = useMutation({
-    mutationFn: (abilityId: string) =>
-      setPropertyFn(KLASS_BONUS_SPELL_ABILITY_ID, classData?.propertyIds.bonusSpellAbilityId, abilityId),
+    mutationFn: ({ type, value }: PropertyChoice) =>
+      setPropertyFn(type, classData?.propertyIds.bonusSpellAbilityId, value),
     onSuccess: handleClassPropertySaved("Bonus spell ability updated"),
     onError: (error) => snackbar.error(error, "Failed to update bonus spell ability"),
   });
 
   const casterTypeMutation = useMutation({
-    mutationFn: (casterType: string) => setPropertyFn(KLASS_CASTER_TYPE, classData?.propertyIds.casterType, casterType),
+    mutationFn: ({ type, value }: PropertyChoice) => setPropertyFn(type, classData?.propertyIds.casterType, value),
     onSuccess: handleClassPropertySaved("Caster type updated"),
     onError: (error) => snackbar.error(error, "Failed to update caster type"),
   });
@@ -214,6 +205,7 @@ export default function ClassDetailsPage() {
   }
 
   const Section = CLASS_SECTIONS[currentTab];
+  const classVocabulary = ruleset && getVocabulary(ruleset.baseRules).classes;
   const bonusSpellAbility = abilities?.find((a) => a.id === classData?.bonusSpellAbilityId);
 
   return (
@@ -242,14 +234,14 @@ export default function ClassDetailsPage() {
         }
         isLoading={isLoading}
       >
-        {classData && ruleset && (
+        {classData && ruleset && classVocabulary && (
           <>
             <EntityDetailsCard
               title="Class Details"
               description={classData.description}
               chips={
                 <>
-                  <ValueChip label={formatHitDie(classData.hd)} />
+                  <ValueChip label={formatDie(classData.hd)} />
                   {bonusSpellAbility && (
                     <ValueChip label={`Bonus Spell Ability: ${bonusSpellAbility.name}`} color="info" />
                   )}
@@ -268,13 +260,18 @@ export default function ClassDetailsPage() {
                             select
                             // Empty until the abilities load: a value with no option is out of range.
                             value={bonusSpellAbility?.id ?? ""}
-                            onChange={(e) => bonusSpellMutation.mutate(e.target.value)}
+                            onChange={(e) =>
+                              bonusSpellMutation.mutate({
+                                type: classVocabulary.bonusSpellAbilityProperty,
+                                value: e.target.value,
+                              })
+                            }
                             disabled={!abilities || bonusSpellMutation.isPending || isClassFetching}
                             error={!!abilitiesError && !abilities}
                             helperText={
                               !abilities && abilitiesError
                                 ? loadFailureMessage("Abilities", abilitiesError)
-                                : propertyHelp(KLASS_BONUS_SPELL_ABILITY_ID)
+                                : propertyHelp(classVocabulary.propertyHelp, classVocabulary.bonusSpellAbilityProperty)
                             }
                           >
                             <MenuItem value="">None</MenuItem>
@@ -289,12 +286,17 @@ export default function ClassDetailsPage() {
                             fullWidth
                             select
                             value={classData.casterType ?? ""}
-                            onChange={(e) => casterTypeMutation.mutate(e.target.value)}
+                            onChange={(e) =>
+                              casterTypeMutation.mutate({
+                                type: classVocabulary.casterTypeProperty,
+                                value: e.target.value,
+                              })
+                            }
                             disabled={casterTypeMutation.isPending || isClassFetching}
-                            helperText={propertyHelp(KLASS_CASTER_TYPE)}
+                            helperText={propertyHelp(classVocabulary.propertyHelp, classVocabulary.casterTypeProperty)}
                           >
                             <MenuItem value="">None</MenuItem>
-                            {CASTER_TYPES.map((casterType) => (
+                            {classVocabulary.casterTypes.map((casterType) => (
                               <MenuItem key={casterType} value={casterType}>
                                 {casterType}
                               </MenuItem>

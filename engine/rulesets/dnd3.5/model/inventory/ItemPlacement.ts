@@ -1,10 +1,10 @@
 /** Where an item goes: the locations its type sets, the hands a weapon set applies to, and where an entry is worn. */
 
-import { HAND_LOCATIONS, type HandLocation, ITEM_TYPE_LOCATIONS } from "@/shared/dnd3.5/equipment.ts";
-import { ITEM_HAS_CHARGES } from "@/shared/dnd3.5/properties/index.ts";
 import { type ItemLocation, LOCATION_OPTIONS } from "@/shared/enums.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import type { Property } from "@/shared/relations.ts";
+import { HAND_LOCATIONS, type HandLocation, ITEM_TYPE_LOCATIONS } from "@/vocabulary/dnd3.5/equipment.ts";
+import { ITEM_HAS_CHARGES } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** An inventory entry, as where it's worn reads it. */
 interface HeldEntry {

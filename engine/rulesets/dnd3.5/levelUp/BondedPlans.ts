@@ -3,8 +3,8 @@ import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import BondedRaceData from "@/engine/rulesets/dnd3.5/model/bonded/BondedRaceData.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
-import { BONDED_KIND_BY_SLUG, BONDED_KIND_SLUGS, type BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
 import type { Character } from "@/shared/relations.ts";
+import { BONDED_KIND_BY_SLUG, BONDED_KIND_SLUGS, type BondedKind } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 
 /**
  * What a master's bonded creature of a kind becomes once the master's levels change. Without a race for the kind, the

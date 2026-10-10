@@ -6,8 +6,8 @@ import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import { proficiencyRequirements } from "@/content/dnd3.5/builders/items/proficiencies.ts";
 import { ALL_WEAPONS, CROSSBOW_WEAPONS, EXOTIC_WEAPONS } from "@/content/dnd3.5/builders/items/weapons.ts";
 import { SKILL_NAMES } from "@/content/dnd3.5/data/skills.ts";
-import { MAGIC_SCHOOLS } from "@/shared/dnd3.5/spells.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { MAGIC_SCHOOLS } from "@/vocabulary/dnd3.5/spells.ts";
 
 export const EXOTIC_WEAPON_PROFICIENCY_FEATS: FeatSeed[] = EXOTIC_WEAPONS.map((w) => ({
   name: `Exotic Weapon Proficiency: ${w}`,
