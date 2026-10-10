@@ -2,7 +2,7 @@ import { LevelUpBase, PicksDistribution } from "@/engine/core/levelUp/index.ts";
 import type { LevelPicks } from "@/engine/core/module/index.ts";
 import type { OwnPicks } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
-import SkillsComponent from "@/engine/rulesets/dnd3.5/model/skills/SkillsComponent.ts";
+import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
 import { include } from "@/lib/mixins.ts";
 
 import { SpendsSkillPoints } from "./concerns/SpendsSkillPoints.ts";
@@ -99,7 +99,7 @@ export default abstract class LevelUpState extends include(LevelUpBase<DetailedC
   protected getClassSkillIds(records: { skillId: string; skillsInRule: { name: string } }[]): Set<string> {
     const ids = new Set(records.map((record) => record.skillId));
     const names = new Set(records.map((record) => record.skillsInRule.name));
-    for (const skill of this.rulesetData.skills) if (SkillsComponent.isSubtypeOf(skill.name, names)) ids.add(skill.id);
+    for (const skill of this.rulesetData.skills) if (SkillRules.isSubtypeOf(skill.name, names)) ids.add(skill.id);
 
     return ids;
   }

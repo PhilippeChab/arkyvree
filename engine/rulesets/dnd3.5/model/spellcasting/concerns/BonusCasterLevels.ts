@@ -1,5 +1,5 @@
+import type { BuiltCharacter } from "@/engine/core/character/index.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
-import type { Components } from "@/engine/core/paths/PathTraverser.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import AptitudesPaths from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesPaths.ts";
@@ -145,12 +145,13 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
     }
 
     /**
-     * Applies the spell progression (`aptitudes.*`) of the class levels bonus caster levels reach, each modifier while
-     * its own requirements hold (`isGateMet`): a pious templar's slots go to the list she picked only. Then the lists a
-     * feat brings (`featListIds`) follow their class's spell levels. `isGateMet` takes the targets to count as met.
+     * Applies the spell progression (`aptitudes.*`) of the class levels bonus caster levels reach to the built
+     * `character`, each modifier while its own requirements hold (`isGateMet`): a pious templar's slots go to the list
+     * she picked only. Then the lists a feat brings (`featListIds`) follow their class's spell levels. `isGateMet` takes
+     * the targets to count as met.
      */
     protected applyBonusCasterLevels(
-      components: Components,
+      character: BuiltCharacter,
       feats: CustomizedFeat[],
       featListIds: Set<string>,
       isGateMet: (modifier: Modifier, metTargets?: string[]) => boolean,
@@ -159,7 +160,8 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
         (m) => AptitudesPaths.isAptitudeTarget(m.target) && isGateMet(m),
       );
 
-      for (const modifier of aptitudeModifiers) this.modifierEvaluator.evaluateModifier(modifier, components);
+      for (const modifier of aptitudeModifiers)
+        character.modifierEvaluator.evaluateModifier(modifier, character.components);
 
       this.syncFeatListSlots(feats, featListIds, isGateMet);
     }

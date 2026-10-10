@@ -11,7 +11,7 @@ import type {
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
-import AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
+import AbilityRules from "@/engine/rulesets/dnd3.5/rules/AbilityRules.ts";
 import { MIN_ABILITY_SCORE, STARTING_ABILITY_SCORE } from "@/vocabulary/dnd3.5/abilities.ts";
 import { CREATION_METHODS } from "@/vocabulary/dnd3.5/creation.ts";
 
@@ -42,7 +42,7 @@ export default class CharacterEdits {
     const modifiers = Object.fromEntries(
       Array.from({ length: scores.max - scores.min + 1 }, (_, index) => {
         const score = scores.min + index;
-        return [score, AbilitiesComponent.computeModifier(score)];
+        return [score, AbilityRules.computeModifier(score)];
       }),
     );
     return { methods: CREATION_METHODS.map((method) => CharacterEdits.methodOf(method)), modifiers, scores };

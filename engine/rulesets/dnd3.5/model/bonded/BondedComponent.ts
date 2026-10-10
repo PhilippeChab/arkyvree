@@ -20,6 +20,8 @@
  *     changes — just the right template modifier on the new feat.
  */
 
+import { CharacterComponent } from "@/engine/core/character/index.ts";
+import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import { BONDED_KINDS, type BondedKind } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 
 type BondsData = {
@@ -31,11 +33,18 @@ type DetailedCharacterBondedSlot = {
   race: string;
 };
 
-export default class BondedComponent {
+/** The creatures a character is bonded to, by kind: each one's race and effective level, which modifiers alone set. */
+export default class BondedComponent extends CharacterComponent<LoadedCharacterData> {
   private readonly bonds: BondsData = BONDED_KINDS.reduce((acc, b) => {
     acc[b.slug] = { race: "", level: 0 };
     return acc;
   }, {} as BondsData);
+
+  /**
+   * Nothing: each kind's slot starts empty (no race, level 0), and only modifiers fill it, a class feature's feat
+   * setting its race and adding to its level.
+   */
+  override initialize(): void {}
 
   getBonded(): BondsData {
     return this.bonds;

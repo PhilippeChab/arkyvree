@@ -1,6 +1,9 @@
-import type { RulesetData } from "@/engine/core/view/index.ts";
+import { CharacterComponent } from "@/engine/core/character/index.ts";
+import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/ClassesComponent.ts";
 import type IdentityComponent from "@/engine/rulesets/dnd3.5/model/identity/IdentityComponent.ts";
+import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
+import SpellLists from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellLists.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import { type Aptitude } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -64,13 +67,22 @@ function sumAvailable(pools: { available: number }[]) {
   return pools.reduce((total, pool) => total + pool.available, 0);
 }
 
-export default class AptitudesComponent {
+/**
+ * A character's aptitudes: what each allows it to pick (feats, powers, a leveled one's spells by spell level) and what it
+ * spent, and the pools a level-up picks in.
+ */
+export default class AptitudesComponent extends CharacterComponent<LoadedCharacterData> {
   constructor(
     private readonly identity: IdentityComponent,
     private readonly classes: ClassesComponent,
-    /** The general feats a character has at its total level: the ruleset's rule, which a bonded creature has none of. */
+    /**
+     * The general feats a character has at its total level: its kind's rule, which a bonded creature has none of. The
+     * one rule a component takes from its character, beside its siblings.
+     */
     private readonly countGeneralFeats: (totalLevel: number) => number,
-  ) {}
+  ) {
+    super();
+  }
 
   /** The spell levels whose spells are all known: a state of the level, not a count it holds (`newSpellLevel`). */
   private readonly allKnownLevels = new WeakSet<AptitudeLevelData>();
@@ -82,6 +94,25 @@ export default class AptitudesComponent {
 
   /** The general feats the character's level gives, when its ruleset has no aptitude for them to count toward. */
   private unplacedGeneralFeats = 0;
+
+  /**
+   * An entry per aptitude of the ruleset (one per spell level for a leveled one, a spell list's: `SpellLists`): what it
+   * allows, from the class levels' feats and powers and the general feats, and what the character spent on it.
+   */
+  override initialize(
+    {
+      klassLevelFeatCountsByAptitudeId,
+      klassLevelPowerCountsByAptitudeId,
+    }: Pick<LoadedCharacterData, "klassLevelFeatCountsByAptitudeId" | "klassLevelPowerCountsByAptitudeId">,
+    { rulesetData }: RulesetView,
+  ) {
+    this.buildEntries(rulesetData.aptitudes, SpellLists.of(rulesetData).leveledAptitudeIds);
+    const aptitudeById: AptitudesById = new Map(
+      Object.values(this.aptitudes).map((aptitude) => [aptitude.id, aptitude]),
+    );
+    this.applyAllowances(aptitudeById, klassLevelFeatCountsByAptitudeId, klassLevelPowerCountsByAptitudeId);
+    this.applySpent(aptitudeById, this.countSpent());
+  }
 
   /**
    * What each aptitude allows: the feats and the (non-free) powers the class levels grant through it, and the general
@@ -295,24 +326,6 @@ export default class AptitudesComponent {
   /** The general feats the character's level gives that count toward no aptitude: its ruleset has no General. */
   getUnplacedGeneralFeats(): number {
     return this.unplacedGeneralFeats;
-  }
-
-  /**
-   * An entry per aptitude (one per spell level for a leveled one, `leveledAptitudeIds`): what it allows, from the class
-   * levels' feats and powers and the general feats, and what the character spent on it.
-   */
-  initialize(
-    aptitudes: Aptitude[],
-    klassLevelFeatCountsByAptitudeId: Record<string, number>,
-    klassLevelPowerCountsByAptitudeId: Record<string, number>,
-    leveledAptitudeIds: Set<string>,
-  ) {
-    this.buildEntries(aptitudes, leveledAptitudeIds);
-    const aptitudeById: AptitudesById = new Map(
-      Object.values(this.aptitudes).map((aptitude) => [aptitude.id, aptitude]),
-    );
-    this.applyAllowances(aptitudeById, klassLevelFeatCountsByAptitudeId, klassLevelPowerCountsByAptitudeId);
-    this.applySpent(aptitudeById, this.countSpent());
   }
 
   isLeveledAptitude(key: string): boolean {

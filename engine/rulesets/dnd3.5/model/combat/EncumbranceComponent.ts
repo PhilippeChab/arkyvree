@@ -1,6 +1,7 @@
+import { CharacterComponent } from "@/engine/core/character/index.ts";
 import type AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
 import type IdentityComponent from "@/engine/rulesets/dnd3.5/model/identity/IdentityComponent.ts";
-import type { InventoryEntry } from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
+import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import {
   CARRYING_CAPACITY,
   CARRYING_CAPACITY_STEP_MULTIPLIER,
@@ -30,11 +31,14 @@ function thirdsOf(value: number, thirds: number) {
   return Math.floor((value * thirds) / 3);
 }
 
-export default class EncumbranceComponent {
+/** What a character carries: the weight, and the loads its Strength and size give, their category and its penalties. */
+export default class EncumbranceComponent extends CharacterComponent<LoadedCharacterData> {
   constructor(
     private readonly abilities: AbilitiesComponent,
     private readonly identity: IdentityComponent,
-  ) {}
+  ) {
+    super();
+  }
 
   /**
    * The carried weight is an input, which a modifier can change; the loads, the load category and its penalties are
@@ -65,6 +69,18 @@ export default class EncumbranceComponent {
       },
     };
   })();
+
+  /** The weight the character carries: its inventory's. */
+  override initialize({ inventory }: Pick<LoadedCharacterData, "inventory">): void {
+    let totalWeight = 0;
+    for (const entry of inventory) {
+      const itemWeight = Number(entry.item.weight ?? 0);
+      const quantity = entry.quantity ?? 1;
+      totalWeight += itemWeight * quantity;
+    }
+
+    this.encumbrance.carriedweight = totalWeight;
+  }
 
   private getCarryingCapacity(str: number): number {
     if (str <= 0) return 0;
@@ -110,17 +126,5 @@ export default class EncumbranceComponent {
 
   getEncumbrance(): EncumbranceData {
     return this.encumbrance;
-  }
-
-  /** The weight the character carries: its inventory's. */
-  initialize(inventory: InventoryEntry[]): void {
-    let totalWeight = 0;
-    for (const entry of inventory) {
-      const itemWeight = Number(entry.item.weight ?? 0);
-      const quantity = entry.quantity ?? 1;
-      totalWeight += itemWeight * quantity;
-    }
-
-    this.encumbrance.carriedweight = totalWeight;
   }
 }

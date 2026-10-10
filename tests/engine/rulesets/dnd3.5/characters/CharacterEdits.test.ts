@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import CharacterEdits from "@/engine/rulesets/dnd3.5/characters/CharacterEdits.ts";
-import AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
+import AbilityRules from "@/engine/rulesets/dnd3.5/rules/AbilityRules.ts";
 
 describe("A new 3.5 character's creation", () => {
   test("offers the SRD's methods, each run by its kind", () => {
@@ -32,6 +32,6 @@ describe("A new 3.5 character's creation", () => {
       -5, -1, -1, 0, 0, 1, 4, 4, 45,
     ]);
     for (let score = scores.min; score <= scores.max; score++)
-      expect(modifiers[score]).toBe(AbilitiesComponent.computeModifier(score));
+      expect(modifiers[score]).toBe(AbilityRules.computeModifier(score));
   });
 });

@@ -8,8 +8,8 @@ import {
 } from "@/vocabulary/dnd3.5/skills.ts";
 
 /**
- * The 3.5 skill rules: the points a level gives, what a rank costs, how many ranks a skill may hold, and how points
- * spread over levels.
+ * The 3.5 skill rules: the points a level gives, what a rank costs, how many ranks a skill may hold, how points spread
+ * over levels, and which skills are another's subtypes.
  */
 export default class SkillRules {
   /**
@@ -27,6 +27,17 @@ export default class SkillRules {
       ...levels.filter((l) => l.pointsPerRank === CLASS_SKILL_POINTS_PER_RANK),
       ...levels.filter((l) => l.pointsPerRank === CROSS_CLASS_POINTS_PER_RANK),
     ];
+  }
+
+  /**
+   * Whether the skill `name` is a subtype of one of `names`: a subtype names itself "<base> (<variant>)", and a
+   * user-authored ruleset can nest them ("Knowledge (Arcana) (Ancient)"), so every " (" is a possible base's end.
+   */
+  static isSubtypeOf(name: string, names: Set<string>): boolean {
+    for (let idx = name.indexOf(" ("); idx > 0; idx = name.indexOf(" (", idx + 1))
+      if (names.has(name.slice(0, idx))) return true;
+
+    return false;
   }
 
   /**

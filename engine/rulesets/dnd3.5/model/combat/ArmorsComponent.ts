@@ -1,4 +1,7 @@
+import { CharacterComponent } from "@/engine/core/character/index.ts";
 import { type ItemFieldValues } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
+import type InventoryComponent from "@/engine/rulesets/dnd3.5/model/inventory/InventoryComponent.ts";
+import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import type { Item } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { MASTERWORK_CHECK_PENALTY_REDUCTION } from "@/vocabulary/dnd3.5/combat.ts";
@@ -17,14 +20,21 @@ type ArmorSlot = {
   spellfailure: number;
 };
 
-export default class ArmorsComponent {
-  private readonly armors: ArmorsData = {};
-
-  getArmors(): ArmorsData {
-    return this.armors;
+/** The armors a character has equipped, under their types: the inventory's (`InventoryComponent.getEquipped`). */
+export default class ArmorsComponent extends CharacterComponent<LoadedCharacterData> {
+  constructor(private readonly inventory: InventoryComponent) {
+    super();
   }
 
-  registerArmor(item: Item, fields: ItemFieldValues): void {
+  private readonly armors: ArmorsData = {};
+
+  /** Each armor the inventory has equipped, in its order. */
+  override initialize() {
+    for (const { entry, fields } of this.inventory.getEquipped())
+      if (entry.item.type === "Armor") this.registerArmor(entry.item, fields);
+  }
+
+  private registerArmor(item: Item, fields: ItemFieldValues): void {
     if (fields.armor.proficiency === null) return;
 
     const acBonus = fields.armor.acBonus ?? 0;
@@ -54,6 +64,10 @@ export default class ArmorsComponent {
     // Under its type: a full plate's `fullplate`
     const grouping = fields.armor.type === null ? "" : stripSeparators(fields.armor.type);
     if (grouping) this.armors[grouping] = armorSlot;
+  }
+
+  getArmors(): ArmorsData {
+    return this.armors;
   }
 }
 

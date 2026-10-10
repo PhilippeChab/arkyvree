@@ -1,4 +1,7 @@
+import { CharacterComponent } from "@/engine/core/character/index.ts";
 import { type ItemFieldValues } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
+import type InventoryComponent from "@/engine/rulesets/dnd3.5/model/inventory/InventoryComponent.ts";
+import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import type { Item } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { MASTERWORK_CHECK_PENALTY_REDUCTION } from "@/vocabulary/dnd3.5/combat.ts";
@@ -18,14 +21,21 @@ type ShieldSlot = {
   spellfailure: number;
 };
 
-export default class ShieldsComponent {
-  private readonly shields: ShieldsData = {};
-
-  getShields(): ShieldsData {
-    return this.shields;
+/** The shields a character has equipped, under their types: the inventory's (`InventoryComponent.getEquipped`). */
+export default class ShieldsComponent extends CharacterComponent<LoadedCharacterData> {
+  constructor(private readonly inventory: InventoryComponent) {
+    super();
   }
 
-  registerShield(item: Item, fields: ItemFieldValues): void {
+  private readonly shields: ShieldsData = {};
+
+  /** Each shield the inventory has equipped, in its order. */
+  override initialize() {
+    for (const { entry, fields } of this.inventory.getEquipped())
+      if (entry.item.type === "Shield") this.registerShield(entry.item, fields);
+  }
+
+  private registerShield(item: Item, fields: ItemFieldValues): void {
     if (fields.shield.proficiency === null) return;
 
     const acBonus = fields.shield.acBonus ?? 0;
@@ -55,6 +65,10 @@ export default class ShieldsComponent {
     // Under its type: a heavy wooden shield's `heavywooden`
     const grouping = fields.shield.type === null ? "" : stripSeparators(fields.shield.type);
     if (grouping) this.shields[grouping] = shieldSlot;
+  }
+
+  getShields(): ShieldsData {
+    return this.shields;
   }
 }
 

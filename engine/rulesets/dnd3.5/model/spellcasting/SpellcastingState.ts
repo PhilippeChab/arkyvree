@@ -1,9 +1,10 @@
-import type ModifierEvaluator from "@/engine/core/modifiers/ModifierEvaluator.ts";
+import { CharacterComponent } from "@/engine/core/character/index.ts";
 import type AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
 import type AptitudesComponent from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/ClassesComponent.ts";
+import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import type PowerGroupingsComponent from "@/engine/rulesets/dnd3.5/model/powers/PowerGroupingsComponent.ts";
 import type PowersComponent from "@/engine/rulesets/dnd3.5/model/powers/PowersComponent.ts";
 import type { KlassLevel, Modifier, Power, Property } from "@/shared/relations.ts";
@@ -20,15 +21,16 @@ export interface SpellTagLists {
 }
 
 /** What a character's spellcasting holds: its bonus caster levels, its aptitudes' powers, its spell tags. */
-export default abstract class SpellcastingState {
+export default abstract class SpellcastingState extends CharacterComponent<LoadedCharacterData> {
   constructor(
     protected readonly classes: ClassesComponent,
     protected readonly abilities: AbilitiesComponent,
     protected readonly aptitudes: AptitudesComponent,
     protected readonly powers: PowersComponent,
     protected readonly powerGroupings: PowerGroupingsComponent,
-    protected readonly modifierEvaluator: ModifierEvaluator,
-  ) {}
+  ) {
+    super();
+  }
 
   /**
    * The highest arcane and divine spell levels the character casts (`spellcasting.arcane`, `spellcasting.divine`),
@@ -123,10 +125,11 @@ export default abstract class SpellcastingState {
   }
 
   /**
-   * The classes each spell list joins (`aptitudes.<list>.joinsclasslist`), by list: the class whose level gave the feat
-   * that joins it, or the class level's own class. A cleric's domain joins the cleric's list.
+   * The classes each spell list joins (`aptitudes.<list>.joinsclasslist`) by the modifiers applied (`appliedModifiers`),
+   * by list: the class whose level gave the feat that joins it, or the class level's own class. A cleric's domain joins
+   * the cleric's list.
    */
-  protected joiningClassNames() {
+  protected joiningClassNames(appliedModifiers: Modifier[]) {
     const aptitudes = this.aptitudes.getAptitudes() as Record<string, { joinsclasslist?: boolean }>;
     const classes = Object.entries(this.classes.getClasses());
     const classNameByKlassLevelId = this.classNameByKlassLevelId();
@@ -141,7 +144,7 @@ export default abstract class SpellcastingState {
     };
 
     const joining = new Map<string, Set<string>>();
-    for (const modifier of this.modifierEvaluator.getModifiers().appliedModifiers) {
+    for (const modifier of appliedModifiers) {
       const list = AptitudeTargets.parseJoin(modifier.target);
       if (list === undefined || aptitudes[list]?.joinsclasslist !== true || modifier.value === "false") continue;
       const className = classOf(modifier);

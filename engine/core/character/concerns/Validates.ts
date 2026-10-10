@@ -1,5 +1,5 @@
 import type { default as CharacterBase, LoadedCharacter } from "@/engine/core/character/CharacterBase.ts";
-import type { Components } from "@/engine/core/paths/PathTraverser.ts";
+import type CharacterComponent from "@/engine/core/character/CharacterComponent.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import type { Constructor } from "@/lib/mixins.ts";
@@ -33,7 +33,10 @@ const OPERATOR_SYMBOLS: Record<string, string> = {
  * unmet and invalid requirements, the modifiers it couldn't apply or applied past their gates, then where its rows come
  * from (`findSourceIssues`); and a requirement group's tree, which an issue shows.
  */
-export function Validates<B extends Constructor<CharacterBase<Components, LoadedCharacter>>>(Base: B) {
+export function Validates<
+  // Components set up from any ruleset's data (`never`: each reads its own)
+  B extends Constructor<CharacterBase<Record<string, CharacterComponent<never>>, LoadedCharacter>>,
+>(Base: B) {
   abstract class Validating extends Base {
     /** The issue of a requirement the build couldn't evaluate, on the entity it's of. */
     private invalidRequirementIssue({
