@@ -64,28 +64,28 @@ describe("ContributorsService", () => {
         (await ContributorsService.inviteContributor(admin, ruleset.id, invitee.emailAddress, "Editor")).role,
       ).toBe("Editor");
       const { user: other } = await createTestUser("other");
-      await expect(
-        ContributorsService.inviteContributor(admin, ruleset.id, other.emailAddress, "Admin"),
-      ).rejects.toThrow(ForbiddenError);
+      expect(ContributorsService.inviteContributor(admin, ruleset.id, other.emailAddress, "Admin")).rejects.toThrow(
+        ForbiddenError,
+      );
     });
 
     test("refuses strangers, the owner's own email, a second invite and an archived ruleset", async () => {
       const { owner, ownerSession, ruleset } = await setup();
       const { session: stranger } = await createTestUser("stranger");
-      await expect(
-        ContributorsService.inviteContributor(stranger, ruleset.id, "test@example.com", "Editor"),
-      ).rejects.toThrow(ForbiddenError);
-      await expect(
+      expect(ContributorsService.inviteContributor(stranger, ruleset.id, "test@example.com", "Editor")).rejects.toThrow(
+        ForbiddenError,
+      );
+      expect(
         ContributorsService.inviteContributor(ownerSession, ruleset.id, owner.emailAddress, "Editor"),
       ).rejects.toThrow(ConflictError);
 
       const { user } = await addContributor(ownerSession, ruleset.id, "Editor", true);
-      await expect(
+      expect(
         ContributorsService.inviteContributor(ownerSession, ruleset.id, user.emailAddress, "Viewer"),
       ).rejects.toThrow(ConflictError);
 
       await Rulesets.archive(db, { id: ruleset.id });
-      await expect(
+      expect(
         ContributorsService.inviteContributor(ownerSession, ruleset.id, "late@example.com", "Editor"),
       ).rejects.toThrow(ConflictError);
     });
@@ -96,7 +96,7 @@ describe("ContributorsService", () => {
       const { ownerSession, ruleset } = await setup();
       const { session, invite } = await addContributor(ownerSession, ruleset.id, "Editor", true);
       expect((await ContributorsService.acceptInvite(session, invite.id)).status).toBe("Active");
-      await expect(ContributorsService.acceptInvite(session, invite.id)).rejects.toThrow(ConflictError);
+      expect(ContributorsService.acceptInvite(session, invite.id)).rejects.toThrow(ConflictError);
     });
 
     test("rejects a pending invite", async () => {
@@ -109,10 +109,10 @@ describe("ContributorsService", () => {
       const { ownerSession, ruleset } = await setup();
       const { session, invite } = await addContributor(ownerSession, ruleset.id, "Editor", true);
       const { session: stranger } = await createTestUser("stranger");
-      await expect(ContributorsService.acceptInvite(stranger, invite.id)).rejects.toThrow(NotFoundError);
+      expect(ContributorsService.acceptInvite(stranger, invite.id)).rejects.toThrow(NotFoundError);
 
       await Rulesets.archive(db, { id: ruleset.id });
-      await expect(ContributorsService.acceptInvite(session, invite.id)).rejects.toThrow(ConflictError);
+      expect(ContributorsService.acceptInvite(session, invite.id)).rejects.toThrow(ConflictError);
     });
   });
 
@@ -140,7 +140,7 @@ describe("ContributorsService", () => {
       const { ownerSession, ruleset } = await setup();
       const { invite } = await addContributor(ownerSession, ruleset.id, "Editor", true);
       const { session: stranger } = await createTestUser("stranger");
-      await expect(ContributorsService.getInvite(stranger, invite.id)).rejects.toThrow(NotFoundError);
+      expect(ContributorsService.getInvite(stranger, invite.id)).rejects.toThrow(NotFoundError);
     });
   });
 
@@ -167,7 +167,7 @@ describe("ContributorsService", () => {
       expect((await list(ownerSession)).items.map((c) => c.email)).toEqual([user.emailAddress]);
       expect((await list(viewer)).items).toHaveLength(1);
       const { session: stranger } = await createTestUser("stranger");
-      await expect(list(stranger)).rejects.toThrow(ForbiddenError);
+      expect(list(stranger)).rejects.toThrow(ForbiddenError);
     });
   });
 
@@ -181,18 +181,18 @@ describe("ContributorsService", () => {
     test("refuses a pending invite, an archived ruleset, and an Admin promoting to Admin", async () => {
       const { ownerSession, ruleset } = await setup();
       const pending = await addContributor(ownerSession, ruleset.id, "Editor", true);
-      await expect(
-        ContributorsService.updateContributorRole(ownerSession, pending.invite.id, "Viewer"),
-      ).rejects.toThrow(ConflictError);
+      expect(ContributorsService.updateContributorRole(ownerSession, pending.invite.id, "Viewer")).rejects.toThrow(
+        ConflictError,
+      );
 
       const { session: admin } = await addContributor(ownerSession, ruleset.id, "Admin");
       const editor = await addContributor(ownerSession, ruleset.id, "Editor");
-      await expect(ContributorsService.updateContributorRole(admin, editor.invite.id, "Admin")).rejects.toThrow(
+      expect(ContributorsService.updateContributorRole(admin, editor.invite.id, "Admin")).rejects.toThrow(
         ForbiddenError,
       );
 
       await Rulesets.archive(db, { id: ruleset.id });
-      await expect(ContributorsService.updateContributorRole(ownerSession, editor.invite.id, "Viewer")).rejects.toThrow(
+      expect(ContributorsService.updateContributorRole(ownerSession, editor.invite.id, "Viewer")).rejects.toThrow(
         ConflictError,
       );
     });
@@ -211,7 +211,7 @@ describe("ContributorsService", () => {
       const { ownerSession, ruleset } = await setup();
       const { session: admin } = await addContributor(ownerSession, ruleset.id, "Admin");
       const other = await addContributor(ownerSession, ruleset.id, "Admin");
-      await expect(ContributorsService.revokeContributor(admin, other.invite.id)).rejects.toThrow(ForbiddenError);
+      expect(ContributorsService.revokeContributor(admin, other.invite.id)).rejects.toThrow(ForbiddenError);
     });
   });
 
@@ -222,7 +222,7 @@ describe("ContributorsService", () => {
       expect((await ContributorsService.leaveRuleset(session, ruleset.id)).status).toBe("Revoked");
 
       const { session: stranger } = await createTestUser("stranger");
-      await expect(ContributorsService.leaveRuleset(stranger, ruleset.id)).rejects.toThrow(NotFoundError);
+      expect(ContributorsService.leaveRuleset(stranger, ruleset.id)).rejects.toThrow(NotFoundError);
     });
   });
 

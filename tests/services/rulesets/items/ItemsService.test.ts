@@ -205,9 +205,9 @@ describe("ItemsService", () => {
       const { session, ruleset } = await createTestUserAndRuleset();
       const source = await ItemsService.createItem(session, ruleset.id, { name: "Scroll" });
       const { session: other } = await createTestUserAndRuleset();
-      await expect(
-        ItemsService.createVariants(other, ruleset.id, source.id, [{ name: "Stolen Scroll" }]),
-      ).rejects.toThrow(ForbiddenError);
+      expect(ItemsService.createVariants(other, ruleset.id, source.id, [{ name: "Stolen Scroll" }])).rejects.toThrow(
+        ForbiddenError,
+      );
     });
 
     test("are refused all together when a name repeats or is taken", async () => {

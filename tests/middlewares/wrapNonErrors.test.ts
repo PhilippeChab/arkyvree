@@ -28,6 +28,6 @@ describe("wrapNonErrors", () => {
 
   test("is needed: without it, the value escapes onError", async () => {
     // Hono throws it from `request` itself, synchronously or not.
-    await expect(Promise.resolve().then(() => throwing("boom", []).request("/"))).rejects.toBe("boom");
+    expect(Promise.resolve().then(() => throwing("boom", []).request("/"))).rejects.toBe("boom");
   });
 });

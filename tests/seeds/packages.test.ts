@@ -56,7 +56,7 @@ async function renameSeeded() {
 test("An extension doesn't seed without the core rules", async () => {
   await renameSeeded();
   const extension = registry.find((pkg) => pkg.type === "extension")!;
-  await expect(extension.seeds[0](db)).rejects.toThrow(`needs ${DND35_RULESET_NAME}, which isn't seeded`);
+  expect(extension.seeds[0](db)).rejects.toThrow(`needs ${DND35_RULESET_NAME}, which isn't seeded`);
 });
 
 test("Every content package seeds into a database without them, its extensions extending the core rules it seeds", async () => {

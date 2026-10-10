@@ -93,11 +93,11 @@ describe("ModifiersService", () => {
   test("refuses an unknown target", async () => {
     const { session, rulesetId, feat } = await setup();
     const invalid = { ...strengthBonus, target: "invalid.path.that.does.not.exist" };
-    await expect(ModifiersService.createModifier(session, rulesetId, "feats", feat.id, invalid)).rejects.toMatchObject({
+    expect(ModifiersService.createModifier(session, rulesetId, "feats", feat.id, invalid)).rejects.toMatchObject({
       refusal: "invalid",
     });
     const created = await ModifiersService.createModifier(session, rulesetId, "feats", feat.id, strengthBonus);
-    await expect(
+    expect(
       ModifiersService.updateModifier(session, rulesetId, "feats", feat.id, created.id, invalid),
     ).rejects.toMatchObject({ refusal: "invalid" });
   });
@@ -111,7 +111,7 @@ describe("ModifiersService", () => {
     await expectRefusedWith(ModifiersService.getModifiers(rulesetId, "feats", NIL_UUID), 404);
     await expectRefusedWith(ModifiersService.getModifier(rulesetId, "feats", feat.id, NIL_UUID), 404);
     await expectRefusedWith(ModifiersService.createModifier(session, rulesetId, "feats", NIL_UUID, strengthBonus), 404);
-    await expect(ModifiersService.createModifier(other, rulesetId, "feats", feat.id, strengthBonus)).rejects.toThrow(
+    expect(ModifiersService.createModifier(other, rulesetId, "feats", feat.id, strengthBonus)).rejects.toThrow(
       ForbiddenError,
     );
     for (const change of [
@@ -124,7 +124,7 @@ describe("ModifiersService", () => {
     ]) {
       await expectRefusedWith(change(session, feat.id, NIL_UUID), 404);
       await expectRefusedWith(change(session, item.id), 404);
-      await expect(change(other)).rejects.toThrow(ForbiddenError);
+      expect(change(other)).rejects.toThrow(ForbiddenError);
     }
   });
 

@@ -562,7 +562,7 @@ describe("LevelsService", () => {
       );
       expect(names(available.items).sort()).toEqual(["Dodge", "Weapon Focus"]);
       // Picking the granted feat anyway is refused.
-      await expect(
+      expect(
         addOneLevel(
           session,
           character.id,
@@ -629,7 +629,7 @@ describe("LevelsService", () => {
         page,
       );
       expect(names(available.items)).not.toContain("Power Attack");
-      await expect(
+      expect(
         addOneLevel(
           session,
           character.id,
@@ -671,7 +671,7 @@ describe("LevelsService", () => {
       );
       expect(names(available.items)).toEqual(["Weapon Focus"]);
       for (const copy of copies) {
-        await expect(
+        expect(
           addOneLevel(session, character.id, klass.id, 2, 8, null, {}, { [featAptitude.id]: [copy.id] }, {}, true),
         ).rejects.toThrow(`Non-stackable feat "${copy.name}" is already on this character`);
       }

@@ -117,8 +117,8 @@ describe("CharactersService", () => {
       });
 
       const { session: stranger } = await createTestUser();
-      await expect(createCharacterAs(stranger, onPrivate)).rejects.toThrow(ForbiddenError);
-      await expect(createCharacterAs(stranger, { rulesetId: NIL_UUID })).rejects.toThrow(NotFoundError);
+      expect(createCharacterAs(stranger, onPrivate)).rejects.toThrow(ForbiddenError);
+      expect(createCharacterAs(stranger, { rulesetId: NIL_UUID })).rejects.toThrow(NotFoundError);
     });
 
     test("takes a race the ruleset inherits, however far up, and not one of an unrelated ruleset", async () => {
@@ -145,11 +145,9 @@ describe("CharactersService", () => {
         rulesetId: grandparent.id,
         ancestorRulesetIds: [grandparent.id],
       });
-      await expect(createCharacterAs(session, { rulesetId: fork.id, raceId: unrelated.race.id })).rejects.toMatchObject(
-        {
-          refusal: "not-found",
-        },
-      );
+      expect(createCharacterAs(session, { rulesetId: fork.id, raceId: unrelated.race.id })).rejects.toMatchObject({
+        refusal: "not-found",
+      });
     });
   });
 
@@ -176,7 +174,7 @@ describe("CharactersService", () => {
         name: created.name,
       });
 
-      await expect(
+      expect(
         CharactersService.updateCharacter(session, created.id, { age: 40, updatedAt: created.updatedAt }),
       ).rejects.toThrow(ConflictError);
     });
@@ -213,7 +211,7 @@ describe("CharactersService", () => {
       ];
       // One at a time: the test's transaction has a single connection.
       for (const call of [...calls(owner, NIL_UUID), ...calls(other, character.id)])
-        await expect(call()).rejects.toThrow(NotFoundError);
+        expect(call()).rejects.toThrow(NotFoundError);
 
       await CharactersService.archiveCharacter(owner, character.id);
       for (const call of [
@@ -221,7 +219,7 @@ describe("CharactersService", () => {
         () => CharactersService.unarchiveCharacter(owner, NIL_UUID),
         () => CharactersService.hardDeleteCharacter(other, character.id),
       ])
-        await expect(call()).rejects.toThrow(NotFoundError);
+        expect(call()).rejects.toThrow(NotFoundError);
     });
   });
 
@@ -368,12 +366,12 @@ describe("CharactersService", () => {
       test("is refused for a character that isn't archived, or that plays in an active campaign", async () => {
         const { session } = await createTestUser();
         const character = await createCharacterAs(session);
-        await expect(CharactersService.hardDeleteCharacter(session, character.id)).rejects.toThrow(NotFoundError);
+        expect(CharactersService.hardDeleteCharacter(session, character.id)).rejects.toThrow(NotFoundError);
 
         const { player } = await createTestCampaign(session.userId);
         await PlayerCharacters.create(db, { playerId: player.id, characterId: character.id });
         await CharactersService.archiveCharacter(session, character.id);
-        await expect(CharactersService.hardDeleteCharacter(session, character.id)).rejects.toThrow(ConflictError);
+        expect(CharactersService.hardDeleteCharacter(session, character.id)).rejects.toThrow(ConflictError);
       });
 
       test.each(["removed from the campaign", "in an archived campaign"])(
@@ -443,8 +441,8 @@ describe("CharactersService", () => {
       expect(await CharacterSharingService.revokeShareToken(session, character.id)).toMatchObject({ shareToken: null });
 
       for (const token of [first, second, NIL_UUID])
-        await expect(CharacterSharingService.getSharedCharacter(token)).rejects.toThrow(NotFoundError);
-      await expect(CharacterSharingService.generateSharedPdf(NIL_UUID)).rejects.toThrow(NotFoundError);
+        expect(CharacterSharingService.getSharedCharacter(token)).rejects.toThrow(NotFoundError);
+      expect(CharacterSharingService.generateSharedPdf(NIL_UUID)).rejects.toThrow(NotFoundError);
     });
   });
 

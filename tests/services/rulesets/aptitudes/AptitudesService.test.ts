@@ -42,10 +42,10 @@ describe("AptitudesService", () => {
       ruleset,
       aptitudeIds: [generalId],
     } = await createTestUserAndRuleset(["General"]);
-    await expect(
+    expect(
       AptitudesService.updateAptitude(session, ruleset.id, generalId, { name: "General Feats" }),
     ).rejects.toMatchObject({ refusal: "unprocessable" });
-    await expect(AptitudesService.deleteAptitude(session, ruleset.id, generalId)).rejects.toMatchObject({
+    expect(AptitudesService.deleteAptitude(session, ruleset.id, generalId)).rejects.toMatchObject({
       refusal: "unprocessable",
     });
     const described = await AptitudesService.updateAptitude(session, ruleset.id, generalId, {
@@ -56,7 +56,7 @@ describe("AptitudesService", () => {
     // By its slug, which the engine and the target paths know it by: a new case is no change to them
     const recased = await AptitudesService.updateAptitude(session, ruleset.id, generalId, { name: "GENERAL" });
     expect(recased.name).toBe("GENERAL");
-    await expect(AptitudesService.deleteAptitude(session, ruleset.id, generalId)).rejects.toMatchObject({
+    expect(AptitudesService.deleteAptitude(session, ruleset.id, generalId)).rejects.toMatchObject({
       refusal: "unprocessable",
     });
   });
@@ -119,7 +119,7 @@ describe("AptitudesService", () => {
       powers: [{ powerId: power.id, aptitudeId: powerAptitude.id }],
     });
 
-    await expect(AptitudesService.deleteAptitude(session, ruleset.id, featAptitude.id)).rejects.toThrow(ConflictError);
-    await expect(AptitudesService.deleteAptitude(session, ruleset.id, powerAptitude.id)).rejects.toThrow(ConflictError);
+    expect(AptitudesService.deleteAptitude(session, ruleset.id, featAptitude.id)).rejects.toThrow(ConflictError);
+    expect(AptitudesService.deleteAptitude(session, ruleset.id, powerAptitude.id)).rejects.toThrow(ConflictError);
   });
 });

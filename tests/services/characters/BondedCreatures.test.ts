@@ -246,7 +246,7 @@ describe("CharactersService with bonded creatures", () => {
   test("refuses a familiar's race for a new character, and a familiar's class for a level", async () => {
     const ctx = await getSeedCtx();
     const { session } = await createTestUser();
-    await expect(
+    expect(
       CharactersService.createCharacter(session, {
         rulesetId: ctx.rulesetId,
         raceId: ctx.raceMap.familiar["Cat"],
@@ -261,7 +261,7 @@ describe("CharactersService with bonded creatures", () => {
       }),
     ).rejects.toMatchObject({ refusal: "invalid" });
     const wizardId = await createSeedCharacter(ctx, "wizard");
-    await expect(addOneLevel(owner, wizardId, ctx.klassMap.familiar["Familiar"], 1, 4, null)).rejects.toThrow(
+    expect(addOneLevel(owner, wizardId, ctx.klassMap.familiar["Familiar"], 1, 4, null)).rejects.toThrow(
       "Level 1: Class is not valid for a player character",
     );
   });
@@ -284,9 +284,7 @@ describe("CharactersService with bonded creatures", () => {
       bonded: {},
     });
     expect((await CharactersService.getCharacter(contributor, bonded.id)).id).toBe(bonded.id);
-    await expect(CharactersService.getCharacter((await createTestUser()).session, bonded.id)).rejects.toThrow(
-      NotFoundError,
-    );
+    expect(CharactersService.getCharacter((await createTestUser()).session, bonded.id)).rejects.toThrow(NotFoundError);
 
     await CharactersService.archiveCharacter(owner, masterId);
     expect((await CharactersService.getCharacter(owner, bonded.id)).id).toBe(bonded.id);
@@ -299,7 +297,7 @@ describe("CharactersService with bonded creatures", () => {
     await CharactersService.updateCharacter(owner, bonded.id, { name: "Whiskers" });
     await CharactersService.updateCharacter(contributor, bonded.id, { name: "Mittens" });
     expect((await Characters.findOne(db, { id: bonded.id }))?.name).toBe("Mittens");
-    await expect(
+    expect(
       CharactersService.updateCharacter((await createTestUser()).session, bonded.id, { name: "Nope" }),
     ).rejects.toThrow(NotFoundError);
     await CharactersService.enqueuePdf(owner, bonded.id);
@@ -308,8 +306,8 @@ describe("CharactersService with bonded creatures", () => {
     ]);
 
     await CharactersService.archiveCharacter(owner, masterId);
-    await expect(CharactersService.updateCharacter(owner, bonded.id, { name: "Ghost" })).rejects.toThrow(NotFoundError);
-    await expect(CharactersService.enqueuePdf(owner, bonded.id)).rejects.toThrow(NotFoundError);
+    expect(CharactersService.updateCharacter(owner, bonded.id, { name: "Ghost" })).rejects.toThrow(NotFoundError);
+    expect(CharactersService.enqueuePdf(owner, bonded.id)).rejects.toThrow(NotFoundError);
   });
 
   test("shares a master with their familiar", async () => {
@@ -349,7 +347,7 @@ describe("CharactersService with bonded creatures", () => {
     ["list the modifiers of", (id: string) => CharacterModifiersService.getModifiers(owner, id)],
   ])("won't %s a familiar on its own", async (_, call) => {
     const { bonded } = await createWizardWithFamiliar();
-    await expect(call(bonded.id)).rejects.toThrow(NotFoundError);
+    expect(call(bonded.id)).rejects.toThrow(NotFoundError);
   });
 
   test("shows a campaign character's familiar, unless the character is partly hidden from the other players", async () => {

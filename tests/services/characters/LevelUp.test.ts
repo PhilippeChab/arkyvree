@@ -431,9 +431,9 @@ describe("finalizing several levels at once", () => {
     ];
     for (const [error, attempt] of refusals) {
       // One at a time: the test's transaction has a single connection.
-      await expect(attempt()).rejects.toThrow(error);
+      expect(attempt()).rejects.toThrow(error);
     }
-    await expect(finalizeBatch(ctx, NIL_UUID, fighterLevels(1), {})).rejects.toThrow(NotFoundError);
+    expect(finalizeBatch(ctx, NIL_UUID, fighterLevels(1), {})).rejects.toThrow(NotFoundError);
   });
 
   test("refuses a class level the batch takes twice: the second sees the first", async () => {
@@ -451,7 +451,7 @@ describe("finalizing several levels at once", () => {
       ],
       { skills: { Climb: 16 }, feats: FIGHTER_LEVELS[0].feats },
     );
-    await expect(twice).rejects.toMatchObject({
+    expect(twice).rejects.toMatchObject({
       message: "Level 2: This level has already been finalized",
       refusal: "invalid",
     });
@@ -461,7 +461,7 @@ describe("finalizing several levels at once", () => {
       [...fighterLevels(2), ["Fighter", 2, 6]],
       { skills: { Climb: 20 }, feats: firstTwo },
     );
-    await expect(thirdRepeatsSecond).rejects.toMatchObject({
+    expect(thirdRepeatsSecond).rejects.toMatchObject({
       message: "Level 3: This level has already been finalized",
       refusal: "invalid",
     });
@@ -476,7 +476,7 @@ describe("a pool's room", () => {
     const plan = { skills: { Climb: 16 }, feats: { General: GENERAL_THREE, "Fighter Bonus Feat": ["Dodge"] } };
     for (const force of [false, true]) {
       const characterId = await createSeedCharacter(ctx);
-      await expect(finalizeBatch(ctx, characterId, fighterLevels(1), plan, force)).rejects.toThrow(
+      expect(finalizeBatch(ctx, characterId, fighterLevels(1), plan, force)).rejects.toThrow(
         "General: 3 picked, room for 2",
       );
     }
@@ -487,7 +487,7 @@ describe("a pool's room", () => {
     const characterId = await createSeedCharacter(ctx, "wizard");
     const schools = ["Prohibit Illusion", "Prohibit Necromancy", "Prohibit Enchantment"];
     const plan = { ...WIZARD_1, feats: { ...WIZARD_1.feats, "Prohibited School": schools } };
-    await expect(levelUp(session, ctx, characterId, "Wizard", 1, plan, true)).rejects.toThrow(
+    expect(levelUp(session, ctx, characterId, "Wizard", 1, plan, true)).rejects.toThrow(
       "Prohibited School: 3 picked, room for 2",
     );
   });
@@ -495,8 +495,7 @@ describe("a pool's room", () => {
   test("refuses an edit's picks a pool has no room for, forced or not", async () => {
     const { resave } = await setupFighter();
     const plan = { feats: { General: GENERAL_THREE, "Fighter Bonus Feat": ["Improved Initiative"] } };
-    for (const force of [false, true])
-      await expect(resave(plan, force)).rejects.toThrow("General: 3 picked, room for 2");
+    for (const force of [false, true]) expect(resave(plan, force)).rejects.toThrow("General: 3 picked, room for 2");
   });
 
   test("fits a preview's picks to their pools: a pool past its room drops its latest", async () => {
@@ -564,7 +563,7 @@ describe("previewing a level-up", () => {
     await addFighterLevels(session, ctx, characterId, 1);
     // Only a character's first level gets ×4.
     expect((await preview(ctx, characterId, [["Fighter", 2]])).perLevelSkillPoints).toEqual([4]);
-    await expect(preview(ctx, NIL_UUID, fighter(1))).rejects.toThrow(NotFoundError);
+    expect(preview(ctx, NIL_UUID, fighter(1))).rejects.toThrow(NotFoundError);
   });
 
   test("shows the base attributes, raised only by the increases chosen at the levels that take one", async () => {
@@ -679,8 +678,8 @@ describe("the feats of a level in a batch", () => {
 describe("re-saving a level", () => {
   test("refuses ranks above the level's cap, and a pool left unspent", async () => {
     const { resave } = await setupFighter();
-    await expect(resave({ skills: { Climb: 8, Intimidate: 4, Jump: 4 } })).rejects.toThrow("rank");
-    await expect(
+    expect(resave({ skills: { Climb: 8, Intimidate: 4, Jump: 4 } })).rejects.toThrow("rank");
+    expect(
       resave({ feats: { General: ["Power Attack", "Great Fortitude"], "Fighter Bonus Feat": [] } }),
     ).rejects.toThrow(/Fighter Bonus Feat.*unspent/);
   });
@@ -725,7 +724,7 @@ describe("re-saving a level", () => {
     };
     const level = await levelUp(session, ctx, characterId, "Wizard", 1, plan);
     const { skills, feats, powers } = picks(ctx, { ...plan, feats: { ...plan.feats, "Prohibited School": [] } });
-    await expect(
+    expect(
       CharacterLevelsService.updateLevel(session, characterId, level.id, 4, [], skills, feats, powers),
     ).rejects.toThrow(/Prohibited School.*unspent/);
   });
@@ -734,7 +733,7 @@ describe("re-saving a level", () => {
     test("is refused at a level that doesn't grant one, even forced", async () => {
       const { ctx, resave } = await setupFighter();
       for (const force of [false, true]) {
-        await expect(resave({ abilityId: ctx.abilityMap["Strength"] }, force)).rejects.toThrow(
+        expect(resave({ abilityId: ctx.abilityMap["Strength"] }, force)).rejects.toThrow(
           "Ability increase is not available at this level",
         );
       }
@@ -746,7 +745,7 @@ describe("re-saving a level", () => {
         .insert(levelAbilityIncreasesInCharacter)
         .values({ characterLevelId: first.id, abilityId: ctx.abilityMap["Strength"], amount: 1 });
       // The edit dialog sends the stored increase back.
-      await expect(resave({ abilityId: ctx.abilityMap["Strength"] })).rejects.toThrow(
+      expect(resave({ abilityId: ctx.abilityMap["Strength"] })).rejects.toThrow(
         "Ability increase is not available at this level",
       );
       await resave({ abilityId: null });
@@ -772,16 +771,16 @@ describe("re-saving a level", () => {
           {},
           true,
         );
-      await expect(save([{ abilityId: strength, amount: 2 }])).rejects.toThrow(
+      expect(save([{ abilityId: strength, amount: 2 }])).rejects.toThrow(
         "Level 4: Ability increases must add up to 1 at this level",
       );
-      await expect(
+      expect(
         save([
           { abilityId: strength, amount: 1 },
           { abilityId: dexterity, amount: 1 },
         ]),
       ).rejects.toThrow("Level 4: Ability increases must add up to 1 at this level");
-      await expect(
+      expect(
         save([
           { abilityId: strength, amount: 1 },
           { abilityId: strength, amount: 1 },

@@ -51,7 +51,7 @@ test("a race picked before the fork copied it blocks deleting the copy, but not 
     baseSpeed: human.baseSpeed,
   });
 
-  await expect(RacesService.deleteRace(session, fork.id, local.id)).rejects.toThrow("in use by characters");
+  expect(RacesService.deleteRace(session, fork.id, local.id)).rejects.toThrow("in use by characters");
   expect(
     await withRulesetScope(db, fork.id, async ({ rulesetData }) => rulesetData.racesById.get(character.raceId)?.id),
   ).toBe(local.id);
@@ -73,7 +73,7 @@ test("a language picked before the fork copied it blocks deleting the copy", asy
     type: language.type,
   });
 
-  await expect(LanguagesService.deleteLanguage(session, fork.id, local.id)).rejects.toThrow("in use by characters");
+  expect(LanguagesService.deleteLanguage(session, fork.id, local.id)).rejects.toThrow("in use by characters");
 });
 
 test("an item picked before the fork copied it blocks deleting the copy", async () => {
@@ -89,5 +89,5 @@ test("an item picked before the fork copied it blocks deleting the copy", async 
     costGp: Number(item.costGp),
   });
 
-  await expect(ItemsService.deleteItem(session, fork.id, local.id)).rejects.toThrow("in use by characters");
+  expect(ItemsService.deleteItem(session, fork.id, local.id)).rejects.toThrow("in use by characters");
 });

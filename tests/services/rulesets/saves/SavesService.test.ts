@@ -47,6 +47,6 @@ describe("SavesService", () => {
     const [klassLevel] = await KlassLevels.create(db, { klassId: klass.id, level: 1 });
     await KlassLevelSaves.createMany(db, [{ klassLevelId: klassLevel.id, saveId: save.id, base: 2 }]);
 
-    await expect(SavesService.deleteSave(session, ruleset.id, save.id)).rejects.toThrow(ConflictError);
+    expect(SavesService.deleteSave(session, ruleset.id, save.id)).rejects.toThrow(ConflictError);
   });
 });

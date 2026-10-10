@@ -73,7 +73,7 @@ test("owner locks leave other entities independent and shared copy reads compati
 });
 
 test("a missing owner is rejected before customization writes", async () => {
-  await expect(EntityRepositories.lock(db, "feats", crypto.randomUUID())).rejects.toThrow("no longer exists");
+  expect(EntityRepositories.lock(db, "feats", crypto.randomUUID())).rejects.toThrow("no longer exists");
 });
 
 test("every customization kind reports a row removed before the owner lock as missing", async () => {
@@ -95,5 +95,5 @@ test("every customization kind reports a row removed before the owner lock as mi
     () => RequirementsService.updateRequirement(session, rulesetId, "feats", featId, requirement.id, { level: "1" }),
     () => RequirementsService.deleteRequirement(session, rulesetId, "feats", featId, requirement.id),
   ];
-  for (const mutate of mutations) await expect(mutate()).rejects.toThrow("no longer exists");
+  for (const mutate of mutations) expect(mutate()).rejects.toThrow("no longer exists");
 });

@@ -210,7 +210,7 @@ describe("RulesetsService", () => {
       contributorRole: "Admin",
       isUsedAsExtension: false,
     });
-    await expect(RulesetsService.getRuleset(session, NIL_UUID)).rejects.toThrow(NotFoundError);
+    expect(RulesetsService.getRuleset(session, NIL_UUID)).rejects.toThrow(NotFoundError);
   });
 
   describe("forking", () => {
@@ -272,14 +272,12 @@ describe("RulesetsService", () => {
       const first = await fork(session, parent);
       await Rulesets.update(db, { status: "Published" }, { id: first.id });
 
-      await expect(fork(session, first)).rejects.toThrow(UnprocessableEntityError);
-      await expect(fork(session, await createTestRuleset(null, { private: false }))).rejects.toThrow(
+      expect(fork(session, first)).rejects.toThrow(UnprocessableEntityError);
+      expect(fork(session, await createTestRuleset(null, { private: false }))).rejects.toThrow(
         UnprocessableEntityError,
       );
-      await expect(fork(session, { id: NIL_UUID })).rejects.toThrow(NotFoundError);
-      await expect(fork(session, parent, { name: (await createTestRuleset(user.id)).name })).rejects.toThrow(
-        ConflictError,
-      );
+      expect(fork(session, { id: NIL_UUID })).rejects.toThrow(NotFoundError);
+      expect(fork(session, parent, { name: (await createTestRuleset(user.id)).name })).rejects.toThrow(ConflictError);
     });
 
     test("lets an ordinary account override more than 25 inherited entities", async () => {
@@ -315,14 +313,14 @@ describe("RulesetsService", () => {
       const ruleset = await createTestRuleset(user.id);
       const base = await createTestRuleset(null, { private: false, status: "Published" });
 
-      await expect(RulesetsService.archiveRuleset(other, ruleset.id)).rejects.toThrow(ForbiddenError);
-      await expect(RulesetsService.archiveRuleset(session, base.id)).rejects.toThrow(ForbiddenError);
-      await expect(RulesetsService.archiveRuleset(session, NIL_UUID)).rejects.toThrow(NotFoundError);
-      await expect(RulesetsService.unarchiveRuleset(session, ruleset.id)).rejects.toThrow(ForbiddenError);
-      await expect(RulesetsService.unarchiveRuleset(session, base.id)).rejects.toThrow(ForbiddenError);
-      await expect(RulesetsService.unarchiveRuleset(session, NIL_UUID)).rejects.toThrow(NotFoundError);
+      expect(RulesetsService.archiveRuleset(other, ruleset.id)).rejects.toThrow(ForbiddenError);
+      expect(RulesetsService.archiveRuleset(session, base.id)).rejects.toThrow(ForbiddenError);
+      expect(RulesetsService.archiveRuleset(session, NIL_UUID)).rejects.toThrow(NotFoundError);
+      expect(RulesetsService.unarchiveRuleset(session, ruleset.id)).rejects.toThrow(ForbiddenError);
+      expect(RulesetsService.unarchiveRuleset(session, base.id)).rejects.toThrow(ForbiddenError);
+      expect(RulesetsService.unarchiveRuleset(session, NIL_UUID)).rejects.toThrow(NotFoundError);
       await RulesetsService.archiveRuleset(session, ruleset.id);
-      await expect(RulesetsService.unarchiveRuleset(other, ruleset.id)).rejects.toThrow(ForbiddenError);
+      expect(RulesetsService.unarchiveRuleset(other, ruleset.id)).rejects.toThrow(ForbiddenError);
     });
   });
 
@@ -341,7 +339,7 @@ describe("RulesetsService", () => {
     test("names the kinds of content still missing, not counting deleted rows", async () => {
       const { user, session } = await createTestUser();
       const empty = await createTestRuleset(user.id);
-      await expect(RulesetsService.publishRuleset(session, empty.id)).rejects.toMatchObject({
+      expect(RulesetsService.publishRuleset(session, empty.id)).rejects.toMatchObject({
         refusal: "unprocessable",
         message: "Ruleset requires at least one of each: race, class, skill, feat",
       });
@@ -350,7 +348,7 @@ describe("RulesetsService", () => {
       const { race, klass } = await addPlayableContent(partial.id);
       await Races.delete(db, { id: race.id });
       await Klasses.delete(db, { id: klass.id });
-      await expect(RulesetsService.publishRuleset(session, partial.id)).rejects.toMatchObject({
+      expect(RulesetsService.publishRuleset(session, partial.id)).rejects.toMatchObject({
         refusal: "unprocessable",
         message: "Ruleset requires at least one of each: race, class",
       });
@@ -365,13 +363,13 @@ describe("RulesetsService", () => {
         status: "Published",
       });
 
-      await expect(
+      expect(
         RulesetsService.publishRuleset(session, (await createTestRuleset(user.id)).id, { kind: "extension" }),
       ).rejects.toThrow(UnprocessableEntityError);
       const host = await fork(session, { id: rulesetId });
       const seedExtension = await findSeededRuleset(DND35_COMPLETE_WARRIOR_NAME);
       await RulesetExtensionsService.subscribeExtension(session, host.id, [seedExtension.id]);
-      await expect(RulesetsService.publishRuleset(session, host.id, { kind: "extension" })).rejects.toThrow(
+      expect(RulesetsService.publishRuleset(session, host.id, { kind: "extension" })).rejects.toThrow(
         UnprocessableEntityError,
       );
     });
@@ -382,17 +380,17 @@ describe("RulesetsService", () => {
       const draft = await createTestRuleset(user.id);
       await addPlayableContent(draft.id);
 
-      await expect(RulesetsService.publishRuleset(other, draft.id)).rejects.toThrow(ForbiddenError);
-      await expect(RulesetsService.publishRuleset(session, (await createTestRuleset(null)).id)).rejects.toThrow(
+      expect(RulesetsService.publishRuleset(other, draft.id)).rejects.toThrow(ForbiddenError);
+      expect(RulesetsService.publishRuleset(session, (await createTestRuleset(null)).id)).rejects.toThrow(
         ForbiddenError,
       );
-      await expect(
+      expect(
         RulesetsService.publishRuleset(session, (await createTestRuleset(user.id, { status: "Published" })).id),
       ).rejects.toThrow(UnprocessableEntityError);
-      await expect(
+      expect(
         RulesetsService.publishRuleset(session, (await createTestRuleset(user.id, { status: "Archived" })).id),
       ).rejects.toThrow(UnprocessableEntityError);
-      await expect(RulesetsService.publishRuleset(session, NIL_UUID)).rejects.toThrow(NotFoundError);
+      expect(RulesetsService.publishRuleset(session, NIL_UUID)).rejects.toThrow(NotFoundError);
     });
   });
 
@@ -402,7 +400,7 @@ describe("RulesetsService", () => {
       const ruleset = await createTestRuleset(user.id);
       const update = { name: `Renamed ${uniqueId()}`, description: "Updated", private: false };
       expect(await RulesetsService.updateRuleset(session, ruleset.id, update)).toMatchObject(update);
-      await expect(RulesetsService.updateRuleset(session, ruleset.id, { ...update, private: true })).rejects.toThrow(
+      expect(RulesetsService.updateRuleset(session, ruleset.id, { ...update, private: true })).rejects.toThrow(
         ForbiddenError,
       );
     });
@@ -415,7 +413,7 @@ describe("RulesetsService", () => {
         RulesetsService.updateRuleset(session, id, { name, description: "", kind: "extension" });
       expect(await update(forked.id, forked.name)).toMatchObject({ kind: "extension" });
       const standalone = await createTestRuleset(user.id);
-      await expect(update(standalone.id, standalone.name)).rejects.toThrow(UnprocessableEntityError);
+      expect(update(standalone.id, standalone.name)).rejects.toThrow(UnprocessableEntityError);
     });
 
     test("refuses an edit started from a stale copy", async () => {
@@ -424,23 +422,23 @@ describe("RulesetsService", () => {
       const edit = (name: string) =>
         RulesetsService.updateRuleset(session, ruleset.id, { name, description: "", updatedAt: ruleset.updatedAt });
       await edit(`First ${uniqueId()}`);
-      await expect(edit(`Second ${uniqueId()}`)).rejects.toThrow(ConflictError);
+      expect(edit(`Second ${uniqueId()}`)).rejects.toThrow(ConflictError);
     });
 
     test("refuses another user's ruleset, a base, an archived one and a missing one", async () => {
       const { user, session } = await createTestUser();
       const { session: other } = await createTestUser();
       const body = { name: "Updated", description: "Updated" };
-      await expect(RulesetsService.updateRuleset(other, (await createTestRuleset(user.id)).id, body)).rejects.toThrow(
+      expect(RulesetsService.updateRuleset(other, (await createTestRuleset(user.id)).id, body)).rejects.toThrow(
         ForbiddenError,
       );
-      await expect(RulesetsService.updateRuleset(session, (await createTestRuleset(null)).id, body)).rejects.toThrow(
+      expect(RulesetsService.updateRuleset(session, (await createTestRuleset(null)).id, body)).rejects.toThrow(
         ForbiddenError,
       );
-      await expect(
+      expect(
         RulesetsService.updateRuleset(session, (await createTestRuleset(user.id, { status: "Archived" })).id, body),
       ).rejects.toThrow(UnprocessableEntityError);
-      await expect(RulesetsService.updateRuleset(session, NIL_UUID, body)).rejects.toThrow(NotFoundError);
+      expect(RulesetsService.updateRuleset(session, NIL_UUID, body)).rejects.toThrow(NotFoundError);
     });
   });
 
@@ -461,10 +459,10 @@ describe("RulesetsService", () => {
       await star({ ...fork, kind: "extension" });
       expect(await StarredRulesets.findMany(db, { userId: user.id })).toHaveLength(2);
 
-      await expect(star({ private: false })).rejects.toThrow(ForbiddenError);
-      await expect(star({ status: "Published" })).rejects.toThrow(ForbiddenError);
-      await expect(star(fork)).rejects.toThrow(ForbiddenError);
-      await expect(RulesetsService.starRuleset(session, NIL_UUID)).rejects.toThrow(NotFoundError);
+      expect(star({ private: false })).rejects.toThrow(ForbiddenError);
+      expect(star({ status: "Published" })).rejects.toThrow(ForbiddenError);
+      expect(star(fork)).rejects.toThrow(ForbiddenError);
+      expect(RulesetsService.starRuleset(session, NIL_UUID)).rejects.toThrow(NotFoundError);
     });
 
     test("unstars, and unstarring what isn't starred is fine", async () => {
@@ -505,13 +503,13 @@ describe("RulesetsService", () => {
 
     test("are only a fork's, and a private fork's only its members'", async () => {
       const { user, session } = await createTestUser();
-      await expect(RulesetChangesService.getChanges(session, (await createTestRuleset(user.id)).id)).rejects.toThrow(
+      expect(RulesetChangesService.getChanges(session, (await createTestRuleset(user.id)).id)).rejects.toThrow(
         BadRequestError,
       );
-      await expect(RulesetChangesService.getChanges(session, NIL_UUID)).rejects.toThrow(NotFoundError);
+      expect(RulesetChangesService.getChanges(session, NIL_UUID)).rejects.toThrow(NotFoundError);
 
       const { fork } = await setupChanges({ private: true });
-      await expect(RulesetChangesService.getChanges(session, fork.id)).rejects.toThrow(ForbiddenError);
+      expect(RulesetChangesService.getChanges(session, fork.id)).rejects.toThrow(ForbiddenError);
     });
 
     describe("reverting", () => {
@@ -597,10 +595,10 @@ describe("RulesetsService", () => {
         });
 
         // Reverting deletes the copy, and with it the character's pick.
-        await expect(RulesetChangesService.revertOverride(session, fork.id, "feats", modified.id)).rejects.toThrow(
+        expect(RulesetChangesService.revertOverride(session, fork.id, "feats", modified.id)).rejects.toThrow(
           ConflictError,
         );
-        await expect(RulesetChangesService.revertOverride(session, fork.id, "feats", untouched.id)).rejects.toThrow(
+        expect(RulesetChangesService.revertOverride(session, fork.id, "feats", untouched.id)).rejects.toThrow(
           NotFoundError,
         );
       });

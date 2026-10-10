@@ -126,6 +126,6 @@ describe("SkillsService", () => {
     const { klassLevel } = await createTestKlassLevel(ruleset.id);
     await addCharacterLevel(character.id, klassLevel.id, { skills: [{ skillId: skill.id, rank: 1 }] });
 
-    await expect(SkillsService.deleteSkill(session, ruleset.id, skill.id)).rejects.toThrow(ConflictError);
+    expect(SkillsService.deleteSkill(session, ruleset.id, skill.id)).rejects.toThrow(ConflictError);
   });
 });

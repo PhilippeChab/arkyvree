@@ -88,9 +88,9 @@ describe("RequirementsService", () => {
     test("refuses an unknown target path", async () => {
       const { session, rulesetId, feat } = await setup();
       const body = { ...babAtLeast5, target: "invalid.path.that.does.not.exist" };
-      await expect(
-        RequirementsService.createRequirement(session, rulesetId, "feats", feat.id, body),
-      ).rejects.toMatchObject({ refusal: "invalid" });
+      expect(RequirementsService.createRequirement(session, rulesetId, "feats", feat.id, body)).rejects.toMatchObject({
+        refusal: "invalid",
+      });
     });
 
     test("refuses a missing ruleset or entity, and another user", async () => {
@@ -98,7 +98,7 @@ describe("RequirementsService", () => {
       const { session: other } = await createTestUserAndRuleset();
       await expectRefusedWith(RequirementsService.createRequirement(session, NIL_UUID, "feats", feat.id, chain), 404);
       await expectRefusedWith(RequirementsService.createRequirement(session, rulesetId, "feats", NIL_UUID, chain), 404);
-      await expect(RequirementsService.createRequirement(other, rulesetId, "feats", feat.id, chain)).rejects.toThrow(
+      expect(RequirementsService.createRequirement(other, rulesetId, "feats", feat.id, chain)).rejects.toThrow(
         ForbiddenError,
       );
     });
@@ -140,7 +140,7 @@ describe("RequirementsService", () => {
       expect(updated).toMatchObject({ ...update, valueType: "number", chainingOperator: null });
 
       const invalid = { ...babAtLeast5, target: "invalid.path.does.not.exist" };
-      await expect(
+      expect(
         RequirementsService.updateRequirement(session, rulesetId, "feats", feat.id, created.id, invalid),
       ).rejects.toMatchObject({ refusal: "invalid" });
     });
@@ -164,7 +164,7 @@ describe("RequirementsService", () => {
         RequirementsService.updateRequirement(session, rulesetId, "feats", otherFeat.id, created.id, update),
         404,
       );
-      await expect(
+      expect(
         RequirementsService.updateRequirement(other, rulesetId, "feats", feat.id, created.id, update),
       ).rejects.toThrow(ForbiddenError);
     });
@@ -207,9 +207,9 @@ describe("RequirementsService", () => {
         RequirementsService.deleteRequirement(session, rulesetId, "feats", otherFeat.id, created.id),
         404,
       );
-      await expect(
-        RequirementsService.deleteRequirement(other, rulesetId, "feats", feat.id, created.id),
-      ).rejects.toThrow(ForbiddenError);
+      expect(RequirementsService.deleteRequirement(other, rulesetId, "feats", feat.id, created.id)).rejects.toThrow(
+        ForbiddenError,
+      );
     });
   });
 });

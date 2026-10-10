@@ -56,7 +56,7 @@ describe("PropertiesService", () => {
     await expectRefusedWith(PropertiesService.getProperties(NIL_UUID, "feats", feat.id), 404);
     await expectRefusedWith(PropertiesService.getProperties(rulesetId, "feats", NIL_UUID), 404);
     await expectRefusedWith(PropertiesService.createProperty(session, rulesetId, "feats", NIL_UUID, acBonus), 404);
-    await expect(PropertiesService.createProperty(other, rulesetId, "feats", feat.id, acBonus)).rejects.toThrow(
+    expect(PropertiesService.createProperty(other, rulesetId, "feats", feat.id, acBonus)).rejects.toThrow(
       ForbiddenError,
     );
     for (const change of [
@@ -68,7 +68,7 @@ describe("PropertiesService", () => {
       await expectRefusedWith(change(session, feat.id, NIL_UUID), 404);
       // Only an item made from a template reaches the template's properties.
       await expectRefusedWith(change(session, feat.id, templateProperty.id), 404);
-      await expect(change(other)).rejects.toThrow(ForbiddenError);
+      expect(change(other)).rejects.toThrow(ForbiddenError);
     }
   });
 

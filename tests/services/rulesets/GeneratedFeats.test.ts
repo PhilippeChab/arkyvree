@@ -357,7 +357,7 @@ describe("an inherited skill's Skill Focus", () => {
       operation === "delete"
         ? SkillsService.deleteSkill(session, fork.id, climb.id)
         : SkillsService.updateSkill(session, fork.id, climb.id, { ...climbBody, name: "Mountaineering" });
-    await expect(mutation).rejects.toThrow("Skill Focus feat in use");
+    expect(mutation).rejects.toThrow("Skill Focus feat in use");
     expect(await Feats.findOne(db, { id: copy?.id ?? feat.id })).toBeDefined();
     expect(await Feats.findOne(db, { id: feat.id })).toEqual(feat);
   });
@@ -422,9 +422,9 @@ describe("generated feats", () => {
     const feat = await withRulesetScope(db, fork.id, async ({ rulesetData }) =>
       rulesetData.feats.find((row) => row.name.startsWith(`${family}: `))!,
     );
-    await expect(
-      FeatsService.updateFeat(session, fork.id, feat.id, { name: "Renamed generated feat" }),
-    ).rejects.toThrow("Generated feats cannot be renamed");
+    expect(FeatsService.updateFeat(session, fork.id, feat.id, { name: "Renamed generated feat" })).rejects.toThrow(
+      "Generated feats cannot be renamed",
+    );
     expect(await EntitySnapshots.findOne(db, { rulesetId: fork.id, sourceEntityId: feat.id })).toBeUndefined();
 
     const local = await FeatsService.updateFeat(session, fork.id, feat.id, {
@@ -432,7 +432,7 @@ describe("generated feats", () => {
       description: "Customized description",
     });
     expect(local.description).toBe("Customized description");
-    await expect(FeatsService.updateFeat(session, fork.id, local.id, { name: "Another name" })).rejects.toThrow(
+    expect(FeatsService.updateFeat(session, fork.id, local.id, { name: "Another name" })).rejects.toThrow(
       "Generated feats cannot be renamed",
     );
     expect(await Feats.findOne(db, { id: feat.id })).toMatchObject({ name: feat.name, description: feat.description });
@@ -447,7 +447,7 @@ describe("generated feats", () => {
       skill(climb.primaryAbilityId, "New Skill", { impactedByWeight: false }),
     );
     const generated = await findFeat(fork.id, "Skill Focus: New Skill");
-    await expect(FeatsService.updateFeat(session, fork.id, generated.id, { name: "Specialist" })).rejects.toThrow(
+    expect(FeatsService.updateFeat(session, fork.id, generated.id, { name: "Specialist" })).rejects.toThrow(
       "Generated feats cannot be renamed",
     );
 

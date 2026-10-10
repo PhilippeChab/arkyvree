@@ -28,7 +28,7 @@ describe("RacesService", () => {
       const { user, session, ruleset } = await createTestUserAndRuleset();
       const race = await RacesService.createRace(session, ruleset.id, elf);
       await createTestCharacter(user.id, { rulesetId: ruleset.id, raceId: race.id });
-      await expect(RacesService.deleteRace(session, ruleset.id, race.id)).rejects.toThrow(ConflictError);
+      expect(RacesService.deleteRace(session, ruleset.id, race.id)).rejects.toThrow(ConflictError);
     });
 
     test("is refused when a character of a fork is of that race", async () => {
@@ -36,7 +36,7 @@ describe("RacesService", () => {
       const race = await RacesService.createRace(session, parent.id, elf);
       const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
       await createTestCharacter(user.id, { rulesetId: fork.id, raceId: race.id });
-      await expect(RacesService.deleteRace(session, parent.id, race.id)).rejects.toThrow(ConflictError);
+      expect(RacesService.deleteRace(session, parent.id, race.id)).rejects.toThrow(ConflictError);
     });
 
     test("is refused when a character of a ruleset using it as an extension is of that race", async () => {
@@ -44,7 +44,7 @@ describe("RacesService", () => {
       const race = await RacesService.createRace(session, extension.id, elf);
       const host = await createTestRuleset(user.id, { extensionRulesetIds: [extension.id] });
       await createTestCharacter(user.id, { rulesetId: host.id, raceId: race.id });
-      await expect(RacesService.deleteRace(session, extension.id, race.id)).rejects.toThrow(ConflictError);
+      expect(RacesService.deleteRace(session, extension.id, race.id)).rejects.toThrow(ConflictError);
     });
 
     test("is allowed in a fork whose parent's characters use the race", async () => {

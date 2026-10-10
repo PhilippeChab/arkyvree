@@ -61,7 +61,7 @@ describe("AbilitiesService", () => {
     });
 
     test("should throw NotFoundError for non-existent ruleset", async () => {
-      await expect(AbilitiesService.getAbilities(NIL_UUID, {}, { limit: 10, page: 1 })).rejects.toThrow(NotFoundError);
+      expect(AbilitiesService.getAbilities(NIL_UUID, {}, { limit: 10, page: 1 })).rejects.toThrow(NotFoundError);
     });
   });
 });

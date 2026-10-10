@@ -66,7 +66,7 @@ describe("CampaignCharactersService", () => {
       const { campaign } = await createTestCampaign(user.id);
       const { user: other } = await createTestUser();
       const character = await createTestCharacter(other.id);
-      await expect(link(other.id, campaign.id, character.id)).rejects.toThrow(NotFoundError);
+      expect(link(other.id, campaign.id, character.id)).rejects.toThrow(NotFoundError);
     });
 
     test("links a character to one campaign, once", async () => {
@@ -76,10 +76,8 @@ describe("CampaignCharactersService", () => {
       const character = await createTestCharacter(user.id);
       await link(user.id, campaign.id, character.id);
 
-      await expect(link(user.id, campaign.id, character.id)).rejects.toThrow(
-        "Character already linked to this campaign",
-      );
-      await expect(link(user.id, other.id, character.id)).rejects.toThrow("Character is already linked to a campaign");
+      expect(link(user.id, campaign.id, character.id)).rejects.toThrow("Character already linked to this campaign");
+      expect(link(user.id, other.id, character.id)).rejects.toThrow("Character is already linked to a campaign");
     });
 
     test("refuses a bonded character", async () => {
@@ -93,7 +91,7 @@ describe("CampaignCharactersService", () => {
         kind: "familiar",
         parentCharacterId: master.id,
       });
-      await expect(link(user.id, campaign.id, familiar.id)).rejects.toThrow(NotFoundError);
+      expect(link(user.id, campaign.id, familiar.id)).rejects.toThrow(NotFoundError);
     });
   });
 
@@ -246,8 +244,8 @@ describe("CampaignCharactersService", () => {
       const { rulesetId } = await getSeedCtx();
       const { user } = await createTestUser();
       const [campaign] = await Campaigns.create(db, { name: "Empty Campaign", rulesetId });
-      await expect(list(user.id, campaign.id)).rejects.toThrow(ForbiddenError);
-      await expect(list(user.id, NIL_UUID)).rejects.toThrow("Campaign not found");
+      expect(list(user.id, campaign.id)).rejects.toThrow(ForbiddenError);
+      expect(list(user.id, NIL_UUID)).rejects.toThrow("Campaign not found");
     });
   });
 
@@ -287,7 +285,7 @@ describe("CampaignCharactersService", () => {
       });
 
       const privateOne = await joinWithCharacter(campaign.id, "Private");
-      await expect(get(privateOne.character.id)).rejects.toThrow(NotFoundError);
+      expect(get(privateOne.character.id)).rejects.toThrow(NotFoundError);
     });
 
     test("gives an active character contributor the full, editable sheet", async () => {
@@ -312,14 +310,14 @@ describe("CampaignCharactersService", () => {
       await link(user.id, campaign.id, linked.id);
       const { user: stranger } = await createTestUser();
 
-      await expect(
-        CampaignCharactersService.getCharacter(makeSession(stranger.id), campaign.id, linked.id),
-      ).rejects.toThrow(ForbiddenError);
+      expect(CampaignCharactersService.getCharacter(makeSession(stranger.id), campaign.id, linked.id)).rejects.toThrow(
+        ForbiddenError,
+      );
       const unlinked = await createTestCharacter(user.id);
-      await expect(
-        CampaignCharactersService.getCharacter(makeSession(user.id), campaign.id, unlinked.id),
-      ).rejects.toThrow(NotFoundError);
-      await expect(CampaignCharactersService.getCharacter(makeSession(user.id), NIL_UUID, linked.id)).rejects.toThrow(
+      expect(CampaignCharactersService.getCharacter(makeSession(user.id), campaign.id, unlinked.id)).rejects.toThrow(
+        NotFoundError,
+      );
+      expect(CampaignCharactersService.getCharacter(makeSession(user.id), NIL_UUID, linked.id)).rejects.toThrow(
         "Campaign not found",
       );
     });

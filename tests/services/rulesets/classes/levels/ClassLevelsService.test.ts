@@ -268,7 +268,7 @@ describe("ClassLevelsService", () => {
       () => ClassLevelsService.updateClassLevel(other, ruleset.id, klass.id, level.id, { fields: { bab: 3 } }),
       () => ClassLevelsService.deleteClassLevel(other, ruleset.id, klass.id, level.id),
     ])
-      await expect(change()).rejects.toThrow(ForbiddenError);
+      expect(change()).rejects.toThrow(ForbiddenError);
   });
 
   test("doesn't find a missing ruleset, class or level, nor a level through another ruleset", async () => {
@@ -346,7 +346,7 @@ describe("ClassLevelsService", () => {
       const character = await createTestCharacter(user.id, { rulesetId: ruleset.id });
       await addCharacterLevel(character.id, level.id);
 
-      await expect(ClassLevelsService.deleteClassLevel(session, ruleset.id, klass.id, level.id)).rejects.toThrow(
+      expect(ClassLevelsService.deleteClassLevel(session, ruleset.id, klass.id, level.id)).rejects.toThrow(
         ConflictError,
       );
     });

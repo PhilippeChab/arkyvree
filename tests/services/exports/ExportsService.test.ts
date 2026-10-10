@@ -17,13 +17,13 @@ describe("ExportsService.getExport", () => {
     const { session: owner } = await createTestUser();
     const { session: other } = await createTestUser();
     const { id } = await createExport(owner.userId);
-    await expect(ExportsService.getExport(other, id)).rejects.toThrow(NotFoundError);
+    expect(ExportsService.getExport(other, id)).rejects.toThrow(NotFoundError);
   });
 
   test("throws NotFoundError for a missing or expired export", async () => {
     const { session } = await createTestUser();
-    await expect(ExportsService.getExport(session, NIL_UUID)).rejects.toThrow(NotFoundError);
+    expect(ExportsService.getExport(session, NIL_UUID)).rejects.toThrow(NotFoundError);
     const expired = await createExport(session.userId, new Date(Date.now() - 1000).toISOString());
-    await expect(ExportsService.getExport(session, expired.id)).rejects.toThrow("expired");
+    expect(ExportsService.getExport(session, expired.id)).rejects.toThrow("expired");
   });
 });

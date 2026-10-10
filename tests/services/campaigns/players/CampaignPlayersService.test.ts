@@ -36,10 +36,8 @@ describe("CampaignPlayersService", () => {
     test("refuses non-members and throws NotFoundError for a missing campaign", async () => {
       const { campaign } = await setup();
       const { session: stranger } = await createTestUser();
-      await expect(CampaignPlayersService.getPlayers(stranger, campaign.id, {}, firstPage)).rejects.toThrow(
-        ForbiddenError,
-      );
-      await expect(CampaignPlayersService.getPlayers(stranger, NIL_UUID, {}, firstPage)).rejects.toThrow(NotFoundError);
+      expect(CampaignPlayersService.getPlayers(stranger, campaign.id, {}, firstPage)).rejects.toThrow(ForbiddenError);
+      expect(CampaignPlayersService.getPlayers(stranger, NIL_UUID, {}, firstPage)).rejects.toThrow(NotFoundError);
     });
   });
 
@@ -67,14 +65,12 @@ describe("CampaignPlayersService", () => {
     test("is for the Game Master of a live campaign", async () => {
       const { session, campaign } = await setup();
       const { session: stranger } = await createTestUser();
-      await expect(CampaignPlayersService.addPlayer(stranger, campaign.id, "Player Character")).rejects.toThrow(
+      expect(CampaignPlayersService.addPlayer(stranger, campaign.id, "Player Character")).rejects.toThrow(
         ForbiddenError,
       );
-      await expect(CampaignPlayersService.addPlayer(session, NIL_UUID, "Player Character")).rejects.toThrow(
-        NotFoundError,
-      );
+      expect(CampaignPlayersService.addPlayer(session, NIL_UUID, "Player Character")).rejects.toThrow(NotFoundError);
       await Campaigns.archive(db, { id: campaign.id });
-      await expect(CampaignPlayersService.addPlayer(session, campaign.id, "Player Character")).rejects.toThrow(
+      expect(CampaignPlayersService.addPlayer(session, campaign.id, "Player Character")).rejects.toThrow(
         "Cannot modify an archived campaign",
       );
     });
@@ -94,7 +90,7 @@ describe("CampaignPlayersService", () => {
 
     test("never demotes the last Game Master", async () => {
       const { session, campaign, gmPlayer } = await setup();
-      await expect(
+      expect(
         CampaignPlayersService.updatePlayer(session, campaign.id, gmPlayer.id, "Player Character"),
       ).rejects.toThrow("Cannot demote the last Game Master");
     });
@@ -113,7 +109,7 @@ describe("CampaignPlayersService", () => {
         invitee.emailAddress,
       );
       expect(invite).toMatchObject({ userId: invitee.id, playerId: player.id, status: "Pending" });
-      await expect(
+      expect(
         CampaignPlayersService.updatePlayer(session, campaign.id, player.id, "Player Character", late.emailAddress),
       ).rejects.toThrow(ConflictError);
 
@@ -122,7 +118,7 @@ describe("CampaignPlayersService", () => {
         userId: invitee.id,
         role: "Player Character",
       });
-      await expect(
+      expect(
         CampaignPlayersService.updatePlayer(session, campaign.id, taken.id, "Player Character", late.emailAddress),
       ).rejects.toThrow("Player already has a user assigned");
     });
@@ -133,20 +129,20 @@ describe("CampaignPlayersService", () => {
       const { player } = await CampaignPlayersService.addPlayer(session, campaign.id, "Player Character");
       const { session: stranger } = await createTestUser();
 
-      await expect(
-        CampaignPlayersService.updatePlayer(stranger, campaign.id, player.id, "Game Master"),
-      ).rejects.toThrow(ForbiddenError);
-      await expect(CampaignPlayersService.updatePlayer(session, NIL_UUID, player.id, "Game Master")).rejects.toThrow(
+      expect(CampaignPlayersService.updatePlayer(stranger, campaign.id, player.id, "Game Master")).rejects.toThrow(
+        ForbiddenError,
+      );
+      expect(CampaignPlayersService.updatePlayer(session, NIL_UUID, player.id, "Game Master")).rejects.toThrow(
         NotFoundError,
       );
-      await expect(CampaignPlayersService.updatePlayer(session, campaign.id, NIL_UUID, "Game Master")).rejects.toThrow(
+      expect(CampaignPlayersService.updatePlayer(session, campaign.id, NIL_UUID, "Game Master")).rejects.toThrow(
         NotFoundError,
       );
-      await expect(CampaignPlayersService.updatePlayer(session, other.id, player.id, "Game Master")).rejects.toThrow(
+      expect(CampaignPlayersService.updatePlayer(session, other.id, player.id, "Game Master")).rejects.toThrow(
         NotFoundError,
       );
       await Campaigns.archive(db, { id: campaign.id });
-      await expect(CampaignPlayersService.updatePlayer(session, campaign.id, player.id, "Game Master")).rejects.toThrow(
+      expect(CampaignPlayersService.updatePlayer(session, campaign.id, player.id, "Game Master")).rejects.toThrow(
         ForbiddenError,
       );
     });
@@ -180,7 +176,7 @@ describe("CampaignPlayersService", () => {
       const [seat] = await Players.create(db, { campaignId: campaign.id, userId: user.id, role: "Player Character" });
       expect((await CampaignPlayersService.removePlayer(playerSession, campaign.id, seat.id)).id).toBe(seat.id);
 
-      await expect(CampaignPlayersService.removePlayer(session, campaign.id, gmPlayer.id)).rejects.toThrow(
+      expect(CampaignPlayersService.removePlayer(session, campaign.id, gmPlayer.id)).rejects.toThrow(
         "Cannot remove the last Game Master",
       );
     });
@@ -191,16 +187,12 @@ describe("CampaignPlayersService", () => {
       const { player } = await CampaignPlayersService.addPlayer(session, campaign.id, "Player Character");
       const { session: stranger } = await createTestUser();
 
-      await expect(CampaignPlayersService.removePlayer(stranger, campaign.id, player.id)).rejects.toThrow(
-        ForbiddenError,
-      );
-      await expect(CampaignPlayersService.removePlayer(session, NIL_UUID, player.id)).rejects.toThrow(NotFoundError);
-      await expect(CampaignPlayersService.removePlayer(session, campaign.id, NIL_UUID)).rejects.toThrow(NotFoundError);
-      await expect(CampaignPlayersService.removePlayer(session, other.id, player.id)).rejects.toThrow(NotFoundError);
+      expect(CampaignPlayersService.removePlayer(stranger, campaign.id, player.id)).rejects.toThrow(ForbiddenError);
+      expect(CampaignPlayersService.removePlayer(session, NIL_UUID, player.id)).rejects.toThrow(NotFoundError);
+      expect(CampaignPlayersService.removePlayer(session, campaign.id, NIL_UUID)).rejects.toThrow(NotFoundError);
+      expect(CampaignPlayersService.removePlayer(session, other.id, player.id)).rejects.toThrow(NotFoundError);
       await Campaigns.archive(db, { id: campaign.id });
-      await expect(CampaignPlayersService.removePlayer(session, campaign.id, player.id)).rejects.toThrow(
-        ForbiddenError,
-      );
+      expect(CampaignPlayersService.removePlayer(session, campaign.id, player.id)).rejects.toThrow(ForbiddenError);
     });
   });
 });

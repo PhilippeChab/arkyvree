@@ -197,6 +197,7 @@
     "arkyvree/pickers": "error",
     "arkyvree/pending-buttons": "error",
     "arkyvree/query-errors": "error",
+    "arkyvree/sync-expects": "error",
     "arkyvree/test-conventions": "error",
     // A function holds at most 80 of its own lines (lint/size.mjs): a longer one splits into named steps.
     "arkyvree/function-length": "error",

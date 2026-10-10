@@ -106,7 +106,7 @@ test("the original name of a renamed extension copy is available", async () => {
 
 test("a visible inherited feat still blocks its name", async () => {
   const { session, fork, general } = await setup();
-  await expect(
-    FeatsService.createFeat(session, fork.id, { name: "Alertness", aptitudeIds: [general.id] }),
-  ).rejects.toThrow("Name already exists in the source chain");
+  expect(FeatsService.createFeat(session, fork.id, { name: "Alertness", aptitudeIds: [general.id] })).rejects.toThrow(
+    "Name already exists in the source chain",
+  );
 });

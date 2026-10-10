@@ -171,6 +171,6 @@ describe("ClassesService", () => {
     const character = await createTestCharacter(user.id, { rulesetId: ruleset.id });
     await addCharacterLevel(character.id, level.id);
 
-    await expect(ClassesService.deleteClass(session, ruleset.id, klass.id)).rejects.toThrow(ConflictError);
+    expect(ClassesService.deleteClass(session, ruleset.id, klass.id)).rejects.toThrow(ConflictError);
   });
 });
