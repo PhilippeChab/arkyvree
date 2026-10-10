@@ -54,7 +54,7 @@ export default new Hono<SessionContext>()
       "json",
       z.object({
         level: z.number().int().min(1).max(RULESET_LIMITS.classLevel),
-        ...ENTITY_FIELDS.klassLevels,
+        ...ENTITY_FIELDS.klassLevels.create,
         saves: levelSaves,
         feats: levelFeats,
       }),
@@ -71,7 +71,7 @@ export default new Hono<SessionContext>()
     validate(
       "json",
       z.object({
-        ...z.object(ENTITY_FIELDS.klassLevels).partial().shape,
+        ...ENTITY_FIELDS.klassLevels.edit,
         saves: levelSaves,
         feats: levelFeats,
       }),

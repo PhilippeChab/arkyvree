@@ -661,7 +661,7 @@ A part's operation is a method of a handle of `engine/api/`, which `Engine` hand
 
 Its verb says which: `describe…`, `get…` and `list…` answer what something is, `open…` a picker or a list, `plan…` a plan, `check…` refuses or answers what it checked, `validate…` a path's validation, `build…` the view, its copy-on-write data and its source chain (`buildView`, `buildData`, `buildSourceChain`), `merge…` the rows a copy takes of its siblings, and `to…` a conversion (`toEntityProperties`). A method named for a noun hands out a handle (`character(input)`, `class(klassId)`, `entities("skills")`, `levelUp()`), and isn't an operation (`arkyvree/one-engine-op`).
 
-An entity's fields are declared once, in its kind's folder, as a spec a codec reads and writes (`engine/core/fields/`: `Field`'s kinds, `FieldCodec`): `entities/skills/fields.ts` declares `SKILL_FIELDS`, from which come the fields' values (`SkillFieldValues`), their defaults, the property types that store them, their reading off an entity's properties (`read`, in one pass) and their writing back as id-less `PropertyValue`s (`toProperties`, `write`), an edit's merge, the rule between them (`normalize`), and the shape a route validates a body's fields with (`ENTITY_FIELDS`, built from the specs). Its entity class describes it and plans its saves with them (`skills/SkillEntity.ts`: its `fields`, and what a save writes beside its row), the character's loader reads with them, and the seeders write with them (`Engine.forRules(baseRules).toEntityProperties`):
+An entity's fields are declared once, in its kind's folder, as a spec a codec reads and writes (`engine/core/fields/`: `Field`'s kinds, `FieldCodec`): `entities/skills/fields.ts` declares `SKILL_FIELDS`, from which come the fields' values (`SkillFieldValues`), their defaults, the property types that store them, their reading off an entity's properties (`read`, in one pass) and their writing back as id-less `PropertyValue`s (`toProperties`, `write`), an edit's merge, the rule between them (`normalize`, which reading and writing apply), and the shapes a route validates a body's fields with, a create's and an edit's (`ENTITY_FIELDS`, built from the specs). Its entity class describes it and plans its saves with them (`skills/SkillEntity.ts`: its `fields`, and what a save writes beside its row), the character's loader reads with them, and the seeders write with them (`Engine.forRules(baseRules).toEntityProperties`):
 
 ```ts
 // engine/rulesets/dnd3.5/entities/skills/fields.ts
@@ -681,12 +681,11 @@ export default class SkillEntity extends RulesetEntity<"skills", SkillBody, Skil
   protected readonly fields = SKILL_FIELDS;
 
   protected override writesOf(body: SkillBody, skill?: Skill): EntityWrites {
-    const { checkPenaltyMultiplier, impactedByWeight, usableWithoutTraining } = body;
-    const fields = this.fields.normalize({ checkPenaltyMultiplier, impactedByWeight, usableWithoutTraining });
+    const fields = this.formFields(body, skill);
     const renamed = skill?.name !== body.name;
     return {
       made: renamed ? SkillFocusFeats.make(this.view, body.name) : [],
-      properties: this.fields.write(fields),
+      properties: fields && this.fields.write(fields),
       removed: skill && renamed ? SkillFocusFeats.remove(this.view, skill.name) : [],
     };
   }
@@ -710,7 +709,7 @@ Entity CRUD services (`FeatsService`, `PowersService`, `SkillsService`, `ClassLe
 
 The level routes (`server/routers/api/characters/levels/index.ts`) take the generic schema's level-up: class levels, skill ranks, and feats and powers by their pool; the module reads what its own pickers take (a spell level, a specialist's excluded schools).
 
-A body's fields that a ruleset's rules take, and the bounds they set on its columns, are the engine's (`ENTITY_FIELDS`, `RULESET_LIMITS`, the 3.5 module's today: a second module's join them), which a route spreads into its schema (`...ENTITY_FIELDS.skills`, `.max(RULESET_LIMITS.spellLevel)`). A character's alignment and gender are the database's enums, whose options `shared/enums.ts` writes out (`ALIGNMENT_OPTIONS`, `GENDER_OPTIONS`). The server imports nothing of `shared/dnd3.5/`.
+A body's fields that a ruleset's rules take, and the bounds they set on its columns, are the engine's (`ENTITY_FIELDS`, `RULESET_LIMITS`, the 3.5 module's today: a second module's join them), which a route spreads into its schema, its create's or its edit's (`...ENTITY_FIELDS.skills.create`, `...ENTITY_FIELDS.skills.edit`), and their bounds (`.max(RULESET_LIMITS.spellLevel)`). An edit gives the fields it changes: the entity's base merges them over those it keeps (`formFields`), for a skill, a spell and a class level alike. A character's alignment and gender are the database's enums, whose options `shared/enums.ts` writes out (`ALIGNMENT_OPTIONS`, `GENDER_OPTIONS`). The server imports nothing of `shared/dnd3.5/`.
 
 ### What's intentionally generic schema, not ruleset-specific
 

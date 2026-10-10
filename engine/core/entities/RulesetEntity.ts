@@ -54,6 +54,15 @@ export default abstract class RulesetEntity<
   }
 
   /**
+   * The fields a save keeps from its form: the ones it gives over the edited entity's (a new one's defaults). None when
+   * the form gives none: an edit keeps those it has, and a new entity keeps none.
+   */
+  protected formFields(given: Partial<FieldValues<S>>, entity?: ViewEntities[K]) {
+    if (this.fields.keys.every((key) => given[key] === undefined)) return undefined;
+    return this.fields.merge(entity ? this.fields.read(this.propertiesOf(entity)) : this.fields.defaults, given);
+  }
+
+  /**
    * The properties a saved entity's fields are read off when its save writes none: the edited one's, none for a new one
    * (an item's, its template's).
    */

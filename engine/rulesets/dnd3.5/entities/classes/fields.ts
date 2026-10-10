@@ -22,10 +22,10 @@ export const CLASS_FIELDS = new FieldCodec({
 });
 
 /**
- * A class level's fields its properties hold: its base attack bonus and its skill points, 0 without their rows, both
- * always written.
+ * A class level's fields its properties hold: its base attack bonus and its skill points, 0 without their rows (a
+ * familiar's levels give none: it uses its master's), both always written.
  */
 export const CLASS_LEVEL_FIELDS = new FieldCodec({
   bab: Field.number(KLASS_LEVEL_BAB, { default: 0, min: 0, write: "always" }),
-  skills: Field.number(KLASS_LEVEL_SKILL_POINTS, { default: 0, min: 1, write: "always" }),
+  skills: Field.number(KLASS_LEVEL_SKILL_POINTS, { default: 0, min: 0, write: "always" }),
 });

@@ -44,8 +44,11 @@ describe("A field codec", () => {
   });
 
   test("reads a number off the first row holding one in its bounds, and its default otherwise", () => {
-    expect(CODEC.read(rows(["COUNT", "x"], ["COUNT", "0"], ["COUNT", "3"], ["COUNT", "4"])).count).toBe(3);
-    expect(CODEC.read(rows(["COUNT", "0"])).count).toBe(1);
+    // The flag keeps the count its rule would otherwise set to 1
+    const counted = (...counts: string[]) =>
+      rows(["FLAG", "true"], ...counts.map((count): [string, string] => ["COUNT", count]));
+    expect(CODEC.read(counted("x", "0", "3", "4")).count).toBe(3);
+    expect(CODEC.read(counted("0")).count).toBe(1);
     expect(CODEC.read(rows(["LEVEL", ""], ["LEVEL", "-2"])).group.level).toBe(-2);
   });
 
@@ -70,14 +73,15 @@ describe("A field codec", () => {
 
   test("writes nothing when the entity keeps no field, and a save's write replaces every type", () => {
     expect(CODEC.toProperties({ ...CODEC.defaults, count: 5 })).toEqual([]);
-    expect(CODEC.write({ title: "A" })).toEqual({
+    expect(CODEC.write({ ...CODEC.defaults, title: "A" })).toEqual({
       types: ["COUNT", "FLAG", "KNOWN", "LEVEL", "KIND", "OWNER", "TAG", "TITLE"],
       values: [{ type: "TITLE", value: "A" }],
     });
   });
 
-  test("normalizes, merges an edit's given fields over the kept, and finds each field's row", () => {
-    expect(CODEC.normalize({ ...CODEC.defaults, count: 3 }).count).toBe(1);
+  test("reads and writes its rule, merges an edit's given fields over the kept, and finds each field's row", () => {
+    expect(CODEC.read([{ type: "COUNT", value: "3" }]).count).toBe(1);
+    expect(CODEC.toProperties({ ...CODEC.defaults, count: 3, title: "A" })).toEqual([{ type: "TITLE", value: "A" }]);
     expect(CODEC.merge({ ...CODEC.defaults, title: "A" }, { count: 2, title: undefined })).toMatchObject({
       count: 2,
       title: "A",

@@ -82,9 +82,9 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
   }
 
   /**
-   * What saving a level writes (`level`: the one edited): its base attack and skill points, those an edit doesn't give
-   * kept, and, made with a level past the class's first, its requirement of the class's previous level
-   * (`classes.<slug>.level` above it). An edit that gives neither keeps them.
+   * What saving a level writes (`level`: the one edited): the base attack and skill points its form gives, over those it
+   * keeps, and, made with a level past the class's first, its requirement of the class's previous level
+   * (`classes.<slug>.level` above it).
    */
   protected override writesOf(body: ClassLevelBody, level?: KlassLevel): EntityWrites {
     const writes: EntityWrites = {};
@@ -97,10 +97,8 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
         operator: "greater_than",
       };
     }
-    if (body.bab === undefined && body.skills === undefined) return writes;
-    const kept = this.fields.read(level ? this.propertiesOf(level) : []);
-    const fields = this.fields.merge(kept, { bab: body.bab, skills: body.skills });
-    return { ...writes, properties: this.fields.write(fields) };
+    const fields = this.formFields(body, level);
+    return fields ? { ...writes, properties: this.fields.write(fields) } : writes;
   }
 
   /** One of the class's levels with its details and its customizations: refused when it isn't the class's. */

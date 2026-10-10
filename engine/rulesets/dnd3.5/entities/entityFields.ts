@@ -15,14 +15,16 @@ import { SKILL_FIELDS } from "./skills/fields.ts";
 const HIT_DIE = z.literal(HIT_DIE_VALUES, { error: () => `Hit die must be one of: ${HIT_DIE_VALUES.join(", ")}` });
 
 /**
- * The fields of an entity's body the ruleset's rules take, as the shapes a route validates a body with, by entity:
- * a class's hit die (a column), and a class level's, a spell's and a skill's fields, as their codecs read them.
+ * The fields of an entity's body the ruleset's rules take, as the shapes a route validates a body with, by entity and by
+ * save: a class's hit die (a column), and a class level's, a spell's and a skill's fields, as their codecs read them. An
+ * edit gives the fields it changes, which the engine merges over those the entity keeps; a create gives them all, but a
+ * spell's, which a power that isn't one has none of.
  */
 export const ENTITY_FIELDS = {
-  klasses: { hd: HIT_DIE.optional() },
-  klassLevels: CLASS_LEVEL_FIELDS.shape(),
-  powers: POWER_FIELDS.shape({ optional: true }),
-  skills: SKILL_FIELDS.shape(),
+  klasses: { create: { hd: HIT_DIE.optional() }, edit: { hd: HIT_DIE.optional() } },
+  klassLevels: { create: CLASS_LEVEL_FIELDS.shape(), edit: CLASS_LEVEL_FIELDS.shape({ optional: true }) },
+  powers: { create: POWER_FIELDS.shape({ optional: true }), edit: POWER_FIELDS.shape({ optional: true }) },
+  skills: { create: SKILL_FIELDS.shape(), edit: SKILL_FIELDS.shape({ optional: true }) },
 };
 
 /**

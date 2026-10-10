@@ -232,7 +232,7 @@ export default class SkillsComponent {
 
     for (const skill of rulesetSkills) {
       // A skill without its fields' rows has their defaults: armor doesn't weigh on it, and it needs training
-      const fields = SKILL_FIELDS.normalize(skillFields?.get(skill.id) ?? SKILL_FIELDS.defaults);
+      const fields = skillFields?.get(skill.id) ?? SKILL_FIELDS.defaults;
       const { usableWithoutTraining } = fields;
       // How many times over the skill takes the armor check penalty: none when armor doesn't weigh on it
       const checkPenaltyMultiplier = fields.impactedByWeight ? fields.checkPenaltyMultiplier : 0;
