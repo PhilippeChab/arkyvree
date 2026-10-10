@@ -283,7 +283,10 @@
       "description": "Targets become unable to independently determine their actions. Each round, a random roll determines what an affected creature does. A confused creature that cannot perform the indicated action babbles incoherently. Attackers gain no special advantage against confused targets. A confused creature that is attacked automatically retaliates on its next turn while still confused. Arcane Material Component: Three nut shells."
     },
     "Confusion, Lesser": {
-      "description": "You cause a single creature to become confused for 1 round, with effects as the confusion spell."
+      "castingTime": "1 standard action",
+      "description": "You cause a single creature to become confused for 1 round, with effects as the confusion spell.",
+      "savingThrow": "Will negates",
+      "spellResistance": "Yes"
     },
     "Consecrate": {
       "description": "You bless an area with positive energy. Turning checks within the area gain a +3 sacred bonus. Undead entering the area suffer a -1 penalty on attack rolls, damage rolls, and saves. Undead cannot be created or summoned within the area. If the area contains a permanent fixture dedicated to your deity, all modifiers double. A fixture of another deity is instead cursed, severing its divine connection (without the undead-related benefits). This spell counters and dispels desecrate. Material Component: A vial of holy water and 25 gp worth of silver dust."

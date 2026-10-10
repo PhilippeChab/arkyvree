@@ -191,6 +191,7 @@ export const LEVEL_6_SPELLS: PowerSeed[] = [
       { type: "SPELL_SCHOOL", value: "Evocation" },
       { type: "SPELL_DESCRIPTOR", value: "Fire" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
+      { type: "SPELL_RANGE_TYPE", value: "Touch" },
       { type: "SPELL_TARGET", value: "Creature touched" },
       { type: "SPELL_DURATION", value: "1 round/level" },
       { type: "SPELL_RESISTANCE", value: "Yes (harmless); see text" },

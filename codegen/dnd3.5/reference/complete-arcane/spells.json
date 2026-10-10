@@ -5,6 +5,15 @@
     "sourceUrl": "https://dndtools.net/spells/complete-arcane--55/",
     "type": "spell"
   },
+  "overrides": {
+    "Anticipate Teleportation": {
+      "range": "Touch",
+      "target": "One willing creature touched"
+    },
+    "Lightning Blade": {
+      "range": "Touch"
+    }
+  },
   "raw": [
     {
       "castingTime": "1 standard action",

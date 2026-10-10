@@ -222,6 +222,7 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
       { type: "SPELL_SCHOOL", value: "Evocation" },
       { type: "SPELL_DESCRIPTOR", value: "Electricity" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
+      { type: "SPELL_RANGE_TYPE", value: "Touch" },
       { type: "SPELL_TARGET", value: "Willing creature touched; see text" },
       { type: "SPELL_EFFECT", value: "Swordlike blade; see text" },
       { type: "SPELL_DURATION", value: "1 minute or until discharged" },
