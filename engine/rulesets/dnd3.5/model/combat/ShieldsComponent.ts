@@ -2,8 +2,6 @@ import { type ItemFieldValues } from "@/engine/rulesets/dnd3.5/entities/items/fi
 import type { Item } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-import type CombatComponent from "./CombatComponent.ts";
-
 /** Grouping key (normalized) → shared ShieldSlot reference */
 type ShieldsData = Record<string, ShieldSlot>;
 
@@ -18,8 +16,6 @@ type ShieldSlot = {
 };
 
 export default class ShieldsComponent {
-  constructor(private readonly combat: CombatComponent) {}
-
   private readonly shields: ShieldsData = {};
 
   getShields(): ShieldsData {
@@ -54,8 +50,6 @@ export default class ShieldsComponent {
     // Under its type: a heavy wooden shield's `heavywooden`
     const grouping = fields.shield.type === null ? "" : stripSeparators(fields.shield.type);
     if (grouping) this.shields[grouping] = shieldSlot;
-
-    this.combat.addShield(fields);
   }
 }
 

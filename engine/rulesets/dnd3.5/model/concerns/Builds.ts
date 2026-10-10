@@ -138,11 +138,6 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
       );
       this.components.abilities.initialize(this.characterAbilityScores, this.characterLevels);
       this.components.identity.initialize(this.character, this.race, this.languages);
-      this.components.skills.setSkillPointDependencies(
-        this.rulesetAbilities,
-        this.skillPointAbilityId,
-        this.klassLevelProperties,
-      );
       this.components.aptitudes.initialize(
         this.rulesetAptitudes,
         this.klassLevelFeatCountsByAptitudeId,
@@ -158,11 +153,17 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
       }
       this.components.featGroupings.seedEmptyFamilies(FEAT_FAMILIES);
       this.components.feats.injectGroupings(this.components.featGroupings.getFeatGroupings());
-      this.components.skills.initialize(this.rulesetSkills, this.rulesetAbilities, this.race.size, this.skillFields);
+      this.components.skills.initialize(
+        this.rulesetSkills,
+        this.rulesetAbilities,
+        this.skillPointAbilityId,
+        this.klassLevelProperties,
+        this.skillFields,
+      );
       this.components.saves.initialize(this.rulesetSaves, this.rulesetAbilities, this.klassLevelSaves);
       this.components.combat.initialize(this.race, this.klassLevelProperties);
       this.components.inventory.initialize(this.inventory);
-      this.components.encumbrance.initialize(this.inventory, this.race);
+      this.components.encumbrance.initialize(this.inventory);
       this.components.powers.initialize(this.powers, this.rulesetPowers, this.rulesetAptitudes, this.featListIds);
 
       // Seed empty buckets for every school/descriptor in the ruleset so a
@@ -201,42 +202,29 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
       }
       this.components.powers.seedEmptyDcs(this.rulesetPowers);
       this.components.powers.injectGroupings(this.components.powerGroupings.getPowerGroupings());
-
-      this.components.skills.updateSkillPointTotals();
     }
 
     protected postModifierProcessing(rulesetData: RulesetData): void {
-      this.components.spellcasting.fetchBonusCasterLevelData(
-        rulesetData,
-        this.klassLevels,
-        this.feats,
-        this.characterLevels,
-        this.rulesetKlasses,
-      );
-      this.components.spellcasting.applyBonusCasterLevelModifiers(
-        this.components!,
-        this.feats,
-        this.featListIds,
-        // A target counted as met reads as one any value meets: a class's level gate, which its spell levels replace
-        (modifier, metTargets = []) =>
-          this.areRequirementsMet([
-            (rulesetData.requirementsByEntity.get(modifier.id) ?? []).map((requirement) =>
-              requirement.target && metTargets.includes(requirement.target)
-                ? { ...requirement, operator: "greater_than_or_equal", value: "0", valueType: "number" }
-                : requirement,
-            ),
-          ]),
-      );
-      this.components.spellcasting.applyBonusSpellsFromAbilities(this.klassBonusSpellAbilityMap);
-      this.components.spellcasting.computeSpellcasting(this.klassCasterTypeMap);
-      this.components.spellcasting.fetchAptitudePowerData(rulesetData, this.powers);
-      this.components.spellcasting.enrichAllKnownPowers(
-        this.powers,
-        this.klassLevels,
-        this.rulesetAptitudes,
-        this.klassBonusSpellAbilityMap,
-      );
-      this.components.spellcasting.buildSpellTags(this.feats, this.featListIds);
+      const character = {
+        characterLevels: this.characterLevels,
+        feats: this.feats,
+        featListIds: this.featListIds,
+        klassBonusSpellAbilityMap: this.klassBonusSpellAbilityMap,
+        klassLevels: this.klassLevels,
+        powers: this.powers,
+        rulesetAptitudes: this.rulesetAptitudes,
+        rulesetKlasses: this.rulesetKlasses,
+      };
+      // A target counted as met reads as one any value meets: a class's level gate, which its spell levels replace
+      const isGateMet = (modifier: Modifier, metTargets: string[] = []) =>
+        this.areRequirementsMet([
+          (rulesetData.requirementsByEntity.get(modifier.id) ?? []).map((requirement) =>
+            requirement.target && metTargets.includes(requirement.target)
+              ? { ...requirement, operator: "greater_than_or_equal", value: "0", valueType: "number" }
+              : requirement,
+          ),
+        ]);
+      this.components.spellcasting.finalize(rulesetData, this.components, character, isGateMet);
     }
 
     protected postRequirementProcessing(): void {
@@ -271,8 +259,7 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
     }
 
     protected preRequirementProcessing(rulesetData: RulesetData): void {
-      this.components.spellcasting.loadClassLists(rulesetData);
-      this.components.spellcasting.initCasterLevels(this.modifiers, this.klassCasterTypeMap);
+      this.components.spellcasting.initialize(rulesetData, this.klassCasterTypeMap);
       // Possession modifiers have given their feats: a finessed weapon's attack is what requirements read
       this.components.combat.applyWeaponFinesse(this.hasFeatWith(rulesetData, "weaponFinesse"));
       this.components.combat.applyOversizedTwoWeaponFighting(

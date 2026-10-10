@@ -65,13 +65,14 @@ export default class PowersComponent {
     return this.powers[stripSeparators(name)] as PowerEntry | undefined;
   }
 
-  getPowers() {
+  getPowers(): PowersData {
     return this.powers;
   }
 
-  getSpellEntry(spellSlug: string, aptitudeSlug: string): { known: boolean } | undefined {
-    const entry = this.powers[spellSlug] as Record<string, { known: boolean }> | undefined;
-    return entry?.[aptitudeSlug];
+  /** A spell's known flag on a list (`listName`), by their names (or their slugs: a target's). */
+  getSpellEntry(spellName: string, listName: string): { known: boolean } | undefined {
+    const entry = this.powers[stripSeparators(spellName)] as Record<string, { known: boolean }> | undefined;
+    return entry?.[toSpellPossessionSlug(listName)];
   }
 
   /** `featListIds`: the lists a feat brings (a domain's, a specialist's school), whose spells it gives, never known. */

@@ -32,10 +32,14 @@ type DetailedCharacterBondedSlot = {
 };
 
 export default class BondedComponent {
-  protected readonly bonds: BondsData = BONDED_KINDS.reduce((acc, b) => {
+  private readonly bonds: BondsData = BONDED_KINDS.reduce((acc, b) => {
     acc[b.slug] = { race: "", level: 0 };
     return acc;
   }, {} as BondsData);
+
+  getBonded(): BondsData {
+    return this.bonds;
+  }
 
   /** Effective level for a given bonded slot. */
   getBondedLevel(slug: BondedKind): number {
@@ -46,9 +50,5 @@ export default class BondedComponent {
   getBondedRace(slug: BondedKind): string | null {
     const value = this.bonds[slug]?.race;
     return value && value.length > 0 ? value : null;
-  }
-
-  getBonds(): BondsData {
-    return this.bonds;
   }
 }

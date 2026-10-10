@@ -68,12 +68,10 @@ export default class DetailedCharacter extends include(CharacterState, Builds, P
       deletedAt: null,
       position: (this.characterLevels.at(-1)?.position ?? 0) + 1,
     };
-    const { meta } = this.components.identity.getIdentity();
-    meta.level++;
+    // The class's level and the character's (`identity.meta.level`, counted from the classes) take it
     this.components.classes.addProjectedLevel(klassName, klassLevel, characterLevel);
     const met = this.areRequirementsMet(requirementGroups);
     this.components.classes.removeProjectedLevel(klassName);
-    meta.level--;
     return met;
   }
 }

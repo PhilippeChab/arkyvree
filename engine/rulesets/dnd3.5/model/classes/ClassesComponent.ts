@@ -1,15 +1,10 @@
-import {
-  type CharacterLevel,
-  type Feat,
-  type Klass,
-  type KlassLevel,
-  type KlassSkill,
-  type Modifier,
-  type Power,
-  type Property,
-  type Requirement,
-  type Skill,
-} from "@/shared/relations.ts";
+import type {
+  CustomizedClassLevel,
+  CustomizedFeat,
+  CustomizedPower,
+} from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
+import type { SkillWithRank } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
+import type { CharacterLevel, Klass, KlassLevel, KlassSkill } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 type ClassesData = {
@@ -20,33 +15,10 @@ type ClassesData = {
     level: number;
     levels: {
       characterLevel: CharacterLevel;
-      feats: (Feat & {
-        aptitudeId: string;
-        characterLevelId: string;
-        klassLevelId: string;
-        modifiers: Modifier[];
-        properties: Property[];
-        requirements: Requirement[];
-      })[];
-      klassLevel: KlassLevel & {
-        modifiers: Modifier[];
-        properties: Property[];
-        requirements: Requirement[];
-      };
-      powers: (Power & {
-        aptitudeId: string;
-        characterLevelId: string;
-        free?: boolean;
-        klassLevelId: string;
-        powerLevel: number | null;
-        properties: Property[];
-        saveName: string | null;
-      })[];
-      skills: (Skill & {
-        characterLevelId: string;
-        klassLevelId: string;
-        rank: number;
-      })[];
+      feats: CustomizedFeat[];
+      klassLevel: CustomizedClassLevel;
+      powers: CustomizedPower[];
+      skills: SkillWithRank[];
     }[];
   };
 };
@@ -68,46 +40,23 @@ export default class ClassesComponent {
     entry.level++;
   }
 
-  getCharacterClasses() {
+  getCharacterClasses(): ClassesData {
     return Object.fromEntries(Object.entries(this.classes).filter(([, klass]) => klass.level > 0));
   }
 
-  getClasses() {
+  getClasses(): ClassesData {
     return this.classes;
   }
 
   initialize(
     klasses: Klass[],
     klassSkills: KlassSkill[],
-    klassLevels: (KlassLevel & {
-      modifiers: Modifier[];
-      properties: Property[];
-      requirements: Requirement[];
-    })[],
+    klassLevels: CustomizedClassLevel[],
     characterLevels: CharacterLevel[],
-    feats: (Feat & {
-      aptitudeId: string;
-      characterLevelId: string;
-      klassLevelId: string;
-      modifiers: Modifier[];
-      properties: Property[];
-      requirements: Requirement[];
-    })[],
-    skills: (Skill & {
-      characterLevelId: string;
-      klassLevelId: string;
-      rank: number;
-    })[],
-    powers: (Power & {
-      aptitudeId: string;
-      characterLevelId: string;
-      free?: boolean;
-      klassLevelId: string;
-      powerLevel: number | null;
-      properties: Property[];
-      saveName: string | null;
-    })[],
-    rulesetKlasses?: Klass[],
+    feats: CustomizedFeat[],
+    skills: SkillWithRank[],
+    powers: CustomizedPower[],
+    rulesetKlasses: Klass[],
   ) {
     // Build per-level lookup indices once (replaces 4 .filter() scans per character level).
     const klassLevelsById = new Map<string, (typeof klassLevels)[number]>();
@@ -172,18 +121,16 @@ export default class ClassesComponent {
     }
 
     // Add level-0 entries for ruleset classes the character doesn't have
-    if (rulesetKlasses) {
-      for (const klass of rulesetKlasses) {
-        const klassName = stripSeparators(klass.name);
-        if (!this.classes[klassName]) {
-          this.classes[klassName] = {
-            klass,
-            klassSkills: [],
-            levels: [],
-            level: 0,
-            bonuscasterlevel: 0,
-          };
-        }
+    for (const klass of rulesetKlasses) {
+      const klassName = stripSeparators(klass.name);
+      if (!this.classes[klassName]) {
+        this.classes[klassName] = {
+          klass,
+          klassSkills: [],
+          levels: [],
+          level: 0,
+          bonuscasterlevel: 0,
+        };
       }
     }
   }

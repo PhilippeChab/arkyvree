@@ -1,5 +1,4 @@
 import type ModifierEvaluator from "@/engine/core/modifiers/ModifierEvaluator.ts";
-import type { RulesetData } from "@/engine/core/view/index.ts";
 import type AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
 import type AptitudesComponent from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
@@ -8,9 +7,8 @@ import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/Classe
 import type PowerGroupingsComponent from "@/engine/rulesets/dnd3.5/model/powers/PowerGroupingsComponent.ts";
 import type PowersComponent from "@/engine/rulesets/dnd3.5/model/powers/PowersComponent.ts";
 import type { SpellTagLists } from "@/shared/dnd3.5/spellGroups.ts";
+import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
 import type { KlassLevel, Modifier, Power, Property } from "@/shared/relations.ts";
-
-import SpellLists from "./SpellLists.ts";
 
 /** What a character's spellcasting holds: its bonus caster levels, its aptitudes' powers, its spell tags. */
 export default abstract class SpellcastingState {
@@ -22,6 +20,23 @@ export default abstract class SpellcastingState {
     protected readonly powerGroupings: PowerGroupingsComponent,
     protected readonly modifierEvaluator: ModifierEvaluator,
   ) {}
+
+  /**
+   * The highest arcane and divine spell levels the character casts (`spellcasting.arcane`, `spellcasting.divine`),
+   * counted when read from its classes' slots: as the slot modifiers have given them so far, so requirements like Scribe
+   * Scroll's read what the character casts when they're checked.
+   */
+  protected readonly casterLevels = (() => {
+    const highest = (casterType: "Arcane" | "Divine") => this.highestSpellLevel(casterType);
+    return {
+      get arcane() {
+        return highest("Arcane");
+      },
+      get divine() {
+        return highest("Divine");
+      },
+    };
+  })();
 
   protected allAptitudePowers: Array<
     Power & {
@@ -42,14 +57,10 @@ export default abstract class SpellcastingState {
 
   protected bonusKlassLevels: KlassLevel[] = [];
 
-  /**
-   * The highest arcane and divine spell levels the character casts (`spellcasting.arcane`, `spellcasting.divine`):
-   * estimated from its spell slots' modifiers before modifiers apply, so requirements like Scribe Scroll's can read
-   * them, then computed from its classes' slots after.
-   */
-  protected casterLevels = { arcane: 0, divine: 0 };
+  /** Each class's caster type, by its id: a class casting neither has none. */
+  protected casterTypeByKlassId = new Map<string, "Arcane" | "Divine">();
 
-  /** Each class's spell lists, by its id (`loadClassLists`). */
+  /** Each class's spell lists, by its id (`initialize`). */
   protected classListsByKlassId = new Map<string, Set<string>>();
 
   protected powerAptitudeLinks: { aptitudeId: string; powerId: string }[] = [];
@@ -79,6 +90,27 @@ export default abstract class SpellcastingState {
       for (const level of klassData.levels) classNames.set(level.klassLevel.id, className);
 
     return classNames;
+  }
+
+  /** The highest spell level any of the classes of a caster type has slots at, in any of its lists. */
+  private highestSpellLevel(casterType: "Arcane" | "Divine"): number {
+    const aptitudes = this.aptitudes.getAptitudes();
+    let highest = 0;
+    for (const [className, klassData] of Object.entries(this.classes.getCharacterClasses())) {
+      if (this.casterTypeByKlassId.get(klassData.klass.id) !== casterType) continue;
+      for (const key of this.spellListsOf(className)) {
+        const aptitude = aptitudes[key] as Record<string, unknown> | undefined;
+        if (!aptitude || !this.aptitudes.isLeveledAptitude(key)) continue;
+        for (let spellLevel = MAX_SPELL_LEVEL; spellLevel > highest; spellLevel--) {
+          const levelData = aptitude[String(spellLevel)] as AptitudeLevelData | undefined;
+          if (levelData && levelData.allowed !== 0) {
+            highest = spellLevel;
+            break;
+          }
+        }
+      }
+    }
+    return highest;
   }
 
   /**
@@ -120,10 +152,5 @@ export default abstract class SpellcastingState {
   protected spellListsOf(className: string): string[] {
     const klassId = this.classes.getCharacterClasses()[className]?.klass.id;
     return [...((klassId && this.classListsByKlassId.get(klassId)) || [])];
-  }
-
-  /** Reads each class's spell lists off the ruleset, its levels' slots (`collectClassLists`): `spellListsOf`'s. */
-  loadClassLists(rulesetData: Pick<RulesetData, "klassLevels" | "modifiersBySource">) {
-    this.classListsByKlassId = SpellLists.collectClassLists(rulesetData);
   }
 }

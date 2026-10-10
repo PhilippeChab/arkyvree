@@ -1,6 +1,6 @@
-import type AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/ClassesComponent.ts";
-import { type Character, type Language, type Race } from "@/shared/relations.ts";
+import type { CustomizedRace } from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
+import { type Character, type Language } from "@/shared/relations.ts";
 
 type IdentityData = {
   background: {
@@ -21,18 +21,16 @@ type IdentityData = {
     height: string;
     languages: Language[];
     name: string;
-    race: Race;
+    /** The race as the character reads it, its fields with it: what its size, its legs and its speed follow */
+    race: CustomizedRace;
     weight: string;
   };
 };
 
 export default class IdentityComponent {
-  constructor(
-    protected readonly abilities: AbilitiesComponent,
-    protected readonly classes: ClassesComponent,
-  ) {}
+  constructor(private readonly classes: ClassesComponent) {}
 
-  protected readonly identity: IdentityData = {} as IdentityData;
+  private readonly identity: IdentityData = {} as IdentityData;
 
   /**
    * The GM's notes on the character, held apart from the identity the target paths walk: no modifier or requirement
@@ -40,7 +38,7 @@ export default class IdentityComponent {
    */
   private privateNotes = "";
 
-  getIdentity() {
+  getIdentity(): IdentityData {
     return this.identity;
   }
 
@@ -49,9 +47,14 @@ export default class IdentityComponent {
     return this.privateNotes;
   }
 
-  initialize(character: Character, race: Race, languages: Language[]) {
-    const classes = this.classes.getClasses();
-    const level = Object.values(classes).reduce((acc, klass) => acc + klass.level, 0);
+  /**
+   * Who the character is, from its row, its race and its languages. Its level (`meta.level`) is the levels its classes
+   * hold, counted when read (one a picker projects counts), and what a modifier adds to it.
+   */
+  initialize(character: Character, race: CustomizedRace, languages: Language[]) {
+    const levelOfClasses = () =>
+      Object.values(this.classes.getClasses()).reduce((acc, klass) => acc + klass.levels.length, 0);
+    let levelBonus = 0;
 
     this.identity.physiology = {
       name: character.name,
@@ -73,7 +76,12 @@ export default class IdentityComponent {
     this.privateNotes = character.privateNotes || "";
 
     this.identity.meta = {
-      level,
+      get level() {
+        return levelOfClasses() + levelBonus;
+      },
+      set level(value: number) {
+        levelBonus = value - levelOfClasses();
+      },
       xp: character.xp,
     };
   }

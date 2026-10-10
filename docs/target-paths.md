@@ -232,7 +232,7 @@ DC formula: `base (10) + spell level + ability modifier + misc`
 | `identity.physiology.height` | string | Character height |
 | `identity.physiology.weight` | string | Body weight |
 | `identity.physiology.race.name` | string | Race name |
-| `identity.physiology.race.size` | string | Size (e.g., Medium, Small) |
+| `identity.physiology.race.size` | string | Size (e.g., Medium, Small): what the armor class, attacks, grapple, damage dice, Hide and carrying capacity read |
 
 ### identity.beliefs
 
@@ -253,7 +253,7 @@ A character's private notes have no path: the engine holds them apart from what 
 
 | Path | Type | Description |
 |------|------|-------------|
-| `identity.meta.level` | number | Total character level (all classes combined) |
+| `identity.meta.level` | number | Total character level (all classes combined), counted from the classes' levels |
 | `identity.meta.xp` | number | Current experience points |
 
 Note: D&D 3.5 skill budget data (total, available, spent, perlevel) lives on `skills.budget.*` — e.g. `skills.budget.perlevel` for Human racial bonus.

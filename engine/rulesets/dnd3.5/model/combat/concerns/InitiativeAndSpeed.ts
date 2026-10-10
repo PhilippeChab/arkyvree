@@ -39,7 +39,7 @@ export function InitiativeAndSpeed<B extends Constructor<CombatState>>(Base: B) 
       const { encumbrance, armor } = this.combat;
       const heavy = (category: string) => category === "medium" || category === "heavy";
       const slowed = !this.speedIgnoresEncumbrance && (heavy(encumbrance.load) || heavy(armor.category));
-      return slowed && this.characterEncumbrance ? this.characterEncumbrance.getEncumberedSpeed(base) : base;
+      return slowed ? this.encumbrance.getEncumberedSpeed(base) : base;
     }
   }
   return WithInitiativeAndSpeed;

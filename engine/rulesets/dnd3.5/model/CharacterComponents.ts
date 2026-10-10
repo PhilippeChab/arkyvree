@@ -52,31 +52,23 @@ export default class CharacterComponents {
     modifierEvaluator: ModifierEvaluator,
     countGeneralFeats: (totalLevel: number) => number,
   ): Dnd35Components {
+    // Each part after the ones it reads
     const classes = new ClassesComponent();
     const abilities = new AbilitiesComponent();
+    const identity = new IdentityComponent(classes);
     const feats = new FeatsComponent();
     const featGroupings = new FeatGroupingsComponent(feats);
     const powers = new PowersComponent(getStaticPropertyValues);
     const powerGroupings = new PowerGroupingsComponent(powers, abilities);
     const saves = new SavesComponent(abilities, classes);
-    const identity = new IdentityComponent(abilities, classes);
     const aptitudes = new AptitudesComponent(identity, classes, countGeneralFeats);
-    const skills = new SkillsComponent(abilities, classes);
-    const combat = new CombatComponent(abilities, classes);
+    const armors = new ArmorsComponent();
+    const shields = new ShieldsComponent();
+    const encumbrance = new EncumbranceComponent(abilities, identity);
+    const skills = new SkillsComponent(abilities, classes, identity, armors, shields, encumbrance);
+    const combat = new CombatComponent(abilities, classes, identity, armors, shields, encumbrance);
     const weapons = new WeaponsComponent(combat);
-    const armors = new ArmorsComponent(combat);
-    const shields = new ShieldsComponent(combat);
-    const encumbrance = new EncumbranceComponent(abilities);
-
-    // Wire cross-dependencies
-    combat.setArmorsData(armors.getArmors());
-    combat.setShieldsData(shields.getShields());
-    skills.setArmorSources(armors, shields);
-    skills.setEncumbranceSource(encumbrance);
-    combat.setSkills(skills);
-    combat.setEncumbranceSource(encumbrance);
     const inventory = new InventoryComponent(combat, weapons, armors, shields);
-
     const spellcasting = new SpellcastingComponent(
       classes,
       abilities,

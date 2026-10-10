@@ -25,7 +25,7 @@ export default class BondedPaths implements PathCategory<Dnd35Components> {
     );
   }
 
-  readonly component = { key: "bonded", getter: "getBonds" } as const;
+  readonly component = { key: "bonded", getter: "getBonded" } as const;
 
   readonly description = "Familiar, animal companion, or mount race";
 
