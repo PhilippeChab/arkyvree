@@ -46,7 +46,7 @@ export { SaveButton } from "./SaveButton.tsx";
 export { ScrollSafeListbox } from "./ScrollSafeListbox.tsx";
 export { type FilterOption, SearchBar, type SortOption } from "./SearchBar.tsx";
 export { SectionContent, type SectionTab, SectionTabPanel, SectionTabs } from "./SectionTabs.tsx";
-export { CREATED_SORTS, NAME_SORTS, UPDATED_SORTS } from "./sortOptions.ts";
+export { CHANGED_SORTS, CREATED_SORTS, NAME_SORTS, UPDATED_SORTS } from "./sortOptions.ts";
 export { ConfirmDialog, CreateDialog, DeleteDialog, EditDialog } from "./StandardDialogs.tsx";
 export { SubsectionTitle } from "./SubsectionTitle.tsx";
 export { type TableColumn, TableColumnsHead } from "./TableColumnsHead.tsx";

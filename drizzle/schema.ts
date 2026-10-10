@@ -420,6 +420,7 @@ export const charactersInCharacter = character.table(
     notes: text(),
     privateNotes: text("private_notes"),
     shareToken: text("share_token"),
+    lastChangedAt: timestamp("last_changed_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     foreignKey({

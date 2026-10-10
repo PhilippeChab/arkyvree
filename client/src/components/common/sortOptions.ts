@@ -2,6 +2,12 @@
 
 import type { SortOption } from "./SearchBar.tsx";
 
+/** By a record's last change, which its rows' changes move as well as its own (a character's): shown as its update. */
+export const CHANGED_SORTS: SortOption<"lastChangedAt">[] = [
+  { field: "lastChangedAt", direction: "desc", label: "Recently Updated" },
+  { field: "lastChangedAt", direction: "asc", label: "Least Recently Updated" },
+];
+
 export const CREATED_SORTS: SortOption<"createdAt">[] = [
   { field: "createdAt", direction: "desc", label: "Newest First" },
   { field: "createdAt", direction: "asc", label: "Oldest First" },

@@ -30,7 +30,7 @@ import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterSharingService } from "@/server/services/characters/sharing/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
-import { createCharacterAs } from "@/tests/support/characters.ts";
+import { backdateLastChange, createCharacterAs } from "@/tests/support/characters.ts";
 import { addRulesetContributor } from "@/tests/support/contributors.ts";
 import { createTestAttachment } from "@/tests/support/files.ts";
 import { queuedPdfJobs } from "@/tests/support/jobs.ts";
@@ -348,17 +348,22 @@ describe("CharactersService", () => {
       ]);
     });
 
-    test("lists the last updated first, unless told another order", async () => {
+    test("lists the last changed first, a level-up as much as an edit, unless told another order", async () => {
       const { session } = await createTestUser();
       const ids = async (where: Parameters<typeof CharactersService.getCharacters>[1] = {}) =>
         ((await CharactersService.getCharacters(session, where, page)).items as { id: string }[]).map((c) => c.id);
-      const edited = await createCharacterAs(session, { name: "Edited Later" });
+      const leveled = await createCharacterAs(session, { name: "Leveled Later" });
       const untouched = await createCharacterAs(session, { name: "Made Later" });
-      await CharactersService.updateCharacter(session, edited.id, { notes: "A later edit" });
+      await backdateLastChange(leveled.id, "2000-01-01T00:00:00Z");
+      await backdateLastChange(untouched.id, "2001-01-01T00:00:00Z");
+      expect(await ids()).toEqual([untouched.id, leveled.id]);
 
-      expect(await ids()).toEqual([edited.id, untouched.id]);
-      expect(await ids({ orderBy: "updatedAt", orderDir: "asc" })).toEqual([untouched.id, edited.id]);
-      expect(await ids({ orderBy: "name", orderDir: "asc" })).toEqual([edited.id, untouched.id]);
+      // A level writes the character's levels, never its own row
+      await addCharacterLevel(leveled.id, (await fighterLevel()).id);
+
+      expect(await ids()).toEqual([leveled.id, untouched.id]);
+      expect(await ids({ orderBy: "lastChangedAt", orderDir: "asc" })).toEqual([untouched.id, leveled.id]);
+      expect(await ids({ orderBy: "name", orderDir: "desc" })).toEqual([untouched.id, leveled.id]);
     });
 
     test("lists the archived ones apart, or all together", async () => {

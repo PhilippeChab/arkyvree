@@ -1,8 +1,8 @@
-import type { InferInsertModel } from "drizzle-orm";
+import { eq, type InferInsertModel, or } from "drizzle-orm";
 import type { InferRequestType } from "hono/client";
 
 import type { Db } from "@/drizzle/database.ts";
-import type { charactersInCharacter } from "@/drizzle/schema.ts";
+import { charactersInCharacter } from "@/drizzle/schema.ts";
 import Modules from "@/engine/api/Modules.ts";
 import { CharacterInputs, CharacterProjection } from "@/engine/core/module/index.ts";
 import { type RulesetScope, withRulesetScope } from "@/server/cow/index.ts";
@@ -13,6 +13,18 @@ import type { Character, Session } from "@/shared/relations.ts";
 
 import { api, expectOk } from "./api.ts";
 import { getSeedCtx, uniqueId } from "./seed.ts";
+
+/**
+ * Moves a character's last change, and its bonded creatures', back to `at`, long before any test, writing it alone
+ * (the database keeps what such a write sets): a test's writes all run at its transaction's start, so a change the test
+ * makes then moves the character past `at`.
+ */
+export async function backdateLastChange(characterId: string, at = "2000-01-01T00:00:00Z") {
+  await db
+    .update(charactersInCharacter)
+    .set({ lastChangedAt: at })
+    .where(or(eq(charactersInCharacter.id, characterId), eq(charactersInCharacter.parentCharacterId, characterId)));
+}
 
 /**
  * `record`, built the way the engine builds a character (its base rules' module, `Modules.of`: of its row's kind, a
