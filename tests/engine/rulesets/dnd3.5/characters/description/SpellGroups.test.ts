@@ -2,8 +2,31 @@ import { describe, expect, test } from "bun:test";
 
 import SpellGroups from "@/engine/rulesets/dnd3.5/characters/description/SpellGroups.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import { addClassLevels, addFeats } from "@/scripts/db/seeds/seedCharacter.ts";
+import { db } from "@/server/database/index.ts";
+import { Characters } from "@/server/repositories/index.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
-import { findSeededCharacter } from "@/tests/support/seed.ts";
+import { createSeedCharacter } from "@/tests/support/dnd3.5/levelFixtures.ts";
+import { findSeededCharacter, getSeedCtx } from "@/tests/support/seed.ts";
+
+/**
+ * A new cleric 5 / wizard 5, Wisdom 16 (+3) and Intelligence 16 (+3): of the Good and Magic domains, and an evoker. Built
+ * as the engine builds it.
+ */
+async function buildClericWizard() {
+  const ctx = await getSeedCtx();
+  const characterId = await createSeedCharacter(ctx, "cleric", { xp: 45000, abilities: { Intelligence: 16 } });
+  const clericLevels = await addClassLevels(db, ctx, characterId, "Cleric", [1, 2, 3, 4, 5], [8, 6, 6, 6, 6]);
+  const wizardLevels = await addClassLevels(db, ctx, characterId, "Wizard", [1, 2, 3, 4, 5], [4, 3, 3, 3, 3]);
+  await addFeats(db, ctx, clericLevels, [
+    { levelIndex: 0, featName: "Good Domain", aptitude: "Cleric Domain" },
+    { levelIndex: 0, featName: "Magic Domain", aptitude: "Cleric Domain" },
+  ]);
+  await addFeats(db, ctx, wizardLevels, [
+    { levelIndex: 0, featName: "Evocation Specialist", aptitude: "Wizard Specialization" },
+  ]);
+  return buildAs(DetailedCharacter, (await Characters.findOne(db, { id: characterId }))!);
+}
 
 /** A seeded character's spell lists as its sheets list them: each list's levels, with their uses and spells. */
 async function seededLists(name: string) {
@@ -14,6 +37,11 @@ async function seededLists(name: string) {
       list.levels.map((group) => ({ level: group.level, uses: group.uses, spells: group.spells.map((s) => s.name) })),
     ]),
   );
+}
+
+/** A seeded character's slots per day as its sheets' summary prints them. */
+async function seededPerDay(name: string) {
+  return SpellGroups.describePerDay(await buildAs(DetailedCharacter, await findSeededCharacter(name)));
 }
 
 describe("SpellGroups", () => {
@@ -115,5 +143,79 @@ describe("SpellGroups", () => {
     expect(SpellGroups.describe(character)).toMatchObject([
       { aptitudeName: "Sun Domain Spells", levels: [{ level: 1, uses: null, spells: [{ name: "Endure Elements" }] }] },
     ]);
+  });
+
+  describe("describePerDay", () => {
+    test("counts a cleric's domain slot as one more in his class's row, from the first spell level", async () => {
+      // Theron, a seeded cleric 3 of the Healing and Sun domains: no Domain Spells row of its own
+      expect(await seededPerDay("Theron Lightbringer")).toEqual({
+        levels: [0, 1, 2],
+        lists: [{ aptitudeName: "Cleric Spells", slots: ["4", "3+1", "2+1"] }],
+      });
+    });
+
+    test("counts a specialist wizard's school slot as one more in her class's row, cantrips too", async () => {
+      // Elara, a seeded evoker 3: no Evocation Specialist Spells row of its own
+      expect(await seededPerDay("Elara Starweaver")).toEqual({
+        levels: [0, 1, 2],
+        lists: [{ aptitudeName: "Wizard Spells", slots: ["4+1", "3+1", "2+1"] }],
+      });
+    });
+
+    test("prints a list no feat adds to as its slots alone", async () => {
+      // Vex, a seeded sorcerer 3
+      expect(await seededPerDay("Vex Flamecaller")).toEqual({
+        levels: [0, 1],
+        lists: [{ aptitudeName: "Sorcerer Spells", slots: ["6", "6"] }],
+      });
+    });
+
+    test("gives a multiclass caster a row per class, each with the slot its own feat adds", async () => {
+      // Cleric 5 (Wisdom 16): 5/3/2/1 and his bonus spells; wizard 5 (Intelligence 16): 4/3/2/1 and his
+      expect(SpellGroups.describePerDay(await buildClericWizard())).toEqual({
+        levels: [0, 1, 2, 3],
+        lists: [
+          { aptitudeName: "Cleric Spells", slots: ["5", "4+1", "3+1", "2+1"] },
+          { aptitudeName: "Wizard Spells", slots: ["4+1", "4+1", "3+1", "2+1"] },
+        ],
+      });
+    });
+
+    test("gives a character without slots none", async () => {
+      // Bjorn, a seeded fighter 5
+      expect(await seededPerDay("Bjorn Ironhand")).toEqual({ levels: [], lists: [] });
+    });
+
+    test("keeps a row of its own for a slot a feat's list gives where its class's lists have none", () => {
+      // A domain slot at the second spell level, where the cleric has no slot of his own
+      const character = {
+        components: {
+          aptitudes: {
+            getAptitudes: () => ({
+              clericspells: { id: "cleric", name: "Cleric Spells", 1: { uses: 2, allowed: -1 } },
+              domainspells: {
+                id: "domain",
+                name: "Domain Spells",
+                1: { uses: 1, allowed: 0 },
+                2: { uses: 1, allowed: 0 },
+              },
+            }),
+          },
+          classes: { getCharacterClasses: () => ({}) },
+          powers: { getFlatPowers: () => ({}) },
+        },
+        getFeatListSpells: () => new Map([["domain", new Map()]]),
+        getSpellTagLists: () => ({ Domains: { aptitudeIds: ["domain", "cleric"], joinsClassList: false } }),
+        getSpellTags: () => ({}),
+        getVirtualPowers: () => [],
+      };
+      expect(SpellGroups.describePerDay(character)).toEqual({
+        levels: [1, 2],
+        lists: [
+          { aptitudeName: "Cleric Spells", slots: ["2+1", null] },
+          { aptitudeName: "Domain Spells", slots: [null, "1"] },
+        ],
+      });
+    });
   });
 });

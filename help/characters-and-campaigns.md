@@ -86,6 +86,8 @@ The engine validates the *base, permanent character sheet*. Temporary buffs, con
 
 Each weapon on the sheet lists a row per way to attack with it: its own attack, a thrown one for a melee weapon you can throw (a dagger, a spear), and, when a weapon set holds a weapon in each hand, the same with two-weapon fighting's penalties. The Two-Weapon Fighting feats and a light off-hand weapon lessen them, and Improved and Greater Two-Weapon Fighting add off-hand attacks. Range-increment penalties depend on the distance, so they aren't on the sheet.
 
+The sheet's **Spells** section, and the PDF's, opens on **Spells per Day**: a row per spell list with slots, a column per spell level you have slots at, and your slots per day there, your ability's bonus spells included. A cleric's domain slot and a specialist wizard's school slot count in their class's row as one more, **3+1**, and have no row of their own; the lists under the table still give each spell level's uses.
+
 ## Can I export my character?
 
 Yes. Every character can be exported as a printable PDF.
