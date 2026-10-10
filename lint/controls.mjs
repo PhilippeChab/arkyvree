@@ -14,8 +14,9 @@
  * - `chips`: a chip is one of the family (`components/common`), its role setting its look at the theme's small size,
  *   in a list, a card or a page's header alike: a `RoleChip` (outlined), a `StatusChip` (filled), a `CountChip`
  *   (outlined), a `ValueChip` (outlined red, a link through its `to` when it names a record, never a link in its
- *   label) or a `ChoiceChip`; MUI's `Chip` is the family's alone (`Chips.tsx`). A chip is a value or a choice, never an action: a click with a fixed label, or one that opens
- *   something (a menu, a popover), is a `Button`'s.
+ *   label) or a `ChoiceChip`; MUI's `Chip` is the family's alone (`Chips.tsx`). A chip is a value or a choice, never
+ *   an action: a click with a fixed label, or one that opens something (a menu, a popover), is a `Button`'s, but a
+ *   count's, which opens the list of what it counts (a ruleset header's "3 extensions").
  * - `help-labels`: help is a `HelpLabel` wherever it's given (its question-mark icon, at 16px): never a help icon in a
  *   tooltip of its own, nor a "What's this?".
  *
@@ -109,14 +110,16 @@ function createChips(context) {
     JSXElement(node) {
       if (!CHIP_ROLES.has(elementName(node)) || !hasAttribute(node, "onClick")) return;
       const label = attributeValue(attribute(node, "label"));
-      // A click that opens something (a menu, a popover, a dialog: `menu.openMenu`, `setOpen(true)`) is an action's
+      // A click that opens something (a menu, a popover, a dialog: `menu.openMenu`, `setOpen(true)`) is an action's,
+      // but a count's, which opens the list of what it counts
       const click = context.sourceCode.getText(attributeValue(attribute(node, "onClick")));
-      if (label?.type !== "Literal" && !/\bopen|set\w*Open\(/.test(click)) return;
+      const opens = /\bopen|set\w*Open\(/.test(click);
+      if (label?.type !== "Literal" && (!opens || elementName(node) === "CountChip")) return;
       context.report({
         node: node.openingElement,
         message:
-          "A chip is a value or a choice, never an action: a click with a fixed label, or one that opens something, " +
-          "is a `Button`'s.",
+          "A chip is a value or a choice, never an action: a click with a fixed label, or one that opens something " +
+          "(but a count's, which opens what it counts), is a `Button`'s.",
       });
     },
   };

@@ -12,9 +12,9 @@ interface RulesetFactChipsProps {
 }
 
 /**
- * A ruleset's facts, the same on its card and in its page's header: its status and its privacy (filled), an extension
- * and the ruleset it was forked from (outlined, the fork a link to it, which warms that ruleset's page as it's pointed
- * at or focused).
+ * A ruleset's facts, the same on its card and in its page's header: its status (filled), then its privacy, an
+ * extension and the ruleset it was forked from (outlined, the fork a link to it, which warms that ruleset's page as it's
+ * pointed at or focused).
  */
 export function RulesetFactChips({ ruleset }: RulesetFactChipsProps) {
   const queryClient = useQueryClient();
@@ -25,7 +25,7 @@ export function RulesetFactChips({ ruleset }: RulesetFactChipsProps) {
       <Tooltip describeChild title={tooltip}>
         <StatusChip icon={<StatusIcon />} label={ruleset.status} color={color} />
       </Tooltip>
-      <StatusChip
+      <ValueChip
         icon={ruleset.private ? <PrivateIcon /> : <PublicIcon />}
         label={ruleset.private ? "Private" : "Public"}
         color={ruleset.private ? "warning" : "success"}

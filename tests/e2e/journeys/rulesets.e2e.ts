@@ -121,7 +121,7 @@ test.describe("Rulesets", () => {
     const subscribed = apiResponse(page, "POST", /\/api\/rulesets\/[a-f0-9-]+\/subscribe/);
     await dialog.getByRole("button", { name: /^Subscribe$/ }).click();
     await subscribed;
-    const extensions = page.getByRole("button", { name: "Extensions (1)" });
+    const extensions = page.getByRole("button", { name: "1 extension" });
     await expect(extensions).toBeVisible({ timeout: 15_000 });
 
     // Cloud Chariot is one of Complete Arcane's own spells.
@@ -146,7 +146,7 @@ test.describe("Rulesets", () => {
       .getByRole("button", { name: /^Unsubscribe from Extension$/ })
       .click();
     await unsubscribed;
-    await expect(page.locator('text="1 extension"')).toHaveCount(0, { timeout: 15_000 });
+    await expect(extensions).toHaveCount(0, { timeout: 15_000 });
     await searchSpells();
     await expect(cloudChariot).toHaveCount(0, { timeout: 10_000 });
   });
