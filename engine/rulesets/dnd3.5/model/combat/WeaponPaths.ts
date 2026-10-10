@@ -2,8 +2,8 @@ import type { GetterOf, PathCategory } from "@/engine/core/paths/PathCategory.ts
 import PathTraverser, { type Components, type TraversePathResult } from "@/engine/core/paths/PathTraverser.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
-import { MODIFIER_OPERATORS, NUMERIC_REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
-import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
+import { getOperators } from "@/shared/customization/operators.ts";
+import { deriveSegmentLabels, isLeafOfKind, type TargetPath } from "@/shared/customization/target.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
 import type CombatComponent from "./CombatComponent.ts";
@@ -52,21 +52,12 @@ const WEAPON_PATH_ROOTS = [...new Set(WEAPON_PATHS.map(({ path }) => path.split(
 export default class WeaponPaths implements PathCategory<Dnd35Components> {
   /** A weapon's paths under `prefix`: a weapon group's, or an item's own weapon's. */
   static buildPaths(prefix: string, category: string, kind: "modifier" | "requirement"): TargetPath[] {
-    return WEAPON_PATHS.filter(
-      (subPath) => !("requirementOnly" in subPath && subPath.requirementOnly && kind === "modifier"),
-    ).map((subPath) => ({
+    return WEAPON_PATHS.filter((subPath) => isLeafOfKind(subPath, kind)).map((subPath) => ({
       path: `${prefix}.${subPath.path}`,
       category,
       description: subPath.description,
       valueType: subPath.type,
-      operators:
-        kind === "modifier"
-          ? subPath.type === "string"
-            ? ["set"]
-            : [...MODIFIER_OPERATORS]
-          : subPath.type === "string"
-            ? ["equal", "not_equal"]
-            : [...NUMERIC_REQUIREMENT_OPERATORS],
+      operators: getOperators(subPath.type, kind),
       ...("possibleValues" in subPath && { possibleValues: subPath.possibleValues }),
     }));
   }
@@ -94,7 +85,6 @@ export default class WeaponPaths implements PathCategory<Dnd35Components> {
 
   getSegmentLabels(): Record<string, string> {
     return deriveSegmentLabels(WEAPON_PATHS, {
-      weapons: "Weapons",
       weapon: "Weapon",
       tohit: "To Hit",
       gearpenalty: "Gear Penalty",

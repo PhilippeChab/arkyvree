@@ -2,8 +2,8 @@ import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellLists.ts";
-import { getNumericOperators } from "@/shared/customization/operators.ts";
-import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
+import { getOperators } from "@/shared/customization/operators.ts";
+import { deriveNameLabels, deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
 import type { Aptitude } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -68,7 +68,6 @@ export default class AptitudesPaths implements PathCategory<Dnd35Components> {
     leveledAptitudeIds: Set<string>,
   ): TargetPath[] {
     const paths: TargetPath[] = [];
-    const operators = getNumericOperators(kind);
 
     for (const aptitude of aptitudes) {
       const normalizedAptitudeName = stripSeparators(aptitude.name);
@@ -82,7 +81,7 @@ export default class AptitudesPaths implements PathCategory<Dnd35Components> {
               category: "aptitudes",
               description: subPath.description,
               valueType: subPath.type,
-              operators,
+              operators: getOperators(subPath.type, kind),
               ...("allowedEntityTypes" in subPath && { allowedEntityTypes: subPath.allowedEntityTypes }),
               ...(kind === "modifier" && SPELL_LEVEL_SLOT_MODIFIERS[subPath.path]),
             });
@@ -93,7 +92,7 @@ export default class AptitudesPaths implements PathCategory<Dnd35Components> {
           category: "aptitudes",
           description: JOINS_CLASS_LIST.description,
           valueType: "boolean",
-          operators: kind === "modifier" ? ["set"] : ["equal", "not_equal"],
+          operators: getOperators("boolean", kind),
           allowedEntityTypes: JOINS_CLASS_LIST.allowedEntityTypes,
         });
       } else {
@@ -104,7 +103,7 @@ export default class AptitudesPaths implements PathCategory<Dnd35Components> {
             category: "aptitudes",
             description: subPath.description,
             valueType: subPath.type,
-            operators,
+            operators: getOperators(subPath.type, kind),
             ...("allowedEntityTypes" in subPath && { allowedEntityTypes: subPath.allowedEntityTypes }),
             ...(kind === "modifier" && subPath.path === "allowed" && POOL_SLOT_MODIFIERS),
           });
@@ -146,5 +145,10 @@ export default class AptitudesPaths implements PathCategory<Dnd35Components> {
 
   getSegmentLabels(): Record<string, string> {
     return deriveSegmentLabels(NAVIGATABLE_PATHS, { [JOINS_CLASS_LIST.path]: JOINS_CLASS_LIST.label });
+  }
+
+  /** The ruleset's aptitudes, labeled by their names. */
+  labelNames(rulesetData: RulesetData) {
+    return { names: deriveNameLabels(rulesetData.aptitudes.map(({ name }) => name)) };
   }
 }

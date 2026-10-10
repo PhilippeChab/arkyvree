@@ -2,8 +2,8 @@ import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
 import { LOAD_CATEGORIES } from "@/engine/rulesets/dnd3.5/rules/carrying.ts";
-import { getNumericOperators } from "@/shared/customization/operators.ts";
-import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
+import { getOperators } from "@/shared/customization/operators.ts";
+import { deriveSegmentLabels, isLeafOfKind, type TargetPath } from "@/shared/customization/target.ts";
 import { capitalize } from "@/shared/text.ts";
 
 import { ARMOR_CATEGORIES } from "./CombatState.ts";
@@ -202,14 +202,13 @@ export default class CombatPaths implements PathCategory<Dnd35Components> {
     const paths: TargetPath[] = [];
 
     for (const path of COMBAT_PATHS) {
-      if ("requirementOnly" in path && path.requirementOnly && kind === "modifier") continue;
+      if (!isLeafOfKind(path, kind)) continue;
       paths.push({
         path: `combat.${path.path}`,
         category: "combat",
         description: path.description,
         valueType: path.type,
-        operators:
-          path.type === "number" ? getNumericOperators(kind) : kind === "modifier" ? ["set"] : ["equal", "not_equal"],
+        operators: getOperators(path.type, kind),
         ...("sortOrder" in path && { sortOrder: path.sortOrder }),
         ...("possibleValues" in path && { possibleValues: path.possibleValues }),
       });
@@ -219,12 +218,12 @@ export default class CombatPaths implements PathCategory<Dnd35Components> {
   }
 
   static generateEncumbrancePaths(kind: "modifier" | "requirement"): TargetPath[] {
-    return ENCUMBRANCE_PATHS.filter((path) => kind === "requirement" || !("requirementOnly" in path)).map((path) => ({
+    return ENCUMBRANCE_PATHS.filter((path) => isLeafOfKind(path, kind)).map((path) => ({
       path: `combat.encumbrance.${path.path}`,
       category: "combat",
       description: path.description,
       valueType: path.type,
-      operators: path.type === "string" ? ["equal", "not_equal"] : getNumericOperators(kind),
+      operators: getOperators(path.type, kind),
       ...("possibleValues" in path && { possibleValues: path.possibleValues }),
     }));
   }

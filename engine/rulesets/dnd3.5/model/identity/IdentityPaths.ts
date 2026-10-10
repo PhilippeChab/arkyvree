@@ -1,11 +1,7 @@
 import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
-import {
-  getNumericOperators,
-  MODIFIER_OPERATORS,
-  NUMERIC_REQUIREMENT_OPERATORS,
-} from "@/shared/customization/operators.ts";
+import { getOperators } from "@/shared/customization/operators.ts";
 import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
 
 const NAVIGATABLE_BACKGROUND_PATHS = [{ path: "notes", description: "Public notes", type: "string" as const }];
@@ -46,14 +42,7 @@ export default class IdentityPaths implements PathCategory<Dnd35Components> {
         category: "identity",
         description: subPath.description,
         valueType: subPath.type,
-        operators:
-          kind === "modifier"
-            ? subPath.type === "string"
-              ? ["set"]
-              : [...MODIFIER_OPERATORS]
-            : subPath.type === "string"
-              ? ["equal", "not_equal"]
-              : [...NUMERIC_REQUIREMENT_OPERATORS],
+        operators: getOperators(subPath.type, kind),
       });
     }
 
@@ -63,7 +52,7 @@ export default class IdentityPaths implements PathCategory<Dnd35Components> {
         category: "identity",
         description: subPath.description,
         valueType: subPath.type,
-        operators: kind === "modifier" ? ["set"] : ["equal", "not_equal"],
+        operators: getOperators(subPath.type, kind),
       });
     }
 
@@ -73,7 +62,7 @@ export default class IdentityPaths implements PathCategory<Dnd35Components> {
         category: "identity",
         description: subPath.description,
         valueType: subPath.type,
-        operators: kind === "modifier" ? ["set"] : ["equal", "not_equal"],
+        operators: getOperators(subPath.type, kind),
       });
     }
 
@@ -83,7 +72,7 @@ export default class IdentityPaths implements PathCategory<Dnd35Components> {
         category: "identity",
         description: subPath.description,
         valueType: subPath.type,
-        operators: getNumericOperators(kind),
+        operators: getOperators(subPath.type, kind),
       });
     }
 

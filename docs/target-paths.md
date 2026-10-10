@@ -2,7 +2,9 @@
 
 All available paths for modifiers and requirements. Dynamic segments are shown as `<name>`.
 
-Paths marked "req only" are available as requirement targets but not modifier targets.
+Paths marked "req only" are available as requirement targets but not modifier targets, and "mod only" ones as modifier targets but not requirement targets.
+
+Every category (`engine/rulesets/dnd3.5/model/*/…Paths.ts`, a `PathCategory`) lists its leaves in a table (its paths under an entity or a group: a description, a value type, whether it's req only or mod only, which `isLeafOfKind` reads), and offers each the operators of its value type (`getOperators`, `shared/customization/operators.ts`): a number's arithmetic for a modifier and comparisons for a requirement, any other value's `set` for a modifier and `equal` / `not_equal` for a requirement. A count of levels (a class's, a bonded creature's) is added to, taken from or set, never multiplied or divided (`LEVEL_MODIFIER_OPERATORS`), and a spell's list-valued properties are added to or taken from, contained or not. A segment's label is its category's (`getSegmentLabels`, derived from its table), or one of the ruleset's names its category labels (`labelNames`: an entity's name over any other label, a property's value only where no other label names the segment).
 
 A part the sheet computes when read (the totals, an ability's modifier, a skill's or a save's `ability`, a skill's `weight`, `combat.ac.dexterity`, `size`, `touch` and `flatfooted`, `combat.hp.constitution`, `combat.initiative.dexterity`, the grapple's `bab`, `strength` and `size`, the encumbrance's `heavyload`, a weapon's `tohit.strength`, `tohit.size`, `tohit.gearpenalty`, `damage.strength` and `wielded`, the armor's `category` and whether a shield is `held`) follows what it's computed from, a modifier that raises an ability included: it's "req only", and a flat bonus belongs in the `misc` beside it. See [How a sheet is built](customization.md#how-a-sheet-is-built).
 
@@ -161,7 +163,7 @@ Grouped by shield type (`SHIELD_TYPE`), as the picker lists them; an item is nev
 | Path | Type | Description |
 |------|------|-------------|
 | `classes.<name>.level` | number | Class level |
-| `classes.<name>.bonuscasterlevel` | number | Bonus caster levels from prestige class advancement |
+| `classes.<name>.bonuscasterlevel` | number | Bonus caster levels from prestige class advancement (mod only) |
 
 ## feats
 

@@ -4,8 +4,8 @@ import PathTraverser, { type Components, type TraversePathResult } from "@/engin
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
 import { UNARMED_STRIKE } from "@/engine/rulesets/dnd3.5/rules/combat.ts";
-import { getNumericOperators } from "@/shared/customization/operators.ts";
-import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
+import { getOperators } from "@/shared/customization/operators.ts";
+import { deriveNameLabels, deriveSegmentLabels, isLeafOfKind, type TargetPath } from "@/shared/customization/target.ts";
 import { ARMOR_TYPE, SHIELD_TYPE, WEAPON_PROFICIENCY, WEAPON_TYPE } from "@/shared/dnd3.5/properties/index.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -52,13 +52,13 @@ export default class ItemsPaths implements PathCategory<Dnd35Components> {
 
     for (const grouping of armorGroupings) {
       for (const subPath of NAVIGATABLE_ARMOR_PATHS) {
-        if ("requirementOnly" in subPath && subPath.requirementOnly && kind === "modifier") continue;
+        if (!isLeafOfKind(subPath, kind)) continue;
         paths.push({
           path: `items.armors.${grouping}.${subPath.path}`,
           category: "items",
           description: subPath.description,
           valueType: subPath.type,
-          operators: getNumericOperators(kind),
+          operators: getOperators(subPath.type, kind),
         });
       }
     }
@@ -71,13 +71,13 @@ export default class ItemsPaths implements PathCategory<Dnd35Components> {
 
     for (const grouping of shieldGroupings) {
       for (const subPath of NAVIGATABLE_SHIELD_PATHS) {
-        if ("requirementOnly" in subPath && subPath.requirementOnly && kind === "modifier") continue;
+        if (!isLeafOfKind(subPath, kind)) continue;
         paths.push({
           path: `items.shields.${grouping}.${subPath.path}`,
           category: "items",
           description: subPath.description,
           valueType: subPath.type,
-          operators: getNumericOperators(kind),
+          operators: getOperators(subPath.type, kind),
         });
       }
     }
@@ -134,9 +134,22 @@ export default class ItemsPaths implements PathCategory<Dnd35Components> {
 
   getSegmentLabels(): Record<string, string> {
     return {
+      weapons: "Weapons",
       ...deriveSegmentLabels(NAVIGATABLE_ARMOR_PATHS, { armors: "Armors", ...ARMOR_LABELS }),
       ...deriveSegmentLabels(NAVIGATABLE_SHIELD_PATHS, { shields: "Shields", ...SHIELD_LABELS }),
     };
+  }
+
+  /**
+   * The groupings an item is reached by, labeled by their names: its properties' values (a weapon's type, its
+   * proficiency; a number, or no letter at all, names none: a number is a spell level's), and the unarmed strike,
+   * which no item has.
+   */
+  labelNames(rulesetData: RulesetData) {
+    const values = (rulesetData.propertiesByEntityType.get("items") ?? [])
+      .map(({ value }) => value)
+      .filter((value) => /[a-z]/.test(stripSeparators(value)));
+    return { names: deriveNameLabels([UNARMED_STRIKE, ...values]) };
   }
 
   /** A grouping's equipped items. Null for another sub-category, or a path that names none. */

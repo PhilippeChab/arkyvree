@@ -1,10 +1,21 @@
 import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
-import { NUMERIC_REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
-import type { TargetPath } from "@/shared/customization/target.ts";
+import { getOperators, LEVEL_MODIFIER_OPERATORS } from "@/shared/customization/operators.ts";
+import { deriveNameLabels, deriveSegmentLabels, isLeafOfKind, type TargetPath } from "@/shared/customization/target.ts";
 import type { Klass } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
+
+/** A class's paths, `{name}` its name: its levels, and the caster levels prestige classes add to it (a modifier's). */
+const CLASS_PATHS = [
+  { path: "level", description: "Number of {name} levels taken", type: "number" as const },
+  {
+    path: "bonuscasterlevel",
+    description: "{name} bonus caster levels from prestige classes",
+    type: "number" as const,
+    modifierOnly: true,
+  },
+];
 
 /** The classes' target paths: each class's level and caster level. */
 export default class ClassesPaths implements PathCategory<Dnd35Components> {
@@ -19,21 +30,14 @@ export default class ClassesPaths implements PathCategory<Dnd35Components> {
     for (const klass of klasses) {
       const normalizedClassName = stripSeparators(klass.name);
 
-      paths.push({
-        path: `classes.${normalizedClassName}.level`,
-        category: "classes",
-        description: `Number of ${klass.name} levels taken`,
-        valueType: "number",
-        operators: kind === "modifier" ? ["add", "subtract", "set"] : [...NUMERIC_REQUIREMENT_OPERATORS],
-      });
-
-      if (kind === "modifier") {
+      for (const subPath of CLASS_PATHS) {
+        if (!isLeafOfKind(subPath, kind)) continue;
         paths.push({
-          path: `classes.${normalizedClassName}.bonuscasterlevel`,
+          path: `classes.${normalizedClassName}.${subPath.path}`,
           category: "classes",
-          description: `${klass.name} bonus caster levels from prestige classes`,
-          valueType: "number",
-          operators: ["add", "subtract", "set"],
+          description: subPath.description.replace("{name}", klass.name),
+          valueType: subPath.type,
+          operators: getOperators(subPath.type, kind, LEVEL_MODIFIER_OPERATORS),
         });
       }
     }
@@ -61,6 +65,11 @@ export default class ClassesPaths implements PathCategory<Dnd35Components> {
   }
 
   getSegmentLabels(): Record<string, string> {
-    return { level: "Level", bonuscasterlevel: "Bonus Caster Level" };
+    return deriveSegmentLabels(CLASS_PATHS, { bonuscasterlevel: "Bonus Caster Level" });
+  }
+
+  /** The ruleset's classes, labeled by their names. */
+  labelNames(rulesetData: RulesetData) {
+    return { names: deriveNameLabels(rulesetData.klasses.map(({ name }) => name)) };
   }
 }
