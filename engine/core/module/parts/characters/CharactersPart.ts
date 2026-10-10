@@ -3,9 +3,8 @@ import { z } from "zod";
 import type { CharacterInput } from "@/engine/core/module/CharacterInputs.ts";
 import type { Descriptions } from "@/engine/core/module/contract.ts";
 import type { OpenedPicker } from "@/engine/core/module/pickers.ts";
-import RequestIds from "@/engine/core/module/RequestIds.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import type { RulesetView } from "@/engine/core/view/index.ts";
+import { RequestIds, type RulesetView } from "@/engine/core/view/index.ts";
 import type { Item, Property } from "@/shared/relations.ts";
 
 import type {

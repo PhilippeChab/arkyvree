@@ -1,4 +1,4 @@
-import type { RulesetData } from "@/engine/core/view/index.ts";
+import { RequestIds, type RulesetData } from "@/engine/core/view/index.ts";
 
 import type {
   AbilityIncrease,
@@ -11,7 +11,6 @@ import type {
   PlannedSoFar,
   PreviewRequest,
 } from "./parts/levelUp/index.ts";
-import RequestIds from "./RequestIds.ts";
 
 /**
  * A level flow's request (a level-up, a saved level's edit, the wizard's preview, a step's or a picker's query) as its
