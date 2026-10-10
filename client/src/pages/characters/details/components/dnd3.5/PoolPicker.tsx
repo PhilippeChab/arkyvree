@@ -13,6 +13,7 @@ import {
 import { fadeInUpSx } from "@/client/src/theme/animations.ts";
 
 import { OptionTooltip } from "./OptionTooltip.tsx";
+import { poolName } from "./poolName.ts";
 
 /** The pool open to pick from: its name, what's picked in it and how many it takes. */
 interface OpenPool {
@@ -96,7 +97,7 @@ export function PickOption({
  * and its search over the options it lists.
  */
 export function PoolPicker({ what, granted, pools, open, search, onSearch, options, children }: PoolPickerProps) {
-  const openName = open && `${open.name} ${what}${open.level ? ` — ${open.level}` : ""}`;
+  const openName = open && `${poolName(open.name, what)}${open.level ? ` — ${open.level}` : ""}`;
   return (
     <Stack spacing={3} sx={{ flex: 1, minHeight: 0 }}>
       <Stack spacing={1} sx={{ flexShrink: 0 }}>
