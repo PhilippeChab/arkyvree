@@ -44,7 +44,7 @@ class CharactersService extends include(Object, Archives) {
     const languages = await Languages.findMany(tx, {
       ids: languageIds.map((languageId) => scope.rulesetData.cow.resolve(languageId)),
     });
-    Engine.for(scope).characters().checkLanguages(characterRecord.rulesetId, languageIds, languages);
+    Engine.for(scope).characters().checkLanguages(languageIds, languages);
 
     const existing = await CharacterLanguages.findMany(tx, { characterId: characterRecord.id });
     for (const lang of existing)

@@ -1,6 +1,7 @@
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
+import CharacterEdits from "@/engine/rulesets/dnd3.5/characters/CharacterEdits.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 import { isHandLocation } from "@/shared/equipment.ts";
 import type { Item } from "@/shared/relations.ts";
@@ -78,11 +79,8 @@ export default class InventoryEntries {
   static planInventoryEntry(view: RulesetView, character: CharacterInput, change: EntryChange) {
     const { rulesetData } = view;
     const { request } = change;
-    if ("item" in change) {
-      const validRulesetIds = new Set([character.record.rulesetId, ...rulesetData.cow.sourceChain]);
-      if (!validRulesetIds.has(change.item.rulesetId))
-        throw new RulesError("invalid", "Item does not belong to the character's ruleset");
-    }
+    if ("item" in change)
+      CharacterEdits.checkFromRuleset(view, [change.item], "Item does not belong to the character's ruleset");
     InventoryEntries.checkCharges(request.totalCharges, request.remainingCharges);
 
     const { equipped, force, location, weaponSet } = request;
@@ -92,7 +90,7 @@ export default class InventoryEntries {
           ? { id: null, item: change.item }
           : { id: change.entry.id, item: rulesetData.itemsById.get(change.entry.itemId) };
       if (!entry.item) throw new RulesError("not-found", "Item not found");
-      Equipping.check(view, character, { id: entry.id, item: entry.item }, location, weaponSet, force);
+      new Equipping(view, character).checkEquip({ id: entry.id, item: entry.item }, location, weaponSet, force);
     }
     return InventoryEntries.entryFields(request);
   }

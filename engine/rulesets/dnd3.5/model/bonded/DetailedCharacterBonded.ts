@@ -15,7 +15,7 @@ export default abstract class DetailedCharacterBonded extends DetailedCharacter 
 
   /**
    * The stat block's feats, as any granted feat is: possessed and counted, and listed with the feats the creature has
-   * without a pick (`getVirtuallyPossessedFeats`: its sheet and PDF), their modifiers applied. A feat the creature
+   * without a pick (`getVirtualFeats`: its sheet and PDF), their modifiers applied. A feat the creature
    * already has, from a modifier that grants it, stays as it is, as a granted feat the character has does.
    */
   protected applyGrantedFeats(featNames: string[], rulesetData: RulesetData): void {

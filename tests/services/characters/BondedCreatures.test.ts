@@ -384,9 +384,7 @@ describe("Stat blocks", () => {
     );
     expect(dog.components.feats.getFeat("Toughness")).toMatchObject({ possessed: true, count: 1 });
     expect(dog.components.feats.getFeat("Alertness")).toMatchObject({ possessed: true, count: 1 });
-    expect(dog.getVirtuallyPossessedFeats().map((feat) => feat.name)).toEqual(
-      expect.arrayContaining(["Alertness", "Toughness"]),
-    );
+    expect(dog.getVirtualFeats().map((feat) => feat.name)).toEqual(expect.arrayContaining(["Alertness", "Toughness"]));
   });
 
   test("leave a stat block's feat the creature already has as it is: counted once, its bonus once", async () => {
@@ -404,7 +402,7 @@ describe("Stat blocks", () => {
     });
     const dog = await buildAs(DetailedCharacterAnimalCompanion, bonded);
     expect(dog.components.feats.getFeat("Improved Initiative")).toMatchObject({ possessed: true, count: 1 });
-    expect(dog.getVirtuallyPossessedFeats().filter((feat) => feat.name === "Improved Initiative")).toHaveLength(1);
+    expect(dog.getVirtualFeats().filter((feat) => feat.name === "Improved Initiative")).toHaveLength(1);
     expect(initiative(dog)).toBe(before);
   });
 
