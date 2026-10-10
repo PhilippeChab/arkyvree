@@ -268,7 +268,7 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
   const classPicker: ClassPicker = {
     ...plannedLevelsOf(previewLevelDetails, abilityIncreases),
     featPicks: allSelectedFeatPickString,
-    skillRanks: skillPointString(skillPointAllocations),
+    skillPoints: skillPointString(skillPointAllocations),
   };
 
   const {

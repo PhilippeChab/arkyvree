@@ -73,18 +73,20 @@ const pickerQuery = {
   search: z.string().optional(),
 };
 
-/** Comma-separated `skillId:rank` ranks: what isn't one is dropped. */
-const skillRanks = z
+/** Comma-separated `skillId:points` points spent on each skill: what isn't one is dropped. */
+const skillPoints = z
   .string()
   .optional()
   .transform((value) =>
-    value
-      ?.split(",")
-      .map((pair) => {
-        const [skillId, rank] = pair.split(":");
-        return { skillId, rank: Number(rank) };
-      })
-      .filter((ranked) => isUuid(ranked.skillId) && !isNaN(ranked.rank)),
+    value === undefined
+      ? undefined
+      : Object.fromEntries(
+          value
+            .split(",")
+            .map((pair) => pair.split(":"))
+            .filter(([skillId, points]) => isUuid(skillId) && !isNaN(Number(points)))
+            .map(([skillId, points]) => [skillId, Number(points)]),
+        ),
   );
 
 /** A step's name, as its ruleset lists it. */
@@ -103,7 +105,7 @@ export default new Hono<SessionContext>()
         plannedAbilityIds: abilityIdList,
         plannedClassLevelIds: idList,
         search: z.string().optional(),
-        skillRanks,
+        skillPoints,
       }),
     ),
     async (c) => {

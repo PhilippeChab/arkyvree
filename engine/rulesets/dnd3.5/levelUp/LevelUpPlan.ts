@@ -3,6 +3,7 @@ import {
   CharacterProjection,
   type LevelPicks,
   type LevelRequest,
+  type PlannedSoFar,
 } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
@@ -147,5 +148,21 @@ export default class LevelUpPlan extends PlannedLevelsState {
         ...this.toPickRows(levelPicks),
       })),
     };
+  }
+
+  /**
+   * The skill points the level-up wizard has spent so far (`planned.skillPoints`), spread over the levels it plans as a
+   * save spreads them (within each level's points and max ranks, class skills first): each planned level's skill rows,
+   * which the class picker projects. Refused when a planned level isn't one of the view's class levels.
+   */
+  spreadSkillPoints({ abilityIds = [], klassLevelIds = [], skillPoints = {} }: PlannedSoFar) {
+    if (Object.keys(skillPoints).length === 0) return [];
+    const klassLevelEntries = klassLevelIds.map((klassLevelId, i) => ({
+      ...this.getSavedKlassLevel({ klassLevelId }),
+      abilityId: abilityIds[i] ?? null,
+    }));
+    const picks = { feats: {}, powers: {}, skills: skillPoints };
+    const distributed = this.distributePlannedPicks(this.buildPlannedLevels(klassLevelEntries), picks);
+    return distributed.map((levelPicks) => this.toPickRows(levelPicks).skills);
   }
 }

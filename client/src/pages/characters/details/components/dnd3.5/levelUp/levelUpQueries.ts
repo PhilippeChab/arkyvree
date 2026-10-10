@@ -49,7 +49,7 @@ export type AvailablePower = InferResponseType<LevelsApi["available-powers"]["$g
 
 /** What the class picker's list is checked against: the planned picks, and the skill points spent over them. */
 export interface ClassPicker extends PlannedPicks {
-  skillRanks: string | undefined;
+  skillPoints: string | undefined;
 }
 
 export type FeatsData = Unnamed<NamedStep<"feats">>;
@@ -135,7 +135,7 @@ export function availableClassesQuery(characterId: string, search: string, picke
     limit: "10",
     search: search || undefined,
     ...plannedQueryOf(picker),
-    skillRanks: picker.skillRanks || undefined,
+    skillPoints: picker.skillPoints || undefined,
   };
   return infiniteQueryOptions({
     queryKey: QUERY_KEYS.characters.levelUp.availableClasses(characterId, query),

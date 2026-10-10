@@ -107,13 +107,13 @@ export interface PickLevel {
 
 /**
  * What the level-up wizard plans before the level a step or a picker is for, not saved yet: its levels (their class
- * levels, and their ability increases by place), and the feats and skill ranks picked over them so far.
+ * levels, and their ability increases by place), and the feats and skill points picked over them so far.
  */
 export interface PlannedSoFar {
   abilityIds?: (string | undefined)[];
   featPicks?: FeatPick[];
   klassLevelIds?: string[];
-  skillRanks?: { rank: number; skillId: string }[];
+  skillPoints?: Record<string, number>;
 }
 
 /** A level-up wizard's step, as its ruleset lists it: its name, which the ruleset answers the step by, and its label. */

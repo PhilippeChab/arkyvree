@@ -64,7 +64,7 @@ import {
 import { findSeededCharacter, findSeededRuleset, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
-/** The levels, ability increases, feats and skill ranks planned so far, which the class picker checks against. */
+/** The levels, ability increases, feats and skill points planned so far, which the class picker checks against. */
 type Planned = Parameters<typeof CharacterLevelsService.getAvailableClasses>[2];
 
 const lockPool = createTestPool();
@@ -144,18 +144,18 @@ async function setupCandidate(missing: { bab?: boolean; feat?: string; skill?: s
     plannedClassLevelIds?: Planned["plannedClassLevelIds"],
     plannedAbilityIds?: Planned["plannedAbilityIds"],
     featPicks?: Planned["featPicks"],
-    skillRanks?: Planned["skillRanks"],
+    skillPoints?: Planned["skillPoints"],
   ) =>
     (
       await CharacterLevelsService.getAvailableClasses(
         session,
         characterId,
-        { featPicks, plannedAbilityIds, plannedClassLevelIds, skillRanks },
+        { featPicks, plannedAbilityIds, plannedClassLevelIds, skillPoints },
         page,
       )
     ).items.find((k) => k.id === blackguard.id)!.eligible;
-  const fighterLevel = async (level: number) => (await findKlassLevel(ctx.klassMap.pc["Fighter"], level))!.id;
-  return { ctx, eligible, fighterLevel };
+  const klassLevel = async (klass: string, level: number) => (await findKlassLevel(ctx.klassMap.pc[klass], level))!.id;
+  return { ctx, eligible, klassLevel };
 }
 
 /** A dwarf with a barbarian level, then fighter levels, made in that order. */
@@ -396,9 +396,9 @@ describe("LevelsService", () => {
 
     describe("counts the levels, feats and skill ranks being added toward a prestige class", () => {
       test("a pending level brings the BAB", async () => {
-        const { eligible, fighterLevel } = await setupCandidate({ bab: true });
+        const { eligible, klassLevel } = await setupCandidate({ bab: true });
         expect(await eligible()).toBe(false);
-        expect(await eligible([await fighterLevel(6)])).toBe(true);
+        expect(await eligible([await klassLevel("Fighter", 6)])).toBe(true);
       });
 
       test("a pending feat pick brings the missing feat", async () => {
@@ -409,12 +409,15 @@ describe("LevelsService", () => {
         ).toBe(true);
       });
 
-      test("pending skill ranks bring the missing skill", async () => {
-        const { ctx, eligible, fighterLevel } = await setupCandidate({ skill: "Hide" });
+      test("pending skill points bring the missing skill, spent over the planned levels as the save spends them", async () => {
+        const { ctx, eligible, klassLevel } = await setupCandidate({ skill: "Hide" });
+        const hide = { [ctx.skillMap["Hide"]]: 5 };
         expect(await eligible()).toBe(false);
-        expect(
-          await eligible([await fighterLevel(7)], undefined, undefined, [{ skillId: ctx.skillMap["Hide"], rank: 10 }]),
-        ).toBe(true);
+        // A rogue level takes them as a class skill's, a rank a point, wherever the plan puts it
+        const plan = [await klassLevel("Fighter", 7), await klassLevel("Rogue", 1)];
+        expect(await eligible(plan, undefined, undefined, hide)).toBe(true);
+        // A fighter level alone takes as many as its points allow, at two a rank
+        expect(await eligible([await klassLevel("Fighter", 7)], undefined, undefined, hide)).toBe(false);
       });
     });
   });

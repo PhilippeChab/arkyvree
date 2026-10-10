@@ -57,19 +57,18 @@ export default class LevelUpSteps extends LevelUpState {
   }
 
   /**
-   * The skills step of the step's level: the points to spend and each skill's class status. An edit replaces the edited
-   * level, so the character's level count stays its total.
+   * The skills step of the step's level: the points to spend and each skill's class status, and the levels the
+   * character has with it, the planned ones before it too (an edit's level takes the edited one's place).
    */
   private describeSkillStep(step: LevelStep) {
     const klassLevel = this.readKlassLevel(step);
-    const character = this.build(this.projectStep(klassLevel.id, this.readStep(step)));
-    const totalCharacterLevel = this.character.rows.levels.length + (step.editedLevelId ? 0 : 1);
+    const projection = this.projectStep(klassLevel.id, this.readStep(step));
     // A skill's class status is any of the character's classes' (its max rank, `isClassSkill`) and the leveled class's
     // (its cost, `isCurrentClassSkill`)
     const classSkillIds = this.getClassSkillIds(
       this.rulesetData.klassSkillsWithSkillsByKlass.get(klassLevel.klassId) ?? [],
     );
-    return this.skillStep(character, classSkillIds, totalCharacterLevel);
+    return this.skillStep(this.build(projection), classSkillIds, projection.input.rows.levels.length);
   }
 
   /**

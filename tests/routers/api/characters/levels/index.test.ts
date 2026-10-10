@@ -9,6 +9,7 @@ import { db } from "@/server/database/index.ts";
 import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { postCharacter } from "@/tests/support/characters.ts";
 import { FIGHTER_LEVELS, picks, type Picks } from "@/tests/support/levelFixtures.ts";
+import { findKlassLevel } from "@/tests/support/levels.ts";
 import { createSeededTestRulesetWithExtensions } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 
@@ -157,6 +158,18 @@ describe("character levels", () => {
 
       // Ability increases only come every 4 character levels.
       expect(await getStep(characterId, "abilities", {})).toMatchObject({ isAvailable: false });
+    });
+
+    test("counts the levels planned before a step's level in the character's total, which caps a rank", async () => {
+      const { characterId, ctx } = await createCharacter();
+      const fighter = ctx.klassMap.pc["Fighter"];
+      const planned = [(await findKlassLevel(fighter, 1))!.id, (await findKlassLevel(fighter, 2))!.id];
+      const skills = await getStep(characterId, "skills", {
+        classId: fighter,
+        level: "3",
+        plannedClassLevelIds: planned.join(","),
+      });
+      expect(skills.totalCharacterLevel).toBe(3);
     });
 
     test("lists the feats of a pool, flat and grouped by family", async () => {

@@ -59,9 +59,12 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, Detaile
     return LevelRules.isAbilityIncreaseLevel(totalLevel);
   }
 
-  /** The class picker for the character, with what the level-up wizard plans so far: its filters, a page described. */
+  /**
+   * The class picker for the character, with what the level-up wizard plans so far, its skill points spread over its
+   * planned levels as the save spreads them: its filters, a page described.
+   */
   openClassPicker(view: RulesetView, character: CharacterInput, planned: PlannedSoFar) {
-    return new ClassPicker(view, character, planned);
+    return new ClassPicker(view, character, planned, new LevelUpPlan(view, character, this));
   }
 
   /** A feat picker for the character: what it offers and leaves out, and a page of options described. */

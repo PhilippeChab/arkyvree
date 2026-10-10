@@ -1,6 +1,7 @@
 import { type CharacterInput, CharacterProjection, type PlannedSoFar } from "@/engine/core/module/index.ts";
 import { CharacterPicker } from "@/engine/core/pickers/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
+import type LevelUpPlan from "@/engine/rulesets/dnd3.5/levelUp/LevelUpPlan.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import Dnd35CharacterBuilder from "@/engine/rulesets/dnd3.5/model/Dnd35CharacterBuilder.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
@@ -10,7 +11,8 @@ import { stripSeparators } from "@/shared/text.ts";
 /**
  * The class picker for the character, from its rows and what the level-up wizard plans so far: a player character's
  * classes (`filters`), each the character can take another level of offered with that level and its class's last, and
- * checked with that level added; highest next level first, then by name.
+ * checked with that level added; highest next level first, then by name. The skill points spent so far go on the planned
+ * levels as a save would spread them (`plan`).
  */
 export default class ClassPicker extends CharacterPicker<
   DetailedCharacter,
@@ -21,6 +23,7 @@ export default class ClassPicker extends CharacterPicker<
     view: RulesetView,
     input: CharacterInput,
     private readonly planned: PlannedSoFar,
+    private readonly plan: LevelUpPlan,
   ) {
     super(view, input, Dnd35CharacterBuilder);
   }
@@ -73,17 +76,19 @@ export default class ClassPicker extends CharacterPicker<
   }
 
   /**
-   * What the level-up wizard plans adds to the character, for the class picker: its planned levels, and its feats and
-   * skill ranks picked so far, which requirements read: at the first planned level, or at the character's last level
-   * when it plans none.
+   * What the level-up wizard plans adds to the character, for the class picker: its planned levels, the skill points
+   * spent so far, each planned level's as a save spreads them, and the feats picked so far, which requirements read: at
+   * the first planned level, or at the character's last level when it plans none.
    */
   protected project() {
-    const { abilityIds, featPicks, klassLevelIds = [], skillRanks } = this.planned;
+    const { abilityIds, featPicks, klassLevelIds = [] } = this.planned;
     const projection = new CharacterProjection(this.input);
     const hp = LevelRules.UNROLLED_LEVEL_HP;
-    const [first] = projection.addLevels(klassLevelIds, { abilityIds, hp });
-    const pickedAt = first ?? this.input.rows.levels.toSorted((a, b) => a.position - b.position).at(-1);
-    if (pickedAt) projection.pick(pickedAt, { feats: featPicks, skills: skillRanks });
+    const levels = projection.addLevels(klassLevelIds, { abilityIds, hp });
+    for (const [i, skills] of this.plan.spreadSkillPoints(this.planned).entries())
+      projection.pick(levels[i], { skills });
+    const pickedAt = levels[0] ?? this.input.rows.levels.toSorted((a, b) => a.position - b.position).at(-1);
+    if (pickedAt) projection.pick(pickedAt, { feats: featPicks });
     return projection;
   }
 
