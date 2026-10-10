@@ -67,12 +67,10 @@ function fork(
 /** A race, a class, a skill and a feat: what a ruleset needs to be published. */
 async function addPlayableContent(rulesetId: string) {
   const [ability] = await Abilities.create(db, { name: "Strength", description: "Strength", rulesetId });
-  const [[race], [klass], [skill], [feat]] = await Promise.all([
-    Races.create(db, { name: "Human", rulesetId, size: "Medium", baseSpeed: 30 }),
-    Klasses.create(db, { name: "Fighter", rulesetId, hd: 10 }),
-    Skills.create(db, { name: "Climb", rulesetId, primaryAbilityId: ability.id }),
-    Feats.create(db, { name: "Toughness", rulesetId }),
-  ]);
+  const [race] = await Races.create(db, { name: "Human", rulesetId, size: "Medium", baseSpeed: 30 });
+  const [klass] = await Klasses.create(db, { name: "Fighter", rulesetId, hd: 10 });
+  const [skill] = await Skills.create(db, { name: "Climb", rulesetId, primaryAbilityId: ability.id });
+  const [feat] = await Feats.create(db, { name: "Toughness", rulesetId });
   return { race, klass, skill, feat };
 }
 

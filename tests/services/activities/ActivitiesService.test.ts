@@ -23,8 +23,10 @@ function resolve(targetTable: string, targetId: string, session: Session = makeS
   return ActivitiesService.getActivityUrl(session, targetTable, targetId);
 }
 
-function resolveAll(targets: string[][]) {
-  return Promise.all(targets.map(([table, id]) => resolve(table, id)));
+async function resolveAll(targets: string[][]) {
+  const urls = [];
+  for (const [table, id] of targets) urls.push(await resolve(table, id));
+  return urls;
 }
 
 describe("ActivitiesService.getActivityUrl", () => {

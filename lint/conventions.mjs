@@ -33,7 +33,8 @@
  * - `writes-in-transactions`: a repository write or lock (`methodVerbs.json`'s verbs) outside the repositories takes a
  *   transaction's handle, `tx` (`withTransaction(async (tx) => …)`), never the shared `db`: a write is atomic with the
  *   rest of its request, and a lock holds until its transaction ends. A transaction's queries run one at a time, on its
- *   one connection: never in a `Promise.all` (`tx`, or a handle the function is given, which may be a transaction).
+ *   one connection: never in a `Promise.all` (`tx`, or a handle the function is given, which may be a transaction), nor,
+ *   in a test, over its `db`, which is the test's transaction (`tests/setup.ts`), and which it writes through.
  * - `empty-list-reads`: an empty list never reaches the database, and is checked in one place: the repository. A read
  *   method filtering on a list of `where` (`inArray(column, where.ids)`, outside an `or`) answers an empty one without a
  *   query (`if (where.ids.length === 0) return [];` first), and its callers read without checking: no
@@ -946,7 +947,10 @@ function createTestPlacement(context) {
 
 function createWritesInTransactions(context) {
   const file = repoPath(context.filename);
-  if (!file.startsWith("server/") || /^server\/(repositories|database)\//.test(file)) return {};
+  // A test's `db` is its own transaction (`tests/setup.ts`), which it writes through; an e2e test holds none
+  const inTest = file.startsWith("tests/") && !file.startsWith("tests/e2e/");
+  if (!inTest && (!file.startsWith("server/") || /^server\/(repositories|database)\//.test(file))) return {};
+  const transactions = new Set(inTest ? ["tx", "db"] : ["tx"]);
   // The repositories' shared instances this file imports.
   const repositories = new Set();
   return {
@@ -962,19 +966,21 @@ function createWritesInTransactions(context) {
         const onTransaction = [...callsIn(node.arguments[0])].some((call) => {
           const handle = call.arguments[0];
           if (handle?.type !== "Identifier") return false;
-          if (handle.name === "tx") return true;
+          if (transactions.has(handle.name)) return true;
           const isRepository = call.callee.type === "MemberExpression" && repositories.has(call.callee.object.name);
           return isRepository && isParameterOf(call, handle.name);
         });
         if (onTransaction) {
           context.report({
             node,
-            message:
-              "A transaction runs one query at a time, on its one connection: await these in turn, not in `Promise.all` (pg queues them, and pg@9 throws).",
+            message: inTest
+              ? "A test's `db` is its transaction, which runs one query at a time on its one connection: await these in turn, not in `Promise.all`."
+              : "A transaction runs one query at a time, on its one connection: await these in turn, not in `Promise.all` (pg queues them, and pg@9 throws).",
           });
         }
         return;
       }
+      if (inTest) return;
       if (!repositories.has(callee.object.name) || callee.property.type !== "Identifier") return;
       const method = callee.property.name;
       if (!WRITE_VERBS.some((verb) => startsWithVerb(method, verb))) return;

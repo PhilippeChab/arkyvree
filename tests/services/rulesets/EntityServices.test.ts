@@ -177,7 +177,12 @@ async function counts(entityType: (typeof ENTITY_TYPES)[number], id: string) {
 
 /** Whether any of these requirements is left. */
 async function remaining(ids: string[]) {
-  return (await Promise.all(ids.map((id) => Requirements.findOne(db, { id })))).filter(Boolean);
+  const left = [];
+  for (const id of ids) {
+    const requirement = await Requirements.findOne(db, { id });
+    if (requirement) left.push(requirement);
+  }
+  return left;
 }
 
 /** A new user's empty ruleset, holding the rows entity bodies refer to. */

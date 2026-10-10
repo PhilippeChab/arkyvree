@@ -15,14 +15,10 @@ async function setup() {
   const { user, session, ruleset } = await createTestUserAndRuleset();
   const rulesetId = ruleset.id;
   const [ability] = await Abilities.create(db, { name: "Strength", description: "Strength", rulesetId });
-  const [fighter, rogue] = await Promise.all(
-    ["Fighter", "Rogue"].map(async (name) => (await Klasses.create(db, { name, rulesetId, hd: 8 }))[0]),
-  );
-  const [climb, swim] = await Promise.all(
-    ["Climb", "Swim"].map(
-      async (name) => (await Skills.create(db, { name, rulesetId, primaryAbilityId: ability.id }))[0],
-    ),
-  );
+  const [fighter] = await Klasses.create(db, { name: "Fighter", rulesetId, hd: 8 });
+  const [rogue] = await Klasses.create(db, { name: "Rogue", rulesetId, hd: 8 });
+  const [climb] = await Skills.create(db, { name: "Climb", rulesetId, primaryAbilityId: ability.id });
+  const [swim] = await Skills.create(db, { name: "Swim", rulesetId, primaryAbilityId: ability.id });
   return { user, session, ruleset, fighter, rogue, climb, swim };
 }
 

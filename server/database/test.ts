@@ -4,6 +4,7 @@
  */
 
 import { drizzle as drizzlePg, type NodePgClient } from "drizzle-orm/node-postgres";
+import type { PoolClient, QueryConfig, QueryResult } from "pg";
 
 import { type Db, SCHEMA_WITH_RELATIONS, type Transaction } from "@/drizzle/database.ts";
 
@@ -30,9 +31,39 @@ export const db = new Proxy(poolDb, {
   },
 });
 
-/** A database on `client`, a connection of the test's own (a competing transaction). */
-export function createTestDbFromClient(client: NodePgClient) {
-  return drizzlePg(client, { schema: SCHEMA_WITH_RELATIONS });
+/**
+ * A connection's queries, run one at a time: each is handed to the connection once the ones before it settled. A
+ * test's transaction holds the shared `db` on one connection, where production spreads it over the pool's, and the
+ * code reads through `db` together (a `Promise.all`, a websocket event published after its response) as a pool lets
+ * it. A connection takes no query while it runs another: pg 8 queues it, warning, and pg@9 throws.
+ */
+class SerialQueries {
+  constructor(private readonly client: PoolClient) {}
+
+  /** The query handed in last, settled or not: the next one waits for it. */
+  private last: Promise<unknown> = Promise.resolve();
+
+  /** Runs `config` once the queries handed in before it settled. */
+  run(config: QueryConfig, values?: unknown[]): Promise<QueryResult> {
+    const result = this.last.then(() => this.client.query(config, values));
+    this.last = result.catch(() => undefined);
+    return result;
+  }
+}
+
+/**
+ * A database on `client`, a connection of the test's own (its transaction, a competing one), which runs its queries
+ * one at a time (`SerialQueries`).
+ */
+export function createTestDbFromClient(client: PoolClient) {
+  const queries = new SerialQueries(client);
+  const serial = new Proxy(client, {
+    get: (target, property, receiver) =>
+      property === "query"
+        ? (config: QueryConfig, values?: unknown[]) => queries.run(config, values)
+        : Reflect.get(target, property, receiver),
+  });
+  return drizzlePg(serial, { schema: SCHEMA_WITH_RELATIONS });
 }
 
 /** A pool of connections to the test database, apart from the run's. */

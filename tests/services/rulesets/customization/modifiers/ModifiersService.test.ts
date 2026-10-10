@@ -20,13 +20,11 @@ async function setup() {
   const { session, ruleset } = await createTestUserAndRuleset();
   const rulesetId = ruleset.id;
   await Abilities.create(db, { name: "Strength", description: "Strength", rulesetId });
-  const [[feat], [item], [power], [race], { klassLevel }] = await Promise.all([
-    Feats.create(db, { name: "Test Feat", rulesetId }),
-    Items.create(db, { name: "Test Item", rulesetId }),
-    Powers.create(db, { name: "Test Power", rulesetId }),
-    Races.create(db, { name: "Test Race", rulesetId, size: "Medium", baseSpeed: 30 }),
-    createTestKlassLevel(rulesetId),
-  ]);
+  const [feat] = await Feats.create(db, { name: "Test Feat", rulesetId });
+  const [item] = await Items.create(db, { name: "Test Item", rulesetId });
+  const [power] = await Powers.create(db, { name: "Test Power", rulesetId });
+  const [race] = await Races.create(db, { name: "Test Race", rulesetId, size: "Medium", baseSpeed: 30 });
+  const { klassLevel } = await createTestKlassLevel(rulesetId);
   const owners = { feats: feat.id, items: item.id, powers: power.id, races: race.id, klass_levels: klassLevel.id };
   return { session, rulesetId, feat, item, owners };
 }

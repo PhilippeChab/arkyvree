@@ -136,8 +136,10 @@ describe("PropertyTypesService", () => {
       },
     ]);
 
-    const pages = [1, 2].map((page) => PropertyTypesService.getCompletions(rulesetId, "custom", { limit: 3, page }));
-    expect(await Promise.all(pages)).toMatchObject([
+    const pages = [];
+    for (const page of [1, 2])
+      pages.push(await PropertyTypesService.getCompletions(rulesetId, "custom", { limit: 3, page }));
+    expect(pages).toMatchObject([
       { items: items.slice(0, 3), nextPage: 2 },
       { items: items.slice(3), nextPage: undefined },
     ]);

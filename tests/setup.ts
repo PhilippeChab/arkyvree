@@ -6,7 +6,6 @@
 import { afterEach, beforeEach } from "bun:test";
 
 import { TransactionRollbackError } from "drizzle-orm/errors";
-import type { NodePgClient } from "drizzle-orm/node-postgres";
 import type { PoolClient } from "pg";
 
 import { createTestDbFromClient, createTestPool, setTestDb } from "@/server/database/test.ts";
@@ -29,7 +28,7 @@ beforeEach(async () => {
   // The test's database is a transaction held open until it ends, then rolled back: a transaction the code under
   // test opens in it is a savepoint, which never commits the test's rows.
   testClient = await testPool.connect();
-  const clientDb = createTestDbFromClient(testClient as unknown as NodePgClient);
+  const clientDb = createTestDbFromClient(testClient);
   await new Promise<void>((started, failed) => {
     testTransaction = clientDb
       .transaction(async (tx) => {
