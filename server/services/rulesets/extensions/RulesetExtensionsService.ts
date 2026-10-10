@@ -8,6 +8,7 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import {
   Activities,
+  EntityReferences,
   EntitySnapshots,
   RULESET_ENTITY_TYPES,
   RulesetEntities,
@@ -16,10 +17,9 @@ import {
   Rulesets,
 } from "@/server/repositories/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import { hasCharacterPicks } from "@/server/services/rulesets/characterPicks.ts";
 import type { Session } from "@/shared/relations.ts";
 
-import { type Copies, repointDepartingReferences } from "./departingReferences.ts";
+import { type Departures, findDepartures, repointDepartingReferences } from "./departingReferences.ts";
 
 class RulesetExtensionsService {
   // Rejects a subscribe action that would surface two entities of the same name in
@@ -44,14 +44,16 @@ class RulesetExtensionsService {
   }
 
   /**
-   * Whether a character on the host picked one of the extension's entities, or one of the host's copies of them
-   * (`copies`), which the unsubscribe deletes: the pick would dangle. Every type's picks (`hasCharacterPicks`).
+   * Whether a character on the host picked what leaves its view with the extension (`departures`): one of its entities,
+   * or one of the host's copies of them, with nothing in its place once it's gone (an entity only the extension has), or
+   * a level of a class the class standing in its place doesn't have. The pick would dangle. A pick of what the view
+   * shows something else in place of (a core feat the extension overrides) names that instead. Every type's picks, a
+   * class's by its levels (`EntityReferences.exists`).
    */
-  private async isExtensionInUseByHost(tx: Db, hostRulesetId: string, extensionId: string, copies: Copies) {
-    for (const entityType of RULESET_ENTITY_TYPES) {
-      const own = await RulesetEntities.findNames(tx, entityType, { rulesetId: extensionId });
-      const ids = [...own.map((entity) => entity.id), ...(copies.get(entityType) ?? [])];
-      if (await hasCharacterPicks(tx, entityType, ids, hostRulesetId)) return true;
+  private async isExtensionInUseByHost(tx: Db, hostRulesetId: string, departures: Departures) {
+    for (const [entityType, fallbacks] of departures) {
+      const ids = [...fallbacks].filter(([, fallbackId]) => !fallbackId).map(([id]) => id);
+      if (await EntityReferences.exists(tx, { entityType, ids, rulesetId: hostRulesetId })) return true;
     }
     return false;
   }
@@ -176,11 +178,13 @@ class RulesetExtensionsService {
           snaps.map((snap) => snap.forkedEntityId),
         ]),
       );
-      policy.canUnsubscribeExtension({ inUse: await this.isExtensionInUseByHost(tx, id, extensionId, copies) });
+      // What leaves with the book, each with what the fork's view shows in its place once it's gone, if anything
+      const departures = await findDepartures(tx, ruleset, extensionId, copies);
+      policy.canUnsubscribeExtension({ inUse: await this.isExtensionInUseByHost(tx, id, departures) });
 
-      // What the fork keeps that names the book's lists moves to its lists of the same name, or the unsubscribe
-      // refuses: before the copies go, links to the fork's copies of the book's lists included
-      await repointDepartingReferences(tx, ruleset, extensionId, copies);
+      // What the fork and its characters keep that names what leaves names what stands in its place, or the
+      // unsubscribe refuses: before the copies go, what names the fork's copies of the book's entities included
+      await repointDepartingReferences(tx, id, departures, copies);
 
       // The fork's copies go as a restore reverts them (`EntityRevert`): what names a copy names the extension's entity
       // first, so no copy's delete trips another's reference to it (an item's copy naming its template's), in any order

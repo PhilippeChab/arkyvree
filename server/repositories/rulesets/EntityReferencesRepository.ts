@@ -1,5 +1,5 @@
 import { and, type Column, eq, exists, getTableColumns, inArray, isNull, or, type SQL, sql } from "drizzle-orm";
-import { alias, getTableConfig, type PgColumn, unionAll } from "drizzle-orm/pg-core";
+import { alias, getTableConfig, type PgColumn, union, unionAll } from "drizzle-orm/pg-core";
 
 import type { Db } from "@/drizzle/database.ts";
 import {
@@ -10,7 +10,12 @@ import {
   rulesetsInRules,
 } from "@/drizzle/schema.ts";
 
-import { ENTITY_REFERENCES, type ReferencedType, type ReferenceOwner } from "./entityReferences.ts";
+import {
+  ENTITY_REFERENCES,
+  type EntityReference,
+  type ReferencedType,
+  type ReferenceOwner,
+} from "./entityReferences.ts";
 import { ENTITY_TABLES, type RulesetEntityType } from "./entityTables.ts";
 
 /** What a character's row naming an entity belongs to: the character, or one of its levels. */
@@ -43,9 +48,39 @@ function keyOf(columns: Record<string, Column>, column: Column) {
 /**
  * The rows that name an entity, every table's (`ENTITY_REFERENCES`): those of a ruleset an unsubscribe would leave
  * dangling (`findMany`), the characters an in-use check counts (`exists`), and every row a revert points at another
- * entity (`update`), a restore's or an unsubscribe's (`EntityRevert`).
+ * entity (`update`), a restore's or an unsubscribe's (`EntityRevert`), or one ruleset's rows an unsubscribe points at
+ * what its view shows once the extension is gone.
  */
 class EntityReferencesRepository {
+  /**
+   * Whether a row belongs to `rulesetId`, by what it belongs to: one of the ruleset's entities or its classes' levels
+   * (the rows `findMany` reads), or a character on the ruleset or on a ruleset built on it (those `exists` counts).
+   */
+  private ownedBy(db: Db, owner: ReferenceOwner, rulesetId: string): SQL {
+    if (isCharacters(owner)) {
+      const characters = db
+        .select({ id: charactersInCharacter.id })
+        .from(charactersInCharacter)
+        .innerJoin(rulesetsInRules, this.rulesetOrDescendant(charactersInCharacter.rulesetId, rulesetId));
+      if ("characterId" in owner) return inArray(owner.characterId, characters);
+      const levels = db
+        .select({ id: levelsInCharacter.id })
+        .from(levelsInCharacter)
+        .where(inArray(levelsInCharacter.characterId, characters));
+      return inArray(owner.characterLevelId, levels);
+    }
+    if ("klassLevelId" in owner) {
+      const levels = db
+        .select({ id: klassLevelsInRules.id })
+        .from(klassLevelsInRules)
+        .innerJoin(klassesInRules, eq(klassesInRules.id, klassLevelsInRules.klassId))
+        .where(eq(klassesInRules.rulesetId, rulesetId));
+      return inArray(owner.klassLevelId, levels);
+    }
+    const entity = ENTITY_TABLES[owner.entityType];
+    return inArray(owner.id, db.select({ id: entity.id }).from(entity).where(eq(entity.rulesetId, rulesetId)));
+  }
+
   /**
    * The ruleset's join when it's `rulesetId` or a ruleset built on it, by `rulesetIdColumn` (a character's ruleset): a
    * fork of it, or a ruleset subscribing to it as an extension. What an in-use check counts.
@@ -125,12 +160,14 @@ class EntityReferencesRepository {
   }
 
   /**
-   * Points `column`'s `from` at `to`, leaving the rows' `updatedAt`: a repoint isn't an edit. A row that would then
-   * repeat another by its table's primary key goes instead: the one naming `to` already stays.
+   * Points `column`'s `from` at `to`, every row's or `rulesetId`'s rows only (`ownedBy`), leaving the rows' `updatedAt`:
+   * a repoint isn't an edit. A row that would then repeat another by its table's primary key goes instead: the one
+   * naming `to` already stays.
    */
-  private async repoint(db: Db, column: PgColumn, from: string, to: string) {
+  private async repoint(db: Db, { column, owner }: EntityReference, from: string, to: string, rulesetId?: string) {
     const { table } = column;
     const columns = getTableColumns(table);
+    const named = and(eq(column, from), rulesetId === undefined ? undefined : this.ownedBy(db, owner, rulesetId));
     const [primaryKey] = getTableConfig(table).primaryKeys;
     if (primaryKey?.columns.some((keyColumn) => keyColumn.name === column.name)) {
       const twin = alias(table, "twin");
@@ -141,7 +178,7 @@ class EntityReferencesRepository {
         .map((keyColumn) => eq(twinOf(keyColumn), keyColumn));
       await db.delete(table).where(
         and(
-          eq(column, from),
+          named,
           exists(
             db
               .select({ one: sql<number>`1` })
@@ -154,7 +191,7 @@ class EntityReferencesRepository {
     await db
       .update(table)
       .set({ [keyOf(columns, column)]: to })
-      .where(eq(column, from));
+      .where(named);
   }
 
   /**
@@ -168,6 +205,25 @@ class EntityReferencesRepository {
       if (isCharacters(owner) && (await this.existsPick(db, column, owner, where))) return true;
 
     return false;
+  }
+
+  /**
+   * The ids among `entityIds` that `rulesetId`'s rows name (`ownedBy`): its entities' rows and its classes' levels', and
+   * its characters' and those of the characters on a ruleset built on it. What an unsubscribe points at what stands in
+   * their place, each with `update`.
+   */
+  async findIds(db: Db, where: { entityIds: string[]; rulesetId: string }): Promise<string[]> {
+    if (where.entityIds.length === 0) return [];
+    const [first, second, ...rest] = Object.values(ENTITY_REFERENCES).flatMap((references) =>
+      references.map(({ column, owner }) =>
+        db
+          .select({ id: sql<string>`${column}`.as("id") })
+          .from(column.table)
+          .where(and(inArray(column, where.entityIds), this.ownedBy(db, owner, where.rulesetId))),
+      ),
+    );
+    const rows = await union(first, second, ...rest).orderBy(sql`id`);
+    return rows.map((row) => row.id);
   }
 
   /**
@@ -189,12 +245,20 @@ class EntityReferencesRepository {
 
   /**
    * Points every row naming an entity (`where.entityId`) at another of its type (`values.entityId`): a ruleset's and a
-   * character's, whatever their ruleset. A row that would then repeat one naming the other (by its table's primary
-   * key: a feat's link to a list it links to already) goes instead.
+   * character's, whatever their ruleset, or one ruleset's (`rulesetId`): its entities' rows and its classes' levels',
+   * and its characters' and those of the characters on a ruleset built on it. A row that would then repeat one naming
+   * the other (by its table's primary key: a feat's link to a list it links to already) goes instead.
    */
-  async update(db: Db, values: { entityId: string }, where: { entityId: string; entityType: ReferencedType }) {
-    for (const { column } of ENTITY_REFERENCES[where.entityType])
-      await this.repoint(db, column, where.entityId, values.entityId);
+  async update(
+    db: Db,
+    values: { entityId: string },
+    where:
+      | { entityId: string; entityType: ReferencedType }
+      | { entityId: string; entityType: ReferencedType; rulesetId: string },
+  ) {
+    const rulesetId = "rulesetId" in where ? where.rulesetId : undefined;
+    for (const reference of ENTITY_REFERENCES[where.entityType])
+      await this.repoint(db, reference, where.entityId, values.entityId, rulesetId);
   }
 }
 

@@ -127,7 +127,7 @@ Hard-deleted via `Users.delete` (gated on `expiresAt` / `@demo.invalid`). Demo d
 
 ### A fork's copies of an extension's entities (`unsubscribeExtension`)
 
-`RulesetExtensionsService.unsubscribeExtension` hard-deletes the fork's copies of the extension's entities. It does so once what the fork keeps of them was repointed or refused (`extensions/departingReferences.ts`), and once no character picked one. It reverts each copy as a restore does (`EntityRevert`, `server/cow/writes/`):
+`RulesetExtensionsService.unsubscribeExtension` hard-deletes the fork's copies of the extension's entities. It does so once what the fork and its characters keep that names what leaves was pointed at what the fork's view shows in its place, or refused when nothing stands there (`extensions/departingReferences.ts`). It reverts each copy as a restore does (`EntityRevert`, `server/cow/writes/`):
 
 - Every row naming the copy is pointed at the extension's entity (`EntityReferences.update`, by the list of what names each type, `ENTITY_REFERENCES`). By then, those rows are the other copies' only.
 - The copy goes, then its snapshot. The database deletes the copy's own rows with it (FK CASCADE: its links, a class's levels and skills) and the customizations of every row it deletes (see *Polymorphic rows* above).

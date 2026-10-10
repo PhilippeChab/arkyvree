@@ -18,6 +18,12 @@ import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import {
   Abilities,
   Aptitudes,
+  CharacterInventory,
+  CharacterLanguages,
+  CharacterLevelFeats,
+  CharacterLevelPowers,
+  CharacterLevels,
+  CharacterLevelSkills,
   Characters,
   EntityReferences,
   EntitySnapshots,
@@ -63,7 +69,7 @@ import {
   editRuleset,
   invalidateSeededRuleset,
 } from "@/tests/support/rulesets.ts";
-import { findSeededRuleset, getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
+import { findPlainItem, findSeededRuleset, getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
 type EntityType = "feats" | "powers";
@@ -243,6 +249,33 @@ async function forkTaking(...books: string[]) {
   return { session, draft, character };
 }
 
+/**
+ * A level a new character of the user's took on the ruleset, in a class of the ruleset's own, picking this entity from
+ * this list.
+ */
+async function levelPicking(userId: string, rulesetId: string, type: EntityType, entityId: string, aptitudeId: string) {
+  const character = await createTestCharacter(userId, { rulesetId });
+  const { klassLevel } = await createTestKlassLevel(rulesetId);
+  const picks =
+    type === "feats" ? { feats: [{ featId: entityId, aptitudeId }] } : { powers: [{ powerId: entityId, aptitudeId }] };
+  return await addCharacterLevel(character.id, klassLevel.id, picks);
+}
+
+/** A level's picks of a type, each by the entity it names and the list it's from. */
+async function picksOf(type: EntityType, characterLevelId: string) {
+  const where = { characterLevelIds: [characterLevelId] };
+  if (type === "feats") {
+    return (await CharacterLevelFeats.findMany(db, where)).map(({ featId, aptitudeId }) => ({
+      entityId: featId,
+      aptitudeId,
+    }));
+  }
+  return (await CharacterLevelPowers.findMany(db, where)).map(({ powerId, aptitudeId }) => ({
+    entityId: powerId,
+    aptitudeId,
+  }));
+}
+
 /** The seeded base, its Complete Warrior extension, and a new user's fork of the base. */
 async function setupFork() {
   const { user, session } = await createTestUser();
@@ -297,6 +330,14 @@ async function setupSiblings(entityType: EntityType) {
   const draft = await forkBase(session);
   await RulesetExtensionsService.subscribeExtension(session, draft.id, extensions);
   return { session, draft, baseId, contributions };
+}
+
+/** Complete Warrior's own feat or spell of this name: its copy of a core one, or one only the book has. */
+async function warriorEntity(type: EntityType, name: string) {
+  const { id: rulesetId } = await findSeededRuleset(DND35_COMPLETE_WARRIOR_NAME);
+  const entity =
+    type === "feats" ? await Feats.findOne(db, { name, rulesetId }) : await Powers.findOne(db, { name, rulesetId });
+  return entity!.id;
 }
 
 /** A seeded Complete Warrior feat, with the aptitude it's picked through. */
@@ -811,6 +852,202 @@ describe("unsubscribing from an extension", () => {
     expect(RulesetExtensionsService.unsubscribeExtension(session, draft.id, extension.id)).rejects.toThrow(
       ConflictError,
     );
+  });
+
+  test.each([
+    ["feats", "Spirited Charge", "General"],
+    ["powers", "Bull's Strength", "Cleric Spells"],
+  ] as const)(
+    "keeps a character's pick of a core entity it overrides (%s: %s) as the core one, whichever id the pick names",
+    async (type, name, list) => {
+      const { user, session, extension: warrior, draft } = await setupFork();
+      await RulesetExtensionsService.subscribeExtension(session, draft.id, [warrior.id]);
+      const { aptMap, featMap, powerMap } = await getSeedCtx();
+      const coreId = (type === "feats" ? featMap : powerMap)[name];
+      const copyId = await warriorEntity(type, name);
+      expect(copyId).not.toBe(coreId);
+      const aptitudeId = aptMap[list];
+      // A level-up writes the id the view shows, the book's copy; a pick made before subscribing names the core one
+      const ofCopy = await levelPicking(user.id, draft.id, type, copyId, aptitudeId);
+      const ofCore = await levelPicking(user.id, draft.id, type, coreId, aptitudeId);
+
+      expect(await RulesetExtensionsService.unsubscribeExtension(session, draft.id, warrior.id)).toEqual({
+        unsubscribed: true,
+      });
+      for (const level of [ofCopy, ofCore])
+        expect(await picksOf(type, level.id)).toEqual([{ entityId: coreId, aptitudeId }]);
+    },
+  );
+
+  test.each([
+    ["a feat only it has", "feats", "Monkey Grip", "General"],
+    ["a spell only it has", "powers", "Cloak of Bravery", "Cleric Spells"],
+    ["a core spell it overrides, from a list only it has", "powers", "Bull's Strength", "Knight of the Chalice Spells"],
+  ] as const)("is refused while a character picked %s", async (_, type, name, list) => {
+    const { user, session, extension: warrior, draft } = await setupFork();
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [warrior.id]);
+    const aptitude =
+      (await Aptitudes.findOne(db, { name: list, rulesetId: draft.ancestorRulesetIds[0] })) ??
+      (await Aptitudes.findOne(db, { name: list, rulesetId: warrior.id }))!;
+    const level = await levelPicking(user.id, draft.id, type, await warriorEntity(type, name), aptitude.id);
+
+    expect(RulesetExtensionsService.unsubscribeExtension(session, draft.id, warrior.id)).rejects.toThrow(
+      "Cannot unsubscribe from extensions on a ruleset in use by characters",
+    );
+    expect(await picksOf(type, level.id)).toMatchObject([{ aptitudeId: aptitude.id }]);
+  });
+
+  test("points the fork's class granting a core feat it overrides at the core feat", async () => {
+    const { session, extension: warrior, draft } = await setupFork();
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [warrior.id]);
+    const { aptMap, featMap } = await getSeedCtx();
+    const { klassLevel } = await createTestKlassLevel(draft.id);
+    const grant = { featId: await warriorEntity("feats", "Spirited Charge"), aptitudeId: aptMap["General"] };
+    await KlassLevelFeats.create(db, { klassLevelId: klassLevel.id, ...grant });
+
+    await RulesetExtensionsService.unsubscribeExtension(session, draft.id, warrior.id);
+    expect(await KlassLevelFeats.findMany(db, { klassLevelIds: [klassLevel.id] })).toMatchObject([
+      { featId: featMap["Spirited Charge"], aptitudeId: aptMap["General"] },
+    ]);
+  });
+
+  test("points what the fork and its characters keep naming a core race, item, language or skill it overrides at the core one, and no other ruleset's", async () => {
+    const { user, session, draft } = await setupFork();
+    const extension = await createExtension(user.id);
+    const ctx = await getSeedCtx();
+    const core = {
+      race: ctx.raceMap.pc["Human"],
+      item: (await findPlainItem(ctx.rulesetId)).id,
+      language: ctx.langMap["Elven"],
+      skill: ctx.skillMap["Climb"],
+    };
+    const copies = {
+      race: (await copyEntity(db, "races", core.race, extension)).id,
+      item: (await copyEntity(db, "items", core.item, extension)).id,
+      language: (await copyEntity(db, "languages", core.language, extension)).id,
+      skill: (await copyEntity(db, "skills", core.skill, extension)).id,
+    };
+    // A subrace of the copy in the fork and in the extension, and a character naming the copies on the fork and on
+    // another fork of the user's taking the extension
+    const subraceOf = async (rulesetId: string) =>
+      (
+        await Races.create(db, {
+          name: `Deep Kin ${uniqueId()}`,
+          size: "Small",
+          baseSpeed: 20,
+          parentId: copies.race,
+          rulesetId,
+        })
+      )[0];
+    const characterOn = async (rulesetId: string) => {
+      const character = await createTestCharacter(user.id, { rulesetId, raceId: copies.race });
+      await CharacterInventory.create(db, { characterId: character.id, itemId: copies.item, quantity: 1 });
+      await CharacterLanguages.create(db, { characterId: character.id, languageId: copies.language });
+      const { klassLevel } = await createTestKlassLevel(rulesetId);
+      const level = await addCharacterLevel(character.id, klassLevel.id, {
+        skills: [{ skillId: copies.skill, rank: 2 }],
+      });
+      return { character, level };
+    };
+    const named = async ({ character, level }: Awaited<ReturnType<typeof characterOn>>) => ({
+      race: (await Characters.findOne(db, { id: character.id }))!.raceId,
+      item: (await CharacterInventory.findMany(db, { characterId: character.id }))[0].itemId,
+      language: (await CharacterLanguages.findMany(db, { characterId: character.id }))[0].languageId,
+      skill: (await CharacterLevelSkills.findMany(db, { characterLevelIds: [level.id] }))[0].skillId,
+    });
+    const other = await forkBase(session);
+    for (const fork of [draft, other])
+      await RulesetExtensionsService.subscribeExtension(session, fork.id, [extension.id]);
+    const [ownSubrace, extensionSubrace] = [await subraceOf(draft.id), await subraceOf(extension.id)];
+    const [mine, theirs] = [await characterOn(draft.id), await characterOn(other.id)];
+
+    await RulesetExtensionsService.unsubscribeExtension(session, draft.id, extension.id);
+    expect(await named(mine)).toEqual(core);
+    expect(await Races.findOne(db, { id: ownSubrace.id })).toMatchObject({ parentId: core.race });
+    expect(await named(theirs)).toEqual(copies);
+    expect(await Races.findOne(db, { id: extensionSubrace.id })).toMatchObject({ parentId: copies.race });
+  });
+
+  test("points a pick of the fork's copy of a core feat it overrides at the core feat, the copy going", async () => {
+    const { user, session, extension: warrior, draft } = await setupFork();
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [warrior.id]);
+    const { aptMap, featMap } = await getSeedCtx();
+    const mine = await FeatsService.updateFeat(session, draft.id, await warriorEntity("feats", "Spirited Charge"), {
+      name: "Spirited Charge",
+      description: "Mine",
+    });
+    const level = await levelPicking(user.id, draft.id, "feats", mine.id, aptMap["General"]);
+
+    await RulesetExtensionsService.unsubscribeExtension(session, draft.id, warrior.id);
+    expect(await picksOf("feats", level.id)).toEqual([
+      { entityId: featMap["Spirited Charge"], aptitudeId: aptMap["General"] },
+    ]);
+    expect(await Feats.findOne(db, { id: mine.id })).toBeUndefined();
+    expect(await featsNamed(draft.id, "Spirited Charge")).toMatchObject([{ id: featMap["Spirited Charge"] }]);
+  });
+
+  test("points a pick of the copy of a feat two extensions override at the other one's, which wins once it's gone", async () => {
+    const { session, draft, baseId, contributions } = await setupSiblings("feats");
+    const general = (await getSeedCtx()).aptMap["General"];
+    const winner = (await RulesetViews.getCowData((await Rulesets.findOne(db, { id: draft.id }))!)).resolve(baseId);
+    expect(winner).not.toBe(baseId);
+    const other = contributions.find((contribution) => contribution.copyId !== winner)!;
+    const level = await levelPicking(session.userId, draft.id, "feats", winner, general);
+
+    await RulesetExtensionsService.unsubscribeExtension(
+      session,
+      draft.id,
+      (await Feats.findOne(db, { id: winner }))!.rulesetId,
+    );
+    expect(await picksOf("feats", level.id)).toEqual([{ entityId: other.copyId, aptitudeId: general }]);
+  });
+
+  test("points a character's pick from its list at the list of that name another book has", async () => {
+    const { user, session, extension: warrior, draft } = await setupFork();
+    const dmg = await findSeededRuleset(DND35_DMG_NAME);
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [warrior.id, dmg.id]);
+    const [warriorAssassin, dmgAssassin] = [
+      (await Aptitudes.findOne(db, { name: "Assassin Spells", rulesetId: warrior.id }))!,
+      (await Aptitudes.findOne(db, { name: "Assassin Spells", rulesetId: dmg.id }))!,
+    ];
+    const spell = (await getSeedCtx()).powerMap["Magic Missile"];
+    const level = await levelPicking(user.id, draft.id, "powers", spell, warriorAssassin.id);
+
+    await RulesetExtensionsService.unsubscribeExtension(session, draft.id, warrior.id);
+    expect(await picksOf("powers", level.id)).toEqual([{ entityId: spell, aptitudeId: dmgAssassin.id }]);
+  });
+
+  test("moves a character's level in a class it overrides to the class's level of its number, refused for a level or a class only it has", async () => {
+    const { user, session } = await createTestUser();
+    const parent = await createTestRuleset(null, { private: false, status: "Published" });
+    const fork = { rulesetId: parent.id, ancestorRulesetIds: [parent.id] };
+    const extension = await createTestRuleset(null, {
+      ...fork,
+      kind: "extension",
+      private: false,
+      status: "Published",
+    });
+    const draft = await createTestRuleset(user.id, fork);
+    // A class of the parent's with one level, which the extension copied and gave a second, and a class of its own
+    const [source] = await Klasses.create(db, { name: `Parent Class ${uniqueId()}`, rulesetId: parent.id, hd: 8 });
+    const [sourceLevel] = await KlassLevels.create(db, { klassId: source.id, level: 1 });
+    const copy = await copyEntity(db, "klasses", source.id, extension);
+    const [copyLevel] = await KlassLevels.findMany(db, { klassId: copy.id });
+    const [added] = await KlassLevels.create(db, { klassId: copy.id, level: 2 });
+    const { klassLevel: own } = await createTestKlassLevel(extension.id);
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
+    const character = await createTestCharacter(user.id, { rulesetId: draft.id });
+    const kept = await addCharacterLevel(character.id, copyLevel.id);
+
+    for (const klassLevelId of [added.id, own.id]) {
+      const level = await addCharacterLevel(character.id, klassLevelId);
+      expect(RulesetExtensionsService.unsubscribeExtension(session, draft.id, extension.id)).rejects.toThrow(
+        ConflictError,
+      );
+      await CharacterLevels.delete(db, { id: level.id });
+    }
+    await RulesetExtensionsService.unsubscribeExtension(session, draft.id, extension.id);
+    expect(await CharacterLevels.findOne(db, { id: kept.id })).toMatchObject({ klassLevelId: sourceLevel.id });
   });
 
   test("refuses an extension the fork doesn't use, another user, and an archived fork", async () => {
