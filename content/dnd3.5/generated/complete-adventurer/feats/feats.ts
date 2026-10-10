@@ -135,14 +135,14 @@ export const GENERAL_FEATS: FeatSeed[] = [
     name: "Brachiation",
     description:
       "You can move through wooded areas at your base land speed, ignoring any effects on movement due to terrain. You must be at least 20 feet from the ground to use this ability. This ability works only in medium and dense forests",
-    aptitudes: ["General"],
+    aptitudes: ["General", "Scout Bonus Feat"],
     requirements: [gte("skills.climb.rank", 4), gte("skills.jump.rank", 4)],
   },
   {
     name: "Danger Sense",
     description:
       "Once per day, you can reroll an initiative check you have just made. You use the better of your two rolls. You must decide to reroll before the round starts.",
-    aptitudes: ["General"],
+    aptitudes: ["General", "Scout Bonus Feat"],
     requirements: [eq("feats.improvedinitiative.possessed")],
   },
   {
@@ -252,7 +252,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     name: "Hear The Unseen",
     description:
       "As a move action that does not provoke attacks of opportunity, you can attempt a DC 25 Listen check. If successful, you can pinpoint the location of all foes within 30 feet, as long as you have line of effect to them. This benefit does not eliminate the normal miss chance for fighting foes with concealment, but it ensures that you can target the correct square with your attacks. If you are deafened or within an area of silence, you can't use this feat. If an invisible or hidden opponent is attempting to move silently, your Listen check is opposed by your opponent's Move Silently check, but your opponent gains a +15 bonus on this check. This feat does not work against perfectly silent opponents, such as incorporeal creatures.",
-    aptitudes: ["General"],
+    aptitudes: ["General", "Scout Bonus Feat"],
     requirements: [eq("feats.blindfight.possessed"), gte("skills.listen.rank", 5)],
   },
   {
@@ -264,7 +264,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
   {
     name: "Improved Swimming",
     description: "You can swim half your speed as a move action or your speed as a full-round action.",
-    aptitudes: ["General"],
+    aptitudes: ["General", "Exemplar Bonus Feat", "Scout Bonus Feat"],
     requirements: [gte("skills.swim.rank", 6)],
   },
   {
@@ -318,13 +318,13 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description:
       "You immediately gain 5 skill points. Spend these skill points as normal. You cannot exceed the normal maximum ranks for your level in any skill.",
     stackable: true,
-    aptitudes: ["General"],
+    aptitudes: ["General", "Exemplar Bonus Feat"],
   },
   {
     name: "Quick Reconnoiter",
     description:
       "You can make one Spot check and one Listen check each round as a free action. You also gain a +2 bonus on initiative checks.",
-    aptitudes: ["General"],
+    aptitudes: ["General", "Scout Bonus Feat"],
     requirements: [gte("skills.listen.rank", 5), gte("skills.spot.rank", 5)],
     modifiers: [{ target: "combat.initiative.misc", operator: "add", value: "2", valueType: "number" }],
   },
@@ -362,7 +362,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     name: "Versatile Performer",
     description:
       "Pick a number of Perform categories equal to your Intelligence bonus (minimum 1). For the purpose of making Perform checks, you are treated as having a number of ranks in those skills equal to the highest number of ranks you have in any Perform category. You cannot change these categories once you have picked them, but your score in them automatically increases if you later add additional ranks in your highestranked Perform category. You gain new categories of your choice if your Intelligence bonus permanently increases. In addition, you gain a +2 bonus on a combined Perform check when using two or more forms of performance at the same time, such as a bard strumming a lyre while singing. In such cases, add the bonus to the higher of your two Perform skill modifiers.",
-    aptitudes: ["General"],
+    aptitudes: ["General", "Exemplar Bonus Feat"],
     requirements: [gte("skills.perform.rank", 5)],
   },
 ];

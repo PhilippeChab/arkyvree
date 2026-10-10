@@ -194,6 +194,7 @@ What the generator reads is derived from the two each time a reference is loaded
 
 `bun run parser:dnd3.5:validate` lists:
 - unresolved detections, and items without a definition (the generator leaves them out), not yet listed in `overrides.reviewed`; and entries of `overrides.reviewed` that cover none of them, or repeat one;
+- a class's bonus feat list entries that name no feat (the seeds leave them out), not yet listed in its `overrides.reviewed`;
 - classes the generator refuses;
 - class overrides that change nothing (they hold what's derived without them) or that the generator ignores;
 - values the seed refuses, such as a race's size or a magic item's slot. These can't be marked reviewed: correct the value with an override, or skip the entry;
@@ -201,7 +202,7 @@ What the generator reads is derived from the two each time a reference is loaded
 
 ## COW-ing core entities into extensions
 
-When an extension changes a core entity (a feat its classes take in more aptitudes, a spell it adds to its spell lists), it copies it (copy on write) rather than recreating it: `database/seeders/core/concerns/CopiesOnWrite.ts` copies the entity and its customizations and records the copy in `entity_snapshots`, the same way a fork does, a power's copy keeping its spell lists (3.5's `copyPowerLinks`); 3.5's `CopiesIntoExtensions` changes the copies as the book says. Each extension book's generated `cowFeats.ts` and `cowSpells.ts` list what it changes (`codegen/dnd3.5/tools/seeds/concerns/Copies.ts`, a concern of `BookSeeds`).
+When an extension changes a core entity (a feat its classes take in more aptitudes, a spell it adds to its spell lists), it copies it (copy on write) rather than recreating it: `database/seeders/core/concerns/CopiesOnWrite.ts` copies the entity and its customizations and records the copy in `entity_snapshots`, the same way a fork does, a power's copy keeping its spell lists (3.5's `copyPowerLinks`); 3.5's `CopiesIntoExtensions` changes the copies as the book says. Each extension book's generated `cowFeats.ts` and `cowSpells.ts` list what it changes (`codegen/dnd3.5/tools/seeds/concerns/Copies.ts`, a concern of `BookSeeds`): each core feat a class's bonus feat list names, by its letters, and a core family's feat for each of its options when the list names the family ("Skill Focus"). A feat of the book's own needs no copy: the feat generator gives it the list (a list's "Hear the Unseen" is the book's Hear The Unseen).
 
 ### Aptitude ownership rules
 

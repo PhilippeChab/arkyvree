@@ -37,7 +37,11 @@
       "Weapon and Armor Proficiency": {
         "description": "Geomancers do not gain any additional weapon or armor proficiencies."
       }
-    }
+    },
+    "reviewed": [
+      "a new terrain in which to receive the benefit (at +1)",
+      "increase his effective caster level in a previously chosen terrain by an additional +1"
+    ]
   },
   "raw": {
     "classFeatures": [

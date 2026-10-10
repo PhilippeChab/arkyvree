@@ -30,8 +30,8 @@ bun run parser:dnd3.5:sync
 bun run parser:dnd3.5:sync srd                     # filter by book
 bun run parser:dnd3.5:sync srd --type class         # filter by book + type
 
-# Validate reference files: unresolved detections (a class feature's too), class overrides that change nothing, and
-# values the seed refuses
+# Validate reference files: unresolved detections (a class feature's too), class overrides that change nothing, a class's
+# bonus feat list entries that name no feat, and values the seed refuses
 bun run parser:dnd3.5:validate
 bun run parser:dnd3.5:validate --type class
 bun run parser:dnd3.5:validate complete-warrior

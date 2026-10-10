@@ -133,12 +133,13 @@ export class FeatDetector extends BaseDetector<FeatReference> {
 
       const featNameMap = { ...det.featNameMap, ...ovr?.featNameMap };
       const baseAptitudes = ovr?.aptitudes ?? det.aptitudes;
-      const extraAptitudes = (bonusFeatAptitudes.get(entry.name) ?? []).filter((a) => !baseAptitudes.includes(a));
+      const slug = stripSeparators(entry.name);
+      const extraAptitudes = (bonusFeatAptitudes.get(slug) ?? []).filter((a) => !baseAptitudes.includes(a));
 
       // Wrap detected requirements with class-level alternatives from bonusFeatLists
       let requirements = ovr?.requirements ?? det.requirements;
       if (!ovr?.requirements && requirements.length > 0) {
-        const classLevels = bonusFeatClassLevels.get(entry.name);
+        const classLevels = bonusFeatClassLevels.get(slug);
         if (classLevels?.length) {
           const detectedBranch = requirements.length === 1 ? requirements[0] : and(...requirements);
           const classAlts = classLevels.map((cl) => gte(`classes.${cl.classSlug}.level`, cl.minLevel));
@@ -164,17 +165,19 @@ export class FeatDetector extends BaseDetector<FeatReference> {
   }
 
   /**
-   * Each feat's aptitudes from the book's classes: the bonus feat lists that name it, and the class feature aptitude of
-   * a class whose feature says it "gains X as a bonus feat".
+   * Each feat's aptitudes from the book's classes, by its name's slug (a list's "Hear the Unseen" is Hear The Unseen):
+   * the bonus feat lists that name it, and the class feature aptitude of a class whose feature says it "gains X as a
+   * bonus feat".
    */
   private bonusFeatAptitudes(): Map<string, string[]> {
     const map = new Map<string, string[]>();
 
     function add(featName: string, aptitude: string) {
-      const existing = map.get(featName) ?? [];
+      const slug = stripSeparators(featName);
+      const existing = map.get(slug) ?? [];
       if (!existing.includes(aptitude)) {
         existing.push(aptitude);
-        map.set(featName, existing);
+        map.set(slug, existing);
       }
     }
 
@@ -200,7 +203,7 @@ export class FeatDetector extends BaseDetector<FeatReference> {
 
   /**
    * Each feat's class levels that grant it as a bonus feat (for alternate prerequisites), from the book's classes'
-   * lists.
+   * lists, by its name's slug.
    */
   private bonusFeatClassLevels(): Map<string, { classSlug: string; minLevel: number }[]> {
     const map = new Map<string, { classSlug: string; minLevel: number }[]>();
@@ -214,9 +217,10 @@ export class FeatDetector extends BaseDetector<FeatReference> {
         if (!list.levels?.length) continue;
         const minLevel = Math.min(...list.levels);
         for (const featName of list.feats) {
-          const existing = map.get(featName) ?? [];
+          const slug = stripSeparators(featName);
+          const existing = map.get(slug) ?? [];
           existing.push({ classSlug, minLevel });
-          map.set(featName, existing);
+          map.set(slug, existing);
         }
       }
     }

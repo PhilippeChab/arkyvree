@@ -218,6 +218,39 @@ describe("The seeded extensions", () => {
     );
   });
 
+  test("give the exemplar's and the scout's bonus feats every feat their lists name, a family's for each option", async () => {
+    const core = await seededRows();
+    const adventurer = await seededRows(DND35_COMPLETE_ADVENTURER_NAME);
+    const choicesOf = (pool: string) => {
+      const id = adventurer.aptitude(pool).id;
+      return adventurer.feats
+        .filter((feat) => feat.featsAptitudesInRules.some((link) => link.aptitudeId === id))
+        .map((feat) => feat.name);
+    };
+    const familyOf = (family: string) =>
+      core.feats.filter((feat) => feat.name.startsWith(`${family}: `)).map((feat) => feat.name);
+    const skillFocus = familyOf("Skill Focus");
+    expect(skillFocus.length).toBeGreaterThan(40);
+    // The book's own new feats, which its lists mark "?" ("Improved Swimming?"), and Skill Focus for each skill
+    expect(choicesOf("Exemplar Bonus Feat")).toEqual(
+      expect.arrayContaining(["Improved Swimming", "Open Minded", "Versatile Performer", "Acrobatic", ...skillFocus]),
+    );
+    expect(choicesOf("Scout Bonus Feat")).toEqual(
+      expect.arrayContaining([
+        "Brachiation",
+        "Danger Sense",
+        "Hear The Unseen",
+        "Improved Swimming",
+        "Quick Reconnoiter",
+        "Dodge",
+        ...skillFocus,
+        ...familyOf("Rapid Reload"),
+      ]),
+    );
+    expect(choicesOf("Exemplar Bonus Feat")).toHaveLength(23 + skillFocus.length);
+    expect(choicesOf("Scout Bonus Feat")).toHaveLength(25 + skillFocus.length + familyOf("Rapid Reload").length);
+  });
+
   test("give the divine crusader a pick of the core rules' and Complete Divine's domains, each joining its list to hers", async () => {
     const core = await seededRows();
     const divine = await seededRows(DND35_COMPLETE_DIVINE_NAME);
