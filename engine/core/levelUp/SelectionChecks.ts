@@ -1,4 +1,4 @@
-import type { AbilityIncrease } from "@/engine/core/module/index.ts";
+import type { AbilityIncrease, PowerPick } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 
@@ -25,13 +25,20 @@ interface PickRecord {
   name: string;
 }
 
+/** A power a character knows, in the pool it knows it in, as the character holds it. */
+export interface KnownPower {
+  aptitudeId: string;
+  id: string;
+}
+
 /** A class level's granted feats, as the view joins them to their feats. */
 export type GrantedFeatRecords =
   RulesetData["klassLevelFeatsWithFeatsByKlassLevel"] extends Map<string, infer R> ? R : never;
 
 /**
- * A level's selections checked against the ruleset (`rulesetData`): theirs, linked to their pools, and not taken twice;
- * and its hit points and ability increases, within what its ruleset's rules give it (`rules`).
+ * A level's selections checked against the ruleset (`rulesetData`): theirs, linked to their pools, and not taken twice
+ * (a non-stackable feat on the character, a power in a pool it knows it in); and its hit points and ability increases,
+ * within what its ruleset's rules give it (`rules`).
  */
 export default class SelectionChecks {
   constructor(
@@ -175,6 +182,31 @@ export default class SelectionChecks {
   }
 
   /**
+   * A level's powers (`powers`, by pool, each pool's in its order) split by whether the character knows them in their
+   * pool already: held there (`known`, read only when the level picks any: picked at its other levels, granted, or made
+   * known by its modifiers), or picked there before them. A character knows a power once in a pool, and may know it in
+   * another. A pick the level holds already (`kept`, an edited level's saved picks) is its own, whatever else knows it.
+   */
+  private splitKnownPowers(powers: Record<string, string[]>, known: () => KnownPower[], kept: PowerPick[]) {
+    const repeated: PowerPick[] = [];
+    if (Object.values(powers).every((ids) => ids.length === 0)) return { fresh: powers, repeated };
+    const keyOf = (aptitudeId: string, powerId: string) => `${powerId}:${aptitudeId}`;
+    const seen = new Set(known().map(({ aptitudeId, id }) => keyOf(aptitudeId, id)));
+    const own = new Set(kept.map(({ aptitudeId, powerId }) => keyOf(aptitudeId, powerId)));
+    const fresh: Record<string, string[]> = {};
+    for (const [aptitudeId, ids] of Object.entries(powers)) {
+      fresh[aptitudeId] = [];
+      for (const powerId of ids) {
+        const key = keyOf(aptitudeId, powerId);
+        if (seen.has(key) && !own.has(key)) repeated.push({ aptitudeId, powerId });
+        else fresh[aptitudeId].push(powerId);
+        seen.add(key);
+      }
+    }
+    return { fresh, repeated };
+  }
+
+  /**
    * Whether the level after `totalLevel` levels raises its abilities by what its rules give it, as its save checks them
    * (`checkAbilityIncreases`): a level that takes none is picked with none.
    */
@@ -201,9 +233,30 @@ export default class SelectionChecks {
       this.checkNotTaken(fetchedFeats, pickedFeatIds, otherLevels, autoGrantedRecords);
   }
 
+  /**
+   * Throws when a level picks a power in a pool where the character knows it already (`known`, read only when it picks
+   * any), or picks it there twice, naming the power and the pool: but a pick the level holds already (`kept`, an edited
+   * level's saved picks), so a repeat saved before stays. A power known in another pool is the level's to pick.
+   */
+  checkPowersNotKnown(powers: Record<string, string[]>, known: () => KnownPower[], kept: PowerPick[] = []) {
+    const [repeated] = this.splitKnownPowers(powers, known, kept).repeated;
+    if (!repeated) return;
+    const power = this.rulesetData.powersById.get(repeated.powerId)?.name ?? repeated.powerId;
+    const pool = this.rulesetData.aptitudesById.get(repeated.aptitudeId)?.name ?? repeated.aptitudeId;
+    throw new RulesError("invalid", `Power "${power}" is already known in ${pool}`);
+  }
+
   /** Throws when a submitted selection isn't the character's ruleset's, or isn't linked to the pool it's picked under. */
   checkSelections(skills: Record<string, number>, feats: Record<string, string[]>, powers: Record<string, string[]>) {
     this.fetchSelections(skills, feats, powers);
     this.checkLinks(feats, powers);
+  }
+
+  /**
+   * A level's powers (`powers`, by pool) but those the character knows in their pool already, as a save refuses them
+   * (`checkPowersNotKnown`): what the save takes of them, which a preview fits.
+   */
+  withoutKnownPowers(powers: Record<string, string[]>, known: () => KnownPower[], kept: PowerPick[] = []) {
+    return this.splitKnownPowers(powers, known, kept).fresh;
   }
 }

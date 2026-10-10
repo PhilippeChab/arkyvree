@@ -29,7 +29,7 @@ import {
   SORCERER_1,
   WIZARD_1,
 } from "@/tests/support/dnd3.5/levelFixtures.ts";
-import { addCharacterLevel, findKlassLevel, increasesOf } from "@/tests/support/levels.ts";
+import { addCharacterLevel, findKlassLevel, getLevelStep, increasesOf } from "@/tests/support/levels.ts";
 import { copyEntity, createSeededTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
@@ -145,6 +145,27 @@ async function preview(
     skills,
     feats,
     powers,
+  );
+}
+
+/**
+ * Saves a saved level's edit as the level reads it (`getLevel`): its hit points, ability increases and picks, its powers
+ * those of `powers` when given.
+ */
+async function resaveAsRead(characterId: string, levelId: string, powers?: Record<string, string[]>) {
+  const level = await CharacterLevelsService.getLevel(session, characterId, levelId);
+  const idsOf = (picked: Record<string, { id: string }[]>) =>
+    Object.fromEntries(Object.entries(picked).map(([aptitudeId, rows]) => [aptitudeId, rows.map(({ id }) => id)]));
+  const { abilityIncreases, feats, hp, skills } = level;
+  return CharacterLevelsService.updateLevel(
+    session,
+    characterId,
+    levelId,
+    hp,
+    abilityIncreases,
+    skills,
+    idsOf(feats),
+    powers ?? idsOf(level.powers),
   );
 }
 
@@ -888,6 +909,130 @@ describe("the feats of a level in a batch", () => {
         increases: [undefined, undefined, undefined, (await getSeedCtx()).abilityMap["Strength"]],
       }),
     ).toBe(true);
+  });
+});
+
+describe("a spell known once in its class list", () => {
+  const KNOWN_LIGHT = { message: 'Power "Light" is already known in Sorcerer Spells', refusal: "invalid" };
+  /** A sorcerer's second level: its skill points, and its one more cantrip when it picks one. */
+  const SORCERER_2 = { hp: 4, skills: { Bluff: 1, Concentration: 1, Spellcraft: 1, "Knowledge (Arcana)": 1 } };
+  /** A sorcerer's first two levels, but their spells: five cantrips and two first-level spells. */
+  const SORCERER_1_TO_2 = {
+    skills: { Bluff: 5, Concentration: 5, Spellcraft: 5, "Use Magic Device": 5 },
+    feats: { General: ["Toughness", "Great Fortitude"], "Familiar Bond": ["Cat Familiar"] },
+  };
+
+  test("refuses a spell picked again in its list, saved at a level or planned at an earlier one, forced or not", async () => {
+    const ctx = await getSeedCtx();
+    // The second Light goes on the second level, past the first level's four cantrips
+    const lightTwice = ["Detect Magic", "Light", "Read Magic", "Mage Hand", "Light", "Magic Missile", "Shield"];
+    for (const force of [false, true]) {
+      const savedId = await createSeedCharacter(ctx, "sorcerer", { xp: 1000 });
+      await levelUp(session, ctx, savedId, "Sorcerer", 1, SORCERER_1);
+      const lightAgain = { ...SORCERER_2, powers: { "Sorcerer Spells": ["Light"] } };
+      expect(levelUp(session, ctx, savedId, "Sorcerer", 2, lightAgain, force)).rejects.toMatchObject(KNOWN_LIGHT);
+
+      const plannedId = await createSeedCharacter(ctx, "sorcerer", { xp: 1000 });
+      const plan = { ...SORCERER_1_TO_2, powers: { "Sorcerer Spells": lightTwice } };
+      expect(finalizeBatch(ctx, plannedId, levelsOf("Sorcerer", [4, 4]), plan, force)).rejects.toMatchObject(
+        KNOWN_LIGHT,
+      );
+    }
+  });
+
+  test("refuses a spell a modifier makes known in its list, forced or not, and previews it dropped", async () => {
+    const ctx = await getSeedCtx();
+    const characterId = await createSeedCharacter(ctx, "wizard");
+    await Modifiers.create(db, {
+      sourceId: characterId,
+      sourceType: "characters",
+      target: "powers.magicmissile.wizard.known",
+      value: "true",
+      valueType: "boolean",
+      operator: "set",
+    });
+    for (const force of [false, true]) {
+      expect(levelUp(session, ctx, characterId, "Wizard", 1, WIZARD_1, force)).rejects.toMatchObject({
+        message: 'Power "Magic Missile" is already known in Wizard Spells',
+        refusal: "invalid",
+      });
+    }
+    const previewed = await preview(ctx, characterId, [["Wizard", 1]], undefined, { powers: WIZARD_1.powers });
+    expect(previewed.powers.fitted[ctx.aptMap["Wizard Spells"]]).not.toContain(ctx.powerMap["Magic Missile"]);
+  });
+
+  test("previews a spell picked again in its list as the save refuses it: dropped, and the rest saved", async () => {
+    const ctx = await getSeedCtx();
+    const sorcererSpells = ctx.aptMap["Sorcerer Spells"];
+    const idsOf = (names: string[]) => names.map((name) => ctx.powerMap[name]);
+    // A plan's second Light, past the first level's four cantrips
+    const plannedId = await createSeedCharacter(ctx, "sorcerer", { xp: 1000 });
+    const kept = ["Detect Magic", "Light", "Read Magic", "Mage Hand", "Resistance", "Magic Missile", "Shield"];
+    const picked = { powers: { "Sorcerer Spells": [...kept.slice(0, 4), "Light", ...kept.slice(4)] } };
+    const sorcerer1To2: [string, number][] = [
+      ["Sorcerer", 1],
+      ["Sorcerer", 2],
+    ];
+    const planned = await preview(ctx, plannedId, sorcerer1To2, undefined, picked);
+    expect(planned.powers.fitted[sorcererSpells]).toEqual(idsOf(kept));
+    const plan = { ...SORCERER_1_TO_2, powers: { "Sorcerer Spells": kept } };
+    expect(await finalizeBatch(ctx, plannedId, levelsOf("Sorcerer", [4, 4]), plan)).toHaveLength(2);
+
+    // A saved level's Light, picked again at the next
+    const savedId = await createSeedCharacter(ctx, "sorcerer", { xp: 1000 });
+    await levelUp(session, ctx, savedId, "Sorcerer", 1, SORCERER_1);
+    const next = await preview(ctx, savedId, [["Sorcerer", 2]], undefined, {
+      powers: { "Sorcerer Spells": ["Light", "Resistance"] },
+    });
+    expect(next.powers.fitted[sorcererSpells]).toEqual(idsOf(["Resistance"]));
+    await levelUp(session, ctx, savedId, "Sorcerer", 2, {
+      ...SORCERER_2,
+      powers: { "Sorcerer Spells": ["Resistance"] },
+    });
+  });
+
+  test("lets a spell known in one class's list be picked in another's, previewed and saved", async () => {
+    const ctx = await getSeedCtx();
+    const wizardSpells = ctx.aptMap["Wizard Spells"];
+    const characterId = await createSeedCharacter(ctx, "sorcerer", { xp: 1000 });
+    await levelUp(session, ctx, characterId, "Sorcerer", 1, SORCERER_1);
+    const wizardLight = { powers: { "Wizard Spells": ["Light"] } };
+    const previewed = await preview(ctx, characterId, [["Wizard", 1]], undefined, wizardLight);
+    expect(previewed.powers.fitted[wizardSpells]).toEqual([ctx.powerMap["Light"]]);
+    // Forced: the wizard level's other picks aren't this test's
+    const [level] = await finalizeBatch(ctx, characterId, [["Wizard", 1, 4]], wizardLight, true);
+    const saved = await CharacterLevelPowers.findMany(db, { characterLevelIds: [level.id] });
+    expect(saved.map(({ aptitudeId, powerId }) => ({ aptitudeId, powerId }))).toEqual([
+      { aptitudeId: wizardSpells, powerId: ctx.powerMap["Light"] },
+    ]);
+  });
+
+  test("keeps a spell a level knows again from before the rule: each level edits as it reads, a new repeat refused", async () => {
+    const ctx = await getSeedCtx();
+    const sorcererSpells = ctx.aptMap["Sorcerer Spells"];
+    const [light, detectMagic] = [ctx.powerMap["Light"], ctx.powerMap["Detect Magic"]];
+    const characterId = await createSeedCharacter(ctx, "sorcerer", { xp: 1000 });
+    const first = await levelUp(session, ctx, characterId, "Sorcerer", 1, SORCERER_1);
+    // A second level that knows Light again, saved before the rule: written straight to the database
+    const { skills } = picks(ctx, SORCERER_2);
+    const second = await addCharacterLevel(characterId, (await findKlassLevel(ctx.klassMap.pc["Sorcerer"], 2))!.id, {
+      powers: [{ powerId: light, aptitudeId: sorcererSpells }],
+      skills: Object.entries(skills).map(([skillId, rank]) => ({ skillId, rank })),
+    });
+
+    for (const level of [first, second]) await resaveAsRead(characterId, level.id);
+    // Its step keeps its own Light, and drops a spell the first level knows, as its save refuses it
+    const step = await getLevelStep(session, characterId, "powers", {
+      classId: ctx.klassMap.pc["Sorcerer"],
+      level: 2,
+      editedLevelId: second.id,
+      powerPicks: [light, detectMagic].map((powerId) => ({ aptitudeId: sorcererSpells, powerId })),
+    });
+    expect(step.fitted[sorcererSpells]).toEqual([light]);
+    expect(resaveAsRead(characterId, second.id, { [sorcererSpells]: [detectMagic] })).rejects.toMatchObject({
+      message: 'Power "Detect Magic" is already known in Sorcerer Spells',
+      refusal: "invalid",
+    });
   });
 });
 

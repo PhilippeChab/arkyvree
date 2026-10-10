@@ -1206,6 +1206,43 @@ describe("LevelsService", () => {
       expect(await firstLevelSpells("Wizard Spells")).not.toContain("Magic Missile");
     });
 
+    test("leave a spell a later level knows out of an edited level's list, as the edit refuses it", async () => {
+      const ctx = await getSeedCtx();
+      const characterId = await createSeedCharacter(ctx, "sorcerer", { xp: 1000 });
+      const first = await levelUp(session, ctx, characterId, "Sorcerer", 1, SORCERER_1);
+      await levelUp(
+        session,
+        ctx,
+        characterId,
+        "Sorcerer",
+        2,
+        { hp: 4, powers: { "Sorcerer Spells": ["Resistance"] } },
+        true,
+      );
+      const cantrips = async (list: "Sorcerer Spells" | "Wizard Spells") =>
+        names(
+          (
+            await CharacterLevelsService.getAvailablePowers(
+              session,
+              characterId,
+              {
+                aptitudeId: ctx.aptMap[list],
+                classId: ctx.klassMap.pc["Sorcerer"],
+                level: 1,
+                powerLevel: 0,
+                editedLevelId: first.id,
+              },
+              page,
+            )
+          ).items,
+        );
+
+      // The second level's Resistance, but the edited level's own Light, which it can pick again once removed
+      expect(await cantrips("Sorcerer Spells")).not.toContain("Resistance");
+      expect(await cantrips("Sorcerer Spells")).toContain("Light");
+      expect(await cantrips("Wizard Spells")).toContain("Resistance");
+    });
+
     test("list a fork's inherited powers", async () => {
       const { session, character, klass, powerAptitude } = await setupRuleset({ fork: true });
       const { items } = await CharacterLevelsService.getAvailablePowers(
