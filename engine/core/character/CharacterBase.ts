@@ -8,25 +8,7 @@ import { isTemplateValue } from "@/shared/customization/templateExpression.ts";
 import type { Character, Modifier, Requirement } from "@/shared/relations.ts";
 
 import type { BuiltCharacter, default as CharacterComponent } from "./CharacterComponent.ts";
-
-/** What assembles a character's data from its rows and its ruleset's view: reading nothing. */
-export interface DataLoader<D extends LoadedCharacter> {
-  load(rows: CharacterRows, view: RulesetView): D;
-}
-
-/**
- * What a character's build loads of its rows and its ruleset's view (`DataLoader`), as every ruleset's build reads it:
- * its campaign and player, its inventory, its modifiers and the requirement groups gating them, and the item each
- * modifier an item is the source of belongs to. A ruleset's loaded data adds its own.
- */
-export interface LoadedCharacter {
-  campaign: CharacterRows["campaign"];
-  inventory: { equipped: boolean; id: string; item: { id: string } }[];
-  itemModifiers: Map<string, string>;
-  modifiers: Modifier[];
-  player: CharacterRows["player"];
-  requirementGroups: Requirement[][];
-}
+import type { default as CharacterDataLoader, LoadedCharacter } from "./CharacterDataLoader.ts";
 
 /**
  * A character, as every ruleset builds it (`build`): its data loaded (`createDataLoader`), its components (`C`, each a
@@ -82,7 +64,7 @@ export default abstract class CharacterBase<
   /** The components the evaluators walk, once the build set them up. */
   protected builtComponents: C | null = null;
 
-  /** What the build loaded of the character's rows and the view (`DataLoader`), and what it adds. */
+  /** What the build loaded of the character's rows and the view (`CharacterDataLoader`), and what it adds. */
   protected data!: D;
 
   /**
@@ -102,7 +84,7 @@ export default abstract class CharacterBase<
   protected view!: RulesetView;
 
   /** The ruleset's data loader, which assembles the character's data from its rows and the view. */
-  protected abstract createDataLoader(): DataLoader<D>;
+  protected abstract createDataLoader(): CharacterDataLoader<D>;
 
   /** The ruleset's issues about what the character has, before its requirements' and modifiers' (`validate`). */
   protected abstract findRulesetIssues(): RulesIssue[];

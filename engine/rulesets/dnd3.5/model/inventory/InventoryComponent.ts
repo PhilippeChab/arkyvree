@@ -1,6 +1,5 @@
-import { CharacterComponent } from "@/engine/core/character/index.ts";
+import { CharacterComponent, type InventoryEntry } from "@/engine/core/character/index.ts";
 import { ITEM_FIELDS, type ItemFieldValues } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
-import type { InventoryEntry } from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 
 import InventorySlots from "./InventorySlots.ts";

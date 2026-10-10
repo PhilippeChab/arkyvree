@@ -1,5 +1,6 @@
-import type { default as CharacterBase, LoadedCharacter } from "@/engine/core/character/CharacterBase.ts";
+import type CharacterBase from "@/engine/core/character/CharacterBase.ts";
 import type CharacterComponent from "@/engine/core/character/CharacterComponent.ts";
+import type { LoadedCharacter } from "@/engine/core/character/CharacterDataLoader.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import type { Constructor } from "@/lib/mixins.ts";

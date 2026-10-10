@@ -1,10 +1,8 @@
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
-import CustomizedEntities, {
-  type CustomizedFeat,
-  type CustomizedPower,
-} from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
+import type { CustomizedFeat, CustomizedPower } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
+import PowersComponent from "@/engine/rulesets/dnd3.5/model/powers/PowersComponent.ts";
 import type SpellcastingState from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellcastingState.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellLists.ts";
 import type { Constructor } from "@/lib/mixins.ts";
@@ -109,7 +107,7 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
         const firstLevel = klassData.levels[0];
         const enrichedPower: CustomizedPower = {
           ...power,
-          // Its DC's ability, as a loaded spell's (`CustomizedEntities.withDcAbilities`): its class's bonus spell ability
+          // Its DC's ability, as a loaded spell's (`CustomizesEntities.withDcAbilities`): its class's bonus spell ability
           abilityDcName: klassBonusSpellAbilityMap.get(firstLevel.klassLevel.klassId) ?? null,
           aptitudeId,
           klassLevelId: firstLevel.klassLevel.id,
@@ -217,7 +215,7 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
         Power & { aptitudeId: string; powerLevel: number | null; saveName: string | null }
       > = [];
       for (const power of rulesetData.powers) {
-        const saveName = CustomizedEntities.saveNameOf(power, rulesetData);
+        const saveName = PowersComponent.saveNameOf(power, rulesetData);
         for (const link of power.powersAptitudesInRules) {
           const leveledSet = perAptitudeLevels.get(link.aptitudeId);
           const isLeveled = leveledSet !== undefined && link.level !== null && leveledSet.has(link.level);

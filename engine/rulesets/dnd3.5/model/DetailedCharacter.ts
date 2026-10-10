@@ -1,4 +1,4 @@
-import { type DataLoader, Validates } from "@/engine/core/character/index.ts";
+import { Validates } from "@/engine/core/character/index.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import { include } from "@/lib/mixins.ts";
@@ -9,7 +9,7 @@ import CharacterState from "./CharacterState.ts";
 import { Builds } from "./concerns/Builds.ts";
 import { Diagnoses } from "./concerns/Diagnoses.ts";
 import { PossessesVirtually } from "./concerns/PossessesVirtually.ts";
-import DetailedCharacterDataLoader, { type LoadedCharacterData } from "./loading/DetailedCharacterDataLoader.ts";
+import DetailedCharacterDataLoader from "./loading/DetailedCharacterDataLoader.ts";
 
 /** A 3.5 character: its components wired, built and validated by its concerns, on core's build and validation. */
 export default class DetailedCharacter extends include(
@@ -26,7 +26,7 @@ export default class DetailedCharacter extends include(
 
   override readonly components: Dnd35Components;
 
-  protected override createDataLoader(): DataLoader<LoadedCharacterData> {
+  protected override createDataLoader(): DetailedCharacterDataLoader {
     return new DetailedCharacterDataLoader(this.character);
   }
 

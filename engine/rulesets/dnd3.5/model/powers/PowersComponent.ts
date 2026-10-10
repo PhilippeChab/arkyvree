@@ -1,5 +1,5 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
-import type { RulesetView } from "@/engine/core/view/index.ts";
+import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import Dnd35PropertyTypes from "@/engine/rulesets/dnd3.5/Dnd35PropertyTypes.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellLists.ts";
@@ -45,6 +45,11 @@ type PowersData = {
 export default class PowersComponent extends CharacterComponent<LoadedCharacterData> {
   constructor(private readonly powerGroupings: PowerGroupingsComponent) {
     super();
+  }
+
+  /** The name of the save a power's targets make, none without one. */
+  static saveNameOf(power: { saveId: string | null }, rulesetData: RulesetData): string | null {
+    return power.saveId ? (rulesetData.savesById.get(power.saveId)?.name ?? null) : null;
   }
 
   private readonly powers: PowersData = {};

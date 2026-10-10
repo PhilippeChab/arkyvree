@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 
 import FeatGroupingsComponent from "@/engine/rulesets/dnd3.5/model/feats/FeatGroupingsComponent.ts";
 import FeatsComponent from "@/engine/rulesets/dnd3.5/model/feats/FeatsComponent.ts";
-import CustomizedEntities from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Properties, Rulesets } from "@/server/repositories/index.ts";
@@ -20,7 +19,7 @@ describe("FeatsComponent.injectGroupings", () => {
     const family = await Properties.findMany(db, { entityIds: [rapier.id], entityType: "feats", type: FEAT_FAMILY });
     const feats = new FeatsComponent();
     // The character holds the rapier's
-    feats.initialize({ feats: [CustomizedEntities.toVirtualFeat(rapier, rulesetData)] }, { ruleset, rulesetData });
+    feats.initialize({ feats: [FeatsComponent.toVirtualFeat(rapier, rulesetData)] }, { ruleset, rulesetData });
     const groupings = new FeatGroupingsComponent(feats);
     // The feat in its own family too, as a ruleset could tag it
     for (const feat of [generic, rapier]) groupings.registerFeat(feat, family);
