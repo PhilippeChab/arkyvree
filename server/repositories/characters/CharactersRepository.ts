@@ -159,7 +159,7 @@ class CharactersRepository extends include(
     });
   }
 
-  /** The user's characters, owned or contributed to. */
+  /** The user's characters, owned or contributed to: the last updated first, unless the list says another order. */
   async findPage(
     db: Db,
     where: {
@@ -177,7 +177,7 @@ class CharactersRepository extends include(
     const {
       visibility = Visibility.UnarchivedOnly,
       search,
-      orderBy = "createdAt",
+      orderBy = "updatedAt",
       orderDir = "desc",
       accessRole,
     } = where;
