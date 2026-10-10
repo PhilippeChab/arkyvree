@@ -348,6 +348,19 @@ describe("CharactersService", () => {
       ]);
     });
 
+    test("lists the last updated first, unless told another order", async () => {
+      const { session } = await createTestUser();
+      const ids = async (where: Parameters<typeof CharactersService.getCharacters>[1] = {}) =>
+        ((await CharactersService.getCharacters(session, where, page)).items as { id: string }[]).map((c) => c.id);
+      const edited = await createCharacterAs(session, { name: "Edited Later" });
+      const untouched = await createCharacterAs(session, { name: "Made Later" });
+      await CharactersService.updateCharacter(session, edited.id, { notes: "A later edit" });
+
+      expect(await ids()).toEqual([edited.id, untouched.id]);
+      expect(await ids({ orderBy: "updatedAt", orderDir: "asc" })).toEqual([untouched.id, edited.id]);
+      expect(await ids({ orderBy: "name", orderDir: "asc" })).toEqual([edited.id, untouched.id]);
+    });
+
     test("lists the archived ones apart, or all together", async () => {
       const { session } = await createTestUser();
       const [active, archived] = [await createCharacterAs(session), await createCharacterAs(session)];

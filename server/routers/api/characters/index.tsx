@@ -33,7 +33,7 @@ export default new Hono()
         page,
         visibility: z.enum(["all", "archived", "active"]).default("active"),
         search: z.string().optional(),
-        orderBy: z.enum(["name", "createdAt", "updatedAt"]).default("createdAt"),
+        orderBy: z.enum(["name", "createdAt", "updatedAt"]).default("updatedAt"),
         orderDir: orderDirDesc,
         accessRole: z.enum(["owner", "contributor"]).optional(),
       }),
