@@ -1,7 +1,7 @@
 import { bonus } from "@/content/core/builders/customization/modifiers.ts";
 import { eq } from "@/content/core/builders/customization/requirements.ts";
+import type { FeatSeed } from "@/content/core/builders/feats/types.ts";
 import { feat } from "@/content/dnd3.5/builders/feats/possession.ts";
-import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import { CREATURE_TYPES } from "@/vocabulary/dnd3.5/creatureTypes.ts";
 import { FAVORED_ENEMY_FAMILY } from "@/vocabulary/dnd3.5/feats.ts";
 import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";

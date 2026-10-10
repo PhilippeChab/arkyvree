@@ -1,5 +1,5 @@
-import type { ItemSeed } from "@/content/dnd3.5/builders/items/types.ts";
-import { BaseSeeder } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
+import type { ItemSeed } from "@/content/core/builders/items/types.ts";
+import { SeederState } from "@/database/seeders/core/SeederState.ts";
 import {
   itemsInRules,
   modifiersInCustomization,
@@ -9,7 +9,7 @@ import {
 import type { Constructor } from "@/lib/mixins.ts";
 
 /** Seeding items. */
-export function SeedsItems<B extends Constructor<BaseSeeder>>(Base: B) {
+export function SeedsItems<B extends Constructor<SeederState>>(Base: B) {
   abstract class SeedingItems extends Base {
     /**
      * Seeds items with their properties, requirements and modifiers, as templates or made from the templates
@@ -17,7 +17,7 @@ export function SeedsItems<B extends Constructor<BaseSeeder>>(Base: B) {
      */
     async seedItems(items: ItemSeed[], options: { isTemplate?: boolean; templateMap?: Record<string, string> } = {}) {
       if (items.length === 0) return {};
-      const ids = BaseSeeder.idsByName(
+      const ids = SeederState.idsByName(
         await this.db
           .insert(itemsInRules)
           .values(

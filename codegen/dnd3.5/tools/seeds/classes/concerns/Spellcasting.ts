@@ -1,8 +1,8 @@
 import type { BaseClassSeeds } from "@/codegen/dnd3.5/tools/seeds/classes/BaseClassSeeds.ts";
 import { bonus, setFlag } from "@/content/core/builders/customization/modifiers.ts";
+import type { FeatSeed } from "@/content/core/builders/feats/types.ts";
 import { classSpells, domainSpells } from "@/content/dnd3.5/builders/aptitudes/names.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
-import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
 

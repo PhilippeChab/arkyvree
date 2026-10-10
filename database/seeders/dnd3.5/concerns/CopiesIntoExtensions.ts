@@ -1,6 +1,7 @@
 /**
- * An extension changes an inherited feat or power the way a fork does: it copies it (copy on write) and records the
- * copy in `entity_snapshots`, so the ruleset shows the copy in place of the original.
+ * An extension's book changes core feats and spells (its `cowFeats`, `cowSpells`): the extension copies each (copy on
+ * write, `ContentSeeder`'s `CopiesOnWrite`) and changes its copy, a feat taken in more aptitudes and by more classes, a
+ * spell on more spell lists.
  */
 
 import { and, eq, like } from "drizzle-orm";
@@ -11,16 +12,31 @@ import type { BaseSeeder } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
 import {
   aptitudesInRules,
   featsAptitudesInRules,
-  featsInRules,
   powersAptitudesInRules,
-  powersInRules,
   requirementsInCustomization,
 } from "@/drizzle/schema.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 /** Copying the core's feats and spells into an extension that changes them. */
-export function CopiesOnWrite<B extends Constructor<BaseSeeder>>(Base: B) {
-  abstract class CopyingOnWrite extends Base {
+export function CopiesIntoExtensions<B extends Constructor<BaseSeeder>>(Base: B) {
+  abstract class CopyingIntoExtensions extends Base {
+    /** A power's copy keeps its spell lists ("X Spells" aptitudes), at the same levels. */
+    protected override async copyPowerLinks(fromId: string, toId: string) {
+      const links = await this.db
+        .select({
+          aptitudeId: powersAptitudesInRules.aptitudeId,
+          level: powersAptitudesInRules.level,
+          aptitude: aptitudesInRules.name,
+        })
+        .from(powersAptitudesInRules)
+        .innerJoin(aptitudesInRules, eq(aptitudesInRules.id, powersAptitudesInRules.aptitudeId))
+        .where(eq(powersAptitudesInRules.powerId, fromId));
+      await this.linkPower(
+        toId,
+        links.filter(({ aptitude }) => /^(\w[\w ]*) Spells$/.test(aptitude)),
+      );
+    }
+
     /**
      * Adds class levels to a feat's first-level `or` of requirements, which a single first-level requirement becomes.
      * A feat with neither gets none.
@@ -72,72 +88,6 @@ export function CopiesOnWrite<B extends Constructor<BaseSeeder>>(Base: B) {
       );
     }
 
-    /** Adds a power to the spell lists another one is in, at the same levels. */
-    private async copySpellLists(fromId: string, toId: string) {
-      const links = await this.db
-        .select({
-          aptitudeId: powersAptitudesInRules.aptitudeId,
-          level: powersAptitudesInRules.level,
-          aptitude: aptitudesInRules.name,
-        })
-        .from(powersAptitudesInRules)
-        .innerJoin(aptitudesInRules, eq(aptitudesInRules.id, powersAptitudesInRules.aptitudeId))
-        .where(eq(powersAptitudesInRules.powerId, fromId));
-      await this.linkPower(
-        toId,
-        links.filter(({ aptitude }) => /^(\w[\w ]*) Spells$/.test(aptitude)),
-      );
-    }
-
-    /** Copies an inherited feat into the ruleset, with its aptitudes and customizations. */
-    private async cowFeat(featId: string) {
-      const [feat] = await this.db.select().from(featsInRules).where(eq(featsInRules.id, featId));
-      const [copy] = await this.db
-        .insert(featsInRules)
-        .values({
-          rulesetId: this.ctx.rulesetId,
-          name: feat.name,
-          description: feat.description,
-          stackable: feat.stackable,
-          selectable: feat.selectable,
-          generated: feat.generated,
-        })
-        .returning({ id: featsInRules.id });
-      const aptitudes = await this.db
-        .select()
-        .from(featsAptitudesInRules)
-        .where(eq(featsAptitudesInRules.featId, featId));
-      await this.insertAll(
-        featsAptitudesInRules,
-        aptitudes.map(({ aptitudeId }) => ({ featId: copy.id, aptitudeId })),
-      );
-      await this.copyCustomizations(featId, copy.id);
-      await this.recordCopy("feats", featId, copy.id);
-      return copy.id;
-    }
-
-    /**
-     * Copies an inherited power into the ruleset, with its customizations and its spell lists ("X Spells" aptitudes):
-     * the copy hides the original in the rulesets that extend this one, so it keeps the original's lists.
-     */
-    private async cowPower(powerId: string) {
-      const [power] = await this.db.select().from(powersInRules).where(eq(powersInRules.id, powerId));
-      const [copy] = await this.db
-        .insert(powersInRules)
-        .values({
-          rulesetId: this.ctx.rulesetId,
-          name: power.name,
-          description: power.description,
-          saveId: power.saveId,
-          saveEffect: power.saveEffect,
-        })
-        .returning({ id: powersInRules.id });
-      await this.copyCustomizations(powerId, copy.id);
-      await this.recordCopy("powers", powerId, copy.id);
-      await this.copySpellLists(powerId, copy.id);
-      return copy.id;
-    }
-
     /**
      * Copies the inherited feats an extension changes: each is taken in more aptitudes, and more class levels qualify
      * for it (added to its `or` of requirements). Its classes then grant the copy.
@@ -167,7 +117,7 @@ export function CopiesOnWrite<B extends Constructor<BaseSeeder>>(Base: B) {
         // A power of its own keeps the inherited one's spell lists too, as a copy does.
         const inheritedId = this.ctx.inheritedPowerMap[entry.spell];
         if (this.ctx.powerMap[entry.spell] && inheritedId)
-          await this.copySpellLists(inheritedId, this.ctx.powerMap[entry.spell]);
+          await this.copyPowerLinks(inheritedId, this.ctx.powerMap[entry.spell]);
         const powerId = await this.ownPower(entry.spell);
         if (!powerId) continue;
         await this.linkPower(
@@ -178,30 +128,6 @@ export function CopiesOnWrite<B extends Constructor<BaseSeeder>>(Base: B) {
         );
       }
     }
-
-    /** Adds a power to aptitudes, each at its level: the first link to an aptitude it isn't in yet. */
-    async linkPower(powerId: string, links: { aptitudeId: string; level: number | null }[]) {
-      const linked = new Set(
-        (
-          await this.db
-            .select({ aptitudeId: powersAptitudesInRules.aptitudeId })
-            .from(powersAptitudesInRules)
-            .where(eq(powersAptitudesInRules.powerId, powerId))
-        ).map((link) => link.aptitudeId),
-      );
-      const added = links.filter(({ aptitudeId }) => !linked.has(aptitudeId) && linked.add(aptitudeId));
-      await this.insertAll(
-        powersAptitudesInRules,
-        added.map((link) => ({ powerId, ...link })),
-      );
-    }
-
-    /** The ruleset's own power named so, copying the inherited one first when it has none. */
-    async ownPower(name: string): Promise<string | undefined> {
-      const inheritedId = this.ctx.inheritedPowerMap[name];
-      if (!this.ctx.powerMap[name] && inheritedId) this.ctx.powerMap[name] = await this.cowPower(inheritedId);
-      return this.ctx.powerMap[name];
-    }
   }
-  return CopyingOnWrite;
+  return CopyingIntoExtensions;
 }

@@ -3,7 +3,7 @@
  * Weapon Focus for spells, and the favored enemies.
  */
 
-import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
+import type { FeatSeed } from "@/content/core/builders/feats/types.ts";
 import type { WizardSchoolSeed } from "@/content/dnd3.5/builders/wizardSchools/types.ts";
 
 import { FAVORED_ENEMY_FEATS } from "./favoredEnemy.ts";

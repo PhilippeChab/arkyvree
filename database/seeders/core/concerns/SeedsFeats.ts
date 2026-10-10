@@ -1,5 +1,5 @@
-import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
-import { BaseSeeder } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
+import type { FeatSeed } from "@/content/core/builders/feats/types.ts";
+import { SeederState } from "@/database/seeders/core/SeederState.ts";
 import {
   featsAptitudesInRules,
   featsInRules,
@@ -9,13 +9,13 @@ import {
 import type { Constructor } from "@/lib/mixins.ts";
 
 /** Seeding feats. */
-export function SeedsFeats<B extends Constructor<BaseSeeder>>(Base: B) {
+export function SeedsFeats<B extends Constructor<SeederState>>(Base: B) {
   abstract class SeedingFeats extends Base {
     /** Seeds feats with their aptitudes, requirements, modifiers and properties, and adds them to the context. */
     async seedFeats(feats: FeatSeed[]) {
       if (feats.length === 0) return;
 
-      const ids = BaseSeeder.idsByName(
+      const ids = SeederState.idsByName(
         await this.db
           .insert(featsInRules)
           .values(

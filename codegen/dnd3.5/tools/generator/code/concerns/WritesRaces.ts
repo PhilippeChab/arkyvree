@@ -1,5 +1,5 @@
 import type { BaseCodeFile } from "@/codegen/dnd3.5/tools/generator/code/BaseCodeFile.ts";
-import type { RaceSeed } from "@/content/dnd3.5/builders/races/types.ts";
+import type { RaceSeed } from "@/content/core/builders/races/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 /** Writing a race. */

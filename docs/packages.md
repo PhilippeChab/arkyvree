@@ -30,17 +30,21 @@ database/
 │   └── contentPackages.ts  # listContentPackages: the registry's packages in the order they're applied, each seeded by its base rules' seeder
 ├── seeders/              # What writes content to the database
 │   ├── core/
-│   │   └── ContentSeeder.ts  # The seeder's contract (seedCore, seedExtension) and what every ruleset's seeder runs on: its database and context (SeedContext, loadContext), the system rulesets its packages create (createCore, createExtension; the core one found by its package, findCoreRulesetId), the customizations' rows and inserts, an extension's copies
+│   │   ├── SeederState.ts    # What every step builds on: its database and context (SeedContext), the customizations' rows and inserts, a copy's customizations and record
+│   │   ├── concerns/         # The steps every ruleset's content seeds alike, a step per kind of row: SeedsAptitudes, SeedsCoreRules (abilities, saves, languages), SeedsFeats, SeedsRaces, SeedsItems, CopiesOnWrite (an extension's copies of the feats and powers it changes)
+│   │   └── ContentSeeder.ts  # The seeder's contract (seedCore, seedExtension, and copyPowerLinks: the links a power's copy keeps), on SeederState and the steps; the system rulesets its packages create (createCore, createExtension; the core one found by its package, findCoreRulesetId), a seeded ruleset's context (loadContext)
 │   └── dnd3.5/
 │       ├── BaseSeeder.ts     # The 3.5 seeder's core, a ContentSeeder of the 3.5 content (CoreContent, BookContent): what its spell lists write
 │       ├── RulesetSeeder.ts  # seedCore, seedExtension (the contract), seedBond, seedDomains: the steps made of steps
-│       ├── concerns/         # A step per kind of row: SeedsFeats, SeedsClasses, CopiesOnWrite…
+│       ├── concerns/         # Its own steps: SeedsClasses, SeedsSkills, SeedsPowers, SeedsWizardSchools, CopiesIntoExtensions (a book's changes to the core feats and spells; its copies' spell lists, copyPowerLinks)
 │       └── spellTable.ts     # A spellcaster's table: the class level each of its spell levels opens at
 └── seeds/                # The dev and test databases' seed scripts: the users, each base rules' test characters (seedCharacter, seedContext), read through the registry
 
 content/core/
 └── builders/
     ├── customization/    # What every ruleset's content writes its customizations with: eq(), gte(), or(), bonus(), setFlag()…, their types
+    ├── feats/, races/, items/   # FeatSeed, RaceSeed, ItemSeed: the rows every ruleset's content seeds alike, as the core's steps write them
+    ├── abilities/, saves/, languages/   # AbilitySeed, SaveSeed, LanguageSeed: a base ruleset's own rows
     ├── characters/       # CharacterSeed: a seeded character, as a base rules' test characters are written
     └── packages/         # PackageDefinition: a package as data (its name, type, seedsVersion, ruleset and content); CorePackageDefinition, ExtensionPackageDefinition
 
@@ -48,14 +52,14 @@ content/dnd3.5/
 ├── baseRules.ts          # DND35_BASE_RULES: the base rules the content is written for, which the seeders ask the engine by
 ├── rulesetNames.ts       # The system rulesets' display names
 ├── builders/             # What the content is written with: a type per kind of seed, and the functions that write a seed's parts
-│   ├── items/            # ItemSeed; an item's properties (weaponProperties()…) and proficiencies (simple(), martial()…)
+│   ├── items/            # An item's properties (weaponProperties()…) and proficiencies (simple(), martial()…)
 │   ├── classes/          # ClassSeed
-│   ├── feats/, spells/, domains/   # FeatSeed, a feat's path and grant (feat(), grantFeat()); PowerSeed, SpellSeed; DomainSeed
-│   ├── races/            # RaceSeed; a race's properties (QUADRUPED)
+│   ├── feats/, spells/, domains/   # A feat's path and grant (feat(), grantFeat()); PowerSeed, SpellSeed; DomainSeed
+│   ├── races/            # A race's properties (QUADRUPED)
 │   ├── aptitudes/        # How the content names its spell lists and picks (classSpells(), domainFeat(), CLERIC_DOMAIN…)
 │   ├── wizardSchools/    # WizardSchoolSeed
 │   ├── bonds/            # BondContent; "a Cat", "an Owl" for the bonds' descriptions
-│   ├── abilities/, saves/, skills/, languages/   # The core rules' own: AbilitySeed, SaveSeed…
+│   ├── skills/           # SkillSeed: a skill, with the fields 3.5's rules keep
 │   └── rulesets/         # CoreContent, BookContent: what a ruleset is seeded with; CorePackage, ExtensionPackage
 ├── data/                 # The hand-written rows, which no book's page gives
 │   ├── coreRules.ts      # The core rules' abilities, saves, skills and languages
@@ -131,7 +135,7 @@ The registry (`database/packages/registry.ts`) has a row for each base rules (`R
 - A core package creates the core ruleset of its base rules (`createCore`), and the seeder seeds the core rules' content there (`seedCore`).
 - An extension's finds that core ruleset by its package (`findCoreRulesetId`, by the name the core package gives it), creates an extension of it with its context (`loadContext`, `createExtension`), and the seeder seeds the extension's book there, beside the core rules' content (`seedExtension`).
 
-A ruleset's seeder extends `ContentSeeder` (`database/seeders/core/`), the contract: its abstract members (`seedCore`, `seedExtension`, over the content its packages give, `ContentSeeder<Core, Book>`) are what a ruleset's seeding implements, and the rest is what every ruleset's seeding writes with: the context it names rows by, the system rulesets its packages create, the customizations' rows and their inserts, and the copies an extension makes of the entities it changes. 3.5's `RulesetSeeder` seeds a ruleset step by step: a step that writes one kind of row is a concern (`concerns/`), and the steps made of others (`seedCore`, `seedExtension`, `seedBond`, `seedDomains`) are the class's own. It holds a `SeedContext`: the ruleset it writes to and the ids, by name, of the rows its content names (abilities, saves, skills, aptitudes, feats, powers). Seeding aptitudes, feats or powers adds them to it, so the steps after can name them. It holds no content: a package gives it.
+A ruleset's seeder extends `ContentSeeder` (`database/seeders/core/`), the contract: its abstract members (`seedCore`, `seedExtension`, over the content its packages give, `ContentSeeder<Core, Book>`) are what a ruleset's seeding implements, and the rest is what every ruleset's seeding writes with: the context it names rows by, the system rulesets its packages create, the customizations' rows and their inserts, and the copies an extension makes of the entities it changes. The steps that write the rows every ruleset's content seeds alike, from the seed types of `content/core/builders/` (aptitudes, abilities, saves, languages, feats, races, items, and the copies an extension makes of the feats and powers it changes), are `ContentSeeder`'s concerns (`database/seeders/core/concerns/`), so a ruleset's seeder has them; a copied power keeps the links its ruleset says (`copyPowerLinks`, abstract). 3.5's `RulesetSeeder` seeds a ruleset step by step: a step that writes one kind of row is a concern, the core's or its own (`concerns/`: classes, skills, spells, wizard schools, a book's changes to the core), and the steps made of others (`seedCore`, `seedExtension`, `seedBond`, `seedDomains`) are the class's own. It holds a `SeedContext`: the ruleset it writes to and the ids, by name, of the rows its content names (abilities, saves, skills, aptitudes, feats, powers). Seeding aptitudes, feats or powers adds them to it, so the steps after can name them. It holds no content: a package gives it.
 
 The dev seeds (`database/seeds`, which seed each base rules' test characters on its core rules: its registry row's `testCharacters`, `content/dnd3.5/testData/` for 3.5) and the tests load the same context for the seeded ruleset (`ContentSeeder.loadContext`).
 
@@ -195,7 +199,7 @@ What the generator reads is derived from the two each time a reference is loaded
 
 ## COW-ing core entities into extensions
 
-When an extension changes a core entity (a feat its classes take in more aptitudes, a spell it adds to its spell lists), it copies it (copy on write) rather than recreating it: `database/seeders/dnd3.5/concerns/CopiesOnWrite.ts` copies the entity and its customizations and records the copy in `entity_snapshots`, the same way a fork does. Each extension book's generated `cowFeats.ts` and `cowSpells.ts` list what it changes (`codegen/dnd3.5/tools/seeds/concerns/Copies.ts`, a concern of `BookSeeds`).
+When an extension changes a core entity (a feat its classes take in more aptitudes, a spell it adds to its spell lists), it copies it (copy on write) rather than recreating it: `database/seeders/core/concerns/CopiesOnWrite.ts` copies the entity and its customizations and records the copy in `entity_snapshots`, the same way a fork does, a power's copy keeping its spell lists (3.5's `copyPowerLinks`); 3.5's `CopiesIntoExtensions` changes the copies as the book says. Each extension book's generated `cowFeats.ts` and `cowSpells.ts` list what it changes (`codegen/dnd3.5/tools/seeds/concerns/Copies.ts`, a concern of `BookSeeds`).
 
 ### Aptitude ownership rules
 

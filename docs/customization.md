@@ -82,7 +82,7 @@ requirements: [
 ]
 ```
 
-`requirementRows()` in `database/seeders/dnd3.5/BaseSeeder.ts` walks the tree and assigns hierarchical levels:
+`requirementRows()` in `database/seeders/core/SeederState.ts` walks the tree and assigns hierarchical levels:
 - Root entries: `"1"`, `"2"`, `"3"`
 - Children: `"1.1"`, `"1.2"`, nested: `"1.1.1"`, `"1.1.2"`
 

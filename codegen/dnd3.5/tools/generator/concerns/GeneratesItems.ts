@@ -4,7 +4,7 @@ import { type BaseBookGenerator } from "@/codegen/dnd3.5/tools/generator/BaseBoo
 import BookLayout from "@/codegen/dnd3.5/tools/generator/BookLayout.ts";
 import type { ItemReference } from "@/codegen/dnd3.5/tools/types/items.ts";
 import type { MagicItemReference } from "@/codegen/dnd3.5/tools/types/magicItems.ts";
-import type { ItemSeed } from "@/content/dnd3.5/builders/items/types.ts";
+import type { ItemSeed } from "@/content/core/builders/items/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 /** A book's item seeds, by the kind each of its item files holds. */

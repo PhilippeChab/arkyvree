@@ -10,10 +10,10 @@ const DECLARED_TYPES = {
   CowFeatEntry: "@/content/dnd3.5/builders/rulesets/types.ts",
   CowSpellEntry: "@/content/dnd3.5/builders/rulesets/types.ts",
   DomainSeed: "@/content/dnd3.5/builders/domains/types.ts",
-  FeatSeed: "@/content/dnd3.5/builders/feats/types.ts",
-  ItemSeed: "@/content/dnd3.5/builders/items/types.ts",
+  FeatSeed: "@/content/core/builders/feats/types.ts",
+  ItemSeed: "@/content/core/builders/items/types.ts",
   PowerSeed: "@/content/dnd3.5/builders/spells/types.ts",
-  RaceSeed: "@/content/dnd3.5/builders/races/types.ts",
+  RaceSeed: "@/content/core/builders/races/types.ts",
   SpellSeed: "@/content/dnd3.5/builders/spells/types.ts",
   WizardSchoolSeed: "@/content/dnd3.5/builders/wizardSchools/types.ts",
 };

@@ -9,8 +9,8 @@ import { normalizeDescription } from "@/codegen/dnd3.5/tools/text/scrapedText.ts
 import { type ClassReference } from "@/codegen/dnd3.5/tools/types/classes.ts";
 import { findClassFeatFamily } from "@/codegen/dnd3.5/tools/vocabulary/classFeatFamilies.ts";
 import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
+import type { FeatSeed } from "@/content/core/builders/feats/types.ts";
 import { grantFeat } from "@/content/dnd3.5/builders/feats/possession.ts";
-import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { FAVORED_ENEMY_FAMILY } from "@/vocabulary/dnd3.5/feats.ts";
