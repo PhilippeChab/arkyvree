@@ -3,13 +3,14 @@ import {
   CharactersPart,
   type HeldInventoryEntry,
   type InventoryEntryChange,
-  type InventoryEntryFields,
+  type InventoryEntryPlan,
   type InventoryEntryRequest,
+  type PlacementDescription,
+  type PlacementQuery,
 } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import ItemPlacement from "@/engine/rulesets/dnd3.5/model/inventory/ItemPlacement.ts";
-import type { ItemLocation } from "@/shared/enums.ts";
 import type { Item, Property } from "@/shared/relations.ts";
 
 import Equipping from "./Equipping.ts";
@@ -35,7 +36,7 @@ export default class InventoryEntries {
     remainingCharges,
     totalCharges,
     weaponSet,
-  }: InventoryEntryRequest): InventoryEntryFields {
+  }: InventoryEntryRequest): InventoryEntryPlan {
     const resolvedLocation = equipped ? (location ?? null) : null;
     const resolvedEquipped = !!resolvedLocation;
     return {
@@ -59,10 +60,8 @@ export default class InventoryEntries {
   static describePlacement(
     view: RulesetView,
     character: CharacterInput,
-    entryId: string | null,
-    location: ItemLocation,
-    weaponSet: number | null,
-  ) {
+    { entryId, location, weaponSet }: PlacementQuery,
+  ): PlacementDescription {
     return { warning: new Equipping(view, character).describeConflict(entryId, location, weaponSet) };
   }
 
@@ -70,16 +69,21 @@ export default class InventoryEntries {
    * What an entry's add or edit stores, from the character's rows: its placement and charges. Refused when an added
    * item isn't the character's ruleset's (nor from its source chain), the charges disagree, or the item can't be
    * equipped where it's asked to be (`Equipping`: an item already carried takes another entry, a second dagger held in
-   * the other hand).
+   * the other hand; its requirements unless `force`d).
    */
-  static planInventoryEntry(view: RulesetView, character: CharacterInput, change: InventoryEntryChange) {
+  static planInventoryEntry(
+    view: RulesetView,
+    character: CharacterInput,
+    change: InventoryEntryChange,
+    force: boolean,
+  ): InventoryEntryPlan {
     const { rulesetData } = view;
     const { request } = change;
     if ("item" in change)
       CharactersPart.checkFromRuleset(view, [change.item], "Item does not belong to the character's ruleset");
     InventoryEntries.checkCharges(request.totalCharges, request.remainingCharges);
 
-    const { equipped, force, location, weaponSet } = request;
+    const { equipped, location, weaponSet } = request;
     if (equipped && location) {
       const entry =
         "item" in change

@@ -9,6 +9,6 @@ export default class BondedCreatures<C> extends LevelUpBase<C> {
    * creature removed, kept or made, and the levels it takes or loses.
    */
   planBonded(bonded: CharacterInput[]) {
-    return { bonded: this.planBondedOf(this.build(), bonded) };
+    return this.planBondedOf(this.build(), bonded);
   }
 }

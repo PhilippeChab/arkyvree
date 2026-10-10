@@ -1,5 +1,5 @@
 import { SelectionChecks } from "@/engine/core/levelUp/index.ts";
-import type { LevelPicks, LevelRequest } from "@/engine/core/module/index.ts";
+import type { LevelPicks, PreviewRequest } from "@/engine/core/module/index.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
@@ -91,11 +91,11 @@ export default class LevelUpPreview extends PlannedLevelsState {
   }
 
   /**
-   * The level-up wizard's preview of the levels the character plans, each with its ability increases (raising nothing
-   * at a level that takes none: the wizard's pick for a level the plan moved), and of the picks made over them so far
-   * (`picks`: the skill points spent, by skill, in the form's order, and the feats and powers picked, by pool).
+   * The level-up wizard's preview of the levels the character plans (`levels`), each with its ability increases (raising
+   * nothing at a level that takes none: the wizard's pick for a level the plan moved), and of the picks made over them so
+   * far (`picks`: the skill points spent, by skill, in the form's order, and the feats and powers picked, by pool).
    */
-  describePreview(levels: Omit<LevelRequest, "hp">[], picks: Partial<LevelPicks> = {}) {
+  describePreview({ levels, picks = {} }: PreviewRequest) {
     const savedLevelCount = this.character.rows.levels.length;
     const increased = levels.map((level, i) =>
       LevelRules.isAbilityIncreaseLevel(savedLevelCount + i) ? level : { ...level, abilityIncreases: [] },

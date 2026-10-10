@@ -3,7 +3,7 @@ import {
   type CharacterInput,
   CharacterProjection,
   type LevelPicks,
-  type LevelRequest,
+  type LevelUpRequest,
   type PlannedSoFar,
 } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
@@ -35,14 +35,14 @@ export default class LevelUpPlan extends PlannedLevelsState {
   }
 
   /**
-   * The levels a level-up saves (`levels`, with the character's pooled picks spread over them), and what the master's
+   * The levels a level-up writes (its request's `levels`, with its `picks` spread over them), and what the master's
    * bonded creatures (`bonded`, their rows) become with them. Each level is checked as the levels before it see it,
    * and refused when it's saved already, raises its abilities by other than its rules give it, or picks what it can't;
    * the picks are refused when they overfill a pool, forced or not, and the character with them with what it fails,
-   * unless `force`d. Each level's writes are its row's columns
-   * (its class level and hit points) and its rows under it (its ability increases and picks).
+   * unless `force`d. Each level's writes are its row's columns (its class level and hit points) and its rows under it
+   * (its ability increases and picks).
    */
-  planLevels(bonded: CharacterInput[], levels: LevelRequest[], picks: LevelPicks, force: boolean) {
+  planLevels(bonded: CharacterInput[], { levels, picks }: LevelUpRequest, force: boolean) {
     const { rows } = this.character;
     const klassLevelEntries = this.getPlannedKlassLevels(levels);
     // Every selection is the ruleset's before a character is built with it
@@ -69,7 +69,7 @@ export default class LevelUpPlan extends PlannedLevelsState {
     this.refuseOverfull(saved, picks);
     if (!force) RulesError.refuseIssues(saved.validate().issues);
     return {
-      bonded: this.planBondedOf(saved, bonded),
+      ...this.planBondedOf(saved, bonded),
       levels: planned.map(({ abilityIncreases, hp, klassLevelId, picks: levelPicks }) => ({
         columns: { hp, klassLevelId },
         rows: { abilityIncreases, ...this.toPickRows(levelPicks) },

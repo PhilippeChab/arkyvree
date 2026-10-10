@@ -33,8 +33,8 @@ class CharacterInventoryService {
         if (!itemRecord) throw new NotFoundError("Item not found");
 
         const character = await readCharacterInput(tx, characterRecord);
-        const request = { equipped, force, location, remainingCharges, totalCharges, weaponSet };
-        const fields = Engine.for(scope).character(character).planInventoryEntry({ item: itemRecord, request });
+        const request = { equipped, location, remainingCharges, totalCharges, weaponSet };
+        const fields = Engine.for(scope).character(character).planInventoryEntry({ item: itemRecord, request }, force);
         const rows = await CharacterInventory.create(tx, { characterId, itemId, quantity, ...fields });
 
         await Activities.create(tx, {
@@ -75,7 +75,7 @@ class CharacterInventoryService {
 
     return await withRulesetScope(db, characterRecord.rulesetId, async (scope) => {
       const character = await readCharacterInput(db, characterRecord);
-      return Engine.for(scope).character(character).describePlacement(entryId, location, weaponSet);
+      return Engine.for(scope).character(character).describePlacement({ entryId, location, weaponSet });
     });
   }
 
@@ -122,8 +122,8 @@ class CharacterInventoryService {
         if (!existing) throw new NotFoundError("Item not in inventory");
 
         const character = await readCharacterInput(tx, characterRecord);
-        const request = { equipped, force, location, remainingCharges, totalCharges, weaponSet };
-        const fields = Engine.for(scope).character(character).planInventoryEntry({ entry: existing, request });
+        const request = { equipped, location, remainingCharges, totalCharges, weaponSet };
+        const fields = Engine.for(scope).character(character).planInventoryEntry({ entry: existing, request }, force);
 
         const rows = await CharacterInventory.update(
           tx,

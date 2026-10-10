@@ -1,4 +1,4 @@
-import { CharacterProjection, type LevelStep } from "@/engine/core/module/index.ts";
+import { CharacterProjection, type LevelQuery } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 
@@ -8,7 +8,7 @@ import LevelUpState, { type PoolPicks } from "./LevelUpState.ts";
  * What a level-up step projects: a new level after the levels planned before it (`pendingLevel…`), or an edit of one
  * of the character's (`editedLevel`), which the projected level replaces.
  */
-type StepProjection = Omit<LevelStep, "editedLevelId"> & {
+type StepProjection = Omit<LevelQuery, "editedLevelId"> & {
   /** The level edited: the projected level takes its place, so the first level stays the first (its x4 skill points). */
   editedLevel?: { id: string; position: number };
 };
@@ -30,7 +30,7 @@ export default class LevelUpSteps extends LevelUpState {
    * The step's level built with the feats and powers picked at it (`step.picks`), fitted to their pools as a save would
    * take them: the character with what fits, what fits, and its class level.
    */
-  private buildPicked(step: LevelStep) {
+  private buildPicked(step: LevelQuery) {
     const klassLevel = this.readKlassLevel(step);
     const projected = this.readStep(step);
     const fitted = this.fitPicks(step.picks ?? {}, (picks) =>
@@ -47,7 +47,7 @@ export default class LevelUpSteps extends LevelUpState {
    * The attributes step: the character's abilities, when the level it adds or edits takes an ability increase, after
    * its levels but the edited one and those after it, and the levels planned before it, which it's built with.
    */
-  private describeAbilityStep(step: LevelStep) {
+  private describeAbilityStep(step: LevelQuery) {
     const { editedLevel, planned } = this.readStep(step);
     const projection = new CharacterProjection(this.character);
     if (editedLevel) projection.dropLevelsFrom(editedLevel.id);
@@ -63,7 +63,7 @@ export default class LevelUpSteps extends LevelUpState {
    * The feats step of the step's level: the pools the character picks feats in with it, each with its room for the
    * feats picked at it (`step.picks`), what of them fits (`fitted`), and its grants.
    */
-  private describeFeatStep(step: LevelStep) {
+  private describeFeatStep(step: LevelQuery) {
     const { klassLevel, picks, pools } = this.buildPicked(step);
     return { ...this.featStep(pools, [klassLevel.id]), fitted: picks.feats };
   }
@@ -72,7 +72,7 @@ export default class LevelUpSteps extends LevelUpState {
    * The powers step of the step's level: the pools the character picks powers in with it, each with its room for the
    * powers picked at it (`step.picks`), what of them fits (`fitted`), and its grants.
    */
-  private describePowerStep(step: LevelStep) {
+  private describePowerStep(step: LevelQuery) {
     const { klassLevel, picks, pools } = this.buildPicked(step);
     return { ...this.powerStep(pools, [klassLevel.id]), fitted: picks.powers };
   }
@@ -82,7 +82,7 @@ export default class LevelUpSteps extends LevelUpState {
    * (`step.picks.skills`) come to at the level, and the levels the character has with it, the planned ones before it
    * too (an edit's level takes the edited one's place). The level's points are all the character has left to spend.
    */
-  private describeSkillStep(step: LevelStep) {
+  private describeSkillStep(step: LevelQuery) {
     const klassLevel = this.readKlassLevel(step);
     const projection = this.projectStep(klassLevel.id, this.readStep(step));
     const character = this.build(projection);
@@ -115,13 +115,13 @@ export default class LevelUpSteps extends LevelUpState {
   }
 
   /** The class level the step's level is: refused when the step names no class or level, or the class has no such level. */
-  private readKlassLevel({ klassId, level }: LevelStep) {
+  private readKlassLevel({ klassId, level }: LevelQuery) {
     if (!klassId || level === undefined) throw new RulesError("invalid", "The step's class and level are required");
     return this.getKlassLevel(klassId, level);
   }
 
   /** The step's projection, the edited level's place read off the character's levels: refused when it has no such level. */
-  private readStep({ editedLevelId, ...step }: LevelStep): StepProjection {
+  private readStep({ editedLevelId, ...step }: LevelQuery): StepProjection {
     if (!editedLevelId) return step;
     const editedLevel = this.character.rows.levels.find((level) => level.id === editedLevelId);
     if (!editedLevel) throw new RulesError("not-found", "Character level not found");
@@ -132,7 +132,7 @@ export default class LevelUpSteps extends LevelUpState {
    * The wizard's step `name` of the step's level, named for which it is: refused when 3.5 has no such step, or when it
    * reads the level's class (its skills, feats and powers) and the step names none.
    */
-  describeStep(name: string, step: LevelStep) {
+  describeStep(name: string, step: LevelQuery) {
     switch (name) {
       case "abilities":
         return { name, ...this.describeAbilityStep(step) };

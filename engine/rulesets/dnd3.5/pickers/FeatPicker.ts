@@ -1,4 +1,4 @@
-import type { CharacterInput, PickLevel } from "@/engine/core/module/index.ts";
+import type { CharacterInput, FeatPickQuery } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import FeatEntity, { type PoolModifier } from "@/engine/rulesets/dnd3.5/entities/feats/FeatEntity.ts";
 import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
@@ -11,7 +11,7 @@ import LevelPicker from "./LevelPicker.ts";
  * add slots to, and a family's row described when the picker opens it (`describeGroups`).
  */
 export default class FeatPicker extends LevelPicker<{ aptitudeModifiers: PoolModifier[] }> {
-  constructor(view: RulesetView, input: CharacterInput, query: PickLevel & { family?: string }) {
+  constructor(view: RulesetView, input: CharacterInput, query: FeatPickQuery) {
     super(view, input, query);
     const offered = {
       ids: this.rulesetData.listFeatIds(query.aptitudeId),

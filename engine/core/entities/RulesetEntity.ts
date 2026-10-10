@@ -1,7 +1,13 @@
 import type { z } from "zod";
 
 import type { FieldCodec, Fields, FieldValues, NoFields } from "@/engine/core/fields/index.ts";
-import type { EntityWrites, ListLink } from "@/engine/core/module/index.ts";
+import type {
+  EntityCreatePlan,
+  EntityDeletePlan,
+  EntityEditPlan,
+  EntityWrites,
+  ListLink,
+} from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetData, RulesetView, ViewEntities } from "@/engine/core/view/index.ts";
 import type { Property } from "@/shared/relations.ts";
@@ -39,7 +45,11 @@ export default abstract class RulesetEntity<
   protected abstract columnsOf(body: Body, entity?: ViewEntities[K]): Columns;
 
   /** What a form writes, and the fields the entity keeps (`fields`, which a create or an edit answers with its row). */
-  private planWrite(body: Body, given: Partial<FieldValues<S>>, entity?: ViewEntities[K]) {
+  private planWrite(
+    body: Body,
+    given: Partial<FieldValues<S>>,
+    entity?: ViewEntities[K],
+  ): EntityCreatePlan<Columns, FieldValues<S>> {
     const columns = this.columnsOf(body, entity);
     const writes = this.writesOf(body, given, entity);
     const fields = this.fields.read(writes?.properties?.values ?? this.keptProperties(columns, entity));
@@ -150,14 +160,14 @@ export default abstract class RulesetEntity<
   }
 
   /** A new entity's row off its form, what it writes beside it, and the fields it keeps once written. */
-  planCreate(body: Body) {
+  planCreate(body: Body): EntityCreatePlan<Columns, FieldValues<S>> {
     const given = this.readFields(body);
     this.checkForm(body);
     return this.planWrite(body, given);
   }
 
   /** Deleting an entity (`id`): the entity as the view has it, and what its delete writes with it. */
-  planDelete(id: string) {
+  planDelete(id: string): EntityDeletePlan<ViewEntities[K]> {
     const entity = this.find(id);
     this.checkDelete(entity);
     return { entity, writes: this.deleteWritesOf(entity) };
@@ -167,7 +177,7 @@ export default abstract class RulesetEntity<
    * An entity's edit (`id`): the entity as the view has it, its new row off its form (an edit leaves the columns it
    * doesn't give as they are), what it writes beside it, and the fields it keeps once written.
    */
-  planEdit(id: string, body: Body) {
+  planEdit(id: string, body: Body): EntityEditPlan<Columns, FieldValues<S>, ViewEntities[K]> {
     const entity = this.find(id);
     const given = this.readFields(body, entity);
     this.checkForm(body, entity);

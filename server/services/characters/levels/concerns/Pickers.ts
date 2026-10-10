@@ -1,4 +1,4 @@
-import { type AbilityIncrease, Engine, type PlannedSoFar } from "@/engine/index.ts";
+import { type AbilityIncrease, Engine, type PickQuery, type PlannedSoFar } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Klasses, Powers } from "@/server/repositories/index.ts";
@@ -27,8 +27,15 @@ interface PlannedWhere {
   skillPoints?: PlannedSoFar["skillPoints"];
 }
 
-/** A picker's level as the engine takes it. */
-function pickLevelOf({ abilityIncreases, aptitudeId, classId, editedLevelId, level, ...planned }: PickLevelWhere) {
+/** A picker's query as the engine takes it: its level, its pool, and what the wizard plans before it. */
+function pickQueryOf({
+  abilityIncreases,
+  aptitudeId,
+  classId,
+  editedLevelId,
+  level,
+  ...planned
+}: PickLevelWhere): PickQuery {
   return { abilityIncreases, aptitudeId, editedLevelId, klassId: classId, level, planned: plannedOf(planned) };
 }
 
@@ -80,7 +87,7 @@ export function Pickers<B extends Constructor>(Base: B) {
       pagination: { limit: number; page: number },
     ) {
       return await withEditableCharacter(db, session, characterId, async (scope, character) => {
-        const picker = Engine.for(scope).character(character).levelUp().openFeatPicker(pickLevelOf(where));
+        const picker = Engine.for(scope).character(character).levelUp().openFeatPicker(pickQueryOf(where));
         const result = await Feats.findOptionGroupPage(
           db,
           { ...picker.groupFilters, search: where.search },
@@ -102,7 +109,7 @@ export function Pickers<B extends Constructor>(Base: B) {
         const picker = Engine.for(scope)
           .character(character)
           .levelUp()
-          .openFeatPicker({ ...pickLevelOf(pick), family });
+          .openFeatPicker({ ...pickQueryOf(pick), family });
         const result = await Feats.findOptionPage(db, { ...picker.filters, search: where.search }, pagination);
         return { items: picker.describe(result.items), page: result.page, nextPage: result.nextPage };
       });
@@ -120,7 +127,7 @@ export function Pickers<B extends Constructor>(Base: B) {
         const picker = Engine.for(scope)
           .character(character)
           .levelUp()
-          .openPowerPicker({ ...pickLevelOf(pick), powerLevel, selectedPowerIds });
+          .openPowerPicker({ ...pickQueryOf(pick), powerLevel, selectedPowerIds });
         const result = await Powers.findOptionPage(db, { ...picker.filters, search: where.search }, pagination);
         return { items: picker.describe(result.items), page: result.page, nextPage: result.nextPage };
       });

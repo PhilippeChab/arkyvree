@@ -1,21 +1,26 @@
 import type { CharacterInput } from "@/engine/core/module/CharacterInputs.ts";
+import type { Descriptions } from "@/engine/core/module/contract.ts";
 import type {
-  AbilityScore,
   CharacterCard,
   CharacterCreation,
   DescribedInventoryEntry,
   HeldInventoryEntry,
-  InventoryEntryChange,
-  InventoryEntryFields,
-  MemberReading,
-  NewCharacterPlan,
-  PrivateNotes,
-} from "@/engine/core/module/characters.ts";
-import type { Descriptions } from "@/engine/core/module/contract.ts";
+  PlacementDescription,
+} from "@/engine/core/module/descriptions.ts";
 import type { OpenedPicker } from "@/engine/core/module/pickers.ts";
+import type { AbilitiesPlan, InventoryEntryPlan, NewCharacterPlan } from "@/engine/core/module/plans.ts";
+import type {
+  AbilitiesRequest,
+  InventoryEntryChange,
+  MemberReading,
+  NewCharacterRequest,
+  PlacementQuery,
+  PrivateNotes,
+  RacePickQuery,
+  SheetRequest,
+} from "@/engine/core/module/requests.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import type { ItemLocation } from "@/shared/enums.ts";
 import type { Item, Property } from "@/shared/relations.ts";
 
 /**
@@ -71,49 +76,43 @@ export default abstract class CharactersPart<D extends Descriptions> {
   ): D["memberSheet"];
 
   /**
-   * Why `location` (in `weaponSet`, for a hand) can't take one more item of the character's, if it can't: the entry in
-   * the way, the entry placed (`entryId`, none for a new one) aside. What the inventory dialogs warn of, and the save
-   * refuses.
+   * Why a placement (`query`: its location, in its weapon set for a hand) can't take one more item of the character's,
+   * if it can't: the entry in the way, the entry placed (none for a new one) aside. What the inventory dialogs warn of,
+   * and an add refuses.
    */
-  abstract describePlacement(
-    view: RulesetView,
-    character: CharacterInput,
-    entryId: string | null,
-    location: ItemLocation,
-    weaponSet: number | null,
-  ): { warning: string | null };
+  abstract describePlacement(view: RulesetView, character: CharacterInput, query: PlacementQuery): PlacementDescription;
 
   /** A character's printed sheet: the document the server renders. */
-  abstract describeSheet(
-    view: RulesetView,
-    character: CharacterInput,
-    options: { diagnostics: boolean; portraitUrl?: string | null },
-  ): D["sheetDocument"];
+  abstract describeSheet(view: RulesetView, character: CharacterInput, request: SheetRequest): D["sheetDocument"];
 
-  /** The race picker of a new character of what its form says (`identity`): the races it offers, each checked. */
+  /** The race picker of a new character of what its form says (`query`): the races it offers, each checked. */
   abstract openRacePicker(
     view: RulesetView,
-    identity: { alignment?: string; gender?: string },
+    query: RacePickQuery,
   ): OpenedPicker<{ kind: string }, { id: string }, D["raceOption"]>;
 
   /**
    * The ability scores a character's edit stores (`abilities`, by ability id): refused when one isn't an ability of its
    * ruleset, or its score is past the rules' bounds.
    */
-  abstract planAbilities(view: RulesetView, abilities: Record<string, number>): AbilityScore[];
+  abstract planAbilities(view: RulesetView, abilities: AbilitiesRequest): AbilitiesPlan;
 
   /**
    * What a new character stores beside its row: its ability scores. Refused when its race can't be a player's, or a
    * score is past the rules' bounds.
    */
-  abstract planCreate(view: RulesetView, body: { abilities: Record<string, number>; raceId: string }): NewCharacterPlan;
+  abstract planCreate(view: RulesetView, request: NewCharacterRequest): NewCharacterPlan;
 
-  /** What an inventory entry's add or edit stores, checked: its placement and charges, the item equipped where asked. */
+  /**
+   * What an inventory entry's add or edit stores, checked: its placement and charges, the item equipped where asked,
+   * its requirements checked unless `force`d.
+   */
   abstract planInventoryEntry(
     view: RulesetView,
     character: CharacterInput,
     change: InventoryEntryChange,
-  ): InventoryEntryFields;
+    force: boolean,
+  ): InventoryEntryPlan;
 
   /**
    * Refuses languages a character can't speak: one of `languageIds` not found (`languages`, the rows the server read

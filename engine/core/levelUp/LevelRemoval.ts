@@ -15,6 +15,6 @@ export default class LevelRemoval<C> extends LevelUpBase<C> {
     const projection = new CharacterProjection(this.character);
     projection.dropLevel(level.id);
     const without = this.build(projection);
-    return { bonded: this.planBondedOf(without, bonded), level };
+    return { ...this.planBondedOf(without, bonded), level };
   }
 }

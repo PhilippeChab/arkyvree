@@ -1,4 +1,9 @@
-import type { BondedLevelsPlan, BondedPlan, CharacterInput, NewBondedCreature } from "@/engine/core/module/index.ts";
+import type {
+  BondedCreaturesPlan,
+  BondedLevelsPlan,
+  CharacterInput,
+  NewBondedCreature,
+} from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import BondedRaceData from "@/engine/rulesets/dnd3.5/model/bonded/BondedRaceData.ts";
@@ -110,13 +115,15 @@ export default class BondedPlans {
    * each with its rows): the creature it had removed (`removedId`), and the one it keeps (`keptId`) or makes (`created`,
    * its row whole, after its master's, `record`) with the levels it takes or loses (`levels`: a new one has none yet).
    */
-  planMasterCreatures(master: DetailedCharacter, record: Character, bonded: CharacterInput[]): BondedPlan[] {
-    return BONDED_KIND_SLUGS.map((kind) => {
-      const existing = bonded.find((input) => input.record.kind === kind);
-      const plan = this.planBondedCreature(master, record, kind, existing?.record);
-      if (!plan.levels) return { kind, levels: undefined, removedId: plan.removedId };
-      const levels = this.planBondedLevels("keptId" in plan ? (existing?.rows.levels ?? []) : [], plan.levels);
-      return { ...plan, kind, levels };
-    });
+  planMasterCreatures(master: DetailedCharacter, record: Character, bonded: CharacterInput[]): BondedCreaturesPlan {
+    return {
+      bonded: BONDED_KIND_SLUGS.map((kind) => {
+        const existing = bonded.find((input) => input.record.kind === kind);
+        const plan = this.planBondedCreature(master, record, kind, existing?.record);
+        if (!plan.levels) return { kind, levels: undefined, removedId: plan.removedId };
+        const levels = this.planBondedLevels("keptId" in plan ? (existing?.rows.levels ?? []) : [], plan.levels);
+        return { ...plan, kind, levels };
+      }),
+    };
   }
 }

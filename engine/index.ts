@@ -15,15 +15,21 @@ export type {
   BondedPlan,
   CharacterInput,
   CharacterRows,
+  EntityCreatePlan,
+  EntityDeletePlan,
+  EntityEditPlan,
   EntityRemoval,
   EntityWrites,
+  LevelQuery,
+  LevelRequest,
   LevelRows,
-  LevelStep,
   LevelWrites,
   ListLink,
   MadeEntity,
   NewBondedCreature,
+  PickQuery,
   PlannedSoFar,
+  PreviewRequest,
 } from "./core/module/index.ts";
 export { default as RulesError } from "./core/RulesError.ts";
 export type { EntityCustomizations, RulesetData, RulesetRawData } from "./core/view/index.ts";

@@ -1,5 +1,5 @@
 import {
-  type BondedPlan,
+  type BondedCreaturesPlan,
   type CharacterInput,
   CharacterProjection,
   type LevelPickRows,
@@ -24,7 +24,7 @@ export interface LevelUpRules<C> {
    * What the bonded creatures (`bonded`, their rows) become with their master as `master` builds it, from its row
    * (`record`), which a creature it makes takes after.
    */
-  planBondedCreatures(view: RulesetView, master: C, record: Character, bonded: CharacterInput[]): BondedPlan[];
+  planBondedCreatures(view: RulesetView, master: C, record: Character, bonded: CharacterInput[]): BondedCreaturesPlan;
 }
 
 /**
