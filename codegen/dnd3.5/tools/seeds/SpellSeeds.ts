@@ -4,6 +4,7 @@ import { normalizeDescription } from "@/codegen/dnd3.5/tools/text/scrapedText.ts
 import type { InheritedSpellList } from "@/codegen/dnd3.5/tools/types/classes.ts";
 import { type SpellReference } from "@/codegen/dnd3.5/tools/types/spells.ts";
 import type { SpellSeed } from "@/content/dnd3.5/builders/spells/types.ts";
+import { CORE_BOOK } from "@/vocabulary/dnd3.5/books.ts";
 
 import { ReferenceSeeds } from "./ReferenceSeeds.ts";
 
@@ -20,9 +21,9 @@ type RawSpell = SpellReference["raw"][number];
 export class SpellSeeds extends ReferenceSeeds<SpellReference> {
   /**
    * A spell's aptitudes (its classes' spell lists, by the name its level line gives each, `classSpellLists`, and the
-   * lists other books' classes inherit, `othersInherited`), its level on each, and its lowest level: on a list it's on,
-   * else in any level entry, else 0. Its level entries are the scraped ones: an override's extra entries reach only the
-   * copies an extension makes of a core spell (#359).
+   * lists other books' classes inherit, `othersInherited`), its level on each, and its lowest level: on a list it's on
+   * that the book's ruleset has (`rulesetHas`), else in any level entry, else 0. Its level entries are the scraped
+   * ones: an override's extra entries reach only the copies an extension makes of a core spell (#359).
    */
   private levels(
     entry: RawSpell,
@@ -38,7 +39,7 @@ export class SpellSeeds extends ReferenceSeeds<SpellReference> {
       if (apt) {
         aptitudes.add(apt);
         aptitudeLevels[apt] = aptitudeLevels[apt] !== undefined ? Math.min(aptitudeLevels[apt], le.level) : le.level;
-        minLevel = Math.min(minLevel, le.level);
+        if (this.rulesetHas(apt)) minLevel = Math.min(minLevel, le.level);
       }
     }
 
@@ -50,11 +51,20 @@ export class SpellSeeds extends ReferenceSeeds<SpellReference> {
       aptitudeLevels[aptitude] = level;
     }
 
-    // Fallback: if no mapped entries found, use the lowest level from any entry
+    // Fallback: if no entry is on a list the ruleset has, use the lowest level from any entry
     if (minLevel === 99) for (const le of entry.levelEntries) minLevel = Math.min(minLevel, le.level);
 
     if (minLevel === 99) minLevel = 0;
     return { aptitudes, aptitudeLevels, minLevel };
+  }
+
+  /**
+   * Whether the book's ruleset has the spell list `list`: the core rules have their own classes' lists alone (the
+   * seed leaves the others out, and each book's copy of a core spell adds it to its own); an extension has every list
+   * its spells are on (it seeds its own copy of another book's, `CollectsAptitudes`).
+   */
+  private rulesetHas(list: string) {
+    return this.book.book !== CORE_BOOK || this.book.spellLists().has(list);
   }
 
   /** Its seeds, sorted by level, then name. */

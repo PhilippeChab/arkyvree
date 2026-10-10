@@ -240,6 +240,26 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
     ],
   },
   {
+    name: "Earthquake",
+    description:
+      "An intense, localized tremor rips the ground for 1 round. Creatures on the ground cannot move or attack. Spellcasters must make a Concentration check (DC 20 + spell level) or lose spells. Effects vary by terrain: Cave/Tunnel: Roof collapses for 8d6 bludgeoning (Reflex DC 15 half), pinning creatures. Cliff: Creates a landslide traveling horizontally equal to the fall distance, dealing 8d6 (Reflex DC 15 half) and pinning. Open Ground: DC 15 Reflex or fall prone; 25% chance of falling into a fissure (Reflex DC 20 to avoid); fissures close at spell's end, killing trapped creatures. Structure: 100 points of damage (ignoring hardness), collapsing typical buildings; trapped creatures take 8d6 (Reflex DC 15 half). River/Lake/Marsh: Fissures drain water; swampland becomes quicksand (DC 15 Reflex or sink). Pinned creatures take 1d6 nonlethal per minute; unconscious pinned creatures must make DC 15 Constitution checks or take 1d6 lethal per minute.",
+    aptitudes: ["Blighter Spells", "Cleric Spells", "Druid Spells", "Warmage Spells"],
+    aptitudeLevels: { "Blighter Spells": 7, "Cleric Spells": 8, "Druid Spells": 8, "Warmage Spells": 7 },
+    savingThrow: "See text",
+    properties: [
+      { type: "SPELL_SCHOOL", value: "Evocation" },
+      { type: "SPELL_DESCRIPTOR", value: "Earth" },
+      { type: "SPELL_CASTING_TIME", value: "1 standard action" },
+      { type: "SPELL_RANGE_TYPE", value: "Long" },
+      { type: "SPELL_AREA_OF_EFFECT", value: "80-ft.-radius spread (S)" },
+      { type: "SPELL_DURATION", value: "1 round" },
+      { type: "SPELL_RESISTANCE", value: "No" },
+      { type: "SPELL_COMPONENT", value: "Verbal" },
+      { type: "SPELL_COMPONENT", value: "Somatic" },
+      { type: "SPELL_COMPONENT", value: "Divine Focus" },
+    ],
+  },
+  {
     name: "Holy Aura",
     description:
       "Brilliant divine radiance provides four effects: +4 deflection to AC and +4 resistance on saves against all attacks; SR 25 against evil spells and spells cast by evil creatures; blocks possession and mental influence; evil creatures making successful melee attacks are blinded (Fortitude negates). Focus: A tiny reliquary with a sacred relic, costing at least 500 gp.",
@@ -558,6 +578,25 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
     ],
   },
   {
+    name: "Repel Metal Or Stone",
+    description:
+      "Invisible energy waves push metal and stone objects away at 40 feet per round. Fixed objects larger than 3 inches are unaffected; smaller ones break. Loose objects over 500 pounds are unaffected. Creatures in metal armor are dragged along. Even magic items are repelled (antimagic fields block the effect). The path is set at casting.",
+    aptitudes: ["Blighter Spells", "Druid Spells"],
+    aptitudeLevels: { "Blighter Spells": 7, "Druid Spells": 8 },
+    savingThrow: "None",
+    properties: [
+      { type: "SPELL_SCHOOL", value: "Abjuration" },
+      { type: "SPELL_DESCRIPTOR", value: "Earth" },
+      { type: "SPELL_CASTING_TIME", value: "1 standard action" },
+      { type: "SPELL_RANGE_TYPE", value: "60 ft." },
+      { type: "SPELL_AREA_OF_EFFECT", value: "60-ft. line from you" },
+      { type: "SPELL_DURATION", value: "1 round/level (D)" },
+      { type: "SPELL_RESISTANCE", value: "No" },
+      { type: "SPELL_COMPONENT", value: "Verbal" },
+      { type: "SPELL_COMPONENT", value: "Somatic" },
+    ],
+  },
+  {
     name: "Scintillating Pattern",
     description:
       "A coruscating pattern affects HD equal to your caster level (maximum 20), fewest first. 6 or less HD: unconscious 1d4 rounds, stunned 1d4 rounds, confused 1d4 rounds. 7-12 HD: stunned 1d4 rounds, confused 1d4 rounds. 13+ HD: confused 1d4 rounds. Sightless creatures unaffected. Material Component: A small crystal prism.",
@@ -609,28 +648,6 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
       { type: "SPELL_TARGET", value: "See text" },
       { type: "SPELL_DURATION", value: "See text" },
       { type: "SPELL_RESISTANCE", value: "Yes" },
-      { type: "SPELL_COMPONENT", value: "Verbal" },
-      { type: "SPELL_COMPONENT", value: "Somatic" },
-    ],
-  },
-  {
-    name: "Shambler",
-    description:
-      "You create 1d4+2 shambling mounds with 11 HD each that serve you for seven days (or seven months for guard duty only). Guard-duty shamblers cannot leave the spell's range. They gain fire resistance only in damp terrain.",
-    aptitudes: ["Blighter Spells", "Druid Spells"],
-    aptitudeLevels: { "Blighter Spells": 8, "Druid Spells": 9 },
-    savingThrow: "None",
-    properties: [
-      { type: "SPELL_SCHOOL", value: "Conjuration" },
-      { type: "SPELL_SUBSCHOOL", value: "Creation" },
-      { type: "SPELL_CASTING_TIME", value: "1 standard action" },
-      { type: "SPELL_RANGE_TYPE", value: "Medium" },
-      {
-        type: "SPELL_TARGET",
-        value: "Three or more shambling mounds, no two of which can be more than 30 ft. apart; see text",
-      },
-      { type: "SPELL_DURATION", value: "Seven days or seven months (D); see text" },
-      { type: "SPELL_RESISTANCE", value: "No" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },
     ],

@@ -112,6 +112,38 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
     ],
   },
   {
+    name: "Control Weather",
+    description:
+      "You change local weather over 10 minutes of casting plus 10 minutes for effects to manifest. You can call weather appropriate to the climate and season, controlling general tendencies like wind direction and intensity, but not specific effects like individual lightning strikes. New weather manifests gradually over 10 minutes. You can change weather types with a standard action (also manifesting in 10 minutes). Contradictory conditions cannot coexist. A druid doubles the duration and affects a 3-mile radius circle.",
+    aptitudes: [
+      "Blighter Spells",
+      "Cleric Spells",
+      "Druid Spells",
+      "Sorcerer Spells",
+      "Wizard Spells",
+      "Wu Jen Spells",
+    ],
+    aptitudeLevels: {
+      "Blighter Spells": 7,
+      "Cleric Spells": 7,
+      "Druid Spells": 7,
+      "Sorcerer Spells": 7,
+      "Wizard Spells": 7,
+      "Wu Jen Spells": 6,
+    },
+    savingThrow: "None",
+    properties: [
+      { type: "SPELL_SCHOOL", value: "Transmutation" },
+      { type: "SPELL_CASTING_TIME", value: "10 minutes; see text" },
+      { type: "SPELL_RANGE_TYPE", value: "2 miles" },
+      { type: "SPELL_AREA_OF_EFFECT", value: "2-mile-radius circle, centered on you; see text" },
+      { type: "SPELL_DURATION", value: "4d12 hours; see text" },
+      { type: "SPELL_RESISTANCE", value: "No" },
+      { type: "SPELL_COMPONENT", value: "Verbal" },
+      { type: "SPELL_COMPONENT", value: "Somatic" },
+    ],
+  },
+  {
     name: "Creeping Doom",
     description:
       "You summon a mass of centipede swarms (one per two caster levels, maximum ten at 20th level) that need not appear adjacent. They attack any creatures in their area and remain stationary unless you direct them (standard action). You can command any number of swarms to pursue prey within 100 feet. Swarms that move beyond 100 feet become stationary but can be commanded again if you return within range.",
@@ -223,26 +255,6 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
     ],
   },
   {
-    name: "Earthquake",
-    description:
-      "An intense, localized tremor rips the ground for 1 round. Creatures on the ground cannot move or attack. Spellcasters must make a Concentration check (DC 20 + spell level) or lose spells. Effects vary by terrain: Cave/Tunnel: Roof collapses for 8d6 bludgeoning (Reflex DC 15 half), pinning creatures. Cliff: Creates a landslide traveling horizontally equal to the fall distance, dealing 8d6 (Reflex DC 15 half) and pinning. Open Ground: DC 15 Reflex or fall prone; 25% chance of falling into a fissure (Reflex DC 20 to avoid); fissures close at spell's end, killing trapped creatures. Structure: 100 points of damage (ignoring hardness), collapsing typical buildings; trapped creatures take 8d6 (Reflex DC 15 half). River/Lake/Marsh: Fissures drain water; swampland becomes quicksand (DC 15 Reflex or sink). Pinned creatures take 1d6 nonlethal per minute; unconscious pinned creatures must make DC 15 Constitution checks or take 1d6 lethal per minute.",
-    aptitudes: ["Blighter Spells", "Cleric Spells", "Druid Spells", "Warmage Spells"],
-    aptitudeLevels: { "Blighter Spells": 7, "Cleric Spells": 8, "Druid Spells": 8, "Warmage Spells": 7 },
-    savingThrow: "See text",
-    properties: [
-      { type: "SPELL_SCHOOL", value: "Evocation" },
-      { type: "SPELL_DESCRIPTOR", value: "Earth" },
-      { type: "SPELL_CASTING_TIME", value: "1 standard action" },
-      { type: "SPELL_RANGE_TYPE", value: "Long" },
-      { type: "SPELL_AREA_OF_EFFECT", value: "80-ft.-radius spread (S)" },
-      { type: "SPELL_DURATION", value: "1 round" },
-      { type: "SPELL_RESISTANCE", value: "No" },
-      { type: "SPELL_COMPONENT", value: "Verbal" },
-      { type: "SPELL_COMPONENT", value: "Somatic" },
-      { type: "SPELL_COMPONENT", value: "Divine Focus" },
-    ],
-  },
-  {
     name: "Ethereal Jaunt",
     description:
       "You become ethereal along with your equipment. You are invisible, insubstantial, and can move in any direction at half speed, passing through solid objects. You can see and hear the Material Plane (limited to 60 feet) but everything appears gray. Force effects and abjurations affect you normally. You cannot attack material creatures, and your spells affect only ethereal things. Ending the spell while inside a solid object shunts you to the nearest open space for 1d6 damage per 5 feet traveled.",
@@ -255,6 +267,31 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
       { type: "SPELL_TARGET", value: "You" },
       { type: "SPELL_DURATION", value: "1 round/level (D)" },
       { type: "SPELL_RESISTANCE", value: "No" },
+      { type: "SPELL_COMPONENT", value: "Verbal" },
+      { type: "SPELL_COMPONENT", value: "Somatic" },
+    ],
+  },
+  {
+    name: "Finger of Death",
+    description:
+      "You can kill one living creature within range. A successful Fortitude save instead deals 3d6 + 1 per caster level (maximum +25) damage. The creature may still die from the damage.",
+    aptitudes: ["Blighter Spells", "Druid Spells", "Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
+    aptitudeLevels: {
+      "Blighter Spells": 6,
+      "Druid Spells": 8,
+      "Sorcerer Spells": 7,
+      "Warmage Spells": 7,
+      "Wizard Spells": 7,
+    },
+    savingThrow: "Fortitude partial",
+    properties: [
+      { type: "SPELL_SCHOOL", value: "Necromancy" },
+      { type: "SPELL_DESCRIPTOR", value: "Death" },
+      { type: "SPELL_CASTING_TIME", value: "1 standard action" },
+      { type: "SPELL_RANGE_TYPE", value: "Close" },
+      { type: "SPELL_TARGET", value: "One living creature" },
+      { type: "SPELL_DURATION", value: "Instantaneous" },
+      { type: "SPELL_RESISTANCE", value: "Yes" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },
     ],
@@ -532,25 +569,6 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },
       { type: "SPELL_COMPONENT", value: "Divine Focus" },
-    ],
-  },
-  {
-    name: "Repel Metal Or Stone",
-    description:
-      "Invisible energy waves push metal and stone objects away at 40 feet per round. Fixed objects larger than 3 inches are unaffected; smaller ones break. Loose objects over 500 pounds are unaffected. Creatures in metal armor are dragged along. Even magic items are repelled (antimagic fields block the effect). The path is set at casting.",
-    aptitudes: ["Blighter Spells", "Druid Spells"],
-    aptitudeLevels: { "Blighter Spells": 7, "Druid Spells": 8 },
-    savingThrow: "None",
-    properties: [
-      { type: "SPELL_SCHOOL", value: "Abjuration" },
-      { type: "SPELL_DESCRIPTOR", value: "Earth" },
-      { type: "SPELL_CASTING_TIME", value: "1 standard action" },
-      { type: "SPELL_RANGE_TYPE", value: "60 ft." },
-      { type: "SPELL_AREA_OF_EFFECT", value: "60-ft. line from you" },
-      { type: "SPELL_DURATION", value: "1 round/level (D)" },
-      { type: "SPELL_RESISTANCE", value: "No" },
-      { type: "SPELL_COMPONENT", value: "Verbal" },
-      { type: "SPELL_COMPONENT", value: "Somatic" },
     ],
   },
   {
