@@ -13,24 +13,21 @@ import type {
 
 /**
  * What a ruleset describes in its own shape, which the server hands to the client as it is: a character's sheet (as the
- * API answers it, as a member reads it, printed), the level-up wizard's steps, preview and a saved level's selections,
- * and what each picker adds to an option.
+ * API answers it, as a member reads it, printed), the level-up wizard's steps (any of them, each named for which it
+ * is), preview and a saved level's selections, and what each picker adds to an option.
  */
 export interface Descriptions {
-  abilityStep: unknown;
   classOption: object;
   featGroup: object;
   featOption: object;
-  featStep: unknown;
   levelSelections: unknown;
   memberSheet: unknown;
   powerOption: object;
-  powerStep: unknown;
   preview: unknown;
   raceOption: object;
   sheet: unknown;
   sheetDocument: unknown;
-  skillStep: unknown;
+  step: { name: string };
 }
 
 /**

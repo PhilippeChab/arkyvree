@@ -54,7 +54,7 @@ import {
   WAR_CLERIC_1,
   WIZARD_1,
 } from "@/tests/support/levelFixtures.ts";
-import { addCharacterLevel, addOneLevel, findKlassLevel } from "@/tests/support/levels.ts";
+import { addCharacterLevel, addOneLevel, findKlassLevel, getLevelStep } from "@/tests/support/levels.ts";
 import {
   createSeededTestRuleset,
   createSeededTestRulesetWithExtensions,
@@ -287,14 +287,14 @@ describe("LevelsService", () => {
     const notFound = [
       () => CharacterLevelsService.getAvailableClasses(session, NIL_UUID, {}, page),
       () => CharacterLevelsService.getAvailableClasses(other, character.id, {}, page),
-      () => CharacterLevelsService.getAbilityStep(session, NIL_UUID),
-      () => CharacterLevelsService.getSkillStep(session, NIL_UUID, klass.id, 1),
-      () => CharacterLevelsService.getSkillStep(session, character.id, klass.id, 999),
-      () => CharacterLevelsService.getFeatStep(session, NIL_UUID, klass.id, 1),
-      () => CharacterLevelsService.getFeatStep(session, character.id, klass.id, 999),
-      () => CharacterLevelsService.getPowerStep(session, NIL_UUID, klass.id, 1),
-      () => CharacterLevelsService.getPowerStep(session, character.id, klass.id, 999),
-      () => CharacterLevelsService.getPowerStep(session, character.id, klass.id, 1, NIL_UUID),
+      () => getLevelStep(session, NIL_UUID, "abilities"),
+      () => getLevelStep(session, NIL_UUID, "skills", { classId: klass.id, level: 1 }),
+      () => getLevelStep(session, character.id, "skills", { classId: klass.id, level: 999 }),
+      () => getLevelStep(session, NIL_UUID, "feats", { classId: klass.id, level: 1 }),
+      () => getLevelStep(session, character.id, "feats", { classId: klass.id, level: 999 }),
+      () => getLevelStep(session, NIL_UUID, "powers", { classId: klass.id, level: 1 }),
+      () => getLevelStep(session, character.id, "powers", { classId: klass.id, level: 999 }),
+      () => getLevelStep(session, character.id, "powers", { classId: klass.id, level: 1, editedLevelId: NIL_UUID }),
       () =>
         CharacterLevelsService.getAvailablePowers(
           session,
@@ -423,13 +423,14 @@ describe("LevelsService", () => {
     const { session, character, klassLevels } = await setupRuleset();
     await addCharacterLevel(character.id, klassLevels[0].id);
     await addCharacterLevel(character.id, klassLevels[1].id);
-    expect(await CharacterLevelsService.getAbilityStep(session, character.id)).toEqual({
+    expect(await getLevelStep(session, character.id, "abilities")).toEqual({
+      name: "abilities",
       isAvailable: false,
       attributes: {},
     });
 
     await addCharacterLevel(character.id, klassLevels[2].id);
-    expect(await CharacterLevelsService.getAbilityStep(session, character.id)).toMatchObject({
+    expect(await getLevelStep(session, character.id, "abilities")).toMatchObject({
       isAvailable: true,
       attributes: expect.any(Object),
     });
@@ -448,7 +449,7 @@ describe("LevelsService", () => {
         { characterLevelId: level.id, skillId: skills["Diplomacy"].id, rank: 1 },
       ]);
 
-      const slots = await CharacterLevelsService.getSkillStep(session, character.id, klass.id, 2);
+      const slots = await getLevelStep(session, character.id, "skills", { classId: klass.id, level: 2 });
       expect(slots.totalCharacterLevel).toBe(2);
       expect(slots.skillPointsToSpend).toBeGreaterThan(0);
       expect(
@@ -468,7 +469,7 @@ describe("LevelsService", () => {
       const characterId = await createSeedCharacter(ctx, "fighter", { xp: 6000, abilities: { Intelligence: 13 } });
       await addFighterLevels(session, ctx, characterId, 3);
       const slots = (abilityId?: string) =>
-        CharacterLevelsService.getSkillStep(session, characterId, ctx.klassMap.pc["Fighter"], 4, abilityId);
+        getLevelStep(session, characterId, "skills", { classId: ctx.klassMap.pc["Fighter"], level: 4, abilityId });
 
       expect((await slots()).skillPointsToSpend).toBe(4);
       // INT 14 makes it 5 a level: 20 + 5 + 5 + 5 = 35, less the 24 spent.
@@ -495,7 +496,10 @@ describe("LevelsService", () => {
       });
       const characterId = await createSeedCharacter(ctx, "cleric", { rulesetId: fork.id });
 
-      const { skills } = await CharacterLevelsService.getSkillStep(session, characterId, ctx.klassMap.pc["Cleric"], 1);
+      const { skills } = await getLevelStep(session, characterId, "skills", {
+        classId: ctx.klassMap.pc["Cleric"],
+        level: 1,
+      });
       const flags = (name: string) => {
         const { isClassSkill, isCurrentClassSkill } = skills.find((s) => s.name === name)!;
         return { isClassSkill, isCurrentClassSkill };
@@ -514,7 +518,7 @@ describe("LevelsService", () => {
       ];
       await KlassSkills.create(db, { klassId: klass.id, skillId: craft.id });
 
-      const { skills } = await CharacterLevelsService.getSkillStep(session, character.id, klass.id, 1);
+      const { skills } = await getLevelStep(session, character.id, "skills", { classId: klass.id, level: 1 });
       expect(
         skills
           .filter((s) => s.isClassSkill && s.isCurrentClassSkill)
@@ -536,7 +540,7 @@ describe("LevelsService", () => {
       });
 
       expect(
-        (await CharacterLevelsService.getFeatStep(session, character.id, klass.id, 1)).autoGrantedFeats,
+        (await getLevelStep(session, character.id, "feats", { classId: klass.id, level: 1 })).autoGrantedFeats,
       ).toMatchObject([{ id: feats["Power Attack"].id }]);
       const available = await CharacterLevelsService.getAvailableFeats(
         session,
@@ -736,12 +740,10 @@ describe("LevelsService", () => {
       await FeatsAptitudes.create(db, { featId: feats["Dodge"].id, aptitudeId: shared.id });
       await PowersAptitudes.create(db, { powerId: powers["Rage"].id, aptitudeId: shared.id });
 
-      const { aptitudePools, featsToSelect } = await CharacterLevelsService.getFeatStep(
-        session,
-        character.id,
-        klass.id,
-        1,
-      );
+      const { aptitudePools, featsToSelect } = await getLevelStep(session, character.id, "feats", {
+        classId: klass.id,
+        level: 1,
+      });
       const sharedByName = Object.fromEntries(Object.values(aptitudePools).map((p) => [p.name, p.shared]));
       expect(sharedByName).toMatchObject({ "Shared Aptitude": true, "Power Aptitude": true, "Feat Aptitude": false });
       expect(featsToSelect).toBe(
@@ -794,12 +796,10 @@ describe("LevelsService", () => {
           klass === "Ranger" ? [{ levelIndex: 0, featName: "Track", aptitude: "Ranger Class Feature" }] : [];
         await addFeats(db, ctx, levelIds, earlyFeats);
       }
-      const { aptitudePools } = await CharacterLevelsService.getFeatStep(
-        session,
-        characterId,
-        ctx.klassMap.pc[klass],
+      const { aptitudePools } = await getLevelStep(session, characterId, "feats", {
+        classId: ctx.klassMap.pc[klass],
         level,
-      );
+      });
       expect(Object.values(aptitudePools).find((p) => p.name === pool)).toMatchObject({ available: 1 });
       // A wizard picks the schools to give up once specialized.
       if (klass === "Wizard")
@@ -1113,7 +1113,7 @@ describe("LevelsService", () => {
       });
 
       expect(
-        (await CharacterLevelsService.getPowerStep(session, character.id, klass.id, 2)).autoGrantedPowers,
+        (await getLevelStep(session, character.id, "powers", { classId: klass.id, level: 2 })).autoGrantedPowers,
       ).toMatchObject([{ id: powers["Rage"].id }]);
       const { items } = await CharacterLevelsService.getAvailablePowers(
         session,
@@ -1213,8 +1213,13 @@ describe("LevelsService", () => {
       const level = await levelUp(session, ctx, characterId, "Sorcerer", 1, SORCERER_1);
       // Four cantrips and two first-level spells, all picked at that level.
       expect(
-        (await CharacterLevelsService.getPowerStep(session, characterId, ctx.klassMap.pc["Sorcerer"], 1, level.id))
-          .powersToSelect,
+        (
+          await getLevelStep(session, characterId, "powers", {
+            classId: ctx.klassMap.pc["Sorcerer"],
+            level: 1,
+            editedLevelId: level.id,
+          })
+        ).powersToSelect,
       ).toBe(6);
     });
 
@@ -1472,13 +1477,11 @@ describe("LevelsService", () => {
       const ctx = await getSeedCtx();
       const characterId = await createSeedCharacter(ctx);
       const [level] = await addClassLevels(db, ctx, characterId, "Fighter", [1], [10]);
-      const { aptitudePools } = await CharacterLevelsService.getFeatStep(
-        session,
-        characterId,
-        ctx.klassMap.pc["Fighter"],
-        1,
-        level,
-      );
+      const { aptitudePools } = await getLevelStep(session, characterId, "feats", {
+        classId: ctx.klassMap.pc["Fighter"],
+        level: 1,
+        editedLevelId: level,
+      });
       // One General feat for the first level, one for being human.
       expect(pool(aptitudePools, "General")).toMatchObject({ allowed: 2 });
       expect(pool(aptitudePools, "Fighter Bonus Feat")).toMatchObject({ allowed: 1 });
@@ -1519,13 +1522,11 @@ describe("LevelsService", () => {
             { levelIndex: 1, featName: "Weapon Focus: Battleaxe", aptitude: "Fighter Bonus Feat" },
           ],
         );
-        const { aptitudePools } = await CharacterLevelsService.getFeatStep(
-          session,
-          characterId,
-          ctx.klassMap.pc["Fighter"],
-          1,
-          fighter1,
-        );
+        const { aptitudePools } = await getLevelStep(session, characterId, "feats", {
+          classId: ctx.klassMap.pc["Fighter"],
+          level: 1,
+          editedLevelId: fighter1,
+        });
         expect(pool(aptitudePools, "General")!.available).toBeGreaterThanOrEqual(1);
 
         const { feats } = picks(ctx, {
@@ -1551,14 +1552,11 @@ describe("LevelsService", () => {
           { levelIndex: 3, skillName: "Intimidate", rank: 4 },
         ]);
         const edit = async (index: number, klass: string, ranks: Record<string, number>) => {
-          const slots = await CharacterLevelsService.getSkillStep(
-            session,
-            characterId,
-            ctx.klassMap.pc[klass],
-            1,
-            undefined,
-            levelIds[index],
-          );
+          const slots = await getLevelStep(session, characterId, "skills", {
+            classId: ctx.klassMap.pc[klass],
+            level: 1,
+            editedLevelId: levelIds[index],
+          });
           await CharacterLevelsService.updateLevel(
             session,
             characterId,
@@ -1701,8 +1699,8 @@ describe("LevelsService", () => {
           () => CharacterLevelsService.getPreview(session, character.id, [{ klassId: klass.id, level: 1 }], [null]),
         ],
         ["classes", () => CharacterLevelsService.getAvailableClasses(session, character.id, {}, page)],
-        ["feat slots", () => CharacterLevelsService.getFeatStep(session, character.id, klass.id, 1)],
-        ["skill slots", () => CharacterLevelsService.getSkillStep(session, character.id, klass.id, 1)],
+        ["feat slots", () => getLevelStep(session, character.id, "feats", { classId: klass.id, level: 1 })],
+        ["skill slots", () => getLevelStep(session, character.id, "skills", { classId: klass.id, level: 1 })],
         ["finalize", () => addOneLevel(session, character.id, klass.id, 1, 8, null, {}, {}, {}, true)],
         ["remove", () => CharacterLevelsService.removeLevel(session, character.id)],
       ];

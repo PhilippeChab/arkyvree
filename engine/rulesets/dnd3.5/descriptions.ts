@@ -16,18 +16,15 @@ type DetailsOf<P> = P extends Picker<infer _Row, infer Details> ? Details : neve
 
 /** What the 3.5 rules describe in their own shape: the sheets, the level-up wizard's pages, the pickers' options. */
 export type Dnd35Descriptions = {
-  abilityStep: ReturnType<LevelUpSteps["describeAbilityStep"]>;
   classOption: DetailsOf<ClassPicker>;
   featGroup: { aptitudeModifiers: PoolModifier[]; eligible: boolean; requirementTree: string | undefined };
   featOption: DetailsOf<FeatPicker>;
-  featStep: ReturnType<LevelUpSteps["describeFeatStep"]>;
   levelSelections: ReturnType<Dnd35LevelSelections["describeLevel"]>;
   memberSheet: ReturnType<typeof CharacterDescription.describeForMember>;
   powerOption: DetailsOf<PowerPicker>;
-  powerStep: ReturnType<LevelUpSteps["describePowerStep"]>;
   preview: ReturnType<LevelUpPreview["describePreview"]>;
   raceOption: DetailsOf<RacePicker>;
   sheet: ReturnType<typeof CharacterDescription.describe>;
   sheetDocument: ReturnType<typeof CharacterSheet.describeSheet>;
-  skillStep: ReturnType<LevelUpSteps["describeSkillStep"]>;
+  step: ReturnType<LevelUpSteps["describeStep"]>;
 };

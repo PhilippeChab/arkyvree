@@ -45,28 +45,31 @@ const levelParams = characterIdParam.extend({ characterLevelId: z.string().uuid(
 const queryNumber = z.string().pipe(z.coerce.number());
 
 /**
- * The level a step is for: class `classId`'s `level`, after the levels the wizard plans before it
- * (`plannedClassLevelIds`), or a saved level's edit (`editedLevelId`).
+ * The level a step is for: class `classId`'s `level` (which a step that reads its class requires) with its ability
+ * increase, after the levels the wizard plans before it (`plannedClassLevelIds`, with their ability increases), or a
+ * saved level's edit (`editedLevelId`).
  */
 const stepQuery = {
-  classId: z.string().uuid(),
-  level: queryNumber,
+  abilityId: z.string().uuid().optional(),
+  classId: z.string().uuid().optional(),
   editedLevelId: z.string().uuid().optional(),
+  level: queryNumber.optional(),
+  plannedAbilityIds: abilityIdList,
   plannedClassLevelIds: idList,
 };
 
 /**
- * A feat or power picker's page: its step's level and that level's ability increase, the pool it picks in, the planned
- * levels' ability increases and the feats picked so far, which its options are checked against.
+ * A feat or power picker's page: its step's level, which it requires, the pool it picks in and the feats picked so far,
+ * which its options are checked against.
  */
 const pickerQuery = {
   ...stepQuery,
-  abilityId: z.string().uuid().optional(),
   aptitudeId: z.string().uuid(),
+  classId: z.string().uuid(),
   featPicks,
+  level: queryNumber,
   limit: limitDefaultingTo(20),
   page,
-  plannedAbilityIds: abilityIdList,
   search: z.string().optional(),
 };
 
@@ -84,31 +87,10 @@ const skillRanks = z
       .filter((ranked) => isUuid(ranked.skillId) && !isNaN(ranked.rank)),
   );
 
+/** A step's name, as its ruleset lists it. */
+const stepParams = characterIdParam.extend({ step: z.string().min(1) });
+
 export default new Hono<SessionContext>()
-  .get(
-    "/:characterId/ability-step",
-    validate("param", characterIdParam),
-    validate(
-      "query",
-      z.object({
-        editedLevelId: z.string().uuid().optional(),
-        plannedLevelCount: queryNumber.optional(),
-      }),
-    ),
-    async (c) => {
-      const { characterId } = c.req.valid("param");
-      const { editedLevelId, plannedLevelCount } = c.req.valid("query");
-      return c.json(
-        await CharacterLevelsService.getAbilityStep(
-          c.var.requestSession,
-          characterId,
-          editedLevelId,
-          plannedLevelCount,
-        ),
-        200,
-      );
-    },
-  )
   .get(
     "/:characterId/available-classes",
     validate("param", characterIdParam),
@@ -173,73 +155,23 @@ export default new Hono<SessionContext>()
     },
   )
   .get(
-    "/:characterId/feat-step",
+    "/:characterId/level-steps",
     validate("param", characterIdParam),
     validate("query", z.object(stepQuery)),
     async (c) => {
       const { characterId } = c.req.valid("param");
-      const { classId, level, editedLevelId, plannedClassLevelIds } = c.req.valid("query");
-      return c.json(
-        await CharacterLevelsService.getFeatStep(
-          c.var.requestSession,
-          characterId,
-          classId,
-          level,
-          editedLevelId,
-          plannedClassLevelIds,
-        ),
-        200,
-      );
+      const query = c.req.valid("query");
+      return c.json(await CharacterLevelsService.getSteps(c.var.requestSession, characterId, query), 200);
     },
   )
   .get(
-    "/:characterId/power-step",
-    validate("param", characterIdParam),
+    "/:characterId/level-steps/:step",
+    validate("param", stepParams),
     validate("query", z.object(stepQuery)),
     async (c) => {
-      const { characterId } = c.req.valid("param");
-      const { classId, level, editedLevelId, plannedClassLevelIds } = c.req.valid("query");
-      return c.json(
-        await CharacterLevelsService.getPowerStep(
-          c.var.requestSession,
-          characterId,
-          classId,
-          level,
-          editedLevelId,
-          plannedClassLevelIds,
-        ),
-        200,
-      );
-    },
-  )
-  .get(
-    "/:characterId/skill-step",
-    validate("param", characterIdParam),
-    validate(
-      "query",
-      z.object({
-        ...stepQuery,
-        abilityId: z.string().uuid().optional(),
-        plannedAbilityIds: abilityIdList,
-      }),
-    ),
-    async (c) => {
-      const { characterId } = c.req.valid("param");
-      const { classId, level, abilityId, editedLevelId, plannedClassLevelIds, plannedAbilityIds } =
-        c.req.valid("query");
-      return c.json(
-        await CharacterLevelsService.getSkillStep(
-          c.var.requestSession,
-          characterId,
-          classId,
-          level,
-          abilityId,
-          editedLevelId,
-          plannedClassLevelIds,
-          plannedAbilityIds,
-        ),
-        200,
-      );
+      const { characterId, step } = c.req.valid("param");
+      const query = c.req.valid("query");
+      return c.json(await CharacterLevelsService.getStep(c.var.requestSession, characterId, step, query), 200);
     },
   )
   .get("/:characterId/:characterLevelId", validate("param", levelParams), async (c) => {

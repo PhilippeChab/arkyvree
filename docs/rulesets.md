@@ -558,7 +558,8 @@ engine/rulesets/
     │                                      what they give (AptitudeSlotsPlan), which LevelUpPreview (the wizard's
     │                                      preview) and LevelUpPlan (a save's levels checked, its picks spread over
     │                                      them, PicksDistribution) build on; LevelEdit: a saved level's edit, and
-    │                                      the issues it answers for; LevelUpSteps: the wizard's steps;
+    │                                      the issues it answers for; LevelUpSteps: the wizard's steps, which it
+    │                                      lists (abilities, skills, feats, powers) and answers by name;
     │                                      Dnd35LevelSelections: a saved level's selections, with each feat's pools
     ├── pickers/                           (the 3.5 pickers, on core's: ClassPicker (a class's next level) and
     │                                      LevelPicker (FeatPicker, PowerPicker: the level they pick at) on
@@ -584,8 +585,8 @@ server/
 │   │       ├── CharacterLevelsService.ts  (a save, an edit, a removal: levelUp().planLevels, planEdit,
 │   │       │                              planRemoval, each with what the bonded creatures become; the preview;
 │   │       │                              a saved level's selections)
-│   │       ├── concerns/                  (Pickers: the class, feat and power pickers' pages; Steps: the wizard's
-│   │       │                              ability, feat, power and skill steps)
+│   │       ├── concerns/                  (Pickers: the class, feat and power pickers' pages; Steps: the steps
+│   │       │                              the ruleset lists for a level, and one by its name)
 │   │       └── bondedWrites.ts            (the bonded creatures the engine plans, written)
 │   └── rulesets/                          ← entity CRUD for feats/powers/aptitudes/…
 │       └── entityWrites.ts                (what the engine plans a save writes beside its row, written)
@@ -632,6 +633,10 @@ export interface RulesetModule<D extends Descriptions, E extends EntityKindsCont
 // client as it is the ruleset's own (`D`)
 export default abstract class LevelUpPart<D extends Descriptions> {
   abstract describePreview(view: RulesetView, character: CharacterInput, …): D["preview"];
+  // The wizard's steps are the ruleset's: it lists a level's, and answers one by its name (`D["step"]`, a union of
+  // its steps, each named for which it is)
+  abstract describeStep(view: RulesetView, character: CharacterInput, name: string, step: LevelStep): D["step"];
+  abstract describeSteps(view: RulesetView, character: CharacterInput, step: LevelStep): readonly WizardStep<D["step"]["name"]>[];
   abstract planLevels(view: RulesetView, character: CharacterInput, …, force: boolean): LevelsPlan;
   …
 }
@@ -684,7 +689,7 @@ What a ruleset answers is its module's: five parts, each a class whose operation
 |---|---|---|---|
 | `characters` | a character's sheets (the API's, a campaign member's reading, partial or whole, the printed one), a list's card of one, its inventory, what a new one and an inventory entry store (what equipping an item checks), the languages it can speak, the races a new character can pick | `Dnd35Characters`: `describe`, `describeForMember`, `describeSheet`, `planCreate`, `planInventoryEntry`, `openRacePicker`: each named as its handle's operation is; `describeCard`, `describeInventory` and `checkLanguages` are `CharactersPart`'s, which read the schema's rows and the view alone | `character(input)` (`CharacterEngine`), `characters()` (`CharactersEngine`) |
 | `entities` | each entity kind's rules, by its table: an entity found and described, a page opened (`openList`), what saving or deleting one writes, what the rules refuse of an edit; a class's levels, class skills and table, which the classes' kind hands out | `Dnd35Entities`: `of(view, type)`, each kind's class (`SkillEntity`, `FeatEntity`, `ItemEntity`…; `ClassEntity`'s `levels(klassId)`, `skills(klassId)`, `table(klassId)`) | `entities(type)`, `class(klassId)` (`ClassEngine`) |
-| `levelUp` | the level flows: the preview, a save's levels and its check (the character with them, unless forced), a saved level's edit, the last level's removal, the bonded creatures the levels make, the wizard's steps and pickers, a saved level's selections | `Dnd35LevelUp`: `describePreview`, `planLevels`, `planEdit`, `planRemoval`, `planBonded`, `describeAbilityStep`, `describeFeatStep`…, `openFeatPicker`…, `describeLevel`: each named as its handle's operation is, and as the class it opens names it (`LevelUpPlan.describePreview`, `LevelEdit.planEdit`) | `character(input).levelUp()` (`LevelUpEngine`) |
+| `levelUp` | the level flows: the preview, a save's levels and its check (the character with them, unless forced), a saved level's edit, the last level's removal, the bonded creatures the levels make, the wizard's steps and pickers, a saved level's selections | `Dnd35LevelUp`: `describePreview`, `planLevels`, `planEdit`, `planRemoval`, `planBonded`, `describeSteps`, `describeStep`, `openFeatPicker`…, `describeLevel`: each named as its handle's operation is, and as the class it opens names it (`LevelUpPlan.describePreview`, `LevelEdit.planEdit`) | `character(input).levelUp()` (`LevelUpEngine`) |
 | `ruleset` | what a ruleset needs as a whole, past its entities: to be published to be played, a player race and class, a skill and a feat | `Dnd35Ruleset`: `findMissingContent`, which `RulesetPart.checkPublishable` reads (an extension needs none) | `checkPublishable` |
 | `content` | what the seeders and the codegen ask: the paths a book can target, an entity's fields as its properties | `Dnd35Content`: `listBookTargetPaths`, and the codecs of its seeded fields, which `ContentPart.toEntityProperties` writes with | `Engine.forRules(baseRules)` (`ContentEngine`) |
 | `createTargetPaths`, `createPropertyTypes` | the ruleset's path categories, its property types (in stat-block order, which the view orders an entity's properties by: `PropertyOrder`) | `Dnd35TargetPaths`, `Dnd35PropertyTypes` | `targetPaths()`, `modifiers(…)`, `requirements(…)`; `propertyTypes()` |
@@ -737,7 +742,7 @@ More complex operations (bound to the detailed character, returning rich data) b
 
 ### The level flows ask the module
 
-The level flows (`server/services/characters/levels/`: the preview, a save, an edit, a removal, the wizard's steps and pickers, a level's selections, the bonded creatures' writes) are the server's: they read the character's rows (`readCharacterInput`, `readBondedInputs`; a save's in its transaction, the character locked), ask the engine, and write what it plans. What a level-up is, its rules, is the module's `levelUp` (the 3.5 module's `Dnd35LevelUp`, which opens a class per operation: the planned levels' class levels and projections, the preview and a save's distribution, the checks a save makes, the last level's removal, the steps' slots, the pickers' filters and options, a level's selections, the bonded creatures' plans), which build the characters a step needs from the rows they're given. A second ruleset extends `LevelUpPart` with a level-up of its own. The level routes still name 3.5's four steps (ability, feat, power, skill), and a body's fields are 3.5's: a ruleset with other steps or fields needs the routes to take the module's (planned).
+The level flows (`server/services/characters/levels/`: the preview, a save, an edit, a removal, the wizard's steps and pickers, a level's selections, the bonded creatures' writes) are the server's: they read the character's rows (`readCharacterInput`, `readBondedInputs`; a save's in its transaction, the character locked), ask the engine, and write what it plans. What a level-up is, its rules, is the module's `levelUp` (the 3.5 module's `Dnd35LevelUp`, which opens a class per operation: the planned levels' class levels and projections, the preview and a save's distribution, the checks a save makes, the last level's removal, the steps' slots, the pickers' filters and options, a level's selections, the bonded creatures' plans), which build the characters a step needs from the rows they're given. A second ruleset extends `LevelUpPart` with a level-up of its own. Its wizard's steps are its own: the module lists a level's (`describeSteps`, each its name and label: `GET /characters/:characterId/level-steps`) and answers one by its name (`describeStep`: `GET /characters/:characterId/level-steps/:step`, a step it doesn't have refused as not found), each taking the level it's for (`LevelStep`: its class's level, the levels planned before it, or the level an edit replaces), and the client's Add Level and Edit Level wizards render each by its name with their base rules' step components (`getLevelWizards`, see [docs/frontend.md](./frontend.md)). A body's fields are 3.5's: a ruleset with other fields needs the routes to take the module's (planned).
 
 Entity CRUD services (`FeatsService`, `PowersService`, `SkillsService`, `ClassLevelsService`, `AptitudesService`, …) operate on rows of the generic schema, and ask the module's `entities` what's ruleset-specific about them, one operation per action: an entity's fields, what saving it writes, what its rules refuse. Their customizations' services (`ModifiersService`, `PropertiesService`, `RequirementsService`, `PropertyTypesService`) ask the engine's customizations and property types the same way.
 

@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
+import type { InferResponseType } from "hono/client";
+
 import { addClassLevels, addPowers } from "@/database/seeds/seedCharacter.ts";
 import { type SeedContext } from "@/database/seeds/seedContext.ts";
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
@@ -10,8 +12,15 @@ import { FIGHTER_LEVELS, picks, type Picks } from "@/tests/support/levelFixtures
 import { createSeededTestRulesetWithExtensions } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 
+/** A level-up step, as the API answers it: any of those the ruleset lists, named for which it is. */
+type LevelStep = InferResponseType<(typeof step)["$get"], 200>;
+
+/** The query a step takes: the level it's for. */
+type StepQuery = Parameters<(typeof step)["$get"]>[0]["query"];
+
 const levels = api.api.characters.levels[":characterId"];
 const level = levels[":characterLevelId"];
+const step = levels["level-steps"][":step"];
 
 function featIds(feats: Record<string, { id: string }[]>, aptitudeId: string) {
   return (feats[aptitudeId] ?? []).map((f) => f.id);
@@ -37,6 +46,14 @@ function finalize(characterId: string, klassId: string, levelNumber: number, hp:
   });
 }
 
+/** Whether the API's step is the one asked for, by its name. */
+function isStep<N extends LevelStep["name"]>(
+  answered: LevelStep,
+  name: N,
+): answered is Extract<LevelStep, { name: N }> {
+  return answered.name === name;
+}
+
 /** A new human character of the seeded user's (INT 12), on the seeded ruleset unless `rulesetId` says otherwise. */
 async function createCharacter(rulesetId?: string) {
   const ctx = await getSeedCtx();
@@ -57,6 +74,13 @@ async function createCharacter(rulesetId?: string) {
 async function finalizeOk(characterId: string, klassId: string, levelNumber: number, hp: number, levelPicks: Picks) {
   const [created] = await expectOk(finalize(characterId, klassId, levelNumber, hp, levelPicks));
   return created;
+}
+
+/** The step `name` of the level `query` is for, as the API answers it: that step. */
+async function getStep<N extends LevelStep["name"]>(characterId: string, name: N, query: StepQuery) {
+  const answered = await expectOk(step.$get({ param: { characterId, step: name }, query }));
+  if (!isStep(answered, name)) throw new Error(`The API answered the ${answered.name} step for ${name}`);
+  return answered;
 }
 
 describe("character levels", () => {
@@ -100,26 +124,39 @@ describe("character levels", () => {
       expect(await cleave(`not:ids,${ctx.featMap["Power Attack"]}:${general}`)).toMatchObject({ eligible: true });
     });
 
+    test("lists the steps the ruleset gives a level, in order, and refuses one it doesn't", async () => {
+      const { characterId, ctx } = await createCharacter();
+      expect(await expectOk(levels["level-steps"].$get({ param: { characterId }, query: {} }))).toEqual([
+        { name: "abilities", label: "Ability Increase" },
+        { name: "skills", label: "Select Skills" },
+        { name: "feats", label: "Select Feats" },
+        { name: "powers", label: "Select Spells" },
+      ]);
+
+      const query = { classId: ctx.klassMap.pc["Fighter"], level: "1" };
+      await expectStatus(step.$get({ param: { characterId, step: "languages" }, query }), 404);
+      // A step that reads the level's class needs it
+      await expectStatus(step.$get({ param: { characterId, step: "feats" }, query: {} }), 400);
+    });
+
     test("reports the slots a class level grants", async () => {
       const { characterId, ctx } = await createCharacter();
       const query = { classId: ctx.klassMap.pc["Fighter"], level: "1" };
 
-      const skills = await expectOk(levels["skill-step"].$get({ param: { characterId }, query }));
+      const skills = await getStep(characterId, "skills", query);
       expect(skills).toMatchObject({ skillPointsToSpend: 16, totalCharacterLevel: 1 });
 
-      const feats = await expectOk(levels["feat-step"].$get({ param: { characterId }, query }));
+      const feats = await getStep(characterId, "feats", query);
       expect(feats.featsToSelect).toBe(3);
       const pools = Object.values(feats.aptitudePools);
       expect(pools.find((p) => p.name === "General")?.available).toBe(2);
       expect(pools.find((p) => p.name === "Fighter Bonus Feat")?.available).toBe(1);
 
-      const powers = await expectOk(levels["power-step"].$get({ param: { characterId }, query }));
+      const powers = await getStep(characterId, "powers", query);
       expect(powers.powersToSelect).toBe(0);
 
       // Ability increases only come every 4 character levels.
-      expect(await expectOk(levels["ability-step"].$get({ param: { characterId }, query: {} }))).toMatchObject({
-        isAvailable: false,
-      });
+      expect(await getStep(characterId, "abilities", {})).toMatchObject({ isAvailable: false });
     });
 
     test("lists the feats of a pool, flat and grouped by family", async () => {
@@ -348,12 +385,11 @@ describe("character levels", () => {
       await finalizeOk(characterId, klassId, 2, 6, fighter2(ctx));
 
       const general = async (characterLevelId?: string) => {
-        const slots = await expectOk(
-          levels["feat-step"].$get({
-            param: { characterId },
-            query: { classId: klassId, level: "1", editedLevelId: characterLevelId },
-          }),
-        );
+        const slots = await getStep(characterId, "feats", {
+          classId: klassId,
+          level: "1",
+          editedLevelId: characterLevelId,
+        });
         return Object.values(slots.aptitudePools).find((p) => p.name === "General")!;
       };
       const editing = await general(first.id);
@@ -388,12 +424,11 @@ describe("character levels", () => {
       const second = await finalizeOk(characterId, rangerId, 2, 7, secondPicks);
 
       const combatStyle = async (levelNumber: number, characterLevelId: string) => {
-        const slots = await expectOk(
-          levels["feat-step"].$get({
-            param: { characterId },
-            query: { classId: rangerId, level: String(levelNumber), editedLevelId: characterLevelId },
-          }),
-        );
+        const slots = await getStep(characterId, "feats", {
+          classId: rangerId,
+          level: String(levelNumber),
+          editedLevelId: characterLevelId,
+        });
         return Object.values(slots.aptitudePools).find((p) => p.name === "Ranger Combat Style (2nd)")?.available ?? 0;
       };
       expect(await combatStyle(2, second.id)).toBeGreaterThan(0);
@@ -444,12 +479,11 @@ describe("character levels", () => {
       const [l1, l2, l3] = created;
 
       const pools = async (levelNumber: number, characterLevelId: string) => {
-        const slots = await expectOk(
-          levels["feat-step"].$get({
-            param: { characterId },
-            query: { classId: klassId, level: String(levelNumber), editedLevelId: characterLevelId },
-          }),
-        );
+        const slots = await getStep(characterId, "feats", {
+          classId: klassId,
+          level: String(levelNumber),
+          editedLevelId: characterLevelId,
+        });
         const pool = (name: string) => Object.values(slots.aptitudePools).find((p) => p.name === name);
         return { general: pool("General"), bonus: pool("Fighter Bonus Feat") };
       };
@@ -518,10 +552,8 @@ describe("character levels", () => {
     const query = { classId: ctx.klassMap.pc["Fighter"], level: "1" };
     const responses = await Promise.all([
       guest["available-classes"].$get({ param: { characterId }, query: {} }),
-      guest["ability-step"].$get({ param: { characterId }, query: {} }),
-      guest["skill-step"].$get({ param: { characterId }, query }),
-      guest["feat-step"].$get({ param: { characterId }, query }),
-      guest["power-step"].$get({ param: { characterId }, query }),
+      guest["level-steps"].$get({ param: { characterId }, query: {} }),
+      guest["level-steps"][":step"].$get({ param: { characterId, step: "feats" }, query }),
       guest.finalize.$post({
         param: { characterId },
         json: {
@@ -549,10 +581,8 @@ describe("character levels", () => {
     const noPicks = { skills: {}, feats: {}, powers: {} };
 
     await expectStatus(levels["available-classes"].$get({ param: missing, query: {} }), 404);
-    await expectStatus(levels["ability-step"].$get({ param: missing, query: {} }), 404);
-    await expectStatus(levels["skill-step"].$get({ param: missing, query }), 404);
-    await expectStatus(levels["feat-step"].$get({ param: missing, query }), 404);
-    await expectStatus(levels["power-step"].$get({ param: missing, query }), 404);
+    await expectStatus(levels["level-steps"].$get({ param: missing, query: {} }), 404);
+    await expectStatus(step.$get({ param: { ...missing, step: "feats" }, query }), 404);
     await expectStatus(finalize(NIL_UUID, klassId, 1, 8, noPicks), 404);
     await expectStatus(levels.$delete({ param: missing }), 404);
     const characterLevel = { characterId, characterLevelId: NIL_UUID };

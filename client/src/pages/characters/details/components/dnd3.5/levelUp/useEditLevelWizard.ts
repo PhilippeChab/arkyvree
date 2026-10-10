@@ -11,19 +11,18 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import { fitFeats, fitPowers, fitSkillPoints, openPoolOf } from "./fitPicks.ts";
 import { type HpLevel, hpSet } from "./hitPoints.ts";
 import {
-  abilityStepQuery,
   availableFeatsGroupedQuery,
   availablePowersQuery,
   characterLevelQuery,
-  featStepQuery,
+  levelStepQuery,
+  levelStepsQuery,
   type PickerLevel,
-  powerStepQuery,
-  skillStepQuery,
   type StepLevel,
 } from "./levelUpQueries.ts";
 import { featPickString, powerPickString } from "./pendingPicks.ts";
 import { editedLevelSkills } from "./skillLevels.ts";
 import { type LevelUpFormData, pickIds, useLevelWizardBase } from "./useLevelWizardBase.ts";
+import { HP_STEP, REVIEW_STEP } from "./wizardSteps.ts";
 
 interface UseEditLevelWizardParams {
   characterId: string;
@@ -35,17 +34,6 @@ interface UseEditLevelWizardParams {
 
 /** The Edit Level wizard's state: what its dialog and its steps read. */
 export type EditLevelWizard = ReturnType<typeof useEditLevelWizard>;
-
-export const EDIT_STEP_CONTENT = ["hp", "abilities", "skills", "feats", "powers", "review"] as const;
-
-export const EDIT_STEP_LABELS = [
-  "Select HP",
-  "Ability Increase",
-  "Select Skills",
-  "Select Feats",
-  "Select Spells",
-  "Review Changes",
-];
 
 export function useEditLevelWizard({ open, onClose, characterId, editingLevel }: UseEditLevelWizardParams) {
   const editingLevelId = editingLevel.characterLevelId;
@@ -70,10 +58,10 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevel }:
     setShowCancelConfirm,
   } = base;
 
-  const abilityStep = EDIT_STEP_CONTENT.indexOf("abilities");
-  const skillsStep = EDIT_STEP_CONTENT.indexOf("skills");
-  const featsStep = EDIT_STEP_CONTENT.indexOf("feats");
-  const powersStep = EDIT_STEP_CONTENT.indexOf("powers");
+  // Its steps: the level's hit points, the steps the ruleset lists for the edited level, then its review
+  const stepsQuery = useQuery({ ...levelStepsQuery(characterId, editingLevelId), enabled: open });
+  const steps = useMemo(() => [HP_STEP, ...(stepsQuery.data ?? []), REVIEW_STEP], [stepsQuery.data]);
+  const stepName = steps[activeStep].name;
 
   const {
     data: levelData,
@@ -124,15 +112,15 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevel }:
     data: attributeData,
     isLoading: isLoadingAttributes,
     error: attributesError,
-  } = useQuery({ ...abilityStepQuery(characterId, editingLevelId), enabled: open && activeStep === abilityStep });
+  } = useQuery({ ...levelStepQuery(characterId, "abilities", step), enabled: open && stepName === "abilities" });
 
   const {
     data: skillData,
     isLoading: isLoadingSkills,
     error: skillsError,
   } = useQuery({
-    ...skillStepQuery(characterId, step, selectedAttribute),
-    enabled: open && activeStep === skillsStep,
+    ...levelStepQuery(characterId, "skills", { ...step, abilityId: selectedAttribute ?? undefined }),
+    enabled: open && stepName === "skills",
   });
 
   // The edited level's class skills and points, which the skills step and the review spend the points over
@@ -147,7 +135,7 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevel }:
     data: featData,
     isLoading: isLoadingFeats,
     error: featsError,
-  } = useQuery({ ...featStepQuery(characterId, step), enabled: open });
+  } = useQuery({ ...levelStepQuery(characterId, "feats", step), enabled: open });
 
   // The feats, fitted to the level's slots
   const { feats: selectedFeats, pools: adjustedFeatPools } = useMemo(
@@ -171,7 +159,7 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevel }:
     isFetchingNextPage: isFetchingNextFeatsPage,
   } = useListboxQuery({
     ...availableFeatsGroupedQuery(characterId, selectedAptitude, debouncedFeatSearch, picker),
-    enabled: open && activeStep === featsStep,
+    enabled: open && stepName === "feats",
   });
 
   // Powers queries
@@ -179,7 +167,7 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevel }:
     data: powerData,
     isLoading: isLoadingPowers,
     error: powersError,
-  } = useQuery({ ...powerStepQuery(characterId, step), enabled: open });
+  } = useQuery({ ...levelStepQuery(characterId, "powers", step), enabled: open });
 
   // The spells, fitted to the level's slots
   const selectedPowers = useMemo(() => fitPowers(picked.powers, powerData?.aptitudePools), [picked.powers, powerData]);
@@ -195,7 +183,7 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevel }:
       ...picker,
       selectedPowerIds: powerPickString(selectedPowers),
     }),
-    enabled: open && activeStep === powersStep,
+    enabled: open && stepName === "powers",
   });
 
   const finalizeMutation = useMutation({
@@ -227,7 +215,7 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevel }:
     onError: handleSaveError,
   });
 
-  const isLastStep = activeStep === EDIT_STEP_CONTENT.length - 1;
+  const isLastStep = activeStep === steps.length - 1;
 
   const handleNext = useCallback(() => {
     if (isLastStep) handleSubmit((data) => finalizeMutation.mutate({ data }))();
@@ -252,19 +240,27 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevel }:
   }, [resetPicks, onClose]);
 
   // The saved level fills the picks in as it loads, and its class's slots, which load after it, fit its picks: Next
-  // waits for its feat and power slots both, the Skills step for its skill slots, and a load that failed stops the
-  // wizard at the step that shows its error. The dialog also disables it while the save runs.
-  const content = EDIT_STEP_CONTENT[activeStep];
+  // waits for the steps the ruleset lists, its feat and power slots both, the Skills step for its skill slots, and a
+  // load that failed stops the wizard at the step that shows its error. The dialog also disables it while the save runs.
   const loading = isLoadingLevel || (!!levelData && !selectedClass) || isLoadingFeats || isLoadingPowers;
   const failed =
     !levelData ||
-    (content === "skills" && !skillData) ||
-    (content === "feats" && !featData) ||
-    (content === "powers" && !powerData);
-  const isNextDisabled = loading || failed || (content === "hp" && !hpSet(hpLevels, [selectedHP]));
+    !stepsQuery.data ||
+    (stepName === "skills" && !skillData) ||
+    (stepName === "feats" && !featData) ||
+    (stepName === "powers" && !powerData);
+  const isNextDisabled = loading || failed || (stepName === "hp" && !hpSet(hpLevels, [selectedHP]));
+
+  // The saved level, or the steps' list, failed to load: the wizard can't go on
+  const loadError =
+    (!levelData && levelError && { what: "Level", error: levelError }) ||
+    (!stepsQuery.data && stepsQuery.error && { what: "Steps", error: stepsQuery.error }) ||
+    undefined;
 
   return {
     ...base,
+    steps,
+    loadError,
     selectedFeats,
     selectedPowers,
     skillPointAllocations,
@@ -274,8 +270,6 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevel }:
     selectedHP,
     selectedAttribute,
     isLastStep,
-    levelData,
-    levelError,
 
     hpLevels,
     hpValues: [selectedHP],

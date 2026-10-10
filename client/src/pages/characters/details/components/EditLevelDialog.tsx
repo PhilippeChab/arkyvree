@@ -1,9 +1,7 @@
 import type { EditingLevel } from "@/client/src/components/characters/index.ts";
-import { LoadError } from "@/client/src/components/common/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
-import { EDIT_STEP_CONTENT, EDIT_STEP_LABELS, useEditLevelWizard } from "./dnd3.5/levelUp/index.ts";
-import { getLevelUpSections } from "./levelUpFactory.ts";
+import { getLevelWizards } from "./levelUpFactory.ts";
 import { LevelWizardDialog } from "./LevelWizardDialog.tsx";
 
 interface EditLevelDialogProps {
@@ -16,6 +14,7 @@ interface EditLevelDialogProps {
   open: boolean;
 }
 
+/** Edit Level: its base rules' wizard, its steps (those the ruleset lists for the level among them) shown by name. */
 export function EditLevelDialog({
   open,
   onClose,
@@ -24,27 +23,9 @@ export function EditLevelDialog({
   baseRules,
   editingLevel,
 }: EditLevelDialogProps) {
+  const { editSteps, useEditLevelWizard } = getLevelWizards(baseRules);
   const wizard = useEditLevelWizard({ open, onClose, characterId, editingLevel });
-  const Sections = getLevelUpSections(baseRules);
-
-  const renderStepContent = () => {
-    if (!wizard.levelData && wizard.levelError) return <LoadError what="Level" error={wizard.levelError} />;
-
-    switch (EDIT_STEP_CONTENT[wizard.activeStep]) {
-      case "hp":
-        return <Sections.HpStep wizard={wizard} />;
-      case "abilities":
-        return <Sections.EditAbilityStep wizard={wizard} baseRules={baseRules} />;
-      case "skills":
-        return <Sections.SkillsStep wizard={wizard} />;
-      case "feats":
-        return <Sections.FeatsStep wizard={wizard} characterId={characterId} />;
-      case "powers":
-        return <Sections.PowersStep wizard={wizard} />;
-      case "review":
-        return <Sections.EditReviewStep wizard={wizard} />;
-    }
-  };
+  const Step = editSteps[wizard.steps[wizard.activeStep].name];
 
   return (
     <LevelWizardDialog
@@ -52,11 +33,10 @@ export function EditLevelDialog({
       onExited={onExited}
       title="Edit Level"
       wizard={wizard}
-      stepLabels={EDIT_STEP_LABELS}
       finishLabel="Finish"
       isSaving={wizard.finalizeMutation.isPending}
     >
-      {renderStepContent()}
+      <Step wizard={wizard} characterId={characterId} baseRules={baseRules} />
     </LevelWizardDialog>
   );
 }

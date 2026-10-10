@@ -36,7 +36,7 @@ import {
   SORCERER_1,
   WIZARD_1,
 } from "@/tests/support/levelFixtures.ts";
-import { addOneLevel, findKlassLevel } from "@/tests/support/levels.ts";
+import { addOneLevel, findKlassLevel, getLevelStep } from "@/tests/support/levels.ts";
 import { invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
@@ -323,7 +323,8 @@ describe("CharactersService with bonded creatures", () => {
     ],
     [
       "count the feat slots of",
-      async (id: string) => CharacterLevelsService.getFeatStep(owner, id, (await getSeedCtx()).klassMap.pc.Wizard, 2),
+      async (id: string) =>
+        getLevelStep(owner, id, "feats", { classId: (await getSeedCtx()).klassMap.pc.Wizard, level: 2 }),
     ],
     ["level up", async (id: string) => addOneLevel(owner, id, (await getSeedCtx()).klassMap.pc.Wizard, 2, 4, null)],
     ["remove a level from", (id: string) => CharacterLevelsService.removeLevel(owner, id)],

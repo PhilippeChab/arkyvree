@@ -72,12 +72,15 @@ export interface LevelsPlan {
 }
 
 /**
- * A level-up wizard's step, as it asks for it: the step's level's ability increase, the levels the wizard plans before
- * it (`planned`), or the saved level it edits (`editedLevelId`), which the step's level takes the place of.
+ * The level a level-up wizard's step is for, as the wizard asks for it: class `klassId`'s `level` (a step that reads the
+ * level's class refuses to answer without them) and its ability increase, after the levels the wizard plans before it
+ * (`planned`), or in the place of the saved level it edits (`editedLevelId`).
  */
 export interface LevelStep {
   abilityId?: string;
   editedLevelId?: string;
+  klassId?: string;
+  level?: number;
   planned?: Pick<PlannedSoFar, "abilityIds" | "klassLevelIds">;
 }
 
@@ -111,4 +114,10 @@ export interface PlannedSoFar {
   featPicks?: FeatPick[];
   klassLevelIds?: string[];
   skillRanks?: { rank: number; skillId: string }[];
+}
+
+/** A level-up wizard's step, as its ruleset lists it: its name, which the ruleset answers the step by, and its label. */
+export interface WizardStep<N extends string = string> {
+  label: string;
+  name: N;
 }

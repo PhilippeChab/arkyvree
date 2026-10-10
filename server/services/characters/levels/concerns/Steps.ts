@@ -1,79 +1,44 @@
-import { Engine } from "@/engine/index.ts";
+import { Engine, type LevelStep } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { db } from "@/server/database/index.ts";
 import { withEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /**
- * The level-up wizard's steps, for a new level after those it plans (`plannedClassLevelIds`) or a saved level's edit
- * (`editedLevelId`): the ability increase, the feat and power pools, and the skill points.
+ * The level a step is for, as the wizard's query sends it: class `classId`'s `level` with its ability increase, after
+ * the levels it plans before it (their class levels and ability increases), or a saved level's edit (`editedLevelId`).
+ */
+interface StepQuery {
+  abilityId?: string;
+  classId?: string;
+  editedLevelId?: string;
+  level?: number;
+  plannedAbilityIds?: (string | undefined)[];
+  plannedClassLevelIds?: string[];
+}
+
+/** The step's level as the engine takes it. */
+function stepOf({ classId, plannedAbilityIds, plannedClassLevelIds, ...step }: StepQuery): LevelStep {
+  return { ...step, klassId: classId, planned: { abilityIds: plannedAbilityIds, klassLevelIds: plannedClassLevelIds } };
+}
+
+/**
+ * The level-up wizard's steps, which the character's ruleset lists and answers by name, for a new level after those it
+ * plans or a saved level's edit.
  */
 export function Steps<B extends Constructor>(Base: B) {
   abstract class WithSteps extends Base {
-    /**
-     * The ability step: the character's abilities, when the level it adds (after `plannedLevelCount` planned ones) or
-     * edits takes an ability increase.
-     */
-    async getAbilityStep(session: Session, characterId: string, editedLevelId?: string, plannedLevelCount?: number) {
+    /** The step `name` of the level the query is for: refused when the character's ruleset has no such step. */
+    async getStep(session: Session, characterId: string, name: string, query: StepQuery) {
       return await withEditableCharacter(db, session, characterId, (scope, character) =>
-        Engine.for(scope).character(character).levelUp().describeAbilityStep(editedLevelId, plannedLevelCount),
+        Engine.for(scope).character(character).levelUp().describeStep(name, stepOf(query)),
       );
     }
 
-    /** The feat step of class `classId`'s `level`: the pools the character picks feats in with it, and its grants. */
-    async getFeatStep(
-      session: Session,
-      characterId: string,
-      classId: string,
-      level: number,
-      editedLevelId?: string,
-      plannedClassLevelIds?: string[],
-    ) {
+    /** The steps of the level the query is for, in the wizard's order: each by its name, and its label. */
+    async getSteps(session: Session, characterId: string, query: StepQuery) {
       return await withEditableCharacter(db, session, characterId, (scope, character) =>
-        Engine.for(scope)
-          .character(character)
-          .levelUp()
-          .describeFeatStep(classId, level, { editedLevelId, planned: { klassLevelIds: plannedClassLevelIds } }),
-      );
-    }
-
-    /** The power step of class `classId`'s `level`: the pools the character picks powers in with it, and its grants. */
-    async getPowerStep(
-      session: Session,
-      characterId: string,
-      classId: string,
-      level: number,
-      editedLevelId?: string,
-      plannedClassLevelIds?: string[],
-    ) {
-      return await withEditableCharacter(db, session, characterId, (scope, character) =>
-        Engine.for(scope)
-          .character(character)
-          .levelUp()
-          .describePowerStep(classId, level, { editedLevelId, planned: { klassLevelIds: plannedClassLevelIds } }),
-      );
-    }
-
-    /** The skill step of class `classId`'s `level`, with its ability increase: the points to spend, each skill's status. */
-    async getSkillStep(
-      session: Session,
-      characterId: string,
-      classId: string,
-      level: number,
-      abilityId?: string,
-      editedLevelId?: string,
-      plannedClassLevelIds?: string[],
-      plannedAbilityIds?: (string | undefined)[],
-    ) {
-      return await withEditableCharacter(db, session, characterId, (scope, character) =>
-        Engine.for(scope)
-          .character(character)
-          .levelUp()
-          .describeSkillStep(classId, level, {
-            abilityId,
-            editedLevelId,
-            planned: { abilityIds: plannedAbilityIds, klassLevelIds: plannedClassLevelIds },
-          }),
+        Engine.for(scope).character(character).levelUp().describeSteps(stepOf(query)),
       );
     }
   }

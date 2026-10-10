@@ -22,6 +22,14 @@ type LevelPicks = {
   skills?: { rank: number; skillId: string }[];
 };
 
+/** A level-up step, as the service answers it: any of those its ruleset lists, named for which it is. */
+type LevelStep = Awaited<ReturnType<typeof CharacterLevelsService.getStep>>;
+
+/** Whether the service's step is the one asked for, by its name. */
+function isStep<N extends LevelStep["name"]>(step: LevelStep, name: N): step is Extract<LevelStep, { name: N }> {
+  return step.name === name;
+}
+
 /** Gives a character a level in a class level, with these picks, straight in the database: no level-up rule applies. */
 export async function addCharacterLevel(characterId: string, klassLevelId: string, picks: LevelPicks = {}) {
   const [level] = await CharacterLevels.create(db, { characterId, klassLevelId, hp: 1 });
@@ -86,6 +94,18 @@ export async function findKlassLevel(klassId: string, level: number) {
       isNull(klassLevelsInRules.deletedAt),
     ),
   });
+}
+
+/** The level-up step `name` of the level the query is for (its class's level, the levels planned before it, an edit), as that step. */
+export async function getLevelStep<N extends LevelStep["name"]>(
+  session: Session,
+  characterId: string,
+  name: N,
+  query: Parameters<typeof CharacterLevelsService.getStep>[3] = {},
+) {
+  const step = await CharacterLevelsService.getStep(session, characterId, name, query);
+  if (!isStep(step, name)) throw new Error(`The service answered the ${step.name} step for ${name}`);
+  return step;
 }
 
 /** A character of `userId`'s on `rulesetId`, who picked the feat at their first level. */

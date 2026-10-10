@@ -4,56 +4,65 @@ import type { BaseRules } from "@/shared/enums.ts";
 
 import {
   AddAbilityStep,
-  type AddAbilityStepProps,
   AddClassPlanStep,
-  type AddClassPlanStepProps,
   AddReviewStep,
-  type AddReviewStepProps,
   EditAbilityStep,
-  type EditAbilityStepProps,
   EditReviewStep,
-  type EditReviewStepProps,
   FeatsStep,
-  type FeatsStepProps,
   HpStep,
-  type HpStepProps,
   SkillsStep,
-  type SkillsStepProps,
   SpellsStep,
-  type SpellsStepProps,
 } from "./dnd3.5/index.ts";
+import {
+  type AddLevelWizard,
+  type EditLevelWizard,
+  useAddLevelWizard,
+  useEditLevelWizard,
+} from "./dnd3.5/levelUp/index.ts";
 
-/**
- * The steps of a base rules' level wizards: Add Level's own (`Add…`), Edit Level's (`Edit…`), and those both show. A
- * key names its slot as the schema does, a power, and its base rules' step names it its way (3.5's `SpellsStep`), as the
- * sheet's `PowersSection` does. Each step takes the wizard state it reads as `wizard`, which both wizards hand over.
- */
-interface SectionMap {
-  AddAbilityStep: ComponentType<AddAbilityStepProps>;
-  AddClassPlanStep: ComponentType<AddClassPlanStepProps>;
-  AddReviewStep: ComponentType<AddReviewStepProps>;
-  EditAbilityStep: ComponentType<EditAbilityStepProps>;
-  EditReviewStep: ComponentType<EditReviewStepProps>;
-  FeatsStep: ComponentType<FeatsStepProps>;
-  HpStep: ComponentType<HpStepProps>;
-  PowersStep: ComponentType<SpellsStepProps>;
-  SkillsStep: ComponentType<SkillsStepProps>;
+/** What a level wizard's step takes: the wizard's state, and the character it levels, of its base rules. */
+interface LevelStepProps<W> {
+  baseRules: BaseRules;
+  characterId: string;
+  wizard: W;
 }
 
-const RULESET_SECTIONS: Record<BaseRules, SectionMap> = {
+/**
+ * A base rules' level wizards: the hooks that drive Add Level and Edit Level, and each one's steps by the name its hook
+ * lists them by (those the ruleset lists for a level, `GET level-steps`, and the wizard's own around them), which the
+ * dialogs render one at a time. A second base rules makes this a union of each one's.
+ */
+interface LevelWizards {
+  addSteps: Record<AddLevelWizard["steps"][number]["name"], ComponentType<LevelStepProps<AddLevelWizard>>>;
+  editSteps: Record<EditLevelWizard["steps"][number]["name"], ComponentType<LevelStepProps<EditLevelWizard>>>;
+  useAddLevelWizard: typeof useAddLevelWizard;
+  useEditLevelWizard: typeof useEditLevelWizard;
+}
+
+const RULESET_WIZARDS: Record<BaseRules, LevelWizards> = {
   "Dungeons & Dragons: 3.5": {
-    AddAbilityStep,
-    AddClassPlanStep,
-    AddReviewStep,
-    EditAbilityStep,
-    EditReviewStep,
-    FeatsStep,
-    HpStep,
-    PowersStep: SpellsStep,
-    SkillsStep,
+    addSteps: {
+      "class-plan": AddClassPlanStep,
+      hp: HpStep,
+      abilities: AddAbilityStep,
+      skills: SkillsStep,
+      feats: FeatsStep,
+      powers: SpellsStep,
+      review: AddReviewStep,
+    },
+    editSteps: {
+      hp: HpStep,
+      abilities: EditAbilityStep,
+      skills: SkillsStep,
+      feats: FeatsStep,
+      powers: SpellsStep,
+      review: EditReviewStep,
+    },
+    useAddLevelWizard,
+    useEditLevelWizard,
   },
 };
 
-export function getLevelUpSections(baseRules: BaseRules): SectionMap {
-  return RULESET_SECTIONS[baseRules];
+export function getLevelWizards(baseRules: BaseRules): LevelWizards {
+  return RULESET_WIZARDS[baseRules];
 }

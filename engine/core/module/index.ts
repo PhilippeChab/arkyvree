@@ -28,6 +28,7 @@ export type {
   NewBondedCreature,
   PickLevel,
   PlannedSoFar,
+  WizardStep,
 } from "./levelUp.ts";
 export {
   CharactersPart,
