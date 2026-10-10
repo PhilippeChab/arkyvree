@@ -436,6 +436,34 @@ async function setupUncannyBlow(location: "Main Hand" | "Two Handed") {
   return build(character);
 }
 
+/**
+ * A wizard 7 / loremaster 1 of Intelligence `intelligence`, who picked Weapon Trick at her loremaster level 1, a
+ * quarterstaff in her hands.
+ */
+async function setupWeaponTrick(intelligence: number) {
+  const ctx = await getSeedCtx();
+  const dmg = await findSeededRuleset(DND35_DMG_NAME);
+  const fork = await forkWith(DND35_DMG_NAME);
+  const characterId = await seedHuman(
+    `Loremaster ${intelligence}`,
+    { ...WIZARD_SCORES, Intelligence: intelligence },
+    { xp: 28000, rulesetId: fork.id },
+  );
+  await addClassLevels(db, ctx, characterId, "Wizard", [1, 2, 3, 4, 5, 6, 7], [4, 4, 4, 4, 4, 4, 4]);
+  const loremaster = (await Klasses.findOne(db, { name: "Loremaster", rulesetId: dmg.id }))!;
+  const weaponTrick = (await Feats.findOne(db, {
+    name: "Secret: Weapon Trick (Loremaster Secret)",
+    rulesetId: dmg.id,
+  }))!;
+  const secret = (await Aptitudes.findOne(db, { name: "Loremaster Secret", rulesetId: dmg.id }))!;
+  await addCharacterLevel(characterId, (await findKlassLevel(loremaster.id, 1))!.id, {
+    feats: [{ featId: weaponTrick.id, aptitudeId: secret.id }],
+  });
+  const character = (await Characters.findOne(db, { id: characterId }))!;
+  await carry(character, [{ item: "Quarterstaff", location: "Two Handed", weaponSet: 0 }]);
+  return await build(character);
+}
+
 describe("DetailedCharacter", () => {
   describe("building", () => {
     test("fails without its ruleset or its race", async () => {
@@ -3019,6 +3047,32 @@ describe("DetailedCharacter", () => {
         expect(powers.getSpellEntry("dawnhymn", "sunprayers")).toBeUndefined();
         expect(powers.getSpellEntry("duskhymn", "moondomain")).toBeUndefined();
         expect(powers.getSpellEntry("bless", "cleric")).toBeDefined();
+      });
+    });
+
+    describe("of a loremaster's secrets", () => {
+      test("are her picks in her Secret pool, none of them granted", async () => {
+        const detailed = await setupWeaponTrick(20);
+        const loremasterFeats = detailed.components.classes
+          .getCharacterClasses()
+          ["loremaster"].levels.flatMap((level) => level.feats.map((f) => f.name));
+        expect(loremasterFeats.filter((name) => name.startsWith("Secret")).sort()).toEqual([
+          "Secret (Loremaster)",
+          "Secret: Weapon Trick (Loremaster Secret)",
+        ]);
+        expect(detailed.components.aptitudes.getAptitudes()["loremastersecret"]).toMatchObject({
+          allowed: 1,
+          spent: 1,
+        });
+      });
+
+      test("give a secret's bonus once her loremaster level plus her Intelligence modifier reach its row", async () => {
+        // Weapon Trick, the sixth row: +1 on attack rolls at loremaster 1 with Intelligence 20 (+5), none with 18 (+4).
+        // Once on her quarterstaff, though it's both a quarterstaff and a simple weapon
+        const tohit = async (intelligence: number) =>
+          (await setupWeaponTrick(intelligence)).components.weapons.getWeapons()["quarterstaff"]["0_twohanded"].tohit
+            .misc;
+        expect([await tohit(20), await tohit(18)]).toEqual([1, 0]);
       });
     });
 

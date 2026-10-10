@@ -21,7 +21,15 @@
         "description": "Through extensive research, loremasters uncover a wide range of useful knowledge and hidden insights. At 1st level and at every other level thereafter (3rd, 5th, 7th, and 9th), the loremaster selects one secret. Her level combined with her Intelligence modifier determines the total number of secrets available to her. The same secret cannot be selected more than once."
       },
       "Secret: Applicable Knowledge": {
-        "description": "Any single feat"
+        "description": "Any single feat",
+        "requirements": [
+          {
+            "operator": "greater_than_or_equal",
+            "target": "classes.loremaster.level",
+            "value": "{{ 8 - [abilities.intelligence.modifier] }}",
+            "valueType": "number"
+          }
+        ]
       },
       "Secret: Dodge Trick": {
         "modifiers": [
@@ -31,16 +39,138 @@
             "value": "1",
             "valueType": "number"
           }
+        ],
+        "requirements": [
+          {
+            "operator": "greater_than_or_equal",
+            "target": "classes.loremaster.level",
+            "value": "{{ 7 - [abilities.intelligence.modifier] }}",
+            "valueType": "number"
+          }
         ]
       },
       "Secret: Instant Mastery": {
-        "description": "4 ranks in a skill in which the character currently has no ranks"
+        "description": "4 ranks in a skill in which the character currently has no ranks",
+        "requirements": [
+          {
+            "operator": "greater_than_or_equal",
+            "target": "classes.loremaster.level",
+            "value": "{{ 1 - [abilities.intelligence.modifier] }}",
+            "valueType": "number"
+          }
+        ]
       },
       "Secret: More Newfound Arcana": {
-        "description": "1 bonus 2nd-level spell"
+        "description": "1 bonus 2nd-level spell",
+        "requirements": [
+          {
+            "operator": "greater_than_or_equal",
+            "target": "classes.loremaster.level",
+            "value": "{{ 10 - [abilities.intelligence.modifier] }}",
+            "valueType": "number"
+          }
+        ]
       },
       "Secret: Newfound Arcana": {
-        "description": "1 bonus 1st-level spell"
+        "description": "1 bonus 1st-level spell",
+        "requirements": [
+          {
+            "operator": "greater_than_or_equal",
+            "target": "classes.loremaster.level",
+            "value": "{{ 9 - [abilities.intelligence.modifier] }}",
+            "valueType": "number"
+          }
+        ]
+      },
+      "Secret: Secret Health": {
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "combat.hp.misc",
+            "value": "3",
+            "valueType": "number"
+          }
+        ],
+        "requirements": [
+          {
+            "operator": "greater_than_or_equal",
+            "target": "classes.loremaster.level",
+            "value": "{{ 2 - [abilities.intelligence.modifier] }}",
+            "valueType": "number"
+          }
+        ]
+      },
+      "Secret: Secret Knowledge of Avoidance": {
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "saves.reflex.misc",
+            "value": "2",
+            "valueType": "number"
+          }
+        ],
+        "requirements": [
+          {
+            "operator": "greater_than_or_equal",
+            "target": "classes.loremaster.level",
+            "value": "{{ 5 - [abilities.intelligence.modifier] }}",
+            "valueType": "number"
+          }
+        ]
+      },
+      "Secret: Secrets of Inner Strength": {
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "saves.will.misc",
+            "value": "2",
+            "valueType": "number"
+          }
+        ],
+        "requirements": [
+          {
+            "operator": "greater_than_or_equal",
+            "target": "classes.loremaster.level",
+            "value": "{{ 3 - [abilities.intelligence.modifier] }}",
+            "valueType": "number"
+          }
+        ]
+      },
+      "Secret: Weapon Trick": {
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "items.weapons.*.tohit.misc",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "requirements": [
+          {
+            "operator": "greater_than_or_equal",
+            "target": "classes.loremaster.level",
+            "value": "{{ 6 - [abilities.intelligence.modifier] }}",
+            "valueType": "number"
+          }
+        ]
+      },
+      "Secret: the Lore of True Stamina": {
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "saves.fortitude.misc",
+            "value": "2",
+            "valueType": "number"
+          }
+        ],
+        "requirements": [
+          {
+            "operator": "greater_than_or_equal",
+            "target": "classes.loremaster.level",
+            "value": "{{ 4 - [abilities.intelligence.modifier] }}",
+            "valueType": "number"
+          }
+        ]
       },
       "Spells per Day/Spells Known": {
         "description": "The loremaster continues to develop her spellcasting alongside her scholarly pursuits. Each time she gains a loremaster level, she receives new spells per day (and spells known, if relevant) as though she had also advanced one level in a spellcasting class she belonged to before entering this prestige class. However, she does not receive any other class benefits that the prior class would have granted, such as improved undead turning, bonus metamagic feats, or item creation feats. In effect, the loremaster level stacks with her previous spellcasting class level for the purpose of determining spells per day, spells known, and caster level."
@@ -84,8 +214,7 @@
       }
     ],
     "reviewed": [
-      "Any three metamagic or item creation feats",
-      "Unresolved bonus: \"+1 bonus on attack rolls\""
+      "Any three metamagic or item creation feats"
     ]
   },
   "raw": {

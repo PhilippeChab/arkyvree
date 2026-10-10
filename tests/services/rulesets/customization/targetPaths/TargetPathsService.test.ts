@@ -419,9 +419,13 @@ describe("TargetPathsService", () => {
       ]);
     });
 
-    test("describe each weapon by its name", async () => {
-      expect((await complete("items.weapons.", "modifier", { limit: 1 })).items).toMatchObject([
+    test("describe each weapon by its name, after every weapon held", async () => {
+      expect((await complete("items.weapons.", "modifier", { limit: 2 })).items).toMatchObject([
+        { label: "*", detail: "All in this group" },
         { label: "bastardsword", detail: "Bastard Sword weapon stats" },
+      ]);
+      expect((await complete("items.weapons.", "requirement", { limit: 1 })).items).toMatchObject([
+        { label: "bastardsword" },
       ]);
     });
   });

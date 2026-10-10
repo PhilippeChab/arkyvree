@@ -17,7 +17,8 @@ export interface PoolAptitude {
 /**
  * A class's pools: the features of its aptitude picks whose description offers a choice, each with its aptitude
  * ("<Class> <Feature>") and its sub-options, the ones its description lists (inline), or else the separate features
- * that follow it (orphans: a stonelord's Stone Power's).
+ * that follow it (orphans: a stonelord's Stone Power's), or else those its table's rows name after it, wherever they
+ * stand ("Secret: Dodge Trick", a loremaster's Secret's).
  */
 export class ClassPools {
   constructor(
@@ -36,6 +37,33 @@ export class ClassPools {
   private readonly orphans = new Map<string, NamedText[]>();
   /** Each pool's aptitude by its own lowercased name (a pool without inline sub-options too). */
   private readonly poolAptitudes = new Map<string, PoolAptitude>();
+
+  /**
+   * The sub-options of a pool that no features follow, without inline ones: the features its table's rows name after
+   * it, "<Pool>: <Option>", wherever they stand (a loremaster's secrets, after her True Lore), two or more, which no
+   * other pool's are.
+   */
+  private detectNamedSubOptions(progressionFeatureNames: Set<string>) {
+    const { raw } = this.detector;
+    for (const cf of raw.classFeatures) {
+      const baseName = getFeatureBaseName(cf.name);
+      const pool = baseName.toLowerCase();
+      if (!this.poolAptitudes.has(cf.name.toLowerCase()) && !this.poolAptitudes.has(pool)) continue;
+      if (this.orphans.has(pool) || new FeatureText(normalizeWs(cf.description)).poolSubOptions()) continue;
+
+      const named = raw.classFeatures.flatMap((next) => {
+        const nextBase = getFeatureBaseName(next.name);
+        if (!nextBase.toLowerCase().startsWith(`${pool}: `) || this.isOrphan(nextBase)) return [];
+        if (progressionFeatureNames.has(normalizeFeatureName(nextBase).toLowerCase())) return [];
+        return [{ name: nextBase, description: normalizeWs(next.description) }];
+      });
+      if (named.length >= 2) {
+        this.orphans.set(pool, named);
+        this.featureNames.add(cf.name.toLowerCase());
+        this.featureNames.add(pool);
+      }
+    }
+  }
 
   /**
    * The orphan sub-options: the features that follow a pool without inline sub-options and that the table doesn't
@@ -75,6 +103,7 @@ export class ClassPools {
         this.featureNames.add(baseName.toLowerCase());
       }
     }
+    this.detectNamedSubOptions(progressionFeatureNames);
   }
 
   /**
