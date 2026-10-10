@@ -43,7 +43,7 @@ export const SHUGENJA_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Advance Shugenja Spellcasting",
     description:
-      "Your effective shugenja caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in shugenja.",
+      "Your effective Shugenja caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in Shugenja.",
     stackable: true,
     aptitudes: ["Bonus Divine Caster Level", "Bonus Caster Level"],
     requirements: [gte("classes.shugenja.level", 1)],

@@ -69,7 +69,7 @@ export const KNIGHT_OF_THE_CHALICE_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Advance Knight of the Chalice Spellcasting",
     description:
-      "Your effective knightofthechalice caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in knightofthechalice.",
+      "Your effective Knight of the Chalice caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in Knight of the Chalice.",
     stackable: true,
     aptitudes: ["Bonus Divine Caster Level", "Bonus Caster Level"],
     requirements: [gte("classes.knightofthechalice.level", 1)],

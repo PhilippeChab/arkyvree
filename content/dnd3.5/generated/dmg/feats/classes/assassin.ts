@@ -128,7 +128,7 @@ export const ASSASSIN_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Advance Assassin Spellcasting",
     description:
-      "Your effective assassin caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in assassin.",
+      "Your effective Assassin caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in Assassin.",
     stackable: true,
     aptitudes: ["Bonus Arcane Caster Level", "Bonus Caster Level"],
     requirements: [gte("classes.assassin.level", 1)],

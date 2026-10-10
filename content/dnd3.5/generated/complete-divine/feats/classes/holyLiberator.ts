@@ -87,7 +87,7 @@ export const HOLY_LIBERATOR_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Advance Holy Liberator Spellcasting",
     description:
-      "Your effective holyliberator caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in holyliberator.",
+      "Your effective Holy Liberator caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in Holy Liberator.",
     stackable: true,
     aptitudes: ["Bonus Divine Caster Level", "Bonus Caster Level"],
     requirements: [gte("classes.holyliberator.level", 1)],

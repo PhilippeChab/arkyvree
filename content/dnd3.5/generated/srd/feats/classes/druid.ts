@@ -148,7 +148,7 @@ export const DRUID_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Advance Druid Spellcasting",
     description:
-      "Your effective druid caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in druid.",
+      "Your effective Druid caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in Druid.",
     stackable: true,
     aptitudes: ["Bonus Divine Caster Level", "Bonus Caster Level"],
     requirements: [gte("classes.druid.level", 1)],

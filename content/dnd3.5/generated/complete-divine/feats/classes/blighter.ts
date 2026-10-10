@@ -84,7 +84,7 @@ export const BLIGHTER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Advance Blighter Spellcasting",
     description:
-      "Your effective blighter caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in blighter.",
+      "Your effective Blighter caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in Blighter.",
     stackable: true,
     aptitudes: ["Bonus Divine Caster Level", "Bonus Caster Level"],
     requirements: [gte("classes.blighter.level", 1)],

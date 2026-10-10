@@ -51,7 +51,7 @@ export const SUEL_ARCANAMACH_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Advance Suel Arcanamach Spellcasting",
     description:
-      "Your effective suelarcanamach caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in suelarcanamach.",
+      "Your effective Suel Arcanamach caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in Suel Arcanamach.",
     stackable: true,
     aptitudes: ["Bonus Arcane Caster Level", "Bonus Caster Level"],
     requirements: [gte("classes.suelarcanamach.level", 1)],

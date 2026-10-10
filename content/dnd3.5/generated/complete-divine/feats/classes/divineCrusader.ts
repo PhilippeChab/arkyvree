@@ -66,7 +66,7 @@ export const DIVINE_CRUSADER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Advance Divine Crusader Spellcasting",
     description:
-      "Your effective divinecrusader caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in divinecrusader.",
+      "Your effective Divine Crusader caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in Divine Crusader.",
     stackable: true,
     aptitudes: ["Bonus Divine Caster Level", "Bonus Caster Level"],
     requirements: [gte("classes.divinecrusader.level", 1)],

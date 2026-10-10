@@ -109,7 +109,7 @@ export const PALADIN_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Advance Paladin Spellcasting",
     description:
-      "Your effective paladin caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in paladin.",
+      "Your effective Paladin caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in Paladin.",
     stackable: true,
     aptitudes: ["Bonus Divine Caster Level", "Bonus Caster Level"],
     requirements: [gte("classes.paladin.level", 1)],

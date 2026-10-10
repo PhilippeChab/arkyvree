@@ -85,7 +85,7 @@ export const PIOUS_TEMPLAR_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Advance Pious Templar Spellcasting",
     description:
-      "Your effective pioustemplar caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in pioustemplar.",
+      "Your effective Pious Templar caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in Pious Templar.",
     stackable: true,
     aptitudes: ["Bonus Divine Caster Level", "Bonus Caster Level"],
     requirements: [gte("classes.pioustemplar.level", 1)],

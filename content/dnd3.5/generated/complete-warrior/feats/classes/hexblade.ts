@@ -96,7 +96,7 @@ export const HEXBLADE_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Advance Hexblade Spellcasting",
     description:
-      "Your effective hexblade caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in hexblade.",
+      "Your effective Hexblade caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in Hexblade.",
     stackable: true,
     aptitudes: ["Bonus Arcane Caster Level", "Bonus Caster Level"],
     requirements: [gte("classes.hexblade.level", 1)],

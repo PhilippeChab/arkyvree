@@ -79,3 +79,19 @@ test("Every seeded check of a feat names a feat or a family of the seeded rules"
   );
   expect([...new Set(paths.filter(namesNothing))]).toEqual([]);
 });
+
+test("A class's Advance Spellcasting feat names the class in its description as its name does", async () => {
+  const feats = (await seededRulesets()).flatMap((rows) => rows.feats);
+  const advances = feats.flatMap(({ name, description }) => {
+    const klass = /^Advance (.+) Spellcasting$/.exec(name)?.[1];
+    return klass ? [{ description, klass }] : [];
+  });
+  expect(advances.map(({ klass }) => klass)).toContain("Hunter of the Dead");
+  expect(
+    advances.filter(
+      ({ description, klass }) =>
+        !description?.startsWith(`Your effective ${klass} caster level`) ||
+        !description.endsWith(`a level in ${klass}.`),
+    ),
+  ).toEqual([]);
+});

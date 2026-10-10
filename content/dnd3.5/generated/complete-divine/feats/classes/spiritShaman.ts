@@ -185,7 +185,7 @@ export const SPIRIT_SHAMAN_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Advance Spirit Shaman Spellcasting",
     description:
-      "Your effective spiritshaman caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in spiritshaman.",
+      "Your effective Spirit Shaman caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in Spirit Shaman.",
     stackable: true,
     aptitudes: ["Bonus Divine Caster Level", "Bonus Caster Level"],
     requirements: [gte("classes.spiritshaman.level", 1)],

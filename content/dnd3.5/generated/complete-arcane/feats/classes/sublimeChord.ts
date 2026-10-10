@@ -56,7 +56,7 @@ export const SUBLIME_CHORD_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Advance Sublime Chord Spellcasting",
     description:
-      "Your effective sublimechord caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in sublimechord.",
+      "Your effective Sublime Chord caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in Sublime Chord.",
     stackable: true,
     aptitudes: ["Bonus Arcane Caster Level", "Bonus Caster Level"],
     requirements: [gte("classes.sublimechord.level", 1)],

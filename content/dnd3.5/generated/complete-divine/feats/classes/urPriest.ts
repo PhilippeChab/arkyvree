@@ -56,7 +56,7 @@ export const UR_PRIEST_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Advance Ur-priest Spellcasting",
     description:
-      "Your effective urpriest caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in urpriest.",
+      "Your effective Ur-priest caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in Ur-priest.",
     stackable: true,
     aptitudes: ["Bonus Divine Caster Level", "Bonus Caster Level"],
     requirements: [gte("classes.urpriest.level", 1)],
