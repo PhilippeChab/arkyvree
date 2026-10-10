@@ -2,6 +2,22 @@ import { describe, expect, test } from "bun:test";
 
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 
+describe("LiteralValue.normalize", () => {
+  test.each([
+    ["02", "number", "2"],
+    [" 1.50 ", "number", "1.5"],
+    ["+3", "number", "3"],
+    ["-0", "number", "0"],
+    ["1e2", "number", "100"],
+    ["abc", "number", "abc"],
+    ["{{ [abilities.strength.modifier] }}", "number", "{{ [abilities.strength.modifier] }}"],
+    ["02", "string", "02"],
+    ["true", "boolean", "true"],
+  ] as const)("stores %p, a %s, as %p", (value, valueType, expected) => {
+    expect(LiteralValue.normalize(value, valueType)).toBe(expected);
+  });
+});
+
 describe("LiteralValue.parse", () => {
   test.each([
     ["true", "boolean", true],

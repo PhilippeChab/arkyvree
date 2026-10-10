@@ -10,16 +10,14 @@ import { getEditableCharacter } from "@/server/services/characters/editableChara
 import type { Session } from "@/shared/relations.ts";
 
 class CharacterModifiersService {
-  /** A character's modifier's value type, its operator and value checked against its path by the engine. */
-  private async checkModifier(rulesetId: string, body: { operator: string; target: string; value: string }) {
+  /** The row a character's modifier stores, as the engine plans it: its operator and value checked against its path. */
+  private async planModifier(rulesetId: string, body: { operator: string; target: string; value: string }) {
     const { operator, target, value } = body;
     return await withRulesetScope(db, rulesetId, async (scope) =>
       Engine.for(scope)
         .targetPaths()
-        .checkValue(await RulesetViews.getTargetPathCatalogs(scope.ruleset, "modifier"), {
-          kind: "modifier",
+        .planModifier(await RulesetViews.getTargetPathCatalogs(scope.ruleset, "modifier"), "characters", {
           operator,
-          sourceType: "characters",
           target,
           value,
         }),
@@ -34,24 +32,18 @@ class CharacterModifiersService {
     return withTransaction(async (tx) => {
       const character = await getEditableCharacter(tx, session, characterId);
 
-      const valueType = await this.checkModifier(character.rulesetId, body);
+      const row = await this.planModifier(character.rulesetId, body);
 
-      const rows = await Modifiers.create(tx, {
-        sourceId: characterId,
-        sourceType: "characters",
-        target: body.target,
-        value: body.value,
-        valueType,
-        operator: body.operator,
-      });
+      const rows = await Modifiers.create(tx, { sourceId: characterId, sourceType: "characters", ...row });
       const modifier = rows[0];
 
+      const { operator, target, value } = row;
       await Activities.create(tx, {
         userId: session.userId,
         targetId: modifier.id,
         targetTable: getTableName(modifiersInCustomization),
         type: "createCharacterModifier",
-        data: { characterName: character.name, target: body.target, value: body.value, operator: body.operator },
+        data: { characterName: character.name, target, value, operator },
       });
 
       return modifier;
@@ -110,28 +102,20 @@ class CharacterModifiersService {
       if (!existing || existing.sourceId !== characterId || existing.sourceType !== "characters")
         throw new NotFoundError("Modifier not found");
 
-      const valueType = await this.checkModifier(character.rulesetId, body);
+      const row = await this.planModifier(character.rulesetId, body);
 
-      const rows = await Modifiers.update(
-        tx,
-        {
-          target: body.target,
-          value: body.value,
-          valueType,
-          operator: body.operator,
-        },
-        { id: modifierId, expectedUpdatedAt: body.updatedAt },
-      );
+      const rows = await Modifiers.update(tx, row, { id: modifierId, expectedUpdatedAt: body.updatedAt });
       if (body.updatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
       const modifier = rows[0];
 
+      const { operator, target, value } = row;
       await Activities.create(tx, {
         userId: session.userId,
         targetId: modifierId,
         targetTable: getTableName(modifiersInCustomization),
         type: "updateCharacterModifier",
-        data: { characterName: character.name, target: body.target, value: body.value, operator: body.operator },
+        data: { characterName: character.name, target, value, operator },
       });
 
       return modifier;

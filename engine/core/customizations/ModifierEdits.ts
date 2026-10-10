@@ -1,4 +1,5 @@
 import type { TargetCatalogs, TargetPaths } from "@/engine/core/paths/CategoryPaths.ts";
+import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { TargetPathCatalog } from "@/shared/customization/target.ts";
 import type { Modifier } from "@/shared/relations.ts";
@@ -16,18 +17,23 @@ interface ModifierBody {
 
 /** An entity's modifiers: as its page lists them, and what their saves store, checked against their paths. */
 export default class ModifierEdits extends CustomizationEdits<Modifier> {
+  /**
+   * The row a modifier's save stores on a source of `sourceType`: its target, its operator, and its value as the sheet
+   * reads it (a number normalized: "02" is "2"), with their value type, checked against its path (`targetPaths`, among
+   * `catalogs`). Refused as invalid with what's wrong.
+   */
+  static rowOf(targetPaths: TargetPaths, catalogs: TargetCatalogs, sourceType: string, body: ModifierBody) {
+    const { operator, target, value } = body;
+    const valueType = targetPaths.checkValue(catalogs, { kind: "modifier", operator, sourceType, target, value });
+    return { operator, target, value: LiteralValue.normalize(value, valueType), valueType };
+  }
+
   protected override readonly label = "Modifier";
 
   /** The entity's modifiers of its type: its own, and its siblings' (the view composes them into the winner's). */
   protected override rowsOf(entityId: string) {
     const modifiers = this.view.rulesetData.modifiersBySource.get(entityId) ?? [];
     return modifiers.filter((modifier) => modifier.sourceType === this.entityType);
-  }
-
-  /** The row a modifier's save stores: its target, operator and value, and their value type, checked against its path. */
-  private toRow(targetPaths: TargetPaths, catalogs: TargetCatalogs, body: ModifierBody) {
-    const valueType = targetPaths.checkValue(catalogs, { kind: "modifier", sourceType: this.entityType, ...body });
-    return { operator: body.operator, target: body.target, value: body.value, valueType };
   }
 
   /**
@@ -65,7 +71,7 @@ export default class ModifierEdits extends CustomizationEdits<Modifier> {
   planCreate(targetPaths: TargetPaths, catalogs: TargetCatalogs, body: ModifierBody, sourceModifierId?: string) {
     const { entity } = this;
     if (sourceModifierId) this.findOwn(entity.id, sourceModifierId, "Source modifier not found for this entity");
-    return { entity, row: this.toRow(targetPaths, catalogs, body) };
+    return { entity, row: ModifierEdits.rowOf(targetPaths, catalogs, this.entityType, body) };
   }
 
   /** Deleting one of the entity's modifiers: the entity and the modifier, as the view has them. */
@@ -76,6 +82,7 @@ export default class ModifierEdits extends CustomizationEdits<Modifier> {
 
   /** An edit of one of the entity's modifiers: the entity and the modifier, and the row it stores, checked. */
   planEdit(targetPaths: TargetPaths, catalogs: TargetCatalogs, modifierId: string, body: ModifierBody) {
-    return { ...this.planDelete(modifierId), row: this.toRow(targetPaths, catalogs, body) };
+    const row = ModifierEdits.rowOf(targetPaths, catalogs, this.entityType, body);
+    return { ...this.planDelete(modifierId), row };
   }
 }

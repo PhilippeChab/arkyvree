@@ -14,13 +14,16 @@ const BOOLEAN_CHOICES: PathChoice[] = [
   { value: "false", label: "False" },
 ];
 
+/**
+ * The value a new condition starts on once its path is picked: its first choice, True for a boolean, and none for a
+ * number or a text, which is typed (a "0" there would take the digits typed after it: "02").
+ */
 export function defaultValueForPath(
   valueType: PathValueType | undefined,
   possibleValues: PathChoice[] | undefined,
 ): string {
   if (possibleValues?.length) return possibleValues[0].value;
   if (valueType === "boolean") return "true";
-  if (valueType === "number") return "0";
   return "";
 }
 

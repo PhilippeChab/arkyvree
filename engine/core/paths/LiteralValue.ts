@@ -10,6 +10,15 @@ export default class LiteralValue {
   }
 
   /**
+   * A modifier's or a requirement's value as its row stores it: a number written as the sheet reads it ("02" is "2",
+   * " 1.50" is "1.5"), anything else (a template, a string, a boolean, or a literal its type doesn't read) as written.
+   */
+  static normalize(value: string, valueType: string | null): string {
+    const literal = valueType === "number" ? LiteralValue.parse(value, valueType) : undefined;
+    return literal === undefined ? value : String(literal);
+  }
+
+  /**
    * A modifier's or a requirement's literal value, typed by its value type: a finite number, the string itself, or a
    * boolean written `true` or `false`. Undefined when the literal isn't one of its type (`Boolean("false")` is true, and
    * `Number("")` 0) or the type is unknown.
