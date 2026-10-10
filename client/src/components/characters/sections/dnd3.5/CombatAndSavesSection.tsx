@@ -7,7 +7,7 @@ import { formatSigned } from "@/shared/text.ts";
 
 import { StatField } from "./StatField.tsx";
 
-export interface CombatAndSavesSectionProps {
+interface CombatAndSavesSectionProps {
   combat: SheetCombat;
   saves: CharacterDetail["saves"];
 }

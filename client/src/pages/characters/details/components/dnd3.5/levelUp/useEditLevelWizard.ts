@@ -6,6 +6,11 @@ import { useController } from "react-hook-form";
 import type { EditingLevel } from "@/client/src/components/characters/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDebouncedValue, useFormSync, useListboxQuery } from "@/client/src/hooks/index.ts";
+import {
+  type LevelUpFormData,
+  pickIds,
+  useLevelWizardBase,
+} from "@/client/src/pages/characters/details/components/useLevelWizardBase.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import { fitSkillPoints, keepFitted, openPoolOf } from "./fitPicks.ts";
@@ -26,7 +31,6 @@ import {
   powerPickString,
   skillPointString,
 } from "./pendingPicks.ts";
-import { type LevelUpFormData, pickIds, useLevelWizardBase } from "./useLevelWizardBase.ts";
 import { HP_STEP, REVIEW_STEP } from "./wizardSteps.ts";
 
 interface UseEditLevelWizardParams {

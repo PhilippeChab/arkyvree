@@ -1,4 +1,5 @@
-import type { ClassSectionProps } from "./classSections.ts";
+import type { ClassSectionProps } from "@/client/src/pages/rulesets/details/classes/classSectionFactory.ts";
+
 import { useClassCopy } from "./useClassCopy.ts";
 
 /** What a customization section of the class takes: the class, and where a copy of it goes. */

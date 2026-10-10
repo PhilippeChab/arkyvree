@@ -6,3 +6,4 @@ export { EquipmentSection } from "./EquipmentSection.tsx";
 export { FeatsSection } from "./FeatsSection.tsx";
 export { NotesField, PrivateNotesField } from "./NotesFields.tsx";
 export { ReadOnlyEquipmentSection } from "./ReadOnlyEquipmentSection.tsx";
+export { getSections } from "./sectionFactory.ts";

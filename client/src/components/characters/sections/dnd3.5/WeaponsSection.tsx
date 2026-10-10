@@ -16,7 +16,7 @@ import { BlankNote, EmptyValue, SubsectionTitle } from "@/client/src/components/
 
 import type { SheetCombat } from "./CombatAndSavesSection.tsx";
 
-export interface WeaponsSectionProps {
+interface WeaponsSectionProps {
   combat: SheetCombat;
 }
 

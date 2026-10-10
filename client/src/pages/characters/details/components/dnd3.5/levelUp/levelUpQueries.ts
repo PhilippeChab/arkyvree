@@ -15,9 +15,6 @@ import { rpc } from "@/client/src/services/rpc.ts";
 
 import { abilityIncreaseString, type PlannedLevels } from "./pendingPicks.ts";
 
-/** A saved level, as Edit Level loads it. */
-type LevelData = InferResponseType<LevelsApi[":characterLevelId"]["$get"], 200>;
-
 type LevelsApi = (typeof rpc.api.characters.levels)[":characterId"];
 
 /** A step of the level, by its name, as the ruleset describes it. */
@@ -42,8 +39,6 @@ export type AptitudePool = FeatsData["aptitudePools"][string];
 
 /** Whether a level takes an ability increase, and the character's abilities at it. */
 export type AttributesData = Unnamed<NamedStep<"abilities">>;
-
-export type AvailableKlass = InferResponseType<LevelsApi["available-classes"]["$get"], 200>["items"][number];
 
 export type AvailablePower = InferResponseType<LevelsApi["available-powers"]["$get"], 200>["items"][number];
 
@@ -78,15 +73,6 @@ export type PowersData = Unnamed<NamedStep<"powers">>;
 
 /** A planned level, as the Add Level preview lists it. */
 export type PreviewLevelDetail = InferResponseType<LevelsApi["preview"]["$post"], 200>["levelDetails"][number];
-
-/** A feat picked for the level, as a saved level lists it. */
-export type SelectedFeat = LevelData["feats"][string][number];
-
-/** A class picked for a level. */
-export type SelectedKlass = Pick<AvailableKlass, "id" | "name" | "nextLevel" | "maxLevel" | "hd" | "eligible">;
-
-/** A spell picked for the level, as a saved level lists it. */
-export type SelectedPower = LevelData["powers"][string][number];
 
 export type SkillsData = Unnamed<NamedStep<"skills">>;
 

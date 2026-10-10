@@ -6,6 +6,12 @@ import type { BaseRules } from "@/shared/enums.ts";
 
 import { DND35_ENTITY_KINDS } from "./dnd3.5/entityKinds.ts";
 
+/** A kind a race or a class is for, which its base rules list: its label, and its value, which the URL keeps. */
+interface EntityKindOption {
+  label: string;
+  value: string;
+}
+
 /** What a race or a class is for: a player character ("pc"), or what its base rules list besides. */
 export type EntityKind = (typeof ENTITY_KINDS)[BaseRules][number]["value"];
 export type EntitySortField = (typeof ENTITY_SORT_FIELDS)[number];
@@ -13,7 +19,7 @@ export type EntitySortField = (typeof ENTITY_SORT_FIELDS)[number];
 /** The kinds a race or a class is for, by base rules: what the Races and Classes tabs filter by. */
 const ENTITY_KINDS = {
   "Dungeons & Dragons: 3.5": DND35_ENTITY_KINDS,
-} satisfies Record<BaseRules, { label: string; value: string }[]>;
+} satisfies Record<BaseRules, EntityKindOption[]>;
 
 const ENTITY_SORT_FIELDS = ["name", "createdAt", "updatedAt"] as const;
 

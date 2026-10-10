@@ -9,7 +9,7 @@ interface AddReviewState extends LevelReviewState {
   attributeData: AttributesData | undefined;
 }
 
-export interface AddReviewStepProps {
+interface AddReviewStepProps {
   wizard: AddReviewState;
 }
 

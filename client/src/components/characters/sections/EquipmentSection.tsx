@@ -1,7 +1,7 @@
 import { Autocomplete, Box, Button, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { Controller } from "react-hook-form";
 import { Link } from "react-router-dom";
 
@@ -33,13 +33,7 @@ import { invalidateCharacter, rulesetDetailQuery } from "@/client/src/lib/querie
 import { requiredRules } from "@/client/src/lib/validation.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-import {
-  EMPTY_INVENTORY_FORM,
-  type EncumbranceData,
-  type InventoryFormData,
-  LOCATION_CHOICES,
-  placementPayload,
-} from "./equipment.ts";
+import { EMPTY_INVENTORY_FORM, type InventoryFormData, LOCATION_CHOICES, placementPayload } from "./equipment.ts";
 import {
   characterInventoryQuery,
   type InventoryEntry,
@@ -55,12 +49,13 @@ import { shownWeaponSet } from "./weaponSets.ts";
 
 interface EquipmentSectionProps {
   characterId: string;
-  encumbrance?: EncumbranceData;
+  /** What the sheet's base rules say of the load the character carries, under its table. */
+  load?: ReactNode;
   readOnly: boolean;
   rulesetId: string;
 }
 
-export function EquipmentSection({ characterId, rulesetId, readOnly, encumbrance }: EquipmentSectionProps) {
+export function EquipmentSection({ characterId, rulesetId, readOnly, load }: EquipmentSectionProps) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
 
@@ -276,7 +271,7 @@ export function EquipmentSection({ characterId, rulesetId, readOnly, encumbrance
               weight: entry.item.weight,
               costGp: entry.item.costGp,
             }))}
-            encumbrance={encumbrance}
+            load={load}
             rulesetId={rulesetId}
             renderActions={
               readOnly

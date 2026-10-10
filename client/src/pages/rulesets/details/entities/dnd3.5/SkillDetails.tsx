@@ -8,13 +8,9 @@ import {
   SkillFormFields,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { skillQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
+import type { SkillDetailsProps } from "@/client/src/pages/rulesets/details/entities/entityPageFactory.ts";
 import { RulesetEntityDetail } from "@/client/src/pages/rulesets/details/entities/RulesetEntityDetail.tsx";
 import { rpc } from "@/client/src/services/rpc.ts";
-
-export interface SkillDetailsProps {
-  rulesetId: string;
-  skillId: string;
-}
 
 /** A 3.5 skill's page: its primary ability, whether it needs training, and its armor check penalty. */
 export function SkillDetails({ rulesetId, skillId }: SkillDetailsProps) {

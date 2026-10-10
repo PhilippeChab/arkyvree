@@ -13,9 +13,9 @@ import { SkillsIcon } from "@/client/src/components/icons/index.ts";
 import { useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { truncate } from "@/client/src/lib/truncate.ts";
+import type { ClassSectionProps } from "@/client/src/pages/rulesets/details/classes/classSectionFactory.ts";
 import { RemoveSkillDialog } from "@/client/src/pages/rulesets/details/classes/components/index.ts";
 
-import type { ClassSectionProps } from "./classSections.ts";
 import { useClassSkills } from "./useClassSkills.ts";
 
 export function ClassSkillsSection({ rulesetId, classId, ruleset, restorable }: ClassSectionProps) {

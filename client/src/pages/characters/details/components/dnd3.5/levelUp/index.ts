@@ -5,7 +5,6 @@ export {
   type AptitudePool,
   type AttributesData,
   availableFeatFamilyQuery,
-  type AvailableKlass,
   type AvailablePower,
   type FeatsData,
   type GroupedFeatRow,
@@ -14,11 +13,9 @@ export {
   type PowerAptitudePool,
   type PowersData,
   type PreviewLevelDetail,
-  type SelectedFeat,
-  type SelectedKlass,
   type SkillsData,
 } from "./levelUpQueries.ts";
 export { pointsAt, ranksAt } from "./skillRanks.ts";
 export { type AddLevelWizard, useAddLevelWizard } from "./useAddLevelWizard.ts";
 export { type EditLevelWizard, useEditLevelWizard } from "./useEditLevelWizard.ts";
-export { type LevelUpFormData } from "./useLevelWizardBase.ts";
+export { type LevelStepProps } from "./wizardSteps.ts";

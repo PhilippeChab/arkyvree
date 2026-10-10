@@ -1,12 +1,20 @@
 import { useQueryClient } from "@tanstack/react-query";
+import type { InferResponseType } from "hono/client";
 import { useCallback, useState } from "react";
 
 import { useValidationIssues } from "@/client/src/components/characters/index.ts";
 import { useDebouncedValue, useFormWith, useToggleSet } from "@/client/src/hooks/index.ts";
 import { invalidateCharacter, invalidateCharacterListings } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
+import type { rpc } from "@/client/src/services/rpc.ts";
 
-import type { SelectedFeat, SelectedKlass, SelectedPower } from "./levelUpQueries.ts";
+/** A saved level, as Edit Level loads it. */
+type LevelData = InferResponseType<LevelsApi[":characterLevelId"]["$get"], 200>;
+
+type LevelsApi = (typeof rpc.api.characters.levels)[":characterId"];
+
+/** A class the class plan offers. */
+export type AvailableKlass = InferResponseType<LevelsApi["available-classes"]["$get"], 200>["items"][number];
 
 /** The picks a level wizard collects. */
 export interface LevelUpFormData {
@@ -17,6 +25,15 @@ export interface LevelUpFormData {
   selectedPowers: Record<string, SelectedPower[]>;
   skillPointAllocations: Record<string, number>;
 }
+
+/** A feat picked for the level, as a saved level lists it. */
+export type SelectedFeat = LevelData["feats"][string][number];
+
+/** A class picked for a level. */
+export type SelectedKlass = Pick<AvailableKlass, "id" | "name" | "nextLevel" | "maxLevel" | "hd" | "eligible">;
+
+/** A spell picked for the level, as a saved level lists it. */
+export type SelectedPower = LevelData["powers"][string][number];
 
 const EMPTY_PICKS: LevelUpFormData = {
   selectedClass: null,
@@ -35,8 +52,8 @@ export function pickIds(picks: Record<string, { id: string }[]>) {
 }
 
 /**
- * What the Add Level and Edit Level wizards share: the picks form, the step,
- * the feat and spell pickers' state, and the save's cache refresh and errors.
+ * What a base rules' Add Level and Edit Level wizards share: the picks form the level endpoints take, the step, the feat
+ * and spell pickers' state, and the save's cache refresh and errors.
  */
 export function useLevelWizardBase(characterId: string) {
   const queryClient = useQueryClient();

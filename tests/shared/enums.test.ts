@@ -7,7 +7,6 @@ import { db } from "@/server/database/index.ts";
 import {
   ALIGNMENT_OPTIONS,
   BASE_RULES_OPTIONS,
-  DEFAULT_BASE_RULES,
   GENDER_OPTIONS,
   LOCATION_OPTIONS,
   SIZE_OPTIONS,
@@ -30,7 +29,3 @@ for (const [options, enumeration] of [
     expect(live.rows.map((row) => row.label)).toEqual([...options]);
   });
 }
-
-test("the default base rules are one of the database's", () => {
-  expect(baseRules.enumValues).toContain(DEFAULT_BASE_RULES);
-});

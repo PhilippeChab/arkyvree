@@ -11,6 +11,7 @@ import {
   SpellLevelFilter,
 } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
+import type { ClassSectionProps } from "@/client/src/pages/rulesets/details/classes/classSectionFactory.ts";
 import {
   classSpellListsQuery,
   spellListSpellsQuery,
@@ -18,8 +19,6 @@ import {
 import type { Power } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { useOpenEntity, useSpellLevelFilter } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
-
-import type { ClassSectionProps } from "./classSections.ts";
 
 const COLUMNS = [
   { key: "name", label: "Name", width: "30%" },

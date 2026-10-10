@@ -9,7 +9,7 @@ interface EditReviewState extends LevelReviewState {
   selectedAttribute: string | null;
 }
 
-export interface EditReviewStepProps {
+interface EditReviewStepProps {
   wizard: EditReviewState;
 }
 

@@ -11,15 +11,15 @@ import { formatSigned } from "@/shared/text.ts";
 import { AbilityScoreBox } from "./AbilityScoreBox.tsx";
 import { StatField } from "./StatField.tsx";
 
-type FeatEntry = NonNullable<BondedCreatureProps["bonded"]["feats"]>[string];
-
-export interface BondedCreatureProps {
+interface BondedCreatureProps {
   /** Its master's sheet's base rules, which order its abilities. */
   baseRules: BaseRules;
   bonded: NonNullable<CharacterDetail["bonded"][string]>;
   /** The creature's name links to its sheet. */
   linkable?: boolean;
 }
+
+type FeatEntry = NonNullable<BondedCreatureProps["bonded"]["feats"]>[string];
 
 /** A feat entry, as opposed to a family of variants keyed by name. */
 function isFeat(entry: FeatEntry): entry is Extract<FeatEntry, { possessed: boolean }> {

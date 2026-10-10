@@ -1,1 +1,1 @@
-export { RulesetLicenseNotice, type RulesetLicenseNoticeProps } from "./RulesetLicenseNotice.tsx";
+export { RulesetLicenseNotice } from "./RulesetLicenseNotice.tsx";

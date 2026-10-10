@@ -3,11 +3,10 @@
  * the key its section reads.
  */
 
-import { infiniteQueryOptions, type QueryClient, queryOptions, skipToken } from "@tanstack/react-query";
+import { infiniteQueryOptions, queryOptions, skipToken } from "@tanstack/react-query";
 import { type InferRequestType, type InferResponseType, parseResponse } from "hono/client";
 
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
-import type { CustomizationSection } from "@/client/src/pages/rulesets/customization/sections/index.ts";
 import { powersQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
@@ -29,16 +28,6 @@ export type ClassLevelRow = InferResponseType<
   (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"]["$get"],
   200
 >[number];
-
-/** A class page's tab: its own, then those that customize it (`CUSTOMIZATION_TABS`) */
-export type ClassSection =
-  | "levels"
-  | "skills"
-  | "feat-pools"
-  | "spells-known"
-  | "spell-list"
-  | "spells-per-day"
-  | CustomizationSection;
 
 function classParam(rulesetId: string, classId: string) {
   return { param: { id: rulesetId, classId } };
@@ -99,34 +88,6 @@ export function classSpellsPerDayQuery(rulesetId: string, classId: string) {
     queryFn: () =>
       parseResponse(rpc.api.rulesets[":id"].classes[":classId"].spells.$get(classParam(rulesetId, classId))),
   });
-}
-
-/** Warm a tab's rows as it's pointed at: the spell list tab's, the lists it picks among. */
-export function prefetchClassSection(
-  queryClient: QueryClient,
-  rulesetId: string,
-  classId: string,
-  section: ClassSection,
-) {
-  switch (section) {
-    case "levels":
-      return queryClient.prefetchQuery(classLevelsQuery(rulesetId, classId));
-    case "skills":
-      return queryClient.prefetchQuery(classSkillsQuery(rulesetId, classId));
-    case "feat-pools":
-      return queryClient.prefetchQuery(classFeatPoolsQuery(rulesetId, classId));
-    case "spells-known":
-      return queryClient.prefetchQuery(classSpellsKnownQuery(rulesetId, classId));
-    case "spells-per-day":
-      return queryClient.prefetchQuery(classSpellsPerDayQuery(rulesetId, classId));
-    case "spell-list":
-      return queryClient.prefetchQuery(classSpellListsQuery(rulesetId, classId));
-    // The customization tabs read their rows through their sections, as every entity's customization page does
-    case "properties":
-    case "modifiers":
-    case "requirements":
-      return;
-  }
 }
 
 /**

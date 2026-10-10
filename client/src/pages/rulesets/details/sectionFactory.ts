@@ -3,7 +3,7 @@ import type { ComponentType, ReactNode } from "react";
 import { type RulesetDetail } from "@/client/src/lib/queries.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
-import { RulesetLicenseNotice, type RulesetLicenseNoticeProps } from "./components/dnd3.5/index.ts";
+import { RulesetLicenseNotice } from "./components/dnd3.5/index.ts";
 import { ClassesSection, ItemsSection, SkillsSection, SpellsSection } from "./sections/dnd3.5/index.ts";
 
 type SectionComponent = (props: RulesetSectionProps) => ReactNode;
@@ -13,9 +13,14 @@ interface SectionMap {
   ClassesSection: SectionComponent;
   ItemsSection: SectionComponent;
   /** What a system ruleset's content is licensed under, under its header: none where nothing needs saying */
-  LicenseNotice?: ComponentType<RulesetLicenseNoticeProps>;
+  LicenseNotice?: ComponentType<LicenseNoticeProps>;
   PowersSection: SectionComponent;
   SkillsSection: SectionComponent;
+}
+
+/** What the ruleset page passes its license notice: the system ruleset's name. */
+export interface LicenseNoticeProps {
+  name: string;
 }
 
 /** What the ruleset page passes every section tab. */
