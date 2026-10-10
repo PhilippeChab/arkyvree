@@ -51,7 +51,8 @@ export type ReferenceOwner =
 /**
  * Every row that names an entity, by the entity's type: what a revert points at the source before the copy goes
  * (`EntityRevert`, a restore's and an unsubscribe's), what an unsubscribe finds the ruleset would lose
- * (`EntityReferences.findMany`) and what an in-use check counts (`exists`). An entity's own rows aren't among them,
+ * (`EntityReferences.findMany`) or points at what stands in place of what leaves (`findIds`, `update` given the
+ * ruleset), and what an in-use check counts (`exists`). An entity's own rows aren't among them,
  * since they go with it: a feat's or a spell's links to its lists, a class's skills and levels. A customization names
  * its owner by type and id, and goes with it (`docs/persistence.md`); a property naming an ability by its id
  * (`PROPERTY_REFERENCES`) names an entity no ruleset copies or deletes.

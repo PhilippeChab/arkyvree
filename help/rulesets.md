@@ -32,7 +32,7 @@ A user-owned ruleset has three states: **Draft**, **Published**, **Archived**. T
 The starting state of a fork. Your rulesets all start as a fork of a base ruleset.
 
 - Add, edit, and delete any entity. An entity that's already been picked by a character on this ruleset, or on a fork that subscribes to it as an extension, can't be deleted — the platform blocks it.
-- Subscribe to and unsubscribe from extensions. The same in-use rule applies: you can't unsubscribe from an extension while a character on the ruleset has picked its content.
+- Subscribe to and unsubscribe from extensions. The same in-use rule applies: you can't unsubscribe from an extension while a character on the ruleset has picked content only it has. A core feat or spell it changes doesn't count: the character keeps the core version.
 - Not visible in public listings. Only you, invited contributors and the players of a campaign on it find it.
 - You can build characters on it while iterating.
 
