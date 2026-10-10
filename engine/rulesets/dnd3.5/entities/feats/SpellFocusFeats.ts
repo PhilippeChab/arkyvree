@@ -1,10 +1,11 @@
+import { GeneratedFeats } from "@/engine/core/entities/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import FeatsPaths from "@/engine/rulesets/dnd3.5/model/feats/FeatsPaths.ts";
 import PowersPaths from "@/engine/rulesets/dnd3.5/model/powers/PowersPaths.ts";
+import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import { FEAT_FIELDS } from "./fields.ts";
-import GeneratedFeats from "./GeneratedFeats.ts";
 
 /** The feats a spell's grouping makes: a school's Spell Focus. */
 export default class SpellFocusFeats {
@@ -22,6 +23,7 @@ export default class SpellFocusFeats {
     } as const;
     return GeneratedFeats.make(
       view,
+      LevelRules.GENERAL_FEATS_APTITUDE_SLUG,
       [
         {
           name: spellFocus,

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { addClassLevels } from "@/database/seeds/seedCharacter.ts";
-import GeneratedFeats from "@/engine/rulesets/dnd3.5/entities/feats/GeneratedFeats.ts";
+import GeneratedFeats from "@/engine/core/entities/GeneratedFeats.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import {

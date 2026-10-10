@@ -463,7 +463,11 @@ engine/
 │   │                                      view has it; PropertyTypeCatalog: the property types and values, the
 │   │                                      rules' then the ruleset's own)
 │   ├── entities/                          (RulesetEntity: an entity kind's steps, which a ruleset's kinds extend;
-│   │                                      CustomizationPageEntity: a kind whose page shows its customizations)
+│   │                                      CustomizationPageEntity: a kind whose page shows its customizations;
+│   │                                      ListedEntity: a kind a ruleset lists, a feat in a pool, a power on a
+│   │                                      spell list; AbilityEntity, LanguageEntity, MechanicEntity, SaveEntity:
+│   │                                      the plain kinds, which a module uses as they are; GeneratedFeats: the
+│   │                                      feats a save makes or removes, in the pool a ruleset names)
 │   ├── fields/                            (Field, FieldCodec: an entity's fields kept in its properties)
 │   ├── pickers/                           (Picker: one pipeline, `filters` and `describe(rows)`: the rows as the
 │   │                                      view reads them, those it offers, each with whether who it picks for
@@ -512,12 +516,13 @@ engine/rulesets/
     │   ├── Dnd35Entities.ts               (each kind's class, by its table: `of`)
     │   ├── entityFields.ts                (ENTITY_FIELDS, RULESET_LIMITS: a body's fields the rules take, and their
     │   │                                  bounds)
-    │   ├── abilities/ aptitudes/ classes/ feats/ items/ languages/ mechanics/ powers/ races/ saves/ skills/
+    │   ├── aptitudes/ classes/ feats/ items/ powers/ races/ skills/
     │   │                                  (XEntity: an entity described, what saving or deleting one writes; fields.ts:
     │   │                                  its fields off its properties; classes/ ClassLevelEntity, ClassSkillEntity,
-    │   │                                  ClassTable: a class's parts, which ClassEntity hands out)
-    │   └── feats/                         (GeneratedFeats: the feats a save makes or removes, in the general feats'
-    │                                      pool; SpellFocusFeats: a school's Spell Focus)
+    │   │                                  ClassTable: a class's parts, which ClassEntity hands out; the abilities,
+    │   │                                  languages, mechanics and saves are core's kinds as they are)
+    │   └── feats/                         (SkillFocusFeats, SpellFocusFeats: a skill's Skill Focus, a school's Spell
+    │                                      Focus, made with core's GeneratedFeats in the general feats' pool)
     ├── ruleset/                           ← the module's `ruleset`: what it answers of a ruleset as a whole
     │   ├── Dnd35Ruleset.ts                (checkPublishable: what a ruleset published to be played needs)
     │   └── fields.ts                      (RULESET_FIELDS: the ruleset's own fields, its skill points' ability)

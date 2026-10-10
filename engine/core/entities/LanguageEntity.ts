@@ -1,5 +1,6 @@
-import { RulesetEntity } from "@/engine/core/entities/index.ts";
 import { FieldCodec } from "@/engine/core/fields/index.ts";
+
+import RulesetEntity from "./RulesetEntity.ts";
 
 /** A language's form: its name, description and type. */
 type LanguageBody = { description?: string | null; name: string; type: string };

@@ -1,8 +1,9 @@
+import { GeneratedFeats } from "@/engine/core/entities/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import SkillsPaths from "@/engine/rulesets/dnd3.5/model/skills/SkillsPaths.ts";
+import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 
 import { FEAT_FIELDS } from "./fields.ts";
-import GeneratedFeats from "./GeneratedFeats.ts";
 
 /** The feats a skill makes: its Skill Focus. */
 export default class SkillFocusFeats {
@@ -14,6 +15,7 @@ export default class SkillFocusFeats {
     const name = `Skill Focus: ${skillName}`;
     return GeneratedFeats.make(
       view,
+      LevelRules.GENERAL_FEATS_APTITUDE_SLUG,
       [
         {
           name,

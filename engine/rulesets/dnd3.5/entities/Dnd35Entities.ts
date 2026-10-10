@@ -1,16 +1,13 @@
+import { AbilityEntity, LanguageEntity, MechanicEntity, SaveEntity } from "@/engine/core/entities/index.ts";
 import { EntitiesPart } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 
-import AbilityEntity from "./abilities/AbilityEntity.ts";
 import AptitudeEntity from "./aptitudes/AptitudeEntity.ts";
 import ClassEntity from "./classes/ClassEntity.ts";
 import FeatEntity from "./feats/FeatEntity.ts";
 import ItemEntity from "./items/ItemEntity.ts";
-import LanguageEntity from "./languages/LanguageEntity.ts";
-import MechanicEntity from "./mechanics/MechanicEntity.ts";
 import PowerEntity from "./powers/PowerEntity.ts";
 import RaceEntity from "./races/RaceEntity.ts";
-import SaveEntity from "./saves/SaveEntity.ts";
 import SkillEntity from "./skills/SkillEntity.ts";
 
 /** The 3.5 entity kinds' rules, by table. */

@@ -1,9 +1,9 @@
 /** A power as a ruleset's entity: what the ruleset lists it by, and what its save writes, checked. */
 
+import { ListedEntity } from "@/engine/core/entities/index.ts";
 import type { EntityWrites } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import SpellFocusFeats from "@/engine/rulesets/dnd3.5/entities/feats/SpellFocusFeats.ts";
-import ListedEntity from "@/engine/rulesets/dnd3.5/entities/ListedEntity.ts";
 import type { PowerWithAptitudes } from "@/shared/relations.ts";
 
 import { POWER_FIELDS, type PowerFieldValues } from "./fields.ts";
