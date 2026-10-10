@@ -4,9 +4,6 @@ import { normalizeWs } from "@/codegen/core/text/whitespace.ts";
 
 import { sanitizeText } from "./sanitize.ts";
 
-/** The longest a description is kept, in characters. */
-const MAX_DESC = 2000;
-
 const WEAPON_DESC_PATTERNS = [/the selected weapon/gi, /selected weapon/gi, /the weapon you selected/gi];
 
 /**
@@ -26,7 +23,7 @@ export function expandTemplateDescription(description: string, type: string, ite
   return description;
 }
 
-export function normalizeDescription(text: string, maxLen = MAX_DESC): string {
-  const clean = normalizeWs(sanitizeText(text));
-  return clean.length > maxLen ? clean.substring(0, maxLen - 3).trim() + "..." : clean;
+/** A description as the seeds store it: the scraped text sanitized and its whitespace normalized, whole. */
+export function normalizeDescription(text: string): string {
+  return normalizeWs(sanitizeText(text));
 }
