@@ -57,9 +57,6 @@ class PowersAptitudesRepository extends BaseRepository<typeof powersAptitudesInR
           isNull(this.table.deletedAt),
         ],
       ),
-      with: {
-        aptitudesInRule: true,
-      },
     });
   }
 

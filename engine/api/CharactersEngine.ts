@@ -1,6 +1,5 @@
 import type { HeldInventoryEntry } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import type { Item } from "@/shared/relations.ts";
 
 import type { Module, Rest } from "./Modules.ts";
 
@@ -30,10 +29,10 @@ export default class CharactersEngine {
   }
 
   /**
-   * A character's inventory entries (each with the item row it names), as stored, as its sheet lists them: each with
-   * where its item can go and where it's worn.
+   * A character's inventory entries (each naming its item), as stored, as its sheet lists them: each with its item as
+   * the view has it, where it can go and where it's worn.
    */
-  describeInventory<T extends HeldInventoryEntry & { itemId: string; itemsInRule: Item }>(entries: T[]) {
+  describeInventory<T extends HeldInventoryEntry & { itemId: string }>(entries: T[]) {
     return this.module.characters.describeInventory(this.view, this.view.rulesetData.cow.resolveRows(entries));
   }
 

@@ -112,7 +112,7 @@ export default class PowerEntity extends ListedEntity<
     RulesError.parse(SPELL_LEVEL.optional(), level, ["level"]);
     const listed = aptitudeId !== undefined || level != null;
     return {
-      describe: <T extends Record<string, unknown> & { id: string }>(rows: T[]) => this.describeListed(rows, where),
+      describe: <T extends Record<string, unknown> & { id: string }>(rows: T[]) => this.describeListed(rows),
       filters: { ids: listed ? this.rulesetData.listPowerIds({ aptitudeId, level }) : undefined },
     };
   }

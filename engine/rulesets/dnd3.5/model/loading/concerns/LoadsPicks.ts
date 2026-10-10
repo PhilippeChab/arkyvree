@@ -14,7 +14,6 @@ import type {
   KlassLevelFeat,
   KlassLevelPower,
   PowerWithAptitudes,
-  RulesetSave,
 } from "@/shared/relations.ts";
 
 /**
@@ -77,18 +76,8 @@ function toGrantedPower(
   };
 }
 
-/**
- * A power as a pick or a grant holds it: the view's, without its lists' links or the save its row joins
- * (`savesInRule`), whose name it holds instead.
- */
-function toPowerRow(
-  {
-    powersAptitudesInRules: _links,
-    savesInRule: _save,
-    ...power
-  }: PowerWithAptitudes & { savesInRule?: RulesetSave | null },
-  rulesetData: RulesetData,
-) {
+/** A power as a pick or a grant holds it: the view's, without its lists' links, with its save's name. */
+function toPowerRow({ powersAptitudesInRules: _links, ...power }: PowerWithAptitudes, rulesetData: RulesetData) {
   return { ...power, saveName: PowersComponent.saveNameOf(power, rulesetData) };
 }
 

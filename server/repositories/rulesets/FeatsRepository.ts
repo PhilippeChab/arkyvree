@@ -75,14 +75,6 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
     return await db.query.featsInRules.findMany({
       where: and(inArray(this.table.id, where.ids), isNull(this.table.deletedAt)),
       orderBy: [this.orderBy(this.table.name)],
-      with: {
-        featsAptitudesInRules: {
-          orderBy: (links) => [this.orderBy(links.createdAt), this.orderBy(links.aptitudeId)],
-          with: {
-            aptitudesInRule: true,
-          },
-        },
-      },
     });
   }
 
@@ -95,14 +87,6 @@ class FeatsRepository extends include(RulesetEntityRepository<typeof featsInRule
         ["id" in where && eq(this.table.id, where.id), "name" in where && eq(this.table.name, where.name)],
         ["rulesetId" in where && eq(this.table.rulesetId, where.rulesetId), isNull(this.table.deletedAt)],
       ),
-      with: {
-        featsAptitudesInRules: {
-          orderBy: (links) => [this.orderBy(links.createdAt), this.orderBy(links.aptitudeId)],
-          with: {
-            aptitudesInRule: true,
-          },
-        },
-      },
     });
   }
 

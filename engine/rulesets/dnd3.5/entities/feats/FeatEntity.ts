@@ -77,7 +77,7 @@ export default class FeatEntity extends ListedEntity<
   override openList(where: { aptitudeId?: string; childOnly?: boolean; family?: string }) {
     const ids = where.aptitudeId === undefined ? undefined : this.rulesetData.listFeatIds(where.aptitudeId);
     return {
-      describe: <T extends Record<string, unknown> & { id: string }>(rows: T[]) => this.describeListed(rows, where),
+      describe: <T extends Record<string, unknown> & { id: string }>(rows: T[]) => this.describeListed(rows),
       filters: { ids, ...(where.family && { family: { type: FEAT_FAMILY, value: where.family } }) },
       groupFilters: { familyType: FEAT_FAMILY, ids },
     };

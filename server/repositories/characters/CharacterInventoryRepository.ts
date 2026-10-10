@@ -79,12 +79,10 @@ class CharacterInventoryRepository extends include(
     return await this.existsItemPickFromExtension(db, where);
   }
 
+  /** A character's inventory entries, each naming its item by its id: the engine takes the item from the view. */
   async findMany(db: Db, where: { characterId: string }) {
     return await db.query.inventoryInCharacter.findMany({
       where: eq(this.table.characterId, where.characterId),
-      with: {
-        itemsInRule: true,
-      },
     });
   }
 

@@ -31,15 +31,6 @@ class PowersRepository extends include(RulesetEntityRepository<typeof powersInRu
         ["id" in where && eq(this.table.id, where.id), "name" in where && eq(this.table.name, where.name)],
         ["rulesetId" in where && eq(this.table.rulesetId, where.rulesetId), isNull(this.table.deletedAt)],
       ),
-      with: {
-        powersAptitudesInRules: {
-          orderBy: (links) => [this.orderBy(links.createdAt), this.orderBy(links.aptitudeId)],
-          with: {
-            aptitudesInRule: true,
-          },
-        },
-        savesInRule: true,
-      },
     });
   }
 
@@ -101,7 +92,6 @@ class PowersRepository extends include(RulesetEntityRepository<typeof powersInRu
                 aptitudesInRule: true,
               },
             },
-            savesInRule: true,
           },
           limit,
           offset,
