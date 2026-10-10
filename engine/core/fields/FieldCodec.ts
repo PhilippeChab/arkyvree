@@ -18,7 +18,8 @@ type Row = { id?: string; type: string; value: string };
 /**
  * An entity's fields kept in its properties, read and written by one spec (`fields`, written with `Field`): their
  * defaults, the property types that store them, the rows of an entity read into values in one pass, values written
- * back as rows, an edit's values merged over what's kept, and the schema a save reads a form's fields with.
+ * back as rows, an edit's values merged over what's kept, and the schema a create or an edit reads a form's fields
+ * with.
  */
 export default class FieldCodec<S extends Fields> {
   constructor(
@@ -189,8 +190,8 @@ export default class FieldCodec<S extends Fields> {
   }
 
   /**
-   * What a save reads a form's fields with: an object of each field's shape, every one of them, or those an edit
-   * changes (`optional`), the rest of the form's keys left out.
+   * What a create or an edit reads a form's fields with: an object of each field's shape, every one of them, or those
+   * an edit changes (`optional`), the rest of the form's keys left out.
    */
   schema(options: { optional?: boolean } = {}): z.ZodType<Partial<FieldValues<S>>> {
     const shapes = Object.entries(this.fields).map(([key, field]) => {
@@ -207,7 +208,7 @@ export default class FieldCodec<S extends Fields> {
     return FieldCodec.writeFields(this.fields, this.normalize(values) as Record<string, unknown>);
   }
 
-  /** The values as a save's property write: the rows, and the types they replace. */
+  /** The values as a form's property write: the rows, and the types they replace. */
   write(values: FieldValues<S>): { types: string[]; values: PropertyValue[] } {
     return { types: this.types, values: this.toProperties(values) };
   }

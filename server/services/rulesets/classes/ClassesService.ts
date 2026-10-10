@@ -3,12 +3,12 @@ import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Klasses } from "@/server/repositories/index.ts";
-import EntitySaves from "@/server/services/rulesets/EntitySaves.ts";
+import EntityWriter from "@/server/services/rulesets/EntityWriter.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class ClassesService {
   /** What its creates, updates and deletes write, in one order around the plans its rules give. */
-  private readonly saves = new EntitySaves("klasses", Klasses, klassesInRules, "Klass");
+  private readonly writer = new EntityWriter("klasses", Klasses, klassesInRules, "Klass");
 
   async createClass(
     session: Session,
@@ -19,13 +19,13 @@ class ClassesService {
       name: string;
     },
   ) {
-    return await this.saves.create(session, rulesetId, body.name, (scope) =>
+    return await this.writer.create(session, rulesetId, body.name, (scope) =>
       Engine.for(scope).entities("klasses").planCreate(body),
     );
   }
 
   async deleteClass(session: Session, rulesetId: string, klassId: string) {
-    return await this.saves.delete(session, rulesetId, klassId, (scope) =>
+    return await this.writer.delete(session, rulesetId, klassId, (scope) =>
       Engine.for(scope).entities("klasses").planDelete(klassId),
     );
   }
@@ -67,7 +67,7 @@ class ClassesService {
       updatedAt?: string;
     },
   ) {
-    return await this.saves.update(session, rulesetId, body, (scope) =>
+    return await this.writer.update(session, rulesetId, body, (scope) =>
       Engine.for(scope).entities("klasses").planEdit(klassId, body),
     );
   }

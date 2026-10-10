@@ -1,4 +1,4 @@
-/** A feat as a ruleset's entity: what the ruleset describes of it, lists it by, and checks of its save. */
+/** A feat as a ruleset's entity: what the ruleset describes of it, lists it by, and checks of its form. */
 
 import { ListedEntity } from "@/engine/core/entities/index.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
@@ -37,7 +37,7 @@ export default class FeatEntity extends ListedEntity<
    * Refuses a new feat without a pool, renaming a generated feat (its name names its option, `Weapon Focus: Longsword`,
    * which checks and generators find it by), and a feat linked to a pool the view's spells use.
    */
-  protected override checkSave(body: FeatBody, feat?: FeatWithAptitudes) {
+  protected override checkForm(body: FeatBody, feat?: FeatWithAptitudes) {
     if (!feat && !body.aptitudeIds?.length)
       throw new RulesError("invalid", "At least one aptitude must be selected for the feat");
     if (feat && body.name !== feat.name && feat.generated)

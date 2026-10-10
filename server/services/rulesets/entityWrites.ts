@@ -24,7 +24,7 @@ function entityTypeOf(type: string): RulesetEntityType {
 }
 
 /**
- * An entity a save makes, in the scope's ruleset: its row, its list links, its modifiers, its properties and its
+ * An entity a plan makes, in the scope's ruleset: its row, its list links, its modifiers, its properties and its
  * requirements.
  */
 async function makeEntity(tx: Db, scope: RulesetScope, made: MadeEntity) {
@@ -47,7 +47,7 @@ async function makeEntity(tx: Db, scope: RulesetScope, made: MadeEntity) {
 }
 
 /**
- * An entity a save removes, refused while a character picked it. Deleting the ruleset's copy of an inherited one leaves
+ * An entity a plan removes, refused while a character picked it. Deleting the ruleset's copy of an inherited one leaves
  * a tombstone snapshot: it disappears from the ruleset while its ancestor stays intact. A hard delete: the database
  * deletes its links and customizations with it, and a soft-archive would block an entity of the same name made later.
  */
@@ -62,9 +62,9 @@ async function removeEntity(tx: Db, scope: RulesetScope, removal: EntityRemoval)
 }
 
 /**
- * Writes what the engine plans a save of an entity (`entityId`, of `entityType`) writes beside its row (`writes`): the
- * entities it removes, its properties (those of their types it had give way), a requirement on it, and the entities it
- * makes. Answers the properties it wrote, which describe the entity as saved.
+ * Writes what the engine plans an entity's create or edit (`entityId`, of `entityType`) writes beside its row
+ * (`writes`): the entities it removes, its properties (those of their types it had give way), a requirement on it, and
+ * the entities it makes. Answers the properties it wrote, which describe the entity as written.
  */
 export async function writeEntityWrites(
   tx: Db,

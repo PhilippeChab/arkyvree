@@ -3,7 +3,7 @@ import { Engine, type EntityKinds } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Powers } from "@/server/repositories/index.ts";
-import EntitySaves from "@/server/services/rulesets/EntitySaves.ts";
+import EntityWriter from "@/server/services/rulesets/EntityWriter.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /** A power's body: its row's columns, its aptitude links, and its fields (`planPowerCreate`). */
@@ -11,18 +11,18 @@ type PowerBody = Parameters<EntityKinds["powers"]["planCreate"]>[0] & { updatedA
 
 class PowersService {
   /** What its creates, updates and deletes write, in one order around the plans its rules give. */
-  private readonly saves = new EntitySaves("powers", Powers, powersInRules, "Power", (scope) => ({
+  private readonly writer = new EntityWriter("powers", Powers, powersInRules, "Power", (scope) => ({
     baseRules: scope.ruleset.baseRules,
   }));
 
   async createPower(session: Session, rulesetId: string, body: PowerBody) {
-    return await this.saves.create(session, rulesetId, body.name, (scope) =>
+    return await this.writer.create(session, rulesetId, body.name, (scope) =>
       Engine.for(scope).entities("powers").planCreate(body),
     );
   }
 
   async deletePower(session: Session, rulesetId: string, powerId: string) {
-    return await this.saves.delete(session, rulesetId, powerId, (scope) =>
+    return await this.writer.delete(session, rulesetId, powerId, (scope) =>
       Engine.for(scope).entities("powers").planDelete(powerId),
     );
   }
@@ -59,7 +59,7 @@ class PowersService {
   }
 
   async updatePower(session: Session, rulesetId: string, powerId: string, body: PowerBody) {
-    return await this.saves.update(session, rulesetId, body, (scope) =>
+    return await this.writer.update(session, rulesetId, body, (scope) =>
       Engine.for(scope).entities("powers").planEdit(powerId, body),
     );
   }

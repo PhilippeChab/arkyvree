@@ -23,7 +23,7 @@ import { createListLinks, setListLinks } from "./listLinks.ts";
 
 /**
  * What a create's plan gives: the row's columns, its list links, what it writes beside it, whose customizations it
- * copies, and the fields the entity keeps once saved, which the action answers with its row.
+ * copies, and the fields the entity keeps once written, which the action answers with its row.
  */
 interface CreatePlan<Columns> {
   columns: Columns;
@@ -47,7 +47,7 @@ interface DeletePlan {
   writes?: EntityWrites;
 }
 
-/** A kind's table, as its saves write it. */
+/** A kind's table, as its creates, updates and deletes write it. */
 interface KindRepository<Row, Insert> {
   create(db: Db, values: Insert): Promise<Row[]>;
   delete(db: Db, where: { id: string }): Promise<Row[]>;
@@ -59,7 +59,7 @@ type PlannedEntity = { id: string; name: string; rulesetId: string };
 
 /**
  * What an update's plan gives: the entity as the view has it, its new columns, its new list links (none: kept), its
- * writes, and the fields the entity keeps once saved.
+ * writes, and the fields the entity keeps once written.
  */
 interface UpdatePlan<Columns> {
   columns: Columns;
@@ -70,19 +70,19 @@ interface UpdatePlan<Columns> {
 }
 
 /**
- * A ruleset entity kind's saves (`type`, its table and repository): the steps every kind's create, update and delete
+ * A ruleset entity kind's writer (`type`, its table and repository): the steps every kind's create, update and delete
  * take, in one order, around the plan its rules give (`Engine.for(scope).entities(type)`). A create checks access,
  * keeps the name free (taking over a deleted copy's tombstone), writes the row, its list links, what the plan writes
  * beside it and the customizations it copies. An update writes the row the view's entity resolves to (its copy, made on
  * its first edit), refused when stale. A delete is refused while the entity is in use. Each records its activity, and
  * the ruleset's views drop what it changed.
  */
-export default class EntitySaves<Row extends { id: string; name: string }, Insert extends { rulesetId: string }> {
+export default class EntityWriter<Row extends { id: string; name: string }, Insert extends { rulesetId: string }> {
   constructor(
     private readonly type: RulesetEntityType,
     private readonly repository: KindRepository<Row, Insert>,
     private readonly table: Table,
-    /** Its activities' name: `Save` in `createSave`. */
+    /** Its activities' name: `Feat` in `createFeat`. */
     private readonly activityName: string,
     /** What its activities carry beside the entity's name (a power's base rules). */
     private readonly activityData: (scope: RulesetScope) => Record<string, unknown> = () => ({}),
@@ -95,7 +95,7 @@ export default class EntitySaves<Row extends { id: string; name: string }, Inser
     if (customizations) await CustomizationCopies.copy(tx, entityId, this.type, customizations);
   }
 
-  /** Records what a save did to the entity (`verb`), with what its kind's activities carry. */
+  /** Records what a create, an update or a delete did to the entity (`verb`), with what its kind's activities carry. */
   private async recordActivity(
     tx: Db,
     scope: RulesetScope,

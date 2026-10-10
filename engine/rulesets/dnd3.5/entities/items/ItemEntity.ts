@@ -24,7 +24,7 @@ type ItemBody = {
   weight?: number;
 };
 
-/** An item's row, as its saves write it: a template keeps no source, an edit leaves whether it's one as it is. */
+/** An item's row, as its forms write it: a template keeps no source, an edit leaves whether it's one as it is. */
 type ItemColumns = Omit<ItemBody, "costGp" | "isTemplate" | "sourceItemId" | "weight"> & {
   costGp?: string;
   isTemplate?: boolean;
@@ -76,7 +76,7 @@ export default class ItemEntity extends CustomizationPageEntity<
   }
 
   /** Refuses a template made from another item: a template is its copies' source, never one's copy. */
-  protected override checkSave(body: ItemBody, item?: Item) {
+  protected override checkForm(body: ItemBody, item?: Item) {
     if ((item ? item.isTemplate : body.isTemplate) && body.sourceItemId)
       throw new RulesError("unprocessable", "Template items cannot have a source item");
   }

@@ -29,7 +29,7 @@ export default class SkillFocusFeats {
     );
   }
 
-  /** The skill's own feat a save removes with its name: its Skill Focus, unless a character picked it. */
+  /** The skill's own feat a delete or a rename removes with its name: its Skill Focus, unless a character picked it. */
   static remove(view: RulesetView, skillName: string) {
     const inUse = "Cannot remove a Skill Focus feat in use by a character in this ruleset";
     return GeneratedFeats.remove(view, `Skill Focus: ${skillName}`, inUse);

@@ -44,7 +44,7 @@ export default class RequirementEdits extends CustomizationEdits<Requirement> {
     return TargetLabels.describe(catalog, this.rowsOf(this.entity.id));
   }
 
-  /** A new requirement on the entity: the entity as the view has it, and the row its save stores. */
+  /** A new requirement on the entity: the entity as the view has it, and the row it stores. */
   planCreate(targetPaths: TargetPaths, catalogs: TargetCatalogs, body: RequirementBody) {
     return { entity: this.entity, row: this.toRow(targetPaths, catalogs, body) };
   }
@@ -55,7 +55,7 @@ export default class RequirementEdits extends CustomizationEdits<Requirement> {
     return { entity, requirement: this.findOwn(entity.id, requirementId) };
   }
 
-  /** An edit of one of the entity's requirements: the entity and the requirement, and the row its save stores. */
+  /** An edit of one of the entity's requirements: the entity and the requirement, and the row it stores. */
   planEdit(targetPaths: TargetPaths, catalogs: TargetCatalogs, requirementId: string, body: RequirementBody) {
     const plan = this.planDelete(requirementId);
     return { ...plan, row: this.toRow(targetPaths, catalogs, body, plan.requirement) };
