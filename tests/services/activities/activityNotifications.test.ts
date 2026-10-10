@@ -1,9 +1,19 @@
 import { describe, expect, test } from "bun:test";
 
 import { db } from "@/server/database/index.ts";
-import { Aptitudes, Characters, Notifications, Players, Rulesets } from "@/server/repositories/index.ts";
+import {
+  Abilities,
+  Aptitudes,
+  Characters,
+  Klasses,
+  Notifications,
+  Players,
+  Rulesets,
+  Skills,
+} from "@/server/repositories/index.ts";
 import { CampaignInvitesService } from "@/server/services/campaigns/invites/index.ts";
 import { CharacterContributorsService } from "@/server/services/characters/contributors/index.ts";
+import { ClassSkillsService } from "@/server/services/rulesets/classes/skills/index.ts";
 import { ContributorsService } from "@/server/services/rulesets/contributors/index.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
@@ -190,6 +200,20 @@ describe("activity notifications", () => {
       note("deleteMechanic", author),
       note("updateMechanic", author),
     ]);
+  });
+
+  // A class skill's add and remove used to reach nobody: only a create, an update or a delete counted as a change.
+  test("of a class skill go to its ruleset's owner", async () => {
+    const [owner, author] = await users(2);
+    const { id: rulesetId } = await createTestRuleset(owner.user.id);
+    await addRulesetContributor(rulesetId, author.user, owner.user.id);
+    const [ability] = await Abilities.create(db, { name: "Strength", description: "", rulesetId });
+    const [fighter] = await Klasses.create(db, { name: "Fighter", rulesetId, hd: 10 });
+    const [climb] = await Skills.create(db, { name: "Climb", rulesetId, primaryAbilityId: ability.id });
+    await ClassSkillsService.addClassSkill(author.session, rulesetId, fighter.id, climb.id);
+    await ClassSkillsService.removeClassSkill(author.session, rulesetId, fighter.id, climb.id);
+
+    expect(await inbox(owner)).toEqual([note("addKlassSkill", author), note("removeKlassSkill", author)]);
   });
 
   test("of a ruleset's content go to nobody when its owner works alone", async () => {

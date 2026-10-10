@@ -162,15 +162,14 @@ async function resolveRecipients(
     }
   }
 
-  // Ruleset content changes
-  const isContentChange = type.startsWith("create") || type.startsWith("update") || type.startsWith("delete");
+  // Ruleset content changes: their creates, updates and deletes, a class skill's add and remove
   const isRulesetContent =
     RULESET_ENTITY_TABLES.has(targetTable) ||
     targetTable === "klass_levels" ||
     targetTable === "klass_skills" ||
     CUSTOMIZATION_TABLES.has(targetTable);
 
-  if (isContentChange && isRulesetContent) {
+  if (isRulesetContent) {
     // Prefer rulesetId from data (required for deletes where the entity is already archived)
     const rulesetId = (d.rulesetId as string | undefined) ?? (await resolveRulesetId(db, targetTable, targetId));
     if (rulesetId) {
