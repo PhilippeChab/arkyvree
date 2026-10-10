@@ -3,6 +3,8 @@ export { default as CharacterProjection } from "./CharacterProjection.ts";
 export type {
   AbilityScore,
   CharacterCard,
+  CharacterCreation,
+  CreationMethod,
   DescribedInventoryEntry,
   InventoryEntryChange,
   InventoryEntryFields,

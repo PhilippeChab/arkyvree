@@ -18,14 +18,15 @@ const ABILITY_MODIFIER_DIVISOR = 2;
 const ABILITY_MODIFIER_OFFSET = 10;
 
 export default class AbilitiesComponent {
+  /** An ability's modifier at a score: +1 for every 2 points above 10, rounded down (a score of 9 is -1). */
+  static computeModifier(score: number): number {
+    return Math.floor((score - ABILITY_MODIFIER_OFFSET) / ABILITY_MODIFIER_DIVISOR);
+  }
+
   private readonly abilities: AbilitiesData = {} as AbilitiesData;
 
   // Map abilityId -> normalized ability name for level-up lookups
   private readonly abilityIdToName: Map<string, string> = new Map();
-
-  private computeModifier(total: number): number {
-    return Math.floor((total - ABILITY_MODIFIER_OFFSET) / ABILITY_MODIFIER_DIVISOR);
-  }
 
   getAbilities(): AbilitiesData {
     return this.abilities;
@@ -65,7 +66,7 @@ export default class AbilitiesComponent {
   getAbilityModifierExcludingMisc(abilityName: string) {
     const ability = this.abilities[stripSeparators(abilityName)];
     if (!ability) return 0;
-    return this.computeModifier(ability.base + ability.level);
+    return AbilitiesComponent.computeModifier(ability.base + ability.level);
   }
 
   /** An ability's name by its id (as the sheet keys it): none for one the character has no score in. */
@@ -79,7 +80,6 @@ export default class AbilitiesComponent {
       const normalizedName = stripSeparators(name);
       this.abilityIdToName.set(abilityId, normalizedName);
 
-      const computeModifier = (total: number) => this.computeModifier(total);
       // The total and the modifier are computed from the parts when read, so they follow every change to them
       this.abilities[normalizedName] = {
         base: score,
@@ -89,7 +89,7 @@ export default class AbilitiesComponent {
           return this.base + this.misc + this.level;
         },
         get modifier() {
-          return computeModifier(this.total);
+          return AbilitiesComponent.computeModifier(this.total);
         },
       };
     }

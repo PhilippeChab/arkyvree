@@ -10,12 +10,17 @@ import CharacterSheet from "./sheet/CharacterSheet.tsx";
 
 /**
  * The 3.5 characters, as the module answers the server of them: their sheets, as the API answers them and printed,
- * what equipping an item checks, and the races a new one can pick.
+ * what equipping an item checks, and how a new one's ability scores are set and the races it can pick.
  */
 export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
   /** A character's sheet as the API answers it, with its bonded creatures', or a creature's. */
   describe(...args: Parameters<typeof CharacterDescription.describe>) {
     return CharacterDescription.describe(...args);
+  }
+
+  /** How a new character's ability scores are set: the SRD's methods, the scores' bounds, each score's modifier. */
+  describeCreation(...args: Parameters<typeof CharacterEdits.describeCreation>) {
+    return CharacterEdits.describeCreation(...args);
   }
 
   /** A character as a campaign member reads it: partly, or its sheet with its private notes shown or blank. */

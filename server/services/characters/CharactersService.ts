@@ -212,6 +212,11 @@ class CharactersService extends include(Object, Archives) {
     );
   }
 
+  /** How a new character of a ruleset (`rulesetId`) sets its ability scores, as its rules answer it. */
+  async getCreation(rulesetId: string) {
+    return await withRulesetScope(db, rulesetId, async (scope) => Engine.for(scope).characters().describeCreation());
+  }
+
   async getUnlinkedCharacters(
     session: Session,
     campaignId: string,

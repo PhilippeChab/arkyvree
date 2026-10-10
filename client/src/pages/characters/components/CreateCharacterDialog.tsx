@@ -1,16 +1,11 @@
 import { IconButton, MenuItem, Paper, Stack, TextField, Typography } from "@mui/material";
-import { keepPreviousData, useMutation, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferRequestType, parseResponse } from "hono/client";
 import { useMemo, useState } from "react";
 import { type Control, Controller, useController } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
-import {
-  computeAbilityModifier,
-  NotesField,
-  PrivateNotesField,
-  sortAbilities,
-} from "@/client/src/components/characters/index.ts";
+import { NotesField, PrivateNotesField, sortAbilities } from "@/client/src/components/characters/index.ts";
 import {
   BlankNote,
   CountChip,
@@ -35,22 +30,18 @@ import { type Ability, useFormWith, useListboxQuery, useRulesetAbilities } from 
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
 import type { CharacterPageState } from "@/client/src/pages/characters/characterPageState.ts";
-import { availableRacesQuery } from "@/client/src/pages/characters/characterQueries.ts";
 import {
-  getRollFunction,
-  POINT_BUY_COSTS,
-  POINT_BUY_TOTAL,
-  pointBuySpent,
-  ROLL_METHODS,
-  type RollMethodId,
-  STANDARD_ARRAY,
-} from "@/client/src/pages/characters/dice.ts";
-import { formatPointsSpent } from "@/client/src/pages/characters/pointsSpent.ts";
+  availableRacesQuery,
+  type CharacterCreation,
+  characterCreationQuery,
+  type CreationMethod,
+} from "@/client/src/pages/characters/characterQueries.ts";
+import { rollDice } from "@/client/src/pages/characters/dice.ts";
+import { formatPointsSpent, pointsSpent } from "@/client/src/pages/characters/pointsSpent.ts";
 import { RollAllButton } from "@/client/src/pages/characters/RollAllButton.tsx";
 import { type DiceRoll, useDiceRoll } from "@/client/src/pages/characters/useDiceRoll.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { PREFERS_REDUCED_MOTION, settleAnimation } from "@/client/src/theme/animations.ts";
-import { MAX_ABILITY_SCORE } from "@/shared/dnd3.5/abilities.ts";
 import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/shared/enums.ts";
 import { formatSigned } from "@/shared/text.ts";
 
@@ -70,10 +61,15 @@ type AbilityOption = Pick<Ability, "id" | "name">;
 interface AbilityScoresFieldProps {
   abilities: AbilityOption[];
   control: Control<CreateCharacterFormData>;
+  /** How the ruleset sets its scores: their bounds and modifiers. */
+  creation: CharacterCreation;
   /** The dialog's roll of the scores, which they show as it tumbles. */
   diceRoll: DiceRoll;
-  method: RollMethodId;
+  method: CreationMethod;
 }
+
+/** The scores taken from an array, each ability one of them. */
+type ArrayMethod = Extract<CreationMethod, { kind: "array" }>;
 
 interface CreateCharacterDialogProps {
   onClose: () => void;
@@ -90,11 +86,28 @@ type CreateCharacterFormData = Omit<CreateCharacterRequest, "alignment" | "gende
 
 type CreateCharacterRequest = InferRequestType<typeof rpc.api.characters.$post>["json"];
 
-/** The scores a method that sets them shows (a point-buy, the standard array), and their change. */
+/** The scores bought out of a budget, each at its cost. */
+type PointBuyMethod = Extract<CreationMethod, { kind: "pointBuy" }>;
+
+/** A point buy's scores, and their change. */
+interface PointBuyScoresProps extends SetScoresProps {
+  method: PointBuyMethod;
+}
+
+/** The scores rolled with dice. */
+type RollMethod = Extract<CreationMethod, { kind: "roll" }>;
+
+/** The scores a method that sets them shows (a point buy, an array), and their change. */
 interface SetScoresProps {
   abilities: AbilityOption[];
   abilityValues: Record<string, number> | undefined;
   onChange: (scores: Record<string, number>) => void;
+}
+
+/** An array's scores, each with its modifier, and their change. */
+interface StandardArrayScoresProps extends SetScoresProps {
+  method: ArrayMethod;
+  modifiers: CharacterCreation["modifiers"];
 }
 
 function AbilityCard({
@@ -144,18 +157,28 @@ function AbilityCard({
   );
 }
 
-/** The new character's ability scores, its form's `abilities`, set the way its roll method sets them. */
-function AbilityScoresField({ abilities, control, diceRoll, method }: AbilityScoresFieldProps) {
+/** The new character's ability scores, its form's `abilities`, set the way its method sets them. */
+function AbilityScoresField({ abilities, control, creation, diceRoll, method }: AbilityScoresFieldProps) {
   const {
     field: { value, onChange },
   } = useController({ control, name: "abilities" });
-  const abilityValues = scoresOf(abilities, value, method);
+  const abilityValues = scoresOf(abilities, value, method, creation.scores.start);
+  const { max, min } = creation.scores;
 
-  if (method === "standard-array")
-    return <StandardArrayScores abilities={abilities} abilityValues={abilityValues} onChange={onChange} />;
+  if (method.kind === "array") {
+    return (
+      <StandardArrayScores
+        abilities={abilities}
+        abilityValues={abilityValues}
+        method={method}
+        modifiers={creation.modifiers}
+        onChange={onChange}
+      />
+    );
+  }
 
-  if (method === "point-buy")
-    return <PointBuyScores abilities={abilities} abilityValues={abilityValues} onChange={onChange} />;
+  if (method.kind === "pointBuy")
+    return <PointBuyScores abilities={abilities} abilityValues={abilityValues} method={method} onChange={onChange} />;
 
   return (
     <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap" }}>
@@ -167,11 +190,11 @@ function AbilityScoresField({ abilities, control, diceRoll, method }: AbilitySco
             key={ability.id}
             name={ability.name}
             score={score}
-            onIncrease={() => onChange({ ...abilityValues, [ability.id]: Math.min(MAX_ABILITY_SCORE, score + 1) })}
-            onDecrease={() => onChange({ ...abilityValues, [ability.id]: Math.max(1, score - 1) })}
-            canIncrease={!diceRoll.rolling && score < MAX_ABILITY_SCORE}
-            canDecrease={!diceRoll.rolling && score > 1}
-            bottomInfo={`Mod: ${formatSigned(computeAbilityModifier(score))}`}
+            onIncrease={() => onChange({ ...abilityValues, [ability.id]: Math.min(max, score + 1) })}
+            onDecrease={() => onChange({ ...abilityValues, [ability.id]: Math.max(min, score - 1) })}
+            canIncrease={!diceRoll.rolling && score < max}
+            canDecrease={!diceRoll.rolling && score > min}
+            bottomInfo={`Mod: ${formatSigned(creation.modifiers[score])}`}
             isSettled={diceRoll.hasLanded(ability.id)}
           />
         );
@@ -180,24 +203,37 @@ function AbilityScoresField({ abilities, control, diceRoll, method }: AbilitySco
   );
 }
 
-/** An ability's score before one is set: 8 to point-buy from, the standard array's in order, else 10. */
-function defaultScore(method: RollMethodId, index: number) {
-  if (method === "point-buy") return 8;
-  if (method === "standard-array") return STANDARD_ARRAY[index] ?? STANDARD_ARRAY[STANDARD_ARRAY.length - 1];
-  return 10;
+/**
+ * An ability's score before one is set: a point buy's lowest to buy from, an array's in order, else the rules'
+ * starting score (`start`).
+ */
+function defaultScore(method: CreationMethod, index: number, start: number) {
+  if (method.kind === "pointBuy") return method.min;
+  if (method.kind === "array") return method.scores[index] ?? method.scores[method.scores.length - 1];
+  return start;
 }
 
-function PointBuyScores({ abilities, abilityValues, onChange }: SetScoresProps) {
-  const pointsRemaining = POINT_BUY_TOTAL - pointBuySpent(abilities.map((a) => abilityValues?.[a.id] ?? 8));
+/** What a point buy's scores cost: each score's price, summed. */
+function pointBuyCost(method: PointBuyMethod, scores: number[]) {
+  return pointsSpent(scores.map((score) => method.costs[score] ?? 0));
+}
+
+function PointBuyScores({ abilities, abilityValues, method, onChange }: PointBuyScoresProps) {
+  const pointsRemaining =
+    method.budget -
+    pointBuyCost(
+      method,
+      abilities.map((a) => abilityValues?.[a.id] ?? method.min),
+    );
 
   return (
     <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap" }}>
       {abilities.map((ability) => {
-        const score = abilityValues?.[ability.id] ?? 8;
-        const costNow = POINT_BUY_COSTS[score] ?? 0;
-        const costNext = POINT_BUY_COSTS[score + 1];
-        const canIncrease = score < 18 && costNext !== undefined && costNext - costNow <= pointsRemaining;
-        const canDecrease = score > 8;
+        const score = abilityValues?.[ability.id] ?? method.min;
+        const costNow = method.costs[score] ?? 0;
+        const costNext = method.costs[score + 1];
+        const canIncrease = score < method.max && costNext !== undefined && costNext - costNow <= pointsRemaining;
+        const canDecrease = score > method.min;
 
         return (
           <AbilityCard
@@ -216,30 +252,35 @@ function PointBuyScores({ abilities, abilityValues, onChange }: SetScoresProps) 
   );
 }
 
-/** Every ability's score: the one set, or its method's default. */
-function scoresOf(abilities: AbilityOption[], values: Record<string, number> | undefined, method: RollMethodId) {
+/** Every ability's score: the one set, or its method's default (`start`, the rules' starting score, for a roll). */
+function scoresOf(
+  abilities: AbilityOption[],
+  values: Record<string, number> | undefined,
+  method: CreationMethod,
+  start: number,
+) {
   return Object.fromEntries(
-    abilities.map((ability, index) => [ability.id, values?.[ability.id] ?? defaultScore(method, index)]),
+    abilities.map((ability, index) => [ability.id, values?.[ability.id] ?? defaultScore(method, index, start)]),
   );
 }
 
-function StandardArrayScores({ abilities, abilityValues, onChange }: SetScoresProps) {
+function StandardArrayScores({ abilities, abilityValues, method, modifiers, onChange }: StandardArrayScoresProps) {
   // A score already given to another ability swaps with this one's
   const handleChange = (abilityId: string, newValue: number) => {
     if (!abilityValues) return;
     const next = { ...abilityValues };
     const swapId = abilities.find((a) => a.id !== abilityId && abilityValues[a.id] === newValue)?.id;
-    if (swapId) next[swapId] = abilityValues[abilityId] ?? STANDARD_ARRAY[STANDARD_ARRAY.length - 1];
+    if (swapId) next[swapId] = abilityValues[abilityId] ?? method.scores[method.scores.length - 1];
     next[abilityId] = newValue;
     onChange(next);
   };
 
-  const sortedAsc = useMemo(() => [...STANDARD_ARRAY].sort((a, b) => a - b), []);
+  const sortedAsc = [...method.scores].sort((a, b) => a - b);
 
   return (
     <Stack direction="row" spacing={2} sx={{ flexWrap: "wrap" }}>
       {abilities.map((ability) => {
-        const score = abilityValues?.[ability.id] ?? STANDARD_ARRAY[0];
+        const score = abilityValues?.[ability.id] ?? method.scores[0];
         const idx = sortedAsc.indexOf(score);
         const canIncrease = idx !== -1 && idx < sortedAsc.length - 1;
         const canDecrease = idx > 0;
@@ -253,7 +294,7 @@ function StandardArrayScores({ abilities, abilityValues, onChange }: SetScoresPr
             onDecrease={() => canDecrease && handleChange(ability.id, sortedAsc[idx - 1])}
             canIncrease={canIncrease}
             canDecrease={canDecrease}
-            bottomInfo={`Mod: ${formatSigned(computeAbilityModifier(score))}`}
+            bottomInfo={`Mod: ${formatSigned(modifiers[score])}`}
           />
         );
       })}
@@ -270,7 +311,7 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
   const diceRoll = useDiceRoll();
-  const [rollMethod, setRollMethod] = useState<RollMethodId>("4d6-drop-lowest");
+  const [methodId, setMethodId] = useState("");
   const form = useFormWith<CreateCharacterFormData>({
     rulesetId: "",
     raceId: "",
@@ -331,15 +372,26 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
     return sortAbilities(items, baseRules, (a) => a.name);
   }, [abilityItems, baseRules]);
 
-  // What a point-buy's scores cost, its chip says
-  const pointBuyPoints = pointBuySpent(Object.values(scoresOf(rulesetAbilities, watch("abilities"), rollMethod)));
+  // How the ruleset sets its scores, and the method picked: its first until one is
+  const {
+    data: creation,
+    error: creationError,
+    isLoading: creationLoading,
+  } = useQuery(characterCreationQuery(selectedRulesetId));
+  const method = creation?.methods.find((m) => m.id === methodId) ?? creation?.methods[0];
+
+  // What a point buy's scores cost, its chip says
+  const abilityValues = watch("abilities");
+  const pointBuyPoints =
+    creation && method?.kind === "pointBuy"
+      ? pointBuyCost(method, Object.values(scoresOf(rulesetAbilities, abilityValues, method, creation.scores.start)))
+      : 0;
 
   // A method that rolls dice rolls each score: they land one by one, the roll keeping the scores so far
-  const rollScore = getRollFunction(rollMethod);
-  const handleRollAll = (roll: () => number) => {
-    const rolled = scoresOf(rulesetAbilities, getValues("abilities"), rollMethod);
+  const handleRollAll = (rollMethod: RollMethod, start: number) => {
+    const rolled = scoresOf(rulesetAbilities, getValues("abilities"), rollMethod, start);
     diceRoll.roll(
-      rulesetAbilities.map((ability) => ({ key: ability.id, roll })),
+      rulesetAbilities.map((ability) => ({ key: ability.id, roll: () => rollDice(rollMethod.dice) })),
       (abilityId, score) => {
         rolled[abilityId] = score;
         setValue("abilities", { ...rolled }, { shouldDirty: true });
@@ -382,7 +434,8 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
   // The alignment and gender are required: a submit always has them. The scores not set yet are their method's defaults
   const handleCreate = ({ alignment, gender, ...data }: CreateCharacterFormData) => {
     if (!alignment || !gender) return;
-    const abilities = scoresOf(rulesetAbilities, data.abilities, rollMethod);
+    const abilities =
+      creation && method ? scoresOf(rulesetAbilities, data.abilities, method, creation.scores.start) : data.abilities;
     createCharacterMutation.mutate({ ...data, alignment, gender, abilities });
   };
 
@@ -476,56 +529,55 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
       <Stack spacing={1}>
         <SubsectionTitle>Ability Scores</SubsectionTitle>
         <Stack spacing={3}>
-          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-            <TextField
-              select
-              label="Method"
-              value={rollMethod}
-              onChange={(e) => {
-                // Another method's scores start from its defaults
-                const method = ROLL_METHODS.find((m) => m.id === e.target.value);
-                if (!method) return;
-                setRollMethod(method.id);
-                setValue("abilities", {}, { shouldDirty: true });
-              }}
-              size="small"
-              sx={{ minWidth: 200 }}
-            >
-              {ROLL_METHODS.map((m) => (
-                <MenuItem key={m.id} value={m.id}>
-                  {m.label}
-                </MenuItem>
-              ))}
-            </TextField>
-            {rollScore && (
-              <RollAllButton
-                onClick={() => handleRollAll(rollScore)}
-                disabled={!rulesetAbilities.length || diceRoll.rolling}
-              />
-            )}
-            {rollMethod === "point-buy" && (
-              <CountChip
-                label={formatPointsSpent(pointBuyPoints, POINT_BUY_TOTAL)}
-                color={
-                  pointBuyPoints > POINT_BUY_TOTAL
-                    ? "error"
-                    : pointBuyPoints === POINT_BUY_TOTAL
-                      ? "success"
-                      : "default"
-                }
-              />
-            )}
-          </Stack>
-          {rulesetAbilities.length > 0 ? (
+          {creation && method && (
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+              <TextField
+                select
+                label="Method"
+                value={method.id}
+                onChange={(e) => {
+                  // Another method's scores start from its defaults
+                  setMethodId(e.target.value);
+                  setValue("abilities", {}, { shouldDirty: true });
+                }}
+                size="small"
+                sx={{ minWidth: 200 }}
+              >
+                {creation.methods.map((m) => (
+                  <MenuItem key={m.id} value={m.id}>
+                    {m.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+              {method.kind === "roll" && (
+                <RollAllButton
+                  onClick={() => handleRollAll(method, creation.scores.start)}
+                  disabled={!rulesetAbilities.length || diceRoll.rolling}
+                />
+              )}
+              {method.kind === "pointBuy" && (
+                <CountChip
+                  label={formatPointsSpent(pointBuyPoints, method.budget)}
+                  color={
+                    pointBuyPoints > method.budget ? "error" : pointBuyPoints === method.budget ? "success" : "default"
+                  }
+                />
+              )}
+            </Stack>
+          )}
+          {rulesetAbilities.length > 0 && creation && method ? (
             <AbilityScoresField
               abilities={rulesetAbilities}
               control={control}
+              creation={creation}
               diceRoll={diceRoll}
-              method={rollMethod}
+              method={method}
             />
           ) : abilitiesError ? (
             <LoadError what="Abilities" error={abilitiesError} />
-          ) : abilitiesLoading ? (
+          ) : creationError ? (
+            <LoadError what="Ability Score Methods" error={creationError} />
+          ) : abilitiesLoading || creationLoading ? (
             <DiceSpinner sx={{ py: 4 }} />
           ) : (
             <BlankNote>

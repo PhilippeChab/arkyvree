@@ -23,6 +23,11 @@ export default class CharactersEngine {
     return this.module.characters.describeCard(this.view, ...args);
   }
 
+  /** How a new character's ability scores are set: the ways its form offers, their bounds, each score's modifier. */
+  describeCreation(...args: Args<"describeCreation">) {
+    return this.module.characters.describeCreation(this.view, ...args);
+  }
+
   /** A character's inventory entries (each with the item row it names), as stored, as its sheet lists them. */
   describeInventory<T extends { itemId: string; itemsInRule: Item }>(entries: T[]) {
     return this.module.characters.describeInventory(this.view, this.view.rulesetData.cow.resolveRows(entries));

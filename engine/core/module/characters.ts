@@ -14,6 +14,27 @@ export interface CharacterCard {
   totalLevel: number;
 }
 
+/**
+ * How a new character's ability scores are set: the ways its form offers (`methods`), the scores' bounds and the one
+ * an ability shows before it's rolled or set (`scores`), and each score's modifier over those bounds (`modifiers`).
+ */
+export interface CharacterCreation {
+  methods: CreationMethod[];
+  modifiers: Record<number, number>;
+  scores: { max: number; min: number; start: number };
+}
+
+/**
+ * A way a new character's ability scores are set, which its form runs by its kind: rolled (`dice`: `count` dice of
+ * `sides`, the highest `keep` summed), taken from an array (`scores`, each to one ability), or bought (`costs`, each
+ * score's from `min` to `max`, out of `budget`).
+ */
+export type CreationMethod = { id: string; label: string } & (
+  | { dice: { count: number; keep: number; sides: number }; kind: "roll" }
+  | { kind: "array"; scores: readonly number[] }
+  | { budget: number; costs: Readonly<Record<number, number>>; kind: "pointBuy"; max: number; min: number }
+);
+
 /** A character's inventory entry, as its sheet lists it: the entry, with its item as the view composes it. */
 export type DescribedInventoryEntry<T> = T & {
   item: Item & { modifiers: Modifier[]; properties: Property[]; requirements: Requirement[] };
