@@ -1,7 +1,6 @@
 import RulesError from "@/engine/core/RulesError.ts";
 
 import LevelUpBase from "./LevelUpBase.ts";
-import SelectionChecks from "./SelectionChecks.ts";
 
 /** A saved level's picks, as the character's rows hold them. */
 interface SavedPicks {
@@ -55,9 +54,9 @@ export default abstract class LevelSelections<C, F extends object> extends Level
   }
 
   /**
-   * The character's saved level `characterLevelId`: its class level, its hit points and the bounds its class's die
-   * sets them (`hitPoints`), its ability increases, its skill ranks, its feats by pool and its powers by pool. Refused
-   * when the character has no such level.
+   * The character's saved level `characterLevelId`: its class level, its hit points and the bounds its ruleset sets
+   * them by its class's die (`hitPoints`), its ability increases, its skill ranks, its feats by pool and its powers by
+   * pool. Refused when the character has no such level.
    */
   describeLevel(characterLevelId: string) {
     const { levels, picks } = this.character.rows;
@@ -72,7 +71,7 @@ export default abstract class LevelSelections<C, F extends object> extends Level
       klassName: klass.name,
       level: klassLevel.level,
       hd: klass.hd,
-      hitPoints: SelectionChecks.hitPointsOf(klass.hd),
+      hitPoints: this.rules.hitPointsOf(klass.hd),
       hp: level.hp,
       abilityIncreases: atLevel(picks.abilityIncreases).map(({ abilityId, amount }) => ({ abilityId, amount })),
       ...this.buildLevelSelections({

@@ -23,18 +23,13 @@ export type GrantedFeatRecords =
 
 /**
  * A level's selections checked against the ruleset (`rulesetData`): theirs, linked to their pools, and not taken twice;
- * and its ability increases, adding up to what its ruleset's rules give it (`rules`).
+ * and its hit points and ability increases, within what its ruleset's rules give it (`rules`).
  */
 export default class SelectionChecks {
   constructor(
     private readonly rulesetData: RulesetData,
-    private readonly rules: Pick<LevelUpRules<unknown>, "getAbilityIncreaseTotal">,
+    private readonly rules: Pick<LevelUpRules<unknown>, "getAbilityIncreaseTotal" | "hitPointsOf">,
   ) {}
-
-  /** The hit points a level of a class with hit die `hd` gains: 1 to its die, the die's average rounded up between. */
-  static hitPointsOf(hd: number) {
-    return { average: Math.ceil(hd / 2), max: hd, min: 1 };
-  }
 
   /**
    * A level's hit points, ability increases and selections checked, for both the level save and the level-up's: each
@@ -45,7 +40,7 @@ export default class SelectionChecks {
   private checkLevelSelections(level: LevelChecked) {
     const { klass, klassLevel, hp, abilityIncreases, skills, feats, powers } = level;
 
-    const { max, min } = SelectionChecks.hitPointsOf(klass.hd);
+    const { max, min } = this.rules.hitPointsOf(klass.hd);
     if (hp < min || hp > max) throw new RulesError("invalid", `HP must be between ${min} and ${max}`);
 
     // A cache hit means the entity is in the composed view of the character's ruleset

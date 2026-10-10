@@ -3,7 +3,7 @@ import type { RulesetView } from "@/engine/core/view/index.ts";
 import FeatEntity, { type PoolModifier } from "@/engine/rulesets/dnd3.5/entities/feats/FeatEntity.ts";
 import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
-import LevelPicker from "./LevelPicker.ts";
+import Dnd35LevelPicker from "./Dnd35LevelPicker.ts";
 
 /**
  * What a row of the grouped feat options tells beside its own columns: the pools its modifiers add slots to, whether
@@ -20,7 +20,7 @@ export interface FeatGroupDetails {
  * `groupFilters`, grouped by family), but those it holds that don't stack; each described with the pools its modifiers
  * add slots to, and a family's row described when the picker opens it (`describeGroups`).
  */
-export default class FeatPicker extends LevelPicker<{ aptitudeModifiers: PoolModifier[] }> {
+export default class FeatPicker extends Dnd35LevelPicker<{ aptitudeModifiers: PoolModifier[] }> {
   constructor(view: RulesetView, input: CharacterInput, query: FeatPickQuery) {
     super(view, input, query);
     const offered = {
