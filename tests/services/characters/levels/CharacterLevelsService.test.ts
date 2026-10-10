@@ -428,21 +428,32 @@ describe("LevelsService", () => {
     });
   });
 
-  test("offers an ability increase every fourth character level", async () => {
-    const { session, character, klassLevels } = await setupRuleset();
+  test("offers an ability increase every fourth character level, picked as the save checks it", async () => {
+    const { session, character, klassLevels, abilities } = await setupRuleset();
     await addCharacterLevel(character.id, klassLevels[0].id);
     await addCharacterLevel(character.id, klassLevels[1].id);
+    // Nothing to pick at a level that takes none
     expect(await getLevelStep(session, character.id, "abilities")).toEqual({
       name: "abilities",
       isAvailable: false,
       attributes: {},
+      picked: true,
     });
 
     await addCharacterLevel(character.id, klassLevels[2].id);
     expect(await getLevelStep(session, character.id, "abilities")).toMatchObject({
       isAvailable: true,
       attributes: expect.any(Object),
+      picked: false,
     });
+    // One at a time: the test's transaction has a single connection
+    const picked = [];
+    for (const amounts of [[1], [2], [1, 1]]) {
+      const abilityIncreases = amounts.map((amount, i) => ({ abilityId: abilities[i].id, amount }));
+      picked.push((await getLevelStep(session, character.id, "abilities", { abilityIncreases })).picked);
+    }
+    // One ability raised by 1, as 3.5's fourth level takes, and the save checks
+    expect(picked).toEqual([true, false, false]);
   });
 
   describe("skill slots", () => {

@@ -36,8 +36,6 @@ export interface AddLevelDialogProps {
 export interface EditAnswers extends PickAnswers {
   /** The answers its save takes are in: the picks are saved as they fit */
   complete: boolean;
-  /** Next waits: an answer it waits for loads, or the step shown has none */
-  waiting: boolean;
 }
 
 /** What a character's sheet passes its Edit Level dialog: Add Level's, and the level it edits. */
@@ -53,8 +51,9 @@ export interface LevelStepProps<W> {
 }
 
 /**
- * What a ruleset answers of the picks so far, which a level wizard keeps them by (`fitPicks.ts`): the feat pools' room,
- * what of the feats and powers picked fits, and what the skill points come to.
+ * What a ruleset answers of the picks so far, which a level wizard keeps them by (`fitPicks.ts`) and its Next waits for:
+ * the feat pools' room, what of the feats and powers picked fits, what the skill points come to, and whether the step
+ * shown is answered and done.
  */
 export interface PickAnswers {
   /** Each feat pool's room for the feats picked: one with none left closes its picker */
@@ -65,6 +64,11 @@ export interface PickAnswers {
   fittedPowers: Record<string, string[]> | undefined;
   /** The skills the points are spent on, each with its ranks by points: none until they load */
   skills: SpentSkill[] | undefined;
+  /**
+   * Next waits: an answer it waits for loads, the step shown has none, or its answer says a pick is still to make there
+   * (an ability increase), as the rules check the save
+   */
+  waiting: boolean;
 }
 
 /** A planned level, as a ruleset's preview lists it: its class's level, and the hit points it may gain. */

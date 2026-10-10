@@ -392,9 +392,9 @@ describe("finalizing several levels at once", () => {
             { skills: { Climb: 5, Intimidate: 5, Jump: 5, Swim: 5 }, feats: firstTwo },
           ),
       ],
-      // Errors name the level by its place in the batch.
+      // Errors name the character's level they're about.
       [
-        "Level 1: Ability increase is required at this level",
+        "Level 4: Ability increase is required at this level",
         async () => {
           const characterId = await createSeedCharacter(ctx, "fighter", { xp: 6000 });
           await addFighterLevels(session, ctx, characterId, 3);
@@ -594,6 +594,20 @@ describe("previewing a level-up", () => {
     });
     // A pick the plan moved off an increase level (the first takes none) raises nothing
     expect((await intelligence([ctx.abilityMap["Intelligence"], null, null, null])).total).toBe(12);
+  });
+
+  test("says whether the increases are picked at every level that takes one, as the save checks them", async () => {
+    const ctx = await getSeedCtx();
+    const characterId = await createSeedCharacter(ctx);
+    const picked = async (levels: number, abilities: (string | null)[]) =>
+      (await preview(ctx, characterId, fighter(levels), abilities)).attributes.picked;
+    const intelligence = ctx.abilityMap["Intelligence"];
+    // One at a time: the test's transaction has a single connection
+    expect(await picked(4, [null, null, null, null])).toBe(false);
+    expect(await picked(4, [intelligence, null, null, null])).toBe(false);
+    expect(await picked(4, [null, null, null, intelligence])).toBe(true);
+    // A plan without a level that takes one has nothing to pick
+    expect(await picked(3, [null, null, null])).toBe(true);
   });
 
   test("raises every level's skill points with an Intelligence increase, as 3.5 grants them retroactively", async () => {

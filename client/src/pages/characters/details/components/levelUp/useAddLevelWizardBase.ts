@@ -159,7 +159,8 @@ export function useAddLevelWizardBase({ plan, answers, characterId, open, onClos
     onError: handleSaveError,
   });
 
-  // Next waits for the steps the ruleset lists. The dialog also disables it while the save runs.
+  // Next waits for the steps the ruleset lists, and on one of them for what its answers wait for (`waiting`). The dialog
+  // also disables it while the save runs.
   const isNextDisabled = useMemo(() => {
     if (!stepsLoaded) return true;
     switch (stepName) {
@@ -168,9 +169,9 @@ export function useAddLevelWizardBase({ plan, answers, characterId, open, onClos
       case HP_STEP.name:
         return !hpSet(hpLevels, hpValues);
       default:
-        return false;
+        return answers.waiting;
     }
-  }, [stepsLoaded, stepName, validClassPlan, hpLevels, hpValues]);
+  }, [stepsLoaded, stepName, validClassPlan, hpLevels, hpValues, answers.waiting]);
 
   return {
     ...plan,

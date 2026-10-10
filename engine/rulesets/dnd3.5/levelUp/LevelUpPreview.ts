@@ -9,11 +9,11 @@ import PlannedLevelsState, { type LevelGains, type PlannedLevels } from "./Plann
 /** The level-up wizard's preview of the levels a character plans, from its rows: its steps, and each level's details. */
 export default class LevelUpPreview extends PlannedLevelsState {
   /**
-   * The level-up wizard's preview of the planned levels: its skills, feats, powers and attributes steps, each level's
-   * class, hit die and skill points, and where each pool's next pick goes. The skills step spends the form's points
-   * (`picks.skills`, by skill, in its order) over the planned levels, as their save spreads them; the feats and powers
-   * steps fit the form's feats and powers (`picks`) to their pools, as a save would take them, and say what fits
-   * (`fitted`) and each pool's room for them.
+   * The level-up wizard's preview of the planned levels: its skills, feats, powers and attributes steps (whether every
+   * level's ability increase is picked among them), each level's class, hit die and skill points, and where each pool's
+   * next pick goes. The skills step spends the form's points (`picks.skills`, by skill, in its order) over the planned
+   * levels, as their save spreads them; the feats and powers steps fit the form's feats and powers (`picks`) to their
+   * pools, as a save would take them, and say what fits (`fitted`) and each pool's room for them.
    */
   private buildLevelUpPreview(planned: PlannedLevels, picks: Partial<LevelPicks>) {
     const { character, savedLevelCount, klassLevelEntries } = planned;
@@ -32,6 +32,10 @@ export default class LevelUpPreview extends PlannedLevelsState {
       attributes: {
         abilityIncreaseLevels: this.getAbilityIncreaseLevels(savedLevelCount, klassLevelEntries.length),
         attributes: character.components.abilities.getAbilitiesWithIds(),
+        // Every planned level raises its abilities as its save checks them: the step's Next waits for it
+        picked: klassLevelEntries.every(({ abilityIncreases }, i) =>
+          this.checks.areAbilityIncreasesPicked(savedLevelCount + i, abilityIncreases),
+        ),
       },
       // Per-level data for HP step, review, and auto-assignment
       levelDetails: klassLevelEntries.map(({ klass, klassLevel }, i) => ({

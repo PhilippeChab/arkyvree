@@ -141,22 +141,35 @@ export default class SelectionChecks {
   }
 
   /**
+   * What's wrong with the ability increases of the level after `totalLevel` levels: none when they raise its abilities
+   * by what its rules give it (none where they give none), each ability once.
+   */
+  private findAbilityIncreaseError(totalLevel: number, increases: AbilityIncrease[]) {
+    const total = this.rules.getAbilityIncreaseTotal(totalLevel);
+    if (increases.length > 0 && total === 0) return "Ability increase is not available at this level";
+    if (increases.length === 0 && total > 0) return "Ability increase is required at this level";
+    if (new Set(increases.map(({ abilityId }) => abilityId)).size < increases.length)
+      return "An ability is increased twice at this level";
+    if (increases.reduce((sum, { amount }) => sum + amount, 0) !== total)
+      return `Ability increases must add up to ${total} at this level`;
+    return undefined;
+  }
+
+  /**
+   * Whether the level after `totalLevel` levels raises its abilities by what its rules give it, as its save checks them
+   * (`checkAbilityIncreases`): a level that takes none is picked with none.
+   */
+  areAbilityIncreasesPicked(totalLevel: number, increases: AbilityIncrease[]) {
+    return this.findAbilityIncreaseError(totalLevel, increases) === undefined;
+  }
+
+  /**
    * Throws when the level after `totalLevel` levels raises its abilities by other than what its rules give it (none
    * where they give none), or raises one twice. `label` names the level in the message ("Level 2: ").
    */
   checkAbilityIncreases(totalLevel: number, increases: AbilityIncrease[], label = "") {
-    const total = this.rules.getAbilityIncreaseTotal(totalLevel);
-    if (increases.length > 0 && total === 0)
-      throw new RulesError("invalid", `${label}Ability increase is not available at this level`);
-
-    if (increases.length === 0 && total > 0)
-      throw new RulesError("invalid", `${label}Ability increase is required at this level`);
-
-    if (new Set(increases.map(({ abilityId }) => abilityId)).size < increases.length)
-      throw new RulesError("invalid", `${label}An ability is increased twice at this level`);
-
-    if (increases.reduce((sum, { amount }) => sum + amount, 0) !== total)
-      throw new RulesError("invalid", `${label}Ability increases must add up to ${total} at this level`);
+    const error = this.findAbilityIncreaseError(totalLevel, increases);
+    if (error) throw new RulesError("invalid", `${label}${error}`);
   }
 
   /**

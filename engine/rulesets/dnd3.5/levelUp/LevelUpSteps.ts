@@ -45,18 +45,24 @@ export default class LevelUpSteps extends LevelUpState {
 
   /**
    * The attributes step: the character's abilities, when the level it adds or edits takes an ability increase, after
-   * its levels but the edited one and those after it, and the levels planned before it, which it's built with.
+   * its levels but the edited one and those after it, and the levels planned before it, which it's built with; and
+   * whether its pick is made, which Next waits for: the level's increases (`step.abilityIncreases`) as its save checks
+   * them, or nothing to pick at a level that takes none.
    */
   private describeAbilityStep(step: LevelQuery) {
-    const { editedLevel, planned } = this.readStep(step);
+    const { abilityIncreases = [], editedLevel, planned } = this.readStep(step);
     const projection = new CharacterProjection(this.character);
     if (editedLevel) projection.dropLevelsFrom(editedLevel.id);
     const hp = LevelRules.UNROLLED_LEVEL_HP;
     projection.addLevels(planned?.klassLevelIds ?? [], { abilityIncreases: planned?.abilityIncreases, hp });
     // The levels before this one: the level added or edited is the next
-    if (!LevelRules.isAbilityIncreaseLevel(projection.input.rows.levels.length))
-      return { isAvailable: false, attributes: {} };
-    return { isAvailable: true, attributes: this.build(projection).components.abilities.getAbilitiesWithIds() };
+    const levelsBefore = projection.input.rows.levels.length;
+    if (!LevelRules.isAbilityIncreaseLevel(levelsBefore)) return { isAvailable: false, attributes: {}, picked: true };
+    return {
+      isAvailable: true,
+      attributes: this.build(projection).components.abilities.getAbilitiesWithIds(),
+      picked: this.checks.areAbilityIncreasesPicked(levelsBefore, abilityIncreases),
+    };
   }
 
   /**

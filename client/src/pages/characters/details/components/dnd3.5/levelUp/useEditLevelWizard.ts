@@ -28,11 +28,14 @@ export type EditLevelWizard = ReturnType<typeof useEditLevelWizard>;
  */
 export function useEditLevelWizard({ open, onClose, characterId, editingLevel }: UseEditLevelWizardParams) {
   const level = useEditedLevel({ open, characterId, editingLevel });
-  const { debouncedSkillPoints, increasedStep, pickedStep, step, stepName } = level;
+  const { debouncedSkillPoints, increasedStep, pickedStep, stepName } = level;
 
+  // The level's abilities, and whether the increase picked is the one it takes, which Next waits for: its last answer
+  // kept while it answers for a new pick
   const attributesQuery = useQuery({
-    ...levelStepQuery(characterId, "abilities", step),
+    ...levelStepQuery(characterId, "abilities", increasedStep),
     enabled: open && stepName === "abilities",
+    placeholderData: keepPreviousData,
   });
 
   // The skill points spent so far, which the skills step says what they come to, its last answer kept meanwhile
@@ -55,7 +58,10 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevel }:
     placeholderData: keepPreviousData,
   });
 
-  const answers = stepAnswers({ feats: featsQuery, powers: powersQuery, skills: skillsQuery }, stepName);
+  const answers = stepAnswers(
+    { abilities: attributesQuery, feats: featsQuery, powers: powersQuery, skills: skillsQuery },
+    stepName,
+  );
   const wizard = useEditLevelWizardBase({ level, answers, characterId, onClose });
   const pickOptions = usePickOptions({ characterId, open, wizard });
 
