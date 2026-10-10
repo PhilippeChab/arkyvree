@@ -1,6 +1,8 @@
 import { asc, eq } from "drizzle-orm";
 
-import type { SeedContext } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
+import { DND35_BASE_RULES } from "@/content/dnd3.5/baseRules.ts";
+import { DND35_CORE_PACKAGE } from "@/content/dnd3.5/packages/core.ts";
+import type { SeedContext } from "@/database/seeders/core/ContentSeeder.ts";
 import { RulesetSeeder } from "@/database/seeders/dnd3.5/RulesetSeeder.ts";
 import { modifiersInCustomization, propertiesInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
@@ -17,6 +19,7 @@ function describeModifier(m: { operator: string; target: string; value: string; 
 export function freshExtensionSeeder(base: SeedContext) {
   return RulesetSeeder.createExtension(
     db,
+    DND35_BASE_RULES,
     { name: `Seed test extension ${uniqueId()}`, description: "An extension a test seeds into" },
     base,
   );
@@ -62,13 +65,16 @@ export async function describeCustomizations(entityId: string) {
 
 /** A seeder of a new system ruleset for a test to seed into: naming no rows, or the seeded core's (`named`). */
 export async function freshSeeder({ named = false } = {}) {
-  const seeder = await RulesetSeeder.createCore(db, {
+  const seeder = await RulesetSeeder.createCore(db, DND35_BASE_RULES, {
     name: `Seed test ${uniqueId()}`,
     description: "A ruleset a test seeds into",
   });
   if (!named) return seeder;
   return new RulesetSeeder(db, {
-    ...(await RulesetSeeder.loadContext(db, await RulesetSeeder.findCoreRulesetId(db, "A seed test naming its rows"))),
+    ...(await RulesetSeeder.loadContext(
+      db,
+      await RulesetSeeder.findCoreRulesetId(db, DND35_CORE_PACKAGE, "A seed test naming its rows"),
+    )),
     rulesetId: seeder.ctx.rulesetId,
     powerMap: {},
     inheritedPowerMap: {},

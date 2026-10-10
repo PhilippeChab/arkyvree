@@ -1,4 +1,4 @@
-import type { CharacterSeed } from "@/content/dnd3.5/builders/characters/types.ts";
+import type { CharacterSeed } from "@/content/core/builders/characters/types.ts";
 
 /** Half-Elf Bard 3 — Skills: (6+2)*4 + (6+2)*2 = 48 */
 export default {

@@ -24,7 +24,7 @@ import { readFileSync } from "node:fs";
 
 import { Pool, type PoolClient } from "pg";
 
-import { registry } from "@/database/packages/registry.ts";
+import { CONTENT_PACKAGES } from "@/database/packages/registry.ts";
 import { planPackages } from "@/database/packages/runner.ts";
 
 import { diffContent, LABELLED_COLUMNS, type Query } from "./content.ts";
@@ -100,9 +100,12 @@ async function main() {
 
       const remoteMap = new Map(remotePackages.map((p) => [p.name, p]));
       // What the next deploy's runner does: it applies no package while one has a problem.
-      const { plans, problems } = planPackages(registry, new Map(remotePackages.map((p) => [p.name, p.version])));
+      const { plans, problems } = planPackages(
+        CONTENT_PACKAGES,
+        new Map(remotePackages.map((p) => [p.name, p.version])),
+      );
       const codeMap = new Map([
-        ...registry.map((p): [string, number | undefined] => [p.name, undefined]),
+        ...CONTENT_PACKAGES.map((p): [string, number | undefined] => [p.name, undefined]),
         ...plans.map((p): [string, number | undefined] => [p.pkg.name, p.version]),
       ]);
       const blocked = problems.size > 0;

@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { contentPackagesInRules } from "@/drizzle/schema.ts";
 import type { Db } from "@/server/database/index.ts";
 
-import { registry } from "./registry.ts";
+import { CONTENT_PACKAGES } from "./registry.ts";
 import type { ContentPackage } from "./types.ts";
 
 /**
@@ -50,7 +50,7 @@ export function planPackages(packages: ContentPackage[], applied: Map<string, nu
 }
 
 /** Installs the packages missing from the database, and brings the others up to date, or applies none (`planPackages`). */
-export async function applyPackages(db: Db, packages: ContentPackage[] = registry) {
+export async function applyPackages(db: Db, packages: ContentPackage[] = CONTENT_PACKAGES) {
   const applied = new Map(
     (
       await db

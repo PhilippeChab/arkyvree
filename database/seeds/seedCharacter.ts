@@ -5,7 +5,7 @@
 
 import { and, eq } from "drizzle-orm";
 
-import type { CharacterSeed, InventorySeed } from "@/content/dnd3.5/builders/characters/types.ts";
+import type { CharacterSeed, InventorySeed } from "@/content/core/builders/characters/types.ts";
 import {
   characterAbilitiesInCharacter,
   charactersInCharacter,

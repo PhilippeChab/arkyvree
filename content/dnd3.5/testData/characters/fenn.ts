@@ -1,4 +1,4 @@
-import type { CharacterSeed } from "@/content/dnd3.5/builders/characters/types.ts";
+import type { CharacterSeed } from "@/content/core/builders/characters/types.ts";
 
 /** Half-Elf Ranger 3 — Skills: (6+1)*4 + (6+1) + (6+1) = 42 */
 export default {

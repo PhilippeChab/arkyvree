@@ -1,4 +1,4 @@
-import type { CharacterSeed } from "@/content/dnd3.5/builders/characters/types.ts";
+import type { CharacterSeed } from "@/content/core/builders/characters/types.ts";
 
 /** Human Paladin 5 — Skills: (2+0+1)*4 + (2+0+1)*4 = 24. Special Mount unlocks at L5. */
 export default {

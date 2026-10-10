@@ -1,4 +1,4 @@
-import type { CharacterSeed } from "@/content/dnd3.5/builders/characters/types.ts";
+import type { CharacterSeed } from "@/content/core/builders/characters/types.ts";
 
 /** Human Cleric 3 — Skills: (2+1+1)*4 + (2+1+1)*2 = 24 */
 export default {

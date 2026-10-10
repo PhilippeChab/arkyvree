@@ -1,39 +1,20 @@
 import { bonus, setFlag, setNum } from "@/content/core/builders/customization/modifiers.ts";
 import { gte } from "@/content/core/builders/customization/requirements.ts";
+import type { BookContent, CoreContent } from "@/content/dnd3.5/builders/rulesets/types.ts";
 import { ContentSeeder } from "@/database/seeders/core/ContentSeeder.ts";
 import { modifiersInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import { getClassSpellLevels, type SpellcastingClass } from "./spellTable.ts";
 
-type Ids = Record<string, string>;
-
 type ModifierRow = typeof modifiersInCustomization.$inferInsert;
 
 /**
- * The ruleset a seed writes to, and the ids of the rows its content names. Seeding aptitudes, feats or
- * powers adds them, so the steps after can name them.
+ * The 3.5 seeder's core, which its steps (`concerns/`) build on: a content seeder (`ContentSeeder`: its context, the
+ * rows and their inserts) of the 3.5 content (the core rules' `CoreContent`, an extension's `BookContent`), and what
+ * its spell lists write with.
  */
-export type SeedContext = {
-  abilityMap: Ids;
-  /** Its aptitudes and its base ruleset's. */
-  aptMap: Ids;
-  /** Its feats and its base ruleset's, its own under a name they share. */
-  featMap: Ids;
-  /** Its base ruleset's powers, which it copies before adding them to a spell list (`cowPower`). */
-  inheritedPowerMap: Ids;
-  /** Its own powers. */
-  powerMap: Ids;
-  rulesetId: string;
-  saveMap: Ids;
-  skillMap: Ids;
-};
-
-/**
- * The 3.5 seeder's core, which its steps (`concerns/`) build on: a content seeder (`ContentSeeder`: the rows and their
- * inserts) with the 3.5 context it names rows by, and what its spell lists write with.
- */
-export class BaseSeeder extends ContentSeeder<SeedContext> {
+export abstract class BaseSeeder extends ContentSeeder<CoreContent, BookContent> {
   /** A spell list's spells joining the list of the class whose level gave the source: a cleric's domain, the cleric's. */
   protected joinsClassList(sourceId: string, sourceType: string, list: string): ModifierRow {
     return { sourceId, sourceType, ...setFlag(`aptitudes.${list}.joinsclasslist`) };
