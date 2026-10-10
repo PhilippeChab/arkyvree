@@ -64,17 +64,18 @@ export default class PowerEntity extends ListedEntity<
   }
 
   /**
-   * What saving a power writes (`power`: the one edited): its fields as properties, and the feats of its grouping (a
-   * spell's school: its Spell Focus) when it comes to one. An edit that gives none of its fields keeps those it has.
+   * What saving a power writes (`power`: the one edited): the fields its form gives, over those it keeps, and the feats
+   * of its grouping (a spell's school: its Spell Focus) when it comes to one. A form that gives none of its fields keeps
+   * those it has.
    */
   protected override writesOf(body: PowerBody, power?: PowerWithAptitudes): EntityWrites {
-    if (power && this.fields.keys.every((key) => body[key] === undefined)) return {};
-    const grouping = getGrouping(body);
+    const fields = this.formFields(body, power);
+    if (!fields) return {};
+    const grouping = getGrouping(fields);
     const before = power && getGrouping(this.fields.read(this.propertiesOf(power)));
-    const isNewGrouping = grouping !== null && grouping !== before;
     return {
-      made: isNewGrouping ? SpellFocusFeats.make(this.view, grouping) : [],
-      properties: this.fields.write(body),
+      made: grouping !== null && grouping !== before ? SpellFocusFeats.make(this.view, grouping) : [],
+      properties: this.fields.write(fields),
     };
   }
 

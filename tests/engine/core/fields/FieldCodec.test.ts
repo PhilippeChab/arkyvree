@@ -70,14 +70,15 @@ describe("A field codec", () => {
 
   test("writes nothing when the entity keeps no field, and a save's write replaces every type", () => {
     expect(CODEC.toProperties({ ...CODEC.defaults, count: 5 })).toEqual([]);
-    expect(CODEC.write({ title: "A" })).toEqual({
+    expect(CODEC.write({ ...CODEC.defaults, title: "A" })).toEqual({
       types: ["COUNT", "FLAG", "KNOWN", "LEVEL", "KIND", "OWNER", "TAG", "TITLE"],
       values: [{ type: "TITLE", value: "A" }],
     });
   });
 
-  test("normalizes, merges an edit's given fields over the kept, and finds each field's row", () => {
-    expect(CODEC.normalize({ ...CODEC.defaults, count: 3 }).count).toBe(1);
+  test("reads and writes its rule, merges an edit's given fields over the kept, and finds each field's row", () => {
+    expect(CODEC.read([{ type: "COUNT", value: "3" }]).count).toBe(1);
+    expect(CODEC.toProperties({ ...CODEC.defaults, count: 3, title: "A" })).toEqual([{ type: "TITLE", value: "A" }]);
     expect(CODEC.merge({ ...CODEC.defaults, title: "A" }, { count: 2, title: undefined })).toMatchObject({
       count: 2,
       title: "A",

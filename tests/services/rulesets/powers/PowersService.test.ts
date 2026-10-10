@@ -7,7 +7,7 @@ import { db } from "@/server/database/index.ts";
 import { Properties } from "@/server/repositories/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
-import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
+import { SPELL_CASTING_TIME, SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { insertRows } from "@/tests/support/database.ts";
@@ -154,8 +154,8 @@ describe("PowersService", () => {
     });
   });
 
-  test("keeps the properties a user added when the spell's fields change", async () => {
-    // Regression: saving the spell fields once replaced every property of the power.
+  test("keeps the properties a user added, and the fields an edit leaves out, when the spell's fields change", async () => {
+    // Regression: saving the spell fields once replaced every property of the power, then the fields the edit left out.
     const {
       session,
       ruleset,
@@ -175,6 +175,7 @@ describe("PowersService", () => {
     expect(properties.map(({ type, value }) => ({ type, value })).sort((a, b) => a.type.localeCompare(b.type))).toEqual(
       [
         { type: "SIGNATURE_SPELL", value: "true" },
+        { type: SPELL_CASTING_TIME, value: "1 round" },
         { type: SPELL_SCHOOL, value: "Conjuration" },
       ],
     );

@@ -14,8 +14,8 @@ const aptitudeLinks = z.array(
   }),
 );
 
-/** A power's fields, its create's and its update's. */
-const powerFields = {
+/** A power's columns, its create's and its update's. */
+const powerColumns = {
   name: z.string().min(1),
   description: z
     .string()
@@ -31,7 +31,6 @@ const powerFields = {
     .nullable()
     .optional()
     .transform((v) => v || null),
-  ...ENTITY_FIELDS.powers,
 };
 
 const powerParams = idParam.extend({ powerId: z.string().uuid() });
@@ -71,7 +70,11 @@ export default new Hono<SessionContext>()
     validate("param", idParam),
     validate(
       "json",
-      z.object({ ...powerFields, aptitudes: aptitudeLinks.min(1, "At least one aptitude must be selected") }),
+      z.object({
+        ...powerColumns,
+        ...ENTITY_FIELDS.powers.create,
+        aptitudes: aptitudeLinks.min(1, "At least one aptitude must be selected"),
+      }),
     ),
     async (c) => {
       const { id } = c.req.valid("param");
@@ -84,7 +87,12 @@ export default new Hono<SessionContext>()
     validate("param", powerParams),
     validate(
       "json",
-      z.object({ ...powerFields, aptitudes: aptitudeLinks.optional(), updatedAt: z.string().optional() }),
+      z.object({
+        ...powerColumns,
+        ...ENTITY_FIELDS.powers.edit,
+        aptitudes: aptitudeLinks.optional(),
+        updatedAt: z.string().optional(),
+      }),
     ),
     async (c) => {
       const { id, powerId } = c.req.valid("param");

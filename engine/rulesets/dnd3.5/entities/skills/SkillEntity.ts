@@ -9,8 +9,8 @@ import { stripSeparators } from "@/shared/text.ts";
 
 import { SKILL_FIELDS, type SkillFieldValues } from "./fields.ts";
 
-/** A skill's save, as its form sends it: its row's columns, and the fields its properties keep. */
-type SkillBody = SkillFieldValues & { description?: string | null; name: string; primaryAbilityId: string };
+/** A skill's save, as its form sends it: its row's columns, and the fields its properties keep (an edit's, those it changes). */
+type SkillBody = Partial<SkillFieldValues> & { description?: string | null; name: string; primaryAbilityId: string };
 
 /** A skill as the ruleset describes it, and what its save or delete writes beside its row: its fields, its feat. */
 export default class SkillEntity extends RulesetEntity<
@@ -42,16 +42,15 @@ export default class SkillEntity extends RulesetEntity<
   }
 
   /**
-   * What saving a skill writes (`skill`: the one edited): its fields as it keeps them, and its Skill Focus, made with it
+   * What saving a skill writes (`skill`: the one edited): the fields its form gives, and its Skill Focus, made with it
    * and renamed with it.
    */
   protected override writesOf(body: SkillBody, skill?: Skill): EntityWrites {
-    const { checkPenaltyMultiplier, impactedByWeight, usableWithoutTraining } = body;
-    const fields = this.fields.normalize({ checkPenaltyMultiplier, impactedByWeight, usableWithoutTraining });
+    const fields = this.formFields(body, skill);
     const renamed = skill?.name !== body.name;
     return {
       made: renamed ? SkillFocusFeats.make(this.view, body.name) : [],
-      properties: this.fields.write(fields),
+      properties: fields && this.fields.write(fields),
       removed: skill && renamed ? SkillFocusFeats.remove(this.view, skill.name) : [],
     };
   }

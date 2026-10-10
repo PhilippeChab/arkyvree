@@ -52,7 +52,7 @@ export default new Hono<SessionContext>()
           .string()
           .optional()
           .transform((v) => v || null),
-        ...ENTITY_FIELDS.klasses,
+        ...ENTITY_FIELDS.klasses.create,
       }),
     ),
     async (c) => {
@@ -72,7 +72,7 @@ export default new Hono<SessionContext>()
           .string()
           .optional()
           .transform((v) => v || null),
-        ...ENTITY_FIELDS.klasses,
+        ...ENTITY_FIELDS.klasses.edit,
         updatedAt: z.string().optional(),
       }),
     ),

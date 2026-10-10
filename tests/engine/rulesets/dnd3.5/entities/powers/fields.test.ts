@@ -60,9 +60,17 @@ describe("A power's fields", () => {
   });
 
   test("are kept in a property per field with a value, none for an empty one, and none at all without a school", () => {
-    expect(POWER_FIELDS.toProperties({ duration: "1 round", target: "You" })).toEqual([]);
+    expect(POWER_FIELDS.toProperties({ ...POWER_FIELDS.defaults, duration: "1 round", target: "You" })).toEqual([]);
     expect(
-      multiset(POWER_FIELDS.toProperties({ components: ["V"], duration: "", school: "Evocation", target: "You" })),
+      multiset(
+        POWER_FIELDS.toProperties({
+          ...POWER_FIELDS.defaults,
+          components: ["V"],
+          duration: "",
+          school: "Evocation",
+          target: "You",
+        }),
+      ),
     ).toEqual([`${SPELL_COMPONENT}=V`, `${SPELL_SCHOOL}=Evocation`, `${SPELL_TARGET}=You`]);
   });
 

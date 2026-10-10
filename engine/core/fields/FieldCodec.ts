@@ -155,18 +155,18 @@ export default class FieldCodec<S extends Fields> {
   /** The property types that store the fields. */
   readonly types: string[];
 
-  /** The values an edit keeps: what's kept, with the fields the edit gives over it. */
-  merge(kept: FieldValues<S>, given: Partial<FieldValues<S>>): FieldValues<S> {
-    const defined = Object.entries(given).filter(([, value]) => value !== undefined);
-    return { ...kept, ...Object.fromEntries(defined) };
-  }
-
   /** The values as the entity keeps them, its rule between fields applied. */
-  normalize(values: FieldValues<S>): FieldValues<S> {
+  private normalize(values: FieldValues<S>): FieldValues<S> {
     return this.rules.normalize ? this.rules.normalize(values) : values;
   }
 
-  /** The fields' values off an entity's property rows (several entities' too), in one pass. */
+  /** The values an edit keeps: what's kept, with the fields the edit gives over it (its other keys aside). */
+  merge(kept: FieldValues<S>, given: Partial<FieldValues<S>>): FieldValues<S> {
+    const defined = this.keys.filter((key) => given[key] !== undefined).map((key) => [key, given[key]]);
+    return { ...kept, ...Object.fromEntries(defined) };
+  }
+
+  /** The fields' values off an entity's property rows (several entities' too), in one pass, its rule applied. */
   read(rows: readonly Row[]): FieldValues<S> {
     const byType = new Map<string, string[]>();
     for (const { type, value } of rows) {
@@ -175,7 +175,7 @@ export default class FieldCodec<S extends Fields> {
       if (values) values.push(value);
       else byType.set(type, [value]);
     }
-    return FieldCodec.readFields(this.fields, byType) as FieldValues<S>;
+    return this.normalize(FieldCodec.readFields(this.fields, byType) as FieldValues<S>);
   }
 
   /** The id of the row each top-level field is read from, for an edit of that row: none without one. */
@@ -203,14 +203,14 @@ export default class FieldCodec<S extends Fields> {
     );
   }
 
-  /** The values as the rows that keep them: none when the entity keeps no field (`storesWhen`). */
-  toProperties(values: Partial<FieldValues<S>>): PropertyValue[] {
+  /** The values as the rows that keep them, its rule applied: none when the entity keeps no field (`storesWhen`). */
+  toProperties(values: FieldValues<S>): PropertyValue[] {
     if (this.rules.storesWhen && !this.rules.storesWhen(values)) return [];
-    return FieldCodec.writeFields(this.fields, values as Record<string, unknown>);
+    return FieldCodec.writeFields(this.fields, this.normalize(values) as Record<string, unknown>);
   }
 
   /** The values as a save's property write: the rows, and the types they replace. */
-  write(values: Partial<FieldValues<S>>): { types: string[]; values: PropertyValue[] } {
+  write(values: FieldValues<S>): { types: string[]; values: PropertyValue[] } {
     return { types: this.types, values: this.toProperties(values) };
   }
 }

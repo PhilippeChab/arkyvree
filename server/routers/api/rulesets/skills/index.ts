@@ -45,7 +45,7 @@ export default new Hono<SessionContext>()
           .optional()
           .transform((v) => v || null),
         primaryAbilityId: z.string().uuid(),
-        ...ENTITY_FIELDS.skills,
+        ...ENTITY_FIELDS.skills.create,
       }),
     ),
     async (c) => {
@@ -66,7 +66,7 @@ export default new Hono<SessionContext>()
           .optional()
           .transform((v) => v || null),
         primaryAbilityId: z.string().uuid(),
-        ...ENTITY_FIELDS.skills,
+        ...ENTITY_FIELDS.skills.edit,
         updatedAt: z.string().optional(),
       }),
     ),
