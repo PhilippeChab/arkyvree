@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { join } from "node:path";
 
 import { FeatDetector } from "@/codegen/dnd3.5/tools/detect/FeatDetector.ts";
 import References from "@/codegen/dnd3.5/tools/references/References.ts";
@@ -182,5 +183,12 @@ describe("A feat's mapping", () => {
     expect(detected.Dodge.requirements).toHaveLength(1);
     expect(mapping.Dodge.requirements).toEqual([or(detected.Dodge.requirements[0], gte("classes.wujen.level", 5))]);
     expect(mapping.Dodge.aptitudes).toContain("Wu Jen Bonus Feat");
+  });
+
+  test("takes the bonus feat lists naming it by its letters, without the mark a book puts on its new feats", () => {
+    // The scout's list: "…Hear the Unseen?, …? New feat described in Chapter 3"
+    const { mapping } = References.load(join(References.dir, "complete-adventurer", "feats.json"), "feat");
+    expect(mapping["Hear The Unseen"].aptitudes).toEqual(["General", "Scout Bonus Feat"]);
+    expect(mapping["Improved Swimming"].aptitudes).toEqual(["General", "Exemplar Bonus Feat", "Scout Bonus Feat"]);
   });
 });

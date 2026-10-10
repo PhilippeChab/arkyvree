@@ -33,6 +33,7 @@ export interface Issue {
     | "aptitude pick"
     | "unresolved item"
     | "unread column"
+    | "unknown listed feat"
     | "stale review"
     | "unknown type"
     | "redundant override"
@@ -77,9 +78,10 @@ export class ReferenceIssues {
   readonly file: ReferenceFile;
 
   /**
-   * A class's: its detections, its features' (each by its feature) and the columns of its table no modifier reads (what
-   * only a column gives, a monk's AC bonus, reaches the class through a modifier reading it), but those of a class or a
-   * feature its mapping skips; and what its overrides' check finds (`ClassOverridesCheck`).
+   * A class's: its detections, its features' (each by its feature), the columns of its table no modifier reads (what
+   * only a column gives, a monk's AC bonus, reaches the class through a modifier reading it) and its bonus feat lists'
+   * entries that name no feat (`unknownListedFeats`), but those of a class or a feature its mapping skips; and what its
+   * overrides' check finds (`ClassOverridesCheck`).
    */
   private classIssues(): Issue[] {
     const data = References.load(this.file.path, "class");
@@ -108,6 +110,14 @@ export class ReferenceIssues {
       ...this.unreviewed(
         review,
         [...unread].filter((column) => !read.has(column)).map((text) => ({ kind: "unread column" as const, text })),
+        where,
+        skip,
+      ),
+      ...this.unreviewed(
+        review,
+        Library.book(data._meta.book)
+          .unknownListedFeats(data)
+          .map((text) => ({ kind: "unknown listed feat" as const, text })),
         where,
         skip,
       ),

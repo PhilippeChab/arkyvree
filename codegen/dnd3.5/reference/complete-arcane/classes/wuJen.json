@@ -5,6 +5,11 @@
     "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/wu-jen/",
     "type": "class"
   },
+  "overrides": {
+    "reviewed": [
+      "one spell known to her that then becomes permanently modified as though affected by one of the following metamagic feats: Enlarge Spell"
+    ]
+  },
   "raw": {
     "bonusSpellAbility": "Intelligence",
     "classFeatures": [

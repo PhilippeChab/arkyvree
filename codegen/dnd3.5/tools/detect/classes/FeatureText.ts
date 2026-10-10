@@ -31,7 +31,10 @@ function detectStackable(description: string): boolean {
 export class FeatureText {
   constructor(readonly text: string) {}
 
-  /** A bonus feat list: "from the following list: Feat1, Feat2, ...". */
+  /**
+   * A bonus feat list: "from the following list: Feat1, Feat2, ...", each feat without the mark a book puts on its own
+   * new feats ("Improved Swimming?, …? New feat described in Chapter 3").
+   */
   bonusFeatList(): string[] | undefined {
     // Match patterns like "from the following list: X, Y, Z" or "choose one feat from the following list: X, Y, Z"
     const match = this.text.match(/(?:from the following list|from the following feats)[:\s]+(.+?)(?:\.\s|$)/i);
@@ -62,7 +65,7 @@ export class FeatureText {
       .trim();
     if (last) feats.push(last);
 
-    return feats.length >= 2 ? feats : undefined;
+    return feats.length >= 2 ? feats.map((feat) => feat.replace(/\?$/, "")) : undefined;
   }
 
   /** Whether the text offers a choice: its player picks from a pool. */

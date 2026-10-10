@@ -5,11 +5,28 @@
 
 import References from "@/codegen/dnd3.5/tools/references/References.ts";
 import { type BaseBookSeeds } from "@/codegen/dnd3.5/tools/seeds/BaseBookSeeds.ts";
-import type { InheritedSpellList } from "@/codegen/dnd3.5/tools/types/classes.ts";
+import type { TemplateFamily } from "@/codegen/dnd3.5/tools/seeds/FeatSeeds.ts";
+import type { ClassReference, InheritedSpellList } from "@/codegen/dnd3.5/tools/types/classes.ts";
 import { classSpells } from "@/content/dnd3.5/builders/aptitudes/names.ts";
 import type { CowFeatEntry, CowSpellEntry } from "@/content/dnd3.5/builders/rulesets/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
+import { stripSeparators } from "@/shared/text.ts";
 import { CORE_BOOK } from "@/vocabulary/dnd3.5/books.ts";
+
+/** What a class's bonus feat list's entry names, of the feats its book can list. */
+type ListedFeat =
+  /** A feat of the book's own (one of its feats or template families, a feature of its classes), by its name */
+  | { own: string }
+  /** A core feat, by its name: the book copies it */
+  | { core: string }
+  /** A core template family ("Skill Focus"): the book copies its feat for each option */
+  | { family: TemplateFamily };
+
+/** A core template family a book's bonus feat lists name ("Skill Focus"): it copies its feat for each option. */
+export interface CowFamilyEntry {
+  aptitudes: string[];
+  family: TemplateFamily;
+}
 
 /** The spells a book's inherited lists add (`additions`), each at its level there, into `entries`. */
 function addListAdditions(
@@ -36,28 +53,73 @@ function addListAdditions(
 export function Copies<B extends Constructor<BaseBookSeeds>>(Base: B) {
   abstract class Copying extends Base {
     /**
-     * The core feats a book copies: those its classes' bonus feat lists (`bonusFeatLists`) name, each with the lists it
-     * joins. A feat of the book's own feat pool, or one its classes' features are, needs none: the feat generator adds
-     * the list to it.
+     * The core template families, by their name's slug: their feats are copied for each option. The core rules' own,
+     * none.
      */
-    cowFeats(): CowFeatEntry[] {
-      return this.memo("cowFeats", () => {
-        const classes = this.classReferences();
-        // The book's own feats and its classes' features, which the feats and class feats files give their lists
-        const ownFeats = new Set<string>();
-        for (const feat of this.reference("feat")?.raw ?? []) ownFeats.add(feat.name);
-        for (const { ref } of classes)
-          for (const feat of Object.values(ref.mapping.features)) if (feat.seedName) ownFeats.add(feat.seedName);
+    private coreTemplates(): Map<string, TemplateFamily> {
+      return this.memo("coreTemplates", () => {
+        const ref = References.find(CORE_BOOK, "feat");
+        const templates = this.book === CORE_BOOK || !ref ? [] : this.shelf.book(CORE_BOOK).feats(ref).templates();
+        return new Map(templates.map((family) => [stripSeparators(family.familyName), family]));
+      });
+    }
 
+    /**
+     * What a class's bonus feat list's entry names, by its letters ("Hear the Unseen" is Hear The Unseen): a feat of the
+     * book's own (the feat generator gives it the list), a core feat (a family's for an option too, "Spell Focus:
+     * Enchantment") or a core family, which the book copies; or none.
+     */
+    private listedFeat(name: string): ListedFeat | undefined {
+      const slug = stripSeparators(name);
+      const own = this.ownFeatNames().get(slug);
+      if (own) return { own };
+      const family = this.coreTemplates().get(slug);
+      if (family) return { family };
+      const [, prefix] = /^(.+?): ./.exec(name) ?? [];
+      if (prefix && this.coreTemplates().has(stripSeparators(prefix))) return { core: name };
+      const core = this.findExistingFeat(name);
+      return core ? { core } : undefined;
+    }
+
+    /**
+     * The book's own feats, by their name's slug: its feats (its template families' names too) and its classes'
+     * features, which the feats and class feats files give their lists.
+     */
+    private ownFeatNames(): Map<string, string> {
+      return this.memo("ownFeatNames", () => {
+        const names = new Map<string, string>();
+        for (const feat of this.reference("feat")?.raw ?? []) names.set(stripSeparators(feat.name), feat.name);
+        for (const { ref } of this.classReferences()) {
+          for (const feat of Object.values(ref.mapping.features))
+            if (feat.seedName) names.set(stripSeparators(feat.seedName), feat.seedName);
+        }
+        return names;
+      });
+    }
+
+    /**
+     * The core feats a book copies: those its classes' bonus feat lists (`bonusFeatLists`) name, each with the lists it
+     * joins, a family's for each of its options. A feat of the book's own needs none: the feat generator adds the list
+     * to it. An entry that names no feat is left out: `parser:dnd3.5:validate` reports it (`unknownListedFeats`).
+     */
+    cowFeats(): (CowFeatEntry | CowFamilyEntry)[] {
+      return this.memo("cowFeats", () => {
         // A feat in several lists joins each, once
-        const copies = new Map<string, CowFeatEntry>();
-        for (const { ref } of classes) {
+        const copies = new Map<string, CowFeatEntry | CowFamilyEntry>();
+        for (const { ref } of this.classReferences()) {
           for (const list of ref.mapping.bonusFeatLists ?? []) {
-            for (const feat of list.feats) {
-              if (ownFeats.has(feat)) continue;
-              const copy = copies.get(feat);
-              if (!copy) copies.set(feat, { feat, requirements: [], aptitudes: [list.aptitude] });
-              else if (!copy.aptitudes.includes(list.aptitude)) copy.aptitudes.push(list.aptitude);
+            for (const name of list.feats) {
+              const listed = this.listedFeat(name);
+              if (!listed || "own" in listed) continue;
+              const key = "core" in listed ? listed.core : listed.family.familyName;
+              const copy = copies.get(key);
+              if (copy) {
+                if (!copy.aptitudes.includes(list.aptitude)) copy.aptitudes.push(list.aptitude);
+              } else if ("core" in listed) {
+                copies.set(key, { feat: listed.core, requirements: [], aptitudes: [list.aptitude] });
+              } else {
+                copies.set(key, { family: listed.family, aptitudes: [list.aptitude] });
+              }
             }
           }
         }
@@ -130,6 +192,15 @@ export function Copies<B extends Constructor<BaseBookSeeds>>(Base: B) {
         addListAdditions(entries, inheritable, bookInheritedLists);
         return [...entries.values()];
       });
+    }
+
+    /**
+     * The entries of a class's bonus feat lists that name no feat its book can list, once each: what the list's text
+     * runs into ("…a new terrain in which to receive the benefit (at +1)"), which no copy or feat takes.
+     */
+    unknownListedFeats(ref: ClassReference): string[] {
+      const names = (ref.mapping.bonusFeatLists ?? []).flatMap((list) => list.feats);
+      return [...new Set(names.filter((name) => !this.listedFeat(name)))];
     }
   }
   return Copying;
