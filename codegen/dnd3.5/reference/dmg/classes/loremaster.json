@@ -189,13 +189,13 @@
           {
             "operator": "greater_than_or_equal",
             "target": "spellcasting.arcane",
-            "value": "7",
+            "value": "3",
             "valueType": "number"
           },
           {
             "operator": "greater_than_or_equal",
             "target": "spellcasting.divine",
-            "value": "7",
+            "value": "3",
             "valueType": "number"
           }
         ]
