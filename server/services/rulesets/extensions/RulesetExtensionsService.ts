@@ -3,7 +3,7 @@ import { getTableName } from "drizzle-orm";
 import type { Db } from "@/drizzle/database.ts";
 import { rulesetsInRules } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
-import { EntityRepositories, RulesetViews } from "@/server/cow/index.ts";
+import { EntityRepositories, EntityRevert, RulesetViews } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import {
@@ -17,7 +17,6 @@ import {
 } from "@/server/repositories/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { hasCharacterPicks } from "@/server/services/rulesets/characterPicks.ts";
-import { deleteEntityWithCascade } from "@/server/services/rulesets/deleteEntityWithCascade.ts";
 import type { Session } from "@/shared/relations.ts";
 
 import { type Copies, repointDepartingReferences } from "./departingReferences.ts";
@@ -183,15 +182,10 @@ class RulesetExtensionsService {
       // refuses: before the copies go, links to the fork's copies of the book's lists included
       await repointDepartingReferences(tx, ruleset, extensionId, copies);
 
-      // Delete COW copies and their snapshots
-      for (const snap of extensionSnapshots) {
-        const entityType = snap.entityType as RulesetEntityType;
-        await deleteEntityWithCascade(tx, entityType, snap.forkedEntityId);
-        await EntitySnapshots.delete(tx, {
-          sourceEntityId: snap.sourceEntityId,
-          rulesetId: id,
-        });
-      }
+      // The fork's copies go as a restore reverts them (`EntityRevert`): what names a copy names the extension's entity
+      // first, so no copy's delete trips another's reference to it (an item's copy naming its template's), in any order
+      for (const snap of extensionSnapshots)
+        await EntityRevert.revert(tx, snap.entityType as RulesetEntityType, snap.sourceEntityId, id);
 
       // 3. Remove extensionId from array
       await Rulesets.update(

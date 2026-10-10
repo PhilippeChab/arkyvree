@@ -190,9 +190,9 @@ its copy of an inherited entity to the source: `EntityRevert` (`server/cow/write
 the views show in the copy's place once it's gone. The rows that name an entity are
 one list, by the entity's type (`ENTITY_REFERENCES`,
 `server/repositories/rulesets/entityReferences.ts`), which `EntityReferences` reads
-for every use: a restore's repoint (`update`), an unsubscribe's lost references
-(`findMany`) and its delete of a copy's links (`delete`), the in-use checks
-(`exists`). An entity's own rows aren't among them, since they go with it: a feat's
+for every use: a revert's repoint (`update`: a restore's, and an unsubscribe's of
+each copy it removes), an unsubscribe's lost references (`findMany`) and the in-use
+checks (`exists`). An entity's own rows aren't among them, since they go with it: a feat's
 or a spell's links to its lists, a class's skills and levels. A restore repoints,
 whichever ruleset holds them:
 
@@ -214,7 +214,9 @@ whichever ruleset holds them:
 A row that would then repeat another by its table's primary key (a feat linked to
 both the list and the copy) goes, and the one naming the source stays. Then the copy
 goes with its own rows and customizations, and its snapshot, and the cache drops the
-fork's views and its subscribers' (`RulesetViews.invalidate`).
+fork's views and its subscribers' (`RulesetViews.invalidate`). An unsubscribe reverts
+the fork's copies of the extension's entities the same way, once nothing else names
+them (see [Unsubscribe](#unsubscribe-unsubscribeextension)).
 
 ### Multi-Extension COW (Sibling Map)
 
@@ -327,7 +329,7 @@ No entities are copied. They become visible immediately via the source chain.
 2. **In-use check** (`isExtensionInUseByHost`) — blocks with `ConflictError` if any character on the host has picked an extension-owned entity, either directly or via a host-side COW shadow of one (the host's copies of the extension's entities, found by their snapshots). The shadow case matters because step 5 below hard-deletes those shadows; without this guard the character pick would silently dangle. It's the entity deletes' check (`hasCharacterPicks`, every type's picks: `EntityReferences.exists`), given the extension's entities of each type and the host's copies of them; it also counts a ruleset built on the host, which has none: fork-of-fork is blocked at policy time, and a host isn't an extension.
 3. Finds snapshots whose `sourceEntityId` belongs to the extension (COW copies of extension entities)
 4. **Repoints what the host keeps that names the extension's lists** (`repointDepartingReferences`, `extensions/departingReferences.ts`): its feats' and powers' links, and its classes' level grants, to the extension's lists (and to its copies of them) move to the list of the same name the host keeps, as its view will show it (`CowDataBuilder.build` without the extension); a list's name is its identity, as the namesakes pair. A link to a list no other book of the host has, or a host row naming another of the extension's entities (an item's template, a class's or a race's parent, a spell's save, a save's or a skill's ability, a class's skill or its levels' saves, granted feats and powers: `EntityReferences.findMany`), refuses the unsubscribe with a `ConflictError` naming them, before anything changes
-5. Deletes those COW copies and their snapshots
+5. **Reverts those COW copies** (`EntityRevert`, as a restore does: see [Restoring an override](#restoring-an-override)), which deletes them and their snapshots. What names a copy names the extension's entity before the copy goes. By then, only another of the copies names one: step 4 moved or refused the host's own rows, and step 2 refused the picks. So a copy naming another never blocks the other's delete, whatever order the copies go in: an item's copy naming its template's copy (`items.source_item_id`, `ON DELETE RESTRICT`), a class level's save (`klass_level_saves.save_id`, restrict too). Nor is a subrace's or a subclass's copy cascaded away with its parent's (`races.parent_id`, `klasses.parent_id`) before its own turn
 6. Removes `extensionId` from the array
 7. Soft-deletes the tracking row
 
