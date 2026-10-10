@@ -2,6 +2,7 @@ import { isDeepStrictEqual } from "node:util";
 
 import type { BaseCodeFile } from "@/codegen/dnd3.5/tools/generator/code/BaseCodeFile.ts";
 import type { Property, RequirementEntry } from "@/content/core/builders/customization/types.ts";
+import type { ItemSeed } from "@/content/core/builders/items/types.ts";
 import {
   exotic,
   HEAVY_ARMOR_PROF,
@@ -13,7 +14,6 @@ import {
   TOWER_SHIELD_PROF,
 } from "@/content/dnd3.5/builders/items/proficiencies.ts";
 import { armorProperties, shieldProperties, weaponProperties } from "@/content/dnd3.5/builders/items/properties.ts";
-import type { ItemSeed } from "@/content/dnd3.5/builders/items/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { ARMOR_TYPE_DEFINITIONS, SHIELD_TYPE_DEFINITIONS } from "@/vocabulary/dnd3.5/armor.ts";
 import { WEAPON_TYPE_DEFINITIONS } from "@/vocabulary/dnd3.5/weapons.ts";

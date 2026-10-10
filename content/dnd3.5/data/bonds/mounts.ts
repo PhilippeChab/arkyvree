@@ -1,10 +1,10 @@
 import { setStr } from "@/content/core/builders/customization/modifiers.ts";
+import type { FeatSeed } from "@/content/core/builders/feats/types.ts";
+import type { RaceSeed } from "@/content/core/builders/races/types.ts";
 import { formatWithArticle } from "@/content/dnd3.5/builders/bonds/articles.ts";
 import type { BondContent } from "@/content/dnd3.5/builders/bonds/types.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
-import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import { QUADRUPED } from "@/content/dnd3.5/builders/races/properties.ts";
-import type { RaceSeed } from "@/content/dnd3.5/builders/races/types.ts";
 
 const SPECIAL_MOUNT_APTITUDE = "Special Mount Bond";
 const SPECIAL_MOUNT_CLASS_FEATURE_APTITUDE = "Special Mount Class Feature";

@@ -139,7 +139,7 @@ engine/                 # The ruleset engine: computes a ruleset's rules over th
 lib/                    # What the engine and the server share: the mixins (include)
 
 content/
-  core/                 # What every ruleset's content is written with: the customization builders, a package's and a test character's shape
+  core/                 # What every ruleset's content is written with: the customization builders, the seed types they share, a package's and a test character's shape
   dnd3.5/               # The 3.5 content, data: its builders, its hand-written rows, the generated books, its packages, its test characters
 
 codegen/
@@ -147,7 +147,7 @@ codegen/
 
 database/
   packages/             # The content packages' runner and registry: each base rules' packages, seeder and test characters, which a database gets
-  seeders/              # What writes content to the database: core/ (ContentSeeder, a seeder's contract), dnd3.5/ (its seeder)
+  seeders/              # What writes content to the database: core/ (ContentSeeder, a seeder's contract, and the steps every ruleset's content seeds alike), dnd3.5/ (its seeder)
   seeds/                # The dev and test seed scripts (users, each base rules' test characters, through the registry)
 
 drizzle/

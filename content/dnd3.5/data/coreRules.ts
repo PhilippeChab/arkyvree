@@ -1,11 +1,11 @@
 /**
  * The core rules' own rows, which no book's page gives: the abilities, the saves, the skills and the languages
- * (`RulesetSeeder`'s `SeedsCoreRules` writes them).
+ * (`ContentSeeder`'s `SeedsCoreRules` writes them, but the skills, which 3.5's `SeedsSkills` writes).
  */
 
-import type { AbilitySeed } from "@/content/dnd3.5/builders/abilities/types.ts";
-import type { LanguageSeed } from "@/content/dnd3.5/builders/languages/types.ts";
-import type { SaveSeed } from "@/content/dnd3.5/builders/saves/types.ts";
+import type { AbilitySeed } from "@/content/core/builders/abilities/types.ts";
+import type { LanguageSeed } from "@/content/core/builders/languages/types.ts";
+import type { SaveSeed } from "@/content/core/builders/saves/types.ts";
 import type { SkillSeed } from "@/content/dnd3.5/builders/skills/types.ts";
 
 export const ABILITIES: AbilitySeed[] = [

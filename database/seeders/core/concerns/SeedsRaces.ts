@@ -1,17 +1,17 @@
-import type { RaceSeed } from "@/content/dnd3.5/builders/races/types.ts";
-import { BaseSeeder } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
+import type { RaceSeed } from "@/content/core/builders/races/types.ts";
+import { SeederState } from "@/database/seeders/core/SeederState.ts";
 import { modifiersInCustomization, propertiesInCustomization, racesInRules } from "@/drizzle/schema.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 /** Seeding races. */
-export function SeedsRaces<B extends Constructor<BaseSeeder>>(Base: B) {
+export function SeedsRaces<B extends Constructor<SeederState>>(Base: B) {
   abstract class SeedingRaces extends Base {
     /**
      * Seeds races with their modifiers and properties: of their own kind, else of `kind` (the table's default without
      * one).
      */
     async seedRaces(races: RaceSeed[], kind?: string) {
-      const ids = BaseSeeder.idsByName(
+      const ids = SeederState.idsByName(
         await this.db
           .insert(racesInRules)
           .values(

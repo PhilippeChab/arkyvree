@@ -1,6 +1,6 @@
 import { normalizeDescription } from "@/codegen/dnd3.5/tools/text/scrapedText.ts";
+import type { FeatSeed } from "@/content/core/builders/feats/types.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
-import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import { include } from "@/lib/mixins.ts";
 
 import { BaseClassSeeds } from "./BaseClassSeeds.ts";

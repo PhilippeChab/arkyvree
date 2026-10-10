@@ -3,7 +3,8 @@
 import { eq } from "drizzle-orm";
 
 import { RULESET_CONTENT } from "@/database/packages/registry.ts";
-import { ContentSeeder, type SeedContext as RulesetSeedContext } from "@/database/seeders/core/ContentSeeder.ts";
+import { ContentSeeder } from "@/database/seeders/core/ContentSeeder.ts";
+import type { SeedContext as RulesetSeedContext } from "@/database/seeders/core/SeederState.ts";
 import { itemsInRules, klassesInRules, languagesInRules, racesInRules } from "@/drizzle/schema.ts";
 import { type Db } from "@/server/database/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";

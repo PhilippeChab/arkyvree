@@ -7,32 +7,26 @@ import { include } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import { BaseSeeder } from "./BaseSeeder.ts";
-import { CopiesOnWrite } from "./concerns/CopiesOnWrite.ts";
-import { SeedsAptitudes } from "./concerns/SeedsAptitudes.ts";
+import { CopiesIntoExtensions } from "./concerns/CopiesIntoExtensions.ts";
 import { SeedsClasses } from "./concerns/SeedsClasses.ts";
-import { SeedsCoreRules } from "./concerns/SeedsCoreRules.ts";
-import { SeedsFeats } from "./concerns/SeedsFeats.ts";
-import { SeedsItems } from "./concerns/SeedsItems.ts";
 import { SeedsPowers } from "./concerns/SeedsPowers.ts";
-import { SeedsRaces } from "./concerns/SeedsRaces.ts";
+import { SeedsSkills } from "./concerns/SeedsSkills.ts";
 import { SeedsWizardSchools } from "./concerns/SeedsWizardSchools.ts";
 import { findSpellcastingClass, type SpellcastingClass } from "./spellTable.ts";
 
 /**
- * Seeds a 3.5 ruleset, step by step: a step that writes one kind of row is a concern (`concerns/`), and the steps made
- * of others are its own. Each names the rows the steps before it seeded by their ids in its context. It holds no
- * content: the core rules' package gives `seedCore` theirs, an extension's package gives `seedExtension` its book.
+ * Seeds a 3.5 ruleset, step by step: a step that writes one kind of row is a concern, every ruleset's
+ * (`ContentSeeder`'s: aptitudes, abilities, saves, languages, feats, races, items, copies) or 3.5's own (`concerns/`:
+ * classes, skills, spells, wizard schools, an extension's changes to the core), and the steps made of others are its
+ * own. Each names the rows the steps before it seeded by their ids in its context. It holds no content: the core rules'
+ * package gives `seedCore` theirs, an extension's package gives `seedExtension` its book.
  */
 export class RulesetSeeder extends include(
   BaseSeeder,
-  CopiesOnWrite,
-  SeedsAptitudes,
+  CopiesIntoExtensions,
   SeedsClasses,
-  SeedsCoreRules,
-  SeedsFeats,
-  SeedsItems,
   SeedsPowers,
-  SeedsRaces,
+  SeedsSkills,
   SeedsWizardSchools,
 ) {
   /** Seeds the core rules: the SRD's content, and the hand-written core content and bonded creatures. */
@@ -41,6 +35,7 @@ export class RulesetSeeder extends include(
     await this.seedLanguages(core.languages);
     await this.seedRaces(core.races);
     await this.seedAbilities(core.abilities);
+    await this.seedSkillPointAbility();
     await this.seedSkills(core.skills);
     await this.seedSaves(core.saves);
     await this.seedFeats(core.feats);

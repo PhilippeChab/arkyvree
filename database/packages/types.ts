@@ -4,7 +4,8 @@ import type {
   ExtensionPackageDefinition,
   PackageDefinition,
 } from "@/content/core/builders/packages/types.ts";
-import type { ContentSeeder, SeedContext } from "@/database/seeders/core/ContentSeeder.ts";
+import type { ContentSeeder } from "@/database/seeders/core/ContentSeeder.ts";
+import type { SeedContext } from "@/database/seeders/core/SeederState.ts";
 import type { Db } from "@/server/database/index.ts";
 
 /** A step that seeds or changes a package's content. */

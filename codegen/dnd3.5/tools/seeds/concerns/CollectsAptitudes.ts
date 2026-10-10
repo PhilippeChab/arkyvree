@@ -1,8 +1,8 @@
 import References from "@/codegen/dnd3.5/tools/references/References.ts";
 import { type BaseBookSeeds } from "@/codegen/dnd3.5/tools/seeds/BaseBookSeeds.ts";
 import { CORE_BOOK } from "@/codegen/dnd3.5/tools/vocabulary/books.ts";
+import type { FeatSeed } from "@/content/core/builders/feats/types.ts";
 import { CLERIC_DOMAIN, specialistSpells } from "@/content/dnd3.5/builders/aptitudes/names.ts";
-import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import { buildCoreFeats } from "@/content/dnd3.5/data/feats/coreFeats.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";

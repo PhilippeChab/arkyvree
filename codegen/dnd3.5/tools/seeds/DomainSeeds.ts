@@ -5,9 +5,9 @@
 
 import { type DomainReference } from "@/codegen/dnd3.5/tools/types/domains.ts";
 import type { ModifierSeed } from "@/content/core/builders/customization/types.ts";
+import type { FeatSeed } from "@/content/core/builders/feats/types.ts";
 import type { DomainSeed } from "@/content/dnd3.5/builders/domains/types.ts";
 import { grantFeat } from "@/content/dnd3.5/builders/feats/possession.ts";
-import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 import { ALL_WEAPONS, EXOTIC_WEAPONS, MARTIAL_WEAPONS, SIMPLE_WEAPONS } from "@/vocabulary/dnd3.5/weapons.ts";
 
