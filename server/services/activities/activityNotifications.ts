@@ -1,315 +1,211 @@
-import { getTableName, type InferInsertModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
-import {
-  type activitiesInAccount,
-  contributorsInCharacter,
-  contributorsInRules,
-  invitesInCampaign,
-} from "@/drizzle/schema.ts";
+import type { activitiesInAccount } from "@/drizzle/schema.ts";
+import { EntityRepositories } from "@/server/cow/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import {
   Activities,
-  Aptitudes,
   CharacterContributors,
   Characters,
   Contributors,
-  Feats,
   Invites,
-  Items,
-  Klasses,
   KlassLevels,
-  Languages,
   Modifiers,
   Notifications,
   Players,
-  Powers,
   Properties,
-  Races,
   Requirements,
   RULESET_ENTITY_TYPES,
   Rulesets,
-  Saves,
-  Skills,
   Users,
   Visibility,
 } from "@/server/repositories/index.ts";
 import { noteNotified } from "@/server/websockets/index.ts";
-import type { ChangedField } from "@/shared/activity.ts";
+import { isOneOf } from "@/shared/isOneOf.ts";
+import { isRecord } from "@/shared/isRecord.ts";
 
 type ActivityValues = InferInsertModel<typeof activitiesInAccount>;
 
-const CHARACTER_CONTRIBUTORS_TABLE = getTableName(contributorsInCharacter);
-
-const CONTRIBUTORS_TABLE = getTableName(contributorsInRules);
-
-/** Customization tables whose source entities have a rulesetId */
-const CUSTOMIZATION_TABLES = new Set(["modifiers", "requirements", "properties"]);
-const INVITES_TABLE = getTableName(invitesInCampaign);
-const LONG_TEXT_FIELDS = new Set(["description"]);
-
-/** Ruleset entities' tables, named like their types (abilities raise no activity) */
-const RULESET_ENTITY_TABLES = new Set<string>(RULESET_ENTITY_TYPES.filter((type) => type !== "abilities"));
-
-function normalize(v: unknown): string {
-  if (typeof v === "number") return String(v);
-  if (typeof v === "string" && v.trim() !== "") {
-    const n = Number(v);
-    if (Number.isFinite(n)) return String(n);
-  }
-  return String(v);
+/** A row of a ruleset's content, by its table: an entity, or what belongs to one (a class level, a customization). */
+interface ContentRow {
+  id: string;
+  table: string;
 }
 
 /**
- * Get campaign GMs for the campaign that owns a given invite.
+ * Who hears of an activity: the contributor it's about (a ruleset's, a character's) or the owner of what they contribute
+ * to, the Game Masters of the campaign an invite is to or the user it invites, a ruleset's owner and active contributors.
  */
-async function getCampaignGMsForInvite(db: Db, inviteId: string): Promise<string[]> {
+type Recipient =
+  | "characterContributor"
+  | "characterOwner"
+  | "gameMasters"
+  | "invitee"
+  | "rulesetContributor"
+  | "rulesetOwner"
+  | "rulesetStakeholders";
+
+/**
+ * The rows of a ruleset's content beside its entities, by their table, and the row each belongs to: a class level's
+ * class, a customization's entity (a requirement's may be a modifier). A class skill's activity targets its class.
+ */
+const CONTENT_OWNERS = new Map<string, (db: Db, id: string) => Promise<ContentRow | undefined>>([
+  [
+    "klass_levels",
+    async (db, id) => {
+      const level = await KlassLevels.findOne(db, { id });
+      return level && { id: level.klassId, table: "klasses" };
+    },
+  ],
+  ["klass_skills", async (_db, id) => ({ id, table: "klasses" })],
+  [
+    "modifiers",
+    async (db, id) => {
+      const modifier = await Modifiers.findOne(db, { id });
+      return modifier && { id: modifier.sourceId, table: modifier.sourceType };
+    },
+  ],
+  [
+    "properties",
+    async (db, id) => {
+      const property = await Properties.findOne(db, { id });
+      return property && { id: property.entityId, table: property.entityType };
+    },
+  ],
+  [
+    "requirements",
+    async (db, id) => {
+      const requirement = await Requirements.findOne(db, { id });
+      return requirement && { id: requirement.entityId, table: requirement.entityType };
+    },
+  ],
+]);
+
+/**
+ * Who hears of an activity on an invite or a contributor, by its type. A revocation reaches a contributor who was
+ * collaborating: revoking a pending invite is just "I changed my mind", worth no ping (a campaign invite's reaches no one).
+ */
+const RECIPIENTS = new Map<string, Recipient>([
+  ["acceptCampaignInvite", "gameMasters"],
+  ["acceptCharacterContributorInvite", "characterOwner"],
+  ["acceptContributorInvite", "rulesetOwner"],
+  ["createCampaignInvite", "invitee"],
+  ["inviteCharacterContributor", "characterContributor"],
+  ["inviteContributor", "rulesetContributor"],
+  ["leaveCharacter", "characterOwner"],
+  ["leaveRuleset", "rulesetOwner"],
+  ["rejectCampaignInvite", "gameMasters"],
+  ["rejectCharacterContributorInvite", "characterOwner"],
+  ["rejectContributorInvite", "rulesetOwner"],
+  ["revokeCharacterContributor", "characterContributor"],
+  ["revokeContributor", "rulesetContributor"],
+  ["updateContributorRole", "rulesetContributor"],
+]);
+
+/** Whether a table holds a ruleset's content, whose every change its stakeholders hear of. */
+function isContentTable(table: string) {
+  return isOneOf(table, RULESET_ENTITY_TYPES) || CONTENT_OWNERS.has(table);
+}
+
+/** An id an activity's data holds (`invitedUserId`, `rulesetId`), when it holds one. */
+function readId(value: unknown) {
+  return typeof value === "string" ? value : undefined;
+}
+
+/** The ruleset a row of its content is in: an entity's own, or that of the row it belongs to. */
+async function findContentRuleset(db: Db, { id, table }: ContentRow): Promise<string | undefined> {
+  if (isOneOf(table, RULESET_ENTITY_TYPES)) return (await EntityRepositories.of(table).findOne(db, { id }))?.rulesetId;
+  const owner = await CONTENT_OWNERS.get(table)?.(db, id);
+  return owner && (await findContentRuleset(db, owner));
+}
+
+/** The Game Masters of the campaign an invite (`inviteId`) is to. */
+async function findGameMasters(db: Db, inviteId: string) {
   const invite = await Invites.findOne(db, { id: inviteId });
-  if (!invite) return [];
-  const player = await Players.findOne(db, { id: invite.playerId });
+  const player = invite && (await Players.findOne(db, { id: invite.playerId }));
   if (!player) return [];
-  const campaignPlayers = await Players.findMany(db, { campaignId: player.campaignId });
-  return campaignPlayers.filter((p) => p.role === "Game Master" && p.userId).map((p) => p.userId!);
+  const players = await Players.findMany(db, { campaignId: player.campaignId });
+  return players.filter((campaignPlayer) => campaignPlayer.role === "Game Master").map(({ userId }) => userId);
 }
 
-/**
- * Get all active contributor userIds + ruleset owner for a given rulesetId.
- */
-async function getRulesetStakeholders(db: Db, rulesetId: string): Promise<string[]> {
+/** The users an activity notifies (`RECIPIENTS`, or a change to a ruleset's content its stakeholders), but its actor. */
+async function findRecipientIds(db: Db, activity: ActivityValues, data: Record<string, unknown>) {
+  const recipient =
+    RECIPIENTS.get(activity.type) ?? (isContentTable(activity.targetTable) ? "rulesetStakeholders" : undefined);
+  const userIds = recipient ? await findRecipients(db, recipient, activity, data) : [];
+  const recipientIds = new Set<string>();
+  for (const userId of userIds) if (userId && userId !== activity.userId) recipientIds.add(userId);
+  return [...recipientIds];
+}
+
+/** Who an activity (`activity`, carrying `data`) notifies, as its `recipient`: their users, when they have one. */
+async function findRecipients(
+  db: Db,
+  recipient: Recipient,
+  { targetId, targetTable }: ActivityValues,
+  data: Record<string, unknown>,
+): Promise<(string | null | undefined)[]> {
+  // A revocation names what the contributor was, and reaches them only if they were collaborating
+  if ("prevStatus" in data && data.prevStatus !== "Active") return [];
+  switch (recipient) {
+    case "characterContributor":
+      return [(await CharacterContributors.findOne(db, { id: targetId }))?.userId];
+    case "characterOwner": {
+      const characterId =
+        readId(data.characterId) ?? (await CharacterContributors.findOne(db, { id: targetId }))?.characterId;
+      return [characterId && (await Characters.findOne(db, { id: characterId }, Visibility.All))?.userId];
+    }
+    case "gameMasters":
+      return await findGameMasters(db, targetId);
+    case "invitee":
+      return [readId(data.invitedUserId)];
+    case "rulesetContributor":
+      return [(await Contributors.findOne(db, { id: targetId }))?.userId];
+    case "rulesetOwner": {
+      const rulesetId = readId(data.rulesetId) ?? (await Contributors.findOne(db, { id: targetId }))?.rulesetId;
+      return [rulesetId && (await Rulesets.findOne(db, { id: rulesetId }, Visibility.All))?.userId];
+    }
+    case "rulesetStakeholders": {
+      // A delete names its ruleset: the row it removed is gone
+      const rulesetId = readId(data.rulesetId) ?? (await findContentRuleset(db, { id: targetId, table: targetTable }));
+      return rulesetId ? await findRulesetStakeholders(db, rulesetId) : [];
+    }
+  }
+}
+
+/** A ruleset's owner and its active contributors, who hear of a change to its content. */
+async function findRulesetStakeholders(db: Db, rulesetId: string) {
   // `db` is the caller's transaction, whose queries run one at a time.
   const contributors = await Contributors.findMany(db, { rulesetId, status: "Active" });
   const ruleset = await Rulesets.findOne(db, { id: rulesetId });
-
-  const userIds = new Set<string>();
-  if (ruleset?.userId) userIds.add(ruleset.userId);
-  for (const c of contributors) if (c.userId) userIds.add(c.userId);
-
-  return Array.from(userIds);
+  return [ruleset?.userId, ...contributors.map(({ userId }) => userId)];
 }
 
 /**
- * Determine which users should be notified for a given activity.
- * The actor is always excluded from the result.
+ * Records an activity (`values`), and notifies the users it concerns, but its actor: a notification each, carrying the
+ * activity's data and the actor's name, which their pages hear of once the request is answered.
  */
-async function resolveRecipients(
-  db: Db,
-  actorId: string,
-  type: string,
-  targetId: string,
-  targetTable: string,
-  data: unknown,
-): Promise<string[]> {
-  const recipients = new Set<string>();
-  const d = (data ?? {}) as Record<string, unknown>;
-
-  // Campaign invites
-  if (targetTable === INVITES_TABLE) {
-    if (type === "createCampaignInvite") {
-      // Notify the invitee (if they have an account)
-      const invitedUserId = d.invitedUserId as string | undefined;
-      if (invitedUserId) recipients.add(invitedUserId);
-    } else if (type === "acceptCampaignInvite" || type === "rejectCampaignInvite") {
-      const gms = await getCampaignGMsForInvite(db, targetId);
-      for (const gm of gms) recipients.add(gm);
-    }
-  }
-
-  // Ruleset contributors
-  if (targetTable === CONTRIBUTORS_TABLE) {
-    if (type === "inviteContributor") {
-      const contributor = await Contributors.findOne(db, { id: targetId });
-      if (contributor?.userId) recipients.add(contributor.userId);
-    } else if (type === "acceptContributorInvite" || type === "rejectContributorInvite" || type === "leaveRuleset") {
-      // data may have rulesetId directly, or we look up via the contributor record (targetId)
-      let rulesetId = d.rulesetId as string | undefined;
-      if (!rulesetId) {
-        const contributor = await Contributors.findOne(db, { id: targetId });
-        rulesetId = contributor?.rulesetId;
-      }
-      if (rulesetId) {
-        const ruleset = await Rulesets.findOne(db, { id: rulesetId }, Visibility.All);
-        if (ruleset?.userId) recipients.add(ruleset.userId);
-      }
-    } else if (type === "updateContributorRole") {
-      const contributor = await Contributors.findOne(db, { id: targetId });
-      if (contributor?.userId) recipients.add(contributor.userId);
-    } else if (type === "revokeContributor") {
-      // Only notify if they were actively collaborating; revoking a pending
-      // invite is just "I changed my mind" and doesn't warrant a ping.
-      if (d.prevStatus === "Active") {
-        const contributor = await Contributors.findOne(db, { id: targetId });
-        if (contributor?.userId) recipients.add(contributor.userId);
-      }
-    }
-  }
-
-  // Character contributors
-  if (targetTable === CHARACTER_CONTRIBUTORS_TABLE) {
-    if (type === "inviteCharacterContributor") {
-      const contributor = await CharacterContributors.findOne(db, { id: targetId });
-      if (contributor?.userId) recipients.add(contributor.userId);
-    } else if (
-      type === "acceptCharacterContributorInvite" ||
-      type === "rejectCharacterContributorInvite" ||
-      type === "leaveCharacter"
-    ) {
-      let characterId = d.characterId as string | undefined;
-      if (!characterId) {
-        const contributor = await CharacterContributors.findOne(db, { id: targetId });
-        characterId = contributor?.characterId;
-      }
-      if (characterId) {
-        const character = await Characters.findOne(db, { id: characterId }, Visibility.All);
-        if (character?.userId) recipients.add(character.userId);
-      }
-    } else if (type === "revokeCharacterContributor") {
-      if (d.prevStatus === "Active") {
-        const contributor = await CharacterContributors.findOne(db, { id: targetId });
-        if (contributor?.userId) recipients.add(contributor.userId);
-      }
-    }
-  }
-
-  // Ruleset content changes
-  const isContentChange = type.startsWith("create") || type.startsWith("update") || type.startsWith("delete");
-  const isRulesetContent =
-    RULESET_ENTITY_TABLES.has(targetTable) ||
-    targetTable === "klass_levels" ||
-    targetTable === "klass_skills" ||
-    CUSTOMIZATION_TABLES.has(targetTable);
-
-  if (isContentChange && isRulesetContent) {
-    // Prefer rulesetId from data (required for deletes where the entity is already archived)
-    const rulesetId = (d.rulesetId as string | undefined) ?? (await resolveRulesetId(db, targetTable, targetId));
-    if (rulesetId) {
-      const stakeholders = await getRulesetStakeholders(db, rulesetId);
-      for (const uid of stakeholders) recipients.add(uid);
-    }
-  }
-
-  // Never notify the actor
-  recipients.delete(actorId);
-  return Array.from(recipients);
-}
-
-/**
- * Resolve the rulesetId from a target entity. Used for ruleset content change notifications.
- */
-async function resolveRulesetId(db: Db, targetTable: string, targetId: string): Promise<string | null> {
-  if (RULESET_ENTITY_TABLES.has(targetTable)) {
-    const finders: Record<string, (id: string) => Promise<{ rulesetId: string } | undefined>> = {
-      feats: (id) => Feats.findOne(db, { id }),
-      powers: (id) => Powers.findOne(db, { id }),
-      skills: (id) => Skills.findOne(db, { id }),
-      races: (id) => Races.findOne(db, { id }),
-      klasses: (id) => Klasses.findOne(db, { id }),
-      items: (id) => Items.findOne(db, { id }),
-      saves: (id) => Saves.findOne(db, { id }),
-      languages: (id) => Languages.findOne(db, { id }),
-      aptitudes: (id) => Aptitudes.findOne(db, { id }),
-    };
-    const entity = await finders[targetTable]?.(targetId);
-    return entity?.rulesetId ?? null;
-  }
-
-  if (targetTable === "klass_levels") {
-    const klassLevel = await KlassLevels.findOne(db, { id: targetId });
-    if (!klassLevel) return null;
-    const klass = await Klasses.findOne(db, { id: klassLevel.klassId });
-    return klass?.rulesetId ?? null;
-  }
-
-  if (targetTable === "klass_skills") {
-    const klass = await Klasses.findOne(db, { id: targetId });
-    return klass?.rulesetId ?? null;
-  }
-
-  if (CUSTOMIZATION_TABLES.has(targetTable)) {
-    if (targetTable === "modifiers") {
-      const modifier = await Modifiers.findOne(db, { id: targetId });
-      if (!modifier) return null;
-      return resolveRulesetId(db, modifier.sourceType, modifier.sourceId);
-    }
-    if (targetTable === "requirements") {
-      const req = await Requirements.findOne(db, { id: targetId });
-      if (!req) return null;
-      return resolveRulesetId(db, req.entityType, req.entityId);
-    }
-    if (targetTable === "properties") {
-      const prop = await Properties.findOne(db, { id: targetId });
-      if (!prop) return null;
-      return resolveRulesetId(db, prop.entityType, prop.entityId);
-    }
-  }
-
-  return null;
-}
-
-/**
- * Compare an existing entity with an update body and return a list of changes.
- * Short fields include before/after values; long text fields only note the change.
- */
-export function getChangedFields(existing: object, body: object): ChangedField[] {
-  const before = new Map(Object.entries(existing));
-  const changes: ChangedField[] = [];
-  for (const [key, newVal] of Object.entries(body)) {
-    if (!before.has(key)) continue;
-    const oldVal = before.get(key);
-    if (oldVal == null && newVal == null) continue;
-    if (normalize(oldVal) === normalize(newVal)) continue;
-
-    if (LONG_TEXT_FIELDS.has(key)) {
-      changes.push({ field: key });
-    } else {
-      changes.push({
-        field: key,
-        from: oldVal != null ? normalize(oldVal) : undefined,
-        to: newVal != null ? normalize(newVal) : undefined,
-      });
-    }
-  }
-  return changes;
-}
-
-/**
- * Drop-in replacement for Activities.create that also creates notifications
- * for interested parties. Returns the created activity and recipient IDs
- * for WebSocket broadcasting.
- */
-export async function createActivityWithNotifications(
-  tx: Db,
-  values: ActivityValues,
-): Promise<{ activity: Awaited<ReturnType<typeof Activities.create>>[0]; recipientIds: string[] }> {
+export async function createActivityWithNotifications(tx: Db, values: ActivityValues) {
   const [activity] = await Activities.create(tx, values);
+  const data = isRecord(values.data) ? values.data : {};
+  const recipientIds = await findRecipientIds(tx, values, data);
+  if (recipientIds.length === 0) return;
 
-  const recipientIds = await resolveRecipients(
+  const actor = await Users.findOne(tx, { id: values.userId });
+  const actorName = actor?.username ?? actor?.emailAddress ?? "Unknown";
+  const { targetId, targetTable, type, userId: actorId } = values;
+  await Notifications.createMany(
     tx,
-    values.userId,
-    values.type,
-    values.targetId,
-    values.targetTable,
-    values.data,
+    recipientIds.map((recipientId) => ({
+      recipientId,
+      actorId,
+      activityId: activity.id,
+      type,
+      targetId,
+      targetTable,
+      data: { ...data, actorName },
+    })),
   );
-
-  if (recipientIds.length > 0) {
-    // Look up actor name once for all notification rows
-    const actor = await Users.findOne(tx, { id: values.userId });
-    const actorName = actor?.username ?? actor?.emailAddress ?? "Unknown";
-
-    await Notifications.createMany(
-      tx,
-      recipientIds.map((recipientId) => ({
-        recipientId,
-        actorId: values.userId,
-        activityId: activity.id,
-        type: values.type,
-        targetId: values.targetId,
-        targetTable: values.targetTable,
-        data: { ...((values.data as Record<string, unknown>) ?? {}), actorName },
-      })),
-    );
-    // Their pages hear of it once the request is answered, and its transaction committed
-    noteNotified(recipientIds);
-  }
-
-  return { activity, recipientIds };
+  // Their pages hear of it once the request is answered, and its transaction committed
+  noteNotified(recipientIds);
 }
