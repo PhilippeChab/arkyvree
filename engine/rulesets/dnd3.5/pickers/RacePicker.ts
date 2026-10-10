@@ -1,5 +1,6 @@
 /** The races a new character can pick. */
 
+import type { RacePickQuery } from "@/engine/core/module/index.ts";
 import type { Components } from "@/engine/core/paths/PathTraverser.ts";
 import { Picker } from "@/engine/core/pickers/index.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
@@ -13,7 +14,7 @@ import type { Requirement } from "@/shared/relations.ts";
  * met, and the form says no tree of what a race fails: there's no character yet to word it for.
  */
 export default class RacePicker extends Picker<{ id: string }> {
-  constructor(view: RulesetView, identity: { alignment?: string; gender?: string }) {
+  constructor(view: RulesetView, identity: RacePickQuery) {
     super(view);
     // Only what the form says: a requirement on what it doesn't reads no value, which leaves it invalid, not unmet
     const identityData: Record<string, Record<string, unknown>> = {

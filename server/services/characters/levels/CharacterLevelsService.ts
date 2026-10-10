@@ -7,7 +7,13 @@
 import { getTableName } from "drizzle-orm";
 
 import { levelsInCharacter } from "@/drizzle/schema.ts";
-import { type AbilityIncrease, Engine, type LevelRows } from "@/engine/index.ts";
+import {
+  type AbilityIncrease,
+  Engine,
+  type LevelRequest,
+  type LevelRows,
+  type PreviewRequest,
+} from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { type Db, db, withTransaction } from "@/server/database/index.ts";
@@ -76,12 +82,7 @@ class CharacterLevelsService extends include(Object, Pickers, Steps) {
   async finalizeLevelUp(
     session: Session,
     characterId: string,
-    levels: Array<{
-      abilityIncreases: AbilityIncrease[];
-      hp: number;
-      klassId: string;
-      level: number;
-    }>,
+    levels: LevelRequest[],
     skills: Record<string, number>,
     feats: Record<string, string[]>,
     powers: Record<string, string[]>,
@@ -96,7 +97,7 @@ class CharacterLevelsService extends include(Object, Pickers, Steps) {
         const plan = Engine.for(scope)
           .character(character)
           .levelUp()
-          .planLevels(bonded, levels, { skills, feats, powers }, force);
+          .planLevels(bonded, { levels, picks: { skills, feats, powers } }, force);
         const createdLevels = [];
         for (const { columns, rows } of plan.levels) {
           const [created] = await CharacterLevels.create(tx, { characterId, ...columns });
@@ -133,13 +134,13 @@ class CharacterLevelsService extends include(Object, Pickers, Steps) {
   async getPreview(
     session: Session,
     characterId: string,
-    levels: Array<{ abilityIncreases: AbilityIncrease[]; klassId: string; level: number }>,
+    levels: PreviewRequest["levels"],
     skills: Record<string, number>,
     feats: Record<string, string[]>,
     powers: Record<string, string[]>,
   ) {
     return await withEditableCharacter(db, session, characterId, (scope, character) =>
-      Engine.for(scope).character(character).levelUp().describePreview(levels, { feats, powers, skills }),
+      Engine.for(scope).character(character).levelUp().describePreview({ levels, picks: { feats, powers, skills } }),
     );
   }
 

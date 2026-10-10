@@ -1,4 +1,4 @@
-import { CharactersPart } from "@/engine/core/module/index.ts";
+import { CharactersPart, type RacePickQuery } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { Dnd35Descriptions } from "@/engine/rulesets/dnd3.5/descriptions.ts";
 import RacePicker from "@/engine/rulesets/dnd3.5/pickers/RacePicker.ts";
@@ -45,8 +45,8 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
   }
 
   /** The race picker of a new character: the races it offers, and whether each is eligible. */
-  override openRacePicker(view: RulesetView, identity: { alignment?: string; gender?: string }) {
-    return new RacePicker(view, identity);
+  override openRacePicker(view: RulesetView, query: RacePickQuery) {
+    return new RacePicker(view, query);
   }
 
   /** The ability scores a character's edit stores: refused when one isn't the ruleset's, or past the rules' bounds. */

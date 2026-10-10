@@ -1,6 +1,13 @@
 import { z } from "zod";
 
-import type { AbilityScore, CharacterCreation, CreationMethod, NewCharacterPlan } from "@/engine/core/module/index.ts";
+import type {
+  AbilitiesPlan,
+  AbilitiesRequest,
+  CharacterCreation,
+  CreationMethod,
+  NewCharacterPlan,
+  NewCharacterRequest,
+} from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
@@ -45,12 +52,12 @@ export default class CharacterEdits {
    * The ability scores an edit stores (`abilities`, by ability id), each under the id its form gives. Refused when one
    * isn't an ability of the ruleset, or its score is past the rules' bounds.
    */
-  static planAbilities(view: RulesetView, abilities: Record<string, number>): AbilityScore[] {
+  static planAbilities(view: RulesetView, abilities: AbilitiesRequest): AbilitiesPlan {
     RulesError.parse(ABILITY_SCORES, abilities);
     const { abilitiesById } = view.rulesetData;
     if (Object.keys(abilities).some((abilityId) => !abilitiesById.has(abilityId)))
       throw new RulesError("not-found", "Ability not found");
-    return Object.entries(abilities).map(([abilityId, score]) => ({ abilityId, score }));
+    return { abilities: Object.entries(abilities).map(([abilityId, score]) => ({ abilityId, score })) };
   }
 
   /**
@@ -58,16 +65,16 @@ export default class CharacterEdits {
    * (`abilities`, by ability id) or the starting one, 10. Refused when its race isn't the ruleset's or isn't a player
    * character's, or a score is past the rules' bounds.
    */
-  static planCreate(view: RulesetView, body: { abilities: Record<string, number>; raceId: string }): NewCharacterPlan {
+  static planCreate(view: RulesetView, request: NewCharacterRequest): NewCharacterPlan {
     const { rulesetData } = view;
-    RulesError.parse(ABILITY_SCORES, body.abilities, ["abilities"]);
-    const race = rulesetData.racesById.get(body.raceId);
+    RulesError.parse(ABILITY_SCORES, request.abilities, ["abilities"]);
+    const race = rulesetData.racesById.get(request.raceId);
     if (!race) throw new RulesError("not-found", "Race not found in this ruleset");
     if (race.kind !== "pc") throw new RulesError("invalid", "Race is not valid for a player character");
     return {
       abilities: rulesetData.abilities.map((ability) => ({
         abilityId: ability.id,
-        score: body.abilities[ability.id] ?? STARTING_ABILITY_SCORE,
+        score: request.abilities[ability.id] ?? STARTING_ABILITY_SCORE,
       })),
     };
   }

@@ -1,11 +1,12 @@
-import type { ItemLocation } from "@/shared/enums.ts";
+/**
+ * What a `describe*` operation answers in a shape every ruleset shares: a character's card, how a new one's ability
+ * scores are set, an inventory entry with its item, a placement's warning, a wizard's steps. What a ruleset describes
+ * in its own shape is its `Descriptions` (`contract.ts`).
+ */
+
 import type { Item, Modifier, Property, Requirement } from "@/shared/relations.ts";
 
-/** A character's score in one of its ruleset's abilities, as it stores it. */
-export interface AbilityScore {
-  abilityId: string;
-  score: number;
-}
+import type { InventoryEntryPlan } from "./plans.ts";
 
 /** A character's card, as a list of characters shows it: its race, its classes at their highest level, its total. */
 export interface CharacterCard {
@@ -45,39 +46,15 @@ export type DescribedInventoryEntry<T, X = unknown> = T &
   };
 
 /** An inventory entry, as where it's held reads it: whether it's equipped, where, and its weapon set in a hand. */
-export type HeldInventoryEntry = Pick<InventoryEntryFields, "equipped" | "location" | "weaponSet">;
+export type HeldInventoryEntry = Pick<InventoryEntryPlan, "equipped" | "location" | "weaponSet">;
 
-/** What an inventory entry's add (a new entry of `item`) or edit (an `entry` of the character's) asks. */
-export type InventoryEntryChange =
-  | { item: Item; request: InventoryEntryRequest }
-  | { entry: { id: string; itemId: string }; request: InventoryEntryRequest };
-
-/** What an inventory entry's add or edit stores: where its item is held, and its charges. */
-export interface InventoryEntryFields {
-  equipped: boolean;
-  location: ItemLocation | null;
-  remainingCharges: number | null;
-  totalCharges: number | null;
-  weaponSet: number | null;
+/** Why a placement can't take one more item, if it can't: what the inventory dialogs warn of, and an add refuses. */
+export interface PlacementDescription {
+  warning: string | null;
 }
 
-/** What an inventory entry's add or edit asks: where its item is held, its charges, and whether to force the rules. */
-export interface InventoryEntryRequest {
-  equipped: boolean;
-  force: boolean;
-  location: ItemLocation | null;
-  remainingCharges: number | null;
-  totalCharges: number | null;
-  weaponSet: number | null;
+/** A level-up wizard's step, as its ruleset lists it: its name, which the ruleset answers the step by, and its label. */
+export interface WizardStep<N extends string = string> {
+  label: string;
+  name: N;
 }
-
-/** How a campaign member reads a character: partly (`partial`), or its sheet with its private notes shown or blank. */
-export type MemberReading = "blank" | "partial" | "show";
-
-/** What a new character stores beside its row: a score for each of the ruleset's abilities. */
-export interface NewCharacterPlan {
-  abilities: AbilityScore[];
-}
-
-/** What a viewer reads of a character's private notes: all of it, a blank, or no field at all. */
-export type PrivateNotes = "blank" | "omit" | "show";

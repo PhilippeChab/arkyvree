@@ -1,4 +1,4 @@
-import { type CharacterInput, CharacterProjection, type PickLevel } from "@/engine/core/module/index.ts";
+import { type CharacterInput, CharacterProjection, type PickQuery } from "@/engine/core/module/index.ts";
 import { CharacterPicker } from "@/engine/core/pickers/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
@@ -16,7 +16,7 @@ export default abstract class LevelPicker<Details extends object = object> exten
   constructor(
     view: RulesetView,
     input: CharacterInput,
-    protected readonly query: PickLevel,
+    protected readonly query: PickQuery,
   ) {
     super(view, input, Dnd35CharacterBuilder);
     const klassLevel = this.rulesetData.klassLevelByKlassAndLevel.get(`${query.klassId}:${query.level}`);

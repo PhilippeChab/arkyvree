@@ -1,6 +1,6 @@
 import { getTableName, type Table } from "drizzle-orm";
 
-import type { EntityWrites, ListLink } from "@/engine/index.ts";
+import type { EntityCreatePlan, EntityDeletePlan, EntityEditPlan, EntityWrites } from "@/engine/index.ts";
 import {
   CustomizationCopies,
   EntityEdit,
@@ -21,30 +21,12 @@ import { hasCharacterPicks } from "./characterPicks.ts";
 import { writeEntityWrites } from "./entityWrites.ts";
 import { createListLinks, setListLinks } from "./listLinks.ts";
 
-/**
- * What a create's plan gives: the row's columns, its list links, what it writes beside it, whose customizations it
- * copies, and the fields the entity keeps once written, which the action answers with its row.
- */
-interface CreatePlan<Columns> {
-  columns: Columns;
-  copyCustomizationsFrom?: string;
-  fields: object;
-  links?: ListLink[];
-  writes?: EntityWrites;
-}
-
 /** What a delete adds of its kind's: what else uses an entity, and what else refuses its delete. */
 interface DeleteChecks<P> {
   /** Whether the entity is in use, which refuses its delete: picked by a character, unless the kind says otherwise. */
   inUse?: (tx: Db, scope: RulesetScope) => Promise<boolean>;
   /** Refuses the delete the plan plans, by what the kind reads of it (an item template's copies). */
   refuse?: (tx: Db, plan: P) => Promise<void>;
-}
-
-/** What a delete's plan gives: the entity as the view has it, and what its delete writes (the entities it removes). */
-interface DeletePlan {
-  entity: PlannedEntity;
-  writes?: EntityWrites;
 }
 
 /** A kind's table, as its creates, updates and deletes write it. */
@@ -56,18 +38,6 @@ interface KindRepository<Row, Insert> {
 
 /** An entity a plan names, as the view has it. */
 type PlannedEntity = { id: string; name: string; rulesetId: string };
-
-/**
- * What an update's plan gives: the entity as the view has it, its new columns, its new list links (none: kept), its
- * writes, and the fields the entity keeps once written.
- */
-interface UpdatePlan<Columns> {
-  columns: Columns;
-  entity: PlannedEntity;
-  fields: object;
-  links?: ListLink[];
-  writes?: EntityWrites;
-}
 
 /**
  * A ruleset entity kind's writer (`type`, its table and repository): the steps every kind's create, update and delete
@@ -126,7 +96,7 @@ export default class EntityWriter<Row extends { id: string; name: string }, Inse
    * ancestor whose deleted copy's tombstone the new entity takes over, and the transaction to read what the plan needs):
    * the row written, with the fields the plan keeps.
    */
-  async create<P extends CreatePlan<Omit<Insert, "rulesetId">>>(
+  async create<P extends EntityCreatePlan<Omit<Insert, "rulesetId">>>(
     session: Session,
     rulesetId: string,
     name: string,
@@ -162,7 +132,7 @@ export default class EntityWriter<Row extends { id: string; name: string }, Inse
    * unless its kind says otherwise: `checks`), the row the view's entity resolves to deleted, and what the plan writes
    * with it (the entities it removes). Answers the deleted row.
    */
-  async delete<P extends DeletePlan>(
+  async delete<P extends EntityDeletePlan<PlannedEntity>>(
     session: Session,
     rulesetId: string,
     entityId: string,
@@ -201,7 +171,7 @@ export default class EntityWriter<Row extends { id: string; name: string }, Inse
    * ruleset's own, or its copy, made on its first edit) updated, refused when stale (`body.updatedAt`, a copy's never
    * is), its list links replaced, and what the plan writes beside it. The row written, with the fields the plan keeps.
    */
-  async update<P extends UpdatePlan<Partial<Insert>>>(
+  async update<P extends EntityEditPlan<Partial<Insert>, object, PlannedEntity>>(
     session: Session,
     rulesetId: string,
     body: { name: string; updatedAt?: string },

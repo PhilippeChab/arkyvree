@@ -1,4 +1,4 @@
-import { Engine, type LevelStep, type PlannedSoFar } from "@/engine/index.ts";
+import { Engine, type LevelQuery, type PlannedSoFar } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { db } from "@/server/database/index.ts";
 import { withEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
@@ -10,7 +10,7 @@ import type { Session } from "@/shared/relations.ts";
  * and the skill points spent and the feats and powers picked at it so far (`skillPoints`, `featPicks`, `powerPicks`).
  */
 interface StepQuery {
-  abilityIncreases?: LevelStep["abilityIncreases"];
+  abilityIncreases?: LevelQuery["abilityIncreases"];
   classId?: string;
   editedLevelId?: string;
   featPicks?: { aptitudeId: string; featId: string }[];
@@ -28,8 +28,8 @@ function byPool(pairs: { aptitudeId: string; id: string }[] = []) {
   return pools;
 }
 
-/** The step's level as the engine takes it. */
-function stepOf({
+/** A step's query as the engine takes it: its level, what the wizard plans before it, and what it picked so far. */
+function levelQueryOf({
   classId,
   featPicks,
   plannedAbilityIncreases,
@@ -37,7 +37,7 @@ function stepOf({
   powerPicks,
   skillPoints,
   ...step
-}: StepQuery): LevelStep {
+}: StepQuery): LevelQuery {
   const planned = { abilityIncreases: plannedAbilityIncreases, klassLevelIds: plannedClassLevelIds };
   const picks = {
     feats: byPool(featPicks?.map(({ aptitudeId, featId }) => ({ aptitudeId, id: featId }))),
@@ -56,14 +56,14 @@ export function Steps<B extends Constructor>(Base: B) {
     /** The step `name` of the level the query is for: refused when the character's ruleset has no such step. */
     async getStep(session: Session, characterId: string, name: string, query: StepQuery) {
       return await withEditableCharacter(db, session, characterId, (scope, character) =>
-        Engine.for(scope).character(character).levelUp().describeStep(name, stepOf(query)),
+        Engine.for(scope).character(character).levelUp().describeStep(name, levelQueryOf(query)),
       );
     }
 
     /** The steps of the level the query is for, in the wizard's order: each by its name, and its label. */
     async getSteps(session: Session, characterId: string, query: StepQuery) {
       return await withEditableCharacter(db, session, characterId, (scope, character) =>
-        Engine.for(scope).character(character).levelUp().describeSteps(stepOf(query)),
+        Engine.for(scope).character(character).levelUp().describeSteps(levelQueryOf(query)),
       );
     }
   }
