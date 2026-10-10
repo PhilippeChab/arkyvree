@@ -1,3 +1,4 @@
+import type { OpenedPicker, PickerOption } from "@/engine/core/module/index.ts";
 import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import type { Requirement } from "@/shared/relations.ts";
 
@@ -5,10 +6,14 @@ import type { Requirement } from "@/shared/relations.ts";
  * A picker: what it offers (`filters`, which the server reads a page of options with), and each option of a page
  * described one way (`describe`): the rows as the view reads them, those the picker offers (`offer`), each with whether
  * who it picks for meets the option's requirements (`requirementsOf`, `meets`) and, when not, the tree of those it fails
- * (`describeFailed`), what the picker adds of the option (`detailsOf`), in the picker's order (`order`). A kind says
- * only what differs: what it offers, an option's requirements, who's checked, and what it adds.
+ * (`describeFailed`), what the picker adds of the option (`detailsOf`), in the picker's order (`order`): what an
+ * operation opens (`OpenedPicker`). A ruleset's picker says only what differs: what it offers, an option's requirements,
+ * who's checked, and what it adds.
  */
-export default abstract class Picker<Row extends { id: string }, Details extends object = object> {
+export default abstract class Picker<
+  Row extends { id: string },
+  Details extends object = object,
+> implements OpenedPicker<object, Row, Details> {
   constructor(protected readonly view: RulesetView) {}
 
   /** What the picker offers, which the server reads a page of options with. */
@@ -49,7 +54,7 @@ export default abstract class Picker<Row extends { id: string }, Details extends
    * A page's options (`rows`, as the server read them), each with whether who the picker is for may pick it, the tree
    * of the requirements it fails, and what the picker adds of it.
    */
-  describe<R extends Row>(rows: R[]): (R & Details & { eligible: boolean; requirementTree?: string })[] {
+  describe<R extends Row>(rows: R[]): PickerOption<R, Details>[] {
     // The picker offers a subset of the rows it's handed, of their own type
     const options = this.offer(this.rulesetData.cow.resolveRows(rows)) as R[];
     const details = this.detailsOf(options);

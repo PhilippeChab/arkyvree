@@ -7,11 +7,9 @@ import {
 import RulesError from "@/engine/core/RulesError.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
-import { include } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import type { FeatSlots } from "./AptitudeSlotsPlan.ts";
-import { ChecksSelections } from "./concerns/ChecksSelections.ts";
 import PicksDistribution, { type PerLevelDistributionData } from "./PicksDistribution.ts";
 import PlannedLevelsState, { type PlannedLevels } from "./PlannedLevelsState.ts";
 
@@ -27,7 +25,7 @@ interface PlannedLevel {
  * The levels a level-up saves, from the character's rows: its pooled picks spread over them, each level checked as the
  * levels before it see it, and the character with them checked unless forced.
  */
-export default class LevelUpPlan extends include(PlannedLevelsState, ChecksSelections) {
+export default class LevelUpPlan extends PlannedLevelsState {
   /** What a save distributes its pooled picks over the planned levels by: each level's points, class skills and slots. */
   private buildDistributionData(planned: PlannedLevels): PerLevelDistributionData {
     const { classSkills, perLevelFeatSlots, perLevelPowerSlots, perLevelSkillPoints } = this.computeLevelGains(planned);
@@ -119,7 +117,7 @@ export default class LevelUpPlan extends include(PlannedLevelsState, ChecksSelec
     const { rows } = this.character;
     const klassLevelEntries = this.getPlannedKlassLevels(levels);
     // Every selection is the ruleset's before a character is built with it
-    this.checkSelections(picks.skills, picks.feats, picks.powers);
+    this.checks.checkSelections(picks.skills, picks.feats, picks.powers);
     const distributed = this.distributePlannedPicks(this.buildPlannedLevels(klassLevelEntries), picks);
 
     // Each level sees the saved ones and those planned before it
@@ -131,8 +129,8 @@ export default class LevelUpPlan extends include(PlannedLevelsState, ChecksSelec
       const levelPicks = distributed[i];
       if (otherLevels.some((other) => other.klassLevelId === klassLevel.id))
         throw new RulesError("invalid", `Level ${i + 1}: This level has already been finalized`);
-      this.checkAbilityIncrease(rows.levels.length + i, abilityId, `Level ${i + 1}: `);
-      this.checkLevel({ klass, klassLevel, hp, abilityId, ...levelPicks }, otherLevels, pickedFeatIds);
+      this.checks.checkAbilityIncrease(rows.levels.length + i, abilityId, `Level ${i + 1}: `);
+      this.checks.checkLevel({ klass, klassLevel, hp, abilityId, ...levelPicks }, otherLevels, pickedFeatIds);
       planned.push({ abilityId: abilityId || null, hp, klassLevelId: klassLevel.id, picks: levelPicks });
       otherLevels.push({ klassLevelId: klassLevel.id });
       pickedFeatIds.push(...Object.values(levelPicks.feats).flat());

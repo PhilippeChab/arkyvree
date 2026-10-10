@@ -1,5 +1,6 @@
-import { RulesetEntity } from "@/engine/core/entities/index.ts";
 import { FieldCodec } from "@/engine/core/fields/index.ts";
+
+import RulesetEntity from "./RulesetEntity.ts";
 
 /** An ability's form: its name and description. */
 type AbilityBody = { description?: string | null; name: string };

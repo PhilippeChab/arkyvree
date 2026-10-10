@@ -4,8 +4,8 @@ import type { CharacterInput } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import { ITEM_FIELDS } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
-import CharacterBuilder from "@/engine/rulesets/dnd3.5/model/CharacterBuilder.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import Dnd35CharacterBuilder from "@/engine/rulesets/dnd3.5/model/Dnd35CharacterBuilder.ts";
 import { SIZE_ORDER } from "@/engine/rulesets/dnd3.5/model/inventory/InventorySlots.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 import { findSlotConflict, isHandLocation, MAX_FINGER_ITEMS, type SlotConflictReason } from "@/shared/equipment.ts";
@@ -41,7 +41,7 @@ export default class Equipping {
 
   /** The character, built from its rows the first time a requirement reads it. */
   private get character() {
-    return (this.built ??= CharacterBuilder.build(this.view, this.input));
+    return (this.built ??= Dnd35CharacterBuilder.build(this.view, this.input));
   }
 
   /**

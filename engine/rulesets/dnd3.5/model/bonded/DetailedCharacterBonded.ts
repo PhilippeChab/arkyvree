@@ -1,6 +1,6 @@
 import type { CharacterRows } from "@/engine/core/module/index.ts";
+import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import { type RulesetView } from "@/engine/core/view/index.ts";
-import type { ValidationIssue } from "@/engine/rulesets/dnd3.5/model/concerns/Validates.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import CustomizedEntities from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -8,7 +8,7 @@ import { stripSeparators } from "@/shared/text.ts";
 import BondedRaceData, { type BondedRaceStatBlock, STAT_BLOCK_FEAT_SKILL_BONUSES } from "./BondedRaceData.ts";
 
 export default abstract class DetailedCharacterBonded extends DetailedCharacter {
-  /** The creature's master, built before it (`CharacterBuilder.build`): what its sheet derives from. */
+  /** The creature's master, built before it (`Dnd35CharacterBuilder`): what its sheet derives from. */
   protected master?: DetailedCharacter;
 
   /**
@@ -65,7 +65,7 @@ export default abstract class DetailedCharacterBonded extends DetailedCharacter 
   }
 
   /** None: a stat block's skills are its totals, which no skill points buy. */
-  protected override getSkillValidationIssues(): { budget: ValidationIssue[]; ranks: ValidationIssue[] } {
+  protected override getSkillValidationIssues(): { budget: RulesIssue[]; ranks: RulesIssue[] } {
     return { budget: [], ranks: [] };
   }
 

@@ -1,8 +1,8 @@
 /** A feat as a ruleset's entity: what the ruleset describes of it, lists it by, and checks of its save. */
 
+import { ListedEntity } from "@/engine/core/entities/index.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import ListedEntity from "@/engine/rulesets/dnd3.5/entities/ListedEntity.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 import type { FeatWithAptitudes } from "@/shared/relations.ts";

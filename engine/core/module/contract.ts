@@ -1,4 +1,5 @@
 import type { PropertyTypesProvider } from "@/engine/core/customizations/index.ts";
+import type { Fields } from "@/engine/core/fields/index.ts";
 import type { TargetPaths } from "@/engine/core/paths/CategoryPaths.ts";
 
 import type {
@@ -35,12 +36,12 @@ export interface Descriptions {
 /**
  * A base rules' module: the parts the engine's handles ask what its rules answer, each an abstract class of
  * `engine/core/module/parts/` a ruleset extends (the compiler lists what a part lacks), and its paths and property
- * types. `D` is what it describes in its own shape, `E` its entity kinds by table, `F` the fields its content seeds.
+ * types. `D` is what it describes in its own shape, `E` its entity kinds by table, `F` the fields its content seeds, by entity.
  */
 export interface RulesetModule<
   D extends Descriptions = Descriptions,
   E extends EntityKindsContract = EntityKindsContract,
-  F extends object = object,
+  F extends Record<string, Fields> = Record<string, Fields>,
 > {
   /** What the ruleset answers of its characters, from the rows the server reads: their sheets, an item equipped */
   characters: CharactersPart<D>;

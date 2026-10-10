@@ -1,7 +1,7 @@
 import type { CharacterInput, MemberReading, PrivateNotes } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import CharacterBuilder from "@/engine/rulesets/dnd3.5/model/CharacterBuilder.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import Dnd35CharacterBuilder from "@/engine/rulesets/dnd3.5/model/Dnd35CharacterBuilder.ts";
 import { BONDED_KIND_SLUGS } from "@/shared/dnd3.5/bondedKinds.ts";
 
 import CharacterResponse from "./CharacterResponse.ts";
@@ -24,7 +24,7 @@ export default class CharacterDescription {
       const input = byKind.get(kind);
       if (input) {
         described[kind] = CharacterDescription.redactNotes(
-          CharacterResponse.buildBonded(input.record, CharacterBuilder.build(view, input, { master })),
+          CharacterResponse.buildBonded(input.record, Dnd35CharacterBuilder.build(view, input, { master })),
           notes,
         );
       }
@@ -38,7 +38,7 @@ export default class CharacterDescription {
    * be considered here.
    */
   private static describePartial(view: RulesetView, character: CharacterInput) {
-    const response = CharacterResponse.buildFull(character.record, CharacterBuilder.build(view, character));
+    const response = CharacterResponse.buildFull(character.record, Dnd35CharacterBuilder.build(view, character));
     const { physiology } = response.identity;
     return {
       id: response.id,
@@ -119,7 +119,7 @@ export default class CharacterDescription {
     bonded: CharacterInput[],
     notes: PrivateNotes = "show",
   ) {
-    const built = CharacterBuilder.build(view, character);
+    const built = Dnd35CharacterBuilder.build(view, character);
     if (character.master)
       return { ...CharacterResponse.buildBonded(character.record, built), bonded: CharacterDescription.noBonded() };
     const response = CharacterResponse.buildFull(character.record, built);

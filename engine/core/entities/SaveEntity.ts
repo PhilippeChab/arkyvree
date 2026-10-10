@@ -1,5 +1,6 @@
-import { RulesetEntity } from "@/engine/core/entities/index.ts";
 import { FieldCodec } from "@/engine/core/fields/index.ts";
+
+import RulesetEntity from "./RulesetEntity.ts";
 
 /** A save's form: its name, description and the ability its bonus comes from. */
 type SaveBody = { abilityId: string; description?: string | null; name: string };

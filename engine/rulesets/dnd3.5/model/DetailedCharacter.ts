@@ -1,24 +1,26 @@
-import ModifierEvaluator from "@/engine/core/modifiers/ModifierEvaluator.ts";
-import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
+import { type DataLoader, Validates } from "@/engine/core/character/index.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import { include } from "@/lib/mixins.ts";
 import type { Character, KlassLevel, Requirement } from "@/shared/relations.ts";
 
 import CharacterComponents, { type Dnd35Components } from "./CharacterComponents.ts";
-import CharacterState, { type DataLoader } from "./CharacterState.ts";
+import CharacterState from "./CharacterState.ts";
 import { Builds } from "./concerns/Builds.ts";
+import { Diagnoses } from "./concerns/Diagnoses.ts";
 import { PossessesVirtually } from "./concerns/PossessesVirtually.ts";
-import { Validates } from "./concerns/Validates.ts";
-import DetailedCharacterDataLoader from "./loading/DetailedCharacterDataLoader.ts";
+import DetailedCharacterDataLoader, { type LoadedCharacterData } from "./loading/DetailedCharacterDataLoader.ts";
 
-/** A 3.5 character: its components wired, built and validated by its concerns. */
-export default class DetailedCharacter extends include(CharacterState, Builds, PossessesVirtually, Validates) {
+/** A 3.5 character: its components wired, built and validated by its concerns, on core's build and validation. */
+export default class DetailedCharacter extends include(
+  CharacterState,
+  Builds,
+  Diagnoses,
+  PossessesVirtually,
+  Validates,
+) {
   constructor(character: Character) {
-    super(character);
-    this.targetPaths = new Dnd35TargetPaths();
-    this.modifierEvaluator = new ModifierEvaluator(this.targetPaths, this.sourcesOf);
-    this.requirementEvaluator = new RequirementEvaluator(this.targetPaths);
+    super(character, new Dnd35TargetPaths());
     this.components = CharacterComponents.build(this.modifierEvaluator, (totalLevel) =>
       this.countGeneralFeats(totalLevel),
     );
@@ -26,16 +28,12 @@ export default class DetailedCharacter extends include(CharacterState, Builds, P
 
   readonly components: Dnd35Components;
 
-  readonly modifierEvaluator: ModifierEvaluator;
-
-  readonly requirementEvaluator: RequirementEvaluator;
-
   /** The general feats the character has at its total level (`LevelRules.countGeneralFeats`). */
   protected countGeneralFeats(totalLevel: number): number {
     return LevelRules.countGeneralFeats(totalLevel);
   }
 
-  protected createDataLoader(): DataLoader {
+  protected createDataLoader(): DataLoader<LoadedCharacterData> {
     return new DetailedCharacterDataLoader(this.character);
   }
 

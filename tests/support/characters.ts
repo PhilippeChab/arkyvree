@@ -3,8 +3,8 @@ import type { InferRequestType } from "hono/client";
 
 import type { charactersInCharacter } from "@/drizzle/schema.ts";
 import { CharacterInputs, CharacterProjection } from "@/engine/core/module/index.ts";
-import CharacterBuilder from "@/engine/rulesets/dnd3.5/model/CharacterBuilder.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import Dnd35CharacterBuilder from "@/engine/rulesets/dnd3.5/model/Dnd35CharacterBuilder.ts";
 import { type RulesetScope, withRulesetScope } from "@/server/cow/index.ts";
 import { type Db, db } from "@/server/database/index.ts";
 import { Characters } from "@/server/repositories/index.ts";
@@ -16,7 +16,7 @@ import { getSeedCtx, uniqueId } from "./seed.ts";
 
 /**
  * `record`, built as the class a test picks (`Kind`: a familiar, a mount…) the way the engine builds a character
- * (`CharacterBuilder.build`): its rows read through `database`, in `scope` when it's the character's ruleset's, a bonded
+ * (`Dnd35CharacterBuilder`): its rows read through `database`, in `scope` when it's the character's ruleset's, a bonded
  * creature's master built first.
  */
 export async function buildAs<C extends DetailedCharacter>(
@@ -36,7 +36,7 @@ export async function buildAs<C extends DetailedCharacter>(
     project?.(projection);
     const { input } = projection;
     const character = new Kind(input.record);
-    character.build(input.rows, view, input.master && CharacterBuilder.build(view, input.master));
+    character.build(input.rows, view, input.master && Dnd35CharacterBuilder.build(view, input.master));
     return character;
   };
   if (scope?.ruleset.id !== record.rulesetId) return await withRulesetScope(database, record.rulesetId, build);

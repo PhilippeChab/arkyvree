@@ -1,7 +1,8 @@
-import { CustomizationPageEntity } from "@/engine/core/entities/index.ts";
 import type { Fields } from "@/engine/core/fields/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { ViewEntities } from "@/engine/core/view/index.ts";
+
+import CustomizationPageEntity from "./CustomizationPageEntity.ts";
 
 /** A listed entity's links to the lists, as its row carries them. */
 type Links<K extends "feats" | "powers"> = K extends "feats"
@@ -9,7 +10,8 @@ type Links<K extends "feats" | "powers"> = K extends "feats"
   : Pick<ViewEntities["powers"], "powersAptitudesInRules">;
 
 /**
- * A kind the ruleset lists: a feat in its pools, a power on its spell lists. A list holds feats or spells, never both,
+ * A kind a ruleset lists (a feat in a pool, a power on a spell list: the schema's listed tables). A list holds feats or
+ * spells, never both,
  * and a page's rows carry their lists as the ruleset composes them (`describeListed`).
  */
 export default abstract class ListedEntity<

@@ -1,19 +1,17 @@
-import type {
-  CharacterInput,
-  DescribedInventoryEntry,
-  InventoryEntryChange,
-  InventoryEntryFields,
-  InventoryEntryRequest,
+import {
+  type CharacterInput,
+  CharactersPart,
+  type InventoryEntryChange,
+  type InventoryEntryFields,
+  type InventoryEntryRequest,
 } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import CharacterEdits from "@/engine/rulesets/dnd3.5/characters/CharacterEdits.ts";
 import { isHandLocation } from "@/shared/equipment.ts";
-import type { Item } from "@/shared/relations.ts";
 
 import Equipping from "./Equipping.ts";
 
-/** A character's inventory: its entries as its sheet lists them, and what an entry's add or edit stores. */
+/** A character's inventory: what an entry's add or edit stores, checked. */
 export default class InventoryEntries {
   /** An entry's charges: both set or both null, and no more remaining than total. */
   private static checkCharges(totalCharges: number | null, remainingCharges: number | null) {
@@ -44,32 +42,6 @@ export default class InventoryEntries {
   }
 
   /**
-   * The character's entries (`entries`, each with the item row it names), as its sheet lists them: each with its item
-   * as the view composes it (the stored row's copy or winner, the row itself without one), its properties, its
-   * modifiers, and its requirements, its template's before its own.
-   */
-  static describeInventory<T extends { itemId: string; itemsInRule: Item }>(
-    view: RulesetView,
-    entries: T[],
-  ): DescribedInventoryEntry<T>[] {
-    const { rulesetData } = view;
-    return entries.map((entry) => {
-      // The join still contains the stored parent row after itemId resolves.
-      const item = rulesetData.itemsById.get(entry.itemId) ?? entry.itemsInRule;
-      const { own: requirements, template: proficiency } = rulesetData.itemRequirements(item);
-      return {
-        ...entry,
-        item: {
-          ...item,
-          properties: rulesetData.itemProperties(item),
-          modifiers: rulesetData.modifiersBySource.get(item.id) ?? [],
-          requirements: [...proficiency, ...requirements],
-        },
-      };
-    });
-  }
-
-  /**
    * What an entry's add or edit stores, from the character's rows: its placement and charges. Refused when an added
    * item isn't the character's ruleset's (nor from its source chain), the charges disagree, or the item can't be
    * equipped where it's asked to be (`Equipping`: an item already carried takes another entry, a second dagger held in
@@ -79,7 +51,7 @@ export default class InventoryEntries {
     const { rulesetData } = view;
     const { request } = change;
     if ("item" in change)
-      CharacterEdits.checkFromRuleset(view, [change.item], "Item does not belong to the character's ruleset");
+      CharactersPart.checkFromRuleset(view, [change.item], "Item does not belong to the character's ruleset");
     InventoryEntries.checkCharges(request.totalCharges, request.remainingCharges);
 
     const { equipped, force, location, weaponSet } = request;

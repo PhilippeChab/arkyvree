@@ -1,74 +1,19 @@
-import type { CharacterRows } from "@/engine/core/module/index.ts";
-import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
-import { type RulesetView } from "@/engine/core/view/index.ts";
 import { FEAT_FIELDS } from "@/engine/rulesets/dnd3.5/entities/feats/fields.ts";
 import type CharacterState from "@/engine/rulesets/dnd3.5/model/CharacterState.ts";
-import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import PowersPaths from "@/engine/rulesets/dnd3.5/model/powers/PowersPaths.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellLists.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { isTemplateValue } from "@/shared/customization/templateExpression.ts";
 import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
 import { SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
-import type { Modifier, Requirement } from "@/shared/relations.ts";
+import type { Modifier } from "@/shared/relations.ts";
 
-/** A 3.5 character's build: its data loaded, its components initialized, its modifiers applied in rounds. */
+/**
+ * A 3.5 character's build steps, which core's build runs (`CharacterBase.build`): its components set up, its
+ * spellcasting and weapon rules before the requirements, its proficiency penalties, its spellcasting after the
+ * modifiers, and its spells' DCs applied last.
+ */
 export function Builds<B extends Constructor<CharacterState>>(Base: B) {
   abstract class Building extends Base {
-    /**
-     * Applies the modifiers in rounds, so a modifier's requirements read the sheet the other modifiers have already
-     * changed (an item's Strength counts toward a feat's prerequisite): first those no requirement gates, then, round
-     * after round, the gated ones whose requirements the sheet now meets, until a round applies none. Each round checks
-     * only the requirements gating a modifier still waiting. A template modifier, which reads the sheet, applies last.
-     * The requirements are evaluated once more on the final sheet: the evaluation the templates, the power modifiers and
-     * the validation read.
-     */
-    private applyModifiersInRounds(modifiers: Modifier[]): void {
-      const components = this.builtComponents!;
-      const groups = this.data.requirementGroups.filter((group) => group.length > 0);
-      const gateKey = (r: Requirement) => `${r.entityId}:${r.entityType}`;
-      const keysOf = (m: Modifier) => [`${m.sourceId}:${m.sourceType}`, `${m.id}:modifiers`];
-      const gateKeys = new Set(groups.flatMap((group) => group.map(gateKey)));
-      const literal = modifiers.filter((m) => !isTemplateValue(m.value));
-
-      for (const modifier of literal.filter((m) => !keysOf(m).some((key) => gateKeys.has(key))))
-        this.modifierEvaluator.evaluateModifier(modifier, components);
-
-      let waiting = literal.filter((m) => keysOf(m).some((key) => gateKeys.has(key)));
-      const appliedGated: Modifier[] = [];
-      while (waiting.length > 0) {
-        const waitingKeys = new Set(waiting.flatMap(keysOf));
-        const round = new RequirementEvaluator(this.targetPaths);
-        round.evaluateRequirements(
-          components,
-          groups.filter((group) => group.some((r) => waitingKeys.has(gateKey(r)))),
-          this.itemOf,
-        );
-        const blocked = round.getBlockedKeys();
-        const ready = waiting.filter((m) => !keysOf(m).some((key) => blocked.has(key)));
-        if (ready.length === 0) break;
-        for (const modifier of ready) this.modifierEvaluator.evaluateModifier(modifier, components);
-        appliedGated.push(...ready);
-        waiting = waiting.filter((m) => !ready.includes(m));
-      }
-
-      this.requirementEvaluator.evaluateRequirements(components, groups, this.itemOf);
-      // A modifier can break a requirement already met, another's or its own: the modifiers it gated stay applied (undoing
-      // them could loop, two modifiers breaking each other's), and validation reports them. A ready one a round skipped,
-      // or that reached nothing, didn't apply
-      const blockedAtTheEnd = this.requirementEvaluator.getBlockedKeys();
-      const appliedIds = new Set(this.modifierEvaluator.getModifiers().appliedModifiers.map((m) => m.id));
-      this.modifiersPastTheirGates = appliedGated.filter(
-        (m) => appliedIds.has(m.id) && keysOf(m).some((key) => blockedAtTheEnd.has(key)),
-      );
-      // The modifiers still waiting are recorded as gated out; the templates apply, or are, by the final evaluation
-      this.modifierEvaluator.evaluateModifiers(
-        components,
-        [...waiting, ...modifiers.filter((m) => isTemplateValue(m.value))],
-        this.requirementEvaluator,
-      );
-    }
-
     /**
      * Whether the character has a feat that changes this weapon rule (Weapon Finesse's): picked, granted or given by a
      * modifier. Only the feats it has are read.
@@ -79,6 +24,11 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
           (this.components.feats.getFeat(feat.name)?.possessed ?? false) &&
           FEAT_FIELDS.read(this.rulesetData.propertiesByEntity.get(feat.id) ?? [])[rule],
       );
+    }
+
+    /** Whether a modifier applies after the spellcasting: a spell's DC, which its school's and its list's read. */
+    protected isLateModifier(modifier: Modifier): boolean {
+      return PowersPaths.isPowerTarget(modifier.target);
     }
 
     protected normalizeData(): void {
@@ -171,39 +121,6 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
       // The loaded feats include those possession modifiers give: a finessed weapon's attack is what requirements read
       this.components.combat.applyWeaponFinesse(this.hasFeatWith("weaponFinesse"));
       this.components.combat.applyOversizedTwoWeaponFighting(this.hasFeatWith("oversizedTwoWeaponFighting"));
-    }
-
-    /**
-     * Builds the character from its rows (`rows`) in its ruleset's `view`: it reads nothing. A bonded creature's `master`
-     * comes built (`DetailedCharacterBonded`); a character of its own needs none.
-     */
-    build(rows: CharacterRows, view: RulesetView, _master?: DetailedCharacter) {
-      // 1. Assemble the data from the rows and the view: the feats and spells possession modifiers grant included
-      this.view = view;
-      this.data = this.createDataLoader().load(rows, view);
-
-      // 2. Normalize: each component's initialize, from the loaded data
-      this.normalizeData();
-
-      // 3. The components the evaluators walk
-      this.builtComponents = this.components;
-
-      // 4. Pre-requirement processing (the spellcasting component, a bonded creature's master and stat block)
-      this.preRequirementProcessing();
-
-      // 5. Post-requirement processing (proficiency penalties, which check requirements of their own)
-      this.postRequirementProcessing();
-
-      // 6. Non-power modifiers, and the requirements that gate them
-      const powerModifiers = this.data.modifiers.filter((m) => PowersPaths.isPowerTarget(m.target));
-      const otherModifiers = this.data.modifiers.filter((m) => !PowersPaths.isPowerTarget(m.target));
-      this.applyModifiersInRounds(otherModifiers);
-
-      // 7. Post-modifier processing: the spellcasting (bonus caster levels, bonus spells, known spells)
-      this.postModifierProcessing();
-
-      // 8. Power modifiers, gated by the final requirement evaluation
-      this.modifierEvaluator.evaluateModifiers(this.builtComponents, powerModifiers, this.requirementEvaluator);
     }
   }
 

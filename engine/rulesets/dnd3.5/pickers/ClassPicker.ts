@@ -1,23 +1,28 @@
 import { type CharacterInput, CharacterProjection, type PlannedSoFar } from "@/engine/core/module/index.ts";
+import { CharacterPicker } from "@/engine/core/pickers/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
+import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import Dnd35CharacterBuilder from "@/engine/rulesets/dnd3.5/model/Dnd35CharacterBuilder.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import type { Klass, KlassLevel, Requirement } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
-
-import CharacterPicker from "./CharacterPicker.ts";
 
 /**
  * The class picker for the character, from its rows and what the level-up wizard plans so far: a player character's
  * classes (`filters`), each the character can take another level of offered with that level and its class's last, and
  * checked with that level added; highest next level first, then by name.
  */
-export default class ClassPicker extends CharacterPicker<Klass, { maxLevel: number; nextLevel: number }> {
+export default class ClassPicker extends CharacterPicker<
+  DetailedCharacter,
+  Klass,
+  { maxLevel: number; nextLevel: number }
+> {
   constructor(
     view: RulesetView,
     input: CharacterInput,
     private readonly planned: PlannedSoFar,
   ) {
-    super(view, input);
+    super(view, input, Dnd35CharacterBuilder);
   }
 
   /** What the picker offers: a player character's classes. */

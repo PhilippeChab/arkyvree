@@ -1,3 +1,5 @@
+import type { FieldValues } from "@/engine/core/fields/index.ts";
+
 import type { Module, SeededFields } from "./Modules.ts";
 
 /** The engine bound to a base rules' content, which the seeders and the codegen ask before any ruleset has a view. */
@@ -10,7 +12,7 @@ export default class ContentEngine {
   }
 
   /** An entity's fields as the properties that keep them: what a seeder writes for them. */
-  toEntityProperties<K extends keyof SeededFields>(entityType: K, fields: SeededFields[K]) {
+  toEntityProperties<K extends keyof SeededFields>(entityType: K, fields: FieldValues<SeededFields[K]>) {
     return this.module.content.toEntityProperties(entityType, fields);
   }
 }
