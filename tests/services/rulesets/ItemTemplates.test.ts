@@ -290,6 +290,113 @@ describe("Item templates", () => {
     });
   });
 
+  describe("keep their type while items are made from them", () => {
+    test("refused before any copy is made, naming an item made from it", async () => {
+      const { session, ruleset, template, instance } = await setup();
+      await instance("Club");
+      const club = await template("Club");
+      const edit = { name: club.name, type: "Armor" };
+      expect(ItemsService.updateItem(session, ruleset.id, club.id, edit)).rejects.toThrow(
+        `Can't change the Weapon template "Club" to Armor while items are made from it: "My Club"`,
+      );
+      await expectRefusedWith(ItemsService.updateItem(session, ruleset.id, club.id, edit), 422);
+      expect(await EntitySnapshots.findOne(db, { rulesetId: ruleset.id, sourceEntityId: club.id })).toBeUndefined();
+    });
+
+    test("refused for the items another ruleset makes from it, counting them", async () => {
+      const { session, ruleset, template } = await setup();
+      const sword = await template("Longsword");
+      expect(
+        ItemsService.updateItem(session, ruleset.id, sword.id, { name: sword.name, type: "Shield" }),
+      ).rejects.toThrow(
+        /^Can't change the Weapon template "Longsword" to Shield while items are made from it: ".+" and \d+ more$/,
+      );
+    });
+
+    test("refused for an item made from the original its copy stands for", async () => {
+      const { session, ruleset, template, instance } = await setup();
+      await instance("Club");
+      const club = await template("Club");
+      const local = await ItemsService.updateItem(session, ruleset.id, club.id, {
+        name: club.name,
+        description: "Local",
+      });
+      expect(local.id).not.toBe(club.id);
+      await expectRefusedWith(
+        ItemsService.updateItem(session, ruleset.id, local.id, { name: local.name, type: "Armor" }),
+        422,
+      );
+      expect(await Items.findOne(db, { id: local.id })).toMatchObject({ type: "Weapon" });
+    });
+
+    test("changed when no item is made from it", async () => {
+      const { session, ruleset, template } = await setup();
+      const club = await template("Club");
+      expect(
+        await ItemsService.updateItem(session, ruleset.id, club.id, { name: club.name, type: "Shield" }),
+      ).toMatchObject({ isTemplate: true, type: "Shield", slot: "Off Hand" });
+    });
+
+    test("changed to the type the items made from it already are", async () => {
+      const { session, ruleset } = await setup();
+      const old = await ItemsService.createItem(session, ruleset.id, { name: "Old", type: "Weapon", isTemplate: true });
+      await Items.create(db, { rulesetId: ruleset.id, name: "Old Mail", type: "Armor", sourceItemId: old.id });
+      expect(
+        await ItemsService.updateItem(session, ruleset.id, old.id, { name: old.name, type: "Armor" }),
+      ).toMatchObject({ type: "Armor" });
+    });
+  });
+
+  describe("are of a type an item can be based on a template of", () => {
+    test.each([
+      ["a Ring", "Ring"],
+      ["an item without a type", null],
+    ])("refused as %s when created", async (_what, type) => {
+      const { session, ruleset } = await setup();
+      expect(
+        ItemsService.createItem(session, ruleset.id, { name: "Odd Template", type, isTemplate: true }),
+      ).rejects.toThrow(`Item type ${type ?? "None"} can't be a template: only Weapon, Armor, Shield can`);
+      await expectRefusedWith(
+        ItemsService.createItem(session, ruleset.id, { name: "Odd Template", type, isTemplate: true }),
+        422,
+      );
+      expect(await Items.findOne(db, { rulesetId: ruleset.id, name: "Odd Template" })).toBeUndefined();
+    });
+
+    test("refused when an edit changes one to another", async () => {
+      const { session, ruleset, template } = await setup();
+      const club = await template("Club");
+      await expectRefusedWith(
+        ItemsService.updateItem(session, ruleset.id, club.id, { name: club.name, type: "Wondrous Item" }),
+        422,
+      );
+      await expectRefusedWith(
+        ItemsService.updateItem(session, ruleset.id, club.id, { name: club.name, type: null }),
+        422,
+      );
+    });
+
+    test("kept by an edit of one stored with another, which can change it to one", async () => {
+      const { session, ruleset } = await setup();
+      const [ring] = await Items.create(db, {
+        rulesetId: ruleset.id,
+        name: "Old Ring",
+        type: "Ring",
+        isTemplate: true,
+      });
+      expect(
+        await ItemsService.updateItem(session, ruleset.id, ring.id, {
+          name: ring.name,
+          type: "Ring",
+          description: "Still a ring",
+        }),
+      ).toMatchObject({ type: "Ring", description: "Still a ring" });
+      expect(
+        await ItemsService.updateItem(session, ruleset.id, ring.id, { name: ring.name, type: "Weapon" }),
+      ).toMatchObject({ type: "Weapon" });
+    });
+  });
+
   test("an inherited one is edited into a local copy, leaving the original", async () => {
     const { session, ruleset, template } = await setup();
     const mace = await template("Heavy Mace");
@@ -321,5 +428,17 @@ describe("Item templates", () => {
       isTemplate: true,
     });
     expect((await ItemsService.deleteItem(session, ruleset.id, unused.id)).id).toBe(unused.id);
+  });
+
+  test("can't be deleted while an item is made from the original their copy stands for", async () => {
+    const { session, ruleset, template, instance } = await setup();
+    await instance("Club");
+    const club = await template("Club");
+    const local = await ItemsService.updateItem(session, ruleset.id, club.id, {
+      name: club.name,
+      description: "Local",
+    });
+    await expectRefusedWith(ItemsService.deleteItem(session, ruleset.id, local.id), 409);
+    expect((await ItemsService.getTemplates(ruleset.id, "Weapon")).map((item) => item.id)).toContain(local.id);
   });
 });

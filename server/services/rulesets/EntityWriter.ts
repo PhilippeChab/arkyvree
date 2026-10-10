@@ -169,15 +169,16 @@ export default class EntityWriter<Row extends { id: string; name: string }, Inse
   }
 
   /**
-   * An entity's update, as its rules plan it (`plan`) from its form (`body`): the row the view's entity resolves to (the
-   * ruleset's own, or its copy, made on its first edit) updated, refused when stale (`body.updatedAt`, a copy's never
-   * is), its list links replaced, and what the plan writes beside it. The row written, with the fields the plan keeps.
+   * An entity's update, as its rules plan it (`plan`, given the transaction to read what the plan needs) from its form
+   * (`body`): the row the view's entity resolves to (the ruleset's own, or its copy, made on its first edit) updated,
+   * refused when stale (`body.updatedAt`, a copy's never is), its list links replaced, and what the plan writes beside
+   * it. The row written, with the fields the plan keeps.
    */
   async update<P extends EntityEditPlan<Partial<Insert>, object, PlannedEntity>>(
     session: Session,
     rulesetId: string,
     body: { name: string; updatedAt?: string },
-    plan: (scope: RulesetScope) => P,
+    plan: (scope: RulesetScope, reads: { tx: Db }) => P | Promise<P>,
     /** What its activity compares with the entity it was, for its changed fields: the body, unless the row says better. */
     compare: (row: Row) => object = () => body,
   ): Promise<Row & P["fields"]> {
@@ -186,7 +187,7 @@ export default class EntityWriter<Row extends { id: string; name: string }, Inse
         await withRulesetScope(tx, rulesetId, async (scope) => {
           (await RulesetsPolicy.for(tx, session, scope.ruleset)).canUpdateEntity();
 
-          const planned = plan(scope);
+          const planned = await plan(scope, { tx });
           const { id: targetId, copied } = await new EntityEdit(scope.ruleset).cowToEdit(tx, this.type, planned.entity);
           const expectedUpdatedAt = copied ? undefined : body.updatedAt;
           const rows = await this.repository.update(tx, planned.columns, { id: targetId, expectedUpdatedAt });

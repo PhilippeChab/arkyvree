@@ -71,26 +71,10 @@ export default class ItemEntity extends CustomizationPageEntity<
 
   override readonly type = "items";
 
-  /**
-   * Refuses a template made from another item (a template is its copies' source, never one's copy), and an item based on
-   * anything but a template of its type (the one its form gives, or the one it keeps), which it would read its
-   * properties and requirements off: a weapon's, an armor's or a shield's.
-   */
+  /** Refuses a template's form (`checkTemplate`), or an item's based on a template (`checkTemplateOf`). */
   protected override checkForm(body: ItemBody, item?: Item) {
-    if ((item ? item.isTemplate : body.isTemplate) && body.sourceItemId)
-      throw new RulesError("unprocessable", "Template items cannot have a source item");
-    const templateId = this.templateIdOf(body, item);
-    if (!templateId) return;
-
-    const template = this.rulesetData.find("items", templateId);
-    if (!template?.isTemplate) throw new RulesError("unprocessable", "Source item is not a template of this ruleset");
-    const type = body.type === undefined ? (item?.type ?? null) : body.type;
-    if (template.type !== type || !isOneOf(type, TEMPLATE_ITEM_TYPES)) {
-      throw new RulesError(
-        "unprocessable",
-        `Item type ${type ?? "None"} can't be based on the ${template.type ?? "None"} template "${template.name}"`,
-      );
-    }
+    if (item ? item.isTemplate : body.isTemplate) this.checkTemplate(body, item);
+    else this.checkTemplateOf(body, item);
   }
 
   /** A form's columns: a new item's template, and whether it's one; an edited template keeps no source. */
@@ -128,10 +112,17 @@ export default class ItemEntity extends CustomizationPageEntity<
     return [...proficiency, ...requirements];
   }
 
-  /** An item as its page shows it, with where a character carrying it can place it (`placement`). */
+  /**
+   * An item as its page shows it, with where a character carrying it can place it (`placement`), and its template's
+   * name (`templateName`), which its editor shows while the template isn't one of its type.
+   */
   override describe(id: string) {
     const item = super.describe(id);
-    return { ...item, placement: ItemPlacement.describe(item, item.properties) };
+    return {
+      ...item,
+      placement: ItemPlacement.describe(item, item.properties),
+      templateName: this.templateNameOf(item.sourceItemId),
+    };
   }
 
   /** A page of the ruleset's items, each with its template's name. */
@@ -140,19 +131,14 @@ export default class ItemEntity extends CustomizationPageEntity<
     return {
       ...list,
       describe: <T extends Record<string, unknown> & { id: string }>(rows: T[]) =>
-        list.describe(rows).map((item) => ({
-          ...item,
-          templateName:
-            typeof item.sourceItemId === "string"
-              ? (this.rulesetData.itemsById.get(item.sourceItemId)?.name ?? null)
-              : null,
-        })),
+        list.describe(rows).map((item) => ({ ...item, templateName: this.templateNameOf(item.sourceItemId) })),
     };
   }
 
   /**
-   * Deleting an item: the item as the view has it, and, a template, the item whose copies the server reads
-   * (`copiesOf`, in any ruleset) for `checkCopies`, which refuses deleting a template that has any.
+   * Deleting an item: the item as the view has it, and, a template, the ids its copies hold (`copiesOf`: its own, and
+   * those it stands for), whose copies the server reads in any ruleset for `checkCopies`, which refuses deleting a
+   * template that has any.
    */
   override planDelete(itemId: string) {
     const plan = super.planDelete(itemId);
@@ -162,8 +148,67 @@ export default class ItemEntity extends CustomizationPageEntity<
         if (copies.length > 0)
           throw new RulesError("conflict", "Cannot delete a template item that has copies referencing it");
       },
-      copiesOf: plan.entity.isTemplate ? plan.entity.id : undefined,
+      copiesOf: plan.entity.isTemplate ? this.rulesetData.cow.getEquivalentIds(plan.entity.id) : undefined,
     };
+  }
+
+  /**
+   * An item's edit, and, a template's that changes its type, the ids its copies hold (`copiesOf`: its own, and those it
+   * stands for), whose copies the server reads in any ruleset for `checkCopies`, which refuses the change while any is
+   * of another type than the new one: it would read the properties and requirements of a template of another type.
+   */
+  override planEdit(itemId: string, body: ItemBody) {
+    const plan = super.planEdit(itemId, body);
+    const { entity: item } = plan;
+    const type = this.typeOf(body, item);
+    return {
+      ...plan,
+      checkCopies(copies: Pick<Item, "name" | "type">[]) {
+        const [copy, ...others] = copies.filter((made) => made.type !== type);
+        if (!copy) return;
+        const template = `the ${item.type ?? "None"} template "${item.name}"`;
+        const more = others.length > 0 ? ` and ${others.length} more` : "";
+        throw new RulesError(
+          "unprocessable",
+          `Can't change ${template} to ${type ?? "None"} while items are made from it: "${copy.name}"${more}`,
+        );
+      },
+      copiesOf: item.isTemplate && type !== item.type ? this.rulesetData.cow.getEquivalentIds(item.id) : undefined,
+    };
+  }
+
+  /**
+   * Refuses a template made from another item (a template is its copies' source, never one's copy), or of a type no
+   * item can be based on a template of: a new one's, or the one an edit changes it to (one it keeps stays).
+   */
+  private checkTemplate(body: ItemBody, template?: Item) {
+    if (body.sourceItemId) throw new RulesError("unprocessable", "Template items cannot have a source item");
+    const type = this.typeOf(body, template);
+    if ((!template || type !== template.type) && !isOneOf(type, TEMPLATE_ITEM_TYPES)) {
+      throw new RulesError(
+        "unprocessable",
+        `Item type ${type ?? "None"} can't be a template: only ${TEMPLATE_ITEM_TYPES.join(", ")} can`,
+      );
+    }
+  }
+
+  /**
+   * Refuses an item based on anything but a template of its type (the one its form gives, or the one it keeps), which
+   * it would read its properties and requirements off: a weapon's, an armor's or a shield's.
+   */
+  private checkTemplateOf(body: ItemBody, item?: Item) {
+    const templateId = this.templateIdOf(body, item);
+    if (!templateId) return;
+
+    const template = this.rulesetData.find("items", templateId);
+    if (!template?.isTemplate) throw new RulesError("unprocessable", "Source item is not a template of this ruleset");
+    const type = this.typeOf(body, item);
+    if (template.type !== type || !isOneOf(type, TEMPLATE_ITEM_TYPES)) {
+      throw new RulesError(
+        "unprocessable",
+        `Item type ${type ?? "None"} can't be based on the ${template.type ?? "None"} template "${template.name}"`,
+      );
+    }
   }
 
   /** The item a duplicate or variants are made from, as the view has it: refused when there's none of its id. */
@@ -190,9 +235,19 @@ export default class ItemEntity extends CustomizationPageEntity<
     return form.sourceItemId === undefined ? (item?.sourceItemId ?? null) : form.sourceItemId;
   }
 
+  /** The name of an item's template (`sourceItemId`, as the view resolves it): null for none. */
+  private templateNameOf(sourceItemId: unknown) {
+    return typeof sourceItemId === "string" ? (this.rulesetData.itemsById.get(sourceItemId)?.name ?? null) : null;
+  }
+
   /** The template an item made from `item` points at: `item` itself when it's a template, or its own template. */
   private templateOf(item: Item) {
     return item.isTemplate ? item.id : (item.sourceItemId ?? undefined);
+  }
+
+  /** The type a form saves an item with: the form's (null: none), or the one the edited item keeps. */
+  private typeOf(body: ItemBody, item?: Item) {
+    return body.type === undefined ? (item?.type ?? null) : body.type;
   }
 
   /**

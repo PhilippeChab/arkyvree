@@ -24,4 +24,5 @@ How the D&D 3.5 ruleset reads its rules where the SRD is ambiguous, and where it
 ## Content
 
 - **A school's Spell Focus stays.** The Spell Focus and Greater Spell Focus feats a school generates aren't removed with a spell (`SpellFocusFeats`), unlike a skill's Skill Focus, which goes with its skill (`SkillFocusFeats`).
+- **An item is made from a template of its own type.** Only a weapon, an armor or a shield is a template (`TEMPLATE_ITEM_TYPES`): an item's save refuses a template of another type, and a template's edit refuses a type change while items of another type are made from it, in any ruleset (`ItemEntity`).
 - **A class level may give 0 skill points.** A familiar uses its master's skills, so its seeded levels hold 0, and the class level form accepts it.
