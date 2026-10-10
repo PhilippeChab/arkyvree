@@ -64,7 +64,10 @@ export const PALADIN_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Paladin Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Smite Evil" }],
+    properties: [
+      { type: "FEAT_FAMILY", value: "Smite" },
+      { type: "FEAT_FAMILY", value: "Smite Evil" },
+    ],
   },
   {
     name: "Special Mount (Paladin)",

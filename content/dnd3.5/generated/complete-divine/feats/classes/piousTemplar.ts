@@ -61,6 +61,7 @@ export const PIOUS_TEMPLAR_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Pious Templar Class Feature"],
+    properties: [{ type: "FEAT_FAMILY", value: "Smite" }],
   },
   {
     name: "Spells per Day (Pious Templar)",

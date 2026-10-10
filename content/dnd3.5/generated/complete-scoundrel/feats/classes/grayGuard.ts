@@ -59,7 +59,10 @@ export const GRAY_GUARD_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Gray Guard Class Feature"],
-    properties: [{ type: "FEAT_FAMILY", value: "Smite Evil" }],
+    properties: [
+      { type: "FEAT_FAMILY", value: "Smite" },
+      { type: "FEAT_FAMILY", value: "Smite Evil" },
+    ],
   },
   {
     name: "Unbound Justice (Gray Guard)",

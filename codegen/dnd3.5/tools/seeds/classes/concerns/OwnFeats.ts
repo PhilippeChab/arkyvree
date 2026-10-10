@@ -4,7 +4,7 @@ import {
   type PerLevelExpansion,
 } from "@/codegen/dnd3.5/tools/seeds/classes/BaseClassSeeds.ts";
 import { GrantText } from "@/codegen/dnd3.5/tools/seeds/GrantText.ts";
-import { findClassFeatFamily } from "@/codegen/dnd3.5/tools/terms/classFeatFamilies.ts";
+import { findClassFeatFamilies } from "@/codegen/dnd3.5/tools/terms/classFeatFamilies.ts";
 import { insertOrdinalInName } from "@/codegen/dnd3.5/tools/text/names.ts";
 import { normalizeDescription } from "@/codegen/dnd3.5/tools/text/scrapedText.ts";
 import { type ClassReference } from "@/codegen/dnd3.5/tools/types/classes.ts";
@@ -115,7 +115,7 @@ export function OwnFeats<B extends Constructor<BaseClassSeeds>>(Base: B) {
           ...(poolLevel != null && poolLevel > 1 ? this.classLevelRequirement(poolLevel) : []),
         ];
         const isAutoGranted = feature.level != null && !feature.aptitude;
-        const family = lockedType ? FAVORED_ENEMY_FAMILY : findClassFeatFamily(name);
+        const families = lockedType ? [FAVORED_ENEMY_FAMILY] : findClassFeatFamilies(name);
         feats.push({
           name,
           description,
@@ -128,7 +128,7 @@ export function OwnFeats<B extends Constructor<BaseClassSeeds>>(Base: B) {
           aptitudes,
           ...(modifiers.length > 0 ? { modifiers } : {}),
           ...(requirements.length > 0 ? { requirements } : {}),
-          ...(family ? { properties: [{ type: FEAT_FAMILY, value: family }] } : {}),
+          ...(families.length > 0 ? { properties: families.map((value) => ({ type: FEAT_FAMILY, value })) } : {}),
         });
       }
 

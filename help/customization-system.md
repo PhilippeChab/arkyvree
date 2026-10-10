@@ -182,6 +182,7 @@ Built-in families on the SRD ruleset and its extensions:
 | `luck` | Complete Scoundrel's luck feats |
 | `draconic` | Complete Arcane's draconic feats (Draconic Heritage, Draconic Breath…) |
 | `turnorrebukeundead`, `wildshape`, `favoredenemy` | class-feature feats |
+| `smite` | any smite: a paladin's smite evil, a blackguard's smite good, a hunter of the dead's smite undead… |
 | `sneakattack`, `rage`, `evasion`, `smiteevil`, `bardicmusic`… | a class feature several classes have, each class's its own feat ("Sneak Attack (Rogue)") |
 
 ### Skill families — `skills.<family>.rank`

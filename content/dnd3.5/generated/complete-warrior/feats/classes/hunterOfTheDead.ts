@@ -32,6 +32,7 @@ export const HUNTER_OF_THE_DEAD_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Hunter of the Dead Class Feature"],
+    properties: [{ type: "FEAT_FAMILY", value: "Smite" }],
   },
   {
     name: "Spells (Hunter of the Dead)",

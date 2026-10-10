@@ -52,6 +52,7 @@ export const SAMURAI_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Samurai Class Feature"],
+    properties: [{ type: "FEAT_FAMILY", value: "Smite" }],
   },
   {
     name: "Mass Staredown (Samurai)",

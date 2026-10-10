@@ -57,6 +57,8 @@ export const FEAT_FAMILIES = [
   // Class features
   "Turn or Rebuke Undead",
   "Wild Shape",
+  // Any smite, smite evil's and the others' (a "smite ability")
+  "Smite",
   FAVORED_ENEMY_FAMILY,
   ...CLASS_FEATURE_FAMILIES,
 ] as const;

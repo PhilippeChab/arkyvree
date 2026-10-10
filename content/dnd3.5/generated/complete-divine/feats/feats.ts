@@ -170,7 +170,10 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description:
       "Your smite attacks bypass damage reduction as though they were aligned, and they inflict an additional +1d6 damage to creatures of a specific opposing alignment. If your smite already has an inherent alignment (such as a paladin's smite evil being good-aligned), it deals the extra damage to foes of that alignment and overcomes DR as the opposite alignment. If your smite lacks an inherent alignment, you select one alignment component (chaotic, evil, good, or lawful) when taking this feat; your smites then overcome DR as that alignment and deal +1d6 extra damage to foes of the opposing alignment. The chosen component must match part of your own alignment, and this selection is permanent. Changing your alignment so the chosen component no longer applies causes you to lose this feat's benefits.",
     aptitudes: ["General"],
-    requirements: [gte("abilities.charisma.total", 13), eq("feats.smiteevil.*.possessed")],
+    requirements: [
+      gte("abilities.charisma.total", 13),
+      or(eq("feats.smite.*.possessed"), eq("feats.destructiondomain.possessed")),
+    ],
   },
   {
     name: "Practiced Spellcaster",

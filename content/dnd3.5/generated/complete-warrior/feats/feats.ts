@@ -403,7 +403,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
       "You gain two additional smite attempts per day, applicable to whichever smite ability you possess (such as a paladin's smite evil or similar class features).",
     stackable: true,
     aptitudes: ["General"],
-    requirements: [gte("combat.bab", 4), eq("feats.smiteevil.*.possessed")],
+    requirements: [gte("combat.bab", 4), or(eq("feats.smite.*.possessed"), eq("feats.destructiondomain.possessed"))],
   },
   {
     name: "Extra Stunning",

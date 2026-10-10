@@ -63,6 +63,7 @@ export const BLACKGUARD_CLASS_FEATS: FeatSeed[] = [
     stackable: true,
     selectable: false,
     aptitudes: ["Blackguard Class Feature"],
+    properties: [{ type: "FEAT_FAMILY", value: "Smite" }],
   },
   {
     name: "Sneak Attack (Blackguard)",
