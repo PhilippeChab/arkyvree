@@ -2,16 +2,20 @@
 
 import { wholeNumberError } from "@/client/src/lib/validation.ts";
 
-/** A level whose hit points the step sets: its class and level, and the die it rolls. */
+/**
+ * A level whose hit points the step sets: its class and level, the die it rolls, and the hit points it may gain, as its
+ * rules answer them (`hitPoints`: the least, the most and the average).
+ */
 export interface HpLevel {
   className: string;
   hd: number;
+  hitPoints: { average: number; max: number; min: number };
   nextLevel: number;
 }
 
-/** What's wrong with a level's hit points: a whole number from 1 to its die, or nothing. */
+/** What's wrong with a level's hit points: a whole number within the bounds its rules answer, or nothing. */
 export function hpError(value: number, level: HpLevel) {
-  return wholeNumberError(value, 1, level.hd);
+  return wholeNumberError(value, level.hitPoints.min, level.hitPoints.max);
 }
 
 /** Whether every level has its hit points, each one right: the step's Next, and the save after it, wait for it. */

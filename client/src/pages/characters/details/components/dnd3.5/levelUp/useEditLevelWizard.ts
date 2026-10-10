@@ -1,11 +1,11 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useCallback, useMemo } from "react";
 import { useController } from "react-hook-form";
 
 import type { EditingLevel } from "@/client/src/components/characters/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useFormSync, useListboxQuery } from "@/client/src/hooks/index.ts";
+import { useDebouncedValue, useFormSync, useListboxQuery } from "@/client/src/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import { fitFeats, fitPowers, fitSkillPoints, openPoolOf } from "./fitPicks.ts";
@@ -19,8 +19,7 @@ import {
   type PickerLevel,
   type StepLevel,
 } from "./levelUpQueries.ts";
-import { abilityIncreasesOf, featPickString, powerPickString } from "./pendingPicks.ts";
-import { editedLevelSkills } from "./skillLevels.ts";
+import { abilityIncreasesOf, featPickString, powerPickString, skillPointString } from "./pendingPicks.ts";
 import { type LevelUpFormData, pickIds, useLevelWizardBase } from "./useLevelWizardBase.ts";
 import { HP_STEP, REVIEW_STEP } from "./wizardSteps.ts";
 
@@ -97,9 +96,17 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevel }:
 
   // The HP step's one level, the edited one, its HP the form's field
   const { field: hpField } = useController({ control, name: "selectedHP" });
-  const hpLevels: HpLevel[] = selectedClass
-    ? [{ className: selectedClass.name, hd: selectedClass.hd, nextLevel: selectedClass.nextLevel }]
-    : [];
+  const hpLevels: HpLevel[] =
+    selectedClass && levelData
+      ? [
+          {
+            className: selectedClass.name,
+            hd: selectedClass.hd,
+            hitPoints: levelData.hitPoints,
+            nextLevel: selectedClass.nextLevel,
+          },
+        ]
+      : [];
 
   // The edited level's class and level, which the slot and picker endpoints take.
   const step: StepLevel = {
@@ -117,21 +124,23 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevel }:
   // The edited level with its ability increase, which its skill points, its slots and its pickers' options read
   const increasedStep: StepLevel = { ...step, abilityId: selectedAttribute ?? undefined };
 
+  // The skill points spent so far, which the skills step says what they come to: sent once the typing settles, the
+  // step's last answer kept meanwhile
+  const debouncedSkillPoints = useDebouncedValue(picked.skillPoints);
   const {
     data: skillData,
     isLoading: isLoadingSkills,
     error: skillsError,
   } = useQuery({
-    ...levelStepQuery(characterId, "skills", increasedStep),
+    ...levelStepQuery(characterId, "skills", { ...increasedStep, skillPoints: skillPointString(debouncedSkillPoints) }),
     enabled: open && stepName === "skills",
+    placeholderData: keepPreviousData,
   });
 
-  // The edited level's class skills and points, which the skills step and the review spend the points over
-  const skillLevels = useMemo(() => skillData && editedLevelSkills(skillData), [skillData]);
   // The skill points, fitted to the level's: its ability increase changes how many it has
   const skillPointAllocations = useMemo(
-    () => fitSkillPoints(picked.skillPoints, skillData, skillLevels),
-    [picked.skillPoints, skillData, skillLevels],
+    () => fitSkillPoints(picked.skillPoints, skillData?.skills),
+    [picked.skillPoints, skillData],
   );
 
   const {
@@ -281,7 +290,6 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevel }:
     skillData,
     isLoadingSkills,
     skillsError,
-    skillLevels,
     featData,
     isLoadingFeats,
     featsError,

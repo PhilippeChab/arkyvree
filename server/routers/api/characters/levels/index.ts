@@ -58,10 +58,26 @@ const plannedIncreaseList = z
   .optional()
   .transform((value) => value?.split(",").map((level) => increaseList.parse(level)));
 
+/** Comma-separated `skillId:points` points spent on each skill: what isn't one is dropped. */
+const skillPoints = z
+  .string()
+  .optional()
+  .transform((value) =>
+    value === undefined
+      ? undefined
+      : Object.fromEntries(
+          value
+            .split(",")
+            .map((pair) => pair.split(":"))
+            .filter(([skillId, points]) => isUuid(skillId) && !isNaN(Number(points)))
+            .map(([skillId, points]) => [skillId, Number(points)]),
+        ),
+  );
+
 /**
  * The level a step is for: class `classId`'s `level` (which a step that reads its class requires) with its ability
  * increases, after the levels the wizard plans before it (`plannedClassLevelIds`, with their ability increases), or a
- * saved level's edit (`editedLevelId`).
+ * saved level's edit (`editedLevelId`), and the skill points spent at it so far (`skillPoints`).
  */
 const stepQuery = {
   abilityIncreases: increaseList.optional(),
@@ -70,6 +86,7 @@ const stepQuery = {
   level: queryNumber.optional(),
   plannedAbilityIncreases: plannedIncreaseList,
   plannedClassLevelIds: idList,
+  skillPoints,
 };
 
 /**
@@ -86,22 +103,6 @@ const pickerQuery = {
   page,
   search: z.string().optional(),
 };
-
-/** Comma-separated `skillId:points` points spent on each skill: what isn't one is dropped. */
-const skillPoints = z
-  .string()
-  .optional()
-  .transform((value) =>
-    value === undefined
-      ? undefined
-      : Object.fromEntries(
-          value
-            .split(",")
-            .map((pair) => pair.split(":"))
-            .filter(([skillId, points]) => isUuid(skillId) && !isNaN(Number(points)))
-            .map(([skillId, points]) => [skillId, Number(points)]),
-        ),
-  );
 
 /** A step's name, as its ruleset lists it. */
 const stepParams = characterIdParam.extend({ step: z.string().min(1) });
@@ -248,12 +249,13 @@ export default new Hono<SessionContext>()
             }),
           )
           .min(1),
+        skills: z.record(z.string().uuid(), z.number().int().min(0)).default({}),
       }),
     ),
     async (c) => {
       const { characterId } = c.req.valid("param");
-      const { levels } = c.req.valid("json");
-      return c.json(await CharacterLevelsService.getPreview(c.var.requestSession, characterId, levels), 200);
+      const { levels, skills } = c.req.valid("json");
+      return c.json(await CharacterLevelsService.getPreview(c.var.requestSession, characterId, levels, skills), 200);
     },
   )
   .put(

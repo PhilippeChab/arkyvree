@@ -94,13 +94,15 @@ export interface LevelsPlan {
 /**
  * The level a level-up wizard's step is for, as the wizard asks for it: class `klassId`'s `level` (a step that reads the
  * level's class refuses to answer without them) and its ability increases, after the levels the wizard plans before
- * it (`planned`), or in the place of the saved level it edits (`editedLevelId`).
+ * it (`planned`), or in the place of the saved level it edits (`editedLevelId`), and what the wizard picked at it so far
+ * (`picks`), which the step says what it comes to.
  */
 export interface LevelStep {
   abilityIncreases?: AbilityIncrease[];
   editedLevelId?: string;
   klassId?: string;
   level?: number;
+  picks?: Partial<LevelPicks>;
   planned?: Pick<PlannedSoFar, "abilityIncreases" | "klassLevelIds">;
 }
 

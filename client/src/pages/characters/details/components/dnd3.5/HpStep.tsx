@@ -34,7 +34,10 @@ export function HpStep({ wizard }: HpStepProps) {
 
   const rollLevels = (indexes: number[]) =>
     diceRoll.roll(
-      indexes.map((index) => ({ key: String(index), roll: () => rollDie(levels[index].hd) })),
+      indexes.map((index) => {
+        const { max, min } = levels[index].hitPoints;
+        return { key: String(index), roll: () => min - 1 + rollDie(max - min + 1) };
+      }),
       (key, hp) => handleHpChange(Number(key), hp),
     );
 
@@ -45,7 +48,7 @@ export function HpStep({ wizard }: HpStepProps) {
         <RollAllButton onClick={() => rollLevels(levels.map((_, index) => index))} disabled={diceRoll.rolling} />
         <Button
           onClick={() => {
-            for (const [index, level] of levels.entries()) handleHpChange(index, level.hd);
+            for (const [index, level] of levels.entries()) handleHpChange(index, level.hitPoints.max);
           }}
           size="small"
           disabled={diceRoll.rolling}
@@ -75,12 +78,17 @@ export function HpStep({ wizard }: HpStepProps) {
                   >
                     <CasinoIcon />
                   </IconButton>
-                  <Button size="small" onClick={() => handleHpChange(index, level.hd)} disabled={diceRoll.rolling}>
+                  <Button
+                    size="small"
+                    onClick={() => handleHpChange(index, level.hitPoints.max)}
+                    disabled={diceRoll.rolling}
+                  >
                     Max
                   </Button>
                 </Stack>
                 <Typography variant="body2" sx={{ color: "text.secondary" }} gutterBottom>
-                  Enter HP gain (1 to {level.hd}). Average: {Math.ceil(level.hd / 2)}, Maximum: {level.hd}
+                  Enter HP gain ({level.hitPoints.min} to {level.hitPoints.max}). Average: {level.hitPoints.average},
+                  Maximum: {level.hitPoints.max}
                 </Typography>
               </Box>
               <TextField
@@ -97,7 +105,7 @@ export function HpStep({ wizard }: HpStepProps) {
                   animation: diceRoll.hasLanded(String(index)) ? settleAnimation : undefined,
                   [PREFERS_REDUCED_MOTION]: { animation: "none" },
                 }}
-                slotProps={{ htmlInput: { min: 1, max: level.hd, step: 1 } }}
+                slotProps={{ htmlInput: { min: level.hitPoints.min, max: level.hitPoints.max, step: 1 } }}
               />
             </Stack>
           );

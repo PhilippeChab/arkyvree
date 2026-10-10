@@ -127,15 +127,17 @@ class CharacterLevelsService extends include(Object, Pickers, Steps) {
 
   /**
    * The level-up wizard's preview of the levels the character plans (`levels`, each with its ability increases): the
-   * pools they merge, each level's skill points, and how the picks spread over them.
+   * pools they merge, each level's skill points, how the picks spread over them, and what the skill points spent so
+   * far (`skills`, by skill, in the form's order) come to.
    */
   async getPreview(
     session: Session,
     characterId: string,
     levels: Array<{ abilityIncreases: AbilityIncrease[]; klassId: string; level: number }>,
+    skills: Record<string, number>,
   ) {
     return await withEditableCharacter(db, session, characterId, (scope, character) =>
-      Engine.for(scope).character(character).levelUp().describePreview(levels),
+      Engine.for(scope).character(character).levelUp().describePreview(levels, { skills }),
     );
   }
 

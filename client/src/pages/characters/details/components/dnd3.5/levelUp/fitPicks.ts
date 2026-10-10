@@ -6,15 +6,14 @@
  */
 
 import type { AptitudePool, PowerAptitudePool, SkillsData } from "./levelUpQueries.ts";
-import { maxSkillPoints, type SkillLevels, type SkillLimit } from "./skillLevels.ts";
 import type { LevelUpFormData } from "./useLevelWizardBase.ts";
 
 type Feats = LevelUpFormData["selectedFeats"];
 
 type Powers = LevelUpFormData["selectedPowers"];
 
-/** What the skill slots say a level's points may go to: their total, and each skill's limit. */
-type SkillLimits = Pick<SkillsData, "skillPointsToSpend" | "totalCharacterLevel"> & { skills: SkillLimit[] };
+/** A skill as its skills step answers it: its ranks at each count of points, up to the most it keeps. */
+type SpentSkill = Pick<SkillsData["skills"][number], "id" | "ranksByPoints">;
 
 /** The feat pools grown by the picked feats' "add" aptitude modifiers. */
 function growFeatPools(aptitudePools: Record<string, AptitudePool>, feats: Feats) {
@@ -91,34 +90,19 @@ export function fitPowers(powers: Powers, aptitudePools: Record<string, PowerApt
 }
 
 /**
- * The skill points each skill may take (its rank cap, the points its levels give it) within the level's total, in the
- * order they were given. Until the slots load, the points stand.
+ * The skill points the form gave each skill, as its skills step answers them: each up to the most it keeps whole as the
+ * save spreads them (its `ranksByPoints`), in the order they were given. Until the step loads, the points stand.
  */
-export function fitSkillPoints(
-  allocations: Record<string, number>,
-  limits: SkillLimits | null | undefined,
-  levels: SkillLevels | undefined,
-) {
-  if (!limits || !levels) return allocations;
+export function fitSkillPoints(allocations: Record<string, number>, skills: SpentSkill[] | undefined) {
+  if (!skills) return allocations;
+  const byId = new Map(skills.map((skill) => [skill.id, skill]));
   let changed = false;
-  let total = 0;
   const fitted: Record<string, number> = {};
   for (const [skillId, points] of Object.entries(allocations)) {
-    const skill = limits.skills.find((s) => s.id === skillId);
-    if (!skill || points <= 0) {
-      changed = true;
-      continue;
-    }
-    const clamped = Math.min(
-      points,
-      maxSkillPoints(skill, limits.totalCharacterLevel, levels),
-      limits.skillPointsToSpend - total,
-    );
-    if (clamped !== points) changed = true;
-    if (clamped > 0) {
-      fitted[skillId] = clamped;
-      total += clamped;
-    }
+    const skill = byId.get(skillId);
+    const kept = skill ? Math.min(points, skill.ranksByPoints.length - 1) : 0;
+    if (kept !== points) changed = true;
+    if (kept > 0) fitted[skillId] = kept;
   }
   return changed ? fitted : allocations;
 }

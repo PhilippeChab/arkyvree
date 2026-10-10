@@ -34,11 +34,15 @@ export default abstract class LevelUpPart<D extends Descriptions, C = unknown> i
   /** A saved level's selections, as its edit opens them: refused when the character has no such level. */
   abstract describeLevel(view: RulesetView, character: CharacterInput, characterLevelId: string): D["levelSelections"];
 
-  /** The wizard's preview of the levels the character plans, each with its ability increases. */
+  /**
+   * The wizard's preview of the levels the character plans, each with its ability increases, and of what the wizard
+   * picked over them so far (`picks`), which the preview says what it comes to.
+   */
   abstract describePreview(
     view: RulesetView,
     character: CharacterInput,
     levels: Omit<LevelRequest, "hp">[],
+    picks?: Partial<LevelPicks>,
   ): D["preview"];
 
   /**

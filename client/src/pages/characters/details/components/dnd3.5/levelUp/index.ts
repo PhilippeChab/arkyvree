@@ -18,7 +18,7 @@ export {
   type SelectedKlass,
   type SkillsData,
 } from "./levelUpQueries.ts";
-export { maxSkillPoints, type SkillLevels, skillRanks } from "./skillLevels.ts";
+export { pointsAt, ranksAt } from "./skillRanks.ts";
 export { type AddLevelWizard, useAddLevelWizard } from "./useAddLevelWizard.ts";
 export { type EditLevelWizard, useEditLevelWizard } from "./useEditLevelWizard.ts";
 export { type LevelUpFormData } from "./useLevelWizardBase.ts";

@@ -92,13 +92,14 @@ export type SkillsData = Unnamed<NamedStep<"skills">>;
 
 /**
  * The level a step is for, as the step and picker endpoints take it: its class and level, which the query waits for,
- * its ability increase, and the saved level it edits.
+ * its ability increase, the saved level it edits, and the skill points spent at it so far (`skillPointString`).
  */
 export interface StepLevel {
   abilityId?: string;
   classId: string | undefined;
   editedLevelId?: string;
   level: number | undefined;
+  skillPoints?: string;
 }
 
 /** The name of a step the ruleset lists for a level. */
@@ -110,13 +111,14 @@ function isNamed<N extends StepName>(step: LevelStepData, name: N): step is Name
 }
 
 /** The step's level as the endpoints' query, once its class and level are known. */
-function levelQueryOf({ abilityId, classId, level, editedLevelId }: StepLevel) {
+function levelQueryOf({ abilityId, classId, level, editedLevelId, skillPoints }: StepLevel) {
   if (!classId || level === undefined) return undefined;
   return {
     classId,
     level: level.toString(),
     abilityIncreases: abilityIncreaseString(abilityId) || undefined,
     editedLevelId: editedLevelId || undefined,
+    skillPoints: skillPoints || undefined,
   };
 }
 
@@ -267,14 +269,16 @@ export function characterLevelQuery(characterId: string, characterLevelId: strin
 }
 
 /**
- * What a plan of new levels gives the character: their attributes, skills, feat and spell slots, level by level. It
- * holds for as long as the plan does.
+ * What a plan of new levels gives the character, with their ability increases and the skill points spent over them so
+ * far (by skill, in the form's order): their attributes, skills, feat and spell slots, level by level. It holds for as
+ * long as the plan does.
  */
-export function levelPreviewQuery(characterId: string, levels: { klassId: string; level: number }[]) {
-  // The levels go without their ability increases, which the Add Level wizard applies itself (its attribute and skill
-  // point memos): sent, a refetch for a new plan would apply the current increases on the server too, and the memo
-  // would count them twice.
-  const body = { levels };
+export function levelPreviewQuery(
+  characterId: string,
+  levels: { abilityIncreases: { abilityId: string; amount: number }[]; klassId: string; level: number }[],
+  skills: Record<string, number>,
+) {
+  const body = { levels, skills };
   return queryOptions({
     queryKey: QUERY_KEYS.characters.levelUp.preview(characterId, body),
     queryFn: () =>

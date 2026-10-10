@@ -102,23 +102,23 @@ describe("fitting a level's spells to its pools", () => {
 });
 
 describe("fitting a level's skill points", () => {
-  const limits = {
-    skills: [
-      { id: "climb", isClassSkill: true, currentRank: 0 },
-      { id: "swim", isClassSkill: true, currentRank: 0 },
-    ],
-    totalCharacterLevel: 1,
-    skillPointsToSpend: 6,
-  };
-  const oneLevel = { classSkillIds: [["climb", "swim"]], points: [6] };
+  // As the step answers them: Climb keeps up to 4 points, Swim 2 with Climb's spent
+  const skills = [
+    { id: "climb", ranksByPoints: [0, 1, 2, 3, 4] },
+    { id: "swim", ranksByPoints: [0, 1, 2] },
+  ];
 
-  test("caps a skill at its rank and the points left, in the order given", () => {
-    expect(fitSkillPoints({ climb: 5, swim: 3 }, limits, oneLevel)).toEqual({ climb: 4, swim: 2 });
+  test("caps a skill at the most points its step answer keeps, in the order given", () => {
+    expect(fitSkillPoints({ climb: 5, swim: 3 }, skills)).toEqual({ climb: 4, swim: 2 });
   });
 
-  test("keeps points that fit, and every point while the slots load", () => {
+  test("drops a skill the step doesn't list, and points that buy nothing", () => {
+    expect(fitSkillPoints({ climb: 2, gone: 3, swim: 0 }, skills)).toEqual({ climb: 2 });
+  });
+
+  test("keeps points that fit, and every point while the step loads", () => {
     const allocations = { climb: 2 };
-    expect(fitSkillPoints(allocations, limits, oneLevel)).toBe(allocations);
-    expect(fitSkillPoints(allocations, null, undefined)).toBe(allocations);
+    expect(fitSkillPoints(allocations, skills)).toBe(allocations);
+    expect(fitSkillPoints(allocations, undefined)).toBe(allocations);
   });
 });

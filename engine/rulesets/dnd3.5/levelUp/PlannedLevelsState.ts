@@ -44,6 +44,19 @@ const PLANNED_LEVELS = z
  */
 export default abstract class PlannedLevelsState extends LevelUpState {
   /**
+   * Each planned level's points per level before the minimum, in the batch's order: its class's and the skill point
+   * ability's modifier.
+   */
+  private computeSkillPointBasesPerLevel(character: DetailedCharacter, klassLevelIds: string[]): number[] {
+    const { skills } = character.components;
+    return klassLevelIds.map((klassLevelId) =>
+      skills.getLevelPointsPerLevel(
+        CLASS_LEVEL_FIELDS.read(this.rulesetData.propertiesByEntity.get(klassLevelId) ?? []).skills,
+      ),
+    );
+  }
+
+  /**
    * The planned levels (`klassLevelEntries`), built from the character's rows: the character with them (each with its
    * ability increase), and as saved.
    */
@@ -85,19 +98,6 @@ export default abstract class PlannedLevelsState extends LevelUpState {
       perLevelSkillPoints: this.computeSkillPointsPerLevel(character, klassLevelIds, savedLevelCount),
       pools,
     };
-  }
-
-  /**
-   * Each planned level's points per level before the minimum, in the batch's order: its class's and the skill point
-   * ability's modifier.
-   */
-  protected computeSkillPointBasesPerLevel(character: DetailedCharacter, klassLevelIds: string[]): number[] {
-    const { skills } = character.components;
-    return klassLevelIds.map((klassLevelId) =>
-      skills.getLevelPointsPerLevel(
-        CLASS_LEVEL_FIELDS.read(this.rulesetData.propertiesByEntity.get(klassLevelId) ?? []).skills,
-      ),
-    );
   }
 
   /** Each planned level's skill points, in the batch's order: the first counts four times over on a new character. */

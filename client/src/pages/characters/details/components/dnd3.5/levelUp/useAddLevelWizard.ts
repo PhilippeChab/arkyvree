@@ -2,12 +2,10 @@ import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { useCallback, useMemo, useRef, useState } from "react";
 
-import { computeAbilityModifier } from "@/client/src/components/characters/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { computeLevelSkillPoints } from "@/shared/dnd3.5/skills.ts";
 
 import { plannedLevel, plannedSlotKeys } from "./classPlan.ts";
 import { fitFeats, fitPowers, fitSkillPoints, openPoolOf } from "./fitPicks.ts";
@@ -32,7 +30,6 @@ import {
   skillPointString,
   spellSlotsPerLevel,
 } from "./pendingPicks.ts";
-import type { SkillLevels } from "./skillLevels.ts";
 import { pickIds, useLevelWizardBase } from "./useLevelWizardBase.ts";
 import { CLASS_PLAN_STEP, HP_STEP, REVIEW_STEP } from "./wizardSteps.ts";
 
@@ -118,30 +115,29 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     [levelKeys],
   );
 
-  const hpLevels = useMemo<HpLevel[]>(
-    () =>
-      adjustedClassPlan
-        .filter((k): k is SelectedKlass => k !== null)
-        .map((k) => ({ className: k.name, hd: k.hd, nextLevel: k.nextLevel })),
-    [adjustedClassPlan],
-  );
-
   const handleAbilityIncreaseChange = useCallback(
     (index: number, abilityId: string) => setAbilityBySlot((prev) => ({ ...prev, [levelKeys[index]]: abilityId })),
     [levelKeys],
   );
 
-  // In plan order: the preview's levels pair by index with the plan's HP and ability increases.
+  // In plan order: the preview's levels pair by index with the plan's HP and ability increases. Each takes its slot's
+  // ability, which the preview raises at a level that takes an increase only
   const plannedLevels = useMemo(
     () =>
       adjustedClassPlan
         .filter((k): k is SelectedKlass => k !== null)
-        .map((k) => ({ klassId: k.id, level: k.nextLevel })),
-    [adjustedClassPlan],
+        .map((k, index) => ({
+          klassId: k.id,
+          level: k.nextLevel,
+          abilityIncreases: abilityIncreasesOf(abilityBySlot[levelKeys[index]]),
+        })),
+    [adjustedClassPlan, abilityBySlot, levelKeys],
   );
+  // The skill points spent so far, which the preview says what they come to: sent once the typing settles
+  const debouncedSkillPoints = useDebouncedValue(picked.skillPoints);
 
   const previewQuery = useQuery({
-    ...levelPreviewQuery(characterId, plannedLevels),
+    ...levelPreviewQuery(characterId, plannedLevels, debouncedSkillPoints),
     enabled: open && validClassPlan.length >= 1 && activeStep > 0,
     placeholderData: keepPreviousData,
   });
@@ -157,76 +153,30 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     [levelKeys, abilityBySlot, abilityIncreaseLevels],
   );
 
+  // The character's abilities with the plan's increases, at the levels that take one
   const attributeData = useMemo(() => {
     if (!previewQuery.data) return undefined;
     if (abilityIncreaseLevels.length === 0) return { isAvailable: false as const, attributes: {} };
+    return { isAvailable: true as const, attributes: previewQuery.data.attributes.attributes };
+  }, [previewQuery.data, abilityIncreaseLevels]);
 
-    // Adjust attributes client-side for user-selected ability increases
-    // (preview is cached per class plan only, doesn't refire on ability changes).
-    const baseAttrs = previewQuery.data.attributes.attributes;
-    const increaseCounts: Record<string, number> = {};
-    for (const abilityId of Object.values(abilityIncreases))
-      if (abilityId) increaseCounts[abilityId] = (increaseCounts[abilityId] ?? 0) + 1;
-
-    const adjusted = Object.fromEntries(
-      Object.entries(baseAttrs).map(([key, attr]) => {
-        const bonus = increaseCounts[attr.abilityId] ?? 0;
-        if (bonus === 0) return [key, attr];
-        const newTotal = attr.total + bonus;
-        return [
-          key,
-          { ...attr, level: attr.level + bonus, total: newTotal, modifier: computeAbilityModifier(newTotal) },
-        ];
-      }),
-    );
-
-    return {
-      isAvailable: true as const,
-      attributes: adjusted,
-    };
-  }, [previewQuery.data, abilityIncreaseLevels, abilityIncreases]);
+  // The planned levels whose hit points the HP step sets, as the preview lists them, with the hit points each may gain
+  const hpLevels = useMemo<HpLevel[]>(
+    () =>
+      (previewQuery.data?.levelDetails ?? []).map((detail) => ({
+        className: detail.klassName,
+        hd: detail.hd,
+        hitPoints: detail.hitPoints,
+        nextLevel: detail.level,
+      })),
+    [previewQuery.data],
+  );
 
   const isLoadingAttributes = previewQuery.isLoading;
   const attributesError = previewQuery.error;
 
-  // Skill data (from preview)
-  const perLevelClassSkillIds = previewQuery.data?.perLevelClassSkillIds;
-
-  // How much the plan's ability increases raise the INT modifier over the preview's, which is cached per class plan
-  // only: D&D 3.5's INT increases grant skill points retroactively, for every level
-  const modDelta = useMemo(() => {
-    const intAttr = previewQuery.data?.attributes.attributes.intelligence;
-    if (!intAttr) return 0;
-    const intIncreases = Object.values(abilityIncreases).filter((id) => id === intAttr.abilityId).length;
-    return computeAbilityModifier(intAttr.total + intIncreases) - intAttr.modifier;
-  }, [previewQuery.data, abilityIncreases]);
-
-  // Each planned level's points, recomputed from its points before the minimum with the raised modifier
-  const perLevelSkillPoints = useMemo(() => {
-    const data = previewQuery.data;
-    if (!data) return undefined;
-    if (modDelta === 0) return data.perLevelSkillPoints;
-    const existingLevelCount = data.skills.totalCharacterLevel - data.perLevelSkillPointBases.length;
-    return data.perLevelSkillPointBases.map((points, i) =>
-      computeLevelSkillPoints(points + modDelta, data.skills.bonusPerLevel, existingLevelCount === 0 && i === 0),
-    );
-  }, [previewQuery.data, modDelta]);
-
-  // The total ceiling follows every level's points the same way (existing and planned, the first ×4). Without this,
-  // the skills step's "X / Y" cap stays at the pre-bump value and silently caps input below what the bump grants.
-  const skillData = useMemo(() => {
-    const base = previewQuery.data?.skills ?? null;
-    if (!base) return null;
-    if (modDelta === 0) return base;
-    const gained = base.pointsPerLevel.reduce(
-      (acc, points, i) =>
-        acc +
-        computeLevelSkillPoints(points + modDelta, base.bonusPerLevel, i === 0) -
-        computeLevelSkillPoints(points, base.bonusPerLevel, i === 0),
-      0,
-    );
-    return { ...base, skillPointsToSpend: Math.max(1, base.skillPointsToSpend + gained) };
-  }, [previewQuery.data, modDelta]);
+  // The skill points to spend over the planned levels, and each skill's spending, with the plan's increases
+  const skillData = previewQuery.data?.skills ?? null;
 
   const isLoadingSkills = previewQuery.isLoading;
   const skillsError = previewQuery.error;
@@ -246,16 +196,9 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     [picked.feats, featData],
   );
   const selectedPowers = useMemo(() => fitPowers(picked.powers, powerData?.aptitudePools), [picked.powers, powerData]);
-  // The planned levels' class skills and points, which the skills step and the review spend the points over
-  const skillLevels = useMemo<SkillLevels | undefined>(
-    () =>
-      perLevelClassSkillIds &&
-      perLevelSkillPoints && { classSkillIds: perLevelClassSkillIds, points: perLevelSkillPoints },
-    [perLevelClassSkillIds, perLevelSkillPoints],
-  );
   const skillPointAllocations = useMemo(
-    () => fitSkillPoints(picked.skillPoints, skillData, skillLevels),
-    [picked.skillPoints, skillData, skillLevels],
+    () => fitSkillPoints(picked.skillPoints, skillData?.skills),
+    [picked.skillPoints, skillData],
   );
   const selectedAptitude = openPoolOf(base.selectedAptitude, adjustedFeatPools);
   const allSelectedFeatPickString = useMemo(() => featPickString(selectedFeats), [selectedFeats]);
@@ -470,7 +413,6 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     skillData,
     isLoadingSkills,
     skillsError,
-    skillLevels,
 
     // Feats
     featData,

@@ -8,8 +8,6 @@ import {
 } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
-import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
-import { stripSeparators } from "@/shared/text.ts";
 
 import type { FeatSlots } from "./AptitudeSlotsPlan.ts";
 import PicksDistribution, { type PerLevelDistributionData } from "./PicksDistribution.ts";
@@ -37,22 +35,10 @@ export default class LevelUpPlan extends PlannedLevelsState {
       perLevelFeatSlots,
       perLevelPowerSlots,
       savedLevelCount: planned.savedLevelCount,
-      skillContexts: this.buildSkillContexts(planned.character, classSkills.merged),
+      skillContexts: PicksDistribution.contextsOf(
+        planned.character.components.skills.getEnrichedSkills(this.rulesetData.skills, classSkills.merged),
+      ),
     };
-  }
-
-  /** Each skill's current rank, and whether it's a class skill: innate to the character, or a planned class's. */
-  private buildSkillContexts(character: DetailedCharacter, classSkillIds: Set<string>) {
-    const characterSkills = character.components.skills.getSkills();
-    const contexts = new Map<string, { currentRank: number; isClassSkill: boolean }>();
-    for (const skill of this.rulesetData.skills) {
-      const skillData = characterSkills[stripSeparators(skill.name)] as { innate?: boolean; rank?: number } | undefined;
-      contexts.set(skill.id, {
-        isClassSkill: skillData?.innate ?? classSkillIds.has(skill.id),
-        currentRank: skillData?.rank || 0,
-      });
-    }
-    return contexts;
   }
 
   /**
