@@ -43,7 +43,7 @@ export const LOREMASTER: ClassSeed = {
     "Use Magic Device",
   ],
   requirements: [
-    or(gte("spellcasting.arcane", 7), gte("spellcasting.divine", 7)),
+    or(gte("spellcasting.arcane", 3), gte("spellcasting.divine", 3)),
     gte("skills.spellcraft.rank", 10),
     {
       target: "feats.metamagic.count",
