@@ -15,6 +15,7 @@
  *   bun run parser:dnd3.5:validate                              # all issues
  *   bun run parser:dnd3.5:validate --type class                  # only class references
  *   bun run parser:dnd3.5:validate complete-warrior              # only a specific book
+ *   bun run parser:dnd3.5:validate srd wizard                    # only a book's reference, by its file's name
  */
 
 import References from "@/codegen/dnd3.5/tools/references/References.ts";
@@ -23,9 +24,7 @@ import { type Issue, ReferenceIssues } from "@/codegen/dnd3.5/tools/validate/Ref
 import { CommandLine } from "./CommandLine.ts";
 
 function main() {
-  const { bookFilter, typeFilter } = CommandLine.filters();
-
-  const refs = References.files({ bookFilter, typeFilter });
+  const refs = References.files(CommandLine.filters());
 
   const issues = ReferenceIssues.of(refs);
   if (issues.length === 0) {

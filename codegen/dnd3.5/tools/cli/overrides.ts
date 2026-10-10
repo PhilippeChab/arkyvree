@@ -1,5 +1,6 @@
 /**
- * Lists all overrides across reference files, with the same filters as parser:dnd3.5:sync.
+ * Lists the overrides across reference files, every type's (`ReferenceOverrides`: each class's, each entry's), with the
+ * same filters as parser:dnd3.5:sync, but those that only reword a description.
  *
  * Usage:
  *   bun run parser:dnd3.5:overrides                              # all overrides
@@ -9,92 +10,16 @@
  *   bun run parser:dnd3.5:overrides complete-warrior --type feat  # combine filters
  */
 
-import { basename } from "node:path";
-
+import { type OverrideEntry, ReferenceOverrides } from "@/codegen/dnd3.5/tools/references/ReferenceOverrides.ts";
 import References from "@/codegen/dnd3.5/tools/references/References.ts";
-import type { StoredReference } from "@/codegen/dnd3.5/tools/types/reference.ts";
 
 import { CommandLine } from "./CommandLine.ts";
 
-interface OverrideEntry {
-  book: string;
-  entryName: string;
-  keys: string[];
-  prereqText?: string;
-  refName: string;
-  refType: string;
-}
-
-function collectClassOverrides(data: StoredReference<"class">, book: string, fileName: string): OverrideEntry[] {
-  const entries: OverrideEntry[] = [];
-  const overrides = data.overrides;
-  if (!overrides) return entries;
-
-  const keys = Object.keys(overrides).filter((k) => {
-    if (k === "reviewed" || k === "description") return false;
-    // For features, check if any feature has non-description overrides
-    if (k === "features") {
-      return Object.values(overrides.features ?? {}).some((feat) =>
-        Object.keys(feat).some((fk) => fk !== "description"),
-      );
-    }
-    return true;
-  });
-  if (keys.length === 0) return entries;
-
-  entries.push({
-    book,
-    refType: "class",
-    refName: basename(fileName, ".json"),
-    entryName: data.raw.name,
-    keys,
-  });
-
-  return entries;
-}
-
-/** The entries of a feat or domain reference whose overrides change more than their description. */
-function collectEntryOverrides(
-  overrides: Record<string, object> | undefined,
-  reference: Pick<OverrideEntry, "book" | "refType" | "refName">,
-  prereqText: (name: string) => string | undefined = () => undefined,
-): OverrideEntry[] {
-  const { reviewed: _reviewed, ...rest } = overrides ?? {};
-  return Object.entries(rest).flatMap(([name, override]) => {
-    const keys = Object.keys(override).filter((k) => k !== "description");
-    return keys.length === 0 ? [] : [{ ...reference, entryName: name, keys, prereqText: prereqText(name) }];
-  });
-}
-
 function main() {
-  const { bookFilter, typeFilter, nameFilter, keyFilter } = CommandLine.filters();
+  const { filters, keyFilter } = CommandLine.overrides();
+  const { bookFilter, typeFilter, nameFilter } = filters;
 
-  const refs = References.files({ bookFilter, typeFilter, nameFilter });
-
-  const allEntries: OverrideEntry[] = [];
-
-  for (const ref of refs) {
-    if (ref.type === "feat") {
-      const { raw, overrides } = References.stored(ref.path, "feat");
-      allEntries.push(
-        ...collectEntryOverrides(
-          overrides,
-          { book: ref.book, refType: "feat", refName: "feats" },
-          (name) => raw.find((r) => r.name === name)?.prerequisiteText,
-        ),
-      );
-    } else if (ref.type === "domain") {
-      allEntries.push(
-        ...collectEntryOverrides(References.stored(ref.path, "domain").overrides, {
-          book: ref.book,
-          refType: "domain",
-          refName: "domains",
-        }),
-      );
-    } else if (ref.type === "class") {
-      allEntries.push(...collectClassOverrides(References.stored(ref.path, "class"), ref.book, basename(ref.path)));
-    }
-  }
+  const allEntries = ReferenceOverrides.of(References.files(filters));
 
   // Filter by override key
   const filtered = keyFilter ? allEntries.filter((e) => e.keys.includes(keyFilter)) : allEntries;

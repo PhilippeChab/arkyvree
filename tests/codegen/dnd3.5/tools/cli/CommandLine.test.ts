@@ -1,20 +1,36 @@
 import { describe, expect, test } from "bun:test";
+import { join } from "node:path";
 
 import { CommandLine } from "@/codegen/dnd3.5/tools/cli/CommandLine.ts";
+import References from "@/codegen/dnd3.5/tools/references/References.ts";
 
 describe("A parser command's line", () => {
-  test("name a book and a reference, and filter by type and key", () => {
-    expect(CommandLine.filters(["srd", "Wizard", "--type", "class", "--key", "requirements"])).toEqual({
+  test("name a book and a reference, and filter by type", () => {
+    expect(CommandLine.filters(["srd", "Wizard", "--type", "class"])).toEqual({
       bookFilter: "srd",
       nameFilter: "wizard",
       typeFilter: "class",
-      keyFilter: "requirements",
     });
     expect(CommandLine.filters(["--type", "feat"])).toEqual({ typeFilter: "feat" });
   });
 
+  test("pick the reference a book and a name name, as a command hands them on whole", () => {
+    expect(References.files(CommandLine.filters(["srd", "Wizard"])).map(({ path }) => path)).toEqual([
+      join(References.dir, "srd/classes/wizard.json"),
+    ]);
+  });
+
   test("refuse an option they don't know, which would be read as a book", () => {
     expect(() => CommandLine.filters(["--book", "srd"])).toThrow("Unknown option --book");
+  });
+
+  test("ask parser:dnd3.5:overrides for an override key besides, which no other command takes", () => {
+    expect(CommandLine.overrides(["srd", "--key", "requirements", "--type", "feat"])).toEqual({
+      filters: { bookFilter: "srd", typeFilter: "feat" },
+      keyFilter: "requirements",
+    });
+    expect(CommandLine.overrides([])).toEqual({ filters: {} });
+    expect(() => CommandLine.filters(["srd", "--key", "requirements"])).toThrow("Unknown option --key");
   });
 
   test("asks the scraper for a type of reference, from a book, a page, with its own fetching, the options anywhere", () => {

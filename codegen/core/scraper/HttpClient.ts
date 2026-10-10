@@ -2,6 +2,8 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
+import { HttpError } from "./HttpError.ts";
+
 interface HttpOptions {
   /** Where the pages are cached on disk: the scraper's own folder's (a ruleset's codegen keeps its own). */
   cacheDir: string;
@@ -19,7 +21,8 @@ const MAX_RETRIES = 3;
 
 /**
  * Fetches the scraped sites' pages: from the disk cache while it holds them (a day), else from the site, a request at a
- * time at most every `delay` ms, retried when the site is busy or fails.
+ * time at most every `delay` ms, retried when the site is busy or fails, but not when it refuses a page or has none (an
+ * `HttpError`).
  */
 export class HttpClient {
   constructor(private readonly options: HttpOptions) {}
@@ -73,45 +76,36 @@ export class HttpClient {
     writeFileSync(this.cachePath(url), html);
   }
 
-  /** A page's HTML: from the disk cache, else fetched, rate limited, with up to MAX_RETRIES attempts. */
+  /** A page's HTML from its site, sanitized and cached: an error status throws an `HttpError`. */
+  private async fetchPage(url: string): Promise<string> {
+    const response = await fetch(url);
+    if (!response.ok) throw new HttpError(response.status, response.statusText, url);
+    const text = await response.text();
+    const html = this.options.sanitize ? this.options.sanitize(text) : text;
+    this.writeCache(url, html);
+    return html;
+  }
+
+  /**
+   * A page's HTML: from the disk cache, else fetched, rate limited, in up to MAX_RETRIES attempts. A page the site
+   * refuses or doesn't have (an `HttpError` that isn't `retryable`, a 404) throws at once: asking again gets the same.
+   */
   async fetchHtml(url: string): Promise<string> {
-    // Check cache first
     const cached = this.readCache(url);
     if (cached) return cached;
 
     await this.rateLimit();
 
-    let lastError: Error | null = null;
-
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    for (let attempt = 1; ; attempt++) {
       try {
-        const response = await fetch(url);
-
-        if (response.status === 429 || response.status >= 500) {
-          const backoff = Math.pow(2, attempt) * 500;
-          console.warn(
-            `HTTP ${response.status} for ${url} — retrying in ${backoff}ms (attempt ${attempt}/${MAX_RETRIES})`,
-          );
-          await new Promise((resolve) => setTimeout(resolve, backoff));
-          continue;
-        }
-
-        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText} — ${url}`);
-
-        const text = await response.text();
-        const html = this.options.sanitize ? this.options.sanitize(text) : text;
-        this.writeCache(url, html);
-        return html;
+        return await this.fetchPage(url);
       } catch (error) {
-        lastError = error instanceof Error ? error : new Error(String(error));
-        if (attempt < MAX_RETRIES) {
-          const backoff = Math.pow(2, attempt) * 500;
-          console.warn(`Fetch error for ${url} — retrying in ${backoff}ms (attempt ${attempt}/${MAX_RETRIES})`);
-          await new Promise((resolve) => setTimeout(resolve, backoff));
-        }
+        if ((error instanceof HttpError && !error.retryable) || attempt === MAX_RETRIES) throw error;
+        const backoff = Math.pow(2, attempt) * 500;
+        const reason = error instanceof Error ? error.message : String(error);
+        console.warn(`${reason} — retrying in ${backoff}ms (attempt ${attempt}/${MAX_RETRIES})`);
+        await new Promise((resolve) => setTimeout(resolve, backoff));
       }
     }
-
-    throw lastError ?? new Error(`Failed to fetch ${url} after ${MAX_RETRIES} attempts`);
   }
 }
