@@ -6,6 +6,8 @@
 
 **Forking** makes your own editable copy of a base ruleset.
 
+Choose **Fork** in the base ruleset's **⋮** menu, name your copy and pick its **Privacy**. It starts **Private**: once published, only you, your contributors and your campaigns' players find it. Make it **Public**, there or later with **Edit**, for anyone to find it once published; a public ruleset can't be made private again.
+
 A fork starts empty — it shares all entities with the parent. When you edit a feat, item, or class, that one entity is copied into your fork at the moment of the edit. Everything you haven't touched stays shared.
 
 In a fork you can:

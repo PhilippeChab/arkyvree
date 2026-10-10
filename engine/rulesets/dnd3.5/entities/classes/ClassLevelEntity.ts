@@ -6,6 +6,7 @@ import { CustomizationPageEntity } from "@/engine/core/entities/index.ts";
 import type { EntityWrites } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
+import CombatSheet from "@/engine/rulesets/dnd3.5/characters/description/CombatSheet.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import ClassesPaths from "@/engine/rulesets/dnd3.5/model/classes/ClassesPaths.ts";
 import type { Klass, KlassLevel } from "@/shared/relations.ts";
@@ -178,9 +179,16 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
     };
   }
 
-  /** The class's levels, each with its fields and its details. */
+  /**
+   * The class's levels, each with its fields, its details, and its base attack bonus as the sheet writes it, its
+   * attacks a round (`babLabel`: "+6/+1").
+   */
   describeAll() {
     const levels = this.rulesetData.klassLevelsByKlass.get(this.klass.id) ?? [];
-    return this.describeRows(levels).map((level) => ({ ...level, ...this.detailsOf(level) }));
+    return this.describeRows(levels).map((level) => ({
+      ...level,
+      ...this.detailsOf(level),
+      babLabel: CombatSheet.formatBab(level.bab),
+    }));
   }
 }

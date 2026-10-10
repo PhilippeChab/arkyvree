@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { eq } from "drizzle-orm";
 
-import { DND35_COMPLETE_DIVINE_NAME } from "@/content/dnd3.5/rulesetNames.ts";
+import { DND35_COMPLETE_DIVINE_NAME, DND35_RULESET_NAME } from "@/content/dnd3.5/rulesetNames.ts";
 import {
   featsInRules,
   klassLevelFeatsInRules,
@@ -110,6 +110,22 @@ describe("ClassLevelsService", () => {
           saves: [{ saveId: fortitude.id, base: 2 }],
         },
         { level: 2, bab: 2, feats: [], saves: [] },
+      ]);
+    });
+
+    test("writes each level's base attack bonus as the sheet does: its attacks a round", async () => {
+      const { session, ruleset, klass } = await setup();
+      for (const [level, bab] of [
+        [1, 0],
+        [2, 6],
+        [3, 11],
+      ])
+        await createLevel(session, ruleset.id, klass.id, level, { fields: { bab, skills: 4 } });
+
+      expect((await ClassLevelsService.getClassLevels(ruleset.id, klass.id)).map((level) => level.babLabel)).toEqual([
+        "+0",
+        "+6/+1",
+        "+11/+6/+1",
       ]);
     });
 
@@ -303,15 +319,23 @@ describe("ClassLevelsService", () => {
     ]);
   });
 
+  test("writes 0 spells a day at a spell level the class casts but gives no uses at yet, as the SRD: a paladin's", async () => {
+    const core = await findSeededRuleset(DND35_RULESET_NAME);
+    const paladin = (await Klasses.findOne(db, { name: "Paladin", rulesetId: core.id }))!;
+    const perDay = (await ClassLevelsService.getClassLevelSpells(core.id, paladin.id)).map((l) => l.spellsPerDay);
+    // None before the 4th level, its 1st-level spells its bonus spells alone fill at the 4th and 5th, one at the 6th
+    expect(perDay.slice(2, 6)).toEqual([{}, { 1: 0 }, { 1: 0 }, { 1: 1 }]);
+  });
+
   test("reads a spell list's slots whatever its class's name holds: the Ur-priest's", async () => {
     const divine = await findSeededRuleset(DND35_COMPLETE_DIVINE_NAME);
     const urPriest = (await Klasses.findOne(db, { name: "Ur-priest", rulesetId: divine.id }))!;
     const perDay = (await ClassLevelsService.getClassLevelSpells(divine.id, urPriest.id)).map((l) => l.spellsPerDay);
-    // Complete Divine's table: 4 and 2 at the 1st level; at the 4th, 6/3/2/1 (its 4th-level 0, bonus spells only,
-    // adds nothing)
+    // Complete Divine's table: 4 and 2 at the 1st level; at the 4th, 6/3/2/1/0 (its 4th-level spells its bonus spells
+    // alone fill)
     expect([perDay[0], perDay[3]]).toEqual([
       { 0: 4, 1: 2 },
-      { 0: 6, 1: 3, 2: 2, 3: 1 },
+      { 0: 6, 1: 3, 2: 2, 3: 1, 4: 0 },
     ]);
     const known = (await ClassLevelsService.getClassLevelSpellsKnown(divine.id, urPriest.id)).map((l) => l.spellsKnown);
     expect(known[0]).toMatchObject({ 0: "All", 1: "All" });

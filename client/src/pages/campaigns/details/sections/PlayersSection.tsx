@@ -110,8 +110,9 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
           json: toPlayerPayload(data),
         }),
       ),
-    onSuccess: () => {
-      snackbar.success("Player added");
+    // An email sends its invite: the player joins once they accept it
+    onSuccess: (_player, data) => {
+      snackbar.success(data.email ? "Invite sent" : "Player added");
       invalidateCampaignPlayers(queryClient, campaign.id);
       setAddDialogOpen(false);
     },
@@ -128,8 +129,8 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
           json: toPlayerPayload(data),
         }),
       ),
-    onSuccess: () => {
-      snackbar.success("Player updated");
+    onSuccess: (_player, { data }) => {
+      snackbar.success(data.email ? "Invite sent" : "Player updated");
       invalidateCampaignPlayers(queryClient, campaign.id);
       editDialog.close();
     },

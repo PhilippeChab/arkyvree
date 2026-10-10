@@ -1,4 +1,5 @@
 import type { WeaponSlot } from "@/engine/rulesets/dnd3.5/model/combat/CombatState.ts";
+import AttackRules from "@/engine/rulesets/dnd3.5/rules/AttackRules.ts";
 import { WEAPON_SET_SLOTS } from "@/engine/rulesets/dnd3.5/rules/InventorySlots.ts";
 import { capitalize, formatSigned } from "@/shared/text.ts";
 
@@ -16,8 +17,12 @@ interface AttackRow {
   types: string;
 }
 
-/** What a sheet reads of a character's combat: its stats, its speed and its weapon sets (its component's `getCombat`). */
+/**
+ * What a sheet reads of a character's combat: its stats, its base attack bonus, its speed and its weapon sets (its
+ * component's `getCombat`).
+ */
 interface CombatStats {
+  bab: number;
   speed: { total: number };
   weaponsets: Record<string, Record<(typeof WEAPON_SET_SLOTS)[number], SheetWeaponSource | null>>;
 }
@@ -125,13 +130,20 @@ export default class CombatSheet {
    * attacks a round ("+11/+6/+1"), its speed in feet ("30 ft."), and its weapon sets' attacks (the sets themselves, as
    * the rules hold them, left out).
    */
-  static describe<C extends CombatStats>(combat: { getBabAttacks(): number[]; getCombat(): C }) {
+  static describe<C extends CombatStats>(combat: { getCombat(): C }) {
     const { weaponsets, ...stats } = combat.getCombat();
     return {
       ...stats,
-      babLabel: CombatSheet.formatAttacks(combat.getBabAttacks()),
+      babLabel: CombatSheet.formatBab(stats.bab),
       speedLabel: `${stats.speed.total} ft.`,
       weaponSets: CombatSheet.weaponSets(weaponsets),
     };
+  }
+
+  /**
+   * A base attack bonus as the sheets and a class's table write it: its attacks a round, signed and joined ("+6/+1").
+   */
+  static formatBab(bab: number): string {
+    return CombatSheet.formatAttacks(AttackRules.listIterativeAttacks(bab));
   }
 }
