@@ -9,6 +9,7 @@ import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
 
 import { levelStepsQuery } from "./levelUpQueries.ts";
+import { shownStep } from "./wizardNavigation.ts";
 import { REVIEW_STEP } from "./wizardSteps.ts";
 
 interface LevelWizardBaseParams<O extends WizardStep> {
@@ -93,7 +94,8 @@ export function useLevelWizardBase<O extends WizardStep>({
   // The skill points spent so far, which the ruleset says what they come to: sent once the typing settles
   const debouncedSkillPoints = useDebouncedValue(picked.skillPoints);
 
-  const [activeStep, setActiveStep] = useState(0);
+  // The step Back and Next moved it to, which it shows while its steps list it (`activeStep`)
+  const [movedTo, setActiveStep] = useState(0);
   const [selectedAptitude, setSelectedAptitude] = useState<string | null>(null);
   const [selectedPowerAptitude, setSelectedPowerAptitude] = useState<string | null>(null);
   const [selectedPowerLevel, setSelectedPowerLevel] = useState<number | null>(null);
@@ -108,6 +110,7 @@ export function useLevelWizardBase<O extends WizardStep>({
   // Its steps: its own, the steps the ruleset lists for the level, then its review
   const stepsQuery = useQuery({ ...levelStepsQuery(characterId, editedLevelId), enabled: open });
   const steps = useMemo(() => [...ownSteps, ...(stepsQuery.data ?? []), REVIEW_STEP], [ownSteps, stepsQuery.data]);
+  const activeStep = shownStep(steps, movedTo);
   const stepName = steps[activeStep].name;
   const isLastStep = activeStep === steps.length - 1;
   // The steps' list failed to load: the wizard can't go on
