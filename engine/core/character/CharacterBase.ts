@@ -93,6 +93,36 @@ export default abstract class CharacterBase<C extends Components, D extends Load
   /** The ruleset's view the character is built in: the ruleset, and its lists the build reads. */
   protected view!: RulesetView;
 
+  /** The ruleset's data loader, which assembles the character's data from its rows and the view. */
+  protected abstract createDataLoader(): DataLoader<D>;
+
+  /** The ruleset's issues about what the character has, before its requirements' and modifiers' (`validate`). */
+  protected abstract findRulesetIssues(): RulesIssue[];
+
+  /** The ruleset's issues about where the character's rows come from, after the rest (`validate`). */
+  protected abstract findSourceIssues(): RulesIssue[];
+
+  /** Whether a modifier applies after the ruleset's last step (`postModifierProcessing`), not in the rounds. */
+  protected abstract isLateModifier(modifier: Modifier): boolean;
+
+  /** Each component's setup, from the loaded data. */
+  protected abstract normalizeData(): void;
+
+  /** The ruleset's step after the modifiers' rounds, before the late modifiers. */
+  protected abstract postModifierProcessing(): void;
+
+  /** The ruleset's step after its pre-requirement step, before the modifiers apply. */
+  protected abstract postRequirementProcessing(): void;
+
+  /** The ruleset's step once the components are set up, before the requirements read the sheet. */
+  protected abstract preRequirementProcessing(): void;
+
+  /** The name of the entity an issue is about, as the character has it: none when it has no such entity. */
+  abstract resolveEntityName(entityId: string, entityType: string): string | undefined;
+
+  /** The entity a modifier comes from, by its name and its type: none when the character has no such source. */
+  abstract resolveModifierSourceName(modifier: Modifier): { name: string; type: string } | undefined;
+
   /**
    * Applies the modifiers in rounds, so a modifier's requirements read the sheet the other modifiers have already
    * changed (an item's Strength counts toward a feat's prerequisite): first those no requirement gates, then, round
@@ -147,9 +177,6 @@ export default abstract class CharacterBase<C extends Components, D extends Load
     );
   }
 
-  /** The ruleset's data loader, which assembles the character's data from its rows and the view. */
-  protected abstract createDataLoader(): DataLoader<D>;
-
   /**
    * The groups (those that require anything) evaluated on the built sheet, apart from the build's own evaluation, each
    * of the item its owner names, or of `context.sourceId` when given: nothing evaluated before the build.
@@ -163,27 +190,6 @@ export default abstract class CharacterBase<C extends Components, D extends Load
     evaluator.evaluateRequirements(this.builtComponents, nonEmpty, itemOf);
     return evaluator.getRequirements();
   }
-
-  /** The ruleset's issues about what the character has, before its requirements' and modifiers' (`validate`). */
-  protected abstract findRulesetIssues(): RulesIssue[];
-
-  /** The ruleset's issues about where the character's rows come from, after the rest (`validate`). */
-  protected abstract findSourceIssues(): RulesIssue[];
-
-  /** Whether a modifier applies after the ruleset's last step (`postModifierProcessing`), not in the rounds. */
-  protected abstract isLateModifier(modifier: Modifier): boolean;
-
-  /** Each component's setup, from the loaded data. */
-  protected abstract normalizeData(): void;
-
-  /** The ruleset's step after the modifiers' rounds, before the late modifiers. */
-  protected abstract postModifierProcessing(): void;
-
-  /** The ruleset's step after its pre-requirement step, before the modifiers apply. */
-  protected abstract postRequirementProcessing(): void;
-
-  /** The ruleset's step once the components are set up, before the requirements read the sheet. */
-  protected abstract preRequirementProcessing(): void;
 
   /** The ruleset's lists and indices, as its view composes them. */
   protected get rulesetData(): RulesetData {
@@ -242,10 +248,4 @@ export default abstract class CharacterBase<C extends Components, D extends Load
   getRuleset() {
     return this.view.ruleset;
   }
-
-  /** The name of the entity an issue is about, as the character has it: none when it has no such entity. */
-  abstract resolveEntityName(entityId: string, entityType: string): string | undefined;
-
-  /** The entity a modifier comes from, by its name and its type: none when the character has no such source. */
-  abstract resolveModifierSourceName(modifier: Modifier): { name: string; type: string } | undefined;
 }

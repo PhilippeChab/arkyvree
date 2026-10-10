@@ -35,6 +35,9 @@ export default abstract class RulesetEntity<
   /** The kind's table. */
   abstract readonly type: K;
 
+  /** A form's columns: the ones the kind's row takes (`entity`: the one edited, none for a new one). */
+  protected abstract columnsOf(body: Body, entity?: ViewEntities[K]): Columns;
+
   /** What saving a form writes, and the fields the saved entity keeps (`fields`, which a save answers with its row). */
   private planSave(body: Body, given: Partial<FieldValues<S>>, entity?: ViewEntities[K]) {
     const columns = this.columnsOf(body, entity);
@@ -58,9 +61,6 @@ export default abstract class RulesetEntity<
 
   /** Refuses saving a form (`entity`: the one edited, none for a new one): nothing does, unless its kind's rules say. */
   protected checkSave(_body: Body, _entity?: ViewEntities[K]) {}
-
-  /** A form's columns: the ones the kind's row takes (`entity`: the one edited, none for a new one). */
-  protected abstract columnsOf(body: Body, entity?: ViewEntities[K]): Columns;
 
   /** What deleting an entity writes with it: nothing, unless its kind's rules say. */
   protected deleteWritesOf(_entity: ViewEntities[K]): EntityWrites | undefined {

@@ -20,6 +20,9 @@ export default abstract class ListedEntity<
   Columns extends object,
   S extends Fields,
 > extends CustomizationPageEntity<K, Body, Columns, S> {
+  /** An entity's links to the lists, as the view composes them. */
+  protected abstract linksIn(entity: ViewEntities[K]): Links<K>;
+
   /**
    * Rows of a page, described: each inherited one with its lists as the ruleset composes them (its siblings' links
    * merged into the winning copy's), unless the page lists the ruleset's own rows only (`childOnly`).
@@ -35,9 +38,6 @@ export default abstract class ListedEntity<
       return entity ? { ...row, ...this.linksIn(entity) } : row;
     });
   }
-
-  /** An entity's links to the lists, as the view composes them. */
-  protected abstract linksIn(entity: ViewEntities[K]): Links<K>;
 
   /** Refuses linking an entity to a list the other kind uses (`taken`): the ruleset's own and its chain's. */
   protected refuseLists(listIds: string[], taken: Set<string>, message: string) {

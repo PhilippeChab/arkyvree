@@ -33,6 +33,9 @@ export default abstract class CharacterPicker<
   /** The character the picker checks against, once built. */
   private built?: C;
 
+  /** The character's rows with what the level-up plans before the pick. */
+  protected abstract project(): CharacterProjection;
+
   /** The character the picker checks options against: built from its projection when first asked. */
   protected get character(): C {
     return (this.built ??= this.builder.build(this.view, this.project().input));
@@ -47,7 +50,4 @@ export default abstract class CharacterPicker<
   protected meets(groups: Requirement[][], _row: Row) {
     return this.character.areRequirementsMet(groups);
   }
-
-  /** The character's rows with what the level-up plans before the pick. */
-  protected abstract project(): CharacterProjection;
 }
