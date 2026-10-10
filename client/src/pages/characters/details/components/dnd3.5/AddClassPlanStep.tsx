@@ -1,11 +1,12 @@
 import { Autocomplete, Box, IconButton, Stack, TextField, Typography } from "@mui/material";
 import { type UIEvent, useMemo } from "react";
 
-import { AddButton, ScrollSafeListbox, ValueChip } from "@/client/src/components/common/index.ts";
+import { AddButton, BlankNote, ScrollSafeListbox, ValueChip } from "@/client/src/components/common/index.ts";
 import { DeleteIcon } from "@/client/src/components/icons/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import {
   type AvailableKlass,
+  hasRoomForLevel,
   plannedLevel,
   type SelectedKlass,
 } from "@/client/src/pages/characters/details/components/levelUp/index.ts";
@@ -79,10 +80,13 @@ export function AddClassPlanStep({ wizard }: AddClassPlanStepProps) {
     return existing.map((klass) => ({ klass, level: plannedLevel(klass, levels) }));
   }, [levels, quickAddKlasses]);
 
+  // The plan stops at the character's last level: every class's option says how many levels it has left
+  const hasRoom = hasRoomForLevel(levels, quickAddKlasses[0]?.levelsLeft);
+
   return (
     <Stack spacing={0.5}>
       <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
-        <AddButton variant="text" size="small" label="Add Level" onClick={onAddLevel} />
+        <AddButton variant="text" size="small" label="Add Level" onClick={onAddLevel} disabled={!hasRoom} />
         {quickAddClasses.map(({ klass, level }) => (
           <AddButton
             key={klass.id}
@@ -90,10 +94,11 @@ export function AddClassPlanStep({ wizard }: AddClassPlanStepProps) {
             size="small"
             label={`${klass.name} ${level}`}
             onClick={() => onQuickAddLevel(klass)}
-            disabled={level > klass.maxLevel}
+            disabled={!hasRoom || level > klass.maxLevel}
           />
         ))}
       </Stack>
+      {!hasRoom && <BlankNote>No more levels: a character stops at its last level</BlankNote>}
       {levels.map((selectedKlass, index) =>
         selectedKlass ? (
           <Stack key={slotKeys[index]} direction="row" sx={{ height: 56, alignItems: "center" }}>

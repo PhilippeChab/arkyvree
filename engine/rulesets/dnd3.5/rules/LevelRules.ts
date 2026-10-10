@@ -1,5 +1,9 @@
 import { stripSeparators } from "@/shared/text.ts";
-import { ABILITY_INCREASE_LEVEL_INTERVAL, GENERAL_FEAT_LEVEL_INTERVAL } from "@/vocabulary/dnd3.5/classes.ts";
+import {
+  ABILITY_INCREASE_LEVEL_INTERVAL,
+  GENERAL_FEAT_LEVEL_INTERVAL,
+  MAX_CHARACTER_LEVEL,
+} from "@/vocabulary/dnd3.5/classes.ts";
 import { GENERAL_FEATS_APTITUDE } from "@/vocabulary/dnd3.5/feats.ts";
 
 export default class LevelRules {
@@ -18,6 +22,14 @@ export default class LevelRules {
    */
   static countGeneralFeats(totalLevel: number): number {
     return totalLevel === 0 ? 0 : Math.floor(totalLevel / GENERAL_FEAT_LEVEL_INTERVAL) + 1;
+  }
+
+  /**
+   * The levels a character with `totalLevel` levels can still take, whatever their classes: up to a character's last
+   * level (`MAX_CHARACTER_LEVEL`).
+   */
+  static countLevelsLeft(totalLevel: number): number {
+    return Math.max(0, MAX_CHARACTER_LEVEL - totalLevel);
   }
 
   /** Whether the level after `totalLevel` levels takes an ability increase: every fourth (`ABILITY_INCREASE_LEVEL_INTERVAL`). */

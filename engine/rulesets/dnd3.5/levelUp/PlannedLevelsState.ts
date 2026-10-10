@@ -30,10 +30,8 @@ export interface PlannedLevels {
 /** What the planned levels give: the pools the character picks in, and each level's skill points, class skills and slots. */
 export type LevelGains = ReturnType<PlannedLevelsState["computeLevelGains"]>;
 
-/** A level-up's planned levels, within the rules' bounds: no class past its last level, no character past its own. */
-const PLANNED_LEVELS = z
-  .array(z.object({ level: z.number().max(RULESET_LIMITS.classLevel) }))
-  .max(RULESET_LIMITS.characterLevel);
+/** A level-up's planned level, within the rules' bounds: no class past its last level. */
+const PLANNED_LEVEL = z.object({ level: z.number().max(RULESET_LIMITS.classLevel) });
 
 /**
  * The levels a character plans in a level-up, from its rows: each checked to be the ruleset's, the character built with
@@ -190,11 +188,14 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
 
   /**
    * Each planned level's class and class level, from the composed ruleset: a class the view has is of the character's
-   * ruleset or its source chain. Refused past the rules' bounds (a class's last level, a character's), and when a class
-   * isn't the view's or a player character's, or hasn't that level.
+   * ruleset or its source chain. Refused past the rules' bounds (a class's last level, and a character's, counting the
+   * levels it has), and when a class isn't the view's or a player character's, or hasn't that level.
    */
   getPlannedKlassLevels(levels: Omit<LevelRequest, "hp">[]): PlannedClassLevel[] {
-    RulesError.parse(PLANNED_LEVELS, levels, ["levels"]);
+    // No character past its last level: the planned levels come after those it has
+    const levelsLeft = LevelRules.countLevelsLeft(this.character.rows.levels.length);
+    const message = `A character can't go past level ${RULESET_LIMITS.characterLevel}: ${levelsLeft} level(s) left`;
+    RulesError.parse(z.array(PLANNED_LEVEL).max(levelsLeft, message), levels, ["levels"]);
     return levels.map(({ klassId, level, abilityIncreases }, i) => {
       const klass = this.rulesetData.klassesById.get(klassId);
       if (!klass) throw new RulesError("invalid", `Level ${i + 1}: Class does not belong to the character's ruleset`);

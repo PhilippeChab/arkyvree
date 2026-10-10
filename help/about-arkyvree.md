@@ -21,6 +21,6 @@ Included content for Core SRD 3.5:
 
 Excluded:
 
-- **Epic-level play.** No class goes past level 20, and spells stop at 9th level.
+- **Epic-level play.** No character goes past level 20, whatever its classes, and spells stop at 9th level.
 
 The 3.5 data is auto-generated from SRD pages and hand-checked. Errors get fixed in content updates and propagate to every character built on the ruleset — report them with the in-app **Feedback** button.

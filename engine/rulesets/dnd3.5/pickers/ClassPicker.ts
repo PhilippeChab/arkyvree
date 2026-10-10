@@ -10,14 +10,14 @@ import { stripSeparators } from "@/shared/text.ts";
 
 /**
  * The class picker for the character, from its rows and what the level-up wizard plans so far: a player character's
- * classes (`filters`), each the character can take another level of offered with that level and its class's last, and
- * checked with that level added; highest next level first, then by name. The skill points spent so far go on the planned
- * levels as a save would spread them (`plan`).
+ * classes (`filters`), each the character can take another level of offered with that level, its class's last, and the
+ * levels the character has left, and checked with that level added; highest next level first, then by name. The skill
+ * points spent so far go on the planned levels as a save would spread them (`plan`).
  */
 export default class ClassPicker extends CharacterPicker<
   DetailedCharacter,
   Klass,
-  { maxLevel: number; nextLevel: number }
+  { levelsLeft: number; maxLevel: number; nextLevel: number }
 > {
   constructor(
     view: RulesetView,
@@ -34,12 +34,16 @@ export default class ClassPicker extends CharacterPicker<
   /** The character's highest level in each class it has levels of, by the class's id, once read. */
   private maxLevels?: Map<string, number>;
 
-  /** The class's next level, with the class's last. */
+  /**
+   * The class's next level, with the class's last, and the levels the character can still take, whatever their classes
+   * (`levelsLeft`, the same for every class): those it has count, not those the wizard plans, which a plan counts.
+   */
   protected override detailsOf() {
+    const levelsLeft = LevelRules.countLevelsLeft(this.input.rows.levels.length);
     return (klass: Klass) => {
       const next = this.nextLevelOf(klass)!;
       const last = this.rulesetData.klassLevelsByKlass.get(klass.id)?.at(-1)?.level ?? next.level;
-      return { nextLevel: next.level, maxLevel: last };
+      return { levelsLeft, nextLevel: next.level, maxLevel: last };
     };
   }
 
