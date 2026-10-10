@@ -13,6 +13,7 @@ export {
   CharacterContributors,
   CharacterInventory,
   CharacterLanguages,
+  CharacterLevelAbilityIncreases,
   CharacterLevelFeats,
   CharacterLevelPowers,
   CharacterLevels,

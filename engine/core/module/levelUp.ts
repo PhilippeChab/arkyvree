@@ -1,13 +1,21 @@
+import type { Character } from "@/shared/relations.ts";
+
 import type { CharacterRows } from "./CharacterInputs.ts";
+
+/** An ability a level raises, and by how much. */
+export interface AbilityIncrease {
+  abilityId: string;
+  amount: number;
+}
 
 /** What a master's bonded creatures become: one plan per kind of creature its levels give it. */
 export interface BondedCreaturesPlan {
   bonded: BondedPlan[];
 }
 
-/** The levels a bonded creature takes, and the ids of those it loses. */
+/** The levels a bonded creature takes (their rows' columns), and the ids of those it loses. */
 export interface BondedLevelsPlan {
-  added: { abilityId: null; hp: number; klassLevelId: string }[];
+  added: LevelColumns[];
   removedIds: string[];
 }
 
@@ -26,16 +34,23 @@ export type BondedPlan = { kind: string; removedId?: string } & (
 /** A feat picked in a pool. */
 export type FeatPick = { aptitudeId: string; featId: string };
 
-/** What a saved level's edit writes, checked: the level, its new hit points, ability and picks, and the bonded creatures. */
-export type LevelEditPlan = LevelPickRows & {
-  abilityId: string | null;
-  bonded: BondedPlan[];
+/** A level's row, as a save writes it beside its character's: its class level and hit points. */
+export interface LevelColumns {
   hp: number;
+  klassLevelId: string;
+}
+
+/**
+ * What a saved level's edit writes, checked: the level as saved (`level`), its row's new columns and its rows under it
+ * in place of those it had, and what the bonded creatures become.
+ */
+export type LevelEditPlan = LevelWrites<Omit<LevelColumns, "klassLevelId">> & {
+  bonded: BondedPlan[];
   level: CharacterRows["levels"][number];
 };
 
-/** A saved level's edit, as the form sends it: its new hit points, ability increase and picks. */
-export type LevelEditRequest = LevelPicks & { abilityId: string | null; hp: number };
+/** A saved level's edit, as the form sends it: its new hit points, ability increases and picks. */
+export type LevelEditRequest = LevelPicks & { abilityIncreases: AbilityIncrease[]; hp: number };
 
 /** A level's picks as the rows a save writes. */
 export interface LevelPickRows {
@@ -57,47 +72,66 @@ export interface LevelRemovalPlan {
   level: CharacterRows["levels"][number];
 }
 
-/** A level a level-up saves, as the wizard sends it: its class's level, hit points and ability increase. */
+/** A level a level-up saves, as the wizard sends it: its class's level, hit points and ability increases. */
 export interface LevelRequest {
-  abilityId: string | null;
+  abilityIncreases: AbilityIncrease[];
   hp: number;
   klassId: string;
   level: number;
 }
 
-/** What a level-up saves, checked: each level's rows, and what the master's bonded creatures become. */
+/** A level's rows in the tables under it, by table, as a save writes them: its ability increases and its picks. */
+export interface LevelRows extends LevelPickRows {
+  abilityIncreases: AbilityIncrease[];
+}
+
+/** What a level-up saves, checked: each level's writes, and what the master's bonded creatures become. */
 export interface LevelsPlan {
   bonded: BondedPlan[];
-  levels: (LevelPickRows & { abilityId: string | null; hp: number; klassLevelId: string })[];
+  levels: LevelWrites[];
 }
 
 /**
  * The level a level-up wizard's step is for, as the wizard asks for it: class `klassId`'s `level` (a step that reads the
- * level's class refuses to answer without them) and its ability increase, after the levels the wizard plans before it
- * (`planned`), or in the place of the saved level it edits (`editedLevelId`).
+ * level's class refuses to answer without them) and its ability increases, after the levels the wizard plans before
+ * it (`planned`), or in the place of the saved level it edits (`editedLevelId`).
  */
 export interface LevelStep {
-  abilityId?: string;
+  abilityIncreases?: AbilityIncrease[];
   editedLevelId?: string;
   klassId?: string;
   level?: number;
-  planned?: Pick<PlannedSoFar, "abilityIds" | "klassLevelIds">;
-}
-
-/** A bonded creature a plan makes: of a race, named for it, with its ability scores. */
-export interface NewBondedCreature {
-  abilities: { abilityId: string; score: number }[];
-  name: string;
-  raceId: string;
+  planned?: Pick<PlannedSoFar, "abilityIncreases" | "klassLevelIds">;
 }
 
 /**
- * The level a feat or a power is picked at: class `klassId`'s `level` with its ability increase (`abilityId`), in the
- * pool `aptitudeId`, after the levels the wizard plans before it (`planned`), or a saved level's (`editedLevelId`),
- * which a pick sees the character as it was before.
+ * What a save writes of a level: its row's columns (`columns`, `C`), and its rows in the tables under it (`rows`), by
+ * table. The server writes each as it is.
+ */
+export interface LevelWrites<C = LevelColumns> {
+  columns: C;
+  rows: LevelRows;
+}
+
+/**
+ * A bonded creature a plan makes: its character's row, whole (its master's, of its kind, its race and name, and what it
+ * takes of its master), and its ability scores.
+ */
+export interface NewBondedCreature {
+  abilities: { abilityId: string; score: number }[];
+  row: Pick<
+    Character,
+    "alignment" | "gender" | "kind" | "name" | "parentCharacterId" | "raceId" | "rulesetId" | "userId" | "xp"
+  >;
+}
+
+/**
+ * The level a feat or a power is picked at: class `klassId`'s `level` with its ability increases, in the pool
+ * `aptitudeId`, after the levels the wizard plans before it (`planned`), or a saved level's (`editedLevelId`), which a
+ * pick sees the character as it was before.
  */
 export interface PickLevel {
-  abilityId?: string;
+  abilityIncreases?: AbilityIncrease[];
   aptitudeId: string;
   editedLevelId?: string;
   klassId: string;
@@ -110,7 +144,7 @@ export interface PickLevel {
  * levels, and their ability increases by place), and the feats and skill points picked over them so far.
  */
 export interface PlannedSoFar {
-  abilityIds?: (string | undefined)[];
+  abilityIncreases?: AbilityIncrease[][];
   featPicks?: FeatPick[];
   klassLevelIds?: string[];
   skillPoints?: Record<string, number>;

@@ -32,12 +32,12 @@ export default abstract class LevelPicker<Details extends object = object> exten
    * one and their ability increases, then this class level with its own and the feats picked so far.
    */
   protected project() {
-    const { abilityId, editedLevelId, planned = {} } = this.query;
+    const { abilityIncreases, editedLevelId, planned = {} } = this.query;
     const projection = new CharacterProjection(this.input);
     if (editedLevelId) projection.dropLevelsFrom(editedLevelId);
     const hp = LevelRules.UNROLLED_LEVEL_HP;
-    projection.addLevels(planned.klassLevelIds ?? [], { abilityIds: planned.abilityIds, hp });
-    projection.pick(projection.addLevel(this.klassLevel.id, { abilityId, hp }), { feats: planned.featPicks });
+    projection.addLevels(planned.klassLevelIds ?? [], { abilityIncreases: planned.abilityIncreases, hp });
+    projection.pick(projection.addLevel(this.klassLevel.id, { abilityIncreases, hp }), { feats: planned.featPicks });
     return projection;
   }
 }

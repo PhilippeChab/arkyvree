@@ -1,15 +1,14 @@
 import { describe, expect, test } from "bun:test";
 
-import { eq } from "drizzle-orm";
-
 import { type SeedContext } from "@/database/seeds/seedContext.ts";
-import { levelsInCharacter } from "@/drizzle/schema.ts";
+import { levelAbilityIncreasesInCharacter } from "@/drizzle/schema.ts";
+import type { AbilityIncrease } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import {
+  CharacterLevelAbilityIncreases,
   CharacterLevelFeats,
   CharacterLevelPowers,
-  CharacterLevels,
   CharacterLevelSkills,
 } from "@/server/repositories/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
@@ -22,6 +21,7 @@ import {
   levelUp,
   picks,
 } from "@/tests/support/levelFixtures.ts";
+import { increasesOf } from "@/tests/support/levels.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
@@ -52,7 +52,7 @@ function finalizeBatch(
     klassId: ctx.klassMap.pc[klass],
     level,
     hp,
-    abilityId: ability ? ctx.abilityMap[ability] : null,
+    abilityIncreases: increasesOf(ability && ctx.abilityMap[ability]),
   }));
   return CharacterLevelsService.finalizeLevelUp(session, characterId, batch, skills, feats, powers, force);
 }
@@ -75,13 +75,12 @@ async function eligible(
     xp: 6000,
     abilities: { Strength: options.strength ?? 14 },
   });
-  const plan = Array.from({ length: level }, (_, i) => ({ klassId: ctx.klassMap.pc["Fighter"], level: i + 1 }));
-  const { levelDetails } = await CharacterLevelsService.getPreview(
-    session,
-    characterId,
-    plan,
-    plan.map(() => null),
-  );
+  const plan = Array.from({ length: level }, (_, i) => ({
+    abilityIncreases: [],
+    klassId: ctx.klassMap.pc["Fighter"],
+    level: i + 1,
+  }));
+  const { levelDetails } = await CharacterLevelsService.getPreview(session, characterId, plan);
   const featPicks = (options.pendingPicks ?? []).map((name) => ({
     featId: ctx.featMap[name],
     aptitudeId: ctx.aptMap["General"],
@@ -94,8 +93,8 @@ async function eligible(
       classId: ctx.klassMap.pc["Fighter"],
       level: level,
       plannedClassLevelIds: levelDetails.slice(0, level - 1).map((d) => d.klassLevelId),
-      plannedAbilityIds: options.increases?.slice(0, level - 1),
-      abilityId: options.increases?.[level - 1],
+      plannedAbilityIncreases: options.increases?.slice(0, level - 1).map(increasesOf),
+      abilityIncreases: increasesOf(options.increases?.[level - 1]),
       search,
       featPicks,
     },
@@ -113,8 +112,11 @@ async function preview(
   return CharacterLevelsService.getPreview(
     session,
     characterId,
-    levels.map(([klass, level]) => ({ klassId: ctx.klassMap.pc[klass], level })),
-    abilities,
+    levels.map(([klass, level], i) => ({
+      abilityIncreases: increasesOf(abilities[i]),
+      klassId: ctx.klassMap.pc[klass],
+      level,
+    })),
   );
 }
 
@@ -131,7 +133,7 @@ async function setupFighter() {
       characterId,
       first.id,
       10,
-      plan.abilityId ?? null,
+      increasesOf(plan.abilityId),
       skills,
       feats,
       powers,
@@ -320,9 +322,14 @@ describe("finalizing several levels at once", () => {
     expect(
       (await CharacterLevelPowers.findMany(db, { characterLevelIds: levelIds })).map((p) => p.powerId).sort(),
     ).toEqual(Object.values(powers).flat().sort());
-    expect(created.map((l) => l.abilityId)).toEqual(
-      levels.map(([, , , ability]) => (ability ? ctx.abilityMap[ability] : null)),
-    );
+    const increases = await CharacterLevelAbilityIncreases.findMany(db, { characterLevelIds: levelIds });
+    expect(
+      created.map((l) =>
+        increases
+          .filter((row) => row.characterLevelId === l.id)
+          .map(({ abilityId, amount }) => ({ abilityId, amount })),
+      ),
+    ).toEqual(levels.map(([, , , ability]) => increasesOf(ability && ctx.abilityMap[ability])));
   });
 
   test("spreads pooled skill ranks over the levels, within each level's rank cap", async () => {
@@ -598,7 +605,7 @@ describe("re-saving a level", () => {
     const level = await levelUp(session, ctx, characterId, "Wizard", 1, plan);
     const { skills, feats, powers } = picks(ctx, { ...plan, feats: { ...plan.feats, "Prohibited School": [] } });
     await expect(
-      CharacterLevelsService.updateLevel(session, characterId, level.id, 4, null, skills, feats, powers),
+      CharacterLevelsService.updateLevel(session, characterId, level.id, 4, [], skills, feats, powers),
     ).rejects.toThrow(/Prohibited School.*unspent/);
   });
 
@@ -615,15 +622,54 @@ describe("re-saving a level", () => {
     test("saved there before the check existed is refused again, and can be cleared", async () => {
       const { ctx, first, resave } = await setupFighter();
       await db
-        .update(levelsInCharacter)
-        .set({ abilityId: ctx.abilityMap["Strength"] })
-        .where(eq(levelsInCharacter.id, first.id));
+        .insert(levelAbilityIncreasesInCharacter)
+        .values({ characterLevelId: first.id, abilityId: ctx.abilityMap["Strength"], amount: 1 });
       // The edit dialog sends the stored increase back.
       await expect(resave({ abilityId: ctx.abilityMap["Strength"] })).rejects.toThrow(
         "Ability increase is not available at this level",
       );
       await resave({ abilityId: null });
-      expect(await CharacterLevels.findOne(db, { id: first.id })).toMatchObject({ abilityId: null });
+      expect(await CharacterLevelAbilityIncreases.findMany(db, { characterLevelIds: [first.id] })).toEqual([]);
+    });
+
+    test("at a level that grants one raises one ability by 1, read back with the level", async () => {
+      const ctx = await getSeedCtx();
+      const characterId = await createSeedCharacter(ctx, "fighter", { xp: 6000 });
+      const [strength, dexterity] = [ctx.abilityMap["Strength"], ctx.abilityMap["Dexterity"]];
+      const save = (increases: AbilityIncrease[]) =>
+        CharacterLevelsService.finalizeLevelUp(
+          session,
+          characterId,
+          [1, 2, 3, 4].map((level) => ({
+            abilityIncreases: level === 4 ? increases : [],
+            hp: 6,
+            klassId: ctx.klassMap.pc["Fighter"],
+            level,
+          })),
+          {},
+          {},
+          {},
+          true,
+        );
+      await expect(save([{ abilityId: strength, amount: 2 }])).rejects.toThrow(
+        "Level 4: Ability increases must add up to 1 at this level",
+      );
+      await expect(
+        save([
+          { abilityId: strength, amount: 1 },
+          { abilityId: dexterity, amount: 1 },
+        ]),
+      ).rejects.toThrow("Level 4: Ability increases must add up to 1 at this level");
+      await expect(
+        save([
+          { abilityId: strength, amount: 1 },
+          { abilityId: strength, amount: 1 },
+        ]),
+      ).rejects.toThrow("Level 4: An ability is increased twice at this level");
+
+      const saved = await save([{ abilityId: strength, amount: 1 }]);
+      const level = await CharacterLevelsService.getLevel(session, characterId, saved[3].id);
+      expect(level.abilityIncreases).toEqual([{ abilityId: strength, amount: 1 }]);
     });
   });
 });

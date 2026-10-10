@@ -36,15 +36,18 @@ export default class LevelEdit extends LevelUpState {
     );
   }
 
-  /** An edited level's projection: the level with its new hit points, ability and picks, in place of its saved row. */
+  /**
+   * An edited level's projection: the level with its new hit points, ability increases and picks, in place of its saved
+   * row.
+   */
   private projectEditedLevel(
     characterLevel: { id: string; position: number },
     klassLevelId: string,
     edit: LevelEditRequest,
   ) {
     const projection = new CharacterProjection(this.character);
-    const { abilityId, hp } = edit;
-    const level = projection.addLevel(klassLevelId, { abilityId, hp, replacing: characterLevel });
+    const { abilityIncreases, hp } = edit;
+    const level = projection.addLevel(klassLevelId, { abilityIncreases, hp, replacing: characterLevel });
     projection.pick(level, this.toPickRows(edit));
     return projection;
   }
@@ -71,17 +74,17 @@ export default class LevelEdit extends LevelUpState {
    */
   planEdit(bonded: CharacterInput[], characterLevelId: string, edit: LevelEditRequest, force: boolean) {
     const { rows } = this.character;
-    const { abilityId, hp } = edit;
+    const { abilityIncreases, hp } = edit;
     const level = rows.levels.find((saved) => saved.id === characterLevelId);
     if (!level) throw new RulesError("not-found", "Character level not found");
     const { klassLevel, klass } = this.getSavedKlassLevel(level);
     // The levels in the order the character took them: the edited level's index is its total level less one
-    this.checks.checkAbilityIncrease(rows.levels.indexOf(level), abilityId);
+    this.checks.checkAbilityIncreases(rows.levels.indexOf(level), abilityIncreases);
     const otherLevels = rows.levels.filter((saved) => saved.id !== characterLevelId);
     const otherLevelIds = new Set(otherLevels.map((saved) => saved.id));
     const pickedFeatIds = rows.picks.feats.filter((pick) => otherLevelIds.has(pick.characterLevelId));
     this.checks.checkLevel(
-      { klass, klassLevel, hp, abilityId, skills: edit.skills, feats: edit.feats, powers: edit.powers },
+      { klass, klassLevel, hp, abilityIncreases, skills: edit.skills, feats: edit.feats, powers: edit.powers },
       otherLevels,
       pickedFeatIds.map((pick) => pick.featId),
     );
@@ -94,11 +97,10 @@ export default class LevelEdit extends LevelUpState {
       this.checkEditedLevelIssues(issues, this.build(contribution.before), this.build(contribution.withLevel));
     }
     return {
-      abilityId: abilityId || null,
       bonded: this.planBondedOf(edited, bonded),
-      hp,
+      columns: { hp },
       level,
-      ...this.toPickRows(edit),
+      rows: { abilityIncreases, ...this.toPickRows(edit) },
     };
   }
 }

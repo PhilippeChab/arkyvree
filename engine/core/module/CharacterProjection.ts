@@ -1,14 +1,15 @@
 import type { CharacterLevel } from "@/shared/relations.ts";
 
 import type { CharacterInput, CharacterRows } from "./CharacterInputs.ts";
-import type { LevelPickRows } from "./levelUp.ts";
+import type { AbilityIncrease, LevelPickRows } from "./levelUp.ts";
 
 /**
  * A character's rows (`character`) with what a level-up adds before it's saved, as the rows it would save: the levels
- * it adds, replaces or leaves out, and the picks at them. A ruleset builds the character from them as from saved rows
- * (`input`), so what a level grants, what a pick carries and where a level stands are read one way. It says which
- * character it projects: the character as it was before a level (`dropLevelsFrom`, what a level's prerequisites read),
- * or with a level replaced where it stands (`addLevel`'s `replacing`, what its slots and points read).
+ * it adds, replaces or leaves out, and their ability increases and picks. A ruleset builds the character from them as
+ * from saved rows (`input`), so what a level grants, what a pick carries and where a level stands are read one way. It
+ * says which character it projects: the character as it was before a level (`dropLevelsFrom`, what a level's
+ * prerequisites read), or with a level replaced where it stands (`addLevel`'s `replacing`, what its slots and points
+ * read).
  */
 export default class CharacterProjection {
   constructor(private readonly character: CharacterInput) {
@@ -19,7 +20,7 @@ export default class CharacterProjection {
 
   private readonly levels: CharacterLevel[] = [];
 
-  private readonly picks: CharacterRows["picks"] = { feats: [], powers: [], skills: [] };
+  private readonly picks: CharacterRows["picks"] = { abilityIncreases: [], feats: [], powers: [], skills: [] };
 
   /** Where the next level added goes: after every level the character saved, and those added before it. */
   private nextPosition: number;
@@ -31,17 +32,17 @@ export default class CharacterProjection {
   }
 
   /**
-   * Adds a level of class level `klassLevelId`, with its ability increase and hit points: after the character's levels,
-   * or in the place of the level it's `replacing`, which it leaves out. A fresh id keeps it apart from the level it
-   * replaces.
+   * Adds a level of class level `klassLevelId`, with its ability increases and hit points: after the character's
+   * levels, or in the place of the level it's `replacing`, which it leaves out. A fresh id keeps it apart from the level
+   * it replaces.
    */
   addLevel(
     klassLevelId: string,
     {
-      abilityId,
+      abilityIncreases = [],
       hp,
       replacing,
-    }: { abilityId?: string | null; hp: number; replacing?: { id: string; position: number } },
+    }: { abilityIncreases?: AbilityIncrease[]; hp: number; replacing?: { id: string; position: number } },
   ): CharacterLevel {
     if (replacing) this.droppedLevelIds.add(replacing.id);
     const level = {
@@ -49,17 +50,21 @@ export default class CharacterProjection {
       characterId: this.character.record.id,
       klassLevelId,
       hp,
-      abilityId: abilityId || null,
       position: replacing ? replacing.position : this.nextPosition++,
       ...this.stamps(),
     };
     this.levels.push(level);
+    const at = { characterLevelId: level.id, ...this.stamps() };
+    for (const { abilityId, amount } of abilityIncreases)
+      this.picks.abilityIncreases.push({ ...at, abilityId, amount });
     return level;
   }
 
-  /** Adds levels of these class levels, in order, with their ability increases when given. */
-  addLevels(klassLevelIds: string[], { abilityIds, hp }: { abilityIds?: (string | undefined)[]; hp: number }) {
-    return klassLevelIds.map((klassLevelId, i) => this.addLevel(klassLevelId, { abilityId: abilityIds?.[i], hp }));
+  /** Adds levels of these class levels, in order, with their ability increases (by place) when given. */
+  addLevels(klassLevelIds: string[], { abilityIncreases, hp }: { abilityIncreases?: AbilityIncrease[][]; hp: number }) {
+    return klassLevelIds.map((klassLevelId, i) =>
+      this.addLevel(klassLevelId, { abilityIncreases: abilityIncreases?.[i], hp }),
+    );
   }
 
   /** Leaves out the character's level `levelId`, with its picks. */
@@ -92,6 +97,7 @@ export default class CharacterProjection {
         ...rows,
         levels,
         picks: {
+          abilityIncreases: keep(rows.picks.abilityIncreases, this.picks.abilityIncreases),
           feats: keep(rows.picks.feats, this.picks.feats),
           powers: keep(rows.picks.powers, this.picks.powers),
           skills: keep(rows.picks.skills, this.picks.skills),

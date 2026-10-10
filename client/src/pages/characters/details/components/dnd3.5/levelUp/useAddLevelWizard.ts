@@ -23,6 +23,7 @@ import {
   type SelectedKlass,
 } from "./levelUpQueries.ts";
 import {
+  abilityIncreasesOf,
   featPickString,
   nextPickLevel,
   plannedLevelsOf,
@@ -364,7 +365,7 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
         klassId: detail.klassId,
         level: detail.level,
         hp: hpValues[i],
-        abilityId: abilityIncreases[i] ?? null,
+        abilityIncreases: abilityIncreasesOf(abilityIncreases[i]),
       }));
       return parseResponse(
         rpc.api.characters.levels[":characterId"].finalize.$post({

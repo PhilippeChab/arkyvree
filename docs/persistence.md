@@ -16,7 +16,7 @@ Rows whose disappearance leaves no observable history a user would expect to fin
 | Customizations | `Modifiers`, `Properties`, `Requirements` |
 | Aptitude links | `FeatsAptitudes`, `PowersAptitudes` |
 | Class structure | `KlassSkills`, `KlassLevelFeats`, `KlassLevelPowers`, `KlassLevelSaves` |
-| Character state | `CharacterLevels`, `CharacterLevelFeats`, `CharacterLevelPowers`, `CharacterLevelSkills`, `CharacterInventory`, `CharacterLanguages`, `CharacterAbilities` |
+| Character state | `CharacterLevels`, `CharacterLevelAbilityIncreases`, `CharacterLevelFeats`, `CharacterLevelPowers`, `CharacterLevelSkills`, `CharacterInventory`, `CharacterLanguages`, `CharacterAbilities` |
 | Internal forking metadata | `EntitySnapshots` |
 | Ruleset entities | `Feats`, `Items`, `Races`, `Klasses`, `KlassLevels`, `Skills`, `Powers`, `Aptitudes`, `Saves`, `Languages`, `Mechanics` |
 | Status-driven lifecycle | `Contributors` (Pending/Active/Rejected/Revoked enum) |

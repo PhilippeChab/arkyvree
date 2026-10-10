@@ -35,7 +35,7 @@ export default class LevelUpSteps extends LevelUpState {
     const projection = new CharacterProjection(this.character);
     if (editedLevel) projection.dropLevelsFrom(editedLevel.id);
     const hp = LevelRules.UNROLLED_LEVEL_HP;
-    projection.addLevels(planned?.klassLevelIds ?? [], { abilityIds: planned?.abilityIds, hp });
+    projection.addLevels(planned?.klassLevelIds ?? [], { abilityIncreases: planned?.abilityIncreases, hp });
     // The levels before this one: the level added or edited is the next
     if (!LevelRules.isAbilityIncreaseLevel(projection.input.rows.levels.length))
       return { isAvailable: false, attributes: {} };
@@ -78,8 +78,8 @@ export default class LevelUpSteps extends LevelUpState {
   private projectStep(klassLevelId: string, step: StepProjection) {
     const projection = new CharacterProjection(this.character);
     const hp = LevelRules.UNROLLED_LEVEL_HP;
-    projection.addLevels(step.planned?.klassLevelIds ?? [], { abilityIds: step.planned?.abilityIds, hp });
-    projection.addLevel(klassLevelId, { abilityId: step.abilityId, hp, replacing: step.editedLevel });
+    projection.addLevels(step.planned?.klassLevelIds ?? [], { abilityIncreases: step.planned?.abilityIncreases, hp });
+    projection.addLevel(klassLevelId, { abilityIncreases: step.abilityIncreases, hp, replacing: step.editedLevel });
     return projection;
   }
 

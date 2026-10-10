@@ -30,6 +30,11 @@ function isStep<N extends LevelStep["name"]>(step: LevelStep, name: N): step is 
   return step.name === name;
 }
 
+/** A level's ability increases as 3.5 gives them: `abilityId` raised by 1, or none. */
+export function increasesOf(abilityId: string | null | undefined) {
+  return abilityId ? [{ abilityId, amount: 1 }] : [];
+}
+
 /** Gives a character a level in a class level, with these picks, straight in the database: no level-up rule applies. */
 export async function addCharacterLevel(characterId: string, klassLevelId: string, picks: LevelPicks = {}) {
   const [level] = await CharacterLevels.create(db, { characterId, klassLevelId, hp: 1 });
@@ -52,7 +57,8 @@ export async function addCharacterLevel(characterId: string, klassLevelId: strin
 /**
  * Adds a single level to a character via the batch finalizer. Tests used
  * `finalizeLevelUp` for this before batch became the only flow; this wraps
- * `finalizeLevelUp` with one level so call sites stay readable.
+ * `finalizeLevelUp` with one level so call sites stay readable. The level
+ * raises `abilityId` by 1 (`increasesOf`), or no ability.
  */
 export async function addOneLevel(
   session: Session,
@@ -69,7 +75,7 @@ export async function addOneLevel(
   const createdLevels = await CharacterLevelsService.finalizeLevelUp(
     session,
     characterId,
-    [{ klassId, level, hp, abilityId }],
+    [{ klassId, level, hp, abilityIncreases: increasesOf(abilityId) }],
     skills,
     feats,
     powers,

@@ -5,6 +5,7 @@ import {
   type aptitudesInRules,
   charactersInCharacter,
   type featsInRules,
+  type levelAbilityIncreasesInCharacter,
   type levelFeatsInCharacter,
   type levelPowersInCharacter,
   levelsInCharacter,
@@ -19,7 +20,11 @@ import BaseRepository from "@/server/repositories/BaseRepository.ts";
 import { ChecksRulesetUse } from "@/server/repositories/concerns/ChecksRulesetUse.ts";
 import { ResolvesCopies } from "@/server/repositories/concerns/ResolvesCopies.ts";
 
-type LevelPickTable = typeof levelSkillsInCharacter | typeof levelFeatsInCharacter | typeof levelPowersInCharacter;
+type LevelPickTable =
+  | typeof levelAbilityIncreasesInCharacter
+  | typeof levelSkillsInCharacter
+  | typeof levelFeatsInCharacter
+  | typeof levelPowersInCharacter;
 
 /** What a pick names: a skill, a feat, a power, or the aptitude a feat or a power is picked under. */
 type PickedTable = typeof skillsInRules | typeof featsInRules | typeof powersInRules | typeof aptitudesInRules;

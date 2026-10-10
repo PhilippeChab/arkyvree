@@ -16,18 +16,22 @@ export type {
 } from "./characters.ts";
 export type { Descriptions, RulesetModule } from "./contract.ts";
 export type {
+  AbilityIncrease,
   BondedCreaturesPlan,
   BondedLevelsPlan,
   BondedPlan,
   FeatPick,
+  LevelColumns,
   LevelEditPlan,
   LevelEditRequest,
   LevelPickRows,
   LevelPicks,
   LevelRemovalPlan,
   LevelRequest,
+  LevelRows,
   LevelsPlan,
   LevelStep,
+  LevelWrites,
   NewBondedCreature,
   PickLevel,
   PlannedSoFar,

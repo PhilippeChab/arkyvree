@@ -54,7 +54,7 @@ export default abstract class LevelSelections<C, F extends object> extends Level
   protected abstract featDetailsOf(featIds: string[]): (featId: string) => F;
 
   /**
-   * The character's saved level `characterLevelId`: its class level, hit points and ability increase, its skill ranks,
+   * The character's saved level `characterLevelId`: its class level, hit points and ability increases, its skill ranks,
    * its feats by pool and its powers by pool. Refused when the character has no such level.
    */
   describeLevel(characterLevelId: string) {
@@ -71,7 +71,7 @@ export default abstract class LevelSelections<C, F extends object> extends Level
       level: klassLevel.level,
       hd: klass.hd,
       hp: level.hp,
-      abilityId: level.abilityId,
+      abilityIncreases: atLevel(picks.abilityIncreases).map(({ abilityId, amount }) => ({ abilityId, amount })),
       ...this.buildLevelSelections({
         feats: atLevel(picks.feats),
         powers: atLevel(picks.powers),

@@ -1,4 +1,4 @@
-import { Engine, type PlannedSoFar } from "@/engine/index.ts";
+import { type AbilityIncrease, Engine, type PlannedSoFar } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { db } from "@/server/database/index.ts";
 import { Feats, Klasses, Powers } from "@/server/repositories/index.ts";
@@ -7,7 +7,7 @@ import type { Session } from "@/shared/relations.ts";
 
 /** A feat or power picker's level, as its list's filters send it, and what the wizard plans before it. */
 interface PickLevelWhere extends PlannedWhere {
-  abilityId?: string;
+  abilityIncreases?: AbilityIncrease[];
   aptitudeId: string;
   classId: string;
   editedLevelId?: string;
@@ -22,19 +22,24 @@ interface PickLevelWhere extends PlannedWhere {
  */
 interface PlannedWhere {
   featPicks?: PlannedSoFar["featPicks"];
-  plannedAbilityIds?: PlannedSoFar["abilityIds"];
+  plannedAbilityIncreases?: PlannedSoFar["abilityIncreases"];
   plannedClassLevelIds?: PlannedSoFar["klassLevelIds"];
   skillPoints?: PlannedSoFar["skillPoints"];
 }
 
 /** A picker's level as the engine takes it. */
-function pickLevelOf({ abilityId, aptitudeId, classId, editedLevelId, level, ...planned }: PickLevelWhere) {
-  return { abilityId, aptitudeId, editedLevelId, klassId: classId, level, planned: plannedOf(planned) };
+function pickLevelOf({ abilityIncreases, aptitudeId, classId, editedLevelId, level, ...planned }: PickLevelWhere) {
+  return { abilityIncreases, aptitudeId, editedLevelId, klassId: classId, level, planned: plannedOf(planned) };
 }
 
 /** What the wizard plans so far, as the engine takes it. */
-function plannedOf({ featPicks, plannedAbilityIds, plannedClassLevelIds, skillPoints }: PlannedWhere): PlannedSoFar {
-  return { abilityIds: plannedAbilityIds, featPicks, klassLevelIds: plannedClassLevelIds, skillPoints };
+function plannedOf({
+  featPicks,
+  plannedAbilityIncreases,
+  plannedClassLevelIds,
+  skillPoints,
+}: PlannedWhere): PlannedSoFar {
+  return { abilityIncreases: plannedAbilityIncreases, featPicks, klassLevelIds: plannedClassLevelIds, skillPoints };
 }
 
 /**

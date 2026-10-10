@@ -24,6 +24,7 @@ import {
   klassSkillsInRules,
   languagesInCharacter,
   languagesInRules,
+  levelAbilityIncreasesInCharacter,
   levelFeatsInCharacter,
   levelPowersInCharacter,
   levelsInCharacter,
@@ -54,10 +55,10 @@ export const abilitiesInRulesRelations = relations(abilitiesInRules, ({ one, man
     fields: [abilitiesInRules.campaignId],
     references: [campaignsInCampaign.id],
   }),
-  levelsInCharacters: many(levelsInCharacter),
   savesInRules: many(savesInRules),
   skillsInRules: many(skillsInRules),
   characterAbilitiesInCharacters: many(characterAbilitiesInCharacter),
+  levelAbilityIncreasesInCharacters: many(levelAbilityIncreasesInCharacter),
 }));
 
 export const activitiesInAccountRelations = relations(activitiesInAccount, ({ one }) => ({
@@ -344,6 +345,17 @@ export const languagesInRulesRelations = relations(languagesInRules, ({ one, man
   languagesInCharacters: many(languagesInCharacter),
 }));
 
+export const levelAbilityIncreasesInCharacterRelations = relations(levelAbilityIncreasesInCharacter, ({ one }) => ({
+  levelsInCharacter: one(levelsInCharacter, {
+    fields: [levelAbilityIncreasesInCharacter.characterLevelId],
+    references: [levelsInCharacter.id],
+  }),
+  abilitiesInRule: one(abilitiesInRules, {
+    fields: [levelAbilityIncreasesInCharacter.abilityId],
+    references: [abilitiesInRules.id],
+  }),
+}));
+
 export const levelFeatsInCharacterRelations = relations(levelFeatsInCharacter, ({ one }) => ({
   levelsInCharacter: one(levelsInCharacter, {
     fields: [levelFeatsInCharacter.characterLevelId],
@@ -383,13 +395,10 @@ export const levelsInCharacterRelations = relations(levelsInCharacter, ({ one, m
     fields: [levelsInCharacter.klassLevelId],
     references: [klassLevelsInRules.id],
   }),
-  abilitiesInRule: one(abilitiesInRules, {
-    fields: [levelsInCharacter.abilityId],
-    references: [abilitiesInRules.id],
-  }),
   levelPowersInCharacters: many(levelPowersInCharacter),
   levelSkillsInCharacters: many(levelSkillsInCharacter),
   levelFeatsInCharacters: many(levelFeatsInCharacter),
+  levelAbilityIncreasesInCharacters: many(levelAbilityIncreasesInCharacter),
 }));
 
 export const levelSkillsInCharacterRelations = relations(levelSkillsInCharacter, ({ one }) => ({

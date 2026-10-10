@@ -7,20 +7,24 @@ import {
 } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
+import type { Character } from "@/shared/relations.ts";
 
 import SelectionChecks from "./SelectionChecks.ts";
 
 /**
  * What a ruleset's level-up rules decide, which every level-up flow reads: how a character is built (`C`, the ruleset's
- * character), which levels take an ability increase, and what a master's bonded creatures become with it.
+ * character), what a level's ability increases add up to, and what a master's bonded creatures become with it.
  */
 export interface LevelUpRules<C> {
   /** The character built from its rows (as the server read them, or with what a level-up adds), in the ruleset's view. */
   buildCharacter(view: RulesetView, input: CharacterInput): C;
-  /** Whether the level after `totalLevel` levels takes an ability increase. */
-  isAbilityIncreaseLevel(totalLevel: number): boolean;
-  /** What the bonded creatures (`bonded`, their rows) become with their master as `master` builds it. */
-  planBondedCreatures(view: RulesetView, master: C, bonded: CharacterInput[]): BondedPlan[];
+  /** What the ability increases of the level after `totalLevel` levels add up to: 0 when it takes none. */
+  getAbilityIncreaseTotal(totalLevel: number): number;
+  /**
+   * What the bonded creatures (`bonded`, their rows) become with their master as `master` builds it, from its row
+   * (`record`), which a creature it makes takes after.
+   */
+  planBondedCreatures(view: RulesetView, master: C, record: Character, bonded: CharacterInput[]): BondedPlan[];
 }
 
 /**
@@ -53,7 +57,7 @@ export default abstract class LevelUpBase<C> {
     return lookup;
   }
 
-  /** A level's selections checked against the ruleset, and its ability increase against its rules. */
+  /** A level's selections checked against the ruleset, and its ability increases against its rules. */
   protected get checks(): SelectionChecks {
     return new SelectionChecks(this.rulesetData, this.rules);
   }
@@ -81,7 +85,7 @@ export default abstract class LevelUpBase<C> {
    * creature removed, kept or made, and the levels it takes or loses.
    */
   protected planBondedOf(master: C, bonded: CharacterInput[]) {
-    return this.rules.planBondedCreatures(this.view, master, bonded);
+    return this.rules.planBondedCreatures(this.view, master, this.character.record, bonded);
   }
 
   protected get rulesetData(): RulesetData {

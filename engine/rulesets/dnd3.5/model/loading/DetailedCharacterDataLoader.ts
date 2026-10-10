@@ -1,4 +1,4 @@
-import { type CharacterRows } from "@/engine/core/module/index.ts";
+import type { AbilityIncrease, CharacterRows } from "@/engine/core/module/index.ts";
 import { type RulesetData, type RulesetView } from "@/engine/core/view/index.ts";
 import { type SkillFieldValues } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
 import type {
@@ -31,6 +31,8 @@ import RulesetReadings from "./RulesetReadings.ts";
  * classes' fields, its skills' fields). The ruleset's own lists the build reads off the view itself.
  */
 export interface LoadedCharacterData {
+  /** The ability increases the character's levels take. */
+  abilityIncreases: AbilityIncrease[];
   campaign: Campaign | undefined;
   characterAbilityScores: { abilityId: string; name: string; score: number }[];
   characterLevels: CharacterLevel[];
@@ -152,6 +154,7 @@ export default class DetailedCharacterDataLoader {
       campaign,
       ...RulesetReadings.readRulesetProperties(rulesetData, (id) => cowData.resolve(id)),
       characterAbilityScores: resolve(rows.abilities).map((ca) => RulesetReadings.buildAbilityScore(ca, abilityLookup)),
+      abilityIncreases: resolve(rows.picks.abilityIncreases).map(({ abilityId, amount }) => ({ abilityId, amount })),
       race: parts.race,
       languages,
       inventory: parts.inventory,

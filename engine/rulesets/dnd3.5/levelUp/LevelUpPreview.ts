@@ -1,3 +1,4 @@
+import type { LevelRequest } from "@/engine/core/module/index.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 
 import PlannedLevelsState, { type PlannedLevels } from "./PlannedLevelsState.ts";
@@ -48,14 +49,8 @@ export default class LevelUpPreview extends PlannedLevelsState {
     return levels;
   }
 
-  /**
-   * The level-up wizard's preview of the levels the character plans (`levels`, each with its ability increase in
-   * `abilityIds`).
-   */
-  describePreview(levels: { klassId: string; level: number }[], abilityIds: (string | null)[]) {
-    const klassLevelEntries = this.getPlannedKlassLevels(
-      levels.map((level, i) => ({ ...level, abilityId: abilityIds[i] ?? null })),
-    );
-    return this.buildLevelUpPreview(this.buildPlannedLevels(klassLevelEntries));
+  /** The level-up wizard's preview of the levels the character plans, each with its ability increases. */
+  describePreview(levels: Omit<LevelRequest, "hp">[]) {
+    return this.buildLevelUpPreview(this.buildPlannedLevels(this.getPlannedKlassLevels(levels)));
   }
 }

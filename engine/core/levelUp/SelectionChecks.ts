@@ -1,3 +1,4 @@
+import type { AbilityIncrease } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 
@@ -5,9 +6,9 @@ import type { LevelUpRules } from "./LevelUpBase.ts";
 
 type FeatRecord = { id: string; name: string; stackable: boolean };
 
-/** The level's hit points, ability and selections a check reads, with its class and class level. */
+/** The level's hit points, ability increases and selections a check reads, with its class and class level. */
 interface LevelChecked {
-  abilityId: string | null;
+  abilityIncreases: AbilityIncrease[];
   feats: Record<string, string[]>;
   hp: number;
   klass: { hd: number };
@@ -22,27 +23,28 @@ export type GrantedFeatRecords =
 
 /**
  * A level's selections checked against the ruleset (`rulesetData`): theirs, linked to their pools, and not taken twice;
- * and its ability increase where its ruleset's rules give one (`rules`).
+ * and its ability increases, adding up to what its ruleset's rules give it (`rules`).
  */
 export default class SelectionChecks {
   constructor(
     private readonly rulesetData: RulesetData,
-    private readonly rules: Pick<LevelUpRules<unknown>, "isAbilityIncreaseLevel">,
+    private readonly rules: Pick<LevelUpRules<unknown>, "getAbilityIncreaseTotal">,
   ) {}
 
   /**
-   * A level's hit points, ability and selections checked, for both the level save and the level-up's: each selection
-   * the ruleset's and linked to its pool, no non-stackable feat picked twice. Answers the feats picked and what the
-   * level is granted, which whether a feat is already on the character reads (`checkNotTaken`).
+   * A level's hit points, ability increases and selections checked, for both the level save and the level-up's: each
+   * ability and selection the ruleset's, each selection linked to its pool, no non-stackable feat picked twice. Answers
+   * the feats picked and what the level is granted, which whether a feat is already on the character reads
+   * (`checkNotTaken`).
    */
   private checkLevelSelections(level: LevelChecked) {
-    const { klass, klassLevel, hp, abilityId, skills, feats, powers } = level;
+    const { klass, klassLevel, hp, abilityIncreases, skills, feats, powers } = level;
 
     if (hp < 1 || hp > klass.hd) throw new RulesError("invalid", `HP must be between 1 and ${klass.hd}`);
 
     // A cache hit means the entity is in the composed view of the character's ruleset
     // (the cache's arrays are already COW-resolved and sibling-filtered).
-    if (abilityId && !this.rulesetData.abilitiesById.has(abilityId))
+    if (abilityIncreases.some(({ abilityId }) => !this.rulesetData.abilitiesById.has(abilityId)))
       throw new RulesError("invalid", "Ability does not belong to the character's ruleset");
 
     // Submitted ids can repeat, e.g. a non-stackable feat picked under two aptitude pools: caught by checkRepeatedPicks.
@@ -134,16 +136,22 @@ export default class SelectionChecks {
   }
 
   /**
-   * Throws when the level after `totalLevel` levels takes an ability increase it doesn't have, or skips the one it has.
-   * `label` names the level in the message ("Level 2: ").
+   * Throws when the level after `totalLevel` levels raises its abilities by other than what its rules give it (none
+   * where they give none), or raises one twice. `label` names the level in the message ("Level 2: ").
    */
-  checkAbilityIncrease(totalLevel: number, abilityId: string | null, label = "") {
-    const isAbilityIncreaseLevel = this.rules.isAbilityIncreaseLevel(totalLevel);
-    if (abilityId && !isAbilityIncreaseLevel)
+  checkAbilityIncreases(totalLevel: number, increases: AbilityIncrease[], label = "") {
+    const total = this.rules.getAbilityIncreaseTotal(totalLevel);
+    if (increases.length > 0 && total === 0)
       throw new RulesError("invalid", `${label}Ability increase is not available at this level`);
 
-    if (!abilityId && isAbilityIncreaseLevel)
+    if (increases.length === 0 && total > 0)
       throw new RulesError("invalid", `${label}Ability increase is required at this level`);
+
+    if (new Set(increases.map(({ abilityId }) => abilityId)).size < increases.length)
+      throw new RulesError("invalid", `${label}An ability is increased twice at this level`);
+
+    if (increases.reduce((sum, { amount }) => sum + amount, 0) !== total)
+      throw new RulesError("invalid", `${label}Ability increases must add up to ${total} at this level`);
   }
 
   /**

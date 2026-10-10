@@ -11,13 +11,15 @@ export type { default as LevelUpEngine } from "./api/LevelUpEngine.ts";
 export type { EntityKinds } from "./api/Modules.ts";
 export type { CowData, RulesetSources } from "./core/cow/index.ts";
 export type {
+  AbilityIncrease,
   BondedPlan,
   CharacterInput,
   CharacterRows,
   EntityRemoval,
   EntityWrites,
-  LevelPickRows,
+  LevelRows,
   LevelStep,
+  LevelWrites,
   ListLink,
   MadeEntity,
   NewBondedCreature,
@@ -25,4 +27,3 @@ export type {
 } from "./core/module/index.ts";
 export { default as RulesError } from "./core/RulesError.ts";
 export type { EntityCustomizations, RulesetData, RulesetRawData } from "./core/view/index.ts";
-export { RULESET_LIMITS } from "./rulesets/dnd3.5/index.ts";

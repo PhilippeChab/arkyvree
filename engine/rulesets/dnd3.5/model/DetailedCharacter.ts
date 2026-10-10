@@ -60,7 +60,6 @@ export default class DetailedCharacter extends include(
       characterId: this.character.id,
       klassLevelId: klassLevel.id,
       hp: 10,
-      abilityId: null,
       createdAt: now,
       updatedAt: now,
       deletedAt: null,

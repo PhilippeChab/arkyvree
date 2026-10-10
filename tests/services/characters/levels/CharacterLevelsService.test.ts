@@ -17,6 +17,7 @@ import { createTestPool } from "@/server/database/test.ts";
 import { toJson } from "@/server/errors/index.ts";
 import {
   Aptitudes,
+  CharacterLevelAbilityIncreases,
   CharacterLevelFeats,
   CharacterLevelPowers,
   CharacterLevels,
@@ -54,7 +55,7 @@ import {
   WAR_CLERIC_1,
   WIZARD_1,
 } from "@/tests/support/levelFixtures.ts";
-import { addCharacterLevel, addOneLevel, findKlassLevel, getLevelStep } from "@/tests/support/levels.ts";
+import { addCharacterLevel, addOneLevel, findKlassLevel, getLevelStep, increasesOf } from "@/tests/support/levels.ts";
 import {
   createSeededTestRuleset,
   createSeededTestRulesetWithExtensions,
@@ -142,7 +143,7 @@ async function setupCandidate(missing: { bab?: boolean; feat?: string; skill?: s
 
   const eligible = async (
     plannedClassLevelIds?: Planned["plannedClassLevelIds"],
-    plannedAbilityIds?: Planned["plannedAbilityIds"],
+    plannedAbilityIncreases?: Planned["plannedAbilityIncreases"],
     featPicks?: Planned["featPicks"],
     skillPoints?: Planned["skillPoints"],
   ) =>
@@ -150,7 +151,7 @@ async function setupCandidate(missing: { bab?: boolean; feat?: string; skill?: s
       await CharacterLevelsService.getAvailableClasses(
         session,
         characterId,
-        { featPicks, plannedAbilityIds, plannedClassLevelIds, skillPoints },
+        { featPicks, plannedAbilityIncreases, plannedClassLevelIds, skillPoints },
         page,
       )
     ).items.find((k) => k.id === blackguard.id)!.eligible;
@@ -303,13 +304,17 @@ describe("LevelsService", () => {
           page,
         ),
       () => addOneLevel(session, NIL_UUID, klass.id, 1, 8, null, {}, {}, {}),
-      () => addOneLevel(session, character.id, klass.id, 999, 8, null, {}, {}, {}),
+      () => addOneLevel(session, character.id, klass.id, 6, 8, null, {}, {}, {}),
       () => CharacterLevelsService.removeLevel(session, NIL_UUID),
       () => CharacterLevelsService.removeLevel(other, character.id),
       () => CharacterLevelsService.removeLevel(session, character.id),
     ];
     // One at a time: the test's transaction has a single connection.
     for (const call of notFound) expect((await answerTo(call)).status).toBe(404);
+    // A level past the rules' last class level is refused before it's looked up
+    expect((await answerTo(() => addOneLevel(session, character.id, klass.id, 999, 8, null, {}, {}, {}))).status).toBe(
+      400,
+    );
   });
 
   describe("classes a character can take", () => {
@@ -472,7 +477,11 @@ describe("LevelsService", () => {
       const characterId = await createSeedCharacter(ctx, "fighter", { xp: 6000, abilities: { Intelligence: 13 } });
       await addFighterLevels(session, ctx, characterId, 3);
       const slots = (abilityId?: string) =>
-        getLevelStep(session, characterId, "skills", { classId: ctx.klassMap.pc["Fighter"], level: 4, abilityId });
+        getLevelStep(session, characterId, "skills", {
+          abilityIncreases: increasesOf(abilityId),
+          classId: ctx.klassMap.pc["Fighter"],
+          level: 4,
+        });
 
       expect((await slots()).skillPointsToSpend).toBe(4);
       // INT 14 makes it 5 a level: 20 + 5 + 5 + 5 = 35, less the 24 spent.
@@ -1290,7 +1299,8 @@ describe("LevelsService", () => {
       const ctx = await getSeedCtx();
       const characterId = await createSeedCharacter(ctx, "sorcerer");
       const level = await levelUp(session, ctx, characterId, "Sorcerer", 1, SORCERER_1);
-      expect(level).toMatchObject({ characterId, hp: 4, abilityId: null });
+      expect(level).toMatchObject({ characterId, hp: 4 });
+      expect(await CharacterLevelAbilityIncreases.findMany(db, { characterLevelIds: [level.id] })).toEqual([]);
 
       const { skills, feats, powers } = picks(ctx, SORCERER_1);
       const saved = async <T>(rows: Promise<T[]>, key: (row: T) => string) => (await rows).map(key).sort();
@@ -1323,9 +1333,10 @@ describe("LevelsService", () => {
       const ctx = await getSeedCtx();
       const characterId = await createSeedCharacter(ctx, "fighter", { xp: 6000 });
       await addFighterLevels(session, ctx, characterId, 3);
-      expect(await levelUp(session, ctx, characterId, "Fighter", 4, FIGHTER_LEVELS[3])).toMatchObject({
-        abilityId: ctx.abilityMap["Strength"],
-      });
+      const level = await levelUp(session, ctx, characterId, "Fighter", 4, FIGHTER_LEVELS[3]);
+      expect(await CharacterLevelAbilityIncreases.findMany(db, { characterLevelIds: [level.id] })).toMatchObject([
+        { abilityId: ctx.abilityMap["Strength"], amount: 1 },
+      ]);
     });
 
     test("refuses picks the level can't take", async () => {
@@ -1535,7 +1546,7 @@ describe("LevelsService", () => {
         const { feats } = picks(ctx, {
           feats: { General: ["Power Attack"], "Fighter Bonus Feat": ["Weapon Focus: Battleaxe"] },
         });
-        await CharacterLevelsService.updateLevel(session, characterId, fighter1, 10, null, {}, feats, {}, true);
+        await CharacterLevelsService.updateLevel(session, characterId, fighter1, 10, [], {}, feats, {}, true);
         expect(
           (await CharacterLevelFeats.findMany(db, { characterLevelIds: [fighter1] })).map((f) => f.featId).sort(),
         ).toEqual(Object.values(feats).flat().sort());
@@ -1565,7 +1576,7 @@ describe("LevelsService", () => {
             characterId,
             levelIds[index],
             8,
-            null,
+            [],
             skillRanks(ctx, ranks),
             {},
             {},
@@ -1608,7 +1619,7 @@ describe("LevelsService", () => {
           characterId,
           levelIds[2],
           4,
-          null,
+          [],
           {},
           {},
           picks(ctx, { powers: { "Sorcerer Spells": ["Magic Missile"] } }).powers,
@@ -1640,7 +1651,7 @@ describe("LevelsService", () => {
           characterId,
           levelIds[0],
           10,
-          null,
+          [],
           {},
           { [ctx.aptMap["General"]]: [] },
           {},
@@ -1657,7 +1668,7 @@ describe("LevelsService", () => {
       const familiar = await Characters.findOne(db, { parentCharacterId: characterId, kind: "familiar" });
 
       const { skills, feats, powers } = picks(ctx, SORCERER_1);
-      await CharacterLevelsService.updateLevel(session, characterId, level.id, 4, null, skills, feats, powers);
+      await CharacterLevelsService.updateLevel(session, characterId, level.id, 4, [], skills, feats, powers);
       expect(await Characters.findOne(db, { parentCharacterId: characterId, kind: "familiar" })).toMatchObject({
         id: familiar!.id,
       });
@@ -1699,7 +1710,10 @@ describe("LevelsService", () => {
       const flows: [string, () => Promise<unknown>][] = [
         [
           "preview",
-          () => CharacterLevelsService.getPreview(session, character.id, [{ klassId: klass.id, level: 1 }], [null]),
+          () =>
+            CharacterLevelsService.getPreview(session, character.id, [
+              { abilityIncreases: [], klassId: klass.id, level: 1 },
+            ]),
         ],
         ["classes", () => CharacterLevelsService.getAvailableClasses(session, character.id, {}, page)],
         ["feat slots", () => getLevelStep(session, character.id, "feats", { classId: klass.id, level: 1 })],
@@ -1718,7 +1732,7 @@ describe("LevelsService", () => {
       const level = await addOneLevel(session, character.id, klass.id, 1, 8, null, {}, {}, {}, true);
       const scope = await measure(() => withRulesetScope(db, character.rulesetId, async () => {}));
       const { timing } = await measure(() =>
-        CharacterLevelsService.updateLevel(session, character.id, level.id, 6, null, {}, {}, {}, true),
+        CharacterLevelsService.updateLevel(session, character.id, level.id, 6, [], {}, {}, {}, true),
       );
       expect(timing.cacheHits + timing.cacheMisses).toBe(scope.timing.cacheHits + scope.timing.cacheMisses);
     });

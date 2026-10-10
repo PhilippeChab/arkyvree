@@ -17,15 +17,15 @@ import type {
 } from "@/engine/core/module/levelUp.ts";
 import type { OpenedGroupedPicker, OpenedPicker, PickFilters, PickGroupFilters } from "@/engine/core/module/pickers.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import type { Klass } from "@/shared/relations.ts";
+import type { Character, Klass } from "@/shared/relations.ts";
 
 /**
  * What a ruleset answers of a character's levels, from the rows the server reads: the level-up wizard's steps (which it
  * lists, and answers by name), preview and pickers, a saved level's selections, and what a save, an edit or a removal
  * writes, with what the master's bonded creatures become. Its descriptions are the ruleset's own (`D`); its plans are
- * the rows the server writes. Its level-up rules (`LevelUpRules`: how its character `C` is built, which levels take an
- * ability increase, what bonded creatures become) are what every flow reads: a removal and the bonded creatures follow
- * from them alone.
+ * the rows the server writes. Its level-up rules (`LevelUpRules`: how its character `C` is built, what a level's
+ * ability increases add up to, what bonded creatures become) are what every flow reads: a removal and the bonded
+ * creatures follow from them alone.
  */
 export default abstract class LevelUpPart<D extends Descriptions, C = unknown> implements LevelUpRules<C> {
   /** The ruleset's character built from its rows, in the ruleset's view. */
@@ -34,12 +34,11 @@ export default abstract class LevelUpPart<D extends Descriptions, C = unknown> i
   /** A saved level's selections, as its edit opens them: refused when the character has no such level. */
   abstract describeLevel(view: RulesetView, character: CharacterInput, characterLevelId: string): D["levelSelections"];
 
-  /** The wizard's preview of the levels the character plans, each with its ability increase (`abilityIds`, by place). */
+  /** The wizard's preview of the levels the character plans, each with its ability increases. */
   abstract describePreview(
     view: RulesetView,
     character: CharacterInput,
-    levels: { klassId: string; level: number }[],
-    abilityIds: (string | null)[],
+    levels: Omit<LevelRequest, "hp">[],
   ): D["preview"];
 
   /**
@@ -55,8 +54,8 @@ export default abstract class LevelUpPart<D extends Descriptions, C = unknown> i
     step: LevelStep,
   ): readonly WizardStep<D["step"]["name"]>[];
 
-  /** Whether the level after `totalLevel` levels takes an ability increase. */
-  abstract isAbilityIncreaseLevel(totalLevel: number): boolean;
+  /** What the ability increases of the level after `totalLevel` levels add up to: 0 when it takes none. */
+  abstract getAbilityIncreaseTotal(totalLevel: number): number;
 
   /** The class picker, with what the wizard plans so far: the classes it offers, each with the level it would take. */
   abstract openClassPicker(
@@ -82,8 +81,11 @@ export default abstract class LevelUpPart<D extends Descriptions, C = unknown> i
   planBonded(view: RulesetView, character: CharacterInput, bonded: CharacterInput[]): BondedCreaturesPlan {
     return new BondedCreatures(view, character, this).planBonded(bonded);
   }
-  /** What bonded creatures (`bonded`, their rows) become with their master as `master` builds it, kind by kind. */
-  abstract planBondedCreatures(view: RulesetView, master: C, bonded: CharacterInput[]): BondedPlan[];
+  /**
+   * What bonded creatures (`bonded`, their rows) become with their master as `master` builds it, kind by kind, from its
+   * row (`record`), which a creature it makes takes after.
+   */
+  abstract planBondedCreatures(view: RulesetView, master: C, record: Character, bonded: CharacterInput[]): BondedPlan[];
 
   /** A saved level's edit: what it writes, checked unless `force`d, and what the bonded creatures become with it. */
   abstract planEdit(

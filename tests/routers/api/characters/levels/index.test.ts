@@ -43,7 +43,7 @@ function fighter2(ctx: SeedContext) {
 function finalize(characterId: string, klassId: string, levelNumber: number, hp: number, levelPicks: Picks) {
   return levels.finalize.$post({
     param: { characterId },
-    json: { levels: [{ klassId, level: levelNumber, hp, abilityId: null }], ...levelPicks },
+    json: { levels: [{ klassId, level: levelNumber, hp, abilityIncreases: [] }], ...levelPicks },
   });
 }
 
@@ -172,6 +172,24 @@ describe("character levels", () => {
       expect(skills.totalCharacterLevel).toBe(3);
     });
 
+    test("reads the planned levels' ability increases, leaving out what isn't one", async () => {
+      const { characterId, ctx } = await createCharacter();
+      const fighter = ctx.klassMap.pc["Fighter"];
+      // One at a time: the test's transaction has a single connection
+      const planned: string[] = [];
+      for (const level of [1, 2, 3]) planned.push((await findKlassLevel(fighter, level))!.id);
+      const [strength, dexterity] = [ctx.abilityMap["Strength"], ctx.abilityMap["Dexterity"]];
+      // The fourth level's step: the first three planned, each level's increases "abilityId:amount" pairs joined by ";"
+      const abilities = await getStep(characterId, "abilities", {
+        plannedClassLevelIds: planned.join(","),
+        plannedAbilityIncreases: `${strength}:1,${strength}:2;${dexterity}:1,not-an-increase`,
+      });
+      expect(abilities).toMatchObject({
+        isAvailable: true,
+        attributes: { strength: { level: 3 }, dexterity: { level: 1 }, constitution: { level: 0 } },
+      });
+    });
+
     test("lists the feats of a pool, flat and grouped by family", async () => {
       const { characterId, ctx } = await createCharacter();
       const query = {
@@ -197,7 +215,6 @@ describe("character levels", () => {
               { klassId: ctx.klassMap.pc["Fighter"], level: 1 },
               { klassId: ctx.klassMap.pc["Fighter"], level: 2 },
             ],
-            abilityIds: [null, null],
           },
         }),
       );
@@ -309,7 +326,7 @@ describe("character levels", () => {
         klassId: ctx.klassMap.pc["Fighter"],
         level: 1,
         hp: 7,
-        abilityId: null,
+        abilityIncreases: [],
       });
       expect(data.skills).toMatchObject(fighter1(ctx).skills);
       expect(featIds(data.feats, ctx.aptMap["General"]).sort()).toEqual(
@@ -328,7 +345,7 @@ describe("character levels", () => {
           param,
           json: {
             hp: 5,
-            abilityId: null,
+            abilityIncreases: [],
             skills: {
               [ctx.skillMap["Climb"]]: 3,
               [ctx.skillMap["Intimidate"]]: 3,
@@ -359,7 +376,7 @@ describe("character levels", () => {
       const created = await finalizeOk(characterId, ctx.klassMap.pc["Fighter"], 1, 8, fighter1(ctx));
       const response = await level.$put({
         param: { characterId, characterLevelId: created.id },
-        json: { hp: 11, abilityId: null, ...fighter1(ctx) },
+        json: { hp: 11, abilityIncreases: [], ...fighter1(ctx) },
       });
       await expectStatus(response, 400);
     });
@@ -378,7 +395,7 @@ describe("character levels", () => {
       await expectOk(
         level.$put({
           param: { characterId, characterLevelId: first.id },
-          json: { ...fighter1(ctx), hp: 7, abilityId: null, skills },
+          json: { ...fighter1(ctx), hp: 7, abilityIncreases: [], skills },
         }),
       );
 
@@ -450,7 +467,7 @@ describe("character levels", () => {
       await expectOk(
         level.$put({
           param: { characterId, characterLevelId: second.id },
-          json: { hp: 5, abilityId: null, ...secondPicks },
+          json: { hp: 5, abilityIncreases: [], ...secondPicks },
         }),
       );
       const edited = await expectOk(level.$get({ param: { characterId, characterLevelId: second.id } }));
@@ -470,9 +487,9 @@ describe("character levels", () => {
           param: { characterId },
           json: {
             levels: [
-              { klassId, level: 1, hp: 8, abilityId: null },
-              { klassId, level: 2, hp: 6, abilityId: null },
-              { klassId, level: 3, hp: 6, abilityId: null },
+              { klassId, level: 1, hp: 8, abilityIncreases: [] },
+              { klassId, level: 2, hp: 6, abilityIncreases: [] },
+              { klassId, level: 3, hp: 6, abilityIncreases: [] },
             ],
             skills: {
               [ctx.skillMap["Climb"]]: 6,
@@ -519,7 +536,7 @@ describe("character levels", () => {
           param: { characterId, characterLevelId: l2.id },
           json: {
             hp: 4,
-            abilityId: null,
+            abilityIncreases: [],
             skills: {
               [ctx.skillMap["Listen"]]: 1,
               [ctx.skillMap["Spot"]]: 1,
@@ -570,7 +587,7 @@ describe("character levels", () => {
       guest.finalize.$post({
         param: { characterId },
         json: {
-          levels: [{ klassId: query.classId, level: 1, hp: 8, abilityId: null }],
+          levels: [{ klassId: query.classId, level: 1, hp: 8, abilityIncreases: [] }],
           skills: {},
           feats: {},
           powers: {},
@@ -579,7 +596,7 @@ describe("character levels", () => {
       guest[":characterLevelId"].$get({ param: { characterId, characterLevelId: NIL_UUID } }),
       guest[":characterLevelId"].$put({
         param: { characterId, characterLevelId: NIL_UUID },
-        json: { hp: 5, abilityId: null, skills: {}, feats: {}, powers: {} },
+        json: { hp: 5, abilityIncreases: [], skills: {}, feats: {}, powers: {} },
       }),
       guest.$delete({ param: { characterId } }),
     ]);
@@ -600,6 +617,6 @@ describe("character levels", () => {
     await expectStatus(levels.$delete({ param: missing }), 404);
     const characterLevel = { characterId, characterLevelId: NIL_UUID };
     await expectStatus(level.$get({ param: characterLevel }), 404);
-    await expectStatus(level.$put({ param: characterLevel, json: { hp: 5, abilityId: null, ...noPicks } }), 404);
+    await expectStatus(level.$put({ param: characterLevel, json: { hp: 5, abilityIncreases: [], ...noPicks } }), 404);
   });
 });

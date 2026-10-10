@@ -1,4 +1,4 @@
-import { type CharacterLevel } from "@/shared/relations.ts";
+import type { AbilityIncrease } from "@/engine/core/module/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 type AbilitiesData = {
@@ -74,7 +74,7 @@ export default class AbilitiesComponent {
     return this.abilityIdToName.get(abilityId);
   }
 
-  initialize(characterAbilities: { abilityId: string; name: string; score: number }[], levels: CharacterLevel[]) {
+  initialize(characterAbilities: { abilityId: string; name: string; score: number }[], increases: AbilityIncrease[]) {
     // Initialize abilities from the character's ability scores
     for (const { abilityId, name, score } of characterAbilities) {
       const normalizedName = stripSeparators(name);
@@ -94,12 +94,10 @@ export default class AbilitiesComponent {
       };
     }
 
-    // Apply level-up ability increases
-    for (const level of levels) {
-      if (level.abilityId) {
-        const normalizedName = this.abilityIdToName.get(level.abilityId);
-        if (normalizedName && this.abilities[normalizedName]) this.abilities[normalizedName].level += 1;
-      }
+    // Apply the levels' ability increases
+    for (const { abilityId, amount } of increases) {
+      const normalizedName = this.abilityIdToName.get(abilityId);
+      if (normalizedName && this.abilities[normalizedName]) this.abilities[normalizedName].level += amount;
     }
   }
 }

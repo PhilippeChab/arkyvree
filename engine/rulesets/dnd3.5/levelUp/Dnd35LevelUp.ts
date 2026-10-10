@@ -7,6 +7,7 @@ import ClassPicker from "@/engine/rulesets/dnd3.5/pickers/ClassPicker.ts";
 import FeatPicker from "@/engine/rulesets/dnd3.5/pickers/FeatPicker.ts";
 import PowerPicker from "@/engine/rulesets/dnd3.5/pickers/PowerPicker.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
+import type { Character } from "@/shared/relations.ts";
 
 import BondedPlans from "./BondedPlans.ts";
 import Dnd35LevelSelections from "./Dnd35LevelSelections.ts";
@@ -35,7 +36,7 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, Detaile
     return new Dnd35LevelSelections(view, character, this).describeLevel(...args);
   }
 
-  /** The level-up wizard's preview of the levels the character plans, each with its ability increase. */
+  /** The level-up wizard's preview of the levels the character plans, each with its ability increases. */
   describePreview(
     view: RulesetView,
     character: CharacterInput,
@@ -54,9 +55,9 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, Detaile
     return new LevelUpSteps(view, character, this).describeSteps();
   }
 
-  /** Whether the level after `totalLevel` levels takes an ability increase: every fourth. */
-  isAbilityIncreaseLevel(totalLevel: number) {
-    return LevelRules.isAbilityIncreaseLevel(totalLevel);
+  /** What the ability increases of the level after `totalLevel` levels add up to: one, at every fourth level. */
+  getAbilityIncreaseTotal(totalLevel: number) {
+    return LevelRules.isAbilityIncreaseLevel(totalLevel) ? 1 : 0;
   }
 
   /**
@@ -78,8 +79,8 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, Detaile
   }
 
   /** What a master's bonded creatures become with it: each kind's creature removed, kept or made, at its hit dice. */
-  planBondedCreatures(view: RulesetView, master: DetailedCharacter, bonded: CharacterInput[]) {
-    return new BondedPlans(view.rulesetData).planMasterCreatures(master, bonded);
+  planBondedCreatures(view: RulesetView, master: DetailedCharacter, record: Character, bonded: CharacterInput[]) {
+    return new BondedPlans(view.rulesetData).planMasterCreatures(master, record, bonded);
   }
 
   /** A saved level's edit: what it writes, checked, and what the master's bonded creatures become with it. */

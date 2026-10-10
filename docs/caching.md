@@ -262,7 +262,7 @@ The flat `properties` / `modifiers` / `requirements` arrays were removed from `R
 
 ### What's not in the ruleset cache (and why)
 
-Character-scoped tables (the `character` schema): `characters`, `levels`, `character_abilities`, `languages`, `inventory`, `level_feats` / `level_powers` / `level_skills`, character-sourced modifiers. These change per character per mutation; cross-request cache hit rate would be ~0%. They're served by the request-scoped dedup layer when the same query fires twice in one request.
+Character-scoped tables (the `character` schema): `characters`, `levels`, `character_abilities`, `languages`, `inventory`, `level_ability_increases` / `level_feats` / `level_powers` / `level_skills`, character-sourced modifiers. These change per character per mutation; cross-request cache hit rate would be ~0%. They're served by the request-scoped dedup layer when the same query fires twice in one request.
 
 Paginated / searched / filtered queries (e.g. `Feats.findPage({ search, pagination })`): too many unique keys to make a shared cache useful. These go straight to Postgres.
 
