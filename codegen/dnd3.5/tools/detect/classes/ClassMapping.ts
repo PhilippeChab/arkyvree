@@ -177,9 +177,11 @@ export class ClassMapping {
     const poolInfo = this.pools.poolAptitude(baseName) ?? this.pools.poolAptitude(cf.name);
     if (!poolInfo) return;
     for (const orphan of orphans) {
+      const sharedAptitudes = this.pools.sharedAptitudesOf(orphan.name);
       this.features[orphan.name] = {
         description: orphan.description,
         aptitude: poolInfo.aptitude,
+        ...(sharedAptitudes ? { sharedAptitudes } : {}),
         selectable: true,
         level: poolInfo.level,
       };

@@ -249,4 +249,30 @@ describe("The seeded extensions", () => {
       divine.modifiersOf(divine.klassLevel("Divine Crusader", 1).id).map((m) => `${m.target} ${m.operator} ${m.value}`),
     ).toContain("aptitudes.divinecrusaderdomain.allowed add 1");
   });
+
+  test("give the horizon walker a terrain to pick from his 1st level, and a terrain or a planar one from his 6th", async () => {
+    const dmg = await seededRows(DND35_DMG_NAME);
+    const choicesOf = (pool: string) => {
+      const id = dmg.aptitude(pool).id;
+      const choices = dmg.feats.filter((feat) => feat.featsAptitudesInRules.some((link) => link.aptitudeId === id));
+      return Object.fromEntries(
+        choices.map((feat) => [feat.name, dmg.requirementsOf(feat.id).map((q) => `${q.target} ${q.value}`)]),
+      );
+    };
+    const terrains = ["Aquatic", "Desert", "Forest", "Hills", "Marsh", "Mountains", "Plains", "Underground"];
+    const planar = ["Aligned", "Cavernous", "Cold", "Fiery", "Other", "Shifting", "Weightless"];
+    const regular = Object.fromEntries(
+      terrains.map((terrain) => [`Terrain Mastery: ${terrain} (Horizon Walker Terrain Mastery)`, []]),
+    );
+    expect(choicesOf("Horizon Walker Terrain Mastery")).toEqual(regular);
+    expect(choicesOf("Horizon Walker Planar Terrain Mastery")).toEqual({
+      ...regular,
+      ...Object.fromEntries(
+        planar.map((terrain) => [
+          `Terrain Mastery: ${terrain} (Planar) (Horizon Walker Planar Terrain Mastery)`,
+          ["classes.horizonwalker.level 6"],
+        ]),
+      ),
+    });
+  });
 });

@@ -18,7 +18,8 @@ export interface PoolAptitude {
  * A class's pools: the features of its aptitude picks whose description offers a choice, each with its aptitude
  * ("<Class> <Feature>") and its sub-options, the ones its description lists (inline), or else the separate features
  * that follow it (orphans: a stonelord's Stone Power's), or else those its table's rows name after it, wherever they
- * stand ("Secret: Dodge Trick", a loremaster's Secret's).
+ * stand ("Secret: Dodge Trick", a loremaster's Secret's). A pool named for another with a qualifier offers the other's
+ * sub-options too (a horizon walker's Planar Terrain Mastery, his Terrain Mastery's terrains).
  */
 export class ClassPools {
   constructor(
@@ -27,6 +28,7 @@ export class ClassPools {
   ) {
     this.detectPools();
     this.detectOrphanSubOptions();
+    this.detectQualifiedPools();
   }
 
   /** The pool features, lowercased: their sub-options are features, not they. */
@@ -37,6 +39,8 @@ export class ClassPools {
   private readonly orphans = new Map<string, NamedText[]>();
   /** Each pool's aptitude by its own lowercased name (a pool without inline sub-options too). */
   private readonly poolAptitudes = new Map<string, PoolAptitude>();
+  /** The aptitudes of the pools that offer an orphan sub-option besides its own, by its lowercased name. */
+  private readonly sharedAptitudes = new Map<string, string[]>();
 
   /**
    * The sub-options of a pool that no features follow, without inline ones: the features its table's rows name after
@@ -149,6 +153,33 @@ export class ClassPools {
     }
   }
 
+  /**
+   * The sub-options of a pool named for another with a qualifier ("Planar Terrain Mastery", Terrain Mastery's planar
+   * form), which offers the other's too: of the orphans it took, those named after the other pool ("Terrain Mastery:
+   * Aquatic") are the other's, which it shares, and those its qualifier marks ("Terrain Mastery: Fiery (Planar)") its
+   * own. A horizon walker picks a terrain at each of his first five levels, a terrain or a planar terrain after.
+   */
+  private detectQualifiedPools() {
+    for (const [name, orphans] of [...this.orphans]) {
+      const pool = this.poolAptitude(name);
+      const base = [...this.poolAptitudes.keys()].find((other) => name.endsWith(` ${other}`));
+      if (!pool || !base) continue;
+      const qualifier = `(${name.slice(0, -base.length - 1)})`;
+      const shared = orphans.filter(
+        ({ name: option }) => option.toLowerCase().startsWith(`${base}: `) && !option.toLowerCase().endsWith(qualifier),
+      );
+      if (shared.length < 2) continue;
+
+      this.orphans.set(base, shared);
+      this.orphans.set(
+        name,
+        orphans.filter((orphan) => !shared.includes(orphan)),
+      );
+      this.featureNames.add(base);
+      for (const option of shared) this.sharedAptitudes.set(option.name.toLowerCase(), [pool.aptitude]);
+    }
+  }
+
   /** Whether a feature (by its base name) is a pool's orphan sub-option, which its pool adds. */
   isOrphan(baseName: string): boolean {
     return [...this.orphans.values()].some((orphans) =>
@@ -174,5 +205,10 @@ export class ClassPools {
   /** A pool's own aptitude, by its feature's name. */
   poolAptitude(name: string): PoolAptitude | undefined {
     return this.poolAptitudes.get(name.toLowerCase());
+  }
+
+  /** The aptitudes of the other pools that offer an orphan sub-option (by its name), besides its own. */
+  sharedAptitudesOf(name: string): string[] | undefined {
+    return this.sharedAptitudes.get(name.toLowerCase());
   }
 }
