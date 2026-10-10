@@ -2,6 +2,7 @@ import { POWER_FIELDS } from "@/engine/rulesets/dnd3.5/entities/powers/fields.ts
 import type AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
 import type { Property } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { SPELL_SAVE_DC_BASE } from "@/vocabulary/dnd3.5/spells.ts";
 
 import type PowersComponent from "./PowersComponent.ts";
 
@@ -48,7 +49,7 @@ export default class PowerGroupingsComponent {
 
     // The casting ability's modifier and the total are computed when read, so a raised ability raises the DC
     const dc: PowerDc = {
-      base: 10,
+      base: SPELL_SAVE_DC_BASE,
       level: power.powerLevel,
       get ability() {
         return abilities.getAbilityModifier(abilityName);

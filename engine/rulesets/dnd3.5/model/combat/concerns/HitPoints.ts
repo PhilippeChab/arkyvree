@@ -1,6 +1,7 @@
 import type CombatState from "@/engine/rulesets/dnd3.5/model/combat/CombatState.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { type CharacterLevel } from "@/shared/relations.ts";
+import { MIN_HIT_POINTS_PER_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
 
 /** A character's hit points: its classes' hit dice and its Constitution. */
 export function HitPoints<B extends Constructor<CombatState>>(Base: B) {
@@ -12,7 +13,10 @@ export function HitPoints<B extends Constructor<CombatState>>(Base: B) {
     private constitutionHitPoints(): number {
       const constitutionModifier = this.abilities.getAbilityModifier("Constitution");
       if (this.hitDiceOverride !== null) return constitutionModifier * this.hitDiceOverride;
-      return this.hitDieRolls.reduce((acc, roll) => acc + Math.max(constitutionModifier, 1 - roll), 0);
+      return this.hitDieRolls.reduce(
+        (acc, roll) => acc + Math.max(constitutionModifier, MIN_HIT_POINTS_PER_LEVEL - roll),
+        0,
+      );
     }
 
     /**

@@ -1,26 +1,15 @@
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import { SPECIAL_MOUNT_BASICS, type SpecialMountBasics } from "@/vocabulary/dnd3.5/bondedCreatures.ts";
 
 import BondedRaceData from "./BondedRaceData.ts";
 import DetailedCharacterAdvancingBonded from "./DetailedCharacterAdvancingBonded.ts";
 
 /**
- * SRD Paladin's Special Mount progression — keyed on paladin class level.
- * The mount only exists once the master reaches paladin 5; below that the
- * bracket is null and the mount keeps its base race stats only.
+ * The special mount's bracket at a paladin level (`SPECIAL_MOUNT_BASICS`): none below the first, and the mount keeps its
+ * base race stats only.
  */
-type MountRow = {
-  bonusHD: number;
-  int: number;
-  natural: number;
-  str: number;
-};
-
-function bracketAt(paladinLevel: number): MountRow | null {
-  if (paladinLevel < 5) return null;
-  if (paladinLevel <= 7) return { bonusHD: 2, natural: 4, str: 1, int: 6 };
-  if (paladinLevel <= 10) return { bonusHD: 4, natural: 6, str: 2, int: 7 };
-  if (paladinLevel <= 14) return { bonusHD: 6, natural: 8, str: 3, int: 8 };
-  return { bonusHD: 8, natural: 10, str: 4, int: 9 };
+function bracketAt(paladinLevel: number): SpecialMountBasics | null {
+  return SPECIAL_MOUNT_BASICS.findLast((row) => paladinLevel >= row.minLevel) ?? null;
 }
 
 /**

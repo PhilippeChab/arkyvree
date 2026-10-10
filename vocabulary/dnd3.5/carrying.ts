@@ -39,6 +39,15 @@ export const CARRYING_CAPACITY: number[] = [
   1400, // 29
 ];
 
+/** What each `CARRYING_CAPACITY_STRENGTH_STEP` of Strength past the table multiplies the carrying capacity by. */
+export const CARRYING_CAPACITY_STEP_MULTIPLIER = 4;
+
+/**
+ * Past the table's Strength, how many more points of it multiply the carrying capacity
+ * (`CARRYING_CAPACITY_STEP_MULTIPLIER`).
+ */
+export const CARRYING_CAPACITY_STRENGTH_STEP = 10;
+
 /** D&D 3.5 reduced speed for medium/heavy encumbrance (base → reduced) */
 export const ENCUMBERED_SPEED: Record<number, number> = {
   20: 15,
@@ -52,6 +61,9 @@ export const ENCUMBERED_SPEED: Record<number, number> = {
   100: 70,
 };
 
+/** The thirds of its speed a medium or heavy load leaves a speed the table (`ENCUMBERED_SPEED`) doesn't list. */
+export const ENCUMBERED_SPEED_THIRDS = 2;
+
 /** Max Dex bonus and check penalty by load category */
 export const ENCUMBRANCE_PENALTIES = {
   light: { maxdex: Infinity, checkpenalty: 0 },
@@ -60,7 +72,16 @@ export const ENCUMBRANCE_PENALTIES = {
   overloaded: { maxdex: 0, checkpenalty: -6 },
 } as const;
 
+/** The thirds of the heavy load a light load is, at most. */
+export const LIGHT_LOAD_THIRDS = 1;
+
 export const LOAD_CATEGORIES = ["light", "medium", "heavy", "overloaded"] as const;
+
+/** The thirds of the heavy load a medium load is, at most. */
+export const MEDIUM_LOAD_THIRDS = 2;
+
+/** The speed an overloaded creature moves at, whatever its own: 5 ft. */
+export const OVERLOADED_SPEED = 5;
 
 /** A quadruped's carrying capacity by size: it carries more than a biped (SRD, "Bigger and Smaller Creatures"). */
 export const QUADRUPED_SIZE_CARRY_MULTIPLIERS: Record<string, number> = {

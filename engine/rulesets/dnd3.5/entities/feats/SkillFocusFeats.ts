@@ -2,6 +2,7 @@ import { GeneratedFeats } from "@/engine/core/entities/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import SkillsPaths from "@/engine/rulesets/dnd3.5/model/skills/SkillsPaths.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
+import { SKILL_FOCUS_BONUS } from "@/vocabulary/dnd3.5/feats.ts";
 
 import { FEAT_FIELDS } from "./fields.ts";
 
@@ -19,9 +20,16 @@ export default class SkillFocusFeats {
       [
         {
           name,
-          description: `You get a +3 bonus on all ${skillName} checks.`,
+          description: `You get a +${SKILL_FOCUS_BONUS} bonus on all ${skillName} checks.`,
           properties: FEAT_FIELDS.toProperties({ ...FEAT_FIELDS.defaults, families: ["Skill Focus"] }),
-          modifiers: [{ target: SkillsPaths.misc(skillName), operator: "add", value: "3", valueType: "number" }],
+          modifiers: [
+            {
+              target: SkillsPaths.misc(skillName),
+              operator: "add",
+              value: String(SKILL_FOCUS_BONUS),
+              valueType: "number",
+            },
+          ],
           requirements: [],
         },
       ],

@@ -10,7 +10,12 @@ import {
 import { SIZE_ORDER, WEAPON_SET_SLOTS } from "@/engine/rulesets/dnd3.5/model/inventory/InventorySlots.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { type Item } from "@/shared/relations.ts";
-import { COMBAT_RULES, DAMAGE_PROGRESSION, SLOT_STRENGTH_MULTIPLIERS } from "@/vocabulary/dnd3.5/combat.ts";
+import {
+  COMBAT_RULES,
+  DAMAGE_PROGRESSION,
+  NATURAL_ATTACK_CRITICAL,
+  SLOT_STRENGTH_MULTIPLIERS,
+} from "@/vocabulary/dnd3.5/combat.ts";
 import { SIZE_AC_ATTACK_MOD, SIZE_GRAPPLE_MOD, SIZE_STEPS } from "@/vocabulary/dnd3.5/sizes.ts";
 
 /** A natural attack's proficiency: its damage dice are the creature's own, from its stat block, already at its size. */
@@ -446,11 +451,10 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
         const displayName = attack.count && attack.count > 1 ? `${attack.name} (x${attack.count})` : attack.name;
         const fields: WeaponFields = {
           ...ITEM_FIELDS.defaults.weapon,
+          ...NATURAL_ATTACK_CRITICAL,
           proficiency: NATURAL_PROFICIENCY,
           baseDamage: attack.damage,
           damageTypes: [attack.type],
-          criticalRange: 1,
-          criticalMultiplier: 2,
           finessable: true,
         };
         const kind = attack.secondary ? "secondary" : "primary";

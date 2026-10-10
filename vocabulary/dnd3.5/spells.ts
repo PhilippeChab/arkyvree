@@ -1,3 +1,6 @@
+/** How many points of its ability's modifier past a spell level give one more bonus spell of it: 4. */
+export const BONUS_SPELL_MODIFIER_STEP = 4;
+
 export const SPELL_SCHOOLS = [
   "Abjuration",
   "Conjuration",
@@ -9,7 +12,6 @@ export const SPELL_SCHOOLS = [
   "Transmutation",
   "Universal",
 ] as const;
-
 /** Schools that get Spell Focus / Greater Spell Focus feats (excludes Universal) */
 export const MAGIC_SCHOOLS = SPELL_SCHOOLS.filter((s) => s !== "Universal");
 /** The highest spell level, from 0: the app has no epic spells. */
@@ -53,6 +55,10 @@ export const SPELL_LEVELS = Array.from({ length: MAX_SPELL_LEVEL + 1 }, (_, leve
 export const SPELL_LEVEL_LABELS = SPELL_LEVELS.map((level) => (level === 0 ? "Cantrips" : `Level ${level}`));
 export const SPELL_RANGE_TYPES = ["Personal", "Touch", "Close", "Medium", "Long", "Unlimited"] as const;
 export const SPELL_RESISTANCE_OPTIONS = ["Yes", "No"] as const;
+
+/** A spell's save DC before its level and its caster's ability modifier: 10. */
+export const SPELL_SAVE_DC_BASE = 10;
+
 export const SPELL_SAVING_THROWS = [
   "None",
   "Fortitude negates",

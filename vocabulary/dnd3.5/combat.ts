@@ -47,6 +47,12 @@ export const DAMAGE_PROGRESSION = [
   "4d8",
 ];
 
+/** How much masterwork armor or a masterwork shield lessens its armor check penalty, to 0 at most. */
+export const MASTERWORK_CHECK_PENALTY_REDUCTION = 1;
+
+/** A natural attack's critical: a threat on a 20 alone, ×2. */
+export const NATURAL_ATTACK_CRITICAL = { criticalMultiplier: 2, criticalRange: 1 } as const;
+
 /**
  * The share of its Strength bonus a weapon adds to damage in each slot: all of it, half, or one and a half (a light
  * weapon's all of it in two hands).
@@ -55,3 +61,13 @@ export const SLOT_STRENGTH_MULTIPLIERS: Record<string, number> = { "Main Hand": 
 
 /** The weapon every character strikes with when its hand holds none: no item, always on the sheet. */
 export const UNARMED_STRIKE = "Unarmed Strike";
+
+/** The unarmed strike's weapon: 1d3 bludgeoning, a threat on a 20 alone, ×2, light enough for Weapon Finesse. */
+export const UNARMED_STRIKE_STATS = {
+  baseDamage: "1d3",
+  criticalMultiplier: 2,
+  criticalRange: 1,
+  damageTypes: ["Bludgeoning"],
+  finessable: true,
+  proficiency: "Unarmed",
+} as const;

@@ -1,6 +1,7 @@
 import { type ItemFieldValues } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import type { Item } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { MASTERWORK_CHECK_PENALTY_REDUCTION } from "@/vocabulary/dnd3.5/combat.ts";
 
 /** Grouping key (normalized) → shared ShieldSlot reference */
 type ShieldsData = Record<string, ShieldSlot>;
@@ -32,7 +33,7 @@ export default class ShieldsComponent {
     const spellFailure = fields.spellFailure ?? 0;
     const maxDex = fields.maxDex ?? 99;
 
-    if (fields.masterwork === true) checkPenalty = Math.min(checkPenalty + 1, 0);
+    if (fields.masterwork === true) checkPenalty = Math.min(checkPenalty + MASTERWORK_CHECK_PENALTY_REDUCTION, 0);
 
     const shieldSlot: ShieldSlot = {
       name: item.name,

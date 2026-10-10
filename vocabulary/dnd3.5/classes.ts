@@ -11,3 +11,12 @@ export const MAX_CHARACTER_LEVEL = 20;
 export const MAX_CLASS_LEVEL = 20;
 /** The highest base bonus a class level gives a save. */
 export const MAX_SAVE_BASE = 12;
+
+/** The fewest hit points a level gives, whatever its Constitution: 1. */
+export const MIN_HIT_POINTS_PER_LEVEL = 1;
+
+/** A save's progression by hit dice: a good one's base plus one per two, a poor one's one per three. */
+export const SAVE_PROGRESSIONS = {
+  good: { base: 2, hitDicePerPoint: 2 },
+  poor: { base: 0, hitDicePerPoint: 3 },
+} as const;

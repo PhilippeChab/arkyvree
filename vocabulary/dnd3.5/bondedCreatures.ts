@@ -63,11 +63,23 @@ export type BondedRaceStatBlock = {
   skillPriority?: string[];
 };
 
+/** A bracket of the paladin's special mount's progression (`SPECIAL_MOUNT_BASICS`). */
+export type SpecialMountBasics = {
+  bonusHD: number;
+  int: number;
+  minLevel: number;
+  natural: number;
+  str: number;
+};
+
 /**
  * Generic feat pool used as the tail of featPriority for animals whose per-race list runs out. These are all valid for
  * an animal taking feats via Monster Manual advancement.
  */
 const GENERIC_TAIL = ["Toughness", "Iron Will", "Lightning Reflexes", "Great Fortitude"];
+
+/** An animal's base attack bonus a hit die: ¾. */
+export const ANIMAL_BAB_PER_HIT_DIE = 3 / 4;
 
 /** The animal companion's basics table (SRD): a row per effective level, from the first. */
 export const ANIMAL_COMPANION_BASICS: AnimalCompanionBasics[] = [
@@ -95,6 +107,15 @@ export const ANIMAL_COMPANION_BASICS: AnimalCompanionBasics[] = [
 
 /** An animal's average hit points a hit die: a d8's. */
 export const ANIMAL_HIT_DIE_AVERAGE = 4.5;
+
+/** An animal's saves' progressions: good Fortitude and Reflex, poor Will. */
+export const ANIMAL_SAVE_PROGRESSIONS = { Fortitude: "good", Reflex: "good", Will: "poor" } as const;
+
+/**
+ * The skill points an animal's hit die past its stat block's gives: 2 + its Intelligence modifier, at least 1, and an
+ * animal's Intelligence of 1 or 2 makes it 1.
+ */
+export const ANIMAL_SKILL_POINTS_PER_HIT_DIE = 1;
 
 /**
  * D&D 3.5 Monster Manual base stats for bonded creatures (familiars, animal
@@ -419,6 +440,32 @@ export const BONDED_RACE_STATS: Record<string, BondedRaceStatBlock> = {
     skillPriority: ["Listen", "Spot"],
   },
 };
+
+/** The share of its master's hit points a familiar has: half (`FAMILIAR_HIT_POINTS_DIVISOR`), rounded down. */
+export const FAMILIAR_HIT_POINTS_DIVISOR = 2;
+
+/**
+ * A familiar's Intelligence: 5, plus one a step of its master's levels (`FAMILIAR_MASTER_LEVELS_PER_STEP`), 15 at
+ * most.
+ */
+export const FAMILIAR_INTELLIGENCE = { base: 5, max: 15 } as const;
+
+/** How many of its master's levels make a step of a familiar's natural armor and Intelligence: two, rounded up. */
+export const FAMILIAR_MASTER_LEVELS_PER_STEP = 2;
+
+/** A familiar's natural armor adjustment: one a step of its master's levels, from 1 to 10. */
+export const FAMILIAR_NATURAL_ARMOR = { max: 10, min: 1 } as const;
+
+/**
+ * The paladin's special mount's progression, a row per bracket of paladin levels from its first (`minLevel`): the hit
+ * dice it adds, its natural armor and Strength adjustments, and its Intelligence. No mount below the first bracket.
+ */
+export const SPECIAL_MOUNT_BASICS: SpecialMountBasics[] = [
+  { bonusHD: 2, int: 6, minLevel: 5, natural: 4, str: 1 },
+  { bonusHD: 4, int: 7, minLevel: 8, natural: 6, str: 2 },
+  { bonusHD: 6, int: 8, minLevel: 11, natural: 8, str: 3 },
+  { bonusHD: 8, int: 9, minLevel: 15, natural: 10, str: 4 },
+];
 
 /**
  * What the SRD's feats a stat block lists add to its skills, by feat, then skill: what its printed totals count. A

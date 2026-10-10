@@ -1,6 +1,7 @@
 import type CombatState from "@/engine/rulesets/dnd3.5/model/combat/CombatState.ts";
 import type { CustomizedRace } from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
 import type { Constructor } from "@/lib/mixins.ts";
+import { OVERLOADED_SPEED } from "@/vocabulary/dnd3.5/carrying.ts";
 
 /** A character's initiative, and its speed under its armor and load (which a dwarf's ignores). */
 export function InitiativeAndSpeed<B extends Constructor<CombatState>>(Base: B) {
@@ -37,7 +38,7 @@ export function InitiativeAndSpeed<B extends Constructor<CombatState>>(Base: B) 
         misc: 0,
         get total() {
           // The overloaded 5 ft has nothing to add to; otherwise the misc comes on top of the slowed base
-          return overloaded() ? 5 : loadedSpeed(this.base) + this.misc;
+          return overloaded() ? OVERLOADED_SPEED : loadedSpeed(this.base) + this.misc;
         },
       };
     }

@@ -9,6 +9,7 @@ import type { RulesetData } from "@/engine/core/view/index.ts";
 import BondedRaceData from "@/engine/rulesets/dnd3.5/model/bonded/BondedRaceData.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import type { Character } from "@/shared/relations.ts";
+import { STARTING_ABILITY_SCORE } from "@/vocabulary/dnd3.5/abilities.ts";
 import { BONDED_KIND_BY_SLUG, BONDED_KIND_SLUGS, type BondedKind } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 
 /**
@@ -43,7 +44,7 @@ function buildCreature(
   return {
     abilities: abilities.map((ability) => ({
       abilityId: ability.id,
-      score: stats?.abilities[ability.name.toLowerCase() as keyof typeof stats.abilities] ?? 10,
+      score: stats?.abilities[ability.name.toLowerCase() as keyof typeof stats.abilities] ?? STARTING_ABILITY_SCORE,
     })),
     row: {
       alignment: master.alignment,

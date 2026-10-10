@@ -59,7 +59,7 @@ export default class DetailedCharacter extends include(
       id: crypto.randomUUID(),
       characterId: this.character.id,
       klassLevelId: klassLevel.id,
-      hp: 10,
+      hp: LevelRules.UNROLLED_LEVEL_HP,
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
