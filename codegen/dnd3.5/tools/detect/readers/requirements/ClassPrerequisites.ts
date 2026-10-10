@@ -241,7 +241,8 @@ export class ClassPrerequisites extends RequirementReading {
 
   /**
    * A special ability's requirements: a domain's access, else a size (`sizeRequirements`), spellcasting
-   * (`castingRequirements`) or any feat of a family (`familyFeatRequirements`), as a feat's prerequisite reads them.
+   * (`castingRequirements`), a caster level (`casterLevelRequirements`) or any feat of a family
+   * (`familyFeatRequirements`), as a feat's prerequisite reads them.
    */
   private specialAbilityRequirements(text: string): RequirementEntry[] {
     // "access to the X domain"
@@ -250,7 +251,12 @@ export class ClassPrerequisites extends RequirementReading {
       const domainName = domainMatch[1].charAt(0).toUpperCase() + domainMatch[1].slice(1).toLowerCase();
       return [eq(feat(domainFeat(domainName)))];
     }
-    for (const read of [this.sizeRequirements(text), this.castingRequirements(text), this.familyFeatRequirements(text)])
+    for (const read of [
+      this.sizeRequirements(text),
+      this.castingRequirements(text),
+      this.casterLevelRequirements(text),
+      this.familyFeatRequirements(text),
+    ])
       if (read.length > 0) return read;
     return [];
   }

@@ -11,6 +11,7 @@ import { Builds } from "./concerns/Builds.ts";
 import { Diagnoses } from "./concerns/Diagnoses.ts";
 import { PossessesVirtually } from "./concerns/PossessesVirtually.ts";
 import DetailedCharacterDataLoader from "./loading/DetailedCharacterDataLoader.ts";
+import type { CastingLevels } from "./spellcasting/SpellcastingState.ts";
 
 /** A 3.5 character: its components wired, built and validated by its concerns, on core's build and validation. */
 export default class DetailedCharacter extends include(
@@ -44,7 +45,7 @@ export default class DetailedCharacter extends include(
     return SpellLists.of(this.rulesetData).featListSpells;
   }
 
-  getSpellcasting(): { arcane: number; divine: number } {
+  getSpellcasting(): CastingLevels {
     return this.components.spellcasting.getSpellcasting();
   }
 

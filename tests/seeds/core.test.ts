@@ -13,12 +13,9 @@ const bab1 = "2 combat.bab greater_than_or_equal 1";
 /** The cleric level each spell level opens at, the first at the first. */
 const CLERIC_OPENS_AT = [1, 3, 5, 7, 9, 11, 13, 15, 17];
 
+/** An item creation feat's caster level: the character's highest, of either kind. */
 function casterLevel(level: number) {
-  return [
-    "1 or",
-    `1.1 spellcasting.arcane greater_than_or_equal ${level}`,
-    `1.2 spellcasting.divine greater_than_or_equal ${level}`,
-  ];
+  return [`1 spellcasting.casterlevel greater_than_or_equal ${level}`];
 }
 
 /** What a slot of the spell level opening at `clericLevel` requires: a cleric level, but the first's. */

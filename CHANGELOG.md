@@ -6,6 +6,7 @@
 - Inventory: Add Item and Update wait while the slot's warning stands, and equipping two-handed names everything in the way, a weapon and a shield alike
 - D&D 3.5 sheets and PDFs open their spells on a Spells per Day table, a cleric's domain slot and a specialist wizard's school slot shown as "+1" in their class's row
 - The characters list opens on the most recently updated character first; the other orders stay in its Sort menu
+- D&D 3.5: a feat's "Caster level" prerequisite checks your caster level, not the highest spell level you cast: Craft Wand opens at caster level 5
 
 ## 0.5.0 — 2026-05-21
 

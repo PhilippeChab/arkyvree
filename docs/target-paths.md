@@ -166,7 +166,7 @@ Grouped by shield type (`SHIELD_TYPE`), as the picker lists them; an item is nev
 | Path | Type | Description |
 |------|------|-------------|
 | `classes.<name>.level` | number | Class level |
-| `classes.<name>.bonuscasterlevel` | number | Bonus caster levels from prestige class advancement (mod only) |
+| `classes.<name>.bonuscasterlevel` | number | Bonus caster levels from prestige class advancement (mod only): the class's caster level and spell slots count them |
 
 ## feats
 
@@ -274,3 +274,16 @@ Note: D&D 3.5 skill budget data (total, available, spent, perlevel) lives on `sk
 A modifier on a pool's slots grants more, with a number: `add` on `aptitudes.<name>.allowed` (a feat pool) and on a spell level's `uses` and `allowed`, or `set` -1 on a spell level's `allowed`, all of that level known. The level-up wizard and the class tables count these without a character, the sheet's way; another operator or a template would count differently there, so the editor doesn't offer them and the API refuses them (`TargetPath.setValues`, `literalOnly`). A pool's own `uses` (Turn Undead's) counts on the sheet alone and takes any modifier.
 
 A feat or a class level sets `joinsclasslist` (`set` true): a cleric's domain feat sets its domain list's. The list's spells are then known on the list of the class whose level gave the feat (or the class level's own class), at the spell levels that class knows its whole list at. A specialist wizard's school doesn't join: his school's spells stay learned. The slots and known spells a feat gives in a list it brings, a domain's spells, a school's slots, the cleric's domain slot (his feature's `aptitudes.domainspells.<level>.uses`), follow the spell levels the feat's class casts, bonus caster levels counted: a level it casts gets what the feat gives there, though the feat's modifiers open it at a class level.
+
+## spellcasting
+
+What the character casts, counted from its classes when read: a class of a caster type (arcane or divine) casts once its levels give it slots at a spell level, cantrips included, so a bard from his first level and a paladin or a ranger from his fourth.
+
+| Path | Type | Description |
+|------|------|-------------|
+| `spellcasting.arcane` | number | Highest arcane spell level castable: the highest an arcane class has slots at, 0 for cantrips alone (req only) |
+| `spellcasting.divine` | number | Highest divine spell level castable (req only) |
+| `spellcasting.casterlevel` | number | Highest caster level: a casting class's level and the caster levels other classes add to it (`classes.<name>.bonuscasterlevel`), up to 20 (req only) |
+| `spellcasting.arcanecasterlevel` | number | Highest arcane caster level, an arcane class's (req only) |
+
+A caster level is a class's own, the level its spells per day are read at: a multiclass character's are never added up (a cleric 3 / wizard 2's is 3, and his arcane one 2), and a prestige class that advances another class's spellcasting raises that class's (a cleric 3 / stormlord 2's is 5). A "Caster level 5th" prerequisite (Craft Wand's) checks `spellcasting.casterlevel`, an "Arcane caster level 5th" one `spellcasting.arcanecasterlevel`: a wizard 5 meets Craft Wand, though he casts 3rd-level spells. No path reads one class's caster level, nor a divine caster level: no prerequisite asks either. See [the rulings](./dnd3.5/rules-decisions.md#characters).

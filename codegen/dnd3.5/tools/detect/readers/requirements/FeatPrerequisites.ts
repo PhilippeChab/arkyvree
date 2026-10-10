@@ -120,7 +120,7 @@ function classLevelRequirements(text: string): RequirementEntry[] {
   while ((classLevelMatch = classLevelRegex.exec(text)) !== null) {
     const className = classLevelMatch[1].toLowerCase();
     const level = parseInt(classLevelMatch[2], 10);
-    // Skip "caster level" (handled above)
+    // "Caster level 5th" is a caster level (`casterLevelRequirements`)
     if (className === "caster") continue;
     // "Character level" = overall level, not a class
     if (className === "character") {
@@ -240,15 +240,6 @@ export class FeatPrerequisites extends RequirementReading {
   private anyAlignmentRequirements(text: string): RequirementEntry[] {
     const requirement = this.alignmentRequirement(/^any\b/i.test(text) ? text : `any ${text}`);
     return requirement ? [requirement] : [];
-  }
-
-  /**
-   * A feat's caster level requirement: "Caster level Nth", as the highest spell level of either kind the character
-   * casts, which no path reads a caster level as.
-   */
-  private casterLevelRequirements(text: string): RequirementEntry[] {
-    const level = /[Cc]aster level (\d+)(?:st|nd|rd|th)/.exec(text)?.[1];
-    return level ? [this.spellcastingOfEitherKind(parseInt(level, 10))] : [];
   }
 
   /**

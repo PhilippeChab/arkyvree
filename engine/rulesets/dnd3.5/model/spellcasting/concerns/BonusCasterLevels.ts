@@ -9,7 +9,6 @@ import type { CustomizedClassLevel, CustomizedFeat } from "@/engine/rulesets/dnd
 import type SpellcastingState from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellcastingState.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import type { CharacterLevel, Klass, KlassLevel, Modifier } from "@/shared/relations.ts";
-import { MAX_CLASS_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
 /** A character level's key in the index of the class levels the character took. */
@@ -52,18 +51,16 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
     }
 
     /**
-     * The klass levels each class's bonus caster levels reach past its own level (up to `MAX_CLASS_LEVEL`), as `klassId:level`, with
-     * the class's name.
+     * The klass levels each class's bonus caster levels reach past its own level, up to its caster level
+     * (`casterLevelOf`), as `klassId:level`, with the class's name.
      */
     private bonusLevelClassNames() {
       const classNameByLevel = new Map<string, string>();
       for (const [className, klassData] of Object.entries(this.classes.getCharacterClasses())) {
-        const bonus = klassData.bonuscasterlevel;
-        if (bonus <= 0) continue;
+        if (klassData.bonuscasterlevel <= 0) continue;
 
-        const actualLevel = klassData.level;
-        const effectiveLevel = Math.min(actualLevel + bonus, MAX_CLASS_LEVEL);
-        for (let level = actualLevel + 1; level <= effectiveLevel; level++)
+        const casterLevel = this.casterLevelOf(klassData);
+        for (let level = klassData.level + 1; level <= casterLevel; level++)
           classNameByLevel.set(`${klassData.klass.id}:${level}`, className);
       }
       return classNameByLevel;

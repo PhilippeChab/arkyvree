@@ -8,7 +8,19 @@ import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading
 import type PowerGroupingsComponent from "@/engine/rulesets/dnd3.5/model/powers/PowerGroupingsComponent.ts";
 import type PowersComponent from "@/engine/rulesets/dnd3.5/model/powers/PowersComponent.ts";
 import type { KlassLevel, Modifier, Power, Property } from "@/shared/relations.ts";
+import { MAX_CLASS_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
+
+/**
+ * What the `spellcasting` paths read: the highest spell levels the character casts, arcane and divine, and its highest
+ * caster level, of either kind and arcane.
+ */
+export interface CastingLevels {
+  readonly arcane: number;
+  readonly arcanecasterlevel: number;
+  readonly casterlevel: number;
+  readonly divine: number;
+}
 
 /**
  * Where a feat's tag on the spells of a list it gives slots in or joins to its class's list shows (a cleric's domain,
@@ -33,18 +45,26 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
   }
 
   /**
-   * The highest arcane and divine spell levels the character casts (`spellcasting.arcane`, `spellcasting.divine`),
-   * counted when read from its classes' slots: as the slot modifiers have given them so far, so requirements like Scribe
-   * Scroll's read what the character casts when they're checked.
+   * What the `spellcasting` paths read, counted when read from the classes' slots: as the slot modifiers have given them
+   * so far, so requirements like Scribe Scroll's read what the character casts when they're checked. The highest arcane
+   * and divine spell levels it casts (`spellcasting.arcane`, `.divine`), and its highest caster level, of either kind and
+   * arcane (`spellcasting.casterlevel`, `.arcanecasterlevel`).
    */
-  protected readonly casterLevels = (() => {
-    const highest = (casterType: "Arcane" | "Divine") => this.highestSpellLevel(casterType);
+  protected readonly castingLevels: CastingLevels = (() => {
+    const casterLevel = (casterType?: "Arcane" | "Divine") => this.highestCasterLevel(casterType);
+    const spellLevel = (casterType: "Arcane" | "Divine") => this.highestSpellLevel(casterType);
     return {
       get arcane() {
-        return highest("Arcane");
+        return spellLevel("Arcane");
+      },
+      get arcanecasterlevel() {
+        return casterLevel("Arcane");
+      },
+      get casterlevel() {
+        return casterLevel();
       },
       get divine() {
-        return highest("Divine");
+        return spellLevel("Divine");
       },
     };
   })();
@@ -81,25 +101,55 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
 
   protected spellTags: Record<string, string[]> = {};
 
-  /** The highest spell level any of the classes of a caster type has slots at, in any of its lists. */
-  private highestSpellLevel(casterType: "Arcane" | "Divine"): number {
-    const aptitudes = this.aptitudes.getAptitudes();
+  /**
+   * The highest caster level of the classes that cast, of a caster type when one is given (`casterLevelOf`): a class
+   * casts once it has slots at a spell level, cantrips included, so a bard from his first level and a paladin from his
+   * fourth. A multiclass character's caster levels don't add up.
+   */
+  private highestCasterLevel(casterType?: "Arcane" | "Divine"): number {
     let highest = 0;
     for (const [className, klassData] of Object.entries(this.classes.getCharacterClasses())) {
-      if (this.casterTypeByKlassId.get(klassData.klass.id) !== casterType) continue;
-      for (const key of this.spellListsOf(className)) {
-        const aptitude = aptitudes[key] as Record<string, unknown> | undefined;
-        if (!aptitude || !this.aptitudes.isLeveledAptitude(key)) continue;
-        for (let spellLevel = MAX_SPELL_LEVEL; spellLevel > highest; spellLevel--) {
-          const levelData = aptitude[String(spellLevel)] as AptitudeLevelData | undefined;
-          if (levelData && levelData.allowed !== 0) {
-            highest = spellLevel;
-            break;
-          }
+      const classCasterType = this.casterTypeByKlassId.get(klassData.klass.id);
+      if (!classCasterType || (casterType && classCasterType !== casterType)) continue;
+      if (this.highestSlotLevel(className) >= 0) highest = Math.max(highest, this.casterLevelOf(klassData));
+    }
+    return highest;
+  }
+
+  /** The highest spell level a class has slots at in any of its lists, cantrips' 0 included: -1 when it has none. */
+  private highestSlotLevel(className: string): number {
+    const aptitudes = this.aptitudes.getAptitudes();
+    let highest = -1;
+    for (const key of this.spellListsOf(className)) {
+      const aptitude = aptitudes[key] as Record<string, unknown> | undefined;
+      if (!aptitude || !this.aptitudes.isLeveledAptitude(key)) continue;
+      for (let spellLevel = MAX_SPELL_LEVEL; spellLevel > highest; spellLevel--) {
+        const levelData = aptitude[String(spellLevel)] as AptitudeLevelData | undefined;
+        if (levelData && levelData.allowed !== 0) {
+          highest = spellLevel;
+          break;
         }
       }
     }
     return highest;
+  }
+
+  /** The highest spell level any of the classes of a caster type has slots at, in any of its lists: 0 for cantrips alone. */
+  private highestSpellLevel(casterType: "Arcane" | "Divine"): number {
+    let highest = 0;
+    for (const [className, klassData] of Object.entries(this.classes.getCharacterClasses())) {
+      if (this.casterTypeByKlassId.get(klassData.klass.id) === casterType)
+        highest = Math.max(highest, this.highestSlotLevel(className));
+    }
+    return highest;
+  }
+
+  /**
+   * A class's caster level: its level, and the caster levels other classes add to it (`bonuscasterlevel`, a prestige
+   * class's), up to `MAX_CLASS_LEVEL`. The class level its spells per day are read at.
+   */
+  protected casterLevelOf({ bonuscasterlevel, level }: { bonuscasterlevel: number; level: number }): number {
+    return Math.min(level + bonuscasterlevel, MAX_CLASS_LEVEL);
   }
 
   /**
