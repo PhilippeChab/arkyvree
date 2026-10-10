@@ -61,13 +61,16 @@ function gatedKnown(list: string, classTarget: string) {
   });
 }
 
-/** A spell list's slot at each spell level, as `describeCustomizations` reads it, gated from the second on by `classTarget`. */
+/**
+ * A spell list's slot at each spell level, cantrips too, as `describeCustomizations` reads it, gated from the second on
+ * by `classTarget`.
+ */
 function gatedSlots(list: string, classTarget: string) {
-  return Array.from({ length: 9 }, (_, i) => {
-    const gate = i === 0 ? "" : `\n  if 1 ${classTarget} greater_than_or_equal ${2 * i + 1}`;
+  return Array.from({ length: 10 }, (_, level) => {
+    const gate = level <= 1 ? "" : `\n  if 1 ${classTarget} greater_than_or_equal ${2 * level - 1}`;
     return [
-      `aptitudes.${list}.${i + 1}.allowed set -1 number${gate}`,
-      `aptitudes.${list}.${i + 1}.uses add 1 number${gate}`,
+      `aptitudes.${list}.${level}.allowed set -1 number${gate}`,
+      `aptitudes.${list}.${level}.uses add 1 number${gate}`,
     ];
   }).flat();
 }

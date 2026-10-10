@@ -13,8 +13,9 @@ import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
 export function SeedsWizardSchools<B extends Constructor<BaseSeeder>>(Base: B) {
   abstract class SeedingWizardSchools extends Base {
     /**
-     * Gives each school's specialist feat a slot at each spell level of its spell list ("X Specialist Spells"), once
-     * the wizard casts that level, and lists there the seeded wizard spells of the school, at their wizard level.
+     * Gives each school's specialist feat a slot at each spell level of its spell list ("X Specialist Spells"), its
+     * cantrips' included, once the wizard casts that level, and lists there the seeded wizard spells of the school, at
+     * their wizard level.
      */
     async seedWizardSchools(schools: WizardSchoolSeed[], wizard: SpellcastingClass) {
       await this.insertGatedSpellSlots(
