@@ -8,7 +8,7 @@ import type { Klass } from "@/shared/relations.ts";
 import { DEFAULT_HIT_DIE, HIT_DIE_VALUES } from "@/vocabulary/dnd3.5/classes.ts";
 
 import ClassLevelEntity from "./ClassLevelEntity.ts";
-import ClassSkillEntity from "./ClassSkillEntity.ts";
+import ClassSkills from "./ClassSkills.ts";
 import ClassTable from "./ClassTable.ts";
 import { CLASS_FIELDS } from "./fields.ts";
 
@@ -69,7 +69,7 @@ export default class ClassEntity extends RulesetEntity<
 
   /** A class's class skills (`klassId`): described, and what adding or removing one takes. Refused without the class. */
   skills(klassId: string) {
-    return new ClassSkillEntity(this.view, this.find(klassId));
+    return new ClassSkills(this.view, this.find(klassId));
   }
 
   /** A class's table (`klassId`): its feat pools, spell lists and spells by level. Refused without the class. */

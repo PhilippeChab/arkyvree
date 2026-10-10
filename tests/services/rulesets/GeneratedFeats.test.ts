@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { addClassLevels } from "@/database/seeds/seedCharacter.ts";
-import GeneratedFeats from "@/engine/core/entities/GeneratedFeats.ts";
+import SkillFocusFeats from "@/engine/rulesets/dnd3.5/entities/feats/SkillFocusFeats.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
@@ -392,10 +392,10 @@ describe("an inherited skill's Skill Focus", () => {
   test("is removed by the id the rules the caller loaded have, and left out when they have none", async () => {
     const { fork, feat } = await seededForkWithClimb();
     await withRulesetScope(db, fork.id, async (scope) => {
-      expect(GeneratedFeats.remove(scope, "Skill Focus: Climb", "In use")).toEqual([
-        { id: feat.id, inUse: "In use", type: "feats" },
-      ]);
-      expect(GeneratedFeats.remove(scope, "Skill Focus: No generated feat", "In use")).toEqual([]);
+      const skillFocus = new SkillFocusFeats(scope);
+      const inUse = "Cannot remove a Skill Focus feat in use by a character in this ruleset";
+      expect(skillFocus.remove("Climb")).toEqual([{ id: feat.id, inUse, type: "feats" }]);
+      expect(skillFocus.remove("No generated feat")).toEqual([]);
     });
   });
 });

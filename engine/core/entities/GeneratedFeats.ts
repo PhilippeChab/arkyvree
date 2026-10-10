@@ -2,38 +2,48 @@ import type { EntityRemoval, MadeEntity } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 
 /** A feat a plan makes with an entity: its name and description, its customizations. */
-type GeneratedFeat = Pick<MadeEntity, "modifiers" | "properties" | "requirements"> & {
+export type GeneratedFeat = Pick<MadeEntity, "modifiers" | "properties" | "requirements"> & {
   description: string;
   name: string;
 };
 
 /**
- * The feats a plan makes or removes with an entity, as the ruleset's view has them: generated, in the pool a ruleset
- * names (`poolSlug`: 3.5's general feats'), as entities its plan makes (`MadeEntity`) or removes (`EntityRemoval`).
+ * A set of feats an entity brings, generated in the pool a ruleset names (`poolSlug`: 3.5's general feats'): what a
+ * name brings (`featsOf`, a skill's, a school's), made with the entity's plan (`make`), and removed with it by a set
+ * that removes its feats (`removeFeat`, which a set exposes when it does).
  */
-export default class GeneratedFeats {
+export default abstract class GeneratedFeats {
+  constructor(protected readonly view: RulesetView) {}
+
+  /** The pool the set's feats go in, by its slug. */
+  protected abstract readonly poolSlug: string;
+
+  /** The feats `name` brings, the first its key: the set is made unless the view has a feat of its name. */
+  protected abstract featsOf(name: string): GeneratedFeat[];
+
+  /** The generated feat named `featName` a plan removes, refused (`inUse`) while picked: none when the view has none. */
+  protected removeFeat(featName: string, inUse: string) {
+    const feat = this.view.rulesetData.feats.find((f) => f.name === featName);
+    const removal: EntityRemoval[] = feat ? [{ id: feat.id, inUse, type: "feats" }] : [];
+    return removal;
+  }
+
   /**
-   * The feats a plan makes in the pool of `poolSlug`: none when the ruleset has no such pool, or when its view shows a
-   * feat named `unlessPresent` (its own or its chain's; one it deleted, a tombstone hides, doesn't count).
+   * The feats `name` brings, as entities a plan makes in the set's pool: none when the ruleset has no such pool, or
+   * when its view shows the set's key feat (its own or its chain's; one it deleted, a tombstone hides, doesn't count).
    */
-  static make(view: RulesetView, poolSlug: string, feats: GeneratedFeat[], unlessPresent?: string): MadeEntity[] {
-    const { rulesetData } = view;
-    const aptitudeId = rulesetData.aptitudeIdBySlug.get(poolSlug);
-    if (!aptitudeId || rulesetData.feats.some((feat) => feat.name === unlessPresent)) return [];
-    return feats.map(({ description, modifiers, name, properties, requirements }) => ({
-      columns: { description, generated: true, name },
+  make(name: string): MadeEntity[] {
+    const { rulesetData } = this.view;
+    const feats = this.featsOf(name);
+    const aptitudeId = rulesetData.aptitudeIdBySlug.get(this.poolSlug);
+    if (!aptitudeId || rulesetData.feats.some((feat) => feat.name === feats[0]?.name)) return [];
+    return feats.map(({ description, modifiers, name: featName, properties, requirements }) => ({
+      columns: { description, generated: true, name: featName },
       links: [{ aptitudeId }],
       modifiers,
       properties,
       requirements,
       type: "feats",
     }));
-  }
-
-  /** The generated feat named `name` a plan removes, refused (`inUse`) while picked: none when the view has none. */
-  static remove(view: RulesetView, name: string, inUse: string) {
-    const feat = view.rulesetData.feats.find((f) => f.name === name);
-    const removal: EntityRemoval[] = feat ? [{ id: feat.id, inUse, type: "feats" }] : [];
-    return removal;
   }
 }

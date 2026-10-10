@@ -39,6 +39,9 @@ export default class PowerEntity extends ListedEntity<
   { description?: string | null; name: string; saveEffect: string | null; saveId: string | null },
   typeof POWER_FIELDS.fields
 > {
+  /** The Spell Focus feats a power's school brings. */
+  private readonly spellFocus = new SpellFocusFeats(this.view);
+
   /** A spell's school, components, range… */
   protected override readonly fields = POWER_FIELDS;
 
@@ -94,7 +97,7 @@ export default class PowerEntity extends ListedEntity<
     const grouping = getGrouping(fields);
     const before = power && getGrouping(this.fields.read(this.propertiesOf(power)));
     return {
-      made: grouping !== null && grouping !== before ? SpellFocusFeats.make(this.view, grouping) : [],
+      made: grouping !== null && grouping !== before ? this.spellFocus.make(grouping) : [],
       properties: this.fields.write(fields),
     };
   }
