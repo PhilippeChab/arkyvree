@@ -96,7 +96,7 @@ export const BARDIC_FEATS: FeatSeed[] = [
 
 export const DISEMBOWELING_STRIKE_FEATS: FeatSeed[] = ALL_WEAPONS.map((w) => ({
   name: `Disemboweling Strike: ${w}`,
-  description: `Your successful sneak attack with a slashing weapon for which you have ${w} Focus deals 1d4 points of Constitution damage in addition to its normal damage. You can't use this feat against the same target more than once per day. Using this feat reduces your sneak attack damage by 4d6.`,
+  description: `Your successful sneak attack with a slashing weapon for which you have selected Weapon Focus deals 1d4 points of Constitution damage in addition to its normal damage. You can't use this feat against the same target more than once per day. Using this feat reduces your sneak attack damage by 4d6.`,
   generated: true,
   aptitudes: ["General"],
   properties: [{ type: "FEAT_FAMILY", value: "Disemboweling Strike" }],
@@ -251,7 +251,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
 
 export const HEAD_SHOT_FEATS: FeatSeed[] = ALL_WEAPONS.map((w) => ({
   name: `Head Shot: ${w}`,
-  description: `Your successful sneak attack with a bludgeoning weapon for which you have ${w} Focus leaves your foe confused for 1 round. A successful Will save (DC 10 + the number of extra damage dice normally dealt by your sneak attack + your Dex modifier) negates this effect. If you use this feat a second time on a target before 1 round has elapsed, the effect of the first use expires. Using this feat reduces your sneak attack damage by 5d6.`,
+  description: `Your successful sneak attack with a bludgeoning weapon for which you have selected Weapon Focus leaves your foe confused for 1 round. A successful Will save (DC 10 + the number of extra damage dice normally dealt by your sneak attack + your Dex modifier) negates this effect. If you use this feat a second time on a target before 1 round has elapsed, the effect of the first use expires. Using this feat reduces your sneak attack damage by 5d6.`,
   generated: true,
   aptitudes: ["General"],
   properties: [{ type: "FEAT_FAMILY", value: "Head Shot" }],
