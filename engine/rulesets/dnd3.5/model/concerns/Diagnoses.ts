@@ -7,9 +7,9 @@ import type {
   CustomizedPower,
   InventoryEntry,
 } from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
-import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import type { Klass, Modifier } from "@/shared/relations.ts";
+import { GENERAL_FEATS_APTITUDE } from "@/vocabulary/dnd3.5/feats.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
 /** An aptitude pool's (or one of its spell levels') slots. */
@@ -72,7 +72,7 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
       if (unplacedGeneralFeats > 0) {
         issues.push({
           category: "integrity",
-          message: `The ruleset has no ${LevelRules.GENERAL_FEATS_APTITUDE} aptitude: this character's ${unplacedGeneralFeats} general feat(s) count toward none`,
+          message: `The ruleset has no ${GENERAL_FEATS_APTITUDE} aptitude: this character's ${unplacedGeneralFeats} general feat(s) count toward none`,
         });
       }
       sourceChain(this.data.race.rulesetId, this.data.race.name, "races");

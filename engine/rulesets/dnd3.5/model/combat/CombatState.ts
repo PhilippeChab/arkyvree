@@ -1,7 +1,7 @@
 import type AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/ClassesComponent.ts";
 import type IdentityComponent from "@/engine/rulesets/dnd3.5/model/identity/IdentityComponent.ts";
-import { COMBAT_RULES } from "@/engine/rulesets/dnd3.5/rules/combat.ts";
+import { type ARMOR_CATEGORIES, COMBAT_RULES } from "@/vocabulary/dnd3.5/combat.ts";
 
 import type ArmorsComponent from "./ArmorsComponent.ts";
 import type { ArmorsData } from "./ArmorsComponent.ts";
@@ -164,9 +164,6 @@ export type WeaponSlot = {
   /** How it's held: `mainhand`, `offhand` or `twohanded`, one value per inventory entry */
   wielded: string;
 };
-
-/** The category of the armor a character wears, lightest first: none, or the armor's proficiency category. */
-export const ARMOR_CATEGORIES = ["none", "light", "medium", "heavy"] as const;
 
 /** A weapon slot's label, as an item's location names it, to its place in the weapon set. */
 export const SLOT_MAP: Record<string, keyof WeaponSet> = {

@@ -1,3 +1,7 @@
+/** What an ability's score, less its offset, is halved by into its modifier, rounded down. */
+export const ABILITY_MODIFIER_DIVISOR = 2;
+/** The score an ability's modifier is 0 at. */
+export const ABILITY_MODIFIER_OFFSET = 10;
 /** The highest score a character's ability takes. */
 export const MAX_ABILITY_SCORE = 100;
 /** The lowest score a character's ability takes. */

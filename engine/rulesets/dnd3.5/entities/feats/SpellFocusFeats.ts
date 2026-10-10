@@ -4,6 +4,7 @@ import FeatsPaths from "@/engine/rulesets/dnd3.5/model/feats/FeatsPaths.ts";
 import PowersPaths from "@/engine/rulesets/dnd3.5/model/powers/PowersPaths.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { SPELL_FOCUS_DC_BONUS } from "@/vocabulary/dnd3.5/feats.ts";
 
 import { FEAT_FIELDS } from "./fields.ts";
 
@@ -18,7 +19,7 @@ export default class SpellFocusFeats {
     const dcBonus = {
       target: PowersPaths.groupDcMisc(schoolName),
       operator: "add",
-      value: "1",
+      value: String(SPELL_FOCUS_DC_BONUS),
       valueType: "number",
     } as const;
     return GeneratedFeats.make(
@@ -27,14 +28,14 @@ export default class SpellFocusFeats {
       [
         {
           name: spellFocus,
-          description: `Add +1 to the Difficulty Class for all saving throws against spells from the school of ${schoolName}.`,
+          description: `Add +${SPELL_FOCUS_DC_BONUS} to the Difficulty Class for all saving throws against spells from the school of ${schoolName}.`,
           properties: FEAT_FIELDS.toProperties({ ...FEAT_FIELDS.defaults, families: ["Spell Focus"] }),
           modifiers: [dcBonus],
           requirements: [],
         },
         {
           name: `Greater Spell Focus: ${schoolName}`,
-          description: `Add +1 to the Difficulty Class for all saving throws against spells from the school of ${schoolName}. This bonus stacks with the bonus granted by Spell Focus.`,
+          description: `Add +${SPELL_FOCUS_DC_BONUS} to the Difficulty Class for all saving throws against spells from the school of ${schoolName}. This bonus stacks with the bonus granted by Spell Focus.`,
           properties: FEAT_FIELDS.toProperties({ ...FEAT_FIELDS.defaults, families: ["Greater Spell Focus"] }),
           modifiers: [dcBonus],
           requirements: [

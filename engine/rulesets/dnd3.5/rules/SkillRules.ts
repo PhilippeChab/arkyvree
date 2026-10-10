@@ -1,3 +1,12 @@
+import {
+  CLASS_SKILL_POINTS_PER_RANK,
+  CROSS_CLASS_POINTS_PER_RANK,
+  CROSS_CLASS_RANK_CAP_DIVISOR,
+  FIRST_LEVEL_SKILL_POINTS_MULTIPLIER,
+  MAX_RANKS_OVER_LEVEL,
+  MIN_SKILL_POINTS_PER_LEVEL,
+} from "@/vocabulary/dnd3.5/skills.ts";
+
 /**
  * The 3.5 skill rules: the points a level gives, what a rank costs, how many ranks a skill may hold, and how points
  * spread over levels.
@@ -10,9 +19,14 @@ export default class SkillRules {
   private static spendingOrder(skillId: string, perLevelClassSkillIds: string[][], perLevelSkillPoints: number[]) {
     const levels = perLevelSkillPoints.map((_, level) => ({
       level,
-      pointsPerRank: perLevelClassSkillIds[level].includes(skillId) ? 1 : 2,
+      pointsPerRank: perLevelClassSkillIds[level].includes(skillId)
+        ? CLASS_SKILL_POINTS_PER_RANK
+        : CROSS_CLASS_POINTS_PER_RANK,
     }));
-    return [...levels.filter((l) => l.pointsPerRank === 1), ...levels.filter((l) => l.pointsPerRank === 2)];
+    return [
+      ...levels.filter((l) => l.pointsPerRank === CLASS_SKILL_POINTS_PER_RANK),
+      ...levels.filter((l) => l.pointsPerRank === CROSS_CLASS_POINTS_PER_RANK),
+    ];
   }
 
   /**
@@ -20,22 +34,24 @@ export default class SkillRules {
    * 1, and a bonus per level (a human's 1) beside the minimum, both four times over at the character's first level.
    */
   static levelPoints(pointsPerLevel: number, bonusPerLevel: number, isFirstCharacterLevel: boolean): number {
-    return (Math.max(1, pointsPerLevel) + bonusPerLevel) * (isFirstCharacterLevel ? 4 : 1);
+    const multiplier = isFirstCharacterLevel ? FIRST_LEVEL_SKILL_POINTS_MULTIPLIER : 1;
+    return (Math.max(MIN_SKILL_POINTS_PER_LEVEL, pointsPerLevel) + bonusPerLevel) * multiplier;
   }
 
   /** The most ranks a skill may have at `characterLevel`: the level + 3 as a class skill, half that cross-class. */
   static maxRank(characterLevel: number, isClassSkill: boolean): number {
-    return isClassSkill ? characterLevel + 3 : (characterLevel + 3) / 2;
+    const classSkillRanks = characterLevel + MAX_RANKS_OVER_LEVEL;
+    return isClassSkill ? classSkillRanks : classSkillRanks / CROSS_CLASS_RANK_CAP_DIVISOR;
   }
 
   /** The points `ranks` cost: a point a rank in a class skill, two cross-class. */
   static pointsFor(ranks: number, isClassSkill: boolean): number {
-    return isClassSkill ? ranks : ranks * 2;
+    return ranks * (isClassSkill ? CLASS_SKILL_POINTS_PER_RANK : CROSS_CLASS_POINTS_PER_RANK);
   }
 
   /** The ranks `points` buy: a rank a point in a class skill, half a rank cross-class. */
   static ranksFor(points: number, isClassSkill: boolean): number {
-    return isClassSkill ? points : points / 2;
+    return points / (isClassSkill ? CLASS_SKILL_POINTS_PER_RANK : CROSS_CLASS_POINTS_PER_RANK);
   }
 
   /**

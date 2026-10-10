@@ -3,11 +3,11 @@ import type { GetterOf, PathCategory } from "@/engine/core/paths/PathCategory.ts
 import PathTraverser, { type Components, type TraversePathResult } from "@/engine/core/paths/PathTraverser.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
-import { UNARMED_STRIKE } from "@/engine/rulesets/dnd3.5/rules/combat.ts";
 import { getOperators } from "@/shared/customization/operators.ts";
 import { deriveNameLabels, deriveSegmentLabels, isLeafOfKind, type TargetPath } from "@/shared/customization/target.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { UNARMED_STRIKE } from "@/vocabulary/dnd3.5/combat.ts";
 import { ARMOR_TYPE, SHIELD_TYPE, WEAPON_PROFICIENCY, WEAPON_TYPE } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 import type ArmorsComponent from "./ArmorsComponent.ts";

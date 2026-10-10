@@ -1,5 +1,6 @@
 import type { AbilityIncrease } from "@/engine/core/module/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { ABILITY_MODIFIER_DIVISOR, ABILITY_MODIFIER_OFFSET } from "@/vocabulary/dnd3.5/abilities.ts";
 
 type AbilitiesData = {
   [key: string]: {
@@ -10,12 +11,6 @@ type AbilitiesData = {
     readonly total: number;
   };
 };
-
-/** What an ability's score, less its offset, is halved by into its modifier, rounded down. */
-const ABILITY_MODIFIER_DIVISOR = 2;
-
-/** The score an ability's modifier is 0 at. */
-const ABILITY_MODIFIER_OFFSET = 10;
 
 export default class AbilitiesComponent {
   /** An ability's modifier at a score: +1 for every 2 points above 10, rounded down (a score of 9 is -1). */

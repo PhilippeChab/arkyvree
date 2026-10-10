@@ -1,8 +1,13 @@
-import { type BondedRaceStatBlock } from "./BondedRaceData.ts";
+import {
+  ANIMAL_BAB_PER_HIT_DIE,
+  ANIMAL_HIT_DIE_AVERAGE,
+  ANIMAL_SAVE_PROGRESSIONS,
+  type BondedRaceStatBlock,
+} from "@/vocabulary/dnd3.5/bondedCreatures.ts";
+import { SAVE_PROGRESSIONS } from "@/vocabulary/dnd3.5/classes.ts";
+
 import BondedScaling from "./BondedScaling.ts";
 import DetailedCharacterBonded from "./DetailedCharacterBonded.ts";
-
-const HD_PER_LEVEL_AVG = 4.5;
 
 /**
  * A bonded animal whose hit dice advance with its master (an animal companion, a special mount): its feats and skills
@@ -32,13 +37,13 @@ export default abstract class DetailedCharacterAdvancingBonded extends DetailedC
 
     const combat = this.components.combat.getCombat();
     combat.ac.natural = naturalArmor;
-    combat.bab = Math.floor((totalHD * 3) / 4);
-    combat.hp.base = Math.ceil(totalHD * HD_PER_LEVEL_AVG);
+    combat.bab = Math.floor(totalHD * ANIMAL_BAB_PER_HIT_DIE);
+    combat.hp.base = Math.ceil(totalHD * ANIMAL_HIT_DIE_AVERAGE);
 
-    const { saves } = this.components;
-    const [fortitude, reflex, will] = [saves.getSave("Fortitude"), saves.getSave("Reflex"), saves.getSave("Will")];
-    if (fortitude) fortitude.base = 2 + Math.floor(totalHD / 2);
-    if (reflex) reflex.base = 2 + Math.floor(totalHD / 2);
-    if (will) will.base = Math.floor(totalHD / 3);
+    for (const [name, progression] of Object.entries(ANIMAL_SAVE_PROGRESSIONS)) {
+      const save = this.components.saves.getSave(name);
+      const { base, hitDicePerPoint } = SAVE_PROGRESSIONS[progression];
+      if (save) save.base = base + Math.floor(totalHD / hitDicePerPoint);
+    }
   }
 }

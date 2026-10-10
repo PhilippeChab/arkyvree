@@ -54,3 +54,12 @@ export const FEAT_FAMILIES = [
   "Favored Enemy",
   ...CLASS_FEATURE_FAMILIES,
 ] as const;
+
+/** The aptitude the general feats count toward, by its name, which a ruleset keeps (`Dnd35AptitudesRules`). */
+export const GENERAL_FEATS_APTITUDE = "General";
+
+/** What Skill Focus adds to its skill's checks: +3. */
+export const SKILL_FOCUS_BONUS = 3;
+
+/** What Spell Focus, and Greater Spell Focus on top, add to their school's spells' save DCs: +1. */
+export const SPELL_FOCUS_DC_BONUS = 1;

@@ -1,8 +1,8 @@
 import { ITEM_FIELDS } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import type { CustomizedRace } from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
-import { UNARMED_STRIKE } from "@/engine/rulesets/dnd3.5/rules/combat.ts";
 import { include } from "@/lib/mixins.ts";
 import { type CharacterLevel } from "@/shared/relations.ts";
+import { UNARMED_STRIKE, UNARMED_STRIKE_STATS } from "@/vocabulary/dnd3.5/combat.ts";
 
 import CombatState, { type CombatData } from "./CombatState.ts";
 import { ArmorClass } from "./concerns/ArmorClass.ts";
@@ -36,12 +36,8 @@ class CombatComponent extends include(CombatState, ArmorClass, Attacks, HitPoint
       { name: UNARMED_STRIKE },
       {
         ...ITEM_FIELDS.defaults.weapon,
-        proficiency: "Unarmed",
-        baseDamage: "1d3",
-        damageTypes: ["Bludgeoning"],
-        criticalRange: 1,
-        criticalMultiplier: 2,
-        finessable: true,
+        ...UNARMED_STRIKE_STATS,
+        damageTypes: [...UNARMED_STRIKE_STATS.damageTypes],
       },
     );
   }

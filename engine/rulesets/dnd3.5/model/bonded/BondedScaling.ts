@@ -1,6 +1,5 @@
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
-
-import { type BondedRaceStatBlock } from "./BondedRaceData.ts";
+import { ANIMAL_SKILL_POINTS_PER_HIT_DIE, type BondedRaceStatBlock } from "@/vocabulary/dnd3.5/bondedCreatures.ts";
 
 /** A bonded creature's feats and skill ranks, scaled to its hit dice. */
 export default class BondedScaling {
@@ -27,7 +26,7 @@ export default class BondedScaling {
     const ranks: Record<string, number> = {};
     const priority = stats.skillPriority ?? [];
     if (priority.length === 0) return ranks;
-    const points = Math.max(0, totalHD - stats.baseHD);
+    const points = Math.max(0, totalHD - stats.baseHD) * ANIMAL_SKILL_POINTS_PER_HIT_DIE;
     for (let point = 0; point < points; point++) {
       const skill = priority[point % priority.length];
       ranks[skill] = (ranks[skill] ?? 0) + 1;

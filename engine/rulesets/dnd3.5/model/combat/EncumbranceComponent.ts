@@ -3,12 +3,17 @@ import type IdentityComponent from "@/engine/rulesets/dnd3.5/model/identity/Iden
 import type { InventoryEntry } from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
 import {
   CARRYING_CAPACITY,
+  CARRYING_CAPACITY_STEP_MULTIPLIER,
+  CARRYING_CAPACITY_STRENGTH_STEP,
   ENCUMBERED_SPEED,
+  ENCUMBERED_SPEED_THIRDS,
   ENCUMBRANCE_PENALTIES,
+  LIGHT_LOAD_THIRDS,
   type LoadCategory,
+  MEDIUM_LOAD_THIRDS,
   QUADRUPED_SIZE_CARRY_MULTIPLIERS,
   SIZE_CARRY_MULTIPLIERS,
-} from "@/engine/rulesets/dnd3.5/rules/carrying.ts";
+} from "@/vocabulary/dnd3.5/carrying.ts";
 
 export type EncumbranceData = {
   carriedweight: number;
@@ -19,6 +24,11 @@ export type EncumbranceData = {
   readonly maxdex: number;
   readonly mediumload: number;
 };
+
+/** `thirds` thirds of `value`, rounded down: a load's share of the heavy load, an encumbered speed's of its own. */
+function thirdsOf(value: number, thirds: number) {
+  return Math.floor((value * thirds) / 3);
+}
 
 export default class EncumbranceComponent {
   constructor(
@@ -39,10 +49,10 @@ export default class EncumbranceComponent {
         return heavyLoad();
       },
       get mediumload() {
-        return Math.floor((this.heavyload * 2) / 3);
+        return thirdsOf(this.heavyload, MEDIUM_LOAD_THIRDS);
       },
       get lightload() {
-        return Math.floor(this.heavyload / 3);
+        return thirdsOf(this.heavyload, LIGHT_LOAD_THIRDS);
       },
       get load() {
         return loadCategory(this.carriedweight, this.heavyload);
@@ -60,10 +70,12 @@ export default class EncumbranceComponent {
     if (str <= 0) return 0;
     if (str < CARRYING_CAPACITY.length) return CARRYING_CAPACITY[str];
 
-    // For Str 30+: each +10 multiplies by ×4 (PHB formula)
-    const remainder = str % 10;
-    const baseStr = remainder === 0 ? 10 : 20 + remainder;
-    const multiplier = Math.pow(4, Math.floor((str - baseStr) / 10));
+    // Past the table: each 10 more Strength multiplies by ×4 (PHB formula), from the score of the table's last ten with
+    // the same ones digit
+    const step = CARRYING_CAPACITY_STRENGTH_STEP;
+    const remainder = str % step;
+    const baseStr = remainder === 0 ? step : 2 * step + remainder;
+    const multiplier = Math.pow(CARRYING_CAPACITY_STEP_MULTIPLIER, Math.floor((str - baseStr) / step));
     return CARRYING_CAPACITY[baseStr] * multiplier;
   }
 
@@ -80,8 +92,8 @@ export default class EncumbranceComponent {
 
   private getLoadCategory(weight: number, heavyLoad: number): LoadCategory {
     if (heavyLoad <= 0) return weight > 0 ? "overloaded" : "light";
-    const lightLoad = Math.floor(heavyLoad / 3);
-    const mediumLoad = Math.floor((heavyLoad * 2) / 3);
+    const lightLoad = thirdsOf(heavyLoad, LIGHT_LOAD_THIRDS);
+    const mediumLoad = thirdsOf(heavyLoad, MEDIUM_LOAD_THIRDS);
     if (weight <= lightLoad) return "light";
     if (weight <= mediumLoad) return "medium";
     if (weight <= heavyLoad) return "heavy";
@@ -91,7 +103,7 @@ export default class EncumbranceComponent {
   getEncumberedSpeed(baseSpeed: number): number {
     if (ENCUMBERED_SPEED[baseSpeed] !== undefined) return ENCUMBERED_SPEED[baseSpeed];
 
-    return Math.floor((baseSpeed * 2) / 3);
+    return thirdsOf(baseSpeed, ENCUMBERED_SPEED_THIRDS);
   }
 
   getEncumbrance(): EncumbranceData {

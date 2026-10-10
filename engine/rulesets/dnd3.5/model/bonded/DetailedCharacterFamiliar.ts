@@ -1,6 +1,13 @@
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import {
+  type BondedRaceStatBlock,
+  FAMILIAR_HIT_POINTS_DIVISOR,
+  FAMILIAR_INTELLIGENCE,
+  FAMILIAR_MASTER_LEVELS_PER_STEP,
+  FAMILIAR_NATURAL_ARMOR,
+} from "@/vocabulary/dnd3.5/bondedCreatures.ts";
 
-import BondedRaceData, { type BondedRaceStatBlock } from "./BondedRaceData.ts";
+import BondedRaceData from "./BondedRaceData.ts";
 import DetailedCharacterBonded from "./DetailedCharacterBonded.ts";
 
 /**
@@ -22,13 +29,14 @@ export default class DetailedCharacterFamiliar extends DetailedCharacterBonded {
 
   protected override applyMasterDerivation(master: DetailedCharacter): void {
     const masterLevel = master.components.identity.getIdentity().meta.level;
-    const naBonus = Math.min(10, Math.max(1, Math.ceil(masterLevel / 2)));
-    const familiarInt = Math.min(15, 5 + Math.ceil(masterLevel / 2));
+    const step = Math.ceil(masterLevel / FAMILIAR_MASTER_LEVELS_PER_STEP);
+    const naBonus = Math.min(FAMILIAR_NATURAL_ARMOR.max, Math.max(FAMILIAR_NATURAL_ARMOR.min, step));
+    const familiarInt = Math.min(FAMILIAR_INTELLIGENCE.max, FAMILIAR_INTELLIGENCE.base + step);
 
     const masterCombat = master.components.combat.getCombat();
     const familiarCombat = this.components.combat.getCombat();
 
-    familiarCombat.hp.base = Math.floor(masterCombat.hp.total / 2);
+    familiarCombat.hp.base = Math.floor(masterCombat.hp.total / FAMILIAR_HIT_POINTS_DIVISOR);
     familiarCombat.bab = masterCombat.bab;
 
     const raceStats = BondedRaceData.getStats(this.data.race.name);

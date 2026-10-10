@@ -4,7 +4,7 @@ import type CombatComponent from "@/engine/rulesets/dnd3.5/model/combat/CombatCo
 import type ShieldsComponent from "@/engine/rulesets/dnd3.5/model/combat/ShieldsComponent.ts";
 import type WeaponsComponent from "@/engine/rulesets/dnd3.5/model/combat/WeaponsComponent.ts";
 import type { InventoryEntry } from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
-import { UNARMED_STRIKE } from "@/engine/rulesets/dnd3.5/rules/combat.ts";
+import { UNARMED_STRIKE } from "@/vocabulary/dnd3.5/combat.ts";
 
 import InventorySlots from "./InventorySlots.ts";
 

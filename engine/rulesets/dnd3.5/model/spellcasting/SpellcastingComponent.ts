@@ -8,7 +8,7 @@ import type {
 } from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
 import { include } from "@/lib/mixins.ts";
 import type { CharacterLevel, Modifier } from "@/shared/relations.ts";
-import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
+import { BONUS_SPELL_MODIFIER_STEP, MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
 import { BonusCasterLevels } from "./concerns/BonusCasterLevels.ts";
 import { KnownPowers } from "./concerns/KnownPowers.ts";
@@ -53,7 +53,7 @@ class SpellcastingComponent extends include(SpellcastingState, BonusCasterLevels
           if (!levelData || levelData.allowed === 0) continue;
           if (abilityMod < spellLevel) continue;
 
-          const bonusSpells = Math.floor((abilityMod - spellLevel) / 4) + 1;
+          const bonusSpells = Math.floor((abilityMod - spellLevel) / BONUS_SPELL_MODIFIER_STEP) + 1;
           levelData.uses += bonusSpells;
         }
       }

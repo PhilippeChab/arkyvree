@@ -6,10 +6,10 @@ import type ArmorsComponent from "@/engine/rulesets/dnd3.5/model/combat/ArmorsCo
 import type EncumbranceComponent from "@/engine/rulesets/dnd3.5/model/combat/EncumbranceComponent.ts";
 import type ShieldsComponent from "@/engine/rulesets/dnd3.5/model/combat/ShieldsComponent.ts";
 import type IdentityComponent from "@/engine/rulesets/dnd3.5/model/identity/IdentityComponent.ts";
-import { SIZE_HIDE_MOD } from "@/engine/rulesets/dnd3.5/rules/sizes.ts";
 import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
 import { type Skill } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { SIZE_HIDE_MOD } from "@/vocabulary/dnd3.5/sizes.ts";
 
 /** The skill points' budget: a level's bonus points, an input, and the points counted from the character's levels. */
 type SkillBudget = {
