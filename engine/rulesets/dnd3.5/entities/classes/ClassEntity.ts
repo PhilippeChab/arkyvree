@@ -13,7 +13,11 @@ import ClassTable from "./ClassTable.ts";
 import { CLASS_FIELDS } from "./fields.ts";
 
 /** A class's form: its name, description and hit die. */
-type ClassBody = { description?: string | null; hd?: number; name: string };
+interface ClassBody {
+  description?: string | null;
+  hd?: number;
+  name: string;
+}
 
 /** A class's hit die. */
 const HIT_DIE = z.literal(HIT_DIE_VALUES, { error: () => `Hit die must be one of: ${HIT_DIE_VALUES.join(", ")}` });

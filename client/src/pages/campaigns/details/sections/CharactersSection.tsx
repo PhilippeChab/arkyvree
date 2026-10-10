@@ -40,10 +40,6 @@ import {
 import { rpc } from "@/client/src/services/rpc.ts";
 import { CHARACTER_VISIBILITY_OPTIONS, type CharacterVisibility } from "@/shared/campaigns.ts";
 
-type CampaignCharacter = CampaignCharactersPaginated["items"][number];
-
-type CampaignCharactersPaginated = InferResponseType<(typeof rpc.api.campaigns)[":id"]["characters"]["$get"], 200>;
-
 interface CharacterCardProps {
   animationIndex: number;
   animationOffset: number;
@@ -53,9 +49,11 @@ interface CharacterCardProps {
   character: CampaignCharacter;
   portraitUrl: string | null;
 }
+
 interface CharactersSectionProps {
   campaign: CampaignDetail;
 }
+
 interface LinkCharacterDialogProps {
   campaignId: string;
   onClose: () => void;
@@ -63,6 +61,8 @@ interface LinkCharacterDialogProps {
   onExited: () => void;
   open: boolean;
 }
+type CampaignCharacter = CampaignCharactersPaginated["items"][number];
+type CampaignCharactersPaginated = InferResponseType<(typeof rpc.api.campaigns)[":id"]["characters"]["$get"], 200>;
 
 type UnlinkedCharacter = InferResponseType<
   (typeof rpc.api.characters.unlinked)[":campaignId"]["$get"],

@@ -8,13 +8,13 @@ import { normalizeWs } from "@/codegen/core/text/whitespace.ts";
 import type { MagicItemCategory, MagicItemReference } from "@/codegen/dnd3.5/tools/types/magicItems.ts";
 
 /** An item's block on the page: its name, description, metadata (its price…), a staff's spells, and where it ends. */
-type ItemBlock = {
+interface ItemBlock {
   charges: { charges: number; spell: string }[];
   description: string;
   end: cheerio.Cheerio<AnyNode>;
   metadataText: string;
   name: string;
-};
+}
 
 /** A magic item, as its reference stores it. */
 type RawMagicItem = MagicItemReference["raw"][number];

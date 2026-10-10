@@ -56,8 +56,6 @@ interface AbilityCardProps {
   score: number;
 }
 
-type AbilityOption = Pick<Ability, "id" | "name">;
-
 interface AbilityScoresFieldProps {
   abilities: AbilityOption[];
   control: Control<CreateCharacterFormData>;
@@ -68,9 +66,6 @@ interface AbilityScoresFieldProps {
   method: CreationMethod;
 }
 
-/** The scores taken from an array, each ability one of them. */
-type ArrayMethod = Extract<CreationMethod, { kind: "array" }>;
-
 interface CreateCharacterDialogProps {
   onClose: () => void;
   /** It has faded out: its opener lets it go, so the next opening starts clean. */
@@ -78,24 +73,10 @@ interface CreateCharacterDialogProps {
   open: boolean;
 }
 
-/** What the character is created with, its alignment and gender unpicked ("") until they're chosen. */
-type CreateCharacterFormData = Omit<CreateCharacterRequest, "alignment" | "gender"> & {
-  alignment: CreateCharacterRequest["alignment"] | "";
-  gender: CreateCharacterRequest["gender"] | "";
-};
-
-type CreateCharacterRequest = InferRequestType<typeof rpc.api.characters.$post>["json"];
-
-/** The scores bought out of a budget, each at its cost. */
-type PointBuyMethod = Extract<CreationMethod, { kind: "pointBuy" }>;
-
 /** A point buy's scores, and their change. */
 interface PointBuyScoresProps extends SetScoresProps {
   method: PointBuyMethod;
 }
-
-/** The scores rolled with dice. */
-type RollMethod = Extract<CreationMethod, { kind: "roll" }>;
 
 /** The scores a method that sets them shows (a point buy, an array), and their change. */
 interface SetScoresProps {
@@ -109,6 +90,25 @@ interface StandardArrayScoresProps extends SetScoresProps {
   method: ArrayMethod;
   modifiers: CharacterCreation["modifiers"];
 }
+
+type AbilityOption = Pick<Ability, "id" | "name">;
+
+/** The scores taken from an array, each ability one of them. */
+type ArrayMethod = Extract<CreationMethod, { kind: "array" }>;
+
+/** What the character is created with, its alignment and gender unpicked ("") until they're chosen. */
+type CreateCharacterFormData = Omit<CreateCharacterRequest, "alignment" | "gender"> & {
+  alignment: CreateCharacterRequest["alignment"] | "";
+  gender: CreateCharacterRequest["gender"] | "";
+};
+
+type CreateCharacterRequest = InferRequestType<typeof rpc.api.characters.$post>["json"];
+
+/** The scores bought out of a budget, each at its cost. */
+type PointBuyMethod = Extract<CreationMethod, { kind: "pointBuy" }>;
+
+/** The scores rolled with dice. */
+type RollMethod = Extract<CreationMethod, { kind: "roll" }>;
 
 function AbilityCard({
   name,

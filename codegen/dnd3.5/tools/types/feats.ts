@@ -3,7 +3,7 @@ import type { ModifierSeed, Property, RequirementEntry } from "@/content/core/bu
 import type { Overrides, ScrapedMeta } from "./reference.ts";
 
 /** A feat's fields a mapping derives and an override sets. */
-type FeatFields = {
+interface FeatFields {
   aptitudes?: string[];
   description?: string;
   featNameMap?: Record<string, string>;
@@ -13,12 +13,15 @@ type FeatFields = {
   selectable?: boolean;
   skip?: boolean;
   stackable?: boolean;
-};
+}
 
 /** Template expansion config for family feats (Weapon Focus, Skill Focus, etc.) */
-type FeatTemplate = { familyName: string; type: "weapon" | "skill" | "school" | "crossbow" };
+interface FeatTemplate {
+  familyName: string;
+  type: "weapon" | "skill" | "school" | "crossbow";
+}
 
-export type FeatReference = {
+export interface FeatReference {
   _meta: ScrapedMeta<"feat">;
 
   /** Auto-detected requirements for each feat */
@@ -60,4 +63,4 @@ export type FeatReference = {
     prerequisiteText: string;
     special?: string;
   }[];
-};
+}

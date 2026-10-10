@@ -12,14 +12,14 @@ import type { PowerWithAptitudes } from "@/shared/relations.ts";
 import { POWER_FIELDS, type PowerFieldValues } from "./fields.ts";
 
 /** A power's save, as its form sends it: its row's columns, its pools (each at its spell level), and its fields. */
-type PowerBody = {
+interface PowerBody {
   aptitudes?: { id: string; level?: number }[];
   description?: string | null;
   fields?: Partial<PowerFieldValues>;
   name: string;
   saveEffect?: string | null;
   saveId?: string | null;
-};
+}
 
 /** A spell's level: 0 to the rules' last. */
 const SPELL_LEVEL = z.number().int().min(0).max(RULESET_LIMITS.spellLevel);

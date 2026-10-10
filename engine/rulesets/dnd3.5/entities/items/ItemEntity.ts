@@ -13,7 +13,7 @@ import { TEMPLATE_ITEM_TYPES, type TemplateItemType } from "@/vocabulary/dnd3.5/
 import { ITEM_FIELDS } from "./fields.ts";
 
 /** An item's save, as its form sends it. */
-type ItemBody = {
+interface ItemBody {
   costGp?: number;
   description?: string | null;
   isTemplate?: boolean;
@@ -22,7 +22,13 @@ type ItemBody = {
   sourceItemId?: string;
   type?: string | null;
   weight?: number;
-};
+}
+
+/** A variant of an item, as its form sends it. */
+interface VariantBody {
+  description?: string | null;
+  name: string;
+}
 
 /** An item's row, as its forms write it: a template keeps no source, an edit leaves whether it's one as it is. */
 type ItemColumns = Omit<ItemBody, "costGp" | "isTemplate" | "sourceItemId" | "weight"> & {
@@ -31,9 +37,6 @@ type ItemColumns = Omit<ItemBody, "costGp" | "isTemplate" | "sourceItemId" | "we
   sourceItemId?: string | null;
   weight?: string;
 };
-
-/** A variant of an item, as its form sends it. */
-type VariantBody = { description?: string | null; name: string };
 
 /** A type an item can be based on a template of: a weapon's, an armor's or a shield's. */
 const TEMPLATE_TYPE = z.enum(TEMPLATE_ITEM_TYPES);

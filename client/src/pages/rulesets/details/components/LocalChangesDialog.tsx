@@ -37,10 +37,6 @@ import type { BaseRules } from "@/shared/enums.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
-type Change = ChangesResponse[number];
-
-type ChangesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["changes"]["$get"], 200>;
-
 interface LocalChangesDialogProps {
   /** The ruleset's base rules, whose words name the entity types */
   baseRules: BaseRules;
@@ -50,6 +46,10 @@ interface LocalChangesDialogProps {
   open: boolean;
   rulesetId: string;
 }
+
+type Change = ChangesResponse[number];
+
+type ChangesResponse = InferResponseType<(typeof rpc.api.rulesets)[":id"]["changes"]["$get"], 200>;
 
 /** A change the fork can undo: an entity it modified or deleted, which the restore route takes back. */
 type RestorableChange = Extract<Change, { sourceEntityId: string }>;

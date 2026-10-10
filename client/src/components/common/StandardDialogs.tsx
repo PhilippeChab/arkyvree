@@ -24,9 +24,6 @@ interface ConfirmDialogProps {
   title: string;
 }
 
-/** A deletion's confirmation: `ConfirmDialog`'s destructive preset, its action "Delete" unless it names another. */
-type DeleteDialogProps = Omit<ConfirmDialogProps, "confirmLabel" | "intent"> & { confirmLabel?: string };
-
 interface FormActionDialogProps<T extends FieldValues = FieldValues> {
   children: ReactNode;
   fixedHeight?: boolean | string;
@@ -43,6 +40,9 @@ interface FormActionDialogProps<T extends FieldValues = FieldValues> {
   submitLabel: string;
   title: ReactNode;
 }
+
+/** A deletion's confirmation: `ConfirmDialog`'s destructive preset, its action "Delete" unless it names another. */
+type DeleteDialogProps = Omit<ConfirmDialogProps, "confirmLabel" | "intent"> & { confirmLabel?: string };
 
 type StandardFormDialogProps<T extends FieldValues> = Omit<FormActionDialogProps<T>, "submitLabel"> & {
   submitLabel?: string;

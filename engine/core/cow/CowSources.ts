@@ -11,7 +11,11 @@ export interface CowRows {
 }
 
 /** A ruleset's id and where its inherited entities come from. */
-export type RulesetSources = { ancestorRulesetIds: string[]; extensionRulesetIds: string[]; id: string };
+export interface RulesetSources {
+  ancestorRulesetIds: string[];
+  extensionRulesetIds: string[];
+  id: string;
+}
 
 /**
  * Tables that participate in the name-based sibling fallback. Limited to feats and powers because those are the entity

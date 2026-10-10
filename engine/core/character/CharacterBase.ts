@@ -11,7 +11,10 @@ import type { BuiltCharacter, default as CharacterComponent } from "./CharacterC
 import type { default as CharacterDataLoader, LoadedCharacter } from "./CharacterDataLoader.ts";
 
 /** A row of the ruleset's entities the character has, which its source chain must hold: its name and its ruleset. */
-type EntityRow = { name: string; rulesetId: string };
+interface EntityRow {
+  name: string;
+  rulesetId: string;
+}
 
 /**
  * A character, as every ruleset builds it (`build`): its data loaded (`createDataLoader`), its components (`C`, each a
@@ -22,7 +25,7 @@ type EntityRow = { name: string; rulesetId: string };
  * implements each step its rules take.
  */
 export default abstract class CharacterBase<
-  C extends Record<string, CharacterComponent<D>>,
+  C extends { [K in keyof C]: CharacterComponent<D> },
   D extends LoadedCharacter,
 > implements BuiltCharacter {
   /** A character of `character`'s row, its paths walked by its ruleset's (`targetPaths`), which its evaluators read. */
@@ -243,7 +246,8 @@ export default abstract class CharacterBase<
     this.data = this.createDataLoader().load(rows, view);
 
     // 2. Each component set up from the loaded data, in the order the ruleset lists them
-    for (const component of Object.values(this.components)) component.initialize(this.data, view);
+    for (const component of Object.values<CharacterComponent<D>>(this.components))
+      component.initialize(this.data, view);
 
     // 3. The components the evaluators walk
     this.builtComponents = this.components;
@@ -256,7 +260,8 @@ export default abstract class CharacterBase<
     this.applyModifiersInRounds(this.data.modifiers.filter((m) => !this.isLateModifier(m)));
 
     // 6. Each component finished, from what the modifiers left
-    for (const component of Object.values(this.components)) component.finalize(this.data, view, this);
+    for (const component of Object.values<CharacterComponent<D>>(this.components))
+      component.finalize(this.data, view, this);
 
     // 7. The late modifiers, gated by the final requirement evaluation
     this.modifierEvaluator.evaluateModifiers(this.builtComponents, lateModifiers, this.requirementEvaluator);

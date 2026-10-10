@@ -1,6 +1,6 @@
 import type { Overrides, ScrapedMeta } from "./reference.ts";
 
-export type WizardSchoolReference = {
+export interface WizardSchoolReference {
   _meta: ScrapedMeta<"wizardSchool">;
 
   /** Each school as the seeds make it: its overrides applied */
@@ -13,4 +13,4 @@ export type WizardSchoolReference = {
     name: string;
     prohibitedSchoolCount: number;
   }[];
-};
+}

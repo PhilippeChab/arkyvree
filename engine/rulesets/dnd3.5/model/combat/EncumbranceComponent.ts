@@ -16,7 +16,7 @@ import {
   SPEED_STEP,
 } from "@/vocabulary/dnd3.5/carrying.ts";
 
-export type EncumbranceData = {
+export interface EncumbranceData {
   carriedweight: number;
   readonly checkpenalty: number;
   readonly heavyload: number;
@@ -24,7 +24,7 @@ export type EncumbranceData = {
   readonly load: LoadCategory;
   readonly maxdex: number;
   readonly mediumload: number;
-};
+}
 
 /** `thirds` thirds of `value`, rounded down: a load's share of the heavy load, an encumbered speed's of its own. */
 function thirdsOf(value: number, thirds: number) {

@@ -13,8 +13,6 @@ import {
 import EntityCopy from "./EntityCopy.ts";
 import EntityRepositories from "./EntityRepositories.ts";
 
-type CustomizationKind = keyof typeof CUSTOMIZATION_REPOS;
-
 /**
  * The row a customization of an entity changes (`cowOwner`), and what its copy copied when this call copied it: a
  * nested customization (a modifier's requirement) resolves through the same copy.
@@ -23,6 +21,8 @@ interface Owner {
   copiedIds?: ReadonlyMap<string, string>;
   id: string;
 }
+
+type CustomizationKind = keyof typeof CUSTOMIZATION_REPOS;
 
 /** Each customization kind's repository: what a change to a copied entity's customization resolves the row through. */
 const CUSTOMIZATION_REPOS = {

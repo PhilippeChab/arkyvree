@@ -3,18 +3,21 @@ import type { Modifier } from "@/content/core/builders/customization/types.ts";
 import type { DetectedModifiers, Overrides, ScrapedMeta } from "./reference.ts";
 
 /** A domain's pool of feats (e.g. War Domain Weapon: a feat per martial weapon). */
-type DomainFeatPool = {
+interface DomainFeatPool {
   aptitude: string;
   description?: string;
   grants: string[];
   items: "martial" | "simple" | "exotic" | "all" | string[];
   namePrefix: string;
-};
+}
 
 /** A domain version of the domain index (dnd.arkalseif.info): its page's slug ("celerity-cd") and its label ("Celerity (CD)"). */
-export type DomainIndexEntry = { label: string; slug: string };
+export interface DomainIndexEntry {
+  label: string;
+  slug: string;
+}
 
-export type DomainReference = {
+export interface DomainReference {
   _meta: ScrapedMeta<"domain">;
 
   detected: Record<string, DetectedModifiers>;
@@ -46,19 +49,23 @@ export type DomainReference = {
     page?: number;
     spells: { level: number; name: string }[];
   }[];
-};
+}
 
 /**
  * A domain version, as its page gives it: its label, its book (the rulebook's slug, "complete-divine--56") and page,
  * its granted power, its spells.
  */
-export type DomainVersion = {
+export interface DomainVersion {
   bookSlug?: string;
   description: string;
   label: string;
   page?: number;
   spells: DomainVersionSpell[];
-};
+}
 
 /** A spell a domain version's page lists: its page (`<book>/<spell>`), its name and its edition ("Core (3.5)"). */
-export type DomainVersionSpell = { edition: string; name: string; path: string };
+export interface DomainVersionSpell {
+  edition: string;
+  name: string;
+  path: string;
+}

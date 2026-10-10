@@ -9,8 +9,6 @@ import { CHAINING_OPERATORS, formatChainingOperator } from "@/shared/customizati
 import { ConditionFields, type ConditionMode } from "./ConditionFields.tsx";
 import { CONDITION_OPERATOR_RULES, CONDITION_TARGET_RULES, REQUIREMENT_VALUE_RULES } from "./conditionRules.ts";
 
-type RequirementConditionFieldsProps = Pick<RequirementFormFieldsProps, "form" | "rulesetId" | "mode">;
-
 interface RequirementFormFieldsProps {
   form: UseFormReturn<RequirementFormData>;
   mode: ConditionMode;
@@ -18,6 +16,8 @@ interface RequirementFormFieldsProps {
   rulesetId: string;
   type: RequirementType;
 }
+
+type RequirementConditionFieldsProps = Pick<RequirementFormFieldsProps, "form" | "rulesetId" | "mode">;
 
 export type RequirementFormData = InferRequestType<
   (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["requirements"]["$post"]

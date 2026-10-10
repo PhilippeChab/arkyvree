@@ -6,10 +6,7 @@ import type { Item } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { MASTERWORK_CHECK_PENALTY_REDUCTION } from "@/vocabulary/dnd3.5/combat.ts";
 
-/** Grouping key (normalized) → shared ArmorSlot reference */
-type ArmorsData = Record<string, ArmorSlot>;
-
-type ArmorSlot = {
+interface ArmorSlot {
   ac: { bonus: number; misc: number; readonly total: number };
   checkpenalty: number;
   itemId: string;
@@ -18,7 +15,10 @@ type ArmorSlot = {
   /** Whether the character is proficient with it: without, its check penalty applies to attack rolls */
   proficient: boolean;
   spellfailure: number;
-};
+}
+
+/** Grouping key (normalized) → shared ArmorSlot reference */
+type ArmorsData = Record<string, ArmorSlot>;
 
 /** The armors a character has equipped, under their types: the inventory's (`InventoryComponent.getEquipped`). */
 export default class ArmorsComponent extends CharacterComponent<LoadedCharacterData> {

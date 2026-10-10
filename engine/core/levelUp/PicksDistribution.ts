@@ -1,9 +1,6 @@
 import type { LevelPicks } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 
-/** Each planned level's slots in each feat pool, by pool id. */
-export type FeatSlots = Record<string, number[]>;
-
 /** A pool a level-up's picks overfill, as the character holding them says: its name, its picks and its room for them. */
 export interface OverfullPool {
   name: string;
@@ -16,6 +13,9 @@ export interface PoolSlots {
   perLevelFeatSlots: FeatSlots;
   perLevelPowerSlots: PowerSlots;
 }
+
+/** Each planned level's slots in each feat pool, by pool id. */
+export type FeatSlots = Record<string, number[]>;
 
 /** Each planned level's slots in each power pool, by spell level, by pool id. */
 export type PowerSlots = Record<string, Record<string, number>[]>;

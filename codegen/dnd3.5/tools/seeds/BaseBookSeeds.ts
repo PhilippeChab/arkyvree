@@ -28,11 +28,11 @@ import { SpellSeeds } from "./SpellSeeds.ts";
 import { WizardSchoolSeeds } from "./WizardSchoolSeeds.ts";
 
 /** What a book's seeds read of the other books' (the `Library`): their seeds, and every book's class spell lists. */
-export type Shelf = {
+export interface Shelf {
   book(name: string): BookSeeds;
   bookNames(): string[];
   classSpellLists(): Record<string, string>;
-};
+}
 
 /**
  * A book's seeds' core, which its concerns (`concerns/`) build on: the book, its references, the library it's on (the

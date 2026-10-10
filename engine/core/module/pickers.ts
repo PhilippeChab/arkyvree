@@ -21,12 +21,6 @@ export interface OpenedPicker<Filters, Row extends { id: string }, Details> {
   readonly filters: Filters;
 }
 
-/**
- * An option a picker describes: its row, whether who the picker is for may pick it (`eligible`), the tree of the
- * requirements it fails, and what the picker adds of it (`Details`).
- */
-export type PickerOption<R, Details> = R & Details & { eligible: boolean; requirementTree?: string };
-
 /** What a page of a list's entities is read with: those of the list (`ids`), less those left out (`excludeIds`). */
 export interface PickFilters {
   excludeIds: string[];
@@ -44,3 +38,9 @@ export interface PickGroupFilters {
   families: { family: string; id: string }[];
   ids: string[];
 }
+
+/**
+ * An option a picker describes: its row, whether who the picker is for may pick it (`eligible`), the tree of the
+ * requirements it fails, and what the picker adds of it (`Details`).
+ */
+export type PickerOption<R, Details> = R & Details & { eligible: boolean; requirementTree?: string };

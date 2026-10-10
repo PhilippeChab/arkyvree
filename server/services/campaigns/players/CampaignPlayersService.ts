@@ -18,13 +18,13 @@ import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import type { CampaignRole } from "@/shared/enums.ts";
 import type { Invite, Player, Session } from "@/shared/relations.ts";
 
-type InviteEmailData = {
+interface InviteEmailData {
   campaignName: string;
   email: string;
   invite: Invite;
   inviteeName: string;
   inviterName: string;
-};
+}
 
 class CampaignPlayersService {
   /** Send the invite email (fire-and-forget, call after transaction commits). */

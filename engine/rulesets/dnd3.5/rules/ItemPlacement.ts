@@ -14,17 +14,17 @@ interface HeldEntry {
   weaponSet: number | null;
 }
 
-/** An item's property, as its placement reads it. */
-type ItemProperty = Pick<Property, "type" | "value">;
-
-/** An item type that sets the locations its items go to (`ITEM_TYPE_LOCATIONS`). */
-type LocatedItemType = keyof typeof ITEM_TYPE_LOCATIONS;
-
 /** An item, as its placement reads it: its type, and the slot it's worn in (`"Other"` for none). */
 interface PlacedItem {
   slot: ItemLocation;
   type: string | null;
 }
+
+/** An item's property, as its placement reads it. */
+type ItemProperty = Pick<Property, "type" | "value">;
+
+/** An item type that sets the locations its items go to (`ITEM_TYPE_LOCATIONS`). */
+type LocatedItemType = keyof typeof ITEM_TYPE_LOCATIONS;
 
 /**
  * How an item is placed, as the inventory dialogs offer it: the charges it comes with (none for an item without

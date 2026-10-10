@@ -3,7 +3,6 @@ import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { Character } from "@/shared/relations.ts";
 
 import type CharacterBase from "./CharacterBase.ts";
-import type CharacterComponent from "./CharacterComponent.ts";
 import type { LoadedCharacter } from "./CharacterDataLoader.ts";
 
 /** What builds a ruleset's characters: a character from its rows, in its ruleset's view. */
@@ -16,8 +15,8 @@ export interface BuildsCharacters<C> {
  * (`create`: a player character, a creature bonded to one), a bonded creature's master built first.
  */
 export default abstract class CharacterBuilder<
-  // Its components set up from its ruleset's data (`never`: each reads its own)
-  C extends CharacterBase<Record<string, CharacterComponent<never>>, LoadedCharacter>,
+  // Its ruleset's character, whatever its components (`object`: `CharacterBase` checks each is one of its data)
+  C extends CharacterBase<object, LoadedCharacter>,
 > implements BuildsCharacters<C> {
   /** The ruleset's character a row is, by its kind. */
   protected abstract create(record: Character): C;

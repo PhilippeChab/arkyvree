@@ -6,12 +6,12 @@ import type RequirementEvaluator from "@/engine/core/requirements/RequirementEva
 import { extractReferencedPaths, isTemplateValue } from "@/shared/customization/templateExpression.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
-type ModifierResults = {
+interface ModifierResults {
   appliedModifiers: Modifier[];
   inactiveModifiers: Modifier[];
   skippedModifiers: { modifier: Modifier; warning: string }[];
   unappliedModifiers: Modifier[];
-};
+}
 
 export default class ModifierEvaluator {
   /**

@@ -15,9 +15,6 @@ import { PlansAptitudeSlots } from "./concerns/PlansAptitudeSlots.ts";
 import Dnd35PicksDistribution, { type PerLevelDistributionData } from "./Dnd35PicksDistribution.ts";
 import LevelUpState, { type PoolPicks } from "./LevelUpState.ts";
 
-/** What the planned levels give: the pools the character picks in, and each level's skill points, class skills and slots. */
-export type LevelGains = ReturnType<PlannedLevelsState["computeLevelGains"]>;
-
 /**
  * A level-up's planned levels, built: the character with them (`character`, built with their projection), the
  * character as saved, without them (`saved`), what their class levels grant, and how many levels it has before them.
@@ -29,6 +26,9 @@ export interface PlannedLevels {
   saved: DetailedCharacter;
   savedLevelCount: number;
 }
+
+/** What the planned levels give: the pools the character picks in, and each level's skill points, class skills and slots. */
+export type LevelGains = ReturnType<PlannedLevelsState["computeLevelGains"]>;
 
 /** A level-up's planned levels, within the rules' bounds: no class past its last level, no character past its own. */
 const PLANNED_LEVELS = z

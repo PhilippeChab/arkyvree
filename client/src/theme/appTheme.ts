@@ -59,9 +59,6 @@ interface BoxShadows {
   selectedItem: string;
 }
 
-/** A contained button's color, which its border and gradient follow. */
-type ContainedColor = ButtonProps["color"];
-
 /** The shadows an image or an icon casts by its own shape (`filter: drop-shadow(…)`), by what casts them. */
 interface DropShadows {
   /** The logo on the auth pages' brand panel */
@@ -107,6 +104,9 @@ interface TextShadows {
   /** A dashboard stat card's count, label and tagline */
   stat: string;
 }
+
+/** A contained button's color, which its border and gradient follow. */
+type ContainedColor = ButtonProps["color"];
 
 /** The app's typeface, its text's and its headings', which `main.tsx` loads: the error page's title takes it too. */
 export const APP_FONT = '"Lora Variable", "Georgia", serif';

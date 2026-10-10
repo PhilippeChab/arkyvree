@@ -8,13 +8,13 @@ import { stripSeparators } from "@/shared/text.ts";
 import { GrantText } from "./GrantText.ts";
 import { ReferenceSeeds } from "./ReferenceSeeds.ts";
 
-type FeatEntry = {
+interface FeatEntry {
   entry: FeatReference["raw"][number];
   mapped: FeatReference["mapping"][string];
-};
+}
 
 /** A template feat's family, which the generated code makes a feat of per item (weapon, skill, school…). */
-export type TemplateFamily = {
+export interface TemplateFamily {
   aptitudes: string[];
   description: string;
   familyName: string;
@@ -26,7 +26,7 @@ export type TemplateFamily = {
   proficient: boolean;
   requirements: RequirementEntry[];
   type: TemplateType;
-};
+}
 
 /** The kind of item a template family makes a feat for. */
 export type TemplateType = NonNullable<FeatReference["mapping"][string]["template"]>["type"];

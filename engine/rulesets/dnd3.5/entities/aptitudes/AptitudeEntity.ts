@@ -8,7 +8,10 @@ import type { Aptitude } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /** An aptitude's form: its name and description. */
-type AptitudeBody = { description?: string | null; name: string };
+interface AptitudeBody {
+  description?: string | null;
+  name: string;
+}
 
 /** What an aptitude's edit may change: the rules count on a pool's name. */
 export default class AptitudeEntity extends RulesetEntity<"aptitudes", AptitudeBody> {

@@ -6,11 +6,11 @@ import RequirementTree, { getParentLevel, type RequirementNode } from "@/shared/
 import { isTemplateValue } from "@/shared/customization/templateExpression.ts";
 import type { Requirement } from "@/shared/relations.ts";
 
-type RequirementResults = {
+interface RequirementResults {
   fulfilledRequirementGroups: Requirement[][];
   invalidRequirements: { requirement: Requirement; warning: string }[];
   unmetRequirementGroups: Requirement[][];
-};
+}
 
 export default class RequirementEvaluator {
   constructor(private readonly targetPaths: TargetPathsTraverser) {}

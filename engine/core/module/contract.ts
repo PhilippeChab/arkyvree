@@ -37,7 +37,7 @@ export interface Descriptions {
 export interface RulesetModule<
   D extends Descriptions = Descriptions,
   E extends EntityKindsContract = EntityKindsContract,
-  F extends Record<string, Fields> = Record<string, Fields>,
+  F = Record<string, Fields>,
 > {
   /** What the ruleset answers of its characters, from the rows the server reads: their sheets, an item equipped */
   characters: CharactersPart<D>;

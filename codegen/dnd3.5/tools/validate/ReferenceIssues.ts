@@ -7,19 +7,22 @@ import type { ReferenceFile } from "@/codegen/dnd3.5/tools/types/reference.ts";
 import { ClassOverridesCheck } from "./ClassOverridesCheck.ts";
 import { ReviewList } from "./ReviewList.ts";
 
-type DetectedEntry = {
+interface DetectedEntry {
   errors?: string[];
   unresolvedAptitudePicks?: string[];
   unresolvedModifiers?: string[];
   unresolvedPrereqs?: string[];
-};
+}
 
-type Found = { kind: Issue["kind"]; text: string };
+interface Found {
+  kind: Issue["kind"];
+  text: string;
+}
 
 /** Where an issue is in its reference: what it's about (an entity's name, `class`, `reviewed`…), its entity. */
 type Where = Pick<Issue, "entityName" | "label">;
 
-export type Issue = {
+export interface Issue {
   book: string;
   entityName?: string;
   file: string;
@@ -38,7 +41,7 @@ export type Issue = {
     | "not seedable";
   label: string;
   text: string;
-};
+}
 
 /** A detection's kinds of issue, each with the issue it's reported as. */
 const DETECTED_ISSUES = [

@@ -8,12 +8,12 @@ import { UnauthorizedError } from "@/server/errors/index.ts";
 import { SESSION_TTL_SECONDS, Sessions, Users } from "@/server/repositories/index.ts";
 import type { Session, User } from "@/shared/relations.ts";
 
-export type SessionContext = {
+export interface SessionContext {
   Variables: {
     requestSession: Session;
     requestUser: User;
   };
-};
+}
 
 const SESSION_CONTEXT_KEY = "requestSession";
 const USER_CONTEXT_KEY = "requestUser";

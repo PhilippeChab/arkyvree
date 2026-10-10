@@ -1,21 +1,25 @@
 import { stripSeparators } from "@/shared/text.ts";
 
-/**
- * A character component (abilities, skills, combat, etc.): a class instance whose getters the target paths call
- * by name (`PathTraverser.readComponent`).
- */
-export type Component = object;
-
-export type Components = Record<string, Component>;
-
-export type TraversePathResult = {
+export interface TraversePathResult {
   component: Component | null;
   data: unknown;
   error: string | null;
   key: string;
   object: unknown;
   resolvedPath: string | null;
-};
+}
+
+/**
+ * A character component (abilities, skills, combat, etc.): a class instance whose getters the target paths call
+ * by name (`PathTraverser.readComponent`).
+ */
+export type Component = object;
+
+/**
+ * A character's components, by the key a category's paths reach each by (`PathCategory.component`): whatever its
+ * ruleset's components are, the walk reads one by the key a path names (`PathTraverser.findComponent`).
+ */
+export type Components = object;
 
 /** The key of `value` whose slug is `slug`: one written its own way, as a spell's property types are (`SPELL_COMPONENT`). */
 function keyBySlug(value: Record<string, unknown>, slug: string) {
@@ -44,6 +48,12 @@ export default class PathTraverser {
   /** A path that reaches no value, with why. */
   static failed(component: Component | null, key: string, error: string): TraversePathResult[] {
     return [{ component, object: null, data: null, key, resolvedPath: null, error }];
+  }
+
+  /** The component `components` holds at `key`, which a target path names: undefined when it holds none. */
+  static findComponent(components: Components, key: string): Component | undefined {
+    const component: unknown = Reflect.get(components, key);
+    return typeof component === "object" && component !== null ? component : undefined;
   }
 
   /**

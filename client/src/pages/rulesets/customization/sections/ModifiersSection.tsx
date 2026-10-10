@@ -30,12 +30,6 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import { buildCustomizationPath, type CustomizableEntityType } from "@/shared/customization/entities.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
-type Modifier = ModifiersArray[number];
-type ModifiersArray = InferResponseType<
-  (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["modifiers"]["$get"],
-  200
->;
-
 interface ModifiersSectionProps {
   entityId: string;
   entityType: CustomizableEntityType;
@@ -45,6 +39,12 @@ interface ModifiersSectionProps {
   restorable: boolean;
   ruleset: RulesetDetail;
 }
+type Modifier = ModifiersArray[number];
+
+type ModifiersArray = InferResponseType<
+  (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["modifiers"]["$get"],
+  200
+>;
 
 const MODIFIERS_COLUMNS = [
   { key: "target", label: "Target", width: "30%" },

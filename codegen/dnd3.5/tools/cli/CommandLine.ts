@@ -2,7 +2,13 @@ import type { ReferenceFilters } from "@/codegen/dnd3.5/tools/types/reference.ts
 import { CORE_BOOK } from "@/codegen/dnd3.5/tools/vocabulary/books.ts";
 
 /** What `parser:dnd3.5:scrape` is asked: the type of reference to scrape, its book, one page, how it fetches pages. */
-type ScrapeRequest = { book: string; delay?: number; noCache: boolean; type?: string; url?: string };
+interface ScrapeRequest {
+  book: string;
+  delay?: number;
+  noCache: boolean;
+  type?: string;
+  url?: string;
+}
 
 /**
  * A parser command's line, read one way by every command: its options (`--type <type>`, a flag such as `--no-cache`)

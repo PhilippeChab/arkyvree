@@ -16,11 +16,11 @@ import type { Session } from "@/shared/relations.ts";
 import { createTestCharacter } from "./characters.ts";
 import { uniqueId } from "./seed.ts";
 
-type LevelPicks = {
+interface LevelPicks {
   feats?: { aptitudeId: string; featId: string }[];
   powers?: { aptitudeId: string; powerId: string }[];
   skills?: { rank: number; skillId: string }[];
-};
+}
 
 /** A level-up step, as the service answers it: any of those its ruleset lists, named for which it is. */
 type LevelStep = Awaited<ReturnType<typeof CharacterLevelsService.getStep>>;

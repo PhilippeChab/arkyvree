@@ -21,8 +21,6 @@ interface AptitudeFilters extends ListFilters {
   aptitudeId?: string;
 }
 
-type AptitudesApi = (typeof rpc.api.rulesets)[":id"]["aptitudes"];
-
 interface EntityFilters extends ListFilters {
   kind: EntityKind;
   orderBy: EntitySortField;
@@ -37,6 +35,8 @@ interface ListFilters {
 interface PowerFilters extends AptitudeFilters {
   level?: number;
 }
+
+type AptitudesApi = (typeof rpc.api.rulesets)[":id"]["aptitudes"];
 
 /** A ruleset's aptitude, as its list and its pickers give it. */
 export type Aptitude = InferResponseType<AptitudesApi["$get"], 200>["items"][number];

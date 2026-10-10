@@ -12,6 +12,12 @@ import type { Character } from "@/shared/relations.ts";
 import { STARTING_ABILITY_SCORE } from "@/vocabulary/dnd3.5/abilities.ts";
 import { BONDED_KIND_BY_SLUG, BONDED_KIND_SLUGS, type BondedKind } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 
+/** The levels a bonded creature has: its class's first `hitDice`. */
+interface BondedLevels {
+  hitDice: number;
+  klassId: string;
+}
+
 /**
  * What a master's bonded creature of a kind becomes once the master's levels change. Without a race for the kind, the
  * creature the master had goes (`removedId`). With one, the master keeps the creature of that race it has (`keptId`),
@@ -22,12 +28,6 @@ type BondedCreaturePlan = { removedId?: string } & (
   | { keptId: string; levels: BondedLevels }
   | { levels?: undefined }
 );
-
-/** The levels a bonded creature has: its class's first `hitDice`. */
-interface BondedLevels {
-  hitDice: number;
-  klassId: string;
-}
 
 /**
  * The master's (`master`, its row) creature of `kind` and `race`, named for it, with its stat block's scores (a cat's

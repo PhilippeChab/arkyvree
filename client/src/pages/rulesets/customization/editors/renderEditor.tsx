@@ -22,8 +22,6 @@ interface RulesetEditors {
   PowersEditor: ComponentType<EditorProps<Power>>;
 }
 
-export type EditableEntity = Extract<CustomizationEntity, { type: (typeof EDITABLE_TYPES)[number] }>;
-
 /** What the customization page passes each editor of an entity's details. */
 export interface EditorProps<T> {
   /** Set right after a copy-on-write moved the page here: the record the form may still hold. */
@@ -41,6 +39,8 @@ export interface EditorProps<T> {
   refetchSaved: (saved: { id: string }) => Promise<unknown>;
   rulesetId: string;
 }
+
+export type EditableEntity = Extract<CustomizationEntity, { type: (typeof EDITABLE_TYPES)[number] }>;
 
 /** The entity types with an editor on the customization page */
 const EDITABLE_TYPES = ["feats", "races", "items", "powers", "klass_levels"] as const;

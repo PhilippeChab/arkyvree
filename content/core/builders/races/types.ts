@@ -2,7 +2,7 @@ import type { Modifier, Property } from "@/content/core/builders/customization/t
 import type { SizeType } from "@/shared/enums.ts";
 
 /** A race: its size, its speed, its modifiers and properties, and its kind (a familiar's, an animal companion's…). */
-export type RaceSeed = {
+export interface RaceSeed {
   baseSpeed: number;
   description: string;
   kind?: string;
@@ -10,4 +10,4 @@ export type RaceSeed = {
   name: string;
   properties?: Property[];
   size: SizeType;
-};
+}

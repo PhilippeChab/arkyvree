@@ -204,8 +204,8 @@ export class ClassMapping {
     const bonusSpellAbility = overrides?.bonusSpellAbility ?? mapping.bonusSpellAbility;
     if (bonusSpellAbility !== undefined) mapping.bonusSpellAbility = bonusSpellAbility;
     for (const [name, fields] of Object.entries(overrides?.features ?? {})) {
-      const feature: Record<string, unknown> = Object.assign(mapping.features[name] ?? {}, fields);
-      for (const [key, value] of Object.entries(feature)) if (value === null) delete feature[key];
+      const feature = Object.assign(mapping.features[name] ?? {}, fields);
+      for (const [key, value] of Object.entries(feature)) if (value === null) Reflect.deleteProperty(feature, key);
       mapping.features[name] = feature;
     }
   }

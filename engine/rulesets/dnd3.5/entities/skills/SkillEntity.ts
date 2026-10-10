@@ -10,12 +10,12 @@ import { stripSeparators } from "@/shared/text.ts";
 import { SKILL_FIELDS, type SkillFieldValues } from "./fields.ts";
 
 /** A skill's save, as its form sends it: its row's columns, and the fields its properties keep (an edit's, those it changes). */
-type SkillBody = {
+interface SkillBody {
   description?: string | null;
   fields?: Partial<SkillFieldValues>;
   name: string;
   primaryAbilityId: string;
-};
+}
 
 /** A skill as the ruleset describes it, and what its form or delete writes beside its row: its fields, its feat. */
 export default class SkillEntity extends RulesetEntity<

@@ -1,5 +1,4 @@
 import type CharacterBase from "@/engine/core/character/CharacterBase.ts";
-import type CharacterComponent from "@/engine/core/character/CharacterComponent.ts";
 import type { LoadedCharacter } from "@/engine/core/character/CharacterDataLoader.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import type { RulesIssue } from "@/engine/core/RulesError.ts";
@@ -8,10 +7,10 @@ import RequirementTree, { type RequirementNode } from "@/shared/customization/Re
 import type { Requirement } from "@/shared/relations.ts";
 
 /** A character's validation: whether it's valid, and every issue it has. */
-export type ValidationResult = {
+export interface ValidationResult {
   issues: RulesIssue[];
   valid: boolean;
-};
+}
 
 /** Each comparison's symbol, as a requirement's tree prints it. */
 const OPERATOR_SYMBOLS: Record<string, string> = {
@@ -35,8 +34,8 @@ const OPERATOR_SYMBOLS: Record<string, string> = {
  * from (`findSourceIssues`); and a requirement group's tree, which an issue shows.
  */
 export function Validates<
-  // Components set up from any ruleset's data (`never`: each reads its own)
-  B extends Constructor<CharacterBase<Record<string, CharacterComponent<never>>, LoadedCharacter>>,
+  // Any ruleset's character, whatever its components (`object`: `CharacterBase` checks each is one of its data)
+  B extends Constructor<CharacterBase<object, LoadedCharacter>>,
 >(Base: B) {
   abstract class Validating extends Base {
     /** The issue of a requirement the build couldn't evaluate, on the entity it's of. */

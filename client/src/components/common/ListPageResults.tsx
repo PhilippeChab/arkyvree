@@ -9,9 +9,6 @@ import { LoadError } from "./LoadError.tsx";
 import { LoadMoreButton } from "./LoadMoreButton.tsx";
 import { PageLoader } from "./PageLoader.tsx";
 
-/** A list page's query, as `useListPageQuery` gives it. */
-type ListPageQuery = ReturnType<typeof useListPageQuery>;
-
 interface ListPageResultsProps {
   /** The loaded list: a `ListCardGrid` of cards, or a table in its `TableFrame`. */
   children: ReactNode;
@@ -33,6 +30,9 @@ interface ListPageResultsProps {
   /** What it lists, as its load failure names it: "Characters". */
   what: string;
 }
+
+/** A list page's query, as `useListPageQuery` gives it. */
+type ListPageQuery = ReturnType<typeof useListPageQuery>;
 
 /**
  * A list's results, below its search bar, a page's or a tab's: its first load, its failure while nothing has loaded,

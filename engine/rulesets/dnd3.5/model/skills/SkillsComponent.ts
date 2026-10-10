@@ -15,14 +15,14 @@ import { stripSeparators } from "@/shared/text.ts";
 import { SIZE_HIDE_MOD } from "@/vocabulary/dnd3.5/sizes.ts";
 
 /** The skill points' budget: a level's bonus points, an input, and the points counted from the character's levels. */
-type SkillBudget = {
+interface SkillBudget {
   readonly available: number;
   perlevel: number;
   readonly spent: number;
   readonly total: number;
-};
+}
 
-type SkillsData = {
+interface SkillsData {
   [key: string]: {
     readonly ability: number; // Bonus from ability modifier
     description?: string | null;
@@ -35,7 +35,7 @@ type SkillsData = {
     trained: boolean;
     readonly weight: number; // Armor check penalty, from armor, shield and load
   };
-};
+}
 
 /**
  * A character's skills: each one's ranks from its levels and what its ability, its size and its armor add, counted when

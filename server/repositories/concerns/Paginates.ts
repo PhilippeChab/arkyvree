@@ -3,11 +3,11 @@ import type { Column, SQL, Table } from "drizzle-orm";
 import type { Constructor } from "@/lib/mixins.ts";
 import type BaseRepository from "@/server/repositories/BaseRepository.ts";
 
-export type Paginated<T> = {
+export interface Paginated<T> {
   items: T[];
   nextPage: number | undefined;
   page: number;
-};
+}
 
 /** A page of a list held in memory, shaped like the repositories' pages. */
 export function paginateItems<T>(items: T[], pagination: { limit: number; page: number }): Paginated<T> {

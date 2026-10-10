@@ -108,9 +108,9 @@ export default class WeaponPaths implements PathCategory<Dnd35Components> {
     if (!this.readsSource(target)) return null;
     const sourceId = context?.sourceId;
     if (!sourceId) return [];
-    const combatComponent = components["combat"];
+    const combatComponent = PathTraverser.findComponent(components, "combat");
     if (!combatComponent) return [];
-    const weaponsComponent = components["weapons"];
+    const weaponsComponent = PathTraverser.findComponent(components, "weapons");
     if (!weaponsComponent) return [];
 
     const combat = PathTraverser.readComponent(combatComponent, "getCombat" satisfies GetterOf<CombatComponent>);

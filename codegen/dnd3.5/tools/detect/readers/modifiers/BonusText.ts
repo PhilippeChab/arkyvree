@@ -2,7 +2,12 @@ import { PART_SEPARATOR } from "@/codegen/dnd3.5/tools/text/scrapedText.ts";
 import { SKILL_SLUGS } from "@/codegen/dnd3.5/tools/vocabulary/skills.ts";
 
 /** A skill bonus a text gives: its skill's slug, or none when the name isn't a skill (`name`), and where it was read. */
-export type SkillBonus = { index: number; name: string; slug: string | undefined; value: string };
+export interface SkillBonus {
+  index: number;
+  name: string;
+  slug: string | undefined;
+  value: string;
+}
 
 /** An effect used rather than had: "expend/spend one use of…", "three times per day", "as a swift action", "for 1 hour". */
 const ACTIVATION =

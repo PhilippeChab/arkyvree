@@ -16,12 +16,12 @@ import { CLASS_LEVEL_FIELDS, type ClassLevelFieldValues } from "./fields.ts";
  * A class level's save, as its form sends it: its number (a new level's), its fields, the feats it grants and its
  * saves' base bonuses.
  */
-type ClassLevelBody = {
+interface ClassLevelBody {
   feats?: { aptitudeId: string; featId: string; free?: boolean }[];
   fields?: Partial<ClassLevelFieldValues>;
   level?: number;
   saves?: { base: number; saveId: string }[];
-};
+}
 
 /** A new level's number: the class's first to its last. */
 const LEVEL = z.number().int().min(1).max(RULESET_LIMITS.classLevel);

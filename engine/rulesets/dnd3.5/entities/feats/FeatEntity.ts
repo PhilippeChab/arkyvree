@@ -14,10 +14,19 @@ import { FEAT_FIELDS } from "./fields.ts";
  * ancestor its ruleset deleted stands in for it, and is generated when the ancestor was (`tombstoneGenerated`, what the
  * server reads of the ancestor, which the view hides).
  */
-type FeatBody = { aptitudeIds?: string[]; description?: string | null; name: string; tombstoneGenerated?: boolean };
+interface FeatBody {
+  aptitudeIds?: string[];
+  description?: string | null;
+  name: string;
+  tombstoneGenerated?: boolean;
+}
 
 /** A slot a feat's modifier adds to (or sets on) a pool. */
-export type PoolModifier = { aptitudeId: string; operator: string; value: number };
+export interface PoolModifier {
+  aptitudeId: string;
+  operator: string;
+  value: number;
+}
 
 /** A feat as the ruleset has it: described with its customizations, listed by pool or family, saved by its rules. */
 export default class FeatEntity extends ListedEntity<

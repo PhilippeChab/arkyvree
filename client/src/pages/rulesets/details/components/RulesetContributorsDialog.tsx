@@ -10,16 +10,16 @@ import { type RulesetDetail } from "@/client/src/lib/queries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
 
-/** A contributor's role, as its update sends it. */
-type RoleFormData = InferRequestType<
-  (typeof rpc.api.rulesets)[":id"]["contributors"][":contributorId"]["$put"]
->["json"];
-
 interface RulesetContributorsDialogProps {
   onClose: () => void;
   open: boolean;
   ruleset: RulesetDetail;
 }
+
+/** A contributor's role, as its update sends it. */
+type RoleFormData = InferRequestType<
+  (typeof rpc.api.rulesets)[":id"]["contributors"][":contributorId"]["$put"]
+>["json"];
 
 /**
  * A ruleset's contributors (`ContributorsDialog`), whose roles who manages them changes too: an Admin's, the owner

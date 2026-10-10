@@ -17,7 +17,10 @@ import { capitalizeTitle } from "@/codegen/dnd3.5/tools/text/names.ts";
 import { type ClassReference } from "@/codegen/dnd3.5/tools/types/classes.ts";
 
 /** A feature's type (Ex, Su, Sp), when its heading gives one, and its description. */
-type FeatureDescription = { desc: string; type?: string };
+interface FeatureDescription {
+  desc: string;
+  type?: string;
+}
 
 type RawFeature = ClassReference["raw"]["classFeatures"][number];
 

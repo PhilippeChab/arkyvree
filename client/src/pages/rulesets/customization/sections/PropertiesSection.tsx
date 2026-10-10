@@ -30,10 +30,6 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import type { CustomizableEntityType } from "@/shared/customization/entities.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
-type PropertiesArray = InferResponseType<
-  (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["properties"]["$get"],
-  200
->;
 interface PropertiesSectionProps {
   data?: Property[];
   entityId: string;
@@ -44,6 +40,10 @@ interface PropertiesSectionProps {
   restorable: boolean;
   ruleset: RulesetDetail;
 }
+type PropertiesArray = InferResponseType<
+  (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["properties"]["$get"],
+  200
+>;
 
 type Property = PropertiesArray[number];
 

@@ -11,9 +11,7 @@ import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
 import { JOINS_CLASS_LIST } from "./AptitudesPaths.ts";
 
-type AptitudesById = Map<string, AptitudesData[string]>;
-
-type AptitudesData = {
+interface AptitudesData {
   [key: string]: {
     allowed: number;
     readonly available: number;
@@ -25,16 +23,29 @@ type AptitudesData = {
     spent: number;
     uses: number;
   };
-};
+}
 
 /** A pool a level-up picks feats in: an unleveled aptitude, `shared` when its aptitude has powers too. */
-type FeatPool = { allowed: number; available: number; id: string; name: string; shared: boolean; spent: number };
+interface FeatPool {
+  allowed: number;
+  available: number;
+  id: string;
+  name: string;
+  shared: boolean;
+  spent: number;
+}
 
 /** A pool picks overfill: its aptitude, its spell level for a leveled one, its name, the picks in it and its room. */
-type OverfullPool = { aptitudeId: string; level?: string; name: string; picked: number; room: number };
+interface OverfullPool {
+  aptitudeId: string;
+  level?: string;
+  name: string;
+  picked: number;
+  room: number;
+}
 
 /** A pool a level-up picks powers in: a leveled aptitude, with each spell level it has left (`levels`), or a shared one. */
-type PowerPool = {
+interface PowerPool {
   allowed: number;
   available: number;
   id: string;
@@ -42,20 +53,25 @@ type PowerPool = {
   levels?: Record<string, { allowed: number; available: number; spent: number }>;
   name: string;
   spent: number;
-};
+}
 
-export type AptitudeLevelData = {
+type AptitudesById = Map<string, AptitudesData[string]>;
+
+export interface AptitudeLevelData {
   allowed: number;
   readonly available: number;
   spent: number;
   uses: number;
-};
+}
 
 /**
  * A level-up's own picks, counted by pool: its feats, and its powers by spell level (`""` for one picked in a pool
  * without spell levels). A pool's room for them adds them back to what it has left.
  */
-export type OwnPicks = { feats: Record<string, number>; powers: Record<string, Record<string, number>> };
+export interface OwnPicks {
+  feats: Record<string, number>;
+  powers: Record<string, Record<string, number>>;
+}
 
 /** No picks of a level-up's own: a pool's room is what it has left. */
 const NO_OWN_PICKS: OwnPicks = { feats: {}, powers: {} };

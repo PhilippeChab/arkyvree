@@ -4,7 +4,7 @@ import type { BabType, SaveType } from "@/content/dnd3.5/builders/classes/types.
 import type { ScrapedMeta } from "./reference.ts";
 
 /** A class feature's fields a mapping derives and an override sets. */
-type ClassFeatureFields = {
+interface ClassFeatureFields {
   /** Alternative occurrence names that map to this feature (e.g. "Summon Familiar" → "Familiar") */
   aliases?: string[];
   description?: string;
@@ -15,10 +15,10 @@ type ClassFeatureFields = {
   selectable?: boolean;
   skip?: boolean;
   stackable?: boolean;
-};
+}
 
 /** A class's own spell list: its slots per day, its spells known, and the list it inherits. */
-type ClassSpells = {
+interface ClassSpells {
   /**
    * The pool a domain is picked from (a divine crusader's), whose spells are her list: a feat per domain her book and
    * the core rules have, joining its list to hers (`aptitudes.<domain>domainspells.joinsclasslist`)
@@ -32,17 +32,28 @@ type ClassSpells = {
   noCantrips?: boolean;
   perDay: number[][];
   slug: string;
-};
+}
 
-type Saves = { fortitude: SaveType; reflex: SaveType; will: SaveType };
+interface Saves {
+  fortitude: SaveType;
+  reflex: SaveType;
+  will: SaveType;
+}
 
 /** A class level pick of an aptitude's feats. */
-export type AptitudePick = { levels: number[]; target: string };
+export interface AptitudePick {
+  levels: number[];
+  target: string;
+}
 
 /** Existing feats a class lets its player pick, as an aptitude (at `levels` only, when given). */
-export type BonusFeatList = { aptitude: string; feats: string[]; levels?: number[] };
+export interface BonusFeatList {
+  aptitude: string;
+  feats: string[];
+  levels?: number[];
+}
 
-export type ClassReference = {
+export interface ClassReference {
   _meta: ScrapedMeta<"class">;
 
   detected: {
@@ -190,28 +201,39 @@ export type ClassReference = {
     /** Separate "Spells Known" table, if present */
     spellsKnown?: string[];
   };
-};
+}
 
 /** A book's class reference, with its file's name (`wizard.json`). */
-export type ClassReferenceFile = { file: string; ref: ClassReference };
+export interface ClassReferenceFile {
+  file: string;
+  ref: ClassReference;
+}
 
 /** A list a class's slots can go to, while its requirements are met: a pious templar's paladin or blackguard list. */
-export type ClassSpellList = { inheritsFrom: InheritedSpellList; name: string; requirements: RequirementEntry[] };
+export interface ClassSpellList {
+  inheritsFrom: InheritedSpellList;
+  name: string;
+  requirements: RequirementEntry[];
+}
 
 /**
  * A class table column its levels' modifiers read (`progression[].columns`): at each level its value changes, `add`
  * the rise of its number (the table gives the total so far, "+10 ft.") or `set` its text ("1d8").
  */
-export type ColumnModifier = { operator: "add" | "set"; requirements?: RequirementEntry[]; target: string };
+export interface ColumnModifier {
+  operator: "add" | "set";
+  requirements?: RequirementEntry[];
+  target: string;
+}
 
 /**
  * The spell list a class draws on, made of other classes' (`classes`, a spell at its level on the first that has it):
  * only their spells of `schools` when given, none with one of `excludeDescriptors`, and `additions`, its own spells by
  * level.
  */
-export type InheritedSpellList = {
+export interface InheritedSpellList {
   additions?: Record<string, string[]>;
   classes: string[];
   excludeDescriptors?: string[];
   schools?: string[];
-};
+}

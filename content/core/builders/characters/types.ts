@@ -7,7 +7,7 @@ type Picks<K extends string> = { levelIndex: number } & Record<K, string>;
  * A seeded character of the seed user's: who it is (its race, abilities and languages by name), its levels (each
  * class's in order, from the first, by the hit points it rolled) and its picks at each, and its inventory.
  */
-export type CharacterSeed = {
+export interface CharacterSeed {
   abilities: Record<string, number>;
   age: number;
   alignment: Alignment;
@@ -24,13 +24,13 @@ export type CharacterSeed = {
   skills: { levelIndex: number; rank: number; skillName: string }[];
   weight: string;
   xp: number;
-};
+}
 
 /** An item in a seeded character's inventory, by name: how many, and where it's equipped. */
-export type InventorySeed = {
+export interface InventorySeed {
   equipped?: boolean;
   location?: ItemLocation;
   name: string;
   quantity: number;
   weaponSet?: number;
-};
+}

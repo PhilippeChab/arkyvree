@@ -37,7 +37,11 @@ interface KindRepository<Row, Insert> {
 }
 
 /** An entity a plan names, as the view has it. */
-type PlannedEntity = { id: string; name: string; rulesetId: string };
+interface PlannedEntity {
+  id: string;
+  name: string;
+  rulesetId: string;
+}
 
 /**
  * A ruleset entity kind's writer (`type`, its table and repository): the steps every kind's create, update and delete

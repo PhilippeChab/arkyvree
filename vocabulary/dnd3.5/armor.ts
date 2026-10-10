@@ -3,7 +3,6 @@
  * (an item's builders, the codegen's items). A name the tables don't have has none.
  */
 
-type ArmorCategory = "Light" | "Medium" | "Heavy";
 interface ArmorDefinition {
   acBonus: number;
   armorType: ArmorCategory;
@@ -11,15 +10,16 @@ interface ArmorDefinition {
   maxDex: number;
   spellFailure: number;
 }
-
-type ShieldCategory = "Light" | "Heavy" | "Tower";
-
 interface ShieldDefinition {
   acBonus: number;
   checkPenalty: number;
   shieldType: ShieldCategory;
   spellFailure: number;
 }
+
+type ArmorCategory = "Light" | "Medium" | "Heavy";
+
+type ShieldCategory = "Light" | "Heavy" | "Tower";
 
 /**
  * Each entry is the canonical definition for a base armor type. All properties are derived from selecting an armor type

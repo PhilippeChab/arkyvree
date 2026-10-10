@@ -6,8 +6,6 @@ import type { BaseRules } from "@/shared/enums.ts";
 import { RulesetLicenseNotice } from "./components/dnd3.5/index.ts";
 import { ClassesSection, ItemsSection, SkillsSection, SpellsSection } from "./sections/dnd3.5/index.ts";
 
-type SectionComponent = (props: RulesetSectionProps) => ReactNode;
-
 /** What the ruleset page renders by its base rules: the tabs whose entities are theirs, and its system's license. */
 interface SectionMap {
   ClassesSection: SectionComponent;
@@ -17,6 +15,8 @@ interface SectionMap {
   PowersSection: SectionComponent;
   SkillsSection: SectionComponent;
 }
+
+type SectionComponent = (props: RulesetSectionProps) => ReactNode;
 
 /** What the ruleset page passes its license notice: the system ruleset's name. */
 export interface LicenseNoticeProps {

@@ -6,12 +6,6 @@
 
 import type { AbilityIncrease, FeatPick } from "./plans.ts";
 
-/** A feat picker's query: a level's pool, and a family's feats when it names one. */
-export type FeatPickQuery = PickQuery & { family?: string };
-
-/** A saved level's edit, as the form sends it: its new hit points, ability increases and picks. */
-export type LevelEditRequest = LevelPicks & { abilityIncreases: AbilityIncrease[]; hp: number };
-
 /** A level's picks, as a form sends them: its skill ranks, and its feats and powers by the pool they're picked in. */
 export interface LevelPicks {
   feats: Record<string, string[]>;
@@ -48,9 +42,6 @@ export interface LevelUpRequest {
   picks: LevelPicks;
 }
 
-/** A feat's or a power's picker query: a level, its class's, and the pool it picks in (`aptitudeId`). */
-export type PickQuery = LevelQuery & { aptitudeId: string; klassId: string; level: number };
-
 /**
  * What the level-up wizard plans before the level a step or a picker is for, not saved yet: its levels (their class
  * levels, and their ability increases by place), and the feats and skill points picked over them so far.
@@ -62,11 +53,20 @@ export interface PlannedSoFar {
   skillPoints?: Record<string, number>;
 }
 
-/** A power picker's query: a level's pool, of a spell level when given, less the powers picked so far. */
-export type PowerPickQuery = PickQuery & { powerLevel?: number; selectedPowerIds?: string[] };
-
 /** The level-up wizard's preview: the levels it plans, each with its ability increases, and what it picked so far. */
 export interface PreviewRequest {
   levels: Omit<LevelRequest, "hp">[];
   picks?: Partial<LevelPicks>;
 }
+
+/** A feat picker's query: a level's pool, and a family's feats when it names one. */
+export type FeatPickQuery = PickQuery & { family?: string };
+
+/** A saved level's edit, as the form sends it: its new hit points, ability increases and picks. */
+export type LevelEditRequest = LevelPicks & { abilityIncreases: AbilityIncrease[]; hp: number };
+
+/** A feat's or a power's picker query: a level, its class's, and the pool it picks in (`aptitudeId`). */
+export type PickQuery = LevelQuery & { aptitudeId: string; klassId: string; level: number };
+
+/** A power picker's query: a level's pool, of a spell level when given, less the powers picked so far. */
+export type PowerPickQuery = PickQuery & { powerLevel?: number; selectedPowerIds?: string[] };

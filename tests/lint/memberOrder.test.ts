@@ -221,6 +221,64 @@ describe("member order", () => {
     fs.rmSync(dir, { recursive: true });
   });
 
+  test("puts a file's interfaces together, then its type aliases, each by name, its own then its exports, with oxlint --fix", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "member-order-"));
+    const config = path.join(dir, ".oxlintrc.json");
+    fs.writeFileSync(
+      config,
+      JSON.stringify({ jsPlugins: [path.resolve("lint/plugin.mjs")], rules: { "arkyvree/member-order": "error" } }),
+    );
+    const types = path.join(dir, "types.ts");
+    fs.writeFileSync(
+      types,
+      [
+        "type Kind = Row | Page;",
+        "interface Row {",
+        "  id: string;",
+        "}",
+        "/** A page of rows. */",
+        "type Ids = Row[];",
+        "interface Page {",
+        "  rows: Row[];",
+        "}",
+        "",
+        'export type Picked = Pick<Row, "id">;',
+        "export interface Zone {}",
+        "export type Area = Partial<Zone>;",
+        "export interface Board {} // the board",
+        "",
+      ].join("\n"),
+    );
+    expect((await runOxlint(["-f", "unix", "-c", config, types])).stdout).toContain(
+      "A file's types go by name, its interfaces before its type aliases: its own, then the ones it exports.",
+    );
+    await runOxlint(["-c", config, "--fix", dir]);
+
+    expect(fs.readFileSync(types, "utf8")).toBe(
+      [
+        // The file's own interfaces, then its own type aliases, then its exported ones the same way: each with its
+        // comments, each place keeping its spacing.
+        "interface Page {",
+        "  rows: Row[];",
+        "}",
+        "interface Row {",
+        "  id: string;",
+        "}",
+        "/** A page of rows. */",
+        "type Ids = Row[];",
+        "type Kind = Row | Page;",
+        "",
+        "export interface Board {} // the board",
+        "export interface Zone {}",
+        "export type Area = Partial<Zone>;",
+        'export type Picked = Pick<Row, "id">;',
+        "",
+      ].join("\n"),
+    );
+    expect((await runOxlint(["-c", config, dir])).exitCode).toBe(0);
+    fs.rmSync(dir, { recursive: true });
+  });
+
   test("puts a class's members in groups with oxlint --fix: constructor, statics, readonly fields, other fields, methods, private members first in each", async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "member-order-"));
     const config = path.join(dir, ".oxlintrc.json");
@@ -444,8 +502,7 @@ describe("member order", () => {
       [
         "/** The index: a `{` in a comment is no list's start. */",
         "",
-        "type A = { b: string; a: number };",
-        "interface B {",
+        "interface A {",
         "  /** The zed, `{{ }}`. */",
         "  z: string; // about z",
         "  y(): void;",
@@ -454,6 +511,7 @@ describe("member order", () => {
         "  [key: string]: unknown;",
         "  a: string;",
         "}",
+        "type B = { b: string; a: number } | undefined;",
         "enum E {",
         '  B = "b",',
         "  /** The a. */",
@@ -477,10 +535,8 @@ describe("member order", () => {
       [
         "/** The index: a `{` in a comment is no list's start. */",
         "",
-        // Each place keeps its separator: the last member of a one-line type has none
-        "type A = { a: number; b: string };",
         // Call and index signatures first, in their order, then by name, an overload's signatures together
-        "interface B {",
+        "interface A {",
         "  (x: number): string;",
         "  [key: string]: unknown;",
         "  a: string;",
@@ -489,6 +545,8 @@ describe("member order", () => {
         "  /** The zed, `{{ }}`. */",
         "  z: string; // about z",
         "}",
+        // Each place keeps its separator: the last member of a one-line type has none
+        "type B = { a: number; b: string } | undefined;",
         "enum E {",
         "  /** The a. */",
         '  A = "a",',

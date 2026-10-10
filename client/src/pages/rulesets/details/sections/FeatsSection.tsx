@@ -49,12 +49,6 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import { fadeInUpSx } from "@/client/src/theme/animations.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 
-type Feat = FeatsPaginated["items"][number];
-
-type FeatsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["feats"]["$get"], 200>;
-type GroupedFeatRow = GroupedPaginated["items"][number];
-
-type GroupedPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["feats"]["grouped"]["$get"], 200>;
 interface GroupedRowProps {
   /** Its place in the list, which staggers its entry (`fadeInUpSx`), from the page that came in (`animationOffset`). */
   animationIndex: number;
@@ -71,6 +65,12 @@ interface GroupedRowProps {
   row: GroupedFeatRow;
   rulesetId: string;
 }
+
+type Feat = FeatsPaginated["items"][number];
+type FeatsPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["feats"]["$get"], 200>;
+
+type GroupedFeatRow = GroupedPaginated["items"][number];
+type GroupedPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["feats"]["grouped"]["$get"], 200>;
 
 const FEATS_COLUMNS = [
   { key: "name", label: "Name", width: "25%" },

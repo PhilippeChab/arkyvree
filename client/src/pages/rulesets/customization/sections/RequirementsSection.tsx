@@ -45,12 +45,6 @@ import RequirementTree, {
 } from "@/shared/customization/RequirementTree.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
-type Requirement = RequirementsArray[number];
-type RequirementsArray = InferResponseType<
-  (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["requirements"]["$get"],
-  200
->;
-
 interface RequirementsSectionProps {
   entityId: string;
   entityType: CustomizationOwnerType;
@@ -60,6 +54,12 @@ interface RequirementsSectionProps {
   restorable: boolean;
   ruleset: RulesetDetail;
 }
+type Requirement = RequirementsArray[number];
+
+type RequirementsArray = InferResponseType<
+  (typeof rpc.api.rulesets)[":id"]["customization"][":entityType"][":entityId"]["requirements"]["$get"],
+  200
+>;
 
 /** A requirement in the tree the section shows, with the requirements it groups. */
 type RequirementTreeNode = RequirementNode<Requirement>;

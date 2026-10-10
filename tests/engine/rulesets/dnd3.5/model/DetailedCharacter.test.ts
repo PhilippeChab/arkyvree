@@ -87,13 +87,13 @@ import {
   WEAPON_TYPE,
 } from "@/vocabulary/dnd3.5/properties/index.ts";
 
-type Carried = {
+interface Carried {
   equipped?: boolean;
   item: string;
   location?: ItemLocation;
   quantity?: number;
   weaponSet?: number;
-};
+}
 
 type Detailed = Awaited<ReturnType<typeof build>>;
 

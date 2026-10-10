@@ -15,14 +15,6 @@ import { rpc } from "@/client/src/services/rpc.ts";
 
 import { abilityIncreaseString, type PlannedLevels } from "./pendingPicks.ts";
 
-type LevelsApi = (typeof rpc.api.characters.levels)[":characterId"];
-
-/** A step of the level, by its name, as the ruleset describes it. */
-type LevelStepData = InferResponseType<LevelsApi["level-steps"][":step"]["$get"], 200>;
-
-/** A step named `N`, as the server describes it. */
-type NamedStep<N extends StepName> = Extract<LevelStepData, { name: N }>;
-
 /**
  * What a picker's list is checked against, encoded by `pendingPicks.ts`: the planned levels before it, not saved yet
  * (their class levels and ability increases), and the feats picked so far.
@@ -31,29 +23,21 @@ interface PlannedPicks extends Partial<PlannedLevels> {
   featPicks: string | undefined;
 }
 
+type LevelsApi = (typeof rpc.api.characters.levels)[":characterId"];
+
+/** A step of the level, by its name, as the ruleset describes it. */
+type LevelStepData = InferResponseType<LevelsApi["level-steps"][":step"]["$get"], 200>;
+
+/** A step named `N`, as the server describes it. */
+type NamedStep<N extends StepName> = Extract<LevelStepData, { name: N }>;
+
 /** A step's description as the steps read it: a step's without its name, or the same from the Add Level preview. */
 type Unnamed<S> = S extends unknown ? Omit<S, "name"> : never;
-
-/** A feat pool of the level's slots. */
-export type AptitudePool = FeatsData["aptitudePools"][string];
-
-/** Whether a level takes an ability increase, and the character's abilities at it. */
-export type AttributesData = Unnamed<NamedStep<"abilities">>;
-
-export type AvailablePower = InferResponseType<LevelsApi["available-powers"]["$get"], 200>["items"][number];
 
 /** What the class picker's list is checked against: the planned picks, and the skill points spent over them. */
 export interface ClassPicker extends PlannedPicks {
   skillPoints: string | undefined;
 }
-
-export type FeatsData = Unnamed<NamedStep<"feats">>;
-
-/** A row of the feat picker: a feat, or a family of feat variants. */
-export type GroupedFeatRow = InferResponseType<LevelsApi["available-feats"]["grouped"]["$get"], 200>["items"][number];
-
-/** The character's abilities at a level, by name: each with its score and modifier. */
-export type LevelAbilities = AttributesData["attributes"];
 
 /**
  * A picker's level (a `StepLevel`), and what its list is checked against: the levels planned before it and the feats
@@ -61,20 +45,10 @@ export type LevelAbilities = AttributesData["attributes"];
  */
 export interface PickerLevel extends StepLevel, PlannedPicks {}
 
-/** A spell pool of the level's slots. */
-export type PowerAptitudePool = PowersData["aptitudePools"][string];
-
 /** The spell picker's level (a `PickerLevel`), and the spells picked already, which it leaves out (`powerPickString`). */
 export interface PowerPickerLevel extends PickerLevel {
   selectedPowerIds: string | undefined;
 }
-
-export type PowersData = Unnamed<NamedStep<"powers">>;
-
-/** A planned level, as the Add Level preview lists it. */
-export type PreviewLevelDetail = InferResponseType<LevelsApi["preview"]["$post"], 200>["levelDetails"][number];
-
-export type SkillsData = Unnamed<NamedStep<"skills">>;
 
 /**
  * The level a step is for, as the step and picker endpoints take it: its class and level, which the query waits for,
@@ -89,6 +63,32 @@ export interface StepLevel {
   picks?: { feats: string | undefined; powers: string | undefined };
   skillPoints?: string;
 }
+
+/** A feat pool of the level's slots. */
+export type AptitudePool = FeatsData["aptitudePools"][string];
+
+/** Whether a level takes an ability increase, and the character's abilities at it. */
+export type AttributesData = Unnamed<NamedStep<"abilities">>;
+
+export type AvailablePower = InferResponseType<LevelsApi["available-powers"]["$get"], 200>["items"][number];
+
+export type FeatsData = Unnamed<NamedStep<"feats">>;
+
+/** A row of the feat picker: a feat, or a family of feat variants. */
+export type GroupedFeatRow = InferResponseType<LevelsApi["available-feats"]["grouped"]["$get"], 200>["items"][number];
+
+/** The character's abilities at a level, by name: each with its score and modifier. */
+export type LevelAbilities = AttributesData["attributes"];
+
+/** A spell pool of the level's slots. */
+export type PowerAptitudePool = PowersData["aptitudePools"][string];
+
+export type PowersData = Unnamed<NamedStep<"powers">>;
+
+/** A planned level, as the Add Level preview lists it. */
+export type PreviewLevelDetail = InferResponseType<LevelsApi["preview"]["$post"], 200>["levelDetails"][number];
+
+export type SkillsData = Unnamed<NamedStep<"skills">>;
 
 /** The name of a step the ruleset lists for a level. */
 export type StepName = LevelStepData["name"];

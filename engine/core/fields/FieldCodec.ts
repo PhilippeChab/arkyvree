@@ -13,7 +13,11 @@ interface FieldRules<V> {
 }
 
 /** A property row, as a codec reads it: its type and value, and its id when it has one. */
-type Row = { id?: string; type: string; value: string };
+interface Row {
+  id?: string;
+  type: string;
+  value: string;
+}
 
 /**
  * An entity's fields kept in its properties, read and written by one spec (`fields`, written with `Field`): their

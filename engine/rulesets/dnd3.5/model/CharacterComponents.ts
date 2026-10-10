@@ -18,7 +18,7 @@ import SkillsComponent from "./skills/SkillsComponent.ts";
 import SpellcastingComponent from "./spellcasting/SpellcastingComponent.ts";
 
 /** The parts a 3.5 character is built from, by the key its target paths reach each by. */
-export type Dnd35Components = {
+export interface Dnd35Components {
   readonly abilities: AbilitiesComponent;
   readonly aptitudes: AptitudesComponent;
   readonly armors: ArmorsComponent;
@@ -37,7 +37,7 @@ export type Dnd35Components = {
   readonly skills: SkillsComponent;
   readonly spellcasting: SpellcastingComponent;
   readonly weapons: WeaponsComponent;
-};
+}
 
 /** A 3.5 character's components. */
 export default class CharacterComponents {

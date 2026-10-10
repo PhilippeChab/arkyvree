@@ -5,7 +5,13 @@ import type { Modifier } from "@/content/core/builders/customization/types.ts";
 import type { ModifierReading } from "./readers/modifiers/ModifierReading.ts";
 
 /** A reference as a detector resolves it: what it stores, and what's derived from it. */
-type Reference = { _meta: unknown; detected: unknown; mapping: unknown; overrides?: unknown; raw: unknown };
+interface Reference {
+  _meta: unknown;
+  detected: unknown;
+  mapping: unknown;
+  overrides?: unknown;
+  raw: unknown;
+}
 
 /** A reference resolved: what it stores, with what's derived from it. */
 export type Resolved<R extends Reference> = Pick<R, "_meta" | "detected" | "mapping" | "overrides" | "raw">;

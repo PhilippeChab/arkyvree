@@ -7,9 +7,9 @@ import type { TargetPath } from "@/shared/customization/target.ts";
  * modifiers and requirements may name, and an entity's fields as the properties that keep them (`F`, the fields it
  * seeds, by entity, each kept by its codec).
  */
-export default abstract class ContentPart<F extends Record<string, Fields>> {
+export default abstract class ContentPart<F> {
   /** The codecs of the fields its content seeds, by entity: what keeps an entity's fields in its properties. */
-  protected abstract readonly codecs: { [K in keyof F]: FieldCodec<F[K]> };
+  protected abstract readonly codecs: { [K in keyof F]: FieldCodec<Extract<F[K], Fields>> };
 
   /** The target paths a book's generated content may name, from the names it seeds. */
   abstract listBookTargetPaths(
@@ -18,7 +18,7 @@ export default abstract class ContentPart<F extends Record<string, Fields>> {
   ): TargetPath[];
 
   /** An entity's fields as the properties that keep them: what a seeder writes for them. */
-  toEntityProperties<K extends keyof F>(entityType: K, fields: FieldValues<F[K]>): PropertyValue[] {
+  toEntityProperties<K extends keyof F>(entityType: K, fields: FieldValues<Extract<F[K], Fields>>): PropertyValue[] {
     return this.codecs[entityType].toProperties(fields);
   }
 }

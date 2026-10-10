@@ -18,7 +18,7 @@ type DetailsOf<P> = P extends Picker<infer _Row, infer Details> ? Details : neve
  * What the 3.5 rules describe in their own shape: the sheets, an inventory entry's placement, the level-up wizard's
  * pages, the pickers' options.
  */
-export type Dnd35Descriptions = {
+export interface Dnd35Descriptions {
   classOption: DetailsOf<ClassPicker>;
   featGroup: FeatGroupDetails;
   featOption: DetailsOf<FeatPicker>;
@@ -31,4 +31,4 @@ export type Dnd35Descriptions = {
   sheet: ReturnType<typeof CharacterDescription.describeFull>;
   sheetDocument: ReturnType<typeof CharacterSheet.describeSheet>;
   step: ReturnType<LevelUpSteps["describeStep"]>;
-};
+}

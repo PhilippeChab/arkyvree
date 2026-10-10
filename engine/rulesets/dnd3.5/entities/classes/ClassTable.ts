@@ -8,7 +8,10 @@ import type { Klass, Modifier } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 /** What a level's modifier steps on its table: the key it counts toward, and that key's total after it. */
-type TableStep<V> = { key: string | number; step: (total: V | undefined) => V };
+interface TableStep<V> {
+  key: string | number;
+  step: (total: V | undefined) => V;
+}
 
 /** The modifiers a class's levels set, each level's. */
 function getLevelModifiers(rulesetData: RulesetData, levels: { id: string }[]) {

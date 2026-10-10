@@ -3,9 +3,6 @@ import { useAuthStore } from "@/client/src/stores/authStore.ts";
 
 import { useIsDemo } from "./useIsDemo.ts";
 
-/** The fields permissions depend on; ruleset details and list items both carry them. */
-type RulesetData = Pick<RulesetDetail, "userId" | "status" | "contributorRole">;
-
 interface RulesetPermissions {
   /** Owner, Admin, or Editor — can CRUD entities (feats, skills, etc.) */
   canEditEntities: boolean;
@@ -18,6 +15,9 @@ interface RulesetPermissions {
   isContributor: boolean;
   isOwner: boolean;
 }
+
+/** The fields permissions depend on; ruleset details and list items both carry them. */
+type RulesetData = Pick<RulesetDetail, "userId" | "status" | "contributorRole">;
 
 export function useRulesetPermissions(ruleset: RulesetData | undefined): RulesetPermissions {
   const currentUserId = useAuthStore((state) => state.user?.id);

@@ -16,14 +16,14 @@ import type { StoredReference } from "@/codegen/dnd3.5/tools/types/reference.ts"
 
 import { CommandLine } from "./CommandLine.ts";
 
-type OverrideEntry = {
+interface OverrideEntry {
   book: string;
   entryName: string;
   keys: string[];
   prereqText?: string;
   refName: string;
   refType: string;
-};
+}
 
 function collectClassOverrides(data: StoredReference<"class">, book: string, fileName: string): OverrideEntry[] {
   const entries: OverrideEntry[] = [];

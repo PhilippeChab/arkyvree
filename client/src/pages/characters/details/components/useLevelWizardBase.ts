@@ -13,9 +13,6 @@ type LevelData = InferResponseType<LevelsApi[":characterLevelId"]["$get"], 200>;
 
 type LevelsApi = (typeof rpc.api.characters.levels)[":characterId"];
 
-/** A class the class plan offers. */
-export type AvailableKlass = InferResponseType<LevelsApi["available-classes"]["$get"], 200>["items"][number];
-
 /** The picks a level wizard collects. */
 export interface LevelUpFormData {
   selectedAttribute: string | null;
@@ -25,6 +22,9 @@ export interface LevelUpFormData {
   selectedPowers: Record<string, SelectedPower[]>;
   skillPointAllocations: Record<string, number>;
 }
+
+/** A class the class plan offers. */
+export type AvailableKlass = InferResponseType<LevelsApi["available-classes"]["$get"], 200>["items"][number];
 
 /** A feat picked for the level, as a saved level lists it. */
 export type SelectedFeat = LevelData["feats"][string][number];

@@ -1,10 +1,7 @@
 import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
 
-/** How fast a class's base attack bonus grows: as fast as its level, three quarters of it, or half. */
-export type BabType = "good" | "medium" | "poor";
-
 /** A class: its levels' hit die, base attack, saves and skill points, its class skills and features, its spells. */
-export type ClassSeed = {
+export interface ClassSeed {
   /** One more pick in the `target` aptitude at each of these levels. */
   aptitudePicks?: { levels: number[]; target: string }[];
   bab: BabType;
@@ -51,7 +48,10 @@ export type ClassSeed = {
     /** The spell list's aptitude, as a path segment: "wizardspells". */
     slug: string;
   };
-};
+}
+
+/** How fast a class's base attack bonus grows: as fast as its level, three quarters of it, or half. */
+export type BabType = "good" | "medium" | "poor";
 
 /** How good a class's save is. */
 export type SaveType = "good" | "poor";

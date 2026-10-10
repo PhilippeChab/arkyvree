@@ -5,7 +5,7 @@ import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/Classe
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-type SavesData = {
+interface SavesData {
   [key: string]: {
     readonly ability: number;
     base: number;
@@ -13,7 +13,7 @@ type SavesData = {
     name: string;
     readonly total: number;
   };
-};
+}
 
 /** A character's saves: each one's base from its classes' levels and its ability's modifier, counted when read. */
 export default class SavesComponent extends CharacterComponent<LoadedCharacterData> {
