@@ -10,6 +10,7 @@ export const BARD_CLASS_FEATS: FeatSeed[] = [
       "Through years of travel and swapping tales with fellow performers, a bard accumulates a wide assortment of miscellaneous lore. The bard can attempt a special bardic knowledge check, adding his bard level + his Intelligence modifier to the roll, to determine whether he recalls useful information about notable local figures, legendary artifacts, or remarkable locations. (A bard who possesses 5 or more ranks in Knowledge (history) gains an additional +2 bonus on this check.) Taking 10 or taking 20 is not permitted on this check, as this type of knowledge is inherently unpredictable.",
     selectable: false,
     aptitudes: ["Bard Class Feature"],
+    properties: [{ type: "FEAT_FAMILY", value: "Bardic Knowledge" }],
   },
   {
     name: "Bardic Music (Bard)",

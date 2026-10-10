@@ -28,22 +28,34 @@ describe("A class's skill prerequisite", () => {
 });
 
 describe("A class's special prerequisite", () => {
-  test("is read as one requirement, the prerequisites it lists that none reads unresolved", () => {
+  test("is read for each prerequisite its entry lists, each class feature any class's", () => {
     const drunkenMaster = new ClassPrerequisites({
       special: ["Flurry of blows ability; evasion ability; must be chosen by existing drunken masters."],
     });
-    expect(drunkenMaster.requirements).toEqual([eq("feats.flurryofblows.*.possessed")]);
-    expect(drunkenMaster.unresolved).toEqual(["evasion ability"]);
+    expect(drunkenMaster.requirements).toEqual([
+      eq("feats.flurryofblows.*.possessed"),
+      eq("feats.evasion.*.possessed"),
+    ]);
+    expect(drunkenMaster.unresolved).toEqual([]);
+    const shaper = new ClassPrerequisites({
+      special: ["Wild shape class feature.Special: Either sneak attack +1d6 or skirmish +1d6."],
+    });
+    expect(shaper.requirements).toEqual([
+      eq("feats.wildshape.*.possessed"),
+      or(gte("feats.sneakattack.count", 1), gte("feats.skirmish.count", 1)),
+    ]);
+    const lyrist = new ClassPrerequisites({ special: ["Bardic knowledge and evasion abilities."] });
+    expect(lyrist.requirements).toEqual([eq("feats.bardicknowledge.*.possessed"), eq("feats.evasion.*.possessed")]);
   });
 
   test("naming a class feature nothing reads is unresolved, and a narrative one is dropped", () => {
     const enforcer = new ClassPrerequisites({
       special: [
-        "Evasion class feature.Special: The character must undergo intensive training before she can gain the class abilities.",
+        "Spell secret class ability.Special: The character must undergo intensive training before she can gain the class abilities.",
       ],
     });
     expect(enforcer.requirements).toEqual([]);
-    expect(enforcer.unresolved).toEqual(["Evasion class feature"]);
+    expect(enforcer.unresolved).toEqual(["Spell secret class ability"]);
   });
 
   test("leaves out of the unresolved what the class requires otherwise", () => {

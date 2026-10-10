@@ -5,12 +5,6 @@
     "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/shadowbane-inquisitor/",
     "type": "class"
   },
-  "overrides": {
-    "reviewed": [
-      "Detect evil class feature or ability to cast detect evil as a divine spell",
-      "Sneak attack class feature"
-    ]
-  },
   "raw": {
     "classFeatures": [
       {

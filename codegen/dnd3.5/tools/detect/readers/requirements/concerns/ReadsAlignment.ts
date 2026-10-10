@@ -30,6 +30,8 @@ const ANY_ALIGNMENTS: { alignments: string[]; prefixes: string[] }[] = [
   { prefixes: ["any non-good", "any nongood"], alignments: ["Lawful Neutral", "True Neutral", "Chaotic Neutral", "Lawful Evil", "Neutral Evil", "Chaotic Evil"] },
   { prefixes: ["any non-lawful", "any nonlawful"], alignments: ["Neutral Good", "True Neutral", "Neutral Evil", "Chaotic Good", "Chaotic Neutral", "Chaotic Evil"] },
   { prefixes: ["any non-chaotic", "any nonchaotic"], alignments: ["Lawful Good", "Lawful Neutral", "Lawful Evil", "Neutral Good", "True Neutral", "Neutral Evil"] },
+  // A neutral component on either axis: "any neutral alignment (NG, LN, N, CN, or NE)"
+  { prefixes: ["any neutral"], alignments: ["Neutral Good", "Lawful Neutral", "True Neutral", "Chaotic Neutral", "Neutral Evil"] },
 ];
 
 /** A comma-separated list of alignments ("Neutral good, lawful neutral, neutral, or neutral evil"): any of them. */

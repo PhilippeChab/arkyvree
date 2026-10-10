@@ -9,6 +9,7 @@ export const FOCHLUCAN_LYRIST_CLASS_FEATS: FeatSeed[] = [
       "A Fochlucan lyrist can attempt to recall some relevant piece of information about local notable people, legendary items, or noteworthy places. See the bard class feature of the Player's Handbook. She adds her Fochlucan lyrist class level to her bardic knowledge checks, so her bardic knowledge checks have a bonus equal to her bard level + her Fochlucan lyrist level + her Int modifier.",
     selectable: false,
     aptitudes: ["Fochlucan Lyrist Class Feature"],
+    properties: [{ type: "FEAT_FAMILY", value: "Bardic Knowledge" }],
   },
   {
     name: "Bardic Music (Fochlucan Lyrist)",

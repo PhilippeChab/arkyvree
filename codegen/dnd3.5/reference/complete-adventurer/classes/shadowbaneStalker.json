@@ -5,11 +5,6 @@
     "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/shadowbane-stalker/",
     "type": "class"
   },
-  "overrides": {
-    "reviewed": [
-      "Detect evil class feature or ability to cast detect evil as a divine spell"
-    ]
-  },
   "raw": {
     "classFeatures": [
       {

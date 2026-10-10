@@ -181,6 +181,7 @@ export const SPIRIT_SHAMAN_CLASS_FEATS: FeatSeed[] = [
       "Drawing on her connection to animal spirits, the spirit shaman can use body language, vocalizations, and demeanor to shift the disposition of an animal (any creature of the animal type). This works like a Diplomacy check to improve a person's attitude. She rolls 1d20 and adds her spirit shaman level plus her Charisma modifier to determine the result. Domesticated animals typically start as indifferent, while wild animals are generally unfriendly. Both the spirit shaman and the animal must be able to observe one another, requiring them to be within 30 feet under normal circumstances. Influencing an animal in this manner generally takes about 1 minute, though it can take more or less time depending on circumstances. This ability does not work on magical beasts.",
     selectable: false,
     aptitudes: ["Spirit Shaman Class Feature"],
+    properties: [{ type: "FEAT_FAMILY", value: "Wild Empathy" }],
   },
   {
     name: "Advance Spirit Shaman Spellcasting",

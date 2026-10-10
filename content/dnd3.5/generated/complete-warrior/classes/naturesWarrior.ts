@@ -5,7 +5,7 @@
  * - No modifiers defined — review if this class needs any
  */
 
-import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
+import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
 
 export const NATURES_WARRIOR: ClassSeed = {
@@ -24,6 +24,13 @@ export const NATURES_WARRIOR: ClassSeed = {
     gte("skills.knowledgetheplanes.rank", 2),
     gte("skills.survival.rank", 8),
     eq("feats.track.possessed"),
+    or(
+      eqStr("identity.beliefs.alignment", "Neutral Good"),
+      eqStr("identity.beliefs.alignment", "Lawful Neutral"),
+      eqStr("identity.beliefs.alignment", "True Neutral"),
+      eqStr("identity.beliefs.alignment", "Chaotic Neutral"),
+      eqStr("identity.beliefs.alignment", "Neutral Evil"),
+    ),
     eq("feats.wildshape.*.possessed"),
   ],
   casterLevelAdvancement: { type: "divine", levels: [2, 4] },

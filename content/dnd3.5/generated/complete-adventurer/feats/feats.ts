@@ -115,7 +115,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description:
       "Your paladin and monk levels stack for the purpose of determining your unarmed strike damage. For example, a human 3rd-level paladin/1st-level monk would deal 1d8 points of damage with her unarmed strike. Your paladin and monk levels also stack when determining the extra damage dealt by your smite evil ability. In addition, you can multiclass freely between the paladin and monk classes. You must still remain lawful good in order to retain your paladin abilities and take paladin levels, and you must remain lawful in order to continue advancing as a monk. You still face the normal XP penalties for having multiple classes more than one level apart.",
     aptitudes: ["General"],
-    requirements: [eq("feats.improvedunarmedstrike.possessed")],
+    requirements: [eq("feats.improvedunarmedstrike.possessed"), eq("feats.smiteevil.*.possessed")],
   },
   {
     name: "Ascetic Mage",
@@ -182,14 +182,14 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description:
       "If you have levels in paladin and bard, those levels stack for the purpose of determining the bonus damage dealt by your smite evil ability and determining the number of times per day that you can use your bardic music. This feat does not allow additional daily uses of smite evil or bardic music abilities beyond what your class levels would normally allow. In addition, you can multiclass freely between the paladin and bard classes and may even gain additional bard levels regardless of your lawful alignment. You must still remain lawful good in order to retain your paladin abilities and take paladin levels. You still face the normal XP penalties for having multiple classes more than one level apart.",
     aptitudes: ["General"],
-    requirements: [eq("feats.bardicmusic.*.possessed")],
+    requirements: [eq("feats.bardicmusic.*.possessed"), eq("feats.smiteevil.*.possessed")],
   },
   {
     name: "Devoted Tracker",
     description:
       "If you have levels in paladin and ranger, those levels stack for the purposes of determining the extra damage dealt by your smite evil ability and determining the bonus for your wild empathy class feature. This feat does not allow additional daily uses of smite evil. If you have both the special mount and animal companion class features, you can designate your special mount as your animal companion. The mount gains all the benefits of being both your special mount and your animal companion. For instance, a 5th-level paladin/6th-level ranger's special mount would have 4 bonus Hit Dice, a +6 natural armor adjustment, +2 Strength, +1 Dexterity, two bonus tricks, and Intelligence 6, as well as the empathic link, improved evasion, share spells, share saving throws, and link special abilities. In addition, you can multiclass freely between the paladin and ranger classes. You must still remain lawful good in order to retain your paladin abilities and take paladin levels. You still face the normal XP penalties for having multiple classes more than one level apart.",
     aptitudes: ["General"],
-    requirements: [eq("feats.track.possessed")],
+    requirements: [eq("feats.track.possessed"), eq("feats.smiteevil.*.possessed"), eq("feats.wildempathy.*.possessed")],
     modifiers: [{ target: "combat.ac.natural", operator: "add", value: "6", valueType: "number" }],
   },
   {
@@ -197,7 +197,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description:
       "You can cast spells unobtrusively, mingling verbal and somatic components into your performances. To disguise a spell, make a Perform check as part of the action used to cast the spell. Onlookers must match or exceed your check result with a Spot check to detect that you're casting a spell (your performance is obvious to everyone in the vicinity, but the fact that you are casting a spell isn't). Unless the spell visibly emanates from you, or observers have some other means of determining its source, they don't know where the effect came from. A disguised spell can't be identified with a Spellcraft check, even by someone who realizes you're casting a spell. The act of casting still provokes attacks of opportunity as normal.",
     aptitudes: ["General"],
-    requirements: [gte("skills.perform.rank", 9)],
+    requirements: [gte("skills.perform.rank", 9), eq("feats.bardicmusic.*.possessed")],
   },
   {
     name: "Dive For Cover",
@@ -246,7 +246,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description:
       "You can alter any of your mind-affecting bardic music abilities (or similar Perform-based abilities from other classes) so that they influence only plant creatures instead of other creatures. However, plants receive a +5 bonus on Will saves against any of these effects.",
     aptitudes: ["General"],
-    requirements: [gte("skills.perform.rank", 10)],
+    requirements: [gte("skills.perform.rank", 10), eq("feats.bardicmusic.*.possessed")],
   },
   {
     name: "Hear The Unseen",
@@ -311,6 +311,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     name: "Obscure Lore",
     description: "You gain a +4 insight bonus on checks using your bardic knowledge or lore class feature.",
     aptitudes: ["General"],
+    requirements: [or(eq("feats.bardicknowledge.*.possessed"), eq("feats.lore.*.possessed"))],
   },
   {
     name: "Open Minded",
@@ -349,7 +350,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description:
       "You can produce music or poetics so subtly that opponents do not notice it, yet your allies still gain all the usual benefits from your bardic music. Similarly, you can affect opponents within range with your music, but unless they can see you performing or have some other means of discovering it, they cannot determine the source of the effect.",
     aptitudes: ["General"],
-    requirements: [gte("skills.perform.rank", 10)],
+    requirements: [gte("skills.perform.rank", 10), eq("feats.bardicmusic.*.possessed")],
   },
   {
     name: "Tactile Trapsmith",
@@ -372,39 +373,41 @@ export const WILD_FEATS: FeatSeed[] = [
     description:
       "You can expend one daily use of wild shape to gain blindsense for 1 minute per Hit Die, enabling you to pinpoint the location of a creature within 30 feet if you have line of effect to that creature. You retain this benefit regardless of what form you are in.",
     aptitudes: ["General"],
-    requirements: [gte("skills.listen.rank", 4)],
+    requirements: [gte("skills.listen.rank", 4), eq("feats.wildshape.*.possessed")],
   },
   {
     name: "Climb like an Ape",
     description:
       "You can expend one daily use of wild shape to gain a climb speed equal to your base land speed for 10 minutes per Hit Die. This feat also grants you a +8 racial bonus on Climb checks and allows you to take 10 on Climb checks, even if rushed or threatened.",
     aptitudes: ["General"],
+    requirements: [eq("feats.wildshape.*.possessed")],
   },
   {
     name: "Cougar's Vision",
     description:
       "You can expend one daily use of wild shape to gain low-light vision for 1 hour per Hit Die. In addition, you gain a +4 bonus on all Spot checks. You retain these benefits regardless of what form you are in.",
     aptitudes: ["General"],
-    requirements: [gte("skills.spot.rank", 2)],
+    requirements: [gte("skills.spot.rank", 2), eq("feats.wildshape.*.possessed")],
   },
   {
     name: "Hawk's Vision",
     description:
       "You can expend one of your daily uses of wild shape to gain a +8 bonus on your Spot checks for 1 hour per Hit Die. While this benefit is in effect, you take only half the normal penalty for range increment (-1 on ranged attacks per range increment instead of -2), and you take a -1 penalty on Spot checks per 20 feet of distance (rather than per 10 feet). You retain these benefits regardless of what form you are in.",
     aptitudes: ["General"],
-    requirements: [gte("skills.spot.rank", 4)],
+    requirements: [gte("skills.spot.rank", 4), eq("feats.wildshape.*.possessed")],
   },
   {
     name: "Savage Grapple",
     description:
       "While you are in a wild shape, any time you make a successful grapple check to damage a creature with which you are already grappling, you can add your sneak attack damage as well. Creatures not subject to sneak attacks don't take this extra damage.",
     aptitudes: ["General"],
-    requirements: [eq("feats.sneakattack.*.possessed")],
+    requirements: [eq("feats.sneakattack.*.possessed"), eq("feats.wildshape.*.possessed")],
   },
   {
     name: "Scent",
     description:
       "You can expend one daily use of wild shape to gain the scent ability for 1 hour per Hit Die. While this benefit is in effect, you can detect opponents within 30 feet by sense of smell. In addition, if you have the Track feat, you can track creatures by scent. You retain this benefit regardless of what form you are in.",
     aptitudes: ["General"],
+    requirements: [eq("feats.wildshape.*.possessed")],
   },
 ];

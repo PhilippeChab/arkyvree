@@ -24,6 +24,7 @@ export const SACRED_EXORCIST_CLASS_FEATS: FeatSeed[] = [
       "A sacred exorcist who has reached 2nd level or higher may use detect evil at will as a spell-like ability.",
     selectable: false,
     aptitudes: ["Sacred Exorcist Class Feature"],
+    properties: [{ type: "FEAT_FAMILY", value: "Detect Evil" }],
   },
   {
     name: "Dispel Evil (Sacred Exorcist)",

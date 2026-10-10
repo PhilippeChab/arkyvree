@@ -5,7 +5,7 @@
  * - No modifiers defined — review if this class needs any
  */
 
-import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
+import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
 
 export const VOID_DISCIPLE: ClassSeed = {
@@ -40,6 +40,13 @@ export const VOID_DISCIPLE: ClassSeed = {
     gte("skills.spellcraft.rank", 10),
     eq("feats.heightenspell.possessed"),
     eq("feats.spellpenetration.possessed"),
+    or(
+      eqStr("identity.beliefs.alignment", "Neutral Good"),
+      eqStr("identity.beliefs.alignment", "Lawful Neutral"),
+      eqStr("identity.beliefs.alignment", "True Neutral"),
+      eqStr("identity.beliefs.alignment", "Chaotic Neutral"),
+      eqStr("identity.beliefs.alignment", "Neutral Evil"),
+    ),
   ],
   casterLevelAdvancement: { type: "any", levels: [2, 4, 5, 6, 8, 10, 11, 12] },
   classFeatureAptitude: "Void Disciple Class Feature",

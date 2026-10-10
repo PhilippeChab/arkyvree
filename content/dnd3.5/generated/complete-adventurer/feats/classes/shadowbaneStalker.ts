@@ -8,6 +8,7 @@ export const SHADOWBANE_STALKER_CLASS_FEATS: FeatSeed[] = [
     description: "A shadowbane stalker can use detect evil at will. See the spell of the Player's Handbook.",
     selectable: false,
     aptitudes: ["Shadowbane Stalker Class Feature"],
+    properties: [{ type: "FEAT_FAMILY", value: "Detect Evil" }],
   },
   {
     name: "Discover Subterfuge (Shadowbane Stalker)",
