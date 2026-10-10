@@ -35,10 +35,17 @@ export type CreationMethod = { id: string; label: string } & (
   | { budget: number; costs: Readonly<Record<number, number>>; kind: "pointBuy"; max: number; min: number }
 );
 
-/** A character's inventory entry, as its sheet lists it: the entry, with its item as the view composes it. */
-export type DescribedInventoryEntry<T> = T & {
-  item: Item & { modifiers: Modifier[]; properties: Property[]; requirements: Requirement[] };
-};
+/**
+ * A character's inventory entry, as its sheet lists it: the entry, what its ruleset shows of it (`X`: where its item
+ * can go, where it's worn), and its item as the view composes it.
+ */
+export type DescribedInventoryEntry<T, X = unknown> = T &
+  X & {
+    item: Item & { modifiers: Modifier[]; properties: Property[]; requirements: Requirement[] };
+  };
+
+/** An inventory entry, as where it's held reads it: whether it's equipped, where, and its weapon set in a hand. */
+export type HeldInventoryEntry = Pick<InventoryEntryFields, "equipped" | "location" | "weaponSet">;
 
 /** What an inventory entry's add (a new entry of `item`) or edit (an `entry` of the character's) asks. */
 export type InventoryEntryChange =

@@ -13,13 +13,15 @@ import type {
 
 /**
  * What a ruleset describes in its own shape, which the server hands to the client as it is: a character's sheet (as the
- * API answers it, as a member reads it, printed), the level-up wizard's steps (any of them, each named for which it
- * is), preview and a saved level's selections, and what each picker adds to an option.
+ * API answers it, as a member reads it, printed), what an inventory entry shows beside its row, the level-up wizard's
+ * steps (any of them, each named for which it is), preview and a saved level's selections, and what each picker adds
+ * to an option.
  */
 export interface Descriptions {
   classOption: object;
   featGroup: object;
   featOption: object;
+  inventoryEntry: object;
   levelSelections: unknown;
   memberSheet: unknown;
   powerOption: object;

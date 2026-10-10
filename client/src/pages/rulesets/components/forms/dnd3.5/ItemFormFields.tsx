@@ -4,8 +4,9 @@ import { type UseFormReturn } from "react-hook-form";
 import { DescriptionField, FormTextField, NameField, SelectField } from "@/client/src/components/common/index.ts";
 import { DECIMAL_RULES } from "@/client/src/lib/validation.ts";
 import { itemTemplatesQuery } from "@/client/src/pages/rulesets/optionQueries.ts";
+import { TEMPLATE_ITEM_TYPES, type TemplateItemType } from "@/shared/dnd3.5/itemTemplates.ts";
 import { LOCATION_OPTIONS } from "@/shared/enums.ts";
-import { isTemplateItemType, type TemplateItemType } from "@/shared/itemTemplates.ts";
+import { isOneOf } from "@/shared/isOneOf.ts";
 
 import { ITEM_TYPE_OPTIONS, type ItemFormData } from "./itemForm.ts";
 
@@ -46,7 +47,7 @@ export function ItemFormFields({ form, rulesetId, lockType }: ItemFormFieldsProp
 
   // A template type has no slot, and starts with no template
   const handleTypeChange = (newType: unknown) => {
-    if (!isTemplateItemType(newType)) return;
+    if (!isOneOf(newType, TEMPLATE_ITEM_TYPES)) return;
     form.setValue("slot", "", { shouldDirty: true });
     form.setValue("sourceItemId", "", { shouldDirty: true });
   };
@@ -86,7 +87,7 @@ export function ItemFormFields({ form, rulesetId, lockType }: ItemFormFieldsProp
         onChange={handleTypeChange}
         disabled={lockType}
       />
-      {isTemplateItemType(itemType) ? (
+      {isOneOf(itemType, TEMPLATE_ITEM_TYPES) ? (
         !isTemplate && <TemplateSelector form={form} rulesetId={rulesetId} type={itemType} disabled={lockType} />
       ) : (
         <SelectField

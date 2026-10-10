@@ -6,6 +6,7 @@ export type {
   CharacterCreation,
   CreationMethod,
   DescribedInventoryEntry,
+  HeldInventoryEntry,
   InventoryEntryChange,
   InventoryEntryFields,
   InventoryEntryRequest,

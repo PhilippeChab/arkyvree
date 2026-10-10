@@ -13,6 +13,32 @@ export default new Hono<SessionContext>()
     const { characterId } = c.req.valid("param");
     return c.json(await CharacterInventoryService.getInventory(c.var.requestSession, characterId), 200);
   })
+  .get(
+    "/:characterId/placement",
+    validate("param", characterIdParam),
+    validate(
+      "query",
+      z.object({
+        entryId: z.string().uuid().optional(),
+        location: z.enum(location.enumValues),
+        weaponSet: z.coerce.number().int().min(0),
+      }),
+    ),
+    async (c) => {
+      const { characterId } = c.req.valid("param");
+      const { entryId, location, weaponSet } = c.req.valid("query");
+      return c.json(
+        await CharacterInventoryService.getPlacement(
+          c.var.requestSession,
+          characterId,
+          entryId ?? null,
+          location,
+          weaponSet,
+        ),
+        200,
+      );
+    },
+  )
   .post(
     "/:characterId",
     validate("param", characterIdParam),

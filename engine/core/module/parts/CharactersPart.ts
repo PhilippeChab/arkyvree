@@ -4,6 +4,7 @@ import type {
   CharacterCard,
   CharacterCreation,
   DescribedInventoryEntry,
+  HeldInventoryEntry,
   InventoryEntryChange,
   InventoryEntryFields,
   MemberReading,
@@ -14,7 +15,8 @@ import type { Descriptions } from "@/engine/core/module/contract.ts";
 import type { OpenedPicker } from "@/engine/core/module/pickers.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import type { Item } from "@/shared/relations.ts";
+import type { ItemLocation } from "@/shared/enums.ts";
+import type { Item, Property } from "@/shared/relations.ts";
 
 /**
  * What a ruleset answers of its characters, from the rows the server reads: their sheets (as the API answers them, as
@@ -32,6 +34,16 @@ export default abstract class CharactersPart<D extends Descriptions> {
     const rulesetIds = new Set([view.ruleset.id, ...view.rulesetData.cow.sourceChain]);
     if (rows.some((row) => !rulesetIds.has(row.rulesetId))) throw new RulesError("invalid", message);
   }
+
+  /**
+   * What the ruleset shows of an inventory entry (`entry`, of `item`, with its `properties`) beside its row: where its
+   * item can go, where it's worn.
+   */
+  protected abstract describeInventoryEntry(
+    entry: HeldInventoryEntry,
+    item: Item,
+    properties: Property[],
+  ): D["inventoryEntry"];
 
   /**
    * Refuses languages a character can't speak: one of `languageIds` not found (`languages`, the rows the server read
@@ -90,30 +102,46 @@ export default abstract class CharactersPart<D extends Descriptions> {
   ): D["memberSheet"];
 
   /**
-   * The character's entries (`entries`, each with the item row it names), as its sheet lists them: each with its item
-   * as the view composes it (the stored row's copy or winner, the row itself without one), its properties, its
-   * modifiers, and its requirements, its template's before its own.
+   * The character's entries (`entries`, each with the item row it names), as its sheet lists them: each with what its
+   * ruleset shows of it (`describeInventoryEntry`), and its item as the view composes it (the stored row's copy or
+   * winner, the row itself without one), its properties, its modifiers, and its requirements, its template's before
+   * its own.
    */
-  describeInventory<T extends { itemId: string; itemsInRule: Item }>(
+  describeInventory<T extends HeldInventoryEntry & { itemId: string; itemsInRule: Item }>(
     view: RulesetView,
     entries: T[],
-  ): DescribedInventoryEntry<T>[] {
+  ): DescribedInventoryEntry<T, D["inventoryEntry"]>[] {
     const { rulesetData } = view;
     return entries.map((entry) => {
       // The join still contains the stored parent row after itemId resolves.
       const item = rulesetData.itemsById.get(entry.itemId) ?? entry.itemsInRule;
+      const properties = rulesetData.itemProperties(item);
       const { own: requirements, template: proficiency } = rulesetData.itemRequirements(item);
       return {
         ...entry,
+        ...this.describeInventoryEntry(entry, item, properties),
         item: {
           ...item,
-          properties: rulesetData.itemProperties(item),
+          properties,
           modifiers: rulesetData.modifiersBySource.get(item.id) ?? [],
           requirements: [...proficiency, ...requirements],
         },
       };
     });
   }
+
+  /**
+   * Why `location` (in `weaponSet`, for a hand) can't take one more item of the character's, if it can't: the entry in
+   * the way, the entry placed (`entryId`, none for a new one) aside. What the inventory dialogs warn of, and the save
+   * refuses.
+   */
+  abstract describePlacement(
+    view: RulesetView,
+    character: CharacterInput,
+    entryId: string | null,
+    location: ItemLocation,
+    weaponSet: number | null,
+  ): { warning: string | null };
 
   /** A character's printed sheet: the document the server renders. */
   abstract describeSheet(

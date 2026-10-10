@@ -1,17 +1,23 @@
 import {
   type CharacterInput,
   CharactersPart,
+  type HeldInventoryEntry,
   type InventoryEntryChange,
   type InventoryEntryFields,
   type InventoryEntryRequest,
 } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import { isHandLocation } from "@/shared/equipment.ts";
+import ItemPlacement from "@/engine/rulesets/dnd3.5/model/inventory/ItemPlacement.ts";
+import type { ItemLocation } from "@/shared/enums.ts";
+import type { Item, Property } from "@/shared/relations.ts";
 
 import Equipping from "./Equipping.ts";
 
-/** A character's inventory: what an entry's add or edit stores, checked. */
+/**
+ * A character's inventory: what an entry shows beside its row (where its item can go, where it's worn), what keeps a
+ * location from taking an item, and what an entry's add or edit stores, checked.
+ */
 export default class InventoryEntries {
   /** An entry's charges: both set or both null, and no more remaining than total. */
   private static checkCharges(totalCharges: number | null, remainingCharges: number | null) {
@@ -35,10 +41,29 @@ export default class InventoryEntries {
     return {
       equipped: resolvedEquipped,
       location: resolvedLocation,
-      weaponSet: resolvedEquipped && isHandLocation(resolvedLocation) ? weaponSet : null,
+      weaponSet: resolvedEquipped && ItemPlacement.isHand(resolvedLocation) ? weaponSet : null,
       totalCharges: totalCharges ?? null,
       remainingCharges: remainingCharges ?? null,
     };
+  }
+
+  /** What an inventory entry shows beside its row: where its item can go (`placement`), and where it's worn. */
+  static describeInventoryEntry(entry: HeldInventoryEntry, item: Item, properties: Property[]) {
+    return { placement: ItemPlacement.describe(item, properties), slotLabel: ItemPlacement.describeSlot(entry) };
+  }
+
+  /**
+   * Why `location` (in `weaponSet`, stored from 0, for a hand) can't take one more item of the character's, if it
+   * can't: the entry in the way, named, the entry placed (`entryId`, none for a new one) aside.
+   */
+  static describePlacement(
+    view: RulesetView,
+    character: CharacterInput,
+    entryId: string | null,
+    location: ItemLocation,
+    weaponSet: number | null,
+  ) {
+    return { warning: new Equipping(view, character).describeConflict(entryId, location, weaponSet) };
   }
 
   /**

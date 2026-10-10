@@ -2,6 +2,7 @@ import type { InferSelectModel } from "drizzle-orm";
 
 import type { charactersInCharacter } from "@/drizzle/schema.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import ItemPlacement from "@/engine/rulesets/dnd3.5/model/inventory/ItemPlacement.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 /** A built character as the API answers it. */
@@ -42,7 +43,7 @@ export default class CharacterResponse {
     };
   }
 
-  /** The inventory as a flat list of entries, each with its item's fields. */
+  /** The inventory as a flat list of entries, each with its item's fields and where it's worn (`slotLabel`). */
   private static equipmentOf(built: DetailedCharacter) {
     return built.components.inventory.getFlatInventory().map((entry) => ({
       id: entry.id,
@@ -56,6 +57,7 @@ export default class CharacterResponse {
       equipped: entry.equipped,
       location: entry.location,
       weaponSet: entry.weaponSet,
+      slotLabel: ItemPlacement.describeSlot(entry),
       totalCharges: entry.totalCharges,
       remainingCharges: entry.remainingCharges,
       updatedAt: entry.updatedAt,

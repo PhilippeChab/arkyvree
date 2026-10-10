@@ -10,9 +10,15 @@ import CharacterSheet from "./sheet/CharacterSheet.tsx";
 
 /**
  * The 3.5 characters, as the module answers the server of them: their sheets, as the API answers them and printed,
- * what equipping an item checks, and how a new one's ability scores are set and the races it can pick.
+ * where an item goes and what equipping one checks, and how a new one's ability scores are set and the races it can
+ * pick.
  */
 export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
+  /** An inventory entry beside its row: where its item can go, and where it's worn. */
+  protected describeInventoryEntry(...args: Parameters<typeof InventoryEntries.describeInventoryEntry>) {
+    return InventoryEntries.describeInventoryEntry(...args);
+  }
+
   /** A character's sheet as the API answers it, with its bonded creatures', or a creature's. */
   describe(...args: Parameters<typeof CharacterDescription.describe>) {
     return CharacterDescription.describe(...args);
@@ -26,6 +32,11 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
   /** A character as a campaign member reads it: partly, or its sheet with its private notes shown or blank. */
   describeForMember(...args: Parameters<typeof CharacterDescription.describeForMember>) {
     return CharacterDescription.describeForMember(...args);
+  }
+
+  /** Why a location can't take one more item of the character's, if it can't: what the inventory dialogs warn of. */
+  describePlacement(...args: Parameters<typeof InventoryEntries.describePlacement>) {
+    return InventoryEntries.describePlacement(...args);
   }
 
   /** A character's printed sheet: the PDF document the server renders. */

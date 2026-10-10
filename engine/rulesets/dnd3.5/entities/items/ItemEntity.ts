@@ -5,6 +5,8 @@ import { z } from "zod";
 import { CustomizationPageEntity } from "@/engine/core/entities/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
+import ItemPlacement from "@/engine/rulesets/dnd3.5/model/inventory/ItemPlacement.ts";
+import { TEMPLATE_ITEM_TYPES, type TemplateItemType } from "@/shared/dnd3.5/itemTemplates.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 import type { Item } from "@/shared/relations.ts";
 
@@ -33,6 +35,9 @@ type ItemColumns = Omit<ItemBody, "costGp" | "isTemplate" | "sourceItemId" | "we
 /** A variant of an item, as its form sends it. */
 type VariantBody = { description?: string | null; name: string };
 
+/** A type an item can be based on a template of: a weapon's, an armor's or a shield's. */
+const TEMPLATE_TYPE = z.enum(TEMPLATE_ITEM_TYPES);
+
 /** The variants an item's form makes at once: as many as the rules allow. */
 const VARIANTS = z.array(z.unknown()).max(RULESET_LIMITS.itemVariants);
 
@@ -60,9 +65,9 @@ export default class ItemEntity extends CustomizationPageEntity<
     return item;
   }
 
-  /** An item's slot: its type's (an armor's the torso, a shield's the off hand), or the one its form gives. */
+  /** An item's slot: the one its type sets (an armor's the torso, a shield's the off hand), or the one its form gives. */
   private slotOf(item: { slot?: ItemLocation; type?: string | null }): ItemLocation | undefined {
-    return item.type === "Armor" ? "Torso" : item.type === "Shield" ? "Off Hand" : item.slot;
+    return ItemPlacement.slotOfType(item.type ?? null) ?? item.slot;
   }
 
   /** The template an item made from `item` points at: `item` itself when it's a template, or its own template. */
@@ -111,6 +116,12 @@ export default class ItemEntity extends CustomizationPageEntity<
     return [...proficiency, ...requirements];
   }
 
+  /** An item as its page shows it, with where a character carrying it can place it (`placement`). */
+  override describe(id: string) {
+    const item = super.describe(id);
+    return { ...item, placement: ItemPlacement.describe(item, item.properties) };
+  }
+
   /** A page of the ruleset's items, each with its template's name. */
   override openList(where: { childOnly?: boolean }) {
     const list = super.openList(where);
@@ -125,6 +136,14 @@ export default class ItemEntity extends CustomizationPageEntity<
               : null,
         })),
     };
+  }
+
+  /**
+   * The ruleset's templates of a type (`type`; every type's without one), as the server reads them (`filters`): refused
+   * for a type no item can be based on a template of.
+   */
+  openTemplates(type?: string): { filters: { isTemplate: true; type?: TemplateItemType } } {
+    return { filters: { isTemplate: true, type: RulesError.parse(TEMPLATE_TYPE.optional(), type, ["type"]) } };
   }
 
   /**

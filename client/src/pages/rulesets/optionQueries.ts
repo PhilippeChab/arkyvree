@@ -10,7 +10,6 @@ import { type InferRequestType, parseResponse } from "hono/client";
 import { nextPage } from "@/client/src/lib/pageItems.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import type { TemplateItemType } from "@/shared/itemTemplates.ts";
 
 /** The aptitudes a picker offers: those of the ruleset's feats, or of its spells (all of them without one). */
 export type AptitudeScope = NonNullable<
@@ -55,7 +54,7 @@ export function featOptionsQuery(rulesetId: string, search: string) {
 }
 
 /** The ruleset's templates of an item type (its weapons, armors or shields an item can be based on). */
-export function itemTemplatesQuery(rulesetId: string, type: TemplateItemType) {
+export function itemTemplatesQuery(rulesetId: string, type: string) {
   return queryOptions({
     queryKey: QUERY_KEYS.rulesets.itemTemplates(rulesetId, type),
     queryFn: () => parseResponse(rpc.api.rulesets[":id"].templates.$get({ param: { id: rulesetId }, query: { type } })),
