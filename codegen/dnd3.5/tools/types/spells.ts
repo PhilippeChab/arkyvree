@@ -36,7 +36,7 @@ export interface SpellReference {
 
   /**
    * Each spell as the seeds make it, its overrides applied: its description, and its level entries, the scraped ones
-   * and the overrides' (which only the copies an extension makes of a core spell read so far: #359)
+   * and the overrides', which the spell's seed, the copies an extension makes of a core spell and a domain's check read
    */
   mapping: Record<string, { description: string; levelEntries: { className: string; level: number }[] }>;
 

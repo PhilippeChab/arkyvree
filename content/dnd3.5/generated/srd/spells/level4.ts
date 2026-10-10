@@ -197,8 +197,8 @@ export const LEVEL_4_SPELLS: PowerSeed[] = [
     name: "Cure Critical Wounds",
     description:
       "This functions like cure light wounds, except it restores 4d8 points of damage + 1 per caster level (maximum +20).",
-    aptitudes: ["Cleric Spells", "Druid Spells", "Hunter of the Dead Spells"],
-    aptitudeLevels: { "Cleric Spells": 4, "Druid Spells": 5, "Hunter of the Dead Spells": 4 },
+    aptitudes: ["Blackguard Spells", "Cleric Spells", "Druid Spells", "Hunter of the Dead Spells"],
+    aptitudeLevels: { "Blackguard Spells": 4, "Cleric Spells": 4, "Druid Spells": 5, "Hunter of the Dead Spells": 4 },
     savingThrow: "Will half (harmless); see text",
     properties: [
       { type: "SPELL_SCHOOL", value: "Conjuration" },
@@ -260,7 +260,7 @@ export const LEVEL_4_SPELLS: PowerSeed[] = [
     name: "Dimension Door",
     description:
       "You instantly teleport to any spot within range by visualizing it or stating direction and distance. You cannot take other actions until your next turn. You can bring objects up to your maximum load and one additional willing Medium or smaller creature per three caster levels (Large counts as two Medium, etc.). All must be touching. Arriving in a solid object deals 1d6 damage and shunts you to a random open space within 100 feet; if none, additional 2d6 damage and shunted within 1,000 feet; if still none, additional 4d6 and the spell fails.",
-    aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Assassin Spells", "Bard Spells", "Sorcerer Spells", "Wizard Spells"],
     savingThrow: "None and Will negates (object)",
     properties: [
       { type: "SPELL_SCHOOL", value: "Conjuration" },
@@ -518,7 +518,9 @@ export const LEVEL_4_SPELLS: PowerSeed[] = [
     description:
       "The subject moves and attacks normally despite movement-impeding magic like paralysis, solid fog, slow, and web. It automatically succeeds on grapple checks to resist or escape grapples and pins. It also attacks and moves normally underwater with melee weapons. Does not grant water breathing. Material Component: A leather thong bound around an appendage.",
     aptitudes: [
+      "Assassin Spells",
       "Bard Spells",
+      "Blackguard Spells",
       "Cleric Spells",
       "Druid Spells",
       "Hunter of the Dead Spells",
@@ -712,7 +714,7 @@ export const LEVEL_4_SPELLS: PowerSeed[] = [
   {
     name: "Inflict Critical Wounds",
     description: "This functions like inflict light wounds, except it deals 4d8 + 1 per caster level (maximum +20).",
-    aptitudes: ["Blighter Spells", "Cleric Spells"],
+    aptitudes: ["Blackguard Spells", "Blighter Spells", "Cleric Spells"],
     savingThrow: "Will half",
     properties: [
       { type: "SPELL_SCHOOL", value: "Necromancy" },
@@ -728,7 +730,14 @@ export const LEVEL_4_SPELLS: PowerSeed[] = [
   {
     name: "Invisibility, Greater",
     description: "This functions like invisibility, except attacking does not end the effect.",
-    aptitudes: ["Bard Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells", "Wu Jen Spells"],
+    aptitudes: [
+      "Assassin Spells",
+      "Bard Spells",
+      "Sorcerer Spells",
+      "Vigilante Spells",
+      "Wizard Spells",
+      "Wu Jen Spells",
+    ],
     savingThrow: "Will negates (harmless)",
     properties: [
       { type: "SPELL_SCHOOL", value: "Illusion" },
@@ -786,7 +795,14 @@ export const LEVEL_4_SPELLS: PowerSeed[] = [
     name: "Locate Creature",
     description:
       "This functions like locate object, except it locates creatures. You sense direction and movement of a known or familiar creature, or a specific kind you have seen within 30 feet. Cannot find creature types. Running water blocks it. Material Component: Bloodhound fur.",
-    aptitudes: ["Bard Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells", "Wu Jen Spells"],
+    aptitudes: [
+      "Assassin Spells",
+      "Bard Spells",
+      "Sorcerer Spells",
+      "Vigilante Spells",
+      "Wizard Spells",
+      "Wu Jen Spells",
+    ],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Divination" },
@@ -842,7 +858,7 @@ export const LEVEL_4_SPELLS: PowerSeed[] = [
     name: "Modify Memory",
     description:
       "You alter up to 5 minutes of a subject's memories. Illogical modifications are dismissed as bad dreams. Useful applications include implanting friendly encounters, changing orders, or making the subject forget your presence. The GM may judge modifications that are too nonsensical as ineffective.",
-    aptitudes: ["Bard Spells"],
+    aptitudes: ["Assassin Spells", "Bard Spells"],
     savingThrow: "Will negates",
     properties: [
       { type: "SPELL_SCHOOL", value: "Enchantment" },
@@ -1218,7 +1234,14 @@ export const LEVEL_4_SPELLS: PowerSeed[] = [
     name: "Summon Monster IV",
     description:
       "This functions like summon monster I, except you summon one 4th-level, 1d3 3rd-level, or 1d4+1 lower-level creatures.",
-    aptitudes: ["Bard Spells", "Cleric Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
+    aptitudes: [
+      "Bard Spells",
+      "Blackguard Spells",
+      "Cleric Spells",
+      "Sorcerer Spells",
+      "Wizard Spells",
+      "Wu Jen Spells",
+    ],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Conjuration" },

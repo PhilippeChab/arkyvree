@@ -122,7 +122,14 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
     name: "Clairaudience/clairvoyance",
     description:
       "You create an invisible sensor at a known location (familiar or obvious, such as behind a door or around a corner) that lets you hear or see (your choice) as if present. The sensor is stationary but can be rotated freely. Enhanced senses do not function through it. Magical darkness prevents seeing; natural pitch darkness allows vision in a 10-foot radius. This works only on your current plane. Arcane Focus: A small horn (for hearing) or a glass eye (for seeing).",
-    aptitudes: ["Bard Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells"],
+    aptitudes: ["Assassin Spells", "Bard Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells"],
+    aptitudeLevels: {
+      "Assassin Spells": 4,
+      "Bard Spells": 3,
+      "Sorcerer Spells": 3,
+      "Vigilante Spells": 3,
+      "Wizard Spells": 3,
+    },
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Divination" },
@@ -185,6 +192,7 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
     description:
       "The target contracts a disease of your choice, which takes effect immediately with no incubation period.",
     aptitudes: [
+      "Blackguard Spells",
       "Blighter Spells",
       "Cleric Spells",
       "Druid Spells",
@@ -193,6 +201,7 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
       "Wizard Spells",
     ],
     aptitudeLevels: {
+      "Blackguard Spells": 3,
       "Blighter Spells": 3,
       "Cleric Spells": 3,
       "Druid Spells": 3,
@@ -258,6 +267,7 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
       "This functions like cure light wounds, except it restores 3d8 points of damage + 1 per caster level (maximum +15).",
     aptitudes: [
       "Bard Spells",
+      "Blackguard Spells",
       "Cleric Spells",
       "Druid Spells",
       "Hunter of the Dead Spells",
@@ -266,6 +276,7 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
     ],
     aptitudeLevels: {
       "Bard Spells": 3,
+      "Blackguard Spells": 3,
       "Cleric Spells": 3,
       "Druid Spells": 4,
       "Hunter of the Dead Spells": 3,
@@ -314,7 +325,7 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   {
     name: "Deep Slumber",
     description: "This functions like sleep, except it affects 10 HD of creatures.",
-    aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Assassin Spells", "Bard Spells", "Sorcerer Spells", "Wizard Spells"],
     savingThrow: "Will negates",
     properties: [
       { type: "SPELL_SCHOOL", value: "Enchantment" },
@@ -334,7 +345,7 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
     name: "Deeper Darkness",
     description:
       "This functions like darkness, except the shadowy illumination extends to a 60-foot radius and lasts longer. Daylight and deeper darkness temporarily negate each other in overlapping areas. This counters and dispels light spells of equal or lower level, including daylight and light.",
-    aptitudes: ["Blighter Spells", "Cleric Spells"],
+    aptitudes: ["Assassin Spells", "Blackguard Spells", "Blighter Spells", "Cleric Spells"],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Evocation" },
@@ -610,7 +621,8 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
     name: "Glibness",
     description:
       "You gain a +30 bonus on Bluff checks to convince others of your words' truth (not for feinting, diversion, or innuendo). Lie-detecting magical effects must succeed on a caster level check (1d20 + CL) against DC 15 + your caster level to function against you.",
-    aptitudes: ["Bard Spells", "Vigilante Spells"],
+    aptitudes: ["Assassin Spells", "Bard Spells", "Vigilante Spells"],
+    aptitudeLevels: { "Assassin Spells": 4, "Bard Spells": 3, "Vigilante Spells": 3 },
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -735,7 +747,22 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
     name: "Illusory Script",
     description:
       "You write information that only designated readers can understand. Others see foreign or magical writing. Unauthorized readers who attempt to read it trigger an illusory effect (save or be subject to a suggestion you implanted, lasting 30 minutes). Dispel magic destroys both the illusion and the secret message. True seeing combined with read magic or comprehend languages reveals the hidden text. Material Component: Lead-based ink worth at least 50 gp.",
-    aptitudes: ["Bard Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells", "Wu Jen Spells"],
+    aptitudes: [
+      "Assassin Spells",
+      "Bard Spells",
+      "Sorcerer Spells",
+      "Vigilante Spells",
+      "Wizard Spells",
+      "Wu Jen Spells",
+    ],
+    aptitudeLevels: {
+      "Assassin Spells": 2,
+      "Bard Spells": 3,
+      "Sorcerer Spells": 3,
+      "Vigilante Spells": 3,
+      "Wizard Spells": 3,
+      "Wu Jen Spells": 3,
+    },
     savingThrow: "Will negates; see text",
     properties: [
       { type: "SPELL_SCHOOL", value: "Illusion" },
@@ -754,7 +781,7 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   {
     name: "Inflict Serious Wounds",
     description: "This functions like inflict light wounds, except it deals 3d8 + 1 per caster level (maximum +15).",
-    aptitudes: ["Blighter Spells", "Cleric Spells"],
+    aptitudes: ["Blackguard Spells", "Blighter Spells", "Cleric Spells"],
     savingThrow: "Will half",
     properties: [
       { type: "SPELL_SCHOOL", value: "Necromancy" },
@@ -912,7 +939,7 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
     name: "Magic Circle Against Good",
     description:
       "This functions like magic circle against evil, except it uses protection from good effects and can imprison nonevil called creatures.",
-    aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
+    aptitudes: ["Assassin Spells", "Cleric Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "Will negates (harmless)",
     properties: [
       { type: "SPELL_SCHOOL", value: "Abjuration" },
@@ -1085,8 +1112,8 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
     name: "Nondetection",
     description:
       "The warded creature or object resists divination spells. Diviners must succeed on a caster level check against DC 11 + the nondetection caster's level (or DC 15 + CL if self-cast). Also wards the creature's gear. Material Component: Diamond dust worth 50 gp.",
-    aptitudes: ["Ranger Spells", "Sorcerer Spells", "Wizard Spells"],
-    aptitudeLevels: { "Ranger Spells": 4, "Sorcerer Spells": 3, "Wizard Spells": 3 },
+    aptitudes: ["Assassin Spells", "Ranger Spells", "Sorcerer Spells", "Wizard Spells"],
+    aptitudeLevels: { "Assassin Spells": 3, "Ranger Spells": 4, "Sorcerer Spells": 3, "Wizard Spells": 3 },
     savingThrow: "Will negates (harmless, object)",
     properties: [
       { type: "SPELL_SCHOOL", value: "Abjuration" },
@@ -1140,8 +1167,22 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
     name: "Poison",
     description:
       "A melee touch attack infects the target, dealing 1d10 temporary Constitution damage immediately and another 1d10 one minute later. Each instance allows a Fortitude save (DC 10 + half CL + Wis modifier).",
-    aptitudes: ["Blighter Spells", "Cleric Spells", "Druid Spells", "Warmage Spells"],
-    aptitudeLevels: { "Blighter Spells": 3, "Cleric Spells": 4, "Druid Spells": 3, "Warmage Spells": 3 },
+    aptitudes: [
+      "Assassin Spells",
+      "Blackguard Spells",
+      "Blighter Spells",
+      "Cleric Spells",
+      "Druid Spells",
+      "Warmage Spells",
+    ],
+    aptitudeLevels: {
+      "Assassin Spells": 4,
+      "Blackguard Spells": 4,
+      "Blighter Spells": 3,
+      "Cleric Spells": 4,
+      "Druid Spells": 3,
+      "Warmage Spells": 3,
+    },
     savingThrow: "Fortitude negates; see text",
     properties: [
       { type: "SPELL_SCHOOL", value: "Necromancy" },
@@ -1533,6 +1574,7 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
       "This functions like summon monster I, except you summon one 3rd-level, 1d3 2nd-level, or 1d4+1 1st-level creatures.",
     aptitudes: [
       "Bard Spells",
+      "Blackguard Spells",
       "Cleric Spells",
       "Knight of the Chalice Spells",
       "Sorcerer Spells",

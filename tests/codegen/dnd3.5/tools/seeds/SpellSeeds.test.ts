@@ -40,3 +40,25 @@ describe("A spell's level", () => {
     }
   });
 });
+
+describe("A spell's lists", () => {
+  test("hold those its override's level entries add, at their level, as the copies of a core spell do", () => {
+    const classLists = Library.book(CORE_BOOK).classSpellLists();
+    let added = 0;
+    for (const book of References.books()) {
+      const ref = References.find(book, "spell");
+      for (const spell of ref ? spellsOf(book) : []) {
+        for (const { className, level } of ref?.overrides?.[spell.name]?.levelEntries ?? []) {
+          expect(levelsOf(spell)).toContainEqual({ list: classLists[className], level });
+          added++;
+        }
+      }
+    }
+    expect(added).toBeGreaterThan(0);
+    // The Assassin's list is no list of the core rules: its 2nd level leaves Illusory Script a 3rd-level spell there
+    expect(spellsOf(CORE_BOOK).find(({ name }) => name === "Illusory Script")).toMatchObject({
+      level: 3,
+      aptitudeLevels: { "Assassin Spells": 2, "Bard Spells": 3, "Wizard Spells": 3 },
+    });
+  });
+});

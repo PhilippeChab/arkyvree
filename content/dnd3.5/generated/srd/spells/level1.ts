@@ -181,7 +181,14 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
     name: "Cause Fear",
     description:
       "The target becomes frightened. On a successful Will save, it is only shaken for 1 round. Creatures with 6 or more HD are immune. This spell counters and dispels remove fear.",
-    aptitudes: ["Bard Spells", "Cleric Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells"],
+    aptitudes: [
+      "Bard Spells",
+      "Blackguard Spells",
+      "Cleric Spells",
+      "Sorcerer Spells",
+      "Vigilante Spells",
+      "Wizard Spells",
+    ],
     savingThrow: "Will partial",
     properties: [
       { type: "SPELL_SCHOOL", value: "Necromancy" },
@@ -341,6 +348,7 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
       "By laying your hand on a living creature, you channel positive energy to heal 1d8 points of damage + 1 per caster level (maximum +5). Against undead, this spell deals damage instead. An undead creature can apply spell resistance and attempt a Will save for half damage.",
     aptitudes: [
       "Bard Spells",
+      "Blackguard Spells",
       "Cleric Spells",
       "Druid Spells",
       "Hunter of the Dead Spells",
@@ -349,6 +357,7 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
     ],
     aptitudeLevels: {
       "Bard Spells": 1,
+      "Blackguard Spells": 1,
       "Cleric Spells": 1,
       "Druid Spells": 1,
       "Hunter of the Dead Spells": 1,
@@ -613,7 +622,7 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   {
     name: "Doom",
     description: "You fill the target with horrible dread, causing it to become shaken.",
-    aptitudes: ["Blighter Spells", "Cleric Spells", "Knight of the Chalice Spells"],
+    aptitudes: ["Blackguard Spells", "Blighter Spells", "Cleric Spells", "Knight of the Chalice Spells"],
     savingThrow: "Will negates",
     properties: [
       { type: "SPELL_SCHOOL", value: "Necromancy" },
@@ -914,7 +923,7 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
     name: "Inflict Light Wounds",
     description:
       "You channel negative energy through your touch, dealing 1d8 + 1 per caster level (maximum +5) damage. Against undead, this heals instead.",
-    aptitudes: ["Blighter Spells", "Cleric Spells"],
+    aptitudes: ["Blackguard Spells", "Blighter Spells", "Cleric Spells"],
     savingThrow: "Will half",
     properties: [
       { type: "SPELL_SCHOOL", value: "Necromancy" },
@@ -1062,6 +1071,7 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
     description:
       "A weapon gains a +1 enhancement bonus on attack and damage rolls (does not stack with masterwork). Cannot affect natural weapons (use magic fang instead). Monk unarmed strikes can be enhanced.",
     aptitudes: [
+      "Blackguard Spells",
       "Cleric Spells",
       "Hunter of the Dead Spells",
       "Knight of the Chalice Spells",
@@ -1167,7 +1177,8 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   {
     name: "Pass Without Trace",
     description: "Subjects leave no footprints or scent in any terrain. Nonmagical tracking is impossible.",
-    aptitudes: ["Druid Spells", "Ranger Spells"],
+    aptitudes: ["Assassin Spells", "Druid Spells", "Ranger Spells"],
+    aptitudeLevels: { "Assassin Spells": 2, "Druid Spells": 1, "Ranger Spells": 1 },
     savingThrow: "Will negates (harmless)",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -1552,6 +1563,7 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
       "You summon an extraplanar creature that acts immediately on your turn, attacking opponents or following your directions. It cannot summon others or use teleportation/planar travel. The spell takes on type descriptors matching the summoned creature's alignment subtypes. Arcane Focus: A tiny bag and a small candle.",
     aptitudes: [
       "Bard Spells",
+      "Blackguard Spells",
       "Cleric Spells",
       "Knight of the Chalice Spells",
       "Sorcerer Spells",
@@ -1652,8 +1664,16 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
   {
     name: "Undetectable Alignment",
     description: "Conceals the alignment of a creature or object from all divination.",
-    aptitudes: ["Bard Spells", "Cleric Spells", "Knight of the Chalice Spells", "Paladin Spells", "Vigilante Spells"],
+    aptitudes: [
+      "Assassin Spells",
+      "Bard Spells",
+      "Cleric Spells",
+      "Knight of the Chalice Spells",
+      "Paladin Spells",
+      "Vigilante Spells",
+    ],
     aptitudeLevels: {
+      "Assassin Spells": 2,
       "Bard Spells": 1,
       "Cleric Spells": 2,
       "Knight of the Chalice Spells": 2,

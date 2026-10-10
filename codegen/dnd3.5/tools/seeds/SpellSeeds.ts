@@ -22,19 +22,20 @@ export class SpellSeeds extends ReferenceSeeds<SpellReference> {
   /**
    * A spell's aptitudes (its classes' spell lists, by the name its level line gives each, `classSpellLists`, and the
    * lists other books' classes inherit, `othersInherited`), its level on each, and its lowest level: on a list it's on
-   * that the book's ruleset has (`rulesetHas`), else in any level entry, else 0. Its level entries are the scraped
-   * ones: an override's extra entries reach only the copies an extension makes of a core spell (#359).
+   * that the book's ruleset has (`rulesetHas`), else in any level entry, else 0. Its level entries are its mapping's:
+   * the scraped ones and its override's.
    */
   private levels(
     entry: RawSpell,
     othersInherited: { aptitude: string; list: InheritedSpellList }[],
     classSpellLists: Record<string, string>,
   ) {
+    const { levelEntries } = this.ref.mapping[entry.name];
     const aptitudes = new Set<string>();
     const aptitudeLevels: Record<string, number> = {};
     let minLevel = 99;
 
-    for (const le of entry.levelEntries) {
+    for (const le of levelEntries) {
       const apt = classSpellLists[le.className];
       if (apt) {
         aptitudes.add(apt);
@@ -45,14 +46,14 @@ export class SpellSeeds extends ReferenceSeeds<SpellReference> {
 
     for (const { aptitude, list } of othersInherited) {
       if (aptitudes.has(aptitude)) continue;
-      const level = this.book.inheritedLevel(entry, entry.levelEntries, list);
+      const level = this.book.inheritedLevel(entry, levelEntries, list);
       if (level === undefined) continue;
       aptitudes.add(aptitude);
       aptitudeLevels[aptitude] = level;
     }
 
     // Fallback: if no entry is on a list the ruleset has, use the lowest level from any entry
-    if (minLevel === 99) for (const le of entry.levelEntries) minLevel = Math.min(minLevel, le.level);
+    if (minLevel === 99) for (const le of levelEntries) minLevel = Math.min(minLevel, le.level);
 
     if (minLevel === 99) minLevel = 0;
     return { aptitudes, aptitudeLevels, minLevel };
