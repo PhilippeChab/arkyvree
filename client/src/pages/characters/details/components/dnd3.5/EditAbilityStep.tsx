@@ -1,7 +1,7 @@
 import { type Control, useController } from "react-hook-form";
 
 import { BlankNote, DiceSpinner, LoadError } from "@/client/src/components/common/index.ts";
-import type { LevelUpFormData } from "@/client/src/pages/characters/details/components/useLevelWizardBase.ts";
+import type { LevelUpFormData } from "@/client/src/pages/characters/details/components/levelUp/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
 import { AbilityIncreaseField } from "./AbilityIncreaseField.tsx";

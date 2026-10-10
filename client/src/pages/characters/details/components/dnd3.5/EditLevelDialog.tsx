@@ -1,13 +1,16 @@
 import type { ComponentType } from "react";
 
-import type { EditLevelDialogProps } from "@/client/src/pages/characters/details/components/levelUpFactory.ts";
-import { LevelWizardDialog } from "@/client/src/pages/characters/details/components/LevelWizardDialog.tsx";
+import { LevelWizardDialog } from "@/client/src/pages/characters/details/components/levelUp/index.ts";
+import type {
+  EditLevelDialogProps,
+  LevelStepProps,
+} from "@/client/src/pages/characters/details/components/levelUpFactory.ts";
 
 import { EditAbilityStep } from "./EditAbilityStep.tsx";
 import { EditReviewStep } from "./EditReviewStep.tsx";
 import { FeatsStep } from "./FeatsStep.tsx";
 import { HpStep } from "./HpStep.tsx";
-import { type EditLevelWizard, type LevelStepProps, useEditLevelWizard } from "./levelUp/index.ts";
+import { type EditLevelWizard, useEditLevelWizard } from "./levelUp/index.ts";
 import { SkillsStep } from "./SkillsStep.tsx";
 import { SpellsStep } from "./SpellsStep.tsx";
 
@@ -31,7 +34,6 @@ export function EditLevelDialog({
   editingLevel,
 }: EditLevelDialogProps) {
   const wizard = useEditLevelWizard({ open, onClose, characterId, editingLevel });
-  const Step = EDIT_STEPS[wizard.steps[wizard.activeStep].name];
 
   return (
     <LevelWizardDialog
@@ -39,10 +41,10 @@ export function EditLevelDialog({
       onExited={onExited}
       title="Edit Level"
       wizard={wizard}
+      steps={EDIT_STEPS}
       finishLabel="Finish"
-      isSaving={wizard.finalizeMutation.isPending}
-    >
-      <Step wizard={wizard} characterId={characterId} baseRules={baseRules} />
-    </LevelWizardDialog>
+      characterId={characterId}
+      baseRules={baseRules}
+    />
   );
 }

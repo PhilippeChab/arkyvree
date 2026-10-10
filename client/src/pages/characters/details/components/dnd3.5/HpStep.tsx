@@ -5,12 +5,11 @@ import { DiceSpinner, SubsectionTitle } from "@/client/src/components/common/ind
 import { CasinoIcon } from "@/client/src/components/icons/index.ts";
 import { formatDie } from "@/client/src/lib/formatNumeric.ts";
 import { readNumberInput } from "@/client/src/lib/validation.ts";
+import { hpError, type HpLevel } from "@/client/src/pages/characters/details/components/levelUp/index.ts";
 import { rollDie } from "@/client/src/pages/characters/dice.ts";
 import { RollAllButton } from "@/client/src/pages/characters/RollAllButton.tsx";
 import { useDiceRoll } from "@/client/src/pages/characters/useDiceRoll.ts";
 import { PREFERS_REDUCED_MOTION, settleAnimation } from "@/client/src/theme/animations.ts";
-
-import { hpError, type HpLevel } from "./levelUp/index.ts";
 
 /** The hit points a level wizard hands the HP step: its levels, and their values, which the wizard keeps. */
 interface HpState {

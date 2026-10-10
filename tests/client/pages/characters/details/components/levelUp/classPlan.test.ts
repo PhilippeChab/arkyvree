@@ -1,9 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import {
-  plannedLevel,
-  plannedSlotKeys,
-} from "@/client/src/pages/characters/details/components/dnd3.5/levelUp/classPlan.ts";
+import { plannedLevel, plannedSlotKeys } from "@/client/src/pages/characters/details/components/levelUp/classPlan.ts";
 
 const FIGHTER = { id: "fighter", nextLevel: 3 };
 

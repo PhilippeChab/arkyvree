@@ -6,7 +6,7 @@ import {
   plannedLevelsOf,
   plannedPicker,
   skillPointString,
-} from "@/client/src/pages/characters/details/components/dnd3.5/levelUp/pendingPicks.ts";
+} from "@/client/src/pages/characters/details/components/levelUp/pendingPicks.ts";
 
 /** A planned Fighter 3, then a Wizard 1: Add Level's preview's levels. */
 const FIGHTER_THEN_WIZARD = [

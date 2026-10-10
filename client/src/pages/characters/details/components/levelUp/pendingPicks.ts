@@ -4,9 +4,8 @@
  * and a level's ability increase, which the saves send too.
  */
 
-import type { LevelUpFormData } from "@/client/src/pages/characters/details/components/useLevelWizardBase.ts";
-
-import type { PickerLevel, PreviewLevelDetail } from "./levelUpQueries.ts";
+import type { PickerLevel } from "./levelUpQueries.ts";
+import type { LevelUpFormData } from "./useLevelWizardBase.ts";
 
 /** The planned levels before a pick, as a picker's query sends them. */
 export interface PlannedLevels {
@@ -67,7 +66,7 @@ export function plannedLevelsOf(
  * Nothing until the plan's preview has loaded, which skips the picker's query.
  */
 export function plannedPicker(
-  levelDetails: Pick<PreviewLevelDetail, "klassId" | "klassLevelId" | "level">[] | undefined,
+  levelDetails: { klassId: string; klassLevelId: string; level: number }[] | undefined,
   abilityIncreases: (string | null)[],
   index: number,
   featPicks: string | undefined,

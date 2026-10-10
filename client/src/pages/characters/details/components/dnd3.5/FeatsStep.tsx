@@ -12,21 +12,18 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
-import type {
-  LevelUpFormData,
-  SelectedFeat,
-} from "@/client/src/pages/characters/details/components/useLevelWizardBase.ts";
-
-import { AutoGrantedPicks } from "./AutoGrantedPicks.tsx";
 import {
-  type AptitudePool,
   availableFeatFamilyQuery,
-  type FeatsData,
   type GroupedFeatRow,
+  type LevelUpFormData,
   type PickerLevel,
+  type SelectedFeat,
   withoutPick,
   withPick,
-} from "./levelUp/index.ts";
+} from "@/client/src/pages/characters/details/components/levelUp/index.ts";
+
+import { AutoGrantedPicks } from "./AutoGrantedPicks.tsx";
+import type { FeatsData } from "./levelUp/index.ts";
 import { PickOption, PoolPicker } from "./PoolPicker.tsx";
 
 interface FeatFamilyExpansionProps {
@@ -52,8 +49,6 @@ interface FeatPickerState {
    * checked at too.
    */
   featPicker: PickerLevel;
-  /** The level's feat pools, each with its room for the feats picked (the step's answer). */
-  featPools: Record<string, AptitudePool>;
   featSearch: string;
   featsError: Error | null;
   groupedFeats: GroupedFeatRow[];
@@ -127,7 +122,6 @@ export function FeatsStep({ wizard, characterId }: FeatsStepProps) {
     featData,
     isLoadingFeats,
     featsError,
-    featPools,
     control,
     selectedFeats,
     selectedAptitude,
@@ -149,7 +143,8 @@ export function FeatsStep({ wizard, characterId }: FeatsStepProps) {
   if (featsError && !featData) return <LoadError what="Feats" error={featsError} />;
   if (!featData) return null;
 
-  const openPools = Object.values(featPools).filter((pool) => pool.available > 0);
+  // The level's feat pools, each with its room for the feats picked
+  const openPools = Object.values(featData.aptitudePools).filter((pool) => pool.available > 0);
   if (openPools.length === 0 && featData.autoGrantedFeats.length === 0)
     return <BlankNote>No feats to select at this level</BlankNote>;
 

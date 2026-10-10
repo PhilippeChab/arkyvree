@@ -2,18 +2,19 @@
  * A level's picks as their pools have room for, and the skill points as their levels take them. The form keeps what
  * was picked; the wizards read it through these, so a pool that shrinks (another class planned, a feat that granted
  * room removed) drops its later picks, and a step's change, made from what it shows, keeps them dropped. Until then they
- * wait unshown: a pool that grows back (the class planned again) shows them again. The steps say what fits (`fitted`):
- * the engine fits the picks to their pools, as a save would take them.
+ * wait unshown: a pool that grows back (the class planned again) shows them again. The ruleset's answers say what fits
+ * (`fitted`): the engine fits the picks to their pools, as a save would take them.
  */
 
-import type { AptitudePool, SkillsData } from "./levelUpQueries.ts";
-
-/** A skill as its skills step answers it: its ranks at each count of points, up to the most it keeps. */
-type SpentSkill = Pick<SkillsData["skills"][number], "id" | "ranksByPoints">;
+/** A skill as an answer spends the points on it: its ranks at each count of points, up to the most it keeps. */
+export interface SpentSkill {
+  id: string;
+  ranksByPoints: number[];
+}
 
 /**
- * The skill points the form gave each skill, as its skills step answers them: each up to the most it keeps whole as the
- * save spreads them (its `ranksByPoints`), in the order they were given. Until the step loads, the points stand.
+ * The skill points the form gave each skill, as the answer spends them: each up to the most it keeps whole as the save
+ * spreads them (its `ranksByPoints`), in the order they were given. Until the answer loads, the points stand.
  */
 export function fitSkillPoints(allocations: Record<string, number>, skills: SpentSkill[] | undefined) {
   if (!skills) return allocations;
@@ -30,8 +31,8 @@ export function fitSkillPoints(allocations: Record<string, number>, skills: Spen
 }
 
 /**
- * The picks a step says fit (`fitted`: each pool's ids, as the engine fits them), each the form's own pick, in its
- * order; the same picks if all fit. Until the step answers for these picks, they stand.
+ * The picks an answer says fit (`fitted`: each pool's ids, as the engine fits them), each the form's own pick, in its
+ * order; the same picks if all fit. Until an answer is for these picks, they stand.
  */
 export function keepFitted<T extends { id: string }>(
   picks: Record<string, T[]>,
@@ -41,7 +42,7 @@ export function keepFitted<T extends { id: string }>(
   let changed = false;
   const kept = Object.fromEntries(
     Object.entries(picks).map(([poolId, poolPicks]) => {
-      // Each id the step keeps once: a pick given twice is one
+      // Each id the answer keeps once: a pick given twice is one
       const left = [...(fitted[poolId] ?? [])];
       const fits = poolPicks.filter((pick) => {
         const index = left.indexOf(pick.id);
@@ -56,7 +57,7 @@ export function keepFitted<T extends { id: string }>(
 }
 
 /** The pool whose feat picker is open, while it has slots: one a removed feat granted closes it. */
-export function openPoolOf(aptitudeId: string | null, pools: Record<string, AptitudePool>) {
+export function openPoolOf(aptitudeId: string | null, pools: Record<string, { available: number }>) {
   if (!aptitudeId) return null;
   const available = pools[aptitudeId]?.available;
   return available !== undefined && available <= 0 ? null : aptitudeId;
