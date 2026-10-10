@@ -68,8 +68,9 @@ export default abstract class LevelPicker<
 
   /**
    * The character whose feats and powers the picker leaves out: with every level it has and the wizard plans, built
-   * when first asked. A level can't pick what another holds, picked or granted, a later one too, as the save checks a
-   * level against the character's every other level (`SelectionChecks`).
+   * when first asked. A level can't pick what the character holds, picked or granted at another level, a later one too,
+   * or given by a modifier, as the save checks a level's picks against what the character holds with its every other
+   * level (`SelectionChecks.checkFeatsNotHeld`, `checkPowersNotKnown`).
    */
   protected get holder(): C {
     // With no level edited or planned after it, it's the character the pick is made for

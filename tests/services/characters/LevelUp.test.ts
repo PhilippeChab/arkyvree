@@ -40,6 +40,11 @@ type BatchLevel = [klass: string, level: number, hp: number, ability?: string];
 
 const session = makeSession();
 
+/** The refusal of a pick of a feat that doesn't stack, which the character has already. */
+function alreadyHeld(feat: string) {
+  return { message: `Non-stackable feat "${feat}" is already on this character`, refusal: "invalid" };
+}
+
 function fighter(count: number) {
   return Array.from({ length: count }, (_, i): [string, number] => ["Fighter", i + 1]);
 }
@@ -125,6 +130,32 @@ async function eligible(
     { limit: 20, page: 1 },
   );
   return items.find((row) => row.displayName === search)!.eligible;
+}
+
+/** The names of the feats Add Level's picker offers at a class's `level`, in pool `aptitude`, searched by `search`. */
+async function offeredFeats(characterId: string, klass: string, level: number, aptitude: string, search: string) {
+  const ctx = await getSeedCtx();
+  const { items } = await CharacterLevelsService.getAvailableFeats(
+    session,
+    characterId,
+    { aptitudeId: ctx.aptMap[aptitude], classId: ctx.klassMap.pc[klass], level, search },
+    { limit: 20, page: 1 },
+  );
+  return items.map(({ name }) => name);
+}
+
+/** Gives the character the feats of these `slugs` by modifiers of its own (`set feats.<slug>.possessed`), as a race would. */
+async function possess(characterId: string, slugs: string[]) {
+  for (const slug of slugs) {
+    await Modifiers.create(db, {
+      sourceId: characterId,
+      sourceType: "characters",
+      target: `feats.${slug}.possessed`,
+      value: "true",
+      valueType: "boolean",
+      operator: "set",
+    });
+  }
 }
 
 async function preview(
@@ -1078,6 +1109,91 @@ describe("a spell known once in its class list", () => {
       message: 'Power "Detect Magic" is already known in Sorcerer Spells',
       refusal: "invalid",
     });
+  });
+});
+
+describe("a feat that doesn't stack, held once", () => {
+  test("refuses a feat a modifier gives the character, forced or not, as the picker leaves it out and the preview drops it", async () => {
+    const ctx = await getSeedCtx();
+    // An elf, whose race gives her Martial Weapon Proficiency: Longsword, and a human, whose race doesn't
+    const proficiency = "Martial Weapon Proficiency: Longsword";
+    const elf = await createSeedCharacter(ctx, "wizard");
+    const human = await createSeedCharacter(ctx, "sorcerer");
+    expect(await offeredFeats(human, "Wizard", 1, "General", proficiency)).toEqual([proficiency]);
+    expect(await offeredFeats(elf, "Wizard", 1, "General", proficiency)).toEqual([]);
+
+    const plan = { ...WIZARD_1, feats: { ...WIZARD_1.feats, General: [proficiency] } };
+    const previewed = await preview(ctx, elf, [["Wizard", 1]], undefined, { feats: plan.feats });
+    expect(previewed.feats.fitted[ctx.aptMap["General"]]).toEqual([]);
+    for (const force of [false, true])
+      expect(levelUp(session, ctx, elf, "Wizard", 1, plan, force)).rejects.toMatchObject(alreadyHeld(proficiency));
+  });
+
+  test("refuses a feat another level picked, forced or not, as the picker leaves it out and the preview drops it", async () => {
+    const ctx = await getSeedCtx();
+    const characterId = await createSeedCharacter(ctx, "fighter", { xp: 1000 });
+    // The first level picked Power Attack, which the second's bonus feat picks again
+    await levelUp(session, ctx, characterId, "Fighter", 1, FIGHTER_LEVELS[0]);
+    expect(await offeredFeats(characterId, "Fighter", 2, "Fighter Bonus Feat", "Power Attack")).toEqual([]);
+    const plan = { ...FIGHTER_LEVELS[1], feats: { "Fighter Bonus Feat": ["Power Attack"] } };
+    const previewed = await preview(ctx, characterId, [["Fighter", 2]], undefined, { feats: plan.feats });
+    expect(previewed.feats.fitted[ctx.aptMap["Fighter Bonus Feat"]]).toEqual([]);
+    for (const force of [false, true]) {
+      expect(levelUp(session, ctx, characterId, "Fighter", 2, plan, force)).rejects.toMatchObject(
+        alreadyHeld("Power Attack"),
+      );
+    }
+  });
+
+  test("lets a feat that stacks be picked though the character has it, twice at a level too, previewed and saved", async () => {
+    const ctx = await getSeedCtx();
+    const characterId = await createSeedCharacter(ctx);
+    await possess(characterId, ["toughness"]);
+    expect(await offeredFeats(characterId, "Fighter", 1, "General", "Toughness")).toEqual(["Toughness"]);
+
+    const plan = {
+      ...FIGHTER_LEVELS[0],
+      feats: { General: ["Toughness", "Toughness"], "Fighter Bonus Feat": ["Dodge"] },
+    };
+    const previewed = await preview(ctx, characterId, [["Fighter", 1]], undefined, { feats: plan.feats });
+    const toughness = ctx.featMap["Toughness"];
+    expect(previewed.feats.fitted[ctx.aptMap["General"]]).toEqual([toughness, toughness]);
+    const level = await levelUp(session, ctx, characterId, "Fighter", 1, plan);
+    expect(await savedFeatNames(ctx, [level.id])).toEqual(["Dodge", "Toughness", "Toughness"]);
+  });
+
+  test("keeps a feat a level holds from before the rule: each level edits as it reads, a new pick refused", async () => {
+    const { ctx, characterId, first, resave } = await setupFighter();
+    const [general, bonus] = [ctx.aptMap["General"], ctx.aptMap["Fighter Bonus Feat"]];
+    // Modifiers made after the first level was saved give the character its Improved Initiative, and Iron Will
+    await possess(characterId, ["improvedinitiative", "ironwill"]);
+    await resaveAsRead(characterId, first.id);
+    // Its step keeps its own Improved Initiative, and drops Iron Will, as its save refuses it
+    const picked = [
+      { aptitudeId: general, featId: ctx.featMap["Power Attack"] },
+      { aptitudeId: general, featId: ctx.featMap["Iron Will"] },
+      { aptitudeId: bonus, featId: ctx.featMap["Improved Initiative"] },
+    ];
+    const step = await getLevelStep(session, characterId, "feats", {
+      classId: ctx.klassMap.pc["Fighter"],
+      level: 1,
+      editedLevelId: first.id,
+      featPicks: picked,
+    });
+    expect(step.fitted).toEqual({
+      [general]: [ctx.featMap["Power Attack"]],
+      [bonus]: [ctx.featMap["Improved Initiative"]],
+    });
+    const ironWill = { General: ["Power Attack", "Iron Will"], "Fighter Bonus Feat": ["Improved Initiative"] };
+    expect(resave({ feats: ironWill }, true)).rejects.toMatchObject(alreadyHeld("Iron Will"));
+
+    // Track, picked at a fighter's first level before a ranger's granted it
+    const trackerId = await createSeedCharacter(ctx, "fighter", { xp: 1000 });
+    const tracker = { ...FIGHTER_LEVELS[0], feats: { ...FIGHTER_LEVELS[0].feats, General: ["Power Attack", "Track"] } };
+    const tracking = await levelUp(session, ctx, trackerId, "Fighter", 1, tracker);
+    const ranger = { hp: 8, skills: { Spot: 4, Survival: 4 }, feats: { "Favored Enemy": ["Favored Enemy: Undead"] } };
+    await levelUp(session, ctx, trackerId, "Ranger", 1, ranger);
+    await resaveAsRead(trackerId, tracking.id);
   });
 });
 

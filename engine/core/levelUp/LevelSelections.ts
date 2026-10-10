@@ -1,13 +1,7 @@
+import type { LevelPickRows } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 
 import LevelUpBase from "./LevelUpBase.ts";
-
-/** A saved level's picks, as the character's rows hold them. */
-interface SavedPicks {
-  feats: { aptitudeId: string; featId: string }[];
-  powers: { aptitudeId: string; powerId: string }[];
-  skills: { rank: number; skillId: string }[];
-}
 
 /**
  * A character's saved level's selections, from its rows, as the level's edit opens them: what its ruleset adds of each
@@ -21,7 +15,7 @@ export default abstract class LevelSelections<C, F extends object> extends Level
    * A saved level's selections: its skill ranks, its feats by pool (each with what the ruleset adds of it) and its powers
    * by pool (each with its spell level in the pool when it has one).
    */
-  private buildLevelSelections({ feats: levelFeats, powers: levelPowers, skills: levelSkills }: SavedPicks) {
+  private buildLevelSelections({ feats: levelFeats, powers: levelPowers, skills: levelSkills }: LevelPickRows) {
     const skills: Record<string, number> = {};
     for (const s of levelSkills) skills[s.skillId] = s.rank;
 
@@ -59,11 +53,9 @@ export default abstract class LevelSelections<C, F extends object> extends Level
    * pool. Refused when the character has no such level.
    */
   describeLevel(characterLevelId: string) {
-    const { levels, picks } = this.character.rows;
-    const level = levels.find((saved) => saved.id === characterLevelId);
+    const level = this.character.rows.levels.find((saved) => saved.id === characterLevelId);
     if (!level) throw new RulesError("not-found", "Character level not found");
-    const atLevel = <P extends { characterLevelId: string }>(rows: P[]) =>
-      rows.filter((pick) => pick.characterLevelId === characterLevelId);
+    const { abilityIncreases, ...picks } = this.getSavedPicks(characterLevelId);
     const { klassLevel, klass } = this.getSavedKlassLevel(level);
     return {
       characterLevelId: level.id,
@@ -73,12 +65,8 @@ export default abstract class LevelSelections<C, F extends object> extends Level
       hd: klass.hd,
       hitPoints: this.rules.hitPointsOf(klass.hd),
       hp: level.hp,
-      abilityIncreases: atLevel(picks.abilityIncreases).map(({ abilityId, amount }) => ({ abilityId, amount })),
-      ...this.buildLevelSelections({
-        feats: atLevel(picks.feats),
-        powers: atLevel(picks.powers),
-        skills: atLevel(picks.skills),
-      }),
+      abilityIncreases: abilityIncreases.map(({ abilityId, amount }) => ({ abilityId, amount })),
+      ...this.buildLevelSelections(picks),
     };
   }
 }
