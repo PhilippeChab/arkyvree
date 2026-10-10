@@ -9,7 +9,14 @@ export const DIVINE_FEATS: FeatSeed[] = [
     description:
       "When you use your turn undead ability, you may expend two turn attempts instead of one. Doing so destroys the affected undead outright rather than merely turning them.",
     aptitudes: ["General"],
-    requirements: [eq("feats.turnorrebukeundead.*.possessed")],
+    requirements: [
+      eq("feats.turnorrebukeundead.*.possessed"),
+      or(
+        eqStr("identity.beliefs.alignment", "Lawful Good"),
+        eqStr("identity.beliefs.alignment", "Neutral Good"),
+        eqStr("identity.beliefs.alignment", "Chaotic Good"),
+      ),
+    ],
   },
   {
     name: "Divine Metamagic",
@@ -237,21 +244,52 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description:
       "You gain the ability to spontaneously convert your prepared spells into cure spells from your class spell list, mirroring a cleric's spontaneous casting. You can use this ability a number of times per day equal to your Wisdom modifier.",
     aptitudes: ["General"],
-    requirements: [gte("skills.knowledgereligion.rank", 4)],
+    requirements: [
+      gte("skills.knowledgereligion.rank", 4),
+      or(
+        eqStr("identity.beliefs.alignment", "Lawful Good"),
+        eqStr("identity.beliefs.alignment", "Neutral Good"),
+        eqStr("identity.beliefs.alignment", "Chaotic Good"),
+        eqStr("identity.beliefs.alignment", "Lawful Neutral"),
+        eqStr("identity.beliefs.alignment", "True Neutral"),
+        eqStr("identity.beliefs.alignment", "Chaotic Neutral"),
+      ),
+    ],
   },
   {
     name: "Spontaneous Summoner",
     description:
       "You can spontaneously convert prepared spells into summon nature's ally spells from your class list, in the same manner a druid does. The number of times you may do this per day equals your Wisdom modifier.",
     aptitudes: ["General"],
-    requirements: [gte("abilities.wisdom.total", 13), gte("skills.knowledgenature.rank", 4)],
+    requirements: [
+      gte("abilities.wisdom.total", 13),
+      gte("skills.knowledgenature.rank", 4),
+      or(
+        eqStr("identity.beliefs.alignment", "Neutral Good"),
+        eqStr("identity.beliefs.alignment", "Lawful Neutral"),
+        eqStr("identity.beliefs.alignment", "True Neutral"),
+        eqStr("identity.beliefs.alignment", "Chaotic Neutral"),
+        eqStr("identity.beliefs.alignment", "Neutral Evil"),
+      ),
+    ],
   },
   {
     name: "Spontaneous Wounder",
     description:
       "You gain the ability to spontaneously convert your prepared spells into inflict spells from your class spell list, functioning like a cleric's spontaneous casting of inflict spells. You can use this ability a number of times per day equal to your Wisdom modifier.",
     aptitudes: ["General"],
-    requirements: [gte("abilities.wisdom.total", 13), gte("skills.knowledgereligion.rank", 4)],
+    requirements: [
+      gte("abilities.wisdom.total", 13),
+      gte("skills.knowledgereligion.rank", 4),
+      or(
+        eqStr("identity.beliefs.alignment", "Lawful Neutral"),
+        eqStr("identity.beliefs.alignment", "True Neutral"),
+        eqStr("identity.beliefs.alignment", "Chaotic Neutral"),
+        eqStr("identity.beliefs.alignment", "Lawful Evil"),
+        eqStr("identity.beliefs.alignment", "Neutral Evil"),
+        eqStr("identity.beliefs.alignment", "Chaotic Evil"),
+      ),
+    ],
   },
 ];
 
@@ -271,6 +309,13 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
     description:
       "Applying this metamagic feat gives a spell the good descriptor. If the modified spell inflicts damage, half that damage (rounded down) stems from pure divine energy and therefore bypasses resistance or immunity to energy-based attacks. For instance, a consecrated fire storm from a 16th-level cleric inflicts 16d6 damage: half is fire and the other half is untyped divine power, so fire-immune creatures still take the divine portion. The modified spell occupies a slot one level higher than its actual level.",
     aptitudes: ["General", "Wizard Bonus Feat"],
+    requirements: [
+      or(
+        eqStr("identity.beliefs.alignment", "Lawful Good"),
+        eqStr("identity.beliefs.alignment", "Neutral Good"),
+        eqStr("identity.beliefs.alignment", "Chaotic Good"),
+      ),
+    ],
     properties: [{ type: "FEAT_FAMILY", value: "Metamagic" }],
   },
   {
@@ -278,6 +323,13 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
     description:
       "This metamagic feat applies the evil descriptor to a spell. When the spell inflicts damage, half of it (rounded down) comes from raw divine power and cannot be reduced by energy resistance or immunity. The modified spell requires a spell slot one level above the spell's normal level.",
     aptitudes: ["General", "Wizard Bonus Feat"],
+    requirements: [
+      or(
+        eqStr("identity.beliefs.alignment", "Lawful Evil"),
+        eqStr("identity.beliefs.alignment", "Neutral Evil"),
+        eqStr("identity.beliefs.alignment", "Chaotic Evil"),
+      ),
+    ],
     properties: [{ type: "FEAT_FAMILY", value: "Metamagic" }],
   },
   {
@@ -378,5 +430,6 @@ export const WILD_FEATS: FeatSeed[] = [
     description:
       "If you sustained damage during the previous round, you may expend one wild shape use as a free action on your turn to enter a frenzy. While in this state, you gain +2 to Strength, +2 to Constitution, and suffer a -2 penalty to AC. The frenzy lasts 5 rounds and cannot be ended early.",
     aptitudes: ["General"],
+    requirements: [eq("feats.wildshape.*.possessed")],
   },
 ];

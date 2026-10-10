@@ -119,15 +119,13 @@ describe("parser:dnd3.5:validate", () => {
     ]);
     const feats = issuesOf("complete-divine/feats.json", clear);
     expect(feats.map(({ kind, entityName }) => `${kind} ${entityName}`)).toEqual([
-      "prereq Consecrate Spell",
-      "prereq Corrupt Spell",
-      "prereq Disciple of the Sun",
       "modifier Divine Spell Power",
       "modifier Oaken Resilience",
-      "prereq Spontaneous Healer",
-      "prereq Spontaneous Summoner",
-      "prereq Spontaneous Wounder",
       "modifier Wolverine's Rage",
+    ]);
+    expect(issuesOf("complete-arcane/feats.json", clear).filter(({ kind }) => kind === "prereq")).toEqual([
+      { kind: "prereq", entityName: "Extra Spell Secret", text: "Spell secret class ability" },
+      { kind: "prereq", entityName: "Guardian Spirit", text: "Watchful spirit class ability" },
     ]);
   });
 

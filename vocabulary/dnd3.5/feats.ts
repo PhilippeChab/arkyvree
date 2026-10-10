@@ -4,13 +4,16 @@
  */
 export const CLASS_FEATURE_FAMILIES = [
   "Animal Companion",
+  "Bardic Knowledge",
   "Bardic Music",
+  "Detect Evil",
   "Evasion",
   "Flurry of Blows",
   "Grace",
   "Inspire Courage",
   "Ki Power",
   "Lay on Hands",
+  "Lore",
   "Poison Use",
   "Rage",
   "Skirmish",
@@ -19,6 +22,7 @@ export const CLASS_FEATURE_FAMILIES = [
   "Sudden Strike",
   "Summon Familiar",
   "Trapfinding",
+  "Wild Empathy",
 ] as const;
 
 /** The family of the favored enemy feats, one per creature type a ranger can favor, and their specializations. */

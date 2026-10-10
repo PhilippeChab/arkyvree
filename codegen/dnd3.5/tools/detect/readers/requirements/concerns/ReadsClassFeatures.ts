@@ -7,6 +7,10 @@ import { stripSeparators } from "@/shared/text.ts";
 
 /** A class feature a prerequisite can name, and the families of class features (and the features of their own) it is. */
 interface ClassFeature {
+  /** Each of its families is required ("Bardic knowledge and evasion abilities"), not any one of them. */
+  all?: true;
+  /** Casting such spells qualifies too ("…or ability to cast detect evil as a divine spell"): any spell of the kind. */
+  casting?: "divine";
   /** Its dice count ("Sneak attack +2d6": two of the family's dice, every class's together). */
   counted?: true;
   families: string[];
@@ -28,6 +32,16 @@ const CLASS_FEATURES: ClassFeature[] = [
     families: ["Turn or Rebuke Undead"],
   },
   { pattern: /\bwild ?shape\b/i, families: ["Wild Shape"] },
+  { pattern: /\bwild empathy\b/i, families: ["Wild Empathy"] },
+  {
+    pattern: /\bdetect evil\b.*\bability to cast detect evil as a divine spell\b/i,
+    families: ["Detect Evil"],
+    casting: "divine",
+  },
+  { pattern: /\bdetect evil\b/i, families: ["Detect Evil"] },
+  { pattern: /\bskirmish or sneak attack\b/i, families: ["Skirmish", "Sneak Attack"], counted: true },
+  // "Either sneak attack +1d6 or skirmish +1d6"
+  { pattern: /\bsneak attack\b[^,;]*\bor skirmish\b/i, families: ["Sneak Attack", "Skirmish"], counted: true },
   { pattern: /\bsneak attack or sudden strike\b/i, families: ["Sneak Attack", "Sudden Strike"], counted: true },
   { pattern: /\bsneak attack\b/i, families: ["Sneak Attack"], counted: true },
   { pattern: /\bsudden strike\b/i, families: ["Sudden Strike"], counted: true },
@@ -35,15 +49,22 @@ const CLASS_FEATURES: ClassFeature[] = [
   { pattern: /\brage\b.*\bfrenzy\b|\bfrenzy\b.*\brage\b/i, families: ["Rage"], feats: ["Frenzy (Frenzied Berserker)"] },
   { pattern: /\brage ability\b/i, families: ["Rage"] },
   { pattern: /\bflurry of blows\b/i, families: ["Flurry of Blows"] },
-  // "Smite ability": the smites a family groups, smite evil's
-  { pattern: /\bsmite\b/i, families: ["Smite Evil"] },
+  // "Smite ability": the smites a family groups, smite evil's; not a smite of another kind ("Smite good class feature")
+  { pattern: /\bsmite (?:ability|evil)\b/i, families: ["Smite Evil"] },
   { pattern: /\bgrace\b/i, families: ["Grace"] },
   // "Ability to acquire a new familiar"
   { pattern: /\bfamiliar\b/i, families: ["Summon Familiar"] },
-  { pattern: /\bevasion ability\b/i, families: ["Evasion"] },
+  { pattern: /\bbardic knowledge and evasion\b/i, families: ["Bardic Knowledge", "Evasion"], all: true },
+  { pattern: /\bbardic knowledge or lore\b/i, families: ["Bardic Knowledge", "Lore"] },
+  { pattern: /\bbardic knowledge\b/i, families: ["Bardic Knowledge"] },
+  // Evasion, not improved evasion, which is no evasion
+  { pattern: /(?<!improved )\bevasion\b/i, families: ["Evasion"] },
   { pattern: /\btrapfinding\b/i, families: ["Trapfinding"] },
   { pattern: /\blay on hands\b/i, families: ["Lay on Hands"] },
+  // "Able to use the inspire courage bardic music ability": inspire courage
   { pattern: /\binspire courage\b/i, families: ["Inspire Courage"] },
+  { pattern: /\bbardic music\b/i, families: ["Bardic Music"] },
+  { pattern: /\bki power\b/i, families: ["Ki Power"] },
 ];
 
 /**
@@ -59,21 +80,24 @@ function familyRequirement(family: string, dice: number | undefined): Requiremen
 export function ReadsClassFeatures<B extends Constructor<BaseRequirementReading>>(Base: B) {
   abstract class ReadingClassFeatures extends Base {
     /**
-     * The first class feature `text` names (`CLASS_FEATURES`), as the requirement it gives: any class's feature of its
-     * families, or as many of their dice as it counts ("+2d6" after its name); none when it names none.
+     * The first class feature `text` names (`CLASS_FEATURES`), as the requirements it gives: any class's feature of its
+     * families (each of them, when it names them all), or as many of their dice as it counts ("+2d6" after its name);
+     * none when it names none.
      */
-    protected classFeatureRequirement(text: string): RequirementEntry | undefined {
-      for (const { counted, families, feats = [], pattern } of CLASS_FEATURES) {
+    protected classFeatureRequirements(text: string): RequirementEntry[] {
+      for (const { all, casting, counted, families, feats = [], pattern } of CLASS_FEATURES) {
         const match = pattern.exec(text);
         if (!match) continue;
         const dice = counted ? /^[^+,;]*?\+(\d+)d\d+/.exec(text.slice(match.index + match[0].length))?.[1] : undefined;
         const requirements = [
           ...families.map((family) => familyRequirement(family, dice ? parseInt(dice, 10) : undefined)),
           ...feats.map((name) => eq(feat(name))),
+          ...(casting ? [gte(`spellcasting.${casting}`, 1)] : []),
         ];
-        return requirements.length === 1 ? requirements[0] : or(...requirements);
+        if (all || requirements.length === 1) return requirements;
+        return [or(...requirements)];
       }
-      return undefined;
+      return [];
     }
   }
   return ReadingClassFeatures;

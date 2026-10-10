@@ -8,6 +8,7 @@ export const CHURCH_INQUISITOR_CLASS_FEATS: FeatSeed[] = [
     description: "A church inquisitor gains the ability to use detect evil at will as a spell-like ability.",
     selectable: false,
     aptitudes: ["Church Inquisitor Class Feature"],
+    properties: [{ type: "FEAT_FAMILY", value: "Detect Evil" }],
   },
   {
     name: "Discern Lies (Church Inquisitor)",

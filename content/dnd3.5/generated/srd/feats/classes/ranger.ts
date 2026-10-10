@@ -113,6 +113,7 @@ export const RANGER_CLASS_FEATS: FeatSeed[] = [
       "Through gestures, sounds, and body language, a ranger can shift the disposition of an animal (such as a bear or monitor lizard) in the same way a Diplomacy check improves a person's attitude. The check result equals 1d20 + his ranger level + his Charisma modifier. Domesticated animals typically start with an indifferent attitude, whereas wild animals are generally unfriendly. Both the ranger and the animal must be within 30 feet of each other under normal conditions of visibility. This process normally requires 1 minute, though it may take more or less time depending on circumstances, just as with influencing people. A ranger can also attempt to sway a magical beast that has an Intelligence of 1 or 2 (such as a basilisk or girallon), but suffers a -4 penalty on the check.",
     selectable: false,
     aptitudes: ["Ranger Class Feature"],
+    properties: [{ type: "FEAT_FAMILY", value: "Wild Empathy" }],
   },
   {
     name: "Woodland Stride (Ranger)",

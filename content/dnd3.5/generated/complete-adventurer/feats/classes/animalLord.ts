@@ -290,6 +290,7 @@ export const ANIMAL_LORD_CLASS_FEATS: FeatSeed[] = [
       "An animal lord can improve the attitude of an animal. See the druid class feature of the Player's Handbook. If an animal lord has wild empathy from another class, his level stack for determining the bonus.",
     selectable: false,
     aptitudes: ["Animal Lord Class Feature"],
+    properties: [{ type: "FEAT_FAMILY", value: "Wild Empathy" }],
   },
   {
     name: "Wolflord (Animal Lord)",

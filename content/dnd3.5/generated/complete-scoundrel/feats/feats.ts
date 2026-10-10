@@ -115,6 +115,7 @@ export const FIGHTER_FEATS: FeatSeed[] = [
     description:
       "Your fighter and ninja levels stack for the purpose of determining the size of your ki pool, as well as your AC bonus. For example, a 5th-level fighter/1st-level ninja with this feat could use his ki powers a number of times equal to 3 (one-half his ninja and fighter levels) + his Wisdom bonus (if any), and would have a +1 bonus to AC (as if he were a 6th-level ninja). Your fighter and ninja levels also stack for the purpose of qualifying for feats that require a minimum fighter level, such as Greater Weapon Focus.",
     aptitudes: ["General", "Fighter Bonus Feat"],
+    requirements: [eq("feats.kipower.*.possessed"), eq("feats.martialweaponproficiency.possessed")],
   },
 ];
 
@@ -124,7 +125,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description:
       "Your monk and ninja levels stack for the purpose of determining the size of your ki pool. For example, a 4th-level monk/2nd-level ninja with this feat could use her ki powers a number of times equal to 3 (half the sum of her monk and ninja levels) + her Wisdom bonus (if any). Your monk and ninja levels also stack for the purpose of determining your unarmed strike damage, as well as your ki strike class feature. For example, a 4th-level monk/6th-level ninja would deal 1d10 points of damage with her unarmed strike, and her unarmed strike would overcome damage reduction as a lawful magic weapon (as if she were a 10th-level monk). In addition, you can multiclass freely between the monk and ninja classes. You must still remain lawful in order to continue advancing as a monk. You still face the normal XP penalties for having multiple classes more than one level apart.",
     aptitudes: ["General"],
-    requirements: [eq("feats.kipower.*.possessed")],
+    requirements: [eq("feats.kipower.*.possessed"), gte("classes.monk.level", 4)],
   },
   {
     name: "Cool Head (CS)",
@@ -724,6 +725,6 @@ export const SKILL_TRICK_FEATS: FeatSeed[] = [
     description:
       "You can use a whip as a makeshift grappling hook, lashing it around a protrusion or other firm, weightbearing object in order to climb a wall or swing across a chasm. You make Climb checks using the whip as if it were a normal rope. Using this feat requires a Use Rope check as normal for securing a grappling hook (PH 86) but takes only a move action.",
     aptitudes: ["General"],
-    requirements: [gte("skills.userope.rank", 5)],
+    requirements: [gte("skills.userope.rank", 5), eq("feats.exoticweaponproficiencywhip.possessed")],
   },
 ];

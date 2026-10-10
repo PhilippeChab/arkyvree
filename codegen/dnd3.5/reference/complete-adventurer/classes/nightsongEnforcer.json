@@ -5,11 +5,6 @@
     "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/nightsong-enforcer/",
     "type": "class"
   },
-  "overrides": {
-    "reviewed": [
-      "Evasion class feature"
-    ]
-  },
   "raw": {
     "classFeatures": [
       {

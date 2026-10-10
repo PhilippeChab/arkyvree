@@ -6,9 +6,6 @@
     "type": "class"
   },
   "overrides": {
-    "reviewed": [
-      "Bardic music ability"
-    ],
     "spells": {
       "inheritsFrom": {
         "classes": [

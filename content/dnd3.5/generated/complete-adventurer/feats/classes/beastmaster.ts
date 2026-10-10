@@ -55,5 +55,6 @@ export const BEASTMASTER_CLASS_FEATS: FeatSeed[] = [
       "A beastmaster can improve the attitude of an animal. See the druid class feature of the Player's Handbook. If a beastmaster has wild empathy from another class, her levels stack for determining the bonus.",
     selectable: false,
     aptitudes: ["Beastmaster Class Feature"],
+    properties: [{ type: "FEAT_FAMILY", value: "Wild Empathy" }],
   },
 ];

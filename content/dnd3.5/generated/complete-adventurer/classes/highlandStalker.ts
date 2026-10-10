@@ -5,7 +5,7 @@
  * - No modifiers defined — review if this class needs any
  */
 
-import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
+import { eq, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
 
 export const HIGHLAND_STALKER: ClassSeed = {
@@ -37,7 +37,7 @@ export const HIGHLAND_STALKER: ClassSeed = {
     gte("skills.spot.rank", 8),
     gte("skills.survival.rank", 8),
     eq("feats.track.possessed"),
-    eq("feats.sneakattack.*.possessed"),
+    or(eq("feats.skirmish.*.possessed"), eq("feats.sneakattack.*.possessed")),
   ],
   classFeatureAptitude: "Highland Stalker Class Feature",
   classFeatures: [

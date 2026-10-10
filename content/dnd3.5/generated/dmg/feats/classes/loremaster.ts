@@ -24,6 +24,7 @@ export const LOREMASTER_CLASS_FEATS: FeatSeed[] = [
       "Loremasters are collectors of knowledge. Starting at 2nd level, a loremaster gains the ability to recall legends and obscure information on a variety of subjects, functioning similarly to a bard's bardic knowledge ability. She adds her loremaster level and her Intelligence modifier to the lore check.",
     selectable: false,
     aptitudes: ["Loremaster Class Feature"],
+    properties: [{ type: "FEAT_FAMILY", value: "Lore" }],
   },
   {
     name: "Secret (Loremaster)",

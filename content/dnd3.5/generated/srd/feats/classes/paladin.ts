@@ -23,6 +23,7 @@ export const PALADIN_CLASS_FEATS: FeatSeed[] = [
     description: "A paladin can use detect evil at will, functioning identically to the spell of the same name.",
     selectable: false,
     aptitudes: ["Paladin Class Feature"],
+    properties: [{ type: "FEAT_FAMILY", value: "Detect Evil" }],
   },
   {
     name: "Divine Grace (Paladin)",

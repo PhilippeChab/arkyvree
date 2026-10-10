@@ -22,6 +22,7 @@ export const RAINBOW_SERVANT_CLASS_FEATS: FeatSeed[] = [
     description: "A rainbow servant can use detect evil at will, functioning as the spell of the same name.",
     selectable: false,
     aptitudes: ["Rainbow Servant Class Feature"],
+    properties: [{ type: "FEAT_FAMILY", value: "Detect Evil" }],
   },
   {
     name: "Detect Thoughts (Rainbow Servant)",

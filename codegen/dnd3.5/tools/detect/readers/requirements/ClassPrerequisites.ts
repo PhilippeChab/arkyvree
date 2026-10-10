@@ -66,16 +66,6 @@ function normalizeCraftSubtype(subtype: string): string {
   return map[lower] ?? subtype;
 }
 
-/** A proficiency requirement: "proficient with all martial weapons". */
-function proficiencyRequirement(text: string): RequirementEntry | undefined {
-  const lower = text.toLowerCase();
-  if (lower.includes("proficient with all martial weapons") || lower.includes("all martial weapons"))
-    return eq(feat("Martial Weapon Proficiency"));
-  if (lower.includes("proficient with all simple weapons") || lower.includes("all simple weapons"))
-    return eq(feat("Simple Weapon Proficiency"));
-  return undefined;
-}
-
 /** A race requirement: "Race: Elf or half-elf", "Race: Dwarf". */
 function raceRequirement(text: string): RequirementEntry | undefined {
   const match = text.match(/^Race:\s*(.+)$/i);
@@ -253,6 +243,22 @@ export class ClassPrerequisites extends RequirementReading {
   }
 
   /**
+   * A special prerequisite's requirements: a race, a proficiency, the class features it names, which any class's of
+   * their family meets ("Turn undead class feature", "Either sneak attack +1d6 or skirmish +1d6"), or another special
+   * ability (`specialAbilityRequirement`).
+   */
+  private partRequirements(text: string): RequirementEntry[] {
+    const race = raceRequirement(text);
+    if (race) return [race];
+    const proficiency = this.weaponProficiencyRequirements(text);
+    if (proficiency.length > 0) return proficiency;
+    const classFeatures = this.classFeatureRequirements(text);
+    if (classFeatures.length > 0) return classFeatures;
+    const ability = this.specialAbilityRequirement(text);
+    return ability ? [ability] : [];
+  }
+
+  /**
    * The skills a class's prerequisites list, as requirements: an "X or Y" one either, and an "or Y" entry folded into
    * the skill before it. A skill no check is made with is left out.
    */
@@ -310,16 +316,9 @@ export class ClassPrerequisites extends RequirementReading {
     return reqs;
   }
 
-  /**
-   * A special ability requirement: a class feature any class's of its family meets (`classFeatureRequirement`), a
-   * domain's access, a size, spellcasting, any feat of a family.
-   */
+  /** A special ability requirement: a domain's access, a size, spellcasting, any feat of a family. */
   private specialAbilityRequirement(text: string): RequirementEntry | undefined {
     const lower = text.toLowerCase();
-
-    // "Ability to turn or rebuke undead", "Wild shape ability", "Sneak attack +1d6", "Rage or frenzy ability"…
-    const classFeature = this.classFeatureRequirement(text);
-    if (classFeature) return classFeature;
 
     // "access to the X domain"
     const domainMatch = text.match(/access to the (\w+) domain/i);
@@ -368,42 +367,31 @@ export class ClassPrerequisites extends RequirementReading {
     return undefined;
   }
 
-  /** A special prerequisite's requirement: a race, a proficiency or a special ability, the first that reads it. */
-  private specialRequirement(text: string): RequirementEntry | undefined {
-    return raceRequirement(text) ?? proficiencyRequirement(text) ?? this.specialAbilityRequirement(text);
-  }
-
   /**
-   * The race, proficiency and special ability requirements of a class's special prerequisites, an entry read as one
-   * requirement (`specialRequirement`). An entry it can't read is unresolved when it's mechanical (sneak attack, rage…);
-   * else the prerequisites the entry lists that no requirement reads are (`unreadSpecialParts`), and the narrative ones
-   * (a deity, an organization) are dropped.
+   * The requirements of a class's special prerequisites: a race read on its whole entry, else each prerequisite its
+   * entry lists (`specialParts`, "Flurry of blows ability; evasion ability"), but those the class requires otherwise.
+   * An entry none of whose prerequisites reads is unresolved when it's mechanical (an animal companion, a spell-like
+   * ability); else a prerequisite naming a class feature nothing reads is ("Spell secret class ability"), and the
+   * narrative ones (a deity, an organization) are dropped.
    */
   private specialRequirements(special: string[]): RequirementEntry[] {
     const reqs: RequirementEntry[] = [];
-    const listing: string[] = [];
-    for (const s of special) {
-      const requirement = this.specialRequirement(s);
-      if (requirement) reqs.push(requirement);
-      if (!requirement && isMechanicalPrereq(s)) this.unresolved.push(s);
-      else listing.push(s);
+    const read = new Set(this.requirements.map((requirement) => JSON.stringify(requirement)));
+    for (const entry of special) {
+      const race = raceRequirement(entry);
+      const parts = race ? [] : specialParts(entry);
+      const partReqs = parts.map((part) => this.partRequirements(part));
+      for (const requirement of race ? [race] : partReqs.flat()) {
+        const key = JSON.stringify(requirement);
+        if (read.has(key)) continue;
+        read.add(key);
+        reqs.push(requirement);
+      }
+      if (race) continue;
+      if (partReqs.every((requirements) => requirements.length === 0) && isMechanicalPrereq(entry))
+        this.unresolved.push(entry);
+      else this.unresolved.push(...parts.filter((part, i) => partReqs[i].length === 0 && namesClassFeature(part)));
     }
-    this.unresolved.push(...this.unreadSpecialParts(listing, [...this.requirements, ...reqs]));
     return reqs;
-  }
-
-  /**
-   * The prerequisites special entries list that no requirement reads, of a class that requires `requirements`: one read
-   * as a requirement the class lacks (an entry is read as one requirement, "Flurry of blows ability; evasion ability"
-   * the flurry), or a class feature's name nothing reads ("Evasion class feature").
-   */
-  private unreadSpecialParts(entries: string[], requirements: RequirementEntry[]): string[] {
-    const read = new Set(requirements.map((requirement) => JSON.stringify(requirement)));
-    return entries.flatMap((entry) =>
-      specialParts(entry).filter((part) => {
-        const requirement = this.specialRequirement(part);
-        return requirement ? !read.has(JSON.stringify(requirement)) : namesClassFeature(part);
-      }),
-    );
   }
 }

@@ -67,19 +67,53 @@ describe("A feat's detected prerequisites", () => {
     expect(flight.unresolvedPrereqs).toEqual(["Ability to fly"]);
   });
 
-  test("report an alignment, a class feature none reads and a proficiency they give no requirement, but a shield's", () => {
+  test("read an alignment, a class feature named as one and a proficiency, and report a class feature none reads", () => {
     const holyStrike = featDetectedOf("Holy Strike", "any good alignment, Smite evil class feature,");
-    expect(holyStrike.requirements).toEqual([]);
-    expect(holyStrike.unresolvedPrereqs).toEqual(["any good alignment", "Smite evil class feature"]);
+    expect(holyStrike.requirements).toEqual([
+      or(...["Lawful Good", "Neutral Good", "Chaotic Good"].map((a) => eqStr("identity.beliefs.alignment", a))),
+      eq("feats.smiteevil.*.possessed"),
+    ]);
+    expect(holyStrike.unresolvedPrereqs).toBeUndefined();
+    const healer = featDetectedOf("Spontaneous Healer", "Knowledge (religion) 4 ranks, nonevil alignment,");
+    expect(healer.requirements).toEqual([
+      gte("skills.knowledgereligion.rank", 4),
+      or(
+        ...["Lawful Good", "Neutral Good", "Chaotic Good", "Lawful Neutral", "True Neutral", "Chaotic Neutral"].map(
+          (a) => eqStr("identity.beliefs.alignment", a),
+        ),
+      ),
+    ]);
     const stalker = featDetectedOf("Martial Stalker", "ki power, Proficiency with all martial weapons,");
-    expect(stalker.requirements).toEqual([]);
-    expect(stalker.unresolvedPrereqs).toEqual(["Proficiency with all martial weapons"]);
+    expect(stalker.requirements).toEqual([eq("feats.kipower.*.possessed"), eq(feat("Martial Weapon Proficiency"))]);
+    expect(stalker.unresolvedPrereqs).toBeUndefined();
+    const whip = featDetectedOf("Whip Climber", "Use Rope 5 ranks, proficiency with the whip,");
+    expect(whip.requirements).toEqual([gte("skills.userope.rank", 5), eq(feat("Exotic Weapon Proficiency: Whip"))]);
     const shield = featDetectedOf("Phalanx Fighting", "base attack bonus +1, Proficiency with a heavy shield,");
     expect(shield.requirements).toEqual([gte("combat.bab", 1), eq(feat("Shield Proficiency"))]);
     expect(shield.unresolvedPrereqs).toBeUndefined();
     const turning = featDetectedOf("Divine Might", "Turn or rebuke undead class feature,");
     expect(turning.requirements).toEqual([eq("feats.turnorrebukeundead.*.possessed")]);
     expect(turning.unresolvedPrereqs).toBeUndefined();
+    const secret = featDetectedOf("Extra Spell Secret", "Spell secret class ability,");
+    expect(secret.requirements).toEqual([]);
+    expect(secret.unresolvedPrereqs).toEqual(["Spell secret class ability"]);
+  });
+
+  test("read a class feature named in lower case or alone as any class's, the wild shape a bare name gives too", () => {
+    expect(featDetectedOf("Devoted Tracker", "Track, smite evil, wild empathy,").requirements).toEqual([
+      eq(feat("Track")),
+      eq("feats.smiteevil.*.possessed"),
+      eq("feats.wildempathy.*.possessed"),
+    ]);
+    expect(featDetectedOf("Scent", "Wild shape,").requirements).toEqual([eq("feats.wildshape.*.possessed")]);
+    expect(featDetectedOf("Subsonics", "Perform 10 ranks, bardic music,").requirements).toEqual([
+      gte("skills.perform.rank", 10),
+      eq("feats.bardicmusic.*.possessed"),
+    ]);
+    expect(featDetectedOf("Ascetic Stalker", "Ki power, ki strike (magic),").requirements).toEqual([
+      eq(feat("Ki Power")),
+      gte("classes.monk.level", 4),
+    ]);
   });
 });
 

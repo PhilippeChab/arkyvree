@@ -29,10 +29,13 @@ const ABILITY_PREREQ_PATTERNS = [
   /^grace \+\d+$/i,
   /^skirmish \+\d+d\d+.*$/i,
   /^sudden strike \+\d+d\d+$/i,
-  /^ki strike \(lawful\)$/i,
+  /^ki strike \((?:lawful|magic)\)$/i,
   /^relevant alignment$/i,
   /^Weapon Proficiency\b/i,
 ];
+
+/** An alignment a feat's prerequisite names ("Any good alignment", "nonevil alignment"), but the relevant one. */
+const ALIGNMENT_PREREQUISITE = /\b(?:any )?(?:non-?)?(?:lawful|chaotic|good|evil|neutral) alignment\b/i;
 
 /**
  * The class abilities a feat's prerequisite can name: the class features any class's of their family meets
@@ -50,14 +53,25 @@ const CLASS_ABILITY_PREREQUISITES: { pattern: RegExp; requirement?: () => Requir
   { pattern: /[Gg]race \+\d+/ },
   { pattern: /[Ss]kirmish \+(\d+)d\d+/ },
   { pattern: /[Rr]age or frenzy ability/i },
-  { pattern: /[Ss]mite ability/i },
+  // "Smite ability", "ability to smite evil", "smite evil" (a "Smite evil class feature" is read as a class feature)
+  { pattern: /[Ss]mite ability|(?:[Aa]bility to )?smite evil(?! class)/ },
   { pattern: /[Ff]lurry of blows ability/i },
-  { pattern: /[Ww]ild [Ss]hape ability|[Aa]bility to (?:use )?wild shape|[Ww]ild [Ss]hape\./i },
+  // "Wild shape ability", "Ability to use wild shape", "Wild shape" alone, but not "Wild shape class feature"
+  { pattern: /[Ww]ild [Ss]hape ability|[Aa]bility to (?:use )?wild shape|[Ww]ild [Ss]hape(?=\s*(?:[,.]|$))/i },
+  // Named in lower case, which no feat's name is: a capitalized "Bardic music" is read as the feat of its name, which the
+  // generator makes a check of its family
+  { pattern: /\bwild empathy\b/ },
+  { pattern: /\bbardic music\b/ },
+  { pattern: /\bki power\b/ },
   { pattern: /[Aa]bility to acquire a (?:new )?familiar/ },
-  // A monk's ki strike is lawful from monk level 10
+  // A monk's ki strike is magic from monk level 4, lawful from monk level 10
+  { pattern: /[Kk]i strike \(magic\)/, requirement: () => gte("classes.monk.level", 4) },
   { pattern: /[Kk]i strike \(lawful\)/, requirement: () => gte("classes.monk.level", 10) },
   { pattern: /[Ff]avored enemy ability/i, requirement: () => undefined },
 ];
+
+/** A proficiency a feat's prerequisite names, but with a shield (Shield Proficiency): "Proficiency with the whip". */
+const PROFICIENCY_PREREQUISITE = /[Pp]roficien(?:t|cy) with (?!(?:a )?(?:heavy )?shield)[^,.]+/;
 
 /** The alignment "Relevant alignment" asks of a feat for an alignment's spells ("Spell Focus (Chaos)") */
 const RELEVANT_ALIGNMENTS: Record<string, string> = {
@@ -67,16 +81,8 @@ const RELEVANT_ALIGNMENTS: Record<string, string> = {
   law: "Any lawful",
 };
 
-/**
- * Prerequisites recognized that the reading gives no requirement for: left unresolved, to be reviewed. An alignment
- * ("Any good alignment"; but the relevant one, the feat's), a proficiency (but with a shield: Shield Proficiency),
- * flight.
- */
-const UNRESOLVED_PREREQUISITES = [
-  /\b(?:any )?(?:non-?)?(?:lawful|chaotic|good|evil|neutral) alignment\b/i,
-  /[Pp]roficien(?:t|cy) with (?!(?:a )?(?:heavy )?shield)[^,.]+/,
-  /[Aa]bility to fly\b/,
-];
+/** Prerequisites recognized that no path reads: left unresolved, to be reviewed. Flight. */
+const UNRESOLVED_PREREQUISITES = [/[Aa]bility to fly\b/];
 
 /** A feat's ability score requirements: "Str 13", "Dex 15". */
 function abilityScoreRequirements(text: string): RequirementEntry[] {
@@ -281,6 +287,15 @@ export class FeatPrerequisites extends RequirementReading {
   }
 
   /**
+   * An alignment a feat's prerequisite names, any of its kind ("good alignment", "nonevil alignment": any good, any
+   * nonevil), as a check of the character's.
+   */
+  private anyAlignmentRequirements(text: string): RequirementEntry[] {
+    const requirement = this.alignmentRequirement(/^any\b/i.test(text) ? text : `any ${text}`);
+    return requirement ? [requirement] : [];
+  }
+
+  /**
    * A feat's class ability prerequisites (`CLASS_ABILITY_PREREQUISITES`, in order), a class feature any class's of its
    * family: a text one matched is no longer read by the ones after.
    */
@@ -290,8 +305,8 @@ export class FeatPrerequisites extends RequirementReading {
     for (const { pattern, requirement } of CLASS_ABILITY_PREREQUISITES) {
       const match = abilityText.match(pattern);
       if (!match) continue;
-      const read = requirement ? requirement() : this.classFeatureRequirement(match[0]);
-      if (read) reqs.push(read);
+      const read = requirement ? [requirement()] : this.classFeatureRequirements(match[0]);
+      for (const entry of read) if (entry) reqs.push(entry);
       abilityText = abilityText.replace(match[0], "");
     }
     return reqs;
@@ -388,6 +403,12 @@ export class FeatPrerequisites extends RequirementReading {
     return { requirements: reqs, featText };
   }
 
+  /** The requirements `text` was read as, or `text` unresolved when it was read as none. */
+  private readOrUnresolved(text: string, requirements: RequirementEntry[]) {
+    if (requirements.length > 0) this.requirements.push(...requirements);
+    else this.unresolved.push(text);
+  }
+
   /** The requirements a feat's prerequisite text gives, in its order, and what it names that none can say. */
   private readPrerequisiteText(text: string) {
     if (!text || text === "-" || text === "None" || text === "none") return;
@@ -431,12 +452,19 @@ export class FeatPrerequisites extends RequirementReading {
 
     reqs.push(...this.familyFeatRequirements(cleanedText));
 
-    // Detect prerequisite patterns we recognize but can't map to requirement entries
+    // An alignment, a proficiency and the class features named "X class feature": read, or else unresolved
+    const alignment = ALIGNMENT_PREREQUISITE.exec(cleanedText)?.[0];
+    if (alignment) this.readOrUnresolved(alignment, this.anyAlignmentRequirements(alignment));
+    const proficiency = PROFICIENCY_PREREQUISITE.exec(cleanedText)?.[0];
+    if (proficiency) this.readOrUnresolved(proficiency, this.weaponProficiencyRequirements(proficiency));
+    for (const feature of unreadClassFeatures(cleanedText))
+      this.readOrUnresolved(feature, this.classFeatureRequirements(feature));
+
+    // Prerequisite patterns recognized that no path reads
     for (const pattern of UNRESOLVED_PREREQUISITES) {
       const match = cleanedText.match(pattern);
       if (match) this.unresolved.push(match[0]);
     }
-    this.unresolved.push(...unreadClassFeatures(cleanedText));
   }
 
   /** A feat's skill rank requirements: "SkillName N ranks", "Knowledge (any)" any Knowledge skill. */

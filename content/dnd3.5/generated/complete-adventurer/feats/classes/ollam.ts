@@ -23,6 +23,7 @@ export const OLLAM_CLASS_FEATS: FeatSeed[] = [
       "An ollam has the ability to recall legends or information regarding various topics, just as a bard can with bardic knowledge. See the bardic knowledge class feature of the Player's Handbook. An ollam adds her class level and her Intelligence modifier to her lore check. If the character has a similar ability from another class (such as bardic knowledge), her ollam levels stack with class levels from that other class to determine the success of the lore check.",
     selectable: false,
     aptitudes: ["Ollam Class Feature"],
+    properties: [{ type: "FEAT_FAMILY", value: "Lore" }],
   },
   {
     name: "Spells per Day/Spells Known (Ollam)",
