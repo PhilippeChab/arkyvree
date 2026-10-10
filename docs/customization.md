@@ -305,6 +305,7 @@ Properties auto-generated from spell form fields by `entities("powers").planCrea
 | `SPELL_CASTING_TIME` | Casting time (optional) |
 | `SPELL_RANGE_TYPE` | Range category (optional) |
 | `SPELL_TARGET` | Target description (optional) |
+| `SPELL_EFFECT` | Effect description: what the spell brings into being, a summoned creature, a wall, a ray (optional) |
 | `SPELL_AREA_OF_EFFECT` | Area of effect description (optional) |
 | `SPELL_DURATION` | Duration description (optional) |
 | `SPELL_RESISTANCE` | Whether spell resistance applies (optional) |

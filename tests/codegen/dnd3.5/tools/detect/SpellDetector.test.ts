@@ -40,4 +40,24 @@ describe("A spell's detected properties", () => {
     expect(detected.Lasting).toContainEqual({ type: "SPELL_DURATION", value: "1 round/level (D)" });
     expect(detected.Unsaid.filter(({ type }) => type === "SPELL_DURATION")).toEqual([]);
   });
+
+  test("hold its Effect line as its effect, beside its target and area, even where they say the same", () => {
+    const aimed = (properties: { type: string; value: string }[]) =>
+      properties.filter(({ type }) => ["SPELL_TARGET", "SPELL_EFFECT", "SPELL_AREA_OF_EFFECT"].includes(type));
+    const detected = propertiesDetected([
+      spell("Flame", { target: "Object touched", effect: "Magical, heatless flame" }),
+      spell("Summon", { effect: "One summoned creature" }),
+      spell("Lasting", { target: "See text", effect: "See text", area: "See text" }),
+    ]);
+    expect(aimed(detected.Flame)).toEqual([
+      { type: "SPELL_TARGET", value: "Object touched" },
+      { type: "SPELL_EFFECT", value: "Magical, heatless flame" },
+    ]);
+    expect(aimed(detected.Summon)).toEqual([{ type: "SPELL_EFFECT", value: "One summoned creature" }]);
+    expect(aimed(detected.Lasting)).toEqual([
+      { type: "SPELL_TARGET", value: "See text" },
+      { type: "SPELL_EFFECT", value: "See text" },
+      { type: "SPELL_AREA_OF_EFFECT", value: "See text" },
+    ]);
+  });
 });

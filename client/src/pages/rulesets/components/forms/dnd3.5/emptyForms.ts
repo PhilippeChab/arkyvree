@@ -44,6 +44,7 @@ export const EMPTY_SPELL: SpellFormData = {
     castingTime: "",
     rangeType: "",
     target: "",
+    effect: "",
     areaOfEffect: "",
     duration: "",
     spellResistance: "",

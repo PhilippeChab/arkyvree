@@ -13,7 +13,7 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
       { type: "SPELL_RANGE_TYPE", value: "Touch" },
-      { type: "SPELL_TARGET", value: "One touched weapon not in another creature's possession" },
+      { type: "SPELL_EFFECT", value: "One touched weapon not in another creature's possession" },
       { type: "SPELL_DURATION", value: "1 hour/level (D)" },
       { type: "SPELL_RESISTANCE", value: "Yes (object)" },
       { type: "SPELL_COMPONENT", value: "Verbal" },

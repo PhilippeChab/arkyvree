@@ -14,7 +14,7 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
       { type: "SPELL_SCHOOL", value: "Divination" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
       { type: "SPELL_RANGE_TYPE", value: "60 ft." },
-      { type: "SPELL_TARGET", value: "60-ft. spread, centered on you" },
+      { type: "SPELL_EFFECT", value: "60-ft. spread, centered on you" },
       { type: "SPELL_DURATION", value: "Concentration" },
       { type: "SPELL_RESISTANCE", value: "No" },
       { type: "SPELL_COMPONENT", value: "Verbal" },

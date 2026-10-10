@@ -47,7 +47,7 @@ export const LEVEL_4_SPELLS: PowerSeed[] = [
       { type: "SPELL_SUBSCHOOL", value: "Scrying" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
       { type: "SPELL_RANGE_TYPE", value: "Touch" },
-      { type: "SPELL_TARGET", value: "Magical sensor" },
+      { type: "SPELL_EFFECT", value: "Magical sensor" },
       { type: "SPELL_DURATION", value: "1 hour/level (D)" },
       { type: "SPELL_RESISTANCE", value: "No" },
       { type: "SPELL_COMPONENT", value: "Verbal" },

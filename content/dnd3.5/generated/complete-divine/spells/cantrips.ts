@@ -14,7 +14,7 @@ export const CANTRIPS: PowerSeed[] = [
       { type: "SPELL_SUBSCHOOL", value: "Creation" },
       { type: "SPELL_CASTING_TIME", value: "1 full round" },
       { type: "SPELL_RANGE_TYPE", value: "Long" },
-      { type: "SPELL_TARGET", value: "A whirlpool 120 ft. wide and 60 ft. deep" },
+      { type: "SPELL_EFFECT", value: "A whirlpool 120 ft. wide and 60 ft. deep" },
       { type: "SPELL_DURATION", value: "1 round/level" },
       { type: "SPELL_RESISTANCE", value: "No" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
