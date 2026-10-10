@@ -28,6 +28,7 @@ import NotificationsRepository from "./notifications/NotificationsRepository.ts"
 import AbilitiesRepository from "./rulesets/AbilitiesRepository.ts";
 import AptitudesRepository from "./rulesets/AptitudesRepository.ts";
 import ContributorsRepository from "./rulesets/ContributorsRepository.ts";
+import EntityReferencesRepository from "./rulesets/EntityReferencesRepository.ts";
 import EntitySnapshotsRepository from "./rulesets/EntitySnapshotsRepository.ts";
 import FeatsAptitudesRepository from "./rulesets/FeatsAptitudesRepository.ts";
 import FeatsRepository from "./rulesets/FeatsRepository.ts";
@@ -78,6 +79,7 @@ export const EmailVerifications = withRequestCache(
   "EmailVerifications",
   new AccountCodesRepository(emailVerificationsInAccount),
 );
+export const EntityReferences = withRequestCache("EntityReferences", new EntityReferencesRepository());
 export const EntitySnapshots = withRequestCache("EntitySnapshots", new EntitySnapshotsRepository());
 export const Exports = withRequestCache("Exports", new ExportsRepository());
 export const Feats = withRequestCache("Feats", new FeatsRepository());

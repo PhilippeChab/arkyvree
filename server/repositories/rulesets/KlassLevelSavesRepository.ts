@@ -15,15 +15,10 @@ class KlassLevelSavesRepository extends BaseRepository<typeof klassLevelSavesInR
   }
 
   // Exception to soft-delete: disposable configuration data
-  async delete(db: Db, where: { klassLevelId: string } | { saveId: string }) {
+  async delete(db: Db, where: { klassLevelId: string }) {
     return await db
       .delete(this.table)
-      .where(
-        this.branchWhere([
-          "klassLevelId" in where && eq(this.table.klassLevelId, where.klassLevelId),
-          "saveId" in where && eq(this.table.saveId, where.saveId),
-        ]),
-      )
+      .where(this.branchWhere(["klassLevelId" in where && eq(this.table.klassLevelId, where.klassLevelId)]))
       .returning();
   }
 

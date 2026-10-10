@@ -127,14 +127,12 @@ Hard-deleted via `Users.delete` (gated on `expiresAt` / `@demo.invalid`). Demo d
 
 ### Ruleset entity / class cascade (`deleteEntityWithCascade`)
 
-`deleteEntityWithCascade` (`server/services/rulesets/deleteEntityWithCascade.ts`) is the shared cleanup helper used in two flows: `RulesetExtensionsService.unsubscribeExtension` and `RulesetChangesService.revertOverride`. It:
+`deleteEntityWithCascade` (`server/services/rulesets/deleteEntityWithCascade.ts`) deletes what `RulesetExtensionsService.unsubscribeExtension` takes of an extension: the fork's copies of its entities, once what the fork keeps of them was repointed or refused (`extensions/departingReferences.ts`). It:
 
-- Hard-deletes the entity's junction rows (aptitude links, class-structure rows referencing it).
-- Hard-deletes the entity itself, plus `klass_levels` for klasses (FK CASCADE on `klass_levels.klass_id` would also handle this).
+- Hard-deletes the links naming the entity (`EntityReferences.delete`, by the list of what names each type, `ENTITY_REFERENCES`): another entity's link to it (a feat's to a list, a class's skill) and a class level's grants and saves.
+- Hard-deletes the entity itself. The database deletes its own rows with it (FK CASCADE: its links, a class's levels and skills) and the customizations of every row it deletes (see *Polymorphic rows* above).
 
-The database deletes the customizations of every row it deletes (see *Polymorphic rows* above).
-
-For items, the `source_item_id` FK is `RESTRICT` — `revertOverride` repoints copies to the original parent template before invoking the cascade.
+Restoring an override doesn't delete what names the copy: `EntityRevert` (`server/cow/writes/`) points every row naming it at its source first, characters' picks included, then deletes the copy and its snapshot (see [rulesets.md](./rulesets.md#restoring-an-override)).
 
 ## Decision rule for new code
 

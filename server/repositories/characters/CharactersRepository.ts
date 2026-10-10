@@ -1,59 +1,21 @@
 import { and, count, eq, exists, inArray, type InferInsertModel, isNull, not, or, sql } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
-import {
-  charactersInCharacter,
-  contributorsInCharacter,
-  playerCharactersInCampaign,
-  racesInRules,
-  rulesetsInRules,
-} from "@/drizzle/schema.ts";
+import { charactersInCharacter, contributorsInCharacter, playerCharactersInCampaign } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
 import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository.ts";
-import { ChecksRulesetUse } from "@/server/repositories/concerns/ChecksRulesetUse.ts";
 import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
 import { Paginates } from "@/server/repositories/concerns/Paginates.ts";
-import { ResolvesCopies } from "@/server/repositories/concerns/ResolvesCopies.ts";
 import { Searches } from "@/server/repositories/concerns/Searches.ts";
 
 class CharactersRepository extends include(
   BaseRepository<typeof charactersInCharacter>,
-  ChecksRulesetUse,
   GuardsStaleEdits,
   Paginates,
-  ResolvesCopies,
   Searches,
 ) {
   constructor() {
     super(charactersInCharacter);
-  }
-
-  // Archived characters count: one can be restored, and its picks must still resolve.
-  private async existsRacePick(db: Db, where: { raceIds: string[]; rulesetId: string }) {
-    const rows = await db
-      .select({ id: this.table.id })
-      .from(this.table)
-      .innerJoin(rulesetsInRules, this.rulesetOrDescendant(this.table.rulesetId, where.rulesetId))
-      .where(this.idMatches(this.table.raceId, where.raceIds))
-      .limit(1);
-    return rows.length > 0;
-  }
-
-  private async existsRacePickFromExtension(
-    db: Db,
-    where: { extensionRulesetId: string; hostRulesetId: string; shadowRaceIds: string[] },
-  ) {
-    const raceCondition =
-      where.shadowRaceIds.length > 0
-        ? or(eq(racesInRules.rulesetId, where.extensionRulesetId), inArray(racesInRules.id, where.shadowRaceIds))
-        : eq(racesInRules.rulesetId, where.extensionRulesetId);
-    const rows = await db
-      .select({ id: this.table.id })
-      .from(this.table)
-      .innerJoin(racesInRules, eq(racesInRules.id, this.table.raceId))
-      .where(and(eq(this.table.rulesetId, where.hostRulesetId), raceCondition))
-      .limit(1);
-    return rows.length > 0;
   }
 
   /** A character the user may edit: theirs, or one they contribute to. */
@@ -135,20 +97,6 @@ class CharactersRepository extends include(
   /** Hard delete — bonded children are reconcile-managed, not user-archived. */
   async delete(db: Db, where: { id: string }) {
     return await db.delete(this.table).where(eq(this.table.id, where.id));
-  }
-
-  /**
-   * Whether a character on the ruleset (or a descendant) is of the race, or, with an extension, of one of its races:
-   * an in-use check.
-   */
-  async exists(
-    db: Db,
-    where:
-      | { raceIds: string[]; rulesetId: string }
-      | { extensionRulesetId: string; hostRulesetId: string; shadowRaceIds: string[] },
-  ): Promise<boolean> {
-    if ("raceIds" in where) return await this.existsRacePick(db, where);
-    return await this.existsRacePickFromExtension(db, where);
   }
 
   async findIds(db: Db, where: { userIds: string[] }) {

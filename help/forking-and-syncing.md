@@ -28,7 +28,7 @@ Once you edit an entity in your fork, that entity becomes yours. Parent changes 
 
 This per-entity behavior protects your customizations. If you've rebalanced Power Attack to fit your campaign, the parent's next update won't silently overwrite your changes.
 
-To re-pull the parent's update onto an entity you've already edited, restore it: in the ruleset's **⋮** menu, **Local Changes**, then **Restore Parent Version** on it. The inherited version returns, but your changes are lost. Or re-apply the parent's change by hand.
+To re-pull the parent's update onto an entity you've already edited, restore it: in the ruleset's **⋮** menu, **Local Changes**, then **Restore Parent Version** on it. The inherited version returns, but your changes are lost. What used your version uses the inherited one instead: your own feats in its list, a class granting it, the characters who picked it. A class can't be restored while a character took a level your version added that the parent's doesn't have. Or re-apply the parent's change by hand.
 
 ## What are Extensions?
 

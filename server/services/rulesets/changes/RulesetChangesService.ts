@@ -1,17 +1,14 @@
-import { RulesetViews } from "@/server/cow/index.ts";
+import { EntityRevert, RulesetViews } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import { BadRequestError, ConflictError, NotFoundError } from "@/server/errors/index.ts";
+import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
 import {
   EntitySnapshots,
-  Items,
   RULESET_ENTITY_TYPES,
   RulesetEntities,
   type RulesetEntityType,
   Rulesets,
 } from "@/server/repositories/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import { hasCharacterPicks } from "@/server/services/rulesets/characterPicks.ts";
-import { deleteEntityWithCascade } from "@/server/services/rulesets/deleteEntityWithCascade.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -99,43 +96,24 @@ class RulesetChangesService {
     return changes;
   }
 
-  async revertOverride(session: Session, rulesetId: string, entityType: RulesetEntityType, entityId: string) {
-    const result = await withTransaction(async (tx) => {
+  /**
+   * Reverts the fork's copy of an inherited entity to its parent's (`EntityRevert`): what names the copy, the fork's
+   * rows, its subscribers' and their characters', names the parent's entity again.
+   */
+  async revertOverride(session: Session, rulesetId: string, entityType: RestorableEntityType, entityId: string) {
+    const subscribers = await withTransaction(async (tx) => {
       const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
       if (!ruleset) throw new NotFoundError("Ruleset not found");
 
       (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-      const snapshot = await EntitySnapshots.findOne(tx, {
-        sourceEntityId: entityId,
-        rulesetId,
-      });
-
-      if (!snapshot) throw new NotFoundError("Entity is not an override in this ruleset");
-
-      // Reverting hard-deletes the COW row, and FK CASCADE then wipes any
-      // character picks pointing at it. Mirror the inUse guard each delete
-      // service runs (current ruleset + descendants).
-      if (await hasCharacterPicks(tx, entityType, [snapshot.forkedEntityId], rulesetId))
-        throw new ConflictError("Cannot revert override while characters in this ruleset depend on it");
-
-      // For items, repoint copies from the COW back to the original parent template
-      // before the cascade hard-deletes (RESTRICT FK). Klass_levels and dependent
-      // character_levels are wiped via FK CASCADE on the parent klass row.
-      if (entityType === "items")
-        await Items.update(tx, { sourceItemId: entityId }, { sourceItemId: snapshot.forkedEntityId });
-
-      await deleteEntityWithCascade(tx, entityType, snapshot.forkedEntityId);
-      await EntitySnapshots.delete(tx, {
-        sourceEntityId: entityId,
-        rulesetId,
-      });
-
-      return { restored: true };
+      await EntityRevert.revert(tx, entityType, entityId, rulesetId);
+      // The rulesets built on it, whose rows may have named the copy: its subscribers, when it's an extension
+      return await Rulesets.findMany(tx, { extensionRulesetId: rulesetId });
     });
 
-    RulesetViews.invalidate(rulesetId);
-    return result;
+    for (const id of [rulesetId, ...subscribers.map((subscriber) => subscriber.id)]) RulesetViews.invalidate(id);
+    return { restored: true };
   }
 }
 

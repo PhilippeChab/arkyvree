@@ -6,8 +6,8 @@
  *   the scope a service reads a view in (`withRulesetScope`).
  * - Its write side (`writes/`): the row a change to an entity writes (`EntityEdit`), the row a change to a
  *   customization writes (`CustomizationEdit`), the names a new entity may take (`EntityNames`), the copy of an
- *   inherited entity (`EntityCopy`), an entity's customizations read and copied (`CustomizationCopies`), and each
- *   entity type's repository (`EntityRepositories`).
+ *   inherited entity (`EntityCopy`) and its revert to the source (`EntityRevert`), an entity's customizations read and
+ *   copied (`CustomizationCopies`), and each entity type's repository (`EntityRepositories`).
  */
 export { default as CowDataReader } from "./views/CowDataReader.ts";
 export { default as RulesetViews } from "./views/RulesetViews.ts";
@@ -18,3 +18,4 @@ export { default as EntityCopy } from "./writes/EntityCopy.ts";
 export { default as EntityEdit } from "./writes/EntityEdit.ts";
 export { default as EntityNames } from "./writes/EntityNames.ts";
 export { default as EntityRepositories } from "./writes/EntityRepositories.ts";
+export { default as EntityRevert } from "./writes/EntityRevert.ts";

@@ -1,56 +1,16 @@
 import type { Db } from "@/drizzle/database.ts";
 import { EntityRepositories } from "@/server/cow/index.ts";
-import {
-  FeatsAptitudes,
-  KlassLevelFeats,
-  KlassLevelPowers,
-  KlassLevels,
-  KlassLevelSaves,
-  KlassSkills,
-  PowersAptitudes,
-  type RulesetEntityType,
-} from "@/server/repositories/index.ts";
+import { EntityReferences, type RulesetEntityType } from "@/server/repositories/index.ts";
 
 /**
- * Hard-deletes an entity along with its junctions and customizations (and, for klasses, its klass_levels). Used by
- * revertOverride and unsubscribeExtension.
+ * Hard-deletes an entity with the links naming it (`EntityReferences.delete`: a feat's link to a list, a class level's
+ * grant of a feat or its save); the database deletes its own rows with it (its links, a class's levels and skills) and
+ * its customizations. What an unsubscribe deletes of an extension: the fork's copies of its entities, once what the
+ * fork keeps of them was repointed or refused (`extensions/departingReferences.ts`).
  */
 export async function deleteEntityWithCascade(tx: Db, entityType: RulesetEntityType, entityId: string) {
-  // A tombstone may already have no row. Still clean up any remaining children
-  // when restoring it; creation cannot succeed against an absent owner.
-  await EntityRepositories.of(entityType).lock(tx, { id: entityId });
-
-  // 1. Delete join tables
-  if (entityType === "feats") {
-    await FeatsAptitudes.delete(tx, { featId: entityId });
-    await KlassLevelFeats.delete(tx, { featId: entityId });
-  } else if (entityType === "powers") {
-    await PowersAptitudes.delete(tx, { powerId: entityId });
-    await KlassLevelPowers.delete(tx, { powerId: entityId });
-  } else if (entityType === "aptitudes") {
-    await KlassLevelFeats.delete(tx, { aptitudeId: entityId });
-    await FeatsAptitudes.delete(tx, { aptitudeId: entityId });
-    await PowersAptitudes.delete(tx, { aptitudeId: entityId });
-    await KlassLevelPowers.delete(tx, { aptitudeId: entityId });
-  } else if (entityType === "skills") {
-    await KlassSkills.delete(tx, { skillId: entityId });
-  } else if (entityType === "saves") {
-    await KlassLevelSaves.delete(tx, { saveId: entityId });
-  } else if (entityType === "klasses") {
-    const levels = await KlassLevels.findMany(tx, { klassId: entityId });
-    const levelIds = levels.map((l) => l.id);
-    if (levelIds.length > 0) {
-      for (const levelId of levelIds) {
-        await KlassLevelFeats.delete(tx, { klassLevelId: levelId });
-        await KlassLevelPowers.delete(tx, { klassLevelId: levelId });
-        await KlassLevelSaves.delete(tx, { klassLevelId: levelId });
-      }
-      for (const level of levels) await KlassLevels.delete(tx, { id: level.id });
-    }
-    await KlassSkills.delete(tx, { klassId: entityId });
-  }
-  // items.source_item_id is RESTRICT — callers that may hit references (revertOverride)
-  // must repoint copies before invoking this.
-  // 2. Delete the entity itself: the database deletes its customizations
-  await EntityRepositories.of(entityType).delete(tx, { id: entityId });
+  const repository = EntityRepositories.of(entityType);
+  await repository.lock(tx, { id: entityId });
+  await EntityReferences.delete(tx, { entityType, entityId });
+  await repository.delete(tx, { id: entityId });
 }

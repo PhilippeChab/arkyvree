@@ -1,58 +1,12 @@
-import { and, eq, inArray, type InferInsertModel, isNull, or } from "drizzle-orm";
+import { and, eq, type InferInsertModel } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
-import { charactersInCharacter, languagesInCharacter, languagesInRules, rulesetsInRules } from "@/drizzle/schema.ts";
-import { include } from "@/lib/mixins.ts";
+import { languagesInCharacter } from "@/drizzle/schema.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
-import { ChecksRulesetUse } from "@/server/repositories/concerns/ChecksRulesetUse.ts";
-import { ResolvesCopies } from "@/server/repositories/concerns/ResolvesCopies.ts";
 
-class CharacterLanguagesRepository extends include(
-  BaseRepository<typeof languagesInCharacter>,
-  ChecksRulesetUse,
-  ResolvesCopies,
-) {
+class CharacterLanguagesRepository extends BaseRepository<typeof languagesInCharacter> {
   constructor() {
     super(languagesInCharacter);
-  }
-
-  private async existsLanguagePick(db: Db, where: { languageIds: string[]; rulesetId: string }) {
-    const rows = await db
-      .select({ id: this.table.languageId })
-      .from(this.table)
-      .innerJoin(charactersInCharacter, eq(charactersInCharacter.id, this.table.characterId))
-      .innerJoin(rulesetsInRules, this.rulesetOrDescendant(charactersInCharacter.rulesetId, where.rulesetId))
-      .where(and(this.idMatches(this.table.languageId, where.languageIds), isNull(this.table.deletedAt)))
-      .limit(1);
-    return rows.length > 0;
-  }
-
-  // Archived characters count: one can be restored, and its picks must still resolve.
-  private async existsLanguagePickFromExtension(
-    db: Db,
-    where: { extensionRulesetId: string; hostRulesetId: string; shadowLanguageIds: string[] },
-  ) {
-    const langCondition =
-      where.shadowLanguageIds.length > 0
-        ? or(
-            eq(languagesInRules.rulesetId, where.extensionRulesetId),
-            inArray(languagesInRules.id, where.shadowLanguageIds),
-          )
-        : eq(languagesInRules.rulesetId, where.extensionRulesetId);
-    const rows = await db
-      .select({ id: this.table.languageId })
-      .from(this.table)
-      .innerJoin(
-        charactersInCharacter,
-        and(
-          eq(charactersInCharacter.id, this.table.characterId),
-          eq(charactersInCharacter.rulesetId, where.hostRulesetId),
-        ),
-      )
-      .innerJoin(languagesInRules, eq(languagesInRules.id, this.table.languageId))
-      .where(langCondition)
-      .limit(1);
-    return rows.length > 0;
   }
 
   async create(db: Db, values: InferInsertModel<typeof languagesInCharacter>) {
@@ -64,20 +18,6 @@ class CharacterLanguagesRepository extends include(
     return await db
       .delete(this.table)
       .where(and(eq(this.table.characterId, where.characterId), eq(this.table.languageId, where.languageId)));
-  }
-
-  /**
-   * Whether a character on the ruleset (or a descendant) picked the entity, or, with an extension, one of its entities:
-   * an in-use check.
-   */
-  async exists(
-    db: Db,
-    where:
-      | { languageIds: string[]; rulesetId: string }
-      | { extensionRulesetId: string; hostRulesetId: string; shadowLanguageIds: string[] },
-  ): Promise<boolean> {
-    if ("languageIds" in where) return await this.existsLanguagePick(db, where);
-    return await this.existsLanguagePickFromExtension(db, where);
   }
 
   async findMany(db: Db, where: { characterId: string }) {
