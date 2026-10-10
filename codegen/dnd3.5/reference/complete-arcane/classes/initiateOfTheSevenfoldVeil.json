@@ -5,6 +5,11 @@
     "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/initiate-of-the-sevenfold-veil/",
     "type": "class"
   },
+  "overrides": {
+    "reviewed": [
+      "Unresolved bonus: \"At 2nd level and higher, she gains a +2 bonus on caster level checks to counter or dispel abjuration spells\""
+    ]
+  },
   "raw": {
     "classFeatures": [
       {

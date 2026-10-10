@@ -256,6 +256,9 @@
       "Emerald Perfection": {
         "modifiers": null
       }
-    }
+    },
+    "reviewed": [
+      "Unresolved bonus: \"He gains a +2 bonus on saving throws against poison, sleep effects, paralysis, stunning, disease, death effects, and necromancy effects\""
+    ]
   }
 }

@@ -53,7 +53,10 @@
       "Weapon and Armor Proficiency": {
         "description": "Paladins have proficiency with every simple and martial weapon, all armor types (light, medium, and heavy), and all shields other than tower shields."
       }
-    }
+    },
+    "reviewed": [
+      "Unresolved bonus: \"For example, a 7th-level paladin with a 16 Charisma (+3 bonus) can heal 21 points of damage per day\""
+    ]
   },
   "raw": {
     "bonusSpellAbility": "Wisdom",

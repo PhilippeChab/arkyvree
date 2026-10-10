@@ -5,6 +5,11 @@
     "sourceUrl": "https://dndtools.net/classes/complete-scoundrel--60/malconvoker/",
     "type": "class"
   },
+  "overrides": {
+    "reviewed": [
+      "Unresolved bonus: \"If your Bluff check to extend the duration of summoning succeeds, the creatures get a +2 bonus on weapon damage rolls and 2 extra hit points per Hit Die (in addition to the bonuses conferred by Augment Summoning)\""
+    ]
+  },
   "raw": {
     "classFeatures": [
       {

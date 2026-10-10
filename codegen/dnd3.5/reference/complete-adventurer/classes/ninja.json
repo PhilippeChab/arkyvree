@@ -71,7 +71,10 @@
       }
     },
     "reviewed": [
-      "AC Bonus"
+      "AC Bonus",
+      "Unresolved bonus: \"In addition, a ninja gains a +1 bonus to AC at 5th level\"",
+      "Unresolved bonus: \"At 4th level and higher, a ninja always makes Jump checks as if she were running and had the Run feat, enabling her to make long jumps without a running start and granting a +4 bonus on the jump\"",
+      "Unresolved bonus: \"As long as a ninja's ki pool isn't empty (that is, as long as she has at least one daily use remaining), she gains a +2 bonus on her Will saves\""
     ]
   },
   "raw": {

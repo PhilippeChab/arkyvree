@@ -1,6 +1,6 @@
 import { sanitizeJsonValues } from "@/codegen/dnd3.5/tools/text/sanitize.ts";
 import type { DetectedModifiers } from "@/codegen/dnd3.5/tools/types/reference.ts";
-import type { Modifier } from "@/content/core/builders/customization/types.ts";
+import type { Modifier, ModifierEffect } from "@/content/core/builders/customization/types.ts";
 
 import type { ModifierReading } from "./readers/modifiers/ModifierReading.ts";
 
@@ -65,11 +65,11 @@ export abstract class BaseDetector<R extends Reference> {
   }
 
   /** Each entry's detected modifiers (`read`), with the invalid paths and the text it couldn't read, when any. */
-  protected modifiersOf<E extends { name: string }>(
+  protected modifiersOf<E extends { name: string }, M extends ModifierEffect = Modifier>(
     raw: E[],
-    read: (entry: E) => Pick<ModifierReading<Modifier>, "errors" | "modifiers" | "unresolved">,
-  ): Record<string, DetectedModifiers> {
-    const detected: Record<string, DetectedModifiers> = {};
+    read: (entry: E) => Pick<ModifierReading<M>, "errors" | "modifiers" | "unresolved">,
+  ): Record<string, DetectedModifiers<M>> {
+    const detected: Record<string, DetectedModifiers<M>> = {};
     for (const entry of raw) {
       const { modifiers, errors, unresolved: unresolvedModifiers } = read(entry);
       detected[entry.name] = {

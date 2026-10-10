@@ -51,7 +51,10 @@
       "Woodland Stride": {
         "description": "From 2nd level onward, a druid can pass through natural undergrowth of any kind - including thorns, briars, dense vegetation, and similar overgrowth - moving at full speed without sustaining damage or any other hindrance. This benefit does not apply to undergrowth that has been magically altered to obstruct movement, which still impedes the druid normally."
       }
-    }
+    },
+    "reviewed": [
+      "Unresolved bonus: \"Starting at 4th level, a druid gains a +4 bonus on saving throws against the spell-like abilities of fey (such as dryads, pixies, and sprites)\""
+    ]
   },
   "raw": {
     "bonusSpellAbility": "Wisdom",

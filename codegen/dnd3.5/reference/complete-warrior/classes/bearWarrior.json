@@ -20,7 +20,10 @@
       "Weapon and Armor Proficiency": {
         "description": "This prestige class does not grant proficiency with any weapons or armor."
       }
-    }
+    },
+    "reviewed": [
+      "Unresolved bonus: \"The bear warrior retains the normal +2 bonus on Will saves and ?2 penalty to Armor Class while raging, but the ability score bonuses granted by rage or frenzy are replaced by Strength, Dexterity, and Constitution bonuses appropriate to the bear form taken\""
+    ]
   },
   "raw": {
     "classFeatures": [

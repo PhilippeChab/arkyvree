@@ -42,7 +42,10 @@
       "Weapon and Armor Proficiency": {
         "description": "Ronins do not gain proficiency with any additional weapons or armor."
       }
-    }
+    },
+    "reviewed": [
+      "Unresolved bonus: \"For example, a 2nd-level ronin making a banzai charge could take a -8 penalty to AC in exchange for a +8 bonus on the damage roll\""
+    ]
   },
   "raw": {
     "classFeatures": [

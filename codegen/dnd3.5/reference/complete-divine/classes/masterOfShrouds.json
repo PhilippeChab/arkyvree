@@ -20,7 +20,10 @@
       "Weapon and Armor Proficiency": {
         "description": "A master of shrouds is proficient with all simple weapons, all armor types, and shields."
       }
-    }
+    },
+    "reviewed": [
+      "Unresolved bonus: \"The master of shrouds gains a +4 bonus on turning checks and damage against undead he has summoned\""
+    ]
   },
   "raw": {
     "classFeatures": [

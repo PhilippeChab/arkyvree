@@ -79,7 +79,11 @@
       "Weapon and Armor Proficiency": {
         "description": "A duelist has proficiency with all simple and martial weapons but lacks proficiency with any armor or shields."
       }
-    }
+    },
+    "reviewed": [
+      "Unresolved bonus: \"For instance, a 2nd-level duelist with an Intelligence score of 16 (+3 bonus) can add +2 to her Armor Class\"",
+      "Unresolved bonus: \"When wearing no armor and not using a shield, a duelist gains an additional +4 bonus to AC against attacks of opportunity caused when she moves out of a threatened square\""
+    ]
   },
   "raw": {
     "classFeatures": [

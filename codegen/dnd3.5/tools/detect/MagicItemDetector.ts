@@ -38,13 +38,13 @@ export class MagicItemDetector extends BaseDetector<MagicItemReference> {
    */
   private readonly overrides: MagicItemReference["overrides"];
 
-  /** Each item's detected section: its metadata, its base item, its modifiers. */
+  /** Each item's detected section: its metadata, its base item, its modifiers, the invalid paths and the unread text. */
   protected override detected(): MagicItemReference["detected"] {
     const detected: MagicItemReference["detected"] = {};
 
     for (const entry of this.stored.raw) {
       const description = entry.description ?? "";
-      const { modifiers, unresolved } = new MagicItemModifiers(entry.name, description);
+      const { modifiers, errors, unresolved } = new MagicItemModifiers(entry.name, description);
       const baseItem = new MagicItemText(description).baseItem(entry.name, entry.category);
 
       detected[entry.name] = {
@@ -52,6 +52,7 @@ export class MagicItemDetector extends BaseDetector<MagicItemReference> {
         ...new MagicItemMetadata(entry).read(),
         ...(baseItem ? { baseItem } : {}),
         ...(modifiers.length > 0 ? { modifiers } : {}),
+        ...(errors.length > 0 ? { errors } : {}),
         ...(unresolved.length > 0 ? { unresolvedModifiers: unresolved } : {}),
       };
     }

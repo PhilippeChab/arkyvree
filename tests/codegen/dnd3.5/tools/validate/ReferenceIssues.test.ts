@@ -9,11 +9,16 @@ import { isRecord } from "@/shared/isRecord.ts";
 
 const folders: string[] = [];
 
+/** The issues of a committed reference `edit` changes (`referenceIssuesOf`): each one's kind, entity and text. */
+function issuesOf(file: string, edit: (overrides: Record<string, unknown>) => void) {
+  return referenceIssuesOf(file, edit).map(({ kind, entityName, text }) => ({ kind, entityName, text }));
+}
+
 /**
  * The issues parser:dnd3.5:validate reports of a committed reference whose overrides `edit` changes, as a hand edit of
  * its file would, in a folder of its own.
  */
-function issuesOf(file: string, edit: (overrides: Record<string, unknown>) => void) {
+function referenceIssuesOf(file: string, edit: (overrides: Record<string, unknown>) => void) {
   const reference: unknown = JSON.parse(readFileSync(join(References.dir, file), "utf8"));
   if (!isRecord(reference)) throw new Error(`${file} isn't a reference`);
   const overrides = isRecord(reference.overrides) ? reference.overrides : {};
@@ -23,11 +28,7 @@ function issuesOf(file: string, edit: (overrides: Record<string, unknown>) => vo
   folders.push(folder);
   mkdirSync(dirname(join(folder, file)), { recursive: true });
   writeFileSync(join(folder, file), JSON.stringify(reference));
-  return ReferenceIssues.of([References.file(join(folder, file))]).map(({ kind, entityName, text }) => ({
-    kind,
-    entityName,
-    text,
-  }));
+  return ReferenceIssues.of([References.file(join(folder, file))]);
 }
 afterEach(() => {
   for (const folder of folders.splice(0)) rmSync(folder, { recursive: true, force: true });
@@ -105,11 +106,13 @@ describe("parser:dnd3.5:validate", () => {
     expect(ReferenceIssues.of(References.files())).toEqual([]);
   });
 
-  test("reports what a reference's review list covers, once cleared: a class's aptitude picks and prerequisites, feats' modifiers", () => {
+  test("reports what a reference's review list covers, once cleared: a class's aptitude picks, prerequisites and features' modifiers, feats' modifiers", () => {
     const clear = (overrides: Record<string, unknown>) => void (overrides.reviewed = []);
     expect(issuesOf("complete-adventurer/classes/animalLord.json", clear)).toEqual([
       { kind: "aptitude pick", entityName: "Animal Lord", text: "Animal Bond" },
       { kind: "aptitude pick", entityName: "Animal Lord", text: "Third Totem" },
+      { kind: "modifier", entityName: "Animal Lord", text: expect.stringContaining("Handle Animal and wild empathy") },
+      { kind: "modifier", entityName: "Animal Lord", text: expect.stringContaining("a specific skill") },
     ]);
     expect(issuesOf("complete-warrior/classes/stonelord.json", clear)).toEqual([
       { kind: "prereq", entityName: "Stonelord", text: expect.stringContaining("arduous ritual") },
@@ -200,6 +203,38 @@ describe("parser:dnd3.5:validate", () => {
     expect(issuesOf("srd/spells.json", (overrides) => void (overrides.reviewed = ["It’s  resolved"]))).toEqual([
       { kind: "stale review", entityName: undefined, text: "It's resolved" },
     ]);
+  });
+
+  test("reports a class feature's unread bonus by its feature, but a skipped feature's or class's, whose review entries are used", () => {
+    const clear = (overrides: Record<string, unknown>) => void (overrides.reviewed = []);
+    const skipRage = (overrides: Record<string, unknown>) => {
+      const features = isRecord(overrides.features) ? overrides.features : {};
+      features.Rage = { ...(isRecord(features.Rage) ? features.Rage : {}), skip: true };
+      overrides.features = features;
+    };
+    expect(
+      referenceIssuesOf("srd/classes/barbarian.json", clear).map(({ label, kind, entityName }) => ({
+        label,
+        kind,
+        entityName,
+      })),
+    ).toEqual(
+      ["Indomitable Will", "Rage", "Trap Sense"].map((label) => ({ label, kind: "modifier", entityName: "Barbarian" })),
+    );
+    expect(
+      issuesOf("srd/classes/barbarian.json", (overrides) => {
+        clear(overrides);
+        skipRage(overrides);
+      }).map(({ text }) => text),
+    ).not.toContainEqual(expect.stringContaining("+4 bonus to Strength"));
+    expect(issuesOf("srd/classes/barbarian.json", skipRage)).toEqual([]);
+    expect(
+      issuesOf("srd/classes/barbarian.json", (overrides) => {
+        clear(overrides);
+        overrides.skip = true;
+      }),
+    ).toEqual([]);
+    expect(issuesOf("srd/classes/barbarian.json", (overrides) => void (overrides.skip = true))).toEqual([]);
   });
 
   test("reports a class table's column no modifier reads, unless the class maps it or reviews it", () => {

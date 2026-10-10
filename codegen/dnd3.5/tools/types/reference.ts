@@ -1,6 +1,6 @@
 /** What every reference holds (its scraped `_meta`, its overrides, the texts it names), and the references by type. */
 
-import type { Modifier } from "@/content/core/builders/customization/types.ts";
+import type { Modifier, ModifierEffect } from "@/content/core/builders/customization/types.ts";
 
 import type { ClassReference } from "./classes.ts";
 import type { DomainReference } from "./domains.ts";
@@ -12,12 +12,13 @@ import type { SpellReference } from "./spells.ts";
 import type { WizardSchoolReference } from "./wizardSchools.ts";
 
 /**
- * A domain's or a race's detected modifiers, the invalid paths (bugs to fix) and the text that couldn't be parsed (to
- * review). Their modifiers have no requirements: only a feat's has.
+ * A domain's, a race's or a class feature's detected modifiers, the invalid paths (bugs to fix) and the text that
+ * couldn't be parsed (to review). A domain's and a race's have no requirements (`Modifier`): a class feature is a feat,
+ * whose modifiers may have some (`ModifierSeed`).
  */
-export interface DetectedModifiers {
+export interface DetectedModifiers<M extends ModifierEffect = Modifier> {
   errors?: string[];
-  modifiers: Modifier[];
+  modifiers: M[];
   unresolvedModifiers?: string[];
 }
 

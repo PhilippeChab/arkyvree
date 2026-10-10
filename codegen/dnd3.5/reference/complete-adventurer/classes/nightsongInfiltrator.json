@@ -5,6 +5,11 @@
     "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/nightsong-infiltrator/",
     "type": "class"
   },
+  "overrides": {
+    "reviewed": [
+      "Unresolved bonus: \"A nightsong infiltrator has an intuitive sense that alerts her to danger from traps, giving her a +1 bonus on Reflex saves made to avoid traps and a +1 dodge bonus to Armor Class against attacks made by traps\""
+    ]
+  },
   "raw": {
     "classFeatures": [
       {

@@ -54,7 +54,9 @@
       ]
     ],
     "reviewed": [
-      "Inquisition Domain"
+      "Inquisition Domain",
+      "Unresolved bonus: \"The church inquisitor's +4 bonus on dispel checks (the Inquisition domain granted power) applies to this check\"",
+      "Unresolved bonus: \"The character gains the granted power associated with the domain (a +4 bonus on dispel checks) and can choose the spells in that domain as his daily domain spells\""
     ]
   },
   "raw": {

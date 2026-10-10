@@ -38,7 +38,12 @@
       "Weapon and Armor Proficiency": {
         "description": "This prestige class does not grant proficiency with any weapons or armor."
       }
-    }
+    },
+    "reviewed": [
+      "Unresolved bonus: \"While frenzied, she gains a +6 bonus to Strength and, if she makes a full attack action, gains a single extra attack each round at her highest bonus. (This latter effect is not cumulative with haste or other effects that grant additional attacks.) However, she also takes a -4 penalty to Armor Class and takes 2 points of nonlethal damage per round\"",
+      "Unresolved bonus: \"Beginning at 5th level, a frenzied berserker gains a +3 bonus on her melee damage rolls for every -2 penalty she takes on her melee attack rolls when using the Power Attack feat (or +3 for every -1 penalty if wielding a two-handed weapon other than a double weapon)\"",
+      "Unresolved bonus: \"A 10th-level frenzied berserker gains a +2 bonus on her melee damage rolls for every -1 penalty she takes on her melee attack rolls when using the Power Attack feat (or +4 for every -1 penalty if wielding a two-handed weapon other than a double weapon)\""
+    ]
   },
   "raw": {
     "classFeatures": [

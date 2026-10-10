@@ -2,8 +2,9 @@
  * Validates all reference files for unresolved issues that would produce incomplete seed data, and for overrides that
  * change nothing.
  *
- * Checks: errors, unresolvedModifiers, unresolvedPrereqs, unresolvedAptitudePicks, items without a definition and the
- * columns of a class's table no modifier reads (`overrides.columns`), except those listed in `overrides.reviewed`;
+ * Checks: errors, unresolvedModifiers (a class feature's too), unresolvedPrereqs, unresolvedAptitudePicks, items without
+ * a definition and the columns of a class's table no modifier reads (`overrides.columns`), except those listed in
+ * `overrides.reviewed` and those of a skipped entity (a feat, a race, a magic item, a class, a class feature);
  * entries of `overrides.reviewed` that cover none of them (or repeat one), classes the generator refuses, class
  * overrides that hold what's derived without them (and leave its generated files the same) or that the generator
  * ignores, values the seed refuses (a race's size, a magic item's slot), what a domain's list lacks (a spell no parsed

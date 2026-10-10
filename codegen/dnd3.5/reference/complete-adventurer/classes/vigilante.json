@@ -5,6 +5,11 @@
     "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/vigilante/",
     "type": "class"
   },
+  "overrides": {
+    "reviewed": [
+      "Unresolved bonus: \"He gains a +4 bonus on Bluff checks made for this purpose\""
+    ]
+  },
   "raw": {
     "bonusSpellAbility": "Charisma",
     "classFeatures": [

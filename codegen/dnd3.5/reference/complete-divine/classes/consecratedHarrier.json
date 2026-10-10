@@ -39,6 +39,9 @@
         "description": "The consecrated harrier does not gain any additional weapon or armor proficiencies."
       }
     },
+    "reviewed": [
+      "Unresolved bonus: \"Beginning at 2nd level, a consecrated harrier receives a +4 bonus on all saves against illusions\""
+    ],
     "spells": {
       "inheritsFrom": {
         "additions": {

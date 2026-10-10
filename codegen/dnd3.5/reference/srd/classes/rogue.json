@@ -61,7 +61,10 @@
       "Weapon and Armor Proficiency": {
         "description": "Rogues have proficiency with all simple weapons, as well as the hand crossbow, rapier, sap, shortbow, and short sword. They are proficient with light armor but not with any type of shield."
       }
-    }
+    },
+    "reviewed": [
+      "Unresolved bonus: \"At 3rd level, a rogue gains an intuitive sense that alerts her to danger from traps, giving her a +1 bonus on Reflex saves made to avoid traps and a +1 dodge bonus to AC against attacks made by traps\""
+    ]
   },
   "raw": {
     "classFeatures": [
