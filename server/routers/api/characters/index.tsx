@@ -79,6 +79,11 @@ export default new Hono()
       );
     },
   )
+  // How a new character of a ruleset sets its ability scores
+  .get("/creation", validate("query", z.object({ rulesetId: z.string().uuid() })), async (c) => {
+    const { rulesetId } = c.req.valid("query");
+    return c.json(await CharactersService.getCreation(rulesetId), 200);
+  })
   // Get characters not in a campaign
   .get(
     "/unlinked/:campaignId",

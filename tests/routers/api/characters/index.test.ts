@@ -61,6 +61,23 @@ describe("characters", () => {
     expect(races.items.map((r) => r.id)).toContain(ctx.raceMap.pc["Human"]);
   });
 
+  test("answers how a new character of a ruleset sets its ability scores, and refuses a ruleset that isn't", async () => {
+    const ctx = await getSeedCtx();
+    const creation = await expectOk(characters.creation.$get({ query: { rulesetId: ctx.rulesetId } }));
+    expect(creation.methods.map((method) => method.label)).toEqual([
+      "4d6 Drop Lowest",
+      "3d6 Straight",
+      "Standard Array",
+      "Point Buy",
+    ]);
+    expect(creation.scores).toEqual({ max: 100, min: 1, start: 10 });
+    expect(creation.modifiers[15]).toBe(2);
+
+    await expectStatus(characters.creation.$get({ query: { rulesetId: NIL_UUID } }), 404);
+    await expectStatus(characters.creation.$get({ query: { rulesetId: "not-an-id" } }), 400);
+    await expectStatus(guestApi.api.characters.creation.$get({ query: { rulesetId: ctx.rulesetId } }), 401);
+  });
+
   test("lists the characters not linked to a campaign yet", async () => {
     const campaign = await postCampaign();
     const created = await postCharacter();

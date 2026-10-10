@@ -2,6 +2,7 @@ import type { CharacterInput } from "@/engine/core/module/CharacterInputs.ts";
 import type {
   AbilityScore,
   CharacterCard,
+  CharacterCreation,
   DescribedInventoryEntry,
   InventoryEntryChange,
   InventoryEntryFields,
@@ -17,9 +18,10 @@ import type { Item } from "@/shared/relations.ts";
 
 /**
  * What a ruleset answers of its characters, from the rows the server reads: their sheets (as the API answers them, as
- * a member reads them, printed), their cards and inventories, a new one's ability scores and the races it can pick,
- * and an inventory entry's add or edit. Its descriptions are the ruleset's own (`D`). What reads the schema's rows
- * alone is every ruleset's: what a character takes from its ruleset, its languages, its card, its inventory.
+ * a member reads them, printed), their cards and inventories, how a new one's ability scores are set, what it stores
+ * and the races it can pick, and an inventory entry's add or edit. Its descriptions are the ruleset's own (`D`). What
+ * reads the schema's rows alone is every ruleset's: what a character takes from its ruleset, its languages, its card,
+ * its inventory.
  */
 export default abstract class CharactersPart<D extends Descriptions> {
   /**
@@ -72,6 +74,12 @@ export default abstract class CharactersPart<D extends Descriptions> {
       totalLevel: classLevels.reduce((sum, { level }) => sum + level, 0),
     };
   }
+
+  /**
+   * How a new character's ability scores are set: the ways its form offers, run by their kind, the scores' bounds and
+   * the one an unset ability shows, and each score's modifier over those bounds.
+   */
+  abstract describeCreation(view: RulesetView): CharacterCreation;
 
   /** A character as a campaign member reads it (`reading`): partly, or its sheet with its private notes shown or blank. */
   abstract describeForMember(
