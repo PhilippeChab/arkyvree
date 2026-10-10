@@ -129,6 +129,12 @@ export const SHADOWDANCER_CLASS_FEATS: FeatSeed[] = [
         valueType: "boolean",
       },
       {
+        target: "feats.martialweaponproficiencyshortsword.possessed",
+        operator: "set",
+        value: "true",
+        valueType: "boolean",
+      },
+      {
         target: "feats.simpleweaponproficiencyquarterstaff.possessed",
         operator: "set",
         value: "true",
@@ -136,12 +142,6 @@ export const SHADOWDANCER_CLASS_FEATS: FeatSeed[] = [
       },
       {
         target: "feats.simpleweaponproficiencymorningstar.possessed",
-        operator: "set",
-        value: "true",
-        valueType: "boolean",
-      },
-      {
-        target: "feats.martialweaponproficiencyshortsword.possessed",
         operator: "set",
         value: "true",
         valueType: "boolean",

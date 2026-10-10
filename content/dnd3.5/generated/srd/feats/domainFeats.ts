@@ -110,9 +110,8 @@ export const DOMAIN_POOL_FEATS: FeatSeed[] = [
     ],
   },
   {
-    name: "War Domain Weapon: Short Sword",
-    description:
-      "You gain proficiency with Short Sword and Weapon Focus with Short Sword as granted by the War domain.",
+    name: "War Domain Weapon: Shortsword",
+    description: "You gain proficiency with Shortsword and Weapon Focus with Shortsword as granted by the War domain.",
     generated: true,
     aptitudes: ["War Domain Weapon"],
     modifiers: [

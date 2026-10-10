@@ -124,13 +124,13 @@ export const SCOUT_CLASS_FEATS: FeatSeed[] = [
     modifiers: [
       { target: "feats.simpleweaponproficiency.possessed", operator: "set", value: "true", valueType: "boolean" },
       {
-        target: "feats.martialweaponproficiencythrowingaxe.possessed",
+        target: "feats.martialweaponproficiencyshortsword.possessed",
         operator: "set",
         value: "true",
         valueType: "boolean",
       },
       {
-        target: "feats.martialweaponproficiencyshortsword.possessed",
+        target: "feats.martialweaponproficiencythrowingaxe.possessed",
         operator: "set",
         value: "true",
         valueType: "boolean",

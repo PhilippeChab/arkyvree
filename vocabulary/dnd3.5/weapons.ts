@@ -1,8 +1,11 @@
 /**
  * The SRD's weapons: the weapon table (each base weapon type's definition, which its properties and proficiency are read
  * from; a name the table doesn't have has none), and the weapons by proficiency, which the weapon feats and the
- * proficiency requirements name.
+ * proficiency requirements name: the table's, by their proficiency, and the unarmed strike, a simple weapon that's no
+ * item.
  */
+
+import { UNARMED_STRIKE } from "./combat.ts";
 
 interface WeaponDefinition {
   baseDamage: string;
@@ -37,98 +40,17 @@ interface WeaponDefinition {
 
 type DamageType = "Bludgeoning" | "Piercing" | "Slashing";
 
-export const EXOTIC_WEAPONS = [
-  "Kama",
-  "Nunchaku",
-  "Sai",
-  "Siangham",
-  "Bastard Sword",
-  "Dwarven Waraxe",
-  "Whip",
-  "Orc Double Axe",
-  "Spiked Chain",
-  "Dire Flail",
-  "Two-Bladed Sword",
-  "Dwarven Urgrosh",
-  "Gnome Hooked Hammer",
-  "Shuriken",
-  "Hand Crossbow",
-  "Repeating Heavy Crossbow",
-  "Repeating Light Crossbow",
-  "Net",
-  "Bolas",
-];
-
-export const MARTIAL_WEAPONS = [
-  "Throwing Axe",
-  "Light Hammer",
-  "Handaxe",
-  "Kukri",
-  "Light Pick",
-  "Sap",
-  "Short Sword",
-  "Battleaxe",
-  "Flail",
-  "Longsword",
-  "Heavy Pick",
-  "Rapier",
-  "Scimitar",
-  "Trident",
-  "Warhammer",
-  "Falchion",
-  "Glaive",
-  "Greataxe",
-  "Greatclub",
-  "Heavy Flail",
-  "Greatsword",
-  "Guisarme",
-  "Halberd",
-  "Lance",
-  "Ranseur",
-  "Scythe",
-  "Shortbow",
-  "Composite Shortbow",
-  "Longbow",
-  "Composite Longbow",
-];
-
-export const SIMPLE_WEAPONS = [
-  "Gauntlet",
-  "Unarmed Strike",
-  "Dagger",
-  "Punching Dagger",
-  "Spiked Gauntlet",
-  "Light Mace",
-  "Sickle",
-  "Club",
-  "Heavy Mace",
-  "Morningstar",
-  "Shortspear",
-  "Longspear",
-  "Quarterstaff",
-  "Spear",
-  "Heavy Crossbow",
-  "Light Crossbow",
-  "Dart",
-  "Javelin",
-  "Sling",
-];
-
-export const ALL_WEAPONS = [...SIMPLE_WEAPONS, ...MARTIAL_WEAPONS, ...EXOTIC_WEAPONS];
-
-export const CROSSBOW_WEAPONS = ALL_WEAPONS.filter((w) => w.toLowerCase().includes("crossbow"));
-
 /**
  * Each entry is the canonical definition for a base weapon type. All properties are derived from selecting a weapon
- * type name.
+ * type name. The weapons by proficiency list them in its order.
  */
 // oxfmt-ignore
 export const WEAPON_TYPE_DEFINITIONS: Partial<Record<string, WeaponDefinition>> = {
   // Simple
   "Gauntlet": { proficiency: "Simple", family: "Close", baseDamage: "1d3", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Bludgeoning"], size: "Tiny", finessable: true },
-  "Spiked Gauntlet": { proficiency: "Simple", family: "Close", baseDamage: "1d4", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Piercing"], size: "Tiny", finessable: true },
   "Dagger": { proficiency: "Simple", family: "Dagger", baseDamage: "1d4", criticalRange: 2, criticalMultiplier: 2, damageTypes: ["Piercing", "Slashing"], size: "Tiny", range: 10, finessable: true },
   "Punching Dagger": { proficiency: "Simple", family: "Dagger", baseDamage: "1d4", criticalRange: 1, criticalMultiplier: 3, damageTypes: ["Piercing"], size: "Tiny", finessable: true },
+  "Spiked Gauntlet": { proficiency: "Simple", family: "Close", baseDamage: "1d4", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Piercing"], size: "Tiny", finessable: true },
   "Light Mace": { proficiency: "Simple", family: "Mace", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Bludgeoning"], size: "Small", finessable: true },
   "Sickle": { proficiency: "Simple", family: "Sickle", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Slashing"], size: "Small", finessable: true },
   "Club": { proficiency: "Simple", family: "Club", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Bludgeoning"], size: "Medium", range: 10 },
@@ -145,13 +67,13 @@ export const WEAPON_TYPE_DEFINITIONS: Partial<Record<string, WeaponDefinition>> 
   "Sling": { proficiency: "Simple", family: "Sling", baseDamage: "1d4", criticalRange: 1, criticalMultiplier: 2, ranged: true, damageTypes: ["Bludgeoning"], size: "Medium", range: 50 },
 
   // Martial
-  "Handaxe": { proficiency: "Martial", family: "Axe", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 3, damageTypes: ["Slashing"], size: "Small", finessable: true },
+  "Throwing Axe": { proficiency: "Martial", family: "Axe", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Slashing"], size: "Small", range: 10, finessable: true },
   "Light Hammer": { proficiency: "Martial", family: "Hammer", baseDamage: "1d4", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Bludgeoning"], size: "Small", range: 20, finessable: true },
+  "Handaxe": { proficiency: "Martial", family: "Axe", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 3, damageTypes: ["Slashing"], size: "Small", finessable: true },
   "Kukri": { proficiency: "Martial", family: "Dagger", baseDamage: "1d4", criticalRange: 3, criticalMultiplier: 2, damageTypes: ["Slashing"], size: "Small", finessable: true },
   "Light Pick": { proficiency: "Martial", family: "Pick", baseDamage: "1d4", criticalRange: 1, criticalMultiplier: 4, damageTypes: ["Piercing"], size: "Small", finessable: true },
   "Sap": { proficiency: "Martial", family: "Close", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Bludgeoning"], size: "Small", finessable: true },
   "Shortsword": { proficiency: "Martial", family: "Sword", baseDamage: "1d6", criticalRange: 2, criticalMultiplier: 2, damageTypes: ["Piercing"], size: "Small", finessable: true },
-  "Throwing Axe": { proficiency: "Martial", family: "Axe", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Slashing"], size: "Small", range: 10, finessable: true },
   "Battleaxe": { proficiency: "Martial", family: "Axe", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, damageTypes: ["Slashing"], size: "Medium" },
   "Flail": { proficiency: "Martial", family: "Flail", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Bludgeoning"], size: "Medium" },
   "Longsword": { proficiency: "Martial", family: "Sword", baseDamage: "1d8", criticalRange: 2, criticalMultiplier: 2, damageTypes: ["Slashing"], size: "Medium" },
@@ -164,17 +86,17 @@ export const WEAPON_TYPE_DEFINITIONS: Partial<Record<string, WeaponDefinition>> 
   "Glaive": { proficiency: "Martial", family: "Polearm", baseDamage: "1d10", criticalRange: 1, criticalMultiplier: 3, damageTypes: ["Slashing"], size: "Large", reach: 10 },
   "Greataxe": { proficiency: "Martial", family: "Axe", baseDamage: "1d12", criticalRange: 1, criticalMultiplier: 3, damageTypes: ["Slashing"], size: "Large" },
   "Greatclub": { proficiency: "Martial", family: "Club", baseDamage: "1d10", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Bludgeoning"], size: "Large" },
+  "Heavy Flail": { proficiency: "Martial", family: "Flail", baseDamage: "1d10", criticalRange: 2, criticalMultiplier: 2, damageTypes: ["Bludgeoning"], size: "Large" },
   "Greatsword": { proficiency: "Martial", family: "Sword", baseDamage: "2d6", criticalRange: 2, criticalMultiplier: 2, damageTypes: ["Slashing"], size: "Large" },
   "Guisarme": { proficiency: "Martial", family: "Polearm", baseDamage: "2d4", criticalRange: 1, criticalMultiplier: 3, damageTypes: ["Slashing"], size: "Large", reach: 10 },
   "Halberd": { proficiency: "Martial", family: "Polearm", baseDamage: "1d10", criticalRange: 1, criticalMultiplier: 3, damageTypes: ["Piercing", "Slashing"], size: "Large", reach: 10 },
   "Lance": { proficiency: "Martial", family: "Spear", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, damageTypes: ["Piercing"], size: "Large" },
-  "Heavy Flail": { proficiency: "Martial", family: "Flail", baseDamage: "1d10", criticalRange: 2, criticalMultiplier: 2, damageTypes: ["Bludgeoning"], size: "Large" },
   "Ranseur": { proficiency: "Martial", family: "Polearm", baseDamage: "2d4", criticalRange: 1, criticalMultiplier: 3, damageTypes: ["Piercing"], size: "Large", reach: 10 },
   "Scythe": { proficiency: "Martial", family: "Polearm", baseDamage: "2d4", criticalRange: 1, criticalMultiplier: 4, damageTypes: ["Piercing", "Slashing"], size: "Large" },
-  "Longbow": { proficiency: "Martial", family: "Bow", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, ranged: true, strengthDamage: "Rating", damageTypes: ["Piercing"], size: "Large", range: 100 },
-  "Composite Longbow": { proficiency: "Martial", family: "Bow", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, ranged: true, strengthDamage: "Rating", mighty: 0, damageTypes: ["Piercing"], size: "Large", range: 110 },
   "Shortbow": { proficiency: "Martial", family: "Bow", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 3, ranged: true, strengthDamage: "Rating", damageTypes: ["Piercing"], size: "Large", range: 60 },
   "Composite Shortbow": { proficiency: "Martial", family: "Bow", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 3, ranged: true, strengthDamage: "Rating", mighty: 0, damageTypes: ["Piercing"], size: "Large", range: 70 },
+  "Longbow": { proficiency: "Martial", family: "Bow", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, ranged: true, strengthDamage: "Rating", damageTypes: ["Piercing"], size: "Large", range: 100 },
+  "Composite Longbow": { proficiency: "Martial", family: "Bow", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, ranged: true, strengthDamage: "Rating", mighty: 0, damageTypes: ["Piercing"], size: "Large", range: 110 },
 
   // Exotic
   "Kama": { proficiency: "Exotic", family: "Monk", baseDamage: "1d6", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Slashing"], size: "Small", finessable: true },
@@ -184,16 +106,34 @@ export const WEAPON_TYPE_DEFINITIONS: Partial<Record<string, WeaponDefinition>> 
   "Bastard Sword": { proficiency: "Exotic", family: "Sword", baseDamage: "1d10", criticalRange: 2, criticalMultiplier: 2, oneHandTraining: true, damageTypes: ["Slashing"], size: "Medium" },
   "Dwarven Waraxe": { proficiency: "Exotic", family: "Axe", baseDamage: "1d10", criticalRange: 1, criticalMultiplier: 3, oneHandTraining: true, damageTypes: ["Slashing"], size: "Medium" , familiarity: "Dwarf" },
   "Whip": { proficiency: "Exotic", family: "Flail", baseDamage: "1d3", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Slashing"], size: "Medium", reach: 15, finessable: true },
+  "Orc Double Axe": { proficiency: "Exotic", family: "Axe", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, doubleDamage: "1d8", damageTypes: ["Slashing"], size: "Large" },
   "Spiked Chain": { proficiency: "Exotic", family: "Flail", baseDamage: "2d4", criticalRange: 1, criticalMultiplier: 2, damageTypes: ["Piercing"], size: "Large", reach: 10, finessable: true },
   "Dire Flail": { proficiency: "Exotic", family: "Flail", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 2, doubleDamage: "1d8", damageTypes: ["Bludgeoning"], size: "Large" },
-  "Gnome Hooked Hammer": { proficiency: "Exotic", family: "Hammer", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, doubleDamage: "1d6", damageTypes: ["Bludgeoning", "Piercing"], size: "Large" , familiarity: "Gnome" },
-  "Orc Double Axe": { proficiency: "Exotic", family: "Axe", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, doubleDamage: "1d8", damageTypes: ["Slashing"], size: "Large" },
   "Two-Bladed Sword": { proficiency: "Exotic", family: "Sword", baseDamage: "1d8", criticalRange: 2, criticalMultiplier: 2, doubleDamage: "1d8", damageTypes: ["Slashing"], size: "Large" },
   "Dwarven Urgrosh": { proficiency: "Exotic", family: "Axe", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, doubleDamage: "1d6", damageTypes: ["Slashing", "Piercing"], size: "Large" , familiarity: "Dwarf" },
+  "Gnome Hooked Hammer": { proficiency: "Exotic", family: "Hammer", baseDamage: "1d8", criticalRange: 1, criticalMultiplier: 3, doubleDamage: "1d6", damageTypes: ["Bludgeoning", "Piercing"], size: "Large" , familiarity: "Gnome" },
+  "Shuriken": { proficiency: "Exotic", family: "Monk", baseDamage: "1d2", criticalRange: 1, criticalMultiplier: 2, ranged: true, damageTypes: ["Piercing"], size: "Tiny", range: 10 },
   "Hand Crossbow": { proficiency: "Exotic", family: "Crossbow", baseDamage: "1d4", criticalRange: 2, criticalMultiplier: 2, ranged: true, strengthDamage: "None", damageTypes: ["Piercing"], size: "Tiny", range: 30 },
   "Repeating Heavy Crossbow": { proficiency: "Exotic", family: "Crossbow", baseDamage: "1d10", criticalRange: 2, criticalMultiplier: 2, ranged: true, strengthDamage: "None", oneHandedPenalty: -4, damageTypes: ["Piercing"], size: "Medium", range: 120 },
   "Repeating Light Crossbow": { proficiency: "Exotic", family: "Crossbow", baseDamage: "1d8", criticalRange: 2, criticalMultiplier: 2, ranged: true, strengthDamage: "None", oneHandedPenalty: -2, damageTypes: ["Piercing"], size: "Small", range: 80 },
-  "Bolas": { proficiency: "Exotic", family: "Thrown", baseDamage: "1d4", criticalRange: 1, criticalMultiplier: 2, ranged: true, damageTypes: ["Bludgeoning"], size: "Medium", range: 10 },
   "Net": { proficiency: "Exotic", family: "Thrown", baseDamage: "0", criticalRange: 1, criticalMultiplier: 0, ranged: true, damageTypes: [], size: "Medium", range: 10 },
-  "Shuriken": { proficiency: "Exotic", family: "Monk", baseDamage: "1d2", criticalRange: 1, criticalMultiplier: 2, ranged: true, damageTypes: ["Piercing"], size: "Tiny", range: 10 },
+  "Bolas": { proficiency: "Exotic", family: "Thrown", baseDamage: "1d4", criticalRange: 1, criticalMultiplier: 2, ranged: true, damageTypes: ["Bludgeoning"], size: "Medium", range: 10 },
 };
+
+export const EXOTIC_WEAPONS = Object.keys(WEAPON_TYPE_DEFINITIONS).filter(
+  (name) => WEAPON_TYPE_DEFINITIONS[name]?.proficiency === "Exotic",
+);
+
+export const MARTIAL_WEAPONS = Object.keys(WEAPON_TYPE_DEFINITIONS).filter(
+  (name) => WEAPON_TYPE_DEFINITIONS[name]?.proficiency === "Martial",
+);
+
+/** The weapons proficiency with every simple weapon covers: the table's, and the unarmed strike. */
+export const SIMPLE_WEAPONS = [
+  ...Object.keys(WEAPON_TYPE_DEFINITIONS).filter((name) => WEAPON_TYPE_DEFINITIONS[name]?.proficiency === "Simple"),
+  UNARMED_STRIKE,
+];
+
+export const ALL_WEAPONS = [...SIMPLE_WEAPONS, ...MARTIAL_WEAPONS, ...EXOTIC_WEAPONS];
+
+export const CROSSBOW_WEAPONS = ALL_WEAPONS.filter((w) => w.toLowerCase().includes("crossbow"));
