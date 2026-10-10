@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-divine",
-    "scrapedAt": "2026-03-23T01:27:28.906Z",
+    "scrapedAt": "2026-10-10T23:22:37.904Z",
     "sourceUrl": "https://dndtools.net/classes/complete-divine--56/sacred-exorcist/",
     "type": "class"
   },
@@ -122,6 +122,9 @@
         ],
         "special": [
           "Adopting this prestige class requires the sanction of a church or order that ordains sacred exorcists. Only characters judged by their church to be exemplary in faith and devotion, strong of will and upright in morality, are made sacred exorcists."
+        ],
+        "spells": [
+          "Able to cast dismissal or dispel evil ."
         ]
       },
       "text": "Skills: Knowledge (the planes) 10 ranks, Knowledge (religion) 7 ranks Alignment: Any good.Spells: Able to cast dismissal or dispel evil.Special: Adopting this prestige class requires the sanction of a church or order that ordains sacred exorcists. Only characters judged by their church to be exemplary in faith and devotion, strong of will and upright in morality, are made sacred exorcists."

@@ -5,7 +5,7 @@
  * - No modifiers defined — review if this class needs any
  */
 
-import { gte } from "@/content/core/builders/customization/requirements.ts";
+import { gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
 
 export const WAYFARER_GUIDE: ClassSeed = {
@@ -34,7 +34,11 @@ export const WAYFARER_GUIDE: ClassSeed = {
     "Speak Language",
     "Spellcraft",
   ],
-  requirements: [gte("skills.knowledgearcana.rank", 10), gte("skills.knowledgegeography.rank", 10)],
+  requirements: [
+    gte("skills.knowledgearcana.rank", 10),
+    gte("skills.knowledgegeography.rank", 10),
+    or(gte("spellcasting.arcane", 1), gte("spellcasting.divine", 1)),
+  ],
   casterLevelAdvancement: { type: "any", levels: [1, 3] },
   classFeatureAptitude: "Wayfarer Guide Class Feature",
   classFeatures: [

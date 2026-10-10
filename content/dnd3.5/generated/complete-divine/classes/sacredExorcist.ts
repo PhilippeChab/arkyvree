@@ -30,6 +30,7 @@ export const SACRED_EXORCIST: ClassSeed = {
   requirements: [
     gte("skills.knowledgetheplanes.rank", 10),
     gte("skills.knowledgereligion.rank", 7),
+    or(gte("spellcasting.arcane", 1), gte("spellcasting.divine", 1)),
     or(
       eqStr("identity.beliefs.alignment", "Lawful Good"),
       eqStr("identity.beliefs.alignment", "Neutral Good"),

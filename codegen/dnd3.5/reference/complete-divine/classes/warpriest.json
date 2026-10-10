@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-divine",
-    "scrapedAt": "2026-03-20T23:14:13.158Z",
+    "scrapedAt": "2026-10-10T23:22:42.378Z",
     "sourceUrl": "https://dndtools.net/classes/complete-divine--56/warpriest/",
     "type": "class"
   },
@@ -135,6 +135,9 @@
         ],
         "special": [
           "Ability to turn or rebuke undead."
+        ],
+        "spells": [
+          "Able to cast at least one divine spell from one of the following domains' spell lists: Destruction, Protection, Strength, or War. A character who can cast at least one spell from a domain counts as having access for this purpose."
         ]
       },
       "text": "Base Attack Bonus: +5 Skills: Diplomacy 8 ranks, Sense Motive 5 ranks Feats: Combat Casting Spells: Able to cast at least one divine spell from one of the following domains' spell lists: Destruction, Protection, Strength, or War. A character who can cast at least one spell from a domain counts as having access for this purpose.Special: Ability to turn or rebuke undead."

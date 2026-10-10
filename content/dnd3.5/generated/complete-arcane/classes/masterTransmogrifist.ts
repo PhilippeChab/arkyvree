@@ -22,6 +22,7 @@ export const MASTER_TRANSMOGRIFIST: ClassSeed = {
     gte("skills.bluff.rank", 2),
     gte("skills.disguise.rank", 5),
     eq("feats.eschewmaterials.possessed"),
+    or(gte("spellcasting.arcane", 1), gte("spellcasting.divine", 1)),
     or(
       eqStr("identity.beliefs.alignment", "Neutral Good"),
       eqStr("identity.beliefs.alignment", "True Neutral"),

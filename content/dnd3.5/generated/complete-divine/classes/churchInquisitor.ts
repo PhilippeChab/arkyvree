@@ -36,6 +36,7 @@ export const CHURCH_INQUISITOR: ClassSeed = {
     gte("skills.knowledgearcana.rank", 4),
     gte("skills.knowledgereligion.rank", 4),
     gte("skills.spellcraft.rank", 4),
+    gte("spellcasting.divine", 1),
     gte("saves.will.base", 3),
   ],
   casterLevelAdvancement: { type: "divine", levels: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },

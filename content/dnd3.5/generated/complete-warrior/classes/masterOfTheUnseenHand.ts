@@ -5,7 +5,7 @@
  * - No modifiers defined — review if this class needs any
  */
 
-import { gte } from "@/content/core/builders/customization/requirements.ts";
+import { gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
 
 export const MASTER_OF_THE_UNSEEN_HAND: ClassSeed = {
@@ -18,7 +18,7 @@ export const MASTER_OF_THE_UNSEEN_HAND: ClassSeed = {
   bab: "good",
   saves: { fortitude: "poor", reflex: "poor", will: "good" },
   classSkills: ["Concentration", "Craft", "Intimidate", "Knowledge (Arcana)", "Profession", "Spellcraft"],
-  requirements: [gte("skills.concentration.rank", 8)],
+  requirements: [gte("skills.concentration.rank", 8), or(gte("spellcasting.arcane", 1), gte("spellcasting.divine", 1))],
   classFeatureAptitude: "Master of the Unseen Hand Class Feature",
   classFeatures: [
     [1, "Improved Caster Level (Master of the Unseen Hand)"],

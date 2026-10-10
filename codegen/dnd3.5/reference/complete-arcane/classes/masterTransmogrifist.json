@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-arcane",
-    "scrapedAt": "2026-03-31T22:16:31.343Z",
+    "scrapedAt": "2026-10-10T23:22:26.600Z",
     "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/master-transmogrifist/",
     "type": "class"
   },
@@ -88,6 +88,9 @@
             "name": "Disguise",
             "ranks": 5
           }
+        ],
+        "spells": [
+          "Able to cast alter self and polymorph."
         ]
       },
       "text": "Alignment: any nonlawful Skills: Bluff 2 ranks, Disguise 5 ranks Feats: Eschew Materials Spells: Able to cast alter self and polymorph."

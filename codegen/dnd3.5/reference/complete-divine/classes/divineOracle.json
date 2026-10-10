@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-divine",
-    "scrapedAt": "2026-03-20T23:14:12.504Z",
+    "scrapedAt": "2026-10-10T23:22:33.378Z",
     "sourceUrl": "https://dndtools.net/classes/complete-divine--56/divine-oracle/",
     "type": "class"
   },
@@ -122,6 +122,9 @@
             "name": "Knowledge (religion)",
             "ranks": 8
           }
+        ],
+        "spells": [
+          "Able to cast at least 2 divination spells."
         ]
       },
       "text": "Skills: Knowledge (religion) 8 ranks Feats: Skill Focus (Knowledge [religion]) Spells: Able to cast at least 2 divination spells."

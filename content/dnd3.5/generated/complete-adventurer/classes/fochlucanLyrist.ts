@@ -60,6 +60,8 @@ export const FOCHLUCAN_LYRIST: ClassSeed = {
     gte("skills.knowledgenature.rank", 7),
     gte("skills.perform.rank", 13),
     gte("skills.sleightofhand.rank", 7),
+    gte("spellcasting.arcane", 1),
+    gte("spellcasting.divine", 1),
     or(
       eqStr("identity.beliefs.alignment", "Neutral Good"),
       eqStr("identity.beliefs.alignment", "True Neutral"),

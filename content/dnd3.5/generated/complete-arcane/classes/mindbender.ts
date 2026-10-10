@@ -41,6 +41,7 @@ export const MINDBENDER: ClassSeed = {
     gte("skills.diplomacy.rank", 4),
     gte("skills.intimidate.rank", 4),
     gte("skills.sensemotive.rank", 4),
+    or(gte("spellcasting.arcane", 1), gte("spellcasting.divine", 1)),
     gte("spellcasting.arcanecasterlevel", 5),
     or(
       eqStr("identity.beliefs.alignment", "Lawful Neutral"),

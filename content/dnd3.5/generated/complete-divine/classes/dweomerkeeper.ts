@@ -41,6 +41,8 @@ export const DWEOMERKEEPER: ClassSeed = {
     gte("skills.spellcraft.rank", 8),
     eq("feats.itemcreation.*.possessed"),
     eq("feats.metamagic.*.possessed"),
+    gte("spellcasting.arcane", 1),
+    gte("spellcasting.divine", 1),
   ],
   casterLevelAdvancement: { type: "any", levels: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
   classFeatureAptitude: "Dweomerkeeper Class Feature",

@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-adventurer",
-    "scrapedAt": "2026-03-24T22:27:47.288Z",
+    "scrapedAt": "2026-10-10T23:22:10.686Z",
     "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/fochlucan-lyrist/",
     "type": "class"
   },
@@ -103,6 +103,9 @@
         ],
         "special": [
           "Bardic knowledge and evasion abilities."
+        ],
+        "spells": [
+          "Ability to cast 1st-level arcane and divine spells."
         ]
       },
       "text": "Alignment: Neutral good, neutral, chaotic neutral, or neutral evil. Skills: Decipher Script 7 ranks, Diplomacy 7 ranks, Gather Information 7 ranks, Knowledge (nature) 7 ranks, Perform (string instruments) 13 ranks, Sleight of Hand 7 ranks, Speak Language (druidic) 1 ranks Spells: Ability to cast 1st-level arcane and divine spells.Special: Bardic knowledge and evasion abilities."

@@ -6,15 +6,20 @@ import type { Constructor } from "@/lib/mixins.ts";
 /** A caster level, of either kind or arcane: "Caster level 5th", "arcane caster level 1st". */
 const CASTER_LEVEL = /\b(?:(arcane) )?caster level (\d+)(?:st|nd|rd|th)/i;
 
-/** A spell or a kind of spell it names besides: "Ability to cast summon monster III", "able to cast any cure wounds spell". */
-const CASTING_ANY = /\bab(?:ility|le) to cast\b/i;
-
-/** Spells of a level, a kind or both: "Ability to cast 3rd-level arcane spells", "able to cast divine spells". */
-const CASTING_SPELLS =
-  /\bab(?:ility|le) to cast (?:the )?(?:(\d+)(?:st|nd|rd|th)[- ]level )?(arcane|divine)?\s*spells?/i;
+/** Casting a prerequisite asks, to its sentence's end: "Able to cast at least one summoning spell of 3rd level or higher". */
+const CASTING = /\bab(?:ility|le) to cast\b[^.;]*/i;
 
 /** Casting it rules out, which no requirement says: "no ability to cast divine spells". */
 const NO_CASTING = /\bno\s+ability to cast\b|\bmust not have\b.*\bability to cast\b/i;
+
+/**
+ * The kinds of spells a casting names: "arcane spells", "arcane and divine spells" (each), "arcane or divine spells"
+ * (either), "zone of truth as a divine spell".
+ */
+const SPELL_KINDS = /\b(arcane|divine)(?: (and|or) (arcane|divine))? spells?\b/i;
+
+/** The spell level a casting asks: "3rd-level spells", "a spell of 3rd level or higher". */
+const SPELL_LEVEL = /\b(\d+)(?:st|nd|rd|th)[- ]level\b/i;
 
 /** Reading the spellcasting a prerequisite asks: a caster level, spells of a level or a kind, a spell it names. */
 export function ReadsCasting<B extends Constructor<BaseRequirementReading>>(Base: B) {
@@ -32,21 +37,22 @@ export function ReadsCasting<B extends Constructor<BaseRequirementReading>>(Base
     }
 
     /**
-     * The spellcasting `text` asks: spells of a level, a kind or both ("Ability to cast 3rd-level arcane spells": arcane
-     * spells of 3rd level), of either kind when it names none; and any spellcasting for a spell or a kind of spell it
-     * names ("Ability to cast summon monster III", "able to cast any cure wounds spell"), which only a spellcaster
-     * casts. Nothing for casting it rules out ("no ability to cast divine spells"), nor for an ability it uses
-     * ("Ability to use lesser invocations": no spell).
+     * The spellcasting `text` asks, read in its sentence: spells of the level it names ("3rd-level spells", "a spell of
+     * 3rd level or higher"), else from 1st; of the kind it names ("arcane spells", "as a divine spell"), of each of two
+     * ("arcane and divine spells"), else of either kind ("arcane or divine spells"). So a spell or a kind of spell it
+     * names ("Ability to cast summon monster III", "able to cast any cure wounds spell") is any spellcasting, which only
+     * a spellcaster casts. Nothing for casting it rules out ("no ability to cast divine spells"), nor for an ability it
+     * uses ("Ability to use lesser invocations": no spell).
      */
     protected castingRequirements(text: string): RequirementEntry[] {
-      if (NO_CASTING.test(text)) return [];
-      const spells = CASTING_SPELLS.exec(text);
-      if (spells) {
-        const level = spells[1] ? parseInt(spells[1], 10) : 1;
-        const kind = spells[2]?.toLowerCase();
-        return [kind ? gte(`spellcasting.${kind}`, level) : this.spellcastingOfEitherKind(level)];
-      }
-      return CASTING_ANY.test(text) ? [this.spellcastingOfEitherKind(1)] : [];
+      const casting = CASTING.exec(text)?.[0];
+      if (!casting || NO_CASTING.test(text)) return [];
+      const level = parseInt(SPELL_LEVEL.exec(casting)?.[1] ?? "1", 10);
+      const kinds = SPELL_KINDS.exec(casting);
+      if (!kinds || kinds[2]?.toLowerCase() === "or") return [this.spellcastingOfEitherKind(level)];
+      return [kinds[1], kinds[3]]
+        .filter((kind) => kind !== undefined)
+        .map((kind) => gte(`spellcasting.${kind.toLowerCase()}`, level));
     }
 
     /** Arcane or divine spellcasting of `level` or higher. */

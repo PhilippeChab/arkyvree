@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-arcane",
-    "scrapedAt": "2026-03-31T19:42:09.424Z",
+    "scrapedAt": "2026-10-10T23:22:13.055Z",
     "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/alienist/",
     "type": "class"
   },
@@ -98,6 +98,9 @@
         "special": [
           "Must have made peaceful contact with an alienist or a pseudonatural creature.",
           "made peaceful contact with an alienist or a pseudonatural creature"
+        ],
+        "spells": [
+          "Able to cast at least one summoning spell of 3rd level or higher."
         ]
       },
       "text": "Alignment: any nonlawful Skills: Knowledge (the planes) 8 ranks Feats: Augment Summoning Spells: Able to cast at least one summoning spell of 3rd level or higher. Special: Must have made peaceful contact with an alienist or a pseudonatural creature."

@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-divine",
-    "scrapedAt": "2026-03-23T01:27:27.809Z",
+    "scrapedAt": "2026-10-10T23:22:31.229Z",
     "sourceUrl": "https://dndtools.net/classes/complete-divine--56/church-inquisitor/",
     "type": "class"
   },
@@ -164,6 +164,9 @@
         "special": [
           "Must be a member of a lawful good church or religious order, and must have already uncovered some corruption within that organization.",
           "a member of a lawful good church or religious order, and must have already uncovered some corruption within that organization"
+        ],
+        "spells": [
+          "Able to cast zone of truth as a divine spell."
         ]
       },
       "text": "Alignment: Lawful good or lawful neutral Skills: Knowledge (arcana) 4 ranks, Knowledge (religion) 4 ranks, Spellcraft 4 ranks Base Save Bonus: Will +3.Spells: Able to cast zone of truth as a divine spell.Special: Must be a member of a lawful good church or religious order, and must have already uncovered some corruption within that organization."

@@ -6,6 +6,9 @@ import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requir
 import { feat } from "@/content/dnd3.5/builders/feats/possession.ts";
 import { proficiencyRequirements } from "@/content/dnd3.5/builders/items/proficiencies.ts";
 
+/** The character's alignment a prerequisite checks. */
+const ALIGNMENT = "identity.beliefs.alignment";
+
 /** The race's size a prerequisite checks. */
 const SIZE = "identity.physiology.race.size";
 
@@ -25,6 +28,11 @@ function specialRequirements(text: string) {
   return classPrerequisites({ special: [text] }).requirements;
 }
 
+/** The requirements a class whose Spells line is `line` gives. */
+function spellsLineRequirements(line: string) {
+  return classPrerequisites({ spells: [line] }).requirements;
+}
+
 describe("A prerequisite a feat and a class share", () => {
   test("asking to cast spells of a level or a kind is that spellcasting", () => {
     expect(featRequirements("Ability to cast 3rd-level arcane spells,")).toEqual([gte("spellcasting.arcane", 3)]);
@@ -33,6 +41,29 @@ describe("A prerequisite a feat and a class share", () => {
     expect(specialRequirements("Ability to cast 3rd-level spells.")).toEqual([
       or(gte("spellcasting.arcane", 3), gte("spellcasting.divine", 3)),
     ]);
+  });
+
+  test("asking to cast spells of two kinds is each, or either, and a level or a kind its sentence names later", () => {
+    const either = (level: number) => or(gte("spellcasting.arcane", level), gte("spellcasting.divine", level));
+    expect(specialRequirements("Ability to cast 1st-level arcane and divine spells.")).toEqual([
+      gte("spellcasting.arcane", 1),
+      gte("spellcasting.divine", 1),
+    ]);
+    expect(featRequirements("Ability to cast arcane and divine spells,")).toEqual([
+      gte("spellcasting.arcane", 1),
+      gte("spellcasting.divine", 1),
+    ]);
+    expect(specialRequirements("Able to cast 3rd-level arcane or divine spells.")).toEqual([either(3)]);
+    expect(specialRequirements("Able to cast at least one summoning spell of 3rd level or higher.")).toEqual([
+      either(3),
+    ]);
+    expect(
+      spellsLineRequirements("Able to cast five abjuration spells, including at least two of 4th level or higher."),
+    ).toEqual([either(4)]);
+    expect(spellsLineRequirements("Able to cast zone of truth as a divine spell.")).toEqual([
+      gte("spellcasting.divine", 1),
+    ]);
+    expect(featRequirements("Able to cast summon monster III. Its 3rd-level arcane spells,")).toEqual([either(1)]);
   });
 
   test("of a caster level is the highest caster level, of either kind or arcane, not a spell level", () => {
@@ -52,11 +83,18 @@ describe("A prerequisite a feat and a class share", () => {
     expect(specialRequirements("Caster level 5th.")).toEqual([gte("spellcasting.casterlevel", 5)]);
   });
 
-  test("a class's Spells line asks its caster level after its spell levels, which it doesn't read again", () => {
+  test("a class's Spells line asks its spellcasting, then its caster level, after its spell levels, which it doesn't read again", () => {
     expect(
       classPrerequisites({ spells: ["Able to cast charm person, or use the charm invocation.", "Caster level 5th."] })
         .requirements,
-    ).toEqual([gte("spellcasting.casterlevel", 5)]);
+    ).toEqual([or(gte("spellcasting.arcane", 1), gte("spellcasting.divine", 1)), gte("spellcasting.casterlevel", 5)]);
+    expect(
+      classPrerequisites({
+        alignment: "Lawful neutral",
+        skills: [{ name: "Spellcraft", ranks: 4 }],
+        spells: ["Able to cast zone of truth as a divine spell."],
+      }).requirements,
+    ).toEqual([gte("skills.spellcraft.rank", 4), gte("spellcasting.divine", 1), eqStr(ALIGNMENT, "Lawful Neutral")]);
     expect(
       classPrerequisites({
         alignment: "Any nongood",
