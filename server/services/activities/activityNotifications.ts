@@ -6,30 +6,23 @@ import {
   contributorsInRules,
   invitesInCampaign,
 } from "@/drizzle/schema.ts";
+import { EntityRepositories } from "@/server/cow/index.ts";
 import type { Db } from "@/server/database/index.ts";
 import {
   Activities,
-  Aptitudes,
   CharacterContributors,
   Characters,
   Contributors,
-  Feats,
   Invites,
-  Items,
   Klasses,
   KlassLevels,
-  Languages,
   Modifiers,
   Notifications,
   Players,
-  Powers,
   Properties,
-  Races,
   Requirements,
   RULESET_ENTITY_TYPES,
   Rulesets,
-  Saves,
-  Skills,
   Users,
   Visibility,
 } from "@/server/repositories/index.ts";
@@ -196,18 +189,8 @@ async function resolveRecipients(
  */
 async function resolveRulesetId(db: Db, targetTable: string, targetId: string): Promise<string | null> {
   if (RULESET_ENTITY_TABLES.has(targetTable)) {
-    const finders: Record<string, (id: string) => Promise<{ rulesetId: string } | undefined>> = {
-      feats: (id) => Feats.findOne(db, { id }),
-      powers: (id) => Powers.findOne(db, { id }),
-      skills: (id) => Skills.findOne(db, { id }),
-      races: (id) => Races.findOne(db, { id }),
-      klasses: (id) => Klasses.findOne(db, { id }),
-      items: (id) => Items.findOne(db, { id }),
-      saves: (id) => Saves.findOne(db, { id }),
-      languages: (id) => Languages.findOne(db, { id }),
-      aptitudes: (id) => Aptitudes.findOne(db, { id }),
-    };
-    const entity = await finders[targetTable]?.(targetId);
+    const entityType = RULESET_ENTITY_TYPES.find((type) => type === targetTable);
+    const entity = entityType && (await EntityRepositories.of(entityType).findOne(db, { id: targetId }));
     return entity?.rulesetId ?? null;
   }
 
