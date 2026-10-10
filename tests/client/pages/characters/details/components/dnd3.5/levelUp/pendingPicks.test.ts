@@ -2,11 +2,10 @@ import { describe, expect, test } from "bun:test";
 
 import {
   featPickString,
-  nextPickLevel,
+  pickPairString,
   plannedLevelsOf,
   plannedPicker,
   skillPointString,
-  spellSlotsPerLevel,
 } from "@/client/src/pages/characters/details/components/dnd3.5/levelUp/pendingPicks.ts";
 
 /** A planned Fighter 3, then a Wizard 1: Add Level's preview's levels. */
@@ -14,9 +13,6 @@ const FIGHTER_THEN_WIZARD = [
   { klassId: "fighter", klassLevelId: "f3", level: 3 },
   { klassId: "wizard", klassLevelId: "w1", level: 1 },
 ];
-
-/** A wizard's spell slots over the same plan: none at the fighter level, cantrips and first-level spells at Wizard 1. */
-const WIZARD_SPELL_SLOTS: Record<string, number>[] = [{}, { 0: 6, 1: 3 }];
 
 /** A feat picked by its id. */
 function feat(id: string) {
@@ -48,31 +44,22 @@ describe("encoding a level wizard's picks for its pickers", () => {
     expect(plannedLevelsOf([], [])).toEqual(none);
   });
 
+  test("lists a level's picks for its steps by pool, in the order they were picked", () => {
+    expect(pickPairString({ general: [feat("b"), feat("a")], bonus: [feat("c")] })).toBe("b:general,a:general,c:bonus");
+    expect(pickPairString({ general: [] })).toBeUndefined();
+  });
+
   test("lists the skill points spent, leaving out a skill with none", () => {
     expect(skillPointString({ climb: 2, swim: 0, jump: 1 })).toBe("climb:2,jump:1");
     expect(skillPointString({ swim: 0 })).toBeUndefined();
   });
 });
 
-describe("the planned level a pick lands on", () => {
-  test("is the first whose slots so far outnumber the picks, the last once they're all taken", () => {
-    expect(nextPickLevel([0, 2, 1], 0)).toBe(1);
-    expect(nextPickLevel([0, 2, 1], 1)).toBe(1);
-    expect(nextPickLevel([0, 2, 1], 2)).toBe(2);
-    expect(nextPickLevel([0, 2, 1], 3)).toBe(2);
-    expect(nextPickLevel([], 0)).toBe(0);
-  });
-
-  test("counts a spell pool's slots at its open spell level, or every level's for a pool without", () => {
-    expect(spellSlotsPerLevel(WIZARD_SPELL_SLOTS, 1)).toEqual([0, 3]);
-    expect(spellSlotsPerLevel(WIZARD_SPELL_SLOTS, 4)).toEqual([0, 0]);
-    expect(spellSlotsPerLevel(WIZARD_SPELL_SLOTS, null)).toEqual([0, 9]);
-  });
-
-  test("asks the picker for that level's class, level and ability increase, after the planned levels before it", () => {
-    // A Fighter 3 then Wizard 1 plan: its wizard spells are picked at Wizard 1, never at the plan's first class
-    const index = nextPickLevel(spellSlotsPerLevel(WIZARD_SPELL_SLOTS, 1), 0);
-    expect(plannedPicker(FIGHTER_THEN_WIZARD, [null, "int"], index, "dodge:general")).toEqual({
+describe("the picker at the planned level a pick lands on", () => {
+  test("asks for that level's class, level and ability increase, after the planned levels before it", () => {
+    // A Fighter 3 then Wizard 1 plan: its wizard spells land on Wizard 1 (the preview's next pick level), never on the
+    // plan's first class
+    expect(plannedPicker(FIGHTER_THEN_WIZARD, [null, "int"], 1, "dodge:general")).toEqual({
       abilityId: "int",
       classId: "wizard",
       level: 1,

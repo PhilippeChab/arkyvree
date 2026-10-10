@@ -1718,6 +1718,8 @@ describe("LevelsService", () => {
               character.id,
               [{ abilityIncreases: [], klassId: klass.id, level: 1 }],
               {},
+              {},
+              {},
             ),
         ],
         ["classes", () => CharacterLevelsService.getAvailableClasses(session, character.id, {}, page)],

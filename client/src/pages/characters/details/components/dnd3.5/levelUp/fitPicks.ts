@@ -1,93 +1,15 @@
 /**
- * A level's picks as the slots its pools give have room for. The form keeps what was picked; the wizards read it
- * through these, so a pool that shrinks (another class planned, a feat that granted slots removed) drops its later
- * picks, and a step's change, made from what it shows, keeps them dropped. Until then they wait unshown: a pool that
- * grows back (the class planned again) shows them again.
+ * A level's picks as their pools have room for, and the skill points as their levels take them. The form keeps what
+ * was picked; the wizards read it through these, so a pool that shrinks (another class planned, a feat that granted
+ * room removed) drops its later picks, and a step's change, made from what it shows, keeps them dropped. Until then they
+ * wait unshown: a pool that grows back (the class planned again) shows them again. The steps say what fits (`fitted`):
+ * the engine fits the picks to their pools, as a save would take them.
  */
 
-import type { AptitudePool, PowerAptitudePool, SkillsData } from "./levelUpQueries.ts";
-import type { LevelUpFormData } from "./useLevelWizardBase.ts";
-
-type Feats = LevelUpFormData["selectedFeats"];
-
-type Powers = LevelUpFormData["selectedPowers"];
+import type { AptitudePool, SkillsData } from "./levelUpQueries.ts";
 
 /** A skill as its skills step answers it: its ranks at each count of points, up to the most it keeps. */
 type SpentSkill = Pick<SkillsData["skills"][number], "id" | "ranksByPoints">;
-
-/** The feat pools grown by the picked feats' "add" aptitude modifiers. */
-function growFeatPools(aptitudePools: Record<string, AptitudePool>, feats: Feats) {
-  const pools = { ...aptitudePools };
-  const adjustments = new Map<string, number>();
-  for (const picks of Object.values(feats)) {
-    for (const feat of picks) {
-      for (const mod of feat.aptitudeModifiers ?? [])
-        if (mod.operator === "add") adjustments.set(mod.aptitudeId, (adjustments.get(mod.aptitudeId) ?? 0) + mod.value);
-    }
-  }
-  for (const [aptitudeId, delta] of adjustments) {
-    if (pools[aptitudeId]) {
-      pools[aptitudeId] = {
-        ...pools[aptitudeId],
-        allowed: pools[aptitudeId].allowed + delta,
-        available: pools[aptitudeId].available + delta,
-      };
-    }
-  }
-  return pools;
-}
-
-/** Each pool's picks up to its room (`roomOf`, none for a pool gone), the later ones dropped; the same picks if all fit. */
-function trimPools<T>(picks: Record<string, T[]>, roomOf: (poolId: string, picks: T[]) => T[]) {
-  let changed = false;
-  const trimmed = Object.fromEntries(
-    Object.entries(picks).map(([poolId, poolPicks]) => {
-      const kept = roomOf(poolId, poolPicks);
-      if (kept.length !== poolPicks.length) changed = true;
-      return [poolId, kept];
-    }),
-  );
-  return changed ? trimmed : picks;
-}
-
-/**
- * The feats each pool has room for, and the pools they grow. A feat dropped takes the slots it granted with it, which
- * may drop more. Until the pools load, the picks stand.
- */
-export function fitFeats(feats: Feats, aptitudePools: Record<string, AptitudePool> | undefined) {
-  if (!aptitudePools) return { feats, pools: {} };
-  let fitted = feats;
-  for (;;) {
-    const pools = growFeatPools(aptitudePools, fitted);
-    const trimmed = trimPools(fitted, (poolId, picks) => picks.slice(0, Math.max(0, pools[poolId]?.available ?? 0)));
-    if (trimmed === fitted) return { feats: fitted, pools };
-    fitted = trimmed;
-  }
-}
-
-/**
- * The spells each pool has room for: a leveled pool's at each spell level, the latest dropped first. Until the pools
- * load, the picks stand.
- */
-export function fitPowers(powers: Powers, aptitudePools: Record<string, PowerAptitudePool> | undefined) {
-  if (!aptitudePools) return powers;
-  return trimPools(powers, (poolId, picks) => {
-    const pool = aptitudePools[poolId];
-    if (!pool) return [];
-    if (!pool.leveled || !pool.levels) return picks.slice(0, Math.max(0, pool.available));
-    const kept = [...picks];
-    for (const [level, { available }] of Object.entries(pool.levels)) {
-      let excess = kept.filter((p) => p.powerLevel === Number(level)).length - available;
-      for (let i = kept.length - 1; i >= 0 && excess > 0; i--) {
-        if (kept[i].powerLevel === Number(level)) {
-          kept.splice(i, 1);
-          excess--;
-        }
-      }
-    }
-    return kept;
-  });
-}
 
 /**
  * The skill points the form gave each skill, as its skills step answers them: each up to the most it keeps whole as the
@@ -105,6 +27,32 @@ export function fitSkillPoints(allocations: Record<string, number>, skills: Spen
     if (kept > 0) fitted[skillId] = kept;
   }
   return changed ? fitted : allocations;
+}
+
+/**
+ * The picks a step says fit (`fitted`: each pool's ids, as the engine fits them), each the form's own pick, in its
+ * order; the same picks if all fit. Until the step answers for these picks, they stand.
+ */
+export function keepFitted<T extends { id: string }>(
+  picks: Record<string, T[]>,
+  fitted: Record<string, string[]> | undefined,
+) {
+  if (!fitted) return picks;
+  let changed = false;
+  const kept = Object.fromEntries(
+    Object.entries(picks).map(([poolId, poolPicks]) => {
+      // Each id the step keeps once: a pick given twice is one
+      const left = [...(fitted[poolId] ?? [])];
+      const fits = poolPicks.filter((pick) => {
+        const index = left.indexOf(pick.id);
+        if (index >= 0) left.splice(index, 1);
+        return index >= 0;
+      });
+      if (fits.length !== poolPicks.length) changed = true;
+      return [poolId, fits];
+    }),
+  );
+  return changed ? kept : picks;
 }
 
 /** The pool whose feat picker is open, while it has slots: one a removed feat granted closes it. */

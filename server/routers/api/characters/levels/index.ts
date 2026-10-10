@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
-import { isUuid, limitDefaultingTo } from "@/server/routers/api/schemaBuilders.ts";
+import { buildPickPairsSchema, isUuid, limitDefaultingTo } from "@/server/routers/api/schemaBuilders.ts";
 import { characterIdParam, page } from "@/server/routers/api/validation.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 
@@ -10,18 +10,7 @@ import { CharacterLevelsService } from "@/server/services/characters/levels/inde
 const classLevel = z.number().int().min(1);
 
 /** Comma-separated `featId:aptitudeId` picks: what isn't one is dropped. */
-const featPicks = z
-  .string()
-  .optional()
-  .transform((value) =>
-    value
-      ?.split(",")
-      .map((pair) => {
-        const [featId, aptitudeId] = pair.split(":");
-        return { featId, aptitudeId };
-      })
-      .filter((pick) => isUuid(pick.featId) && isUuid(pick.aptitudeId)),
-  );
+const featPicks = buildPickPairsSchema("featId");
 
 /** Comma-separated ids: what isn't one is dropped. */
 const idList = z
@@ -104,6 +93,9 @@ const pickerQuery = {
   search: z.string().optional(),
 };
 
+/** Comma-separated `powerId:aptitudeId` picks: what isn't one is dropped. */
+const powerPicks = buildPickPairsSchema("powerId");
+
 /** A step's name, as its ruleset lists it. */
 const stepParams = characterIdParam.extend({ step: z.string().min(1) });
 
@@ -184,7 +176,7 @@ export default new Hono<SessionContext>()
   .get(
     "/:characterId/level-steps/:step",
     validate("param", stepParams),
-    validate("query", z.object(stepQuery)),
+    validate("query", z.object({ ...stepQuery, featPicks, powerPicks })),
     async (c) => {
       const { characterId, step } = c.req.valid("param");
       const query = c.req.valid("query");
@@ -250,12 +242,17 @@ export default new Hono<SessionContext>()
           )
           .min(1),
         skills: z.record(z.string().uuid(), z.number().int().min(0)).default({}),
+        feats: z.record(z.string().uuid(), z.array(z.string().uuid())).default({}),
+        powers: z.record(z.string().uuid(), z.array(z.string().uuid())).default({}),
       }),
     ),
     async (c) => {
       const { characterId } = c.req.valid("param");
-      const { levels, skills } = c.req.valid("json");
-      return c.json(await CharacterLevelsService.getPreview(c.var.requestSession, characterId, levels, skills), 200);
+      const { levels, skills, feats, powers } = c.req.valid("json");
+      return c.json(
+        await CharacterLevelsService.getPreview(c.var.requestSession, characterId, levels, skills, feats, powers),
+        200,
+      );
     },
   )
   .put(

@@ -33,16 +33,14 @@ export function featPickString(feats: LevelUpFormData["selectedFeats"]) {
 }
 
 /**
- * The planned level a pool's next pick lands on, as the save hands a pool's picks out over its slots (`slotsPerLevel`,
- * in plan order): the first level whose slots so far outnumber the `picked`, the last once they're all taken.
+ * A level's feats or powers as a step takes them, to fit them to their pools: "id:aptitudeId" pairs, every pool's, in
+ * the order they were picked, which a pool that's over drops the latest of.
  */
-export function nextPickLevel(slotsPerLevel: number[], picked: number) {
-  let slots = 0;
-  for (const [index, levelSlots] of slotsPerLevel.entries()) {
-    slots += levelSlots;
-    if (slots > picked) return index;
-  }
-  return Math.max(0, slotsPerLevel.length - 1);
+export function pickPairString(picks: Record<string, { id: string }[]>) {
+  const pairs = Object.entries(picks).flatMap(([aptitudeId, poolPicks]) =>
+    poolPicks.map((pick) => `${pick.id}:${aptitudeId}`),
+  );
+  return pairs.length > 0 ? pairs.join(",") : undefined;
 }
 
 /**
@@ -63,7 +61,7 @@ export function plannedLevelsOf(
 }
 
 /**
- * Add Level's picker at the planned level its next pick lands on (`index`, `nextPickLevel`'s): that level's class,
+ * Add Level's picker at the planned level its next pick lands on (`index`, the preview's `nextPickLevels`): that level's class,
  * level and ability increase, the planned levels before it, and the feats picked so far, none of them saved yet.
  * Nothing until the plan's preview has loaded, which skips the picker's query.
  */
@@ -95,14 +93,4 @@ export function skillPointString(allocations: LevelUpFormData["skillPointAllocat
     .filter(([, points]) => points > 0)
     .map(([skillId, points]) => `${skillId}:${points}`);
   return pairs.length > 0 ? pairs.join(",") : undefined;
-}
-
-/**
- * A spell pool's slots at each planned level (`slotsPerLevel`, by spell level): at the open spell level, or every
- * level's together for a pool without spell levels (`null`), as the save hands its picks out.
- */
-export function spellSlotsPerLevel(slotsPerLevel: Record<string, number>[], spellLevel: number | null) {
-  return slotsPerLevel.map((slots) =>
-    spellLevel === null ? Object.values(slots).reduce((sum, count) => sum + count, 0) : (slots[spellLevel] ?? 0),
-  );
 }

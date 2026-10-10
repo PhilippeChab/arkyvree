@@ -381,6 +381,23 @@ describe("character levels", () => {
       await expectStatus(response, 400);
     });
 
+    test("refuses a feat its pool has no room for, forced or not", async () => {
+      const { characterId, ctx } = await createCharacter();
+      const levelPicks = fighter1(ctx);
+      const general = ctx.aptMap["General"];
+      const feats = { ...levelPicks.feats, [general]: [...levelPicks.feats[general], ctx.featMap["Toughness"]] };
+      const response = await levels.finalize.$post({
+        param: { characterId },
+        json: {
+          levels: [{ klassId: ctx.klassMap.pc["Fighter"], level: 1, hp: 8, abilityIncreases: [] }],
+          ...levelPicks,
+          feats,
+          force: true,
+        },
+      });
+      await expectStatus(response, 400);
+    });
+
     test("refuses a class level beyond the rules' last", async () => {
       const { characterId, ctx } = await createCharacter();
       await expectStatus(finalize(characterId, ctx.klassMap.pc["Fighter"], 21, 8, fighter1(ctx)), 400);

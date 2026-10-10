@@ -1,67 +1,42 @@
 import { describe, expect, test } from "bun:test";
 
 import {
-  fitFeats,
-  fitPowers,
   fitSkillPoints,
+  keepFitted,
   openPoolOf,
   withoutPick,
   withPick,
 } from "@/client/src/pages/characters/details/components/dnd3.5/levelUp/fitPicks.ts";
 
-/** A feat that grants `grants` slots in pool `poolId`. */
-function feat(id: string, grants?: { poolId: string; slots: number }) {
-  return {
-    id,
-    name: id,
-    aptitudeModifiers: grants ? [{ aptitudeId: grants.poolId, value: grants.slots, operator: "add" }] : [],
-  };
-}
-
-/** A feat pool with `available` slots. */
+/** A feat pool with `available` room. */
 function featPool(id: string, available: number) {
   return { id, name: id, allowed: available, spent: 0, available, shared: false };
 }
 
-/** A spell picked at `powerLevel`. */
-function power(id: string, powerLevel?: number) {
-  return { id, name: id, powerLevel };
+/** A feat or a spell picked. */
+function pick(id: string) {
+  return { id, name: id };
 }
 
-describe("fitting a level's feats to its pools", () => {
-  test("keeps picks that fit, as the same object", () => {
-    const feats = { general: [feat("Dodge")] };
-    expect(fitFeats(feats, { general: featPool("general", 1) }).feats).toBe(feats);
+describe("keeping the picks a step says fit", () => {
+  test("keeps the form's own picks the step keeps, in their order, and drops the others", () => {
+    const feats = { general: [pick("Dodge"), pick("Mobility")], fighter: [pick("Cleave")] };
+    expect(keepFitted(feats, { general: ["Dodge"] })).toEqual({ general: [pick("Dodge")], fighter: [] });
   });
 
-  test("drops the later picks a pool has no room for, and every pick of a pool gone", () => {
-    const feats = { general: [feat("Dodge"), feat("Mobility")], fighter: [feat("Cleave")] };
-    expect(fitFeats(feats, { general: featPool("general", 1) }).feats).toEqual({
-      general: [feat("Dodge")],
-      fighter: [],
+  test("keeps a pick given twice once, as the step counts it", () => {
+    expect(keepFitted({ general: [pick("Toughness"), pick("Toughness")] }, { general: ["Toughness"] })).toEqual({
+      general: [pick("Toughness")],
     });
   });
 
-  test("grows a pool by a picked feat's slots, and drops them with it", () => {
-    const granter = feat("Bonus", { poolId: "bonus", slots: 1 });
-    const feats = { general: [feat("Dodge"), granter], bonus: [feat("Cleave")] };
-    const pools = { general: featPool("general", 2), bonus: featPool("bonus", 0) };
-    const fitted = fitFeats(feats, pools);
-    expect(fitted.feats).toBe(feats);
-    expect(fitted.pools.bonus.available).toBe(1);
-    // The granter no longer fits: its slot, and the feat in it, go
-    expect(fitFeats(feats, { ...pools, general: featPool("general", 1) }).feats).toEqual({
-      general: [feat("Dodge")],
-      bonus: [],
-    });
+  test("keeps picks that fit as the same object, and every pick until the step answers for them", () => {
+    const feats = { general: [pick("Dodge")] };
+    expect(keepFitted(feats, { general: ["Dodge"] })).toBe(feats);
+    expect(keepFitted(feats, undefined)).toBe(feats);
   });
 
-  test("leaves the picks while the pools load", () => {
-    const feats = { general: [feat("Dodge")] };
-    expect(fitFeats(feats, undefined)).toEqual({ feats, pools: {} });
-  });
-
-  test("closes the picker of a pool with no slots", () => {
+  test("closes the picker of a pool with no room", () => {
     const pools = { general: featPool("general", 1), bonus: featPool("bonus", 0) };
     expect([openPoolOf("general", pools), openPoolOf("bonus", pools), openPoolOf(null, pools)]).toEqual([
       "general",
@@ -69,35 +44,11 @@ describe("fitting a level's feats to its pools", () => {
       null,
     ]);
   });
-});
-
-describe("fitting a level's spells to its pools", () => {
-  test("drops a leveled pool's latest picks at a spell level past its room", () => {
-    const powers = { wizard: [power("a", 1), power("b", 1), power("c", 2)], gone: [power("d")] };
-    const pools = {
-      wizard: {
-        id: "wizard",
-        name: "Wizard",
-        allowed: 3,
-        spent: 0,
-        available: 3,
-        leveled: true,
-        levels: { 1: { allowed: 1, spent: 0, available: 1 }, 2: { allowed: 1, spent: 0, available: 1 } },
-      },
-    };
-    expect(fitPowers(powers, pools)).toEqual({ wizard: [power("a", 1), power("c", 2)], gone: [] });
-  });
-
-  test("keeps picks that fit, and every pick while the pools load", () => {
-    const powers = { bard: [power("a")] };
-    expect(fitPowers(powers, { bard: { id: "bard", name: "Bard", allowed: 1, spent: 0, available: 1 } })).toBe(powers);
-    expect(fitPowers(powers, undefined)).toBe(powers);
-  });
 
   test("adds a pick last in its pool, and removes one", () => {
-    expect(withPick({ bard: [power("a")] }, "bard", power("b"))).toEqual({ bard: [power("a"), power("b")] });
-    expect(withPick({}, "bard", power("a"))).toEqual({ bard: [power("a")] });
-    expect(withoutPick({ bard: [power("a"), power("b")] }, "bard", "a")).toEqual({ bard: [power("b")] });
+    expect(withPick({ bard: [pick("a")] }, "bard", pick("b"))).toEqual({ bard: [pick("a"), pick("b")] });
+    expect(withPick({}, "bard", pick("a"))).toEqual({ bard: [pick("a")] });
+    expect(withoutPick({ bard: [pick("a"), pick("b")] }, "bard", "a")).toEqual({ bard: [pick("b")] });
   });
 });
 

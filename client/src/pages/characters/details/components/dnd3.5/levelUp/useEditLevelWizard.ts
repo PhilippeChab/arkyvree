@@ -8,7 +8,7 @@ import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDebouncedValue, useFormSync, useListboxQuery } from "@/client/src/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-import { fitFeats, fitPowers, fitSkillPoints, openPoolOf } from "./fitPicks.ts";
+import { fitSkillPoints, keepFitted, openPoolOf } from "./fitPicks.ts";
 import { type HpLevel, hpSet } from "./hitPoints.ts";
 import {
   availableFeatsGroupedQuery,
@@ -19,7 +19,13 @@ import {
   type PickerLevel,
   type StepLevel,
 } from "./levelUpQueries.ts";
-import { abilityIncreasesOf, featPickString, powerPickString, skillPointString } from "./pendingPicks.ts";
+import {
+  abilityIncreasesOf,
+  featPickString,
+  pickPairString,
+  powerPickString,
+  skillPointString,
+} from "./pendingPicks.ts";
 import { type LevelUpFormData, pickIds, useLevelWizardBase } from "./useLevelWizardBase.ts";
 import { HP_STEP, REVIEW_STEP } from "./wizardSteps.ts";
 
@@ -143,18 +149,26 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevel }:
     [picked.skillPoints, skillData],
   );
 
-  const {
-    data: featData,
-    isLoading: isLoadingFeats,
-    error: featsError,
-  } = useQuery({ ...levelStepQuery(characterId, "feats", increasedStep), enabled: open });
+  // The level with its feats and spells, which its feat and spell steps fit to their pools: each step's last answer kept
+  // while it answers for the new picks, which stand meanwhile
+  const pickedStep: StepLevel = {
+    ...increasedStep,
+    picks: { feats: pickPairString(picked.feats), powers: pickPairString(picked.powers) },
+  };
+  const featQuery = useQuery({
+    ...levelStepQuery(characterId, "feats", pickedStep),
+    enabled: open,
+    placeholderData: keepPreviousData,
+  });
+  const { data: featData, isLoading: isLoadingFeats, error: featsError } = featQuery;
 
-  // The feats, fitted to the level's slots
-  const { feats: selectedFeats, pools: adjustedFeatPools } = useMemo(
-    () => fitFeats(picked.feats, featData?.aptitudePools),
-    [picked.feats, featData],
+  // The feats that fit the level's pools
+  const selectedFeats = useMemo(
+    () => keepFitted(picked.feats, featQuery.isPlaceholderData ? undefined : featData?.fitted),
+    [picked.feats, featQuery.isPlaceholderData, featData],
   );
-  const selectedAptitude = openPoolOf(base.selectedAptitude, adjustedFeatPools);
+  const featPools = useMemo(() => featData?.aptitudePools ?? {}, [featData]);
+  const selectedAptitude = openPoolOf(base.selectedAptitude, featPools);
   const allSelectedFeatPickString = useMemo(() => featPickString(selectedFeats), [selectedFeats]);
   const picker: PickerLevel = { ...increasedStep, featPicks: allSelectedFeatPickString };
 
@@ -170,15 +184,18 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevel }:
     enabled: open && stepName === "feats",
   });
 
-  // Powers queries
-  const {
-    data: powerData,
-    isLoading: isLoadingPowers,
-    error: powersError,
-  } = useQuery({ ...levelStepQuery(characterId, "powers", increasedStep), enabled: open });
+  const powerQuery = useQuery({
+    ...levelStepQuery(characterId, "powers", pickedStep),
+    enabled: open,
+    placeholderData: keepPreviousData,
+  });
+  const { data: powerData, isLoading: isLoadingPowers, error: powersError } = powerQuery;
 
-  // The spells, fitted to the level's slots
-  const selectedPowers = useMemo(() => fitPowers(picked.powers, powerData?.aptitudePools), [picked.powers, powerData]);
+  // The spells that fit the level's pools
+  const selectedPowers = useMemo(
+    () => keepFitted(picked.powers, powerQuery.isPlaceholderData ? undefined : powerData?.fitted),
+    [picked.powers, powerQuery.isPlaceholderData, powerData],
+  );
 
   const {
     items: availablePowers,
@@ -314,7 +331,7 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevel }:
     handleFeatsScroll,
     handlePowersScroll,
 
-    adjustedFeatPools,
+    featPools,
     isNextDisabled,
   };
 }

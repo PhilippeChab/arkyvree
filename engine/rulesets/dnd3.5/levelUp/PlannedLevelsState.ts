@@ -1,17 +1,27 @@
 import { z } from "zod";
 
 import type { GrantedFeatRecords } from "@/engine/core/levelUp/index.ts";
-import { type AbilityIncrease, CharacterProjection, type LevelRequest } from "@/engine/core/module/index.ts";
+import {
+  type AbilityIncrease,
+  CharacterProjection,
+  type LevelPicks,
+  type LevelRequest,
+} from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { CLASS_LEVEL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/classes/fields.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
+import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
 import type { Klass, KlassLevel } from "@/shared/relations.ts";
 
-import AptitudeSlotsPlan from "./AptitudeSlotsPlan.ts";
-import LevelUpState from "./LevelUpState.ts";
+import AptitudeSlotsPlan, { type FeatSlots } from "./AptitudeSlotsPlan.ts";
+import LevelUpState, { type PoolPicks } from "./LevelUpState.ts";
+import PicksDistribution, { type PerLevelDistributionData } from "./PicksDistribution.ts";
+
+/** What the planned levels give: the pools the character picks in, and each level's skill points, class skills and slots. */
+export type LevelGains = ReturnType<PlannedLevelsState["computeLevelGains"]>;
 
 /** A planned level's class and class level, and its ability increases. */
 export interface PlannedClassLevel {
@@ -43,6 +53,21 @@ const PLANNED_LEVELS = z
  * pools the character picks in, and each level's skill points, class skills and pool slots.
  */
 export default abstract class PlannedLevelsState extends LevelUpState {
+  /** What a save distributes its pooled picks over the planned levels by: each level's points, class skills and slots. */
+  private buildDistributionData(planned: PlannedLevels, gains: LevelGains): PerLevelDistributionData {
+    const { classSkills, perLevelFeatSlots, perLevelPowerSlots, perLevelSkillPoints } = gains;
+    return {
+      perLevelSkillPoints,
+      perLevelClassSkillIds: classSkills.perLevel,
+      perLevelFeatSlots,
+      perLevelPowerSlots,
+      savedLevelCount: planned.savedLevelCount,
+      skillContexts: PicksDistribution.contextsOf(
+        planned.character.components.skills.getEnrichedSkills(this.rulesetData.skills, classSkills.merged),
+      ),
+    };
+  }
+
   /**
    * Each planned level's points per level before the minimum, in the batch's order: its class's and the skill point
    * ability's modifier.
@@ -54,6 +79,26 @@ export default abstract class PlannedLevelsState extends LevelUpState {
         CLASS_LEVEL_FIELDS.read(this.rulesetData.propertiesByEntity.get(klassLevelId) ?? []).skills,
       ),
     );
+  }
+
+  /**
+   * The feat that gives each pool room past its slots, a pool a feat's modifier creates (`aptitudes.<slug>….allowed`)
+   * too: the first-pass feat (one picked in a pool with slots) that targets it.
+   */
+  private getAptitudeSources(feats: Record<string, string[]>, perLevelFeatSlots: FeatSlots) {
+    const hasSlots = (aptId: string) => (perLevelFeatSlots[aptId] ?? []).some((s) => s > 0);
+    const sources = new Map<string, string>();
+    const firstPassFeatIds = Object.entries(feats)
+      .filter(([aptId]) => hasSlots(aptId))
+      .flatMap(([, ids]) => ids);
+    for (const featId of firstPassFeatIds) {
+      for (const mod of this.rulesetData.modifiersBySource.get(featId) ?? []) {
+        const list = AptitudeTargets.parseAllowed(mod.target);
+        const aptId = list === undefined ? undefined : this.rulesetData.aptitudeIdBySlug.get(list);
+        if (aptId && Object.hasOwn(feats, aptId)) sources.set(aptId, mod.sourceId);
+      }
+    }
+    return sources;
   }
 
   /**
@@ -73,6 +118,20 @@ export default abstract class PlannedLevelsState extends LevelUpState {
       klassLevelEntries,
       saved: this.build(),
     };
+  }
+
+  /**
+   * The character with the planned levels (`planned`) and the picks spread over them as a save spreads them (`gains`:
+   * what the levels give), which the preview fits the wizard's picks with.
+   */
+  protected buildWithPicks(planned: PlannedLevels, picks: PoolPicks, gains: LevelGains) {
+    const distributed = this.distributePlannedPicks(planned, { ...picks, skills: {} }, gains);
+    const projection = new CharacterProjection(this.character);
+    for (const [i, { abilityIncreases, klassLevel }] of planned.klassLevelEntries.entries()) {
+      const level = projection.addLevel(klassLevel.id, { abilityIncreases, hp: LevelRules.UNROLLED_LEVEL_HP });
+      projection.pick(level, this.toPickRows(distributed[i]));
+    }
+    return this.build(projection);
   }
 
   /**
@@ -109,6 +168,26 @@ export default abstract class PlannedLevelsState extends LevelUpState {
     const { bonusPerLevel } = character.components.skills.getSkillPointBases();
     return this.computeSkillPointBasesPerLevel(character, klassLevelIds).map((points, i) =>
       SkillRules.levelPoints(points, bonusPerLevel, savedLevelCount === 0 && i === 0),
+    );
+  }
+
+  /**
+   * A save's pooled picks (skill ranks, and feats and powers by pool) spread over its planned levels, each level taking
+   * what its points and slots allow, in order, and what's past a pool's slots on the level of the feat that gives it
+   * room, or the last (`PicksDistribution`). `gains`: what the levels give, when the caller has them.
+   */
+  protected distributePlannedPicks(
+    planned: PlannedLevels,
+    { feats, powers, skills }: LevelPicks,
+    gains = this.computeLevelGains(planned),
+  ) {
+    const data = this.buildDistributionData(planned, gains);
+    return new PicksDistribution(data).distribute(
+      skills,
+      feats,
+      powers,
+      this.buildPowerLevelLookup(Object.values(powers).flat()),
+      this.getAptitudeSources(feats, data.perLevelFeatSlots),
     );
   }
 

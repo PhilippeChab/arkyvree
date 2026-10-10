@@ -39,7 +39,6 @@ interface FeatFamilyExpansionProps {
 
 /** The feat picker state a level wizard hands the Feats step. */
 interface FeatPickerState {
-  adjustedFeatPools: Record<string, AptitudePool>;
   /** Why the feats to pick didn't load. */
   availableFeatsError: unknown;
   /** The picks' form: the feats field, which the step changes from `selectedFeats`. */
@@ -51,6 +50,8 @@ interface FeatPickerState {
    * checked at too.
    */
   featPicker: PickerLevel;
+  /** The level's feat pools, each with its room for the feats picked (the step's answer). */
+  featPools: Record<string, AptitudePool>;
   featSearch: string;
   featsError: Error | null;
   groupedFeats: GroupedFeatRow[];
@@ -124,7 +125,7 @@ export function FeatsStep({ wizard, characterId }: FeatsStepProps) {
     featData,
     isLoadingFeats,
     featsError,
-    adjustedFeatPools,
+    featPools,
     control,
     selectedFeats,
     selectedAptitude,
@@ -146,7 +147,7 @@ export function FeatsStep({ wizard, characterId }: FeatsStepProps) {
   if (featsError && !featData) return <LoadError what="Feats" error={featsError} />;
   if (!featData) return null;
 
-  const openPools = Object.values(adjustedFeatPools).filter((pool) => pool.available > 0);
+  const openPools = Object.values(featPools).filter((pool) => pool.available > 0);
   if (openPools.length === 0 && featData.autoGrantedFeats.length === 0)
     return <BlankNote>No feats to select at this level</BlankNote>;
 

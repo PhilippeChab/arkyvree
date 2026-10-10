@@ -29,7 +29,6 @@ interface SpellPickerState {
   powerData: PowersData | null | undefined;
   powerSearch: string;
   powersError: Error | null;
-  selectedFeats: LevelUpFormData["selectedFeats"];
   selectedPowerAptitude: string | null;
   selectedPowerLevel: number | null;
   selectedPowers: LevelUpFormData["selectedPowers"];
@@ -48,7 +47,6 @@ export function SpellsStep({ wizard }: SpellsStepProps) {
     isLoadingPowers,
     powersError,
     control,
-    selectedFeats,
     selectedPowers,
     selectedPowerAptitude,
     selectedPowerLevel,
@@ -68,8 +66,8 @@ export function SpellsStep({ wizard }: SpellsStepProps) {
   if (powersError && !powerData) return <LoadError what="Spells" error={powersError} />;
   if (!powerData) return null;
 
-  // A pool's room, less the feats picked in it; a leveled pool's at a spell level
-  const poolRoom = (pool: PowerAptitudePool) => Math.max(0, pool.available - (selectedFeats[pool.id] ?? []).length);
+  // A pool's room for the spells picked (a shared pool's feats take theirs); a leveled pool's at a spell level
+  const poolRoom = (pool: PowerAptitudePool) => Math.max(0, pool.available);
   const levelRoom = (pool: PowerAptitudePool, level: number) => pool.levels?.[level]?.available ?? 0;
   const picksAt = (pool: PowerAptitudePool, level: number | null) =>
     (selectedPowers[pool.id] ?? []).filter((power) => level === null || power.powerLevel === level);

@@ -69,8 +69,8 @@ export default class LevelEdit extends LevelUpState {
 
   /**
    * The edit of saved level `characterLevelId`, with the character's bonded creatures' rows (`bonded`): the level as
-   * saved, its new hit points, ability and picks, checked, and refused with the issues it answers for unless `force`d;
-   * and what its bonded creatures become with it.
+   * saved, its new hit points, ability and picks, checked, its picks refused when they overfill a pool (forced or not),
+   * and refused with the issues it answers for unless `force`d; and what its bonded creatures become with it.
    */
   planEdit(bonded: CharacterInput[], characterLevelId: string, edit: LevelEditRequest, force: boolean) {
     const { rows } = this.character;
@@ -90,6 +90,7 @@ export default class LevelEdit extends LevelUpState {
     );
 
     const edited = this.build(this.projectEditedLevel(level, klassLevel.id, edit));
+    this.refuseOverfull(edited, edit);
     const { valid, issues } = edited.validate();
     if (!valid && !force) {
       // The issues of the pools the level adds to: built without the level and every later one, then with it alone

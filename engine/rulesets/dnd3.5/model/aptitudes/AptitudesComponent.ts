@@ -27,6 +27,9 @@ type AptitudesData = {
 /** A pool a level-up picks feats in: an unleveled aptitude, `shared` when its aptitude has powers too. */
 type FeatPool = { allowed: number; available: number; id: string; name: string; shared: boolean; spent: number };
 
+/** A pool picks overfill: its aptitude, its spell level for a leveled one, its name, the picks in it and its room. */
+type OverfullPool = { aptitudeId: string; level?: string; name: string; picked: number; room: number };
+
 /** A pool a level-up picks powers in: a leveled aptitude, with each spell level it has left (`levels`), or a shared one. */
 type PowerPool = {
   allowed: number;
@@ -44,6 +47,15 @@ export type AptitudeLevelData = {
   spent: number;
   uses: number;
 };
+
+/**
+ * A level-up's own picks, counted by pool: its feats, and its powers by spell level (`""` for one picked in a pool
+ * without spell levels). A pool's room for them adds them back to what it has left.
+ */
+export type OwnPicks = { feats: Record<string, number>; powers: Record<string, Record<string, number>> };
+
+/** No picks of a level-up's own: a pool's room is what it has left. */
+const NO_OWN_PICKS: OwnPicks = { feats: {}, powers: {} };
 
 export const ALLOWED_ALL = -1;
 
@@ -192,20 +204,25 @@ export default class AptitudesComponent {
     };
   }
 
-  /** A leveled aptitude's power pool: what each spell level that has any left gives, and all of them. */
-  private toLeveledPool(aptitude: AptitudesData[string]): PowerPool {
-    const levelsByKey = aptitude as Record<string, unknown>;
+  /** A leveled aptitude's spell level `level`, if it has one. */
+  private spellLevelOf(aptitude: AptitudesData[string], level: string) {
+    return (aptitude as Record<string, unknown>)[level] as AptitudeLevelData | undefined;
+  }
+
+  /**
+   * A leveled aptitude's power pool: what each spell level that has room left gives, or that a level-up's own picks
+   * (`own`, by spell level) are in, with its room for them (what it has left, and them), and all of them.
+   */
+  private toLeveledPool(aptitude: AptitudesData[string], own: Record<string, number>): PowerPool {
     const levels: Record<string, { allowed: number; available: number; spent: number }> = {};
     let available = 0;
     for (let spellLevel = 0; spellLevel <= MAX_SPELL_LEVEL; spellLevel++) {
-      const levelData = levelsByKey[String(spellLevel)] as AptitudeLevelData | undefined;
-      if (levelData && levelData.available > 0) {
-        levels[String(spellLevel)] = {
-          allowed: levelData.allowed,
-          spent: levelData.spent,
-          available: levelData.available,
-        };
-        available += levelData.available;
+      const levelData = this.spellLevelOf(aptitude, String(spellLevel));
+      const picked = own[String(spellLevel)] ?? 0;
+      const room = (levelData?.available ?? 0) + picked;
+      if (levelData && (room > 0 || picked > 0)) {
+        levels[String(spellLevel)] = { allowed: levelData.allowed, spent: levelData.spent - picked, available: room };
+        available += room;
       }
     }
     const { id, name, allowed, spent } = aptitude;
@@ -225,20 +242,24 @@ export default class AptitudesComponent {
   /**
    * The pools a level-up picks in, by aptitude id, and what's left to pick in each kind. An unleveled aptitude is a
    * feat pool, `shared` when its aptitude has powers too, which makes it a power pool as well: its picks count as
-   * powers. A leveled aptitude is a power pool, with what each spell level it has left gives.
+   * powers. A leveled aptitude is a power pool, with what each spell level it has left gives. A pool's room for the
+   * level-up's own picks of its kind (`own`, which the character holds) adds them back to what it has left: a shared
+   * pool's feats take room from its powers, and its powers from its feats.
    */
-  getLevelUpPools(rulesetData: Pick<RulesetData, "aptitudeIdsWithPowers">) {
+  getLevelUpPools(rulesetData: Pick<RulesetData, "aptitudeIdsWithPowers">, own: OwnPicks = NO_OWN_PICKS) {
     const featPools: Record<string, FeatPool> = {};
     const powerPools: Record<string, PowerPool> = {};
     for (const [key, aptitude] of Object.entries(this.aptitudes)) {
       const { id, name, allowed, spent, available } = aptitude;
       if (this.leveledAptitudeKeys.has(key)) {
-        powerPools[id] = this.toLeveledPool(aptitude);
+        powerPools[id] = this.toLeveledPool(aptitude, own.powers[id] ?? {});
         continue;
       }
       const shared = rulesetData.aptitudeIdsWithPowers.has(id);
-      featPools[id] = { id, name, allowed, spent, available, shared };
-      if (shared) powerPools[id] = { id, name, allowed, spent, available };
+      const feats = own.feats[id] ?? 0;
+      featPools[id] = { id, name, allowed, spent: spent - feats, available: available + feats, shared };
+      const powers = own.powers[id]?.[""] ?? 0;
+      if (shared) powerPools[id] = { id, name, allowed, spent: spent - powers, available: available + powers };
     }
     return {
       featPools,
@@ -246,6 +267,29 @@ export default class AptitudesComponent {
       powerPools,
       powersToSelect: sumAvailable(Object.values(powerPools)),
     };
+  }
+
+  /**
+   * The pools a level-up's own picks (`own`, which the character holds) overfill: each pool they're in that has less
+   * than nothing left, a leveled one's at each spell level, with how many they pick there and its room for them.
+   */
+  getOverfullPools(own: OwnPicks): OverfullPool[] {
+    const overfull: OverfullPool[] = [];
+    for (const [key, aptitude] of Object.entries(this.aptitudes)) {
+      const { id: aptitudeId, name } = aptitude;
+      if (!this.leveledAptitudeKeys.has(key)) {
+        const picked = (own.feats[aptitudeId] ?? 0) + (own.powers[aptitudeId]?.[""] ?? 0);
+        if (picked > 0 && aptitude.available < 0)
+          overfull.push({ aptitudeId, name, picked, room: aptitude.available + picked });
+        continue;
+      }
+      for (const [level, picked] of Object.entries(own.powers[aptitudeId] ?? {})) {
+        const available = this.spellLevelOf(aptitude, level)?.available ?? -picked;
+        if (picked > 0 && available < 0)
+          overfull.push({ aptitudeId, level, name: `${name} (level ${level})`, picked, room: available + picked });
+      }
+    }
+    return overfull;
   }
 
   /** The general feats the character's level gives that count toward no aptitude: its ruleset has no General. */
