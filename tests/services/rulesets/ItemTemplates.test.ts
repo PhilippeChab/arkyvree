@@ -216,6 +216,80 @@ describe("Item templates", () => {
     });
   });
 
+  describe("are templates of their instances' type", () => {
+    test.each([
+      ["a Ring", "Ring"],
+      ["an Armor", "Armor"],
+      ["an item without a type", null],
+    ])("refused as %s's when created", async (_what, type) => {
+      const { session, ruleset, template } = await setup();
+      const sword = await template("Longsword");
+      await expectRefusedWith(
+        ItemsService.createItem(session, ruleset.id, { name: "Mismatched", type, sourceItemId: sword.id }),
+        422,
+      );
+      expect(await Items.findOne(db, { rulesetId: ruleset.id, name: "Mismatched" })).toBeUndefined();
+    });
+
+    test("refused when the source isn't a template", async () => {
+      const { session, ruleset, instance } = await setup();
+      const sword = await instance("Longsword");
+      await expectRefusedWith(
+        ItemsService.createItem(session, ruleset.id, { name: "From a copy", type: "Weapon", sourceItemId: sword.id }),
+        422,
+      );
+    });
+
+    test("refused when an edit changes the type and keeps the template", async () => {
+      const { session, ruleset, instance } = await setup();
+      const sword = await instance("Longsword");
+      await expectRefusedWith(
+        ItemsService.updateItem(session, ruleset.id, sword.id, { name: sword.name, type: "Wondrous Item" }),
+        422,
+      );
+      await expectRefusedWith(
+        ItemsService.updateItem(session, ruleset.id, sword.id, {
+          name: sword.name,
+          type: "Wondrous Item",
+          sourceItemId: sword.sourceItemId,
+        }),
+        422,
+      );
+      expect(await Items.findOne(db, { id: sword.id })).toMatchObject({ type: "Weapon" });
+    });
+
+    test("refused when an edit gives a template of another type", async () => {
+      const { session, ruleset, template, instance } = await setup();
+      const sword = await instance("Longsword");
+      const mail = await template("Chain Mail");
+      await expectRefusedWith(
+        ItemsService.updateItem(session, ruleset.id, sword.id, { name: sword.name, sourceItemId: mail.id }),
+        422,
+      );
+      expect(await Items.findOne(db, { id: sword.id })).toMatchObject({ sourceItemId: sword.sourceItemId });
+    });
+
+    test("kept when an edit changes the type with a template of it, or none", async () => {
+      const { session, ruleset, template, instance } = await setup();
+      const sword = await instance("Longsword");
+      const mail = await template("Chain Mail");
+      expect(
+        await ItemsService.updateItem(session, ruleset.id, sword.id, {
+          name: sword.name,
+          type: "Armor",
+          sourceItemId: mail.id,
+        }),
+      ).toMatchObject({ type: "Armor", sourceItemId: mail.id });
+      expect(
+        await ItemsService.updateItem(session, ruleset.id, sword.id, {
+          name: sword.name,
+          type: "Ring",
+          sourceItemId: null,
+        }),
+      ).toMatchObject({ type: "Ring", sourceItemId: null });
+    });
+  });
+
   test("an inherited one is edited into a local copy, leaving the original", async () => {
     const { session, ruleset, template } = await setup();
     const mace = await template("Heavy Mace");

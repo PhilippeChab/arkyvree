@@ -39,7 +39,7 @@ Each condition (a requirement of type **Condition**) has three parts: **target**
 
 Pick the path in the editor's **Target** field: drill down its list, or search it.
 
-On an item, the requirements of a base weapon, armor or shield (a template) are the proficiency with it, and an item made from it shares them. Not being proficient with a weapon costs 4 to hit and nothing else; armor and shields can't be equipped without their proficiency. Requirements added to any other item are its own: while one isn't met, the item's own modifiers don't apply. So for the proficiency penalty, make a weapon from a base weapon: a requirement added to a plain one only turns its modifiers off.
+On an item, the requirements of a base weapon, armor or shield (a template) are the proficiency with it, and an item made from it shares them. An item is made from a template of its own type, so changing its type drops its template, and the template's properties and requirements with it. Not being proficient with a weapon costs 4 to hit and nothing else; armor and shields can't be equipped without their proficiency. Requirements added to any other item are its own: while one isn't met, the item's own modifiers don't apply. So for the proficiency penalty, make a weapon from a base weapon: a requirement added to a plain one only turns its modifiers off.
 
 Multiple requirements on the same entity are AND'd together. To express OR, add a requirement of type **Chaining** with the **Chaining Operator** OR, then add each condition under it with its **Add Child Requirement**.
 
