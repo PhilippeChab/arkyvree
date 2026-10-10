@@ -1,8 +1,8 @@
 import { ITEM_FIELDS } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import type { CustomizedRace } from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
-import { UNARMED_STRIKE } from "@/engine/rulesets/dnd3.5/rules/combat.ts";
 import { include } from "@/lib/mixins.ts";
 import { type CharacterLevel } from "@/shared/relations.ts";
+import { UNARMED_STRIKE } from "@/vocabulary/dnd3.5/combat.ts";
 
 import CombatState, { type CombatData } from "./CombatState.ts";
 import { ArmorClass } from "./concerns/ArmorClass.ts";

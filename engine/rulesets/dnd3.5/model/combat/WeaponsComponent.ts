@@ -1,6 +1,6 @@
 import { type WeaponFields } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
-import { UNARMED_STRIKE } from "@/engine/rulesets/dnd3.5/rules/combat.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { UNARMED_STRIKE } from "@/vocabulary/dnd3.5/combat.ts";
 
 import type CombatComponent from "./CombatComponent.ts";
 import { SLOT_MAP, type WeaponSet } from "./CombatState.ts";

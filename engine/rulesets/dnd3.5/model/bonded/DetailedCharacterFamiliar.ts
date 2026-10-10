@@ -1,6 +1,7 @@
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import { type BondedRaceStatBlock } from "@/vocabulary/dnd3.5/bondedCreatures.ts";
 
-import BondedRaceData, { type BondedRaceStatBlock } from "./BondedRaceData.ts";
+import BondedRaceData from "./BondedRaceData.ts";
 import DetailedCharacterBonded from "./DetailedCharacterBonded.ts";
 
 /**

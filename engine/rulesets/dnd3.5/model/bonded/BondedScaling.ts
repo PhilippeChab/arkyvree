@@ -1,6 +1,5 @@
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
-
-import { type BondedRaceStatBlock } from "./BondedRaceData.ts";
+import { type BondedRaceStatBlock } from "@/vocabulary/dnd3.5/bondedCreatures.ts";
 
 /** A bonded creature's feats and skill ranks, scaled to its hit dice. */
 export default class BondedScaling {

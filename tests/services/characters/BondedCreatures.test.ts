@@ -8,7 +8,6 @@ import DetailedCharacterAnimalCompanion from "@/engine/rulesets/dnd3.5/model/bon
 import DetailedCharacterFamiliar from "@/engine/rulesets/dnd3.5/model/bonded/DetailedCharacterFamiliar.ts";
 import DetailedCharacterMount from "@/engine/rulesets/dnd3.5/model/bonded/DetailedCharacterMount.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
-import { CARRYING_CAPACITY } from "@/engine/rulesets/dnd3.5/rules/carrying.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
@@ -40,6 +39,7 @@ import { addOneLevel, findKlassLevel, getLevelStep } from "@/tests/support/level
 import { invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
+import { CARRYING_CAPACITY } from "@/vocabulary/dnd3.5/carrying.ts";
 
 const owner = makeSession();
 function familiarOf(masterId: string) {

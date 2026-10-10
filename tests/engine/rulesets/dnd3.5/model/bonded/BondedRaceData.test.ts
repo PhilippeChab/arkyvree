@@ -1,10 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
-import BondedRaceData, { STAT_BLOCK_FEAT_SKILL_BONUSES } from "@/engine/rulesets/dnd3.5/model/bonded/BondedRaceData.ts";
+import BondedRaceData from "@/engine/rulesets/dnd3.5/model/bonded/BondedRaceData.ts";
 import SkillsPaths from "@/engine/rulesets/dnd3.5/model/skills/SkillsPaths.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
+import { STAT_BLOCK_FEAT_SKILL_BONUSES } from "@/vocabulary/dnd3.5/bondedCreatures.ts";
 import { BONDED_KIND_SLUGS } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 
 describe("A stat block's feats", () => {

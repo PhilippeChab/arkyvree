@@ -54,3 +54,6 @@ export const FEAT_FAMILIES = [
   "Favored Enemy",
   ...CLASS_FEATURE_FAMILIES,
 ] as const;
+
+/** The aptitude the general feats count toward, by its name, which a ruleset keeps (`Dnd35AptitudesRules`). */
+export const GENERAL_FEATS_APTITUDE = "General";

@@ -1,8 +1,7 @@
-import { type BondedRaceStatBlock } from "./BondedRaceData.ts";
+import { ANIMAL_HIT_DIE_AVERAGE, type BondedRaceStatBlock } from "@/vocabulary/dnd3.5/bondedCreatures.ts";
+
 import BondedScaling from "./BondedScaling.ts";
 import DetailedCharacterBonded from "./DetailedCharacterBonded.ts";
-
-const HD_PER_LEVEL_AVG = 4.5;
 
 /**
  * A bonded animal whose hit dice advance with its master (an animal companion, a special mount): its feats and skills
@@ -33,7 +32,7 @@ export default abstract class DetailedCharacterAdvancingBonded extends DetailedC
     const combat = this.components.combat.getCombat();
     combat.ac.natural = naturalArmor;
     combat.bab = Math.floor((totalHD * 3) / 4);
-    combat.hp.base = Math.ceil(totalHD * HD_PER_LEVEL_AVG);
+    combat.hp.base = Math.ceil(totalHD * ANIMAL_HIT_DIE_AVERAGE);
 
     const { saves } = this.components;
     const [fortitude, reflex, will] = [saves.getSave("Fortitude"), saves.getSave("Reflex"), saves.getSave("Will")];

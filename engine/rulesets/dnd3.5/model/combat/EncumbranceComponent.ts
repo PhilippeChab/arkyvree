@@ -8,7 +8,7 @@ import {
   type LoadCategory,
   QUADRUPED_SIZE_CARRY_MULTIPLIERS,
   SIZE_CARRY_MULTIPLIERS,
-} from "@/engine/rulesets/dnd3.5/rules/carrying.ts";
+} from "@/vocabulary/dnd3.5/carrying.ts";
 
 export type EncumbranceData = {
   carriedweight: number;

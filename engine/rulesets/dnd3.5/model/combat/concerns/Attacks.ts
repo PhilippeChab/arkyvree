@@ -8,40 +8,13 @@ import {
   type WeaponSlot,
 } from "@/engine/rulesets/dnd3.5/model/combat/CombatState.ts";
 import { SIZE_ORDER, WEAPON_SET_SLOTS } from "@/engine/rulesets/dnd3.5/model/inventory/InventorySlots.ts";
-import { COMBAT_RULES } from "@/engine/rulesets/dnd3.5/rules/combat.ts";
-import { SIZE_AC_ATTACK_MOD, SIZE_GRAPPLE_MOD, SIZE_STEPS } from "@/engine/rulesets/dnd3.5/rules/sizes.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { type Item } from "@/shared/relations.ts";
-
-/**
- * D&D 3.5 damage die progression for size adjustments. All weapon/unarmed damages are defined for Medium size; shift up
- * for Large, down for Small, etc.
- */
-const DAMAGE_PROGRESSION = [
-  "1",
-  "1d2",
-  "1d3",
-  "1d4",
-  "1d6",
-  "1d8",
-  "1d10",
-  "2d6",
-  "2d8",
-  "2d10",
-  "3d6",
-  "3d8",
-  "4d6",
-  "4d8",
-];
+import { COMBAT_RULES, DAMAGE_PROGRESSION, SLOT_STRENGTH_MULTIPLIERS } from "@/vocabulary/dnd3.5/combat.ts";
+import { SIZE_AC_ATTACK_MOD, SIZE_GRAPPLE_MOD, SIZE_STEPS } from "@/vocabulary/dnd3.5/sizes.ts";
 
 /** A natural attack's proficiency: its damage dice are the creature's own, from its stat block, already at its size. */
 const NATURAL_PROFICIENCY = "Natural";
-
-/**
- * The share of its Strength bonus a weapon adds to damage in each slot: all of it, half, or one and a half (a light
- * weapon's all of it in two hands).
- */
-const SLOT_STRENGTH_MULTIPLIERS: Record<string, number> = { "Main Hand": 1, "Off Hand": 0.5, "Two Handed": 1.5 };
 
 function adjustDamageForSize(baseDamage: string, size: string): string {
   const step = SIZE_STEPS[size] ?? 0;
