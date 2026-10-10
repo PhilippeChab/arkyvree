@@ -79,7 +79,7 @@ test.describe("Level up", () => {
       .filter({ hasText: /^Fighter Bonus Feat \d+\/\d+/ })
       .click();
     // The pools share their search: the family would hide behind "Toughness".
-    const search = wizard.getByLabel(/^Search Fighter Bonus Feat Feats$/);
+    const search = wizard.getByLabel(/^Search Fighter Bonus Feats$/);
     await search.fill("");
     await search.fill("Weapon Focus");
     await wizard.getByRole("button", { name: /^Weapon Focus \d+ variants$/ }).click();
