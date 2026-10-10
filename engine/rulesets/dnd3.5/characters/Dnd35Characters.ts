@@ -2,7 +2,6 @@ import { CharactersPart } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { Dnd35Descriptions } from "@/engine/rulesets/dnd3.5/descriptions.ts";
 import RacePicker from "@/engine/rulesets/dnd3.5/pickers/RacePicker.ts";
-import type { Item } from "@/shared/relations.ts";
 
 import CharacterEdits from "./CharacterEdits.ts";
 import CharacterDescription from "./description/CharacterDescription.ts";
@@ -22,11 +21,6 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
   /** A character as a campaign member reads it: partly, or its sheet with its private notes shown or blank. */
   describeForMember(...args: Parameters<typeof CharacterDescription.describeForMember>) {
     return CharacterDescription.describeForMember(...args);
-  }
-
-  /** A character's inventory entries, as its sheet lists them: each with its item, composed by the view. */
-  describeInventory<T extends { itemId: string; itemsInRule: Item }>(view: RulesetView, entries: T[]) {
-    return InventoryEntries.describeInventory(view, entries);
   }
 
   /** A character's printed sheet: the PDF document the server renders. */

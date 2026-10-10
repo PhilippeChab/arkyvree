@@ -1,7 +1,6 @@
 import {
   type CharacterInput,
   CharactersPart,
-  type DescribedInventoryEntry,
   type InventoryEntryChange,
   type InventoryEntryFields,
   type InventoryEntryRequest,
@@ -9,11 +8,10 @@ import {
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import { isHandLocation } from "@/shared/equipment.ts";
-import type { Item } from "@/shared/relations.ts";
 
 import Equipping from "./Equipping.ts";
 
-/** A character's inventory: its entries as its sheet lists them, and what an entry's add or edit stores. */
+/** A character's inventory: what an entry's add or edit stores, checked. */
 export default class InventoryEntries {
   /** An entry's charges: both set or both null, and no more remaining than total. */
   private static checkCharges(totalCharges: number | null, remainingCharges: number | null) {
@@ -41,32 +39,6 @@ export default class InventoryEntries {
       totalCharges: totalCharges ?? null,
       remainingCharges: remainingCharges ?? null,
     };
-  }
-
-  /**
-   * The character's entries (`entries`, each with the item row it names), as its sheet lists them: each with its item
-   * as the view composes it (the stored row's copy or winner, the row itself without one), its properties, its
-   * modifiers, and its requirements, its template's before its own.
-   */
-  static describeInventory<T extends { itemId: string; itemsInRule: Item }>(
-    view: RulesetView,
-    entries: T[],
-  ): DescribedInventoryEntry<T>[] {
-    const { rulesetData } = view;
-    return entries.map((entry) => {
-      // The join still contains the stored parent row after itemId resolves.
-      const item = rulesetData.itemsById.get(entry.itemId) ?? entry.itemsInRule;
-      const { own: requirements, template: proficiency } = rulesetData.itemRequirements(item);
-      return {
-        ...entry,
-        item: {
-          ...item,
-          properties: rulesetData.itemProperties(item),
-          modifiers: rulesetData.modifiersBySource.get(item.id) ?? [],
-          requirements: [...proficiency, ...requirements],
-        },
-      };
-    });
   }
 
   /**

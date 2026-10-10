@@ -18,7 +18,7 @@ import type { Item } from "@/shared/relations.ts";
  * What a ruleset answers of its characters, from the rows the server reads: their sheets (as the API answers them, as
  * a member reads them, printed), their cards and inventories, a new one's ability scores and the races it can pick,
  * and an inventory entry's add or edit. Its descriptions are the ruleset's own (`D`). What reads the schema's rows
- * alone is every ruleset's: what a character takes from its ruleset, its languages, its card.
+ * alone is every ruleset's: what a character takes from its ruleset, its languages, its card, its inventory.
  */
 export default abstract class CharactersPart<D extends Descriptions> {
   /**
@@ -80,11 +80,31 @@ export default abstract class CharactersPart<D extends Descriptions> {
     reading: MemberReading,
   ): D["memberSheet"];
 
-  /** A character's inventory entries (each with the item row it names), as its sheet lists them. */
-  abstract describeInventory<T extends { itemId: string; itemsInRule: Item }>(
+  /**
+   * The character's entries (`entries`, each with the item row it names), as its sheet lists them: each with its item
+   * as the view composes it (the stored row's copy or winner, the row itself without one), its properties, its
+   * modifiers, and its requirements, its template's before its own.
+   */
+  describeInventory<T extends { itemId: string; itemsInRule: Item }>(
     view: RulesetView,
     entries: T[],
-  ): DescribedInventoryEntry<T>[];
+  ): DescribedInventoryEntry<T>[] {
+    const { rulesetData } = view;
+    return entries.map((entry) => {
+      // The join still contains the stored parent row after itemId resolves.
+      const item = rulesetData.itemsById.get(entry.itemId) ?? entry.itemsInRule;
+      const { own: requirements, template: proficiency } = rulesetData.itemRequirements(item);
+      return {
+        ...entry,
+        item: {
+          ...item,
+          properties: rulesetData.itemProperties(item),
+          modifiers: rulesetData.modifiersBySource.get(item.id) ?? [],
+          requirements: [...proficiency, ...requirements],
+        },
+      };
+    });
+  }
 
   /** A character's printed sheet: the document the server renders. */
   abstract describeSheet(
