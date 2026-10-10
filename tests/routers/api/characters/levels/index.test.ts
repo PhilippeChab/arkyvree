@@ -398,6 +398,42 @@ describe("character levels", () => {
       await expectStatus(response, 400);
     });
 
+    test("saves a stacking feat a level picks twice, forced or not, and an edit that picks it twice", async () => {
+      const { characterId, ctx } = await createCharacter();
+      const levelPicks = fighter1(ctx);
+      const general = ctx.aptMap["General"];
+      const toughness = ctx.featMap["Toughness"];
+      const feats = { ...levelPicks.feats, [general]: [toughness, toughness] };
+      for (const force of [false, true]) {
+        const { characterId: id } = await createCharacter();
+        const [created] = await expectOk(
+          levels.finalize.$post({
+            param: { characterId: id },
+            json: {
+              levels: [{ klassId: ctx.klassMap.pc["Fighter"], level: 1, hp: 8, abilityIncreases: [] }],
+              ...levelPicks,
+              feats,
+              force,
+            },
+          }),
+        );
+        const saved = await expectOk(level.$get({ param: { characterId: id, characterLevelId: created.id } }));
+        expect(featIds(saved.feats, general)).toEqual([toughness, toughness]);
+      }
+      const created = await finalizeOk(characterId, ctx.klassMap.pc["Fighter"], 1, 8, levelPicks);
+      const param = { characterId, characterLevelId: created.id };
+      await expectOk(level.$put({ param, json: { hp: 8, abilityIncreases: [], ...levelPicks, feats } }));
+      expect(featIds((await expectOk(level.$get({ param }))).feats, general)).toEqual([toughness, toughness]);
+    });
+
+    test("refuses a feat that doesn't stack a level picks twice", async () => {
+      const { characterId, ctx } = await createCharacter();
+      const levelPicks = fighter1(ctx);
+      const powerAttack = ctx.featMap["Power Attack"];
+      const feats = { ...levelPicks.feats, [ctx.aptMap["General"]]: [powerAttack, powerAttack] };
+      await expectStatus(finalize(characterId, ctx.klassMap.pc["Fighter"], 1, 8, { ...levelPicks, feats }), 400);
+    });
+
     test("refuses a class level beyond the rules' last", async () => {
       const { characterId, ctx } = await createCharacter();
       await expectStatus(finalize(characterId, ctx.klassMap.pc["Fighter"], 21, 8, fighter1(ctx)), 400);

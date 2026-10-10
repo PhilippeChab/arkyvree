@@ -21,11 +21,6 @@ export type PoolPicks = Pick<LevelPicks, "feats" | "powers">;
  * a powers step and a skills step (`SpendsSkillPoints`), and which skills a class makes class skills.
  */
 export default abstract class LevelUpState extends include(LevelUpBase<DetailedCharacter>, SpendsSkillPoints) {
-  /** Each pool's picks once, in the order given: a pick given twice is one, as a save keeps it. */
-  private dedupe(picks: Record<string, string[]>) {
-    return Object.fromEntries(Object.entries(picks).map(([aptitudeId, ids]) => [aptitudeId, [...new Set(ids)]]));
-  }
-
   /**
    * The picks without their latest in the overfull pool (`pool`), as many as it's over: at its spell level for a leveled
    * one; in a shared one, its powers before its feats, the wizard's later step first.
@@ -46,14 +41,37 @@ export default abstract class LevelUpState extends include(LevelUpBase<DetailedC
     };
   }
 
+  /** Each pool's picks in the order given, a pick given again dropped unless it `stacks`. */
+  private dropRepeats(picks: Record<string, string[]>, stacks: (id: string) => boolean) {
+    return Object.fromEntries(
+      Object.entries(picks).map(([aptitudeId, ids]) => [
+        aptitudeId,
+        ids.filter((id, index) => stacks(id) || ids.indexOf(id) === index),
+      ]),
+    );
+  }
+
   /**
-   * A level-up's own picks, counted by pool (`OwnPicks`): its feats, and its powers by their spell level there. A pick
-   * given twice counts once.
+   * The picks a save takes, each pool's in the order given: a stackable feat each time it's picked (a row a pick); a
+   * non-stackable feat or a power given again in its pool once, since a character takes a non-stackable feat once and
+   * knows a power once (a save refuses either picked twice at a level).
    */
-  protected countOwnPicks({ feats = {}, powers = {} }: Partial<PoolPicks>): OwnPicks {
+  private keepTakenPicks({ feats = {}, powers = {} }: Partial<PoolPicks>): PoolPicks {
+    return {
+      feats: this.dropRepeats(feats, (id) => this.rulesetData.featsById.get(id)?.stackable === true),
+      powers: this.dropRepeats(powers, () => false),
+    };
+  }
+
+  /**
+   * A level-up's own picks, counted by pool (`OwnPicks`): its feats, and its powers by their spell level there, as a
+   * save takes them (`keepTakenPicks`): a stackable feat each time, a repeat of the others once.
+   */
+  protected countOwnPicks(picks: Partial<PoolPicks>): OwnPicks {
+    const { feats, powers } = this.keepTakenPicks(picks);
     const lookup = this.buildPowerLevelLookup(Object.values(powers).flat());
     const powerCounts: OwnPicks["powers"] = {};
-    for (const [aptitudeId, ids] of Object.entries(this.dedupe(powers))) {
+    for (const [aptitudeId, ids] of Object.entries(powers)) {
       const counts: Record<string, number> = {};
       for (const powerId of ids) {
         const level = String(lookup.get(`${powerId}:${aptitudeId}`) ?? "");
@@ -61,7 +79,7 @@ export default abstract class LevelUpState extends include(LevelUpBase<DetailedC
       }
       powerCounts[aptitudeId] = counts;
     }
-    const featCounts = Object.entries(this.dedupe(feats)).map(([aptitudeId, ids]) => [aptitudeId, ids.length]);
+    const featCounts = Object.entries(feats).map(([aptitudeId, ids]) => [aptitudeId, ids.length]);
     return { feats: Object.fromEntries(featCounts), powers: powerCounts };
   }
 
@@ -81,12 +99,12 @@ export default abstract class LevelUpState extends include(LevelUpBase<DetailedC
   }
 
   /**
-   * The picks that fit their pools (`picks`, each pool's in its order), and the character holding them (`build`): the
-   * latest picks of an overfull pool dropped, and the character built again, until none is (a feat dropped takes the
-   * room it gave). What the wizard keeps of its picks, as a save would take them.
+   * The picks that fit their pools (`picks`, each pool's in its order), and the character holding them (`build`): those
+   * a save takes (`keepTakenPicks`), then the latest picks of an overfull pool dropped, and the character built again,
+   * until none is (a feat dropped takes the room it gave). What the wizard keeps of its picks, as a save would take them.
    */
   protected fitPicks(picks: Partial<PoolPicks>, build: (picks: PoolPicks) => DetailedCharacter) {
-    let fitted: PoolPicks = { feats: this.dedupe(picks.feats ?? {}), powers: this.dedupe(picks.powers ?? {}) };
+    let fitted = this.keepTakenPicks(picks);
     for (;;) {
       const character = build(fitted);
       const [overfull] = character.components.aptitudes.getOverfullPools(this.countOwnPicks(fitted));

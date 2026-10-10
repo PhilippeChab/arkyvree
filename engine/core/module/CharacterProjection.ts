@@ -107,15 +107,15 @@ export default class CharacterProjection {
   }
 
   /**
-   * Adds picks at a level, as the rows a save keeps: one per feat or power and pool (a pick given twice, as the wizard
-   * can send it, counts once), and one per skill (the last rank given wins).
+   * Adds picks at a level, as the rows a save writes: one per feat or power picked (a stackable feat picked twice is
+   * two, each with an id of its own), and one per skill (the last rank given wins). What a level can't hold twice, a
+   * power or a non-stackable feat, its caller has refused or dropped (`SelectionChecks`, a preview's fitting).
    */
   pick(level: { id: string }, { feats = [], powers = [], skills = [] }: Partial<LevelPickRows>) {
     const at = { characterLevelId: level.id, ...this.stamps() };
-    const uniqueFeats = new Map(feats.map((pick) => [`${pick.featId}:${pick.aptitudeId}`, pick]));
-    for (const { aptitudeId, featId } of uniqueFeats.values()) this.picks.feats.push({ ...at, aptitudeId, featId });
-    const uniquePowers = new Map(powers.map((pick) => [`${pick.powerId}:${pick.aptitudeId}`, pick]));
-    for (const { aptitudeId, powerId } of uniquePowers.values()) this.picks.powers.push({ ...at, aptitudeId, powerId });
+    for (const { aptitudeId, featId } of feats)
+      this.picks.feats.push({ ...at, id: crypto.randomUUID(), aptitudeId, featId });
+    for (const { aptitudeId, powerId } of powers) this.picks.powers.push({ ...at, aptitudeId, powerId });
     const ranks = new Map(skills.map((skill) => [skill.skillId, skill.rank]));
     for (const [skillId, rank] of ranks) this.picks.skills.push({ ...at, rank, skillId });
   }

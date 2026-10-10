@@ -136,8 +136,9 @@ export function PoolPicker({ what, granted, pools, open, search, onSearch, optio
             </SubsectionTitle>
             <Stack direction="row" spacing={0.5} sx={{ flexWrap: "wrap" }}>
               {open.picks.length > 0 ? (
-                open.picks.map((pick) => (
-                  <OptionTooltip key={pick.id} description={pick.description} maxLength={200}>
+                // A stackable feat can be picked twice in its pool
+                open.picks.map((pick, i) => (
+                  <OptionTooltip key={`${pick.id}-${i}`} description={pick.description} maxLength={200}>
                     <ValueChip color="default" label={pick.name} onDelete={() => open.onRemove(pick.id)} />
                   </OptionTooltip>
                 ))

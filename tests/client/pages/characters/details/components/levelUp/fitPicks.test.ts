@@ -24,10 +24,12 @@ describe("keeping the picks a step says fit", () => {
     expect(keepFitted(feats, { general: ["Dodge"] })).toEqual({ general: [pick("Dodge")], fighter: [] });
   });
 
-  test("keeps a pick given twice once, as the step counts it", () => {
-    expect(keepFitted({ general: [pick("Toughness"), pick("Toughness")] }, { general: ["Toughness"] })).toEqual({
-      general: [pick("Toughness")],
+  test("keeps a pick given twice as often as the step keeps it: once, or twice for a stackable feat", () => {
+    const twice = { general: [pick("Toughness"), pick("Toughness")] };
+    expect(keepFitted({ general: [pick("Dodge"), pick("Dodge")] }, { general: ["Dodge"] })).toEqual({
+      general: [pick("Dodge")],
     });
+    expect(keepFitted(twice, { general: ["Toughness", "Toughness"] })).toBe(twice);
   });
 
   test("keeps picks that fit as the same object, and every pick until the step answers for them", () => {
@@ -49,6 +51,12 @@ describe("keeping the picks a step says fit", () => {
     expect(withPick({ bard: [pick("a")] }, "bard", pick("b"))).toEqual({ bard: [pick("a"), pick("b")] });
     expect(withPick({}, "bard", pick("a"))).toEqual({ bard: [pick("a")] });
     expect(withoutPick({ bard: [pick("a"), pick("b")] }, "bard", "a")).toEqual({ bard: [pick("b")] });
+  });
+
+  test("removes one pick of a stackable feat picked twice, keeping the other", () => {
+    const general = [pick("Toughness"), pick("Dodge"), pick("Toughness")];
+    expect(withoutPick({ general }, "general", "Toughness")).toEqual({ general: [pick("Toughness"), pick("Dodge")] });
+    expect(withoutPick({ general }, "general", "Cleave")).toEqual({ general });
   });
 });
 

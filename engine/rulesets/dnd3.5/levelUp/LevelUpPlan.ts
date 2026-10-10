@@ -20,8 +20,8 @@ export default class LevelUpPlan extends PlannedLevelsState {
   }
 
   /**
-   * The pools picks (`picks`, which `holder` holds) overfill, as its aptitudes count them: a pick given twice counts
-   * once, and a power at its spell level in its pool.
+   * The pools picks (`picks`, which `holder` holds) overfill, as its aptitudes count them: a stackable feat each time
+   * it's picked, another pick given twice once, and a power at its spell level in its pool.
    */
   findOverfullPools(holder: DetailedCharacter, picks: Partial<PoolPicks>) {
     return holder.components.aptitudes.getOverfullPools(this.countOwnPicks(picks));

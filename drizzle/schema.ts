@@ -1481,6 +1481,10 @@ export const levelFeatsInCharacter = character.table(
     createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
     deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
+    id: uuid()
+      .default(sql`public.gen_random_uuid()`)
+      .primaryKey()
+      .notNull(),
     characterLevelId: uuid("character_level_id").notNull(),
     featId: uuid("feat_id").notNull(),
     aptitudeId: uuid("aptitude_id").notNull(),
@@ -1503,7 +1507,6 @@ export const levelFeatsInCharacter = character.table(
       foreignColumns: [aptitudesInRules.id],
       name: "level_feats_aptitude_id_fkey",
     }).onDelete("restrict"),
-    primaryKey({ columns: [table.characterLevelId, table.featId], name: "level_feats_pkey" }),
   ],
 );
 

@@ -18,6 +18,7 @@ How the D&D 3.5 ruleset reads its rules where the SRD is ambiguous, and where it
 
 - **A 1st level's hit points are rolled (or entered) like any level's,** within 1 and the hit die. The SRD's maximum at 1st level isn't enforced: tables differ.
 - **An overfull pool is refused, never trimmed.** A level-up's save or edit that picks more feats or spells than a pool has room for is refused with the pool and its room, forced or not (`PicksDistribution.refuseOverfull`, through core's `LevelsPlanning`). No pick is dropped silently; the wizard's steps answer each pool's room so it never sends too many.
+- **A stackable feat can be taken twice at one level,** in one pool or two: a human fighter 1 can take Toughness in both its General slots. Each pick is a row of its own (`level_feats`), the preview and the wizard keep both, and a plan's pick lands on whichever level its pool's slot is at, the same level or another. A feat that doesn't stack is refused when a level picks it twice or the character has it already, and a spell when a level picks it twice (`SelectionChecks`); the preview keeps a pool's repeat of either once.
 - **The skills step's "Auto" is a convenience, not a rule.** It spreads the points at random within the caps the engine answers, class and cross-class skills alike; a player adjusts what it picks.
 
 ## Content

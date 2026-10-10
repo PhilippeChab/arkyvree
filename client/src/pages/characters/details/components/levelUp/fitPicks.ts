@@ -42,7 +42,7 @@ export function keepFitted<T extends { id: string }>(
   let changed = false;
   const kept = Object.fromEntries(
     Object.entries(picks).map(([poolId, poolPicks]) => {
-      // Each id the answer keeps once: a pick given twice is one
+      // Each id as often as the answer keeps it: a stackable feat picked twice twice, another pick given twice once
       const left = [...(fitted[poolId] ?? [])];
       const fits = poolPicks.filter((pick) => {
         const index = left.indexOf(pick.id);
@@ -63,9 +63,11 @@ export function openPoolOf(aptitudeId: string | null, pools: Record<string, { av
   return available !== undefined && available <= 0 ? null : aptitudeId;
 }
 
-/** The picks without one: a chip's delete. */
+/** The picks without one of `id`, its last (a stackable feat picked twice keeps the other): a chip's delete. */
 export function withoutPick<T extends { id: string }>(picks: Record<string, T[]>, aptitudeId: string, id: string) {
-  return { ...picks, [aptitudeId]: (picks[aptitudeId] ?? []).filter((pick) => pick.id !== id) };
+  const poolPicks = picks[aptitudeId] ?? [];
+  const index = poolPicks.findLastIndex((pick) => pick.id === id);
+  return { ...picks, [aptitudeId]: index === -1 ? poolPicks : poolPicks.toSpliced(index, 1) };
 }
 
 /** The picks with one more, last in its pool: an option's click. */

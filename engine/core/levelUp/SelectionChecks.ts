@@ -4,9 +4,7 @@ import type { RulesetData } from "@/engine/core/view/index.ts";
 
 import type { LevelUpRules } from "./LevelUpBase.ts";
 
-interface FeatRecord {
-  id: string;
-  name: string;
+interface FeatRecord extends PickRecord {
   stackable: boolean;
 }
 
@@ -19,6 +17,12 @@ interface LevelChecked {
   klassLevel: { id: string };
   powers: Record<string, string[]>;
   skills: Record<string, number>;
+}
+
+/** A feat or a power picked, as the check names it. */
+interface PickRecord {
+  id: string;
+  name: string;
 }
 
 /** A class level's granted feats, as the view joins them to their feats. */
@@ -37,8 +41,8 @@ export default class SelectionChecks {
 
   /**
    * A level's hit points, ability increases and selections checked, for both the level save and the level-up's: each
-   * ability and selection the ruleset's, each selection linked to its pool, no non-stackable feat picked twice. Answers
-   * the feats picked and what the level is granted, which whether a feat is already on the character reads
+   * ability and selection the ruleset's, each selection linked to its pool, no non-stackable feat or power picked twice.
+   * Answers the feats picked and what the level is granted, which whether a feat is already on the character reads
    * (`checkNotTaken`).
    */
   private checkLevelSelections(level: LevelChecked) {
@@ -52,10 +56,9 @@ export default class SelectionChecks {
     if (abilityIncreases.some(({ abilityId }) => !this.rulesetData.abilitiesById.has(abilityId)))
       throw new RulesError("invalid", "Ability does not belong to the character's ruleset");
 
-    // Submitted ids can repeat, e.g. a non-stackable feat picked under two aptitude pools: caught by checkRepeatedPicks.
-    const featIds = Object.values(feats).flat();
-    const { fetchedFeats } = this.fetchSelections(skills, feats, powers);
-    this.checkRepeatedPicks(featIds, fetchedFeats);
+    // Submitted ids can repeat, in a pool or under two: a stackable feat's may, checkRepeatedPicks refuses the others.
+    const { fetchedFeats, fetchedPowers } = this.fetchSelections(skills, feats, powers);
+    this.checkRepeatedPicks(feats, fetchedFeats, powers, fetchedPowers);
     this.checkLinks(feats, powers);
 
     // What the class level grants, which a non-stackable pick can't be
@@ -107,14 +110,23 @@ export default class SelectionChecks {
     }
   }
 
-  /** Throws when a non-stackable feat is picked more than once in the level (under two pools). */
-  private checkRepeatedPicks(featIds: string[], fetchedFeats: FeatRecord[]) {
-    const submittedFeatCounts = new Map<string, number>();
-    for (const id of featIds) submittedFeatCounts.set(id, (submittedFeatCounts.get(id) ?? 0) + 1);
-    for (const feat of fetchedFeats) {
-      if (!feat.stackable && (submittedFeatCounts.get(feat.id) ?? 0) > 1)
-        throw new RulesError("invalid", `Non-stackable feat "${feat.name}" cannot be picked more than once`);
-    }
+  /**
+   * Throws when the level picks a non-stackable feat or a power more than once, in a pool or under two: a character
+   * takes a non-stackable feat once, and a level knows a power once (one row a power). A stackable feat may be picked
+   * again, at this level as at another: each pick is a row of its own.
+   */
+  private checkRepeatedPicks(
+    feats: Record<string, string[]>,
+    fetchedFeats: FeatRecord[],
+    powers: Record<string, string[]>,
+    fetchedPowers: PickRecord[],
+  ) {
+    const nonStackable = this.findRepeated(feats, fetchedFeats).find((feat) => !feat.stackable);
+    if (nonStackable)
+      throw new RulesError("invalid", `Non-stackable feat "${nonStackable.name}" cannot be picked more than once`);
+
+    const [power] = this.findRepeated(powers, fetchedPowers);
+    if (power) throw new RulesError("invalid", `Power "${power.name}" cannot be picked more than once at a level`);
   }
 
   /** The rows of these ids, deduplicated, from the character's ruleset; throws when one isn't in it. */
@@ -153,6 +165,13 @@ export default class SelectionChecks {
     if (increases.reduce((sum, { amount }) => sum + amount, 0) !== total)
       return `Ability increases must add up to ${total} at this level`;
     return undefined;
+  }
+
+  /** The picks (`fetched`) a level's selections (`picks`, by pool) give more than once, in a pool or under two. */
+  private findRepeated<R extends PickRecord>(picks: Record<string, string[]>, fetched: R[]): R[] {
+    const ids = Object.values(picks).flat();
+    const repeated = new Set(ids.filter((id, index) => ids.indexOf(id) !== index));
+    return fetched.filter(({ id }) => repeated.has(id));
   }
 
   /**
