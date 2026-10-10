@@ -28,13 +28,19 @@ describe("The core feats a book copies", () => {
   });
 
   test("leave out a list's entry that names no feat, which a class's issues report", () => {
-    const copies = copiedFeatsOf("complete-divine");
-    expect(copies).toEqual([]);
+    // No class of Complete Divine or Complete Arcane lists a core feat: the geomancer's ley lines and the wu jen's spell
+    // secrets are pools of their own
+    expect(copiedFeatsOf("complete-divine")).toEqual([]);
+    expect(copiedFeatsOf("complete-arcane")).toEqual([]);
     const geomancer = References.loadClasses("complete-divine").find(({ ref }) => ref.raw.name === "Geomancer");
     if (!geomancer) throw new Error("Complete Divine has no geomancer");
-    expect(Library.book("complete-divine").unknownListedFeats(geomancer.ref)).toEqual([
-      "a new terrain in which to receive the benefit (at +1)",
-      "increase his effective caster level in a previously chosen terrain by an additional +1",
+    const fragment = "a new terrain in which to receive the benefit (at +1)";
+    const listing = {
+      ...geomancer.ref.mapping,
+      bonusFeatLists: [{ aptitude: "Ley Lines", feats: ["Alertness", fragment] }],
+    };
+    expect(Library.book("complete-divine").unknownListedFeats({ ...geomancer.ref, mapping: listing })).toEqual([
+      fragment,
     ]);
   });
 });

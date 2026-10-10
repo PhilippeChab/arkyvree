@@ -41,7 +41,7 @@ export const ALL_APTITUDES: string[] = [
   "Wild Mage Class Feature",
   "Wizard Bonus Feat",
   "Wu Jen Class Feature",
+  "Wu Jen Elemental Mastery",
   "Wu Jen Spell Secret",
-  "Wu Jen Spell Secret (3rd)",
   "Wu Jen Spells",
 ];

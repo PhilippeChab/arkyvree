@@ -283,6 +283,60 @@ describe("The seeded extensions", () => {
     ).toContain("aptitudes.divinecrusaderdomain.allowed add 1");
   });
 
+  test("give the wu jen a spell secret and an element to pick, and the geomancer a terrain, never a feat", async () => {
+    const arcane = await seededRows(DND35_COMPLETE_ARCANE_NAME);
+    const divine = await seededRows(DND35_COMPLETE_DIVINE_NAME);
+    const choicesOf = (rows: typeof arcane, pool: string) => {
+      const id = rows.aptitude(pool).id;
+      const choices = rows.feats.filter((feat) => feat.featsAptitudesInRules.some((link) => link.aptitudeId === id));
+      return Object.fromEntries(
+        choices.map((feat) => [
+          feat.name,
+          [feat.stackable, ...rows.requirementsOf(feat.id).map((q) => `${q.target} ${q.value}`)],
+        ]),
+      );
+    };
+    const options = (pool: string, feature: string, names: string[], stackable: boolean, level: string) =>
+      Object.fromEntries(names.map((name) => [`${feature}: ${name} (${pool})`, [stackable, level]]));
+    // Each of the wu jen's five spell secrets modifies a spell, the same way again for another
+    expect(choicesOf(arcane, "Wu Jen Spell Secret")).toEqual(
+      options(
+        "Wu Jen Spell Secret",
+        "Spell Secret",
+        ["Enlarge Spell", "Extend Spell", "Silent Spell", "Still Spell"],
+        true,
+        "classes.wujen.level 3",
+      ),
+    );
+    expect(choicesOf(arcane, "Wu Jen Elemental Mastery")).toEqual(
+      options(
+        "Wu Jen Elemental Mastery",
+        "Elemental Mastery",
+        ["Earth", "Fire", "Metal", "Water", "Wood"],
+        false,
+        "classes.wujen.level 6",
+      ),
+    );
+    // A terrain taken again raises its bonus
+    expect(choicesOf(divine, "Geomancer Ley Lines")).toEqual(
+      options(
+        "Geomancer Ley Lines",
+        "Ley Lines",
+        ["Aquatic", "Desert", "Forest", "Hills", "Marsh", "Mountains", "Plains"],
+        true,
+        "classes.geomancer.level 2",
+      ),
+    );
+    // Each feature opens its pick at each of its levels
+    const picksOf = (rows: typeof arcane, feature: string) => {
+      const feat = rows.feat(feature);
+      return [feat.stackable, ...rows.modifiersOf(feat.id).map((m) => m.target)];
+    };
+    expect(picksOf(arcane, "Spell Secret (Wu Jen)")).toEqual([true, "aptitudes.wujenspellsecret.allowed"]);
+    expect(picksOf(arcane, "Elemental Mastery (Wu Jen)")).toEqual([false, "aptitudes.wujenelementalmastery.allowed"]);
+    expect(picksOf(divine, "Ley Lines (Geomancer)")).toEqual([true, "aptitudes.geomancerleylines.allowed"]);
+  });
+
   test("give the horizon walker a terrain to pick from his 1st level, and a terrain or a planar one from his 6th", async () => {
     const dmg = await seededRows(DND35_DMG_NAME);
     const choicesOf = (pool: string) => {

@@ -28,7 +28,7 @@ export const ALL_APTITUDES: string[] = [
   "General",
   "Geomancer Class Feature",
   "Geomancer Drift 1",
-  "Geomancer Ley Lines (6th)",
+  "Geomancer Ley Lines",
   "Holy Liberator Class Feature",
   "Holy Liberator Spells",
   "Hospitaler Class Feature",
