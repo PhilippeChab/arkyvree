@@ -62,7 +62,6 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
       { type: "SPELL_SCHOOL", value: "Conjuration" },
       { type: "SPELL_SUBSCHOOL", value: "Creation" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
-      { type: "SPELL_DURATION", value: "" },
       { type: "SPELL_RESISTANCE", value: "Yes" },
     ],
   },

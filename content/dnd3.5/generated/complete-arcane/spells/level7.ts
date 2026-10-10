@@ -32,7 +32,6 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
       { type: "SPELL_SCHOOL", value: "Divination" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
       { type: "SPELL_TARGET", value: "One spirit" },
-      { type: "SPELL_DURATION", value: "" },
       { type: "SPELL_RESISTANCE", value: "No" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },
@@ -85,7 +84,6 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
     properties: [
       { type: "SPELL_SCHOOL", value: "Abjuration" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
-      { type: "SPELL_DURATION", value: "" },
       { type: "SPELL_RESISTANCE", value: "No" },
     ],
   },
@@ -119,7 +117,6 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
       { type: "SPELL_DESCRIPTOR", value: "Evil" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
       { type: "SPELL_TARGET", value: "Black blade of negative energy" },
-      { type: "SPELL_DURATION", value: "" },
       { type: "SPELL_RESISTANCE", value: "No" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },

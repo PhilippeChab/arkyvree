@@ -126,7 +126,10 @@ function simplifyRange(range: string): string {
   return stripped;
 }
 
-/** A spell's properties: its school, subschool and descriptors, casting time, range, targets, duration, components. */
+/**
+ * A spell's properties: its school, subschool and descriptors, casting time, range, targets, duration, components. A
+ * field its source leaves empty (a range, a target, a duration…) gives none.
+ */
 function spellProperties(entry: RawSpell): Property[] {
   const properties: Property[] = [];
   properties.push({ type: SPELL_SCHOOL, value: entry.school });
@@ -144,7 +147,8 @@ function spellProperties(entry: RawSpell): Property[] {
   if (entry.area) properties.push({ type: SPELL_AREA_OF_EFFECT, value: normalizeSpellText(entry.area) });
   const effectValue = entry.effect ? normalizeSpellText(entry.effect) : undefined;
   if (effectValue && effectValue !== targetValue) properties.push({ type: SPELL_TARGET, value: effectValue });
-  properties.push({ type: SPELL_DURATION, value: normalizeSpellText(entry.duration) });
+  const durationValue = normalizeSpellText(entry.duration);
+  if (durationValue) properties.push({ type: SPELL_DURATION, value: durationValue });
   properties.push({
     type: SPELL_RESISTANCE,
     value: normalizeSpellResistance(normalizeSpellText(entry.spellResistance || "No")),
