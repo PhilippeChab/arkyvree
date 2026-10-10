@@ -5,6 +5,13 @@ import { type ClassReference } from "@/codegen/dnd3.5/tools/types/classes.ts";
 /** What a class's prerequisites ask for, read from their text. */
 type Parsed = ClassReference["raw"]["prerequisites"]["parsed"];
 
+/**
+ * A Spells line: its label ("Spells", "Spell", "Spells or Spell-Like Abilities", "Spellcasting") and its text, up to its
+ * line's end or the next label the page joins to it ("Arcane caster level 5th.Special: …").
+ */
+const SPELLS_LINE =
+  /\bSpell(?:s|casting)?(?: or Spell-Like Abilities)?:[ \t]*(.+?)[ \t]*(?=\n|$|(?:Special|Alignment|Skills?|Feats?|Race|Base (?:Attack|Save) Bonus|Spell(?:s|casting)?(?: or Spell-Like Abilities)?|Domain|Patron|Languages?|Other|Skill Tricks)\s*:)/g;
+
 /** A prestige class's prerequisites' text, read for what they ask: each kind of requirement its own reading. */
 export class PrerequisiteText {
   constructor(readonly text: string) {}
@@ -129,6 +136,11 @@ export class PrerequisiteText {
     return specials;
   }
 
+  /** The prerequisites' Spells lines, each its text after its label ("Arcane caster level 5th."). */
+  private requiredSpells(): string[] {
+    return [...this.text.matchAll(SPELLS_LINE)].map((line) => line[1]);
+  }
+
   /** What the prerequisites ask for: a base attack bonus, skills, feats, spellcasting, an alignment and the rest. */
   parsed(): Parsed {
     const parsed: Parsed = {};
@@ -145,6 +157,9 @@ export class PrerequisiteText {
 
     const casterLevels = this.requiredCasterLevels();
     if (casterLevels.length > 0) parsed.casterLevel = casterLevels;
+
+    const spells = this.requiredSpells();
+    if (spells.length > 0) parsed.spells = spells;
 
     // Alignment — stop at next labeled section (Skills:, Special:, Feats:, etc.) or end of line
     const alignMatch = this.text.match(

@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-arcane",
-    "scrapedAt": "2026-03-31T22:09:31.536Z",
+    "scrapedAt": "2026-10-10T22:51:44.169Z",
     "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/mindbender/",
     "type": "class"
   },
@@ -100,6 +100,10 @@
             "name": "Sense Motive",
             "ranks": 4
           }
+        ],
+        "spells": [
+          "Able to cast charm person, use charm person as a spell-like ability, or use the charm invocation.",
+          "Arcane caster level 5th."
         ]
       },
       "text": "Alignment: Any nongood Skills: Bluff 4 ranks, Diplomacy 4 ranks, Intimidate 4 ranks, Sense Motive 4 ranks Spells: Able to cast charm person, use charm person as a spell-like ability, or use the charm invocation. Spells or Spell-Like Abilities: Arcane caster level 5th."

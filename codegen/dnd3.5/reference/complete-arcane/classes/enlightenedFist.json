@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-arcane",
-    "scrapedAt": "2026-03-31T22:09:30.334Z",
+    "scrapedAt": "2026-10-10T22:51:43.794Z",
     "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/enlightened-fist/",
     "type": "class"
   },
@@ -94,6 +94,9 @@
             "name": "Spellcraft",
             "ranks": 5
           }
+        ],
+        "spells": [
+          "Arcane caster level 3rd."
         ]
       },
       "text": "Skills: Concentration 8 ranks, Knowledge (arcana) 5 ranks, Spellcraft 5 ranks Feats: Combat Casting, Improved Unarmed Strike, Stunning Fist Spells or Spell-Like Abilities: Arcane caster level 3rd."

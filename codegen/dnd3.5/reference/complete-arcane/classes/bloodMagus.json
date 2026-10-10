@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-arcane",
-    "scrapedAt": "2026-03-31T22:09:32.189Z",
+    "scrapedAt": "2026-10-10T22:51:43.607Z",
     "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/blood-magus/",
     "type": "class"
   },
@@ -102,6 +102,9 @@
         "special": [
           "The character must have been killed, then returned to life.",
           "been killed, then returned to life"
+        ],
+        "spells": [
+          "Arcane caster level 5th."
         ]
       },
       "text": "Alignment: Any but lawful good Skills: Concentration 4 ranks Feats: Great Fortitude, Toughness Spells or Spell-Like Abilities: Arcane caster level 5th. Special: The character must have been killed, then returned to life."

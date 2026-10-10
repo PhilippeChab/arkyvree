@@ -27,6 +27,7 @@ export const ACOLYTE_OF_THE_SKIN: ClassSeed = {
   ],
   requirements: [
     gte("skills.knowledgetheplanes.rank", 6),
+    gte("spellcasting.casterlevel", 5),
     or(
       eqStr("identity.beliefs.alignment", "Lawful Neutral"),
       eqStr("identity.beliefs.alignment", "True Neutral"),

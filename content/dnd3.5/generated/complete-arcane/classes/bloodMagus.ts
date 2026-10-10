@@ -18,7 +18,11 @@ export const BLOOD_MAGUS: ClassSeed = {
   bab: "poor",
   saves: { fortitude: "good", reflex: "poor", will: "poor" },
   classSkills: ["Bluff", "Concentration", "Craft", "Heal", "Spellcraft"],
-  requirements: [gte("skills.concentration.rank", 4), eq("feats.greatfortitude.possessed")],
+  requirements: [
+    gte("skills.concentration.rank", 4),
+    eq("feats.greatfortitude.possessed"),
+    gte("spellcasting.arcanecasterlevel", 5),
+  ],
   casterLevelAdvancement: { type: "arcane", levels: [1, 2, 3, 4, 6, 7, 8, 9] },
   classFeatureAptitude: "Blood Magus Class Feature",
   classFeatures: [

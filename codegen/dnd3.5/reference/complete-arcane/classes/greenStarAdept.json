@@ -1,9 +1,19 @@
 {
   "_meta": {
     "book": "complete-arcane",
-    "scrapedAt": "2026-03-31T19:42:12.121Z",
+    "scrapedAt": "2026-10-10T22:51:43.979Z",
     "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/green-star-adept/",
     "type": "class"
+  },
+  "overrides": {
+    "features": {
+      "Emerald Perfection": {
+        "modifiers": null
+      }
+    },
+    "reviewed": [
+      "Unresolved bonus: \"He gains a +2 bonus on saving throws against poison, sleep effects, paralysis, stunning, disease, death effects, and necromancy effects\""
+    ]
   },
   "raw": {
     "classFeatures": [
@@ -125,6 +135,9 @@
         ],
         "special": [
           "Must acquire a piece of starmetal weighing at least 2 ounces, powder it, and consume it by drinking it in a specially prepared infusion. This infusion requires arcane reagents costing 1,000 gp and takes one week to prepare."
+        ],
+        "spells": [
+          "Arcane caster level 1st."
         ]
       },
       "text": "Base Attack Bonus: +4 Skills: Decipher Script 2 ranks, Knowledge (arcana) 8 ranks, Knowledge (architecture and engineering) 2 ranks, Knowledge (geography) 2 ranks, Knowledge (history) 2 ranks Feats: Combat Casting Spells or Spell-Like Abilities: Arcane caster level 1st. Special: Must acquire a piece of starmetal weighing at least 2 ounces, powder it, and consume it by drinking it in a specially prepared infusion. This infusion requires arcane reagents costing 1,000 gp and takes one week to prepare."
@@ -250,15 +263,5 @@
       }
     ],
     "skillPointsPerLevel": "2 + Int modifier"
-  },
-  "overrides": {
-    "features": {
-      "Emerald Perfection": {
-        "modifiers": null
-      }
-    },
-    "reviewed": [
-      "Unresolved bonus: \"He gains a +2 bonus on saving throws against poison, sleep effects, paralysis, stunning, disease, death effects, and necromancy effects\""
-    ]
   }
 }

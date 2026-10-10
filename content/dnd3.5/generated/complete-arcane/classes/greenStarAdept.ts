@@ -36,6 +36,7 @@ export const GREEN_STAR_ADEPT: ClassSeed = {
     gte("skills.knowledgearchitectureandengineering.rank", 2),
     gte("skills.knowledgegeography.rank", 2),
     gte("skills.knowledgehistory.rank", 2),
+    gte("spellcasting.arcanecasterlevel", 1),
   ],
   casterLevelAdvancement: { type: "arcane", levels: [2, 4, 6, 8, 10] },
   classFeatureAptitude: "Green Star Adept Class Feature",

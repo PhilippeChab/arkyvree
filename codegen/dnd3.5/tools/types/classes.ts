@@ -189,7 +189,8 @@ export interface ClassReference {
         saves?: { base: number; name: string }[];
         skills?: { name: string; ranks: number }[];
         special?: string[];
-        spells?: string;
+        /** The Spells lines, each its text after its label: "Arcane caster level 5th." */
+        spells?: string[];
       };
       text: string;
     };

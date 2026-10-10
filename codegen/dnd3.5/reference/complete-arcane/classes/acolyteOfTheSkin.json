@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-arcane",
-    "scrapedAt": "2026-03-31T19:42:09.082Z",
+    "scrapedAt": "2026-10-10T22:51:43.421Z",
     "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/acolyte-of-the-skin/",
     "type": "class"
   },
@@ -85,6 +85,9 @@
         "special": [
           "Must have made peaceful contact with a summoned evil outsider.",
           "made peaceful contact with a summoned evil outsider"
+        ],
+        "spells": [
+          "Caster level 5th."
         ]
       },
       "text": "Alignment: Any nongood Skills: Knowledge (the planes) 6 ranks Spells or Spell-Like Abilities: Caster level 5th. Special: Must have made peaceful contact with a summoned evil outsider. Special: Must undergo the Ritual of Bonding."

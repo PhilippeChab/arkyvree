@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-adventurer",
-    "scrapedAt": "2026-03-24T22:27:47.303Z",
+    "scrapedAt": "2026-10-10T22:51:43.058Z",
     "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/maester/",
     "type": "class"
   },
@@ -80,6 +80,9 @@
         ],
         "special": [
           "Race: Gnome"
+        ],
+        "spells": [
+          "Arcane caster level 5th."
         ]
       },
       "text": "Skills: Craft (any) 8 ranks, Use Magic Device 4 ranks Race: Gnome.Feats: Any two item creation feats.Spells: Arcane caster level 5th."

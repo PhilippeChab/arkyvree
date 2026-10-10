@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-adventurer",
-    "scrapedAt": "2026-04-08T13:06:56.315Z",
+    "scrapedAt": "2026-10-10T22:51:43.240Z",
     "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/virtuoso/",
     "type": "class"
   },
@@ -88,6 +88,9 @@
             "name": "Perform",
             "ranks": 10
           }
+        ],
+        "spells": [
+          "Arcane caster level 1st"
         ]
       },
       "text": "Skills: Diplomacy 4 ranks, Intimidate 4 ranks, Perform 10 ranks Spells: Arcane caster level 1st"

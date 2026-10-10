@@ -40,6 +40,7 @@ export const ENLIGHTENED_FIST: ClassSeed = {
     gte("skills.spellcraft.rank", 5),
     eq("feats.combatcasting.possessed"),
     eq("feats.improvedunarmedstrike.possessed"),
+    gte("spellcasting.arcanecasterlevel", 3),
   ],
   casterLevelAdvancement: { type: "arcane", levels: [2, 3, 4, 5, 7, 8, 9, 10] },
   classFeatureAptitude: "Enlightened Fist Class Feature",
