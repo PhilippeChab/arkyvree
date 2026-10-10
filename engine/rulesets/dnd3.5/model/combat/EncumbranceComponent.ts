@@ -5,7 +5,6 @@ import {
   CARRYING_CAPACITY,
   CARRYING_CAPACITY_STEP_MULTIPLIER,
   CARRYING_CAPACITY_STRENGTH_STEP,
-  ENCUMBERED_SPEED,
   ENCUMBERED_SPEED_THIRDS,
   ENCUMBRANCE_PENALTIES,
   LIGHT_LOAD_THIRDS,
@@ -13,6 +12,7 @@ import {
   MEDIUM_LOAD_THIRDS,
   QUADRUPED_SIZE_CARRY_MULTIPLIERS,
   SIZE_CARRY_MULTIPLIERS,
+  SPEED_STEP,
 } from "@/vocabulary/dnd3.5/carrying.ts";
 
 export type EncumbranceData = {
@@ -100,10 +100,12 @@ export default class EncumbranceComponent {
     return "overloaded";
   }
 
+  /**
+   * A speed under a medium or heavy load: two thirds of it, rounded up to the next 5 ft. step, as the SRD's table gives
+   * it (30 ft. → 20, 20 ft. → 15, 40 ft. → 30), whatever the speed.
+   */
   getEncumberedSpeed(baseSpeed: number): number {
-    if (ENCUMBERED_SPEED[baseSpeed] !== undefined) return ENCUMBERED_SPEED[baseSpeed];
-
-    return thirdsOf(baseSpeed, ENCUMBERED_SPEED_THIRDS);
+    return Math.ceil((baseSpeed * ENCUMBERED_SPEED_THIRDS) / 3 / SPEED_STEP) * SPEED_STEP;
   }
 
   getEncumbrance(): EncumbranceData {
