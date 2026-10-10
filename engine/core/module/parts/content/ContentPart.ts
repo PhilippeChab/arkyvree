@@ -1,5 +1,5 @@
 import type { FieldCodec, Fields, FieldValues } from "@/engine/core/fields/index.ts";
-import type { PropertyValue } from "@/engine/core/module/plans.ts";
+import type { PropertyValue } from "@/engine/core/module/parts/entities/index.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 
 /**

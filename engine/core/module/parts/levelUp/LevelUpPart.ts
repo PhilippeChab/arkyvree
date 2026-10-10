@@ -1,9 +1,12 @@
 import { BondedCreatures, LevelRemoval, type LevelUpRules } from "@/engine/core/levelUp/index.ts";
 import type { CharacterInput } from "@/engine/core/module/CharacterInputs.ts";
 import type { Descriptions } from "@/engine/core/module/contract.ts";
-import type { WizardStep } from "@/engine/core/module/descriptions.ts";
 import type { OpenedGroupedPicker, OpenedPicker, PickFilters, PickGroupFilters } from "@/engine/core/module/pickers.ts";
-import type { BondedCreaturesPlan, LevelEditPlan, LevelRemovalPlan, LevelsPlan } from "@/engine/core/module/plans.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
+import type { Character, Klass } from "@/shared/relations.ts";
+
+import type { WizardStep } from "./descriptions.ts";
+import type { BondedCreaturesPlan, LevelEditPlan, LevelRemovalPlan, LevelsPlan } from "./plans.ts";
 import type {
   FeatPickQuery,
   LevelEditRequest,
@@ -12,9 +15,7 @@ import type {
   PlannedSoFar,
   PowerPickQuery,
   PreviewRequest,
-} from "@/engine/core/module/requests.ts";
-import type { RulesetView } from "@/engine/core/view/index.ts";
-import type { Character, Klass } from "@/shared/relations.ts";
+} from "./requests.ts";
 
 /**
  * What a ruleset answers of a character's levels, from the rows the server reads: the level-up wizard's steps (which it

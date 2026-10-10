@@ -1,7 +1,7 @@
 /**
- * What a `describe*` operation answers in a shape every ruleset shares: a character's card, how a new one's ability
- * scores are set, an inventory entry with its item, a placement's warning, a wizard's steps. What a ruleset describes
- * in its own shape is its `Descriptions` (`contract.ts`).
+ * What the characters part's `describe*` operations answer in a shape every ruleset shares: a character's card, how a
+ * new one's ability scores are set, an inventory entry with its item, a placement's warning. What a ruleset describes in
+ * its own shape is its `Descriptions` (`contract.ts`).
  */
 
 import type { Item, Modifier, Property, Requirement } from "@/shared/relations.ts";
@@ -51,10 +51,4 @@ export type HeldInventoryEntry = Pick<InventoryEntryPlan, "equipped" | "location
 /** Why a placement can't take one more item, if it can't: what the inventory dialogs warn of, and an add refuses. */
 export interface PlacementDescription {
   warning: string | null;
-}
-
-/** A level-up wizard's step, as its ruleset lists it: its name, which the ruleset answers the step by, and its label. */
-export interface WizardStep<N extends string = string> {
-  label: string;
-  name: N;
 }
