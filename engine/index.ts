@@ -1,6 +1,6 @@
 /**
  * The engine's one entry, `Engine`: what the server (and the seeders and the codegen) ask of a ruleset's rules, through
- * a handle bound to its view and to what they're about (`Engine.for(scope).character(input).checkLanguages(…)`), each
+ * a handle bound to its view and to what they're about (`Engine.for(scope).character(input).describe(…)`), each
  * operation on the data the caller read, answering data. Which ruleset answers is the engine's to know, from the
  * ruleset the caller hands it: nothing outside the engine imports anything else of it, but the handles' types.
  */

@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { CharacterInput } from "@/engine/core/module/CharacterInputs.ts";
 import type { Descriptions } from "@/engine/core/module/contract.ts";
 import type { OpenedPicker } from "@/engine/core/module/pickers.ts";
+import RequestIds from "@/engine/core/module/RequestIds.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { Item, Property } from "@/shared/relations.ts";
@@ -16,12 +17,13 @@ import type {
   NotedSheet,
   PlacementDescription,
 } from "./descriptions.ts";
-import type { AbilitiesPlan, InventoryEntryPlan, NewCharacterPlan } from "./plans.ts";
+import type { AbilitiesPlan, InventoryEntryPlan, LanguagesPlan, NewCharacterPlan } from "./plans.ts";
 import type {
   AbilitiesRequest,
   InventoryEntryChange,
   MemberReading,
   NewCharacterRequest,
+  PlacementChange,
   PlacementQuery,
   PrivateNotes,
   RacePickQuery,
@@ -37,8 +39,9 @@ type HiddenNotes = Exclude<PrivateNotes, "show">;
  * and the races it can pick, and an inventory entry's add or edit. Its descriptions are the ruleset's own (`D`). What
  * reads the schema's rows alone is every ruleset's: what a character takes from its ruleset, its languages, its card,
  * its inventory. So are the checks that guard a character's privacy and integrity, which no ruleset can skip: a reader
- * reads the private notes the reading gives them, an item is of the character's ruleset and its charges agree, a score
- * is within the ruleset's bounds and a new character's race is a player's. Their operations are this part's, over
+ * reads the private notes the reading gives them, an entity a request names is one its ruleset's view shows (a race, an
+ * ability, a language, an item: `RequestIds`, which reads a source's id as its copy's), an entry's charges agree, a
+ * score is within the ruleset's bounds and a new character's race is a player's. Their operations are this part's, over
  * hooks for what a ruleset describes or checks its own way (`describeFull`, `describePartial`, `planPlacement`,
  * `describeCreation`).
  */
@@ -55,6 +58,11 @@ export default abstract class CharactersPart<D extends Descriptions> {
 
     if (totalCharges !== null && remainingCharges !== null && remainingCharges > totalCharges)
       throw new RulesError("invalid", "Remaining charges cannot exceed total charges");
+  }
+
+  /** The entities a request about a character names, as its ruleset's view reads them. */
+  private static idsOf(view: RulesetView) {
+    return new RequestIds(view.rulesetData, "the character's ruleset");
   }
 
   /**
@@ -84,15 +92,6 @@ export default abstract class CharactersPart<D extends Descriptions> {
       ...(input.master && { master: CharactersPart.withoutNotes(input.master) }),
       record: { ...input.record, privateNotes: null },
     };
-  }
-
-  /**
-   * Refuses rows a character can't take from its ruleset (`rows`, each with the ruleset it's of): rows of neither the
-   * view's ruleset, the character's, nor its source chain.
-   */
-  static checkFromRuleset(view: RulesetView, rows: { rulesetId: string }[], message: string) {
-    const rulesetIds = new Set([view.ruleset.id, ...view.rulesetData.cow.sourceChain]);
-    if (rows.some((row) => !rulesetIds.has(row.rulesetId))) throw new RulesError("invalid", message);
   }
 
   /**
@@ -126,7 +125,7 @@ export default abstract class CharactersPart<D extends Descriptions> {
   protected abstract planPlacement(
     view: RulesetView,
     character: CharacterInput,
-    change: InventoryEntryChange,
+    change: PlacementChange,
     force: boolean,
   ): HeldInventoryEntry;
 
@@ -152,15 +151,6 @@ export default abstract class CharactersPart<D extends Descriptions> {
     view: RulesetView,
     query: RacePickQuery,
   ): OpenedPicker<{ kind: string }, { id: string }, D["raceOption"]>;
-
-  /**
-   * Refuses languages a character can't speak: one of `languageIds` not found (`languages`, the rows the server read
-   * for them), or not of the character's ruleset nor of its source chain.
-   */
-  checkLanguages(view: RulesetView, languageIds: string[], languages: { rulesetId: string }[]) {
-    if (languages.length !== languageIds.length) throw new RulesError("invalid", "Some languages were not found");
-    CharactersPart.checkFromRuleset(view, languages, "Some languages do not belong to the character's ruleset");
-  }
 
   /**
    * A character's sheet as the API answers it (`describeFull`): a player character's with its bonded creatures'
@@ -243,41 +233,43 @@ export default abstract class CharactersPart<D extends Descriptions> {
   }
 
   /**
-   * The ability scores a character's edit stores (`abilities`, by ability id), each under the id its form gives.
-   * Refused when a score is past the ruleset's bounds (`describeCreation`), or one isn't an ability of its ruleset.
+   * The ability scores a character's edit stores (`abilities`, by ability id), each under the id the view keys its
+   * ability by. Refused when a score is past the ruleset's bounds (`describeCreation`), or names no ability of its
+   * ruleset, or two name one.
    */
   planAbilities(view: RulesetView, abilities: AbilitiesRequest): AbilitiesPlan {
     RulesError.parse(CharactersPart.boundedScores(this.describeCreation(view).scores), abilities);
-    const { abilitiesById } = view.rulesetData;
-    if (Object.keys(abilities).some((abilityId) => !abilitiesById.has(abilityId)))
-      throw new RulesError("not-found", "Ability not found");
-    return { abilities: Object.entries(abilities).map(([abilityId, score]) => ({ abilityId, score })) };
+    const scores = CharactersPart.idsOf(view).resolveKeys("abilities", abilities);
+    return { abilities: [...scores].map(([abilityId, score]) => ({ abilityId, score })) };
   }
 
   /**
-   * What a new character stores beside its row: a score for each of the ruleset's abilities, the one its form gives
-   * (`abilities`, by ability id) or the one an unset ability starts at (`describeCreation`). Refused when a score is
-   * past the ruleset's bounds, or its race isn't the ruleset's or isn't a player character's (of kind `pc`).
+   * What a new character stores: its race, and a score for each of the ruleset's abilities, the one its form gives
+   * (`abilities`, by ability id) or the one an unset ability starts at (`describeCreation`), each by the id the view
+   * keys it by. Refused when a score is past the ruleset's bounds, its race or an ability isn't one of the ruleset's, two
+   * scores name one ability, or its race isn't a player character's (of kind `pc`).
    */
   planCreate(view: RulesetView, request: NewCharacterRequest): NewCharacterPlan {
-    const { rulesetData } = view;
     const { scores } = this.describeCreation(view);
     RulesError.parse(CharactersPart.boundedScores(scores), request.abilities, ["abilities"]);
-    const race = rulesetData.racesById.get(request.raceId);
-    if (!race) throw new RulesError("not-found", "Race not found in this ruleset");
+    const ids = CharactersPart.idsOf(view);
+    const race = ids.find("races", request.raceId);
     if (race.kind !== "pc") throw new RulesError("invalid", "Race is not valid for a player character");
+    const given = ids.resolveKeys("abilities", request.abilities);
     return {
-      abilities: rulesetData.abilities.map((ability) => ({
+      abilities: view.rulesetData.abilities.map((ability) => ({
         abilityId: ability.id,
-        score: request.abilities[ability.id] ?? scores.start,
+        score: given.get(ability.id) ?? scores.start,
       })),
+      raceId: race.id,
     };
   }
 
   /**
-   * What an inventory entry's add or edit stores, checked: its placement (`planPlacement`: the item equipped where
-   * asked, its requirements checked unless `force`d) and its charges. Refused when an added item isn't the character's
-   * ruleset's (nor from its source chain), or its charges disagree.
+   * What an inventory entry's add or edit stores, checked: its item (an added one's, as the view has it), its placement
+   * (`planPlacement`: the item equipped where asked, its requirements checked unless `force`d) and its charges. Refused
+   * when an added item isn't one of the ruleset's (unknown, of an unrelated ruleset, or deleted), or its charges
+   * disagree.
    */
   planInventoryEntry(
     view: RulesetView,
@@ -285,14 +277,24 @@ export default abstract class CharactersPart<D extends Descriptions> {
     change: InventoryEntryChange,
     force: boolean,
   ): InventoryEntryPlan {
-    const { remainingCharges, totalCharges } = change.request;
-    if ("item" in change)
-      CharactersPart.checkFromRuleset(view, [change.item], "Item does not belong to the character's ruleset");
-    CharactersPart.checkCharges(totalCharges, remainingCharges);
+    const { request } = change;
+    const placed: PlacementChange =
+      "itemId" in change ? { item: CharactersPart.idsOf(view).find("items", change.itemId), request } : change;
+    CharactersPart.checkCharges(request.totalCharges, request.remainingCharges);
     return {
-      ...this.planPlacement(view, character, change, force),
-      totalCharges: totalCharges ?? null,
-      remainingCharges: remainingCharges ?? null,
+      ...this.planPlacement(view, character, placed, force),
+      itemId: "item" in placed ? placed.item.id : placed.entry.itemId,
+      totalCharges: request.totalCharges ?? null,
+      remainingCharges: request.remainingCharges ?? null,
     };
+  }
+
+  /**
+   * The languages a character's edit sets (`languageIds`), each by the id the view keys it by. Refused, naming it, when
+   * one isn't a language of the character's ruleset (unknown, of an unrelated ruleset, or deleted), or is sent twice
+   * (by one id, or by its source's and its copy's).
+   */
+  planLanguages(view: RulesetView, languageIds: string[]): LanguagesPlan {
+    return { languageIds: CharactersPart.idsOf(view).resolveAll("languages", languageIds) };
   }
 }

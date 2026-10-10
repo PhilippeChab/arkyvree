@@ -3,18 +3,20 @@ import { describe, expect, test } from "bun:test";
 import type { InferInsertModel } from "drizzle-orm";
 
 import type { itemsInRules } from "@/drizzle/schema.ts";
+import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { CharacterInventory, Modifiers, Properties, Races, Requirements } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
+import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import type { ItemLocation, SizeType } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createCharacterAs } from "@/tests/support/characters.ts";
 import { createTestItem } from "@/tests/support/items.ts";
 import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
-import { findSeededCharacter, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
+import { findPlainItem, findSeededCharacter, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
 import { WEAPON_PROFICIENCY, WEAPON_SIZE } from "@/vocabulary/dnd3.5/properties/index.ts";
 
@@ -278,7 +280,10 @@ describe("InventoryService", () => {
 
     test("refuses a missing item and changes to an entry the character doesn't have", async () => {
       const { session, character } = await setup();
-      expect(add(session, character.id, NIL_UUID)).rejects.toThrow(NotFoundError);
+      expect(add(session, character.id, NIL_UUID)).rejects.toMatchObject({
+        message: `Item ${NIL_UUID} does not belong to the character's ruleset`,
+        refusal: "invalid",
+      });
       expect(update(session, character.id, NIL_UUID)).rejects.toThrow(NotFoundError);
       expect(remove(session, character.id, NIL_UUID)).rejects.toThrow(NotFoundError);
     });
@@ -336,7 +341,32 @@ describe("InventoryService", () => {
 
       // A character of the seeded ruleset: the item's ruleset is unrelated to it.
       const onSeed = await createCharacterAs(session);
-      expect(add(session, onSeed.id, inherited.id)).rejects.toMatchObject({ refusal: "invalid" });
+      expect(add(session, onSeed.id, inherited.id)).rejects.toMatchObject({
+        message: `Item ${inherited.id} does not belong to the character's ruleset`,
+        refusal: "invalid",
+      });
+    });
+
+    test("adds an item by the id of what its fork copied as the copy, placed as the copy is, and not one it deleted", async () => {
+      const session = makeSession();
+      const plain = await findPlainItem((await getSeedCtx()).rulesetId);
+      // The fork makes the item a weapon: a hand holds it, the torso no longer does
+      const fork = await createSeededTestRuleset(SEED_USER_ID);
+      const copy = await ItemsService.updateItem(session, fork.id, plain.id, { name: plain.name, type: "Weapon" });
+      const character = await createCharacterAs(session, { rulesetId: fork.id });
+      expect(add(session, character.id, plain.id, equipped("Torso"))).rejects.toThrow(
+        "Weapons can only be equipped in hand slots",
+      );
+      expect(await add(session, character.id, plain.id, equipped("Main Hand", 0))).toMatchObject({ itemId: copy.id });
+
+      // A fork that deleted it shows none of it: its entry would be listed nowhere
+      const deleting = await createSeededTestRuleset(SEED_USER_ID);
+      await ItemsService.deleteItem(session, deleting.id, plain.id);
+      const onDeleting = await createCharacterAs(session, { rulesetId: deleting.id });
+      expect(add(session, onDeleting.id, plain.id)).rejects.toMatchObject({
+        message: `Item ${plain.id} does not belong to the character's ruleset`,
+        refusal: "invalid",
+      });
     });
   });
 

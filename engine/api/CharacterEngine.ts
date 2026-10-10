@@ -52,8 +52,8 @@ export default class CharacterEngine extends CharacterHandle {
   }
 
   /**
-   * What an inventory entry's add or edit stores: its placement and charges, refused when the item isn't the ruleset's,
-   * its charges disagree, or it can't be equipped where the request asks.
+   * What an inventory entry's add or edit stores: its item (an added one by the view's id), its placement and charges,
+   * refused when the item isn't the ruleset's, its charges disagree, or it can't be equipped where the request asks.
    */
   planInventoryEntry(...args: Args<"planInventoryEntry">) {
     return this.module.characters.planInventoryEntry(this.view, this.input, ...args);

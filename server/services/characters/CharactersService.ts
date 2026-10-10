@@ -14,7 +14,6 @@ import {
   CharacterLanguages,
   CharacterLevels,
   Characters,
-  Languages,
   Races,
   Visibility,
   visibilityMap,
@@ -31,9 +30,10 @@ import { enqueueCharacterPdf, findExportableCharacter } from "./pdf.ts";
 
 class CharactersService extends include(Object, Archives) {
   /**
-   * Replace a character's language set in-place, the engine refusing those it can't speak (`characters().checkLanguages`):
-   * deletes the existing rows and inserts the new set. Caller is responsible for the surrounding transaction and its
-   * ruleset's scope.
+   * Replace a character's language set in-place, as the engine plans it (`characters().planLanguages`: each the view's
+   * language, a copy's when the ruleset copied one, refused when the view has none or it's sent twice): deletes the
+   * existing rows and inserts the new set. Caller is responsible for the surrounding transaction and its ruleset's
+   * scope.
    */
   private async replaceCharacterLanguages(
     tx: Db,
@@ -41,17 +41,13 @@ class CharactersService extends include(Object, Archives) {
     characterRecord: { id: string; rulesetId: string },
     languageIds: string[],
   ): Promise<void> {
-    // The languages the view shows for the ids sent: a copy's, when the ruleset copied one
-    const languages = await Languages.findMany(tx, {
-      ids: languageIds.map((languageId) => scope.rulesetData.cow.resolve(languageId)),
-    });
-    Engine.for(scope).characters().checkLanguages(languageIds, languages);
+    const plan = Engine.for(scope).characters().planLanguages(languageIds);
 
     const existing = await CharacterLanguages.findMany(tx, { characterId: characterRecord.id });
     for (const lang of existing)
       await CharacterLanguages.delete(tx, { characterId: characterRecord.id, languageId: lang.languageId });
 
-    for (const languageId of languageIds)
+    for (const languageId of plan.languageIds)
       await CharacterLanguages.create(tx, { characterId: characterRecord.id, languageId });
   }
 
@@ -83,7 +79,7 @@ class CharactersService extends include(Object, Archives) {
           const [newCharacter] = await Characters.create(tx, {
             userId: session.userId,
             rulesetId: characterData.rulesetId,
-            raceId: characterData.raceId,
+            raceId: plan.raceId,
             name: characterData.name,
             xp: characterData.xp,
             alignment: characterData.alignment,
@@ -288,8 +284,8 @@ class CharactersService extends include(Object, Archives) {
       const [updatedCharacter] = updatedRows;
 
       // Apply languages atomically when present. `undefined` = leave alone;
-      // `[]` = clear all. Wrapped in withRulesetScope because language ids
-      // need COW canonicalization against the character's ruleset.
+      // `[]` = clear all. Wrapped in withRulesetScope: the engine reads the
+      // language ids as the character's ruleset's view does.
       if (languageIds !== undefined) {
         await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
           await this.replaceCharacterLanguages(tx, scope, characterRecord, languageIds);

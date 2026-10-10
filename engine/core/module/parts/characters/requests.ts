@@ -37,16 +37,27 @@ export interface SheetRequest {
 /** A form's ability scores, by ability id. */
 export type AbilitiesRequest = Record<string, number>;
 
-/** What an inventory entry's add (a new entry of `item`) or edit (an `entry` of the character's) asks. */
+/**
+ * What an inventory entry's add (a new entry of the ruleset's item `itemId`) or edit (an `entry` of the character's)
+ * asks.
+ */
 export type InventoryEntryChange =
-  | { item: Item; request: InventoryEntryRequest }
+  | { itemId: string; request: InventoryEntryRequest }
   | { entry: { id: string; itemId: string }; request: InventoryEntryRequest };
 
-/** What an inventory entry's add or edit asks: the fields it stores, which the plan answers checked. */
-export type InventoryEntryRequest = InventoryEntryPlan;
+/** What an inventory entry's add or edit asks: the fields it stores but its item, which the plan answers checked. */
+export type InventoryEntryRequest = Omit<InventoryEntryPlan, "itemId">;
 
 /** How a campaign member reads a character: partly (`partial`), or its sheet with its private notes shown or blank. */
 export type MemberReading = "blank" | "partial" | "show";
+
+/**
+ * Where an inventory entry's add or edit places its item, as a ruleset checks it: a new entry's item as the view has it
+ * (`item`), or an `entry` of the character's.
+ */
+export type PlacementChange =
+  | { item: Item; request: InventoryEntryRequest }
+  | { entry: { id: string; itemId: string }; request: InventoryEntryRequest };
 
 /** What a viewer reads of a character's private notes: all of it, a blank, or no field at all. */
 export type PrivateNotes = "blank" | "omit" | "show";

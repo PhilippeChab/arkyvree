@@ -1,4 +1,3 @@
-import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 
 import type {
@@ -12,33 +11,24 @@ import type {
   PlannedSoFar,
   PreviewRequest,
 } from "./parts/levelUp/index.ts";
-
-/**
- * What a level picks by id (an ability to increase, a feat or a power and the pool it's in, a skill), by the view's index
- * of it (`RulesetData`'s `…ById`).
- */
-type PickedKind = "abilities" | "aptitudes" | "feats" | "powers" | "skills";
-
-/** What a refusal names a pick of each kind. */
-const PICK_LABELS: Record<PickedKind, string> = {
-  abilities: "Ability",
-  aptitudes: "Aptitude",
-  feats: "Feat",
-  powers: "Power",
-  skills: "Skill",
-};
+import RequestIds from "./RequestIds.ts";
 
 /**
  * A level flow's request (a level-up, a saved level's edit, the wizard's preview, a step's or a picker's query) as its
  * ruleset's view (`rulesetData`) reads it: each entity it names by id (a class, a class level, a pool, and what a level
  * picks: an ability increase's ability, a feat, a power, a skill) resolved to the one the view shows in its place, a
  * copy's or a sibling winner's, since the API takes a source's id as well as its copy's. A pick the view has no entity
- * for is refused, naming it: read as it was sent, a spell would count at no spell level, a feat in its pool. The level-up
- * handle resolves a request once, as it enters (`LevelUpEngine`), as the character's rows are (`CharacterInputs`): its
- * checks, its preview and the rows a save writes all read the view's ids.
+ * for is refused, naming it (`RequestIds`): read as it was sent, a spell would count at no spell level, a feat in its
+ * pool. The level-up handle resolves a request once, as it enters (`LevelUpEngine`), as the character's rows are
+ * (`CharacterInputs`): its checks, its preview and the rows a save writes all read the view's ids.
  */
 export default class LevelRequests {
-  constructor(private readonly rulesetData: RulesetData) {}
+  constructor(private readonly rulesetData: RulesetData) {
+    this.ids = new RequestIds(rulesetData, "the character's ruleset");
+  }
+
+  /** What a level picks by id (an ability to increase, a feat or a power and its pool, a skill), as the view reads it. */
+  private readonly ids: RequestIds;
 
   /** The id that stands for `id` in the view: its copy's or its winner's when it's stale, itself otherwise. */
   private resolve(id: string) {
@@ -47,7 +37,7 @@ export default class LevelRequests {
 
   /** A level's ability increases, each ability the view's. */
   private resolveIncreases(increases: AbilityIncrease[]): AbilityIncrease[] {
-    return increases.map((increase) => ({ ...increase, abilityId: this.resolvePick("abilities", increase.abilityId) }));
+    return increases.map((increase) => ({ ...increase, abilityId: this.ids.resolve("abilities", increase.abilityId) }));
   }
 
   /** A level the request plans: its class, and its ability increases' abilities, the view's. */
@@ -59,15 +49,6 @@ export default class LevelRequests {
     };
   }
 
-  /** `id`, a pick of `kind`, as the view stands for it: refused, naming it, when the view has no such entity. */
-  private resolvePick(kind: PickedKind, id: string) {
-    const resolved = this.resolve(id);
-    const index: ReadonlyMap<string, unknown> = this.rulesetData[`${kind}ById`];
-    if (!index.has(resolved))
-      throw new RulesError("invalid", `${PICK_LABELS[kind]} ${id} does not belong to the character's ruleset`);
-    return resolved;
-  }
-
   /**
    * Feats or powers (`kind`) by pool, each pool and pick the view's: a pool sent by two of its ids gathers their picks,
    * in the order they came.
@@ -75,7 +56,7 @@ export default class LevelRequests {
   private resolvePools(byPool: Record<string, string[]>, kind: "feats" | "powers") {
     const resolved: Record<string, string[]> = {};
     for (const [aptitudeId, ids] of Object.entries(byPool))
-      (resolved[this.resolvePick("aptitudes", aptitudeId)] ??= []).push(...ids.map((id) => this.resolvePick(kind, id)));
+      (resolved[this.ids.resolve("aptitudes", aptitudeId)] ??= []).push(...ids.map((id) => this.ids.resolve(kind, id)));
     return resolved;
   }
 
@@ -86,7 +67,7 @@ export default class LevelRequests {
   private resolveSkills(skills: Record<string, number>) {
     const resolved: Record<string, number> = {};
     for (const [skillId, points] of Object.entries(skills)) {
-      const id = points > 0 ? this.resolvePick("skills", skillId) : this.resolve(skillId);
+      const id = points > 0 ? this.ids.resolve("skills", skillId) : this.resolve(skillId);
       resolved[id] = (resolved[id] ?? 0) + points;
     }
     return resolved;
@@ -129,13 +110,13 @@ export default class LevelRequests {
     return {
       abilityIncreases: abilityIncreases?.map((increases) => this.resolveIncreases(increases)),
       featPicks: featPicks?.map(({ aptitudeId, featId }) => ({
-        aptitudeId: this.resolvePick("aptitudes", aptitudeId),
-        featId: this.resolvePick("feats", featId),
+        aptitudeId: this.ids.resolve("aptitudes", aptitudeId),
+        featId: this.ids.resolve("feats", featId),
       })),
       klassLevelIds: klassLevelIds?.map((klassLevelId) => this.resolve(klassLevelId)),
       powerPicks: powerPicks?.map(({ aptitudeId, powerId }) => ({
-        aptitudeId: this.resolvePick("aptitudes", aptitudeId),
-        powerId: this.resolvePick("powers", powerId),
+        aptitudeId: this.ids.resolve("aptitudes", aptitudeId),
+        powerId: this.ids.resolve("powers", powerId),
       })),
       skillPoints: skillPoints && this.resolveSkills(skillPoints),
     };

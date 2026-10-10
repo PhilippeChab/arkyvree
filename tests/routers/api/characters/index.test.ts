@@ -144,9 +144,9 @@ describe("characters", () => {
       expect(strength).toMatchObject({ base: 18, total: 18, modifier: 4 });
     });
 
-    test("returns 404 for an ability the ruleset doesn't have", async () => {
+    test("refuses an ability the ruleset doesn't have", async () => {
       const { id } = await postCharacter();
-      await expectStatus(character.abilities.$put({ param: { id }, json: { [NIL_UUID]: 15 } }), 404);
+      await expectStatus(character.abilities.$put({ param: { id }, json: { [NIL_UUID]: 15 } }), 400);
     });
 
     test("refuses a score past the ruleset's bounds", async () => {
