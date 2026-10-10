@@ -55,6 +55,13 @@ describe("The seeded bonuses the rules read", () => {
     expect(seededModifiers(RODS, "Rod of Splendor")).toEqual(["abilities.charisma.misc +4"]);
   });
 
+  test("give a class feature the bonus it comes with at its level, but not one a condition still holds", () => {
+    // "When she attains 6th level, a dervish gains a +2 bonus on initiative rolls": the level the feature is granted at
+    expect(seededModifiers(WARRIOR_FEATS, "Improved Reaction (Dervish)")).toEqual(["combat.initiative.misc +2"]);
+    // "When she attains 7th level, … +4 bonus to Armor Class when she chooses to fight defensively"
+    expect(seededModifiers(WARRIOR_FEATS, "Elaborate Parry (Dervish)")).toEqual([]);
+  });
+
   test("leave out a bonus that's conditional, used, narrowed, someone else's or a choice", () => {
     for (const [seeds, name] of [
       [ADVENTURER_FEATS, "Improved Diversion"],

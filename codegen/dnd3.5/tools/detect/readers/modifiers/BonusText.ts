@@ -23,6 +23,13 @@ const CONDITION = /\b(?:against|while|whenever|when|during|versus|if|unless|only
 const EQUIPPED =
   /\b(?:when|while|if|as long as)\s+(?:(?:it is|you are|they are|she|he|you)\s+)?(?:worn|wears|wearing|placed|donned|held|holds|holding|grasped|carried|carries|carrying|used|activated|wielded|wields|wielding)\b/gi;
 
+/**
+ * The level a class feature comes at, which conditions nothing: the feature is granted at that level ("When she attains
+ * 6th level, a dervish gains…", "Upon reaching 9th level").
+ */
+const LEVEL_REACHED =
+  /\b(?:when|once|upon|after)\s+(?:(?:she|he|you|they|it|(?:a|an|the)\s+[a-z]+)\s+)?(?:attains?|attaining|reach(?:es|ing)?)\s+\d+(?:st|nd|rd|th)\s+level\b/gi;
+
 /** A skill's name: capitalized words, a parenthesis allowed ("Knowledge (architecture and engineering)", "Sleight of Hand"). */
 const NAME = String.raw`[A-Z][\w'-]*(?:\s+(?:\([^)]*\)|of|the|[A-Z][\w'-]*))*`;
 
@@ -50,13 +57,13 @@ const SOMEONE_ELSE = /\b(?:all(?:y|ies)|companions?|cohorts?|familiars?|follower
 
 /**
  * Whether the bonus `text` gives from `start` to `end` isn't a permanent modifier of the character: what it falls under
- * (`scopeOf`) names a condition, other than what's worn or held, an effect used, or someone else it goes to; or what
- * follows the bonus narrows it.
+ * (`scopeOf`) names a condition, other than what's worn or held or the level it comes at, an effect used, or someone
+ * else it goes to; or what follows the bonus narrows it.
  */
 function isConditionalAt(text: string, start: number, end: number): boolean {
   const scope = scopeOf(text, start, end);
   return (
-    CONDITION.test(scope.replace(EQUIPPED, "")) ||
+    CONDITION.test(scope.replace(EQUIPPED, "").replace(LEVEL_REACHED, "")) ||
     ACTIVATION.test(scope) ||
     SOMEONE_ELSE.test(scope) ||
     NARROWED.test(text.slice(end).replace(EQUIPPED, ""))

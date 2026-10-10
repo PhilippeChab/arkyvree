@@ -80,6 +80,7 @@ export const DERVISH_CLASS_FEATS: FeatSeed[] = [
     description: "At 6th level, a dervish receives a +2 bonus to initiative checks.",
     selectable: false,
     aptitudes: ["Dervish Class Feature"],
+    modifiers: [{ target: "combat.initiative.misc", operator: "add", value: "2", valueType: "number" }],
   },
   {
     name: "Movement Mastery (Dervish)",
