@@ -1139,6 +1139,62 @@ describe("LevelsService", () => {
       ]);
     });
 
+    test("leave a power the level's class level grants out of its own pool only, as once the level is saved", async () => {
+      // Each pool is a list of its own: a power known in one is offered in another that lists it
+      const { session, parent, character, klass, klassLevels, powerAptitude, powers } = await setupRuleset();
+      const [otherAptitude] = await Aptitudes.create(db, { name: "Other Power Aptitude", rulesetId: parent.id });
+      await PowersAptitudes.createMany(db, [{ powerId: powers["Rage"].id, aptitudeId: otherAptitude.id }]);
+      await insertRows(klassLevelPowersInRules, [
+        { klassLevelId: klassLevels[1].id, powerId: powers["Rage"].id, aptitudeId: powerAptitude.id },
+      ]);
+      await addCharacterLevel(character.id, klassLevels[0].id);
+      const offered = async (aptitudeId: string, level: number) =>
+        names(
+          (
+            await CharacterLevelsService.getAvailablePowers(
+              session,
+              character.id,
+              { aptitudeId, classId: klass.id, level },
+              page,
+            )
+          ).items,
+        );
+
+      // Taking the level that grants Rage, then the one after it
+      for (const level of [2, 3]) {
+        expect(await offered(otherAptitude.id, level)).toContain("Rage");
+        expect(await offered(powerAptitude.id, level)).not.toContain("Rage");
+        await addCharacterLevel(character.id, klassLevels[level - 1].id);
+      }
+    });
+
+    test("leave a spell a modifier makes known out of its own list only", async () => {
+      const ctx = await getSeedCtx();
+      const characterId = await createSeedCharacter(ctx, "sorcerer");
+      await Modifiers.create(db, {
+        sourceId: characterId,
+        sourceType: "characters",
+        target: "powers.magicmissile.wizard.known",
+        value: "true",
+        valueType: "boolean",
+        operator: "set",
+      });
+      const firstLevelSpells = async (list: "Sorcerer Spells" | "Wizard Spells") =>
+        names(
+          (
+            await CharacterLevelsService.getAvailablePowers(
+              session,
+              characterId,
+              { aptitudeId: ctx.aptMap[list], classId: ctx.klassMap.pc["Sorcerer"], level: 1, powerLevel: 1 },
+              page,
+            )
+          ).items,
+        );
+
+      expect(await firstLevelSpells("Sorcerer Spells")).toContain("Magic Missile");
+      expect(await firstLevelSpells("Wizard Spells")).not.toContain("Magic Missile");
+    });
+
     test("list a fork's inherited powers", async () => {
       const { session, character, klass, powerAptitude } = await setupRuleset({ fork: true });
       const { items } = await CharacterLevelsService.getAvailablePowers(
