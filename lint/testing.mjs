@@ -10,7 +10,8 @@
  *
  * And `sync-expects`: Bun's matchers are synchronous, `.resolves` / `.rejects` included (they block until the promise
  * settles, and throw), and its types have them return `void`: an `await` before a `bun:test` `expect(…)` waits for
- * nothing and reads as if it did (`--fix` drops it). Revisit on a Bun upgrade whose types have a matcher return a
+ * nothing and reads as if it did (`--fix` drops it). It only yields a tick, which a test that needs one awaits by name
+ * (the promise whose handlers must have run: `await first.catch(…)`). Revisit on a Bun upgrade whose types have a matcher return a
  * promise: the rule then flips back for it, or a failing test would pass unnoticed. Playwright's `expect` (the e2e
  * tests'), whose web-first assertions wait, is another import, which the rule leaves alone.
  *
