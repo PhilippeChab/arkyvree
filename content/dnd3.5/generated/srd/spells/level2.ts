@@ -213,6 +213,7 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
     description:
       "The target becomes stronger, gaining a +4 enhancement bonus to Strength with the usual benefits to melee attack rolls, damage rolls, and Strength-based checks. Arcane Material Component: A few hairs or a pinch of dung from a bull.",
     aptitudes: [
+      "Blackguard Spells",
       "Cleric Spells",
       "Druid Spells",
       "Hunter of the Dead Spells",
@@ -375,6 +376,7 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
       "This functions like cure light wounds, except it restores 2d8 points of damage + 1 per caster level (maximum +10).",
     aptitudes: [
       "Bard Spells",
+      "Blackguard Spells",
       "Cleric Spells",
       "Druid Spells",
       "Hunter of the Dead Spells",
@@ -383,6 +385,7 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
     ],
     aptitudeLevels: {
       "Bard Spells": 2,
+      "Blackguard Spells": 2,
       "Cleric Spells": 2,
       "Druid Spells": 3,
       "Hunter of the Dead Spells": 2,
@@ -406,7 +409,15 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
     name: "Darkness",
     description:
       "An object you target radiates shadowy illumination in a 20-foot radius, granting all creatures within 20% concealment. Even darkvision and low-light vision do not negate this miss chance. Normal light sources cannot brighten the area, nor can lower-level light spells. Higher-level light spells are unaffected. If cast on a small object placed under lightproof covering, the effect is blocked until uncovered. Darkness counters or dispels equal or lower level light spells. Arcane Material Component: A bit of bat fur and a drop of pitch or piece of coal.",
-    aptitudes: ["Bard Spells", "Blighter Spells", "Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
+    aptitudes: [
+      "Assassin Spells",
+      "Bard Spells",
+      "Blackguard Spells",
+      "Blighter Spells",
+      "Cleric Spells",
+      "Sorcerer Spells",
+      "Wizard Spells",
+    ],
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Evocation" },
@@ -464,7 +475,7 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
     name: "Death Knell",
     description:
       "You draw the fading life force from a creature with -1 or fewer hit points that you touch. On a failed save, it dies, and you gain 1d8 temporary hit points, +2 Strength, and +1 effective caster level (not granting access to higher-level spells). These benefits last 10 minutes per HD of the slain creature.",
-    aptitudes: ["Blighter Spells", "Cleric Spells"],
+    aptitudes: ["Blackguard Spells", "Blighter Spells", "Cleric Spells"],
     savingThrow: "Will negates",
     properties: [
       { type: "SPELL_SCHOOL", value: "Necromancy" },
@@ -526,6 +537,7 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
       "The target becomes more poised and personally forceful, gaining a +4 enhancement bonus to Charisma. Charisma-based spellcasters gain increased save DCs but not extra spell slots. Arcane Material Component: A few eagle feathers or a pinch of eagle droppings.",
     aptitudes: [
       "Bard Spells",
+      "Blackguard Spells",
       "Cleric Spells",
       "Paladin Spells",
       "Sorcerer Spells",
@@ -571,7 +583,8 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
     name: "False Life",
     description:
       "You harness negative energy to gain 1d10 + 1 per caster level (maximum +10) temporary hit points. Material Component: A small amount of alcohol or spirits used to trace sigils on your body.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    aptitudes: ["Assassin Spells", "Sorcerer Spells", "Wizard Spells"],
+    aptitudeLevels: { "Assassin Spells": 3, "Sorcerer Spells": 2, "Wizard Spells": 2 },
     savingThrow: "None",
     properties: [
       { type: "SPELL_SCHOOL", value: "Necromancy" },
@@ -689,7 +702,7 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
     name: "Fox's Cunning",
     description:
       "The target gains a +4 enhancement bonus to Intelligence. Intelligence-based spellcasters gain increased save DCs but not extra spells or skill points. Arcane Material Component: Fox hair or dung.",
-    aptitudes: ["Bard Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells"],
+    aptitudes: ["Assassin Spells", "Bard Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells"],
     savingThrow: "Will negates (harmless)",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -894,7 +907,7 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
   {
     name: "Inflict Moderate Wounds",
     description: "This functions like inflict light wounds, except it deals 2d8 + 1 per caster level (maximum +10).",
-    aptitudes: ["Blighter Spells", "Cleric Spells"],
+    aptitudes: ["Blackguard Spells", "Blighter Spells", "Cleric Spells"],
     savingThrow: "Will half",
     properties: [
       { type: "SPELL_SCHOOL", value: "Necromancy" },
@@ -911,7 +924,14 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
     name: "Invisibility",
     description:
       "The touched creature or object vanishes from sight, even from darkvision. Carried gear also vanishes. Dropped items become visible; picked-up items disappear. Light sources become invisible but still shed light. Items extending more than 10 feet from the subject become visible. The spell ends if the subject attacks (including targeting foes with spells). Indirect harm does not end it. Can be made permanent on objects with permanency. Arcane Material Component: An eyelash in gum arabic.",
-    aptitudes: ["Bard Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells", "Wu Jen Spells"],
+    aptitudes: [
+      "Assassin Spells",
+      "Bard Spells",
+      "Sorcerer Spells",
+      "Vigilante Spells",
+      "Wizard Spells",
+      "Wu Jen Spells",
+    ],
     savingThrow: "Will negates (harmless) or Will negates (harmless, object)",
     properties: [
       { type: "SPELL_SCHOOL", value: "Illusion" },
@@ -1095,7 +1115,22 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
     name: "Misdirection",
     description:
       "You redirect the aura information from detection spells to another object within range. Detection spells provide information based on the other object rather than the actual target (Will save for the detection caster to see through it). Does not affect other divination types.",
-    aptitudes: ["Bard Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells", "Wu Jen Spells"],
+    aptitudes: [
+      "Assassin Spells",
+      "Bard Spells",
+      "Sorcerer Spells",
+      "Vigilante Spells",
+      "Wizard Spells",
+      "Wu Jen Spells",
+    ],
+    aptitudeLevels: {
+      "Assassin Spells": 3,
+      "Bard Spells": 2,
+      "Sorcerer Spells": 2,
+      "Vigilante Spells": 2,
+      "Wizard Spells": 2,
+      "Wu Jen Spells": 2,
+    },
     savingThrow: "None or Will negates; see text",
     properties: [
       { type: "SPELL_SCHOOL", value: "Illusion" },
@@ -1151,6 +1186,7 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
     description:
       "Grants temporary immunity to one energy type (acid, cold, electricity, fire, or sonic). Absorbs 12 points per caster level (maximum 120). Overlaps (does not stack) with resist energy.",
     aptitudes: [
+      "Blackguard Spells",
       "Cleric Spells",
       "Druid Spells",
       "Hunter of the Dead Spells",
@@ -1160,6 +1196,7 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
       "Wizard Spells",
     ],
     aptitudeLevels: {
+      "Blackguard Spells": 3,
       "Cleric Spells": 3,
       "Druid Spells": 3,
       "Hunter of the Dead Spells": 3,
@@ -1348,7 +1385,14 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
     name: "Shatter",
     description:
       "A loud ringing noise breaks nonmagical brittle objects, sunders a single solid nonmagical object, or damages crystalline creatures. Area attack: destroys crystal, glass, ceramic, and porcelain within 5 feet (objects over 1 lb/level unaffected). Single target: up to 10 lbs/level. Against crystalline creatures: 1d6 sonic per caster level (maximum 10d6, Fortitude half). Arcane Material Component: Mica chip.",
-    aptitudes: ["Bard Spells", "Cleric Spells", "Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
+    aptitudes: [
+      "Bard Spells",
+      "Blackguard Spells",
+      "Cleric Spells",
+      "Sorcerer Spells",
+      "Warmage Spells",
+      "Wizard Spells",
+    ],
     savingThrow: "Will negates (object); Will negates (object) or Fortitude half; see text",
     properties: [
       { type: "SPELL_SCHOOL", value: "Evocation" },
@@ -1503,7 +1547,7 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
     name: "Spider Climb",
     description:
       "The subject climbs vertical and inverted surfaces at 20 feet (climb speed) without Climb checks. Hands must be free. Retains Dexterity bonus; opponents get no special bonus. Cannot run while climbing. Material Component: Bitumen and a live spider (eaten).",
-    aptitudes: ["Druid Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
+    aptitudes: ["Assassin Spells", "Druid Spells", "Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     savingThrow: "Will negates (harmless)",
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
@@ -1599,6 +1643,7 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
       "This functions like summon monster I, except you summon one 2nd-level creature or 1d3 1st-level creatures.",
     aptitudes: [
       "Bard Spells",
+      "Blackguard Spells",
       "Cleric Spells",
       "Knight of the Chalice Spells",
       "Sorcerer Spells",

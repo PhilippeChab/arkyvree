@@ -106,7 +106,7 @@ export class DomainSeeds extends ReferenceSeeds<DomainReference> {
    */
   spellIssues(): { domain: string; text: string }[] {
     const spellNames = this.book.domainSpellNames();
-    const bookSpells = this.book.reference("spell")?.raw ?? [];
+    const spellRef = this.book.reference("spell");
     const issues: { domain: string; text: string }[] = [];
     for (const { name: domain, spells } of this.seeds()) {
       const has = (name: string, level: number) =>
@@ -122,10 +122,10 @@ export class DomainSeeds extends ReferenceSeeds<DomainReference> {
       for (let level = 1; level <= 9; level++)
         if (!spells.some((spell) => spell.level === level)) issues.push({ domain, text: `no spell at level ${level}` });
 
-      for (const spell of bookSpells) {
-        for (const { className, level } of spell.levelEntries) {
-          if (className === domain && !has(spell.name, level))
-            issues.push({ domain, text: `the book's ${spell.name} is ${domain} ${level}, not on its list` });
+      for (const [name, { levelEntries }] of Object.entries(spellRef?.mapping ?? {})) {
+        for (const { className, level } of levelEntries) {
+          if (className === domain && !has(name, level))
+            issues.push({ domain, text: `the book's ${name} is ${domain} ${level}, not on its list` });
         }
       }
     }
