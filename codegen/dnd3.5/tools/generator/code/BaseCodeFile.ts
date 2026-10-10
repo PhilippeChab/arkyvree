@@ -122,17 +122,6 @@ export class BaseCodeFile {
     });
   }
 
-  /** Two names in lint's order, which ignores case (`sort-imports`, `member-order`). */
-  protected compareNames(a: string, b: string): number {
-    const [x, y] = [a.toLowerCase(), b.toLowerCase()];
-    return x < y ? -1 : x > y ? 1 : 0;
-  }
-
-  /** `s` escaped for a template literal: as for a string literal, and its backticks and `${` too. */
-  protected escapeTemplate(s: string): string {
-    return escapeString(s).replace(/`/g, "\\`").replace(/\$\{/g, "\\${");
-  }
-
   /** An import of `names` from `from`, the names in lint's order. */
   private formatImport(names: string[], from: string): string {
     return `import { ${[...names].sort((a, b) => this.compareNames(a, b)).join(", ")} } from "${from}";`;
@@ -146,6 +135,17 @@ export class BaseCodeFile {
       const used = names.filter((name) => this.uses.has(name));
       return used.length > 0 ? [this.formatImport(used, from)] : [];
     });
+  }
+
+  /** Two names in lint's order, which ignores case (`sort-imports`, `member-order`). */
+  protected compareNames(a: string, b: string): number {
+    const [x, y] = [a.toLowerCase(), b.toLowerCase()];
+    return x < y ? -1 : x > y ? 1 : 0;
+  }
+
+  /** `s` escaped for a template literal: as for a string literal, and its backticks and `${` too. */
+  protected escapeTemplate(s: string): string {
+    return escapeString(s).replace(/`/g, "\\`").replace(/\$\{/g, "\\${");
   }
 
   /** `items` as an array of string literals: on one line when it's short, else an item per line, at `indentLevel`. */

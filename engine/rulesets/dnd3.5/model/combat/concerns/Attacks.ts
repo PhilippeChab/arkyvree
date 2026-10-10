@@ -144,41 +144,6 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       return unproficient + (this.towerShield ? COMBAT_RULES.TOWER_SHIELD_PENALTY : 0);
     }
 
-    protected initializeBaseAttackBonus(
-      classes: ReturnType<ClassesComponent["getClasses"]>,
-      klassLevelProperties: Map<string, { bab: number; skills: number }>,
-    ): void {
-      const baseAttackBonusFromClasses = Object.values(classes).reduce((acc, klass) => {
-        const lastLevel = klass.levels.at(-1);
-        if (!lastLevel) return acc;
-        return acc + (klassLevelProperties.get(lastLevel.klassLevel.id)?.bab ?? 0);
-      }, 0);
-
-      this.combat.bab = baseAttackBonusFromClasses;
-    }
-
-    /** The grapple: misc is an input; the base attack bonus's, Strength's and the size's parts and the total are read. */
-    protected initializeGrapple(): void {
-      const combat = this.combat;
-      const strength = () => this.abilities.getAbilityModifier("Strength");
-      const size = () => SIZE_GRAPPLE_MOD[this.raceSize] ?? 0;
-      combat.grapple = {
-        get bab() {
-          return combat.bab;
-        },
-        get strength() {
-          return strength();
-        },
-        get size() {
-          return size();
-        },
-        misc: 0,
-        get total() {
-          return this.bab + this.strength + this.size + this.misc;
-        },
-      };
-    }
-
     /**
      * A natural weapon's attacks: one at the base attack bonus, whatever it is, and when it's the creature's primary one
      * (`repeats`), the extra ones `combat.naturalattacks.extraattacks` counts, each at −5.
@@ -299,6 +264,41 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
         critical: {
           range: weapon.criticalRange ?? 1,
           multiplier: weapon.criticalMultiplier ?? 1,
+        },
+      };
+    }
+
+    protected initializeBaseAttackBonus(
+      classes: ReturnType<ClassesComponent["getClasses"]>,
+      klassLevelProperties: Map<string, { bab: number; skills: number }>,
+    ): void {
+      const baseAttackBonusFromClasses = Object.values(classes).reduce((acc, klass) => {
+        const lastLevel = klass.levels.at(-1);
+        if (!lastLevel) return acc;
+        return acc + (klassLevelProperties.get(lastLevel.klassLevel.id)?.bab ?? 0);
+      }, 0);
+
+      this.combat.bab = baseAttackBonusFromClasses;
+    }
+
+    /** The grapple: misc is an input; the base attack bonus's, Strength's and the size's parts and the total are read. */
+    protected initializeGrapple(): void {
+      const combat = this.combat;
+      const strength = () => this.abilities.getAbilityModifier("Strength");
+      const size = () => SIZE_GRAPPLE_MOD[this.raceSize] ?? 0;
+      combat.grapple = {
+        get bab() {
+          return combat.bab;
+        },
+        get strength() {
+          return strength();
+        },
+        get size() {
+          return size();
+        },
+        misc: 0,
+        get total() {
+          return this.bab + this.strength + this.size + this.misc;
         },
       };
     }

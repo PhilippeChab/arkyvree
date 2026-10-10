@@ -234,6 +234,9 @@ describe("member order", () => {
       [
         "class Store {",
         "  async load() {}",
+        "  protected later() {}",
+        "  private middle() {}",
+        "  protected early() {}",
         "  count = 0;",
         "  protected total = 0;",
         "  label?: string;",
@@ -257,7 +260,7 @@ describe("member order", () => {
       [
         "class Store {",
         "  constructor() {}",
-        // Each group of fields puts its private and protected ones first, as methods do
+        // Each group puts its private members first, then its protected ones, then its public ones
         "  private static SECRET = 0;",
         "  static VERSION = 1;",
         // Static methods as methods are: private before public, sync before async, then by name
@@ -272,6 +275,10 @@ describe("member order", () => {
         "  protected total = 0;",
         "  count = 0;",
         "  label?: string;",
+        // A group's private members, then its protected ones, each by name
+        "  private middle() {}",
+        "  protected early() {}",
+        "  protected later() {}",
         "  async load() {}",
         "}",
         "",

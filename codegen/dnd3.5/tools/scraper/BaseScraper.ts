@@ -43,6 +43,49 @@ export class BaseScraper {
     return match[1];
   }
 
+  /** A reference as scraped (its `_meta` and `raw`), with the overrides its file had. */
+  private scrapedReference<T extends ReferenceType>(
+    outPath: string,
+    _meta: StoredReference<T>["_meta"] & { type: T },
+    raw: StoredReference<T>["raw"],
+  ): StoredReference<T> {
+    const overrides = References.overrides(outPath, _meta.type);
+    if (overrides) console.log(`  Preserving existing overrides from ${outPath}`);
+    return sanitizeJsonValues({ _meta, raw, ...(overrides ? { overrides } : {}) });
+  }
+
+  /** Writes a reference to its file, unless all that changed is when it was scraped. */
+  private writeReference(outPath: string, reference: StoredReference) {
+    console.log(`${References.write(outPath, reference) ? "Written" : "Unchanged"}: ${outPath}`);
+  }
+
+  /**
+   * The pages of a dndtools.net listing (`url`): its first, then as many more as its "(total N items)" says it holds,
+   * fetched in turn.
+   */
+  private async listingPages(url: string): Promise<string[]> {
+    const sep = url.includes("?") ? "&" : "?";
+    const page1Url = `${url}${sep}page=1`;
+    console.log(`Fetching page 1: ${page1Url}`);
+    const page1Html = await this.http.fetchHtml(page1Url);
+
+    // A listing of one page says no total
+    const totalMatch = page1Html.match(/\(total\s+(\d+)\s+items?\)/i);
+    if (!totalMatch) return [page1Html];
+
+    const total = parseInt(totalMatch[1], 10);
+    const totalPages = Math.ceil(total / LISTING_PAGE_SIZE);
+    console.log(`  Total: ${total} items across ${totalPages} page(s)`);
+
+    const pages = [page1Html];
+    for (let page = 2; page <= totalPages; page++) {
+      const pageUrl = `${url}${sep}page=${page}`;
+      console.log(`Fetching page ${page}/${totalPages}: ${pageUrl}`);
+      pages.push(await this.http.fetchHtml(pageUrl));
+    }
+    return pages;
+  }
+
   /** The book's slug in dndtools.net's URLs: an unknown book throws, naming the known ones. */
   protected bookSlug(): string {
     const slug = BOOK_SLUGS[this.book];
@@ -82,22 +125,6 @@ export class BaseScraper {
     return resolved;
   }
 
-  /** A reference as scraped (its `_meta` and `raw`), with the overrides its file had. */
-  private scrapedReference<T extends ReferenceType>(
-    outPath: string,
-    _meta: StoredReference<T>["_meta"] & { type: T },
-    raw: StoredReference<T>["raw"],
-  ): StoredReference<T> {
-    const overrides = References.overrides(outPath, _meta.type);
-    if (overrides) console.log(`  Preserving existing overrides from ${outPath}`);
-    return sanitizeJsonValues({ _meta, raw, ...(overrides ? { overrides } : {}) });
-  }
-
-  /** Writes a reference to its file, unless all that changed is when it was scraped. */
-  private writeReference(outPath: string, reference: StoredReference) {
-    console.log(`${References.write(outPath, reference) ? "Written" : "Unchanged"}: ${outPath}`);
-  }
-
   /**
    * The book's entries of a kind, from dndtools.net's listing of them, with absolute URLs, and the listing's URL: its
    * feats' and spells' are the book's own listings; its classes and races are listed with every book's, so only the
@@ -124,32 +151,5 @@ export class BaseScraper {
       }
     }
     return { entries, url };
-  }
-
-  /**
-   * The pages of a dndtools.net listing (`url`): its first, then as many more as its "(total N items)" says it holds,
-   * fetched in turn.
-   */
-  private async listingPages(url: string): Promise<string[]> {
-    const sep = url.includes("?") ? "&" : "?";
-    const page1Url = `${url}${sep}page=1`;
-    console.log(`Fetching page 1: ${page1Url}`);
-    const page1Html = await this.http.fetchHtml(page1Url);
-
-    // A listing of one page says no total
-    const totalMatch = page1Html.match(/\(total\s+(\d+)\s+items?\)/i);
-    if (!totalMatch) return [page1Html];
-
-    const total = parseInt(totalMatch[1], 10);
-    const totalPages = Math.ceil(total / LISTING_PAGE_SIZE);
-    console.log(`  Total: ${total} items across ${totalPages} page(s)`);
-
-    const pages = [page1Html];
-    for (let page = 2; page <= totalPages; page++) {
-      const pageUrl = `${url}${sep}page=${page}`;
-      console.log(`Fetching page ${page}/${totalPages}: ${pageUrl}`);
-      pages.push(await this.http.fetchHtml(pageUrl));
-    }
-    return pages;
   }
 }

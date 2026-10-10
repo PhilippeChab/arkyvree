@@ -5,6 +5,14 @@ import type { Constructor } from "@/lib/mixins.ts";
 /** A character's initiative, and its speed under its armor and load (which a dwarf's ignores). */
 export function InitiativeAndSpeed<B extends Constructor<CombatState>>(Base: B) {
   abstract class WithInitiativeAndSpeed extends Base {
+    /** The base speed under the load and the armor: slowed by a medium or heavy load or by armor, unless the race isn't. */
+    private loadedSpeed(base: number): number {
+      const { encumbrance, armor } = this.combat;
+      const heavy = (category: string) => category === "medium" || category === "heavy";
+      const slowed = !this.speedIgnoresEncumbrance && (heavy(encumbrance.load) || heavy(armor.category));
+      return slowed ? this.encumbrance.getEncumberedSpeed(base) : base;
+    }
+
     /** The initiative: misc is an input; Dexterity's part and the total are computed when read. */
     protected initializeInitiative(): void {
       const dexterity = () => this.abilities.getAbilityModifier("Dexterity");
@@ -32,14 +40,6 @@ export function InitiativeAndSpeed<B extends Constructor<CombatState>>(Base: B) 
           return overloaded() ? 5 : loadedSpeed(this.base) + this.misc;
         },
       };
-    }
-
-    /** The base speed under the load and the armor: slowed by a medium or heavy load or by armor, unless the race isn't. */
-    private loadedSpeed(base: number): number {
-      const { encumbrance, armor } = this.combat;
-      const heavy = (category: string) => category === "medium" || category === "heavy";
-      const slowed = !this.speedIgnoresEncumbrance && (heavy(encumbrance.load) || heavy(armor.category));
-      return slowed ? this.encumbrance.getEncumberedSpeed(base) : base;
     }
   }
   return WithInitiativeAndSpeed;

@@ -69,6 +69,12 @@ export class BaseBookSeeds {
     });
   }
 
+  /** The template families of the book's feats: none for a book without feats. */
+  private templateFamilies(): Set<string> {
+    const ref = this.reference("feat");
+    return ref ? this.feats(ref).templateNames() : new Set<string>();
+  }
+
   /** What `build` builds, once: the same each time `key` asks for it. */
   protected memo<T>(key: string, build: () => T): T {
     return this.memos.of(key, build);
@@ -82,12 +88,6 @@ export class BaseBookSeeds {
       this.memosOf.set(of, memos);
     }
     return memos.of(key, build);
-  }
-
-  /** The template families of the book's feats: none for a book without feats. */
-  private templateFamilies(): Set<string> {
-    const ref = this.reference("feat");
-    return ref ? this.feats(ref).templateNames() : new Set<string>();
   }
 
   /** The weight of each weapon, armor and shield the book's items seed, by name: what an item made from one weighs. */

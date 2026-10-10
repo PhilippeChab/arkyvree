@@ -44,11 +44,6 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
 
   readonly type = "klass_levels";
 
-  /** A form's columns: none, a level's number is its own (a new one's, its form's: `planCreate`). */
-  protected columnsOf() {
-    return {};
-  }
-
   /** A level's details: the feats it grants (each with its pool's name and whether it's free), its saves' base bonuses. */
   private detailsOf(level: { id: string }) {
     const levelSaves = this.rulesetData.klassLevelSavesByKlassLevel.get(level.id) ?? [];
@@ -79,6 +74,11 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
       feats: feats?.map((feat) => ({ aptitudeId: feat.aptitudeId, featId: feat.featId, free: feat.free ?? true })),
       saves: saves?.map((save) => ({ base: save.base, saveId: save.saveId })),
     };
+  }
+
+  /** A form's columns: none, a level's number is its own (a new one's, its form's: `planCreate`). */
+  protected columnsOf() {
+    return {};
   }
 
   /**

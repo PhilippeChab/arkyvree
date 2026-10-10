@@ -48,113 +48,6 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
     }
 
     /**
-     * Tags the spells of each list one of the character's feats brings (`featListIds`: it gives slots in it or joins it
-     * to its class's list) with the feat's name: a cleric's domain spells "Fire Domain", a specialist wizard's school
-     * spells "Evocation Specialist". A tag shows on that list and on the lists of the class whose level gave the feat.
-     */
-    protected buildSpellTags(feats: CustomizedFeat[], featListIds: Set<string>) {
-      const aptitudes = this.aptitudes.getAptitudes();
-      const classNameByKlassLevelId = this.classNameByKlassLevelId();
-      const tagsByAptitudeId = new Map<string, string[]>();
-      for (const feat of feats) {
-        const className = classNameByKlassLevelId.get(feat.klassLevelId);
-        const classListIds = className
-          ? this.spellListsOf(className).flatMap((key) => (aptitudes[key] ? [aptitudes[key].id] : []))
-          : [];
-        const lists = new Set(feat.modifiers.flatMap((modifier) => SpellLists.listOpenedBy(modifier.target) ?? []));
-        for (const list of lists) {
-          const aptitude = aptitudes[list];
-          if (!aptitude || !featListIds.has(aptitude.id)) continue;
-          const joinsClassList = feat.modifiers.some((modifier) => AptitudeTargets.parseJoin(modifier.target) === list);
-          // A feat opening several lists shows its tag on each of them
-          const tagged = this.spellTagLists[feat.name] ?? { aptitudeIds: classListIds, joinsClassList: false };
-          this.spellTagLists[feat.name] = {
-            aptitudeIds: [...new Set([aptitude.id, ...tagged.aptitudeIds])],
-            joinsClassList: tagged.joinsClassList || joinsClassList,
-          };
-          tagsByAptitudeId.set(aptitude.id, [...(tagsByAptitudeId.get(aptitude.id) ?? []), feat.name]);
-        }
-      }
-      if (tagsByAptitudeId.size === 0) return;
-
-      for (const link of this.powerAptitudeLinks) {
-        for (const tag of tagsByAptitudeId.get(link.aptitudeId) ?? []) {
-          if (!this.spellTags[link.powerId]) this.spellTags[link.powerId] = [];
-          this.spellTags[link.powerId].push(tag);
-        }
-      }
-    }
-
-    /**
-     * The spells of the lists the character knows every spell of (or a level of), off the view, with their properties
-     * and the lists each is on.
-     */
-    protected collectAptitudePowers(rulesetData: RulesetData, powers: CustomizedPower[]) {
-      const { perAptitudeLevels, unleveledAptitudeIds } = this.knownAptitudeLevels();
-      if (perAptitudeLevels.size === 0 && unleveledAptitudeIds.size === 0) return;
-
-      // Iterate the composed powers once, emitting one row per matching
-      // (power, aptitude) link — mirrors the old SQL join shape.
-      const allAptitudePowers: Array<
-        Power & { aptitudeId: string; powerLevel: number | null; saveName: string | null }
-      > = [];
-      for (const power of rulesetData.powers) {
-        const saveName = CustomizedEntities.saveNameOf(power, rulesetData);
-        for (const link of power.powersAptitudesInRules) {
-          const leveledSet = perAptitudeLevels.get(link.aptitudeId);
-          const isLeveled = leveledSet !== undefined && link.level !== null && leveledSet.has(link.level);
-          const isUnleveled = unleveledAptitudeIds.has(link.aptitudeId);
-          if (!isLeveled && !isUnleveled) continue;
-          allAptitudePowers.push({
-            ...power,
-            aptitudeId: link.aptitudeId,
-            powerLevel: link.level,
-            saveName,
-          });
-        }
-      }
-
-      this.allAptitudePowers = allAptitudePowers;
-      if (this.allAptitudePowers.length === 0) return;
-
-      // Gather properties (own + template via sourceItemId-style inheritance does
-      // not apply to powers) and the power→aptitude link table from the cache.
-      // Virtuals already live in `powers` with their properties attached, so
-      // they no longer need to be folded into `aptitudePowerProperties`.
-      const aptitudePowerIds = new Set(this.allAptitudePowers.map((p) => p.id));
-      const propertyEntityIds = new Set<string>(aptitudePowerIds);
-
-      const properties: Property[] = [];
-      for (const id of propertyEntityIds) {
-        const ps = rulesetData.propertiesByEntity.get(id);
-        if (ps) properties.push(...ps);
-      }
-
-      const allPowerIdSet = new Set<string>([...powers.map((p) => p.id), ...aptitudePowerIds]);
-      const powerAptitudeLinks: { aptitudeId: string; powerId: string }[] = [];
-      for (const id of allPowerIdSet) {
-        const p = rulesetData.powersById.get(id);
-        if (!p) continue;
-        for (const link of p.powersAptitudesInRules)
-          powerAptitudeLinks.push({ powerId: p.id, aptitudeId: link.aptitudeId });
-      }
-
-      this.aptitudePowerProperties = properties;
-      this.powerAptitudeLinks = powerAptitudeLinks;
-    }
-
-    /** The spells the character's lists make it know, added to its powers with their DCs. */
-    protected enrichAllKnownPowers(
-      rulesetData: RulesetData,
-      powers: CustomizedPower[],
-      klassBonusSpellAbilityMap: Map<string, string>,
-    ) {
-      if (this.allAptitudePowers.length === 0) return;
-      const newPowers = this.newKnownPowers(powers, this.aptitudeClassNames(), klassBonusSpellAbilityMap);
-      if (newPowers.length > 0) this.registerKnownPowers(rulesetData, newPowers);
-    }
-
-    /**
      * The spell levels each aptitude knows every spell of: a leveled one's levels all known, and those of the classes a
      * list joins (a cleric's domain spells, at the levels the cleric knows his list at). An unleveled one all known
      * knows all its powers.
@@ -270,6 +163,113 @@ export function KnownPowers<B extends Constructor<SpellcastingState>>(Base: B) {
         this.powerGroupings.registerPower({ ...power, aptitudeSlug }, power.properties);
       }
       this.powers.injectGroupings(this.powerGroupings.getPowerGroupings());
+    }
+
+    /**
+     * Tags the spells of each list one of the character's feats brings (`featListIds`: it gives slots in it or joins it
+     * to its class's list) with the feat's name: a cleric's domain spells "Fire Domain", a specialist wizard's school
+     * spells "Evocation Specialist". A tag shows on that list and on the lists of the class whose level gave the feat.
+     */
+    protected buildSpellTags(feats: CustomizedFeat[], featListIds: Set<string>) {
+      const aptitudes = this.aptitudes.getAptitudes();
+      const classNameByKlassLevelId = this.classNameByKlassLevelId();
+      const tagsByAptitudeId = new Map<string, string[]>();
+      for (const feat of feats) {
+        const className = classNameByKlassLevelId.get(feat.klassLevelId);
+        const classListIds = className
+          ? this.spellListsOf(className).flatMap((key) => (aptitudes[key] ? [aptitudes[key].id] : []))
+          : [];
+        const lists = new Set(feat.modifiers.flatMap((modifier) => SpellLists.listOpenedBy(modifier.target) ?? []));
+        for (const list of lists) {
+          const aptitude = aptitudes[list];
+          if (!aptitude || !featListIds.has(aptitude.id)) continue;
+          const joinsClassList = feat.modifiers.some((modifier) => AptitudeTargets.parseJoin(modifier.target) === list);
+          // A feat opening several lists shows its tag on each of them
+          const tagged = this.spellTagLists[feat.name] ?? { aptitudeIds: classListIds, joinsClassList: false };
+          this.spellTagLists[feat.name] = {
+            aptitudeIds: [...new Set([aptitude.id, ...tagged.aptitudeIds])],
+            joinsClassList: tagged.joinsClassList || joinsClassList,
+          };
+          tagsByAptitudeId.set(aptitude.id, [...(tagsByAptitudeId.get(aptitude.id) ?? []), feat.name]);
+        }
+      }
+      if (tagsByAptitudeId.size === 0) return;
+
+      for (const link of this.powerAptitudeLinks) {
+        for (const tag of tagsByAptitudeId.get(link.aptitudeId) ?? []) {
+          if (!this.spellTags[link.powerId]) this.spellTags[link.powerId] = [];
+          this.spellTags[link.powerId].push(tag);
+        }
+      }
+    }
+
+    /**
+     * The spells of the lists the character knows every spell of (or a level of), off the view, with their properties
+     * and the lists each is on.
+     */
+    protected collectAptitudePowers(rulesetData: RulesetData, powers: CustomizedPower[]) {
+      const { perAptitudeLevels, unleveledAptitudeIds } = this.knownAptitudeLevels();
+      if (perAptitudeLevels.size === 0 && unleveledAptitudeIds.size === 0) return;
+
+      // Iterate the composed powers once, emitting one row per matching
+      // (power, aptitude) link — mirrors the old SQL join shape.
+      const allAptitudePowers: Array<
+        Power & { aptitudeId: string; powerLevel: number | null; saveName: string | null }
+      > = [];
+      for (const power of rulesetData.powers) {
+        const saveName = CustomizedEntities.saveNameOf(power, rulesetData);
+        for (const link of power.powersAptitudesInRules) {
+          const leveledSet = perAptitudeLevels.get(link.aptitudeId);
+          const isLeveled = leveledSet !== undefined && link.level !== null && leveledSet.has(link.level);
+          const isUnleveled = unleveledAptitudeIds.has(link.aptitudeId);
+          if (!isLeveled && !isUnleveled) continue;
+          allAptitudePowers.push({
+            ...power,
+            aptitudeId: link.aptitudeId,
+            powerLevel: link.level,
+            saveName,
+          });
+        }
+      }
+
+      this.allAptitudePowers = allAptitudePowers;
+      if (this.allAptitudePowers.length === 0) return;
+
+      // Gather properties (own + template via sourceItemId-style inheritance does
+      // not apply to powers) and the power→aptitude link table from the cache.
+      // Virtuals already live in `powers` with their properties attached, so
+      // they no longer need to be folded into `aptitudePowerProperties`.
+      const aptitudePowerIds = new Set(this.allAptitudePowers.map((p) => p.id));
+      const propertyEntityIds = new Set<string>(aptitudePowerIds);
+
+      const properties: Property[] = [];
+      for (const id of propertyEntityIds) {
+        const ps = rulesetData.propertiesByEntity.get(id);
+        if (ps) properties.push(...ps);
+      }
+
+      const allPowerIdSet = new Set<string>([...powers.map((p) => p.id), ...aptitudePowerIds]);
+      const powerAptitudeLinks: { aptitudeId: string; powerId: string }[] = [];
+      for (const id of allPowerIdSet) {
+        const p = rulesetData.powersById.get(id);
+        if (!p) continue;
+        for (const link of p.powersAptitudesInRules)
+          powerAptitudeLinks.push({ powerId: p.id, aptitudeId: link.aptitudeId });
+      }
+
+      this.aptitudePowerProperties = properties;
+      this.powerAptitudeLinks = powerAptitudeLinks;
+    }
+
+    /** The spells the character's lists make it know, added to its powers with their DCs. */
+    protected enrichAllKnownPowers(
+      rulesetData: RulesetData,
+      powers: CustomizedPower[],
+      klassBonusSpellAbilityMap: Map<string, string>,
+    ) {
+      if (this.allAptitudePowers.length === 0) return;
+      const newPowers = this.newKnownPowers(powers, this.aptitudeClassNames(), klassBonusSpellAbilityMap);
+      if (newPowers.length > 0) this.registerKnownPowers(rulesetData, newPowers);
     }
 
     getSpellTagLists() {

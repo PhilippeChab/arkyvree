@@ -26,6 +26,23 @@ export default class ClassPicker extends CharacterPicker<Klass, { maxLevel: numb
   /** The character's highest level in each class it has levels of, by the class's id, once read. */
   private maxLevels?: Map<string, number>;
 
+  /** The class's next level for the character: after its highest in the class. */
+  private nextLevelOf(klass: Klass): KlassLevel | undefined {
+    this.maxLevels ??= this.readMaxLevels();
+    return this.rulesetData.klassLevelByKlassAndLevel.get(`${klass.id}:${(this.maxLevels.get(klass.id) || 0) + 1}`);
+  }
+
+  /** The character's highest level in each class it has levels of, by the class's id. */
+  private readMaxLevels() {
+    const maxLevels = new Map<string, number>();
+    for (const level of this.input.rows.levels) {
+      const klassLevel = this.rulesetData.klassLevelsById.get(level.klassLevelId);
+      if (klassLevel)
+        maxLevels.set(klassLevel.klassId, Math.max(maxLevels.get(klassLevel.klassId) ?? 0, klassLevel.level));
+    }
+    return maxLevels;
+  }
+
   /** The class's next level, with the class's last. */
   protected override detailsOf() {
     return (klass: Klass) => {
@@ -38,12 +55,6 @@ export default class ClassPicker extends CharacterPicker<Klass, { maxLevel: numb
   /** Whether the character meets a class's requirement groups with the class's next level added. */
   protected override meets(groups: Requirement[][], klass: Klass) {
     return this.character.meetsWithNextLevel(stripSeparators(klass.name), this.nextLevelOf(klass)!, groups);
-  }
-
-  /** The class's next level for the character: after its highest in the class. */
-  private nextLevelOf(klass: Klass): KlassLevel | undefined {
-    this.maxLevels ??= this.readMaxLevels();
-    return this.rulesetData.klassLevelByKlassAndLevel.get(`${klass.id}:${(this.maxLevels.get(klass.id) || 0) + 1}`);
   }
 
   /** The classes the character can take another level of. */
@@ -69,17 +80,6 @@ export default class ClassPicker extends CharacterPicker<Klass, { maxLevel: numb
     const pickedAt = first ?? this.input.rows.levels.toSorted((a, b) => a.position - b.position).at(-1);
     if (pickedAt) projection.pick(pickedAt, { feats: featPicks, skills: skillRanks });
     return projection;
-  }
-
-  /** The character's highest level in each class it has levels of, by the class's id. */
-  private readMaxLevels() {
-    const maxLevels = new Map<string, number>();
-    for (const level of this.input.rows.levels) {
-      const klassLevel = this.rulesetData.klassLevelsById.get(level.klassLevelId);
-      if (klassLevel)
-        maxLevels.set(klassLevel.klassId, Math.max(maxLevels.get(klassLevel.klassId) ?? 0, klassLevel.level));
-    }
-    return maxLevels;
   }
 
   /** A class's requirement groups: its own and its next level's. */

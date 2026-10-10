@@ -3,8 +3,9 @@
  * routes sort by HTTP method and path. `oxlint --fix` puts a file in order.
  *
  * - A class's members, in groups: its constructor, its static fields, its static methods, its readonly fields, its other
- *   fields, then its methods, its private and protected ones before its public ones (in every group of fields and of
- *   methods: a class's private members stay together). Each group goes by name, its
+ *   fields, then its methods, its private and protected ones before its public ones. In every group, its private
+ *   members come first, then its protected ones, then its public ones, so a class's private members stay together. Each
+ *   goes by name, its
  *   methods sync before async; a field goes right below a field its initializer reads, which runs as the class is
  *   built (`this.lines`), and `--fix` never moves a field whose initializer runs code against the other fields (what
  *   it calls may read any of them): it suggests it.
@@ -177,8 +178,8 @@ function checkClass(context, body) {
       text: (order) => order.map((member, i) => gaps[i] + text.slice(member.start, member.end)).join(""),
     },
     "Members go in groups: the constructor, the static fields, the static methods, the readonly fields, the other " +
-      "fields, then the private and protected methods, then the public ones; in each group of fields too, its " +
-      "private and protected ones before its public ones. Each group by name, a field below one " +
+      "fields, then the private and protected methods, then the public ones; in each group, its private members " +
+      "first, then its protected ones, then its public ones. Each by name, a field below one " +
       "its initializer reads, methods sync before async." +
       (safe
         ? ""
@@ -405,9 +406,9 @@ function compareRunMembers(a, b) {
 }
 
 /**
- * Where a class member goes: [rank, async, name]. The constructor (-4), statics (-3) and fields (-2) keep their order;
- * private and protected methods (-1), then public ones (0), sort sync before async, then by name. `asyncNames`: the
- * methods with an async body, whose overload signatures go with it.
+ * Where a class member goes: [rank, visibility, async, name]. The constructor, statics and fields keep their order;
+ * private and protected methods (-1), then public ones (0), each private, then protected, then public, sort sync before
+ * async, then by name. `asyncNames`: the methods with an async body, whose overload signatures go with it.
  *
  * A class member's names its field initializer reads off the class: `this.lines`, and `Telemetry.provider` when static.
  */
@@ -479,20 +480,19 @@ function memberName(member) {
 
 /**
  * A class member's place: its group (the constructor, static fields, static methods, readonly fields, other fields,
- * private and protected methods, public methods), its private and protected members before its public ones in every
- * group of fields, then within it, a method's async-ness and its name, a field's name.
+ * private and protected methods, public methods), its private members, then its protected ones, then its public ones in
+ * every group, then within it, a method's async-ness and its name, a field's name.
  */
 function memberRank(member, asyncNames) {
   const name = memberName(member);
   if (member.kind === "constructor") return [-7];
   if (member.type === "TSIndexSignature") return [-8];
   if (member.type === "StaticBlock") return [-6, -1, ""];
-  const isPublic =
-    (!member.accessibility || member.accessibility === "public") && member.key?.type !== "PrivateIdentifier";
+  const visibility = visibilityRank(member);
   const async = asyncNames.has(name) ? 1 : 0;
-  if (isField(member)) return [member.static ? -6 : member.readonly ? -4 : -3, isPublic ? 1 : 0, name];
-  if (member.static) return [-5, isPublic ? 1 : 0, async, name];
-  return [isPublic ? 0 : -1, async, name];
+  if (isField(member)) return [member.static ? -6 : member.readonly ? -4 : -3, visibility, name];
+  if (member.static) return [-5, visibility, async, name];
+  return [visibility === 2 ? 0 : -1, visibility, async, name];
 }
 
 function rangeOf(node) {
@@ -580,6 +580,12 @@ function trailingComment(text, pos) {
   const lineEnd = text.indexOf("\n", pos);
   const rest = text.slice(pos, lineEnd === -1 ? text.length : lineEnd);
   return /^\s*(\/\/.*|\/\*.*\*\/\s*)$/.test(rest) ? rest.trimEnd().length : 0;
+}
+
+/** A member's visibility, as its group orders it: private (a `#name` too) 0, protected 1, public 2. */
+function visibilityRank(member) {
+  if (member.key?.type === "PrivateIdentifier" || member.accessibility === "private") return 0;
+  return member.accessibility === "protected" ? 1 : 2;
 }
 
 /** Two routes' order: by method, then by path, a fixed segment before a parameter, a parameter before a wildcard. */
