@@ -61,7 +61,7 @@ export default class ClassEngine {
     return this.classes.table(this.klassId).describeSpellsKnown();
   }
 
-  /** A new level of the class: its row and join rows, what its save writes, and the level it answers once saved. */
+  /** A new level of the class: its row and join rows, what its form writes, and the level it answers once written. */
   planLevelCreate(...args: Parameters<Levels["planCreate"]>) {
     return this.classes.levels(this.klassId).planCreate(...args);
   }
@@ -71,7 +71,7 @@ export default class ClassEngine {
     return this.classes.levels(this.klassId).planDelete(...args);
   }
 
-  /** One of the class's levels' edit: its new join rows, what its save writes, and what it answers. */
+  /** One of the class's levels' edit: its new join rows, what its form writes, and what it answers. */
   planLevelEdit(...args: Parameters<Levels["planEdit"]>) {
     return this.classes.levels(this.klassId).planEdit(...args);
   }

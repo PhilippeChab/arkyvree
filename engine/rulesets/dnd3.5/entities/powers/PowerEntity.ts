@@ -1,4 +1,4 @@
-/** A power as a ruleset's entity: what the ruleset lists it by, and what its save writes, checked. */
+/** A power as a ruleset's entity: what the ruleset lists it by, and what its form writes, checked. */
 
 import { z } from "zod";
 
@@ -48,9 +48,9 @@ export default class PowerEntity extends ListedEntity<
 
   /**
    * Refuses a new power without a pool, a pool's spell level past the rules' bounds, and a power linked to a pool the
-   * view's feats use: a save names no spell's save but the one it gives.
+   * view's feats use: a form names no spell's save but the one it gives.
    */
-  protected override checkSave(body: PowerBody, power?: PowerWithAptitudes) {
+  protected override checkForm(body: PowerBody, power?: PowerWithAptitudes) {
     RulesError.parse(POOL_LEVELS, body.aptitudes, ["aptitudes"]);
     if (!power && !body.aptitudes?.length)
       throw new RulesError("invalid", "At least one aptitude must be selected for the power");
@@ -59,7 +59,7 @@ export default class PowerEntity extends ListedEntity<
     this.refuseLists(listIds, this.rulesetData.aptitudeIdsWithFeats, message);
   }
 
-  /** A form's columns: a save names no spell's save but the one it gives. */
+  /** A form's columns: it names no spell's save but the one it gives. */
   protected columnsOf({ description, name, saveEffect, saveId }: PowerBody) {
     return { description, name, saveEffect: saveEffect ?? null, saveId: saveId ?? null };
   }

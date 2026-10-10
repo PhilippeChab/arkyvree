@@ -12,10 +12,10 @@ import type { Property } from "@/shared/relations.ts";
  * - an entity found by its id (`find`) and described (`describe`): its row as the view resolves it, with the fields its
  *   properties hold (`fields`);
  * - a page of its rows (`openList`): what the server reads it with (`filters`), and its rows described alike;
- * - what saving one writes (`planCreate`, `planEdit`): the fields its form gives, read by its codec (`fieldsSchema`),
- *   its form checked (`checkSave`), its row's columns (`columnsOf`), the lists it's linked to (`linksOf`), what it
- *   writes beside them (`writesOf`: its fields, the feats it makes), and the fields it keeps once saved (`fields`,
- *   which a save answers with its row);
+ * - what its form writes (`planCreate`, `planEdit`): the fields the form gives, read by its codec (`fieldsSchema`),
+ *   the form checked (`checkForm`), its row's columns (`columnsOf`), the lists it's linked to (`linksOf`), what it
+ *   writes beside them (`writesOf`: its fields, the feats it makes), and the fields it keeps once written (`fields`,
+ *   which a create or an edit answers with its row);
  * - what deleting one writes (`planDelete`): checked (`checkDelete`), and what it writes with it (`deleteWritesOf`).
  */
 export default abstract class RulesetEntity<
@@ -38,8 +38,8 @@ export default abstract class RulesetEntity<
   /** A form's columns: the ones the kind's row takes (`entity`: the one edited, none for a new one). */
   protected abstract columnsOf(body: Body, entity?: ViewEntities[K]): Columns;
 
-  /** What saving a form writes, and the fields the saved entity keeps (`fields`, which a save answers with its row). */
-  private planSave(body: Body, given: Partial<FieldValues<S>>, entity?: ViewEntities[K]) {
+  /** What a form writes, and the fields the entity keeps (`fields`, which a create or an edit answers with its row). */
+  private planWrite(body: Body, given: Partial<FieldValues<S>>, entity?: ViewEntities[K]) {
     const columns = this.columnsOf(body, entity);
     const writes = this.writesOf(body, given, entity);
     const fields = this.fields.read(writes?.properties?.values ?? this.keptProperties(columns, entity));
@@ -59,8 +59,8 @@ export default abstract class RulesetEntity<
   /** Refuses deleting an entity: nothing does, unless its kind's rules say. */
   protected checkDelete(_entity: ViewEntities[K]) {}
 
-  /** Refuses saving a form (`entity`: the one edited, none for a new one): nothing does, unless its kind's rules say. */
-  protected checkSave(_body: Body, _entity?: ViewEntities[K]) {}
+  /** Refuses a form (`entity`: the one edited, none for a new one): nothing does, unless its kind's rules say. */
+  protected checkForm(_body: Body, _entity?: ViewEntities[K]) {}
 
   /** What deleting an entity writes with it: nothing, unless its kind's rules say. */
   protected deleteWritesOf(_entity: ViewEntities[K]): EntityWrites | undefined {
@@ -83,7 +83,7 @@ export default abstract class RulesetEntity<
   }
 
   /**
-   * The fields a save keeps from its form: the ones it gives over the edited entity's (a new one's defaults). None when
+   * The fields a form writes: the ones it gives over the edited entity's (a new one's defaults). None when
    * the form gives none: an edit keeps those it has, and a new entity keeps none.
    */
   protected formFields(given: Partial<FieldValues<S>>, entity?: ViewEntities[K]) {
@@ -92,8 +92,8 @@ export default abstract class RulesetEntity<
   }
 
   /**
-   * The properties a saved entity's fields are read off when its save writes none: the edited one's, none for a new one
-   * (an item's, its template's).
+   * The properties a written entity's fields are read off when its form writes none: the edited one's, none for a new
+   * one (an item's, its template's).
    */
   protected keptProperties(_columns: Columns, entity?: ViewEntities[K]): Property[] {
     return entity ? this.propertiesOf(entity) : [];
@@ -115,7 +115,7 @@ export default abstract class RulesetEntity<
   }
 
   /**
-   * What saving a form writes beside the row (`given`: the fields it gives, read; `entity`: the one edited): nothing,
+   * What a form writes beside the row (`given`: the fields it gives, read; `entity`: the one edited): nothing,
    * unless its kind's rules say.
    */
   protected writesOf(
@@ -149,11 +149,11 @@ export default abstract class RulesetEntity<
     };
   }
 
-  /** A new entity's row off its form, what it writes beside it, and the fields it keeps once saved. */
+  /** A new entity's row off its form, what it writes beside it, and the fields it keeps once written. */
   planCreate(body: Body) {
     const given = this.readFields(body);
-    this.checkSave(body);
-    return this.planSave(body, given);
+    this.checkForm(body);
+    return this.planWrite(body, given);
   }
 
   /** Deleting an entity (`id`): the entity as the view has it, and what its delete writes with it. */
@@ -165,12 +165,12 @@ export default abstract class RulesetEntity<
 
   /**
    * An entity's edit (`id`): the entity as the view has it, its new row off its form (an edit leaves the columns it
-   * doesn't give as they are), what it writes beside it, and the fields it keeps once saved.
+   * doesn't give as they are), what it writes beside it, and the fields it keeps once written.
    */
   planEdit(id: string, body: Body) {
     const entity = this.find(id);
     const given = this.readFields(body, entity);
-    this.checkSave(body, entity);
-    return { ...this.planSave(body, given, entity), entity };
+    this.checkForm(body, entity);
+    return { ...this.planWrite(body, given, entity), entity };
   }
 }

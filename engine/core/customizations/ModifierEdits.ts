@@ -54,7 +54,7 @@ export default class ModifierEdits extends CustomizationEdits<Modifier> {
   }
 
   /**
-   * A new modifier on the entity: the entity as the view has it, and the row its save stores, its value checked against
+   * A new modifier on the entity: the entity as the view has it, and the row it stores, its value checked against
    * its path (`targetPaths`, among `catalogs`). A duplicate (`sourceModifierId`, one of the entity's) takes its
    * source's requirements: refused when it isn't the entity's.
    */
@@ -70,7 +70,7 @@ export default class ModifierEdits extends CustomizationEdits<Modifier> {
     return { entity, modifier: this.findOwn(entity.id, modifierId) };
   }
 
-  /** An edit of one of the entity's modifiers: the entity and the modifier, and the row its save stores, checked. */
+  /** An edit of one of the entity's modifiers: the entity and the modifier, and the row it stores, checked. */
   planEdit(targetPaths: TargetPaths, catalogs: TargetCatalogs, modifierId: string, body: ModifierBody) {
     return { ...this.planDelete(modifierId), row: this.toRow(targetPaths, catalogs, body) };
   }

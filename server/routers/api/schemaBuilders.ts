@@ -3,7 +3,7 @@ import { z } from "zod";
 import { isRecord } from "@/shared/isRecord.ts";
 import { getEntityTypeOfSegment, getUrlSegments } from "@/shared/urlSegments.ts";
 
-/** The fields a save's body carries for its ruleset's rules, as the engine's plan of it (`P`) takes them. */
+/** The fields an entity's body carries for its ruleset's rules, as the engine's plan of it (`P`) takes them. */
 type PlanFields<P extends (body: never) => unknown> = Parameters<P>[0] extends { fields?: infer F }
   ? NonNullable<F>
   : never;
@@ -11,7 +11,7 @@ type PlanFields<P extends (body: never) => unknown> = Parameters<P>[0] extends {
 /**
  * An entity's fields, as a body carries them for its ruleset's rules (`fields`): any object, which the engine reads by
  * the entity kind's fields and refuses as invalid when one isn't its field's type or in its bounds. Typed as the
- * engine's plan of the save (`P`: `EntityKinds["skills"]["planCreate"]`) takes them, so the client's forms keep their
+ * engine's plan of the body (`P`: `EntityKinds["skills"]["planCreate"]`) takes them, so the client's forms keep their
  * types.
  */
 export function buildEntityFieldsSchema<P extends (body: never) => unknown>() {

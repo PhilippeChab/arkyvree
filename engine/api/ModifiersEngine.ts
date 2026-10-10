@@ -46,7 +46,7 @@ export default class ModifiersEngine {
     return this.modifiers.planDelete(modifierId);
   }
 
-  /** One of the entity's own modifiers' edit: the entity, the modifier, and the row its save stores, checked. */
+  /** One of the entity's own modifiers' edit: the entity, the modifier, and the row it stores, checked. */
   planEdit(catalogs: TargetCatalogs, modifierId: string, body: ModifierBody) {
     return this.modifiers.planEdit(this.module.createTargetPaths(), catalogs, modifierId, body);
   }

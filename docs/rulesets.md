@@ -359,34 +359,34 @@ return await withRulesetScope(db, rulesetId, async (scope) => {
 return Engine.for(scope).entities("saves").describe(saveId);
 ```
 
-A kind's creates, updates and deletes go through its writer, `EntitySaves` (`server/services/rulesets/EntitySaves.ts`), a field of its service: the service hands it the plan its rules give (`Engine.for(scope).entities(type)`), and it takes every kind's steps around it, in one order:
+A kind's creates, updates and deletes go through its writer, `EntityWriter` (`server/services/rulesets/EntityWriter.ts`), a field of its service: the service hands it the plan its rules give (`Engine.for(scope).entities(type)`), and it takes every kind's steps around it, in one order:
 
 ```ts
-private readonly saves = new EntitySaves("saves", Saves, savesInRules, "Save");
+private readonly writer = new EntityWriter("languages", Languages, languagesInRules, "Language");
 
-return await this.saves.create(session, rulesetId, body.name, (scope) =>
-  Engine.for(scope).entities("saves").planCreate(body),
+return await this.writer.create(session, rulesetId, body.name, (scope) =>
+  Engine.for(scope).entities("languages").planCreate(body),
 );
-return await this.saves.update(session, rulesetId, body, (scope) =>
-  Engine.for(scope).entities("saves").planEdit(saveId, body),
+return await this.writer.update(session, rulesetId, body, (scope) =>
+  Engine.for(scope).entities("languages").planEdit(languageId, body),
 );
-return await this.saves.delete(session, rulesetId, saveId, (scope) =>
-  Engine.for(scope).entities("saves").planDelete(saveId),
+return await this.writer.delete(session, rulesetId, languageId, (scope) =>
+  Engine.for(scope).entities("languages").planDelete(languageId),
 );
 ```
 
 - **A create** checks access, then the name against the composed view (`EntityNames.assertNameAvailable`), plans, writes the row, points a tombstone the name hides at it (`repointTombstone`), and writes its list links (`listLinks.ts`), what its plan writes beside it (`writeEntityWrites`) and the customizations it copies (an item's duplicate's).
 - **An update** writes the row the view's entity resolves to: the fork's own, or the copy of an inherited one (`EntityEdit.cowToEdit`), refused when stale (a copy's `updatedAt` isn't the client's). It replaces its list links when the plan gives them.
-- **A delete** is refused while the entity is in use: picked by a character, unless the kind says otherwise (a save granted by a class level, `inUse`). It deletes the row the entity resolves to (`EntityEdit.cowToDelete`), the fork's own locked first, with what its plan removes.
+- **A delete** is refused while the entity is in use: picked by a character, unless the kind says otherwise (a saving throw a class level grants, `inUse`). It deletes the row the entity resolves to (`EntityEdit.cowToDelete`), the fork's own locked first, with what its plan removes.
 
-Each records its activity (`createSave`, `updateSave`, `deleteSave`: the writer's activity name), and drops the ruleset's views. A kind adds what's its own: what its plan reads (a feat's tombstone ancestor, whether it was generated), what refuses its delete (`refuse`: an item template's copies), what its activity carries (`activityData`: a power's base rules) and what it compares to the entity it was (an item's template, from the row).
+Each records its activity (`createLanguage`, `updateLanguage`, `deleteLanguage`: the writer's activity name), and drops the ruleset's views. A kind adds what's its own: what its plan reads (a feat's tombstone ancestor, whether it was generated), what refuses its delete (`refuse`: an item template's copies), what its activity carries (`activityData`: a power's base rules) and what it compares to the entity it was (an item's template, from the row).
 
-A save answers its row with the fields the entity keeps once saved (its plan's `fields`: a skill's, a race's, none of an ability's), as a page describes its rows, and a class's levels, class skills and table keep their handle (`class(klassId).planLevelDelete`, `describeLevel`).
+A create or an edit answers its row with the fields the entity keeps once written (its plan's `fields`: a skill's, a race's, none of an ability's), as a page describes its rows, and a class's levels, class skills and table keep their handle (`class(klassId).planLevelDelete`, `describeLevel`).
 
 Every kind's rules are a class on one base (`engine/core/entities/RulesetEntity.ts`), whose steps every kind takes, a kind adding its rules to the ones they name:
 - **Described** (`describe(id)`): the entity found (`find`, refused as not found), its row as the view resolves it, with the fields its properties hold (the kind's `fields`, a codec: `FieldCodec.NONE` for a kind without). A kind whose page shows its customizations adds them (`CustomizationPageEntity`: a race, a feat, a power, an item, a class level); an item's are merged with its template's (`propertiesOf`, `requirementsOf`).
 - **Listed** (`openList(where)`): what the server reads a page with (`filters`) and its rows described alike. A feat's and a power's list narrows them to a list's, and gives its rows their lists as the ruleset composes them (`ListedEntity`, which also refuses a feat in a spell list and a spell in a feat pool); an item's gives its rows their template's name.
-- **Saved** (`planCreate(body)`, `planEdit(id, body)`): the form checked (`checkSave`), its row's columns (`columnsOf`), its list links (`linksOf`), what it writes beside them (`writesOf`: a skill's fields and its Skill Focus, a power's fields and its school's Spell Focus, a class level's base attack and skill points), and the fields it keeps once saved (`fields`).
+- **Written** (`planCreate(body)`, `planEdit(id, body)`): the form checked (`checkForm`), its row's columns (`columnsOf`), its list links (`linksOf`), what it writes beside them (`writesOf`: a skill's fields and its Skill Focus, a power's fields and its school's Spell Focus, a class level's base attack and skill points), and the fields it keeps once written (`fields`).
 - **Deleted** (`planDelete(id)`): checked (`checkDelete`: the aptitude the general feats count toward), and what it writes with it (`deleteWritesOf`: a skill's Skill Focus).
 
 A class's parts are bound to the class as the view has it (`entities("klasses").levels(klassId)`, `skills(klassId)`, `table(klassId)`): its levels are a kind of their own on the same base, found among the class's.
@@ -455,14 +455,14 @@ engine/
 │   │   │                                  them, and their references resolved as the view reads them)
 │   │   ├── CharacterProjection.ts         (the rows a level-up adds before it's saved: levels added, replaced or
 │   │   │                                  left out, and the picks at them)
-│   │   └── writes.ts                      (EntityWrites: what saving an entity writes beside its row, without ids)
+│   │   └── writes.ts                      (EntityWrites: what an entity's form writes beside its row, without ids)
 │   ├── view/                              (RulesetView, RulesetData, with a list's members, RulesetComposition, the
 │   │                                      sibling merge: SiblingMerge, SiblingRows)
 │   ├── cow/                               (CowData, CowDataBuilder; CowSources: the source chain and the rows CowData
 │   │                                      is read from; ExtensionNames: the extensions' name check)
 │   ├── customizations/                    (ModifierEdits, PropertyEdits, RequirementEdits, on CustomizationEdits:
 │   │                                      an entity's customizations, bound to it, read from its bucket in the
-│   │                                      view, described, and what their saves store, checked; TargetLabels:
+│   │                                      view, described, and what they store, checked; TargetLabels:
 │   │                                      their labels, one way; CustomizedEntity: the entity they're on, as the
 │   │                                      view has it; PropertyTypeCatalog: the property types and values, the
 │   │                                      rules' then the ruleset's own)
@@ -471,7 +471,7 @@ engine/
 │   │                                      ListedEntity: a kind a ruleset lists, a feat in a pool, a power on a
 │   │                                      spell list; AbilityEntity, LanguageEntity, MechanicEntity, SaveEntity:
 │   │                                      the plain kinds, which a module uses as they are; GeneratedFeats: the
-│   │                                      feats a save makes or removes, in the pool a ruleset names)
+│   │                                      feats a plan makes or removes, in the pool a ruleset names)
 │   ├── fields/                            (Field, FieldCodec: an entity's fields kept in its properties)
 │   ├── character/                         (CharacterBase: a character's state, its evaluators and its build, the
 │   │                                      modifiers in rounds behind their requirements, the ruleset's steps its
@@ -591,7 +591,7 @@ server/
 │   │       │                              the ruleset lists for a level, and one by its name)
 │   │       └── bondedWrites.ts            (the bonded creatures the engine plans, written)
 │   └── rulesets/                          ← entity CRUD for feats/powers/aptitudes/…
-│       └── entityWrites.ts                (what the engine plans a save writes beside its row, written)
+│       └── entityWrites.ts                (what the engine plans a form writes beside its row, written)
 └── routers/
     └── api/
         └── characters/
@@ -699,7 +699,7 @@ What a ruleset answers is its module's: five parts, each a class whose operation
 A part's operation is a method of a handle of `engine/api/`, which `Engine` hands out, dispatched by the view's base rules (`Modules.of(view.ruleset.baseRules)`, which `Engine.for(scope)` reads once; a content operation by the base rules its caller names, `Engine.forRules(baseRules)`). The target paths' handle asks the target paths (`targetPaths()`: `list`, `validate`, `checkValue`, `getCompletions`, which `CategoryPaths` answers, over `PathChecks` and `PathCompletions`), and the view's build asks the order (`Engine.copyOnWrite().buildView`). The properties' and the customizations', which no ruleset changes but by its factories, ask the core's classes (`engine/core/customizations/`): `PropertyTypeCatalog` adds the types and values the ruleset's own properties use to its rules' (`createPropertyTypes`: `propertyTypes()`'s `list`, `getTypeCompletions`, `getValueCompletions`); `ModifierEdits`, `PropertyEdits` and `RequirementEdits` (on `CustomizationEdits`, bound to the entity as their handles are) describe an entity's customizations and plan their saves, a modifier's or a requirement's row checked against its target paths (`modifiers(entityType, entityId)`: `describe`, `describeAll`, `planCreate`, `planEdit`, `planDelete`, and `properties(…)` and `requirements(…)` alike; a list's, `targetPaths().describeModifiers`, labeled as the entity's are: `TargetLabels.describe`), on the entity the view has (`CustomizedEntity.find`, refused as not found otherwise). Copy-on-write's (`Engine.copyOnWrite()`) ask the core's classes too (`CowSources`: `buildSourceChain`, `getReads`; `ExtensionNames`: `checkExtensionNames`; `SiblingMerge`: `mergeCustomizations`). `entities(type)` hands out a kind's class, whose `find` and `describe` read the view (`RulesetData.find`; a customizable kind's `describe` with its customizations), and `checkPublishable` asks the ruleset part's `checkPublishable`, which an extension passes. An operation takes the data its caller read: the view (`RulesetView`: the ruleset and its `rulesetData`), which `Engine.for` binds, a character's rows (`CharacterInput`: its record, its rows, a bonded creature's master's), which `character(input)` binds, a request's body. It answers data:
 
 - **A description**: what the API answers (`character(input).describe`, `class(klassId).describeLevels`), a picker's or a list's filters, which the server reads a page with, and what describes the page it read (`levelUp().openFeatPicker`'s `describe`, `entities("feats").openList`'s `describe`), the printed sheet's document (`character(input).describeSheet`).
-- **A plan**: what to write, without ids. `EntityWrites` (`engine/core/module/writes.ts`) is what saving an entity writes beside its row: the properties its fields are kept in, a requirement on it, the entities it makes (`made`: each with its table, its row's columns, its list links and its customizations; 3.5's general feats, `feats/GeneratedFeats.ts`), and those it removes (`removed`, by table and id). A level-up's is each level's writes (`LevelWrites`: its row's columns, and its rows in the tables under it, by table: its ability increases, each an ability and an amount, and its picks), and what the master's bonded creatures become with them (`levelUp()`'s `planLevels`, `planEdit`, `planRemoval`; the seeders', `planBonded`: a creature it makes as its row whole, after its master's, with its ability scores), which the service writes as they are, table by table. A plan whose save answers the entity carries what it answers once written (`describe(row)`: the saved row with the fields the save keeps, `entities("skills").planCreate`). The server writes a plan in its transaction (`writeEntityWrites`, `writeBondedCreatures`), which reads of the view only its copy-on-write data, and of the database what a write depends on: whether a grouping's feats are there already, whether a character picked a feat it removes.
+- **A plan**: what to write, without ids. `EntityWrites` (`engine/core/module/writes.ts`) is what an entity's form writes beside its row: the properties its fields are kept in, a requirement on it, the entities it makes (`made`: each with its table, its row's columns, its list links and its customizations; 3.5's general feats, `feats/GeneratedFeats.ts`), and those it removes (`removed`, by table and id). A level-up's is each level's writes (`LevelWrites`: its row's columns, and its rows in the tables under it, by table: its ability increases, each an ability and an amount, and its picks), and what the master's bonded creatures become with them (`levelUp()`'s `planLevels`, `planEdit`, `planRemoval`; the seeders', `planBonded`: a creature it makes as its row whole, after its master's, with its ability scores), which the service writes as they are, table by table. A plan whose save answers the entity carries what it answers once written (`describe(row)`: the saved row with the fields the save keeps, `entities("skills").planCreate`). The server writes a plan in its transaction (`writeEntityWrites`, `writeBondedCreatures`), which reads of the view only its copy-on-write data, and of the database what a write depends on: whether a grouping's feats are there already, whether a character picked a feat it removes.
 - **A refusal**: a `RulesError` naming its kind (`invalid`, `unprocessable`, `conflict`, `not-found`), which the server answers as its error of that kind (`characters().checkLanguages`, `checkPublishable`, and a plan's own: `character(input).planInventoryEntry` an item the character can't equip where asked, `entities("aptitudes").planEdit` renaming a pool the characters count on by name). What a character fails is refused with its issues (`RulesError.refuseIssues`): `levelUp().planLevels` refuses the character with its new levels, unless forced.
 
 Its verb says which: `describe…`, `get…` and `list…` answer what something is, `open…` a picker or a list, `plan…` a plan, `check…` refuses or answers what it checked, `validate…` a path's validation, `build…` the view, its copy-on-write data and its source chain (`buildView`, `buildData`, `buildSourceChain`), `merge…` the rows a copy takes of its siblings, and `to…` a conversion (`toEntityProperties`). A method named for a noun hands out a handle (`character(input)`, `class(klassId)`, `entities("skills")`, `levelUp()`), and isn't an operation (`arkyvree/one-engine-op`).
@@ -752,7 +752,7 @@ Entity CRUD services (`FeatsService`, `PowersService`, `SkillsService`, `ClassLe
 
 The level routes (`server/routers/api/characters/levels/index.ts`) take the generic schema's level-up: class levels, skill points, and feats and powers by their pool; the module bounds them (a class's last level, a character's: `PlannedLevelsState`), and reads what its own pickers take (a spell level, a specialist's excluded schools).
 
-A body's fields that a ruleset's rules take, and the bounds they set on its columns, are the engine's. A route carries an entity's fields as one object, `fields` (`buildEntityFieldsSchema`, `server/routers/api/schemaBuilders.ts`: any object, typed as the engine's plan takes it, so the client's forms keep their types), and a column a rule bounds as its type alone (a class's `hitDie`, a class level's number, a pool's spell level, an ability's score). The operation reads the fields by the kind's codec (`RulesetEntity.readFields`: every field for a create, those it changes for an edit, a spell's always optional) and checks the bounds by the module's limits (`checkSave`, `planVariants`, `planAbilities`), refusing with a `RulesError` "invalid" (`RulesError.parse`), which answers 400 with an issue per field as a route's validation does (`fields.bab`, `saves.0.base`, `aptitudes.0.level`). A kind whose page edits its properties (a class, a race, a feat, an item) takes no `fields`. An edit gives the fields it changes: the entity's base merges them over those it keeps (`formFields`), for a skill, a spell and a class level alike. A character's ability edit is the module's too (`characters().planAbilities`: each ability the ruleset's, each score in its bounds), which the service writes. A character's alignment and gender are the database's enums, whose options `shared/enums.ts` writes out (`ALIGNMENT_OPTIONS`, `GENDER_OPTIONS`). The server imports nothing of `shared/dnd3.5/`.
+A body's fields that a ruleset's rules take, and the bounds they set on its columns, are the engine's. A route carries an entity's fields as one object, `fields` (`buildEntityFieldsSchema`, `server/routers/api/schemaBuilders.ts`: any object, typed as the engine's plan takes it, so the client's forms keep their types), and a column a rule bounds as its type alone (a class's `hitDie`, a class level's number, a pool's spell level, an ability's score). The operation reads the fields by the kind's codec (`RulesetEntity.readFields`: every field for a create, those it changes for an edit, a spell's always optional) and checks the bounds by the module's limits (`checkForm`, `planVariants`, `planAbilities`), refusing with a `RulesError` "invalid" (`RulesError.parse`), which answers 400 with an issue per field as a route's validation does (`fields.bab`, `saves.0.base`, `aptitudes.0.level`). A kind whose page edits its properties (a class, a race, a feat, an item) takes no `fields`. An edit gives the fields it changes: the entity's base merges them over those it keeps (`formFields`), for a skill, a spell and a class level alike. A character's ability edit is the module's too (`characters().planAbilities`: each ability the ruleset's, each score in its bounds), which the service writes. A character's alignment and gender are the database's enums, whose options `shared/enums.ts` writes out (`ALIGNMENT_OPTIONS`, `GENDER_OPTIONS`). The server imports nothing of `shared/dnd3.5/`.
 
 ### What's intentionally generic schema, not ruleset-specific
 
@@ -812,8 +812,8 @@ An audit on 2026-04-16 identified real leaks and some false alarms. It predates 
 | `server/services/rulesets/changes/RulesetChangesService.ts` | `getChanges`, `revertOverride` |
 | `server/services/policies/RulesetsPolicy.ts` | Authorization checks for all ruleset operations: the ruleset's own, plus the concerns in `policies/concerns/` (entities, contributors, extensions, creating campaigns and characters), over the roles in `RulesetRoles.ts` |
 | `server/services/rulesets/*/` | Entity services (feats, powers, classes, etc.) using the COW pattern |
-| `server/services/rulesets/EntitySaves.ts` | `EntitySaves`: a kind's create, update and delete, in one order around the plan its rules give |
-| `server/services/rulesets/entityWrites.ts` | `writeEntityWrites`: what the engine plans a save writes beside an entity's row (`EntityWrites`), written in the save's transaction |
+| `server/services/rulesets/EntityWriter.ts` | `EntityWriter`: a kind's create, update and delete, in one order around the plan its rules give |
+| `server/services/rulesets/entityWrites.ts` | `writeEntityWrites`: what the engine plans a form writes beside an entity's row (`EntityWrites`), written in the action's transaction |
 | `server/services/rulesets/listLinks.ts` | `createListLinks`, `setListLinks`: an entity's list links (a feat's pools, a power's lists), as a plan gives them (`ListLink`) |
 | `server/services/characters/characterInputs.ts` | `readCharacterInput`, `readBondedInputs`: a character's rows, read in its ruleset's scope, which the engine builds it from |
 | `server/repositories/*Repository.ts` | COW-aware SQL queries with snapshot exclusion |

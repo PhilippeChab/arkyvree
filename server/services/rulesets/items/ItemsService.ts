@@ -4,7 +4,7 @@ import { include } from "@/lib/mixins.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Items } from "@/server/repositories/index.ts";
-import EntitySaves from "@/server/services/rulesets/EntitySaves.ts";
+import EntityWriter from "@/server/services/rulesets/EntityWriter.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -24,16 +24,16 @@ interface ItemBody {
 
 class ItemsService extends include(Object, Variants) {
   /** What its creates, updates and deletes write, in one order around the plans its rules give. */
-  private readonly saves = new EntitySaves("items", Items, itemsInRules, "Item");
+  private readonly writer = new EntityWriter("items", Items, itemsInRules, "Item");
 
   async createItem(session: Session, rulesetId: string, body: ItemBody) {
-    return await this.saves.create(session, rulesetId, body.name, (scope) =>
+    return await this.writer.create(session, rulesetId, body.name, (scope) =>
       Engine.for(scope).entities("items").planCreate(body),
     );
   }
 
   async deleteItem(session: Session, rulesetId: string, itemId: string) {
-    return await this.saves.delete(
+    return await this.writer.delete(
       session,
       rulesetId,
       itemId,
@@ -52,7 +52,7 @@ class ItemsService extends include(Object, Variants) {
    * its source isn't a template; a template's copies get their properties from the template.
    */
   async duplicateItem(session: Session, rulesetId: string, sourceItemId: string, body: ItemBody) {
-    return await this.saves.create(session, rulesetId, body.name, (scope) =>
+    return await this.writer.create(session, rulesetId, body.name, (scope) =>
       Engine.for(scope).entities("items").planDuplicate(sourceItemId, body),
     );
   }
@@ -84,7 +84,7 @@ class ItemsService extends include(Object, Variants) {
   }
 
   async updateItem(session: Session, rulesetId: string, itemId: string, body: ItemBody) {
-    return await this.saves.update(
+    return await this.writer.update(
       session,
       rulesetId,
       body,

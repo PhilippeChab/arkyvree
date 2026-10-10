@@ -17,7 +17,7 @@ type SkillBody = {
   primaryAbilityId: string;
 };
 
-/** A skill as the ruleset describes it, and what its save or delete writes beside its row: its fields, its feat. */
+/** A skill as the ruleset describes it, and what its form or delete writes beside its row: its fields, its feat. */
 export default class SkillEntity extends RulesetEntity<
   "skills",
   SkillBody,
@@ -32,7 +32,7 @@ export default class SkillEntity extends RulesetEntity<
   readonly type = "skills";
 
   /** Refuses the name its budget's path holds (`skills.budget`). */
-  protected override checkSave(body: SkillBody) {
+  protected override checkForm(body: SkillBody) {
     if (stripSeparators(body.name) === "budget") throw new RulesError("invalid", '"Budget" is a reserved skill name');
   }
 

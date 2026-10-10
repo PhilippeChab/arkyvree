@@ -3,12 +3,12 @@ import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Languages } from "@/server/repositories/index.ts";
-import EntitySaves from "@/server/services/rulesets/EntitySaves.ts";
+import EntityWriter from "@/server/services/rulesets/EntityWriter.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class LanguagesService {
   /** What its creates, updates and deletes write, in one order around the plans its rules give. */
-  private readonly saves = new EntitySaves("languages", Languages, languagesInRules, "Language");
+  private readonly writer = new EntityWriter("languages", Languages, languagesInRules, "Language");
 
   async createLanguage(
     session: Session,
@@ -19,13 +19,13 @@ class LanguagesService {
       type: string;
     },
   ) {
-    return await this.saves.create(session, rulesetId, body.name, (scope) =>
+    return await this.writer.create(session, rulesetId, body.name, (scope) =>
       Engine.for(scope).entities("languages").planCreate(body),
     );
   }
 
   async deleteLanguage(session: Session, rulesetId: string, languageId: string) {
-    return await this.saves.delete(session, rulesetId, languageId, (scope) =>
+    return await this.writer.delete(session, rulesetId, languageId, (scope) =>
       Engine.for(scope).entities("languages").planDelete(languageId),
     );
   }
@@ -68,7 +68,7 @@ class LanguagesService {
       updatedAt?: string;
     },
   ) {
-    return await this.saves.update(session, rulesetId, body, (scope) =>
+    return await this.writer.update(session, rulesetId, body, (scope) =>
       Engine.for(scope).entities("languages").planEdit(languageId, body),
     );
   }

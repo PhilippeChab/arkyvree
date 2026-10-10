@@ -1,4 +1,4 @@
-/** A class as a ruleset's entity: its fields, what its save stores, and its parts: its levels, skills and table. */
+/** A class as a ruleset's entity: its fields, what its form stores, and its parts: its levels, skills and table. */
 
 import { z } from "zod";
 
@@ -19,7 +19,7 @@ type ClassBody = { description?: string | null; hd?: number; name: string };
 const HIT_DIE = z.literal(HIT_DIE_VALUES, { error: () => `Hit die must be one of: ${HIT_DIE_VALUES.join(", ")}` });
 
 /**
- * A class as the ruleset describes it, what its save stores, and its parts, each bound to the class as the view has
+ * A class as the ruleset describes it, what its form stores, and its parts, each bound to the class as the view has
  * it: its levels, its class skills, its table.
  */
 export default class ClassEntity extends RulesetEntity<
@@ -36,7 +36,7 @@ export default class ClassEntity extends RulesetEntity<
   readonly type = "klasses";
 
   /** Refuses a hit die the rules have no die for (0 is none). */
-  protected override checkSave({ hd }: ClassBody) {
+  protected override checkForm({ hd }: ClassBody) {
     RulesError.parse(HIT_DIE.optional(), hd || undefined, ["hd"]);
   }
 

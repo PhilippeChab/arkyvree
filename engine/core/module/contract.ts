@@ -48,7 +48,7 @@ export interface RulesetModule<
   content: ContentPart<F>;
   createPropertyTypes(): PropertyTypesProvider;
   createTargetPaths(): TargetPaths;
-  /** What the ruleset answers of its entities: their fields, and what saving one writes */
+  /** What the ruleset answers of its entities: their fields, and what their forms write */
   entities: EntitiesPart<E>;
   /** What the ruleset answers a character's level-up, from the rows the server reads */
   levelUp: LevelUpPart<D>;

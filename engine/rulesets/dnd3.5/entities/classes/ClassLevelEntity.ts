@@ -1,4 +1,4 @@
-/** A class's levels as a ruleset's entities: their details, their fields, and what their saves write. */
+/** A class's levels as a ruleset's entities: their details, their fields, and what their forms write. */
 
 import { z } from "zod";
 
@@ -78,7 +78,7 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
     });
   }
 
-  /** A save's join rows, from its form: the feats it grants (free unless it says), and its saves' base bonuses. */
+  /** A form's join rows: the feats it grants (free unless it says), and its saves' base bonuses. */
   private joinRows({ feats, saves }: ClassLevelBody) {
     return {
       feats: feats?.map((feat) => ({ aptitudeId: feat.aptitudeId, featId: feat.featId, free: feat.free ?? true })),
@@ -87,7 +87,7 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
   }
 
   /** Refuses a new level's number past the class's bounds, and a save's base bonus past the rules'. */
-  protected override checkSave({ level: number, saves }: ClassLevelBody, level?: KlassLevel) {
+  protected override checkForm({ level: number, saves }: ClassLevelBody, level?: KlassLevel) {
     if (!level) RulesError.parse(LEVEL, number, ["level"]);
     RulesError.parse(SAVES, saves, ["saves"]);
   }
@@ -141,8 +141,8 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
   }
 
   /**
-   * A new level of the class: the class as the view has it, the level's row and join rows, what its save writes beside
-   * them, and the level it answers once saved, with the fields the save keeps.
+   * A new level of the class: the class as the view has it, the level's row and join rows, what its form writes beside
+   * them, and the level it answers once written, with the fields it keeps.
    */
   override planCreate(body: ClassLevelBody & { level: number }) {
     return { ...super.planCreate(body), ...this.joinRows(body), columns: { level: body.level }, klass: this.klass };
@@ -155,8 +155,8 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
 
   /**
    * One of the class's levels' edit: the class and the level, as the view has them, its new join rows when the form
-   * sends them, what its save writes against the properties the view composes for it (those a copy of it holds), and the
-   * level it answers once saved, with the fields it keeps.
+   * sends them, what its form writes against the properties the view composes for it (those a copy of it holds), and the
+   * level it answers once written, with the fields it keeps.
    */
   override planEdit(levelId: string, body: ClassLevelBody) {
     return { ...super.planEdit(levelId, body), ...this.joinRows(body), klass: this.klass };

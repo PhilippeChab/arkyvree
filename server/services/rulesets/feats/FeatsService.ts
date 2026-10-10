@@ -3,12 +3,12 @@ import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { type Db, db } from "@/server/database/index.ts";
 import { Feats } from "@/server/repositories/index.ts";
-import EntitySaves from "@/server/services/rulesets/EntitySaves.ts";
+import EntityWriter from "@/server/services/rulesets/EntityWriter.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class FeatsService {
   /** What its creates, updates and deletes write, in one order around the plans its rules give. */
-  private readonly saves = new EntitySaves("feats", Feats, featsInRules, "Feat");
+  private readonly writer = new EntityWriter("feats", Feats, featsInRules, "Feat");
 
   /**
    * Whether the ancestor feat a fork deleted was generated, read by its stored id: a new feat with its name stands in
@@ -28,7 +28,7 @@ class FeatsService {
       name: string;
     },
   ) {
-    return await this.saves.create(session, rulesetId, body.name, async (scope, { tombstoneAncestorId, tx }) =>
+    return await this.writer.create(session, rulesetId, body.name, async (scope, { tombstoneAncestorId, tx }) =>
       // Named as an ancestor the fork deleted, the feat stands in for it (`EntityNames.repointTombstone`), checks
       // finding it by that name
       Engine.for(scope)
@@ -41,7 +41,7 @@ class FeatsService {
   }
 
   async deleteFeat(session: Session, rulesetId: string, featId: string) {
-    return await this.saves.delete(session, rulesetId, featId, (scope) =>
+    return await this.writer.delete(session, rulesetId, featId, (scope) =>
       Engine.for(scope).entities("feats").planDelete(featId),
     );
   }
@@ -101,7 +101,7 @@ class FeatsService {
       updatedAt?: string;
     },
   ) {
-    return await this.saves.update(session, rulesetId, body, (scope) =>
+    return await this.writer.update(session, rulesetId, body, (scope) =>
       Engine.for(scope).entities("feats").planEdit(featId, body),
     );
   }
