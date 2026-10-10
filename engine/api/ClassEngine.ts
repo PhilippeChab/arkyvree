@@ -1,12 +1,16 @@
+import type { EntityKindsContract } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 
-import type { EntityKinds, Module } from "./Modules.ts";
+import type { Accepted, EntityKinds, Module } from "./Modules.ts";
 
-/** A class's levels, as the ruleset's classes have them. */
-type Levels = ReturnType<EntityKinds["klasses"]["levels"]>;
+/** A class's levels, as the contract has every ruleset's classes answer them: what each of their operations takes. */
+type Levels = ReturnType<EntityKindsContract["klasses"]["levels"]>;
 
-/** A class's class skills, as the ruleset's classes have them. */
-type Skills = ReturnType<EntityKinds["klasses"]["skills"]>;
+/** A class's levels, as the registered rulesets' classes have them: whose saves take each ruleset's own body. */
+type RegisteredLevels = ReturnType<EntityKinds["klasses"]["levels"]>;
+
+/** A class's class skills, as the contract has every ruleset's classes answer them. */
+type Skills = ReturnType<EntityKindsContract["klasses"]["skills"]>;
 
 /** The engine bound to a class of the ruleset (`klassId`): its table, its levels and its skills. */
 export default class ClassEngine {
@@ -62,8 +66,8 @@ export default class ClassEngine {
   }
 
   /** A new level of the class: its row and join rows, what its form writes, and the level it answers once written. */
-  planLevelCreate(...args: Parameters<Levels["planCreate"]>) {
-    return this.classes.levels(this.klassId).planCreate(...args);
+  planLevelCreate(body: Accepted<RegisteredLevels["planCreate"]>[0]) {
+    return this.classes.levels(this.klassId).planCreate(body);
   }
 
   /** Deleting one of the class's levels: the class and the level, refused when the level isn't the class's. */
@@ -72,8 +76,8 @@ export default class ClassEngine {
   }
 
   /** One of the class's levels' edit: its new join rows, what its form writes, and what it answers. */
-  planLevelEdit(...args: Parameters<Levels["planEdit"]>) {
-    return this.classes.levels(this.klassId).planEdit(...args);
+  planLevelEdit(levelId: Parameters<Levels["planEdit"]>[0], body: Accepted<RegisteredLevels["planEdit"]>[1]) {
+    return this.classes.levels(this.klassId).planEdit(levelId, body);
   }
 
   /** Assigning a skill to the class: refused when the skill isn't the ruleset's, or the class has it already. */
