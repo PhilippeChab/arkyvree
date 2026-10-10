@@ -1,4 +1,4 @@
-import { Button, Container, Divider, Menu, Popover, Stack } from "@mui/material";
+import { Container, Divider, Menu, Popover, Stack } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type MouseEvent, type ReactNode, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
@@ -6,6 +6,7 @@ import { Navigate, useNavigate, useParams } from "react-router-dom";
 import {
   ActionMenuItem,
   ArchivedNotice,
+  CountChip,
   DetailPageHeader,
   HelpLabel,
   LoadError,
@@ -42,6 +43,7 @@ import {
 import { useAnchorMenu, usePageTitle, useRulesetPermissions, useSearchParam } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
+import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
@@ -300,16 +302,13 @@ export default function RulesetDetailsPage() {
                 {subscribedExtensions && subscribedExtensions.length > 0 && (
                   <>
                     {/* Opens the list of its extensions; orange while one of them has an update */}
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      color={subscribedExtensions.some((ext) => ext.updateAvailable) ? "warning" : "inherit"}
-                      startIcon={<ExtensionIcon />}
+                    <CountChip
+                      icon={<ExtensionIcon />}
+                      label={formatCount(subscribedExtensions.length, "extension")}
+                      color={subscribedExtensions.some((ext) => ext.updateAvailable) ? "warning" : "default"}
                       onClick={extensionsMenu.openMenu}
                       aria-expanded={extensionsMenu.open}
-                    >
-                      Extensions ({subscribedExtensions.length})
-                    </Button>
+                    />
                     <Popover
                       open={extensionsMenu.open}
                       anchorEl={extensionsMenu.anchorEl}

@@ -27,13 +27,13 @@ export function Encumbrance({ encumbrance }: EncumbranceProps) {
       <Typography variant="body2" sx={{ fontWeight: 500, color: "text.secondary" }}>
         Carried Weight: {encumbrance.carriedweight ?? 0} lbs
       </Typography>
-      <Typography variant="caption" sx={{ color: "text.secondary" }}>
+      <Typography variant="body2" sx={{ color: "text.secondary" }}>
         Light: {encumbrance.lightload ?? 0}
       </Typography>
-      <Typography variant="caption" sx={{ color: "text.secondary" }}>
+      <Typography variant="body2" sx={{ color: "text.secondary" }}>
         Medium: {encumbrance.mediumload ?? 0}
       </Typography>
-      <Typography variant="caption" sx={{ color: "text.secondary" }}>
+      <Typography variant="body2" sx={{ color: "text.secondary" }}>
         Heavy: {encumbrance.heavyload ?? 0}
       </Typography>
       {encumbrance.load && encumbrance.load !== "light" && (

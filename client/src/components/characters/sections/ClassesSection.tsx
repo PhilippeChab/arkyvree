@@ -1,4 +1,4 @@
-import { Collapse, IconButton, Link as MuiLink, Stack, Tooltip, Typography } from "@mui/material";
+import { Button, Collapse, Link as MuiLink, Stack, Typography } from "@mui/material";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -133,11 +133,9 @@ export function ClassesSection({
         onAddLevel &&
         onRemoveLevel && (
           <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-            <Tooltip title="Remove Level">
-              <IconButton aria-label="Remove Level" size="small" onClick={onRemoveLevel}>
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
+            <Button variant="outlined" size="small" startIcon={<DeleteIcon />} onClick={onRemoveLevel}>
+              Remove Level
+            </Button>
             <AddButton label="Add Level" size="small" onClick={onAddLevel} />
           </Stack>
         )

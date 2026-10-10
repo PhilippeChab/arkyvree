@@ -36,7 +36,10 @@ export function ChoiceChip({ label, selected, onClick }: ChoiceChipProps) {
   );
 }
 
-/** A count ("3 variants", "1 player", a point-buy's points): outlined, at the theme's small size. */
+/**
+ * A count ("3 variants", "1 player", a point-buy's points): outlined, at the theme's small size; it may open the list of
+ * what it counts (a ruleset header's extensions).
+ */
 export function CountChip({ ...props }: FamilyChipProps) {
   return <Chip {...props} size="small" variant="outlined" sx={CHIP_SX} />;
 }
@@ -46,7 +49,7 @@ export function RoleChip({ ...props }: FamilyChipProps) {
   return <Chip {...props} size="small" variant="outlined" sx={CHIP_SX} />;
 }
 
-/** The state something is in (Active, Draft, Private, Shared, modified): filled, at the theme's small size. */
+/** The state something is in (Active, Draft, Shared, modified): filled, at the theme's small size. */
 export function StatusChip({ ...props }: FamilyChipProps) {
   return <Chip {...props} size="small" variant="filled" sx={CHIP_SX} />;
 }
