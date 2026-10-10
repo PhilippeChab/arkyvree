@@ -57,16 +57,16 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
   {
     name: "Grasping Wall",
     description:
-      "1 round/level) + 3 roundsSaving Throw: Reflex negatesSpell Resistance: NoHundreds of disembodied hands burst from the wall, forming a sea of clutching, probing appendages.You cause hands to sprout from a wall within range.This spell simply adds grasping hands to an existing wall rather than creating a wall of a substance.All opponents adjacent to the wall are entangled unless they succeed on Reflex saves.An opponent must repeat this save each round it remains adjacent to the wall.Allied creatures are not entangled, and in fact can use the hands to gain a +10 competence bonus on Climb checks to scale the wall.If the spell ends while you are climbing, you immediately fall but can make a normal Climb check to catch yourself (PH 69).Any objects on a wall affected by the spell are unharmed; doors, windows, and other apertures in the wall can be opened or closed as normal.Material Component: A handful of fingernails.",
+      "Hundreds of disembodied hands burst from the wall, forming a sea of clutching, probing appendages.You cause hands to sprout from a wall within range.This spell simply adds grasping hands to an existing wall rather than creating a wall of a substance.All opponents adjacent to the wall are entangled unless they succeed on Reflex saves.An opponent must repeat this save each round it remains adjacent to the wall.Allied creatures are not entangled, and in fact can use the hands to gain a +10 competence bonus on Climb checks to scale the wall.If the spell ends while you are climbing, you immediately fall but can make a normal Climb check to catch yourself (PH 69).Any objects on a wall affected by the spell are unharmed; doors, windows, and other apertures in the wall can be opened or closed as normal.Material Component: A handful of fingernails.",
     aptitudes: ["Sorcerer Spells", "Sublime Chord Spells", "Wizard Spells"],
-    savingThrow: "None",
+    savingThrow: "Reflex negates",
     properties: [
       { type: "SPELL_SCHOOL", value: "Conjuration" },
       { type: "SPELL_SUBSCHOOL", value: "Creation" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
       { type: "SPELL_RANGE_TYPE", value: "Medium" },
       { type: "SPELL_EFFECT", value: "Hands sprout from a wall in an area of up to four 5-ft. squares (S)" },
-      { type: "SPELL_DURATION", value: "Concentration (max." },
+      { type: "SPELL_DURATION", value: "Concentration (max. 1 round/level) + 3 rounds" },
       { type: "SPELL_RESISTANCE", value: "No" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },

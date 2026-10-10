@@ -27,11 +27,13 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
     description:
       "As commune with lesser spirit, except this spell can contact any spirit creature regardless of Hit Dice, and you can ask one question per caster level.Material Component: Incense and a small offering worth 25 gp.XP Cost: 100 XP.",
     aptitudes: ["Wu Jen Spells"],
-    savingThrow: "None",
+    savingThrow: "Will negates; see text",
     properties: [
       { type: "SPELL_SCHOOL", value: "Divination" },
-      { type: "SPELL_CASTING_TIME", value: "1 standard action" },
+      { type: "SPELL_CASTING_TIME", value: "10 minutes" },
+      { type: "SPELL_RANGE_TYPE", value: "10 ft." },
       { type: "SPELL_TARGET", value: "One spirit" },
+      { type: "SPELL_DURATION", value: "1 min./level" },
       { type: "SPELL_RESISTANCE", value: "No" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },
@@ -84,7 +86,17 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
     properties: [
       { type: "SPELL_SCHOOL", value: "Abjuration" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
+      { type: "SPELL_RANGE_TYPE", value: "Close" },
+      {
+        type: "SPELL_EFFECT",
+        value:
+          "Energy wall whose area is up to one 10-ft. square/level, or a sphere or hemisphere with a radius of up to 1 ft./level",
+      },
+      { type: "SPELL_DURATION", value: "1 min./level (D)" },
       { type: "SPELL_RESISTANCE", value: "No" },
+      { type: "SPELL_COMPONENT", value: "Verbal" },
+      { type: "SPELL_COMPONENT", value: "Somatic" },
+      { type: "SPELL_COMPONENT", value: "Material" },
     ],
   },
   {
@@ -117,8 +129,10 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
       { type: "SPELL_SCHOOL", value: "Necromancy" },
       { type: "SPELL_DESCRIPTOR", value: "Evil" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
+      { type: "SPELL_RANGE_TYPE", value: "Medium" },
       { type: "SPELL_EFFECT", value: "Black blade of negative energy" },
-      { type: "SPELL_RESISTANCE", value: "No" },
+      { type: "SPELL_DURATION", value: "1 round/level (D)" },
+      { type: "SPELL_RESISTANCE", value: "Yes" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },
       { type: "SPELL_COMPONENT", value: "Material" },

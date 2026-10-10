@@ -191,7 +191,13 @@ export const LEVEL_9_SPELLS: PowerSeed[] = [
       { type: "SPELL_DESCRIPTOR", value: "Evil" },
       { type: "SPELL_DESCRIPTOR", value: "Good" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
+      { type: "SPELL_RANGE_TYPE", value: "Personal" },
+      { type: "SPELL_TARGET", value: "You" },
+      { type: "SPELL_DURATION", value: "1 round/level" },
       { type: "SPELL_RESISTANCE", value: "No" },
+      { type: "SPELL_COMPONENT", value: "Verbal" },
+      { type: "SPELL_COMPONENT", value: "Somatic" },
+      { type: "SPELL_COMPONENT", value: "Divine Focus" },
     ],
   },
   {

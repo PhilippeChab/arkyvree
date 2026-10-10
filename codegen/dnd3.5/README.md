@@ -125,6 +125,13 @@ Scrapes spell listing and detail pages into `SpellReference` JSON.
 - Spell name, school, subschool, descriptor
 - Level entries per class (e.g. "Cleric 3, Druid 4")
 - Description text
+- The stat block's fields (casting time, range, target, effect, area, duration, components, saving throw, spell resistance)
+- A field its stat block leaves out, from the spell its text says it's written as ("functions like X", "As X, except…", "the same as X", "works as the X spell"), its book's or the core rules': what its own stat block states stays, and a personal spell takes no saving throw or spell resistance
+
+**Needs manual annotation in `overrides`:**
+- Description rewording, as for every entity
+- `levelEntries`: the class/level entries its page leaves out
+- A stat block's field its page leaves out or garbles (`duration`, `savingThrow`, `target`…): Tortoise Shell's and Grasping Wall's last lines, leaked into their description
 
 ### Domains
 

@@ -140,7 +140,12 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
     properties: [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
+      { type: "SPELL_RANGE_TYPE", value: "Touch" },
+      { type: "SPELL_TARGET", value: "Construct touched" },
+      { type: "SPELL_DURATION", value: "Instantaneous" },
       { type: "SPELL_RESISTANCE", value: "No" },
+      { type: "SPELL_COMPONENT", value: "Verbal" },
+      { type: "SPELL_COMPONENT", value: "Somatic" },
     ],
   },
   {
@@ -268,9 +273,13 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
       { type: "SPELL_SCHOOL", value: "Transmutation" },
       { type: "SPELL_DESCRIPTOR", value: "Earth" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
+      { type: "SPELL_RANGE_TYPE", value: "Close" },
       { type: "SPELL_EFFECT", value: "Animated stone arm" },
       { type: "SPELL_DURATION", value: "1 round/level" },
-      { type: "SPELL_RESISTANCE", value: "No" },
+      { type: "SPELL_RESISTANCE", value: "Yes" },
+      { type: "SPELL_COMPONENT", value: "Verbal" },
+      { type: "SPELL_COMPONENT", value: "Somatic" },
+      { type: "SPELL_COMPONENT", value: "Material" },
     ],
   },
   {

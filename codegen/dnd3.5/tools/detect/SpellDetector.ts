@@ -1,5 +1,6 @@
 import { normalizeWs } from "@/codegen/core/text/whitespace.ts";
 import { sanitizeText } from "@/codegen/dnd3.5/tools/text/sanitize.ts";
+import type { StoredReference } from "@/codegen/dnd3.5/tools/types/reference.ts";
 import { type SpellReference } from "@/codegen/dnd3.5/tools/types/spells.ts";
 import type { Property } from "@/content/core/builders/customization/types.ts";
 import { capitalize } from "@/shared/text.ts";
@@ -24,6 +25,14 @@ import { BaseDetector, type Resolved } from "./BaseDetector.ts";
 type RawSpell = SpellReference["raw"][number];
 
 /**
+ * How a spell's text names the spell it's written as: "functions like X", "functions as X", "works as the X spell",
+ * "similar to X", "the same as X", or a description opening "As X, except…". The base spell's name runs to a comma, a
+ * period, "except" or "but".
+ */
+const BASE_SPELL_WORDINGS =
+  /(?:^As|functions? (?:like|as|similarly to)|works (?:like|as)|similar to|(?:is|otherwise) the same as)\s+(.+?)(?:,|\.| except| but)/gi;
+
+/**
  * A spell's components, by the abbreviation its scraped stat block gives each: the site writes a focus "AF" (the SRD's
  * "F", and the F of "F/DF": Alarm's "V, S, F/DF" is scraped as V, S, AF, DF).
  */
@@ -43,7 +52,21 @@ const COMPOUND_COMPONENT_MAP: Record<string, string> = {
   "F/DF": "Focus/Divine Focus",
 };
 
+/**
+ * The words a spell's name puts after a comma ("Cure Light Wounds, Mass", "Vigor, Mass Lesser"), which its text puts
+ * first ("mass lesser vigor"), and the name they qualify.
+ */
+const NAME_QUALIFIERS = /^((?:(?:greater|improved|lesser|mass|swift)\s+)+)(.+)$/;
+
 const SUBSCHOOL_CANON: Record<string, string> = Object.fromEntries(SPELL_SUBSCHOOLS.map((s) => [s.toLowerCase(), s]));
+
+/** A reference's spells, each with the stat block's fields its override corrects. */
+function correctedSpells({ overrides, raw }: Pick<SpellReference, "overrides" | "raw">): RawSpell[] {
+  return raw.map((entry) => {
+    const { description: _description, levelEntries: _levelEntries, ...fields } = overrides?.[entry.name] ?? {};
+    return { ...entry, ...fields };
+  });
+}
 
 function expandComponents(components: string[]): string[] {
   const result: string[] = [];
@@ -59,7 +82,25 @@ function expandComponents(components: string[]): string[] {
   return result;
 }
 
-/** Whether a spell lacks a field its base spell can give it ("functions like" another). */
+/**
+ * The spell `entry`'s text names as its base (`BASE_SPELL_WORDINGS`), of `spells` (by lowercase name), but those it
+ * has already walked through (`visited`): the first it names that's one of them, none when it names none.
+ */
+function findBaseSpell(entry: RawSpell, spells: Map<string, RawSpell>, visited: Set<string>): RawSpell | undefined {
+  for (const [, name] of entry.description.matchAll(BASE_SPELL_WORDINGS)) {
+    const base = resolveBaseSpell(
+      spells,
+      name
+        .trim()
+        .replace(/^(?:a|the) /i, "")
+        .replace(/ spell$/i, ""),
+    );
+    if (base && !visited.has(base.name)) return base;
+  }
+  return undefined;
+}
+
+/** Whether a spell lacks a field its base spell can give it (the spell it's written as). */
 function lacksFields(entry: RawSpell): boolean {
   return (
     !entry.range ||
@@ -102,24 +143,18 @@ function normalizeSubschool(value: string): string {
 }
 
 /**
- * Resolve a "functions like" base spell reference to a raw entry, of the reference's (`rawByName`, by lowercased name).
- * Handles patterns: "interposing hand" → "Bigby's Interposing Hand",
- * "mass cure light wounds" → "Cure Light Wounds, Mass", etc.
+ * The spell of `spells` (by lowercase name) a spell's text names `name`: by its name, its qualifiers moved after a
+ * comma ("mass lesser vigor" → "Vigor, Mass Lesser"), or the end of its name ("interposing hand" → "Bigby's
+ * Interposing Hand").
  */
-function resolveBaseSpell(rawByName: Map<string, RawSpell>, refText: string): RawSpell | undefined {
-  const lower = refText.toLowerCase();
-  // Direct match
-  if (rawByName.has(lower)) return rawByName.get(lower);
-  // "mass X" → "X, Mass"
-  const massMatch = lower.match(/^(greater|lesser|mass)\s+(.+)$/);
-  if (massMatch) {
-    const reordered = `${massMatch[2]}, ${massMatch[1]}`;
-    if (rawByName.has(reordered)) return rawByName.get(reordered);
-  }
-  // Partial match: "interposing hand" should match "Bigby's Interposing Hand"
-  for (const [name, entry] of rawByName) if (name.endsWith(lower) || name.endsWith(` ${lower}`)) return entry;
-
-  return undefined;
+function resolveBaseSpell(spells: Map<string, RawSpell>, name: string): RawSpell | undefined {
+  const lower = name.toLowerCase();
+  const qualified = lower.match(NAME_QUALIFIERS);
+  return (
+    spells.get(lower) ??
+    (qualified ? spells.get(`${qualified[2]}, ${qualified[1].trim().replace(/\s+/g, " ")}`) : undefined) ??
+    [...spells.values()].find((spell) => spell.name.toLowerCase().endsWith(` ${lower}`))
+  );
 }
 
 function simplifyRange(range: string): string {
@@ -164,29 +199,30 @@ function spellProperties(entry: RawSpell): Property[] {
 }
 
 /**
- * A spell with the fields it lacks taken from its base spell (SRD "functions like X" pattern), of the reference's
- * (`rawByName`). Follows the chain: e.g. Mass Charm Monster → Charm Monster → Charm Person.
+ * A spell with the fields its stat block leaves out taken from its base spell, the spell its text says it's written as
+ * ("functions like X", "As X, except…": `findBaseSpell`), of `spells` (the spell's book's and the core rules', by
+ * lowercase name): what its own stat block states stays. Follows the chain: e.g. Mass Charm Monster → Charm Monster →
+ * Charm Person.
  */
-function withBaseSpellFields(rawEntry: RawSpell, rawByName: Map<string, RawSpell>): RawSpell {
+function withBaseSpellFields(rawEntry: RawSpell, spells: Map<string, RawSpell>): RawSpell {
   let entry = rawEntry;
   if (!lacksFields(entry)) return entry;
-  // Walk the "functions like" chain up to 3 levels deep
+  // Walk the chain of base spells up to 3 levels deep
   let current: RawSpell | undefined = entry;
   const visited = new Set<string>([entry.name]);
   for (let depth = 0; depth < 3 && current; depth++) {
-    const baseMatch = current.description.match(
-      /(?:functions? like|works like|functions? similarly to|[Ss]imilar to)\s+(.+?)(?:,|\.| except| but)/i,
-    );
-    if (!baseMatch) break;
-    const baseRef = baseMatch[1].trim().replace(/^a /i, "").replace(/\.$/, "");
-    const base = resolveBaseSpell(rawByName, baseRef);
-    if (!base || visited.has(base.name)) break;
+    const base = findBaseSpell(current, spells, visited);
+    if (!base) break;
     visited.add(base.name);
 
+    const range = entry.range || base.range;
+    // A spell only its caster is the target of ("Personal", not "Personal or touch") has no saving throw or spell
+    // resistance line: it takes none from its base
+    const personal = range.trim().toLowerCase() === "personal";
     entry = {
       ...entry,
       castingTime: entry.castingTime || base.castingTime,
-      range: entry.range || base.range,
+      range,
       duration: entry.duration || base.duration,
       components: entry.components.length > 0 ? entry.components : base.components,
       // Only inherit target/area/effect if this spell has none at all
@@ -198,8 +234,8 @@ function withBaseSpellFields(rawEntry: RawSpell, rawByName: Map<string, RawSpell
           }
         : {}),
       // Only inherit savingThrow/spellResistance if truly empty (not scraped)
-      savingThrow: entry.savingThrow || base.savingThrow,
-      spellResistance: entry.spellResistance || base.spellResistance,
+      savingThrow: entry.savingThrow || (personal ? "" : base.savingThrow),
+      spellResistance: entry.spellResistance || (personal ? "" : base.spellResistance),
     };
     // Continue walking if still missing fields
     if (!lacksFields(entry)) break;
@@ -210,19 +246,31 @@ function withBaseSpellFields(rawEntry: RawSpell, rawByName: Map<string, RawSpell
 
 /**
  * A spell reference's detector: what each spell's text gives (`detected`: its properties and its saving throw,
- * normalized), the fields it lacks taken from the spell it "functions like"; and its description and level entries,
- * its overrides applied (`mapping`).
+ * normalized), its stat block's fields as its overrides correct them, those it leaves out taken from the spell it's
+ * written as ("functions like", "As X, except…"), the book's or the core rules' (`coreRules`); and its description and
+ * level entries, its overrides applied (`mapping`).
  */
 export class SpellDetector extends BaseDetector<SpellReference> {
+  constructor(
+    stored: StoredReference<"spell">,
+    private readonly coreRules: Pick<SpellReference, "overrides" | "raw">,
+  ) {
+    super(stored);
+  }
+
   /** Each spell's properties and saving throw. */
   protected override detected(): SpellReference["detected"] {
-    // Build name lookup (case-insensitive) for base spell resolution
-    const rawByName = new Map<string, RawSpell>();
-    for (const entry of this.stored.raw) rawByName.set(entry.name.toLowerCase(), entry);
+    const spells = correctedSpells(this.stored);
+    // The spells one can be written as, by lowercase name: the book's, then the core rules' it doesn't have
+    const byName = new Map<string, RawSpell>();
+    for (const entry of [...spells, ...correctedSpells(this.coreRules)]) {
+      const name = entry.name.toLowerCase();
+      if (!byName.has(name)) byName.set(name, entry);
+    }
 
     const detected: SpellReference["detected"] = {};
-    for (const rawEntry of this.stored.raw) {
-      const entry = withBaseSpellFields(rawEntry, rawByName);
+    for (const corrected of spells) {
+      const entry = withBaseSpellFields(corrected, byName);
       detected[entry.name] = {
         properties: spellProperties(entry),
         savingThrow: normalizeSpellText(entry.savingThrow || "None"),
