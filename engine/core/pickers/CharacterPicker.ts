@@ -36,18 +36,18 @@ export default abstract class CharacterPicker<
   /** The character's rows with what the level-up plans before the pick. */
   protected abstract project(): CharacterProjection;
 
-  /** The character the picker checks options against: built from its projection when first asked. */
-  protected get character(): C {
-    return (this.built ??= this.builder.build(this.view, this.project().input));
-  }
-
   /** The tree of the requirement groups the character fails, one line a group. */
-  protected describeFailed(groups: Requirement[][]) {
+  protected override describeFailed(groups: Requirement[][]) {
     return groups.map((requirements) => this.character.formatRequirements(requirements)).join("\n");
   }
 
   /** Whether the character meets an option's requirement groups. */
-  protected meets(groups: Requirement[][], _row: Row) {
+  protected override meets(groups: Requirement[][], _row: Row) {
     return this.character.areRequirementsMet(groups);
+  }
+
+  /** The character the picker checks options against: built from its projection when first asked. */
+  protected get character(): C {
+    return (this.built ??= this.builder.build(this.view, this.project().input));
   }
 }

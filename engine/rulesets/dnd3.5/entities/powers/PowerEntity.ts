@@ -40,11 +40,11 @@ export default class PowerEntity extends ListedEntity<
   typeof POWER_FIELDS.fields
 > {
   /** A spell's school, components, range… */
-  protected readonly fields = POWER_FIELDS;
+  protected override readonly fields = POWER_FIELDS;
 
-  protected readonly label = "Power";
+  protected override readonly label = "Power";
 
-  readonly type = "powers";
+  override readonly type = "powers";
 
   /**
    * Refuses a new power without a pool, a pool's spell level past the rules' bounds, and a power linked to a pool the
@@ -60,7 +60,7 @@ export default class PowerEntity extends ListedEntity<
   }
 
   /** A form's columns: it names no spell's save but the one it gives. */
-  protected columnsOf({ description, name, saveEffect, saveId }: PowerBody) {
+  protected override columnsOf({ description, name, saveEffect, saveId }: PowerBody) {
     return { description, name, saveEffect: saveEffect ?? null, saveId: saveId ?? null };
   }
 
@@ -70,7 +70,7 @@ export default class PowerEntity extends ListedEntity<
   }
 
   /** A power's pool links, as the view composes them. */
-  protected linksIn({ powersAptitudesInRules }: PowerWithAptitudes) {
+  protected override linksIn({ powersAptitudesInRules }: PowerWithAptitudes) {
     return { powersAptitudesInRules };
   }
 

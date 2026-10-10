@@ -55,7 +55,7 @@ const IMPORT_TABLE: ImportTable = [
  * code (`GeneratedCode`), with where the 3.5 content types and the names its code uses come from.
  */
 export class BaseCodeFile extends GeneratedCode<DeclaredType> {
-  protected readonly declaredTypes = DECLARED_TYPES;
+  protected override readonly declaredTypes = DECLARED_TYPES;
 
-  protected readonly importTable = IMPORT_TABLE;
+  protected override readonly importTable = IMPORT_TABLE;
 }

@@ -20,29 +20,8 @@ export class ClassDetector extends include(
   ReadsBonusFeatLists,
   ReadsFavoredEnemies,
 ) {
-  /** The kind of spells the class casts, as its features' text says. */
-  private casterType(): { casterType?: "Arcane" | "Divine" } {
-    const text = this.raw.classFeatures.map((f) => f.description).join(" ");
-    if (/casts?\b.{0,30}\barcane spells/i.test(text) || /arcane spell failure/i.test(text))
-      return { casterType: "Arcane" };
-    if (/casts?\b.{0,30}\bdivine spells/i.test(text) || /\bdivine focus\b/i.test(text)) return { casterType: "Divine" };
-    return {};
-  }
-
-  /** The class's hit die ("d10" → 10), d8 when it gives none. */
-  private hitDie(): number {
-    const match = this.raw.hitDie.match(/d(\d+)/);
-    return match ? parseInt(match[1], 10) : 8;
-  }
-
-  /** The class's skill points per level, 2 when it gives none. */
-  private skillPoints(): number {
-    const match = this.raw.skillPointsPerLevel.match(/(\d+)/);
-    return match ? parseInt(match[1], 10) : 2;
-  }
-
   /** The class's detected section. */
-  protected detected(): ClassReference["detected"] {
+  protected override detected(): ClassReference["detected"] {
     const { raw } = this;
     const { requirements, errors, unresolved } = new ClassPrerequisites(raw.prerequisites.parsed);
     const spellsPerDay = this.table.spellsPerDay();
@@ -71,7 +50,7 @@ export class ClassDetector extends include(
   }
 
   /** The class's entities, a `ClassMapping`'s: what's detected and scraped, its overrides applied. */
-  protected mapping(detected: ClassReference["detected"]): ClassReference["mapping"] {
+  protected override mapping(detected: ClassReference["detected"]): ClassReference["mapping"] {
     return new ClassMapping(this, detected).build();
   }
 
@@ -79,7 +58,28 @@ export class ClassDetector extends include(
    * The reference with what's derived from it (`BaseDetector.resolve`), its raw the one the class is read from: its
    * alignment filled in from its overrides when its page names none.
    */
-  resolve(): Resolved<ClassReference> {
+  override resolve(): Resolved<ClassReference> {
     return { ...super.resolve(), raw: this.raw };
+  }
+
+  /** The kind of spells the class casts, as its features' text says. */
+  private casterType(): { casterType?: "Arcane" | "Divine" } {
+    const text = this.raw.classFeatures.map((f) => f.description).join(" ");
+    if (/casts?\b.{0,30}\barcane spells/i.test(text) || /arcane spell failure/i.test(text))
+      return { casterType: "Arcane" };
+    if (/casts?\b.{0,30}\bdivine spells/i.test(text) || /\bdivine focus\b/i.test(text)) return { casterType: "Divine" };
+    return {};
+  }
+
+  /** The class's hit die ("d10" → 10), d8 when it gives none. */
+  private hitDie(): number {
+    const match = this.raw.hitDie.match(/d(\d+)/);
+    return match ? parseInt(match[1], 10) : 8;
+  }
+
+  /** The class's skill points per level, 2 when it gives none. */
+  private skillPoints(): number {
+    const match = this.raw.skillPointsPerLevel.match(/(\d+)/);
+    return match ? parseInt(match[1], 10) : 2;
   }
 }

@@ -10,7 +10,7 @@ class SkillsRepository extends RulesetEntityRepository<typeof skillsInRules> {
     super(skillsInRules);
   }
 
-  protected readonly entityType = "skills";
+  protected override readonly entityType = "skills";
 
   async findMany(db: Db, where: { ids: string[] }) {
     if (where.ids.length === 0) return [];

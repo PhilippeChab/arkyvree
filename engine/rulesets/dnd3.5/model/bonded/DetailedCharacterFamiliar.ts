@@ -20,7 +20,7 @@ export default class DetailedCharacterFamiliar extends DetailedCharacterBonded {
   /** The master's skill ranks, by skill slug: the familiar's where they're better than its own. */
   private masterSkillRanks: Record<string, number> = {};
 
-  protected applyMasterDerivation(master: DetailedCharacter): void {
+  protected override applyMasterDerivation(master: DetailedCharacter): void {
     const masterLevel = master.components.identity.getIdentity().meta.level;
     const naBonus = Math.min(10, Math.max(1, Math.ceil(masterLevel / 2)));
     const familiarInt = Math.min(15, 5 + Math.ceil(masterLevel / 2));

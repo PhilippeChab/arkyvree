@@ -11,10 +11,14 @@ class AbilitiesRepository extends RulesetEntityRepository<typeof abilitiesInRule
     super(abilitiesInRules);
   }
 
-  protected readonly entityType = "abilities";
+  protected override readonly entityType = "abilities";
 
-  async delete(): Promise<never> {
+  override async delete(): Promise<never> {
     throw new Error("Abilities are immutable and cannot be deleted");
+  }
+
+  override async update(): Promise<never> {
+    throw new Error("Abilities are immutable and cannot be edited");
   }
 
   async findMany(db: Db, where: { ids: string[] }) {
@@ -56,10 +60,6 @@ class AbilitiesRepository extends RulesetEntityRepository<typeof abilitiesInRule
           offset,
         }),
     );
-  }
-
-  async update(): Promise<never> {
-    throw new Error("Abilities are immutable and cannot be edited");
   }
 }
 

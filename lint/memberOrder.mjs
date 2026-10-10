@@ -3,9 +3,10 @@
  * routes sort by HTTP method and path. `oxlint --fix` puts a file in order.
  *
  * - A class's members, in groups: its constructor, its static fields, its static methods, its readonly fields, its other
- *   fields, its abstract methods (what a subclass gives, so an abstract class reads its contract first), then its
- *   methods, its private and protected ones before its public ones. In every group, its private members come first,
- *   then its protected ones, then its public ones, so a class's private members stay together. Each goes by name, its
+ *   fields, its abstract methods (what a subclass gives, so an abstract class reads its contract first), its overrides
+ *   (what it gives its base: a method that says `override`, which `override-keyword` makes every one say), then its
+ *   own methods, its private and protected ones before its public ones. In every group, its private members come
+ *   first, then its protected ones, then its public ones, so a class's private members stay together. Each goes by name, its
  *   methods sync before async; a field goes right below a field its initializer reads, which runs as the class is
  *   built (`this.lines`), and `--fix` never moves a field whose initializer runs code against the other fields (what
  *   it calls may read any of them): it suggests it.
@@ -178,9 +179,9 @@ function checkClass(context, body) {
       text: (order) => order.map((member, i) => gaps[i] + text.slice(member.start, member.end)).join(""),
     },
     "Members go in groups: the constructor, the static fields, the static methods, the readonly fields, the other " +
-      "fields, the abstract methods, then the private and protected methods, then the public ones; in each group, " +
-      "its private members first, then its protected ones, then its public ones. Each by name, a field below one " +
-      "its initializer reads, methods sync before async." +
+      "fields, the abstract methods, the overrides, then the private and protected methods, then the public ones; in " +
+      "each group, its private members first, then its protected ones, then its public ones. Each by name, a field " +
+      "below one its initializer reads, methods sync before async." +
       (safe
         ? ""
         : " A field's initializer runs code, which `--fix` never moves against the other fields: move it, or " +
@@ -407,8 +408,9 @@ function compareRunMembers(a, b) {
 
 /**
  * Where a class member goes: [rank, visibility, async, name]. The constructor, statics and fields keep their order;
- * abstract methods (-2), then private and protected methods (-1), then public ones (0), each private, then protected,
- * then public, sort sync before async, then by name. `asyncNames`: the methods with an async body, whose overload signatures go with it.
+ * abstract methods (-3), overrides (-2), then private and protected methods (-1), then public ones (0), each private,
+ * then protected, then public, sort sync before async, then by name. `asyncNames`: the methods with an async body,
+ * whose overload signatures go with it.
  *
  * A class member's names its field initializer reads off the class: `this.lines`, and `Telemetry.provider` when static.
  */
@@ -480,19 +482,20 @@ function memberName(member) {
 
 /**
  * A class member's place: its group (the constructor, static fields, static methods, readonly fields, other fields,
- * abstract methods, private and protected methods, public methods), its private members, then its protected ones, then its public ones in
- * every group, then within it, a method's async-ness and its name, a field's name.
+ * abstract methods, overrides, private and protected methods, public methods), its private members, then its protected
+ * ones, then its public ones in every group, then within it, a method's async-ness and its name, a field's name.
  */
 function memberRank(member, asyncNames) {
   const name = memberName(member);
-  if (member.kind === "constructor") return [-7];
-  if (member.type === "TSIndexSignature") return [-8];
-  if (member.type === "StaticBlock") return [-6, -1, ""];
+  if (member.kind === "constructor") return [-8];
+  if (member.type === "TSIndexSignature") return [-9];
+  if (member.type === "StaticBlock") return [-7, -1, ""];
   const visibility = visibilityRank(member);
   const async = asyncNames.has(name) ? 1 : 0;
-  if (isField(member)) return [member.static ? -6 : member.readonly ? -4 : -3, visibility, name];
-  if (member.static) return [-5, visibility, async, name];
-  if (member.type === "TSAbstractMethodDefinition") return [-2, visibility, 0, name];
+  if (isField(member)) return [member.static ? -7 : member.readonly ? -5 : -4, visibility, name];
+  if (member.static) return [-6, visibility, async, name];
+  if (member.type === "TSAbstractMethodDefinition") return [-3, visibility, 0, name];
+  if (member.override) return [-2, visibility, async, name];
   return [visibility === 2 ? 0 : -1, visibility, async, name];
 }
 

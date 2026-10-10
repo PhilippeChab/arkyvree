@@ -12,18 +12,18 @@ type ModifierBody = { operator: string; target: string; value: string };
 
 /** An entity's modifiers: as its page lists them, and what their saves store, checked against their paths. */
 export default class ModifierEdits extends CustomizationEdits<Modifier> {
-  protected readonly label = "Modifier";
+  protected override readonly label = "Modifier";
+
+  /** The entity's modifiers of its type: its own, and its siblings' (the view composes them into the winner's). */
+  protected override rowsOf(entityId: string) {
+    const modifiers = this.view.rulesetData.modifiersBySource.get(entityId) ?? [];
+    return modifiers.filter((modifier) => modifier.sourceType === this.entityType);
+  }
 
   /** The row a modifier's save stores: its target, operator and value, and their value type, checked against its path. */
   private toRow(targetPaths: TargetPaths, catalogs: TargetCatalogs, body: ModifierBody) {
     const valueType = targetPaths.checkValue(catalogs, { kind: "modifier", sourceType: this.entityType, ...body });
     return { operator: body.operator, target: body.target, value: body.value, valueType };
-  }
-
-  /** The entity's modifiers of its type: its own, and its siblings' (the view composes them into the winner's). */
-  protected rowsOf(entityId: string) {
-    const modifiers = this.view.rulesetData.modifiersBySource.get(entityId) ?? [];
-    return modifiers.filter((modifier) => modifier.sourceType === this.entityType);
   }
 
   /**

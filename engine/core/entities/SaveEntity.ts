@@ -8,14 +8,14 @@ type SaveBody = { abilityId: string; description?: string | null; name: string }
 /** A save as the ruleset has it: its row, and the ability its bonus comes from. */
 export default class SaveEntity extends RulesetEntity<"saves", SaveBody> {
   /** None of its own. */
-  protected readonly fields = FieldCodec.NONE;
+  protected override readonly fields = FieldCodec.NONE;
 
-  protected readonly label = "Save";
+  protected override readonly label = "Save";
 
-  readonly type = "saves";
+  override readonly type = "saves";
 
   /** A form's columns. */
-  protected columnsOf({ abilityId, description, name }: SaveBody) {
+  protected override columnsOf({ abilityId, description, name }: SaveBody) {
     return { abilityId, description, name };
   }
 }

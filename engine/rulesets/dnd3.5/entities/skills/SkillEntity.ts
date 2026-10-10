@@ -25,11 +25,11 @@ export default class SkillEntity extends RulesetEntity<
   typeof SKILL_FIELDS.fields
 > {
   /** How armor weighs on it, and whether it's usable untrained. */
-  protected readonly fields = SKILL_FIELDS;
+  protected override readonly fields = SKILL_FIELDS;
 
-  protected readonly label = "Skill";
+  protected override readonly label = "Skill";
 
-  readonly type = "skills";
+  override readonly type = "skills";
 
   /** Refuses the name its budget's path holds (`skills.budget`). */
   protected override checkForm(body: SkillBody) {
@@ -37,7 +37,7 @@ export default class SkillEntity extends RulesetEntity<
   }
 
   /** A form's columns. */
-  protected columnsOf({ description, name, primaryAbilityId }: SkillBody) {
+  protected override columnsOf({ description, name, primaryAbilityId }: SkillBody) {
     return { description, name, primaryAbilityId };
   }
 

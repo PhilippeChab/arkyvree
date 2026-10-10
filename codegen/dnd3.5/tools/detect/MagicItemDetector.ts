@@ -39,7 +39,7 @@ export class MagicItemDetector extends BaseDetector<MagicItemReference> {
   private readonly overrides: MagicItemReference["overrides"];
 
   /** Each item's detected section: its metadata, its base item, its modifiers. */
-  protected detected(): MagicItemReference["detected"] {
+  protected override detected(): MagicItemReference["detected"] {
     const detected: MagicItemReference["detected"] = {};
 
     for (const entry of this.stored.raw) {
@@ -60,7 +60,7 @@ export class MagicItemDetector extends BaseDetector<MagicItemReference> {
   }
 
   /** Each item as the seeds make it: what was detected and what its text gives, its override over both. */
-  protected mapping(detected: MagicItemReference["detected"]): MagicItemReference["mapping"] {
+  protected override mapping(detected: MagicItemReference["detected"]): MagicItemReference["mapping"] {
     const { overrides } = this;
     const { raw } = this.stored;
     const mapping: MagicItemReference["mapping"] = {};
@@ -109,7 +109,7 @@ export class MagicItemDetector extends BaseDetector<MagicItemReference> {
    * The reference with what's derived from it: its detected section, sanitized, and its mapping, made of its sanitized
    * sections (sanitizing a normalized description again would change it).
    */
-  resolve(): Resolved<MagicItemReference> {
+  override resolve(): Resolved<MagicItemReference> {
     const { _meta, overrides, raw } = this.stored;
     const sanitized = sanitizeJsonValues({ overrides, detected: this.detected() });
     return { _meta, raw, ...sanitized, mapping: this.mapping(sanitized.detected) };

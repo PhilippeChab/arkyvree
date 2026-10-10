@@ -52,28 +52,11 @@ export default class ItemEntity extends CustomizationPageEntity<
   typeof ITEM_FIELDS.fields
 > {
   /** Its armor's, its shield's and its weapon's, its charges, its make. */
-  protected readonly fields = ITEM_FIELDS;
+  protected override readonly fields = ITEM_FIELDS;
 
-  protected readonly label = "Item";
+  protected override readonly label = "Item";
 
-  readonly type = "items";
-
-  /** The item a duplicate or variants are made from, as the view has it: refused when there's none of its id. */
-  private findSource(itemId: string) {
-    const item = this.rulesetData.find("items", itemId);
-    if (!item) throw new RulesError("not-found", "Source item not found in this ruleset");
-    return item;
-  }
-
-  /** An item's slot: the one its type sets (an armor's the torso, a shield's the off hand), or the one its form gives. */
-  private slotOf(item: { slot?: ItemLocation; type?: string | null }): ItemLocation | undefined {
-    return ItemPlacement.slotOfType(item.type ?? null) ?? item.slot;
-  }
-
-  /** The template an item made from `item` points at: `item` itself when it's a template, or its own template. */
-  private templateOf(item: Item) {
-    return item.isTemplate ? item.id : (item.sourceItemId ?? undefined);
-  }
+  override readonly type = "items";
 
   /** Refuses a template made from another item: a template is its copies' source, never one's copy. */
   protected override checkForm(body: ItemBody, item?: Item) {
@@ -82,7 +65,7 @@ export default class ItemEntity extends CustomizationPageEntity<
   }
 
   /** A form's columns: a new item's template, and whether it's one; an edited template keeps no source. */
-  protected columnsOf(body: ItemBody, item?: Item): ItemColumns {
+  protected override columnsOf(body: ItemBody, item?: Item): ItemColumns {
     const columns = {
       costGp: body.costGp?.toString(),
       description: body.description,
@@ -139,14 +122,6 @@ export default class ItemEntity extends CustomizationPageEntity<
   }
 
   /**
-   * The ruleset's templates of a type (`type`; every type's without one), as the server reads them (`filters`): refused
-   * for a type no item can be based on a template of.
-   */
-  openTemplates(type?: string): { filters: { isTemplate: true; type?: TemplateItemType } } {
-    return { filters: { isTemplate: true, type: RulesError.parse(TEMPLATE_TYPE.optional(), type, ["type"]) } };
-  }
-
-  /**
    * Deleting an item: the item as the view has it, and, a template, the item whose copies the server reads
    * (`copiesOf`, in any ruleset) for `checkCopies`, which refuses deleting a template that has any.
    */
@@ -160,6 +135,31 @@ export default class ItemEntity extends CustomizationPageEntity<
       },
       copiesOf: plan.entity.isTemplate ? plan.entity.id : undefined,
     };
+  }
+
+  /** The item a duplicate or variants are made from, as the view has it: refused when there's none of its id. */
+  private findSource(itemId: string) {
+    const item = this.rulesetData.find("items", itemId);
+    if (!item) throw new RulesError("not-found", "Source item not found in this ruleset");
+    return item;
+  }
+
+  /** An item's slot: the one its type sets (an armor's the torso, a shield's the off hand), or the one its form gives. */
+  private slotOf(item: { slot?: ItemLocation; type?: string | null }): ItemLocation | undefined {
+    return ItemPlacement.slotOfType(item.type ?? null) ?? item.slot;
+  }
+
+  /** The template an item made from `item` points at: `item` itself when it's a template, or its own template. */
+  private templateOf(item: Item) {
+    return item.isTemplate ? item.id : (item.sourceItemId ?? undefined);
+  }
+
+  /**
+   * The ruleset's templates of a type (`type`; every type's without one), as the server reads them (`filters`): refused
+   * for a type no item can be based on a template of.
+   */
+  openTemplates(type?: string): { filters: { isTemplate: true; type?: TemplateItemType } } {
+    return { filters: { isTemplate: true, type: RulesError.parse(TEMPLATE_TYPE.optional(), type, ["type"]) } };
   }
 
   /**

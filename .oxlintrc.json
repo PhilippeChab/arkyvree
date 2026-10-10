@@ -56,6 +56,9 @@
     // Every declaration and method by name, every route by method and path (lint/memberOrder.mjs): `bun run lint --fix`
     // sorts them.
     "arkyvree/member-order": "error",
+    // A member that implements its base's abstract member says so, `override`, as noImplicitOverride makes one that
+    // overrides a concrete member (lint/overrides.mjs): member-order groups the overrides.
+    "arkyvree/override-keyword": "error",
     // A public method starts with a verb its layer knows (lint/methodNames.mjs): repositories, services, policies.
     "arkyvree/method-names": "error",
     // An exported function of the server or shared/ starts with a verb (lint/methodNames.mjs).

@@ -112,7 +112,7 @@ export class ItemDetector extends BaseDetector<ItemReference> {
   }
 
   /** The items' detected section: the weapons, armor and goods, and the weapons and armor with no definition. */
-  protected detected(): ItemReference["detected"] {
+  protected override detected(): ItemReference["detected"] {
     const { overrides, raw } = this.stored;
     const nameMap = overrides?.nameMap;
     const weapons: ItemReference["detected"]["weapons"] = {};
@@ -164,7 +164,7 @@ export class ItemDetector extends BaseDetector<ItemReference> {
   }
 
   /** Each item's cost and weight, its override's or else as detected, its override's description, and its skip. */
-  protected mapping(detected: ItemReference["detected"]): ItemReference["mapping"] {
+  protected override mapping(detected: ItemReference["detected"]): ItemReference["mapping"] {
     const { overrides } = this.stored;
     const corrected = (items: Record<string, { costGp: string; weight: string }>) =>
       Object.fromEntries(

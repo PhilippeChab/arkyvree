@@ -31,7 +31,7 @@ export default abstract class LevelPicker<Details extends object = object> exten
    * The character a pick is made for: as it was before the edited level (an edit), with the levels planned before this
    * one and their ability increases, then this class level with its own and the feats picked so far.
    */
-  protected project() {
+  protected override project() {
     const { abilityIncreases, editedLevelId, planned = {} } = this.query;
     const projection = new CharacterProjection(this.input);
     if (editedLevelId) projection.dropLevelsFrom(editedLevelId);

@@ -18,7 +18,7 @@ export class RaceDetector extends BaseDetector<RaceReference> {
   private readonly races: RaceReference["raw"];
 
   /** Each race's detected modifiers. */
-  protected detected(): RaceReference["detected"] {
+  protected override detected(): RaceReference["detected"] {
     return this.modifiersOf(this.races, (entry) => new RaceModifiers(entry));
   }
 
@@ -26,7 +26,7 @@ export class RaceDetector extends BaseDetector<RaceReference> {
    * Each race as the seeds make it: its description and modifiers, its name, size and speed, its override's or else
    * what's scraped and detected; the properties its override gives, and whether its override skips it.
    */
-  protected mapping(detected: RaceReference["detected"]): RaceReference["mapping"] {
+  protected override mapping(detected: RaceReference["detected"]): RaceReference["mapping"] {
     return this.modifierMapping(
       this.races,
       detected,

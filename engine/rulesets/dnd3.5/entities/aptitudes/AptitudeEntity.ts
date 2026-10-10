@@ -13,11 +13,26 @@ type AptitudeBody = { description?: string | null; name: string };
 /** What an aptitude's edit may change: the rules count on a pool's name. */
 export default class AptitudeEntity extends RulesetEntity<"aptitudes", AptitudeBody> {
   /** None of its own. */
-  protected readonly fields = FieldCodec.NONE;
+  protected override readonly fields = FieldCodec.NONE;
 
-  protected readonly label = "Aptitude";
+  protected override readonly label = "Aptitude";
 
-  readonly type = "aptitudes";
+  override readonly type = "aptitudes";
+
+  /** Refuses deleting an aptitude the rules count on by name. */
+  protected override checkDelete(aptitude: Aptitude) {
+    this.checkName(aptitude);
+  }
+
+  /** Refuses renaming an aptitude the rules count on by name. */
+  protected override checkForm(body: AptitudeBody, aptitude?: Aptitude) {
+    if (aptitude) this.checkName(aptitude, body.name);
+  }
+
+  /** A form's columns. */
+  protected override columnsOf({ description, name }: AptitudeBody) {
+    return { description, name };
+  }
 
   /**
    * Refuses renaming the aptitude to `name`, or deleting it without one, when the ruleset's characters count on it by
@@ -32,20 +47,5 @@ export default class AptitudeEntity extends RulesetEntity<"aptitudes", AptitudeB
       "unprocessable",
       `${aptitude.name} is the aptitude a character's general feats count toward: it can be neither renamed nor deleted`,
     );
-  }
-
-  /** Refuses deleting an aptitude the rules count on by name. */
-  protected override checkDelete(aptitude: Aptitude) {
-    this.checkName(aptitude);
-  }
-
-  /** Refuses renaming an aptitude the rules count on by name. */
-  protected override checkForm(body: AptitudeBody, aptitude?: Aptitude) {
-    if (aptitude) this.checkName(aptitude, body.name);
-  }
-
-  /** A form's columns. */
-  protected columnsOf({ description, name }: AptitudeBody) {
-    return { description, name };
   }
 }

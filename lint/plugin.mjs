@@ -1,7 +1,7 @@
 /**
  * The repo's own lint rules, as one oxlint plugin (`arkyvree/…`): member order, method names, the architecture, the
  * backend's conventions, a file's layout, the client's, its styles, its shared components, its controls, its wording
- * and its feedback, the tests', and where a module keeps its state.
+ * and its feedback, the tests', where a module keeps its state, and a class's overrides.
  */
 
 import architecture from "./architecture.mjs";
@@ -15,6 +15,7 @@ import layout from "./layout.mjs";
 import memberOrder from "./memberOrder.mjs";
 import methodNames from "./methodNames.mjs";
 import moduleState from "./moduleState.mjs";
+import overrides from "./overrides.mjs";
 import size from "./size.mjs";
 import styles from "./styles.mjs";
 import testing from "./testing.mjs";
@@ -38,5 +39,6 @@ export default {
     ...testing,
     ...size,
     ...moduleState,
+    ...overrides,
   },
 };

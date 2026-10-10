@@ -12,7 +12,7 @@ class PowersRepository extends include(RulesetEntityRepository<typeof powersInRu
     super(powersInRules);
   }
 
-  protected readonly entityType = "powers";
+  protected override readonly entityType = "powers";
 
   async findMany(db: Db, where: { ids: string[] }) {
     if (where.ids.length === 0) return [];

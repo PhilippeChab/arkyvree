@@ -207,7 +207,7 @@ function withBaseSpellFields(rawEntry: RawSpell, rawByName: Map<string, RawSpell
  */
 export class SpellDetector extends BaseDetector<SpellReference> {
   /** Each spell's properties and saving throw. */
-  protected detected(): SpellReference["detected"] {
+  protected override detected(): SpellReference["detected"] {
     // Build name lookup (case-insensitive) for base spell resolution
     const rawByName = new Map<string, RawSpell>();
     for (const entry of this.stored.raw) rawByName.set(entry.name.toLowerCase(), entry);
@@ -224,7 +224,7 @@ export class SpellDetector extends BaseDetector<SpellReference> {
   }
 
   /** Each spell's description and level entries, its overrides applied. */
-  protected mapping(): SpellReference["mapping"] {
+  protected override mapping(): SpellReference["mapping"] {
     const { overrides, raw } = this.stored;
     return Object.fromEntries(
       raw.map((entry) => {
@@ -241,7 +241,7 @@ export class SpellDetector extends BaseDetector<SpellReference> {
   }
 
   /** The reference with what's derived from it: its detected section and its mapping, its overrides as stored. */
-  resolve(): Resolved<SpellReference> {
+  override resolve(): Resolved<SpellReference> {
     return { ...this.stored, detected: this.detected(), mapping: this.mapping() };
   }
 }

@@ -65,7 +65,7 @@ function getAnimalCompanionEffectiveLevel(master: DetailedCharacter): number {
  *   bonuses apply on top of the race's ability modifiers.
  */
 export default class DetailedCharacterAnimalCompanion extends DetailedCharacterAdvancingBonded {
-  protected applyMasterDerivation(master: DetailedCharacter): void {
+  protected override applyMasterDerivation(master: DetailedCharacter): void {
     const effective = getAnimalCompanionEffectiveLevel(master);
     const row = basicsAt(effective);
     const raceStats = BondedRaceData.getStats(this.data.race.name);

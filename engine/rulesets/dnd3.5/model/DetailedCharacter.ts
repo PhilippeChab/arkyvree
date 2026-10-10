@@ -26,15 +26,15 @@ export default class DetailedCharacter extends include(
     );
   }
 
-  readonly components: Dnd35Components;
+  override readonly components: Dnd35Components;
+
+  protected override createDataLoader(): DataLoader<LoadedCharacterData> {
+    return new DetailedCharacterDataLoader(this.character);
+  }
 
   /** The general feats the character has at its total level (`LevelRules.countGeneralFeats`). */
   protected countGeneralFeats(totalLevel: number): number {
     return LevelRules.countGeneralFeats(totalLevel);
-  }
-
-  protected createDataLoader(): DataLoader<LoadedCharacterData> {
-    return new DetailedCharacterDataLoader(this.character);
   }
 
   getSpellcasting(): { arcane: number; divine: number } {

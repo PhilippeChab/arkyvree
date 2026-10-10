@@ -10,7 +10,7 @@ class AptitudesRepository extends RulesetEntityRepository<typeof aptitudesInRule
     super(aptitudesInRules);
   }
 
-  protected readonly entityType = "aptitudes";
+  protected override readonly entityType = "aptitudes";
 
   async findLeveledIds(db: Db, where: { aptitudeIds: string[] }) {
     if (where.aptitudeIds.length === 0) return new Set<string>();
