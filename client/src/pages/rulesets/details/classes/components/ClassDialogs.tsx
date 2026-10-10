@@ -8,9 +8,12 @@ import {
   type ClassLevelFormData,
 } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { useRulesetSaves } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { MAX_CLASS_LEVEL } from "@/shared/dnd3.5/classes.ts";
+import { getVocabulary } from "@/client/src/pages/rulesets/vocabularyFactory.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 
 interface CreateLevelDialogProps {
+  /** The ruleset's, whose last class level bounds the level's number. */
+  baseRules: BaseRules;
   form: UseFormReturn<ClassLevelFormData>;
   onClose: () => void;
   onSubmit: (data: ClassLevelFormData) => void;
@@ -28,8 +31,17 @@ interface RemoveSkillDialogProps {
   restorable: boolean;
 }
 
-export function CreateLevelDialog({ open, onClose, form, onSubmit, pending, rulesetId }: CreateLevelDialogProps) {
+export function CreateLevelDialog({
+  open,
+  onClose,
+  form,
+  onSubmit,
+  pending,
+  rulesetId,
+  baseRules,
+}: CreateLevelDialogProps) {
   const { data: rulesetSaves, error: savesError } = useRulesetSaves(rulesetId, open);
+  const { lastLevel } = getVocabulary(baseRules).classes;
 
   // The endpoint takes every ruleset save, 0 when unset.
   const handleSubmit = (data: ClassLevelFormData) =>
@@ -47,12 +59,12 @@ export function CreateLevelDialog({ open, onClose, form, onSubmit, pending, rule
       <FormTextField
         control={form.control}
         name="level"
-        rules={wholeNumberRules(1, "Level is required", MAX_CLASS_LEVEL)}
+        rules={wholeNumberRules(1, "Level is required", lastLevel)}
         number
         label="Level"
         fullWidth
         slotProps={{
-          htmlInput: { min: 1, max: MAX_CLASS_LEVEL },
+          htmlInput: { min: 1, max: lastLevel },
         }}
       />
       <FormTextField

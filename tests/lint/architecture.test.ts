@@ -242,26 +242,33 @@ describe("architecture rules", () => {
           "database/packages/pf1/d.ts": imports("@/database/packages/dnd3.5/seed/BaseSeeder.ts"),
           "client/src/pages/pf1/e.ts": imports("@/client/src/pages/dnd3.5/f.ts"),
           // What every ruleset runs on names none of them
-          "engine/core/g.ts": imports("@/shared/dnd3.5/spells.ts"),
+          "engine/core/g.ts": imports("@/vocabulary/dnd3.5/spells.ts"),
           "content/core/builders/h.ts": imports("@/content/dnd3.5/builders/feats/possession.ts"),
           "codegen/core/i.ts": imports("@/codegen/dnd3.5/tools/text/sanitize.ts"),
           "database/packages/seed/j.ts": imports("@/database/packages/dnd3.5/seed/BaseSeeder.ts"),
-          "server/k.ts": imports("@/shared/dnd3.5/spells.ts"),
-          "shared/l.ts": imports("@/shared/dnd3.5/spells.ts"),
+          "server/k.ts": imports("@/vocabulary/dnd3.5/spells.ts"),
+          "shared/l.ts": imports("@/vocabulary/dnd3.5/spells.ts"),
           // A ruleset's builders are what its data is written with: they read none of it
           "content/dnd3.5/builders/m.ts": imports("@/content/dnd3.5/data/core.ts"),
           "content/dnd3.5/builders/n.ts": imports("@/content/dnd3.5/generated/srd/index.ts"),
           // A ruleset reads its own folders and the core's; a registry and a test read any ruleset's
           "content/dnd3.5/builders/o.ts": imports("@/content/dnd3.5/builders/items/types.ts"),
           "content/dnd3.5/data/p.ts": imports("@/content/core/builders/customization/requirements.ts"),
-          "engine/rulesets/dnd3.5/q.ts": imports("@/shared/dnd3.5/spells.ts"),
+          "engine/rulesets/dnd3.5/q.ts": imports("@/vocabulary/dnd3.5/spells.ts"),
           "engine/api/r.ts": imports("@/engine/rulesets/pf1/index.ts"),
           "tests/s.test.ts": imports("@/engine/rulesets/pf1/index.ts"),
+          // A ruleset's vocabulary is its own too: the client's generic modules read it through its registry alone
+          "client/src/pages/rulesets/t.ts": imports("@/vocabulary/dnd3.5/spells.ts"),
+          "client/src/pages/rulesets/vocabularyFactory.ts": imports("@/vocabulary/dnd3.5/spells.ts"),
+          "client/src/pages/rulesets/components/dnd3.5/u.ts": imports("@/vocabulary/dnd3.5/spells.ts"),
+          "client/src/pages/rulesets/components/v.ts": imports("@/client/src/pages/rulesets/components/dnd3.5/u.ts"),
+          "vocabulary/pf1/w.ts": imports("@/vocabulary/dnd3.5/spells.ts"),
         },
         ["ruleset-folders"],
       ),
     ).toEqual([
       "ruleset-folders client/src/pages/pf1/e.ts",
+      "ruleset-folders client/src/pages/rulesets/t.ts",
       "ruleset-folders codegen/core/i.ts",
       "ruleset-folders codegen/pf1/tools/c.ts",
       "ruleset-folders content/core/builders/h.ts",
@@ -274,6 +281,39 @@ describe("architecture rules", () => {
       "ruleset-folders engine/rulesets/pf1/a.ts",
       "ruleset-folders server/k.ts",
       "ruleset-folders shared/l.ts",
+      "ruleset-folders vocabulary/pf1/w.ts",
+    ]);
+  });
+
+  test("a ruleset's vocabulary is data: it imports nothing of the app but shared/'s types", async () => {
+    expect(
+      await lint({
+        "vocabulary/dnd3.5/a.ts": 'import { x } from "@/engine/core/RulesError.ts";\nexport const a = x;\n',
+        "vocabulary/dnd3.5/b.ts":
+          'import type { ItemLocation } from "@/shared/enums.ts";\nexport const b: ItemLocation[] = [];\n',
+        "vocabulary/dnd3.5/c.ts": 'import { y } from "@/client/src/lib/z.ts";\nexport const c = y;\n',
+      }),
+    ).toEqual(["layers vocabulary/dnd3.5/a.ts", "layers vocabulary/dnd3.5/c.ts"]);
+  });
+
+  test("a ruleset's vocabulary declares no function or class, and a constant holds none", async () => {
+    expect(
+      await lintRepo(
+        {
+          "vocabulary/dnd3.5/a.ts": "export function label(level: number) {\n  return `Level ${level}`;\n}\n",
+          "vocabulary/dnd3.5/b.ts": "export const label = (level: number) => `Level ${level}`;\n",
+          "vocabulary/dnd3.5/c.ts": "export class Labels {}\n",
+          // A callback in a constant's value builds the data
+          "vocabulary/dnd3.5/d.ts":
+            "const LEVELS = [0, 1];\nexport const LABELS = LEVELS.map((level) => `Level ${level}`);\n",
+          "shared/e.ts": "export function label(level: number) {\n  return `Level ${level}`;\n}\n",
+        },
+        ["vocabulary-data"],
+      ),
+    ).toEqual([
+      "vocabulary-data vocabulary/dnd3.5/a.ts",
+      "vocabulary-data vocabulary/dnd3.5/b.ts",
+      "vocabulary-data vocabulary/dnd3.5/c.ts",
     ]);
   });
 

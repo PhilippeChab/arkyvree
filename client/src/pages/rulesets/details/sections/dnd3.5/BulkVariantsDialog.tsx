@@ -5,7 +5,7 @@ import { AddButton, DialogFooter, FormDialog, FormTextField, RowAction } from "@
 import { DeleteIcon } from "@/client/src/components/icons/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { NAME_RULES } from "@/client/src/lib/validation.ts";
-import { MAX_ITEM_VARIANTS } from "@/shared/dnd3.5/itemTemplates.ts";
+import { MAX_ITEM_VARIANTS } from "@/vocabulary/dnd3.5/itemTemplates.ts";
 
 import { type BulkVariantsFormValues, type VariantRow, variantRow } from "./bulkVariants.ts";
 

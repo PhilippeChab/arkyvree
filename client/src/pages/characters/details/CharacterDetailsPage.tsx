@@ -36,7 +36,6 @@ import { characterDetailQuery, invalidateCharacter, invalidateCharacterListings 
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { characterPageState } from "@/client/src/pages/characters/characterPageState.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
 
 import { AddLevelDialog, CharacterModifiersDialog, EditLevelDialog, ShareDialog } from "./components/index.ts";
 import { useCharacterPermissions } from "./useCharacterPermissions.ts";
@@ -316,7 +315,7 @@ export default function CharacterDetailsPage() {
               onClose={closeAddLevel}
               onExited={addLevel.onExited}
               characterId={id}
-              baseRules={character.baseRules ?? DEFAULT_BASE_RULES}
+              baseRules={character.baseRules}
             />
           )}
           {editLevel.target && (
@@ -325,7 +324,7 @@ export default function CharacterDetailsPage() {
               onClose={editLevel.close}
               onExited={editLevel.onExited}
               characterId={id}
-              baseRules={character.baseRules ?? DEFAULT_BASE_RULES}
+              baseRules={character.baseRules}
               editingLevel={editLevel.target}
             />
           )}

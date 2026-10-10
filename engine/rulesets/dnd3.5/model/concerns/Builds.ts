@@ -3,9 +3,9 @@ import type CharacterState from "@/engine/rulesets/dnd3.5/model/CharacterState.t
 import PowersPaths from "@/engine/rulesets/dnd3.5/model/powers/PowersPaths.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellLists.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
-import { SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import type { Modifier } from "@/shared/relations.ts";
+import { FEAT_FAMILIES } from "@/vocabulary/dnd3.5/feats.ts";
+import { SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /**
  * A 3.5 character's build steps, which core's build runs (`CharacterBase.build`): its components set up, its

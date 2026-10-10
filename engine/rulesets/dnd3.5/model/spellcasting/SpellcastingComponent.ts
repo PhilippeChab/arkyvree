@@ -7,8 +7,8 @@ import type {
   CustomizedPower,
 } from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
 import { include } from "@/lib/mixins.ts";
-import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
 import type { CharacterLevel, Modifier } from "@/shared/relations.ts";
+import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
 import { BonusCasterLevels } from "./concerns/BonusCasterLevels.ts";
 import { KnownPowers } from "./concerns/KnownPowers.ts";

@@ -1,5 +1,5 @@
 import { Field, FieldCodec, type FieldValues } from "@/engine/core/fields/index.ts";
-import { RACE_QUADRUPED, RACE_SPEED_IGNORES_ENCUMBRANCE } from "@/shared/dnd3.5/properties/index.ts";
+import { RACE_QUADRUPED, RACE_SPEED_IGNORES_ENCUMBRANCE } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** A race's fields' values. */
 export type RaceFieldValues = FieldValues<typeof RACE_FIELDS.fields>;

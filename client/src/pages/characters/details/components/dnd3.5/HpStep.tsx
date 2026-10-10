@@ -3,12 +3,12 @@ import type { Ref } from "react";
 
 import { DiceSpinner, SubsectionTitle } from "@/client/src/components/common/index.ts";
 import { CasinoIcon } from "@/client/src/components/icons/index.ts";
+import { formatDie } from "@/client/src/lib/formatNumeric.ts";
 import { readNumberInput } from "@/client/src/lib/validation.ts";
 import { rollDie } from "@/client/src/pages/characters/dice.ts";
 import { RollAllButton } from "@/client/src/pages/characters/RollAllButton.tsx";
 import { useDiceRoll } from "@/client/src/pages/characters/useDiceRoll.ts";
 import { PREFERS_REDUCED_MOTION, settleAnimation } from "@/client/src/theme/animations.ts";
-import { formatHitDie } from "@/shared/dnd3.5/classes.ts";
 
 import { hpError, type HpLevel } from "./levelUp/index.ts";
 
@@ -74,7 +74,7 @@ export function HpStep({ wizard }: HpStepProps) {
                     disabled={diceRoll.rolling}
                     color="primary"
                     size="small"
-                    aria-label={`Roll ${formatHitDie(level.hd)}`}
+                    aria-label={`Roll ${formatDie(level.hd)}`}
                   >
                     <CasinoIcon />
                   </IconButton>

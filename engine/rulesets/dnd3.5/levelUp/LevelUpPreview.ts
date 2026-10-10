@@ -1,7 +1,7 @@
 import { SelectionChecks } from "@/engine/core/levelUp/index.ts";
 import type { LevelPicks, LevelRequest } from "@/engine/core/module/index.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
-import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
+import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
 import type { PoolPicks } from "./LevelUpState.ts";
 import PicksDistribution from "./PicksDistribution.ts";

@@ -42,7 +42,6 @@ import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
-import { FEAT_FAMILY, KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/shared/dnd3.5/properties/index.ts";
 import { buildAs, createTestCharacter } from "@/tests/support/characters.ts";
 import { insertRows, measure, runWhileLocked } from "@/tests/support/database.ts";
 import {
@@ -64,6 +63,7 @@ import {
 } from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, findSeededRuleset, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
+import { FEAT_FAMILY, KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** The levels, ability increases, feats and skill points planned so far, which the class picker checks against. */
 type Planned = Parameters<typeof CharacterLevelsService.getAvailableClasses>[2];

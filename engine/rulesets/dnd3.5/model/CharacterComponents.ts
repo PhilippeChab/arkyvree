@@ -1,5 +1,5 @@
 import type ModifierEvaluator from "@/engine/core/modifiers/ModifierEvaluator.ts";
-import { getStaticPropertyValues } from "@/shared/dnd3.5/properties/index.ts";
+import Dnd35PropertyTypes from "@/engine/rulesets/dnd3.5/Dnd35PropertyTypes.ts";
 
 import AbilitiesComponent from "./abilities/AbilitiesComponent.ts";
 import AptitudesComponent from "./aptitudes/AptitudesComponent.ts";
@@ -58,7 +58,7 @@ export default class CharacterComponents {
     const identity = new IdentityComponent(classes);
     const feats = new FeatsComponent();
     const featGroupings = new FeatGroupingsComponent(feats);
-    const powers = new PowersComponent(getStaticPropertyValues);
+    const powers = new PowersComponent(Dnd35PropertyTypes.valuesOf);
     const powerGroupings = new PowerGroupingsComponent(powers, abilities);
     const saves = new SavesComponent(abilities, classes);
     const aptitudes = new AptitudesComponent(identity, classes, countGeneralFeats);

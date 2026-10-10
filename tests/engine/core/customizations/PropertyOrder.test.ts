@@ -12,7 +12,7 @@ import {
   SPELL_RANGE_TYPE,
   SPELL_RESISTANCE,
   SPELL_SCHOOL,
-} from "@/shared/dnd3.5/properties/index.ts";
+} from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** Properties in the 3.5 rules' stat-block order. */
 const ORDER = new PropertyOrder(new Dnd35PropertyTypes());

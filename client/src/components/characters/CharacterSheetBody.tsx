@@ -1,7 +1,6 @@
 import { Stack } from "@mui/material";
 
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
-import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
 
 import { getSections } from "./sectionFactory.ts";
 import type { SheetCombat } from "./sections/dnd3.5/index.ts";
@@ -58,7 +57,7 @@ export function CharacterSheetBody({
 }: CharacterSheetBodyProps) {
   const combat: SheetCombat = character.combat;
   const encumbrance = combat.encumbrance;
-  const baseRules = character.baseRules ?? DEFAULT_BASE_RULES;
+  const { baseRules } = character;
   const sections = getSections(baseRules);
   // The bonded creatures, by the feat that bonds each
   const bondedByFeat = new Map(Object.values(character.bonded).map((creature) => [creature.bondFeatId, creature]));

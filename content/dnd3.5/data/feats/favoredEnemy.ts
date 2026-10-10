@@ -3,7 +3,7 @@ import { eq } from "@/content/core/builders/customization/requirements.ts";
 import { feat } from "@/content/dnd3.5/builders/feats/possession.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import { CREATURE_TYPES } from "@/content/dnd3.5/data/creatureTypes.ts";
-import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
+import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 const FAVORED_ENEMY_APTITUDE = "Favored Enemy";
 const FAVORED_ENEMY_SPECIALIZATION_APTITUDE = "Favored Enemy Specialization";

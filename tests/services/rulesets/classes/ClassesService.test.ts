@@ -25,11 +25,11 @@ import {
 } from "@/server/repositories/index.ts";
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
-import { KLASS_BONUS_SPELL_ABILITY_ID } from "@/shared/dnd3.5/properties/index.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { insertRows } from "@/tests/support/database.ts";
 import { addCharacterLevel } from "@/tests/support/levels.ts";
 import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
+import { KLASS_BONUS_SPELL_ABILITY_ID } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
 describe("ClassesService", () => {

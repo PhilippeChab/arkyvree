@@ -8,12 +8,12 @@ import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import { Feats, Modifiers, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
-import { RULESET_SKILL_POINT_ABILITY_ID } from "@/shared/dnd3.5/properties/index.ts";
 import { STRENGTH_BONUS } from "@/tests/support/customizations.ts";
 import { insertRows } from "@/tests/support/database.ts";
 import { copyEntity, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { RULESET_SKILL_POINT_ABILITY_ID } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 function createFork(seedId: string) {
   return createTestRuleset(SEED_USER_ID, { rulesetId: seedId, ancestorRulesetIds: [seedId] });

@@ -2,8 +2,8 @@ import { Box, IconButton, Paper, Stack, Typography } from "@mui/material";
 
 import { AddIcon, RemoveIcon } from "@/client/src/components/icons/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
-import { MAX_ABILITY_SCORE } from "@/shared/dnd3.5/abilities.ts";
 import { formatSigned } from "@/shared/text.ts";
+import { MAX_ABILITY_SCORE } from "@/vocabulary/dnd3.5/abilities.ts";
 
 interface AbilityScoreBoxProps {
   ability: string;

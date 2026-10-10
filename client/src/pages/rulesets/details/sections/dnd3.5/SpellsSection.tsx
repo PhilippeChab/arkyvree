@@ -47,7 +47,7 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
 
   const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("search");
   const { aptitude, aptitudeError, aptitudeId, setAptitude } = useAptitudeFilter(ruleset.id);
-  const { level: selectedLevel, setLevel: setSelectedLevel } = useSpellLevelFilter(true);
+  const { level: selectedLevel, setLevel: setSelectedLevel } = useSpellLevelFilter(ruleset.baseRules, true);
 
   const { createForm, createDialogProps, handleCreate } = useRulesetSection<Spell, SpellFormData>({
     createDefaults: EMPTY_SPELL,
@@ -111,7 +111,12 @@ export function SpellsSection({ ruleset, childOnly, onChildOnlyChange }: Ruleset
                   scope="spells"
                 />
               </Box>
-              <SpellLevelFilter value={selectedLevel} onChange={setSelectedLevel} allowAll />
+              <SpellLevelFilter
+                baseRules={ruleset.baseRules}
+                value={selectedLevel}
+                onChange={setSelectedLevel}
+                allowAll
+              />
             </>
           }
           actions={

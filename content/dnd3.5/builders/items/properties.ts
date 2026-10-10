@@ -28,7 +28,7 @@ import {
   WEAPON_SIZE,
   WEAPON_STRENGTH_DAMAGE,
   WEAPON_TYPE,
-} from "@/shared/dnd3.5/properties/index.ts";
+} from "@/vocabulary/dnd3.5/properties/index.ts";
 
 import { getArmorDefinition, getShieldDefinition } from "./armor.ts";
 import { getWeaponDefinition } from "./weapons.ts";

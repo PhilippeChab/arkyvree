@@ -20,7 +20,7 @@
  *     changes — just the right template modifier on the new feat.
  */
 
-import { BONDED_KINDS, type BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
+import { BONDED_KINDS, type BondedKind } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 
 type BondsData = {
   [K in BondedKind]: DetailedCharacterBondedSlot;

@@ -6,7 +6,7 @@ import {
   KLASS_CASTER_TYPE,
   KLASS_LEVEL_BAB,
   KLASS_LEVEL_SKILL_POINTS,
-} from "@/shared/dnd3.5/properties/index.ts";
+} from "@/vocabulary/dnd3.5/properties/index.ts";
 
 describe("A class's fields", () => {
   test("are null without their properties, and their values with them", () => {

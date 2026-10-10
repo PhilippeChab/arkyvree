@@ -5,7 +5,12 @@ import { and, eq, isNull } from "drizzle-orm";
 import { itemsInRules, propertiesInCustomization } from "@/drizzle/schema.ts";
 import { ITEM_FIELDS } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import { db } from "@/server/database/index.ts";
-import { DAMAGE_TYPE, ITEM_HAS_CHARGES, WEAPON_FINESSABLE, WEAPON_RANGE } from "@/shared/dnd3.5/properties/index.ts";
+import {
+  DAMAGE_TYPE,
+  ITEM_HAS_CHARGES,
+  WEAPON_FINESSABLE,
+  WEAPON_RANGE,
+} from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** Rows as a sorted list of `type=value`: a multiset. */
 function multiset(rows: { type: string; value: string }[]) {

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import { BONDED_KIND_BY_SLUG, BONDED_KIND_SLUGS, BONDED_KINDS } from "@/shared/dnd3.5/bondedKinds.ts";
-import { MAGIC_SCHOOLS } from "@/shared/dnd3.5/spells.ts";
+import { BONDED_KIND_BY_SLUG, BONDED_KIND_SLUGS, BONDED_KINDS } from "@/vocabulary/dnd3.5/bondedKinds.ts";
+import { MAGIC_SCHOOLS } from "@/vocabulary/dnd3.5/spells.ts";
 
 describe("D&D 3.5", () => {
   test("gives Spell Focus a school of magic, Universal aside", () => {

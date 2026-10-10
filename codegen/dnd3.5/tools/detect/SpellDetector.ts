@@ -2,6 +2,7 @@ import { normalizeWs } from "@/codegen/core/text/whitespace.ts";
 import { sanitizeText } from "@/codegen/dnd3.5/tools/text/sanitize.ts";
 import { type SpellReference } from "@/codegen/dnd3.5/tools/types/spells.ts";
 import type { Property } from "@/content/core/builders/customization/types.ts";
+import { capitalize } from "@/shared/text.ts";
 import {
   SPELL_AREA_OF_EFFECT,
   SPELL_CASTING_TIME,
@@ -13,9 +14,8 @@ import {
   SPELL_SCHOOL,
   SPELL_SUBSCHOOL,
   SPELL_TARGET,
-} from "@/shared/dnd3.5/properties/index.ts";
-import { SPELL_SUBSCHOOLS } from "@/shared/dnd3.5/spells.ts";
-import { capitalize } from "@/shared/text.ts";
+} from "@/vocabulary/dnd3.5/properties/index.ts";
+import { SPELL_SUBSCHOOLS } from "@/vocabulary/dnd3.5/spells.ts";
 
 import { BaseDetector, type Resolved } from "./BaseDetector.ts";
 

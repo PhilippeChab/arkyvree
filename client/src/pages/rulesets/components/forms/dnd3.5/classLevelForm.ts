@@ -4,7 +4,7 @@ import { wholeNumberError } from "@/client/src/lib/validation.ts";
 import type { ClassLevelRow } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import type { Save } from "@/client/src/pages/rulesets/hooks/index.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
-import { MAX_SAVE_BASE } from "@/shared/dnd3.5/classes.ts";
+import { MAX_SAVE_BASE } from "@/vocabulary/dnd3.5/classes.ts";
 
 import { EMPTY_CLASS_LEVEL } from "./emptyForms.ts";
 

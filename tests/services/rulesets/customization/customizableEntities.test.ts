@@ -4,10 +4,10 @@ import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Feats } from "@/server/repositories/index.ts";
 import { checkCustomizedEntity } from "@/server/services/rulesets/customization/customizableEntities.ts";
-import { WEAPON_PROFICIENCY } from "@/shared/dnd3.5/properties/index.ts";
 import type { Modifier, Property } from "@/shared/relations.ts";
 import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
+import { WEAPON_PROFICIENCY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 const now = new Date().toISOString();
 function modifierOn(sourceId: string, sourceType: string): Modifier {

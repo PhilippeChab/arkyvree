@@ -1,5 +1,5 @@
 import { Field, FieldCodec, type FieldValues } from "@/engine/core/fields/index.ts";
-import { RULESET_SKILL_POINT_ABILITY_ID } from "@/shared/dnd3.5/properties/index.ts";
+import { RULESET_SKILL_POINT_ABILITY_ID } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** A ruleset's own fields' values. */
 export type RulesetFieldValues = FieldValues<typeof RULESET_FIELDS.fields>;

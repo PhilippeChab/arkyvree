@@ -9,8 +9,8 @@ import type {
 } from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
 import type { Klass, Modifier } from "@/shared/relations.ts";
+import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
 /** An aptitude pool's (or one of its spell levels') slots. */
 type AptitudeSlots = { allowed: number; available: number; spent: number };

@@ -1,12 +1,14 @@
 /** Each D&D 3.5 entity's form, empty: what its create dialog opens on, and what its edit form holds until it loads. */
 
+import { DEFAULT_HIT_DIE } from "@/vocabulary/dnd3.5/classes.ts";
+
 import type { ClassFormData } from "./ClassFormFields.tsx";
 import type { ClassLevelFormData } from "./classLevelForm.ts";
 import type { ItemFormData } from "./itemForm.ts";
 import type { SkillFormData } from "./SkillFormFields.tsx";
 import type { SpellFormData } from "./spellForm.ts";
 
-export const EMPTY_CLASS: ClassFormData = { name: "", description: "", hd: 8 };
+export const EMPTY_CLASS: ClassFormData = { name: "", description: "", hd: DEFAULT_HIT_DIE };
 
 export const EMPTY_CLASS_LEVEL: ClassLevelFormData = { level: 1, fields: { bab: 0, skills: 1 }, saves: [], feats: [] };
 

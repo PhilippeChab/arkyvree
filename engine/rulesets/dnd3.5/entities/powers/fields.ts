@@ -10,7 +10,7 @@ import {
   SPELL_SCHOOL,
   SPELL_SUBSCHOOL,
   SPELL_TARGET,
-} from "@/shared/dnd3.5/properties/index.ts";
+} from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** A power's fields' values. */
 export type PowerFieldValues = FieldValues<typeof POWER_FIELDS.fields>;

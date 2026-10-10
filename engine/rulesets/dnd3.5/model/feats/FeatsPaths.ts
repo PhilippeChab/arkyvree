@@ -4,10 +4,10 @@ import { FEAT_FIELDS } from "@/engine/rulesets/dnd3.5/entities/feats/fields.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
 import { getOperators } from "@/shared/customization/operators.ts";
 import { deriveNameLabels, deriveSegmentLabels, isLeafOfKind, type TargetPath } from "@/shared/customization/target.ts";
-import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
-import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 import type { Feat } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { FEAT_FAMILIES } from "@/vocabulary/dnd3.5/feats.ts";
+import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 const FAMILY_PATHS = [
   { path: "possessed", description: "Whether this feat is possessed", type: "boolean" as const },

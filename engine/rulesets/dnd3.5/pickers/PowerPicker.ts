@@ -1,7 +1,7 @@
 import type { CharacterInput, PickLevel } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import { FEAT_FIELDS } from "@/engine/rulesets/dnd3.5/entities/feats/fields.ts";
-import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
+import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 import LevelPicker from "./LevelPicker.ts";
 

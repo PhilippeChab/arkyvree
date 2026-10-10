@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
+import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { NIL_UUID } from "@/tests/support/seed.ts";
 import {
   ARMOR_MAX_DEX,
   ARMOR_PROFICIENCY,
@@ -11,10 +14,7 @@ import {
   WEAPON_CRITICAL_MULTIPLIER,
   WEAPON_CRITICAL_RANGE,
   WEAPON_PROFICIENCY,
-} from "@/shared/dnd3.5/properties/index.ts";
-import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
-import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
-import { NIL_UUID } from "@/tests/support/seed.ts";
+} from "@/vocabulary/dnd3.5/properties/index.ts";
 
 const properties = api.api.rulesets[":id"].customization.properties;
 const types = properties.types;

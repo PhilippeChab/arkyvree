@@ -2,7 +2,7 @@ import { type UIEvent } from "react";
 import { type Control, useController } from "react-hook-form";
 
 import { BlankNote, DiceSpinner, LoadError } from "@/client/src/components/common/index.ts";
-import { formatSpellLevel } from "@/shared/dnd3.5/spells.ts";
+import { SPELL_LEVEL_LABELS } from "@/vocabulary/dnd3.5/spells.ts";
 
 import { AutoGrantedPicks } from "./AutoGrantedPicks.tsx";
 import {
@@ -100,7 +100,7 @@ export function SpellsStep({ wizard }: SpellsStepProps) {
       }
       pools={pools.map(({ pool, level }) => ({
         key: `${pool.id}-${level}`,
-        label: `${pool.name}${level === null ? "" : ` — ${formatSpellLevel(level)}`} ${picksAt(pool, level).length}/${roomAt(pool, level)}`,
+        label: `${pool.name}${level === null ? "" : ` — ${SPELL_LEVEL_LABELS[level]}`} ${picksAt(pool, level).length}/${roomAt(pool, level)}`,
         open: pool.id === selectedPowerAptitude && level === selectedPowerLevel,
         onOpen: () => {
           setSelectedPowerAptitude(pool.id);
@@ -110,7 +110,7 @@ export function SpellsStep({ wizard }: SpellsStepProps) {
       open={
         currentPool && {
           name: currentPool.name,
-          level: currentLevel === null ? undefined : formatSpellLevel(currentLevel),
+          level: currentLevel === null ? undefined : SPELL_LEVEL_LABELS[currentLevel],
           picks: picksAt(currentPool, currentLevel),
           room: roomAt(currentPool, currentLevel),
           onRemove: (id) => powers.onChange(withoutPick(selectedPowers, currentPool.id, id)),

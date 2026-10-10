@@ -6,8 +6,8 @@ import type { BaseSeeder } from "@/database/packages/dnd3.5/seed/BaseSeeder.ts";
 import type { SpellcastingClass } from "@/database/packages/dnd3.5/seed/spellTable.ts";
 import { powersAptitudesInRules, propertiesInCustomization } from "@/drizzle/schema.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** Seeding the wizard's schools. */
 export function SeedsWizardSchools<B extends Constructor<BaseSeeder>>(Base: B) {

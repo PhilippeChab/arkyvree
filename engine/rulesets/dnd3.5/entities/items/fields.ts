@@ -31,7 +31,7 @@ import {
   WEAPON_SIZE,
   WEAPON_STRENGTH_DAMAGE,
   WEAPON_TYPE,
-} from "@/shared/dnd3.5/properties/index.ts";
+} from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** An item's fields' values. */
 export type ItemFieldValues = FieldValues<typeof ITEM_FIELDS.fields>;

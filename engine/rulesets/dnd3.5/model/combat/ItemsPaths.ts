@@ -6,9 +6,9 @@ import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterCo
 import { UNARMED_STRIKE } from "@/engine/rulesets/dnd3.5/rules/combat.ts";
 import { getOperators } from "@/shared/customization/operators.ts";
 import { deriveNameLabels, deriveSegmentLabels, isLeafOfKind, type TargetPath } from "@/shared/customization/target.ts";
-import { ARMOR_TYPE, SHIELD_TYPE, WEAPON_PROFICIENCY, WEAPON_TYPE } from "@/shared/dnd3.5/properties/index.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { ARMOR_TYPE, SHIELD_TYPE, WEAPON_PROFICIENCY, WEAPON_TYPE } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 import type ArmorsComponent from "./ArmorsComponent.ts";
 import type ShieldsComponent from "./ShieldsComponent.ts";

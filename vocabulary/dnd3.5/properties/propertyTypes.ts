@@ -5,7 +5,7 @@
  */
 
 import type { PropertyEntityType } from "@/shared/customization/entities.ts";
-import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
+import { FEAT_FAMILIES } from "@/vocabulary/dnd3.5/feats.ts";
 import {
   SPELL_COMPONENTS,
   SPELL_DESCRIPTORS,
@@ -15,7 +15,7 @@ import {
   SPELL_SAVING_THROWS,
   SPELL_SCHOOLS,
   SPELL_SUBSCHOOLS,
-} from "@/shared/dnd3.5/spells.ts";
+} from "@/vocabulary/dnd3.5/spells.ts";
 
 import { ARMOR_AC_BONUS, ARMOR_CHECK_PENALTY, ARMOR_MAX_DEX, ARMOR_PROFICIENCY, ARMOR_TYPE } from "./armor.ts";
 import {
@@ -165,6 +165,16 @@ const POWER_PROPERTY_TYPES: Record<string, string> = {
   [SPELL_RESISTANCE]: "Whether spell resistance applies (Yes/No)",
 };
 
+const RACE_PROPERTY_TYPES: Record<string, string> = {
+  [RACE_SPEED_IGNORES_ENCUMBRANCE]:
+    "Whether the race keeps its speed in medium or heavy armor and under a medium or heavy load (the dwarf)",
+  [RACE_QUADRUPED]: "Whether the race walks on four legs, which carries more: x1 1/2 when Medium, x3 when Large (SRD)",
+};
+
+const RULESET_PROPERTY_TYPES: Record<string, string> = {
+  [RULESET_SKILL_POINT_ABILITY_ID]: "Ability used for skill point calculation",
+};
+
 const SHIELD_TYPE_NAMES = [
   "Buckler",
   "Heavy Steel Shield",
@@ -173,6 +183,12 @@ const SHIELD_TYPE_NAMES = [
   "Light Wooden Shield",
   "Tower Shield",
 ];
+
+const SKILL_PROPERTY_TYPES: Record<string, string> = {
+  [SKILL_IMPACTED_BY_WEIGHT]: "Whether the skill is impacted by armor check penalty",
+  [SKILL_CHECK_PENALTY_MULTIPLIER]: "How many times over the skill takes the armor check penalty (2 for Swim)",
+  [SKILL_USABLE_WITHOUT_TRAINING]: "Whether the skill can be used without training",
+};
 
 const WEAPON_TYPE_NAMES = [
   "Bastard Sword",
@@ -244,8 +260,22 @@ const WEAPON_TYPE_NAMES = [
   "Whip",
 ];
 
-/** The values the engine knows for each property type, in their order: a value picker's options. */
-const PROPERTY_VALUES: Record<string, string[]> = {
+export const ENTITY_PROPERTY_TYPES: Partial<Record<PropertyEntityType, Record<string, string>>> = {
+  feats: FEAT_PROPERTY_TYPES,
+  items: ITEM_PROPERTY_TYPES,
+  klasses: KLASS_PROPERTY_TYPES,
+  klass_levels: KLASS_LEVEL_PROPERTY_TYPES,
+  powers: POWER_PROPERTY_TYPES,
+  races: RACE_PROPERTY_TYPES,
+  rulesets: RULESET_PROPERTY_TYPES,
+  skills: SKILL_PROPERTY_TYPES,
+};
+
+/**
+ * The values the engine knows for each property type, in their order: a value picker's options. A free-text type has
+ * none.
+ */
+export const PROPERTY_VALUES: Partial<Record<string, string[]>> = {
   [WEAPON_PROFICIENCY]: ["Simple", "Martial", "Exotic"],
   [WEAPON_FAMILY]: [
     "Axe",
@@ -296,35 +326,3 @@ const PROPERTY_VALUES: Record<string, string[]> = {
   [RACE_SPEED_IGNORES_ENCUMBRANCE]: ["true", "false"],
   [RACE_QUADRUPED]: ["true", "false"],
 };
-
-const RACE_PROPERTY_TYPES: Record<string, string> = {
-  [RACE_SPEED_IGNORES_ENCUMBRANCE]:
-    "Whether the race keeps its speed in medium or heavy armor and under a medium or heavy load (the dwarf)",
-  [RACE_QUADRUPED]: "Whether the race walks on four legs, which carries more: x1 1/2 when Medium, x3 when Large (SRD)",
-};
-
-const RULESET_PROPERTY_TYPES: Record<string, string> = {
-  [RULESET_SKILL_POINT_ABILITY_ID]: "Ability used for skill point calculation",
-};
-
-const SKILL_PROPERTY_TYPES: Record<string, string> = {
-  [SKILL_IMPACTED_BY_WEIGHT]: "Whether the skill is impacted by armor check penalty",
-  [SKILL_CHECK_PENALTY_MULTIPLIER]: "How many times over the skill takes the armor check penalty (2 for Swim)",
-  [SKILL_USABLE_WITHOUT_TRAINING]: "Whether the skill can be used without training",
-};
-
-export const ENTITY_PROPERTY_TYPES: Partial<Record<PropertyEntityType, Record<string, string>>> = {
-  feats: FEAT_PROPERTY_TYPES,
-  items: ITEM_PROPERTY_TYPES,
-  klasses: KLASS_PROPERTY_TYPES,
-  klass_levels: KLASS_LEVEL_PROPERTY_TYPES,
-  powers: POWER_PROPERTY_TYPES,
-  races: RACE_PROPERTY_TYPES,
-  rulesets: RULESET_PROPERTY_TYPES,
-  skills: SKILL_PROPERTY_TYPES,
-};
-
-/** A property type's options: the values the engine knows for it, in their order. None for a free-text type. */
-export function getStaticPropertyValues(type: string): string[] | null {
-  return PROPERTY_VALUES[type] ?? null;
-}

@@ -29,7 +29,6 @@ import {
 import { ClassesService } from "@/server/services/rulesets/classes/index.ts";
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
-import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/shared/dnd3.5/properties/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
@@ -38,6 +37,7 @@ import { insertRows } from "@/tests/support/database.ts";
 import { addCharacterLevel } from "@/tests/support/levels.ts";
 import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, NIL_UUID } from "@/tests/support/seed.ts";
+import { KLASS_LEVEL_BAB, KLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 type LevelBody = Omit<Parameters<typeof ClassLevelsService.createClassLevel>[3], "level">;
 

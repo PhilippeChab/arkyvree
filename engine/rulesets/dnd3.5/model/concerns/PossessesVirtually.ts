@@ -1,8 +1,8 @@
+import Dnd35PropertyTypes from "@/engine/rulesets/dnd3.5/Dnd35PropertyTypes.ts";
 import type CharacterState from "@/engine/rulesets/dnd3.5/model/CharacterState.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellLists.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { formatPropertyValues, groupPropertyValues } from "@/shared/customization/properties.ts";
-import { getStaticPropertyValues } from "@/shared/dnd3.5/properties/index.ts";
 
 /** The feats and spells a 3.5 character has without a pick: those its modifiers grant (`set …possessed`, `set …known`). */
 export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: B) {
@@ -36,8 +36,8 @@ export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: 
             level,
             dc: this.components.powers.getPower(power.name)?.dc?.[aptitudeSlug]?.total ?? null,
             properties: formatPropertyValues(
-              groupPropertyValues(power.properties, getStaticPropertyValues),
-              getStaticPropertyValues,
+              groupPropertyValues(power.properties, Dnd35PropertyTypes.valuesOf),
+              Dnd35PropertyTypes.valuesOf,
             ),
           },
         ];

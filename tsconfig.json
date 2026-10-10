@@ -35,7 +35,8 @@
       "@/scripts/*": ["./scripts/*"],
       "@/emails/*": ["./emails/*"],
       "@/database/*": ["./database/*"],
-      "@/engine/*": ["./engine/*"]
+      "@/engine/*": ["./engine/*"],
+      "@/vocabulary/*": ["./vocabulary/*"]
     },
 
     // Types
@@ -52,7 +53,8 @@
     "engine/**/*",
     "content/**/*",
     "codegen/**/*",
-    "lib/**/*"
+    "lib/**/*",
+    "vocabulary/**/*"
   ],
   "exclude": ["node_modules", "dist"]
 }

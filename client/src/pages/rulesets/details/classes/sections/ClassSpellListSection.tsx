@@ -29,7 +29,7 @@ const COLUMNS = [
 export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSectionProps) {
   const openEntity = useOpenEntity(ruleset.id);
   const queryClient = useQueryClient();
-  const { level, setLevel } = useSpellLevelFilter(false);
+  const { level, setLevel } = useSpellLevelFilter(ruleset.baseRules, false);
   const { value: chosenListId, setValue: setChosenListId } = useSearchParam("list");
   const { search, searchBarProps } = useSearchText();
 
@@ -98,7 +98,7 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
                 </TextField>
               </Box>
             )}
-            <SpellLevelFilter value={level} onChange={setLevel} />
+            <SpellLevelFilter baseRules={ruleset.baseRules} value={level} onChange={setLevel} />
           </>
         }
       />

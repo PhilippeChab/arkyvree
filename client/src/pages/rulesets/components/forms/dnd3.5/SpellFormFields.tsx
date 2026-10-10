@@ -22,7 +22,7 @@ import {
   SPELL_RESISTANCE_OPTIONS,
   SPELL_SCHOOLS,
   SPELL_SUBSCHOOLS,
-} from "@/shared/dnd3.5/spells.ts";
+} from "@/vocabulary/dnd3.5/spells.ts";
 
 import {
   areSpellLevelsValid,

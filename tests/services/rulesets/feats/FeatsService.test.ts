@@ -8,12 +8,12 @@ import { Aptitudes, Characters, EntitySnapshots, Klasses, Properties } from "@/s
 import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
-import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { pickFeat } from "@/tests/support/levels.ts";
 import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** The aptitudes of the test's ruleset. */
 const APTITUDES = ["Combat", "Metamagic", "General"];

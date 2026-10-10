@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { powersInRules, propertiesInCustomization } from "@/drizzle/schema.ts";
 import { POWER_FIELDS } from "@/engine/rulesets/dnd3.5/entities/powers/fields.ts";
 import { db } from "@/server/database/index.ts";
-import { SPELL_COMPONENT, SPELL_DESCRIPTOR, SPELL_SCHOOL, SPELL_TARGET } from "@/shared/dnd3.5/properties/index.ts";
+import { SPELL_COMPONENT, SPELL_DESCRIPTOR, SPELL_SCHOOL, SPELL_TARGET } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /**
  * The seeded spells whose rows a spell's fields can't hold, until the parser stops writing them: an Effect line stored

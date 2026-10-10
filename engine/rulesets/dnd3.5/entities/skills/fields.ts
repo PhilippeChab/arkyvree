@@ -3,7 +3,7 @@ import {
   SKILL_CHECK_PENALTY_MULTIPLIER,
   SKILL_IMPACTED_BY_WEIGHT,
   SKILL_USABLE_WITHOUT_TRAINING,
-} from "@/shared/dnd3.5/properties/index.ts";
+} from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** A skill's fields' values. */
 export type SkillFieldValues = FieldValues<typeof SKILL_FIELDS.fields>;

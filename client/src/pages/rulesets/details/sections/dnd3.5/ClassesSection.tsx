@@ -10,6 +10,7 @@ import {
   ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { ClassesIcon } from "@/client/src/components/icons/index.ts";
+import { formatDie } from "@/client/src/lib/formatNumeric.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import {
   type ClassFormData,
@@ -25,7 +26,6 @@ import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/se
 import { classesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { useEntityFilters, useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { formatHitDie } from "@/shared/dnd3.5/classes.ts";
 
 type Class = ClassesPaginated["items"][number];
 type ClassesPaginated = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"]["$get"], 200>;
@@ -82,7 +82,7 @@ export function ClassesSection({ ruleset, childOnly, onChildOnlyChange }: Rulese
           </Typography>
         );
       case "hitDie":
-        return <ValueChip label={formatHitDie(klass.hd)} />;
+        return <ValueChip label={formatDie(klass.hd)} />;
       case "description":
         return <DescriptionCell text={klass.description} />;
       default:

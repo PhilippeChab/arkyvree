@@ -1,9 +1,9 @@
 /** The bounds the 3.5 rules set on its entities' and characters' columns. */
 
-import { MAX_ABILITY_SCORE } from "@/shared/dnd3.5/abilities.ts";
-import { MAX_CHARACTER_LEVEL, MAX_CLASS_LEVEL, MAX_SAVE_BASE } from "@/shared/dnd3.5/classes.ts";
-import { MAX_ITEM_VARIANTS } from "@/shared/dnd3.5/itemTemplates.ts";
-import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
+import { MAX_ABILITY_SCORE } from "@/vocabulary/dnd3.5/abilities.ts";
+import { MAX_CHARACTER_LEVEL, MAX_CLASS_LEVEL, MAX_SAVE_BASE } from "@/vocabulary/dnd3.5/classes.ts";
+import { MAX_ITEM_VARIANTS } from "@/vocabulary/dnd3.5/itemTemplates.ts";
+import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
 /**
  * The bounds the ruleset's rules set on its entities' and characters' columns, which its operations check: an ability's

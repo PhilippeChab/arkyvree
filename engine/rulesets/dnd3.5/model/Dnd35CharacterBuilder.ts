@@ -1,6 +1,6 @@
 import { CharacterBuilder } from "@/engine/core/character/index.ts";
-import type { BondedKind } from "@/shared/dnd3.5/bondedKinds.ts";
 import type { Character as CharacterRecord } from "@/shared/relations.ts";
+import type { BondedKind } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 
 import DetailedCharacterAnimalCompanion from "./bonded/DetailedCharacterAnimalCompanion.ts";
 import DetailedCharacterFamiliar from "./bonded/DetailedCharacterFamiliar.ts";

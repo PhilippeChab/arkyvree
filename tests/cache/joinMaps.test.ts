@@ -15,8 +15,8 @@ import { type RulesetData } from "@/engine/core/view/index.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
-import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
+import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 function sortById<T extends { id: string }>(xs: T[]) {
   return [...xs].sort((a, b) => a.id.localeCompare(b.id));

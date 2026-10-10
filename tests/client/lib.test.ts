@@ -9,7 +9,7 @@ import {
 } from "@/client/src/lib/activityFormatters.ts";
 import { accessLost, errorMessage, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { formatRelativeTime } from "@/client/src/lib/formatDate.ts";
-import { formatCost, formatCount, formatDecimal, formatWeight } from "@/client/src/lib/formatNumeric.ts";
+import { formatCost, formatCount, formatDecimal, formatDie, formatWeight } from "@/client/src/lib/formatNumeric.ts";
 import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { pageItems } from "@/client/src/lib/pageItems.ts";
@@ -40,6 +40,10 @@ describe("Numbers shown to the user", () => {
       "15.00 gp",
       null,
     ]);
+  });
+
+  test("write a die in dice notation, as the books write a hit die", () => {
+    expect([4, 8, 12].map(formatDie)).toEqual(["d4", "d8", "d12"]);
   });
 
   test("carry their noun when they're counts", () => {

@@ -6,9 +6,9 @@ import SpellLists from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellLists.t
 import { getOperators } from "@/shared/customization/operators.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import { deriveNameLabels, deriveSegmentLabels, isLeafOfKind, type TargetPath } from "@/shared/customization/target.ts";
-import { SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import type { PowerWithAptitudes, Property } from "@/shared/relations.ts";
 import { capitalize, stripSeparators } from "@/shared/text.ts";
+import { SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 const NAVIGATABLE_POWER_DC_PATHS = [
   { path: "dc.misc", description: "Other bonuses to spell DC", type: "number" as const },

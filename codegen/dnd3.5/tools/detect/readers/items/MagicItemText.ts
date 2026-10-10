@@ -5,14 +5,14 @@
 
 import type { MagicItemCategory } from "@/codegen/dnd3.5/tools/types/magicItems.ts";
 import type { Property } from "@/content/core/builders/customization/types.ts";
+import { capitalize } from "@/shared/text.ts";
 import {
   ARMOR_CHECK_PENALTY,
   ARMOR_MAX_DEX,
   ARMOR_PROFICIENCY,
   ITEM_MASTERWORK,
   ITEM_SPELL_FAILURE,
-} from "@/shared/dnd3.5/properties/index.ts";
-import { capitalize } from "@/shared/text.ts";
+} from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** What a specific armor's or shield's text says of itself, over its base's: its stats, weight and enhancement. */
 type ArmorStats = { enhancement?: number; properties: Property[]; weight?: string };
