@@ -56,7 +56,7 @@ test("each target's copied modifier requirement belongs to that target's modifie
 
 test("copied-id recording is limited to a single target", async () => {
   const { targets, customizations } = await setup();
-  await expect(
+  expect(
     CustomizationCopies.copyToMany(
       db,
       targets.map((t) => t.id),
@@ -69,7 +69,7 @@ test("copied-id recording is limited to a single target", async () => {
 
 test("a modifier requirement is never copied onto the source's own modifier", async () => {
   const { targets, modifier, customizations } = await setup();
-  await expect(
+  expect(
     CustomizationCopies.copyToMany(db, [targets[0].id], "feats", { ...customizations, modifiers: [] }),
   ).rejects.toThrow("outside the copied set");
   expect(await Requirements.findMany(db, { entityIds: [modifier.id], entityType: "modifiers" })).toHaveLength(1);
@@ -77,7 +77,7 @@ test("a modifier requirement is never copied onto the source's own modifier", as
 
 test("modifiers are not silently dropped for entity types that cannot own them", async () => {
   const { targets, customizations } = await setup();
-  await expect(CustomizationCopies.copyToMany(db, [targets[0].id], "skills", customizations)).rejects.toThrow(
+  expect(CustomizationCopies.copyToMany(db, [targets[0].id], "skills", customizations)).rejects.toThrow(
     "Cannot copy modifiers onto skills",
   );
 });

@@ -45,18 +45,18 @@ describe("CharacterContributorsService", () => {
     test("refuses strangers, the owner's own email, a second invite and an archived character", async () => {
       const { owner, ownerSession, invitee, character } = await setup(true);
       const { session: stranger } = await createTestUser("stranger");
-      await expect(
-        CharacterContributorsService.inviteContributor(stranger, character.id, "x@example.com"),
-      ).rejects.toThrow(ForbiddenError);
-      await expect(
+      expect(CharacterContributorsService.inviteContributor(stranger, character.id, "x@example.com")).rejects.toThrow(
+        ForbiddenError,
+      );
+      expect(
         CharacterContributorsService.inviteContributor(ownerSession, character.id, owner.emailAddress),
       ).rejects.toThrow(ConflictError);
-      await expect(
+      expect(
         CharacterContributorsService.inviteContributor(ownerSession, character.id, invitee.emailAddress),
       ).rejects.toThrow(ConflictError);
 
       await CharactersService.archiveCharacter(ownerSession, character.id);
-      await expect(
+      expect(
         CharacterContributorsService.inviteContributor(ownerSession, character.id, "late@example.com"),
       ).rejects.toThrow(ConflictError);
     });
@@ -94,16 +94,16 @@ describe("CharacterContributorsService", () => {
     test("rejects an invite", async () => {
       const { inviteeSession, invite } = await setup(true);
       expect((await CharacterContributorsService.rejectInvite(inviteeSession, invite.id)).status).toBe("Rejected");
-      await expect(CharacterContributorsService.acceptInvite(inviteeSession, invite.id)).rejects.toThrow(ConflictError);
+      expect(CharacterContributorsService.acceptInvite(inviteeSession, invite.id)).rejects.toThrow(ConflictError);
     });
 
     test("refuses another user's invite, and an invite to a character archived since", async () => {
       const { ownerSession, inviteeSession, character, invite } = await setup(true);
       const { session: stranger } = await createTestUser("stranger");
-      await expect(CharacterContributorsService.acceptInvite(stranger, invite.id)).rejects.toThrow(NotFoundError);
+      expect(CharacterContributorsService.acceptInvite(stranger, invite.id)).rejects.toThrow(NotFoundError);
 
       await CharactersService.archiveCharacter(ownerSession, character.id);
-      await expect(CharacterContributorsService.acceptInvite(inviteeSession, invite.id)).rejects.toThrow(ConflictError);
+      expect(CharacterContributorsService.acceptInvite(inviteeSession, invite.id)).rejects.toThrow(ConflictError);
     });
   });
 
@@ -123,7 +123,7 @@ describe("CharacterContributorsService", () => {
     test("hides the invite from anyone else", async () => {
       const { invite } = await setup(true);
       const { session: stranger } = await createTestUser("stranger");
-      await expect(CharacterContributorsService.getInvite(stranger, invite.id)).rejects.toThrow(NotFoundError);
+      expect(CharacterContributorsService.getInvite(stranger, invite.id)).rejects.toThrow(NotFoundError);
     });
   });
 
@@ -135,19 +135,19 @@ describe("CharacterContributorsService", () => {
       expect((await list(ownerSession)).items.map((c) => c.email)).toEqual([invitee.emailAddress]);
       expect((await list(inviteeSession)).items).toHaveLength(1);
       const { session: stranger } = await createTestUser("stranger");
-      await expect(list(stranger)).rejects.toThrow(ForbiddenError);
+      expect(list(stranger)).rejects.toThrow(ForbiddenError);
     });
 
     test("lose edit access when revoked or when they leave", async () => {
       const revoked = await setup();
       await CharacterContributorsService.revokeContributor(revoked.ownerSession, revoked.invite.id);
-      await expect(
+      expect(
         CharactersService.updateCharacter(revoked.inviteeSession, revoked.character.id, { notes: "after revoke" }),
       ).rejects.toThrow(NotFoundError);
 
       const left = await setup();
       await CharacterContributorsService.leaveCharacter(left.inviteeSession, left.character.id);
-      await expect(
+      expect(
         CharactersService.updateCharacter(left.inviteeSession, left.character.id, { notes: "after leaving" }),
       ).rejects.toThrow(NotFoundError);
     });
@@ -157,14 +157,10 @@ describe("CharacterContributorsService", () => {
       await CharactersService.updateCharacter(inviteeSession, character.id, { notes: "ok" });
       await CharactersService.enqueuePdf(inviteeSession, character.id);
 
-      await expect(CharactersService.archiveCharacter(inviteeSession, character.id)).rejects.toThrow(NotFoundError);
-      await expect(CharacterSharingService.generateShareToken(inviteeSession, character.id)).rejects.toThrow(
-        NotFoundError,
-      );
-      await expect(CharacterSharingService.revokeShareToken(inviteeSession, character.id)).rejects.toThrow(
-        NotFoundError,
-      );
-      await expect(
+      expect(CharactersService.archiveCharacter(inviteeSession, character.id)).rejects.toThrow(NotFoundError);
+      expect(CharacterSharingService.generateShareToken(inviteeSession, character.id)).rejects.toThrow(NotFoundError);
+      expect(CharacterSharingService.revokeShareToken(inviteeSession, character.id)).rejects.toThrow(NotFoundError);
+      expect(
         CharacterContributorsService.inviteContributor(inviteeSession, character.id, "x@example.com"),
       ).rejects.toThrow(ForbiddenError);
     });
@@ -172,7 +168,7 @@ describe("CharacterContributorsService", () => {
     test("are the only ones besides the owner who can edit", async () => {
       const { character } = await setup();
       const { session: stranger } = await createTestUser("stranger");
-      await expect(CharactersService.updateCharacter(stranger, character.id, { notes: "nope" })).rejects.toThrow(
+      expect(CharactersService.updateCharacter(stranger, character.id, { notes: "nope" })).rejects.toThrow(
         NotFoundError,
       );
     });

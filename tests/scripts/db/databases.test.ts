@@ -28,26 +28,26 @@ describe("A script that drops databases or tables", () => {
     const url = process.env.DATABASE_URL;
     try {
       process.env.DATABASE_URL = "postgresql://u:p@ep-x.neon.tech/arkyvree_test";
-      await expect(resetDatabase(false)).rejects.toThrow("isn't a local database server");
+      expect(resetDatabase(false)).rejects.toThrow("isn't a local database server");
       // Production through a tunnel: on localhost, but not named as a development or test database
       process.env.DATABASE_URL = "postgresql://u:p@localhost:5433/arkyvreedb";
-      await expect(resetDatabase(false)).rejects.toThrow("arkyvreedb isn't a development or test database");
+      expect(resetDatabase(false)).rejects.toThrow("arkyvreedb isn't a development or test database");
     } finally {
       process.env.DATABASE_URL = url;
     }
   });
 
   test("copies only a local test database, into databases named after it", async () => {
-    await expect(cloneDatabase("postgresql://u:p@db.example.com/arkyvree_test", ["arkyvree_test_w1"])).rejects.toThrow(
+    expect(cloneDatabase("postgresql://u:p@db.example.com/arkyvree_test", ["arkyvree_test_w1"])).rejects.toThrow(
       "isn't a local database server",
     );
-    await expect(cloneDatabase("postgresql://u:p@localhost/arkyvree_dev", ["arkyvree_dev_w1"])).rejects.toThrow(
+    expect(cloneDatabase("postgresql://u:p@localhost/arkyvree_dev", ["arkyvree_dev_w1"])).rejects.toThrow(
       "arkyvree_dev isn't a test database",
     );
-    await expect(cloneDatabase("postgresql://u:p@localhost/arkyvree_test", ["arkyvree_prod"])).rejects.toThrow(
+    expect(cloneDatabase("postgresql://u:p@localhost/arkyvree_test", ["arkyvree_prod"])).rejects.toThrow(
       "not arkyvree_prod",
     );
-    await expect(
+    expect(
       cloneDatabase("postgresql://u:p@localhost/arkyvree_test", [`arkyvree_test_${"x".repeat(60)}`]),
     ).rejects.toThrow("in 63 characters");
   });

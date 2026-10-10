@@ -247,7 +247,7 @@ describe("Seeding", () => {
 
     test("refuses an aptitude that isn't seeded", async () => {
       const seeder = await freshSeeder();
-      await expect(seeder.seedFeats([{ name: "Test Feat", description: "", aptitudes: ["Nope"] }])).rejects.toThrow(
+      expect(seeder.seedFeats([{ name: "Test Feat", description: "", aptitudes: ["Nope"] }])).rejects.toThrow(
         `Test Feat's aptitude: "Nope" isn't seeded`,
       );
     });
@@ -407,10 +407,10 @@ describe("Seeding", () => {
     test("refuses a class skill or a granted feat that isn't seeded", async () => {
       const seeder = await freshSeeder({ named: true });
       await seeder.seedAptitudes(["Test Class Feature"]);
-      await expect(seeder.seedClass(klass("Test Skilled", { classSkills: ["Nope"] }))).rejects.toThrow(
+      expect(seeder.seedClass(klass("Test Skilled", { classSkills: ["Nope"] }))).rejects.toThrow(
         `Test Skilled's class skill: "Nope" isn't seeded`,
       );
-      await expect(
+      expect(
         seeder.seedClass(
           klass("Test Featured", {
             levels: 2,

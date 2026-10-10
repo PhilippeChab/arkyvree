@@ -176,7 +176,7 @@ describe("Item templates", () => {
     test("when an inherited one is edited, before any copy is made", async () => {
       const { session, ruleset, template } = await setup();
       const mace = await template("Heavy Mace");
-      await expect(
+      expect(
         ItemsService.updateItem(session, ruleset.id, mace.id, { name: mace.name, sourceItemId: mace.id }),
       ).rejects.toThrow("Template items cannot have a source item");
       expect(await EntitySnapshots.findOne(db, { rulesetId: ruleset.id, sourceEntityId: mace.id })).toBeUndefined();

@@ -98,14 +98,12 @@ describe("AttachmentsService", () => {
       const { session: owner } = await createTestUser();
       const { session: other } = await createTestUser();
 
-      await expect(AttachmentsService.createDirectUpload(other, uploadParams(owner.userId))).rejects.toThrow(
-        ForbiddenError,
-      );
+      expect(AttachmentsService.createDirectUpload(other, uploadParams(owner.userId))).rejects.toThrow(ForbiddenError);
     });
 
     test("rejects unknown record types", async () => {
       const { session } = await createTestUser();
-      await expect(
+      expect(
         AttachmentsService.createDirectUpload(session, {
           ...uploadParams(session.userId),
           recordType: "Mystery",
@@ -115,7 +113,7 @@ describe("AttachmentsService", () => {
 
     test("rejects uploads exceeding the per-type maxBytes", async () => {
       const { session } = await createTestUser();
-      await expect(
+      expect(
         AttachmentsService.createDirectUpload(session, {
           ...uploadParams(session.userId),
           byteSize: 10 * 1024 * 1024, // 10 MB > 5 MB cap for User
@@ -125,7 +123,7 @@ describe("AttachmentsService", () => {
 
     test("rejects uploads with disallowed contentType", async () => {
       const { session } = await createTestUser();
-      await expect(
+      expect(
         AttachmentsService.createDirectUpload(session, {
           ...uploadParams(session.userId),
           contentType: "application/pdf",
@@ -153,7 +151,7 @@ describe("AttachmentsService", () => {
       const { session: other } = await createTestUser();
       const character = await createTestCharacter(owner.userId);
 
-      await expect(
+      expect(
         AttachmentsService.createDirectUpload(other, {
           recordType: "Character",
           recordId: character.id,
@@ -167,7 +165,7 @@ describe("AttachmentsService", () => {
 
     test("Character: non-existent record is forbidden", async () => {
       const { session } = await createTestUser();
-      await expect(
+      expect(
         AttachmentsService.createDirectUpload(session, {
           recordType: "Character",
           recordId: NIL_UUID,
@@ -233,7 +231,7 @@ describe("AttachmentsService", () => {
       const key = presignCalls[0].key;
       stats.set(key, null);
 
-      await expect(AttachmentsService.attach(session, direct.signedId)).rejects.toThrow(/Upload not found/);
+      expect(AttachmentsService.attach(session, direct.signedId)).rejects.toThrow(/Upload not found/);
     });
 
     test("rejects attach when uploaded size does not match declared byteSize", async () => {
@@ -246,9 +244,7 @@ describe("AttachmentsService", () => {
       const key = presignCalls[0].key;
       stats.set(key, { size: 9999, etag: "wrong" });
 
-      await expect(AttachmentsService.attach(session, direct.signedId)).rejects.toThrow(
-        /does not match declared byteSize/,
-      );
+      expect(AttachmentsService.attach(session, direct.signedId)).rejects.toThrow(/does not match declared byteSize/);
     });
 
     test("rejects a tampered signed id", async () => {
@@ -257,7 +253,7 @@ describe("AttachmentsService", () => {
       const [data] = direct.signedId.split(".");
       const tampered = `${data}.AAAA`;
 
-      await expect(AttachmentsService.attach(session, tampered)).rejects.toThrow(BadRequestError);
+      expect(AttachmentsService.attach(session, tampered)).rejects.toThrow(BadRequestError);
     });
 
     test("rejects when caller no longer owns the target", async () => {
@@ -265,7 +261,7 @@ describe("AttachmentsService", () => {
       const { session: other } = await createTestUser();
       const direct = await AttachmentsService.createDirectUpload(owner, uploadParams(owner.userId));
 
-      await expect(AttachmentsService.attach(other, direct.signedId)).rejects.toThrow(ForbiddenError);
+      expect(AttachmentsService.attach(other, direct.signedId)).rejects.toThrow(ForbiddenError);
     });
 
     test("rejects an expired signed id", async () => {
@@ -280,7 +276,7 @@ describe("AttachmentsService", () => {
         iat: Date.now() - 25 * 60 * 60 * 1000, // 25h ago
       });
 
-      await expect(AttachmentsService.attach(session, expired)).rejects.toThrow(/expired/);
+      expect(AttachmentsService.attach(session, expired)).rejects.toThrow(/expired/);
 
       // The direct-upload's own (fresh) signedId still works.
       const fresh = await AttachmentsService.attach(session, direct.signedId);
@@ -356,7 +352,7 @@ describe("AttachmentsService", () => {
 
     test("throws NotFoundError for an unknown attachment id", async () => {
       const { session } = await createTestUser();
-      await expect(AttachmentsService.detach(session, NIL_UUID)).rejects.toThrow(NotFoundError);
+      expect(AttachmentsService.detach(session, NIL_UUID)).rejects.toThrow(NotFoundError);
     });
 
     test("rejects detach when caller does not own the target", async () => {
@@ -365,7 +361,7 @@ describe("AttachmentsService", () => {
       const direct = await AttachmentsService.createDirectUpload(owner, uploadParams(owner.userId));
       const { attachment } = await AttachmentsService.attach(owner, direct.signedId);
 
-      await expect(AttachmentsService.detach(other, attachment.id)).rejects.toThrow(ForbiddenError);
+      expect(AttachmentsService.detach(other, attachment.id)).rejects.toThrow(ForbiddenError);
     });
   });
 });

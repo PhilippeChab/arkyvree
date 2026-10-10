@@ -49,10 +49,8 @@ describe("ClassSkillsService", () => {
   test("refuses changes from anyone but the owner", async () => {
     const { ruleset, fighter, climb } = await setup();
     const { session: other } = await createTestUserAndRuleset();
-    await expect(ClassSkillsService.addClassSkill(other, ruleset.id, fighter.id, climb.id)).rejects.toThrow(
-      ForbiddenError,
-    );
-    await expect(ClassSkillsService.removeClassSkill(other, ruleset.id, fighter.id, climb.id)).rejects.toThrow(
+    expect(ClassSkillsService.addClassSkill(other, ruleset.id, fighter.id, climb.id)).rejects.toThrow(ForbiddenError);
+    expect(ClassSkillsService.removeClassSkill(other, ruleset.id, fighter.id, climb.id)).rejects.toThrow(
       ForbiddenError,
     );
   });
@@ -74,7 +72,7 @@ describe("ClassSkillsService", () => {
     const character = await createTestCharacter(user.id, { rulesetId: ruleset.id });
     await addCharacterLevel(character.id, klassLevel.id);
 
-    await expect(ClassSkillsService.removeClassSkill(session, ruleset.id, fighter.id, climb.id)).rejects.toThrow(
+    expect(ClassSkillsService.removeClassSkill(session, ruleset.id, fighter.id, climb.id)).rejects.toThrow(
       ConflictError,
     );
   });

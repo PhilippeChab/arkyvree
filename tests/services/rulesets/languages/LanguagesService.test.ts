@@ -36,6 +36,6 @@ describe("LanguagesService", () => {
     const character = await createTestCharacter(user.id, { rulesetId: host.id });
     await db.insert(languagesInCharacter).values({ characterId: character.id, languageId: language.id });
 
-    await expect(LanguagesService.deleteLanguage(session, extension.id, language.id)).rejects.toThrow(ConflictError);
+    expect(LanguagesService.deleteLanguage(session, extension.id, language.id)).rejects.toThrow(ConflictError);
   });
 });

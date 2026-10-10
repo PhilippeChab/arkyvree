@@ -177,12 +177,12 @@ describe("TargetPathsService", () => {
       );
     expect(await check("{{ floor([classes.ranger.level] / 2) }}")).toBe("number");
     expect(await check("{{ [abilities.charisma.modifier] }}")).toBe("number");
-    await expect(check("{{ [classes.rangr.level] }}")).rejects.toThrow(
+    expect(check("{{ [classes.rangr.level] }}")).rejects.toThrow(
       "classes.rangr.level isn't a path a template can read",
     );
-    await expect(check("{{ round([classes.ranger.level]) }}")).rejects.toThrow('Unknown function "round"');
-    await expect(check("{{ [abilities.*.modifier] }}")).rejects.toThrow("isn't a path a template can read");
-    await expect(check("{{ [identity.physiology.name] + 1 }}")).rejects.toThrow("arithmetic takes numbers");
+    expect(check("{{ round([classes.ranger.level]) }}")).rejects.toThrow('Unknown function "round"');
+    expect(check("{{ [abilities.*.modifier] }}")).rejects.toThrow("isn't a path a template can read");
+    expect(check("{{ [identity.physiology.name] + 1 }}")).rejects.toThrow("arithmetic takes numbers");
   });
 
   test("leaves totals to requirements", async () => {
@@ -349,7 +349,7 @@ describe("TargetPathsService", () => {
   });
 
   test("throws NotFoundError for a missing ruleset", async () => {
-    await expect(TargetPathsService.validatePath(NIL_UUID, "combat.ac.misc")).rejects.toThrow(NotFoundError);
+    expect(TargetPathsService.validatePath(NIL_UUID, "combat.ac.misc")).rejects.toThrow(NotFoundError);
   });
 
   describe("completing a path", () => {

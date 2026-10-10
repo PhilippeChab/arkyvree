@@ -25,7 +25,7 @@ test("a rejected repository write remains handled and subsequent reads work", as
     const cached = Rulesets.findOne(db, { id: ctx.rulesetId });
     await cached;
     // A nested transaction rolls the real constraint failure back to a savepoint.
-    await expect(
+    expect(
       db.transaction((tx) =>
         Requirements.create(tx, {
           entityId: ctx.featMap.Toughness,
@@ -63,5 +63,5 @@ test("a query whose where matches none of its branches throws, instead of writin
     () => Characters.findOne(db, unmatched),
     () => Users.findOne(db, unmatched),
   ])
-    await expect(write()).rejects.toThrow("a where that matches none of its branches");
+    expect(write()).rejects.toThrow("a where that matches none of its branches");
 });

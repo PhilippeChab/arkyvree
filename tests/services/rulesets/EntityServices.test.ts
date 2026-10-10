@@ -213,9 +213,9 @@ describe.each(ENTITY_TYPES)("%s service", (entityType) => {
     const entity = await service.create(session, ruleset.id, "Guarded Entity", refs);
     const { session: other, ruleset: otherRuleset } = await createTestUserAndRuleset();
 
-    await expect(service.create(other, ruleset.id, "Intruder", refs)).rejects.toThrow(ForbiddenError);
-    await expect(service.update(other, ruleset.id, entity.id, "Hijacked", refs)).rejects.toThrow(ForbiddenError);
-    await expect(service.remove(other, ruleset.id, entity.id)).rejects.toThrow(ForbiddenError);
+    expect(service.create(other, ruleset.id, "Intruder", refs)).rejects.toThrow(ForbiddenError);
+    expect(service.update(other, ruleset.id, entity.id, "Hijacked", refs)).rejects.toThrow(ForbiddenError);
+    expect(service.remove(other, ruleset.id, entity.id)).rejects.toThrow(ForbiddenError);
     // Reading it through a ruleset it isn't part of doesn't find it either.
     await expectRefusedWith(service.get(otherRuleset.id, entity.id), 404);
   });

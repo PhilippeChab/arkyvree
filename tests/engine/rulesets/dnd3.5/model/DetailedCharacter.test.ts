@@ -448,12 +448,12 @@ describe("DetailedCharacter", () => {
         height: "180",
         weight: "80",
       };
-      await expect(
+      expect(
         buildAs(DetailedCharacter, { ...character, rulesetId: NIL_UUID, raceId: NIL_UUID } as Character),
       ).rejects.toThrow("Ruleset not found");
-      await expect(
-        buildAs(DetailedCharacter, { ...character, rulesetId, raceId: NIL_UUID } as Character),
-      ).rejects.toThrow("Race not found");
+      expect(buildAs(DetailedCharacter, { ...character, rulesetId, raceId: NIL_UUID } as Character)).rejects.toThrow(
+        "Race not found",
+      );
     });
 
     test("builds in the scope its caller holds: it reads no ruleset and composes no view, for the same sheet", async () => {

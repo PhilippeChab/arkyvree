@@ -8,6 +8,12 @@
  * - an e2e test selects by role and accessible name, never by test id (the production build strips MUI's), and takes
  *   `test` from `tests/e2e/fixtures.ts`, which every journey's users come from (`expect` from Playwright's).
  *
+ * And `sync-expects`: Bun's matchers are synchronous, `.resolves` / `.rejects` included (they block until the promise
+ * settles, and throw), and its types have them return `void`: an `await` before a `bun:test` `expect(…)` waits for
+ * nothing and reads as if it did (`--fix` drops it). Revisit on a Bun upgrade whose types have a matcher return a
+ * promise: the rule then flips back for it, or a failing test would pass unnoticed. Playwright's `expect` (the e2e
+ * tests'), whose web-first assertions wait, is another import, which the rule leaves alone.
+ *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
 
@@ -16,6 +22,32 @@ import { repoPath } from "./paths.mjs";
 const MOCKS = new Set(["mock", "spyOn", "jest"]);
 const SKIPPING = new Set(["skip", "only", "todo", "skipIf", "if", "failing", "fixme"]);
 const TEST_FUNCTIONS = new Set(["test", "it", "describe"]);
+
+/** An `await`'s keyword and the space after it, short of a parenthesis its argument may open. */
+function awaitKeywordOf(node, text) {
+  const [start] = rangeOf(node);
+  return [start, start + /^await\s*/.exec(text.slice(start, rangeOf(node.argument)[0]))[0].length];
+}
+
+/** An `await` on a `bun:test` `expect(…)`, whose matchers return no promise: the `await` goes. */
+function createSyncExpects(context) {
+  const expectNames = new Set();
+  return {
+    ImportDeclaration(node) {
+      if (node.source.value !== "bun:test") return;
+      for (const s of node.specifiers ?? [])
+        if (s.type === "ImportSpecifier" && s.imported.name === "expect") expectNames.add(s.local.name);
+    },
+    AwaitExpression(node) {
+      if (!isExpectChain(node.argument, expectNames)) return;
+      context.report({
+        node,
+        message: "Bun's matchers are synchronous, `.resolves` / `.rejects` included: an `expect(…)` takes no `await`.",
+        fix: (fixer) => fixer.removeRange(awaitKeywordOf(node, context.sourceCode.text)),
+      });
+    },
+  };
+}
 
 function createTestConventions(context) {
   const file = repoPath(context.filename);
@@ -89,6 +121,22 @@ function createTestConventions(context) {
   };
 }
 
+/** Whether `node` is an `expect(…)` chain (`.not`, `.rejects`, its matcher) of one of `expectNames`. */
+function isExpectChain(node, expectNames) {
+  let current = node;
+  while (current.type === "CallExpression" || current.type === "MemberExpression") {
+    if (current.type === "CallExpression" && current.callee.type === "Identifier")
+      return expectNames.has(current.callee.name);
+    current = current.type === "CallExpression" ? current.callee : current.object;
+  }
+  return false;
+}
+
+function rangeOf(node) {
+  return node.range ?? [node.start, node.end];
+}
+
 export default {
+  "sync-expects": { meta: { type: "suggestion", fixable: "code" }, create: createSyncExpects },
   "test-conventions": { meta: { type: "problem" }, create: createTestConventions },
 };

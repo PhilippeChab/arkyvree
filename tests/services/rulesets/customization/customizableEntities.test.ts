@@ -47,6 +47,6 @@ describe("customizableEntities", () => {
       expect(await checkCustomizedEntity(customization)).toBeUndefined();
 
     for (const customization of [modifierOn(NIL_UUID, "items"), propertyOn(NIL_UUID, "races")])
-      await expect(checkCustomizedEntity(customization)).rejects.toThrow(NotFoundError);
+      expect(checkCustomizedEntity(customization)).rejects.toThrow(NotFoundError);
   });
 });

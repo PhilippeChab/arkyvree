@@ -268,19 +268,19 @@ describe("InventoryService", () => {
         [10, null],
         [null, 5],
       ] as [number | null, number | null][])
-        await expect(add(session, character.id, item.id, { charges })).rejects.toMatchObject({ refusal: "invalid" });
+        expect(add(session, character.id, item.id, { charges })).rejects.toMatchObject({ refusal: "invalid" });
 
       await add(session, character.id, item.id, { charges: [10, 10] });
-      await expect(update(session, character.id, item.id, { charges: [10, 20] })).rejects.toMatchObject({
+      expect(update(session, character.id, item.id, { charges: [10, 20] })).rejects.toMatchObject({
         refusal: "invalid",
       });
     });
 
     test("refuses a missing item and changes to an entry the character doesn't have", async () => {
       const { session, character } = await setup();
-      await expect(add(session, character.id, NIL_UUID)).rejects.toThrow(NotFoundError);
-      await expect(update(session, character.id, NIL_UUID)).rejects.toThrow(NotFoundError);
-      await expect(remove(session, character.id, NIL_UUID)).rejects.toThrow(NotFoundError);
+      expect(add(session, character.id, NIL_UUID)).rejects.toThrow(NotFoundError);
+      expect(update(session, character.id, NIL_UUID)).rejects.toThrow(NotFoundError);
+      expect(remove(session, character.id, NIL_UUID)).rejects.toThrow(NotFoundError);
     });
 
     test("refuses a missing character, another user's, and changes to an archived one", async () => {
@@ -295,20 +295,18 @@ describe("InventoryService", () => {
       ];
       // One at a time: the test's transaction has a single connection.
       for (const call of [...calls(session, NIL_UUID), ...calls(other, character.id)])
-        await expect(call()).rejects.toThrow(NotFoundError);
+        expect(call()).rejects.toThrow(NotFoundError);
 
       await CharactersService.archiveCharacter(session, character.id);
-      await expect(add(session, character.id, (await newItem()).id)).rejects.toThrow(NotFoundError);
-      await expect(update(session, character.id, item.id, { quantity: 2 })).rejects.toThrow(NotFoundError);
+      expect(add(session, character.id, (await newItem()).id)).rejects.toThrow(NotFoundError);
+      expect(update(session, character.id, item.id, { quantity: 2 })).rejects.toThrow(NotFoundError);
     });
 
     test("refuses an edit started from a stale copy", async () => {
       const { session, character, item } = await setup();
       const added = await add(session, character.id, item.id);
       await update(session, character.id, item.id, { quantity: 2 }, added.updatedAt);
-      await expect(update(session, character.id, item.id, { quantity: 3 }, added.updatedAt)).rejects.toThrow(
-        ConflictError,
-      );
+      expect(update(session, character.id, item.id, { quantity: 3 }, added.updatedAt)).rejects.toThrow(ConflictError);
     });
 
     test("takes an item the character's ruleset inherits, however far up, and not one of an unrelated ruleset", async () => {
@@ -338,7 +336,7 @@ describe("InventoryService", () => {
 
       // A character of the seeded ruleset: the item's ruleset is unrelated to it.
       const onSeed = await createCharacterAs(session);
-      await expect(add(session, onSeed.id, inherited.id)).rejects.toMatchObject({ refusal: "invalid" });
+      expect(add(session, onSeed.id, inherited.id)).rejects.toMatchObject({ refusal: "invalid" });
     });
   });
 
@@ -350,20 +348,20 @@ describe("InventoryService", () => {
         await newItem({ type: "Armor" }),
         await newItem({ type: "Shield" }),
       ];
-      await expect(add(session, character.id, weapon.id, equipped("Trinket"))).rejects.toThrow(
+      expect(add(session, character.id, weapon.id, equipped("Trinket"))).rejects.toThrow(
         "Weapons can only be equipped in hand slots",
       );
-      await expect(add(session, character.id, armor.id, equipped("Head"))).rejects.toThrow(
+      expect(add(session, character.id, armor.id, equipped("Head"))).rejects.toThrow(
         "Body armor can only be equipped in the Torso slot",
       );
-      await expect(add(session, character.id, shield.id, equipped("Head"))).rejects.toThrow(
+      expect(add(session, character.id, shield.id, equipped("Head"))).rejects.toThrow(
         "Shields can only be equipped in the Off Hand slot",
       );
       // A hand holds weapons and shields only, and a shield only the off hand
-      await expect(add(session, character.id, armor.id, equipped("Main Hand", 0))).rejects.toThrow(
+      expect(add(session, character.id, armor.id, equipped("Main Hand", 0))).rejects.toThrow(
         "Body armor can only be equipped in the Torso slot",
       );
-      await expect(add(session, character.id, shield.id, equipped("Main Hand", 0))).rejects.toThrow(
+      expect(add(session, character.id, shield.id, equipped("Main Hand", 0))).rejects.toThrow(
         "Shields can only be equipped in the Off Hand slot",
       );
 
@@ -381,10 +379,10 @@ describe("InventoryService", () => {
       const { session, character, item, newItem } = await setup();
       const shield = await newItem({ type: "Shield" });
       const message = "A weapon set is required when equipping to a hand slot";
-      await expect(add(session, character.id, item.id, equipped("Main Hand"))).rejects.toThrow(message);
-      await expect(add(session, character.id, shield.id, equipped("Off Hand"))).rejects.toThrow(message);
+      expect(add(session, character.id, item.id, equipped("Main Hand"))).rejects.toThrow(message);
+      expect(add(session, character.id, shield.id, equipped("Off Hand"))).rejects.toThrow(message);
       await add(session, character.id, item.id);
-      await expect(update(session, character.id, item.id, equipped("Main Hand"))).rejects.toThrow(message);
+      expect(update(session, character.id, item.id, equipped("Main Hand"))).rejects.toThrow(message);
     });
 
     test("fills each slot once per weapon set, a two-handed weapon taking both hands, and two rings", async () => {
@@ -395,18 +393,18 @@ describe("InventoryService", () => {
       const equip = (itemId: string, placement: Placement) => add(session, character.id, itemId, placement);
 
       await equip(helm, equipped("Head"));
-      await expect(equip(otherHelm, equipped("Head"))).rejects.toMatchObject({ refusal: "invalid" });
+      expect(equip(otherHelm, equipped("Head"))).rejects.toMatchObject({ refusal: "invalid" });
 
       await equip(sword, equipped("Main Hand", 0));
-      await expect(equip(greatsword, equipped("Two Handed", 0))).rejects.toMatchObject({ refusal: "invalid" });
+      expect(equip(greatsword, equipped("Two Handed", 0))).rejects.toMatchObject({ refusal: "invalid" });
       expect(await equip(greatsword, equipped("Two Handed", 1))).toMatchObject({
         location: "Two Handed",
         weaponSet: 1,
       });
-      await expect(equip(otherGreatsword, equipped("Two Handed", 1))).rejects.toThrow(
+      expect(equip(otherGreatsword, equipped("Two Handed", 1))).rejects.toThrow(
         /^Two Handed is occupied by Test Item .* \(Set 2\)$/,
       );
-      await expect(equip(dagger, equipped("Main Hand", 1))).rejects.toMatchObject({ refusal: "invalid" });
+      expect(equip(dagger, equipped("Main Hand", 1))).rejects.toMatchObject({ refusal: "invalid" });
       expect(await equip(otherGreatsword, equipped("Two Handed", 2))).toMatchObject({ weaponSet: 2 });
       // A weapon doesn't block its own slot.
       expect(
@@ -417,8 +415,8 @@ describe("InventoryService", () => {
       const [first, second, third] = rings;
       await equip(first, equipped("Finger"));
       await equip(second, equipped("Finger"));
-      await expect(equip(third, equipped("Finger"))).rejects.toMatchObject({ refusal: "invalid" });
-      await expect(update(session, character.id, dagger, equipped("Off Hand", 0))).resolves.toMatchObject({
+      expect(equip(third, equipped("Finger"))).rejects.toMatchObject({ refusal: "invalid" });
+      expect(update(session, character.id, dagger, equipped("Off Hand", 0))).resolves.toMatchObject({
         location: "Off Hand",
       });
     });
@@ -445,14 +443,14 @@ describe("InventoryService", () => {
 
         const attempt = add(session, character.id, weapon.id, equipped(slot, 0));
         if (outcome === "allowed") expect(await attempt).toMatchObject({ equipped: true, location: slot });
-        else await expect(attempt).rejects.toThrow(outcome);
+        else expect(attempt).rejects.toThrow(outcome);
       },
     );
 
     test("needs both hands for a bow, whatever its size", async () => {
       const { session, character } = await setup();
       const shortbow = (await getSeedCtx()).itemMap["Shortbow"];
-      await expect(add(session, character.id, shortbow, equipped("Main Hand", 0))).rejects.toThrow(
+      expect(add(session, character.id, shortbow, equipped("Main Hand", 0))).rejects.toThrow(
         "This weapon requires two hands",
       );
       // Forced past the martial proficiency the character lacks.
@@ -467,7 +465,7 @@ describe("InventoryService", () => {
       const session = makeSession();
       const { itemMap } = await getSeedCtx();
       await remove(session, lyra.id, itemMap["Studded Leather"]);
-      await expect(add(session, lyra.id, itemMap["Chain Mail"], equipped("Torso"))).rejects.toThrow(
+      expect(add(session, lyra.id, itemMap["Chain Mail"], equipped("Torso"))).rejects.toThrow(
         "Character does not meet the requirements to equip this item",
       );
       for (const armor of ["Elven Chain", "Celestial Armor"]) {
@@ -483,7 +481,7 @@ describe("InventoryService", () => {
       const second = await add(session, character.id, dagger, equipped("Off Hand", 0));
       expect(second.id).not.toBe(first.id);
       // The other dagger takes the main hand: the second can't go there, but moving the first within its hand is fine
-      await expect(
+      expect(
         CharacterInventoryService.updateItem(session, character.id, second.id, 1, true, "Main Hand", null, null, 0),
       ).rejects.toThrow("Main Hand is occupied by Dagger (Set 1)");
       expect(
@@ -548,7 +546,7 @@ describe("InventoryService", () => {
       await strengthAtLeast(variant.id, "30");
       RulesetViews.invalidate(character.rulesetId);
 
-      await expect(add(session, character.id, variant.id, equipped("Torso"))).rejects.toMatchObject({
+      expect(add(session, character.id, variant.id, equipped("Torso"))).rejects.toMatchObject({
         refusal: "invalid",
       });
     });
@@ -567,7 +565,7 @@ describe("InventoryService", () => {
       });
       RulesetViews.invalidate(character.rulesetId);
 
-      await expect(add(session, character.id, armor.id, equipped("Torso"))).rejects.toMatchObject({
+      expect(add(session, character.id, armor.id, equipped("Torso"))).rejects.toMatchObject({
         refusal: "invalid",
       });
       expect(await add(session, character.id, armor.id, { ...equipped("Torso"), force: true })).toMatchObject({

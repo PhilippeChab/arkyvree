@@ -162,7 +162,7 @@ describe("requestCache — memoizeRequest primitive", () => {
         return callCount === 1 ? Promise.reject(new Error("boom")) : Promise.resolve("ok");
       };
 
-      await expect(memoizeRequest("retry-key", failThenSucceed)).rejects.toThrow("boom");
+      expect(memoizeRequest("retry-key", failThenSucceed)).rejects.toThrow("boom");
 
       // Second call must actually re-invoke the fn — the cache must not have
       // retained the rejected promise from the first attempt.

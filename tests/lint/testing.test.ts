@@ -1,6 +1,6 @@
 import { describe, expect, setDefaultTimeout, test } from "bun:test";
 
-import { lintRepo } from "./lintRepo.ts";
+import { fixRepo, lines, lintRepo } from "./lintRepo.ts";
 
 // Each test runs oxlint, which a busy suite can slow past the default 5s.
 setDefaultTimeout(30_000);
@@ -36,5 +36,48 @@ describe("test rules", () => {
       "test-conventions tests/services/d.test.ts",
       "test-conventions tests/services/j.test.ts",
     ]);
+  });
+
+  test("an awaited bun:test expect, a .resolves / .rejects chain too, loses its await with --fix; Playwright's keeps it", async () => {
+    const files = {
+      "tests/services/a.test.ts": lines(
+        'import { expect as check, test } from "bun:test";',
+        "",
+        'test("a", async () => {',
+        "  await check(1).toBe(1);",
+        "  await check(2).not.toEqual(3);",
+        "  await (check(4).toBe(4));",
+        "  await check(Promise.resolve(5)).resolves.toBe(5);",
+        '  await check(Promise.reject(new Error("x")))',
+        '    .rejects.toThrow("x");',
+        "});",
+      ),
+      "tests/e2e/journeys/b.e2e.ts": lines(
+        'import { expect } from "@playwright/test";',
+        "",
+        'import { test } from "../fixtures.ts";',
+        "",
+        'test("b", async ({ page }) => {',
+        '  await expect(page.getByRole("button", { name: "Save" })).toBeVisible();',
+        "});",
+      ),
+    };
+    expect(await lintRepo(files, ["sync-expects"])).toEqual(Array(5).fill("sync-expects tests/services/a.test.ts"));
+    const out = await fixRepo(files, ["sync-expects"]);
+    expect(out["tests/services/a.test.ts"]).toBe(
+      lines(
+        'import { expect as check, test } from "bun:test";',
+        "",
+        'test("a", async () => {',
+        "  check(1).toBe(1);",
+        "  check(2).not.toEqual(3);",
+        "  (check(4).toBe(4));",
+        "  check(Promise.resolve(5)).resolves.toBe(5);",
+        '  check(Promise.reject(new Error("x")))',
+        '    .rejects.toThrow("x");',
+        "});",
+      ),
+    );
+    expect(out["tests/e2e/journeys/b.e2e.ts"]).toBe(files["tests/e2e/journeys/b.e2e.ts"]);
   });
 });

@@ -59,9 +59,9 @@ describe("CampaignsService", () => {
       const { user: outsider, session } = await createTestUser("outsider");
       const ruleset = await createSeededTestRuleset(owner.id);
 
-      await expect(
-        CampaignsService.createCampaign(session, { name: "Unauthorized", rulesetId: ruleset.id }),
-      ).rejects.toThrow(ForbiddenError);
+      expect(CampaignsService.createCampaign(session, { name: "Unauthorized", rulesetId: ruleset.id })).rejects.toThrow(
+        ForbiddenError,
+      );
       expect(await Campaigns.count(db, { userId: outsider.id })).toBe(0);
 
       const { campaign } = await CampaignsService.createCampaign(ownerSession, {
@@ -78,14 +78,14 @@ describe("CampaignsService", () => {
     test("refuses archived rulesets and extensions", async () => {
       const { user, session } = await createTestUser();
       const archived = await createSeededTestRuleset(user.id, { status: "Archived" });
-      await expect(
-        CampaignsService.createCampaign(session, { name: "Archived", rulesetId: archived.id }),
-      ).rejects.toThrow("active playable ruleset");
+      expect(CampaignsService.createCampaign(session, { name: "Archived", rulesetId: archived.id })).rejects.toThrow(
+        "active playable ruleset",
+      );
       const extension = await createSeededTestRuleset(user.id, { status: "Published" });
       await Rulesets.update(db, { kind: "extension" }, { id: extension.id });
-      await expect(
-        CampaignsService.createCampaign(session, { name: "Extension", rulesetId: extension.id }),
-      ).rejects.toThrow("active playable ruleset");
+      expect(CampaignsService.createCampaign(session, { name: "Extension", rulesetId: extension.id })).rejects.toThrow(
+        "active playable ruleset",
+      );
     });
   });
 
@@ -135,7 +135,7 @@ describe("CampaignsService", () => {
         description: "Test description",
         currentUserRole: "Game Master",
       });
-      await expect(CampaignsService.getCampaign(session, NIL_UUID)).rejects.toThrow(NotFoundError);
+      expect(CampaignsService.getCampaign(session, NIL_UUID)).rejects.toThrow(NotFoundError);
     });
   });
 
@@ -154,13 +154,11 @@ describe("CampaignsService", () => {
     test("is for the Game Master only", async () => {
       const { campaign, player, stranger } = await setup();
       for (const session of [player, stranger]) {
-        await expect(CampaignsService.updateCampaign(session, campaign.id, { name: "Hacked" })).rejects.toThrow(
+        expect(CampaignsService.updateCampaign(session, campaign.id, { name: "Hacked" })).rejects.toThrow(
           ForbiddenError,
         );
       }
-      await expect(CampaignsService.updateCampaign(stranger, NIL_UUID, { name: "Missing" })).rejects.toThrow(
-        NotFoundError,
-      );
+      expect(CampaignsService.updateCampaign(stranger, NIL_UUID, { name: "Missing" })).rejects.toThrow(NotFoundError);
     });
   });
 
@@ -180,14 +178,14 @@ describe("CampaignsService", () => {
     test("is for the Game Master only", async () => {
       const { gm, campaign, player, stranger } = await setup();
       for (const session of [player, stranger])
-        await expect(CampaignsService.archiveCampaign(session, campaign.id)).rejects.toThrow(ForbiddenError);
+        expect(CampaignsService.archiveCampaign(session, campaign.id)).rejects.toThrow(ForbiddenError);
 
       await CampaignsService.archiveCampaign(gm, campaign.id);
       for (const session of [player, stranger])
-        await expect(CampaignsService.unarchiveCampaign(session, campaign.id)).rejects.toThrow(ForbiddenError);
+        expect(CampaignsService.unarchiveCampaign(session, campaign.id)).rejects.toThrow(ForbiddenError);
 
-      await expect(CampaignsService.archiveCampaign(gm, NIL_UUID)).rejects.toThrow(NotFoundError);
-      await expect(CampaignsService.unarchiveCampaign(gm, NIL_UUID)).rejects.toThrow(NotFoundError);
+      expect(CampaignsService.archiveCampaign(gm, NIL_UUID)).rejects.toThrow(NotFoundError);
+      expect(CampaignsService.unarchiveCampaign(gm, NIL_UUID)).rejects.toThrow(NotFoundError);
     });
   });
 
@@ -202,9 +200,9 @@ describe("CampaignsService", () => {
 
     test("refuses a campaign that isn't archived, and anyone but the Game Master", async () => {
       const { gm, campaign, player } = await setup();
-      await expect(CampaignsService.hardDeleteCampaign(gm, campaign.id)).rejects.toThrow(NotFoundError);
+      expect(CampaignsService.hardDeleteCampaign(gm, campaign.id)).rejects.toThrow(NotFoundError);
       await CampaignsService.archiveCampaign(gm, campaign.id);
-      await expect(CampaignsService.hardDeleteCampaign(player, campaign.id)).rejects.toThrow(ForbiddenError);
+      expect(CampaignsService.hardDeleteCampaign(player, campaign.id)).rejects.toThrow(ForbiddenError);
       expect(await Campaigns.findOne(db, { id: campaign.id }, Visibility.All)).toBeDefined();
     });
   });
