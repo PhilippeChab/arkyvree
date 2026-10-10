@@ -3,9 +3,9 @@ import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellLists.ts";
-import { getNumericOperators } from "@/shared/customization/operators.ts";
+import { getOperators } from "@/shared/customization/operators.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
-import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
+import { deriveNameLabels, deriveSegmentLabels, isLeafOfKind, type TargetPath } from "@/shared/customization/target.ts";
 import { SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
 import { toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
 import type { Aptitude, PowerWithAptitudes, Property } from "@/shared/relations.ts";
@@ -32,7 +32,7 @@ export default class PowersPaths implements PathCategory<Dnd35Components> {
 
     for (const grouping of powerGroupings) {
       for (const subPath of NAVIGATABLE_POWER_DC_PATHS) {
-        if ("requirementOnly" in subPath && subPath.requirementOnly && kind === "modifier") continue;
+        if (!isLeafOfKind(subPath, kind)) continue;
         const prefix = groupLabel ? `${capitalize(grouping)} ${groupLabel}` : capitalize(grouping);
         const leaf = subPath.path.slice("dc.".length);
         paths.push({
@@ -41,7 +41,7 @@ export default class PowersPaths implements PathCategory<Dnd35Components> {
           description: `${kind === "requirement" ? "Any" : "All"} ${prefix} — ${subPath.description}`,
           ...(groupLabel && { groupDescription: `${capitalize(grouping)} ${groupLabel} spells` }),
           valueType: subPath.type,
-          operators: getNumericOperators(kind),
+          operators: getOperators(subPath.type, kind),
         });
       }
     }
@@ -99,7 +99,7 @@ export default class PowersPaths implements PathCategory<Dnd35Components> {
           category: "powers",
           description: `Whether ${power.name} is known`,
           valueType: "boolean",
-          operators: kind === "modifier" ? ["set"] : ["equal", "not_equal"],
+          operators: getOperators("boolean", kind),
         });
       }
     }
@@ -180,9 +180,24 @@ export default class PowersPaths implements PathCategory<Dnd35Components> {
     return {
       properties: "Properties",
       known: "Known",
-      ...deriveSegmentLabels(NAVIGATABLE_POWER_DC_PATHS, { dc: "DC", groups: "Groups" }),
-      // D&D 3.5 surfaces power groupings as schools in the path picker.
-      groups: "Schools",
+      // D&D 3.5 surfaces power groupings as schools in the path picker
+      ...deriveSegmentLabels(NAVIGATABLE_POWER_DC_PATHS, { dc: "DC", groups: "Schools" }),
     };
+  }
+  /**
+   * The ruleset's spells, labeled by their names; and, where no other label names them, each list's possession slug
+   * ("wizard" for Wizard Spells, which a spell's `known` path names), its spells' properties' types and values (a
+   * number names a spell level, never a value).
+   */
+  labelNames(rulesetData: RulesetData) {
+    const fallbacks: Record<string, string> = {};
+    for (const { name } of rulesetData.aptitudes)
+      fallbacks[toSpellPossessionSlug(name)] ??= name.replace(/ Spells$/, "");
+    for (const { type, value } of rulesetData.propertiesByEntityType.get("powers") ?? []) {
+      fallbacks[type] ??= formatPropertyType(type);
+      const slug = stripSeparators(value);
+      if (/[a-z]/.test(slug)) fallbacks[slug] ??= value;
+    }
+    return { fallbacks, names: deriveNameLabels(rulesetData.powers.map(({ name }) => name)) };
   }
 }

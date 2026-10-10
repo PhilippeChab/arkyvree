@@ -2,7 +2,7 @@
 
 import { isOneOf } from "@/shared/isOneOf.ts";
 
-import type { TargetPathKind } from "./target.ts";
+import type { PathValueType, TargetPathKind } from "./target.ts";
 
 type ChainingOperator = (typeof CHAINING_OPERATORS)[number];
 
@@ -48,6 +48,12 @@ const VALUELESS_REQUIREMENT_OPERATORS = ["is_empty", "not_empty"] as const;
 
 export const CHAINING_OPERATORS = ["and", "or"] as const;
 
+/**
+ * The operators a count of levels offers a modifier: it's added to, taken from or set, never multiplied or divided,
+ * which would make a fraction of a level.
+ */
+export const LEVEL_MODIFIER_OPERATORS = ["add", "subtract", "set"] as const;
+
 export const MODIFIER_OPERATORS = ["add", "subtract", "multiply", "divide", "set"] as const;
 
 /** The requirement operators that compare a number: what a numeric target path offers a requirement. */
@@ -83,9 +89,29 @@ export function formatOperator(kind: OperatorKind, operator: string): string {
   return Object.hasOwn(labels, operator) ? labels[operator] : operator;
 }
 
-/** The operators a numeric target path offers a modifier, or a requirement. */
-export function getNumericOperators(kind: OperatorKind): string[] {
-  return kind === "modifier" ? [...MODIFIER_OPERATORS] : [...NUMERIC_REQUIREMENT_OPERATORS];
+/**
+ * The operators a numeric target path offers a modifier (`modifierOperators`: every arithmetic one, unless its path
+ * counts something narrower), or a requirement.
+ */
+export function getNumericOperators(
+  kind: OperatorKind,
+  modifierOperators: readonly string[] = MODIFIER_OPERATORS,
+): string[] {
+  return kind === "modifier" ? [...modifierOperators] : [...NUMERIC_REQUIREMENT_OPERATORS];
+}
+
+/**
+ * The operators a target path of a value type offers a modifier, or a requirement: a number's (`getNumericOperators`,
+ * `modifierOperators` its modifier's), and any other value's, which a modifier sets and a requirement compares for
+ * equality.
+ */
+export function getOperators(
+  valueType: PathValueType,
+  kind: OperatorKind,
+  modifierOperators?: readonly string[],
+): string[] {
+  if (valueType === "number") return getNumericOperators(kind, modifierOperators);
+  return kind === "modifier" ? ["set"] : ["equal", "not_equal"];
 }
 
 /** Whether a requirement's operator checks its target alone, with no value to compare it to. */

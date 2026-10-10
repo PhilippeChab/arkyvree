@@ -1,8 +1,8 @@
 import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
-import { getNumericOperators } from "@/shared/customization/operators.ts";
-import { deriveSegmentLabels, type TargetPath } from "@/shared/customization/target.ts";
+import { getNumericOperators, getOperators } from "@/shared/customization/operators.ts";
+import { deriveNameLabels, deriveSegmentLabels, isLeafOfKind, type TargetPath } from "@/shared/customization/target.ts";
 import type { RulesetAbility } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -25,13 +25,13 @@ export default class AbilitiesPaths implements PathCategory<Dnd35Components> {
       const normalizedAbilityName = stripSeparators(ability.name);
 
       for (const subPath of NAVIGATABLE_PATHS) {
-        if ("requirementOnly" in subPath && subPath.requirementOnly && kind === "modifier") continue;
+        if (!isLeafOfKind(subPath, kind)) continue;
         paths.push({
           path: `abilities.${normalizedAbilityName}.${subPath.path}`,
           category: "abilities",
           description: subPath.description,
           valueType: subPath.type,
-          operators: getNumericOperators(kind),
+          operators: getOperators(subPath.type, kind),
         });
       }
     }
@@ -64,5 +64,10 @@ export default class AbilitiesPaths implements PathCategory<Dnd35Components> {
 
   getSegmentLabels(): Record<string, string> {
     return deriveSegmentLabels(NAVIGATABLE_PATHS);
+  }
+
+  /** The ruleset's abilities, labeled by their names. */
+  labelNames(rulesetData: RulesetData) {
+    return { names: deriveNameLabels(rulesetData.abilities.map(({ name }) => name)) };
   }
 }

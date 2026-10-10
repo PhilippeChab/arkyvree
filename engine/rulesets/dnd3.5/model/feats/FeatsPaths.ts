@@ -2,9 +2,10 @@ import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { FEAT_FIELDS } from "@/engine/rulesets/dnd3.5/entities/feats/fields.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
-import { NUMERIC_REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
-import type { TargetPath } from "@/shared/customization/target.ts";
+import { getOperators } from "@/shared/customization/operators.ts";
+import { deriveNameLabels, deriveSegmentLabels, isLeafOfKind, type TargetPath } from "@/shared/customization/target.ts";
 import { FEAT_FAMILIES } from "@/shared/dnd3.5/feats.ts";
+import { FEAT_FAMILY } from "@/shared/dnd3.5/properties/index.ts";
 import type { Feat } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -23,6 +24,11 @@ const FEAT_PATHS = [
     stackableOnly: true,
   },
 ];
+
+/** Every family the rules know, by its slug: listed whether a feat of the ruleset is in it or not. */
+const KNOWN_FAMILY_LABELS: Record<string, string> = Object.fromEntries(
+  FEAT_FAMILIES.map((family) => [stripSeparators(family), family]),
+);
 
 /**
  * A family's `count`: how many times the character has its feats, all together (every class's sneak attack dice). It's
@@ -48,19 +54,14 @@ export default class FeatsPaths implements PathCategory<Dnd35Components> {
     for (const grouping of featGroupings) {
       const displayName = labels[grouping] || grouping;
       for (const subPath of FAMILY_PATHS) {
-        if (subPath.requirementOnly && kind === "modifier") continue;
+        if (!isLeafOfKind(subPath, kind)) continue;
         paths.push({
           path: `feats.${grouping}.*.${subPath.path}`,
           category: "feats",
           description: `${kind === "requirement" ? "Any" : "All"} ${displayName} feats — ${subPath.description}`,
           groupDescription: `${kind === "requirement" ? "Any" : "All"} ${displayName} feats`,
           valueType: subPath.type,
-          operators:
-            kind === "modifier"
-              ? ["set"]
-              : subPath.type === "number"
-                ? [...NUMERIC_REQUIREMENT_OPERATORS]
-                : ["equal", "not_equal"],
+          operators: getOperators(subPath.type, kind),
         });
       }
       if (kind === "requirement" && !featKeys.has(grouping)) {
@@ -70,7 +71,7 @@ export default class FeatsPaths implements PathCategory<Dnd35Components> {
           description: `${displayName} feats — Times taken, all together`,
           groupDescription: `${displayName} feats`,
           valueType: "number",
-          operators: [...NUMERIC_REQUIREMENT_OPERATORS],
+          operators: getOperators("number", kind),
         });
       }
     }
@@ -85,7 +86,7 @@ export default class FeatsPaths implements PathCategory<Dnd35Components> {
       const normalizedFeatName = stripSeparators(feat.name);
 
       for (const subPath of FEAT_PATHS) {
-        if ("requirementOnly" in subPath && subPath.requirementOnly && kind === "modifier") continue;
+        if (!isLeafOfKind(subPath, kind)) continue;
         if ("stackableOnly" in subPath && subPath.stackableOnly && !feat.stackable) continue;
 
         paths.push({
@@ -93,12 +94,7 @@ export default class FeatsPaths implements PathCategory<Dnd35Components> {
           category: "feats",
           description: subPath.description,
           valueType: subPath.type,
-          operators:
-            kind === "modifier"
-              ? ["set"]
-              : subPath.type === "number"
-                ? [...NUMERIC_REQUIREMENT_OPERATORS]
-                : ["equal", "not_equal"],
+          operators: getOperators(subPath.type, kind),
         });
       }
     }
@@ -125,9 +121,7 @@ export default class FeatsPaths implements PathCategory<Dnd35Components> {
 
   /** Every family the rules know, a feat of the ruleset in it or not (an extension's checks of another book's), by its slug. */
   private familyLabels(rulesetData: RulesetData) {
-    const featGroupingLabels: Record<string, string> = Object.fromEntries(
-      FEAT_FAMILIES.map((family) => [stripSeparators(family), family]),
-    );
+    const featGroupingLabels = { ...KNOWN_FAMILY_LABELS };
     // Every family a feat of the ruleset names
     for (const family of FEAT_FIELDS.read(rulesetData.propertiesByEntityType.get("feats") ?? []).families)
       featGroupingLabels[stripSeparators(family)] = family;
@@ -150,6 +144,21 @@ export default class FeatsPaths implements PathCategory<Dnd35Components> {
   }
 
   getSegmentLabels(): Record<string, string> {
-    return { possessed: "Possessed", [FAMILY_COUNT]: "Count" };
+    return deriveSegmentLabels([...FEAT_PATHS, ...FAMILY_PATHS]);
+  }
+
+  /**
+   * The ruleset's feats, labeled by their names; and, where no other label names them, every family the rules know,
+   * its feats' properties' values, and a family's wildcard ("Weapon Focus (Any)").
+   */
+  labelNames(rulesetData: RulesetData) {
+    const fallbacks = { ...KNOWN_FAMILY_LABELS };
+    for (const { type, value } of rulesetData.propertiesByEntityType.get("feats") ?? []) {
+      const slug = stripSeparators(value);
+      if (!slug) continue;
+      fallbacks[slug] ??= value;
+      if (type === FEAT_FAMILY) fallbacks[`${slug}*`] ??= `${value} (Any)`;
+    }
+    return { fallbacks, names: deriveNameLabels(rulesetData.feats.map(({ name }) => name)) };
   }
 }

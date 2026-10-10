@@ -1,3 +1,5 @@
+import { stripSeparators } from "@/shared/text.ts";
+
 export interface PathCompletion {
   detail: string;
   documentation: string;
@@ -71,6 +73,11 @@ export interface TargetPathCatalog {
 /** What a listing offers: a modifier's targets, a requirement's, or the paths a template reads, one value each. */
 export type TargetPathKind = "modifier" | "requirement" | "template";
 
+/** The label of each name's segment (`stripSeparators`): the name, the last of a segment's winning. */
+export function deriveNameLabels(names: string[]): Record<string, string> {
+  return Object.fromEntries(names.map((name) => [stripSeparators(name), name]));
+}
+
 /** The label of each segment of `paths`: its override, else the segment formatted. */
 export function deriveSegmentLabels(
   paths: { path: string }[],
@@ -86,4 +93,15 @@ export function deriveSegmentLabels(
 /** A path segment as a label ("privateNotes" → "Private Notes"). */
 export function formatSegment(segment: string) {
   return segment.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (c) => c.toUpperCase());
+}
+
+/**
+ * Whether a category's leaf (one of its paths' tables) is one of `kind`'s paths: one its sheet computes is a
+ * requirement's only (`requirementOnly`), and one only a modifier changes a modifier's (`modifierOnly`).
+ */
+export function isLeafOfKind(
+  leaf: { modifierOnly?: boolean; requirementOnly?: boolean },
+  kind: Exclude<TargetPathKind, "template">,
+): boolean {
+  return kind === "modifier" ? !leaf.requirementOnly : !leaf.modifierOnly;
 }

@@ -4,6 +4,9 @@ import type { TargetPath } from "@/shared/customization/target.ts";
 import type { Components, TraversePathResult } from "./PathTraverser.ts";
 import type PathTraverser from "./PathTraverser.ts";
 
+/** A category's labels of the ruleset's own names: those over any other label, and those that only fill a gap. */
+type CategoryLabelNames = { fallbacks?: Record<string, string>; names?: Record<string, string> };
+
 /** A component of `C`, by its key, and the getter that hands its data to a path: both checked against `C`. */
 type ComponentSpec<C> = { [K in keyof C & string]: { getter: GetterOf<C[K]>; key: K } }[keyof C & string];
 
@@ -28,6 +31,11 @@ export interface PathCategory<C = Components> {
   groupDescriptionTemplates?: Record<string, string>;
   /** Its name in the path picker */
   label: string;
+  /**
+   * The labels of the ruleset's own names in its paths (its entities', its properties' values): `names` label their
+   * segment over any other label, `fallbacks` only one no other label names
+   */
+  labelNames?(rulesetData: RulesetData): CategoryLabelNames;
   /** A path's first element */
   name: string;
   /**

@@ -80,11 +80,22 @@ export default abstract class CategoryPaths<C = Components> implements TargetPat
 
   protected readonly traverser: PathTraverser;
 
-  /** The labels of the ruleset's own names (its entities', its properties' values), added to the categories'. */
-  protected abstract labelNames(
-    rulesetData: RulesetData,
-    segmentLabels: Record<string, string>,
-  ): Record<string, string>;
+  /**
+   * Each segment's label: the categories' own (`getSegmentLabels`), then the ruleset's names, those that name a segment
+   * over any other label first, those that only fill a gap after (`labelNames`), each category's in its order.
+   */
+  private labelSegments(rulesetData: RulesetData): Record<string, string> {
+    const segmentLabels: Record<string, string> = {
+      "*": "All",
+      ...this.labelOf,
+      ...Object.assign({}, ...this.categories.map((category) => category.getSegmentLabels?.())),
+    };
+    const named = this.categories.map((category) => category.labelNames?.(rulesetData) ?? {});
+    for (const { names } of named) Object.assign(segmentLabels, names);
+    for (const { fallbacks = {} } of named)
+      for (const [segment, label] of Object.entries(fallbacks)) segmentLabels[segment] ??= label;
+    return segmentLabels;
+  }
 
   /** A category's data, from its component's getter, traversed with the rest of the path. */
   private traverseCategory(
@@ -157,14 +168,9 @@ export default abstract class CategoryPaths<C = Components> implements TargetPat
         segmentLabels,
       };
     }
-    const segmentLabels: Record<string, string> = {
-      "*": "All",
-      ...this.labelOf,
-      ...Object.assign({}, ...this.categories.map((category) => category.getSegmentLabels?.())),
-    };
     return {
       paths: this.categories.flatMap((category) => category.generate?.(rulesetData, kind) ?? []),
-      segmentLabels: this.labelNames(rulesetData, segmentLabels),
+      segmentLabels: this.labelSegments(rulesetData),
     };
   }
 
