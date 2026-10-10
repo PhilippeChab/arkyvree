@@ -95,10 +95,13 @@ export default class SpellLists {
     return (this.built.featListIds = featListIds);
   }
 
-  /** The lists leveled by spell: a list with spells at a level, or one a class gives slots in before it has any. */
+  /**
+   * The lists leveled by spell: a list with spells at a level, or one a class or a feat gives slots in before it has
+   * any, or with none of its own (a cleric's domain slot, which his domains' spells fill).
+   */
   get leveledAptitudeIds(): Set<string> {
     if (this.built.leveledAptitudeIds) return this.built.leveledAptitudeIds;
-    const leveledAptitudeIds = new Set(this.classListIds);
+    const leveledAptitudeIds = new Set([...this.classListIds, ...this.featListIds]);
     for (const power of this.rulesetData.powers)
       for (const link of power.powersAptitudesInRules) if (link.level != null) leveledAptitudeIds.add(link.aptitudeId);
     return (this.built.leveledAptitudeIds = leveledAptitudeIds);

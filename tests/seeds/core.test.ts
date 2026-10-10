@@ -8,6 +8,8 @@ import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 import { describeRequirement, seededRows } from "./seededRows.ts";
 
 const bab1 = "2 combat.bab greater_than_or_equal 1";
+/** The cleric level each spell level opens at, the first at the first. */
+const CLERIC_OPENS_AT = [1, 3, 5, 7, 9, 11, 13, 15, 17];
 
 function casterLevel(level: number) {
   return [
@@ -15,6 +17,11 @@ function casterLevel(level: number) {
     `1.1 spellcasting.arcane greater_than_or_equal ${level}`,
     `1.2 spellcasting.divine greater_than_or_equal ${level}`,
   ];
+}
+
+/** What a slot of the spell level opening at `clericLevel` requires: a cleric level, but the first's. */
+function clericGate(clericLevel: number) {
+  return clericLevel === 1 ? "" : ` classes.cleric.level greater_than_or_equal ${clericLevel}`;
 }
 
 function proficiency(kind: string, weapon: string) {
@@ -91,10 +98,23 @@ describe("The seeded core rules", () => {
       }
     });
 
-    test("each open a domain spell a spell level, as the cleric reaches it, join the cleric's list, and carry their other powers", async () => {
+    test("fill the cleric's one domain slot a spell level, which his feature opens as he reaches it", async () => {
       const rows = await seededRows();
-      // The cleric level each spell level opens at: the first at the first.
-      const opensAt = [1, 3, 5, 7, 9, 11, 13, 15, 17];
+      const feature = rows.feat("Deity, Domains, and Domain Spells (Cleric)");
+      const slots = rows.modifiersOf(feature.id).map((m) => {
+        const clericLevel = rows.requirementsOf(m.id).map((r) => `${r.target} ${r.operator} ${r.value}`);
+        return `${m.target} ${m.operator} ${m.value} ${clericLevel.join()}`.trim();
+      });
+      expect(slots.sort()).toEqual(
+        CLERIC_OPENS_AT.map(
+          (clericLevel, i) => `aptitudes.domainspells.${i + 1}.uses add 1${clericGate(clericLevel)}`,
+        ).sort(),
+      );
+      expect(rows.aptitude("Domain Spells")).toBeDefined();
+    });
+
+    test("each make a domain spell a spell level known, as the cleric reaches it, join the cleric's list, and carry their other powers", async () => {
+      const rows = await seededRows();
       for (const domain of ALL_DOMAINS) {
         const feat = rows.feat(`${domain.name} Domain`);
         const spells = `aptitudes.${stripSeparators(domain.name)}domainspells.`;
@@ -107,11 +127,7 @@ describe("The seeded core rules", () => {
           });
         expect({ domain: domain.name, slots: slots.sort() }).toEqual({
           domain: domain.name,
-          slots: opensAt
-            .flatMap((clericLevel, i) => {
-              const requirement = i === 0 ? "" : ` classes.cleric.level greater_than_or_equal ${clericLevel}`;
-              return [`${i + 1}.allowed set -1${requirement}`, `${i + 1}.uses add 1${requirement}`];
-            })
+          slots: CLERIC_OPENS_AT.map((clericLevel, i) => `${i + 1}.allowed set -1${clericGate(clericLevel)}`)
             .concat("joinsclasslist set true")
             .sort(),
         });

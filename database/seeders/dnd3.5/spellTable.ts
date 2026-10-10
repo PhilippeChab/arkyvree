@@ -5,7 +5,7 @@ import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
 /** A class that casts spells: its table of slots. */
 export type SpellcastingClass = ClassSeed & { spells: NonNullable<ClassSeed["spells"]> };
 
-/** The class of `classes` named `name`, which casts spells: what a domain's or a school's slots open with. */
+/** The class of `classes` named `name`, which casts spells: what a domain's spells or a school's slots open with. */
 export function findSpellcastingClass(classes: ClassSeed[], name: string): SpellcastingClass {
   const klass = classes.find((c) => c.name === name);
   if (!klass?.spells) throw new Error(`${name} isn't a spellcasting class of these classes`);
@@ -14,7 +14,7 @@ export function findSpellcastingClass(classes: ClassSeed[], name: string): Spell
 
 /**
  * The class level each of a spellcaster's spell levels opens at, by spell level (its first is 1 for a class without
- * cantrips): where its spells a day first give it slots. A domain's or a school's slots open with it.
+ * cantrips): where its spells a day first give it slots. A domain's spells or a school's slots open with it.
  */
 export function getClassSpellLevels(spells: NonNullable<ClassSeed["spells"]>): Record<number, number> {
   const levels: Record<number, number> = {};

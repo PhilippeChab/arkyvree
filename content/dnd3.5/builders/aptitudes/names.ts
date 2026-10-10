@@ -6,6 +6,12 @@
 /** The aptitude a cleric picks a domain in. */
 export const CLERIC_DOMAIN = "Cleric Domain";
 
+/**
+ * A cleric's domain spell slot, one at each spell level he casts, which his domains' spells fill: a list of no spells
+ * of its own, its slots his Deity, Domains, and Domain Spells feature's.
+ */
+export const DOMAIN_SPELLS = "Domain Spells";
+
 /** A class's spell list: "Wizard Spells". */
 export function classSpells(className: string): string {
   return `${className} Spells`;

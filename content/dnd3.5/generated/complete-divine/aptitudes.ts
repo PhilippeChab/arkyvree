@@ -18,6 +18,7 @@ export const ALL_APTITUDES: string[] = [
   "Divine Crusader Domain",
   "Divine Crusader Spells",
   "Divine Oracle Class Feature",
+  "Domain Spells",
   "Dweomerkeeper Class Feature",
   "Dweomerkeeper Supernatural Spell",
   "Entropomancer Class Feature",

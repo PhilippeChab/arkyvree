@@ -13,6 +13,7 @@ export const ALL_APTITUDES: string[] = [
   "Cleric Spells",
   "Conjuration Specialist Spells",
   "Divination Specialist Spells",
+  "Domain Spells",
   "Druid Class Feature",
   "Druid Spells",
   "Enchantment Specialist Spells",
