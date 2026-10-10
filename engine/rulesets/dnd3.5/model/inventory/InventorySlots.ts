@@ -29,9 +29,7 @@ export const WEAPON_SET_SLOTS: WeaponSetSlot[] = Object.values(WEAPON_LOCATION_M
 /** An inventory entry's slot, from where it's held. */
 export default class InventorySlots {
   static getSlot(type: string | null, location: string | null): InventorySlot | null {
-    if (type === "Armor") return "torso";
-    if (type === "Shield") return "offhand";
-
-    return location ? (LOCATION_TO_SLOT[location] ?? null) : null;
+    const held = ItemPlacement.slotOfType(type) ?? location;
+    return held ? (LOCATION_TO_SLOT[held] ?? null) : null;
   }
 }

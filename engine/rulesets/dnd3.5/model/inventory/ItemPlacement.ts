@@ -96,4 +96,10 @@ export default class ItemPlacement {
   static isLocatedType(type: string | null): type is LocatedItemType {
     return type !== null && Object.hasOwn(ITEM_TYPE_LOCATIONS, type);
   }
+
+  /** The location an item of `type` goes to when its type sets that one alone (body armor's torso, a shield's off hand). */
+  static slotOfType(type: string | null): ItemLocation | undefined {
+    const locations = ItemPlacement.locationsOf(type);
+    return locations?.length === 1 ? locations[0] : undefined;
+  }
 }

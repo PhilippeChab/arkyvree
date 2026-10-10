@@ -65,9 +65,9 @@ export default class ItemEntity extends CustomizationPageEntity<
     return item;
   }
 
-  /** An item's slot: its type's (an armor's the torso, a shield's the off hand), or the one its form gives. */
+  /** An item's slot: the one its type sets (an armor's the torso, a shield's the off hand), or the one its form gives. */
   private slotOf(item: { slot?: ItemLocation; type?: string | null }): ItemLocation | undefined {
-    return item.type === "Armor" ? "Torso" : item.type === "Shield" ? "Off Hand" : item.slot;
+    return ItemPlacement.slotOfType(item.type ?? null) ?? item.slot;
   }
 
   /** The template an item made from `item` points at: `item` itself when it's a template, or its own template. */
