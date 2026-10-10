@@ -556,12 +556,15 @@ engine/rulesets/
     │                                      the level-up rules core's flows read (buildCharacter,
     │                                      getAbilityIncreaseTotal, planBondedCreatures: BondedPlans). A class per
     │                                      3.5 operation on LevelUpState (core's LevelUpBase, with the steps the
-    │                                      wizard and the preview share): PlannedLevelsState, the planned levels and
-    │                                      what they give (AptitudeSlotsPlan), which LevelUpPreview (the wizard's
-    │                                      preview) and LevelUpPlan (a save's levels checked, its picks spread over
-    │                                      them, PicksDistribution) build on; LevelEdit: a saved level's edit, and
-    │                                      the issues it answers for; LevelUpSteps: the wizard's steps, which it
-    │                                      lists (abilities, skills, feats, powers) and answers by name;
+    │                                      wizard and the preview share, and a pool's room: the picks fitted to
+    │                                      their pools, fitPicks, and those that overfill one refused,
+    │                                      refuseOverfull): PlannedLevelsState, the planned levels, what they give
+    │                                      (AptitudeSlotsPlan) and their picks spread over them (PicksDistribution,
+    │                                      which drops none), which LevelUpPreview (the wizard's preview) and
+    │                                      LevelUpPlan (a save's levels checked) build on; LevelEdit: a saved
+    │                                      level's edit, and the issues it answers for; LevelUpSteps: the wizard's
+    │                                      steps, which it lists (abilities, skills, feats, powers) and answers by
+    │                                      name;
     │                                      SkillSpending: what the form's skill points come to, as a save spreads
     │                                      them, which the skills step and the preview answer;
     │                                      Dnd35LevelSelections: a saved level's selections, with each feat's pools
@@ -693,7 +696,7 @@ What a ruleset answers is its module's: five parts, each a class whose operation
 |---|---|---|---|
 | `characters` | a character's sheets (the API's, a campaign member's reading, partial or whole, the printed one), a list's card of one, its inventory (each entry with where its item can go and where it's worn), how a new one sets its ability scores (the methods its form runs by kind, the scores' bounds, each score's modifier), what a new one and an inventory entry store (what equipping an item checks), what keeps a slot from taking an item, the languages it can speak, the races a new character can pick | `Dnd35Characters`: `describe`, `describeCreation`, `describeForMember`, `describeSheet`, `describePlacement`, `planCreate`, `planInventoryEntry`, `openRacePicker`: each named as its handle's operation is; `describeCard`, `describeInventory` (over its hook, `describeInventoryEntry`: 3.5's `InventoryEntries`, by `ItemPlacement`) and `checkLanguages` are `CharactersPart`'s, which read the schema's rows and the view alone | `character(input)` (`CharacterEngine`), `characters()` (`CharactersEngine`) |
 | `entities` | each entity kind's rules, by its table: an entity found and described, a page opened (`openList`), what saving or deleting one writes, what the rules refuse of an edit; a class's levels, class skills and table, which the classes' kind hands out | `Dnd35Entities`: `of(view, type)`, each kind's class (`SkillEntity`, `FeatEntity`, `ItemEntity`…; `ClassEntity`'s `levels(klassId)`, `skills(klassId)`, `table(klassId)`) | `entities(type)`, `class(klassId)` (`ClassEngine`) |
-| `levelUp` | the level flows: the preview, a save's levels and its check (the character with them, unless forced), a saved level's edit, the last level's removal, the bonded creatures the levels make, the wizard's steps and pickers, a saved level's selections | `Dnd35LevelUp`: `describePreview`, `planLevels`, `planEdit`, `planRemoval`, `planBonded`, `describeSteps`, `describeStep`, `openFeatPicker`…, `describeLevel`: each named as its handle's operation is, and as the class it opens names it (`LevelUpPlan.describePreview`, `LevelEdit.planEdit`) | `character(input).levelUp()` (`LevelUpEngine`) |
+| `levelUp` | the level flows: the preview, a save's levels and its check (its picks refused when they overfill a pool, forced or not; the character with them, unless forced), a saved level's edit, the last level's removal, the bonded creatures the levels make, the wizard's steps and pickers, a saved level's selections | `Dnd35LevelUp`: `describePreview`, `planLevels`, `planEdit`, `planRemoval`, `planBonded`, `describeSteps`, `describeStep`, `openFeatPicker`…, `describeLevel`: each named as its handle's operation is, and as the class it opens names it (`LevelUpPlan.describePreview`, `LevelEdit.planEdit`) | `character(input).levelUp()` (`LevelUpEngine`) |
 | `ruleset` | what a ruleset needs as a whole, past its entities: to be published to be played, a player race and class, a skill and a feat | `Dnd35Ruleset`: `findMissingContent`, which `RulesetPart.checkPublishable` reads (an extension needs none) | `checkPublishable` |
 | `content` | what the seeders and the codegen ask: the paths a book can target, an entity's fields as its properties | `Dnd35Content`: `listBookTargetPaths`, and the codecs of its seeded fields, which `ContentPart.toEntityProperties` writes with | `Engine.forRules(baseRules)` (`ContentEngine`) |
 | `createTargetPaths`, `createPropertyTypes` | the ruleset's path categories, its property types (in stat-block order, which the view orders an entity's properties by: `PropertyOrder`) | `Dnd35TargetPaths`, `Dnd35PropertyTypes` | `targetPaths()`, `modifiers(…)`, `requirements(…)`; `propertyTypes()` |

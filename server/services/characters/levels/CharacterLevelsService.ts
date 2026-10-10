@@ -135,9 +135,11 @@ class CharacterLevelsService extends include(Object, Pickers, Steps) {
     characterId: string,
     levels: Array<{ abilityIncreases: AbilityIncrease[]; klassId: string; level: number }>,
     skills: Record<string, number>,
+    feats: Record<string, string[]>,
+    powers: Record<string, string[]>,
   ) {
     return await withEditableCharacter(db, session, characterId, (scope, character) =>
-      Engine.for(scope).character(character).levelUp().describePreview(levels, { skills }),
+      Engine.for(scope).character(character).levelUp().describePreview(levels, { feats, powers, skills }),
     );
   }
 

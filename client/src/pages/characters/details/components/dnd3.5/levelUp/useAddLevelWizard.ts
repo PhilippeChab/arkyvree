@@ -8,7 +8,7 @@ import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import { plannedLevel, plannedSlotKeys } from "./classPlan.ts";
-import { fitFeats, fitPowers, fitSkillPoints, openPoolOf } from "./fitPicks.ts";
+import { fitSkillPoints, keepFitted, openPoolOf } from "./fitPicks.ts";
 import { type HpLevel, hpSet } from "./hitPoints.ts";
 import {
   availableClassesQuery,
@@ -23,12 +23,10 @@ import {
 import {
   abilityIncreasesOf,
   featPickString,
-  nextPickLevel,
   plannedLevelsOf,
   plannedPicker,
   powerPickString,
   skillPointString,
-  spellSlotsPerLevel,
 } from "./pendingPicks.ts";
 import { pickIds, useLevelWizardBase } from "./useLevelWizardBase.ts";
 import { CLASS_PLAN_STEP, HP_STEP, REVIEW_STEP } from "./wizardSteps.ts";
@@ -135,9 +133,14 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
   );
   // The skill points spent so far, which the preview says what they come to: sent once the typing settles
   const debouncedSkillPoints = useDebouncedValue(picked.skillPoints);
+  // The feats and spells picked so far, which the preview fits to their pools
+  const pickedIds = useMemo(
+    () => ({ feats: pickIds(picked.feats), powers: pickIds(picked.powers) }),
+    [picked.feats, picked.powers],
+  );
 
   const previewQuery = useQuery({
-    ...levelPreviewQuery(characterId, plannedLevels, debouncedSkillPoints),
+    ...levelPreviewQuery(characterId, plannedLevels, { ...pickedIds, skills: debouncedSkillPoints }),
     enabled: open && validClassPlan.length >= 1 && activeStep > 0,
     placeholderData: keepPreviousData,
   });
@@ -190,17 +193,16 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
   // Power data (from preview)
   const powerData = useMemo(() => previewQuery.data?.powers ?? null, [previewQuery.data]);
 
-  // The picks, fitted to the slots the plan gives
-  const { feats: selectedFeats, pools: adjustedFeatPools } = useMemo(
-    () => fitFeats(picked.feats, featData?.aptitudePools),
-    [picked.feats, featData],
-  );
-  const selectedPowers = useMemo(() => fitPowers(picked.powers, powerData?.aptitudePools), [picked.powers, powerData]);
+  // The picks the preview fits to the plan's pools: while it answers for earlier picks, they stand
+  const fittedFor = previewQuery.isPlaceholderData ? undefined : previewQuery.data;
+  const selectedFeats = useMemo(() => keepFitted(picked.feats, fittedFor?.feats.fitted), [picked.feats, fittedFor]);
+  const selectedPowers = useMemo(() => keepFitted(picked.powers, fittedFor?.powers.fitted), [picked.powers, fittedFor]);
+  const featPools = useMemo(() => featData?.aptitudePools ?? {}, [featData]);
   const skillPointAllocations = useMemo(
     () => fitSkillPoints(picked.skillPoints, skillData?.skills),
     [picked.skillPoints, skillData],
   );
-  const selectedAptitude = openPoolOf(base.selectedAptitude, adjustedFeatPools);
+  const selectedAptitude = openPoolOf(base.selectedAptitude, featPools);
   const allSelectedFeatPickString = useMemo(() => featPickString(selectedFeats), [selectedFeats]);
 
   const isLoadingPowers = previewQuery.isLoading;
@@ -236,15 +238,11 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
   const quickAddKlasses = hasUnfilteredKlasses ? availableKlasses : quickAddSnapshot;
 
   // The level the next feat pick lands on, which its options are checked at: the feat list's, and a family's variants'
+  const nextPickLevels = previewQuery.data?.nextPickLevels;
   const featPicker = plannedPicker(
     previewLevelDetails,
     abilityIncreases,
-    selectedAptitude
-      ? nextPickLevel(
-          previewQuery.data?.perLevelFeatSlots[selectedAptitude] ?? [],
-          (selectedFeats[selectedAptitude] ?? []).length,
-        )
-      : 0,
+    selectedAptitude ? (nextPickLevels?.feats[selectedAptitude] ?? 0) : 0,
     allSelectedFeatPickString,
   );
 
@@ -252,14 +250,7 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
   const powerPicker = plannedPicker(
     previewLevelDetails,
     abilityIncreases,
-    selectedPowerAptitude
-      ? nextPickLevel(
-          spellSlotsPerLevel(previewQuery.data?.perLevelPowerSlots[selectedPowerAptitude] ?? [], selectedPowerLevel),
-          (selectedPowers[selectedPowerAptitude] ?? []).filter(
-            (power) => selectedPowerLevel === null || power.powerLevel === selectedPowerLevel,
-          ).length,
-        )
-      : 0,
+    selectedPowerAptitude ? (nextPickLevels?.powers[selectedPowerAptitude]?.[selectedPowerLevel ?? ""] ?? 0) : 0,
     allSelectedFeatPickString,
   );
 
@@ -418,7 +409,7 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     featData,
     isLoadingFeats,
     featsError,
-    adjustedFeatPools,
+    featPools,
     groupedFeats,
     isLoadingAvailableFeats,
     availableFeatsError,

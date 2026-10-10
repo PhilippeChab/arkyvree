@@ -20,13 +20,30 @@ export interface PerLevelDistributionData {
   skillContexts: Map<string, { currentRank: number; isClassSkill: boolean }>;
 }
 
-/** A save's pooled picks (skill ranks, and feats and powers by pool) spread over its planned levels, in order. */
+/**
+ * A save's pooled picks (skill ranks, and feats and powers by pool) spread over its planned levels, in order. A pick
+ * past its pool's slots isn't dropped: it goes on the level of the feat that gives its pool more room, or the last
+ * one, and the save says whether its pool has room for it (`refuseOverfull`).
+ */
 export default class PicksDistribution {
   constructor(private readonly data: PerLevelDistributionData) {}
 
   /** Each skill's rank so far and whether it's a class skill, which cap its ranks: by its id, of the step's skills. */
   static contextsOf(skills: { currentRank: number; id: string; isClassSkill: boolean }[]) {
     return new Map(skills.map(({ currentRank, id, isClassSkill }) => [id, { currentRank, isClassSkill }]));
+  }
+
+  /**
+   * The planned level a pool's next pick goes on, as the save hands a pool's picks out over its slots (`slotsPerLevel`,
+   * in plan order): the first level whose slots so far outnumber the `picked`, the last once they're all taken.
+   */
+  static nextLevelOf(slotsPerLevel: number[], picked: number) {
+    let slots = 0;
+    for (const [index, levelSlots] of slotsPerLevel.entries()) {
+      slots += levelSlots;
+      if (slots > picked) return index;
+    }
+    return Math.max(0, slotsPerLevel.length - 1);
   }
 
   /**
@@ -68,24 +85,25 @@ export default class PicksDistribution {
 
   /**
    * Puts each pool's feats into the levels' slots. A pool with no slots, one a feat's modifier created, goes on the
-   * level its source feat went to (the first when that's unknown).
+   * level its source feat went to (the first when that's unknown); a pool's feats past its slots go there too (the
+   * last when that's unknown).
    */
   private distributeFeats(
     feats: Record<string, string[]>,
-    deferredAptitudeSources: Map<string, string>,
+    aptitudeSources: Map<string, string>,
     result: DistributedLevel[],
   ) {
-    const deferredFeatEntries: [string, string[]][] = [];
+    const unplaced: { aptitudeId: string; featIds: string[]; level: number }[] = [];
     const assignedFeatLevels = new Map<string, number>();
 
     for (const [aptitudeId, featIds] of Object.entries(feats)) {
       const slotsPerLevel = this.data.perLevelFeatSlots[aptitudeId] ?? [];
       if (!slotsPerLevel.some((s) => s > 0)) {
-        deferredFeatEntries.push([aptitudeId, featIds]);
+        unplaced.push({ aptitudeId, featIds, level: 0 });
         continue;
       }
 
-      this.fillSlots(
+      const left = this.fillSlots(
         result.length,
         featIds,
         (i) => slotsPerLevel[i] ?? 0,
@@ -94,18 +112,13 @@ export default class PicksDistribution {
           assignedFeatLevels.set(featId, i);
         },
       );
+      if (left.length > 0) unplaced.push({ aptitudeId, featIds: left, level: result.length - 1 });
     }
 
-    for (const [aptitudeId, featIds] of deferredFeatEntries) {
-      let targetLevel = 0;
-      const sourceFeatId = deferredAptitudeSources.get(aptitudeId);
-      if (sourceFeatId) {
-        const lvl = assignedFeatLevels.get(sourceFeatId);
-        if (lvl !== undefined) targetLevel = lvl;
-      }
-
-      if (!result[targetLevel].feats[aptitudeId]) result[targetLevel].feats[aptitudeId] = [];
-      for (const featId of featIds) result[targetLevel].feats[aptitudeId].push(featId);
+    for (const { aptitudeId, featIds, level } of unplaced) {
+      const sourceFeatId = aptitudeSources.get(aptitudeId);
+      const sourceLevel = sourceFeatId === undefined ? undefined : assignedFeatLevels.get(sourceFeatId);
+      (result[sourceLevel ?? level].feats[aptitudeId] ??= []).push(...featIds);
     }
   }
 
@@ -132,12 +145,16 @@ export default class PicksDistribution {
         powersByLevel.get(key)!.push(powerId);
       }
 
+      // What the slots leave goes on the last level
+      const placeLeft = (left: string[]) => {
+        for (const powerId of left) place(result.length - 1, powerId);
+      };
       if (!hasLevels) {
         const totalSlotsAt = (i: number) => Object.values(slotsPerLevel[i] ?? {}).reduce((sum, n) => sum + n, 0);
-        this.fillSlots(result.length, powerIds, totalSlotsAt, place);
+        placeLeft(this.fillSlots(result.length, powerIds, totalSlotsAt, place));
       } else {
         for (const [plKey, levelPowerIds] of powersByLevel)
-          this.fillSlots(result.length, levelPowerIds, (i) => (slotsPerLevel[i] ?? {})[plKey] ?? 0, place);
+          placeLeft(this.fillSlots(result.length, levelPowerIds, (i) => (slotsPerLevel[i] ?? {})[plKey] ?? 0, place));
       }
     }
   }
@@ -166,7 +183,10 @@ export default class PicksDistribution {
     }
   }
 
-  /** Hands `ids` out in order to the levels' slots, as many to a level as `slotsAt` gives it. */
+  /**
+   * Hands `ids` out in order to the levels' slots, as many to a level as `slotsAt` gives it: the ids past them, which
+   * it leaves to its caller.
+   */
   private fillSlots(
     levelCount: number,
     ids: string[],
@@ -181,18 +201,19 @@ export default class PicksDistribution {
         pickIndex++;
       }
     }
+    return ids.slice(pickIndex);
   }
 
   /**
    * The pooled picks, spread: each level's skill ranks, and its feats and powers by pool. `powerLevelLookup` is each
-   * power's spell level by `powerId:aptitudeId`; `deferredAptitudeSources` the feat a pool with no slots comes from.
+   * power's spell level by `powerId:aptitudeId`; `aptitudeSources` the feat that gives a pool room past its slots.
    */
   distribute(
     skills: Record<string, number>,
     feats: Record<string, string[]>,
     powers: Record<string, string[]>,
     powerLevelLookup: Map<string, number | null>,
-    deferredAptitudeSources: Map<string, string>,
+    aptitudeSources: Map<string, string>,
   ): DistributedLevel[] {
     const result: DistributedLevel[] = Array.from({ length: this.data.perLevelSkillPoints.length }, () => ({
       skills: {},
@@ -200,7 +221,7 @@ export default class PicksDistribution {
       powers: {},
     }));
     this.distributeSkills(skills, result);
-    this.distributeFeats(feats, deferredAptitudeSources, result);
+    this.distributeFeats(feats, aptitudeSources, result);
     this.distributePowers(powers, powerLevelLookup, result);
     return result;
   }

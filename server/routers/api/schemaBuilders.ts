@@ -26,6 +26,25 @@ export function buildEntityTypeSchema<T extends string>(entityTypes: readonly T[
   return z.enum(getUrlSegments(entityTypes)).transform((segment) => getEntityTypeOfSegment(segment));
 }
 
+/**
+ * Comma-separated `id:aptitudeId` picks in a query (a feat's or a power's id, and the pool it's picked in), each read as
+ * the id under `idKey` and its pool's: what isn't one is dropped.
+ */
+export function buildPickPairsSchema<K extends string>(idKey: K) {
+  return z
+    .string()
+    .optional()
+    .transform((value) =>
+      value
+        ?.split(",")
+        .map((pair) => {
+          const [id, aptitudeId] = pair.split(":");
+          return { [idKey]: id, aptitudeId } as Record<K, string> & { aptitudeId: string };
+        })
+        .filter((pick) => isUuid(pick[idKey]) && isUuid(pick.aptitudeId)),
+    );
+}
+
 /** Whether `value` is a UUID: what a list of ids in a query keeps. */
 export function isUuid(value: string) {
   return z.string().uuid().safeParse(value).success;

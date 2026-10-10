@@ -20,6 +20,7 @@ import {
   type LevelPlan,
   levelUp,
   picks,
+  WIZARD_1,
 } from "@/tests/support/levelFixtures.ts";
 import { increasesOf } from "@/tests/support/levels.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
@@ -80,7 +81,7 @@ async function eligible(
     klassId: ctx.klassMap.pc["Fighter"],
     level: i + 1,
   }));
-  const { levelDetails } = await CharacterLevelsService.getPreview(session, characterId, plan, {});
+  const { levelDetails } = await CharacterLevelsService.getPreview(session, characterId, plan, {}, {}, {});
   const featPicks = (options.pendingPicks ?? []).map((name) => ({
     featId: ctx.featMap[name],
     aptitudeId: ctx.aptMap["General"],
@@ -108,8 +109,9 @@ async function preview(
   characterId: string,
   levels: [string, number][],
   abilities: (string | null)[] = levels.map(() => null),
-  skills: Record<string, number> = {},
+  plan: Omit<LevelPlan, "ability" | "hp"> = {},
 ) {
+  const { feats, powers, skills } = picks(ctx, plan);
   return CharacterLevelsService.getPreview(
     session,
     characterId,
@@ -118,7 +120,9 @@ async function preview(
       klassId: ctx.klassMap.pc[klass],
       level,
     })),
-    Object.fromEntries(Object.entries(skills).map(([name, points]) => [ctx.skillMap[name], points])),
+    skills,
+    feats,
+    powers,
   );
 }
 
@@ -403,9 +407,9 @@ describe("finalizing several levels at once", () => {
             feats: { General: ["Power Attack"], "Fighter Bonus Feat": ["Improved Initiative", "Dodge"] },
           }),
       ],
-      // Refused for its skills: the third General feat, which no level has a slot for, is dropped (#476)
+      // A third General feat, which the pool has no room for: refused, where it used to be dropped (#476)
       [
-        "12 unspent skill point(s) (4/16)",
+        "General: 3 picked, room for 2",
         async () =>
           finalizeBatch(ctx, await createSeedCharacter(ctx), fighterLevels(1), {
             skills: { Climb: 16 },
@@ -464,6 +468,78 @@ describe("finalizing several levels at once", () => {
   });
 });
 
+describe("a pool's room", () => {
+  const GENERAL_THREE = ["Power Attack", "Great Fortitude", "Toughness"];
+
+  test("refuses a save's picks a pool with slots has no room for, forced or not, naming it", async () => {
+    const ctx = await getSeedCtx();
+    const plan = { skills: { Climb: 16 }, feats: { General: GENERAL_THREE, "Fighter Bonus Feat": ["Dodge"] } };
+    for (const force of [false, true]) {
+      const characterId = await createSeedCharacter(ctx);
+      await expect(finalizeBatch(ctx, characterId, fighterLevels(1), plan, force)).rejects.toThrow(
+        "General: 3 picked, room for 2",
+      );
+    }
+  });
+
+  test("refuses a third school a wizard's specialization opens room for two of, forced or not", async () => {
+    const ctx = await getSeedCtx();
+    const characterId = await createSeedCharacter(ctx, "wizard");
+    const schools = ["Prohibit Illusion", "Prohibit Necromancy", "Prohibit Enchantment"];
+    const plan = { ...WIZARD_1, feats: { ...WIZARD_1.feats, "Prohibited School": schools } };
+    await expect(levelUp(session, ctx, characterId, "Wizard", 1, plan, true)).rejects.toThrow(
+      "Prohibited School: 3 picked, room for 2",
+    );
+  });
+
+  test("refuses an edit's picks a pool has no room for, forced or not", async () => {
+    const { resave } = await setupFighter();
+    const plan = { feats: { General: GENERAL_THREE, "Fighter Bonus Feat": ["Improved Initiative"] } };
+    for (const force of [false, true])
+      await expect(resave(plan, force)).rejects.toThrow("General: 3 picked, room for 2");
+  });
+
+  test("fits a preview's picks to their pools: a pool past its room drops its latest", async () => {
+    const ctx = await getSeedCtx();
+    const result = await preview(ctx, await createSeedCharacter(ctx), fighter(1), undefined, {
+      feats: { General: GENERAL_THREE },
+    });
+    const general = ctx.aptMap["General"];
+    expect(result.feats.fitted[general]).toEqual([ctx.featMap["Power Attack"], ctx.featMap["Great Fortitude"]]);
+    // Its room for the feats picked in it: what it had left, before them
+    expect(result.feats.aptitudePools[general]).toMatchObject({ allowed: 2, available: 2, spent: 0 });
+  });
+
+  test("grows a pool by a picked feat's room, and drops what's in it with the feat", async () => {
+    const ctx = await getSeedCtx();
+    const characterId = await createSeedCharacter(ctx, "wizard");
+    const schools = ["Prohibit Illusion", "Prohibit Necromancy"];
+    const specialized = { "Wizard Specialization": ["Evocation Specialist"], "Prohibited School": schools };
+    const withFeat = await preview(ctx, characterId, [["Wizard", 1]], undefined, { feats: specialized });
+    const prohibited = ctx.aptMap["Prohibited School"];
+    expect(withFeat.feats.aptitudePools[prohibited]).toMatchObject({ available: 2 });
+    expect(withFeat.feats.fitted[prohibited]).toHaveLength(2);
+    const without = await preview(ctx, characterId, [["Wizard", 1]], undefined, {
+      feats: { "Prohibited School": schools },
+    });
+    expect(without.feats.fitted[prohibited]).toEqual([]);
+  });
+
+  test("answers an edited level's feat step with its room for the picks, and what of them fits", async () => {
+    const { ctx, characterId, first } = await setupFighter();
+    const general = ctx.aptMap["General"];
+    const step = await CharacterLevelsService.getStep(session, characterId, "feats", {
+      classId: ctx.klassMap.pc["Fighter"],
+      level: 1,
+      editedLevelId: first.id,
+      featPicks: GENERAL_THREE.map((name) => ({ aptitudeId: general, featId: ctx.featMap[name] })),
+    });
+    if (step.name !== "feats") throw new Error("Expected the feats step");
+    expect(step.fitted[general]).toEqual([ctx.featMap["Power Attack"], ctx.featMap["Great Fortitude"]]);
+    expect(step.aptitudePools[general]).toMatchObject({ available: 2 });
+  });
+});
+
 describe("previewing a level-up", () => {
   test("describes each level, its skill points and where the ability increase falls", async () => {
     const ctx = await getSeedCtx();
@@ -517,7 +593,7 @@ describe("previewing a level-up", () => {
   test("spends the skill points as the save spreads them, each skill with its ranks by points", async () => {
     const ctx = await getSeedCtx();
     const characterId = await createSeedCharacter(ctx);
-    const { skills } = await preview(ctx, characterId, fighter(1), [null], { Climb: 6, Hide: 3 });
+    const { skills } = await preview(ctx, characterId, fighter(1), [null], { skills: { Climb: 6, Hide: 3 } });
     const skill = (name: string) => skills.skills.find((s) => s.id === ctx.skillMap[name])!;
     // Climb, a fighter's class skill, caps at 4 ranks at level 1: its 2 points over the cap aren't kept
     expect(skill("Climb")).toMatchObject({
@@ -536,35 +612,41 @@ describe("previewing a level-up", () => {
     expect(skill("Swim").ranksByPoints).toEqual([0, 1, 2, 3, 4]);
   });
 
-  test("counts a human's bonus feat in the first level's General slots", async () => {
+  test("counts a human's bonus feat in the first level's General slots: its next feat goes there, then on the third", async () => {
     const ctx = await getSeedCtx();
-    const generalSlots = async (characterId: string, count: number) => {
-      const result = await preview(ctx, characterId, fighter(count));
-      const [generalId] = Object.entries(result.feats.aptitudePools).find(([, pool]) => pool.name === "General")!;
-      return result.perLevelFeatSlots[generalId];
+    const nextGeneral = async (characterId: string, count: number, general: string[]) => {
+      const result = await preview(ctx, characterId, fighter(count), undefined, { feats: { General: general } });
+      return result.nextPickLevels.feats[ctx.aptMap.General];
     };
-    expect(await generalSlots(await createSeedCharacter(ctx), 4)).toEqual([2, 0, 1, 0]);
-    expect(
-      await generalSlots(
-        await createSeedCharacter(ctx, "fighter", { raceName: "Elf", languages: ["Common", "Elven"] }),
-        2,
-      ),
-    ).toEqual([1, 0]);
+    // A human's bonus feat and its first level's: two at the first level, then one at the third
+    const human = await createSeedCharacter(ctx);
+    expect(await nextGeneral(human, 4, [])).toBe(0);
+    expect(await nextGeneral(human, 4, ["Power Attack"])).toBe(0);
+    expect(await nextGeneral(human, 4, ["Power Attack", "Great Fortitude"])).toBe(2);
+    // An elf's first level's alone: once it's taken, a pick goes on the last level
+    const elf = await createSeedCharacter(ctx, "fighter", { raceName: "Elf", languages: ["Common", "Elven"] });
+    expect(await nextGeneral(elf, 2, [])).toBe(0);
+    expect(await nextGeneral(elf, 2, ["Power Attack"])).toBe(1);
   });
 
   test("gives a sorcerer's spell pool cantrip and first-level slots at each level", async () => {
     const ctx = await getSeedCtx();
-    const result = await preview(ctx, await createSeedCharacter(ctx, "sorcerer"), [
+    const sorcerer = await createSeedCharacter(ctx, "sorcerer");
+    const levels: [string, number][] = [
       ["Sorcerer", 1],
       ["Sorcerer", 2],
-    ]);
+    ];
+    const result = await preview(ctx, sorcerer, levels);
     const spells = Object.values(result.powers.aptitudePools).find((pool) => pool.name === "Sorcerer Spells")!;
     expect(spells).toMatchObject({ leveled: true });
-    expect(spells.available).toBeGreaterThan(0);
-    const [first] = result.perLevelPowerSlots[spells.id];
-    expect(result.perLevelPowerSlots[spells.id]).toHaveLength(2);
-    expect(first["0"]).toBeGreaterThan(0);
-    expect(first["1"]).toBeGreaterThan(0);
+    expect(spells.levels?.["0"]?.available).toBeGreaterThan(0);
+    expect(spells.levels?.["1"]?.available).toBeGreaterThan(0);
+    expect(result.nextPickLevels.powers[spells.id]).toMatchObject({ "0": 0, "1": 0 });
+    // The first level's four cantrips taken, the next goes on the second
+    const cantrips = ["Detect Magic", "Light", "Read Magic", "Mage Hand"];
+    const picked = await preview(ctx, sorcerer, levels, undefined, { powers: { "Sorcerer Spells": cantrips } });
+    expect(picked.nextPickLevels.powers[spells.id]["0"]).toBe(1);
+    expect(picked.powers.fitted[spells.id]).toEqual(cantrips.map((name) => ctx.powerMap[name]));
   });
 });
 

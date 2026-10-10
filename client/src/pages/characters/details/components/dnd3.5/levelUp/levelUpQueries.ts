@@ -92,13 +92,15 @@ export type SkillsData = Unnamed<NamedStep<"skills">>;
 
 /**
  * The level a step is for, as the step and picker endpoints take it: its class and level, which the query waits for,
- * its ability increase, the saved level it edits, and the skill points spent at it so far (`skillPointString`).
+ * its ability increase, the saved level it edits, and the skill points spent at it so far (`skillPointString`); and,
+ * for a step, the feats and powers picked at it (`pickPairString`), which it fits to their pools.
  */
 export interface StepLevel {
   abilityId?: string;
   classId: string | undefined;
   editedLevelId?: string;
   level: number | undefined;
+  picks?: { feats: string | undefined; powers: string | undefined };
   skillPoints?: string;
 }
 
@@ -269,16 +271,21 @@ export function characterLevelQuery(characterId: string, characterLevelId: strin
 }
 
 /**
- * What a plan of new levels gives the character, with their ability increases and the skill points spent over them so
- * far (by skill, in the form's order): their attributes, skills, feat and spell slots, level by level. It holds for as
- * long as the plan does.
+ * What a plan of new levels gives the character, with their ability increases and what's picked over them so far (the
+ * skill points by skill, in the form's order, and the feats and powers by pool, in theirs): their attributes, skills,
+ * feat and spell pools (what of the picks fits, and each pool's room for them), level by level. It holds for as long as
+ * the plan does.
  */
 export function levelPreviewQuery(
   characterId: string,
   levels: { abilityIncreases: { abilityId: string; amount: number }[]; klassId: string; level: number }[],
-  skills: Record<string, number>,
+  {
+    feats,
+    powers,
+    skills,
+  }: { feats: Record<string, string[]>; powers: Record<string, string[]>; skills: Record<string, number> },
 ) {
-  const body = { levels, skills };
+  const body = { levels, skills, feats, powers };
   return queryOptions({
     queryKey: QUERY_KEYS.characters.levelUp.preview(characterId, body),
     queryFn: () =>
@@ -289,10 +296,11 @@ export function levelPreviewQuery(
 
 /**
  * A step of the step's level, by its name (`StepName`, as its ruleset lists it): an ability increase, the skill points or
- * the feat or spell slots it gives; skipped until its class is known.
+ * the feat or spell pools it gives, with the picks at it fitted to them; skipped until its class is known.
  */
 export function levelStepQuery<N extends StepName>(characterId: string, name: N, step: StepLevel) {
-  const query = levelQueryOf(step);
+  const level = levelQueryOf(step);
+  const query = level && { ...level, featPicks: step.picks?.feats, powerPicks: step.picks?.powers };
   return queryOptions({
     queryKey: QUERY_KEYS.characters.levelUp.step(characterId, name, query),
     queryFn: query
