@@ -34,79 +34,29 @@ const ABILITY_PREREQ_PATTERNS = [
   /^Weapon Proficiency\b/i,
 ];
 
-/** The class abilities a feat's prerequisite can name, each the requirements it is (none: a class's own feature). */
-const CLASS_ABILITY_PREREQUISITES: {
-  pattern: RegExp;
-  resolve: (match: RegExpMatchArray) => RequirementEntry | RequirementEntry[] | null;
-}[] = [
-  {
-    pattern: /[Aa]bility to (?:turn|rebuke)|[Tt]urn or rebuke undead ability|[Tt]urn or rebuke undead\b/,
-    resolve: () => or(eq(feat("Turn or Rebuke Undead (Cleric)")), eq(feat("Turn Undead (Paladin)"))),
-  },
-  {
-    // "Sneak attack or sudden strike +Nd6" — either ability's dice, every class's together
-    pattern: /[Ss]neak [Aa]ttack or [Ss]udden [Ss]trike \+(\d+)d\d+/,
-    resolve: (m) => {
-      const count = parseInt(m[1], 10);
-      return or(gte("feats.sneakattack.count", count), gte("feats.suddenstrike.count", count));
-    },
-  },
-  {
-    // "Sneak Attack +Nd6" — N sneak attack dice, every class's together
-    pattern: /[Ss]neak [Aa]ttack \+(\d+)d\d+/,
-    resolve: (m) => gte("feats.sneakattack.count", parseInt(m[1], 10)),
-  },
-  {
-    pattern: /[Ss]neak [Aa]ttack ability/i,
-    resolve: () => eq("feats.sneakattack.possessed"),
-  },
-  {
-    // Bare "Sneak Attack" — just requires having it
-    pattern: /[Ss]neak [Aa]ttack(?!\s*\+|\s*ability|\s*or)/,
-    resolve: () => eq("feats.sneakattack.possessed"),
-  },
-  {
-    // "Sudden Strike +Nd6" — N sudden strike dice, every class's together
-    pattern: /[Ss]udden [Ss]trike \+(\d+)d\d+/,
-    resolve: (m) => gte("feats.suddenstrike.count", parseInt(m[1], 10)),
-  },
-  {
-    pattern: /[Gg]race \+\d+/,
-    resolve: () => eq("feats.grace.possessed"),
-  },
-  {
-    // "Skirmish +Nd6" — N skirmish dice, every class's together
-    pattern: /[Ss]kirmish \+(\d+)d\d+/,
-    resolve: (m) => gte("feats.skirmish.count", parseInt(m[1], 10)),
-  },
-  {
-    pattern: /[Rr]age or frenzy ability/i,
-    resolve: () => eq(feat("Rage (Barbarian)")),
-  },
-  {
-    pattern: /[Ss]mite ability/i,
-    resolve: () => eq(feat("Smite Evil (Paladin)")),
-  },
-  {
-    pattern: /[Ff]lurry of blows ability/i,
-    resolve: () => eq(feat("Flurry of Blows (Monk)")),
-  },
-  {
-    pattern: /[Ww]ild [Ss]hape ability|[Aa]bility to (?:use )?wild shape|[Ww]ild [Ss]hape\./i,
-    resolve: () => eq(feat("Wild Shape (Druid)")),
-  },
-  {
-    // Any class's Summon Familiar (the generator makes it a check of its family)
-    pattern: /[Aa]bility to acquire a (?:new )?familiar/,
-    resolve: () => eq(feat("Summon Familiar")),
-  },
-  {
-    // A monk's ki strike is lawful from monk level 10
-    pattern: /[Kk]i strike \(lawful\)/,
-    resolve: () => gte("classes.monk.level", 10),
-  },
-  // These are class features inherent to a class — not feat prerequisites
-  { pattern: /[Ff]avored enemy ability/i, resolve: () => null },
+/**
+ * The class abilities a feat's prerequisite can name: the class features any class's of their family meets
+ * (`classFeatureRequirement`), and those it reads a requirement of its own for, a lawful ki strike the monk level it
+ * comes at, a favored enemy none (a class's own feature).
+ */
+const CLASS_ABILITY_PREREQUISITES: { pattern: RegExp; requirement?: () => RequirementEntry | undefined }[] = [
+  { pattern: /[Aa]bility to (?:turn|rebuke)|[Tt]urn or rebuke undead ability|[Tt]urn or rebuke undead\b/ },
+  { pattern: /[Ss]neak [Aa]ttack or [Ss]udden [Ss]trike \+(\d+)d\d+/ },
+  { pattern: /[Ss]neak [Aa]ttack \+(\d+)d\d+/ },
+  { pattern: /[Ss]neak [Aa]ttack ability/i },
+  // Bare "Sneak Attack": having it
+  { pattern: /[Ss]neak [Aa]ttack(?!\s*\+|\s*ability|\s*or)/ },
+  { pattern: /[Ss]udden [Ss]trike \+(\d+)d\d+/ },
+  { pattern: /[Gg]race \+\d+/ },
+  { pattern: /[Ss]kirmish \+(\d+)d\d+/ },
+  { pattern: /[Rr]age or frenzy ability/i },
+  { pattern: /[Ss]mite ability/i },
+  { pattern: /[Ff]lurry of blows ability/i },
+  { pattern: /[Ww]ild [Ss]hape ability|[Aa]bility to (?:use )?wild shape|[Ww]ild [Ss]hape\./i },
+  { pattern: /[Aa]bility to acquire a (?:new )?familiar/ },
+  // A monk's ki strike is lawful from monk level 10
+  { pattern: /[Kk]i strike \(lawful\)/, requirement: () => gte("classes.monk.level", 10) },
+  { pattern: /[Ff]avored enemy ability/i, requirement: () => undefined },
 ];
 
 /** The alignment "Relevant alignment" asks of a feat for an alignment's spells ("Spell Focus (Chaos)") */
@@ -172,27 +122,6 @@ function castingRequirements(text: string): RequirementEntry[] {
     if (type === "arcane") reqs.push(gte("spellcasting.arcane", level));
     else if (type === "divine") reqs.push(gte("spellcasting.divine", level));
     else reqs.push(or(gte("spellcasting.arcane", level), gte("spellcasting.divine", level)));
-  }
-  return reqs;
-}
-
-/**
- * A feat's class ability prerequisites, each the class feature feats that give it (`CLASS_ABILITY_PREREQUISITES`, in
- * order): a text one matched is no longer read by the ones after.
- */
-function classAbilityRequirements(text: string): RequirementEntry[] {
-  const reqs: RequirementEntry[] = [];
-  let abilityText = text;
-  for (const { pattern, resolve } of CLASS_ABILITY_PREREQUISITES) {
-    const match = abilityText.match(pattern);
-    if (match) {
-      const result = resolve(match);
-      if (result) {
-        if (Array.isArray(result)) reqs.push(...result);
-        else reqs.push(result);
-      }
-      abilityText = abilityText.replace(match[0], "");
-    }
   }
   return reqs;
 }
@@ -351,6 +280,23 @@ export class FeatPrerequisites extends RequirementReading {
     if (alignment) this.requirements.push(alignment);
   }
 
+  /**
+   * A feat's class ability prerequisites (`CLASS_ABILITY_PREREQUISITES`, in order), a class feature any class's of its
+   * family: a text one matched is no longer read by the ones after.
+   */
+  private classAbilityRequirements(text: string): RequirementEntry[] {
+    const reqs: RequirementEntry[] = [];
+    let abilityText = text;
+    for (const { pattern, requirement } of CLASS_ABILITY_PREREQUISITES) {
+      const match = abilityText.match(pattern);
+      if (!match) continue;
+      const read = requirement ? requirement() : this.classFeatureRequirement(match[0]);
+      if (read) reqs.push(read);
+      abilityText = abilityText.replace(match[0], "");
+    }
+    return reqs;
+  }
+
   /** The check that the character has the feat `name`, which the prerequisites name. */
   private featRequirement(name: string): RequirementEntry {
     this.featNames[stripSeparators(name)] = name;
@@ -476,8 +422,8 @@ export class FeatPrerequisites extends RequirementReading {
     reqs.push(...classLevelRequirements(cleanedText));
     reqs.push(...this.skillRankRequirements(cleanedText));
 
-    // Class ability prerequisites — map to actual class feature feats
-    reqs.push(...classAbilityRequirements(cleanedText));
+    // Class ability prerequisites: any class's feature of their family
+    reqs.push(...this.classAbilityRequirements(cleanedText));
 
     // Shield proficiency prerequisites
     if (/[Pp]roficien(?:t|cy) with (?:a )?(?:heavy )?shield/i.test(cleanedText))

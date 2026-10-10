@@ -540,7 +540,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description:
       "Your effective level for turning or rebuking creatures is treated as one level higher than your actual level in the class that grants the ability.",
     aptitudes: ["General"],
-    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
+    requirements: [eq("feats.turnorrebukeundead.*.possessed")],
   },
   {
     name: "Investigator",
@@ -598,7 +598,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     description:
       "You can fulfill the verbal and somatic components of spells while in wild shape form. For instance, while shaped as a hawk, screeches and talon gestures can substitute for normal verbal and somatic components. You may also use material components or focuses in your possession, even if they are melded into your current form. This feat does not allow use of magic items that your current form could not normally use, nor does it grant the ability to speak while wild shaped.",
     aptitudes: ["General"],
-    requirements: [gte("abilities.wisdom.total", 13), eq("feats.wildshapedruid.possessed")],
+    requirements: [gte("abilities.wisdom.total", 13), eq("feats.wildshape.*.possessed")],
   },
   {
     name: "Negotiator",
@@ -909,7 +909,7 @@ export const SPECIAL_FEATS: FeatSeed[] = [
       "Each time you select this feat, you gain four additional daily uses of your turn or rebuke ability. If you possess multiple turn/rebuke abilities (for example, a good-aligned cleric with the Fire domain who can turn undead and rebuke fire creatures), each ability gains four extra daily uses.",
     stackable: true,
     aptitudes: ["General"],
-    requirements: [or(eq("feats.turnorrebukeundeadcleric.possessed"), eq("feats.turnundeadpaladin.possessed"))],
+    requirements: [eq("feats.turnorrebukeundead.*.possessed")],
   },
   {
     name: "Spell Mastery",

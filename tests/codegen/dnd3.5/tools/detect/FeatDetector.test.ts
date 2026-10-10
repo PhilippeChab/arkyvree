@@ -41,7 +41,7 @@ describe("A feat's detected aptitudes", () => {
 describe("A feat's detected prerequisites", () => {
   test("name a class feature by its family, and a lawful ki strike by the monk level it comes at", () => {
     expect(featDetectedOf("Improved Familiar", "Ability to acquire a new familiar,").requirements).toEqual([
-      eq(feat("Summon Familiar")),
+      eq("feats.summonfamiliar.*.possessed"),
     ]);
     expect(featDetectedOf("Axiomatic Strike", "Stunning Fist, Ki strike (lawful),").requirements).toEqual([
       eq(feat("Stunning Fist")),
@@ -78,9 +78,7 @@ describe("A feat's detected prerequisites", () => {
     expect(shield.requirements).toEqual([gte("combat.bab", 1), eq(feat("Shield Proficiency"))]);
     expect(shield.unresolvedPrereqs).toBeUndefined();
     const turning = featDetectedOf("Divine Might", "Turn or rebuke undead class feature,");
-    expect(turning.requirements).toEqual([
-      or(eq(feat("Turn or Rebuke Undead (Cleric)")), eq(feat("Turn Undead (Paladin)"))),
-    ]);
+    expect(turning.requirements).toEqual([eq("feats.turnorrebukeundead.*.possessed")]);
     expect(turning.unresolvedPrereqs).toBeUndefined();
   });
 });
