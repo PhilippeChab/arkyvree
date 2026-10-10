@@ -87,12 +87,23 @@ describe("A bonus", () => {
     expect(conditional("Her mount gains a +2 bonus on Jump checks.")).toBe(true);
   });
 
-  test("applies always when only what's worn, held or carried, or another sentence, sets terms", () => {
+  test("applies always when only what's worn, held or carried, the level it comes at, or another sentence, sets terms", () => {
     expect(conditional("The wearer gains a +5 competence bonus on Climb checks when worn.")).toBe(false);
     expect(
       conditional("If you are wearing light armor and carrying a light load, you gain a +2 bonus on Jump checks."),
     ).toBe(false);
     expect(conditional("You gain a +2 racial bonus on Listen checks. You hide only when unseen.")).toBe(false);
+    // A class feature's level is when it's granted, not a condition; one named after it still is
+    expect(
+      conditionalAt("When she attains 6th level, a dervish gains a +2 bonus on initiative rolls.", /\+2 bonus/),
+    ).toBe(false);
+    expect(conditional("Upon reaching 9th level, a scout gains a +2 bonus on Hide checks.")).toBe(false);
+    expect(
+      conditionalAt(
+        "When she attains 7th level, a dervish gains an extra +4 bonus to Armor Class when she chooses to fight defensively.",
+        /\+4 bonus/,
+      ),
+    ).toBe(true);
     // "for" scales it here, it doesn't narrow it
     expect(conditional("You gain a +1 bonus on Search checks for every three class levels.")).toBe(false);
     // A race's traits are joined by a separator: each is its own sentence
