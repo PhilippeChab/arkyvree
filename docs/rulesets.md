@@ -473,7 +473,8 @@ engine/
 │   │                                      ListedEntity: a kind a ruleset lists, a feat in a pool, a power on a
 │   │                                      spell list; AbilityEntity, LanguageEntity, MechanicEntity, SaveEntity:
 │   │                                      the plain kinds, which a module uses as they are; GeneratedFeats: the
-│   │                                      feats a plan makes or removes, in the pool a ruleset names)
+│   │                                      base of a set of feats an entity brings (featsOf), made in the pool a
+│   │                                      ruleset names, removed by a set that removes its feats)
 │   ├── fields/                            (Field, FieldCodec: an entity's fields kept in its properties)
 │   ├── character/                         (CharacterBase: a character's state, its evaluators and its build, the
 │   │                                      modifiers in rounds behind their requirements, the ruleset's steps its
@@ -535,11 +536,11 @@ engine/rulesets/
     │   ├── Dnd35Entities.ts               (each kind's class, by its table: `of`)
     │   ├── aptitudes/ classes/ feats/ items/ powers/ races/ skills/
     │   │                                  (XEntity: an entity described, what saving or deleting one writes; fields.ts:
-    │   │                                  its fields off its properties; classes/ ClassLevelEntity, ClassSkillEntity,
+    │   │                                  its fields off its properties; classes/ ClassLevelEntity, ClassSkills,
     │   │                                  ClassTable: a class's parts, which ClassEntity hands out; the abilities,
     │   │                                  languages, mechanics and saves are core's kinds as they are)
     │   └── feats/                         (SkillFocusFeats, SpellFocusFeats: a skill's Skill Focus, a school's Spell
-    │                                      Focus, made with core's GeneratedFeats in the general feats' pool)
+    │                                      Focus, sets of core's GeneratedFeats in the general feats' pool)
     ├── ruleset/                           ← the module's `ruleset`: what it answers of a ruleset as a whole
     │   ├── Dnd35Ruleset.ts                (findMissingContent: what a ruleset published to be played needs, which
     │   │                                  core's checkPublishable refuses it without)
@@ -706,7 +707,7 @@ What a ruleset answers is its module's: five parts, each a class whose operation
 A part's operation is a method of a handle of `engine/api/`, which `Engine` hands out, dispatched by the view's base rules (`Modules.of(view.ruleset.baseRules)`, which `Engine.for(scope)` reads once; a content operation by the base rules its caller names, `Engine.forRules(baseRules)`). The target paths' handle asks the target paths (`targetPaths()`: `list`, `validate`, `checkValue`, `getCompletions`, which `CategoryPaths` answers, over `PathChecks` and `PathCompletions`), and the view's build asks the order (`Engine.copyOnWrite().buildView`). The properties' and the customizations', which no ruleset changes but by its factories, ask the core's classes (`engine/core/customizations/`): `PropertyTypeCatalog` adds the types and values the ruleset's own properties use to its rules' (`createPropertyTypes`: `propertyTypes()`'s `list`, `getTypeCompletions`, `getValueCompletions`); `ModifierEdits`, `PropertyEdits` and `RequirementEdits` (on `CustomizationEdits`, bound to the entity as their handles are) describe an entity's customizations and plan their saves, a modifier's or a requirement's row checked against its target paths (`modifiers(entityType, entityId)`: `describe`, `describeAll`, `planCreate`, `planEdit`, `planDelete`, and `properties(…)` and `requirements(…)` alike; a list's, `targetPaths().describeModifiers`, labeled as the entity's are: `TargetLabels.describe`), on the entity the view has (`CustomizedEntity.find`, refused as not found otherwise). Copy-on-write's (`Engine.copyOnWrite()`) ask the core's classes too (`CowSources`: `buildSourceChain`, `getReads`; `ExtensionNames`: `checkExtensionNames`; `SiblingMerge`: `mergeCustomizations`). `entities(type)` hands out a kind's class, whose `find` and `describe` read the view (`RulesetData.find`; a customizable kind's `describe` with its customizations), and `checkPublishable` asks the ruleset part's `checkPublishable`, which an extension passes. An operation takes the data its caller read: the view (`RulesetView`: the ruleset and its `rulesetData`), which `Engine.for` binds, a character's rows (`CharacterInput`: its record, its rows, a bonded creature's master's), which `character(input)` binds, a request's body. It answers data:
 
 - **A description**: what the API answers (`character(input).describe`, `class(klassId).describeLevels`), a picker's or a list's filters, which the server reads a page with, and what describes the page it read (`levelUp().openFeatPicker`'s `describe`, `entities("feats").openList`'s `describe`), the printed sheet's document (`character(input).describeSheet`).
-- **A plan**: what to write, without ids, always a named object (its part's `plans.ts`: `LevelsPlan`, `AbilitiesPlan`, `InventoryEntryPlan`, `BondedCreaturesPlan`…), never a bare list. `EntityWrites` is what an entity's form writes beside its row: the properties its fields are kept in, a requirement on it, the entities it makes (`made`: each with its table, its row's columns, its list links and its customizations; 3.5's general feats, `feats/GeneratedFeats.ts`), and those it removes (`removed`, by table and id). A level-up's is each level's writes (`LevelWrites`: its row's columns, and its rows in the tables under it, by table: its ability increases, each an ability and an amount, and its picks), and what the master's bonded creatures become with them (`levelUp()`'s `planLevels`, `planEdit`, `planRemoval`; the seeders', `planBonded`: a creature it makes as its row whole, after its master's, with its ability scores), which the service writes as they are, table by table. A plan whose save answers the entity carries what it answers once written (`describe(row)`: the saved row with the fields the save keeps, `entities("skills").planCreate`). The server writes a plan in its transaction (`writeEntityWrites`, `writeBondedCreatures`), which reads of the view only its copy-on-write data, and of the database what a write depends on: whether a grouping's feats are there already, whether a character picked a feat it removes.
+- **A plan**: what to write, without ids, always a named object (its part's `plans.ts`: `LevelsPlan`, `AbilitiesPlan`, `InventoryEntryPlan`, `BondedCreaturesPlan`…), never a bare list. `EntityWrites` is what an entity's form writes beside its row: the properties its fields are kept in, a requirement on it, the entities it makes (`made`: each with its table, its row's columns, its list links and its customizations; 3.5's Skill Focus and Spell Focus, sets of core's `GeneratedFeats`, `engine/core/entities/GeneratedFeats.ts`), and those it removes (`removed`, by table and id). A level-up's is each level's writes (`LevelWrites`: its row's columns, and its rows in the tables under it, by table: its ability increases, each an ability and an amount, and its picks), and what the master's bonded creatures become with them (`levelUp()`'s `planLevels`, `planEdit`, `planRemoval`; the seeders', `planBonded`: a creature it makes as its row whole, after its master's, with its ability scores), which the service writes as they are, table by table. A plan whose save answers the entity carries what it answers once written (`describe(row)`: the saved row with the fields the save keeps, `entities("skills").planCreate`). The server writes a plan in its transaction (`writeEntityWrites`, `writeBondedCreatures`), which reads of the view only its copy-on-write data, and of the database what a write depends on: whether a grouping's feats are there already, whether a character picked a feat it removes.
 - **A refusal**: a `RulesError` naming its kind (`invalid`, `unprocessable`, `conflict`, `not-found`), which the server answers as its error of that kind (`characters().checkLanguages`, `checkPublishable`, and a plan's own: `character(input).planInventoryEntry` an item the character can't equip where asked, `entities("aptitudes").planEdit` renaming a pool the characters count on by name). What a character fails is refused with its issues (`RulesError.refuseIssues`): `levelUp().planLevels` refuses the character with its new levels, unless forced.
 
 Its verb says which: `describe…`, `get…` and `list…` answer what something is, `open…` a picker or a list, `plan…` a plan, `check…` refuses or answers what it checked, `validate…` a path's validation, `build…` the view, its copy-on-write data and its source chain (`buildView`, `buildData`, `buildSourceChain`), `merge…` the rows a copy takes of its siblings, and `to…` a conversion (`toEntityProperties`). A method named for a noun hands out a handle (`character(input)`, `class(klassId)`, `entities("skills")`, `levelUp()`), and isn't an operation (`arkyvree/one-engine-op`).
@@ -728,15 +729,17 @@ export const SKILL_FIELDS = new FieldCodec(
 ```ts
 // engine/rulesets/dnd3.5/entities/skills/SkillEntity.ts
 export default class SkillEntity extends RulesetEntity<"skills", SkillBody, SkillColumns, typeof SKILL_FIELDS.fields> {
+  private readonly skillFocus = new SkillFocusFeats(this.view);
+
   protected readonly fields = SKILL_FIELDS;
 
   protected override writesOf(body: SkillBody, given: Partial<SkillFieldValues>, skill?: Skill): EntityWrites {
     const fields = this.formFields(given, skill);
     const renamed = skill?.name !== body.name;
     return {
-      made: renamed ? SkillFocusFeats.make(this.view, body.name) : [],
+      made: renamed ? this.skillFocus.make(body.name) : [],
       properties: fields && this.fields.write(fields),
-      removed: skill && renamed ? SkillFocusFeats.remove(this.view, skill.name) : [],
+      removed: skill && renamed ? this.skillFocus.remove(skill.name) : [],
     };
   }
   …

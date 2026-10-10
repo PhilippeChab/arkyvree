@@ -4,7 +4,7 @@ import SkillEntity from "@/engine/rulesets/dnd3.5/entities/skills/SkillEntity.ts
 import type { Klass } from "@/shared/relations.ts";
 
 /** A class's class skills (`klass`, as the view has it): what it lists, and what assigning or removing one takes. */
-export default class ClassSkillEntity {
+export default class ClassSkills {
   constructor(
     private readonly view: RulesetView,
     private readonly klass: Klass,

@@ -24,6 +24,9 @@ export default class SkillEntity extends RulesetEntity<
   { description?: string | null; name: string; primaryAbilityId: string },
   typeof SKILL_FIELDS.fields
 > {
+  /** The skill's Skill Focus, made and removed with it. */
+  private readonly skillFocus = new SkillFocusFeats(this.view);
+
   /** How armor weighs on it, and whether it's usable untrained. */
   protected override readonly fields = SKILL_FIELDS;
 
@@ -43,7 +46,7 @@ export default class SkillEntity extends RulesetEntity<
 
   /** What deleting a skill writes with it: its Skill Focus removed, refused while a character picked it. */
   protected override deleteWritesOf(skill: Skill): EntityWrites {
-    return { removed: SkillFocusFeats.remove(this.view, skill.name) };
+    return { removed: this.skillFocus.remove(skill.name) };
   }
 
   /**
@@ -54,9 +57,9 @@ export default class SkillEntity extends RulesetEntity<
     const fields = this.formFields(given, skill);
     const renamed = skill?.name !== body.name;
     return {
-      made: renamed ? SkillFocusFeats.make(this.view, body.name) : [],
+      made: renamed ? this.skillFocus.make(body.name) : [],
       properties: fields && this.fields.write(fields),
-      removed: skill && renamed ? SkillFocusFeats.remove(this.view, skill.name) : [],
+      removed: skill && renamed ? this.skillFocus.remove(skill.name) : [],
     };
   }
 }

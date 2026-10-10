@@ -314,7 +314,7 @@ On create: with a school, generates the properties from the form's fields, and t
 On update: replaces the generated property types (the spell's fields) with the form's, none without a school, and creates the feats of a school that's new. The spell's other properties remain, and so do existing school feats.
 On delete: cleans up the spell's customizations. School feats remain even if the school has no spells left.
 
-Feats auto-generated per unique school by `entities("powers").planCreate` and `planEdit` (`SpellFocusFeats.make`, `feats/SpellFocusFeats.ts`, beside a skill's `SkillFocusFeats`):
+Feats auto-generated per unique school by `entities("powers").planCreate` and `planEdit` (`SpellFocusFeats`, `feats/SpellFocusFeats.ts`, a set of core's `GeneratedFeats` beside a skill's `SkillFocusFeats`):
 - `Spell Focus: <school>` — +1 `powers.groups.<stripped_school>.*.dc.misc`, linked to General aptitude
 - `Greater Spell Focus: <school>` — +1 `powers.groups.<stripped_school>.*.dc.misc`, requires `feats.spellfocus<stripped_school>.possessed == true`, linked to General aptitude
 - Created idempotently (skipped if already exist for the school)
