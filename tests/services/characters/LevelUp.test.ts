@@ -27,6 +27,7 @@ import {
   levelUp,
   picks,
   SORCERER_1,
+  WAR_CLERIC_1,
   WIZARD_1,
 } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { addCharacterLevel, findKlassLevel, getLevelStep, increasesOf } from "@/tests/support/levels.ts";
@@ -1004,6 +1005,50 @@ describe("a spell known once in its class list", () => {
     const saved = await CharacterLevelPowers.findMany(db, { characterLevelIds: [level.id] });
     expect(saved.map(({ aptitudeId, powerId }) => ({ aptitudeId, powerId }))).toEqual([
       { aptitudeId: wizardSpells, powerId: ctx.powerMap["Light"] },
+    ]);
+  });
+
+  test("refuses a spell a modifier makes known in its list though another class's list picked it, forced or not", async () => {
+    const ctx = await getSeedCtx();
+    const characterId = await createSeedCharacter(ctx, "sorcerer", { xp: 1000 });
+    await Modifiers.create(db, {
+      sourceId: characterId,
+      sourceType: "characters",
+      target: "powers.light.sorcerer.known",
+      value: "true",
+      valueType: "boolean",
+      operator: "set",
+    });
+    // The wizard's spellbook's Light, which the wizard's list doesn't know. Forced: the level's other picks aren't this
+    // test's
+    await finalizeBatch(ctx, characterId, [["Wizard", 1, 4]], { powers: { "Wizard Spells": ["Light"] } }, true);
+    const sorcererLight = { powers: { "Sorcerer Spells": ["Light"] } };
+    const lightLevel = { hp: 4, ...sorcererLight };
+    for (const force of [false, true])
+      expect(levelUp(session, ctx, characterId, "Sorcerer", 1, lightLevel, force)).rejects.toMatchObject(KNOWN_LIGHT);
+    const previewed = await preview(ctx, characterId, [["Sorcerer", 1]], undefined, sorcererLight);
+    expect(previewed.powers.fitted[ctx.aptMap["Sorcerer Spells"]]).toEqual([]);
+  });
+
+  test("lists a cleric spell a cleric/wizard's spellbook has on his cleric's list too, each at its class's DC", async () => {
+    const ctx = await getSeedCtx();
+    const abilities = { Intelligence: 16, Wisdom: 14 };
+    const characterId = await createSeedCharacter(ctx, "fighter", { xp: 1000, abilities });
+    // Forced: the levels' other picks aren't this test's
+    const spellbook = { hp: 4, powers: { "Wizard Spells": ["Protection from Evil"] } };
+    await levelUp(session, ctx, characterId, "Wizard", 1, spellbook, true);
+    await levelUp(session, ctx, characterId, "Cleric", 1, WAR_CLERIC_1, true);
+
+    const { spellGroups } = await CharactersService.getCharacter(session, characterId);
+    const protection = (list: string) =>
+      spellGroups
+        .find((apt) => apt.aptitudeName === list)
+        ?.levels.find((group) => group.level === 1)
+        ?.spells.find((spell) => spell.name === "Protection from Evil");
+    // Wisdom 14 (+2) for the cleric's, with his Good domain's tag; Intelligence 16 (+3) for the wizard's
+    expect([protection("Cleric Spells"), protection("Wizard Spells")]).toMatchObject([
+      { dc: 10 + 1 + 2, tags: [{ name: "Good Domain" }] },
+      { dc: 10 + 1 + 3 },
     ]);
   });
 

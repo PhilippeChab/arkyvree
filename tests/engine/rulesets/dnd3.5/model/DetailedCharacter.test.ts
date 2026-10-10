@@ -362,8 +362,11 @@ async function seedHuman(
   });
 }
 
-/** A new wizard 1 whose Toughness grants Magic Missile, which gets `requirement` of its own when given. */
-async function setupGrantedSpell({ requirement = false, spellFocus = false } = {}) {
+/**
+ * A new wizard 1 whose Toughness grants Magic Missile, which gets `requirement` of its own when given, and which a
+ * modifier of the character's own grants too when `ownGrant` is.
+ */
+async function setupGrantedSpell({ ownGrant = false, requirement = false, spellFocus = false } = {}) {
   const ctx = await getSeedCtx();
   const characterId = await seedHuman("Granted Spell Test", WIZARD_SCORES, { xp: 1000 });
   const levelIds = await addClassLevels(db, ctx, characterId, "Wizard", [1], [4]);
@@ -390,14 +393,19 @@ async function setupGrantedSpell({ requirement = false, spellFocus = false } = {
       aptitude: "Wizard Spells",
     })),
   );
-  await Modifiers.create(db, {
-    sourceId: ctx.featMap["Toughness"],
-    sourceType: "feats",
-    target: "powers.magicmissile.wizard.known",
-    value: "true",
-    valueType: "boolean",
-    operator: "set",
-  });
+  for (const [sourceId, sourceType] of [
+    [ctx.featMap["Toughness"], "feats"],
+    ...(ownGrant ? [[characterId, "characters"]] : []),
+  ]) {
+    await Modifiers.create(db, {
+      sourceId,
+      sourceType,
+      target: "powers.magicmissile.wizard.known",
+      value: "true",
+      valueType: "boolean",
+      operator: "set",
+    });
+  }
   if (requirement) {
     await Requirements.create(db, {
       entityId: ctx.powerMap["Magic Missile"],
@@ -3148,6 +3156,46 @@ describe("DetailedCharacter", () => {
       expect([holdPerson("Wizard Spells", 3), holdPerson("Bard Spells", 2)]).toEqual([17, 14]);
     });
 
+    test("give a cleric/wizard's cleric list the cleric spells his spellbook has too, at the cleric's DC, with his domains' tags", async () => {
+      // Cleric 5 / wizard 5, Wisdom 14 (+2), Intelligence 16 (+3): Protection from Evil is a 1st-level cleric, wizard and
+      // Good domain spell, Dispel Magic a 3rd-level cleric, wizard and Magic domain one
+      const ctx = await getSeedCtx();
+      const characterId = await seedHuman("Cleric Wizard", { ...WIZARD_SCORES, Wisdom: 14 }, { xp: 45000 });
+      const clericLevels = await addClassLevels(db, ctx, characterId, "Cleric", [1, 2, 3, 4, 5], [8, 6, 6, 6, 6]);
+      const wizardLevels = await addClassLevels(db, ctx, characterId, "Wizard", [1, 2, 3, 4, 5], [4, 3, 3, 3, 3]);
+      await addFeats(db, ctx, clericLevels, [
+        { levelIndex: 0, featName: "Good Domain", aptitude: "Cleric Domain" },
+        { levelIndex: 0, featName: "Magic Domain", aptitude: "Cleric Domain" },
+      ]);
+      await addPowers(db, ctx, wizardLevels, [
+        { levelIndex: 0, powerName: "Protection from Evil", aptitude: "Wizard Spells" },
+        { levelIndex: 4, powerName: "Dispel Magic", aptitude: "Wizard Spells" },
+      ]);
+      const record = (await Characters.findOne(db, { id: characterId }))!;
+      const lists = CharacterResponse.buildFull(record, await build(record)).spellGroups;
+      const rowOf = (list: string, level: number, name: string) => {
+        const row = lists
+          .find((apt) => apt.aptitudeName === list)
+          ?.levels.find((group) => group.level === level)
+          ?.spells.find((spell) => spell.name === name);
+        return row && { dc: row.dc, tags: row.tags?.map((tag) => tag.name) ?? [] };
+      };
+
+      // Each class's list knows each spell, at its own DC; the domain's tag shows on the cleric's
+      expect([1, 3].map((level) => rowOf("Cleric Spells", level, "Protection from Evil"))).toEqual([
+        { dc: 10 + 1 + 2, tags: ["Good Domain"] },
+        undefined,
+      ]);
+      expect(rowOf("Wizard Spells", 1, "Protection from Evil")).toEqual({ dc: 10 + 1 + 3, tags: [] });
+      expect(rowOf("Cleric Spells", 3, "Dispel Magic")).toEqual({ dc: 10 + 3 + 2, tags: ["Magic Domain"] });
+      expect(rowOf("Wizard Spells", 3, "Dispel Magic")).toEqual({ dc: 10 + 3 + 3, tags: [] });
+      // And his domain slot lists them, as the cleric casts them
+      expect([rowOf("Domain Spells", 1, "Protection from Evil"), rowOf("Domain Spells", 3, "Dispel Magic")]).toEqual([
+        { dc: 10 + 1 + 2, tags: ["Good Domain"] },
+        { dc: 10 + 3 + 2, tags: ["Magic Domain"] },
+      ]);
+    });
+
     describe("granted by a feat's modifier", () => {
       test("are known, next to those picked", async () => {
         const spells = (await setupGrantedSpell()).components.powers;
@@ -3177,6 +3225,64 @@ describe("DetailedCharacter", () => {
         const granted = (await setupGrantedSpell({ spellFocus: true })).getVirtualPowers();
         expect(granted.find((power) => power.name === "Magic Missile")).toMatchObject({ dc: 15 });
       });
+
+      test("are known on their list beside the same spell another class's list picked, each listed under its class", async () => {
+        // A sorcerer 1 / wizard 1 whose spellbook has Light, which a modifier of his makes a sorcerer spell known too
+        const ctx = await getSeedCtx();
+        const characterId = await seedHuman("Two Lists", { ...WIZARD_SCORES, Charisma: 12 }, { xp: 1000 });
+        await addClassLevels(db, ctx, characterId, "Sorcerer", [1], [4]);
+        const wizardLevel = await addClassLevels(db, ctx, characterId, "Wizard", [1], [4]);
+        await addPowers(db, ctx, wizardLevel, [{ levelIndex: 0, powerName: "Light", aptitude: "Wizard Spells" }]);
+        await Modifiers.create(db, {
+          sourceId: characterId,
+          sourceType: "characters",
+          target: "powers.light.sorcerer.known",
+          value: "true",
+          valueType: "boolean",
+          operator: "set",
+        });
+        const record = (await Characters.findOne(db, { id: characterId }))!;
+        const detailed = await build(record);
+
+        const listsKnowing = detailed
+          .getHeldPowers()
+          .filter((power) => power.name === "Light")
+          .map((power) => power.aptitudeId);
+        expect(listsKnowing.sort()).toEqual([ctx.aptMap["Sorcerer Spells"], ctx.aptMap["Wizard Spells"]].sort());
+        const cantrips = (list: string) =>
+          CharacterResponse.buildFull(record, detailed)
+            .spellGroups.find((apt) => apt.aptitudeName === list)
+            ?.levels.find((group) => group.level === 0)
+            ?.spells.map((spell) => spell.name);
+        expect([cantrips("Sorcerer Spells"), cantrips("Wizard Spells")]).toEqual([["Light"], ["Light"]]);
+      });
+
+      test("are known once on their list, however many modifiers make them known there", async () => {
+        // Toughness makes Magic Missile a wizard spell known, and so does a modifier of the character's own
+        const detailed = await setupGrantedSpell({ ownGrant: true });
+        expect(detailed.getVirtualPowers().map((power) => power.name)).toEqual(["Magic Missile"]);
+      });
+    });
+
+    test("apply a spell's modifiers once, however many class lists know it", async () => {
+      // A sorcerer 1 / wizard 1 who picked Light in both lists: Light here raises Strength by 1
+      const ctx = await getSeedCtx();
+      const characterId = await seedHuman("Light Twice", { ...WIZARD_SCORES, Charisma: 12 }, { xp: 1000 });
+      const sorcererLevel = await addClassLevels(db, ctx, characterId, "Sorcerer", [1], [4]);
+      const wizardLevel = await addClassLevels(db, ctx, characterId, "Wizard", [1], [4]);
+      await addPowers(db, ctx, sorcererLevel, [{ levelIndex: 0, powerName: "Light", aptitude: "Sorcerer Spells" }]);
+      await addPowers(db, ctx, wizardLevel, [{ levelIndex: 0, powerName: "Light", aptitude: "Wizard Spells" }]);
+      await Modifiers.create(db, {
+        sourceId: ctx.powerMap["Light"],
+        sourceType: "powers",
+        target: "abilities.strength.misc",
+        value: "1",
+        valueType: "number",
+        operator: "add",
+      });
+      invalidateSeededRuleset(ctx.rulesetId);
+      const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
+      expect(detailed.components.abilities.getAbilities().strength.misc).toBe(1);
     });
 
     describe("the highest spell level cast, by kind", () => {

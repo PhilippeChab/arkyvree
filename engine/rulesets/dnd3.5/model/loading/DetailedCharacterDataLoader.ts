@@ -134,7 +134,7 @@ export default class DetailedCharacterDataLoader extends include(
       rows.modifiers,
       [race.id, ...equippedItemIds, ...klassEntityIds, ...levels.klassLevelIds, ...featIds, ...powerIds],
       featIds,
-      powerIds,
+      allPowers,
       rulesetData,
     );
 
@@ -165,9 +165,10 @@ export default class DetailedCharacterDataLoader extends include(
 
   /**
    * The sources of the character's modifiers past its own, in the order they apply: its race, its equipped items, its
-   * class levels, its classes (once each, for a character with any level of it), its feats and its powers. A feat or a
-   * power granted without a pick (a class level's, or a modifier's) bypasses its own prerequisites: what grants it is
-   * its gate.
+   * class levels, its classes (once each, for a character with any level of it), its feats and its powers (once each,
+   * however many lists know it: its first, a pick before a grant, a grant before a modifier's). A feat or a power
+   * granted without a pick (a class level's, or a modifier's) bypasses its own prerequisites: what grants it is its
+   * gate.
    */
   protected override sourcesOf(
     { feats, klassEntityIds, klassLevels, powers, race }: LoadedParts,
@@ -183,7 +184,9 @@ export default class DetailedCharacterDataLoader extends include(
         requirements: rulesetData.requirementsByEntity.get(klassId) ?? [],
       })),
       ...feats.map((feat) => (feat.klassLevelFeatId || feat.virtual ? { modifiers: feat.modifiers } : feat)),
-      ...powers.map((power) => (power.free || power.virtual ? { modifiers: power.modifiers } : power)),
+      ...[...Map.groupBy(powers, (power) => power.id).values()].map(([power]) =>
+        power.free || power.virtual ? { modifiers: power.modifiers } : power,
+      ),
     ];
   }
 }
