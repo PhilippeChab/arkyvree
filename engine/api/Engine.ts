@@ -23,8 +23,11 @@ export default class Engine {
     return new RulesetEngine(view);
   }
 
-  /** The engine bound to a base rules' content, which the seeders and the codegen ask before any ruleset has a view. */
-  static forRules(baseRules: BaseRules) {
-    return new ContentEngine(Modules.of(baseRules));
+  /**
+   * The engine bound to a base rules' content, which the seeders and the codegen ask before any ruleset has a view: its
+   * own module's, by the base rules it's handed.
+   */
+  static forRules<B extends BaseRules>(baseRules: B) {
+    return new ContentEngine(Modules.of(baseRules).content);
   }
 }
