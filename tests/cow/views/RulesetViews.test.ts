@@ -1,6 +1,12 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 
-import { featsInRules, itemsInRules, modifiersInCustomization, propertiesInCustomization } from "@/drizzle/schema.ts";
+import {
+  aptitudesInRules,
+  featsInRules,
+  itemsInRules,
+  modifiersInCustomization,
+  propertiesInCustomization,
+} from "@/drizzle/schema.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -8,12 +14,23 @@ import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import { Feats, Modifiers, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
+import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { STRENGTH_BONUS } from "@/tests/support/customizations.ts";
 import { insertRows } from "@/tests/support/database.ts";
 import { copyEntity, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { RULESET_SKILL_POINT_ABILITY_ID } from "@/vocabulary/dnd3.5/properties/index.ts";
+
+/** A published system ruleset built on the seeded one, as a book a fork takes is. */
+function createBook(seedId: string) {
+  return createTestRuleset(null, {
+    private: false,
+    status: "Published",
+    rulesetId: seedId,
+    ancestorRulesetIds: [seedId],
+  });
+}
 
 function createFork(seedId: string) {
   return createTestRuleset(SEED_USER_ID, { rulesetId: seedId, ancestorRulesetIds: [seedId] });
@@ -572,18 +589,8 @@ describe("RulesetViews", () => {
         },
       ]);
 
-      const extA = await createTestRuleset(null, {
-        private: false,
-        status: "Published",
-        rulesetId: seed.id,
-        ancestorRulesetIds: [seed.id],
-      });
-      const extB = await createTestRuleset(null, {
-        private: false,
-        status: "Published",
-        rulesetId: seed.id,
-        ancestorRulesetIds: [seed.id],
-      });
+      const extA = await createBook(seed.id);
+      const extB = await createBook(seed.id);
 
       const cowA = await copyEntity(db, "feats", baseFeat.id, extA);
       const cowB = await copyEntity(db, "feats", baseFeat.id, extB);
@@ -628,18 +635,8 @@ describe("RulesetViews", () => {
         },
       ]);
 
-      const extA = await createTestRuleset(null, {
-        private: false,
-        status: "Published",
-        rulesetId: seed.id,
-        ancestorRulesetIds: [seed.id],
-      });
-      const extB = await createTestRuleset(null, {
-        private: false,
-        status: "Published",
-        rulesetId: seed.id,
-        ancestorRulesetIds: [seed.id],
-      });
+      const extA = await createBook(seed.id);
+      const extB = await createBook(seed.id);
 
       const cowA = await copyEntity(db, "items", baseItem.id, extA);
       const cowB = await copyEntity(db, "items", baseItem.id, extB);
@@ -662,6 +659,43 @@ describe("RulesetViews", () => {
       expect(composed.items.find((i) => i.id === winnerId)).toBeDefined();
       expect(composed.items.find((i) => i.id === loserId)).toBeUndefined();
       expect(composed.items.find((i) => i.id === baseItem.id)).toBeUndefined();
+    });
+  });
+
+  describe("lists of one name", () => {
+    test("a fork's copy of a book's list stands for the list of its name a book before it takes later", async () => {
+      const seed = await getRuleset();
+      const [first, second] = [await createBook(seed.id), await createBook(seed.id)];
+      const name = `Shared Spells ${uniqueId()}`;
+      const [secondList] = await insertRows(aptitudesInRules, [{ name, rulesetId: second.id }]);
+      const fork = await createTestRuleset(SEED_USER_ID, {
+        rulesetId: seed.id,
+        ancestorRulesetIds: [seed.id],
+        extensionRulesetIds: [first.id, second.id],
+      });
+      const copy = await copyEntity(db, "aptitudes", secondList.id, fork);
+      const [firstList] = await insertRows(aptitudesInRules, [{ name, rulesetId: first.id }]);
+
+      const view = await RulesetViews.getData(fork);
+      expect(view.aptitudes.filter((list) => list.name === name).map((list) => list.id)).toEqual([copy.id]);
+      expect(view.cow.resolve(firstList.id)).toBe(copy.id);
+    });
+
+    test("a campaign's list takes no book's list's place in its ruleset's view", async () => {
+      const seed = await getRuleset();
+      const book = await createBook(seed.id);
+      const name = `Shared Spells ${uniqueId()}`;
+      const [bookList] = await insertRows(aptitudesInRules, [{ name, rulesetId: book.id }]);
+      const fork = await createTestRuleset(SEED_USER_ID, {
+        rulesetId: seed.id,
+        ancestorRulesetIds: [seed.id],
+        extensionRulesetIds: [book.id],
+      });
+      const { campaign } = await createTestCampaign(SEED_USER_ID, fork.id);
+      await insertRows(aptitudesInRules, [{ name, rulesetId: fork.id, campaignId: campaign.id }]);
+
+      const view = await RulesetViews.getData(fork);
+      expect(view.aptitudes.filter((list) => list.name === name).map((list) => list.id)).toEqual([bookList.id]);
     });
   });
 });

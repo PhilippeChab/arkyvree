@@ -51,6 +51,7 @@ import {
   Skills,
 } from "@/server/repositories/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
+import { AptitudesService } from "@/server/services/rulesets/aptitudes/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
@@ -124,6 +125,16 @@ const NAMINGS = [
 
 function unique(keys: string[]) {
   return new Set(keys).size === keys.length;
+}
+
+/** A character of the user's on the ruleset, every ability score 16. */
+async function createCharacterOn(userId: string, rulesetId: string) {
+  const { abilityMap } = await getSeedCtx();
+  const character = await createTestCharacter(userId, { rulesetId });
+  await db
+    .insert(characterAbilitiesInCharacter)
+    .values(Object.values(abilityMap).map((abilityId) => ({ characterId: character.id, abilityId, score: 16 })));
+  return character;
 }
 
 /** A published public extension of the seeded base (a system one when `userId` is null). */
@@ -241,12 +252,7 @@ async function forkTaking(...books: string[]) {
   for (const book of books)
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [(await findSeededRuleset(book)).id]);
 
-  const { abilityMap } = await getSeedCtx();
-  const character = await createTestCharacter(user.id, { rulesetId: draft.id });
-  await db
-    .insert(characterAbilitiesInCharacter)
-    .values(Object.values(abilityMap).map((abilityId) => ({ characterId: character.id, abilityId, score: 16 })));
-  return { session, draft, character };
+  return { session, draft, character: await createCharacterOn(user.id, draft.id) };
 }
 
 /**
@@ -545,6 +551,38 @@ describe("subscribing to an extension", () => {
       expect(cow.resolve(basePower.id)).toBe(reprint.id);
       expect(cow.getStaleIds()).not.toContain(reprint.id);
     });
+
+    test("pairs the fork's own list with its books' lists of its name: the fork's shows, its books' classes drawing on it", async () => {
+      const { user, session, draft } = await setupFork();
+      const [own] = await Aptitudes.create(db, { name: "Favored Soul Spells", rulesetId: draft.id });
+      const divine = await findSeededRuleset(DND35_COMPLETE_DIVINE_NAME);
+      await RulesetExtensionsService.subscribeExtension(session, draft.id, [divine.id]);
+      const view = await RulesetViews.getData((await Rulesets.findOne(db, { id: draft.id }))!);
+      const divineList = (await Aptitudes.findOne(db, { name: own.name, rulesetId: divine.id }))!;
+      const named = (lists: { id: string; name: string }[]) =>
+        lists.filter((list) => list.name === own.name).map((list) => list.id);
+      expect(named([...view.aptitudesById.values()])).toEqual([own.id]);
+      expect(view.aptitudesById.get(divineList.id)?.id).toBe(own.id);
+      const { items } = await AptitudesService.getAptitudes(draft.id, { search: own.name }, firstPage);
+      expect(named(items)).toEqual([own.id]);
+
+      // The book's favored soul casts from the fork's list, which offers the spells on the book's
+      const spell = (await RulesetViews.getRawData(divine.id)).powers.find((power) =>
+        power.powersAptitudesInRules.some((link) => link.aptitudeId === divineList.id && link.level === 1),
+      )!;
+      const character = await createCharacterOn(user.id, draft.id);
+      const favoredSoul = (await Klasses.findOne(db, { name: "Favored Soul", rulesetId: divine.id }))!;
+      const step = { classId: favoredSoul.id, level: 1 };
+      const { aptitudePools } = await getLevelStep(session, character.id, "powers", step);
+      expect(named(Object.values(aptitudePools))).toEqual([own.id]);
+      const offered = await CharacterLevelsService.getAvailablePowers(
+        session,
+        character.id,
+        { aptitudeId: own.id, ...step, search: spell.name },
+        firstPage,
+      );
+      expect(offered.items.map((power) => power.id)).toContain(view.powersById.get(spell.id)!.id);
+    });
   });
 
   describe("when the fork already copied a base feat an extension also copies", () => {
@@ -693,6 +731,23 @@ describe("unsubscribing from an extension", () => {
     );
     expect((await Rulesets.findOne(db, { id: draft.id }))!.extensionRulesetIds).toEqual([warrior.id]);
     expect(await PowersAptitudes.findMany(db, { powerId: spell.id })).toMatchObject([{ aptitudeId: warriorOnly.id }]);
+  });
+
+  test("points the fork's links and its characters' picks from its list at the fork's own list of its name", async () => {
+    const { user, session, extension: warrior, draft } = await setupFork();
+    const [own] = await Aptitudes.create(db, { name: "Assassin Spells", rulesetId: draft.id });
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [warrior.id]);
+    const warriorList = (await Aptitudes.findOne(db, { name: own.name, rulesetId: warrior.id }))!;
+    // Rows naming the book's list, as a fork's spell and a character's pick could name it while both lists showed
+    const [spell] = await Powers.create(db, { name: `Probe ${uniqueId()}`, rulesetId: draft.id });
+    await PowersAptitudes.create(db, { powerId: spell.id, aptitudeId: warriorList.id, level: 1 });
+    const level = await levelPicking(user.id, draft.id, "powers", spell.id, warriorList.id);
+
+    expect(await RulesetExtensionsService.unsubscribeExtension(session, draft.id, warrior.id)).toEqual({
+      unsubscribed: true,
+    });
+    expect(await PowersAptitudes.findMany(db, { powerId: spell.id })).toMatchObject([{ aptitudeId: own.id }]);
+    expect(await picksOf("powers", level.id)).toEqual([{ entityId: spell.id, aptitudeId: own.id }]);
   });
 
   test("refuses to leave a class's grant of the extension's feat", async () => {

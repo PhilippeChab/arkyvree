@@ -1,7 +1,7 @@
 /**
  * The rows a ruleset's `CowData` is built from (`CowDataBuilder.build`), as stored, which the server reads as
  * `CowSources.getReads` says: its snapshots, and its source chain's, the levels of the classes it copied, the chain's
- * native namesakes of the types that pair by name, and the chain's aptitudes.
+ * native namesakes of the types that pair by name, and its aptitudes and the chain's.
  */
 export interface CowRows {
   aptitudes: { id: string; name: string; rulesetId: string }[];
@@ -55,15 +55,16 @@ export default class CowSources {
 
   /**
    * What a ruleset's `CowData` is read from, each read none when it needs none: its snapshots and its chain's, when it
-   * has a chain (a ruleset with none copies nothing); its chain's aptitudes, which pair by name when it has extensions;
-   * and its chain's native namesakes of the types that pair by name, when its extensions and ancestors make more than one
-   * source. The levels of the classes it copied follow from its snapshots (`getPairedKlassIds`).
+   * has a chain (a ruleset with none copies nothing); its aptitudes and its chain's, its own first, which pair by name
+   * when it has extensions (its own lists with its books' too: a list's name is its identity); and its chain's native
+   * namesakes of the types that pair by name, when its extensions and ancestors make more than one source. The levels
+   * of the classes it copied follow from its snapshots (`getPairedKlassIds`).
    */
   static getReads(ruleset: RulesetSources) {
     const chain = CowSources.buildSourceChain(ruleset);
     const hasExtensions = ruleset.extensionRulesetIds.length > 0;
     return {
-      aptitudeRulesetIds: hasExtensions ? chain : [],
+      aptitudeRulesetIds: hasExtensions ? [ruleset.id, ...chain] : [],
       namesakes: {
         entityTypes: hasExtensions && chain.length > 1 ? [...NAME_FALLBACK_ENTITY_TYPES] : [],
         rulesetIds: chain,

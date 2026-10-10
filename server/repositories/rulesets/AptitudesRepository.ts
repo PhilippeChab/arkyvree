@@ -24,6 +24,7 @@ class AptitudesRepository extends RulesetEntityRepository<typeof aptitudesInRule
     return new Set(rows.map((r) => r.aptitudeId));
   }
 
+  /** Aptitudes by id, or the lists of rulesets, as their views show them: none of a campaign's. */
   async findMany(db: Db, where: { ids: string[] } | { rulesetIds: string[] }) {
     if ("ids" in where && where.ids.length === 0) return [];
     if ("rulesetIds" in where && where.rulesetIds.length === 0) return [];
@@ -33,7 +34,7 @@ class AptitudesRepository extends RulesetEntityRepository<typeof aptitudesInRule
           "ids" in where && inArray(this.table.id, where.ids),
           "rulesetIds" in where && inArray(this.table.rulesetId, where.rulesetIds),
         ],
-        [isNull(this.table.deletedAt)],
+        [isNull(this.table.deletedAt), "rulesetIds" in where && isNull(this.table.campaignId)],
       ),
       orderBy: [this.orderBy(this.table.name)],
     });
