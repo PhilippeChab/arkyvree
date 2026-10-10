@@ -37,9 +37,6 @@ export interface PathValidationResult {
   target?: TargetPath;
 }
 
-/** The type of value a target path holds. */
-export type PathValueType = "number" | "string" | "boolean";
-
 export interface TargetPath {
   /** When set, this path is only available for modifiers on these entity types */
   allowedEntityTypes?: string[];
@@ -69,6 +66,9 @@ export interface TargetPathCatalog {
   readonly paths: readonly TargetPath[];
   segmentLabels: Record<string, string>;
 }
+
+/** The type of value a target path holds. */
+export type PathValueType = "number" | "string" | "boolean";
 
 /** What a listing offers: a modifier's targets, a requirement's, or the paths a template reads, one value each. */
 export type TargetPathKind = "modifier" | "requirement" | "template";

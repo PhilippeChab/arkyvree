@@ -31,9 +31,6 @@ import { formatPropertyType } from "@/shared/customization/properties.ts";
 import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
 import { SPELL_LEVEL_LABELS } from "@/vocabulary/dnd3.5/spells.ts";
 
-/** An aptitude's spells, by spell level, as the sheet lists them. */
-type AptitudeSpells = CharacterDetail["spellGroups"][number];
-
 interface CollapsibleAptitudeProps {
   apt: AptitudeSpells;
   rulesetId?: string;
@@ -44,9 +41,6 @@ interface CollapsibleLevelProps {
   rulesetId?: string;
 }
 
-/** An aptitude's spells at a spell level. */
-type SpellGroup = AptitudeSpells["levels"][number];
-
 interface SpellRowItemProps {
   rulesetId?: string;
   spell: SpellGroup["spells"][number];
@@ -56,6 +50,12 @@ interface SpellsSectionProps {
   rulesetId?: string;
   spellGroups: CharacterDetail["spellGroups"];
 }
+
+/** An aptitude's spells, by spell level, as the sheet lists them. */
+type AptitudeSpells = CharacterDetail["spellGroups"][number];
+
+/** An aptitude's spells at a spell level. */
+type SpellGroup = AptitudeSpells["levels"][number];
 
 function CollapsibleAptitude({ apt, rulesetId }: CollapsibleAptitudeProps) {
   const [open, setOpen] = useState(false);

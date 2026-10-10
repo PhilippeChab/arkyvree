@@ -37,13 +37,6 @@ interface EmailFieldProps<T extends FieldValues> extends Omit<PresetFieldProps<T
   placeholder?: string;
 }
 
-/** A text field's own props: the form gives its value, change, error and ref. */
-type FormTextFieldProps<T extends FieldValues> = BoundFieldProps<T> &
-  Omit<TextFieldProps, "name" | "value" | "defaultValue" | "onChange" | "onBlur" | "inputRef" | "error"> & {
-    /** Whether its value is a number: NaN when it's empty, as the form's rules read it. */
-    number?: boolean;
-  };
-
 interface NameFieldProps<T extends FieldValues> extends Omit<PresetFieldProps<T>, "rules"> {
   helperText?: string;
   label?: string;
@@ -83,15 +76,22 @@ interface SelectFieldProps<T extends FieldValues> {
   size?: "small" | "medium";
 }
 
-type SelectOption = string | { disabled?: boolean; label: ReactNode; value: SelectValue };
-
-/** What a select's choice holds: a word, or a number (a hit die) */
-type SelectValue = string | number;
-
 interface SwitchFieldProps<T extends FieldValues> extends BoundFieldProps<T> {
   label: string;
   onChange?: (checked: boolean) => void;
 }
+
+/** A text field's own props: the form gives its value, change, error and ref. */
+type FormTextFieldProps<T extends FieldValues> = BoundFieldProps<T> &
+  Omit<TextFieldProps, "name" | "value" | "defaultValue" | "onChange" | "onBlur" | "inputRef" | "error"> & {
+    /** Whether its value is a number: NaN when it's empty, as the form's rules read it. */
+    number?: boolean;
+  };
+
+type SelectOption = string | { disabled?: boolean; label: ReactNode; value: SelectValue };
+
+/** What a select's choice holds: a word, or a number (a hit die) */
+type SelectValue = string | number;
 
 /**
  * A number field's rules: its empty value is NaN, which `required` doesn't count as empty (only `""`), so a required one

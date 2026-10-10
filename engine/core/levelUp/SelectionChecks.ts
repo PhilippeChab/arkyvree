@@ -4,8 +4,6 @@ import type { RulesetData } from "@/engine/core/view/index.ts";
 
 import type { LevelUpRules } from "./LevelUpBase.ts";
 
-type FeatRecord = { id: string; name: string; stackable: boolean };
-
 /** The level's hit points, ability increases and selections a check reads, with its class and class level. */
 interface LevelChecked {
   abilityIncreases: AbilityIncrease[];
@@ -16,6 +14,8 @@ interface LevelChecked {
   powers: Record<string, string[]>;
   skills: Record<string, number>;
 }
+
+type FeatRecord = { id: string; name: string; stackable: boolean };
 
 /** A class level's granted feats, as the view joins them to their feats. */
 export type GrantedFeatRecords =

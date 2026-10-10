@@ -26,6 +26,27 @@ export interface CharacterCreation {
 }
 
 /**
+ * A character's sheet as the API answers it, in every ruleset's shape: noted (`NotedSheet`), with its bonded creatures'
+ * sheets (`bonded`, none for a creature's own), each noted.
+ */
+export interface DescribedSheet extends NotedSheet {
+  bonded: Record<string, NotedSheet>;
+}
+
+/**
+ * Where a sheet, as the API answers it, holds its character's private notes, in every ruleset's: its identity's
+ * background, where the characters part shows them, blanks them or leaves them out as its reader reads them.
+ */
+export interface NotedSheet {
+  identity: { background: { privateNotes?: string } };
+}
+
+/** Why a placement can't take one more item, if it can't: what the inventory dialogs warn of, and an add refuses. */
+export interface PlacementDescription {
+  warning: string | null;
+}
+
+/**
  * A way a new character's ability scores are set, which its form runs by its kind: rolled (`dice`: `count` dice of
  * `sides`, the highest `keep` summed), taken from an array (`scores`, each to one ability), or bought (`costs`, each
  * score's from `min` to `max`, out of `budget`).
@@ -45,26 +66,5 @@ export type DescribedInventoryEntry<T, X = unknown> = T &
     item: Item & { modifiers: Modifier[]; properties: Property[]; requirements: Requirement[] };
   };
 
-/**
- * A character's sheet as the API answers it, in every ruleset's shape: noted (`NotedSheet`), with its bonded creatures'
- * sheets (`bonded`, none for a creature's own), each noted.
- */
-export interface DescribedSheet extends NotedSheet {
-  bonded: Record<string, NotedSheet>;
-}
-
 /** An inventory entry, as where it's held reads it: whether it's equipped, where, and its weapon set in a hand. */
 export type HeldInventoryEntry = Pick<InventoryEntryPlan, "equipped" | "location" | "weaponSet">;
-
-/**
- * Where a sheet, as the API answers it, holds its character's private notes, in every ruleset's: its identity's
- * background, where the characters part shows them, blanks them or leaves them out as its reader reads them.
- */
-export interface NotedSheet {
-  identity: { background: { privateNotes?: string } };
-}
-
-/** Why a placement can't take one more item, if it can't: what the inventory dialogs warn of, and an add refuses. */
-export interface PlacementDescription {
-  warning: string | null;
-}

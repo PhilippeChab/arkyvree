@@ -3,22 +3,6 @@ import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import type { Character, CharacterInventory, Item, Modifier, Property, Requirement } from "@/shared/relations.ts";
 
 /**
- * An entry of a character's inventory, as its build reads it: its item as the view composes it (the stored row's copy
- * or winner, the row itself without one), with its properties (its template's of each type it doesn't set, then its
- * own), its requirements as its template splits them, and its modifiers when it's equipped.
- */
-export type InventoryEntry = CharacterInventory & {
-  item: Item & {
-    modifiers: Modifier[];
-    /** The base item's requirements: its template's, or its own when it is one */
-    proficiency: Requirement[];
-    properties: Property[];
-    /** Its other requirements, which its modifiers need */
-    requirements: Requirement[];
-  };
-};
-
-/**
  * What a character's build loads of its rows and its ruleset's view (`CharacterDataLoader`), as every ruleset's build
  * reads it: its campaign and player, its inventory, its modifiers and the requirement groups gating them, the item each
  * modifier an item is the source of belongs to, and the rulesets its rows may come from. A ruleset's loaded data adds
@@ -44,6 +28,22 @@ export interface ModifierSource {
   modifiers: Modifier[];
   requirements?: Requirement[];
 }
+
+/**
+ * An entry of a character's inventory, as its build reads it: its item as the view composes it (the stored row's copy
+ * or winner, the row itself without one), with its properties (its template's of each type it doesn't set, then its
+ * own), its requirements as its template splits them, and its modifiers when it's equipped.
+ */
+export type InventoryEntry = CharacterInventory & {
+  item: Item & {
+    modifiers: Modifier[];
+    /** The base item's requirements: its template's, or its own when it is one */
+    proficiency: Requirement[];
+    properties: Property[];
+    /** Its other requirements, which its modifiers need */
+    requirements: Requirement[];
+  };
+};
 
 /**
  * A character's data, assembled from its rows and its ruleset's view, reading nothing (`load`): what every ruleset's

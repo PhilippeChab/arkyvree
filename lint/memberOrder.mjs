@@ -11,11 +11,12 @@
  *   built (`this.lines`), and `--fix` never moves a field whose initializer runs code against the other fields (what
  *   it calls may read any of them): it suggests it.
  * - A file's types, constants and functions, in each run of them: by name, within the sections `file-layout` gives
- *   them (its own types, then the ones it exports; the same for its constants; its helpers, then its exports), its
- *   functions sync before async. What a constant reads goes right above it: the file reads it as it loads. A function
- *   is hoisted: it goes by name, whatever it calls. `--fix` never swaps two constants whose values run code (a call,
- *   `new`, `await`): it suggests it, which `--fix-suggestions` applies once nothing depends on the order they run in. A
- *   comment set apart by a blank line ends a run: `--fix` would lose its place, and `comment-style` reports it.
+ *   them (its own types, then the ones it exports; the same for its constants; its helpers, then its exports), a
+ *   section's interfaces before its type aliases, its functions sync before async. What a constant reads goes right
+ *   above it: the file reads it as it loads. A function is hoisted: it goes by name, whatever it calls. `--fix` never
+ *   swaps two constants whose values run code (a call, `new`, `await`): it suggests it, which `--fix-suggestions`
+ *   applies once nothing depends on the order they run in. A comment set apart by a blank line ends a run: `--fix`
+ *   would lose its place, and `comment-style` reports it.
  * - A type's members (an interface's, a type literal's): its call and index signatures first, in their order, then its
  *   properties and methods by name, an overload's signatures together. An enum's members go by name, each with its
  *   value, when every one has its value written (an implicit one is its place). A list of names an export gives goes by
@@ -43,7 +44,7 @@ const ROUTE_METHODS = ["get", "post", "put", "patch", "delete"];
 const RUN_ORDERS = {
   constant: "A file's constants go by name: its own, then the ones it exports; what one reads goes right above it.",
   function: "A file's functions go by name: its helpers, then its exports, each sync before async.",
-  type: "A file's types go by name: its own, then the ones it exports.",
+  type: "A file's types go by name, its interfaces before its type aliases: its own, then the ones it exports.",
 };
 
 function checkChain(context, outermost) {
@@ -530,7 +531,8 @@ function segments(path) {
 
 /**
  * What a top-level statement is to a run, as `file-layout` ranks it (`item`): a function, a type or a constant, with
- * its name and its place among its peers ([section, async, name], [section, name]); null for anything else.
+ * its name and its place among its peers ([section, async, name], [section, interface or alias, name], [section,
+ * name]); null for anything else.
  */
 function sortableOf(item) {
   const fn = functionOf(item.statement);
@@ -545,8 +547,12 @@ function sortableOf(item) {
     };
   }
   const declaration = declarationOf(item.statement);
-  if (item.kind === "type" && /^TS(TypeAlias|Interface)Declaration$/.test(declaration?.type))
-    return { kind: "type", node: declaration.id, name: declaration.id.name, rank: [item.rank, declaration.id.name] };
+  if (item.kind === "type" && /^TS(TypeAlias|Interface)Declaration$/.test(declaration?.type)) {
+    // A section's interfaces, then its type aliases
+    const group = declaration.type === "TSInterfaceDeclaration" ? 0 : 1;
+    const name = declaration.id.name;
+    return { kind: "type", node: declaration.id, name, rank: [item.rank, group, name] };
+  }
 
   if (item.kind === "constant" && item.names.length > 0) {
     const runs = runsAtLoad(item.statement);

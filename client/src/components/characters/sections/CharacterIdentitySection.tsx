@@ -26,11 +26,6 @@ import { type Alignment, ALIGNMENT_OPTIONS, type Gender, GENDER_OPTIONS } from "
 import { NotesField, PrivateNotesField } from "./NotesFields.tsx";
 import { type RulesetLanguage, useRulesetLanguages } from "./useRulesetLanguages.ts";
 
-type CampaignCharacterData = InferResponseType<
-  (typeof rpc.api.campaigns)[":id"]["characters"][":characterId"]["$get"],
-  200
->;
-
 interface CharacterIdentityFormData {
   /** NaN while it is empty: a number field's value. */
   age: number;
@@ -60,6 +55,11 @@ interface CharacterIdentitySectionProps {
   /** The viewer receives the private notes: the character's editors, and its campaign's Game Master. */
   showPrivateNotes?: boolean;
 }
+
+type CampaignCharacterData = InferResponseType<
+  (typeof rpc.api.campaigns)[":id"]["characters"][":characterId"]["$get"],
+  200
+>;
 
 /** A language as the picker shows it: the character's, or one the ruleset offers. */
 type LanguageOption = Pick<RulesetLanguage, "id" | "name">;

@@ -38,14 +38,14 @@ import type { AuthUser } from "@/client/src/stores/authUser.ts";
 import { DeleteAccountDialog, EmailChangeVerificationDialog } from "./components/index.ts";
 import { linkedAccountsQuery } from "./profileQueries.ts";
 
-/** A password's change, as its request sends it (a password set for the first time sends the new one alone). */
-type PasswordFormData = InferRequestType<typeof rpc.auth.password.$put>["json"];
-
 interface ProfileCardProps {
   children: ReactNode;
   danger?: boolean;
   title: string;
 }
+
+/** A password's change, as its request sends it (a password set for the first time sends the new one alone). */
+type PasswordFormData = InferRequestType<typeof rpc.auth.password.$put>["json"];
 
 /** The profile's fields, as its update sends them: each one held by its form, which sends what's filled in. */
 type ProfileFormData = Required<InferRequestType<typeof rpc.auth.profile.$put>["json"]>;

@@ -4,8 +4,6 @@
  * proficiency requirements name.
  */
 
-type DamageType = "Bludgeoning" | "Piercing" | "Slashing";
-
 interface WeaponDefinition {
   baseDamage: string;
   criticalMultiplier: number;
@@ -36,6 +34,8 @@ interface WeaponDefinition {
   /** How Strength applies to its damage when not by its slot: a bow's "Rating", a crossbow's "None". */
   strengthDamage?: "Rating" | "None";
 }
+
+type DamageType = "Bludgeoning" | "Piercing" | "Slashing";
 
 export const EXOTIC_WEAPONS = [
   "Kama",

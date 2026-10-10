@@ -22,8 +22,6 @@ interface BoundField {
   fieldState: { error?: FieldError };
 }
 
-type ConditionField = "target" | "operator" | "value";
-
 interface ConditionFieldsProps {
   /** Filters target-path completions to those allowed for this entity type. Not applied to the template path picker. */
   entityType?: string;
@@ -33,6 +31,8 @@ interface ConditionFieldsProps {
   mode: ConditionMode;
   rulesetId: string;
 }
+
+type ConditionField = "target" | "operator" | "value";
 
 /** What a condition's form is for: a new one ("create") takes the path's defaults, a loaded one ("edit") keeps its own. */
 export type ConditionMode = "create" | "edit";

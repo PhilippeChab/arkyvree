@@ -24,18 +24,6 @@ export interface BondedLevelsPlan {
   removedIds: string[];
 }
 
-/**
- * What a master's bonded creature of a kind (`kind`, the creature's character kind) becomes once the master's levels
- * change. Without one for the kind, the creature the master had goes (`removedId`). With one, the master keeps the
- * creature it has (`keptId`), or one is made (`created`) in place of the one it had; the creature kept or made takes or
- * loses `levels`.
- */
-export type BondedPlan = { kind: string; removedId?: string } & (
-  | { created: NewBondedCreature; levels: BondedLevelsPlan }
-  | { keptId: string; levels: BondedLevelsPlan }
-  | { levels: undefined }
-);
-
 /** A feat picked in a pool. */
 export interface FeatPick {
   aptitudeId: string;
@@ -110,3 +98,15 @@ export interface SkillRank {
   rank: number;
   skillId: string;
 }
+
+/**
+ * What a master's bonded creature of a kind (`kind`, the creature's character kind) becomes once the master's levels
+ * change. Without one for the kind, the creature the master had goes (`removedId`). With one, the master keeps the
+ * creature it has (`keptId`), or one is made (`created`) in place of the one it had; the creature kept or made takes or
+ * loses `levels`.
+ */
+export type BondedPlan = { kind: string; removedId?: string } & (
+  | { created: NewBondedCreature; levels: BondedLevelsPlan }
+  | { keptId: string; levels: BondedLevelsPlan }
+  | { levels: undefined }
+);

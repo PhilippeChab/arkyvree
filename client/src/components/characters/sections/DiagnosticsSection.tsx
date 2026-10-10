@@ -57,23 +57,16 @@ interface InvalidRequirementTableProps {
   items: DiagnosticsSectionProps["requirements"]["invalidRequirements"];
 }
 
-/** A modifier in the applied, unapplied or inactive list, with its source's name. */
-type Modifier = DiagnosticsSectionProps["modifiers"]["appliedModifiers"][number];
-
 interface ModifierTableProps {
   label: string;
   modifiers: Modifier[];
 }
-
-type RequirementGroup = DiagnosticsSectionProps["requirements"]["unmetRequirementGroups"][number];
 
 interface RequirementTableProps {
   groups: RequirementGroup[];
   label: string;
 }
 
-/** A requirement's or modifier's target, operator, value and last column (chaining or value type). */
-type RuleCells = [target: ReactNode, operator: ReactNode, value: ReactNode, last: ReactNode];
 interface RuleCellsRowProps {
   cells: RuleCells;
 }
@@ -87,6 +80,13 @@ interface RuleGroup {
 interface SkippedModifierTableProps {
   items: DiagnosticsSectionProps["modifiers"]["skippedModifiers"];
 }
+/** A modifier in the applied, unapplied or inactive list, with its source's name. */
+type Modifier = DiagnosticsSectionProps["modifiers"]["appliedModifiers"][number];
+
+type RequirementGroup = DiagnosticsSectionProps["requirements"]["unmetRequirementGroups"][number];
+
+/** A requirement's or modifier's target, operator, value and last column (chaining or value type). */
+type RuleCells = [target: ReactNode, operator: ReactNode, value: ReactNode, last: ReactNode];
 
 const ACCORDION_SX = { boxShadow: "none", "&:before": { display: "none" } } as const;
 

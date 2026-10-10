@@ -10,9 +10,6 @@ type CategoryLabelNames = { fallbacks?: Record<string, string>; names?: Record<s
 /** A component of `C`, by its key, and the getter that hands its data to a path: both checked against `C`. */
 type ComponentSpec<C> = { [K in keyof C & string]: { getter: GetterOf<C[K]>; key: K } }[keyof C & string];
 
-/** The names of `T`'s methods a path can call without arguments: the getters its data comes from. */
-export type GetterOf<T> = { [M in keyof T]-?: T[M] extends () => unknown ? M : never }[keyof T] & string;
-
 /**
  * A category of target paths (`abilities`, `skills`…): its names, and how a path in it reaches its data in the
  * components `C`.
@@ -56,3 +53,6 @@ export interface PathCategory<C = Components> {
     context?: { sourceId?: string },
   ): TraversePathResult[] | null;
 }
+
+/** The names of `T`'s methods a path can call without arguments: the getters its data comes from. */
+export type GetterOf<T> = { [M in keyof T]-?: T[M] extends () => unknown ? M : never }[keyof T] & string;

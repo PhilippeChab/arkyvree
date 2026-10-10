@@ -25,8 +25,6 @@ import { isOneOf } from "@/shared/isOneOf.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import type { Ruleset } from "@/shared/relations.ts";
 
-type ActivityValues = InferInsertModel<typeof activitiesInAccount>;
-
 /** The ruleset a change to its content is in: its id, and its row while it's unarchived. */
 interface ChangedRuleset {
   id: string;
@@ -38,6 +36,8 @@ interface ContentRow {
   id: string;
   table: string;
 }
+
+type ActivityValues = InferInsertModel<typeof activitiesInAccount>;
 
 /**
  * Who hears of an activity: the contributor it's about (a ruleset's, a character's) or the owner of what they contribute

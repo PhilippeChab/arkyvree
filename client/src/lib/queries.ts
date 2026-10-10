@@ -38,33 +38,33 @@ export interface CampaignListFilters {
   search: string;
   view: "active" | "archived";
 }
-export type CharacterDetail = InferResponseType<(typeof rpc.api.characters)[":id"]["$get"], 200>;
 export interface CharacterListFilters {
   orderBy: NonNullable<CharacterListParams["orderBy"]>;
   orderDir: Direction;
   search: string;
   view: "active" | "shared" | "archived";
 }
-/** A list's sort direction, as every list endpoint takes it. */
-export type Direction = NonNullable<RulesetListParams["orderDir"]>;
-
-export type RulesetDetail = InferResponseType<(typeof rpc.api.rulesets)[":id"]["$get"], 200>;
-
 export interface RulesetListFilters {
   orderBy: NonNullable<RulesetListParams["orderBy"]>;
   orderDir: Direction;
   scope: RulesetListParams["scope"];
   search: string;
 }
-
-export type RulesetListItem = InferResponseType<typeof rpc.api.rulesets.$get, 200>["items"][number];
-
 /** The lists of a ruleset its pickers, columns and lookups read whole (`rulesetOptionsQuery`): their rows, by name. */
 export interface RulesetOptions {
   abilities: InferResponseType<(typeof rpc.api.rulesets)[":id"]["abilities"]["$get"], 200>["items"];
   languages: InferResponseType<(typeof rpc.api.rulesets)[":id"]["languages"]["$get"], 200>["items"];
   saves: InferResponseType<(typeof rpc.api.rulesets)[":id"]["saves"]["$get"], 200>["items"];
 }
+
+export type CharacterDetail = InferResponseType<(typeof rpc.api.characters)[":id"]["$get"], 200>;
+
+/** A list's sort direction, as every list endpoint takes it. */
+export type Direction = NonNullable<RulesetListParams["orderDir"]>;
+
+export type RulesetDetail = InferResponseType<(typeof rpc.api.rulesets)[":id"]["$get"], 200>;
+
+export type RulesetListItem = InferResponseType<typeof rpc.api.rulesets.$get, 200>["items"][number];
 
 /** A list read whole: its first page of 100, the most one request returns (a ruleset has far fewer of each). */
 const FIRST_HUNDRED = { page: "1", limit: "100" };

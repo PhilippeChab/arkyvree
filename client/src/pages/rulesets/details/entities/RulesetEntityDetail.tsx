@@ -15,15 +15,6 @@ import {
 import { entityPageBack } from "@/client/src/pages/rulesets/entityPageState.ts";
 import { useCopyOnWrite, useEntitySave, useRestorableDelete } from "@/client/src/pages/rulesets/hooks/index.ts";
 
-type EditableDetailsProps<TEntity extends EntityBase, TForm extends FieldValues, TKey extends QueryKey> = Pick<
-  RulesetEntityDetailProps<TEntity, TForm, TKey>,
-  "rulesetId" | "entityId" | "section" | "label" | "query"
-> & {
-  chips: ReactNode;
-  editing: EntityEditing<TEntity, TForm>;
-  entity: TEntity;
-};
-
 interface EntityBase {
   description?: string | null;
   id: string;
@@ -63,6 +54,15 @@ interface RulesetEntityDetailProps<TEntity extends EntityBase, TForm extends Fie
   /** Ruleset tab and URL segment, e.g. "languages". */
   section: string;
 }
+
+type EditableDetailsProps<TEntity extends EntityBase, TForm extends FieldValues, TKey extends QueryKey> = Pick<
+  RulesetEntityDetailProps<TEntity, TForm, TKey>,
+  "rulesetId" | "entityId" | "section" | "label" | "query"
+> & {
+  chips: ReactNode;
+  editing: EntityEditing<TEntity, TForm>;
+  entity: TEntity;
+};
 
 /** An editor's details: the entity's form, following the entity, which saves it. */
 function EditableDetails<TEntity extends EntityBase, TForm extends FieldValues, TKey extends QueryKey>({

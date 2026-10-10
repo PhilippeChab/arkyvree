@@ -14,9 +14,6 @@ import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import type { ListPage } from "@/client/src/lib/pageItems.ts";
 import type { PropertyTypeCompletion, PropertyValueCompletion } from "@/shared/customization/properties.ts";
 
-/** A suggestion of the property completion endpoints: a type's, which has its detail, or a value's. */
-type Completion = PropertyTypeCompletion | PropertyValueCompletion;
-
 /** A page of the property completion endpoints. */
 interface CompletionPage extends ListPage {
   items: Completion[];
@@ -41,6 +38,9 @@ interface PropertyCompletionAutocompleteProps<
   required?: boolean;
   value: string;
 }
+
+/** A suggestion of the property completion endpoints: a type's, which has its detail, or a value's. */
+type Completion = PropertyTypeCompletion | PropertyValueCompletion;
 
 /** A property's type or value, typed freely: it suggests those the ruleset already uses. */
 export function PropertyCompletionAutocomplete<

@@ -9,6 +9,31 @@ import type { Item } from "@/shared/relations.ts";
 
 import type { InventoryEntryPlan } from "./plans.ts";
 
+/** A new character, as its form sends it: its race, and its ability scores. */
+export interface NewCharacterRequest {
+  abilities: AbilitiesRequest;
+  raceId: string;
+}
+
+/** Where an inventory dialog places an item: `location`, in `weaponSet` for a hand, the entry placed (`entryId`) aside. */
+export interface PlacementQuery {
+  entryId: string | null;
+  location: ItemLocation;
+  weaponSet: number | null;
+}
+
+/** The race picker's query: what a new character's form says so far. */
+export interface RacePickQuery {
+  alignment?: string;
+  gender?: string;
+}
+
+/** A printed sheet's request: whether it adds the diagnostics page, and the character's portrait. */
+export interface SheetRequest {
+  diagnostics: boolean;
+  portraitUrl?: string | null;
+}
+
 /** A form's ability scores, by ability id. */
 export type AbilitiesRequest = Record<string, number>;
 
@@ -23,30 +48,5 @@ export type InventoryEntryRequest = InventoryEntryPlan;
 /** How a campaign member reads a character: partly (`partial`), or its sheet with its private notes shown or blank. */
 export type MemberReading = "blank" | "partial" | "show";
 
-/** A new character, as its form sends it: its race, and its ability scores. */
-export interface NewCharacterRequest {
-  abilities: AbilitiesRequest;
-  raceId: string;
-}
-
-/** Where an inventory dialog places an item: `location`, in `weaponSet` for a hand, the entry placed (`entryId`) aside. */
-export interface PlacementQuery {
-  entryId: string | null;
-  location: ItemLocation;
-  weaponSet: number | null;
-}
-
 /** What a viewer reads of a character's private notes: all of it, a blank, or no field at all. */
 export type PrivateNotes = "blank" | "omit" | "show";
-
-/** The race picker's query: what a new character's form says so far. */
-export interface RacePickQuery {
-  alignment?: string;
-  gender?: string;
-}
-
-/** A printed sheet's request: whether it adds the diagnostics page, and the character's portrait. */
-export interface SheetRequest {
-  diagnostics: boolean;
-  portraitUrl?: string | null;
-}

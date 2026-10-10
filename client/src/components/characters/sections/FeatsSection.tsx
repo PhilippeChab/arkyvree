@@ -10,8 +10,6 @@ import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 import { EntryTitle } from "./EntryTitle.tsx";
 import { SheetSection } from "./SheetSection.tsx";
 
-type Feat = CharacterDetail["classes"][string]["levels"][number]["feats"][number];
-
 interface FeatRowProps {
   /** Its heading's level: `h4` under the Granted heading. */
   component?: "h3" | "h4";
@@ -33,6 +31,8 @@ interface GrantedFeatsProps {
   feats: FeatsSectionProps["virtualFeats"];
   rulesetId?: string;
 }
+
+type Feat = CharacterDetail["classes"][string]["levels"][number]["feats"][number];
 
 /** A feat on the sheet: its name, a link to its page in the ruleset, over its description, and its details to open. */
 function FeatRow({ feat, suffix, rulesetId, extra, component }: FeatRowProps) {

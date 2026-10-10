@@ -7,18 +7,18 @@ interface ChoiceChipProps {
   selected: boolean;
 }
 
-/**
- * A chip of the family: MUI's, its size and its fill set by its role. What it's handed beyond its label and color (a
- * click that opens its choices, a delete, an input's tag props, a tooltip's handlers) goes on to MUI's chip.
- */
-type FamilyChipProps = Omit<ChipProps, "size" | "sx" | "variant">;
-
 interface ValueChipProps extends FamilyChipProps {
   /** Warms the page its link opens, as it's pointed at or focused. */
   onPrefetch?: () => void;
   /** The record it names, which it opens: a link, its icon, label and delete kept (the ruleset a fork comes from). */
   to?: string;
 }
+
+/**
+ * A chip of the family: MUI's, its size and its fill set by its role. What it's handed beyond its label and color (a
+ * click that opens its choices, a delete, an input's tag props, a tooltip's handlers) goes on to MUI's chip.
+ */
+type FamilyChipProps = Omit<ChipProps, "size" | "sx" | "variant">;
 
 /** A chip keeps its whole label beside text that wraps (a change's name in Local Changes). */
 const CHIP_SX = { flexShrink: 0 } as const;

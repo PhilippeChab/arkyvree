@@ -4,9 +4,6 @@ import { type ItemLocation, LOCATION_OPTIONS } from "@/shared/enums.ts";
 import type { RulesetItem, RulesetItemDetail } from "./equipmentQueries.ts";
 import { shownWeaponSet } from "./weaponSets.ts";
 
-/** A sheet's equipment row: the inventory entry with its item's fields. */
-export type EquipmentRow = CharacterDetail["equipment"][number];
-
 /** The add and edit inventory dialogs' form: the item (add only) and where and how it's carried. */
 export interface InventoryFormData {
   location: ItemLocation | "none";
@@ -17,6 +14,9 @@ export interface InventoryFormData {
   /** As shown, from 1 (see `shownWeaponSet`). */
   weaponSet: number;
 }
+
+/** A sheet's equipment row: the inventory entry with its item's fields. */
+export type EquipmentRow = CharacterDetail["equipment"][number];
 
 /**
  * How an item is placed, as its ruleset says: the location it goes to once picked, the locations it can take (each
