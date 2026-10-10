@@ -36,6 +36,8 @@ interface FormActionDialogProps<T extends FieldValues = FieldValues> {
   open: boolean;
   /** Its request is in flight: its submit spins, and the dialog waits. */
   pending: boolean;
+  /** Its submit waits: what the form holds would be refused as it stands (a slot its warning says is taken). */
+  submitDisabled?: boolean;
   submitIcon?: ReactNode;
   submitLabel: string;
   title: ReactNode;
@@ -60,6 +62,7 @@ function FormActionDialog<T extends FieldValues = FieldValues>({
   fixedHeight = false,
   submitLabel,
   submitIcon,
+  submitDisabled,
   onExited,
 }: FormActionDialogProps<T>) {
   return (
@@ -89,7 +92,11 @@ function FormActionDialog<T extends FieldValues = FieldValues>({
             {children}
           </Stack>
         </DialogContent>
-        <DialogFooter onCancel={onClose} pending={pending} action={{ label: submitLabel, icon: submitIcon }} />
+        <DialogFooter
+          onCancel={onClose}
+          pending={pending}
+          action={{ label: submitLabel, icon: submitIcon, disabled: submitDisabled }}
+        />
       </Stack>
     </FormDialog>
   );

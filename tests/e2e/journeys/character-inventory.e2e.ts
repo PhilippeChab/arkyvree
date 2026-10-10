@@ -88,7 +88,7 @@ test.describe("Character inventory", () => {
     await expect(row().getByText("Two Handed (Set 1)")).toBeVisible();
   });
 
-  test("the same weapon goes in each hand, as two entries", async ({ page }) => {
+  test("the same weapon goes in each hand, as two entries, and a third waits for a free hand", async ({ page }) => {
     // A dagger in the main hand, then a second one in the off hand: the inventory lists both. A weapon's details make
     // its slot a hand's, cached the second time
     for (const hand of ["Main Hand", "Off Hand"]) {
@@ -104,5 +104,19 @@ test.describe("Character inventory", () => {
       .locator("table tbody tr", { hasText: /^Dagger/ });
     await expect(daggers.filter({ hasText: "Main Hand (Set 1)" })).toHaveCount(1);
     await expect(daggers.filter({ hasText: "Off Hand (Set 1)" })).toHaveCount(1);
+
+    // A third finds the hands taken: the warning names what holds them, and Add Item waits while it stands
+    const dialog = await pickItem(page, "Dagger", /^Dagger\s/, (d) => d.getByRole("combobox", { name: "Hand Slot" }));
+    const addItem = dialog.getByRole("button", { name: /^Add Item$/ });
+    await selectOption(page, "Hand Slot", "Main Hand");
+    await expect(dialog.getByText("Main Hand is occupied by Dagger (Set 1)")).toBeVisible();
+    await expect(addItem).toBeDisabled();
+    await selectOption(page, "Hand Slot", "Two Handed");
+    await expect(
+      dialog.getByText("Cannot equip two-handed: Dagger is in Main Hand and Dagger is in Off Hand (Set 1)"),
+    ).toBeVisible();
+    await expect(addItem).toBeDisabled();
+    await dialog.locator('input[name="weaponSet"]').fill("2");
+    await expect(addItem).toBeEnabled();
   });
 });

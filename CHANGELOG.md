@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Inventory: Add Item and Update wait while the slot's warning stands, and equipping two-handed names everything in the way, a weapon and a shield alike
+
 ## 0.5.0 — 2026-05-21
 
 - Character contributors: invite collaborators by email to edit a character and download its PDF
