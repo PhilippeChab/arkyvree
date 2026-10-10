@@ -1,3 +1,4 @@
+import { PropertyLabels } from "@/engine/core/customizations/index.ts";
 import type { Fields, NoFields } from "@/engine/core/fields/index.ts";
 import type { ViewEntities } from "@/engine/core/view/index.ts";
 import type { Requirement } from "@/shared/relations.ts";
@@ -15,13 +16,16 @@ export default abstract class CustomizationPageEntity<
   Columns extends object = Body,
   S extends Fields = NoFields,
 > extends RulesetEntity<K, Body, Columns, S> {
-  /** An entity as its page shows it, with its modifiers, its properties and its requirements. */
+  /**
+   * An entity as its page shows it, with its modifiers, its properties (each named for the entity its value names,
+   * `PropertyLabels`) and its requirements.
+   */
   override describe(id: string) {
     const entity = super.describe(id);
     return {
       ...entity,
       modifiers: this.rulesetData.modifiersBySource.get(entity.id) ?? [],
-      properties: this.propertiesOf(entity),
+      properties: PropertyLabels.describe(this.rulesetData, this.propertiesOf(entity)),
       requirements: this.requirementsOf(entity),
     };
   }

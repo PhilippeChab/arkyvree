@@ -129,9 +129,10 @@ export function PropertiesSection({
   const renderCell = (property: Property, columnKey: string) => {
     switch (columnKey) {
       case "value":
+        // The entity it names, by its name: an ability's id shows as "Wisdom"
         return (
           <Typography variant="body2" sx={{ fontWeight: 500 }}>
-            {property.value}
+            {property.valueLabel ?? property.value}
           </Typography>
         );
       case "type":

@@ -272,6 +272,15 @@ export const ENTITY_PROPERTY_TYPES: Partial<Record<PropertyEntityType, Record<st
 };
 
 /**
+ * The entity kind a property type's value names, by its id: an ability, for a class's bonus spells and the ruleset's
+ * skill points. A list names the entity, never its id.
+ */
+export const PROPERTY_REFERENCES: Partial<Record<string, "abilities">> = {
+  [KLASS_BONUS_SPELL_ABILITY_ID]: "abilities",
+  [RULESET_SKILL_POINT_ABILITY_ID]: "abilities",
+};
+
+/**
  * The values the engine knows for each property type, in their order: a value picker's options. A free-text type has
  * none.
  */

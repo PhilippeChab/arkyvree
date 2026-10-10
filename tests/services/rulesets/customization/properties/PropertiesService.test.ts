@@ -1,14 +1,18 @@
 import { describe, expect, test } from "bun:test";
 
-import { propertiesInCustomization } from "@/drizzle/schema.ts";
+import { abilitiesInRules, propertiesInCustomization } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
-import { Feats, Items, Properties } from "@/server/repositories/index.ts";
+import { Feats, Items, Klasses, Properties } from "@/server/repositories/index.ts";
 import { PropertiesService } from "@/server/services/rulesets/customization/properties/index.ts";
+import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { activityTypes } from "@/tests/support/activities.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
-import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
+import { insertRows } from "@/tests/support/database.ts";
+import { createSeededTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
+import { createTestUser } from "@/tests/support/users.ts";
+import { KLASS_BONUS_SPELL_ABILITY_ID, KLASS_CASTER_TYPE } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 const acBonus = { type: "AC_BONUS", value: "5", description: "Armor class bonus" };
 
@@ -83,6 +87,33 @@ describe("PropertiesService", () => {
       });
     await edit("6");
     await expectRefusedWith(edit("7"), 409);
+  });
+
+  test("names the entity a value names, on a class's Properties tab and an entity's page alike", async () => {
+    const { user } = await createTestUser();
+    const fork = await createSeededTestRuleset(user.id);
+    const paladin = await Klasses.findOne(db, { name: "Paladin", rulesetId: fork.rulesetId! });
+    expect(await PropertiesService.getProperties(fork.id, "klasses", paladin!.id)).toMatchObject([
+      { type: KLASS_BONUS_SPELL_ABILITY_ID, valueLabel: "Wisdom" },
+      { type: KLASS_CASTER_TYPE, value: "Divine", valueLabel: null },
+    ]);
+
+    // A feat's page lists its properties alike, an id its view has none of left unnamed
+    const { session, rulesetId, feat } = await setup();
+    const [wisdom] = await insertRows(abilitiesInRules, [{ name: "Wisdom", description: "Wisdom", rulesetId }]);
+    for (const value of [NIL_UUID, wisdom.id]) {
+      await PropertiesService.createProperty(session, rulesetId, "feats", feat.id, {
+        type: KLASS_BONUS_SPELL_ABILITY_ID,
+        value,
+      });
+    }
+    // In their values' order, as a stat block lists a type's
+    const named = [
+      { value: NIL_UUID, valueLabel: null },
+      { value: wisdom.id, valueLabel: "Wisdom" },
+    ];
+    expect(await PropertiesService.getProperties(rulesetId, "feats", feat.id)).toMatchObject(named);
+    expect((await FeatsService.getFeat(rulesetId, feat.id)).properties).toMatchObject(named);
   });
 
   describe("on an item made from a template", () => {
