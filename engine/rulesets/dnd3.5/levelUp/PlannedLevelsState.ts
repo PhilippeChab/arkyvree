@@ -1,3 +1,4 @@
+import type { GrantedFeatRecords } from "@/engine/core/levelUp/index.ts";
 import { CharacterProjection } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { CLASS_LEVEL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/classes/fields.ts";
@@ -7,7 +8,6 @@ import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
 import type { Klass, KlassLevel } from "@/shared/relations.ts";
 
 import AptitudeSlotsPlan from "./AptitudeSlotsPlan.ts";
-import type { GrantedFeatRecords } from "./concerns/ChecksSelections.ts";
 import LevelUpState from "./LevelUpState.ts";
 
 /** A planned level's class and class level, and its ability increase. */

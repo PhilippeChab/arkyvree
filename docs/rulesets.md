@@ -469,6 +469,11 @@ engine/
 │   │                                      the plain kinds, which a module uses as they are; GeneratedFeats: the
 │   │                                      feats a save makes or removes, in the pool a ruleset names)
 │   ├── fields/                            (Field, FieldCodec: an entity's fields kept in its properties)
+│   ├── levelUp/                           (LevelUpBase: what every level flow reads, the view, the character's
+│   │                                      rows and its ruleset's level-up rules, LevelUpRules; SelectionChecks: a
+│   │                                      level's selections checked; the flows any ruleset takes as they are,
+│   │                                      LevelRemoval and BondedCreatures, and LevelSelections, a saved level's
+│   │                                      selections with what the ruleset adds of a picked feat)
 │   ├── pickers/                           (Picker: one pipeline, `filters` and `describe(rows)`: the rows as the
 │   │                                      view reads them, those it offers, each with whether who it picks for
 │   │                                      meets its requirements and the tree of those it fails, and what it adds;
@@ -535,18 +540,16 @@ engine/rulesets/
     │   ├── inventory/                     (InventoryEntries: a character's entries described, what an entry's add or
     │   │                                  edit stores; Equipping: what equipping an item checks)
     │   └── sheet/                         (the printed sheet, in React PDF: CharacterSheet and its pages, SheetFormat)
-    ├── levelUp/                           ← the module's `levelUp`: a class per operation on a base, LevelUpState:
-    │                                      the view and the character's rows, the character built (`build`), class
-    │                                      level lookups, the steps' shapes, the bonded creatures; its concern:
-    │                                      ChecksSelections; PlannedLevelsState: the planned levels and what they
-    │                                      give (AptitudeSlotsPlan), which LevelUpPreview (the wizard's preview) and
-    │                                      LevelUpPlan (a save's levels checked, its picks spread over them,
-    │                                      PicksDistribution) build on; LevelEdit: a saved level's edit, and the issues it
-    │                                      answers for; LevelRemoval: the last level removed; LevelUpSteps: the
-    │                                      wizard's steps; LevelSelections: a saved level's selections;
-    │                                      BondedCreatures: what a master's creatures become as its saved levels
-    │                                      make them, which every save plans with BondedPlans; Dnd35LevelUp: the
-    │                                      module's levelUp, which opens them)
+    ├── levelUp/                           ← the module's `levelUp`: Dnd35LevelUp, on core's LevelUpPart, gives
+    │                                      the level-up rules core's flows read (buildCharacter,
+    │                                      isAbilityIncreaseLevel, planBondedCreatures: BondedPlans). A class per
+    │                                      3.5 operation on LevelUpState (core's LevelUpBase, with the steps the
+    │                                      wizard and the preview share): PlannedLevelsState, the planned levels and
+    │                                      what they give (AptitudeSlotsPlan), which LevelUpPreview (the wizard's
+    │                                      preview) and LevelUpPlan (a save's levels checked, its picks spread over
+    │                                      them, PicksDistribution) build on; LevelEdit: a saved level's edit, and
+    │                                      the issues it answers for; LevelUpSteps: the wizard's steps;
+    │                                      Dnd35LevelSelections: a saved level's selections, with each feat's pools
     ├── pickers/                           (the 3.5 pickers, on core's: ClassPicker (a class's next level) and
     │                                      LevelPicker (FeatPicker, PowerPicker: the level they pick at) on
     │                                      CharacterPicker; RacePicker on Picker, checking a new character's form)
@@ -720,7 +723,7 @@ A small rule several of a ruleset's modules share, a constant or a predicate, is
 
 A bound the client and the API check too is a constant of the ruleset's shared vocabulary, which every side reads instead of writing the number: `MAX_SPELL_LEVEL` (`shared/dnd3.5/spells.ts`) for the aptitudes' spell levels, the spellcasting and the spell forms, `MAX_CLASS_LEVEL` (`shared/dnd3.5/classes.ts`) for the class-level forms and the bonus caster levels, `MAX_ABILITY_SCORE` (`shared/dnd3.5/abilities.ts`) for a new character's ability scores and the sheet's, and `MAX_ITEM_VARIANTS` (`shared/itemTemplates.ts`) for the variants form. The routes read them through the engine (`RULESET_LIMITS`), and a character's last level with them (`MAX_CHARACTER_LEVEL`, `shared/dnd3.5/classes.ts`: the most levels a level-up saves).
 
-More complex operations (bound to the detailed character, returning rich data) belong on the ruleset's level-up classes (`LevelUpState` and its concern, `ChecksSelections`, and the pickers on core's `Picker` and `CharacterPicker`, building the character from the rows a level-up adds, `CharacterProjection`) or on its character (a concern of `DetailedCharacter`), which an operation builds from the input it's given (`CharacterBuilder.build`).
+More complex operations (bound to the detailed character, returning rich data) belong on the ruleset's level-up classes (on core's `LevelUpBase`, which checks a level's selections, `SelectionChecks`; and the pickers on core's `Picker` and `CharacterPicker`, building the character from the rows a level-up adds, `CharacterProjection`) or on its character (a concern of `DetailedCharacter`), which an operation builds from the input it's given (`CharacterBuilder.build`).
 
 ### The level flows ask the module
 
@@ -763,7 +766,7 @@ If the services need a per-ruleset value or answer:
 - Add an operation: an abstract method of its part (`engine/core/module/parts/`), which every ruleset's part then implements (`Dnd35Entities`, `Dnd35LevelUp`, …), and the method of the handle it's about that dispatches to it (`LevelUpEngine`, `ClassEngine`, …: `engine/api/`; an entity kind's is a method of its entity class, on `RulesetEntity`, which `entities(type)` hands out), or a handle of its own, which `RulesetEngine` hands out under a noun (`class(klassId)`). `engine/index.ts` exports a handle's type when the server derives a body's or a plan's from it (`Parameters<EntityKinds["skills"]["planCreate"]>[0]`).
 - A value the client and the API need too lives in the ruleset's `shared/<ruleset>/` (`MAX_SPELL_LEVEL`), never in a file another ruleset would read; the server takes it through the engine (`RULESET_LIMITS`).
 
-If you need a per-ruleset behavior too complex for one class (takes the detailed character, returns rich data, reads several components), make it a method of the ruleset's level-up base or one of its concerns (`LevelUpState`, `ChecksSelections`…) or a concern of its character, which its operations call. A part is typed by the contract (its abstract class), so nothing casts.
+If you need a per-ruleset behavior too complex for one class (takes the detailed character, returns rich data, reads several components), make it a method of the ruleset's level-up base (`LevelUpState`, on core's `LevelUpBase`) or a concern of its character, which its operations call. A part is typed by the contract (its abstract class), so nothing casts.
 
 ### Grey areas and audit findings
 

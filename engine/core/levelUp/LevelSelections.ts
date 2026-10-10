@@ -1,7 +1,6 @@
 import RulesError from "@/engine/core/RulesError.ts";
-import FeatEntity, { type PoolModifier } from "@/engine/rulesets/dnd3.5/entities/feats/FeatEntity.ts";
 
-import LevelUpState from "./LevelUpState.ts";
+import LevelUpBase from "./LevelUpBase.ts";
 
 /** A saved level's picks, as the character's rows hold them. */
 interface SavedPicks {
@@ -10,28 +9,28 @@ interface SavedPicks {
   skills: { rank: number; skillId: string }[];
 }
 
-/** A character's saved level's selections, from its rows, as the level's edit opens them. */
-export default class LevelSelections extends LevelUpState {
+/**
+ * A character's saved level's selections, from its rows, as the level's edit opens them: what its ruleset adds of each
+ * feat it picked (`featDetailsOf`: `F`) is its own.
+ */
+export default abstract class LevelSelections<C, F extends object> extends LevelUpBase<C> {
   /**
-   * A saved level's selections: its skill ranks, its feats by pool (each with the pools its modifiers add slots to) and
-   * its powers by pool (each with its spell level in the pool when it has one).
+   * A saved level's selections: its skill ranks, its feats by pool (each with what the ruleset adds of it) and its powers
+   * by pool (each with its spell level in the pool when it has one).
    */
   private buildLevelSelections({ feats: levelFeats, powers: levelPowers, skills: levelSkills }: SavedPicks) {
     const skills: Record<string, number> = {};
     for (const s of levelSkills) skills[s.skillId] = s.rank;
 
-    const aptitudeModByFeat = new FeatEntity(this.view).describePoolModifiers(levelFeats.map((f) => f.featId));
-    const feats: Record<
-      string,
-      { aptitudeModifiers: PoolModifier[]; description?: string; id: string; name: string }[]
-    > = {};
+    const detailsOf = this.featDetailsOf(levelFeats.map((f) => f.featId));
+    const feats: Record<string, ({ description?: string; id: string; name: string } & F)[]> = {};
     for (const f of levelFeats) {
       const feat = this.rulesetData.featsById.get(f.featId);
       (feats[f.aptitudeId] ??= []).push({
         id: f.featId,
         name: feat?.name ?? f.featId,
         description: feat?.description ?? undefined,
-        aptitudeModifiers: aptitudeModByFeat.get(f.featId) ?? [],
+        ...detailsOf(f.featId),
       });
     }
 
@@ -50,6 +49,9 @@ export default class LevelSelections extends LevelUpState {
     }
     return { skills, feats, powers };
   }
+
+  /** What the ruleset adds of each of these picked feats, by feat. */
+  protected abstract featDetailsOf(featIds: string[]): (featId: string) => F;
 
   /**
    * The character's saved level `characterLevelId`: its class level, hit points and ability increase, its skill ranks,

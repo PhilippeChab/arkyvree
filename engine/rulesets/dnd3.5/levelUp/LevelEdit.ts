@@ -8,16 +8,14 @@ import RulesError from "@/engine/core/RulesError.ts";
 import type { ValidationIssue } from "@/engine/rulesets/dnd3.5/model/concerns/Validates.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
-import { include } from "@/lib/mixins.ts";
 
-import { ChecksSelections } from "./concerns/ChecksSelections.ts";
 import LevelUpState from "./LevelUpState.ts";
 
 /**
  * A saved level's edit, from the character's rows: the level as saved, its new hit points, ability and picks, checked,
  * and refused with the issues it answers for unless forced; and what the character's bonded creatures become with it.
  */
-export default class LevelEdit extends include(LevelUpState, ChecksSelections) {
+export default class LevelEdit extends LevelUpState {
   /**
    * Refuses an edited level with the issues it answers for: all the character's but those of the pools the level
    * doesn't add to, which the levels before it or after it give. A level adds to a pool the character allows more of
@@ -79,11 +77,11 @@ export default class LevelEdit extends include(LevelUpState, ChecksSelections) {
     if (!level) throw new RulesError("not-found", "Character level not found");
     const { klassLevel, klass } = this.getSavedKlassLevel(level);
     // The levels in the order the character took them: the edited level's index is its total level less one
-    this.checkAbilityIncrease(rows.levels.indexOf(level), abilityId);
+    this.checks.checkAbilityIncrease(rows.levels.indexOf(level), abilityId);
     const otherLevels = rows.levels.filter((saved) => saved.id !== characterLevelId);
     const otherLevelIds = new Set(otherLevels.map((saved) => saved.id));
     const pickedFeatIds = rows.picks.feats.filter((pick) => otherLevelIds.has(pick.characterLevelId));
-    this.checkLevel(
+    this.checks.checkLevel(
       { klass, klassLevel, hp, abilityId, skills: edit.skills, feats: edit.feats, powers: edit.powers },
       otherLevels,
       pickedFeatIds.map((pick) => pick.featId),
