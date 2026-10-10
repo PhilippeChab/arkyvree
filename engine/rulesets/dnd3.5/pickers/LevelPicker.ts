@@ -2,8 +2,8 @@ import { type CharacterInput, CharacterProjection, type PickLevel } from "@/engi
 import { CharacterPicker } from "@/engine/core/pickers/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import CharacterBuilder from "@/engine/rulesets/dnd3.5/model/CharacterBuilder.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import Dnd35CharacterBuilder from "@/engine/rulesets/dnd3.5/model/Dnd35CharacterBuilder.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import type { KlassLevel } from "@/shared/relations.ts";
 
@@ -29,7 +29,7 @@ export default abstract class LevelPicker<Details extends object = object> exten
 
   /** The 3.5 character built from rows. */
   protected build(input: CharacterInput) {
-    return CharacterBuilder.build(this.view, input);
+    return new Dnd35CharacterBuilder().build(this.view, input);
   }
 
   /**

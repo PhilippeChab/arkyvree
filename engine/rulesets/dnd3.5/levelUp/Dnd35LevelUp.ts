@@ -1,8 +1,8 @@
 import { type CharacterInput, LevelUpPart, type PlannedSoFar } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { Dnd35Descriptions } from "@/engine/rulesets/dnd3.5/descriptions.ts";
-import CharacterBuilder from "@/engine/rulesets/dnd3.5/model/CharacterBuilder.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import Dnd35CharacterBuilder from "@/engine/rulesets/dnd3.5/model/Dnd35CharacterBuilder.ts";
 import ClassPicker from "@/engine/rulesets/dnd3.5/pickers/ClassPicker.ts";
 import FeatPicker from "@/engine/rulesets/dnd3.5/pickers/FeatPicker.ts";
 import PowerPicker from "@/engine/rulesets/dnd3.5/pickers/PowerPicker.ts";
@@ -23,7 +23,7 @@ import LevelUpSteps from "./LevelUpSteps.ts";
 export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, DetailedCharacter> {
   /** The 3.5 character built from its rows. */
   buildCharacter(view: RulesetView, input: CharacterInput) {
-    return CharacterBuilder.build(view, input);
+    return new Dnd35CharacterBuilder().build(view, input);
   }
 
   /** The level-up wizard's ability step: the character's abilities, when the level it adds or edits takes an increase. */

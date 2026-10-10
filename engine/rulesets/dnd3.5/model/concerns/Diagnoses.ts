@@ -1,4 +1,4 @@
-import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
+import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import type CharacterState from "@/engine/rulesets/dnd3.5/model/CharacterState.ts";
 import type {
@@ -9,54 +9,22 @@ import type {
 } from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import RequirementTree, { type RequirementNode } from "@/shared/customization/RequirementTree.ts";
 import { MAX_SPELL_LEVEL } from "@/shared/dnd3.5/spells.ts";
-import type { Klass, Modifier, Requirement } from "@/shared/relations.ts";
+import type { Klass, Modifier } from "@/shared/relations.ts";
 
 /** An aptitude pool's (or one of its spell levels') slots. */
 type AptitudeSlots = { allowed: number; available: number; spent: number };
 
-export type RequirementIssue = {
-  category: "requirements";
-  entityName?: string;
-  entityType?: string;
-  message: string;
-  requirementTree?: string;
-};
-
-export type ValidationIssue = {
-  category: "aptitudes" | "skills" | "requirements" | "modifiers" | "integrity";
-  entityName?: string;
-  entityType?: string;
-  message: string;
-  requirementTree?: string;
-};
-
-export type ValidationResult = {
-  issues: ValidationIssue[];
-  valid: boolean;
-};
-
-const OPERATOR_SYMBOLS: Record<string, string> = {
-  equal: "=",
-  not_equal: "!=",
-  greater_than: ">",
-  less_than: "<",
-  greater_than_or_equal: ">=",
-  less_than_or_equal: "<=",
-  contains: "contains",
-  not_contains: "not contains",
-  starts_with: "starts with",
-  ends_with: "ends with",
-  is_empty: "is empty",
-  not_empty: "is not empty",
-};
-
-/** A 3.5 character's validation: what its rules flag, and the names its issues give. */
-export function Validates<B extends Constructor<CharacterState>>(Base: B) {
-  abstract class Validating extends Base {
-    private findIssues(): ValidationIssue[] {
-      const issues: ValidationIssue[] = [];
+/**
+ * A 3.5 character's diagnostics, which core's validation reads (`Validates`): the issues its rules flag (its pools'
+ * slots, its skill points and ranks, a general feat with no pool, a row from outside its source chain), and the names
+ * its issues give.
+ */
+export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
+  abstract class Diagnosing extends Base {
+    /** The pools' slots unspent or overspent, then the skill points and ranks: what the 3.5 rules flag first. */
+    protected findRulesetIssues(): RulesIssue[] {
+      const issues: RulesIssue[] = [];
 
       // Check aptitudes: each should have available === 0
       const slotIssue = (name: string, { allowed, spent, available }: AptitudeSlots) => {
@@ -82,54 +50,14 @@ export function Validates<B extends Constructor<CharacterState>>(Base: B) {
         }
       }
 
-      // Check unmet requirements (skip modifier/item requirements)
-      const { unmetRequirementGroups, invalidRequirements } = this.requirementEvaluator.getRequirements();
-      for (const group of unmetRequirementGroups) {
-        if (group.every((r) => r.entityType === "modifiers")) continue;
-        if (group.every((r) => r.entityType === "items")) continue;
-        issues.push(this.unmetRequirementIssue(group, group.find((r) => r.entityType !== "modifiers") ?? group[0]));
-      }
-      for (const invalid of invalidRequirements) issues.push(this.invalidRequirementIssue(invalid));
+      const { budget, ranks } = this.getSkillValidationIssues();
+      return [...issues, ...budget, ...ranks];
+    }
 
-      // Check modifier issues
-      const { skippedModifiers, unappliedModifiers } = this.modifierEvaluator.getModifiers();
-      for (const modifier of unappliedModifiers) {
-        const isConditional = unmetRequirementGroups.some((group) =>
-          group.every((r) => r.entityType === "modifiers" && r.entityId === modifier.id),
-        );
-        if (isConditional) continue;
-        const source = this.resolveModifierSourceName(modifier);
-        issues.push({
-          category: "modifiers",
-          message: source
-            ? `Unapplied modifier on ${modifier.target} from ${source.name} (${source.type})`
-            : `Unapplied modifier on ${modifier.target} (blocked by unmet requirements)`,
-          entityName: source?.name,
-          entityType: source?.type,
-        });
-      }
-      for (const { warning, modifier } of skippedModifiers) {
-        const source = this.resolveModifierSourceName(modifier);
-        issues.push({
-          category: "modifiers",
-          message: source
-            ? `Skipped modifier on ${modifier.target} from ${source.name} (${source.type}): ${warning}`
-            : `Skipped modifier: ${warning}`,
-          entityName: source?.name,
-          entityType: source?.type,
-        });
-      }
-      for (const modifier of this.modifiersPastTheirGates) {
-        const source = this.resolveModifierSourceName(modifier);
-        issues.push({
-          category: "modifiers",
-          message: `Modifier on ${modifier.target}${source ? ` from ${source.name} (${source.type})` : ""} applied while its requirement held, which no longer holds on the final sheet`,
-          entityName: source?.name,
-          entityType: source?.type,
-        });
-      }
+    /** A general feat with no pool to count toward, and each row from outside the character's source chain. */
+    protected findSourceIssues(): RulesIssue[] {
+      const issues: RulesIssue[] = [];
 
-      // Check referential integrity
       const sourceChain = (rulesetId: string, name: string, entityType: string) => {
         if (!this.data.validRulesetIds.has(rulesetId)) {
           issues.push({
@@ -204,41 +132,8 @@ export function Validates<B extends Constructor<CharacterState>>(Base: B) {
       return this.diagnosticsIndex;
     }
 
-    private invalidRequirementIssue({
-      warning,
-      requirement,
-    }: {
-      requirement: Requirement;
-      warning: string;
-    }): RequirementIssue {
-      const entityName = this.resolveEntityName(requirement.entityId, requirement.entityType);
-      return {
-        category: "requirements",
-        message: entityName
-          ? `Invalid requirement on ${entityName} (${requirement.entityType}): ${warning}`
-          : `Invalid requirement: ${warning}`,
-        entityName,
-        entityType: requirement.entityType,
-      };
-    }
-
-    /** An unmet requirement group's issue: on the entity of `owner`, one of its requirements, or naming its targets. */
-    private unmetRequirementIssue(group: Requirement[], owner: Requirement): RequirementIssue {
-      const entityName = this.resolveEntityName(owner.entityId, owner.entityType);
-      const targets = group.filter((r) => r.target).map((r) => r.target);
-      return {
-        category: "requirements",
-        message: entityName
-          ? `Unmet prerequisite on ${entityName} (${owner.entityType})`
-          : `Unmet prerequisite: ${targets.join(", ") || "unknown"}`,
-        entityName,
-        entityType: owner.entityType,
-        requirementTree: this.formatRequirements(group),
-      };
-    }
-
-    protected getSkillValidationIssues(): { budget: ValidationIssue[]; ranks: ValidationIssue[] } {
-      const budget: ValidationIssue[] = [];
+    protected getSkillValidationIssues(): { budget: RulesIssue[]; ranks: RulesIssue[] } {
+      const budget: RulesIssue[] = [];
       const { available, spent, total } = this.components.skills.getSkillBudget();
       if (available > 0) {
         budget.push({ category: "skills", message: `${available} unspent skill point(s) (${spent}/${total})` });
@@ -253,41 +148,7 @@ export function Validates<B extends Constructor<CharacterState>>(Base: B) {
       return { budget, ranks };
     }
 
-    formatRequirements(requirements: Requirement[]): string {
-      // A row under a condition, which groups nothing, isn't printed
-      const { roots } = RequirementTree.fromRows(requirements);
-
-      // Each condition evaluated as the requirements are, templates and every operator included
-      const conditions = new RequirementEvaluator(this.targetPaths);
-      const isLeafMet = (req: Requirement) =>
-        !!this.builtComponents && conditions.isConditionMet(req, this.builtComponents, this.itemOf([req]));
-
-      const formatNode = (node: RequirementNode<Requirement>, indent: string): string => {
-        const req = node.requirement;
-        if (req.chainingOperator) {
-          const label = `(${req.chainingOperator.toUpperCase()})`;
-          const childLines = node.children.map((child) => formatNode(child, indent + "  ")).join("\n");
-          return `${indent}${label}\n${childLines}`;
-        }
-        const op = OPERATOR_SYMBOLS[req.operator ?? ""] ?? req.operator ?? "?";
-        const isMet = isLeafMet(req);
-        const marker = isMet ? "" : "  [UNMET]";
-        return `${indent}${req.target} ${op} ${req.value}${marker}`;
-      };
-
-      return roots.map((root) => formatNode(root, "")).join("\n");
-    }
-
-    getUnmetRequirementIssues(requirementGroups: Requirement[][]): RequirementIssue[] {
-      const { unmetRequirementGroups, invalidRequirements } = this.evaluateGroups(requirementGroups);
-      const issues: RequirementIssue[] = [];
-
-      for (const group of unmetRequirementGroups) issues.push(this.unmetRequirementIssue(group, group[0]));
-      for (const invalid of invalidRequirements) issues.push(this.invalidRequirementIssue(invalid));
-      return issues;
-    }
-
-    resolveEntityName(entityId: string, entityType: string): string | undefined {
+    override resolveEntityName(entityId: string, entityType: string): string | undefined {
       const idx = this.getDiagnosticsIndex();
       switch (entityType) {
         case "races":
@@ -331,27 +192,12 @@ export function Validates<B extends Constructor<CharacterState>>(Base: B) {
       return undefined;
     }
 
-    resolveModifierSourceName(modifier: Modifier): { name: string; type: string } | undefined {
+    override resolveModifierSourceName(modifier: Modifier): { name: string; type: string } | undefined {
       const name = this.resolveEntityName(modifier.sourceId, modifier.sourceType);
       if (name) return { name, type: modifier.sourceType };
       return this.getDiagnosticsIndex().modifierOwner.get(modifier.id);
     }
-
-    validate(): ValidationResult {
-      const ruleIssues = this.findIssues();
-      const { budget: skillBudgetIssues, ranks: skillRankIssues } = this.getSkillValidationIssues();
-
-      // Insert skill issues after aptitude issues to preserve original ordering
-      const aptitudeEndIndex = ruleIssues.findLastIndex((i) => i.category === "aptitudes") + 1;
-      const issues = [
-        ...ruleIssues.slice(0, aptitudeEndIndex),
-        ...skillBudgetIssues,
-        ...skillRankIssues,
-        ...ruleIssues.slice(aptitudeEndIndex),
-      ];
-      return { valid: issues.length === 0, issues };
-    }
   }
 
-  return Validating;
+  return Diagnosing;
 }

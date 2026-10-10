@@ -476,7 +476,7 @@ A new kind of write takes an existing verb (`updateStatus`, not `setStatus`). A 
 - `server/repositories/withRequestCache.ts` — Proxy wrapping every repo (its shared instance in `server/repositories/index.ts`) with dedup + write invalidation
 - `server/repositories/concerns/ResolvesCopies.ts` — `idMatches()`: an entity id column matching the equivalent ids a query is given (`CowData.getEquivalentIds`)
 - `server/services/characters/characterInputs.ts` — `readCharacterInput` reads a character's rows as stored, and a bonded creature's master's with them, which the engine's character handle resolves (`CharacterInputs`): what the engine builds the character from (`CharacterBuilder.build`, `engine/rulesets/dnd3.5/model/CharacterBuilder.ts`), its master first
-- `engine/rulesets/dnd3.5/model/concerns/Builds.ts` — `build(rows, view, projected, master)` reads nothing: the data loader assembles the character's data from the rows and the view
+- `engine/core/character/CharacterBase.ts` — `build(rows, view, master)` reads nothing: the ruleset's data loader assembles the character's data from the rows and the view
 - `server/timing.ts` — hit/miss counters surfaced in request logs
 - `tests/cow/views/RulesetViews.test.ts` — compose + invalidation + pinning semantics + COW-fork resolving maps
 - `tests/cache/joinMaps.test.ts` — accessor-map parity with replaced repo queries

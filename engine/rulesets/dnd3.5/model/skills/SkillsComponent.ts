@@ -1,10 +1,10 @@
+import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import { SKILL_FIELDS, type SkillFieldValues } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
 import type AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/ClassesComponent.ts";
 import type ArmorsComponent from "@/engine/rulesets/dnd3.5/model/combat/ArmorsComponent.ts";
 import type EncumbranceComponent from "@/engine/rulesets/dnd3.5/model/combat/EncumbranceComponent.ts";
 import type ShieldsComponent from "@/engine/rulesets/dnd3.5/model/combat/ShieldsComponent.ts";
-import type { ValidationIssue } from "@/engine/rulesets/dnd3.5/model/concerns/Validates.ts";
 import type IdentityComponent from "@/engine/rulesets/dnd3.5/model/identity/IdentityComponent.ts";
 import { SIZE_HIDE_MOD } from "@/engine/rulesets/dnd3.5/rules/sizes.ts";
 import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
@@ -228,8 +228,8 @@ export default class SkillsComponent {
     return this.skills;
   }
 
-  getValidationIssues(characterLevel: number): ValidationIssue[] {
-    const issues: ValidationIssue[] = [];
+  getValidationIssues(characterLevel: number): RulesIssue[] {
+    const issues: RulesIssue[] = [];
     for (const [, skill] of Object.entries(this.skills)) {
       if (skill.rank <= 0) continue;
       const maxRank = SkillRules.maxRank(characterLevel, skill.innate);

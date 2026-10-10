@@ -1,6 +1,6 @@
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import CharacterBuilder, { type CharacterKind } from "@/engine/rulesets/dnd3.5/model/CharacterBuilder.ts";
+import Dnd35CharacterBuilder, { type CharacterKind } from "@/engine/rulesets/dnd3.5/model/Dnd35CharacterBuilder.ts";
 
 import DetailedCharacterSheet from "./DetailedCharacterSheet.tsx";
 
@@ -17,7 +17,7 @@ export default class CharacterSheet {
   ) {
     return (
       <DetailedCharacterSheet
-        detailedCharacter={CharacterBuilder.build(view, character)}
+        detailedCharacter={new Dnd35CharacterBuilder().build(view, character)}
         kind={character.record.kind as CharacterKind}
         {...options}
       />

@@ -4,8 +4,7 @@ import {
   type LevelEditRequest,
   type LevelPicks,
 } from "@/engine/core/module/index.ts";
-import RulesError from "@/engine/core/RulesError.ts";
-import type { ValidationIssue } from "@/engine/rulesets/dnd3.5/model/concerns/Validates.ts";
+import RulesError, { type RulesIssue } from "@/engine/core/RulesError.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 
@@ -22,7 +21,7 @@ export default class LevelEdit extends LevelUpState {
    * with it (`withLevel`) than without it (`before`), each built without the levels from it onward
    * (`projectLevelContribution`).
    */
-  private checkEditedLevelIssues(issues: ValidationIssue[], before: DetailedCharacter, withLevel: DetailedCharacter) {
+  private checkEditedLevelIssues(issues: RulesIssue[], before: DetailedCharacter, withLevel: DetailedCharacter) {
     const allowedBefore = new Map<string, number>();
     for (const apt of Object.values(before.components.aptitudes.getAptitudes()))
       allowedBefore.set(apt.name, apt.allowed);
