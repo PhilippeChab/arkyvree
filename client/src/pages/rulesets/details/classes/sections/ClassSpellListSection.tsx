@@ -15,7 +15,7 @@ import {
   classSpellListsQuery,
   spellListSpellsQuery,
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
-import type { Spell } from "@/client/src/pages/rulesets/details/sections/dnd3.5/index.ts";
+import type { Power } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { useOpenEntity, useSpellLevelFilter } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 
@@ -54,15 +54,15 @@ export function ClassSpellListSection({ rulesetId, classId, ruleset }: ClassSect
   // Without a list the key is the ruleset's own "all lists" one, whose cached spells aren't this class's
   const spells = listId === undefined ? [] : pageItems(data);
 
-  const handleRowClick = (spell: Spell) => {
+  const handleRowClick = (spell: Power) => {
     openEntity(buildCustomizationPath("powers", spell.id));
   };
 
-  const handleRowMouseEnter = (spell: Spell) => {
+  const handleRowMouseEnter = (spell: Power) => {
     void queryClient.prefetchQuery(customizationEntityQuery(rulesetId, "powers", spell.id));
   };
 
-  const renderCell = (spell: Spell, columnKey: string) => {
+  const renderCell = (spell: Power, columnKey: string) => {
     switch (columnKey) {
       case "name":
         return spell.name;

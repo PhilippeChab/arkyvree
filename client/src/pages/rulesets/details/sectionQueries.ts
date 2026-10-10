@@ -41,6 +41,9 @@ interface PowerFilters extends AptitudeFilters {
 /** A ruleset's aptitude, as its list and its pickers give it. */
 export type Aptitude = InferResponseType<AptitudesApi["$get"], 200>["items"][number];
 
+/** A ruleset's power (3.5's spell), as its list gives it. */
+export type Power = InferResponseType<(typeof rpc.api.rulesets)[":id"]["powers"]["$get"], 200>["items"][number];
+
 export type RulesetSection =
   | "races"
   | "languages"

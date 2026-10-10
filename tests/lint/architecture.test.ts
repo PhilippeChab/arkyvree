@@ -257,17 +257,21 @@ describe("architecture rules", () => {
           "engine/rulesets/dnd3.5/q.ts": imports("@/vocabulary/dnd3.5/spells.ts"),
           "engine/api/r.ts": imports("@/engine/rulesets/pf1/index.ts"),
           "tests/s.test.ts": imports("@/engine/rulesets/pf1/index.ts"),
-          // A ruleset's vocabulary is its own too: the client's generic modules read it through its registry alone
+          // The client's generic modules reach a ruleset's vocabulary and code through its registries alone
           "client/src/pages/rulesets/t.ts": imports("@/vocabulary/dnd3.5/spells.ts"),
           "client/src/pages/rulesets/vocabularyFactory.ts": imports("@/vocabulary/dnd3.5/spells.ts"),
           "client/src/pages/rulesets/components/dnd3.5/u.ts": imports("@/vocabulary/dnd3.5/spells.ts"),
           "client/src/pages/rulesets/components/v.ts": imports("@/client/src/pages/rulesets/components/dnd3.5/u.ts"),
+          "client/src/pages/rulesets/details/sectionFactory.ts": imports(
+            "@/client/src/pages/rulesets/components/dnd3.5/u.ts",
+          ),
           "vocabulary/pf1/w.ts": imports("@/vocabulary/dnd3.5/spells.ts"),
         },
         ["ruleset-folders"],
       ),
     ).toEqual([
       "ruleset-folders client/src/pages/pf1/e.ts",
+      "ruleset-folders client/src/pages/rulesets/components/v.ts",
       "ruleset-folders client/src/pages/rulesets/t.ts",
       "ruleset-folders codegen/core/i.ts",
       "ruleset-folders codegen/pf1/tools/c.ts",
@@ -384,6 +388,27 @@ describe("architecture rules", () => {
           'import { Row } from "@/client/src/components/sheet/rows/index.ts";\nexport const i = Row;\n',
       }),
     ).toEqual(["folder-index client/src/pages/inner.tsx"]);
+  });
+
+  test("a ruleset's code enters a client component folder of its own ruleset at that ruleset folder's index", async () => {
+    expect(
+      await lint({
+        "engine/rulesets/dnd3.5/index.ts": "export const x = 1;\n",
+        "client/src/components/sheet/index.ts": 'export { Row } from "./Row.tsx";\n',
+        "client/src/components/sheet/Row.tsx": "export function Row() {\n  return null;\n}\n",
+        "client/src/components/sheet/dnd3.5/index.ts": 'export { Cell } from "./cells/index.ts";\n',
+        "client/src/components/sheet/dnd3.5/cells/index.ts": 'export { Cell } from "./Cell.tsx";\n',
+        "client/src/components/sheet/dnd3.5/cells/Cell.tsx": "export function Cell() {\n  return null;\n}\n",
+        // Its ruleset folder's index, never a subfolder's, nor the generic folder's around it, which re-exports none of it
+        "client/src/pages/dnd3.5/step.tsx":
+          'import { Cell } from "@/client/src/components/sheet/dnd3.5/index.ts";\nexport const s = Cell;\n',
+        "client/src/pages/dnd3.5/deep.tsx":
+          'import { Cell } from "@/client/src/components/sheet/dnd3.5/cells/index.ts";\nexport const d = Cell;\n',
+        // A generic module still enters at the folder's outermost index
+        "client/src/pages/generic.tsx":
+          'import { Cell } from "@/client/src/components/sheet/dnd3.5/index.ts";\nexport const g = Cell;\n',
+      }),
+    ).toEqual(["folder-index client/src/pages/dnd3.5/deep.tsx", "folder-index client/src/pages/generic.tsx"]);
   });
 
   test("the middlewares sit above the repositories, and the server reads nothing of database/", async () => {

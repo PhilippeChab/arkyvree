@@ -5,10 +5,11 @@ import { parseResponse } from "hono/client";
 import { AddButton, EmptyValue, ListToolbar, LoadError, ValueChip } from "@/client/src/components/common/index.ts";
 import { LevelsIcon } from "@/client/src/components/icons/index.ts";
 import { useRulesetPermissions } from "@/client/src/hooks/index.ts";
-import { type ClassLevelFormData, nextClassLevel } from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
+import { getClassForms } from "@/client/src/pages/rulesets/details/classes/classFormFactory.ts";
 import {
+  type ClassLevelFormData,
   type ClassLevelRow,
   classLevelsQuery,
 } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
@@ -47,7 +48,7 @@ export function ClassLevelsSection({ rulesetId, classId, className, ruleset }: C
   const { data: levels, isLoading, error } = useQuery(query);
   const { createDialogProps, handleCreate } = useRulesetSection({
     // Its create opens on the class's next level
-    createDefaults: nextClassLevel(levels),
+    createDefaults: getClassForms(ruleset.baseRules).nextClassLevel(levels),
     rulesetId,
     label: "Class level",
     query,

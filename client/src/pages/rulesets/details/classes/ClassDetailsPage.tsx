@@ -25,12 +25,6 @@ import { formatDie } from "@/client/src/lib/formatNumeric.ts";
 import { rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
-  type ClassFormData,
-  ClassFormFields,
-  EMPTY_CLASS,
-  toClassForm,
-} from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
-import {
   EntityDetailLayout,
   EntityDetailsCard,
   EntityPageError,
@@ -44,9 +38,16 @@ import { useCopyOnWrite, useEntitySave, useRestorableDelete } from "@/client/src
 import { isStillOpen } from "@/client/src/pages/rulesets/stillOpen.ts";
 import { getVocabulary, type RulesetVocabulary } from "@/client/src/pages/rulesets/vocabularyFactory.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
+import { DEFAULT_BASE_RULES } from "@/shared/enums.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
-import { classDetailQuery, type ClassSection, prefetchClassSection } from "./classSectionQueries.ts";
+import { getClassForms } from "./classFormFactory.ts";
+import {
+  classDetailQuery,
+  type ClassFormData,
+  type ClassSection,
+  prefetchClassSection,
+} from "./classSectionQueries.ts";
 import { CLASS_SECTIONS } from "./sections/index.ts";
 
 /** A class property a select sets: its type, as the ruleset's vocabulary names it, and its value ("" clears it). */
@@ -110,13 +111,16 @@ export default function ClassDetailsPage() {
 
   usePageTitle(classData?.name);
 
-  const editForm = useFormWith<ClassFormData>(EMPTY_CLASS);
+  // The ruleset's class form: until the ruleset loads, the form opens on the default base rules' empty class, which
+  // it never shows (its editor renders once the class and its ruleset have loaded)
+  const classForms = getClassForms(ruleset?.baseRules ?? DEFAULT_BASE_RULES);
+  const editForm = useFormWith<ClassFormData>(classForms.emptyClass);
 
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
   // Deleting an inherited class, or what it holds, can be undone
   const { restorable, error: changesError } = useRestorableDelete(ruleset, classData);
 
-  const sync = useFormSync(editForm, classData && toClassForm(classData), {
+  const sync = useFormSync(editForm, classData && ruleset && classForms.toClassForm(classData), {
     key: copy.key,
     adoptKey: copy.adoptKey,
     updatedAt: classData?.updatedAt,
@@ -138,7 +142,7 @@ export default function ClassDetailsPage() {
           json: { ...data, updatedAt },
         }),
       ),
-    toFormValues: toClassForm,
+    toFormValues: classForms.toClassForm,
     storeSaved: (saved, sourceId) => {
       const savedKey = classDetailQuery(rulesetId, saved.id).queryKey;
       // The PUT returns the bare class row: keep showing the property fields (bonus spell ability, caster type) until
@@ -253,7 +257,7 @@ export default function ClassDetailsPage() {
                   ? {
                       fields: (
                         <>
-                          <ClassFormFields form={editForm} />
+                          <classForms.ClassFormFields form={editForm} />
                           <TextField
                             label="Bonus Spell Ability"
                             fullWidth

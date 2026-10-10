@@ -4,7 +4,7 @@
  */
 
 import { infiniteQueryOptions, type QueryClient, queryOptions, skipToken } from "@tanstack/react-query";
-import { type InferResponseType, parseResponse } from "hono/client";
+import { type InferRequestType, type InferResponseType, parseResponse } from "hono/client";
 
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import type { CustomizationSection } from "@/client/src/pages/rulesets/customization/sections/index.ts";
@@ -12,6 +12,17 @@ import { powersQuery } from "@/client/src/pages/rulesets/details/sectionQueries.
 import { rpc } from "@/client/src/services/rpc.ts";
 
 export type ClassDetail = InferResponseType<(typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["$get"], 200>;
+
+/** A class's form, its create's body: what its create dialog and its page's editor edit. */
+export type ClassFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["classes"]["$post"]>["json"];
+
+/**
+ * A class level's form, its create's body: its number, base attack bonus and skill points, which its create dialog
+ * sets, and its saves and granted feats, which its page edits too.
+ */
+export type ClassLevelFormData = InferRequestType<
+  (typeof rpc.api.rulesets)[":id"]["classes"][":classId"]["levels"]["$post"]
+>["json"];
 
 /** A class's level as its Levels tab lists it */
 export type ClassLevelRow = InferResponseType<

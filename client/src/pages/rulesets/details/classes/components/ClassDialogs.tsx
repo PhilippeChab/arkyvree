@@ -2,11 +2,8 @@ import type { UseFormReturn } from "react-hook-form";
 
 import { CreateDialog, DeleteDialog, FormTextField } from "@/client/src/components/common/index.ts";
 import { wholeNumberRules } from "@/client/src/lib/validation.ts";
-import {
-  allLevelSaves,
-  ClassLevelFields,
-  type ClassLevelFormData,
-} from "@/client/src/pages/rulesets/components/forms/dnd3.5/index.ts";
+import { getClassForms } from "@/client/src/pages/rulesets/details/classes/classFormFactory.ts";
+import type { ClassLevelFormData } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 import { useRulesetSaves } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { getVocabulary } from "@/client/src/pages/rulesets/vocabularyFactory.ts";
 import type { BaseRules } from "@/shared/enums.ts";
@@ -42,6 +39,7 @@ export function CreateLevelDialog({
 }: CreateLevelDialogProps) {
   const { data: rulesetSaves, error: savesError } = useRulesetSaves(rulesetId, open);
   const { lastLevel } = getVocabulary(baseRules).classes;
+  const { allLevelSaves, ClassLevelFields } = getClassForms(baseRules);
 
   // The endpoint takes every ruleset save, 0 when unset.
   const handleSubmit = (data: ClassLevelFormData) =>
