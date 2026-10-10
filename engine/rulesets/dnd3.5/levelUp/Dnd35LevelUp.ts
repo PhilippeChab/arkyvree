@@ -26,24 +26,6 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, Detaile
     return Dnd35CharacterBuilder.build(view, input);
   }
 
-  /** The level-up wizard's ability step: the character's abilities, when the level it adds or edits takes an increase. */
-  describeAbilityStep(
-    view: RulesetView,
-    character: CharacterInput,
-    ...args: Parameters<LevelUpSteps["describeAbilityStep"]>
-  ) {
-    return new LevelUpSteps(view, character, this).describeAbilityStep(...args);
-  }
-
-  /** The level-up wizard's feats step of class `klassId`'s `level`. */
-  describeFeatStep(
-    view: RulesetView,
-    character: CharacterInput,
-    ...args: Parameters<LevelUpSteps["describeFeatStep"]>
-  ) {
-    return new LevelUpSteps(view, character, this).describeFeatStep(...args);
-  }
-
   /** A saved level's selections, as its edit opens them. */
   describeLevel(
     view: RulesetView,
@@ -51,15 +33,6 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, Detaile
     ...args: Parameters<Dnd35LevelSelections["describeLevel"]>
   ) {
     return new Dnd35LevelSelections(view, character, this).describeLevel(...args);
-  }
-
-  /** The level-up wizard's powers step of class `klassId`'s `level`. */
-  describePowerStep(
-    view: RulesetView,
-    character: CharacterInput,
-    ...args: Parameters<LevelUpSteps["describePowerStep"]>
-  ) {
-    return new LevelUpSteps(view, character, this).describePowerStep(...args);
   }
 
   /** The level-up wizard's preview of the levels the character plans, each with its ability increase. */
@@ -71,13 +44,14 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, Detaile
     return new LevelUpPreview(view, character, this).describePreview(...args);
   }
 
-  /** The level-up wizard's skills step of class `klassId`'s `level`. */
-  describeSkillStep(
-    view: RulesetView,
-    character: CharacterInput,
-    ...args: Parameters<LevelUpSteps["describeSkillStep"]>
-  ) {
-    return new LevelUpSteps(view, character, this).describeSkillStep(...args);
+  /** The level-up wizard's step `name` of the level the step is for: its abilities, skills, feats or powers. */
+  describeStep(view: RulesetView, character: CharacterInput, ...args: Parameters<LevelUpSteps["describeStep"]>) {
+    return new LevelUpSteps(view, character, this).describeStep(...args);
+  }
+
+  /** The level-up wizard's steps of a level, in order: the same four for every level. */
+  describeSteps(view: RulesetView, character: CharacterInput) {
+    return new LevelUpSteps(view, character, this).describeSteps();
   }
 
   /** Whether the level after `totalLevel` levels takes an ability increase: every fourth. */
@@ -85,9 +59,12 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, Detaile
     return LevelRules.isAbilityIncreaseLevel(totalLevel);
   }
 
-  /** The class picker for the character, with what the level-up wizard plans so far: its filters, a page described. */
+  /**
+   * The class picker for the character, with what the level-up wizard plans so far, its skill points spread over its
+   * planned levels as the save spreads them: its filters, a page described.
+   */
   openClassPicker(view: RulesetView, character: CharacterInput, planned: PlannedSoFar) {
-    return new ClassPicker(view, character, planned);
+    return new ClassPicker(view, character, planned, new LevelUpPlan(view, character, this));
   }
 
   /** A feat picker for the character: what it offers and leaves out, and a page of options described. */

@@ -22,7 +22,11 @@ export async function checkAbilityIncreases(characters: Character[]) {
     await withRulesetScope(db, char.rulesetId, async (scope) => {
       const character = await readCharacterInput(db, char);
       for (const [index, level] of character.rows.levels.entries()) {
-        const due = Engine.for(scope).character(character).levelUp().describeAbilityStep(level.id).isAvailable;
+        const step = Engine.for(scope)
+          .character(character)
+          .levelUp()
+          .describeStep("abilities", { editedLevelId: level.id });
+        const due = step.name === "abilities" && step.isAvailable;
         if (due === (level.abilityId !== null)) continue;
         issues++;
         const klassLevel = scope.rulesetData.klassLevelsById.get(level.klassLevelId);

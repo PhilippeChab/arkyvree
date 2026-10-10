@@ -19,6 +19,6 @@ export {
   type SkillsData,
 } from "./levelUpQueries.ts";
 export { maxSkillPoints, type SkillLevels, skillRanks } from "./skillLevels.ts";
-export { ADD_STEP_CONTENT, ADD_STEP_LABELS, type AddLevelWizard, useAddLevelWizard } from "./useAddLevelWizard.ts";
-export { EDIT_STEP_CONTENT, EDIT_STEP_LABELS, type EditLevelWizard, useEditLevelWizard } from "./useEditLevelWizard.ts";
+export { type AddLevelWizard, useAddLevelWizard } from "./useAddLevelWizard.ts";
+export { type EditLevelWizard, useEditLevelWizard } from "./useEditLevelWizard.ts";
 export { type LevelUpFormData } from "./useLevelWizardBase.ts";

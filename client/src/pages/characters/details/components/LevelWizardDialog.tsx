@@ -2,10 +2,9 @@ import { Button, DialogContent, DialogTitle, Stack, Step, StepLabel, Stepper } f
 import type { ReactNode } from "react";
 
 import { ValidationIssuesAlert } from "@/client/src/components/characters/index.ts";
-import { ConfirmDialog, DialogFooter, Modal } from "@/client/src/components/common/index.ts";
+import { ConfirmDialog, DialogFooter, LoadError, Modal } from "@/client/src/components/common/index.ts";
 import { useIsMobile } from "@/client/src/hooks/index.ts";
-
-import type { AddLevelWizard, EditLevelWizard } from "./dnd3.5/levelUp/index.ts";
+import type { ApiValidationIssue } from "@/client/src/services/ApiError.ts";
 
 interface LevelWizardDialogProps {
   /** The current step. */
@@ -16,27 +15,30 @@ interface LevelWizardDialogProps {
   /** It has faded out (`useDialogState`'s `onExited`): its owner unmounts it. */
   onExited: () => void;
   open: boolean;
-  stepLabels: readonly string[];
   title: string;
   wizard: WizardControls;
 }
 
-/** The part of a level wizard, Add Level's or Edit Level's, the dialog drives: steps, cancel, validation and navigation. */
-type WizardControls = Pick<
-  AddLevelWizard | EditLevelWizard,
-  | "activeStep"
-  | "showCancelConfirm"
-  | "setShowCancelConfirm"
-  | "handleConfirmCancel"
-  | "issues"
-  | "setIssues"
-  | "handleForceSubmit"
-  | "handleCancel"
-  | "handleBack"
-  | "handleNext"
-  | "isNextDisabled"
-  | "isLastStep"
->;
+/**
+ * The part of a level wizard, Add Level's or Edit Level's, the dialog drives: its steps (their labels, in order), what
+ * failed to load (`loadError`, which it shows in place of the step), cancel, validation and navigation.
+ */
+interface WizardControls {
+  activeStep: number;
+  handleBack: () => void;
+  handleCancel: () => void;
+  handleConfirmCancel: () => void;
+  handleForceSubmit: () => void;
+  handleNext: () => void;
+  isLastStep: boolean;
+  isNextDisabled: boolean;
+  issues: ApiValidationIssue[];
+  loadError: { error: Error; what: string } | undefined;
+  setIssues: (issues: ApiValidationIssue[]) => void;
+  setShowCancelConfirm: (show: boolean) => void;
+  showCancelConfirm: boolean;
+  steps: readonly { label: string }[];
+}
 
 /** The Add Level / Edit Level dialog: stepper, cancel confirmation, validation warnings and navigation. */
 export function LevelWizardDialog({
@@ -44,7 +46,6 @@ export function LevelWizardDialog({
   onExited,
   title,
   wizard,
-  stepLabels,
   finishLabel,
   isSaving,
   children,
@@ -94,14 +95,16 @@ export function LevelWizardDialog({
                 isMobile && { "& .MuiStepLabel-label": { fontSize: "0.65rem" } },
               ]}
             >
-              {stepLabels.map((label) => (
+              {wizard.steps.map(({ label }) => (
                 <Step key={label}>
                   <StepLabel>{label}</StepLabel>
                 </Step>
               ))}
             </Stepper>
 
-            <Stack sx={{ flex: 1, overflow: "auto", minHeight: 0 }}>{children}</Stack>
+            <Stack sx={{ flex: 1, overflow: "auto", minHeight: 0 }}>
+              {wizard.loadError ? <LoadError what={wizard.loadError.what} error={wizard.loadError.error} /> : children}
+            </Stack>
           </Stack>
         </Stack>
         <DialogFooter

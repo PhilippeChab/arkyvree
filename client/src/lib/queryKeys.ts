@@ -85,8 +85,6 @@ export const QUERY_KEYS = {
     /** A level-up read's cache: its key holds the query (or the body) it sends, so no parameter is left out of it. */
     levelUp: {
       all: (characterId: string) => ["characters", "levelUp", characterId] as const,
-      attributes: (characterId: string, query?: Record<string, unknown>) =>
-        ["characters", "levelUp", characterId, "attributes", query] as const,
       availableClasses: (characterId: string, query?: Record<string, unknown>) =>
         ["characters", "levelUp", characterId, "availableClasses", query] as const,
       availableFeatFamily: (characterId: string, query?: Record<string, unknown>) =>
@@ -95,16 +93,14 @@ export const QUERY_KEYS = {
         ["characters", "levelUp", characterId, "availableFeatsGrouped", query] as const,
       availablePowers: (characterId: string, query?: Record<string, unknown>) =>
         ["characters", "levelUp", characterId, "availablePowers", query] as const,
-      feats: (characterId: string, query?: Record<string, unknown>) =>
-        ["characters", "levelUp", characterId, "feats", query] as const,
       levelData: (characterId: string, characterLevelId: string) =>
         ["characters", "levelUp", characterId, "levelData", characterLevelId] as const,
-      powers: (characterId: string, query?: Record<string, unknown>) =>
-        ["characters", "levelUp", characterId, "powers", query] as const,
       preview: (characterId: string, body: Record<string, unknown>) =>
         ["characters", "levelUp", characterId, "preview", body] as const,
-      skills: (characterId: string, query?: Record<string, unknown>) =>
-        ["characters", "levelUp", characterId, "skills", query] as const,
+      step: (characterId: string, name: string, query?: Record<string, unknown>) =>
+        ["characters", "levelUp", characterId, "step", name, query] as const,
+      steps: (characterId: string, query?: Record<string, unknown>) =>
+        ["characters", "levelUp", characterId, "steps", query] as const,
     },
   },
   legal: {

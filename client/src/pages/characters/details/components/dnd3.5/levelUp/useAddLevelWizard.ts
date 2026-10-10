@@ -19,6 +19,7 @@ import {
   availablePowersQuery,
   type ClassPicker,
   levelPreviewQuery,
+  levelStepsQuery,
   type SelectedKlass,
 } from "./levelUpQueries.ts";
 import {
@@ -32,6 +33,7 @@ import {
 } from "./pendingPicks.ts";
 import type { SkillLevels } from "./skillLevels.ts";
 import { pickIds, useLevelWizardBase } from "./useLevelWizardBase.ts";
+import { CLASS_PLAN_STEP, HP_STEP, REVIEW_STEP } from "./wizardSteps.ts";
 
 interface UseAddLevelWizardParams {
   characterId: string;
@@ -41,18 +43,6 @@ interface UseAddLevelWizardParams {
 
 /** The Add Level wizard's state: what its dialog and its steps read. */
 export type AddLevelWizard = ReturnType<typeof useAddLevelWizard>;
-
-export const ADD_STEP_CONTENT = ["class-plan", "hp", "abilities", "skills", "feats", "powers", "review"] as const;
-
-export const ADD_STEP_LABELS = [
-  "Class Plan",
-  "Select HP",
-  "Ability Increase",
-  "Select Skills",
-  "Select Feats",
-  "Select Spells",
-  "Review Changes",
-];
 
 export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWizardParams) {
   const snackbar = useSnackbar();
@@ -72,9 +62,10 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     handleSaveError,
   } = base;
 
-  const classPlanStep = ADD_STEP_CONTENT.indexOf("class-plan");
-  const featsStep = ADD_STEP_CONTENT.indexOf("feats");
-  const powersStep = ADD_STEP_CONTENT.indexOf("powers");
+  // Its steps: its class plan and hit points, the steps the ruleset lists for a new level, then its review
+  const stepsQuery = useQuery({ ...levelStepsQuery(characterId), enabled: open });
+  const steps = useMemo(() => [CLASS_PLAN_STEP, HP_STEP, ...(stepsQuery.data ?? []), REVIEW_STEP], [stepsQuery.data]);
+  const stepName = steps[activeStep].name;
 
   const [klassSearch, setKlassSearch] = useState("");
   const debouncedKlassSearch = useDebouncedValue(klassSearch);
@@ -277,7 +268,7 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
   const classPicker: ClassPicker = {
     ...plannedLevelsOf(previewLevelDetails, abilityIncreases),
     featPicks: allSelectedFeatPickString,
-    skillRanks: skillPointString(skillPointAllocations),
+    skillPoints: skillPointString(skillPointAllocations),
   };
 
   const {
@@ -287,7 +278,7 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     onScroll: handleKlassesScroll,
   } = useListboxQuery({
     ...availableClassesQuery(characterId, debouncedKlassSearch, classPicker),
-    enabled: open && activeStep === classPlanStep,
+    enabled: open && stepName === "class-plan",
     // Adding a class to the plan re-keys the query, which would drop the data while it refetches: the previous result
     // stays shown, so the quick-add buttons don't flash
     placeholderData: keepPreviousData,
@@ -336,7 +327,7 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     isFetchingNextPage: isFetchingNextFeatsPage,
   } = useListboxQuery({
     ...availableFeatsGroupedQuery(characterId, selectedAptitude, debouncedFeatSearch, featPicker),
-    enabled: open && activeStep === featsStep,
+    enabled: open && stepName === "feats",
   });
 
   const {
@@ -350,7 +341,7 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
       ...powerPicker,
       selectedPowerIds: powerPickString(selectedPowers),
     }),
-    enabled: open && activeStep === powersStep,
+    enabled: open && stepName === "powers",
   });
 
   const resetWizard = useCallback(() => {
@@ -397,7 +388,7 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     onError: handleSaveError,
   });
 
-  const isLastStep = activeStep === ADD_STEP_CONTENT.length - 1;
+  const isLastStep = activeStep === steps.length - 1;
 
   const handleNext = useCallback(() => {
     if (isLastStep) finalizeMutation.mutate({ force: false });
@@ -421,10 +412,10 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     onClose();
   }, [resetWizard, onClose]);
 
-  // The dialog also disables it while the save runs.
+  // Next waits for the steps the ruleset lists. The dialog also disables it while the save runs.
   const isNextDisabled = useMemo(() => {
-    const content = ADD_STEP_CONTENT[activeStep];
-    switch (content) {
+    if (!stepsQuery.data) return true;
+    switch (stepName) {
       case "class-plan":
         return validClassPlan.length < 1;
       case "hp":
@@ -432,17 +423,22 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
       default:
         return false;
     }
-  }, [activeStep, validClassPlan, hpLevels, hpValues]);
+  }, [stepsQuery.data, stepName, validClassPlan, hpLevels, hpValues]);
+
+  // The steps' list failed to load: the wizard can't go on
+  const loadError = !stepsQuery.data && stepsQuery.error ? { what: "Steps", error: stepsQuery.error } : undefined;
 
   return {
     ...base,
+    steps,
+    loadError,
     selectedFeats,
     selectedPowers,
     skillPointAllocations,
     selectedAptitude,
     isLastStep,
 
-    // Class plan (step 1)
+    // Class plan
     classPlan: adjustedClassPlan,
     slotKeys,
     handleClassChange,
@@ -456,12 +452,12 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     handleKlassesScroll,
     setKlassSearch,
 
-    // HP (step 2)
+    // HP
     hpValues,
     handleHpChange,
     hpLevels,
 
-    // Ability increases (step 3)
+    // Ability increases
     attributeData,
     isLoadingAttributes,
     attributesError,
@@ -469,13 +465,13 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     abilityIncreases,
     handleAbilityIncreaseChange,
 
-    // Skills (step 4)
+    // Skills
     skillData,
     isLoadingSkills,
     skillsError,
     skillLevels,
 
-    // Feats (step 5)
+    // Feats
     featData,
     isLoadingFeats,
     featsError,
@@ -487,7 +483,7 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     featPicker,
     handleFeatsScroll,
 
-    // Powers (step 6)
+    // Powers
     powerData,
     isLoadingPowers,
     powersError,

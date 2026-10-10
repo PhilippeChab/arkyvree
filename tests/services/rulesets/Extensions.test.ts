@@ -50,7 +50,7 @@ import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { buildAs, createTestCharacter } from "@/tests/support/characters.ts";
-import { addCharacterLevel, createTestKlassLevel, pickFeat } from "@/tests/support/levels.ts";
+import { addCharacterLevel, createTestKlassLevel, getLevelStep, pickFeat } from "@/tests/support/levels.ts";
 import {
   copyEntity,
   createSeededTestRulesetWithExtensions,
@@ -123,12 +123,10 @@ async function favoredSoulOnMixedFork() {
   const fork = await forkTaking(DND35_DMG_NAME, DND35_COMPLETE_WARRIOR_NAME, DND35_COMPLETE_DIVINE_NAME);
   const divine = await findSeededRuleset(DND35_COMPLETE_DIVINE_NAME);
   const favoredSoul = (await Klasses.findOne(db, { name: "Favored Soul", rulesetId: divine.id }))!;
-  const { aptitudePools } = await CharacterLevelsService.getPowerStep(
-    fork.session,
-    fork.character.id,
-    favoredSoul.id,
-    1,
-  );
+  const { aptitudePools } = await getLevelStep(fork.session, fork.character.id, "powers", {
+    classId: favoredSoul.id,
+    level: 1,
+  });
   const list = Object.values(aptitudePools).find((pool) => pool.name === "Favored Soul Spells")!;
   const offer = (where: { powerLevel?: number; search: string }) =>
     CharacterLevelsService.getAvailablePowers(

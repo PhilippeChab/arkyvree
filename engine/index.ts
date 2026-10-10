@@ -17,6 +17,7 @@ export type {
   EntityRemoval,
   EntityWrites,
   LevelPickRows,
+  LevelStep,
   ListLink,
   MadeEntity,
   NewBondedCreature,

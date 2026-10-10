@@ -12,24 +12,9 @@ type Args<K extends keyof Module["levelUp"]> = Rest<Module["levelUp"][K], [Rules
  * character's input is read as the view reads it (`CharacterEngine` resolved it), and so are its bonded creatures'.
  */
 export default class LevelUpEngine extends CharacterHandle {
-  /** The wizard's ability step: the character's abilities, when the level it adds or edits takes an increase. */
-  describeAbilityStep(...args: Args<"describeAbilityStep">) {
-    return this.module.levelUp.describeAbilityStep(this.view, this.input, ...args);
-  }
-
-  /** The wizard's feats step of class `klassId`'s `level`: the pools the character picks feats in, and its grants. */
-  describeFeatStep(...args: Args<"describeFeatStep">) {
-    return this.module.levelUp.describeFeatStep(this.view, this.input, ...args);
-  }
-
   /** A saved level's selections, as its edit opens them: refused when the character has no such level. */
   describeLevel(...args: Args<"describeLevel">) {
     return this.module.levelUp.describeLevel(this.view, this.input, ...args);
-  }
-
-  /** The wizard's powers step of class `klassId`'s `level`: the pools the character picks powers in, and its grants. */
-  describePowerStep(...args: Args<"describePowerStep">) {
-    return this.module.levelUp.describePowerStep(this.view, this.input, ...args);
   }
 
   /** The wizard's preview of the levels the character plans, each with its ability increase. */
@@ -37,9 +22,14 @@ export default class LevelUpEngine extends CharacterHandle {
     return this.module.levelUp.describePreview(this.view, this.input, ...args);
   }
 
-  /** The wizard's skills step of class `klassId`'s `level`: the points to spend and each skill's class status. */
-  describeSkillStep(...args: Args<"describeSkillStep">) {
-    return this.module.levelUp.describeSkillStep(this.view, this.input, ...args);
+  /** The wizard's step `name` of the level a step is for: refused when the ruleset has no such step. */
+  describeStep(...args: Args<"describeStep">) {
+    return this.module.levelUp.describeStep(this.view, this.input, ...args);
+  }
+
+  /** The wizard's steps of the level a step is for, in order: each by the name `describeStep` answers it by. */
+  describeSteps(...args: Args<"describeSteps">) {
+    return this.module.levelUp.describeSteps(this.view, this.input, ...args);
   }
 
   /** The class picker, with what the wizard plans so far: its filters, and a page of classes described. */
