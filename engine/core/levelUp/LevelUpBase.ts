@@ -1,30 +1,85 @@
 import {
+  type AbilityIncrease,
   type BondedCreaturesPlan,
   type CharacterInput,
   CharacterProjection,
   type LevelPickRows,
   type LevelPicks,
+  type LevelRequest,
 } from "@/engine/core/module/index.ts";
-import RulesError from "@/engine/core/RulesError.ts";
+import RulesError, { type RulesIssue } from "@/engine/core/RulesError.ts";
 import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
-import type { Character } from "@/shared/relations.ts";
+import type { Character, Klass, KlassLevel } from "@/shared/relations.ts";
 
+import type { OverfullPool } from "./PicksDistribution.ts";
 import SelectionChecks from "./SelectionChecks.ts";
+
+/** The hit points a level of a class gains, as its hit die bounds them: the least, the most, and the average. */
+export interface LevelHitPoints {
+  average: number;
+  max: number;
+  min: number;
+}
 
 /**
  * What a ruleset's level-up rules decide, which every level-up flow reads: how a character is built (`C`, the ruleset's
- * character), what a level's ability increases add up to, and what a master's bonded creatures become with it.
+ * character), what a level's ability increases add up to, the hit points it gains and those it counts before they're
+ * rolled, and what a master's bonded creatures become with it; and what a save's checks (`LevelsPlanning`) ask of the
+ * ruleset: its planned levels, its picks spread over them, the pools they overfill, the issues an edited level answers
+ * for.
  */
 export interface LevelUpRules<C> {
   /** The character built from its rows (as the server read them, or with what a level-up adds), in the ruleset's view. */
   buildCharacter(view: RulesetView, input: CharacterInput): C;
+  /**
+   * A save's pooled picks (`picks`) spread over its planned levels (`levels`, in order) of the character (`input`), as
+   * the ruleset spreads them: each level's.
+   */
+  distributePicks(
+    view: RulesetView,
+    input: CharacterInput,
+    levels: PlannedClassLevel[],
+    picks: LevelPicks,
+  ): LevelPicks[];
+  /**
+   * The issues an edited level answers for, of the character's with it (`issues`): read off the character as it was
+   * before the level (`before`), and with the level alone after that (`withLevel`).
+   */
+  findEditedLevelIssues(issues: RulesIssue[], before: C, withLevel: C): RulesIssue[];
+  /** The pools picks (`picks`) overfill in the character holding them (`holder`, built from `input` with them). */
+  findOverfullPools(
+    view: RulesetView,
+    input: CharacterInput,
+    holder: C,
+    picks: Pick<LevelPicks, "feats" | "powers">,
+  ): OverfullPool[];
   /** What the ability increases of the level after `totalLevel` levels add up to: 0 when it takes none. */
   getAbilityIncreaseTotal(totalLevel: number): number;
+  /**
+   * Each planned level's class and class level, with its ability increases (`levels`), the ruleset's: refused when a
+   * class or a class level isn't, or the levels go past its bounds.
+   */
+  getPlannedKlassLevels(
+    view: RulesetView,
+    input: CharacterInput,
+    levels: Omit<LevelRequest, "hp">[],
+  ): PlannedClassLevel[];
+  /** The hit points a level of a class with hit die `hd` gains: the least, the most, and the average. */
+  hitPointsOf(hd: number): LevelHitPoints;
   /**
    * What the bonded creatures (`bonded`, their rows) become with their master as `master` builds it, from its row
    * (`record`), which a creature it makes takes after.
    */
   planBondedCreatures(view: RulesetView, master: C, record: Character, bonded: CharacterInput[]): BondedCreaturesPlan;
+  /** The hit points a level counts before they're rolled: a level a flow projects, whose hit points its save sets. */
+  readonly unrolledLevelHp: number;
+}
+
+/** A level a level-up plans: its class and class level, and its ability increases. */
+export interface PlannedClassLevel {
+  abilityIncreases: AbilityIncrease[];
+  klass: Klass;
+  klassLevel: KlassLevel;
 }
 
 /**

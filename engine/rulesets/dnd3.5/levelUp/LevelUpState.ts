@@ -1,4 +1,4 @@
-import { LevelUpBase, PicksDistribution } from "@/engine/core/levelUp/index.ts";
+import { LevelUpBase } from "@/engine/core/levelUp/index.ts";
 import type { LevelPicks } from "@/engine/core/module/index.ts";
 import type { OwnPicks } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
@@ -117,13 +117,5 @@ export default abstract class LevelUpState extends include(LevelUpBase<DetailedC
       ),
       aptitudePools: pools.powerPools,
     };
-  }
-
-  /**
-   * Refuses picks (`picks`, which `character` holds) that overfill a pool they're in, as a save refuses them
-   * (`PicksDistribution.refuseOverfull`).
-   */
-  protected refuseOverfull(character: DetailedCharacter, picks: Partial<PoolPicks>) {
-    PicksDistribution.refuseOverfull(character.components.aptitudes.getOverfullPools(this.countOwnPicks(picks)));
   }
 }

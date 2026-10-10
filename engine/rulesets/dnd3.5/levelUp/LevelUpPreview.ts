@@ -1,4 +1,4 @@
-import { PicksDistribution, SelectionChecks } from "@/engine/core/levelUp/index.ts";
+import { PicksDistribution } from "@/engine/core/levelUp/index.ts";
 import type { LevelPicks, PreviewRequest } from "@/engine/core/module/index.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
@@ -40,7 +40,7 @@ export default class LevelUpPreview extends PlannedLevelsState {
         klassLevelId: klassLevel.id,
         level: klassLevel.level,
         hd: klass.hd,
-        hitPoints: SelectionChecks.hitPointsOf(klass.hd),
+        hitPoints: this.rules.hitPointsOf(klass.hd),
         skillPoints: perLevelSkillPoints[i],
       })),
       nextPickLevels: this.nextPickLevelsOf(gains, fitted.picks),

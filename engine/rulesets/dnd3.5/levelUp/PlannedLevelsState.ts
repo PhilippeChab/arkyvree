@@ -1,12 +1,7 @@
 import { z } from "zod";
 
-import type { FeatSlots, GrantedFeatRecords } from "@/engine/core/levelUp/index.ts";
-import {
-  type AbilityIncrease,
-  CharacterProjection,
-  type LevelPicks,
-  type LevelRequest,
-} from "@/engine/core/module/index.ts";
+import type { FeatSlots, GrantedFeatRecords, PlannedClassLevel } from "@/engine/core/levelUp/index.ts";
+import { CharacterProjection, type LevelPicks, type LevelRequest } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { CLASS_LEVEL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/classes/fields.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
@@ -15,7 +10,6 @@ import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedChara
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
 import { include } from "@/lib/mixins.ts";
-import type { Klass, KlassLevel } from "@/shared/relations.ts";
 
 import { PlansAptitudeSlots } from "./concerns/PlansAptitudeSlots.ts";
 import Dnd35PicksDistribution, { type PerLevelDistributionData } from "./Dnd35PicksDistribution.ts";
@@ -23,13 +17,6 @@ import LevelUpState, { type PoolPicks } from "./LevelUpState.ts";
 
 /** What the planned levels give: the pools the character picks in, and each level's skill points, class skills and slots. */
 export type LevelGains = ReturnType<PlannedLevelsState["computeLevelGains"]>;
-
-/** A planned level's class and class level, and its ability increases. */
-export interface PlannedClassLevel {
-  abilityIncreases: AbilityIncrease[];
-  klass: Klass;
-  klassLevel: KlassLevel;
-}
 
 /**
  * A level-up's planned levels, built: the character with them (`character`, built with their projection), the
@@ -206,7 +193,7 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
    * ruleset or its source chain. Refused past the rules' bounds (a class's last level, a character's), and when a class
    * isn't the view's or a player character's, or hasn't that level.
    */
-  protected getPlannedKlassLevels(levels: Omit<LevelRequest, "hp">[]): PlannedClassLevel[] {
+  getPlannedKlassLevels(levels: Omit<LevelRequest, "hp">[]): PlannedClassLevel[] {
     RulesError.parse(PLANNED_LEVELS, levels, ["levels"]);
     return levels.map(({ klassId, level, abilityIncreases }, i) => {
       const klass = this.rulesetData.klassesById.get(klassId);

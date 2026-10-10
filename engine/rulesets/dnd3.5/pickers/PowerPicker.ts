@@ -3,14 +3,14 @@ import type { RulesetView } from "@/engine/core/view/index.ts";
 import { FEAT_FIELDS } from "@/engine/rulesets/dnd3.5/entities/feats/fields.ts";
 import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
 
-import LevelPicker from "./LevelPicker.ts";
+import Dnd35LevelPicker from "./Dnd35LevelPicker.ts";
 
 /**
  * A power picker for the character, from its rows: the pool's powers (`filters`: of a spell level, when given), but
  * those it knows in the pool, those its class level grants, those its modifiers give it, those of the schools a wizard's
  * specialization prohibits, and those picked so far.
  */
-export default class PowerPicker extends LevelPicker {
+export default class PowerPicker extends Dnd35LevelPicker {
   constructor(view: RulesetView, input: CharacterInput, query: PowerPickQuery) {
     super(view, input, query);
     this.filters = this.buildFilters(query);

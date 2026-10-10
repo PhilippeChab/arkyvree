@@ -1,7 +1,17 @@
-import { BondedCreatures, LevelRemoval, type LevelUpRules } from "@/engine/core/levelUp/index.ts";
+import {
+  BondedCreatures,
+  type LevelHitPoints,
+  LevelRemoval,
+  LevelsPlanning,
+  type LevelUpRules,
+  type OverfullPool,
+  type PlannedClassLevel,
+  type ValidatedCharacter,
+} from "@/engine/core/levelUp/index.ts";
 import type { CharacterInput } from "@/engine/core/module/CharacterInputs.ts";
 import type { Descriptions } from "@/engine/core/module/contract.ts";
 import type { OpenedGroupedPicker, OpenedPicker, PickFilters, PickGroupFilters } from "@/engine/core/module/pickers.ts";
+import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { Character, Klass } from "@/shared/relations.ts";
 
@@ -10,7 +20,9 @@ import type { BondedCreaturesPlan, LevelEditPlan, LevelRemovalPlan, LevelsPlan }
 import type {
   FeatPickQuery,
   LevelEditRequest,
+  LevelPicks,
   LevelQuery,
+  LevelRequest,
   LevelUpRequest,
   PlannedSoFar,
   PowerPickQuery,
@@ -22,10 +34,18 @@ import type {
  * lists, and answers by name), preview and pickers, a saved level's selections, and what a save, an edit or a removal
  * writes, with what the master's bonded creatures become. Its descriptions are the ruleset's own (`D`); its plans are
  * the rows the server writes. Its level-up rules (`LevelUpRules`: how its character `C` is built, what a level's
- * ability increases add up to, what bonded creatures become) are what every flow reads: a removal and the bonded
- * creatures follow from them alone.
+ * ability increases add up to and its hit points, what bonded creatures become, a save's planned levels and its picks
+ * spread over them, the pools picks overfill, the issues an edited level answers for) are what every flow reads: a
+ * removal and the bonded creatures follow from them alone, and a save and an edit are checked over them in the order
+ * every ruleset's are (`LevelsPlanning`).
  */
-export default abstract class LevelUpPart<D extends Descriptions, C = unknown> implements LevelUpRules<C> {
+export default abstract class LevelUpPart<
+  D extends Descriptions,
+  C extends ValidatedCharacter = ValidatedCharacter,
+> implements LevelUpRules<C> {
+  /** The hit points a level counts before they're rolled: a level a flow projects, whose hit points its save sets. */
+  abstract readonly unrolledLevelHp: number;
+
   /** The ruleset's character built from its rows, in the ruleset's view. */
   abstract buildCharacter(view: RulesetView, input: CharacterInput): C;
 
@@ -51,8 +71,43 @@ export default abstract class LevelUpPart<D extends Descriptions, C = unknown> i
     query: LevelQuery,
   ): readonly WizardStep<D["step"]["name"]>[];
 
+  /** A save's pooled picks (`picks`) spread over its planned levels (`levels`, in order), as the ruleset spreads them. */
+  abstract distributePicks(
+    view: RulesetView,
+    character: CharacterInput,
+    levels: PlannedClassLevel[],
+    picks: LevelPicks,
+  ): LevelPicks[];
+
+  /**
+   * The issues an edited level answers for, of the character's with it (`issues`): read off the character as it was
+   * before the level (`before`), and with the level alone after that (`withLevel`).
+   */
+  abstract findEditedLevelIssues(issues: RulesIssue[], before: C, withLevel: C): RulesIssue[];
+
+  /** The pools picks (`picks`) overfill in the character holding them (`holder`), as the ruleset counts them. */
+  abstract findOverfullPools(
+    view: RulesetView,
+    character: CharacterInput,
+    holder: C,
+    picks: Pick<LevelPicks, "feats" | "powers">,
+  ): OverfullPool[];
+
   /** What the ability increases of the level after `totalLevel` levels add up to: 0 when it takes none. */
   abstract getAbilityIncreaseTotal(totalLevel: number): number;
+
+  /**
+   * Each planned level's class and class level, with its ability increases (`levels`), the ruleset's: refused when a
+   * class or a class level isn't, or the levels go past its bounds.
+   */
+  abstract getPlannedKlassLevels(
+    view: RulesetView,
+    character: CharacterInput,
+    levels: Omit<LevelRequest, "hp">[],
+  ): PlannedClassLevel[];
+
+  /** The hit points a level of a class with hit die `hd` gains: the least, the most, and the average. */
+  abstract hitPointsOf(hd: number): LevelHitPoints;
 
   /** The class picker, with what the wizard plans so far: the classes it offers, each with the level it would take. */
   abstract openClassPicker(
@@ -84,31 +139,40 @@ export default abstract class LevelUpPart<D extends Descriptions, C = unknown> i
     record: Character,
     bonded: CharacterInput[],
   ): BondedCreaturesPlan;
-  /** A saved level's edit: what it writes, checked unless `force`d, and what the bonded creatures become with it. */
-  abstract planEdit(
+
+  /** What a master's bonded creatures (`bonded`, their rows) become as its saved levels make them. */
+  planBonded(view: RulesetView, character: CharacterInput, bonded: CharacterInput[]): BondedCreaturesPlan {
+    return new BondedCreatures(view, character, this).planBonded(bonded);
+  }
+
+  /**
+   * A saved level's edit: what it writes, checked in the order every ruleset's is (`LevelsPlanning`) unless `force`d,
+   * and what the bonded creatures become with it.
+   */
+  planEdit(
     view: RulesetView,
     character: CharacterInput,
     bonded: CharacterInput[],
     characterLevelId: string,
     edit: LevelEditRequest,
     force: boolean,
-  ): LevelEditPlan;
+  ): LevelEditPlan {
+    return new LevelsPlanning(view, character, this).planEdit(bonded, characterLevelId, edit, force);
+  }
 
   /**
    * The levels a level-up writes (`request`), with its picks spread over them: the rows it writes, and what the master's
-   * bonded creatures become. The character with them is refused with what it fails, unless `force`d.
+   * bonded creatures become. Each level is checked in the order every ruleset's is (`LevelsPlanning`), and the character
+   * with them refused with what it fails, unless `force`d.
    */
-  abstract planLevels(
+  planLevels(
     view: RulesetView,
     character: CharacterInput,
     bonded: CharacterInput[],
     request: LevelUpRequest,
     force: boolean,
-  ): LevelsPlan;
-
-  /** What a master's bonded creatures (`bonded`, their rows) become as its saved levels make them. */
-  planBonded(view: RulesetView, character: CharacterInput, bonded: CharacterInput[]): BondedCreaturesPlan {
-    return new BondedCreatures(view, character, this).planBonded(bonded);
+  ): LevelsPlan {
+    return new LevelsPlanning(view, character, this).planLevels(bonded, request, force);
   }
 
   /** The character's last level removed: the level that goes, and what its bonded creatures become without it. */

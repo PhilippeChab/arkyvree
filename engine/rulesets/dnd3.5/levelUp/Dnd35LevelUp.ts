@@ -1,4 +1,5 @@
 import { type CharacterInput, LevelUpPart, type PlannedSoFar } from "@/engine/core/module/index.ts";
+import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { Dnd35Descriptions } from "@/engine/rulesets/dnd3.5/descriptions.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
@@ -11,17 +12,19 @@ import type { Character } from "@/shared/relations.ts";
 
 import BondedPlans from "./BondedPlans.ts";
 import Dnd35LevelSelections from "./Dnd35LevelSelections.ts";
-import LevelEdit from "./LevelEdit.ts";
 import LevelUpPlan from "./LevelUpPlan.ts";
 import LevelUpPreview from "./LevelUpPreview.ts";
 import LevelUpSteps from "./LevelUpSteps.ts";
 
 /**
  * The 3.5 level-up, as the module answers the server's level flows, each from the rows the server read: the preview,
- * a save's levels and its check, a saved level's edit, the bonded creatures the levels make, the wizard's steps and
- * pickers, and a saved level's selections.
+ * the bonded creatures the levels make, the wizard's steps and pickers, and a saved level's selections; and the rules
+ * core's flows read, with which it removes a level and checks a save and an edit.
  */
 export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, DetailedCharacter> {
+  /** The hit points a level counts before they're rolled. */
+  override readonly unrolledLevelHp = LevelRules.UNROLLED_LEVEL_HP;
+
   /** The 3.5 character built from its rows. */
   override buildCharacter(view: RulesetView, input: CharacterInput) {
     return Dnd35CharacterBuilder.build(view, input);
@@ -59,9 +62,65 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, Detaile
     return new LevelUpSteps(view, character, this).describeSteps();
   }
 
+  /**
+   * A save's pooled picks spread over its planned levels: each skill's points within each level's points and max ranks,
+   * class skills first, and the feats and powers in each level's pool slots.
+   */
+  override distributePicks(
+    view: RulesetView,
+    character: CharacterInput,
+    ...args: Parameters<LevelUpPlan["distributePicks"]>
+  ) {
+    return new LevelUpPlan(view, character, this).distributePicks(...args);
+  }
+
+  /**
+   * The issues an edited level answers for: all the character's (`issues`) but those of the pools the level doesn't add
+   * to, which the levels before it or after it give. A level adds to a pool the character allows more of with it
+   * (`withLevel`) than without it (`before`).
+   */
+  override findEditedLevelIssues(issues: RulesIssue[], before: DetailedCharacter, withLevel: DetailedCharacter) {
+    const allowedBefore = new Map<string, number>();
+    for (const apt of Object.values(before.components.aptitudes.getAptitudes()))
+      allowedBefore.set(apt.name, apt.allowed);
+    const owned = new Set<string>();
+    for (const apt of Object.values(withLevel.components.aptitudes.getAptitudes()))
+      if (apt.allowed > (allowedBefore.get(apt.name) ?? 0)) owned.add(apt.name);
+
+    return issues.filter(
+      (issue) => issue.category !== "aptitudes" || [...owned].some((name) => issue.message.startsWith(name)),
+    );
+  }
+
+  /** The pools a save's picks overfill, as the character holding them counts them. */
+  override findOverfullPools(
+    view: RulesetView,
+    character: CharacterInput,
+    ...args: Parameters<LevelUpPlan["findOverfullPools"]>
+  ) {
+    return new LevelUpPlan(view, character, this).findOverfullPools(...args);
+  }
+
   /** What the ability increases of the level after `totalLevel` levels add up to: one, at every fourth level. */
   override getAbilityIncreaseTotal(totalLevel: number) {
     return LevelRules.isAbilityIncreaseLevel(totalLevel) ? 1 : 0;
+  }
+
+  /**
+   * Each planned level's class and class level: within the rules' bounds (a class's last level, a character's), a
+   * player character's class of the view, and one of its levels.
+   */
+  override getPlannedKlassLevels(
+    view: RulesetView,
+    character: CharacterInput,
+    ...args: Parameters<LevelUpPlan["getPlannedKlassLevels"]>
+  ) {
+    return new LevelUpPlan(view, character, this).getPlannedKlassLevels(...args);
+  }
+
+  /** The hit points a level gains: 1 to its class's hit die, the die's average rounded up between. */
+  override hitPointsOf(hd: number) {
+    return { average: Math.ceil(hd / 2), max: hd, min: 1 };
   }
 
   /**
@@ -98,18 +157,5 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions, Detaile
     bonded: CharacterInput[],
   ) {
     return new BondedPlans(view.rulesetData).planMasterCreatures(master, record, bonded);
-  }
-
-  /** A saved level's edit: what it writes, checked, and what the master's bonded creatures become with it. */
-  override planEdit(view: RulesetView, character: CharacterInput, ...args: Parameters<LevelEdit["planEdit"]>) {
-    return new LevelEdit(view, character, this).planEdit(...args);
-  }
-
-  /**
-   * The levels a level-up saves, checked, with the picks spread over them: the rows the save writes, and what the
-   * master's bonded creatures become with them. The character with them is refused with what it fails, unless forced.
-   */
-  override planLevels(view: RulesetView, character: CharacterInput, ...args: Parameters<LevelUpPlan["planLevels"]>) {
-    return new LevelUpPlan(view, character, this).planLevels(...args);
   }
 }
