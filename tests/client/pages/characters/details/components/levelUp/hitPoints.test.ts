@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { hpError, hpSet } from "@/client/src/pages/characters/details/components/dnd3.5/levelUp/hitPoints.ts";
+import { hpError, hpSet } from "@/client/src/pages/characters/details/components/levelUp/hitPoints.ts";
 
 /** As the rules answer a level's hit points: 1 to its die */
 const FIGHTER = { className: "Fighter", hd: 10, hitPoints: { average: 5, max: 10, min: 1 }, nextLevel: 2 };

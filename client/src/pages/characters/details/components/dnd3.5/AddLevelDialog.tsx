@@ -1,14 +1,17 @@
 import type { ComponentType } from "react";
 
-import type { AddLevelDialogProps } from "@/client/src/pages/characters/details/components/levelUpFactory.ts";
-import { LevelWizardDialog } from "@/client/src/pages/characters/details/components/LevelWizardDialog.tsx";
+import { LevelWizardDialog } from "@/client/src/pages/characters/details/components/levelUp/index.ts";
+import type {
+  AddLevelDialogProps,
+  LevelStepProps,
+} from "@/client/src/pages/characters/details/components/levelUpFactory.ts";
 
 import { AddAbilityStep } from "./AddAbilityStep.tsx";
 import { AddClassPlanStep } from "./AddClassPlanStep.tsx";
 import { AddReviewStep } from "./AddReviewStep.tsx";
 import { FeatsStep } from "./FeatsStep.tsx";
 import { HpStep } from "./HpStep.tsx";
-import { type AddLevelWizard, type LevelStepProps, useAddLevelWizard } from "./levelUp/index.ts";
+import { type AddLevelWizard, useAddLevelWizard } from "./levelUp/index.ts";
 import { SkillsStep } from "./SkillsStep.tsx";
 import { SpellsStep } from "./SpellsStep.tsx";
 
@@ -26,7 +29,6 @@ const ADD_STEPS: Record<AddLevelWizard["steps"][number]["name"], ComponentType<L
 /** 3.5's Add Level: its wizard, its steps shown by name. */
 export function AddLevelDialog({ open, onClose, onExited, characterId, baseRules }: AddLevelDialogProps) {
   const wizard = useAddLevelWizard({ open, onClose, characterId });
-  const Step = ADD_STEPS[wizard.steps[wizard.activeStep].name];
 
   return (
     <LevelWizardDialog
@@ -34,10 +36,10 @@ export function AddLevelDialog({ open, onClose, onExited, characterId, baseRules
       onExited={onExited}
       title="Add Level"
       wizard={wizard}
+      steps={ADD_STEPS}
       finishLabel="Finish All"
-      isSaving={wizard.finalizeMutation.isPending}
-    >
-      <Step wizard={wizard} characterId={characterId} baseRules={baseRules} />
-    </LevelWizardDialog>
+      characterId={characterId}
+      baseRules={baseRules}
+    />
   );
 }

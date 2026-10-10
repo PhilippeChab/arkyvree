@@ -1,8 +1,9 @@
 /**
- * The level-up wizards' queries: the classes a character can add, a saved level, the steps a level has and each one by
- * its name, the plan's preview, and the feat and spell pickers' lists, which Add Level and Edit Level both ask for at the level their picks
- * land on. Each builds the query its request sends once, and its key holds it: no parameter can be left out of it. Their
- * responses' types are here too, which the wizards and their steps read.
+ * The level-up wizards' queries, every ruleset's alike: the classes a character can add, a saved level, the steps a
+ * level has and each one by its name, the plan's preview, and the feat and spell pickers' lists, which Add Level and
+ * Edit Level both ask for at the level their picks land on. Each builds the query its request sends once, and its key
+ * holds it: no parameter can be left out of it. Their responses' types are here too, as the API answers them: a step's
+ * answer by its name (`StepAnswer`) and the preview are the ruleset's own shape, which its hooks read.
  */
 
 import { infiniteQueryOptions, queryOptions, skipToken } from "@tanstack/react-query";
@@ -31,7 +32,7 @@ type LevelStepData = InferResponseType<LevelsApi["level-steps"][":step"]["$get"]
 /** A step named `N`, as the server describes it. */
 type NamedStep<N extends StepName> = Extract<LevelStepData, { name: N }>;
 
-/** A step's description as the steps read it: a step's without its name, or the same from the Add Level preview. */
+/** A step's description as the steps read it: a step's without its name. */
 type Unnamed<S> = S extends unknown ? Omit<S, "name"> : never;
 
 /** What the class picker's list is checked against: the planned picks, and the skill points spent over them. */
@@ -64,31 +65,16 @@ export interface StepLevel {
   skillPoints?: string;
 }
 
-/** A feat pool of the level's slots. */
-export type AptitudePool = FeatsData["aptitudePools"][string];
-
-/** Whether a level takes an ability increase, and the character's abilities at it. */
-export type AttributesData = Unnamed<NamedStep<"abilities">>;
-
 export type AvailablePower = InferResponseType<LevelsApi["available-powers"]["$get"], 200>["items"][number];
-
-export type FeatsData = Unnamed<NamedStep<"feats">>;
 
 /** A row of the feat picker: a feat, or a family of feat variants. */
 export type GroupedFeatRow = InferResponseType<LevelsApi["available-feats"]["grouped"]["$get"], 200>["items"][number];
 
-/** The character's abilities at a level, by name: each with its score and modifier. */
-export type LevelAbilities = AttributesData["attributes"];
+/** The ruleset's preview of the levels Add Level plans, in its own shape: what its steps read, and what fits. */
+export type LevelPreview = InferResponseType<LevelsApi["preview"]["$post"], 200>;
 
-/** A spell pool of the level's slots. */
-export type PowerAptitudePool = PowersData["aptitudePools"][string];
-
-export type PowersData = Unnamed<NamedStep<"powers">>;
-
-/** A planned level, as the Add Level preview lists it. */
-export type PreviewLevelDetail = InferResponseType<LevelsApi["preview"]["$post"], 200>["levelDetails"][number];
-
-export type SkillsData = Unnamed<NamedStep<"skills">>;
+/** A step's answer, by the name the ruleset lists it by, as its steps read it: without its name. */
+export type StepAnswer<N extends StepName> = Unnamed<NamedStep<N>>;
 
 /** The name of a step the ruleset lists for a level. */
 export type StepName = LevelStepData["name"];

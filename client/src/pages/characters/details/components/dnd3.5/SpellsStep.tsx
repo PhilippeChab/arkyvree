@@ -2,17 +2,16 @@ import { type UIEvent } from "react";
 import { type Control, useController } from "react-hook-form";
 
 import { BlankNote, DiceSpinner, LoadError } from "@/client/src/components/common/index.ts";
-import type { LevelUpFormData } from "@/client/src/pages/characters/details/components/useLevelWizardBase.ts";
+import {
+  type AvailablePower,
+  type LevelUpFormData,
+  withoutPick,
+  withPick,
+} from "@/client/src/pages/characters/details/components/levelUp/index.ts";
 import { SPELL_LEVEL_LABELS } from "@/vocabulary/dnd3.5/spells.ts";
 
 import { AutoGrantedPicks } from "./AutoGrantedPicks.tsx";
-import {
-  type AvailablePower,
-  type PowerAptitudePool,
-  type PowersData,
-  withoutPick,
-  withPick,
-} from "./levelUp/index.ts";
+import type { PowerAptitudePool, PowersData } from "./levelUp/index.ts";
 import { PickOption, PoolPicker } from "./PoolPicker.tsx";
 
 /** The spell picker state a level wizard hands the Spells step: its powers, as the API names them. */

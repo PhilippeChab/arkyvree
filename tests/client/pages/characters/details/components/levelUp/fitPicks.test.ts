@@ -6,7 +6,7 @@ import {
   openPoolOf,
   withoutPick,
   withPick,
-} from "@/client/src/pages/characters/details/components/dnd3.5/levelUp/fitPicks.ts";
+} from "@/client/src/pages/characters/details/components/levelUp/fitPicks.ts";
 
 /** A feat pool with `available` room. */
 function featPool(id: string, available: number) {

@@ -18,7 +18,7 @@ import { GroupedSkillRows, SkillRow } from "@/client/src/components/characters/s
 import { DiceSpinner, LoadError, SubsectionTitle } from "@/client/src/components/common/index.ts";
 import { CasinoIcon } from "@/client/src/components/icons/index.ts";
 import { useLatest } from "@/client/src/hooks/index.ts";
-import type { LevelUpFormData } from "@/client/src/pages/characters/details/components/useLevelWizardBase.ts";
+import type { LevelUpFormData } from "@/client/src/pages/characters/details/components/levelUp/index.ts";
 import { formatPointsSpent, pointsSpent } from "@/client/src/pages/characters/pointsSpent.ts";
 
 import { pointsAt, ranksAt, type SkillsData } from "./levelUp/index.ts";

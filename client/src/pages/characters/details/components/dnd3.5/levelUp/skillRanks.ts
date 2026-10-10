@@ -4,7 +4,7 @@
  * asks for. The step answers them as the save spreads the points, so they're looked up here, never worked out.
  */
 
-import type { SkillsData } from "./levelUpQueries.ts";
+import type { SkillsData } from "./levelAnswers.ts";
 
 /** A skill's ranks by points, as a skills step answers them. */
 type RankedSkill = Pick<SkillsData["skills"][number], "ranksByPoints">;
