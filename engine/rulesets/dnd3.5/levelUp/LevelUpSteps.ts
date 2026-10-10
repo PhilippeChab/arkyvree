@@ -28,8 +28,8 @@ const STEPS = [
 export default class LevelUpSteps extends LevelUpState {
   /**
    * The step's level built with the feats and powers picked at it (`step.picks`), fitted to their pools as a save would
-   * take them (an edited level keeping its own saved powers): the character with what fits, what fits, and its class
-   * level.
+   * take them (an edited level keeping its own saved feats and powers): the character with what fits, what fits, and
+   * its class level.
    */
   private buildPicked(step: LevelQuery) {
     const klassLevel = this.readKlassLevel(step);
@@ -37,7 +37,7 @@ export default class LevelUpSteps extends LevelUpState {
     const fitted = this.fitPicks(
       step.picks ?? {},
       (picks) => this.build(this.projectStep(klassLevel.id, projected, picks)),
-      this.getSavedPowerPicks(projected.editedLevel?.id),
+      this.getSavedPicks(projected.editedLevel?.id),
     );
     const pools = fitted.character.components.aptitudes.getLevelUpPools(
       this.rulesetData,

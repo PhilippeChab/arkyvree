@@ -1,4 +1,4 @@
-import type { AbilityIncrease, PowerPick } from "@/engine/core/module/index.ts";
+import type { AbilityIncrease, FeatPick, PowerPick } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 
@@ -8,13 +8,12 @@ interface FeatRecord extends PickRecord {
   stackable: boolean;
 }
 
-/** The level's hit points, ability increases and selections a check reads, with its class and class level. */
+/** The level's hit points, ability increases and selections a check reads, with its class. */
 interface LevelChecked {
   abilityIncreases: AbilityIncrease[];
   feats: Record<string, string[]>;
   hp: number;
   klass: { hd: number };
-  klassLevel: { id: string };
   powers: Record<string, string[]>;
   skills: Record<string, number>;
 }
@@ -23,6 +22,11 @@ interface LevelChecked {
 interface PickRecord {
   id: string;
   name: string;
+}
+
+/** A feat a character holds, as the character holds it. */
+export interface HeldFeat {
+  id: string;
 }
 
 /** A power a character knows, in the pool it knows it in, as the character holds it. */
@@ -37,42 +41,14 @@ export type GrantedFeatRecords =
 
 /**
  * A level's selections checked against the ruleset (`rulesetData`): theirs, linked to their pools, and not taken twice
- * (a non-stackable feat on the character, a power in a pool it knows it in); and its hit points and ability increases,
- * within what its ruleset's rules give it (`rules`).
+ * (a non-stackable feat the character has, a power in a pool it knows it in); and its hit points and ability
+ * increases, within what its ruleset's rules give it (`rules`).
  */
 export default class SelectionChecks {
   constructor(
     private readonly rulesetData: RulesetData,
     private readonly rules: Pick<LevelUpRules<unknown>, "getAbilityIncreaseTotal" | "hitPointsOf">,
   ) {}
-
-  /**
-   * A level's hit points, ability increases and selections checked, for both the level save and the level-up's: each
-   * ability and selection the ruleset's, each selection linked to its pool, no non-stackable feat or power picked twice.
-   * Answers the feats picked and what the level is granted, which whether a feat is already on the character reads
-   * (`checkNotTaken`).
-   */
-  private checkLevelSelections(level: LevelChecked) {
-    const { klass, klassLevel, hp, abilityIncreases, skills, feats, powers } = level;
-
-    const { max, min } = this.rules.hitPointsOf(klass.hd);
-    if (hp < min || hp > max) throw new RulesError("invalid", `HP must be between ${min} and ${max}`);
-
-    // A cache hit means the entity is in the composed view of the character's ruleset
-    // (the cache's arrays are already COW-resolved and sibling-filtered).
-    if (abilityIncreases.some(({ abilityId }) => !this.rulesetData.abilitiesById.has(abilityId)))
-      throw new RulesError("invalid", "Ability does not belong to the character's ruleset");
-
-    // Submitted ids can repeat, in a pool or under two: a stackable feat's may, checkRepeatedPicks refuses the others.
-    const { fetchedFeats, fetchedPowers } = this.fetchSelections(skills, feats, powers);
-    this.checkRepeatedPicks(feats, fetchedFeats, powers, fetchedPowers);
-    this.checkLinks(feats, powers);
-
-    // What the class level grants, which a non-stackable pick can't be
-    const autoGrantedRecords = this.rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(klassLevel.id) ?? [];
-
-    return { autoGrantedRecords, fetchedFeats };
-  }
 
   /** Throws when a feat or a power isn't linked to the pool it's picked under. */
   private checkLinks(feats: Record<string, string[]>, powers: Record<string, string[]>) {
@@ -90,30 +66,6 @@ export default class SelectionChecks {
         if (!links.some((pa) => pa.aptitudeId === aptitudeId))
           throw new RulesError("invalid", "Power is not linked to the specified aptitude");
       }
-    }
-  }
-
-  /**
-   * Throws when a non-stackable feat picked (`feats`) is already on the character: picked at its other levels
-   * (`pickedFeatIds`, read in the save's scope: the ids the view stands for them), granted by their class levels, or
-   * granted at this one (`autoGrantedRecords`).
-   */
-  private checkNotTaken(
-    feats: FeatRecord[],
-    pickedFeatIds: string[],
-    otherLevels: { klassLevelId: string }[],
-    autoGrantedRecords: { featsInRule: { id: string } }[],
-  ) {
-    const existingFeatIds = new Set(pickedFeatIds);
-    // The feats the other levels' class levels and this one grant, as the view composes them
-    const grants = otherLevels.flatMap(
-      (level) => this.rulesetData.klassLevelFeatsWithFeatsByKlassLevel.get(level.klassLevelId) ?? [],
-    );
-    for (const rec of [...grants, ...autoGrantedRecords]) existingFeatIds.add(rec.featsInRule.id);
-
-    for (const feat of feats) {
-      if (!feat.stackable && existingFeatIds.has(feat.id))
-        throw new RulesError("invalid", `Non-stackable feat "${feat.name}" is already on this character`);
     }
   }
 
@@ -182,6 +134,31 @@ export default class SelectionChecks {
   }
 
   /**
+   * A level's feats (`feats`, by pool, each pool's in its order) split by whether the character has those that don't
+   * stack already: held (`held`, read only when the level picks one: picked at its other levels, granted, or made
+   * possessed by its modifiers), or picked before them, in a pool or under another. A character has a feat that doesn't
+   * stack once; one that stacks is the level's to pick again. A pick the level holds already (`kept`, an edited level's
+   * saved picks) is its own, whatever else holds it.
+   */
+  private splitHeldFeats(feats: Record<string, string[]>, held: () => HeldFeat[], kept: FeatPick[]) {
+    const repeated: FeatPick[] = [];
+    const stacks = (featId: string) => this.rulesetData.featsById.get(featId)?.stackable === true;
+    if (Object.values(feats).flat().every(stacks)) return { fresh: feats, repeated };
+    const seen = new Set(held().map(({ id }) => id));
+    const own = new Set(kept.map(({ featId }) => featId));
+    const fresh: Record<string, string[]> = {};
+    for (const [aptitudeId, ids] of Object.entries(feats)) {
+      fresh[aptitudeId] = [];
+      for (const featId of ids) {
+        if (!stacks(featId) && seen.has(featId) && !own.has(featId)) repeated.push({ aptitudeId, featId });
+        else fresh[aptitudeId].push(featId);
+        seen.add(featId);
+      }
+    }
+    return { fresh, repeated };
+  }
+
+  /**
    * A level's powers (`powers`, by pool, each pool's in its order) split by whether the character knows them in their
    * pool already: held there (`known`, read only when the level picks any: picked at its other levels, granted, or made
    * known by its modifiers), or picked there before them. A character knows a power once in a pool, and may know it in
@@ -224,13 +201,36 @@ export default class SelectionChecks {
   }
 
   /**
-   * A level's selections checked (`checkLevelSelections`), then its non-stackable feats against those the character
-   * already has: picked at its other levels (`pickedFeatIds`) or granted by their class levels (`otherLevels`).
+   * Throws when a level picks a feat that doesn't stack the character has already (`held`, read only when it picks one:
+   * picked at another level, granted, or made possessed by a modifier), or picks it earlier in the level-up, naming the
+   * feat: but a pick the level holds already (`kept`, an edited level's saved picks), so one saved before stays. A feat
+   * that stacks is the level's to pick again.
    */
-  checkLevel(level: LevelChecked, otherLevels: { klassLevelId: string }[], pickedFeatIds: string[]) {
-    const { autoGrantedRecords, fetchedFeats } = this.checkLevelSelections(level);
-    if (fetchedFeats.some((feat) => !feat.stackable))
-      this.checkNotTaken(fetchedFeats, pickedFeatIds, otherLevels, autoGrantedRecords);
+  checkFeatsNotHeld(feats: Record<string, string[]>, held: () => HeldFeat[], kept: FeatPick[] = []) {
+    const [repeated] = this.splitHeldFeats(feats, held, kept).repeated;
+    if (!repeated) return;
+    const feat = this.rulesetData.featsById.get(repeated.featId)?.name ?? repeated.featId;
+    throw new RulesError("invalid", `Non-stackable feat "${feat}" is already on this character`);
+  }
+
+  /**
+   * A level's hit points, ability increases and selections checked, for both the level save and the level-up's: each
+   * ability and selection the ruleset's, each selection linked to its pool, no non-stackable feat or power picked twice.
+   * Whether the character has a feat it picks already is the save's next check (`checkFeatsNotHeld`).
+   */
+  checkLevel({ klass, hp, abilityIncreases, skills, feats, powers }: LevelChecked) {
+    const { max, min } = this.rules.hitPointsOf(klass.hd);
+    if (hp < min || hp > max) throw new RulesError("invalid", `HP must be between ${min} and ${max}`);
+
+    // A cache hit means the entity is in the composed view of the character's ruleset
+    // (the cache's arrays are already COW-resolved and sibling-filtered).
+    if (abilityIncreases.some(({ abilityId }) => !this.rulesetData.abilitiesById.has(abilityId)))
+      throw new RulesError("invalid", "Ability does not belong to the character's ruleset");
+
+    // Submitted ids can repeat, in a pool or under two: a stackable feat's may, checkRepeatedPicks refuses the others.
+    const { fetchedFeats, fetchedPowers } = this.fetchSelections(skills, feats, powers);
+    this.checkRepeatedPicks(feats, fetchedFeats, powers, fetchedPowers);
+    this.checkLinks(feats, powers);
   }
 
   /**
@@ -250,6 +250,14 @@ export default class SelectionChecks {
   checkSelections(skills: Record<string, number>, feats: Record<string, string[]>, powers: Record<string, string[]>) {
     this.fetchSelections(skills, feats, powers);
     this.checkLinks(feats, powers);
+  }
+
+  /**
+   * A level's feats (`feats`, by pool) but those that don't stack the character has already, as a save refuses them
+   * (`checkFeatsNotHeld`): what the save takes of them, which a preview fits.
+   */
+  withoutHeldFeats(feats: Record<string, string[]>, held: () => HeldFeat[], kept: FeatPick[] = []) {
+    return this.splitHeldFeats(feats, held, kept).fresh;
   }
 
   /**

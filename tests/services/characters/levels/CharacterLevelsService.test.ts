@@ -942,7 +942,7 @@ describe("LevelsService", () => {
       ).not.toContain("Track");
     });
 
-    test("leave out a feat that a level planned after the picker's grants, as the save refuses it", async () => {
+    test("leave out a feat that a level planned after the picker's grants, as the preview drops it and the save refuses it", async () => {
       const ctx = await getSeedCtx();
       const characterId = await createSeedCharacter(ctx, "fighter", { xp: 1000 });
       // A fighter's first level, then a ranger's, which grants Track
@@ -976,6 +976,8 @@ describe("LevelsService", () => {
         ...FIGHTER_LEVELS[0],
         feats: { General: ["Power Attack", "Track"], "Fighter Bonus Feat": ["Improved Initiative"] },
       });
+      const preview = await CharacterLevelsService.getPreview(session, characterId, levels, skills, feats, {});
+      expect(preview.feats.fitted[ctx.aptMap["General"]]).toEqual([ctx.featMap["Power Attack"]]);
       for (const force of [false, true]) {
         expect(
           CharacterLevelsService.finalizeLevelUp(session, characterId, levels, skills, feats, {}, force),
@@ -1053,7 +1055,7 @@ describe("LevelsService", () => {
       expect((await featsAtFirstLevel("Fighter", "Weapon Focus: Longsword")).flat).toMatchObject([{ eligible: true }]);
     });
 
-    test("leave a feat that doesn't stack out of an edited level's pool when a later level takes it, as the edit refuses it", async () => {
+    test("leave a feat that doesn't stack out of an edited level's pool when a later level takes it, as its step drops it and the edit refuses it", async () => {
       const ctx = await getSeedCtx();
       const characterId = await createSeedCharacter(ctx, "fighter", { xp: 3000 });
       const first = await levelUp(session, ctx, characterId, "Fighter", 1, FIGHTER_LEVELS[0]);
@@ -1080,8 +1082,16 @@ describe("LevelsService", () => {
 
       // The edited level's own Power Attack, which it picks again once removed
       expect(await offered("Power Attack")).toContain("Power Attack");
+      const general = ctx.aptMap["General"];
       for (const feat of ["Dodge", "Track"]) {
         expect(await offered(feat)).not.toContain(feat);
+        const step = await getLevelStep(session, characterId, "feats", {
+          classId: ctx.klassMap.pc["Fighter"],
+          level: 1,
+          editedLevelId: first.id,
+          featPicks: ["Power Attack", feat].map((name) => ({ aptitudeId: general, featId: ctx.featMap[name] })),
+        });
+        expect(step.fitted[general]).toEqual([ctx.featMap["Power Attack"]]);
         const { skills, feats, powers } = picks(ctx, {
           ...FIGHTER_LEVELS[0],
           feats: { General: ["Power Attack", feat], "Fighter Bonus Feat": ["Improved Initiative"] },

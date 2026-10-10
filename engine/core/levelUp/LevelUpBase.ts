@@ -6,7 +6,7 @@ import {
   type LevelPickRows,
   type LevelPicks,
   type LevelRequest,
-  type PowerPick,
+  type LevelRows,
 } from "@/engine/core/module/index.ts";
 import RulesError, { type RulesIssue } from "@/engine/core/RulesError.ts";
 import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
@@ -137,11 +137,19 @@ export default abstract class LevelUpBase<C> {
   }
 
   /**
-   * The powers saved level `characterLevelId` picks, each in its pool, as the character's rows hold them: none for a
-   * level it hasn't saved (a level-up's).
+   * The rows saved level `characterLevelId` holds under it, as the character's rows hold them: its ability increases,
+   * its feats and powers, each in its pool, and its skill ranks; none for a level it hasn't saved (a level-up's).
    */
-  protected getSavedPowerPicks(characterLevelId: string | undefined): PowerPick[] {
-    return this.character.rows.picks.powers.filter((pick) => pick.characterLevelId === characterLevelId);
+  protected getSavedPicks(characterLevelId: string | undefined): LevelRows {
+    const atLevel = <P extends { characterLevelId: string }>(rows: P[]) =>
+      rows.filter((pick) => pick.characterLevelId === characterLevelId);
+    const { abilityIncreases, feats, powers, skills } = this.character.rows.picks;
+    return {
+      abilityIncreases: atLevel(abilityIncreases),
+      feats: atLevel(feats),
+      powers: atLevel(powers),
+      skills: atLevel(skills),
+    };
   }
 
   /**
