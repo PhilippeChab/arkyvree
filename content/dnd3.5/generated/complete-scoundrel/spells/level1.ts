@@ -65,7 +65,7 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
       { type: "SPELL_SUBSCHOOL", value: "Creation" },
       { type: "SPELL_CASTING_TIME", value: "1 swift action" },
       { type: "SPELL_RANGE_TYPE", value: "0 ft." },
-      { type: "SPELL_TARGET", value: "5-ft. cube of wood" },
+      { type: "SPELL_EFFECT", value: "5-ft. cube of wood" },
       { type: "SPELL_DURATION", value: "3 rounds" },
       { type: "SPELL_RESISTANCE", value: "None" },
       { type: "SPELL_COMPONENT", value: "Verbal" },

@@ -9,6 +9,7 @@ import {
   SPELL_COMPONENT,
   SPELL_DESCRIPTOR,
   SPELL_DURATION,
+  SPELL_EFFECT,
   SPELL_RANGE_TYPE,
   SPELL_RESISTANCE,
   SPELL_SCHOOL,
@@ -127,8 +128,8 @@ function simplifyRange(range: string): string {
 }
 
 /**
- * A spell's properties: its school, subschool and descriptors, casting time, range, targets, duration, components. A
- * field its source leaves empty (a range, a target, a duration…) gives none.
+ * A spell's properties: its school, subschool and descriptors, casting time, range, target, effect and area, duration,
+ * components. A field its source leaves empty (a range, a target, a duration…) gives none.
  */
 function spellProperties(entry: RawSpell): Property[] {
   const properties: Property[] = [];
@@ -142,11 +143,9 @@ function spellProperties(entry: RawSpell): Property[] {
   });
   const rangeValue = simplifyRange(normalizeSpellText(entry.range));
   if (rangeValue) properties.push({ type: SPELL_RANGE_TYPE, value: rangeValue });
-  const targetValue = entry.target ? normalizeSpellText(entry.target) : undefined;
-  if (targetValue) properties.push({ type: SPELL_TARGET, value: targetValue });
+  if (entry.target) properties.push({ type: SPELL_TARGET, value: normalizeSpellText(entry.target) });
+  if (entry.effect) properties.push({ type: SPELL_EFFECT, value: normalizeSpellText(entry.effect) });
   if (entry.area) properties.push({ type: SPELL_AREA_OF_EFFECT, value: normalizeSpellText(entry.area) });
-  const effectValue = entry.effect ? normalizeSpellText(entry.effect) : undefined;
-  if (effectValue && effectValue !== targetValue) properties.push({ type: SPELL_TARGET, value: effectValue });
   const durationValue = normalizeSpellText(entry.duration);
   if (durationValue) properties.push({ type: SPELL_DURATION, value: durationValue });
   properties.push({

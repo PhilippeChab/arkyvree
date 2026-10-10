@@ -14,7 +14,7 @@ export const LEVEL_8_SPELLS: PowerSeed[] = [
       { type: "SPELL_DESCRIPTOR", value: "Evil" },
       { type: "SPELL_CASTING_TIME", value: "1 standard action" },
       { type: "SPELL_RANGE_TYPE", value: "Medium" },
-      { type: "SPELL_TARGET", value: "Ray" },
+      { type: "SPELL_EFFECT", value: "Ray" },
       { type: "SPELL_DURATION", value: "1 round/level" },
       { type: "SPELL_RESISTANCE", value: "Yes" },
       { type: "SPELL_COMPONENT", value: "Verbal" },

@@ -6,6 +6,8 @@ export const SPELL_COMPONENT = "SPELL_COMPONENT";
 export const SPELL_DESCRIPTOR = "SPELL_DESCRIPTOR";
 export const SPELL_DURATION = "SPELL_DURATION";
 export const SPELL_DURATION_TYPE = "SPELL_DURATION_TYPE";
+/** What a spell brings into being (a summoned creature, a wall, a ray): its Effect line, beside its target and area. */
+export const SPELL_EFFECT = "SPELL_EFFECT";
 export const SPELL_LEVEL = "SPELL_LEVEL";
 export const SPELL_MATERIAL = "SPELL_MATERIAL";
 export const SPELL_RANGE_TYPE = "SPELL_RANGE_TYPE";

@@ -14,7 +14,7 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
       { type: "SPELL_SUBSCHOOL", value: "Shadow" },
       { type: "SPELL_CASTING_TIME", value: "1 round" },
       { type: "SPELL_RANGE_TYPE", value: "Close" },
-      { type: "SPELL_TARGET", value: "Shadowy hound" },
+      { type: "SPELL_EFFECT", value: "Shadowy hound" },
       { type: "SPELL_DURATION", value: "1 minute/level (D) or until destroyed" },
       { type: "SPELL_RESISTANCE", value: "No" },
       { type: "SPELL_COMPONENT", value: "Verbal" },

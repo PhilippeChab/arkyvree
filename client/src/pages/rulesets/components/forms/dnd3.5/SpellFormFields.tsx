@@ -102,6 +102,13 @@ function SpellPropertyFields({ form }: SpellPropertyFieldsProps) {
         />
         <FormTextField
           control={form.control}
+          name="fields.effect"
+          label="Effect"
+          fullWidth
+          placeholder='e.g., "One summoned creature"'
+        />
+        <FormTextField
+          control={form.control}
           name="fields.areaOfEffect"
           label="Area of Effect"
           fullWidth

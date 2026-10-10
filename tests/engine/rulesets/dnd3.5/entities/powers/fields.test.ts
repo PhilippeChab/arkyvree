@@ -7,12 +7,6 @@ import { POWER_FIELDS } from "@/engine/rulesets/dnd3.5/entities/powers/fields.ts
 import { db } from "@/server/database/index.ts";
 import { SPELL_COMPONENT, SPELL_DESCRIPTOR, SPELL_SCHOOL, SPELL_TARGET } from "@/vocabulary/dnd3.5/properties/index.ts";
 
-/**
- * The seeded spells whose rows a spell's fields can't hold, until the parser stops writing them: an Effect line stored
- * as a second target (#422).
- */
-const SPELLS_THE_FIELDS_CANNOT_HOLD = ["Continual Flame", "Lightning Blade"];
-
 /** Rows as a sorted list of `type=value`. */
 function multiset(rows: { type: string; value: string }[]) {
   return rows.map((row) => `${row.type}=${row.value}`).toSorted();
@@ -55,7 +49,7 @@ describe("A power's fields", () => {
     ).toEqual([`${SPELL_COMPONENT}=V`, `${SPELL_SCHOOL}=Evocation`, `${SPELL_TARGET}=You`]);
   });
 
-  test("of every seeded spell rebuild its rows, but for the spells they can't hold", async () => {
+  test("of every seeded spell rebuild its rows", async () => {
     const rows = await db
       .select({
         name: powersInRules.name,
@@ -74,8 +68,6 @@ describe("A power's fields", () => {
       ([, stored]) =>
         multiset(POWER_FIELDS.toProperties(POWER_FIELDS.read(stored))).join("|") !== multiset(stored).join("|"),
     );
-    expect([...new Set(mismatches.map(([, stored]) => stored[0].name))].toSorted()).toEqual(
-      SPELLS_THE_FIELDS_CANNOT_HOLD,
-    );
+    expect([...new Set(mismatches.map(([, stored]) => stored[0].name))]).toEqual([]);
   });
 });
