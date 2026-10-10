@@ -33,6 +33,7 @@ export default class SpellLists {
     classListIds?: Set<string>;
     classListsByKlass?: Map<string, Set<string>>;
     featListIds?: Set<string>;
+    featListSpells?: Map<string, Map<number, Set<string>>>;
     leveledAptitudeIds?: Set<string>;
     spellSlugByAptitudeId?: Map<string, string>;
   } = {};
@@ -93,6 +94,24 @@ export default class SpellLists {
       }
     }
     return (this.built.featListIds = featListIds);
+  }
+
+  /**
+   * The spells of each list a feat brings (`featListIds`: a domain's, a specialist's school, none on a cleric's domain
+   * slot), by its aptitude id, then by the spell level the list has each at: what a sheet fills the list's slots with,
+   * of the spells the character has.
+   */
+  get featListSpells(): Map<string, Map<number, Set<string>>> {
+    if (this.built.featListSpells) return this.built.featListSpells;
+    const featListSpells = new Map([...this.featListIds].map((id) => [id, new Map<number, Set<string>>()]));
+    for (const power of this.rulesetData.powers) {
+      for (const { aptitudeId, level } of power.powersAptitudesInRules) {
+        const levels = featListSpells.get(aptitudeId);
+        if (level == null || !levels) continue;
+        levels.set(level, (levels.get(level) ?? new Set<string>()).add(power.id));
+      }
+    }
+    return (this.built.featListSpells = featListSpells);
   }
 
   /**
