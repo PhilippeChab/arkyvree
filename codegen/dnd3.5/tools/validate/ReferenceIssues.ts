@@ -54,8 +54,8 @@ function detectedIssues(d: DetectedEntry): Found[] {
 }
 
 /**
- * A reference file's issues, which `parser:validate` reports (its header lists them): a method per kind of reference,
- * each reporting what its review list (`ReviewList`) doesn't cover, then the list's stale entries.
+ * A reference file's issues, which `parser:dnd3.5:validate` reports (its header lists them): a method per kind of
+ * reference, each reporting what its review list (`ReviewList`) doesn't cover, then the list's stale entries.
  */
 export class ReferenceIssues {
   constructor(file: ReferenceFile) {

@@ -287,7 +287,7 @@ skill deletes its old generated feat and its customizations, then creates the re
 
 Properties the engine reads off a race (`combat/concerns/InitiativeAndSpeed.ts`, `combat/EncumbranceComponent.ts`), seeded where the SRD says so. They're a race's fields, which the components read with `RACE_FIELDS.read` (`entities/races/fields.ts`):
 - `RACE_SPEED_IGNORES_ENCUMBRANCE` — the race keeps its speed in medium or heavy armor and under a medium or heavy load. The dwarf has it, through the parser's override (`reference/srd/races.json`).
-- `RACE_QUADRUPED` — the race walks on four legs, so it carries more for its size: ×¼ Fine to ×24 Colossal (×1½ Medium, ×3 Large) instead of a biped's ×⅛ to ×16. The four-legged familiars, animal companions and special mounts have it (`data/bonds/raceProperties.ts`); birds, bats and snakes don't.
+- `RACE_QUADRUPED` — the race walks on four legs, so it carries more for its size: ×¼ Fine to ×24 Colossal (×1½ Medium, ×3 Large) instead of a biped's ×⅛ to ×16. The four-legged familiars, animal companions and special mounts have it (`QUADRUPED`, `content/dnd3.5/builders/races/properties.ts`, which `content/dnd3.5/data/bonds/` gives them); birds, bats and snakes don't.
 
 ### Rulesets
 

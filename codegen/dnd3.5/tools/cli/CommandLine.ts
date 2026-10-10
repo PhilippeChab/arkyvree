@@ -1,14 +1,15 @@
 import type { ReferenceFilters } from "@/codegen/dnd3.5/tools/types/reference.ts";
 import { CORE_BOOK } from "@/codegen/dnd3.5/tools/vocabulary/books.ts";
 
-/** What `parser:scrape` is asked: the type of reference to scrape, its book, one page, and how it fetches pages. */
+/** What `parser:dnd3.5:scrape` is asked: the type of reference to scrape, its book, one page, how it fetches pages. */
 type ScrapeRequest = { book: string; delay?: number; noCache: boolean; type?: string; url?: string };
 
 /**
  * A parser command's line, read one way by every command: its options (`--type <type>`, a flag such as `--no-cache`)
  * are taken out wherever they stand, an option given without its value or one the command doesn't take is refused
- * (it would be read as nothing, or as a word), and the words left are what the command names. Each command's grammar is a static method: the reference filters most
- * commands take (`filters`), and what `parser:scrape` takes (`scrape`).
+ * (it would be read as nothing, or as a word), and the words left are what the command names. Each command's grammar
+ * is a static method: the reference filters most commands take (`filters`), and what `parser:dnd3.5:scrape` takes
+ * (`scrape`).
  */
 export class CommandLine {
   private constructor(argv: string[]) {
@@ -28,8 +29,9 @@ export class CommandLine {
   }
 
   /**
-   * What `parser:scrape` is asked (the command line's by default): `<type> [--book <slug>] [--url <url>] [--no-cache]
-   * [--delay <ms>]`, the core rules' book by default. A delay that isn't a whole number of milliseconds is refused.
+   * What `parser:dnd3.5:scrape` is asked (the command line's by default): `<type> [--book <slug>] [--url <url>]
+   * [--no-cache] [--delay <ms>]`, the core rules' book by default. A delay that isn't a whole number of milliseconds is
+   * refused.
    */
   static scrape(argv = process.argv.slice(2)): ScrapeRequest {
     const line = new CommandLine(argv);

@@ -7,7 +7,7 @@ import { CharacterInventory, Items, Sessions, Users } from "@/server/repositorie
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
-import { buildAs } from "@/tests/support/characters.ts";
+import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 

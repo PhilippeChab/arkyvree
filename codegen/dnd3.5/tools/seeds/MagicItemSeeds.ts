@@ -42,7 +42,7 @@ function withOwnProperties(base: Property[], own: Property[]): Property[] {
 export class MagicItemSeeds extends ReferenceSeeds<MagicItemReference> {
   /**
    * The magic items a magic item reference seeds (those its mapping doesn't skip), each with its mapping and its slot,
-   * checked when it has one. Generation throws a slot's problem, and `parser:validate` reports it.
+   * checked when it has one. Generation throws a slot's problem, and `parser:dnd3.5:validate` reports it.
    */
   seeded() {
     return Object.entries(this.ref.detected).flatMap(([name, det]) => {

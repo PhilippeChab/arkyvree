@@ -8,7 +8,7 @@ import { SEED_USER_ID } from "@/database/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { postCharacter } from "@/tests/support/characters.ts";
-import { FIGHTER_LEVELS, picks, type Picks } from "@/tests/support/levelFixtures.ts";
+import { FIGHTER_LEVELS, picks, type Picks } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { findKlassLevel } from "@/tests/support/levels.ts";
 import { createSeededTestRulesetWithExtensions } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";

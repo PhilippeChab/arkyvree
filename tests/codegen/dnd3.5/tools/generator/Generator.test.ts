@@ -25,7 +25,7 @@ describe("The generator", () => {
   test("writes, from the committed references, exactly the committed generated files", () => {
     const folder = mkdtempSync(join(tmpdir(), "generated-"));
     try {
-      // As `parser:generate` writes them: generated in a copy, formatted, then swapped in
+      // As `parser:dnd3.5:generate` writes them: generated in a copy, formatted, then swapped in
       expect(GeneratedFolder.generateAtomically(folder, (copy) => new Generator(copy, true).generateAll({}))).toEqual(
         [],
       );

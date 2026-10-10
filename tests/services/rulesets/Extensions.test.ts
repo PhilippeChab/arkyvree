@@ -49,7 +49,8 @@ import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
-import { buildAs, createTestCharacter } from "@/tests/support/characters.ts";
+import { createTestCharacter } from "@/tests/support/characters.ts";
+import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
 import { addCharacterLevel, createTestKlassLevel, getLevelStep, pickFeat } from "@/tests/support/levels.ts";
 import {
   copyEntity,

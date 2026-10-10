@@ -8,10 +8,9 @@ import { type SeedContext } from "@/database/seeds/seedContext.ts";
 import { db } from "@/server/database/index.ts";
 import { Characters } from "@/server/repositories/index.ts";
 import type { Session } from "@/shared/relations.ts";
-
-import { addOneLevel } from "./levels.ts";
-import { getSeedCtx, uniqueId } from "./seed.ts";
-import { makeSession } from "./users.ts";
+import { addOneLevel } from "@/tests/support/levels.ts";
+import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
+import { makeSession } from "@/tests/support/users.ts";
 
 type CharacterValues = Omit<Parameters<typeof createCharacter>[2], "name" | "xp" | "description">;
 

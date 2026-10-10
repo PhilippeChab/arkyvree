@@ -2,9 +2,9 @@
  * Re-scrapes all existing reference JSON files (keeping their overrides),
  * then regenerates all TypeScript output.
  *
- * Usage: bun run parser:sync
- *        bun run parser:sync srd              (filter by book)
- *        bun run parser:sync srd --type class  (filter by type)
+ * Usage: bun run parser:dnd3.5:sync
+ *        bun run parser:dnd3.5:sync srd              (filter by book)
+ *        bun run parser:dnd3.5:sync srd --type class  (filter by type)
  */
 
 import { basename, join } from "node:path";

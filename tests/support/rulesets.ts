@@ -1,5 +1,6 @@
 import { eq, type InferInsertModel } from "drizzle-orm";
 
+import { DND35_BASE_RULES } from "@/content/dnd3.5/baseRules.ts";
 import { DND35_CORE_PACKAGE } from "@/content/dnd3.5/packages/core.ts";
 import { RulesetSeeder } from "@/database/seeders/dnd3.5/RulesetSeeder.ts";
 import { SEED_USER_ID } from "@/database/seeds/users.ts";
@@ -106,9 +107,9 @@ export async function createSeededTestRulesetWithExtensions(userId: string) {
 }
 
 /**
- * An empty private D&D 3.5 draft ruleset owned by `userId` (`null` for a
- * system ruleset). Pass `rulesetId` and `ancestorRulesetIds` to make it a
- * fork. For one that already has the seeded content, use `createSeededTestRuleset`.
+ * An empty private draft ruleset owned by `userId` (`null` for a system ruleset), of the base rules the seeded content
+ * is written for (3.5's), unless `values` names others. Pass `rulesetId` and `ancestorRulesetIds` to make it a fork.
+ * For one that already has the seeded content, use `createSeededTestRuleset`.
  */
 export async function createTestRuleset(
   userId: string | null,
@@ -118,7 +119,7 @@ export async function createTestRuleset(
     name: `Test Ruleset ${uniqueId()}`,
     description: "Test ruleset description",
     private: true,
-    baseRules: "Dungeons & Dragons: 3.5",
+    baseRules: DND35_BASE_RULES,
     userId,
     ...values,
   });

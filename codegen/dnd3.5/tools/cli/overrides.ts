@@ -1,12 +1,12 @@
 /**
- * Lists all overrides across reference files, with the same filters as parser:sync.
+ * Lists all overrides across reference files, with the same filters as parser:dnd3.5:sync.
  *
  * Usage:
- *   bun run parser:overrides                              # all overrides
- *   bun run parser:overrides --type feat                   # only feat references
- *   bun run parser:overrides --key requirements            # only requirement overrides
- *   bun run parser:overrides complete-warrior              # only a specific book
- *   bun run parser:overrides complete-warrior --type feat  # combine filters
+ *   bun run parser:dnd3.5:overrides                              # all overrides
+ *   bun run parser:dnd3.5:overrides --type feat                   # only feat references
+ *   bun run parser:dnd3.5:overrides --key requirements            # only requirement overrides
+ *   bun run parser:dnd3.5:overrides complete-warrior              # only a specific book
+ *   bun run parser:dnd3.5:overrides complete-warrior --type feat  # combine filters
  */
 
 import { basename } from "node:path";

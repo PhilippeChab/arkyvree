@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { DomainPage } from "@/codegen/dnd3.5/tools/scraper/pages/DomainPage.ts";
-import { fixture, named, stored } from "@/tests/support/scrapedPages.ts";
+import { fixture, named, stored } from "@/tests/support/dnd3.5/scrapedPages.ts";
 
 describe("A domain version's page", () => {
   test("reads its label, book, page, granted power and spells; its label, its name and its book's code", () => {

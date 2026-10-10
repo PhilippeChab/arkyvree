@@ -8,7 +8,7 @@ import { Memos } from "./Memos.ts";
  * The seeds of one of a book's references (a feat reference's, a race reference's…), which the book builds once per
  * reference (`BaseBookSeeds`): the reference, the book's seeds, which it reads what other kinds give from, the check of
  * a text against the fixed set of options the seed accepts, and what it builds, each once, when first asked (`memo`):
- * `parser:validate` reads what a seed checks without building what throws.
+ * `parser:dnd3.5:validate` reads what a seed checks without building what throws.
  */
 export abstract class ReferenceSeeds<R> {
   constructor(

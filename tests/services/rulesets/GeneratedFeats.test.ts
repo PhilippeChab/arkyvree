@@ -23,7 +23,7 @@ import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import { SkillsService } from "@/server/services/rulesets/skills/index.ts";
-import { createSeedCharacter } from "@/tests/support/levelFixtures.ts";
+import { createSeedCharacter } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import {
   copyEntity,
   createSeededTestRuleset,

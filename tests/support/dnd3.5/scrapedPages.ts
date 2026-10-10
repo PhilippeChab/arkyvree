@@ -12,7 +12,7 @@ import type { ReferenceType } from "@/codegen/dnd3.5/tools/types/reference.ts";
 
 /** A saved page's HTML. */
 export function fixture(name: string): string {
-  return readFileSync(join(import.meta.dirname, "../codegen/dnd3.5/fixtures", `${name}.html`), "utf8");
+  return readFileSync(join(import.meta.dirname, "../../codegen/dnd3.5/fixtures", `${name}.html`), "utf8");
 }
 
 /** The reference's entries with these names, in order: each the next with its name (a table can list one twice). */

@@ -10,8 +10,8 @@ import { isRecord } from "@/shared/isRecord.ts";
 const folders: string[] = [];
 
 /**
- * The issues parser:validate reports of a committed reference whose overrides `edit` changes, as a hand edit of its
- * file would, in a folder of its own.
+ * The issues parser:dnd3.5:validate reports of a committed reference whose overrides `edit` changes, as a hand edit of
+ * its file would, in a folder of its own.
  */
 function issuesOf(file: string, edit: (overrides: Record<string, unknown>) => void) {
   const reference: unknown = JSON.parse(readFileSync(join(References.dir, file), "utf8"));
@@ -33,7 +33,7 @@ afterEach(() => {
   for (const folder of folders.splice(0)) rmSync(folder, { recursive: true, force: true });
 });
 
-describe("parser:validate", () => {
+describe("parser:dnd3.5:validate", () => {
   test("reports a race size the seed refuses, and a seeded race's unreviewed detections", () => {
     const issues = issuesOf("srd/races.json", (overrides) => {
       overrides.reviewed = [];

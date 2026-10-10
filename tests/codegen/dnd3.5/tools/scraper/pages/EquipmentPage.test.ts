@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { EquipmentPage } from "@/codegen/dnd3.5/tools/scraper/pages/EquipmentPage.ts";
-import { fixture, named, scraped, stored } from "@/tests/support/scrapedPages.ts";
+import { fixture, named, scraped, stored } from "@/tests/support/dnd3.5/scrapedPages.ts";
 
 describe("A page of the SRD's equipment", () => {
   test("reads its weapons, armor and goods as their reference stores them", () => {

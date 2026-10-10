@@ -4,8 +4,8 @@ import CombatSheet from "@/engine/rulesets/dnd3.5/characters/description/CombatS
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { db } from "@/server/database/index.ts";
 import { Characters } from "@/server/repositories/index.ts";
-import { buildAs } from "@/tests/support/characters.ts";
-import { createDruidWithCompanion } from "@/tests/support/levelFixtures.ts";
+import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
+import { createDruidWithCompanion } from "@/tests/support/dnd3.5/levelFixtures.ts";
 
 /** What the sheet reads of a character's combat. */
 type Combat = ReturnType<Parameters<typeof CombatSheet.describe>[0]["getCombat"]>;

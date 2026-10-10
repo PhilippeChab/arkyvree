@@ -42,8 +42,9 @@ import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { PowersService } from "@/server/services/rulesets/powers/index.ts";
-import { buildAs, createTestCharacter } from "@/tests/support/characters.ts";
+import { createTestCharacter } from "@/tests/support/characters.ts";
 import { insertRows, measure, runWhileLocked } from "@/tests/support/database.ts";
+import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
 import {
   addFighterLevels,
   createSeedCharacter,
@@ -53,7 +54,7 @@ import {
   SORCERER_1,
   WAR_CLERIC_1,
   WIZARD_1,
-} from "@/tests/support/levelFixtures.ts";
+} from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { addCharacterLevel, addOneLevel, findKlassLevel, getLevelStep, increasesOf } from "@/tests/support/levels.ts";
 import {
   createSeededTestRuleset,

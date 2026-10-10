@@ -1,6 +1,6 @@
 # Reference JSON Schema
 
-A reference file stores what the scraper read (`raw`) and the corrections made by hand (`overrides`), nothing else. Loading it (`References`, `tools/references/References.ts`, with the detectors in `tools/detect/`) derives what the generator reads: `detected`, parsed from `raw` (wizard schools have none), and `mapping`, each entity as the seeds make it, its overrides applied (they win over both). The seeds read the mapping, never the overrides. So a correction takes effect at the next `parser:generate`, and re-scraping (which replaces `raw`) keeps it.
+A reference file stores what the scraper read (`raw`) and the corrections made by hand (`overrides`), nothing else. Loading it (`References`, `tools/references/References.ts`, with the detectors in `tools/detect/`) derives what the generator reads: `detected`, parsed from `raw` (wizard schools have none), and `mapping`, each entity as the seeds make it, its overrides applied (they win over both). The seeds read the mapping, never the overrides. So a correction takes effect at the next `parser:dnd3.5:generate`, and re-scraping (which replaces `raw`) keeps it.
 
 A class reference, as stored (see `tools/types/classes.ts` for the definitive types):
 
@@ -33,7 +33,7 @@ overrides                           # MANUAL — the only hand-edited part
 ├── modifiers[]                     #   Class-level modifiers (passive bonuses)
 ├── columns{}                       #   Table column (header) → modifiers at each level its value changes:
 │                                   #     { target, operator: add (the number's rise) | set (the text),
-│                                   #     requirements? }; parser:validate reports a column none reads
+│                                   #     requirements? }; parser:dnd3.5:validate reports a column none reads
 ├── aptitudePicks[]                 #   Override detected.aptitudePicks
 ├── bonusFeatLists[]                #   Override detected.bonusFeatLists
 ├── casterType                      #   Override detected.casterType
@@ -100,7 +100,7 @@ Next to `detected` and `mapping`, the loaded reference keeps `_meta` as stored; 
 The generator reads a class's `mapping` (`ClassMapping` builds it), and what no override changes (its hit die, levels, feature occurrences…) in `detected`:
 
 1. Its features, spells and `classFeatureAptitude`, derived from `detected`
-2. Each field an override sets (bab, saves, requirements, aptitudePicks, bonusFeatLists, casterType, bonusSpellAbility, classSkills, description, freeFeats, proficiencies, modifiers, columns, skip): the override's, else the detected or scraped value. `aptitudePicks` keeps the detected picks an override's for the same aptitude doesn't replace, and `spells`' fields go over the detected spells: a class with none detected ignores them (`parser:validate` reports it)
+2. Each field an override sets (bab, saves, requirements, aptitudePicks, bonusFeatLists, casterType, bonusSpellAbility, classSkills, description, freeFeats, proficiencies, modifiers, columns, skip): the override's, else the detected or scraped value. `aptitudePicks` keeps the detected picks an override's for the same aptitude doesn't replace, and `spells`' fields go over the detected spells: a class with none detected ignores them (`parser:dnd3.5:validate` reports it)
 3. For features specifically: `overrides.features[name]` fields are merged on top of the detected feature (set a field to `null` to delete it)
 
-`bun run parser:validate` reports a class override that changes nothing, so remove it: it holds what's derived without it, and the class's generated files come out the same without it. An override that differs from what's derived stays, even when nothing uses it today.
+`bun run parser:dnd3.5:validate` reports a class override that changes nothing, so remove it: it holds what's derived without it, and the class's generated files come out the same without it. An override that differs from what's derived stays, even when nothing uses it today.

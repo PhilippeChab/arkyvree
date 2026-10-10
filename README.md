@@ -167,8 +167,9 @@ tests/
   services/             # Service-level tests
   engine/               # The engine: its machinery, its operations, the 3.5 module's characters, level-ups and sheets
   cache/                # Cache tests
+  cow/                  # Copy-on-write's server part: the views it composes
   seeds/                # The seeders, the seeded content, the package runner, the test data
-  parser/               # The codegen's parser tools
+  codegen/              # The codegen, mirrored: its core's tools, each ruleset's parser tools
   jobs/                 # Background jobs
   emails/               # The email service and its templates
   middlewares/          # Rate limits, error wrapping
@@ -179,7 +180,7 @@ tests/
   client/               # Client logic that needs no browser
   e2e/                  # Playwright E2E tests
   fixtures/             # Playwright's setup and auth fixture, the PDF bundle check's document
-  support/              # Shared test helpers, one module per topic
+  support/              # Shared test helpers, one module per topic, a ruleset's own in a folder of its name (dnd3.5/)
 ```
 
 ## Architecture

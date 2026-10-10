@@ -54,8 +54,6 @@ export default class EntityWriter<Row extends { id: string; name: string }, Inse
     private readonly table: Table,
     /** Its activities' name: `Feat` in `createFeat`. */
     private readonly activityName: string,
-    /** What its activities carry beside the entity's name (a power's base rules). */
-    private readonly activityData: (scope: RulesetScope) => Record<string, unknown> = () => ({}),
   ) {}
 
   /** The entity's customizations, copied onto the new one (`entityId`) from `sourceId`'s. */
@@ -65,10 +63,9 @@ export default class EntityWriter<Row extends { id: string; name: string }, Inse
     if (customizations) await CustomizationCopies.copy(tx, entityId, this.type, customizations);
   }
 
-  /** Records what a create, an update or a delete did to the entity (`verb`), with what its kind's activities carry. */
+  /** Records what a create, an update or a delete did to the entity (`verb`), with what the activity carries. */
   private async recordActivity(
     tx: Db,
-    scope: RulesetScope,
     session: Session,
     verb: "create" | "delete" | "update",
     targetId: string,
@@ -79,7 +76,7 @@ export default class EntityWriter<Row extends { id: string; name: string }, Inse
       targetId,
       targetTable: getTableName(this.table),
       type: `${verb}${this.activityName}`,
-      data: { ...this.activityData(scope), ...data },
+      data,
     });
   }
 
@@ -119,7 +116,7 @@ export default class EntityWriter<Row extends { id: string; name: string }, Inse
           await this.writeBeside(tx, scope, row.id, planned.writes);
           if (planned.copyCustomizationsFrom) await this.copyCustomizations(tx, row.id, planned.copyCustomizationsFrom);
 
-          await this.recordActivity(tx, scope, session, "create", row.id, { entityName: row.name });
+          await this.recordActivity(tx, session, "create", row.id, { entityName: row.name });
           return { ...row, ...planned.fields };
         }),
     );
@@ -155,7 +152,7 @@ export default class EntityWriter<Row extends { id: string; name: string }, Inse
 
           // The database deletes its links and customizations with it.
           const [row] = await this.repository.delete(tx, { id: targetId });
-          await this.recordActivity(tx, scope, session, "delete", targetId, {
+          await this.recordActivity(tx, session, "delete", targetId, {
             rulesetId,
             entityName: planned.entity.name,
           });
@@ -194,7 +191,7 @@ export default class EntityWriter<Row extends { id: string; name: string }, Inse
           await this.writeBeside(tx, scope, targetId, planned.writes);
 
           const [row] = rows;
-          await this.recordActivity(tx, scope, session, "update", targetId, {
+          await this.recordActivity(tx, session, "update", targetId, {
             entityName: body.name,
             changedFields: getChangedFields(planned.entity, compare(row)),
           });

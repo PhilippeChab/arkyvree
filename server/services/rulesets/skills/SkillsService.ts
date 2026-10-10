@@ -1,13 +1,16 @@
 import { skillsInRules } from "@/drizzle/schema.ts";
-import { Engine, type EntityKinds } from "@/engine/index.ts";
+import { type Accepted, Engine, type EntityKinds } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Skills } from "@/server/repositories/index.ts";
 import EntityWriter from "@/server/services/rulesets/EntityWriter.ts";
 import type { Session } from "@/shared/relations.ts";
 
-/** A skill's body: its row's columns, and the fields its ruleset's rules keep (`planSkillCreate`). */
-type SkillBody = Parameters<EntityKinds["skills"]["planCreate"]>[0];
+/**
+ * A skill's body: its row's columns, and the fields its ruleset's rules keep (`planCreate`), as every registered
+ * ruleset's takes it (`Accepted`).
+ */
+type SkillBody = Accepted<EntityKinds["skills"]["planCreate"]>[0];
 
 class SkillsService {
   /** What its creates, updates and deletes write, in one order around the plans its rules give. */

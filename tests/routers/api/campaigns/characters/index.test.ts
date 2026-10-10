@@ -9,8 +9,8 @@ import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tes
 import { postCampaign } from "@/tests/support/campaigns.ts";
 import { postCharacter } from "@/tests/support/characters.ts";
 import { addCharacterContributor } from "@/tests/support/contributors.ts";
+import { createWizardWithFamiliar } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { queuedPdfJobs, silentJobHelpers } from "@/tests/support/jobs.ts";
-import { createWizardWithFamiliar } from "@/tests/support/levelFixtures.ts";
 import { addCharacterLevel, findKlassLevel } from "@/tests/support/levels.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 

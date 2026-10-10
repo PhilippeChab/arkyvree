@@ -10,7 +10,7 @@ import { ReferenceSeeds } from "./ReferenceSeeds.ts";
 export class RaceSeeds extends ReferenceSeeds<RaceReference> {
   /**
    * The races a race reference seeds (those its mapping doesn't skip), each with its size, checked: its mapping's (its
-   * override's, else as scraped). Generation throws a size's problem, and `parser:validate` reports it.
+   * override's, else as scraped). Generation throws a size's problem, and `parser:dnd3.5:validate` reports it.
    */
   seeded() {
     const skipped = this.skipped();

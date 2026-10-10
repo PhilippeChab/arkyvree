@@ -6,39 +6,39 @@ Pipeline for scraping D&D 3.5 SRD HTML pages from dndtools.net into structured J
 
 ```bash
 # Scrape all entities of a type for a book
-bun run parser:scrape -- class --book srd
-bun run parser:scrape -- feat --book srd
-bun run parser:scrape -- spell --book srd
-bun run parser:scrape -- domain --book complete-divine
-bun run parser:scrape -- race --book srd
-bun run parser:scrape -- item --book srd
-bun run parser:scrape -- magicItem --book dmg
+bun run parser:dnd3.5:scrape -- class --book srd
+bun run parser:dnd3.5:scrape -- feat --book srd
+bun run parser:dnd3.5:scrape -- spell --book srd
+bun run parser:dnd3.5:scrape -- domain --book complete-divine
+bun run parser:dnd3.5:scrape -- race --book srd
+bun run parser:dnd3.5:scrape -- item --book srd
+bun run parser:dnd3.5:scrape -- magicItem --book dmg
 
 # Scrape a single entity by URL
-bun run parser:scrape -- class --url https://dndtools.net/classes/.../barbarian/ --book srd
+bun run parser:dnd3.5:scrape -- class --url https://dndtools.net/classes/.../barbarian/ --book srd
 
 # Regenerate TypeScript from the references
-bun run parser:generate                      # every book
-bun run parser:generate srd                  # one book
-bun run parser:generate --type domain        # the books with domains
-bun run parser:generate -- <path-to-json>    # a reference's book
+bun run parser:dnd3.5:generate                      # every book
+bun run parser:dnd3.5:generate srd                  # one book
+bun run parser:dnd3.5:generate --type domain        # the books with domains
+bun run parser:dnd3.5:generate -- <path-to-json>    # a reference's book
 # A generation runs in a copy of content/dnd3.5/generated/, formatted (oxfmt) and swapped in only when every reference
 # succeeds: a failed one leaves it as it was. One runs at a time (generated.lock)
 
 # Re-scrape and regenerate all existing references
-bun run parser:sync
-bun run parser:sync srd                     # filter by book
-bun run parser:sync srd --type class         # filter by book + type
+bun run parser:dnd3.5:sync
+bun run parser:dnd3.5:sync srd                     # filter by book
+bun run parser:dnd3.5:sync srd --type class         # filter by book + type
 
 # Validate reference files: unresolved detections, class overrides that change nothing, and values the seed refuses
-bun run parser:validate
-bun run parser:validate --type class
-bun run parser:validate complete-warrior
+bun run parser:dnd3.5:validate
+bun run parser:dnd3.5:validate --type class
+bun run parser:dnd3.5:validate complete-warrior
 
 # List all manual overrides across reference files
-bun run parser:overrides
-bun run parser:overrides --type feat
-bun run parser:overrides complete-warrior
+bun run parser:dnd3.5:overrides
+bun run parser:dnd3.5:overrides --type feat
+bun run parser:dnd3.5:overrides complete-warrior
 ```
 
 ### Global scraper options
@@ -58,15 +58,15 @@ Each reference JSON stores:
 - **`raw`** — Scraped data, never manually edited. Replaced on re-scrape.
 - **`overrides`** — Corrections made by hand. Kept on re-scrape.
 
-Loading a reference (`References`, `tools/references/References.ts`: the reference files, each book's, found, read, written and loaded) derives the rest with its kind's detector (`tools/detect/`): **`detected`** (BAB, saves, requirements, modifiers… parsed from `raw`; a spell's properties and saving throw, normalized; wizard schools have none) and **`mapping`** (each entity as the seeds make it: what's detected and scraped, its overrides applied, which win over both). The seeds read the mapping, and the detected values no override changes, never the overrides. A correction takes effect at the next `parser:generate`, without re-scraping. What the scraper reads of a page's structure (a class's table, its prerequisites' lines, which the stored text no longer splits) is in `raw`: a fix to how it reads them takes a re-scrape. See `reference/README.md`.
+Loading a reference (`References`, `tools/references/References.ts`: the reference files, each book's, found, read, written and loaded) derives the rest with its kind's detector (`tools/detect/`): **`detected`** (BAB, saves, requirements, modifiers… parsed from `raw`; a spell's properties and saving throw, normalized; wizard schools have none) and **`mapping`** (each entity as the seeds make it: what's detected and scraped, its overrides applied, which win over both). The seeds read the mapping, and the detected values no override changes, never the overrides. A correction takes effect at the next `parser:dnd3.5:generate`, without re-scraping. What the scraper reads of a page's structure (a class's table, its prerequisites' lines, which the stored text no longer splits) is in `raw`: a fix to how it reads them takes a re-scrape. See `reference/README.md`.
 
 `content/dnd3.5/generated/` holds only what the generator writes: hand-written content goes in `content/dnd3.5/data/`, what content is written with (its types and builders) in `content/dnd3.5/builders/`, and the books' facts the codegen reads beside them (the weapon and armor tables, the skills' and creature types' names) in `vocabulary/dnd3.5/`. The codegen reads the books and writes content: it stores nothing, reads none of the generated books it writes nor the packages that gather them (`content/dnd3.5/packages/`), and enters the engine through its entry (`engine/index.ts`) like the server.
 
-The generator (`tools/generator/`) is a `Generator`, which picks the books to regenerate (every book, those a filter picks, a reference's) and generates each whole, a `BookGenerator` each, into a `GeneratedFolder`: the folder it writes to, a copy of generated/ that replaces it only once every book succeeded and it's laid out as the repo is (`generateAtomically`), and the files a generation wrote there. A `BookGenerator` is built as the seeder is: a step that writes one kind of file is a concern (`concerns/`: `GeneratesClasses`, `GeneratesFeats`…, and `GeneratesIndexes`, the indexes that list what was written) on a `BaseBookGenerator` (the book, its seeds, what several kinds of files are written with). It writes the book's files from its references, then what they make together (its aptitudes, what an extension copies from the core rules, its indexes), then the files it no longer makes go. A filter or a reference picks which books regenerate, never part of one, so a book's files always agree. A file's code is a `CodeFile` (`code/`), built the same way: its core (`BaseCodeFile`) holds its lines and the names they use, which its imports are written from (one table, `IMPORT_TABLE`), how a value is written as code (a string literal, a list), and the customization values every seed writes alike (a check, a modifier, a property); each kind of seed is written by a concern (`concerns/`: `WritesClasses`, `WritesFeats`…), and so are a book's indexes (`WritesIndexes`). Each generated file's path and the list it exports are named once, in `BookLayout`. What's left to review in a class, which opens its file, is its seeds' (`ClassSeeds.reviewNotes`), and a class's files are composed once (`ClassFiles`), for the generator to write them and `parser:validate` to check what an override changes in them.
+The generator (`tools/generator/`) is a `Generator`, which picks the books to regenerate (every book, those a filter picks, a reference's) and generates each whole, a `BookGenerator` each, into a `GeneratedFolder`: the folder it writes to, a copy of generated/ that replaces it only once every book succeeded and it's laid out as the repo is (`generateAtomically`), and the files a generation wrote there, each opening on the command that generates it (`Generator.COMMAND`, `parser:dnd3.5:generate`). A `BookGenerator` is built as the seeder is: a step that writes one kind of file is a concern (`concerns/`: `GeneratesClasses`, `GeneratesFeats`…, and `GeneratesIndexes`, the indexes that list what was written) on a `BaseBookGenerator` (the book, its seeds, what several kinds of files are written with). It writes the book's files from its references, then what they make together (its aptitudes, what an extension copies from the core rules, its indexes), then the files it no longer makes go. A filter or a reference picks which books regenerate, never part of one, so a book's files always agree. A file's code is a `CodeFile` (`code/`), built the same way: its core (`BaseCodeFile`) holds its lines and the names they use, which its imports are written from (one table, `IMPORT_TABLE`), how a value is written as code (a string literal, a list), and the customization values every seed writes alike (a check, a modifier, a property); each kind of seed is written by a concern (`concerns/`: `WritesClasses`, `WritesFeats`…), and so are a book's indexes (`WritesIndexes`). Each generated file's path and the list it exports are named once, in `BookLayout`. What's left to review in a class, which opens its file, is its seeds' (`ClassSeeds.reviewNotes`), and a class's files are composed once (`ClassFiles`), for the generator to write them and `parser:dnd3.5:validate` to check what an override changes in them.
 
-What `parser:validate` reports (`tools/validate/`) is each reference file's `ReferenceIssues`: a method per kind of reference, reporting what its review list (`ReviewList`, `overrides.reviewed`) doesn't cover, then the list's stale entries; a class's overrides are checked by a `ClassOverridesCheck` (why the generator refuses the class, the overrides that change nothing, those it ignores). The commands (`tools/cli/`) read their line one way, through `CommandLine`: an option is taken out wherever it stands, one the command doesn't take is refused, and each command's grammar is a static method (`filters`, the reference filters most commands take; `scrape`).
+What `parser:dnd3.5:validate` reports (`tools/validate/`) is each reference file's `ReferenceIssues`: a method per kind of reference, reporting what its review list (`ReviewList`, `overrides.reviewed`) doesn't cover, then the list's stale entries; a class's overrides are checked by a `ClassOverridesCheck` (why the generator refuses the class, the overrides that change nothing, those it ignores). The commands (`tools/cli/`) read their line one way, through `CommandLine`: an option is taken out wherever it stands, one the command doesn't take is refused, and each command's grammar is a static method (`filters`, the reference filters most commands take; `scrape`).
 
-The seeds (`tools/seeds/`) are a `BookSeeds` per book, which the `Library` gives (`Library.book(name)`). Each of its references' seeds is a class of its kind, on a `ReferenceSeeds` (the reference, the book's seeds, the check of a value against the options the seed accepts), which the book builds once per reference (`BaseBookSeeds`: `classes(ref)`, `feats(ref)`, `spells(ref)`…). Each gives its seeds through methods (`seeds()`, a class's `seed()` and `feats()`), built once, when first asked (`memo`), so `parser:validate` reads what a seed checks (`seeded()`) without building what throws: `FeatSeeds` (its feats by feat type, its template families), `ItemSeeds`, `MagicItemSeeds`, `RaceSeeds`, `DomainSeeds` (its domains, its feat pools' feats, what its lists lack), `SpellSeeds`, `WizardSchoolSeeds`, and a class's `ClassSeeds` (`seeds/classes/`, whose concerns build its features, its own feats, its spellcasting, its level modifiers and its aptitude picks from what both decide alike: its picks split per level, a feature's feat name, the existing feat it grants). `BaseBookSeeds` also holds what several kinds look up: the feats the book already has, the families a prerequisite asks for, the domains its classes pick from, its base items' weights, its spells' names. What's made of several kinds is a concern of `BookSeeds` (`concerns/`): the aptitudes its seeds use (`CollectsAptitudes`), what it copies from the core rules (`Copies`). A feat's or a class feature's grants (a bonded creature, the feats it names, uncanny dodge) are read by a `GrantText`. The generator, `parser:validate` and the code writers read a book's seeds from it.
+The seeds (`tools/seeds/`) are a `BookSeeds` per book, which the `Library` gives (`Library.book(name)`). Each of its references' seeds is a class of its kind, on a `ReferenceSeeds` (the reference, the book's seeds, the check of a value against the options the seed accepts), which the book builds once per reference (`BaseBookSeeds`: `classes(ref)`, `feats(ref)`, `spells(ref)`…). Each gives its seeds through methods (`seeds()`, a class's `seed()` and `feats()`), built once, when first asked (`memo`), so `parser:dnd3.5:validate` reads what a seed checks (`seeded()`) without building what throws: `FeatSeeds` (its feats by feat type, its template families), `ItemSeeds`, `MagicItemSeeds`, `RaceSeeds`, `DomainSeeds` (its domains, its feat pools' feats, what its lists lack), `SpellSeeds`, `WizardSchoolSeeds`, and a class's `ClassSeeds` (`seeds/classes/`, whose concerns build its features, its own feats, its spellcasting, its level modifiers and its aptitude picks from what both decide alike: its picks split per level, a feature's feat name, the existing feat it grants). `BaseBookSeeds` also holds what several kinds look up: the feats the book already has, the families a prerequisite asks for, the domains its classes pick from, its base items' weights, its spells' names. What's made of several kinds is a concern of `BookSeeds` (`concerns/`): the aptitudes its seeds use (`CollectsAptitudes`), what it copies from the core rules (`Copies`). A feat's or a class feature's grants (a bonded creature, the feats it names, uncanny dodge) are read by a `GrantText`. The generator, `parser:dnd3.5:validate` and the code writers read a book's seeds from it.
 
 The scraper (`tools/scraper/`) is a `Scraper`, built the same way: a concern per kind of reference (`concerns/`: `ScrapesClasses`, `ScrapesFeats`…) on a `BaseScraper` (the book it scrapes and its slug on dndtools.net, the `HttpClient` it fetches pages with, the listings it finds the book's entries in, `listing(kind)`, and the reference files it saves what it read to, `meta()` and `saveReference`, their overrides kept). What reads a page is a page (`pages/`), a class per kind of page holding its document, its reading public (`read()`, or a section's: `EquipmentPage.weapons()`), its steps private: a `Page` (how a section and its heading are found), a `DndToolsPage` (the site's frame, the page's title: `FeatPage`, `SpellPage`, `RacePage`, `ListingPage`), the SRD's `EquipmentPage` and `MagicItemPage`, the domains' `DomainIndexPage`, `DomainPage` and `SpellDomainsPage`, and a class's `ClassPage` (`pages/class/`: a concern per part it reads, `ReadsSummary`, `ReadsSkills`, `ReadsPrerequisites`, `ReadsProgression`, `ReadsFeatures`, with the `ClassFeatures` and `PrerequisiteText` readers). The tests read saved pages through them. What reads a reference's text is its kind's detector (`tools/detect/`: `ClassDetector`, `FeatDetector`, `SpellDetector`, `DomainDetector`, `RaceDetector`, `ItemDetector`, `MagicItemDetector`, on a `BaseDetector`; and `WizardSchoolDetector`, whose page gives nothing to detect), whose `resolve()` gives the reference with its `detected` and its `mapping` (`References` calls it): the base holds the reference as stored, resolves it (its detected section and its mapping, sanitized with its overrides; a spell's and a magic item's say how they differ) and maps a domain's or a race's modifiers alike. A class's (`detect/classes/`) reads its table with a `ClassTable` (its base attack bonus and saves, its spells per day and known, the features its Special column names) and a feature's text with a `FeatureText` (a choice it offers, a pool's options, a list of feats to pick from), has concerns (`ReadsAptitudePicks`, `ReadsBonusFeatLists`, `ReadsFavoredEnemies`), and builds the entities it makes with a `ClassMapping`, its overrides applied, whose pools and their sub-options are a `ClassPools`. The detectors read their texts with readers (`detect/readers/`), a class each: a prerequisite's reading (`RequirementReading`: `FeatPrerequisites`, `ClassPrerequisites`, on a `BaseRequirementReading` and a concern per reading both share, an alignment, any feat of a family, a feat's options, any skill of a family), a text's modifiers (`ModifierReading`: `BenefitModifiers`, `RaceModifiers`, `DomainModifiers`, `MagicItemModifiers`, reading their text's bonuses with a `BonusText`, which leaves out those that apply only sometimes), a magic item's text and metadata (`MagicItemText`: its base item, an armor's stats, a weapon's enhancement; `MagicItemMetadata`), and the target paths a modifier or a requirement read must be one of (`TargetPaths`, the paths the engine lists for a book: `listBookTargetPaths`). The names the books give abilities, saves, skills, races and numbers, the options a family of feats is taken for, and the core rules' book, which every stage reads alike, are the parser's vocabulary (`tools/vocabulary/`, a module per subject).
 
@@ -133,7 +133,7 @@ Scrapes a book's domains into `reference/<book>/domains.json` (`DomainReference`
 
 **Needs manual annotation in `overrides`:**
 - Description rewording, as for every entity
-- The spells a version's pages miss or misplace: `parser:validate` reports a spell no parsed book has, a level from 1st to 9th without a spell, and a spell of the book whose level line puts it on one of its domains at a level the list doesn't
+- The spells a version's pages miss or misplace: `parser:dnd3.5:validate` reports a spell no parsed book has, a level from 1st to 9th without a spell, and a spell of the book whose level line puts it on one of its domains at a level the list doesn't
 - Modifier definitions for complex granted powers
 
 ### Races

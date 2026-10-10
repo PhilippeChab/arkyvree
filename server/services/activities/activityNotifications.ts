@@ -23,8 +23,15 @@ import {
 import { noteNotified } from "@/server/websockets/index.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { isRecord } from "@/shared/isRecord.ts";
+import type { Ruleset } from "@/shared/relations.ts";
 
 type ActivityValues = InferInsertModel<typeof activitiesInAccount>;
+
+/** The ruleset a change to its content is in: its id, and its row while it's unarchived. */
+interface ChangedRuleset {
+  id: string;
+  row: Ruleset | undefined;
+}
 
 /** A row of a ruleset's content, by its table: an entity, or what belongs to one (a class level, a customization). */
 interface ContentRow {
@@ -112,6 +119,19 @@ function readId(value: unknown) {
   return typeof value === "string" ? value : undefined;
 }
 
+/**
+ * The ruleset a change to its content (`activity`, carrying `data`) is in: a delete names it, the row it removed being
+ * gone.
+ */
+async function findChangedRuleset(
+  db: Db,
+  { targetId, targetTable }: ActivityValues,
+  data: Record<string, unknown>,
+): Promise<ChangedRuleset | undefined> {
+  const id = readId(data.rulesetId) ?? (await findContentRuleset(db, { id: targetId, table: targetTable }));
+  return id ? { id, row: await Rulesets.findOne(db, { id }) } : undefined;
+}
+
 /** The ruleset a row of its content is in: an entity's own, or that of the row it belongs to. */
 async function findContentRuleset(db: Db, { id, table }: ContentRow): Promise<string | undefined> {
   if (isOneOf(table, RULESET_ENTITY_TYPES)) return (await EntityRepositories.of(table).findOne(db, { id }))?.rulesetId;
@@ -128,22 +148,34 @@ async function findGameMasters(db: Db, inviteId: string) {
   return players.filter((campaignPlayer) => campaignPlayer.role === "Game Master").map(({ userId }) => userId);
 }
 
-/** The users an activity notifies (`RECIPIENTS`, or a change to a ruleset's content its stakeholders), but its actor. */
-async function findRecipientIds(db: Db, activity: ActivityValues, data: Record<string, unknown>) {
+/**
+ * The users an activity notifies (`RECIPIENTS`, or a change to a ruleset's content, `changed`, its stakeholders), but
+ * its actor.
+ */
+async function findRecipientIds(
+  db: Db,
+  activity: ActivityValues,
+  data: Record<string, unknown>,
+  changed: ChangedRuleset | undefined,
+) {
   const recipient =
     RECIPIENTS.get(activity.type) ?? (isContentTable(activity.targetTable) ? "rulesetStakeholders" : undefined);
-  const userIds = recipient ? await findRecipients(db, recipient, activity, data) : [];
+  const userIds = recipient ? await findRecipients(db, recipient, activity, data, changed) : [];
   const recipientIds = new Set<string>();
   for (const userId of userIds) if (userId && userId !== activity.userId) recipientIds.add(userId);
   return [...recipientIds];
 }
 
-/** Who an activity (`activity`, carrying `data`) notifies, as its `recipient`: their users, when they have one. */
+/**
+ * Who an activity (`activity`, carrying `data`, about the content of `changed`) notifies, as its `recipient`: their
+ * users, when they have one.
+ */
 async function findRecipients(
   db: Db,
   recipient: Recipient,
-  { targetId, targetTable }: ActivityValues,
+  { targetId }: ActivityValues,
   data: Record<string, unknown>,
+  changed: ChangedRuleset | undefined,
 ): Promise<(string | null | undefined)[]> {
   // A revocation names what the contributor was, and reaches them only if they were collaborating
   if ("prevStatus" in data && data.prevStatus !== "Active") return [];
@@ -165,30 +197,28 @@ async function findRecipients(
       const rulesetId = readId(data.rulesetId) ?? (await Contributors.findOne(db, { id: targetId }))?.rulesetId;
       return [rulesetId && (await Rulesets.findOne(db, { id: rulesetId }, Visibility.All))?.userId];
     }
-    case "rulesetStakeholders": {
-      // A delete names its ruleset: the row it removed is gone
-      const rulesetId = readId(data.rulesetId) ?? (await findContentRuleset(db, { id: targetId, table: targetTable }));
-      return rulesetId ? await findRulesetStakeholders(db, rulesetId) : [];
-    }
+    case "rulesetStakeholders":
+      return changed ? await findRulesetStakeholders(db, changed) : [];
   }
 }
 
 /** A ruleset's owner and its active contributors, who hear of a change to its content. */
-async function findRulesetStakeholders(db: Db, rulesetId: string) {
-  // `db` is the caller's transaction, whose queries run one at a time.
-  const contributors = await Contributors.findMany(db, { rulesetId, status: "Active" });
-  const ruleset = await Rulesets.findOne(db, { id: rulesetId });
-  return [ruleset?.userId, ...contributors.map(({ userId }) => userId)];
+async function findRulesetStakeholders(db: Db, { id, row }: ChangedRuleset) {
+  const contributors = await Contributors.findMany(db, { rulesetId: id, status: "Active" });
+  return [row?.userId, ...contributors.map(({ userId }) => userId)];
 }
 
 /**
  * Records an activity (`values`), and notifies the users it concerns, but its actor: a notification each, carrying the
- * activity's data and the actor's name, which their pages hear of once the request is answered.
+ * activity's data and the actor's name, which their pages hear of once the request is answered. A change to a ruleset's
+ * content records its ruleset's base rules with it, whose words name what it changed ("created spell Fireball").
  */
 export async function createActivityWithNotifications(tx: Db, values: ActivityValues) {
-  const [activity] = await Activities.create(tx, values);
-  const data = isRecord(values.data) ? values.data : {};
-  const recipientIds = await findRecipientIds(tx, values, data);
+  const given = isRecord(values.data) ? values.data : {};
+  const changed = isContentTable(values.targetTable) ? await findChangedRuleset(tx, values, given) : undefined;
+  const data = changed?.row ? { ...given, baseRules: changed.row.baseRules } : given;
+  const [activity] = await Activities.create(tx, changed?.row ? { ...values, data } : values);
+  const recipientIds = await findRecipientIds(tx, values, data, changed);
   if (recipientIds.length === 0) return;
 
   const actor = await Users.findOne(tx, { id: values.userId });
