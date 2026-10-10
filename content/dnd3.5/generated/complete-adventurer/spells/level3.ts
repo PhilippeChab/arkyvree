@@ -122,6 +122,7 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
       { type: "SPELL_DURATION", value: "1 round/level (D)" },
       { type: "SPELL_RESISTANCE", value: "Yes (harmless)" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
+      { type: "SPELL_COMPONENT", value: "Focus" },
     ],
   },
   {
@@ -164,6 +165,7 @@ export const LEVEL_3_SPELLS: PowerSeed[] = [
       { type: "SPELL_RESISTANCE", value: "Yes" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },
+      { type: "SPELL_COMPONENT", value: "Focus" },
     ],
   },
   {

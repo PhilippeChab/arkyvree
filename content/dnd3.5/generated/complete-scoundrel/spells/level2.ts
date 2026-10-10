@@ -166,6 +166,7 @@ export const LEVEL_2_SPELLS: PowerSeed[] = [
       { type: "SPELL_RESISTANCE", value: "No" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },
+      { type: "SPELL_COMPONENT", value: "Focus" },
     ],
   },
 ];

@@ -52,6 +52,7 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
       { type: "SPELL_RESISTANCE", value: "Yes" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },
+      { type: "SPELL_COMPONENT", value: "Focus" },
       { type: "SPELL_COMPONENT", value: "Divine Focus" },
     ],
   },
@@ -88,6 +89,7 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
       { type: "SPELL_RESISTANCE", value: "No" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },
+      { type: "SPELL_COMPONENT", value: "Focus" },
     ],
   },
   {
@@ -215,6 +217,7 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
       { type: "SPELL_RESISTANCE", value: "Yes" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },
+      { type: "SPELL_COMPONENT", value: "Focus" },
     ],
   },
   {
@@ -350,6 +353,7 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
       { type: "SPELL_RESISTANCE", value: "Yes" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },
+      { type: "SPELL_COMPONENT", value: "Focus" },
       { type: "SPELL_COMPONENT", value: "Divine Focus" },
     ],
   },
@@ -459,6 +463,7 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
       { type: "SPELL_RESISTANCE", value: "No" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },
+      { type: "SPELL_COMPONENT", value: "Focus" },
     ],
   },
   {
@@ -477,6 +482,7 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
       { type: "SPELL_RESISTANCE", value: "Yes" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },
+      { type: "SPELL_COMPONENT", value: "Focus" },
     ],
   },
   {
@@ -739,6 +745,7 @@ export const LEVEL_7_SPELLS: PowerSeed[] = [
       { type: "SPELL_RESISTANCE", value: "No" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
       { type: "SPELL_COMPONENT", value: "Somatic" },
+      { type: "SPELL_COMPONENT", value: "Focus" },
       { type: "SPELL_COMPONENT", value: "Divine Focus" },
     ],
   },

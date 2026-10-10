@@ -23,11 +23,16 @@ import { BaseDetector, type Resolved } from "./BaseDetector.ts";
 /** A spell of a reference, as scraped. */
 type RawSpell = SpellReference["raw"][number];
 
+/**
+ * A spell's components, by the abbreviation its scraped stat block gives each: the site writes a focus "AF" (the SRD's
+ * "F", and the F of "F/DF": Alarm's "V, S, F/DF" is scraped as V, S, AF, DF).
+ */
 const COMPONENT_MAP: Record<string, string> = {
   V: "Verbal",
   S: "Somatic",
   M: "Material",
   F: "Focus",
+  AF: "Focus",
   DF: "Divine Focus",
   XP: "XP Cost",
 };

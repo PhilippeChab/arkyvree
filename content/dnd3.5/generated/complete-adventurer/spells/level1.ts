@@ -540,6 +540,7 @@ export const LEVEL_1_SPELLS: PowerSeed[] = [
       { type: "SPELL_DURATION", value: "1 minute/level (D)" },
       { type: "SPELL_RESISTANCE", value: "No" },
       { type: "SPELL_COMPONENT", value: "Verbal" },
+      { type: "SPELL_COMPONENT", value: "Focus" },
     ],
   },
   {
