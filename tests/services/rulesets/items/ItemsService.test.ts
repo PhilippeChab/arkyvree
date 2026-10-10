@@ -21,10 +21,11 @@ const copiedCustomizations = {
 };
 const noCustomizations = { modifiers: [], properties: [], requirements: [] };
 
-/** A template with a property and a requirement, which its instances read, and a modifier, which they don't. */
+/** A weapon template with a property and a requirement, which its instances read, and a modifier, which they don't. */
 async function createTemplate(session: Parameters<typeof ItemsService.createItem>[0], rulesetId: string) {
   const template = await ItemsService.createItem(session, rulesetId, {
     name: "Sword Template",
+    type: "Weapon",
     isTemplate: true,
   });
   await customize("items", template.id, { property: COLD_RESISTANCE });
@@ -174,7 +175,10 @@ describe("ItemsService", () => {
     test("makes a template's copy an instance of it, with no customizations of its own", async () => {
       const { session, ruleset } = await createTestUserAndRuleset();
       const template = await createTemplate(session, ruleset.id);
-      const copy = await ItemsService.duplicateItem(session, ruleset.id, template.id, { name: "Sword" });
+      const copy = await ItemsService.duplicateItem(session, ruleset.id, template.id, {
+        name: "Sword",
+        type: "Weapon",
+      });
       await expectTemplateInstance(ruleset.id, copy.id, template.id);
     });
 
@@ -228,6 +232,7 @@ describe("ItemsService", () => {
       const template = await createTemplate(session, ruleset.id);
       const instance = await ItemsService.createItem(session, ruleset.id, {
         name: "Longsword",
+        type: "Weapon",
         sourceItemId: template.id,
       });
 

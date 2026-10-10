@@ -3,6 +3,8 @@ import type { InferRequestType } from "hono/client";
 import { formatDecimal } from "@/client/src/lib/formatNumeric.ts";
 import type { Item } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import type { rpc } from "@/client/src/services/rpc.ts";
+import { isOneOf } from "@/shared/isOneOf.ts";
+import { TEMPLATE_ITEM_TYPES } from "@/vocabulary/dnd3.5/itemTemplates.ts";
 
 /** An item's request's body, which `toItemPayload` makes of its form. */
 type ItemBody = InferRequestType<(typeof rpc.api.rulesets)[":id"]["items"]["$post"]>["json"];
@@ -35,6 +37,14 @@ function parseNumericField(value: string | undefined): number | null {
   if (value === undefined || value.trim() === "") return null;
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * The fields an item's form empties as its type changes to `type`: its template, which is a template of one type, and,
+ * for a type a template can be of, its slot, which that type sets.
+ */
+export function fieldsClearedByType(type: unknown): ("slot" | "sourceItemId")[] {
+  return isOneOf(type, TEMPLATE_ITEM_TYPES) ? ["slot", "sourceItemId"] : ["sourceItemId"];
 }
 
 /** The form values of an existing item: the editor's, or a duplicate's starting point. */

@@ -7,6 +7,7 @@ import RulesError from "@/engine/core/RulesError.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
+import { isOneOf } from "@/shared/isOneOf.ts";
 import type { Item } from "@/shared/relations.ts";
 import { TEMPLATE_ITEM_TYPES, type TemplateItemType } from "@/vocabulary/dnd3.5/itemTemplates.ts";
 
@@ -70,10 +71,26 @@ export default class ItemEntity extends CustomizationPageEntity<
 
   override readonly type = "items";
 
-  /** Refuses a template made from another item: a template is its copies' source, never one's copy. */
+  /**
+   * Refuses a template made from another item (a template is its copies' source, never one's copy), and an item based on
+   * anything but a template of its type (the one its form gives, or the one it keeps), which it would read its
+   * properties and requirements off: a weapon's, an armor's or a shield's.
+   */
   protected override checkForm(body: ItemBody, item?: Item) {
     if ((item ? item.isTemplate : body.isTemplate) && body.sourceItemId)
       throw new RulesError("unprocessable", "Template items cannot have a source item");
+    const templateId = this.templateIdOf(body, item);
+    if (!templateId) return;
+
+    const template = this.rulesetData.find("items", templateId);
+    if (!template?.isTemplate) throw new RulesError("unprocessable", "Source item is not a template of this ruleset");
+    const type = body.type === undefined ? (item?.type ?? null) : body.type;
+    if (template.type !== type || !isOneOf(type, TEMPLATE_ITEM_TYPES)) {
+      throw new RulesError(
+        "unprocessable",
+        `Item type ${type ?? "None"} can't be based on the ${template.type ?? "None"} template "${template.name}"`,
+      );
+    }
   }
 
   /** A form's columns: a new item's template, and whether it's one; an edited template keeps no source. */
@@ -95,7 +112,7 @@ export default class ItemEntity extends CustomizationPageEntity<
    * (the one it keeps when the form gives none); a new one's template's alone.
    */
   protected override keptProperties(columns: ItemColumns, item?: Item) {
-    const sourceItemId = columns.sourceItemId === undefined ? (item?.sourceItemId ?? null) : columns.sourceItemId;
+    const sourceItemId = this.templateIdOf(columns, item);
     if (item) return this.propertiesOf({ id: item.id, sourceItemId });
     return sourceItemId ? this.propertiesOf({ id: sourceItemId, sourceItemId: null }) : [];
   }
@@ -162,6 +179,15 @@ export default class ItemEntity extends CustomizationPageEntity<
    */
   private slotOf(item: { slot?: ItemLocation | null; type?: string | null }): ItemLocation | undefined {
     return ItemPlacement.slotOfType(item.type ?? null) ?? (item.slot === null ? "Other" : item.slot);
+  }
+
+  /**
+   * The template a form (its body, or its columns) saves an item with: none for an edited template, which keeps no
+   * source, or the form's (null: none), or the one the edited item keeps.
+   */
+  private templateIdOf(form: { sourceItemId?: string | null }, item?: Item) {
+    if (item?.isTemplate) return null;
+    return form.sourceItemId === undefined ? (item?.sourceItemId ?? null) : form.sourceItemId;
   }
 
   /** The template an item made from `item` points at: `item` itself when it's a template, or its own template. */

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { EMPTY_ITEM } from "@/client/src/pages/rulesets/components/forms/dnd3.5/emptyForms.ts";
-import { toItemPayload } from "@/client/src/pages/rulesets/components/forms/dnd3.5/itemForm.ts";
+import { fieldsClearedByType, toItemPayload } from "@/client/src/pages/rulesets/components/forms/dnd3.5/itemForm.ts";
 
 describe("an item's form", () => {
   test("sends null for the slot, template, weight and cost it leaves empty, which clears them", () => {
@@ -30,5 +30,13 @@ describe("an item's form", () => {
     expect(toItemPayload({ ...EMPTY_ITEM, name: "Sword", isTemplate: true, sourceItemId: "sword" })).toMatchObject({
       sourceItemId: null,
     });
+  });
+
+  test.each(["Wondrous Item", "Ring", "Other", ""])("drops its template when its type changes to %p", (type) => {
+    expect(fieldsClearedByType(type)).toEqual(["sourceItemId"]);
+  });
+
+  test.each(["Weapon", "Armor", "Shield"])("drops its template and its slot when its type changes to %p", (type) => {
+    expect(fieldsClearedByType(type)).toEqual(["slot", "sourceItemId"]);
   });
 });

@@ -8,7 +8,7 @@ import { LOCATION_OPTIONS } from "@/shared/enums.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { TEMPLATE_ITEM_TYPES, type TemplateItemType } from "@/vocabulary/dnd3.5/itemTemplates.ts";
 
-import { ITEM_TYPE_OPTIONS, type ItemFormData } from "./itemForm.ts";
+import { fieldsClearedByType, ITEM_TYPE_OPTIONS, type ItemFormData } from "./itemForm.ts";
 
 interface ItemFormFieldsProps {
   form: UseFormReturn<ItemFormData>;
@@ -45,11 +45,9 @@ export function ItemFormFields({ form, rulesetId, lockType }: ItemFormFieldsProp
   const itemType = form.watch("type");
   const isTemplate = form.watch("isTemplate");
 
-  // A template type has no slot, and starts with no template
+  // A new type takes none of the old type's templates, and a template type sets its slot
   const handleTypeChange = (newType: unknown) => {
-    if (!isOneOf(newType, TEMPLATE_ITEM_TYPES)) return;
-    form.setValue("slot", "", { shouldDirty: true });
-    form.setValue("sourceItemId", "", { shouldDirty: true });
+    for (const field of fieldsClearedByType(newType)) form.setValue(field, "", { shouldDirty: true });
   };
 
   return (

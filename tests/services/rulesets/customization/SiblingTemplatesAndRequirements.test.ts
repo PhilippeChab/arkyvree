@@ -20,7 +20,14 @@ async function setup(
   const host = await createSeededTestRuleset(session.userId);
   const source =
     entityType === "items"
-      ? (await Items.create(db, { rulesetId: host.ancestorRulesetIds[0], name: "Audit Template", isTemplate: true }))[0]
+      ? (
+          await Items.create(db, {
+            rulesetId: host.ancestorRulesetIds[0],
+            name: "Audit Template",
+            type: "Weapon",
+            isTemplate: true,
+          })
+        )[0]
       : (await Feats.findOne(db, { rulesetId: host.ancestorRulesetIds[0], name: "Toughness" }))!;
   const copies: string[] = [];
   const extensionIds: string[] = [];
@@ -59,7 +66,10 @@ afterEach(() => RulesetViews.invalidateAll());
 for (const index of [0, 1]) {
   test(`derived item can override template property from extension ${index}`, async () => {
     const { session, host, source } = await setup("items");
-    const item = await ItemsService.duplicateItem(session, host.id, source.id, { name: "Audit Derived Item" });
+    const item = await ItemsService.duplicateItem(session, host.id, source.id, {
+      name: "Audit Derived Item",
+      type: "Weapon",
+    });
     const before = await ItemsService.getItem(host.id, item.id);
     const property = before.properties.find((p) => p.type === `AUDIT_PROPERTY_${index}`)!;
     expect(property).toBeDefined();
@@ -173,6 +183,7 @@ test("hidden and unrelated template properties cannot be overridden", async () =
   });
   const item = await ItemsService.duplicateItem(session, host.id, source.id, {
     name: "Template ownership check",
+    type: "Weapon",
   });
   const [hidden] = await Properties.findMany(db, { entityIds: [copies[1]], entityType: "items" });
   const [unrelatedItem] = await Items.create(db, { rulesetId: host.id, name: "Unrelated template", isTemplate: true });
