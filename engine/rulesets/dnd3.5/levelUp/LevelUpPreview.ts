@@ -1,3 +1,4 @@
+import { SelectionChecks } from "@/engine/core/levelUp/index.ts";
 import type { LevelPicks, LevelRequest } from "@/engine/core/module/index.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 
@@ -30,6 +31,7 @@ export default class LevelUpPreview extends PlannedLevelsState {
         klassLevelId: klassLevel.id,
         level: klassLevel.level,
         hd: klass.hd,
+        hitPoints: SelectionChecks.hitPointsOf(klass.hd),
         skillPoints: perLevelSkillPoints[i],
       })),
       perLevelSkillPoints,

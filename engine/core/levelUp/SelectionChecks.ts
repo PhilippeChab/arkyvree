@@ -31,6 +31,11 @@ export default class SelectionChecks {
     private readonly rules: Pick<LevelUpRules<unknown>, "getAbilityIncreaseTotal">,
   ) {}
 
+  /** The hit points a level of a class with hit die `hd` gains: 1 to its die, the die's average rounded up between. */
+  static hitPointsOf(hd: number) {
+    return { average: Math.ceil(hd / 2), max: hd, min: 1 };
+  }
+
   /**
    * A level's hit points, ability increases and selections checked, for both the level save and the level-up's: each
    * ability and selection the ruleset's, each selection linked to its pool, no non-stackable feat picked twice. Answers
@@ -40,7 +45,8 @@ export default class SelectionChecks {
   private checkLevelSelections(level: LevelChecked) {
     const { klass, klassLevel, hp, abilityIncreases, skills, feats, powers } = level;
 
-    if (hp < 1 || hp > klass.hd) throw new RulesError("invalid", `HP must be between 1 and ${klass.hd}`);
+    const { max, min } = SelectionChecks.hitPointsOf(klass.hd);
+    if (hp < min || hp > max) throw new RulesError("invalid", `HP must be between ${min} and ${max}`);
 
     // A cache hit means the entity is in the composed view of the character's ruleset
     // (the cache's arrays are already COW-resolved and sibling-filtered).

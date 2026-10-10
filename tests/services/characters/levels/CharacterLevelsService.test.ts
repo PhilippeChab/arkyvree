@@ -1514,8 +1514,10 @@ describe("LevelsService", () => {
           { levelIndex: 0, featName: "Dodge", aptitude: "General" },
         ],
       );
-      const { feats } = await CharacterLevelsService.getLevel(session, characterId, level);
+      const { feats, hitPoints } = await CharacterLevelsService.getLevel(session, characterId, level);
       expect(feats[ctx.aptMap["General"]].map((feat) => feat.name)).toEqual(["Dodge", "Power Attack"]);
+      // The bounds its class's d10 sets its hit points, which Edit Level's HP step reads
+      expect(hitPoints).toEqual({ average: 5, max: 10, min: 1 });
     });
 
     describe("of a multiclass character", () => {

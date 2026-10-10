@@ -96,9 +96,17 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevel }:
 
   // The HP step's one level, the edited one, its HP the form's field
   const { field: hpField } = useController({ control, name: "selectedHP" });
-  const hpLevels: HpLevel[] = selectedClass
-    ? [{ className: selectedClass.name, hd: selectedClass.hd, nextLevel: selectedClass.nextLevel }]
-    : [];
+  const hpLevels: HpLevel[] =
+    selectedClass && levelData
+      ? [
+          {
+            className: selectedClass.name,
+            hd: selectedClass.hd,
+            hitPoints: levelData.hitPoints,
+            nextLevel: selectedClass.nextLevel,
+          },
+        ]
+      : [];
 
   // The edited level's class and level, which the slot and picker endpoints take.
   const step: StepLevel = {

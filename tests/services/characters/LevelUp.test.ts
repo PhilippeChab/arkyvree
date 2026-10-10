@@ -471,7 +471,13 @@ describe("previewing a level-up", () => {
     const result = await preview(ctx, characterId, fighter(4));
 
     expect(result.levelDetails).toMatchObject(
-      fighter(4).map(([, level]) => ({ klassId: ctx.klassMap.pc["Fighter"], level, hd: 10 })),
+      fighter(4).map(([, level]) => ({
+        klassId: ctx.klassMap.pc["Fighter"],
+        level,
+        hd: 10,
+        // A d10's: 1 to 10, 5 on average, which the HP step reads
+        hitPoints: { average: 5, max: 10, min: 1 },
+      })),
     );
     expect(result.perLevelSkillPoints).toEqual([16, 4, 4, 4]);
     expect(result.skills).toMatchObject({ skillPointsToSpend: 28, totalCharacterLevel: 4 });

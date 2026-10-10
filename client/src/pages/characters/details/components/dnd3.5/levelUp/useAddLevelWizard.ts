@@ -115,14 +115,6 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     [levelKeys],
   );
 
-  const hpLevels = useMemo<HpLevel[]>(
-    () =>
-      adjustedClassPlan
-        .filter((k): k is SelectedKlass => k !== null)
-        .map((k) => ({ className: k.name, hd: k.hd, nextLevel: k.nextLevel })),
-    [adjustedClassPlan],
-  );
-
   const handleAbilityIncreaseChange = useCallback(
     (index: number, abilityId: string) => setAbilityBySlot((prev) => ({ ...prev, [levelKeys[index]]: abilityId })),
     [levelKeys],
@@ -167,6 +159,18 @@ export function useAddLevelWizard({ open, onClose, characterId }: UseAddLevelWiz
     if (abilityIncreaseLevels.length === 0) return { isAvailable: false as const, attributes: {} };
     return { isAvailable: true as const, attributes: previewQuery.data.attributes.attributes };
   }, [previewQuery.data, abilityIncreaseLevels]);
+
+  // The planned levels whose hit points the HP step sets, as the preview lists them, with the hit points each may gain
+  const hpLevels = useMemo<HpLevel[]>(
+    () =>
+      (previewQuery.data?.levelDetails ?? []).map((detail) => ({
+        className: detail.klassName,
+        hd: detail.hd,
+        hitPoints: detail.hitPoints,
+        nextLevel: detail.level,
+      })),
+    [previewQuery.data],
+  );
 
   const isLoadingAttributes = previewQuery.isLoading;
   const attributesError = previewQuery.error;
