@@ -1,8 +1,8 @@
 import { normalizeWs } from "@/codegen/core/text/whitespace.ts";
 import type { BaseClassDetector } from "@/codegen/dnd3.5/tools/detect/classes/BaseClassDetector.ts";
 import { type ClassReference } from "@/codegen/dnd3.5/tools/types/classes.ts";
-import { CREATURE_TYPES } from "@/content/dnd3.5/data/creatureTypes.ts";
 import type { Constructor } from "@/lib/mixins.ts";
+import { CREATURE_TYPES } from "@/vocabulary/dnd3.5/creatureTypes.ts";
 
 type CreatureType = (typeof CREATURE_TYPES)[number];
 

@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { eq } from "drizzle-orm";
 
-import { DND35_COMPLETE_DIVINE_NAME } from "@/content/dnd3.5/names.ts";
+import { DND35_COMPLETE_DIVINE_NAME } from "@/content/dnd3.5/rulesetNames.ts";
 import {
   featsInRules,
   klassLevelFeatsInRules,

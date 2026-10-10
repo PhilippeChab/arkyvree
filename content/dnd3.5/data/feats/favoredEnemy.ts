@@ -2,7 +2,8 @@ import { bonus } from "@/content/core/builders/customization/modifiers.ts";
 import { eq } from "@/content/core/builders/customization/requirements.ts";
 import { feat } from "@/content/dnd3.5/builders/feats/possession.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
-import { CREATURE_TYPES } from "@/content/dnd3.5/data/creatureTypes.ts";
+import { CREATURE_TYPES } from "@/vocabulary/dnd3.5/creatureTypes.ts";
+import { FAVORED_ENEMY_FAMILY } from "@/vocabulary/dnd3.5/feats.ts";
 import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 const FAVORED_ENEMY_APTITUDE = "Favored Enemy";
@@ -18,8 +19,6 @@ const favoredEnemySpecializationUmbrella: FeatSeed = {
   aptitudes: ["Ranger Class Feature"],
   modifiers: [bonus("aptitudes.favoredenemyspecialization.allowed", 1)],
 };
-
-export const FAVORED_ENEMY_FAMILY = "Favored Enemy";
 
 /** A favored enemy feat per creature type, its specialization per type, and the ranger's pick of one. */
 export const FAVORED_ENEMY_FEATS: FeatSeed[] = [

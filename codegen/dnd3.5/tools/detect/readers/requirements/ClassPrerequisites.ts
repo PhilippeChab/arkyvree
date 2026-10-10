@@ -8,8 +8,8 @@ import type { RequirementEntry } from "@/content/core/builders/customization/typ
 import { domainFeat } from "@/content/dnd3.5/builders/aptitudes/names.ts";
 import { feat } from "@/content/dnd3.5/builders/feats/possession.ts";
 import { proficiencyRequirements } from "@/content/dnd3.5/builders/items/proficiencies.ts";
-import { ALL_WEAPONS } from "@/content/dnd3.5/builders/items/weapons.ts";
 import { capitalize, stripSeparators } from "@/shared/text.ts";
+import { ALL_WEAPONS } from "@/vocabulary/dnd3.5/weapons.ts";
 
 import { RequirementReading } from "./RequirementReading.ts";
 

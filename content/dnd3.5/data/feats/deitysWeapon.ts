@@ -5,8 +5,8 @@
 
 import { grantFeat } from "@/content/dnd3.5/builders/feats/possession.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
-import { ALL_WEAPONS } from "@/content/dnd3.5/builders/items/weapons.ts";
 import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { ALL_WEAPONS } from "@/vocabulary/dnd3.5/weapons.ts";
 
 const DEITYS_WEAPON_FOCUS: FeatSeed[] = ALL_WEAPONS.map((w) => ({
   name: `Deity's Weapon Focus: ${w}`,

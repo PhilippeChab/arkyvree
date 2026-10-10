@@ -1,9 +1,9 @@
 import type { BaseRequirementReading } from "@/codegen/dnd3.5/tools/detect/readers/requirements/BaseRequirementReading.ts";
 import { gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { RequirementEntry } from "@/content/core/builders/customization/types.ts";
-import { SKILL_NAMES } from "@/content/dnd3.5/data/skills.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { SKILL_NAMES } from "@/vocabulary/dnd3.5/skills.ts";
 
 /** Reading what a prerequisite asks of a skill a family of skills names: ranks in any of them. */
 export function ReadsSkills<B extends Constructor<BaseRequirementReading>>(Base: B) {

@@ -6,8 +6,7 @@ import { and, eq, eqStr, or } from "@/content/core/builders/customization/requir
 import type { RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import { feat } from "@/content/dnd3.5/builders/feats/possession.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
-
-import { getWeaponDefinition, MARTIAL_WEAPONS, SIMPLE_WEAPONS } from "./weapons.ts";
+import { MARTIAL_WEAPONS, SIMPLE_WEAPONS, WEAPON_TYPE_DEFINITIONS } from "@/vocabulary/dnd3.5/weapons.ts";
 
 export const HEAVY_ARMOR_PROF: RequirementEntry[] = [eq(feat("Armor Proficiency (Heavy)"))];
 export const LIGHT_ARMOR_PROF: RequirementEntry[] = [eq(feat("Armor Proficiency (Light)"))];
@@ -21,7 +20,7 @@ export const TOWER_SHIELD_PROF: RequirementEntry[] = [eq(feat("Tower Shield Prof
  * what only a weapon's own proficiency reads, a prerequisite holding no weapon.
  */
 function exoticProficiency(weapon: string, held: boolean): RequirementEntry[] {
-  const definition = getWeaponDefinition(weapon);
+  const definition = WEAPON_TYPE_DEFINITIONS[weapon];
   const asMartial = [
     ...(held && definition?.oneHandTraining ? [eqStr("weapon.wielded", "twohanded")] : []),
     ...(definition?.familiarity ? [eqStr("identity.physiology.race.name", definition.familiarity)] : []),

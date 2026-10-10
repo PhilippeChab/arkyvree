@@ -1,7 +1,7 @@
 import { readCost, readWeight } from "@/codegen/dnd3.5/tools/text/amounts.ts";
 import type { ItemReference } from "@/codegen/dnd3.5/tools/types/items.ts";
-import { getArmorDefinition, getShieldDefinition } from "@/content/dnd3.5/builders/items/armor.ts";
-import { getWeaponDefinition } from "@/content/dnd3.5/builders/items/weapons.ts";
+import { ARMOR_TYPE_DEFINITIONS, SHIELD_TYPE_DEFINITIONS } from "@/vocabulary/dnd3.5/armor.ts";
+import { WEAPON_TYPE_DEFINITIONS } from "@/vocabulary/dnd3.5/weapons.ts";
 
 import { BaseDetector } from "./BaseDetector.ts";
 
@@ -124,7 +124,7 @@ export class ItemDetector extends BaseDetector<ItemReference> {
       if (isAmmunition(w.name)) continue;
 
       const resolved = generatorNameOf(w.name, DEFAULT_WEAPON_NAME_MAP, nameMap);
-      const def = getWeaponDefinition(resolved);
+      const def = WEAPON_TYPE_DEFINITIONS[resolved];
 
       weapons[w.name] = {
         generatorName: def ? resolved : null,
@@ -140,7 +140,7 @@ export class ItemDetector extends BaseDetector<ItemReference> {
 
       const isShieldCategory = a.category === "Shields";
       const resolved = generatorNameOf(a.name, DEFAULT_ARMOR_NAME_MAP, nameMap);
-      const def = isShieldCategory ? getShieldDefinition(resolved) : getArmorDefinition(resolved);
+      const def = isShieldCategory ? SHIELD_TYPE_DEFINITIONS[resolved] : ARMOR_TYPE_DEFINITIONS[resolved];
       const itemType: "Armor" | "Shield" = isShieldCategory ? "Shield" : "Armor";
 
       armor[a.name] = {

@@ -5,6 +5,7 @@
 
 import { and, eq } from "drizzle-orm";
 
+import type { CharacterSeed, InventorySeed } from "@/content/dnd3.5/builders/characters/types.ts";
 import {
   characterAbilitiesInCharacter,
   charactersInCharacter,
@@ -22,39 +23,11 @@ import { NotFoundError } from "@/server/errors/index.ts";
 import { CharacterLevels, Characters } from "@/server/repositories/index.ts";
 import { readBondedInputs, readCharacterInput } from "@/server/services/characters/index.ts";
 import { writeBondedCreatures } from "@/server/services/characters/levels/index.ts";
-import { type Alignment, type Gender, type ItemLocation } from "@/shared/enums.ts";
 
 import { type SeedContext } from "./seedContext.ts";
 import { SEED_USER_ID } from "./users.ts";
 
-type CharacterData = Parameters<typeof createCharacter>[2];
-
-type Picks<K extends string> = { levelIndex: number } & Record<K, string>;
-
-/**
- * A character of the seed user's: who it is, its levels (each class's in order, from the first, by the hit points
- * it rolled) and its picks at each (`levelIndex` counts all its levels), and its inventory.
- */
-export type CharacterSeed = Omit<CharacterData, "rulesetId"> & {
-  classes: { hp: number[]; klass: string }[];
-  feats: (Picks<"featName"> & { aptitude: string })[];
-  inventory: Parameters<typeof addInventory>[3];
-  powers?: (Picks<"powerName"> & { aptitude: string })[];
-  skills: { levelIndex: number; rank: number; skillName: string }[];
-};
-
-async function addInventory(
-  db: Db,
-  ctx: SeedContext,
-  characterId: string,
-  items: {
-    equipped?: boolean;
-    location?: ItemLocation;
-    name: string;
-    quantity: number;
-    weaponSet?: number;
-  }[],
-) {
+async function addInventory(db: Db, ctx: SeedContext, characterId: string, items: InventorySeed[]) {
   if (items.length === 0) return;
   await db.insert(inventoryInCharacter).values(
     items.map((item) => ({
@@ -161,20 +134,9 @@ export async function addSkills(
 export async function createCharacter(
   db: Db,
   ctx: SeedContext,
-  data: {
-    abilities: Record<string, number>;
-    age: number;
-    alignment: Alignment;
-    description: string;
-    gender: Gender;
-    height: string;
-    languages: string[];
-    name: string;
-    raceName: string;
+  data: Omit<CharacterSeed, "classes" | "feats" | "inventory" | "powers" | "skills"> & {
     /** Override the ruleset (e.g., to place the character in a fork that subscribes to an extension). Defaults to seed. */
     rulesetId?: string;
-    weight: string;
-    xp: number;
   },
 ) {
   const [character] = await db

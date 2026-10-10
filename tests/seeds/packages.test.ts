@@ -5,8 +5,6 @@ import { and, eq, inArray, notInArray, sql } from "drizzle-orm";
 import { ANIMAL_COMPANIONS } from "@/content/dnd3.5/data/bonds/animalCompanions.ts";
 import { FAMILIARS } from "@/content/dnd3.5/data/bonds/familiars.ts";
 import { SPECIAL_MOUNTS } from "@/content/dnd3.5/data/bonds/mounts.ts";
-import { CORE } from "@/content/dnd3.5/data/core.ts";
-import { TEMPLATE_ITEMS } from "@/content/dnd3.5/data/templateItems.ts";
 import { ALL_CLASSES } from "@/content/dnd3.5/generated/srd/classes/index.ts";
 import { ALL_DOMAINS } from "@/content/dnd3.5/generated/srd/domains.ts";
 import {
@@ -21,7 +19,8 @@ import {
 } from "@/content/dnd3.5/generated/srd/items/index.ts";
 import { ALL_RACES } from "@/content/dnd3.5/generated/srd/races.ts";
 import { ALL_SPELLS } from "@/content/dnd3.5/generated/srd/spells/index.ts";
-import { DND35_RULESET_NAME } from "@/content/dnd3.5/names.ts";
+import { CORE, TEMPLATE_ITEMS } from "@/content/dnd3.5/packages/core.ts";
+import { DND35_RULESET_NAME } from "@/content/dnd3.5/rulesetNames.ts";
 import { registry } from "@/database/packages/registry.ts";
 import {
   entitySnapshotsInRules,

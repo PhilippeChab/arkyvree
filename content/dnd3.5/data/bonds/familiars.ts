@@ -5,9 +5,8 @@ import type { BondContent } from "@/content/dnd3.5/builders/bonds/types.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
 import { grantFeat } from "@/content/dnd3.5/builders/feats/possession.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
+import { QUADRUPED } from "@/content/dnd3.5/builders/races/properties.ts";
 import type { RaceSeed } from "@/content/dnd3.5/builders/races/types.ts";
-
-import { QUADRUPED } from "./raceProperties.ts";
 
 const FAMILIAR_APTITUDE = "Familiar Bond";
 const FAMILIAR_CLASS_FEATURE_APTITUDE = "Familiar Class Feature";

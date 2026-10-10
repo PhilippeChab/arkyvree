@@ -1,7 +1,7 @@
 /** The skills, as the books name them, and the slug each is in a target path. */
 
-import { SKILL_NAMES } from "@/content/dnd3.5/data/skills.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { SKILL_NAMES } from "@/vocabulary/dnd3.5/skills.ts";
 
 /** The Knowledge skills, as the books name them ("Knowledge (Arcana)"…), in the skill list's order. */
 export const KNOWLEDGE_SKILLS = SKILL_NAMES.filter((name) => name.startsWith("Knowledge"));

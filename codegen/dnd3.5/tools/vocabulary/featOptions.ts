@@ -1,9 +1,9 @@
 /** What a family of feats is taken for: a weapon feat's weapons, a spell school feat's schools, Skill Focus's skills. */
 
-import { ALL_WEAPONS } from "@/content/dnd3.5/builders/items/weapons.ts";
-import { SKILL_NAMES } from "@/content/dnd3.5/data/skills.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { SKILL_NAMES } from "@/vocabulary/dnd3.5/skills.ts";
 import { SPELL_SCHOOLS } from "@/vocabulary/dnd3.5/spells.ts";
+import { ALL_WEAPONS } from "@/vocabulary/dnd3.5/weapons.ts";
 
 /** Each family of feats taken for an option, and the names its options take. */
 const FEAT_OPTIONS: { family: RegExp; names: readonly string[] }[] = [
