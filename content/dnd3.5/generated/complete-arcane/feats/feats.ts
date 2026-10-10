@@ -420,7 +420,11 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
     description:
       "You can turn spells with the cold descriptor into uttercold spells. Half the damage dealt by an uttercold spell is cold damage, and the other half is negative energy damage. The spell's saving throw remains unchanged, but creatures can apply cold resistance or immunity to cold only to the cold portion of the damage. An undead creature can be healed by the negative energy damage of an uttercold spell, though if it doesn't have resistance to cold, the effects of damage and healing cancel each other out. An uttercold spell uses a spell slot of the spell's normal level.",
     aptitudes: ["General", "Wizard Bonus Feat"],
-    requirements: [eq("feats.energysubstitution.possessed"), gte("skills.knowledgetheplanes.rank", 9)],
+    requirements: [
+      eq("feats.energysubstitution.possessed"),
+      or(gte("spellcasting.arcane", 1), gte("spellcasting.divine", 1)),
+      gte("skills.knowledgetheplanes.rank", 9),
+    ],
     properties: [{ type: "FEAT_FAMILY", value: "Metamagic" }],
   },
   {

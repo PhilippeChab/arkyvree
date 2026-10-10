@@ -7,6 +7,12 @@ import { stripSeparators } from "@/shared/text.ts";
 import { FEAT_FAMILIES } from "@/vocabulary/dnd3.5/feats.ts";
 
 /**
+ * A feat with options a prerequisite asks any of (or a number of): "Weapon Focus (any thrown weapon)", "Spell Focus in
+ * two schools of magic", "Weapon Focus (with deity's favored weapon)".
+ */
+const ANY_OPTION = /\(any\b|\bany\b|\btwo\s+(schools?|weapons?|domains?|powers?|skills?|feats?)\b|\bdeity'?s?\b/i;
+
+/**
  * Reading what a prerequisite asking for any feat of a family checks: "any metamagic feat" a family the rules name
  * (`FEAT_FAMILIES`), "Weapon Focus (any thrown weapon)" one a feat's options make.
  */
@@ -23,6 +29,14 @@ export function ReadsAnyFeats<B extends Constructor<BaseRequirementReading>>(Bas
       const slug = stripSeparators(family.trim());
       // "Spell Focus (two schools of magic)": two of the family's feats
       return /\btwo\s+\w/i.test(text) ? gte(`feats.${slug}.count`, 2) : eq(`feats.${slug}.*.possessed`);
+    }
+
+    /**
+     * Whether a feat prerequisite asks for any of a feat's options, or a number of them (`ANY_OPTION`), which
+     * `anyFeatRequirement` reads.
+     */
+    protected asksAnyOption(text: string): boolean {
+      return ANY_OPTION.test(text);
     }
 
     /** "Any (other) metamagic feat": one feat of the family; "any two luck feats": that many of them. */

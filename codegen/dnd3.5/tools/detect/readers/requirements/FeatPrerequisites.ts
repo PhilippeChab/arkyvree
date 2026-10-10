@@ -1,13 +1,10 @@
 import { ABILITY_ABBREVIATIONS } from "@/codegen/dnd3.5/tools/terms/abilities.ts";
-import { RACE_SIZE_PATH } from "@/codegen/dnd3.5/tools/terms/races.ts";
 import { SAVE_SLUGS } from "@/codegen/dnd3.5/tools/terms/saves.ts";
-import { toSkillSlug } from "@/codegen/dnd3.5/tools/terms/skills.ts";
 import { BOOK_ABBREV_PATTERN } from "@/codegen/dnd3.5/tools/text/sanitize.ts";
 import type { FeatReference } from "@/codegen/dnd3.5/tools/types/feats.ts";
-import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
+import { eq, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import { feat } from "@/content/dnd3.5/builders/feats/possession.ts";
-import { SIZE_OPTIONS } from "@/shared/enums.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import { RequirementReading } from "./RequirementReading.ts";
@@ -81,6 +78,13 @@ const RELEVANT_ALIGNMENTS: Record<string, string> = {
   law: "Any lawful",
 };
 
+/**
+ * A skill's ranks a feat's prerequisite names: "Hide 4 ranks", "Knowledge (any) 5 ranks", "Knowledge (arcana or
+ * religion) 8 ranks", "Diplomacy or Intimidate 4 ranks". Its skill, then its ranks.
+ */
+const SKILL_RANKS =
+  /([A-Z][a-zA-Z]*(?:\s+[A-Z][a-zA-Z]*)*(?:\s*\([^)]+\))?(?:\s+or\s+[A-Z][a-zA-Z]*(?:\s+[A-Z][a-zA-Z]*)*(?:\s*\([^)]+\))?)*)\s+(\d+)\s+ranks?/gi;
+
 /** Prerequisites recognized that no path reads: left unresolved, to be reviewed. Flight. */
 const UNRESOLVED_PREREQUISITES = [/[Aa]bility to fly\b/];
 
@@ -104,30 +108,6 @@ function baseSaveRequirements(text: string): RequirementEntry[] {
   while ((baseSaveMatch = baseSaveRegex.exec(text)) !== null) {
     const save = SAVE_SLUGS[baseSaveMatch[1].toLowerCase()];
     if (save) reqs.push(gte(`saves.${save}.base`, parseInt(baseSaveMatch[2], 10)));
-  }
-  return reqs;
-}
-
-/** A feat's spellcasting requirements: "Caster level Nth", then "Ability to cast (Nth-level) arcane/divine spells". */
-function castingRequirements(text: string): RequirementEntry[] {
-  const reqs: RequirementEntry[] = [];
-  // Caster level: "Caster level Nth"
-  const casterMatch = text.match(/[Cc]aster level (\d+)(?:st|nd|rd|th)/);
-  if (casterMatch) {
-    const level = parseInt(casterMatch[1], 10);
-    reqs.push(or(gte("spellcasting.arcane", level), gte("spellcasting.divine", level)));
-  }
-
-  // Able to cast spells: "Ability to cast arcane spells" or specific level
-  const castMatch = text.match(
-    /[Aa](?:bility|ble) to cast (?:(\d+)(?:st|nd|rd|th)[- ]level )?(arcane|divine)?\s*spells/i,
-  );
-  if (castMatch) {
-    const level = castMatch[1] ? parseInt(castMatch[1], 10) : 1;
-    const type = castMatch[2]?.toLowerCase();
-    if (type === "arcane") reqs.push(gte("spellcasting.arcane", level));
-    else if (type === "divine") reqs.push(gte("spellcasting.divine", level));
-    else reqs.push(or(gte("spellcasting.arcane", level), gte("spellcasting.divine", level)));
   }
   return reqs;
 }
@@ -178,39 +158,6 @@ function isCommonPhrase(text: string): boolean {
   // "Spell-like ability at caster level X or higher" — not a feat
   if (/^spell-like ability/i.test(lower)) return true;
   return false;
-}
-
-/** A feat's size requirements: "Small or Medium size", "Medium or smaller size", "Small size". */
-function sizeRequirements(text: string): RequirementEntry[] {
-  const reqs: RequirementEntry[] = [];
-  const sizeNames = SIZE_OPTIONS.join("|");
-
-  // "X or Y size"
-  const explicitSizeMatch = text.match(new RegExp(`\\b(${sizeNames})\\s+or\\s+(${sizeNames})\\s+size`, "i"));
-  if (explicitSizeMatch) {
-    const s1 = SIZE_OPTIONS.find((s) => s.toLowerCase() === explicitSizeMatch[1].toLowerCase())!;
-    const s2 = SIZE_OPTIONS.find((s) => s.toLowerCase() === explicitSizeMatch[2].toLowerCase())!;
-    reqs.push(or(eqStr(RACE_SIZE_PATH, s1), eqStr(RACE_SIZE_PATH, s2)));
-  }
-
-  // "X or smaller size"
-  const orSmallerMatch =
-    !explicitSizeMatch && text.match(new RegExp(`\\b(${sizeNames})\\s+or\\s+smaller\\s+size`, "i"));
-  if (orSmallerMatch) {
-    const maxSize = SIZE_OPTIONS.find((s) => s.toLowerCase() === orSmallerMatch[1].toLowerCase())!;
-    const maxIdx = SIZE_OPTIONS.indexOf(maxSize);
-    const sizes = SIZE_OPTIONS.slice(0, maxIdx + 1);
-    reqs.push(or(...sizes.map((s) => eqStr(RACE_SIZE_PATH, s))));
-  }
-
-  // "X size" (standalone)
-  const exactSizeMatch =
-    !explicitSizeMatch && !orSmallerMatch && text.match(new RegExp(`\\b(${sizeNames})\\s+size\\b`, "i"));
-  if (exactSizeMatch) {
-    const size = SIZE_OPTIONS.find((s) => s.toLowerCase() === exactSizeMatch[1].toLowerCase())!;
-    reqs.push(eqStr(RACE_SIZE_PATH, size));
-  }
-  return reqs;
 }
 
 /**
@@ -296,6 +243,15 @@ export class FeatPrerequisites extends RequirementReading {
   }
 
   /**
+   * A feat's caster level requirement: "Caster level Nth", as the highest spell level of either kind the character
+   * casts, which no path reads a caster level as.
+   */
+  private casterLevelRequirements(text: string): RequirementEntry[] {
+    const level = /[Cc]aster level (\d+)(?:st|nd|rd|th)/.exec(text)?.[1];
+    return level ? [this.spellcastingOfEitherKind(parseInt(level, 10))] : [];
+  }
+
+  /**
    * A feat's class ability prerequisites (`CLASS_ABILITY_PREREQUISITES`, in order), a class feature any class's of its
    * family: a text one matched is no longer read by the ones after.
    */
@@ -331,7 +287,7 @@ export class FeatPrerequisites extends RequirementReading {
       .replace(/(?:Base attack bonus|BAB)[:\s]+\+{1,2}\d+/gi, "")
       .replace(/[Bb]ase\s+(?:Fortitude|Reflex|Will)\s+save\s+bonus\s+\+\d+/gi, "")
       .replace(/\b(?:Str|Dex|Con|Int|Wis|Cha)\s+\d+/gi, "")
-      .replace(/[A-Z][a-zA-Z]*(?:\s+[A-Z][a-zA-Z]*)*(?:\s*\([^)]+\))?\s+\d+\s+ranks?/gi, "")
+      .replace(SKILL_RANKS, "")
       .replace(/[Cc]aster level \d+(?:st|nd|rd|th)/g, "")
       .replace(/\w+\s+level\s+\d+(?:st|nd|rd|th)?/gi, "")
       .replace(/[Aa](?:bility|ble) to cast[^,.]+/gi, "")
@@ -368,13 +324,23 @@ export class FeatPrerequisites extends RequirementReading {
     return feats;
   }
 
-  /** The feats a prerequisite lists, split on commas but not inside parentheses. */
+  /**
+   * The feats a prerequisite lists, split on commas but not inside parentheses: an exotic weapon's proficiency as its
+   * item requires it, any of a feat's options ("Weapon Focus (any thrown weapon)"), or the feat.
+   */
   private listedFeatRequirements(text: string): RequirementEntry[] {
-    // Strip numeric/dice suffixes (e.g. "Sudden Strike +8d6" → "Sudden Strike")
-    // and book abbreviation suffixes (e.g. "Brutal Throw (CAd)" → "Brutal Throw")
-    return this.listedFeatNames(text).map((name) =>
-      this.featRequirement(name.replace(/\s*\+\d+(?:d\d+)?$/, "").replace(BOOK_ABBREV_PATTERN, "")),
-    );
+    return this.listedFeatNames(text).flatMap((name) => {
+      const proficiency = this.exoticProficiencyRequirements(name);
+      if (proficiency.length > 0) return proficiency;
+      if (this.asksAnyOption(name)) {
+        const anyOption = this.anyFeatRequirement(name);
+        if (!anyOption) this.unresolved.push(name);
+        return anyOption ? [anyOption] : [];
+      }
+      // Strip numeric/dice suffixes (e.g. "Sudden Strike +8d6" → "Sudden Strike")
+      // and book abbreviation suffixes (e.g. "Brutal Throw (CAd)" → "Brutal Throw")
+      return [this.featRequirement(name.replace(/\s*\+\d+(?:d\d+)?$/, "").replace(BOOK_ABBREV_PATTERN, ""))];
+    });
   }
 
   /**
@@ -426,20 +392,22 @@ export class FeatPrerequisites extends RequirementReading {
     if (babMatch) reqs.push(gte("combat.bab", parseInt(babMatch[1], 10)));
 
     reqs.push(...baseSaveRequirements(cleanedText));
-    reqs.push(...sizeRequirements(cleanedText));
+    reqs.push(...this.sizeRequirements(cleanedText));
     reqs.push(...abilityScoreRequirements(cleanedText));
 
     const spellcastingAbility = spellcastingAbilityRequirements(cleanedText);
     reqs.push(...spellcastingAbility.requirements);
+    // A skill's options ("Knowledge (arcana or religion) 8 ranks") are its, read with its ranks: no feat's
     const multiOption = this.multiOptionFeatRequirements(
-      cleanedText,
+      cleanedText.replace(SKILL_RANKS, ""),
       spellcastingAbility.matched ? cleanedText.replace(spellcastingAbility.matched, "") : cleanedText,
     );
     reqs.push(...multiOption.requirements);
 
     // Feat prerequisites — split on commas but respect parentheses
     reqs.push(...this.listedFeatRequirements(multiOption.featText));
-    reqs.push(...castingRequirements(cleanedText));
+    reqs.push(...this.casterLevelRequirements(cleanedText));
+    reqs.push(...this.castingRequirements(cleanedText));
     reqs.push(...classLevelRequirements(cleanedText));
     reqs.push(...this.skillRankRequirements(cleanedText));
 
@@ -467,19 +435,15 @@ export class FeatPrerequisites extends RequirementReading {
     }
   }
 
-  /** A feat's skill rank requirements: "SkillName N ranks", "Knowledge (any)" any Knowledge skill. */
+  /** A feat's skill rank requirements (`SKILL_RANKS`), each read as a class's (`skillRankRequirement`). */
   private skillRankRequirements(text: string): RequirementEntry[] {
     const reqs: RequirementEntry[] = [];
-    const skillRegex = /([A-Z][a-zA-Z]*(?:\s+[A-Z][a-zA-Z]*)*(?:\s*\([^)]+\))?)\s+(\d+)\s+ranks?/gi;
-    let skillMatch: RegExpExecArray | null;
-    while ((skillMatch = skillRegex.exec(text)) !== null) {
-      const name = skillMatch[1].trim();
-      const ranks = parseInt(skillMatch[2], 10);
+    for (const [, skill, ranks] of text.matchAll(SKILL_RANKS)) {
+      const name = skill.trim();
       // Skip false positives
       if (name.match(/^(Base|Must|Any|Or|And|The|Can|Has|Level)$/i)) continue;
-
-      // "Knowledge (any)" → OR of all Knowledge skills; else the skill, or its base skill for a specialization
-      reqs.push(this.anySkillRequirement(name, ranks) ?? gte(`skills.${toSkillSlug(name)}.rank`, ranks));
+      const requirement = this.skillRankRequirement(name, parseInt(ranks, 10));
+      if (requirement) reqs.push(requirement);
     }
     return reqs;
   }

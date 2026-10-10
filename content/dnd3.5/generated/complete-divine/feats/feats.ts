@@ -248,6 +248,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
       "You gain the ability to spontaneously convert your prepared spells into cure spells from your class spell list, mirroring a cleric's spontaneous casting. You can use this ability a number of times per day equal to your Wisdom modifier.",
     aptitudes: ["General"],
     requirements: [
+      or(gte("spellcasting.arcane", 1), gte("spellcasting.divine", 1)),
       gte("skills.knowledgereligion.rank", 4),
       or(
         eqStr("identity.beliefs.alignment", "Lawful Good"),
@@ -266,6 +267,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     aptitudes: ["General"],
     requirements: [
       gte("abilities.wisdom.total", 13),
+      or(gte("spellcasting.arcane", 1), gte("spellcasting.divine", 1)),
       gte("skills.knowledgenature.rank", 4),
       or(
         eqStr("identity.beliefs.alignment", "Neutral Good"),
@@ -283,6 +285,7 @@ export const GENERAL_FEATS: FeatSeed[] = [
     aptitudes: ["General"],
     requirements: [
       gte("abilities.wisdom.total", 13),
+      or(gte("spellcasting.arcane", 1), gte("spellcasting.divine", 1)),
       gte("skills.knowledgereligion.rank", 4),
       or(
         eqStr("identity.beliefs.alignment", "Lawful Neutral"),

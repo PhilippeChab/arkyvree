@@ -20,6 +20,15 @@ const FEATS_WITH_A_CHOICE = ["Energy Substitution"];
 export function ReadsFeatOptions<B extends Constructor<BaseRequirementReading>>(Base: B) {
   abstract class ReadingFeatOptions extends Base {
     /**
+     * The proficiency an exotic weapon's proficiency names ("Exotic Weapon Proficiency (kukri)"), as its item requires
+     * it: a martial weapon's for one the books list as exotic, a race's familiarity; none for any other name.
+     */
+    protected exoticProficiencyRequirements(name: string): RequirementEntry[] {
+      const weapon = findOptionName(/^Exotic Weapon Proficiency \((.+)\)$/i.exec(name)?.[1] ?? "", ALL_WEAPONS);
+      return weapon ? proficiencyRequirements(weapon) : [];
+    }
+
+    /**
      * The options of `family` a prerequisite lists ("dagger, kukri, or punch dagger"), each by its name where it can
      * tell it (Punching Dagger, Necromancy for "Necro."), else as written. "Composite version of either" is the
      * composite of each option before it.

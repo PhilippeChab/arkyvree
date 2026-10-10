@@ -1,21 +1,14 @@
-import { findOptionName } from "@/codegen/dnd3.5/tools/terms/featOptions.ts";
-import { RACE_NAME_PATH, RACE_SIZE_PATH, RACE_SPELLINGS } from "@/codegen/dnd3.5/tools/terms/races.ts";
-import { SKILL_SLUGS, toSkillSlug } from "@/codegen/dnd3.5/tools/terms/skills.ts";
+import { RACE_NAME_PATH, RACE_SPELLINGS } from "@/codegen/dnd3.5/tools/terms/races.ts";
+import { toSkillSlug } from "@/codegen/dnd3.5/tools/terms/skills.ts";
 import { BOOK_ABBREV_PATTERN } from "@/codegen/dnd3.5/tools/text/sanitize.ts";
 import { type ClassReference } from "@/codegen/dnd3.5/tools/types/classes.ts";
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import { domainFeat } from "@/content/dnd3.5/builders/aptitudes/names.ts";
 import { feat } from "@/content/dnd3.5/builders/feats/possession.ts";
-import { proficiencyRequirements } from "@/content/dnd3.5/builders/items/proficiencies.ts";
 import { capitalize, stripSeparators } from "@/shared/text.ts";
-import { CHECKLESS_SKILLS } from "@/vocabulary/dnd3.5/skills.ts";
-import { ALL_WEAPONS } from "@/vocabulary/dnd3.5/weapons.ts";
 
 import { RequirementReading } from "./RequirementReading.ts";
-
-/** The skills no check is made with, lowercased: a prerequisite's ranks in one (Speak Language's languages) aren't read. */
-const CHECKLESS_SKILL_NAMES = new Set(CHECKLESS_SKILLS.map((name) => name.toLowerCase()));
 
 /**
  * A class's feat prerequisites as the scraper split them, mended: a list split inside its parentheses ("Weapon Focus
@@ -47,23 +40,6 @@ function isMechanicalPrereq(text: string): boolean {
  */
 function namesClassFeature(text: string): boolean {
   return /^[A-Z][\w'-]*(?: [\w'-]+){0,4} (?:class feature|abilit(?:y|ies))$/.test(text);
-}
-
-/** Normalize abbreviated Craft subtypes from prerequisite text to proper D&D skill names */
-function normalizeCraftSubtype(subtype: string): string {
-  const lower = subtype.toLowerCase().trim();
-  const map: Record<string, string> = {
-    leather: "leatherworking",
-    metal: "metalworking",
-    wood: "woodworking",
-    stone: "stoneworking",
-    bone: "bonecarving",
-    gem: "gemcutting",
-    cloth: "weaving",
-    pottery: "pottery",
-    basket: "basketweaving",
-  };
-  return map[lower] ?? subtype;
 }
 
 /** A race requirement: "Race: Elf or half-elf", "Race: Dwarf". */
@@ -175,9 +151,9 @@ export class ClassPrerequisites extends RequirementReading {
       // "Improved Unarmed Strike (or monk's unarmed strike ability)": the feat, which the alternative grants
       f = f.replace(/\s*\(or\b[^)]*\)$/i, "");
       // "Exotic Weapon Proficiency (kukri)": proficiency with the weapon, which may be martial
-      const proficiencyWeapon = findOptionName(/^Exotic Weapon Proficiency \((.+)\)$/i.exec(f)?.[1] ?? "", ALL_WEAPONS);
-      if (proficiencyWeapon) {
-        reqs.push(...proficiencyRequirements(proficiencyWeapon));
+      const proficiency = this.exoticProficiencyRequirements(f);
+      if (proficiency.length > 0) {
+        reqs.push(...proficiency);
         continue;
       }
       const withoutChoice = this.featWithoutChoice(f);
@@ -194,7 +170,7 @@ export class ClassPrerequisites extends RequirementReading {
       // "any" feats (e.g. "Weapon Focus (any thrown weapon)", "Spell Focus in two schools of magic",
       //   "Weapon Focus (with deity's favored weapon)")
       // → prefix wildcard on the feat family slug
-      if (/\(any\b|\bany\b|\btwo\s+(schools?|weapons?|domains?|powers?|skills?|feats?)\b|\bdeity'?s?\b/i.test(f)) {
+      if (this.asksAnyOption(f)) {
         const anyReq = this.anyFeatRequirement(f);
         if (anyReq) reqs.push(anyReq);
         else this.unresolved.push(f);
@@ -213,35 +189,6 @@ export class ClassPrerequisites extends RequirementReading {
     return reqs;
   }
 
-  /** Expand "Knowledge (any)" to OR of all matching knowledge skills, or handle multi-option parentheticals */
-  private listedSkillRequirement(name: string, ranks: number): RequirementEntry | null {
-    // "Knowledge (any)" → OR of all Knowledge skills
-    const anySkill = this.anySkillRequirement(name, ranks);
-    if (anySkill) return anySkill;
-
-    // "Knowledge (arcana, local or psionics)" or "Craft (leather, metal, or woodworking)" → OR of individual skills
-    const multiMatch = name.match(/^(.+?)\s*\(([^)]*(?:,|or)[^)]*)\)$/i);
-    if (multiMatch) {
-      const baseName = multiMatch[1].trim();
-      const options = multiMatch[2]
-        .split(/,\s*(?:or\s+)?|\s+or\s+/)
-        .map((o) => o.trim())
-        .filter(Boolean);
-      if (options.length >= 2) {
-        const slugs = options.map((opt) => {
-          // Normalize abbreviated Craft subtypes: "leather" → "leatherworking", "metal" → "metalworking"
-          const normalized = /^craft$/i.test(baseName) ? normalizeCraftSubtype(opt) : opt;
-          const fullName = `${baseName} (${capitalize(normalized)})`;
-          // Try exact SKILL_SLUGS lookup first, fall back to constructing the slug directly
-          return SKILL_SLUGS[fullName.toLowerCase()] ?? stripSeparators(fullName);
-        });
-        return or(...slugs.map((s) => gte(`skills.${s}.rank`, ranks)));
-      }
-    }
-
-    return null;
-  }
-
   /**
    * A special prerequisite's requirements: a race, a proficiency, the class features it names, which any class's of
    * their family meets ("Turn undead class feature", "Either sneak attack +1d6 or skirmish +1d6"), or another special
@@ -254,13 +201,12 @@ export class ClassPrerequisites extends RequirementReading {
     if (proficiency.length > 0) return proficiency;
     const classFeatures = this.classFeatureRequirements(text);
     if (classFeatures.length > 0) return classFeatures;
-    const ability = this.specialAbilityRequirement(text);
-    return ability ? [ability] : [];
+    return this.specialAbilityRequirements(text);
   }
 
   /**
-   * The skills a class's prerequisites list, as requirements: an "X or Y" one either, and an "or Y" entry folded into
-   * the skill before it. A skill no check is made with is left out.
+   * The skills a class's prerequisites list, as requirements (`skillRankRequirement`): an "or Y" entry folded into the
+   * skill before it. A skill no check is made with is left out.
    */
   private skillRequirements(skills: { name: string; ranks: number }[]): RequirementEntry[] {
     const reqs: RequirementEntry[] = [];
@@ -268,33 +214,6 @@ export class ClassPrerequisites extends RequirementReading {
     for (let i = 0; i < skills.length; i++) {
       const s = skills[i];
 
-      // Skip the skills no check is made with ("Speak Language (Terran)")
-      const baseName = s.name
-        .replace(/\s*\([^)]*\)\s*$/, "")
-        .toLowerCase()
-        .trim();
-      if (CHECKLESS_SKILL_NAMES.has(baseName)) continue;
-
-      // Try to expand special skill patterns first (e.g. "Knowledge (any)", "Knowledge (arcana, local or psionics)")
-      const expanded = this.listedSkillRequirement(s.name, s.ranks);
-      if (expanded) {
-        reqs.push(expanded);
-        lastSkillReqIdx = reqs.length - 1;
-        continue;
-      }
-
-      // "Diplomacy or Intimidate 1 rank" → single entry with "or" inside
-      if (/\bor\b/i.test(s.name) && !/^or\s+/i.test(s.name)) {
-        const parts = s.name
-          .split(/\s+or\s+/i)
-          .map((p) => p.trim())
-          .filter(Boolean);
-        if (parts.length >= 2) {
-          reqs.push(or(...parts.map((p) => gte(`skills.${toSkillSlug(p)}.rank`, s.ranks))));
-          lastSkillReqIdx = reqs.length - 1;
-          continue;
-        }
-      }
       // "or Intimidate" as a separate entry → merge with previous skill req as OR
       if (/^or\s+/i.test(s.name)) {
         const name = s.name.replace(/^or\s+/i, "");
@@ -310,61 +229,30 @@ export class ClassPrerequisites extends RequirementReading {
         }
         continue;
       }
-      reqs.push(gte(`skills.${toSkillSlug(s.name)}.rank`, s.ranks));
+      // "Knowledge (any)", "Knowledge (arcana, local or psionics)", "Diplomacy or Intimidate", or the skill; none for
+      // a skill no check is made with ("Speak Language (Terran)")
+      const requirement = this.skillRankRequirement(s.name, s.ranks);
+      if (!requirement) continue;
+      reqs.push(requirement);
       lastSkillReqIdx = reqs.length - 1;
     }
     return reqs;
   }
 
-  /** A special ability requirement: a domain's access, a size, spellcasting, any feat of a family. */
-  private specialAbilityRequirement(text: string): RequirementEntry | undefined {
-    const lower = text.toLowerCase();
-
+  /**
+   * A special ability's requirements: a domain's access, else a size (`sizeRequirements`), spellcasting
+   * (`castingRequirements`) or any feat of a family (`familyFeatRequirements`), as a feat's prerequisite reads them.
+   */
+  private specialAbilityRequirements(text: string): RequirementEntry[] {
     // "access to the X domain"
     const domainMatch = text.match(/access to the (\w+) domain/i);
     if (domainMatch) {
       const domainName = domainMatch[1].charAt(0).toUpperCase() + domainMatch[1].slice(1).toLowerCase();
-      return eq(feat(domainFeat(domainName)));
+      return [eq(feat(domainFeat(domainName)))];
     }
-
-    // "Large size or larger"
-    if (/\blarge size or larger\b/i.test(lower)) {
-      return or(
-        eqStr(RACE_SIZE_PATH, "Large"),
-        eqStr(RACE_SIZE_PATH, "Huge"),
-        eqStr(RACE_SIZE_PATH, "Gargantuan"),
-        eqStr(RACE_SIZE_PATH, "Colossal"),
-      );
-    }
-
-    // Skip negated casting prereqs ("no ability to cast", "must have no ability to cast")
-    if (/\bno\s+ability to cast\b/i.test(lower) || /\bmust not have\b.*\bability to cast\b/i.test(lower))
-      return undefined;
-
-    // "Ability to cast N-level [arcane/divine] spells"
-    const castAbilityMatch = text.match(
-      /[Aa](?:bility|ble) to cast (?:the )?(?:(\d+)(?:st|nd|rd|th)[- ]level )?(arcane|divine)?\s*spells?/i,
-    );
-    if (castAbilityMatch) {
-      const level = castAbilityMatch[1] ? parseInt(castAbilityMatch[1], 10) : 1;
-      const type = castAbilityMatch[2]?.toLowerCase();
-      if (type === "arcane") return gte("spellcasting.arcane", level);
-      if (type === "divine") return gte("spellcasting.divine", level);
-      return or(gte("spellcasting.arcane", level), gte("spellcasting.divine", level));
-    }
-
-    // "Ability to cast summon monster III" / "Ability to cast detect thoughts"
-    if (/[Aa](?:bility|ble) to (?:cast|use)\b/i.test(lower))
-      return or(gte("spellcasting.arcane", 1), gte("spellcasting.divine", 1));
-
-    // "Any luck feat" / "Any divine feat"
-    const anyFeatMatch = text.match(/\bany (\w+) feat\b/i);
-    if (anyFeatMatch) {
-      const family = stripSeparators(anyFeatMatch[1]);
-      return eq(`feats.${family}.possessed`);
-    }
-
-    return undefined;
+    for (const read of [this.sizeRequirements(text), this.castingRequirements(text), this.familyFeatRequirements(text)])
+      if (read.length > 0) return read;
+    return [];
   }
 
   /**
