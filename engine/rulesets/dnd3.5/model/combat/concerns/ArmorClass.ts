@@ -101,14 +101,6 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
       if (category === "Tower") this.towerShield = true;
       if (fields.maxDex !== null) this.shieldMaxDex = Math.min(this.shieldMaxDex, fields.maxDex);
     }
-
-    setArmorsData(armors: ArmorsData): void {
-      this.combat.armors = armors;
-    }
-
-    setShieldsData(shields: ShieldsData): void {
-      this.combat.shields = shields;
-    }
   }
   return WithArmorClass;
 }

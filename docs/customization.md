@@ -23,6 +23,8 @@ The build (`Builds.build`, a concern of `DetailedCharacter`) loads the data, set
 3. The requirements are evaluated once more on the sheet the rounds leave: the evaluation the templates, the power modifiers and the validation read. Template modifiers then apply, reading those values, when that evaluation meets their requirements. Nothing checks the requirements again after them.
 4. The modifiers that target a power (`powers.*`) apply last, after the spellcasting is computed (bonus caster levels, bonus spells, known spells), gated by the same evaluation.
 
+Each component is built after the ones it reads (`CharacterComponents.build`: the encumbrance, the armors and the shields before the skills and combat), so none is wired in later, and each takes its data in one `initialize` (the spellcasting also has a `finalize`, the step 4 above). What a component computes from others is counted when read, never copied: an aptitude's slots left, the skill points' budget, the character's level (`identity.meta.level`), the highest spell levels it casts (`spellcasting.arcane`, `.divine`), and the size the sheet reads, its identity's race's (`identity.physiology.race.size`), which a modifier changes. A computed value a modifier may change (the level, a Hide check's size) keeps what the modifier adds on top of what it counts.
+
 ## Modifier Operators
 
 `add`, `subtract`, `multiply`, `divide`, `set`

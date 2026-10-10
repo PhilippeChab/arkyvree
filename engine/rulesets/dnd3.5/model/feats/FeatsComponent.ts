@@ -27,7 +27,7 @@ export default class FeatsComponent {
     return isFeatEntry(entry) ? entry : undefined;
   }
 
-  getFeats() {
+  getFeats(): FeatsData {
     return this.feats;
   }
 

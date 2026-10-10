@@ -1,5 +1,6 @@
 import type AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
-import type { CustomizedRace } from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
+import type IdentityComponent from "@/engine/rulesets/dnd3.5/model/identity/IdentityComponent.ts";
+import type { InventoryEntry } from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
 import {
   CARRYING_CAPACITY,
   ENCUMBERED_SPEED,
@@ -8,15 +9,6 @@ import {
   QUADRUPED_SIZE_CARRY_MULTIPLIERS,
   SIZE_CARRY_MULTIPLIERS,
 } from "@/engine/rulesets/dnd3.5/rules/carrying.ts";
-import type { CharacterInventory, Item, Modifier, Property, Requirement } from "@/shared/relations.ts";
-
-type RawInventoryEntry = CharacterInventory & {
-  item: Item & {
-    modifiers: Modifier[];
-    properties: Property[];
-    requirements: Requirement[];
-  };
-};
 
 export type EncumbranceData = {
   carriedweight: number;
@@ -29,7 +21,10 @@ export type EncumbranceData = {
 };
 
 export default class EncumbranceComponent {
-  constructor(private readonly abilities: AbilitiesComponent) {}
+  constructor(
+    private readonly abilities: AbilitiesComponent,
+    private readonly identity: IdentityComponent,
+  ) {}
 
   /**
    * The carried weight is an input, which a modifier can change; the loads, the load category and its penalties are
@@ -61,11 +56,6 @@ export default class EncumbranceComponent {
     };
   })();
 
-  /** Whether the race walks on four legs (RACE_QUADRUPED), which carries more for its size. */
-  private quadruped = false;
-
-  private raceSize = "Medium";
-
   private getCarryingCapacity(str: number): number {
     if (str <= 0) return 0;
     if (str < CARRYING_CAPACITY.length) return CARRYING_CAPACITY[str];
@@ -77,11 +67,14 @@ export default class EncumbranceComponent {
     return CARRYING_CAPACITY[baseStr] * multiplier;
   }
 
-  /** The heaviest load the character carries: its strength's, for its size and legs. */
+  /**
+   * The heaviest load the character carries: its strength's, for its size and legs, as its identity's race has them (a
+   * race walking on four legs, RACE_QUADRUPED, carries more).
+   */
   private getHeavyLoad(): number {
     const strTotal = this.abilities.getAbility("Strength")?.total ?? 0;
-    const sizeMultiplier =
-      (this.quadruped ? QUADRUPED_SIZE_CARRY_MULTIPLIERS : SIZE_CARRY_MULTIPLIERS)[this.raceSize] ?? 1;
+    const { quadruped, size } = this.identity.getIdentity().physiology.race;
+    const sizeMultiplier = (quadruped ? QUADRUPED_SIZE_CARRY_MULTIPLIERS : SIZE_CARRY_MULTIPLIERS)[size] ?? 1;
     return Math.floor(this.getCarryingCapacity(strTotal) * sizeMultiplier);
   }
 
@@ -105,10 +98,8 @@ export default class EncumbranceComponent {
     return this.encumbrance;
   }
 
-  initialize(inventory: RawInventoryEntry[], race: CustomizedRace): void {
-    this.raceSize = race.size;
-    this.quadruped = race.quadruped;
-
+  /** The weight the character carries: its inventory's. */
+  initialize(inventory: InventoryEntry[]): void {
     let totalWeight = 0;
     for (const entry of inventory) {
       const itemWeight = Number(entry.item.weight ?? 0);

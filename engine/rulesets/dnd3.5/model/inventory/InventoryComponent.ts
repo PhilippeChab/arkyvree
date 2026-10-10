@@ -3,14 +3,8 @@ import type ArmorsComponent from "@/engine/rulesets/dnd3.5/model/combat/ArmorsCo
 import type CombatComponent from "@/engine/rulesets/dnd3.5/model/combat/CombatComponent.ts";
 import type ShieldsComponent from "@/engine/rulesets/dnd3.5/model/combat/ShieldsComponent.ts";
 import type WeaponsComponent from "@/engine/rulesets/dnd3.5/model/combat/WeaponsComponent.ts";
+import type { InventoryEntry } from "@/engine/rulesets/dnd3.5/model/loading/CustomizedEntities.ts";
 import { UNARMED_STRIKE } from "@/engine/rulesets/dnd3.5/rules/combat.ts";
-import {
-  type CharacterInventory,
-  type Item,
-  type Modifier,
-  type Property,
-  type Requirement,
-} from "@/shared/relations.ts";
 
 import InventorySlots from "./InventorySlots.ts";
 
@@ -21,14 +15,6 @@ type InventoryData = Record<string, InventorySlotData> & {
 type InventorySlotData = {
   properties: Record<string, string>;
 } | null;
-
-type RawInventoryEntry = CharacterInventory & {
-  item: Item & {
-    modifiers: Modifier[];
-    properties: Property[];
-    requirements: Requirement[];
-  };
-};
 
 type WeaponSetInventory = Record<
   string,
@@ -51,17 +37,17 @@ export default class InventoryComponent {
     weaponsets: {},
   } as InventoryData;
 
-  private rawItems: RawInventoryEntry[] = [];
+  private rawItems: InventoryEntry[] = [];
 
-  getFlatInventory() {
+  getFlatInventory(): InventoryEntry[] {
     return this.rawItems;
   }
 
-  getInventory() {
+  getInventory(): InventoryData {
     return this.inventory;
   }
 
-  initialize(inventory: RawInventoryEntry[]) {
+  initialize(inventory: InventoryEntry[]) {
     this.rawItems = inventory;
     for (const entry of inventory) {
       if (!entry.equipped) continue;
@@ -109,9 +95,13 @@ export default class InventoryComponent {
         // A weapon without a proficiency fills no slot: what the slot holds (an empty hand's unarmed strike) isn't it
         if (weapon) this.weapons.registerWeapon(setIndex, entry.location as string, fields.weapon);
       } else if (isArmor) {
+        // The armors list it, and the sheet wears it: the heaviest worn slows the character down
         this.armors.registerArmor(entry.item, fields);
+        this.combat.addArmor(fields);
       } else if (isShield) {
+        // The shields list it, and the sheet carries it: its maximum Dexterity, a tower shield's bulk
         this.shields.registerShield(entry.item, fields);
+        this.combat.addShield(fields);
       } else {
         // Non-combat equipment goes into flat equipment slots
         this.inventory[slot] = {

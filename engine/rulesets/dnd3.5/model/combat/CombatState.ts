@@ -1,11 +1,13 @@
 import type AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/ClassesComponent.ts";
-import type SkillsComponent from "@/engine/rulesets/dnd3.5/model/skills/SkillsComponent.ts";
+import type IdentityComponent from "@/engine/rulesets/dnd3.5/model/identity/IdentityComponent.ts";
 import { COMBAT_RULES } from "@/engine/rulesets/dnd3.5/rules/combat.ts";
 
+import type ArmorsComponent from "./ArmorsComponent.ts";
 import type { ArmorsData } from "./ArmorsComponent.ts";
 import type EncumbranceComponent from "./EncumbranceComponent.ts";
 import type { EncumbranceData } from "./EncumbranceComponent.ts";
+import type ShieldsComponent from "./ShieldsComponent.ts";
 import type { ShieldsData } from "./ShieldsComponent.ts";
 
 type ArmorCategory = (typeof ARMOR_CATEGORIES)[number];
@@ -181,66 +183,65 @@ export default abstract class CombatState {
   constructor(
     protected readonly abilities: AbilitiesComponent,
     protected readonly classes: ClassesComponent,
-  ) {}
+    protected readonly identity: IdentityComponent,
+    armors: ArmorsComponent,
+    shields: ShieldsComponent,
+    protected readonly encumbrance: EncumbranceComponent,
+  ) {
+    this.combat = CombatState.newSheet(armors.getArmors(), shields.getShields(), encumbrance.getEncumbrance());
+  }
+
+  /** A new sheet, around the armors, the shields and the encumbrance the character's components hold. */
+  private static newSheet(armors: ArmorsData, shields: ShieldsData, encumbrance: EncumbranceData): CombatData {
+    return {
+      ac: {
+        base: COMBAT_RULES.DEFAULT_AC_BASE,
+        armor: 0,
+        shield: 0,
+        dexterity: 0,
+        natural: 0,
+        deflection: 0,
+        dodge: 0,
+        size: 0,
+        misc: 0,
+        uncannydodge: false,
+        total: COMBAT_RULES.DEFAULT_AC_BASE,
+        touch: COMBAT_RULES.DEFAULT_AC_BASE,
+        flatfooted: COMBAT_RULES.DEFAULT_AC_BASE,
+      },
+      hp: { base: 0, constitution: 0, misc: 0, total: 0 },
+      initiative: { dexterity: 0, misc: 0, total: 0 },
+      bab: 0,
+      naturalattacks: { secondarypenalty: COMBAT_RULES.SECONDARY_NATURAL_ATTACK_PENALTY, extraattacks: 0, count: 0 },
+      throwing: { tohit: 0 },
+      twoweapon: {
+        mainhandpenalty: COMBAT_RULES.TWO_WEAPON_MAIN_HAND_PENALTY,
+        offhandpenalty: COMBAT_RULES.TWO_WEAPON_OFF_HAND_PENALTY,
+        offhandattacks: 1,
+      },
+      grapple: { bab: 0, strength: 0, size: 0, misc: 0, total: 0 },
+      speed: { base: COMBAT_RULES.DEFAULT_SPEED, misc: 0, total: COMBAT_RULES.DEFAULT_SPEED },
+      encumbrance,
+      armor: { category: "none" },
+      shield: { held: false },
+      weaponsets: {},
+      armors,
+      shields,
+    };
+  }
 
   /**
    * The sheet. Its sections that compute parts when read (armor class, hit points, initiative, grapple, speed) are
-   * placeholders here, which the concerns replace when the character initializes; the encumbrance is the encumbrance's
-   * own object, set with its source.
+   * placeholders here, which the concerns replace when the character initializes; its armors, shields and encumbrance
+   * are their components' own objects, so what changes them (a modifier) is what the sheet reads.
    */
-  protected readonly combat: CombatData = {
-    ac: {
-      base: COMBAT_RULES.DEFAULT_AC_BASE,
-      armor: 0,
-      shield: 0,
-      dexterity: 0,
-      natural: 0,
-      deflection: 0,
-      dodge: 0,
-      size: 0,
-      misc: 0,
-      uncannydodge: false,
-      total: COMBAT_RULES.DEFAULT_AC_BASE,
-      touch: COMBAT_RULES.DEFAULT_AC_BASE,
-      flatfooted: COMBAT_RULES.DEFAULT_AC_BASE,
-    },
-    hp: { base: 0, constitution: 0, misc: 0, total: 0 },
-    initiative: { dexterity: 0, misc: 0, total: 0 },
-    bab: 0,
-    naturalattacks: { secondarypenalty: COMBAT_RULES.SECONDARY_NATURAL_ATTACK_PENALTY, extraattacks: 0, count: 0 },
-    throwing: { tohit: 0 },
-    twoweapon: {
-      mainhandpenalty: COMBAT_RULES.TWO_WEAPON_MAIN_HAND_PENALTY,
-      offhandpenalty: COMBAT_RULES.TWO_WEAPON_OFF_HAND_PENALTY,
-      offhandattacks: 1,
-    },
-    grapple: { bab: 0, strength: 0, size: 0, misc: 0, total: 0 },
-    speed: { base: COMBAT_RULES.DEFAULT_SPEED, misc: 0, total: COMBAT_RULES.DEFAULT_SPEED },
-    encumbrance: {
-      carriedweight: 0,
-      lightload: 0,
-      mediumload: 0,
-      heavyload: 0,
-      load: "light" as const,
-      maxdex: Infinity,
-      checkpenalty: 0,
-    },
-    armor: { category: "none" },
-    shield: { held: false },
-    weaponsets: {},
-    armors: {},
-    shields: {},
-  };
+  protected readonly combat: CombatData;
 
   /** Each double weapon's other end's damage dice (its WEAPON_DOUBLE_DAMAGE). */
   protected readonly doubleWeapons = new WeakMap<WeaponSlot, string>();
 
   /** Each weapon's abilities, which its to-hit and damage read: Weapon Finesse sets its finesse. */
   protected readonly weaponAbilities = new WeakMap<WeaponSlot, WeaponAbilities>();
-
-  protected characterEncumbrance: EncumbranceComponent | null = null;
-
-  protected characterSkills: SkillsComponent | null = null;
 
   protected hitDiceOverride: number | null = null;
 
@@ -250,8 +251,6 @@ export default abstract class CombatState {
   /** Whether a one-handed off-hand weapon counts as light in two-weapon fighting: Oversized Two-Weapon Fighting. */
   protected oversizedOffHand = false;
 
-  protected raceSize = "Medium";
-
   protected shieldMaxDex = Infinity;
 
   /** Whether the race keeps its speed in medium or heavy armor and load (RACE_SPEED_IGNORES_ENCUMBRANCE: the dwarf). */
@@ -259,4 +258,9 @@ export default abstract class CombatState {
 
   /** Whether a tower shield is carried: −2 on attack rolls, for its encumbrance. */
   protected towerShield = false;
+
+  /** The character's size, as its identity's race has it: a modifier on `identity.physiology.race.size` changes it. */
+  protected get raceSize(): string {
+    return this.identity.getIdentity().physiology.race.size;
+  }
 }

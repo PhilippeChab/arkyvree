@@ -13,7 +13,7 @@ type AptitudesById = Map<string, AptitudesData[string]>;
 type AptitudesData = {
   [key: string]: {
     allowed: number;
-    available: number;
+    readonly available: number;
     description: string;
     id: string;
     /** A spell list's: whether its spells join the list of the class whose level gave it. */
@@ -40,7 +40,7 @@ type PowerPool = {
 
 export type AptitudeLevelData = {
   allowed: number;
-  available: number;
+  readonly available: number;
   spent: number;
   uses: number;
 };
@@ -100,10 +100,7 @@ export default class AptitudesComponent {
   ) {
     for (const [aptitudeId, count] of Object.entries(spentByAptitudeId)) {
       const aptitude = aptitudeById.get(aptitudeId);
-      if (aptitude) {
-        aptitude.spent = count;
-        aptitude.available = aptitude.allowed - aptitude.spent;
-      }
+      if (aptitude) aptitude.spent = count;
     }
 
     for (const [aptitudeId, levelSpent] of Object.entries(spentByAptitudeIdAndLevel)) {
@@ -128,7 +125,10 @@ export default class AptitudesComponent {
         description: aptitude.description || "",
         uses: 0,
         allowed: 0,
-        available: 0,
+        // What's left to pick, counted when read: none once every spell is known
+        get available() {
+          return this.allowed === ALLOWED_ALL ? 0 : this.allowed - this.spent;
+        },
         spent: 0,
       };
 
@@ -185,7 +185,10 @@ export default class AptitudesComponent {
         else if (!allKnownLevels.has(this)) count = value;
       },
       spent: 0,
-      available: 0,
+      // What's left to pick, counted when read: none once every spell is known
+      get available() {
+        return this.allowed === ALLOWED_ALL ? 0 : this.allowed - this.spent;
+      },
     };
   }
 
@@ -215,7 +218,7 @@ export default class AptitudesComponent {
     level.allowed = 0;
   }
 
-  getAptitudes() {
+  getAptitudes(): AptitudesData {
     return this.aptitudes;
   }
 
@@ -250,11 +253,15 @@ export default class AptitudesComponent {
     return this.unplacedGeneralFeats;
   }
 
+  /**
+   * An entry per aptitude (one per spell level for a leveled one, `leveledAptitudeIds`): what it allows, from the class
+   * levels' feats and powers and the general feats, and what the character spent on it.
+   */
   initialize(
     aptitudes: Aptitude[],
     klassLevelFeatCountsByAptitudeId: Record<string, number>,
-    klassLevelPowerCountsByAptitudeId: Record<string, number> = {},
-    leveledAptitudeIds: Set<string> = new Set(),
+    klassLevelPowerCountsByAptitudeId: Record<string, number>,
+    leveledAptitudeIds: Set<string>,
   ) {
     this.buildEntries(aptitudes, leveledAptitudeIds);
     const aptitudeById: AptitudesById = new Map(
@@ -262,30 +269,9 @@ export default class AptitudesComponent {
     );
     this.applyAllowances(aptitudeById, klassLevelFeatCountsByAptitudeId, klassLevelPowerCountsByAptitudeId);
     this.applySpent(aptitudeById, this.countSpent());
-    this.updateAvailables();
   }
 
   isLeveledAptitude(key: string): boolean {
     return this.leveledAptitudeKeys.has(key);
-  }
-
-  updateAvailables() {
-    for (const [key, aptitude] of Object.entries(this.aptitudes)) {
-      if (this.leveledAptitudeKeys.has(key)) {
-        // Update per-level availables for spell aptitudes
-        const aptitudeObj = aptitude as Record<string, unknown>;
-        for (let level = 0; level <= MAX_SPELL_LEVEL; level++) {
-          const levelData = aptitudeObj[String(level)] as AptitudeLevelData | undefined;
-          if (levelData) {
-            if (levelData.allowed === ALLOWED_ALL) levelData.available = 0;
-            else levelData.available = levelData.allowed - levelData.spent;
-          }
-        }
-      } else {
-        // Update flat available
-        if (aptitude.allowed === ALLOWED_ALL) aptitude.available = 0;
-        else aptitude.available = aptitude.allowed - aptitude.spent;
-      }
-    }
   }
 }

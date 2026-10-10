@@ -27,7 +27,7 @@ export default class AbilitiesComponent {
     return Math.floor((total - ABILITY_MODIFIER_OFFSET) / ABILITY_MODIFIER_DIVISOR);
   }
 
-  getAbilities() {
+  getAbilities(): AbilitiesData {
     return this.abilities;
   }
 

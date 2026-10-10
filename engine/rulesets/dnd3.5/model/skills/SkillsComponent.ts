@@ -1,13 +1,23 @@
 import { SKILL_FIELDS, type SkillFieldValues } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
 import type AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/ClassesComponent.ts";
-import type { ArmorsData } from "@/engine/rulesets/dnd3.5/model/combat/ArmorsComponent.ts";
-import type { ShieldsData } from "@/engine/rulesets/dnd3.5/model/combat/ShieldsComponent.ts";
+import type ArmorsComponent from "@/engine/rulesets/dnd3.5/model/combat/ArmorsComponent.ts";
+import type EncumbranceComponent from "@/engine/rulesets/dnd3.5/model/combat/EncumbranceComponent.ts";
+import type ShieldsComponent from "@/engine/rulesets/dnd3.5/model/combat/ShieldsComponent.ts";
 import type { ValidationIssue } from "@/engine/rulesets/dnd3.5/model/concerns/Validates.ts";
+import type IdentityComponent from "@/engine/rulesets/dnd3.5/model/identity/IdentityComponent.ts";
 import { SIZE_HIDE_MOD } from "@/engine/rulesets/dnd3.5/rules/sizes.ts";
 import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
 import { type RulesetAbility, type Skill } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
+
+/** The skill points' budget: a level's bonus points, an input, and the points counted from the character's levels. */
+type SkillBudget = {
+  readonly available: number;
+  perlevel: number;
+  readonly spent: number;
+  readonly total: number;
+};
 
 type SkillsData = {
   [key: string]: {
@@ -17,7 +27,7 @@ type SkillsData = {
     misc: number; // Misc from items
     name: string;
     rank: number; // Rank from levels
-    size: number; // Size modifier (Hide only)
+    size: number; // Size modifier (Hide only), which a modifier can add to
     readonly total: number; // Total from everything
     trained: boolean;
     readonly weight: number; // Armor check penalty, from armor, shield and load
@@ -28,6 +38,10 @@ export default class SkillsComponent {
   constructor(
     private readonly abilities: AbilitiesComponent,
     private readonly classes: ClassesComponent,
+    private readonly identity: IdentityComponent,
+    private readonly armors: ArmorsComponent,
+    private readonly shields: ShieldsComponent,
+    private readonly encumbrance: EncumbranceComponent,
   ) {}
 
   /**
@@ -48,19 +62,28 @@ export default class SkillsComponent {
 
   private readonly rankBySkillId: Map<string, number> = new Map<string, number>();
 
-  private readonly skillBudget = { total: 0, available: 0, spent: 0, perlevel: 0 };
+  /**
+   * The skill points' budget: a level's bonus points (`perlevel`, a human's) are an input, which a modifier changes; the
+   * total, what's left and what's spent are counted when read, from the classes' levels and the skill point ability.
+   */
+  private readonly skillBudget: SkillBudget = (() => {
+    const total = () => this.countTotalPoints();
+    const spent = () => this.countSpentPoints();
+    return {
+      get total() {
+        return total();
+      },
+      get available() {
+        return this.total - this.spent;
+      },
+      get spent() {
+        return spent();
+      },
+      perlevel: 0,
+    };
+  })();
 
   private readonly skills: SkillsData = {} as SkillsData;
-
-  private characterArmors: { getArmors(): ArmorsData } | null = null;
-
-  private characterEncumbrance: {
-    getEncumbrance(): { checkpenalty: number };
-  } | null = null;
-
-  private characterShields: { getShields(): ShieldsData } | null = null;
-
-  private raceSize = "Medium";
 
   private skillPointAbilityId: string | null = null;
 
@@ -72,19 +95,30 @@ export default class SkillsComponent {
   private armorCheckPenalty(): number {
     let armorPenalty = 0;
 
-    if (this.characterArmors) {
-      const uniqueArmors = new Set(Object.values(this.characterArmors.getArmors()));
-      for (const armor of uniqueArmors) armorPenalty += armor.checkpenalty;
-    }
-
-    if (this.characterShields) {
-      const uniqueShields = new Set(Object.values(this.characterShields.getShields()));
-      for (const shield of uniqueShields) armorPenalty += shield.checkpenalty;
-    }
+    for (const armor of new Set(Object.values(this.armors.getArmors()))) armorPenalty += armor.checkpenalty;
+    for (const shield of new Set(Object.values(this.shields.getShields()))) armorPenalty += shield.checkpenalty;
 
     // D&D 3.5: use the worse (more negative) of armor+shield penalty vs encumbrance penalty
-    const encumbrancePenalty = this.characterEncumbrance ? this.characterEncumbrance.getEncumbrance().checkpenalty : 0;
+    const encumbrancePenalty = this.encumbrance.getEncumbrance().checkpenalty;
     return Math.abs(Math.min(armorPenalty, encumbrancePenalty));
+  }
+
+  /** The skill points the character's levels spent: their skills' ranks. */
+  private countSpentPoints(): number {
+    return Object.values(this.classes.getClasses()).reduce(
+      (acc, klass) =>
+        acc + klass.levels.reduce((acc, level) => acc + level.skills.reduce((acc, skill) => acc + skill.rank, 0), 0),
+      0,
+    );
+  }
+
+  /** The skill points every level gives: its points per level, with the bonus each level adds (`perlevel`). */
+  private countTotalPoints(): number {
+    const { pointsPerLevel, bonusPerLevel } = this.getSkillPointBases();
+    return pointsPerLevel.reduce(
+      (acc, points, index) => acc + SkillRules.levelPoints(points, bonusPerLevel, index === 0),
+      0,
+    );
   }
 
   /** The modifier of the ruleset's skill point ability, its misc bonuses aside: 0 when the ruleset names none. */
@@ -93,6 +127,45 @@ export default class SkillsComponent {
       ? (this.skillPointRulesetAbilities.find((a) => a.id === this.skillPointAbilityId)?.name ?? null)
       : null;
     return abilityName ? this.abilities.getAbilityModifierExcludingMisc(abilityName) : 0;
+  }
+
+  /**
+   * A skill as the sheet holds it: its ranks and misc are inputs; the ability's modifier, the armor check penalty and
+   * the total are computed when read, as they follow the abilities, the armor and the load. A Hide check's size follows
+   * the character's, as its identity's race has it, and keeps what a modifier adds to it.
+   */
+  private newSkill(skill: Skill, abilityName: string, fields: SkillFieldValues): SkillsData[string] {
+    const { abilities } = this;
+    const armorCheckPenalty = () => this.armorCheckPenalty();
+    const raceSize = () => this.identity.getIdentity().physiology.race.size;
+    const invested = this.rankBySkillId.get(skill.id) ?? 0;
+    // How many times over the skill takes the armor check penalty: none when armor doesn't weigh on it
+    const checkPenaltyMultiplier = fields.impactedByWeight ? fields.checkPenaltyMultiplier : 0;
+    const sizeOfRace = () => (skill.name === "Hide" ? (SIZE_HIDE_MOD[raceSize()] ?? 0) : 0);
+    let sizeBonus = 0;
+    return {
+      name: skill.name,
+      description: skill.description ?? undefined,
+      trained: fields.usableWithoutTraining ? true : invested !== 0,
+      innate: this.innateSkillIds.has(skill.id),
+      rank: invested,
+      get ability() {
+        return abilityName ? abilities.getAbilityModifier(abilityName) : 0;
+      },
+      get weight() {
+        return checkPenaltyMultiplier === 0 ? 0 : armorCheckPenalty() * checkPenaltyMultiplier;
+      },
+      get size() {
+        return sizeOfRace() + sizeBonus;
+      },
+      set size(value: number) {
+        sizeBonus = value - sizeOfRace();
+      },
+      misc: 0,
+      get total() {
+        return this.rank + this.ability + this.size + this.misc - this.weight;
+      },
+    };
   }
 
   /** Ranks a bonded creature's hit dice past its stat block's give a skill. */
@@ -134,7 +207,7 @@ export default class SkillsComponent {
     return classSkillPoints + this.getSkillPointAbilityModifier();
   }
 
-  getSkillBudget() {
+  getSkillBudget(): SkillBudget {
     return this.skillBudget;
   }
 
@@ -155,7 +228,7 @@ export default class SkillsComponent {
     };
   }
 
-  getSkills() {
+  getSkills(): SkillsData {
     return this.skills;
   }
 
@@ -175,13 +248,21 @@ export default class SkillsComponent {
     return issues;
   }
 
+  /**
+   * Each of the ruleset's skills (`rulesetSkills`), with the fields its properties hold (`skillFields`) and the ranks the
+   * character's class levels put in it; and the skill points' budget, from the ruleset's skill point ability
+   * (`skillPointAbilityId`) and each class level's points (`klassLevelProperties`).
+   */
   initialize(
     rulesetSkills: Skill[],
     rulesetAbilities: RulesetAbility[],
-    raceSize: string,
-    skillFields?: Map<string, SkillFieldValues>,
+    skillPointAbilityId: string | null,
+    klassLevelProperties: Map<string, { bab: number; skills: number }>,
+    skillFields: Map<string, SkillFieldValues>,
   ) {
-    this.raceSize = raceSize;
+    this.skillPointRulesetAbilities = rulesetAbilities;
+    this.skillPointAbilityId = skillPointAbilityId;
+    this.skillPointKlassLevelProperties = klassLevelProperties;
     const classes = this.classes.getClasses();
 
     // Build ability ID -> name lookup
@@ -231,57 +312,12 @@ export default class SkillsComponent {
     }
 
     for (const skill of rulesetSkills) {
-      // A skill without its fields' rows has their defaults: armor doesn't weigh on it, and it needs training
-      const fields = skillFields?.get(skill.id) ?? SKILL_FIELDS.defaults;
-      const { usableWithoutTraining } = fields;
-      // How many times over the skill takes the armor check penalty: none when armor doesn't weigh on it
-      const checkPenaltyMultiplier = fields.impactedByWeight ? fields.checkPenaltyMultiplier : 0;
-      const invested = this.rankBySkillId.get(skill.id) ?? 0;
       const abilityName = abilityNameById.get(skill.primaryAbilityId) ?? "";
       this.abilityNameBySkill.set(stripSeparators(skill.name), abilityName);
-      const abilities = this.abilities;
-      const armorCheckPenalty = () => this.armorCheckPenalty();
-
-      // The ability's modifier, the armor check penalty and the total are computed when read: they follow the
-      // abilities, the armor and the load, and the parts
-      this.skills[stripSeparators(skill.name)] = {
-        name: skill.name,
-        description: skill.description ?? undefined,
-        trained: usableWithoutTraining ? true : invested !== 0,
-        innate: this.innateSkillIds.has(skill.id),
-        rank: invested,
-        get ability() {
-          return abilityName ? abilities.getAbilityModifier(abilityName) : 0;
-        },
-        get weight() {
-          return checkPenaltyMultiplier === 0 ? 0 : armorCheckPenalty() * checkPenaltyMultiplier;
-        },
-        size: skill.name === "Hide" ? (SIZE_HIDE_MOD[this.raceSize] ?? 0) : 0,
-        misc: 0,
-        get total() {
-          return this.rank + this.ability + this.size + this.misc - this.weight;
-        },
-      };
+      // A skill without its fields' rows has their defaults: armor doesn't weigh on it, and it needs training
+      const fields = skillFields.get(skill.id) ?? SKILL_FIELDS.defaults;
+      this.skills[stripSeparators(skill.name)] = this.newSkill(skill, abilityName, fields);
     }
-  }
-
-  setArmorSources(armors: { getArmors(): ArmorsData }, shields: { getShields(): ShieldsData }) {
-    this.characterArmors = armors;
-    this.characterShields = shields;
-  }
-
-  setEncumbranceSource(encumbrance: { getEncumbrance(): { checkpenalty: number } }) {
-    this.characterEncumbrance = encumbrance;
-  }
-
-  setSkillPointDependencies(
-    rulesetAbilities: RulesetAbility[],
-    skillPointAbilityId: string | null,
-    klassLevelProperties: Map<string, { bab: number; skills: number }>,
-  ) {
-    this.skillPointRulesetAbilities = rulesetAbilities;
-    this.skillPointAbilityId = skillPointAbilityId;
-    this.skillPointKlassLevelProperties = klassLevelProperties;
   }
 
   /**
@@ -299,30 +335,5 @@ export default class SkillsComponent {
     skill.rank = ranks;
     skill.misc = total - ability - skill.size - ranks - featBonus;
     skill.trained = total > 0;
-  }
-
-  updateAvailables() {
-    this.updateSkillPointTotals();
-  }
-
-  updateSkillPointTotals() {
-    const classes = this.classes.getClasses();
-
-    // Compute spent from actual skill ranks
-    const spent = Object.values(classes).reduce(
-      (acc, klass) =>
-        acc + klass.levels.reduce((acc, level) => acc + level.skills.reduce((acc, skill) => acc + skill.rank, 0), 0),
-      0,
-    );
-
-    const { pointsPerLevel, bonusPerLevel } = this.getSkillPointBases();
-    const total = pointsPerLevel.reduce(
-      (acc, points, index) => acc + SkillRules.levelPoints(points, bonusPerLevel, index === 0),
-      0,
-    );
-
-    this.skillBudget.total = total;
-    this.skillBudget.spent = spent;
-    this.skillBudget.available = total - spent;
   }
 }

@@ -1,10 +1,6 @@
 import type { TargetPathsTraverser } from "@/engine/core/paths/CategoryPaths.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
-import PathTraverser, {
-  type Component,
-  type Components,
-  type TraversePathResult,
-} from "@/engine/core/paths/PathTraverser.ts";
+import PathTraverser, { type Components, type TraversePathResult } from "@/engine/core/paths/PathTraverser.ts";
 import TemplateExpression from "@/engine/core/paths/TemplateExpression.ts";
 import type RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import { extractReferencedPaths, isTemplateValue } from "@/shared/customization/templateExpression.ts";
@@ -45,7 +41,7 @@ export default class ModifierEvaluator {
     skippedModifiers: [],
   };
 
-  private applyModifier(modifier: Modifier, result: TraversePathResult, component: Component, components: Components) {
+  private applyModifier(modifier: Modifier, result: TraversePathResult, components: Components) {
     const { data } = result;
 
     // Resolve the modifier value — template references or literal conversion
@@ -66,8 +62,6 @@ export default class ModifierEvaluator {
     this.results.appliedModifiers.push(
       appliedTarget !== modifier.target ? { ...modifier, target: appliedTarget } : modifier,
     );
-
-    PathTraverser.readComponent(component, "updateAvailables");
   }
 
   /**
@@ -205,7 +199,7 @@ export default class ModifierEvaluator {
     }
     for (const result of results) {
       if (result.error) this.skip(modifier, result.error);
-      else if (result.component) this.applyModifier(modifier, result, result.component, components);
+      else if (result.component) this.applyModifier(modifier, result, components);
     }
   }
 
