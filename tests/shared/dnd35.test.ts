@@ -1,15 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
 import { BONDED_KIND_BY_SLUG, BONDED_KIND_SLUGS, BONDED_KINDS } from "@/shared/dnd3.5/bondedKinds.ts";
-import { MAGIC_SCHOOLS, toSpellPossessionSlug } from "@/shared/dnd3.5/spells.ts";
+import { MAGIC_SCHOOLS } from "@/shared/dnd3.5/spells.ts";
 
 describe("D&D 3.5", () => {
-  test("names a spell list's possession paths after its aptitude, without the Spells suffix", () => {
-    expect(toSpellPossessionSlug("Wizard Spells")).toBe("wizard");
-    expect(toSpellPossessionSlug("Knowledge Domain Spells")).toBe("knowledgedomain");
-    expect(toSpellPossessionSlug("Spells of the Deep")).toBe("spellsofthedeep");
-  });
-
   test("gives Spell Focus a school of magic, Universal aside", () => {
     expect(MAGIC_SCHOOLS).toEqual([
       "Abjuration",

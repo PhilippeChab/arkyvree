@@ -444,6 +444,11 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       }
     }
 
+    /** The attacks a round its base attack bonus gives: each 5 less than the last while positive, or the bonus alone. */
+    getBabAttacks(): number[] {
+      return iterativeAttacks(this.combat.bab);
+    }
+
     /**
      * Replace the default Unarmed Strike with the bonded creature's natural attacks, by its stat block. Each becomes a
      * weapon entry, two to a set (its main and off hand only hold them: "Two Handed" would clear both), primary or

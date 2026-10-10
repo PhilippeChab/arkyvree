@@ -1,5 +1,3 @@
-import { stripSeparators } from "@/shared/text.ts";
-
 export const SPELL_SCHOOLS = [
   "Abjuration",
   "Conjuration",
@@ -87,12 +85,4 @@ export const SPELL_SUBSCHOOLS = [
  */
 export function formatSpellLevel(level: number) {
   return level === 0 ? "Cantrips" : `Level ${level}`;
-}
-
-/**
- * The slug of a spell list's possession paths, from its aptitude's name without the " Spells" suffix ("Wizard Spells"
- * → "wizard", "Knowledge Domain Spells" → "knowledgedomain").
- */
-export function toSpellPossessionSlug(aptitudeName: string) {
-  return stripSeparators(aptitudeName.replace(/ Spells$/, ""));
 }

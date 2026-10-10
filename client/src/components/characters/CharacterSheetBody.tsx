@@ -60,7 +60,8 @@ export function CharacterSheetBody({
   const encumbrance = combat.encumbrance;
   const baseRules = character.baseRules ?? DEFAULT_BASE_RULES;
   const sections = getSections(baseRules);
-  const bondedByFeat = sections.bondedFeats(character.bonded);
+  // The bonded creatures, by the feat that bonds each
+  const bondedByFeat = new Map(Object.values(character.bonded).map((creature) => [creature.bondFeatId, creature]));
 
   return (
     <Stack spacing={3}>
@@ -104,25 +105,14 @@ export function CharacterSheetBody({
             virtualFeats={character.virtualFeats}
             rulesetId={rulesetId}
             renderFeatExtra={(feat) => {
-              const bonded = bondedByFeat.get(feat.name);
+              const bonded = bondedByFeat.get(feat.id);
               return (
                 bonded && <sections.BondedCreature bonded={bonded} baseRules={baseRules} linkable={bondedLinkable} />
               );
             }}
           />
 
-          {/* A Partial character's powers are [] (`partial` already leaves them out): this narrows them to the record PowersSection takes */}
-          {!Array.isArray(character.powers) && (
-            <sections.PowersSection
-              classes={character.classes}
-              powers={character.powers}
-              virtualPowers={character.virtualPowers}
-              aptitudes={character.aptitudes}
-              spellTags={character.spellTags}
-              spellTagLists={character.spellTagLists}
-              rulesetId={rulesetId}
-            />
-          )}
+          <sections.PowersSection spellGroups={character.spellGroups} rulesetId={rulesetId} />
 
           {equipmentMode === "editable" && rulesetId ? (
             <EquipmentSection

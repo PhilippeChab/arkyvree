@@ -7,7 +7,6 @@ import {
   type AbilityScoresSectionProps,
   BondedCreature,
   type BondedCreatureProps,
-  bondedFeats,
   CombatAndSavesSection,
   type CombatAndSavesSectionProps,
   SkillsSection,
@@ -20,13 +19,11 @@ import {
 
 /**
  * What a sheet shows by its base rules: its sections, which a power is to the schema and a spell to 3.5
- * (`PowersSection: SpellsSection`), and its bonded creatures by the feat that bonds each. A second base rules makes
- * this a union of each one's map.
+ * (`PowersSection: SpellsSection`). A second base rules makes this a union of each one's map.
  */
 interface SectionMap {
   AbilityScoresSection: ComponentType<AbilityScoresSectionProps>;
   BondedCreature: ComponentType<BondedCreatureProps>;
-  bondedFeats: typeof bondedFeats;
   CombatAndSavesSection: ComponentType<CombatAndSavesSectionProps>;
   PowersSection: ComponentType<SpellsSectionProps>;
   SkillsSection: ComponentType<SkillsSectionProps>;
@@ -36,7 +33,6 @@ interface SectionMap {
 const RULESET_SECTIONS: Record<BaseRules, SectionMap> = {
   "Dungeons & Dragons: 3.5": {
     AbilityScoresSection,
-    bondedFeats,
     BondedCreature,
     CombatAndSavesSection,
     PowersSection: SpellsSection,

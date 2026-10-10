@@ -1,12 +1,7 @@
 import { Image, Page, Text, View } from "@react-pdf/renderer";
 
+import CombatSheet from "@/engine/rulesets/dnd3.5/characters/description/CombatSheet.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
-import {
-  buildAttackRows,
-  describeWeaponSlot,
-  formatAttackBonus,
-  formatCritical,
-} from "@/shared/dnd3.5/weaponAttacks.ts";
 
 import SheetFormat from "./SheetFormat.ts";
 import { FONT_SIZE, styles } from "./styles.ts";
@@ -39,7 +34,7 @@ function InfoPage({
   const classes = detailedCharacter.components.classes;
   const identityData = identity.getIdentity();
   const abilityData = abilities.getAbilities();
-  const combatData = combat.getCombat();
+  const combatData = CombatSheet.describe(combat);
   const saveData = saves.getSaves();
   const classData = classes.getCharacterClasses();
   return (
@@ -236,13 +231,7 @@ function InfoPage({
                 </View>
                 <View style={styles.statBox}>
                   <Text style={styles.statLabel}>BAB</Text>
-                  <Text style={styles.statValue}>
-                    {(() => {
-                      const attacks: string[] = [];
-                      for (let b = combatData.bab; b > 0; b -= 5) attacks.push(SheetFormat.formatModifier(b));
-                      return attacks.length > 0 ? attacks.join("/") : SheetFormat.formatModifier(combatData.bab);
-                    })()}
-                  </Text>
+                  <Text style={styles.statValue}>{combatData.babLabel}</Text>
                 </View>
                 <View style={styles.statBox}>
                   <Text style={styles.statLabel}>Grapple</Text>
@@ -250,7 +239,7 @@ function InfoPage({
                 </View>
                 <View style={styles.statBox}>
                   <Text style={styles.statLabel}>Speed</Text>
-                  <Text style={styles.statValue}>{combatData.speed.total} ft.</Text>
+                  <Text style={styles.statValue}>{combatData.speedLabel}</Text>
                 </View>
               </View>
             </View>
@@ -260,53 +249,41 @@ function InfoPage({
         {/* Weapons & Combat */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Weapons & Combat</Text>
-          {Object.entries(combatData.weaponsets)
-            .sort(([a], [b]) => Number(a) - Number(b))
-            .map(([setIndex, set]) => {
-              const weapons = (["mainhand", "offhand", "twohanded"] as const)
-                .map((slotKey) => ({ slotKey, weapon: set[slotKey] }))
-                .filter(({ weapon }) => weapon !== null);
-
-              if (weapons.length === 0) return null;
-
-              return (
-                <View key={setIndex} style={{ marginBottom: 6 }}>
-                  <Text style={{ fontSize: FONT_SIZE.md, fontWeight: "bold", marginBottom: 3, color: "#444" }}>
-                    Set {Number(setIndex) + 1}
-                  </Text>
-                  <View style={[styles.tableRow, styles.tableHeader]}>
-                    <Text style={[styles.tableCell, { width: "27%", fontWeight: "bold" }]}>Weapon</Text>
-                    <Text style={[styles.tableCell, { width: "18%", fontWeight: "bold" }]}>Attack Bonus</Text>
-                    <Text style={[styles.tableCell, { width: "18%", fontWeight: "bold" }]}>Damage</Text>
-                    <Text style={[styles.tableCell, { width: "13%", fontWeight: "bold" }]}>Critical</Text>
-                    <Text style={[styles.tableCell, { width: "11%", fontWeight: "bold" }]}>Range</Text>
-                    <Text style={[styles.tableCell, { width: "13%", fontWeight: "bold" }]}>Type</Text>
-                  </View>
-                  {weapons.flatMap(({ slotKey, weapon }) =>
-                    buildAttackRows(weapon!, describeWeaponSlot(weapon!, slotKey)).map((row) => (
-                      <View key={row.key} style={styles.tableRow}>
-                        <View style={[styles.tableCell, { width: "27%" }]}>
-                          <Text>{weapon!.name}</Text>
-                          <Text style={{ fontSize: FONT_SIZE.sm, color: "#666" }}>{row.label}</Text>
-                          {weapon!.proficient === false && (
-                            <Text style={{ fontSize: FONT_SIZE.xs, color: "#cc0000", fontWeight: "bold" }}>
-                              Not Proficient (-4)
-                            </Text>
-                          )}
-                        </View>
-                        <Text style={[styles.tableCell, { width: "18%" }]}>{formatAttackBonus(row.attack)}</Text>
-                        <Text style={[styles.tableCell, { width: "18%" }]}>{row.damage ?? weapon!.damage.total}</Text>
-                        <Text style={[styles.tableCell, { width: "13%" }]}>
-                          {formatCritical(weapon!.damage.critical)}
+          {combatData.weaponSets.map(({ set, weapons }) => (
+            <View key={set} style={{ marginBottom: 6 }}>
+              <Text style={{ fontSize: FONT_SIZE.md, fontWeight: "bold", marginBottom: 3, color: "#444" }}>
+                Set {set + 1}
+              </Text>
+              <View style={[styles.tableRow, styles.tableHeader]}>
+                <Text style={[styles.tableCell, { width: "27%", fontWeight: "bold" }]}>Weapon</Text>
+                <Text style={[styles.tableCell, { width: "18%", fontWeight: "bold" }]}>Attack Bonus</Text>
+                <Text style={[styles.tableCell, { width: "18%", fontWeight: "bold" }]}>Damage</Text>
+                <Text style={[styles.tableCell, { width: "13%", fontWeight: "bold" }]}>Critical</Text>
+                <Text style={[styles.tableCell, { width: "11%", fontWeight: "bold" }]}>Range</Text>
+                <Text style={[styles.tableCell, { width: "13%", fontWeight: "bold" }]}>Type</Text>
+              </View>
+              {weapons.flatMap((weapon) =>
+                weapon.rows.map((row) => (
+                  <View key={row.key} style={styles.tableRow}>
+                    <View style={[styles.tableCell, { width: "27%" }]}>
+                      <Text>{weapon.name}</Text>
+                      <Text style={{ fontSize: FONT_SIZE.sm, color: "#666" }}>{row.label}</Text>
+                      {weapon.proficient === false && (
+                        <Text style={{ fontSize: FONT_SIZE.xs, color: "#cc0000", fontWeight: "bold" }}>
+                          Not Proficient (-4)
                         </Text>
-                        <Text style={[styles.tableCell, { width: "11%" }]}>{row.range}</Text>
-                        <Text style={[styles.tableCell, { width: "13%" }]}>{weapon!.damage.types.join(", ")}</Text>
-                      </View>
-                    )),
-                  )}
-                </View>
-              );
-            })}
+                      )}
+                    </View>
+                    <Text style={[styles.tableCell, { width: "18%" }]}>{row.attack}</Text>
+                    <Text style={[styles.tableCell, { width: "18%" }]}>{row.damage}</Text>
+                    <Text style={[styles.tableCell, { width: "13%" }]}>{row.critical}</Text>
+                    <Text style={[styles.tableCell, { width: "11%" }]}>{row.range}</Text>
+                    <Text style={[styles.tableCell, { width: "13%" }]}>{row.types}</Text>
+                  </View>
+                )),
+              )}
+            </View>
+          ))}
         </View>
       </View>
     </Page>

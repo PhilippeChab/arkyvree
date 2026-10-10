@@ -12,7 +12,6 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import { useSuppressedWarningsStore } from "@/client/src/stores/suppressedWarningsStore.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
-import { computeAbilityModifier } from "./abilities.ts";
 import { AbilityScoreBox } from "./AbilityScoreBox.tsx";
 
 export interface AbilityScoresSectionProps {
@@ -48,9 +47,9 @@ export function AbilityScoresSection({ abilities, baseRules, characterId, readOn
         const updated = { ...old.abilities };
         for (const [name, data] of Object.entries(updated)) {
           if (data.abilityId === abilityId) {
-            // Until the server answers: the total moves by the base's change, whatever else adds to it
-            const total = data.total + score - data.base;
-            updated[name] = { ...data, base: score, total, modifier: computeAbilityModifier(total) };
+            // Until the server answers: the total moves by the base's change, whatever else adds to it, and the
+            // modifier stays the one it gave
+            updated[name] = { ...data, base: score, total: data.total + score - data.base };
             break;
           }
         }

@@ -124,12 +124,13 @@ describe("characters", () => {
     const [theron] = (await expectOk(characters.$get({ query: { search: "Theron Lightbringer" } }))).items;
     const detail = await expectOk(character.$get({ param: { id: theron.id } }));
 
-    const tags = [...new Set(Object.values(detail.spellTags).flat())].sort();
+    const spells = detail.spellGroups.flatMap((list) => list.levels.flatMap((group) => group.spells));
+    const tags = [...new Set(spells.flatMap((spell) => spell.tags?.map((tag) => tag.name) ?? []))].sort();
     expect(tags).toEqual(["Healing Domain", "Sun Domain"]);
     const classPowerIds = new Set(
       Object.values(detail.classes).flatMap((klass) => klass.levels.flatMap((level) => level.powers.map((p) => p.id))),
     );
-    expect(Object.keys(detail.spellTags).some((id) => classPowerIds.has(id))).toBe(true);
+    expect(spells.some((spell) => spell.tags && classPowerIds.has(spell.id))).toBe(true);
   });
 
   describe("abilities", () => {

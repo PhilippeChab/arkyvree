@@ -11,7 +11,7 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import { SheetSection } from "@/client/src/components/characters/sections/SheetSection.tsx";
@@ -29,8 +29,10 @@ import { DURATION } from "@/client/src/theme/animations.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 import { formatPropertyType } from "@/shared/customization/properties.ts";
 import { SPELL_SCHOOL } from "@/shared/dnd3.5/properties/index.ts";
-import { type AptitudeSpells, buildSpellGroups, type SpellGroup, type SpellRow } from "@/shared/dnd3.5/spellGroups.ts";
 import { formatSpellLevel } from "@/shared/dnd3.5/spells.ts";
+
+/** An aptitude's spells, by spell level, as the sheet lists them. */
+type AptitudeSpells = CharacterDetail["spellGroups"][number];
 
 interface CollapsibleAptitudeProps {
   apt: AptitudeSpells;
@@ -42,19 +44,17 @@ interface CollapsibleLevelProps {
   rulesetId?: string;
 }
 
+/** An aptitude's spells at a spell level. */
+type SpellGroup = AptitudeSpells["levels"][number];
+
 interface SpellRowItemProps {
   rulesetId?: string;
-  spell: SpellRow;
+  spell: SpellGroup["spells"][number];
 }
 
 export interface SpellsSectionProps {
-  aptitudes?: CharacterDetail["aptitudes"];
-  classes: CharacterDetail["classes"];
-  powers?: CharacterDetail["powers"];
   rulesetId?: string;
-  spellTagLists?: CharacterDetail["spellTagLists"];
-  spellTags?: CharacterDetail["spellTags"];
-  virtualPowers?: CharacterDetail["virtualPowers"];
+  spellGroups: CharacterDetail["spellGroups"];
 }
 
 function CollapsibleAptitude({ apt, rulesetId }: CollapsibleAptitudeProps) {
@@ -196,26 +196,13 @@ function SpellRowItem({ spell, rulesetId }: SpellRowItemProps) {
   );
 }
 
-export function SpellsSection({
-  classes,
-  powers,
-  virtualPowers,
-  aptitudes,
-  spellTags,
-  spellTagLists,
-  rulesetId,
-}: SpellsSectionProps) {
-  const groups = useMemo(
-    () => buildSpellGroups({ classes, powers, virtualPowers, aptitudes, spellTags, spellTagLists }),
-    [classes, powers, virtualPowers, aptitudes, spellTags, spellTagLists],
-  );
-
-  if (groups.length === 0) return null;
+export function SpellsSection({ spellGroups, rulesetId }: SpellsSectionProps) {
+  if (spellGroups.length === 0) return null;
 
   return (
     <SheetSection title="Spells">
       <Stack spacing={3}>
-        {groups.map((apt) => (
+        {spellGroups.map((apt) => (
           <CollapsibleAptitude key={apt.aptitudeName} apt={apt} rulesetId={rulesetId} />
         ))}
       </Stack>

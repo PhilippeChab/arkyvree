@@ -25,6 +25,11 @@ export default class BondedPaths implements PathCategory<Dnd35Components> {
     );
   }
 
+  /** A bonded kind's race (`bonded.<kind>.race`): what the feat that bonds its creature sets. */
+  static raceOf(kind: string): string {
+    return `bonded.${kind}.race`;
+  }
+
   readonly component = { key: "bonded", getter: "getBonded" } as const;
 
   readonly description = "Familiar, animal companion, or mount race";

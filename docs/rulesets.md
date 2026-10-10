@@ -546,7 +546,9 @@ engine/rulesets/
     │   ├── Dnd35Characters.ts             (the module's characters)
     │   ├── CharacterEdits.ts              (what its creation stores: its ability scores)
     │   ├── description/                   (CharacterDescription: the 3.5 API response shape, whole or partial, its
-    │   │                                  private notes as the viewer reads them; CharacterResponse)
+    │   │                                  private notes as the viewer reads them, the feat that bonds each creature;
+    │   │                                  CharacterResponse; what both sheets print, CombatSheet: the attacks and the
+    │   │                                  speed, SpellGroups: the spells by list and level)
     │   ├── inventory/                     (InventoryEntries: what an entry's add or edit stores; Equipping: what
     │   │                                  equipping an item checks)
     │   └── sheet/                         (the printed sheet, in React PDF: CharacterSheet and its pages, SheetFormat)

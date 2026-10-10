@@ -5,7 +5,6 @@ import { sortAbilities } from "@/client/src/components/characters/sections/abili
 import { EntryTitle } from "@/client/src/components/characters/sections/EntryTitle.tsx";
 import { SubsectionTitle, ValueChip } from "@/client/src/components/common/index.ts";
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
-import { formatIterativeAttacks, formatSpeed } from "@/shared/dnd3.5/weaponAttacks.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 import { formatSigned } from "@/shared/text.ts";
 
@@ -79,8 +78,8 @@ export function BondedCreature({ bonded, baseRules, linkable = false }: BondedCr
               <Stack spacing={1.5}>
                 <StatField label="HP" value={combat?.hp?.total ?? 0} />
                 <StatField label="AC" value={combat?.ac?.total ?? 10} />
-                <StatField label="BAB" value={formatIterativeAttacks(combat?.bab ?? 0)} />
-                <StatField label="Speed" value={formatSpeed(combat?.speed?.total)} />
+                <StatField label="BAB" value={combat?.babLabel} />
+                <StatField label="Speed" value={combat?.speedLabel} />
               </Stack>
               <Stack spacing={1.5}>
                 {Object.entries(saves).map(([key, save]) => (
