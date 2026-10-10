@@ -124,7 +124,7 @@ Scrapes spell listing and detail pages into `SpellReference` JSON.
 **Auto-detected:**
 - Spell name, school, subschool, descriptor
 - Level entries per class (e.g. "Cleric 3, Druid 4")
-- Description text
+- Description text: its paragraphs, and the lines a paragraph splits (`<br />`, which cheerio's `text()` drops: `Page.text` keeps them), which the reference stores as one text, a space between them
 - The stat block's fields (casting time, range, target, effect, area, duration, components, saving throw, spell resistance)
 - A field its stat block leaves out, from the spell its text says it's written as ("functions like X", "As X, except…", "the same as X", "works as the X spell"), its book's or the core rules': what its own stat block states stays, and a personal spell takes no saving throw or spell resistance
 

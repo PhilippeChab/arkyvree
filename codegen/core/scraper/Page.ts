@@ -1,4 +1,4 @@
-/** A scraped page: its HTML, loaded, and how its sections and their headings are found. */
+/** A scraped page: its HTML, loaded, how its sections and their headings are found, and an element's text read. */
 
 import * as cheerio from "cheerio";
 import type { AnyNode } from "domhandler";
@@ -6,8 +6,8 @@ import type { AnyNode } from "domhandler";
 import { normalizeWs } from "@/codegen/core/text/whitespace.ts";
 
 /**
- * A scraped page, whatever its site: its document, which a page's readings read (`$`), and how they find a section
- * (`section`) and its heading (`heading`).
+ * A scraped page, whatever its site: its document, which a page's readings read (`$`), how they find a section
+ * (`section`) and its heading (`heading`), and an element's text, its lines kept apart (`text`).
  */
 export class Page {
   constructor(html: string) {
@@ -25,6 +25,16 @@ export class Page {
   /** An element's tag name, lowercased. */
   static tagName(el: cheerio.Cheerio<AnyNode>): string | undefined {
     return el.prop("tagName")?.toLowerCase();
+  }
+
+  /**
+   * An element's text, each line break (`<br>`) in it a newline: cheerio's `text()` drops it, which joins the lines it
+   * splits ("tortured spirits.One side of the wall").
+   */
+  static text(el: cheerio.Cheerio<AnyNode>): string {
+    const copy = el.clone();
+    copy.find("br").replaceWith("\n");
+    return copy.text();
   }
 
   /** The page's document. */
