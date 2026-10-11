@@ -36,8 +36,10 @@ function rankNamesakes<T extends { id: string; rulesetId: string }>(
  *   3. Name-based fallback for `NAME_FALLBACK_ENTITY_TYPES` — pairs same-name native rows across the chain when the
  *      snapshot pass didn't catch them (e.g. a spell reprinted in two D&D sourcebooks).
  *   4. A local copy's siblings become overrides of it.
- *   5. A copied class's levels, paired by number.
- *   6. The aptitudes' namesakes.
+ *   5. The aptitudes' namesakes.
+ *   6. The ruleset's own entities over its extensions' of their names — an extension's entity of a name the ruleset's
+ *      own has is overridden by it (a homebrew feat a book's author named as the ruleset's since it subscribed).
+ *   7. A copied class's levels, and those of an extension's class the ruleset's own hides, paired by number.
  *
  * One build (`build`), from the rows the server reads for it (`CowSources.getReads`) through the handle its caller
  * holds: the shared `db` for a ruleset's scope, a copy's transaction for the copy, so that what the copy stores (its
@@ -54,11 +56,12 @@ export default class CowDataBuilder {
   /** A ruleset's `CowData`, from its rows: the stored ids the server reads, copy-on-write resolution off. */
   static build(ruleset: RulesetSources, rows: CowRows): CowData {
     const builder = new CowDataBuilder(ruleset);
-    if (builder.sourceChain.length > 0) {
-      builder.load(rows);
-      builder.pairKlassLevels(rows);
+    if (builder.sourceChain.length > 0) builder.load(rows);
+    if (builder.extensionRulesetIds.length > 0) {
+      builder.pairAptitudes(rows);
+      builder.overrideOwnNamesakes(rows);
     }
-    if (builder.extensionRulesetIds.length > 0) builder.pairAptitudes(rows);
+    if (builder.sourceChain.length > 0) builder.pairKlassLevels(rows);
     return builder.toCowData();
   }
 
@@ -71,6 +74,9 @@ export default class CowDataBuilder {
   private readonly overrides = new Map<string, string>();
 
   private readonly rulesetId: string;
+
+  /** An extension's entity the ruleset's own of its name hides, to that one. */
+  private readonly shadows = new Map<string, string>();
 
   /** Each winner to its sibling losers, whose customizations merge into it. */
   private readonly siblings = new Map<string, string[]>();
@@ -113,6 +119,34 @@ export default class CowDataBuilder {
     this.aliases.set(sourceId, copyId);
   }
 
+  /**
+   * The ruleset's own entities win over its extensions' of their names, of every type: an extension's entity named as
+   * one of the ruleset's (one its author added or renamed since the ruleset subscribed, which a subscribe refuses) is
+   * overridden by the ruleset's, as a local copy overrides what it copied. Its own rows go with it (its customizations,
+   * its links to lists), never merged: a homebrew entity and a book's of one name may be different things. What stood
+   * for it stands for the ruleset's entity now (what it copied, its sibling losers), so a row naming any of them (a
+   * book's class granting it, a character's pick) reads the ruleset's. An extension's entity the view already hides
+   * (one the ruleset copied, a list paired by name) stays as it is. Of the ruleset's own entities of a name, the first
+   * stands.
+   */
+  private overrideOwnNamesakes(rows: CowRows) {
+    const key = (row: CowRows["ownNamesakes"][number]) => `${row.entityType}|${row.name}`;
+    const own = new Map<string, string>();
+    for (const row of rows.ownNamesakes)
+      if (row.rulesetId === this.rulesetId && !own.has(key(row))) own.set(key(row), row.id);
+
+    const loserIds = new Set([...this.siblings.values()].flat());
+    for (const row of rows.ownNamesakes) {
+      const ownId = own.get(key(row));
+      if (!ownId || row.rulesetId === this.rulesetId || this.overrides.has(row.id) || loserIds.has(row.id)) continue;
+      for (const [staleId, id] of this.aliases) if (id === row.id) this.aliases.set(staleId, ownId);
+      for (const [sourceId, copyId] of this.overrides) if (copyId === row.id) this.overrides.set(sourceId, ownId);
+      for (const loserId of this.siblings.get(row.id) ?? []) this.override(loserId, ownId);
+      this.override(row.id, ownId);
+      this.shadows.set(row.id, ownId);
+    }
+  }
+
   /** The true overrides: each source entity to its closest fork's copy, following a copy of a copy to the last. */
   private overrideSnapshots(allRulesetIds: string[], byRuleset: SnapshotsByRuleset) {
     for (const rid of allRulesetIds) {
@@ -145,16 +179,24 @@ export default class CowDataBuilder {
   }
 
   /**
-   * Klass-level id pairs for COW'd klasses: levels aren't individually snapshotted, so they pair by level number, as
-   * overrides, so that a stored klass-level id resolves to the copy's.
+   * Klass-level id pairs for COW'd klasses, and for an extension's klass the ruleset's own of its name hides: levels
+   * aren't individually snapshotted, so they pair by level number, as overrides, so that a stored klass-level id
+   * resolves to the copy's (the ruleset's own klass's).
    */
   private pairKlassLevels(rows: CowRows) {
     if (this.overrides.size === 0) return;
-    const klassSnaps = CowSources.getKlassSnapshots(this.rulesetId, rows.snapshots);
+    // An entity of another type that the ruleset's own hides has no levels
+    const pairs = [
+      ...CowSources.getKlassSnapshots(this.rulesetId, rows.snapshots).map((snap) => [
+        snap.sourceEntityId,
+        snap.forkedEntityId,
+      ]),
+      ...this.shadows,
+    ];
     const levelsByKlass = Map.groupBy(rows.klassLevels, (level) => level.klassId);
-    for (const snap of klassSnaps) {
-      const childLevels = levelsByKlass.get(snap.forkedEntityId) ?? [];
-      for (const parentLevel of levelsByKlass.get(snap.sourceEntityId) ?? []) {
+    for (const [sourceId, copyId] of pairs) {
+      const childLevels = levelsByKlass.get(copyId) ?? [];
+      for (const parentLevel of levelsByKlass.get(sourceId) ?? []) {
         const childLevel = childLevels.find((l) => l.level === parentLevel.level);
         if (childLevel) this.override(parentLevel.id, childLevel.id);
       }
@@ -233,6 +275,6 @@ export default class CowDataBuilder {
   }
 
   private toCowData(): CowData {
-    return new CowData(this.sourceChain, this.overrides, this.aliases, this.siblings);
+    return new CowData(this.sourceChain, this.overrides, this.aliases, this.siblings, new Set(this.shadows.keys()));
   }
 }

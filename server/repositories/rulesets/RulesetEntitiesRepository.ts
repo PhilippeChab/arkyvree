@@ -4,7 +4,7 @@ import { unionAll } from "drizzle-orm/pg-core";
 import type { Db } from "@/drizzle/database.ts";
 import { entitySnapshotsInRules } from "@/drizzle/schema.ts";
 
-import { ENTITY_TABLES, type RulesetEntityType } from "./entityTables.ts";
+import { ENTITY_TABLES, RULESET_ENTITY_TYPES, type RulesetEntityType } from "./entityTables.ts";
 
 /**
  * The rows `findNames` reads: a ruleset's own, those with these ids, or the live rows of these rulesets themselves (not a
@@ -75,6 +75,43 @@ class RulesetEntitiesRepository {
     });
     const [first, second, ...rest] = subqueries;
     // One order, whatever the plan: the name pass meets its groups in it (the union's own columns)
+    return await unionAll(first, second, ...rest).orderBy(sql`entity_type, name, id`);
+  }
+
+  /**
+   * The live entities of every type, by id and name, each with its type and ruleset, of a ruleset (`rulesetId`) and of
+   * these rulesets (`rulesetIds`, its extensions) whose name the ruleset has and one of these has too: its own rows, not
+   * a campaign's, copies included (a copy shows under its own name).
+   */
+  async findOwnNamesakes(db: Db, where: { rulesetId: string; rulesetIds: string[] }) {
+    if (where.rulesetIds.length === 0) return [];
+    const subqueries = RULESET_ENTITY_TYPES.map((entityType) => {
+      const table = ENTITY_TABLES[entityType];
+      const live = and(isNull(table.deletedAt), isNull(table.campaignId));
+      const namesOf = (rulesetIds: string[]) =>
+        db
+          .select({ name: table.name })
+          .from(table)
+          .where(and(inArray(table.rulesetId, rulesetIds), live));
+      return db
+        .select({
+          entityType: sql<RulesetEntityType>`${entityType}::text`.as("entity_type"),
+          id: table.id,
+          name: table.name,
+          rulesetId: table.rulesetId,
+        })
+        .from(table)
+        .where(
+          and(
+            inArray(table.rulesetId, [where.rulesetId, ...where.rulesetIds]),
+            live,
+            inArray(table.name, namesOf([where.rulesetId])),
+            inArray(table.name, namesOf(where.rulesetIds)),
+          ),
+        );
+    });
+    const [first, second, ...rest] = subqueries;
+    // One order, whatever the plan: the pass meets its groups in it (the union's own columns)
     return await unionAll(first, second, ...rest).orderBy(sql`entity_type, name, id`);
   }
 }

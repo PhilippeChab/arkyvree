@@ -85,8 +85,9 @@ export default class EntityNames {
    * Refuses a change to the ruleset's extensions when its view (`after`: its `CowData` once they're changed) would then
    * show more entities of a kind under one of `names` (by kind) than once, and than it shows now (`refusal` says so).
    * What the view pairs under one name shows one (a book's copy of an inherited entity, the reprints and the lists the
-   * source chain pairs), and a name it already shows twice stays allowed. `leaving`: the ruleset's own entities the
-   * change removes (an unsubscribe's copies of the book's entities).
+   * source chain pairs), and a name it already shows twice stays allowed. A book's entity the ruleset's own of its name
+   * shadows counts as shown: the ruleset is told of the clash its change makes rather than lose the book's entity.
+   * `leaving`: the ruleset's own entities the change removes (an unsubscribe's copies of the book's entities).
    */
   private async refuseChainNames(
     tx: Db,
@@ -95,7 +96,7 @@ export default class EntityNames {
     leaving: ReadonlySet<string>,
     refusal: (entityType: RulesetEntityType, name: string) => string,
   ) {
-    const shown = (cow: CowData, id: string) => !cow.isHidden(id);
+    const shown = (cow: CowData, id: string) => !cow.isHidden(id) || cow.isShadowed(id);
     const before = new Set([this.ruleset.id, ...this.cow.sourceChain]);
     const remaining = new Set([this.ruleset.id, ...after.sourceChain]);
     const chain = [...new Set([...this.cow.sourceChain, ...after.sourceChain])];

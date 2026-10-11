@@ -1,25 +1,29 @@
 /**
  * A ruleset's copy-on-write state: what reading its stored rows as its view does resolves ids through, built by the engine
  * (`CowDataBuilder`) from the rows copy-on-write's views read. An entity a later ruleset copied is overridden: its copy
- * stands for it, and its customizations are the copy's. A book's copy of an entity another book copied too is a sibling
- * loser: the winner stands for it, and its customizations merge into the winner's. Every stale id (an overridden one, a
- * sibling loser) resolves to the id that stands for it.
+ * stands for it, and its customizations are the copy's. So is a book's entity of a name the ruleset's own has: the
+ * ruleset's stands for it (it's shadowed). A book's copy of an entity another book copied too is a sibling loser: the
+ * winner stands for it, and its customizations merge into the winner's. Every stale id (an overridden one, a sibling
+ * loser) resolves to the id that stands for it.
  */
 export default class CowData {
   /**
    * `overrides` maps each overridden id to its copy, `aliases` every stale id to the id that stands for it (each
    * override among them), `siblings` each winner to its sibling losers, in the order they were paired. A loser paired
-   * twice is listed once, where it was paired under the later winner.
+   * twice is listed once, where it was paired under the later winner. `shadowedIds`: the overridden books' entities the
+   * ruleset's own of their names stands for.
    */
   constructor(
     sourceChain: string[],
     overrides: ReadonlyMap<string, string>,
     aliases: ReadonlyMap<string, string>,
     siblings: ReadonlyMap<string, readonly string[]>,
+    shadowedIds: ReadonlySet<string>,
   ) {
     this.sourceChain = sourceChain;
     this.overrides = overrides;
     this.aliases = aliases;
+    this.shadowedIds = shadowedIds;
     for (const [winnerId, loserIds] of siblings) for (const loserId of loserIds) this.winners.set(loserId, winnerId);
 
     const losersOf = new Map<string, string[]>();
@@ -34,6 +38,8 @@ export default class CowData {
   private readonly aliases: ReadonlyMap<string, string>;
 
   private readonly overrides: ReadonlyMap<string, string>;
+
+  private readonly shadowedIds: ReadonlySet<string>;
 
   private readonly siblings: ReadonlyMap<string, readonly string[]>;
 
@@ -84,17 +90,29 @@ export default class CowData {
     return this.isOverridden(id) || this.siblingIds.has(id);
   }
 
-  /** Whether a later ruleset copied the entity: its copy stands for it, its customizations with it. */
+  /**
+   * Whether a later ruleset copied the entity, or the ruleset's own entity of its name shadows it: its copy (the
+   * ruleset's) stands for it, its customizations with it.
+   */
   isOverridden(id: string): boolean {
     return this.overrides.has(id);
   }
 
   /**
+   * Whether the ruleset's own entity of its name hides the entity, a book's: it stands for it, as a copy stands for what
+   * it copied. A subscribe counts it as the view would show it but for the ruleset's own (`EntityNames`).
+   */
+  isShadowed(id: string): boolean {
+    return this.shadowedIds.has(id);
+  }
+
+  /**
    * What a list of the ruleset's entities reads besides its own rows: its source chain's (`ancestorRulesetIds`), less
-   * the sibling losers it leaves out (`siblingLoserIds`), in the query, so a page keeps its size.
+   * what the view hides that no snapshot overrides (`hiddenIds`: the sibling losers, the shadowed books' entities),
+   * which it leaves out in the query, so a page keeps its size.
    */
   get listFilters() {
-    return { ancestorRulesetIds: this.sourceChain, siblingLoserIds: [...this.siblingIds] };
+    return { ancestorRulesetIds: this.sourceChain, hiddenIds: [...this.siblingIds, ...this.shadowedIds] };
   }
 
   /** The id that stands for `id`: its copy or its winner when it's stale, itself otherwise. */

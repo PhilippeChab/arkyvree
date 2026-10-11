@@ -40,9 +40,12 @@ export default class CopyOnWriteEngine {
     return new RulesetComposition(chain, cow, Modules.of(ruleset.baseRules).createPropertyTypes()).build();
   }
 
-  /** The classes whose levels pair by number: those the ruleset copied (its snapshots say), and their sources. */
-  getPairedKlassIds(rulesetId: string, snapshots: CowRows["snapshots"]) {
-    return CowSources.getPairedKlassIds(rulesetId, snapshots);
+  /**
+   * The classes whose levels pair by number: those the ruleset copied (its snapshots say) and their sources, and those
+   * of its own and its extensions' of a name both have.
+   */
+  getPairedKlassIds(rulesetId: string, rows: Pick<CowRows, "ownNamesakes" | "snapshots">) {
+    return CowSources.getPairedKlassIds(rulesetId, rows);
   }
 
   /** What a ruleset's copy-on-write data is read from, each read none when it needs none. */
