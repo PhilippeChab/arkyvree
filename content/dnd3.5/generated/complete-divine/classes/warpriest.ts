@@ -32,6 +32,7 @@ export const WARPRIEST: ClassSeed = {
     gte("skills.diplomacy.rank", 8),
     gte("skills.sensemotive.rank", 5),
     eq("feats.combatcasting.possessed"),
+    gte("spellcasting.divine", 1),
     eq("feats.turnorrebukeundead.*.possessed"),
   ],
   casterLevelAdvancement: { type: "divine", levels: [2, 4, 6, 8, 10] },

@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-arcane",
-    "scrapedAt": "2026-10-10T22:51:43.979Z",
+    "scrapedAt": "2026-10-10T23:22:22.233Z",
     "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/green-star-adept/",
     "type": "class"
   },
@@ -111,6 +111,9 @@
     "prerequisites": {
       "parsed": {
         "bab": 4,
+        "feats": [
+          "Combat Casting"
+        ],
         "skills": [
           {
             "name": "Decipher Script",

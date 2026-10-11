@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-arcane",
-    "scrapedAt": "2026-10-10T22:51:43.794Z",
+    "scrapedAt": "2026-10-10T23:22:19.873Z",
     "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/enlightened-fist/",
     "type": "class"
   },
@@ -79,7 +79,8 @@
       "parsed": {
         "feats": [
           "Combat Casting",
-          "Improved Unarmed Strike"
+          "Improved Unarmed Strike",
+          "Stunning Fist"
         ],
         "skills": [
           {

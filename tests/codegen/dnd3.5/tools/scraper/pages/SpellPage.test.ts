@@ -19,6 +19,14 @@ describe("A spell's page", () => {
     );
   });
 
+  test("reads a description's lines (<br />) apart, which its reference stores as one text, a space between them", () => {
+    const allegro = new SpellPage(fixture("spell-allegro"), urlOf("spell-allegro")).read()!;
+    expect(allegro.description).toContain("fleet of foot.\nEach creature");
+    expect(scraped(allegro).description).toContain("fleet of foot. Each creature");
+    const spells = stored("complete-adventurer/spells.json", "spell").raw;
+    expect(scraped(allegro)).toEqual(spells.find((spell) => spell.name === "Allegro")!);
+  });
+
   test("reads no spell on a page carrying only the site's heading", () => {
     const html = "<html><body><h2>D&D Tools</h2><h4>Benefit</h4><p>You gain a bonus.</p></body></html>";
     expect(new SpellPage(html, "https://dndtools.net/spells/srd/fireball--1/").read()).toBeUndefined();

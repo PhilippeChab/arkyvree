@@ -39,6 +39,7 @@ export const ALIENIST: ClassSeed = {
   requirements: [
     gte("skills.knowledgetheplanes.rank", 8),
     eq("feats.augmentsummoning.possessed"),
+    or(gte("spellcasting.arcane", 3), gte("spellcasting.divine", 3)),
     or(
       eqStr("identity.beliefs.alignment", "Neutral Good"),
       eqStr("identity.beliefs.alignment", "True Neutral"),

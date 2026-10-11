@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-arcane",
-    "scrapedAt": "2026-03-31T19:42:09.756Z",
+    "scrapedAt": "2026-10-10T23:22:15.280Z",
     "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/argent-savant/",
     "type": "class"
   },
@@ -78,6 +78,9 @@
         ],
         "special": [
           "5th level or higher"
+        ],
+        "spells": [
+          "Able to cast at least five spells with the force descriptor, at least one of which must be 5th level or higher."
         ]
       },
       "text": "Skills: Knowledge (arcana) 6 ranks, Spellcraft 12 ranks Spells: Able to cast at least five spells with the force descriptor, at least one of which must be 5th level or higher."

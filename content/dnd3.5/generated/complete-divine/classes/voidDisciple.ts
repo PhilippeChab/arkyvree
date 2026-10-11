@@ -40,6 +40,7 @@ export const VOID_DISCIPLE: ClassSeed = {
     gte("skills.spellcraft.rank", 10),
     eq("feats.heightenspell.possessed"),
     eq("feats.spellpenetration.possessed"),
+    or(gte("spellcasting.arcane", 3), gte("spellcasting.divine", 3)),
     or(
       eqStr("identity.beliefs.alignment", "Neutral Good"),
       eqStr("identity.beliefs.alignment", "Lawful Neutral"),

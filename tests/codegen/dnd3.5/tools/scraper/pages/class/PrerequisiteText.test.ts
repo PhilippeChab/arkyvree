@@ -2,6 +2,11 @@ import { describe, expect, test } from "bun:test";
 
 import { PrerequisiteText } from "@/codegen/dnd3.5/tools/scraper/pages/class/PrerequisiteText.ts";
 
+/** The feats the prerequisites' `text` gives. */
+function featsOf(text: string) {
+  return new PrerequisiteText(text).parsed().feats;
+}
+
 /** The Spells lines the prerequisites' `text` gives. */
 function spellsOf(text: string) {
   return new PrerequisiteText(text).parsed().spells;
@@ -31,5 +36,19 @@ describe("A class's prerequisites' text", () => {
 
   test("gives none for a skill whose name starts with Spell", () => {
     expect(spellsOf("Skills: Spellcraft 8 ranks")).toBeUndefined();
+  });
+
+  test("gives the Feats line's feats, up to any Spells line's label", () => {
+    expect(
+      featsOf(
+        "Feats: Great Fortitude, Toughness\nSpells or Spell-Like Abilities: Arcane caster level 5th.\nSpecial: The character must have been killed, then returned to life.",
+      ),
+    ).toEqual(["Great Fortitude", "Toughness"]);
+    expect(featsOf("Feats: Any one metamagic feat.Spellcasting: Ability to cast 3rd-level spells.")).toEqual([
+      "Any one metamagic feat",
+    ]);
+    expect(
+      featsOf("Feats: Spell Focus (evocation), Spell Penetration\nSpells: Able to cast 2nd-level arcane spells."),
+    ).toEqual(["Spell Focus (evocation)", "Spell Penetration"]);
   });
 });

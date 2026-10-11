@@ -33,10 +33,8 @@ export const RAINBOW_SERVANT: ClassSeed = {
     or(
       eqStr("identity.beliefs.alignment", "Lawful Good"),
       eqStr("identity.beliefs.alignment", "Neutral Good"),
-      eqStr("identity.beliefs.alignment", "Chaotic Good"),
       eqStr("identity.beliefs.alignment", "Lawful Neutral"),
       eqStr("identity.beliefs.alignment", "True Neutral"),
-      eqStr("identity.beliefs.alignment", "Chaotic Neutral"),
     ),
   ],
   casterLevelAdvancement: { type: "arcane", levels: [2, 3, 5, 6, 8, 9] },

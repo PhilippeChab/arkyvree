@@ -14,3 +14,11 @@ describe("A section", () => {
     expect(texts(["h3", "h4"])).toEqual(["one", "two"]);
   });
 });
+
+describe("An element's text", () => {
+  test("reads a line break as a newline between the lines it splits, which text() joins", () => {
+    const $ = cheerio.load("<p>tortured spirits.<br />One side<br>of the wall</p>");
+    expect(Page.text($("p"))).toBe("tortured spirits.\nOne side\nof the wall");
+    expect($("p").html()).toBe("tortured spirits.<br>One side<br>of the wall");
+  });
+});

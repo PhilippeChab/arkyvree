@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-arcane",
-    "scrapedAt": "2026-03-31T22:09:31.432Z",
+    "scrapedAt": "2026-10-10T23:22:29.022Z",
     "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/wayfarer-guide/",
     "type": "class"
   },
@@ -71,6 +71,9 @@
         ],
         "special": [
           "A prospective wayfarer guide must join the Wayfarers Union (although she can later quit without losing previously acquired levels)."
+        ],
+        "spells": [
+          "Able to cast teleport."
         ]
       },
       "text": "Skills: Knowledge (arcana) 10 ranks, Knowledge (geography) 10 ranks Spell: Able to cast teleport. Special: A prospective wayfarer guide must join the Wayfarers Union (although she can later quit without losing previously acquired levels)."

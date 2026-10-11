@@ -6,7 +6,7 @@ export const CANTRIPS: PowerSeed[] = [
   {
     name: "Cloud Chariot",
     description:
-      "When the spell is cast, you and any willing creatures you touch lift into the air on a magic chariot formed of cloud, then fly away in the direction you desire.You can bring one Medium or smaller creature (carrying gear and objects up to its maximum load) per four caster levels.A Large creature counts as two Medium creatures, a Huge creature counts as two Large creatures, and so forth.A cloud chariot flies at 10 miles per minute, so that you can cover a distance of 100 miles over the spell's full duration.You and your passengers feel none of the effects of this swift movement, though, and the ride is perfectly steady and calm in even the worst weather.When the spell is dismissed, the cloud settles gently to the ground and dissipates.Should the spell duration expire while a cloud chariot is still aloft, the magic fails slowly, with cloud and riders floating downward 60 feet per round for 1d6 rounds.If the cloud reaches the ground in that amount of time, it lands safely.If not, it falls the rest of the distance, and all creatures riding in it take falling damage.A cloud chariot descends slowly if the spell is dispelled, but not if it is negated by an antimagic field.Material Component: A small ball of cotton.",
+      "When the spell is cast, you and any willing creatures you touch lift into the air on a magic chariot formed of cloud, then fly away in the direction you desire. You can bring one Medium or smaller creature (carrying gear and objects up to its maximum load) per four caster levels. A Large creature counts as two Medium creatures, a Huge creature counts as two Large creatures, and so forth. A cloud chariot flies at 10 miles per minute, so that you can cover a distance of 100 miles over the spell's full duration. You and your passengers feel none of the effects of this swift movement, though, and the ride is perfectly steady and calm in even the worst weather. When the spell is dismissed, the cloud settles gently to the ground and dissipates. Should the spell duration expire while a cloud chariot is still aloft, the magic fails slowly, with cloud and riders floating downward 60 feet per round for 1d6 rounds. If the cloud reaches the ground in that amount of time, it lands safely. If not, it falls the rest of the distance, and all creatures riding in it take falling damage. A cloud chariot descends slowly if the spell is dispelled, but not if it is negated by an antimagic field. Material Component: A small ball of cotton.",
     aptitudes: [],
     savingThrow: "None",
     properties: [
@@ -26,7 +26,7 @@ export const CANTRIPS: PowerSeed[] = [
   {
     name: "Cobra's Breath",
     description:
-      "Your saliva changes into a virulent poison that you then spray forth in a 10-foot cone.Creatures within the cone must make a Fortitude save or take 1d3 points of Constitution damage.The poison does not affect you, nor does it produce any secondary effects or remain potent once sprayed.Material Component: A cobra's fang.",
+      "Your saliva changes into a virulent poison that you then spray forth in a 10-foot cone. Creatures within the cone must make a Fortitude save or take 1d3 points of Constitution damage. The poison does not affect you, nor does it produce any secondary effects or remain potent once sprayed. Material Component: A cobra's fang.",
     aptitudes: [],
     savingThrow: "Fortitude negates",
     properties: [
@@ -43,7 +43,7 @@ export const CANTRIPS: PowerSeed[] = [
   {
     name: "Dancing Blade",
     description:
-      "When you cast this spell, you cause the target sword to hover and attack on its own, aiding a character you designate.The sword must be either unattended (in which case you choose which creature it will fight for, so long as both creature and weapon are within range) or in the possession of a willing ally who benefits from the spell.A dancing blade attacks using the initiative modifier and base attack bonus of the creature it fights for, though it gains no other attack or damage modifiers the creature might have (including those from Strength) and takes a -4 penalty on its attack rolls if the creature it fights for doesn't have proficiency with a weapon of its kind.The sword moves with the creature it fights for (and so can take the full attack action if that creature does), staying within 5 feet at all times and dropping to the ground if that creature is reduced to 0 or fewer hit points.Controlling the sword requires no concentration, and the designated creature can fight with another weapon at the same time.A dancing blade prevents two opponents from flanking the creature it fights for (though that creature can be flanked by additional opponents).Material Component: A tiny stick puppet.",
+      "When you cast this spell, you cause the target sword to hover and attack on its own, aiding a character you designate. The sword must be either unattended (in which case you choose which creature it will fight for, so long as both creature and weapon are within range) or in the possession of a willing ally who benefits from the spell. A dancing blade attacks using the initiative modifier and base attack bonus of the creature it fights for, though it gains no other attack or damage modifiers the creature might have (including those from Strength) and takes a -4 penalty on its attack rolls if the creature it fights for doesn't have proficiency with a weapon of its kind. The sword moves with the creature it fights for (and so can take the full attack action if that creature does), staying within 5 feet at all times and dropping to the ground if that creature is reduced to 0 or fewer hit points. Controlling the sword requires no concentration, and the designated creature can fight with another weapon at the same time. A dancing blade prevents two opponents from flanking the creature it fights for (though that creature can be flanked by additional opponents). Material Component: A tiny stick puppet.",
     aptitudes: [],
     savingThrow: "None",
     properties: [
@@ -61,7 +61,7 @@ export const CANTRIPS: PowerSeed[] = [
   {
     name: "Decapitating Scarf",
     description:
-      "When you cast this spell, you flick a silk scarf at one creature within range, magically propelling it toward the target.The scarf assumes an ironlike hardness on the way, and then wraps around the creature's neck.You must have line of sight to the target and hit with a normal ranged attack.If you hit, the target must make a Fortitude saving throw; failure indicates that the scarf has decapitated the victim.A target creature that makes its save takes 1d4 points of damage per caster level (maximum 20d4) before freeing itself from the decapitating scarf.Constructs and most undead (except vampires) are not immediately killed by decapitation, and take only 6d4 points of damage whether they make their save or not.Oozes, aberrations, and other creatures without a head are immune to the spell's effects.Focus: The silk scarf.",
+      "When you cast this spell, you flick a silk scarf at one creature within range, magically propelling it toward the target. The scarf assumes an ironlike hardness on the way, and then wraps around the creature's neck. You must have line of sight to the target and hit with a normal ranged attack. If you hit, the target must make a Fortitude saving throw; failure indicates that the scarf has decapitated the victim. A target creature that makes its save takes 1d4 points of damage per caster level (maximum 20d4) before freeing itself from the decapitating scarf. Constructs and most undead (except vampires) are not immediately killed by decapitation, and take only 6d4 points of damage whether they make their save or not. Oozes, aberrations, and other creatures without a head are immune to the spell's effects. Focus: The silk scarf.",
     aptitudes: [],
     savingThrow: "Fortitude partial; see text",
     properties: [
@@ -79,7 +79,7 @@ export const CANTRIPS: PowerSeed[] = [
   {
     name: "Earthbolt",
     description:
-      "With a shout, you strike the ground at your feet and create a bolt of seismic force that causes earth, rock, and sand to fly into the air, striking creatures along its path.Any creatures caught in the spell's area take 1d6 points of damage per caster level (maximum 10d6).This spell functions only if you are standing on dirt, clay, sand, or stone (including stone floors), not on wooden floors or other surfaces.",
+      "With a shout, you strike the ground at your feet and create a bolt of seismic force that causes earth, rock, and sand to fly into the air, striking creatures along its path. Any creatures caught in the spell's area take 1d6 points of damage per caster level (maximum 10d6). This spell functions only if you are standing on dirt, clay, sand, or stone (including stone floors), not on wooden floors or other surfaces.",
     aptitudes: [],
     savingThrow: "Reflex half",
     properties: [
@@ -97,7 +97,7 @@ export const CANTRIPS: PowerSeed[] = [
   {
     name: "Elemental Burst",
     description:
-      "When you cast this spell, you designate a target composed of one of the five wu jen elements-earth, fire, metal, water, and wood.The target then releases magical energy in a sudden, explosive burst, as follows: Wood,Metal, or Earth: The target throws off sharp slivers and fragments; creatures within the burst take 1d8 points of damage (Reflex save for half damage).Fire: The target shoots out glowing sparks that deal 1d8 points of fire damage to creatures within the burst (Reflex save for half damage).Water:Water pushes out in a fierce wave, knocking creatures within the area prone unless they make successful Reflex saves.Creatures get a +4 bonus on their saving throws for each size category they are larger than Medium, or a -4 penalty for each size category smaller than Medium.Exceptionally stable creatures, such as dwarves or creatures with four legs, get an additional +4 bonus.The spell does not noticeably affect the structure or form of the target object.",
+      "When you cast this spell, you designate a target composed of one of the five wu jen elements-earth, fire, metal, water, and wood. The target then releases magical energy in a sudden, explosive burst, as follows: Wood,Metal, or Earth: The target throws off sharp slivers and fragments; creatures within the burst take 1d8 points of damage (Reflex save for half damage). Fire: The target shoots out glowing sparks that deal 1d8 points of fire damage to creatures within the burst (Reflex save for half damage). Water:Water pushes out in a fierce wave, knocking creatures within the area prone unless they make successful Reflex saves. Creatures get a +4 bonus on their saving throws for each size category they are larger than Medium, or a -4 penalty for each size category smaller than Medium. Exceptionally stable creatures, such as dwarves or creatures with four legs, get an additional +4 bonus. The spell does not noticeably affect the structure or form of the target object.",
     aptitudes: [],
     savingThrow: "Reflex half or Reflex negates; see text",
     properties: [
@@ -114,7 +114,7 @@ export const CANTRIPS: PowerSeed[] = [
   {
     name: "Elemental Ward",
     description:
-      "This spell allows you to drive off elementals of a specific type by uttering a fearsome cry.When you cast the spell, any elemental within the spell's area must leave the area unless it makes a successful Will save.If you try to force the barrier against an elemental that has failed its saving throw, the spell fails.Material Component: A small quantity of the element opposed to the type being warded against-fire for water elementals, earth for air elementals, air for earth elementals, or water for fire elementals.",
+      "This spell allows you to drive off elementals of a specific type by uttering a fearsome cry. When you cast the spell, any elemental within the spell's area must leave the area unless it makes a successful Will save. If you try to force the barrier against an elemental that has failed its saving throw, the spell fails. Material Component: A small quantity of the element opposed to the type being warded against-fire for water elementals, earth for air elementals, air for earth elementals, or water for fire elementals.",
     aptitudes: [],
     savingThrow: "Will negates",
     properties: [
@@ -132,7 +132,7 @@ export const CANTRIPS: PowerSeed[] = [
   {
     name: "Entangling Scarf",
     description:
-      "When you cast this spell, you flick a silk scarf at one creature within range, magically propelling it toward the target.The scarf assumes an ironlike hardness on its way and then wraps around the target creature.You must have line of sight to the target and hit with a ranged touch attack.If you hit, the target must make a successful Reflex save or become entangled.Focus: The silk scarf.",
+      "When you cast this spell, you flick a silk scarf at one creature within range, magically propelling it toward the target. The scarf assumes an ironlike hardness on its way and then wraps around the target creature. You must have line of sight to the target and hit with a ranged touch attack. If you hit, the target must make a successful Reflex save or become entangled. Focus: The silk scarf.",
     aptitudes: [],
     savingThrow: "Reflex negates",
     properties: [
@@ -150,7 +150,7 @@ export const CANTRIPS: PowerSeed[] = [
   {
     name: "Fiery Eyes",
     description:
-      "This spell causes your eyes to glow with an unnatural fire whose color you determine (from dull red to brilliant yellow), projecting beams of bright light that clearly illuminate a 5-foot-square area to a range of 5 feet.By fixing your sight on one spot within 60 feet as a full-round action, you can cause combustible materials to burst into flames, and though you cannot target living creatures with this effect, creatures carrying or wearing items you ignite take 1d6 points of fire damage and must make a DC 15 Reflex save or catch on fire themselves.",
+      "This spell causes your eyes to glow with an unnatural fire whose color you determine (from dull red to brilliant yellow), projecting beams of bright light that clearly illuminate a 5-foot-square area to a range of 5 feet. By fixing your sight on one spot within 60 feet as a full-round action, you can cause combustible materials to burst into flames, and though you cannot target living creatures with this effect, creatures carrying or wearing items you ignite take 1d6 points of fire damage and must make a DC 15 Reflex save or catch on fire themselves.",
     aptitudes: [],
     savingThrow: "Reflex special; see text",
     properties: [
@@ -168,7 +168,7 @@ export const CANTRIPS: PowerSeed[] = [
   {
     name: "Fire Breath",
     description:
-      "As a standard action, you can breathe a gout of flame once per round for the duration of the spell.You make a ranged touch attack with the flame (to a maximum range of 15 feet), dealing 1d8 points of fire damage per two caster levels (maximum 10d8) on a successful hit.Fire breath ignites combustibles and damages objects in the area, and it can melt metals with low melting points (such as lead, gold, copper, silver, and bronze).The spell does not function underwater.",
+      "As a standard action, you can breathe a gout of flame once per round for the duration of the spell. You make a ranged touch attack with the flame (to a maximum range of 15 feet), dealing 1d8 points of fire damage per two caster levels (maximum 10d8) on a successful hit. Fire breath ignites combustibles and damages objects in the area, and it can melt metals with low melting points (such as lead, gold, copper, silver, and bronze). The spell does not function underwater.",
     aptitudes: [],
     savingThrow: "None",
     properties: [
@@ -186,7 +186,7 @@ export const CANTRIPS: PowerSeed[] = [
   {
     name: "Fire Wings",
     description:
-      "This spell transforms your arms into wings of brilliant fire (resembling those of a phoenix), which do not damage you or any items you carry.Since your arms are transformed, you cannot hold items in your hands or cast spells with somatic components while using fire wings, but rings, bracers, and other items worn on your arms meld into the new form and continue to function normally.The wings allow you to fly at a speed of 60 feet (good) while carrying no more than a light load.You can ascend at half speed and descend at double speed, and you can charge (but not run) while flying.You can make unarmed attacks with fire wings but are not considered proficient with them, taking a -4 penalty on your attack rolls.A successful unarmed strike deals 2d6 points of fire damage in addition to your normal unarmed attack damage (treated as lethal damage while the spell is in effect).The wings are extinguished (and the spell ends) if subjected to a quench spell, immersed in water for 1 round, or exposed to winds of hurricane force or greater.If the spell expires while you are aloft, you fall normally.Material Component: The feather of a bird, which you must burn when you cast the spell.Focus: A golden amulet shaped like a phoenix.",
+      "This spell transforms your arms into wings of brilliant fire (resembling those of a phoenix), which do not damage you or any items you carry. Since your arms are transformed, you cannot hold items in your hands or cast spells with somatic components while using fire wings, but rings, bracers, and other items worn on your arms meld into the new form and continue to function normally. The wings allow you to fly at a speed of 60 feet (good) while carrying no more than a light load. You can ascend at half speed and descend at double speed, and you can charge (but not run) while flying. You can make unarmed attacks with fire wings but are not considered proficient with them, taking a -4 penalty on your attack rolls. A successful unarmed strike deals 2d6 points of fire damage in addition to your normal unarmed attack damage (treated as lethal damage while the spell is in effect). The wings are extinguished (and the spell ends) if subjected to a quench spell, immersed in water for 1 round, or exposed to winds of hurricane force or greater. If the spell expires while you are aloft, you fall normally. Material Component: The feather of a bird, which you must burn when you cast the spell. Focus: A golden amulet shaped like a phoenix.",
     aptitudes: [],
     savingThrow: "None",
     properties: [
@@ -206,7 +206,7 @@ export const CANTRIPS: PowerSeed[] = [
   {
     name: "Ice Blast",
     description:
-      "When you cast this spell, you spit forth a cloud of icy crystals that extends outward in a cone.Creatures in the area are covered with a thin layer of ice that deals 1d6 points of damage per two caster levels (maximum 10d6).In addition, creatures are affected by a temporary frostbite condition, making them fatigued for 1 minute.A successful Fortitude save negates both the damage and the frostbite effect.Material Component: A mouthful of water.",
+      "When you cast this spell, you spit forth a cloud of icy crystals that extends outward in a cone. Creatures in the area are covered with a thin layer of ice that deals 1d6 points of damage per two caster levels (maximum 10d6). In addition, creatures are affected by a temporary frostbite condition, making them fatigued for 1 minute. A successful Fortitude save negates both the damage and the frostbite effect. Material Component: A mouthful of water.",
     aptitudes: [],
     savingThrow: "Fortitude negates",
     properties: [
@@ -224,7 +224,7 @@ export const CANTRIPS: PowerSeed[] = [
   {
     name: "Internal Fire",
     description:
-      "This spell creates a deadly raging heat in the internal organs of the targets, causing them to burst into flame from within.Targets that fail a Fortitude save die instantly.Those who save successfully take 6d6 points of fire damage +1 point per caster level (maximum +20) instead.Focus: An iron brazier filled with red-hot charcoal.",
+      "This spell creates a deadly raging heat in the internal organs of the targets, causing them to burst into flame from within. Targets that fail a Fortitude save die instantly. Those who save successfully take 6d6 points of fire damage +1 point per caster level (maximum +20) instead. Focus: An iron brazier filled with red-hot charcoal.",
     aptitudes: [],
     savingThrow: "Fortitude partial",
     properties: [
@@ -243,7 +243,7 @@ export const CANTRIPS: PowerSeed[] = [
   {
     name: "Iron Scarf",
     description:
-      "When you cast this spell, you flick a silk scarf at one creature within range, magically propelling it toward the target.The scarf assumes an ironlike hardness on the way.You must have line of sight to the target and hit with a normal ranged attack with the scarf.If you hit, the target takes 1d8 points of damage +1 point per caster level (maximum +5).Focus: The silk scarf.",
+      "When you cast this spell, you flick a silk scarf at one creature within range, magically propelling it toward the target. The scarf assumes an ironlike hardness on the way. You must have line of sight to the target and hit with a normal ranged attack with the scarf. If you hit, the target takes 1d8 points of damage +1 point per caster level (maximum +5). Focus: The silk scarf.",
     aptitudes: [],
     savingThrow: "None",
     properties: [
@@ -261,7 +261,7 @@ export const CANTRIPS: PowerSeed[] = [
   {
     name: "Magnetism",
     description:
-      "A shimmering magnetic ray springs from your hand and pulls iron or steel objects to your grasp.Once per round on a successful ranged touch attack, the magnetic ray can draw an object toward you with an effective Strength score of 30 (and so can target items weighing up to 8,000 pounds).Any unattended and unsecured item flies directly and safely to your hand (or to the edge of your space if too large to be wielded), but drawing an item toward you that another creature is holding (such as a weapon) requires a successful disarm attempt.You use the ray's Strength modifier (+10) in place of your own, and such attempts do not provoke attacks of opportunity, even if you use magnetism against a creature in an adjacent square, although casting the spell might still provoke attacks of opportunity.If you succeed on the disarm attempt, the weapon flies from your opponent's hand to your own.If you target an item that is attended but not held, such as a weapon at someone's belt, the creature bearing the item gets a Reflex save to hang onto it, dropping whatever else is in one hand at the time unless it has a free hand.On a failed save, the item flies from the creature's hand to your own.Otherwise, make a disarm attempt as above.If an item is secured in some way, you can make a Strength check (using the ray's +10 bonus) to break or burst whatever holds it.Material Component: A piece of lodestone.",
+      "A shimmering magnetic ray springs from your hand and pulls iron or steel objects to your grasp. Once per round on a successful ranged touch attack, the magnetic ray can draw an object toward you with an effective Strength score of 30 (and so can target items weighing up to 8,000 pounds). Any unattended and unsecured item flies directly and safely to your hand (or to the edge of your space if too large to be wielded), but drawing an item toward you that another creature is holding (such as a weapon) requires a successful disarm attempt. You use the ray's Strength modifier (+10) in place of your own, and such attempts do not provoke attacks of opportunity, even if you use magnetism against a creature in an adjacent square, although casting the spell might still provoke attacks of opportunity. If you succeed on the disarm attempt, the weapon flies from your opponent's hand to your own. If you target an item that is attended but not held, such as a weapon at someone's belt, the creature bearing the item gets a Reflex save to hang onto it, dropping whatever else is in one hand at the time unless it has a free hand. On a failed save, the item flies from the creature's hand to your own. Otherwise, make a disarm attempt as above. If an item is secured in some way, you can make a Strength check (using the ray's +10 bonus) to break or burst whatever holds it. Material Component: A piece of lodestone.",
     aptitudes: [],
     savingThrow: "See text",
     properties: [
@@ -279,7 +279,7 @@ export const CANTRIPS: PowerSeed[] = [
   {
     name: "Melt",
     description:
-      "This spell allows you to melt ice and snow, or to deal damage to cold creatures.The spell melts normal ice and snow automatically (no saving throw or spell resistance allowed); melted ice creates an equivalent volume of water that flows and spreads according to its location.Melted snow creates a volume of water equal to one-tenth its original volume (so that a 10th-level wu jen melting ten 10-foot cubes of snow would create a single 10-foot-cube volume of water in its place).In both cases, depending on the local temperature, melted ice or snow might begin to freeze again once the water stops flowing, possibly creating a movement hazard.Against cold creatures, the spell deals 2 points of damage per caster level (maximum 10 points), or half damage on a successful Fortitude save.Against magically created ice or snow (like that generated by wall of ice), the spell deals the same damage (possibly smashing or breaching the ice) but does not melt it.Cold creatures apply spell resistance, if any.Material Component: A few crystals of rock salt and a pinch of soot.",
+      "This spell allows you to melt ice and snow, or to deal damage to cold creatures. The spell melts normal ice and snow automatically (no saving throw or spell resistance allowed); melted ice creates an equivalent volume of water that flows and spreads according to its location. Melted snow creates a volume of water equal to one-tenth its original volume (so that a 10th-level wu jen melting ten 10-foot cubes of snow would create a single 10-foot-cube volume of water in its place). In both cases, depending on the local temperature, melted ice or snow might begin to freeze again once the water stops flowing, possibly creating a movement hazard. Against cold creatures, the spell deals 2 points of damage per caster level (maximum 10 points), or half damage on a successful Fortitude save. Against magically created ice or snow (like that generated by wall of ice), the spell deals the same damage (possibly smashing or breaching the ice) but does not melt it. Cold creatures apply spell resistance, if any. Material Component: A few crystals of rock salt and a pinch of soot.",
     aptitudes: [],
     savingThrow: "None or Fortitude half; see text",
     properties: [
@@ -297,7 +297,7 @@ export const CANTRIPS: PowerSeed[] = [
   {
     name: "Metal Skin",
     description:
-      "When you cast this spell, the recipient's skin toughens and gleams as if metallic, and it gains a natural armor bonus of +8.The target becomes somewhat slow and stiff, taking a -2 penalty to Dexterity.Material Component: A small piece of rhinoceros hide.",
+      "When you cast this spell, the recipient's skin toughens and gleams as if metallic, and it gains a natural armor bonus of +8. The target becomes somewhat slow and stiff, taking a -2 penalty to Dexterity. Material Component: A small piece of rhinoceros hide.",
     aptitudes: [],
     savingThrow: "None",
     properties: [
@@ -315,7 +315,7 @@ export const CANTRIPS: PowerSeed[] = [
   {
     name: "Poison Needles",
     description:
-      "A needle flicked from your fingers multiplies into a hail of needles that drip poison, striking a single target.If you hit with a normal ranged attack, the target takes 1d4 points of damage per caster level (maximum 5d4) and experiences an effect of your choice from the following.",
+      "A needle flicked from your fingers multiplies into a hail of needles that drip poison, striking a single target. If you hit with a normal ranged attack, the target takes 1d4 points of damage per caster level (maximum 5d4) and experiences an effect of your choice from the following.",
     aptitudes: [],
     savingThrow: "None and Fortitude negates; see text",
     properties: [
@@ -333,7 +333,7 @@ export const CANTRIPS: PowerSeed[] = [
   {
     name: "Rain of Needles",
     description:
-      "A needle flicked from your fingers multiplies into a hail of needles, raining down on all the targets you select.You make a normal ranged attack against each target separately, and the needles deal 1d4 points of damage per caster level (maximum 5d4) divided up among the targets.Thus, a 4th-level wu jen can target a single creature with 4d4 points of damage, or two creatures with 2d4 points of damage each, and so forth.Material Component: A long metal needle.",
+      "A needle flicked from your fingers multiplies into a hail of needles, raining down on all the targets you select. You make a normal ranged attack against each target separately, and the needles deal 1d4 points of damage per caster level (maximum 5d4) divided up among the targets. Thus, a 4th-level wu jen can target a single creature with 4d4 points of damage, or two creatures with 2d4 points of damage each, and so forth. Material Component: A long metal needle.",
     aptitudes: [],
     savingThrow: "None",
     properties: [
@@ -367,7 +367,7 @@ export const CANTRIPS: PowerSeed[] = [
   {
     name: "Smoke Ladder",
     description:
-      "You create a misty ladder up to 10 feet long per caster level, shaped from the smoke given off by a fire as you cast the spell.A smoke ladder weighs virtually nothing and can be easily handled at any length.Always steady and rigid, the ladder needs no support or object to lean against, but can simply be placed in the desired position and climbed.By casting the spell again on an existing smoke ladder before it dissipates, you can reset its duration.Focus: A large fire of green wood.",
+      "You create a misty ladder up to 10 feet long per caster level, shaped from the smoke given off by a fire as you cast the spell. A smoke ladder weighs virtually nothing and can be easily handled at any length. Always steady and rigid, the ladder needs no support or object to lean against, but can simply be placed in the desired position and climbed. By casting the spell again on an existing smoke ladder before it dissipates, you can reset its duration. Focus: A large fire of green wood.",
     aptitudes: [],
     savingThrow: "None",
     properties: [
@@ -385,7 +385,7 @@ export const CANTRIPS: PowerSeed[] = [
   {
     name: "Spirit Needle",
     description:
-      "A needle flicked from your fingers magically penetrates a spirit creature's aura.If you hit with a normal ranged attack, the spirit loses the protective benefits of being incorporeal and is held in place (losing any Dexterity bonus to Armor Class and giving attackers a +4 bonus on attack rolls against it).Though the spirit cannot move for the duration of the spell, it can still take standard and full-round actions (including attacks).A pinned spirit is unable to use any supernatural or spell-like ability that would transport it from its current location (such as dimension door or teleport) or alter its substance or state (such as gaseous form or ethereal jaunt).The spirit cannot remove the needle that pins it in place, but another creature can do so as a standard action.Focus: A long metal needle.",
+      "A needle flicked from your fingers magically penetrates a spirit creature's aura. If you hit with a normal ranged attack, the spirit loses the protective benefits of being incorporeal and is held in place (losing any Dexterity bonus to Armor Class and giving attackers a +4 bonus on attack rolls against it). Though the spirit cannot move for the duration of the spell, it can still take standard and full-round actions (including attacks). A pinned spirit is unable to use any supernatural or spell-like ability that would transport it from its current location (such as dimension door or teleport) or alter its substance or state (such as gaseous form or ethereal jaunt). The spirit cannot remove the needle that pins it in place, but another creature can do so as a standard action. Focus: A long metal needle.",
     aptitudes: [],
     savingThrow: "None",
     properties: [
@@ -403,7 +403,7 @@ export const CANTRIPS: PowerSeed[] = [
   {
     name: "Steam Breath",
     description:
-      "You expel a powerful breath of superheated steam that extends outward as a cone of scalding mist.Creatures within the cone take 1d6 points of fire damage per caster level (maximum 10d6).The steam clouds dissipate instantly after the damage is dealt.Material Component: A glowing piece of charcoal doused with water.",
+      "You expel a powerful breath of superheated steam that extends outward as a cone of scalding mist. Creatures within the cone take 1d6 points of fire damage per caster level (maximum 10d6). The steam clouds dissipate instantly after the damage is dealt. Material Component: A glowing piece of charcoal doused with water.",
     aptitudes: [],
     savingThrow: "Reflex half",
     properties: [
@@ -422,7 +422,7 @@ export const CANTRIPS: PowerSeed[] = [
   {
     name: "Terra Cotta Lion",
     description:
-      "As terra cotta warrior, but the spell animates a statuette of a foo lion (a celestial dire lion) into a Huge animated object (Huge construct, 90 hp, AC 13, hardness 6, speed 30 ft., attack slam +9, damage 2d6+7).As with terra cotta warrior, the lion has none of the animated object attack forms.Focus: A terra cotta statue of a foo lion, up to 1 foot tall and costing 10 gp.",
+      "As terra cotta warrior, but the spell animates a statuette of a foo lion (a celestial dire lion) into a Huge animated object (Huge construct, 90 hp, AC 13, hardness 6, speed 30 ft., attack slam +9, damage 2d6+7). As with terra cotta warrior, the lion has none of the animated object attack forms. Focus: A terra cotta statue of a foo lion, up to 1 foot tall and costing 10 gp.",
     aptitudes: [],
     savingThrow: "None",
     properties: [
@@ -441,7 +441,7 @@ export const CANTRIPS: PowerSeed[] = [
   {
     name: "Terra Cotta Warrior",
     description:
-      "This spell turns an innocuous statuette of decoration and devotion into a full-sized warrior, ready to fight your foes.The statuette becomes a Medium animated object (Medium construct, 35 hp, AC 14, hardness 6, speed 40 ft., attack slam +2, damage 1d6+1) that attacks a specified target on your turn as directed by you.You can change the designated target as a move action (as if directing an active spell).The statuette can be reused if the terra cotta warrior remains intact at the end of the spell, but if the warrior is reduced to 0 or fewer hit points, it crumbles to powder and the statuette is lost. Focus: A terra cotta statue of a warrior, up to 6 inches tall and costing 1 gp.",
+      "This spell turns an innocuous statuette of decoration and devotion into a full-sized warrior, ready to fight your foes. The statuette becomes a Medium animated object (Medium construct, 35 hp, AC 14, hardness 6, speed 40 ft., attack slam +2, damage 1d6+1) that attacks a specified target on your turn as directed by you. You can change the designated target as a move action (as if directing an active spell). The statuette can be reused if the terra cotta warrior remains intact at the end of the spell, but if the warrior is reduced to 0 or fewer hit points, it crumbles to powder and the statuette is lost. Focus: A terra cotta statue of a warrior, up to 6 inches tall and costing 1 gp.",
     aptitudes: [],
     savingThrow: "None",
     properties: [
@@ -459,7 +459,7 @@ export const CANTRIPS: PowerSeed[] = [
   {
     name: "Water to Poison",
     description:
-      "This spell transforms a volume of water into an equal volume of colorless, tasteless, ingested poison with a save DC equal to the spell's DC.When ingested, the poison deals 1 point of Constitution damage followed by 1d8 points of Constitution damage 1 minute later.A successful Will save can negate each instance of damage.A single swallow (1 ounce) of poison is enough to affect a single creature; drinking more does not increase the effect.Material Component: The fang of a poisonous snake and a bloodstone worth at least 50 gp.",
+      "This spell transforms a volume of water into an equal volume of colorless, tasteless, ingested poison with a save DC equal to the spell's DC. When ingested, the poison deals 1 point of Constitution damage followed by 1d8 points of Constitution damage 1 minute later. A successful Will save can negate each instance of damage. A single swallow (1 ounce) of poison is enough to affect a single creature; drinking more does not increase the effect. Material Component: The fang of a poisonous snake and a bloodstone worth at least 50 gp.",
     aptitudes: [],
     savingThrow: "None; see text",
     properties: [

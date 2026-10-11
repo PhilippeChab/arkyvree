@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-divine",
-    "scrapedAt": "2026-03-23T01:27:28.333Z",
+    "scrapedAt": "2026-10-10T23:22:35.556Z",
     "sourceUrl": "https://dndtools.net/classes/complete-divine--56/dweomerkeeper/",
     "type": "class"
   },
@@ -119,6 +119,9 @@
         "special": [
           "The candidate must have created at least one magic item, whether of a permanent nature or not.",
           "created at least one magic item, whether of a permanent nature or not"
+        ],
+        "spells": [
+          "Ability to cast arcane and divine spells."
         ]
       },
       "text": "Skills: Knowledge (arcana) 8 ranks, Spellcraft 8 ranks Feats: Any item creation feat and any metamagic feat.Spells: Ability to cast arcane and divine spells.Domain: Magic.Special: The candidate must have created at least one magic item, whether of a permanent nature or not."

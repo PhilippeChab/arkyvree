@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-arcane",
-    "scrapedAt": "2026-03-31T22:15:54.855Z",
+    "scrapedAt": "2026-10-10T23:22:24.424Z",
     "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/initiate-of-the-sevenfold-veil/",
     "type": "class"
   },
@@ -119,6 +119,9 @@
             "name": "Spellcraft",
             "ranks": 12
           }
+        ],
+        "spells": [
+          "Able to cast five abjuration spells, including at least two of 4th level or higher."
         ]
       },
       "text": "Skills: Knowledge (arcana) 12 ranks, Knowledge (nature) 4 ranks, Spellcraft 12 ranks Feats: Greater Spell Focus (abjuration), Spell Focus (abjuration), Skill Focus (spellcraft) Spells: Able to cast five abjuration spells, including at least two of 4th level or higher."

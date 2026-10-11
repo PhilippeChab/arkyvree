@@ -5,7 +5,7 @@
  * - No modifiers defined — review if this class needs any
  */
 
-import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
+import { eq, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
 
 export const DIVINE_ORACLE: ClassSeed = {
@@ -27,7 +27,11 @@ export const DIVINE_ORACLE: ClassSeed = {
     "Profession",
     "Spellcraft",
   ],
-  requirements: [gte("skills.knowledgereligion.rank", 8), eq("feats.skillfocusknowledgereligion.possessed")],
+  requirements: [
+    gte("skills.knowledgereligion.rank", 8),
+    eq("feats.skillfocusknowledgereligion.possessed"),
+    or(gte("spellcasting.arcane", 1), gte("spellcasting.divine", 1)),
+  ],
   casterLevelAdvancement: { type: "any", levels: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
   classFeatureAptitude: "Divine Oracle Class Feature",
   classFeatures: [

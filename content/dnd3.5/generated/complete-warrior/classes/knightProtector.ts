@@ -5,7 +5,7 @@
  * - No modifiers defined — review if this class needs any
  */
 
-import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
+import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
 
 export const KNIGHT_PROTECTOR: ClassSeed = {
@@ -28,6 +28,7 @@ export const KNIGHT_PROTECTOR: ClassSeed = {
     eq("feats.greatcleave.possessed"),
     eq("feats.mountedcombat.possessed"),
     eq("feats.powerattack.possessed"),
+    or(eqStr("identity.beliefs.alignment", "Lawful Neutral"), eqStr("identity.beliefs.alignment", "Lawful Good")),
   ],
   classFeatureAptitude: "Knight Protector Class Feature",
   classFeatures: [

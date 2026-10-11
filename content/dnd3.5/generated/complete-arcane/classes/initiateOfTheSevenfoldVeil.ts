@@ -5,7 +5,7 @@
  * - No modifiers defined — review if this class needs any
  */
 
-import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
+import { eq, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
 
 export const INITIATE_OF_THE_SEVENFOLD_VEIL: ClassSeed = {
@@ -43,6 +43,7 @@ export const INITIATE_OF_THE_SEVENFOLD_VEIL: ClassSeed = {
     eq("feats.greaterspellfocusabjuration.possessed"),
     eq("feats.spellfocusabjuration.possessed"),
     eq("feats.skillfocusspellcraft.possessed"),
+    or(gte("spellcasting.arcane", 4), gte("spellcasting.divine", 4)),
   ],
   casterLevelAdvancement: { type: "arcane", levels: [1, 2, 3, 4, 5, 6, 7] },
   classFeatureAptitude: "Initiate of the Sevenfold Veil Class Feature",

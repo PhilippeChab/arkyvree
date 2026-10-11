@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-scoundrel",
-    "scrapedAt": "2026-04-01T02:22:19.989Z",
+    "scrapedAt": "2026-10-10T23:22:46.695Z",
     "sourceUrl": "https://dndtools.net/classes/complete-scoundrel--60/spellwarp-sniper/",
     "type": "class"
   },
@@ -49,6 +49,9 @@
             "type": "any"
           }
         ],
+        "feats": [
+          "Point Blank Shot"
+        ],
         "skills": [
           {
             "name": "Concentration",
@@ -61,6 +64,9 @@
         ],
         "special": [
           "Sneak attack or sudden strike +1d6."
+        ],
+        "spells": [
+          "Ability to cast 3rd-level spells."
         ]
       },
       "text": "Skills: Concentration 8 ranks, Spellcraft 8 ranks Feats: Point Blank Shot Spellcasting: Ability to cast 3rd-level spells.Special: Sneak attack or sudden strike +1d6."

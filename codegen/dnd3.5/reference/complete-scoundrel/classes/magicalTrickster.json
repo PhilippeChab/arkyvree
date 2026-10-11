@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-scoundrel",
-    "scrapedAt": "2026-03-22T16:06:25.846Z",
+    "scrapedAt": "2026-10-10T23:22:44.543Z",
     "sourceUrl": "https://dndtools.net/classes/complete-scoundrel--60/magical-trickster/",
     "type": "class"
   },
@@ -55,6 +55,12 @@
             "level": 3,
             "type": "any"
           }
+        ],
+        "feats": [
+          "Any one metamagic feat"
+        ],
+        "spells": [
+          "Ability to cast 3rd-level spells."
         ]
       },
       "text": "Feats: Any one metamagic feat.Spellcasting: Ability to cast 3rd-level spells.Skill Tricks: Any two."

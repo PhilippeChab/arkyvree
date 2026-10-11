@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-divine",
-    "scrapedAt": "2026-03-20T23:14:15.294Z",
+    "scrapedAt": "2026-10-10T23:22:40.167Z",
     "sourceUrl": "https://dndtools.net/classes/complete-divine--56/void-disciple/",
     "type": "class"
   },
@@ -113,6 +113,9 @@
             "name": "Spellcraft",
             "ranks": 10
           }
+        ],
+        "spells": [
+          "Able to cast 3rd-level arcane or divine spells."
         ]
       },
       "text": "Alignment: Any neutral Skills: Spellcraft 10 ranks Feats: Heighten Spell, Spell Penetration Spells: Able to cast 3rd-level arcane or divine spells."

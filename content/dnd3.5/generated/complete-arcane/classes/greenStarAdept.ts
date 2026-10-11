@@ -5,7 +5,7 @@
  * - No modifiers defined — review if this class needs any
  */
 
-import { gte } from "@/content/core/builders/customization/requirements.ts";
+import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
 
 export const GREEN_STAR_ADEPT: ClassSeed = {
@@ -36,6 +36,7 @@ export const GREEN_STAR_ADEPT: ClassSeed = {
     gte("skills.knowledgearchitectureandengineering.rank", 2),
     gte("skills.knowledgegeography.rank", 2),
     gte("skills.knowledgehistory.rank", 2),
+    eq("feats.combatcasting.possessed"),
     gte("spellcasting.arcanecasterlevel", 1),
   ],
   casterLevelAdvancement: { type: "arcane", levels: [2, 4, 6, 8, 10] },

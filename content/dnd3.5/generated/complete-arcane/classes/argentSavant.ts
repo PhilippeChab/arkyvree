@@ -5,7 +5,7 @@
  * - No modifiers defined — review if this class needs any
  */
 
-import { gte } from "@/content/core/builders/customization/requirements.ts";
+import { gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
 
 export const ARGENT_SAVANT: ClassSeed = {
@@ -34,7 +34,11 @@ export const ARGENT_SAVANT: ClassSeed = {
     "Profession",
     "Spellcraft",
   ],
-  requirements: [gte("skills.knowledgearcana.rank", 6), gte("skills.spellcraft.rank", 12)],
+  requirements: [
+    gte("skills.knowledgearcana.rank", 6),
+    gte("skills.spellcraft.rank", 12),
+    or(gte("spellcasting.arcane", 5), gte("spellcasting.divine", 5)),
+  ],
   casterLevelAdvancement: { type: "arcane", levels: [2, 3, 4, 5] },
   classFeatureAptitude: "Argent Savant Class Feature",
   classFeatures: [

@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-warrior",
-    "scrapedAt": "2026-03-20T23:14:08.783Z",
+    "scrapedAt": "2026-10-10T23:22:49.065Z",
     "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/master-of-the-unseen-hand/",
     "type": "class"
   },
@@ -102,6 +102,9 @@
             "name": "Concentration",
             "ranks": 8
           }
+        ],
+        "spells": [
+          "Able to cast the telekinesis spell, or access to telekinesis as a spell-like or supernatural ability"
         ]
       },
       "text": "Skills: Concentration 8 ranks Spells: Able to cast the telekinesis spell, or access to telekinesis as a spell-like or supernatural ability"

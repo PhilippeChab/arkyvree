@@ -10,6 +10,7 @@
 
 import { type Element, isText } from "domhandler";
 
+import { Page } from "@/codegen/core/scraper/Page.ts";
 import { normalizeWs } from "@/codegen/core/text/whitespace.ts";
 import type { SpellReference } from "@/codegen/dnd3.5/tools/types/spells.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
@@ -63,13 +64,16 @@ export class SpellPage extends DndToolsPage {
     super(html);
   }
 
-  /** The spell's description: the paragraphs after its stat fields, in its nice-textile div or standalone. */
+  /**
+   * The spell's description: the paragraphs after its stat fields, in its nice-textile div or standalone, a line break
+   * in one (`<br>`) kept between its lines.
+   */
   private description(): string {
     const descParts: string[] = [];
     const niceTextile = this.$("div.nice-textile");
     if (niceTextile.length > 0) {
       niceTextile.find("p").each((_, p) => {
-        const text = this.$(p).text().trim();
+        const text = Page.text(this.$(p)).trim();
         if (text && !isStatLabel(text)) descParts.push(text);
       });
     }
@@ -78,7 +82,7 @@ export class SpellPage extends DndToolsPage {
     if (descParts.length === 0) {
       let foundStats = false;
       this.$("p").each((_, p) => {
-        const text = this.$(p).text().trim();
+        const text = Page.text(this.$(p)).trim();
         if (isStatLabel(text)) {
           foundStats = true;
           return;
