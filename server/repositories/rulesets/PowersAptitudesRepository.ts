@@ -1,0 +1,54 @@
+import { and, eq, inArray, type InferInsertModel, isNull } from "drizzle-orm";
+
+import type { Db } from "@/drizzle/database.ts";
+import { powersAptitudesInRules } from "@/drizzle/schema.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
+
+class PowersAptitudesRepository extends BaseRepository<typeof powersAptitudesInRules> {
+  constructor() {
+    super(powersAptitudesInRules);
+  }
+
+  async create(db: Db, values: InferInsertModel<typeof powersAptitudesInRules>) {
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  async createMany(db: Db, values: InferInsertModel<typeof powersAptitudesInRules>[]) {
+    if (values.length === 0) return [];
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  // Exception to soft-delete: disposable configuration data — intentional removal
+  async delete(db: Db, where: { powerId: string }) {
+    return await db
+      .delete(this.table)
+      .where(this.branchWhere(["powerId" in where && eq(this.table.powerId, where.powerId)]))
+      .returning();
+  }
+
+  /** Links of powers. */
+  async findMany(db: Db, where: { powerIds: string[] } | { powerId: string }) {
+    if ("powerIds" in where && where.powerIds.length === 0) return [];
+    return await db.query.powersAptitudesInRules.findMany({
+      where: this.branchWhere(
+        [
+          "powerIds" in where && inArray(this.table.powerId, where.powerIds),
+          "powerId" in where && eq(this.table.powerId, where.powerId),
+        ],
+        [isNull(this.table.deletedAt)],
+      ),
+    });
+  }
+
+  async findOne(db: Db, where: { aptitudeId: string; powerId: string }) {
+    return await db.query.powersAptitudesInRules.findFirst({
+      where: and(
+        eq(this.table.powerId, where.powerId),
+        eq(this.table.aptitudeId, where.aptitudeId),
+        isNull(this.table.deletedAt),
+      ),
+    });
+  }
+}
+
+export default PowersAptitudesRepository;

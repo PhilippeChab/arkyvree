@@ -1,0 +1,159 @@
+import { eq, type InferInsertModel } from "drizzle-orm";
+
+import { DND35_CORE_PACKAGE } from "@/content/dnd3.5/packages/core.ts";
+import { RulesetSeeder } from "@/database/seeders/dnd3.5/RulesetSeeder.ts";
+import type { Db } from "@/drizzle/database.ts";
+import { aptitudesInRules, rulesetExtensionsInRules, type rulesetsInRules } from "@/drizzle/schema.ts";
+import type { CowData, RulesetSources } from "@/engine/core/cow/index.ts";
+import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
+import { EntityCopy, RulesetViews } from "@/server/cow/index.ts";
+import { db } from "@/server/database/index.ts";
+import { Properties, type RulesetEntityType, Rulesets } from "@/server/repositories/index.ts";
+import type { TargetPathKind } from "@/shared/customization/target.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
+
+import { api, expectOk } from "./api.ts";
+import { insertRows } from "./database.ts";
+import { uniqueId } from "./seed.ts";
+import { createTestUser } from "./users.ts";
+
+const writtenSeededRulesets = new Set<string>();
+
+/** Drops the rules of the seeded rulesets the test wrote to, now that the rollback undid its rows. */
+export function forgetSeededRulesetWrites() {
+  for (const rulesetId of writtenSeededRulesets) RulesetViews.invalidate(rulesetId);
+  writtenSeededRulesets.clear();
+}
+
+/**
+ * Drops a seeded ruleset's cached rules after the test wrote rows straight into it, so what it reads next
+ * sees them. The cache outlives the test's rollback, so the setup drops them again once the test ends.
+ * A fork goes away with the rollback: after writing into one, `RulesetViews.invalidate` is enough.
+ */
+export function invalidateSeededRuleset(rulesetId: string) {
+  writtenSeededRulesets.add(rulesetId);
+  RulesetViews.invalidate(rulesetId);
+}
+
+/**
+ * Copies an inherited entity into `rulesetId` (`EntityCopy`), on the chain given: what a first edit there copies. The
+ * copied row.
+ */
+export async function copyEntity(
+  database: Db,
+  entityType: RulesetEntityType,
+  entityId: string,
+  ruleset: RulesetSources,
+) {
+  return (await EntityCopy.create(database, entityType, entityId, ruleset)).entity;
+}
+
+/** A new seeded fork of the seed user's with an aptitude of its own: the fork's `id` and the `aptitudeId`. */
+export async function createSeededForkWithAptitude() {
+  const { id } = await createSeededTestRuleset(SEED_USER_ID);
+  return { id, aptitudeId: (await postAptitude(id)).id };
+}
+
+/**
+ * Creates a test ruleset by forking the seeded D&D 3.5 base ruleset.
+ * The fork inherits all entities (abilities, saves, skills, feats, etc.)
+ * via COW without duplicating any data.
+ */
+export async function createSeededTestRuleset(
+  userId: string,
+  options: {
+    description?: string;
+    name?: string;
+    private?: boolean;
+    status?: "Draft" | "Published" | "Archived";
+  } = {},
+) {
+  const coreId = await RulesetSeeder.findCoreRulesetId(db, DND35_CORE_PACKAGE, "A seeded test ruleset");
+
+  const ruleset = await createTestRuleset(userId, {
+    rulesetId: coreId,
+    ancestorRulesetIds: [coreId],
+    ...options,
+  });
+
+  // Copy ruleset-level properties (e.g., RULESET_SKILL_POINT_ABILITY_ID)
+  const sourceProperties = await Properties.findMany(db, {
+    entityIds: [coreId],
+    entityType: "rulesets",
+  });
+  if (sourceProperties.length > 0) {
+    await Properties.createMany(
+      db,
+      sourceProperties.map((p) => ({
+        ...p,
+        id: undefined,
+        entityId: ruleset.id,
+      })),
+    );
+  }
+
+  return ruleset;
+}
+
+/** A seeded fork that also uses every extension shipped with the seeded base ruleset. */
+export async function createSeededTestRulesetWithExtensions(userId: string) {
+  const fork = await createSeededTestRuleset(userId);
+  const links = await db
+    .select({ id: rulesetExtensionsInRules.extensionId })
+    .from(rulesetExtensionsInRules)
+    .where(eq(rulesetExtensionsInRules.rulesetId, fork.rulesetId!));
+  const [ruleset] = await Rulesets.update(db, { extensionRulesetIds: links.map((link) => link.id) }, { id: fork.id });
+  RulesetViews.invalidate(fork.id);
+  return ruleset;
+}
+
+/**
+ * An empty private draft ruleset owned by `userId` (`null` for a system ruleset), of the base rules the seeded content
+ * is written for (3.5's), unless `values` names others. Pass `rulesetId` and `ancestorRulesetIds` to make it a fork.
+ * For one that already has the seeded content, use `createSeededTestRuleset`.
+ */
+export async function createTestRuleset(
+  userId: string | null,
+  values: Partial<InferInsertModel<typeof rulesetsInRules>> = {},
+) {
+  const [ruleset] = await Rulesets.create(db, {
+    name: `Test Ruleset ${uniqueId()}`,
+    description: "Test ruleset description",
+    private: true,
+    baseRules: DND35_BASE_RULES,
+    userId,
+    ...values,
+  });
+  return ruleset;
+}
+
+/** A new user with an empty ruleset of their own, holding aptitudes of these names: their ids, in that order. */
+export async function createTestUserAndRuleset(aptitudeNames: string[] = []) {
+  const { user, session } = await createTestUser();
+  const ruleset = await createTestRuleset(user.id);
+  const aptitudes = await insertRows(
+    aptitudesInRules,
+    aptitudeNames.map((name) => ({ name, rulesetId: ruleset.id })),
+  );
+  return { user, session, ruleset, aptitudeIds: aptitudes.map((a) => a.id) };
+}
+
+/**
+ * A change to `ruleset`'s entities or customizations (`Edit`: `EntityEdit`, `CustomizationEdit`, `EntityNames`), as a
+ * service makes it in its scope, outside one.
+ */
+export async function editRuleset<E>(Edit: new (ruleset: RulesetSources, cow: CowData) => E, ruleset: RulesetSources) {
+  return new Edit(ruleset, await RulesetViews.getCowData(ruleset));
+}
+
+/** A new aptitude of the ruleset, created through the API as the seed user. */
+export async function postAptitude(rulesetId: string) {
+  return await expectOk(
+    api.api.rulesets[":id"].aptitudes.$post({ param: { id: rulesetId }, json: { name: `Aptitude ${uniqueId()}` } }),
+  );
+}
+
+/** A ruleset's target paths of a kind, by its id, as the cache keeps them (`RulesetViews.getTargetPaths`). */
+export async function readTargetPaths(rulesetId: string, kind: TargetPathKind) {
+  return await RulesetViews.getTargetPaths((await Rulesets.findOne(db, { id: rulesetId }))!, kind);
+}

@@ -1,0 +1,61 @@
+import { runWithRequestCache } from "@/server/database/index.ts";
+
+import MemoryCache from "./MemoryCache.ts";
+
+interface Loaded<T> {
+  data: T;
+  pinned?: boolean;
+}
+
+/** Bounded cached entries plus in-flight reads, invalidated by dependency ID. */
+export default class DependentCache<T> {
+  private readonly cache = new MemoryCache<{ data: T; dependencies: ReadonlySet<string> }>();
+
+  private readonly pending = new Map<string, { dependencies: ReadonlySet<string>; promise: Promise<T> }>();
+
+  invalidate(dependencyId: string): void {
+    // MemoryCache is capped at 200 entries. No unbounded dependency registry,
+    // no database lookup, and unrelated cached/in-flight reads stay reusable.
+    this.cache.invalidateWhere((entry) => entry.dependencies.has(dependencyId));
+    for (const [key, entry] of this.pending) if (entry.dependencies.has(dependencyId)) this.pending.delete(key);
+  }
+
+  invalidateAll(): void {
+    this.cache.invalidateAll();
+    this.pending.clear();
+  }
+
+  isPinned(key: string): boolean {
+    return this.cache.isPinned(key);
+  }
+
+  async getOrFetch(key: string, dependencyIds: readonly string[], fetcher: () => Promise<Loaded<T>>): Promise<T> {
+    if (!MemoryCache.isEnabled()) return (await fetcher()).data;
+
+    const cached = this.cache.get(key);
+    if (cached) return cached.data;
+    const active = this.pending.get(key);
+    if (active) return active.promise;
+
+    const dependencies = new Set(dependencyIds);
+    // Register before invoking the loader, including loaders that throw before
+    // their first await. Promise identity is the generation token for this key.
+    // A caller may have read before another request invalidated this entry.
+    // Never promote its old repository promises back into a shared cache.
+    // Keep deduplication within the fill, including concurrent reads it starts.
+    const promise: Promise<T> = Promise.resolve()
+      .then(() => runWithRequestCache(fetcher))
+      .then(({ data, pinned }) => {
+        if (this.pending.get(key)?.promise === promise) {
+          this.cache.set(key, { data, dependencies });
+          if (pinned) this.cache.pin(key);
+        }
+        return data;
+      })
+      .finally(() => {
+        if (this.pending.get(key)?.promise === promise) this.pending.delete(key);
+      });
+    this.pending.set(key, { promise, dependencies });
+    return promise;
+  }
+}

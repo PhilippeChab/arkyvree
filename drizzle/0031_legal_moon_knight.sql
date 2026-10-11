@@ -1,0 +1,2 @@
+ALTER TABLE "rules"."klass_level_feats" ADD COLUMN "id" uuid DEFAULT public.gen_random_uuid() NOT NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX "klass_level_feats_id_key" ON "rules"."klass_level_feats" USING btree ("id");

@@ -1,0 +1,528 @@
+{
+  "_meta": {
+    "book": "dmg",
+    "scrapedAt": "2026-03-23T18:43:45.334Z",
+    "sourceUrl": "https://dndtools.net/classes/dungeon-masters-guide-v35--4/loremaster/",
+    "type": "class"
+  },
+  "overrides": {
+    "description": "Loremasters are arcane or divine casters devoted to the pursuit of knowledge, prizing hidden wisdom and obscure lore above material wealth.",
+    "features": {
+      "Bonus Language": {
+        "description": "Through their dedicated scholarly efforts, loremasters pick up new languages to broaden their access to written knowledge. At 4th and 8th level, a loremaster may learn any single new language of her choice."
+      },
+      "Greater Lore": {
+        "description": "Beginning at 6th level, a loremaster gains the power to analyze and comprehend magical items, producing an effect equivalent to the identify spell."
+      },
+      "Lore": {
+        "description": "Loremasters are collectors of knowledge. Starting at 2nd level, a loremaster gains the ability to recall legends and obscure information on a variety of subjects, functioning similarly to a bard's bardic knowledge ability. She adds her loremaster level and her Intelligence modifier to the lore check."
+      },
+      "Secret": {
+        "description": "Through extensive research, loremasters uncover a wide range of useful knowledge and hidden insights. At 1st level and at every other level thereafter (3rd, 5th, 7th, and 9th), the loremaster selects one secret. Her level combined with her Intelligence modifier determines the total number of secrets available to her. The same secret cannot be selected more than once."
+      },
+      "Secret: Applicable Knowledge": {
+        "description": "Any single feat",
+        "requirements": [
+          {
+            "operator": "greater_than_or_equal",
+            "target": "classes.loremaster.level",
+            "value": "{{ 8 - [abilities.intelligence.modifier] }}",
+            "valueType": "number"
+          }
+        ]
+      },
+      "Secret: Dodge Trick": {
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "combat.ac.dodge",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "requirements": [
+          {
+            "operator": "greater_than_or_equal",
+            "target": "classes.loremaster.level",
+            "value": "{{ 7 - [abilities.intelligence.modifier] }}",
+            "valueType": "number"
+          }
+        ]
+      },
+      "Secret: Instant Mastery": {
+        "description": "4 ranks in a skill in which the character currently has no ranks",
+        "requirements": [
+          {
+            "operator": "greater_than_or_equal",
+            "target": "classes.loremaster.level",
+            "value": "{{ 1 - [abilities.intelligence.modifier] }}",
+            "valueType": "number"
+          }
+        ]
+      },
+      "Secret: More Newfound Arcana": {
+        "description": "1 bonus 2nd-level spell",
+        "requirements": [
+          {
+            "operator": "greater_than_or_equal",
+            "target": "classes.loremaster.level",
+            "value": "{{ 10 - [abilities.intelligence.modifier] }}",
+            "valueType": "number"
+          }
+        ]
+      },
+      "Secret: Newfound Arcana": {
+        "description": "1 bonus 1st-level spell",
+        "requirements": [
+          {
+            "operator": "greater_than_or_equal",
+            "target": "classes.loremaster.level",
+            "value": "{{ 9 - [abilities.intelligence.modifier] }}",
+            "valueType": "number"
+          }
+        ]
+      },
+      "Secret: Secret Health": {
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "combat.hp.misc",
+            "value": "3",
+            "valueType": "number"
+          }
+        ],
+        "requirements": [
+          {
+            "operator": "greater_than_or_equal",
+            "target": "classes.loremaster.level",
+            "value": "{{ 2 - [abilities.intelligence.modifier] }}",
+            "valueType": "number"
+          }
+        ]
+      },
+      "Secret: Secret Knowledge of Avoidance": {
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "saves.reflex.misc",
+            "value": "2",
+            "valueType": "number"
+          }
+        ],
+        "requirements": [
+          {
+            "operator": "greater_than_or_equal",
+            "target": "classes.loremaster.level",
+            "value": "{{ 5 - [abilities.intelligence.modifier] }}",
+            "valueType": "number"
+          }
+        ]
+      },
+      "Secret: Secrets of Inner Strength": {
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "saves.will.misc",
+            "value": "2",
+            "valueType": "number"
+          }
+        ],
+        "requirements": [
+          {
+            "operator": "greater_than_or_equal",
+            "target": "classes.loremaster.level",
+            "value": "{{ 3 - [abilities.intelligence.modifier] }}",
+            "valueType": "number"
+          }
+        ]
+      },
+      "Secret: Weapon Trick": {
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "items.weapons.*.tohit.misc",
+            "value": "1",
+            "valueType": "number"
+          }
+        ],
+        "requirements": [
+          {
+            "operator": "greater_than_or_equal",
+            "target": "classes.loremaster.level",
+            "value": "{{ 6 - [abilities.intelligence.modifier] }}",
+            "valueType": "number"
+          }
+        ]
+      },
+      "Secret: the Lore of True Stamina": {
+        "modifiers": [
+          {
+            "operator": "add",
+            "target": "saves.fortitude.misc",
+            "value": "2",
+            "valueType": "number"
+          }
+        ],
+        "requirements": [
+          {
+            "operator": "greater_than_or_equal",
+            "target": "classes.loremaster.level",
+            "value": "{{ 4 - [abilities.intelligence.modifier] }}",
+            "valueType": "number"
+          }
+        ]
+      },
+      "Spells per Day/Spells Known": {
+        "description": "The loremaster continues to develop her spellcasting alongside her scholarly pursuits. Each time she gains a loremaster level, she receives new spells per day (and spells known, if relevant) as though she had also advanced one level in a spellcasting class she belonged to before entering this prestige class. However, she does not receive any other class benefits that the prior class would have granted, such as improved undead turning, bonus metamagic feats, or item creation feats. In effect, the loremaster level stacks with her previous spellcasting class level for the purpose of determining spells per day, spells known, and caster level."
+      },
+      "True Lore": {
+        "description": "Upon reaching 10th level, a loremaster can draw upon her vast knowledge once per day to produce an effect identical to either a legend lore spell or an analyze dweomer spell."
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "A loremaster does not gain proficiency with any weapons or armor upon taking this class."
+      }
+    },
+    "requirements": [
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "greater_than_or_equal",
+            "target": "spellcasting.arcane",
+            "value": "3",
+            "valueType": "number"
+          },
+          {
+            "operator": "greater_than_or_equal",
+            "target": "spellcasting.divine",
+            "value": "3",
+            "valueType": "number"
+          }
+        ]
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "skills.knowledge.rank",
+        "value": "10",
+        "valueType": "number"
+      },
+      {
+        "operator": "greater_than_or_equal",
+        "target": "feats.metamagic.count",
+        "value": "{{ 3 - [feats.itemcreation.count] }}",
+        "valueType": "number"
+      },
+      {
+        "chainingOperator": "or",
+        "children": [
+          {
+            "operator": "equal",
+            "target": "feats.skillfocusknowledgearcana.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "equal",
+            "target": "feats.skillfocusknowledgearchitectureandengineering.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "equal",
+            "target": "feats.skillfocusknowledgedungeoneering.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "equal",
+            "target": "feats.skillfocusknowledgegeography.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "equal",
+            "target": "feats.skillfocusknowledgehistory.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "equal",
+            "target": "feats.skillfocusknowledgelocal.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "equal",
+            "target": "feats.skillfocusknowledgenature.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "equal",
+            "target": "feats.skillfocusknowledgenobilityandroyalty.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "equal",
+            "target": "feats.skillfocusknowledgepsionics.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "equal",
+            "target": "feats.skillfocusknowledgereligion.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          },
+          {
+            "operator": "equal",
+            "target": "feats.skillfocusknowledgetheplanes.possessed",
+            "value": "true",
+            "valueType": "boolean"
+          }
+        ]
+      }
+    ],
+    "reviewed": [
+      "Any three metamagic or item creation feats"
+    ]
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Loremasters gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A loremaster continues training in magic as well as her field of research. Thus, when a new loremaster level is gained, the character gains new spells per day (and spells known, if applicable) as if she had also gained a level in a spellcasting class she belonged to before she added the prestige class. She does not, however, gain any other benefit a character of that class would have gained (improved chance of controlling or rebuking undead, metamagic or item creation feats, and so on). This essentially means that she adds the level of loremaster to the level of some other spellcasting class the character has, then determines spells per day, spells known, and caster level accordingly.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "In their studies, loremasters stumble upon all sorts of applicable knowledge and secrets. At 1st level and every two levels higher than 1st (3rd, 5th, 7th, and 9th), the loremaster chooses one secret from the table on the next page. Her level plus Intelligence modifier determines the total number of secrets she can choose. She can't choose the same secret twice.",
+        "name": "Secret"
+      },
+      {
+        "description": "Loremasters gather knowledge. At 2nd level, a loremaster gains the ability to know legends or information regarding various topics, just as a bard can with bardic knowledge. The loremaster adds her level and her Intelligence modifier to the lore check.",
+        "name": "Lore"
+      },
+      {
+        "description": "Loremasters, in their laborious studies, learn new languages in order to access more knowledge. A loremaster can choose any new language at 4th and 8th level.",
+        "name": "Bonus Language"
+      },
+      {
+        "description": "At 6th level, a loremaster gains the ability to understand magic items, as with the identify spell.",
+        "name": "Greater Lore",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 10th level, once per day a loremaster can use her knowledge to gain the effect of a legend lore spell or an analyze dweomer spell.",
+        "name": "True Lore",
+        "type": "(Ex)"
+      },
+      {
+        "description": "4 ranks of skill in which the character has no ranks",
+        "name": "Secret: Instant Mastery"
+      },
+      {
+        "description": "+3 hit points",
+        "name": "Secret: Secret Health"
+      },
+      {
+        "description": "+2 bonus on Will saves",
+        "name": "Secret: Secrets of Inner Strength"
+      },
+      {
+        "description": "+2 bonus on Fortitude saves",
+        "name": "Secret: the Lore of True Stamina"
+      },
+      {
+        "description": "+2 bonus on Reflex saves",
+        "name": "Secret: Secret Knowledge of Avoidance"
+      },
+      {
+        "description": "+1 bonus on attack rolls",
+        "name": "Secret: Weapon Trick"
+      },
+      {
+        "description": "+1 dodge bonus to AC",
+        "name": "Secret: Dodge Trick"
+      },
+      {
+        "description": "Any one feat",
+        "name": "Secret: Applicable Knowledge"
+      },
+      {
+        "description": "1 bonus 1st-level spell 1",
+        "name": "Secret: Newfound Arcana"
+      },
+      {
+        "description": "1 bonus 2nd-level spell 1",
+        "name": "Secret: More Newfound Arcana"
+      }
+    ],
+    "classSkills": [
+      "Appraise",
+      "Concentration",
+      "Craft",
+      "Decipher Script",
+      "Gather Information",
+      "Handle Animal",
+      "Heal",
+      "Knowledge (Arcana)",
+      "Knowledge (Architecture and Engineering)",
+      "Knowledge (Dungeoneering)",
+      "Knowledge (Geography)",
+      "Knowledge (History)",
+      "Knowledge (Local)",
+      "Knowledge (Nature)",
+      "Knowledge (Nobility and Royalty)",
+      "Knowledge (Psionics)",
+      "Knowledge (Religion)",
+      "Knowledge (The Planes)",
+      "Perform",
+      "Profession",
+      "Speak Language",
+      "Spellcraft",
+      "Use Magic Device"
+    ],
+    "description": "Loremasters are spellcasters who concentrate on knowledge, valuing lore and secrets over gold.",
+    "hitDie": "d4",
+    "languages": "Loremasters, in their laborious studies, learn new languages in order to access more knowledge. A loremaster can choose any new language at 4th and 8th level.",
+    "name": "Loremaster",
+    "prerequisites": {
+      "parsed": {
+        "feats": [
+          "Any three metamagic or item creation feats"
+        ],
+        "skills": [
+          {
+            "name": "Knowledge (any)",
+            "ranks": 10
+          },
+          {
+            "name": "Knowledge (any)",
+            "ranks": 10
+          }
+        ],
+        "special": [
+          "3rd level or higher"
+        ]
+      },
+      "text": "Skills: Knowledge (any) 10 ranks, Knowledge (any) 10 ranks Feats: Any three metamagic or item creation feats, plus Skill Focus (Knowledge [any individual Knowledge skill]). Spells: Able to cast seven different divination spells, one of which must be 3rd level or higher."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Secret"
+        ],
+        "spellsPerDay": "+1 level of existing class",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Lore"
+        ],
+        "spellsPerDay": "+1 level of existing class",
+        "willSave": 3
+      },
+      {
+        "bab": 1,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Secret"
+        ],
+        "spellsPerDay": "+1 level of existing class",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 1,
+        "special": [
+          "Bonus language"
+        ],
+        "spellsPerDay": "+1 level of existing class",
+        "willSave": 4
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 1,
+        "special": [
+          "Secret"
+        ],
+        "spellsPerDay": "+1 level of existing class",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 2,
+        "special": [
+          "Greater lore"
+        ],
+        "spellsPerDay": "+1 level of existing class",
+        "willSave": 5
+      },
+      {
+        "bab": 3,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 2,
+        "special": [
+          "Secret"
+        ],
+        "spellsPerDay": "+1 level of existing class",
+        "willSave": 5
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 2,
+        "special": [
+          "Bonus language"
+        ],
+        "spellsPerDay": "+1 level of existing class",
+        "willSave": 6
+      },
+      {
+        "bab": 4,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 3,
+        "special": [
+          "Secret"
+        ],
+        "spellsPerDay": "+1 level of existing class",
+        "willSave": 6
+      },
+      {
+        "bab": 5,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 3,
+        "special": [
+          "True lore"
+        ],
+        "spellsPerDay": "+1 level of existing class",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

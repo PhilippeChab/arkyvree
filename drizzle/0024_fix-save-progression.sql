@@ -1,0 +1,4 @@
+-- No-op: fix already folded into v1 seeds.
+-- Original migration fixed D&D 3.5 save progression formulas from
+-- goodSave = floor((level-1)/3) + 2 / poorSave = floor((level-1)/3)
+-- to goodSave = floor(level/2) + 2 / poorSave = floor(level/3).

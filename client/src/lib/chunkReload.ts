@@ -1,0 +1,27 @@
+import { readChunkReloadTime, saveChunkReloadTime } from "@/client/src/stores/chunkReloadTime.ts";
+
+const RELOAD_WINDOW_MS = 10_000;
+
+/**
+ * True for the errors browsers raise when a lazily imported chunk is gone,
+ * typically because a deploy replaced it while this tab was open.
+ */
+export function isChunkLoadError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  if (error.name === "ChunkLoadError") return true;
+  // Chrome, Firefox and Safari wording for a failed dynamic import.
+  return /dynamically imported module|Importing a module script failed/i.test(error.message);
+}
+
+/**
+ * Reload once to fetch the current deploy's chunks. Returns false without
+ * reloading when a reload already happened moments ago (or storage is
+ * blocked, which can't tell), so a chunk that is really missing can't loop the page.
+ */
+export function reloadForStaleChunks(): boolean {
+  const lastReload = readChunkReloadTime();
+  if (lastReload && Date.now() - lastReload < RELOAD_WINDOW_MS) return false;
+  if (!saveChunkReloadTime(Date.now())) return false;
+  window.location.reload();
+  return true;
+}

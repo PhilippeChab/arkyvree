@@ -1,0 +1,30 @@
+import type { RulesetData } from "@/engine/core/view/index.ts";
+import { FEAT_FIELDS, type FeatFieldValues } from "@/engine/rulesets/dnd3.5/entities/feats/fields.ts";
+import type { FeatWithAptitudes } from "@/shared/relations.ts";
+
+/** A weapon rule a feat changes, by its field: Weapon Finesse's, Oversized Two-Weapon Fighting's. */
+export type WeaponRule = keyof Pick<FeatFieldValues, "oversizedTwoWeaponFighting" | "weaponFinesse">;
+
+/**
+ * The feats of a ruleset's view that change a weapon rule (a feat's FEAT_WEAPON_FINESSE,
+ * FEAT_OVERSIZED_TWO_WEAPON_FIGHTING), by the rule: derived once and kept with the view (`WeaponRuleFeats.of`), so a
+ * build, which settles its weapons before each round, reads only whether its character has them.
+ */
+export default class WeaponRuleFeats {
+  constructor(private readonly rulesetData: RulesetData) {}
+
+  /** The view's feats that change a weapon rule, derived once with it. */
+  static of(rulesetData: RulesetData): WeaponRuleFeats {
+    return rulesetData.derive(WeaponRuleFeats);
+  }
+
+  /** What it derived: each rule's feats, the first time they're read. */
+  private readonly built: Partial<Record<WeaponRule, FeatWithAptitudes[]>> = {};
+
+  /** The view's feats that change `rule`, by their properties' fields. */
+  featsWith(rule: WeaponRule): FeatWithAptitudes[] {
+    return (this.built[rule] ??= this.rulesetData.feats.filter(
+      (feat) => FEAT_FIELDS.read(this.rulesetData.propertiesByEntity.get(feat.id) ?? [])[rule],
+    ));
+  }
+}

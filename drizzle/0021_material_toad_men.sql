@@ -1,0 +1,2 @@
+ALTER TABLE "character"."characters" ADD COLUMN "share_token" text;--> statement-breakpoint
+CREATE UNIQUE INDEX "characters_share_token_unique_idx" ON "character"."characters" USING btree ("share_token") WHERE (share_token IS NOT NULL);

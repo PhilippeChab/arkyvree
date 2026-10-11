@@ -1,0 +1,308 @@
+# Target Paths
+
+All available paths for modifiers and requirements. Dynamic segments are shown as `<name>`.
+
+Paths marked "req only" are available as requirement targets but not modifier targets, and "mod only" ones as modifier targets but not requirement targets.
+
+Every category (`engine/rulesets/dnd3.5/model/*/…Paths.ts`, a `PathCategory`) lists its leaves in a table (its paths under an entity or a group: a description, a value type, whether it's req only or mod only, which `isLeafOfKind` reads), and offers each the operators of its value type (`getOperators`, `shared/customization/operators.ts`): a number's arithmetic for a modifier and comparisons for a requirement, any other value's `set` for a modifier and `equal` / `not_equal` for a requirement. A count of levels (a class's, a bonded creature's) is added to, taken from or set, never multiplied or divided (`LEVEL_MODIFIER_OPERATORS`), and a spell's list-valued properties are added to or taken from, contained or not. A segment's label is its category's (`getSegmentLabels`, derived from its table), or one of the ruleset's names its category labels (`labelNames`: an entity's name over any other label, a property's value only where no other label names the segment).
+
+A part the sheet computes when read (the totals, an ability's modifier, a skill's or a save's `ability`, a skill's `weight`, `combat.ac.dexterity` and `size`, a weapon set's `ac.touch` and `ac.flatfooted`, `combat.hp.constitution`, `combat.initiative.dexterity`, the grapple's `bab`, `strength` and `size`, the encumbrance's `heavyload`, a weapon's `tohit.strength`, `tohit.size`, `tohit.gearpenalty`, `damage.strength` and `wielded`, the armor's `category` and whether a shield is `held`) follows what it's computed from, a modifier that raises an ability included: it's "req only", and a flat bonus belongs in the `misc` beside it. See [How a sheet is built](customization.md#how-a-sheet-is-built).
+
+A path on a value the character doesn't have reaches nothing: a modifier on it is inactive, and a requirement on it unmet rather than invalid. Such a value is a leaf holding `null` or `undefined`, such as a bow's or a crossbow's `damage.strmultiplier` (its Strength doesn't follow its hand). So a field a modifier must be able to `set` holds an empty value when unset (`""`, `0`), never `null` or `undefined`: an unset height or weight is `""`, which `is_empty` reads as empty. An unset age is the exception, on purpose: a character without one has no age to compare or set.
+
+## abilities
+
+| Path | Type | Description |
+|------|------|-------------|
+| `abilities.<name>.base` | number | Base score before modifiers (req only) |
+| `abilities.<name>.misc` | number | From feats, items, and spells |
+| `abilities.<name>.total` | number | Final score after all bonuses (req only) |
+| `abilities.<name>.modifier` | number | Derived from total score (req only) |
+| `abilities.*.misc` | number | Misc modifier for all abilities |
+
+## skills
+
+| Path | Type | Description |
+|------|------|-------------|
+| `skills.<name>.rank` | number | Total ranks invested |
+| `skills.<name>.ability` | number | From key ability modifier (req only) |
+| `skills.<name>.weight` | number | Armor check penalty (ACP) (req only) |
+| `skills.<name>.misc` | number | From feats, items, and spells |
+| `skills.<name>.total` | number | Final skill check bonus (req only) |
+| `skills.<name>.trained` | boolean | Whether at least 1 rank is invested |
+| `skills.<name>.innate` | boolean | Whether skill is a class skill |
+| `skills.*.misc` | number | Misc modifier for all skills |
+| `skills.<family>.<field>` | number | Each skill of a family no skill of its own names (`skills.knowledge.rank`: any Knowledge skill for a requirement, all of them for a modifier) |
+| `skills.budget.perlevel` | number | Bonus skill points per level (a human's) |
+| `skills.budget.total`, `.spent`, `.available` | number | The skill points from every level, spent, and left (req only) |
+
+## saves
+
+| Path | Type | Description |
+|------|------|-------------|
+| `saves.<name>.base` | number | Base save bonus from class levels |
+| `saves.<name>.ability` | number | From key ability modifier (req only) |
+| `saves.<name>.misc` | number | From feats, items, and spells |
+| `saves.<name>.total` | number | Final saving throw bonus (req only) |
+| `saves.*.misc` | number | Misc modifier for all saving throws |
+
+## combat
+
+| Path | Type | Description |
+|------|------|-------------|
+| `combat.ac.base` | number | Default 10 |
+| `combat.ac.armor` | number | Armor bonus to AC: armor, bracers, an armor's enhancement (not in touch AC) |
+| `combat.ac.shield` | number | Shield bonus to AC: a shield, its enhancement (not in touch AC). Each set's own, which a modifier changes in each set; read elsewhere, the greatest set's |
+| `combat.ac.dexterity` | number | Dexterity bonus to AC (req only) |
+| `combat.ac.natural` | number | Natural armor bonus (not in touch AC) |
+| `combat.ac.deflection` | number | Deflection bonus to AC |
+| `combat.ac.dodge` | number | Dodge bonus to AC, and any other lost when flat-footed (not in flat-footed AC) |
+| `combat.ac.misc` | number | Other bonuses to AC, kept in touch and flat-footed AC (a monk's Wisdom) |
+| `combat.ac.uncannydodge` | boolean | Keeps the Dexterity and dodge bonuses when flat-footed (uncanny dodge) |
+| `combat.weaponsets.*.ac.total` | number | A weapon set's AC: all its bonuses combined, met when any set's is (req only) |
+| `combat.weaponsets.*.ac.touch` | number | A weapon set's touch AC: ignores armor, shield, natural (req only) |
+| `combat.weaponsets.*.ac.flatfooted` | number | A weapon set's flat-footed AC: ignores the Dexterity and dodge bonuses, unless uncanny dodge (req only) |
+| `combat.armor.category` | string | The category of the heaviest armor worn: none, light, medium or heavy (req only) |
+| `combat.shield.held` | boolean | Whether a shield is carried: in a set's armor class, by the set; elsewhere, in any set (req only) |
+| `combat.hp.base` | number | From hit dice rolls |
+| `combat.hp.constitution` | number | Con modifier per level (req only) |
+| `combat.hp.misc` | number | Other bonuses to HP |
+| `combat.hp.total` | number | All HP sources combined (req only) |
+| `combat.initiative.dexterity` | number | Dex modifier (req only) |
+| `combat.initiative.misc` | number | Other bonuses to initiative |
+| `combat.initiative.total` | number | All initiative bonuses combined (req only) |
+| `combat.bab` | number | From class progression |
+| `combat.throwing.tohit` | number | Bonus to hit with thrown weapons and slings, a melee weapon's thrown attack included (a halfling's +1) |
+| `combat.naturalattacks.secondarypenalty` | number | Penalty on secondary natural attacks (−5; −2 with Multiattack) |
+| `combat.naturalattacks.extraattacks` | number | Extra attacks with the primary natural weapon, each at −5 (a companion's Multiattack, under 3 attacks) |
+| `combat.naturalattacks.count` | number | Natural attacks made in a round, two claws being two (req only) |
+| `combat.grapple.bab` | number | BAB contribution (req only) |
+| `combat.grapple.strength` | number | Str modifier (req only) |
+| `combat.grapple.size` | number | From race size (req only) |
+| `combat.grapple.misc` | number | Other bonuses to grapple |
+| `combat.grapple.total` | number | All grapple bonuses combined (req only) |
+| `combat.twoweapon.mainhandpenalty` | number | Penalty on main-hand attacks with two weapons (−6) |
+| `combat.twoweapon.offhandpenalty` | number | Penalty on off-hand attacks with two weapons (−10) |
+| `combat.twoweapon.offhandattacks` | number | Attacks the off hand makes with two weapons (1) |
+| `combat.speed.base` | number | From race, and fast movement: what armor and load slow (ft) |
+| `combat.speed.misc` | number | Other bonuses to speed, after armor and load (ft) |
+| `combat.speed.total` | number | Final movement speed (ft) (req only) |
+| `combat.encumbrance.carriedweight` | number | Total weight of items (lbs) |
+| `combat.encumbrance.heavyload` | number | Max carry capacity (lbs) (req only) |
+| `combat.encumbrance.load` | string | The load carried: light, medium, heavy or overloaded (req only) |
+
+### Armor class by weapon set
+
+A character has an armor class for each weapon set, the loadouts it switches between, and none of its own: each set's (`combat.weaponsets.<set>.ac`, its set stored from 0) counts a shield only when the set holds one (its AC, its maximum Dexterity), and every part the sets share (`combat.ac.*`: the armor, natural armor, deflection, dodge, misc, uncanny dodge). A character with no weapon set has one, the first, holding no shield; a set holding a shield and no weapon is one too. A requirement reads a set's totals with `combat.weaponsets.*.ac.total` (`touch`, `flatfooted`), met when any set's meets it; a template reads none: they're several values.
+
+A modifier on the armor class (`combat.ac.<part>`) adds to what every set shares, but for three, which apply in each set on their own, each set's own `combat.ac.<part>` reached in it: an item's held in a set's hand, only in the sets holding it (a magic shield's enhancement on `combat.ac.shield`); any other on `combat.ac.shield`, the part no set shares, in every set (a +1 adds 1 to each set's, a set to 0 makes each set's 0); and one whose own requirements read the armor class or the shield (`combat.ac.*`, `combat.shield.*`), in each set that meets them whole (a monk's AC bonus, gated on `combat.shield.held == false`, counts in the sets holding no shield; requirements met each by a different set count in none). Anywhere else (a skill's, a save's or the speed's modifier, a prerequisite, a template), `combat.shield.held` is whether any set holds a shield, `combat.ac.shield` the greatest set's shield bonus, its shield's enhancement included, and Dexterity's bonus is capped by every shield: the worst case, which the skills' armor check penalty takes too (the worst set's shield). A set's attacks take only its own shield's penalties (`tohit.gearpenalty`, a finessed attack's check penalty). See [the rulings](./dnd3.5/rules-decisions.md#characters).
+
+## items.weapons
+
+Grouped by weapon type (`WEAPON_TYPE`) and proficiency (`WEAPON_PROFICIENCY`: simple, martial, exotic), as the picker lists them; an item is never reached by its name. `items.weapons.unarmedstrike` is always there: every character strikes unarmed, and a gauntlet's strike is unarmed too. A familiar's, animal companion's or mount's natural attacks replace its weapons: they aren't items, so no `items.weapons` path reaches them, and its unarmed strike group is empty.
+
+| Path | Type | Description |
+|------|------|-------------|
+| `items.weapons.<group>.tohit.strength` | number | Str/Dex bonus to attack (a finessed one less a shield's check penalty, a composite bow's −2 below its rating) (req only) |
+| `items.weapons.<group>.tohit.magic` | number | Enhancement bonus to attack |
+| `items.weapons.<group>.tohit.misc` | number | Other bonuses to attack, a weapon the character isn't proficient with's −4 among them |
+| `items.weapons.<group>.tohit.size` | number | Size modifier to attack (req only) |
+| `items.weapons.<group>.tohit.gearpenalty` | number | Penalty to attack from the gear: the check penalty of armor or a shield worn without proficiency, a tower shield's −2, a crossbow's in one hand (req only) |
+| `items.weapons.<group>.damage.base` | string | Base damage dice |
+| `items.weapons.<group>.damage.strength` | number | Str bonus to damage (req only) |
+| `items.weapons.<group>.damage.magic` | number | Enhancement bonus to damage |
+| `items.weapons.<group>.damage.misc` | number | Other bonuses to damage |
+| `items.weapons.<group>.damage.strmultiplier` | number | Str-to-damage ratio (1x/0.5x/1.5x) |
+| `items.weapons.<group>.damage.critical.range` | number | Critical threat range |
+| `items.weapons.<group>.damage.critical.multiplier` | number | Critical hit multiplier |
+| `items.weapons.<group>.wielded` | string | How it's held: mainhand, offhand or twohanded (req only) |
+
+A modifier can reach every weapon the character holds with `*` for the group (`items.weapons.*.tohit.misc`, a loremaster's Weapon Trick): each weapon once, though its type's group and its proficiency's both list it, an unarmed strike too. A requirement can't: it reads one value.
+
+A weapon's attacks also take, where they apply, what's written once for the character: a secondary natural attack's `combat.naturalattacks.secondarypenalty`, and a thrown weapon's or a sling's `combat.throwing.tohit`.
+
+## weapon
+
+An item's own weapon: written on an item (its modifiers and requirements), `weapon.*` reaches the weapon it is, wherever it's held. An item held in several places (a dagger in each hand, a bastard sword in two weapon sets) is a weapon in each, each judged on its own. Anywhere else, `weapon.*` reaches no weapon, so a requirement on it is unmet. Its paths are the same as a weapon group's:
+
+| Path | Type | Description |
+|------|------|-------------|
+| `weapon.tohit.strength` | number | Str/Dex bonus to attack (req only) |
+| `weapon.tohit.magic` | number | Enhancement bonus to attack (a +1 sword's) |
+| `weapon.tohit.size` | number | Size modifier to attack (req only) |
+| `weapon.tohit.misc` | number | Other bonuses to attack, the −4 without proficiency among them |
+| `weapon.tohit.gearpenalty` | number | Penalty to attack from the gear (req only) |
+| `weapon.damage.base` | string | Base damage dice |
+| `weapon.damage.strength` | number | Str bonus to damage (req only) |
+| `weapon.damage.magic` | number | Enhancement bonus to damage |
+| `weapon.damage.misc` | number | Other bonuses to damage |
+| `weapon.damage.strmultiplier` | number | Str-to-damage ratio (1x/0.5x/1.5x) |
+| `weapon.damage.critical.range` | number | Critical threat range |
+| `weapon.damage.critical.multiplier` | number | Critical hit multiplier |
+| `weapon.wielded` | string | How it's held: mainhand, offhand or twohanded (req only): a bastard sword's martial proficiency counts while `twohanded` |
+
+## items.armors
+
+Grouped by armor type (`ARMOR_TYPE`), as the picker lists them; an item is never reached by its name.
+
+| Path | Type | Description |
+|------|------|-------------|
+| `items.armors.<group>.ac.bonus` | number | Base AC bonus from armor |
+| `items.armors.<group>.ac.misc` | number | Other bonuses to armor AC |
+| `items.armors.<group>.ac.total` | number | Total AC from this armor (req only) |
+| `items.armors.<group>.checkpenalty` | number | Penalty to Str/Dex skill checks |
+| `items.armors.<group>.spellfailure` | number | Arcane spell failure chance |
+| `items.armors.<group>.maxdex` | number | Maximum Dexterity bonus to AC |
+
+## items.shields
+
+Grouped by shield type (`SHIELD_TYPE`), as the picker lists them; an item is never reached by its name. A path reaches every equipped shield of its type, whichever weapon set holds it: the same shield carried in two sets is two.
+
+| Path | Type | Description |
+|------|------|-------------|
+| `items.shields.<group>.ac.bonus` | number | Base AC bonus from shield |
+| `items.shields.<group>.ac.misc` | number | Other bonuses to shield AC |
+| `items.shields.<group>.ac.total` | number | Total AC from this shield (req only) |
+| `items.shields.<group>.checkpenalty` | number | Penalty to Str/Dex skill checks |
+| `items.shields.<group>.spellfailure` | number | Arcane spell failure chance |
+| `items.shields.<group>.maxdex` | number | Maximum Dexterity bonus to AC (a tower shield's) |
+
+## classes
+
+| Path | Type | Description |
+|------|------|-------------|
+| `classes.<name>.level` | number | Class level |
+| `classes.<name>.bonuscasterlevel` | number | Bonus caster levels from prestige class advancement (mod only): the class's caster level and spell slots count them |
+
+## feats
+
+| Path | Type | Description |
+|------|------|-------------|
+| `feats.<name>.possessed` | boolean | Whether feat is possessed |
+| `feats.<name>.count` | number | Times taken — stackable feats only (req only) |
+| `feats.<family>.*.possessed` | boolean | Any feat of the family possessed (req only) |
+| `feats.<family>.*.count` | number | Times any one feat of the family was taken (req only) |
+| `feats.<family>.count` | number | Times the family's feats were taken, all together (req only) |
+
+A modifier that sets `feats.<name>.possessed` true grants the feat, and one that sets `powers.<spell>.<aptitude>.known` true the spell on its list (`languages.<name>.known`, a language): the character has it once the modifier applies, in the build's rounds behind the modifier's requirements as any modifier, its own and its source's (a feat's prerequisites, an item's own requirements, a class level's). A feat granted so is possessed, counted and listed with those the character has without a pick, and a spell known with its DC; its own modifiers then apply, behind their own requirements, not its prerequisites: the grant is its gate. A requirement that reads what another grant gives (a grant gated on `feats.<name>.possessed`) is met once that grant has applied. A grant applied while its requirements held stays given if another modifier breaks them, as any modifier does, and the validation reports it. A grant names the one feat, spell or language it gives and sets a literal `true`: a modifier on one of these paths written as a template, or on a wildcard (`feats.<family>.*.possessed`, which a requirement reads as any feat of the family), would mark it had without giving it, so its save is refused and a stored one is skipped, saying why (`CategoryPaths.findGrantError`). The editor offers neither: the modifier catalog lists no such wildcard, and marks these paths `literalOnly` from the same declaration (its category's `grants`), so the Template switch is off there. A grant on a condition takes the condition as its requirement (Great Fortitude, requiring `languages.common.known`).
+
+A family is the feats sharing a `FEAT_FAMILY` property (*Feat family groupings* in [customization.md](./customization.md)). `feats.<family>.possessed` names no feat, unless a feat has the family's name: Martial Weapon Proficiency (every martial weapon) and its family (the feats for one weapon) share `feats.martialweaponproficiency`, where `possessed` and `count` are the feat's and `*` reaches the family's feats. The family's count isn't listed there.
+
+### Proficiency feat paths (auto-generated as item requirements)
+
+Weapon items, armor items, and shield items auto-generate proficiency requirements targeting these feat paths. A simple or martial weapon accepts the proficiency with all of its group or with it alone, never another weapon's: `feats.simpleweaponproficiency.possessed` is that feat only, not every `simpleweaponproficiency<weapon>`. The gauntlet also accepts the unarmed strike's: a strike with it is unarmed.
+
+
+| Path                                               | Used by                        |
+|----------------------------------------------------|--------------------------------|
+| `feats.simpleweaponproficiency.possessed`          | Simple weapon items (OR chain) |
+| `feats.simpleweaponproficiency<weapon>.possessed`   | Simple weapon items (OR chain) |
+| `feats.martialweaponproficiency.possessed`         | Martial weapon items (OR chain) |
+| `feats.martialweaponproficiency<weapon>.possessed`  | Martial weapon items (OR chain) |
+| `feats.exoticweaponproficiency<weapon>.possessed`   | Exotic weapon items            |
+| `feats.armorproficiencylight.possessed`            | Light armor items              |
+| `feats.armorproficiencymedium.possessed`           | Medium armor items             |
+| `feats.armorproficiencyheavy.possessed`            | Heavy armor items              |
+| `feats.shieldproficiency.possessed`                | Light/Heavy shield items       |
+| `feats.towershieldproficiency.possessed`           | Tower shield items             |
+
+## powers
+
+| Path | Type | Description |
+|------|------|-------------|
+| `powers.<name>.properties.<type>` | string list | Power property values: one per property row, in the type's options' order |
+| `powers.<spell>.<aptitude>.known` | boolean | Whether spell is known via this aptitude |
+
+A property path holds its type's values as a list (a spell's components: `Verbal`, `Somatic`, `Divine Focus`). A requirement asks whether one of them is there, whole (`contains` / `not_contains`: `Focus` isn't on a spell with only a divine focus), and a modifier adds a value or takes one (`add` / `subtract`). A sheet lists them joined, in the books' order. A template can't read one as a value: it's a list, not a string or a number.
+
+A list a feat brings (one a feat gives slots in or joins to its class's list, and no class gives slots in: a cleric's domain, a specialist wizard's school) has no known paths: its spells come with the feat.
+
+### powers (DC groupings)
+
+Grouped by spell school and spell descriptor, and reached by each spell's name. A spell has a DC for each class that casts it: its level on that class's list and that class's casting ability (a wizard/bard's Hold Person: 3rd level and Intelligence as a wizard's, 2nd and Charisma as a bard's). A DC object is shared by its spell's groupings and its entry, so modifying it via school or name affects the same DC.
+
+DC formula: `base (10) + spell level + ability modifier + misc`
+
+| Path | Type | Description |
+|------|------|-------------|
+| `powers.groups.<group>.*.dc.misc` | number | DC misc modifier |
+| `powers.groups.<group>.*.dc.total` | number | DC total (read-only, recomputed) |
+
+`<group>` is a spell school (e.g., `evocation`) or descriptor (e.g., `fire`); its `*` reaches each spell, and each class's DC of it. Individual spells use `powers.<spell>.dc.*.misc` and `powers.<spell>.dc.*.total`, each class's DC of the spell (`powers.fireball.dc.*.misc`; `powers.fireball.dc.wizard.misc` is the wizard's alone), without the `groups` namespace. Only powers with a spell level and ability DC get DC entries.
+
+## identity
+
+### identity.physiology
+
+| Path | Type | Description |
+|------|------|-------------|
+| `identity.physiology.name` | string | Character name |
+| `identity.physiology.description` | string | Physical description |
+| `identity.physiology.age` | number | Character age |
+| `identity.physiology.gender` | string | Character gender |
+| `identity.physiology.height` | string | Character height |
+| `identity.physiology.weight` | string | Body weight |
+| `identity.physiology.race.name` | string | Race name |
+| `identity.physiology.race.size` | string | Size (e.g., Medium, Small): what the armor class, attacks, grapple, damage dice, Hide and carrying capacity read |
+
+### identity.beliefs
+
+| Path | Type | Description |
+|------|------|-------------|
+| `identity.beliefs.deity` | string | Character deity |
+| `identity.beliefs.alignment` | string | Character alignment |
+
+### identity.background
+
+| Path | Type | Description |
+|------|------|-------------|
+| `identity.background.notes` | string | Public notes |
+
+A character's private notes have no path: the engine holds them apart from what paths read, so no modifier can copy them into a field others see, and no requirement can tell them by whether it's met.
+
+### identity.meta
+
+| Path | Type | Description |
+|------|------|-------------|
+| `identity.meta.level` | number | Total character level (all classes combined), counted from the classes' levels |
+| `identity.meta.xp` | number | Current experience points |
+
+Note: D&D 3.5 skill budget data (total, available, spent, perlevel) lives on `skills.budget.*` — e.g. `skills.budget.perlevel` for Human racial bonus.
+
+## languages
+
+| Path | Type | Description |
+|------|------|-------------|
+| `languages.<name>.known` | boolean | Whether the character speaks the language. Set true, a modifier grants it without a pick (a race's automatic languages, a druid's Druidic); read, it's true however the character speaks it, picked or granted |
+| `languages.extrapicks` | number | Languages the character may pick past its Intelligence and its Speak Language ranks: a class level's +1 (a loremaster's 4th and 8th) |
+
+A language is named by the slug of its name, as a skill or a feat is. A grant is given as its modifier applies, behind its requirements as any modifier, as a feat's possession is (see [feats](#feats)): the language is the character's from then on, never stored, and never one of its picks. A secret language (its type `Secret`: Druidic) is a character's only by such a grant: no pick takes one. See [the ruling](./dnd3.5/rules-decisions.md#characters).
+
+A fork's rename of a language leaves the modifiers and requirements naming it by its old name naming nothing, as every path keyed by a name does (a skill's, a feat's): such a modifier is skipped, such a requirement never met, until it's edited to the new name. Deleting a language leaves them so too, as deleting a skill or a feat does.
+
+## aptitudes
+
+| Path | Type | Description |
+|------|------|-------------|
+| `aptitudes.<name>.uses` | number | Uses per day (casts, charges, etc.) |
+| `aptitudes.<name>.allowed` | number | Slots for known spells or feats |
+| `aptitudes.<name>.<level>.uses` | number | Uses per day at spell level (leveled aptitudes only) |
+| `aptitudes.<name>.<level>.allowed` | number | Slots at spell level (leveled aptitudes only) |
+| `aptitudes.<name>.joinsclasslist` | boolean | Whether the list's spells join the list of the class whose level gave it (leveled aptitudes only) |
+
+A modifier on a pool's slots grants more, with a number: `add` on `aptitudes.<name>.allowed` (a feat pool) and on a spell level's `uses` and `allowed`, or `set` -1 on a spell level's `allowed`, all of that level known. The level-up wizard and the class tables count these without a character, the sheet's way; another operator or a template would count differently there, so the editor doesn't offer them and the API refuses them (`TargetPath.setValues`, `literalOnly`). A pool's own `uses` (Turn Undead's) counts on the sheet alone and takes any modifier.
+
+A feat or a class level sets `joinsclasslist` (`set` true): a cleric's domain feat sets its domain list's. The list's spells are then known on the list of the class whose level gave the feat (or the class level's own class), at the spell levels that class knows its whole list at. A specialist wizard's school doesn't join: his school's spells stay learned. The slots and known spells a feat gives in a list it brings, a domain's spells, a school's slots, the cleric's domain slot (his feature's `aptitudes.domainspells.<level>.uses`), follow the spell levels the feat's class casts, bonus caster levels counted: a level it casts gets what the feat gives there, though the feat's modifiers open it at a class level.
+
+## spellcasting
+
+What the character casts, counted from its classes when read: a class of a caster type (arcane or divine) casts once its levels give it slots at a spell level, cantrips included, so a bard from his first level and a paladin or a ranger from his fourth.
+
+| Path | Type | Description |
+|------|------|-------------|
+| `spellcasting.arcane` | number | Highest arcane spell level castable: the highest an arcane class has slots at, 0 for cantrips alone (req only) |
+| `spellcasting.divine` | number | Highest divine spell level castable (req only) |
+| `spellcasting.casterlevel` | number | Highest caster level: a casting class's level and the caster levels other classes add to it (`classes.<name>.bonuscasterlevel`), up to 20 (req only) |
+| `spellcasting.arcanecasterlevel` | number | Highest arcane caster level, an arcane class's (req only) |
+
+A caster level is a class's own, the level its spells per day are read at: a multiclass character's are never added up (a cleric 3 / wizard 2's is 3, and his arcane one 2), and a prestige class that advances another class's spellcasting raises that class's (a cleric 3 / stormlord 2's is 5). A "Caster level 5th" prerequisite (Craft Wand's) checks `spellcasting.casterlevel`, an "Arcane caster level 5th" one `spellcasting.arcanecasterlevel`: a wizard 5 meets Craft Wand, though he casts 3rd-level spells. No path reads one class's caster level, nor a divine caster level: no prerequisite asks either. See [the rulings](./dnd3.5/rules-decisions.md#characters).

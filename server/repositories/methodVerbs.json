@@ -1,0 +1,6 @@
+{
+  "$comment": "The verbs a repository's public method starts with (a whole camelCase word: `find` in `findMany`). The request cache (withRequestCache.ts) reads them: a `read` is memoized within a request and sees copy-on-write ids, a `write` clears the cache, a `lock` does neither. Lint (arkyvree/method-names) holds the repositories to them.",
+  "read": ["find", "exists", "count"],
+  "write": ["create", "update", "upsert", "delete", "archive", "unarchive", "mark", "backfill", "orphan", "publish"],
+  "lock": ["lock"]
+}

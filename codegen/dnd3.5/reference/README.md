@@ -1,0 +1,118 @@
+# Reference JSON Schema
+
+A reference file stores what the scraper read (`raw`) and the corrections made by hand (`overrides`), nothing else. Loading it (`References`, `tools/references/References.ts`, with the detectors in `tools/detect/`) derives what the generator reads: `detected`, parsed from `raw` (wizard schools have none), and `mapping`, each entity as the seeds make it, its overrides applied (they win over both). The seeds read the mapping, never the overrides. So a correction takes effect at the next `parser:dnd3.5:generate`, and re-scraping (which replaces `raw`) keeps it.
+
+A class reference, as stored (see `tools/types/classes.ts` for the definitive types):
+
+```
+_meta                               # Bookkeeping (type, book, url, timestamp)
+
+raw                                 # Verbatim scrape from the HTML page
+├── name, description               #   Class name & flavor text
+├── hitDie, skillPointsPerLevel     #   Strings as they appear on page
+├── classSkills[]                   #   Skill names from page
+├── prerequisites                   #   Raw prereq text + parsed struct
+│   └── parsed                      #     bab, skills, feats, spells, alignment, special,
+│                                   #     saves, casterLevel, classLevels
+├── progression[]                   #   Level table (BAB, saves, special, spellsPerDay, and the other
+│                                   #     columns by header: "AC Bonus": "+1")
+├── classFeatures[]                 #   Feature name + type + description blocks
+├── spellsKnown[]                   #   Separate "spells known" table if any
+├── hasCantrips?                    #   Does spell table start at 0th?
+├── bonusSpellAbility?              #   Detected from feature text
+└── languages?                      #   Its Class Features' "Bonus Languages" paragraph past its name,
+                                    #     and those continuing it (the druid's Druidic)
+
+overrides                           # MANUAL — the only hand-edited part
+├── skip                            #   Leave the class out of the seed (generation removes its files)
+├── description                     #   Override class description
+├── requirements[]                  #   Override detected.requirements
+├── classSkills[]                   #   Override raw.classSkills
+├── bab, saves                      #   Override detected values
+├── alignment                       #   Manual alignment constraint
+├── proficiencies[]                 #   Weapon/armor proficiency strings
+├── freeFeats[]                     #   [level, featName, aptitude]
+├── modifiers[]                     #   Class-level modifiers (passive bonuses)
+├── columns{}                       #   Table column (header) → modifiers at each level its value changes:
+│                                   #     { target, operator: add (the number's rise) | set (the text),
+│                                   #     requirements? }; parser:dnd3.5:validate reports a column none reads
+├── aptitudePicks[]                 #   Override detected.aptitudePicks
+├── bonusFeatLists[]                #   Override detected.bonusFeatLists
+├── casterType                      #   Override detected.casterType
+├── bonusSpellAbility               #   Override mapping.bonusSpellAbility
+├── languages{}                     #   Override detected.languages
+├── spells{}                        #   Override mapping.spells fields
+├── noSpells                        #   Suppress spell generation entirely
+├── features{}                      #   Per-feature overrides (win over mapping.features)
+└── reviewed[]                      #   Unresolved items already reviewed
+```
+
+And what loading it derives:
+
+```
+detected                            # Parsed from raw
+├── hd, levels, skillPoints         #   Parsed numbers from raw strings
+├── bab, saves                      #   Derived from progression table
+├── requirements[]                  #   Parsed from prerequisites
+├── featNameMap                     #   Slug → display name for prereq feats
+├── featureModifiers{}              #   Feature name → modifiers its text gives, and what it leaves unread
+│                                   #     (unresolvedModifiers[], errors[]): a pool's aren't read
+├── featureOccurrences[]            #   Features from progression table (name → levels[])
+├── spellsPerDay[][]                #   Parsed numeric spell table
+├── spellsKnown[][]                 #   Parsed numeric spells known
+├── hasOwnSpells?                   #   Whether class has own spell list (not advancement)
+├── casterType?                     #   Arcane/Divine from feature text
+├── casterLevelAdvancement?         #   { type, levels[] } — advances existing spellcasting
+├── aptitudePicks[]                 #   Choice-granting features (levels + target)
+├── bonusFeatLists[]                #   "Pick from these feats" lists (aptitude + feats)
+├── languages?                      #   From raw.languages: automatic[] (its members speak from its
+│                                   #     first level), levels[] (each adds one of any kind: its
+│                                   #     table's Bonus Language feature's, when its text gives a new
+│                                   #     language); its bonus languages left out
+├── unresolvedAptitudePicks[]       #   Couldn't map to valid target
+├── unresolvedPrereqs[]             #   Recognized but couldn't map
+└── errors[]                        #   Invalid paths
+
+mapping                             # Built from detected, with overrides.features and noSpells applied
+├── classFeatureAptitude            #   Main aptitude name (e.g. "Fighter Class Feature")
+├── features{}                      #   Feature name → seed config
+│   └── [name]
+│       ├── seedName                #     Output feat name (e.g. "Evasion (Rogue)")
+│       ├── description             #     From classFeatures text
+│       ├── level                   #     Min level (from occurrences)
+│       ├── stackable               #     Multiple levels = stackable
+│       ├── selectable              #     Player picks vs auto-granted
+│       ├── skip                    #     Exclude from generation
+│       ├── aptitude                #     Custom aptitude (pool sub-options)
+│       ├── modifiers[]             #     Its detected featureModifiers, with its aptitude pick's
+│       ├── requirements[]          #     What it takes to pick it (an override's: a list by alignment)
+│       └── aliases[]               #     Alt occurrence names
+├── occurrenceMap{}                 #   Occurrence name → features{} key
+├── bonusSpellAbility               #   Ability for bonus spells
+├── languages                       #   Its languages (overrides.languages, else detected)
+└── spells{}                        #   Spell slot config (slug, perDay, known, knowAll,
+                                    #     noCantrips, inheritsFrom)
+    ├── inheritsFrom{}              #   The list it draws on: other classes' (classes[], a spell
+    │                               #     at the first's level), only schools[], none with one of
+    │                               #     excludeDescriptors[], plus additions{level: spells[]}
+    ├── lists[]                     #   The lists its slots go to instead, each its aptitude (name),
+    │                               #     its inheritsFrom, and the requirements gating its slots
+    │                               #     (the pious templar's paladin or blackguard list, by a pick)
+    └── domainPool                  #   The pool a domain is picked from, whose spells join its list
+                                    #     (the divine crusader's): a feat per domain of its book and
+                                    #     the core rules, each setting <domain>domainspells.joinsclasslist
+```
+
+A race reference stores each race's page as read (`raw`: its name, size, speed, ability adjustments, description and traits, a trait the page leaves outside a paragraph too) and its overrides (`description`, `name`, `size`, `baseSpeed`, `modifiers`, `properties`, `languages`, `skip`). Loading it detects each race's `modifiers` and its `languages`, those it speaks from the start, read from its traits' text ("Automatic Languages: …", its bonus languages left out), or, when its traits name none, `unresolvedLanguages[]` (`parser:dnd3.5:validate` reports it until it's reviewed): the human's and the halfling's pages have no traits, so their `overrides.languages` give the SRD's. Its `mapping.languages` is the override's, else the detected; the seeds write each as the grant of the language (`languages.<name>.known` set true), after the race's other modifiers.
+
+Next to `detected` and `mapping`, the loaded reference keeps `_meta` as stored; `raw` as stored, except that a class's `overrides.alignment` fills its prerequisites' alignment when they have none; and `overrides`, their text cleaned up (sanitized) except a spell's or a wizard school's.
+
+## How the generator reads it
+
+The generator reads a class's `mapping` (`ClassMapping` builds it), and what no override changes (its hit die, levels, feature occurrences…) in `detected`:
+
+1. Its features, spells and `classFeatureAptitude`, derived from `detected`
+2. Each field an override sets (bab, saves, requirements, aptitudePicks, bonusFeatLists, casterType, bonusSpellAbility, classSkills, description, freeFeats, languages, proficiencies, modifiers, columns, skip): the override's, else the detected or scraped value. `aptitudePicks` keeps the detected picks an override's for the same aptitude doesn't replace, and `spells`' fields go over the detected spells: a class with none detected ignores them (`parser:dnd3.5:validate` reports it)
+3. For features specifically: `overrides.features[name]` fields are merged on top of the detected feature (set a field to `null` to delete it)
+
+`bun run parser:dnd3.5:validate` reports a class override that changes nothing, so remove it: it holds what's derived without it, and the class's generated files come out the same without it. An override that differs from what's derived stays, even when nothing uses it today.

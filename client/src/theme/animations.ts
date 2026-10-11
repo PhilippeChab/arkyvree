@@ -1,0 +1,122 @@
+/** The theme's motion: its durations and easings, its keyframes and the animations they make, and how a transition is written. */
+
+import { alpha, keyframes, type Theme } from "@mui/material";
+
+/** The bell's ring when a notification comes in */
+const bellShake = keyframes`
+  0%, 100% { transform: rotate(0deg); }
+  15% { transform: rotate(14deg); }
+  30% { transform: rotate(-12deg); }
+  45% { transform: rotate(10deg); }
+  60% { transform: rotate(-8deg); }
+  75% { transform: rotate(4deg); }
+`;
+
+const diceRoll = keyframes`
+  0%   { transform: translateY(0)    rotate(0deg); }
+  25%  { transform: translateY(-8px) rotate(90deg); }
+  50%  { transform: translateY(0)    rotate(180deg); }
+  75%  { transform: translateY(-8px) rotate(270deg); }
+  100% { transform: translateY(0)    rotate(360deg); }
+`;
+
+const pulse = keyframes`
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+`;
+
+/**
+ * How long motion takes, in milliseconds: a delay behind another step, a stagger between items, a transition's, then
+ * an animation's (the bell's ring)
+ */
+export const DURATION = {
+  beat: 50,
+  stagger: 60,
+  slowStagger: 80,
+  quick: 120,
+  fast: 150,
+  brisk: 200,
+  normal: 250,
+  moderate: 300,
+  deliberate: 350,
+  slow: 400,
+  ring: 600,
+} as const;
+
+/** How motion eases: CSS's own curves, and Material's */
+export const EASING = {
+  ease: "ease",
+  easeIn: "ease-in",
+  easeInOut: "ease-in-out",
+  easeOut: "ease-out",
+  standard: "cubic-bezier(0.4, 0, 0.2, 1)",
+  decelerate: "cubic-bezier(0.0, 0.0, 0.2, 1)",
+  emphasized: "cubic-bezier(0.2, 0, 0, 1)",
+} as const;
+
+/** The animations the app runs, by what they show: the bell's ring, the dice of a spinner, a loading pulse */
+export const ANIMATIONS = {
+  bellShake: `${bellShake} ${DURATION.ring}ms ${EASING.easeInOut}`,
+  diceRoll: `${diceRoll} 1.6s ${EASING.decelerate} infinite`,
+  pulse: `${pulse} 2s ${EASING.standard} infinite`,
+} as const;
+
+/**
+ * A roll of dice (`useDiceRoll`): a die shows a new face every `face`, lands on its result after `land`, each next die
+ * `stagger` after the one before, and its result pulses for `settle` (`settleAnimation`)
+ */
+export const DICE_ROLL = { face: DURATION.beat, land: 800, stagger: DURATION.fast, settle: DURATION.slow } as const;
+
+export const fadeIn = keyframes`
+  from { opacity: 0; }
+  to   { opacity: 1; }
+`;
+
+export const fadeInUp = keyframes`
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+`;
+
+export const PREFERS_REDUCED_MOTION = "@media (prefers-reduced-motion: reduce)" as const;
+
+export function fadeInUpSx(index: number, offset = 0) {
+  const delay = (index - offset) * DURATION.stagger;
+  return {
+    // `backwards`, not `both`: hold the first frame through the stagger delay,
+    // but don't pin the last one, which would override hover transforms and
+    // opacity on the animated card once it has finished.
+    animation: `${fadeInUp} ${DURATION.normal}ms ${EASING.decelerate} ${delay}ms backwards`,
+    [PREFERS_REDUCED_MOTION]: { animation: "none" },
+  } as const;
+}
+
+/** A rolled die's result settling (a rolled score, the rolled HP): a ring of the theme's primary color, pulsed once. */
+export function settleAnimation(theme: Theme) {
+  const ring = alpha(theme.palette.primary.main, 0.4);
+  const settledPulse = keyframes`
+    0%   { box-shadow: none; }
+    50%  { box-shadow: 0 0 0 3px ${ring}; }
+    100% { box-shadow: none; }
+  `;
+  return `${settledPulse} ${DICE_ROLL.settle}ms ${EASING.standard}`;
+}
+
+/**
+ * A rolled result settling in a labeled field (the rolled HP): its outline, which breaks around its label, takes the
+ * theme's primary color at its focused width once, as `settleAnimation`'s ring does around a card. A ring around the
+ * field would run through its label.
+ */
+export function settleOutlineAnimation(theme: Theme) {
+  const settledOutline = keyframes`
+    50% { border-color: ${theme.palette.primary.main}; border-width: 2px; }
+  `;
+  return `${settledOutline} ${DICE_ROLL.settle}ms ${EASING.standard}`;
+}
+
+/**
+ * A transition of `properties`, each over `duration` (`DURATION`) along `easing`: `transitionOf(["opacity"],
+ * DURATION.fast)`.
+ */
+export function transitionOf(properties: string[], duration: number, easing: string = EASING.ease) {
+  return properties.map((property) => `${property} ${duration}ms ${easing}`).join(", ");
+}

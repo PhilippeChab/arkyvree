@@ -1,0 +1,214 @@
+import { normalizeWs } from "@/codegen/core/text/whitespace.ts";
+import { getFeatureBaseName, normalizeFeatureName } from "@/codegen/dnd3.5/tools/text/names.ts";
+import { type ClassReference } from "@/codegen/dnd3.5/tools/types/classes.ts";
+import { type NamedText } from "@/codegen/dnd3.5/tools/types/reference.ts";
+import { stripSeparators } from "@/shared/text.ts";
+
+import type { BaseClassDetector } from "./BaseClassDetector.ts";
+import { FeatureText } from "./FeatureText.ts";
+
+/** A pool's aptitude, the level it opens at, and whether its picks stack. */
+export interface PoolAptitude {
+  aptitude: string;
+  level: number;
+  stackable?: true;
+}
+
+/**
+ * A class's pools: the features of its aptitude picks whose description offers a choice, each with its aptitude
+ * ("<Class> <Feature>") and its sub-options, the ones its description lists (inline), or else the separate features
+ * that follow it (orphans: a stonelord's Stone Power's), or else those its table's rows name after it, wherever they
+ * stand ("Secret: Dodge Trick", a loremaster's Secret's). A pool named for another with a qualifier offers the other's
+ * sub-options too (a horizon walker's Planar Terrain Mastery, his Terrain Mastery's terrains).
+ */
+export class ClassPools {
+  constructor(
+    private readonly detector: BaseClassDetector,
+    private readonly detected: Pick<ClassReference["detected"], "aptitudePicks" | "featureOccurrences">,
+  ) {
+    this.detectPools();
+    this.detectOrphanSubOptions();
+    this.detectQualifiedPools();
+  }
+
+  /** The pool features, lowercased: their sub-options are features, not they. */
+  private readonly featureNames = new Set<string>();
+  /** Each pool's aptitude by its inline sub-option's name. */
+  private readonly optionAptitudes = new Map<string, PoolAptitude>();
+  /** Each pool's sub-options as separate features, by the pool's lowercased name. */
+  private readonly orphans = new Map<string, NamedText[]>();
+  /** Each pool's aptitude by its own lowercased name (a pool without inline sub-options too). */
+  private readonly poolAptitudes = new Map<string, PoolAptitude>();
+  /** The aptitudes of the pools that offer an orphan sub-option besides its own, by its lowercased name. */
+  private readonly sharedAptitudes = new Map<string, string[]>();
+
+  /**
+   * The sub-options of a pool that no features follow, without inline ones: the features its table's rows name after
+   * it, "<Pool>: <Option>", wherever they stand (a loremaster's secrets, after her True Lore), two or more, which no
+   * other pool's are.
+   */
+  private detectNamedSubOptions(progressionFeatureNames: Set<string>) {
+    const { raw } = this.detector;
+    for (const cf of raw.classFeatures) {
+      const baseName = getFeatureBaseName(cf.name);
+      const pool = baseName.toLowerCase();
+      if (!this.poolAptitudes.has(cf.name.toLowerCase()) && !this.poolAptitudes.has(pool)) continue;
+      if (this.orphans.has(pool) || new FeatureText(normalizeWs(cf.description)).poolSubOptions()) continue;
+
+      const named = raw.classFeatures.flatMap((next) => {
+        const nextBase = getFeatureBaseName(next.name);
+        if (!nextBase.toLowerCase().startsWith(`${pool}: `) || this.isOrphan(nextBase)) return [];
+        if (progressionFeatureNames.has(normalizeFeatureName(nextBase).toLowerCase())) return [];
+        return [{ name: nextBase, description: normalizeWs(next.description) }];
+      });
+      if (named.length >= 2) {
+        this.orphans.set(pool, named);
+        this.featureNames.add(cf.name.toLowerCase());
+        this.featureNames.add(pool);
+      }
+    }
+  }
+
+  /**
+   * The orphan sub-options: the features that follow a pool without inline sub-options and that the table doesn't
+   * name, two or more (a stonelord's Stone Power's), its own (`poolAptitudes`) to tell a pool by.
+   */
+  private detectOrphanSubOptions() {
+    const { raw } = this.detector;
+    // The features the table names: one that does isn't a sub-option
+    const progressionFeatureNames = new Set<string>();
+    for (const row of raw.progression) {
+      for (const special of row.special)
+        if (special) progressionFeatureNames.add(normalizeFeatureName(special).toLowerCase());
+    }
+
+    for (let i = 0; i < raw.classFeatures.length; i++) {
+      const cf = raw.classFeatures[i];
+      const baseName = getFeatureBaseName(cf.name);
+      if (!this.poolAptitudes.has(cf.name.toLowerCase()) && !this.poolAptitudes.has(baseName.toLowerCase())) continue;
+
+      // A pool with inline sub-options has them
+      if (new FeatureText(normalizeWs(cf.description)).poolSubOptions()) continue;
+
+      // The features that follow it, up to one the table names
+      const orphans: NamedText[] = [];
+      for (let j = i + 1; j < raw.classFeatures.length; j++) {
+        const next = raw.classFeatures[j];
+        const nextBase = getFeatureBaseName(next.name);
+        const nextNorm = normalizeFeatureName(nextBase).toLowerCase();
+        if (progressionFeatureNames.has(nextNorm) || progressionFeatureNames.has(nextBase.toLowerCase())) break;
+        // "Weapon and Armor Proficiency" isn't a sub-option
+        if (nextBase.toLowerCase() === "weapon and armor proficiency") continue;
+        orphans.push({ name: nextBase, description: normalizeWs(next.description) });
+      }
+      if (orphans.length >= 2) {
+        this.orphans.set(baseName.toLowerCase(), orphans);
+        this.featureNames.add(cf.name.toLowerCase());
+        this.featureNames.add(baseName.toLowerCase());
+      }
+    }
+    this.detectNamedSubOptions(progressionFeatureNames);
+  }
+
+  /**
+   * The pools of the class's detected aptitude picks: each pick's feature whose description offers a choice, its
+   * aptitude by its own name, and by each of its inline sub-options' (which make it a pool feature).
+   */
+  private detectPools() {
+    const { detected } = this;
+    if (!detected.aptitudePicks) return;
+    const { classSlug, raw } = this.detector;
+
+    for (const pick of detected.aptitudePicks) {
+      // The pick's feature, by its target's slug: "aptitudes.roguespecialability.allowed" → "specialability"
+      const slugMatch = pick.target.match(/^aptitudes\.(.+)\.allowed$/);
+      if (!slugMatch) continue;
+      const pickSlug = slugMatch[1].replace(new RegExp(`^${classSlug}`), "");
+      const occ = detected.featureOccurrences.find((fo) => stripSeparators(fo.name) === pickSlug);
+      if (!occ) continue;
+      const cf = this.detector.findFeature(occ.name);
+      if (!cf) continue;
+
+      // A pool offers a choice
+      const text = new FeatureText(normalizeWs(cf.description));
+      if (!text.offersChoice()) continue;
+
+      const aptName = `${raw.name} ${occ.name}`;
+      const minLevel = Math.min(...occ.levels);
+
+      // Its inline sub-options make it a pool feature; a pool without them may have orphans (`detectOrphanSubOptions`)
+      const parsed = text.poolSubOptions();
+      if (parsed) {
+        for (const opt of parsed.options) {
+          this.optionAptitudes.set(opt.name, {
+            aptitude: aptName,
+            level: minLevel,
+            ...(opt.stackable ? { stackable: true } : {}),
+          });
+        }
+        this.featureNames.add(cf.name.toLowerCase());
+        this.featureNames.add(occ.name.toLowerCase());
+      }
+      this.poolAptitudes.set(cf.name.toLowerCase(), { aptitude: aptName, level: minLevel });
+    }
+  }
+
+  /**
+   * The sub-options of a pool named for another with a qualifier ("Planar Terrain Mastery", Terrain Mastery's planar
+   * form), which offers the other's too: of the orphans it took, those named after the other pool ("Terrain Mastery:
+   * Aquatic") are the other's, which it shares, and those its qualifier marks ("Terrain Mastery: Fiery (Planar)") its
+   * own. A horizon walker picks a terrain at each of his first five levels, a terrain or a planar terrain after.
+   */
+  private detectQualifiedPools() {
+    for (const [name, orphans] of [...this.orphans]) {
+      const pool = this.poolAptitude(name);
+      const base = [...this.poolAptitudes.keys()].find((other) => name.endsWith(` ${other}`));
+      if (!pool || !base) continue;
+      const qualifier = `(${name.slice(0, -base.length - 1)})`;
+      const shared = orphans.filter(
+        ({ name: option }) => option.toLowerCase().startsWith(`${base}: `) && !option.toLowerCase().endsWith(qualifier),
+      );
+      if (shared.length < 2) continue;
+
+      this.orphans.set(base, shared);
+      this.orphans.set(
+        name,
+        orphans.filter((orphan) => !shared.includes(orphan)),
+      );
+      this.featureNames.add(base);
+      for (const option of shared) this.sharedAptitudes.set(option.name.toLowerCase(), [pool.aptitude]);
+    }
+  }
+
+  /** Whether a feature (by its base name) is a pool's orphan sub-option, which its pool adds. */
+  isOrphan(baseName: string): boolean {
+    return [...this.orphans.values()].some((orphans) =>
+      orphans.some((o) => o.name.toLowerCase() === baseName.toLowerCase()),
+    );
+  }
+
+  /** Whether a feature (by its name or its base name) is a pool's: its sub-options are features, not it. */
+  isPool(name: string, baseName: string): boolean {
+    return this.featureNames.has(name.toLowerCase()) || this.featureNames.has(baseName.toLowerCase());
+  }
+
+  /** The aptitude an inline sub-option (by its name) belongs to. */
+  optionAptitude(name: string): PoolAptitude | undefined {
+    return this.optionAptitudes.get(name);
+  }
+
+  /** A pool's orphan sub-options, by its base name. */
+  orphansOf(baseName: string): NamedText[] | undefined {
+    return this.orphans.get(baseName.toLowerCase());
+  }
+
+  /** A pool's own aptitude, by its feature's name. */
+  poolAptitude(name: string): PoolAptitude | undefined {
+    return this.poolAptitudes.get(name.toLowerCase());
+  }
+
+  /** The aptitudes of the other pools that offer an orphan sub-option (by its name), besides its own. */
+  sharedAptitudesOf(name: string): string[] | undefined {
+    return this.sharedAptitudes.get(name.toLowerCase());
+  }
+}

@@ -1,0 +1,10 @@
+const REPO_URL = "https://github.com/PhilippeChab/arkyvree";
+
+/** Help and the changelog track `main`, the branch production deploys from. */
+export const EXTERNAL_LINKS = {
+  source: REPO_URL,
+  help: `${REPO_URL}/blob/main/help/README.md`,
+  changelog: `${REPO_URL}/blob/main/CHANGELOG.md`,
+  feedback: `${REPO_URL}/issues/new/choose`,
+  support: "https://ko-fi.com/philippechab",
+};

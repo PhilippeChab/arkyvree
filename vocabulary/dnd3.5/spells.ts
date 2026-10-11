@@ -1,0 +1,91 @@
+/** How many points of its ability's modifier past a spell level give one more bonus spell of it: 4. */
+export const BONUS_SPELL_MODIFIER_STEP = 4;
+
+export const SPELL_SCHOOLS = [
+  "Abjuration",
+  "Conjuration",
+  "Divination",
+  "Enchantment",
+  "Evocation",
+  "Illusion",
+  "Necromancy",
+  "Transmutation",
+  "Universal",
+] as const;
+/** Schools that get Spell Focus / Greater Spell Focus feats (excludes Universal) */
+export const MAGIC_SCHOOLS = SPELL_SCHOOLS.filter((s) => s !== "Universal");
+/** The highest spell level, from 0: the app has no epic spells. */
+export const MAX_SPELL_LEVEL = 9;
+export const SPELL_COMPONENTS = ["Verbal", "Somatic", "Material", "Focus", "Divine Focus", "XP Cost"] as const;
+export const SPELL_DESCRIPTORS = [
+  "Acid",
+  "Air",
+  "Chaotic",
+  "Cold",
+  "Darkness",
+  "Death",
+  "Earth",
+  "Electricity",
+  "Evil",
+  "Fear",
+  "Fire",
+  "Force",
+  "Good",
+  "Language-Dependent",
+  "Lawful",
+  "Light",
+  "Mind-Affecting",
+  "Sonic",
+  "Water",
+] as const;
+export const SPELL_DURATION_TYPES = [
+  "Instantaneous",
+  "Concentration",
+  "Sustained",
+  "Permanent",
+  "Dismissible",
+  "See Text",
+] as const;
+/** Every spell level, 0 to `MAX_SPELL_LEVEL`. */
+export const SPELL_LEVELS = Array.from({ length: MAX_SPELL_LEVEL + 1 }, (_, level) => level);
+/**
+ * Each spell level's name, by level, wherever one shows (a sheet's or the level wizard's spell list, a class's spells
+ * per day, a level filter): "Cantrips" for level 0, else "Level 3".
+ */
+export const SPELL_LEVEL_LABELS = SPELL_LEVELS.map((level) => (level === 0 ? "Cantrips" : `Level ${level}`));
+export const SPELL_RANGE_TYPES = ["Personal", "Touch", "Close", "Medium", "Long", "Unlimited"] as const;
+export const SPELL_RESISTANCE_OPTIONS = ["Yes", "No"] as const;
+
+/** A spell's save DC before its level and its caster's ability modifier: 10. */
+export const SPELL_SAVE_DC_BASE = 10;
+
+export const SPELL_SAVING_THROWS = [
+  "None",
+  "Fortitude negates",
+  "Fortitude half",
+  "Fortitude partial",
+  "Reflex negates",
+  "Reflex half",
+  "Reflex partial",
+  "Will negates",
+  "Will half",
+  "Will partial",
+  "Will disbelief",
+] as const;
+
+export const SPELL_SUBSCHOOLS = [
+  "Calling",
+  "Charm",
+  "Compulsion",
+  "Creation",
+  "Figment",
+  "Glamer",
+  "Healing",
+  "Pattern",
+  "Phantasm",
+  "Polymorph",
+  "Scrying",
+  "Shadow",
+  "Summoning",
+  "Teleportation",
+] as const;

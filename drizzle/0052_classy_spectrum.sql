@@ -1,0 +1,2 @@
+ALTER TABLE "storage"."blobs" ADD COLUMN "attached_at" timestamp with time zone;--> statement-breakpoint
+CREATE INDEX "blobs_pending_idx" ON "storage"."blobs" USING btree ("created_at") WHERE (attached_at IS NULL AND deleted_at IS NULL);

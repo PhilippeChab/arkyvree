@@ -1,0 +1,1 @@
+ALTER TABLE "storage"."blobs" DROP COLUMN "checksum";

@@ -1,0 +1,2 @@
+CREATE INDEX "properties_type_entity_type_idx" ON "customization"."properties" USING btree ("type","entity_type") WHERE (deleted_at IS NULL);--> statement-breakpoint
+CREATE INDEX "properties_type_value_idx" ON "customization"."properties" USING btree ("type","value") WHERE (deleted_at IS NULL);

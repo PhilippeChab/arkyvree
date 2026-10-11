@@ -1,0 +1,83 @@
+import { expect, test } from "bun:test";
+
+import { featsInRules } from "@/drizzle/schema.ts";
+import { CustomizationCopies } from "@/server/cow/index.ts";
+import { db } from "@/server/database/index.ts";
+import { Modifiers, Requirements } from "@/server/repositories/index.ts";
+import { insertRows } from "@/tests/support/database.ts";
+import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { makeSession } from "@/tests/support/users.ts";
+
+async function setup() {
+  const session = makeSession();
+  const ruleset = await createSeededTestRuleset(session.userId);
+  const [source, ...targets] = await insertRows(
+    featsInRules,
+    ["Source", "Target A", "Target B"].map((name) => ({ name: `Copy ${name}`, rulesetId: ruleset.id })),
+  );
+  const [modifier] = await Modifiers.createMany(db, [
+    {
+      target: "abilities.strength.misc",
+      value: "1",
+      operator: "add",
+      valueType: "number",
+      sourceId: source.id,
+      sourceType: "feats",
+    },
+  ]);
+  await Requirements.createMany(db, [
+    {
+      entityId: modifier.id,
+      entityType: "modifiers",
+      level: "1",
+      target: "combat.bab",
+      operator: "greater_than_or_equal",
+      value: "1",
+      valueType: "number",
+    },
+  ]);
+  const customizations = (await CustomizationCopies.read(db, [source.id], "feats", "feats")).get(source.id)!;
+  return { source, targets, modifier, customizations };
+}
+
+test("each target's copied modifier requirement belongs to that target's modifier", async () => {
+  const { targets, customizations } = await setup();
+  await CustomizationCopies.copyToMany(
+    db,
+    targets.map((t) => t.id),
+    "feats",
+    customizations,
+  );
+  for (const target of targets) {
+    const [modifier] = await Modifiers.findMany(db, { sourceIds: [target.id], sourceType: "feats" });
+    expect(await Requirements.findMany(db, { entityIds: [modifier.id], entityType: "modifiers" })).toHaveLength(1);
+  }
+});
+
+test("copied-id recording is limited to a single target", async () => {
+  const { targets, customizations } = await setup();
+  expect(
+    CustomizationCopies.copyToMany(
+      db,
+      targets.map((t) => t.id),
+      "feats",
+      customizations,
+      new Map(),
+    ),
+  ).rejects.toThrow("copy to a single target");
+});
+
+test("a modifier requirement is never copied onto the source's own modifier", async () => {
+  const { targets, modifier, customizations } = await setup();
+  expect(
+    CustomizationCopies.copyToMany(db, [targets[0].id], "feats", { ...customizations, modifiers: [] }),
+  ).rejects.toThrow("outside the copied set");
+  expect(await Requirements.findMany(db, { entityIds: [modifier.id], entityType: "modifiers" })).toHaveLength(1);
+});
+
+test("modifiers are not silently dropped for entity types that cannot own them", async () => {
+  const { targets, customizations } = await setup();
+  expect(CustomizationCopies.copyToMany(db, [targets[0].id], "skills", customizations)).rejects.toThrow(
+    "Cannot copy modifiers onto skills",
+  );
+});

@@ -1,0 +1,437 @@
+import { describe, expect, test } from "bun:test";
+
+import {
+  DND35_COMPLETE_ADVENTURER_NAME,
+  DND35_COMPLETE_ARCANE_NAME,
+  DND35_COMPLETE_DIVINE_NAME,
+  DND35_COMPLETE_WARRIOR_NAME,
+  DND35_DMG_NAME,
+} from "@/content/dnd3.5/rulesetNames.ts";
+import { db } from "@/server/database/index.ts";
+import { EntitySnapshots, Rulesets } from "@/server/repositories/index.ts";
+
+import { seededRows } from "./seededRows.ts";
+
+describe("The seeded extensions", () => {
+  test.each([
+    [DND35_DMG_NAME, "Evasion (Shadowdancer)", "Shadowdancer", 2],
+    [DND35_DMG_NAME, "Uncanny Dodge (Shadowdancer)", "Shadowdancer", 2],
+    [DND35_DMG_NAME, "Hide in Plain Sight (Shadowdancer)", "Shadowdancer", 1],
+    [DND35_DMG_NAME, "Uncanny Dodge (Assassin)", "Assassin", 2],
+    [DND35_DMG_NAME, "Hide in Plain Sight (Assassin)", "Assassin", 8],
+    [DND35_DMG_NAME, "Uncanny Dodge (Dwarven Defender)", "Dwarven Defender", 2],
+    [DND35_DMG_NAME, "Damage Reduction (Dwarven Defender)", "Dwarven Defender", 6],
+    [DND35_COMPLETE_DIVINE_NAME, "Damage Reduction (Favored Soul)", "Favored Soul", 20],
+  ])("%s: %s is a class feature a %s gets at level %i", async (ruleset, name, klass, level) => {
+    const rows = await seededRows(ruleset);
+    const feat = rows.feat(name);
+    expect(feat.featsAptitudesInRules.map((link) => link.aptitudeId)).toContain(
+      rows.aptitude(`${klass} Class Feature`).id,
+    );
+    expect(
+      rows.klassLevelFeats
+        .filter((grant) => grant.klassLevelId === rows.klassLevel(klass, level).id)
+        .map((grant) => grant.featId),
+    ).toContain(feat.id);
+  });
+
+  test.each([
+    [DND35_DMG_NAME, "Loremaster", [4, 8]],
+    [DND35_COMPLETE_ARCANE_NAME, "Mage of the Arcane Order", [3, 6]],
+  ] as const)("%s: the %s's levels %p each add a language to pick", async (ruleset, klass, levels) => {
+    const rows = await seededRows(ruleset);
+    const { id } = rows.klasses.find((row) => row.name === klass)!;
+    const picking = rows.klassLevels
+      .filter((level) => level.klassId === id)
+      .filter((level) =>
+        rows
+          .modifiersOf(level.id)
+          .some(
+            ({ operator, target, value }) => target === "languages.extrapicks" && operator === "add" && value === "1",
+          ),
+      )
+      .map(({ level }) => level);
+    expect(picking.toSorted((a, b) => a - b)).toEqual([...levels]);
+  });
+
+  test("copy core feats under their names, each copy recorded against its source", async () => {
+    const warrior = await seededRows(DND35_COMPLETE_WARRIOR_NAME);
+    const coreFeats = new Map((await seededRows()).feats.map((feat) => [feat.id, feat]));
+    const snapshots = (
+      await EntitySnapshots.findMany(db, { rulesetId: warrior.rulesetId, entityType: "feats" })
+    ).filter((s) => coreFeats.has(s.sourceEntityId));
+    expect(snapshots.length).toBeGreaterThan(0);
+    for (const snapshot of snapshots) {
+      expect(warrior.feats.find((feat) => feat.id === snapshot.forkedEntityId)?.name).toBe(
+        coreFeats.get(snapshot.sourceEntityId)!.name,
+      );
+    }
+  });
+
+  // Regression: a domain spell an extension copies from the core rules (Complete Divine's Magic Missile, for the
+  // Force domain) lost the core spell's class spell lists, so forks using the extension lost it from Wizard Spells.
+  test("keep the class spell lists of the core spells their domains copy", async () => {
+    const core = await seededRows();
+    const corePowers = new Map(core.powers.map((power) => [power.id, power]));
+    const failures: string[] = [];
+    let copies = 0;
+    for (const extension of (await Rulesets.findMany(db, { system: true })).filter((r) => r.id !== core.rulesetId)) {
+      const rows = await seededRows(extension.name);
+      for (const { sourceEntityId, forkedEntityId } of await EntitySnapshots.findMany(db, {
+        rulesetId: extension.id,
+        entityType: "powers",
+      })) {
+        const source = corePowers.get(sourceEntityId);
+        const copy = rows.powers.find((power) => power.id === forkedEntityId);
+        if (!source || !copy) continue;
+        const copyLists = new Set(copy.powersAptitudesInRules.map((link) => link.aptitudeId));
+        // A copy with a list of its own was made for a domain.
+        if (![...copyLists].some((id) => !source.powersAptitudesInRules.some((link) => link.aptitudeId === id)))
+          continue;
+        copies++;
+        const lost = source.powersAptitudesInRules.filter(
+          (link) => link.aptitudesInRule.name.endsWith("Spells") && !copyLists.has(link.aptitudeId),
+        );
+        if (lost.length > 0) {
+          failures.push(
+            `${extension.name}: ${copy.name} lost ${lost.map((link) => link.aptitudesInRule.name).join(", ")}`,
+          );
+        }
+      }
+    }
+    expect(copies).toBeGreaterThan(0);
+    expect(failures).toEqual([]);
+
+    const divine = await seededRows(DND35_COMPLETE_DIVINE_NAME);
+    const missile = divine.powers.find((power) => power.name === "Magic Missile")!;
+    const snapshot = (await EntitySnapshots.findMany(db, { rulesetId: divine.rulesetId, entityType: "powers" })).find(
+      (s) => s.forkedEntityId === missile.id,
+    );
+    expect(snapshot?.sourceEntityId).toBe(core.powers.find((power) => power.name === "Magic Missile")!.id);
+    expect(missile.powersAptitudesInRules.map((link) => link.aptitudeId)).toContain(
+      divine.aptitude("Force Domain Spells").id,
+    );
+  });
+
+  test("give the prestige casters that draw on other classes' lists their spells, by their book's rules", async () => {
+    /** The levels some spells are at on a seeded ruleset's list, by spell (none when it isn't on it). */
+    const levelsOn = async (rulesetName: string, list: string, spells: string[]) => {
+      const { powers } = await seededRows(rulesetName);
+      return Object.fromEntries(
+        spells.map((spell) => [
+          spell,
+          powers
+            .find((power) => power.name === spell)
+            ?.powersAptitudesInRules.find((link) => link.aptitudesInRule.name === list)?.level,
+        ]),
+      );
+    };
+    // The cleric's
+    const core = await seededRows();
+    const clericSpells = core.powers.flatMap((power) =>
+      power.powersAptitudesInRules
+        .filter((link) => link.aptitudesInRule.name === "Cleric Spells")
+        .map((link) => [power.name, link.level] as const),
+    );
+    expect(clericSpells.length).toBeGreaterThan(200);
+    expect(
+      await levelsOn(
+        DND35_COMPLETE_DIVINE_NAME,
+        "Ur-priest Spells",
+        clericSpells.map(([name]) => name),
+      ),
+    ).toEqual(Object.fromEntries(clericSpells));
+    // The bard's and the sorcerer's, at the bard's level where they differ; a wizard's own isn't on it
+    expect(
+      await levelsOn(DND35_COMPLETE_ARCANE_NAME, "Sublime Chord Spells", [
+        "Suggestion",
+        "Charm Monster",
+        "Cure Light Wounds",
+        "Fireball",
+        "Rary's Mnemonic Enhancer",
+      ]),
+    ).toEqual({
+      Suggestion: 2,
+      "Charm Monster": 3,
+      "Cure Light Wounds": 1,
+      Fireball: 3,
+      "Rary's Mnemonic Enhancer": undefined,
+    });
+    // The sorcerer's of some schools: the spellthief's five, the Suel arcanamach's four
+    const schools = ["Charm Person", "Dispel Magic", "Invisibility", "Haste", "Fireball", "Magic Missile"];
+    expect(await levelsOn(DND35_COMPLETE_ADVENTURER_NAME, "Spellthief Spells", schools)).toEqual({
+      "Charm Person": 1,
+      "Dispel Magic": 3,
+      Invisibility: 2,
+      Haste: 3,
+      Fireball: undefined,
+      "Magic Missile": undefined,
+    });
+    expect(await levelsOn(DND35_COMPLETE_ARCANE_NAME, "Suel Arcanamach Spells", schools)).toEqual({
+      "Charm Person": undefined,
+      "Dispel Magic": 3,
+      Invisibility: 2,
+      Haste: 3,
+      Fireball: undefined,
+      "Magic Missile": undefined,
+    });
+    // The ranger's and the paladin's, with their additions; the holy liberator's without the lawful spells
+    expect(
+      await levelsOn(DND35_COMPLETE_DIVINE_NAME, "Consecrated Harrier Spells", [
+        "Entangle",
+        "Animate Rope",
+        "Hold Person",
+        "Mark of Justice",
+      ]),
+    ).toEqual({ Entangle: 1, "Animate Rope": 1, "Hold Person": 2, "Mark of Justice": 4 });
+    expect(
+      await levelsOn(DND35_COMPLETE_DIVINE_NAME, "Holy Liberator Spells", [
+        "Bless",
+        "Protection from Chaos",
+        "Dispel Chaos",
+        "Protection from Law",
+        "Heroism",
+        "Magic Circle Against Law",
+        "Dispel Law",
+      ]),
+    ).toEqual({
+      Bless: 1,
+      "Protection from Chaos": undefined,
+      "Dispel Chaos": undefined,
+      "Protection from Law": 1,
+      Heroism: 2,
+      "Magic Circle Against Law": 3,
+      "Dispel Law": 4,
+    });
+    // The pious templar's two: the paladin's, lawful spells included, and the blackguard's
+    expect(
+      await levelsOn(DND35_COMPLETE_DIVINE_NAME, "Pious Templar Spells", [
+        "Bless Weapon",
+        "Protection from Chaos",
+        "Cause Fear",
+      ]),
+    ).toEqual({ "Bless Weapon": 1, "Protection from Chaos": 1, "Cause Fear": undefined });
+    expect(
+      await levelsOn(DND35_COMPLETE_DIVINE_NAME, "Pious Templar Blackguard Spells", [
+        "Cause Fear",
+        "Contagion",
+        "Bless Weapon",
+      ]),
+    ).toEqual({ "Cause Fear": 1, Contagion: 3, "Bless Weapon": undefined });
+  });
+  test("put a book's spells on its own copy of another book's list that draws on others', by that list's rule", async () => {
+    // Complete Adventurer's Fly, Swift (bard 2, sorcerer/wizard 2, druid 3; transmutation): the sublime chord's list
+    // (Complete Arcane: the bard's, then the sorcerer's), the Suel arcanamach's (the sorcerer's transmutation) and the
+    // spirit shaman's (Complete Divine: the druid's), each the book's own copy, which a ruleset merges with its book's
+    const adventurer = await seededRows(DND35_COMPLETE_ADVENTURER_NAME);
+    const lists = ["Sublime Chord Spells", "Suel Arcanamach Spells", "Spirit Shaman Spells"];
+    const fly = adventurer.powers.find((power) => power.name === "Fly, Swift")!;
+    const links = fly.powersAptitudesInRules.filter((link) => lists.includes(link.aptitudesInRule.name));
+    expect(Object.fromEntries(links.map((link) => [link.aptitudesInRule.name, link.level]))).toEqual({
+      "Sublime Chord Spells": 2,
+      "Suel Arcanamach Spells": 2,
+      "Spirit Shaman Spells": 3,
+    });
+    expect(links.map((link) => link.aptitudeId).sort()).toEqual(
+      lists.map((list) => adventurer.aptitude(list).id).sort(),
+    );
+  });
+
+  test("give the exemplar's and the scout's bonus feats every feat their lists name, a family's for each option", async () => {
+    const core = await seededRows();
+    const adventurer = await seededRows(DND35_COMPLETE_ADVENTURER_NAME);
+    const choicesOf = (pool: string) => {
+      const id = adventurer.aptitude(pool).id;
+      return adventurer.feats
+        .filter((feat) => feat.featsAptitudesInRules.some((link) => link.aptitudeId === id))
+        .map((feat) => feat.name);
+    };
+    const familyOf = (family: string) =>
+      core.feats.filter((feat) => feat.name.startsWith(`${family}: `)).map((feat) => feat.name);
+    const skillFocus = familyOf("Skill Focus");
+    expect(skillFocus.length).toBeGreaterThan(40);
+    // The book's own new feats, which its lists mark "?" ("Improved Swimming?"), and Skill Focus for each skill
+    expect(choicesOf("Exemplar Bonus Feat")).toEqual(
+      expect.arrayContaining(["Improved Swimming", "Open Minded", "Versatile Performer", "Acrobatic", ...skillFocus]),
+    );
+    expect(choicesOf("Scout Bonus Feat")).toEqual(
+      expect.arrayContaining([
+        "Brachiation",
+        "Danger Sense",
+        "Hear The Unseen",
+        "Improved Swimming",
+        "Quick Reconnoiter",
+        "Dodge",
+        ...skillFocus,
+        ...familyOf("Rapid Reload"),
+      ]),
+    );
+    expect(choicesOf("Exemplar Bonus Feat")).toHaveLength(23 + skillFocus.length);
+    expect(choicesOf("Scout Bonus Feat")).toHaveLength(25 + skillFocus.length + familyOf("Rapid Reload").length);
+  });
+
+  test("give the divine crusader a pick of the core rules' and Complete Divine's domains, each joining its list to hers", async () => {
+    const core = await seededRows();
+    const divine = await seededRows(DND35_COMPLETE_DIVINE_NAME);
+    // The cleric's domains of both, each with the list its feat joins
+    const clericDomain = core.aptitude("Cleric Domain").id;
+    const domains = [core, divine].flatMap((rows) =>
+      rows.feats
+        .filter((feat) => feat.featsAptitudesInRules.some((link) => link.aptitudeId === clericDomain))
+        .map((feat) => [
+          `${feat.name} (Divine Crusader)`,
+          rows.modifiersOf(feat.id).find((modifier) => modifier.target.endsWith(".joinsclasslist"))?.target,
+        ]),
+    );
+    expect(domains.length).toBeGreaterThan(20);
+
+    const pool = divine.aptitude("Divine Crusader Domain").id;
+    const choices = divine.feats.filter((feat) => feat.featsAptitudesInRules.some((link) => link.aptitudeId === pool));
+    expect(
+      Object.fromEntries(
+        choices.map((feat) => [
+          feat.name,
+          divine.modifiersOf(feat.id).map((modifier) => `${modifier.target} ${modifier.value}`),
+        ]),
+      ),
+    ).toEqual(Object.fromEntries(domains.map(([name, join]) => [name, [`${join} true`]])));
+    expect(choices.every((feat) => feat.selectable && divine.requirementsOf(feat.id).length === 0)).toBe(true);
+    // Picked at her first level
+    expect(
+      divine.modifiersOf(divine.klassLevel("Divine Crusader", 1).id).map((m) => `${m.target} ${m.operator} ${m.value}`),
+    ).toContain("aptitudes.divinecrusaderdomain.allowed add 1");
+  });
+
+  test("give the wu jen a spell secret and an element to pick, and the geomancer a terrain, never a feat", async () => {
+    const arcane = await seededRows(DND35_COMPLETE_ARCANE_NAME);
+    const divine = await seededRows(DND35_COMPLETE_DIVINE_NAME);
+    const choicesOf = (rows: typeof arcane, pool: string) => {
+      const id = rows.aptitude(pool).id;
+      const choices = rows.feats.filter((feat) => feat.featsAptitudesInRules.some((link) => link.aptitudeId === id));
+      return Object.fromEntries(
+        choices.map((feat) => [
+          feat.name,
+          [feat.stackable, ...rows.requirementsOf(feat.id).map((q) => `${q.target} ${q.value}`)],
+        ]),
+      );
+    };
+    const options = (pool: string, feature: string, names: string[], stackable: boolean, level: string) =>
+      Object.fromEntries(names.map((name) => [`${feature}: ${name} (${pool})`, [stackable, level]]));
+    // Each of the wu jen's five spell secrets modifies a spell, the same way again for another
+    expect(choicesOf(arcane, "Wu Jen Spell Secret")).toEqual(
+      options(
+        "Wu Jen Spell Secret",
+        "Spell Secret",
+        ["Enlarge Spell", "Extend Spell", "Silent Spell", "Still Spell"],
+        true,
+        "classes.wujen.level 3",
+      ),
+    );
+    expect(choicesOf(arcane, "Wu Jen Elemental Mastery")).toEqual(
+      options(
+        "Wu Jen Elemental Mastery",
+        "Elemental Mastery",
+        ["Earth", "Fire", "Metal", "Water", "Wood"],
+        false,
+        "classes.wujen.level 6",
+      ),
+    );
+    // A terrain taken again raises its bonus
+    expect(choicesOf(divine, "Geomancer Ley Lines")).toEqual(
+      options(
+        "Geomancer Ley Lines",
+        "Ley Lines",
+        ["Aquatic", "Desert", "Forest", "Hills", "Marsh", "Mountains", "Plains"],
+        true,
+        "classes.geomancer.level 2",
+      ),
+    );
+    // Each feature opens its pick at each of its levels
+    const picksOf = (rows: typeof arcane, feature: string) => {
+      const feat = rows.feat(feature);
+      return [feat.stackable, ...rows.modifiersOf(feat.id).map((m) => m.target)];
+    };
+    expect(picksOf(arcane, "Spell Secret (Wu Jen)")).toEqual([true, "aptitudes.wujenspellsecret.allowed"]);
+    expect(picksOf(arcane, "Elemental Mastery (Wu Jen)")).toEqual([false, "aptitudes.wujenelementalmastery.allowed"]);
+    expect(picksOf(divine, "Ley Lines (Geomancer)")).toEqual([true, "aptitudes.geomancerleylines.allowed"]);
+  });
+
+  test("give the geomancer a drift of his level's stage to pick at each level, ten a stage", async () => {
+    const divine = await seededRows(DND35_COMPLETE_DIVINE_NAME);
+    const stages = [1, 2, 3, 4, 5].map((stage) => {
+      const feature = divine.feat(`Drift ${stage} (Geomancer)`);
+      const pool = divine.aptitude(`Geomancer Drift ${stage}`).id;
+      const options = divine.feats.filter((feat) =>
+        feat.featsAptitudesInRules.some((link) => link.aptitudeId === pool),
+      );
+      return {
+        // The pick each of its levels opens
+        pick: [feature.stackable, ...divine.modifiersOf(feature.id).map((m) => `${m.target} ${m.operator} ${m.value}`)],
+        levels: Array.from({ length: 10 }, (_, index) => index + 1).filter((level) =>
+          divine.klassLevelFeats.some(
+            (grant) => grant.klassLevelId === divine.klassLevel("Geomancer", level).id && grant.featId === feature.id,
+          ),
+        ),
+        // Ten drifts, each taken once, open from the stage's first level
+        options: options.length,
+        stackable: options.some((feat) => feat.stackable),
+        requirements: [
+          ...new Set(options.flatMap((feat) => divine.requirementsOf(feat.id).map((q) => `${q.target} ${q.value}`))),
+        ],
+      };
+    });
+    expect(stages).toEqual(
+      [1, 2, 3, 4, 5].map((stage) => ({
+        pick: [true, `aptitudes.geomancerdrift${stage}.allowed add 1`],
+        levels: [stage * 2 - 1, stage * 2],
+        options: 10,
+        stackable: false,
+        requirements: stage === 1 ? [] : [`classes.geomancer.level ${stage * 2 - 1}`],
+      })),
+    );
+    // A drift whose ability is always on gives it; a cosmetic or conditional one gives nothing
+    const drifts = divine.feats.filter((feat) => /^Drift: .* \(Geomancer Drift \d\)$/.test(feat.name));
+    expect(
+      Object.fromEntries(
+        drifts
+          .map((feat) => [feat.name, divine.modifiersOf(feat.id).map((m) => `${m.target} ${m.operator} ${m.value}`)])
+          .filter(([, modifiers]) => modifiers.length > 0),
+      ),
+    ).toEqual({
+      "Drift: Bark Skin (Geomancer Drift 5)": ["combat.ac.natural add 1"],
+      "Drift: Cat's Grace (Geomancer Drift 2)": ["skills.balance.misc add 4"],
+      "Drift: Dryad's Beauty (Geomancer Drift 2)": ["skills.diplomacy.misc add 4"],
+      "Drift: Elk's Swiftness (Geomancer Drift 2)": ["combat.speed.base add 5"],
+      "Drift: Hawk's Talons (Geomancer Drift 3)": ["feats.weaponfinesse.possessed set true"],
+      "Drift: Lizard's Feet (Geomancer Drift 2)": ["skills.climb.misc add 4"],
+      "Drift: Octopus Skin (Geomancer Drift 2)": ["skills.hide.misc add 4"],
+      "Drift: Pixie's Grace (Geomancer Drift 5)": ["saves.reflex.misc add 2"],
+    });
+  });
+
+  test("give the horizon walker a terrain to pick from his 1st level, and a terrain or a planar one from his 6th", async () => {
+    const dmg = await seededRows(DND35_DMG_NAME);
+    const choicesOf = (pool: string) => {
+      const id = dmg.aptitude(pool).id;
+      const choices = dmg.feats.filter((feat) => feat.featsAptitudesInRules.some((link) => link.aptitudeId === id));
+      return Object.fromEntries(
+        choices.map((feat) => [feat.name, dmg.requirementsOf(feat.id).map((q) => `${q.target} ${q.value}`)]),
+      );
+    };
+    const terrains = ["Aquatic", "Desert", "Forest", "Hills", "Marsh", "Mountains", "Plains", "Underground"];
+    const planar = ["Aligned", "Cavernous", "Cold", "Fiery", "Other", "Shifting", "Weightless"];
+    const regular = Object.fromEntries(
+      terrains.map((terrain) => [`Terrain Mastery: ${terrain} (Horizon Walker Terrain Mastery)`, []]),
+    );
+    expect(choicesOf("Horizon Walker Terrain Mastery")).toEqual(regular);
+    expect(choicesOf("Horizon Walker Planar Terrain Mastery")).toEqual({
+      ...regular,
+      ...Object.fromEntries(
+        planar.map((terrain) => [
+          `Terrain Mastery: ${terrain} (Planar) (Horizon Walker Planar Terrain Mastery)`,
+          ["classes.horizonwalker.level 6"],
+        ]),
+      ),
+    });
+  });
+});

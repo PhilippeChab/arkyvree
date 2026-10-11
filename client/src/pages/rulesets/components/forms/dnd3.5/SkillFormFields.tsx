@@ -1,0 +1,61 @@
+import type { InferRequestType } from "hono/client";
+import type { UseFormReturn } from "react-hook-form";
+
+import {
+  DescriptionField,
+  FormTextField,
+  NameField,
+  SelectField,
+  SwitchField,
+} from "@/client/src/components/common/index.ts";
+import type { Ability } from "@/client/src/hooks/index.ts";
+import { requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
+import type { rpc } from "@/client/src/services/rpc.ts";
+
+interface SkillFormFieldsProps {
+  abilities: Ability[];
+  /** Why the abilities didn't load. */
+  abilitiesError: unknown;
+  form: UseFormReturn<SkillFormData>;
+}
+
+export type SkillFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["skills"]["$post"]>["json"];
+
+export function SkillFormFields({ form, abilities, abilitiesError }: SkillFormFieldsProps) {
+  const impactedByWeight = !!form.watch("fields.impactedByWeight");
+
+  return (
+    <>
+      <NameField control={form.control} name="name" />
+      <DescriptionField control={form.control} name="description" />
+      <SelectField
+        control={form.control}
+        name="primaryAbilityId"
+        label="Primary Ability"
+        rules={requiredRules("Primary ability is required")}
+        options={abilities.map((ability) => ({ value: ability.id, label: ability.name }))}
+        loadError={abilitiesError}
+      />
+      <SwitchField
+        control={form.control}
+        name="fields.impactedByWeight"
+        label="Impacted by Weight"
+        // The multiplier field hides with the weight, and a hidden field isn't validated: drop its value.
+        onChange={(checked) => {
+          if (!checked) form.setValue("fields.checkPenaltyMultiplier", 1, { shouldDirty: true });
+        }}
+      />
+      {impactedByWeight && (
+        <FormTextField
+          control={form.control}
+          name="fields.checkPenaltyMultiplier"
+          rules={wholeNumberRules(1, "Multiplier is required")}
+          number
+          label="Armor Check Penalty Multiplier"
+          fullWidth
+        />
+      )}
+      <SwitchField control={form.control} name="fields.usableWithoutTraining" label="Usable Without Training" />
+    </>
+  );
+}

@@ -1,0 +1,108 @@
+{
+  "_meta": {
+    "book": "complete-scoundrel",
+    "scrapedAt": "2026-10-11T00:25:39.004Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-scoundrel--60/magical-trickster/",
+    "type": "class"
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "At 1st level, and again at 3rd level, you gain a bonus skill trick for which you meet the prerequisite. These bonus tricks do not cost skill points and do not count against your maximum number of skill tricks available.",
+        "name": "Bonus Trick"
+      },
+      {
+        "description": "You can channel magical potential into using skill tricks more often, effectively \"recharging\" them. As a swift action, you can \"lose\" any spell slot or prepared spell of 1st level or higher to perform a trick that you have already used in the encounter.",
+        "name": "Spontaneous Trickster",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 2nd level, you gain a bonus metamagic feat for which you meet the prerequisite.",
+        "name": "Bonus Metamagic Feat"
+      },
+      {
+        "description": "Beginning at 3rd level, you understand how to apply the principle of tricks to your spellcasting. Once per day you can apply the effect of any one metamagic feat you know to a spell as you cast it without altering the spell's effective level. The spell slot adjustment of the metamagic feat can't exceed four.",
+        "name": "Metamagic Trick",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 3rd level, you have mastered incorporating tricks into your spellcasting routines. On any round that you perform a skill trick, the save DC of the next spell you cast that round is increased by 1.",
+        "name": "Tricky Magic",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Bluff",
+      "Climb",
+      "Concentration",
+      "Craft",
+      "Diplomacy",
+      "Jump",
+      "Knowledge (Arcana)",
+      "Knowledge (Religion)",
+      "Profession",
+      "Spellcraft",
+      "Tumble",
+      "Use Rope"
+    ],
+    "description": "Relying as much on her wits as on her spellcasting prowess, the magical trickster can sacrifice her spellcasting ability to gain even greater access to skill tricks.",
+    "hitDie": "d6",
+    "name": "Magical Trickster",
+    "prerequisites": {
+      "parsed": {
+        "casterLevel": [
+          {
+            "level": 3,
+            "type": "any"
+          }
+        ],
+        "feats": [
+          "Any one metamagic feat"
+        ],
+        "spells": [
+          "Ability to cast 3rd-level spells."
+        ]
+      },
+      "text": "Feats: Any one metamagic feat. Spellcasting: Ability to cast 3rd-level spells. Skill Tricks: Any two."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 0,
+        "special": [
+          "Bonus trick",
+          "spontaneous trickster"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 0,
+        "special": [
+          "Bonus metamagic feat"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 1,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 1,
+        "special": [
+          "Bonus trick",
+          "metamagic trick",
+          "tricky magic"
+        ],
+        "spellsPerDay": "+1 level of existing spellcasting class",
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

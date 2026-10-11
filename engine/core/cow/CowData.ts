@@ -1,0 +1,138 @@
+/**
+ * A ruleset's copy-on-write state: what reading its stored rows as its view does resolves ids through, built by the engine
+ * (`CowDataBuilder`) from the rows copy-on-write's views read. An entity a later ruleset copied is overridden: its copy
+ * stands for it, and its customizations are the copy's. So is a book's entity of a name the ruleset's own has: the
+ * ruleset's stands for it (it's shadowed). A book's copy of an entity another book copied too is a sibling loser: the
+ * winner stands for it, and its customizations merge into the winner's. Every stale id (an overridden one, a sibling
+ * loser) resolves to the id that stands for it.
+ */
+export default class CowData {
+  /**
+   * `overrides` maps each overridden id to its copy, `aliases` every stale id to the id that stands for it (each
+   * override among them), `siblings` each winner to its sibling losers, in the order they were paired. A loser paired
+   * twice is listed once, where it was paired under the later winner. `shadowedIds`: the overridden books' entities the
+   * ruleset's own of their names stands for.
+   */
+  constructor(
+    sourceChain: string[],
+    overrides: ReadonlyMap<string, string>,
+    aliases: ReadonlyMap<string, string>,
+    siblings: ReadonlyMap<string, readonly string[]>,
+    shadowedIds: ReadonlySet<string>,
+  ) {
+    this.sourceChain = sourceChain;
+    this.overrides = overrides;
+    this.aliases = aliases;
+    this.shadowedIds = shadowedIds;
+    for (const [winnerId, loserIds] of siblings) for (const loserId of loserIds) this.winners.set(loserId, winnerId);
+
+    const losersOf = new Map<string, string[]>();
+    for (const [winnerId, loserIds] of siblings) {
+      const own = [...new Set(loserIds)].filter((loserId) => this.winners.get(loserId) === winnerId);
+      if (own.length > 0) losersOf.set(winnerId, own);
+    }
+    this.siblings = losersOf;
+    this.siblingIds = new Set(this.winners.keys());
+  }
+
+  private readonly aliases: ReadonlyMap<string, string>;
+
+  private readonly overrides: ReadonlyMap<string, string>;
+
+  private readonly shadowedIds: ReadonlySet<string>;
+
+  private readonly siblings: ReadonlyMap<string, readonly string[]>;
+
+  private readonly winners = new Map<string, string>();
+
+  /** Every sibling loser. */
+  readonly siblingIds: ReadonlySet<string>;
+
+  /** The ruleset's extensions, then its ancestors: where its inherited entities come from. */
+  readonly sourceChain: string[];
+
+  /** Every id that resolves to the entity `id` resolves to, that entity's own first: a stored row may hold any. */
+  getEquivalentIds(id: string): string[] {
+    const target = this.resolve(id);
+    const ids = new Set([target]);
+    for (const [staleId, resolvedId] of this.aliases) if (resolvedId === target) ids.add(staleId);
+
+    return [...ids];
+  }
+
+  /** The sibling losers that merge into `winnerId`, in the order they were paired. */
+  getSiblings(winnerId: string): string[] {
+    return [...(this.siblings.get(winnerId) ?? [])];
+  }
+
+  /** The stale ids: those another id stands for. */
+  getStaleIds(): string[] {
+    return [...this.aliases.keys()];
+  }
+
+  /** The winner a sibling loser merges into: its stored id, which may itself be overridden by a local copy. */
+  getWinner(loserId: string): string | undefined {
+    return this.winners.get(loserId);
+  }
+
+  /** Whether `winnerId` has sibling losers that merge into it. */
+  hasSiblings(winnerId: string): boolean {
+    return this.siblings.has(winnerId);
+  }
+
+  /** Whether the scope resolves no id: a ruleset that copied nothing and pairs no siblings. */
+  isEmpty(): boolean {
+    return this.aliases.size === 0;
+  }
+
+  /** Whether the ruleset's view leaves the entity out: overridden by a copy, or a sibling loser. */
+  isHidden(id: string): boolean {
+    return this.isOverridden(id) || this.siblingIds.has(id);
+  }
+
+  /**
+   * Whether a later ruleset copied the entity, or the ruleset's own entity of its name shadows it: its copy (the
+   * ruleset's) stands for it, its customizations with it.
+   */
+  isOverridden(id: string): boolean {
+    return this.overrides.has(id);
+  }
+
+  /**
+   * Whether the ruleset's own entity of its name hides the entity, a book's: it stands for it, as a copy stands for what
+   * it copied. A subscribe counts it as the view would show it but for the ruleset's own (`EntityNames`).
+   */
+  isShadowed(id: string): boolean {
+    return this.shadowedIds.has(id);
+  }
+
+  /**
+   * What a list of the ruleset's entities reads besides its own rows: its source chain's (`ancestorRulesetIds`), less
+   * what the view hides that no snapshot overrides (`hiddenIds`: the sibling losers, the shadowed books' entities),
+   * which it leaves out in the query, so a page keeps its size.
+   */
+  get listFilters() {
+    return { ancestorRulesetIds: this.sourceChain, hiddenIds: [...this.siblingIds, ...this.shadowedIds] };
+  }
+
+  /** The id that stands for `id`: its copy or its winner when it's stale, itself otherwise. */
+  resolve(id: string): string {
+    return this.aliases.get(id) ?? id;
+  }
+
+  /**
+   * Rows with every string field naming a stale id resolved (`abilityId`, `parentId`, `sourceItemId`…): the same array
+   * when the scope resolves nothing.
+   */
+  resolveRows<T extends Record<string, unknown>>(rows: T[]): T[] {
+    if (this.isEmpty()) return rows;
+    return rows.map((row) => {
+      const resolved = { ...row };
+      for (const [key, value] of Object.entries(resolved)) {
+        if (typeof value === "string" && this.aliases.has(value))
+          (resolved as Record<string, unknown>)[key] = this.aliases.get(value);
+      }
+      return resolved;
+    });
+  }
+}

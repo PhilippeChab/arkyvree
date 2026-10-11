@@ -1,0 +1,2 @@
+ALTER TABLE "character"."inventory" DROP CONSTRAINT "inventory_check1";--> statement-breakpoint
+ALTER TABLE "character"."inventory" ADD CONSTRAINT "inventory_check1" CHECK ((remaining_charges IS NULL) OR ((remaining_charges >= 0) AND (total_charges IS NOT NULL)));

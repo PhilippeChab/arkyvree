@@ -1,0 +1,3 @@
+-- No-op: fix already folded into v1 seeds.
+-- Original migration fixed Weapon Focus martial feat requirement level hierarchy
+-- where combat.bab was misplaced at level "1.3" instead of root level "2".

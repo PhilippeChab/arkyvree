@@ -1,0 +1,1 @@
+ALTER TABLE "rules"."entity_snapshots" DROP COLUMN "content_hash";

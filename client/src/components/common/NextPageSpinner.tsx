@@ -1,0 +1,17 @@
+import { Stack } from "@mui/material";
+
+import { DiceSpinner } from "./DiceSpinner.tsx";
+
+interface NextPageSpinnerProps {
+  loading: boolean;
+}
+
+/** The foot of a list that loads its next page as it scrolls, while that page loads. */
+export function NextPageSpinner({ loading }: NextPageSpinnerProps) {
+  if (!loading) return null;
+  return (
+    <Stack direction="row" sx={{ justifyContent: "center", py: 1 }}>
+      <DiceSpinner size="small" />
+    </Stack>
+  );
+}

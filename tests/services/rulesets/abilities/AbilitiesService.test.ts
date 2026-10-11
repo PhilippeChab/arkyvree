@@ -1,0 +1,67 @@
+import { describe, expect, test } from "bun:test";
+
+import { abilitiesInRules } from "@/drizzle/schema.ts";
+import { NotFoundError } from "@/server/errors/index.ts";
+import { AbilitiesService } from "@/server/services/rulesets/abilities/index.ts";
+import { insertRows } from "@/tests/support/database.ts";
+import { createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
+import { NIL_UUID } from "@/tests/support/seed.ts";
+
+describe("AbilitiesService", () => {
+  describe("getAbilities", () => {
+    test("should return empty paginated result when no abilities exist", async () => {
+      const { ruleset } = await createTestUserAndRuleset();
+
+      const result = await AbilitiesService.getAbilities(ruleset.id, {}, { limit: 10, page: 1 });
+
+      expect(result.items).toEqual([]);
+    });
+
+    test("should return abilities for a ruleset", async () => {
+      const { ruleset } = await createTestUserAndRuleset();
+
+      await insertRows(abilitiesInRules, [
+        { name: "Strength", description: "Physical power", rulesetId: ruleset.id },
+        { name: "Dexterity", description: "Agility", rulesetId: ruleset.id },
+        { name: "Constitution", description: "Endurance", rulesetId: ruleset.id },
+      ]);
+
+      const result = await AbilitiesService.getAbilities(ruleset.id, {}, { limit: 10, page: 1 });
+
+      expect(result.items.length).toBe(3);
+    });
+
+    test("should support search filtering", async () => {
+      const { ruleset } = await createTestUserAndRuleset();
+
+      await insertRows(abilitiesInRules, [
+        { name: "Strength", description: "Physical power", rulesetId: ruleset.id },
+        { name: "Dexterity", description: "Agility", rulesetId: ruleset.id },
+      ]);
+
+      const result = await AbilitiesService.getAbilities(ruleset.id, { search: "Strength" }, { limit: 10, page: 1 });
+
+      expect(result.items.length).toBe(1);
+      expect(result.items[0].name).toBe("Strength");
+    });
+
+    test("should support pagination", async () => {
+      const { ruleset } = await createTestUserAndRuleset();
+
+      await insertRows(abilitiesInRules, [
+        { name: "Strength", description: "Physical power", rulesetId: ruleset.id },
+        { name: "Dexterity", description: "Agility", rulesetId: ruleset.id },
+        { name: "Constitution", description: "Endurance", rulesetId: ruleset.id },
+      ]);
+
+      const result = await AbilitiesService.getAbilities(ruleset.id, {}, { limit: 2, page: 1 });
+
+      expect(result.items.length).toBe(2);
+      expect(result.nextPage).toBe(2);
+    });
+
+    test("should throw NotFoundError for non-existent ruleset", async () => {
+      expect(AbilitiesService.getAbilities(NIL_UUID, {}, { limit: 10, page: 1 })).rejects.toThrow(NotFoundError);
+    });
+  });
+});

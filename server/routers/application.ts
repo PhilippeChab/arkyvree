@@ -1,0 +1,112 @@
+import { httpInstrumentationMiddleware } from "@hono/otel";
+import { Hono } from "hono";
+import { cors as buildCors } from "hono/cors";
+import { csrf } from "hono/csrf";
+import { HTTPException } from "hono/http-exception";
+import { requestId } from "hono/request-id";
+import { secureHeaders } from "hono/secure-headers";
+
+import { runWithRequestCache } from "@/server/database/index.ts";
+import { isProduction, isTest, readEnv } from "@/server/environment.ts";
+import { toJson } from "@/server/errors/index.ts";
+import { requestLogger, type SessionContext, wrapNonErrors } from "@/server/middlewares/index.ts";
+import { collectNotified, publishWsEvent } from "@/server/websockets/index.ts";
+
+import apiRouter from "./api/index.ts";
+import authenticationRouter from "./authentication/index.ts";
+import healthRouter from "./health.ts";
+import staticRouter from "./static.ts";
+import wsRouter from "./ws.ts";
+
+export type Application = typeof application;
+
+/**
+ * Canonical host for the app, parsed from APP_URL. Non-matching hosts (e.g. Fly's default `*.fly.dev`) are 301'd to the
+ * canonical origin so search engines consolidate authority at one URL. `/health` is exempt because Fly's probes hit it
+ * with the machine-name Host, not the public hostname. Disabled in dev because Vite's `changeOrigin: true` proxy
+ * rewrites the Host to the backend's, which would otherwise trigger an infinite redirect loop.
+ */
+const enforceCanonicalHost = isProduction() && !!readEnv("APP_URL");
+
+const canonicalHost = enforceCanonicalHost ? new URL(readEnv("APP_URL")!).host : null;
+
+const isDev = !isProduction();
+
+const origin = isDev ? ["http://localhost:5173"] : readEnv("APP_URL") ? [readEnv("APP_URL")!] : [];
+const cors = buildCors({
+  origin,
+  credentials: true,
+  allowHeaders: ["Content-Type", "Authorization", "Cookie"],
+  allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+});
+
+/** The session is set only on the routes behind the session middleware. */
+export const application = new Hono<{ Variables: Partial<SessionContext["Variables"]> }>()
+  // First, so whatever any later middleware or route throws reaches onError as an Error.
+  .use("*", wrapNonErrors)
+  .use("*", async (c, next) => {
+    if (!canonicalHost) return next();
+    if (c.req.path === "/health") return next();
+    const host = c.req.header("host");
+    if (!host || host === canonicalHost) return next();
+    const url = new URL(c.req.url);
+    return c.redirect(`https://${canonicalHost}${url.pathname}${url.search}`, 301);
+  })
+  .use("*", cors)
+  .use("*", isTest() ? async (_, next) => next() : csrf({ origin }))
+  .use("*", httpInstrumentationMiddleware({ disableTracing: true }))
+  .use("*", requestLogger())
+  .use("*", requestId())
+  // Specific public assets need CORP=cross-origin so Outlook web can render
+  // them — Outlook loads <img src> directly into the outlook.live.com page
+  // (no proxy like Gmail does), and the browser enforces our CORP header.
+  // Default `same-origin` blocks the embed; whitelist only the assets we
+  // actually need cross-origin (email logo + og:image).
+  // Must run BEFORE secureHeaders so its post-next handler unwinds LAST and
+  // wins the header. Anything not listed keeps the secure default.
+  .use("*", async (c, next) => {
+    await next();
+    const CROSS_ORIGIN_ASSETS = new Set([
+      "/pwa-192x192.png", // email logo
+      "/pwa-512x512.png", // og:image
+    ]);
+    if (CROSS_ORIGIN_ASSETS.has(c.req.path)) c.res.headers.set("Cross-Origin-Resource-Policy", "cross-origin");
+  })
+  .use(
+    "*",
+    secureHeaders({
+      crossOriginOpenerPolicy: "same-origin-allow-popups",
+    }),
+  )
+  // Install a request-scoped query dedup store so repeated reads of the same
+  // row/query within one request coalesce into a single DB round trip.
+  .use("*", async (_, next) =>
+    runWithRequestCache(async () => {
+      await next();
+    }),
+  )
+  // Records whom an API write notified, and tells them over the websocket once it succeeds.
+  .use("/api/*", async (c, next) => {
+    const notified = await collectNotified(next);
+    if (["POST", "PUT", "DELETE"].includes(c.req.method) && c.res.ok) {
+      const publish = (userId: string, type: "activities:updated" | "notifications:updated") =>
+        publishWsEvent(userId, { type }).catch((err) => console.error("[ws] Failed to publish event:", err));
+      for (const userId of notified) publish(userId, "notifications:updated");
+      const session = c.get("requestSession");
+      if (session) publish(session.userId, "activities:updated");
+    }
+  })
+  // The static router answers what no other route does: it comes last.
+  .route("/", wsRouter)
+  .route("/", healthRouter)
+  .route("/auth", authenticationRouter)
+  .route("/api", apiRouter)
+  .route("/", staticRouter)
+  .onError((err, c) => {
+    if (err instanceof HTTPException)
+      return c.json({ error: "Forbidden", cause: "forbidden", message: "Forbidden" }, 403);
+
+    // Everything a route or a service throws: the error in the API's envelope, with its status.
+    const [error, code] = toJson(err);
+    return c.json(error, code);
+  });

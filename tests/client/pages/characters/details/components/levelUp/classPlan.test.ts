@@ -1,0 +1,55 @@
+import { describe, expect, test } from "bun:test";
+
+import {
+  canPlanLevel,
+  hasRoomForLevel,
+  plannedLevel,
+  plannedSlotKeys,
+} from "@/client/src/pages/characters/details/components/levelUp/classPlan.ts";
+
+const FIGHTER = { id: "fighter", nextLevel: 3 };
+
+const WIZARD = { id: "wizard", nextLevel: 1 };
+
+describe("Add Level's class plan", () => {
+  test("numbers a class after the levels of it planned before its place", () => {
+    const plan = [FIGHTER, null, WIZARD, FIGHTER];
+    expect(plannedLevel(FIGHTER, plan, 0)).toBe(3);
+    expect(plannedLevel(FIGHTER, plan, 3)).toBe(4);
+    expect(plannedLevel(WIZARD, plan, 2)).toBe(1);
+  });
+
+  test("numbers the next one added at the plan's end", () => {
+    expect(plannedLevel(FIGHTER, [FIGHTER, WIZARD, FIGHTER])).toBe(5);
+    expect(plannedLevel(WIZARD, [])).toBe(1);
+  });
+
+  test("has room for another level while it holds fewer than the character has left, a slot not filled counted", () => {
+    expect(hasRoomForLevel([FIGHTER], 2)).toBe(true);
+    expect(hasRoomForLevel([FIGHTER, null], 2)).toBe(false);
+    expect(hasRoomForLevel([], 0)).toBe(false);
+    // Until the classes load: the preview refuses a plan past the character's last level
+    expect(hasRoomForLevel([FIGHTER, WIZARD], undefined)).toBe(true);
+  });
+
+  test("plans a class's next level while it may, the plan has room, and the class has a level left", () => {
+    const fighter = { ...FIGHTER, eligible: true, maxLevel: 4 };
+    expect(canPlanLevel(fighter, [], 2)).toBe(true);
+    expect(canPlanLevel(fighter, [FIGHTER], 2)).toBe(true);
+    // Its fifth level is past its last
+    expect(canPlanLevel(fighter, [FIGHTER, FIGHTER], 3)).toBe(false);
+    expect(canPlanLevel(fighter, [WIZARD], 1)).toBe(false);
+    expect(canPlanLevel({ ...fighter, eligible: false }, [], 2)).toBe(false);
+  });
+
+  test("keys each planned level by its slot, so filling an earlier slot or removing one moves no level's values", () => {
+    // The wizard's hit points, set while its slot was the plan's only filled one
+    const hpBySlot: Record<number, number | null> = { 7: 4 };
+    const hpOf = (plan: unknown[], slotKeys: number[]) =>
+      plannedSlotKeys(plan, slotKeys).map((key) => hpBySlot[key] ?? null);
+    expect(hpOf([null, WIZARD], [3, 7])).toEqual([4]);
+    expect(hpOf([FIGHTER, WIZARD], [3, 7])).toEqual([null, 4]);
+    expect(hpOf([WIZARD], [7])).toEqual([4]);
+    expect(plannedSlotKeys([], [])).toEqual([]);
+  });
+});

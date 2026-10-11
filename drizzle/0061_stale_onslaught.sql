@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "character_contributors_character_email_unique" ON "character"."character_contributors" USING btree ("character_id","email") WHERE user_id IS NULL AND status IN ('Pending', 'Active') AND deleted_at IS NULL;

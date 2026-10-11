@@ -1,0 +1,324 @@
+{
+  "_meta": {
+    "book": "complete-divine",
+    "scrapedAt": "2026-10-05T01:13:33.825Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-divine--56/sacred-fist/",
+    "type": "class"
+  },
+  "overrides": {
+    "columns": {
+      "Unarmored Speed": {
+        "operator": "add",
+        "requirements": [
+          {
+            "operator": "not_equal",
+            "target": "combat.armor.category",
+            "value": "medium",
+            "valueType": "string"
+          },
+          {
+            "operator": "not_equal",
+            "target": "combat.armor.category",
+            "value": "heavy",
+            "valueType": "string"
+          },
+          {
+            "operator": "equal",
+            "target": "combat.encumbrance.load",
+            "value": "light",
+            "valueType": "string"
+          }
+        ],
+        "target": "combat.speed.base"
+      }
+    },
+    "description": "Sacred fists belong to self-governing orders that operate within the walls of various temples, combining martial discipline with divine power.",
+    "features": {
+      "AC Bonus": {
+        "description": "Through rigorous training, the sacred fist develops an instinctive ability to evade attacks, including those he cannot see coming. While unencumbered and wearing light armor or no armor, he receives a +1 dodge bonus to Armor Class. This bonus improves to +2 at 5th level and +3 at 10th level. It remains effective even against touch attacks and when the sacred fist is caught flat-footed. The bonus is lost if the sacred fist becomes immobilized or helpless, wears armor heavier than light, uses a shield, or carries a medium or heavy load.",
+        "modifiers": [
+          {
+            "operator": "add",
+            "requirements": [
+              {
+                "operator": "not_equal",
+                "target": "combat.armor.category",
+                "value": "medium",
+                "valueType": "string"
+              },
+              {
+                "operator": "not_equal",
+                "target": "combat.armor.category",
+                "value": "heavy",
+                "valueType": "string"
+              },
+              {
+                "operator": "equal",
+                "target": "combat.shield.held",
+                "value": "false",
+                "valueType": "boolean"
+              },
+              {
+                "operator": "equal",
+                "target": "combat.encumbrance.load",
+                "value": "light",
+                "valueType": "string"
+              }
+            ],
+            "target": "combat.ac.misc",
+            "value": "{{ floor([classes.sacredfist.level] / 5) + 1 }}",
+            "valueType": "number"
+          }
+        ]
+      },
+      "Blindsense": {
+        "description": "Upon reaching 6th level, the sacred fist develops a heightened awareness of vibrations, smells, and sounds, gaining blindsense with a range of 10 feet."
+      },
+      "Fast Movement": {
+        "description": "Beginning at 3rd level, the sacred fist receives an enhancement bonus to his base land speed. This speed increase is negated while wearing medium or heavy armor or carrying a medium or heavy load.",
+        "level": 3
+      },
+      "Inner Armor": {
+        "description": "At 10th level, the sacred fist achieves a state of profound inner calm that shields him from harm. Once per day, he can activate this ability to gain a +4 sacred bonus to AC, a +4 sacred bonus on all saving throws, and spell resistance 25. These benefits last for a number of rounds equal to his Wisdom modifier."
+      },
+      "Sacred Flames": {
+        "description": "Starting at 4th level, the sacred fist can spend a standard action to wreathe his hands and feet in holy fire. While active, the flames deal extra damage on each unarmed strike equal to the sacred fist's class level plus his Wisdom modifier (if positive). Half of this bonus damage (rounded up) is fire damage, and the remainder is divine energy that bypasses fire resistance and immunity. The flames persist for 1 minute and can be activated once per day. At 8th level, this ability becomes usable twice per day."
+      },
+      "Spells per Day/Spells Known": {
+        "description": "Each time the sacred fist gains a level that grants spellcasting advancement, he gains additional spells per day (and spells known, where applicable) as though he had also advanced one level in a divine spellcasting class he belonged to before entering this prestige class. He does not, however, receive any other class benefits that would normally accompany such a level increase, such as improved turning ability or wild shape. In effect, the sacred fist level stacks with levels in the prior divine casting class for the sole purpose of calculating spells per day. If the character had multiple divine spellcasting classes before becoming a sacred fist, he must choose which class receives the benefit each time he gains a sacred fist level that advances spellcasting."
+      },
+      "Unarmed Damage": {
+        "description": "Levels in sacred fist stack with monk levels (if any) when calculating unarmed strike damage. A sacred fist who has no monk levels uses his sacred fist class level as his effective monk level for determining unarmed damage."
+      },
+      "Weapon and Armor Proficiency": {
+        "description": "This prestige class does not grant proficiency with any weapons, armor, or shields."
+      }
+    },
+    "reviewed": [
+      "AC Bonus",
+      "Unresolved bonus: \"When unencumbered and wearing light or no armor, a sacred fist gains a +1 bonus to his AC\""
+    ]
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Sacred fists gain no proficiency with any weapons, armor, or shields.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "When a new sacred fist level is gained, the character gains new spells per day (and spells known, if applicable) as if he had also gained a level in whatever divine spellcasting class he possessed before he added the prestige class. He does not, however, gain any other benefit a character of that class would have gained (improved chance of controlling or rebuking undead, wild shape ability, and so on). This essentially means that he adds the level of sacred fist to the level of whatever other spellcasting class the character has, then determines spells per day accordingly. If a character had more than one spellcasting class in which he could cast divine spells before he became a sacred fist, the player must decide which class to assign each level of sacred fi st for the purpose of determining spells per day and spells known.",
+        "name": "Spells per Day/Spells Known"
+      },
+      {
+        "description": "A sacred fist is highly trained at dodging blows, and he has a sixth sense that lets him avoid even unanticipated attacks. When unencumbered and wearing light or no armor, a sacred fist gains a +1 bonus to his AC. This bonus increases to +2 at 5th level and to +3 at 10th. This bonus to AC applies even against touch attacks or when the sacred fist is flat-footed. He loses the bonus when he is immobilized or helpless, when he wears any armor heavier than light armor, when he carries a shield, or when he carries a medium or heavy load.",
+        "name": "AC Bonus",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 3rd level, a sacred fist gains an enhancement bonus to his speed. A sacred fist in medium or heavy armor or carrying a medium or heavy load loses this extra speed.",
+        "name": "Fast Movement",
+        "type": "(Ex)"
+      },
+      {
+        "description": "A sacred fist's class levels stack with his monk levels (if any) for the purpose of determining his unarmed damage. If a sacred fist doesn't have monk levels prior to becoming a sacred fist, treat him as a monk of the same class level as his sacred fist class level for determining his unarmed damage.",
+        "name": "Unarmed Damage",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 4th level, a sacred fist may use a standard action to invoke sacred flames around his hands and feet. These flames add to the sacred fist's unarmed damage. The additional damage is equal to the sacred fist's class level plus his Wisdom modifier (if any). Half the damage is fire damage (round up), and the rest is sacred energy and thus not subject to effects that reduce fire damage. The sacred flames last 1 minute and can be invoked once per day. At 8th level, a sacred fist can invoke sacred flames twice per day.",
+        "name": "Sacred Flames",
+        "type": "(Su)"
+      },
+      {
+        "description": "A 6th-level sacred fist gains sensitivity to vibrations, scent, and noise, granting him blindsense out to 10 feet.",
+        "name": "Blindsense",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 10th level, a sacred fist's inner tranquility protects him from external threats. He may invoke a +4 sacred bonus to AC, a +4 sacred bonus on all saves, and spell resistance 25 for a number of rounds equal to his Wisdom modifier. He may use inner armor once per day.",
+        "name": "Inner Armor",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Balance",
+      "Concentration",
+      "Escape Artist",
+      "Heal",
+      "Jump",
+      "Profession",
+      "Spellcraft",
+      "Tumble"
+    ],
+    "description": "Sacred fists are independent organizations found within many temples.",
+    "hitDie": "d8",
+    "name": "Sacred Fist",
+    "prerequisites": {
+      "parsed": {
+        "bab": 4,
+        "casterLevel": [
+          {
+            "level": 1,
+            "type": "divine"
+          }
+        ],
+        "feats": [
+          "Combat Casting",
+          "Combat Reflexes",
+          "Improved Unarmed Strike",
+          "Stunning Fist"
+        ],
+        "skills": [
+          {
+            "name": "Knowledge (religion)",
+            "ranks": 8
+          }
+        ]
+      },
+      "text": "Base Attack Bonus: +4 Skills: Knowledge (religion) 8 ranks Feats: Combat Casting, Combat Reflexes, Improved Unarmed Strike, Stunning Fist Spells: Able to cast 1st-level divine spells."
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "columns": {
+          "AC Bonus": "+1",
+          "Unarmored Speed": "+0 ft."
+        },
+        "fortSave": 2,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Unarmed damage"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "columns": {
+          "AC Bonus": "+1",
+          "Unarmored Speed": "+0 ft."
+        },
+        "fortSave": 3,
+        "level": 2,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "columns": {
+          "AC Bonus": "+1",
+          "Unarmored Speed": "+10 ft."
+        },
+        "fortSave": 3,
+        "level": 3,
+        "refSave": 3,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "columns": {
+          "AC Bonus": "+1",
+          "Unarmored Speed": "+10 ft."
+        },
+        "fortSave": 4,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "Sacred flames 1/day"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "columns": {
+          "AC Bonus": "+2",
+          "Unarmored Speed": "+10 ft."
+        },
+        "fortSave": 4,
+        "level": 5,
+        "refSave": 4,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 1
+      },
+      {
+        "bab": 6,
+        "columns": {
+          "AC Bonus": "+2",
+          "Unarmored Speed": "+20 ft."
+        },
+        "fortSave": 5,
+        "level": 6,
+        "refSave": 5,
+        "special": [
+          "Blindsense 10 ft."
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 7,
+        "columns": {
+          "AC Bonus": "+2",
+          "Unarmored Speed": "+20 ft."
+        },
+        "fortSave": 5,
+        "level": 7,
+        "refSave": 5,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 2
+      },
+      {
+        "bab": 8,
+        "columns": {
+          "AC Bonus": "+2",
+          "Unarmored Speed": "+30 ft."
+        },
+        "fortSave": 6,
+        "level": 8,
+        "refSave": 6,
+        "special": [
+          "Sacred flames 2/day"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 2
+      },
+      {
+        "bab": 9,
+        "columns": {
+          "AC Bonus": "+2",
+          "Unarmored Speed": "+30 ft."
+        },
+        "fortSave": 6,
+        "level": 9,
+        "refSave": 6,
+        "special": [],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 3
+      },
+      {
+        "bab": 10,
+        "columns": {
+          "AC Bonus": "+3",
+          "Unarmored Speed": "+30 ft."
+        },
+        "fortSave": 7,
+        "level": 10,
+        "refSave": 7,
+        "special": [
+          "Inner armor"
+        ],
+        "spellsPerDay": "+1 level of existing divine spellcasting class",
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

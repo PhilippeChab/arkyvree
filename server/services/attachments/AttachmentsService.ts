@@ -1,0 +1,313 @@
+import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
+
+import type { Db } from "@/drizzle/database.ts";
+import { db, withTransaction } from "@/server/database/index.ts";
+import { readEnv } from "@/server/environment.ts";
+import { BadRequestError, ConflictError, ForbiddenError, InternalError, NotFoundError } from "@/server/errors/index.ts";
+import { Attachments, Blobs, Characters } from "@/server/repositories/index.ts";
+import ObjectStorage from "@/server/storage/ObjectStorage.ts";
+import { ALLOWED_IMAGE_TYPES, ATTACHMENT_SLOTS, MAX_UPLOAD_BYTES } from "@/shared/attachments.ts";
+import type { Session } from "@/shared/relations.ts";
+
+import { canAnySessionRead } from "./readers.ts";
+import { getPublicUrl } from "./records.ts";
+
+interface AttachableConfig {
+  isOwner: OwnershipChecker;
+  isReader: OwnershipChecker;
+  names: readonly string[];
+  policy: UploadPolicy;
+}
+interface SignedTokenPayload {
+  blobId: string;
+  iat: number;
+  name: string;
+  recordId: string;
+  recordType: string;
+}
+interface UploadPolicy {
+  contentTypes: string[];
+  maxBytes: number;
+}
+
+type OwnershipChecker = (session: Session, recordId: string) => Promise<boolean>;
+
+const imagePolicy: UploadPolicy = {
+  maxBytes: MAX_UPLOAD_BYTES,
+  contentTypes: [...ALLOWED_IMAGE_TYPES],
+};
+
+/** The records that take attachments: who may attach to one and read them, what they take, under which names. */
+const ATTACHABLE_TYPES = new Map<string, AttachableConfig>([
+  [
+    ATTACHMENT_SLOTS.avatar.recordType,
+    {
+      isOwner: async (session, recordId) => session.userId === recordId,
+      isReader: canAnySessionRead,
+      policy: imagePolicy,
+      names: [ATTACHMENT_SLOTS.avatar.name],
+    },
+  ],
+  [
+    ATTACHMENT_SLOTS.portrait.recordType,
+    {
+      isOwner: async (session, recordId) => {
+        const character = await Characters.findOne(db, { id: recordId });
+        if (!character) return false;
+        if (character.kind === "pc") return character.userId === session.userId;
+        // Bonded children flow permission through the master (owner or active contributor).
+        if (!character.parentCharacterId) return false;
+        const master = await Characters.findOne(db, {
+          id: character.parentCharacterId,
+          editorId: session.userId,
+        });
+        return !!master;
+      },
+      isReader: canAnySessionRead,
+      policy: imagePolicy,
+      names: [ATTACHMENT_SLOTS.portrait.name],
+    },
+  ],
+]);
+
+const TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
+
+class AttachmentsService {
+  private assertValidName(recordType: string, name: string): void {
+    const { names } = this.getAttachableConfig(recordType);
+    if (!names.includes(name)) throw new BadRequestError(`Slot "${name}" is not allowed for ${recordType}`);
+  }
+
+  private assertWithinPolicy(recordType: string, byteSize: number, contentType: string): void {
+    const { policy } = this.getAttachableConfig(recordType);
+    if (byteSize > policy.maxBytes) throw new BadRequestError(`File exceeds maximum size of ${policy.maxBytes} bytes`);
+
+    if (!policy.contentTypes.includes(contentType))
+      throw new BadRequestError(`Content type "${contentType}" is not allowed for ${recordType}`);
+  }
+
+  private buildKey(blobId: string, filename: string): string {
+    const safe = filename.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 200) || "file";
+    return `blobs/${blobId}/${safe}`;
+  }
+
+  private getAttachableConfig(recordType: string): AttachableConfig {
+    const config = ATTACHABLE_TYPES.get(recordType);
+    if (!config) throw new BadRequestError(`Unsupported record type: ${recordType}`);
+    return config;
+  }
+
+  private getSigningSecret(): string {
+    const secret = readEnv("SIGNING_SECRET");
+    if (!secret) throw new InternalError("SIGNING_SECRET is not configured");
+    return secret;
+  }
+
+  private isUniqueViolation(err: unknown): boolean {
+    if (typeof err !== "object" || err === null) return false;
+    const e = err as { cause?: { code?: string }; code?: string };
+    return e.code === "23505" || e.cause?.code === "23505";
+  }
+
+  private signToken(payload: Omit<SignedTokenPayload, "iat">): string {
+    const full: SignedTokenPayload = { ...payload, iat: Date.now() };
+    // Top-level key sort gives stable serialization since SignedTokenPayload
+    // is flat. Switch to a recursive canonical serializer if any field ever
+    // becomes a nested object.
+    const data = Buffer.from(JSON.stringify(full, Object.keys(full).sort())).toString("base64url");
+    const sig = createHmac("sha256", this.getSigningSecret()).update(data).digest("base64url");
+    return `${data}.${sig}`;
+  }
+
+  private verifyToken(token: string): SignedTokenPayload {
+    const [data, sig] = token.split(".");
+    if (!data || !sig) throw new BadRequestError("Invalid signed id");
+    const expected = createHmac("sha256", this.getSigningSecret()).update(data).digest("base64url");
+    const sigBuf = Buffer.from(sig);
+    const expectedBuf = Buffer.from(expected);
+    if (sigBuf.length !== expectedBuf.length || !timingSafeEqual(sigBuf, expectedBuf))
+      throw new BadRequestError("Invalid signed id");
+
+    let payload: SignedTokenPayload;
+    try {
+      payload = JSON.parse(Buffer.from(data, "base64url").toString());
+    } catch {
+      throw new BadRequestError("Invalid signed id");
+    }
+    if (typeof payload.iat !== "number" || Date.now() - payload.iat > TOKEN_TTL_MS)
+      throw new BadRequestError("Signed id has expired");
+
+    return payload;
+  }
+
+  private async assertCanAttach(session: Session, recordType: string, recordId: string): Promise<void> {
+    const config = this.getAttachableConfig(recordType);
+    if (!(await config.isOwner(session, recordId))) throw new ForbiddenError("Not authorized to attach to this record");
+  }
+
+  private async assertCanRead(session: Session, recordType: string, recordId: string): Promise<void> {
+    const config = this.getAttachableConfig(recordType);
+    if (!(await config.isReader(session, recordId))) throw new ForbiddenError("Not authorized to view this attachment");
+  }
+
+  private async findOrphanedBlob(tx: Db, blobId: string): Promise<{ id: string; key: string } | null> {
+    const refs = await Attachments.findMany(tx, { blobIds: [blobId] });
+    if (refs.length > 0) return null;
+    const blob = await Blobs.findOne(tx, { id: blobId });
+    if (!blob) return null;
+    return { id: blob.id, key: blob.key };
+  }
+
+  private async purgeOrphan(orphan: { id: string; key: string } | null): Promise<void> {
+    if (!orphan) return;
+    try {
+      await ObjectStorage.get().deleteObject(orphan.key);
+      await withTransaction((tx) => Blobs.delete(tx, { id: orphan.id }));
+    } catch (error) {
+      console.warn(
+        `[attachments] S3 cleanup failed for ${orphan.key}: ${error instanceof Error ? error.message : error}`,
+      );
+    }
+  }
+
+  async attach(session: Session, signedId: string) {
+    const payload = this.verifyToken(signedId);
+    await this.assertCanAttach(session, payload.recordType, payload.recordId);
+    this.assertValidName(payload.recordType, payload.name);
+
+    // Check upload size before opening the tx — S3 round-trip would otherwise
+    // hold a DB connection for the duration. The one-shot recheck inside the
+    // tx still catches concurrent attaches.
+    //
+    // Race: if a client takes >2h between upload and attach, the sweep can
+    // delete preBlob between this read and the tx — Blobs.findOne(tx) below
+    // returns undefined and we throw NotFoundError. Fails loud, not silent.
+    const preBlob = await Blobs.findOne(db, { id: payload.blobId });
+    if (!preBlob) throw new NotFoundError("Blob not found");
+    if (preBlob.attachedAt) throw new ConflictError("Blob is already attached");
+
+    const stats = await ObjectStorage.get().objectStats(preBlob.key);
+    if (!stats) throw new BadRequestError("Upload not found at expected key");
+    if (stats.size !== preBlob.byteSize)
+      throw new BadRequestError(`Upload size ${stats.size} does not match declared byteSize ${preBlob.byteSize}`);
+
+    const result = await withTransaction(async (tx: Db) => {
+      // Lock the blob row so a concurrent sweep can't delete it between
+      // here and the Attachments.create below — that would surface as a
+      // 23503 FK violation on insert.
+      await Blobs.lock(tx, { id: payload.blobId });
+      const blob = await Blobs.findOne(tx, { id: payload.blobId });
+      if (!blob) throw new NotFoundError("Blob not found");
+      if (blob.attachedAt) throw new ConflictError("Blob is already attached");
+
+      const existing = await Attachments.findOne(tx, {
+        recordType: payload.recordType,
+        recordId: payload.recordId,
+        name: payload.name,
+      });
+      if (existing) await Attachments.delete(tx, { id: existing.id });
+
+      let attachment;
+      try {
+        const rows = await Attachments.create(tx, {
+          recordType: payload.recordType,
+          recordId: payload.recordId,
+          name: payload.name,
+          blobId: blob.id,
+        });
+        attachment = rows[0];
+      } catch (error) {
+        if (this.isUniqueViolation(error)) throw new ConflictError("Slot is already attached by a concurrent request");
+
+        throw error;
+      }
+      if (!attachment) throw new InternalError("Failed to create attachment");
+
+      const updated = await Blobs.update(tx, { attachedAt: new Date().toISOString() }, { id: blob.id });
+      const attachedBlob = updated[0] ?? blob;
+
+      const orphan = existing ? await this.findOrphanedBlob(tx, existing.blobId) : null;
+
+      return { attachment, blob: attachedBlob, orphan };
+    });
+
+    await this.purgeOrphan(result.orphan);
+    return { attachment: result.attachment, blob: result.blob };
+  }
+
+  async createDirectUpload(
+    session: Session,
+    params: {
+      byteSize: number;
+      contentType: string;
+      filename: string;
+      name: string;
+      recordId: string;
+      recordType: string;
+    },
+  ) {
+    await this.assertCanAttach(session, params.recordType, params.recordId);
+    this.assertValidName(params.recordType, params.name);
+    this.assertWithinPolicy(params.recordType, params.byteSize, params.contentType);
+
+    const blobId = randomUUID();
+    const key = this.buildKey(blobId, params.filename);
+
+    const blob = await withTransaction(async (tx: Db) => {
+      const rows = await Blobs.create(tx, {
+        id: blobId,
+        key,
+        filename: params.filename,
+        contentType: params.contentType,
+        byteSize: params.byteSize,
+      });
+      const row = rows[0];
+      if (!row) throw new InternalError("Failed to create blob");
+      return row;
+    });
+
+    const presignedUrl = ObjectStorage.get().presignPut(key, {
+      contentType: params.contentType,
+    });
+    const signedId = this.signToken({
+      blobId: blob.id,
+      recordType: params.recordType,
+      recordId: params.recordId,
+      name: params.name,
+    });
+
+    return {
+      signedId,
+      presignedUrl,
+      headers: { "Content-Type": params.contentType },
+    };
+  }
+
+  async detach(session: Session, attachmentId: string) {
+    const result = await withTransaction(async (tx: Db) => {
+      const attachment = await Attachments.findOne(tx, { id: attachmentId });
+      if (!attachment) throw new NotFoundError("Attachment not found");
+      await this.assertCanAttach(session, attachment.recordType, attachment.recordId);
+
+      await Attachments.delete(tx, { id: attachment.id });
+      const orphan = await this.findOrphanedBlob(tx, attachment.blobId);
+      return { id: attachment.id, orphan };
+    });
+
+    await this.purgeOrphan(result.orphan);
+    return { id: result.id };
+  }
+
+  async getAttachment(session: Session, params: { name: string; recordId: string; recordType: string }) {
+    await this.assertCanRead(session, params.recordType, params.recordId);
+    const row = await Attachments.findOneWithBlob(db, {
+      recordType: params.recordType,
+      recordId: params.recordId,
+      name: params.name,
+    });
+    if (!row) return null;
+    return { id: row.id, url: getPublicUrl(row) };
+  }
+}
+
+export default new AttachmentsService();

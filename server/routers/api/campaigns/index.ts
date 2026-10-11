@@ -1,0 +1,98 @@
+import { Hono } from "hono";
+import { z } from "zod";
+
+import { denyDemoUser, sessionMiddleware, validate } from "@/server/middlewares/index.ts";
+import { idParam, limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
+import { CampaignsService } from "@/server/services/campaigns/index.ts";
+
+import playerCharacters from "./characters/index.ts";
+import invites from "./invites/index.ts";
+import players from "./players/index.ts";
+
+export default new Hono()
+  .use(sessionMiddleware)
+  .route("/", players)
+  .route("/", invites)
+  .route("/", playerCharacters)
+  .get(
+    "/",
+    validate(
+      "query",
+      z.object({
+        limit,
+        page,
+        visibility: z.enum(["all", "archived", "active"]).default("active"),
+        search: z.string().optional(),
+        orderBy: z.enum(["name", "createdAt", "updatedAt"]).default("createdAt"),
+        orderDir: orderDirDesc,
+      }),
+    ),
+    async (c) => {
+      const { visibility, search, orderBy, orderDir, limit, page } = c.req.valid("query");
+      return c.json(
+        await CampaignsService.getCampaigns(
+          c.var.requestSession,
+          { visibility, search, orderBy, orderDir },
+          { limit, page },
+        ),
+        200,
+      );
+    },
+  )
+  .get("/:id", validate("param", idParam), async (c) => {
+    const { id } = c.req.valid("param");
+
+    return c.json(await CampaignsService.getCampaign(c.var.requestSession, id), 200);
+  })
+  .post(
+    "/",
+    denyDemoUser,
+    validate(
+      "json",
+      z.object({
+        name: z.string().min(1).max(255),
+        description: z.string().optional(),
+        rulesetId: z.string().uuid(),
+      }),
+    ),
+    async (c) => {
+      const body = c.req.valid("json");
+
+      return c.json(await CampaignsService.createCampaign(c.var.requestSession, body), 201);
+    },
+  )
+  .post("/:id/unarchive", validate("param", idParam), async (c) => {
+    const { id } = c.req.valid("param");
+
+    await CampaignsService.unarchiveCampaign(c.var.requestSession, id);
+    return c.json({ message: "Campaign unarchived successfully" }, 200);
+  })
+  .put(
+    "/:id",
+    validate("param", idParam),
+    validate(
+      "json",
+      z.object({
+        name: z.string().min(1).max(255).optional(),
+        description: z.string().optional(),
+      }),
+    ),
+    async (c) => {
+      const { id } = c.req.valid("param");
+      const body = c.req.valid("json");
+
+      return c.json(await CampaignsService.updateCampaign(c.var.requestSession, id, body), 200);
+    },
+  )
+  .delete("/:id", validate("param", idParam), async (c) => {
+    const { id } = c.req.valid("param");
+
+    await CampaignsService.archiveCampaign(c.var.requestSession, id);
+    return c.json({ message: "Campaign archived successfully" }, 200);
+  })
+  .delete("/:id/permanent", validate("param", idParam), async (c) => {
+    const { id } = c.req.valid("param");
+
+    await CampaignsService.hardDeleteCampaign(c.var.requestSession, id);
+    return c.json({ message: "Campaign permanently deleted" }, 200);
+  });

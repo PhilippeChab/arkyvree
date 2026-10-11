@@ -1,0 +1,103 @@
+import type { JobHelpers } from "graphile-worker";
+
+import { db, withTransaction } from "@/server/database/index.ts";
+import { Attachments, Blobs } from "@/server/repositories/index.ts";
+import ObjectStorage, { isStorageConfigured } from "@/server/storage/ObjectStorage.ts";
+
+interface Logger {
+  info(message: string): void;
+  warn(message: string): void;
+}
+
+type SweepResult = "swept" | "failed" | "skipped";
+
+const BATCH_SIZE = 500;
+
+const noopLogger: Logger = { info() {}, warn() {} };
+
+/**
+ * How long an unattached blob (uploaded but never confirmed) lives before the sweep reclaims it. Bounds the cost of the
+ * declared-byteSize-vs-actual-PUT abuse window. Long enough to give clients room to retry attach() if the network
+ * glitches.
+ */
+const UNATTACHED_BLOB_TTL_MS = 60 * 60 * 1000;
+
+async function sweepOne(blobId: string, key: string, logger: Logger): Promise<SweepResult> {
+  return await withTransaction(async (tx) => {
+    if (!(await Blobs.lock(tx, { id: blobId }, "update", true))) return "skipped";
+
+    const refs = await Attachments.findMany(tx, { blobIds: [blobId] });
+    if (refs.length > 0) return "skipped";
+
+    // S3 call inside the tx (unlike attach() which moves it out) — the
+    // FOR UPDATE lock has to span both the S3 delete and the row delete
+    // so a concurrent attach() can't grab the blob and create a ref
+    // after we've already deleted the S3 object. Sweep is sequential
+    // (graphile-worker single concurrency) so connection-pool impact
+    // is bounded.
+    try {
+      await ObjectStorage.get().deleteObject(key);
+      await Blobs.delete(tx, { id: blobId });
+      return "swept";
+    } catch (error) {
+      logger.warn(`S3 delete failed for ${key}: ${error instanceof Error ? error.message : error}`);
+      return "failed";
+    }
+  });
+}
+
+export async function sweepPendingBlobs(
+  opts: { batchSize?: number; logger?: Logger; now?: Date; ttlMs?: number } = {},
+): Promise<{ failed: number; swept: number }> {
+  const logger = opts.logger ?? noopLogger;
+
+  if (!isStorageConfigured()) {
+    logger.info("Storage not configured, skipping pending-blob sweep");
+    return { swept: 0, failed: 0 };
+  }
+
+  const ttl = opts.ttlMs ?? UNATTACHED_BLOB_TTL_MS;
+  const batch = opts.batchSize ?? BATCH_SIZE;
+  const now = opts.now ?? new Date();
+  const cutoff = new Date(now.getTime() - ttl).toISOString();
+
+  let swept = 0;
+  let failed = 0;
+  // Track ids that failed in this run so the next SELECT excludes them.
+  // Without this, ORDER BY created_at ASC keeps re-surfacing the same
+  // failing rows at the front of every batch and the loop achieves only
+  // the success-count's worth of progress per iteration.
+  const failedIds = new Set<string>();
+  while (true) {
+    const candidates = await Blobs.findOrphans(
+      db,
+      { createdBefore: cutoff, excludeIds: [...failedIds] },
+      { limit: batch },
+    );
+
+    if (candidates.length === 0) break;
+
+    let sweptThisBatch = 0;
+    for (const candidate of candidates) {
+      const result = await sweepOne(candidate.id, candidate.key, logger);
+      if (result === "swept") {
+        swept++;
+        sweptThisBatch++;
+      } else if (result === "failed") {
+        failed++;
+        failedIds.add(candidate.id);
+      }
+    }
+
+    if (sweptThisBatch === 0) break;
+    if (candidates.length < batch) break;
+  }
+
+  if (swept > 0 || failed > 0) logger.info(`Swept ${swept} blobs, ${failed} failed`);
+
+  return { swept, failed };
+}
+
+export async function sweepPendingBlobsTask(_payload: unknown, helpers: JobHelpers): Promise<void> {
+  await sweepPendingBlobs({ logger: helpers.logger });
+}

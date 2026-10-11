@@ -1,0 +1,1 @@
+ALTER TABLE "rules"."entity_snapshots" ADD CONSTRAINT "entity_snapshots_ruleset_type_source_unique" UNIQUE("ruleset_id","entity_type","source_entity_id");

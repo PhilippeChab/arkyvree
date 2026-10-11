@@ -1,0 +1,340 @@
+import { and, count, eq, exists, inArray, type InferInsertModel, isNull, not, or, sql } from "drizzle-orm";
+
+import type { Db } from "@/drizzle/database.ts";
+import { charactersInCharacter, contributorsInCharacter, playerCharactersInCampaign } from "@/drizzle/schema.ts";
+import { include } from "@/lib/mixins.ts";
+import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository.ts";
+import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
+import { Paginates } from "@/server/repositories/concerns/Paginates.ts";
+import { Searches } from "@/server/repositories/concerns/Searches.ts";
+
+class CharactersRepository extends include(
+  BaseRepository<typeof charactersInCharacter>,
+  GuardsStaleEdits,
+  Paginates,
+  Searches,
+) {
+  constructor() {
+    super(charactersInCharacter);
+  }
+
+  /** A character the user may edit: theirs, or one they contribute to. */
+  private async findEditable(
+    db: Db,
+    where: { id: string; userId: string },
+    visibility: Visibility = Visibility.UnarchivedOnly,
+  ) {
+    const rows = await db
+      .select()
+      .from(charactersInCharacter)
+      .where(
+        this.where([
+          eq(charactersInCharacter.id, where.id),
+          eq(charactersInCharacter.kind, "pc"),
+          or(
+            eq(charactersInCharacter.userId, where.userId),
+            exists(
+              db
+                .select({ one: sql`1` })
+                .from(contributorsInCharacter)
+                .where(
+                  and(
+                    eq(contributorsInCharacter.characterId, charactersInCharacter.id),
+                    eq(contributorsInCharacter.userId, where.userId),
+                    eq(contributorsInCharacter.status, "Active"),
+                    isNull(contributorsInCharacter.deletedAt),
+                  ),
+                ),
+            ),
+          )!,
+          this.visibility(visibility),
+        ]),
+      )
+      .limit(1);
+    return rows[0];
+  }
+
+  /** Archives a character and its children (`{ id }`), or every character a user owns (`{ userId }`). */
+  async archive(db: Db, where: { id: string } | { userId: string }) {
+    const archived = await db
+      .update(this.table)
+      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+      .where(
+        this.branchWhere(
+          ["id" in where && eq(this.table.id, where.id), "userId" in where && eq(this.table.userId, where.userId)],
+          [isNull(this.table.deletedAt)],
+        ),
+      )
+      .returning();
+    if ("id" in where && archived.length > 0) {
+      await db
+        .update(this.table)
+        .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+        .where(and(eq(this.table.parentCharacterId, where.id), isNull(this.table.deletedAt)));
+    }
+    return archived;
+  }
+
+  async count(db: Db, where: { userId: string }) {
+    const [result] = await db
+      .select({ count: count() })
+      .from(charactersInCharacter)
+      .where(
+        and(
+          isNull(charactersInCharacter.deletedAt),
+          eq(charactersInCharacter.userId, where.userId),
+          eq(charactersInCharacter.kind, "pc"),
+        ),
+      );
+
+    return result.count;
+  }
+
+  async create(db: Db, values: InferInsertModel<typeof charactersInCharacter>) {
+    return await db.insert(this.table).values(values).returning();
+  }
+
+  /** Hard delete — bonded children are reconcile-managed, not user-archived. */
+  async delete(db: Db, where: { id: string }) {
+    return await db.delete(this.table).where(eq(this.table.id, where.id));
+  }
+
+  async findIds(db: Db, where: { userIds: string[] }) {
+    if (where.userIds.length === 0) return [];
+    const rows = await db
+      .select({ id: this.table.id })
+      .from(this.table)
+      .where(inArray(this.table.userId, where.userIds));
+    return rows.map((r) => r.id);
+  }
+
+  /** Characters by id, or a master's bonded creatures (`parentCharacterId`). */
+  async findMany(
+    db: Db,
+    where: { ids: string[] } | { parentCharacterId: string },
+    visibility: Visibility = Visibility.UnarchivedOnly,
+  ) {
+    if ("ids" in where && where.ids.length === 0) return [];
+    return await db.query.charactersInCharacter.findMany({
+      where: this.branchWhere(
+        [
+          "ids" in where && inArray(this.table.id, where.ids),
+          "parentCharacterId" in where && eq(this.table.parentCharacterId, where.parentCharacterId),
+        ],
+        [this.visibility(visibility)],
+      ),
+    });
+  }
+
+  /**
+   * A character by id; its owner's (`{ id, userId }`), or one the user may edit (`{ id, editorId }`: theirs, or one they
+   * actively contribute to); by share token; or a character's bonded creature.
+   */
+  async findOne(
+    db: Db,
+    where:
+      | { id: string }
+      | { id: string; userId: string }
+      | { shareToken: string }
+      | { kind: string; parentCharacterId: string }
+      | { editorId: string; id: string },
+    visibility: Visibility = Visibility.UnarchivedOnly,
+  ) {
+    if ("editorId" in where) return await this.findEditable(db, { id: where.id, userId: where.editorId }, visibility);
+    const isUserFacing = "userId" in where || "shareToken" in where;
+    return await db.query.charactersInCharacter.findFirst({
+      where: this.branchWhere(
+        [
+          "id" in where && eq(this.table.id, where.id),
+          "shareToken" in where && eq(this.table.shareToken, where.shareToken),
+          "parentCharacterId" in where && eq(this.table.parentCharacterId, where.parentCharacterId),
+        ],
+        [
+          "userId" in where && eq(this.table.userId, where.userId),
+          "kind" in where && eq(this.table.kind, where.kind),
+          isUserFacing && eq(this.table.kind, "pc"),
+          this.visibility(visibility),
+        ],
+      ),
+    });
+  }
+
+  /**
+   * The user's characters, owned or contributed to: the last changed first (`lastChangedAt`, which every change to a
+   * character or its rows moves), unless the list says another order.
+   */
+  async findPage(
+    db: Db,
+    where: {
+      // "owner" → only characters this user owns; "contributor" → only
+      // characters they contribute to. Default (undefined) returns both.
+      accessRole?: "owner" | "contributor";
+      orderBy?: "name" | "createdAt" | "lastChangedAt";
+      orderDir?: "asc" | "desc";
+      search?: string;
+      userId: string;
+      visibility?: Visibility;
+    },
+    pagination: { limit: number; page: number },
+  ) {
+    const {
+      visibility = Visibility.UnarchivedOnly,
+      search,
+      orderBy = "lastChangedAt",
+      orderDir = "desc",
+      accessRole,
+    } = where;
+    const searchConditions = this.search(search, [this.table.name, this.table.description]);
+
+    const ownerCondition = eq(this.table.userId, where.userId);
+    const contributorCondition = exists(
+      db
+        .select({ one: sql`1` })
+        .from(contributorsInCharacter)
+        .where(
+          and(
+            eq(contributorsInCharacter.characterId, this.table.id),
+            eq(contributorsInCharacter.userId, where.userId),
+            eq(contributorsInCharacter.status, "Active"),
+            isNull(contributorsInCharacter.deletedAt),
+          ),
+        ),
+    );
+    const accessCondition =
+      accessRole === "owner"
+        ? ownerCondition
+        : accessRole === "contributor"
+          ? contributorCondition
+          : or(ownerCondition, contributorCondition);
+
+    return await this.withPagination(pagination, async ({ limit, offset }) => {
+      const rows = await db
+        .select({
+          id: this.table.id,
+          userId: this.table.userId,
+          rulesetId: this.table.rulesetId,
+          raceId: this.table.raceId,
+          kind: this.table.kind,
+          parentCharacterId: this.table.parentCharacterId,
+          xp: this.table.xp,
+          name: this.table.name,
+          alignment: this.table.alignment,
+          age: this.table.age,
+          gender: this.table.gender,
+          height: this.table.height,
+          weight: this.table.weight,
+          deity: this.table.deity,
+          description: this.table.description,
+          notes: this.table.notes,
+          privateNotes: this.table.privateNotes,
+          shareToken: this.table.shareToken,
+          createdAt: this.table.createdAt,
+          updatedAt: this.table.updatedAt,
+          deletedAt: this.table.deletedAt,
+          lastChangedAt: this.table.lastChangedAt,
+          accessRole: sql<
+            "owner" | "contributor"
+          >`CASE WHEN ${this.table.userId} = ${where.userId} THEN 'owner' ELSE 'contributor' END`,
+        })
+        .from(this.table)
+        .where(this.where([accessCondition!, eq(this.table.kind, "pc"), this.visibility(visibility), searchConditions]))
+        .orderBy(...this.pageOrder(this.orderBy(this.table[orderBy], orderDir)))
+        .limit(limit)
+        .offset(offset);
+      return rows;
+    });
+  }
+
+  /** The user's characters on the ruleset that no campaign links: what a campaign can link. */
+  async findUnlinkedPage(
+    db: Db,
+    where: { rulesetId: string; search?: string; userId: string },
+    pagination: { limit: number; page: number },
+  ) {
+    return await this.withPagination(pagination, async ({ limit, offset }) => {
+      const results = await db
+        .select({
+          id: charactersInCharacter.id,
+          userId: charactersInCharacter.userId,
+          rulesetId: charactersInCharacter.rulesetId,
+          raceId: charactersInCharacter.raceId,
+          kind: charactersInCharacter.kind,
+          parentCharacterId: charactersInCharacter.parentCharacterId,
+          xp: charactersInCharacter.xp,
+          name: charactersInCharacter.name,
+          alignment: charactersInCharacter.alignment,
+          age: charactersInCharacter.age,
+          gender: charactersInCharacter.gender,
+          height: charactersInCharacter.height,
+          weight: charactersInCharacter.weight,
+          deity: charactersInCharacter.deity,
+          description: charactersInCharacter.description,
+          notes: charactersInCharacter.notes,
+          privateNotes: charactersInCharacter.privateNotes,
+          shareToken: charactersInCharacter.shareToken,
+          createdAt: charactersInCharacter.createdAt,
+          updatedAt: charactersInCharacter.updatedAt,
+          deletedAt: charactersInCharacter.deletedAt,
+          lastChangedAt: charactersInCharacter.lastChangedAt,
+        })
+        .from(charactersInCharacter)
+        .leftJoin(
+          playerCharactersInCampaign,
+          and(
+            eq(playerCharactersInCampaign.characterId, charactersInCharacter.id),
+            isNull(playerCharactersInCampaign.deletedAt),
+          ),
+        )
+        .where(
+          and(
+            eq(charactersInCharacter.userId, where.userId),
+            eq(charactersInCharacter.rulesetId, where.rulesetId),
+            eq(charactersInCharacter.kind, "pc"),
+            isNull(charactersInCharacter.deletedAt),
+            isNull(playerCharactersInCampaign.characterId), // NOT linked
+            this.search(where.search, [charactersInCharacter.name]) || undefined,
+          ),
+        )
+        .orderBy(...this.pageOrder(this.orderBy(charactersInCharacter.createdAt, "desc")))
+        .limit(limit)
+        .offset(offset);
+
+      return results;
+    });
+  }
+
+  async unarchive(db: Db, where: { id: string }) {
+    const unarchived = await db
+      .update(this.table)
+      .set({ deletedAt: null, updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.id, where.id), not(isNull(this.table.deletedAt))))
+      .returning();
+    if (unarchived.length > 0) {
+      await db
+        .update(this.table)
+        .set({ deletedAt: null, updatedAt: new Date().toISOString() })
+        .where(and(eq(this.table.parentCharacterId, where.id), not(isNull(this.table.deletedAt))));
+    }
+    return unarchived;
+  }
+
+  async update(
+    db: Db,
+    values: Partial<InferInsertModel<typeof charactersInCharacter>>,
+    where: { expectedUpdatedAt?: string; id: string },
+  ) {
+    return await db
+      .update(this.table)
+      .set({ ...values, updatedAt: new Date().toISOString() })
+      .where(
+        this.where([
+          eq(this.table.id, where.id),
+          isNull(this.table.deletedAt),
+          this.casUpdatedAt(where.expectedUpdatedAt),
+        ]),
+      )
+      .returning();
+  }
+}
+
+export default CharactersRepository;

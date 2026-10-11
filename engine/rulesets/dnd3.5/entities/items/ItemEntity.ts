@@ -1,0 +1,324 @@
+/** An item as a ruleset's entity: what the ruleset describes of it, and what its saves store, checked. */
+
+import { z } from "zod";
+
+import { CustomizationPageEntity } from "@/engine/core/entities/index.ts";
+import RulesError from "@/engine/core/RulesError.ts";
+import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
+import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
+import type { ItemLocation } from "@/shared/enums.ts";
+import { isOneOf } from "@/shared/isOneOf.ts";
+import type { Item } from "@/shared/relations.ts";
+import { TEMPLATE_ITEM_TYPES, type TemplateItemType } from "@/vocabulary/dnd3.5/itemTemplates.ts";
+
+import { ITEM_FIELDS } from "./fields.ts";
+
+/** An item's save, as its form sends it: a cost, a weight, a slot or a template it leaves out is kept, null clears it. */
+interface ItemBody {
+  costGp?: number | null;
+  description?: string | null;
+  isTemplate?: boolean;
+  name: string;
+  slot?: ItemLocation | null;
+  sourceItemId?: string | null;
+  type?: string | null;
+  weight?: number | null;
+}
+
+/** A variant of an item, as its form sends it. */
+interface VariantBody {
+  description?: string | null;
+  name: string;
+}
+
+/**
+ * An item's row, as its forms write it: a template keeps no source, an edit leaves whether it's one as it is, and a slot
+ * is always one (`"Other"` for none).
+ */
+type ItemColumns = Omit<ItemBody, "costGp" | "isTemplate" | "slot" | "sourceItemId" | "weight"> & {
+  costGp?: string | null;
+  isTemplate?: boolean;
+  slot?: ItemLocation;
+  sourceItemId?: string | null;
+  weight?: string | null;
+};
+
+/** A type an item can be based on a template of: a weapon's, an armor's or a shield's. */
+const TEMPLATE_TYPE = z.enum(TEMPLATE_ITEM_TYPES);
+
+/** The variants an item's form makes at once: as many as the rules allow. */
+const VARIANTS = z.array(z.unknown()).max(RULESET_LIMITS.itemVariants);
+
+/** A cost's or a weight's column: its number, written; null clears it, and one left out stays as it is. */
+function decimalColumn(value: number | null | undefined) {
+  return value === null ? null : value?.toString();
+}
+
+/**
+ * An item as the ruleset has it: described with its template's properties and requirements, its own over them, and
+ * saved by its template rules: a template is its copies' source, never one's copy.
+ */
+export default class ItemEntity extends CustomizationPageEntity<
+  "items",
+  ItemBody,
+  ItemColumns,
+  typeof ITEM_FIELDS.fields
+> {
+  /** Its armor's, its shield's and its weapon's, its charges, its make. */
+  protected override readonly fields = ITEM_FIELDS;
+
+  protected override readonly label = "Item";
+
+  override readonly type = "items";
+
+  /** Refuses a template's form (`checkTemplate`), or an item's based on a template (`checkTemplateOf`). */
+  protected override checkForm(body: ItemBody, item?: Item) {
+    if (item ? item.isTemplate : body.isTemplate) this.checkTemplate(body, item);
+    else this.checkTemplateOf(body, item);
+  }
+
+  /** A form's columns: a new item's template, and whether it's one; an edited template keeps no source. */
+  protected override columnsOf(body: ItemBody, item?: Item): ItemColumns {
+    const columns = {
+      costGp: decimalColumn(body.costGp),
+      description: body.description,
+      name: body.name,
+      slot: this.slotOf(body),
+      type: body.type,
+      weight: decimalColumn(body.weight),
+    };
+    if (item) return { ...columns, sourceItemId: item.isTemplate ? null : body.sourceItemId };
+    return { ...columns, isTemplate: body.isTemplate ?? false, sourceItemId: body.sourceItemId };
+  }
+
+  /**
+   * The properties a saved item's fields are read off: the edited one's own, merged with the template it's saved with
+   * (the one it keeps when the form gives none); a new one's template's alone.
+   */
+  protected override keptProperties(columns: ItemColumns, item?: Item) {
+    const sourceItemId = this.templateIdOf(columns, item);
+    if (item) return this.propertiesOf({ id: item.id, sourceItemId });
+    return sourceItemId ? this.propertiesOf({ id: sourceItemId, sourceItemId: null }) : [];
+  }
+
+  /** An item's properties: its template's of each type it doesn't set, then its own. */
+  protected override propertiesOf(item: Pick<Item, "id" | "sourceItemId">) {
+    return this.rulesetData.itemProperties(item);
+  }
+
+  /** An item's requirements: its template's, its proficiency, before its own. */
+  protected override requirementsOf(item: Pick<Item, "id" | "isTemplate" | "sourceItemId">) {
+    const { own: requirements, template: proficiency } = this.rulesetData.itemRequirements(item);
+    return [...proficiency, ...requirements];
+  }
+
+  /** A form's template, the view's. */
+  protected override resolveIds({ sourceItemId }: ItemBody) {
+    return sourceItemId ? { sourceItemId: this.ids.resolve("items", sourceItemId) } : {};
+  }
+
+  /**
+   * An item as its page shows it, with where a character carrying it can place it (`placement`), and its template's
+   * name (`templateName`), which its editor shows while the template isn't one of its type.
+   */
+  override describe(id: string) {
+    const item = super.describe(id);
+    return {
+      ...item,
+      placement: ItemPlacement.describe(item, item.properties),
+      templateName: this.templateNameOf(item.sourceItemId),
+    };
+  }
+
+  /** A page of the ruleset's items, each with its template's name. */
+  override openList(where: { childOnly?: boolean }) {
+    const list = super.openList(where);
+    return {
+      ...list,
+      describe: <T extends Record<string, unknown> & { id: string }>(rows: T[]) =>
+        list.describe(rows).map((item) => ({ ...item, templateName: this.templateNameOf(item.sourceItemId) })),
+    };
+  }
+
+  /**
+   * Deleting an item: the item as the view has it, and, a template, the ids the items made from it hold (`copiesOf`: its
+   * own, and those it stands for), which the server reads where the delete reaches them (the ruleset's view, and the
+   * rulesets built on it) for `checkCopies`, which refuses deleting a template that has any.
+   */
+  override planDelete(itemId: string) {
+    const plan = super.planDelete(itemId);
+    return {
+      ...plan,
+      checkCopies(copies: unknown[]) {
+        if (copies.length > 0)
+          throw new RulesError("conflict", "Cannot delete a template item that has copies referencing it");
+      },
+      copiesOf: plan.entity.isTemplate ? this.rulesetData.cow.getEquivalentIds(plan.entity.id) : undefined,
+    };
+  }
+
+  /**
+   * An item's edit, and, a template's that changes its type, the ids the items made from it hold (`copiesOf`: its own,
+   * and those it stands for), which the server reads where the change reaches them (the ruleset's view, and the
+   * rulesets built on it) for `checkCopies`, which refuses the change while any is of another type than the new one: it
+   * would read the properties and requirements of a template of another type. The refusal names what the view shows
+   * alone (`listCopies`).
+   */
+  override planEdit(itemId: string, body: ItemBody) {
+    const plan = super.planEdit(itemId, body);
+    const { entity: item } = plan;
+    const type = this.typeOf(body, item);
+    return {
+      ...plan,
+      checkCopies: (copies: Pick<Item, "id" | "name" | "type">[]) => {
+        const made = copies.filter((copy) => copy.type !== type);
+        if (made.length === 0) return;
+        const template = `the ${item.type ?? "None"} template "${item.name}"`;
+        throw new RulesError(
+          "unprocessable",
+          `Can't change ${template} to ${type ?? "None"} while items are made from it: ${this.listCopies(made)}`,
+        );
+      },
+      copiesOf: item.isTemplate && type !== item.type ? this.rulesetData.cow.getEquivalentIds(item.id) : undefined,
+    };
+  }
+
+  /**
+   * Refuses a template made from another item (a template is its copies' source, never one's copy), or of a type no
+   * item can be based on a template of: a new one's, or the one an edit changes it to (one it keeps stays).
+   */
+  private checkTemplate(body: ItemBody, template?: Item) {
+    if (body.sourceItemId) throw new RulesError("unprocessable", "Template items cannot have a source item");
+    const type = this.typeOf(body, template);
+    if ((!template || type !== template.type) && !isOneOf(type, TEMPLATE_ITEM_TYPES)) {
+      throw new RulesError(
+        "unprocessable",
+        `Item type ${type ?? "None"} can't be a template: only ${TEMPLATE_ITEM_TYPES.join(", ")} can`,
+      );
+    }
+  }
+
+  /**
+   * Refuses an item based on anything but a template of its type (the one its form gives, or the one it keeps), which
+   * it would read its properties and requirements off: a weapon's, an armor's or a shield's.
+   */
+  private checkTemplateOf(body: ItemBody, item?: Item) {
+    const templateId = this.templateIdOf(body, item);
+    if (!templateId) return;
+
+    const template = this.rulesetData.find("items", templateId);
+    if (!template?.isTemplate) throw new RulesError("unprocessable", "Source item is not a template of this ruleset");
+    const type = this.typeOf(body, item);
+    if (template.type !== type || !isOneOf(type, TEMPLATE_ITEM_TYPES)) {
+      throw new RulesError(
+        "unprocessable",
+        `Item type ${type ?? "None"} can't be based on the ${template.type ?? "None"} template "${template.name}"`,
+      );
+    }
+  }
+
+  /** The item a duplicate or variants are made from, as the view has it: refused when there's none of its id. */
+  private findSource(itemId: string) {
+    const item = this.rulesetData.find("items", itemId);
+    if (!item) throw new RulesError("not-found", "Source item not found in this ruleset");
+    return item;
+  }
+
+  /**
+   * The items made from a template, as a refusal lists them: the first the ruleset's view shows by its name, and how
+   * many more it shows, then how many the rulesets built on it make, which it never names: one may be another user's,
+   * which the session can't read.
+   */
+  private listCopies(copies: Pick<Item, "id" | "name">[]) {
+    const [named, ...shown] = copies.filter((copy) => this.rulesetData.itemsById.has(copy.id));
+    const elsewhere = copies.length - shown.length - (named ? 1 : 0);
+    const more = shown.length > 0 ? ` and ${shown.length} more` : "";
+    return [
+      ...(named ? [`"${named.name}"${more}`] : []),
+      ...(elsewhere > 0 ? [`${elsewhere} in rulesets built on this one`] : []),
+    ].join(", and ");
+  }
+
+  /**
+   * An item's slot: the one its type sets (an armor's the torso, a shield's the off hand), or the one its form gives,
+   * `"Other"` for none (null: an item worn nowhere in particular).
+   */
+  private slotOf(item: { slot?: ItemLocation | null; type?: string | null }): ItemLocation | undefined {
+    return ItemPlacement.slotOfType(item.type ?? null) ?? (item.slot === null ? "Other" : item.slot);
+  }
+
+  /**
+   * The template a form (its body, or its columns) saves an item with: none for an edited template, which keeps no
+   * source, or the form's (null: none), or the one the edited item keeps.
+   */
+  private templateIdOf(form: { sourceItemId?: string | null }, item?: Item) {
+    if (item?.isTemplate) return null;
+    return form.sourceItemId === undefined ? (item?.sourceItemId ?? null) : form.sourceItemId;
+  }
+
+  /** The name of an item's template (`sourceItemId`, as the view resolves it): null for none. */
+  private templateNameOf(sourceItemId: unknown) {
+    return typeof sourceItemId === "string" ? (this.rulesetData.itemsById.get(sourceItemId)?.name ?? null) : null;
+  }
+
+  /** The template an item made from `item` points at: `item` itself when it's a template, or its own template. */
+  private templateOf(item: Item) {
+    return item.isTemplate ? item.id : (item.sourceItemId ?? undefined);
+  }
+
+  /** The type a form saves an item with: the form's (null: none), or the one the edited item keeps. */
+  private typeOf(body: ItemBody, item?: Item) {
+    return body.type === undefined ? (item?.type ?? null) : body.type;
+  }
+
+  /**
+   * The ruleset's templates of a type (`type`; every type's without one), as the server reads them (`filters`): refused
+   * for a type no item can be based on a template of.
+   */
+  openTemplates(type?: string): { filters: { isTemplate: true; type?: TemplateItemType } } {
+    return { filters: { isTemplate: true, type: RulesError.parse(TEMPLATE_TYPE.optional(), type, ["type"]) } };
+  }
+
+  /**
+   * A duplicate of an item (`sourceItemId`), from its form: it points at the same template, isn't one itself, and takes
+   * its source's customizations unless its source is a template, whose copies read the template's
+   * (`copyCustomizationsFrom`). It keeps the fields its source's properties hold, which it takes.
+   */
+  planDuplicate(sourceItemId: string, body: ItemBody) {
+    const source = this.findSource(sourceItemId);
+    return {
+      ...this.planCreate({ ...body, isTemplate: false, sourceItemId: this.templateOf(source) }),
+      copyCustomizationsFrom: source.isTemplate ? undefined : source.id,
+      fields: this.fields.read(this.propertiesOf(source)),
+    };
+  }
+
+  /**
+   * An item's variants (`variants`, of `sourceItemId`): each a copy of its source's type, slot, weight and cost,
+   * pointing at its template, and taking its customizations unless it's a template (`copyCustomizationsFrom`). Refused
+   * with more than the rules make at once, or two of a name.
+   */
+  planVariants(sourceItemId: string, variants: VariantBody[]) {
+    RulesError.parse(VARIANTS, variants, ["variants"]);
+    const names = variants.map((variant) => variant.name);
+    if (new Set(names).size !== names.length)
+      throw new RulesError("conflict", "Duplicate names within the variants list");
+
+    const source = this.findSource(sourceItemId);
+    const slot = this.slotOf(source);
+    return {
+      copyCustomizationsFrom: source.isTemplate ? undefined : source.id,
+      rows: variants.map((variant) => ({
+        name: variant.name,
+        description: variant.description,
+        type: source.type,
+        slot,
+        weight: source.weight,
+        costGp: source.costGp,
+        sourceItemId: this.templateOf(source),
+        isTemplate: false,
+      })),
+      source,
+    };
+  }
+}

@@ -1,0 +1,397 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "react", "import", "unicorn"],
+  // Our own rules (lint/): JS plugins are in alpha, so oxlint's version is pinned.
+  "jsPlugins": ["./lint/plugin.mjs"],
+  "categories": {
+    "correctness": "error"
+  },
+  "ignorePatterns": ["node_modules", "dist"],
+  "rules": {
+    // A parameter's empty `{}` is the shape its caller sets (a Playwright fixture that depends on no other).
+    "no-empty-pattern": ["error", { "allowObjectPatternsAsParameters": true }],
+
+    // TypeScript
+    // A rest parameter may be `any[]`, which TypeScript requires of a mixin's constructor (TS2545); nothing else is `any`.
+    "typescript/no-explicit-any": ["error", { "ignoreRestArgs": true }],
+    // TypeScript's errors are fixed, never silenced: no @ts-expect-error, @ts-ignore or @ts-nocheck.
+    "typescript/ban-ts-comment": ["error", { "ts-expect-error": true, "ts-ignore": true, "ts-nocheck": true }],
+    "typescript/consistent-type-imports": ["error", { "fixStyle": "inline-type-imports" }],
+    // An object's type is an interface; a `type` names a union, a mapped type, an intersection or one derived from
+    // another (`Pick<…>`, `ReturnType<…>`).
+    "typescript/consistent-type-definitions": ["error", "interface"],
+    "typescript/no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }
+    ],
+
+    // React
+    "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "error",
+    // React Compiler rules. The compiler isn't enabled, so APIs it can't memoize (react-hook-form's watch()) are fine.
+    // State a prop drives is reset in the render that sees it change (`useOnChange`), never by an effect.
+    "react/incompatible-library": "off",
+    "react/set-state-in-effect": "error",
+    // A fragment is `<>`, and never wraps a lone child.
+    "react/jsx-fragments": ["error", "syntax"],
+    "react/jsx-no-useless-fragment": "error",
+
+    // Unicorn
+    "unicorn/no-array-for-each": "error",
+    "unicorn/no-new-array": "off",
+    "unicorn/no-single-promise-in-promise-methods": "off",
+    "unicorn/no-useless-fallback-in-spread": "off",
+    "unicorn/no-useless-spread": "off",
+
+    // General
+    "no-console": "error",
+    // A body that fits on its statement's line takes no braces; a longer or nested one takes them, and so do all of
+    // an if-else chain's when one does.
+    "curly": ["error", "multi-or-nest", "consistent"],
+    "arrow-body-style": ["error", "as-needed"],
+    "import/no-empty-named-blocks": "error",
+    // A module is imported once: its types and values in one import (`import { type A, b } from "x"`).
+    "import/no-duplicates": ["error", { "preferInline": true }],
+    // Every declaration and method by name, every route by method and path (lint/memberOrder.mjs): `bun run lint --fix`
+    // sorts them.
+    "arkyvree/member-order": "error",
+    // A member that implements its base's abstract member says so, `override`, as noImplicitOverride makes one that
+    // overrides a concrete member (lint/overrides.mjs): member-order groups the overrides.
+    "arkyvree/override-keyword": "error",
+    // A public method starts with a verb its layer knows (lint/methodNames.mjs): repositories, services, policies.
+    "arkyvree/method-names": "error",
+    // An exported function of the server or shared/ starts with a verb (lint/methodNames.mjs).
+    "arkyvree/function-names": "error",
+    // The architecture (lint/architecture.mjs): what each root folder imports (a box with one role, which reaches
+    // another only by a declared edge) and each layer inside it, the engine's one entry, where queries are built,
+    // folder indexes.
+    "arkyvree/root-folders": "error",
+    "arkyvree/layers": "error",
+    "arkyvree/engine-front-door": "error",
+    "arkyvree/one-engine-op": "error",
+    "arkyvree/opaque-view": "error",
+    "arkyvree/queries-in-repositories": "error",
+    "arkyvree/folder-index": "error",
+    // Each ruleset's folders are its own, and what every ruleset runs on (the core's folders, the content's runner and
+    // seeds, the scripts, the server, shared/) names none of them; the runner and the seeds read a ruleset's content
+    // through the content's registry, and the client's generic modules its vocabulary through theirs
+    // (lint/architecture.mjs).
+    "arkyvree/ruleset-folders": "error",
+    "arkyvree/re-exports": "error",
+    // A ruleset's vocabulary (vocabulary/<ruleset>/) is data: no function or class (lint/architecture.mjs).
+    "arkyvree/vocabulary-data": "error",
+    // AGENTS.md's conventions (lint/conventions.mjs): imports through @/, no helpers.ts, the shared repository
+    // instances, route params / validation / errors, sorting through the repository, shared/'s runtime, `session`,
+    // the environment read in server/environment.ts, repository writes inside a transaction.
+    "arkyvree/no-parent-imports": "error",
+    "arkyvree/no-helpers-modules": "error",
+    "arkyvree/repository-instances": "error",
+    "arkyvree/route-conventions": "error",
+    "arkyvree/order-through-repository": "error",
+    "arkyvree/shared-runtime": "error",
+    "arkyvree/engine-classes": "error",
+    "arkyvree/engine-sync": "error",
+    "arkyvree/session-param": "error",
+    "arkyvree/environment": "error",
+    "arkyvree/no-disable-comments": "error",
+    "arkyvree/writes-in-transactions": "error",
+    "arkyvree/empty-list-reads": "error",
+    "arkyvree/no-null-reads": "error",
+    "arkyvree/test-placement": "error",
+    "arkyvree/class-file-names": "error",
+    "arkyvree/concern-shape": "error",
+    "arkyvree/comment-style": "error",
+    "arkyvree/policy-shape": "error",
+    "arkyvree/include-order": "error",
+    "arkyvree/file-layout": "error",
+    "arkyvree/error-names": "error",
+    "arkyvree/function-declarations": "error",
+    "arkyvree/one-of": "error",
+    // The client's conventions (lint/frontend.mjs) and the tests' (lint/testing.mjs).
+    "arkyvree/accessible-icon-buttons": "error",
+    "arkyvree/dialog-conventions": "error",
+    "arkyvree/query-keys": "error",
+    "arkyvree/client-apis": "error",
+    "arkyvree/controlled-inputs": "error",
+    "arkyvree/effect-writes": "error",
+    "arkyvree/api-calls-in-queries": "error",
+    "arkyvree/load-errors": "error",
+    "arkyvree/component-props": "error",
+    "arkyvree/react-imports": "error",
+    "arkyvree/icons": "error",
+    "arkyvree/jsx-conditionals": "error",
+    "arkyvree/jsx-attribute-lines": "error",
+    "arkyvree/component-files": "error",
+    "arkyvree/hook-files": "error",
+    "arkyvree/handler-names": "error",
+    "arkyvree/constant-names": "error",
+    "arkyvree/queries": "error",
+    "arkyvree/parsed-responses": "error",
+    "arkyvree/dot-notation": "error",
+    "arkyvree/error-reads": "error",
+    "arkyvree/browser-storage": "error",
+    "arkyvree/dirty-forms": "error",
+    "arkyvree/date-formats": "error",
+    "arkyvree/demo-reads": "error",
+    "arkyvree/navigation": "error",
+    "arkyvree/no-types-modules": "error",
+    "arkyvree/clickable-elements": "error",
+    "arkyvree/tooltips": "error",
+    "arkyvree/form-fields": "error",
+    "arkyvree/row-prefetch": "error",
+    "arkyvree/pending-props": "error",
+    "arkyvree/sx-styles": "error",
+    "arkyvree/theme-colors": "error",
+    "arkyvree/shadows": "error",
+    "arkyvree/shape": "error",
+    "arkyvree/borders": "error",
+    "arkyvree/motion": "error",
+    "arkyvree/type-scale": "error",
+    "arkyvree/headings": "error",
+    "arkyvree/flex-layout": "error",
+    "arkyvree/spacing": "error",
+    "arkyvree/sx-conventions": "error",
+    "arkyvree/dialog-footers": "error",
+    "arkyvree/add-buttons": "error",
+    "arkyvree/link-buttons": "error",
+    "arkyvree/choice-chips": "error",
+    "arkyvree/next-page-spinners": "error",
+    "arkyvree/option-tooltips": "error",
+    "arkyvree/anchor-menus": "error",
+    "arkyvree/select-fields": "error",
+    "arkyvree/form-validation": "error",
+    "arkyvree/toggle-states": "error",
+    "arkyvree/expand-arrows": "error",
+    "arkyvree/confirm-dialogs": "error",
+    "arkyvree/table-frames": "error",
+    "arkyvree/card-titles": "error",
+    "arkyvree/blank-notes": "error",
+    "arkyvree/page-loaders": "error",
+    "arkyvree/section-headings": "error",
+    "arkyvree/page-gaps": "error",
+    "arkyvree/page-titles": "error",
+    "arkyvree/panels": "error",
+    "arkyvree/list-toolbars": "error",
+    "arkyvree/list-results": "error",
+    "arkyvree/skeletons": "error",
+    "arkyvree/empty-values": "error",
+    "arkyvree/notification-messages": "error",
+    "arkyvree/row-actions": "error",
+    "arkyvree/target-paths": "error",
+    "arkyvree/entity-pages": "error",
+    // The client's controls (lint/controls.mjs): each weighs what it does, one way.
+    "arkyvree/button-intents": "error",
+    "arkyvree/save-buttons": "error",
+    "arkyvree/roll-buttons": "error",
+    "arkyvree/dice-rolls": "error",
+    "arkyvree/page-actions": "error",
+    "arkyvree/load-more-buttons": "error",
+    "arkyvree/chips": "error",
+    "arkyvree/help-labels": "error",
+    "arkyvree/label-case": "error",
+    "arkyvree/toast-wording": "error",
+    "arkyvree/confirm-wording": "error",
+    "arkyvree/typography-marks": "error",
+    "arkyvree/app-name": "error",
+    "arkyvree/dialog-mounts": "error",
+    "arkyvree/menus": "error",
+    "arkyvree/page-errors": "error",
+    "arkyvree/pickers": "error",
+    "arkyvree/pending-buttons": "error",
+    "arkyvree/query-errors": "error",
+    "arkyvree/sync-expects": "error",
+    "arkyvree/test-conventions": "error",
+    // A function holds at most 80 of its own lines (lint/size.mjs): a longer one splits into named steps.
+    "arkyvree/function-length": "error",
+    "arkyvree/module-state": "error",
+    // A value sits above what reads it as the file loads. Functions are left out (hoisted, they go by name:
+    // member-order), and so are classes (a repository's instance class follows it) and a variable read inside a
+    // function, which runs once the file has loaded: drizzle's tables point their foreign keys both ways.
+    "no-use-before-define": [
+      "error",
+      { "functions": false, "classes": false, "variables": false, "enums": false, "typedefs": false, "ignoreTypeReferences": true }
+    ],
+    // The names inside an import, alphabetically. The formatter orders the imports themselves.
+    "sort-imports": ["error", { "ignoreCase": true, "ignoreDeclarationSort": true }],
+    // Frontend barrel imports
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "@mui/material",
+            "importNames": ["CircularProgress", "Dialog"],
+            "message": "Use DiceSpinner / CreateDialog / EditDialog / FormDialog from @/client/src/components/common instead. Raw MUI Dialog skips the dirty-form close block; raw CircularProgress is not used in this codebase."
+          }
+        ],
+        "patterns": [
+          {
+            "group": [
+              "@/client/src/components/*/*.ts",
+              "@/client/src/components/*/*.tsx",
+              "@/client/src/hooks/*.ts",
+              "@/client/src/pages/*/components/*.ts",
+              "@/client/src/pages/*/components/*.tsx",
+              "@/client/src/pages/*/hooks/*.ts",
+              "@/client/src/pages/*/hooks/*.tsx",
+              "@/client/src/pages/*/details/components/*.ts",
+              "@/client/src/pages/*/details/components/*.tsx",
+              "@/client/src/pages/*/details/*/components/*.ts",
+              "@/client/src/pages/*/details/*/components/*.tsx",
+              "!**/index.ts"
+            ],
+            "message": "Import from the barrel index instead."
+          },
+          {
+            "group": ["@mui/material/*"],
+            "message": "MUI is imported from its one entry, @mui/material (its styles, its CssBaseline too)."
+          }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    // Modal is the single sanctioned wrapper for raw MUI Dialog; the rest of the
+    // codebase must go through Modal/FormDialog/CreateDialog/EditDialog. The
+    // wrappers themselves compose with each other, so they need to import
+    // siblings directly (importing through the barrel would be circular).
+    {
+      "files": [
+        "client/src/components/common/Modal.tsx",
+        "client/src/components/common/FormDialog.tsx",
+        "client/src/components/common/StandardDialogs.tsx"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    },
+    // A test reaches the folder's own module it tests (AGENTS.md): a client test runs without a browser, which a
+    // folder's index would load through its components
+    {
+      "files": ["tests/client/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    },
+    // No default exports in shared components/hooks/contexts/stores/services
+    {
+      "files": [
+        "client/src/components/**/*.{ts,tsx}",
+        "client/src/hooks/**/*.ts",
+        "client/src/contexts/**/*.{ts,tsx}",
+        "client/src/stores/**/*.ts",
+        "client/src/services/**/*.ts",
+        "client/src/pages/*/components/**/*.{ts,tsx}",
+        "client/src/pages/*/hooks/**/*.ts",
+        "client/src/pages/*/details/components/**/*.{ts,tsx}",
+        "client/src/pages/*/details/*/components/**/*.{ts,tsx}",
+        "client/src/pages/*/details/*/sections/**/*.{ts,tsx}",
+        "client/src/pages/*/details/sections/**/*.{ts,tsx}",
+        "client/src/pages/*/customization/sections/**/*.{ts,tsx}"
+      ],
+      "rules": {
+        "import/no-default-export": "error"
+      }
+    },
+    // Fast Refresh reloads the client's components as they're edited: a module of them exports components only
+    {
+      "files": ["client/**/*.{ts,tsx}"],
+      "rules": {
+        "react/only-export-components": ["error", { "allowConstantExport": true }]
+      }
+    },
+    // Server/scripts/tests/database/codegen: allow console
+    {
+      "files": ["server/**/*.{ts,tsx}", "scripts/**/*.ts", "tests/**/*.ts", "database/**/*.ts", "codegen/**/*.ts"],
+      "rules": {
+        "no-console": "off"
+      }
+    },
+    // API routers: no direct repo/db access, use service barrel imports
+    {
+      "files": ["server/routers/api/**/*.{ts,tsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@/server/repositories/index.ts", "@/server/repositories/index"],
+                "message": "API routers must not use repositories directly. Delegate to a service instead."
+              },
+              {
+                "group": ["@/server/database/*"],
+                "message": "API routers must not use the database directly. Delegate to a service instead."
+              },
+              {
+                "group": [
+                  "@/server/services/campaigns/*",
+                  "@/server/services/characters/*",
+                  "@/server/services/rulesets/*",
+                  "!@/server/services/campaigns/index",
+                  "!@/server/services/campaigns/index.ts",
+                  "!@/server/services/characters/index",
+                  "!@/server/services/characters/index.ts",
+                  "!@/server/services/rulesets/index",
+                  "!@/server/services/rulesets/index.ts"
+                ],
+                "message": "Import services from the barrel index (e.g., @/server/services/campaigns/index.ts)."
+              },
+              {
+                "group": [
+                  "@/server/middlewares/*",
+                  "!@/server/middlewares/index",
+                  "!@/server/middlewares/index.ts"
+                ],
+                "message": "Import middlewares from the barrel index (@/server/middlewares/index.ts)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    // Services: use shared repo instances from index.ts
+    {
+      "files": ["server/services/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@/server/repositories/*",
+                  "!@/server/repositories/index",
+                  "!@/server/repositories/index.ts",
+                  "!@/server/repositories/BaseRepository",
+                  "!@/server/repositories/BaseRepository.ts"
+                ],
+                "message": "Import shared repository instances from @/server/repositories/index.ts instead of individual files."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    // Page isolation: each page domain cannot import from other page domains.
+    // Keep this list in sync with the folders under client/src/pages. An override's options replace the base's, so
+    // each repeats its ban on MUI's raw Dialog and CircularProgress.
+    { "files": ["client/src/pages/activities/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "paths": [{ "name": "@mui/material", "importNames": ["CircularProgress", "Dialog"], "message": "Use DiceSpinner / CreateDialog / EditDialog / FormDialog from @/client/src/components/common instead. Raw MUI Dialog skips the dirty-form close block; raw CircularProgress is not used in this codebase." }], "patterns": [{ "group": ["@/client/src/pages/auth/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/characters/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/demo-expired/**", "@/client/src/pages/invites/**", "@/client/src/pages/legal/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**", "@/client/src/pages/share/**"], "message": "Pages must not import from other page domains." } ]} ]}},
+    { "files": ["client/src/pages/auth/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "paths": [{ "name": "@mui/material", "importNames": ["CircularProgress", "Dialog"], "message": "Use DiceSpinner / CreateDialog / EditDialog / FormDialog from @/client/src/components/common instead. Raw MUI Dialog skips the dirty-form close block; raw CircularProgress is not used in this codebase." }], "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/characters/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/demo-expired/**", "@/client/src/pages/invites/**", "@/client/src/pages/legal/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**", "@/client/src/pages/share/**"], "message": "Pages must not import from other page domains." } ]} ]}},
+    { "files": ["client/src/pages/campaigns/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "paths": [{ "name": "@mui/material", "importNames": ["CircularProgress", "Dialog"], "message": "Use DiceSpinner / CreateDialog / EditDialog / FormDialog from @/client/src/components/common instead. Raw MUI Dialog skips the dirty-form close block; raw CircularProgress is not used in this codebase." }], "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/characters/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/demo-expired/**", "@/client/src/pages/invites/**", "@/client/src/pages/legal/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**", "@/client/src/pages/share/**"], "message": "Pages must not import from other page domains." } ]} ]}},
+    { "files": ["client/src/pages/characters/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "paths": [{ "name": "@mui/material", "importNames": ["CircularProgress", "Dialog"], "message": "Use DiceSpinner / CreateDialog / EditDialog / FormDialog from @/client/src/components/common instead. Raw MUI Dialog skips the dirty-form close block; raw CircularProgress is not used in this codebase." }], "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/demo-expired/**", "@/client/src/pages/invites/**", "@/client/src/pages/legal/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**", "@/client/src/pages/share/**"], "message": "Pages must not import from other page domains." } ]} ]}},
+    { "files": ["client/src/pages/dashboard/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "paths": [{ "name": "@mui/material", "importNames": ["CircularProgress", "Dialog"], "message": "Use DiceSpinner / CreateDialog / EditDialog / FormDialog from @/client/src/components/common instead. Raw MUI Dialog skips the dirty-form close block; raw CircularProgress is not used in this codebase." }], "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/characters/**", "@/client/src/pages/demo-expired/**", "@/client/src/pages/invites/**", "@/client/src/pages/legal/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**", "@/client/src/pages/share/**"], "message": "Pages must not import from other page domains." } ]} ]}},
+    { "files": ["client/src/pages/demo-expired/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "paths": [{ "name": "@mui/material", "importNames": ["CircularProgress", "Dialog"], "message": "Use DiceSpinner / CreateDialog / EditDialog / FormDialog from @/client/src/components/common instead. Raw MUI Dialog skips the dirty-form close block; raw CircularProgress is not used in this codebase." }], "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/characters/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/invites/**", "@/client/src/pages/legal/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**", "@/client/src/pages/share/**"], "message": "Pages must not import from other page domains." } ]} ]}},
+    { "files": ["client/src/pages/invites/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "paths": [{ "name": "@mui/material", "importNames": ["CircularProgress", "Dialog"], "message": "Use DiceSpinner / CreateDialog / EditDialog / FormDialog from @/client/src/components/common instead. Raw MUI Dialog skips the dirty-form close block; raw CircularProgress is not used in this codebase." }], "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/characters/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/demo-expired/**", "@/client/src/pages/legal/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**", "@/client/src/pages/share/**"], "message": "Pages must not import from other page domains." } ]} ]}},
+    { "files": ["client/src/pages/legal/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "paths": [{ "name": "@mui/material", "importNames": ["CircularProgress", "Dialog"], "message": "Use DiceSpinner / CreateDialog / EditDialog / FormDialog from @/client/src/components/common instead. Raw MUI Dialog skips the dirty-form close block; raw CircularProgress is not used in this codebase." }], "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/characters/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/demo-expired/**", "@/client/src/pages/invites/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**", "@/client/src/pages/share/**"], "message": "Pages must not import from other page domains." } ]} ]}},
+    { "files": ["client/src/pages/notifications/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "paths": [{ "name": "@mui/material", "importNames": ["CircularProgress", "Dialog"], "message": "Use DiceSpinner / CreateDialog / EditDialog / FormDialog from @/client/src/components/common instead. Raw MUI Dialog skips the dirty-form close block; raw CircularProgress is not used in this codebase." }], "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/characters/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/demo-expired/**", "@/client/src/pages/invites/**", "@/client/src/pages/legal/**", "@/client/src/pages/profile/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**", "@/client/src/pages/share/**"], "message": "Pages must not import from other page domains." } ]} ]}},
+    { "files": ["client/src/pages/profile/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "paths": [{ "name": "@mui/material", "importNames": ["CircularProgress", "Dialog"], "message": "Use DiceSpinner / CreateDialog / EditDialog / FormDialog from @/client/src/components/common instead. Raw MUI Dialog skips the dirty-form close block; raw CircularProgress is not used in this codebase." }], "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/characters/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/demo-expired/**", "@/client/src/pages/invites/**", "@/client/src/pages/legal/**", "@/client/src/pages/notifications/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**", "@/client/src/pages/share/**"], "message": "Pages must not import from other page domains." } ]} ]}},
+    { "files": ["client/src/pages/rulesets/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "paths": [{ "name": "@mui/material", "importNames": ["CircularProgress", "Dialog"], "message": "Use DiceSpinner / CreateDialog / EditDialog / FormDialog from @/client/src/components/common instead. Raw MUI Dialog skips the dirty-form close block; raw CircularProgress is not used in this codebase." }], "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/characters/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/demo-expired/**", "@/client/src/pages/invites/**", "@/client/src/pages/legal/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/settings/**", "@/client/src/pages/share/**"], "message": "Pages must not import from other page domains." } ]} ]}},
+    { "files": ["client/src/pages/settings/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "paths": [{ "name": "@mui/material", "importNames": ["CircularProgress", "Dialog"], "message": "Use DiceSpinner / CreateDialog / EditDialog / FormDialog from @/client/src/components/common instead. Raw MUI Dialog skips the dirty-form close block; raw CircularProgress is not used in this codebase." }], "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/characters/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/demo-expired/**", "@/client/src/pages/invites/**", "@/client/src/pages/legal/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/share/**"], "message": "Pages must not import from other page domains." } ]} ]}},
+    { "files": ["client/src/pages/share/**/*.{ts,tsx}"], "rules": { "no-restricted-imports": ["error", { "paths": [{ "name": "@mui/material", "importNames": ["CircularProgress", "Dialog"], "message": "Use DiceSpinner / CreateDialog / EditDialog / FormDialog from @/client/src/components/common instead. Raw MUI Dialog skips the dirty-form close block; raw CircularProgress is not used in this codebase." }], "patterns": [{ "group": ["@/client/src/pages/activities/**", "@/client/src/pages/auth/**", "@/client/src/pages/campaigns/**", "@/client/src/pages/characters/**", "@/client/src/pages/dashboard/**", "@/client/src/pages/demo-expired/**", "@/client/src/pages/invites/**", "@/client/src/pages/legal/**", "@/client/src/pages/notifications/**", "@/client/src/pages/profile/**", "@/client/src/pages/rulesets/**", "@/client/src/pages/settings/**"], "message": "Pages must not import from other page domains." } ]} ]}}
+  ]
+}

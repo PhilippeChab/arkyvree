@@ -1,0 +1,254 @@
+import { describe, expect, test } from "bun:test";
+
+import { eq } from "drizzle-orm";
+
+import { featsAptitudesInRules, klassLevelFeatsInRules } from "@/drizzle/schema.ts";
+import { db } from "@/server/database/index.ts";
+import { Aptitudes, Characters, EntitySnapshots, Klasses, Properties } from "@/server/repositories/index.ts";
+import { ClassLevelsService } from "@/server/services/rulesets/classes/levels/index.ts";
+import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
+import { PowersService } from "@/server/services/rulesets/powers/index.ts";
+import { expectRefusedWith } from "@/tests/support/api.ts";
+import { createTestCharacter } from "@/tests/support/characters.ts";
+import { pickFeat } from "@/tests/support/levels.ts";
+import { createTestRuleset, createTestUserAndRuleset } from "@/tests/support/rulesets.ts";
+import { createTestUser } from "@/tests/support/users.ts";
+import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
+
+/** The aptitudes of the test's ruleset. */
+const APTITUDES = ["Combat", "Metamagic", "General"];
+
+async function linkedAptitudeIds(featId: string) {
+  const rows = await db.select().from(featsAptitudesInRules).where(eq(featsAptitudesInRules.featId, featId));
+  return rows.map((row) => row.aptitudeId).sort();
+}
+
+// CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
+describe("FeatsService", () => {
+  describe("aptitudes", () => {
+    test("links a feat to its aptitudes; an update replaces them, keeps them when it omits them, and can clear them", async () => {
+      const {
+        session,
+        ruleset,
+        aptitudeIds: [combat, metamagic, general],
+      } = await createTestUserAndRuleset(APTITUDES);
+      const feat = await FeatsService.createFeat(session, ruleset.id, {
+        name: "Power Attack",
+        aptitudeIds: [combat, metamagic],
+      });
+      expect(await linkedAptitudeIds(feat.id)).toEqual([combat, metamagic].sort());
+
+      await FeatsService.updateFeat(session, ruleset.id, feat.id, {
+        name: "Power Attack",
+        aptitudeIds: [general],
+      });
+      expect(await linkedAptitudeIds(feat.id)).toEqual([general]);
+
+      await FeatsService.updateFeat(session, ruleset.id, feat.id, {
+        name: "Power Attack",
+        description: "Renamed only",
+      });
+      expect(await linkedAptitudeIds(feat.id)).toEqual([general]);
+
+      await FeatsService.updateFeat(session, ruleset.id, feat.id, { name: "Power Attack", aptitudeIds: [] });
+      expect(await linkedAptitudeIds(feat.id)).toEqual([]);
+    });
+
+    test("refuses a new feat without an aptitude", async () => {
+      const { session, ruleset } = await createTestUserAndRuleset(APTITUDES);
+      await expectRefusedWith(
+        FeatsService.createFeat(session, ruleset.id, { name: "Orphan Feat", aptitudeIds: [] }),
+        400,
+      );
+    });
+
+    test("refuses an aptitude that spells already use", async () => {
+      const {
+        session,
+        ruleset,
+        aptitudeIds: [combat, spells],
+      } = await createTestUserAndRuleset(APTITUDES);
+      await PowersService.createPower(session, ruleset.id, {
+        name: "Magic Missile",
+        aptitudes: [{ id: spells }],
+      });
+      await expectRefusedWith(
+        FeatsService.createFeat(session, ruleset.id, { name: "Spell Feat", aptitudeIds: [spells] }),
+        409,
+      );
+
+      const feat = await FeatsService.createFeat(session, ruleset.id, {
+        name: "Combat Feat",
+        aptitudeIds: [combat],
+      });
+      await expectRefusedWith(
+        FeatsService.updateFeat(session, ruleset.id, feat.id, { name: "Combat Feat", aptitudeIds: [spells] }),
+        409,
+      );
+    });
+
+    test("counts the spells its own ruleset's view links to an aptitude, not a sibling fork's", async () => {
+      const { user: author } = await createTestUser();
+      const base = await createTestRuleset(author.id, { status: "Published" });
+      const [list] = await Aptitudes.create(db, { name: "Shared List", rulesetId: base.id });
+      const forkOf = async () => {
+        const { user, session } = await createTestUser();
+        const fork = await createTestRuleset(user.id, { rulesetId: base.id, ancestorRulesetIds: [base.id] });
+        return { session, fork };
+      };
+      const [spellFork, featFork] = [await forkOf(), await forkOf()];
+      await PowersService.createPower(spellFork.session, spellFork.fork.id, {
+        name: "Spark",
+        aptitudes: [{ id: list.id }],
+      });
+
+      const feat = await FeatsService.createFeat(featFork.session, featFork.fork.id, {
+        name: "Listed Feat",
+        aptitudeIds: [list.id],
+      });
+      expect(feat).toMatchObject({ name: "Listed Feat" });
+    });
+  });
+
+  test("groups a family's variants into one row, filtered by aptitude", async () => {
+    const {
+      session,
+      ruleset,
+      aptitudeIds: [combat, general],
+    } = await createTestUserAndRuleset(APTITUDES);
+    for (const name of ["Focus: Axe", "Focus: Sword"]) {
+      const feat = await FeatsService.createFeat(session, ruleset.id, { name, aptitudeIds: [combat] });
+      await Properties.create(db, { entityId: feat.id, entityType: "feats", type: FEAT_FAMILY, value: "Focus" });
+    }
+    await FeatsService.createFeat(session, ruleset.id, { name: "Cleave", aptitudeIds: [combat] });
+    await FeatsService.createFeat(session, ruleset.id, { name: "Alertness", aptitudeIds: [general] });
+
+    const grouped = await FeatsService.getFeatGroups(ruleset.id, { aptitudeId: combat }, { limit: 10, page: 1 });
+    expect(grouped.items.map((row) => ({ ...row, variantCount: Number(row.variantCount) }))).toMatchObject([
+      { displayName: "Cleave", family: null, variantCount: 1 },
+      { displayName: "Focus", family: "Focus", variantCount: 2 },
+    ]);
+  });
+
+  test("deletes a feat's aptitude and class-level links with it", async () => {
+    const {
+      session,
+      ruleset,
+      aptitudeIds: [combat],
+    } = await createTestUserAndRuleset(APTITUDES);
+    const feat = await FeatsService.createFeat(session, ruleset.id, {
+      name: "Doomed Feat",
+      aptitudeIds: [combat],
+    });
+    const [klass] = await Klasses.create(db, { name: "Granting Class", rulesetId: ruleset.id, hd: 10 });
+    await ClassLevelsService.createClassLevel(session, ruleset.id, klass.id, {
+      level: 1,
+      fields: { bab: 1, skills: 2 },
+      feats: [{ featId: feat.id, aptitudeId: combat }],
+    });
+
+    await FeatsService.deleteFeat(session, ruleset.id, feat.id);
+
+    expect(await linkedAptitudeIds(feat.id)).toEqual([]);
+    expect(await db.select().from(klassLevelFeatsInRules).where(eq(klassLevelFeatsInRules.featId, feat.id))).toEqual(
+      [],
+    );
+  });
+
+  describe("deleting a feat characters picked", () => {
+    test("is refused while a character of the ruleset has picked it, even an archived one", async () => {
+      const {
+        user,
+        session,
+        ruleset,
+        aptitudeIds: [combat],
+      } = await createTestUserAndRuleset(APTITUDES);
+      const feat = await FeatsService.createFeat(session, ruleset.id, {
+        name: "Picked Feat",
+        aptitudeIds: [combat],
+      });
+      const character = await pickFeat(user.id, ruleset.id, feat.id, combat);
+      await expectRefusedWith(FeatsService.deleteFeat(session, ruleset.id, feat.id), 409);
+
+      // An archived character keeps its picks so unarchiving restores them.
+      await Characters.archive(db, { id: character.id });
+      await expectRefusedWith(FeatsService.deleteFeat(session, ruleset.id, feat.id), 409);
+    });
+
+    test("is refused when a character of a fork picked it", async () => {
+      const {
+        user,
+        session,
+        ruleset: parent,
+        aptitudeIds: [combat],
+      } = await createTestUserAndRuleset(APTITUDES);
+      const feat = await FeatsService.createFeat(session, parent.id, {
+        name: "Inherited Feat",
+        aptitudeIds: [combat],
+      });
+      const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
+      await pickFeat(user.id, fork.id, feat.id, combat);
+      await expectRefusedWith(FeatsService.deleteFeat(session, parent.id, feat.id), 409);
+    });
+
+    test("is refused when a character of a ruleset using it as an extension picked it", async () => {
+      const {
+        user,
+        session,
+        ruleset: extension,
+        aptitudeIds: [combat],
+      } = await createTestUserAndRuleset(APTITUDES);
+      const feat = await FeatsService.createFeat(session, extension.id, {
+        name: "Extension Feat",
+        aptitudeIds: [combat],
+      });
+      const host = await createTestRuleset(user.id, { extensionRulesetIds: [extension.id] });
+      await pickFeat(user.id, host.id, feat.id, combat);
+      await expectRefusedWith(FeatsService.deleteFeat(session, extension.id, feat.id), 409);
+    });
+
+    test("is allowed when the ruleset's characters didn't pick it", async () => {
+      const {
+        user,
+        session,
+        ruleset,
+        aptitudeIds: [combat],
+      } = await createTestUserAndRuleset(APTITUDES);
+      await createTestCharacter(user.id, { rulesetId: ruleset.id });
+      const feat = await FeatsService.createFeat(session, ruleset.id, {
+        name: "Unpicked Feat",
+        aptitudeIds: [combat],
+      });
+      expect(await FeatsService.deleteFeat(session, ruleset.id, feat.id)).toMatchObject({ id: feat.id });
+    });
+  });
+
+  test("points the fork's tombstone at a feat re-created under a deleted copy's name", async () => {
+    // Regression: writes once rewrote the snapshot's source through the fork's
+    // override map, leaving the tombstone pointing at the deleted copy.
+    const {
+      user,
+      session,
+      ruleset: parent,
+      aptitudeIds: [combat],
+    } = await createTestUserAndRuleset(APTITUDES);
+    const source = await FeatsService.createFeat(session, parent.id, {
+      name: "Endurance",
+      aptitudeIds: [combat],
+    });
+    const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
+
+    const copy = await FeatsService.updateFeat(session, fork.id, source.id, {
+      name: "Endurance",
+      description: "Edited in fork",
+    });
+    await FeatsService.deleteFeat(session, fork.id, copy.id);
+    const recreated = await FeatsService.createFeat(session, fork.id, {
+      name: "Endurance",
+      aptitudeIds: [combat],
+    });
+
+    const snapshots = await EntitySnapshots.findMany(db, { rulesetId: fork.id, entityType: "feats" });
+    expect(snapshots).toMatchObject([{ sourceEntityId: source.id, forkedEntityId: recreated.id }]);
+  });
+});

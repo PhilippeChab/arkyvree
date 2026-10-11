@@ -1,0 +1,66 @@
+# Vite/Frontend
+node_modules
+dist/
+dist-ssr/
+*.local
+.vite/
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Editor directories and files
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment variables
+.env
+.env.*
+!.env.example
+!.env.test.example
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Build artifacts
+server-bin
+migrate-bin
+
+# Playwright
+/playwright-report/
+/test-results/
+/.playwright-mcp/
+
+# Scraper cache
+codegen/dnd3.5/tools/scraper/.cache/
+
+# The parser's generation in progress (generated/'s copy, swapped in when it succeeds, and its lock)
+content/dnd3.5/generated.next/
+content/dnd3.5/generated.previous/
+content/dnd3.5/generated.lock
+
+# Dumps
+*.pgdump
+.claude/scheduled_tasks.lock
+
+# diff-prod.ts output
+sync.sql

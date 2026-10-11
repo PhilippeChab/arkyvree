@@ -1,0 +1,2 @@
+ALTER TABLE "character"."inventory" DROP CONSTRAINT "inventory_pkey";--> statement-breakpoint
+ALTER TABLE "character"."inventory" ADD COLUMN "id" uuid PRIMARY KEY DEFAULT public.gen_random_uuid() NOT NULL;

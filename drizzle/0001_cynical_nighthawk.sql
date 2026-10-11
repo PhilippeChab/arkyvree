@@ -1,0 +1,1 @@
+ALTER TABLE "customization"."requirements" ADD CONSTRAINT "requirements_entity_id_entity_type_target_operator_value_key" UNIQUE("entity_id","entity_type","target","operator","value");
