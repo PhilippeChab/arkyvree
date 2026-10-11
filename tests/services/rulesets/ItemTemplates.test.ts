@@ -2,6 +2,8 @@ import { describe, expect, test } from "bun:test";
 
 import { db } from "@/server/database/index.ts";
 import { EntitySnapshots, Items, Properties } from "@/server/repositories/index.ts";
+import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
+import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { ItemsService } from "@/server/services/rulesets/items/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createSeededTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
@@ -25,14 +27,30 @@ import {
   WEAPON_TYPE,
 } from "@/vocabulary/dnd3.5/properties/index.ts";
 
+/**
+ * Another user's private fork of the seeded base, with an item made from `templateId` there ("Secret Homebrew Blade"),
+ * and which then takes `extensionIds`: an item the session can't read.
+ */
+async function createSecretBlade(templateId: string, extensionIds: string[] = []) {
+  const { user, session } = await createTestUser();
+  const ruleset = await createSeededTestRuleset(user.id);
+  await ItemsService.createItem(session, ruleset.id, {
+    name: "Secret Homebrew Blade",
+    type: "Weapon",
+    sourceItemId: templateId,
+  });
+  if (extensionIds.length > 0) await RulesetExtensionsService.subscribeExtension(session, ruleset.id, extensionIds);
+}
+
 /** An item's properties as read through the service, by type. */
 async function propertiesOf(rulesetId: string, itemId: string) {
   return Object.fromEntries((await ItemsService.getItem(rulesetId, itemId)).properties.map((p) => [p.type, p.value]));
 }
 
-async function setup() {
+/** A new user's fork of the seeded base (private, unless `values` says otherwise), and its templates and instances. */
+async function setup(values: { private?: boolean } = {}) {
   const { user, session } = await createTestUser();
-  const ruleset = await createSeededTestRuleset(user.id);
+  const ruleset = await createSeededTestRuleset(user.id, values);
   const template = async (name: string) => {
     const found = (await ItemsService.getTemplates(ruleset.id)).find((item) => item.name === name);
     if (!found) throw new Error(`Seed template ${name} not found`);
@@ -322,7 +340,7 @@ describe("Item templates", () => {
       expect(await EntitySnapshots.findOne(db, { rulesetId: ruleset.id, sourceEntityId: club.id })).toBeUndefined();
     });
 
-    test("refused for the items another ruleset makes from it, counting them", async () => {
+    test("refused for the items its source chain makes from it, counting them", async () => {
       const { session, ruleset, template } = await setup();
       const sword = await template("Longsword");
       expect(
@@ -345,6 +363,44 @@ describe("Item templates", () => {
         ItemsService.updateItem(session, ruleset.id, local.id, { name: local.name, type: "Armor" }),
         422,
       );
+      expect(await Items.findOne(db, { id: local.id })).toMatchObject({ type: "Weapon" });
+    });
+
+    test("changed while another user's fork makes items from the original its copy stands for", async () => {
+      const { session, ruleset, template } = await setup();
+      const sword = await template("Bastard Sword");
+      await createSecretBlade(sword.id);
+      const local = await ItemsService.updateItem(session, ruleset.id, sword.id, {
+        name: sword.name,
+        description: "Local",
+      });
+      expect(
+        await ItemsService.updateItem(session, ruleset.id, local.id, { name: local.name, type: "Armor" }),
+      ).toMatchObject({ type: "Armor" });
+    });
+
+    test("refused for the items of the rulesets built on it, counting those its view doesn't show", async () => {
+      const { session, ruleset, template } = await setup({ private: false });
+      const sword = await template("Bastard Sword");
+      const local = await ItemsService.updateItem(session, ruleset.id, sword.id, {
+        name: sword.name,
+        description: "Local",
+      });
+      await RulesetsService.publishRuleset(session, ruleset.id, { kind: "extension" });
+      // Made from the original, which the subscriber's view reads as the extension's copy
+      await createSecretBlade(sword.id, [ruleset.id]);
+      const edit = { name: local.name, type: "Armor" };
+      const refusal = `Can't change the Weapon template "Bastard Sword" to Armor while items are made from it`;
+      expect(ItemsService.updateItem(session, ruleset.id, local.id, edit)).rejects.toMatchObject({
+        message: `${refusal}: 1 in rulesets built on this one`,
+        refusal: "unprocessable",
+      });
+
+      const blade = { name: "Public Blade", type: "Weapon", sourceItemId: local.id };
+      await ItemsService.createItem(session, ruleset.id, blade);
+      expect(ItemsService.updateItem(session, ruleset.id, local.id, edit)).rejects.toMatchObject({
+        message: `${refusal}: "Public Blade", and 1 in rulesets built on this one`,
+      });
       expect(await Items.findOne(db, { id: local.id })).toMatchObject({ type: "Weapon" });
     });
 
@@ -447,6 +503,29 @@ describe("Item templates", () => {
       isTemplate: true,
     });
     expect((await ItemsService.deleteItem(session, ruleset.id, unused.id)).id).toBe(unused.id);
+  });
+
+  test("are deleted while another user's fork makes items from the original their copy stands for", async () => {
+    const { session, ruleset, template } = await setup();
+    const sword = await template("Bastard Sword");
+    await createSecretBlade(sword.id);
+    const local = await ItemsService.updateItem(session, ruleset.id, sword.id, {
+      name: sword.name,
+      description: "Local",
+    });
+    expect((await ItemsService.deleteItem(session, ruleset.id, local.id)).id).toBe(local.id);
+  });
+
+  test("can't be deleted while a ruleset built on theirs makes items from them", async () => {
+    const { session, ruleset, template } = await setup({ private: false });
+    const sword = await template("Bastard Sword");
+    const local = await ItemsService.updateItem(session, ruleset.id, sword.id, {
+      name: sword.name,
+      description: "Local",
+    });
+    await RulesetsService.publishRuleset(session, ruleset.id, { kind: "extension" });
+    await createSecretBlade(sword.id, [ruleset.id]);
+    await expectRefusedWith(ItemsService.deleteItem(session, ruleset.id, local.id), 409);
   });
 
   test("can't be deleted while an item is made from the original their copy stands for", async () => {

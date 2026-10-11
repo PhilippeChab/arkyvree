@@ -11,6 +11,7 @@
 - Renaming a ruleset's entry (a feat, a spell, a list, an item…) to a name the ruleset already shows is refused, as creating one is, and so are restoring a parent's version and subscribing to an extension that would show a name twice
 - Unsubscribing from an extension is refused while it would bring back an entry (a core feat it changes) under a name your fork has given another entry since
 - An extension's entry that its author adds or renames to the name of one of your fork's own shows as yours alone in your fork, not twice: what of the book named it uses yours
+- Changing an item template's type, or deleting it, counts only the items your change reaches, your ruleset's and those of the rulesets built on it, never another fork's, and a refusal counts a subscriber's items without naming them
 
 ## 0.5.0 — 2026-05-21
 

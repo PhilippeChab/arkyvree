@@ -1,4 +1,4 @@
-import { and, type Column, eq, exists, getTableColumns, inArray, isNull, or, type SQL, sql } from "drizzle-orm";
+import { and, type Column, eq, exists, getTableColumns, inArray, isNull, type SQL, sql } from "drizzle-orm";
 import { alias, getTableConfig, type PgColumn, union, unionAll } from "drizzle-orm/pg-core";
 
 import type { Db } from "@/drizzle/database.ts";
@@ -17,6 +17,7 @@ import {
   type ReferenceOwner,
 } from "./entityReferences.ts";
 import { ENTITY_TABLES, type RulesetEntityType } from "./entityTables.ts";
+import { buildLineageCondition } from "./rulesetLineage.ts";
 
 /** What a character's row naming an entity belongs to: the character, or one of its levels. */
 type CharacterOwner = Extract<ReferenceOwner, { characterId: PgColumn } | { characterLevelId: PgColumn }>;
@@ -86,14 +87,7 @@ class EntityReferencesRepository {
    * fork of it, or a ruleset subscribing to it as an extension. What an in-use check counts.
    */
   private rulesetOrDescendant(rulesetIdColumn: Column, rulesetId: string): SQL {
-    return and(
-      eq(rulesetsInRules.id, rulesetIdColumn),
-      or(
-        eq(rulesetsInRules.id, rulesetId),
-        sql`${rulesetsInRules.ancestorRulesetIds} @> ARRAY[${rulesetId}::uuid]`,
-        sql`${rulesetsInRules.extensionRulesetIds} @> ARRAY[${rulesetId}::uuid]`,
-      ),
-    )!;
+    return and(eq(rulesetsInRules.id, rulesetIdColumn), buildLineageCondition(rulesetId))!;
   }
 
   /**

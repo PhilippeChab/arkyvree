@@ -26,8 +26,8 @@ import { createListLinks, setListLinks } from "./listLinks.ts";
 interface DeleteChecks<P> {
   /** Whether the entity is in use, which refuses its delete: picked by a character, unless the kind says otherwise. */
   inUse?: (tx: Db, scope: RulesetScope) => Promise<boolean>;
-  /** Refuses the delete the plan plans, by what the kind reads of it (an item template's copies). */
-  refuse?: (tx: Db, plan: P) => Promise<void>;
+  /** Refuses the delete the plan plans, by what the kind reads of it in the ruleset's scope (an item template's copies). */
+  refuse?: (tx: Db, scope: RulesetScope, plan: P) => Promise<void>;
 }
 
 /** A kind's table, as its creates, updates and deletes write it. */
@@ -151,7 +151,7 @@ export default class EntityWriter<Row extends { id: string; name: string }, Inse
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
 
           const planned = plan(scope);
-          await checks.refuse?.(tx, planned);
+          await checks.refuse?.(tx, scope, planned);
           const targetId = await new EntityEdit(ruleset).cowToDelete(tx, this.type, planned.entity);
           await this.writeBeside(tx, scope, targetId, planned.writes);
 
