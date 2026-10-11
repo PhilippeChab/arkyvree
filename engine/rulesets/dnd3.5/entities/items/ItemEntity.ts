@@ -141,9 +141,9 @@ export default class ItemEntity extends CustomizationPageEntity<
   }
 
   /**
-   * Deleting an item: the item as the view has it, and, a template, the ids its copies hold (`copiesOf`: its own, and
-   * those it stands for), whose copies the server reads in any ruleset for `checkCopies`, which refuses deleting a
-   * template that has any.
+   * Deleting an item: the item as the view has it, and, a template, the ids the items made from it hold (`copiesOf`: its
+   * own, and those it stands for), which the server reads where the delete reaches them (the ruleset's view, and the
+   * rulesets built on it) for `checkCopies`, which refuses deleting a template that has any.
    */
   override planDelete(itemId: string) {
     const plan = super.planDelete(itemId);
@@ -158,9 +158,11 @@ export default class ItemEntity extends CustomizationPageEntity<
   }
 
   /**
-   * An item's edit, and, a template's that changes its type, the ids its copies hold (`copiesOf`: its own, and those it
-   * stands for), whose copies the server reads in any ruleset for `checkCopies`, which refuses the change while any is
-   * of another type than the new one: it would read the properties and requirements of a template of another type.
+   * An item's edit, and, a template's that changes its type, the ids the items made from it hold (`copiesOf`: its own,
+   * and those it stands for), which the server reads where the change reaches them (the ruleset's view, and the
+   * rulesets built on it) for `checkCopies`, which refuses the change while any is of another type than the new one: it
+   * would read the properties and requirements of a template of another type. The refusal names what the view shows
+   * alone (`listCopies`).
    */
   override planEdit(itemId: string, body: ItemBody) {
     const plan = super.planEdit(itemId, body);
@@ -168,14 +170,13 @@ export default class ItemEntity extends CustomizationPageEntity<
     const type = this.typeOf(body, item);
     return {
       ...plan,
-      checkCopies(copies: Pick<Item, "name" | "type">[]) {
-        const [copy, ...others] = copies.filter((made) => made.type !== type);
-        if (!copy) return;
+      checkCopies: (copies: Pick<Item, "id" | "name" | "type">[]) => {
+        const made = copies.filter((copy) => copy.type !== type);
+        if (made.length === 0) return;
         const template = `the ${item.type ?? "None"} template "${item.name}"`;
-        const more = others.length > 0 ? ` and ${others.length} more` : "";
         throw new RulesError(
           "unprocessable",
-          `Can't change ${template} to ${type ?? "None"} while items are made from it: "${copy.name}"${more}`,
+          `Can't change ${template} to ${type ?? "None"} while items are made from it: ${this.listCopies(made)}`,
         );
       },
       copiesOf: item.isTemplate && type !== item.type ? this.rulesetData.cow.getEquivalentIds(item.id) : undefined,
@@ -221,6 +222,21 @@ export default class ItemEntity extends CustomizationPageEntity<
     const item = this.rulesetData.find("items", itemId);
     if (!item) throw new RulesError("not-found", "Source item not found in this ruleset");
     return item;
+  }
+
+  /**
+   * The items made from a template, as a refusal lists them: the first the ruleset's view shows by its name, and how
+   * many more it shows, then how many the rulesets built on it make, which it never names: one may be another user's,
+   * which the session can't read.
+   */
+  private listCopies(copies: Pick<Item, "id" | "name">[]) {
+    const [named, ...shown] = copies.filter((copy) => this.rulesetData.itemsById.has(copy.id));
+    const elsewhere = copies.length - shown.length - (named ? 1 : 0);
+    const more = shown.length > 0 ? ` and ${shown.length} more` : "";
+    return [
+      ...(named ? [`"${named.name}"${more}`] : []),
+      ...(elsewhere > 0 ? [`${elsewhere} in rulesets built on this one`] : []),
+    ].join(", and ");
   }
 
   /**

@@ -100,10 +100,17 @@ also clears any legacy source reference.
 A template is of a type an item can be based on a template of
 (`TEMPLATE_ITEM_TYPES`: a weapon, an armor, a shield), refused otherwise on
 create and on an edit that changes its type, and an item made from one is of its
-type. A template's edit that changes its type, and its delete, read its copies in
-any ruleset by every id they may hold (its own and those it stands for:
-`cow.getEquivalentIds`), and are refused while it has any (of another type than
-the new one, for an edit): `ItemEntity.planEdit`, `planDelete`.
+type. A template's edit that changes its type, and its delete, read the items made
+from it by every id they may hold (its own and those it stands for:
+`cow.getEquivalentIds`), where the change reaches them (`Items.findMany`): the
+ruleset's view (its own items, and those of its source chain it shows, which read
+its copy in place of what it copied) and the rulesets built on it
+(`buildLineageCondition`: an extension's subscribers), never another fork's, whose
+view reads the original or its own copy. Each is refused while it has any (of
+another type than the new one, for an edit): `ItemEntity.planEdit`, `planDelete`.
+The edit's refusal names an item its view shows, and counts those of the rulesets
+built on it without naming them (`listCopies`): one may be another user's private
+ruleset.
 
 Regular items can reference templates to inherit their properties and
 requirements. Duplicating a template creates a regular item referencing it.
@@ -422,7 +429,8 @@ See [docs/access.md](./access.md) for the full policy matrix across rulesets, ch
 - **Scoping is current + descendants.** The in-use check,
   `EntityReferences.exists`, reads every character row naming an entity of the
   type (`ENTITY_REFERENCES`), and joins the character's ruleset on
-  `id = $rulesetId`, or `$rulesetId` among its ancestors or its extensions — one
+  `id = $rulesetId`, or `$rulesetId` among its ancestors or its extensions
+  (`buildLineageCondition`, which a template's change reads its items by too) — one
   query per such column. With forks of forks blocked, descendants of a base ruleset
   are at most one level deep, but the query shape stays the same so the
   guard is robust if depth ever changes. A parent author deleting a feat

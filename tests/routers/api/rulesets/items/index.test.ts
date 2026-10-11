@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
-import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
+import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 
@@ -118,6 +118,51 @@ describe("rulesets items", () => {
 
     expect((await item.$put({ param, json: { name: "Edit One", updatedAt } })).status).toBe(200);
     await expectStatus(item.$put({ param, json: { name: "Edit Two", updatedAt } }), 409);
+  });
+
+  test("refuses a template's type change and delete by the items they reach, naming none of another user's", async () => {
+    const author = await createSignedInUser("author");
+    const other = await createSignedInUser("other");
+    const { id } = await createSeededTestRuleset(author.user.id, { private: false });
+    const fork = await createSeededTestRuleset(other.user.id);
+    const templates = await expectOk(
+      author.api.api.rulesets[":id"].templates.$get({ param: { id }, query: { type: "Weapon" } }),
+    );
+    const sword = templates.find((template) => template.name === "Bastard Sword")!;
+    await expectOk(
+      other.api.api.rulesets[":id"].items.$post({
+        param: { id: fork.id },
+        json: { name: "Secret Homebrew Blade", type: "Weapon", sourceItemId: sword.id },
+      }),
+    );
+    const authorItem = author.api.api.rulesets[":id"].items[":itemId"];
+    const local = await expectOk(
+      authorItem.$put({
+        param: { id, itemId: sword.id },
+        json: { name: sword.name, type: "Weapon", description: "Ours" },
+      }),
+    );
+    const param = { id, itemId: local.id };
+
+    // The other user's fork subscribes: its item, made from the original, reads the author's copy
+    await expectOk(author.api.api.rulesets[":id"].publish.$post({ param: { id }, json: { kind: "extension" } }));
+    await expectOk(
+      other.api.api.rulesets[":id"].subscribe.$post({ param: { id: fork.id }, json: { extensionIds: [id] } }),
+    );
+    const refused = await expectStatus(authorItem.$put({ param, json: { name: sword.name, type: "Armor" } }), 422);
+    expect(await refused.json()).toMatchObject({
+      message: `Can't change the Weapon template "Bastard Sword" to Armor while items are made from it: 1 in rulesets built on this one`,
+    });
+    await expectStatus(authorItem.$delete({ param }), 409);
+
+    // Once it unsubscribes, the author's change reaches no item of its
+    await expectOk(
+      other.api.api.rulesets[":id"].unsubscribe.$post({ param: { id: fork.id }, json: { extensionId: id } }),
+    );
+    expect(await expectOk(authorItem.$put({ param, json: { name: sword.name, type: "Armor" } }))).toMatchObject({
+      type: "Armor",
+    });
+    await expectOk(authorItem.$delete({ param }));
   });
 
   test("requires a session", async () => {

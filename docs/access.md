@@ -40,6 +40,8 @@ A user can hold multiple roles for the same entity (e.g. owner of a ruleset they
 
 Reading and listing rulesets is enforced by the `findPage` scopes, not the policy. Rulesets are never hard-deleted: they're archived (`canUpdate`).
 
+**What a refusal names.** A check on a change to a ruleset reads what the change reaches: the ruleset's view, and the rulesets built on it (`buildLineageCondition`: a fork of it, an extension's subscribers), which may be other users' private rulesets. What it finds in those it never names: the in-use check answers yes or no (`canDeleteEntity({ inUse })`), and a template's type change names an item its ruleset's view shows and counts those of the rulesets built on it (`ItemEntity.planEdit`). What no change of the ruleset reaches (another fork's items, made from the original or its own copy) isn't read at all.
+
 **Listing scopes** (`RulesetsRepository.findPage`, used by the create-character wizard, dashboard, etc.):
 
 | `scope` query param | Returns |

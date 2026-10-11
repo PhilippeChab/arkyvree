@@ -1,7 +1,8 @@
+import type { Db } from "@/drizzle/database.ts";
 import { itemsInRules } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
-import { withRulesetScope } from "@/server/cow/index.ts";
+import { type RulesetScope, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Items } from "@/server/repositories/index.ts";
 import EntityWriter from "@/server/services/rulesets/EntityWriter.ts";
@@ -26,6 +27,15 @@ class ItemsService extends include(Object, Variants) {
   /** What its creates, updates and deletes write, in one order around the plans its rules give. */
   private readonly writer = new EntityWriter("items", Items, itemsInRules, "Item");
 
+  /**
+   * The items made from a template that a change to it in the scope's ruleset reaches (`copiesOf`: the ids they may
+   * hold): its view's, and those of the rulesets built on it. Not another ruleset's, whose view reads its own copy or
+   * the original.
+   */
+  private async findCopies(tx: Db, { ruleset, rulesetData }: RulesetScope, copiesOf: string[]) {
+    return await Items.findMany(tx, { rulesetId: ruleset.id, ...rulesetData.cow.listFilters, sourceItemIds: copiesOf });
+  }
+
   async createItem(session: Session, rulesetId: string, body: ItemBody) {
     return await this.writer.create(session, rulesetId, body.name, (scope) =>
       Engine.for(scope).entities("items").planCreate(body),
@@ -39,9 +49,9 @@ class ItemsService extends include(Object, Variants) {
       itemId,
       (scope) => Engine.for(scope).entities("items").planDelete(itemId),
       {
-        // A template's copies, in any ruleset: its delete is refused while it has any
-        refuse: async (tx, plan) => {
-          if (plan.copiesOf) plan.checkCopies(await Items.findMany(tx, { sourceItemIds: plan.copiesOf }));
+        // The items made from a template its delete reaches: refused while it has any
+        refuse: async (tx, scope, plan) => {
+          if (plan.copiesOf) plan.checkCopies(await this.findCopies(tx, scope, plan.copiesOf));
         },
       },
     );
@@ -90,8 +100,8 @@ class ItemsService extends include(Object, Variants) {
       body,
       async (scope, { tx }) => {
         const plan = Engine.for(scope).entities("items").planEdit(itemId, body);
-        // A template's copies, in any ruleset: its type change is refused while any is of another type
-        if (plan.copiesOf) plan.checkCopies(await Items.findMany(tx, { sourceItemIds: plan.copiesOf }));
+        // The items made from a template its type change reaches: refused while any is of another type
+        if (plan.copiesOf) plan.checkCopies(await this.findCopies(tx, scope, plan.copiesOf));
         return plan;
       },
       (row) => ({ ...body, sourceItemId: row.sourceItemId }),

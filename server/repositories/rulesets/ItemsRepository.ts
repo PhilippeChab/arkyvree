@@ -1,9 +1,19 @@
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNull, or } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
-import { itemsInRules } from "@/drizzle/schema.ts";
+import { itemsInRules, rulesetsInRules } from "@/drizzle/schema.ts";
 import { type RulesetEntityFilters } from "@/server/repositories/concerns/ScopesToRuleset.ts";
 import RulesetEntityRepository from "@/server/repositories/RulesetEntityRepository.ts";
+
+import { buildLineageCondition } from "./rulesetLineage.ts";
+
+/**
+ * The items made from an item (`sourceItemIds`: the ids they may hold) that a ruleset's change to it reaches: the
+ * ruleset (`rulesetId`), and its view's source chain and hidden ids (`CowData.listFilters`).
+ */
+interface CopiesWhere extends Pick<RulesetEntityFilters, "ancestorRulesetIds" | "hiddenIds" | "rulesetId"> {
+  sourceItemIds: string[];
+}
 
 class ItemsRepository extends RulesetEntityRepository<typeof itemsInRules> {
   constructor() {
@@ -12,10 +22,24 @@ class ItemsRepository extends RulesetEntityRepository<typeof itemsInRules> {
 
   protected override readonly entityType = "items";
 
-  private async findCopies(db: Db, where: { sourceItemIds: string[] }) {
+  /**
+   * The items made from an item, by the ids they may hold (`sourceItemIds`), that a change to it in `rulesetId` reaches:
+   * those of its view (its own, and those its source chain makes that it shows, as its list reads them: an inherited
+   * item made from what its copy stands for reads the copy), and those of the rulesets built on it, whose views read it
+   * (`buildLineageCondition`). Not another ruleset's: its view reads its own copy, or the original.
+   */
+  private async findCopies(db: Db, where: CopiesWhere) {
     if (where.sourceItemIds.length === 0) return [];
+    const lineage = db
+      .select({ id: rulesetsInRules.id })
+      .from(rulesetsInRules)
+      .where(buildLineageCondition(where.rulesetId));
     return await db.query.itemsInRules.findMany({
-      where: this.where([inArray(this.table.sourceItemId, where.sourceItemIds), isNull(this.table.deletedAt)]),
+      where: this.where([
+        inArray(this.table.sourceItemId, where.sourceItemIds),
+        isNull(this.table.deletedAt),
+        or(this.buildRulesetCondition(db, where), inArray(this.table.rulesetId, lineage))!,
+      ]),
     });
   }
 
@@ -43,12 +67,15 @@ class ItemsRepository extends RulesetEntityRepository<typeof itemsInRules> {
     });
   }
 
-  /** Items by id, the copies of an item (`sourceItemIds`: the ids they may hold), or a ruleset's templates. */
+  /**
+   * Items by id, the items made from an item that a ruleset's change to it reaches (`sourceItemIds`: the ids they may
+   * hold, in `rulesetId`'s view and the rulesets built on it), or a ruleset's templates.
+   */
   async findMany(
     db: Db,
     where:
       | { ids: string[] }
-      | { sourceItemIds: string[] }
+      | CopiesWhere
       | { ancestorRulesetIds?: string[]; isTemplate: true; rulesetId: string; type?: string },
   ) {
     if ("ids" in where) return await this.findListed(db, where);
