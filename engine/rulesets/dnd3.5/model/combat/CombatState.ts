@@ -132,7 +132,8 @@ export interface WeaponSet {
   ac: SetArmorClass;
   mainhand: WeaponSlot | null;
   offhand: WeaponSlot | null;
-  shield: { readonly held: boolean };
+  /** Whether its off hand holds a shield, and the names of those it holds: one, by the slots' rules. */
+  shield: { readonly held: boolean; readonly names: string[] };
   twohanded: WeaponSlot | null;
 }
 export interface WeaponSlot {

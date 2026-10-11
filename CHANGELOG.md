@@ -4,6 +4,7 @@
 
 - Characters list: the most recently updated character comes first
 - D&D 3.5 sheets and PDFs: a Spells per Day table opens the spells section, with domain and specialist slots shown as "+1"
+- D&D 3.5 sheets and PDFs show AC for each weapon set
 
 ## 0.5.0 — 2026-05-21
 

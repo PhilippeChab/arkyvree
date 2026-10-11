@@ -135,6 +135,17 @@ export const styles = StyleSheet.create({
     fontSize: FONT_SIZE.xl,
     fontWeight: "bold",
   },
+  armorClassBox: {
+    width: 64,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 4,
+    alignItems: "center",
+  },
+  armorClassBoxMain: {
+    borderWidth: 2,
+    borderColor: "#333",
+  },
   statBox: {
     width: "18%",
     borderWidth: 1,

@@ -119,6 +119,9 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
           get held() {
             return shields().length > 0;
           },
+          get names() {
+            return shields().map((shield) => shield.name);
+          },
         },
       };
     }

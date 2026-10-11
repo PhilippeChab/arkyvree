@@ -5,18 +5,7 @@ import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedChara
 
 import SheetFormat from "./SheetFormat.ts";
 import { FONT_SIZE, styles } from "./styles.ts";
-
-/** The parts of the AC the breakdown lists, by their short label */
-const AC_PARTS = [
-  ["Arm", "armor"],
-  ["Shld", "shield"],
-  ["Dex", "dexterity"],
-  ["Nat", "natural"],
-  ["Defl", "deflection"],
-  ["Dodge", "dodge"],
-  ["Size", "size"],
-  ["Misc", "misc"],
-] as const;
+import WeaponSets from "./WeaponSets.tsx";
 
 /** The sheet's first page: who the character is, its ability scores, saving throws, combat stats and weapons. */
 function InfoPage({
@@ -199,32 +188,12 @@ function InfoPage({
             {/* Combat Stats */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Combat Stats</Text>
+              {/* The armor class is each weapon set's, under Weapons & Combat */}
               <View style={[styles.row, { flexWrap: "wrap", justifyContent: "space-between" }]}>
                 <View style={styles.statBox}>
                   <Text style={styles.statLabel}>HP</Text>
                   <Text style={styles.statValue}>{combatData.hp.total}</Text>
                 </View>
-                <View style={styles.statBox}>
-                  <Text style={styles.statLabel}>AC</Text>
-                  <Text style={styles.statValue}>{combatData.ac.total}</Text>
-                </View>
-                <View style={styles.statBox}>
-                  <Text style={styles.statLabel}>Touch AC</Text>
-                  <Text style={styles.statValue}>{combatData.ac.touch}</Text>
-                </View>
-                <View style={styles.statBox}>
-                  <Text style={styles.statLabel}>Flat-footed</Text>
-                  <Text style={styles.statValue}>{combatData.ac.flatfooted}</Text>
-                </View>
-              </View>
-              <View style={{ marginBottom: 4 }}>
-                <Text style={{ fontSize: FONT_SIZE.xs, color: "#666", textAlign: "center" }}>
-                  {AC_PARTS.map(
-                    ([label, part]) => `${label} ${SheetFormat.formatModifier(combatData.ac[part] ?? 0)}`,
-                  ).join("  ")}
-                </Text>
-              </View>
-              <View style={[styles.row, { flexWrap: "wrap", justifyContent: "space-between" }]}>
                 <View style={styles.statBox}>
                   <Text style={styles.statLabel}>Initiative</Text>
                   <Text style={styles.statValue}>{SheetFormat.formatModifier(combatData.initiative.total)}</Text>
@@ -249,41 +218,7 @@ function InfoPage({
         {/* Weapons & Combat */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Weapons & Combat</Text>
-          {combatData.weaponSets.map(({ set, weapons }) => (
-            <View key={set} style={{ marginBottom: 6 }}>
-              <Text style={{ fontSize: FONT_SIZE.md, fontWeight: "bold", marginBottom: 3, color: "#444" }}>
-                Set {set + 1}
-              </Text>
-              <View style={[styles.tableRow, styles.tableHeader]}>
-                <Text style={[styles.tableCell, { width: "27%", fontWeight: "bold" }]}>Weapon</Text>
-                <Text style={[styles.tableCell, { width: "18%", fontWeight: "bold" }]}>Attack Bonus</Text>
-                <Text style={[styles.tableCell, { width: "18%", fontWeight: "bold" }]}>Damage</Text>
-                <Text style={[styles.tableCell, { width: "13%", fontWeight: "bold" }]}>Critical</Text>
-                <Text style={[styles.tableCell, { width: "11%", fontWeight: "bold" }]}>Range</Text>
-                <Text style={[styles.tableCell, { width: "13%", fontWeight: "bold" }]}>Type</Text>
-              </View>
-              {weapons.flatMap((weapon) =>
-                weapon.rows.map((row) => (
-                  <View key={row.key} style={styles.tableRow}>
-                    <View style={[styles.tableCell, { width: "27%" }]}>
-                      <Text>{weapon.name}</Text>
-                      <Text style={{ fontSize: FONT_SIZE.sm, color: "#666" }}>{row.label}</Text>
-                      {weapon.proficient === false && (
-                        <Text style={{ fontSize: FONT_SIZE.xs, color: "#cc0000", fontWeight: "bold" }}>
-                          Not Proficient (-4)
-                        </Text>
-                      )}
-                    </View>
-                    <Text style={[styles.tableCell, { width: "18%" }]}>{row.attack}</Text>
-                    <Text style={[styles.tableCell, { width: "18%" }]}>{row.damage}</Text>
-                    <Text style={[styles.tableCell, { width: "13%" }]}>{row.critical}</Text>
-                    <Text style={[styles.tableCell, { width: "11%" }]}>{row.range}</Text>
-                    <Text style={[styles.tableCell, { width: "13%" }]}>{row.types}</Text>
-                  </View>
-                )),
-              )}
-            </View>
-          ))}
+          <WeaponSets combat={combatData} />
         </View>
       </View>
     </Page>

@@ -15,48 +15,21 @@ interface CombatAndSavesSectionProps {
 /** The sheet's combat stats; empty on a sheet that carries none. */
 export type SheetCombat = Partial<CharacterDetail["combat"]>;
 
-/** The parts of the AC the breakdown lists, by their label */
-const AC_PARTS = [
-  ["Armor", "armor"],
-  ["Shield", "shield"],
-  ["Dex", "dexterity"],
-  ["Natural", "natural"],
-  ["Deflection", "deflection"],
-  ["Dodge", "dodge"],
-  ["Size", "size"],
-  ["Misc", "misc"],
-] as const;
-
 export function CombatAndSavesSection({ combat, saves }: CombatAndSavesSectionProps) {
   return (
     <SheetSection title="Combat & Saves">
       <Stack direction={{ xs: "column", md: "row" }} spacing={3}>
         <Stack spacing={1} sx={{ flex: 1, minWidth: { md: 350 } }}>
           <SubsectionTitle>Combat Stats</SubsectionTitle>
-          <Stack spacing={2}>
-            {/* One grid, so its columns line up across its rows */}
-            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: { xs: 1, sm: 2 } }}>
-              <StatField label="HP" value={combat?.hp?.total ?? 0} />
-              <StatField label="Initiative" value={formatSigned(combat?.initiative?.total)} />
-              <StatField label="Speed" value={combat?.speedLabel} />
+          {/* One grid, so its columns line up across its rows; the armor class is each weapon set's, under Weapons */}
+          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: { xs: 1, sm: 2 } }}>
+            <StatField label="HP" value={combat?.hp?.total ?? 0} />
+            <StatField label="Initiative" value={formatSigned(combat?.initiative?.total)} />
+            <StatField label="Speed" value={combat?.speedLabel} />
 
-              <StatField label="BAB" value={combat?.babLabel} />
-              <StatField label="Grapple" value={formatSigned(combat?.grapple?.total)} />
-              <Box />
-
-              <StatField label="AC" value={combat?.ac?.total ?? 10} />
-              <StatField label="Touch" value={combat?.ac?.touch ?? 10} />
-              <StatField label="Flat-footed" value={combat?.ac?.flatfooted ?? 10} />
-            </Box>
-
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1 }}>
-              {AC_PARTS.map(([label, part]) => (
-                <Typography key={part} variant="caption" sx={{ color: "text.secondary" }}>
-                  {label}: {formatSigned(combat?.ac?.[part])}
-                </Typography>
-              ))}
-            </Box>
-          </Stack>
+            <StatField label="BAB" value={combat?.babLabel} />
+            <StatField label="Grapple" value={formatSigned(combat?.grapple?.total)} />
+          </Box>
         </Stack>
 
         <Stack spacing={1} sx={{ flex: 1, minWidth: { md: 300 } }}>

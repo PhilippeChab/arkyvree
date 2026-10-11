@@ -218,32 +218,33 @@ describe("the skills", () => {
 });
 
 describe("the sheet", () => {
-  test("lists each weapon set's armor class beside its attacks, a set of a shield alone too", async () => {
+  test("lists each weapon set's AC, touch and flat-footed beside what it holds and its attacks, a shield alone too", async () => {
     const bjorn = await buildCarrying("Bjorn Ironhand", [
       ...SWORD_AND_BOARD,
       { item: "Light Wooden Shield", location: "Off Hand", weaponSet: 2 },
     ]);
-    const { weaponSets } = CombatSheet.describe(bjorn.components.combat);
-    expect(weaponSets.map(({ set, ac, weapons }) => ({ set, ac, weapons: weapons.map(({ name }) => name) }))).toEqual([
+    const { weaponSets, hasWeaponSets } = CombatSheet.describe(bjorn.components.combat);
+    expect(hasWeaponSets).toBe(true);
+    expect(
+      weaponSets.map(({ set, ac, held, weapons }) => ({ set, ac, held, weapons: weapons.map(({ name }) => name) })),
+    ).toEqual([
       {
         set: 0,
-        ac: {
-          total: 14,
-          touch: 12,
-          flatfooted: 12,
-          armor: 0,
-          shield: 2,
-          dexterity: 2,
-          natural: 0,
-          deflection: 0,
-          dodge: 0,
-          size: 0,
-          misc: 0,
-        },
+        ac: { total: 14, touch: 12, flatfooted: 12 },
+        held: ["Longsword", "Heavy Steel Shield"],
         weapons: ["Longsword"],
       },
-      { set: 1, ac: expect.objectContaining({ total: 12, shield: 0 }), weapons: ["Greatsword"] },
-      { set: 2, ac: expect.objectContaining({ total: 13, shield: 1 }), weapons: [] },
+      { set: 1, ac: { total: 12, touch: 12, flatfooted: 10 }, held: ["Greatsword"], weapons: ["Greatsword"] },
+      { set: 2, ac: { total: 13, touch: 12, flatfooted: 11 }, held: ["Light Wooden Shield"], weapons: [] },
+    ]);
+  });
+
+  test("shows a character holding nothing in a hand one loadout, which strikes unarmed, with no set's heading", async () => {
+    const bjorn = await buildCarrying("Bjorn Ironhand", [{ item: "Chain Mail", location: "Torso" }]);
+    const { weaponSets, hasWeaponSets } = CombatSheet.describe(bjorn.components.combat);
+    expect(hasWeaponSets).toBe(false);
+    expect(weaponSets.map(({ set, held, weapons }) => [set, held, weapons.map(({ name }) => name)])).toEqual([
+      [0, [], ["Unarmed Strike"]],
     ]);
   });
 
@@ -251,9 +252,10 @@ describe("the sheet", () => {
     const bjorn = await findSeededCharacter("Bjorn Ironhand");
     await carry(bjorn, SWORD_AND_BOARD);
     const { combat } = await CharactersService.getCharacter(makeSession(), bjorn.id);
-    expect(combat.weaponSets.map(({ set, ac }) => [set, ac.total, ac.touch, ac.flatfooted])).toEqual([
-      [0, 14, 12, 12],
-      [1, 12, 12, 10],
+    expect(combat.weaponSets.map(({ set, ac, held }) => [set, ac, held])).toEqual([
+      [0, { total: 14, touch: 12, flatfooted: 12 }, ["Longsword", "Heavy Steel Shield"]],
+      [1, { total: 12, touch: 12, flatfooted: 10 }, ["Greatsword"]],
     ]);
+    expect("ac" in combat).toBe(false);
   });
 });

@@ -1,4 +1,4 @@
-import type { SetArmorClass, WeaponSlot } from "@/engine/rulesets/dnd3.5/model/combat/CombatState.ts";
+import type { SetArmorClass, WeaponSet, WeaponSlot } from "@/engine/rulesets/dnd3.5/model/combat/CombatState.ts";
 import AttackRules from "@/engine/rulesets/dnd3.5/rules/AttackRules.ts";
 import { WEAPON_SET_SLOTS } from "@/engine/rulesets/dnd3.5/rules/InventorySlots.ts";
 import { capitalize, formatSigned } from "@/shared/text.ts";
@@ -26,7 +26,10 @@ interface CombatStats {
   speed: { total: number };
   weaponsets: Record<
     string,
-    Record<(typeof WEAPON_SET_SLOTS)[number], SheetWeaponSource | null> & { ac: SheetArmorClass }
+    Record<(typeof WEAPON_SET_SLOTS)[number], SheetWeaponSource | null> & {
+      ac: SheetArmorClass;
+      shield: Pick<WeaponSet["shield"], "names">;
+    }
   >;
 }
 
@@ -37,9 +40,13 @@ interface SheetWeapon {
   rows: AttackRow[];
 }
 
-/** A weapon set as a sheet lists it: its index, stored from 0, its armor class, and the weapons it holds. */
+/**
+ * A weapon set as a sheet lists it: its index, stored from 0, the names of the items its hands hold (an unarmed strike
+ * holds none), its armor class, and its weapons with their attacks.
+ */
 interface SheetWeaponSet {
   ac: SheetArmorClass;
+  held: string[];
   set: number;
   weapons: SheetWeapon[];
 }
@@ -47,27 +54,14 @@ interface SheetWeaponSet {
 /** What a sheet reads of a weapon: its name, proficiency and kind, and its attacks' to-hit, damage, critical and range. */
 interface SheetWeaponSource extends Pick<
   WeaponSlot,
-  "name" | "natural" | "offend" | "proficient" | "range" | "ranged" | "thrown" | "twoweapon"
+  "itemId" | "name" | "natural" | "offend" | "proficient" | "range" | "ranged" | "thrown" | "twoweapon"
 > {
   damage: Pick<WeaponSlot["damage"], "critical" | "total" | "types">;
   tohit: Pick<WeaponSlot["tohit"], "total">;
 }
 
-/** A weapon set's armor class as a sheet lists it: its totals, and the parts they add up, the base aside. */
-type SheetArmorClass = Pick<
-  SetArmorClass,
-  | "armor"
-  | "deflection"
-  | "dexterity"
-  | "dodge"
-  | "flatfooted"
-  | "misc"
-  | "natural"
-  | "shield"
-  | "size"
-  | "total"
-  | "touch"
->;
+/** A weapon set's armor class as a sheet lists it: AC, touch AC and flat-footed AC. */
+type SheetArmorClass = Pick<SetArmorClass, "flatfooted" | "total" | "touch">;
 
 /** A weapon slot's label, as an item's location names it. */
 const SLOT_LABELS = { mainhand: "Main Hand", offhand: "Off Hand", twohanded: "Two Handed" } as const;
@@ -77,10 +71,9 @@ const SLOT_LABELS = { mainhand: "Main Hand", offhand: "Off Hand", twohanded: "Tw
  * its speed in feet, and each weapon's attacks, written as the SRD writes them.
  */
 export default class CombatSheet {
-  /** A weapon set's armor class as its values stand: its totals and its parts, read once. */
-  private static armorClass(ac: SheetArmorClass): SheetArmorClass {
-    const { total, touch, flatfooted, armor, shield, dexterity, natural, deflection, dodge, size, misc } = ac;
-    return { total, touch, flatfooted, armor, shield, dexterity, natural, deflection, dodge, size, misc };
+  /** A weapon set's armor class as its values stand: AC, touch AC and flat-footed AC, read once. */
+  private static armorClass({ total, touch, flatfooted }: SheetArmorClass): SheetArmorClass {
+    return { total, touch, flatfooted };
   }
 
   /**
@@ -136,37 +129,45 @@ export default class CombatSheet {
   }
 
   /**
-   * The weapon sets, by their index: each one's armor class, as its values stand, and each weapon it holds with its
+   * The weapon sets, by their index: each one's armor class, as its values stand, the items its hands hold (its
+   * weapons', a natural attack and an unarmed strike holding none, then its shield's), and each weapon with its
    * attacks. A set that holds no weapon (a shield alone) is a loadout all the same.
    */
   private static weaponSets(weaponsets: CombatStats["weaponsets"]): SheetWeaponSet[] {
     return Object.entries(weaponsets)
       .sort(([a], [b]) => Number(a) - Number(b))
-      .map(([set, slots]) => ({
-        set: Number(set),
-        ac: CombatSheet.armorClass(slots.ac),
-        weapons: WEAPON_SET_SLOTS.flatMap((slot) => {
-          const weapon = slots[slot];
-          if (!weapon) return [];
-          const rows = CombatSheet.attackRows(weapon, CombatSheet.slotLabel(weapon, slot));
-          return [{ name: weapon.name, proficient: weapon.proficient, rows }];
-        }),
-      }));
+      .map(([set, slots]) => {
+        const held = WEAPON_SET_SLOTS.flatMap((slot) => slots[slot] ?? []);
+        return {
+          set: Number(set),
+          ac: CombatSheet.armorClass(slots.ac),
+          held: [...held.filter((weapon) => weapon.itemId).map((weapon) => weapon.name), ...slots.shield.names],
+          weapons: WEAPON_SET_SLOTS.flatMap((slot) => {
+            const weapon = slots[slot];
+            if (!weapon) return [];
+            const rows = CombatSheet.attackRows(weapon, CombatSheet.slotLabel(weapon, slot));
+            return [{ name: weapon.name, proficient: weapon.proficient, rows }];
+          }),
+        };
+      });
   }
 
   /**
    * The character's combat (`combat`, its component) as its sheets print it: its stats, its base attack bonus's
-   * attacks a round ("+11/+6/+1"), its speed in feet ("30 ft."), and each weapon set's armor class and attacks (the
-   * sets themselves, as the rules hold them, left out, and the armor class's parts every set shares, which each set's
-   * includes).
+   * attacks a round ("+11/+6/+1"), its speed in feet ("30 ft."), each weapon set's armor class and attacks (the sets
+   * themselves, as the rules hold them, left out, and the armor class's parts, which no sheet breaks down), and whether
+   * the character has weapon sets (`hasWeaponSets`): an item in a set's hand, without which its one loadout, its first
+   * set, striking unarmed, is shown with no set's heading.
    */
   static describe<C extends CombatStats & { ac: unknown }>(combat: { getCombat(): C }) {
-    const { ac: _shared, weaponsets, ...stats } = combat.getCombat();
+    const { ac: _parts, weaponsets, ...stats } = combat.getCombat();
+    const weaponSets = CombatSheet.weaponSets(weaponsets);
     return {
       ...stats,
       babLabel: CombatSheet.formatBab(stats.bab),
       speedLabel: `${stats.speed.total} ft.`,
-      weaponSets: CombatSheet.weaponSets(weaponsets),
+      weaponSets,
+      hasWeaponSets: weaponSets.some(({ held }) => held.length > 0),
     };
   }
 
