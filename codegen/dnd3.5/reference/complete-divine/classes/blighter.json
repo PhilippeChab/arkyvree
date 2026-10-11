@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-divine",
-    "scrapedAt": "2026-03-23T13:42:19.441Z",
+    "scrapedAt": "2026-10-11T00:25:32.372Z",
     "sourceUrl": "https://dndtools.net/classes/complete-divine--56/blighter/",
     "type": "class"
   },
@@ -70,7 +70,7 @@
         "type": "(Ex)"
       },
       {
-        "description": "At 3rd level, the blighter gains a version of the wild shape ability. Undead wild shape functions like the druid's wild shape ability, except that the blighter adds the skeleton template to the animal form he chooses to transform into. The blighter's animal form is altered as follows:? Type changes to undead.? Natural armor bonus is +0 (Tiny animal), +1 (Small), +2 (Medium or Large), or +3 (Huge).? +2 Dexterity, no Constitution score.? Immunity to cold.? Damage reduction 5/bludgeoning.The blighter gains one extra use per day of this ability at every even blighter level after 3rd. In addition, she gains the ability to take the shape of a Large skeletal animal at 5th level and a Huge skeletal animal at 9th level.",
+        "description": "At 3rd level, the blighter gains a version of the wild shape ability. Undead wild shape functions like the druid's wild shape ability, except that the blighter adds the skeleton template to the animal form he chooses to transform into. The blighter's animal form is altered as follows: ? Type changes to undead. ? Natural armor bonus is +0 (Tiny animal), +1 (Small), +2 (Medium or Large), or +3 (Huge). ? +2 Dexterity, no Constitution score. ? Immunity to cold. ? Damage reduction 5/bludgeoning. The blighter gains one extra use per day of this ability at every even blighter level after 3rd. In addition, she gains the ability to take the shape of a Large skeletal animal at 5th level and a Huge skeletal animal at 9th level.",
         "name": "Undead Wild Shape",
         "type": "(Sp)"
       },

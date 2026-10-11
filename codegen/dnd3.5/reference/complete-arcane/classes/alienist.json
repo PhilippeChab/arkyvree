@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-arcane",
-    "scrapedAt": "2026-10-10T23:22:13.055Z",
+    "scrapedAt": "2026-10-11T00:25:28.352Z",
     "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/alienist/",
     "type": "class"
   },
@@ -16,7 +16,7 @@
         "name": "Spells per Day/Spells Known"
       },
       {
-        "description": "Levels of alienist stack with levels of any class that provide access to a familiar. Add levels from this class and the class that granted access to the familiar together and refer to the table to determine the familiar's natural armor, Intelligence, and special abilities. If a character had levels in multiple classes that grant access to a familiar before becoming an alienist, she must decide to which class to add each level for the purpose of determining the abilitiesof her familiar. This ability does not grant an alienist a familiar if she does not already have one.",
+        "description": "Levels of alienist stack with levels of any class that provide access to a familiar. Add levels from this class and the class that granted access to the familiar together and refer to the table to determine the familiar's natural armor, Intelligence, and special abilities. If a character had levels in multiple classes that grant access to a familiar before becoming an alienist, she must decide to which class to add each level for the purpose of determining the abilities of her familiar. This ability does not grant an alienist a familiar if she does not already have one.",
         "name": "Familiar Abilities"
       },
       {

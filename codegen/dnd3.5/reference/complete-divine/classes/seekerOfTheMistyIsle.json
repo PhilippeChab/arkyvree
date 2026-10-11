@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-divine",
-    "scrapedAt": "2026-03-23T14:00:11.863Z",
+    "scrapedAt": "2026-10-11T00:25:36.252Z",
     "sourceUrl": "https://dndtools.net/classes/complete-divine--56/seeker-of-the-misty-isle/",
     "type": "class"
   },
@@ -129,9 +129,12 @@
           "Race: Elf",
           "Must be inducted into the order by another member.",
           "inducted into the order by another member"
+        ],
+        "spells": [
+          "Able to cast 2nd-level divine spells."
         ]
       },
-      "text": "Race: Elf or Half-elf Skills: Knowledge (religion) 4 ranks, Survival 8 ranks Spells: Able to cast 2nd-level divine spells.Special: Must be inducted into the order by another member."
+      "text": "Race: Elf or Half-elf Skills: Knowledge (religion) 4 ranks, Survival 8 ranks Spells: Able to cast 2nd-level divine spells. Special: Must be inducted into the order by another member."
     },
     "progression": [
       {

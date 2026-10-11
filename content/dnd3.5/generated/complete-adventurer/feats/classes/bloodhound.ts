@@ -106,7 +106,7 @@ export const BLOODHOUND_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Track the Trackless (Bloodhound)",
     description:
-      "Starting at 5th level, a bloodhound can track a creature moving under theinfluence of pass without trace or a similar effect, though he takes a -20 penalty on his Survival checks when doing so.",
+      "Starting at 5th level, a bloodhound can track a creature moving under the influence of pass without trace or a similar effect, though he takes a -20 penalty on his Survival checks when doing so.",
     selectable: false,
     aptitudes: ["Bloodhound Class Feature"],
   },

@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-divine",
-    "scrapedAt": "2026-03-23T01:27:25.003Z",
+    "scrapedAt": "2026-10-11T00:25:34.979Z",
     "sourceUrl": "https://dndtools.net/classes/complete-divine--56/moon-guardian/",
     "type": "class"
   },
@@ -85,9 +85,12 @@
         ],
         "special": [
           "an afflicted lycanthrope aware of his condition"
+        ],
+        "spells": [
+          "Ability to cast 3rd-level divine spells."
         ]
       },
-      "text": "Alignment: Any good Spells: Ability to cast 3rd-level divine spells.Other: The candidate must be an afflicted lycanthrope aware of his condition."
+      "text": "Alignment: Any good Spells: Ability to cast 3rd-level divine spells. Other: The candidate must be an afflicted lycanthrope aware of his condition."
     },
     "progression": [
       {

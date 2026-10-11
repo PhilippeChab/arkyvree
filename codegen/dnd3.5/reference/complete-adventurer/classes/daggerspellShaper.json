@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-adventurer",
-    "scrapedAt": "2026-03-26T19:36:50.015Z",
+    "scrapedAt": "2026-10-11T00:27:21.670Z",
     "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/daggerspell-shaper/",
     "type": "class"
   },
@@ -93,10 +93,11 @@
           }
         ],
         "special": [
-          "Wild shape class feature.Special: Either sneak attack +1d6 or skirmish +1d6."
+          "Wild shape class feature.",
+          "Either sneak attack +1d6 or skirmish +1d6."
         ]
       },
-      "text": "Alignment: Any nonevil. Skills: Concentration 8 ranks Feats: Weapon Focus (Dagger), Two-Weapon Fighting Special: Wild shape class feature.Special: Either sneak attack +1d6 or skirmish +1d6."
+      "text": "Alignment: Any nonevil. Skills: Concentration 8 ranks Feats: Weapon Focus (Dagger), Two-Weapon Fighting Special: Wild shape class feature. Special: Either sneak attack +1d6 or skirmish +1d6."
     },
     "progression": [
       {

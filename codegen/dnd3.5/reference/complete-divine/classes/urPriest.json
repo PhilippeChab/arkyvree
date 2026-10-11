@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-divine",
-    "scrapedAt": "2026-03-23T19:32:36.654Z",
+    "scrapedAt": "2026-10-11T00:25:37.383Z",
     "sourceUrl": "https://dndtools.net/classes/complete-divine--56/ur-priest/",
     "type": "class"
   },
@@ -135,7 +135,7 @@
           "trained by another ur-priest"
         ]
       },
-      "text": "Alignment: Any evil Skills: Bluff 6 ranks, Knowledge (arcana) 5 ranks, Knowledge (religion) 8 ranks, Knowledge (the planes) 5 ranks, Spellcraft 8 ranks Feats: Iron Will, Spell Focus (evil) Base Save Bonus: Fort +3, Will +3.Special: The character must have no ability to cast divine spells. If such spellcasting ability was previously possessed (as with an ex-cleric), that ability is forever forsaken. The character must be trained by another ur-priest."
+      "text": "Alignment: Any evil Skills: Bluff 6 ranks, Knowledge (arcana) 5 ranks, Knowledge (religion) 8 ranks, Knowledge (the planes) 5 ranks, Spellcraft 8 ranks Feats: Iron Will, Spell Focus (evil) Base Save Bonus: Fort +3, Will +3. Special: The character must have no ability to cast divine spells. If such spellcasting ability was previously possessed (as with an ex-cleric), that ability is forever forsaken. The character must be trained by another ur-priest."
     },
     "progression": [
       {

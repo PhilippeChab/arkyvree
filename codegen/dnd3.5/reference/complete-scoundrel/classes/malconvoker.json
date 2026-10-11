@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-scoundrel",
-    "scrapedAt": "2026-03-23T18:43:44.067Z",
+    "scrapedAt": "2026-10-11T00:25:39.182Z",
     "sourceUrl": "https://dndtools.net/classes/complete-scoundrel--60/malconvoker/",
     "type": "class"
   },
@@ -22,7 +22,7 @@
         "name": "Unrestricted Conjuration"
       },
       {
-        "description": "Beginning at 2nd level, you can add the following spells to your class spell list and your list of known spells (or your spellbook) at the indicated levels. If you already have one or more of these spells on your class list at a different level, treat it as being of the lower level. 5th: lesser planar binding6th: planar binding8th: greater planar binding",
+        "description": "Beginning at 2nd level, you can add the following spells to your class spell list and your list of known spells (or your spellbook) at the indicated levels. If you already have one or more of these spells on your class list at a different level, treat it as being of the lower level. 5th: lesser planar binding 6th: planar binding 8th: greater planar binding",
         "name": "Planar Binding"
       },
       {
@@ -94,7 +94,7 @@
           "Ability to cast summon monster III"
         ]
       },
-      "text": "Alignment: Any nonevil Skills: Bluff 4 ranks, Knowledge (the planes) 4 ranks Feats: Augment Summoning, Spell Focus (conjuration) Languages: Celestial, Infernal.Special: Ability to cast summon monster III"
+      "text": "Alignment: Any nonevil Skills: Bluff 4 ranks, Knowledge (the planes) 4 ranks Feats: Augment Summoning, Spell Focus (conjuration) Languages: Celestial, Infernal. Special: Ability to cast summon monster III"
     },
     "progression": [
       {

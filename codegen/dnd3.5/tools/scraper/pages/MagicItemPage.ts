@@ -67,8 +67,8 @@ export class MagicItemPage extends Page {
   }
 
   /**
-   * An item's block, after its h5 heading up to the next heading: its description paragraphs, its metadata paragraph
-   * (its price…), and a staff's spells with their charges.
+   * An item's block, after its h5 heading up to the next heading: its description paragraphs (a line break in one,
+   * `<br>`, kept between its lines), its metadata paragraph (its price…), and a staff's spells with their charges.
    */
   private itemBlock(heading: cheerio.Cheerio<AnyNode>): ItemBlock {
     const descParts: string[] = [];
@@ -81,12 +81,12 @@ export class MagicItemPage extends Page {
       if (tag === "ul" && !metadataText) {
         // A staff's spells: <li>Spell Name (N charges)</li>
         sibling.find("li").each((_, li) => {
-          const text = normalizeWs(this.$(li).text());
+          const text = normalizeWs(Page.text(this.$(li)));
           const chargeMatch = text.match(/^(.+?)\s*\((\d+)\s*charges?\)/i);
           if (chargeMatch) charges.push({ spell: chargeMatch[1].trim(), charges: parseInt(chargeMatch[2], 10) });
         });
       } else if (tag === "p") {
-        const text = normalizeWs(sibling.text());
+        const text = normalizeWs(Page.text(sibling));
         if (isMetadataParagraph(text)) metadataText = text;
         else if (!metadataText && text) descParts.push(text);
       }

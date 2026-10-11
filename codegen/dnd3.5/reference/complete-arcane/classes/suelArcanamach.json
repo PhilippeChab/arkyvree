@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-arcane",
-    "scrapedAt": "2026-03-31T19:42:14.459Z",
+    "scrapedAt": "2026-10-11T00:27:29.455Z",
     "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/suel-arcanamach/",
     "type": "class"
   },
@@ -104,6 +104,7 @@
         ],
         "special": [
           "Must be proficient with at least four martial or exotic weapons.",
+          "Must read the Grimoire Arcanamacha, or study with a willing instructor who has done so. Reading the Grimoire requires one full week of uninterrupted study, and the ability to read Ancient Suloise. Learning from a willing instructor requires four weeks of training.",
           "proficient with at least four martial or exotic weapons"
         ]
       },

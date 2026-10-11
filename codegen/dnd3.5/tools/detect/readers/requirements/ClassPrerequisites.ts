@@ -63,7 +63,7 @@ function raceRequirement(text: string): RequirementEntry | undefined {
 
 /**
  * The prerequisites a special entry lists, each on its own: "Flurry of blows ability; evasion ability; must be
- * chosen…", "Evasion class feature.Special: The character must…" (the scraper joins a Special line to the line before).
+ * chosen…", "Evasion class feature.Special: The character must…" (a Special line a page runs into the line before).
  */
 function specialParts(entry: string): string[] {
   return entry

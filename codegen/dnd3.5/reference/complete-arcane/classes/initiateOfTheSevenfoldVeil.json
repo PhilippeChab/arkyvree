@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-arcane",
-    "scrapedAt": "2026-10-10T23:22:24.424Z",
+    "scrapedAt": "2026-10-11T00:25:29.986Z",
     "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/initiate-of-the-sevenfold-veil/",
     "type": "class"
   },
@@ -64,7 +64,7 @@
         "name": "Double Warding"
       },
       {
-        "description": "A 6th-level initiate can create the mighty indigo veil. This veil prevents the passage of all spells or spell-like abilities. Any creature crossing an indigo veil must succeed on a Will save or become confused, as if by an insanity spell. A daylight spell negates and is negated by an indigo veil. A warding with this veil is the equivalent of a 7th-level spell.Violet Veil: At 7th level, an initiate masters the seventh and final veil: the violet veil. This barrier destroys all objects and effects that cross it, as if they were disintegrated. Living creatures passing a violet veil must succeed on a Will save or be shifted to a random place on a random plane (as the plane shift spell). A violet veil is destroyed by a successful dispel magic spell. A warding with this veil is the equivalent of an 8th-level spell.",
+        "description": "A 6th-level initiate can create the mighty indigo veil. This veil prevents the passage of all spells or spell-like abilities. Any creature crossing an indigo veil must succeed on a Will save or become confused, as if by an insanity spell. A daylight spell negates and is negated by an indigo veil. A warding with this veil is the equivalent of a 7th-level spell. Violet Veil: At 7th level, an initiate masters the seventh and final veil: the violet veil. This barrier destroys all objects and effects that cross it, as if they were disintegrated. Living creatures passing a violet veil must succeed on a Will save or be shifted to a random place on a random plane (as the plane shift spell). A violet veil is destroyed by a successful dispel magic spell. A warding with this veil is the equivalent of an 8th-level spell.",
         "name": "Indigo Veil"
       },
       {

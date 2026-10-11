@@ -47,7 +47,7 @@ export const MALCONVOKER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Planar Binding (Malconvoker)",
     description:
-      "Beginning at 2nd level, you can add the following spells to your class spell list and your list of known spells (or your spellbook) at the indicated levels. If you already have one or more of these spells on your class list at a different level, treat it as being of the lower level. 5th: lesser planar binding6th: planar binding8th: greater planar binding",
+      "Beginning at 2nd level, you can add the following spells to your class spell list and your list of known spells (or your spellbook) at the indicated levels. If you already have one or more of these spells on your class list at a different level, treat it as being of the lower level. 5th: lesser planar binding 6th: planar binding 8th: greater planar binding",
     selectable: false,
     aptitudes: ["Malconvoker Class Feature"],
   },

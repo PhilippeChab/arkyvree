@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-scoundrel",
-    "scrapedAt": "2026-03-23T00:50:00.172Z",
+    "scrapedAt": "2026-10-11T00:25:38.101Z",
     "sourceUrl": "https://dndtools.net/classes/complete-scoundrel--60/battle-trickster/",
     "type": "class"
   },
@@ -41,7 +41,7 @@
       "parsed": {
         "bab": 5
       },
-      "text": "Base Attack Bonus: +5 Skills: Any three skills 6 ranks each.Skill Tricks: Any two."
+      "text": "Base Attack Bonus: +5 Skills: Any three skills 6 ranks each. Skill Tricks: Any two."
     },
     "progression": [
       {

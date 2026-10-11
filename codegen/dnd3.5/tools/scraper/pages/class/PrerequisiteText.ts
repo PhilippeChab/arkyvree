@@ -132,14 +132,18 @@ export class PrerequisiteText {
     return skills;
   }
 
-  /** What else the prerequisites require: a race, a special requirement, what a character "must have" or "must be". */
+  /**
+   * What else the prerequisites require: a race, each Special line's requirement (a page may give several: "Special:
+   * Wild shape class feature.", "Special: Either sneak attack +1d6 or skirmish +1d6."), what a character "must have" or
+   * "must be".
+   */
   private requiredSpecials(): string[] {
     const specials: string[] = [];
     const raceMatch = this.text.match(/Race[:\s]+(.+?)(?:\.|,|\n|$)/i);
     if (raceMatch) specials.push(`Race: ${raceMatch[1].trim()}`);
 
-    const specialMatch = this.text.match(/Special[:\s]+(.+?)(?:\n|$)/i);
-    if (specialMatch) specials.push(specialMatch[1].trim());
+    for (const specialMatch of this.text.matchAll(/Special[:\s]+(.+?)(?:\n|$)/gi))
+      specials.push(specialMatch[1].trim());
 
     const mustRegex = /Must (?:have |be )(.+?)(?:\.|$)/gi;
     let mustMatch: RegExpExecArray | null;

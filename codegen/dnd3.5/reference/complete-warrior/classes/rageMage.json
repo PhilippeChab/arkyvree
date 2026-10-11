@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-warrior",
-    "scrapedAt": "2026-03-23T18:43:36.090Z",
+    "scrapedAt": "2026-10-11T00:25:45.186Z",
     "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/rage-mage/",
     "type": "class"
   },
@@ -99,9 +99,12 @@
         ],
         "special": [
           "Rage or frenzy ability."
+        ],
+        "spells": [
+          "Able to cast 2nd-level arcane spells."
         ]
       },
-      "text": "Base Attack Bonus: +4 Alignment: Any nonlawful Feats: Combat Casting Spells: Able to cast 2nd-level arcane spells.Special: Rage or frenzy ability."
+      "text": "Base Attack Bonus: +4 Alignment: Any nonlawful Feats: Combat Casting Spells: Able to cast 2nd-level arcane spells. Special: Rage or frenzy ability."
     },
     "progression": [
       {

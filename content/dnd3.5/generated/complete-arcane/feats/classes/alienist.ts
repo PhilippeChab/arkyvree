@@ -27,7 +27,7 @@ export const ALIENIST_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Familiar Abilities (Alienist)",
     description:
-      "Levels of alienist stack with levels of any class that provide access to a familiar. Add levels from this class and the class that granted access to the familiar together and refer to the table to determine the familiar's natural armor, Intelligence, and special abilities. If a character had levels in multiple classes that grant access to a familiar before becoming an alienist, she must decide to which class to add each level for the purpose of determining the abilitiesof her familiar. This ability does not grant an alienist a familiar if she does not already have one.",
+      "Levels of alienist stack with levels of any class that provide access to a familiar. Add levels from this class and the class that granted access to the familiar together and refer to the table to determine the familiar's natural armor, Intelligence, and special abilities. If a character had levels in multiple classes that grant access to a familiar before becoming an alienist, she must decide to which class to add each level for the purpose of determining the abilities of her familiar. This ability does not grant an alienist a familiar if she does not already have one.",
     selectable: false,
     aptitudes: ["Alienist Class Feature"],
   },

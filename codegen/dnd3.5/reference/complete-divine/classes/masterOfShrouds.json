@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-divine",
-    "scrapedAt": "2026-03-20T23:14:12.950Z",
+    "scrapedAt": "2026-10-11T00:25:34.798Z",
     "sourceUrl": "https://dndtools.net/classes/complete-divine--56/master-of-shrouds/",
     "type": "class"
   },
@@ -97,9 +97,12 @@
             "name": "Spellcraft",
             "ranks": 10
           }
+        ],
+        "spells": [
+          "Ability to cast divine spells and a spell that appears on the spell list for the Death, Evil, or Protection domain."
         ]
       },
-      "text": "Skills: Concentration 10 ranks, Spellcraft 10 ranks Base Save Bonus: Will +5.Spells: Ability to cast divine spells and a spell that appears on the spell list for the Death, Evil, or Protection domain.Other: Ability to command or rebuke undead."
+      "text": "Skills: Concentration 10 ranks, Spellcraft 10 ranks Base Save Bonus: Will +5. Spells: Ability to cast divine spells and a spell that appears on the spell list for the Death, Evil, or Protection domain. Other: Ability to command or rebuke undead."
     },
     "progression": [
       {

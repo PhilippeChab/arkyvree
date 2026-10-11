@@ -7,6 +7,11 @@ function featsOf(text: string) {
   return new PrerequisiteText(text).parsed().feats;
 }
 
+/** The special prerequisites the prerequisites' `text` gives. */
+function specialsOf(text: string) {
+  return new PrerequisiteText(text).parsed().special;
+}
+
 /** The Spells lines the prerequisites' `text` gives. */
 function spellsOf(text: string) {
   return new PrerequisiteText(text).parsed().spells;
@@ -36,6 +41,14 @@ describe("A class's prerequisites' text", () => {
 
   test("gives none for a skill whose name starts with Spell", () => {
     expect(spellsOf("Skills: Spellcraft 8 ranks")).toBeUndefined();
+  });
+
+  test("gives each Special line's text, a page's line breaks (<br />) keeping its lines apart", () => {
+    expect(
+      specialsOf(
+        "Feats: Weapon Focus (dagger), Two-Weapon Fighting\nSpecial: Arcane caster level 5th.\nSpecial: Sneak attack +1d6.",
+      ),
+    ).toEqual(["Arcane caster level 5th.", "Sneak attack +1d6."]);
   });
 
   test("gives the Feats line's feats, up to any Spells line's label", () => {

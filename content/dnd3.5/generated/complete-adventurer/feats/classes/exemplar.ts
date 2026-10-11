@@ -6,7 +6,7 @@ export const EXEMPLAR_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Bonus Feat (Exemplar)",
     description:
-      "At 3rd, 6th, and 9th levels, an exemplar gains a bonus feat, which must be selected from the following list: Acrobatic, Agile, Alertness, Animal Affinity, Athletic, Blind-Fight, Combat Casting, Combat Expertise, Deceitful, Deft Hands, Diligent, Improved Initiative, Improved Swimming?, Investigator, Magical Aptitude, Negotiator, Nimble Fingers, Open Minded?, Persuasive, Self-Sufficient, Skill Focus, Stealthy, Track, or Versatile Performer?. The exemplar must meet all the prerequisites for the chosen feat.? New feat described in Chapter 3.",
+      "At 3rd, 6th, and 9th levels, an exemplar gains a bonus feat, which must be selected from the following list: Acrobatic, Agile, Alertness, Animal Affinity, Athletic, Blind-Fight, Combat Casting, Combat Expertise, Deceitful, Deft Hands, Diligent, Improved Initiative, Improved Swimming?, Investigator, Magical Aptitude, Negotiator, Nimble Fingers, Open Minded?, Persuasive, Self-Sufficient, Skill Focus, Stealthy, Track, or Versatile Performer?. The exemplar must meet all the prerequisites for the chosen feat. ? New feat described in Chapter 3.",
     stackable: true,
     selectable: false,
     aptitudes: ["Exemplar Class Feature"],
@@ -28,7 +28,7 @@ export const EXEMPLAR_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Lend Talent (One-half Penalty) (Exemplar)",
     description:
-      "Starting at 2nd level, an exemplar can lend some of her skill artistry to allies, allowing them to exceed their normal talents. By accepting a penalty on checks using a skill for which she has selected skill artistry, an exemplar grants a competence bonus on checks with that skill to all allies within 30 feet. The penalty can be any number that does not exceed the exemplar's class level, and the competence bonus is equal to one-half the penalty. Activating this ability is a full-round action,and the effect lasts for as long as the exemplar remains conscious and within range. For example, a 4th-level exemplar who has selected skill artistry with Craft (armorsmithing) can accept a -4 penalty on Craft (armorsmithing) checks to grant all allies within 30 feet a +2 competence bonus on Craft (armorsmithing) checks for as long as she remains nearby. At 8th level, the competence bonus granted by this ability becomes equal to the penalty accepted by the exemplar.",
+      "Starting at 2nd level, an exemplar can lend some of her skill artistry to allies, allowing them to exceed their normal talents. By accepting a penalty on checks using a skill for which she has selected skill artistry, an exemplar grants a competence bonus on checks with that skill to all allies within 30 feet. The penalty can be any number that does not exceed the exemplar's class level, and the competence bonus is equal to one-half the penalty. Activating this ability is a full-round action, and the effect lasts for as long as the exemplar remains conscious and within range. For example, a 4th-level exemplar who has selected skill artistry with Craft (armorsmithing) can accept a -4 penalty on Craft (armorsmithing) checks to grant all allies within 30 feet a +2 competence bonus on Craft (armorsmithing) checks for as long as she remains nearby. At 8th level, the competence bonus granted by this ability becomes equal to the penalty accepted by the exemplar.",
     selectable: false,
     aptitudes: ["Exemplar Class Feature"],
   },

@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-divine",
-    "scrapedAt": "2026-03-23T14:00:13.069Z",
+    "scrapedAt": "2026-10-11T00:25:35.703Z",
     "sourceUrl": "https://dndtools.net/classes/complete-divine--56/rainbow-servant/",
     "type": "class"
   },
@@ -111,9 +111,12 @@
         ],
         "special": [
           "Must find the hidden jungle temples of the couatls."
+        ],
+        "spells": [
+          "Able to cast 3rd-level arcane spells."
         ]
       },
-      "text": "Alignment: Any nonevil and nonchaotic Skills: Knowledge (arcana) 4 ranks Spells: Able to cast 3rd-level arcane spells.Special: Must find the hidden jungle temples of the couatls."
+      "text": "Alignment: Any nonevil and nonchaotic Skills: Knowledge (arcana) 4 ranks Spells: Able to cast 3rd-level arcane spells. Special: Must find the hidden jungle temples of the couatls."
     },
     "progression": [
       {

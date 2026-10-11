@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-warrior",
-    "scrapedAt": "2026-03-23T14:00:08.345Z",
+    "scrapedAt": "2026-10-11T00:25:46.091Z",
     "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/spellsword/",
     "type": "class"
   },
@@ -145,11 +145,14 @@
           }
         ],
         "special": [
-          "Must have defeated a foe through force of arms alone, without recourse to spellcasting.Feats: Proficiency with all simple and martial weapons and with all armor (heavy, medium, and light).",
+          "Must have defeated a foe through force of arms alone, without recourse to spellcasting.",
           "defeated a foe through force of arms alone, without recourse to spellcasting"
+        ],
+        "spells": [
+          "Able to cast 2nd-level arcane spells."
         ]
       },
-      "text": "Base Attack Bonus: +4 Skills: Knowledge (arcana) 6 ranks Spells: Able to cast 2nd-level arcane spells.Special: Must have defeated a foe through force of arms alone, without recourse to spellcasting.Feats: Proficiency with all simple and martial weapons and with all armor (heavy, medium, and light)."
+      "text": "Base Attack Bonus: +4 Skills: Knowledge (arcana) 6 ranks Spells: Able to cast 2nd-level arcane spells. Special: Must have defeated a foe through force of arms alone, without recourse to spellcasting. Feats: Proficiency with all simple and martial weapons and with all armor (heavy, medium, and light)."
     },
     "progression": [
       {

@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-adventurer",
-    "scrapedAt": "2026-03-24T22:27:47.323Z",
+    "scrapedAt": "2026-10-11T00:27:23.710Z",
     "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/nightsong-infiltrator/",
     "type": "class"
   },
@@ -146,10 +146,11 @@
           }
         ],
         "special": [
-          "Evasion class feature.Special: The character must undergo intensive training and tests with the Nightsong Guild before she can gain the class abilities."
+          "Evasion class feature.",
+          "The character must undergo intensive training and tests with the Nightsong Guild before she can gain the class abilities."
         ]
       },
-      "text": "Skills: Climb 10 ranks, Disable Device 5 ranks, Open Lock 5 ranks, Search 5 ranks Feats: Alertness Special: Evasion class feature.Special: The character must undergo intensive training and tests with the Nightsong Guild before she can gain the class abilities."
+      "text": "Skills: Climb 10 ranks, Disable Device 5 ranks, Open Lock 5 ranks, Search 5 ranks Feats: Alertness Special: Evasion class feature. Special: The character must undergo intensive training and tests with the Nightsong Guild before she can gain the class abilities."
     },
     "progression": [
       {

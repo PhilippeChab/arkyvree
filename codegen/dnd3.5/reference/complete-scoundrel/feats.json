@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-scoundrel",
-    "scrapedAt": "2026-10-02T02:18:48.639Z",
+    "scrapedAt": "2026-10-11T00:19:18.279Z",
     "sourceUrl": "https://dndtools.net/feats/complete-scoundrel--60/",
     "type": "feat"
   },
@@ -171,7 +171,7 @@
       "prerequisiteText": "Ride 5 ranks,"
     },
     {
-      "benefit": "If you roll a natural 1 when making a saving throw, you can expend one luck reroll as an immediate action to instead trear the roll as a natural 20.You can use this feat once per day.You gain one luck reroll per day.",
+      "benefit": "If you roll a natural 1 when making a saving throw, you can expend one luck reroll as an immediate action to instead trear the roll as a natural 20. You can use this feat once per day. You gain one luck reroll per day.",
       "featType": "luck",
       "name": "Dumb Luck",
       "prerequisiteText": "Character Level 6, any two luck feats,"
@@ -377,7 +377,7 @@
       "prerequisiteText": ""
     },
     {
-      "benefit": "Whenever an opponent makes a sunder attack or Strength check to damage an object within 30 feet of you, you can expend one luck reroll as an immediate action to force that opponent to reroll.In addition, as long as you still have one luck reroll remaining for the day, items in your possession receive a +5 luck bonus on saving throws.You gain one luck reroll per day.",
+      "benefit": "Whenever an opponent makes a sunder attack or Strength check to damage an object within 30 feet of you, you can expend one luck reroll as an immediate action to force that opponent to reroll. In addition, as long as you still have one luck reroll remaining for the day, items in your possession receive a +5 luck bonus on saving throws. You gain one luck reroll per day.",
       "featType": "luck",
       "name": "Miser's Fortune",
       "prerequisiteText": ""
@@ -613,7 +613,7 @@
       "prerequisiteText": "Balance 5 ranks, Tumble 5 ranks,"
     },
     {
-      "benefit": "You can expend one luck reroll as a swift action to reroll a critical threat confirmation roll.You gain one luck reroll per day.",
+      "benefit": "You can expend one luck reroll as a swift action to reroll a critical threat confirmation roll. You gain one luck reroll per day.",
       "featType": "luck",
       "name": "Victor's Luck",
       "prerequisiteText": ""

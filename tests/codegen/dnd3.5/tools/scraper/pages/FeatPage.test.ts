@@ -19,6 +19,13 @@ describe("A feat's page", () => {
     expect(scraped(new FeatPage(fixture(`feat-${page}`)).read())).toEqual(feats.find((feat) => feat.name === name)!);
   });
 
+  test("reads a section's lines (<br />) apart, which its reference stores as one text, a space between them", () => {
+    const dumbLuck = new FeatPage(fixture("feat-dumb-luck")).read()!;
+    expect(dumbLuck.benefit).toContain("a natural 20. You can use this feat once per day. You gain one luck reroll");
+    const feats = stored("complete-scoundrel/feats.json", "feat").raw;
+    expect(scraped(dumbLuck)).toEqual(feats.find((feat) => feat.name === "Dumb Luck")!);
+  });
+
   test("reads no feat on a page carrying only the site's heading", () => {
     expect(
       new FeatPage("<html><body><h2>D&D Tools</h2><h4>Benefit</h4><p>You gain a bonus.</p></body></html>").read(),
