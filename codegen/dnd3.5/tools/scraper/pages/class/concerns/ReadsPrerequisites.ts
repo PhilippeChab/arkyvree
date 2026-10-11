@@ -9,15 +9,16 @@ import type { Constructor } from "@/lib/mixins.ts";
 export function ReadsPrerequisites<B extends Constructor<DndToolsPage>>(Base: B) {
   abstract class ReadingPrerequisites extends Base {
     /**
-     * The prerequisites' text: its Requirements section's lines (an element's own lines kept apart), else an h6
-     * Requirements section's (an older page's), else what the page's text says after "To qualify".
+     * The prerequisites' text: its Requirements section's lines (an element's own lines, and those a line break in it
+     * splits, `<br>`, kept apart), else an h6 Requirements section's (an older page's), else what the page's text says
+     * after "To qualify".
      */
     private prerequisiteText(): string {
       const reqHeader = this.heading(/^Requirements?$/i);
       if (reqHeader.length > 0) {
         const lines: string[] = [];
         for (const el of Page.section(reqHeader)) {
-          const subLines = el.text().split(/\n/).map(normalizeWs).filter(Boolean);
+          const subLines = Page.text(el).split(/\n/).map(normalizeWs).filter(Boolean);
           if (subLines.length) lines.push(subLines.join("\n"));
         }
         return lines.join("\n");
@@ -33,15 +34,15 @@ export function ReadsPrerequisites<B extends Constructor<DndToolsPage>>(Base: B)
       if (h6Header.length > 0) {
         const lines: string[] = [];
         for (const el of Page.section(h6Header.first(), ["h6", "h3", "table"])) {
-          const text = el.text().trim();
+          const text = Page.text(el).trim();
           if (text) lines.push(text);
         }
         return lines.join("\n");
       }
 
-      const match = this.$("body")
-        .text()
-        .match(/To qualify[^.]*\.\s*([\s\S]*?)(?:Class Skills|Class Features|Hit Die)/i);
+      const match = Page.text(this.$("body")).match(
+        /To qualify[^.]*\.\s*([\s\S]*?)(?:Class Skills|Class Features|Hit Die)/i,
+      );
       return match ? match[1].trim() : "";
     }
 

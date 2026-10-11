@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-adventurer",
-    "scrapedAt": "2026-04-01T02:22:04.410Z",
+    "scrapedAt": "2026-10-11T00:27:21.472Z",
     "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/daggerspell-mage/",
     "type": "class"
   },
@@ -93,10 +93,11 @@
           }
         ],
         "special": [
-          "Arcane caster level 5th.Special: Sneak attack +1d6."
+          "Arcane caster level 5th.",
+          "Sneak attack +1d6."
         ]
       },
-      "text": "Alignment: Any nonevil Skills: Concentration 8 ranks Feats: Weapon Focus (Dagger), Two-Weapon Fighting Special: Arcane caster level 5th.Special: Sneak attack +1d6."
+      "text": "Alignment: Any nonevil Skills: Concentration 8 ranks Feats: Weapon Focus (Dagger), Two-Weapon Fighting Special: Arcane caster level 5th. Special: Sneak attack +1d6."
     },
     "progression": [
       {

@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-divine",
-    "scrapedAt": "2026-03-23T14:00:10.444Z",
+    "scrapedAt": "2026-10-11T00:25:36.441Z",
     "sourceUrl": "https://dndtools.net/classes/complete-divine--56/shining-blade-of-heironeous/",
     "type": "class"
   },
@@ -88,9 +88,12 @@
         "special": [
           "Must have Heironeous as a patron deity.",
           "Heironeous as a patron deity"
+        ],
+        "spells": [
+          "Able to cast 1st-level divine spells"
         ]
       },
-      "text": "Base Attack Bonus: +7 Alignment: Lawful good Skills: Knowledge (religion) 7 ranks Base Save Bonus: Will +3.Spells: Able to cast 1st-level divine spellsSpecial: Must have Heironeous as a patron deity."
+      "text": "Base Attack Bonus: +7 Alignment: Lawful good Skills: Knowledge (religion) 7 ranks Base Save Bonus: Will +3. Spells: Able to cast 1st-level divine spells Special: Must have Heironeous as a patron deity."
     },
     "progression": [
       {

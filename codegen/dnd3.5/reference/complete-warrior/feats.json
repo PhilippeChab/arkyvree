@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-warrior",
-    "scrapedAt": "2026-10-02T02:14:29.523Z",
+    "scrapedAt": "2026-10-11T00:19:17.227Z",
     "sourceUrl": "https://dndtools.net/feats/complete-warrior--61/",
     "type": "feat"
   },
@@ -893,7 +893,7 @@
       "name": "Ranged Sunder",
       "normal": "Objects take half damage from ranged weapons (other than siege weapons and the like ). You can only sunder with a melee attack using a slashing or bludgeoning weapon",
       "prerequisiteText": "Point Blank Shot, Precise Shot, STR 13, Base Attack bonus +5,",
-      "special": "Special: A fighter may select Ranged Sunder as one ofhis fighter bonus feats.When using this feat, a character gains no benefit fromthe Improved Sunder feat."
+      "special": "Special: A fighter may select Ranged Sunder as one of his fighter bonus feats. When using this feat, a character gains no benefit from the Improved Sunder feat."
     },
     {
       "benefit": "You may use one additional stunning attack (or other special attack that counts against your daily limit of stunning attacks) per round.",

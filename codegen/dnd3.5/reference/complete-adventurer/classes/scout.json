@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-adventurer",
-    "scrapedAt": "2026-03-27T00:09:21.110Z",
+    "scrapedAt": "2026-10-11T00:25:25.947Z",
     "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/scout/",
     "type": "class"
   },
@@ -86,7 +86,7 @@
         "type": "(Ex)"
       },
       {
-        "description": "At 4th level and every four levels thereafter (8th, 12th, 16th, and 20th level), a scout gains a bonus feat, which must be selected from the following list: Acrobatic, Agile, Alertness, Athletic, Blind-Fight, Brachiation?, Combat Expertise, Danger Sense?, Dodge, Endurance, Far Shot, Great Fortitude, Hear the Unseen?, Improved Initiative, Improved Swimming?, Iron Will, Lightning Reflexes, Mobility, Point Blank Shot, Precise Shot, Quick Draw, Quick Reconnoiter?, Rapid Reload, Shot on the Run, Skill Focus, Spring Attack, Track. She must meet all the prerequisites for the feat.?New feat described in Chapter 3.",
+        "description": "At 4th level and every four levels thereafter (8th, 12th, 16th, and 20th level), a scout gains a bonus feat, which must be selected from the following list: Acrobatic, Agile, Alertness, Athletic, Blind-Fight, Brachiation?, Combat Expertise, Danger Sense?, Dodge, Endurance, Far Shot, Great Fortitude, Hear the Unseen?, Improved Initiative, Improved Swimming?, Iron Will, Lightning Reflexes, Mobility, Point Blank Shot, Precise Shot, Quick Draw, Quick Reconnoiter?, Rapid Reload, Shot on the Run, Skill Focus, Spring Attack, Track. She must meet all the prerequisites for the feat. ?New feat described in Chapter 3.",
         "name": "Bonus Feat"
       },
       {

@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-divine",
-    "scrapedAt": "2026-03-23T01:27:27.181Z",
+    "scrapedAt": "2026-10-11T00:25:37.019Z",
     "sourceUrl": "https://dndtools.net/classes/complete-divine--56/stormlord/",
     "type": "class"
   },
@@ -134,9 +134,12 @@
         "special": [
           "The character must have been hit by a bolt of lightning, whether a natural bolt or one created by magic, and survived.",
           "been hit by a bolt of lightning, whether a natural bolt or one created by magic, and survived"
+        ],
+        "spells": [
+          "Able to cast 3rd-level divine spells."
         ]
       },
-      "text": "Alignment: As for a cleric of Talos Feats: Endurance, Great Fortitude, Weapon Focus (any spear or javelin) Base Save Bonus: Fort +4.Spells: Able to cast 3rd-level divine spells.Patron: Talos.Special: The character must have been hit by a bolt of lightning, whether a natural bolt or one created by magic, and survived."
+      "text": "Alignment: As for a cleric of Talos Feats: Endurance, Great Fortitude, Weapon Focus (any spear or javelin) Base Save Bonus: Fort +4. Spells: Able to cast 3rd-level divine spells. Patron: Talos. Special: The character must have been hit by a bolt of lightning, whether a natural bolt or one created by magic, and survived."
     },
     "progression": [
       {

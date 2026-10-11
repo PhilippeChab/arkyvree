@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-scoundrel",
-    "scrapedAt": "2026-10-05T01:13:45.898Z",
+    "scrapedAt": "2026-10-11T00:25:40.086Z",
     "sourceUrl": "https://dndtools.net/classes/complete-scoundrel--60/uncanny-trickster/",
     "type": "class"
   },
@@ -63,7 +63,7 @@
     "name": "Uncanny Trickster",
     "prerequisites": {
       "parsed": {},
-      "text": "Skills: Any four skills 8 ranks each.Skill Tricks: Any four."
+      "text": "Skills: Any four skills 8 ranks each. Skill Tricks: Any four."
     },
     "progression": [
       {

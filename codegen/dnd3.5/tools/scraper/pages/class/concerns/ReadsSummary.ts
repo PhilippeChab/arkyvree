@@ -43,12 +43,14 @@ export function ReadsSummary<B extends Constructor<DndToolsPage>>(Base: B) {
       return parts.join(" ");
     }
 
-    /** The alignment the class's Requirements section asks for (`<strong>Alignment:</strong> …`), if any. */
+    /**
+     * The alignment the class's Requirements section asks for (`<strong>Alignment:</strong> …`), up to its line's end
+     * (a line break, `<br>`, included), if any.
+     */
     alignment(): string | undefined {
       const reqHeader = this.heading(/^Requirements?$/i);
       for (const el of reqHeader.length > 0 ? Page.section(reqHeader) : []) {
-        const alignMatch = el
-          .text()
+        const alignMatch = Page.text(el)
           .trim()
           .match(/^Alignment:\s*(.+)/i);
         if (alignMatch) return alignMatch[1].trim();
@@ -73,14 +75,17 @@ export function ReadsSummary<B extends Constructor<DndToolsPage>>(Base: B) {
       return undefined;
     }
 
-    /** The class's description: up to three paragraphs between its heading and the first section heading. */
+    /**
+     * The class's description: up to three paragraphs between its heading and the first section heading, a line break
+     * in one (`<br>`) kept between its lines.
+     */
     description(): string {
       const paragraphs: string[] = [];
       const classH2 = this.classHeading();
       for (const el of classH2.length > 0 ? Page.section(classH2, ["h2", "h3", "h4"]) : []) {
         const tag = Page.tagName(el);
         if (tag === "p") {
-          const text = el.text().trim();
+          const text = Page.text(el).trim();
           // Not a short text, a page reference, nor "all of the following" boilerplate
           if (text && text.length >= 20 && !text.match(/^\(.*p\.\s*\d+\)$/) && !text.match(/^All of the following/i))
             paragraphs.push(text);
@@ -88,7 +93,7 @@ export function ReadsSummary<B extends Constructor<DndToolsPage>>(Base: B) {
         // A div's paragraphs (nice-textile), but a div holding a feature's heading
         if (tag === "div" && !el.find("h3, h4, strong, b").length) {
           el.find("p").each((_, p) => {
-            const text = this.$(p).text().trim();
+            const text = Page.text(this.$(p)).trim();
             if (text && text.length >= 20) paragraphs.push(text);
           });
         }

@@ -12,7 +12,7 @@ export const ACOLYTE_OF_THE_SKIN_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Fiendish Glare (Acolyte of the Skin)",
     description:
-      "From 3rd level on, an acolyte of the skin has the supernatural ability to unnerve opponents with a ferocious glare once per day. This is not a gaze attack, and the target need not meet the acolyte's eyes or even see the acolyte (although the acolyte must have line of effect to the target). Glaring is a standard action that affects any creature the acolyte can see within 100 feet. The target becomes shaken for 10 minutes, and must also attempt a Will save (DC 10 + acolyte's class level + Cha modifier) or be stunned. The duration of the stun effect depends on the target's hit points: 50 or less 10 rounds 51 to 100 3 rounds 101 to 150 2 rounds 151 or more 1 roundFiendish glare is a mind-affecting fear effect.",
+      "From 3rd level on, an acolyte of the skin has the supernatural ability to unnerve opponents with a ferocious glare once per day. This is not a gaze attack, and the target need not meet the acolyte's eyes or even see the acolyte (although the acolyte must have line of effect to the target). Glaring is a standard action that affects any creature the acolyte can see within 100 feet. The target becomes shaken for 10 minutes, and must also attempt a Will save (DC 10 + acolyte's class level + Cha modifier) or be stunned. The duration of the stun effect depends on the target's hit points: 50 or less 10 rounds 51 to 100 3 rounds 101 to 150 2 rounds 151 or more 1 round Fiendish glare is a mind-affecting fear effect.",
     selectable: false,
     aptitudes: ["Acolyte of the Skin Class Feature"],
   },

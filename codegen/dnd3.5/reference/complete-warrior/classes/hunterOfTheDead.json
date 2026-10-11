@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-warrior",
-    "scrapedAt": "2026-03-23T18:43:35.473Z",
+    "scrapedAt": "2026-10-11T00:27:41.229Z",
     "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/hunter-of-the-dead/",
     "type": "class"
   },
@@ -105,7 +105,8 @@
           }
         ],
         "special": [
-          "Able to turn undead. Special: Scar of Unlife: The character must have lost one level or had an ability score point drained by an undead creature. Even if the loss is later offset by magic, this is the scar of unlife that all hunters of the dead carry.",
+          "Able to turn undead.",
+          "Scar of Unlife: The character must have lost one level or had an ability score point drained by an undead creature. Even if the loss is later offset by magic, this is the scar of unlife that all hunters of the dead carry.",
           "lost one level or had an ability score point drained by an undead creature"
         ]
       },

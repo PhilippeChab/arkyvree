@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-adventurer",
-    "scrapedAt": "2026-03-24T22:27:47.394Z",
+    "scrapedAt": "2026-10-11T00:25:27.070Z",
     "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/streetfighter/",
     "type": "class"
   },
@@ -32,7 +32,7 @@
         "type": "(Ex)"
       },
       {
-        "description": "At 5th level, a streetfighter cannot be caught flat-footed and reacts to danger before his senses would normally allow him to do so. Seethe barbarian class feature of the Player's Handbook. If a streetfighter already has uncanny dodge from a different class, he gains improved uncanny dodge instead. See the barbarian class feature of the Player's Handbook.",
+        "description": "At 5th level, a streetfighter cannot be caught flat-footed and reacts to danger before his senses would normally allow him to do so. See the barbarian class feature of the Player's Handbook. If a streetfighter already has uncanny dodge from a different class, he gains improved uncanny dodge instead. See the barbarian class feature of the Player's Handbook.",
         "name": "Uncanny Dodge",
         "type": "(Ex)"
       }

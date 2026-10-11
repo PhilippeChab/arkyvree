@@ -21,7 +21,7 @@ export const SCOUT_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Bonus Feat (Scout)",
     description:
-      "At 4th level and every four levels thereafter (8th, 12th, 16th, and 20th level), a scout gains a bonus feat, which must be selected from the following list: Acrobatic, Agile, Alertness, Athletic, Blind-Fight, Brachiation?, Combat Expertise, Danger Sense?, Dodge, Endurance, Far Shot, Great Fortitude, Hear the Unseen?, Improved Initiative, Improved Swimming?, Iron Will, Lightning Reflexes, Mobility, Point Blank Shot, Precise Shot, Quick Draw, Quick Reconnoiter?, Rapid Reload, Shot on the Run, Skill Focus, Spring Attack, Track. She must meet all the prerequisites for the feat.?New feat described in Chapter 3.",
+      "At 4th level and every four levels thereafter (8th, 12th, 16th, and 20th level), a scout gains a bonus feat, which must be selected from the following list: Acrobatic, Agile, Alertness, Athletic, Blind-Fight, Brachiation?, Combat Expertise, Danger Sense?, Dodge, Endurance, Far Shot, Great Fortitude, Hear the Unseen?, Improved Initiative, Improved Swimming?, Iron Will, Lightning Reflexes, Mobility, Point Blank Shot, Precise Shot, Quick Draw, Quick Reconnoiter?, Rapid Reload, Shot on the Run, Skill Focus, Spring Attack, Track. She must meet all the prerequisites for the feat. ?New feat described in Chapter 3.",
     stackable: true,
     selectable: false,
     aptitudes: ["Scout Class Feature"],

@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-adventurer",
-    "scrapedAt": "2026-03-24T22:27:47.241Z",
+    "scrapedAt": "2026-10-11T00:25:23.198Z",
     "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/bloodhound/",
     "type": "class"
   },
@@ -63,7 +63,7 @@
         "type": "(Ex)"
       },
       {
-        "description": "Starting at 5th level, a bloodhound can track a creature moving under theinfluence of pass without trace or a similar effect, though he takes a -20 penalty on his Survival checks when doing so.",
+        "description": "Starting at 5th level, a bloodhound can track a creature moving under the influence of pass without trace or a similar effect, though he takes a -20 penalty on his Survival checks when doing so.",
         "name": "Track the Trackless",
         "type": "(Su)"
       },
@@ -119,7 +119,7 @@
       "Swim",
       "Use Rope"
     ],
-    "description": "A bloodhound tracks down wrongdoers and brings them to whatever justice awaits them. Low-level bloodhounds depend on their keen senses and careful training to hunt their targets. As they gain experience, their obsessive determination gives them supernatural abilities that make them nearly unstoppable. Though some bloodhounds leave calling cards or even brands on their targets, most don't kill their quarry if they can help it. They prefer instead to subdue their targets and bring them in. For those of good alignment, this practice satis?es some deeply held belief in the cause of justice. For neutral and evil bloodhounds, it ensures a steady stream of income from catching the same targetsover and over when they break out of jail. Rangers and barbarians make the best bloodhounds, but rogues, bards, druids, and ?ghters can also excel in this role. Occasionally, a paladin shoulders the mantle, but never for money. Most bloodhounds are human, though elves and half-elves sometimes ?nd this lifestyle satisfying. Some of the best bloodhounds are humanoids such as gnolls, hobgoblins, and bugbears.",
+    "description": "A bloodhound tracks down wrongdoers and brings them to whatever justice awaits them. Low-level bloodhounds depend on their keen senses and careful training to hunt their targets. As they gain experience, their obsessive determination gives them supernatural abilities that make them nearly unstoppable. Though some bloodhounds leave calling cards or even brands on their targets, most don't kill their quarry if they can help it. They prefer instead to subdue their targets and bring them in. For those of good alignment, this practice satis?es some deeply held belief in the cause of justice. For neutral and evil bloodhounds, it ensures a steady stream of income from catching the same targets over and over when they break out of jail. Rangers and barbarians make the best bloodhounds, but rogues, bards, druids, and ?ghters can also excel in this role. Occasionally, a paladin shoulders the mantle, but never for money. Most bloodhounds are human, though elves and half-elves sometimes ?nd this lifestyle satisfying. Some of the best bloodhounds are humanoids such as gnolls, hobgoblins, and bugbears.",
     "hitDie": "d10",
     "name": "Bloodhound",
     "prerequisites": {

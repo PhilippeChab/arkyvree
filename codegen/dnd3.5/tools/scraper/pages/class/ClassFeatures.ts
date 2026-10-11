@@ -225,7 +225,7 @@ function subOptionRows(
       const cells = $(row)
         .find("td")
         .toArray()
-        .map((td) => $(td).text().trim());
+        .map((td) => Page.text($(td)).trim());
       if (cells.length <= nameCol || !cells[nameCol] || $(row).find("td[colspan]").length > 0) return [];
       const subName = cells[nameCol].replace(/\s*\*$/, "");
       return [
@@ -338,7 +338,7 @@ export class ClassFeatures {
         const name = match[1].trim();
         if (isKnownFeature(name, this.featureNames)) {
           this.currentFeature = findMatchingFeatureKey(name, this.featureNames) ?? normalizeFeatureName(name);
-          const fullText = el.text().trim();
+          const fullText = Page.text(el).trim();
           const desc = fullText
             .substring(fullText.indexOf(headerText) + headerText.length)
             .replace(/^[:\s]+/, "")
@@ -361,7 +361,7 @@ export class ClassFeatures {
 
     // Check for plain text "Name (Ex):" or "Name:" pattern
     if (!handled) {
-      const plainText = el.text().trim();
+      const plainText = Page.text(el).trim();
       const plainMatch = plainText.match(/^([A-Z][^:]{2,60}?)\s*(?:\((Ex|Su|Sp)\)\s*)?:\s+([\s\S]*)/);
       if (plainMatch) {
         const name = plainMatch[1].trim();
@@ -378,7 +378,7 @@ export class ClassFeatures {
 
     // Continuation paragraph — append to current feature
     if (!handled && this.currentFeature && this.byKey.has(this.currentFeature)) {
-      const text = el.text().trim();
+      const text = Page.text(el).trim();
       if (text) {
         const entry = this.byKey.get(this.currentFeature)!;
         entry.desc = entry.desc ? `${entry.desc} ${text}` : text;
@@ -390,7 +390,7 @@ export class ClassFeatures {
   private readSubSection(el: cheerio.Cheerio<AnyNode>, parentName: string) {
     for (const next of Page.section(el, ["h2", "h3", "h4", "table"])) {
       if (Page.tagName(next) === "p") {
-        const pText = next.text().trim();
+        const pText = Page.text(next).trim();
         const subFeatureMatch = pText.match(/^([A-Z][^:]{1,60}?)\s*:\s*([\s\S]*)/);
         if (subFeatureMatch) {
           // Keep parentheticals that are part of the name like "(Planar)"

@@ -273,7 +273,7 @@ export const LUCK_FEATS: FeatSeed[] = [
   {
     name: "Dumb Luck",
     description:
-      "If you roll a natural 1 when making a saving throw, you can expend one luck reroll as an immediate action to instead trear the roll as a natural 20.You can use this feat once per day.You gain one luck reroll per day.",
+      "If you roll a natural 1 when making a saving throw, you can expend one luck reroll as an immediate action to instead trear the roll as a natural 20. You can use this feat once per day. You gain one luck reroll per day.",
     aptitudes: ["General"],
     requirements: [gte("identity.meta.level", 6), gte("feats.luck.count", 2)],
     properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
@@ -344,7 +344,7 @@ export const LUCK_FEATS: FeatSeed[] = [
   {
     name: "Miser's Fortune",
     description:
-      "Whenever an opponent makes a sunder attack or Strength check to damage an object within 30 feet of you, you can expend one luck reroll as an immediate action to force that opponent to reroll.In addition, as long as you still have one luck reroll remaining for the day, items in your possession receive a +5 luck bonus on saving throws.You gain one luck reroll per day.",
+      "Whenever an opponent makes a sunder attack or Strength check to damage an object within 30 feet of you, you can expend one luck reroll as an immediate action to force that opponent to reroll. In addition, as long as you still have one luck reroll remaining for the day, items in your possession receive a +5 luck bonus on saving throws. You gain one luck reroll per day.",
     aptitudes: ["General"],
     properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
   },
@@ -395,7 +395,7 @@ export const LUCK_FEATS: FeatSeed[] = [
   {
     name: "Victor's Luck",
     description:
-      "You can expend one luck reroll as a swift action to reroll a critical threat confirmation roll.You gain one luck reroll per day.",
+      "You can expend one luck reroll as a swift action to reroll a critical threat confirmation roll. You gain one luck reroll per day.",
     aptitudes: ["General"],
     properties: [{ type: "FEAT_FAMILY", value: "Luck" }],
   },

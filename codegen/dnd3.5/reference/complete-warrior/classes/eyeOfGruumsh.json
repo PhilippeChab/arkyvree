@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-warrior",
-    "scrapedAt": "2026-03-23T01:27:12.008Z",
+    "scrapedAt": "2026-10-11T00:25:41.737Z",
     "sourceUrl": "https://dndtools.net/classes/complete-warrior--61/eye-of-gruumsh/",
     "type": "class"
   },
@@ -53,7 +53,7 @@
         "type": "(Ex)"
       },
       {
-        "description": "An eye of Gruumsh can fly into a rage just as a barbarian can, with all the same benefits and drawbacks. An eye of Gruumsh's class levels stack with his barbarian levels (if any) for determining the number of times per day he can use his rage ability. Add together the character's levels in the eye of Gruumsh and barbarian classes and refer to the class table. For example, a 6th-level barbarian/2nd-level eye ofGruumsh could rage three times per day (the same as an 8thlevelbarbarian), while a 4th-level eye of Gruumsh with no levels in barbarian could rage twice per day (the same as a 4th-level barbarian).",
+        "description": "An eye of Gruumsh can fly into a rage just as a barbarian can, with all the same benefits and drawbacks. An eye of Gruumsh's class levels stack with his barbarian levels (if any) for determining the number of times per day he can use his rage ability. Add together the character's levels in the eye of Gruumsh and barbarian classes and refer to the class table. For example, a 6th-level barbarian/2nd-level eye ofGruumsh could rage three times per day (the same as an 8thlevel barbarian), while a 4th-level eye of Gruumsh with no levels in barbarian could rage twice per day (the same as a 4th-level barbarian).",
         "name": "Rage",
         "type": "(Ex)"
       },

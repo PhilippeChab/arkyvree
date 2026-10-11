@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-arcane",
-    "scrapedAt": "2026-03-31T22:09:32.303Z",
+    "scrapedAt": "2026-10-11T00:25:31.459Z",
     "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/warmage/",
     "type": "class"
   },
@@ -23,7 +23,7 @@
         "type": "(Ex)"
       },
       {
-        "description": "A warmage is specialized in dealing damage with his spells. Whenever a warmage casts a spell that deals hit point damage, he adds his Intelligence bonus (if any) to the amount of damage dealt. For instance, if a 1st-level warmage with 17 Intelligence casts magic missile, he deals1d4+1 points of damage normally, plus an extra 3 points of damage due to his Intelligence bonus. The bonus from the warmage edge special ability applies only to spells that he casts as a warmage, not to those he might have by virtue of levels in another class. A single spell can never gain this extra damage more than once per casting. For instance, a fireball deals the extra damage to all creatures in the area it affects. However, if a 3rd-level warmage casts magic missile and produces two missiles, only one of them (of the warmage's choice) gains the extra damage, even if both missiles are directed at the same target. If a spell deals damage for more than 1 round, it deals this extra damage in each round. Scrolls scribed by a warmage do not gain any benefit from warmage edge. Scrolls activated by a warmage also gain no benefit from warmage edge. The same is true for most other magic items, such as wands and potions. However, staffs activated by a warmage use not only the warmage's caster level but also gain the benefits of the warmage edge, if applicable.",
+        "description": "A warmage is specialized in dealing damage with his spells. Whenever a warmage casts a spell that deals hit point damage, he adds his Intelligence bonus (if any) to the amount of damage dealt. For instance, if a 1st-level warmage with 17 Intelligence casts magic missile, he deals 1d4+1 points of damage normally, plus an extra 3 points of damage due to his Intelligence bonus. The bonus from the warmage edge special ability applies only to spells that he casts as a warmage, not to those he might have by virtue of levels in another class. A single spell can never gain this extra damage more than once per casting. For instance, a fireball deals the extra damage to all creatures in the area it affects. However, if a 3rd-level warmage casts magic missile and produces two missiles, only one of them (of the warmage's choice) gains the extra damage, even if both missiles are directed at the same target. If a spell deals damage for more than 1 round, it deals this extra damage in each round. Scrolls scribed by a warmage do not gain any benefit from warmage edge. Scrolls activated by a warmage also gain no benefit from warmage edge. The same is true for most other magic items, such as wands and potions. However, staffs activated by a warmage use not only the warmage's caster level but also gain the benefits of the warmage edge, if applicable.",
         "name": "Warmage Edge",
         "type": "(Ex)"
       },

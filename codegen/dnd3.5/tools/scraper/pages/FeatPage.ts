@@ -62,7 +62,10 @@ export class FeatPage extends DndToolsPage {
     return type;
   }
 
-  /** The text of each of the page's sections (Prerequisite, Benefit, Normal, Special), by its label, singular. */
+  /**
+   * The text of each of the page's sections (Prerequisite, Benefit, Normal, Special), by its label, singular: its
+   * paragraphs', a line break in one (`<br>`) kept between its lines.
+   */
   private sections(): Record<string, string> {
     const sections: Record<string, string> = {};
     this.$("h4").each((_, h4) => {
@@ -74,18 +77,18 @@ export class FeatPage extends DndToolsPage {
         const tag = Page.tagName(el);
         if (tag === "div") {
           // Skip divs that contain another section's label (broken HTML nesting)
-          const divText = normalizeWs(el.text());
+          const divText = normalizeWs(Page.text(el));
           const containsNextSection = /^(Prerequisite|Benefit|Normal|Special)\b/i.test(divText);
           if (!containsNextSection) {
             // nice-textile div contains paragraphs
             el.find("p").each((_, p) => {
-              const text = normalizeWs(this.$(p).text());
+              const text = normalizeWs(Page.text(this.$(p)));
               if (text) parts.push(text);
             });
             if (el.find("p").length === 0 && divText) parts.push(divText);
           }
         } else if (tag === "p" || tag === "ul" || tag === "ol") {
-          const text = normalizeWs(el.text());
+          const text = normalizeWs(Page.text(el));
           if (text) parts.push(text);
         }
         // Skip other elements (tables, etc.)

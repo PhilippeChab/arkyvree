@@ -41,7 +41,7 @@ export const STREETFIGHTER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Uncanny Dodge (Streetfighter)",
     description:
-      "At 5th level, a streetfighter cannot be caught flat-footed and reacts to danger before his senses would normally allow him to do so. Seethe barbarian class feature of the Player's Handbook. If a streetfighter already has uncanny dodge from a different class, he gains improved uncanny dodge instead. See the barbarian class feature of the Player's Handbook.",
+      "At 5th level, a streetfighter cannot be caught flat-footed and reacts to danger before his senses would normally allow him to do so. See the barbarian class feature of the Player's Handbook. If a streetfighter already has uncanny dodge from a different class, he gains improved uncanny dodge instead. See the barbarian class feature of the Player's Handbook.",
     selectable: false,
     aptitudes: ["Streetfighter Class Feature"],
     modifiers: [{ target: "combat.ac.uncannydodge", operator: "set", value: "true", valueType: "boolean" }],

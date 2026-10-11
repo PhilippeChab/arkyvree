@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-divine",
-    "scrapedAt": "2026-10-10T23:22:42.378Z",
+    "scrapedAt": "2026-10-11T00:25:37.743Z",
     "sourceUrl": "https://dndtools.net/classes/complete-divine--56/warpriest/",
     "type": "class"
   },
@@ -73,7 +73,7 @@
         "type": "(Ex)"
       },
       {
-        "description": "Starting at 3rd level, a warpriest can use mass cure light wounds once per day as aspell-like ability. Treat the warpriest's caster level for this effect as equal to his highest divine caster level.",
+        "description": "Starting at 3rd level, a warpriest can use mass cure light wounds once per day as a spell-like ability. Treat the warpriest's caster level for this effect as equal to his highest divine caster level.",
         "name": "Mass Cure Light Wounds",
         "type": "(Sp)"
       },
@@ -140,7 +140,7 @@
           "Able to cast at least one divine spell from one of the following domains' spell lists: Destruction, Protection, Strength, or War. A character who can cast at least one spell from a domain counts as having access for this purpose."
         ]
       },
-      "text": "Base Attack Bonus: +5 Skills: Diplomacy 8 ranks, Sense Motive 5 ranks Feats: Combat Casting Spells: Able to cast at least one divine spell from one of the following domains' spell lists: Destruction, Protection, Strength, or War. A character who can cast at least one spell from a domain counts as having access for this purpose.Special: Ability to turn or rebuke undead."
+      "text": "Base Attack Bonus: +5 Skills: Diplomacy 8 ranks, Sense Motive 5 ranks Feats: Combat Casting Spells: Able to cast at least one divine spell from one of the following domains' spell lists: Destruction, Protection, Strength, or War. A character who can cast at least one spell from a domain counts as having access for this purpose. Special: Ability to turn or rebuke undead."
     },
     "progression": [
       {

@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-adventurer",
-    "scrapedAt": "2026-03-24T22:27:47.273Z",
+    "scrapedAt": "2026-10-11T00:27:22.056Z",
     "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/dungeon-delver/",
     "type": "class"
   },
@@ -136,10 +136,11 @@
           }
         ],
         "special": [
-          "Trapfinding class feature.Special: The character must survive a great trial underground. This trial usually takes one of three forms:"
+          "Trapfinding class feature.",
+          "The character must survive a great trial underground. This trial usually takes one of three forms:"
         ]
       },
-      "text": "Skills: Climb 10 ranks, Craft (stonemasonry) 5 ranks, Disable Device 10 ranks, Hide 5 ranks, Knowledge (dungeoneering) 5 ranks, Move Silently 5 ranks, Open Lock 10 ranks, Search 10 ranks Feats: Alertness, Blind-Fight Special: Trapfinding class feature.Special: The character must survive a great trial underground. This trial usually takes one of three forms: A solo dungeon expedition that earns the character half of the experience points needed for advancement to the next level. (For example, a 7th-level character must earn 3,500 XP on such a solo run.) The character must complete the venture in one week, though he may leave the dungeon and return as often as desired during that time. Survival of a cave-in or other collapse. Living for a year without seeing the light of the sun, usually among underground denizens such as the deep dwarves or drow."
+      "text": "Skills: Climb 10 ranks, Craft (stonemasonry) 5 ranks, Disable Device 10 ranks, Hide 5 ranks, Knowledge (dungeoneering) 5 ranks, Move Silently 5 ranks, Open Lock 10 ranks, Search 10 ranks Feats: Alertness, Blind-Fight Special: Trapfinding class feature. Special: The character must survive a great trial underground. This trial usually takes one of three forms: A solo dungeon expedition that earns the character half of the experience points needed for advancement to the next level. (For example, a 7th-level character must earn 3,500 XP on such a solo run.) The character must complete the venture in one week, though he may leave the dungeon and return as often as desired during that time. Survival of a cave-in or other collapse. Living for a year without seeing the light of the sun, usually among underground denizens such as the deep dwarves or drow."
     },
     "progression": [
       {

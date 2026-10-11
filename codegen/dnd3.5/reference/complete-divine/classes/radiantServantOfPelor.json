@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-divine",
-    "scrapedAt": "2026-03-23T14:00:12.057Z",
+    "scrapedAt": "2026-10-11T00:25:35.522Z",
     "sourceUrl": "https://dndtools.net/classes/complete-divine--56/radiant-servant-of-pelor/",
     "type": "class"
   },
@@ -133,9 +133,12 @@
         "special": [
           "Must have Pelor as patron deity. (Adapt as desired for sun god of the setting.)",
           "Pelor as patron deity"
+        ],
+        "spells": [
+          "Able to cast 1st-level divine spells and access to the Sun domain."
         ]
       },
-      "text": "Alignment: Neutral good Skills: Heal 5 ranks, Knowledge (religion) 9 ranks Feats: Extra Turning Base Save Bonus: Will +5.Spells: Able to cast 1st-level divine spells and access to the Sun domain.Special: Must have Pelor as patron deity. (Adapt as desired for sun god of the setting.)"
+      "text": "Alignment: Neutral good Skills: Heal 5 ranks, Knowledge (religion) 9 ranks Feats: Extra Turning Base Save Bonus: Will +5. Spells: Able to cast 1st-level divine spells and access to the Sun domain. Special: Must have Pelor as patron deity. (Adapt as desired for sun god of the setting.)"
     },
     "progression": [
       {

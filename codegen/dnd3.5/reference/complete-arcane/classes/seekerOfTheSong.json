@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "complete-arcane",
-    "scrapedAt": "2026-10-05T01:13:18.240Z",
+    "scrapedAt": "2026-10-11T00:27:29.079Z",
     "sourceUrl": "https://dndtools.net/classes/complete-arcane--55/seeker-of-the-song/",
     "type": "class"
   },
@@ -75,6 +75,7 @@
         ],
         "special": [
           "Bardic music ability.",
+          "Must have been exposed to the primal music by hearing another seeker of the song use a seeker music ability.",
           "been exposed to the primal music by hearing another seeker of the song use a seeker music ability"
         ]
       },
