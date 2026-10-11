@@ -156,6 +156,9 @@ class RulesetExtensionsService {
           snaps.map((snap) => snap.forkedEntityId),
         ]),
       );
+      // What the book hid shows again: its view would show no two entities of a name, as a subscribe's wouldn't
+      const names = new EntityNames(ruleset, await CowDataReader.read(tx, ruleset));
+      await names.assertReturningNamesAvailable(tx, extensionId, [...copies.values()].flat());
       // What leaves with the book, each with what the fork's view shows in its place once it's gone, if anything
       const departures = await findDepartures(tx, ruleset, extensionId, copies);
       policy.canUnsubscribeExtension({ inUse: await this.isExtensionInUseByHost(tx, id, departures) });

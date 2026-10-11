@@ -20,11 +20,11 @@ interface NamedEntity {
 
 /**
  * The names a ruleset's composed view shows (`new EntityNames(ruleset, rulesetData.cow)`), which no change makes it show
- * twice: a new entity, a renamed one, a restored one and a subscribed extension's take a name only when no other entity
- * of their kind the view shows has it, the ruleset's own or an inherited one. An inherited entity the view hides
- * (overridden, or a sibling loser) doesn't block its name, and one whose local copy was deleted left a tombstone
- * snapshot, which a new entity of its name takes over (`repointTombstone`), so the inherited one stays hidden. Every
- * method takes the transaction.
+ * twice: a new entity, a renamed one, a restored one, a subscribed extension's and one an unsubscribe shows again take a
+ * name only when no other entity of their kind the view shows has it, the ruleset's own or an inherited one. An
+ * inherited entity the view hides (overridden, or a sibling loser) doesn't block its name, and one whose local copy was
+ * deleted left a tombstone snapshot, which a new entity of its name takes over (`repointTombstone`), so the inherited
+ * one stays hidden. Every method takes the transaction.
  */
 export default class EntityNames {
   constructor(
@@ -82,30 +82,57 @@ export default class EntityNames {
   }
 
   /**
+   * Refuses a change to the ruleset's extensions when its view (`after`: its `CowData` once they're changed) would then
+   * show more entities of a kind under one of `names` (by kind) than once, and than it shows now (`refusal` says so).
+   * What the view pairs under one name shows one (a book's copy of an inherited entity, the reprints and the lists the
+   * source chain pairs), and a name it already shows twice stays allowed. `leaving`: the ruleset's own entities the
+   * change removes (an unsubscribe's copies of the book's entities).
+   */
+  private async refuseChainNames(
+    tx: Db,
+    after: CowData,
+    names: ReadonlyMap<RulesetEntityType, string[]>,
+    leaving: ReadonlySet<string>,
+    refusal: (entityType: RulesetEntityType, name: string) => string,
+  ) {
+    const shown = (cow: CowData, id: string) => !cow.isHidden(id);
+    const before = new Set([this.ruleset.id, ...this.cow.sourceChain]);
+    const remaining = new Set([this.ruleset.id, ...after.sourceChain]);
+    const chain = [...new Set([...this.cow.sourceChain, ...after.sourceChain])];
+    for (const [entityType, typeNames] of names) {
+      const named = await this.findNamed(tx, entityType, typeNames, chain);
+      for (const [name, entities] of Map.groupBy(named, (entity) => entity.name)) {
+        const shownBefore = entities.filter(({ id, rulesetId }) => before.has(rulesetId) && shown(this.cow, id));
+        const shownAfter = entities.filter(
+          ({ id, rulesetId }) => remaining.has(rulesetId) && !leaving.has(id) && shown(after, id),
+        );
+        if (shownAfter.length > Math.max(shownBefore.length, 1)) throw new ConflictError(refusal(entityType, name));
+      }
+    }
+  }
+
+  /**
    * Refuses subscribing the ruleset to new extensions (`extensionIds`) when its view would then show more entities of a
-   * kind under a name than one, and than it shows now: an extension's entity (its own, or its copy of an inherited one,
-   * by its name) named as one the view shows, or as another the extensions bring. What the view pairs under one name
-   * shows one (a book's copy of an inherited entity, the reprints and the lists the source chain pairs: `CowData`, read
-   * as the view would read it once subscribed), and a name it already shows twice stays allowed.
+   * kind under a name than once, and than it shows now (`refuseChainNames`, with `CowData` read as the view would read
+   * it once subscribed): an extension's entity (its own, or its copy of an inherited one, by its name) named as one the
+   * view shows, or as another the extensions bring.
    */
   async assertExtensionNamesAvailable(tx: Db, extensionIds: string[]): Promise<void> {
     const extensionRulesetIds = [...this.ruleset.extensionRulesetIds, ...extensionIds];
     const after = await CowDataReader.read(tx, { ...this.ruleset, extensionRulesetIds });
-    const before = new Set([this.ruleset.id, ...this.cow.sourceChain]);
+    const names = new Map<RulesetEntityType, string[]>();
     for (const entityType of RULESET_ENTITY_TYPES) {
       const brought = await RulesetEntities.findNames(tx, entityType, { rulesetIds: extensionIds });
-      const names = [...new Set(brought.map((entity) => entity.name))];
-      const named = await this.findNamed(tx, entityType, names, after.sourceChain);
-      for (const [name, entities] of Map.groupBy(named, (entity) => entity.name)) {
-        const shownBefore = entities.filter(({ id, rulesetId }) => before.has(rulesetId) && !this.cow.isHidden(id));
-        const shownAfter = entities.filter(({ id }) => !after.isHidden(id));
-        if (shownAfter.length > Math.max(shownBefore.length, 1)) {
-          throw new ConflictError(
-            `Cannot subscribe: ${entityType} "${name}" already exists in this ruleset or another subscribed extension`,
-          );
-        }
-      }
+      names.set(entityType, [...new Set(brought.map((entity) => entity.name))]);
     }
+    await this.refuseChainNames(
+      tx,
+      after,
+      names,
+      new Set(),
+      (entityType, name) =>
+        `Cannot subscribe: ${entityType} "${name}" already exists in this ruleset or another subscribed extension`,
+    );
   }
 
   /**
@@ -164,6 +191,34 @@ export default class EntityNames {
     const source = entities.find((entity) => entity.id === sourceEntityId);
     const copy = entities.find((entity) => entity.id === copyId);
     if (source && copy?.name !== source.name) this.refuseShown(await this.findNamed(tx, entityType, [source.name]));
+  }
+
+  /**
+   * Refuses unsubscribing the ruleset from an extension (`extensionId`) when its view would then show more entities of a
+   * kind under a name than once, and than it shows now (`refuseChainNames`, with `CowData` read as the view would read
+   * it once unsubscribed): what the extension hid shows again under its name (a core entity it copied, its copies'
+   * siblings, a reprint it won over), which the ruleset may have given another entity since. The ruleset's copies of
+   * the extension's entities (`copyIds`) go with it.
+   */
+  async assertReturningNamesAvailable(tx: Db, extensionId: string, copyIds: string[]): Promise<void> {
+    const extensionRulesetIds = this.ruleset.extensionRulesetIds.filter((id) => id !== extensionId);
+    const after = await CowDataReader.read(tx, { ...this.ruleset, extensionRulesetIds });
+    const remaining = new Set([this.ruleset.id, ...after.sourceChain]);
+    const returning = this.cow.getStaleIds().filter((id) => !after.isHidden(id));
+    const names = new Map<RulesetEntityType, string[]>();
+    for (const entityType of RULESET_ENTITY_TYPES) {
+      const shown = await RulesetEntities.findNames(tx, entityType, { ids: returning });
+      const kept = shown.filter((entity) => remaining.has(entity.rulesetId));
+      names.set(entityType, [...new Set(kept.map((entity) => entity.name))]);
+    }
+    await this.refuseChainNames(
+      tx,
+      after,
+      names,
+      new Set(copyIds),
+      (entityType, name) =>
+        `Cannot unsubscribe: ${entityType} "${name}", which this extension replaces, would show again beside another of its name: rename that one first`,
+    );
   }
 
   /**

@@ -196,6 +196,14 @@ subscribed (its `CowData` read for the new extensions, so what that view pairs
 counts once), and refuses one it would show more often than once and than now: a
 name the view already shows twice (a familiar's race and an animal companion's of
 one name, which a race's kind tells apart) blocks no subscribe that leaves it so.
+An unsubscribe (`assertReturningNamesAvailable`, see
+[Unsubscribe](#unsubscribe-unsubscribeextension)) counts, the same way, the names
+of what the view shows again once the extension is gone (a core entity it copied,
+another book's copy or reprint it won over), the fork's copies of the extension's
+entities going with it: refused while the fork has given another entity one of
+those names since (it renamed its copy of the book's copy of a core feat, then
+created a feat of the core feat's name), a conflict (409) naming it. The fork
+renames that entity first.
 
 If a hidden ancestor's local copy was deleted, its snapshot is a tombstone, and
 `EntityNames.repointTombstone` moves it to the new entity a create makes; a
@@ -351,7 +359,7 @@ No entities are copied. They become visible immediately via the source chain.
 ### Unsubscribe (`unsubscribeExtension`)
 
 1. Validates: user is owner, extension is subscribed, ruleset not archived
-2. Finds the host's copies of the extension's entities: its snapshots whose `sourceEntityId` belongs to the extension
+2. Finds the host's copies of the extension's entities: its snapshots whose `sourceEntityId` belongs to the extension, and checks that its view would then show no name more often than once and than it does now (`EntityNames.assertReturningNamesAvailable`, see [Names of entities](#names-of-entities)): what the extension hid shows again (a core entity it copied, another book's copy or reprint it won over), and a `ConflictError` names one the host has given another entity since, before anything changes
 3. **What leaves, and what stands in its place** (`findDepartures`, `extensions/departingReferences.ts`): the extension's entities, the host's copies of them, and their classes' levels, each with what the host's view shows in its place once the extension is gone, read from its `CowData` with and without the extension (`CowDataReader.read`). Of the ids the view shows the entity for (`getEquivalentIds`: the core entity an extension's copy overrides, another book's copy or a namesake it wins over, a list of its name), it's the first that stays, as the view without the extension resolves it, when that view shows it. So the extension's copy of a core feat or spell falls back to the core one (or to another book's copy of it, which wins once this one is gone, as the sibling pairing has it), a list to the list of its name the host or another book has, and a class's level to the level of its number in the class standing in its class's place, as `CowDataBuilder` pairs a copy's levels. An entity only the extension has, a list no other book has, or a level the class standing in its class's place doesn't have, leaves the view: nothing stands in its place
 4. **In-use check** (`isExtensionInUseByHost`) — blocks with `ConflictError` if a character on the host picked what leaves the view (`EntityReferences.exists`, every type's picks, a class's by its levels), directly or through the host's copy of it: the pick would dangle. A pick of what something stands in place of doesn't count: step 5 points it there. The check also counts a ruleset built on the host, which has none: fork-of-fork is blocked at policy time, and a host isn't an extension
 5. **Repoints what the host keeps** (`repointDepartingReferences`): a host row naming what leaves the view (a link to a list no other book has, an item's template, a class's or a race's parent, a spell's save, a save's or a skill's ability, a class's skill or its levels' saves, granted feats and powers: `EntityReferences.findMany`, the copies' own rows aside, which go with them) refuses the unsubscribe with a `ConflictError` naming them, before anything changes. Then every row of the host and of its characters naming what something stands in place of names that instead (`EntityReferences.findIds`, then `update` given the host): a feat's or a spell's link to the extension's list, a class's grant, a character's pick of a core feat the extension overrides (stored by the copy's id, as a level-up writes the id its view shows: `RequestIds`), the list it's picked from, its level in a class the extension overrides, its race, an item it carries. A row that would then repeat another by its table's primary key goes, as a revert's does. The extension's own rows, and its other subscribers', keep naming its entities
