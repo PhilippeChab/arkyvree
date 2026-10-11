@@ -1,13 +1,14 @@
 import { FEAT_FIELDS } from "@/engine/rulesets/dnd3.5/entities/feats/fields.ts";
 import type CharacterState from "@/engine/rulesets/dnd3.5/model/CharacterState.ts";
+import CombatPaths from "@/engine/rulesets/dnd3.5/model/combat/CombatPaths.ts";
 import PowersPaths from "@/engine/rulesets/dnd3.5/model/powers/PowersPaths.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
 /**
  * A 3.5 character's build steps, which core's build runs (`CharacterBase.build`) around its components' setup and finish:
- * its weapon rules and its proficiency penalties before the requirements (`prepareSheet`), and its spells' DCs applied
- * last.
+ * its weapon rules and its proficiency penalties before the requirements (`prepareSheet`), its armor class's modifiers
+ * applied in each weapon set (`scopesOf`), and its spells' DCs applied last.
  */
 export function Builds<B extends Constructor<CharacterState>>(Base: B) {
   abstract class Building extends Base {
@@ -32,6 +33,23 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
         .filter((inv) => inv.equipped && !this.areRequirementsMet([inv.item.proficiency], { sourceId: inv.id }))
         .map((inv) => ({ id: inv.id, itemId: inv.item.id }));
       this.components.combat.applyProficiencyPenalties(unproficient);
+    }
+
+    /**
+     * The weapon sets a modifier on the armor class applies in, each set its own armor class: an item's, the sets whose
+     * hands hold it (a magic shield's enhancement is its set's); a modifier gated on what follows the set (the shield
+     * held, the armor class: a monk's AC bonus), each set, its gates read there. Any other applies to the parts every
+     * set shares, and a modifier on anything else to the whole sheet.
+     */
+    protected override scopesOf(modifier: Modifier): string[] | null {
+      if (!CombatPaths.isArmorClassTarget(modifier.target)) return null;
+      const { combat } = this.components;
+      const held = modifier.sourceType === "items" ? combat.getSetsHolding(modifier.sourceId) : [];
+      if (held.length > 0) return held;
+      const readsSet = this.gatesOf(modifier).some((group) =>
+        group.some((requirement) => requirement.target !== null && CombatPaths.readsWeaponSet(requirement.target)),
+      );
+      return readsSet ? combat.getSetKeys() : null;
     }
 
     /**

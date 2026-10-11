@@ -86,6 +86,8 @@ The engine validates the *base, permanent character sheet*. Temporary buffs, con
 
 Each weapon on the sheet lists a row per way to attack with it: its own attack, a thrown one for a melee weapon you can throw (a dagger, a spear), and, when a weapon set holds a weapon in each hand, the same with two-weapon fighting's penalties. The Two-Weapon Fighting feats and a light off-hand weapon lessen them, and Improved and Greater Two-Weapon Fighting add off-hand attacks. Range-increment penalties depend on the distance, so they aren't on the sheet.
 
+The sheet's **Weapons** section, and the PDF's, shows each weapon set as a loadout you switch to: **Set 1** and what its hands hold, its **AC**, **Touch** and **Flat-footed**, then its attacks. A set counts a shield only when it holds one, and what goes with it: a magic shield's bonus, a tower shield's cap on Dexterity, a monk's AC bonus lost only in the sets holding a shield, and the shield's penalties only on that set's attacks. Your skills and your speed have one value each: a shield carried in any set weighs on them. A character holding nothing in a hand has one loadout, shown without a set's heading.
+
 The sheet's **Spells** section, and the PDF's, opens on **Spells per Day**: a row per spell list with slots, a column per spell level you have slots at, and your slots per day there, your ability's bonus spells included. A cleric's domain slot and a specialist wizard's school slot count in their class's row as one more, **3+1**, and have no row of their own; the lists under the table still give each spell level's uses.
 
 ## Can I export my character?

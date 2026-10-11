@@ -138,7 +138,7 @@ describe("TargetPathsService", () => {
     const readable = new Set(template);
     for (const path of [
       "abilities.charisma.modifier",
-      "combat.ac.total",
+      "combat.grapple.total",
       "saves.fortitude.total",
       "feats.toughness.count",
       "spellcasting.arcane",
@@ -180,10 +180,19 @@ describe("TargetPathsService", () => {
     expect(check("{{ [identity.physiology.name] + 1 }}")).rejects.toThrow("arithmetic takes numbers");
   });
 
+  test("lists the armor class's totals for each weapon set, to requirements: a character has no single AC", async () => {
+    const pathsOf = async (kind: TargetPathKind) => new Set((await seedPaths(kind)).paths.map((p) => p.path));
+    const [modifiable, requirable] = [await pathsOf("modifier"), await pathsOf("requirement")];
+    const perSet = ["total", "touch", "flatfooted"].map((total) => `combat.weaponsets.*.ac.${total}`);
+    expect(perSet.filter((path) => !requirable.has(path) || modifiable.has(path))).toEqual([]);
+    const single = ["total", "touch", "flatfooted"].map((total) => `combat.ac.${total}`);
+    expect(single.filter((path) => requirable.has(path) || modifiable.has(path))).toEqual([]);
+  });
+
   test("leaves totals to requirements", async () => {
     expect((await seedPaths("modifier")).paths.filter((p) => p.path.endsWith(".total"))).toEqual([]);
     const totals = (await seedPaths("requirement")).paths.filter((p) => p.path.endsWith(".total")).map((p) => p.path);
-    for (const prefix of ["combat.ac", "combat.hp", "skills.", "saves.", "abilities."])
+    for (const prefix of ["combat.weaponsets", "combat.hp", "skills.", "saves.", "abilities."])
       expect(totals.some((path) => path.startsWith(prefix))).toBe(true);
   });
 
@@ -199,8 +208,8 @@ describe("TargetPathsService", () => {
       "combat.shield.held",
       "combat.ac.dexterity",
       "combat.ac.size",
-      "combat.ac.touch",
-      "combat.ac.flatfooted",
+      "combat.weaponsets.*.ac.touch",
+      "combat.weaponsets.*.ac.flatfooted",
       "combat.hp.constitution",
       "combat.initiative.dexterity",
       "combat.grapple.bab",

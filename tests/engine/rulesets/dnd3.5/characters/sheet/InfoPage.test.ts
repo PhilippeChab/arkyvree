@@ -6,6 +6,7 @@ import CombatSheet from "@/engine/rulesets/dnd3.5/characters/description/CombatS
 import InfoPage from "@/engine/rulesets/dnd3.5/characters/sheet/InfoPage.tsx";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
+import { carry } from "@/tests/support/items.ts";
 import { findSeededCharacter } from "@/tests/support/seed.ts";
 
 /** The text a page's element tree shows, its components called, each piece in order. */
@@ -42,5 +43,41 @@ describe("InfoPage", () => {
       const at = text.indexOf(row.label);
       expect(text.slice(at + 1, at + 6)).toEqual([row.attack, row.damage, row.critical, row.range, row.types]);
     }
+  });
+
+  test("prints each weapon set's heading, what it holds, and its AC, touch and flat-footed before its attacks", async () => {
+    const bjorn = await findSeededCharacter("Bjorn Ironhand");
+    await carry(bjorn, [
+      { item: "Longsword", location: "Main Hand", weaponSet: 0 },
+      { item: "Heavy Steel Shield", location: "Off Hand", weaponSet: 0 },
+      { item: "Greatsword", location: "Two Handed", weaponSet: 1 },
+    ]);
+    const text = textOf(InfoPage({ detailedCharacter: await buildAs(DetailedCharacter, bjorn) }));
+    const set = (heading: string) => {
+      const at = text.indexOf(heading);
+      return text.slice(at, at + 9);
+    };
+    expect(set("SET 1")).toEqual([
+      "SET 1",
+      " · Longsword, Heavy Steel Shield",
+      "AC",
+      "14",
+      "TOUCH",
+      "12",
+      "FLAT-FOOTED",
+      "12",
+      "Weapon",
+    ]);
+    expect(set("SET 2")).toEqual(["SET 2", " · Greatsword", "AC", "12", "TOUCH", "12", "FLAT-FOOTED", "10", "Weapon"]);
+  });
+
+  test("prints a character with no weapon set's one loadout without a heading, and no AC among its combat stats", async () => {
+    const bjorn = await findSeededCharacter("Bjorn Ironhand");
+    await carry(bjorn, []);
+    const text = textOf(InfoPage({ detailedCharacter: await buildAs(DetailedCharacter, bjorn) }));
+    expect(text.filter((piece) => piece.startsWith("SET "))).toEqual([]);
+    expect(text.filter((piece) => piece === "AC")).toHaveLength(1);
+    const after = (label: string) => text[text.indexOf(label) + 1];
+    expect([after("AC"), after("TOUCH"), after("FLAT-FOOTED")]).toEqual(["12", "12", "10"]);
   });
 });

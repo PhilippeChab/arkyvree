@@ -13,14 +13,20 @@ type Combat = ReturnType<Parameters<typeof CombatSheet.describe>[0]["getCombat"]
 /** What the sheet reads of a weapon. */
 type Weapon = NonNullable<Combat["weaponsets"][string]["mainhand"]>;
 
+/** A weapon set's armor class as the sheet reads it: 10 and a +2 Dexterity bonus, which flat-footed loses. */
+const ARMOR_CLASS: Combat["weaponsets"][string]["ac"] = { total: 12, touch: 12, flatfooted: 10 };
+
+/** A set's off hand holding no shield. */
+const NO_SHIELD = { names: [] };
+
 /** The combat the sheet prints for a character of this base attack bonus, with these weapon sets. */
 function describeCombat(weaponsets: Combat["weaponsets"], bab = 0, speed = 30) {
-  return CombatSheet.describe({ getCombat: () => ({ bab, speed: { total: speed }, weaponsets }) });
+  return CombatSheet.describe({ getCombat: () => ({ ac: {}, bab, speed: { total: speed }, weaponsets }) });
 }
 
 /** The rows the sheet gives `held`, alone in the first set's `slot`. */
 function rowsOf(held: Weapon, slot: "mainhand" | "offhand" | "twohanded" = "mainhand") {
-  const set = { mainhand: null, offhand: null, twohanded: null, [slot]: held };
+  const set = { ac: ARMOR_CLASS, shield: NO_SHIELD, mainhand: null, offhand: null, twohanded: null, [slot]: held };
   return describeCombat({ "0": set }).weaponSets[0].weapons[0].rows;
 }
 
@@ -28,6 +34,7 @@ function rowsOf(held: Weapon, slot: "mainhand" | "offhand" | "twohanded" = "main
 function weapon(overrides: Partial<Weapon> = {}): Weapon {
   return {
     name: "Dagger",
+    itemId: "dagger",
     natural: null,
     proficient: true,
     ranged: false,
@@ -154,19 +161,54 @@ describe("a weapon's attack rows", () => {
 });
 
 describe("a sheet's weapon sets", () => {
-  test("list the sets that hold a weapon, by their index, each weapon in its slot's order", () => {
+  test("list every set by its index, its armor class beside each weapon in its slot's order, a set holding none too", () => {
     const sword = weapon({ name: "Longsword" });
-    const shield = weapon({ name: "Light Shield", proficient: false });
+    const spikes = weapon({ name: "Shield Spikes", proficient: false });
+    const shielded = { total: 14, touch: 12, flatfooted: 12 };
+    const heavy = { names: ["Heavy Steel Shield"] };
     const { weaponSets } = describeCombat({
-      "1": { mainhand: null, offhand: shield, twohanded: null },
-      "0": { mainhand: sword, offhand: null, twohanded: null },
-      "2": { mainhand: null, offhand: null, twohanded: null },
+      "1": { ac: shielded, shield: NO_SHIELD, mainhand: null, offhand: spikes, twohanded: null },
+      "0": { ac: ARMOR_CLASS, shield: NO_SHIELD, mainhand: sword, offhand: null, twohanded: null },
+      "2": { ac: shielded, shield: heavy, mainhand: null, offhand: null, twohanded: null },
     });
     expect(
-      weaponSets.map(({ set, weapons }) => [set, weapons.map(({ name, proficient }) => [name, proficient])]),
+      weaponSets.map(({ set, ac, weapons }) => [
+        set,
+        ac.total,
+        weapons.map(({ name, proficient }) => [name, proficient]),
+      ]),
     ).toEqual([
-      [0, [["Longsword", true]]],
-      [1, [["Light Shield", false]]],
+      [0, 12, [["Longsword", true]]],
+      [1, 14, [["Shield Spikes", false]]],
+      [2, 14, []],
     ]);
+  });
+
+  test("give a set's AC, touch and flat-footed as their values stand, and none of its parts", () => {
+    // The engine's armor class, which holds its parts too
+    const ac = { ...ARMOR_CLASS, base: 10, dexterity: 2, misc: 0 };
+    const { weaponSets } = describeCombat({
+      "0": { ac, shield: NO_SHIELD, mainhand: null, offhand: null, twohanded: null },
+    });
+    expect(weaponSets[0].ac).toEqual(ARMOR_CLASS);
+  });
+
+  test("name what each set's hands hold, its weapons then its shield, and no item for a strike without one", () => {
+    const fist = weapon({ name: "Unarmed Strike", itemId: null });
+    const bite = weapon({ name: "Bite", itemId: null, natural: "primary" });
+    const heavy = { names: ["Heavy Steel Shield"] };
+    const { weaponSets, hasWeaponSets } = describeCombat({
+      "0": { ac: ARMOR_CLASS, shield: heavy, mainhand: weapon({ name: "Longsword" }), offhand: null, twohanded: null },
+      "1": { ac: ARMOR_CLASS, shield: NO_SHIELD, mainhand: fist, offhand: null, twohanded: null },
+    });
+    expect([weaponSets.map(({ held }) => held), hasWeaponSets]).toEqual([
+      [["Longsword", "Heavy Steel Shield"], []],
+      true,
+    ]);
+    // A character striking unarmed, or a creature's natural attacks, has no weapon set: its one loadout's held nothing
+    const unarmed = (slot: Weapon) =>
+      describeCombat({ "0": { ac: ARMOR_CLASS, shield: NO_SHIELD, mainhand: slot, offhand: null, twohanded: null } })
+        .hasWeaponSets;
+    expect([unarmed(fist), unarmed(bite)]).toEqual([false, false]);
   });
 });

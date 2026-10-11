@@ -161,7 +161,8 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
     let armorPenalty = 0;
 
     for (const armor of new Set(Object.values(this.armors.getArmors()))) armorPenalty += armor.checkpenalty;
-    for (const shield of new Set(Object.values(this.shields.getShields()))) armorPenalty += shield.checkpenalty;
+    // A shield carried in any weapon set weighs on them: the worst set's
+    armorPenalty += this.shields.getCheckPenalty();
 
     // D&D 3.5: use the worse (more negative) of armor+shield penalty vs encumbrance penalty
     const encumbrancePenalty = this.encumbrance.getEncumbrance().checkpenalty;

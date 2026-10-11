@@ -1,12 +1,15 @@
-import { CharacterComponent } from "@/engine/core/character/index.ts";
+import { CharacterComponent, type InventoryEntry } from "@/engine/core/character/index.ts";
 import { type ItemFieldValues } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import type InventoryComponent from "@/engine/rulesets/dnd3.5/model/inventory/InventoryComponent.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
-import type { Item } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { MASTERWORK_CHECK_PENALTY_REDUCTION } from "@/vocabulary/dnd3.5/combat.ts";
 
-interface ShieldSlot {
+/** Grouping key (normalized) → shared ShieldSlot reference */
+type ShieldsData = Record<string, ShieldSlot>;
+
+/** A shield the character has equipped: its AC, its penalties, and its cap on the Dexterity bonus to AC. */
+export interface ShieldSlot {
   ac: { bonus: number; misc: number; readonly total: number };
   checkpenalty: number;
   itemId: string;
@@ -18,24 +21,28 @@ interface ShieldSlot {
   spellfailure: number;
 }
 
-/** Grouping key (normalized) → shared ShieldSlot reference */
-type ShieldsData = Record<string, ShieldSlot>;
-
-/** The shields a character has equipped, under their types: the inventory's (`InventoryComponent.getEquipped`). */
+/**
+ * The shields a character has equipped, the inventory's (`InventoryComponent.getEquipped`): under their types, and in
+ * the weapon set whose off hand holds each.
+ */
 export default class ShieldsComponent extends CharacterComponent<LoadedCharacterData> {
   constructor(private readonly inventory: InventoryComponent) {
     super();
   }
+
+  /** Each weapon set's shields, by the set's key (stored from 0): what its armor class and its attacks read. */
+  private readonly sets: Record<string, ShieldSlot[]> = {};
 
   private readonly shields: ShieldsData = {};
 
   /** Each shield the inventory has equipped, in its order. */
   override initialize() {
     for (const { entry, fields } of this.inventory.getEquipped())
-      if (entry.item.type === "Shield") this.registerShield(entry.item, fields);
+      if (entry.item.type === "Shield") this.registerShield(entry, fields);
   }
 
-  private registerShield(item: Item, fields: ItemFieldValues): void {
+  /** A shield under its type, and in its entry's weapon set (the first, for an entry stored without one). */
+  private registerShield({ item, weaponSet }: InventoryEntry, fields: ItemFieldValues): void {
     if (fields.shield.proficiency === null) return;
 
     const acBonus = fields.shield.acBonus ?? 0;
@@ -65,10 +72,25 @@ export default class ShieldsComponent extends CharacterComponent<LoadedCharacter
     // Under its type: a heavy wooden shield's `heavywooden`
     const grouping = fields.shield.type === null ? "" : stripSeparators(fields.shield.type);
     if (grouping) this.shields[grouping] = shieldSlot;
+    (this.sets[String(weaponSet ?? 0)] ??= []).push(shieldSlot);
+  }
+
+  /**
+   * The check penalty the shields give the skills: the worst weapon set's, as a shield carried in any set weighs on
+   * them.
+   */
+  getCheckPenalty(): number {
+    const penalties = Object.values(this.sets).map((slots) => slots.reduce((sum, slot) => sum + slot.checkpenalty, 0));
+    return Math.min(0, ...penalties);
   }
 
   getShields(): ShieldsData {
     return this.shields;
+  }
+
+  /** Each weapon set's shields, by the set's key: a set without a shield has none. */
+  getShieldSets(): Readonly<Record<string, ShieldSlot[]>> {
+    return this.sets;
   }
 }
 

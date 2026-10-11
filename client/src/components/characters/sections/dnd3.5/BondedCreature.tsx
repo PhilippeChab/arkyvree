@@ -9,6 +9,7 @@ import type { BaseRules } from "@/shared/enums.ts";
 import { formatSigned } from "@/shared/text.ts";
 
 import { AbilityScoreBox } from "./AbilityScoreBox.tsx";
+import { ArmorClassBoxes } from "./ArmorClassBoxes.tsx";
 import { StatField } from "./StatField.tsx";
 
 interface BondedCreatureProps {
@@ -30,6 +31,8 @@ export function BondedCreature({ bonded, baseRules, linkable = false }: BondedCr
   const abilityEntries = sortAbilities(Object.entries(bonded.abilities), baseRules, ([name]) => name);
 
   const combat = bonded.combat;
+  // A creature has one weapon set, its natural attacks', with no shield: its armor class
+  const armorClass = combat?.weaponSets?.[0]?.ac;
   const saves = bonded.saves;
 
   const featNames = Object.values(bonded.feats)
@@ -74,19 +77,21 @@ export function BondedCreature({ bonded, baseRules, linkable = false }: BondedCr
         <Stack spacing={3} sx={{ flex: 1, minWidth: { md: 260 } }}>
           <Stack spacing={1}>
             <SubsectionTitle component="h5">Combat &amp; Saves</SubsectionTitle>
-            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", columnGap: 2, rowGap: 1.5 }}>
-              <Stack spacing={1.5}>
-                <StatField label="HP" value={combat?.hp?.total ?? 0} />
-                <StatField label="AC" value={combat?.ac?.total ?? 10} />
-                <StatField label="BAB" value={combat?.babLabel} />
-                <StatField label="Speed" value={combat?.speedLabel} />
-              </Stack>
-              <Stack spacing={1.5}>
-                {Object.entries(saves).map(([key, save]) => (
-                  <StatField key={key} label={save.name} value={formatSigned(save.total)} />
-                ))}
-              </Stack>
-            </Box>
+            <Stack spacing={2}>
+              {armorClass && <ArmorClassBoxes ac={armorClass} />}
+              <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", columnGap: 2, rowGap: 1.5 }}>
+                <Stack spacing={1.5}>
+                  <StatField label="HP" value={combat?.hp?.total ?? 0} />
+                  <StatField label="BAB" value={combat?.babLabel} />
+                  <StatField label="Speed" value={combat?.speedLabel} />
+                </Stack>
+                <Stack spacing={1.5}>
+                  {Object.entries(saves).map(([key, save]) => (
+                    <StatField key={key} label={save.name} value={formatSigned(save.total)} />
+                  ))}
+                </Stack>
+              </Box>
+            </Stack>
           </Stack>
 
           {featNames.length > 0 && (

@@ -1,5 +1,6 @@
 import type { TargetPathsTraverser } from "@/engine/core/paths/CategoryPaths.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
+import type { PathContext } from "@/engine/core/paths/PathCategory.ts";
 import PathTraverser, { type Components, type TraversePathResult } from "@/engine/core/paths/PathTraverser.ts";
 import TemplateExpression from "@/engine/core/paths/TemplateExpression.ts";
 import type RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
@@ -15,12 +16,14 @@ interface ModifierResults {
 
 export default class ModifierEvaluator {
   /**
-   * `sourcesOf` gives the sources a modifier applies from, each of which a target reading its source resolves by: by
-   * default its own.
+   * `contextsOf` gives the contexts a modifier applies in, each of which its target is reached in: the source a target
+   * reading its source resolves by, and the part of the sheet (a scope); by default its own source, the whole sheet.
    */
   constructor(
     private readonly targetPaths: TargetPathsTraverser,
-    private readonly sourcesOf: (modifier: Modifier) => string[] = (modifier) => [modifier.sourceId],
+    private readonly contextsOf: (modifier: Modifier) => PathContext[] = (modifier) => [
+      { sourceId: modifier.sourceId },
+    ],
   ) {}
 
   private static pathsOverlap(target: string, referencedPath: string): boolean {
@@ -190,8 +193,8 @@ export default class ModifierEvaluator {
   evaluateModifier(modifier: Modifier, components: Components) {
     const { target } = modifier;
 
-    const results = this.sourcesOf(modifier).flatMap((sourceId) =>
-      this.targetPaths.traversePathInit(target, components, { sourceId }),
+    const results = this.contextsOf(modifier).flatMap((context) =>
+      this.targetPaths.traversePathInit(target, components, context),
     );
     if (results.length === 0) {
       this.results.inactiveModifiers.push(modifier);

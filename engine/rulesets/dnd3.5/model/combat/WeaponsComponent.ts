@@ -4,10 +4,10 @@ import { stripSeparators } from "@/shared/text.ts";
 import { UNARMED_STRIKE } from "@/vocabulary/dnd3.5/combat.ts";
 
 import type CombatComponent from "./CombatComponent.ts";
-import { type HeldWeapon, SLOT_MAP, type WeaponSet, type WeaponSlot } from "./CombatState.ts";
+import { type HeldWeapon, SLOT_MAP, type WeaponSlot } from "./CombatState.ts";
 
 /** Record of weapon key ("setIndex_slotKey") → shared WeaponSlot reference */
-type WeaponGroup = Record<string, NonNullable<WeaponSet[keyof WeaponSet]>>;
+type WeaponGroup = Record<string, WeaponSlot>;
 
 /** Grouping key (normalized) → WeaponGroup */
 type WeaponsData = Record<string, WeaponGroup>;
