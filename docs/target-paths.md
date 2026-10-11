@@ -6,7 +6,7 @@ Paths marked "req only" are available as requirement targets but not modifier ta
 
 Every category (`engine/rulesets/dnd3.5/model/*/…Paths.ts`, a `PathCategory`) lists its leaves in a table (its paths under an entity or a group: a description, a value type, whether it's req only or mod only, which `isLeafOfKind` reads), and offers each the operators of its value type (`getOperators`, `shared/customization/operators.ts`): a number's arithmetic for a modifier and comparisons for a requirement, any other value's `set` for a modifier and `equal` / `not_equal` for a requirement. A count of levels (a class's, a bonded creature's) is added to, taken from or set, never multiplied or divided (`LEVEL_MODIFIER_OPERATORS`), and a spell's list-valued properties are added to or taken from, contained or not. A segment's label is its category's (`getSegmentLabels`, derived from its table), or one of the ruleset's names its category labels (`labelNames`: an entity's name over any other label, a property's value only where no other label names the segment).
 
-A part the sheet computes when read (the totals, an ability's modifier, a skill's or a save's `ability`, a skill's `weight`, `combat.ac.dexterity`, `size`, `touch` and `flatfooted`, `combat.hp.constitution`, `combat.initiative.dexterity`, the grapple's `bab`, `strength` and `size`, the encumbrance's `heavyload`, a weapon's `tohit.strength`, `tohit.size`, `tohit.gearpenalty`, `damage.strength` and `wielded`, the armor's `category` and whether a shield is `held`) follows what it's computed from, a modifier that raises an ability included: it's "req only", and a flat bonus belongs in the `misc` beside it. See [How a sheet is built](customization.md#how-a-sheet-is-built).
+A part the sheet computes when read (the totals, an ability's modifier, a skill's or a save's `ability`, a skill's `weight`, `combat.ac.dexterity` and `size`, a weapon set's `ac.touch` and `ac.flatfooted`, `combat.hp.constitution`, `combat.initiative.dexterity`, the grapple's `bab`, `strength` and `size`, the encumbrance's `heavyload`, a weapon's `tohit.strength`, `tohit.size`, `tohit.gearpenalty`, `damage.strength` and `wielded`, the armor's `category` and whether a shield is `held`) follows what it's computed from, a modifier that raises an ability included: it's "req only", and a flat bonus belongs in the `misc` beside it. See [How a sheet is built](customization.md#how-a-sheet-is-built).
 
 A path on a value the character doesn't have reaches nothing: a modifier on it is inactive, and a requirement on it unmet rather than invalid. Such a value is a leaf holding `null` or `undefined`, such as a bow's or a crossbow's `damage.strmultiplier` (its Strength doesn't follow its hand). So a field a modifier must be able to `set` holds an empty value when unset (`""`, `0`), never `null` or `undefined`: an unset height or weight is `""`, which `is_empty` reads as empty. An unset age is the exception, on purpose: a character without one has no age to compare or set.
 
@@ -52,18 +52,18 @@ A path on a value the character doesn't have reaches nothing: a modifier on it i
 |------|------|-------------|
 | `combat.ac.base` | number | Default 10 |
 | `combat.ac.armor` | number | Armor bonus to AC: armor, bracers, an armor's enhancement (not in touch AC) |
-| `combat.ac.shield` | number | Shield bonus to AC: a shield, its enhancement (not in touch AC) |
+| `combat.ac.shield` | number | Shield bonus to AC: a shield, its enhancement (not in touch AC). In a set's armor class, its own shield's; elsewhere, the greatest set's |
 | `combat.ac.dexterity` | number | Dexterity bonus to AC (req only) |
 | `combat.ac.natural` | number | Natural armor bonus (not in touch AC) |
 | `combat.ac.deflection` | number | Deflection bonus to AC |
 | `combat.ac.dodge` | number | Dodge bonus to AC, and any other lost when flat-footed (not in flat-footed AC) |
 | `combat.ac.misc` | number | Other bonuses to AC, kept in touch and flat-footed AC (a monk's Wisdom) |
 | `combat.ac.uncannydodge` | boolean | Keeps the Dexterity and dodge bonuses when flat-footed (uncanny dodge) |
-| `combat.ac.total` | number | All AC bonuses combined (req only) |
-| `combat.ac.touch` | number | Ignores armor, shield, natural (req only) |
-| `combat.ac.flatfooted` | number | Ignores the Dexterity and dodge bonuses, unless uncanny dodge (req only) |
+| `combat.weaponsets.*.ac.total` | number | A weapon set's AC: all its bonuses combined, met when any set's is (req only) |
+| `combat.weaponsets.*.ac.touch` | number | A weapon set's touch AC: ignores armor, shield, natural (req only) |
+| `combat.weaponsets.*.ac.flatfooted` | number | A weapon set's flat-footed AC: ignores the Dexterity and dodge bonuses, unless uncanny dodge (req only) |
 | `combat.armor.category` | string | The category of the heaviest armor worn: none, light, medium or heavy (req only) |
-| `combat.shield.held` | boolean | Whether a shield is carried, in any weapon set (#236) (req only) |
+| `combat.shield.held` | boolean | Whether a shield is carried: in a set's armor class, by the set; elsewhere, in any set (req only) |
 | `combat.hp.base` | number | From hit dice rolls |
 | `combat.hp.constitution` | number | Con modifier per level (req only) |
 | `combat.hp.misc` | number | Other bonuses to HP |
@@ -90,6 +90,12 @@ A path on a value the character doesn't have reaches nothing: a modifier on it i
 | `combat.encumbrance.carriedweight` | number | Total weight of items (lbs) |
 | `combat.encumbrance.heavyload` | number | Max carry capacity (lbs) (req only) |
 | `combat.encumbrance.load` | string | The load carried: light, medium, heavy or overloaded (req only) |
+
+### Armor class by weapon set
+
+A character has an armor class for each weapon set, the loadouts it switches between, and none of its own: each set's (`combat.weaponsets.<set>.ac`, its set stored from 0) counts a shield only when the set holds one (its AC, its maximum Dexterity), and every part the sets share (`combat.ac.*`: the armor, natural armor, deflection, dodge, misc, uncanny dodge). A character with no weapon set has one, the first, holding no shield; a set holding a shield and no weapon is one too. A requirement reads a set's totals with `combat.weaponsets.*.ac.total` (`touch`, `flatfooted`), met when any set's meets it; a template reads none: they're several values.
+
+A modifier on the armor class (`combat.ac.<part>`) adds to what every set shares, but for two, which apply in each set on their own, each set's own `combat.ac.<part>` reached in it: an item's held in a set's hand, only in the sets holding it (a magic shield's enhancement on `combat.ac.shield`), and one whose requirements read the armor class or the shield (`combat.ac.*`, `combat.shield.*`), in each set whose own meets them (a monk's AC bonus, gated on `combat.shield.held == false`, counts in the sets holding no shield). Anywhere else (a skill's, a save's or the speed's modifier, a prerequisite, a template), `combat.shield.held` is whether any set holds a shield, `combat.ac.shield` the greatest set's shield bonus, and Dexterity's bonus is capped by every shield: the worst case, which the skills' armor check penalty takes too (the worst set's shield). A set's attacks take only its own shield's penalties (`tohit.gearpenalty`, a finessed attack's check penalty). See [the rulings](./dnd3.5/rules-decisions.md#characters).
 
 ## items.weapons
 

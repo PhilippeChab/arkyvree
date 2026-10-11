@@ -12,28 +12,35 @@ import type { ArmorsData } from "./ArmorsComponent.ts";
 import type EncumbranceComponent from "./EncumbranceComponent.ts";
 import type { EncumbranceData } from "./EncumbranceComponent.ts";
 import type ShieldsComponent from "./ShieldsComponent.ts";
-import type { ShieldsData } from "./ShieldsComponent.ts";
+import type { ShieldsData, ShieldSlot } from "./ShieldsComponent.ts";
 
 type ArmorCategory = (typeof ARMOR_CATEGORIES)[number];
 
+/**
+ * An armor class's parts: its inputs (the base, the armor's and the shield's AC, natural armor, deflection, dodge,
+ * misc, uncanny dodge), which modifiers change, and what's computed when read (Dexterity's bonus, the size's).
+ */
+export interface ArmorClassParts {
+  armor: number;
+  base: number;
+  deflection: number;
+  readonly dexterity: number;
+  /** Dodge bonuses, and any other a flat-footed character loses with its Dexterity bonus */
+  dodge: number;
+  misc: number;
+  natural: number;
+  shield: number;
+  readonly size: number;
+  /** Keeps the Dexterity and dodge bonuses when flat-footed: uncanny dodge */
+  uncannydodge: boolean;
+}
+
 export interface CombatData {
-  ac: {
-    armor: number;
-    base: number;
-    deflection: number;
-    readonly dexterity: number;
-    /** Dodge bonuses, and any other a flat-footed character loses with its Dexterity bonus */
-    dodge: number;
-    readonly flatfooted: number;
-    misc: number;
-    natural: number;
-    shield: number;
-    readonly size: number;
-    readonly total: number;
-    readonly touch: number;
-    /** Keeps the Dexterity and dodge bonuses when flat-footed: uncanny dodge */
-    uncannydodge: boolean;
-  };
+  /**
+   * The armor class's parts every weapon set shares, read outside a set: a shield in any set counted (its AC, its
+   * maximum Dexterity), and what modifiers add to every set's. Its totals are each set's (`WeaponSet.ac`).
+   */
+  ac: ArmorClassParts;
   /** The category of the heaviest armor worn, "none" without: what a class feature's speed or AC bonus may require */
   armor: { category: ArmorCategory };
   armors: ArmorsData;
@@ -63,8 +70,8 @@ export interface CombatData {
    * many attacks it makes (two claws are two).
    */
   naturalattacks: { readonly count: number; extraattacks: number; secondarypenalty: number };
-  /** Whether a shield is carried, in any weapon set (#236) */
-  shield: { held: boolean };
+  /** Whether a shield is carried in any weapon set: the worst case, which the skills and the speed read */
+  shield: { readonly held: boolean };
   shields: ShieldsData;
   speed: {
     base: number;
@@ -93,6 +100,18 @@ export interface HeldWeapon {
   weapon: WeaponSlot;
 }
 
+/**
+ * A weapon set's armor class: the parts every set shares and what modifiers add in it alone (a gate on the shield
+ * held, an item it holds), its own shield's AC and Dexterity cap, and its totals: all its parts, touch AC (without the
+ * armor, the shield and natural armor), and flat-footed AC (without the Dexterity and dodge bonuses, unless uncanny
+ * dodge keeps them).
+ */
+export interface SetArmorClass extends ArmorClassParts {
+  readonly flatfooted: number;
+  readonly total: number;
+  readonly touch: number;
+}
+
 /** How a weapon's attack and damage follow the character's abilities, which its totals are recomputed from. */
 export interface WeaponAbilities {
   /** The ability it attacks with: Dexterity for a ranged weapon, Strength for a melee one (SRD). */
@@ -105,9 +124,15 @@ export interface WeaponAbilities {
   strengthRating: number | null;
 }
 
+/**
+ * A loadout the character switches to: what each hand holds, its armor class, and whether its off hand holds a shield,
+ * which its armor class, its attacks and its armor class's gates read.
+ */
 export interface WeaponSet {
+  ac: SetArmorClass;
   mainhand: WeaponSlot | null;
   offhand: WeaponSlot | null;
+  shield: { readonly held: boolean };
   twohanded: WeaponSlot | null;
 }
 export interface WeaponSlot {
@@ -180,8 +205,11 @@ export interface WeaponSlot {
 /** A natural attack's kind: a primary one at its full attack bonus, a secondary one lower. */
 export type NaturalAttackKind = "primary" | "secondary";
 
+/** A hand of a weapon set, where it holds a weapon. */
+export type WeaponHand = "mainhand" | "offhand" | "twohanded";
+
 /** A weapon slot's label, as an item's location names it, to its place in the weapon set. */
-export const SLOT_MAP: Record<string, keyof WeaponSet> = {
+export const SLOT_MAP: Record<string, WeaponHand> = {
   "Main Hand": "mainhand",
   "Off Hand": "offhand",
   "Two Handed": "twohanded",
@@ -203,6 +231,7 @@ export default abstract class CombatState extends CharacterComponent<LoadedChara
   ) {
     super();
     this.combat = CombatState.newSheet(armors.getArmors(), shields.getShields(), encumbrance.getEncumbrance());
+    this.shieldSets = shields.getShieldSets();
   }
 
   /** A new sheet, around the armors, the shields and the encumbrance the character's components hold. */
@@ -219,9 +248,6 @@ export default abstract class CombatState extends CharacterComponent<LoadedChara
         size: 0,
         misc: 0,
         uncannydodge: false,
-        total: COMBAT_RULES.DEFAULT_AC_BASE,
-        touch: COMBAT_RULES.DEFAULT_AC_BASE,
-        flatfooted: COMBAT_RULES.DEFAULT_AC_BASE,
       },
       hp: { base: 0, constitution: 0, misc: 0, total: 0 },
       initiative: { dexterity: 0, misc: 0, total: 0 },
@@ -254,8 +280,17 @@ export default abstract class CombatState extends CharacterComponent<LoadedChara
   /** Each double weapon's other end's damage dice (its WEAPON_DOUBLE_DAMAGE). */
   protected readonly doubleWeapons = new WeakMap<WeaponSlot, string>();
 
+  /** What modifiers add to the armor's and the shield's AC, beside the items' own: a modifier's write keeps its part. */
+  protected readonly gearBonus = { armor: 0, shield: 0 };
+
   /** The inventory's weapons the combat placed, in its order (`CombatComponent.initialize`). */
   protected readonly heldWeapons: HeldWeapon[] = [];
+
+  /** Each weapon set's shields, by its key: the shields component's (`ShieldsComponent.getShieldSets`). */
+  protected readonly shieldSets: Readonly<Record<string, ShieldSlot[]>>;
+
+  /** The weapon sets whose off hand holds a tower shield: −2 on their attack rolls, for its encumbrance. */
+  protected readonly towerShieldSets = new Set<string>();
 
   /** Each weapon's abilities, which its to-hit and damage read: Weapon Finesse sets its finesse. */
   protected readonly weaponAbilities = new WeakMap<WeaponSlot, WeaponAbilities>();
@@ -271,11 +306,17 @@ export default abstract class CombatState extends CharacterComponent<LoadedChara
   /** Whether the race keeps its speed in medium or heavy armor and load (RACE_SPEED_IGNORES_ENCUMBRANCE: the dwarf). */
   protected speedIgnoresEncumbrance = false;
 
-  /** Whether a tower shield is carried: −2 on attack rolls, for its encumbrance. */
-  protected towerShield = false;
+  /** A weapon set's armor class and shield (`WeaponSet`), which read its own: the armor class's concern makes them. */
+  protected abstract defenseOf(setKey: string): Pick<WeaponSet, "ac" | "shield">;
 
   /** The character's size, as its identity's race has it: a modifier on `identity.physiology.race.size` changes it. */
   protected get raceSize(): string {
     return this.identity.getIdentity().physiology.race.size;
+  }
+
+  /** The weapon set of key `setKey` (stored from 0), made with its hands empty when the character has none there yet. */
+  protected weaponSet(setKey: string): WeaponSet {
+    this.combat.weaponsets[setKey] ??= { mainhand: null, offhand: null, twohanded: null, ...this.defenseOf(setKey) };
+    return this.combat.weaponsets[setKey];
   }
 }

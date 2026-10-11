@@ -47,15 +47,28 @@ export interface PathCategory<C = Components> {
   pathDescriptions?: Record<string, string>;
   /** Whether a target reads its source itself (an item's own weapon: the place its item is held), not the sheet */
   readsSource?(target: string): boolean;
-  /** A target it resolves its own way, or null for the walk from its component's data */
+  /** A target it resolves its own way, in its `context` (its source, its scope), or null for the walk from its component's data */
   resolve?(
     target: string,
     rest: string[],
     components: Components,
     traverser: PathTraverser,
-    context?: { sourceId?: string },
+    context?: PathContext,
   ): TraversePathResult[] | null;
+}
+
+/**
+ * What a path is read for, past the sheet itself: the item it's of (`sourceId`), whose own weapon its paths reach, and
+ * the part of the sheet it reads (`scope`, a ruleset's own: 3.5's weapon sets), each of them for `EVERY_SCOPE`. A
+ * category whose values differ by scope resolves them (`PathCategory.resolve`); without one, a path reads the sheet.
+ */
+export interface PathContext {
+  scope?: string;
+  sourceId?: string;
 }
 
 /** The names of `T`'s methods a path can call without arguments: the getters its data comes from. */
 export type GetterOf<T> = { [M in keyof T]-?: T[M] extends () => unknown ? M : never }[keyof T] & string;
+
+/** The scope of every part of the sheet at once: a path reads each part's value, met when any of them is. */
+export const EVERY_SCOPE = "*";

@@ -46,7 +46,7 @@ function familiarOf(masterId: string) {
   return Characters.findOne(db, { parentCharacterId: masterId, kind: "familiar" });
 }
 
-/** A bonded creature's numbers, as its sheet shows them. */
+/** A bonded creature's numbers, as its sheet shows them: its first weapon set's armor class, which holds no shield. */
 function statBlock(detailed: DetailedCharacterMount | DetailedCharacterAnimalCompanion) {
   const { hp, bab, ac, weaponsets } = detailed.components.combat.getCombat();
   const saves = detailed.components.saves.getSaves();
@@ -57,7 +57,7 @@ function statBlock(detailed: DetailedCharacterMount | DetailedCharacterAnimalCom
     bab,
     natural: ac.natural,
     size: ac.size,
-    ac: ac.total,
+    ac: weaponsets["0"]?.ac.total,
     baseSaves: { fortitude: saves.fortitude.base, reflex: saves.reflex.base, will: saves.will.base },
     saves: { fortitude: saves.fortitude.total, reflex: saves.reflex.total, will: saves.will.total },
     abilities: {
@@ -563,7 +563,8 @@ describe("Stat blocks", () => {
     ).toEqual({ balance: 10, climb: 6, hide: 16, jump: 10, listen: 3, movesilently: 8, spot: 3 });
     expect(skills["hide"]?.size).toBe(8);
 
-    const { ac, weaponsets } = cat.components.combat.getCombat();
+    const { weaponsets } = cat.components.combat.getCombat();
+    const { ac } = weaponsets["0"];
     expect(ac.size).toBe(2);
     expect(ac.total).toBe(
       ac.base + ac.armor + ac.shield + ac.dexterity + ac.natural + ac.deflection + ac.size + ac.misc,

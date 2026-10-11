@@ -1,11 +1,15 @@
-import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
+import { EVERY_SCOPE, type GetterOf, type PathCategory, type PathContext } from "@/engine/core/paths/PathCategory.ts";
+import PathTraverser, { type Components, type TraversePathResult } from "@/engine/core/paths/PathTraverser.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
 import { getOperators } from "@/shared/customization/operators.ts";
 import { deriveSegmentLabels, isLeafOfKind, type TargetPath } from "@/shared/customization/target.ts";
+import { isRecord } from "@/shared/isRecord.ts";
 import { capitalize } from "@/shared/text.ts";
 import { LOAD_CATEGORIES } from "@/vocabulary/dnd3.5/carrying.ts";
 import { ARMOR_CATEGORIES } from "@/vocabulary/dnd3.5/combat.ts";
+
+import type CombatComponent from "./CombatComponent.ts";
 
 const COMBAT_LABELS: Record<string, string> = {
   tohit: "To Hit",
@@ -20,6 +24,8 @@ const COMBAT_LABELS: Record<string, string> = {
   naturalattacks: "Natural Attacks",
   secondarypenalty: "Secondary Penalty",
   extraattacks: "Extra Attacks",
+  weaponsets: "Weapon Sets",
+  flatfooted: "Flat-Footed",
 };
 
 const COMBAT_PATHS = [
@@ -33,7 +39,8 @@ const COMBAT_PATHS = [
   },
   {
     path: "ac.shield",
-    description: "Shield bonus to AC: a shield, its enhancement (not in touch AC)",
+    description:
+      "Shield bonus to AC: a shield, its enhancement (not in touch AC). In a set's armor class, its own shield's; elsewhere, the greatest set's",
     type: "number" as const,
     sortOrder: 2,
   },
@@ -65,27 +72,6 @@ const COMBAT_PATHS = [
     type: "boolean" as const,
     sortOrder: 2,
   },
-  {
-    path: "ac.total",
-    description: "All AC bonuses combined",
-    type: "number" as const,
-    sortOrder: 2,
-    requirementOnly: true,
-  },
-  {
-    path: "ac.touch",
-    description: "Ignores armor, shield, natural",
-    type: "number" as const,
-    sortOrder: 2,
-    requirementOnly: true,
-  },
-  {
-    path: "ac.flatfooted",
-    description: "Ignores the Dexterity and dodge bonuses, unless uncanny dodge",
-    type: "number" as const,
-    sortOrder: 2,
-    requirementOnly: true,
-  },
   // What a class feature's speed or AC bonus may require
   {
     path: "armor.category",
@@ -97,7 +83,8 @@ const COMBAT_PATHS = [
   },
   {
     path: "shield.held",
-    description: "Whether a shield is carried, in any weapon set",
+    description:
+      "Whether a shield is carried: in a set's armor class, by the set; elsewhere, in any set (the skills' and the speed's worst case)",
     type: "boolean" as const,
     sortOrder: 2,
     requirementOnly: true,
@@ -195,6 +182,17 @@ const ENCUMBRANCE_PATHS = [
   },
 ];
 
+/** Each weapon set's armor class totals, which its own parts give (`combat.weaponsets.*.ac.<total>`): for requirements. */
+const SET_ARMOR_CLASS_PATHS = [
+  { path: "total", description: "All AC bonuses combined", type: "number" as const },
+  { path: "touch", description: "Ignores armor, shield, natural", type: "number" as const },
+  {
+    path: "flatfooted",
+    description: "Ignores the Dexterity and dodge bonuses, unless uncanny dodge",
+    type: "number" as const,
+  },
+];
+
 /** The combat target paths: AC, hit points, attacks, initiative, speed, encumbrance. */
 export default class CombatPaths implements PathCategory<Dnd35Components> {
   static generateCombatPaths(kind: "modifier" | "requirement"): TargetPath[] {
@@ -227,6 +225,35 @@ export default class CombatPaths implements PathCategory<Dnd35Components> {
     }));
   }
 
+  /**
+   * Each weapon set's armor class totals, for requirements: met when any set's is (`combat.weaponsets.*.ac.total`), as
+   * the sets are the character's, not the ruleset's.
+   */
+  static generateSetArmorClassPaths(kind: "modifier" | "requirement"): TargetPath[] {
+    if (kind === "modifier") return [];
+    return SET_ARMOR_CLASS_PATHS.map((path) => ({
+      path: `combat.weaponsets.*.ac.${path.path}`,
+      category: "combat",
+      description: path.description,
+      valueType: path.type,
+      operators: getOperators(path.type, kind),
+      sortOrder: 2,
+    }));
+  }
+
+  /** Whether a target is a part of the armor class (`combat.ac.misc`), which a weapon set's armor class has its own of. */
+  static isArmorClassTarget(target: string): boolean {
+    return target.startsWith("combat.ac.");
+  }
+
+  /**
+   * Whether a target reads what follows the weapon set: the armor class (`combat.ac.*`) and the shield held
+   * (`combat.shield.*`), the set's own in its scope.
+   */
+  static readsWeaponSet(target: string): boolean {
+    return CombatPaths.isArmorClassTarget(target) || target.startsWith("combat.shield.");
+  }
+
   readonly component = { key: "combat", getter: "getCombat" } as const;
 
   readonly description = "AC, hit points, attack bonuses, initiative, speed, armor and shield";
@@ -236,7 +263,7 @@ export default class CombatPaths implements PathCategory<Dnd35Components> {
   readonly name = "combat";
 
   readonly pathDescriptions = {
-    "combat.ac": "AC bonuses and totals",
+    "combat.ac": "AC bonuses",
     "combat.armor": "The armor worn",
     "combat.shield": "The shield carried",
     "combat.hp": "HP sources and total",
@@ -247,16 +274,50 @@ export default class CombatPaths implements PathCategory<Dnd35Components> {
     "combat.throwing": "Attacks with thrown weapons and slings",
     "combat.speed": "Movement speed (ft)",
     "combat.encumbrance": "Carry weight and load capacity",
+    "combat.weaponsets": "Each weapon set's armor class",
+    "combat.weaponsets.*": "Any weapon set",
   };
 
   generate(_rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
-    return [...CombatPaths.generateCombatPaths(kind), ...CombatPaths.generateEncumbrancePaths(kind)];
+    return [
+      ...CombatPaths.generateCombatPaths(kind),
+      ...CombatPaths.generateSetArmorClassPaths(kind),
+      ...CombatPaths.generateEncumbrancePaths(kind),
+    ];
   }
 
   getSegmentLabels(): Record<string, string> {
     return {
       ...deriveSegmentLabels(COMBAT_PATHS, COMBAT_LABELS),
+      ...deriveSegmentLabels(SET_ARMOR_CLASS_PATHS, COMBAT_LABELS),
       ...deriveSegmentLabels(ENCUMBRANCE_PATHS, ENCUMBRANCE_LABELS),
     };
+  }
+
+  /**
+   * In a weapon set's scope (a modifier on the armor class applied in each set, its gates read there: `scopesOf`), the
+   * armor class and the shield are the set's own (`combat.ac.misc` its `combat.weaponsets.<set>.ac.misc`), each set's
+   * in `EVERY_SCOPE`. Null outside a scope, or for another path: the walk reads the sheet.
+   */
+  resolve(
+    target: string,
+    rest: string[],
+    components: Components,
+    traverser: PathTraverser,
+    context?: PathContext,
+  ): TraversePathResult[] | null {
+    const [section, ...subPath] = rest;
+    const scope = context?.scope;
+    if (scope === undefined || !CombatPaths.readsWeaponSet(target)) return null;
+    const component = PathTraverser.findComponent(components, this.component.key);
+    if (!component) return [];
+    const combat = PathTraverser.readComponent(component, "getCombat" satisfies GetterOf<CombatComponent>);
+    if (!isRecord(combat) || !isRecord(combat.weaponsets)) return [];
+    const sets = scope === EVERY_SCOPE ? Object.entries(combat.weaponsets) : [[scope, combat.weaponsets[scope]]];
+    return sets.flatMap(([setKey, weaponSet]) => {
+      if (!isRecord(weaponSet) || subPath.length === 0) return [];
+      const pathParts = ["combat", "weaponsets", String(setKey), section];
+      return traverser.traverse(component, subPath, weaponSet[section], section, 0, pathParts);
+    });
   }
 }

@@ -1,13 +1,14 @@
 import ModifierEvaluator from "@/engine/core/modifiers/ModifierEvaluator.ts";
 import type { CharacterRows } from "@/engine/core/module/index.ts";
 import type { TargetPathsTraverser } from "@/engine/core/paths/CategoryPaths.ts";
+import { EVERY_SCOPE, type PathContext } from "@/engine/core/paths/PathCategory.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import { isTemplateValue } from "@/shared/customization/templateExpression.ts";
 import type { Character, Modifier, Requirement } from "@/shared/relations.ts";
 
-import type { BuiltCharacter, default as CharacterComponent } from "./CharacterComponent.ts";
+import type { BuiltCharacter, default as CharacterComponent, RequirementsContext } from "./CharacterComponent.ts";
 import type { default as CharacterDataLoader, LoadedCharacter } from "./CharacterDataLoader.ts";
 
 /** A row of the ruleset's entities the character has, which its source chain must hold: its name and its ruleset. */
@@ -33,21 +34,27 @@ export default abstract class CharacterBase<
     protected readonly character: Character,
     protected readonly targetPaths: TargetPathsTraverser,
   ) {
-    this.modifierEvaluator = new ModifierEvaluator(targetPaths, this.sourcesOf);
+    this.modifierEvaluator = new ModifierEvaluator(targetPaths, this.contextsOf);
     this.requirementEvaluator = new RequirementEvaluator(targetPaths);
   }
 
   /**
-   * The sources a modifier applies from: its own, or, for an item's modifier on the item itself (a weapon's own paths)
-   * behind gates, each equipped entry of the item whose gates are met there. An item held in two places is a weapon in
-   * each: a bonus gated on the main hand reaches the main-hand dagger, not the off-hand one.
+   * The contexts a modifier applies in: each scope of the sheet it takes on its own (`scopesOf`) whose gates are met
+   * there; for an item's modifier on the item itself (a weapon's own paths) behind gates, each equipped entry of the
+   * item whose gates are met there (an item held in two places is a weapon in each: a bonus gated on the main hand
+   * reaches the main-hand dagger, not the off-hand one); else its own source, on the whole sheet.
    */
-  protected readonly sourcesOf = (modifier: Modifier): string[] => {
-    if (modifier.sourceType !== "items" || !this.targetPaths.readsSource(modifier.target)) return [modifier.sourceId];
-    const gates = this.data.requirementGroups.filter(([owner]) =>
-      owner?.entityType === "modifiers" ? owner.entityId === modifier.id : owner?.entityId === modifier.sourceId,
-    );
-    if (gates.length === 0) return [modifier.sourceId];
+  protected readonly contextsOf = (modifier: Modifier): PathContext[] => {
+    const scopes = this.scopesOf(modifier);
+    if (scopes) {
+      const gates = this.gatesOf(modifier);
+      const met = scopes.filter((scope) => gates.length === 0 || this.areRequirementsMet(gates, { scope }));
+      return met.map((scope) => ({ scope, sourceId: modifier.sourceId }));
+    }
+    if (modifier.sourceType !== "items" || !this.targetPaths.readsSource(modifier.target))
+      return [{ sourceId: modifier.sourceId }];
+    const gates = this.gatesOf(modifier);
+    if (gates.length === 0) return [{ sourceId: modifier.sourceId }];
     return this.data.inventory
       .filter(
         (entry) =>
@@ -55,7 +62,7 @@ export default abstract class CharacterBase<
           entry.item.id === modifier.sourceId &&
           this.areRequirementsMet(gates, { sourceId: entry.id }),
       )
-      .map((entry) => entry.id);
+      .map((entry) => ({ sourceId: entry.id }));
   };
 
   /**
@@ -74,21 +81,27 @@ export default abstract class CharacterBase<
   /** The components the evaluators walk, once the build set them up. */
   protected builtComponents: C | null = null;
 
+  /**
+   * What a requirement group is read for: the item it's of, whose weapon its own paths (`weapon.wielded`) read (an
+   * item's requirements, or those of a modifier the item is the source of), and, for a modifier's own gates when the
+   * modifier applies per scope (`scopesOf`), every scope, met in any: each scope's are read again as it applies.
+   */
+  protected contextOf = (group: Requirement[]): PathContext => {
+    const [owner] = group;
+    if (owner?.entityType === "items") return { sourceId: owner.entityId };
+    if (owner?.entityType !== "modifiers") return {};
+    const sourceId = this.data.itemModifiers.get(owner.entityId);
+    return this.scopedModifierIds.has(owner.entityId) ? { scope: EVERY_SCOPE, sourceId } : { sourceId };
+  };
+
   /** What the build loaded of the character's rows and the view (`CharacterDataLoader`), and what it adds. */
   protected data!: D;
 
-  /**
-   * The item a requirement group is of, whose weapon its own paths (`weapon.wielded`) read: an item's requirements, or
-   * those of a modifier the item is the source of.
-   */
-  protected itemOf = (group: Requirement[]): string | undefined => {
-    const [owner] = group;
-    if (owner?.entityType === "items") return owner.entityId;
-    return owner?.entityType === "modifiers" ? this.data.itemModifiers.get(owner.entityId) : undefined;
-  };
-
   /** The gated modifiers applied while their requirements held, whose requirements don't hold on the final sheet. */
   protected modifiersPastTheirGates: Modifier[] = [];
+
+  /** The modifiers that apply per scope of the sheet (`scopesOf`), by their id: read once the sheet is prepared. */
+  protected scopedModifierIds: ReadonlySet<string> = new Set();
 
   /** The ruleset's view the character is built in: the ruleset, and its lists the build reads. */
   protected view!: RulesetView;
@@ -120,6 +133,12 @@ export default abstract class CharacterBase<
    */
   protected abstract prepareSheet(): void;
 
+  /**
+   * The scopes of the sheet a modifier applies in, each on its own (a ruleset's: 3.5's weapon sets, for a modifier on
+   * an armor class), its gates read and its target reached in each (`contextsOf`); null for one the whole sheet takes.
+   */
+  protected abstract scopesOf(modifier: Modifier): string[] | null;
+
   /** The entity a modifier comes from, by its name and its type: none when the character has no such source. */
   abstract resolveModifierSourceName(modifier: Modifier): { name: string; type: string } | undefined;
 
@@ -150,7 +169,7 @@ export default abstract class CharacterBase<
       round.evaluateRequirements(
         components,
         groups.filter((group) => group.some((r) => waitingKeys.has(gateKey(r)))),
-        this.itemOf,
+        this.contextOf,
       );
       const blocked = round.getBlockedKeys();
       const ready = waiting.filter((m) => !keysOf(m).some((key) => blocked.has(key)));
@@ -160,7 +179,7 @@ export default abstract class CharacterBase<
       waiting = waiting.filter((m) => !ready.includes(m));
     }
 
-    this.requirementEvaluator.evaluateRequirements(components, groups, this.itemOf);
+    this.requirementEvaluator.evaluateRequirements(components, groups, this.contextOf);
     // A modifier can break a requirement already met, another's or its own: the modifiers it gated stay applied (undoing
     // them could loop, two modifiers breaking each other's), and validation reports them. A ready one a round skipped,
     // or that reached nothing, didn't apply
@@ -190,15 +209,18 @@ export default abstract class CharacterBase<
 
   /**
    * The groups (those that require anything) evaluated on the built sheet, apart from the build's own evaluation, each
-   * of the item its owner names, or of `context.sourceId` when given: nothing evaluated before the build.
+   * in its own context (`contextOf`), what `context` gives taking its place: nothing evaluated before the build.
    */
-  protected evaluateGroups(requirementGroups: Requirement[][], context?: { sourceId?: string | null }) {
+  protected evaluateGroups(requirementGroups: Requirement[][], context: RequirementsContext = {}) {
     const evaluator = new RequirementEvaluator(this.targetPaths);
     const nonEmpty = requirementGroups.filter((group) => group.length > 0);
     if (!this.builtComponents || nonEmpty.length === 0) return evaluator.getRequirements();
-    const sourceId = context?.sourceId;
-    const itemOf = sourceId === undefined ? this.itemOf : () => sourceId ?? undefined;
-    evaluator.evaluateRequirements(this.builtComponents, nonEmpty, itemOf);
+    const { scope, sourceId } = context;
+    const contextOf = (group: Requirement[]): PathContext => {
+      const own = this.contextOf(group);
+      return { scope: scope ?? own.scope, sourceId: sourceId === undefined ? own.sourceId : (sourceId ?? undefined) };
+    };
+    evaluator.evaluateRequirements(this.builtComponents, nonEmpty, contextOf);
     return evaluator.getRequirements();
   }
 
@@ -220,17 +242,28 @@ export default abstract class CharacterBase<
     );
   }
 
+  /**
+   * The requirement groups that gate a modifier: its own, and its source's (an item's own requirements, a feat's
+   * prerequisites).
+   */
+  protected gatesOf(modifier: Modifier): Requirement[][] {
+    return this.data.requirementGroups.filter(([owner]) =>
+      owner?.entityType === "modifiers" ? owner.entityId === modifier.id : owner?.entityId === modifier.sourceId,
+    );
+  }
+
   /** The ruleset's lists and indices, as its view composes them. */
   protected get rulesetData(): RulesetData {
     return this.view.rulesetData;
   }
 
   /**
-   * Whether the groups are met, each of the item its owner names, or of `context.sourceId` when given: a weapon's
-   * proficiency, its base item's requirements, reads its own hand. A `null` source is no item: a weapon's own paths
-   * (its hand) reach nothing, as for a weapon not yet held.
+   * Whether the groups are met, each in its own context (`contextOf`), what `context` gives taking its place: a
+   * weapon's proficiency, its base item's requirements, reads its own hand (`sourceId`), and a scope's gates its part of
+   * the sheet (`scope`). A `null` source is no item: a weapon's own paths (its hand) reach nothing, as for a weapon not
+   * yet held.
    */
-  areRequirementsMet(requirementGroups: Requirement[][], context?: { sourceId?: string | null }): boolean {
+  areRequirementsMet(requirementGroups: Requirement[][], context?: RequirementsContext): boolean {
     if (!this.builtComponents) return false;
     const { unmetRequirementGroups, invalidRequirements } = this.evaluateGroups(requirementGroups, context);
     return unmetRequirementGroups.length === 0 && invalidRequirements.length === 0;
@@ -252,8 +285,9 @@ export default abstract class CharacterBase<
     // 3. The components the evaluators walk
     this.builtComponents = this.components;
 
-    // 4. The ruleset's steps before the requirements read the sheet
+    // 4. The ruleset's steps before the requirements read the sheet, then the modifiers that apply per scope of it
     this.prepareSheet();
+    this.scopedModifierIds = new Set(this.data.modifiers.filter((m) => this.scopesOf(m)).map((m) => m.id));
 
     // 5. The modifiers but the late ones, and the requirements that gate them
     const lateModifiers = this.data.modifiers.filter((m) => this.isLateModifier(m));

@@ -36,8 +36,8 @@ describe("RequirementsService", () => {
         chain,
         { ...babAtLeast5, level: "1.1" },
         { level: "1.2", chainingOperator: "or" },
-        { level: "1.2.1", target: "combat.ac.total", value: "10", operator: "greater_than_or_equal" },
-        { level: "1.2.2", target: "combat.ac.total", value: "15", operator: "greater_than_or_equal" },
+        { level: "1.2.1", target: "combat.weaponsets.*.ac.total", value: "10", operator: "greater_than_or_equal" },
+        { level: "1.2.2", target: "combat.weaponsets.*.ac.total", value: "15", operator: "greater_than_or_equal" },
       ];
       for (const body of tree) await RequirementsService.createRequirement(session, rulesetId, "feats", feat.id, body);
       const listed = await RequirementsService.getRequirements(rulesetId, "feats", feat.id);
@@ -139,7 +139,7 @@ describe("RequirementsService", () => {
     test("changes a target requirement's target and value, inferring the new value type", async () => {
       const { session, rulesetId, feat } = await setup();
       const created = await RequirementsService.createRequirement(session, rulesetId, "feats", feat.id, babAtLeast5);
-      const update = { ...babAtLeast5, target: "combat.ac.total", value: "15" };
+      const update = { ...babAtLeast5, target: "combat.weaponsets.*.ac.total", value: "15" };
       const updated = await RequirementsService.updateRequirement(
         session,
         rulesetId,

@@ -7,7 +7,7 @@ import type {
 } from "@/shared/customization/target.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-import type { PathCategory } from "./PathCategory.ts";
+import type { PathCategory, PathContext } from "./PathCategory.ts";
 import PathChecks, { type TargetCheck } from "./PathChecks.ts";
 import PathCompletions, { type PathQuery } from "./PathCompletions.ts";
 import PathTraverser, { type Components, type TraversePathResult } from "./PathTraverser.ts";
@@ -42,7 +42,8 @@ export interface TargetPaths extends TargetPathsTraverser {
 export interface TargetPathsTraverser {
   /** Whether a target reads its source itself (a weapon's own paths: the place its item is held), not the sheet. */
   readsSource(target: string): boolean;
-  traversePathInit(target: string, components: Components, context?: { sourceId?: string }): TraversePathResult[];
+  /** A target's values, read in `context`: the item it's of, the part of the sheet it reads. */
+  traversePathInit(target: string, components: Components, context?: PathContext): TraversePathResult[];
 }
 
 /**
@@ -183,8 +184,11 @@ export default abstract class CategoryPaths<C = Components> implements TargetPat
     return this.byName.get(category)?.readsSource?.(target) ?? false;
   }
 
-  /** A target's values: its category's own resolution, or its category's data walked by the path (category.item.property). */
-  traversePathInit(target: string, components: Components, context?: { sourceId?: string }): TraversePathResult[] {
+  /**
+   * A target's values, read in `context`: its category's own resolution, or its category's data walked by the path
+   * (category.item.property).
+   */
+  traversePathInit(target: string, components: Components, context?: PathContext): TraversePathResult[] {
     try {
       const [category, ...rest] = target.split(".");
       const resolved = this.byName.get(category)?.resolve?.(target, rest, components, this.traverser, context);

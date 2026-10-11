@@ -8,9 +8,18 @@ import type { Requirement } from "@/shared/relations.ts";
  * evaluator that applied its modifiers, and whether requirements hold on its sheet.
  */
 export interface BuiltCharacter {
-  areRequirementsMet(requirementGroups: Requirement[][], context?: { sourceId?: string | null }): boolean;
+  areRequirementsMet(requirementGroups: Requirement[][], context?: RequirementsContext): boolean;
   readonly components: Components;
   readonly modifierEvaluator: ModifierEvaluator;
+}
+
+/**
+ * What requirements are read for, as a caller asks: the item they're of (`sourceId`, `null` for none: a weapon's own
+ * paths reach nothing), and the part of the sheet (`scope`), past what each group's own context says.
+ */
+export interface RequirementsContext {
+  scope?: string;
+  sourceId?: string | null;
 }
 
 /**

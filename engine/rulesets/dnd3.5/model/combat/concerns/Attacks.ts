@@ -77,13 +77,18 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
     }
 
     /**
-     * What abilities give a weapon's attack: its ability's modifier, or Dexterity's less a carried shield's check penalty
-     * when Weapon Finesse makes that better. A composite bow drawn with a Strength bonus below its rating takes −2.
+     * What abilities give a weapon's attack: its ability's modifier, or Dexterity's less the check penalty of the shield
+     * its set holds when Weapon Finesse makes that better. A composite bow drawn with a Strength bonus below its rating
+     * takes −2.
      */
-    private attackModifier({ attack, finesse, strengthRating, ratingRequired }: WeaponAbilities): number {
+    private attackModifier(
+      { attack, finesse, strengthRating, ratingRequired }: WeaponAbilities,
+      setKey: string,
+    ): number {
       const abilities = this.abilities;
       let modifier = abilities.getAbilityModifier(attack);
-      if (finesse) modifier = Math.max(modifier, abilities.getAbilityModifier("Dexterity") + this.shieldCheckPenalty());
+      if (finesse)
+        modifier = Math.max(modifier, abilities.getAbilityModifier("Dexterity") + this.shieldCheckPenalty(setKey));
 
       if (ratingRequired && abilities.getAbilityModifier("Strength") < (strengthRating ?? 0))
         modifier += COMBAT_RULES.COMPOSITE_BOW_PENALTY;
@@ -91,29 +96,26 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       return modifier;
     }
 
-    /** The weapon set, created if missing, with the slots the weapon displaces emptied. */
+    /** The weapon set, made if missing, with the slots the weapon displaces emptied. */
     private clearSlots(setKey: string, slot: "Main Hand" | "Off Hand" | "Two Handed") {
-      if (!this.combat.weaponsets[setKey])
-        this.combat.weaponsets[setKey] = { mainhand: null, offhand: null, twohanded: null };
-
+      const weaponSet = this.weaponSet(setKey);
       // Two-handed weapons displace main-hand and off-hand (e.g. unarmed strike default)
       if (slot === "Two Handed") {
-        this.combat.weaponsets[setKey].mainhand = null;
-        this.combat.weaponsets[setKey].offhand = null;
+        weaponSet.mainhand = null;
+        weaponSet.offhand = null;
       } else {
-        this.combat.weaponsets[setKey].twohanded = null;
+        weaponSet.twohanded = null;
       }
     }
 
     /**
-     * What the gear costs every attack: the armor check penalty of each armor and shield worn without proficiency,
-     * and a tower shield's bulk.
+     * What the gear costs the attacks of a weapon set (`setKey`): the armor check penalty of each armor worn and of the
+     * set's shield without proficiency, and a tower shield's bulk in the set.
      */
-    private gearPenalty(): number {
-      const { armors, shields } = this.combat;
-      const gear = new Set([...Object.values(armors), ...Object.values(shields)]);
+    private gearPenalty(setKey: string): number {
+      const gear = new Set([...Object.values(this.combat.armors), ...(this.shieldSets[setKey] ?? [])]);
       const unproficient = [...gear].reduce((penalty, item) => penalty + (item.proficient ? 0 : item.checkpenalty), 0);
-      return unproficient + (this.towerShield ? COMBAT_RULES.TOWER_SHIELD_PENALTY : 0);
+      return unproficient + (this.towerShieldSets.has(setKey) ? COMBAT_RULES.TOWER_SHIELD_PENALTY : 0);
     }
 
     /**
@@ -145,12 +147,12 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
     }
 
     /**
-     * The armor check penalty of the shields the character carries, which a finessed attack takes: of those it's
-     * proficient with, another's costing every attack already (`gearPenalty`).
+     * The armor check penalty of the shields a weapon set holds (`setKey`), which a finessed attack takes: of those
+     * the character is proficient with, another's costing every attack of the set already (`gearPenalty`).
      */
-    private shieldCheckPenalty(): number {
-      const shields = new Set(Object.values(this.combat.shields));
-      return [...shields].reduce((penalty, shield) => penalty + (shield.proficient ? shield.checkpenalty : 0), 0);
+    private shieldCheckPenalty(setKey: string): number {
+      const shields = this.shieldSets[setKey] ?? [];
+      return shields.reduce((penalty, shield) => penalty + (shield.proficient ? shield.checkpenalty : 0), 0);
     }
 
     /**
@@ -305,9 +307,9 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       this.clearSlots(setKey, slot);
       // What the weapon reads of the character, when read
       const sheet = {
-        attackModifier: () => this.attackModifier(abilities),
+        attackModifier: () => this.attackModifier(abilities, setKey),
         size: () => SIZE_AC_ATTACK_MOD[this.raceSize] ?? 0,
-        gearPenalty: () => this.gearPenalty() + handPenalty,
+        gearPenalty: () => this.gearPenalty(setKey) + handPenalty,
         // What only some weapons take: a secondary natural attack's penalty, and a thrown weapon's or a sling's bonus (a
         // ranged weapon Strength adds to by the hand, not a bow or a crossbow)
         kindBonus: () =>
@@ -387,7 +389,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
      * it isn't proficient with, whose check penalty every attack takes.
      */
     applyProficiencyPenalties(unproficient: { id: string; itemId: string }[]) {
-      const { weaponsets, armors, shields } = this.combat;
+      const { weaponsets, armors } = this.combat;
       const entryIds = new Set(unproficient.map((entry) => entry.id));
       const itemIds = new Set(unproficient.map((entry) => entry.itemId));
       for (const weaponSet of Object.values(weaponsets)) {
@@ -399,7 +401,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
           weapon.tohit.misc += COMBAT_RULES.NONPROFICIENCY_PENALTY;
         }
       }
-      for (const gear of [...Object.values(armors), ...Object.values(shields)])
+      for (const gear of [...Object.values(armors), ...Object.values(this.shieldSets).flat()])
         if (itemIds.has(gear.itemId)) gear.proficient = false;
     }
 

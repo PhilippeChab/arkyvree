@@ -135,7 +135,7 @@ export function Validates<
       // Each condition evaluated as the requirements are, templates and every operator included
       const conditions = new RequirementEvaluator(this.targetPaths);
       const isLeafMet = (req: Requirement) =>
-        !!this.builtComponents && conditions.isConditionMet(req, this.builtComponents, this.itemOf([req]));
+        !!this.builtComponents && conditions.isConditionMet(req, this.builtComponents, this.contextOf([req]));
 
       const formatNode = (node: RequirementNode<Requirement>, indent: string): string => {
         const req = node.requirement;

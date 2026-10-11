@@ -16,7 +16,6 @@ import {
   charactersInCharacter,
   featsAptitudesInRules,
   featsInRules,
-  inventoryInCharacter,
   modifiersInCustomization,
   powersAptitudesInRules,
   powersInRules,
@@ -54,7 +53,7 @@ import { seededRows } from "@/tests/seeds/seededRows.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
 import { insertRows, measure } from "@/tests/support/database.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
-import { createTestItem } from "@/tests/support/items.ts";
+import { type Carried, carry, createTestItem } from "@/tests/support/items.ts";
 import { addCharacterLevel, createTestKlassLevel, findKlassLevel } from "@/tests/support/levels.ts";
 import { createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, findSeededRuleset, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
@@ -86,14 +85,6 @@ import {
   WEAPON_STRENGTH_DAMAGE,
   WEAPON_TYPE,
 } from "@/vocabulary/dnd3.5/properties/index.ts";
-
-interface Carried {
-  equipped?: boolean;
-  item: string;
-  location?: ItemLocation;
-  quantity?: number;
-  weaponSet?: number;
-}
 
 type Detailed = Awaited<ReturnType<typeof build>>;
 
@@ -200,22 +191,6 @@ async function buildRanger(carried: Carried[]) {
 
 async function buildSeeded(name: string) {
   return build(await findSeededCharacter(name));
-}
-
-/** Replaces the character's inventory: seeded items by name, or item ids. */
-async function carry(character: Character, carried: Carried[]) {
-  const { itemMap } = await getSeedCtx();
-  await db.delete(inventoryInCharacter).where(eq(inventoryInCharacter.characterId, character.id));
-  if (carried.length === 0) return;
-  await db.insert(inventoryInCharacter).values(
-    carried.map(({ item, equipped = true, quantity = 1, ...rest }) => ({
-      characterId: character.id,
-      itemId: itemMap[item] ?? item,
-      equipped,
-      quantity,
-      ...rest,
-    })),
-  );
 }
 
 /** A new wondrous item of the seeded ruleset, worn at `slot`, that raises an ability by `bonus`. */
@@ -1295,12 +1270,12 @@ describe("DetailedCharacter", () => {
         expect((await attacks("Bjorn Ironhand", plateAndShield)).gearpenalty).toBe(0);
       });
 
-      test("costs every attack 2 with a tower shield, and its check penalty without proficiency", async () => {
+      test("costs every attack of its set 2 with a tower shield, and its check penalty without proficiency", async () => {
         const gear = async (name: string) =>
           weaponSet(
             await buildCarrying(name, [
               { item: "Dagger", location: "Main Hand", weaponSet: 0 },
-              { item: "Tower Shield", location: "Off Hand", weaponSet: 1 },
+              { item: "Tower Shield", location: "Off Hand", weaponSet: 0 },
             ]),
           ).mainhand!.tohit.gearpenalty;
         // A fighter, proficient with it; a wizard, who isn't, takes its 10 as well
@@ -1657,7 +1632,7 @@ describe("DetailedCharacter", () => {
     test("keeps a dodge bonus in touch AC and loses it flat-footed, with the Dexterity bonus", async () => {
       const bjorn = await findSeededCharacter("Bjorn Ironhand");
       const ac = async () => {
-        const { total, touch, flatfooted, dexterity } = (await build(bjorn)).components.combat.getCombat().ac;
+        const { total, touch, flatfooted, dexterity } = weaponSet(await build(bjorn)).ac;
         return { total, touch, flatfooted, dexterity };
       };
       const before = await ac();
@@ -1695,15 +1670,15 @@ describe("DetailedCharacter", () => {
         for (let level = 1; level <= duelistLevels; level++)
           await addCharacterLevel(characterId, (await findKlassLevel(duelist.id, level))!.id);
 
-        return (await build((await Characters.findOne(db, { id: characterId }))!)).components.combat.getCombat().ac
-          .dodge;
+        // Gated on the armor and the shield, its set's
+        return weaponSet(await build((await Characters.findOne(db, { id: characterId }))!)).ac.dodge;
       };
       // Intelligence 16 (+3): +1 at the first duelist level, +2 at the second; Intelligence 8 (−1): nothing
       expect([await dodgeAt(16, 1), await dodgeAt(16, 2), await dodgeAt(8, 2)]).toEqual([1, 2, 0]);
     });
 
     test("keeps the Dexterity bonus flat-footed with uncanny dodge: a barbarian 2's, not a barbarian 1's", async () => {
-      const acOf = async (name: string) => (await buildSeeded(name)).components.combat.getCombat().ac;
+      const acOf = async (name: string) => weaponSet(await buildSeeded(name)).ac;
       // Grak is a barbarian 3; Kael a barbarian 1 and fighter 3
       const grak = await acOf("Grak Thunderfist");
       expect(grak).toMatchObject({ uncannydodge: true, flatfooted: grak.total });
@@ -1722,7 +1697,7 @@ describe("DetailedCharacter", () => {
         maxdex: 2,
       });
       // DEX 14 (+2), within Chain Mail's 2.
-      expect(bjorn.components.combat.getCombat().ac).toMatchObject({ armor: 5, dexterity: 2, total: 17 });
+      expect(weaponSet(bjorn).ac).toMatchObject({ armor: 5, dexterity: 2, total: 17 });
     });
 
     test("takes a specific armor's own stats: its enhancement, its material's, and its category", async () => {
@@ -1755,7 +1730,8 @@ describe("DetailedCharacter", () => {
         checkpenalty: -2,
         spellfailure: 15,
       });
-      expect(bjorn.components.combat.getCombat().ac).toMatchObject({ shield: 2, dexterity: 2, total: 14 });
+      // Its entry stored without a weapon set: the first set's
+      expect(weaponSet(bjorn).ac).toMatchObject({ shield: 2, dexterity: 2, total: 14 });
     });
 
     test("adds armor and shield together, a weapon in hand", async () => {
@@ -1767,7 +1743,7 @@ describe("DetailedCharacter", () => {
       expect(weaponSet(bjorn).mainhand!.name).toBe("Longsword");
       expect(bjorn.components.armors.getArmors()["chainmail"].ac.bonus).toBe(5);
       expect(bjorn.components.shields.getShields()["lightwoodenshield"].ac.bonus).toBe(1);
-      expect(bjorn.components.combat.getCombat().ac).toMatchObject({
+      expect(weaponSet(bjorn).ac).toMatchObject({
         base: 10,
         armor: 5,
         shield: 1,
@@ -1793,7 +1769,7 @@ describe("DetailedCharacter", () => {
         checkpenalty: -6,
         spellfailure: 35,
       });
-      expect(bjorn.components.combat.getCombat().ac).toMatchObject({ armor: 8, dexterity: 1, total: 19 });
+      expect(weaponSet(bjorn).ac).toMatchObject({ armor: 8, dexterity: 1, total: 19 });
     });
 
     test("lowers a masterwork armor or shield's check penalty by 1", async () => {
@@ -1840,7 +1816,7 @@ describe("DetailedCharacter", () => {
     test("adds a monk's wisdom when unarmored, through a template modifier its requirements gate", async () => {
       // Monk 3: DEX 16 (+3), WIS 16 (+3).
       const zen = await buildSeeded("Zen Whitepetal");
-      expect(zen.components.combat.getCombat().ac).toMatchObject({
+      expect(weaponSet(zen).ac).toMatchObject({
         base: 10,
         dexterity: 3,
         armor: 0,
@@ -1851,7 +1827,7 @@ describe("DetailedCharacter", () => {
       const acBonus = zen.modifierEvaluator
         .getModifiers()
         .appliedModifiers.find(
-          (m) => m.value === "{{ max(0, [abilities.wisdom.modifier]) }}" && m.target === "combat.ac.misc",
+          (m) => m.value === "{{ max(0, [abilities.wisdom.modifier]) }}" && m.target === "combat.weaponsets.0.ac.misc",
         );
       expect(acBonus).toBeDefined();
       // Its requirements: no armor, no shield, a light load.
@@ -1920,10 +1896,9 @@ describe("DetailedCharacter", () => {
         for (let level = 1; level <= levels; level++)
           await addCharacterLevel(characterId, (await findKlassLevel(klass.id, level))!.id);
 
-        const { speed, ac } = (
-          await build((await Characters.findOne(db, { id: characterId }))!)
-        ).components.combat.getCombat();
-        return { speed: speed.total, misc: ac.misc, dodge: ac.dodge };
+        const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
+        const { ac } = weaponSet(detailed);
+        return { speed: detailed.components.combat.getCombat().speed.total, misc: ac.misc, dodge: ac.dodge };
       };
       // Sacred fist 6: +20 feet, +2 AC; dwarven defender 4: +2 dodge
       expect(await sheetWith(DND35_COMPLETE_DIVINE_NAME, "Sacred Fist", 6)).toEqual({ speed: 50, misc: 2, dodge: 0 });
@@ -1933,8 +1908,9 @@ describe("DetailedCharacter", () => {
     test("of a monk loses fast movement under a medium load, and her AC bonus with it", async () => {
       const zen = await findSeededCharacter("Zen Whitepetal");
       const sheet = async () => {
-        const { speed, ac, encumbrance } = (await build(zen)).components.combat.getCombat();
-        return { load: encumbrance.load, speed: speed.total, misc: ac.misc };
+        const detailed = await build(zen);
+        const { speed, encumbrance } = detailed.components.combat.getCombat();
+        return { load: encumbrance.load, speed: speed.total, misc: weaponSet(detailed).ac.misc };
       };
       const light = await sheet();
       expect(light).toMatchObject({ load: "light", speed: 40 });
@@ -3578,11 +3554,9 @@ describe("DetailedCharacter", () => {
 
     test("caps dexterity in armor class and costs weight-affected skills, swim double, unless the armor costs more", async () => {
       // A heavy load's max dex 1, over DEX 14's +2.
-      expect(
-        (
-          await buildCarrying("Bjorn Ironhand", [{ item: "Barrel (empty)", quantity: 7, equipped: false }])
-        ).components.combat.getCombat(),
-      ).toMatchObject({ encumbrance: { maxdex: 1 }, ac: { dexterity: 1, total: 11 } });
+      const loaded = await buildCarrying("Bjorn Ironhand", [{ item: "Barrel (empty)", quantity: 7, equipped: false }]);
+      expect(loaded.components.combat.getCombat().encumbrance.maxdex).toBe(1);
+      expect(weaponSet(loaded).ac).toMatchObject({ dexterity: 1, total: 11 });
 
       const skills = async (carried: Carried[]) => {
         const { swim, climb } = (await buildCarrying("Bjorn Ironhand", carried)).components.skills.getSkills();

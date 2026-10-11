@@ -1,7 +1,8 @@
-import type { GetterOf, PathCategory } from "@/engine/core/paths/PathCategory.ts";
+import type { GetterOf, PathCategory, PathContext } from "@/engine/core/paths/PathCategory.ts";
 import PathTraverser, { type Components, type TraversePathResult } from "@/engine/core/paths/PathTraverser.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
+import { WEAPON_SET_SLOTS } from "@/engine/rulesets/dnd3.5/rules/InventorySlots.ts";
 import { getOperators } from "@/shared/customization/operators.ts";
 import { deriveSegmentLabels, isLeafOfKind, type TargetPath } from "@/shared/customization/target.ts";
 import { isRecord } from "@/shared/isRecord.ts";
@@ -103,7 +104,7 @@ export default class WeaponPaths implements PathCategory<Dnd35Components> {
     rest: string[],
     components: Components,
     traverser: PathTraverser,
-    context?: { sourceId?: string },
+    context?: PathContext,
   ): TraversePathResult[] | null {
     if (!this.readsSource(target)) return null;
     const sourceId = context?.sourceId;
@@ -117,10 +118,11 @@ export default class WeaponPaths implements PathCategory<Dnd35Components> {
     if (!isRecord(combat) || !isRecord(combat.weaponsets)) return [];
     const results: TraversePathResult[] = [];
     for (const weaponSet of Object.values(combat.weaponsets)) {
-      for (const [, weapon] of Object.entries(weaponSet as Record<string, unknown>)) {
+      if (!isRecord(weaponSet)) continue;
+      for (const hand of WEAPON_SET_SLOTS) {
         // Its item's (a modifier's source), or its entry's (a proficiency read of the entry holding it)
-        const held = weapon as { entryId?: string | null; itemId?: string | null } | null;
-        if (held && typeof held === "object" && (held.itemId === sourceId || held.entryId === sourceId))
+        const weapon = weaponSet[hand];
+        if (isRecord(weapon) && (weapon.itemId === sourceId || weapon.entryId === sourceId))
           results.push(...traverser.traverse(weaponsComponent, rest, weapon, rest[0], 0, ["weapon"]));
       }
     }

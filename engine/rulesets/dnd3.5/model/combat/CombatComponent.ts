@@ -1,5 +1,6 @@
 import { ITEM_FIELDS } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
+import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
 import { include } from "@/lib/mixins.ts";
 import { type CharacterLevel } from "@/shared/relations.ts";
 import { UNARMED_STRIKE, UNARMED_STRIKE_STATS } from "@/vocabulary/dnd3.5/combat.ts";
@@ -49,7 +50,8 @@ class CombatComponent extends include(CombatState, ArmorClass, Attacks, HitPoint
 
   /**
    * What the inventory has equipped (`InventoryComponent.getEquipped`), in its order: each weapon in its set's hand
-   * (one without a proficiency fills none), held (`heldWeapons`), and the armor and shields worn.
+   * (one without a proficiency fills none), held (`heldWeapons`), the armor worn, and each shield in its set's off hand
+   * (the first set, for an entry stored without one).
    */
   private equipInventory(): void {
     for (const { entry, fields } of this.inventory.getEquipped()) {
@@ -63,8 +65,8 @@ class CombatComponent extends include(CombatState, ArmorClass, Attacks, HitPoint
         // The sheet wears it: the heaviest worn slows the character down
         this.addArmor(fields);
       } else if (entry.item.type === "Shield") {
-        // The sheet carries it: a tower shield's bulk
-        this.addShield(fields);
+        // Its set carries it: a tower shield's bulk
+        this.addShield(fields, String(entry.weaponSet ?? 0));
       }
     }
   }
@@ -76,6 +78,19 @@ class CombatComponent extends include(CombatState, ArmorClass, Attacks, HitPoint
   /** The inventory's weapons the combat placed, in its order, each with the slot it filled then. */
   getHeldWeapons(): HeldWeapon[] {
     return this.heldWeapons;
+  }
+
+  /** The keys of the weapon sets (stored from 0), the loadouts a character switches between: the first at least. */
+  getSetKeys(): string[] {
+    return Object.keys(this.combat.weaponsets);
+  }
+
+  /** The keys of the weapon sets whose hands hold an item (`itemId`): a shield's, a weapon's; none for an item worn elsewhere. */
+  getSetsHolding(itemId: string): string[] {
+    const held = this.inventory
+      .getEquipped()
+      .filter(({ entry }) => entry.item.id === itemId && ItemPlacement.isHand(entry.location));
+    return [...new Set(held.map(({ entry }) => String(entry.weaponSet ?? 0)))];
   }
 }
 

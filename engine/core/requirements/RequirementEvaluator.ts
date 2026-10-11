@@ -1,5 +1,6 @@
 import type { TargetPathsTraverser } from "@/engine/core/paths/CategoryPaths.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
+import type { PathContext } from "@/engine/core/paths/PathCategory.ts";
 import type { Components, TraversePathResult } from "@/engine/core/paths/PathTraverser.ts";
 import TemplateExpression from "@/engine/core/paths/TemplateExpression.ts";
 import RequirementTree, { getParentLevel, type RequirementNode } from "@/shared/customization/RequirementTree.ts";
@@ -125,7 +126,7 @@ export default class RequirementEvaluator {
     return this.compareRequirement(requirement, data, typedValue);
   }
 
-  private evaluateRequirementsGroup(requirements: Requirement[], components: Components, sourceId: string | undefined) {
+  private evaluateRequirementsGroup(requirements: Requirement[], components: Components, context: PathContext) {
     // The rows the tree holds: every group, and each condition that could be evaluated, with whether it was met
     const evaluated: Requirement[] = [];
     const fulfilled = new Map<Requirement, boolean>();
@@ -134,7 +135,7 @@ export default class RequirementEvaluator {
       if (requirement.chainingOperator !== null) {
         evaluated.push(requirement);
       } else if (requirement.target) {
-        const results = this.targetPaths.traversePathInit(requirement.target, components, { sourceId });
+        const results = this.targetPaths.traversePathInit(requirement.target, components, context);
         const validResults: TraversePathResult[] = [];
 
         for (const result of results) {
@@ -195,13 +196,16 @@ export default class RequirementEvaluator {
     this.results.invalidRequirements.push({ warning, requirement });
   }
 
-  /** Evaluates the groups, each with the item it's of (`itemOf`), which a weapon's own paths (`weapon.wielded`) read. */
+  /**
+   * Evaluates the groups, each in its context (`contextOf`): the item it's of, which a weapon's own paths
+   * (`weapon.wielded`) read, and the part of the sheet it reads (a scope).
+   */
   evaluateRequirements(
     components: Components,
     requirements: Requirement[][],
-    itemOf: (group: Requirement[]) => string | undefined = () => undefined,
+    contextOf: (group: Requirement[]) => PathContext = () => ({}),
   ) {
-    for (const group of requirements) this.evaluateRequirementsGroup(group, components, itemOf(group));
+    for (const group of requirements) this.evaluateRequirementsGroup(group, components, contextOf(group));
   }
 
   /**
@@ -222,13 +226,13 @@ export default class RequirementEvaluator {
   }
 
   /**
-   * Whether a condition (a requirement on a path, not a chain of them) is met: by any of what its path reaches, the item
-   * it's of (`sourceId`) its weapon's own paths.
+   * Whether a condition (a requirement on a path, not a chain of them) is met: by any of what its path reaches in its
+   * `context`, the item it's of its weapon's own paths.
    */
-  isConditionMet(requirement: Requirement, components: Components, sourceId?: string): boolean {
+  isConditionMet(requirement: Requirement, components: Components, context: PathContext = {}): boolean {
     if (!requirement.target) return false;
     return this.targetPaths
-      .traversePathInit(requirement.target, components, { sourceId })
+      .traversePathInit(requirement.target, components, context)
       .some((result) => !result.error && this.evaluateRequirement(requirement, result, components));
   }
 }
