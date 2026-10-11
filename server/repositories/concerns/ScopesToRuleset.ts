@@ -10,18 +10,18 @@ export type RulesetEntityFilters<Extra extends object = object> = Extra & {
   ancestorRulesetIds?: string[];
   campaignId?: string;
   childOnly?: boolean;
+  hiddenIds?: string[];
   orderBy?: "name" | "createdAt" | "updatedAt";
   orderDir?: "asc" | "desc";
   rulesetId: string;
   search?: string;
-  siblingLoserIds?: string[];
 };
 
 /**
- * A ruleset entity's list: the ruleset's own rows, its source chain's (less what a later ruleset copied, and a book's
- * copy that lost to another book's, the sibling losers it's given), and a campaign's. Its source chain and sibling
- * losers are the ruleset's copy-on-write data's (`CowData.listFilters`). A repository that includes it names
- * its `entityType`, the type its copies' snapshots record.
+ * A ruleset entity's list: the ruleset's own rows, its source chain's (less what a later ruleset copied, and the hidden
+ * ids it's given: a book's copy that lost to another book's, a book's entity the ruleset's own of its name shadows), and
+ * a campaign's. Its source chain and hidden ids are the ruleset's copy-on-write data's (`CowData.listFilters`). A
+ * repository that includes it names its `entityType`, the type its copies' snapshots record.
  */
 export function ScopesToRuleset<B extends Constructor<BaseRepository<Table>>>(Base: B) {
   abstract class ScopingToRuleset extends Base {
@@ -49,12 +49,11 @@ export function ScopesToRuleset<B extends Constructor<BaseRepository<Table>>>(Ba
         );
         return and(eq(this.column("rulesetId"), ancestorId), isNull(this.column("campaignId")), cowExcluded);
       });
-      // A book's copy of an entity another book copied too, which lost to that copy: left out in the query, so a page
-      // keeps its size
-      const { siblingLoserIds } = where;
-      const siblingLosers =
-        siblingLoserIds && siblingLoserIds.length > 0 ? notInArray(this.column("id"), siblingLoserIds) : undefined;
-      const inherited = inheritedClauses.length > 0 ? and(or(...inheritedClauses), siblingLosers) : undefined;
+      // A book's copy of an entity another book copied too, which lost to that copy, and a book's entity the ruleset's
+      // own of its name shadows: left out in the query, so a page keeps its size
+      const { hiddenIds } = where;
+      const hidden = hiddenIds && hiddenIds.length > 0 ? notInArray(this.column("id"), hiddenIds) : undefined;
+      const inherited = inheritedClauses.length > 0 ? and(or(...inheritedClauses), hidden) : undefined;
 
       if (where.campaignId) {
         const campaignOwned = and(

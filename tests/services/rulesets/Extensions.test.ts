@@ -61,6 +61,7 @@ import { PowersService } from "@/server/services/rulesets/powers/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/characters.ts";
+import { STRENGTH_BONUS } from "@/tests/support/customizations.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
 import { addCharacterLevel, createTestKlassLevel, getLevelStep, pickFeat } from "@/tests/support/levels.ts";
 import {
@@ -1402,5 +1403,88 @@ describe("two extensions overriding the same base entity", () => {
     const winner = cow.resolve(baseId);
     const loser = contributions.map((c) => c.copyId).find((id) => id !== winner)!;
     expect(cow.getSiblings(winner).filter((id) => id === loser)).toHaveLength(1);
+  });
+});
+
+describe("an extension's entity of a name its subscriber's own has", () => {
+  test("is its author's to add or rename to, and the subscriber's view shows the subscriber's own in its place", async () => {
+    const author = await createTestUser();
+    const { session, draft } = await setupFork();
+    const book = await createExtension(author.user.id);
+    const general = { aptitudeIds: [(await getSeedCtx()).aptMap["General"]] };
+    const later = await FeatsService.createFeat(author.session, book.id, { name: "Probe Book Feat", ...general });
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [book.id]);
+    const own = await FeatsService.createFeat(session, draft.id, { name: "Homebrew Feat", ...general });
+    const ownRenamed = await FeatsService.createFeat(session, draft.id, { name: "Homebrew Renamed", ...general });
+
+    // The author adds a feat of the subscriber's feat's name, and renames another to the other's: neither is refused
+    const added = await FeatsService.createFeat(author.session, book.id, { name: own.name, ...general });
+    await FeatsService.updateFeat(author.session, book.id, later.id, { name: ownRenamed.name });
+
+    expect(await featsNamed(draft.id, own.name)).toMatchObject([{ id: own.id }]);
+    expect(await featsNamed(draft.id, ownRenamed.name)).toMatchObject([{ id: ownRenamed.id }]);
+    const view = await RulesetViews.getData((await Rulesets.findOne(db, { id: draft.id }))!);
+    const shown = view.feats.filter((feat) => [own.name, ownRenamed.name].includes(feat.name)).map((feat) => feat.id);
+    expect(shown.toSorted()).toEqual([own.id, ownRenamed.id].toSorted());
+    expect(await featsNamed(book.id, own.name)).toMatchObject([{ id: added.id }]);
+    await expectRefusedWith(FeatsService.createFeat(session, draft.id, { name: own.name, ...general }), 409);
+
+    // The subscriber's own renamed, the book's shows under its name
+    await FeatsService.updateFeat(session, draft.id, own.id, { name: "Homebrew Feat (Mine)" });
+    expect(await featsNamed(draft.id, own.name)).toMatchObject([{ id: added.id }]);
+  });
+
+  test("reads the subscriber's own where the book's class, a pick and the level-up name the book's, not its own rows; an unsubscribe keeps the pick on it", async () => {
+    const { user, session, draft } = await setupFork();
+    const book = await createExtension((await createTestUser()).user.id);
+    const { aptMap, klassMap } = await getSeedCtx();
+    const general = aptMap["General"];
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [book.id]);
+    const own = await FeatsService.createFeat(session, draft.id, { name: "Homebrew Feat", aptitudeIds: [general] });
+    await Modifiers.create(db, { ...STRENGTH_BONUS, sourceType: "feats", sourceId: own.id });
+    // The book's, added since: on a list of the book's and on the general feats, a class of the book's granting it
+    const [bookFeat] = await Feats.create(db, { name: own.name, rulesetId: book.id });
+    const [bookList] = await Aptitudes.create(db, { name: `Probe Book Feats ${uniqueId()}`, rulesetId: book.id });
+    await FeatsAptitudes.create(db, { featId: bookFeat.id, aptitudeId: bookList.id });
+    await FeatsAptitudes.create(db, { featId: bookFeat.id, aptitudeId: general });
+    await Modifiers.create(db, {
+      ...STRENGTH_BONUS,
+      target: "abilities.wisdom.misc",
+      sourceType: "feats",
+      sourceId: bookFeat.id,
+    });
+    const { klassLevel } = await createTestKlassLevel(book.id);
+    await KlassLevelFeats.create(db, { klassLevelId: klassLevel.id, featId: bookFeat.id, aptitudeId: bookList.id });
+    RulesetViews.invalidate(book.id);
+    // A pick of the book's, as one made while both showed is stored
+    const character = await createCharacterOn(user.id, draft.id);
+    const { klassLevel: ownLevel } = await createTestKlassLevel(draft.id);
+    const level = await addCharacterLevel(character.id, ownLevel.id, {
+      feats: [{ featId: bookFeat.id, aptitudeId: general }],
+    });
+
+    const view = await RulesetViews.getData((await Rulesets.findOne(db, { id: draft.id }))!);
+    expect(view.klassLevelFeatsByKlassLevel.get(klassLevel.id)).toMatchObject([{ featId: own.id }]);
+    expect(view.listFeatIds(bookList.id)).toEqual([]);
+    expect(view.listFeatIds(general).filter((id) => [own.id, bookFeat.id].includes(id))).toEqual([own.id]);
+    const described = await FeatsService.getFeat(draft.id, bookFeat.id);
+    expect(described.id).toBe(own.id);
+    expect(described.modifiers.map((modifier) => modifier.target)).toEqual([STRENGTH_BONUS.target]);
+
+    const applied = (await buildAs(DetailedCharacter, character)).modifierEvaluator.getModifiers().appliedModifiers;
+    expect(applied.filter((modifier) => modifier.sourceType === "feats").map((modifier) => modifier.sourceId)).toEqual([
+      own.id,
+    ]);
+    const leveling = await createCharacterOn(user.id, draft.id);
+    const offered = await CharacterLevelsService.getAvailableFeats(
+      session,
+      leveling.id,
+      { aptitudeId: general, classId: klassMap.pc["Fighter"], level: 1, search: own.name },
+      firstPage,
+    );
+    expect(offered.items.filter((feat) => feat.name === own.name).map((feat) => feat.id)).toEqual([own.id]);
+
+    await RulesetExtensionsService.unsubscribeExtension(session, draft.id, book.id);
+    expect(await picksOf("feats", level.id)).toEqual([{ entityId: own.id, aptitudeId: general }]);
   });
 });

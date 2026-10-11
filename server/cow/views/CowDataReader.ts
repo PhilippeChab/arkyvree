@@ -4,8 +4,8 @@ import { Aptitudes, EntitySnapshots, KlassLevels, RulesetEntities } from "@/serv
 
 /**
  * A ruleset's `CowData`: the rows the engine builds it from (`copyOnWrite().getReads`: the chain's snapshots, the levels
- * of the classes it copied, its namesakes and aptitudes), read as stored through the handle it's given, and the
- * engine's build of them. The cache reads it through the shared `db` and keeps it for every reader
+ * of the classes it copied or its own hide, its namesakes and aptitudes), read as stored through the handle it's given,
+ * and the engine's build of them. The cache reads it through the shared `db` and keeps it for every reader
  * (`RulesetViews.getCowData`); a write reads it through its transaction, which sees the transaction's own copies
  * (`EntityCopy`, an unsubscribe's departing references), and keeps nothing.
  */
@@ -14,10 +14,11 @@ export default class CowDataReader {
     const reads = Engine.copyOnWrite().getReads(ruleset);
     const snapshots = await EntitySnapshots.findMany(database, { rulesetIds: reads.snapshotRulesetIds });
     const namesakes = await RulesetEntities.findNativeNames(database, reads.namesakes);
+    const ownNamesakes = await RulesetEntities.findOwnNamesakes(database, reads.ownNamesakes);
     const klassLevels = await KlassLevels.findMany(database, {
-      klassIds: Engine.copyOnWrite().getPairedKlassIds(ruleset.id, snapshots),
+      klassIds: Engine.copyOnWrite().getPairedKlassIds(ruleset.id, { ownNamesakes, snapshots }),
     });
     const aptitudes = await Aptitudes.findMany(database, { rulesetIds: reads.aptitudeRulesetIds });
-    return Engine.copyOnWrite().buildData(ruleset, { aptitudes, klassLevels, namesakes, snapshots });
+    return Engine.copyOnWrite().buildData(ruleset, { aptitudes, klassLevels, namesakes, ownNamesakes, snapshots });
   }
 }

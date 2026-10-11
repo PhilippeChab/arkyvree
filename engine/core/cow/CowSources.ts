@@ -1,12 +1,14 @@
 /**
  * The rows a ruleset's `CowData` is built from (`CowDataBuilder.build`), as stored, which the server reads as
- * `CowSources.getReads` says: its snapshots, and its source chain's, the levels of the classes it copied, the chain's
- * native namesakes of the types that pair by name, and its aptitudes and the chain's.
+ * `CowSources.getReads` says: its snapshots, and its source chain's, the levels of the classes it copied or its own
+ * entities hide, the chain's native namesakes of the types that pair by name, the ruleset's entities and its
+ * extensions' of a name both have, and its aptitudes and the chain's.
  */
 export interface CowRows {
   aptitudes: { id: string; name: string; rulesetId: string }[];
   klassLevels: { id: string; klassId: string; level: number }[];
   namesakes: { entityType: string; id: string; name: string; rulesetId: string }[];
+  ownNamesakes: { entityType: string; id: string; name: string; rulesetId: string }[];
   snapshots: { entityType: string; forkedEntityId: string; rulesetId: string; sourceEntityId: string }[];
 }
 
@@ -23,8 +25,9 @@ export interface RulesetSources {
  * saves, skills, items, languages, mechanics) a same-name match across extensions is more likely a genuine collision
  * than a reprint — auto-merging a race or a class of one name between two homebrew packages would silently corrupt
  * content. Aptitudes are also excluded; they have their own name-grouping pass since name = identity universally for
- * them. A subscribe reads the view's pairing as it builds it (`EntityNames`, the server's), so it refuses what the view
- * would show twice, never what it pairs.
+ * them. Nor does a ruleset's own entity merge with a book's of its name: its own hides the book's (`CowDataBuilder`). A
+ * subscribe reads the view's pairing as it builds it (`EntityNames`, the server's), so it refuses what the view would
+ * show twice, never what it pairs.
  */
 export const NAME_FALLBACK_ENTITY_TYPES = ["feats", "powers"] as const;
 
@@ -43,20 +46,28 @@ export default class CowSources {
     return snapshots.filter((snap) => snap.rulesetId === rulesetId && snap.entityType === "klasses");
   }
 
-  /** The classes whose levels pair by number: those the ruleset copied (its snapshots say), and their sources. */
-  static getPairedKlassIds(rulesetId: string, snapshots: CowRows["snapshots"]) {
-    return CowSources.getKlassSnapshots(rulesetId, snapshots).flatMap((snap) => [
-      snap.sourceEntityId,
-      snap.forkedEntityId,
-    ]);
+  /**
+   * The classes whose levels pair by number: those the ruleset copied (its snapshots say) and their sources, and the
+   * classes of its own and its extensions' of a name both have (`ownNamesakes`), whose levels pair when its own hides
+   * theirs.
+   */
+  static getPairedKlassIds(rulesetId: string, rows: Pick<CowRows, "ownNamesakes" | "snapshots">) {
+    return [
+      ...CowSources.getKlassSnapshots(rulesetId, rows.snapshots).flatMap((snap) => [
+        snap.sourceEntityId,
+        snap.forkedEntityId,
+      ]),
+      ...rows.ownNamesakes.filter((row) => row.entityType === "klasses").map((row) => row.id),
+    ];
   }
 
   /**
    * What a ruleset's `CowData` is read from, each read none when it needs none: its snapshots and its chain's, when it
    * has a chain (a ruleset with none copies nothing); its aptitudes and its chain's, its own first, which pair by name
    * when it has extensions (its own lists with its books' too: a list's name is its identity); and its chain's native
-   * namesakes of the types that pair by name, when its extensions and ancestors make more than one source. The levels
-   * of the classes it copied follow from its snapshots (`getPairedKlassIds`).
+   * namesakes of the types that pair by name, when its extensions and ancestors make more than one source; and, when it
+   * has extensions, its own entities and theirs of a name both have, of every type (`ownNamesakes`: its own hide
+   * theirs). The levels of the classes it copied or its own hide follow from those (`getPairedKlassIds`).
    */
   static getReads(ruleset: RulesetSources) {
     const chain = CowSources.buildSourceChain(ruleset);
@@ -67,6 +78,7 @@ export default class CowSources {
         entityTypes: hasExtensions && chain.length > 1 ? [...NAME_FALLBACK_ENTITY_TYPES] : [],
         rulesetIds: chain,
       },
+      ownNamesakes: { rulesetId: ruleset.id, rulesetIds: hasExtensions ? ruleset.extensionRulesetIds : [] },
       snapshotRulesetIds: chain.length > 0 ? [ruleset.id, ...chain] : [],
     };
   }

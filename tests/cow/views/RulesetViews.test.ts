@@ -4,6 +4,8 @@ import {
   aptitudesInRules,
   featsInRules,
   itemsInRules,
+  klassesInRules,
+  klassLevelsInRules,
   modifiersInCustomization,
   propertiesInCustomization,
 } from "@/drizzle/schema.ts";
@@ -11,7 +13,7 @@ import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
-import { Feats, Modifiers, Requirements, Rulesets } from "@/server/repositories/index.ts";
+import { Feats, Items, Modifiers, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { FeatsService } from "@/server/services/rulesets/feats/index.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
@@ -659,6 +661,99 @@ describe("RulesetViews", () => {
       expect(composed.items.find((i) => i.id === winnerId)).toBeDefined();
       expect(composed.items.find((i) => i.id === loserId)).toBeUndefined();
       expect(composed.items.find((i) => i.id === baseItem.id)).toBeUndefined();
+    });
+  });
+
+  describe("a book's entity of a name the fork's own has", () => {
+    test("is overridden by the fork's, of any kind, which stands for what it stood for: its sibling, what it copied", async () => {
+      const seed = await getRuleset();
+      const [first, second] = [await createBook(seed.id), await createBook(seed.id)];
+      const featName = `Homebrew Feat ${uniqueId()}`;
+      const itemName = `Homebrew Item ${uniqueId()}`;
+      // Two books' feats of a name pair, the first's winning; the first's copy of a core item, renamed
+      const [firstFeat, secondFeat] = await insertRows(featsInRules, [
+        { name: featName, rulesetId: first.id },
+        { name: featName, rulesetId: second.id },
+      ]);
+      const [baseItem] = await insertRows(itemsInRules, [
+        { name: `Probe Item ${uniqueId()}`, rulesetId: seed.id, weight: "1", costGp: "1" },
+      ]);
+      const bookItem = await copyEntity(db, "items", baseItem.id, first);
+      await Items.update(db, { name: itemName }, { id: bookItem.id as string });
+      const fork = await createTestRuleset(SEED_USER_ID, {
+        rulesetId: seed.id,
+        ancestorRulesetIds: [seed.id],
+        extensionRulesetIds: [first.id, second.id],
+      });
+      const [ownFeat] = await insertRows(featsInRules, [{ name: featName, rulesetId: fork.id }]);
+      const [ownItem] = await insertRows(itemsInRules, [
+        { name: itemName, rulesetId: fork.id, weight: "1", costGp: "1" },
+      ]);
+      await insertRows(modifiersInCustomization, [{ ...STRENGTH_BONUS, sourceType: "feats", sourceId: firstFeat.id }]);
+
+      const cow = await RulesetViews.getCowData(fork);
+      expect([firstFeat.id, secondFeat.id].map((id) => cow.resolve(id))).toEqual([ownFeat.id, ownFeat.id]);
+      expect([bookItem.id as string, baseItem.id].map((id) => cow.resolve(id))).toEqual([ownItem.id, ownItem.id]);
+      expect([firstFeat.id, secondFeat.id, bookItem.id as string].map((id) => cow.isShadowed(id))).toEqual([
+        true,
+        false,
+        true,
+      ]);
+      expect(cow.listFilters.hiddenIds).toEqual(
+        expect.arrayContaining([firstFeat.id, secondFeat.id, bookItem.id as string]),
+      );
+      expect(cow.hasSiblings(ownFeat.id)).toBe(false);
+
+      const view = await RulesetViews.getData(fork);
+      expect(view.feats.filter((feat) => feat.name === featName).map((feat) => feat.id)).toEqual([ownFeat.id]);
+      expect(view.items.filter((item) => item.name === itemName).map((item) => item.id)).toEqual([ownItem.id]);
+      expect(view.featsById.get(secondFeat.id)?.id).toBe(ownFeat.id);
+      expect(view.items.find((item) => item.id === baseItem.id)).toBeUndefined();
+      // The book's own rows go with it: its customizations merge into none of the fork's
+      expect(view.modifiersBySource.get(ownFeat.id) ?? []).toEqual([]);
+    });
+
+    test("a class's levels pair by number with the fork's class of its name, the others going with it", async () => {
+      const seed = await getRuleset();
+      const book = await createBook(seed.id);
+      const name = `Homebrew Class ${uniqueId()}`;
+      const [bookClass] = await insertRows(klassesInRules, [{ name, rulesetId: book.id, hd: 8 }]);
+      const [bookFirst, bookSecond] = await insertRows(klassLevelsInRules, [
+        { klassId: bookClass.id, level: 1 },
+        { klassId: bookClass.id, level: 2 },
+      ]);
+      const fork = await createTestRuleset(SEED_USER_ID, {
+        rulesetId: seed.id,
+        ancestorRulesetIds: [seed.id],
+        extensionRulesetIds: [book.id],
+      });
+      const [ownClass] = await insertRows(klassesInRules, [{ name, rulesetId: fork.id, hd: 10 }]);
+      const [ownFirst] = await insertRows(klassLevelsInRules, [{ klassId: ownClass.id, level: 1 }]);
+
+      const view = await RulesetViews.getData(fork);
+      expect(view.klasses.filter((klass) => klass.name === name).map((klass) => klass.id)).toEqual([ownClass.id]);
+      expect(view.cow.resolve(bookFirst.id)).toBe(ownFirst.id);
+      expect(view.klassLevels.filter((level) => level.klassId === ownClass.id).map((level) => level.id)).toEqual([
+        ownFirst.id,
+      ]);
+      expect(view.klassLevels.find((level) => level.id === bookSecond.id)).toBeUndefined();
+    });
+
+    test("a campaign's entity of its name hides none of a book's", async () => {
+      const seed = await getRuleset();
+      const book = await createBook(seed.id);
+      const name = `Homebrew Feat ${uniqueId()}`;
+      const [bookFeat] = await insertRows(featsInRules, [{ name, rulesetId: book.id }]);
+      const fork = await createTestRuleset(SEED_USER_ID, {
+        rulesetId: seed.id,
+        ancestorRulesetIds: [seed.id],
+        extensionRulesetIds: [book.id],
+      });
+      const { campaign } = await createTestCampaign(SEED_USER_ID, fork.id);
+      await insertRows(featsInRules, [{ name, rulesetId: fork.id, campaignId: campaign.id }]);
+
+      const view = await RulesetViews.getData(fork);
+      expect(view.feats.filter((feat) => feat.name === name).map((feat) => feat.id)).toEqual([bookFeat.id]);
     });
   });
 

@@ -9,6 +9,8 @@
 - The characters list opens on the most recently updated character first; the other orders stay in its Sort menu
 - D&D 3.5: a feat's "Caster level" prerequisite checks your caster level, not the highest spell level you cast: Craft Wand opens at caster level 5
 - Renaming a ruleset's entry (a feat, a spell, a list, an item…) to a name the ruleset already shows is refused, as creating one is, and so are restoring a parent's version and subscribing to an extension that would show a name twice
+- Unsubscribing from an extension is refused while it would bring back an entry (a core feat it changes) under a name your fork has given another entry since
+- An extension's entry that its author adds or renames to the name of one of your fork's own shows as yours alone in your fork, not twice: what of the book named it uses yours
 
 ## 0.5.0 — 2026-05-21
 

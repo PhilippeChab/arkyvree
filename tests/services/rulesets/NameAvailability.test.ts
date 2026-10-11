@@ -305,7 +305,32 @@ test("subscribing to an extension with an entity of a renamed copy's name is ref
   expect(await countNamed(host.id, "items", "Probe Ext Item")).toBe(1);
 });
 
-test("subscribing to an extension that shows a name its view shows twice no more often is no clash", async () => {
+// An unsubscribe shows again what the extension stood in for (a core entity it copied), under its name: refused while
+// the fork shows another entity of it, as a subscribe is (#699)
+test("unsubscribing from an extension whose copy of a core feat the fork renamed, once it named a feat as the core one, is refused", async () => {
+  const { session, fork, general, baseFeat } = await setup();
+  const extension = await createSeededTestRuleset(session.userId);
+  const bookCopy = await copyEntity(db, "feats", (await baseFeat("Dodge")).id, extension);
+  await publishExtension(extension.id);
+  await RulesetExtensionsService.subscribeExtension(session, fork.id, [extension.id]);
+  await FeatsService.updateFeat(session, fork.id, bookCopy.id as string, { name: "Dodge (Local)" });
+  const own = await FeatsService.createFeat(session, fork.id, { name: "Dodge", aptitudeIds: [general.id] });
+
+  expect(RulesetExtensionsService.unsubscribeExtension(session, fork.id, extension.id)).rejects.toThrow(
+    'Cannot unsubscribe: feats "Dodge", which this extension replaces, would show again beside another of its name',
+  );
+  await expectRefusedWith(RulesetExtensionsService.unsubscribeExtension(session, fork.id, extension.id), 409);
+  expect((await Rulesets.findOne(db, { id: fork.id }))!.extensionRulesetIds).toEqual([extension.id]);
+  expect(await countNamed(fork.id, "feats", "Dodge")).toBe(1);
+
+  // Once the fork renamed its own, the core feat comes back alone
+  await FeatsService.updateFeat(session, fork.id, own.id, { name: "Probe Dodge" });
+  await RulesetExtensionsService.unsubscribeExtension(session, fork.id, extension.id);
+  expect(await countNamed(fork.id, "feats", "Dodge")).toBe(1);
+  expect(await countNamed(fork.id, "feats", "Dodge (Local)")).toBe(0);
+});
+
+test("subscribing to an extension that shows a name its view shows twice no more often, or unsubscribing, is no clash", async () => {
   const session = makeSession();
   const base = await createTestRuleset(null);
   const fork = { rulesetId: base.id, ancestorRulesetIds: [base.id] };
@@ -324,5 +349,7 @@ test("subscribing to an extension that shows a name its view shows twice no more
   await publishExtension(extension.id);
 
   await RulesetExtensionsService.subscribeExtension(session, host.id, [extension.id]);
+  expect(await countNamed(host.id, "races", "Twin")).toBe(2);
+  await RulesetExtensionsService.unsubscribeExtension(session, host.id, extension.id);
   expect(await countNamed(host.id, "races", "Twin")).toBe(2);
 });
